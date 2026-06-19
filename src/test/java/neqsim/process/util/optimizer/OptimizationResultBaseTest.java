@@ -13,8 +13,7 @@ import org.junit.jupiter.api.Test;
  * Unit tests for OptimizationResultBase.
  *
  * <p>
- * Tests the unified result base class including status, constraint violations, timing, and
- * sensitivity tracking.
+ * Tests the unified result base class including status, constraint violations, timing, and sensitivity tracking.
  * </p>
  *
  * @author NeqSim Development Team
@@ -156,9 +155,8 @@ class OptimizationResultBaseTest {
 
   @Test
   void testConstraintViolationClass() {
-    OptimizationResultBase.ConstraintViolation violation =
-        new OptimizationResultBase.ConstraintViolation("Compressor1", "MaxPower", 15.0, 12.0, "MW",
-            true);
+    OptimizationResultBase.ConstraintViolation violation = new OptimizationResultBase.ConstraintViolation("Compressor1",
+	"MaxPower", 15.0, 12.0, "MW", true);
 
     assertEquals("Compressor1", violation.getEquipmentName());
     assertEquals("MaxPower", violation.getConstraintName());
@@ -339,4 +337,3 @@ class OptimizationResultBaseTest {
     assertFalse(result.hasViolations());
   }
 }
-

@@ -3,12 +3,12 @@ package neqsim.thermo.system;
 import neqsim.thermo.phase.PhaseSrkEosvolcor;
 
 /**
- * This class defines a thermodynamic system using the Peng-Robinson equation of state with volume
- * correction (Pénéloux shift).
+ * This class defines a thermodynamic system using the Peng-Robinson equation of state with volume correction (Pénéloux
+ * shift).
  *
  * <p>
- * The volume correction improves volumetric predictions (density, molar volume) without affecting
- * phase equilibrium calculations. This is particularly useful for:
+ * The volume correction improves volumetric predictions (density, molar volume) without affecting phase equilibrium
+ * calculations. This is particularly useful for:
  * </p>
  * <ul>
  * <li>High-pressure applications (&gt; 100 bar)</li>
@@ -18,8 +18,8 @@ import neqsim.thermo.phase.PhaseSrkEosvolcor;
  * </ul>
  *
  * <p>
- * The translation parameter is calculated using the correlation: c = (0.1154 - 0.4406 * (0.29056 -
- * 0.08775 * ω)) * R * Tc / Pc
+ * The translation parameter is calculated using the correlation: c = (0.1154 - 0.4406 * (0.29056 - 0.08775 * ω)) * R *
+ * Tc / Pc
  * </p>
  *
  * @author Even Solbraa

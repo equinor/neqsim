@@ -13,9 +13,8 @@ import neqsim.process.equipment.stream.StreamInterface;
  * Shared utilities for resolving outlet streams from NeqSim process equipment.
  *
  * <p>
- * This class centralizes the logic for extracting the primary outlet stream from any process
- * equipment instance. It is used by both {@link DexpiSimulationBuilder} and {@link DexpiXmlWriter}
- * to avoid code duplication.
+ * This class centralizes the logic for extracting the primary outlet stream from any process equipment instance. It is
+ * used by both {@link DexpiSimulationBuilder} and {@link DexpiXmlWriter} to avoid code duplication.
  * </p>
  *
  * @author NeqSim
@@ -23,15 +22,16 @@ import neqsim.process.equipment.stream.StreamInterface;
  */
 public final class DexpiStreamUtils {
 
-  private DexpiStreamUtils() {}
+  private DexpiStreamUtils() {
+  }
 
   /**
    * Gets the primary (gas) outlet stream from a process equipment instance.
    *
    * <p>
-   * For separators, this returns the gas outlet stream. For splitters, it returns the first split
-   * stream. For streams, it returns the stream itself. For all other TwoPortEquipment (compressor,
-   * pump, valve, heater, cooler, expander, heat exchanger), it returns the outlet stream directly.
+   * For separators, this returns the gas outlet stream. For splitters, it returns the first split stream. For streams,
+   * it returns the stream itself. For all other TwoPortEquipment (compressor, pump, valve, heater, cooler, expander,
+   * heat exchanger), it returns the outlet stream directly.
    * </p>
    *
    * @param equipment the process equipment
@@ -57,8 +57,8 @@ public final class DexpiStreamUtils {
   }
 
   /**
-   * Gets the liquid outlet stream from a separator. For a ThreePhaseSeparator, this returns the oil
-   * outlet. For a standard Separator, this returns the liquid outlet.
+   * Gets the liquid outlet stream from a separator. For a ThreePhaseSeparator, this returns the oil outlet. For a
+   * standard Separator, this returns the liquid outlet.
    *
    * @param equipment the process equipment
    * @return the liquid outlet stream, or null if equipment is not a separator

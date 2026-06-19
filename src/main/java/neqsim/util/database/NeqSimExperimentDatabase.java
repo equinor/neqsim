@@ -16,8 +16,7 @@ import org.apache.logging.log4j.Logger;
  * @author Even Solbraa
  * @version Dec 2018
  */
-public class NeqSimExperimentDatabase
-    implements neqsim.util.util.FileSystemSettings, java.io.Serializable {
+public class NeqSimExperimentDatabase implements neqsim.util.util.FileSystemSettings, java.io.Serializable {
   /**
    * <p>
    * createTemporaryTables.
@@ -56,8 +55,7 @@ public class NeqSimExperimentDatabase
 
   private static String dataBaseType = "MSAccessUCanAccess";
   /** Constant <code>connectionString="jdbc:ucanaccess://C:/Users/esol/OneDriv"{trunked}</code>. */
-  public static String connectionString =
-      "jdbc:ucanaccess://C:/Users/esol/OneDrive - Equinor/programming/neqsimdatabase/MSAccess/NeqSimExperimentalData.mdb;memory=true";
+  public static String connectionString = "jdbc:ucanaccess://C:/Users/esol/OneDrive - Equinor/programming/neqsimdatabase/MSAccess/NeqSimExperimentalData.mdb;memory=true";
 
   private transient Statement statement = null;
   protected transient Connection databaseConnection = null;
@@ -85,7 +83,7 @@ public class NeqSimExperimentDatabase
    * </p>
    *
    * @return a Connection object
-   * @throws java.sql.SQLException if any.
+   * @throws java.sql.SQLException            if any.
    * @throws java.lang.ClassNotFoundException if any.
    */
   public Connection openConnection() throws SQLException, ClassNotFoundException {
@@ -94,30 +92,29 @@ public class NeqSimExperimentDatabase
 
     try {
       if (dataBaseType.equals("MSAccessUCanAccess")) {
-        return DriverManager.getConnection(getConnectionString());
-      } else if (dataBaseType.equals("mySQL") || dataBaseType.equals("mySQLNTNU")
-          || dataBaseType.equals("Derby")) {
-        return DriverManager.getConnection(getConnectionString(), username, password);
+	return DriverManager.getConnection(getConnectionString());
+      } else if (dataBaseType.equals("mySQL") || dataBaseType.equals("mySQLNTNU") || dataBaseType.equals("Derby")) {
+	return DriverManager.getConnection(getConnectionString(), username, password);
       } else if (dataBaseType.equals("mySQLNeqSimWeb")) {
-        ctx = new javax.naming.InitialContext();
-        ds = (javax.sql.DataSource) ctx.lookup("java:comp/env/jdbc/NeqsimDataSource");
-        if (ctx != null) {
-          ctx.close();
-        }
-        return ds.getConnection();
+	ctx = new javax.naming.InitialContext();
+	ds = (javax.sql.DataSource) ctx.lookup("java:comp/env/jdbc/NeqsimDataSource");
+	if (ctx != null) {
+	  ctx.close();
+	}
+	return ds.getConnection();
       } else {
-        return DriverManager.getConnection(getConnectionString(), username, password);
+	return DriverManager.getConnection(getConnectionString(), username, password);
       }
     } catch (Exception ex) {
       logger.error("error loading NeqSimExperimentDatabase... ", ex);
       throw new RuntimeException(ex);
     } finally {
       try {
-        if (ctx != null) {
-          ctx.close();
-        }
+	if (ctx != null) {
+	  ctx.close();
+	}
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+	logger.error(ex.getMessage(), ex);
       }
     }
   }
@@ -161,8 +158,8 @@ public class NeqSimExperimentDatabase
   public void execute(String sqlString) {
     try {
       if (databaseConnection == null) {
-        databaseConnection = this.openConnection();
-        setStatement(databaseConnection.createStatement());
+	databaseConnection = this.openConnection();
+	setStatement(databaseConnection.createStatement());
       }
       getStatement().execute(sqlString);
     } catch (Exception ex) {
@@ -199,7 +196,7 @@ public class NeqSimExperimentDatabase
    * Setter for the field <code>dataBaseType</code>.
    * </p>
    *
-   * @param aDataBaseType a {@link java.lang.String} object
+   * @param aDataBaseType    a {@link java.lang.String} object
    * @param connectionString a {@link java.lang.String} object
    */
   public static void setDataBaseType(String aDataBaseType, String connectionString) {
@@ -211,26 +208,25 @@ public class NeqSimExperimentDatabase
 
     try {
       if (dataBaseType.equals("MSAccess")) {
-        Class.forName("sun.jdbc.odbc.JdbcOdbcDriver").getDeclaredConstructor().newInstance();
+	Class.forName("sun.jdbc.odbc.JdbcOdbcDriver").getDeclaredConstructor().newInstance();
       } else if (dataBaseType.equals("H2")) {
-        Class.forName("org.h2.Driver");
+	Class.forName("org.h2.Driver");
       } else if (dataBaseType.equals("H2RT")) {
-        Class.forName("org.h2.Driver");
+	Class.forName("org.h2.Driver");
       } else if (dataBaseType.equals("MSAccessUCanAccess")) {
-        Class.forName("net.ucanaccess.jdbc.UcanaccessDriver");
+	Class.forName("net.ucanaccess.jdbc.UcanaccessDriver");
       } else if (dataBaseType.equals("mySQL")) {
-        Class.forName("com.mysql.cj.jdbc.Driver").getDeclaredConstructor().newInstance();
+	Class.forName("com.mysql.cj.jdbc.Driver").getDeclaredConstructor().newInstance();
       } else if (dataBaseType.equals("mySQLNTNU")) {
-        Class.forName("com.mysql.cj.jdbc.Driver").getDeclaredConstructor().newInstance();
+	Class.forName("com.mysql.cj.jdbc.Driver").getDeclaredConstructor().newInstance();
       } else if (dataBaseType.equals("Derby")) {
-        Class.forName("org.apache.derby.jdbc.EmbeddedDriver").getDeclaredConstructor()
-            .newInstance();
+	Class.forName("org.apache.derby.jdbc.EmbeddedDriver").getDeclaredConstructor().newInstance();
       } else if (dataBaseType.equals("oracle")) {
-        Class.forName("oracle.jdbc.driver.OracleDriver").getDeclaredConstructor().newInstance();
+	Class.forName("oracle.jdbc.driver.OracleDriver").getDeclaredConstructor().newInstance();
       } else if (dataBaseType.equals("oracleST")) {
-        Class.forName("oracle.jdbc.driver.OracleDriver").getDeclaredConstructor().newInstance();
+	Class.forName("oracle.jdbc.driver.OracleDriver").getDeclaredConstructor().newInstance();
       } else {
-        Class.forName("sun.jdbc.odbc.JdbcOdbcDriver");
+	Class.forName("sun.jdbc.odbc.JdbcOdbcDriver");
       }
     } catch (Exception ex) {
       logger.error("error loading database driver.. ", ex);

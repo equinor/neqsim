@@ -22,8 +22,7 @@ public class MaterialReviewResult implements Serializable {
   private final MaterialReviewItem item;
 
   /** Damage-mechanism assessments. */
-  private final List<DamageMechanismAssessment> assessments =
-      new ArrayList<DamageMechanismAssessment>();
+  private final List<DamageMechanismAssessment> assessments = new ArrayList<DamageMechanismAssessment>();
 
   /** Consolidated material recommendation. */
   private MaterialRecommendation recommendation = new MaterialRecommendation();
@@ -85,10 +84,9 @@ public class MaterialReviewResult implements Serializable {
    * @param integrityLifeAssessment integrity life assessment
    * @return this result for fluent construction
    */
-  public MaterialReviewResult setIntegrityLifeAssessment(
-      IntegrityLifeAssessment integrityLifeAssessment) {
-    this.integrityLifeAssessment =
-        integrityLifeAssessment == null ? new IntegrityLifeAssessment() : integrityLifeAssessment;
+  public MaterialReviewResult setIntegrityLifeAssessment(IntegrityLifeAssessment integrityLifeAssessment) {
+    this.integrityLifeAssessment = integrityLifeAssessment == null ? new IntegrityLifeAssessment()
+	: integrityLifeAssessment;
     return this;
   }
 
@@ -145,7 +143,7 @@ public class MaterialReviewResult implements Serializable {
     Set<String> standards = new LinkedHashSet<String>();
     for (DamageMechanismAssessment assessment : assessments) {
       if (!assessment.getStandard().isEmpty()) {
-        standards.add(assessment.getStandard());
+	standards.add(assessment.getStandard());
       }
     }
     return standards;

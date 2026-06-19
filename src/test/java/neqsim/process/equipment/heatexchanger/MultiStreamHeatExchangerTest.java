@@ -53,8 +53,7 @@ public class MultiStreamHeatExchangerTest {
     // heatEx.setUAvalue(1000);
     heatEx.setTemperatureApproach(5);
 
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
     operations.add(stream_Hot);
     operations.add(stream_Cold);
     operations.add(stream_Cold2);
@@ -77,8 +76,7 @@ public class MultiStreamHeatExchangerTest {
 
   @Test
   void testRun2() {
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
 
     Stream feed_stream = new Stream("Stream1", testSystem);
     feed_stream.setTemperature(30.0, "C");
@@ -151,8 +149,7 @@ public class MultiStreamHeatExchangerTest {
     // separator2.getFluid().prettyPrint();
     // heatEx.getOutStream(0).getFluid().prettyPrint();
 
-    assertTrue(
-        separator2.getFluid().getTemperature("C") < heatEx.getOutStream(1).getTemperature("C"));
+    assertTrue(separator2.getFluid().getTemperature("C") < heatEx.getOutStream(1).getTemperature("C"));
     assertEquals(25.0, heatEx.getOutStream(1).getTemperature("C"), 1e-3);
     assertEquals(25.0, heatEx.getOutStream(2).getTemperature("C"), 1e-3);
 

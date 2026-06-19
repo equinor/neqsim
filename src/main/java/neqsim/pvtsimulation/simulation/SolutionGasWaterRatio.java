@@ -11,9 +11,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
- * SolutionGasWaterRatio class. Calculates the Solution Gas-Water Ratio (Rsw), which represents the
- * amount of gas dissolved in water at reservoir conditions that will be released when pressure is
- * reduced to standard conditions.
+ * SolutionGasWaterRatio class. Calculates the Solution Gas-Water Ratio (Rsw), which represents the amount of gas
+ * dissolved in water at reservoir conditions that will be released when pressure is reduced to standard conditions.
  * </p>
  *
  * <p>
@@ -24,23 +23,20 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * Three calculation methods are available:
  * </p>
  * <ul>
- * <li><b>McCain (Culberson-McKetta)</b>: Empirical correlation for methane-water systems with
- * salinity correction</li>
- * <li><b>Søreide-Whitson</b>: EoS-based method using modified Peng-Robinson with salinity
- * effects</li>
- * <li><b>Electrolyte CPA</b>: Rigorous EoS method using CPA equation of state for electrolyte
- * systems</li>
+ * <li><b>McCain (Culberson-McKetta)</b>: Empirical correlation for methane-water systems with salinity correction</li>
+ * <li><b>Søreide-Whitson</b>: EoS-based method using modified Peng-Robinson with salinity effects</li>
+ * <li><b>Electrolyte CPA</b>: Rigorous EoS method using CPA equation of state for electrolyte systems</li>
  * </ul>
  *
  * <p>
  * References:
  * </p>
  * <ul>
- * <li>Culberson, O.L. and McKetta, J.J. (1951): "Phase Equilibria in Hydrocarbon-Water Systems III
- * - The Solubility of Methane in Water at Pressures to 10,000 psia", JPT.</li>
+ * <li>Culberson, O.L. and McKetta, J.J. (1951): "Phase Equilibria in Hydrocarbon-Water Systems III - The Solubility of
+ * Methane in Water at Pressures to 10,000 psia", JPT.</li>
  * <li>McCain, W.D. (1990): "The Properties of Petroleum Fluids", PennWell Books.</li>
- * <li>Søreide, I. and Whitson, C.H. (1992): "Peng-Robinson predictions for hydrocarbons, CO2, N2,
- * and H2S with pure water and NaCl brine", Fluid Phase Equilibria.</li>
+ * <li>Søreide, I. and Whitson, C.H. (1992): "Peng-Robinson predictions for hydrocarbons, CO2, N2, and H2S with pure
+ * water and NaCl brine", Fluid Phase Equilibria.</li>
  * </ul>
  *
  * @author esol
@@ -71,8 +67,7 @@ public class SolutionGasWaterRatio extends BasePVTsimulation {
    * Constructor for SolutionGasWaterRatio.
    * </p>
    *
-   * @param tempSystem a {@link neqsim.thermo.system.SystemInterface} object representing the
-   *        reservoir gas/fluid
+   * @param tempSystem a {@link neqsim.thermo.system.SystemInterface} object representing the reservoir gas/fluid
    */
   public SolutionGasWaterRatio(SystemInterface tempSystem) {
     super(tempSystem);
@@ -98,8 +93,7 @@ public class SolutionGasWaterRatio extends BasePVTsimulation {
    * Set the calculation method using a string.
    * </p>
    *
-   * @param methodName the name of the calculation method ("McCain", "Soreide-Whitson", or
-   *        "Electrolyte-CPA")
+   * @param methodName the name of the calculation method ("McCain", "Soreide-Whitson", or "Electrolyte-CPA")
    */
   public void setCalculationMethod(String methodName) {
     if (methodName == null) {
@@ -107,7 +101,7 @@ public class SolutionGasWaterRatio extends BasePVTsimulation {
     }
     String normalizedName = methodName.toLowerCase().trim();
     if (normalizedName.contains("mccain") || normalizedName.contains("culberson")
-        || normalizedName.contains("mcketta")) {
+	|| normalizedName.contains("mcketta")) {
       this.method = CalculationMethod.MCCAIN;
     } else if (normalizedName.contains("soreide") || normalizedName.contains("whitson")) {
       this.method = CalculationMethod.SOREIDE_WHITSON;
@@ -146,7 +140,7 @@ public class SolutionGasWaterRatio extends BasePVTsimulation {
    * </p>
    *
    * @param salinity the salinity value
-   * @param unit the unit: "molal" (mol/kg water), "wt%" (weight percent NaCl), or "ppm" (mg/L)
+   * @param unit     the unit: "molal" (mol/kg water), "wt%" (weight percent NaCl), or "ppm" (mg/L)
    */
   public void setSalinity(double salinity, String unit) {
     if (unit == null) {
@@ -186,7 +180,7 @@ public class SolutionGasWaterRatio extends BasePVTsimulation {
    * </p>
    *
    * @param temperatures array of temperatures in Kelvin
-   * @param pressures array of pressures in bara
+   * @param pressures    array of pressures in bara
    */
   public void setTemperaturesAndPressures(double[] temperatures, double[] pressures) {
     if (temperatures.length != pressures.length) {
@@ -219,13 +213,13 @@ public class SolutionGasWaterRatio extends BasePVTsimulation {
    */
   public double calculateRsw(double temperatureK, double pressureBara) {
     switch (method) {
-      case MCCAIN:
-        return calculateRswMcCain(temperatureK, pressureBara);
-      case SOREIDE_WHITSON:
-        return calculateRswSoreideWhitson(temperatureK, pressureBara);
-      case ELECTROLYTE_CPA:
-      default:
-        return calculateRswElectrolyteCPA(temperatureK, pressureBara);
+    case MCCAIN:
+      return calculateRswMcCain(temperatureK, pressureBara);
+    case SOREIDE_WHITSON:
+      return calculateRswSoreideWhitson(temperatureK, pressureBara);
+    case ELECTROLYTE_CPA:
+    default:
+      return calculateRswElectrolyteCPA(temperatureK, pressureBara);
     }
   }
 
@@ -235,9 +229,8 @@ public class SolutionGasWaterRatio extends BasePVTsimulation {
    * </p>
    *
    * <p>
-   * The correlation calculates gas solubility in pure water, then applies a salinity correction
-   * factor. Valid for methane-water systems at temperatures up to 350°F (177°C) and pressures up to
-   * 10,000 psia (690 bar).
+   * The correlation calculates gas solubility in pure water, then applies a salinity correction factor. Valid for
+   * methane-water systems at temperatures up to 350°F (177°C) and pressures up to 10,000 psia (690 bar).
    * </p>
    *
    * @param temperatureK temperature in Kelvin
@@ -254,14 +247,14 @@ public class SolutionGasWaterRatio extends BasePVTsimulation {
     // where coefficients are temperature-dependent
 
     double A = 8.15839 - 6.12265e-2 * temperatureF + 1.91663e-4 * temperatureF * temperatureF
-        - 2.1654e-7 * temperatureF * temperatureF * temperatureF;
+	- 2.1654e-7 * temperatureF * temperatureF * temperatureF;
 
     double B = 1.01021e-2 - 7.44241e-5 * temperatureF + 3.05553e-7 * temperatureF * temperatureF
-        - 2.94883e-10 * temperatureF * temperatureF * temperatureF;
+	- 2.94883e-10 * temperatureF * temperatureF * temperatureF;
 
     double C = (-9.02505 + 0.130237 * temperatureF - 8.53425e-4 * temperatureF * temperatureF
-        + 2.34122e-6 * temperatureF * temperatureF * temperatureF
-        - 2.37049e-9 * temperatureF * temperatureF * temperatureF * temperatureF) * 1e-7;
+	+ 2.34122e-6 * temperatureF * temperatureF * temperatureF
+	- 2.37049e-9 * temperatureF * temperatureF * temperatureF * temperatureF) * 1e-7;
 
     // Gas solubility in pure water (scf/STB)
     double rswPure = A + B * pressurePsia + C * pressurePsia * pressurePsia;
@@ -322,8 +315,8 @@ public class SolutionGasWaterRatio extends BasePVTsimulation {
    * </p>
    *
    * <p>
-   * Uses the modified Peng-Robinson EoS with Søreide-Whitson alpha function and mixing rules that
-   * account for salinity effects on gas-water equilibrium.
+   * Uses the modified Peng-Robinson EoS with Søreide-Whitson alpha function and mixing rules that account for salinity
+   * effects on gas-water equilibrium.
    * </p>
    *
    * @param temperatureK temperature in Kelvin
@@ -341,7 +334,7 @@ public class SolutionGasWaterRatio extends BasePVTsimulation {
       // If total moles not available, calculate from components
       totalSourceMoles = 0.0;
       for (int i = 0; i < sourceSystem.getNumberOfComponents(); i++) {
-        totalSourceMoles += sourceSystem.getComponent(i).getNumberOfmoles();
+	totalSourceMoles += sourceSystem.getComponent(i).getNumberOfmoles();
       }
     }
 
@@ -352,10 +345,10 @@ public class SolutionGasWaterRatio extends BasePVTsimulation {
       double moles = sourceSystem.getComponent(i).getNumberOfmoles();
       // Skip water as we add it separately
       if (!componentName.equalsIgnoreCase("water") && !componentName.equalsIgnoreCase("H2O")) {
-        // Scale to reasonable amounts (use fraction * 10 for numerical stability)
-        double scaledMoles = (moles / totalSourceMoles) * 10.0;
-        system.addComponent(componentName, scaledMoles, "mole/sec");
-        totalGasMoles += scaledMoles;
+	// Scale to reasonable amounts (use fraction * 10 for numerical stability)
+	double scaledMoles = (moles / totalSourceMoles) * 10.0;
+	system.addComponent(componentName, scaledMoles, "mole/sec");
+	totalGasMoles += scaledMoles;
       }
     }
 
@@ -395,8 +388,7 @@ public class SolutionGasWaterRatio extends BasePVTsimulation {
    * </p>
    *
    * <p>
-   * Uses the CPA equation of state with electrolyte extensions for accurate modeling of
-   * hydrocarbon-water-salt systems.
+   * Uses the CPA equation of state with electrolyte extensions for accurate modeling of hydrocarbon-water-salt systems.
    * </p>
    *
    * @param temperatureK temperature in Kelvin
@@ -456,7 +448,7 @@ public class SolutionGasWaterRatio extends BasePVTsimulation {
     if (totalSourceMoles <= 0) {
       totalSourceMoles = 0.0;
       for (int i = 0; i < sourceSystem.getNumberOfComponents(); i++) {
-        totalSourceMoles += sourceSystem.getComponent(i).getNumberOfmoles();
+	totalSourceMoles += sourceSystem.getComponent(i).getNumberOfmoles();
       }
     }
 
@@ -465,9 +457,9 @@ public class SolutionGasWaterRatio extends BasePVTsimulation {
       double moles = sourceSystem.getComponent(i).getNumberOfmoles();
       // Skip water as we add it separately
       if (!componentName.equalsIgnoreCase("water") && !componentName.equalsIgnoreCase("H2O")) {
-        // Scale to reasonable amounts (use fraction * 10 for numerical stability)
-        double scaledMoles = (moles / totalSourceMoles) * 10.0;
-        targetSystem.addComponent(componentName, scaledMoles);
+	// Scale to reasonable amounts (use fraction * 10 for numerical stability)
+	double scaledMoles = (moles / totalSourceMoles) * 10.0;
+	targetSystem.addComponent(componentName, scaledMoles);
       }
     }
   }
@@ -478,23 +470,22 @@ public class SolutionGasWaterRatio extends BasePVTsimulation {
    * </p>
    *
    * <p>
-   * Rsw = (moles of dissolved gas in aqueous phase at reservoir conditions) converted to standard
-   * conditions volume / (volume of water at standard conditions)
+   * Rsw = (moles of dissolved gas in aqueous phase at reservoir conditions) converted to standard conditions volume /
+   * (volume of water at standard conditions)
    * </p>
    *
-   * @param system the flashed system
+   * @param system       the flashed system
    * @param temperatureK reservoir temperature in Kelvin
    * @param pressureBara reservoir pressure in bara
    * @return Rsw in Sm³ gas / Sm³ water
    */
-  private double calculateRswFromFlash(SystemInterface system, double temperatureK,
-      double pressureBara) {
+  private double calculateRswFromFlash(SystemInterface system, double temperatureK, double pressureBara) {
     // Find aqueous phase
     int aqueousPhaseIndex = -1;
     for (int i = 0; i < system.getNumberOfPhases(); i++) {
       if (system.getPhase(i).getType() == PhaseType.AQUEOUS) {
-        aqueousPhaseIndex = i;
-        break;
+	aqueousPhaseIndex = i;
+	break;
       }
     }
 
@@ -502,17 +493,17 @@ public class SolutionGasWaterRatio extends BasePVTsimulation {
       // Try to find by water content - look for phase with highest water mole fraction
       double maxWaterFrac = 0.0;
       for (int i = 0; i < system.getNumberOfPhases(); i++) {
-        for (int j = 0; j < system.getPhase(i).getNumberOfComponents(); j++) {
-          String compName = system.getPhase(i).getComponent(j).getComponentName();
-          if (compName.equalsIgnoreCase("water") || compName.equalsIgnoreCase("H2O")) {
-            double waterMoleFrac = system.getPhase(i).getComponent(j).getx();
-            if (waterMoleFrac > maxWaterFrac && waterMoleFrac > 0.5) {
-              maxWaterFrac = waterMoleFrac;
-              aqueousPhaseIndex = i;
-            }
-            break;
-          }
-        }
+	for (int j = 0; j < system.getPhase(i).getNumberOfComponents(); j++) {
+	  String compName = system.getPhase(i).getComponent(j).getComponentName();
+	  if (compName.equalsIgnoreCase("water") || compName.equalsIgnoreCase("H2O")) {
+	    double waterMoleFrac = system.getPhase(i).getComponent(j).getx();
+	    if (waterMoleFrac > maxWaterFrac && waterMoleFrac > 0.5) {
+	      maxWaterFrac = waterMoleFrac;
+	      aqueousPhaseIndex = i;
+	    }
+	    break;
+	  }
+	}
       }
     }
 
@@ -529,10 +520,10 @@ public class SolutionGasWaterRatio extends BasePVTsimulation {
       double x = system.getPhase(aqueousPhaseIndex).getComponent(i).getx();
 
       if (compName.equalsIgnoreCase("water") || compName.equalsIgnoreCase("H2O")) {
-        waterMoleFrac += x;
+	waterMoleFrac += x;
       } else if (!compName.equalsIgnoreCase("Na+") && !compName.equalsIgnoreCase("Cl-")
-          && !compName.equalsIgnoreCase("NaCl")) {
-        gasMoleFrac += x;
+	  && !compName.equalsIgnoreCase("NaCl")) {
+	gasMoleFrac += x;
       }
     }
 
@@ -598,8 +589,7 @@ public class SolutionGasWaterRatio extends BasePVTsimulation {
   public void printResults() {
     System.out.println("Solution Gas-Water Ratio (Rsw) Calculation Results");
     System.out.println("Method: " + method.name());
-    System.out.println(
-        "Salinity: " + salinity + " mol/kg water (" + getSalinityWtPercent() + " wt% NaCl)");
+    System.out.println("Salinity: " + salinity + " mol/kg water (" + getSalinityWtPercent() + " wt% NaCl)");
     System.out.println("--------------------------------------------------");
     System.out.printf("%-12s %-12s %-15s%n", "T (K)", "P (bara)", "Rsw (Sm3/Sm3)");
     System.out.println("--------------------------------------------------");
@@ -632,8 +622,8 @@ public class SolutionGasWaterRatio extends BasePVTsimulation {
     rswCalc.setSalinity(3.5, "wt%");
 
     // Set temperature and pressure points
-    double[] temps = {373.15, 373.15, 373.15, 373.15, 373.15};
-    double[] pres = {200.0, 150.0, 100.0, 50.0, 10.0};
+    double[] temps = { 373.15, 373.15, 373.15, 373.15, 373.15 };
+    double[] pres = { 200.0, 150.0, 100.0, 50.0, 10.0 };
     rswCalc.setTemperaturesAndPressures(temps, pres);
 
     // Calculate using McCain correlation

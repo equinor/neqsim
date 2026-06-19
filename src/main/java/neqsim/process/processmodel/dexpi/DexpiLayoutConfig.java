@@ -4,8 +4,8 @@ package neqsim.process.processmodel.dexpi;
  * Configuration class for DEXPI layout parameters.
  *
  * <p>
- * Provides configurable spacing, colors, and sizing values for the auto-layout engine. Users can
- * create a custom configuration and pass it to the export methods to control drawing appearance.
+ * Provides configurable spacing, colors, and sizing values for the auto-layout engine. Users can create a custom
+ * configuration and pass it to the export methods to control drawing appearance.
  * </p>
  *
  * @author NeqSim
@@ -97,7 +97,8 @@ public final class DexpiLayoutConfig {
   /**
    * Creates a default layout configuration.
    */
-  public DexpiLayoutConfig() {}
+  public DexpiLayoutConfig() {
+  }
 
   /**
    * Gets the horizontal spacing between equipment columns.

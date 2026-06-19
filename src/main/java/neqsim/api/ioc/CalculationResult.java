@@ -19,7 +19,7 @@ public class CalculationResult {
    * Constructor for CalculationResult.
    * </p>
    *
-   * @param fluidProperties an array of {@link java.lang.Double} objects
+   * @param fluidProperties  an array of {@link java.lang.Double} objects
    * @param calculationError an array of {@link java.lang.String} objects
    */
   public CalculationResult(Double[][] fluidProperties, String[] calculationError) {
@@ -41,7 +41,7 @@ public class CalculationResult {
     }
     CalculationResult other = (CalculationResult) obj;
     return Arrays.equals(calculationError, other.calculationError)
-        && Arrays.deepEquals(fluidProperties, other.fluidProperties);
+	&& Arrays.deepEquals(fluidProperties, other.fluidProperties);
   }
 
   /** {@inheritDoc} */

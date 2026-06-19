@@ -68,8 +68,7 @@ public class WellToOilStabilizationExampleTest {
     SimpleReservoir reservoir = new SimpleReservoir("Main Reservoir");
     reservoir.setReservoirFluid(reservoirFluid, 1e6, 10.0, 10.0);
 
-    logger.info(
-        "   - Reservoir pressure: " + reservoir.getReservoirFluid().getPressure("bara") + " bara");
+    logger.info("   - Reservoir pressure: " + reservoir.getReservoirFluid().getPressure("bara") + " bara");
 
     // =========================================================================
     // STEP 3: Create Integrated Well System (IPR + VLP)
@@ -142,8 +141,7 @@ public class WellToOilStabilizationExampleTest {
     logger.info("   - HP Separator: 35 bara, 70°C");
 
     // MP Separator
-    ThrottlingValve mpValve =
-        new ThrottlingValve("MP Let-down Valve", hpSeparator.getLiquidOutStream());
+    ThrottlingValve mpValve = new ThrottlingValve("MP Let-down Valve", hpSeparator.getLiquidOutStream());
     mpValve.setOutletPressure(10.0, "bara");
 
     Heater preHeater2 = new Heater("Pre-Heater MP", mpValve.getOutletStream());
@@ -155,8 +153,7 @@ public class WellToOilStabilizationExampleTest {
     logger.info("   - MP Separator: 10 bara, 65°C");
 
     // LP Separator (Stabilizer)
-    ThrottlingValve lpValve =
-        new ThrottlingValve("LP Let-down Valve", mpSeparator.getLiquidOutStream());
+    ThrottlingValve lpValve = new ThrottlingValve("LP Let-down Valve", mpSeparator.getLiquidOutStream());
     lpValve.setOutletPressure(2.0, "bara");
 
     Heater stabilizer = new Heater("Stabilizer Heater", lpValve.getOutletStream());
@@ -249,64 +246,50 @@ public class WellToOilStabilizationExampleTest {
 
     // Wellhead (from WellSystem with IPR+VLP)
     logger.info("\n--- WELLHEAD (IPR+VLP Solution) ---");
-    logger.info(String.format("   Wellhead Pressure:     %.1f bara",
-        well.getOutletStream().getPressure("bara")));
-    logger.info(String.format("   Wellhead Temperature:  %.1f °C",
-        well.getOutletStream().getTemperature("C")));
-    logger.info(String.format("   Operating Flow Rate:   %.1f Sm³/day",
-        well.getOperatingFlowRate("Sm3/day")));
-    logger.info(
-        String.format("   Bottom Hole Pressure:  %.1f bara", well.getBottomHolePressure("bara")));
-    System.out
-        .println(String.format("   Drawdown:              %.1f bar", well.getDrawdown("bar")));
+    logger.info(String.format("   Wellhead Pressure:     %.1f bara", well.getOutletStream().getPressure("bara")));
+    logger.info(String.format("   Wellhead Temperature:  %.1f °C", well.getOutletStream().getTemperature("C")));
+    logger.info(String.format("   Operating Flow Rate:   %.1f Sm³/day", well.getOperatingFlowRate("Sm3/day")));
+    logger.info(String.format("   Bottom Hole Pressure:  %.1f bara", well.getBottomHolePressure("bara")));
+    System.out.println(String.format("   Drawdown:              %.1f bar", well.getDrawdown("bar")));
 
     // Flowline
     logger.info("\n--- FLOWLINE ---");
-    logger.info(String.format("   Inlet Pressure:        %.1f bara",
-        flowline.getInletStream().getPressure("bara")));
-    logger.info(String.format("   Outlet Pressure:       %.1f bara",
-        flowline.getOutletStream().getPressure("bara")));
+    logger.info(String.format("   Inlet Pressure:        %.1f bara", flowline.getInletStream().getPressure("bara")));
+    logger.info(String.format("   Outlet Pressure:       %.1f bara", flowline.getOutletStream().getPressure("bara")));
     logger.info(String.format("   Pressure Drop:         %.1f bar",
-        flowline.getInletStream().getPressure("bara")
-            - flowline.getOutletStream().getPressure("bara")));
+	flowline.getInletStream().getPressure("bara") - flowline.getOutletStream().getPressure("bara")));
 
     // Choke
     logger.info("\n--- INLET CHOKE ---");
-    logger.info(String.format("   Inlet Pressure:        %.1f bara",
-        inletChoke.getInletStream().getPressure("bara")));
-    logger.info(String.format("   Outlet Pressure:       %.1f bara",
-        inletChoke.getOutletStream().getPressure("bara")));
+    logger.info(String.format("   Inlet Pressure:        %.1f bara", inletChoke.getInletStream().getPressure("bara")));
+    logger.info(String.format("   Outlet Pressure:       %.1f bara", inletChoke.getOutletStream().getPressure("bara")));
 
     // Separation
     logger.info("\n--- SEPARATION TRAIN ---");
-    logger.info(String.format("   HP Sep Gas:            %.1f Sm³/day",
-        hpSeparator.getGasOutStream().getFlowRate("Sm3/day")));
-    logger.info(String.format("   MP Sep Gas:            %.1f Sm³/day",
-        mpSeparator.getGasOutStream().getFlowRate("Sm3/day")));
-    logger.info(String.format("   LP Sep Gas:            %.1f Sm³/day",
-        lpSeparator.getGasOutStream().getFlowRate("Sm3/day")));
+    logger.info(
+	String.format("   HP Sep Gas:            %.1f Sm³/day", hpSeparator.getGasOutStream().getFlowRate("Sm3/day")));
+    logger.info(
+	String.format("   MP Sep Gas:            %.1f Sm³/day", mpSeparator.getGasOutStream().getFlowRate("Sm3/day")));
+    logger.info(
+	String.format("   LP Sep Gas:            %.1f Sm³/day", lpSeparator.getGasOutStream().getFlowRate("Sm3/day")));
 
     // Products
     logger.info("\n--- PRODUCT STREAMS ---");
     logger.info(String.format("   Stabilized Oil Rate:   %.1f Sm³/day",
-        lpSeparator.getLiquidOutStream().getFlowRate("Sm3/day")));
-    logger.info(String.format("   Stabilized Oil Pressure: %.1f bara",
-        lpSeparator.getLiquidOutStream().getPressure("bara")));
-    logger.info(String.format("   Export Gas Rate:       %.1f Sm³/day",
-        exportCooler.getOutletStream().getFlowRate("Sm3/day")));
-    logger.info(String.format("   Export Gas Pressure:   %.1f bara",
-        exportCooler.getOutletStream().getPressure("bara")));
+	lpSeparator.getLiquidOutStream().getFlowRate("Sm3/day")));
+    logger.info(
+	String.format("   Stabilized Oil Pressure: %.1f bara", lpSeparator.getLiquidOutStream().getPressure("bara")));
+    logger.info(
+	String.format("   Export Gas Rate:       %.1f Sm³/day", exportCooler.getOutletStream().getFlowRate("Sm3/day")));
+    logger
+	.info(String.format("   Export Gas Pressure:   %.1f bara", exportCooler.getOutletStream().getPressure("bara")));
 
     // Compression power
     logger.info("\n--- COMPRESSION POWER ---");
-    double totalPower =
-        lpCompressor.getPower("kW") + mpCompressor.getPower("kW") + exportCompressor.getPower("kW");
-    System.out
-        .println(String.format("   LP Compressor:         %.0f kW", lpCompressor.getPower("kW")));
-    System.out
-        .println(String.format("   MP Compressor:         %.0f kW", mpCompressor.getPower("kW")));
-    logger
-        .info(String.format("   Export Compressor:     %.0f kW", exportCompressor.getPower("kW")));
+    double totalPower = lpCompressor.getPower("kW") + mpCompressor.getPower("kW") + exportCompressor.getPower("kW");
+    System.out.println(String.format("   LP Compressor:         %.0f kW", lpCompressor.getPower("kW")));
+    System.out.println(String.format("   MP Compressor:         %.0f kW", mpCompressor.getPower("kW")));
+    logger.info(String.format("   Export Compressor:     %.0f kW", exportCompressor.getPower("kW")));
     logger.info(String.format("   Total Power:           %.0f kW", totalPower));
 
     logger.info("\n" + repeat("=", 70));

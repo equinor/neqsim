@@ -13,9 +13,8 @@ import neqsim.process.safety.risk.sis.SafetyInstrumentedFunction;
  * MCP runner for Layer of Protection Analysis (LOPA).
  *
  * <p>
- * Computes the mitigated event frequency from an initiating event and a list of independent
- * protection layers (IPLs), checks against a target frequency, and returns the gap and required
- * additional risk reduction (RRF / SIL).
+ * Computes the mitigated event frequency from an initiating event and a list of independent protection layers (IPLs),
+ * checks against a target frequency, and returns the gap and required additional risk reduction (RRF / SIL).
  * </p>
  *
  * @author Even Solbraa
@@ -23,10 +22,10 @@ import neqsim.process.safety.risk.sis.SafetyInstrumentedFunction;
  */
 public final class LOPARunner {
 
-  private static final Gson GSON =
-      new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+  private static final Gson GSON = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
 
-  private LOPARunner() {}
+  private LOPARunner() {
+  }
 
   /**
    * Runs a LOPA calculation from a JSON definition.
@@ -40,8 +39,7 @@ public final class LOPARunner {
     }
     try {
       JsonObject input = JsonParser.parseString(json).getAsJsonObject();
-      String scenarioName =
-          input.has("scenario") ? input.get("scenario").getAsString() : "unnamed scenario";
+      String scenarioName = input.has("scenario") ? input.get("scenario").getAsString() : "unnamed scenario";
       double initiating = req(input, "initiatingEventFrequency_per_year");
       double target = req(input, "targetFrequency_per_year");
 
@@ -51,16 +49,16 @@ public final class LOPARunner {
 
       double current = initiating;
       if (input.has("layers")) {
-        JsonArray layers = input.getAsJsonArray("layers");
-        for (JsonElement el : layers) {
-          JsonObject layer = el.getAsJsonObject();
-          String name = layer.has("name") ? layer.get("name").getAsString() : "Layer " + (current);
-          double pfd = layer.get("pfd").getAsDouble();
-          double before = current;
-          double after = before * pfd;
-          lopa.addLayer(name, pfd, before, after);
-          current = after;
-        }
+	JsonArray layers = input.getAsJsonArray("layers");
+	for (JsonElement el : layers) {
+	  JsonObject layer = el.getAsJsonObject();
+	  String name = layer.has("name") ? layer.get("name").getAsString() : "Layer " + (current);
+	  double pfd = layer.get("pfd").getAsDouble();
+	  double before = current;
+	  double after = before * pfd;
+	  lopa.addLayer(name, pfd, before, after);
+	  current = after;
+	}
       }
       lopa.setMitigatedFrequency(current);
 
@@ -75,10 +73,10 @@ public final class LOPARunner {
       gap.addProperty("gapToTarget_per_year", round(lopa.getGapToTarget(), 12));
       gap.addProperty("totalRRF", round(lopa.getTotalRRF(), 2));
       if (!lopa.isTargetMet()) {
-        gap.addProperty("requiredAdditionalRRF", round(lopa.getRequiredAdditionalRRF(), 2));
-        gap.addProperty("requiredAdditionalSIL", lopa.getRequiredAdditionalSIL());
-        double requiredPfd = SafetyInstrumentedFunction.calculateRequiredPfd(current, target);
-        gap.addProperty("requiredAdditionalPFD", round(requiredPfd, 6));
+	gap.addProperty("requiredAdditionalRRF", round(lopa.getRequiredAdditionalRRF(), 2));
+	gap.addProperty("requiredAdditionalSIL", lopa.getRequiredAdditionalSIL());
+	double requiredPfd = SafetyInstrumentedFunction.calculateRequiredPfd(current, target);
+	gap.addProperty("requiredAdditionalPFD", round(requiredPfd, 6));
       }
       out.add("gapAnalysis", gap);
       return GSON.toJson(out);
@@ -104,7 +102,7 @@ public final class LOPARunner {
   /**
    * Rounds a value.
    *
-   * @param value value
+   * @param value    value
    * @param decimals decimals
    * @return rounded value
    */

@@ -22,14 +22,14 @@ import com.google.gson.GsonBuilder;
  * </ul>
  *
  * <p>
- * The model uses a lumped-parameter radial heat transfer approach treating the pipeline
- * cross-section as nested cylindrical shells (fluid, steel wall, insulation, external coating) with
- * an overall heat transfer coefficient (U-value).
+ * The model uses a lumped-parameter radial heat transfer approach treating the pipeline cross-section as nested
+ * cylindrical shells (fluid, steel wall, insulation, external coating) with an overall heat transfer coefficient
+ * (U-value).
  * </p>
  *
  * <p>
- * For subsea pipelines the external boundary is seawater (forced or natural convection). For buried
- * pipelines the external boundary is soil at a specified depth.
+ * For subsea pipelines the external boundary is seawater (forced or natural convection). For buried pipelines the
+ * external boundary is soil at a specified depth.
  * </p>
  *
  * <p>
@@ -149,7 +149,8 @@ public class PipelineCooldownCalculator implements Serializable {
   /**
    * Creates a new PipelineCooldownCalculator with default parameters.
    */
-  public PipelineCooldownCalculator() {}
+  public PipelineCooldownCalculator() {
+  }
 
   /**
    * Sets the internal diameter.
@@ -298,8 +299,8 @@ public class PipelineCooldownCalculator implements Serializable {
    * Runs the cooldown calculation using an explicit Euler time-marching scheme.
    *
    * <p>
-   * The lumped thermal model treats the fluid and steel wall as a combined thermal mass losing heat
-   * through the insulation and external boundary to the ambient. At each time step:
+   * The lumped thermal model treats the fluid and steel wall as a combined thermal mass losing heat through the
+   * insulation and external boundary to the ambient. At each time step:
    * </p>
    *
    * <pre>
@@ -334,7 +335,7 @@ public class PipelineCooldownCalculator implements Serializable {
       // Resistance from insulation
       double rIns_res = 0.0;
       if (insulationThickness > 0.001) {
-        rIns_res = Math.log(rIns / ro) / (2.0 * Math.PI * insulationConductivity);
+	rIns_res = Math.log(rIns / ro) / (2.0 * Math.PI * insulationConductivity);
       }
       // External convection resistance
       double rExt = 1.0 / (2.0 * Math.PI * rOuter * externalHTC);
@@ -381,15 +382,15 @@ public class PipelineCooldownCalculator implements Serializable {
     }
     for (int i = 0; i < fluidTemperature.length; i++) {
       if (fluidTemperature[i] <= targetTemperatureK) {
-        if (i == 0) {
-          return 0.0;
-        }
-        // Linear interpolation
-        double t1 = timeHours[i - 1];
-        double t2 = timeHours[i];
-        double T1 = fluidTemperature[i - 1];
-        double T2 = fluidTemperature[i];
-        return t1 + (t2 - t1) * (T1 - targetTemperatureK) / (T1 - T2);
+	if (i == 0) {
+	  return 0.0;
+	}
+	// Linear interpolation
+	double t1 = timeHours[i - 1];
+	double t2 = timeHours[i];
+	double T1 = fluidTemperature[i - 1];
+	double T2 = fluidTemperature[i];
+	return t1 + (t2 - t1) * (T1 - targetTemperatureK) / (T1 - T2);
       }
     }
     return -1.0; // Not reached
@@ -410,8 +411,8 @@ public class PipelineCooldownCalculator implements Serializable {
     }
     for (int i = 0; i < timeHours.length - 1; i++) {
       if (hours >= timeHours[i] && hours <= timeHours[i + 1]) {
-        double frac = (hours - timeHours[i]) / (timeHours[i + 1] - timeHours[i]);
-        return fluidTemperature[i] + frac * (fluidTemperature[i + 1] - fluidTemperature[i]);
+	double frac = (hours - timeHours[i]) / (timeHours[i + 1] - timeHours[i]);
+	return fluidTemperature[i] + frac * (fluidTemperature[i + 1] - fluidTemperature[i]);
       }
     }
     return fluidTemperature[fluidTemperature.length - 1];
@@ -421,8 +422,8 @@ public class PipelineCooldownCalculator implements Serializable {
    * Returns the analytical infinite-time asymptotic cooldown time constant (tau).
    *
    * <p>
-   * For a lumped system: tau = (m*Cp) / (U*A) in seconds. The fluid temperature follows T(t) =
-   * T_amb + (T_init - T_amb) * exp(-t/tau).
+   * For a lumped system: tau = (m*Cp) / (U*A) in seconds. The fluid temperature follows T(t) = T_amb + (T_init - T_amb)
+   * * exp(-t/tau).
    * </p>
    *
    * @return time constant in hours
@@ -438,9 +439,8 @@ public class PipelineCooldownCalculator implements Serializable {
       uPerLength = overallUValue * 2.0 * Math.PI * rOuter;
     } else {
       double rSteel = Math.log(ro / ri) / (2.0 * Math.PI * steelConductivity);
-      double rInsRes = insulationThickness > 0.001
-          ? Math.log(rIns / ro) / (2.0 * Math.PI * insulationConductivity)
-          : 0.0;
+      double rInsRes = insulationThickness > 0.001 ? Math.log(rIns / ro) / (2.0 * Math.PI * insulationConductivity)
+	  : 0.0;
       double rExt = 1.0 / (2.0 * Math.PI * rOuter * externalHTC);
       uPerLength = 1.0 / (rSteel + rInsRes + rExt);
     }
@@ -448,9 +448,8 @@ public class PipelineCooldownCalculator implements Serializable {
     double areaFluid = Math.PI * ri * ri;
     double areaSteel = Math.PI * (ro * ro - ri * ri);
     double areaIns = Math.PI * (rIns * rIns - ro * ro);
-    double totalMassCp =
-        fluidDensity * areaFluid * fluidSpecificHeat + steelDensity * areaSteel * steelSpecificHeat
-            + insulationDensity * areaIns * insulationSpecificHeat;
+    double totalMassCp = fluidDensity * areaFluid * fluidSpecificHeat + steelDensity * areaSteel * steelSpecificHeat
+	+ insulationDensity * areaIns * insulationSpecificHeat;
 
     double tauSeconds = totalMassCp / uPerLength;
     return tauSeconds / 3600.0;
@@ -492,9 +491,7 @@ public class PipelineCooldownCalculator implements Serializable {
     double rOuter = rIns + coatingThickness;
 
     double rSteel = Math.log(ro / ri) / (2.0 * Math.PI * steelConductivity);
-    double rInsRes =
-        insulationThickness > 0.001 ? Math.log(rIns / ro) / (2.0 * Math.PI * insulationConductivity)
-            : 0.0;
+    double rInsRes = insulationThickness > 0.001 ? Math.log(rIns / ro) / (2.0 * Math.PI * insulationConductivity) : 0.0;
     double rExt = 1.0 / (2.0 * Math.PI * rOuter * externalHTC);
     double uPerLength = 1.0 / (rSteel + rInsRes + rExt);
     return uPerLength / (2.0 * Math.PI * rOuter);
@@ -530,8 +527,7 @@ public class PipelineCooldownCalculator implements Serializable {
     }
     result.put("cooldownProfile", profile);
 
-    Gson gson =
-        new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().create();
+    Gson gson = new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().create();
     return gson.toJson(result);
   }
 }

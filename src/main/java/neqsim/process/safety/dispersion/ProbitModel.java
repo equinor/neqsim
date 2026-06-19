@@ -6,8 +6,8 @@ import java.io.Serializable;
  * Probit (probability unit) consequence model for fatality / injury fraction from a hazard dose.
  *
  * <p>
- * Computes Y = a + b · ln(D), then converts the probit Y to a fatality fraction via the standard
- * normal CDF: P = 0.5 · (1 + erf((Y − 5) / √2)). The dose D depends on the hazard:
+ * Computes Y = a + b · ln(D), then converts the probit Y to a fatality fraction via the standard normal CDF: P = 0.5 ·
+ * (1 + erf((Y − 5) / √2)). The dose D depends on the hazard:
  * <ul>
  * <li><b>Toxic:</b> D = ∫ C^n dt with C in ppm, t in min (varies by chemical)</li>
  * <li><b>Thermal:</b> D = ∫ I^(4/3) dt with I in W/m², t in s</li>
@@ -28,8 +28,8 @@ public class ProbitModel implements Serializable {
   private final double n;
 
   /**
-   * Construct a probit model with constants Y = a + b · ln(D^n) ≡ a + b·n·ln(D).
-   * Many sources publish (a, b) with n already absorbed; in that case set n = 1.
+   * Construct a probit model with constants Y = a + b · ln(D^n) ≡ a + b·n·ln(D). Many sources publish (a, b) with n
+   * already absorbed; in that case set n = 1.
    *
    * @param a probit intercept
    * @param b probit slope
@@ -82,8 +82,8 @@ public class ProbitModel implements Serializable {
     double sign = x < 0.0 ? -1.0 : 1.0;
     x = Math.abs(x);
     double t = 1.0 / (1.0 + 0.3275911 * x);
-    double y = 1.0 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t
-        - 0.284496736) * t + 0.254829592) * t * Math.exp(-x * x);
+    double y = 1.0 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t
+	* Math.exp(-x * x);
     return sign * y;
   }
 
@@ -92,8 +92,7 @@ public class ProbitModel implements Serializable {
   // ------------------------------------------------------------------
 
   /**
-   * Toxic-fatality probit for H₂S (TNO Green Book): Y = -31.42 + 3.008·ln(C^1.43·t),
-   * C in ppm, t in min.
+   * Toxic-fatality probit for H₂S (TNO Green Book): Y = -31.42 + 3.008·ln(C^1.43·t), C in ppm, t in min.
    *
    * @return ProbitModel for H₂S fatality
    */
@@ -102,8 +101,7 @@ public class ProbitModel implements Serializable {
   }
 
   /**
-   * Toxic-fatality probit for chlorine (Eisenberg): Y = -17.10 + 1.69·ln(C^2.75·t),
-   * C in ppm, t in min.
+   * Toxic-fatality probit for chlorine (Eisenberg): Y = -17.10 + 1.69·ln(C^2.75·t), C in ppm, t in min.
    *
    * @return ProbitModel for chlorine fatality
    */
@@ -121,8 +119,8 @@ public class ProbitModel implements Serializable {
   }
 
   /**
-   * Thermal radiation fatality probit for unprotected skin (Eisenberg):
-   * Y = -14.9 + 2.56·ln(t·I^(4/3)/10⁴), t in s, I in W/m².
+   * Thermal radiation fatality probit for unprotected skin (Eisenberg): Y = -14.9 + 2.56·ln(t·I^(4/3)/10⁴), t in s, I
+   * in W/m².
    *
    * @return ProbitModel for thermal radiation fatality
    */
@@ -132,8 +130,7 @@ public class ProbitModel implements Serializable {
   }
 
   /**
-   * Lung-haemorrhage fatality probit for blast overpressure (Eisenberg):
-   * Y = -77.1 + 6.91·ln(ΔP), ΔP in Pa.
+   * Lung-haemorrhage fatality probit for blast overpressure (Eisenberg): Y = -77.1 + 6.91·ln(ΔP), ΔP in Pa.
    *
    * @return ProbitModel for blast lung damage fatality
    */

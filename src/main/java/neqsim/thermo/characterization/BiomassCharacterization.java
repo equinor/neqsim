@@ -10,17 +10,16 @@ import java.util.Map;
  * Characterizes biomass feedstocks for use in NeqSim thermochemical process simulations.
  *
  * <p>
- * Converts proximate and ultimate analysis data into derived properties needed by gasifiers,
- * pyrolysis reactors, and combustion models. Provides higher/lower heating values, stoichiometric
- * air requirements, and a chemical formula representation.
+ * Converts proximate and ultimate analysis data into derived properties needed by gasifiers, pyrolysis reactors, and
+ * combustion models. Provides higher/lower heating values, stoichiometric air requirements, and a chemical formula
+ * representation.
  * </p>
  *
  * <p>
  * Supports two input modes:
  * </p>
  * <ul>
- * <li><b>Proximate analysis</b> (dry basis): moisture, volatile matter, fixed carbon, ash — all in
- * mass-percent.</li>
+ * <li><b>Proximate analysis</b> (dry basis): moisture, volatile matter, fixed carbon, ash — all in mass-percent.</li>
  * <li><b>Ultimate analysis</b> (dry-ash-free basis): C, H, O, N, S, Cl — all in mass-percent.</li>
  * </ul>
  *
@@ -115,13 +114,13 @@ public class BiomassCharacterization implements Serializable {
   /**
    * Sets the proximate analysis on a dry basis.
    *
-   * @param moisturePercent moisture content (wt%, as-received)
+   * @param moisturePercent       moisture content (wt%, as-received)
    * @param volatileMatterPercent volatile matter (wt%, dry basis)
-   * @param fixedCarbonPercent fixed carbon (wt%, dry basis)
-   * @param ashPercent ash content (wt%, dry basis)
+   * @param fixedCarbonPercent    fixed carbon (wt%, dry basis)
+   * @param ashPercent            ash content (wt%, dry basis)
    */
-  public void setProximateAnalysis(double moisturePercent, double volatileMatterPercent,
-      double fixedCarbonPercent, double ashPercent) {
+  public void setProximateAnalysis(double moisturePercent, double volatileMatterPercent, double fixedCarbonPercent,
+      double ashPercent) {
     this.moisture = moisturePercent;
     this.volatileMatter = volatileMatterPercent;
     this.fixedCarbon = fixedCarbonPercent;
@@ -132,15 +131,15 @@ public class BiomassCharacterization implements Serializable {
   /**
    * Sets the ultimate analysis on a dry-ash-free basis.
    *
-   * @param carbonPercent carbon (wt%, daf)
+   * @param carbonPercent   carbon (wt%, daf)
    * @param hydrogenPercent hydrogen (wt%, daf)
-   * @param oxygenPercent oxygen (wt%, daf)
+   * @param oxygenPercent   oxygen (wt%, daf)
    * @param nitrogenPercent nitrogen (wt%, daf)
-   * @param sulfurPercent sulfur (wt%, daf)
+   * @param sulfurPercent   sulfur (wt%, daf)
    * @param chlorinePercent chlorine (wt%, daf)
    */
-  public void setUltimateAnalysis(double carbonPercent, double hydrogenPercent,
-      double oxygenPercent, double nitrogenPercent, double sulfurPercent, double chlorinePercent) {
+  public void setUltimateAnalysis(double carbonPercent, double hydrogenPercent, double oxygenPercent,
+      double nitrogenPercent, double sulfurPercent, double chlorinePercent) {
     this.carbonWt = carbonPercent;
     this.hydrogenWt = hydrogenPercent;
     this.oxygenWt = oxygenPercent;
@@ -172,8 +171,8 @@ public class BiomassCharacterization implements Serializable {
    */
   private void calculateHHV() {
     double ashDaf = ash / (100.0 - moisture) * 100.0;
-    hhv = 0.3491 * carbonWt + 1.1783 * hydrogenWt + 0.1005 * sulfurWt - 0.1034 * oxygenWt
-        - 0.0151 * nitrogenWt - 0.0211 * ashDaf;
+    hhv = 0.3491 * carbonWt + 1.1783 * hydrogenWt + 0.1005 * sulfurWt - 0.1034 * oxygenWt - 0.0151 * nitrogenWt
+	- 0.0211 * ashDaf;
   }
 
   /**
@@ -227,14 +226,14 @@ public class BiomassCharacterization implements Serializable {
    * Calculates the stoichiometric air requirement (kg air per kg fuel, dry basis).
    *
    * <p>
-   * Based on the stoichiometry: C + O2 -&gt; CO2, H2 + 0.5 O2 -&gt; H2O, S + O2 -&gt; SO2, less
-   * oxygen already present in biomass, divided by oxygen mass fraction in air (0.233).
+   * Based on the stoichiometry: C + O2 -&gt; CO2, H2 + 0.5 O2 -&gt; H2O, S + O2 -&gt; SO2, less oxygen already present
+   * in biomass, divided by oxygen mass fraction in air (0.233).
    * </p>
    */
   private void calculateStoichiometricAir() {
     double factor = (100.0 - moisture) * (100.0 - ash) / 10000.0;
     double o2Required = ((carbonWt / MW_C) * MW_O * 2.0 + (hydrogenWt / MW_H / 2.0) * MW_O * 2.0
-        + (sulfurWt / MW_S) * MW_O * 2.0 - oxygenWt) / 100.0;
+	+ (sulfurWt / MW_S) * MW_O * 2.0 - oxygenWt) / 100.0;
     o2Required = o2Required * factor;
     stoichiometricAir = Math.max(0.0, o2Required / 0.233);
   }
@@ -503,42 +502,41 @@ public class BiomassCharacterization implements Serializable {
     String key = feedstockName.trim().toLowerCase().replace(' ', '_').replace('-', '_');
     BiomassCharacterization bc = new BiomassCharacterization(feedstockName);
     switch (key) {
-      case "wood_chips":
-        bc.setProximateAnalysis(25.0, 82.0, 17.0, 1.0);
-        bc.setUltimateAnalysis(51.0, 6.1, 42.0, 0.3, 0.05, 0.01);
-        break;
-      case "straw":
-        bc.setProximateAnalysis(10.0, 78.0, 16.0, 6.0);
-        bc.setUltimateAnalysis(47.0, 5.8, 41.0, 0.8, 0.15, 0.3);
-        break;
-      case "corn_stover":
-        bc.setProximateAnalysis(7.0, 80.0, 15.0, 5.0);
-        bc.setUltimateAnalysis(47.5, 5.9, 40.5, 0.7, 0.1, 0.1);
-        break;
-      case "bagasse":
-        bc.setProximateAnalysis(50.0, 84.0, 14.0, 2.0);
-        bc.setUltimateAnalysis(48.6, 5.9, 44.5, 0.3, 0.05, 0.02);
-        break;
-      case "sewage_sludge":
-        bc.setProximateAnalysis(5.0, 52.0, 8.0, 40.0);
-        bc.setUltimateAnalysis(51.5, 7.3, 30.5, 7.5, 1.5, 0.1);
-        break;
-      case "msw":
-        bc.setProximateAnalysis(20.0, 70.0, 10.0, 20.0);
-        bc.setUltimateAnalysis(48.0, 6.0, 38.0, 1.2, 0.3, 0.5);
-        break;
-      case "microalgae":
-        bc.setProximateAnalysis(5.0, 75.0, 15.0, 10.0);
-        bc.setUltimateAnalysis(50.0, 7.0, 30.0, 8.0, 0.8, 0.0);
-        break;
-      case "rice_husk":
-        bc.setProximateAnalysis(8.0, 65.0, 16.0, 19.0);
-        bc.setUltimateAnalysis(49.0, 6.1, 43.5, 0.5, 0.05, 0.05);
-        break;
-      default:
-        throw new IllegalArgumentException("Unknown biomass feedstock: '" + feedstockName
-            + "'. Supported: wood_chips, straw, corn_stover, bagasse, sewage_sludge, msw, "
-            + "microalgae, rice_husk");
+    case "wood_chips":
+      bc.setProximateAnalysis(25.0, 82.0, 17.0, 1.0);
+      bc.setUltimateAnalysis(51.0, 6.1, 42.0, 0.3, 0.05, 0.01);
+      break;
+    case "straw":
+      bc.setProximateAnalysis(10.0, 78.0, 16.0, 6.0);
+      bc.setUltimateAnalysis(47.0, 5.8, 41.0, 0.8, 0.15, 0.3);
+      break;
+    case "corn_stover":
+      bc.setProximateAnalysis(7.0, 80.0, 15.0, 5.0);
+      bc.setUltimateAnalysis(47.5, 5.9, 40.5, 0.7, 0.1, 0.1);
+      break;
+    case "bagasse":
+      bc.setProximateAnalysis(50.0, 84.0, 14.0, 2.0);
+      bc.setUltimateAnalysis(48.6, 5.9, 44.5, 0.3, 0.05, 0.02);
+      break;
+    case "sewage_sludge":
+      bc.setProximateAnalysis(5.0, 52.0, 8.0, 40.0);
+      bc.setUltimateAnalysis(51.5, 7.3, 30.5, 7.5, 1.5, 0.1);
+      break;
+    case "msw":
+      bc.setProximateAnalysis(20.0, 70.0, 10.0, 20.0);
+      bc.setUltimateAnalysis(48.0, 6.0, 38.0, 1.2, 0.3, 0.5);
+      break;
+    case "microalgae":
+      bc.setProximateAnalysis(5.0, 75.0, 15.0, 10.0);
+      bc.setUltimateAnalysis(50.0, 7.0, 30.0, 8.0, 0.8, 0.0);
+      break;
+    case "rice_husk":
+      bc.setProximateAnalysis(8.0, 65.0, 16.0, 19.0);
+      bc.setUltimateAnalysis(49.0, 6.1, 43.5, 0.5, 0.05, 0.05);
+      break;
+    default:
+      throw new IllegalArgumentException("Unknown biomass feedstock: '" + feedstockName
+	  + "'. Supported: wood_chips, straw, corn_stover, bagasse, sewage_sludge, msw, " + "microalgae, rice_husk");
     }
     bc.calculate();
     return bc;
@@ -550,7 +548,7 @@ public class BiomassCharacterization implements Serializable {
    * @return list of feedstock names
    */
   public static java.util.List<String> getLibraryFeedstocks() {
-    return Collections.unmodifiableList(Arrays.asList("wood_chips", "straw", "corn_stover",
-        "bagasse", "sewage_sludge", "msw", "microalgae", "rice_husk"));
+    return Collections.unmodifiableList(Arrays.asList("wood_chips", "straw", "corn_stover", "bagasse", "sewage_sludge",
+	"msw", "microalgae", "rice_husk"));
   }
 }

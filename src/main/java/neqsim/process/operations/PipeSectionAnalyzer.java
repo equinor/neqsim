@@ -21,16 +21,14 @@ import neqsim.thermo.system.SystemSrkEos;
  * Analyzes pipe sections that may not be part of the main process model.
  *
  * <p>
- * Given a fluid definition and a list of pipe sections (diameter, length, roughness, operating
- * conditions), this analyzer creates a temporary {@link PipeBeggsAndBrills} for each section, runs
- * the hydraulic calculation, and returns velocity, pressure drop, flow regime, and utilization
- * against a maximum design velocity.
+ * Given a fluid definition and a list of pipe sections (diameter, length, roughness, operating conditions), this
+ * analyzer creates a temporary {@link PipeBeggsAndBrills} for each section, runs the hydraulic calculation, and returns
+ * velocity, pressure drop, flow regime, and utilization against a maximum design velocity.
  * </p>
  *
  * <p>
- * This enables velocity and utilization analysis for pipe sections defined on P&amp;IDs that are
- * not modeled in the main {@link ProcessSystem}. Operating conditions can be supplied directly or
- * overridden from tagreader field data.
+ * This enables velocity and utilization analysis for pipe sections defined on P&amp;IDs that are not modeled in the
+ * main {@link ProcessSystem}. Operating conditions can be supplied directly or overridden from tagreader field data.
  * </p>
  *
  * @author ESOL
@@ -39,8 +37,7 @@ import neqsim.thermo.system.SystemSrkEos;
 public final class PipeSectionAnalyzer {
 
   /** JSON serializer. */
-  private static final Gson GSON =
-      new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+  private static final Gson GSON = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
 
   /** Default maximum design velocity in m/s (API RP 14E erosional). */
   private static final double DEFAULT_MAX_DESIGN_VELOCITY = 20.0;
@@ -54,7 +51,8 @@ public final class PipeSectionAnalyzer {
   /**
    * Private constructor for utility class.
    */
-  private PipeSectionAnalyzer() {}
+  private PipeSectionAnalyzer() {
+  }
 
   /**
    * Analyzes pipe sections from a JSON specification.
@@ -84,9 +82,9 @@ public final class PipeSectionAnalyzer {
    * </ul>
    *
    * <p>
-   * Operating conditions in individual sections override the top-level fluid conditions. Field data
-   * from {@code fieldData} can further override section values when tag bindings with matching
-   * {@code pipeSectionName} are provided.
+   * Operating conditions in individual sections override the top-level fluid conditions. Field data from
+   * {@code fieldData} can further override section values when tag bindings with matching {@code pipeSectionName} are
+   * provided.
    * </p>
    *
    * @param json JSON specification with fluid and pipe sections
@@ -95,7 +93,7 @@ public final class PipeSectionAnalyzer {
   public static String run(String json) {
     if (json == null || json.trim().isEmpty()) {
       return errorJson("INPUT_ERROR", "JSON input is null or empty",
-          "Provide a JSON object with 'pipeSections' array and fluid definition.");
+	  "Provide a JSON object with 'pipeSections' array and fluid definition.");
     }
 
     JsonObject input;
@@ -103,14 +101,14 @@ public final class PipeSectionAnalyzer {
       input = JsonParser.parseString(json).getAsJsonObject();
     } catch (RuntimeException ex) {
       return errorJson("JSON_PARSE_ERROR", "Failed to parse JSON: " + ex.getMessage(),
-          "Ensure the pipe-section analysis input is valid JSON.");
+	  "Ensure the pipe-section analysis input is valid JSON.");
     }
 
     try {
       return GSON.toJson(analyze(input));
     } catch (RuntimeException ex) {
       return errorJson("ANALYSIS_ERROR", "Pipe section analysis failed: " + ex.getMessage(),
-          "Check fluid definition, pipe section geometry, and operating conditions.");
+	  "Check fluid definition, pipe section geometry, and operating conditions.");
     }
   }
 
@@ -124,7 +122,7 @@ public final class PipeSectionAnalyzer {
     JsonArray pipeSections = getSections(input);
     if (pipeSections == null || pipeSections.size() == 0) {
       throw new IllegalArgumentException("No 'pipeSections' array found or it is empty. "
-          + "Provide at least one pipe section with geometry and flow conditions.");
+	  + "Provide at least one pipe section with geometry and flow conditions.");
     }
 
     FluidSpec fluidSpec = readFluidSpec(input);
@@ -139,8 +137,7 @@ public final class PipeSectionAnalyzer {
 
     for (int i = 0; i < pipeSections.size(); i++) {
       JsonObject section = pipeSections.get(i).getAsJsonObject();
-      String sectionName =
-          getString(section, "name", getString(section, "lineTag", "Section-" + (i + 1)));
+      String sectionName = getString(section, "name", getString(section, "lineTag", "Section-" + (i + 1)));
 
       applyFieldDataOverrides(section, sectionName, fieldData, sectionBindings);
 
@@ -149,13 +146,13 @@ public final class PipeSectionAnalyzer {
 
       double utilization = sectionResult.get("velocityUtilization").getAsDouble();
       if (utilization > maxUtilization) {
-        maxUtilization = utilization;
-        maxUtilizationSection = sectionName;
+	maxUtilization = utilization;
+	maxUtilizationSection = sectionName;
       }
       if (utilization > 1.0) {
-        overDesignCount++;
+	overDesignCount++;
       } else if (utilization > 0.9) {
-        nearLimitCount++;
+	nearLimitCount++;
       }
     }
 
@@ -180,21 +177,18 @@ public final class PipeSectionAnalyzer {
    * Analyzes a single pipe section.
    *
    * @param sectionName identifier for the section
-   * @param section JSON section definition
-   * @param fluidSpec top-level fluid specification
+   * @param section     JSON section definition
+   * @param fluidSpec   top-level fluid specification
    * @return JSON result for the section
    */
-  private static JsonObject analyzeOneSection(String sectionName, JsonObject section,
-      FluidSpec fluidSpec) {
+  private static JsonObject analyzeOneSection(String sectionName, JsonObject section, FluidSpec fluidSpec) {
     double temperatureC = getDouble(section, "inletTemperature_C", fluidSpec.temperatureC);
     double pressureBara = getDouble(section, "inletPressure_bara", fluidSpec.pressureBara);
-    double diameter =
-        getDouble(section, "innerDiameter_m", getDouble(section, "diameter_m", 0.254));
+    double diameter = getDouble(section, "innerDiameter_m", getDouble(section, "diameter_m", 0.254));
     double length = getDouble(section, "length_m", 100.0);
     double roughness = getDouble(section, "roughness_m", DEFAULT_ROUGHNESS_M);
     double elevation = getDouble(section, "elevation_m", 0.0);
-    double maxDesignVelocity =
-        getDouble(section, "maxDesignVelocity_m_s", DEFAULT_MAX_DESIGN_VELOCITY);
+    double maxDesignVelocity = getDouble(section, "maxDesignVelocity_m_s", DEFAULT_MAX_DESIGN_VELOCITY);
     int increments = getInt(section, "numberOfIncrements", DEFAULT_INCREMENTS);
 
     SystemInterface fluid = createFluid(fluidSpec, section, temperatureC, pressureBara);
@@ -258,14 +252,14 @@ public final class PipeSectionAnalyzer {
   /**
    * Creates a fluid for one pipe section, potentially with section-level component overrides.
    *
-   * @param fluidSpec top-level fluid specification
-   * @param section section JSON with optional component overrides
+   * @param fluidSpec    top-level fluid specification
+   * @param section      section JSON with optional component overrides
    * @param temperatureC temperature in Celsius
    * @param pressureBara pressure in bara
    * @return configured fluid
    */
-  private static SystemInterface createFluid(FluidSpec fluidSpec, JsonObject section,
-      double temperatureC, double pressureBara) {
+  private static SystemInterface createFluid(FluidSpec fluidSpec, JsonObject section, double temperatureC,
+      double pressureBara) {
     String model = getString(section, "model", fluidSpec.model);
     SystemInterface fluid;
     if ("PR".equalsIgnoreCase(model)) {
@@ -274,11 +268,10 @@ public final class PipeSectionAnalyzer {
       fluid = new SystemSrkEos(273.15 + temperatureC, pressureBara);
     }
 
-    JsonObject components =
-        section.has("components") ? section.getAsJsonObject("components") : fluidSpec.components;
+    JsonObject components = section.has("components") ? section.getAsJsonObject("components") : fluidSpec.components;
     if (components != null) {
       for (Map.Entry<String, JsonElement> entry : components.entrySet()) {
-        fluid.addComponent(entry.getKey(), entry.getValue().getAsDouble());
+	fluid.addComponent(entry.getKey(), entry.getValue().getAsDouble());
       }
     }
     fluid.setMixingRule("classic");
@@ -289,8 +282,8 @@ public final class PipeSectionAnalyzer {
   /**
    * Applies flow rate to a stream from section or top-level spec.
    *
-   * @param feed stream to configure
-   * @param section section JSON
+   * @param feed      stream to configure
+   * @param section   section JSON
    * @param fluidSpec top-level fluid spec with default flow rate
    */
   private static void applyFlowRate(Stream feed, JsonObject section, FluidSpec fluidSpec) {
@@ -315,29 +308,29 @@ public final class PipeSectionAnalyzer {
    * {@code flowRate_kg_hr}, {@code inletPressure_bara}, or {@code inletTemperature_C}.
    * </p>
    *
-   * @param section section JSON to update
-   * @param sectionName name of the current section
-   * @param fieldData field data map from tagreader
+   * @param section         section JSON to update
+   * @param sectionName     name of the current section
+   * @param fieldData       field data map from tagreader
    * @param sectionBindings list of section binding objects
    */
-  private static void applyFieldDataOverrides(JsonObject section, String sectionName,
-      Map<String, Double> fieldData, List<JsonObject> sectionBindings) {
+  private static void applyFieldDataOverrides(JsonObject section, String sectionName, Map<String, Double> fieldData,
+      List<JsonObject> sectionBindings) {
     if (fieldData == null || fieldData.isEmpty() || sectionBindings == null) {
       return;
     }
     for (JsonObject binding : sectionBindings) {
       String boundSection = getString(binding, "pipeSectionName", "");
       if (!sectionName.equals(boundSection)) {
-        continue;
+	continue;
       }
       String logicalTag = getString(binding, "logicalTag", "");
       String property = getString(binding, "property", "");
       if (logicalTag.isEmpty() || property.isEmpty()) {
-        continue;
+	continue;
       }
       Double value = fieldData.get(logicalTag);
       if (value == null) {
-        continue;
+	continue;
       }
       section.addProperty(property, value);
     }
@@ -369,10 +362,8 @@ public final class PipeSectionAnalyzer {
   private static FluidSpec readFluidSpec(JsonObject input) {
     FluidSpec spec = new FluidSpec();
     spec.model = getString(input, "model", "SRK").toUpperCase(Locale.ROOT);
-    spec.temperatureC =
-        getDouble(input, "temperature_C", getDouble(input, "inletTemperature_C", 25.0));
-    spec.pressureBara =
-        getDouble(input, "pressure_bara", getDouble(input, "inletPressure_bara", 50.0));
+    spec.temperatureC = getDouble(input, "temperature_C", getDouble(input, "inletTemperature_C", 25.0));
+    spec.pressureBara = getDouble(input, "pressure_bara", getDouble(input, "inletPressure_bara", 50.0));
 
     if (input.has("fluid") && input.get("fluid").isJsonObject()) {
       JsonObject fluid = input.getAsJsonObject("fluid");
@@ -380,11 +371,10 @@ public final class PipeSectionAnalyzer {
       spec.temperatureC = getDouble(fluid, "temperature_C", spec.temperatureC);
       spec.pressureBara = getDouble(fluid, "pressure_bara", spec.pressureBara);
       if (fluid.has("components") && fluid.get("components").isJsonObject()) {
-        spec.components = fluid.getAsJsonObject("components");
+	spec.components = fluid.getAsJsonObject("components");
       }
     }
-    if (spec.components == null && input.has("components")
-        && input.get("components").isJsonObject()) {
+    if (spec.components == null && input.has("components") && input.get("components").isJsonObject()) {
       spec.components = input.getAsJsonObject("components");
     }
 
@@ -407,10 +397,9 @@ public final class PipeSectionAnalyzer {
     if (input.has("fieldData") && input.get("fieldData").isJsonObject()) {
       JsonObject fd = input.getAsJsonObject("fieldData");
       for (Map.Entry<String, JsonElement> entry : fd.entrySet()) {
-        if (entry.getValue().isJsonPrimitive()
-            && entry.getValue().getAsJsonPrimitive().isNumber()) {
-          data.put(entry.getKey(), entry.getValue().getAsDouble());
-        }
+	if (entry.getValue().isJsonPrimitive() && entry.getValue().getAsJsonPrimitive().isNumber()) {
+	  data.put(entry.getKey(), entry.getValue().getAsDouble());
+	}
       }
     }
     return data;
@@ -426,9 +415,9 @@ public final class PipeSectionAnalyzer {
     List<JsonObject> bindings = new ArrayList<JsonObject>();
     if (input.has("sectionTagBindings") && input.get("sectionTagBindings").isJsonArray()) {
       for (JsonElement el : input.getAsJsonArray("sectionTagBindings")) {
-        if (el.isJsonObject()) {
-          bindings.add(el.getAsJsonObject());
-        }
+	if (el.isJsonObject()) {
+	  bindings.add(el.getAsJsonObject());
+	}
       }
     }
     return bindings;
@@ -468,8 +457,8 @@ public final class PipeSectionAnalyzer {
   /**
    * Gets a string from a JSON object with a default.
    *
-   * @param obj JSON object
-   * @param key property name
+   * @param obj          JSON object
+   * @param key          property name
    * @param defaultValue fallback value
    * @return string value or default
    */
@@ -483,17 +472,17 @@ public final class PipeSectionAnalyzer {
   /**
    * Gets a double from a JSON object with a default.
    *
-   * @param obj JSON object
-   * @param key property name
+   * @param obj          JSON object
+   * @param key          property name
    * @param defaultValue fallback value
    * @return double value or default
    */
   private static double getDouble(JsonObject obj, String key, double defaultValue) {
     if (obj != null && obj.has(key) && obj.get(key).isJsonPrimitive()) {
       try {
-        return obj.get(key).getAsDouble();
+	return obj.get(key).getAsDouble();
       } catch (NumberFormatException e) {
-        return defaultValue;
+	return defaultValue;
       }
     }
     return defaultValue;
@@ -502,17 +491,17 @@ public final class PipeSectionAnalyzer {
   /**
    * Gets an int from a JSON object with a default.
    *
-   * @param obj JSON object
-   * @param key property name
+   * @param obj          JSON object
+   * @param key          property name
    * @param defaultValue fallback value
    * @return int value or default
    */
   private static int getInt(JsonObject obj, String key, int defaultValue) {
     if (obj != null && obj.has(key) && obj.get(key).isJsonPrimitive()) {
       try {
-        return obj.get(key).getAsInt();
+	return obj.get(key).getAsInt();
       } catch (NumberFormatException e) {
-        return defaultValue;
+	return defaultValue;
       }
     }
     return defaultValue;
@@ -521,8 +510,8 @@ public final class PipeSectionAnalyzer {
   /**
    * Creates an error JSON response.
    *
-   * @param code error code
-   * @param message error message
+   * @param code        error code
+   * @param message     error message
    * @param remediation fix suggestion
    * @return JSON string with error details
    */

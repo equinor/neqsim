@@ -24,7 +24,7 @@ public enum ParameterTransform implements Serializable {
   /**
    * Converts a physical parameter value to the optimizer parameter value.
    *
-   * @param value physical parameter value
+   * @param value      physical parameter value
    * @param lowerBound physical lower bound
    * @param upperBound physical upper bound
    * @return transformed optimizer value
@@ -36,19 +36,18 @@ public enum ParameterTransform implements Serializable {
       return value;
     } else if (this == LOG) {
       if (value <= 0.0) {
-        throw new IllegalArgumentException("LOG transform requires a positive value");
+	throw new IllegalArgumentException("LOG transform requires a positive value");
       }
       return Math.log(value);
     } else if (this == LOG10) {
       if (value <= 0.0) {
-        throw new IllegalArgumentException("LOG10 transform requires a positive value");
+	throw new IllegalArgumentException("LOG10 transform requires a positive value");
       }
       return Math.log10(value);
     }
     validateLogisticBounds(lowerBound, upperBound);
     if (value <= lowerBound || value >= upperBound) {
-      throw new IllegalArgumentException(
-          "LOGISTIC transform requires lowerBound < value < upperBound");
+      throw new IllegalArgumentException("LOGISTIC transform requires lowerBound < value < upperBound");
     }
     double scaled = (value - lowerBound) / (upperBound - value);
     return Math.log(scaled);
@@ -57,7 +56,7 @@ public enum ParameterTransform implements Serializable {
   /**
    * Converts an optimizer parameter value to the physical parameter value.
    *
-   * @param value optimizer parameter value
+   * @param value      optimizer parameter value
    * @param lowerBound physical lower bound
    * @param upperBound physical upper bound
    * @return physical parameter value
@@ -96,15 +95,15 @@ public enum ParameterTransform implements Serializable {
       return null;
     }
     if (this == LINEAR) {
-      return new double[] {lowerBound, upperBound};
+      return new double[] { lowerBound, upperBound };
     }
     if (lowerBound <= 0.0 || upperBound <= 0.0) {
       throw new IllegalArgumentException("Log transforms require positive bounds");
     }
     if (this == LOG) {
-      return new double[] {Math.log(lowerBound), Math.log(upperBound)};
+      return new double[] { Math.log(lowerBound), Math.log(upperBound) };
     }
-    return new double[] {Math.log10(lowerBound), Math.log10(upperBound)};
+    return new double[] { Math.log10(lowerBound), Math.log10(upperBound) };
   }
 
   /**
@@ -119,7 +118,7 @@ public enum ParameterTransform implements Serializable {
   /**
    * Validates that a value is finite.
    *
-   * @param name value name used in the exception message
+   * @param name  value name used in the exception message
    * @param value value to validate
    * @throws IllegalArgumentException if value is NaN or infinite
    */

@@ -6,13 +6,12 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * Implementation of AGA Report No. 3 (API 14.3 / ISO 5167) - Orifice Metering of Natural Gas and
- * Other Related Hydrocarbon Fluids.
+ * Implementation of AGA Report No. 3 (API 14.3 / ISO 5167) - Orifice Metering of Natural Gas and Other Related
+ * Hydrocarbon Fluids.
  *
  * <p>
- * AGA 3 (also published as API MPMS Chapter 14.3) specifies the measurement of natural gas flow
- * rate using orifice meters. It is the primary custody transfer metering standard in North America.
- * The standard consists of four parts:
+ * AGA 3 (also published as API MPMS Chapter 14.3) specifies the measurement of natural gas flow rate using orifice
+ * meters. It is the primary custody transfer metering standard in North America. The standard consists of four parts:
  * </p>
  * <ul>
  * <li>Part 1: General equations and uncertainty guidelines</li>
@@ -98,15 +97,14 @@ public class Standard_AGA3 extends neqsim.standards.Standard {
    * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
    */
   public Standard_AGA3(SystemInterface thermoSystem) {
-    super("Standard_AGA3", "Orifice Metering of Natural Gas (AGA 3 / API 14.3 / ISO 5167)",
-        thermoSystem);
+    super("Standard_AGA3", "Orifice Metering of Natural Gas (AGA 3 / API 14.3 / ISO 5167)", thermoSystem);
   }
 
   /**
    * Sets the orifice geometry.
    *
    * @param orificeDiameterM orifice bore diameter in meters
-   * @param pipeDiameterM pipe internal diameter in meters
+   * @param pipeDiameterM    pipe internal diameter in meters
    */
   public void setOrificeDimensions(double orificeDiameterM, double pipeDiameterM) {
     this.orificeDiameter = orificeDiameterM;
@@ -185,8 +183,7 @@ public class Standard_AGA3 extends neqsim.standards.Standard {
       dischargeCoefficient = calculateDischargeCoefficient(betaRatio, reynoldsNumber);
 
       // Step 2: Expansion factor Y (AGA 3, ISO 5167)
-      expansionFactor = calculateExpansionFactor(betaRatio, differentialPressure, staticPressure,
-          isentropicExponent);
+      expansionFactor = calculateExpansionFactor(betaRatio, differentialPressure, staticPressure, isentropicExponent);
 
       // Step 3: Velocity of approach factor Ev
       velocityOfApproachFactor = 1.0 / Math.sqrt(1.0 - Math.pow(betaRatio, 4));
@@ -195,21 +192,21 @@ public class Standard_AGA3 extends neqsim.standards.Standard {
       // qm = Cd * Ev * Y * (pi/4) * d^2 * sqrt(2 * rho * dP)
       double areaOrifice = (Math.PI / 4.0) * orificeDiameter * orificeDiameter;
       massFlowRate = dischargeCoefficient * velocityOfApproachFactor * expansionFactor * areaOrifice
-          * Math.sqrt(2.0 * flowingDensity * differentialPressure);
+	  * Math.sqrt(2.0 * flowingDensity * differentialPressure);
 
       // Iterate to refine Cd based on actual Reynolds number
       for (int iter = 0; iter < 5; iter++) {
-        if (viscosity > 0.0 && orificeDiameter > 0.0) {
-          reynoldsNumber = 4.0 * massFlowRate / (Math.PI * orificeDiameter * viscosity);
-        }
-        dischargeCoefficient = calculateDischargeCoefficient(betaRatio, reynoldsNumber);
-        massFlowRate = dischargeCoefficient * velocityOfApproachFactor * expansionFactor
-            * areaOrifice * Math.sqrt(2.0 * flowingDensity * differentialPressure);
+	if (viscosity > 0.0 && orificeDiameter > 0.0) {
+	  reynoldsNumber = 4.0 * massFlowRate / (Math.PI * orificeDiameter * viscosity);
+	}
+	dischargeCoefficient = calculateDischargeCoefficient(betaRatio, reynoldsNumber);
+	massFlowRate = dischargeCoefficient * velocityOfApproachFactor * expansionFactor * areaOrifice
+	    * Math.sqrt(2.0 * flowingDensity * differentialPressure);
       }
 
       // Step 5: Convert to standard volume flow rate
       if (standardDensity > 0.0) {
-        standardVolumeFlowRate = massFlowRate / standardDensity * 3600.0; // Sm3/h
+	standardVolumeFlowRate = massFlowRate / standardDensity * 3600.0; // Sm3/h
       }
 
     } catch (Exception ex) {
@@ -221,7 +218,7 @@ public class Standard_AGA3 extends neqsim.standards.Standard {
    * Calculates discharge coefficient using Reader-Harris/Gallagher equation.
    *
    * @param beta beta ratio d/D
-   * @param re Reynolds number based on orifice diameter
+   * @param re   Reynolds number based on orifice diameter
    * @return discharge coefficient Cd
    */
   private double calculateDischargeCoefficient(double beta, double re) {
@@ -229,8 +226,7 @@ public class Standard_AGA3 extends neqsim.standards.Standard {
     double beta8 = beta4 * beta4;
 
     // Infinite Reynolds number coefficient
-    double cInf =
-        0.5961 + 0.0261 * beta * beta - 0.216 * beta8 + 0.000521 * Math.pow(1.0e6 * beta / re, 0.7);
+    double cInf = 0.5961 + 0.0261 * beta * beta - 0.216 * beta8 + 0.000521 * Math.pow(1.0e6 * beta / re, 0.7);
 
     // Upstream tap term
     double l1 = 0.0;
@@ -249,11 +245,11 @@ public class Standard_AGA3 extends neqsim.standards.Standard {
     double a1 = Math.pow(19000.0 * beta / re, 0.8);
     double m2 = 2.0 * l2prime / (1.0 - beta);
 
-    double upstreamTerm = (0.0188 + 0.0063 * a1) * beta * beta * beta * Math.sqrt(beta)
-        * (1.0 - 0.11 * a1) * l1 / (1.0 - beta);
+    double upstreamTerm = (0.0188 + 0.0063 * a1) * beta * beta * beta * Math.sqrt(beta) * (1.0 - 0.11 * a1) * l1
+	/ (1.0 - beta);
 
     double downstreamTerm = -0.031 * (m2 - 0.8 * Math.pow(m2, 1.1)) * beta * beta * beta * beta
-        * (1.0 + 0.8 * Math.exp(-10.0 * l1));
+	* (1.0 + 0.8 * Math.exp(-10.0 * l1));
 
     return cInf + upstreamTerm + downstreamTerm;
   }
@@ -261,17 +257,17 @@ public class Standard_AGA3 extends neqsim.standards.Standard {
   /**
    * Calculates the expansion factor for compressible flow.
    *
-   * @param beta beta ratio
-   * @param dp differential pressure in Pa
-   * @param p1 upstream static pressure in Pa
+   * @param beta  beta ratio
+   * @param dp    differential pressure in Pa
+   * @param p1    upstream static pressure in Pa
    * @param kappa isentropic exponent
    * @return expansion factor Y
    */
   private double calculateExpansionFactor(double beta, double dp, double p1, double kappa) {
     // ISO 5167 / AGA 3 expansion factor
     double tau = dp / p1;
-    return 1.0 - (0.351 + 0.256 * Math.pow(beta, 4) + 0.93 * Math.pow(beta, 8))
-        * (1.0 - Math.pow(1.0 - tau, 1.0 / kappa));
+    return 1.0
+	- (0.351 + 0.256 * Math.pow(beta, 4) + 0.93 * Math.pow(beta, 8)) * (1.0 - Math.pow(1.0 - tau, 1.0 / kappa));
   }
 
   /** {@inheritDoc} */
@@ -280,18 +276,18 @@ public class Standard_AGA3 extends neqsim.standards.Standard {
     double value = getValue(returnParameter);
     if ("massFlowRate".equals(returnParameter)) {
       if ("kg/h".equals(returnUnit)) {
-        return value * 3600.0;
+	return value * 3600.0;
       }
       if ("lb/h".equals(returnUnit)) {
-        return value * 3600.0 * 2.20462;
+	return value * 3600.0 * 2.20462;
       }
     }
     if ("standardVolumeFlowRate".equals(returnParameter)) {
       if ("SCFD".equals(returnUnit) || "scf/d".equals(returnUnit)) {
-        return value * 24.0 * 35.3147; // Sm3/h to scf/d
+	return value * 24.0 * 35.3147; // Sm3/h to scf/d
       }
       if ("MMSCFD".equals(returnUnit)) {
-        return value * 24.0 * 35.3147 / 1.0e6;
+	return value * 24.0 * 35.3147 / 1.0e6;
       }
     }
     return value;
@@ -337,8 +333,8 @@ public class Standard_AGA3 extends neqsim.standards.Standard {
       return "Sm3/h";
     }
     if ("dischargeCoefficient".equals(returnParameter) || "Cd".equals(returnParameter)
-        || "expansionFactor".equals(returnParameter) || "Y".equals(returnParameter)
-        || "betaRatio".equals(returnParameter)) {
+	|| "expansionFactor".equals(returnParameter) || "Y".equals(returnParameter)
+	|| "betaRatio".equals(returnParameter)) {
       return "-";
     }
     if ("reynoldsNumber".equals(returnParameter) || "Re".equals(returnParameter)) {

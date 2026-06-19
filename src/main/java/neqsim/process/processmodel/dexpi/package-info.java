@@ -2,24 +2,18 @@
  * DEXPI integration layer for importing and exporting P&amp;ID data.
  *
  * <p>
- * This package provides utilities for working with DEXPI (Data Exchange in the Process Industry)
- * XML files, enabling round-trip import and export of process flow diagrams.
+ * This package provides utilities for working with DEXPI (Data Exchange in the Process Industry) XML files, enabling
+ * round-trip import and export of process flow diagrams.
  * </p>
  *
  * <h2>Key Components</h2>
  * <ul>
- * <li>{@link neqsim.process.processmodel.dexpi.DexpiXmlReader} - Import DEXPI P&amp;ID XML to
- * ProcessSystem</li>
- * <li>{@link neqsim.process.processmodel.dexpi.DexpiXmlWriter} - Export ProcessSystem to DEXPI
- * XML</li>
- * <li>{@link neqsim.process.processmodel.dexpi.DexpiProcessUnit} - Lightweight placeholder for
- * imported equipment</li>
- * <li>{@link neqsim.process.processmodel.dexpi.DexpiStream} - Runnable stream with DEXPI
- * metadata</li>
- * <li>{@link neqsim.process.processmodel.dexpi.DexpiMetadata} - Shared constants for DEXPI
- * exchanges</li>
- * <li>{@link neqsim.process.processmodel.dexpi.DexpiRoundTripProfile} - Validation for round-trip
- * fidelity</li>
+ * <li>{@link neqsim.process.processmodel.dexpi.DexpiXmlReader} - Import DEXPI P&amp;ID XML to ProcessSystem</li>
+ * <li>{@link neqsim.process.processmodel.dexpi.DexpiXmlWriter} - Export ProcessSystem to DEXPI XML</li>
+ * <li>{@link neqsim.process.processmodel.dexpi.DexpiProcessUnit} - Lightweight placeholder for imported equipment</li>
+ * <li>{@link neqsim.process.processmodel.dexpi.DexpiStream} - Runnable stream with DEXPI metadata</li>
+ * <li>{@link neqsim.process.processmodel.dexpi.DexpiMetadata} - Shared constants for DEXPI exchanges</li>
+ * <li>{@link neqsim.process.processmodel.dexpi.DexpiRoundTripProfile} - Validation for round-trip fidelity</li>
  * </ul>
  *
  * <h2>Usage Example</h2>

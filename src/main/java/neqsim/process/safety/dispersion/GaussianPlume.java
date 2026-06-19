@@ -6,9 +6,8 @@ import java.io.Serializable;
  * Pasquill–Gifford Gaussian plume dispersion model for neutral / passive gas releases.
  *
  * <p>
- * Implements the steady-state Gaussian plume centerline and ground-level concentration formulae
- * (Briggs urban / rural sigma coefficients) for the six Pasquill atmospheric stability classes
- * (A–F).
+ * Implements the steady-state Gaussian plume centerline and ground-level concentration formulae (Briggs urban / rural
+ * sigma coefficients) for the six Pasquill atmospheric stability classes (A–F).
  *
  * <p>
  * <b>References:</b>
@@ -57,14 +56,14 @@ public class GaussianPlume implements Serializable {
   /**
    * Construct a Gaussian plume model.
    *
-   * @param emissionRateKgPerS continuous source strength in kg/s
+   * @param emissionRateKgPerS    continuous source strength in kg/s
    * @param effectiveStackHeightM effective release height (stack + buoyancy rise) in m
-   * @param windSpeedAtRefM10m wind speed at 10 m reference in m/s
-   * @param stability Pasquill atmospheric stability class
-   * @param terrain rural or urban terrain
+   * @param windSpeedAtRefM10m    wind speed at 10 m reference in m/s
+   * @param stability             Pasquill atmospheric stability class
+   * @param terrain               rural or urban terrain
    */
-  public GaussianPlume(double emissionRateKgPerS, double effectiveStackHeightM,
-      double windSpeedAtRefM10m, Stability stability, Terrain terrain) {
+  public GaussianPlume(double emissionRateKgPerS, double effectiveStackHeightM, double windSpeedAtRefM10m,
+      Stability stability, Terrain terrain) {
     if (emissionRateKgPerS < 0.0 || windSpeedAtRefM10m <= 0.0) {
       throw new IllegalArgumentException("emissionRate must be >=0 and windSpeed must be >0");
     }
@@ -100,19 +99,19 @@ public class GaussianPlume implements Serializable {
   private double[] briggsY() {
     boolean rural = terrain == Terrain.RURAL;
     switch (stability) {
-      case A:
-        return rural ? new double[] {0.22, 0.0001} : new double[] {0.32, 0.0004};
-      case B:
-        return rural ? new double[] {0.16, 0.0001} : new double[] {0.32, 0.0004};
-      case C:
-        return rural ? new double[] {0.11, 0.0001} : new double[] {0.22, 0.0004};
-      case D:
-        return rural ? new double[] {0.08, 0.0001} : new double[] {0.16, 0.0004};
-      case E:
-        return rural ? new double[] {0.06, 0.0001} : new double[] {0.11, 0.0004};
-      case F:
-      default:
-        return rural ? new double[] {0.04, 0.0001} : new double[] {0.11, 0.0004};
+    case A:
+      return rural ? new double[] { 0.22, 0.0001 } : new double[] { 0.32, 0.0004 };
+    case B:
+      return rural ? new double[] { 0.16, 0.0001 } : new double[] { 0.32, 0.0004 };
+    case C:
+      return rural ? new double[] { 0.11, 0.0001 } : new double[] { 0.22, 0.0004 };
+    case D:
+      return rural ? new double[] { 0.08, 0.0001 } : new double[] { 0.16, 0.0004 };
+    case E:
+      return rural ? new double[] { 0.06, 0.0001 } : new double[] { 0.11, 0.0004 };
+    case F:
+    default:
+      return rural ? new double[] { 0.04, 0.0001 } : new double[] { 0.11, 0.0004 };
     }
   }
 
@@ -120,19 +119,19 @@ public class GaussianPlume implements Serializable {
     boolean rural = terrain == Terrain.RURAL;
     // {a, b, exponent}
     switch (stability) {
-      case A:
-        return rural ? new double[] {0.20, 0.0, 1.0} : new double[] {0.24, 0.001, 0.5};
-      case B:
-        return rural ? new double[] {0.12, 0.0, 1.0} : new double[] {0.24, 0.001, 0.5};
-      case C:
-        return rural ? new double[] {0.08, 0.0002, 0.5} : new double[] {0.20, 0.0, 1.0};
-      case D:
-        return rural ? new double[] {0.06, 0.0015, 0.5} : new double[] {0.14, 0.0003, 0.5};
-      case E:
-        return rural ? new double[] {0.03, 0.0003, 1.0} : new double[] {0.08, 0.00015, 0.5};
-      case F:
-      default:
-        return rural ? new double[] {0.016, 0.0003, 1.0} : new double[] {0.08, 0.00015, 0.5};
+    case A:
+      return rural ? new double[] { 0.20, 0.0, 1.0 } : new double[] { 0.24, 0.001, 0.5 };
+    case B:
+      return rural ? new double[] { 0.12, 0.0, 1.0 } : new double[] { 0.24, 0.001, 0.5 };
+    case C:
+      return rural ? new double[] { 0.08, 0.0002, 0.5 } : new double[] { 0.20, 0.0, 1.0 };
+    case D:
+      return rural ? new double[] { 0.06, 0.0015, 0.5 } : new double[] { 0.14, 0.0003, 0.5 };
+    case E:
+      return rural ? new double[] { 0.03, 0.0003, 1.0 } : new double[] { 0.08, 0.00015, 0.5 };
+    case F:
+    default:
+      return rural ? new double[] { 0.016, 0.0003, 1.0 } : new double[] { 0.08, 0.00015, 0.5 };
     }
   }
 
@@ -169,8 +168,8 @@ public class GaussianPlume implements Serializable {
   }
 
   /**
-   * Estimate the maximum downwind distance at which the centerline ground concentration drops to
-   * the supplied threshold (e.g. LFL, IDLH, ERPG-2).
+   * Estimate the maximum downwind distance at which the centerline ground concentration drops to the supplied threshold
+   * (e.g. LFL, IDLH, ERPG-2).
    *
    * @param thresholdKgPerM3 concentration threshold in kg/m³
    * @return downwind distance in m, or {@link Double#NaN} if never reached
@@ -184,8 +183,7 @@ public class GaussianPlume implements Serializable {
     double maxDistance = 100000.0;
     double previousDistance = minDistance;
     double previousConcentration = centerlineGroundConcentration(previousDistance);
-    double aboveDistance =
-        previousConcentration >= thresholdKgPerM3 ? previousDistance : Double.NaN;
+    double aboveDistance = previousConcentration >= thresholdKgPerM3 ? previousDistance : Double.NaN;
     double belowDistance = Double.NaN;
 
     for (int i = 1; i <= 200; i++) {
@@ -193,10 +191,10 @@ public class GaussianPlume implements Serializable {
       double distance = minDistance * Math.pow(maxDistance / minDistance, fraction);
       double concentration = centerlineGroundConcentration(distance);
       if (concentration >= thresholdKgPerM3) {
-        aboveDistance = distance;
+	aboveDistance = distance;
       } else if (previousConcentration >= thresholdKgPerM3) {
-        aboveDistance = previousDistance;
-        belowDistance = distance;
+	aboveDistance = previousDistance;
+	belowDistance = distance;
       }
       previousDistance = distance;
       previousConcentration = concentration;
@@ -214,12 +212,12 @@ public class GaussianPlume implements Serializable {
       double mid = 0.5 * (lo + hi);
       double c = centerlineGroundConcentration(mid);
       if (c > thresholdKgPerM3) {
-        lo = mid;
+	lo = mid;
       } else {
-        hi = mid;
+	hi = mid;
       }
       if ((hi - lo) < 0.5) {
-        break;
+	break;
       }
     }
     return 0.5 * (lo + hi);

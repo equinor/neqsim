@@ -8,10 +8,9 @@ import neqsim.process.measurementdevice.InstrumentTagRole;
  * Defines how a logical P&amp;ID or operating tag maps to NeqSim and plant data.
  *
  * <p>
- * A binding can point to an existing {@link neqsim.process.measurementdevice.MeasurementDeviceInterface}
- * tag, a {@link neqsim.process.automation.ProcessAutomation} address, or both. This lets agents and
- * applications keep private historian tag names outside public models while still running generic
- * operational studies.
+ * A binding can point to an existing {@link neqsim.process.measurementdevice.MeasurementDeviceInterface} tag, a
+ * {@link neqsim.process.automation.ProcessAutomation} address, or both. This lets agents and applications keep private
+ * historian tag names outside public models while still running generic operational studies.
  * </p>
  *
  * @author ESOL
@@ -147,7 +146,7 @@ public final class OperationalTagBinding implements Serializable {
   /**
    * Requires a non-empty text value.
    *
-   * @param text text to validate
+   * @param text      text to validate
    * @param fieldName field name used in error messages
    * @return trimmed text
    * @throws IllegalArgumentException if the text is null or empty

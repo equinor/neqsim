@@ -8,8 +8,8 @@ import neqsim.process.equipment.pump.Pump;
  * Electrical design for pumps.
  *
  * <p>
- * Extends {@link ElectricalDesign} with pump-specific electrical requirements. Pumps are typically
- * smaller loads than compressors and may use single-phase or three-phase motors depending on size.
+ * Extends {@link ElectricalDesign} with pump-specific electrical requirements. Pumps are typically smaller loads than
+ * compressors and may use single-phase or three-phase motors depending on size.
  * </p>
  *
  * @author Even Solbraa

@@ -10,10 +10,9 @@ import neqsim.process.mechanicaldesign.MechanicalDesign;
  * Mechanical design for reactor vessels per ASME VIII Div 1.
  *
  * <p>
- * Covers pressure vessel sizing for fixed-bed, CSTR, and packed-bed reactor vessels. Includes
- * catalyst loading calculation, bed pressure drop estimation (Ergun equation), internal
- * distribution plate design, and weight/cost estimation. Applicable to reactors modeled with
- * {@link GibbsReactor} or similar equipment classes.
+ * Covers pressure vessel sizing for fixed-bed, CSTR, and packed-bed reactor vessels. Includes catalyst loading
+ * calculation, bed pressure drop estimation (Ergun equation), internal distribution plate design, and weight/cost
+ * estimation. Applicable to reactors modeled with {@link GibbsReactor} or similar equipment classes.
  * </p>
  *
  * @author esol
@@ -126,7 +125,7 @@ public class ReactorMechanicalDesign extends MechanicalDesign {
 
     double operatingPressure = Math.max(inletStream.getPressure("bara"), getMaxOperationPressure());
     double operatingTemperatureC = Math.max(inletStream.getTemperature("C"),
-        getMaxOperationTemperature() > 0 ? getMaxOperationTemperature() - 273.15 : 0);
+	getMaxOperationTemperature() > 0 ? getMaxOperationTemperature() - 273.15 : 0);
     double feedFlowM3s = inletStream.getFlowRate("m3/hr") / 3600.0;
     double gasDensity = inletStream.getThermoSystem().getDensity("kg/m3");
     double gasViscosity = 1.5e-5; // Pa*s default
@@ -172,10 +171,8 @@ public class ReactorMechanicalDesign extends MechanicalDesign {
     double dp = catalystParticleDiameter / 1000.0; // mm to m
     double eps = bedVoidFraction;
 
-    double viscousTerm =
-        150.0 * gasViscosity * Math.pow(1.0 - eps, 2) * velocity / (dp * dp * Math.pow(eps, 3));
-    double inertialTerm =
-        1.75 * gasDensity * (1.0 - eps) * velocity * velocity / (dp * Math.pow(eps, 3));
+    double viscousTerm = 150.0 * gasViscosity * Math.pow(1.0 - eps, 2) * velocity / (dp * dp * Math.pow(eps, 3));
+    double inertialTerm = 1.75 * gasDensity * (1.0 - eps) * velocity * velocity / (dp * Math.pow(eps, 3));
     double dPdL = viscousTerm + inertialTerm; // Pa/m
     bedPressureDrop = dPdL * bedLength / 1.0e5; // bar
 
@@ -202,7 +199,7 @@ public class ReactorMechanicalDesign extends MechanicalDesign {
 
     // Internals: distribution plates, support grids
     double internalsWeight = numberOfBeds * Math.PI * vesselDiameter * vesselDiameter / 4.0
-        * (distributionPlateThickness / 1000.0) * steelDensity * 2.0; // top + bottom per bed
+	* (distributionPlateThickness / 1000.0) * steelDensity * 2.0; // top + bottom per bed
     double nozzleWeight = emptyVesselWeight * 0.10;
 
     totalEquippedWeight = emptyVesselWeight + catalystMass + internalsWeight + nozzleWeight;

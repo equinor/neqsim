@@ -4,9 +4,8 @@ package neqsim.process.materials;
  * Data source abstraction for materials-review input.
  *
  * <p>
- * Implementations can wrap STID extracts, project technical database exports, line lists,
- * inspection files, or hand-authored JSON. The engine consumes the normalized
- * {@link MaterialsReviewInput} returned by this interface.
+ * Implementations can wrap STID extracts, project technical database exports, line lists, inspection files, or
+ * hand-authored JSON. The engine consumes the normalized {@link MaterialsReviewInput} returned by this interface.
  * </p>
  *
  * @author NeqSim contributors

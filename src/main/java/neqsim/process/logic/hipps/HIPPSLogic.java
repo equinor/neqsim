@@ -13,9 +13,9 @@ import neqsim.process.logic.sis.VotingLogic;
  * High Integrity Pressure Protection System (HIPPS) Logic.
  *
  * <p>
- * HIPPS is a Safety Instrumented System (SIS) designed to prevent overpressure in process equipment
- * by rapidly closing isolation valves when pressure exceeds a safe limit. HIPPS acts as the first
- * line of defense before pressure relief devices or Emergency Shutdown (ESD) systems are activated.
+ * HIPPS is a Safety Instrumented System (SIS) designed to prevent overpressure in process equipment by rapidly closing
+ * isolation valves when pressure exceeds a safe limit. HIPPS acts as the first line of defense before pressure relief
+ * devices or Emergency Shutdown (ESD) systems are activated.
  *
  * <p>
  * Key features of HIPPS:
@@ -29,8 +29,8 @@ import neqsim.process.logic.sis.VotingLogic;
  * </ul>
  *
  * <p>
- * HIPPS typically operates at ~95% of maximum allowable operating pressure (MAOP), while ESD
- * operates at ~98% MAOP as a backup.
+ * HIPPS typically operates at ~95% of maximum allowable operating pressure (MAOP), while ESD operates at ~98% MAOP as a
+ * backup.
  *
  * <p>
  * Example usage:
@@ -40,12 +40,9 @@ import neqsim.process.logic.sis.VotingLogic;
  * HIPPSLogic hipps = new HIPPSLogic("HIPPS-101", VotingLogic.TWO_OUT_OF_THREE);
  *
  * // Add pressure transmitters
- * hipps.addPressureSensor(
- *     new Detector("PT-101A", DetectorType.PRESSURE, AlarmLevel.HIGH_HIGH, 95.0, "bara"));
- * hipps.addPressureSensor(
- *     new Detector("PT-101B", DetectorType.PRESSURE, AlarmLevel.HIGH_HIGH, 95.0, "bara"));
- * hipps.addPressureSensor(
- *     new Detector("PT-101C", DetectorType.PRESSURE, AlarmLevel.HIGH_HIGH, 95.0, "bara"));
+ * hipps.addPressureSensor(new Detector("PT-101A", DetectorType.PRESSURE, AlarmLevel.HIGH_HIGH, 95.0, "bara"));
+ * hipps.addPressureSensor(new Detector("PT-101B", DetectorType.PRESSURE, AlarmLevel.HIGH_HIGH, 95.0, "bara"));
+ * hipps.addPressureSensor(new Detector("PT-101C", DetectorType.PRESSURE, AlarmLevel.HIGH_HIGH, 95.0, "bara"));
  *
  * // Link isolation valve
  * hipps.setIsolationValve(isolationValve);
@@ -86,7 +83,7 @@ public class HIPPSLogic implements ProcessLogic {
   /**
    * Creates a HIPPS logic instance.
    *
-   * @param name HIPPS name/tag (e.g., "HIPPS-101")
+   * @param name        HIPPS name/tag (e.g., "HIPPS-101")
    * @param votingLogic voting pattern for pressure sensors (typically 2oo3 for SIL 3)
    */
   public HIPPSLogic(String name, VotingLogic votingLogic) {
@@ -102,8 +99,8 @@ public class HIPPSLogic implements ProcessLogic {
    */
   public void addPressureSensor(Detector sensor) {
     if (pressureSensors.size() >= votingLogic.getTotalSensors()) {
-      throw new IllegalStateException("Cannot add more than " + votingLogic.getTotalSensors()
-          + " sensors for " + votingLogic.getNotation() + " voting");
+      throw new IllegalStateException("Cannot add more than " + votingLogic.getTotalSensors() + " sensors for "
+	  + votingLogic.getNotation() + " voting");
     }
     pressureSensors.add(sensor);
   }
@@ -118,11 +115,10 @@ public class HIPPSLogic implements ProcessLogic {
   }
 
   /**
-   * Links HIPPS to an escalation logic (typically ESD) that activates if HIPPS fails to control
-   * pressure.
+   * Links HIPPS to an escalation logic (typically ESD) that activates if HIPPS fails to control pressure.
    *
    * @param escalationLogic ESD or other backup logic
-   * @param delay time in seconds before escalating
+   * @param delay           time in seconds before escalating
    */
   public void linkToEscalationLogic(ProcessLogic escalationLogic, double delay) {
     this.escalationLogic = escalationLogic;
@@ -147,7 +143,7 @@ public class HIPPSLogic implements ProcessLogic {
   public void update(double... pressureValues) {
     if (pressureValues.length != pressureSensors.size()) {
       throw new IllegalArgumentException("Number of pressure values (" + pressureValues.length
-          + ") doesn't match number of sensors (" + pressureSensors.size() + ")");
+	  + ") doesn't match number of sensors (" + pressureSensors.size() + ")");
     }
 
     // Update each sensor
@@ -172,10 +168,10 @@ public class HIPPSLogic implements ProcessLogic {
     int faultyCount = 0;
     for (Detector sensor : pressureSensors) {
       if (sensor.isBypassed()) {
-        bypassedCount++;
+	bypassedCount++;
       }
       if (sensor.isFaulty()) {
-        faultyCount++;
+	faultyCount++;
       }
     }
 
@@ -194,7 +190,7 @@ public class HIPPSLogic implements ProcessLogic {
     int trippedCount = 0;
     for (Detector sensor : pressureSensors) {
       if (!sensor.isBypassed() && !sensor.isFaulty() && sensor.isTripped()) {
-        trippedCount++;
+	trippedCount++;
       }
     }
 
@@ -207,8 +203,8 @@ public class HIPPSLogic implements ProcessLogic {
       state = LogicState.RUNNING;
 
       if (isolationValve != null) {
-        // Rapid closure for HIPPS
-        isolationValve.setPercentValveOpening(0.0);
+	// Rapid closure for HIPPS
+	isolationValve.setPercentValveOpening(0.0);
       }
     }
   }
@@ -231,15 +227,15 @@ public class HIPPSLogic implements ProcessLogic {
       // Check if pressure is still high (voting still true)
       int trippedCount = 0;
       for (Detector sensor : pressureSensors) {
-        if (sensor.isTripped()) {
-          trippedCount++;
-        }
+	if (sensor.isTripped()) {
+	  trippedCount++;
+	}
       }
 
       if (votingLogic.evaluate(trippedCount)) {
-        // Pressure still high after delay - escalate to ESD
-        escalated = true;
-        escalationLogic.activate();
+	// Pressure still high after delay - escalate to ESD
+	escalated = true;
+	escalationLogic.activate();
       }
     }
   }
@@ -268,7 +264,7 @@ public class HIPPSLogic implements ProcessLogic {
     // Check if all sensors are clear
     for (Detector sensor : pressureSensors) {
       if (sensor.isTripped()) {
-        return false;
+	return false;
       }
     }
 
@@ -339,7 +335,7 @@ public class HIPPSLogic implements ProcessLogic {
       state = LogicState.RUNNING;
 
       if (isolationValve != null) {
-        isolationValve.setPercentValveOpening(0.0);
+	isolationValve.setPercentValveOpening(0.0);
       }
     }
   }
@@ -387,15 +383,14 @@ public class HIPPSLogic implements ProcessLogic {
     int bypassedCount = 0;
     for (Detector sensor : pressureSensors) {
       if (sensor.isTripped()) {
-        trippedCount++;
+	trippedCount++;
       }
       if (sensor.isBypassed()) {
-        bypassedCount++;
+	bypassedCount++;
       }
     }
 
-    sb.append(" (").append(trippedCount).append("/").append(pressureSensors.size())
-        .append(" tripped");
+    sb.append(" (").append(trippedCount).append("/").append(pressureSensors.size()).append(" tripped");
     if (bypassedCount > 0) {
       sb.append(", ").append(bypassedCount).append(" bypassed");
     }

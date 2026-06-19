@@ -16,10 +16,11 @@ import neqsim.util.unit.TemperatureUnit;
 /**
  * Calculates trapped inventory for a documented isolation envelope.
  *
- * <p>The calculator is intended for technical safety studies where P&amp;ID, line-list,
- * stress isometric, datasheet, or STID evidence defines the isolated equipment and piping volume.
- * It combines those volumes with a NeqSim fluid state to estimate gas and optional liquid inventory
- * before blowdown, relief, flare-load, or MDMT calculations.</p>
+ * <p>
+ * The calculator is intended for technical safety studies where P&amp;ID, line-list, stress isometric, datasheet, or
+ * STID evidence defines the isolated equipment and piping volume. It combines those volumes with a NeqSim fluid state
+ * to estimate gas and optional liquid inventory before blowdown, relief, flare-load, or MDMT calculations.
+ * </p>
  *
  * @author ESOL
  * @version 1.0
@@ -51,15 +52,15 @@ public class TrappedInventoryCalculator implements Serializable {
   /**
    * Sets operating pressure and temperature for the trapped inventory.
    *
-   * @param pressure pressure value in the supplied pressure unit; must be positive
-   * @param pressureUnit pressure unit supported by {@link PressureUnit}, for example bara or barg
-   * @param temperature temperature value in the supplied temperature unit
+   * @param pressure        pressure value in the supplied pressure unit; must be positive
+   * @param pressureUnit    pressure unit supported by {@link PressureUnit}, for example bara or barg
+   * @param temperature     temperature value in the supplied temperature unit
    * @param temperatureUnit temperature unit supported by {@link TemperatureUnit}, for example K or C
    * @return this calculator for chained setup
    * @throws IllegalArgumentException if pressure or temperature is non-physical
    */
-  public TrappedInventoryCalculator setOperatingConditions(double pressure, String pressureUnit,
-      double temperature, String temperatureUnit) {
+  public TrappedInventoryCalculator setOperatingConditions(double pressure, String pressureUnit, double temperature,
+      String temperatureUnit) {
     this.pressureBara = new PressureUnit(pressure, pressureUnit).getValue("bara");
     this.temperatureK = new TemperatureUnit(temperature, temperatureUnit).getValue("K");
     if (pressureBara <= 0.0 || temperatureK <= 0.0) {
@@ -76,8 +77,7 @@ public class TrappedInventoryCalculator implements Serializable {
    * @return this calculator for chained setup
    * @throws IllegalArgumentException if pressure or temperature is non-physical
    */
-  public TrappedInventoryCalculator setOperatingConditions(double pressureBara,
-      double temperatureK) {
+  public TrappedInventoryCalculator setOperatingConditions(double pressureBara, double temperatureK) {
     return setOperatingConditions(pressureBara, "bara", temperatureK, "K");
   }
 
@@ -99,17 +99,16 @@ public class TrappedInventoryCalculator implements Serializable {
   /**
    * Adds a documented equipment or vessel volume.
    *
-   * @param equipmentTag equipment tag or segment identifier
-   * @param volumeM3 internal volume in m3; must be positive
+   * @param equipmentTag       equipment tag or segment identifier
+   * @param volumeM3           internal volume in m3; must be positive
    * @param liquidFillFraction liquid fill fraction from 0 to 1
-   * @param evidence optional traceable document evidence; may be null
+   * @param evidence           optional traceable document evidence; may be null
    * @return this calculator for chained setup
    * @throws IllegalArgumentException if segment values are invalid
    */
-  public TrappedInventoryCalculator addEquipmentVolume(String equipmentTag, double volumeM3,
-      double liquidFillFraction, DocumentEvidence evidence) {
-    InventorySegment segment = new InventorySegment(equipmentTag, "equipment", volumeM3,
-        liquidFillFraction);
+  public TrappedInventoryCalculator addEquipmentVolume(String equipmentTag, double volumeM3, double liquidFillFraction,
+      DocumentEvidence evidence) {
+    InventorySegment segment = new InventorySegment(equipmentTag, "equipment", volumeM3, liquidFillFraction);
     if (evidence != null) {
       segment.addEvidence(evidence);
     }
@@ -120,38 +119,36 @@ public class TrappedInventoryCalculator implements Serializable {
   /**
    * Adds a documented volume segment using an engineering volume unit.
    *
-   * @param segmentId segment identifier
-   * @param volume volume value in the supplied unit; must be positive
-   * @param volumeUnit volume unit, for example m3, L, litre, ft3, or bbl
+   * @param segmentId          segment identifier
+   * @param volume             volume value in the supplied unit; must be positive
+   * @param volumeUnit         volume unit, for example m3, L, litre, ft3, or bbl
    * @param liquidFillFraction liquid fill fraction from 0 to 1
-   * @param evidence optional traceable document evidence; may be null
+   * @param evidence           optional traceable document evidence; may be null
    * @return this calculator for chained setup
    * @throws IllegalArgumentException if segment values are invalid
    */
-  public TrappedInventoryCalculator addVolumeSegment(String segmentId, double volume,
-      String volumeUnit, double liquidFillFraction, DocumentEvidence evidence) {
-    return addEquipmentVolume(segmentId, toCubicMeters(volume, volumeUnit), liquidFillFraction,
-        evidence);
+  public TrappedInventoryCalculator addVolumeSegment(String segmentId, double volume, String volumeUnit,
+      double liquidFillFraction, DocumentEvidence evidence) {
+    return addEquipmentVolume(segmentId, toCubicMeters(volume, volumeUnit), liquidFillFraction, evidence);
   }
 
   /**
    * Adds a documented pipe segment from diameter and length.
    *
-   * @param segmentId pipe segment identifier
-   * @param internalDiameterM pipe internal diameter in m; must be positive
-   * @param lengthM pipe length in m; must be positive
+   * @param segmentId          pipe segment identifier
+   * @param internalDiameterM  pipe internal diameter in m; must be positive
+   * @param lengthM            pipe length in m; must be positive
    * @param liquidFillFraction liquid fill fraction from 0 to 1
-   * @param evidence optional traceable document evidence; may be null
+   * @param evidence           optional traceable document evidence; may be null
    * @return this calculator for chained setup
    * @throws IllegalArgumentException if segment values are invalid
    */
-  public TrappedInventoryCalculator addPipeSegment(String segmentId, double internalDiameterM,
-      double lengthM, double liquidFillFraction, DocumentEvidence evidence) {
+  public TrappedInventoryCalculator addPipeSegment(String segmentId, double internalDiameterM, double lengthM,
+      double liquidFillFraction, DocumentEvidence evidence) {
     validatePositive(internalDiameterM, "internalDiameterM");
     validatePositive(lengthM, "lengthM");
     double volumeM3 = Math.PI * internalDiameterM * internalDiameterM * lengthM / 4.0;
-    InventorySegment segment = new InventorySegment(segmentId, "pipe", volumeM3,
-        liquidFillFraction);
+    InventorySegment segment = new InventorySegment(segmentId, "pipe", volumeM3, liquidFillFraction);
     segment.setInternalDiameterM(internalDiameterM);
     segment.setLengthM(lengthM);
     if (evidence != null) {
@@ -164,21 +161,20 @@ public class TrappedInventoryCalculator implements Serializable {
   /**
    * Adds a documented pipe segment from diameter and length in engineering units.
    *
-   * @param segmentId pipe segment identifier
-   * @param internalDiameter pipe internal diameter in the supplied diameter unit
-   * @param diameterUnit diameter unit, for example m, mm, in, or ft
-   * @param length pipe length in the supplied length unit
-   * @param lengthUnit length unit, for example m, mm, in, or ft
+   * @param segmentId          pipe segment identifier
+   * @param internalDiameter   pipe internal diameter in the supplied diameter unit
+   * @param diameterUnit       diameter unit, for example m, mm, in, or ft
+   * @param length             pipe length in the supplied length unit
+   * @param lengthUnit         length unit, for example m, mm, in, or ft
    * @param liquidFillFraction liquid fill fraction from 0 to 1
-   * @param evidence optional traceable document evidence; may be null
+   * @param evidence           optional traceable document evidence; may be null
    * @return this calculator for chained setup
    * @throws IllegalArgumentException if segment values are invalid
    */
-  public TrappedInventoryCalculator addPipeSegment(String segmentId, double internalDiameter,
-      String diameterUnit, double length, String lengthUnit, double liquidFillFraction,
-      DocumentEvidence evidence) {
-    return addPipeSegment(segmentId, toMeters(internalDiameter, diameterUnit),
-        toMeters(length, lengthUnit), liquidFillFraction, evidence);
+  public TrappedInventoryCalculator addPipeSegment(String segmentId, double internalDiameter, String diameterUnit,
+      double length, String lengthUnit, double liquidFillFraction, DocumentEvidence evidence) {
+    return addPipeSegment(segmentId, toMeters(internalDiameter, diameterUnit), toMeters(length, lengthUnit),
+	liquidFillFraction, evidence);
   }
 
   /**
@@ -206,33 +202,33 @@ public class TrappedInventoryCalculator implements Serializable {
       double liquidVolume = segment.getVolumeM3() * segment.getLiquidFillFraction();
       double gasMass = gasVolume * gasDensity;
       double liquidMass = liquidVolume * liquidDensity;
-      segmentResults.add(new InventorySegmentResult(segment, gasVolume, liquidVolume, gasMass,
-          liquidMass, gasDensity, liquidDensity));
+      segmentResults.add(
+	  new InventorySegmentResult(segment, gasVolume, liquidVolume, gasMass, liquidMass, gasDensity, liquidDensity));
       totalVolume += segment.getVolumeM3();
       totalGasVolume += gasVolume;
       totalLiquidVolume += liquidVolume;
       totalGasMass += gasMass;
       totalLiquidMass += liquidMass;
       if (segment.getEvidence().isEmpty()) {
-        warnings.add("Segment " + segment.getId() + " has no traceable document evidence.");
+	warnings.add("Segment " + segment.getId() + " has no traceable document evidence.");
       }
     }
     if (totalLiquidVolume > 0.0 && liquidDensity == fallbackLiquidDensityKgPerM3) {
       warnings.add("No liquid phase found in representative fluid; fallback liquid density used.");
     }
 
-    return new InventoryResult(pressureBara, temperatureK, gasDensity, liquidDensity,
-        totalVolume, totalGasVolume, totalLiquidVolume, totalGasMass, totalLiquidMass,
-        segmentResults, warnings);
+    return new InventoryResult(pressureBara, temperatureK, gasDensity, liquidDensity, totalVolume, totalGasVolume,
+	totalLiquidVolume, totalGasMass, totalLiquidMass, segmentResults, warnings);
   }
 
   /**
    * Creates a lumped gas fluid suitable for {@code DepressurizationSimulator} input.
    *
-   * <p>The returned fluid is set to the calculated gas inventory because liquid holdup in
-   * blocked-in piping usually does not discharge as gas through the blowdown valve. Liquid
-   * inventory remains available in {@link InventoryResult} for KO-drum and cold-temperature
-   * screening.</p>
+   * <p>
+   * The returned fluid is set to the calculated gas inventory because liquid holdup in blocked-in piping usually does
+   * not discharge as gas through the blowdown valve. Liquid inventory remains available in {@link InventoryResult} for
+   * KO-drum and cold-temperature screening.
+   * </p>
    *
    * @return cloned fluid with total moles set from calculated gas mass
    * @throws IllegalStateException if the calculated mass or molar mass is non-positive
@@ -328,7 +324,7 @@ public class TrappedInventoryCalculator implements Serializable {
    * Validates that a positive value was provided.
    *
    * @param value value to validate
-   * @param name parameter name used in exception messages
+   * @param name  parameter name used in exception messages
    * @throws IllegalArgumentException if value is not positive and finite
    */
   private static void validatePositive(double value, String name) {
@@ -341,7 +337,7 @@ public class TrappedInventoryCalculator implements Serializable {
    * Converts a length value to meters.
    *
    * @param value length value in the supplied unit
-   * @param unit length unit
+   * @param unit  length unit
    * @return length in m
    * @throws IllegalArgumentException if the unit is unsupported
    */
@@ -360,8 +356,7 @@ public class TrappedInventoryCalculator implements Serializable {
     if ("in".equals(normalized) || "inch".equals(normalized)) {
       return value * 0.0254;
     }
-    if ("ft".equals(normalized) || "foot".equals(normalized)
-        || "feet".equals(normalized)) {
+    if ("ft".equals(normalized) || "foot".equals(normalized) || "feet".equals(normalized)) {
       return value * 0.3048;
     }
     throw new IllegalArgumentException("unsupported length unit: " + unit);
@@ -371,7 +366,7 @@ public class TrappedInventoryCalculator implements Serializable {
    * Converts a volume value to cubic meters.
    *
    * @param value volume value in the supplied unit
-   * @param unit volume unit
+   * @param unit  volume unit
    * @return volume in m3
    * @throws IllegalArgumentException if the unit is unsupported
    */
@@ -381,8 +376,7 @@ public class TrappedInventoryCalculator implements Serializable {
     if ("m3".equals(normalized) || "m^3".equals(normalized)) {
       return value;
     }
-    if ("l".equals(normalized) || "liter".equals(normalized)
-        || "litre".equals(normalized)) {
+    if ("l".equals(normalized) || "liter".equals(normalized) || "litre".equals(normalized)) {
       return value / 1000.0;
     }
     if ("ft3".equals(normalized) || "ft^3".equals(normalized)) {
@@ -425,19 +419,19 @@ public class TrappedInventoryCalculator implements Serializable {
     /**
      * Creates an inventory segment.
      *
-     * @param id segment identifier
-     * @param type segment type, for example pipe or equipment
-     * @param volumeM3 segment internal volume in m3
+     * @param id                 segment identifier
+     * @param type               segment type, for example pipe or equipment
+     * @param volumeM3           segment internal volume in m3
      * @param liquidFillFraction liquid fill fraction from 0 to 1
      * @throws IllegalArgumentException if values are invalid
      */
     private InventorySegment(String id, String type, double volumeM3, double liquidFillFraction) {
       if (id == null || id.trim().isEmpty()) {
-        throw new IllegalArgumentException("segment id must not be empty");
+	throw new IllegalArgumentException("segment id must not be empty");
       }
       validatePositive(volumeM3, "volumeM3");
       if (liquidFillFraction < 0.0 || liquidFillFraction > 1.0) {
-        throw new IllegalArgumentException("liquidFillFraction must be in [0,1]");
+	throw new IllegalArgumentException("liquidFillFraction must be in [0,1]");
       }
       this.id = id.trim();
       this.type = type;
@@ -454,7 +448,7 @@ public class TrappedInventoryCalculator implements Serializable {
      */
     public InventorySegment addEvidence(DocumentEvidence evidence) {
       if (evidence == null) {
-        throw new IllegalArgumentException("evidence must not be null");
+	throw new IllegalArgumentException("evidence must not be null");
       }
       this.evidence.add(evidence);
       return this;
@@ -559,17 +553,16 @@ public class TrappedInventoryCalculator implements Serializable {
     /**
      * Creates a segment result.
      *
-     * @param segment source segment
-     * @param gasVolumeM3 gas-filled volume in m3
-     * @param liquidVolumeM3 liquid-filled volume in m3
-     * @param gasMassKg gas mass in kg
-     * @param liquidMassKg liquid mass in kg
-     * @param gasDensityKgPerM3 gas density in kg/m3
+     * @param segment              source segment
+     * @param gasVolumeM3          gas-filled volume in m3
+     * @param liquidVolumeM3       liquid-filled volume in m3
+     * @param gasMassKg            gas mass in kg
+     * @param liquidMassKg         liquid mass in kg
+     * @param gasDensityKgPerM3    gas density in kg/m3
      * @param liquidDensityKgPerM3 liquid density in kg/m3
      */
-    private InventorySegmentResult(InventorySegment segment, double gasVolumeM3,
-        double liquidVolumeM3, double gasMassKg, double liquidMassKg,
-        double gasDensityKgPerM3, double liquidDensityKgPerM3) {
+    private InventorySegmentResult(InventorySegment segment, double gasVolumeM3, double liquidVolumeM3,
+	double gasMassKg, double liquidMassKg, double gasDensityKgPerM3, double liquidDensityKgPerM3) {
       this.segment = segment;
       this.gasVolumeM3 = gasVolumeM3;
       this.liquidVolumeM3 = liquidVolumeM3;
@@ -679,14 +672,14 @@ public class TrappedInventoryCalculator implements Serializable {
       map.put("liquidDensityKgPerM3", liquidDensityKgPerM3);
       map.put("liquidFillFraction", segment.getLiquidFillFraction());
       if (!Double.isNaN(segment.getInternalDiameterM())) {
-        map.put("internalDiameterM", segment.getInternalDiameterM());
+	map.put("internalDiameterM", segment.getInternalDiameterM());
       }
       if (!Double.isNaN(segment.getLengthM())) {
-        map.put("lengthM", segment.getLengthM());
+	map.put("lengthM", segment.getLengthM());
       }
       List<Map<String, Object>> evidenceMaps = new ArrayList<Map<String, Object>>();
       for (DocumentEvidence item : segment.getEvidence()) {
-        evidenceMaps.add(item.toMap());
+	evidenceMaps.add(item.toMap());
       }
       map.put("evidence", evidenceMaps);
       return map;
@@ -714,22 +707,22 @@ public class TrappedInventoryCalculator implements Serializable {
     /**
      * Creates an aggregate result.
      *
-     * @param pressureBara absolute pressure in bara
-     * @param temperatureK absolute temperature in K
-     * @param gasDensityKgPerM3 gas density in kg/m3
+     * @param pressureBara         absolute pressure in bara
+     * @param temperatureK         absolute temperature in K
+     * @param gasDensityKgPerM3    gas density in kg/m3
      * @param liquidDensityKgPerM3 liquid density in kg/m3
-     * @param totalVolumeM3 total internal volume in m3
-     * @param totalGasVolumeM3 gas-filled volume in m3
-     * @param totalLiquidVolumeM3 liquid-filled volume in m3
-     * @param totalGasMassKg gas mass in kg
-     * @param totalLiquidMassKg liquid mass in kg
-     * @param segmentResults per-segment results
-     * @param warnings calculation warnings
+     * @param totalVolumeM3        total internal volume in m3
+     * @param totalGasVolumeM3     gas-filled volume in m3
+     * @param totalLiquidVolumeM3  liquid-filled volume in m3
+     * @param totalGasMassKg       gas mass in kg
+     * @param totalLiquidMassKg    liquid mass in kg
+     * @param segmentResults       per-segment results
+     * @param warnings             calculation warnings
      */
     private InventoryResult(double pressureBara, double temperatureK, double gasDensityKgPerM3,
-        double liquidDensityKgPerM3, double totalVolumeM3, double totalGasVolumeM3,
-        double totalLiquidVolumeM3, double totalGasMassKg, double totalLiquidMassKg,
-        List<InventorySegmentResult> segmentResults, List<String> warnings) {
+	double liquidDensityKgPerM3, double totalVolumeM3, double totalGasVolumeM3, double totalLiquidVolumeM3,
+	double totalGasMassKg, double totalLiquidMassKg, List<InventorySegmentResult> segmentResults,
+	List<String> warnings) {
       this.pressureBara = pressureBara;
       this.temperatureK = temperatureK;
       this.gasDensityKgPerM3 = gasDensityKgPerM3;
@@ -870,7 +863,7 @@ public class TrappedInventoryCalculator implements Serializable {
       map.put("totalMassKg", getTotalMassKg());
       List<Map<String, Object>> segmentMaps = new ArrayList<Map<String, Object>>();
       for (InventorySegmentResult result : segmentResults) {
-        segmentMaps.add(result.toMap());
+	segmentMaps.add(result.toMap());
       }
       map.put("segments", segmentMaps);
       map.put("warnings", new ArrayList<String>(warnings));

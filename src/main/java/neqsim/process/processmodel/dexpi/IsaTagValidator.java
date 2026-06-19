@@ -5,28 +5,26 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * Validates instrument tag identifiers against the ISA-5.1 (ANSI/ISA-5.1-2009)
- * identification-letter table.
+ * Validates instrument tag identifiers against the ISA-5.1 (ANSI/ISA-5.1-2009) identification-letter table.
  *
  * <p>
- * An ISA instrument tag is built from a letter group followed by a loop number, for example
- * {@code PT-101}, {@code FIC-204} or {@code LSHH-330}. Within the letter group:
+ * An ISA instrument tag is built from a letter group followed by a loop number, for example {@code PT-101},
+ * {@code FIC-204} or {@code LSHH-330}. Within the letter group:
  * </p>
  *
  * <ul>
- * <li>the <b>first letter</b> identifies the measured or initiating variable (P = pressure, T =
- * temperature, F = flow, L = level, A = analysis, etc.);</li>
- * <li>an optional <b>modifier letter</b> may follow the first letter (e.g. the D in PDT for
- * <i>differential</i> pressure);</li>
- * <li>the <b>succeeding letters</b> identify the readout/passive and output functions (I =
- * indicate, R = record, C = control, T = transmit, V = valve, S = switch, etc.).</li>
+ * <li>the <b>first letter</b> identifies the measured or initiating variable (P = pressure, T = temperature, F = flow,
+ * L = level, A = analysis, etc.);</li>
+ * <li>an optional <b>modifier letter</b> may follow the first letter (e.g. the D in PDT for <i>differential</i>
+ * pressure);</li>
+ * <li>the <b>succeeding letters</b> identify the readout/passive and output functions (I = indicate, R = record, C =
+ * control, T = transmit, V = valve, S = switch, etc.).</li>
  * </ul>
  *
  * <p>
- * This validator checks that the first letter is a recognised measured-variable letter and that
- * every succeeding letter is a recognised function letter, and that a numeric loop number is
- * present. It is intentionally permissive about ordering, matching the screening level expected for
- * automatically generated P&amp;ID tags.
+ * This validator checks that the first letter is a recognised measured-variable letter and that every succeeding letter
+ * is a recognised function letter, and that a numeric loop number is present. It is intentionally permissive about
+ * ordering, matching the screening level expected for automatically generated P&amp;ID tags.
  * </p>
  *
  * @author NeqSim
@@ -97,7 +95,8 @@ final class IsaTagValidator {
   }
 
   /** Private constructor — utility class. */
-  private IsaTagValidator() {}
+  private IsaTagValidator() {
+  }
 
   /**
    * Outcome of validating an instrument tag against the ISA-5.1 letter table.
@@ -111,7 +110,7 @@ final class IsaTagValidator {
     /**
      * Creates a validation result.
      *
-     * @param valid whether the tag is valid
+     * @param valid   whether the tag is valid
      * @param message description or error message
      */
     ValidationResult(boolean valid, String message) {
@@ -156,18 +155,18 @@ final class IsaTagValidator {
     for (int i = 0; i < trimmed.length(); i++) {
       char c = trimmed.charAt(i);
       if (c == '-' || c == ' ' || c == '_') {
-        continue;
+	continue;
       }
       if (Character.isLetter(c) && !inNumber) {
-        letters.append(c);
+	letters.append(c);
       } else if (Character.isDigit(c)) {
-        inNumber = true;
-        number.append(c);
+	inNumber = true;
+	number.append(c);
       } else if (Character.isLetter(c) && inNumber) {
-        // Trailing suffix letter after the loop number (e.g. 101A) — accept.
-        number.append(c);
+	// Trailing suffix letter after the loop number (e.g. 101A) — accept.
+	number.append(c);
       } else {
-        return new ValidationResult(false, "Unexpected character '" + c + "' in tag");
+	return new ValidationResult(false, "Unexpected character '" + c + "' in tag");
       }
     }
     if (letters.length() == 0) {
@@ -179,8 +178,7 @@ final class IsaTagValidator {
 
     char first = letters.charAt(0);
     if (!FIRST_LETTERS.containsKey(first)) {
-      return new ValidationResult(false,
-          "First letter '" + first + "' is not a valid ISA-5.1 measured variable");
+      return new ValidationResult(false, "First letter '" + first + "' is not a valid ISA-5.1 measured variable");
     }
     StringBuilder desc = new StringBuilder();
     desc.append(FIRST_LETTERS.get(first));
@@ -193,8 +191,7 @@ final class IsaTagValidator {
     for (int i = idx; i < letters.length(); i++) {
       char c = letters.charAt(i);
       if (!SUCCEEDING_LETTERS.containsKey(c)) {
-        return new ValidationResult(false,
-            "Succeeding letter '" + c + "' is not a valid ISA-5.1 function");
+	return new ValidationResult(false, "Succeeding letter '" + c + "' is not a valid ISA-5.1 function");
       }
       desc.append(" / ").append(SUCCEEDING_LETTERS.get(c));
     }

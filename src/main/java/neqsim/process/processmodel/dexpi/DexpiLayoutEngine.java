@@ -20,16 +20,15 @@ import org.w3c.dom.Element;
  * Computes auto-layout positions for DEXPI XML export.
  *
  * <p>
- * Equipment is arranged left-to-right following process flow topology using a topological sort of
- * the process graph. Each column holds one or more equipment items at a fixed X spacing. Multi-
- * outlet equipment (separators) fan out vertically: the gas/overhead branch routes to the upper
- * part of the sheet and the liquid/bottoms branch to the lower part, following ISO 10628 layout
- * practice. The inlet train and any recombined streams stay on the centre line.
+ * Equipment is arranged left-to-right following process flow topology using a topological sort of the process graph.
+ * Each column holds one or more equipment items at a fixed X spacing. Multi- outlet equipment (separators) fan out
+ * vertically: the gas/overhead branch routes to the upper part of the sheet and the liquid/bottoms branch to the lower
+ * part, following ISO 10628 layout practice. The inlet train and any recombined streams stay on the centre line.
  * </p>
  *
  * <p>
- * Positions and labels are written as DEXPI-compliant {@code <Position>}, {@code <Scale>}, and
- * {@code <Label>} XML elements on each Equipment and PipingComponent element.
+ * Positions and labels are written as DEXPI-compliant {@code <Position>}, {@code <Scale>}, and {@code <Label>} XML
+ * elements on each Equipment and PipingComponent element.
  * </p>
  *
  * @author NeqSim
@@ -104,10 +103,9 @@ final class DexpiLayoutEngine {
 
   // ---- Orthogonal routing constants ----
   /**
-   * Horizontal approach distance (mm) kept between a vertical riser and the target. Placing the
-   * riser near the target (rather than at the segment midpoint) keeps the long horizontal run on
-   * the source line and drops branches at the target column, which reduces line crossings on
-   * multi-branch diagrams.
+   * Horizontal approach distance (mm) kept between a vertical riser and the target. Placing the riser near the target
+   * (rather than at the segment midpoint) keeps the long horizontal run on the source line and drops branches at the
+   * target column, which reduces line crossings on multi-branch diagrams.
    */
   private static final double BRANCH_APPROACH = 18.0;
 
@@ -141,15 +139,16 @@ final class DexpiLayoutEngine {
   /** Row height in revision history table (mm). */
   private static final double REVISION_ROW_HEIGHT = 4.5;
 
-  private DexpiLayoutEngine() {}
+  private DexpiLayoutEngine() {
+  }
 
   /**
    * Computes layout positions for all equipment in a process system.
    *
    * <p>
-   * Returns a map from equipment name to its {@link EquipmentPosition}. The positions are computed
-   * using a topological ordering of the process graph, placing equipment left-to-right. Multi-
-   * outlet equipment branches are fanned out vertically.
+   * Returns a map from equipment name to its {@link EquipmentPosition}. The positions are computed using a topological
+   * ordering of the process graph, placing equipment left-to-right. Multi- outlet equipment branches are fanned out
+   * vertically.
    * </p>
    *
    * @param processSystem the process system to lay out
@@ -165,7 +164,7 @@ final class DexpiLayoutEngine {
 
     for (ProcessEquipmentInterface unit : units) {
       if (unit instanceof Stream || unit instanceof DexpiStream) {
-        continue;
+	continue;
       }
       unitByName.put(unit.getName(), unit);
       adjacency.put(unit.getName(), new ArrayList<String>());
@@ -175,45 +174,44 @@ final class DexpiLayoutEngine {
     Map<Integer, String> outletStreamToEquipment = new HashMap<>();
     for (ProcessEquipmentInterface unit : units) {
       if (unit instanceof Stream || unit instanceof DexpiStream) {
-        continue;
+	continue;
       }
       StreamInterface gasOut = DexpiStreamUtils.getGasOutletStream(unit);
       if (gasOut != null) {
-        outletStreamToEquipment.put(System.identityHashCode(gasOut), unit.getName());
+	outletStreamToEquipment.put(System.identityHashCode(gasOut), unit.getName());
       }
       StreamInterface liqOut = DexpiStreamUtils.getLiquidOutletStream(unit);
       if (liqOut != null) {
-        outletStreamToEquipment.put(System.identityHashCode(liqOut), unit.getName());
+	outletStreamToEquipment.put(System.identityHashCode(liqOut), unit.getName());
       }
       StreamInterface waterOut = DexpiStreamUtils.getWaterOutletStream(unit);
       if (waterOut != null) {
-        outletStreamToEquipment.put(System.identityHashCode(waterOut), unit.getName());
+	outletStreamToEquipment.put(System.identityHashCode(waterOut), unit.getName());
       }
     }
 
     // Also register pass-through streams (Stream wrapping separator outlets)
     for (ProcessEquipmentInterface unit : units) {
       if (unit instanceof Stream && !(unit instanceof DexpiStream)) {
-        Stream stream = (Stream) unit;
-        if (stream.getFluid() != null) {
-          int fluidHash = System.identityHashCode(stream.getFluid());
-          for (Map.Entry<Integer, String> entry : new HashMap<>(outletStreamToEquipment)
-              .entrySet()) {
-            ProcessEquipmentInterface src = unitByName.get(entry.getValue());
-            if (src != null) {
-              StreamInterface srcGas = DexpiStreamUtils.getGasOutletStream(src);
-              if (srcGas != null && srcGas.getFluid() != null
-                  && System.identityHashCode(srcGas.getFluid()) == fluidHash) {
-                outletStreamToEquipment.put(System.identityHashCode(stream), entry.getValue());
-              }
-              StreamInterface srcLiq = DexpiStreamUtils.getLiquidOutletStream(src);
-              if (srcLiq != null && srcLiq.getFluid() != null
-                  && System.identityHashCode(srcLiq.getFluid()) == fluidHash) {
-                outletStreamToEquipment.put(System.identityHashCode(stream), entry.getValue());
-              }
-            }
-          }
-        }
+	Stream stream = (Stream) unit;
+	if (stream.getFluid() != null) {
+	  int fluidHash = System.identityHashCode(stream.getFluid());
+	  for (Map.Entry<Integer, String> entry : new HashMap<>(outletStreamToEquipment).entrySet()) {
+	    ProcessEquipmentInterface src = unitByName.get(entry.getValue());
+	    if (src != null) {
+	      StreamInterface srcGas = DexpiStreamUtils.getGasOutletStream(src);
+	      if (srcGas != null && srcGas.getFluid() != null
+		  && System.identityHashCode(srcGas.getFluid()) == fluidHash) {
+		outletStreamToEquipment.put(System.identityHashCode(stream), entry.getValue());
+	      }
+	      StreamInterface srcLiq = DexpiStreamUtils.getLiquidOutletStream(src);
+	      if (srcLiq != null && srcLiq.getFluid() != null
+		  && System.identityHashCode(srcLiq.getFluid()) == fluidHash) {
+		outletStreamToEquipment.put(System.identityHashCode(stream), entry.getValue());
+	      }
+	    }
+	  }
+	}
       }
     }
 
@@ -230,44 +228,44 @@ final class DexpiLayoutEngine {
     Map<Integer, Boolean> outletIsGasFork = new HashMap<>();
     for (ProcessEquipmentInterface unit : units) {
       if (unit instanceof Stream || unit instanceof DexpiStream) {
-        continue;
+	continue;
       }
       StreamInterface liqOut = DexpiStreamUtils.getLiquidOutletStream(unit);
       StreamInterface waterOut = DexpiStreamUtils.getWaterOutletStream(unit);
       if (liqOut != null) {
-        outletIsLiquid.put(System.identityHashCode(liqOut), Boolean.TRUE);
+	outletIsLiquid.put(System.identityHashCode(liqOut), Boolean.TRUE);
       }
       if (waterOut != null) {
-        outletIsLiquid.put(System.identityHashCode(waterOut), Boolean.TRUE);
+	outletIsLiquid.put(System.identityHashCode(waterOut), Boolean.TRUE);
       }
       // A vessel that produces a liquid or water outlet is a phase-splitting separator;
       // its gas outlet is the overhead branch and is routed to the upper part of the sheet.
       if (liqOut != null || waterOut != null) {
-        StreamInterface gasOut = DexpiStreamUtils.getGasOutletStream(unit);
-        if (gasOut != null) {
-          outletIsGasFork.put(System.identityHashCode(gasOut), Boolean.TRUE);
-        }
+	StreamInterface gasOut = DexpiStreamUtils.getGasOutletStream(unit);
+	if (gasOut != null) {
+	  outletIsGasFork.put(System.identityHashCode(gasOut), Boolean.TRUE);
+	}
       }
     }
 
     for (ProcessEquipmentInterface unit : units) {
       if (unit instanceof Stream || unit instanceof DexpiStream) {
-        continue;
+	continue;
       }
       List<StreamInterface> inletStreams = resolveInletStreams(unit);
       for (StreamInterface inletStream : inletStreams) {
-        String upstream = outletStreamToEquipment.get(System.identityHashCode(inletStream));
-        if (upstream != null && adjacency.containsKey(upstream)) {
-          adjacency.get(upstream).add(unit.getName());
-        }
-        // If this inlet is a liquid/water outlet from its source, mark as liquid branch
-        if (outletIsLiquid.containsKey(System.identityHashCode(inletStream))) {
-          liquidBranchEquipment.add(unit.getName());
-        }
-        // If this inlet is the gas (overhead) outlet of a separator, mark as gas branch
-        if (outletIsGasFork.containsKey(System.identityHashCode(inletStream))) {
-          gasBranchEquipment.add(unit.getName());
-        }
+	String upstream = outletStreamToEquipment.get(System.identityHashCode(inletStream));
+	if (upstream != null && adjacency.containsKey(upstream)) {
+	  adjacency.get(upstream).add(unit.getName());
+	}
+	// If this inlet is a liquid/water outlet from its source, mark as liquid branch
+	if (outletIsLiquid.containsKey(System.identityHashCode(inletStream))) {
+	  liquidBranchEquipment.add(unit.getName());
+	}
+	// If this inlet is the gas (overhead) outlet of a separator, mark as gas branch
+	if (outletIsGasFork.containsKey(System.identityHashCode(inletStream))) {
+	  gasBranchEquipment.add(unit.getName());
+	}
       }
     }
 
@@ -278,17 +276,17 @@ final class DexpiLayoutEngine {
     }
     for (List<String> neighbors : adjacency.values()) {
       for (String neighbor : neighbors) {
-        Integer current = inDegree.get(neighbor);
-        if (current != null) {
-          inDegree.put(neighbor, current + 1);
-        }
+	Integer current = inDegree.get(neighbor);
+	if (current != null) {
+	  inDegree.put(neighbor, current + 1);
+	}
       }
     }
 
     List<String> queue = new ArrayList<>();
     for (Map.Entry<String, Integer> entry : inDegree.entrySet()) {
       if (entry.getValue() == 0) {
-        queue.add(entry.getKey());
+	queue.add(entry.getKey());
       }
     }
 
@@ -298,15 +296,15 @@ final class DexpiLayoutEngine {
       topoOrder.add(current);
       List<String> neighbors = adjacency.get(current);
       if (neighbors != null) {
-        for (String neighbor : neighbors) {
-          Integer deg = inDegree.get(neighbor);
-          if (deg != null) {
-            inDegree.put(neighbor, deg - 1);
-            if (deg - 1 == 0) {
-              queue.add(neighbor);
-            }
-          }
-        }
+	for (String neighbor : neighbors) {
+	  Integer deg = inDegree.get(neighbor);
+	  if (deg != null) {
+	    inDegree.put(neighbor, deg - 1);
+	    if (deg - 1 == 0) {
+	      queue.add(neighbor);
+	    }
+	  }
+	}
       }
     }
 
@@ -314,7 +312,7 @@ final class DexpiLayoutEngine {
     Set<String> placed = new HashSet<>(topoOrder);
     for (String name : unitByName.keySet()) {
       if (!placed.contains(name)) {
-        topoOrder.add(name);
+	topoOrder.add(name);
       }
     }
 
@@ -325,24 +323,24 @@ final class DexpiLayoutEngine {
     while (changed) {
       changed = false;
       for (String name : liquidBranchEquipment.toArray(new String[0])) {
-        List<String> downstream = adjacency.get(name);
-        if (downstream != null) {
-          for (String ds : downstream) {
-            if (liquidBranchEquipment.add(ds)) {
-              changed = true;
-            }
-          }
-        }
+	List<String> downstream = adjacency.get(name);
+	if (downstream != null) {
+	  for (String ds : downstream) {
+	    if (liquidBranchEquipment.add(ds)) {
+	      changed = true;
+	    }
+	  }
+	}
       }
       for (String name : gasBranchEquipment.toArray(new String[0])) {
-        List<String> downstream = adjacency.get(name);
-        if (downstream != null) {
-          for (String ds : downstream) {
-            if (gasBranchEquipment.add(ds)) {
-              changed = true;
-            }
-          }
-        }
+	List<String> downstream = adjacency.get(name);
+	if (downstream != null) {
+	  for (String ds : downstream) {
+	    if (gasBranchEquipment.add(ds)) {
+	      changed = true;
+	    }
+	  }
+	}
       }
     }
 
@@ -357,9 +355,9 @@ final class DexpiLayoutEngine {
       boolean onLiquid = liquidBranchEquipment.contains(name);
       boolean onGas = gasBranchEquipment.contains(name);
       if (onLiquid && !onGas) {
-        y = Y_BASE - Y_BRANCH_OFFSET;
+	y = Y_BASE - Y_BRANCH_OFFSET;
       } else if (onGas && !onLiquid) {
-        y = Y_BASE + Y_BRANCH_OFFSET;
+	y = Y_BASE + Y_BRANCH_OFFSET;
       }
       positions.put(name, new EquipmentPosition(x, y, DEFAULT_SCALE, DEFAULT_SCALE));
       col++;
@@ -372,8 +370,8 @@ final class DexpiLayoutEngine {
    * Appends a DEXPI Position element to an equipment element.
    *
    * @param document the XML document
-   * @param element the equipment element
-   * @param pos the computed position
+   * @param element  the equipment element
+   * @param pos      the computed position
    */
   static void appendPosition(Document document, Element element, EquipmentPosition pos) {
     Element position = document.createElement("Position");
@@ -410,8 +408,8 @@ final class DexpiLayoutEngine {
    * Appends a DEXPI Scale element to an equipment element.
    *
    * @param document the XML document
-   * @param element the equipment element
-   * @param pos the computed position containing scale factors
+   * @param element  the equipment element
+   * @param pos      the computed position containing scale factors
    */
   static void appendScale(Document document, Element element, EquipmentPosition pos) {
     Element scale = document.createElement("Scale");
@@ -423,15 +421,15 @@ final class DexpiLayoutEngine {
   /**
    * Appends an EquipmentTagNameLabel to an equipment element.
    *
-   * @param document the XML document
-   * @param element the equipment element
-   * @param tagName the equipment tag name to display
-   * @param pos the equipment position
-   * @param labelId the unique label ID
+   * @param document    the XML document
+   * @param element     the equipment element
+   * @param tagName     the equipment tag name to display
+   * @param pos         the equipment position
+   * @param labelId     the unique label ID
    * @param equipmentId the equipment element ID (for TextStringFormatSpecification)
    */
-  static void appendTagNameLabel(Document document, Element element, String tagName,
-      EquipmentPosition pos, String labelId, String equipmentId) {
+  static void appendTagNameLabel(Document document, Element element, String tagName, EquipmentPosition pos,
+      String labelId, String equipmentId) {
     Element label = document.createElement("Label");
     label.setAttribute("ID", labelId);
     label.setAttribute("ComponentClass", "EquipmentTagNameLabel");
@@ -487,20 +485,20 @@ final class DexpiLayoutEngine {
    * Appends a process piping line (CenterLine) connecting two nozzle positions.
    *
    * <p>
-   * Uses orthogonal routing (horizontal-vertical-horizontal segments) when source and target are at
-   * different Y coordinates. Horizontal connections use a single straight segment. Line style
-   * matches the DEXPI standard process piping presentation (olive colour, 0.5 weight).
+   * Uses orthogonal routing (horizontal-vertical-horizontal segments) when source and target are at different Y
+   * coordinates. Horizontal connections use a single straight segment. Line style matches the DEXPI standard process
+   * piping presentation (olive colour, 0.5 weight).
    * </p>
    *
    * @param document the XML document
-   * @param parent the parent element (PipingNetworkSegment)
-   * @param fromX source X coordinate
-   * @param fromY source Y coordinate
-   * @param toX destination X coordinate
-   * @param toY destination Y coordinate
+   * @param parent   the parent element (PipingNetworkSegment)
+   * @param fromX    source X coordinate
+   * @param fromY    source Y coordinate
+   * @param toX      destination X coordinate
+   * @param toY      destination Y coordinate
    */
-  static void appendConnectionLine(Document document, Element parent, double fromX, double fromY,
-      double toX, double toY) {
+  static void appendConnectionLine(Document document, Element parent, double fromX, double fromY, double toX,
+      double toY) {
     Element presentation = document.createElement("Presentation");
     presentation.setAttribute("LineType", "0");
     presentation.setAttribute("LineWeight", String.valueOf(PROCESS_LINE_WEIGHT));
@@ -534,34 +532,33 @@ final class DexpiLayoutEngine {
   }
 
   /**
-   * Computes the orthogonal routing points for a connection between two nozzles, using the same
-   * H-V-H geometry as {@code appendConnectionLine} but returning the points instead of drawing
-   * them. This lets the caller analyse all routes together (for example to draw line-crossing hops)
-   * before the segments are serialised.
+   * Computes the orthogonal routing points for a connection between two nozzles, using the same H-V-H geometry as
+   * {@code appendConnectionLine} but returning the points instead of drawing them. This lets the caller analyse all
+   * routes together (for example to draw line-crossing hops) before the segments are serialised.
    *
    * @param fromX source X coordinate
    * @param fromY source Y coordinate
-   * @param toX target X coordinate
-   * @param toY target Y coordinate
-   * @return an array of {x, y} points describing the routed centre line (2 points for a straight
-   *         horizontal run, 4 points for an H-V-H route)
+   * @param toX   target X coordinate
+   * @param toY   target Y coordinate
+   * @return an array of {x, y} points describing the routed centre line (2 points for a straight horizontal run, 4
+   *         points for an H-V-H route)
    */
   static double[][] routeConnection(double fromX, double fromY, double toX, double toY) {
     boolean sameY = Math.abs(fromY - toY) < 0.5;
     if (sameY) {
-      return new double[][] {{fromX, fromY}, {toX, toY}};
+      return new double[][] { { fromX, fromY }, { toX, toY } };
     }
     double riserX = computeBranchRiserX(fromX, toX);
-    return new double[][] {{fromX, fromY}, {riserX, fromY}, {riserX, toY}, {toX, toY}};
+    return new double[][] { { fromX, fromY }, { riserX, fromY }, { riserX, toY }, { toX, toY } };
   }
 
   /**
    * Appends a single Coordinate element to a CenterLine.
    *
    * @param document the XML document
-   * @param parent the CenterLine element
-   * @param x the X coordinate
-   * @param y the Y coordinate
+   * @param parent   the CenterLine element
+   * @param x        the X coordinate
+   * @param y        the Y coordinate
    */
   private static void appendCoordinate(Document document, Element parent, double x, double y) {
     Element coord = document.createElement("Coordinate");
@@ -574,15 +571,14 @@ final class DexpiLayoutEngine {
    * Computes the X coordinate of the vertical riser for an orthogonal (H-V-H) connection.
    *
    * <p>
-   * For normal forward flow with enough horizontal room, the riser is placed a short
-   * {@link #BRANCH_APPROACH} distance to the left of the target so the long horizontal run stays on
-   * the source line and the branch drops at the target column. This keeps risers for different
-   * targets in distinct X channels and reduces line crossings. Short or backward (recycle)
-   * connections fall back to the segment midpoint.
+   * For normal forward flow with enough horizontal room, the riser is placed a short {@link #BRANCH_APPROACH} distance
+   * to the left of the target so the long horizontal run stays on the source line and the branch drops at the target
+   * column. This keeps risers for different targets in distinct X channels and reduces line crossings. Short or
+   * backward (recycle) connections fall back to the segment midpoint.
    * </p>
    *
    * @param fromX source X coordinate
-   * @param toX target X coordinate
+   * @param toX   target X coordinate
    * @return the X coordinate at which the vertical riser is drawn
    */
   private static double computeBranchRiserX(double fromX, double toX) {
@@ -610,8 +606,8 @@ final class DexpiLayoutEngine {
     /**
      * Creates a new equipment position with no rotation.
      *
-     * @param x x coordinate
-     * @param y y coordinate
+     * @param x      x coordinate
+     * @param y      y coordinate
      * @param scaleX x scale factor
      * @param scaleY y scale factor
      */
@@ -622,10 +618,10 @@ final class DexpiLayoutEngine {
     /**
      * Creates a new equipment position with rotation.
      *
-     * @param x x coordinate
-     * @param y y coordinate
-     * @param scaleX x scale factor
-     * @param scaleY y scale factor
+     * @param x        x coordinate
+     * @param y        y coordinate
+     * @param scaleX   x scale factor
+     * @param scaleY   y scale factor
      * @param rotation rotation angle in degrees
      */
     EquipmentPosition(double x, double y, double scaleX, double scaleY, double rotation) {
@@ -641,45 +637,43 @@ final class DexpiLayoutEngine {
    * Appends an EquipmentBarLabel below an equipment element showing operating data.
    *
    * <p>
-   * Renders a table with border lines and rows for equipment identity, operating pressure,
-   * operating temperature, and flow rate. This follows the DEXPI standard pattern for equipment
-   * data labels on P&amp;IDs.
+   * Renders a table with border lines and rows for equipment identity, operating pressure, operating temperature, and
+   * flow rate. This follows the DEXPI standard pattern for equipment data labels on P&amp;IDs.
    * </p>
    *
-   * @param document the XML document
-   * @param element the equipment element
-   * @param tagName the equipment tag name
-   * @param pos the equipment position
-   * @param labelId the unique label ID
+   * @param document    the XML document
+   * @param element     the equipment element
+   * @param tagName     the equipment tag name
+   * @param pos         the equipment position
+   * @param labelId     the unique label ID
    * @param equipmentId the equipment element ID
-   * @param pressure operating pressure in bara (NaN to omit)
+   * @param pressure    operating pressure in bara (NaN to omit)
    * @param temperature operating temperature in C (NaN to omit)
-   * @param flowRate operating flow rate in MSm3/day (NaN to omit)
+   * @param flowRate    operating flow rate in MSm3/day (NaN to omit)
    */
-  static void appendEquipmentBarLabel(Document document, Element element, String tagName,
-      EquipmentPosition pos, String labelId, String equipmentId, double pressure,
-      double temperature, double flowRate) {
-    appendEquipmentBarLabel(document, element, tagName, pos, labelId, equipmentId, pressure,
-        temperature, flowRate, null);
+  static void appendEquipmentBarLabel(Document document, Element element, String tagName, EquipmentPosition pos,
+      String labelId, String equipmentId, double pressure, double temperature, double flowRate) {
+    appendEquipmentBarLabel(document, element, tagName, pos, labelId, equipmentId, pressure, temperature, flowRate,
+	null);
   }
 
   /**
    * Appends an equipment bar label with operating data and optional extra rows.
    *
-   * @param document the XML document
-   * @param element the equipment element
-   * @param tagName the equipment tag name
-   * @param pos the equipment position
-   * @param labelId the unique label ID
+   * @param document    the XML document
+   * @param element     the equipment element
+   * @param tagName     the equipment tag name
+   * @param pos         the equipment position
+   * @param labelId     the unique label ID
    * @param equipmentId the equipment element ID
-   * @param pressure operating pressure in bara (NaN to omit)
+   * @param pressure    operating pressure in bara (NaN to omit)
    * @param temperature operating temperature in C (NaN to omit)
-   * @param flowRate operating flow rate in MSm3/day (NaN to omit)
-   * @param extraRows additional label-value pairs to display (may be null)
+   * @param flowRate    operating flow rate in MSm3/day (NaN to omit)
+   * @param extraRows   additional label-value pairs to display (may be null)
    */
-  static void appendEquipmentBarLabel(Document document, Element element, String tagName,
-      EquipmentPosition pos, String labelId, String equipmentId, double pressure,
-      double temperature, double flowRate, List<String[]> extraRows) {
+  static void appendEquipmentBarLabel(Document document, Element element, String tagName, EquipmentPosition pos,
+      String labelId, String equipmentId, double pressure, double temperature, double flowRate,
+      List<String[]> extraRows) {
     Element label = document.createElement("Label");
     label.setAttribute("ID", labelId);
     label.setAttribute("ComponentClass", "EquipmentBarLabel");
@@ -693,15 +687,15 @@ final class DexpiLayoutEngine {
 
     // Build rows of data to display
     List<String[]> rows = new ArrayList<>();
-    rows.add(new String[] {"Ident", tagName});
+    rows.add(new String[] { "Ident", tagName });
     if (!Double.isNaN(pressure)) {
-      rows.add(new String[] {"Oper. Press.", formatValue(pressure) + " bara"});
+      rows.add(new String[] { "Oper. Press.", formatValue(pressure) + " bara" });
     }
     if (!Double.isNaN(temperature)) {
-      rows.add(new String[] {"Oper. Temp.", formatValue(temperature) + " \u00B0C"});
+      rows.add(new String[] { "Oper. Temp.", formatValue(temperature) + " \u00B0C" });
     }
     if (!Double.isNaN(flowRate)) {
-      rows.add(new String[] {"Flow Rate", formatValue(flowRate) + " MSm3/d"});
+      rows.add(new String[] { "Flow Rate", formatValue(flowRate) + " MSm3/d" });
     }
     if (extraRows != null) {
       rows.addAll(extraRows);
@@ -713,11 +707,9 @@ final class DexpiLayoutEngine {
     for (int i = 0; i < rows.size(); i++) {
       double rowY = boxTop + (i + 1) * BAR_ROW_HEIGHT;
       // Row label text
-      appendBarText(document, label, rows.get(i)[0], textLeft, boxTop + i * BAR_ROW_HEIGHT + 0.8,
-          "LeftBottom");
+      appendBarText(document, label, rows.get(i)[0], textLeft, boxTop + i * BAR_ROW_HEIGHT + 0.8, "LeftBottom");
       // Row value text
-      appendBarText(document, label, rows.get(i)[1], valueX, boxTop + i * BAR_ROW_HEIGHT + 0.8,
-          "CenterBottom");
+      appendBarText(document, label, rows.get(i)[1], valueX, boxTop + i * BAR_ROW_HEIGHT + 0.8, "CenterBottom");
       // Row separator line
       appendBarPolyLine(document, label, boxLeft, rowY, boxRight, rowY);
     }
@@ -733,10 +725,10 @@ final class DexpiLayoutEngine {
   /**
    * Appends a Position and Scale to a Nozzle element for graphical rendering.
    *
-   * @param document the XML document
+   * @param document      the XML document
    * @param nozzleElement the Nozzle element
-   * @param x the x coordinate
-   * @param y the y coordinate
+   * @param x             the x coordinate
+   * @param y             the y coordinate
    */
   static void appendNozzlePosition(Document document, Element nozzleElement, double x, double y) {
     Element position = document.createElement("Position");
@@ -770,14 +762,13 @@ final class DexpiLayoutEngine {
    * Appends a PolyLine element used as a border in an equipment bar label.
    *
    * @param document the XML document
-   * @param parent the label element
-   * @param x1 start X
-   * @param y1 start Y
-   * @param x2 end X
-   * @param y2 end Y
+   * @param parent   the label element
+   * @param x1       start X
+   * @param y1       start Y
+   * @param x2       end X
+   * @param y2       end Y
    */
-  private static void appendBarPolyLine(Document document, Element parent, double x1, double y1,
-      double x2, double y2) {
+  private static void appendBarPolyLine(Document document, Element parent, double x1, double y1, double x2, double y2) {
     Element poly = document.createElement("PolyLine");
     poly.setAttribute("NumPoints", "2");
     Element pres = document.createElement("Presentation");
@@ -795,15 +786,15 @@ final class DexpiLayoutEngine {
   /**
    * Appends a Text element used in an equipment bar label row.
    *
-   * @param document the XML document
-   * @param parent the label element
-   * @param text the text string
-   * @param x the text X position
-   * @param y the text Y position
+   * @param document      the XML document
+   * @param parent        the label element
+   * @param text          the text string
+   * @param x             the text X position
+   * @param y             the text Y position
    * @param justification the text justification (e.g. "LeftBottom", "CenterBottom")
    */
-  private static void appendBarText(Document document, Element parent, String text, double x,
-      double y, String justification) {
+  private static void appendBarText(Document document, Element parent, String text, double x, double y,
+      String justification) {
     Element textElement = document.createElement("Text");
     textElement.setAttribute("String", text);
     textElement.setAttribute("Font", FONT_NAME);
@@ -839,9 +830,8 @@ final class DexpiLayoutEngine {
   }
 
   /**
-   * Resolves all inlet streams for a process equipment unit. Handles both TwoPortEquipment (single
-   * inlet via {@code getInletStream()}) and multi-port equipment like Separator and Mixer (via
-   * {@code getInletStreams()}).
+   * Resolves all inlet streams for a process equipment unit. Handles both TwoPortEquipment (single inlet via
+   * {@code getInletStream()}) and multi-port equipment like Separator and Mixer (via {@code getInletStreams()}).
    *
    * @param unit the process equipment
    * @return list of inlet streams (never null, may be empty)
@@ -851,13 +841,13 @@ final class DexpiLayoutEngine {
     if (unit instanceof TwoPortEquipment) {
       StreamInterface inlet = ((TwoPortEquipment) unit).getInletStream();
       if (inlet != null) {
-        result.add(inlet);
+	result.add(inlet);
       }
     } else {
       // Separator, Mixer, Splitter, etc. — use getInletStreams()
       List<StreamInterface> inlets = unit.getInletStreams();
       if (inlets != null) {
-        result.addAll(inlets);
+	result.addAll(inlets);
       }
     }
     return result;
@@ -883,43 +873,42 @@ final class DexpiLayoutEngine {
    * Computes the layout position for an instrument bubble attached to a specific equipment.
    *
    * <p>
-   * Instruments are placed above (higher Y) the equipment, offset by {@link #INSTRUMENT_OFFSET_Y}.
-   * Multiple instruments on the same equipment are spaced horizontally.
+   * Instruments are placed above (higher Y) the equipment, offset by {@link #INSTRUMENT_OFFSET_Y}. Multiple instruments
+   * on the same equipment are spaced horizontally.
    * </p>
    *
-   * @param equipmentPos the parent equipment position
-   * @param instrumentIndex 0-based index of this instrument on the equipment
+   * @param equipmentPos     the parent equipment position
+   * @param instrumentIndex  0-based index of this instrument on the equipment
    * @param totalInstruments total number of instruments on this equipment
    * @return the instrument position {x, y}
    */
-  static double[] computeInstrumentPosition(EquipmentPosition equipmentPos, int instrumentIndex,
-      int totalInstruments) {
+  static double[] computeInstrumentPosition(EquipmentPosition equipmentPos, int instrumentIndex, int totalInstruments) {
     double baseX = equipmentPos.x;
     double baseY = equipmentPos.y + INSTRUMENT_OFFSET_Y;
     // Center the group of instruments horizontally over the equipment
     double totalWidth = (totalInstruments - 1) * INSTRUMENT_X_SPACING;
     double startX = baseX - totalWidth / 2.0;
     double x = startX + instrumentIndex * INSTRUMENT_X_SPACING;
-    return new double[] {x, baseY};
+    return new double[] { x, baseY };
   }
 
   /**
    * Appends a measuring line (CenterLine) connecting an equipment nozzle to an instrument bubble.
    *
    * <p>
-   * The line runs vertically from a point on the process line up to the bottom of the instrument
-   * bubble. Uses green signal-line colour per DEXPI convention.
+   * The line runs vertically from a point on the process line up to the bottom of the instrument bubble. Uses green
+   * signal-line colour per DEXPI convention.
    * </p>
    *
    * @param document the XML document
-   * @param parent the InformationFlow element to append to
-   * @param tapX X coordinate on the process line (tap point)
-   * @param tapY Y coordinate on the process line
-   * @param bubbleX X coordinate of the instrument bubble center
-   * @param bubbleY Y coordinate of the instrument bubble center
+   * @param parent   the InformationFlow element to append to
+   * @param tapX     X coordinate on the process line (tap point)
+   * @param tapY     Y coordinate on the process line
+   * @param bubbleX  X coordinate of the instrument bubble center
+   * @param bubbleY  Y coordinate of the instrument bubble center
    */
-  static void appendMeasuringLine(Document document, Element parent, double tapX, double tapY,
-      double bubbleX, double bubbleY) {
+  static void appendMeasuringLine(Document document, Element parent, double tapX, double tapY, double bubbleX,
+      double bubbleY) {
     Element centerLine = document.createElement("CenterLine");
 
     double bottomY = bubbleY - INSTRUMENT_BUBBLE_RADIUS;
@@ -949,9 +938,9 @@ final class DexpiLayoutEngine {
   }
 
   /**
-   * ISA-5.1 signal / connecting line kinds, each rendered with a distinct line type so the
-   * measurement (sensor&rarr;controller) and command (controller&rarr;final element) sides of a
-   * loop are visually distinguishable, as required by ANSI/ISA-5.1-2009.
+   * ISA-5.1 signal / connecting line kinds, each rendered with a distinct line type so the measurement
+   * (sensor&rarr;controller) and command (controller&rarr;final element) sides of a loop are visually distinguishable,
+   * as required by ANSI/ISA-5.1-2009.
    */
   enum SignalLineKind {
     /** Undefined instrument signal — dashed (legacy default). */
@@ -992,36 +981,35 @@ final class DexpiLayoutEngine {
    *
    * <p>
    * Backward-compatible overload that delegates to
-   * {@link #appendSignalLine(Document, Element, double, double, double, double, SignalLineKind)}
-   * using {@link SignalLineKind#GENERIC}.
+   * {@link #appendSignalLine(Document, Element, double, double, double, double, SignalLineKind)} using
+   * {@link SignalLineKind#GENERIC}.
    * </p>
    *
    * @param document the XML document
-   * @param parent the InformationFlow element
-   * @param fromX source bubble center X
-   * @param fromY source bubble center Y
-   * @param toX target bubble center X
-   * @param toY target bubble center Y
+   * @param parent   the InformationFlow element
+   * @param fromX    source bubble center X
+   * @param fromY    source bubble center Y
+   * @param toX      target bubble center X
+   * @param toY      target bubble center Y
    */
-  static void appendSignalLine(Document document, Element parent, double fromX, double fromY,
-      double toX, double toY) {
+  static void appendSignalLine(Document document, Element parent, double fromX, double fromY, double toX, double toY) {
     appendSignalLine(document, parent, fromX, fromY, toX, toY, SignalLineKind.GENERIC);
   }
 
   /**
-   * Appends a signal conveying line between two instrument bubbles, encoding the ISA-5.1 signal
-   * kind as the DEXPI line type.
+   * Appends a signal conveying line between two instrument bubbles, encoding the ISA-5.1 signal kind as the DEXPI line
+   * type.
    *
    * @param document the XML document
-   * @param parent the InformationFlow element
-   * @param fromX source bubble center X
-   * @param fromY source bubble center Y
-   * @param toX target bubble center X
-   * @param toY target bubble center Y
-   * @param kind the ISA-5.1 signal line kind (must not be null)
+   * @param parent   the InformationFlow element
+   * @param fromX    source bubble center X
+   * @param fromY    source bubble center Y
+   * @param toX      target bubble center X
+   * @param toY      target bubble center Y
+   * @param kind     the ISA-5.1 signal line kind (must not be null)
    */
-  static void appendSignalLine(Document document, Element parent, double fromX, double fromY,
-      double toX, double toY, SignalLineKind kind) {
+  static void appendSignalLine(Document document, Element parent, double fromX, double fromY, double toX, double toY,
+      SignalLineKind kind) {
     Element centerLine = document.createElement("CenterLine");
 
     double departY = fromY - INSTRUMENT_BUBBLE_RADIUS;
@@ -1058,22 +1046,20 @@ final class DexpiLayoutEngine {
    * Appends an off-page (off-sheet) connector pentagon with a cross-reference label.
    *
    * <p>
-   * Per ISA-5.1 and ISO 10628, a stream that leaves the drawing boundary is terminated with a
-   * pentagon (a "home plate" / flag symbol) pointing in the flow direction and carrying a reference
-   * to the continuation sheet or tag. The pentagon points right for streams leaving to the right
-   * and left for streams entering from the left.
+   * Per ISA-5.1 and ISO 10628, a stream that leaves the drawing boundary is terminated with a pentagon (a "home plate"
+   * / flag symbol) pointing in the flow direction and carrying a reference to the continuation sheet or tag. The
+   * pentagon points right for streams leaving to the right and left for streams entering from the left.
    * </p>
    *
-   * @param document the XML document
-   * @param parent the parent element to append to
-   * @param x the connector tip X coordinate (boundary crossing point)
-   * @param y the connector center Y coordinate
-   * @param reference the cross-reference text (e.g. continuation drawing number / stream tag)
-   * @param pointingRight true to point the pentagon right (outgoing), false to point left
-   *        (incoming)
+   * @param document      the XML document
+   * @param parent        the parent element to append to
+   * @param x             the connector tip X coordinate (boundary crossing point)
+   * @param y             the connector center Y coordinate
+   * @param reference     the cross-reference text (e.g. continuation drawing number / stream tag)
+   * @param pointingRight true to point the pentagon right (outgoing), false to point left (incoming)
    */
-  static void appendOffPageConnector(Document document, Element parent, double x, double y,
-      String reference, boolean pointingRight) {
+  static void appendOffPageConnector(Document document, Element parent, double x, double y, String reference,
+      boolean pointingRight) {
     double h = 4.0; // half-height of the pentagon
     double bodyLen = 6.0; // rectangular body length
     double tipLen = 4.0; // triangular tip length
@@ -1109,29 +1095,28 @@ final class DexpiLayoutEngine {
   // ---- Line-crossing jumps (ISO 10628) ----
 
   /**
-   * Determines whether a horizontal segment and a vertical segment cross, and if so appends a small
-   * semicircular "jump" (hop) arc on the horizontal line at the crossing point. Per ISO 10628 the
-   * line that hops indicates no connection at the crossing.
+   * Determines whether a horizontal segment and a vertical segment cross, and if so appends a small semicircular "jump"
+   * (hop) arc on the horizontal line at the crossing point. Per ISO 10628 the line that hops indicates no connection at
+   * the crossing.
    *
    * <p>
-   * The horizontal segment runs at {@code hY} from {@code hX1} to {@code hX2}; the vertical segment
-   * runs at {@code vX} from {@code vY1} to {@code vY2}. A jump is only drawn when the vertical line
-   * genuinely crosses the interior of the horizontal line (endpoints excluded), so connected
-   * tee-junctions are not given a hop.
+   * The horizontal segment runs at {@code hY} from {@code hX1} to {@code hX2}; the vertical segment runs at {@code vX}
+   * from {@code vY1} to {@code vY2}. A jump is only drawn when the vertical line genuinely crosses the interior of the
+   * horizontal line (endpoints excluded), so connected tee-junctions are not given a hop.
    * </p>
    *
    * @param document the XML document
-   * @param parent the parent element to append the arc to
-   * @param hX1 horizontal segment start X
-   * @param hX2 horizontal segment end X
-   * @param hY horizontal segment Y
-   * @param vX vertical segment X
-   * @param vY1 vertical segment start Y
-   * @param vY2 vertical segment end Y
+   * @param parent   the parent element to append the arc to
+   * @param hX1      horizontal segment start X
+   * @param hX2      horizontal segment end X
+   * @param hY       horizontal segment Y
+   * @param vX       vertical segment X
+   * @param vY1      vertical segment start Y
+   * @param vY2      vertical segment end Y
    * @return true if a crossing was found and a hop was drawn
    */
-  static boolean appendCrossingHop(Document document, Element parent, double hX1, double hX2,
-      double hY, double vX, double vY1, double vY2) {
+  static boolean appendCrossingHop(Document document, Element parent, double hX1, double hX2, double hY, double vX,
+      double vY1, double vY2) {
     double hLeft = Math.min(hX1, hX2);
     double hRight = Math.max(hX1, hX2);
     double vBottom = Math.min(vY1, vY2);
@@ -1184,8 +1169,8 @@ final class DexpiLayoutEngine {
   // ---- Drawing border & title block ----
 
   /**
-   * Computes the required drawing sheet dimensions to enclose all equipment, instruments, and
-   * labels with adequate margin. The result is at least A3 landscape (420 x 297 mm).
+   * Computes the required drawing sheet dimensions to enclose all equipment, instruments, and labels with adequate
+   * margin. The result is at least A3 landscape (420 x 297 mm).
    *
    * @param positions the computed equipment layout positions
    * @return a two-element array {width, height} in mm
@@ -1199,62 +1184,59 @@ final class DexpiLayoutEngine {
       // Controller bubbles may extend INSTRUMENT_X_SPACING beyond the rightmost transmitter
       double instrumentRight = pos.x + INSTRUMENT_X_SPACING + INSTRUMENT_BUBBLE_RADIUS;
       if (instrumentRight > rightEdge) {
-        rightEdge = instrumentRight;
+	rightEdge = instrumentRight;
       }
       double topEdge = pos.y + INSTRUMENT_OFFSET_Y + INSTRUMENT_BUBBLE_RADIUS;
       if (rightEdge > maxX) {
-        maxX = rightEdge;
+	maxX = rightEdge;
       }
       if (topEdge > maxY) {
-        maxY = topEdge;
+	maxY = topEdge;
       }
     }
     // Add right-side padding for nozzles, arrows, and border margin
     double width = Math.max(MIN_SHEET_WIDTH, maxX + BORDER_MARGIN + 40.0);
     double height = Math.max(MIN_SHEET_HEIGHT, maxY + BORDER_MARGIN + 40.0);
-    return new double[] {width, height};
+    return new double[] { width, height };
   }
 
   /**
    * Computes the number of drawing pages needed for a large flowsheet.
    *
    * <p>
-   * When the total equipment extent exceeds an A1 landscape sheet (841 x 594 mm), the flowsheet is
-   * split into multiple pages. Each page has its own Drawing element with border, title block, and
-   * continuation markings.
+   * When the total equipment extent exceeds an A1 landscape sheet (841 x 594 mm), the flowsheet is split into multiple
+   * pages. Each page has its own Drawing element with border, title block, and continuation markings.
    * </p>
    *
-   * @param totalWidth the total layout width in mm
-   * @param totalHeight the total layout height in mm
-   * @param maxPageWidth maximum page width (default 841 mm for A1)
+   * @param totalWidth    the total layout width in mm
+   * @param totalHeight   the total layout height in mm
+   * @param maxPageWidth  maximum page width (default 841 mm for A1)
    * @param maxPageHeight maximum page height (default 594 mm for A1)
    * @return the number of pages as [columns, rows]
    */
-  static int[] computePageGrid(double totalWidth, double totalHeight, double maxPageWidth,
-      double maxPageHeight) {
+  static int[] computePageGrid(double totalWidth, double totalHeight, double maxPageWidth, double maxPageHeight) {
     int cols = Math.max(1, (int) Math.ceil(totalWidth / maxPageWidth));
     int rows = Math.max(1, (int) Math.ceil(totalHeight / maxPageHeight));
-    return new int[] {cols, rows};
+    return new int[] { cols, rows };
   }
 
   /**
    * Appends a continuation arrow marking at the edge of a drawing page.
    *
    * <p>
-   * Per ISO 10628 and NORSOK Z-003, when a P&amp;ID spans multiple sheets, continuation arrows
-   * indicate where the process continues on adjacent sheets. The arrow is labeled with the
-   * destination sheet number.
+   * Per ISO 10628 and NORSOK Z-003, when a P&amp;ID spans multiple sheets, continuation arrows indicate where the
+   * process continues on adjacent sheets. The arrow is labeled with the destination sheet number.
    * </p>
    *
-   * @param document the XML document
-   * @param parent the Drawing element
-   * @param x the arrow X position
-   * @param y the arrow Y position
-   * @param direction "RIGHT", "LEFT", "UP", or "DOWN"
+   * @param document    the XML document
+   * @param parent      the Drawing element
+   * @param x           the arrow X position
+   * @param y           the arrow Y position
+   * @param direction   "RIGHT", "LEFT", "UP", or "DOWN"
    * @param targetSheet the destination sheet identifier (e.g. "Sheet 2")
    */
-  static void appendContinuationArrow(Document document, Element parent, double x, double y,
-      String direction, String targetSheet) {
+  static void appendContinuationArrow(Document document, Element parent, double x, double y, String direction,
+      String targetSheet) {
     double dx = 0;
     double dy = 0;
     double arrowLen = 8.0;
@@ -1339,20 +1321,20 @@ final class DexpiLayoutEngine {
   }
 
   /**
-   * Appends a complete DEXPI {@code <Drawing>} element with border, column/row markers, and a
-   * professional title block. The sheet dimensions are auto-computed to fit all content.
+   * Appends a complete DEXPI {@code <Drawing>} element with border, column/row markers, and a professional title block.
+   * The sheet dimensions are auto-computed to fit all content.
    *
-   * @param document the XML document
-   * @param parent the PlantModel root element
-   * @param drawingName the drawing title (e.g. process name)
+   * @param document      the XML document
+   * @param parent        the PlantModel root element
+   * @param drawingName   the drawing title (e.g. process name)
    * @param drawingNumber the drawing number (e.g. "PID-001")
-   * @param revision the revision string (e.g. "A")
-   * @param date the drawing date string
-   * @param sheetWidth the computed sheet width in mm
-   * @param sheetHeight the computed sheet height in mm
+   * @param revision      the revision string (e.g. "A")
+   * @param date          the drawing date string
+   * @param sheetWidth    the computed sheet width in mm
+   * @param sheetHeight   the computed sheet height in mm
    */
-  static void appendDrawing(Document document, Element parent, String drawingName,
-      String drawingNumber, String revision, String date, double sheetWidth, double sheetHeight) {
+  static void appendDrawing(Document document, Element parent, String drawingName, String drawingNumber,
+      String revision, String date, double sheetWidth, double sheetHeight) {
     Element drawing = document.createElement("Drawing");
     drawing.setAttribute("Name", drawingName != null ? drawingName : "NeqSim P&ID");
     drawing.setAttribute("Type", "PID");
@@ -1391,9 +1373,9 @@ final class DexpiLayoutEngine {
   /**
    * Appends the outer and inner border rectangles.
    *
-   * @param document the XML document
-   * @param border the DrawingBorder element
-   * @param sheetWidth the sheet width in mm
+   * @param document    the XML document
+   * @param border      the DrawingBorder element
+   * @param sheetWidth  the sheet width in mm
    * @param sheetHeight the sheet height in mm
    */
   private static void appendDrawingBorderLines(Document document, Element border, double sheetWidth,
@@ -1402,22 +1384,22 @@ final class DexpiLayoutEngine {
     appendBorderRect(document, border, 1.0, 1.0, sheetWidth - 1.0, sheetHeight - 1.0, 0.3);
     // Inner thick border
     appendBorderRect(document, border, BORDER_MARGIN, BORDER_MARGIN, sheetWidth - BORDER_MARGIN,
-        sheetHeight - BORDER_MARGIN, 0.6);
+	sheetHeight - BORDER_MARGIN, 0.6);
   }
 
   /**
    * Appends a rectangle as a closed PolyLine.
    *
-   * @param document the XML document
-   * @param parent the parent element
-   * @param x1 left X
-   * @param y1 bottom Y
-   * @param x2 right X
-   * @param y2 top Y
+   * @param document   the XML document
+   * @param parent     the parent element
+   * @param x1         left X
+   * @param y1         bottom Y
+   * @param x2         right X
+   * @param y2         top Y
    * @param lineWeight the line weight
    */
-  private static void appendBorderRect(Document document, Element parent, double x1, double y1,
-      double x2, double y2, double lineWeight) {
+  private static void appendBorderRect(Document document, Element parent, double x1, double y1, double x2, double y2,
+      double lineWeight) {
     Element poly = document.createElement("PolyLine");
     poly.setAttribute("NumPoints", "5");
     Element pres = document.createElement("Presentation");
@@ -1438,13 +1420,12 @@ final class DexpiLayoutEngine {
   /**
    * Appends column/row zone markers along the border edges (A-F vertical, 1-8 horizontal).
    *
-   * @param document the XML document
-   * @param border the DrawingBorder element
-   * @param sheetWidth the sheet width in mm
+   * @param document    the XML document
+   * @param border      the DrawingBorder element
+   * @param sheetWidth  the sheet width in mm
    * @param sheetHeight the sheet height in mm
    */
-  private static void appendColumnRowMarkers(Document document, Element border, double sheetWidth,
-      double sheetHeight) {
+  private static void appendColumnRowMarkers(Document document, Element border, double sheetWidth, double sheetHeight) {
     double innerLeft = BORDER_MARGIN;
     double innerRight = sheetWidth - BORDER_MARGIN;
     double innerBottom = BORDER_MARGIN;
@@ -1464,9 +1445,9 @@ final class DexpiLayoutEngine {
       appendBorderText(document, border, num, cx, 2.5);
       // Tick marks
       if (i > 0) {
-        double tickX = innerLeft + i * colWidth;
-        appendBorderTick(document, border, tickX, 1.0, tickX, innerBottom);
-        appendBorderTick(document, border, tickX, sheetHeight - 1.0, tickX, innerTop);
+	double tickX = innerLeft + i * colWidth;
+	appendBorderTick(document, border, tickX, 1.0, tickX, innerBottom);
+	appendBorderTick(document, border, tickX, sheetHeight - 1.0, tickX, innerTop);
       }
     }
 
@@ -1482,9 +1463,9 @@ final class DexpiLayoutEngine {
       appendBorderText(document, border, letter, sheetWidth - 2.5, cy);
       // Tick marks
       if (i > 0) {
-        double tickY = innerBottom + i * rowHeight;
-        appendBorderTick(document, border, 1.0, tickY, innerLeft, tickY);
-        appendBorderTick(document, border, sheetWidth - 1.0, tickY, innerRight, tickY);
+	double tickY = innerBottom + i * rowHeight;
+	appendBorderTick(document, border, 1.0, tickY, innerLeft, tickY);
+	appendBorderTick(document, border, sheetWidth - 1.0, tickY, innerRight, tickY);
       }
     }
   }
@@ -1493,13 +1474,12 @@ final class DexpiLayoutEngine {
    * Appends a border zone label (column number or row letter).
    *
    * @param document the XML document
-   * @param parent the DrawingBorder element
-   * @param text the label text
-   * @param x X coordinate
-   * @param y Y coordinate
+   * @param parent   the DrawingBorder element
+   * @param text     the label text
+   * @param x        X coordinate
+   * @param y        Y coordinate
    */
-  private static void appendBorderText(Document document, Element parent, String text, double x,
-      double y) {
+  private static void appendBorderText(Document document, Element parent, String text, double x, double y) {
     Element textElem = document.createElement("Text");
     textElem.setAttribute("String", text);
     textElem.setAttribute("Font", FONT_NAME);
@@ -1535,14 +1515,13 @@ final class DexpiLayoutEngine {
    * Appends a short tick mark line in the border margin.
    *
    * @param document the XML document
-   * @param parent the DrawingBorder element
-   * @param x1 start X
-   * @param y1 start Y
-   * @param x2 end X
-   * @param y2 end Y
+   * @param parent   the DrawingBorder element
+   * @param x1       start X
+   * @param y1       start Y
+   * @param x2       end X
+   * @param y2       end Y
    */
-  private static void appendBorderTick(Document document, Element parent, double x1, double y1,
-      double x2, double y2) {
+  private static void appendBorderTick(Document document, Element parent, double x1, double y1, double x2, double y2) {
     Element poly = document.createElement("PolyLine");
     poly.setAttribute("NumPoints", "2");
     Element pres = document.createElement("Presentation");
@@ -1560,16 +1539,16 @@ final class DexpiLayoutEngine {
   /**
    * Appends the title block label in the bottom-right corner of the drawing.
    *
-   * @param document the XML document
-   * @param drawing the Drawing element
-   * @param drawingName the drawing title
+   * @param document      the XML document
+   * @param drawing       the Drawing element
+   * @param drawingName   the drawing title
    * @param drawingNumber the drawing number
-   * @param revision the revision
-   * @param date the date string
-   * @param sheetWidth the width of the drawing sheet in layout units
+   * @param revision      the revision
+   * @param date          the date string
+   * @param sheetWidth    the width of the drawing sheet in layout units
    */
-  private static void appendTitleBlock(Document document, Element drawing, String drawingName,
-      String drawingNumber, String revision, String date, double sheetWidth) {
+  private static void appendTitleBlock(Document document, Element drawing, String drawingName, String drawingNumber,
+      String revision, String date, double sheetWidth) {
     Element label = document.createElement("Label");
     label.setAttribute("ID", "TitleBlock-1");
     label.setAttribute("ComponentClass", "Label");
@@ -1592,8 +1571,7 @@ final class DexpiLayoutEngine {
     appendTitleCell(document, label, blockLeft, row1Bottom, col2, row1Top, "DRAWN BY");
     appendTitleCell(document, label, col2, row1Bottom, col3, row1Top, date != null ? date : "");
     appendTitleCell(document, label, col3, row1Bottom, col4, row1Top, "DRAWING NO");
-    appendTitleCell(document, label, col4, row1Bottom, blockRight, row1Top,
-        drawingNumber != null ? drawingNumber : "");
+    appendTitleCell(document, label, col4, row1Bottom, blockRight, row1Top, drawingNumber != null ? drawingNumber : "");
 
     // Row 2: CHECKED BY | - | REV | revision
     double row2Bottom = row1Top;
@@ -1601,8 +1579,7 @@ final class DexpiLayoutEngine {
     appendTitleCell(document, label, blockLeft, row2Bottom, col2, row2Top, "CHECKED BY");
     appendTitleCell(document, label, col2, row2Bottom, col3, row2Top, "-");
     appendTitleCell(document, label, col3, row2Bottom, col4, row2Top, "REV");
-    appendTitleCell(document, label, col4, row2Bottom, blockRight, row2Top,
-        revision != null ? revision : "0");
+    appendTitleCell(document, label, col4, row2Bottom, blockRight, row2Top, revision != null ? revision : "0");
 
     // Row 3: APPROVED BY | - | STATUS | IFC
     double row3Bottom = row2Top;
@@ -1618,15 +1595,14 @@ final class DexpiLayoutEngine {
     // Centred title text
     double titleCenterX = (blockLeft + blockRight) / 2.0;
     double titleCenterY = (titleBottom + blockTop) / 2.0 + 4.0;
-    appendTitleText(document, label,
-        drawingName != null ? drawingName : "Process & Instrument Diagram", titleCenterX,
-        titleCenterY, TITLE_MAIN_FONT_HEIGHT, "CenterCenter");
+    appendTitleText(document, label, drawingName != null ? drawingName : "Process & Instrument Diagram", titleCenterX,
+	titleCenterY, TITLE_MAIN_FONT_HEIGHT, "CenterCenter");
     // ISO 7200 legal owner / originator line
-    appendTitleText(document, label, "Owner: NeqSim  |  Originator: NeqSim DEXPI Export",
-        titleCenterX, titleCenterY - 4.5, TITLE_FONT_HEIGHT, "CenterCenter");
+    appendTitleText(document, label, "Owner: NeqSim  |  Originator: NeqSim DEXPI Export", titleCenterX,
+	titleCenterY - 4.5, TITLE_FONT_HEIGHT, "CenterCenter");
     // ISO 7200 document-type / scale / sheet line
-    appendTitleText(document, label, "Type: P&ID   Scale: NTS   Sheet: 1 of 1   Lang: EN",
-        titleCenterX, titleCenterY - 8.5, TITLE_FONT_HEIGHT, "CenterCenter");
+    appendTitleText(document, label, "Type: P&ID   Scale: NTS   Sheet: 1 of 1   Lang: EN", titleCenterX,
+	titleCenterY - 8.5, TITLE_FONT_HEIGHT, "CenterCenter");
 
     drawing.appendChild(label);
   }
@@ -1635,15 +1611,15 @@ final class DexpiLayoutEngine {
    * Appends a cell in the title block with a border and text.
    *
    * @param document the XML document
-   * @param parent the label element
-   * @param x1 left X
-   * @param y1 bottom Y
-   * @param x2 right X
-   * @param y2 top Y
-   * @param text the cell text
+   * @param parent   the label element
+   * @param x1       left X
+   * @param y1       bottom Y
+   * @param x2       right X
+   * @param y2       top Y
+   * @param text     the cell text
    */
-  private static void appendTitleCell(Document document, Element parent, double x1, double y1,
-      double x2, double y2, String text) {
+  private static void appendTitleCell(Document document, Element parent, double x1, double y1, double x2, double y2,
+      String text) {
     appendBorderRect(document, parent, x1, y1, x2, y2, 0.28);
     appendTitleText(document, parent, text, x1 + 1.2, y1 + 1.5, TITLE_FONT_HEIGHT, "LeftBottom");
   }
@@ -1651,16 +1627,16 @@ final class DexpiLayoutEngine {
   /**
    * Appends a text element for the title block.
    *
-   * @param document the XML document
-   * @param parent the parent element
-   * @param text the text string
-   * @param x X position
-   * @param y Y position
-   * @param fontSize font height
+   * @param document      the XML document
+   * @param parent        the parent element
+   * @param text          the text string
+   * @param x             X position
+   * @param y             Y position
+   * @param fontSize      font height
    * @param justification text justification
    */
-  private static void appendTitleText(Document document, Element parent, String text, double x,
-      double y, double fontSize, String justification) {
+  private static void appendTitleText(Document document, Element parent, String text, double x, double y,
+      double fontSize, String justification) {
     Element textElem = document.createElement("Text");
     textElem.setAttribute("String", text);
     textElem.setAttribute("Font", FONT_NAME);
@@ -1698,20 +1674,19 @@ final class DexpiLayoutEngine {
    * Appends a solid triangular flow-direction arrow at the midpoint of a connection line.
    *
    * <p>
-   * The arrow points from source to destination. For horizontal lines, the arrow points right. For
-   * orthogonal routed lines, the arrow is placed on the first horizontal segment. The arrow is
-   * rendered as a filled PolyLine triangle in the process line colour.
+   * The arrow points from source to destination. For horizontal lines, the arrow points right. For orthogonal routed
+   * lines, the arrow is placed on the first horizontal segment. The arrow is rendered as a filled PolyLine triangle in
+   * the process line colour.
    * </p>
    *
    * @param document the XML document
-   * @param parent the PipingNetworkSegment element
-   * @param fromX source X coordinate
-   * @param fromY source Y coordinate
-   * @param toX destination X coordinate
-   * @param toY destination Y coordinate
+   * @param parent   the PipingNetworkSegment element
+   * @param fromX    source X coordinate
+   * @param fromY    source Y coordinate
+   * @param toX      destination X coordinate
+   * @param toY      destination Y coordinate
    */
-  static void appendFlowArrow(Document document, Element parent, double fromX, double fromY,
-      double toX, double toY) {
+  static void appendFlowArrow(Document document, Element parent, double fromX, double fromY, double toX, double toY) {
     // Place arrow at midpoint of the first horizontal segment
     double midX;
     double midY;
@@ -1752,16 +1727,16 @@ final class DexpiLayoutEngine {
   /**
    * Appends a stream number label at the midpoint of a connection line.
    *
-   * @param document the XML document
-   * @param parent the PipingNetworkSegment element
+   * @param document     the XML document
+   * @param parent       the PipingNetworkSegment element
    * @param streamNumber the stream/line number text to display
-   * @param fromX source X coordinate
-   * @param fromY source Y coordinate
-   * @param toX destination X coordinate
-   * @param toY destination Y coordinate
+   * @param fromX        source X coordinate
+   * @param fromY        source Y coordinate
+   * @param toX          destination X coordinate
+   * @param toY          destination Y coordinate
    */
-  static void appendStreamLabel(Document document, Element parent, String streamNumber,
-      double fromX, double fromY, double toX, double toY) {
+  static void appendStreamLabel(Document document, Element parent, String streamNumber, double fromX, double fromY,
+      double toX, double toY) {
     if (streamNumber == null || streamNumber.trim().isEmpty()) {
       return;
     }
@@ -1807,16 +1782,15 @@ final class DexpiLayoutEngine {
    * Appends a process conditions table (stream table) at the bottom of the drawing.
    *
    * <p>
-   * The table shows key process data (temperature, pressure, flow, phase) for each major stream in
-   * the process. This follows the standard P&amp;ID convention of including a stream data table.
+   * The table shows key process data (temperature, pressure, flow, phase) for each major stream in the process. This
+   * follows the standard P&amp;ID convention of including a stream data table.
    * </p>
    *
-   * @param document the XML document
-   * @param parent the Drawing or PlantModel element
+   * @param document   the XML document
+   * @param parent     the Drawing or PlantModel element
    * @param streamData ordered list of stream data entries
    */
-  static void appendStreamTable(Document document, Element parent,
-      List<StreamTableEntry> streamData) {
+  static void appendStreamTable(Document document, Element parent, List<StreamTableEntry> streamData) {
     if (streamData == null || streamData.isEmpty()) {
       return;
     }
@@ -1829,8 +1803,7 @@ final class DexpiLayoutEngine {
     double tableTop = TABLE_TOP_Y;
     int numStreams = Math.min(streamData.size(), 12); // Limit to 12 streams for readability
 
-    String[] rowLabels =
-        {"Stream", "Temperature (\u00B0C)", "Pressure (bara)", "Flow (kg/hr)", "Phase"};
+    String[] rowLabels = { "Stream", "Temperature (\u00B0C)", "Pressure (bara)", "Flow (kg/hr)", "Phase" };
     int numRows = rowLabels.length;
 
     double tableRight = tableLeft + TABLE_LABEL_WIDTH + numStreams * TABLE_COL_WIDTH;
@@ -1840,10 +1813,8 @@ final class DexpiLayoutEngine {
     for (int r = 0; r < numRows; r++) {
       double rowTop = tableTop - r * TABLE_ROW_HEIGHT;
       double rowBottom = rowTop - TABLE_ROW_HEIGHT;
-      appendBorderRect(document, label, tableLeft, rowBottom, tableLeft + TABLE_LABEL_WIDTH, rowTop,
-          0.2);
-      appendTableText(document, label, rowLabels[r], tableLeft + 1.0,
-          (rowTop + rowBottom) / 2.0 - 0.5, "LeftCenter");
+      appendBorderRect(document, label, tableLeft, rowBottom, tableLeft + TABLE_LABEL_WIDTH, rowTop, 0.2);
+      appendTableText(document, label, rowLabels[r], tableLeft + 1.0, (rowTop + rowBottom) / 2.0 - 0.5, "LeftCenter");
     }
 
     // Data columns
@@ -1851,15 +1822,14 @@ final class DexpiLayoutEngine {
       StreamTableEntry entry = streamData.get(c);
       double colLeft = tableLeft + TABLE_LABEL_WIDTH + c * TABLE_COL_WIDTH;
       double colRight = colLeft + TABLE_COL_WIDTH;
-      String[] values =
-          {entry.name, entry.temperatureC, entry.pressureBara, entry.flowKgHr, entry.phase};
+      String[] values = { entry.name, entry.temperatureC, entry.pressureBara, entry.flowKgHr, entry.phase };
 
       for (int r = 0; r < numRows; r++) {
-        double rowTop = tableTop - r * TABLE_ROW_HEIGHT;
-        double rowBottom = rowTop - TABLE_ROW_HEIGHT;
-        appendBorderRect(document, label, colLeft, rowBottom, colRight, rowTop, 0.15);
-        appendTableText(document, label, values[r], (colLeft + colRight) / 2.0,
-            (rowTop + rowBottom) / 2.0 - 0.5, "CenterCenter");
+	double rowTop = tableTop - r * TABLE_ROW_HEIGHT;
+	double rowBottom = rowTop - TABLE_ROW_HEIGHT;
+	appendBorderRect(document, label, colLeft, rowBottom, colRight, rowTop, 0.15);
+	appendTableText(document, label, values[r], (colLeft + colRight) / 2.0, (rowTop + rowBottom) / 2.0 - 0.5,
+	    "CenterCenter");
       }
     }
 
@@ -1869,15 +1839,15 @@ final class DexpiLayoutEngine {
   /**
    * Appends a text element for the stream table.
    *
-   * @param document the XML document
-   * @param parent the label element
-   * @param text the text string
-   * @param x X position
-   * @param y Y position
+   * @param document      the XML document
+   * @param parent        the label element
+   * @param text          the text string
+   * @param x             X position
+   * @param y             Y position
    * @param justification text justification
    */
-  private static void appendTableText(Document document, Element parent, String text, double x,
-      double y, String justification) {
+  private static void appendTableText(Document document, Element parent, String text, double x, double y,
+      String justification) {
     Element textElem = document.createElement("Text");
     textElem.setAttribute("String", text != null ? text : "-");
     textElem.setAttribute("Font", FONT_NAME);
@@ -1927,14 +1897,13 @@ final class DexpiLayoutEngine {
     /**
      * Creates a stream table entry.
      *
-     * @param name stream name
+     * @param name         stream name
      * @param temperatureC temperature string
      * @param pressureBara pressure string
-     * @param flowKgHr flow rate string
-     * @param phase phase description
+     * @param flowKgHr     flow rate string
+     * @param phase        phase description
      */
-    StreamTableEntry(String name, String temperatureC, String pressureBara, String flowKgHr,
-        String phase) {
+    StreamTableEntry(String name, String temperatureC, String pressureBara, String flowKgHr, String phase) {
       this.name = name;
       this.temperatureC = temperatureC;
       this.pressureBara = pressureBara;
@@ -1949,18 +1918,17 @@ final class DexpiLayoutEngine {
    * Appends a dashed battery-limit boundary rectangle around all equipment.
    *
    * <p>
-   * Per NORSOK Z-003 and ISO 10628, battery limits are shown as bold dash-dot lines enclosing the
-   * process unit boundary. The boundary is computed from the extremes of all equipment positions
-   * with padding.
+   * Per NORSOK Z-003 and ISO 10628, battery limits are shown as bold dash-dot lines enclosing the process unit
+   * boundary. The boundary is computed from the extremes of all equipment positions with padding.
    * </p>
    *
-   * @param document the XML document
-   * @param parent the Drawing or PlantModel element
+   * @param document  the XML document
+   * @param parent    the Drawing or PlantModel element
    * @param positions all equipment positions
    * @param areaLabel the battery limit label (e.g. "AREA 100 - GAS PROCESSING")
    */
-  static void appendBatteryLimitBoundary(Document document, Element parent,
-      Map<String, EquipmentPosition> positions, String areaLabel) {
+  static void appendBatteryLimitBoundary(Document document, Element parent, Map<String, EquipmentPosition> positions,
+      String areaLabel) {
     if (positions == null || positions.isEmpty()) {
       return;
     }
@@ -1970,16 +1938,16 @@ final class DexpiLayoutEngine {
     double maxY = -Double.MAX_VALUE;
     for (EquipmentPosition pos : positions.values()) {
       if (pos.x < minX) {
-        minX = pos.x;
+	minX = pos.x;
       }
       if (pos.x > maxX) {
-        maxX = pos.x;
+	maxX = pos.x;
       }
       if (pos.y < minY) {
-        minY = pos.y;
+	minY = pos.y;
       }
       if (pos.y > maxY) {
-        maxY = pos.y;
+	maxY = pos.y;
       }
     }
 
@@ -2051,18 +2019,17 @@ final class DexpiLayoutEngine {
    * Appends a valve fail-position marker text (FC, FO, FL) near a valve position.
    *
    * <p>
-   * Per NORSOK Z-003, valve fail positions are marked adjacent to the valve symbol: FC = fail
-   * closed, FO = fail open, FL = fail last position.
+   * Per NORSOK Z-003, valve fail positions are marked adjacent to the valve symbol: FC = fail closed, FO = fail open,
+   * FL = fail last position.
    * </p>
    *
-   * @param document the XML document
-   * @param parent the PipingComponent (valve) element
+   * @param document     the XML document
+   * @param parent       the PipingComponent (valve) element
    * @param failPosition the fail position code (FC, FO, or FL)
-   * @param x the valve X coordinate
-   * @param y the valve Y coordinate
+   * @param x            the valve X coordinate
+   * @param y            the valve Y coordinate
    */
-  static void appendFailPositionMarker(Document document, Element parent, String failPosition,
-      double x, double y) {
+  static void appendFailPositionMarker(Document document, Element parent, String failPosition, double x, double y) {
     if (failPosition == null || failPosition.trim().isEmpty()) {
       return;
     }
@@ -2121,14 +2088,14 @@ final class DexpiLayoutEngine {
    * Appends a PST (Partial Stroke Test) annotation marker near a safety valve.
    *
    * <p>
-   * Per IEC 61508 and IEC 61511, valves with partial stroke test capability are annotated with a
-   * "PST" label and a distinctive marker to indicate online diagnostic capability.
+   * Per IEC 61508 and IEC 61511, valves with partial stroke test capability are annotated with a "PST" label and a
+   * distinctive marker to indicate online diagnostic capability.
    * </p>
    *
    * @param document the XML document
-   * @param parent the parent element
-   * @param x the valve center X
-   * @param y the valve center Y
+   * @param parent   the parent element
+   * @param x        the valve center X
+   * @param y        the valve center Y
    */
   static void appendPstMarker(Document document, Element parent, double x, double y) {
     // Small rectangle outline for PST annotation box
@@ -2188,25 +2155,25 @@ final class DexpiLayoutEngine {
    * Appends a heat trace indication on a pipe segment.
    *
    * <p>
-   * Per ISO 10628 and NORSOK Z-003, heat traced lines are indicated with a zigzag marking along the
-   * pipe and an "HT" or specific heat trace type code.
+   * Per ISO 10628 and NORSOK Z-003, heat traced lines are indicated with a zigzag marking along the pipe and an "HT" or
+   * specific heat trace type code.
    * </p>
    *
-   * @param document the XML document
-   * @param parent the parent element
+   * @param document  the XML document
+   * @param parent    the parent element
    * @param traceType the heat trace type code (e.g. "ET" for electric, "ST" for steam)
-   * @param fromX source X
-   * @param fromY source Y
-   * @param toX destination X
-   * @param toY destination Y
+   * @param fromX     source X
+   * @param fromY     source Y
+   * @param toX       destination X
+   * @param toY       destination Y
    */
-  static void appendHeatTraceMark(Document document, Element parent, String traceType, double fromX,
-      double fromY, double toX, double toY) {
+  static void appendHeatTraceMark(Document document, Element parent, String traceType, double fromX, double fromY,
+      double toX, double toY) {
     if (traceType == null || traceType.trim().isEmpty()) {
       return;
     }
     // Place zigzag marks at 33% and 66% along the line
-    for (double frac : new double[] {0.33, 0.66}) {
+    for (double frac : new double[] { 0.33, 0.66 }) {
       double mx = fromX + (toX - fromX) * frac;
       double my = fromY + (toY - fromY) * frac;
       // Zigzag (3 small chevrons)
@@ -2266,19 +2233,19 @@ final class DexpiLayoutEngine {
    * Appends an equipment weight and center-of-gravity annotation marker.
    *
    * <p>
-   * Shows the equipment dry weight and operating weight in a small annotation box below the
-   * equipment symbol. Used for mechanical design and layout planning.
+   * Shows the equipment dry weight and operating weight in a small annotation box below the equipment symbol. Used for
+   * mechanical design and layout planning.
    * </p>
    *
-   * @param document the XML document
-   * @param parent the parent element
-   * @param dryWeightKg the equipment dry weight in kg (0 to omit)
+   * @param document          the XML document
+   * @param parent            the parent element
+   * @param dryWeightKg       the equipment dry weight in kg (0 to omit)
    * @param operatingWeightKg the operating weight in kg (0 to omit)
-   * @param x the equipment center X
-   * @param y the equipment symbol bottom Y
+   * @param x                 the equipment center X
+   * @param y                 the equipment symbol bottom Y
    */
-  static void appendWeightAnnotation(Document document, Element parent, double dryWeightKg,
-      double operatingWeightKg, double x, double y) {
+  static void appendWeightAnnotation(Document document, Element parent, double dryWeightKg, double operatingWeightKg,
+      double x, double y) {
     if (dryWeightKg <= 0 && operatingWeightKg <= 0) {
       return;
     }
@@ -2288,7 +2255,7 @@ final class DexpiLayoutEngine {
     }
     if (operatingWeightKg > 0) {
       if (sb.length() > 0) {
-        sb.append(" / ");
+	sb.append(" / ");
       }
       sb.append("Op: ").append(String.format(Locale.ROOT, "%.0f", operatingWeightKg)).append(" kg");
     }
@@ -2329,15 +2296,15 @@ final class DexpiLayoutEngine {
    * Appends a sample point symbol on a process line.
    *
    * <p>
-   * Per ISO 10628, sample points are indicated with a small circle (or filled dot) with an "SP"
-   * label on the process line where grab or online samples can be taken.
+   * Per ISO 10628, sample points are indicated with a small circle (or filled dot) with an "SP" label on the process
+   * line where grab or online samples can be taken.
    * </p>
    *
    * @param document the XML document
-   * @param parent the parent element
-   * @param tag the sample point tag (e.g. "SP-001")
-   * @param x the sample point X
-   * @param y the sample point Y
+   * @param parent   the parent element
+   * @param tag      the sample point tag (e.g. "SP-001")
+   * @param x        the sample point X
+   * @param y        the sample point Y
    */
   static void appendSamplePoint(Document document, Element parent, String tag, double x, double y) {
     // Small filled circle on process line
@@ -2424,18 +2391,17 @@ final class DexpiLayoutEngine {
    * Appends a gauge glass (level gauge) symbol on a vessel.
    *
    * <p>
-   * Per ISO 10628, sight/gauge glasses on vessels are represented as a narrow rectangle alongside
-   * the vessel with connection stubs at top and bottom.
+   * Per ISO 10628, sight/gauge glasses on vessels are represented as a narrow rectangle alongside the vessel with
+   * connection stubs at top and bottom.
    * </p>
    *
    * @param document the XML document
-   * @param parent the parent element
-   * @param x the gauge glass X position (vessel wall edge)
-   * @param yTop the top connection Y
-   * @param yBottom the bottom connection Y
+   * @param parent   the parent element
+   * @param x        the gauge glass X position (vessel wall edge)
+   * @param yTop     the top connection Y
+   * @param yBottom  the bottom connection Y
    */
-  static void appendGaugeGlass(Document document, Element parent, double x, double yTop,
-      double yBottom) {
+  static void appendGaugeGlass(Document document, Element parent, double x, double yTop, double yBottom) {
     double gx = x + 5.0;
     // Narrow rectangle for gauge glass tube
     Element rect = document.createElement("PolyLine");
@@ -2520,26 +2486,25 @@ final class DexpiLayoutEngine {
    * Appends insulation marking on a process line between two points.
    *
    * <p>
-   * Per ISO 10628 and NORSOK Z-003, insulation is indicated by a short perpendicular tick mark on
-   * the process line with a code letter: H = hot insulation, C = cold insulation, P = personnel
-   * protection, A = acoustic.
+   * Per ISO 10628 and NORSOK Z-003, insulation is indicated by a short perpendicular tick mark on the process line with
+   * a code letter: H = hot insulation, C = cold insulation, P = personnel protection, A = acoustic.
    * </p>
    *
-   * @param document the XML document
-   * @param parent the PipingNetworkSegment element
+   * @param document       the XML document
+   * @param parent         the PipingNetworkSegment element
    * @param insulationCode the insulation code (H, C, P, A)
-   * @param fromX source X
-   * @param fromY source Y
-   * @param toX destination X
-   * @param toY destination Y
+   * @param fromX          source X
+   * @param fromY          source Y
+   * @param toX            destination X
+   * @param toY            destination Y
    */
-  static void appendInsulationMark(Document document, Element parent, String insulationCode,
-      double fromX, double fromY, double toX, double toY) {
+  static void appendInsulationMark(Document document, Element parent, String insulationCode, double fromX, double fromY,
+      double toX, double toY) {
     if (insulationCode == null || insulationCode.trim().isEmpty()) {
       return;
     }
     // Place tick marks at 25% and 75% along the line
-    for (double frac : new double[] {0.25, 0.75}) {
+    for (double frac : new double[] { 0.25, 0.75 }) {
       double mx = fromX + frac * (toX - fromX);
       double my = fromY + frac * (toY - fromY);
 
@@ -2554,13 +2519,13 @@ final class DexpiLayoutEngine {
       tickPres.setAttribute("B", LINE_COLOR_B);
       tick.appendChild(tickPres);
       if (Math.abs(fromY - toY) < 0.5) {
-        // Horizontal line: tick is vertical
-        appendCoordinate(document, tick, mx, my - 2.5);
-        appendCoordinate(document, tick, mx, my + 2.5);
+	// Horizontal line: tick is vertical
+	appendCoordinate(document, tick, mx, my - 2.5);
+	appendCoordinate(document, tick, mx, my + 2.5);
       } else {
-        // Vertical line: tick is horizontal
-        appendCoordinate(document, tick, mx - 2.5, my);
-        appendCoordinate(document, tick, mx + 2.5, my);
+	// Vertical line: tick is horizontal
+	appendCoordinate(document, tick, mx - 2.5, my);
+	appendCoordinate(document, tick, mx + 2.5, my);
       }
       parent.appendChild(tick);
     }
@@ -2604,14 +2569,13 @@ final class DexpiLayoutEngine {
   /**
    * Appends an orientation marker (H or V) next to equipment, per ISO 10628 convention.
    *
-   * @param document the XML document
-   * @param parent the equipment element
+   * @param document    the XML document
+   * @param parent      the equipment element
    * @param orientation the orientation string ("H" or "V")
-   * @param x equipment center X
-   * @param y equipment center Y
+   * @param x           equipment center X
+   * @param y           equipment center Y
    */
-  static void appendOrientationMarker(Document document, Element parent, String orientation,
-      double x, double y) {
+  static void appendOrientationMarker(Document document, Element parent, String orientation, double x, double y) {
     if (orientation == null || orientation.trim().isEmpty()) {
       return;
     }
@@ -2652,15 +2616,15 @@ final class DexpiLayoutEngine {
    * Appends a SIL level marker below an instrument bubble.
    *
    * <p>
-   * Per NORSOK Z-003 and IEC 61511, safety instrumented functions are marked with their SIL level
-   * (SIL 1, SIL 2, SIL 3) below the instrument bubble. The text is shown in a distinctive style.
+   * Per NORSOK Z-003 and IEC 61511, safety instrumented functions are marked with their SIL level (SIL 1, SIL 2, SIL 3)
+   * below the instrument bubble. The text is shown in a distinctive style.
    * </p>
    *
    * @param document the XML document
-   * @param parent the ProcessInstrumentationFunction element
+   * @param parent   the ProcessInstrumentationFunction element
    * @param silLevel the SIL level (1, 2, or 3)
-   * @param x the instrument bubble center X
-   * @param y the instrument bubble center Y
+   * @param x        the instrument bubble center X
+   * @param y        the instrument bubble center Y
    */
   static void appendSilMarker(Document document, Element parent, int silLevel, double x, double y) {
     if (silLevel < 1 || silLevel > 4) {
@@ -2736,19 +2700,19 @@ final class DexpiLayoutEngine {
    * Appends a solenoid actuator diamond symbol near a valve position.
    *
    * <p>
-   * Per ISA 5.1, solenoid-actuated valves (ESD, blowdown, HIPPS) are indicated with a small diamond
-   * symbol on the valve actuator stem, connected to the controller by a signal line.
+   * Per ISA 5.1, solenoid-actuated valves (ESD, blowdown, HIPPS) are indicated with a small diamond symbol on the valve
+   * actuator stem, connected to the controller by a signal line.
    * </p>
    *
-   * @param document the XML document
-   * @param parent the parent element to append drawing primitives to
-   * @param valveX the valve center X
-   * @param valveY the valve center Y
+   * @param document    the XML document
+   * @param parent      the parent element to append drawing primitives to
+   * @param valveX      the valve center X
+   * @param valveY      the valve center Y
    * @param controllerX the controller bubble center X
    * @param controllerY the controller bubble center Y
    */
-  static void appendSolenoidMarker(Document document, Element parent, double valveX, double valveY,
-      double controllerX, double controllerY) {
+  static void appendSolenoidMarker(Document document, Element parent, double valveX, double valveY, double controllerX,
+      double controllerY) {
     double solY = valveY + 6.0;
     double solSize = 2.5;
 
@@ -2819,52 +2783,49 @@ final class DexpiLayoutEngine {
    * Appends a connection line with a specific line type for utility services.
    *
    * <p>
-   * Per ISO 10628 and NORSOK Z-003, different piping services use distinct line styles: solid for
-   * process, dashed for steam/utility, dotted for drain, dash-dot for instrument air, etc.
+   * Per ISO 10628 and NORSOK Z-003, different piping services use distinct line styles: solid for process, dashed for
+   * steam/utility, dotted for drain, dash-dot for instrument air, etc.
    * </p>
    *
    * @param document the XML document
-   * @param parent the PipingNetworkSegment element
-   * @param fromX source X
-   * @param fromY source Y
-   * @param toX destination X
-   * @param toY destination Y
+   * @param parent   the PipingNetworkSegment element
+   * @param fromX    source X
+   * @param fromY    source Y
+   * @param toX      destination X
+   * @param toY      destination Y
    * @param lineType ISO/DEXPI line type (0=solid, 1=dashed, 2=dotted, 3=dash-dot)
-   * @param colorR red component (0-1)
-   * @param colorG green component (0-1)
-   * @param colorB blue component (0-1)
+   * @param colorR   red component (0-1)
+   * @param colorG   green component (0-1)
+   * @param colorB   blue component (0-1)
    */
-  static void appendStyledConnectionLine(Document document, Element parent, double fromX,
-      double fromY, double toX, double toY, int lineType, String colorR, String colorG,
-      String colorB) {
-    appendStyledConnectionLine(document, parent, fromX, fromY, toX, toY, lineType,
-        PROCESS_LINE_WEIGHT, colorR, colorG, colorB);
+  static void appendStyledConnectionLine(Document document, Element parent, double fromX, double fromY, double toX,
+      double toY, int lineType, String colorR, String colorG, String colorB) {
+    appendStyledConnectionLine(document, parent, fromX, fromY, toX, toY, lineType, PROCESS_LINE_WEIGHT, colorR, colorG,
+	colorB);
   }
 
   /**
    * Appends a connection line with an explicit line type, line weight and colour.
    *
    * <p>
-   * This overload supports the ISO 15519-1 line-weight hierarchy (main process &gt; secondary &gt;
-   * utility) together with the ISO 10628-2 service line styles, so a stream's service category
-   * fully determines its appearance.
+   * This overload supports the ISO 15519-1 line-weight hierarchy (main process &gt; secondary &gt; utility) together
+   * with the ISO 10628-2 service line styles, so a stream's service category fully determines its appearance.
    * </p>
    *
-   * @param document the XML document
-   * @param parent the PipingNetworkSegment element
-   * @param fromX source X
-   * @param fromY source Y
-   * @param toX destination X
-   * @param toY destination Y
-   * @param lineType ISO/DEXPI line type (0=solid, 1=dashed, 2=dotted, 3=dash-dot)
+   * @param document   the XML document
+   * @param parent     the PipingNetworkSegment element
+   * @param fromX      source X
+   * @param fromY      source Y
+   * @param toX        destination X
+   * @param toY        destination Y
+   * @param lineType   ISO/DEXPI line type (0=solid, 1=dashed, 2=dotted, 3=dash-dot)
    * @param lineWeight line weight in mm (ISO 15519-1 hierarchy)
-   * @param colorR red component (0-1)
-   * @param colorG green component (0-1)
-   * @param colorB blue component (0-1)
+   * @param colorR     red component (0-1)
+   * @param colorG     green component (0-1)
+   * @param colorB     blue component (0-1)
    */
-  static void appendStyledConnectionLine(Document document, Element parent, double fromX,
-      double fromY, double toX, double toY, int lineType, double lineWeight, String colorR,
-      String colorG, String colorB) {
+  static void appendStyledConnectionLine(Document document, Element parent, double fromX, double fromY, double toX,
+      double toY, int lineType, double lineWeight, String colorR, String colorG, String colorB) {
     boolean sameY = Math.abs(fromY - toY) < 0.5;
     if (sameY) {
       // Simple horizontal line. Use CenterLine (not PolyLine) so DEXPI consumers such as
@@ -2906,28 +2867,27 @@ final class DexpiLayoutEngine {
    * Appends a connection line styled according to a stream's service category.
    *
    * <p>
-   * The {@link DexpiServiceClassifier.ServiceType} supplies the ISO 15519-1 line weight, the ISO
-   * 10628-2 line type and the service colour, so main process, secondary process, utility, flare,
-   * drain and fuel-gas lines are each drawn distinctly. A {@code null} service falls back to the
-   * default process style.
+   * The {@link DexpiServiceClassifier.ServiceType} supplies the ISO 15519-1 line weight, the ISO 10628-2 line type and
+   * the service colour, so main process, secondary process, utility, flare, drain and fuel-gas lines are each drawn
+   * distinctly. A {@code null} service falls back to the default process style.
    * </p>
    *
    * @param document the XML document
-   * @param parent the PipingNetworkSegment element
-   * @param fromX source X
-   * @param fromY source Y
-   * @param toX destination X
-   * @param toY destination Y
-   * @param service the classified service type (may be null)
+   * @param parent   the PipingNetworkSegment element
+   * @param fromX    source X
+   * @param fromY    source Y
+   * @param toX      destination X
+   * @param toY      destination Y
+   * @param service  the classified service type (may be null)
    */
-  static void appendServiceConnectionLine(Document document, Element parent, double fromX,
-      double fromY, double toX, double toY, DexpiServiceClassifier.ServiceType service) {
+  static void appendServiceConnectionLine(Document document, Element parent, double fromX, double fromY, double toX,
+      double toY, DexpiServiceClassifier.ServiceType service) {
     if (service == null) {
       appendConnectionLine(document, parent, fromX, fromY, toX, toY);
       return;
     }
-    appendStyledConnectionLine(document, parent, fromX, fromY, toX, toY, service.getLineType(),
-        service.getLineWeight(), service.getColorR(), service.getColorG(), service.getColorB());
+    appendStyledConnectionLine(document, parent, fromX, fromY, toX, toY, service.getLineType(), service.getLineWeight(),
+	service.getColorR(), service.getColorG(), service.getColorB());
   }
 
   // ==== Utility supply connection points (ISO 10628) ====
@@ -2936,20 +2896,20 @@ final class DexpiLayoutEngine {
    * Appends a utility supply connection point with label and dashed connection line.
    *
    * <p>
-   * Per ISO 10628, utility connections (instrument air, steam, cooling water, nitrogen) are shown
-   * as labeled connection stubs with dashed lines and a utility code identifier.
+   * Per ISO 10628, utility connections (instrument air, steam, cooling water, nitrogen) are shown as labeled connection
+   * stubs with dashed lines and a utility code identifier.
    * </p>
    *
-   * @param document the XML document
-   * @param parent the parent element
+   * @param document    the XML document
+   * @param parent      the parent element
    * @param utilityCode short code for the utility (e.g. "IA", "STM", "CW", "N2")
-   * @param x connection X coordinate
-   * @param y connection Y coordinate
-   * @param targetX equipment or valve X coordinate the utility connects to
-   * @param targetY equipment or valve Y coordinate the utility connects to
+   * @param x           connection X coordinate
+   * @param y           connection Y coordinate
+   * @param targetX     equipment or valve X coordinate the utility connects to
+   * @param targetY     equipment or valve Y coordinate the utility connects to
    */
-  static void appendUtilityConnectionPoint(Document document, Element parent, String utilityCode,
-      double x, double y, double targetX, double targetY) {
+  static void appendUtilityConnectionPoint(Document document, Element parent, String utilityCode, double x, double y,
+      double targetX, double targetY) {
     // Utility label text
     Element text = document.createElement("Text");
     text.setAttribute("String", utilityCode);
@@ -2991,43 +2951,42 @@ final class DexpiLayoutEngine {
    * Appends a formatted line identification label per ISO 10628 / NORSOK Z-003.
    *
    * <p>
-   * The standard line ID format is: SIZE"-FLUID_CODE-LINE_NUMBER-PIPING_CLASS. For example:
-   * 6"-HC-001-A1B. The label is placed above the pipe midpoint.
+   * The standard line ID format is: SIZE"-FLUID_CODE-LINE_NUMBER-PIPING_CLASS. For example: 6"-HC-001-A1B. The label is
+   * placed above the pipe midpoint.
    * </p>
    *
-   * @param document the XML document
-   * @param parent the PipingNetworkSegment element
-   * @param lineSize pipe nominal size (e.g. "6\"")
-   * @param fluidCode fluid code (e.g. "HC")
-   * @param lineNumber line number (e.g. "001")
+   * @param document    the XML document
+   * @param parent      the PipingNetworkSegment element
+   * @param lineSize    pipe nominal size (e.g. "6\"")
+   * @param fluidCode   fluid code (e.g. "HC")
+   * @param lineNumber  line number (e.g. "001")
    * @param pipingClass piping class code (e.g. "A1B", "150#")
-   * @param fromX source X
-   * @param fromY source Y
-   * @param toX destination X
-   * @param toY destination Y
+   * @param fromX       source X
+   * @param fromY       source Y
+   * @param toX         destination X
+   * @param toY         destination Y
    */
-  static void appendLineIdLabel(Document document, Element parent, String lineSize,
-      String fluidCode, String lineNumber, String pipingClass, double fromX, double fromY,
-      double toX, double toY) {
+  static void appendLineIdLabel(Document document, Element parent, String lineSize, String fluidCode, String lineNumber,
+      String pipingClass, double fromX, double fromY, double toX, double toY) {
     StringBuilder sb = new StringBuilder();
     if (lineSize != null && !lineSize.trim().isEmpty()) {
       sb.append(lineSize.trim());
     }
     if (fluidCode != null && !fluidCode.trim().isEmpty()) {
       if (sb.length() > 0) {
-        sb.append("-");
+	sb.append("-");
       }
       sb.append(fluidCode.trim());
     }
     if (lineNumber != null && !lineNumber.trim().isEmpty()) {
       if (sb.length() > 0) {
-        sb.append("-");
+	sb.append("-");
       }
       sb.append(lineNumber.trim());
     }
     if (pipingClass != null && !pipingClass.trim().isEmpty()) {
       if (sb.length() > 0) {
-        sb.append("-");
+	sb.append("-");
       }
       sb.append(pipingClass.trim());
     }
@@ -3071,19 +3030,19 @@ final class DexpiLayoutEngine {
   }
 
   /**
-   * Appends a prebuilt line-identification label (for example one produced by
-   * {@code NorsokLineNumber.build()}) above the pipe midpoint.
+   * Appends a prebuilt line-identification label (for example one produced by {@code NorsokLineNumber.build()}) above
+   * the pipe midpoint.
    *
    * @param document the XML document
-   * @param parent the PipingNetworkSegment element
-   * @param lineId the complete, already-formatted line identifier (skipped when null or blank)
-   * @param fromX source X
-   * @param fromY source Y
-   * @param toX destination X
-   * @param toY destination Y
+   * @param parent   the PipingNetworkSegment element
+   * @param lineId   the complete, already-formatted line identifier (skipped when null or blank)
+   * @param fromX    source X
+   * @param fromY    source Y
+   * @param toX      destination X
+   * @param toY      destination Y
    */
-  static void appendLineIdLabel(Document document, Element parent, String lineId, double fromX,
-      double fromY, double toX, double toY) {
+  static void appendLineIdLabel(Document document, Element parent, String lineId, double fromX, double fromY,
+      double toX, double toY) {
     if (lineId == null || lineId.trim().isEmpty()) {
       return;
     }
@@ -3128,17 +3087,16 @@ final class DexpiLayoutEngine {
    * Appends a revision history table above the title block.
    *
    * <p>
-   * Per NORSOK Z-003, the P&amp;ID title block includes a revision history showing rev number,
-   * date, description, drawn by, and checked by for each revision.
+   * Per NORSOK Z-003, the P&amp;ID title block includes a revision history showing rev number, date, description, drawn
+   * by, and checked by for each revision.
    * </p>
    *
-   * @param document the XML document
-   * @param drawing the Drawing element
-   * @param revisions list of revision entries [rev, date, description, drawnBy, checkedBy]
+   * @param document   the XML document
+   * @param drawing    the Drawing element
+   * @param revisions  list of revision entries [rev, date, description, drawnBy, checkedBy]
    * @param sheetWidth the drawing sheet width
    */
-  static void appendRevisionHistory(Document document, Element drawing, List<String[]> revisions,
-      double sheetWidth) {
+  static void appendRevisionHistory(Document document, Element drawing, List<String[]> revisions, double sheetWidth) {
     if (revisions == null || revisions.isEmpty()) {
       return;
     }
@@ -3171,16 +3129,11 @@ final class DexpiLayoutEngine {
       String[] rev = revisions.get(i);
       double rowBottom = headerTop + i * REVISION_ROW_HEIGHT;
       double rowTop = rowBottom + REVISION_ROW_HEIGHT;
-      appendRevisionCell(document, label, colRev, rowBottom, colDate, rowTop,
-          rev.length > 0 ? rev[0] : "");
-      appendRevisionCell(document, label, colDate, rowBottom, colDesc, rowTop,
-          rev.length > 1 ? rev[1] : "");
-      appendRevisionCell(document, label, colDesc, rowBottom, colDrawn, rowTop,
-          rev.length > 2 ? rev[2] : "");
-      appendRevisionCell(document, label, colDrawn, rowBottom, colChecked, rowTop,
-          rev.length > 3 ? rev[3] : "");
-      appendRevisionCell(document, label, colChecked, rowBottom, blockRight, rowTop,
-          rev.length > 4 ? rev[4] : "");
+      appendRevisionCell(document, label, colRev, rowBottom, colDate, rowTop, rev.length > 0 ? rev[0] : "");
+      appendRevisionCell(document, label, colDate, rowBottom, colDesc, rowTop, rev.length > 1 ? rev[1] : "");
+      appendRevisionCell(document, label, colDesc, rowBottom, colDrawn, rowTop, rev.length > 2 ? rev[2] : "");
+      appendRevisionCell(document, label, colDrawn, rowBottom, colChecked, rowTop, rev.length > 3 ? rev[3] : "");
+      appendRevisionCell(document, label, colChecked, rowBottom, blockRight, rowTop, rev.length > 4 ? rev[4] : "");
     }
 
     drawing.appendChild(label);
@@ -3190,15 +3143,15 @@ final class DexpiLayoutEngine {
    * Appends a cell for the revision history table.
    *
    * @param document the XML document
-   * @param parent the label element
-   * @param x1 left X
-   * @param y1 bottom Y
-   * @param x2 right X
-   * @param y2 top Y
-   * @param text the cell text
+   * @param parent   the label element
+   * @param x1       left X
+   * @param y1       bottom Y
+   * @param x2       right X
+   * @param y2       top Y
+   * @param text     the cell text
    */
-  private static void appendRevisionCell(Document document, Element parent, double x1, double y1,
-      double x2, double y2, String text) {
+  private static void appendRevisionCell(Document document, Element parent, double x1, double y1, double x2, double y2,
+      String text) {
     appendBorderRect(document, parent, x1, y1, x2, y2, 0.2);
     Element textElem = document.createElement("Text");
     textElem.setAttribute("String", text != null ? text : "");
@@ -3237,13 +3190,13 @@ final class DexpiLayoutEngine {
    * Appends a symbol legend box listing line types, valve symbols, and abbreviations.
    *
    * <p>
-   * Per ISO 10628, P&amp;IDs include a legend explaining line type conventions and abbreviations.
-   * The legend is placed bottom-left to avoid overlap with the stream table and title block.
+   * Per ISO 10628, P&amp;IDs include a legend explaining line type conventions and abbreviations. The legend is placed
+   * bottom-left to avoid overlap with the stream table and title block.
    * </p>
    *
    * @param document the XML document
-   * @param parent the Drawing or PlantModel element
-   * @param entries list of legend entries [lineType, description]
+   * @param parent   the Drawing or PlantModel element
+   * @param entries  list of legend entries [lineType, description]
    */
   static void appendSymbolLegend(Document document, Element parent, List<String[]> entries) {
     if (entries == null || entries.isEmpty()) {
@@ -3259,15 +3212,13 @@ final class DexpiLayoutEngine {
     double legendTop = legendBottom + rows * LEGEND_ROW_HEIGHT;
 
     // Outer box
-    appendBorderRect(document, label, legendLeft, legendBottom, legendLeft + LEGEND_WIDTH,
-        legendTop, 0.3);
+    appendBorderRect(document, label, legendLeft, legendBottom, legendLeft + LEGEND_WIDTH, legendTop, 0.3);
 
     // Header
     double headerBottom = legendTop - LEGEND_ROW_HEIGHT;
-    appendBorderRect(document, label, legendLeft, headerBottom, legendLeft + LEGEND_WIDTH,
-        legendTop, 0.2);
+    appendBorderRect(document, label, legendLeft, headerBottom, legendLeft + LEGEND_WIDTH, legendTop, 0.2);
     appendLegendText(document, label, "SYMBOL LEGEND", legendLeft + LEGEND_WIDTH / 2.0,
-        headerBottom + LEGEND_ROW_HEIGHT / 2.0, "CenterCenter", "2.5");
+	headerBottom + LEGEND_ROW_HEIGHT / 2.0, "CenterCenter", "2.5");
 
     // Entry rows
     double sampleLeft = legendLeft + 2.0;
@@ -3280,15 +3231,14 @@ final class DexpiLayoutEngine {
       double rowBottom = rowTop - LEGEND_ROW_HEIGHT;
       double rowMidY = (rowTop + rowBottom) / 2.0;
 
-      appendBorderRect(document, label, legendLeft, rowBottom, legendLeft + LEGEND_WIDTH, rowTop,
-          0.15);
+      appendBorderRect(document, label, legendLeft, rowBottom, legendLeft + LEGEND_WIDTH, rowTop, 0.15);
 
       // Sample line
       int lineType = 0;
       try {
-        lineType = entry.length > 2 ? Integer.parseInt(entry[2]) : 0;
+	lineType = entry.length > 2 ? Integer.parseInt(entry[2]) : 0;
       } catch (NumberFormatException ignored) {
-        // Default to solid
+	// Default to solid
       }
       Element sampleLine = document.createElement("PolyLine");
       sampleLine.setAttribute("NumPoints", "2");
@@ -3306,7 +3256,7 @@ final class DexpiLayoutEngine {
       // Description text
       String desc = entry.length > 1 ? entry[1] : entry[0];
       appendLegendText(document, label, desc, descLeft, rowMidY - 0.5, "LeftCenter",
-          String.valueOf(LEGEND_FONT_HEIGHT));
+	  String.valueOf(LEGEND_FONT_HEIGHT));
     }
 
     parent.appendChild(label);
@@ -3315,16 +3265,16 @@ final class DexpiLayoutEngine {
   /**
    * Appends text for the symbol legend box.
    *
-   * @param document the XML document
-   * @param parent the label element
-   * @param text the text string
-   * @param x X position
-   * @param y Y position
+   * @param document      the XML document
+   * @param parent        the label element
+   * @param text          the text string
+   * @param x             X position
+   * @param y             Y position
    * @param justification text justification
-   * @param fontSize font height as string
+   * @param fontSize      font height as string
    */
-  private static void appendLegendText(Document document, Element parent, String text, double x,
-      double y, String justification, String fontSize) {
+  private static void appendLegendText(Document document, Element parent, String text, double x, double y,
+      String justification, String fontSize) {
     Element textElem = document.createElement("Text");
     textElem.setAttribute("String", text);
     textElem.setAttribute("Font", FONT_NAME);

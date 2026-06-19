@@ -4,16 +4,13 @@ package neqsim.process.mechanicaldesign.valve.choke;
  * Experimental validation data for two-phase choke flow models.
  *
  * <p>
- * This class contains experimental data points from the following classic petroleum engineering
- * papers:
+ * This class contains experimental data points from the following classic petroleum engineering papers:
  * </p>
  * <ul>
  * <li>Sachdeva et al. (1986) - SPE 15657 - "Two-Phase Flow Through Chokes"</li>
- * <li>Gilbert (1954) - API Drilling and Production Practice - "Flowing and Gas-Lift Well
- * Performance"</li>
+ * <li>Gilbert (1954) - API Drilling and Production Practice - "Flowing and Gas-Lift Well Performance"</li>
  * <li>Fortunati (1972) - SPE 3742 - "Two-Phase Flow Through Wellhead Chokes"</li>
- * <li>Ashford (1974) - JPT - "An Evaluation of Critical Multiphase Flow Performance Through
- * Wellhead Chokes"</li>
+ * <li>Ashford (1974) - JPT - "An Evaluation of Critical Multiphase Flow Performance Through Wellhead Chokes"</li>
  * </ul>
  *
  * <p>
@@ -58,42 +55,42 @@ public final class ChokeFlowValidationData {
    */
   public static final double[][] SACHDEVA_AIR_WATER = {
       // Critical flow regime data points
-      {6.89, 1.01, 6.35, 50.0, 28.6, 21.0}, // Test 1 - Critical
-      {6.89, 1.01, 6.35, 100.0, 22.3, 21.0}, // Test 2 - Critical
-      {6.89, 1.01, 6.35, 200.0, 16.5, 21.0}, // Test 3 - Critical
-      {6.89, 1.01, 6.35, 500.0, 9.8, 21.0}, // Test 4 - Critical
-      {6.89, 1.01, 6.35, 1000.0, 6.2, 21.0}, // Test 5 - Critical
+      { 6.89, 1.01, 6.35, 50.0, 28.6, 21.0 }, // Test 1 - Critical
+      { 6.89, 1.01, 6.35, 100.0, 22.3, 21.0 }, // Test 2 - Critical
+      { 6.89, 1.01, 6.35, 200.0, 16.5, 21.0 }, // Test 3 - Critical
+      { 6.89, 1.01, 6.35, 500.0, 9.8, 21.0 }, // Test 4 - Critical
+      { 6.89, 1.01, 6.35, 1000.0, 6.2, 21.0 }, // Test 5 - Critical
 
-      {10.34, 1.01, 6.35, 50.0, 35.2, 21.0}, // Test 6 - Critical
-      {10.34, 1.01, 6.35, 100.0, 28.1, 21.0}, // Test 7 - Critical
-      {10.34, 1.01, 6.35, 200.0, 21.3, 21.0}, // Test 8 - Critical
-      {10.34, 1.01, 6.35, 500.0, 13.1, 21.0}, // Test 9 - Critical
-      {10.34, 1.01, 6.35, 1000.0, 8.5, 21.0}, // Test 10 - Critical
+      { 10.34, 1.01, 6.35, 50.0, 35.2, 21.0 }, // Test 6 - Critical
+      { 10.34, 1.01, 6.35, 100.0, 28.1, 21.0 }, // Test 7 - Critical
+      { 10.34, 1.01, 6.35, 200.0, 21.3, 21.0 }, // Test 8 - Critical
+      { 10.34, 1.01, 6.35, 500.0, 13.1, 21.0 }, // Test 9 - Critical
+      { 10.34, 1.01, 6.35, 1000.0, 8.5, 21.0 }, // Test 10 - Critical
 
-      {13.79, 1.01, 6.35, 50.0, 41.5, 21.0}, // Test 11 - Critical
-      {13.79, 1.01, 6.35, 100.0, 33.8, 21.0}, // Test 12 - Critical
-      {13.79, 1.01, 6.35, 200.0, 26.1, 21.0}, // Test 13 - Critical
-      {13.79, 1.01, 6.35, 500.0, 16.8, 21.0}, // Test 14 - Critical
-      {13.79, 1.01, 6.35, 1000.0, 11.2, 21.0}, // Test 15 - Critical
+      { 13.79, 1.01, 6.35, 50.0, 41.5, 21.0 }, // Test 11 - Critical
+      { 13.79, 1.01, 6.35, 100.0, 33.8, 21.0 }, // Test 12 - Critical
+      { 13.79, 1.01, 6.35, 200.0, 26.1, 21.0 }, // Test 13 - Critical
+      { 13.79, 1.01, 6.35, 500.0, 16.8, 21.0 }, // Test 14 - Critical
+      { 13.79, 1.01, 6.35, 1000.0, 11.2, 21.0 }, // Test 15 - Critical
 
       // Subcritical flow regime data points
-      {6.89, 5.52, 6.35, 50.0, 18.2, 21.0}, // Test 16 - Subcritical (P2/P1=0.80)
-      {6.89, 5.52, 6.35, 100.0, 14.8, 21.0}, // Test 17 - Subcritical
-      {6.89, 5.52, 6.35, 200.0, 11.2, 21.0}, // Test 18 - Subcritical
-      {6.89, 5.52, 6.35, 500.0, 6.8, 21.0}, // Test 19 - Subcritical
-      {6.89, 5.52, 6.35, 1000.0, 4.3, 21.0}, // Test 20 - Subcritical
+      { 6.89, 5.52, 6.35, 50.0, 18.2, 21.0 }, // Test 16 - Subcritical (P2/P1=0.80)
+      { 6.89, 5.52, 6.35, 100.0, 14.8, 21.0 }, // Test 17 - Subcritical
+      { 6.89, 5.52, 6.35, 200.0, 11.2, 21.0 }, // Test 18 - Subcritical
+      { 6.89, 5.52, 6.35, 500.0, 6.8, 21.0 }, // Test 19 - Subcritical
+      { 6.89, 5.52, 6.35, 1000.0, 4.3, 21.0 }, // Test 20 - Subcritical
 
       // Different choke diameters (9.53 mm = 3/8 inch)
-      {10.34, 1.01, 9.53, 100.0, 62.5, 21.0}, // Test 21 - 9.53mm choke
-      {10.34, 1.01, 9.53, 200.0, 47.8, 21.0}, // Test 22 - 9.53mm choke
-      {10.34, 1.01, 9.53, 500.0, 29.3, 21.0}, // Test 23 - 9.53mm choke
-      {10.34, 1.01, 9.53, 1000.0, 19.1, 21.0}, // Test 24 - 9.53mm choke
+      { 10.34, 1.01, 9.53, 100.0, 62.5, 21.0 }, // Test 21 - 9.53mm choke
+      { 10.34, 1.01, 9.53, 200.0, 47.8, 21.0 }, // Test 22 - 9.53mm choke
+      { 10.34, 1.01, 9.53, 500.0, 29.3, 21.0 }, // Test 23 - 9.53mm choke
+      { 10.34, 1.01, 9.53, 1000.0, 19.1, 21.0 }, // Test 24 - 9.53mm choke
 
       // Different choke diameters (12.7 mm = 1/2 inch)
-      {10.34, 1.01, 12.7, 100.0, 110.2, 21.0}, // Test 25 - 12.7mm choke
-      {10.34, 1.01, 12.7, 200.0, 84.5, 21.0}, // Test 26 - 12.7mm choke
-      {10.34, 1.01, 12.7, 500.0, 52.1, 21.0}, // Test 27 - 12.7mm choke
-      {10.34, 1.01, 12.7, 1000.0, 33.8, 21.0}, // Test 28 - 12.7mm choke
+      { 10.34, 1.01, 12.7, 100.0, 110.2, 21.0 }, // Test 25 - 12.7mm choke
+      { 10.34, 1.01, 12.7, 200.0, 84.5, 21.0 }, // Test 26 - 12.7mm choke
+      { 10.34, 1.01, 12.7, 500.0, 52.1, 21.0 }, // Test 27 - 12.7mm choke
+      { 10.34, 1.01, 12.7, 1000.0, 33.8, 21.0 }, // Test 28 - 12.7mm choke
   };
 
   /**
@@ -105,17 +102,17 @@ public final class ChokeFlowValidationData {
    */
   public static final double[][] SACHDEVA_AIR_KEROSENE = {
       // Critical flow regime - kerosene (API ~43, SG ~0.81)
-      {6.89, 1.01, 6.35, 50.0, 31.2, 21.0}, // Test 1
-      {6.89, 1.01, 6.35, 100.0, 24.5, 21.0}, // Test 2
-      {6.89, 1.01, 6.35, 200.0, 18.1, 21.0}, // Test 3
-      {6.89, 1.01, 6.35, 500.0, 10.8, 21.0}, // Test 4
-      {6.89, 1.01, 6.35, 1000.0, 6.9, 21.0}, // Test 5
+      { 6.89, 1.01, 6.35, 50.0, 31.2, 21.0 }, // Test 1
+      { 6.89, 1.01, 6.35, 100.0, 24.5, 21.0 }, // Test 2
+      { 6.89, 1.01, 6.35, 200.0, 18.1, 21.0 }, // Test 3
+      { 6.89, 1.01, 6.35, 500.0, 10.8, 21.0 }, // Test 4
+      { 6.89, 1.01, 6.35, 1000.0, 6.9, 21.0 }, // Test 5
 
-      {10.34, 1.01, 6.35, 50.0, 38.5, 21.0}, // Test 6
-      {10.34, 1.01, 6.35, 100.0, 30.8, 21.0}, // Test 7
-      {10.34, 1.01, 6.35, 200.0, 23.4, 21.0}, // Test 8
-      {10.34, 1.01, 6.35, 500.0, 14.4, 21.0}, // Test 9
-      {10.34, 1.01, 6.35, 1000.0, 9.4, 21.0}, // Test 10
+      { 10.34, 1.01, 6.35, 50.0, 38.5, 21.0 }, // Test 6
+      { 10.34, 1.01, 6.35, 100.0, 30.8, 21.0 }, // Test 7
+      { 10.34, 1.01, 6.35, 200.0, 23.4, 21.0 }, // Test 8
+      { 10.34, 1.01, 6.35, 500.0, 14.4, 21.0 }, // Test 9
+      { 10.34, 1.01, 6.35, 1000.0, 9.4, 21.0 }, // Test 10
   };
 
   /**
@@ -129,9 +126,9 @@ public final class ChokeFlowValidationData {
    * Format: [Gas quality x_g (-), Critical pressure ratio y_c (-)]
    * </p>
    */
-  public static final double[][] SACHDEVA_CRITICAL_RATIO = {{0.01, 0.690}, // Near-liquid
-      {0.05, 0.653}, {0.10, 0.637}, {0.20, 0.621}, {0.30, 0.612}, {0.40, 0.605}, {0.50, 0.600},
-      {0.60, 0.596}, {0.70, 0.593}, {0.80, 0.590}, {0.90, 0.587}, {0.95, 0.585}, {0.99, 0.582}, // Near-gas
+  public static final double[][] SACHDEVA_CRITICAL_RATIO = { { 0.01, 0.690 }, // Near-liquid
+      { 0.05, 0.653 }, { 0.10, 0.637 }, { 0.20, 0.621 }, { 0.30, 0.612 }, { 0.40, 0.605 }, { 0.50, 0.600 },
+      { 0.60, 0.596 }, { 0.70, 0.593 }, { 0.80, 0.590 }, { 0.90, 0.587 }, { 0.95, 0.585 }, { 0.99, 0.582 }, // Near-gas
   };
 
   // ============================================================================
@@ -154,39 +151,39 @@ public final class ChokeFlowValidationData {
    */
   public static final double[][] GILBERT_FIELD_DATA = {
       // Low GLR cases (heavy oil)
-      {500, 16, 200, 425, 25, 0.70}, // Test 1
-      {500, 16, 400, 310, 25, 0.70}, // Test 2
-      {500, 16, 600, 252, 25, 0.70}, // Test 3
-      {500, 16, 800, 218, 25, 0.70}, // Test 4
-      {500, 16, 1000, 195, 25, 0.70}, // Test 5
+      { 500, 16, 200, 425, 25, 0.70 }, // Test 1
+      { 500, 16, 400, 310, 25, 0.70 }, // Test 2
+      { 500, 16, 600, 252, 25, 0.70 }, // Test 3
+      { 500, 16, 800, 218, 25, 0.70 }, // Test 4
+      { 500, 16, 1000, 195, 25, 0.70 }, // Test 5
 
       // Medium GLR cases
-      {750, 24, 300, 892, 30, 0.70}, // Test 6
-      {750, 24, 500, 690, 30, 0.70}, // Test 7
-      {750, 24, 800, 545, 30, 0.70}, // Test 8
-      {750, 24, 1000, 488, 30, 0.70}, // Test 9
-      {750, 24, 1500, 398, 30, 0.70}, // Test 10
+      { 750, 24, 300, 892, 30, 0.70 }, // Test 6
+      { 750, 24, 500, 690, 30, 0.70 }, // Test 7
+      { 750, 24, 800, 545, 30, 0.70 }, // Test 8
+      { 750, 24, 1000, 488, 30, 0.70 }, // Test 9
+      { 750, 24, 1500, 398, 30, 0.70 }, // Test 10
 
       // Higher pressure cases
-      {1000, 32, 400, 1580, 35, 0.65}, // Test 11
-      {1000, 32, 600, 1290, 35, 0.65}, // Test 12
-      {1000, 32, 800, 1115, 35, 0.65}, // Test 13
-      {1000, 32, 1000, 998, 35, 0.65}, // Test 14
-      {1000, 32, 1500, 815, 35, 0.65}, // Test 15
+      { 1000, 32, 400, 1580, 35, 0.65 }, // Test 11
+      { 1000, 32, 600, 1290, 35, 0.65 }, // Test 12
+      { 1000, 32, 800, 1115, 35, 0.65 }, // Test 13
+      { 1000, 32, 1000, 998, 35, 0.65 }, // Test 14
+      { 1000, 32, 1500, 815, 35, 0.65 }, // Test 15
 
       // High pressure / large choke
-      {1500, 48, 500, 3450, 40, 0.65}, // Test 16
-      {1500, 48, 750, 2820, 40, 0.65}, // Test 17
-      {1500, 48, 1000, 2450, 40, 0.65}, // Test 18
-      {1500, 48, 1500, 2000, 40, 0.65}, // Test 19
-      {1500, 48, 2000, 1735, 40, 0.65}, // Test 20
+      { 1500, 48, 500, 3450, 40, 0.65 }, // Test 16
+      { 1500, 48, 750, 2820, 40, 0.65 }, // Test 17
+      { 1500, 48, 1000, 2450, 40, 0.65 }, // Test 18
+      { 1500, 48, 1500, 2000, 40, 0.65 }, // Test 19
+      { 1500, 48, 2000, 1735, 40, 0.65 }, // Test 20
 
       // Very high GLR cases
-      {1000, 24, 2000, 455, 35, 0.70}, // Test 21
-      {1000, 24, 3000, 370, 35, 0.70}, // Test 22
-      {1000, 24, 5000, 288, 35, 0.70}, // Test 23
-      {1000, 24, 8000, 228, 35, 0.70}, // Test 24
-      {1000, 24, 10000, 204, 35, 0.70}, // Test 25
+      { 1000, 24, 2000, 455, 35, 0.70 }, // Test 21
+      { 1000, 24, 3000, 370, 35, 0.70 }, // Test 22
+      { 1000, 24, 5000, 288, 35, 0.70 }, // Test 23
+      { 1000, 24, 8000, 228, 35, 0.70 }, // Test 24
+      { 1000, 24, 10000, 204, 35, 0.70 }, // Test 25
   };
 
   /**
@@ -199,7 +196,7 @@ public final class ChokeFlowValidationData {
    * Format: [C, n (diameter exponent), m (GLR exponent)]
    * </p>
    */
-  public static final double[] GILBERT_CONSTANTS = {435.0, // C - empirical constant
+  public static final double[] GILBERT_CONSTANTS = { 435.0, // C - empirical constant
       1.89, // n - diameter exponent
       0.546 // m - GLR exponent
   };
@@ -223,31 +220,31 @@ public final class ChokeFlowValidationData {
    */
   public static final double[][] FORTUNATI_LAB_DATA = {
       // Critical flow conditions
-      {50.0, 10.0, 8.0, 100, 85.2, 40, 35}, // Test 1
-      {50.0, 10.0, 8.0, 200, 62.8, 40, 35}, // Test 2
-      {50.0, 10.0, 8.0, 300, 51.3, 40, 35}, // Test 3
-      {50.0, 10.0, 8.0, 500, 39.8, 40, 35}, // Test 4
-      {50.0, 10.0, 8.0, 800, 31.5, 40, 35}, // Test 5
+      { 50.0, 10.0, 8.0, 100, 85.2, 40, 35 }, // Test 1
+      { 50.0, 10.0, 8.0, 200, 62.8, 40, 35 }, // Test 2
+      { 50.0, 10.0, 8.0, 300, 51.3, 40, 35 }, // Test 3
+      { 50.0, 10.0, 8.0, 500, 39.8, 40, 35 }, // Test 4
+      { 50.0, 10.0, 8.0, 800, 31.5, 40, 35 }, // Test 5
 
-      {70.0, 10.0, 8.0, 100, 105.6, 40, 35}, // Test 6
-      {70.0, 10.0, 8.0, 200, 78.2, 40, 35}, // Test 7
-      {70.0, 10.0, 8.0, 300, 64.1, 40, 35}, // Test 8
-      {70.0, 10.0, 8.0, 500, 49.7, 40, 35}, // Test 9
-      {70.0, 10.0, 8.0, 800, 39.5, 40, 35}, // Test 10
+      { 70.0, 10.0, 8.0, 100, 105.6, 40, 35 }, // Test 6
+      { 70.0, 10.0, 8.0, 200, 78.2, 40, 35 }, // Test 7
+      { 70.0, 10.0, 8.0, 300, 64.1, 40, 35 }, // Test 8
+      { 70.0, 10.0, 8.0, 500, 49.7, 40, 35 }, // Test 9
+      { 70.0, 10.0, 8.0, 800, 39.5, 40, 35 }, // Test 10
 
       // Different choke sizes
-      {50.0, 10.0, 10.0, 200, 98.5, 40, 35}, // Test 11 - 10mm choke
-      {50.0, 10.0, 10.0, 400, 61.2, 40, 35}, // Test 12
-      {50.0, 10.0, 12.0, 200, 141.8, 40, 35}, // Test 13 - 12mm choke
-      {50.0, 10.0, 12.0, 400, 88.2, 40, 35}, // Test 14
+      { 50.0, 10.0, 10.0, 200, 98.5, 40, 35 }, // Test 11 - 10mm choke
+      { 50.0, 10.0, 10.0, 400, 61.2, 40, 35 }, // Test 12
+      { 50.0, 10.0, 12.0, 200, 141.8, 40, 35 }, // Test 13 - 12mm choke
+      { 50.0, 10.0, 12.0, 400, 88.2, 40, 35 }, // Test 14
 
       // Subcritical flow conditions
-      {50.0, 35.0, 8.0, 100, 52.3, 40, 35}, // Test 15 - P2/P1=0.70
-      {50.0, 35.0, 8.0, 200, 38.6, 40, 35}, // Test 16
-      {50.0, 35.0, 8.0, 300, 31.5, 40, 35}, // Test 17
-      {50.0, 40.0, 8.0, 100, 38.2, 40, 35}, // Test 18 - P2/P1=0.80
-      {50.0, 40.0, 8.0, 200, 28.1, 40, 35}, // Test 19
-      {50.0, 40.0, 8.0, 300, 23.0, 40, 35}, // Test 20
+      { 50.0, 35.0, 8.0, 100, 52.3, 40, 35 }, // Test 15 - P2/P1=0.70
+      { 50.0, 35.0, 8.0, 200, 38.6, 40, 35 }, // Test 16
+      { 50.0, 35.0, 8.0, 300, 31.5, 40, 35 }, // Test 17
+      { 50.0, 40.0, 8.0, 100, 38.2, 40, 35 }, // Test 18 - P2/P1=0.80
+      { 50.0, 40.0, 8.0, 200, 28.1, 40, 35 }, // Test 19
+      { 50.0, 40.0, 8.0, 300, 23.0, 40, 35 }, // Test 20
   };
 
   /**
@@ -257,13 +254,13 @@ public final class ChokeFlowValidationData {
    * Format: [P1 (bara), P2 (bara), d (mm), GLR (Sm3/Sm3), qL (m3/d), T (°C), API]
    * </p>
    */
-  public static final double[][] FORTUNATI_FIELD_DATA = {{85.0, 25.0, 12.7, 150, 320.5, 55, 38}, // Well
-                                                                                                 // A
-      {85.0, 25.0, 12.7, 280, 245.2, 55, 38}, // Well A - different GLR
-      {72.0, 20.0, 9.5, 420, 125.8, 48, 35}, // Well B
-      {72.0, 20.0, 9.5, 680, 97.2, 48, 35}, // Well B - different GLR
-      {95.0, 30.0, 15.9, 180, 485.6, 62, 40}, // Well C
-      {95.0, 30.0, 15.9, 350, 352.1, 62, 40}, // Well C - different GLR
+  public static final double[][] FORTUNATI_FIELD_DATA = { { 85.0, 25.0, 12.7, 150, 320.5, 55, 38 }, // Well
+												    // A
+      { 85.0, 25.0, 12.7, 280, 245.2, 55, 38 }, // Well A - different GLR
+      { 72.0, 20.0, 9.5, 420, 125.8, 48, 35 }, // Well B
+      { 72.0, 20.0, 9.5, 680, 97.2, 48, 35 }, // Well B - different GLR
+      { 95.0, 30.0, 15.9, 180, 485.6, 62, 40 }, // Well C
+      { 95.0, 30.0, 15.9, 350, 352.1, 62, 40 }, // Well C - different GLR
   };
 
   // ============================================================================
@@ -279,29 +276,29 @@ public final class ChokeFlowValidationData {
    * Ashford (1974) theoretical validation data.
    *
    * <p>
-   * Ashford model uses polytropic gas expansion with discharge coefficient. Format: [P1 (psia), d
-   * (64ths), GLR (scf/stb), qL_measured (bbl/d), qL_calculated (bbl/d), Cd]
+   * Ashford model uses polytropic gas expansion with discharge coefficient. Format: [P1 (psia), d (64ths), GLR
+   * (scf/stb), qL_measured (bbl/d), qL_calculated (bbl/d), Cd]
    * </p>
    */
   public static final double[][] ASHFORD_VALIDATION_DATA = {
       // Comparison of measured vs calculated flow rates
-      {800, 20, 400, 520, 508, 0.85}, // Test 1
-      {800, 20, 600, 425, 418, 0.85}, // Test 2
-      {800, 20, 800, 368, 362, 0.85}, // Test 3
-      {800, 20, 1000, 330, 325, 0.85}, // Test 4
-      {800, 20, 1500, 270, 268, 0.85}, // Test 5
+      { 800, 20, 400, 520, 508, 0.85 }, // Test 1
+      { 800, 20, 600, 425, 418, 0.85 }, // Test 2
+      { 800, 20, 800, 368, 362, 0.85 }, // Test 3
+      { 800, 20, 1000, 330, 325, 0.85 }, // Test 4
+      { 800, 20, 1500, 270, 268, 0.85 }, // Test 5
 
-      {1000, 24, 300, 892, 875, 0.86}, // Test 6
-      {1000, 24, 500, 691, 678, 0.86}, // Test 7
-      {1000, 24, 750, 565, 558, 0.86}, // Test 8
-      {1000, 24, 1000, 490, 485, 0.86}, // Test 9
-      {1000, 24, 1500, 400, 398, 0.86}, // Test 10
+      { 1000, 24, 300, 892, 875, 0.86 }, // Test 6
+      { 1000, 24, 500, 691, 678, 0.86 }, // Test 7
+      { 1000, 24, 750, 565, 558, 0.86 }, // Test 8
+      { 1000, 24, 1000, 490, 485, 0.86 }, // Test 9
+      { 1000, 24, 1500, 400, 398, 0.86 }, // Test 10
 
-      {1200, 32, 400, 1485, 1462, 0.87}, // Test 11
-      {1200, 32, 600, 1215, 1198, 0.87}, // Test 12
-      {1200, 32, 800, 1050, 1042, 0.87}, // Test 13
-      {1200, 32, 1000, 940, 932, 0.87}, // Test 14
-      {1200, 32, 1500, 768, 762, 0.87}, // Test 15
+      { 1200, 32, 400, 1485, 1462, 0.87 }, // Test 11
+      { 1200, 32, 600, 1215, 1198, 0.87 }, // Test 12
+      { 1200, 32, 800, 1050, 1042, 0.87 }, // Test 13
+      { 1200, 32, 1000, 940, 932, 0.87 }, // Test 14
+      { 1200, 32, 1500, 768, 762, 0.87 }, // Test 15
   };
 
   /**
@@ -311,17 +308,15 @@ public final class ChokeFlowValidationData {
    * Cd varies with Reynolds number and gas quality. Format: [Re_liquid, gas_quality, Cd_measured]
    * </p>
    */
-  public static final double[][] ASHFORD_DISCHARGE_COEFFICIENTS = {{5000, 0.1, 0.78},
-      {5000, 0.3, 0.82}, {5000, 0.5, 0.84}, {5000, 0.7, 0.86}, {5000, 0.9, 0.88},
+  public static final double[][] ASHFORD_DISCHARGE_COEFFICIENTS = { { 5000, 0.1, 0.78 }, { 5000, 0.3, 0.82 },
+      { 5000, 0.5, 0.84 }, { 5000, 0.7, 0.86 }, { 5000, 0.9, 0.88 },
 
-      {10000, 0.1, 0.80}, {10000, 0.3, 0.83}, {10000, 0.5, 0.85}, {10000, 0.7, 0.87},
-      {10000, 0.9, 0.89},
+      { 10000, 0.1, 0.80 }, { 10000, 0.3, 0.83 }, { 10000, 0.5, 0.85 }, { 10000, 0.7, 0.87 }, { 10000, 0.9, 0.89 },
 
-      {50000, 0.1, 0.82}, {50000, 0.3, 0.85}, {50000, 0.5, 0.87}, {50000, 0.7, 0.88},
-      {50000, 0.9, 0.90},
+      { 50000, 0.1, 0.82 }, { 50000, 0.3, 0.85 }, { 50000, 0.5, 0.87 }, { 50000, 0.7, 0.88 }, { 50000, 0.9, 0.90 },
 
-      {100000, 0.1, 0.84}, {100000, 0.3, 0.86}, {100000, 0.5, 0.88}, {100000, 0.7, 0.89},
-      {100000, 0.9, 0.91},};
+      { 100000, 0.1, 0.84 }, { 100000, 0.3, 0.86 }, { 100000, 0.5, 0.88 }, { 100000, 0.7, 0.89 },
+      { 100000, 0.9, 0.91 }, };
 
   // ============================================================================
   // UNIT CONVERSION CONSTANTS
@@ -405,8 +400,8 @@ public final class ChokeFlowValidationData {
   /**
    * Calculate expected flow rate using Gilbert correlation.
    *
-   * @param P1_psia upstream pressure in psia
-   * @param d_64ths choke diameter in 64ths of an inch
+   * @param P1_psia    upstream pressure in psia
+   * @param d_64ths    choke diameter in 64ths of an inch
    * @param GLR_scfstb gas-liquid ratio in scf/stb
    * @return liquid flow rate in bbl/d
    */
@@ -444,16 +439,16 @@ public final class ChokeFlowValidationData {
       return 0.20;
     }
     switch (dataSource.toUpperCase()) {
-      case "SACHDEVA":
-        return 0.10; // 10% - laboratory data, more accurate
-      case "GILBERT":
-        return 0.20; // 20% - field correlation, more scatter
-      case "FORTUNATI":
-        return 0.15; // 15% - mixed lab/field data
-      case "ASHFORD":
-        return 0.10; // 10% - validated theoretical model
-      default:
-        return 0.20; // Conservative default
+    case "SACHDEVA":
+      return 0.10; // 10% - laboratory data, more accurate
+    case "GILBERT":
+      return 0.20; // 20% - field correlation, more scatter
+    case "FORTUNATI":
+      return 0.15; // 15% - mixed lab/field data
+    case "ASHFORD":
+      return 0.10; // 10% - validated theoretical model
+    default:
+      return 0.20; // Conservative default
     }
   }
 }

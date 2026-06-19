@@ -17,11 +17,10 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * </p>
  *
  * <p>
- * This class provides a wrapper around the GERG-2008 equation of state for calculating
- * thermodynamic properties of natural gas mixtures. The GERG-2008 parameters are cached statically
- * to avoid expensive re-initialization on every call, which significantly improves performance for
- * applications that make repeated property calculations (such as compressor performance
- * estimation).
+ * This class provides a wrapper around the GERG-2008 equation of state for calculating thermodynamic properties of
+ * natural gas mixtures. The GERG-2008 parameters are cached statically to avoid expensive re-initialization on every
+ * call, which significantly improves performance for applications that make repeated property calculations (such as
+ * compressor performance estimation).
  * </p>
  *
  * @author esol
@@ -29,12 +28,10 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  */
 public class NeqSimGERG2008 {
   /**
-   * Cache of initialized GERG-2008 model instances by type. The SetupGERG() method initializes
-   * ~3000 lines of constant parameters, so caching provides significant performance improvement for
-   * repeated calculations.
+   * Cache of initialized GERG-2008 model instances by type. The SetupGERG() method initializes ~3000 lines of constant
+   * parameters, so caching provides significant performance improvement for repeated calculations.
    */
-  private static final ConcurrentHashMap<GERG2008Type, GERG2008> MODEL_CACHE =
-      new ConcurrentHashMap<>();
+  private static final ConcurrentHashMap<GERG2008Type, GERG2008> MODEL_CACHE = new ConcurrentHashMap<>();
 
   double[] normalizedGERGComposition = new double[22 + 1];
   double[] notNormalizedGERGComposition = new double[22 + 1];
@@ -67,7 +64,7 @@ public class NeqSimGERG2008 {
    * Constructor for NeqSimGERG2008 with specified model type.
    * </p>
    *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase     a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param modelType the GERG-2008 model variant to use (STANDARD or HYDROGEN_ENHANCED)
    */
   public NeqSimGERG2008(PhaseInterface phase, GERG2008Type modelType) {
@@ -77,14 +74,14 @@ public class NeqSimGERG2008 {
   }
 
   /**
-   * Gets a cached and initialized GERG-2008 model instance for the specified type. If no cached
-   * instance exists, creates one and initializes it with SetupGERG(). This method is thread-safe.
+   * Gets a cached and initialized GERG-2008 model instance for the specified type. If no cached instance exists,
+   * creates one and initializes it with SetupGERG(). This method is thread-safe.
    *
    * <p>
-   * Performance note: The SetupGERG() method initializes approximately 3000 lines of constant
-   * parameters for the GERG-2008 equation of state. Caching these initialized models provides
-   * significant performance improvement for applications that make repeated property calculations,
-   * such as compressor performance estimation where hundreds of flash calculations may be required.
+   * Performance note: The SetupGERG() method initializes approximately 3000 lines of constant parameters for the
+   * GERG-2008 equation of state. Caching these initialized models provides significant performance improvement for
+   * applications that make repeated property calculations, such as compressor performance estimation where hundreds of
+   * flash calculations may be required.
    * </p>
    *
    * @param type the GERG-2008 model variant (STANDARD or HYDROGEN_ENHANCED)
@@ -106,19 +103,19 @@ public class NeqSimGERG2008 {
    */
   private static GERG2008 createNewModel(GERG2008Type type) {
     switch (type) {
-      case HYDROGEN_ENHANCED:
-        return new GERG2008H2();
-      case AMMONIA_EXTENDED:
-        return new GERG2008NH3();
-      case STANDARD:
-      default:
-        return new GERG2008();
+    case HYDROGEN_ENHANCED:
+      return new GERG2008H2();
+    case AMMONIA_EXTENDED:
+      return new GERG2008NH3();
+    case STANDARD:
+    default:
+      return new GERG2008();
     }
   }
 
   /**
-   * Clears the cached GERG-2008 model instances. This is primarily useful for testing or when
-   * parameters need to be reloaded.
+   * Clears the cached GERG-2008 model instances. This is primarily useful for testing or when parameters need to be
+   * reloaded.
    */
   public static void clearCache() {
     MODEL_CACHE.clear();
@@ -224,15 +221,14 @@ public class NeqSimGERG2008 {
     if (phase != null) {
       PhaseType type = phase.getType();
       if (type == PhaseType.LIQUID || type == PhaseType.OIL || type == PhaseType.AQUEOUS) {
-        flag = 2; // search for high density root
+	flag = 2; // search for high density root
       }
     }
     intW ierr = new intW(0);
     StringW herr = new StringW("");
     doubleW D = new doubleW(0.0);
     double pressure = phase.getPressure() * 100.0;
-    GERG2008.DensityGERG(flag, phase.getTemperature(), pressure, normalizedGERGComposition, D, ierr,
-        herr);
+    GERG2008.DensityGERG(flag, phase.getTemperature(), pressure, normalizedGERGComposition, D, ierr, herr);
     return D.val;
   }
 
@@ -254,7 +250,7 @@ public class NeqSimGERG2008 {
    * getProperties.
    * </p>
    *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase      a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param properties an array of {@link java.lang.String} objects
    * @return an array of type double
    */
@@ -264,20 +260,20 @@ public class NeqSimGERG2008 {
 
     for (int i = 0; i < properties.length; i++) {
       switch (properties[i]) {
-        case "density":
-          returnProperties[i] = allProperties[0];
-          break;
-        case "Cp":
-          returnProperties[i] = allProperties[1];
-          break;
-        case "Cv":
-          returnProperties[i] = allProperties[2];
-          break;
-        case "soundSpeed":
-          returnProperties[i] = allProperties[3];
-          break;
-        default:
-          break;
+      case "density":
+	returnProperties[i] = allProperties[0];
+	break;
+      case "Cp":
+	returnProperties[i] = allProperties[1];
+	break;
+      case "Cv":
+	returnProperties[i] = allProperties[2];
+	break;
+      case "soundSpeed":
+	returnProperties[i] = allProperties[3];
+	break;
+      default:
+	break;
       }
     }
     return returnProperties;
@@ -310,10 +306,10 @@ public class NeqSimGERG2008 {
     double dens = getMolarDensity();
     // neqsim.thermo.GERG.Densitygerg.densitygerg(0, 0, 0, arg3, 0, arg5, arg6,
     // arg7);
-    GERG2008.PropertiesGERG(phase.getTemperature(), dens, normalizedGERGComposition, p, z, dpdd,
-        d2pdd2, d2pdtd, dpdt, u, h, s, cv, cp, w, g, jt, kappa, A);
-    double[] properties = new double[] {p.val, z.val, dpdd.val, d2pdd2.val, d2pdtd.val, dpdt.val,
-        u.val, h.val, s.val, cv.val, cp.val, w.val, g.val, jt.val, kappa.val};
+    GERG2008.PropertiesGERG(phase.getTemperature(), dens, normalizedGERGComposition, p, z, dpdd, d2pdd2, d2pdtd, dpdt,
+	u, h, s, cv, cp, w, g, jt, kappa, A);
+    double[] properties = new double[] { p.val, z.val, dpdd.val, d2pdd2.val, d2pdtd.val, dpdt.val, u.val, h.val, s.val,
+	cv.val, cp.val, w.val, g.val, jt.val, kappa.val };
     return properties;
   }
 
@@ -330,97 +326,97 @@ public class NeqSimGERG2008 {
       String componentName = phase.getComponent(i).getComponentName();
 
       switch (componentName) {
-        case "methane":
-          notNormalizedGERGComposition[1] = phase.getComponent(i).getx();
-          break;
-        case "nitrogen":
-          notNormalizedGERGComposition[2] = phase.getComponent(i).getx();
-          break;
-        case "CO2":
-          notNormalizedGERGComposition[3] = phase.getComponent(i).getx();
-          break;
-        case "ethane":
-          notNormalizedGERGComposition[4] = phase.getComponent(i).getx();
-          break;
-        case "propane":
-          notNormalizedGERGComposition[5] = phase.getComponent(i).getx();
-          break;
-        case "i-butane":
-          notNormalizedGERGComposition[6] = phase.getComponent(i).getx();
-          break;
-        case "n-butane":
-          notNormalizedGERGComposition[7] = phase.getComponent(i).getx();
-          break;
-        case "i-pentane":
-          notNormalizedGERGComposition[8] = phase.getComponent(i).getx();
-          break;
-        case "n-pentane":
-          notNormalizedGERGComposition[9] = phase.getComponent(i).getx();
-          break;
-        case "n-hexane":
-          notNormalizedGERGComposition[10] = phase.getComponent(i).getx();
-          break;
-        case "n-heptane":
-          notNormalizedGERGComposition[11] = phase.getComponent(i).getx();
-          break;
-        case "n-octane":
-          notNormalizedGERGComposition[12] = phase.getComponent(i).getx();
-          break;
-        case "n-nonane":
-          notNormalizedGERGComposition[13] = phase.getComponent(i).getx();
-          break;
-        case "nC10":
-          notNormalizedGERGComposition[14] = phase.getComponent(i).getx();
-          break;
-        case "hydrogen":
-          notNormalizedGERGComposition[15] = phase.getComponent(i).getx();
-          break;
-        case "oxygen":
-          notNormalizedGERGComposition[16] = phase.getComponent(i).getx();
-          break;
-        case "CO":
-          notNormalizedGERGComposition[17] = phase.getComponent(i).getx();
-          break;
-        case "water":
-          notNormalizedGERGComposition[18] = phase.getComponent(i).getx();
-          break;
-        case "H2S":
-          notNormalizedGERGComposition[19] = phase.getComponent(i).getx();
-          break;
-        case "helium":
-          notNormalizedGERGComposition[20] = phase.getComponent(i).getx();
-          break;
-        case "argon":
-          notNormalizedGERGComposition[21] = phase.getComponent(i).getx();
-          break;
-        case "ammonia":
-          notNormalizedGERGComposition[22] = phase.getComponent(i).getx();
-          break;
+      case "methane":
+	notNormalizedGERGComposition[1] = phase.getComponent(i).getx();
+	break;
+      case "nitrogen":
+	notNormalizedGERGComposition[2] = phase.getComponent(i).getx();
+	break;
+      case "CO2":
+	notNormalizedGERGComposition[3] = phase.getComponent(i).getx();
+	break;
+      case "ethane":
+	notNormalizedGERGComposition[4] = phase.getComponent(i).getx();
+	break;
+      case "propane":
+	notNormalizedGERGComposition[5] = phase.getComponent(i).getx();
+	break;
+      case "i-butane":
+	notNormalizedGERGComposition[6] = phase.getComponent(i).getx();
+	break;
+      case "n-butane":
+	notNormalizedGERGComposition[7] = phase.getComponent(i).getx();
+	break;
+      case "i-pentane":
+	notNormalizedGERGComposition[8] = phase.getComponent(i).getx();
+	break;
+      case "n-pentane":
+	notNormalizedGERGComposition[9] = phase.getComponent(i).getx();
+	break;
+      case "n-hexane":
+	notNormalizedGERGComposition[10] = phase.getComponent(i).getx();
+	break;
+      case "n-heptane":
+	notNormalizedGERGComposition[11] = phase.getComponent(i).getx();
+	break;
+      case "n-octane":
+	notNormalizedGERGComposition[12] = phase.getComponent(i).getx();
+	break;
+      case "n-nonane":
+	notNormalizedGERGComposition[13] = phase.getComponent(i).getx();
+	break;
+      case "nC10":
+	notNormalizedGERGComposition[14] = phase.getComponent(i).getx();
+	break;
+      case "hydrogen":
+	notNormalizedGERGComposition[15] = phase.getComponent(i).getx();
+	break;
+      case "oxygen":
+	notNormalizedGERGComposition[16] = phase.getComponent(i).getx();
+	break;
+      case "CO":
+	notNormalizedGERGComposition[17] = phase.getComponent(i).getx();
+	break;
+      case "water":
+	notNormalizedGERGComposition[18] = phase.getComponent(i).getx();
+	break;
+      case "H2S":
+	notNormalizedGERGComposition[19] = phase.getComponent(i).getx();
+	break;
+      case "helium":
+	notNormalizedGERGComposition[20] = phase.getComponent(i).getx();
+	break;
+      case "argon":
+	notNormalizedGERGComposition[21] = phase.getComponent(i).getx();
+	break;
+      case "ammonia":
+	notNormalizedGERGComposition[22] = phase.getComponent(i).getx();
+	break;
 
-        default:
-          double molarMass = phase.getComponent(i).getMolarMass();
-          if (molarMass > 44.096759796142 / 1000.0 && molarMass < 58.1236991882324 / 1000.0) {
-            notNormalizedGERGComposition[7] += phase.getComponent(i).getx();
-          }
-          if (molarMass > 58.1236991882324 / 1000.0 && molarMass < 72.15064 / 1000.0) {
-            notNormalizedGERGComposition[8] += phase.getComponent(i).getx();
-          }
-          if (molarMass > 72.15064 / 1000.0 && molarMass < 86.2 / 1000.0) {
-            notNormalizedGERGComposition[10] += phase.getComponent(i).getx();
-          }
-          if (molarMass > 86.2 / 1000.0 && molarMass < 100.204498291016 / 1000.0) {
-            notNormalizedGERGComposition[11] += phase.getComponent(i).getx();
-          }
-          if (molarMass > 100.204498291016 / 1000.0 && molarMass < 107.0 / 1000.0) {
-            notNormalizedGERGComposition[12] += phase.getComponent(i).getx();
-          }
-          if (molarMass > 107.0 / 1000.0 && molarMass < 121.0 / 1000.0) {
-            notNormalizedGERGComposition[13] += phase.getComponent(i).getx();
-          }
-          if (molarMass > 121.0 / 1000.0) {
-            notNormalizedGERGComposition[14] += phase.getComponent(i).getx();
-          }
-          break;
+      default:
+	double molarMass = phase.getComponent(i).getMolarMass();
+	if (molarMass > 44.096759796142 / 1000.0 && molarMass < 58.1236991882324 / 1000.0) {
+	  notNormalizedGERGComposition[7] += phase.getComponent(i).getx();
+	}
+	if (molarMass > 58.1236991882324 / 1000.0 && molarMass < 72.15064 / 1000.0) {
+	  notNormalizedGERGComposition[8] += phase.getComponent(i).getx();
+	}
+	if (molarMass > 72.15064 / 1000.0 && molarMass < 86.2 / 1000.0) {
+	  notNormalizedGERGComposition[10] += phase.getComponent(i).getx();
+	}
+	if (molarMass > 86.2 / 1000.0 && molarMass < 100.204498291016 / 1000.0) {
+	  notNormalizedGERGComposition[11] += phase.getComponent(i).getx();
+	}
+	if (molarMass > 100.204498291016 / 1000.0 && molarMass < 107.0 / 1000.0) {
+	  notNormalizedGERGComposition[12] += phase.getComponent(i).getx();
+	}
+	if (molarMass > 107.0 / 1000.0 && molarMass < 121.0 / 1000.0) {
+	  notNormalizedGERGComposition[13] += phase.getComponent(i).getx();
+	}
+	if (molarMass > 121.0 / 1000.0) {
+	  notNormalizedGERGComposition[14] += phase.getComponent(i).getx();
+	}
+	break;
       }
     }
     normalizeComposition();
@@ -440,7 +436,7 @@ public class NeqSimGERG2008 {
     if (result < 1e-30) {
       // Set all normalized fractions to zero to avoid NaN
       for (int k = 0; k < normalizedGERGComposition.length; k++) {
-        normalizedGERGComposition[k] = 0.0;
+	normalizedGERGComposition[k] = 0.0;
       }
       return;
     }
@@ -480,8 +476,7 @@ public class NeqSimGERG2008 {
   }
 
   /**
-   * Get reduced residual helmholtz free energy and its derivatives. The returned array has the
-   * following structure:
+   * Get reduced residual helmholtz free energy and its derivatives. The returned array has the following structure:
    * <ul>
    * <li>ar(0,0) - Residual Helmholtz energy (dimensionless, =a/RT)</li>
    * <li>ar(0,1) - delta*partial (ar)/partial(delta)</li>
@@ -506,7 +501,7 @@ public class NeqSimGERG2008 {
     doubleW[][] ar = new doubleW[rows][cols];
     for (int i = 0; i < rows; i++) {
       for (int j = 0; j < cols; j++) {
-        ar[i][j] = new doubleW(0.0);
+	ar[i][j] = new doubleW(0.0);
       }
     }
 

@@ -8,7 +8,8 @@ import neqsim.thermo.system.SystemSrkEos;
 
 class SaturationPressureTest extends neqsim.NeqSimTest {
   @BeforeAll
-  static void setUpBeforeClass() {}
+  static void setUpBeforeClass() {
+  }
 
   @Test
   void testCalcSaturationPressure() {

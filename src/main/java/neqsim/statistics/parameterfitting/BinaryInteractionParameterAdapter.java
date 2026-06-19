@@ -20,14 +20,14 @@ public class BinaryInteractionParameterAdapter implements ParameterUpdateAdapter
   /**
    * Creates a binary interaction parameter adapter.
    *
-   * @param system thermodynamic system to update
+   * @param system     thermodynamic system to update
    * @param component1 first component name
    * @param component2 second component name
-   * @param parameter fitting parameter definition
+   * @param parameter  fitting parameter definition
    * @throws IllegalArgumentException if any required input is null
    */
-  public BinaryInteractionParameterAdapter(SystemInterface system, String component1,
-      String component2, FittingParameter parameter) {
+  public BinaryInteractionParameterAdapter(SystemInterface system, String component1, String component2,
+      FittingParameter parameter) {
     if (system == null) {
       throw new IllegalArgumentException("system cannot be null");
     }
@@ -46,7 +46,7 @@ public class BinaryInteractionParameterAdapter implements ParameterUpdateAdapter
   /** {@inheritDoc} */
   @Override
   public FittingParameter[] getParameters() {
-    return new FittingParameter[] {parameter};
+    return new FittingParameter[] { parameter };
   }
 
   /** {@inheritDoc} */

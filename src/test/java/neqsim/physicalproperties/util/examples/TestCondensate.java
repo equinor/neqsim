@@ -34,8 +34,7 @@ public class TestCondensate {
   public static void main(String args[]) {
     // SystemInterface testSystem = new SystemSrkEos(273.15 + 15.0,
     // ThermodynamicConstantsInterface.referencePressure);
-    SystemInterface testSystem =
-        new SystemPrEos(273.15 + 15.0, ThermodynamicConstantsInterface.referencePressure);
+    SystemInterface testSystem = new SystemPrEos(273.15 + 15.0, ThermodynamicConstantsInterface.referencePressure);
     // testSystem.getCharacterization().setTBPModel("PedersenSRKHeavyOil");
 
     testSystem.setFluidName("Condensate1");

@@ -20,8 +20,7 @@ public class SingleComponentFlash {
 
   @Test
   void testConstantPhaseFractionPressureFlash() {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemPrEos(273.15 + 50.0, 15.0);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemPrEos(273.15 + 50.0, 15.0);
     testSystem.addComponent("propane", 1.0);
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     try {
@@ -35,8 +34,7 @@ public class SingleComponentFlash {
 
   @Test
   void testonConstantPhaseFractionTemperatureFlash() {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemPrEos(283.15, 10.0);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemPrEos(283.15, 10.0);
     testSystem.addComponent("propane", 1.0);
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     try {
@@ -51,8 +49,7 @@ public class SingleComponentFlash {
 
   @Test
   void testonConstantPhaseFractionTemperatureFlash2() {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemPrEos(293.15, 10.0);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemPrEos(293.15, 10.0);
     testSystem.addComponent("ethane", 1.0);
     testSystem.addComponent("propane", 1.0);
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
@@ -68,8 +65,7 @@ public class SingleComponentFlash {
 
   @Test
   void testonConstantPhaseFractionPressureFlash2() {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemPrEos(279.7674878, 10.0);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemPrEos(279.7674878, 10.0);
     testSystem.addComponent("ethane", 1.0);
     testSystem.addComponent("propane", 1.0);
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
@@ -85,8 +81,7 @@ public class SingleComponentFlash {
 
   @Test
   void testonConstantPhaseFractionPressureFlash4() {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemPrEos(279.7674878, 1.0);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemPrEos(279.7674878, 1.0);
     testSystem.addComponent("ethane", 1.0);
     testSystem.addComponent("n-heptane", 1.0);
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
@@ -102,8 +97,7 @@ public class SingleComponentFlash {
 
   @Test
   void testonConstantPhaseFractionTemperatureFlash4() {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemPrEos(299.7674878, 0.047926652566);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemPrEos(299.7674878, 0.047926652566);
     testSystem.addComponent("ethane", 1.0);
     testSystem.addComponent("n-heptane", 1.0);
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
@@ -119,8 +113,7 @@ public class SingleComponentFlash {
 
   @Test
   void testConstantPhaseFractionPressureFlash3() {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemPrEos(273.15 - 150.0, 15.0);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemPrEos(273.15 - 150.0, 15.0);
     testSystem.addComponent("nitrogen", 1.0);
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     try {
@@ -157,8 +150,7 @@ public class SingleComponentFlash {
     compressor1.setOutletPressure(10.0);
     compressor1.run();
 
-    ThrottlingValve liquid_valve1 =
-        new ThrottlingValve("liq valve 1", separator1.getLiquidOutStream());
+    ThrottlingValve liquid_valve1 = new ThrottlingValve("liq valve 1", separator1.getLiquidOutStream());
     liquid_valve1.setOutletPressure(1.4);
     liquid_valve1.run();
 
@@ -212,8 +204,7 @@ public class SingleComponentFlash {
     gasValve.setOutletPressure(1.0);
     gasValve.setPercentValveOpening(50.0);
 
-    ThrottlingValve liquidValve =
-        new ThrottlingValve("liquid valve", separator.getLiquidOutStream());
+    ThrottlingValve liquidValve = new ThrottlingValve("liquid valve", separator.getLiquidOutStream());
     liquidValve.setOutletPressure(1.0);
     liquidValve.setPercentValveOpening(50.0);
 
@@ -229,7 +220,7 @@ public class SingleComponentFlash {
     // liquidValve.getOutletStream().getFluid().prettyPrint();
 
     double initialOut = gasValve.getOutletStream().getFlowRate("kg/hr")
-        + liquidValve.getOutletStream().getFlowRate("kg/hr");
+	+ liquidValve.getOutletStream().getFlowRate("kg/hr");
     assertEquals(feed.getFlowRate("kg/hr"), initialOut, feed.getFlowRate("kg/hr") * 1e-6);
 
     // close inlet valve and run dynamic simulation
@@ -252,11 +243,9 @@ public class SingleComponentFlash {
       process.runTransient();
       time[i] = process.getTime();
       temp[i] = separator.getThermoSystem().getTemperature("C");
-      logger
-          .info("time " + time[i] + " temp " + temp[i] + " sep height " + separator.getLiquidLevel()
-              + " flow rate " + feedValve.getOutletStream().getFlowRate("kg/hr") + " pressure "
-              + feedValve.getOutletStream().getPressure() + " temp_out "
-              + liquidValve.getOutletStream().getTemperature("C"));
+      logger.info("time " + time[i] + " temp " + temp[i] + " sep height " + separator.getLiquidLevel() + " flow rate "
+	  + feedValve.getOutletStream().getFlowRate("kg/hr") + " pressure " + feedValve.getOutletStream().getPressure()
+	  + " temp_out " + liquidValve.getOutletStream().getTemperature("C"));
     }
 
     feedValve.setPercentValveOpening(50.0);
@@ -264,16 +253,14 @@ public class SingleComponentFlash {
       process.runTransient();
       time[i] = process.getTime();
       temp[i] = separator.getThermoSystem().getTemperature("C");
-      logger
-          .info("time " + time[i] + " temp " + temp[i] + " sep height " + separator.getLiquidLevel()
-              + " flow rate " + feedValve.getOutletStream().getFlowRate("kg/hr") + " pressure "
-              + feedValve.getOutletStream().getPressure() + " temp_out "
-              + liquidValve.getOutletStream().getTemperature("C"));
+      logger.info("time " + time[i] + " temp " + temp[i] + " sep height " + separator.getLiquidLevel() + " flow rate "
+	  + feedValve.getOutletStream().getFlowRate("kg/hr") + " pressure " + feedValve.getOutletStream().getPressure()
+	  + " temp_out " + liquidValve.getOutletStream().getTemperature("C"));
     }
 
     liquidValve.getOutletStream().getFluid().prettyPrint();
     double finalOut = gasValve.getOutletStream().getFlowRate("kg/hr")
-        + liquidValve.getOutletStream().getFlowRate("kg/hr");
+	+ liquidValve.getOutletStream().getFlowRate("kg/hr");
     // assertTrue(finalOut < initialOut);
     // assertTrue(finalOut > 0.0);
   }

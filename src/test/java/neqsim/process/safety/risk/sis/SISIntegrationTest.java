@@ -22,11 +22,9 @@ class SISIntegrationTest {
   void setUp() {
     // Create HIPPS (SIL 2) using builder pattern
     hipps = SafetyInstrumentedFunction.builder().id("SDV-001").name("Main HIPPS")
-        .description("High Integrity Pipeline Protection System")
-        .category(SafetyInstrumentedFunction.SIFCategory.HIPPS).sil(2).pfd(0.005)
-        .architecture("1oo2").testIntervalHours(8760.0)
-        .protectedEquipment(Arrays.asList("Export Pipeline", "Riser"))
-        .initiatingEvent("Overpressure").build();
+	.description("High Integrity Pipeline Protection System").category(SafetyInstrumentedFunction.SIFCategory.HIPPS)
+	.sil(2).pfd(0.005).architecture("1oo2").testIntervalHours(8760.0)
+	.protectedEquipment(Arrays.asList("Export Pipeline", "Riser")).initiatingEvent("Overpressure").build();
 
     // Create ESD (SIL 3) using simple constructor
     esd = new SafetyInstrumentedFunction("Emergency Shutdown", 3, 0.0005);
@@ -121,13 +119,11 @@ class SISIntegrationTest {
 
   @Test
   void testSIFCategoryEnum() {
-    SafetyInstrumentedFunction.SIFCategory[] categories =
-        SafetyInstrumentedFunction.SIFCategory.values();
+    SafetyInstrumentedFunction.SIFCategory[] categories = SafetyInstrumentedFunction.SIFCategory.values();
     assertEquals(6, categories.length);
 
     assertEquals("Emergency Shutdown", SafetyInstrumentedFunction.SIFCategory.ESD.getDescription());
-    assertEquals("High Integrity Pressure Protection",
-        SafetyInstrumentedFunction.SIFCategory.HIPPS.getDescription());
+    assertEquals("High Integrity Pressure Protection", SafetyInstrumentedFunction.SIFCategory.HIPPS.getDescription());
     assertEquals("Fire & Gas", SafetyInstrumentedFunction.SIFCategory.FIRE_GAS.getDescription());
   }
 
@@ -152,9 +148,8 @@ class SISIntegrationTest {
     SISIntegratedRiskModel model = new SISIntegratedRiskModel("Test Scenario");
 
     // Create IPL using the proper constructor
-    SISIntegratedRiskModel.IndependentProtectionLayer ipl =
-        new SISIntegratedRiskModel.IndependentProtectionLayer("PSV-001", 0.01,
-            SISIntegratedRiskModel.IndependentProtectionLayer.IPLType.MECHANICAL);
+    SISIntegratedRiskModel.IndependentProtectionLayer ipl = new SISIntegratedRiskModel.IndependentProtectionLayer(
+	"PSV-001", 0.01, SISIntegratedRiskModel.IndependentProtectionLayer.IPLType.MECHANICAL);
     model.addIPL(ipl);
 
     assertEquals(1, model.getIPLs().size());
@@ -162,21 +157,19 @@ class SISIntegrationTest {
 
   @Test
   void testIPLCreation() {
-    SISIntegratedRiskModel.IndependentProtectionLayer ipl =
-        new SISIntegratedRiskModel.IndependentProtectionLayer("PSV-001", 0.01,
-            SISIntegratedRiskModel.IndependentProtectionLayer.IPLType.MECHANICAL);
+    SISIntegratedRiskModel.IndependentProtectionLayer ipl = new SISIntegratedRiskModel.IndependentProtectionLayer(
+	"PSV-001", 0.01, SISIntegratedRiskModel.IndependentProtectionLayer.IPLType.MECHANICAL);
 
     assertEquals("PSV-001", ipl.getName());
     assertEquals(0.01, ipl.getPfd(), 0.001);
-    assertEquals(SISIntegratedRiskModel.IndependentProtectionLayer.IPLType.MECHANICAL,
-        ipl.getType());
+    assertEquals(SISIntegratedRiskModel.IndependentProtectionLayer.IPLType.MECHANICAL, ipl.getType());
     assertEquals(100.0, ipl.getRiskReductionFactor(), 1.0);
   }
 
   @Test
   void testIPLTypeEnum() {
-    SISIntegratedRiskModel.IndependentProtectionLayer.IPLType[] types =
-        SISIntegratedRiskModel.IndependentProtectionLayer.IPLType.values();
+    SISIntegratedRiskModel.IndependentProtectionLayer.IPLType[] types = SISIntegratedRiskModel.IndependentProtectionLayer.IPLType
+	.values();
     assertEquals(6, types.length);
   }
 
@@ -220,14 +213,10 @@ class SISIntegrationTest {
 
   @Test
   void testSTS0131OverpressureTargetFrequency() {
-    assertEquals(1.0e-2, LOPAResult.getSTS0131OverpressureTargetFrequency(90.0, 100.0, 150.0),
-        1.0e-12);
-    assertEquals(1.0e-3, LOPAResult.getSTS0131OverpressureTargetFrequency(120.0, 100.0, 150.0),
-        1.0e-12);
-    assertEquals(1.0e-4, LOPAResult.getSTS0131OverpressureTargetFrequency(175.0, 100.0, 150.0),
-        1.0e-12);
-    assertEquals(1.0e-5, LOPAResult.getSTS0131OverpressureTargetFrequency(250.0, 100.0, 150.0),
-        1.0e-12);
+    assertEquals(1.0e-2, LOPAResult.getSTS0131OverpressureTargetFrequency(90.0, 100.0, 150.0), 1.0e-12);
+    assertEquals(1.0e-3, LOPAResult.getSTS0131OverpressureTargetFrequency(120.0, 100.0, 150.0), 1.0e-12);
+    assertEquals(1.0e-4, LOPAResult.getSTS0131OverpressureTargetFrequency(175.0, 100.0, 150.0), 1.0e-12);
+    assertEquals(1.0e-5, LOPAResult.getSTS0131OverpressureTargetFrequency(250.0, 100.0, 150.0), 1.0e-12);
   }
 
   @Test
@@ -294,17 +283,13 @@ class SISIntegrationTest {
 
   @Test
   void testRiskToleranceCriteria() {
-    SISIntegratedRiskModel.RiskToleranceCriteria criteria =
-        new SISIntegratedRiskModel.RiskToleranceCriteria();
+    SISIntegratedRiskModel.RiskToleranceCriteria criteria = new SISIntegratedRiskModel.RiskToleranceCriteria();
 
     criteria.setTolerableFrequencyFatality(1e-5);
     criteria.setTolerableFrequencyAsset(1e-3);
 
-    assertEquals(1e-5,
-        criteria.getTolerableFrequency(SISIntegratedRiskModel.ConsequenceType.FATALITY), 1e-10);
-    assertEquals(1e-3, criteria.getTolerableFrequency(SISIntegratedRiskModel.ConsequenceType.ASSET),
-        1e-10);
+    assertEquals(1e-5, criteria.getTolerableFrequency(SISIntegratedRiskModel.ConsequenceType.FATALITY), 1e-10);
+    assertEquals(1e-3, criteria.getTolerableFrequency(SISIntegratedRiskModel.ConsequenceType.ASSET), 1e-10);
     assertTrue(criteria.getALARP() > 0);
   }
 }
-

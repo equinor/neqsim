@@ -37,27 +37,27 @@ import neqsim.process.equipment.EquipmentEnum;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 
 /**
- * Utility for exporting {@link ProcessSystem}s created from DEXPI data back into a lightweight
- * DEXPI XML representation.
+ * Utility for exporting {@link ProcessSystem}s created from DEXPI data back into a lightweight DEXPI XML
+ * representation.
  */
 public final class DexpiXmlWriter {
   private static final Pattern NON_IDENTIFIER = Pattern.compile("[^A-Za-z0-9_-]");
-  private static final transient ThreadLocal<DecimalFormat> DECIMAL_FORMAT =
-      ThreadLocal.withInitial(() -> {
-        DecimalFormatSymbols symbols = DecimalFormatSymbols.getInstance(Locale.ROOT);
-        DecimalFormat format = new DecimalFormat("0.############", symbols);
-        format.setMaximumFractionDigits(12);
-        format.setGroupingUsed(false);
-        return format;
-      });
+  private static final transient ThreadLocal<DecimalFormat> DECIMAL_FORMAT = ThreadLocal.withInitial(() -> {
+    DecimalFormatSymbols symbols = DecimalFormatSymbols.getInstance(Locale.ROOT);
+    DecimalFormat format = new DecimalFormat("0.############", symbols);
+    format.setMaximumFractionDigits(12);
+    format.setGroupingUsed(false);
+    return format;
+  });
 
-  private DexpiXmlWriter() {}
+  private DexpiXmlWriter() {
+  }
 
   /**
    * Writes the provided {@link ProcessSystem} to a DEXPI XML file.
    *
    * @param processSystem process model to export
-   * @param file output file
+   * @param file          output file
    * @throws IOException if writing fails
    */
   public static void write(ProcessSystem processSystem, File file) throws IOException {
@@ -76,11 +76,10 @@ public final class DexpiXmlWriter {
    * Writes the provided {@link ProcessSystem} to a DEXPI XML stream.
    *
    * @param processSystem process model to export
-   * @param outputStream destination stream
+   * @param outputStream  destination stream
    * @throws IOException if writing fails
    */
-  public static void write(ProcessSystem processSystem, OutputStream outputStream)
-      throws IOException {
+  public static void write(ProcessSystem processSystem, OutputStream outputStream) throws IOException {
     Objects.requireNonNull(processSystem, "processSystem");
     Objects.requireNonNull(outputStream, "outputStream");
 
@@ -95,17 +94,17 @@ public final class DexpiXmlWriter {
 
     for (ProcessEquipmentInterface unit : processSystem.getUnitOperations()) {
       if (unit instanceof DexpiProcessUnit) {
-        appendProcessUnit(document, root, (DexpiProcessUnit) unit, usedIds);
+	appendProcessUnit(document, root, (DexpiProcessUnit) unit, usedIds);
       } else if (unit instanceof DexpiStream) {
-        DexpiStream stream = (DexpiStream) unit;
-        String systemKey = stream.getLineNumber();
-        if (isBlank(systemKey)) {
-          systemKey = stream.getFluidCode();
-        }
-        if (isBlank(systemKey)) {
-          systemKey = "Segment";
-        }
-        segmentsBySystem.computeIfAbsent(systemKey, key -> new ArrayList<>()).add(stream);
+	DexpiStream stream = (DexpiStream) unit;
+	String systemKey = stream.getLineNumber();
+	if (isBlank(systemKey)) {
+	  systemKey = stream.getFluidCode();
+	}
+	if (isBlank(systemKey)) {
+	  systemKey = "Segment";
+	}
+	segmentsBySystem.computeIfAbsent(systemKey, key -> new ArrayList<>()).add(stream);
       }
     }
 
@@ -137,9 +136,8 @@ public final class DexpiXmlWriter {
 
   private static Element createPlantInformation(Document document) {
     Element plantInformation = document.createElement("PlantInformation");
-    String applicationVersion = ProcessSystem.class.getPackage().getImplementationVersion() == null
-        ? "1.0"
-        : ProcessSystem.class.getPackage().getImplementationVersion();
+    String applicationVersion = ProcessSystem.class.getPackage().getImplementationVersion() == null ? "1.0"
+	: ProcessSystem.class.getPackage().getImplementationVersion();
     plantInformation.setAttribute("Application", "NeqSim");
     plantInformation.setAttribute("ApplicationVersion", applicationVersion);
     plantInformation.setAttribute("OriginatingSystem", "NeqSim");
@@ -159,25 +157,21 @@ public final class DexpiXmlWriter {
     return plantInformation;
   }
 
-  private static void appendProcessUnit(Document document, Element parent,
-      DexpiProcessUnit processUnit, Set<String> usedIds) {
+  private static void appendProcessUnit(Document document, Element parent, DexpiProcessUnit processUnit,
+      Set<String> usedIds) {
     EquipmentEnum mapped = processUnit.getMappedEquipment();
     boolean isPipingComponent = mapped == EquipmentEnum.ThrottlingValve;
     String elementName = isPipingComponent ? "PipingComponent" : "Equipment";
     Element element = document.createElement(elementName);
 
-    String componentClass =
-        firstNonBlank(processUnit.getDexpiClass(), defaultComponentClass(mapped, elementName));
+    String componentClass = firstNonBlank(processUnit.getDexpiClass(), defaultComponentClass(mapped, elementName));
     element.setAttribute("ComponentClass", componentClass);
     element.setAttribute("ID", uniqueIdentifier(elementName, processUnit.getName(), usedIds));
 
     Element genericAttributes = document.createElement("GenericAttributes");
-    appendGenericAttribute(document, genericAttributes, DexpiMetadata.TAG_NAME,
-        processUnit.getName());
-    appendGenericAttribute(document, genericAttributes, DexpiMetadata.LINE_NUMBER,
-        processUnit.getLineNumber());
-    appendGenericAttribute(document, genericAttributes, DexpiMetadata.FLUID_CODE,
-        processUnit.getFluidCode());
+    appendGenericAttribute(document, genericAttributes, DexpiMetadata.TAG_NAME, processUnit.getName());
+    appendGenericAttribute(document, genericAttributes, DexpiMetadata.LINE_NUMBER, processUnit.getLineNumber());
+    appendGenericAttribute(document, genericAttributes, DexpiMetadata.FLUID_CODE, processUnit.getFluidCode());
 
     // Append IEC 81346 reference designation attributes if available
     appendIEC81346Attributes(document, genericAttributes, processUnit);
@@ -190,31 +184,24 @@ public final class DexpiXmlWriter {
   }
 
   /**
-   * Appends IEC 81346 reference designation attributes to a GenericAttributes element for a process
-   * unit. This mirrors the approach in
-   * {@link neqsim.process.processmodel.dexpi.DexpiXmlWriter#appendIEC81346Attributes}.
+   * Appends IEC 81346 reference designation attributes to a GenericAttributes element for a process unit. This mirrors
+   * the approach in {@link neqsim.process.processmodel.dexpi.DexpiXmlWriter#appendIEC81346Attributes}.
    *
    * @param document the XML document
-   * @param parent the GenericAttributes element to append to
-   * @param unit the process equipment to extract IEC 81346 data from
+   * @param parent   the GenericAttributes element to append to
+   * @param unit     the process equipment to extract IEC 81346 data from
    */
-  private static void appendIEC81346Attributes(Document document, Element parent,
-      ProcessEquipmentInterface unit) {
+  private static void appendIEC81346Attributes(Document document, Element parent, ProcessEquipmentInterface unit) {
     neqsim.process.equipment.iec81346.ReferenceDesignation refDes = unit.getReferenceDesignation();
     if (refDes == null || !refDes.isSet()) {
       return;
     }
-    appendGenericAttribute(document, parent, "IEC81346_ReferenceDesignation",
-        refDes.toReferenceDesignationString());
-    appendGenericAttribute(document, parent, "IEC81346_FunctionDesignation",
-        refDes.getFunctionDesignation());
-    appendGenericAttribute(document, parent, "IEC81346_ProductDesignation",
-        refDes.getProductDesignation());
-    appendGenericAttribute(document, parent, "IEC81346_LocationDesignation",
-        refDes.getLocationDesignation());
+    appendGenericAttribute(document, parent, "IEC81346_ReferenceDesignation", refDes.toReferenceDesignationString());
+    appendGenericAttribute(document, parent, "IEC81346_FunctionDesignation", refDes.getFunctionDesignation());
+    appendGenericAttribute(document, parent, "IEC81346_ProductDesignation", refDes.getProductDesignation());
+    appendGenericAttribute(document, parent, "IEC81346_LocationDesignation", refDes.getLocationDesignation());
     if (refDes.getLetterCode() != null) {
-      appendGenericAttribute(document, parent, "IEC81346_LetterCode",
-          refDes.getLetterCode().name());
+      appendGenericAttribute(document, parent, "IEC81346_LetterCode", refDes.getLetterCode().name());
     }
   }
 
@@ -225,11 +212,11 @@ public final class DexpiXmlWriter {
     systemElement.setAttribute("ID", uniqueIdentifier("Line", key, usedIds));
 
     Element systemAttributes = document.createElement("GenericAttributes");
-    String lineNumber = streams.stream().map(DexpiStream::getLineNumber)
-        .filter(value -> !isBlank(value)).findFirst().orElse(null);
+    String lineNumber = streams.stream().map(DexpiStream::getLineNumber).filter(value -> !isBlank(value)).findFirst()
+	.orElse(null);
     appendGenericAttribute(document, systemAttributes, DexpiMetadata.LINE_NUMBER, lineNumber);
-    String fluidCode = streams.stream().map(DexpiStream::getFluidCode)
-        .filter(value -> !isBlank(value)).findFirst().orElse(null);
+    String fluidCode = streams.stream().map(DexpiStream::getFluidCode).filter(value -> !isBlank(value)).findFirst()
+	.orElse(null);
     appendGenericAttribute(document, systemAttributes, DexpiMetadata.FLUID_CODE, fluidCode);
     appendGenericAttribute(document, systemAttributes, "NeqSimGroupingKey", key);
     if (systemAttributes.hasChildNodes()) {
@@ -243,34 +230,29 @@ public final class DexpiXmlWriter {
     parent.appendChild(systemElement);
   }
 
-  private static void appendPipingNetworkSegment(Document document, Element parent,
-      DexpiStream stream, Set<String> usedIds) {
+  private static void appendPipingNetworkSegment(Document document, Element parent, DexpiStream stream,
+      Set<String> usedIds) {
     Element segmentElement = document.createElement("PipingNetworkSegment");
     String componentClass = firstNonBlank(stream.getDexpiClass(), "PipingNetworkSegment");
     segmentElement.setAttribute("ComponentClass", componentClass);
     segmentElement.setAttribute("ID", uniqueIdentifier("Segment", stream.getName(), usedIds));
 
     Element genericAttributes = document.createElement("GenericAttributes");
-    appendGenericAttribute(document, genericAttributes, DexpiMetadata.SEGMENT_NUMBER,
-        stream.getName());
-    appendGenericAttribute(document, genericAttributes, DexpiMetadata.LINE_NUMBER,
-        stream.getLineNumber());
-    appendGenericAttribute(document, genericAttributes, DexpiMetadata.FLUID_CODE,
-        stream.getFluidCode());
+    appendGenericAttribute(document, genericAttributes, DexpiMetadata.SEGMENT_NUMBER, stream.getName());
+    appendGenericAttribute(document, genericAttributes, DexpiMetadata.LINE_NUMBER, stream.getLineNumber());
+    appendGenericAttribute(document, genericAttributes, DexpiMetadata.FLUID_CODE, stream.getFluidCode());
     appendNumericAttribute(document, genericAttributes, DexpiMetadata.OPERATING_PRESSURE_VALUE,
-        stream.getPressure(DexpiMetadata.DEFAULT_PRESSURE_UNIT),
-        DexpiMetadata.DEFAULT_PRESSURE_UNIT);
+	stream.getPressure(DexpiMetadata.DEFAULT_PRESSURE_UNIT), DexpiMetadata.DEFAULT_PRESSURE_UNIT);
     appendGenericAttribute(document, genericAttributes, DexpiMetadata.OPERATING_PRESSURE_UNIT,
-        DexpiMetadata.DEFAULT_PRESSURE_UNIT);
+	DexpiMetadata.DEFAULT_PRESSURE_UNIT);
     appendNumericAttribute(document, genericAttributes, DexpiMetadata.OPERATING_TEMPERATURE_VALUE,
-        stream.getTemperature(DexpiMetadata.DEFAULT_TEMPERATURE_UNIT),
-        DexpiMetadata.DEFAULT_TEMPERATURE_UNIT);
+	stream.getTemperature(DexpiMetadata.DEFAULT_TEMPERATURE_UNIT), DexpiMetadata.DEFAULT_TEMPERATURE_UNIT);
     appendGenericAttribute(document, genericAttributes, DexpiMetadata.OPERATING_TEMPERATURE_UNIT,
-        DexpiMetadata.DEFAULT_TEMPERATURE_UNIT);
+	DexpiMetadata.DEFAULT_TEMPERATURE_UNIT);
     appendNumericAttribute(document, genericAttributes, DexpiMetadata.OPERATING_FLOW_VALUE,
-        stream.getFlowRate(DexpiMetadata.DEFAULT_FLOW_UNIT), DexpiMetadata.DEFAULT_FLOW_UNIT);
+	stream.getFlowRate(DexpiMetadata.DEFAULT_FLOW_UNIT), DexpiMetadata.DEFAULT_FLOW_UNIT);
     appendGenericAttribute(document, genericAttributes, DexpiMetadata.OPERATING_FLOW_UNIT,
-        DexpiMetadata.DEFAULT_FLOW_UNIT);
+	DexpiMetadata.DEFAULT_FLOW_UNIT);
     if (genericAttributes.hasChildNodes()) {
       segmentElement.appendChild(genericAttributes);
     }
@@ -278,13 +260,12 @@ public final class DexpiXmlWriter {
     parent.appendChild(segmentElement);
   }
 
-  private static void appendGenericAttribute(Document document, Element parent, String name,
-      String value) {
+  private static void appendGenericAttribute(Document document, Element parent, String name, String value) {
     appendGenericAttribute(document, parent, name, value, null);
   }
 
-  private static void appendGenericAttribute(Document document, Element parent, String name,
-      String value, String unit) {
+  private static void appendGenericAttribute(Document document, Element parent, String name, String value,
+      String unit) {
     if (isBlank(value)) {
       return;
     }
@@ -297,8 +278,8 @@ public final class DexpiXmlWriter {
     parent.appendChild(attribute);
   }
 
-  private static void appendNumericAttribute(Document document, Element parent, String name,
-      double value, String unit) {
+  private static void appendNumericAttribute(Document document, Element parent, String name, double value,
+      String unit) {
     if (Double.isNaN(value) || Double.isInfinite(value)) {
       return;
     }
@@ -310,16 +291,16 @@ public final class DexpiXmlWriter {
       return elementName;
     }
     switch (mapped) {
-      case HeatExchanger:
-        return "HeatExchanger";
-      case Pump:
-        return "Pump";
-      case Tank:
-        return "Tank";
-      case ThrottlingValve:
-        return "GlobeValve";
-      default:
-        return elementName;
+    case HeatExchanger:
+      return "HeatExchanger";
+    case Pump:
+      return "Pump";
+    case Tank:
+      return "Tank";
+    case ThrottlingValve:
+      return "GlobeValve";
+    default:
+      return elementName;
     }
   }
 
@@ -374,7 +355,7 @@ public final class DexpiXmlWriter {
     }
     for (String value : values) {
       if (!isBlank(value)) {
-        return value.trim();
+	return value.trim();
       }
     }
     return null;
@@ -384,8 +365,7 @@ public final class DexpiXmlWriter {
     return value == null || value.trim().isEmpty();
   }
 
-  private static void writeDocument(Document document, OutputStream outputStream)
-      throws IOException {
+  private static void writeDocument(Document document, OutputStream outputStream) throws IOException {
     try {
       TransformerFactory factory = TransformerFactory.newInstance();
       factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");

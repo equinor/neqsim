@@ -33,14 +33,12 @@ public class MultiPhaseMeterTest {
     multiPhaseMeter.setTemperature(90.0, "C");
     multiPhaseMeter.setPressure(60.0, "bara");
 
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
     operations.add(stream_1);
     operations.add(multiPhaseMeter);
     operations.run();
 
     Assertions.assertEquals(51.3073530232923, multiPhaseMeter.getMeasuredValue("GOR", ""), 1e-5);
-    Assertions.assertEquals(3106.770827796345, multiPhaseMeter.getMeasuredValue("GOR_std", ""),
-        1e-2);
+    Assertions.assertEquals(3106.770827796345, multiPhaseMeter.getMeasuredValue("GOR_std", ""), 1e-2);
   }
 }

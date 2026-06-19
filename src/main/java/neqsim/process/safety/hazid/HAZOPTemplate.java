@@ -6,12 +6,12 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Hazard and Operability (HAZOP) study template — applies guide-words to process variables for a
- * single node and stores deviations, causes, consequences, safeguards and recommendations.
+ * Hazard and Operability (HAZOP) study template — applies guide-words to process variables for a single node and stores
+ * deviations, causes, consequences, safeguards and recommendations.
  *
  * <p>
- * Standard HAZOP guide-words: NO, MORE, LESS, REVERSE, AS_WELL_AS, PART_OF, OTHER_THAN.
- * Standard parameters: FLOW, PRESSURE, TEMPERATURE, LEVEL, COMPOSITION, REACTION.
+ * Standard HAZOP guide-words: NO, MORE, LESS, REVERSE, AS_WELL_AS, PART_OF, OTHER_THAN. Standard parameters: FLOW,
+ * PRESSURE, TEMPERATURE, LEVEL, COMPOSITION, REACTION.
  *
  * <p>
  * <b>References:</b>
@@ -67,7 +67,7 @@ public class HAZOPTemplate implements Serializable {
   /**
    * Construct a HAZOP node template.
    *
-   * @param nodeId HAZOP node identifier (e.g. "Node-12: Inlet line to V-100")
+   * @param nodeId       HAZOP node identifier (e.g. "Node-12: Inlet line to V-100")
    * @param designIntent narrative of the design intent for the node
    */
   public HAZOPTemplate(String nodeId, String designIntent) {
@@ -78,24 +78,23 @@ public class HAZOPTemplate implements Serializable {
   /**
    * Add a deviation row to the worksheet.
    *
-   * @param guideWord guide-word
-   * @param parameter parameter
-   * @param cause hypothesised cause
-   * @param consequence consequence if no protection acts
-   * @param safeguard existing safeguard (instrumentation, procedural, mechanical)
+   * @param guideWord      guide-word
+   * @param parameter      parameter
+   * @param cause          hypothesised cause
+   * @param consequence    consequence if no protection acts
+   * @param safeguard      existing safeguard (instrumentation, procedural, mechanical)
    * @param recommendation new recommendation (or null)
    * @return this template for chaining
    */
-  public HAZOPTemplate addDeviation(GuideWord guideWord, Parameter parameter, String cause,
-      String consequence, String safeguard, String recommendation) {
-    deviations.add(new HAZOPDeviation(guideWord, parameter, cause, consequence, safeguard,
-        recommendation));
+  public HAZOPTemplate addDeviation(GuideWord guideWord, Parameter parameter, String cause, String consequence,
+      String safeguard, String recommendation) {
+    deviations.add(new HAZOPDeviation(guideWord, parameter, cause, consequence, safeguard, recommendation));
     return this;
   }
 
   /**
-   * Generate the full default deviation grid (all guide-word × parameter combinations) with empty
-   * causes/consequences for the user to fill in.
+   * Generate the full default deviation grid (all guide-word × parameter combinations) with empty causes/consequences
+   * for the user to fill in.
    *
    * @param parameters list of parameters to include
    * @return this template for chaining
@@ -103,7 +102,7 @@ public class HAZOPTemplate implements Serializable {
   public HAZOPTemplate generateGrid(Parameter... parameters) {
     for (Parameter p : parameters) {
       for (GuideWord g : GuideWord.values()) {
-        deviations.add(new HAZOPDeviation(g, p, "TBD", "TBD", "TBD", null));
+	deviations.add(new HAZOPDeviation(g, p, "TBD", "TBD", "TBD", null));
       }
     }
     return this;
@@ -147,7 +146,7 @@ public class HAZOPTemplate implements Serializable {
       sb.append("     Consequence : ").append(d.consequence).append('\n');
       sb.append("     Safeguard   : ").append(d.safeguard).append('\n');
       if (d.recommendation != null) {
-        sb.append("     Recommend.  : ").append(d.recommendation).append('\n');
+	sb.append("     Recommend.  : ").append(d.recommendation).append('\n');
       }
       row++;
     }
@@ -173,15 +172,15 @@ public class HAZOPTemplate implements Serializable {
     public final String recommendation;
 
     /**
-     * @param guideWord guide-word
-     * @param parameter process parameter
-     * @param cause cause description
-     * @param consequence consequence description
-     * @param safeguard existing safeguard
+     * @param guideWord      guide-word
+     * @param parameter      process parameter
+     * @param cause          cause description
+     * @param consequence    consequence description
+     * @param safeguard      existing safeguard
      * @param recommendation new recommendation (or null)
      */
-    public HAZOPDeviation(GuideWord guideWord, Parameter parameter, String cause,
-        String consequence, String safeguard, String recommendation) {
+    public HAZOPDeviation(GuideWord guideWord, Parameter parameter, String cause, String consequence, String safeguard,
+	String recommendation) {
       this.guideWord = guideWord;
       this.parameter = parameter;
       this.cause = cause;

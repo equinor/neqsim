@@ -11,8 +11,8 @@ import neqsim.process.equipment.pipeline.twophasepipe.numerics.ConservativeState
  * Extended pipe section state for the two-fluid model.
  *
  * <p>
- * Extends the base {@link PipeSection} with additional state variables and methods required for the
- * two-fluid conservation equations. Key additions include:
+ * Extends the base {@link PipeSection} with additional state variables and methods required for the two-fluid
+ * conservation equations. Key additions include:
  * </p>
  * <ul>
  * <li>Separate conservative variables for each phase</li>
@@ -194,9 +194,9 @@ public class TwoFluidSection extends PipeSection {
   /**
    * Constructor with geometry.
    *
-   * @param position Position from inlet (m)
-   * @param length Segment length (m)
-   * @param diameter Pipe diameter (m)
+   * @param position    Position from inlet (m)
+   * @param length      Segment length (m)
+   * @param diameter    Pipe diameter (m)
    * @param inclination Pipe inclination (radians)
    */
   public TwoFluidSection(double position, double length, double diameter, double inclination) {
@@ -210,8 +210,8 @@ public class TwoFluidSection extends PipeSection {
    * @return New TwoFluidSection with copied state
    */
   public static TwoFluidSection fromPipeSection(PipeSection base) {
-    TwoFluidSection section = new TwoFluidSection(base.getPosition(), base.getLength(),
-        base.getDiameter(), base.getInclination());
+    TwoFluidSection section = new TwoFluidSection(base.getPosition(), base.getLength(), base.getDiameter(),
+	base.getInclination());
 
     // Copy state
     section.setPressure(base.getPressure());
@@ -312,9 +312,8 @@ public class TwoFluidSection extends PipeSection {
    * Extract primitive variables from conservative variables.
    *
    * <p>
-   * This is the inverse operation of updateConservativeVariables. Requires equation of state
-   * evaluation for complete solution. Conservative positivity limiting is applied before
-   * converting to primitive variables.
+   * This is the inverse operation of updateConservativeVariables. Requires equation of state evaluation for complete
+   * solution. Conservative positivity limiting is applied before converting to primitive variables.
    * </p>
    */
   public void extractPrimitiveVariables() {
@@ -385,8 +384,8 @@ public class TwoFluidSection extends PipeSection {
       alphaG = getGasHoldup();
       alphaL = getLiquidHoldup();
       if (Double.isNaN(alphaG) || Double.isNaN(alphaL) || alphaG < 0 || alphaL < 0) {
-        alphaG = 0.5;
-        alphaL = 0.5;
+	alphaG = 0.5;
+	alphaL = 0.5;
       }
       // Split liquid according to preserved water cut
       alphaW = alphaL * calculatedWaterCut;
@@ -418,7 +417,7 @@ public class TwoFluidSection extends PipeSection {
       // Limit velocity to physical range
       vG = Math.max(-100, Math.min(100, vG));
       if (!Double.isNaN(vG)) {
-        setGasVelocity(vG);
+	setGasVelocity(vG);
       }
     }
     if (liquidMassPerLength > 1e-12) {
@@ -426,7 +425,7 @@ public class TwoFluidSection extends PipeSection {
       // Limit velocity to physical range
       vL = Math.max(-50, Math.min(50, vL));
       if (!Double.isNaN(vL)) {
-        setLiquidVelocity(vL);
+	setLiquidVelocity(vL);
       }
     }
 
@@ -440,8 +439,8 @@ public class TwoFluidSection extends PipeSection {
    * @return Conservative state [gasMass, oilMass, waterMass, gasMom, oilMom, waterMom, energy]
    */
   public double[] getStateVector() {
-    return new double[] {gasMassPerLength, oilMassPerLength, waterMassPerLength,
-        gasMomentumPerLength, oilMomentumPerLength, waterMomentumPerLength, energyPerLength};
+    return new double[] { gasMassPerLength, oilMassPerLength, waterMassPerLength, gasMomentumPerLength,
+	oilMomentumPerLength, waterMomentumPerLength, energyPerLength };
   }
 
   /**
@@ -473,8 +472,8 @@ public class TwoFluidSection extends PipeSection {
       // Split momentum proportionally to mass
       double totalLiqMass = oilMassPerLength + waterMassPerLength;
       if (totalLiqMass > 1e-10) {
-        oilMomentumPerLength = liquidMomentumPerLength * oilMassPerLength / totalLiqMass;
-        waterMomentumPerLength = liquidMomentumPerLength * waterMassPerLength / totalLiqMass;
+	oilMomentumPerLength = liquidMomentumPerLength * oilMassPerLength / totalLiqMass;
+	waterMomentumPerLength = liquidMomentumPerLength * waterMassPerLength / totalLiqMass;
       }
       energyPerLength = state[5];
     } else if (state.length >= 5) {
@@ -488,9 +487,9 @@ public class TwoFluidSection extends PipeSection {
   }
 
   /**
-   * Update water and oil holdups from conservative variables. Should be called after
-   * extractPrimitiveVariables if separate tracking is needed. Note: extractPrimitiveVariables now
-   * also sets oil/water holdups, so this is mainly for velocity extraction.
+   * Update water and oil holdups from conservative variables. Should be called after extractPrimitiveVariables if
+   * separate tracking is needed. Note: extractPrimitiveVariables now also sets oil/water holdups, so this is mainly for
+   * velocity extraction.
    */
   public void updateWaterOilHoldups() {
     // Extract velocities from momenta (with slip)
@@ -498,14 +497,14 @@ public class TwoFluidSection extends PipeSection {
       double vO = oilMomentumPerLength / oilMassPerLength;
       vO = Math.max(-50, Math.min(50, vO)); // Clamp to physical range
       if (!Double.isNaN(vO)) {
-        oilVelocity = vO;
+	oilVelocity = vO;
       }
     }
     if (waterMassPerLength > 1e-12) {
       double vW = waterMomentumPerLength / waterMassPerLength;
       vW = Math.max(-50, Math.min(50, vW)); // Clamp to physical range
       if (!Double.isNaN(vW)) {
-        waterVelocity = vW;
+	waterVelocity = vW;
       }
     }
   }
@@ -533,9 +532,9 @@ public class TwoFluidSection extends PipeSection {
    * Calculate effective liquid properties for three-phase flow.
    *
    * <p>
-   * Uses the OilWaterFlowRegimeDetector to determine the oil-water configuration (stratified,
-   * dispersed O/W, dispersed W/O, dual dispersion) and calculates effective viscosity accordingly.
-   * Falls back to volume-weighted averages if detector cannot be used.
+   * Uses the OilWaterFlowRegimeDetector to determine the oil-water configuration (stratified, dispersed O/W, dispersed
+   * W/O, dual dispersion) and calculates effective viscosity accordingly. Falls back to volume-weighted averages if
+   * detector cannot be used.
    * </p>
    */
   public void updateThreePhaseProperties() {
@@ -546,19 +545,18 @@ public class TwoFluidSection extends PipeSection {
 
       // Use flow regime detector for physics-based viscosity and continuous phase
       if (oilViscosity > 0 && waterViscosity > 0) {
-        double muL;
-        double vMix = getLiquidVelocity();
+	double muL;
+	double vMix = getLiquidVelocity();
 
-        if (oilWaterDetector == null) {
-          oilWaterDetector = new OilWaterFlowRegimeDetector();
-        }
+	if (oilWaterDetector == null) {
+	  oilWaterDetector = new OilWaterFlowRegimeDetector();
+	}
 
-        oilWaterResult =
-            oilWaterDetector.detect(waterCut, vMix, oilDensity, waterDensity, oilViscosity,
-                waterViscosity, oilWaterInterfacialTension, getDiameter(), getInclination());
+	oilWaterResult = oilWaterDetector.detect(waterCut, vMix, oilDensity, waterDensity, oilViscosity, waterViscosity,
+	    oilWaterInterfacialTension, getDiameter(), getInclination());
 
-        muL = oilWaterResult.effectiveViscosity;
-        setLiquidViscosity(muL);
+	muL = oilWaterResult.effectiveViscosity;
+	setLiquidViscosity(muL);
       }
     } else if (waterCut >= 1.0 && waterDensity > 0 && waterViscosity > 0) {
       // Pure water
@@ -586,7 +584,7 @@ public class TwoFluidSection extends PipeSection {
     double Fg = -getGasHoldup() * getGasDensity() * g * A * sinTheta;
     double Fl = -getLiquidHoldup() * getLiquidDensity() * g * A * sinTheta;
 
-    return new double[] {Fg, Fl};
+    return new double[] { Fg, Fl };
   }
 
   // ============ Getters and Setters ============
@@ -667,9 +665,8 @@ public class TwoFluidSection extends PipeSection {
    * Calculate the oil-water interfacial shear stress.
    *
    * <p>
-   * Models the shear between oil and water phases when they flow at different velocities. The
-   * friction factor depends on the oil-water flow regime detected by the
-   * {@link OilWaterFlowRegimeDetector}:
+   * Models the shear between oil and water phases when they flow at different velocities. The friction factor depends
+   * on the oil-water flow regime detected by the {@link OilWaterFlowRegimeDetector}:
    * </p>
    * <ul>
    * <li>Stratified: higher friction due to wavy interface (f_ow = 0.02)</li>
@@ -697,26 +694,26 @@ public class TwoFluidSection extends PipeSection {
     double f_ow;
     if (oilWaterResult != null) {
       switch (oilWaterResult.regime) {
-        case STRATIFIED:
-        case STRATIFIED_WITH_MIXING:
-          f_ow = 0.02;
-          break;
-        case DISPERSED_OIL_IN_WATER:
-        case DISPERSED_WATER_IN_OIL:
-          f_ow = 0.005;
-          break;
-        case DUAL_DISPERSION:
-          f_ow = 0.015;
-          break;
-        default:
-          f_ow = 0.01;
-          break;
+      case STRATIFIED:
+      case STRATIFIED_WITH_MIXING:
+	f_ow = 0.02;
+	break;
+      case DISPERSED_OIL_IN_WATER:
+      case DISPERSED_WATER_IN_OIL:
+	f_ow = 0.005;
+	break;
+      case DUAL_DISPERSION:
+	f_ow = 0.015;
+	break;
+      default:
+	f_ow = 0.01;
+	break;
       }
     } else {
       // Fallback when no regime detection available
       f_ow = 0.01;
       if (waterHoldup > 0.1 && oilHoldup > 0.1) {
-        f_ow = 0.02;
+	f_ow = 0.02;
       }
     }
 
@@ -878,9 +875,9 @@ public class TwoFluidSection extends PipeSection {
    * Override getLiquidHoldup to return the total liquid holdup (oil + water).
    *
    * <p>
-   * In TwoFluidSection, the oil and water holdups are tracked separately. This override ensures
-   * that getLiquidHoldup() returns their sum for consistent behavior with LiquidAccumulationTracker
-   * and other components that depend on total liquid holdup.
+   * In TwoFluidSection, the oil and water holdups are tracked separately. This override ensures that getLiquidHoldup()
+   * returns their sum for consistent behavior with LiquidAccumulationTracker and other components that depend on total
+   * liquid holdup.
    * </p>
    *
    * @return Total liquid holdup (oil + water)
@@ -900,8 +897,8 @@ public class TwoFluidSection extends PipeSection {
    * Override setLiquidHoldup to also update oil and water holdups proportionally.
    *
    * <p>
-   * When the liquid holdup is changed (e.g., by LiquidAccumulationTracker), the oil and water
-   * holdups must be updated to maintain their relative proportions within the liquid phase.
+   * When the liquid holdup is changed (e.g., by LiquidAccumulationTracker), the oil and water holdups must be updated
+   * to maintain their relative proportions within the liquid phase.
    * </p>
    *
    * @param liquidHoldup the new total liquid holdup
@@ -920,9 +917,9 @@ public class TwoFluidSection extends PipeSection {
       // Ensure they don't exceed the new liquid holdup
       double totalLiqHoldup = oilHoldup + waterHoldup;
       if (totalLiqHoldup > liquidHoldup + 1e-10) {
-        double norm = liquidHoldup / totalLiqHoldup;
-        oilHoldup *= norm;
-        waterHoldup *= norm;
+	double norm = liquidHoldup / totalLiqHoldup;
+	oilHoldup *= norm;
+	waterHoldup *= norm;
       }
     } else if (liquidHoldup > 1e-10) {
       // Old holdup was near zero - use water cut to distribute
@@ -1146,8 +1143,7 @@ public class TwoFluidSection extends PipeSection {
   }
 
   public void setSevereSluggingNumber(double severeSluggingNumber) {
-    this.severeSluggingNumber =
-        Double.isFinite(severeSluggingNumber) ? severeSluggingNumber : Double.POSITIVE_INFINITY;
+    this.severeSluggingNumber = Double.isFinite(severeSluggingNumber) ? severeSluggingNumber : Double.POSITIVE_INFINITY;
   }
 
   /**

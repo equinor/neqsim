@@ -19,9 +19,8 @@ import org.apache.logging.log4j.Logger;
  * Imports equipment reliability data from OREDA-format CSV files.
  *
  * <p>
- * OREDA (Offshore and Onshore Reliability Data) is the industry standard for equipment reliability
- * data in the oil and gas industry. This class imports data from CSV files following the OREDA
- * format structure.
+ * OREDA (Offshore and Onshore Reliability Data) is the industry standard for equipment reliability data in the oil and
+ * gas industry. This class imports data from CSV files following the OREDA format structure.
  * </p>
  *
  * <h2>CSV Format</h2> The expected CSV format is:
@@ -76,18 +75,17 @@ public class OREDADataImporter implements Serializable {
     /**
      * Creates a reliability record.
      *
-     * @param equipmentType equipment type (e.g., "Compressor")
+     * @param equipmentType  equipment type (e.g., "Compressor")
      * @param equipmentClass equipment class (e.g., "Centrifugal")
-     * @param failureMode failure mode (e.g., "All modes", "Critical")
-     * @param failureRate failure rate per hour
-     * @param mtbfHours mean time between failures in hours
-     * @param mttrHours mean time to repair in hours
-     * @param dataSource data source (e.g., "OREDA-2015")
-     * @param confidence confidence level (e.g., "High", "Medium", "Low")
+     * @param failureMode    failure mode (e.g., "All modes", "Critical")
+     * @param failureRate    failure rate per hour
+     * @param mtbfHours      mean time between failures in hours
+     * @param mttrHours      mean time to repair in hours
+     * @param dataSource     data source (e.g., "OREDA-2015")
+     * @param confidence     confidence level (e.g., "High", "Medium", "Low")
      */
-    public ReliabilityRecord(String equipmentType, String equipmentClass, String failureMode,
-        double failureRate, double mtbfHours, double mttrHours, String dataSource,
-        String confidence) {
+    public ReliabilityRecord(String equipmentType, String equipmentClass, String failureMode, double failureRate,
+	double mtbfHours, double mttrHours, String dataSource, String confidence) {
       this.equipmentType = equipmentType;
       this.equipmentClass = equipmentClass;
       this.failureMode = failureMode;
@@ -204,7 +202,7 @@ public class OREDADataImporter implements Serializable {
      */
     public double getAvailability() {
       if (mtbfHours + mttrHours <= 0) {
-        return 1.0;
+	return 1.0;
       }
       return mtbfHours / (mtbfHours + mttrHours);
     }
@@ -236,15 +234,15 @@ public class OREDADataImporter implements Serializable {
       map.put("dataSource", dataSource);
       map.put("confidence", confidence);
       if (notes != null) {
-        map.put("notes", notes);
+	map.put("notes", notes);
       }
       return map;
     }
 
     @Override
     public String toString() {
-      return String.format("%s (%s) - MTBF: %.0f hrs, MTTR: %.0f hrs, λ: %.2e /hr", equipmentType,
-          equipmentClass, mtbfHours, mttrHours, failureRate);
+      return String.format("%s (%s) - MTBF: %.0f hrs, MTTR: %.0f hrs, λ: %.2e /hr", equipmentType, equipmentClass,
+	  mtbfHours, mttrHours, failureRate);
     }
   }
 
@@ -268,8 +266,7 @@ public class OREDADataImporter implements Serializable {
     if (is == null) {
       throw new IOException("Resource not found: " + resourcePath);
     }
-    try (BufferedReader reader =
-        new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
+    try (BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
       loadFromReader(reader);
     }
     this.dataSource = resourcePath;
@@ -306,19 +303,19 @@ public class OREDADataImporter implements Serializable {
 
       // Skip empty lines and comments
       if (line.isEmpty() || line.startsWith("#")) {
-        continue;
+	continue;
       }
 
       // Skip header line (contains "EquipmentType" as first column)
       if (line.toLowerCase().startsWith("equipmenttype")) {
-        continue;
+	continue;
       }
 
       try {
-        ReliabilityRecord record = parseRecord(line);
-        addRecord(record);
+	ReliabilityRecord record = parseRecord(line);
+	addRecord(record);
       } catch (Exception e) {
-        logger.warn("Failed to parse line {}: {} - {}", lineNumber, line, e.getMessage());
+	logger.warn("Failed to parse line {}: {} - {}", lineNumber, line, e.getMessage());
       }
     }
   }
@@ -344,8 +341,8 @@ public class OREDADataImporter implements Serializable {
     String source = parts[6].trim();
     String confidence = parts[7].trim();
 
-    ReliabilityRecord record = new ReliabilityRecord(equipmentType, equipmentClass, failureMode,
-        failureRate, mtbfHours, mttrHours, source, confidence);
+    ReliabilityRecord record = new ReliabilityRecord(equipmentType, equipmentClass, failureMode, failureRate, mtbfHours,
+	mttrHours, source, confidence);
 
     // Optional notes column
     if (parts.length > 8) {
@@ -388,13 +385,12 @@ public class OREDADataImporter implements Serializable {
   /**
    * Gets a specific record by equipment type, class, and failure mode.
    *
-   * @param equipmentType equipment type
+   * @param equipmentType  equipment type
    * @param equipmentClass equipment class
-   * @param failureMode failure mode
+   * @param failureMode    failure mode
    * @return record or null if not found
    */
-  public ReliabilityRecord getRecord(String equipmentType, String equipmentClass,
-      String failureMode) {
+  public ReliabilityRecord getRecord(String equipmentType, String equipmentClass, String failureMode) {
     String key = equipmentType + "|" + equipmentClass + "|" + failureMode;
     return byKey.get(key);
   }
@@ -402,7 +398,7 @@ public class OREDADataImporter implements Serializable {
   /**
    * Gets a record by equipment type and class (defaults to "All modes").
    *
-   * @param equipmentType equipment type
+   * @param equipmentType  equipment type
    * @param equipmentClass equipment class
    * @return record or null if not found
    */
@@ -469,9 +465,9 @@ public class OREDADataImporter implements Serializable {
 
     for (ReliabilityRecord record : records) {
       if (record.getEquipmentType().toLowerCase().contains(lowerPattern)
-          || record.getEquipmentClass().toLowerCase().contains(lowerPattern)
-          || record.getFailureMode().toLowerCase().contains(lowerPattern)) {
-        results.add(record);
+	  || record.getEquipmentClass().toLowerCase().contains(lowerPattern)
+	  || record.getFailureMode().toLowerCase().contains(lowerPattern)) {
+	results.add(record);
       }
     }
     return results;
@@ -480,9 +476,9 @@ public class OREDADataImporter implements Serializable {
   /**
    * Gets the failure rate for specified equipment.
    *
-   * @param equipmentType equipment type (e.g., "Pump")
+   * @param equipmentType  equipment type (e.g., "Pump")
    * @param equipmentClass equipment class (e.g., "Centrifugal")
-   * @param failureMode failure mode (e.g., "All modes")
+   * @param failureMode    failure mode (e.g., "All modes")
    * @return failure rate per hour, or -1 if not found
    */
   public double getFailureRate(String equipmentType, String equipmentClass, String failureMode) {
@@ -493,9 +489,9 @@ public class OREDADataImporter implements Serializable {
   /**
    * Gets the MTBF for specified equipment.
    *
-   * @param equipmentType equipment type
+   * @param equipmentType  equipment type
    * @param equipmentClass equipment class
-   * @param failureMode failure mode
+   * @param failureMode    failure mode
    * @return MTBF in hours, or -1 if not found
    */
   public double getMTBF(String equipmentType, String equipmentClass, String failureMode) {
@@ -506,9 +502,9 @@ public class OREDADataImporter implements Serializable {
   /**
    * Gets the MTTR for specified equipment.
    *
-   * @param equipmentType equipment type
+   * @param equipmentType  equipment type
    * @param equipmentClass equipment class
-   * @param failureMode failure mode
+   * @param failureMode    failure mode
    * @return MTTR in hours, or -1 if not found
    */
   public double getMTTR(String equipmentType, String equipmentClass, String failureMode) {
@@ -519,13 +515,12 @@ public class OREDADataImporter implements Serializable {
   /**
    * Gets the data source for specified equipment.
    *
-   * @param equipmentType equipment type
+   * @param equipmentType  equipment type
    * @param equipmentClass equipment class
-   * @param failureMode failure mode
+   * @param failureMode    failure mode
    * @return data source identifier, or null if not found
    */
-  public String getDataSourceForRecord(String equipmentType, String equipmentClass,
-      String failureMode) {
+  public String getDataSourceForRecord(String equipmentType, String equipmentClass, String failureMode) {
     ReliabilityRecord record = getRecord(equipmentType, equipmentClass, failureMode);
     return record != null ? record.getDataSource() : null;
   }
@@ -541,9 +536,9 @@ public class OREDADataImporter implements Serializable {
     List<ReliabilityRecord> typeRecords = byEquipmentType.get(equipmentType);
     if (typeRecords != null) {
       for (ReliabilityRecord record : typeRecords) {
-        if (!classes.contains(record.getEquipmentClass())) {
-          classes.add(record.getEquipmentClass());
-        }
+	if (!classes.contains(record.getEquipmentClass())) {
+	  classes.add(record.getEquipmentClass());
+	}
       }
     }
     return classes;
@@ -552,7 +547,7 @@ public class OREDADataImporter implements Serializable {
   /**
    * Gets all failure modes for a given equipment type and class.
    *
-   * @param equipmentType equipment type
+   * @param equipmentType  equipment type
    * @param equipmentClass equipment class
    * @return list of failure modes
    */
@@ -561,10 +556,9 @@ public class OREDADataImporter implements Serializable {
     List<ReliabilityRecord> typeRecords = byEquipmentType.get(equipmentType);
     if (typeRecords != null) {
       for (ReliabilityRecord record : typeRecords) {
-        if (record.getEquipmentClass().equals(equipmentClass)
-            && !modes.contains(record.getFailureMode())) {
-          modes.add(record.getFailureMode());
-        }
+	if (record.getEquipmentClass().equals(equipmentClass) && !modes.contains(record.getFailureMode())) {
+	  modes.add(record.getFailureMode());
+	}
       }
     }
     return modes;
@@ -584,8 +578,7 @@ public class OREDADataImporter implements Serializable {
    * </ul>
    *
    * <p>
-   * Data is loaded in priority order with later sources overriding earlier ones for matching
-   * equipment.
+   * Data is loaded in priority order with later sources overriding earlier ones for matching equipment.
    * </p>
    *
    * @throws IOException if any data file cannot be read
@@ -676,84 +669,81 @@ public class OREDADataImporter implements Serializable {
 
     // Add commonly used equipment reliability data (based on OREDA handbook values)
     // Compressors
-    importer.addRecord(new ReliabilityRecord("Compressor", "Centrifugal", "All modes", 1.14e-4,
-        8772, 72, "OREDA-2015", "High"));
-    importer.addRecord(new ReliabilityRecord("Compressor", "Reciprocating", "All modes", 2.28e-4,
-        4386, 96, "OREDA-2015", "High"));
-    importer.addRecord(new ReliabilityRecord("Compressor", "Screw", "All modes", 1.71e-4, 5848, 48,
-        "OREDA-2015", "Medium"));
+    importer.addRecord(
+	new ReliabilityRecord("Compressor", "Centrifugal", "All modes", 1.14e-4, 8772, 72, "OREDA-2015", "High"));
+    importer.addRecord(
+	new ReliabilityRecord("Compressor", "Reciprocating", "All modes", 2.28e-4, 4386, 96, "OREDA-2015", "High"));
+    importer.addRecord(
+	new ReliabilityRecord("Compressor", "Screw", "All modes", 1.71e-4, 5848, 48, "OREDA-2015", "Medium"));
 
     // Pumps
-    importer.addRecord(new ReliabilityRecord("Pump", "Centrifugal", "All modes", 1.83e-4, 5464, 24,
-        "OREDA-2015", "High"));
-    importer.addRecord(new ReliabilityRecord("Pump", "Reciprocating", "All modes", 3.65e-4, 2740,
-        48, "OREDA-2015", "High"));
-    importer.addRecord(new ReliabilityRecord("Pump", "Submersible (ESP)", "All modes", 5.71e-4,
-        1751, 168, "OREDA-2015", "Medium"));
+    importer
+	.addRecord(new ReliabilityRecord("Pump", "Centrifugal", "All modes", 1.83e-4, 5464, 24, "OREDA-2015", "High"));
+    importer.addRecord(
+	new ReliabilityRecord("Pump", "Reciprocating", "All modes", 3.65e-4, 2740, 48, "OREDA-2015", "High"));
+    importer.addRecord(
+	new ReliabilityRecord("Pump", "Submersible (ESP)", "All modes", 5.71e-4, 1751, 168, "OREDA-2015", "Medium"));
 
     // Separators
-    importer.addRecord(new ReliabilityRecord("Separator", "Two-phase", "All modes", 5.71e-5, 17513,
-        24, "OREDA-2015", "High"));
-    importer.addRecord(new ReliabilityRecord("Separator", "Three-phase", "All modes", 6.85e-5,
-        14599, 36, "OREDA-2015", "High"));
-    importer.addRecord(new ReliabilityRecord("Separator", "Gas scrubber", "All modes", 4.57e-5,
-        21882, 16, "OREDA-2015", "High"));
+    importer.addRecord(
+	new ReliabilityRecord("Separator", "Two-phase", "All modes", 5.71e-5, 17513, 24, "OREDA-2015", "High"));
+    importer.addRecord(
+	new ReliabilityRecord("Separator", "Three-phase", "All modes", 6.85e-5, 14599, 36, "OREDA-2015", "High"));
+    importer.addRecord(
+	new ReliabilityRecord("Separator", "Gas scrubber", "All modes", 4.57e-5, 21882, 16, "OREDA-2015", "High"));
 
     // Heat exchangers
-    importer.addRecord(new ReliabilityRecord("Heat Exchanger", "Shell and tube", "All modes",
-        2.28e-5, 43860, 48, "OREDA-2015", "High"));
-    importer.addRecord(new ReliabilityRecord("Heat Exchanger", "Plate", "All modes", 3.43e-5, 29155,
-        24, "OREDA-2015", "Medium"));
-    importer.addRecord(new ReliabilityRecord("Heat Exchanger", "Air cooler", "All modes", 4.57e-5,
-        21882, 36, "OREDA-2015", "High"));
+    importer.addRecord(new ReliabilityRecord("Heat Exchanger", "Shell and tube", "All modes", 2.28e-5, 43860, 48,
+	"OREDA-2015", "High"));
+    importer.addRecord(
+	new ReliabilityRecord("Heat Exchanger", "Plate", "All modes", 3.43e-5, 29155, 24, "OREDA-2015", "Medium"));
+    importer.addRecord(
+	new ReliabilityRecord("Heat Exchanger", "Air cooler", "All modes", 4.57e-5, 21882, 36, "OREDA-2015", "High"));
 
     // Valves
-    importer.addRecord(new ReliabilityRecord("Valve", "Ball", "All modes", 1.14e-5, 87720, 8,
-        "OREDA-2015", "High"));
-    importer.addRecord(new ReliabilityRecord("Valve", "Gate", "All modes", 1.37e-5, 73050, 8,
-        "OREDA-2015", "High"));
-    importer.addRecord(new ReliabilityRecord("Valve", "Control", "All modes", 4.57e-5, 21882, 12,
-        "OREDA-2015", "High"));
-    importer.addRecord(new ReliabilityRecord("Valve", "Safety/Relief", "All modes", 2.28e-5, 43860,
-        4, "OREDA-2015", "High"));
-    importer.addRecord(new ReliabilityRecord("Valve", "Check", "All modes", 1.83e-5, 54675, 4,
-        "OREDA-2015", "High"));
+    importer.addRecord(new ReliabilityRecord("Valve", "Ball", "All modes", 1.14e-5, 87720, 8, "OREDA-2015", "High"));
+    importer.addRecord(new ReliabilityRecord("Valve", "Gate", "All modes", 1.37e-5, 73050, 8, "OREDA-2015", "High"));
+    importer
+	.addRecord(new ReliabilityRecord("Valve", "Control", "All modes", 4.57e-5, 21882, 12, "OREDA-2015", "High"));
+    importer.addRecord(
+	new ReliabilityRecord("Valve", "Safety/Relief", "All modes", 2.28e-5, 43860, 4, "OREDA-2015", "High"));
+    importer.addRecord(new ReliabilityRecord("Valve", "Check", "All modes", 1.83e-5, 54675, 4, "OREDA-2015", "High"));
 
     // Turbines/Drivers
-    importer.addRecord(new ReliabilityRecord("Gas Turbine", "Industrial", "All modes", 1.37e-4,
-        7299, 120, "OREDA-2015", "High"));
-    importer.addRecord(new ReliabilityRecord("Electric Motor", "Large (>1MW)", "All modes", 4.57e-5,
-        21882, 48, "OREDA-2015", "High"));
-    importer.addRecord(new ReliabilityRecord("Electric Motor", "Medium", "All modes", 2.28e-5,
-        43860, 24, "OREDA-2015", "High"));
+    importer.addRecord(
+	new ReliabilityRecord("Gas Turbine", "Industrial", "All modes", 1.37e-4, 7299, 120, "OREDA-2015", "High"));
+    importer.addRecord(
+	new ReliabilityRecord("Electric Motor", "Large (>1MW)", "All modes", 4.57e-5, 21882, 48, "OREDA-2015", "High"));
+    importer.addRecord(
+	new ReliabilityRecord("Electric Motor", "Medium", "All modes", 2.28e-5, 43860, 24, "OREDA-2015", "High"));
 
     // Piping and vessels
-    importer.addRecord(new ReliabilityRecord("Pressure Vessel", "Vertical", "All modes", 1.14e-5,
-        87720, 48, "OREDA-2015", "High"));
-    importer.addRecord(new ReliabilityRecord("Pressure Vessel", "Horizontal", "All modes", 1.14e-5,
-        87720, 48, "OREDA-2015", "High"));
-    importer.addRecord(new ReliabilityRecord("Pipeline", "Process piping", "All modes", 5.71e-7,
-        1751300, 24, "OREDA-2015", "High"));
+    importer.addRecord(
+	new ReliabilityRecord("Pressure Vessel", "Vertical", "All modes", 1.14e-5, 87720, 48, "OREDA-2015", "High"));
+    importer.addRecord(
+	new ReliabilityRecord("Pressure Vessel", "Horizontal", "All modes", 1.14e-5, 87720, 48, "OREDA-2015", "High"));
+    importer.addRecord(
+	new ReliabilityRecord("Pipeline", "Process piping", "All modes", 5.71e-7, 1751300, 24, "OREDA-2015", "High"));
 
     // Subsea equipment
-    importer.addRecord(new ReliabilityRecord("Subsea Tree", "Vertical", "All modes", 2.28e-5, 43860,
-        720, "OREDA-2015", "Medium"));
-    importer.addRecord(new ReliabilityRecord("Subsea Manifold", "Production", "All modes", 1.14e-5,
-        87720, 480, "OREDA-2015", "Medium"));
-    importer.addRecord(new ReliabilityRecord("Umbilical", "Electro-hydraulic", "All modes", 1.83e-6,
-        546750, 720, "OREDA-2015", "Low"));
-    importer.addRecord(new ReliabilityRecord("Flexible Riser", "Dynamic", "All modes", 5.71e-6,
-        175130, 480, "OREDA-2015", "Medium"));
+    importer.addRecord(
+	new ReliabilityRecord("Subsea Tree", "Vertical", "All modes", 2.28e-5, 43860, 720, "OREDA-2015", "Medium"));
+    importer.addRecord(new ReliabilityRecord("Subsea Manifold", "Production", "All modes", 1.14e-5, 87720, 480,
+	"OREDA-2015", "Medium"));
+    importer.addRecord(new ReliabilityRecord("Umbilical", "Electro-hydraulic", "All modes", 1.83e-6, 546750, 720,
+	"OREDA-2015", "Low"));
+    importer.addRecord(
+	new ReliabilityRecord("Flexible Riser", "Dynamic", "All modes", 5.71e-6, 175130, 480, "OREDA-2015", "Medium"));
 
     // Instrumentation
-    importer.addRecord(new ReliabilityRecord("Transmitter", "Pressure", "All modes", 6.85e-6,
-        146000, 4, "OREDA-2015", "High"));
-    importer.addRecord(new ReliabilityRecord("Transmitter", "Temperature", "All modes", 4.57e-6,
-        219000, 4, "OREDA-2015", "High"));
-    importer.addRecord(new ReliabilityRecord("Transmitter", "Flow", "All modes", 9.13e-6, 109500, 8,
-        "OREDA-2015", "High"));
-    importer.addRecord(new ReliabilityRecord("Transmitter", "Level", "All modes", 6.85e-6, 146000,
-        4, "OREDA-2015", "High"));
+    importer.addRecord(
+	new ReliabilityRecord("Transmitter", "Pressure", "All modes", 6.85e-6, 146000, 4, "OREDA-2015", "High"));
+    importer.addRecord(
+	new ReliabilityRecord("Transmitter", "Temperature", "All modes", 4.57e-6, 219000, 4, "OREDA-2015", "High"));
+    importer
+	.addRecord(new ReliabilityRecord("Transmitter", "Flow", "All modes", 9.13e-6, 109500, 8, "OREDA-2015", "High"));
+    importer.addRecord(
+	new ReliabilityRecord("Transmitter", "Level", "All modes", 6.85e-6, 146000, 4, "OREDA-2015", "High"));
 
     importer.dataSource = "OREDA-2015 (Built-in defaults)";
     return importer;
@@ -763,8 +753,8 @@ public class OREDADataImporter implements Serializable {
    * Creates an importer with all public domain data sources loaded.
    *
    * <p>
-   * This factory method loads data from IEEE 493, IOGP, generic literature, and OREDA
-   * representative values. This provides the most comprehensive coverage for risk analysis.
+   * This factory method loads data from IEEE 493, IOGP, generic literature, and OREDA representative values. This
+   * provides the most comprehensive coverage for risk analysis.
    * </p>
    *
    * @return importer with all public data sources loaded
@@ -774,8 +764,7 @@ public class OREDADataImporter implements Serializable {
     try {
       importer.loadAllPublicDataSources();
     } catch (IOException e) {
-      logger.warn("Failed to load some public data sources, using built-in defaults: {}",
-          e.getMessage());
+      logger.warn("Failed to load some public data sources, using built-in defaults: {}", e.getMessage());
       return createWithDefaults();
     }
     return importer;
@@ -785,8 +774,8 @@ public class OREDADataImporter implements Serializable {
    * Creates an importer optimized for electrical equipment analysis.
    *
    * <p>
-   * Loads IEEE 493 (Gold Book) data which is the primary reference for electrical equipment
-   * reliability in industrial and commercial power systems.
+   * Loads IEEE 493 (Gold Book) data which is the primary reference for electrical equipment reliability in industrial
+   * and commercial power systems.
    * </p>
    *
    * @return importer with IEEE 493 data
@@ -805,8 +794,7 @@ public class OREDADataImporter implements Serializable {
    * Creates an importer optimized for oil and gas equipment analysis.
    *
    * <p>
-   * Loads IOGP/OGP and OREDA data which are the primary references for oil and gas industry
-   * equipment reliability.
+   * Loads IOGP/OGP and OREDA data which are the primary references for oil and gas industry equipment reliability.
    * </p>
    *
    * @return importer with O&amp;G specific data

@@ -25,8 +25,8 @@ import java.util.List;
  * <code>q = II × (P_wf - P_res)</code>
  * </p>
  * <p>
- * where q is injection rate, P_wf is flowing bottomhole pressure, and P_res is average reservoir
- * pressure. Injectivity depends on:
+ * where q is injection rate, P_wf is flowing bottomhole pressure, and P_res is average reservoir pressure. Injectivity
+ * depends on:
  * </p>
  * <ul>
  * <li>Permeability and thickness (kh)</li>
@@ -179,8 +179,7 @@ public class InjectionWellModel implements Serializable {
     }
 
     // Calculate wellhead pressure
-    result.wellheadPressure =
-        calculateWellheadPressure(result.achievableRate, result.bottomholePressure);
+    result.wellheadPressure = calculateWellheadPressure(result.achievableRate, result.bottomholePressure);
 
     // Check if surface pressure is sufficient
     if (result.wellheadPressure > surfaceInjectionPressure) {
@@ -253,7 +252,7 @@ public class InjectionWellModel implements Serializable {
    * Calculates wellhead injection pressure from BHP.
    *
    * @param rateSm3d injection rate (Sm3/day)
-   * @param bhp bottomhole pressure (bara)
+   * @param bhp      bottomhole pressure (bara)
    * @return wellhead pressure (bara)
    */
   private double calculateWellheadPressure(double rateSm3d, double bhp) {
@@ -266,8 +265,7 @@ public class InjectionWellModel implements Serializable {
     } else {
       // Gas density at average conditions
       double avgPressure = (bhp + 20.0) / 2.0; // Approximate
-      density = avgPressure * 1e5 * gasMolecularWeight
-          / (8314.0 * ((reservoirTemperature + 288.15) / 2.0));
+      density = avgPressure * 1e5 * gasMolecularWeight / (8314.0 * ((reservoirTemperature + 288.15) / 2.0));
     }
 
     // Hydrostatic pressure (for injection, this reduces required WHP)
@@ -286,7 +284,7 @@ public class InjectionWellModel implements Serializable {
    * Calculates friction pressure drop in tubing.
    *
    * @param rateSm3d rate (Sm3/day)
-   * @param density fluid density (kg/m³)
+   * @param density  fluid density (kg/m³)
    * @return friction pressure drop (bar)
    */
   private double calculateFrictionPressureDrop(double rateSm3d, double density) {
@@ -300,8 +298,7 @@ public class InjectionWellModel implements Serializable {
     double velocity = qm3s / area;
 
     // Reynolds number
-    double viscosity =
-        (injectionType == InjectionType.WATER_INJECTOR ? waterViscosity : gasViscosity) * 1e-3;
+    double viscosity = (injectionType == InjectionType.WATER_INJECTOR ? waterViscosity : gasViscosity) * 1e-3;
     double reynolds = density * velocity * tubingID / viscosity;
 
     // Friction factor (Colebrook-White approximation)
@@ -334,7 +331,7 @@ public class InjectionWellModel implements Serializable {
   /**
    * Calculates pump power requirement.
    *
-   * @param rateSm3d injection rate (Sm3/day)
+   * @param rateSm3d  injection rate (Sm3/day)
    * @param deltaPbar pressure boost (bar)
    * @return pump power (kW)
    */
@@ -370,13 +367,13 @@ public class InjectionWellModel implements Serializable {
   /**
    * Calculates injection with pressure interference from nearby producers.
    *
-   * @param targetRate target rate (Sm3/day)
+   * @param targetRate        target rate (Sm3/day)
    * @param producerDistances distances to nearby producers (m)
-   * @param producerRates production rates of nearby wells (Sm3/day)
+   * @param producerRates     production rates of nearby wells (Sm3/day)
    * @return adjusted injection result
    */
-  public InjectionWellResult calculateWithInterference(double targetRate,
-      double[] producerDistances, double[] producerRates) {
+  public InjectionWellResult calculateWithInterference(double targetRate, double[] producerDistances,
+      double[] producerRates) {
     // Calculate base injection
     InjectionWellResult result = calculate(targetRate);
 
@@ -386,18 +383,18 @@ public class InjectionWellModel implements Serializable {
 
     for (int i = 0; i < producerDistances.length; i++) {
       if (i < producerRates.length && producerDistances[i] > 0) {
-        // Simplified line source solution
-        double distance = producerDistances[i];
-        double rate = producerRates[i];
+	// Simplified line source solution
+	double distance = producerDistances[i];
+	double rate = producerRates[i];
 
-        // Pressure drawdown at injector due to producer
-        // Δp ∝ q × ln(re/r) / (2π k h)
-        double kSI = formationPermeability * 9.869e-16;
-        double viscosity = formationWaterViscosity * 1e-3;
+	// Pressure drawdown at injector due to producer
+	// Δp ∝ q × ln(re/r) / (2π k h)
+	double kSI = formationPermeability * 9.869e-16;
+	double viscosity = formationWaterViscosity * 1e-3;
 
-        double deltaPSI = rate / 86400.0 * viscosity * Math.log(drainageRadius / distance)
-            / (2.0 * Math.PI * kSI * formationThickness);
-        interferencePressure += deltaPSI / 1e5; // Pa to bar
+	double deltaPSI = rate / 86400.0 * viscosity * Math.log(drainageRadius / distance)
+	    / (2.0 * Math.PI * kSI * formationThickness);
+	interferencePressure += deltaPSI / 1e5; // Pa to bar
       }
     }
 
@@ -430,7 +427,7 @@ public class InjectionWellModel implements Serializable {
    * Sets reservoir pressure.
    *
    * @param pressure pressure value
-   * @param unit unit ("bara", "psia")
+   * @param unit     unit ("bara", "psia")
    * @return this for chaining
    */
   public InjectionWellModel setReservoirPressure(double pressure, String unit) {
@@ -446,7 +443,7 @@ public class InjectionWellModel implements Serializable {
    * Sets reservoir temperature.
    *
    * @param temperature temperature value
-   * @param unit unit ("K", "C", "F")
+   * @param unit        unit ("K", "C", "F")
    * @return this for chaining
    */
   public InjectionWellModel setReservoirTemperature(double temperature, String unit) {
@@ -464,7 +461,7 @@ public class InjectionWellModel implements Serializable {
    * Sets formation permeability.
    *
    * @param permeability permeability value
-   * @param unit unit ("mD", "D")
+   * @param unit         unit ("mD", "D")
    * @return this for chaining
    */
   public InjectionWellModel setFormationPermeability(double permeability, String unit) {
@@ -480,7 +477,7 @@ public class InjectionWellModel implements Serializable {
    * Sets formation thickness.
    *
    * @param thickness thickness value
-   * @param unit unit ("m", "ft")
+   * @param unit      unit ("m", "ft")
    * @return this for chaining
    */
   public InjectionWellModel setFormationThickness(double thickness, String unit) {
@@ -507,7 +504,7 @@ public class InjectionWellModel implements Serializable {
    * Sets well depth.
    *
    * @param depth depth value
-   * @param unit unit ("m", "ft")
+   * @param unit  unit ("m", "ft")
    * @return this for chaining
    */
   public InjectionWellModel setWellDepth(double depth, String unit) {
@@ -523,7 +520,7 @@ public class InjectionWellModel implements Serializable {
    * Sets tubing ID.
    *
    * @param diameter diameter value
-   * @param unit unit ("m", "in", "mm")
+   * @param unit     unit ("m", "in", "mm")
    * @return this for chaining
    */
   public InjectionWellModel setTubingID(double diameter, String unit) {
@@ -541,7 +538,7 @@ public class InjectionWellModel implements Serializable {
    * Sets maximum BHP (operating limit below fracture pressure).
    *
    * @param pressure pressure value
-   * @param unit unit ("bara", "psia")
+   * @param unit     unit ("bara", "psia")
    * @return this for chaining
    */
   public InjectionWellModel setMaxBHP(double pressure, String unit) {
@@ -557,7 +554,7 @@ public class InjectionWellModel implements Serializable {
    * Sets fracture pressure.
    *
    * @param pressure pressure value
-   * @param unit unit ("bara", "psia")
+   * @param unit     unit ("bara", "psia")
    * @return this for chaining
    */
   public InjectionWellModel setFracturePressure(double pressure, String unit) {
@@ -573,7 +570,7 @@ public class InjectionWellModel implements Serializable {
    * Sets surface injection pressure available.
    *
    * @param pressure pressure value
-   * @param unit unit ("bara", "psia")
+   * @param unit     unit ("bara", "psia")
    * @return this for chaining
    */
   public InjectionWellModel setSurfaceInjectionPressure(double pressure, String unit) {
@@ -745,8 +742,7 @@ public class InjectionWellModel implements Serializable {
       sb.append(String.format("WHP: %.1f bara%n", wellheadPressure));
       sb.append(String.format("Limited by pressure: %s%n", limitedByPressure));
       if (needsPump) {
-        sb.append(String.format("Pump required: ΔP=%.1f bar, Power=%.0f kW%n", requiredPumpDeltaP,
-            pumpPower));
+	sb.append(String.format("Pump required: ΔP=%.1f bar, Power=%.0f kW%n", requiredPumpDeltaP, pumpPower));
       }
       return sb.toString();
     }
@@ -782,15 +778,15 @@ public class InjectionWellModel implements Serializable {
     /**
      * Creates an injection zone.
      *
-     * @param name zone name
-     * @param depth TVD to zone midpoint (m)
+     * @param name              zone name
+     * @param depth             TVD to zone midpoint (m)
      * @param reservoirPressure reservoir pressure (bara)
-     * @param permeability formation permeability (mD)
-     * @param thickness formation thickness (m)
-     * @param fracturePressure fracture pressure (bara)
+     * @param permeability      formation permeability (mD)
+     * @param thickness         formation thickness (m)
+     * @param fracturePressure  fracture pressure (bara)
      */
-    public InjectionZone(String name, double depth, double reservoirPressure, double permeability,
-        double thickness, double fracturePressure) {
+    public InjectionZone(String name, double depth, double reservoirPressure, double permeability, double thickness,
+	double fracturePressure) {
       this.name = name;
       this.depth = depth;
       this.reservoirPressure = reservoirPressure;
@@ -855,9 +851,8 @@ public class InjectionWellModel implements Serializable {
       sb.append(String.format("Out-of-zone rate: %.0f Sm3/day%n", outOfZoneRate));
       sb.append("\nPer-zone breakdown:\n");
       for (InjectionZoneResult zr : zoneResults) {
-        sb.append(String.format("  %s: %.0f Sm3/day (%.1f%%)%s%s%n", zr.zoneName, zr.rate,
-            zr.allocationFraction * 100, zr.isTargetZone ? " [TARGET]" : "",
-            zr.fractureRisk ? " [FRACTURE RISK]" : ""));
+	sb.append(String.format("  %s: %.0f Sm3/day (%.1f%%)%s%s%n", zr.zoneName, zr.rate, zr.allocationFraction * 100,
+	    zr.isTargetZone ? " [TARGET]" : "", zr.fractureRisk ? " [FRACTURE RISK]" : ""));
       }
       return sb.toString();
     }
@@ -907,9 +902,8 @@ public class InjectionWellModel implements Serializable {
    * Calculate multi-zone injection allocation at a given total target rate.
    *
    * <p>
-   * The BHP is determined from the total target rate and the combined injectivity of all zones.
-   * Each zone then receives flow proportional to its individual injectivity and pressure
-   * differential.
+   * The BHP is determined from the total target rate and the combined injectivity of all zones. Each zone then receives
+   * flow proportional to its individual injectivity and pressure differential.
    * </p>
    *
    * @param totalTargetRate total target injection rate (Sm3/day)
@@ -945,7 +939,7 @@ public class InjectionWellModel implements Serializable {
     double minFracPressure = Double.MAX_VALUE;
     for (InjectionZone zone : zones) {
       if (zone.fracturePressure > 0 && zone.fracturePressure < minFracPressure) {
-        minFracPressure = zone.fracturePressure;
+	minFracPressure = zone.fracturePressure;
       }
     }
     double effectiveBHP = Math.min(requiredBHP, Math.min(maxBHP, minFracPressure));
@@ -961,7 +955,7 @@ public class InjectionWellModel implements Serializable {
       double ii = zoneIIs.get(i);
       double zoneRate = ii * (effectiveBHP - zone.reservoirPressure);
       if (zoneRate < 0) {
-        zoneRate = 0.0;
+	zoneRate = 0.0;
       }
 
       InjectionZoneResult zr = new InjectionZoneResult();
@@ -975,9 +969,9 @@ public class InjectionWellModel implements Serializable {
       result.zoneResults.add(zr);
       totalRate += zoneRate;
       if (zone.isTargetZone) {
-        targetRate += zoneRate;
+	targetRate += zoneRate;
       } else {
-        oozRate += zoneRate;
+	oozRate += zoneRate;
       }
     }
 
@@ -1036,21 +1030,20 @@ public class InjectionWellModel implements Serializable {
    * Set thermoelastic parameters for thermal stress reduction during cold injection.
    *
    * <p>
-   * During cold water or CO2 injection, the near-wellbore rock cools, reducing the minimum
-   * horizontal stress and effectively lowering the fracture pressure. The thermal stress reduction
-   * is:
+   * During cold water or CO2 injection, the near-wellbore rock cools, reducing the minimum horizontal stress and
+   * effectively lowering the fracture pressure. The thermal stress reduction is:
    * </p>
    * <p>
    * delta_sigma_thermal = alpha_T * E / (1 - nu) * (T_inj - T_res)
    * </p>
    *
-   * @param injectionTemp injection fluid temperature (K)
-   * @param reservoirTemp reservoir temperature (K)
+   * @param injectionTemp    injection fluid temperature (K)
+   * @param reservoirTemp    reservoir temperature (K)
    * @param thermalExpansion linear thermal expansion coefficient (1/K), typically 1e-5 to 3e-5
    * @param youngsModulusGPa Young's modulus (GPa), typically 10-50 GPa for reservoir rock
    */
-  public void setThermalStressReduction(double injectionTemp, double reservoirTemp,
-      double thermalExpansion, double youngsModulusGPa) {
+  public void setThermalStressReduction(double injectionTemp, double reservoirTemp, double thermalExpansion,
+      double youngsModulusGPa) {
     this.injectionTemperature = injectionTemp;
     this.reservoirTemperatureForThermal = reservoirTemp;
     this.thermalExpansionCoeff = thermalExpansion;
@@ -1086,8 +1079,8 @@ public class InjectionWellModel implements Serializable {
    * Get the effective fracture pressure accounting for thermal stress.
    *
    * <p>
-   * Cold injection reduces the minimum horizontal stress and therefore the fracture pressure:
-   * Pfrac_effective = Pfrac_original - |delta_sigma_thermal|
+   * Cold injection reduces the minimum horizontal stress and therefore the fracture pressure: Pfrac_effective =
+   * Pfrac_original - |delta_sigma_thermal|
    * </p>
    *
    * @return effective fracture pressure (bara)
@@ -1147,29 +1140,29 @@ public class InjectionWellModel implements Serializable {
 
     private void setDefaultCounts() {
       switch (patternType) {
-        case FIVE_SPOT:
-          injectorCount = 1;
-          producerCount = 4;
-          break;
-        case INVERTED_FIVE_SPOT:
-          injectorCount = 4;
-          producerCount = 1;
-          break;
-        case LINE_DRIVE:
-          injectorCount = 1;
-          producerCount = 1;
-          break;
-        case SEVEN_SPOT:
-          injectorCount = 1;
-          producerCount = 6;
-          break;
-        case NINE_SPOT:
-          injectorCount = 1;
-          producerCount = 8;
-          break;
-        default:
-          injectorCount = 1;
-          producerCount = 4;
+      case FIVE_SPOT:
+	injectorCount = 1;
+	producerCount = 4;
+	break;
+      case INVERTED_FIVE_SPOT:
+	injectorCount = 4;
+	producerCount = 1;
+	break;
+      case LINE_DRIVE:
+	injectorCount = 1;
+	producerCount = 1;
+	break;
+      case SEVEN_SPOT:
+	injectorCount = 1;
+	producerCount = 6;
+	break;
+      case NINE_SPOT:
+	injectorCount = 1;
+	producerCount = 8;
+	break;
+      default:
+	injectorCount = 1;
+	producerCount = 4;
       }
     }
 
@@ -1184,22 +1177,22 @@ public class InjectionWellModel implements Serializable {
       double baseSweep = 0.7;
 
       switch (patternType) {
-        case FIVE_SPOT:
-          baseSweep = 0.72;
-          break;
-        case LINE_DRIVE:
-          baseSweep = 0.57;
-          break;
-        case STAGGERED_LINE_DRIVE:
-          baseSweep = 0.80;
-          break;
-        default:
-          baseSweep = 0.70;
+      case FIVE_SPOT:
+	baseSweep = 0.72;
+	break;
+      case LINE_DRIVE:
+	baseSweep = 0.57;
+	break;
+      case STAGGERED_LINE_DRIVE:
+	baseSweep = 0.80;
+	break;
+      default:
+	baseSweep = 0.70;
       }
 
       // Mobility ratio correction
       if (mobilityRatio > 1.0) {
-        baseSweep *= Math.pow(mobilityRatio, -0.2);
+	baseSweep *= Math.pow(mobilityRatio, -0.2);
       }
 
       return Math.max(0.3, Math.min(baseSweep, 0.95));

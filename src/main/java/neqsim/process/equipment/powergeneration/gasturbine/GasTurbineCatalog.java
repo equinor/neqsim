@@ -15,14 +15,13 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * Catalog of typical gas turbine packages used in upstream oil &amp; gas topside power generation.
- * Data is loaded from {@code resources/data/powergeneration/gas_turbine_catalog.csv} on first
- * access.
+ * Catalog of typical gas turbine packages used in upstream oil &amp; gas topside power generation. Data is loaded from
+ * {@code resources/data/powergeneration/gas_turbine_catalog.csv} on first access.
  *
  * <p>
- * All entries are based on publicly available OEM datasheets and trade press. Use
- * {@link #get(String)} to retrieve a named entry or {@link #findBestFit} to pick the smallest unit
- * that can deliver a given power demand with the requested redundancy.
+ * All entries are based on publicly available OEM datasheets and trade press. Use {@link #get(String)} to retrieve a
+ * named entry or {@link #findBestFit} to pick the smallest unit that can deliver a given power demand with the
+ * requested redundancy.
  * </p>
  *
  * @author neqsim
@@ -51,11 +50,11 @@ public final class GasTurbineCatalog implements Serializable {
     Map<String, GasTurbineSpec> local = CACHE;
     if (local == null) {
       synchronized (GasTurbineCatalog.class) {
-        local = CACHE;
-        if (local == null) {
-          local = loadFromResource();
-          CACHE = local;
-        }
+	local = CACHE;
+	if (local == null) {
+	  local = loadFromResource();
+	  CACHE = local;
+	}
       }
     }
     return local;
@@ -75,11 +74,10 @@ public final class GasTurbineCatalog implements Serializable {
     String key = normalize(model);
     for (Map.Entry<String, GasTurbineSpec> e : all().entrySet()) {
       if (normalize(e.getKey()).equals(key)) {
-        return e.getValue();
+	return e.getValue();
       }
     }
-    throw new IllegalArgumentException(
-        "Unknown gas turbine model: " + model + ". Available: " + all().keySet());
+    throw new IllegalArgumentException("Unknown gas turbine model: " + model + ". Available: " + all().keySet());
   }
 
   /**
@@ -92,17 +90,17 @@ public final class GasTurbineCatalog implements Serializable {
     Collections.sort(list, new java.util.Comparator<GasTurbineSpec>() {
       @Override
       public int compare(GasTurbineSpec a, GasTurbineSpec b) {
-        return Double.compare(a.getRatedPowerW(), b.getRatedPowerW());
+	return Double.compare(a.getRatedPowerW(), b.getRatedPowerW());
       }
     });
     return list;
   }
 
   /**
-   * Find the smallest catalog entry whose rated power is at least the requested demand multiplied
-   * by the safety / redundancy factor.
+   * Find the smallest catalog entry whose rated power is at least the requested demand multiplied by the safety /
+   * redundancy factor.
    *
-   * @param demandW power demand [W]
+   * @param demandW          power demand [W]
    * @param redundancyFactor multiplier (e.g. 1.0 for 1×100 %, 2.0 for N+1 with two equal units)
    * @return best-fit spec, or {@code null} if no entry is large enough
    */
@@ -114,28 +112,26 @@ public final class GasTurbineCatalog implements Serializable {
     GasTurbineSpec best = null;
     for (GasTurbineSpec s : sortedByPower()) {
       if (s.getRatedPowerW() >= targetW) {
-        best = s;
-        break;
+	best = s;
+	break;
       }
     }
     return best;
   }
 
   /**
-   * Find the best-fit single-unit spec for the given demand. When no single catalog entry is large
-   * enough and {@code returnLargestIfNoneFits} is {@code true}, the largest available entry is
-   * returned instead (indicating a multi-unit dispatch will be required). When the flag is
-   * {@code false}, the behaviour matches the two-argument overload and {@code null} is returned for
-   * infeasible single-unit cases.
+   * Find the best-fit single-unit spec for the given demand. When no single catalog entry is large enough and
+   * {@code returnLargestIfNoneFits} is {@code true}, the largest available entry is returned instead (indicating a
+   * multi-unit dispatch will be required). When the flag is {@code false}, the behaviour matches the two-argument
+   * overload and {@code null} is returned for infeasible single-unit cases.
    *
-   * @param demandW power demand [W]
-   * @param redundancyFactor multiplier (e.g. 1.0 for 1×100 %, 2.0 for N+1 with two equal units)
-   * @param returnLargestIfNoneFits if true, fall back to the largest catalog entry when no single
-   *        unit covers the demand
+   * @param demandW                 power demand [W]
+   * @param redundancyFactor        multiplier (e.g. 1.0 for 1×100 %, 2.0 for N+1 with two equal units)
+   * @param returnLargestIfNoneFits if true, fall back to the largest catalog entry when no single unit covers the
+   *                                demand
    * @return best-fit spec, or the largest spec, or {@code null} if the catalog is empty
    */
-  public static GasTurbineSpec findBestFit(double demandW, double redundancyFactor,
-      boolean returnLargestIfNoneFits) {
+  public static GasTurbineSpec findBestFit(double demandW, double redundancyFactor, boolean returnLargestIfNoneFits) {
     GasTurbineSpec best = findBestFit(demandW, redundancyFactor);
     if (best != null || !returnLargestIfNoneFits) {
       return best;
@@ -163,45 +159,44 @@ public final class GasTurbineCatalog implements Serializable {
       reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8));
       String header = reader.readLine();
       if (header == null) {
-        return map;
+	return map;
       }
       String line;
       while ((line = reader.readLine()) != null) {
-        line = line.trim();
-        if (line.length() == 0 || line.startsWith("#")) {
-          continue;
-        }
-        String[] parts = line.split(",");
-        if (parts.length < 9) {
-          logger.warn("Skipping malformed catalog row: {}", line);
-          continue;
-        }
-        try {
-          String model = parts[0].trim();
-          GasTurbineSpec.TurbineType type =
-              GasTurbineSpec.TurbineType.valueOf(parts[1].trim().toUpperCase());
-          double powerMW = Double.parseDouble(parts[2].trim());
-          double heatRate = Double.parseDouble(parts[3].trim());
-          double exhaustFlow = Double.parseDouble(parts[4].trim());
-          double exhaustTC = Double.parseDouble(parts[5].trim());
-          double nox = Double.parseDouble(parts[6].trim());
-          double mass = Double.parseDouble(parts[7].trim());
-          String desc = parts[8].trim();
-          map.put(model, new GasTurbineSpec(model, type, powerMW * 1.0e6, heatRate, exhaustFlow,
-              exhaustTC + 273.15, nox, mass, desc));
-        } catch (RuntimeException ex) {
-          logger.warn("Failed to parse catalog row '{}': {}", line, ex.getMessage());
-        }
+	line = line.trim();
+	if (line.length() == 0 || line.startsWith("#")) {
+	  continue;
+	}
+	String[] parts = line.split(",");
+	if (parts.length < 9) {
+	  logger.warn("Skipping malformed catalog row: {}", line);
+	  continue;
+	}
+	try {
+	  String model = parts[0].trim();
+	  GasTurbineSpec.TurbineType type = GasTurbineSpec.TurbineType.valueOf(parts[1].trim().toUpperCase());
+	  double powerMW = Double.parseDouble(parts[2].trim());
+	  double heatRate = Double.parseDouble(parts[3].trim());
+	  double exhaustFlow = Double.parseDouble(parts[4].trim());
+	  double exhaustTC = Double.parseDouble(parts[5].trim());
+	  double nox = Double.parseDouble(parts[6].trim());
+	  double mass = Double.parseDouble(parts[7].trim());
+	  String desc = parts[8].trim();
+	  map.put(model, new GasTurbineSpec(model, type, powerMW * 1.0e6, heatRate, exhaustFlow, exhaustTC + 273.15,
+	      nox, mass, desc));
+	} catch (RuntimeException ex) {
+	  logger.warn("Failed to parse catalog row '{}': {}", line, ex.getMessage());
+	}
       }
     } catch (IOException ex) {
       logger.error("Failed to read gas turbine catalog", ex);
     } finally {
       if (reader != null) {
-        try {
-          reader.close();
-        } catch (IOException ignore) {
-          // ignore close failures
-        }
+	try {
+	  reader.close();
+	} catch (IOException ignore) {
+	  // ignore close failures
+	}
       }
     }
     return Collections.unmodifiableMap(map);

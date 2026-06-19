@@ -38,12 +38,13 @@ public class PumpCapacityStrategy implements EquipmentCapacityStrategy {
   /**
    * Default constructor.
    */
-  public PumpCapacityStrategy() {}
+  public PumpCapacityStrategy() {
+  }
 
   /**
    * Constructor with custom constraints.
    *
-   * @param minNpshMargin minimum NPSH margin in meters
+   * @param minNpshMargin  minimum NPSH margin in meters
    * @param maxPowerFactor maximum power factor (1.1 = 110% of rated)
    */
   public PumpCapacityStrategy(double minNpshMargin, double maxPowerFactor) {
@@ -126,9 +127,8 @@ public class PumpCapacityStrategy implements EquipmentCapacityStrategy {
 
     if (maxPower > 0) {
       CapacityConstraint powerConstraint = new CapacityConstraint("power").setDesignValue(maxPower)
-          .setMaxValue(maxPower * maxPowerFactor).setUnit("kW")
-          .setSeverity(CapacityConstraint.ConstraintSeverity.HARD).setWarningThreshold(0.9)
-          .setValueSupplier(() -> pump.getPower("kW"));
+	  .setMaxValue(maxPower * maxPowerFactor).setUnit("kW").setSeverity(CapacityConstraint.ConstraintSeverity.HARD)
+	  .setWarningThreshold(0.9).setValueSupplier(() -> pump.getPower("kW"));
       constraints.put("power", powerConstraint);
     }
 
@@ -137,20 +137,18 @@ public class PumpCapacityStrategy implements EquipmentCapacityStrategy {
     double npshRequired = pump.getNPSHRequired();
     double npshMargin = npshAvailable - npshRequired;
     if (npshAvailable > 0 && npshRequired > 0) {
-      CapacityConstraint npshConstraint = new CapacityConstraint("npshMargin")
-          .setDesignValue(minNpshMargin).setMinValue(minNpshMargin).setUnit("m")
-          .setSeverity(CapacityConstraint.ConstraintSeverity.HARD)
-          .setValueSupplier(() -> pump.getNPSHAvailable() - pump.getNPSHRequired());
+      CapacityConstraint npshConstraint = new CapacityConstraint("npshMargin").setDesignValue(minNpshMargin)
+	  .setMinValue(minNpshMargin).setUnit("m").setSeverity(CapacityConstraint.ConstraintSeverity.HARD)
+	  .setValueSupplier(() -> pump.getNPSHAvailable() - pump.getNPSHRequired());
       constraints.put("npshMargin", npshConstraint);
     }
 
     // Flow rate constraint (using minimum flow as lower limit)
     double minFlow = pump.getMinimumFlow();
-    if (minFlow > 0 && pump.getInletStream() != null
-        && pump.getInletStream().getThermoSystem() != null) {
-      CapacityConstraint flowConstraint = new CapacityConstraint("flowRate").setMinValue(minFlow)
-          .setUnit("m3/hr").setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
-          .setValueSupplier(() -> pump.getInletStream().getFlowRate("m3/hr"));
+    if (minFlow > 0 && pump.getInletStream() != null && pump.getInletStream().getThermoSystem() != null) {
+      CapacityConstraint flowConstraint = new CapacityConstraint("flowRate").setMinValue(minFlow).setUnit("m3/hr")
+	  .setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
+	  .setValueSupplier(() -> pump.getInletStream().getFlowRate("m3/hr"));
       constraints.put("flowRate", flowConstraint);
     }
 
@@ -165,7 +163,7 @@ public class PumpCapacityStrategy implements EquipmentCapacityStrategy {
 
     for (CapacityConstraint constraint : constraints.values()) {
       if (constraint.isViolated()) {
-        violations.add(constraint);
+	violations.add(constraint);
       }
     }
 
@@ -183,8 +181,8 @@ public class PumpCapacityStrategy implements EquipmentCapacityStrategy {
     for (CapacityConstraint constraint : constraints.values()) {
       double util = constraint.getUtilization();
       if (!Double.isNaN(util) && util > maxUtil) {
-        maxUtil = util;
-        bottleneck = constraint;
+	maxUtil = util;
+	bottleneck = constraint;
       }
     }
 
@@ -198,10 +196,10 @@ public class PumpCapacityStrategy implements EquipmentCapacityStrategy {
 
     for (CapacityConstraint constraint : constraints.values()) {
       if (constraint.getSeverity() == CapacityConstraint.ConstraintSeverity.HARD
-          || constraint.getSeverity() == CapacityConstraint.ConstraintSeverity.CRITICAL) {
-        if (constraint.isHardLimitExceeded()) {
-          return false;
-        }
+	  || constraint.getSeverity() == CapacityConstraint.ConstraintSeverity.CRITICAL) {
+	if (constraint.isHardLimitExceeded()) {
+	  return false;
+	}
       }
     }
 
@@ -215,7 +213,7 @@ public class PumpCapacityStrategy implements EquipmentCapacityStrategy {
 
     for (CapacityConstraint constraint : constraints.values()) {
       if (constraint.getUtilization() > 1.0) {
-        return false;
+	return false;
       }
     }
 

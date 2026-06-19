@@ -21,7 +21,7 @@ public class TPflash2 {
   private static final Logger logger = LogManager.getLogger(TPflash2.class);
 
   /** Logger object for class. */
-  
+
   /**
    * <p>
    * main.
@@ -31,16 +31,16 @@ public class TPflash2 {
    */
   @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
-    SystemInterface testSystem =
-        new SystemSrkCPAstatoil(273.15 + 80.0, ThermodynamicConstantsInterface.referencePressure);
+    SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 80.0,
+	ThermodynamicConstantsInterface.referencePressure);
     testSystem.addComponent("nitrogen", 8.71604938);
     // testSystem.addComponent("oxygen", 22.71604938);
     testSystem.addComponent("water", 110.234567901);
     testSystem.createDatabase(true);
     testSystem.setMixingRule(10);
     // testSystem.setMultiPhaseCheck(true);
-    SystemInterface testSystem2 =
-        new SystemSrkCPAstatoil(273.15 + 80.0, ThermodynamicConstantsInterface.referencePressure);
+    SystemInterface testSystem2 = new SystemSrkCPAstatoil(273.15 + 80.0,
+	ThermodynamicConstantsInterface.referencePressure);
     testSystem2.addComponent("nitrogen", 8.71604938);
     // testSystem.addComponent("oxygen", 22.71604938);
     testSystem2.addComponent("MEG", 110.234567901);

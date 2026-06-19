@@ -30,8 +30,8 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * Advanced example demonstrating integrated safety systems using the NeqSim process logic framework
- * and scenario simulation capabilities.
+ * Advanced example demonstrating integrated safety systems using the NeqSim process logic framework and scenario
+ * simulation capabilities.
  *
  * <p>
  * This example showcases:
@@ -56,8 +56,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version 1.0
  */
 public class IntegratedSafetySystemWithLogicExample {
-  private static final Logger logger =
-      LogManager.getLogger(IntegratedSafetySystemWithLogicExample.class);
+  private static final Logger logger = LogManager.getLogger(IntegratedSafetySystemWithLogicExample.class);
 
   // Safety setpoints
   private static final double NORMAL_OPERATING_PRESSURE = 50.0; // bara
@@ -102,8 +101,8 @@ public class IntegratedSafetySystemWithLogicExample {
     @Override
     public void execute() {
       if (!executed) {
-        valve.setPercentValveOpening(0.0);
-        executed = true;
+	valve.setPercentValveOpening(0.0);
+	executed = true;
       }
     }
 
@@ -139,15 +138,14 @@ public class IntegratedSafetySystemWithLogicExample {
     @Override
     public void execute() {
       if (!executed) {
-        separator.setCalculateSteadyState(steadyState);
-        executed = true;
+	separator.setCalculateSteadyState(steadyState);
+	executed = true;
       }
     }
 
     @Override
     public String getDescription() {
-      return "Set separator " + separator.getName() + " to "
-          + (steadyState ? "steady-state" : "transient") + " mode";
+      return "Set separator " + separator.getName() + " to " + (steadyState ? "steady-state" : "transient") + " mode";
     }
 
     @Override
@@ -173,8 +171,7 @@ public class IntegratedSafetySystemWithLogicExample {
     private boolean activated = false;
     private double elapsedTime = 0.0;
 
-    public HIPPSLogic(String name, PressureTransmitter pt1, PressureTransmitter pt2,
-        ThrottlingValve valve) {
+    public HIPPSLogic(String name, PressureTransmitter pt1, PressureTransmitter pt2, ThrottlingValve valve) {
       this.name = name;
       this.pt1 = pt1;
       this.pt2 = pt2;
@@ -191,7 +188,7 @@ public class IntegratedSafetySystemWithLogicExample {
     @Override
     public void execute(double timeStep) {
       if (state != LogicState.RUNNING)
-        return;
+	return;
 
       elapsedTime += timeStep;
 
@@ -200,19 +197,18 @@ public class IntegratedSafetySystemWithLogicExample {
 
       // 2oo2 voting logic (both must detect high pressure for SIL-3)
       if (p1 >= HIPPS_ACTIVATION_PRESSURE && p2 >= HIPPS_ACTIVATION_PRESSURE) {
-        if (!activated) {
-          System.out
-              .println(">>> HIPPS ACTIVATED (SIL-3) - 2oo2 voting confirmed overpressure <<<");
-          activated = true;
-        }
-        // Close valve rapidly (2 seconds)
-        double currentOpening = valve.getPercentValveOpening();
-        if (currentOpening > 0) {
-          double newOpening = Math.max(0, currentOpening - (timeStep / 2.0) * 100.0);
-          valve.setPercentValveOpening(newOpening);
-        } else {
-          state = LogicState.COMPLETED;
-        }
+	if (!activated) {
+	  System.out.println(">>> HIPPS ACTIVATED (SIL-3) - 2oo2 voting confirmed overpressure <<<");
+	  activated = true;
+	}
+	// Close valve rapidly (2 seconds)
+	double currentOpening = valve.getPercentValveOpening();
+	if (currentOpening > 0) {
+	  double newOpening = Math.max(0, currentOpening - (timeStep / 2.0) * 100.0);
+	  valve.setPercentValveOpening(newOpening);
+	} else {
+	  state = LogicState.COMPLETED;
+	}
       }
     }
 
@@ -258,8 +254,7 @@ public class IntegratedSafetySystemWithLogicExample {
 
     @Override
     public String getStatusDescription() {
-      return String.format("%s - %s (activated: %s, elapsed: %.1fs)", name, state, activated,
-          elapsedTime);
+      return String.format("%s - %s (activated: %s, elapsed: %.1fs)", name, state, activated, elapsedTime);
     }
   }
 
@@ -281,52 +276,47 @@ public class IntegratedSafetySystemWithLogicExample {
       logicSequences.add(logic);
     }
 
-    public void runScenario(String scenarioName, ProcessSafetyScenario scenario, double duration,
-        double timeStep) {
+    public void runScenario(String scenarioName, ProcessSafetyScenario scenario, double duration, double timeStep) {
       logger.info("╔══════════════════════════════════════════════════════════════╗");
-      logger.printf(org.apache.logging.log4j.Level.INFO, "║  RUNNING SCENARIO: %-42s ║%n",
-          scenarioName);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "║  RUNNING SCENARIO: %-42s ║%n", scenarioName);
       logger.info("╚══════════════════════════════════════════════════════════════╝");
 
       // Apply scenario perturbations
       if (scenario != null) {
-        scenario.applyTo(system);
-        logger.info("Applied scenario perturbations:");
-        if (!scenario.getBlockedOutletUnits().isEmpty()) {
-          logger.info("  - Blocked outlets: " + scenario.getBlockedOutletUnits());
-        }
-        if (!scenario.getUtilityLossUnits().isEmpty()) {
-          logger.info("  - Utility losses: " + scenario.getUtilityLossUnits());
-        }
-        if (!scenario.getControllerSetPointOverrides().isEmpty()) {
-          System.out
-              .println("  - Controller overrides: " + scenario.getControllerSetPointOverrides());
-        }
+	scenario.applyTo(system);
+	logger.info("Applied scenario perturbations:");
+	if (!scenario.getBlockedOutletUnits().isEmpty()) {
+	  logger.info("  - Blocked outlets: " + scenario.getBlockedOutletUnits());
+	}
+	if (!scenario.getUtilityLossUnits().isEmpty()) {
+	  logger.info("  - Utility losses: " + scenario.getUtilityLossUnits());
+	}
+	if (!scenario.getControllerSetPointOverrides().isEmpty()) {
+	  System.out.println("  - Controller overrides: " + scenario.getControllerSetPointOverrides());
+	}
       }
 
-      logger.info(
-          "Time(s) | Sep P(bara) | HIPPS | ESD | Startup | Shutdown | BD Flow(kg/h) | PSV Status");
-      logger.info(
-          "--------|-------------|-------|-----|---------|----------|---------------|------------");
+      logger.info("Time(s) | Sep P(bara) | HIPPS | ESD | Startup | Shutdown | BD Flow(kg/h) | PSV Status");
+      logger.info("--------|-------------|-------|-----|---------|----------|---------------|------------");
 
       double time = 0.0;
       while (time < duration) {
-        // Execute process logic
-        for (ProcessLogic logic : logicSequences) {
-          if (logic.isActive()) {
-            logic.execute(timeStep);
-          }
-        }
+	// Execute process logic
+	for (ProcessLogic logic : logicSequences) {
+	  if (logic.isActive()) {
+	    logic.execute(timeStep);
+	  }
+	}
 
-        // Run transient simulation
-        system.runTransient(timeStep, simulationId);
+	// Run transient simulation
+	system.runTransient(timeStep, simulationId);
 
-        // Print status every 2 seconds
-        if (time % 2.0 < timeStep) {
-          printStatus(time);
-        }
+	// Print status every 2 seconds
+	if (time % 2.0 < timeStep) {
+	  printStatus(time);
+	}
 
-        time += timeStep;
+	time += timeStep;
       }
 
       logger.info("\n" + scenarioName + " completed.\n");
@@ -336,31 +326,29 @@ public class IntegratedSafetySystemWithLogicExample {
       String hippsStatus = getLogicStatus(hippsLogic);
       String esdStatus = getLogicStatus(esdLogic);
 
-      logger.printf(org.apache.logging.log4j.Level.INFO,
-          "%7.1f | %11.1f | %5s | %3s | %7s | %8s | %13.0f | %10s%n", time,
-          separatorPT.getMeasuredValue(), hippsStatus, esdStatus, "N/A", "N/A",
-          bdValve.getOutletStream().getFlowRate("kg/hr"),
-          psv.getPercentValveOpening() > 0 ? "RELIEVING" : "CLOSED");
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%7.1f | %11.1f | %5s | %3s | %7s | %8s | %13.0f | %10s%n",
+	  time, separatorPT.getMeasuredValue(), hippsStatus, esdStatus, "N/A", "N/A",
+	  bdValve.getOutletStream().getFlowRate("kg/hr"), psv.getPercentValveOpening() > 0 ? "RELIEVING" : "CLOSED");
     }
 
     private String getLogicStatus(ProcessLogic logic) {
       if (logic == null)
-        return "N/A";
+	return "N/A";
       switch (logic.getState()) {
-        case IDLE:
-          return "IDLE";
-        case RUNNING:
-          return "RUN";
-        case COMPLETED:
-          return "DONE";
-        case FAILED:
-          return "FAIL";
-        case PAUSED:
-          return "PAUSE";
-        case WAITING_PERMISSIVES:
-          return "WAIT";
-        default:
-          return "?";
+      case IDLE:
+	return "IDLE";
+      case RUNNING:
+	return "RUN";
+      case COMPLETED:
+	return "DONE";
+      case FAILED:
+	return "FAIL";
+      case PAUSED:
+	return "PAUSE";
+      case WAITING_PERMISSIVES:
+	return "WAIT";
+      default:
+	return "?";
       }
     }
   }
@@ -436,7 +424,7 @@ public class IntegratedSafetySystemWithLogicExample {
 
     // Gas routing splitter
     gasSplitter = new Splitter("Gas Splitter", separator.getGasOutStream(), 2);
-    gasSplitter.setSplitFactors(new double[] {1.0, 0.0}); // Normal: to process, BD closed
+    gasSplitter.setSplitFactors(new double[] { 1.0, 0.0 }); // Normal: to process, BD closed
 
     // Blowdown valve
     bdValve = new BlowdownValve("BD-301", gasSplitter.getSplitStream(1));
@@ -508,8 +496,8 @@ public class IntegratedSafetySystemWithLogicExample {
     esdLogic = new ESDLogic("ESD Level 1 SIL-2");
     esdLogic.addAction(new CloseValveAction(esdInletValve), 0.0); // Close inlet immediately
     esdLogic.addAction(new ActivateBlowdownAction(bdValve), 0.5); // Open blowdown after 0.5s
-    esdLogic.addAction(new SetSplitterAction(gasSplitter, new double[] {0.0, 1.0}), 0.5); // Route
-                                                                                          // to BD
+    esdLogic.addAction(new SetSplitterAction(gasSplitter, new double[] { 0.0, 1.0 }), 0.5); // Route
+											    // to BD
     esdLogic.addAction(new SetSeparatorModeAction(separator, false), 1.0); // Switch to transient
 
     // Link ESD button to logic
@@ -528,8 +516,7 @@ public class IntegratedSafetySystemWithLogicExample {
   private static void runAllScenarios(ScenarioRunner runner) {
     // Scenario 1: Normal operation
     logger.info("\n=== Running Scenario 1: Normal Operation ===");
-    ProcessSafetyScenario normalScenario =
-        ProcessSafetyScenario.builder("Normal Operation").build();
+    ProcessSafetyScenario normalScenario = ProcessSafetyScenario.builder("Normal Operation").build();
 
     runner.runScenario("Normal Operation", normalScenario, 30.0, 1.0);
     resetSystem();
@@ -537,11 +524,11 @@ public class IntegratedSafetySystemWithLogicExample {
     // Scenario 2: HIPPS activation
     logger.info("\n=== Running Scenario 2: HIPPS Activation ===");
     ProcessSafetyScenario hippsScenario = ProcessSafetyScenario.builder("HIPPS Overpressure")
-        .customManipulator("HP Feed", equipment -> {
-          if (equipment instanceof neqsim.process.equipment.stream.Stream) {
-            ((neqsim.process.equipment.stream.Stream) equipment).setPressure(75.0, "bara");
-          }
-        }).build();
+	.customManipulator("HP Feed", equipment -> {
+	  if (equipment instanceof neqsim.process.equipment.stream.Stream) {
+	    ((neqsim.process.equipment.stream.Stream) equipment).setPressure(75.0, "bara");
+	  }
+	}).build();
 
     hippsLogic.activate();
     runner.runScenario("HIPPS Activation", hippsScenario, 30.0, 0.5);
@@ -554,10 +541,10 @@ public class IntegratedSafetySystemWithLogicExample {
     // Simulate operator pushing ESD button after 10 seconds
     new Thread(() -> {
       try {
-        Thread.sleep(10000);
-        esdButton.push();
+	Thread.sleep(10000);
+	esdButton.push();
       } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
+	Thread.currentThread().interrupt();
       }
     }).start();
 
@@ -567,11 +554,11 @@ public class IntegratedSafetySystemWithLogicExample {
     // Scenario 4: Multiple failure scenario
     logger.info("\n=== Running Scenario 4: Multiple Failures ===");
     ProcessSafetyScenario multiFailureScenario = ProcessSafetyScenario.builder("Multiple Failures")
-        .customManipulator("HP Feed", equipment -> {
-          if (equipment instanceof neqsim.process.equipment.stream.Stream) {
-            ((neqsim.process.equipment.stream.Stream) equipment).setPressure(80.0, "bara");
-          }
-        }).build();
+	.customManipulator("HP Feed", equipment -> {
+	  if (equipment instanceof neqsim.process.equipment.stream.Stream) {
+	    ((neqsim.process.equipment.stream.Stream) equipment).setPressure(80.0, "bara");
+	  }
+	}).build();
 
     hippsLogic.activate();
     esdLogic.activate();
@@ -589,19 +576,17 @@ public class IntegratedSafetySystemWithLogicExample {
 
     // Define analysis scenarios
     List<ProcessSafetyScenario> analysisScenarios = Arrays.asList(
-        ProcessSafetyScenario.builder("Blocked Process Outlet").blockOutlet("Gas Splitter").build(),
+	ProcessSafetyScenario.builder("Blocked Process Outlet").blockOutlet("Gas Splitter").build(),
 
-        ProcessSafetyScenario.builder("Utility Loss - Separator").utilityLoss("HP Separator")
-            .build(),
+	ProcessSafetyScenario.builder("Utility Loss - Separator").utilityLoss("HP Separator").build(),
 
-        ProcessSafetyScenario.builder("Controller Failure - High Setpoint")
-            .controllerSetPoint("ESD-XV-201", 80.0).build(),
+	ProcessSafetyScenario.builder("Controller Failure - High Setpoint").controllerSetPoint("ESD-XV-201", 80.0)
+	    .build(),
 
-        ProcessSafetyScenario.builder("Fire Scenario")
-            .customManipulator("HP Separator", equipment -> {
-              // Simulate high temperature due to fire
-              logger.info("  - Fire detected: High temperature alarm");
-            }).build());
+	ProcessSafetyScenario.builder("Fire Scenario").customManipulator("HP Separator", equipment -> {
+	  // Simulate high temperature due to fire
+	  logger.info("  - Fire detected: High temperature alarm");
+	}).build());
 
     // Print analysis results
     logger.info("SCENARIO ANALYSIS RESULTS:");
@@ -622,8 +607,7 @@ public class IntegratedSafetySystemWithLogicExample {
     logger.info(separator2);
     logger.info("Safety Integrity Levels Implemented:");
     logger.info("  SIL-3: HIPPS with 2oo2 voting @ " + HIPPS_ACTIVATION_PRESSURE + " bara");
-    System.out
-        .println("  SIL-2: ESD with multiple triggers @ " + HIGH_HIGH_PRESSURE_ALARM + " bara");
+    System.out.println("  SIL-2: ESD with multiple triggers @ " + HIGH_HIGH_PRESSURE_ALARM + " bara");
     logger.info("  SIL-1: Process alarms @ " + HIGH_PRESSURE_ALARM + " bara");
     logger.info("  PSV:   Mechanical relief @ " + PSV_SET_PRESSURE + " bara");
 
@@ -645,7 +629,7 @@ public class IntegratedSafetySystemWithLogicExample {
     // Reset equipment
     hippsValve.setPercentValveOpening(100.0);
     esdInletValve.setPercentValveOpening(100.0);
-    gasSplitter.setSplitFactors(new double[] {1.0, 0.0});
+    gasSplitter.setSplitFactors(new double[] { 1.0, 0.0 });
     bdValve.reset();
     separator.setCalculateSteadyState(true);
     highPressureFeed.setPressure(55.0, "bara");

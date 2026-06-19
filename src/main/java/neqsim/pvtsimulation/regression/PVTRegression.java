@@ -20,9 +20,8 @@ import neqsim.thermo.system.SystemInterface;
  * PVT Regression Framework for automatic EOS model tuning.
  *
  * <p>
- * This class provides a comprehensive framework for tuning equation of state parameters to match
- * experimental PVT data. It supports multi-objective regression fitting CCE, CVD, DLE, and
- * separator test data simultaneously.
+ * This class provides a comprehensive framework for tuning equation of state parameters to match experimental PVT data.
+ * It supports multi-objective regression fitting CCE, CVD, DLE, and separator test data simultaneously.
  * </p>
  *
  * <p>
@@ -91,9 +90,9 @@ public class PVTRegression {
   /**
    * Add CCE (Constant Composition Expansion) experimental data.
    *
-   * @param pressures pressure values in bar
+   * @param pressures       pressure values in bar
    * @param relativeVolumes relative volume values (V/Vsat)
-   * @param temperature experiment temperature in K
+   * @param temperature     experiment temperature in K
    */
   public void addCCEData(double[] pressures, double[] relativeVolumes, double temperature) {
     for (int i = 0; i < pressures.length; i++) {
@@ -104,13 +103,12 @@ public class PVTRegression {
   /**
    * Add CCE data with Y-factor (for gas phase above saturation).
    *
-   * @param pressures pressure values in bar
+   * @param pressures       pressure values in bar
    * @param relativeVolumes relative volume values
-   * @param yFactors Y-factor values (optional, use Double.NaN if not available)
-   * @param temperature experiment temperature in K
+   * @param yFactors        Y-factor values (optional, use Double.NaN if not available)
+   * @param temperature     experiment temperature in K
    */
-  public void addCCEData(double[] pressures, double[] relativeVolumes, double[] yFactors,
-      double temperature) {
+  public void addCCEData(double[] pressures, double[] relativeVolumes, double[] yFactors, double temperature) {
     for (int i = 0; i < pressures.length; i++) {
       CCEDataPoint point = new CCEDataPoint(pressures[i], relativeVolumes[i], temperature);
       point.setYFactor(yFactors[i]);
@@ -121,13 +119,12 @@ public class PVTRegression {
   /**
    * Add CVD (Constant Volume Depletion) experimental data.
    *
-   * @param pressures pressure values in bar
+   * @param pressures     pressure values in bar
    * @param liquidDropout liquid dropout values (volume %)
-   * @param zFactors gas compressibility factors
-   * @param temperature experiment temperature in K
+   * @param zFactors      gas compressibility factors
+   * @param temperature   experiment temperature in K
    */
-  public void addCVDData(double[] pressures, double[] liquidDropout, double[] zFactors,
-      double temperature) {
+  public void addCVDData(double[] pressures, double[] liquidDropout, double[] zFactors, double temperature) {
     for (int i = 0; i < pressures.length; i++) {
       cvdData.add(new CVDDataPoint(pressures[i], liquidDropout[i], zFactors[i], temperature));
     }
@@ -136,14 +133,13 @@ public class PVTRegression {
   /**
    * Add DLE (Differential Liberation Expansion) experimental data.
    *
-   * @param pressures pressure values in bar
-   * @param rs solution gas-oil ratio (Sm³/Sm³)
-   * @param bo oil formation volume factor (m³/Sm³)
-   * @param oilDensity oil density (kg/m³)
+   * @param pressures   pressure values in bar
+   * @param rs          solution gas-oil ratio (Sm³/Sm³)
+   * @param bo          oil formation volume factor (m³/Sm³)
+   * @param oilDensity  oil density (kg/m³)
    * @param temperature experiment temperature in K
    */
-  public void addDLEData(double[] pressures, double[] rs, double[] bo, double[] oilDensity,
-      double temperature) {
+  public void addDLEData(double[] pressures, double[] rs, double[] bo, double[] oilDensity, double temperature) {
     for (int i = 0; i < pressures.length; i++) {
       dleData.add(new DLEDataPoint(pressures[i], rs[i], bo[i], oilDensity[i], temperature));
     }
@@ -152,63 +148,58 @@ public class PVTRegression {
   /**
    * Add separator test experimental data.
    *
-   * @param gor gas-oil ratio (Sm³/Sm³)
-   * @param bo oil formation volume factor
-   * @param apiGravity API gravity
-   * @param separatorPressure separator pressure in bar
+   * @param gor                  gas-oil ratio (Sm³/Sm³)
+   * @param bo                   oil formation volume factor
+   * @param apiGravity           API gravity
+   * @param separatorPressure    separator pressure in bar
    * @param separatorTemperature separator temperature in K
    * @param reservoirTemperature reservoir temperature in K
    */
   public void addSeparatorData(double gor, double bo, double apiGravity, double separatorPressure,
       double separatorTemperature, double reservoirTemperature) {
-    separatorData.add(new SeparatorDataPoint(gor, bo, apiGravity, separatorPressure,
-        separatorTemperature, reservoirTemperature));
+    separatorData.add(
+	new SeparatorDataPoint(gor, bo, apiGravity, separatorPressure, separatorTemperature, reservoirTemperature));
   }
 
   /**
    * Add viscosity experimental data at one temperature.
    *
-   * @param pressures pressure values in bara
+   * @param pressures   pressure values in bara
    * @param viscosities dynamic viscosity values in Pa s
    * @param temperature experiment temperature in K
-   * @param phaseName phase name: gas, oil, liquid, aqueous, or water
+   * @param phaseName   phase name: gas, oil, liquid, aqueous, or water
    */
-  public void addViscosityData(double[] pressures, double[] viscosities, double temperature,
-      String phaseName) {
+  public void addViscosityData(double[] pressures, double[] viscosities, double temperature, String phaseName) {
     for (int i = 0; i < pressures.length; i++) {
-      viscosityData
-          .add(new ViscosityDataPoint(pressures[i], temperature, viscosities[i], phaseName));
+      viscosityData.add(new ViscosityDataPoint(pressures[i], temperature, viscosities[i], phaseName));
     }
   }
 
   /**
    * Add viscosity experimental data at individual pressure and temperature points.
    *
-   * @param pressures pressure values in bara
+   * @param pressures    pressure values in bara
    * @param temperatures temperature values in K
-   * @param viscosities dynamic viscosity values in Pa s
-   * @param phaseName phase name: gas, oil, liquid, aqueous, or water
+   * @param viscosities  dynamic viscosity values in Pa s
+   * @param phaseName    phase name: gas, oil, liquid, aqueous, or water
    */
-  public void addViscosityData(double[] pressures, double[] temperatures, double[] viscosities,
-      String phaseName) {
+  public void addViscosityData(double[] pressures, double[] temperatures, double[] viscosities, String phaseName) {
     for (int i = 0; i < pressures.length; i++) {
-      viscosityData
-          .add(new ViscosityDataPoint(pressures[i], temperatures[i], viscosities[i], phaseName));
+      viscosityData.add(new ViscosityDataPoint(pressures[i], temperatures[i], viscosities[i], phaseName));
     }
   }
 
   /**
    * Add a regression parameter with bounds.
    *
-   * @param parameter the parameter type to regress
-   * @param lowerBound lower bound for the parameter
-   * @param upperBound upper bound for the parameter
+   * @param parameter    the parameter type to regress
+   * @param lowerBound   lower bound for the parameter
+   * @param upperBound   upper bound for the parameter
    * @param initialGuess initial guess for the parameter
    */
-  public void addRegressionParameter(RegressionParameter parameter, double lowerBound,
-      double upperBound, double initialGuess) {
-    regressionParameters
-        .add(new RegressionParameterConfig(parameter, lowerBound, upperBound, initialGuess));
+  public void addRegressionParameter(RegressionParameter parameter, double lowerBound, double upperBound,
+      double initialGuess) {
+    regressionParameters.add(new RegressionParameterConfig(parameter, lowerBound, upperBound, initialGuess));
   }
 
   /**
@@ -218,8 +209,7 @@ public class PVTRegression {
    */
   public void addRegressionParameter(RegressionParameter parameter) {
     double[] defaults = parameter.getDefaultBounds();
-    regressionParameters
-        .add(new RegressionParameterConfig(parameter, defaults[0], defaults[1], defaults[2]));
+    regressionParameters.add(new RegressionParameterConfig(parameter, defaults[0], defaults[1], defaults[2]));
   }
 
   /**
@@ -235,7 +225,7 @@ public class PVTRegression {
   /**
    * Set the weight for an experiment type in the multi-objective function.
    *
-   * @param type experiment type
+   * @param type   experiment type
    * @param weight weight value (default 1.0)
    */
   public void setExperimentWeight(ExperimentType type, double weight) {
@@ -280,14 +270,14 @@ public class PVTRegression {
     }
 
     if (cceData.isEmpty() && cvdData.isEmpty() && dleData.isEmpty() && separatorData.isEmpty()
-        && viscosityData.isEmpty()) {
+	&& viscosityData.isEmpty()) {
       throw new IllegalStateException("No experimental data provided");
     }
 
     if (verbose) {
       logger.info("Starting PVT regression with {} parameters", regressionParameters.size());
-      logger.info("Data points: CCE={}, CVD={}, DLE={}, Separator={}, Viscosity={}", cceData.size(),
-          cvdData.size(), dleData.size(), separatorData.size(), viscosityData.size());
+      logger.info("Data points: CCE={}, CVD={}, DLE={}, Separator={}, Viscosity={}", cceData.size(), cvdData.size(),
+	  dleData.size(), separatorData.size(), viscosityData.size());
     }
 
     // Create sample set for Levenberg-Marquardt
@@ -324,14 +314,13 @@ public class PVTRegression {
     // Calculate uncertainty if covariance matrix is available
     UncertaintyAnalysis uncertainty = calculateUncertainty(optimizer, function, finalChiSquare);
 
-    lastResult = new RegressionResult(tunedFluid.clone(), objectiveValues, regressionParameters,
-        uncertainty, optimizedParams, finalChiSquare);
+    lastResult = new RegressionResult(tunedFluid.clone(), objectiveValues, regressionParameters, uncertainty,
+	optimizedParams, finalChiSquare);
 
     if (verbose) {
       logger.info("Regression completed. Final chi-square: {}", finalChiSquare);
       for (int i = 0; i < regressionParameters.size(); i++) {
-        logger.info("Parameter {}: {} = {}", i, regressionParameters.get(i).getParameter().name(),
-            optimizedParams[i]);
+	logger.info("Parameter {}: {} = {}", i, regressionParameters.get(i).getParameter().name(), optimizedParams[i]);
       }
     }
 
@@ -354,8 +343,7 @@ public class PVTRegression {
       bounds[i][1] = config.getUpperBound();
     }
 
-    PVTRegressionFunction function =
-        new PVTRegressionFunction(baseFluid, regressionParameters, experimentWeights);
+    PVTRegressionFunction function = new PVTRegressionFunction(baseFluid, regressionParameters, experimentWeights);
     function.setInitialGuess(initialGuess);
     function.setBounds(bounds);
 
@@ -366,17 +354,16 @@ public class PVTRegression {
    * Add CCE samples to the sample list.
    *
    * @param sampleList the list to add constant composition expansion samples to
-   * @param function the PVT regression function to clone for each sample
+   * @param function   the PVT regression function to clone for each sample
    */
   private void addCCESamples(ArrayList<SampleValue> sampleList, PVTRegressionFunction function) {
     double weight = experimentWeights.getOrDefault(ExperimentType.CCE, 1.0);
     for (CCEDataPoint point : cceData) {
-      double[] dependentValues =
-          {point.getPressure(), point.getTemperature(), ExperimentType.CCE.ordinal(), 0}; // 0 =
-                                                                                          // relative
-                                                                                          // volume
-      SampleValue sample =
-          new SampleValue(point.getRelativeVolume(), 0.01 / weight, dependentValues);
+      double[] dependentValues = { point.getPressure(), point.getTemperature(), ExperimentType.CCE.ordinal(), 0 }; // 0
+														   // =
+														   // relative
+														   // volume
+      SampleValue sample = new SampleValue(point.getRelativeVolume(), 0.01 / weight, dependentValues);
       sample.setFunction(function.clone());
       sampleList.add(sample);
     }
@@ -386,22 +373,19 @@ public class PVTRegression {
    * Add CVD samples to the sample list.
    *
    * @param sampleList the list to add constant volume depletion samples to
-   * @param function the PVT regression function to clone for each sample
+   * @param function   the PVT regression function to clone for each sample
    */
   private void addCVDSamples(ArrayList<SampleValue> sampleList, PVTRegressionFunction function) {
     double weight = experimentWeights.getOrDefault(ExperimentType.CVD, 1.0);
     for (CVDDataPoint point : cvdData) {
       // Liquid dropout
-      double[] dependentValues =
-          {point.getPressure(), point.getTemperature(), ExperimentType.CVD.ordinal(), 0};
-      SampleValue sample =
-          new SampleValue(point.getLiquidDropout(), 0.01 / weight, dependentValues);
+      double[] dependentValues = { point.getPressure(), point.getTemperature(), ExperimentType.CVD.ordinal(), 0 };
+      SampleValue sample = new SampleValue(point.getLiquidDropout(), 0.01 / weight, dependentValues);
       sample.setFunction(function.clone());
       sampleList.add(sample);
 
       // Z-factor
-      double[] dependentValues2 =
-          {point.getPressure(), point.getTemperature(), ExperimentType.CVD.ordinal(), 1};
+      double[] dependentValues2 = { point.getPressure(), point.getTemperature(), ExperimentType.CVD.ordinal(), 1 };
       SampleValue sample2 = new SampleValue(point.getZFactor(), 0.01 / weight, dependentValues2);
       sample2.setFunction(function.clone());
       sampleList.add(sample2);
@@ -412,28 +396,25 @@ public class PVTRegression {
    * Add DLE samples to the sample list.
    *
    * @param sampleList the list to add DLE samples to
-   * @param function the PVT regression function to clone for each sample
+   * @param function   the PVT regression function to clone for each sample
    */
   private void addDLESamples(ArrayList<SampleValue> sampleList, PVTRegressionFunction function) {
     double weight = experimentWeights.getOrDefault(ExperimentType.DLE, 1.0);
     for (DLEDataPoint point : dleData) {
       // Rs
-      double[] dependentValues =
-          {point.getPressure(), point.getTemperature(), ExperimentType.DLE.ordinal(), 0};
+      double[] dependentValues = { point.getPressure(), point.getTemperature(), ExperimentType.DLE.ordinal(), 0 };
       SampleValue sample = new SampleValue(point.getRs(), 0.01 / weight, dependentValues);
       sample.setFunction(function.clone());
       sampleList.add(sample);
 
       // Bo
-      double[] dependentValues2 =
-          {point.getPressure(), point.getTemperature(), ExperimentType.DLE.ordinal(), 1};
+      double[] dependentValues2 = { point.getPressure(), point.getTemperature(), ExperimentType.DLE.ordinal(), 1 };
       SampleValue sample2 = new SampleValue(point.getBo(), 0.01 / weight, dependentValues2);
       sample2.setFunction(function.clone());
       sampleList.add(sample2);
 
       // Oil density
-      double[] dependentValues3 =
-          {point.getPressure(), point.getTemperature(), ExperimentType.DLE.ordinal(), 2};
+      double[] dependentValues3 = { point.getPressure(), point.getTemperature(), ExperimentType.DLE.ordinal(), 2 };
       SampleValue sample3 = new SampleValue(point.getOilDensity(), 0.01 / weight, dependentValues3);
       sample3.setFunction(function.clone());
       sampleList.add(sample3);
@@ -444,22 +425,21 @@ public class PVTRegression {
    * Add separator samples to the sample list.
    *
    * @param sampleList the list to add separator samples to
-   * @param function the PVT regression function to clone for each sample
+   * @param function   the PVT regression function to clone for each sample
    */
-  private void addSeparatorSamples(ArrayList<SampleValue> sampleList,
-      PVTRegressionFunction function) {
+  private void addSeparatorSamples(ArrayList<SampleValue> sampleList, PVTRegressionFunction function) {
     double weight = experimentWeights.getOrDefault(ExperimentType.SEPARATOR, 1.0);
     for (SeparatorDataPoint point : separatorData) {
       // GOR
-      double[] dependentValues = {point.getSeparatorPressure(), point.getSeparatorTemperature(),
-          ExperimentType.SEPARATOR.ordinal(), 0, point.getReservoirTemperature()};
+      double[] dependentValues = { point.getSeparatorPressure(), point.getSeparatorTemperature(),
+	  ExperimentType.SEPARATOR.ordinal(), 0, point.getReservoirTemperature() };
       SampleValue sample = new SampleValue(point.getGor(), 0.01 / weight, dependentValues);
       sample.setFunction(function.clone());
       sampleList.add(sample);
 
       // Bo
-      double[] dependentValues2 = {point.getSeparatorPressure(), point.getSeparatorTemperature(),
-          ExperimentType.SEPARATOR.ordinal(), 1, point.getReservoirTemperature()};
+      double[] dependentValues2 = { point.getSeparatorPressure(), point.getSeparatorTemperature(),
+	  ExperimentType.SEPARATOR.ordinal(), 1, point.getReservoirTemperature() };
       SampleValue sample2 = new SampleValue(point.getBo(), 0.01 / weight, dependentValues2);
       sample2.setFunction(function.clone());
       sampleList.add(sample2);
@@ -470,17 +450,15 @@ public class PVTRegression {
    * Add viscosity samples to the sample list.
    *
    * @param sampleList the list to add viscosity samples to
-   * @param function the PVT regression function to clone for each sample
+   * @param function   the PVT regression function to clone for each sample
    */
-  private void addViscositySamples(ArrayList<SampleValue> sampleList,
-      PVTRegressionFunction function) {
+  private void addViscositySamples(ArrayList<SampleValue> sampleList, PVTRegressionFunction function) {
     double weight = experimentWeights.getOrDefault(ExperimentType.VISCOSITY, 1.0);
     for (ViscosityDataPoint point : viscosityData) {
-      double[] dependentValues = {point.getPressure(), point.getTemperature(),
-          ExperimentType.VISCOSITY.ordinal(), point.getPhaseIndex()};
+      double[] dependentValues = { point.getPressure(), point.getTemperature(), ExperimentType.VISCOSITY.ordinal(),
+	  point.getPhaseIndex() };
       double standardDeviation = Math.max(Math.abs(point.getViscosity()) * 0.02, 1.0e-10) / weight;
-      SampleValue sample =
-          new SampleValue(point.getViscosity(), standardDeviation, dependentValues);
+      SampleValue sample = new SampleValue(point.getViscosity(), standardDeviation, dependentValues);
       sample.setFunction(function.clone());
       sampleList.add(sample);
     }
@@ -572,10 +550,10 @@ public class PVTRegression {
       double expDropout = cvdData.get(i).getLiquidDropout();
       double expZ = cvdData.get(i).getZFactor();
       if (calcLiquidDropout != null && i < calcLiquidDropout.length) {
-        objective += Math.pow((calcLiquidDropout[i] - expDropout) / Math.max(expDropout, 0.01), 2);
+	objective += Math.pow((calcLiquidDropout[i] - expDropout) / Math.max(expDropout, 0.01), 2);
       }
       if (calcZgas != null && i < calcZgas.length) {
-        objective += Math.pow((calcZgas[i] - expZ) / expZ, 2);
+	objective += Math.pow((calcZgas[i] - expZ) / expZ, 2);
       }
     }
 
@@ -604,13 +582,13 @@ public class PVTRegression {
       double expDensity = dleData.get(i).getOilDensity();
 
       if (calcRs != null && i < calcRs.length && expRs > 0) {
-        objective += Math.pow((calcRs[i] - expRs) / expRs, 2);
+	objective += Math.pow((calcRs[i] - expRs) / expRs, 2);
       }
       if (calcBo != null && i < calcBo.length && expBo > 0) {
-        objective += Math.pow((calcBo[i] - expBo) / expBo, 2);
+	objective += Math.pow((calcBo[i] - expBo) / expBo, 2);
       }
       if (calcDensity != null && i < calcDensity.length && expDensity > 0) {
-        objective += Math.pow((calcDensity[i] - expDensity) / expDensity, 2);
+	objective += Math.pow((calcDensity[i] - expDensity) / expDensity, 2);
       }
     }
 
@@ -625,8 +603,8 @@ public class PVTRegression {
 
     for (SeparatorDataPoint point : separatorData) {
       SeparatorTest sepTest = new SeparatorTest(tunedFluid.clone());
-      sepTest.setSeparatorConditions(new double[] {point.getSeparatorTemperature()},
-          new double[] {point.getSeparatorPressure()});
+      sepTest.setSeparatorConditions(new double[] { point.getSeparatorTemperature() },
+	  new double[] { point.getSeparatorPressure() });
 
       sepTest.runCalc();
 
@@ -635,12 +613,12 @@ public class PVTRegression {
       double[] boArray = sepTest.getBofactor();
 
       if (gorArray != null && gorArray.length > 0 && point.getGor() > 0) {
-        double calcGOR = gorArray[0];
-        objective += Math.pow((calcGOR - point.getGor()) / point.getGor(), 2);
+	double calcGOR = gorArray[0];
+	objective += Math.pow((calcGOR - point.getGor()) / point.getGor(), 2);
       }
       if (boArray != null && boArray.length > 0 && point.getBo() > 0) {
-        double calcBo = boArray[0];
-        objective += Math.pow((calcBo - point.getBo()) / point.getBo(), 2);
+	double calcBo = boArray[0];
+	objective += Math.pow((calcBo - point.getBo()) / point.getBo(), 2);
       }
     }
 
@@ -659,13 +637,13 @@ public class PVTRegression {
     }
 
     PVTRegressionFunction function = new PVTRegressionFunction(tunedFluid.clone(),
-        new ArrayList<RegressionParameterConfig>(), experimentWeights);
+	new ArrayList<RegressionParameterConfig>(), experimentWeights);
     for (ViscosityDataPoint point : viscosityData) {
-      double[] dependentValues = {point.getPressure(), point.getTemperature(),
-          ExperimentType.VISCOSITY.ordinal(), point.getPhaseIndex()};
+      double[] dependentValues = { point.getPressure(), point.getTemperature(), ExperimentType.VISCOSITY.ordinal(),
+	  point.getPhaseIndex() };
       double calcViscosity = function.calcValue(dependentValues);
       if (point.getViscosity() > 0.0) {
-        objective += Math.pow((calcViscosity - point.getViscosity()) / point.getViscosity(), 2.0);
+	objective += Math.pow((calcViscosity - point.getViscosity()) / point.getViscosity(), 2.0);
       }
     }
 
@@ -675,16 +653,16 @@ public class PVTRegression {
   /**
    * Calculate uncertainty analysis from the optimization results.
    *
-   * @param optimizer fitted optimizer containing the final regression state
-   * @param function regression function used to evaluate fitted parameters
+   * @param optimizer      fitted optimizer containing the final regression state
+   * @param function       regression function used to evaluate fitted parameters
    * @param finalChiSquare final chi-square objective value from the fit
    * @return uncertainty analysis with standard errors, correlation matrix, and confidence intervals
    */
-  private UncertaintyAnalysis calculateUncertainty(LevenbergMarquardt optimizer,
-      PVTRegressionFunction function, double finalChiSquare) {
+  private UncertaintyAnalysis calculateUncertainty(LevenbergMarquardt optimizer, PVTRegressionFunction function,
+      double finalChiSquare) {
     int nParams = regressionParameters.size();
     int nData = cceData.size() + 2 * cvdData.size() + 3 * dleData.size() + 2 * separatorData.size()
-        + viscosityData.size();
+	+ viscosityData.size();
 
     double[] parameterValues = function.getFittingParams();
     double[] standardErrors = new double[nParams];
@@ -697,8 +675,7 @@ public class PVTRegression {
 
     for (int i = 0; i < nParams; i++) {
       // Approximate standard error (simplified)
-      double paramRange =
-          regressionParameters.get(i).getUpperBound() - regressionParameters.get(i).getLowerBound();
+      double paramRange = regressionParameters.get(i).getUpperBound() - regressionParameters.get(i).getLowerBound();
       standardErrors[i] = Math.sqrt(residualVariance / degreesOfFreedom) * paramRange * 0.1;
 
       // 95% confidence interval (t-distribution approximation)
@@ -709,8 +686,8 @@ public class PVTRegression {
       correlationMatrix[i][i] = 1.0;
     }
 
-    return new UncertaintyAnalysis(parameterValues, standardErrors, correlationMatrix,
-        confidenceIntervals95, degreesOfFreedom, residualVariance);
+    return new UncertaintyAnalysis(parameterValues, standardErrors, correlationMatrix, confidenceIntervals95,
+	degreesOfFreedom, residualVariance);
   }
 
   /**

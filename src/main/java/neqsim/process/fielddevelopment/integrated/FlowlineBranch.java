@@ -4,9 +4,8 @@ package neqsim.process.fielddevelopment.integrated;
  * A flowline (or generic pressure-drop) branch in an integrated production network.
  *
  * <p>
- * The branch represents the hydraulic resistance between two nodes using a quadratic pressure-drop
- * law that captures both laminar/friction and turbulent/kinetic contributions plus a static
- * elevation head:
+ * The branch represents the hydraulic resistance between two nodes using a quadratic pressure-drop law that captures
+ * both laminar/friction and turbulent/kinetic contributions plus a static elevation head:
  * </p>
  *
  * <p>
@@ -14,12 +13,11 @@ package neqsim.process.fielddevelopment.integrated;
  * </p>
  *
  * <p>
- * where {@code a} (bar per Sm3/day) and {@code b} (bar per (Sm3/day)&sup2;) are friction
- * coefficients and {@code staticHead} (bar) is the elevation/hydrostatic term. Given the two node
- * pressures the branch inverts this relation to return the volumetric flow, which lets it slot
- * directly into the {@link NetworkNewtonSolver} node-balance equations. Coefficients can be set
- * directly, derived from a single reference operating point, or fitted to a detailed multiphase
- * pipe model with {@link #fromBeggsBrillSample}.
+ * where {@code a} (bar per Sm3/day) and {@code b} (bar per (Sm3/day)&sup2;) are friction coefficients and
+ * {@code staticHead} (bar) is the elevation/hydrostatic term. Given the two node pressures the branch inverts this
+ * relation to return the volumetric flow, which lets it slot directly into the {@link NetworkNewtonSolver} node-balance
+ * equations. Coefficients can be set directly, derived from a single reference operating point, or fitted to a detailed
+ * multiphase pipe model with {@link #fromBeggsBrillSample}.
  * </p>
  *
  * @author NeqSim
@@ -40,15 +38,15 @@ public class FlowlineBranch implements NetworkBranch {
   /**
    * Creates a flowline branch with explicit pressure-drop coefficients.
    *
-   * @param name unique branch name
-   * @param fromNode upstream node name
-   * @param toNode downstream node name
-   * @param linearCoeff linear friction coefficient a in bar per Sm3/day
+   * @param name           unique branch name
+   * @param fromNode       upstream node name
+   * @param toNode         downstream node name
+   * @param linearCoeff    linear friction coefficient a in bar per Sm3/day
    * @param quadraticCoeff quadratic friction coefficient b in bar per (Sm3/day)&sup2;
-   * @param staticHeadBar static elevation head in bar (positive = upstream below downstream)
+   * @param staticHeadBar  static elevation head in bar (positive = upstream below downstream)
    */
-  public FlowlineBranch(String name, String fromNode, String toNode, double linearCoeff,
-      double quadraticCoeff, double staticHeadBar) {
+  public FlowlineBranch(String name, String fromNode, String toNode, double linearCoeff, double quadraticCoeff,
+      double staticHeadBar) {
     this.name = name;
     this.fromNode = fromNode;
     this.toNode = toNode;
@@ -58,40 +56,38 @@ public class FlowlineBranch implements NetworkBranch {
   }
 
   /**
-   * Builds a flowline branch whose quadratic coefficient is fitted to a single reference operating
-   * point (pure turbulent assumption, a = 0).
+   * Builds a flowline branch whose quadratic coefficient is fitted to a single reference operating point (pure
+   * turbulent assumption, a = 0).
    *
-   * @param name unique branch name
-   * @param fromNode upstream node name
-   * @param toNode downstream node name
+   * @param name                     unique branch name
+   * @param fromNode                 upstream node name
+   * @param toNode                   downstream node name
    * @param referencePressureDropBar measured pressure drop at the reference rate, in bar
-   * @param referenceRateSm3PerDay reference rate in Sm3/day
-   * @param staticHeadBar static elevation head in bar
+   * @param referenceRateSm3PerDay   reference rate in Sm3/day
+   * @param staticHeadBar            static elevation head in bar
    * @return a flowline branch
    */
   public static FlowlineBranch fromReferencePoint(String name, String fromNode, String toNode,
       double referencePressureDropBar, double referenceRateSm3PerDay, double staticHeadBar) {
     double friction = Math.max(0.0, referencePressureDropBar - staticHeadBar);
-    double b =
-        referenceRateSm3PerDay > 0.0 ? friction / (referenceRateSm3PerDay * referenceRateSm3PerDay)
-            : 0.0;
+    double b = referenceRateSm3PerDay > 0.0 ? friction / (referenceRateSm3PerDay * referenceRateSm3PerDay) : 0.0;
     return new FlowlineBranch(name, fromNode, toNode, 0.0, b, staticHeadBar);
   }
 
   /**
-   * Builds a flowline branch by fitting the quadratic coefficient to a detailed Beggs and Brill
-   * multiphase pipe model evaluated at its current inlet conditions.
+   * Builds a flowline branch by fitting the quadratic coefficient to a detailed Beggs and Brill multiphase pipe model
+   * evaluated at its current inlet conditions.
    *
    * <p>
-   * The detailed pipe is run once to obtain a representative pressure drop at its current flow
-   * rate; the resulting coefficient is reused cheaply inside the network solve. The static head is
-   * taken from the pipe elevation and the reference fluid density.
+   * The detailed pipe is run once to obtain a representative pressure drop at its current flow rate; the resulting
+   * coefficient is reused cheaply inside the network solve. The static head is taken from the pipe elevation and the
+   * reference fluid density.
    * </p>
    *
-   * @param name unique branch name
+   * @param name     unique branch name
    * @param fromNode upstream node name
-   * @param toNode downstream node name
-   * @param pipe a configured and run Beggs and Brill pipe model
+   * @param toNode   downstream node name
+   * @param pipe     a configured and run Beggs and Brill pipe model
    * @return a flowline branch fitted to the pipe model
    */
   public static FlowlineBranch fromBeggsBrillSample(String name, String fromNode, String toNode,
@@ -141,7 +137,7 @@ public class FlowlineBranch implements NetworkBranch {
     double q;
     if (quadraticCoeff > 0.0) {
       q = (-linearCoeff + Math.sqrt(linearCoeff * linearCoeff + 4.0 * quadraticCoeff * driving))
-          / (2.0 * quadraticCoeff);
+	  / (2.0 * quadraticCoeff);
     } else if (linearCoeff > 0.0) {
       q = driving / linearCoeff;
     } else {

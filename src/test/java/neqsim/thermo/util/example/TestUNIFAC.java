@@ -20,7 +20,7 @@ public class TestUNIFAC {
   private static final Logger logger = LogManager.getLogger(TestUNIFAC.class);
 
   /** Logger object for class. */
-  
+
   /**
    * <p>
    * main.

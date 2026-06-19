@@ -4,9 +4,8 @@ package neqsim.process.instrumentdesign;
  * Specification for a single instrument in a process plant.
  *
  * <p>
- * Represents an instrument data sheet entry per ISA-5.1 / ISA-20 conventions. Each specification
- * defines what to measure, the type of instrument, its range, signal output, hazardous area
- * classification, and optional SIL rating.
+ * Represents an instrument data sheet entry per ISA-5.1 / ISA-20 conventions. Each specification defines what to
+ * measure, the type of instrument, its range, signal output, hazardous area classification, and optional SIL rating.
  * </p>
  *
  * @author Even Solbraa
@@ -53,8 +52,7 @@ public class InstrumentSpecification implements java.io.Serializable {
   private String exProtection = "Ex ia IIC T4 Ga";
 
   /**
-   * I/O type: "AI" (analog input), "AO" (analog output), "DI" (digital input), "DO" (digital
-   * output).
+   * I/O type: "AI" (analog input), "AO" (analog output), "DI" (digital input), "DO" (digital output).
    */
   private String ioType = "AI";
 
@@ -74,14 +72,14 @@ public class InstrumentSpecification implements java.io.Serializable {
    * Constructor for InstrumentSpecification.
    *
    * @param isaSymbol ISA-5.1 functional identification (e.g. "PT", "TT")
-   * @param service service description
-   * @param rangeMin measurement range minimum
-   * @param rangeMax measurement range maximum
+   * @param service   service description
+   * @param rangeMin  measurement range minimum
+   * @param rangeMax  measurement range maximum
    * @param rangeUnit engineering unit for range
-   * @param ioType I/O type ("AI", "AO", "DI", "DO")
+   * @param ioType    I/O type ("AI", "AO", "DI", "DO")
    */
-  public InstrumentSpecification(String isaSymbol, String service, double rangeMin, double rangeMax,
-      String rangeUnit, String ioType) {
+  public InstrumentSpecification(String isaSymbol, String service, double rangeMin, double rangeMax, String rangeUnit,
+      String ioType) {
     this.isaSymbol = isaSymbol;
     this.service = service;
     this.rangeMin = rangeMin;
@@ -96,8 +94,8 @@ public class InstrumentSpecification implements java.io.Serializable {
    * Constructor for discrete/switch instruments (no range).
    *
    * @param isaSymbol ISA-5.1 functional identification (e.g. "PSH", "LSLL")
-   * @param service service description
-   * @param ioType I/O type ("DI" or "DO")
+   * @param service   service description
+   * @param ioType    I/O type ("DI" or "DO")
    * @param silRating SIL level (0-3)
    */
   public InstrumentSpecification(String isaSymbol, String service, String ioType, int silRating) {

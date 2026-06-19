@@ -46,14 +46,10 @@ class EOSExporterTest {
 
     // Create a simple test PVT table
     List<BlackOilPVTTable.Record> records = new ArrayList<>();
-    records.add(
-        new BlackOilPVTTable.Record(50.0, 80.0, 1.25, 0.001, 0.015, 1.5e-5, 0.0, 1.02, 0.0005));
-    records.add(new BlackOilPVTTable.Record(100.0, 120.0, 1.35, 0.0008, 0.008, 1.8e-5, 0.0, 1.015,
-        0.00048));
-    records.add(
-        new BlackOilPVTTable.Record(150.0, 150.0, 1.42, 0.0006, 0.005, 2.1e-5, 0.0, 1.01, 0.00045));
-    records.add(new BlackOilPVTTable.Record(200.0, 150.0, 1.38, 0.0005, 0.004, 2.3e-5, 0.0, 1.005,
-        0.00042));
+    records.add(new BlackOilPVTTable.Record(50.0, 80.0, 1.25, 0.001, 0.015, 1.5e-5, 0.0, 1.02, 0.0005));
+    records.add(new BlackOilPVTTable.Record(100.0, 120.0, 1.35, 0.0008, 0.008, 1.8e-5, 0.0, 1.015, 0.00048));
+    records.add(new BlackOilPVTTable.Record(150.0, 150.0, 1.42, 0.0006, 0.005, 2.1e-5, 0.0, 1.01, 0.00045));
+    records.add(new BlackOilPVTTable.Record(200.0, 150.0, 1.38, 0.0005, 0.004, 2.3e-5, 0.0, 1.005, 0.00042));
     testPVTTable = new BlackOilPVTTable(records, 150.0);
   }
 
@@ -91,10 +87,9 @@ class EOSExporterTest {
 
   @Test
   void testEclipseExportWithConfig() {
-    EclipseEOSExporter.ExportConfig config =
-        new EclipseEOSExporter.ExportConfig().setUnits(EclipseEOSExporter.Units.FIELD)
-            .setIncludeHeader(true).setComment("Test export for validation")
-            .setPressureGrid(new double[] {50, 100, 150, 200, 250, 300});
+    EclipseEOSExporter.ExportConfig config = new EclipseEOSExporter.ExportConfig()
+	.setUnits(EclipseEOSExporter.Units.FIELD).setIncludeHeader(true).setComment("Test export for validation")
+	.setPressureGrid(new double[] { 50, 100, 150, 200, 250, 300 });
 
     String result = EclipseEOSExporter.toString(testFluid, config);
 
@@ -135,8 +130,8 @@ class EOSExporterTest {
 
   @Test
   void testEclipseMetricUnits() {
-    EclipseEOSExporter.ExportConfig config =
-        new EclipseEOSExporter.ExportConfig().setUnits(EclipseEOSExporter.Units.METRIC);
+    EclipseEOSExporter.ExportConfig config = new EclipseEOSExporter.ExportConfig()
+	.setUnits(EclipseEOSExporter.Units.METRIC);
 
     String result = EclipseEOSExporter.toString(testFluid, config);
 
@@ -146,20 +141,19 @@ class EOSExporterTest {
 
   @Test
   void testEclipseFieldUnits() {
-    EclipseEOSExporter.ExportConfig config =
-        new EclipseEOSExporter.ExportConfig().setUnits(EclipseEOSExporter.Units.FIELD);
+    EclipseEOSExporter.ExportConfig config = new EclipseEOSExporter.ExportConfig()
+	.setUnits(EclipseEOSExporter.Units.FIELD);
 
     String result = EclipseEOSExporter.toString(testFluid, config);
 
     assertTrue(result.contains("FIELD"), "Should indicate FIELD units");
-    assertTrue(result.contains("PSIA") || result.contains("psia"),
-        "Should use psia for pressure in field units");
+    assertTrue(result.contains("PSIA") || result.contains("psia"), "Should use psia for pressure in field units");
   }
 
   @Test
   void testEclipseSelectiveKeywords() {
-    EclipseEOSExporter.ExportConfig config = new EclipseEOSExporter.ExportConfig()
-        .setIncludePVTO(true).setIncludePVTG(false).setIncludePVTW(false).setIncludeDensity(true);
+    EclipseEOSExporter.ExportConfig config = new EclipseEOSExporter.ExportConfig().setIncludePVTO(true)
+	.setIncludePVTG(false).setIncludePVTW(false).setIncludeDensity(true);
 
     String result = EclipseEOSExporter.toString(testFluid, config);
 
@@ -195,23 +189,19 @@ class EOSExporterTest {
 
   @Test
   void testCMGExportIMEXFormat() {
-    CMGEOSExporter.ExportConfig config =
-        new CMGEOSExporter.ExportConfig().setSimulator(CMGEOSExporter.Simulator.IMEX);
+    CMGEOSExporter.ExportConfig config = new CMGEOSExporter.ExportConfig().setSimulator(CMGEOSExporter.Simulator.IMEX);
 
     String result = CMGEOSExporter.toString(testFluid, config);
 
     assertNotNull(result);
     assertTrue(result.contains("IMEX"), "Should indicate IMEX simulator");
-    assertTrue(result.contains("*MODEL") || result.contains("BLACKOIL"),
-        "Should contain IMEX-specific keywords");
-    assertTrue(result.contains("*DENSITY") || result.contains("DENSITY"),
-        "Should contain density data");
+    assertTrue(result.contains("*MODEL") || result.contains("BLACKOIL"), "Should contain IMEX-specific keywords");
+    assertTrue(result.contains("*DENSITY") || result.contains("DENSITY"), "Should contain density data");
   }
 
   @Test
   void testCMGExportGEMFormat() {
-    CMGEOSExporter.ExportConfig config =
-        new CMGEOSExporter.ExportConfig().setSimulator(CMGEOSExporter.Simulator.GEM);
+    CMGEOSExporter.ExportConfig config = new CMGEOSExporter.ExportConfig().setSimulator(CMGEOSExporter.Simulator.GEM);
 
     String result = CMGEOSExporter.toString(testFluid, config);
 
@@ -221,8 +211,7 @@ class EOSExporterTest {
 
   @Test
   void testCMGExportSTARSFormat() {
-    CMGEOSExporter.ExportConfig config =
-        new CMGEOSExporter.ExportConfig().setSimulator(CMGEOSExporter.Simulator.STARS);
+    CMGEOSExporter.ExportConfig config = new CMGEOSExporter.ExportConfig().setSimulator(CMGEOSExporter.Simulator.STARS);
 
     String result = CMGEOSExporter.toString(testFluid, config);
 
@@ -245,10 +234,9 @@ class EOSExporterTest {
 
   @Test
   void testCMGExportWithCustomConfig() {
-    CMGEOSExporter.ExportConfig config = new CMGEOSExporter.ExportConfig()
-        .setSimulator(CMGEOSExporter.Simulator.IMEX).setUnits(CMGEOSExporter.Units.FIELD)
-        .setModelName("MY_RESERVOIR_FLUID").setComment("Custom test fluid model")
-        .setPressureGrid(new double[] {50, 100, 150, 200, 300});
+    CMGEOSExporter.ExportConfig config = new CMGEOSExporter.ExportConfig().setSimulator(CMGEOSExporter.Simulator.IMEX)
+	.setUnits(CMGEOSExporter.Units.FIELD).setModelName("MY_RESERVOIR_FLUID").setComment("Custom test fluid model")
+	.setPressureGrid(new double[] { 50, 100, 150, 200, 300 });
 
     String result = CMGEOSExporter.toString(testFluid, config);
 
@@ -260,14 +248,12 @@ class EOSExporterTest {
 
   @Test
   void testCMGExportSIUnits() {
-    CMGEOSExporter.ExportConfig config =
-        new CMGEOSExporter.ExportConfig().setUnits(CMGEOSExporter.Units.SI);
+    CMGEOSExporter.ExportConfig config = new CMGEOSExporter.ExportConfig().setUnits(CMGEOSExporter.Units.SI);
 
     String result = CMGEOSExporter.toString(testFluid, config);
 
     assertTrue(result.contains("SI"), "Should indicate SI units");
-    assertTrue(result.contains("kPa") || result.contains("KPA"),
-        "Should use kPa for pressure in SI units");
+    assertTrue(result.contains("kPa") || result.contains("KPA"), "Should use kPa for pressure in SI units");
   }
 
   // ========== Roundtrip / Integration Tests ==========
@@ -298,8 +284,8 @@ class EOSExporterTest {
   @Test
   void testExportWithDifferentPressureGrids() {
     // Test with few pressure points
-    EclipseEOSExporter.ExportConfig sparseConfig =
-        new EclipseEOSExporter.ExportConfig().setPressureGrid(new double[] {50, 150, 300});
+    EclipseEOSExporter.ExportConfig sparseConfig = new EclipseEOSExporter.ExportConfig()
+	.setPressureGrid(new double[] { 50, 150, 300 });
 
     String sparseResult = EclipseEOSExporter.toString(testFluid, sparseConfig);
     assertNotNull(sparseResult);
@@ -309,33 +295,27 @@ class EOSExporterTest {
     for (int i = 0; i < 20; i++) {
       denseGrid[i] = 20 + i * 20;
     }
-    EclipseEOSExporter.ExportConfig denseConfig =
-        new EclipseEOSExporter.ExportConfig().setPressureGrid(denseGrid);
+    EclipseEOSExporter.ExportConfig denseConfig = new EclipseEOSExporter.ExportConfig().setPressureGrid(denseGrid);
 
     String denseResult = EclipseEOSExporter.toString(testFluid, denseConfig);
     assertNotNull(denseResult);
 
     // Dense result should be longer (more data points)
-    assertTrue(denseResult.length() > sparseResult.length(),
-        "Dense grid should produce more output");
+    assertTrue(denseResult.length() > sparseResult.length(), "Dense grid should produce more output");
   }
 
   @Test
   void testExportHeaderToggle() {
     // With header
-    EclipseEOSExporter.ExportConfig withHeader =
-        new EclipseEOSExporter.ExportConfig().setIncludeHeader(true);
+    EclipseEOSExporter.ExportConfig withHeader = new EclipseEOSExporter.ExportConfig().setIncludeHeader(true);
     String resultWithHeader = EclipseEOSExporter.toString(testFluid, withHeader);
 
     // Without header
-    EclipseEOSExporter.ExportConfig withoutHeader =
-        new EclipseEOSExporter.ExportConfig().setIncludeHeader(false);
+    EclipseEOSExporter.ExportConfig withoutHeader = new EclipseEOSExporter.ExportConfig().setIncludeHeader(false);
     String resultWithoutHeader = EclipseEOSExporter.toString(testFluid, withoutHeader);
 
-    assertTrue(resultWithHeader.contains("Generated by NeqSim"),
-        "With header should contain attribution");
-    assertFalse(resultWithoutHeader.contains("Generated by NeqSim"),
-        "Without header should not contain attribution");
+    assertTrue(resultWithHeader.contains("Generated by NeqSim"), "With header should contain attribution");
+    assertFalse(resultWithoutHeader.contains("Generated by NeqSim"), "Without header should not contain attribution");
   }
 
   @Test
@@ -364,10 +344,9 @@ class EOSExporterTest {
 
     // Check that values are formatted with appropriate precision
     // Oil and water densities should have 4 decimal places
-    assertTrue(result.contains("823.4567") || result.contains("823.4568"),
-        "Oil density should be formatted");
+    assertTrue(result.contains("823.4567") || result.contains("823.4568"), "Oil density should be formatted");
     // Gas density should have 6 decimal places
     assertTrue(result.contains("1.2345") || result.contains("1.234568"),
-        "Gas density should be formatted with more precision");
+	"Gas density should be formatted with more precision");
   }
 }

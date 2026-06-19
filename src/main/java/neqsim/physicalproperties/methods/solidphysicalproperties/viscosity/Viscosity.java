@@ -51,10 +51,9 @@ public class Viscosity extends SolidPhysicalPropertyMethod implements ViscosityI
    * {@inheritDoc}
    *
    * <p>
-   * For solids, viscosity is not well-defined in the traditional sense. However, for modeling
-   * purposes (e.g., flow of slurries or deposits), we return a very high effective viscosity. For
-   * asphaltene and similar organic solids near their softening point, viscosity can be on the order
-   * of 1e3 to 1e12 Pa·s depending on temperature.
+   * For solids, viscosity is not well-defined in the traditional sense. However, for modeling purposes (e.g., flow of
+   * slurries or deposits), we return a very high effective viscosity. For asphaltene and similar organic solids near
+   * their softening point, viscosity can be on the order of 1e3 to 1e12 Pa·s depending on temperature.
    * </p>
    */
   @Override
@@ -84,7 +83,8 @@ public class Viscosity extends SolidPhysicalPropertyMethod implements ViscosityI
    * calcPureComponentViscosity.
    * </p>
    */
-  public void calcPureComponentViscosity() {}
+  public void calcPureComponentViscosity() {
+  }
 
   /** {@inheritDoc} */
   @Override

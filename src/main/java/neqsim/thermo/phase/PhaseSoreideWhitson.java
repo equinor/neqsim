@@ -3,8 +3,7 @@ package neqsim.thermo.phase;
 import neqsim.thermo.component.ComponentSoreideWhitson;
 
 /**
- * PhaseSoreideWhitson implements the Søreide-Whitson Peng-Robinson EoS with modified alpha and
- * mixing rule.
+ * PhaseSoreideWhitson implements the Søreide-Whitson Peng-Robinson EoS with modified alpha and mixing rule.
  *
  * @author sviat
  */

@@ -4,13 +4,12 @@ import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * Utility class for estimating binary interaction parameters (BIPs) using correlations from the
- * literature.
+ * Utility class for estimating binary interaction parameters (BIPs) using correlations from the literature.
  *
  * <p>
- * This class implements BIP estimation methods commonly used in PVT modeling, as described in the
- * Whitson wiki (https://wiki.whitson.com/eos/bips/). The correlations are particularly useful for
- * petroleum fluid characterization where experimental BIP data is not available.
+ * This class implements BIP estimation methods commonly used in PVT modeling, as described in the Whitson wiki
+ * (https://wiki.whitson.com/eos/bips/). The correlations are particularly useful for petroleum fluid characterization
+ * where experimental BIP data is not available.
  * </p>
  *
  * <h2>Available Methods:</h2>
@@ -28,8 +27,7 @@ import neqsim.thermo.system.SystemInterface;
  * fluid.addComponent("n-heptane", 0.1);
  *
  * // Calculate BIP using Chueh-Prausnitz
- * double kij = BIPEstimator.estimateChuehPrausnitz(fluid.getComponent("methane"),
- *     fluid.getComponent("n-heptane"));
+ * double kij = BIPEstimator.estimateChuehPrausnitz(fluid.getComponent("methane"), fluid.getComponent("n-heptane"));
  *
  * // Or apply to entire system
  * BIPEstimator.applyEstimatedBIPs(fluid, BIPEstimationMethod.CHUEH_PRAUSNITZ);
@@ -107,7 +105,8 @@ public final class BIPEstimator {
   private static final double KATZ_FIROOZABADI_B = 0.0429;
 
   /** Private constructor to prevent instantiation. */
-  private BIPEstimator() {}
+  private BIPEstimator() {
+  }
 
   /**
    * Estimate binary interaction parameter using the Chueh-Prausnitz correlation (1967).
@@ -121,9 +120,8 @@ public final class BIPEstimator {
    * </p>
    *
    * <p>
-   * Reference: Chueh, P.L. and Prausnitz, J.M., "Vapor-liquid equilibria at high pressures:
-   * calculation of partial molar volumes in nonpolar liquid mixtures", AIChE Journal, 13:1099-1107,
-   * 1967.
+   * Reference: Chueh, P.L. and Prausnitz, J.M., "Vapor-liquid equilibria at high pressures: calculation of partial
+   * molar volumes in nonpolar liquid mixtures", AIChE Journal, 13:1099-1107, 1967.
    * </p>
    *
    * @param comp1 first component
@@ -135,16 +133,14 @@ public final class BIPEstimator {
   }
 
   /**
-   * Estimate binary interaction parameter using the Chueh-Prausnitz correlation with custom
-   * exponent.
+   * Estimate binary interaction parameter using the Chueh-Prausnitz correlation with custom exponent.
    *
-   * @param comp1 first component
-   * @param comp2 second component
+   * @param comp1    first component
+   * @param comp2    second component
    * @param exponent the exponent n in the correlation (typically 3)
    * @return estimated BIP value
    */
-  public static double estimateChuehPrausnitz(ComponentInterface comp1, ComponentInterface comp2,
-      double exponent) {
+  public static double estimateChuehPrausnitz(ComponentInterface comp1, ComponentInterface comp2, double exponent) {
     if (comp1 == null || comp2 == null) {
       return 0.0;
     }
@@ -165,30 +161,27 @@ public final class BIPEstimator {
   }
 
   /**
-   * Estimate binary interaction parameter for methane with C7+ components using Katz-Firoozabadi
-   * correlation (1978).
+   * Estimate binary interaction parameter for methane with C7+ components using Katz-Firoozabadi correlation (1978).
    *
    * <p>
-   * The correlation is designed specifically for methane interactions with heavy hydrocarbon
-   * fractions: kij = A + B * (M_heavy - 86)^0.5
+   * The correlation is designed specifically for methane interactions with heavy hydrocarbon fractions: kij = A + B *
+   * (M_heavy - 86)^0.5
    * </p>
    *
    * <p>
-   * where M_heavy is the molecular weight of the heavy component (g/mol), and 86 is the molecular
-   * weight of hexane.
+   * where M_heavy is the molecular weight of the heavy component (g/mol), and 86 is the molecular weight of hexane.
    * </p>
    *
    * <p>
-   * Reference: Katz, D.L. and Firoozabadi, A., "Predicting phase behavior of condensate/crude-oil
-   * systems using methane interaction coefficients", JPT, paper SPE-6721-PA, 1978.
+   * Reference: Katz, D.L. and Firoozabadi, A., "Predicting phase behavior of condensate/crude-oil systems using methane
+   * interaction coefficients", JPT, paper SPE-6721-PA, 1978.
    * </p>
    *
    * @param methaneComp methane component
-   * @param heavyComp heavy hydrocarbon component (C7+)
+   * @param heavyComp   heavy hydrocarbon component (C7+)
    * @return estimated BIP value for methane-heavy HC pair
    */
-  public static double estimateKatzFiroozabadi(ComponentInterface methaneComp,
-      ComponentInterface heavyComp) {
+  public static double estimateKatzFiroozabadi(ComponentInterface methaneComp, ComponentInterface heavyComp) {
     if (methaneComp == null || heavyComp == null) {
       return 0.0;
     }
@@ -202,8 +195,8 @@ public final class BIPEstimator {
       heavyComp = temp;
       name = methaneComp.getComponentName().toLowerCase();
       if (!name.equals("methane") && !name.equals("c1")) {
-        // Neither is methane - use Chueh-Prausnitz instead
-        return estimateChuehPrausnitz(methaneComp, heavyComp);
+	// Neither is methane - use Chueh-Prausnitz instead
+	return estimateChuehPrausnitz(methaneComp, heavyComp);
       }
     }
 
@@ -224,8 +217,7 @@ public final class BIPEstimator {
    * @param comp2 second component
    * @return true if one component is mercury and the other is hydrocarbon with available Tb/MW
    */
-  public static boolean canEstimateMercuryHydrocarbonKij(ComponentInterface comp1,
-      ComponentInterface comp2) {
+  public static boolean canEstimateMercuryHydrocarbonKij(ComponentInterface comp1, ComponentInterface comp2) {
     if (comp1 == null || comp2 == null) {
       return false;
     }
@@ -253,9 +245,8 @@ public final class BIPEstimator {
    * Estimate Hg-hydrocarbon kij from Tb/MW correlation.
    *
    * <p>
-   * Implements Eq. 7.2 from the mercury-solubility thesis: kij = A*Tb + B*MW + C, with separate
-   * coefficients for paraffinic, naphthenic, and aromatic hydrocarbons, and separate coefficient
-   * sets for SRK-Twu and PR-MC.
+   * Implements Eq. 7.2 from the mercury-solubility thesis: kij = A*Tb + B*MW + C, with separate coefficients for
+   * paraffinic, naphthenic, and aromatic hydrocarbons, and separate coefficient sets for SRK-Twu and PR-MC.
    * </p>
    *
    * @param comp1 first component (mercury or hydrocarbon)
@@ -263,8 +254,8 @@ public final class BIPEstimator {
    * @param usePR true for PR-MC coefficients, false for SRK-Twu coefficients
    * @return estimated temperature-independent kij, or 0.0 if pair is unsupported
    */
-  public static double estimateMercuryHydrocarbonKij(ComponentInterface comp1,
-      ComponentInterface comp2, boolean usePR) {
+  public static double estimateMercuryHydrocarbonKij(ComponentInterface comp1, ComponentInterface comp2,
+      boolean usePR) {
     if (!canEstimateMercuryHydrocarbonKij(comp1, comp2)) {
       return 0.0;
     }
@@ -276,9 +267,9 @@ public final class BIPEstimator {
 
     if (usePR) {
       if (type == MercuryHydrocarbonType.PARAFFINIC) {
-        return HG_PR_A_PARAFFINIC * tb + HG_PR_B_PARAFFINIC * molarMass + HG_PR_C_PARAFFINIC;
+	return HG_PR_A_PARAFFINIC * tb + HG_PR_B_PARAFFINIC * molarMass + HG_PR_C_PARAFFINIC;
       } else if (type == MercuryHydrocarbonType.NAPHTHENIC) {
-        return HG_PR_A_NAPHTHENIC * tb + HG_PR_B_NAPHTHENIC * molarMass + HG_PR_C_NAPHTHENIC;
+	return HG_PR_A_NAPHTHENIC * tb + HG_PR_B_NAPHTHENIC * molarMass + HG_PR_C_NAPHTHENIC;
       }
       return HG_PR_A_AROMATIC * tb + HG_PR_B_AROMATIC * molarMass + HG_PR_C_AROMATIC;
     }
@@ -303,13 +294,13 @@ public final class BIPEstimator {
     }
 
     String name = hydrocarbon.getComponentName().toLowerCase().replace(" ", "");
-    if (name.contains("benz") || name.contains("xylene") || name.contains("toluene")
-        || name.contains("naphth") || name.contains("phenyl") || name.contains("arom")) {
+    if (name.contains("benz") || name.contains("xylene") || name.contains("toluene") || name.contains("naphth")
+	|| name.contains("phenyl") || name.contains("arom")) {
       return MercuryHydrocarbonType.AROMATIC;
     }
 
     if (name.contains("cyclo") || name.contains("cy") || name.contains("m-c") || name.contains("c-")
-        || name.contains("dm-cy")) {
+	|| name.contains("dm-cy")) {
       return MercuryHydrocarbonType.NAPHTHENIC;
     }
 
@@ -333,21 +324,20 @@ public final class BIPEstimator {
   /**
    * Estimate BIP using the specified method.
    *
-   * @param comp1 first component
-   * @param comp2 second component
+   * @param comp1  first component
+   * @param comp2  second component
    * @param method estimation method to use
    * @return estimated BIP value
    */
-  public static double estimate(ComponentInterface comp1, ComponentInterface comp2,
-      BIPEstimationMethod method) {
+  public static double estimate(ComponentInterface comp1, ComponentInterface comp2, BIPEstimationMethod method) {
     switch (method) {
-      case CHUEH_PRAUSNITZ:
-        return estimateChuehPrausnitz(comp1, comp2);
-      case KATZ_FIROOZABADI:
-        return estimateKatzFiroozabadi(comp1, comp2);
-      case DEFAULT:
-      default:
-        return 0.0;
+    case CHUEH_PRAUSNITZ:
+      return estimateChuehPrausnitz(comp1, comp2);
+    case KATZ_FIROOZABADI:
+      return estimateKatzFiroozabadi(comp1, comp2);
+    case DEFAULT:
+    default:
+      return 0.0;
     }
   }
 
@@ -355,11 +345,11 @@ public final class BIPEstimator {
    * Apply estimated BIPs to all component pairs in a fluid system.
    *
    * <p>
-   * This method calculates BIPs for all component pairs using the specified estimation method and
-   * applies them to the fluid's mixing rule.
+   * This method calculates BIPs for all component pairs using the specified estimation method and applies them to the
+   * fluid's mixing rule.
    * </p>
    *
-   * @param fluid the fluid system to modify
+   * @param fluid  the fluid system to modify
    * @param method estimation method to use
    */
   public static void applyEstimatedBIPs(SystemInterface fluid, BIPEstimationMethod method) {
@@ -369,13 +359,11 @@ public final class BIPEstimator {
   /**
    * Apply estimated BIPs to all component pairs in a fluid system.
    *
-   * @param fluid the fluid system to modify
-   * @param method estimation method to use
-   * @param overwriteExisting if true, overwrite existing non-zero BIPs; if false, only set BIPs
-   *        that are currently zero
+   * @param fluid             the fluid system to modify
+   * @param method            estimation method to use
+   * @param overwriteExisting if true, overwrite existing non-zero BIPs; if false, only set BIPs that are currently zero
    */
-  public static void applyEstimatedBIPs(SystemInterface fluid, BIPEstimationMethod method,
-      boolean overwriteExisting) {
+  public static void applyEstimatedBIPs(SystemInterface fluid, BIPEstimationMethod method, boolean overwriteExisting) {
     if (fluid == null) {
       return;
     }
@@ -384,13 +372,13 @@ public final class BIPEstimator {
 
     for (int i = 0; i < nComp; i++) {
       for (int j = i + 1; j < nComp; j++) {
-        ComponentInterface comp1 = fluid.getComponent(i);
-        ComponentInterface comp2 = fluid.getComponent(j);
+	ComponentInterface comp1 = fluid.getComponent(i);
+	ComponentInterface comp2 = fluid.getComponent(j);
 
-        double estimatedBIP = estimate(comp1, comp2, method);
+	double estimatedBIP = estimate(comp1, comp2, method);
 
-        // Apply the BIP using the system-level setter
-        fluid.setBinaryInteractionParameter(i, j, estimatedBIP);
+	// Apply the BIP using the system-level setter
+	fluid.setBinaryInteractionParameter(i, j, estimatedBIP);
       }
     }
   }
@@ -399,8 +387,8 @@ public final class BIPEstimator {
    * Apply Katz-Firoozabadi BIPs specifically for methane-C7+ pairs in a fluid.
    *
    * <p>
-   * This method is optimized for petroleum fluids where methane BIPs with heavy fractions are
-   * critical for accurate phase behavior prediction.
+   * This method is optimized for petroleum fluids where methane BIPs with heavy fractions are critical for accurate
+   * phase behavior prediction.
    * </p>
    *
    * @param fluid the fluid system to modify
@@ -415,8 +403,8 @@ public final class BIPEstimator {
     for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
       String name = fluid.getComponent(i).getComponentName().toLowerCase();
       if (name.equals("methane") || name.equals("c1")) {
-        methaneIndex = i;
-        break;
+	methaneIndex = i;
+	break;
       }
     }
 
@@ -429,7 +417,7 @@ public final class BIPEstimator {
     // Apply Katz-Firoozabadi for all C7+ components
     for (int j = 0; j < fluid.getNumberOfComponents(); j++) {
       if (j == methaneIndex) {
-        continue;
+	continue;
       }
 
       ComponentInterface comp = fluid.getComponent(j);
@@ -437,8 +425,8 @@ public final class BIPEstimator {
 
       // Only apply to C7+ (MW > 86 g/mol)
       if (molarMass > 86.0 || comp.isIsTBPfraction() || comp.isIsPlusFraction()) {
-        double kij = estimateKatzFiroozabadi(methane, comp);
-        fluid.setBinaryInteractionParameter(methaneIndex, j, kij);
+	double kij = estimateKatzFiroozabadi(methane, comp);
+	fluid.setBinaryInteractionParameter(methaneIndex, j, kij);
       }
     }
   }
@@ -450,7 +438,7 @@ public final class BIPEstimator {
    * This is useful for reviewing estimated values before applying them.
    * </p>
    *
-   * @param fluid the fluid system
+   * @param fluid  the fluid system
    * @param method estimation method to use
    * @return 2D array of estimated BIP values [i][j]
    */
@@ -464,9 +452,9 @@ public final class BIPEstimator {
 
     for (int i = 0; i < nComp; i++) {
       for (int j = i + 1; j < nComp; j++) {
-        double kij = estimate(fluid.getComponent(i), fluid.getComponent(j), method);
-        bipMatrix[i][j] = kij;
-        bipMatrix[j][i] = kij;
+	double kij = estimate(fluid.getComponent(i), fluid.getComponent(j), method);
+	bipMatrix[i][j] = kij;
+	bipMatrix[j][i] = kij;
       }
     }
 
@@ -476,7 +464,7 @@ public final class BIPEstimator {
   /**
    * Print BIP matrix to console for debugging/review.
    *
-   * @param fluid the fluid system
+   * @param fluid     the fluid system
    * @param bipMatrix the BIP matrix to print
    */
   public static void printBIPMatrix(SystemInterface fluid, double[][] bipMatrix) {
@@ -495,7 +483,7 @@ public final class BIPEstimator {
     for (int i = 0; i < nComp; i++) {
       System.out.print(String.format("%15s", fluid.getComponent(i).getComponentName()));
       for (int j = 0; j < nComp; j++) {
-        System.out.print(String.format("%12.6f", bipMatrix[i][j]));
+	System.out.print(String.format("%12.6f", bipMatrix[i][j]));
       }
       System.out.println();
     }

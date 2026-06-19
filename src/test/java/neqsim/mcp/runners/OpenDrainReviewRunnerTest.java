@@ -19,22 +19,16 @@ class OpenDrainReviewRunnerTest {
    */
   @Test
   void testRunnerReturnsOpenDrainReport() {
-    String json = "{\n" + "  \"projectName\": \"MCP open drain\",\n"
-        + "  \"openDrainAreas\": [{\n" + "    \"areaId\": \"OD-R01\",\n"
-        + "    \"areaType\": \"process area\",\n"
-        + "    \"drainSystemType\": \"hazardous open drain\",\n"
-        + "    \"standards\": \"NORSOK P-002; ISO 13702\",\n"
-        + "    \"sourceHasFlammableOrHazardousLiquid\": true,\n"
-        + "    \"hasOpenDrainMeasures\": true,\n"
-        + "    \"drainageCapacityKgPerS\": 12.0,\n"
-        + "    \"fireWaterCapacityKgPerS\": 6.0,\n"
-        + "    \"liquidLeakRateKgPerS\": 5.0,\n"
-        + "    \"backflowPrevented\": true,\n"
-        + "    \"closedOpenDrainInteractionPrevented\": true,\n"
-        + "    \"hazardousNonHazardousPhysicallySeparated\": true,\n"
-        + "    \"sealDesignedForMaxBackpressure\": true,\n"
-        + "    \"ventTerminatedSafe\": true,\n"
-        + "    \"openDrainDependsOnUtility\": false\n" + "  }]\n" + "}";
+    String json = "{\n" + "  \"projectName\": \"MCP open drain\",\n" + "  \"openDrainAreas\": [{\n"
+	+ "    \"areaId\": \"OD-R01\",\n" + "    \"areaType\": \"process area\",\n"
+	+ "    \"drainSystemType\": \"hazardous open drain\",\n" + "    \"standards\": \"NORSOK P-002; ISO 13702\",\n"
+	+ "    \"sourceHasFlammableOrHazardousLiquid\": true,\n" + "    \"hasOpenDrainMeasures\": true,\n"
+	+ "    \"drainageCapacityKgPerS\": 12.0,\n" + "    \"fireWaterCapacityKgPerS\": 6.0,\n"
+	+ "    \"liquidLeakRateKgPerS\": 5.0,\n" + "    \"backflowPrevented\": true,\n"
+	+ "    \"closedOpenDrainInteractionPrevented\": true,\n"
+	+ "    \"hazardousNonHazardousPhysicallySeparated\": true,\n"
+	+ "    \"sealDesignedForMaxBackpressure\": true,\n" + "    \"ventTerminatedSafe\": true,\n"
+	+ "    \"openDrainDependsOnUtility\": false\n" + "  }]\n" + "}";
 
     JsonObject output = JsonParser.parseString(OpenDrainReviewRunner.run(json)).getAsJsonObject();
 
@@ -49,11 +43,10 @@ class OpenDrainReviewRunnerTest {
    */
   @Test
   void testRunnerReportsMissingOpenDrainData() {
-    JsonObject output = JsonParser.parseString(OpenDrainReviewRunner.run("{}"))
-        .getAsJsonObject();
+    JsonObject output = JsonParser.parseString(OpenDrainReviewRunner.run("{}")).getAsJsonObject();
 
     assertEquals("error", output.get("status").getAsString());
     assertEquals("MISSING_OPEN_DRAIN_DATA",
-        output.getAsJsonArray("errors").get(0).getAsJsonObject().get("code").getAsString());
+	output.getAsJsonArray("errors").get(0).getAsJsonObject().get("code").getAsString());
   }
 }

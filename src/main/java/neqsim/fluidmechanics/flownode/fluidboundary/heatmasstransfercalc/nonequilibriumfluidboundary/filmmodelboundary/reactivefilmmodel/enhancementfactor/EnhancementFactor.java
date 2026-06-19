@@ -28,7 +28,8 @@ public class EnhancementFactor implements EnhancementFactorInterface {
    * Constructor for EnhancementFactor.
    * </p>
    */
-  public EnhancementFactor() {}
+  public EnhancementFactor() {
+  }
 
   /**
    * <p>
@@ -36,14 +37,13 @@ public class EnhancementFactor implements EnhancementFactorInterface {
    * </p>
    *
    * @param fluidBoundary a
-   *        {@link neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.FluidBoundaryInterface}
-   *        object
+   *                      {@link neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.FluidBoundaryInterface}
+   *                      object
    */
   public EnhancementFactor(FluidBoundaryInterface fluidBoundary) {
     this();
     this.fluidBoundary = fluidBoundary;
-    enhancementVec =
-        new double[fluidBoundary.getBulkSystem().getPhases()[0].getNumberOfComponents()];
+    enhancementVec = new double[fluidBoundary.getBulkSystem().getPhases()[0].getNumberOfComponents()];
     hattaNumber = new double[fluidBoundary.getBulkSystem().getPhases()[0].getNumberOfComponents()];
   }
 
@@ -52,7 +52,7 @@ public class EnhancementFactor implements EnhancementFactorInterface {
    * calcEnhancementVec.
    * </p>
    *
-   * @param phase a int
+   * @param phase           a int
    * @param enhancementType a int
    */
   public void calcEnhancementVec(int phase, int enhancementType) {
@@ -66,7 +66,8 @@ public class EnhancementFactor implements EnhancementFactorInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void calcEnhancementVec(int phase) {}
+  public void calcEnhancementVec(int phase) {
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -86,7 +87,7 @@ public class EnhancementFactor implements EnhancementFactorInterface {
   /**
    * Indexed setter for property enhancementVec.
    *
-   * @param index Index of the property.
+   * @param index          Index of the property.
    * @param enhancementVec New value of the property at <CODE>index</CODE>.
    */
   public void setEnhancementVec(int index, double enhancementVec) {
@@ -110,8 +111,7 @@ public class EnhancementFactor implements EnhancementFactorInterface {
    * @param phaseNum a int
    */
   public void setOnesVec(int phaseNum) {
-    for (int j = 0; j < fluidBoundary.getBulkSystem().getPhase(phaseNum)
-        .getNumberOfComponents(); j++) {
+    for (int j = 0; j < fluidBoundary.getBulkSystem().getPhase(phaseNum).getNumberOfComponents(); j++) {
       enhancementVec[j] = 1.0;
     }
   }

@@ -16,9 +16,7 @@ public class DistillationTraySection extends SepDesignSection {
    * Constructor for DistillationTraySection.
    * </p>
    *
-   * @param separatorSection a
-   *        {@link neqsim.process.equipment.separator.sectiontype.SeparatorSection}
-   *        object
+   * @param separatorSection a {@link neqsim.process.equipment.separator.sectiontype.SeparatorSection} object
    */
   public DistillationTraySection(SeparatorSection separatorSection) {
     super(separatorSection);

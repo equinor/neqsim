@@ -11,28 +11,26 @@ import com.google.gson.JsonObject;
  * Gradient and Jacobian computation over the agent-facing {@link ProcessAutomation} API.
  *
  * <p>
- * Many downstream agentic workflows (sensitivity studies, gradient-based optimization, what-if
- * scoping, KPI sensitivity dashboards) need partial derivatives of simulation outputs with respect
- * to inputs without having to instrument every equipment class. This analyzer provides those
- * derivatives by finite differences driven entirely through the existing string-addressable
- * facade.
+ * Many downstream agentic workflows (sensitivity studies, gradient-based optimization, what-if scoping, KPI sensitivity
+ * dashboards) need partial derivatives of simulation outputs with respect to inputs without having to instrument every
+ * equipment class. This analyzer provides those derivatives by finite differences driven entirely through the existing
+ * string-addressable facade.
  * </p>
  *
  * <p>
  * Two perturbation modes are supported:
  * </p>
  * <ul>
- * <li><strong>Central difference</strong> (default): {@code dy/dx ≈ (y(x+h) - y(x-h)) / (2 h)} —
- * O(h²) accurate, requires two re-runs per input.</li>
- * <li><strong>Forward difference</strong>: {@code dy/dx ≈ (y(x+h) - y(x)) / h} — O(h) accurate,
- * requires one re-run per input (cheaper for large Jacobians).</li>
+ * <li><strong>Central difference</strong> (default): {@code dy/dx ≈ (y(x+h) - y(x-h)) / (2 h)} — O(h²) accurate,
+ * requires two re-runs per input.</li>
+ * <li><strong>Forward difference</strong>: {@code dy/dx ≈ (y(x+h) - y(x)) / h} — O(h) accurate, requires one re-run per
+ * input (cheaper for large Jacobians).</li>
  * </ul>
  *
  * <p>
- * The step size for each input defaults to {@code max(absStep, relStep · |x|)} so it scales
- * gracefully across pressures (bara) and temperatures (K). The original input value is restored
- * after every probe so the underlying {@link ProcessAutomation} is left in the state it started
- * in.
+ * The step size for each input defaults to {@code max(absStep, relStep · |x|)} so it scales gracefully across pressures
+ * (bara) and temperatures (K). The original input value is restored after every probe so the underlying
+ * {@link ProcessAutomation} is left in the state it started in.
  * </p>
  *
  * <p>
@@ -42,9 +40,7 @@ import com.google.gson.JsonObject;
  * <pre>
  * ProcessAutomation auto = process.getAutomation();
  * SensitivityAnalyzer sens = new SensitivityAnalyzer(auto);
- * double dPowerDPin = sens.partial(
- *     "Compressor.inletStream.pressure", "bara",
- *     "Compressor.power", "kW");
+ * double dPowerDPin = sens.partial("Compressor.inletStream.pressure", "bara", "Compressor.power", "kW");
  * Map&lt;String, Double&gt; grad = sens.gradient("Compressor.power", "kW",
  *     Arrays.asList("Compressor.inletStream.pressure", "Compressor.outletPressure"), "bara");
  * </pre>
@@ -153,19 +149,17 @@ public class SensitivityAnalyzer {
   }
 
   /**
-   * Computes the partial derivative of a single output with respect to a single input by finite
-   * differences. The underlying process is re-run via {@link ProcessAutomation#run()} after each
-   * perturbation and is restored to its original value afterwards.
+   * Computes the partial derivative of a single output with respect to a single input by finite differences. The
+   * underlying process is re-run via {@link ProcessAutomation#run()} after each perturbation and is restored to its
+   * original value afterwards.
    *
-   * @param inputAddress dot-notation address of the input variable (must be an INPUT-type variable)
-   * @param inputUnit unit string for the input value, e.g. "bara"; may be null or empty for default
+   * @param inputAddress  dot-notation address of the input variable (must be an INPUT-type variable)
+   * @param inputUnit     unit string for the input value, e.g. "bara"; may be null or empty for default
    * @param outputAddress dot-notation address of the output variable
-   * @param outputUnit unit string for the output value, e.g. "kW"; may be null or empty for default
-   * @return ∂(output)/∂(input) in {@code outputUnit / inputUnit}; returns {@link Double#NaN} when
-   *         either probe failed
+   * @param outputUnit    unit string for the output value, e.g. "kW"; may be null or empty for default
+   * @return ∂(output)/∂(input) in {@code outputUnit / inputUnit}; returns {@link Double#NaN} when either probe failed
    */
-  public double partial(String inputAddress, String inputUnit, String outputAddress,
-      String outputUnit) {
+  public double partial(String inputAddress, String inputUnit, String outputAddress, String outputUnit) {
     if (inputAddress == null || inputAddress.trim().isEmpty()) {
       throw new IllegalArgumentException("inputAddress must not be null or empty");
     }
@@ -183,43 +177,43 @@ public class SensitivityAnalyzer {
     double dydx;
     try {
       if (mode == Mode.CENTRAL) {
-        automation.setVariableValue(inputAddress, x0 + h, inputUnit);
-        automation.run();
-        double yPlus = automation.getVariableValue(outputAddress, outputUnit);
-        automation.setVariableValue(inputAddress, x0 - h, inputUnit);
-        automation.run();
-        double yMinus = automation.getVariableValue(outputAddress, outputUnit);
-        dydx = (yPlus - yMinus) / (2.0 * h);
+	automation.setVariableValue(inputAddress, x0 + h, inputUnit);
+	automation.run();
+	double yPlus = automation.getVariableValue(outputAddress, outputUnit);
+	automation.setVariableValue(inputAddress, x0 - h, inputUnit);
+	automation.run();
+	double yMinus = automation.getVariableValue(outputAddress, outputUnit);
+	dydx = (yPlus - yMinus) / (2.0 * h);
       } else {
-        automation.setVariableValue(inputAddress, x0 + h, inputUnit);
-        automation.run();
-        double yPlus = automation.getVariableValue(outputAddress, outputUnit);
-        dydx = (yPlus - y0) / h;
+	automation.setVariableValue(inputAddress, x0 + h, inputUnit);
+	automation.run();
+	double yPlus = automation.getVariableValue(outputAddress, outputUnit);
+	dydx = (yPlus - y0) / h;
       }
     } finally {
       // Always restore.
       try {
-        automation.setVariableValue(inputAddress, x0, inputUnit);
-        automation.run();
+	automation.setVariableValue(inputAddress, x0, inputUnit);
+	automation.run();
       } catch (RuntimeException ignored) {
-        // Suppress restore failures so the original exception (if any) is the one that surfaces.
+	// Suppress restore failures so the original exception (if any) is the one that surfaces.
       }
     }
     return dydx;
   }
 
   /**
-   * Computes the gradient ∇y of a single output with respect to a list of inputs. Each input is
-   * perturbed independently with the original values restored between probes.
+   * Computes the gradient ∇y of a single output with respect to a list of inputs. Each input is perturbed independently
+   * with the original values restored between probes.
    *
-   * @param outputAddress dot-notation address of the output variable
-   * @param outputUnit unit string for the output value; may be null or empty for default
+   * @param outputAddress  dot-notation address of the output variable
+   * @param outputUnit     unit string for the output value; may be null or empty for default
    * @param inputAddresses non-null, non-empty list of input addresses
-   * @param inputUnit unit string applied to all input values; may be null or empty for default
+   * @param inputUnit      unit string applied to all input values; may be null or empty for default
    * @return ordered map keyed by input address with ∂y/∂x in each entry
    */
-  public Map<String, Double> gradient(String outputAddress, String outputUnit,
-      List<String> inputAddresses, String inputUnit) {
+  public Map<String, Double> gradient(String outputAddress, String outputUnit, List<String> inputAddresses,
+      String inputUnit) {
     if (inputAddresses == null || inputAddresses.isEmpty()) {
       throw new IllegalArgumentException("inputAddresses must not be null or empty");
     }
@@ -231,17 +225,17 @@ public class SensitivityAnalyzer {
   }
 
   /**
-   * Computes the Jacobian matrix ∂y_i/∂x_j over a list of outputs and inputs. Rows correspond to
-   * outputs and columns to inputs.
+   * Computes the Jacobian matrix ∂y_i/∂x_j over a list of outputs and inputs. Rows correspond to outputs and columns to
+   * inputs.
    *
    * @param outputAddresses non-null, non-empty list of output addresses
-   * @param outputUnit unit string applied to all output values; may be null or empty for default
-   * @param inputAddresses non-null, non-empty list of input addresses
-   * @param inputUnit unit string applied to all input values; may be null or empty for default
+   * @param outputUnit      unit string applied to all output values; may be null or empty for default
+   * @param inputAddresses  non-null, non-empty list of input addresses
+   * @param inputUnit       unit string applied to all input values; may be null or empty for default
    * @return Jacobian matrix of shape {@code [outputs.size()][inputs.size()]}
    */
-  public double[][] jacobian(List<String> outputAddresses, String outputUnit,
-      List<String> inputAddresses, String inputUnit) {
+  public double[][] jacobian(List<String> outputAddresses, String outputUnit, List<String> inputAddresses,
+      String inputUnit) {
     if (outputAddresses == null || outputAddresses.isEmpty()) {
       throw new IllegalArgumentException("outputAddresses must not be null or empty");
     }
@@ -259,53 +253,52 @@ public class SensitivityAnalyzer {
       double x0 = automation.getVariableValue(in, inputUnit);
       double h = Math.max(absoluteStep, relativeStep * Math.abs(x0));
       if (h <= 0.0) {
-        h = absoluteStep;
+	h = absoluteStep;
       }
       try {
-        if (mode == Mode.CENTRAL) {
-          automation.setVariableValue(in, x0 + h, inputUnit);
-          automation.run();
-          double[] yPlus = readAll(outputAddresses, outputUnit);
-          automation.setVariableValue(in, x0 - h, inputUnit);
-          automation.run();
-          double[] yMinus = readAll(outputAddresses, outputUnit);
-          for (int rowIdx = 0; rowIdx < nOut; rowIdx++) {
-            j[rowIdx][colIdx] = (yPlus[rowIdx] - yMinus[rowIdx]) / (2.0 * h);
-          }
-        } else {
-          double[] y0 = readAll(outputAddresses, outputUnit);
-          automation.setVariableValue(in, x0 + h, inputUnit);
-          automation.run();
-          double[] yPlus = readAll(outputAddresses, outputUnit);
-          for (int rowIdx = 0; rowIdx < nOut; rowIdx++) {
-            j[rowIdx][colIdx] = (yPlus[rowIdx] - y0[rowIdx]) / h;
-          }
-        }
+	if (mode == Mode.CENTRAL) {
+	  automation.setVariableValue(in, x0 + h, inputUnit);
+	  automation.run();
+	  double[] yPlus = readAll(outputAddresses, outputUnit);
+	  automation.setVariableValue(in, x0 - h, inputUnit);
+	  automation.run();
+	  double[] yMinus = readAll(outputAddresses, outputUnit);
+	  for (int rowIdx = 0; rowIdx < nOut; rowIdx++) {
+	    j[rowIdx][colIdx] = (yPlus[rowIdx] - yMinus[rowIdx]) / (2.0 * h);
+	  }
+	} else {
+	  double[] y0 = readAll(outputAddresses, outputUnit);
+	  automation.setVariableValue(in, x0 + h, inputUnit);
+	  automation.run();
+	  double[] yPlus = readAll(outputAddresses, outputUnit);
+	  for (int rowIdx = 0; rowIdx < nOut; rowIdx++) {
+	    j[rowIdx][colIdx] = (yPlus[rowIdx] - y0[rowIdx]) / h;
+	  }
+	}
       } finally {
-        try {
-          automation.setVariableValue(in, x0, inputUnit);
-          automation.run();
-        } catch (RuntimeException ignored) {
-          // Suppress restore failures.
-        }
+	try {
+	  automation.setVariableValue(in, x0, inputUnit);
+	  automation.run();
+	} catch (RuntimeException ignored) {
+	  // Suppress restore failures.
+	}
       }
     }
     return j;
   }
 
   /**
-   * Returns a JSON representation of a gradient including the schema version, output address,
-   * input addresses and computed derivatives. Useful as a stable agent handoff format.
+   * Returns a JSON representation of a gradient including the schema version, output address, input addresses and
+   * computed derivatives. Useful as a stable agent handoff format.
    *
-   * @param outputAddress dot-notation address of the output variable
-   * @param outputUnit unit string for the output value; may be null or empty for default
+   * @param outputAddress  dot-notation address of the output variable
+   * @param outputUnit     unit string for the output value; may be null or empty for default
    * @param inputAddresses non-null, non-empty list of input addresses
-   * @param inputUnit unit string applied to all input values; may be null or empty for default
-   * @return JSON string with keys {@code schemaVersion}, {@code mode}, {@code output},
-   *         {@code outputUnit}, {@code inputUnit}, and {@code gradient}
+   * @param inputUnit      unit string applied to all input values; may be null or empty for default
+   * @return JSON string with keys {@code schemaVersion}, {@code mode}, {@code output}, {@code outputUnit},
+   *         {@code inputUnit}, and {@code gradient}
    */
-  public String gradientAsJson(String outputAddress, String outputUnit,
-      List<String> inputAddresses, String inputUnit) {
+  public String gradientAsJson(String outputAddress, String outputUnit, List<String> inputAddresses, String inputUnit) {
     Map<String, Double> g = gradient(outputAddress, outputUnit, inputAddresses, inputUnit);
     JsonObject root = new JsonObject();
     root.addProperty("schemaVersion", SCHEMA_VERSION);
@@ -327,15 +320,15 @@ public class SensitivityAnalyzer {
    * Returns a JSON representation of a Jacobian.
    *
    * @param outputAddresses non-null, non-empty list of output addresses
-   * @param outputUnit unit string applied to all output values; may be null or empty for default
-   * @param inputAddresses non-null, non-empty list of input addresses
-   * @param inputUnit unit string applied to all input values; may be null or empty for default
-   * @return JSON string with keys {@code schemaVersion}, {@code mode}, {@code outputs},
-   *         {@code inputs}, {@code outputUnit}, {@code inputUnit}, and {@code jacobian} (a 2D array
-   *         indexed as {@code [outputIndex][inputIndex]})
+   * @param outputUnit      unit string applied to all output values; may be null or empty for default
+   * @param inputAddresses  non-null, non-empty list of input addresses
+   * @param inputUnit       unit string applied to all input values; may be null or empty for default
+   * @return JSON string with keys {@code schemaVersion}, {@code mode}, {@code outputs}, {@code inputs},
+   *         {@code outputUnit}, {@code inputUnit}, and {@code jacobian} (a 2D array indexed as
+   *         {@code [outputIndex][inputIndex]})
    */
-  public String jacobianAsJson(List<String> outputAddresses, String outputUnit,
-      List<String> inputAddresses, String inputUnit) {
+  public String jacobianAsJson(List<String> outputAddresses, String outputUnit, List<String> inputAddresses,
+      String inputUnit) {
     double[][] j = jacobian(outputAddresses, outputUnit, inputAddresses, inputUnit);
     JsonObject root = new JsonObject();
     root.addProperty("schemaVersion", SCHEMA_VERSION);
@@ -358,7 +351,7 @@ public class SensitivityAnalyzer {
     for (int rowIdx = 0; rowIdx < j.length; rowIdx++) {
       JsonArray row = new JsonArray();
       for (int colIdx = 0; colIdx < j[rowIdx].length; colIdx++) {
-        row.add(j[rowIdx][colIdx]);
+	row.add(j[rowIdx][colIdx]);
       }
       rows.add(row);
     }

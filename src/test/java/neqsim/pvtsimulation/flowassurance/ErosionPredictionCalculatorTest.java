@@ -73,8 +73,7 @@ public class ErosionPredictionCalculatorTest {
     assertTrue(erosionRate < 100, "Erosion rate should be in reasonable range");
 
     double cumulative = calc.getCumulativeErosion();
-    assertEquals(erosionRate * 25.0, cumulative, 0.001,
-        "Cumulative erosion should be rate * design life");
+    assertEquals(erosionRate * 25.0, cumulative, 0.001, "Cumulative erosion should be rate * design life");
   }
 
   @Test
@@ -93,7 +92,7 @@ public class ErosionPredictionCalculatorTest {
   void testGeometryFactors() {
     // Test that different geometries give different erosion rates
     double[] rates = new double[3];
-    String[] geometries = {"blind_tee", "elbow", "choke"};
+    String[] geometries = { "blind_tee", "elbow", "choke" };
 
     for (int i = 0; i < geometries.length; i++) {
       ErosionPredictionCalculator calc = new ErosionPredictionCalculator();
@@ -143,7 +142,7 @@ public class ErosionPredictionCalculatorTest {
     calcInconel.calculate();
 
     assertTrue(calcInconel.getErosionRate() < calcSteel.getErosionRate(),
-        "Inconel should have lower erosion rate than carbon steel");
+	"Inconel should have lower erosion rate than carbon steel");
   }
 
   @Test

@@ -4,8 +4,8 @@ package neqsim.thermo.characterization;
  * Configuration options for fluid characterization operations.
  *
  * <p>
- * This class provides a fluent API for configuring how pseudo-component characterization is
- * performed, including options for:
+ * This class provides a fluent API for configuring how pseudo-component characterization is performed, including
+ * options for:
  * <ul>
  * <li>Binary interaction parameter (BIP) transfer from reference fluids</li>
  * <li>Component naming conventions</li>
@@ -17,12 +17,10 @@ package neqsim.thermo.characterization;
  * Example usage:
  *
  * <pre>
- * CharacterizationOptions options =
- *     CharacterizationOptions.builder().transferBinaryInteractionParameters(true)
- *         .normalizeComposition(true).namingScheme(NamingScheme.REFERENCE).build();
+ * CharacterizationOptions options = CharacterizationOptions.builder().transferBinaryInteractionParameters(true)
+ *     .normalizeComposition(true).namingScheme(NamingScheme.REFERENCE).build();
  *
- * SystemInterface characterized =
- *     PseudoComponentCombiner.characterizeToReference(source, reference, options);
+ * SystemInterface characterized = PseudoComponentCombiner.characterizeToReference(source, reference, options);
  * </pre>
  *
  * @author ESOL
@@ -141,9 +139,9 @@ public class CharacterizationOptions {
      * Set whether to transfer binary interaction parameters from the reference fluid.
      *
      * <p>
-     * When enabled, BIPs between pseudo-components and other components in the reference fluid will
-     * be applied to the corresponding components in the characterized fluid. This is essential for
-     * maintaining consistent phase behavior across multiple fluids in compositional simulation.
+     * When enabled, BIPs between pseudo-components and other components in the reference fluid will be applied to the
+     * corresponding components in the characterized fluid. This is essential for maintaining consistent phase behavior
+     * across multiple fluids in compositional simulation.
      *
      * @param transfer true to enable BIP transfer
      * @return this builder
@@ -182,8 +180,8 @@ public class CharacterizationOptions {
      * Set whether to generate a validation report.
      *
      * <p>
-     * When enabled, a validation report comparing key properties before and after characterization
-     * will be generated and logged.
+     * When enabled, a validation report comparing key properties before and after characterization will be generated
+     * and logged.
      *
      * @param generate true to generate validation report
      * @return this builder

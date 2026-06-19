@@ -6,8 +6,8 @@ import java.io.Serializable;
  * BLEVE (Boiling Liquid Expanding Vapor Explosion) consequence calculator.
  *
  * <p>
- * Computes fireball diameter, duration and surface emissive power for a sudden release of pressure-
- * liquefied flammable gas (LPG, butane, propane, etc.) per CCPS / TNO correlations:
+ * Computes fireball diameter, duration and surface emissive power for a sudden release of pressure- liquefied flammable
+ * gas (LPG, butane, propane, etc.) per CCPS / TNO correlations:
  * <ul>
  * <li>D_fb = 5.8 · M^(1/3) (m, M in kg)</li>
  * <li>t_fb = 0.45 · M^(1/3) (s, M in kg)</li>
@@ -37,12 +37,11 @@ public class BLEVECalculator implements Serializable {
   /**
    * Construct a BLEVE calculator.
    *
-   * @param fuelMassKg total mass of vaporizing fuel in kg
+   * @param fuelMassKg             total mass of vaporizing fuel in kg
    * @param heatOfCombustionJPerKg lower heating value, J/kg
-   * @param radiativeFraction fraction of combustion energy radiated (0.25 – 0.40)
+   * @param radiativeFraction      fraction of combustion energy radiated (0.25 – 0.40)
    */
-  public BLEVECalculator(double fuelMassKg, double heatOfCombustionJPerKg,
-      double radiativeFraction) {
+  public BLEVECalculator(double fuelMassKg, double heatOfCombustionJPerKg, double radiativeFraction) {
     if (fuelMassKg <= 0.0 || heatOfCombustionJPerKg <= 0.0) {
       throw new IllegalArgumentException("fuelMass > 0 and heatOfCombustion > 0 required");
     }
@@ -101,8 +100,7 @@ public class BLEVECalculator implements Serializable {
   public double transmissivity(double distanceM) {
     double pw = humidityRH * 1700.0;
     double xpw = pw * Math.max(distanceM, 1.0);
-    double tau = 1.006 - 0.01171 * Math.log10(xpw)
-        - 0.02368 * Math.pow(Math.log10(xpw), 2);
+    double tau = 1.006 - 0.01171 * Math.log10(xpw) - 0.02368 * Math.pow(Math.log10(xpw), 2);
     return Math.max(0.0, Math.min(1.0, tau));
   }
 
@@ -140,9 +138,9 @@ public class BLEVECalculator implements Serializable {
     for (int i = 0; i < 60; i++) {
       double mid = 0.5 * (lo + hi);
       if (incidentHeatFlux(mid) > targetFluxWperM2) {
-        lo = mid;
+	lo = mid;
       } else {
-        hi = mid;
+	hi = mid;
       }
     }
     return 0.5 * (lo + hi);

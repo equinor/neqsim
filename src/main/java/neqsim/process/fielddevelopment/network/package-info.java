@@ -2,9 +2,8 @@
  * Network solver package for multi-well gathering systems.
  *
  * <p>
- * This package provides classes for solving pressure-flow equilibrium in gathering networks with
- * multiple wells, flowlines, and manifolds. It supports the "Production Network Optimization" topic
- * from NTNU's TPG4230 course.
+ * This package provides classes for solving pressure-flow equilibrium in gathering networks with multiple wells,
+ * flowlines, and manifolds. It supports the "Production Network Optimization" topic from NTNU's TPG4230 course.
  * </p>
  *
  * <h2>TPG4230 Topic: Production Network Optimization</h2>
@@ -20,8 +19,7 @@
  *
  * <h2>Key Classes</h2>
  * <ul>
- * <li>{@link neqsim.process.fielddevelopment.network.NetworkSolver} - Solves network
- * equilibrium</li>
+ * <li>{@link neqsim.process.fielddevelopment.network.NetworkSolver} - Solves network equilibrium</li>
  * <li>{@link neqsim.process.fielddevelopment.network.NetworkResult} - Result container</li>
  * </ul>
  *

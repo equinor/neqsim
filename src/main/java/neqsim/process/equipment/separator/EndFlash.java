@@ -10,9 +10,9 @@ import neqsim.thermo.system.SystemInterface;
  * End flash drum model for LNG production.
  *
  * <p>
- * The end flash drum is the final separation stage in an LNG plant. Sub-cooled LNG from the main
- * cryogenic heat exchanger (MCHE) is letdown to near-atmospheric pressure, causing flash
- * evaporation. The flash gas (rich in nitrogen) is separated from the LNG product.
+ * The end flash drum is the final separation stage in an LNG plant. Sub-cooled LNG from the main cryogenic heat
+ * exchanger (MCHE) is letdown to near-atmospheric pressure, causing flash evaporation. The flash gas (rich in nitrogen)
+ * is separated from the LNG product.
  * </p>
  *
  * <p>
@@ -62,7 +62,7 @@ public class EndFlash extends Separator {
   /**
    * Constructor for EndFlash with inlet stream.
    *
-   * @param name name of the end flash drum
+   * @param name        name of the end flash drum
    * @param inletStream inlet sub-cooled LNG stream
    */
   public EndFlash(String name, StreamInterface inletStream) {
@@ -151,13 +151,12 @@ public class EndFlash extends Separator {
     }
 
     // Calculate flash gas ratio
-    if (gasOut != null && liqOut != null && gasOut.getThermoSystem() != null
-        && liqOut.getThermoSystem() != null) {
+    if (gasOut != null && liqOut != null && gasOut.getThermoSystem() != null && liqOut.getThermoSystem() != null) {
       double gasMoles = gasOut.getThermoSystem().getTotalNumberOfMoles();
       double liqMoles = liqOut.getThermoSystem().getTotalNumberOfMoles();
       double totalMoles = gasMoles + liqMoles;
       if (totalMoles > 0) {
-        flashGasRatio = gasMoles / totalMoles;
+	flashGasRatio = gasMoles / totalMoles;
       }
     }
 
@@ -165,14 +164,13 @@ public class EndFlash extends Separator {
     lngSpecMet = (n2InLNGMolFrac <= maxN2InLNG);
 
     if (!lngSpecMet) {
-      logger.warn(String.format("End Flash '%s': N2 in LNG = %.4f exceeds max %.4f", getName(),
-          n2InLNGMolFrac, maxN2InLNG));
+      logger.warn(
+	  String.format("End Flash '%s': N2 in LNG = %.4f exceeds max %.4f", getName(), n2InLNGMolFrac, maxN2InLNG));
     }
 
-    logger.info(String.format(
-        "End Flash '%s': N2_LNG=%.4f, CH4_LNG=%.4f, N2_gas=%.4f, flash_ratio=%.4f, spec=%s",
-        getName(), n2InLNGMolFrac, methaneInLNGMolFrac, n2InFlashGasMolFrac, flashGasRatio,
-        lngSpecMet ? "MET" : "NOT MET"));
+    logger.info(
+	String.format("End Flash '%s': N2_LNG=%.4f, CH4_LNG=%.4f, N2_gas=%.4f, flash_ratio=%.4f, spec=%s", getName(),
+	    n2InLNGMolFrac, methaneInLNGMolFrac, n2InFlashGasMolFrac, flashGasRatio, lngSpecMet ? "MET" : "NOT MET"));
 
     setCalculationIdentifier(id);
   }
@@ -186,7 +184,7 @@ public class EndFlash extends Separator {
     n2InFlashGasMolFrac = 0.0;
     try {
       if (gasSystem.getPhase(0).hasComponent("nitrogen")) {
-        n2InFlashGasMolFrac = gasSystem.getPhase(0).getComponent("nitrogen").getz();
+	n2InFlashGasMolFrac = gasSystem.getPhase(0).getComponent("nitrogen").getz();
       }
     } catch (Exception ex) {
       logger.debug("Nitrogen not found in flash gas", ex);
@@ -203,10 +201,10 @@ public class EndFlash extends Separator {
     methaneInLNGMolFrac = 0.0;
     try {
       if (liqSystem.getPhase(0).hasComponent("nitrogen")) {
-        n2InLNGMolFrac = liqSystem.getPhase(0).getComponent("nitrogen").getz();
+	n2InLNGMolFrac = liqSystem.getPhase(0).getComponent("nitrogen").getz();
       }
       if (liqSystem.getPhase(0).hasComponent("methane")) {
-        methaneInLNGMolFrac = liqSystem.getPhase(0).getComponent("methane").getz();
+	methaneInLNGMolFrac = liqSystem.getPhase(0).getComponent("methane").getz();
       }
     } catch (Exception ex) {
       logger.debug("Component analysis for LNG product failed", ex);

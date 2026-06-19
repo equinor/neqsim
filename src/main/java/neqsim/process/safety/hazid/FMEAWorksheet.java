@@ -42,24 +42,22 @@ public class FMEAWorksheet implements Serializable {
   /**
    * Add a failure-mode entry.
    *
-   * @param component equipment / item being analysed
+   * @param component   equipment / item being analysed
    * @param failureMode failure mode description
-   * @param effect effect on system
-   * @param cause root cause
-   * @param severity 1..10
-   * @param occurrence 1..10
-   * @param detection 1..10
-   * @param mitigation recommended mitigation (may be null)
+   * @param effect      effect on system
+   * @param cause       root cause
+   * @param severity    1..10
+   * @param occurrence  1..10
+   * @param detection   1..10
+   * @param mitigation  recommended mitigation (may be null)
    * @return this worksheet for chaining
    */
-  public FMEAWorksheet addEntry(String component, String failureMode, String effect,
-      String cause, int severity, int occurrence, int detection, String mitigation) {
-    if (severity < 1 || severity > 10 || occurrence < 1 || occurrence > 10
-        || detection < 1 || detection > 10) {
+  public FMEAWorksheet addEntry(String component, String failureMode, String effect, String cause, int severity,
+      int occurrence, int detection, String mitigation) {
+    if (severity < 1 || severity > 10 || occurrence < 1 || occurrence > 10 || detection < 1 || detection > 10) {
       throw new IllegalArgumentException("S, O, D must each be in [1, 10]");
     }
-    entries.add(new FMEAEntry(component, failureMode, effect, cause, severity, occurrence,
-        detection, mitigation));
+    entries.add(new FMEAEntry(component, failureMode, effect, cause, severity, occurrence, detection, mitigation));
     return this;
   }
 
@@ -71,7 +69,7 @@ public class FMEAWorksheet implements Serializable {
     Collections.sort(copy, new Comparator<FMEAEntry>() {
       @Override
       public int compare(FMEAEntry a, FMEAEntry b) {
-        return Integer.compare(b.rpn(), a.rpn());
+	return Integer.compare(b.rpn(), a.rpn());
       }
     });
     return copy;
@@ -85,7 +83,7 @@ public class FMEAWorksheet implements Serializable {
     List<FMEAEntry> out = new ArrayList<>();
     for (FMEAEntry e : entries) {
       if (e.rpn() >= rpnThreshold) {
-        out.add(e);
+	out.add(e);
       }
     }
     return out;
@@ -106,7 +104,7 @@ public class FMEAWorksheet implements Serializable {
       sb.append("    Effect      : ").append(e.effect).append('\n');
       sb.append(String.format("    S=%d O=%d D=%d%n", e.severity, e.occurrence, e.detection));
       if (e.mitigation != null) {
-        sb.append("    Mitigation  : ").append(e.mitigation).append('\n');
+	sb.append("    Mitigation  : ").append(e.mitigation).append('\n');
       }
     }
     return sb.toString();
@@ -135,17 +133,17 @@ public class FMEAWorksheet implements Serializable {
     public final String mitigation;
 
     /**
-     * @param component component
+     * @param component   component
      * @param failureMode failure mode
-     * @param effect effect description
-     * @param cause root cause
-     * @param severity severity score 1-10
-     * @param occurrence occurrence score 1-10
-     * @param detection detection score 1-10
-     * @param mitigation mitigation
+     * @param effect      effect description
+     * @param cause       root cause
+     * @param severity    severity score 1-10
+     * @param occurrence  occurrence score 1-10
+     * @param detection   detection score 1-10
+     * @param mitigation  mitigation
      */
-    public FMEAEntry(String component, String failureMode, String effect, String cause,
-        int severity, int occurrence, int detection, String mitigation) {
+    public FMEAEntry(String component, String failureMode, String effect, String cause, int severity, int occurrence,
+	int detection, String mitigation) {
       this.component = component;
       this.failureMode = failureMode;
       this.effect = effect;

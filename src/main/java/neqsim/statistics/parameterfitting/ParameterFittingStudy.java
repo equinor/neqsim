@@ -25,8 +25,7 @@ public class ParameterFittingStudy {
   private final LevenbergMarquardt optimizer = new LevenbergMarquardt();
   private String[] parameterNames;
   private ParameterFittingSpec spec;
-  private ObjectiveFunctionType objectiveFunctionType =
-      ObjectiveFunctionType.WEIGHTED_LEAST_SQUARES;
+  private ObjectiveFunctionType objectiveFunctionType = ObjectiveFunctionType.WEIGHTED_LEAST_SQUARES;
   private double robustTuningConstant = DEFAULT_ROBUST_TUNING_CONSTANT;
   private int maxRobustIterations = DEFAULT_MAX_ROBUST_ITERATIONS;
   private int multiStartCount = 1;
@@ -38,7 +37,7 @@ public class ParameterFittingStudy {
   /**
    * Creates a parameter fitting study.
    *
-   * @param dataSet experimental data set to fit
+   * @param dataSet  experimental data set to fit
    * @param function fitting function that predicts the measured response
    * @throws IllegalArgumentException if dataSet or function is null
    */
@@ -56,13 +55,12 @@ public class ParameterFittingStudy {
   /**
    * Creates a parameter fitting study using a complete fitting specification.
    *
-   * @param dataSet experimental data set to fit
+   * @param dataSet  experimental data set to fit
    * @param function fitting function that predicts the measured response
-   * @param spec fitting specification
+   * @param spec     fitting specification
    * @throws IllegalArgumentException if any argument is null or invalid
    */
-  public ParameterFittingStudy(ExperimentalDataSet dataSet, BaseFunction function,
-      ParameterFittingSpec spec) {
+  public ParameterFittingStudy(ExperimentalDataSet dataSet, BaseFunction function, ParameterFittingSpec spec) {
     this(dataSet, function);
     setSpec(spec);
   }
@@ -124,8 +122,7 @@ public class ParameterFittingStudy {
     if (parameterNames == null || parameterNames.length == 0) {
       throw new IllegalArgumentException("parameterNames must contain at least one name");
     }
-    if (function.getFittingParams() != null
-        && parameterNames.length != function.getFittingParams().length) {
+    if (function.getFittingParams() != null && parameterNames.length != function.getFittingParams().length) {
       throw new IllegalArgumentException("parameterNames must match the number of fitting params");
     }
     this.parameterNames = copyArray(parameterNames);
@@ -166,11 +163,9 @@ public class ParameterFittingStudy {
    * @param objectiveFunctionType objective function type
    * @return this study for fluent configuration
    */
-  public ParameterFittingStudy setObjectiveFunctionType(
-      ObjectiveFunctionType objectiveFunctionType) {
-    this.objectiveFunctionType =
-        objectiveFunctionType == null ? ObjectiveFunctionType.WEIGHTED_LEAST_SQUARES
-            : objectiveFunctionType;
+  public ParameterFittingStudy setObjectiveFunctionType(ObjectiveFunctionType objectiveFunctionType) {
+    this.objectiveFunctionType = objectiveFunctionType == null ? ObjectiveFunctionType.WEIGHTED_LEAST_SQUARES
+	: objectiveFunctionType;
     return this;
   }
 
@@ -181,8 +176,7 @@ public class ParameterFittingStudy {
    * @return this study for fluent configuration
    */
   public ParameterFittingStudy setRobustTuningConstant(double robustTuningConstant) {
-    if (robustTuningConstant <= 0.0 || Double.isNaN(robustTuningConstant)
-        || Double.isInfinite(robustTuningConstant)) {
+    if (robustTuningConstant <= 0.0 || Double.isNaN(robustTuningConstant) || Double.isInfinite(robustTuningConstant)) {
       throw new IllegalArgumentException("robustTuningConstant must be positive and finite");
     }
     this.robustTuningConstant = robustTuningConstant;
@@ -245,15 +239,14 @@ public class ParameterFittingStudy {
    * @param parameterUpdateAdapter parameter update adapter, or null to clear
    * @return this study for fluent configuration
    */
-  public ParameterFittingStudy setParameterUpdateAdapter(
-      ParameterUpdateAdapter parameterUpdateAdapter) {
+  public ParameterFittingStudy setParameterUpdateAdapter(ParameterUpdateAdapter parameterUpdateAdapter) {
     this.parameterUpdateAdapter = parameterUpdateAdapter;
     if (parameterUpdateAdapter != null && parameterUpdateAdapter.getParameters() != null
-        && parameterUpdateAdapter.getParameters().length > 0 && spec == null) {
+	&& parameterUpdateAdapter.getParameters().length > 0 && spec == null) {
       ParameterFittingSpec adapterSpec = new ParameterFittingSpec("adapter fitting study");
       FittingParameter[] parameters = parameterUpdateAdapter.getParameters();
       for (int i = 0; i < parameters.length; i++) {
-        adapterSpec.addParameter(parameters[i]);
+	adapterSpec.addParameter(parameters[i]);
       }
       setSpec(adapterSpec);
     }
@@ -272,7 +265,7 @@ public class ParameterFittingStudy {
     }
     if (function.getFittingParams() == null || function.getFittingParams().length == 0) {
       if (spec == null) {
-        throw new IllegalStateException("setInitialGuess must be called before run");
+	throw new IllegalStateException("setInitialGuess must be called before run");
       }
       setInitialGuess(spec.getInitialGuess());
     }
@@ -290,7 +283,7 @@ public class ParameterFittingStudy {
       double[] initialGuess = start == 0 ? firstInitialGuess : createRandomInitialGuess(random);
       Result candidate = runSingleStart(fittingDataSet, validation, initialGuess);
       if (bestResult == null || candidate.getObjectiveValue() < bestResult.getObjectiveValue()) {
-        bestResult = candidate;
+	bestResult = candidate;
       }
     }
     setPhysicalParameters(bestResult.getFittedParameters());
@@ -379,8 +372,8 @@ public class ParameterFittingStudy {
    * Runs one multi-start candidate.
    *
    * @param fittingDataSet data set used for fitting
-   * @param validation data set used for validation, or null
-   * @param initialGuess physical initial parameter values
+   * @param validation     data set used for validation, or null
+   * @param initialGuess   physical initial parameter values
    * @return candidate result
    */
   private Result runSingleStart(ExperimentalDataSet fittingDataSet, ExperimentalDataSet validation,
@@ -396,13 +389,12 @@ public class ParameterFittingStudy {
       optimizer.solve();
       setPhysicalParameters(resolvePhysicalParameters(optimizationFunction));
       if (!objectiveFunctionType.isRobust()) {
-        break;
+	break;
       }
       double[] weights = calculateRobustWeights(fittingDataSet);
       sampleSet = createWeightedSampleSet(fittingDataSet, optimizationFunction, weights);
     }
-    return createResult(fittingDataSet, validation, optimizer.getResult(), completedRobustPasses,
-        optimizationFunction);
+    return createResult(fittingDataSet, validation, optimizer.getResult(), completedRobustPasses, optimizationFunction);
   }
 
   /**
@@ -424,30 +416,26 @@ public class ParameterFittingStudy {
   /**
    * Creates a result object from the final fitted function state.
    *
-   * @param fittingDataSet data set used for fitting
-   * @param validation data set used for validation, or null
-   * @param optimizerResult optimizer result to include
-   * @param robustPasses number of robust reweighting passes completed
+   * @param fittingDataSet       data set used for fitting
+   * @param validation           data set used for validation, or null
+   * @param optimizerResult      optimizer result to include
+   * @param robustPasses         number of robust reweighting passes completed
    * @param optimizationFunction function used by the optimizer
    * @return fitting study result
    */
   private Result createResult(ExperimentalDataSet fittingDataSet, ExperimentalDataSet validation,
-      LevenbergMarquardtResult optimizerResult, int robustPasses,
-      BaseFunction optimizationFunction) {
+      LevenbergMarquardtResult optimizerResult, int robustPasses, BaseFunction optimizationFunction) {
     double[] fittedParameters = resolvePhysicalParameters(optimizationFunction);
     setPhysicalParameters(fittedParameters);
     Metrics fittingMetrics = calculateMetrics(fittingDataSet);
-    Metrics validationMetrics =
-        validation == null ? Metrics.notAvailable() : calculateMetrics(validation);
+    Metrics validationMetrics = validation == null ? Metrics.notAvailable() : calculateMetrics(validation);
     double objectiveValue = calculateObjectiveValue(fittingDataSet, fittedParameters);
-    return new Result(optimizerResult, fittedParameters, resolveParameterNames(),
-        fittingMetrics.calculatedValues, fittingMetrics.residuals, fittingMetrics.weightedResiduals,
-        fittingMetrics.rootMeanSquareError, fittingMetrics.meanAbsoluteError,
-        fittingMetrics.weightedRootMeanSquareError, fittingMetrics.reducedChiSquare,
-        objectiveFunctionType, objectiveValue, robustPasses, validationMetrics.calculatedValues,
-        validationMetrics.residuals, validationMetrics.weightedResiduals,
-        validationMetrics.rootMeanSquareError, validationMetrics.meanAbsoluteError,
-        validationMetrics.weightedRootMeanSquareError);
+    return new Result(optimizerResult, fittedParameters, resolveParameterNames(), fittingMetrics.calculatedValues,
+	fittingMetrics.residuals, fittingMetrics.weightedResiduals, fittingMetrics.rootMeanSquareError,
+	fittingMetrics.meanAbsoluteError, fittingMetrics.weightedRootMeanSquareError, fittingMetrics.reducedChiSquare,
+	objectiveFunctionType, objectiveValue, robustPasses, validationMetrics.calculatedValues,
+	validationMetrics.residuals, validationMetrics.weightedResiduals, validationMetrics.rootMeanSquareError,
+	validationMetrics.meanAbsoluteError, validationMetrics.weightedRootMeanSquareError);
   }
 
   /**
@@ -477,8 +465,8 @@ public class ParameterFittingStudy {
     double weightedRootMeanSquareError = Math.sqrt(sumWeightedSquared / metricsDataSet.size());
     int degreesOfFreedom = Math.max(1, metricsDataSet.size() - currentPhysicalParameters().length);
     double reducedChiSquare = sumWeightedSquared / degreesOfFreedom;
-    return new Metrics(calculatedValues, residuals, weightedResiduals, rootMeanSquareError,
-        meanAbsoluteError, weightedRootMeanSquareError, reducedChiSquare);
+    return new Metrics(calculatedValues, residuals, weightedResiduals, rootMeanSquareError, meanAbsoluteError,
+	weightedRootMeanSquareError, reducedChiSquare);
   }
 
   /**
@@ -516,7 +504,7 @@ public class ParameterFittingStudy {
       return Math.max(NUMERICAL_EPSILON, 1.0 / (1.0 + scaled * scaled));
     } else if (objectiveFunctionType == ObjectiveFunctionType.TUKEY_BIWEIGHT) {
       if (absResidual >= c) {
-        return NUMERICAL_EPSILON;
+	return NUMERICAL_EPSILON;
       }
       double scaled = standardizedResidual / c;
       double factor = 1.0 - scaled * scaled;
@@ -528,20 +516,20 @@ public class ParameterFittingStudy {
   /**
    * Creates a sample set with standard deviations adjusted by robust weights.
    *
-   * @param fittingDataSet source data set
+   * @param fittingDataSet       source data set
    * @param optimizationFunction function to attach to each sample
-   * @param weights robust weights
+   * @param weights              robust weights
    * @return weighted sample set
    */
-  private SampleSet createWeightedSampleSet(ExperimentalDataSet fittingDataSet,
-      BaseFunction optimizationFunction, double[] weights) {
+  private SampleSet createWeightedSampleSet(ExperimentalDataSet fittingDataSet, BaseFunction optimizationFunction,
+      double[] weights) {
     SampleSet sampleSet = new SampleSet();
     for (int i = 0; i < fittingDataSet.size(); i++) {
       ExperimentalDataPoint point = fittingDataSet.getPoint(i);
-      double adjustedStandardDeviation =
-          point.getStandardDeviation() / Math.sqrt(Math.max(NUMERICAL_EPSILON, weights[i]));
+      double adjustedStandardDeviation = point.getStandardDeviation()
+	  / Math.sqrt(Math.max(NUMERICAL_EPSILON, weights[i]));
       SampleValue sample = new SampleValue(point.getMeasuredValue(), adjustedStandardDeviation,
-          point.getDependentValues());
+	  point.getDependentValues());
       sample.setReference(point.getReference());
       sample.setDescription(point.getDescription());
       sample.setFunction(optimizationFunction);
@@ -553,12 +541,11 @@ public class ParameterFittingStudy {
   /**
    * Calculates the configured objective value from physical residuals and priors.
    *
-   * @param fittingDataSet data set used for fitting
+   * @param fittingDataSet   data set used for fitting
    * @param fittedParameters physical fitted parameter values
    * @return objective value
    */
-  private double calculateObjectiveValue(ExperimentalDataSet fittingDataSet,
-      double[] fittedParameters) {
+  private double calculateObjectiveValue(ExperimentalDataSet fittingDataSet, double[] fittedParameters) {
     double objectiveValue = 0.0;
     for (int i = 0; i < fittingDataSet.size(); i++) {
       ExperimentalDataPoint point = fittingDataSet.getPoint(i);
@@ -568,12 +555,12 @@ public class ParameterFittingStudy {
     }
     if (spec != null) {
       for (int i = 0; i < spec.getParameters().size(); i++) {
-        FittingParameter parameter = spec.getParameters().get(i);
-        if (parameter.hasPrior()) {
-          double standardized = (fittedParameters[i] - parameter.getPriorValue())
-              / parameter.getPriorStandardDeviation();
-          objectiveValue += standardized * standardized;
-        }
+	FittingParameter parameter = spec.getParameters().get(i);
+	if (parameter.hasPrior()) {
+	  double standardized = (fittedParameters[i] - parameter.getPriorValue())
+	      / parameter.getPriorStandardDeviation();
+	  objectiveValue += standardized * standardized;
+	}
       }
     }
     return objectiveValue;
@@ -591,14 +578,13 @@ public class ParameterFittingStudy {
     if (objectiveFunctionType == ObjectiveFunctionType.ABSOLUTE_DEVIATION) {
       return absResidual;
     } else if (objectiveFunctionType == ObjectiveFunctionType.HUBER) {
-      return absResidual <= c ? standardizedResidual * standardizedResidual
-          : 2.0 * c * absResidual - c * c;
+      return absResidual <= c ? standardizedResidual * standardizedResidual : 2.0 * c * absResidual - c * c;
     } else if (objectiveFunctionType == ObjectiveFunctionType.CAUCHY) {
       double scaled = standardizedResidual / c;
       return c * c * Math.log(1.0 + scaled * scaled);
     } else if (objectiveFunctionType == ObjectiveFunctionType.TUKEY_BIWEIGHT) {
       if (absResidual >= c) {
-        return c * c / 3.0;
+	return c * c / 3.0;
       }
       double scaled = standardizedResidual / c;
       double factor = 1.0 - scaled * scaled;
@@ -653,12 +639,11 @@ public class ParameterFittingStudy {
    * @param values physical parameter values
    */
   private void setPhysicalParameters(double[] values) {
-    if (function.getFittingParams() == null
-        || function.getFittingParams().length != values.length) {
+    if (function.getFittingParams() == null || function.getFittingParams().length != values.length) {
       function.setInitialGuess(copyArray(values));
     } else {
       for (int i = 0; i < values.length; i++) {
-        function.setFittingParams(i, values[i]);
+	function.setFittingParams(i, values[i]);
       }
     }
     applyParameterAdapter(values);
@@ -691,7 +676,7 @@ public class ParameterFittingStudy {
   /**
    * Validates a finite double array.
    *
-   * @param name array name used in error messages
+   * @param name   array name used in error messages
    * @param values values to validate
    * @throws IllegalArgumentException if values are null, empty or contain non-finite entries
    */
@@ -701,7 +686,7 @@ public class ParameterFittingStudy {
     }
     for (int i = 0; i < values.length; i++) {
       if (Double.isNaN(values[i]) || Double.isInfinite(values[i])) {
-        throw new IllegalArgumentException(name + "[" + i + "] must be finite");
+	throw new IllegalArgumentException(name + "[" + i + "] must be finite");
       }
     }
   }
@@ -716,20 +701,19 @@ public class ParameterFittingStudy {
     if (bounds == null || bounds.length == 0) {
       throw new IllegalArgumentException("bounds must contain at least one row");
     }
-    if (function.getFittingParams() != null
-        && bounds.length != function.getFittingParams().length) {
+    if (function.getFittingParams() != null && bounds.length != function.getFittingParams().length) {
       throw new IllegalArgumentException("bounds must match the number of fitting params");
     }
     for (int i = 0; i < bounds.length; i++) {
       if (bounds[i] == null || bounds[i].length != 2) {
-        throw new IllegalArgumentException("bounds[" + i + "] must contain lower and upper values");
+	throw new IllegalArgumentException("bounds[" + i + "] must contain lower and upper values");
       }
-      if (Double.isNaN(bounds[i][0]) || Double.isInfinite(bounds[i][0])
-          || Double.isNaN(bounds[i][1]) || Double.isInfinite(bounds[i][1])) {
-        throw new IllegalArgumentException("bounds[" + i + "] values must be finite");
+      if (Double.isNaN(bounds[i][0]) || Double.isInfinite(bounds[i][0]) || Double.isNaN(bounds[i][1])
+	  || Double.isInfinite(bounds[i][1])) {
+	throw new IllegalArgumentException("bounds[" + i + "] values must be finite");
       }
       if (bounds[i][0] > bounds[i][1]) {
-        throw new IllegalArgumentException("bounds[" + i + "] lower value exceeds upper value");
+	throw new IllegalArgumentException("bounds[" + i + "] lower value exceeds upper value");
       }
     }
   }
@@ -804,17 +788,17 @@ public class ParameterFittingStudy {
     /**
      * Creates metrics.
      *
-     * @param calculatedValues calculated values
-     * @param residuals residuals
-     * @param weightedResiduals weighted residuals
-     * @param rootMeanSquareError root mean square error
-     * @param meanAbsoluteError mean absolute error
+     * @param calculatedValues            calculated values
+     * @param residuals                   residuals
+     * @param weightedResiduals           weighted residuals
+     * @param rootMeanSquareError         root mean square error
+     * @param meanAbsoluteError           mean absolute error
      * @param weightedRootMeanSquareError weighted root mean square error
-     * @param reducedChiSquare reduced chi-square
+     * @param reducedChiSquare            reduced chi-square
      */
     private Metrics(double[] calculatedValues, double[] residuals, double[] weightedResiduals,
-        double rootMeanSquareError, double meanAbsoluteError, double weightedRootMeanSquareError,
-        double reducedChiSquare) {
+	double rootMeanSquareError, double meanAbsoluteError, double weightedRootMeanSquareError,
+	double reducedChiSquare) {
       this.calculatedValues = copyArray(calculatedValues);
       this.residuals = copyArray(residuals);
       this.weightedResiduals = copyArray(weightedResiduals);
@@ -830,8 +814,7 @@ public class ParameterFittingStudy {
      * @return empty metrics
      */
     private static Metrics notAvailable() {
-      return new Metrics(new double[0], new double[0], new double[0], Double.NaN, Double.NaN,
-          Double.NaN, Double.NaN);
+      return new Metrics(new double[0], new double[0], new double[0], Double.NaN, Double.NaN, Double.NaN, Double.NaN);
     }
   }
 
@@ -850,11 +833,10 @@ public class ParameterFittingStudy {
      * Creates a spec-backed fitting function.
      *
      * @param delegate physical fitting function
-     * @param spec fitting specification
-     * @param adapter optional parameter update adapter
+     * @param spec     fitting specification
+     * @param adapter  optional parameter update adapter
      */
-    private SpecBackedFunction(BaseFunction delegate, ParameterFittingSpec spec,
-        ParameterUpdateAdapter adapter) {
+    private SpecBackedFunction(BaseFunction delegate, ParameterFittingSpec spec, ParameterUpdateAdapter adapter) {
       this.delegate = delegate;
       this.spec = spec;
       this.adapter = adapter;
@@ -900,10 +882,10 @@ public class ParameterFittingStudy {
     private void syncDelegate() {
       double[] physicalValues = getPhysicalParameters();
       for (int i = 0; i < physicalValues.length; i++) {
-        delegate.setFittingParams(i, physicalValues[i]);
+	delegate.setFittingParams(i, physicalValues[i]);
       }
       if (adapter != null) {
-        adapter.applyParameters(physicalValues);
+	adapter.applyParameters(physicalValues);
       }
     }
 
@@ -911,18 +893,18 @@ public class ParameterFittingStudy {
      * Converts physical values to optimizer-space values.
      *
      * @param values physical parameter values
-     * @param spec fitting specification
+     * @param spec   fitting specification
      * @return optimizer-space parameter values
      */
     private static double[] toInternal(double[] values, ParameterFittingSpec spec) {
       if (values == null || values.length != spec.getParameters().size()) {
-        return spec.getInternalInitialGuess();
+	return spec.getInternalInitialGuess();
       }
       double[] internalValues = new double[values.length];
       for (int i = 0; i < values.length; i++) {
-        FittingParameter parameter = spec.getParameters().get(i);
-        internalValues[i] = parameter.getTransform().toInternal(values[i],
-            parameter.getLowerBound(), parameter.getUpperBound());
+	FittingParameter parameter = spec.getParameters().get(i);
+	internalValues[i] = parameter.getTransform().toInternal(values[i], parameter.getLowerBound(),
+	    parameter.getUpperBound());
       }
       return internalValues;
     }
@@ -958,34 +940,33 @@ public class ParameterFittingStudy {
     /**
      * Creates a result object.
      *
-     * @param optimizerResult optimizer result
-     * @param fittedParameters final fitted parameter values
-     * @param parameterNames final fitted parameter names
-     * @param calculatedValues model calculated values for each data point
-     * @param residuals measured minus calculated residuals
-     * @param weightedResiduals residuals divided by standard deviations
-     * @param rootMeanSquareError unweighted root mean square error
-     * @param meanAbsoluteError unweighted mean absolute error
-     * @param weightedRootMeanSquareError weighted root mean square error
-     * @param reducedChiSquare reduced chi-square using training residuals
-     * @param objectiveFunctionType objective function type
-     * @param objectiveValue final objective value
-     * @param robustIterations number of robust reweighting passes
-     * @param validationCalculatedValues validation calculated values
-     * @param validationResiduals validation residuals
-     * @param validationWeightedResiduals validation weighted residuals
-     * @param validationRootMeanSquareError validation root mean square error
-     * @param validationMeanAbsoluteError validation mean absolute error
+     * @param optimizerResult                       optimizer result
+     * @param fittedParameters                      final fitted parameter values
+     * @param parameterNames                        final fitted parameter names
+     * @param calculatedValues                      model calculated values for each data point
+     * @param residuals                             measured minus calculated residuals
+     * @param weightedResiduals                     residuals divided by standard deviations
+     * @param rootMeanSquareError                   unweighted root mean square error
+     * @param meanAbsoluteError                     unweighted mean absolute error
+     * @param weightedRootMeanSquareError           weighted root mean square error
+     * @param reducedChiSquare                      reduced chi-square using training residuals
+     * @param objectiveFunctionType                 objective function type
+     * @param objectiveValue                        final objective value
+     * @param robustIterations                      number of robust reweighting passes
+     * @param validationCalculatedValues            validation calculated values
+     * @param validationResiduals                   validation residuals
+     * @param validationWeightedResiduals           validation weighted residuals
+     * @param validationRootMeanSquareError         validation root mean square error
+     * @param validationMeanAbsoluteError           validation mean absolute error
      * @param validationWeightedRootMeanSquareError validation weighted root mean square error
      */
-    private Result(LevenbergMarquardtResult optimizerResult, double[] fittedParameters,
-        String[] parameterNames, double[] calculatedValues, double[] residuals,
-        double[] weightedResiduals, double rootMeanSquareError, double meanAbsoluteError,
-        double weightedRootMeanSquareError, double reducedChiSquare,
-        ObjectiveFunctionType objectiveFunctionType, double objectiveValue, int robustIterations,
-        double[] validationCalculatedValues, double[] validationResiduals,
-        double[] validationWeightedResiduals, double validationRootMeanSquareError,
-        double validationMeanAbsoluteError, double validationWeightedRootMeanSquareError) {
+    private Result(LevenbergMarquardtResult optimizerResult, double[] fittedParameters, String[] parameterNames,
+	double[] calculatedValues, double[] residuals, double[] weightedResiduals, double rootMeanSquareError,
+	double meanAbsoluteError, double weightedRootMeanSquareError, double reducedChiSquare,
+	ObjectiveFunctionType objectiveFunctionType, double objectiveValue, int robustIterations,
+	double[] validationCalculatedValues, double[] validationResiduals, double[] validationWeightedResiduals,
+	double validationRootMeanSquareError, double validationMeanAbsoluteError,
+	double validationWeightedRootMeanSquareError) {
       this.optimizerResult = optimizerResult;
       this.fittedParameters = copyArray(fittedParameters);
       this.parameterNames = copyArray(parameterNames);
@@ -1054,9 +1035,9 @@ public class ParameterFittingStudy {
      */
     public double getFittedParameter(String parameterName) {
       for (int i = 0; i < parameterNames.length; i++) {
-        if (parameterNames[i].equals(parameterName)) {
-          return fittedParameters[i];
-        }
+	if (parameterNames[i].equals(parameterName)) {
+	  return fittedParameters[i];
+	}
       }
       throw new IllegalArgumentException("Unknown parameter name: " + parameterName);
     }

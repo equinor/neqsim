@@ -11,8 +11,8 @@ import neqsim.process.processmodel.ProcessSystem;
  * Efficient derivative calculator for NeqSim process simulations.
  *
  * <p>
- * Calculates numerical derivatives (gradients, Jacobians, Hessians) of process outputs with respect
- * to process inputs. Designed for use in MPC, optimization, and AI/ML applications.
+ * Calculates numerical derivatives (gradients, Jacobians, Hessians) of process outputs with respect to process inputs.
+ * Designed for use in MPC, optimization, and AI/ML applications.
  * </p>
  *
  * <p>
@@ -44,8 +44,7 @@ import neqsim.process.processmodel.ProcessSystem;
  * double[][] jacobian = calc.calculateJacobian();
  *
  * // Or get single derivative
- * double dGasFlow_dFeedFlow =
- *     calc.getDerivative("Separator.gasOutStream.flowRate", "Feed.flowRate");
+ * double dGasFlow_dFeedFlow = calc.getDerivative("Separator.gasOutStream.flowRate", "Feed.flowRate");
  * }
  * </pre>
  *
@@ -141,20 +140,19 @@ public class ProcessDerivativeCalculator {
     private VariableType inferVariableType(String path) {
       String lowerPath = path.toLowerCase();
       if (lowerPath.contains("pressure")) {
-        return VariableType.PRESSURE;
+	return VariableType.PRESSURE;
       }
       if (lowerPath.contains("temperature") || lowerPath.contains("temp")) {
-        return VariableType.TEMPERATURE;
+	return VariableType.TEMPERATURE;
       }
       if (lowerPath.contains("flow")) {
-        return VariableType.FLOW_RATE;
+	return VariableType.FLOW_RATE;
       }
-      if (lowerPath.contains("composition") || lowerPath.contains("fraction")
-          || lowerPath.contains("mole")) {
-        return VariableType.COMPOSITION;
+      if (lowerPath.contains("composition") || lowerPath.contains("fraction") || lowerPath.contains("mole")) {
+	return VariableType.COMPOSITION;
       }
       if (lowerPath.contains("level")) {
-        return VariableType.LEVEL;
+	return VariableType.LEVEL;
       }
       return VariableType.GENERAL;
     }
@@ -205,7 +203,7 @@ public class ProcessDerivativeCalculator {
     /**
      * Constructor for valid result.
      *
-     * @param value the calculated derivative value
+     * @param value    the calculated derivative value
      * @param stepSize the step size used for calculation
      */
     public DerivativeResult(double value, double stepSize) {
@@ -253,8 +251,8 @@ public class ProcessDerivativeCalculator {
   /**
    * Add an input variable with custom step size.
    *
-   * @param path variable path
-   * @param unit unit of measurement
+   * @param path     variable path
+   * @param unit     unit of measurement
    * @param stepSize custom absolute step size
    * @return this calculator for chaining
    */
@@ -326,7 +324,7 @@ public class ProcessDerivativeCalculator {
   /**
    * Enable parallel computation of derivatives.
    *
-   * @param enabled whether to enable parallel computation
+   * @param enabled    whether to enable parallel computation
    * @param numThreads number of threads to use
    * @return this calculator for chaining
    */
@@ -373,7 +371,7 @@ public class ProcessDerivativeCalculator {
     for (int j = 0; j < numInputs; j++) {
       double[] gradient = calculateGradientForInput(j);
       for (int i = 0; i < numOutputs; i++) {
-        jacobian[i][j] = gradient[i];
+	jacobian[i][j] = gradient[i];
       }
     }
   }
@@ -399,10 +397,10 @@ public class ProcessDerivativeCalculator {
 
     try {
       for (int j = 0; j < numInputs; j++) {
-        double[] gradient = futures.get(j).get();
-        for (int i = 0; i < numOutputs; i++) {
-          jacobian[i][j] = gradient[i];
-        }
+	double[] gradient = futures.get(j).get();
+	for (int i = 0; i < numOutputs; i++) {
+	  jacobian[i][j] = gradient[i];
+	}
       }
     } catch (Exception e) {
       throw new RuntimeException("Parallel Jacobian calculation failed", e);
@@ -426,18 +424,18 @@ public class ProcessDerivativeCalculator {
     double[] gradient = new double[numOutputs];
 
     switch (method) {
-      case FORWARD_DIFFERENCE:
-        gradient = calculateForwardDifference(inputSpec, baseValue, step);
-        break;
+    case FORWARD_DIFFERENCE:
+      gradient = calculateForwardDifference(inputSpec, baseValue, step);
+      break;
 
-      case CENTRAL_DIFFERENCE:
-      default:
-        gradient = calculateCentralDifference(inputSpec, baseValue, step);
-        break;
+    case CENTRAL_DIFFERENCE:
+    default:
+      gradient = calculateCentralDifference(inputSpec, baseValue, step);
+      break;
 
-      case CENTRAL_DIFFERENCE_SECOND_ORDER:
-        gradient = calculateCentralDifferenceSecondOrder(inputSpec, baseValue, step);
-        break;
+    case CENTRAL_DIFFERENCE_SECOND_ORDER:
+      gradient = calculateCentralDifferenceSecondOrder(inputSpec, baseValue, step);
+      break;
     }
 
     return gradient;
@@ -448,11 +446,10 @@ public class ProcessDerivativeCalculator {
    *
    * @param inputSpec the input variable specification
    * @param baseValue the base value of the input variable
-   * @param step the perturbation step size
+   * @param step      the perturbation step size
    * @return gradient array with derivatives for each output variable
    */
-  private double[] calculateForwardDifference(VariableSpec inputSpec, double baseValue,
-      double step) {
+  private double[] calculateForwardDifference(VariableSpec inputSpec, double baseValue, double step) {
     int numOutputs = outputVariables.size();
     double[] gradient = new double[numOutputs];
 
@@ -478,11 +475,10 @@ public class ProcessDerivativeCalculator {
    *
    * @param inputSpec the input variable specification
    * @param baseValue the base value of the input variable
-   * @param step the perturbation step size
+   * @param step      the perturbation step size
    * @return gradient array with derivatives for each output variable
    */
-  private double[] calculateCentralDifference(VariableSpec inputSpec, double baseValue,
-      double step) {
+  private double[] calculateCentralDifference(VariableSpec inputSpec, double baseValue, double step) {
     int numOutputs = outputVariables.size();
     double[] gradient = new double[numOutputs];
 
@@ -513,11 +509,10 @@ public class ProcessDerivativeCalculator {
    *
    * @param inputSpec the input variable specification
    * @param baseValue the base value of the input variable
-   * @param step the perturbation step size
+   * @param step      the perturbation step size
    * @return gradient array with derivatives for each output variable
    */
-  private double[] calculateCentralDifferenceSecondOrder(VariableSpec inputSpec, double baseValue,
-      double step) {
+  private double[] calculateCentralDifferenceSecondOrder(VariableSpec inputSpec, double baseValue, double step) {
     int numOutputs = outputVariables.size();
     double[] gradient = new double[numOutputs];
 
@@ -533,8 +528,7 @@ public class ProcessDerivativeCalculator {
 
     // Five-point stencil formula: (-f(x+2h) + 8f(x+h) - 8f(x-h) + f(x-2h)) / 12h
     for (int i = 0; i < numOutputs; i++) {
-      gradient[i] = (-outputs_p2h[i] + 8 * outputs_p1h[i] - 8 * outputs_m1h[i] + outputs_m2h[i])
-          / (12.0 * step);
+      gradient[i] = (-outputs_p2h[i] + 8 * outputs_p1h[i] - 8 * outputs_m1h[i] + outputs_m2h[i]) / (12.0 * step);
     }
 
     return gradient;
@@ -544,7 +538,7 @@ public class ProcessDerivativeCalculator {
    * Helper to perturb input and evaluate outputs.
    *
    * @param inputSpec the input variable specification
-   * @param value the value to set for the input variable
+   * @param value     the value to set for the input variable
    * @return array of output values after perturbation
    */
   private double[] perturbAndEvaluate(VariableSpec inputSpec, double value) {
@@ -557,7 +551,7 @@ public class ProcessDerivativeCalculator {
    * Calculate a single derivative ∂output/∂input.
    *
    * @param outputPath output variable path
-   * @param inputPath input variable path
+   * @param inputPath  input variable path
    * @return derivative value
    */
   public double getDerivative(String outputPath, String inputPath) {
@@ -567,21 +561,21 @@ public class ProcessDerivativeCalculator {
 
     for (int i = 0; i < inputVariables.size(); i++) {
       if (inputVariables.get(i).path.equals(inputPath)) {
-        inputIndex = i;
-        break;
+	inputIndex = i;
+	break;
       }
     }
 
     for (int i = 0; i < outputVariables.size(); i++) {
       if (outputVariables.get(i).path.equals(outputPath)) {
-        outputIndex = i;
-        break;
+	outputIndex = i;
+	break;
       }
     }
 
     if (inputIndex < 0 || outputIndex < 0) {
       throw new IllegalArgumentException(
-          "Variable not found. Ensure variables are added before calculating derivatives.");
+	  "Variable not found. Ensure variables are added before calculating derivatives.");
     }
 
     ensureBaseCase();
@@ -599,8 +593,8 @@ public class ProcessDerivativeCalculator {
     int outputIndex = -1;
     for (int i = 0; i < outputVariables.size(); i++) {
       if (outputVariables.get(i).path.equals(outputPath)) {
-        outputIndex = i;
-        break;
+	outputIndex = i;
+	break;
       }
     }
 
@@ -622,8 +616,8 @@ public class ProcessDerivativeCalculator {
     int outputIndex = -1;
     for (int i = 0; i < outputVariables.size(); i++) {
       if (outputVariables.get(i).path.equals(outputPath)) {
-        outputIndex = i;
-        break;
+	outputIndex = i;
+	break;
       }
     }
 
@@ -660,16 +654,16 @@ public class ProcessDerivativeCalculator {
 
       // d²f/dx_i dx_j ≈ (∂f/∂x_j|_{x_i+h} - ∂f/∂x_j|_{x_i-h}) / 2h
       for (int j = 0; j < n; j++) {
-        hessian[i][j] = (gradPlus[j] - gradMinus[j]) / (2.0 * step);
+	hessian[i][j] = (gradPlus[j] - gradMinus[j]) / (2.0 * step);
       }
     }
 
     // Symmetrize (average upper and lower triangular)
     for (int i = 0; i < n; i++) {
       for (int j = i + 1; j < n; j++) {
-        double avg = (hessian[i][j] + hessian[j][i]) / 2.0;
-        hessian[i][j] = avg;
-        hessian[j][i] = avg;
+	double avg = (hessian[i][j] + hessian[j][i]) / 2.0;
+	hessian[i][j] = avg;
+	hessian[j][i] = avg;
       }
     }
 
@@ -679,7 +673,7 @@ public class ProcessDerivativeCalculator {
   /**
    * Calculate optimal step size based on variable type and value.
    *
-   * @param spec the variable specification
+   * @param spec  the variable specification
    * @param value the current value of the variable
    * @return the calculated optimal step size
    */
@@ -694,23 +688,23 @@ public class ProcessDerivativeCalculator {
     // Type-specific minimum steps
     double minStep;
     switch (spec.type) {
-      case PRESSURE:
-        minStep = 0.01; // 0.01 bar minimum
-        break;
-      case TEMPERATURE:
-        minStep = 0.1; // 0.1 K minimum
-        break;
-      case FLOW_RATE:
-        minStep = 0.001; // 0.001 kg/hr minimum
-        break;
-      case COMPOSITION:
-        minStep = 1e-6; // Very small for mole fractions
-        break;
-      case LEVEL:
-        minStep = 0.001; // 0.1% of level range
-        break;
-      default:
-        minStep = minAbsoluteStep;
+    case PRESSURE:
+      minStep = 0.01; // 0.01 bar minimum
+      break;
+    case TEMPERATURE:
+      minStep = 0.1; // 0.1 K minimum
+      break;
+    case FLOW_RATE:
+      minStep = 0.001; // 0.001 kg/hr minimum
+      break;
+    case COMPOSITION:
+      minStep = 1e-6; // Very small for mole fractions
+      break;
+    case LEVEL:
+      minStep = 0.001; // 0.1% of level range
+      break;
+    default:
+      minStep = minAbsoluteStep;
     }
 
     // Relative step with minimum floor
@@ -831,7 +825,7 @@ public class ProcessDerivativeCalculator {
     for (int i = 0; i < outputVariables.size(); i++) {
       sb.append(outputVariables.get(i).path);
       for (int j = 0; j < inputVariables.size(); j++) {
-        sb.append(",").append(jacobian[i][j]);
+	sb.append(",").append(jacobian[i][j]);
       }
       sb.append("\n");
     }
@@ -856,7 +850,7 @@ public class ProcessDerivativeCalculator {
     json.append("  \"inputs\": [");
     for (int i = 0; i < inputVariables.size(); i++) {
       if (i > 0) {
-        json.append(", ");
+	json.append(", ");
       }
       json.append("\"").append(inputVariables.get(i).path).append("\"");
     }
@@ -865,7 +859,7 @@ public class ProcessDerivativeCalculator {
     json.append("  \"outputs\": [");
     for (int i = 0; i < outputVariables.size(); i++) {
       if (i > 0) {
-        json.append(", ");
+	json.append(", ");
       }
       json.append("\"").append(outputVariables.get(i).path).append("\"");
     }
@@ -874,7 +868,7 @@ public class ProcessDerivativeCalculator {
     json.append("  \"baseInputValues\": [");
     for (int i = 0; i < baseInputValues.length; i++) {
       if (i > 0) {
-        json.append(", ");
+	json.append(", ");
       }
       json.append(baseInputValues[i]);
     }
@@ -883,7 +877,7 @@ public class ProcessDerivativeCalculator {
     json.append("  \"baseOutputValues\": [");
     for (int i = 0; i < baseOutputValues.length; i++) {
       if (i > 0) {
-        json.append(", ");
+	json.append(", ");
       }
       json.append(baseOutputValues[i]);
     }
@@ -893,14 +887,14 @@ public class ProcessDerivativeCalculator {
     for (int i = 0; i < jacobian.length; i++) {
       json.append("    [");
       for (int j = 0; j < jacobian[i].length; j++) {
-        if (j > 0) {
-          json.append(", ");
-        }
-        json.append(jacobian[i][j]);
+	if (j > 0) {
+	  json.append(", ");
+	}
+	json.append(jacobian[i][j]);
       }
       json.append("]");
       if (i < jacobian.length - 1) {
-        json.append(",");
+	json.append(",");
       }
       json.append("\n");
     }

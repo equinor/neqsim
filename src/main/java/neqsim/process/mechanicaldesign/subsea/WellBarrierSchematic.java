@@ -11,9 +11,8 @@ import java.util.Map;
  * Well barrier schematic per NORSOK D-010 Section 5.
  *
  * <p>
- * A well barrier schematic defines the primary and secondary barrier envelopes and validates them
- * against standard requirements. It implements the two-independent-barrier principle from NORSOK
- * D-010:
+ * A well barrier schematic defines the primary and secondary barrier envelopes and validates them against standard
+ * requirements. It implements the two-independent-barrier principle from NORSOK D-010:
  * </p>
  * <ul>
  * <li>Every well must have two independent well barrier envelopes</li>
@@ -161,7 +160,7 @@ public class WellBarrierSchematic implements Serializable {
   /**
    * Set barrier element count requirements (from standards data).
    *
-   * @param minPrimary minimum elements in primary envelope
+   * @param minPrimary   minimum elements in primary envelope
    * @param minSecondary minimum elements in secondary envelope
    */
   public void setMinimumElements(int minPrimary, int minSecondary) {
@@ -200,8 +199,8 @@ public class WellBarrierSchematic implements Serializable {
    * Validate the barrier schematic against NORSOK D-010 requirements.
    *
    * <p>
-   * Checks the two-barrier principle, minimum element counts, safety valve requirements (DHSV for
-   * producers, ISV for injectors), and envelope integrity.
+   * Checks the two-barrier principle, minimum element counts, safety valve requirements (DHSV for producers, ISV for
+   * injectors), and envelope integrity.
    * </p>
    *
    * @return true if all checks pass
@@ -219,17 +218,15 @@ public class WellBarrierSchematic implements Serializable {
       allPassed = false;
     } else {
       if (!primaryEnvelope.meetsMinimum(minPrimaryElements)) {
-        issues.add("FAIL: Primary envelope has " + primaryEnvelope.getFunctionalElementCount()
-            + " functional elements, minimum " + minPrimaryElements
-            + " required (NORSOK D-010 Sec 5)");
-        allPassed = false;
+	issues.add("FAIL: Primary envelope has " + primaryEnvelope.getFunctionalElementCount()
+	    + " functional elements, minimum " + minPrimaryElements + " required (NORSOK D-010 Sec 5)");
+	allPassed = false;
       }
       if (!primaryEnvelope.isIntact()) {
-        List<BarrierElement> failed = primaryEnvelope.getFailedElements();
-        for (BarrierElement el : failed) {
-          issues.add("WARNING: Primary envelope element failed: " + el.getName() + " ("
-              + el.getType().name() + ")");
-        }
+	List<BarrierElement> failed = primaryEnvelope.getFailedElements();
+	for (BarrierElement el : failed) {
+	  issues.add("WARNING: Primary envelope element failed: " + el.getName() + " (" + el.getType().name() + ")");
+	}
       }
     }
 
@@ -239,17 +236,15 @@ public class WellBarrierSchematic implements Serializable {
       allPassed = false;
     } else {
       if (!secondaryEnvelope.meetsMinimum(minSecondaryElements)) {
-        issues.add("FAIL: Secondary envelope has " + secondaryEnvelope.getFunctionalElementCount()
-            + " functional elements, minimum " + minSecondaryElements
-            + " required (NORSOK D-010 Sec 5)");
-        allPassed = false;
+	issues.add("FAIL: Secondary envelope has " + secondaryEnvelope.getFunctionalElementCount()
+	    + " functional elements, minimum " + minSecondaryElements + " required (NORSOK D-010 Sec 5)");
+	allPassed = false;
       }
       if (!secondaryEnvelope.isIntact()) {
-        List<BarrierElement> failed = secondaryEnvelope.getFailedElements();
-        for (BarrierElement el : failed) {
-          issues.add("WARNING: Secondary envelope element failed: " + el.getName() + " ("
-              + el.getType().name() + ")");
-        }
+	List<BarrierElement> failed = secondaryEnvelope.getFailedElements();
+	for (BarrierElement el : failed) {
+	  issues.add("WARNING: Secondary envelope element failed: " + el.getName() + " (" + el.getType().name() + ")");
+	}
       }
     }
 
@@ -257,8 +252,8 @@ public class WellBarrierSchematic implements Serializable {
     if (dhsvRequired) {
       boolean hasDHSV = hasSafetyValve(BarrierElement.ElementType.DHSV);
       if (!hasDHSV) {
-        issues.add("FAIL: DHSV (SSSV) required for production wells (NORSOK D-010 Table 20)");
-        allPassed = false;
+	issues.add("FAIL: DHSV (SSSV) required for production wells (NORSOK D-010 Table 20)");
+	allPassed = false;
       }
       appliedStandards.add("NORSOK D-010 Table 20 - Production Well Barriers");
     }
@@ -267,8 +262,8 @@ public class WellBarrierSchematic implements Serializable {
     if (isvRequired) {
       boolean hasISV = hasSafetyValve(BarrierElement.ElementType.ISV);
       if (!hasISV) {
-        issues.add("FAIL: ISV required for injection wells (NORSOK D-010 Table 36)");
-        allPassed = false;
+	issues.add("FAIL: ISV required for injection wells (NORSOK D-010 Table 36)");
+	allPassed = false;
       }
       appliedStandards.add("NORSOK D-010 Table 36 - Injection Well Barriers");
     }
@@ -324,7 +319,7 @@ public class WellBarrierSchematic implements Serializable {
     int count = 0;
     for (String issue : issues) {
       if (issue.startsWith("FAIL:") || issue.startsWith("WARNING:")) {
-        count++;
+	count++;
       }
     }
     return count;

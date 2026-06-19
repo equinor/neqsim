@@ -8,10 +8,9 @@ import neqsim.physicalproperties.system.PhysicalProperties;
  * Fuller-Schettler-Giddings method for gas-phase binary diffusion coefficients.
  *
  * <p>
- * This is considered the most accurate and widely recommended general correlation for gas-phase
- * diffusion coefficients. It uses atomic diffusion volumes instead of Lennard-Jones parameters,
- * making it applicable to a wider range of compounds including polar molecules and complex
- * hydrocarbons where L-J parameters may be unavailable or unreliable.
+ * This is considered the most accurate and widely recommended general correlation for gas-phase diffusion coefficients.
+ * It uses atomic diffusion volumes instead of Lennard-Jones parameters, making it applicable to a wider range of
+ * compounds including polar molecules and complex hydrocarbons where L-J parameters may be unavailable or unreliable.
  * </p>
  *
  * <p>
@@ -30,12 +29,12 @@ import neqsim.physicalproperties.system.PhysicalProperties;
  * References:
  * </p>
  * <ul>
- * <li>Fuller, E.N., Schettler, P.D. and Giddings, J.C. (1966). "A new method for prediction of
- * binary gas-phase diffusion coefficients." Ind. Eng. Chem., 58(5), 18-27.</li>
- * <li>Fuller, E.N., Ensley, K. and Giddings, J.C. (1969). "Diffusion of halogenated hydrocarbons in
- * helium." J. Phys. Chem., 73, 3679-3685.</li>
- * <li>Poling, B.E., Prausnitz, J.M. and O'Connell, J.P. (2001). "The Properties of Gases and
- * Liquids." 5th ed., McGraw-Hill, Table 11-1.</li>
+ * <li>Fuller, E.N., Schettler, P.D. and Giddings, J.C. (1966). "A new method for prediction of binary gas-phase
+ * diffusion coefficients." Ind. Eng. Chem., 58(5), 18-27.</li>
+ * <li>Fuller, E.N., Ensley, K. and Giddings, J.C. (1969). "Diffusion of halogenated hydrocarbons in helium." J. Phys.
+ * Chem., 73, 3679-3685.</li>
+ * <li>Poling, B.E., Prausnitz, J.M. and O'Connell, J.P. (2001). "The Properties of Gases and Liquids." 5th ed.,
+ * McGraw-Hill, Table 11-1.</li>
  * </ul>
  *
  * @author Even Solbraa
@@ -46,14 +45,14 @@ public class FullerSchettlerGiddingsDiffusivity extends Diffusivity {
   private static final long serialVersionUID = 1000;
 
   /**
-   * Atomic and structural diffusion volume increments (cm^3/mol) from Fuller, Schettler and
-   * Giddings (1966, 1969) and updated by Poling, Prausnitz and O'Connell (2001), Table 11-1.
+   * Atomic and structural diffusion volume increments (cm^3/mol) from Fuller, Schettler and Giddings (1966, 1969) and
+   * updated by Poling, Prausnitz and O'Connell (2001), Table 11-1.
    */
   private static final Map<String, Double> ATOMIC_DIFFUSION_VOLUMES = createAtomicVolumes();
 
   /**
-   * Special diffusion volumes for simple molecules (cm^3/mol). These are determined directly from
-   * experimental data and should be used in preference to summing atomic increments.
+   * Special diffusion volumes for simple molecules (cm^3/mol). These are determined directly from experimental data and
+   * should be used in preference to summing atomic increments.
    */
   private static final Map<String, Double> MOLECULAR_DIFFUSION_VOLUMES = createMolecularVolumes();
 
@@ -79,8 +78,8 @@ public class FullerSchettlerGiddingsDiffusivity extends Diffusivity {
   }
 
   /**
-   * Create the table of special molecular diffusion volumes. These are experimentally derived
-   * values for simple molecules that should be used instead of summing atomic increments.
+   * Create the table of special molecular diffusion volumes. These are experimentally derived values for simple
+   * molecules that should be used instead of summing atomic increments.
    *
    * @return map of component name to molecular diffusion volume
    */
@@ -164,8 +163,7 @@ public class FullerSchettlerGiddingsDiffusivity extends Diffusivity {
    * Get the diffusion volume for a component.
    *
    * <p>
-   * First checks for a special molecular value, then attempts estimation from molecular formula /
-   * critical properties.
+   * First checks for a special molecular value, then attempts estimation from molecular formula / critical properties.
    * </p>
    *
    * @param componentIndex index of the component
@@ -177,7 +175,7 @@ public class FullerSchettlerGiddingsDiffusivity extends Diffusivity {
     // Check special molecular volumes first (case-insensitive lookup)
     for (Map.Entry<String, Double> entry : MOLECULAR_DIFFUSION_VOLUMES.entrySet()) {
       if (entry.getKey().equalsIgnoreCase(name)) {
-        return entry.getValue();
+	return entry.getValue();
       }
     }
 
@@ -203,9 +201,7 @@ public class FullerSchettlerGiddingsDiffusivity extends Diffusivity {
 
     // Temperature range validation
     if (enableTemperatureWarnings && (T < T_MIN || T > T_MAX)) {
-      logger.warn(
-          "Temperature {} K is outside validated range [{}-{}] for Fuller-Schettler-Giddings", T,
-          T_MIN, T_MAX);
+      logger.warn("Temperature {} K is outside validated range [{}-{}] for Fuller-Schettler-Giddings", T, T_MIN, T_MAX);
     }
 
     // Molar masses in g/mol
@@ -224,8 +220,7 @@ public class FullerSchettlerGiddingsDiffusivity extends Diffusivity {
 
     // D in cm^2/s (P must be in atm; bara ≈ atm for this correlation)
     // Constant 1.013e-3 from Fuller, Ensley & Giddings (1969), J. Phys. Chem. 73, 3679
-    binaryDiffusionCoefficients[i][j] =
-        1.013e-3 * Math.pow(T, 1.75) * mFactor / (P * sigmaV * sigmaV);
+    binaryDiffusionCoefficients[i][j] = 1.013e-3 * Math.pow(T, 1.75) * mFactor / (P * sigmaV * sigmaV);
 
     // Convert from cm^2/s to m^2/s
     binaryDiffusionCoefficients[i][j] *= 1e-4;

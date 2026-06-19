@@ -11,27 +11,25 @@ import org.apache.logging.log4j.Logger;
  * Controller for adsorption/desorption cycle scheduling.
  *
  * <p>
- * Manages the sequence of cycle phases for pressure-swing adsorption (PSA), temperature-swing
- * adsorption (TSA), and vacuum-swing adsorption (VSA) processes. Provides automatic phase
- * transitions based on time or breakthrough detection.
+ * Manages the sequence of cycle phases for pressure-swing adsorption (PSA), temperature-swing adsorption (TSA), and
+ * vacuum-swing adsorption (VSA) processes. Provides automatic phase transitions based on time or breakthrough
+ * detection.
  * </p>
  *
  * <p>
  * A typical PSA cycle consists of:
  * </p>
  * <ol>
- * <li><strong>Adsorption</strong> — feed gas passes through the bed at high pressure; target
- * species are adsorbed.</li>
- * <li><strong>Blowdown</strong> — bed pressure is reduced to desorb the adsorbed species (PSA) or
- * bed temperature is raised (TSA).</li>
+ * <li><strong>Adsorption</strong> — feed gas passes through the bed at high pressure; target species are adsorbed.</li>
+ * <li><strong>Blowdown</strong> — bed pressure is reduced to desorb the adsorbed species (PSA) or bed temperature is
+ * raised (TSA).</li>
  * <li><strong>Purge</strong> — clean gas sweeps the bed to remove remaining adsorbate.</li>
- * <li><strong>Re-pressurisation</strong> — bed pressure is brought back to adsorption
- * pressure.</li>
+ * <li><strong>Re-pressurisation</strong> — bed pressure is brought back to adsorption pressure.</li>
  * </ol>
  *
  * <p>
- * Multi-bed configurations can be coordinated by assigning a separate controller to each bed and
- * staggering their phase schedules.
+ * Multi-bed configurations can be coordinated by assigning a separate controller to each bed and staggering their phase
+ * schedules.
  * </p>
  *
  * @author Even Solbraa
@@ -88,7 +86,7 @@ public class AdsorptionCycleController implements Serializable {
     /**
      * Create a phase step with a duration.
      *
-     * @param phase the cycle phase
+     * @param phase    the cycle phase
      * @param duration duration in seconds
      */
     public PhaseStep(CyclePhase phase, double duration) {
@@ -98,13 +96,12 @@ public class AdsorptionCycleController implements Serializable {
     /**
      * Create a phase step with a duration and target pressure.
      *
-     * @param phase the cycle phase
-     * @param duration duration in seconds
-     * @param targetPressure target pressure (bara)
+     * @param phase             the cycle phase
+     * @param duration          duration in seconds
+     * @param targetPressure    target pressure (bara)
      * @param targetTemperature target temperature (K)
      */
-    public PhaseStep(CyclePhase phase, double duration, double targetPressure,
-        double targetTemperature) {
+    public PhaseStep(CyclePhase phase, double duration, double targetPressure, double targetTemperature) {
       this.phase = phase;
       this.duration = duration;
       this.targetPressure = targetPressure;
@@ -182,14 +179,14 @@ public class AdsorptionCycleController implements Serializable {
    * Create a default PSA cycle schedule.
    *
    * @param adsorptionTime adsorption phase duration (s)
-   * @param blowdownTime blowdown duration (s)
-   * @param purgeTime purge duration (s)
-   * @param repressTime re-pressurisation duration (s)
-   * @param lowPressure blowdown target pressure (bara)
+   * @param blowdownTime   blowdown duration (s)
+   * @param purgeTime      purge duration (s)
+   * @param repressTime    re-pressurisation duration (s)
+   * @param lowPressure    blowdown target pressure (bara)
    * @return this controller for chaining
    */
-  public AdsorptionCycleController configurePSA(double adsorptionTime, double blowdownTime,
-      double purgeTime, double repressTime, double lowPressure) {
+  public AdsorptionCycleController configurePSA(double adsorptionTime, double blowdownTime, double purgeTime,
+      double repressTime, double lowPressure) {
     schedule.clear();
     schedule.add(new PhaseStep(CyclePhase.ADSORPTION, adsorptionTime));
     schedule.add(new PhaseStep(CyclePhase.BLOWDOWN, blowdownTime, lowPressure, -1.0));
@@ -204,14 +201,14 @@ public class AdsorptionCycleController implements Serializable {
   /**
    * Create a default TSA cycle schedule.
    *
-   * @param adsorptionTime adsorption phase duration (s)
-   * @param heatingTime heating/desorption duration (s)
-   * @param coolingTime cooling duration (s)
+   * @param adsorptionTime        adsorption phase duration (s)
+   * @param heatingTime           heating/desorption duration (s)
+   * @param coolingTime           cooling duration (s)
    * @param desorptionTemperature regeneration temperature (K)
    * @return this controller for chaining
    */
-  public AdsorptionCycleController configureTSA(double adsorptionTime, double heatingTime,
-      double coolingTime, double desorptionTemperature) {
+  public AdsorptionCycleController configureTSA(double adsorptionTime, double heatingTime, double coolingTime,
+      double desorptionTemperature) {
     schedule.clear();
     schedule.add(new PhaseStep(CyclePhase.ADSORPTION, adsorptionTime));
     schedule.add(new PhaseStep(CyclePhase.DESORPTION, heatingTime, -1.0, desorptionTemperature));
@@ -234,8 +231,8 @@ public class AdsorptionCycleController implements Serializable {
   }
 
   /**
-   * Advance the cycle by a time step. Checks whether the current step has elapsed and transitions
-   * to the next phase if needed. Applies the current phase's operating conditions to the bed.
+   * Advance the cycle by a time step. Checks whether the current step has elapsed and transitions to the next phase if
+   * needed. Applies the current phase's operating conditions to the bed.
    *
    * @param dt time step size (seconds)
    * @param id calculation identifier
@@ -274,16 +271,16 @@ public class AdsorptionCycleController implements Serializable {
       currentStepIndex = 0;
       completedCycles++;
       if (autoLoop) {
-        logger.info("Cycle " + completedCycles + " completed, starting new cycle");
-        // Reset breakthrough flag for next adsorption phase
-        bed.resetBed();
-        bed.initialiseTransientGrid();
+	logger.info("Cycle " + completedCycles + " completed, starting new cycle");
+	// Reset breakthrough flag for next adsorption phase
+	bed.resetBed();
+	bed.initialiseTransientGrid();
       }
     }
 
     PhaseStep newStep = schedule.get(currentStepIndex);
-    logger.info("Transitioning to phase: " + newStep.getPhase() + " (step " + (currentStepIndex + 1)
-        + "/" + schedule.size() + ")");
+    logger.info("Transitioning to phase: " + newStep.getPhase() + " (step " + (currentStepIndex + 1) + "/"
+	+ schedule.size() + ")");
   }
 
   /**
@@ -293,29 +290,29 @@ public class AdsorptionCycleController implements Serializable {
     PhaseStep step = schedule.get(currentStepIndex);
 
     switch (step.getPhase()) {
-      case ADSORPTION:
-        bed.setDesorptionMode(false);
-        break;
-      case BLOWDOWN:
-      case DESORPTION:
-      case PURGE:
-        bed.setDesorptionMode(true);
-        if (step.getTargetPressure() > 0) {
-          bed.setDesorptionPressure(step.getTargetPressure());
-        }
-        if (step.getTargetTemperature() > 0) {
-          bed.setDesorptionTemperature(step.getTargetTemperature());
-        }
-        break;
-      case REPRESSURISATION:
-      case COOLING:
-        bed.setDesorptionMode(false);
-        break;
-      case STANDBY:
-        // No flow through the bed
-        break;
-      default:
-        break;
+    case ADSORPTION:
+      bed.setDesorptionMode(false);
+      break;
+    case BLOWDOWN:
+    case DESORPTION:
+    case PURGE:
+      bed.setDesorptionMode(true);
+      if (step.getTargetPressure() > 0) {
+	bed.setDesorptionPressure(step.getTargetPressure());
+      }
+      if (step.getTargetTemperature() > 0) {
+	bed.setDesorptionTemperature(step.getTargetTemperature());
+      }
+      break;
+    case REPRESSURISATION:
+    case COOLING:
+      bed.setDesorptionMode(false);
+      break;
+    case STANDBY:
+      // No flow through the bed
+      break;
+    default:
+      break;
     }
   }
 

@@ -11,15 +11,14 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public interface DiffusivityInterface
-    extends ThermodynamicConstantsInterface, PhysicalPropertyMethodInterface {
+public interface DiffusivityInterface extends ThermodynamicConstantsInterface, PhysicalPropertyMethodInterface {
   /**
    * <p>
    * calcBinaryDiffusionCoefficient.
    * </p>
    *
-   * @param i a int
-   * @param j a int
+   * @param i      a int
+   * @param j      a int
    * @param method a int
    * @return a double
    */
@@ -31,11 +30,10 @@ public interface DiffusivityInterface
    * </p>
    *
    * @param binaryDiffusionCoefficientMethod a int
-   * @param multicomponentDiffusionMethod a int
+   * @param multicomponentDiffusionMethod    a int
    * @return an array of type double
    */
-  public double[][] calcDiffusionCoefficients(int binaryDiffusionCoefficientMethod,
-      int multicomponentDiffusionMethod);
+  public double[][] calcDiffusionCoefficients(int binaryDiffusionCoefficientMethod, int multicomponentDiffusionMethod);
 
   /**
    * <p>

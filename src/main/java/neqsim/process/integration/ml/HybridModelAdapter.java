@@ -7,8 +7,8 @@ import java.util.Arrays;
  * Adapter for integrating external ML models with NeqSim hybrid physics simulations.
  *
  * <p>
- * This class provides a bridge between NeqSim's physics-based models and external ML frameworks. It
- * supports various correction strategies and can be extended for specific ML platforms.
+ * This class provides a bridge between NeqSim's physics-based models and external ML frameworks. It supports various
+ * correction strategies and can be extended for specific ML platforms.
  * </p>
  *
  * @author ESOL
@@ -45,7 +45,7 @@ public class HybridModelAdapter implements MLCorrectionInterface, Serializable {
    * Creates a new hybrid model adapter.
    *
    * @param featureNames names of input features
-   * @param strategy combination strategy
+   * @param strategy     combination strategy
    */
   public HybridModelAdapter(String[] featureNames, CombinationStrategy strategy) {
     this.featureNames = featureNames.clone();
@@ -87,23 +87,23 @@ public class HybridModelAdapter implements MLCorrectionInterface, Serializable {
     double confidence = getConfidence(features);
 
     switch (strategy) {
-      case ADDITIVE:
-        return physicsPrediction + mlOutput;
+    case ADDITIVE:
+      return physicsPrediction + mlOutput;
 
-      case MULTIPLICATIVE:
-        return physicsPrediction * (1.0 + mlOutput);
+    case MULTIPLICATIVE:
+      return physicsPrediction * (1.0 + mlOutput);
 
-      case REPLACEMENT:
-        if (confidence >= confidenceThreshold) {
-          return mlOutput;
-        }
-        return physicsPrediction;
+    case REPLACEMENT:
+      if (confidence >= confidenceThreshold) {
+	return mlOutput;
+      }
+      return physicsPrediction;
 
-      case WEIGHTED_AVERAGE:
-        return confidence * mlOutput + (1.0 - confidence) * physicsPrediction;
+    case WEIGHTED_AVERAGE:
+      return confidence * mlOutput + (1.0 - confidence) * physicsPrediction;
 
-      default:
-        return physicsPrediction;
+    default:
+      return physicsPrediction;
     }
   }
 
@@ -144,16 +144,16 @@ public class HybridModelAdapter implements MLCorrectionInterface, Serializable {
       String[] parts = payload.split(",");
 
       if (parts.length >= weights.length + 1) {
-        for (int i = 0; i < weights.length; i++) {
-          weights[i] = Double.parseDouble(parts[i].trim());
-        }
-        bias = Double.parseDouble(parts[weights.length].trim());
+	for (int i = 0; i < weights.length; i++) {
+	  weights[i] = Double.parseDouble(parts[i].trim());
+	}
+	bias = Double.parseDouble(parts[weights.length].trim());
 
-        if (parts.length > weights.length + 1) {
-          modelVersion = parts[weights.length + 1].trim();
-        }
+	if (parts.length > weights.length + 1) {
+	  modelVersion = parts[weights.length + 1].trim();
+	}
 
-        ready = true;
+	ready = true;
       }
     } catch (Exception e) {
       ready = false;
@@ -173,11 +173,11 @@ public class HybridModelAdapter implements MLCorrectionInterface, Serializable {
 
     for (double feature : features) {
       if (Double.isNaN(feature) || Double.isInfinite(feature)) {
-        return 0.0;
+	return 0.0;
       }
       // Reduce confidence for extreme values
       if (Math.abs(feature) > 100) {
-        confidence *= 0.9;
+	confidence *= 0.9;
       }
     }
 
@@ -196,7 +196,7 @@ public class HybridModelAdapter implements MLCorrectionInterface, Serializable {
    * Sets the model weights directly (for testing or simple models).
    *
    * @param weights array of weights
-   * @param bias bias term
+   * @param bias    bias term
    */
   public void setLinearModel(double[] weights, double bias) {
     if (weights.length == this.weights.length) {
@@ -237,12 +237,12 @@ public class HybridModelAdapter implements MLCorrectionInterface, Serializable {
    * Trains the linear model on provided data.
    *
    * <p>
-   * This is a simple least-squares regression for demonstration. Production implementations should
-   * use proper ML libraries.
+   * This is a simple least-squares regression for demonstration. Production implementations should use proper ML
+   * libraries.
    * </p>
    *
    * @param featureMatrix training features (samples x features)
-   * @param targets target correction values
+   * @param targets       target correction values
    */
   public void trainLinear(double[][] featureMatrix, double[] targets) {
     int n = featureMatrix.length;
@@ -264,20 +264,20 @@ public class HybridModelAdapter implements MLCorrectionInterface, Serializable {
       double gradientB = 0.0;
 
       for (int i = 0; i < n; i++) {
-        double pred = bias;
-        for (int j = 0; j < m; j++) {
-          pred += weights[j] * featureMatrix[i][j];
-        }
-        double error = pred - targets[i];
+	double pred = bias;
+	for (int j = 0; j < m; j++) {
+	  pred += weights[j] * featureMatrix[i][j];
+	}
+	double error = pred - targets[i];
 
-        for (int j = 0; j < m; j++) {
-          gradientW[j] += error * featureMatrix[i][j] / n;
-        }
-        gradientB += error / n;
+	for (int j = 0; j < m; j++) {
+	  gradientW[j] += error * featureMatrix[i][j] / n;
+	}
+	gradientB += error / n;
       }
 
       for (int j = 0; j < m; j++) {
-        weights[j] -= learningRate * gradientW[j];
+	weights[j] -= learningRate * gradientW[j];
       }
       bias -= learningRate * gradientB;
     }

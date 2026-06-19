@@ -10,10 +10,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * Sequential Function Chart (SFC) implementation following the IEC 61131-3 standard concept. An SFC
- * models a sequence of discrete steps connected by transitions with guard conditions. Each step can
- * have entry, active, and exit actions. The chart advances when the active step's outgoing
- * transition guard evaluates to true.
+ * Sequential Function Chart (SFC) implementation following the IEC 61131-3 standard concept. An SFC models a sequence
+ * of discrete steps connected by transitions with guard conditions. Each step can have entry, active, and exit actions.
+ * The chart advances when the active step's outgoing transition guard evaluates to true.
  *
  * <p>
  * Typical usage in NeqSim dynamic simulation:
@@ -68,8 +67,8 @@ public class SequentialFunctionChart implements Serializable {
    * Adds a transition between two steps.
    *
    * @param fromStep source step name
-   * @param toStep target step name
-   * @param guard the boolean condition that must be true to advance
+   * @param toStep   target step name
+   * @param guard    the boolean condition that must be true to advance
    */
   public void addTransition(String fromStep, String toStep, BooleanSupplier guard) {
     transitions.add(new SfcTransition(fromStep, toStep, guard));
@@ -78,8 +77,8 @@ public class SequentialFunctionChart implements Serializable {
   /**
    * Adds a timed transition that fires after the specified duration in the source step.
    *
-   * @param fromStep source step name
-   * @param toStep target step name
+   * @param fromStep     source step name
+   * @param toStep       target step name
    * @param delaySeconds time in seconds the step must be active before transition fires
    */
   public void addTimedTransition(String fromStep, String toStep, double delaySeconds) {
@@ -87,7 +86,7 @@ public class SequentialFunctionChart implements Serializable {
     transitions.add(new SfcTransition(fromStep, toStep, new BooleanSupplier() {
       @Override
       public boolean getAsBoolean() {
-        return elapsedTimeInStep >= delay;
+	return elapsedTimeInStep >= delay;
       }
     }));
   }
@@ -131,7 +130,7 @@ public class SequentialFunctionChart implements Serializable {
     if (running && activeStepName != null) {
       SfcStep current = steps.get(activeStepName);
       if (current != null && current.getExitAction() != null) {
-        current.getExitAction().run();
+	current.getExitAction().run();
       }
     }
     running = false;
@@ -159,14 +158,14 @@ public class SequentialFunctionChart implements Serializable {
     // Check transitions
     for (SfcTransition transition : transitions) {
       if (transition.getFromStep().equals(activeStepName)) {
-        try {
-          if (transition.getGuard().getAsBoolean()) {
-            advanceTo(transition.getToStep());
-            break;
-          }
-        } catch (Exception e) {
-          logger.warn("SFC {} transition guard evaluation failed: {}", name, e.getMessage());
-        }
+	try {
+	  if (transition.getGuard().getAsBoolean()) {
+	    advanceTo(transition.getToStep());
+	    break;
+	  }
+	} catch (Exception e) {
+	  logger.warn("SFC {} transition guard evaluation failed: {}", name, e.getMessage());
+	}
       }
     }
   }
@@ -262,8 +261,8 @@ public class SequentialFunctionChart implements Serializable {
   }
 
   /**
-   * A step in the Sequential Function Chart. Each step has a name and optional entry, active, and
-   * exit actions following IEC 61131-3 conventions.
+   * A step in the Sequential Function Chart. Each step has a name and optional entry, active, and exit actions
+   * following IEC 61131-3 conventions.
    */
   public static class SfcStep implements Serializable {
     private static final long serialVersionUID = 1000L;
@@ -346,8 +345,7 @@ public class SequentialFunctionChart implements Serializable {
   }
 
   /**
-   * A transition between two steps in the SFC. A transition has a source step, target step, and a
-   * guard condition.
+   * A transition between two steps in the SFC. A transition has a source step, target step, and a guard condition.
    */
   public static class SfcTransition implements Serializable {
     private static final long serialVersionUID = 1000L;
@@ -359,8 +357,8 @@ public class SequentialFunctionChart implements Serializable {
      * Constructs a transition.
      *
      * @param fromStep source step name
-     * @param toStep target step name
-     * @param guard the guard condition
+     * @param toStep   target step name
+     * @param guard    the guard condition
      */
     public SfcTransition(String fromStep, String toStep, BooleanSupplier guard) {
       this.fromStep = fromStep;

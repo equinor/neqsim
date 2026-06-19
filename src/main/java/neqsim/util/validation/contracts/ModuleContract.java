@@ -6,8 +6,8 @@ import neqsim.util.validation.ValidationResult;
  * Base interface for module contracts.
  *
  * <p>
- * Module contracts define what a component requires (preconditions) and provides (postconditions).
- * AI agents can use these contracts to:
+ * Module contracts define what a component requires (preconditions) and provides (postconditions). AI agents can use
+ * these contracts to:
  * <ul>
  * <li>Validate setup before execution</li>
  * <li>Understand dependencies between modules</li>

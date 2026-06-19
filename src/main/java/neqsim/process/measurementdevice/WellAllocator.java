@@ -32,7 +32,7 @@ public class WellAllocator extends StreamMeasurementDeviceBaseClass {
    * Constructor for WellAllocator.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
+   * @param name   a {@link java.lang.String} object
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public WellAllocator(String name, StreamInterface stream) {
@@ -68,11 +68,10 @@ public class WellAllocator extends StreamMeasurementDeviceBaseClass {
   }
 
   /**
-   * Get specific measurement type. Supports "gas export rate", "oil export rate" and "total export
-   * rate".
+   * Get specific measurement type. Supports "gas export rate", "oil export rate" and "total export rate".
    *
    * @param measurement Measurement value to get
-   * @param unit Unit to get value in
+   * @param unit        Unit to get value in
    * @return Measured value
    */
   public double getMeasuredValue(String measurement, String unit) {
@@ -82,11 +81,10 @@ public class WellAllocator extends StreamMeasurementDeviceBaseClass {
     double oilExportFlow = 0.0;
     for (int i = 0; i < numberOfComps; i++) {
       splitFactors[i] = exportGasStream.getFluid().getComponent(i).getFlowRate("kg/hr")
-          / (exportGasStream.getFluid().getComponent(i).getFlowRate("kg/hr")
-              + exportOilStream.getFluid().getComponent(i).getFlowRate("kg/hr"));
+	  / (exportGasStream.getFluid().getComponent(i).getFlowRate("kg/hr")
+	      + exportOilStream.getFluid().getComponent(i).getFlowRate("kg/hr"));
       gasExportFlow += stream.getFluid().getComponent(i).getTotalFlowRate(unit) * splitFactors[i];
-      oilExportFlow +=
-          stream.getFluid().getComponent(i).getTotalFlowRate(unit) * (1.0 - splitFactors[i]);
+      oilExportFlow += stream.getFluid().getComponent(i).getTotalFlowRate(unit) * (1.0 - splitFactors[i]);
     }
 
     if (measurement.equals("gas export rate")) {

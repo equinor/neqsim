@@ -121,7 +121,7 @@ public class WindFarm extends ProcessEquipmentBaseClass {
   /**
    * Construct with name and number of turbines.
    *
-   * @param name equipment name
+   * @param name             equipment name
    * @param numberOfTurbines number of wind turbines
    */
   public WindFarm(String name, int numberOfTurbines) {
@@ -175,8 +175,8 @@ public class WindFarm extends ProcessEquipmentBaseClass {
    * Calculate annual energy production using Weibull distribution.
    *
    * <p>
-   * Integrates the power curve against the Weibull probability density function using numerical
-   * integration from 0 to 35 m/s with 0.5 m/s steps.
+   * Integrates the power curve against the Weibull probability density function using numerical integration from 0 to
+   * 35 m/s with 0.5 m/s steps.
    * </p>
    *
    * @return annual energy production [Wh]
@@ -192,7 +192,7 @@ public class WindFarm extends ProcessEquipmentBaseClass {
     // Hours per year * number of turbines * losses
     double hoursPerYear = 8760.0;
     aep = aep * hoursPerYear * numberOfTurbines * (1.0 - wakeLossFactor) * availabilityFactor
-        * (1.0 - electricalLossFactor);
+	* (1.0 - electricalLossFactor);
     return aep;
   }
 
@@ -240,8 +240,8 @@ public class WindFarm extends ProcessEquipmentBaseClass {
     }
     for (int i = 0; i < windSpeedTimeSeries.length; i++) {
       double singlePower = calculateTurbinePower(windSpeedTimeSeries[i]);
-      powerTimeSeries[i] = singlePower * numberOfTurbines * (1.0 - wakeLossFactor)
-          * availabilityFactor * (1.0 - electricalLossFactor);
+      powerTimeSeries[i] = singlePower * numberOfTurbines * (1.0 - wakeLossFactor) * availabilityFactor
+	  * (1.0 - electricalLossFactor);
     }
   }
 
@@ -255,8 +255,7 @@ public class WindFarm extends ProcessEquipmentBaseClass {
     double singlePower = calculateTurbinePower(windSpeed);
 
     // Apply farm-level losses
-    power = singlePower * numberOfTurbines * (1.0 - wakeLossFactor) * availabilityFactor
-        * (1.0 - electricalLossFactor);
+    power = singlePower * numberOfTurbines * (1.0 - wakeLossFactor) * availabilityFactor * (1.0 - electricalLossFactor);
 
     // Update capacity factor
     double totalRated = ratedPowerPerTurbine * numberOfTurbines;
@@ -284,14 +283,14 @@ public class WindFarm extends ProcessEquipmentBaseClass {
    */
   public double getPower(String unit) {
     switch (unit) {
-      case "kW":
-        return power / 1.0e3;
-      case "MW":
-        return power / 1.0e6;
-      case "GW":
-        return power / 1.0e9;
-      default:
-        return power;
+    case "kW":
+      return power / 1.0e3;
+    case "MW":
+      return power / 1.0e6;
+    case "GW":
+      return power / 1.0e9;
+    default:
+      return power;
     }
   }
 

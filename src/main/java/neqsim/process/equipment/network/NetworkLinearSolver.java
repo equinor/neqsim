@@ -13,22 +13,20 @@ import org.apache.logging.log4j.Logger;
  * Sparse and dense linear system solvers for pipeline network equations.
  *
  * <p>
- * Replaces the O(n³) Gaussian elimination in the Newton-Raphson GGA solver with efficient
- * alternatives from the EJML library (already a NeqSim dependency):
+ * Replaces the O(n³) Gaussian elimination in the Newton-Raphson GGA solver with efficient alternatives from the EJML
+ * library (already a NeqSim dependency):
  * </p>
  * <ul>
- * <li><b>Sparse LU</b>: For large networks (&gt;50 nodes), uses compressed sparse column (CSC)
- * format with EJML sparse LU. Complexity depends on the number of non-zeros in the Schur complement
- * matrix.</li>
- * <li><b>Dense LU</b>: For small-to-medium networks (&le;50 nodes), uses EJML's optimized dense LU
- * with partial pivoting. Faster than hand-coded Gaussian for n &gt; 10.</li>
+ * <li><b>Sparse LU</b>: For large networks (&gt;50 nodes), uses compressed sparse column (CSC) format with EJML sparse
+ * LU. Complexity depends on the number of non-zeros in the Schur complement matrix.</li>
+ * <li><b>Dense LU</b>: For small-to-medium networks (&le;50 nodes), uses EJML's optimized dense LU with partial
+ * pivoting. Faster than hand-coded Gaussian for n &gt; 10.</li>
  * </ul>
  *
  * <p>
- * The Schur complement matrix in the Todini-Pilati GGA is structurally sparse: entry (i,j) is
- * nonzero only if nodes i and j are connected by at least one pipe. For a gas gathering network
- * with n=100 nodes and average degree 3, matrix density is ~6%, making sparse solvers 10–50x faster
- * than dense Gaussian.
+ * The Schur complement matrix in the Todini-Pilati GGA is structurally sparse: entry (i,j) is nonzero only if nodes i
+ * and j are connected by at least one pipe. For a gas gathering network with n=100 nodes and average degree 3, matrix
+ * density is ~6%, making sparse solvers 10–50x faster than dense Gaussian.
  * </p>
  *
  * @author Even Solbraa
@@ -40,10 +38,9 @@ public class NetworkLinearSolver {
   private static final Logger logger = LogManager.getLogger(NetworkLinearSolver.class);
 
   /**
-   * Threshold for switching from Gaussian to EJML solvers. Networks with more free nodes than this
-   * threshold use EJML (dense LU for n &le; 100, sparse CSC LU for n &gt; 100). Below this
-   * threshold, Gaussian elimination is used for backward compatibility with existing solver
-   * convergence behavior.
+   * Threshold for switching from Gaussian to EJML solvers. Networks with more free nodes than this threshold use EJML
+   * (dense LU for n &le; 100, sparse CSC LU for n &gt; 100). Below this threshold, Gaussian elimination is used for
+   * backward compatibility with existing solver convergence behavior.
    */
   private static final int EJML_THRESHOLD = 30;
 
@@ -56,15 +53,14 @@ public class NetworkLinearSolver {
    * Solve the linear system Ax = b using the most appropriate method.
    *
    * <p>
-   * For small systems (n &le; {@value #EJML_THRESHOLD}), uses Gaussian elimination with partial
-   * pivoting for backward compatibility. For medium systems, uses EJML dense LU. For large systems
-   * (n &gt; {@value #SPARSE_THRESHOLD}), uses EJML sparse CSC LU. Falls back to Gaussian
-   * elimination if EJML solvers fail.
+   * For small systems (n &le; {@value #EJML_THRESHOLD}), uses Gaussian elimination with partial pivoting for backward
+   * compatibility. For medium systems, uses EJML dense LU. For large systems (n &gt; {@value #SPARSE_THRESHOLD}), uses
+   * EJML sparse CSC LU. Falls back to Gaussian elimination if EJML solvers fail.
    * </p>
    *
    * @param matA coefficient matrix (n x n)
    * @param vecB right-hand side vector (n)
-   * @param n system size
+   * @param n    system size
    * @return solution vector x
    */
   public static double[] solve(double[][] matA, double[] vecB, int n) {
@@ -84,9 +80,9 @@ public class NetworkLinearSolver {
 
     try {
       if (n > SPARSE_THRESHOLD) {
-        return solveSparse(matA, vecB, n);
+	return solveSparse(matA, vecB, n);
       } else {
-        return solveDense(matA, vecB, n);
+	return solveDense(matA, vecB, n);
       }
     } catch (Exception e) {
       logger.warn("EJML solver failed (n=" + n + "), falling back to Gaussian: " + e.getMessage());
@@ -98,14 +94,13 @@ public class NetworkLinearSolver {
    * Solve using EJML dense LU decomposition with partial pivoting.
    *
    * <p>
-   * Uses EJML LinearSolverFactory_DDRM.lu() which provides O(n³/3) factorization with
-   * BLAS-optimized operations. For n=50, approximately 5x faster than hand-coded Gaussian
-   * elimination.
+   * Uses EJML LinearSolverFactory_DDRM.lu() which provides O(n³/3) factorization with BLAS-optimized operations. For
+   * n=50, approximately 5x faster than hand-coded Gaussian elimination.
    * </p>
    *
    * @param matA coefficient matrix (n x n)
    * @param vecB right-hand side vector (n)
-   * @param n system size
+   * @param n    system size
    * @return solution vector x
    */
   public static double[] solveDense(double[][] matA, double[] vecB, int n) {
@@ -116,7 +111,7 @@ public class NetworkLinearSolver {
     // Copy data to EJML matrices
     for (int i = 0; i < n; i++) {
       for (int j = 0; j < n; j++) {
-        denseA.set(i, j, matA[i][j]);
+	denseA.set(i, j, matA[i][j]);
       }
       denseB.set(i, 0, vecB[i]);
     }
@@ -139,15 +134,15 @@ public class NetworkLinearSolver {
    * Solve using EJML sparse CSC LU decomposition.
    *
    * <p>
-   * Converts the dense Schur complement to compressed sparse column (CSC) format, discarding
-   * structural zeros. Uses EJML sparse LU with natural ordering; EJML 0.41/0.45 do not expose a
-   * deterministic AMD/COLAMD fill-reducing option through this factory. For a 100x100 matrix with
-   * 6% density, sparse storage can be significantly faster than dense Gaussian.
+   * Converts the dense Schur complement to compressed sparse column (CSC) format, discarding structural zeros. Uses
+   * EJML sparse LU with natural ordering; EJML 0.41/0.45 do not expose a deterministic AMD/COLAMD fill-reducing option
+   * through this factory. For a 100x100 matrix with 6% density, sparse storage can be significantly faster than dense
+   * Gaussian.
    * </p>
    *
    * @param matA coefficient matrix (n x n) — may have many zeros
    * @param vecB right-hand side vector (n)
-   * @param n system size
+   * @param n    system size
    * @return solution vector x
    */
   public static double[] solveSparse(double[][] matA, double[] vecB, int n) {
@@ -155,17 +150,16 @@ public class NetworkLinearSolver {
     int nnz = 0;
     for (int i = 0; i < n; i++) {
       for (int j = 0; j < n; j++) {
-        if (Math.abs(matA[i][j]) > 1e-30) {
-          nnz++;
-        }
+	if (Math.abs(matA[i][j]) > 1e-30) {
+	  nnz++;
+	}
       }
     }
 
     double density = (double) nnz / (n * n);
     if (density > 0.5) {
       // Matrix is too dense for sparse solver benefit; use dense
-      logger.debug("Sparse matrix density " + String.format("%.1f%%", density * 100)
-          + " too high, using dense solver");
+      logger.debug("Sparse matrix density " + String.format("%.1f%%", density * 100) + " too high, using dense solver");
       return solveDense(matA, vecB, n);
     }
 
@@ -173,9 +167,9 @@ public class NetworkLinearSolver {
     DMatrixSparseCSC sparseA = new DMatrixSparseCSC(n, n, nnz);
     for (int j = 0; j < n; j++) {
       for (int i = 0; i < n; i++) {
-        if (Math.abs(matA[i][j]) > 1e-30) {
-          sparseA.set(i, j, matA[i][j]);
-        }
+	if (Math.abs(matA[i][j]) > 1e-30) {
+	  sparseA.set(i, j, matA[i][j]);
+	}
       }
     }
 
@@ -185,8 +179,8 @@ public class NetworkLinearSolver {
       denseB.set(i, 0, vecB[i]);
     }
 
-    LinearSolverSparse<DMatrixSparseCSC, DMatrixRMaj> solver =
-        LinearSolverFactory_DSCC.lu(org.ejml.sparse.FillReducing.NONE);
+    LinearSolverSparse<DMatrixSparseCSC, DMatrixRMaj> solver = LinearSolverFactory_DSCC
+	.lu(org.ejml.sparse.FillReducing.NONE);
     if (!solver.setA(sparseA)) {
       logger.warn("Sparse LU setA failed (singular?), falling back to dense");
       return solveDense(matA, vecB, n);
@@ -198,8 +192,7 @@ public class NetworkLinearSolver {
       result[i] = denseX.get(i, 0);
     }
 
-    logger
-        .debug(String.format("Sparse solve: n=%d, nnz=%d, density=%.1f%%", n, nnz, density * 100));
+    logger.debug(String.format("Sparse solve: n=%d, nnz=%d, density=%.1f%%", n, nnz, density * 100));
 
     return result;
   }
@@ -208,13 +201,13 @@ public class NetworkLinearSolver {
    * Fallback: Gaussian elimination with partial pivoting.
    *
    * <p>
-   * This is the original O(n³) solver, kept as a robust fallback when EJML solvers encounter issues
-   * (singular matrices, numerical edge cases). Makes a defensive copy of the input arrays.
+   * This is the original O(n³) solver, kept as a robust fallback when EJML solvers encounter issues (singular matrices,
+   * numerical edge cases). Makes a defensive copy of the input arrays.
    * </p>
    *
    * @param matAOrig coefficient matrix (n x n) — not modified
    * @param vecBOrig right-hand side vector (n) — not modified
-   * @param n system size
+   * @param n        system size
    * @return solution vector x
    */
   public static double[] solveGaussian(double[][] matAOrig, double[] vecBOrig, int n) {
@@ -232,9 +225,9 @@ public class NetworkLinearSolver {
     for (int k = 0; k < n; k++) {
       int maxRow = k;
       for (int i = k + 1; i < n; i++) {
-        if (Math.abs(matA[i][k]) > Math.abs(matA[maxRow][k])) {
-          maxRow = i;
-        }
+	if (Math.abs(matA[i][k]) > Math.abs(matA[maxRow][k])) {
+	  maxRow = i;
+	}
       }
       double[] tempRow = matA[k];
       matA[k] = matA[maxRow];
@@ -244,15 +237,15 @@ public class NetworkLinearSolver {
       vecB[maxRow] = tempB;
 
       if (Math.abs(matA[k][k]) < 1e-20) {
-        continue;
+	continue;
       }
 
       for (int i = k + 1; i < n; i++) {
-        double factor = matA[i][k] / matA[k][k];
-        for (int j = k + 1; j < n; j++) {
-          matA[i][j] -= factor * matA[k][j];
-        }
-        vecB[i] -= factor * vecB[k];
+	double factor = matA[i][k] / matA[k][k];
+	for (int j = k + 1; j < n; j++) {
+	  matA[i][j] -= factor * matA[k][j];
+	}
+	vecB[i] -= factor * vecB[k];
       }
     }
 
@@ -260,10 +253,10 @@ public class NetworkLinearSolver {
     for (int i = n - 1; i >= 0; i--) {
       x[i] = vecB[i];
       for (int j = i + 1; j < n; j++) {
-        x[i] -= matA[i][j] * x[j];
+	x[i] -= matA[i][j] * x[j];
       }
       if (Math.abs(matA[i][i]) > 1e-20) {
-        x[i] /= matA[i][i];
+	x[i] /= matA[i][i];
       }
     }
     return x;
@@ -278,8 +271,8 @@ public class NetworkLinearSolver {
    *
    * @param nodeCount number of free nodes
    * @param pipeCount number of pipe elements
-   * @return array [density, nonzeros, recommended_threshold] where recommended_threshold is 0 for
-   *         dense and 1 for sparse
+   * @return array [density, nonzeros, recommended_threshold] where recommended_threshold is 0 for dense and 1 for
+   *         sparse
    */
   public static double[] estimateSparsity(int nodeCount, int pipeCount) {
     // In a pipe network, each pipe connects exactly 2 nodes.
@@ -290,6 +283,6 @@ public class NetworkLinearSolver {
     int totalEntries = nodeCount * nodeCount;
     double density = (totalEntries > 0) ? (double) estimatedNnz / totalEntries : 1.0;
     double usesSparse = (nodeCount > SPARSE_THRESHOLD && density < 0.5) ? 1.0 : 0.0;
-    return new double[] {density, estimatedNnz, usesSparse};
+    return new double[] { density, estimatedNnz, usesSparse };
   }
 }

@@ -17,27 +17,26 @@ package neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc;
  */
 public enum WallHeatTransferModel {
   /**
-   * Constant wall temperature boundary condition. The wall temperature is fixed at a specified
-   * value: T_wall = T_const. Suitable for isothermal pipes or pipes with high thermal mass.
+   * Constant wall temperature boundary condition. The wall temperature is fixed at a specified value: T_wall = T_const.
+   * Suitable for isothermal pipes or pipes with high thermal mass.
    */
   CONSTANT_WALL_TEMPERATURE("Constant Wall Temperature", "Fixed wall temperature (isothermal)"),
 
   /**
-   * Constant heat flux boundary condition. A fixed heat flux is applied at the wall: q'' =
-   * q''_const. Suitable for electric heating or controlled heating/cooling.
+   * Constant heat flux boundary condition. A fixed heat flux is applied at the wall: q'' = q''_const. Suitable for
+   * electric heating or controlled heating/cooling.
    */
   CONSTANT_HEAT_FLUX("Constant Heat Flux", "Fixed heat flux at wall"),
 
   /**
-   * Convective boundary condition with heat transfer to surroundings. Heat transfer is calculated
-   * using an overall heat transfer coefficient: q'' = U_overall * (T_ambient - T_fluid). Suitable
-   * for subsea pipelines and buried pipes.
+   * Convective boundary condition with heat transfer to surroundings. Heat transfer is calculated using an overall heat
+   * transfer coefficient: q'' = U_overall * (T_ambient - T_fluid). Suitable for subsea pipelines and buried pipes.
    */
   CONVECTIVE_BOUNDARY("Convective Boundary", "Heat transfer to surroundings"),
 
   /**
-   * Adiabatic boundary condition with no heat transfer through the wall. The wall is perfectly
-   * insulated: q'' = 0. Suitable for well-insulated pipes or short pipe sections.
+   * Adiabatic boundary condition with no heat transfer through the wall. The wall is perfectly insulated: q'' = 0.
+   * Suitable for well-insulated pipes or short pipe sections.
    */
   ADIABATIC("Adiabatic", "No heat transfer (perfectly insulated)");
 

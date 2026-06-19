@@ -16,11 +16,10 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Selective component capture unit for screening separation trains.
  *
  * <p>
- * The unit creates two outlet streams from one inlet stream: a captured stream containing a
- * selected fraction of one named component, and a treated stream containing the remaining gas or
- * liquid. It is intentionally simple and deterministic so route builders can represent CO2 capture,
- * water drying, mercury guard beds, or other high-level component removal steps before a detailed
- * absorber, membrane, or molecular-sieve package is available.
+ * The unit creates two outlet streams from one inlet stream: a captured stream containing a selected fraction of one
+ * named component, and a treated stream containing the remaining gas or liquid. It is intentionally simple and
+ * deterministic so route builders can represent CO2 capture, water drying, mercury guard beds, or other high-level
+ * component removal steps before a detailed absorber, membrane, or molecular-sieve package is available.
  * </p>
  *
  * @author NeqSim contributors
@@ -63,7 +62,7 @@ public class ComponentCaptureUnit extends ProcessEquipmentBaseClass {
   /**
    * Constructs a component capture unit with inlet stream.
    *
-   * @param name unit operation name
+   * @param name        unit operation name
    * @param inletStream inlet stream
    */
   public ComponentCaptureUnit(String name, StreamInterface inletStream) {
@@ -81,8 +80,7 @@ public class ComponentCaptureUnit extends ProcessEquipmentBaseClass {
       throw new IllegalArgumentException("inletStream with a thermo system is required");
     }
     this.inletStream = inletStream;
-    capturedStream =
-        new Stream(getName() + " captured " + componentName, inletStream.getThermoSystem().clone());
+    capturedStream = new Stream(getName() + " captured " + componentName, inletStream.getThermoSystem().clone());
     treatedStream = new Stream(getName() + " treated", inletStream.getThermoSystem().clone());
   }
 
@@ -227,10 +225,8 @@ public class ComponentCaptureUnit extends ProcessEquipmentBaseClass {
   @Override
   public double getMassBalance(String unit) {
     double inletFlow = inletStream == null ? 0.0 : inletStream.getThermoSystem().getFlowRate(unit);
-    double capturedFlow =
-        capturedStream == null ? 0.0 : capturedStream.getThermoSystem().getFlowRate(unit);
-    double treatedFlow =
-        treatedStream == null ? 0.0 : treatedStream.getThermoSystem().getFlowRate(unit);
+    double capturedFlow = capturedStream == null ? 0.0 : capturedStream.getThermoSystem().getFlowRate(unit);
+    double treatedFlow = treatedStream == null ? 0.0 : treatedStream.getThermoSystem().getFlowRate(unit);
     return capturedFlow + treatedFlow - inletFlow;
   }
 
@@ -272,11 +268,11 @@ public class ComponentCaptureUnit extends ProcessEquipmentBaseClass {
       double inletMoles = Math.max(0.0, feed.getComponent(componentIndex).getNumberOfmoles());
       double routedMoles = getRoutedMoles(feedComponentName, inletMoles, captured);
       if (routedMoles > 0.0) {
-        system.addComponent(componentIndex, routedMoles);
-        totalMoles += routedMoles;
-        if (isSelectedComponent(feedComponentName)) {
-          selectedMoles += routedMoles;
-        }
+	system.addComponent(componentIndex, routedMoles);
+	totalMoles += routedMoles;
+	if (isSelectedComponent(feedComponentName)) {
+	  selectedMoles += routedMoles;
+	}
       }
     }
     return new SplitResult(system, totalMoles, selectedMoles);
@@ -286,8 +282,8 @@ public class ComponentCaptureUnit extends ProcessEquipmentBaseClass {
    * Calculates routed moles for one component and one outlet.
    *
    * @param feedComponentName feed component name
-   * @param inletMoles inlet component moles
-   * @param captured true when routing to captured outlet
+   * @param inletMoles        inlet component moles
+   * @param captured          true when routing to captured outlet
    * @return moles routed to the selected outlet
    */
   private double getRoutedMoles(String feedComponentName, double inletMoles, boolean captured) {
@@ -310,17 +306,17 @@ public class ComponentCaptureUnit extends ProcessEquipmentBaseClass {
   /**
    * Initializes a split outlet stream when it contains material.
    *
-   * @param stream split outlet stream
+   * @param stream     split outlet stream
    * @param totalMoles total moles routed to the stream
-   * @param id calculation identifier
+   * @param id         calculation identifier
    */
   private void initializeStream(StreamInterface stream, double totalMoles, UUID id) {
     if (totalMoles > 0.0) {
       stream.getThermoSystem().init(0);
       try {
-        new ThermodynamicOperations(stream.getThermoSystem()).TPflash();
+	new ThermodynamicOperations(stream.getThermoSystem()).TPflash();
       } catch (Exception ex) {
-        stream.getThermoSystem().init(3);
+	stream.getThermoSystem().init(3);
       }
     }
     stream.run(id);
@@ -345,8 +341,8 @@ public class ComponentCaptureUnit extends ProcessEquipmentBaseClass {
     /**
      * Creates a split result.
      *
-     * @param system split thermodynamic system
-     * @param totalMoles total moles routed to this split
+     * @param system                 split thermodynamic system
+     * @param totalMoles             total moles routed to this split
      * @param selectedComponentMoles selected component moles routed to this split
      */
     private SplitResult(SystemInterface system, double totalMoles, double selectedComponentMoles) {

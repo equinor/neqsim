@@ -6,9 +6,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * Fire Detector instrument for fire detection and alarm systems.
  *
  * <p>
- * A fire detector is a binary sensor that detects the presence of fire. It can be used in emergency
- * shutdown (ESD) systems where multiple fire detectors may need to activate before triggering an
- * ESD response (voting logic).
+ * A fire detector is a binary sensor that detects the presence of fire. It can be used in emergency shutdown (ESD)
+ * systems where multiple fire detectors may need to activate before triggering an ESD response (voting logic).
  *
  * <p>
  * Key features:
@@ -84,7 +83,7 @@ public class FireDetector extends MeasurementDeviceBaseClass {
   /**
    * Constructor for FireDetector with location.
    *
-   * @param name name of fire detector
+   * @param name     name of fire detector
    * @param location location or zone where detector is installed
    */
   public FireDetector(String name, String location) {
@@ -96,8 +95,8 @@ public class FireDetector extends MeasurementDeviceBaseClass {
    * Simulates fire detection - activates the detector.
    *
    * <p>
-   * In real applications, this would be triggered by actual sensor readings (IR, UV, heat, smoke).
-   * For simulation purposes, this method directly sets the fire detected state.
+   * In real applications, this would be triggered by actual sensor readings (IR, UV, heat, smoke). For simulation
+   * purposes, this method directly sets the fire detected state.
    * </p>
    */
   public void detectFire() {
@@ -232,8 +231,8 @@ public class FireDetector extends MeasurementDeviceBaseClass {
     if (unit == null || unit.isEmpty() || unit.equalsIgnoreCase("binary")) {
       return getMeasuredValue();
     }
-    throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
-        "getMeasuredValue", "unit", "FireDetector only supports 'binary' unit"));
+    throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "getMeasuredValue", "unit",
+	"FireDetector only supports 'binary' unit"));
   }
 
   /**

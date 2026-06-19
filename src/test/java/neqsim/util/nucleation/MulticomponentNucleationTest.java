@@ -59,14 +59,12 @@ class MulticomponentNucleationTest {
 
     assertTrue(mcn.isCalculated());
     // Should find at least some condensable components (the heavier ones)
-    assertTrue(mcn.getNumberOfCondensableComponents() > 0,
-        "Should identify condensable components");
+    assertTrue(mcn.getNumberOfCondensableComponents() > 0, "Should identify condensable components");
     assertNotNull(mcn.getDominantComponent());
     assertFalse(mcn.getDominantComponent().isEmpty());
     assertTrue(mcn.getEffectiveMW() > 0.0, "Effective MW should be positive");
     assertTrue(mcn.getEffectiveDensity() > 0.0, "Effective density should be positive");
-    assertTrue(mcn.getEffectiveSurfaceTension() > 0.0,
-        "Effective surface tension should be positive");
+    assertTrue(mcn.getEffectiveSurfaceTension() > 0.0, "Effective surface tension should be positive");
   }
 
   @Test
@@ -133,7 +131,7 @@ class MulticomponentNucleationTest {
 
     // Heterogeneous reduces barrier so rate should be >= homogeneous
     assertTrue(mcn.getTotalNucleationRate() >= mcnHom.getTotalNucleationRate(),
-        "Heterogeneous rate should be >= homogeneous rate");
+	"Heterogeneous rate should be >= homogeneous rate");
   }
 
   @Test
@@ -179,8 +177,7 @@ class MulticomponentNucleationTest {
 
     assertTrue(mcn.isCalculated());
     // With only light components and high T, no significant condensation expected
-    assertEquals(0.0, mcn.getTotalNucleationRate(), 1e-10,
-        "Single-phase system should have zero nucleation rate");
+    assertEquals(0.0, mcn.getTotalNucleationRate(), 1e-10, "Single-phase system should have zero nucleation rate");
   }
 
   @Test
@@ -198,8 +195,7 @@ class MulticomponentNucleationTest {
 
     int countLow = mcn2.getNumberOfCondensableComponents();
 
-    assertTrue(countLow >= countHigh,
-        "Lower threshold should find at least as many condensable components");
+    assertTrue(countLow >= countHigh, "Lower threshold should find at least as many condensable components");
   }
 
   @Test

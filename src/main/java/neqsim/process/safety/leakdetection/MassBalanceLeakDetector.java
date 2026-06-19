@@ -16,10 +16,9 @@ import neqsim.thermo.system.SystemInterface;
  * Mass-balance leak-detection sensitivity model for process systems and pipelines.
  *
  * <p>
- * The detector estimates the minimum detectable leak rate from inlet/outlet flow uncertainty plus
- * optional linepack uncertainty caused by pressure and temperature measurement uncertainty. It is a
- * screening model for deciding whether instrumented mass balance can meet a required leak
- * sensitivity before detailed dynamic leak detection is configured.
+ * The detector estimates the minimum detectable leak rate from inlet/outlet flow uncertainty plus optional linepack
+ * uncertainty caused by pressure and temperature measurement uncertainty. It is a screening model for deciding whether
+ * instrumented mass balance can meet a required leak sensitivity before detailed dynamic leak detection is configured.
  * </p>
  *
  * @author NeqSim Development Team
@@ -48,7 +47,7 @@ public class MassBalanceLeakDetector implements Serializable {
   /**
    * Creates a detector between two stream measurements.
    *
-   * @param inletStream inlet measurement stream
+   * @param inletStream  inlet measurement stream
    * @param outletStream outlet measurement stream
    * @throws IllegalArgumentException if either stream is null
    */
@@ -81,8 +80,7 @@ public class MassBalanceLeakDetector implements Serializable {
     if (pipe == null) {
       throw new IllegalArgumentException("pipe must not be null");
     }
-    MassBalanceLeakDetector detector = new MassBalanceLeakDetector(pipe.getInletStream(),
-        pipe.getOutletStream());
+    MassBalanceLeakDetector detector = new MassBalanceLeakDetector(pipe.getInletStream(), pipe.getOutletStream());
     double diameterM = pipe.getDiameter();
     double lengthM = pipe.getLength();
     if (diameterM > 0.0 && lengthM > 0.0) {
@@ -108,8 +106,7 @@ public class MassBalanceLeakDetector implements Serializable {
    * @param uncertaintyFraction relative uncertainty as fraction of reading
    * @return this detector for chaining
    */
-  public MassBalanceLeakDetector setFlowMeasurementUncertaintyFraction(
-      double uncertaintyFraction) {
+  public MassBalanceLeakDetector setFlowMeasurementUncertaintyFraction(double uncertaintyFraction) {
     this.flowMeasurementUncertaintyFraction = Math.max(0.0, uncertaintyFraction);
     return this;
   }
@@ -167,22 +164,22 @@ public class MassBalanceLeakDetector implements Serializable {
     double inletFlowKgPerS = getFlowRateKgPerS(inletStream);
     double outletFlowKgPerS = getFlowRateKgPerS(outletStream);
     double measuredImbalanceKgPerS = inletFlowKgPerS - outletFlowKgPerS;
-    double flowUncertaintyKgPerS = confidenceMultiplier * Math.sqrt(
-        Math.pow(inletFlowKgPerS * flowMeasurementUncertaintyFraction, 2.0)
-            + Math.pow(outletFlowKgPerS * flowMeasurementUncertaintyFraction, 2.0));
+    double flowUncertaintyKgPerS = confidenceMultiplier
+	* Math.sqrt(Math.pow(inletFlowKgPerS * flowMeasurementUncertaintyFraction, 2.0)
+	    + Math.pow(outletFlowKgPerS * flowMeasurementUncertaintyFraction, 2.0));
     double linepackUncertaintyKgPerS = calculateLinepackUncertaintyKgPerS();
-    double combinedUncertaintyKgPerS = Math.sqrt(Math.pow(flowUncertaintyKgPerS, 2.0)
-        + Math.pow(linepackUncertaintyKgPerS, 2.0));
-    double minimumDetectableLeakRateKgPerS = Math.abs(measuredImbalanceKgPerS)
-        + combinedUncertaintyKgPerS;
+    double combinedUncertaintyKgPerS = Math
+	.sqrt(Math.pow(flowUncertaintyKgPerS, 2.0) + Math.pow(linepackUncertaintyKgPerS, 2.0));
+    double minimumDetectableLeakRateKgPerS = Math.abs(measuredImbalanceKgPerS) + combinedUncertaintyKgPerS;
     double referenceFlowKgPerS = Math.max(Math.abs(inletFlowKgPerS), Math.abs(outletFlowKgPerS));
     double minimumDetectableLeakFraction = referenceFlowKgPerS > 0.0
-        ? minimumDetectableLeakRateKgPerS / referenceFlowKgPerS : Double.NaN;
+	? minimumDetectableLeakRateKgPerS / referenceFlowKgPerS
+	: Double.NaN;
 
-    return new LeakDetectionSensitivityResult(inletStream.getName(), outletStream.getName(),
-        inletFlowKgPerS, outletFlowKgPerS, measuredImbalanceKgPerS, flowUncertaintyKgPerS,
-        linepackUncertaintyKgPerS, combinedUncertaintyKgPerS, minimumDetectableLeakRateKgPerS,
-        minimumDetectableLeakFraction, detectionWindowS, confidenceMultiplier);
+    return new LeakDetectionSensitivityResult(inletStream.getName(), outletStream.getName(), inletFlowKgPerS,
+	outletFlowKgPerS, measuredImbalanceKgPerS, flowUncertaintyKgPerS, linepackUncertaintyKgPerS,
+	combinedUncertaintyKgPerS, minimumDetectableLeakRateKgPerS, minimumDetectableLeakFraction, detectionWindowS,
+	confidenceMultiplier);
   }
 
   /**
@@ -196,7 +193,7 @@ public class MassBalanceLeakDetector implements Serializable {
     List<ProcessEquipmentInterface> units = validateProcessAndGetUnits(process);
     for (ProcessEquipmentInterface unit : units) {
       if (unit instanceof PipeLineInterface) {
-        return (PipeLineInterface) unit;
+	return (PipeLineInterface) unit;
       }
     }
     throw new IllegalArgumentException("process must contain at least one pipeline");
@@ -214,7 +211,7 @@ public class MassBalanceLeakDetector implements Serializable {
     for (int index = units.size() - 1; index >= 0; index--) {
       ProcessEquipmentInterface unit = units.get(index);
       if (unit instanceof PipeLineInterface) {
-        return (PipeLineInterface) unit;
+	return (PipeLineInterface) unit;
       }
     }
     throw new IllegalArgumentException("process must contain at least one pipeline");
@@ -267,11 +264,10 @@ public class MassBalanceLeakDetector implements Serializable {
       double temperatureK = Math.max(1.0e-9, inletStream.getTemperature("K"));
       double relativePressureUncertainty = pressureUncertaintyBara / pressureBara;
       double relativeTemperatureUncertainty = temperatureUncertaintyK / temperatureK;
-      double relativeLinepackUncertainty = Math.sqrt(Math.pow(relativePressureUncertainty, 2.0)
-          + Math.pow(relativeTemperatureUncertainty, 2.0));
+      double relativeLinepackUncertainty = Math
+	  .sqrt(Math.pow(relativePressureUncertainty, 2.0) + Math.pow(relativeTemperatureUncertainty, 2.0));
       double linepackMassKg = densityKgPerM3 * linepackVolumeM3;
-      return confidenceMultiplier * linepackMassKg * relativeLinepackUncertainty
-          / detectionWindowS;
+      return confidenceMultiplier * linepackMassKg * relativeLinepackUncertainty / detectionWindowS;
     } catch (RuntimeException ex) {
       return 0.0;
     }
@@ -297,24 +293,23 @@ public class MassBalanceLeakDetector implements Serializable {
     /**
      * Creates a leak detection sensitivity result.
      *
-     * @param inletStreamName inlet stream name
-     * @param outletStreamName outlet stream name
-     * @param inletFlowKgPerS inlet mass flow rate in kg/s
-     * @param outletFlowKgPerS outlet mass flow rate in kg/s
-     * @param measuredImbalanceKgPerS measured mass imbalance in kg/s
-     * @param flowUncertaintyKgPerS flow measurement uncertainty in kg/s
-     * @param linepackUncertaintyKgPerS linepack uncertainty in kg/s
-     * @param combinedUncertaintyKgPerS combined uncertainty in kg/s
+     * @param inletStreamName                 inlet stream name
+     * @param outletStreamName                outlet stream name
+     * @param inletFlowKgPerS                 inlet mass flow rate in kg/s
+     * @param outletFlowKgPerS                outlet mass flow rate in kg/s
+     * @param measuredImbalanceKgPerS         measured mass imbalance in kg/s
+     * @param flowUncertaintyKgPerS           flow measurement uncertainty in kg/s
+     * @param linepackUncertaintyKgPerS       linepack uncertainty in kg/s
+     * @param combinedUncertaintyKgPerS       combined uncertainty in kg/s
      * @param minimumDetectableLeakRateKgPerS minimum detectable leak rate in kg/s
-     * @param minimumDetectableLeakFraction minimum detectable leak fraction of reference flow
-     * @param detectionWindowS detection window in s
-     * @param confidenceMultiplier confidence multiplier
+     * @param minimumDetectableLeakFraction   minimum detectable leak fraction of reference flow
+     * @param detectionWindowS                detection window in s
+     * @param confidenceMultiplier            confidence multiplier
      */
-    public LeakDetectionSensitivityResult(String inletStreamName, String outletStreamName,
-        double inletFlowKgPerS, double outletFlowKgPerS, double measuredImbalanceKgPerS,
-        double flowUncertaintyKgPerS, double linepackUncertaintyKgPerS,
-        double combinedUncertaintyKgPerS, double minimumDetectableLeakRateKgPerS,
-        double minimumDetectableLeakFraction, double detectionWindowS, double confidenceMultiplier) {
+    public LeakDetectionSensitivityResult(String inletStreamName, String outletStreamName, double inletFlowKgPerS,
+	double outletFlowKgPerS, double measuredImbalanceKgPerS, double flowUncertaintyKgPerS,
+	double linepackUncertaintyKgPerS, double combinedUncertaintyKgPerS, double minimumDetectableLeakRateKgPerS,
+	double minimumDetectableLeakFraction, double detectionWindowS, double confidenceMultiplier) {
       this.inletStreamName = inletStreamName;
       this.outletStreamName = outletStreamName;
       this.inletFlowKgPerS = inletFlowKgPerS;
@@ -376,8 +371,7 @@ public class MassBalanceLeakDetector implements Serializable {
      * @return JSON representation of the result
      */
     public String toJson() {
-      Gson gson = new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting()
-          .create();
+      Gson gson = new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().create();
       return gson.toJson(toMap());
     }
   }

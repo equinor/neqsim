@@ -51,8 +51,7 @@ public class FluidMagicInputTest {
 
     assertNotNull(input);
     assertNotNull(input.getReferenceFluid());
-    assertEquals(referenceFluid.getNumberOfComponents(),
-        input.getReferenceFluid().getNumberOfComponents());
+    assertEquals(referenceFluid.getNumberOfComponents(), input.getReferenceFluid().getNumberOfComponents());
   }
 
   /**
@@ -72,7 +71,7 @@ public class FluidMagicInputTest {
     // Gas phase should have lower molar mass (light components)
     // Oil phase should have higher molar mass (heavy components)
     assertTrue(input.getGasPhase().getMolarMass() < input.getOilPhase().getMolarMass(),
-        "Gas phase should be lighter than oil phase");
+	"Gas phase should be lighter than oil phase");
   }
 
   /**
@@ -163,9 +162,8 @@ public class FluidMagicInputTest {
    */
   @Test
   void testBuilderPattern() {
-    FluidMagicInput input =
-        FluidMagicInput.builder().referenceFluid(referenceFluid).gorRange(200, 8000)
-            .waterCutRange(0.05, 0.70).numberOfGORPoints(6).numberOfWaterCutPoints(8).build();
+    FluidMagicInput input = FluidMagicInput.builder().referenceFluid(referenceFluid).gorRange(200, 8000)
+	.waterCutRange(0.05, 0.70).numberOfGORPoints(6).numberOfWaterCutPoints(8).build();
 
     assertNotNull(input);
 

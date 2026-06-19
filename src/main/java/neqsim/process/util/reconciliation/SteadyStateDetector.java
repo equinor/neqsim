@@ -12,28 +12,26 @@ import org.apache.logging.log4j.Logger;
  * Steady-State Detector (SSD) for process variables.
  *
  * <p>
- * Monitors a set of process variables over a sliding window and determines whether the process has
- * reached steady state. The primary criterion is the <b>R-statistic</b>: the ratio of filtered
- * variance (successive differences) to unfiltered variance (sample variance). At steady state, both
- * variances are similar and R approaches 1.0. During ramps, steps, or oscillations, R drops well
- * below 1.0.
+ * Monitors a set of process variables over a sliding window and determines whether the process has reached steady
+ * state. The primary criterion is the <b>R-statistic</b>: the ratio of filtered variance (successive differences) to
+ * unfiltered variance (sample variance). At steady state, both variances are similar and R approaches 1.0. During
+ * ramps, steps, or oscillations, R drops well below 1.0.
  * </p>
  *
  * <p>
  * Two additional optional criteria can be enabled:
  * </p>
  * <ul>
- * <li><b>Slope test</b>: the absolute slope from linear regression through the window must be below
- * a threshold. This catches slow drifts that the R-test may miss.</li>
- * <li><b>Standard deviation test</b>: the standard deviation of the window must be below a
- * threshold. This catches excessive noise.</li>
+ * <li><b>Slope test</b>: the absolute slope from linear regression through the window must be below a threshold. This
+ * catches slow drifts that the R-test may miss.</li>
+ * <li><b>Standard deviation test</b>: the standard deviation of the window must be below a threshold. This catches
+ * excessive noise.</li>
  * </ul>
  *
  * <p>
- * The detector is designed for use in online optimization workflows where data is collected
- * externally (e.g., in Python from a DCS historian) and fed into the detector one sample at a time.
- * When all variables pass the SSD test, the process is at steady state and safe for data
- * reconciliation or model calibration.
+ * The detector is designed for use in online optimization workflows where data is collected externally (e.g., in Python
+ * from a DCS historian) and fed into the detector one sample at a time. When all variables pass the SSD test, the
+ * process is at steady state and safe for data reconciliation or model calibration.
  * </p>
  *
  * <p>
@@ -58,10 +56,10 @@ import org.apache.logging.log4j.Logger;
  * <b>References:</b>
  * </p>
  * <ul>
- * <li>Cao, S. and Rhinehart, R.R. (1995), "An efficient method for on-line identification of steady
- * state", Journal of Process Control, 5(6), 363-374.</li>
- * <li>Jiang, T., Chen, B. and He, X. (2003), "Industrial application of Wavelet-based steady state
- * detection", Computers and Chemical Engineering, 27, 569-578.</li>
+ * <li>Cao, S. and Rhinehart, R.R. (1995), "An efficient method for on-line identification of steady state", Journal of
+ * Process Control, 5(6), 363-374.</li>
+ * <li>Jiang, T., Chen, B. and He, X. (2003), "Industrial application of Wavelet-based steady state detection",
+ * Computers and Chemical Engineering, 27, 569-578.</li>
  * </ul>
  *
  * @author Process Optimization Team
@@ -84,26 +82,26 @@ public class SteadyStateDetector implements java.io.Serializable {
   private int defaultWindowSize;
 
   /**
-   * R-statistic threshold. A variable is at steady state if R &gt;= this threshold. Default 0.5
-   * (Cao-Rhinehart recommended range 0.1-1.0; 0.5 is a good balance).
+   * R-statistic threshold. A variable is at steady state if R &gt;= this threshold. Default 0.5 (Cao-Rhinehart
+   * recommended range 0.1-1.0; 0.5 is a good balance).
    */
   private double rThreshold = 0.5;
 
   /**
-   * Maximum allowed slope (units per sample). If &gt; 0 and |slope| exceeds this, the variable is
-   * not at steady state. Default 0 (disabled).
+   * Maximum allowed slope (units per sample). If &gt; 0 and |slope| exceeds this, the variable is not at steady state.
+   * Default 0 (disabled).
    */
   private double slopeThreshold = 0.0;
 
   /**
-   * Maximum allowed standard deviation. If &gt; 0 and std.dev exceeds this, the variable is not at
-   * steady state. Default 0 (disabled).
+   * Maximum allowed standard deviation. If &gt; 0 and std.dev exceeds this, the variable is not at steady state.
+   * Default 0 (disabled).
    */
   private double stdDevThreshold = 0.0;
 
   /**
-   * Minimum fraction (0-1) of variables that must be at steady state for the overall verdict.
-   * Default 1.0 (all variables must be steady).
+   * Minimum fraction (0-1) of variables that must be at steady state for the overall verdict. Default 1.0 (all
+   * variables must be steady).
    */
   private double requiredFraction = 1.0;
 
@@ -115,14 +113,12 @@ public class SteadyStateDetector implements java.io.Serializable {
   /**
    * Creates a steady-state detector with the given default window size.
    *
-   * @param defaultWindowSize the default number of samples in the sliding window (must be at least
-   *        3)
+   * @param defaultWindowSize the default number of samples in the sliding window (must be at least 3)
    * @throws IllegalArgumentException if defaultWindowSize is less than 3
    */
   public SteadyStateDetector(int defaultWindowSize) {
     if (defaultWindowSize < 3) {
-      throw new IllegalArgumentException(
-          "Default window size must be at least 3, got: " + defaultWindowSize);
+      throw new IllegalArgumentException("Default window size must be at least 3, got: " + defaultWindowSize);
     }
     this.defaultWindowSize = defaultWindowSize;
     this.variableMap = new LinkedHashMap<String, SteadyStateVariable>();
@@ -222,7 +218,7 @@ public class SteadyStateDetector implements java.io.Serializable {
   /**
    * Updates a single variable with a new measurement value.
    *
-   * @param name variable name (tag)
+   * @param name  variable name (tag)
    * @param value new measurement reading
    * @throws IllegalArgumentException if the variable name is not found
    */
@@ -283,10 +279,10 @@ public class SteadyStateDetector implements java.io.Serializable {
       v.setAtSteadyState(isSteady);
 
       if (isSteady) {
-        steadyCount++;
+	steadyCount++;
       } else {
-        transientCount++;
-        result.addTransientVariable(v);
+	transientCount++;
+	result.addTransientVariable(v);
       }
     }
 
@@ -304,7 +300,7 @@ public class SteadyStateDetector implements java.io.Serializable {
     result.setAtSteadyState(overall);
 
     logger.debug("SSD evaluation: {} ({}/{} steady)", overall ? "STEADY" : "TRANSIENT", steadyCount,
-        variableList.size());
+	variableList.size());
 
     return result;
   }
@@ -359,10 +355,9 @@ public class SteadyStateDetector implements java.io.Serializable {
    * Creates a {@link DataReconciliationEngine} pre-populated with variables from this detector.
    *
    * <p>
-   * Each steady-state variable that has a defined uncertainty is converted to a
-   * {@link ReconciliationVariable} using the latest value as the measurement and the configured
-   * uncertainty. Only variables currently at steady state are included (to avoid reconciling
-   * transient data).
+   * Each steady-state variable that has a defined uncertainty is converted to a {@link ReconciliationVariable} using
+   * the latest value as the measurement and the configured uncertainty. Only variables currently at steady state are
+   * included (to avoid reconciling transient data).
    * </p>
    *
    * @return a new engine with variables added, ready for constraints and reconciliation
@@ -371,11 +366,11 @@ public class SteadyStateDetector implements java.io.Serializable {
     DataReconciliationEngine engine = new DataReconciliationEngine();
     for (SteadyStateVariable v : variableList) {
       if (v.isAtSteadyState() && !Double.isNaN(v.getUncertainty())) {
-        double value = v.getMean(); // use window mean for reconciliation
-        double sigma = v.getUncertainty();
-        ReconciliationVariable rv = new ReconciliationVariable(v.getName(), value, sigma);
-        rv.setUnit(v.getUnit());
-        engine.addVariable(rv);
+	double value = v.getMean(); // use window mean for reconciliation
+	double sigma = v.getUncertainty();
+	ReconciliationVariable rv = new ReconciliationVariable(v.getName(), value, sigma);
+	rv.setUnit(v.getUnit());
+	engine.addVariable(rv);
       }
     }
     return engine;
@@ -401,8 +396,7 @@ public class SteadyStateDetector implements java.io.Serializable {
    */
   public SteadyStateDetector setDefaultWindowSize(int defaultWindowSize) {
     if (defaultWindowSize < 3) {
-      throw new IllegalArgumentException(
-          "Default window size must be at least 3, got: " + defaultWindowSize);
+      throw new IllegalArgumentException("Default window size must be at least 3, got: " + defaultWindowSize);
     }
     this.defaultWindowSize = defaultWindowSize;
     return this;
@@ -421,8 +415,8 @@ public class SteadyStateDetector implements java.io.Serializable {
    * Sets the R-statistic threshold.
    *
    * <p>
-   * A lower threshold (e.g., 0.3) is more lenient — allows more variability before declaring
-   * transient. A higher threshold (e.g., 0.8) is stricter — requires very stable signals.
+   * A lower threshold (e.g., 0.3) is more lenient — allows more variability before declaring transient. A higher
+   * threshold (e.g., 0.8) is stricter — requires very stable signals.
    * </p>
    *
    * <p>
@@ -463,8 +457,7 @@ public class SteadyStateDetector implements java.io.Serializable {
    */
   public SteadyStateDetector setSlopeThreshold(double slopeThreshold) {
     if (slopeThreshold < 0) {
-      throw new IllegalArgumentException(
-          "Slope threshold must be non-negative, got: " + slopeThreshold);
+      throw new IllegalArgumentException("Slope threshold must be non-negative, got: " + slopeThreshold);
     }
     this.slopeThreshold = slopeThreshold;
     return this;
@@ -483,8 +476,8 @@ public class SteadyStateDetector implements java.io.Serializable {
    * Sets the standard deviation threshold.
    *
    * <p>
-   * Set to 0 to disable the std.dev test. When enabled, a variable is only at steady state if its
-   * window standard deviation is at or below this threshold.
+   * Set to 0 to disable the std.dev test. When enabled, a variable is only at steady state if its window standard
+   * deviation is at or below this threshold.
    * </p>
    *
    * @param stdDevThreshold max standard deviation, or 0 to disable
@@ -493,8 +486,7 @@ public class SteadyStateDetector implements java.io.Serializable {
    */
   public SteadyStateDetector setStdDevThreshold(double stdDevThreshold) {
     if (stdDevThreshold < 0) {
-      throw new IllegalArgumentException(
-          "Std.dev threshold must be non-negative, got: " + stdDevThreshold);
+      throw new IllegalArgumentException("Std.dev threshold must be non-negative, got: " + stdDevThreshold);
     }
     this.stdDevThreshold = stdDevThreshold;
     return this;
@@ -513,8 +505,8 @@ public class SteadyStateDetector implements java.io.Serializable {
    * Sets the required fraction of variables that must be at steady state.
    *
    * <p>
-   * Default is 1.0 (all variables must pass). Set to 0.8 to allow 20% of variables to be transient
-   * and still declare overall steady state.
+   * Default is 1.0 (all variables must pass). Set to 0.8 to allow 20% of variables to be transient and still declare
+   * overall steady state.
    * </p>
    *
    * @param requiredFraction fraction in [0, 1]
@@ -523,8 +515,7 @@ public class SteadyStateDetector implements java.io.Serializable {
    */
   public SteadyStateDetector setRequiredFraction(double requiredFraction) {
     if (requiredFraction < 0 || requiredFraction > 1.0) {
-      throw new IllegalArgumentException(
-          "Required fraction must be in [0, 1], got: " + requiredFraction);
+      throw new IllegalArgumentException("Required fraction must be in [0, 1], got: " + requiredFraction);
     }
     this.requiredFraction = requiredFraction;
     return this;
@@ -557,8 +548,7 @@ public class SteadyStateDetector implements java.io.Serializable {
    */
   @Override
   public String toString() {
-    return String.format(
-        "SteadyStateDetector[vars=%d, window=%d, R>=%.2f, |slope|<=%.2e, reqFrac=%.0f%%]",
-        variableList.size(), defaultWindowSize, rThreshold, slopeThreshold, requiredFraction * 100);
+    return String.format("SteadyStateDetector[vars=%d, window=%d, R>=%.2f, |slope|<=%.2e, reqFrac=%.0f%%]",
+	variableList.size(), defaultWindowSize, rThreshold, slopeThreshold, requiredFraction * 100);
   }
 }

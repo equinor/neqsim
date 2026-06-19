@@ -3,13 +3,13 @@ package neqsim.process.controllerdevice.structure;
 import neqsim.process.controllerdevice.ControllerDeviceInterface;
 
 /**
- * Split-range control structure where a single controller drives two or more final control elements
- * (e.g. valves). Each element is assigned a sub-range of the controller output (0-100%). For
- * example, valve A may operate from 0-50% while valve B operates from 50-100%.
+ * Split-range control structure where a single controller drives two or more final control elements (e.g. valves). Each
+ * element is assigned a sub-range of the controller output (0-100%). For example, valve A may operate from 0-50% while
+ * valve B operates from 50-100%.
  *
  * <p>
- * After {@link #runTransient(double)} the individual outputs can be queried with
- * {@link #getOutput(int)}. The {@link #getOutput()} method returns the raw controller output.
+ * After {@link #runTransient(double)} the individual outputs can be queried with {@link #getOutput(int)}. The
+ * {@link #getOutput()} method returns the raw controller output.
  * </p>
  *
  * @author NeqSim
@@ -26,10 +26,10 @@ public class SplitRangeControllerStructure implements ControlStructureInterface 
   private boolean isActive = true;
 
   /**
-   * Create a split-range structure with equal-width ranges for the specified number of elements.
-   * For two elements: element 0 gets 0-50%, element 1 gets 50-100%.
+   * Create a split-range structure with equal-width ranges for the specified number of elements. For two elements:
+   * element 0 gets 0-50%, element 1 gets 50-100%.
    *
-   * @param controller the single controller driving the split-range
+   * @param controller       the single controller driving the split-range
    * @param numberOfElements number of final control elements
    */
   public SplitRangeControllerStructure(ControllerDeviceInterface controller, int numberOfElements) {
@@ -51,14 +51,12 @@ public class SplitRangeControllerStructure implements ControlStructureInterface 
    * Create a split-range structure with custom ranges for each element.
    *
    * @param controller the single controller driving the split-range
-   * @param rangeLow array of lower bounds (0-100%) for each element
-   * @param rangeHigh array of upper bounds (0-100%) for each element
+   * @param rangeLow   array of lower bounds (0-100%) for each element
+   * @param rangeHigh  array of upper bounds (0-100%) for each element
    */
-  public SplitRangeControllerStructure(ControllerDeviceInterface controller, double[] rangeLow,
-      double[] rangeHigh) {
+  public SplitRangeControllerStructure(ControllerDeviceInterface controller, double[] rangeLow, double[] rangeHigh) {
     if (rangeLow.length != rangeHigh.length || rangeLow.length < 2) {
-      throw new IllegalArgumentException(
-          "rangeLow and rangeHigh must have equal length and at least 2 elements.");
+      throw new IllegalArgumentException("rangeLow and rangeHigh must have equal length and at least 2 elements.");
     }
     this.controller = controller;
     this.rangeLow = rangeLow.clone();
@@ -77,12 +75,12 @@ public class SplitRangeControllerStructure implements ControlStructureInterface 
 
     for (int i = 0; i < elementOutputs.length; i++) {
       if (rawOutput <= rangeLow[i]) {
-        elementOutputs[i] = 0.0;
+	elementOutputs[i] = 0.0;
       } else if (rawOutput >= rangeHigh[i]) {
-        elementOutputs[i] = 100.0;
+	elementOutputs[i] = 100.0;
       } else {
-        double span = rangeHigh[i] - rangeLow[i];
-        elementOutputs[i] = (rawOutput - rangeLow[i]) / span * 100.0;
+	double span = rangeHigh[i] - rangeLow[i];
+	elementOutputs[i] = (rawOutput - rangeLow[i]) / span * 100.0;
       }
     }
   }

@@ -20,7 +20,7 @@ public class ReadFluidData {
   private static final Logger logger = LogManager.getLogger(ReadFluidData.class);
 
   /** Logger object for class. */
-  
+
   /**
    * <p>
    * main.

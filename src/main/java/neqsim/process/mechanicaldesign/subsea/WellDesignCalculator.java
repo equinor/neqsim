@@ -201,7 +201,8 @@ public class WellDesignCalculator implements Serializable {
   /**
    * Default constructor.
    */
-  public WellDesignCalculator() {}
+  public WellDesignCalculator() {
+  }
 
   /**
    * Calculate casing design for all strings.
@@ -249,8 +250,7 @@ public class WellDesignCalculator implements Serializable {
     // Simplified collapse (yield-strength collapse for D/t < 15):
     // P_collapse = 2 * SMYS * ((D/t - 1) / (D/t)^2)
     // For required thickness: approximate iteratively
-    double requiredCollapseThickness =
-        estimateCollapseThickness(odMm, requiredCollapseRating * 0.1, smys);
+    double requiredCollapseThickness = estimateCollapseThickness(odMm, requiredCollapseRating * 0.1, smys);
 
     // ---- Take maximum ----
     productionCasingWallThickness = Math.max(requiredBurstThickness, requiredCollapseThickness);
@@ -263,18 +263,16 @@ public class WellDesignCalculator implements Serializable {
 
     double dt = odMm / productionCasingWallThickness;
     double actualCollapseRating = 2.0 * smys * ((dt - 1.0) / (dt * dt)) / 0.1;
-    productionCasingCollapseDF =
-        collapsePressure > 0 ? actualCollapseRating / collapsePressure : 99.0;
+    productionCasingCollapseDF = collapsePressure > 0 ? actualCollapseRating / collapsePressure : 99.0;
 
     // ---- Tension ----
     // Weight in air
     double casingWeightKg = calculatePipeWeight(productionCasingOD, productionCasingWallThickness,
-        productionCasingDepth);
+	productionCasingDepth);
     double tensionLoad = casingWeightKg * 9.81 / 1000.0; // kN
 
     // Yield strength for tension = SMYS * cross-section area
-    double crossSection =
-        Math.PI / 4.0 * (Math.pow(odMm, 2) - Math.pow(odMm - 2 * productionCasingWallThickness, 2));
+    double crossSection = Math.PI / 4.0 * (Math.pow(odMm, 2) - Math.pow(odMm - 2 * productionCasingWallThickness, 2));
     double yieldTension = smys * crossSection / 1000.0; // kN
 
     productionCasingTensionDF = tensionLoad > 0 ? yieldTension / tensionLoad : 99.0;
@@ -288,8 +286,8 @@ public class WellDesignCalculator implements Serializable {
     double axialStress = tensionLoad * 1000.0 / crossSection; // kN to N, area in mm2 gives MPa
     double radialStress = -netBurstSurface * 0.1 / 2.0; // approximation
 
-    double vmeStress = Math.sqrt(0.5 * (Math.pow(hoopStress - axialStress, 2)
-        + Math.pow(axialStress - radialStress, 2) + Math.pow(radialStress - hoopStress, 2)));
+    double vmeStress = Math.sqrt(0.5 * (Math.pow(hoopStress - axialStress, 2) + Math.pow(axialStress - radialStress, 2)
+	+ Math.pow(radialStress - hoopStress, 2)));
     productionCasingVME_DF = vmeStress > 0 ? derated / vmeStress : 99.0;
   }
 
@@ -362,32 +360,30 @@ public class WellDesignCalculator implements Serializable {
 
     // Conductor
     double conductorWeight = calculatePipeWeight(conductorOD, 25.4, conductorDepth); // 1" wall
-                                                                                     // typical
+										     // typical
     totalCasingWeight += conductorWeight / 1000.0; // kg to tonnes
 
     // Surface casing
-    double surfaceWeight =
-        calculatePipeWeight(surfaceCasingOD, surfaceCasingWallThickness, surfaceCasingDepth);
+    double surfaceWeight = calculatePipeWeight(surfaceCasingOD, surfaceCasingWallThickness, surfaceCasingDepth);
     totalCasingWeight += surfaceWeight / 1000.0;
 
     // Intermediate casing
     if (intermediateCasingDepth > 0) {
       double intWeight = calculatePipeWeight(intermediateCasingOD, intermediateCasingWallThickness,
-          intermediateCasingDepth);
+	  intermediateCasingDepth);
       totalCasingWeight += intWeight / 1000.0;
     }
 
     // Production casing
-    double prodWeight = calculatePipeWeight(productionCasingOD, productionCasingWallThickness,
-        productionCasingDepth);
+    double prodWeight = calculatePipeWeight(productionCasingOD, productionCasingWallThickness, productionCasingDepth);
     totalCasingWeight += prodWeight / 1000.0;
 
     // Production liner
     if (productionLinerDepth > 0) {
       double linerLength = productionLinerDepth - productionCasingDepth;
       if (linerLength > 0) {
-        double linerWeight = calculatePipeWeight(productionLinerOD, 8.0, linerLength);
-        totalCasingWeight += linerWeight / 1000.0;
+	double linerWeight = calculatePipeWeight(productionLinerOD, 8.0, linerLength);
+	totalCasingWeight += linerWeight / 1000.0;
       }
     }
 
@@ -407,21 +403,20 @@ public class WellDesignCalculator implements Serializable {
     totalCuttingsVolume = 0.0;
 
     // Surface casing cement (full column, wellhead to shoe)
-    totalCementVolume += calculateAnnularVolume(surfaceCasingOD, surfaceCasingWallThickness,
-        conductorOD, 25.4, surfaceCasingDepth);
+    totalCementVolume += calculateAnnularVolume(surfaceCasingOD, surfaceCasingWallThickness, conductorOD, 25.4,
+	surfaceCasingDepth);
 
     // Intermediate cement (typically from shoe up to overlap with surface casing)
     if (intermediateCasingDepth > 0) {
       double cementLength = intermediateCasingDepth - surfaceCasingDepth + 200; // 200m overlap
-      totalCementVolume +=
-          calculateAnnularVolume(intermediateCasingOD, intermediateCasingWallThickness,
-              surfaceCasingOD, surfaceCasingWallThickness, cementLength);
+      totalCementVolume += calculateAnnularVolume(intermediateCasingOD, intermediateCasingWallThickness,
+	  surfaceCasingOD, surfaceCasingWallThickness, cementLength);
     }
 
     // Production casing cement (shoe to 200m above previous shoe)
     double prodCementLength = productionCasingDepth - intermediateCasingDepth + 200;
-    totalCementVolume += calculateAnnularVolume(productionCasingOD, productionCasingWallThickness,
-        intermediateCasingOD, intermediateCasingWallThickness, prodCementLength);
+    totalCementVolume += calculateAnnularVolume(productionCasingOD, productionCasingWallThickness, intermediateCasingOD,
+	intermediateCasingWallThickness, prodCementLength);
 
     // Drill cuttings: total hole volume minus casing volume
     totalCuttingsVolume = calculateHoleVolume();
@@ -431,12 +426,11 @@ public class WellDesignCalculator implements Serializable {
    * Calculate pipe weight in kg.
    *
    * @param outerDiameterInches OD in inches
-   * @param wallThicknessMm wall thickness in mm
-   * @param lengthM length in meters
+   * @param wallThicknessMm     wall thickness in mm
+   * @param lengthM             length in meters
    * @return weight in kg
    */
-  private double calculatePipeWeight(double outerDiameterInches, double wallThicknessMm,
-      double lengthM) {
+  private double calculatePipeWeight(double outerDiameterInches, double wallThicknessMm, double lengthM) {
     double odM = outerDiameterInches * 0.0254;
     double tM = wallThicknessMm / 1000.0;
     double idM = odM - 2.0 * tM;
@@ -454,8 +448,8 @@ public class WellDesignCalculator implements Serializable {
    * @param lengthM length in meters
    * @return volume in m3
    */
-  private double calculateAnnularVolume(double outerOD, double outerWT, double innerOD,
-      double innerWT, double lengthM) {
+  private double calculateAnnularVolume(double outerOD, double outerWT, double innerOD, double innerWT,
+      double lengthM) {
     // Hole ID = bit size ≈ outer casing OD + clearance
     double holeID = outerOD * 0.0254 + 0.05; // ~2" clearance
     double casingOD = innerOD * 0.0254;
@@ -490,7 +484,7 @@ public class WellDesignCalculator implements Serializable {
     // Production section: ~12.25" hole
     double bit4 = 12.25 * 0.0254;
     volume += Math.PI / 4.0 * bit4 * bit4
-        * (productionCasingDepth - Math.max(intermediateCasingDepth, surfaceCasingDepth));
+	* (productionCasingDepth - Math.max(intermediateCasingDepth, surfaceCasingDepth));
 
     return volume;
   }
@@ -502,20 +496,19 @@ public class WellDesignCalculator implements Serializable {
    * Uses the API 5C3 yield-strength collapse formula for an initial estimate.
    * </p>
    *
-   * @param odMm outer diameter in mm
+   * @param odMm                outer diameter in mm
    * @param collapsePressureMPa collapse pressure in MPa
-   * @param smysMPa SMYS in MPa
+   * @param smysMPa             SMYS in MPa
    * @return required wall thickness in mm
    */
-  private double estimateCollapseThickness(double odMm, double collapsePressureMPa,
-      double smysMPa) {
+  private double estimateCollapseThickness(double odMm, double collapsePressureMPa, double smysMPa) {
     // Iterative: starting from thin wall, increase until collapse rating > required
     for (double t = 5.0; t < odMm / 2.0; t += 0.5) {
       double dt = odMm / t;
       // Yield-strength collapse (API 5C3 simplified)
       double collapseRating = 2.0 * smysMPa * ((dt - 1.0) / (dt * dt));
       if (collapseRating >= collapsePressureMPa * minCollapseDF) {
-        return t;
+	return t;
       }
     }
     return odMm / 4.0; // Conservative fallback
@@ -525,11 +518,11 @@ public class WellDesignCalculator implements Serializable {
    * Apply API 5CT temperature derating to yield strength.
    *
    * <p>
-   * Per API 5CT / ISO 11960, yield strength is derated at elevated temperatures. The derating
-   * factors are from API TR 5C3 Table D.1 (typical carbon/low-alloy).
+   * Per API 5CT / ISO 11960, yield strength is derated at elevated temperatures. The derating factors are from API TR
+   * 5C3 Table D.1 (typical carbon/low-alloy).
    * </p>
    *
-   * @param smysMPa SMYS at ambient temperature in MPa
+   * @param smysMPa      SMYS at ambient temperature in MPa
    * @param temperatureC design temperature in Celsius
    * @return derated yield strength in MPa
    */
@@ -717,7 +710,7 @@ public class WellDesignCalculator implements Serializable {
   /**
    * Set conductor casing properties.
    *
-   * @param od outer diameter in inches
+   * @param od    outer diameter in inches
    * @param depth setting depth in meters MD
    */
   public void setConductorCasing(double od, double depth) {
@@ -728,7 +721,7 @@ public class WellDesignCalculator implements Serializable {
   /**
    * Set surface casing properties.
    *
-   * @param od outer diameter in inches
+   * @param od    outer diameter in inches
    * @param depth setting depth in meters MD
    */
   public void setSurfaceCasing(double od, double depth) {
@@ -739,7 +732,7 @@ public class WellDesignCalculator implements Serializable {
   /**
    * Set intermediate casing properties.
    *
-   * @param od outer diameter in inches
+   * @param od    outer diameter in inches
    * @param depth setting depth in meters MD
    */
   public void setIntermediateCasing(double od, double depth) {
@@ -750,7 +743,7 @@ public class WellDesignCalculator implements Serializable {
   /**
    * Set production casing properties.
    *
-   * @param od outer diameter in inches
+   * @param od    outer diameter in inches
    * @param depth setting depth in meters MD
    */
   public void setProductionCasing(double od, double depth) {
@@ -761,7 +754,7 @@ public class WellDesignCalculator implements Serializable {
   /**
    * Set production liner properties.
    *
-   * @param od outer diameter in inches
+   * @param od    outer diameter in inches
    * @param depth total depth in meters MD
    */
   public void setProductionLiner(double od, double depth) {
@@ -772,9 +765,9 @@ public class WellDesignCalculator implements Serializable {
   /**
    * Set tubing properties.
    *
-   * @param od outer diameter in inches
+   * @param od     outer diameter in inches
    * @param weight weight in lb/ft
-   * @param grade API 5CT grade string
+   * @param grade  API 5CT grade string
    */
   public void setTubing(double od, double weight, String grade) {
     this.tubingOD = od;
@@ -896,8 +889,7 @@ public class WellDesignCalculator implements Serializable {
    * Get production casing VME (triaxial) design factor per NORSOK D-010.
    *
    * <p>
-   * The von Mises Equivalent combines hoop, axial, and radial stresses. Must be &gt;= 1.25 per
-   * NORSOK D-010 Table 18.
+   * The von Mises Equivalent combines hoop, axial, and radial stresses. Must be &gt;= 1.25 per NORSOK D-010 Table 18.
    * </p>
    *
    * @return VME design factor
@@ -910,8 +902,8 @@ public class WellDesignCalculator implements Serializable {
    * Get the temperature derating factor applied to production casing SMYS.
    *
    * <p>
-   * Per API 5CT / API TR 5C3 Table D.1, yield strength is derated at elevated temperatures. Factor
-   * of 1.0 means no derating (&lt;= 100 degC).
+   * Per API 5CT / API TR 5C3 Table D.1, yield strength is derated at elevated temperatures. Factor of 1.0 means no
+   * derating (&lt;= 100 degC).
    * </p>
    *
    * @return derating factor (0 to 1)
@@ -962,8 +954,8 @@ public class WellDesignCalculator implements Serializable {
    * Set whether this is an injection well.
    *
    * <p>
-   * Injection wells have different load cases: burst from injection pressure, collapse from
-   * evacuation during workover, and thermal stress considerations.
+   * Injection wells have different load cases: burst from injection pressure, collapse from evacuation during workover,
+   * and thermal stress considerations.
    * </p>
    *
    * @param injectionWell true for injection well design

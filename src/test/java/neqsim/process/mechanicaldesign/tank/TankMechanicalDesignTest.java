@@ -74,8 +74,7 @@ public class TankMechanicalDesignTest {
 
       // Each course should be >= the one above it
       for (int i = 1; i < thicknesses.length; i++) {
-        assertTrue(thicknesses[i - 1] >= thicknesses[i],
-            "Lower courses should be thicker or equal");
+	assertTrue(thicknesses[i - 1] >= thicknesses[i], "Lower courses should be thicker or equal");
       }
       logger.info("Number of shell courses: " + thicknesses.length);
       logger.info("Bottom course thickness: " + bottomCourse + " mm");
@@ -112,8 +111,7 @@ public class TankMechanicalDesignTest {
 
   @Test
   public void testWeight() {
-    double weight =
-        mechDesign.getShellWeight() + mechDesign.getBottomWeight() + mechDesign.getRoofWeight();
+    double weight = mechDesign.getShellWeight() + mechDesign.getBottomWeight() + mechDesign.getRoofWeight();
     assertTrue(weight > 0, "Weight should be positive");
     logger.info("Total weight: " + weight + " kg");
   }
@@ -140,7 +138,6 @@ public class TankMechanicalDesignTest {
     assertTrue(shellWeight >= 0, "Shell weight should be non-negative");
     assertTrue(bottomWeight >= 0, "Bottom weight should be non-negative");
     assertTrue(roofWeight >= 0, "Roof weight should be non-negative");
-    logger.info("Shell: " + shellWeight + " kg, Bottom: " + bottomWeight + " kg, Roof: "
-        + roofWeight + " kg");
+    logger.info("Shell: " + shellWeight + " kg, Bottom: " + bottomWeight + " kg, Roof: " + roofWeight + " kg");
   }
 }

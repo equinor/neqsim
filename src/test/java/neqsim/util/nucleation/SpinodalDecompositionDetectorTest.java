@@ -36,9 +36,8 @@ class SpinodalDecompositionDetectorTest {
 
     assertTrue(detector.isAnalyzed());
     // Verify the detector produces a definite state (not UNKNOWN)
-    assertFalse(
-        detector.getStabilityState() == SpinodalDecompositionDetector.StabilityState.UNKNOWN,
-        "State should not be UNKNOWN for a valid system");
+    assertFalse(detector.getStabilityState() == SpinodalDecompositionDetector.StabilityState.UNKNOWN,
+	"State should not be UNKNOWN for a valid system");
     // Min eigenvalue should be finite
     assertTrue(Double.isFinite(detector.getMinEigenvalue()));
     // Recommendation should be non-empty
@@ -63,9 +62,8 @@ class SpinodalDecompositionDetectorTest {
 
     assertTrue(detector.isAnalyzed());
     // With two phases, should be metastable or unstable (depending on Hessian)
-    assertFalse(
-        detector.getStabilityState() == SpinodalDecompositionDetector.StabilityState.UNKNOWN,
-        "State should not be UNKNOWN for a valid two-phase system");
+    assertFalse(detector.getStabilityState() == SpinodalDecompositionDetector.StabilityState.UNKNOWN,
+	"State should not be UNKNOWN for a valid two-phase system");
   }
 
   @Test
@@ -124,8 +122,7 @@ class SpinodalDecompositionDetectorTest {
 
     assertTrue(detector.isAnalyzed());
     // Pure component at normal conditions should be stable
-    assertTrue(detector.isStable() || detector.isMetastable(),
-        "Pure component should be stable or metastable");
+    assertTrue(detector.isStable() || detector.isMetastable(), "Pure component should be stable or metastable");
   }
 
   @Test
@@ -169,8 +166,9 @@ class SpinodalDecompositionDetectorTest {
     String rec = detector.getRecommendation();
     assertNotNull(rec);
     assertFalse(rec.isEmpty());
-    assertTrue(rec.contains("stable") || rec.contains("metastable") || rec.contains("spinodal")
-        || rec.contains("determined"), "Recommendation should mention stability state");
+    assertTrue(
+	rec.contains("stable") || rec.contains("metastable") || rec.contains("spinodal") || rec.contains("determined"),
+	"Recommendation should mention stability state");
   }
 
   @Test
@@ -260,8 +258,7 @@ class SpinodalDecompositionDetectorTest {
 
     // If unstable, dominant wavelength should be set
     if (detector.isInsideSpinodal()) {
-      assertTrue(detector.getDominantWavelength() > 0.0,
-          "Dominant wavelength should be positive inside spinodal");
+      assertTrue(detector.getDominantWavelength() > 0.0, "Dominant wavelength should be positive inside spinodal");
     }
   }
 

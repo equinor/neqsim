@@ -11,8 +11,8 @@ import neqsim.process.logic.ProcessLogic;
  * Shutdown logic with controlled ramp-down of equipment.
  *
  * <p>
- * Shutdown sequences gradually reduce equipment operation to prevent thermal shock, pressure
- * surges, or other process upsets. This follows industry best practices for safe process shutdown.
+ * Shutdown sequences gradually reduce equipment operation to prevent thermal shock, pressure surges, or other process
+ * upsets. This follows industry best practices for safe process shutdown.
  *
  * <p>
  * Key features:
@@ -80,7 +80,7 @@ public class ShutdownLogic implements ProcessLogic {
    * Adds an action to the shutdown sequence.
    *
    * @param action action to execute
-   * @param delay delay in seconds before executing (relative to shutdown start)
+   * @param delay  delay in seconds before executing (relative to shutdown start)
    */
   public void addAction(LogicAction action, double delay) {
     actions.add(new ActionWithDelay(action, delay));
@@ -176,23 +176,22 @@ public class ShutdownLogic implements ProcessLogic {
     elapsedTime += timeStep;
 
     // Scale time if in emergency mode
-    double effectiveTime =
-        emergencyMode ? elapsedTime * (rampDownTime / emergencyShutdownTime) : elapsedTime;
+    double effectiveTime = emergencyMode ? elapsedTime * (rampDownTime / emergencyShutdownTime) : elapsedTime;
 
     // Execute all actions that should have started by now
     for (int i = currentActionIndex; i < actions.size(); i++) {
       ActionWithDelay actionWithDelay = actions.get(i);
 
       if (effectiveTime >= actionWithDelay.delay) {
-        // Time to execute this action
-        actionWithDelay.action.execute();
+	// Time to execute this action
+	actionWithDelay.action.execute();
 
-        if (actionWithDelay.action.isComplete()) {
-          currentActionIndex = i + 1;
-        }
+	if (actionWithDelay.action.isComplete()) {
+	  currentActionIndex = i + 1;
+	}
       } else {
-        // Haven't reached this action's delay yet
-        break;
+	// Haven't reached this action's delay yet
+	break;
       }
     }
 
@@ -200,14 +199,14 @@ public class ShutdownLogic implements ProcessLogic {
     if (currentActionIndex >= actions.size()) {
       boolean allComplete = true;
       for (ActionWithDelay actionWithDelay : actions) {
-        if (!actionWithDelay.action.isComplete()) {
-          allComplete = false;
-          break;
-        }
+	if (!actionWithDelay.action.isComplete()) {
+	  allComplete = false;
+	  break;
+	}
       }
 
       if (allComplete) {
-        state = LogicState.COMPLETED;
+	state = LogicState.COMPLETED;
       }
     }
   }
@@ -268,19 +267,18 @@ public class ShutdownLogic implements ProcessLogic {
     if (state == LogicState.IDLE) {
       sb.append("IDLE");
     } else if (state == LogicState.RUNNING) {
-      sb.append(String.format("RUNNING (%.1f%% complete, %.1fs / %.1fs)", getProgress(),
-          elapsedTime, getEffectiveShutdownTime()));
+      sb.append(String.format("RUNNING (%.1f%% complete, %.1fs / %.1fs)", getProgress(), elapsedTime,
+	  getEffectiveShutdownTime()));
 
       // Show current action
       if (currentActionIndex < actions.size()) {
-        ActionWithDelay current = actions.get(currentActionIndex);
-        sb.append(String.format("\n  Current: %s", current.action.getDescription()));
+	ActionWithDelay current = actions.get(currentActionIndex);
+	sb.append(String.format("\n  Current: %s", current.action.getDescription()));
       }
 
       // Show completed actions
       if (currentActionIndex > 0) {
-        sb.append(
-            String.format("\n  Completed: %d/%d actions", currentActionIndex, actions.size()));
+	sb.append(String.format("\n  Completed: %d/%d actions", currentActionIndex, actions.size()));
       }
     } else if (state == LogicState.COMPLETED) {
       sb.append(String.format("COMPLETED (%.1fs)", elapsedTime));

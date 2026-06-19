@@ -35,8 +35,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * High-level builder that converts a DEXPI P&amp;ID XML file into a runnable NeqSim
- * {@link ProcessSystem}.
+ * High-level builder that converts a DEXPI P&amp;ID XML file into a runnable NeqSim {@link ProcessSystem}.
  *
  * <p>
  * Usage:
@@ -49,8 +48,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * fluid.setMixingRule("classic");
  *
  * ProcessSystem process = new DexpiSimulationBuilder(new File("plant.xml")).setFluidTemplate(fluid)
- *     .setFeedPressure(50.0, "bara").setFeedTemperature(30.0, "C").setFeedFlowRate(1.0, "MSm3/day")
- *     .build();
+ *     .setFeedPressure(50.0, "bara").setFeedTemperature(30.0, "C").setFeedFlowRate(1.0, "MSm3/day").build();
  *
  * process.run();
  * </pre>
@@ -96,8 +94,8 @@ public class DexpiSimulationBuilder {
   }
 
   /**
-   * Sets the thermodynamic fluid template to use for all streams. If not set, a default
-   * methane/ethane system with SRK EOS is used.
+   * Sets the thermodynamic fluid template to use for all streams. If not set, a default methane/ethane system with SRK
+   * EOS is used.
    *
    * @param fluidTemplate the fluid system to clone for each stream
    * @return this builder for chaining
@@ -111,7 +109,7 @@ public class DexpiSimulationBuilder {
    * Sets the feed stream pressure.
    *
    * @param pressure the pressure value
-   * @param unit the pressure unit (e.g. "bara", "barg", "psia")
+   * @param unit     the pressure unit (e.g. "bara", "barg", "psia")
    * @return this builder for chaining
    */
   public DexpiSimulationBuilder setFeedPressure(double pressure, String unit) {
@@ -124,7 +122,7 @@ public class DexpiSimulationBuilder {
    * Sets the feed stream temperature.
    *
    * @param temperature the temperature value
-   * @param unit the temperature unit (e.g. "C", "K", "F")
+   * @param unit        the temperature unit (e.g. "C", "K", "F")
    * @return this builder for chaining
    */
   public DexpiSimulationBuilder setFeedTemperature(double temperature, String unit) {
@@ -137,7 +135,7 @@ public class DexpiSimulationBuilder {
    * Sets the feed stream flow rate.
    *
    * @param flowRate the flow rate value
-   * @param unit the flow rate unit (e.g. "MSm3/day", "kg/hr")
+   * @param unit     the flow rate unit (e.g. "MSm3/day", "kg/hr")
    * @return this builder for chaining
    */
   public DexpiSimulationBuilder setFeedFlowRate(double flowRate, String unit) {
@@ -147,8 +145,8 @@ public class DexpiSimulationBuilder {
   }
 
   /**
-   * Enables automatic instrumentation (transmitters and PID controllers) on separators,
-   * compressors, and heat exchangers.
+   * Enables automatic instrumentation (transmitters and PID controllers) on separators, compressors, and heat
+   * exchangers.
    *
    * @param autoInstrument true to enable auto-instrumentation
    * @return this builder for chaining
@@ -159,9 +157,9 @@ public class DexpiSimulationBuilder {
   }
 
   /**
-   * Enables namespace-aware XML parsing. When enabled, the parser will respect namespace prefixes
-   * in element names. By default, namespace awareness is disabled for compatibility with DEXPI
-   * files that may use local names without namespace declarations.
+   * Enables namespace-aware XML parsing. When enabled, the parser will respect namespace prefixes in element names. By
+   * default, namespace awareness is disabled for compatibility with DEXPI files that may use local names without
+   * namespace declarations.
    *
    * @param namespaceAware true to enable namespace-aware parsing
    * @return this builder for chaining
@@ -175,7 +173,7 @@ public class DexpiSimulationBuilder {
    * Builds the NeqSim {@link ProcessSystem} from the DEXPI XML file.
    *
    * @return a fully wired ProcessSystem ready for {@code process.run()}
-   * @throws IOException if the file cannot be read
+   * @throws IOException             if the file cannot be read
    * @throws DexpiXmlReaderException if the XML cannot be parsed
    */
   public ProcessSystem build() throws IOException, DexpiXmlReaderException {
@@ -192,7 +190,7 @@ public class DexpiSimulationBuilder {
     // Step 1: Resolve topology
     ResolvedTopology topology = DexpiTopologyResolver.resolve(document);
     logger.info("Topology: {} equipment, {} edges", topology.getOrderedEquipmentIds().size(),
-        topology.getEdges().size());
+	topology.getEdges().size());
 
     // Step 2: Build DexpiProcessUnit map with sizing attributes
     Map<String, DexpiProcessUnit> unitMap = buildUnitMap(document, topology);
@@ -217,35 +215,35 @@ public class DexpiSimulationBuilder {
     for (String equipId : orderedIds) {
       DexpiProcessUnit unit = unitMap.get(equipId);
       if (unit == null) {
-        logger.debug("Skipping equipment '{}' (no unit mapping)", equipId);
-        continue;
+	logger.debug("Skipping equipment '{}' (no unit mapping)", equipId);
+	continue;
       }
 
       // Find inlet stream for this equipment
       StreamInterface inletStream = null;
       List<TopologyEdge> incoming = topology.getIncomingEdges(equipId);
       for (TopologyEdge edge : incoming) {
-        StreamInterface upstreamOutlet = outletStreams.get(edge.getSourceEquipmentId());
-        if (upstreamOutlet != null) {
-          inletStream = upstreamOutlet;
-          break;
-        }
+	StreamInterface upstreamOutlet = outletStreams.get(edge.getSourceEquipmentId());
+	if (upstreamOutlet != null) {
+	  inletStream = upstreamOutlet;
+	  break;
+	}
       }
 
       // If no upstream connection found, use the feed stream
       if (inletStream == null && !feedAssigned) {
-        inletStream = feedStream;
-        feedAssigned = true;
+	inletStream = feedStream;
+	feedAssigned = true;
       }
 
       // If still no inlet, create a clone of the feed
       if (inletStream == null) {
-        Stream clonedFeed = new Stream(equipId + "-feed", fluid.clone());
-        clonedFeed.setPressure(feedPressure, feedPressureUnit);
-        clonedFeed.setTemperature(feedTemperature, feedTemperatureUnit);
-        clonedFeed.setFlowRate(feedFlowRate, feedFlowRateUnit);
-        processSystem.add(clonedFeed);
-        inletStream = clonedFeed;
+	Stream clonedFeed = new Stream(equipId + "-feed", fluid.clone());
+	clonedFeed.setPressure(feedPressure, feedPressureUnit);
+	clonedFeed.setTemperature(feedTemperature, feedTemperatureUnit);
+	clonedFeed.setFlowRate(feedFlowRate, feedFlowRateUnit);
+	processSystem.add(clonedFeed);
+	inletStream = clonedFeed;
       }
 
       // Create the equipment
@@ -256,7 +254,7 @@ public class DexpiSimulationBuilder {
       // Capture outlet stream for downstream wiring
       StreamInterface outletStream = getOutletStream(equipment);
       if (outletStream != null) {
-        outletStreams.put(equipId, outletStream);
+	outletStreams.put(equipId, outletStream);
       }
     }
 
@@ -266,8 +264,7 @@ public class DexpiSimulationBuilder {
       applyAutoInstrumentation(processSystem, dexpiInstruments);
     }
 
-    logger.info("Built ProcessSystem with {} units from DEXPI",
-        processSystem.getUnitOperations().size());
+    logger.info("Built ProcessSystem with {} units from DEXPI", processSystem.getUnitOperations().size());
     return processSystem;
   }
 
@@ -290,11 +287,11 @@ public class DexpiSimulationBuilder {
 
       EquipmentEnum equipEnum = equipmentMapping.get(componentClass);
       if (equipEnum == null) {
-        equipEnum = pipingMapping.get(componentClass);
+	equipEnum = pipingMapping.get(componentClass);
       }
       if (equipEnum == null) {
-        logger.debug("No mapping for ComponentClass '{}', skipping '{}'", componentClass, equipId);
-        continue;
+	logger.debug("No mapping for ComponentClass '{}', skipping '{}'", componentClass, equipId);
+	continue;
       }
 
       String tagName = getGenericAttribute(element, DexpiMetadata.TAG_NAME);
@@ -302,16 +299,15 @@ public class DexpiSimulationBuilder {
       String lineNumber = getGenericAttribute(element, DexpiMetadata.LINE_NUMBER);
       String fluidCode = getGenericAttribute(element, DexpiMetadata.FLUID_CODE);
 
-      DexpiProcessUnit unit =
-          new DexpiProcessUnit(name, componentClass, equipEnum, lineNumber, fluidCode);
+      DexpiProcessUnit unit = new DexpiProcessUnit(name, componentClass, equipEnum, lineNumber, fluidCode);
       unit.setDexpiId(equipId);
 
       // Extract sizing attributes
       for (String attr : DexpiMetadata.sizingAttributes()) {
-        String value = getGenericAttribute(element, attr);
-        if (value != null) {
-          unit.setSizingAttribute(attr, value);
-        }
+	String value = getGenericAttribute(element, attr);
+	if (value != null) {
+	  unit.setSizingAttribute(attr, value);
+	}
       }
 
       unitMap.put(equipId, unit);
@@ -332,55 +328,51 @@ public class DexpiSimulationBuilder {
   }
 
   /**
-   * Applies auto-instrumentation using the DynamicProcessHelper, then logs associations between
-   * DEXPI instrument tags and auto-generated transmitters/controllers.
+   * Applies auto-instrumentation using the DynamicProcessHelper, then logs associations between DEXPI instrument tags
+   * and auto-generated transmitters/controllers.
    *
-   * @param processSystem the process system to instrument
+   * @param processSystem    the process system to instrument
    * @param dexpiInstruments the DEXPI instrument info list (may be empty)
    */
-  private void applyAutoInstrumentation(ProcessSystem processSystem,
-      List<DexpiInstrumentInfo> dexpiInstruments) {
+  private void applyAutoInstrumentation(ProcessSystem processSystem, List<DexpiInstrumentInfo> dexpiInstruments) {
     try {
-      neqsim.process.util.DynamicProcessHelper helper =
-          new neqsim.process.util.DynamicProcessHelper(processSystem);
+      neqsim.process.util.DynamicProcessHelper helper = new neqsim.process.util.DynamicProcessHelper(processSystem);
       helper.instrumentAndControl();
       logger.info("Auto-instrumentation applied");
 
       // Wire DEXPI instrument tags: rename auto-generated tags to match DEXPI names
       if (!dexpiInstruments.isEmpty()) {
-        Map<String, MeasurementDeviceInterface> transmitters = helper.getTransmitters();
-        Map<String, ControllerDeviceInterface> controllers = helper.getControllers();
+	Map<String, MeasurementDeviceInterface> transmitters = helper.getTransmitters();
+	Map<String, ControllerDeviceInterface> controllers = helper.getControllers();
 
-        for (DexpiInstrumentInfo info : dexpiInstruments) {
-          String category = info.getCategory();
-          if (category == null) {
-            continue;
-          }
-          // Match DEXPI instrument to auto-generated tag by category (P->PT, L->LT, T->TT, F->FT)
-          String autoPrefix = category + "T-";
-          for (Map.Entry<String, MeasurementDeviceInterface> entry : transmitters.entrySet()) {
-            if (entry.getKey().startsWith(autoPrefix) && info.getTagName() != null) {
-              entry.getValue().setName(info.getTagName());
-              logger.info("Renamed transmitter '{}' to DEXPI tag '{}'", entry.getKey(),
-                  info.getTagName());
-              break;
-            }
-          }
-          if (info.hasControlFunction()) {
-            String autoControlPrefix = category + "C-";
-            for (Map.Entry<String, ControllerDeviceInterface> entry : controllers.entrySet()) {
-              if (entry.getKey().startsWith(autoControlPrefix) && info.getTagName() != null) {
-                String controlTag = info.getTagName().replaceFirst("^(" + category + ")T", "$1C");
-                if (entry.getValue() instanceof ControllerDeviceBaseClass) {
-                  ((ControllerDeviceBaseClass) entry.getValue()).setName(controlTag);
-                }
-                logger.info("Renamed controller '{}' to DEXPI tag '{}'", entry.getKey(),
-                    controlTag);
-                break;
-              }
-            }
-          }
-        }
+	for (DexpiInstrumentInfo info : dexpiInstruments) {
+	  String category = info.getCategory();
+	  if (category == null) {
+	    continue;
+	  }
+	  // Match DEXPI instrument to auto-generated tag by category (P->PT, L->LT, T->TT, F->FT)
+	  String autoPrefix = category + "T-";
+	  for (Map.Entry<String, MeasurementDeviceInterface> entry : transmitters.entrySet()) {
+	    if (entry.getKey().startsWith(autoPrefix) && info.getTagName() != null) {
+	      entry.getValue().setName(info.getTagName());
+	      logger.info("Renamed transmitter '{}' to DEXPI tag '{}'", entry.getKey(), info.getTagName());
+	      break;
+	    }
+	  }
+	  if (info.hasControlFunction()) {
+	    String autoControlPrefix = category + "C-";
+	    for (Map.Entry<String, ControllerDeviceInterface> entry : controllers.entrySet()) {
+	      if (entry.getKey().startsWith(autoControlPrefix) && info.getTagName() != null) {
+		String controlTag = info.getTagName().replaceFirst("^(" + category + ")T", "$1C");
+		if (entry.getValue() instanceof ControllerDeviceBaseClass) {
+		  ((ControllerDeviceBaseClass) entry.getValue()).setName(controlTag);
+		}
+		logger.info("Renamed controller '{}' to DEXPI tag '{}'", entry.getKey(), controlTag);
+		break;
+	      }
+	    }
+	  }
+	}
       }
     } catch (Exception e) {
       logger.warn("Auto-instrumentation failed: {}", e.getMessage());
@@ -423,12 +415,11 @@ public class DexpiSimulationBuilder {
    * Parses a DEXPI XML document with security hardening.
    *
    * @param inputStream the input stream
-   * @param nsAware whether to enable namespace-aware parsing
+   * @param nsAware     whether to enable namespace-aware parsing
    * @return the parsed Document
    * @throws DexpiXmlReaderException if parsing fails
    */
-  private static Document parseDocument(InputStream inputStream, boolean nsAware)
-      throws DexpiXmlReaderException {
+  private static Document parseDocument(InputStream inputStream, boolean nsAware) throws DexpiXmlReaderException {
     try {
       DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
       factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
@@ -442,26 +433,25 @@ public class DexpiSimulationBuilder {
       factory.setXIncludeAware(false);
       DocumentBuilder builder = factory.newDocumentBuilder();
       builder.setErrorHandler(new org.xml.sax.ErrorHandler() {
-        @Override
-        public void warning(SAXParseException exception) throws SAXException {
-          throw exception;
-        }
+	@Override
+	public void warning(SAXParseException exception) throws SAXException {
+	  throw exception;
+	}
 
-        @Override
-        public void error(SAXParseException exception) throws SAXException {
-          throw exception;
-        }
+	@Override
+	public void error(SAXParseException exception) throws SAXException {
+	  throw exception;
+	}
 
-        @Override
-        public void fatalError(SAXParseException exception) throws SAXException {
-          throw exception;
-        }
+	@Override
+	public void fatalError(SAXParseException exception) throws SAXException {
+	  throw exception;
+	}
       });
       Document document = builder.parse(inputStream);
       document.getDocumentElement().normalize();
       return document;
-    } catch (ParserConfigurationException | SAXException | IOException
-        | IllegalArgumentException e) {
+    } catch (ParserConfigurationException | SAXException | IOException | IllegalArgumentException e) {
       throw new DexpiXmlReaderException("Unable to parse DEXPI XML", e);
     }
   }
@@ -469,7 +459,7 @@ public class DexpiSimulationBuilder {
   /**
    * Reads a GenericAttribute value from the given element.
    *
-   * @param element the XML element
+   * @param element       the XML element
    * @param attributeName the attribute name to search for
    * @return the attribute value, or null if not found
    */
@@ -478,27 +468,27 @@ public class DexpiSimulationBuilder {
     for (int i = 0; i < genericNodes.getLength(); i++) {
       Node child = genericNodes.item(i);
       if (child.getNodeType() != Node.ELEMENT_NODE) {
-        continue;
+	continue;
       }
       Element childEl = (Element) child;
       if ("GenericAttributes".equals(childEl.getTagName())) {
-        NodeList attributes = childEl.getElementsByTagName("GenericAttribute");
-        for (int j = 0; j < attributes.getLength(); j++) {
-          Node attrNode = attributes.item(j);
-          if (attrNode.getNodeType() != Node.ELEMENT_NODE) {
-            continue;
-          }
-          Element attr = (Element) attrNode;
-          if (attributeName.equals(attr.getAttribute("Name"))) {
-            String value = attr.getAttribute("Value");
-            if (value == null || value.isEmpty()) {
-              value = attr.getAttribute("ValueURI");
-            }
-            if (value != null && !value.isEmpty()) {
-              return value;
-            }
-          }
-        }
+	NodeList attributes = childEl.getElementsByTagName("GenericAttribute");
+	for (int j = 0; j < attributes.getLength(); j++) {
+	  Node attrNode = attributes.item(j);
+	  if (attrNode.getNodeType() != Node.ELEMENT_NODE) {
+	    continue;
+	  }
+	  Element attr = (Element) attrNode;
+	  if (attributeName.equals(attr.getAttribute("Name"))) {
+	    String value = attr.getAttribute("Value");
+	    if (value == null || value.isEmpty()) {
+	      value = attr.getAttribute("ValueURI");
+	    }
+	    if (value != null && !value.isEmpty()) {
+	      return value;
+	    }
+	  }
+	}
       }
     }
     return null;

@@ -11,8 +11,7 @@ import neqsim.thermo.system.SystemInterface;
 
 /**
  * <p>
- * TimeSeries class for managing time-varying boundary conditions in transient pipe flow
- * simulations.
+ * TimeSeries class for managing time-varying boundary conditions in transient pipe flow simulations.
  * </p>
  *
  * <p>
@@ -146,38 +145,38 @@ public class TimeSeries implements java.io.Serializable {
     outletPressures = new double[totalSteps];
 
     // Get default outlet pressure from initial flow system state
-    double defaultOutletPressure =
-        flowSystem.getNode(flowSystem.getTotalNumberOfNodes() - 1).getBulkSystem().getPressure();
+    double defaultOutletPressure = flowSystem.getNode(flowSystem.getTotalNumberOfNodes() - 1).getBulkSystem()
+	.getPressure();
 
     double temp = 0;
     for (int k = 0; k < timeSeries.length - 1; k++) {
       double stepLength = (timeSeries[k + 1] - timeSeries[k]) / numberOfTimeStepsInInterval;
       for (int i = 0; i < numberOfTimeStepsInInterval; i++) {
-        timeSteps[p] = stepLength;
-        temp += stepLength;
-        times[p] = temp;
-        if (outletMolarFlowRate != null) {
-          outletMolarFlowRates[p] = outletMolarFlowRate[k];
-        }
-        thermoSystems[p] = inletThermoSystem[k].clone();
+	timeSteps[p] = stepLength;
+	temp += stepLength;
+	times[p] = temp;
+	if (outletMolarFlowRate != null) {
+	  outletMolarFlowRates[p] = outletMolarFlowRate[k];
+	}
+	thermoSystems[p] = inletThermoSystem[k].clone();
 
-        // Handle outlet velocity
-        if (outletBoundaryType == OutletBoundaryType.CLOSED) {
-          outletVelocities[p] = 0.0;
-        } else if (outletVelocity != null && k < outletVelocity.length) {
-          outletVelocities[p] = outletVelocity[k];
-        } else {
-          outletVelocities[p] = Double.NaN; // Not specified
-        }
+	// Handle outlet velocity
+	if (outletBoundaryType == OutletBoundaryType.CLOSED) {
+	  outletVelocities[p] = 0.0;
+	} else if (outletVelocity != null && k < outletVelocity.length) {
+	  outletVelocities[p] = outletVelocity[k];
+	} else {
+	  outletVelocities[p] = Double.NaN; // Not specified
+	}
 
-        // Handle outlet pressure
-        if (outletPressure != null && k < outletPressure.length) {
-          outletPressures[p] = outletPressure[k];
-        } else {
-          outletPressures[p] = defaultOutletPressure;
-        }
+	// Handle outlet pressure
+	if (outletPressure != null && k < outletPressure.length) {
+	  outletPressures[p] = outletPressure[k];
+	} else {
+	  outletPressures[p] = defaultOutletPressure;
+	}
 
-        p++;
+	p++;
       }
     }
   }

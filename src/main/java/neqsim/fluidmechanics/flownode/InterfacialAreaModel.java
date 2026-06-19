@@ -12,8 +12,7 @@ package neqsim.fluidmechanics.flownode;
  * </pre>
  *
  * <p>
- * Different flow patterns require different interfacial area models based on the geometry of the
- * gas-liquid interface.
+ * Different flow patterns require different interfacial area models based on the geometry of the gas-liquid interface.
  * </p>
  *
  * @author ASMF
@@ -21,8 +20,7 @@ package neqsim.fluidmechanics.flownode;
  */
 public enum InterfacialAreaModel {
   /**
-   * Geometric model based on flow pattern geometry. Calculates interfacial area from physical
-   * dimensions.
+   * Geometric model based on flow pattern geometry. Calculates interfacial area from physical dimensions.
    */
   GEOMETRIC("Geometric"),
 

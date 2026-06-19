@@ -13,8 +13,8 @@ import com.google.gson.GsonBuilder;
  * Collection of Pareto-optimal solutions forming the Pareto front.
  *
  * <p>
- * The Pareto front contains all non-dominated solutions found during multi-objective optimization.
- * It automatically maintains the non-dominated property when solutions are added.
+ * The Pareto front contains all non-dominated solutions found during multi-objective optimization. It automatically
+ * maintains the non-dominated property when solutions are added.
  * </p>
  *
  * @author ASMF
@@ -25,8 +25,8 @@ public class ParetoFront implements Serializable, Iterable<ParetoSolution> {
   private static final long serialVersionUID = 1L;
 
   /** Logger for this class. */
-  private static final org.apache.logging.log4j.Logger logger =
-      org.apache.logging.log4j.LogManager.getLogger(ParetoFront.class);
+  private static final org.apache.logging.log4j.Logger logger = org.apache.logging.log4j.LogManager
+      .getLogger(ParetoFront.class);
 
   /** The non-dominated solutions. */
   private final List<ParetoSolution> solutions;
@@ -55,8 +55,8 @@ public class ParetoFront implements Serializable, Iterable<ParetoSolution> {
    * Add a candidate solution to the front.
    *
    * <p>
-   * If the candidate dominates any existing solutions, those are removed. If the candidate is
-   * dominated by any existing solution, it is not added. This method is thread-safe.
+   * If the candidate dominates any existing solutions, those are removed. If the candidate is dominated by any existing
+   * solution, it is not added. This method is thread-safe.
    * </p>
    *
    * @param candidate the solution to add
@@ -76,8 +76,8 @@ public class ParetoFront implements Serializable, Iterable<ParetoSolution> {
     // Check if candidate is dominated by any existing solution
     for (ParetoSolution existing : solutions) {
       if (existing.dominates(candidate)) {
-        logger.debug("Candidate dominated by existing solution");
-        return false; // Candidate is dominated, don't add
+	logger.debug("Candidate dominated by existing solution");
+	return false; // Candidate is dominated, don't add
       }
     }
 
@@ -86,8 +86,8 @@ public class ParetoFront implements Serializable, Iterable<ParetoSolution> {
     java.util.Iterator<ParetoSolution> it = solutions.iterator();
     while (it.hasNext()) {
       if (candidate.dominates(it.next())) {
-        it.remove();
-        removedCount++;
+	it.remove();
+	removedCount++;
       }
     }
     if (removedCount > 0) {
@@ -113,7 +113,7 @@ public class ParetoFront implements Serializable, Iterable<ParetoSolution> {
    * Get solutions sorted by a specific objective.
    *
    * @param objectiveIndex index of objective to sort by
-   * @param ascending if true, sort ascending; otherwise descending
+   * @param ascending      if true, sort ascending; otherwise descending
    * @return sorted list of solutions
    */
   public List<ParetoSolution> getSolutionsSortedBy(int objectiveIndex, boolean ascending) {
@@ -154,8 +154,8 @@ public class ParetoFront implements Serializable, Iterable<ParetoSolution> {
    * Find the "knee" point on the Pareto front.
    *
    * <p>
-   * The knee point is the solution with maximum distance from the line connecting the extreme
-   * points. This often represents a good trade-off between objectives.
+   * The knee point is the solution with maximum distance from the line connecting the extreme points. This often
+   * represents a good trade-off between objectives.
    * </p>
    *
    * @return the knee point solution, or null if front is empty
@@ -191,11 +191,11 @@ public class ParetoFront implements Serializable, Iterable<ParetoSolution> {
       double y0 = sol.getRawValue(1);
       // Distance from point to line
       double distance = Math.abs((y2 - y1) * x0 - (x2 - x1) * y0 + x2 * y1 - y2 * x1)
-          / Math.sqrt((y2 - y1) * (y2 - y1) + (x2 - x1) * (x2 - x1));
+	  / Math.sqrt((y2 - y1) * (y2 - y1) + (x2 - x1) * (x2 - x1));
 
       if (distance > maxDistance) {
-        maxDistance = distance;
-        knee = sol;
+	maxDistance = distance;
+	knee = sol;
       }
     }
 
@@ -226,16 +226,16 @@ public class ParetoFront implements Serializable, Iterable<ParetoSolution> {
     for (ParetoSolution sol : solutions) {
       double dist = 0;
       for (int i = 0; i < numObj; i++) {
-        double range = ideal[i] - nadir[i];
-        if (range > 0) {
-          double normalized = (ideal[i] - sol.getValue(i)) / range;
-          dist += normalized * normalized;
-        }
+	double range = ideal[i] - nadir[i];
+	if (range > 0) {
+	  double normalized = (ideal[i] - sol.getValue(i)) / range;
+	  dist += normalized * normalized;
+	}
       }
       dist = Math.sqrt(dist);
       if (dist < minDist) {
-        minDist = dist;
-        best = sol;
+	minDist = dist;
+	best = sol;
       }
     }
 
@@ -249,8 +249,7 @@ public class ParetoFront implements Serializable, Iterable<ParetoSolution> {
    * @return solution with minimum value for that objective
    */
   public ParetoSolution findMinimum(int objectiveIndex) {
-    return solutions.stream().min(Comparator.comparingDouble(s -> s.getRawValue(objectiveIndex)))
-        .orElse(null);
+    return solutions.stream().min(Comparator.comparingDouble(s -> s.getRawValue(objectiveIndex))).orElse(null);
   }
 
   /**
@@ -260,16 +259,15 @@ public class ParetoFront implements Serializable, Iterable<ParetoSolution> {
    * @return solution with maximum value for that objective
    */
   public ParetoSolution findMaximum(int objectiveIndex) {
-    return solutions.stream().max(Comparator.comparingDouble(s -> s.getRawValue(objectiveIndex)))
-        .orElse(null);
+    return solutions.stream().max(Comparator.comparingDouble(s -> s.getRawValue(objectiveIndex))).orElse(null);
   }
 
   /**
    * Calculate hypervolume indicator (2D case).
    *
    * <p>
-   * The hypervolume is the area/volume dominated by the front with respect to a reference point.
-   * Higher values indicate better convergence and diversity.
+   * The hypervolume is the area/volume dominated by the front with respect to a reference point. Higher values indicate
+   * better convergence and diversity.
    * </p>
    *
    * @param referencePoint reference point (nadir point)
@@ -290,8 +288,8 @@ public class ParetoFront implements Serializable, Iterable<ParetoSolution> {
       double x = sol.getValue(0);
       double y = sol.getValue(1);
       if (x > referencePoint[0] && y > referencePoint[1]) {
-        hypervolume += (x - referencePoint[0]) * (y - prevY);
-        prevY = y;
+	hypervolume += (x - referencePoint[0]) * (y - prevY);
+	prevY = y;
       }
     }
 
@@ -313,18 +311,17 @@ public class ParetoFront implements Serializable, Iterable<ParetoSolution> {
     for (ParetoSolution sol : solutions) {
       double minDist = Double.MAX_VALUE;
       for (ParetoSolution other : solutions) {
-        if (sol != other) {
-          double dist = sol.distanceTo(other);
-          minDist = Math.min(minDist, dist);
-        }
+	if (sol != other) {
+	  double dist = sol.distanceTo(other);
+	  minDist = Math.min(minDist, dist);
+	}
       }
       minDistances.add(minDist);
     }
 
     // Calculate mean and standard deviation
     double mean = minDistances.stream().mapToDouble(d -> d).average().orElse(0);
-    double variance =
-        minDistances.stream().mapToDouble(d -> (d - mean) * (d - mean)).average().orElse(0);
+    double variance = minDistances.stream().mapToDouble(d -> (d - mean) * (d - mean)).average().orElse(0);
     return Math.sqrt(variance);
   }
 
@@ -334,8 +331,7 @@ public class ParetoFront implements Serializable, Iterable<ParetoSolution> {
    * @return JSON string representation
    */
   public String toJson() {
-    Gson gson =
-        new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+    Gson gson = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
 
     List<Object> jsonSolutions = new ArrayList<>();
     for (ParetoSolution sol : solutions) {
@@ -345,11 +341,11 @@ public class ParetoFront implements Serializable, Iterable<ParetoSolution> {
 
       List<Object> objList = new ArrayList<>();
       for (int i = 0; i < sol.getNumObjectives(); i++) {
-        java.util.Map<String, Object> objMap = new java.util.LinkedHashMap<>();
-        objMap.put("name", sol.getObjectiveName(i));
-        objMap.put("value", sol.getRawValue(i));
-        objMap.put("unit", sol.getObjectiveUnit(i));
-        objList.add(objMap);
+	java.util.Map<String, Object> objMap = new java.util.LinkedHashMap<>();
+	objMap.put("name", sol.getObjectiveName(i));
+	objMap.put("value", sol.getRawValue(i));
+	objMap.put("unit", sol.getObjectiveUnit(i));
+	objList.add(objMap);
       }
       solMap.put("objectives", objList);
       jsonSolutions.add(solMap);
@@ -361,12 +357,12 @@ public class ParetoFront implements Serializable, Iterable<ParetoSolution> {
     if (!solutions.isEmpty()) {
       ParetoSolution knee = findKneePoint();
       if (knee != null) {
-        java.util.Map<String, Object> kneeMap = new java.util.LinkedHashMap<>();
-        kneeMap.put("decisionVariables", knee.getDecisionVariables());
-        for (int i = 0; i < knee.getNumObjectives(); i++) {
-          kneeMap.put(knee.getObjectiveName(i), knee.getRawValue(i));
-        }
-        result.put("kneePoint", kneeMap);
+	java.util.Map<String, Object> kneeMap = new java.util.LinkedHashMap<>();
+	kneeMap.put("decisionVariables", knee.getDecisionVariables());
+	for (int i = 0; i < knee.getNumObjectives(); i++) {
+	  kneeMap.put(knee.getObjectiveName(i), knee.getRawValue(i));
+	}
+	result.put("kneePoint", kneeMap);
       }
     }
     result.put("solutions", jsonSolutions);

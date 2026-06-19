@@ -24,8 +24,7 @@ public class PhaseEOSCGEos extends PhaseGERG2008Eos {
   }
 
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt,
-      double beta) {
+  public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt, double beta) {
     IPHASE = pt == PhaseType.LIQUID ? -1 : -2;
     super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
 
@@ -52,26 +51,23 @@ public class PhaseEOSCGEos extends PhaseGERG2008Eos {
 
   @Override
   public double dFdN(int i) {
-    return ((ComponentEosInterface) getComponent(i)).dFdN(this, this.getNumberOfComponents(),
-        temperature, pressure);
+    return ((ComponentEosInterface) getComponent(i)).dFdN(this, this.getNumberOfComponents(), temperature, pressure);
   }
 
   @Override
   public double dFdNdN(int i, int j) {
-    return ((ComponentEosInterface) getComponent(i)).dFdNdN(j, this, this.getNumberOfComponents(),
-        temperature, pressure);
+    return ((ComponentEosInterface) getComponent(i)).dFdNdN(j, this, this.getNumberOfComponents(), temperature,
+	pressure);
   }
 
   @Override
   public double dFdNdV(int i) {
-    return ((ComponentEosInterface) getComponent(i)).dFdNdV(this, this.getNumberOfComponents(),
-        temperature, pressure);
+    return ((ComponentEosInterface) getComponent(i)).dFdNdV(this, this.getNumberOfComponents(), temperature, pressure);
   }
 
   @Override
   public double dFdNdT(int i) {
-    return ((ComponentEosInterface) getComponent(i)).dFdNdT(this, this.getNumberOfComponents(),
-        temperature, pressure);
+    return ((ComponentEosInterface) getComponent(i)).dFdNdT(this, this.getNumberOfComponents(), temperature, pressure);
   }
 
   @Override

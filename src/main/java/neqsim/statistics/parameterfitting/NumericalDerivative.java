@@ -27,25 +27,25 @@ public final class NumericalDerivative implements java.io.Serializable {
   /**
    * Dummy constructor, not for use. Class is to be considered static.
    */
-  private NumericalDerivative() {}
+  private NumericalDerivative() {
+  }
 
   /**
    * <p>
    * calcDerivative.
    * </p>
    *
-   * @param system a {@link neqsim.statistics.parameterfitting.StatisticsBaseClass} object
-   * @param sampleNumber a int
+   * @param system          a {@link neqsim.statistics.parameterfitting.StatisticsBaseClass} object
+   * @param sampleNumber    a int
    * @param parameterNumber a int
    * @return a double
    */
-  public static double calcDerivative(StatisticsBaseClass system, int sampleNumber,
-      int parameterNumber) {
+  public static double calcDerivative(StatisticsBaseClass system, int sampleNumber, int parameterNumber) {
     double errt;
     double fac;
     double hh;
     double oldFittingParam1 = system.getSampleSet().getSample(sampleNumber).getFunction()
-        .getFittingParams(parameterNumber);
+	.getFittingParams(parameterNumber);
     double h = Math.abs(oldFittingParam1) / 1.0e3;
     if (h == 0.0) {
       h = 1.0e-10;
@@ -54,13 +54,12 @@ public final class NumericalDerivative implements java.io.Serializable {
     hh = h;
     // System.out.println("hh " + hh);
     system.getSampleSet().getSample(sampleNumber).getFunction().setFittingParams(parameterNumber,
-        oldFittingParam1 + hh);
+	oldFittingParam1 + hh);
     double val1 = system.calcValue(system.getSample(sampleNumber));
     system.getSampleSet().getSample(sampleNumber).getFunction().setFittingParams(parameterNumber,
-        oldFittingParam1 - hh);
+	oldFittingParam1 - hh);
     double val2 = system.calcValue(system.getSample(sampleNumber));
-    system.getSampleSet().getSample(sampleNumber).getFunction().setFittingParams(parameterNumber,
-        oldFittingParam1);
+    system.getSampleSet().getSample(sampleNumber).getFunction().setFittingParams(parameterNumber, oldFittingParam1);
 
     double[][] a = new double[NTAB][NTAB];
     a[0][0] = (val1 - val2) / (2.0 * hh);
@@ -71,37 +70,35 @@ public final class NumericalDerivative implements java.io.Serializable {
       hh /= CON;
 
       system.getSampleSet().getSample(sampleNumber).getFunction().setFittingParams(parameterNumber,
-          oldFittingParam1 + hh);
+	  oldFittingParam1 + hh);
       val1 = system.calcValue(system.getSample(sampleNumber));
       // system.getSampleSet().getSample(sampleNumber).getFunction().setFittingParams(parameterNumber,
       // oldFittingParam);
       system.getSampleSet().getSample(sampleNumber).getFunction().setFittingParams(parameterNumber,
-          oldFittingParam1 - hh);
+	  oldFittingParam1 - hh);
       val2 = system.calcValue(system.getSample(sampleNumber));
-      system.getSampleSet().getSample(sampleNumber).getFunction().setFittingParams(parameterNumber,
-          oldFittingParam1);
+      system.getSampleSet().getSample(sampleNumber).getFunction().setFittingParams(parameterNumber, oldFittingParam1);
 
       a[0][i] = (val1 - val2) / (2.0 * hh);
       fac = CON2;
       for (int j = 1; j <= i; j++) {
-        a[j][i] = (a[j - 1][i] * fac - a[j - 1][i - 1]) / (fac - 1.0);
-        fac = CON2 * fac;
-        errt = Math.max(Math.abs(a[j][i] - a[j - 1][i]), Math.abs(a[j][i] - a[j - 1][i - 1]));
-        // System.out.println("errt : " +errt);
+	a[j][i] = (a[j - 1][i] * fac - a[j - 1][i - 1]) / (fac - 1.0);
+	fac = CON2 * fac;
+	errt = Math.max(Math.abs(a[j][i] - a[j - 1][i]), Math.abs(a[j][i] - a[j - 1][i - 1]));
+	// System.out.println("errt : " +errt);
 
-        if (errt <= err) {
-          err = errt;
-          ans = a[j][i];
-        }
-        // System.out.println("deriv1 " + ans);
+	if (errt <= err) {
+	  err = errt;
+	  ans = a[j][i];
+	}
+	// System.out.println("deriv1 " + ans);
       }
 
       if (Math.abs(a[i][i] - a[i - 1][i - 1]) >= SAFE * err) {
-        break;
+	break;
       }
     }
-    system.getSampleSet().getSample(sampleNumber).getFunction().setFittingParams(parameterNumber,
-        oldFittingParam1);
+    system.getSampleSet().getSample(sampleNumber).getFunction().setFittingParams(parameterNumber, oldFittingParam1);
     // System.out.println("deriv " + ans);
     // System.out.println("err " + err);
     return ans;

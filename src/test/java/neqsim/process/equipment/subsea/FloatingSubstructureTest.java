@@ -36,8 +36,7 @@ class FloatingSubstructureTest {
     assertTrue(fs.getDraft() < 35.0, "Draft should not exceed column height");
 
     // Displacement must equal total mass (hydrostatic equilibrium)
-    assertEquals(fs.getTotalMass(), fs.getDisplacement(), 1.0,
-        "Displacement must equal total mass");
+    assertEquals(fs.getTotalMass(), fs.getDisplacement(), 1.0, "Displacement must equal total mass");
 
     // GM must be positive for stable floating body
     assertTrue(fs.getMetacentricHeight() > 0, "GM must be positive for stability");
@@ -147,7 +146,6 @@ class FloatingSubstructureTest {
     fs.run();
 
     // TLP should have excess buoyancy (positive)
-    assertTrue(fs.getExcessBuoyancy() > 0,
-        "TLP must have positive excess buoyancy for tendon pretension");
+    assertTrue(fs.getExcessBuoyancy() > 0, "TLP must have positive excess buoyancy for tendon pretension");
   }
 }

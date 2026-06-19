@@ -372,7 +372,7 @@ class PipeFlowNetworkTest {
     process.run();
 
     // Verify profiles exist for all pipelines
-    String[] inletPipes = {"flowline 1", "flowline 2", "flowline 3"};
+    String[] inletPipes = { "flowline 1", "flowline 2", "flowline 3" };
     for (String pipeName : inletPipes) {
       double[] pressure = network.getPressureProfile(pipeName, "bara");
       double[] temp = network.getTemperatureProfile(pipeName, "C");
@@ -398,4 +398,3 @@ class PipeFlowNetworkTest {
     assertEquals(4, network.getPipelines().size());
   }
 }
-

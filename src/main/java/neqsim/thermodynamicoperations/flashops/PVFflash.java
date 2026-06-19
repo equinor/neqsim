@@ -8,14 +8,14 @@ import neqsim.thermo.system.SystemInterface;
  * Pressure-Vapor Fraction (PVF) flash calculation.
  *
  * <p>
- * Given a specified pressure and molar vapor fraction (quality), this flash determines the
- * temperature at which the system achieves the specified vapor fraction. Uses a Newton-Raphson
- * iteration on temperature, adjusting until the computed vapor fraction matches the target.
+ * Given a specified pressure and molar vapor fraction (quality), this flash determines the temperature at which the
+ * system achieves the specified vapor fraction. Uses a Newton-Raphson iteration on temperature, adjusting until the
+ * computed vapor fraction matches the target.
  * </p>
  *
  * <p>
- * The vapor fraction (beta) is defined as the ratio of moles in the vapor phase to total moles.
- * Beta = 0.0 corresponds to the bubble point and beta = 1.0 corresponds to the dew point.
+ * The vapor fraction (beta) is defined as the ratio of moles in the vapor phase to total moles. Beta = 0.0 corresponds
+ * to the bubble point and beta = 1.0 corresponds to the dew point.
  * </p>
  *
  * @author NeqSim
@@ -42,14 +42,13 @@ public class PVFflash extends Flash {
   /**
    * Constructor for PVFflash.
    *
-   * @param system the thermodynamic system (pressure must be set)
+   * @param system            the thermodynamic system (pressure must be set)
    * @param vaporFractionSpec target molar vapor fraction (0.0 = bubble point, 1.0 = dew point)
    * @throws IllegalArgumentException if vaporFractionSpec is not in [0, 1]
    */
   public PVFflash(SystemInterface system, double vaporFractionSpec) {
     if (vaporFractionSpec < 0.0 || vaporFractionSpec > 1.0) {
-      throw new IllegalArgumentException(
-          "Vapor fraction must be between 0.0 and 1.0, got: " + vaporFractionSpec);
+      throw new IllegalArgumentException("Vapor fraction must be between 0.0 and 1.0, got: " + vaporFractionSpec);
     }
     this.system = system;
     this.vaporFractionSpec = vaporFractionSpec;
@@ -73,8 +72,8 @@ public class PVFflash extends Flash {
   }
 
   /**
-   * Internal implementation of the PVF flash. The public {@link #run()} wraps this method to enable
-   * K-value warm-start for the inner TPflash loop.
+   * Internal implementation of the PVF flash. The public {@link #run()} wraps this method to enable K-value warm-start
+   * for the inner TPflash loop.
    */
   private void runInternal() {
     // Handle pure liquid (bubble point) and pure vapor (dew point) as special cases
@@ -107,8 +106,8 @@ public class PVFflash extends Flash {
     while (betaLow > vaporFractionSpec && bracketAttempts < 20) {
       tempLow -= 10.0;
       if (tempLow < 50.0) {
-        tempLow = 50.0;
-        break;
+	tempLow = 50.0;
+	break;
       }
       betaLow = computeBeta(tempLow);
       bracketAttempts++;
@@ -117,8 +116,8 @@ public class PVFflash extends Flash {
     while (betaHigh < vaporFractionSpec && bracketAttempts < 20) {
       tempHigh += 10.0;
       if (tempHigh > 2000.0) {
-        tempHigh = 2000.0;
-        break;
+	tempHigh = 2000.0;
+	break;
       }
       betaHigh = computeBeta(tempHigh);
       bracketAttempts++;
@@ -135,35 +134,35 @@ public class PVFflash extends Flash {
 
       // Clamp to valid range
       if (tC < 50.0) {
-        tC = 50.0;
+	tC = 50.0;
       }
       if (tC > 2000.0) {
-        tC = 2000.0;
+	tC = 2000.0;
       }
 
       double fC = computeBeta(tC) - vaporFractionSpec;
 
       if (Math.abs(fC) < tolerance) {
-        // Converged — set final temperature
-        system.setTemperature(tC);
-        tpFlash.run();
-        system.init(2);
-        return;
+	// Converged — set final temperature
+	system.setTemperature(tC);
+	tpFlash.run();
+	system.init(2);
+	return;
       }
 
       if (fC * fB < 0.0) {
-        // Root is in [tC, tB]
-        tA = tC;
-        fA = fC;
+	// Root is in [tC, tB]
+	tA = tC;
+	fA = fC;
       } else {
-        // Root is in [tA, tC] — Illinois acceleration
-        tB = tC;
-        fB = fC;
-        fA *= 0.5;
+	// Root is in [tA, tC] — Illinois acceleration
+	tB = tC;
+	fB = fC;
+	fA *= 0.5;
       }
 
       if (Math.abs(tB - tA) < 1.0e-10) {
-        break;
+	break;
       }
     }
 
@@ -187,9 +186,9 @@ public class PVFflash extends Flash {
 
     if (system.getNumberOfPhases() == 1) {
       if (system.getPhase(0).getType() == neqsim.thermo.phase.PhaseType.GAS) {
-        return 1.0;
+	return 1.0;
       } else {
-        return 0.0;
+	return 0.0;
       }
     }
 
@@ -222,8 +221,8 @@ public class PVFflash extends Flash {
    */
   private void runBubblePoint() {
     try {
-      neqsim.thermodynamicoperations.ThermodynamicOperations ops =
-          new neqsim.thermodynamicoperations.ThermodynamicOperations(system);
+      neqsim.thermodynamicoperations.ThermodynamicOperations ops = new neqsim.thermodynamicoperations.ThermodynamicOperations(
+	  system);
       ops.bubblePointTemperatureFlash();
     } catch (Exception ex) {
       logger.error("Bubble point flash failed", ex);
@@ -235,8 +234,8 @@ public class PVFflash extends Flash {
    */
   private void runDewPoint() {
     try {
-      neqsim.thermodynamicoperations.ThermodynamicOperations ops =
-          new neqsim.thermodynamicoperations.ThermodynamicOperations(system);
+      neqsim.thermodynamicoperations.ThermodynamicOperations ops = new neqsim.thermodynamicoperations.ThermodynamicOperations(
+	  system);
       ops.dewPointTemperatureFlash();
     } catch (Exception ex) {
       logger.error("Dew point flash failed", ex);

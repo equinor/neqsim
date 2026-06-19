@@ -11,8 +11,8 @@ import java.util.Map;
  * One equipment, piping, line-list, or asset item to evaluate in a materials review.
  *
  * <p>
- * The item combines tag identity, equipment type, current or proposed material selection, service
- * envelope, source references, and free-form metadata from STID or project technical databases.
+ * The item combines tag identity, equipment type, current or proposed material selection, service envelope, source
+ * references, and free-form metadata from STID or project technical databases.
  * </p>
  *
  * @author NeqSim contributors
@@ -43,7 +43,8 @@ public class MaterialReviewItem implements Serializable {
   /**
    * Creates an empty material review item.
    */
-  public MaterialReviewItem() {}
+  public MaterialReviewItem() {
+  }
 
   /**
    * Creates a review item from a generic map.
@@ -59,8 +60,8 @@ public class MaterialReviewItem implements Serializable {
     }
     item.setTag(firstString(source, "tag", "lineNumber", "equipmentTag", "name"));
     item.setEquipmentType(firstString(source, "equipmentType", "type", "assetType"));
-    item.setExistingMaterial(firstString(source, "existingMaterial", "material", "materialGrade",
-        "materialClass", "mds"));
+    item.setExistingMaterial(
+	firstString(source, "existingMaterial", "material", "materialGrade", "materialClass", "mds"));
     Object service = firstObject(source, "service", "serviceEnvelope", "environment");
     if (service instanceof Map<?, ?>) {
       item.setServiceEnvelope(MaterialServiceEnvelope.fromMap((Map<String, Object>) service));
@@ -68,16 +69,16 @@ public class MaterialReviewItem implements Serializable {
     Object references = firstObject(source, "sourceReferences", "sourceRefs", "evidenceRefs");
     if (references instanceof List<?>) {
       for (Object reference : (List<?>) references) {
-        if (reference != null) {
-          item.addSourceReference(String.valueOf(reference));
-        }
+	if (reference != null) {
+	  item.addSourceReference(String.valueOf(reference));
+	}
       }
     } else if (references != null) {
       item.addSourceReference(String.valueOf(references));
     }
     for (Map.Entry<String, Object> entry : source.entrySet()) {
       if (!isCoreKey(entry.getKey())) {
-        item.putMetadata(entry.getKey(), entry.getValue());
+	item.putMetadata(entry.getKey(), entry.getValue());
       }
     }
     return item;
@@ -159,8 +160,7 @@ public class MaterialReviewItem implements Serializable {
    * @return this item for fluent construction
    */
   public MaterialReviewItem setServiceEnvelope(MaterialServiceEnvelope serviceEnvelope) {
-    this.serviceEnvelope =
-        serviceEnvelope == null ? new MaterialServiceEnvelope() : serviceEnvelope;
+    this.serviceEnvelope = serviceEnvelope == null ? new MaterialServiceEnvelope() : serviceEnvelope;
     return this;
   }
 
@@ -189,7 +189,7 @@ public class MaterialReviewItem implements Serializable {
   /**
    * Adds metadata to the item.
    *
-   * @param key metadata key
+   * @param key   metadata key
    * @param value metadata value
    * @return this item for fluent construction
    */
@@ -257,7 +257,7 @@ public class MaterialReviewItem implements Serializable {
    * Returns the first non-empty string value for a list of keys.
    *
    * @param source source map
-   * @param keys keys to test
+   * @param keys   keys to test
    * @return first non-empty value, or an empty string
    */
   private static String firstString(Map<String, Object> source, String... keys) {
@@ -269,13 +269,13 @@ public class MaterialReviewItem implements Serializable {
    * Returns the first non-null object value for a list of keys.
    *
    * @param source source map
-   * @param keys keys to test
+   * @param keys   keys to test
    * @return first non-null value, or null
    */
   private static Object firstObject(Map<String, Object> source, String... keys) {
     for (String key : keys) {
       if (source.containsKey(key) && source.get(key) != null) {
-        return source.get(key);
+	return source.get(key);
       }
     }
     return null;
@@ -288,11 +288,11 @@ public class MaterialReviewItem implements Serializable {
    * @return true if the key is a core item key
    */
   private static boolean isCoreKey(String key) {
-    return "tag".equals(key) || "lineNumber".equals(key) || "equipmentTag".equals(key)
-        || "name".equals(key) || "equipmentType".equals(key) || "type".equals(key)
-        || "assetType".equals(key) || "existingMaterial".equals(key) || "material".equals(key)
-        || "materialGrade".equals(key) || "materialClass".equals(key) || "mds".equals(key)
-        || "service".equals(key) || "serviceEnvelope".equals(key) || "environment".equals(key)
-        || "sourceReferences".equals(key) || "sourceRefs".equals(key) || "evidenceRefs".equals(key);
+    return "tag".equals(key) || "lineNumber".equals(key) || "equipmentTag".equals(key) || "name".equals(key)
+	|| "equipmentType".equals(key) || "type".equals(key) || "assetType".equals(key)
+	|| "existingMaterial".equals(key) || "material".equals(key) || "materialGrade".equals(key)
+	|| "materialClass".equals(key) || "mds".equals(key) || "service".equals(key) || "serviceEnvelope".equals(key)
+	|| "environment".equals(key) || "sourceReferences".equals(key) || "sourceRefs".equals(key)
+	|| "evidenceRefs".equals(key);
   }
 }

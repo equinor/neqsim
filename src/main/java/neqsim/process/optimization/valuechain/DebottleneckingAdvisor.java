@@ -12,20 +12,19 @@ import neqsim.process.equipment.capacity.CapacityConstraint;
  * Ranks candidate debottlenecking investments by their incremental net present value.
  *
  * <p>
- * Once a {@code BottleneckTracker} migration trajectory has revealed <em>which</em> constraint binds
- * the plant and <em>when</em>, the economic question becomes <em>which upgrade is worth making, and
- * in which year</em>. The advisor answers that by discounting the incremental value each candidate
- * upgrade unlocks (extra export, deferred decline) against its capital cost, producing a ranked
- * shortlist with NPV, benefit-cost ratio and simple payback. It is the economic companion to the
- * physical bottleneck analysis.
+ * Once a {@code BottleneckTracker} migration trajectory has revealed <em>which</em> constraint binds the plant and
+ * <em>when</em>, the economic question becomes <em>which upgrade is worth making, and in which year</em>. The advisor
+ * answers that by discounting the incremental value each candidate upgrade unlocks (extra export, deferred decline)
+ * against its capital cost, producing a ranked shortlist with NPV, benefit-cost ratio and simple payback. It is the
+ * economic companion to the physical bottleneck analysis.
  * </p>
  *
  * <p>
- * The advisor is a pure ranking engine: the incremental annual value of each candidate is supplied
- * by the caller (typically obtained by relaxing the binding constraint in NeqSim, re-running, and
- * pricing the extra production with {@link ValueChainObjective}). This keeps the advisor fast and
- * deterministic. When a candidate carries a live {@link CapacityConstraint}, {@link #applyShadowPrices()}
- * writes the per-year incremental value back onto the constraint as its shadow price.
+ * The advisor is a pure ranking engine: the incremental annual value of each candidate is supplied by the caller
+ * (typically obtained by relaxing the binding constraint in NeqSim, re-running, and pricing the extra production with
+ * {@link ValueChainObjective}). This keeps the advisor fast and deterministic. When a candidate carries a live
+ * {@link CapacityConstraint}, {@link #applyShadowPrices()} writes the per-year incremental value back onto the
+ * constraint as its shadow price.
  * </p>
  *
  * @author NeqSim Development Team
@@ -74,17 +73,16 @@ public class DebottleneckingAdvisor implements Serializable {
     /**
      * Creates a debottlenecking candidate.
      *
-     * @param name descriptive name of the upgrade
-     * @param targetEquipment name of the equipment the upgrade targets
-     * @param capexNok capital cost in the configured currency (non-negative)
-     * @param firstYear first year (inclusive) the upgrade starts unlocking value (>= 0)
-     * @param lastYear last year (inclusive) the upgrade continues unlocking value (>= firstYear)
+     * @param name                      descriptive name of the upgrade
+     * @param targetEquipment           name of the equipment the upgrade targets
+     * @param capexNok                  capital cost in the configured currency (non-negative)
+     * @param firstYear                 first year (inclusive) the upgrade starts unlocking value (>= 0)
+     * @param lastYear                  last year (inclusive) the upgrade continues unlocking value (>= firstYear)
      * @param annualIncrementalValueNok incremental value unlocked in currency per year
-     * @param constraint optional live constraint the upgrade relaxes; may be null
+     * @param constraint                optional live constraint the upgrade relaxes; may be null
      */
-    public DebottleneckCandidate(String name, String targetEquipment, double capexNok,
-        int firstYear, int lastYear, double annualIncrementalValueNok,
-        CapacityConstraint constraint) {
+    public DebottleneckCandidate(String name, String targetEquipment, double capexNok, int firstYear, int lastYear,
+	double annualIncrementalValueNok, CapacityConstraint constraint) {
       this.name = name;
       this.targetEquipment = targetEquipment;
       this.capexNok = capexNok;
@@ -184,14 +182,14 @@ public class DebottleneckingAdvisor implements Serializable {
     /**
      * Creates a recommendation.
      *
-     * @param candidate the candidate the recommendation refers to
-     * @param npvNok net present value in the configured currency
-     * @param pvBenefitsNok present value of benefits in the configured currency
+     * @param candidate        the candidate the recommendation refers to
+     * @param npvNok           net present value in the configured currency
+     * @param pvBenefitsNok    present value of benefits in the configured currency
      * @param benefitCostRatio benefit-cost ratio
-     * @param paybackYears simple payback in years
+     * @param paybackYears     simple payback in years
      */
-    public Recommendation(DebottleneckCandidate candidate, double npvNok, double pvBenefitsNok,
-        double benefitCostRatio, double paybackYears) {
+    public Recommendation(DebottleneckCandidate candidate, double npvNok, double pvBenefitsNok, double benefitCostRatio,
+	double paybackYears) {
       this.candidate = candidate;
       this.npvNok = npvNok;
       this.pvBenefitsNok = pvBenefitsNok;
@@ -293,9 +291,9 @@ public class DebottleneckingAdvisor implements Serializable {
    * Evaluates and ranks all candidate upgrades by net present value, highest first.
    *
    * <p>
-   * For each candidate the present value of the incremental annual cash flow is discounted across
-   * its active years and the capital cost is discounted to its installation year. Net present value
-   * is the difference. Ties are broken by benefit-cost ratio.
+   * For each candidate the present value of the incremental annual cash flow is discounted across its active years and
+   * the capital cost is discounted to its installation year. Net present value is the difference. Ties are broken by
+   * benefit-cost ratio.
    * </p>
    *
    * @return a list of recommendations sorted by descending net present value
@@ -305,7 +303,7 @@ public class DebottleneckingAdvisor implements Serializable {
     for (DebottleneckCandidate c : candidates) {
       double pvBenefits = 0.0;
       for (int y = c.getFirstYear(); y <= c.getLastYear(); y++) {
-        pvBenefits += c.getAnnualIncrementalValueNok() * econ.discountFactor(y);
+	pvBenefits += c.getAnnualIncrementalValueNok() * econ.discountFactor(y);
       }
       double pvCapex = c.getCapexNok() * econ.discountFactor(c.getFirstYear());
       double npv = pvBenefits - pvCapex;
@@ -316,11 +314,11 @@ public class DebottleneckingAdvisor implements Serializable {
     Collections.sort(out, new Comparator<Recommendation>() {
       @Override
       public int compare(Recommendation a, Recommendation b) {
-        int byNpv = Double.compare(b.getNpvNok(), a.getNpvNok());
-        if (byNpv != 0) {
-          return byNpv;
-        }
-        return Double.compare(b.getBenefitCostRatio(), a.getBenefitCostRatio());
+	int byNpv = Double.compare(b.getNpvNok(), a.getNpvNok());
+	if (byNpv != 0) {
+	  return byNpv;
+	}
+	return Double.compare(b.getBenefitCostRatio(), a.getBenefitCostRatio());
       }
     });
     return out;
@@ -345,13 +343,11 @@ public class DebottleneckingAdvisor implements Serializable {
   }
 
   /**
-   * Writes each candidate's incremental annual value back onto its live constraint as a shadow
-   * price.
+   * Writes each candidate's incremental annual value back onto its live constraint as a shadow price.
    *
    * <p>
-   * Candidates without a live {@link CapacityConstraint} are skipped. After this call the binding
-   * constraints carry the marginal value of relaxing them, queryable via
-   * {@link CapacityConstraint#getShadowPrice()}.
+   * Candidates without a live {@link CapacityConstraint} are skipped. After this call the binding constraints carry the
+   * marginal value of relaxing them, queryable via {@link CapacityConstraint#getShadowPrice()}.
    * </p>
    *
    * @return the number of constraints updated
@@ -360,8 +356,8 @@ public class DebottleneckingAdvisor implements Serializable {
     int updated = 0;
     for (DebottleneckCandidate c : candidates) {
       if (c.getConstraint() != null) {
-        c.getConstraint().setShadowPrice(c.getAnnualIncrementalValueNok());
-        updated++;
+	c.getConstraint().setShadowPrice(c.getAnnualIncrementalValueNok());
+	updated++;
       }
     }
     return updated;
@@ -379,12 +375,11 @@ public class DebottleneckingAdvisor implements Serializable {
     for (int i = 0; i < recs.size(); i++) {
       Recommendation r = recs.get(i);
       if (i > 0) {
-        sb.append(",");
+	sb.append(",");
       }
       sb.append("{");
       sb.append("\"name\":\"").append(esc(r.getCandidate().getName())).append("\",");
-      sb.append("\"targetEquipment\":\"").append(esc(r.getCandidate().getTargetEquipment()))
-          .append("\",");
+      sb.append("\"targetEquipment\":\"").append(esc(r.getCandidate().getTargetEquipment())).append("\",");
       sb.append("\"npvNok\":").append(fmt(r.getNpvNok())).append(",");
       sb.append("\"benefitCostRatio\":").append(fmt(r.getBenefitCostRatio())).append(",");
       sb.append("\"paybackYears\":").append(fmt(r.getPaybackYears())).append(",");

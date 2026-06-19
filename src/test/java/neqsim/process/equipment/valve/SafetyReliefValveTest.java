@@ -35,8 +35,8 @@ public class SafetyReliefValveTest {
     StreamInterface flare = new Stream("Flare", flareSys);
     flare.setPressure(1.03, "bara");
 
-    SafetyReliefValve psv = new SafetyReliefValve("PSV-101", vesselGas)
-        .configureConventionalSnap(10.0, 0.10, 0.07, 180.0);
+    SafetyReliefValve psv = new SafetyReliefValve("PSV-101", vesselGas).configureConventionalSnap(10.0, 0.10, 0.07,
+	180.0);
     psv.setOutletStream(flare);
     psv.setMinStableOpenFrac(0.0);
 
@@ -55,4 +55,3 @@ public class SafetyReliefValveTest {
     assertEquals(0.0, psv.getOpenFraction(), 1e-2, "valve should close after pressure drops");
   }
 }
-

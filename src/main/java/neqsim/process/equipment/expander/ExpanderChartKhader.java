@@ -8,35 +8,33 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * ExpanderChartKhader is a composition-aware, two-dimensional radial-inflow expander performance
- * map modelled on the Khader (2015) dimensionless-correction approach already used for centrifugal
- * compressors in {@link neqsim.process.equipment.compressor.CompressorChartKhader2015}.
+ * ExpanderChartKhader is a composition-aware, two-dimensional radial-inflow expander performance map modelled on the
+ * Khader (2015) dimensionless-correction approach already used for centrifugal compressors in
+ * {@link neqsim.process.equipment.compressor.CompressorChartKhader2015}.
  *
  * <p>
- * Instead of representing expander performance with a single one-dimensional efficiency parabola in
- * the velocity ratio U/C, this class stores a full grid of map data:
+ * Instead of representing expander performance with a single one-dimensional efficiency parabola in the velocity ratio
+ * U/C, this class stores a full grid of map data:
  * </p>
  *
  * <ul>
  * <li>One curve for each inlet-guide-vane (IGV) position.</li>
- * <li>Each curve gives the isentropic efficiency and the isentropic stage head drop as a function
- * of the velocity ratio U/C (or equivalently the corrected specific speed).</li>
+ * <li>Each curve gives the isentropic efficiency and the isentropic stage head drop as a function of the velocity ratio
+ * U/C (or equivalently the corrected specific speed).</li>
  * </ul>
  *
  * <p>
- * <b>Composition awareness.</b> The map is digitised once on a reference fluid. The stage head drop
- * is normalised by the square of the reference fluid sound speed to give a dimensionless head
- * coefficient. When the map is evaluated for an arbitrary process fluid the head coefficient is
- * scaled back by the actual fluid sound speed squared:
+ * <b>Composition awareness.</b> The map is digitised once on a reference fluid. The stage head drop is normalised by
+ * the square of the reference fluid sound speed to give a dimensionless head coefficient. When the map is evaluated for
+ * an arbitrary process fluid the head coefficient is scaled back by the actual fluid sound speed squared:
  * </p>
  *
  * $$ \\psi = \\frac{\\Delta h_s}{c_s^2}, \\qquad \\Delta h_s = \\psi \\, c_{s,\\text{actual}}^2 $$
  *
  * <p>
- * Because the velocity ratio U/C is already dimensionless and Mach-number similar, the efficiency
- * map is reused directly for any fluid. This lets the expander side carry the same fidelity as the
- * Khader compressor map and removes the low-load solver instability caused by the single global
- * parabola.
+ * Because the velocity ratio U/C is already dimensionless and Mach-number similar, the efficiency map is reused
+ * directly for any fluid. This lets the expander side carry the same fidelity as the Khader compressor map and removes
+ * the low-load solver instability caused by the single global parabola.
  * </p>
  *
  * @author NeqSim
@@ -76,13 +74,14 @@ public class ExpanderChartKhader implements Serializable {
   /**
    * Default constructor.
    */
-  public ExpanderChartKhader() {}
+  public ExpanderChartKhader() {
+  }
 
   /**
    * Constructs an ExpanderChartKhader with a reference fluid and impeller diameter.
    *
-   * @param referenceFluid the fluid the OEM map was digitised on (may be {@code null} to skip
-   *        composition correction and use the head directly)
+   * @param referenceFluid   the fluid the OEM map was digitised on (may be {@code null} to skip composition correction
+   *                         and use the head directly)
    * @param impellerDiameter the impeller outer diameter in m
    */
   public ExpanderChartKhader(SystemInterface referenceFluid, double impellerDiameter) {
@@ -94,29 +93,24 @@ public class ExpanderChartKhader implements Serializable {
    * Set the digitised expander performance map.
    *
    * <p>
-   * The map is supplied as one curve per IGV position. Each curve is an array of velocity ratios
-   * with matching isentropic efficiency and isentropic stage head drop (kJ/kg). All inner arrays
-   * for a given IGV position must share the same length, but different IGV positions may use a
-   * different number of points.
+   * The map is supplied as one curve per IGV position. Each curve is an array of velocity ratios with matching
+   * isentropic efficiency and isentropic stage head drop (kJ/kg). All inner arrays for a given IGV position must share
+   * the same length, but different IGV positions may use a different number of points.
    * </p>
    *
-   * @param igvPositions array of IGV positions (fraction of maximum area, 0..1), strictly
-   *        increasing
-   * @param uc 2-D array of velocity ratios U/C, one row per IGV position
-   * @param eta 2-D array of isentropic efficiencies (0..1), one row per IGV position
-   * @param headDropKjPerKg 2-D array of isentropic stage head drops in kJ/kg, one row per IGV
-   *        position
+   * @param igvPositions    array of IGV positions (fraction of maximum area, 0..1), strictly increasing
+   * @param uc              2-D array of velocity ratios U/C, one row per IGV position
+   * @param eta             2-D array of isentropic efficiencies (0..1), one row per IGV position
+   * @param headDropKjPerKg 2-D array of isentropic stage head drops in kJ/kg, one row per IGV position
    * @throws IllegalArgumentException if the array shapes are inconsistent
    */
-  public void setCurves(double[] igvPositions, double[][] uc, double[][] eta,
-      double[][] headDropKjPerKg) {
+  public void setCurves(double[] igvPositions, double[][] uc, double[][] eta, double[][] headDropKjPerKg) {
     if (igvPositions == null || uc == null || eta == null || headDropKjPerKg == null) {
       throw new IllegalArgumentException("ExpanderChartKhader map arrays must not be null");
     }
-    if (igvPositions.length != uc.length || uc.length != eta.length
-        || eta.length != headDropKjPerKg.length) {
+    if (igvPositions.length != uc.length || uc.length != eta.length || eta.length != headDropKjPerKg.length) {
       throw new IllegalArgumentException(
-          "ExpanderChartKhader: igvPositions, uc, eta and headDrop must have matching outer length");
+	  "ExpanderChartKhader: igvPositions, uc, eta and headDrop must have matching outer length");
     }
     int nIgv = igvPositions.length;
     this.igvPositions = Arrays.copyOf(igvPositions, nIgv);
@@ -129,29 +123,29 @@ public class ExpanderChartKhader implements Serializable {
     for (int i = 0; i < nIgv; i++) {
       int m = uc[i].length;
       if (eta[i].length != m || headDropKjPerKg[i].length != m) {
-        throw new IllegalArgumentException(
-            "ExpanderChartKhader: inner arrays for IGV index " + i + " have inconsistent length");
+	throw new IllegalArgumentException(
+	    "ExpanderChartKhader: inner arrays for IGV index " + i + " have inconsistent length");
       }
       // sort each curve by velocity ratio so interpolation is monotone
       double[][] rows = new double[m][3];
       for (int j = 0; j < m; j++) {
-        rows[j][0] = uc[i][j];
-        rows[j][1] = eta[i][j];
-        rows[j][2] = headDropKjPerKg[i][j] * 1000.0 / (csRef * csRef); // J/kg / (m/s)^2
+	rows[j][0] = uc[i][j];
+	rows[j][1] = eta[i][j];
+	rows[j][2] = headDropKjPerKg[i][j] * 1000.0 / (csRef * csRef); // J/kg / (m/s)^2
       }
       Arrays.sort(rows, new java.util.Comparator<double[]>() {
-        @Override
-        public int compare(double[] a, double[] b) {
-          return Double.compare(a[0], b[0]);
-        }
+	@Override
+	public int compare(double[] a, double[] b) {
+	  return Double.compare(a[0], b[0]);
+	}
       });
       this.velocityRatio[i] = new double[m];
       this.efficiency[i] = new double[m];
       this.headCoefficient[i] = new double[m];
       for (int j = 0; j < m; j++) {
-        this.velocityRatio[i][j] = rows[j][0];
-        this.efficiency[i][j] = rows[j][1];
-        this.headCoefficient[i][j] = rows[j][2];
+	this.velocityRatio[i][j] = rows[j][0];
+	this.efficiency[i][j] = rows[j][1];
+	this.headCoefficient[i][j] = rows[j][2];
       }
     }
     this.mapDefined = true;
@@ -160,8 +154,8 @@ public class ExpanderChartKhader implements Serializable {
   /**
    * Compute (and cache) the reference fluid sound speed used to normalise the head coefficient.
    *
-   * @return the reference sound speed in m/s (1.0 if no reference fluid is set, leaving the head
-   *         effectively un-normalised)
+   * @return the reference sound speed in m/s (1.0 if no reference fluid is set, leaving the head effectively
+   *         un-normalised)
    */
   private double computeReferenceSoundSpeed() {
     if (referenceFluid == null) {
@@ -187,18 +181,17 @@ public class ExpanderChartKhader implements Serializable {
   /**
    * Returns whether a performance map has been loaded.
    *
-   * @return {@code true} if {@link #setCurves(double[], double[][], double[][], double[][])} has
-   *         been called with valid data
+   * @return {@code true} if {@link #setCurves(double[], double[][], double[][], double[][])} has been called with valid
+   *         data
    */
   public boolean isMapDefined() {
     return mapDefined;
   }
 
   /**
-   * Get the isentropic efficiency at a given velocity ratio and IGV position using bilinear
-   * interpolation over the map.
+   * Get the isentropic efficiency at a given velocity ratio and IGV position using bilinear interpolation over the map.
    *
-   * @param uc velocity ratio U/C
+   * @param uc  velocity ratio U/C
    * @param igv IGV position (fraction of maximum area, 0..1)
    * @return the interpolated isentropic efficiency (0..1)
    */
@@ -207,14 +200,13 @@ public class ExpanderChartKhader implements Serializable {
   }
 
   /**
-   * Get the isentropic stage head drop at a given velocity ratio and IGV position for the supplied
-   * process fluid. The dimensionless head coefficient is scaled by the actual fluid sound speed
-   * squared to make the result composition aware.
+   * Get the isentropic stage head drop at a given velocity ratio and IGV position for the supplied process fluid. The
+   * dimensionless head coefficient is scaled by the actual fluid sound speed squared to make the result composition
+   * aware.
    *
-   * @param uc velocity ratio U/C
-   * @param igv IGV position (fraction of maximum area, 0..1)
-   * @param processFluid the actual process fluid (may be {@code null} to use the reference sound
-   *        speed)
+   * @param uc           velocity ratio U/C
+   * @param igv          IGV position (fraction of maximum area, 0..1)
+   * @param processFluid the actual process fluid (may be {@code null} to use the reference sound speed)
    * @return the isentropic stage head drop in kJ/kg
    */
   public double getStageHeadDrop(double uc, double igv, SystemInterface processFluid) {
@@ -222,20 +214,20 @@ public class ExpanderChartKhader implements Serializable {
     double cs = referenceSoundSpeed;
     if (processFluid != null) {
       try {
-        double localCs = processFluid.getSoundSpeed();
-        if (localCs > 0.0) {
-          cs = localCs;
-        }
+	double localCs = processFluid.getSoundSpeed();
+	if (localCs > 0.0) {
+	  cs = localCs;
+	}
       } catch (Exception ex) {
-        logger.debug("ExpanderChartKhader using reference sound speed for head scaling", ex);
+	logger.debug("ExpanderChartKhader using reference sound speed for head scaling", ex);
       }
     }
     return coeff * cs * cs / 1000.0; // back to kJ/kg
   }
 
   /**
-   * Find the velocity ratio that maximises efficiency at a given IGV position. Useful for control
-   * targets and best-efficiency-point tracking.
+   * Find the velocity ratio that maximises efficiency at a given IGV position. Useful for control targets and
+   * best-efficiency-point tracking.
    *
    * @param igv IGV position (fraction of maximum area, 0..1)
    * @return the velocity ratio U/C at peak efficiency for the nearest stored IGV curve
@@ -250,18 +242,18 @@ public class ExpanderChartKhader implements Serializable {
     int best = 0;
     for (int j = 1; j < eta.length; j++) {
       if (eta[j] > eta[best]) {
-        best = j;
+	best = j;
       }
     }
     return uc[best];
   }
 
   /**
-   * Bilinear interpolation of a stored grid quantity over velocity ratio and IGV position. Linear
-   * blending is used between the two bracketing IGV curves and clamped at the edges.
+   * Bilinear interpolation of a stored grid quantity over velocity ratio and IGV position. Linear blending is used
+   * between the two bracketing IGV curves and clamped at the edges.
    *
-   * @param uc velocity ratio U/C
-   * @param igv IGV position (fraction of maximum area)
+   * @param uc   velocity ratio U/C
+   * @param igv  IGV position (fraction of maximum area)
    * @param grid the per-IGV value grid to interpolate (efficiency or head coefficient)
    * @return the interpolated value
    */
@@ -286,8 +278,8 @@ public class ExpanderChartKhader implements Serializable {
     int lo = 0;
     for (int i = 0; i < nIgv - 1; i++) {
       if (igv >= igvPositions[i] && igv <= igvPositions[i + 1]) {
-        lo = i;
-        break;
+	lo = i;
+	break;
       }
     }
     double v0 = interpolateCurve(uc, velocityRatio[lo], grid[lo]);
@@ -297,12 +289,12 @@ public class ExpanderChartKhader implements Serializable {
   }
 
   /**
-   * Piecewise-linear interpolation of a single curve in velocity ratio, with linear extrapolation
-   * outside the data range.
+   * Piecewise-linear interpolation of a single curve in velocity ratio, with linear extrapolation outside the data
+   * range.
    *
    * @param uc velocity ratio to evaluate
-   * @param x sorted velocity-ratio abscissa array
-   * @param y matching ordinate array
+   * @param x  sorted velocity-ratio abscissa array
+   * @param y  matching ordinate array
    * @return the interpolated value
    */
   private double interpolateCurve(double uc, double[] x, double[] y) {
@@ -320,8 +312,8 @@ public class ExpanderChartKhader implements Serializable {
     }
     for (int i = 0; i < n - 1; i++) {
       if (uc >= x[i] && uc <= x[i + 1]) {
-        double t = (uc - x[i]) / (x[i + 1] - x[i]);
-        return y[i] + t * (y[i + 1] - y[i]);
+	double t = (uc - x[i]) / (x[i + 1] - x[i]);
+	return y[i] + t * (y[i + 1] - y[i]);
       }
     }
     return y[n - 1];
@@ -339,8 +331,8 @@ public class ExpanderChartKhader implements Serializable {
     for (int i = 1; i < igvPositions.length; i++) {
       double d = Math.abs(igvPositions[i] - igv);
       if (d < best) {
-        best = d;
-        idx = i;
+	best = d;
+	idx = i;
       }
     }
     return idx;

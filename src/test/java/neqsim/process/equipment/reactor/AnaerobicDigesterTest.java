@@ -21,10 +21,8 @@ class AnaerobicDigesterTest {
     digester.run();
 
     assertTrue(digester.getBiogasFlowRateNm3PerDay() > 0.0, "Biogas flow should be positive");
-    assertTrue(digester.getMethaneProductionNm3PerDay() > 0.0,
-        "Methane production should be positive");
-    assertEquals(60.0, digester.getMethaneContentPercent(), 1e-6,
-        "Default methane content should be 60%");
+    assertTrue(digester.getMethaneProductionNm3PerDay() > 0.0, "Methane production should be positive");
+    assertEquals(60.0, digester.getMethaneContentPercent(), 1e-6, "Default methane content should be 60%");
   }
 
   @Test
@@ -61,8 +59,7 @@ class AnaerobicDigesterTest {
     foodDigester.run();
 
     double foodCH4 = foodDigester.getMethaneProductionNm3PerDay();
-    assertTrue(foodCH4 > manureCH4,
-        "Food waste should produce more methane per unit feed than manure");
+    assertTrue(foodCH4 > manureCH4, "Food waste should produce more methane per unit feed than manure");
   }
 
   @Test
@@ -75,7 +72,7 @@ class AnaerobicDigesterTest {
     digester.run();
 
     assertEquals(AnaerobicDigester.TemperatureRegime.THERMOPHILIC, digester.getTemperatureRegime(),
-        "55 C should be thermophilic");
+	"55 C should be thermophilic");
     assertTrue(digester.getBiogasFlowRateNm3PerDay() > 0.0);
   }
 
@@ -84,7 +81,7 @@ class AnaerobicDigesterTest {
     AnaerobicDigester digester = new AnaerobicDigester("AD-meso");
     digester.setDigesterTemperature(37.0, "C");
     assertEquals(AnaerobicDigester.TemperatureRegime.MESOPHILIC, digester.getTemperatureRegime(),
-        "37 C should be mesophilic");
+	"37 C should be mesophilic");
   }
 
   @Test
@@ -198,10 +195,9 @@ class AnaerobicDigesterTest {
       digester.setDigesterTemperature(37.0, "C");
       digester.run();
 
-      assertTrue(digester.getBiogasFlowRateNm3PerDay() > 0.0,
-          "Biogas flow should be positive for " + type.name());
+      assertTrue(digester.getBiogasFlowRateNm3PerDay() > 0.0, "Biogas flow should be positive for " + type.name());
       assertTrue(digester.getMethaneProductionNm3PerDay() > 0.0,
-          "CH4 production should be positive for " + type.name());
+	  "CH4 production should be positive for " + type.name());
     }
   }
 }

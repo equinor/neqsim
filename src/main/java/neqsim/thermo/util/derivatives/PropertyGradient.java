@@ -58,39 +58,36 @@ public class PropertyGradient implements Serializable {
   /**
    * Constructor for PropertyGradient.
    *
-   * @param propertyName name of the property
-   * @param unit unit of the property
-   * @param value current value of the property
-   * @param dT derivative with respect to temperature
-   * @param dP derivative with respect to pressure
-   * @param dz derivatives with respect to composition
+   * @param propertyName   name of the property
+   * @param unit           unit of the property
+   * @param value          current value of the property
+   * @param dT             derivative with respect to temperature
+   * @param dP             derivative with respect to pressure
+   * @param dz             derivatives with respect to composition
    * @param componentNames names of components
    */
-  public PropertyGradient(String propertyName, String unit, double value, double dT, double dP,
-      double[] dz, String[] componentNames) {
+  public PropertyGradient(String propertyName, String unit, double value, double dT, double dP, double[] dz,
+      String[] componentNames) {
     this.propertyName = propertyName;
     this.unit = unit;
     this.value = value;
     this.dT = dT;
     this.dP = dP;
     this.dz = dz != null ? Arrays.copyOf(dz, dz.length) : new double[0];
-    this.componentNames =
-        componentNames != null ? Arrays.copyOf(componentNames, componentNames.length)
-            : new String[0];
+    this.componentNames = componentNames != null ? Arrays.copyOf(componentNames, componentNames.length) : new String[0];
   }
 
   /**
    * Simplified constructor without component names.
    *
    * @param propertyName name of the property
-   * @param unit unit of the property
-   * @param value current value of the property
-   * @param dT derivative with respect to temperature
-   * @param dP derivative with respect to pressure
-   * @param dz derivatives with respect to composition
+   * @param unit         unit of the property
+   * @param value        current value of the property
+   * @param dT           derivative with respect to temperature
+   * @param dP           derivative with respect to pressure
+   * @param dz           derivatives with respect to composition
    */
-  public PropertyGradient(String propertyName, String unit, double value, double dT, double dP,
-      double[] dz) {
+  public PropertyGradient(String propertyName, String unit, double value, double dT, double dP, double[] dz) {
     this(propertyName, unit, value, dT, dP, dz, null);
   }
 
@@ -157,7 +154,7 @@ public class PropertyGradient implements Serializable {
   public double getDerivativeWrtComponent(int componentIndex) {
     if (componentIndex < 0 || componentIndex >= dz.length) {
       throw new IndexOutOfBoundsException(
-          "Component index " + componentIndex + " out of bounds [0, " + dz.length + ")");
+	  "Component index " + componentIndex + " out of bounds [0, " + dz.length + ")");
     }
     return dz[componentIndex];
   }
@@ -192,7 +189,7 @@ public class PropertyGradient implements Serializable {
     double result = dT * deltaT + dP * deltaP;
     if (deltaZ != null) {
       for (int i = 0; i < Math.min(dz.length, deltaZ.length); i++) {
-        result += dz[i] * deltaZ[i];
+	result += dz[i] * deltaZ[i];
       }
     }
     return result;
@@ -214,16 +211,14 @@ public class PropertyGradient implements Serializable {
   /**
    * Create a zero gradient for a given property.
    *
-   * @param propertyName name of the property
-   * @param unit unit of the property
-   * @param value current value
+   * @param propertyName       name of the property
+   * @param unit               unit of the property
+   * @param value              current value
    * @param numberOfComponents number of components
    * @return zero gradient
    */
-  public static PropertyGradient zero(String propertyName, String unit, double value,
-      int numberOfComponents) {
-    return new PropertyGradient(propertyName, unit, value, 0.0, 0.0,
-        new double[numberOfComponents]);
+  public static PropertyGradient zero(String propertyName, String unit, double value, int numberOfComponents) {
+    return new PropertyGradient(propertyName, unit, value, 0.0, 0.0, new double[numberOfComponents]);
   }
 
   @Override
@@ -236,10 +231,10 @@ public class PropertyGradient implements Serializable {
     sb.append("  d/dz = [");
     for (int i = 0; i < dz.length; i++) {
       if (i > 0) {
-        sb.append(", ");
+	sb.append(", ");
       }
       if (componentNames.length > i) {
-        sb.append(componentNames[i]).append(":");
+	sb.append(componentNames[i]).append(":");
       }
       sb.append(String.format("%.6e", dz[i]));
     }

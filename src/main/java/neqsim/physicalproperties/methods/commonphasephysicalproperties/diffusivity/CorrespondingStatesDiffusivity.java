@@ -27,21 +27,20 @@ public class CorrespondingStatesDiffusivity extends Diffusivity {
    */
   public CorrespondingStatesDiffusivity(PhysicalProperties phase) {
     super(phase);
-    binaryDiffusionCoefficients = new double[phase.getPhase().getNumberOfComponents()][phase
-        .getPhase().getNumberOfComponents()];
+    binaryDiffusionCoefficients = new double[phase.getPhase().getNumberOfComponents()][phase.getPhase()
+	.getNumberOfComponents()];
   }
 
   /** {@inheritDoc} */
   @Override
   public double calcBinaryDiffusionCoefficient(int i, int j, int method) {
     if (phase.getPhase().getType() == PhaseType.LIQUID) {
-      binaryDiffusionCoefficients[i][j] =
-          1.0e-4 * 9.89e-8 * Math.pow(phase.getViscosity() * 1e3, -0.907)
-              * Math.pow(1.0 / phase.getPhase().getComponent(i).getNormalLiquidDensity()
-                  * phase.getPhase().getComponent(i).getMolarMass() * 1000, -0.45)
-              * Math.pow(1.0 / phase.getPhase().getComponent(j).getNormalLiquidDensity()
-                  * phase.getPhase().getComponent(j).getMolarMass() * 1000, 0.265)
-              * phase.getPhase().getTemperature();
+      binaryDiffusionCoefficients[i][j] = 1.0e-4 * 9.89e-8 * Math.pow(phase.getViscosity() * 1e3, -0.907)
+	  * Math.pow(1.0 / phase.getPhase().getComponent(i).getNormalLiquidDensity()
+	      * phase.getPhase().getComponent(i).getMolarMass() * 1000, -0.45)
+	  * Math.pow(1.0 / phase.getPhase().getComponent(j).getNormalLiquidDensity()
+	      * phase.getPhase().getComponent(j).getMolarMass() * 1000, 0.265)
+	  * phase.getPhase().getTemperature();
       // System.out.println("liq diffusivity " +binaryDiffusionCoefficients[i][j]
       // );
       return binaryDiffusionCoefficients[i][j];

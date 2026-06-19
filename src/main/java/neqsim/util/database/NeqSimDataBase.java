@@ -21,8 +21,7 @@ import org.h2.jdbc.JdbcSQLSyntaxErrorException;
  * @author Even Solbraa
  * @version Dec 2018
  */
-public class NeqSimDataBase
-    implements neqsim.util.util.FileSystemSettings, java.io.Serializable, AutoCloseable {
+public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java.io.Serializable, AutoCloseable {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
@@ -74,7 +73,7 @@ public class NeqSimDataBase
    * </p>
    *
    * @return a Connection object
-   * @throws java.sql.SQLException if any.
+   * @throws java.sql.SQLException            if any.
    * @throws java.lang.ClassNotFoundException if any.
    */
   public Connection openConnection() throws SQLException, ClassNotFoundException {
@@ -82,46 +81,43 @@ public class NeqSimDataBase
     javax.sql.DataSource ds = null;
     try {
       if (System.getenv("NEQSIMTHERMODB_CS") != null) {
-        Properties properties = new Properties();
-        properties.setProperty("user", System.getenv("MYSQL_USER"));
-        properties.setProperty("password", System.getenv("MYSQL_PASSWORD"));
-        properties.setProperty("useSSL", "false");
-        return DriverManager.getConnection(System.getenv("NEQSIMTHERMODB_CS"), properties);
+	Properties properties = new Properties();
+	properties.setProperty("user", System.getenv("MYSQL_USER"));
+	properties.setProperty("password", System.getenv("MYSQL_PASSWORD"));
+	properties.setProperty("useSSL", "false");
+	return DriverManager.getConnection(System.getenv("NEQSIMTHERMODB_CS"), properties);
       } else if (dataBaseType.equals("MSAccess")) {
-        String dir = "";
-        if (System.getProperty("NeqSim.home") == null) {
-          dir = neqsim.util.util.FileSystemSettings.root
-              + "\\programming\\NeqSimSourceCode\\java\\neqsim";
-        } else {
-          dir = System.getProperty("NeqSim.home");
-        }
-        return DriverManager.getConnection("jdbc:odbc:DRIVER={Microsoft Access Driver (*.mdb)};DBQ="
-            + dir + "\\data\\NeqSimDatabase");
-      } else if (dataBaseType.equals("H2fromCSV") || dataBaseType.equals("H2")
-          || dataBaseType.equals("H2RT")) {
-        return DriverManager.getConnection(connectionString, "sa", "");
+	String dir = "";
+	if (System.getProperty("NeqSim.home") == null) {
+	  dir = neqsim.util.util.FileSystemSettings.root + "\\programming\\NeqSimSourceCode\\java\\neqsim";
+	} else {
+	  dir = System.getProperty("NeqSim.home");
+	}
+	return DriverManager
+	    .getConnection("jdbc:odbc:DRIVER={Microsoft Access Driver (*.mdb)};DBQ=" + dir + "\\data\\NeqSimDatabase");
+      } else if (dataBaseType.equals("H2fromCSV") || dataBaseType.equals("H2") || dataBaseType.equals("H2RT")) {
+	return DriverManager.getConnection(connectionString, "sa", "");
       } else if (dataBaseType.equals("MSAccessUCanAccess")) {
-        return DriverManager.getConnection(getConnectionString());
-      } else if (dataBaseType.equals("mySQL") || dataBaseType.equals("mySQLNTNU")
-          || dataBaseType.equals("Derby")) {
-        return DriverManager.getConnection(getConnectionString(), username, password);
+	return DriverManager.getConnection(getConnectionString());
+      } else if (dataBaseType.equals("mySQL") || dataBaseType.equals("mySQLNTNU") || dataBaseType.equals("Derby")) {
+	return DriverManager.getConnection(getConnectionString(), username, password);
       } else if (dataBaseType.equals("mySQLNeqSimWeb")) {
-        ctx = new javax.naming.InitialContext();
-        ds = (javax.sql.DataSource) ctx.lookup("java:comp/env/jdbc/NeqsimThermoDatabase");
-        return ds.getConnection();
+	ctx = new javax.naming.InitialContext();
+	ds = (javax.sql.DataSource) ctx.lookup("java:comp/env/jdbc/NeqsimThermoDatabase");
+	return ds.getConnection();
       } else {
-        return DriverManager.getConnection(getConnectionString());
+	return DriverManager.getConnection(getConnectionString());
       }
     } catch (Exception ex) {
       logger.error("error loading NeqSimDataBase... ", ex);
       throw new RuntimeException(ex);
     } finally {
       try {
-        if (ctx != null) {
-          ctx.close();
-        }
+	if (ctx != null) {
+	  ctx.close();
+	}
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+	logger.error(ex.getMessage(), ex);
       }
     }
   }
@@ -165,14 +161,13 @@ public class NeqSimDataBase
    * </p>
    *
    * @param sqlString Query to execute.
-   * @return True if the first result is a ResultSet object; false if it is an update count or there
-   *         are no results
+   * @return True if the first result is a ResultSet object; false if it is an update count or there are no results
    */
   public boolean execute(String sqlString) {
     try {
       if (databaseConnection == null) {
-        databaseConnection = this.openConnection();
-        setStatement(databaseConnection.createStatement());
+	databaseConnection = this.openConnection();
+	setStatement(databaseConnection.createStatement());
       }
       return getStatement().execute(sqlString);
     } catch (Exception ex) {
@@ -193,8 +188,8 @@ public class NeqSimDataBase
   public void executeQuery(String sqlString) {
     try {
       if (databaseConnection == null) {
-        databaseConnection = this.openConnection();
-        setStatement(databaseConnection.createStatement());
+	databaseConnection = this.openConnection();
+	setStatement(databaseConnection.createStatement());
       }
       getStatement().executeQuery(sqlString);
     } catch (Exception ex) {
@@ -216,14 +211,14 @@ public class NeqSimDataBase
   public ResultSet getResultSet(String sqlString) {
     try {
       if (databaseConnection == null) {
-        databaseConnection = this.openConnection();
-        setStatement(databaseConnection.createStatement());
+	databaseConnection = this.openConnection();
+	setStatement(databaseConnection.createStatement());
       }
       return getStatement().executeQuery(sqlString);
     } catch (JdbcSQLSyntaxErrorException ex) {
       if (ex.getMessage().startsWith("Table ") && ex.getMessage().contains(" not found;")) {
-        throw new RuntimeException(new neqsim.util.exception.NotInitializedException(this,
-            "getResultSet", ex.getMessage()));
+	throw new RuntimeException(
+	    new neqsim.util.exception.NotInitializedException(this, "getResultSet", ex.getMessage()));
       }
       throw new RuntimeException(ex);
     } catch (Exception ex) {
@@ -294,7 +289,7 @@ public class NeqSimDataBase
    * Setter for the field <code>dataBaseType</code>.
    * </p>
    *
-   * @param aDataBaseType a {@link java.lang.String} object
+   * @param aDataBaseType    a {@link java.lang.String} object
    * @param connectionString a {@link java.lang.String} object
    */
   public static void setDataBaseType(String aDataBaseType, String connectionString) {
@@ -304,7 +299,7 @@ public class NeqSimDataBase
     // initialized.
     synchronized (NeqSimDataBase.class) {
       if ("H2fromCSV".equals(dataBaseType) && !h2IsInitialized && !h2IsInitalizing) {
-        initH2DatabaseFromCSVfiles();
+	initH2DatabaseFromCSVfiles();
       }
     }
 
@@ -314,25 +309,23 @@ public class NeqSimDataBase
 
     try {
       if (dataBaseType.equals("MSAccess")) {
-        Class.forName("sun.jdbc.odbc.JdbcOdbcDriver").getDeclaredConstructor().newInstance();
-      } else if (dataBaseType.equals("H2fromCSV") || dataBaseType.equals("H2")
-          || dataBaseType.equals("H2RT")) {
-        Class.forName("org.h2.Driver");
+	Class.forName("sun.jdbc.odbc.JdbcOdbcDriver").getDeclaredConstructor().newInstance();
+      } else if (dataBaseType.equals("H2fromCSV") || dataBaseType.equals("H2") || dataBaseType.equals("H2RT")) {
+	Class.forName("org.h2.Driver");
       } else if (dataBaseType.equals("MSAccessUCanAccess")) {
-        Class.forName("net.ucanaccess.jdbc.UcanaccessDriver");
+	Class.forName("net.ucanaccess.jdbc.UcanaccessDriver");
       } else if (dataBaseType.equals("mySQL")) {
-        Class.forName("com.mysql.cj.jdbc.Driver").getDeclaredConstructor().newInstance();
+	Class.forName("com.mysql.cj.jdbc.Driver").getDeclaredConstructor().newInstance();
       } else if (dataBaseType.equals("mySQLNTNU")) {
-        Class.forName("com.mysql.cj.jdbc.Driver").getDeclaredConstructor().newInstance();
+	Class.forName("com.mysql.cj.jdbc.Driver").getDeclaredConstructor().newInstance();
       } else if (dataBaseType.equals("Derby")) {
-        Class.forName("org.apache.derby.jdbc.EmbeddedDriver").getDeclaredConstructor()
-            .newInstance();
+	Class.forName("org.apache.derby.jdbc.EmbeddedDriver").getDeclaredConstructor().newInstance();
       } else if (dataBaseType.equals("oracle")) {
-        Class.forName("oracle.jdbc.driver.OracleDriver").getDeclaredConstructor().newInstance();
+	Class.forName("oracle.jdbc.driver.OracleDriver").getDeclaredConstructor().newInstance();
       } else if (dataBaseType.equals("oracleST")) {
-        Class.forName("oracle.jdbc.driver.OracleDriver").getDeclaredConstructor().newInstance();
+	Class.forName("oracle.jdbc.driver.OracleDriver").getDeclaredConstructor().newInstance();
       } else {
-        Class.forName("sun.jdbc.odbc.JdbcOdbcDriver");
+	Class.forName("sun.jdbc.odbc.JdbcOdbcDriver");
       }
     } catch (Exception ex) {
       logger.error("error loading database driver.. ", ex);
@@ -393,10 +386,10 @@ public class NeqSimDataBase
    */
   public static String[] getComponentNames() {
     try (NeqSimDataBase database = new NeqSimDataBase();
-        ResultSet dataSet = database.getResultSet("SELECT name FROM comp ORDER BY ID")) {
+	ResultSet dataSet = database.getResultSet("SELECT name FROM comp ORDER BY ID")) {
       List<String> names = new ArrayList<>();
       while (dataSet.next()) {
-        names.add(dataSet.getString("name"));
+	names.add(dataSet.getString("name"));
       }
       return names.toArray(new String[0]);
     } catch (Exception ex) {
@@ -412,14 +405,13 @@ public class NeqSimDataBase
    */
   public static boolean hasComponent(String name) {
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-        java.sql.ResultSet dataSet =
-            database.getResultSet("select count(*) from comp WHERE NAME='" + name + "'")) {
+	java.sql.ResultSet dataSet = database.getResultSet("select count(*) from comp WHERE NAME='" + name + "'")) {
       dataSet.next();
       int size = dataSet.getInt(1);
       if (size == 0) {
-        return false;
+	return false;
       } else {
-        return true;
+	return true;
       }
     } catch (Exception ex) {
       throw new RuntimeException(ex);
@@ -434,14 +426,13 @@ public class NeqSimDataBase
    */
   public static boolean hasTempComponent(String name) {
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-        java.sql.ResultSet dataSet =
-            database.getResultSet("select count(*) from comptemp WHERE NAME='" + name + "'")) {
+	java.sql.ResultSet dataSet = database.getResultSet("select count(*) from comptemp WHERE NAME='" + name + "'")) {
       dataSet.next();
       int size = dataSet.getInt(1);
       if (size == 0) {
-        return false;
+	return false;
       } else {
-        return true;
+	return true;
       }
     } catch (Exception ex) {
       throw new RuntimeException(ex);
@@ -473,18 +464,17 @@ public class NeqSimDataBase
    * Drops and re-creates table from contents in csv file.
    *
    * @param tableName Name of table to replace
-   * @param path Path to csv file to get table data from
+   * @param path      Path to csv file to get table data from
    */
   public static void updateTable(String tableName, String path) {
     URL url = NeqSimDataBase.class.getClassLoader().getResource(path);
     if (url == null) {
-      throw new RuntimeException(new neqsim.util.exception.InvalidInputException("NeqSimDataBase",
-          "updateTable", "path", "- Resource " + path + " not found"));
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException("NeqSimDataBase", "updateTable",
+	  "path", "- Resource " + path + " not found"));
     }
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
       database.execute("DROP TABLE IF EXISTS " + tableName);
-      String sqlString =
-          "CREATE TABLE " + tableName + " AS SELECT * FROM CSVREAD('file:" + url + "')";
+      String sqlString = "CREATE TABLE " + tableName + " AS SELECT * FROM CSVREAD('file:" + url + "')";
       database.execute(sqlString);
       // System.out.println("Updated table " + tableName + " from file: " + url.getPath());
     } catch (Exception ex) {
@@ -496,7 +486,7 @@ public class NeqSimDataBase
    * Drops and re-creates table from contents in csv file.
    *
    * @param tableName Name of table to replace
-   * @param path Path to csv file to
+   * @param path      Path to csv file to
    */
   public static void replaceTable(String tableName, String path) {
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
@@ -506,8 +496,8 @@ public class NeqSimDataBase
     } catch (Exception ex) {
       updateTable(tableName);
       logger.error("Failed updating table " + tableName, ex);
-      throw new RuntimeException(new neqsim.util.exception.InvalidInputException("NeqSimDataBase",
-          "replaceTable", "path", "- Resource " + path + " not found"));
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException("NeqSimDataBase", "replaceTable",
+	  "path", "- Resource " + path + " not found"));
     }
   }
 
@@ -518,8 +508,7 @@ public class NeqSimDataBase
    */
   public static void initH2DatabaseFromCSVfiles() {
     h2IsInitalizing = true;
-    neqsim.util.database.NeqSimDataBase.connectionString =
-        "jdbc:h2:mem:neqsimthermodatabase;DB_CLOSE_DELAY=-1";
+    neqsim.util.database.NeqSimDataBase.connectionString = "jdbc:h2:mem:neqsimthermodatabase;DB_CLOSE_DELAY=-1";
     neqsim.util.database.NeqSimDataBase.dataBaseType = "H2";
 
     try {
@@ -565,10 +554,9 @@ public class NeqSimDataBase
       // technicalrequirements, technicalrequirements_process, materialpipeproperties,
       // materialplateproperties, fittings, LuciaData, Luciadata8
 
-      try (neqsim.util.database.NeqSimDataBase database =
-          new neqsim.util.database.NeqSimDataBase()) {
-        database.execute("CREATE TABLE comptemp AS SELECT * FROM comp");
-        database.execute("CREATE TABLE intertemp AS SELECT * FROM inter");
+      try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
+	database.execute("CREATE TABLE comptemp AS SELECT * FROM comp");
+	database.execute("CREATE TABLE intertemp AS SELECT * FROM inter");
       }
 
       h2IsInitialized = true;

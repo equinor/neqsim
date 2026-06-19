@@ -29,9 +29,8 @@ import neqsim.thermo.system.SystemUMRPRUMCEos;
  * Stateless flow assurance runner for MCP integration.
  *
  * <p>
- * Supports hydrate risk mapping, wax appearance temperature, asphaltene stability screening,
- * CO2/H2S corrosion prediction, scale prediction, erosion analysis, pipeline cooldown, and emulsion
- * viscosity calculations.
+ * Supports hydrate risk mapping, wax appearance temperature, asphaltene stability screening, CO2/H2S corrosion
+ * prediction, scale prediction, erosion analysis, pipeline cooldown, and emulsion viscosity calculations.
  * </p>
  *
  * @author Even Solbraa
@@ -39,18 +38,17 @@ import neqsim.thermo.system.SystemUMRPRUMCEos;
  */
 public class FlowAssuranceRunner {
 
-  private static final Gson GSON =
-      new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+  private static final Gson GSON = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
 
-  private static final List<String> SUPPORTED_ANALYSES =
-      Collections.unmodifiableList(Arrays.asList("hydrateRiskMap", "waxAppearance",
-          "asphalteneStability", "CO2Corrosion", "scalePrediction", "erosion", "pipelineCooldown",
-          "emulsionViscosity", "demulsifierDoseOptimization"));
+  private static final List<String> SUPPORTED_ANALYSES = Collections
+      .unmodifiableList(Arrays.asList("hydrateRiskMap", "waxAppearance", "asphalteneStability", "CO2Corrosion",
+	  "scalePrediction", "erosion", "pipelineCooldown", "emulsionViscosity", "demulsifierDoseOptimization"));
 
   /**
    * Private constructor — all methods are static.
    */
-  private FlowAssuranceRunner() {}
+  private FlowAssuranceRunner() {
+  }
 
   /**
    * Returns the list of supported flow assurance analysis types.
@@ -70,27 +68,25 @@ public class FlowAssuranceRunner {
   public static String run(String json) {
     if (json == null || json.trim().isEmpty()) {
       return errorJson("INPUT_ERROR", "JSON input is null or empty",
-          "Provide a valid JSON flow assurance specification");
+	  "Provide a valid JSON flow assurance specification");
     }
 
     JsonObject input;
     try {
       input = JsonParser.parseString(json).getAsJsonObject();
     } catch (Exception e) {
-      return errorJson("JSON_PARSE_ERROR", "Failed to parse JSON: " + e.getMessage(),
-          "Ensure the JSON is well-formed");
+      return errorJson("JSON_PARSE_ERROR", "Failed to parse JSON: " + e.getMessage(), "Ensure the JSON is well-formed");
     }
 
     long startTime = System.currentTimeMillis();
 
     if (!input.has("analysis")) {
       return errorJson("MISSING_ANALYSIS", "No 'analysis' field specified",
-          "Provide 'analysis': one of " + SUPPORTED_ANALYSES);
+	  "Provide 'analysis': one of " + SUPPORTED_ANALYSES);
     }
     String analysis = input.get("analysis").getAsString();
     if (!SUPPORTED_ANALYSES.contains(analysis)) {
-      return errorJson("UNKNOWN_ANALYSIS", "Unknown analysis type: " + analysis,
-          "Use one of: " + SUPPORTED_ANALYSES);
+      return errorJson("UNKNOWN_ANALYSIS", "Unknown analysis type: " + analysis, "Use one of: " + SUPPORTED_ANALYSES);
     }
 
     try {
@@ -100,35 +96,35 @@ public class FlowAssuranceRunner {
 
       JsonObject data;
       switch (analysis) {
-        case "hydrateRiskMap":
-          data = runHydrateRiskMap(input);
-          break;
-        case "waxAppearance":
-          data = runWaxAppearance(input);
-          break;
-        case "asphalteneStability":
-          data = runAsphalteneStability(input);
-          break;
-        case "CO2Corrosion":
-          data = runCO2Corrosion(input);
-          break;
-        case "scalePrediction":
-          data = runScalePrediction(input);
-          break;
-        case "erosion":
-          data = runErosion(input);
-          break;
-        case "pipelineCooldown":
-          data = runPipelineCooldown(input);
-          break;
-        case "emulsionViscosity":
-          data = runEmulsionViscosity(input);
-          break;
-        case "demulsifierDoseOptimization":
-          data = runDemulsifierDoseOptimization(input);
-          break;
-        default:
-          return errorJson("UNKNOWN_ANALYSIS", "Not implemented: " + analysis, "");
+      case "hydrateRiskMap":
+	data = runHydrateRiskMap(input);
+	break;
+      case "waxAppearance":
+	data = runWaxAppearance(input);
+	break;
+      case "asphalteneStability":
+	data = runAsphalteneStability(input);
+	break;
+      case "CO2Corrosion":
+	data = runCO2Corrosion(input);
+	break;
+      case "scalePrediction":
+	data = runScalePrediction(input);
+	break;
+      case "erosion":
+	data = runErosion(input);
+	break;
+      case "pipelineCooldown":
+	data = runPipelineCooldown(input);
+	break;
+      case "emulsionViscosity":
+	data = runEmulsionViscosity(input);
+	break;
+      case "demulsifierDoseOptimization":
+	data = runDemulsifierDoseOptimization(input);
+	break;
+      default:
+	return errorJson("UNKNOWN_ANALYSIS", "Not implemented: " + analysis, "");
       }
 
       result.add("data", data);
@@ -142,7 +138,7 @@ public class FlowAssuranceRunner {
       return GSON.toJson(result);
     } catch (Exception e) {
       return errorJson("FLOW_ASSURANCE_ERROR", "Analysis failed: " + e.getMessage(),
-          "Check input parameters for " + analysis);
+	  "Check input parameters for " + analysis);
     }
   }
 
@@ -154,18 +150,17 @@ public class FlowAssuranceRunner {
    */
   private static JsonObject runHydrateRiskMap(JsonObject input) {
     SystemInterface fluid = createFluidFromInput(input);
-    neqsim.pvtsimulation.flowassurance.HydrateRiskMapper mapper =
-        new neqsim.pvtsimulation.flowassurance.HydrateRiskMapper(fluid);
+    neqsim.pvtsimulation.flowassurance.HydrateRiskMapper mapper = new neqsim.pvtsimulation.flowassurance.HydrateRiskMapper(
+	fluid);
     if (input.has("profilePoints")) {
       JsonArray points = input.getAsJsonArray("profilePoints");
       for (int i = 0; i < points.size(); i++) {
-        JsonObject pt = points.get(i).getAsJsonObject();
-        mapper.addProfilePoint(pt.get("km").getAsDouble(), pt.get("pressure_bara").getAsDouble(),
-            pt.get("temperature_C").getAsDouble());
+	JsonObject pt = points.get(i).getAsJsonObject();
+	mapper.addProfilePoint(pt.get("km").getAsDouble(), pt.get("pressure_bara").getAsDouble(),
+	    pt.get("temperature_C").getAsDouble());
       }
     } else if (input.has("pressure_bara") && input.has("temperature_C")) {
-      mapper.addProfilePoint(0.0, input.get("pressure_bara").getAsDouble(),
-          input.get("temperature_C").getAsDouble());
+      mapper.addProfilePoint(0.0, input.get("pressure_bara").getAsDouble(), input.get("temperature_C").getAsDouble());
     }
     HydrateRiskMapper.RiskProfile riskProfile = mapper.calculate();
     return JsonParser.parseString(riskProfile.toJson()).getAsJsonObject();
@@ -179,15 +174,15 @@ public class FlowAssuranceRunner {
    */
   private static JsonObject runWaxAppearance(JsonObject input) {
     SystemInterface fluid = createFluidFromInput(input);
-    neqsim.pvtsimulation.flowassurance.WaxCurveCalculator wax =
-        new neqsim.pvtsimulation.flowassurance.WaxCurveCalculator(fluid);
+    neqsim.pvtsimulation.flowassurance.WaxCurveCalculator wax = new neqsim.pvtsimulation.flowassurance.WaxCurveCalculator(
+	fluid);
     if (input.has("pressure_bara")) {
       wax.setPressure(input.get("pressure_bara").getAsDouble());
     }
     if (input.has("temperatureRange")) {
       JsonObject range = input.getAsJsonObject("temperatureRange");
       wax.setTemperatureRange(range.get("startC").getAsDouble(), range.get("endC").getAsDouble(),
-          range.has("stepC") ? range.get("stepC").getAsDouble() : 5.0);
+	  range.has("stepC") ? range.get("stepC").getAsDouble() : 5.0);
     }
     wax.calculate();
     JsonObject data = new JsonObject();
@@ -205,29 +200,24 @@ public class FlowAssuranceRunner {
    * @return JSON object with asphaltene stability results
    */
   private static JsonObject runAsphalteneStability(JsonObject input) {
-    neqsim.pvtsimulation.flowassurance.AsphalteneStabilityAnalyzer analyzer =
-        new neqsim.pvtsimulation.flowassurance.AsphalteneStabilityAnalyzer();
+    neqsim.pvtsimulation.flowassurance.AsphalteneStabilityAnalyzer analyzer = new neqsim.pvtsimulation.flowassurance.AsphalteneStabilityAnalyzer();
     if (input.has("components")) {
       SystemInterface fluid = createFluidFromInput(input);
       analyzer.setSystem(fluid);
     }
     if (input.has("SARA")) {
       JsonObject sara = input.getAsJsonObject("SARA");
-      analyzer.setSARAFractions(sara.get("saturates").getAsDouble(),
-          sara.get("aromatics").getAsDouble(), sara.get("resins").getAsDouble(),
-          sara.get("asphaltenes").getAsDouble());
+      analyzer.setSARAFractions(sara.get("saturates").getAsDouble(), sara.get("aromatics").getAsDouble(),
+	  sara.get("resins").getAsDouble(), sara.get("asphaltenes").getAsDouble());
     }
-    double resPressure =
-        input.has("reservoirPressure_bara") ? input.get("reservoirPressure_bara").getAsDouble()
-            : 300.0;
-    double satPressure =
-        input.has("saturationPressure_bara") ? input.get("saturationPressure_bara").getAsDouble()
-            : 200.0;
+    double resPressure = input.has("reservoirPressure_bara") ? input.get("reservoirPressure_bara").getAsDouble()
+	: 300.0;
+    double satPressure = input.has("saturationPressure_bara") ? input.get("saturationPressure_bara").getAsDouble()
+	: 200.0;
     double density = input.has("density_kg_m3") ? input.get("density_kg_m3").getAsDouble() : 800.0;
 
     JsonObject data = new JsonObject();
-    data.addProperty("deBoerRisk",
-        analyzer.deBoerScreening(resPressure, satPressure, density).name());
+    data.addProperty("deBoerRisk", analyzer.deBoerScreening(resPressure, satPressure, density).name());
     data.addProperty("colloidalInstabilityIndex", analyzer.getColloidalInstabilityIndex());
     data.addProperty("resinToAsphalteneRatio", analyzer.getResinToAsphalteneRatio());
     data.addProperty("saraStability", analyzer.evaluateSARAStability().name());
@@ -241,8 +231,7 @@ public class FlowAssuranceRunner {
    * @return JSON object with corrosion rate results
    */
   private static JsonObject runCO2Corrosion(JsonObject input) {
-    neqsim.pvtsimulation.flowassurance.CO2CorrosionAnalyzer analyzer =
-        new neqsim.pvtsimulation.flowassurance.CO2CorrosionAnalyzer();
+    neqsim.pvtsimulation.flowassurance.CO2CorrosionAnalyzer analyzer = new neqsim.pvtsimulation.flowassurance.CO2CorrosionAnalyzer();
     if (input.has("temperature_C")) {
       analyzer.setTemperatureCelsius(input.get("temperature_C").getAsDouble());
     }
@@ -275,8 +264,7 @@ public class FlowAssuranceRunner {
    * @return JSON object with scale saturation indices
    */
   private static JsonObject runScalePrediction(JsonObject input) {
-    neqsim.pvtsimulation.flowassurance.ScalePredictionCalculator calc =
-        new neqsim.pvtsimulation.flowassurance.ScalePredictionCalculator();
+    neqsim.pvtsimulation.flowassurance.ScalePredictionCalculator calc = new neqsim.pvtsimulation.flowassurance.ScalePredictionCalculator();
     if (input.has("temperature_C")) {
       calc.setTemperatureCelsius(input.get("temperature_C").getAsDouble());
     }
@@ -321,8 +309,7 @@ public class FlowAssuranceRunner {
    * @return JSON object with erosion results
    */
   private static JsonObject runErosion(JsonObject input) {
-    neqsim.pvtsimulation.flowassurance.ErosionPredictionCalculator calc =
-        new neqsim.pvtsimulation.flowassurance.ErosionPredictionCalculator();
+    neqsim.pvtsimulation.flowassurance.ErosionPredictionCalculator calc = new neqsim.pvtsimulation.flowassurance.ErosionPredictionCalculator();
     if (input.has("mixtureDensity_kg_m3")) {
       calc.setMixtureDensity(input.get("mixtureDensity_kg_m3").getAsDouble());
     }
@@ -358,8 +345,7 @@ public class FlowAssuranceRunner {
    * @return JSON object with cooldown results
    */
   private static JsonObject runPipelineCooldown(JsonObject input) {
-    neqsim.pvtsimulation.flowassurance.PipelineCooldownCalculator calc =
-        new neqsim.pvtsimulation.flowassurance.PipelineCooldownCalculator();
+    neqsim.pvtsimulation.flowassurance.PipelineCooldownCalculator calc = new neqsim.pvtsimulation.flowassurance.PipelineCooldownCalculator();
     if (input.has("internalDiameter_m")) {
       calc.setInternalDiameter(input.get("internalDiameter_m").getAsDouble());
     }
@@ -376,8 +362,7 @@ public class FlowAssuranceRunner {
       calc.setOverallUValue(input.get("overallUValue_W_m2K").getAsDouble());
     }
     if (input.has("initialFluidTemperature_C")) {
-      calc.setInitialFluidTemperature(
-          input.get("initialFluidTemperature_C").getAsDouble() + 273.15);
+      calc.setInitialFluidTemperature(input.get("initialFluidTemperature_C").getAsDouble() + 273.15);
     }
     if (input.has("ambientTemperature_C")) {
       calc.setAmbientTemperature(input.get("ambientTemperature_C").getAsDouble() + 273.15);
@@ -409,8 +394,7 @@ public class FlowAssuranceRunner {
    * @return JSON object with emulsion viscosity results
    */
   private static JsonObject runEmulsionViscosity(JsonObject input) {
-    neqsim.pvtsimulation.flowassurance.EmulsionViscosityCalculator calc =
-        new neqsim.pvtsimulation.flowassurance.EmulsionViscosityCalculator();
+    neqsim.pvtsimulation.flowassurance.EmulsionViscosityCalculator calc = new neqsim.pvtsimulation.flowassurance.EmulsionViscosityCalculator();
     if (input.has("oilViscosity_cP")) {
       calc.setOilViscosity(input.get("oilViscosity_cP").getAsDouble());
     }
@@ -444,13 +428,12 @@ public class FlowAssuranceRunner {
     configureMonthlyMonitor(optimizer.getMonthlyMonitor(), input);
 
     if (input.has("minimumDosePpm") || input.has("maximumDosePpm") || input.has("doseStepPpm")) {
-      optimizer.setDoseRange(getDouble(input, "minimumDosePpm", 0.0),
-          getDouble(input, "maximumDosePpm", 120.0), getDouble(input, "doseStepPpm", 1.0));
+      optimizer.setDoseRange(getDouble(input, "minimumDosePpm", 0.0), getDouble(input, "maximumDosePpm", 120.0),
+	  getDouble(input, "doseStepPpm", 1.0));
     }
     optimizer.setSafetyMarginMgL(getDouble(input, "safetyMarginMgL", 3.0));
     optimizer.setOptimizationHorizonHours(getDouble(input, "optimizationHorizonHours", 1.0));
-    optimizer
-        .setAnalyzerConfidenceMultiplier(getDouble(input, "analyzerConfidenceMultiplier", 0.0));
+    optimizer.setAnalyzerConfidenceMultiplier(getDouble(input, "analyzerConfidenceMultiplier", 0.0));
 
     double untreatedOilInWaterMgL = getDouble(input, "untreatedOIW_mgL", 100.0);
     double waterRateM3h = getDouble(input, "waterRate_m3_h", 100.0);
@@ -466,8 +449,7 @@ public class FlowAssuranceRunner {
    * @param model dose-response model to configure
    * @param input JSON input
    */
-  private static void configureDoseResponseModel(DemulsifierDoseResponseModel model,
-      JsonObject input) {
+  private static void configureDoseResponseModel(DemulsifierDoseResponseModel model, JsonObject input) {
     if (input.has("maxRemovalFraction")) {
       model.setMaxRemovalFraction(input.get("maxRemovalFraction").getAsDouble());
     }
@@ -506,7 +488,7 @@ public class FlowAssuranceRunner {
     }
     if (input.has("currentEffectiveDosePpm")) {
       model.resetToSteadyState(input.get("currentEffectiveDosePpm").getAsDouble(),
-          getDouble(input, "waterRate_m3_h", 100.0));
+	  getDouble(input, "waterRate_m3_h", 100.0));
     }
   }
 
@@ -538,10 +520,9 @@ public class FlowAssuranceRunner {
    * Configures a monthly monitor from JSON.
    *
    * @param monitor monthly compliance monitor to configure
-   * @param input JSON input
+   * @param input   JSON input
    */
-  private static void configureMonthlyMonitor(OilInWaterMonthlyComplianceMonitor monitor,
-      JsonObject input) {
+  private static void configureMonthlyMonitor(OilInWaterMonthlyComplianceMonitor monitor, JsonObject input) {
     if (input.has("monthlyLimit_mgL")) {
       monitor.setMonthlyLimitMgL(input.get("monthlyLimit_mgL").getAsDouble());
     }
@@ -554,9 +535,8 @@ public class FlowAssuranceRunner {
     if (input.has("monthlySamples")) {
       JsonArray samples = input.getAsJsonArray("monthlySamples");
       for (int index = 0; index < samples.size(); index++) {
-        JsonObject sample = samples.get(index).getAsJsonObject();
-        monitor.addSample(getDouble(sample, "oiw_mgL", 0.0),
-            getDouble(sample, "waterVolume_m3", 0.0));
+	JsonObject sample = samples.get(index).getAsJsonObject();
+	monitor.addSample(getDouble(sample, "oiw_mgL", 0.0), getDouble(sample, "waterVolume_m3", 0.0));
       }
     }
   }
@@ -564,8 +544,8 @@ public class FlowAssuranceRunner {
   /**
    * Reads a double JSON field with a default.
    *
-   * @param input JSON object
-   * @param fieldName field name
+   * @param input        JSON object
+   * @param fieldName    field name
    * @param defaultValue default value returned if the field is absent
    * @return field value or default
    */
@@ -597,7 +577,7 @@ public class FlowAssuranceRunner {
     if (input.has("components")) {
       JsonObject comps = input.getAsJsonObject("components");
       for (Map.Entry<String, JsonElement> entry : comps.entrySet()) {
-        fluid.addComponent(entry.getKey(), entry.getValue().getAsDouble());
+	fluid.addComponent(entry.getKey(), entry.getValue().getAsDouble());
       }
     }
     String mixingRule = input.has("mixingRule") ? input.get("mixingRule").getAsString() : "classic";
@@ -616,18 +596,18 @@ public class FlowAssuranceRunner {
    */
   private static SystemInterface createFluid(String model, double tempK, double pBara) {
     switch (model.toUpperCase()) {
-      case "PR":
-        return new SystemPrEos(tempK, pBara);
-      case "CPA":
-        return new SystemSrkCPAstatoil(tempK, pBara);
-      case "GERG2008":
-        return new SystemGERG2008Eos(tempK, pBara);
-      case "PCSAFT":
-        return new SystemPCSAFT(tempK, pBara);
-      case "UMRPRU":
-        return new SystemUMRPRUMCEos(tempK, pBara);
-      default:
-        return new SystemSrkEos(tempK, pBara);
+    case "PR":
+      return new SystemPrEos(tempK, pBara);
+    case "CPA":
+      return new SystemSrkCPAstatoil(tempK, pBara);
+    case "GERG2008":
+      return new SystemGERG2008Eos(tempK, pBara);
+    case "PCSAFT":
+      return new SystemPCSAFT(tempK, pBara);
+    case "UMRPRU":
+      return new SystemUMRPRUMCEos(tempK, pBara);
+    default:
+      return new SystemSrkEos(tempK, pBara);
     }
   }
 
@@ -645,12 +625,12 @@ public class FlowAssuranceRunner {
     double value = obj.get("value").getAsDouble();
     String unit = obj.has("unit") ? obj.get("unit").getAsString() : "K";
     switch (unit) {
-      case "C":
-        return value + 273.15;
-      case "F":
-        return (value - 32.0) * 5.0 / 9.0 + 273.15;
-      default:
-        return value;
+    case "C":
+      return value + 273.15;
+    case "F":
+      return (value - 32.0) * 5.0 / 9.0 + 273.15;
+    default:
+      return value;
     }
   }
 
@@ -668,20 +648,20 @@ public class FlowAssuranceRunner {
     double value = obj.get("value").getAsDouble();
     String unit = obj.has("unit") ? obj.get("unit").getAsString() : "bara";
     switch (unit) {
-      case "barg":
-        return value + 1.01325;
-      case "Pa":
-        return value / 100000.0;
-      case "kPa":
-        return value / 100.0;
-      case "MPa":
-        return value * 10.0;
-      case "psi":
-        return value / 14.696;
-      case "atm":
-        return value * 1.01325;
-      default:
-        return value;
+    case "barg":
+      return value + 1.01325;
+    case "Pa":
+      return value / 100000.0;
+    case "kPa":
+      return value / 100.0;
+    case "MPa":
+      return value * 10.0;
+    case "psi":
+      return value / 14.696;
+    case "atm":
+      return value * 1.01325;
+    default:
+      return value;
     }
   }
 
@@ -695,7 +675,7 @@ public class FlowAssuranceRunner {
     JsonArray ja = new JsonArray();
     if (arr != null) {
       for (double v : arr) {
-        ja.add(v);
+	ja.add(v);
       }
     }
     return ja;
@@ -704,8 +684,8 @@ public class FlowAssuranceRunner {
   /**
    * Creates a standard error JSON string.
    *
-   * @param code the error code
-   * @param message the error message
+   * @param code        the error code
+   * @param message     the error message
    * @param remediation the fix suggestion
    * @return the error JSON string
    */

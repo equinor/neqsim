@@ -11,8 +11,8 @@ import neqsim.thermo.system.SystemInterface;
  * Subsea Tree (Christmas Tree) equipment class.
  *
  * <p>
- * A subsea tree is a system of valves and connectors installed on top of a subsea wellhead to
- * control production from the well. Key functions include:
+ * A subsea tree is a system of valves and connectors installed on top of a subsea wellhead to control production from
+ * the well. Key functions include:
  * </p>
  * <ul>
  * <li>Well control and shut-in capability</li>
@@ -248,7 +248,7 @@ public class SubseaTree extends TwoPortEquipment {
   /**
    * Constructor with name and inlet stream.
    *
-   * @param name equipment name
+   * @param name     equipment name
    * @param inStream inlet stream (from well)
    */
   public SubseaTree(String name, StreamInterface inStream) {
@@ -264,12 +264,10 @@ public class SubseaTree extends TwoPortEquipment {
       productionMasterValve = new ThrottlingValve(getName() + " PMV", inStream);
       productionMasterValve.setPercentValveOpening(pmvOpen ? 100.0 : 0.0);
 
-      productionWingValve =
-          new ThrottlingValve(getName() + " PWV", productionMasterValve.getOutletStream());
+      productionWingValve = new ThrottlingValve(getName() + " PWV", productionMasterValve.getOutletStream());
       productionWingValve.setPercentValveOpening(pwvOpen ? 100.0 : 0.0);
 
-      productionChoke =
-          new ThrottlingValve(getName() + " Choke", productionWingValve.getOutletStream());
+      productionChoke = new ThrottlingValve(getName() + " Choke", productionWingValve.getOutletStream());
       productionChoke.setPercentValveOpening(chokeOpening);
     }
   }

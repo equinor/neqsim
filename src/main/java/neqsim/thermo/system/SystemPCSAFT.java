@@ -44,8 +44,8 @@ public class SystemPCSAFT extends SystemSrkEos {
    * Constructor for SystemPCSAFT.
    * </p>
    *
-   * @param T The temperature in unit Kelvin
-   * @param P The pressure in unit bara (absolute pressure)
+   * @param T              The temperature in unit Kelvin
+   * @param P              The pressure in unit bara (absolute pressure)
    * @param checkForSolids Set true to do solid phase check and calculations
    */
   public SystemPCSAFT(double T, double P, boolean checkForSolids) {
@@ -80,11 +80,9 @@ public class SystemPCSAFT extends SystemSrkEos {
 
   /** {@inheritDoc} */
   @Override
-  public void addTBPfraction(String componentName2, double numberOfMoles, double molarMass,
-      double density) {
+  public void addTBPfraction(String componentName2, double numberOfMoles, double molarMass, double density) {
     super.addTBPfraction(componentName2, numberOfMoles, molarMass, density);
-    String componentName =
-        getPhase(0).getComponent(getPhase(0).getNumberOfComponents() - 1).getComponentName();
+    String componentName = getPhase(0).getComponent(getPhase(0).getNumberOfComponents() - 1).getComponentName();
     double mwG = molarMass * 1e3; // convert kg/mol to g/mol
 
     // Gross & Sadowski (2001, I&EC Res, 40, 1244-1260) n-alkane correlations
@@ -98,17 +96,16 @@ public class SystemPCSAFT extends SystemSrkEos {
       // Approximate n-alkane specific gravity from Riazi-Daubert type fit (C5-C20)
       double sgAlkane = 1.07 - 3.5649 / Math.pow(mwG, 0.25);
       if (sgAlkane > 0.5 && sgAlkane < 1.0) {
-        msigm3 = msigm3 * (sgAlkane / density);
+	msigm3 = msigm3 * (sgAlkane / density);
       }
     }
 
     for (int i = 0; i < numberOfPhases; i++) {
       getPhase(phaseIndex[i]).getComponent(componentName).setmSAFTi(mSaft);
       getPhase(phaseIndex[i]).getComponent(componentName).setEpsikSAFT(epskSaftm / mSaft);
-      getPhase(phaseIndex[i]).getComponent(componentName)
-          .setSigmaSAFTi(Math.pow(msigm3 / mSaft, 1.0 / 3.0) / 1.0e10);
+      getPhase(phaseIndex[i]).getComponent(componentName).setSigmaSAFTi(Math.pow(msigm3 / mSaft, 1.0 / 3.0) / 1.0e10);
       logger.info("PC-SAFT TBP params: m=" + mSaft + " eps/k=" + epskSaftm / mSaft + " sigma="
-          + Math.pow(msigm3 / mSaft, 1.0 / 3.0) + " Angstrom (SG=" + density + ")");
+	  + Math.pow(msigm3 / mSaft, 1.0 / 3.0) + " Angstrom (SG=" + density + ")");
     }
   }
 

@@ -16,8 +16,8 @@ import neqsim.fluidmechanics.geometrydefinitions.internalgeometry.wall.PipeMater
  *
  * <h2>Buried Pipe Heat Transfer</h2>
  * <p>
- * For buried pipes, the soil thermal resistance depends on burial depth and soil conductivity.
- * Using the shape factor method:
+ * For buried pipes, the soil thermal resistance depends on burial depth and soil conductivity. Using the shape factor
+ * method:
  * </p>
  *
  * <pre>
@@ -94,11 +94,10 @@ public class PipeSurroundingEnvironment extends SurroundingEnvironmentBaseClass 
    * Creates an environment for a pipe exposed to air.
    *
    * @param airTemperatureK Air temperature in Kelvin
-   * @param windVelocityMs Wind velocity in m/s
+   * @param windVelocityMs  Wind velocity in m/s
    * @return Configured PipeSurroundingEnvironment
    */
-  public static PipeSurroundingEnvironment exposedToAir(double airTemperatureK,
-      double windVelocityMs) {
+  public static PipeSurroundingEnvironment exposedToAir(double airTemperatureK, double windVelocityMs) {
     PipeSurroundingEnvironment env = new PipeSurroundingEnvironment();
     env.setForAir(windVelocityMs);
     env.setTemperature(airTemperatureK);
@@ -109,11 +108,10 @@ public class PipeSurroundingEnvironment extends SurroundingEnvironmentBaseClass 
    * Creates an environment for a subsea pipe.
    *
    * @param seawaterTemperatureK Seawater temperature in Kelvin
-   * @param currentVelocityMs Current velocity in m/s
+   * @param currentVelocityMs    Current velocity in m/s
    * @return Configured PipeSurroundingEnvironment
    */
-  public static PipeSurroundingEnvironment subseaPipe(double seawaterTemperatureK,
-      double currentVelocityMs) {
+  public static PipeSurroundingEnvironment subseaPipe(double seawaterTemperatureK, double currentVelocityMs) {
     PipeSurroundingEnvironment env = new PipeSurroundingEnvironment();
     env.setForSeawater(currentVelocityMs);
     env.setTemperature(seawaterTemperatureK);
@@ -124,13 +122,13 @@ public class PipeSurroundingEnvironment extends SurroundingEnvironmentBaseClass 
    * Creates an environment for a buried pipe.
    *
    * @param groundTemperatureK Undisturbed ground temperature in Kelvin
-   * @param burialDepthM Burial depth to pipe centerline in meters
-   * @param pipeOuterRadiusM Outer radius of the pipe in meters
-   * @param soilMaterial Type of soil
+   * @param burialDepthM       Burial depth to pipe centerline in meters
+   * @param pipeOuterRadiusM   Outer radius of the pipe in meters
+   * @param soilMaterial       Type of soil
    * @return Configured PipeSurroundingEnvironment
    */
-  public static PipeSurroundingEnvironment buriedPipe(double groundTemperatureK,
-      double burialDepthM, double pipeOuterRadiusM, PipeMaterial soilMaterial) {
+  public static PipeSurroundingEnvironment buriedPipe(double groundTemperatureK, double burialDepthM,
+      double pipeOuterRadiusM, PipeMaterial soilMaterial) {
     PipeSurroundingEnvironment env = new PipeSurroundingEnvironment();
     env.setForBuried(burialDepthM, pipeOuterRadiusM, soilMaterial);
     env.setTemperature(groundTemperatureK);
@@ -167,8 +165,7 @@ public class PipeSurroundingEnvironment extends SurroundingEnvironmentBaseClass 
    * Configures for seawater exposure.
    *
    * <p>
-   * Seawater has much higher heat transfer coefficients than air due to its higher thermal
-   * conductivity and density.
+   * Seawater has much higher heat transfer coefficients than air due to its higher thermal conductivity and density.
    * </p>
    *
    * @param currentVelocityMs Seawater current velocity in m/s
@@ -189,13 +186,13 @@ public class PipeSurroundingEnvironment extends SurroundingEnvironmentBaseClass 
    * Configures for buried pipe.
    *
    * <p>
-   * Calculates the soil thermal resistance using the shape factor method and converts to an
-   * equivalent heat transfer coefficient.
+   * Calculates the soil thermal resistance using the shape factor method and converts to an equivalent heat transfer
+   * coefficient.
    * </p>
    *
-   * @param depthM Burial depth to pipe centerline in meters
+   * @param depthM       Burial depth to pipe centerline in meters
    * @param outerRadiusM Outer radius of the pipe in meters
-   * @param soil Soil material type
+   * @param soil         Soil material type
    */
   public void setForBuried(double depthM, double outerRadiusM, PipeMaterial soil) {
     this.environmentType = EnvironmentType.BURIED;
@@ -228,13 +225,12 @@ public class PipeSurroundingEnvironment extends SurroundingEnvironmentBaseClass 
    * h = k_soil * S / (2π * r)
    * </pre>
    *
-   * @param depthM Burial depth to centerline in meters
+   * @param depthM       Burial depth to centerline in meters
    * @param outerRadiusM Pipe outer radius in meters
-   * @param kSoil Soil thermal conductivity in W/(m·K)
+   * @param kSoil        Soil thermal conductivity in W/(m·K)
    * @return Equivalent heat transfer coefficient in W/(m²·K)
    */
-  public static double calcBuriedPipeHeatTransferCoefficient(double depthM, double outerRadiusM,
-      double kSoil) {
+  public static double calcBuriedPipeHeatTransferCoefficient(double depthM, double outerRadiusM, double kSoil) {
     if (depthM <= outerRadiusM) {
       // Pipe is at or above ground surface
       throw new IllegalArgumentException("Burial depth must be greater than pipe outer radius");
@@ -251,13 +247,12 @@ public class PipeSurroundingEnvironment extends SurroundingEnvironmentBaseClass 
   /**
    * Calculates the thermal resistance per unit length for a buried pipe.
    *
-   * @param depthM Burial depth to centerline in meters
+   * @param depthM       Burial depth to centerline in meters
    * @param outerRadiusM Pipe outer radius in meters
-   * @param kSoil Soil thermal conductivity in W/(m·K)
+   * @param kSoil        Soil thermal conductivity in W/(m·K)
    * @return Thermal resistance in K·m/W
    */
-  public static double calcBuriedPipeThermalResistance(double depthM, double outerRadiusM,
-      double kSoil) {
+  public static double calcBuriedPipeThermalResistance(double depthM, double outerRadiusM, double kSoil) {
     if (depthM <= outerRadiusM) {
       throw new IllegalArgumentException("Burial depth must be greater than pipe outer radius");
     }
@@ -334,12 +329,11 @@ public class PipeSurroundingEnvironment extends SurroundingEnvironmentBaseClass 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append(String.format("PipeSurroundingEnvironment[type=%s, T=%.1f K, h=%.1f W/(m²·K)]",
-        environmentType, getTemperature(), getHeatTransferCoefficient()));
+    sb.append(String.format("PipeSurroundingEnvironment[type=%s, T=%.1f K, h=%.1f W/(m²·K)]", environmentType,
+	getTemperature(), getHeatTransferCoefficient()));
 
     if (environmentType == EnvironmentType.BURIED) {
-      sb.append(
-          String.format(" (depth=%.2f m, soil=%s)", burialDepth, soilMaterial.getDisplayName()));
+      sb.append(String.format(" (depth=%.2f m, soil=%s)", burialDepth, soilMaterial.getDisplayName()));
     } else if (environmentType == EnvironmentType.SEAWATER) {
       sb.append(String.format(" (velocity=%.2f m/s)", seawaterVelocity));
     } else if (environmentType == EnvironmentType.AIR) {

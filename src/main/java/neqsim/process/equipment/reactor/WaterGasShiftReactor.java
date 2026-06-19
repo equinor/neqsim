@@ -13,11 +13,10 @@ import neqsim.thermo.system.SystemInterface;
  * Screening model for high-temperature and low-temperature water-gas shift service.
  *
  * <p>
- * The unit wraps {@link GibbsReactor} for the equilibrium reaction family dominated by
- * {@code CO + H2O = CO2 + H2}. Methane, nitrogen, and oxygen are treated as inert so the model
- * represents a shift converter rather than another reformer stage. It is intended for blue-H2 and
- * syngas process templates where a fast, repeatable equilibrium endpoint is more useful than a
- * vendor-calibrated rate model.
+ * The unit wraps {@link GibbsReactor} for the equilibrium reaction family dominated by {@code CO + H2O = CO2 + H2}.
+ * Methane, nitrogen, and oxygen are treated as inert so the model represents a shift converter rather than another
+ * reformer stage. It is intended for blue-H2 and syngas process templates where a fast, repeatable equilibrium endpoint
+ * is more useful than a vendor-calibrated rate model.
  * </p>
  *
  * @author NeqSim contributors
@@ -63,7 +62,7 @@ public class WaterGasShiftReactor extends TwoPortEquipment {
   /**
    * Constructs a water-gas shift reactor with an inlet stream.
    *
-   * @param name unit operation name
+   * @param name        unit operation name
    * @param inletStream syngas inlet stream
    */
   public WaterGasShiftReactor(String name, StreamInterface inletStream) {
@@ -84,7 +83,7 @@ public class WaterGasShiftReactor extends TwoPortEquipment {
    * Sets the isothermal shift temperature with unit conversion.
    *
    * @param temperature shift temperature value
-   * @param unit temperature unit, accepted values are K, C, and F
+   * @param unit        temperature unit, accepted values are K, C, and F
    */
   public void setShiftTemperature(double temperature, String unit) {
     setShiftTemperature(toKelvin(temperature, unit));
@@ -188,16 +187,15 @@ public class WaterGasShiftReactor extends TwoPortEquipment {
     double co2In = HydrogenProductionUtils.getComponentMoles(inletSystem, "CO2");
 
     inletSystem.setTemperature(shiftTemperatureK);
-    inletSystem.setPressure(Math.max(0.1, inletSystem.getPressure("bara") - pressureDropBar),
-        "bara");
+    inletSystem.setPressure(Math.max(0.1, inletSystem.getPressure("bara") - pressureDropBar), "bara");
     inletSystem.init(0);
     inletSystem.init(3);
 
     Stream reactorFeed = new Stream(getName() + " equilibrium feed", inletSystem);
     reactorFeed.run(id);
 
-    equilibriumReactor = HydrogenProductionUtils.createSyngasGibbsReactor(
-        getName() + " equilibrium", reactorFeed, GibbsReactor.EnergyMode.ISOTHERMAL);
+    equilibriumReactor = HydrogenProductionUtils.createSyngasGibbsReactor(getName() + " equilibrium", reactorFeed,
+	GibbsReactor.EnergyMode.ISOTHERMAL);
     equilibriumReactor.setComponentAsInert("methane");
     equilibriumReactor.setComponentAsInert("nitrogen");
     equilibriumReactor.setComponentAsInert("oxygen");
@@ -226,7 +224,7 @@ public class WaterGasShiftReactor extends TwoPortEquipment {
     results.put("wgsEquilibriumRatio", wgsEquilibriumRatio);
     results.put("converged", hasConverged());
     results.put("outletComposition",
-        HydrogenProductionUtils.extractSyngasComposition(getOutletStream().getThermoSystem()));
+	HydrogenProductionUtils.extractSyngasComposition(getOutletStream().getThermoSystem()));
     return results;
   }
 
@@ -240,9 +238,9 @@ public class WaterGasShiftReactor extends TwoPortEquipment {
    * Updates reactor metrics after equilibrium calculation.
    *
    * @param outletSystem outlet equilibrium system
-   * @param coIn inlet carbon monoxide amount
-   * @param h2In inlet hydrogen amount
-   * @param co2In inlet carbon dioxide amount
+   * @param coIn         inlet carbon monoxide amount
+   * @param h2In         inlet hydrogen amount
+   * @param co2In        inlet carbon dioxide amount
    */
   private void updateMetrics(SystemInterface outletSystem, double coIn, double h2In, double co2In) {
     double coOut = HydrogenProductionUtils.getComponentMoles(outletSystem, "CO");
@@ -250,27 +248,25 @@ public class WaterGasShiftReactor extends TwoPortEquipment {
     double co2Out = HydrogenProductionUtils.getComponentMoles(outletSystem, "CO2");
     double waterOut = HydrogenProductionUtils.getComponentMoles(outletSystem, "water");
 
-    carbonMonoxideConversion =
-        coIn > 0.0 ? HydrogenProductionUtils.clamp((coIn - coOut) / coIn, 0.0, 1.0) : 0.0;
+    carbonMonoxideConversion = coIn > 0.0 ? HydrogenProductionUtils.clamp((coIn - coOut) / coIn, 0.0, 1.0) : 0.0;
     hydrogenMoleFlowGain = h2Out - h2In;
     carbonDioxideMoleFlowFormation = co2Out - co2In;
     heatDutyKW = equilibriumReactor != null ? equilibriumReactor.getPower("kW") : 0.0;
-    wgsEquilibriumRatio =
-        calculateWgsEquilibriumRatio(outletSystem, coOut, waterOut, co2Out, h2Out);
+    wgsEquilibriumRatio = calculateWgsEquilibriumRatio(outletSystem, coOut, waterOut, co2Out, h2Out);
   }
 
   /**
    * Calculates the WGS reaction quotient from outlet component amounts.
    *
    * @param outletSystem outlet system used only for finite-system validation
-   * @param coOut outlet carbon monoxide amount
-   * @param waterOut outlet water amount
-   * @param co2Out outlet carbon dioxide amount
-   * @param h2Out outlet hydrogen amount
+   * @param coOut        outlet carbon monoxide amount
+   * @param waterOut     outlet water amount
+   * @param co2Out       outlet carbon dioxide amount
+   * @param h2Out        outlet hydrogen amount
    * @return WGS reaction quotient, or {@link Double#NaN} when undefined
    */
-  private double calculateWgsEquilibriumRatio(SystemInterface outletSystem, double coOut,
-      double waterOut, double co2Out, double h2Out) {
+  private double calculateWgsEquilibriumRatio(SystemInterface outletSystem, double coOut, double waterOut,
+      double co2Out, double h2Out) {
     if (outletSystem == null || coOut <= 0.0 || waterOut <= 0.0) {
       return Double.NaN;
     }
@@ -281,7 +277,7 @@ public class WaterGasShiftReactor extends TwoPortEquipment {
    * Converts temperature values to Kelvin.
    *
    * @param temperature temperature value
-   * @param unit unit string, accepted values are K, C, and F
+   * @param unit        unit string, accepted values are K, C, and F
    * @return temperature in Kelvin
    */
   private double toKelvin(double temperature, String unit) {
@@ -300,7 +296,7 @@ public class WaterGasShiftReactor extends TwoPortEquipment {
   /**
    * Validates positive finite values.
    *
-   * @param value value to validate
+   * @param value         value to validate
    * @param parameterName parameter name used in exception messages
    */
   private void validatePositive(double value, String parameterName) {

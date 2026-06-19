@@ -7,23 +7,20 @@ import java.util.Map;
  * Calculates the heat of absorption for CO2 and H2S in aqueous amine solutions.
  *
  * <p>
- * Provides correlations for the exothermic heat released when acid gases (CO2, H2S) are absorbed
- * into amine solutions. The heat of absorption depends on the amine type, temperature, CO2 loading,
- * and amine concentration.
+ * Provides correlations for the exothermic heat released when acid gases (CO2, H2S) are absorbed into amine solutions.
+ * The heat of absorption depends on the amine type, temperature, CO2 loading, and amine concentration.
  * </p>
  *
  * <p>
  * References:
  * </p>
  * <ul>
- * <li>Kim, I., Svendsen, H.F. (2007). Heat of Absorption of Carbon Dioxide (CO2) in
- * Monoethanolamine (MEA) and 2-(Aminoethyl)ethanolamine (AEEA) Solutions. Ind. Eng. Chem. Res., 46,
- * 5803-5809.</li>
- * <li>Carson, J.K., Marsh, K.N., Mather, A.E. (2000). Enthalpy of solution of carbon dioxide in
- * (water + MEA or DEA or MDEA) and (water + MEA + MDEA) at T = 298.15 K. J. Chem. Thermodyn., 32,
- * 1285-1296.</li>
- * <li>Arcis, H., Rodier, L., Coxam, J.Y. (2007). Enthalpy of solution of CO2 in aqueous solutions
- * of MDEA at T = 322.5 K and pressures up to 5 MPa. J. Chem. Thermodyn., 39, 878-887.</li>
+ * <li>Kim, I., Svendsen, H.F. (2007). Heat of Absorption of Carbon Dioxide (CO2) in Monoethanolamine (MEA) and
+ * 2-(Aminoethyl)ethanolamine (AEEA) Solutions. Ind. Eng. Chem. Res., 46, 5803-5809.</li>
+ * <li>Carson, J.K., Marsh, K.N., Mather, A.E. (2000). Enthalpy of solution of carbon dioxide in (water + MEA or DEA or
+ * MDEA) and (water + MEA + MDEA) at T = 298.15 K. J. Chem. Thermodyn., 32, 1285-1296.</li>
+ * <li>Arcis, H., Rodier, L., Coxam, J.Y. (2007). Enthalpy of solution of CO2 in aqueous solutions of MDEA at T = 322.5
+ * K and pressures up to 5 MPa. J. Chem. Thermodyn., 39, 878-887.</li>
  * </ul>
  *
  * @author Even Solbraa
@@ -53,8 +50,8 @@ public class AmineHeatOfAbsorption implements java.io.Serializable {
     /**
      * Constructor for AmineType enum.
      *
-     * @param name display name
-     * @param molarMass molar mass in g/mol
+     * @param name       display name
+     * @param molarMass  molar mass in g/mol
      * @param maxLoading maximum practical CO2 loading (mol CO2/mol amine)
      */
     AmineType(String name, double molarMass, double maxLoading) {
@@ -99,18 +96,18 @@ public class AmineHeatOfAbsorption implements java.io.Serializable {
   /**
    * Constructor for AmineHeatOfAbsorption.
    */
-  public AmineHeatOfAbsorption() {}
+  public AmineHeatOfAbsorption() {
+  }
 
   /**
    * Constructor for AmineHeatOfAbsorption with parameters.
    *
-   * @param amineType the type of amine
+   * @param amineType          the type of amine
    * @param amineConcentration mass fraction of amine in solution (0 to 1)
-   * @param co2Loading CO2 loading in mol CO2 / mol amine
-   * @param temperatureK temperature in Kelvin
+   * @param co2Loading         CO2 loading in mol CO2 / mol amine
+   * @param temperatureK       temperature in Kelvin
    */
-  public AmineHeatOfAbsorption(AmineType amineType, double amineConcentration, double co2Loading,
-      double temperatureK) {
+  public AmineHeatOfAbsorption(AmineType amineType, double amineConcentration, double co2Loading, double temperatureK) {
     this.amineType = amineType;
     this.amineConcentration = amineConcentration;
     this.co2Loading = co2Loading;
@@ -121,24 +118,24 @@ public class AmineHeatOfAbsorption implements java.io.Serializable {
    * Calculates the differential heat of absorption of CO2 in kJ/mol CO2.
    *
    * <p>
-   * The differential heat of absorption is the enthalpy change per mole of CO2 absorbed at a given
-   * loading. This is negative (exothermic) for all amine types.
+   * The differential heat of absorption is the enthalpy change per mole of CO2 absorbed at a given loading. This is
+   * negative (exothermic) for all amine types.
    * </p>
    *
    * @return heat of absorption in kJ/mol CO2 (negative for exothermic)
    */
   public double calcHeatOfAbsorptionCO2() {
     switch (amineType) {
-      case MEA:
-        return calcMEAHeatOfAbsorption();
-      case DEA:
-        return calcDEAHeatOfAbsorption();
-      case MDEA:
-        return calcMDEAHeatOfAbsorption();
-      case AMDEA:
-        return calcAMDEAHeatOfAbsorption();
-      default:
-        return calcMEAHeatOfAbsorption();
+    case MEA:
+      return calcMEAHeatOfAbsorption();
+    case DEA:
+      return calcDEAHeatOfAbsorption();
+    case MDEA:
+      return calcMDEAHeatOfAbsorption();
+    case AMDEA:
+      return calcAMDEAHeatOfAbsorption();
+    default:
+      return calcMEAHeatOfAbsorption();
     }
   }
 
@@ -166,8 +163,8 @@ public class AmineHeatOfAbsorption implements java.io.Serializable {
    * Calculates the heat of absorption of H2S in kJ/mol H2S.
    *
    * <p>
-   * H2S absorption is less exothermic than CO2 for all amine types. The heat is primarily from the
-   * H2S ionization reaction.
+   * H2S absorption is less exothermic than CO2 for all amine types. The heat is primarily from the H2S ionization
+   * reaction.
    * </p>
    *
    * @return heat of absorption in kJ/mol H2S (negative for exothermic)
@@ -188,9 +185,9 @@ public class AmineHeatOfAbsorption implements java.io.Serializable {
    * Calculates the heat of absorption of CO2 in MEA solution.
    *
    * <p>
-   * Uses the Kim and Svendsen (2007) correlation for 30 wt% MEA, with corrections for concentration
-   * and loading effects. MEA absorbs CO2 through both carbamate formation (fast, exothermic) at low
-   * loadings and bicarbonate formation at higher loadings.
+   * Uses the Kim and Svendsen (2007) correlation for 30 wt% MEA, with corrections for concentration and loading
+   * effects. MEA absorbs CO2 through both carbamate formation (fast, exothermic) at low loadings and bicarbonate
+   * formation at higher loadings.
    * </p>
    *
    * @return heat of absorption in kJ/mol CO2 (negative for exothermic)
@@ -224,8 +221,8 @@ public class AmineHeatOfAbsorption implements java.io.Serializable {
    * Calculates the heat of absorption of CO2 in DEA solution.
    *
    * <p>
-   * DEA forms both carbamate and protonated species. Heat is intermediate between MEA and MDEA.
-   * Based on Carson et al. (2000) measurements.
+   * DEA forms both carbamate and protonated species. Heat is intermediate between MEA and MDEA. Based on Carson et al.
+   * (2000) measurements.
    * </p>
    *
    * @return heat of absorption in kJ/mol CO2 (negative for exothermic)
@@ -252,9 +249,9 @@ public class AmineHeatOfAbsorption implements java.io.Serializable {
    * Calculates the heat of absorption of CO2 in MDEA solution.
    *
    * <p>
-   * MDEA is a tertiary amine: no carbamate formation. CO2 reacts only via the base-catalyzed
-   * hydration mechanism, resulting in lower heat of absorption compared to primary/secondary
-   * amines. Based on Arcis et al. (2007) and Carson et al. (2000).
+   * MDEA is a tertiary amine: no carbamate formation. CO2 reacts only via the base-catalyzed hydration mechanism,
+   * resulting in lower heat of absorption compared to primary/secondary amines. Based on Arcis et al. (2007) and Carson
+   * et al. (2000).
    * </p>
    *
    * @return heat of absorption in kJ/mol CO2 (negative for exothermic)
@@ -277,9 +274,9 @@ public class AmineHeatOfAbsorption implements java.io.Serializable {
    * Calculates the heat of absorption of CO2 in activated MDEA (aMDEA) solution.
    *
    * <p>
-   * Activated MDEA blends MDEA with piperazine (PZ). The piperazine provides fast kinetics through
-   * carbamate formation while MDEA provides high capacity. The heat of absorption is intermediate
-   * between MEA and MDEA, depending on the PZ/MDEA ratio.
+   * Activated MDEA blends MDEA with piperazine (PZ). The piperazine provides fast kinetics through carbamate formation
+   * while MDEA provides high capacity. The heat of absorption is intermediate between MEA and MDEA, depending on the
+   * PZ/MDEA ratio.
    * </p>
    *
    * @return heat of absorption in kJ/mol CO2 (negative for exothermic)

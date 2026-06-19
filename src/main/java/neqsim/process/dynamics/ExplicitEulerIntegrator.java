@@ -4,8 +4,8 @@ package neqsim.process.dynamics;
  * Explicit Euler integrator: x_{n+1} = x_n + dt · f(t_n, x_n).
  *
  * <p>
- * First-order accurate, conditionally stable. Provided as a baseline reference and as a lightweight
- * option for non-stiff problems.
+ * First-order accurate, conditionally stable. Provided as a baseline reference and as a lightweight option for
+ * non-stiff problems.
  * </p>
  *
  * @author Even Solbraa

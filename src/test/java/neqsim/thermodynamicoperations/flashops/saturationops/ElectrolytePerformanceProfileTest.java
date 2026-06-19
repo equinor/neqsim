@@ -21,7 +21,6 @@ import org.apache.logging.log4j.Logger;
 public class ElectrolytePerformanceProfileTest {
   private static final Logger logger = LogManager.getLogger(ElectrolytePerformanceProfileTest.class);
 
-
   /**
    * Profile init() call times for electrolyte CPA.
    */

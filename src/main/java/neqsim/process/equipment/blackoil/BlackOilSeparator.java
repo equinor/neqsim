@@ -13,15 +13,14 @@ import neqsim.process.equipment.ProcessEquipmentBaseClass;
  * Equilibrium Black-Oil separator at given (P_out, T_out).
  *
  * <p>
- * Extends {@link ProcessEquipmentBaseClass} so it can be added to a
- * {@link neqsim.process.processmodel.ProcessSystem} and participate in sequential flowsheet
- * execution alongside compositional equipment.
+ * Extends {@link ProcessEquipmentBaseClass} so it can be added to a {@link neqsim.process.processmodel.ProcessSystem}
+ * and participate in sequential flowsheet execution alongside compositional equipment.
  * </p>
  *
  * <p>
  * Inlet and outlet fluids are represented as {@link SystemBlackOil} objects (not
- * {@link neqsim.thermo.system.SystemInterface}). Access them via {@link #getBlackOilInlet()},
- * {@link #getOilOut()}, {@link #getGasOut()}, {@link #getWaterOut()}.
+ * {@link neqsim.thermo.system.SystemInterface}). Access them via {@link #getBlackOilInlet()}, {@link #getOilOut()},
+ * {@link #getGasOut()}, {@link #getWaterOut()}.
  * </p>
  *
  * @author esol
@@ -42,13 +41,12 @@ public class BlackOilSeparator extends ProcessEquipmentBaseClass {
   /**
    * Constructs a BlackOilSeparator.
    *
-   * @param name equipment name used in the process system
-   * @param inlet the inlet Black-Oil fluid
-   * @param outletPressure separator outlet pressure in bar(a)
+   * @param name              equipment name used in the process system
+   * @param inlet             the inlet Black-Oil fluid
+   * @param outletPressure    separator outlet pressure in bar(a)
    * @param outletTemperature separator outlet temperature in Kelvin
    */
-  public BlackOilSeparator(String name, SystemBlackOil inlet, double outletPressure,
-      double outletTemperature) {
+  public BlackOilSeparator(String name, SystemBlackOil inlet, double outletPressure, double outletTemperature) {
     super(name);
     this.inlet = inlet;
     this.outletPressure = outletPressure;
@@ -235,8 +233,7 @@ public class BlackOilSeparator extends ProcessEquipmentBaseClass {
       json.add("waterOutlet", waterJson);
     }
 
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(json);
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(json);
   }
 
   /**

@@ -15,15 +15,14 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Solids separator for bio-processing applications.
  *
  * <p>
- * Separates a feed stream into a solids-rich (cake/retentate) stream and a liquid-clear
- * (filtrate/permeate) stream. The separation is based on component-specific split fractions that
- * define what fraction of each component goes to the solids outlet.
+ * Separates a feed stream into a solids-rich (cake/retentate) stream and a liquid-clear (filtrate/permeate) stream. The
+ * separation is based on component-specific split fractions that define what fraction of each component goes to the
+ * solids outlet.
  * </p>
  *
  * <p>
- * This is the base class for various solids-liquid separation equipment such as centrifuges, rotary
- * vacuum filters, pressure filters, and screw presses. Subclasses can override the defaults for
- * energy consumption and efficiency.
+ * This is the base class for various solids-liquid separation equipment such as centrifuges, rotary vacuum filters,
+ * pressure filters, and screw presses. Subclasses can override the defaults for energy consumption and efficiency.
  * </p>
  *
  * <p>
@@ -60,9 +59,8 @@ public class SolidsSeparator extends ProcessEquipmentBaseClass {
   protected StreamInterface liquidOutStream;
 
   /**
-   * Component-specific split fraction to solids outlet. Keys are component names, values are
-   * fractions (0-1) going to solids outlet. Components not listed default to
-   * {@link #defaultSolidsSplit}.
+   * Component-specific split fraction to solids outlet. Keys are component names, values are fractions (0-1) going to
+   * solids outlet. Components not listed default to {@link #defaultSolidsSplit}.
    */
   private Map<String, Double> solidsSplitFractions = new LinkedHashMap<String, Double>();
 
@@ -96,7 +94,7 @@ public class SolidsSeparator extends ProcessEquipmentBaseClass {
   /**
    * Constructor for SolidsSeparator with inlet stream.
    *
-   * @param name name of the separator
+   * @param name        name of the separator
    * @param inletStream the feed stream to separate
    */
   public SolidsSeparator(String name, StreamInterface inletStream) {
@@ -151,7 +149,7 @@ public class SolidsSeparator extends ProcessEquipmentBaseClass {
    * Set the fraction of a specific component going to the solids outlet.
    *
    * @param componentName name of the component
-   * @param fraction fraction going to solids (0.0 to 1.0)
+   * @param fraction      fraction going to solids (0.0 to 1.0)
    */
   public void setSolidsSplitFraction(String componentName, double fraction) {
     if (fraction < 0.0 || fraction > 1.0) {
@@ -325,8 +323,7 @@ public class SolidsSeparator extends ProcessEquipmentBaseClass {
   /** {@inheritDoc} */
   @Override
   public String toJson() {
-    return new com.google.gson.GsonBuilder().serializeSpecialFloatingPointValues().create()
-        .toJson(toMap());
+    return new com.google.gson.GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(toMap());
   }
 
   /**

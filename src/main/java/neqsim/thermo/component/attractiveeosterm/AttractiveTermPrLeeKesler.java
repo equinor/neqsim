@@ -13,11 +13,10 @@ import neqsim.thermo.component.ComponentEosInterface;
  * </pre>
  *
  * <p>
- * <b>Note:</b> Despite the class name, this implements the Soave m-factor — NOT the standard PR76
- * m-factor and NOT the Lee-Kesler BWR enthalpy method.
- * {@link neqsim.thermo.system.SystemPrLeeKeslerEos} uses {@code attractiveTermNumber=1} (standard
- * PR76 alpha), not this class. This class is retained at dispatch index 21 for backward
- * compatibility and research purposes.
+ * <b>Note:</b> Despite the class name, this implements the Soave m-factor — NOT the standard PR76 m-factor and NOT the
+ * Lee-Kesler BWR enthalpy method. {@link neqsim.thermo.system.SystemPrLeeKeslerEos} uses {@code attractiveTermNumber=1}
+ * (standard PR76 alpha), not this class. This class is retained at dispatch index 21 for backward compatibility and
+ * research purposes.
  *
  * <p>
  * The alpha function form is:
@@ -40,7 +39,7 @@ public class AttractiveTermPrLeeKesler extends AttractiveTermPr {
   public AttractiveTermPrLeeKesler(ComponentEosInterface component) {
     super(component);
     m = 0.480 + 1.574 * component.getAcentricFactor()
-        - 0.176 * component.getAcentricFactor() * component.getAcentricFactor();
+	- 0.176 * component.getAcentricFactor() * component.getAcentricFactor();
   }
 
   /** {@inheritDoc} */
@@ -59,7 +58,7 @@ public class AttractiveTermPrLeeKesler extends AttractiveTermPr {
   @Override
   public void init() {
     m = 0.480 + 1.574 * getComponent().getAcentricFactor()
-        - 0.176 * getComponent().getAcentricFactor() * getComponent().getAcentricFactor();
+	- 0.176 * getComponent().getAcentricFactor() * getComponent().getAcentricFactor();
   }
 
   /**
@@ -71,10 +70,9 @@ public class AttractiveTermPrLeeKesler extends AttractiveTermPr {
   @Override
   public void setm(double val) {
     this.m = val;
-    neqsim.mathlib.nonlinearsolver.NewtonRhapson solve =
-        new neqsim.mathlib.nonlinearsolver.NewtonRhapson();
+    neqsim.mathlib.nonlinearsolver.NewtonRhapson solve = new neqsim.mathlib.nonlinearsolver.NewtonRhapson();
     solve.setOrder(2);
-    double[] acentricConstants = {-0.176, 1.574, (0.480 - this.m)};
+    double[] acentricConstants = { -0.176, 1.574, (0.480 - this.m) };
     solve.setConstants(acentricConstants);
     getComponent().setAcentricFactor(solve.solve(0.2));
   }

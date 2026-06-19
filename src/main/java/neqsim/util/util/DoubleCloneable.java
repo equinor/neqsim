@@ -27,7 +27,8 @@ public class DoubleCloneable implements Cloneable {
    * Constructor for DoubleCloneable.
    * </p>
    */
-  public DoubleCloneable() {}
+  public DoubleCloneable() {
+  }
 
   /**
    * <p>

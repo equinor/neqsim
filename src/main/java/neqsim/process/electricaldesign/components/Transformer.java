@@ -8,8 +8,8 @@ import java.util.Map;
  * Model of a power transformer for process electrical systems.
  *
  * <p>
- * Supports sizing based on load, efficiency calculation, and loss estimation per IEC 60076.
- * Handles step-down transformers from utility voltage to equipment voltage levels.
+ * Supports sizing based on load, efficiency calculation, and loss estimation per IEC 60076. Handles step-down
+ * transformers from utility voltage to equipment voltage levels.
  * </p>
  *
  * @author Even Solbraa
@@ -20,9 +20,8 @@ public class Transformer implements java.io.Serializable {
   private static final long serialVersionUID = 1000L;
 
   /** Standard transformer kVA ratings per IEC. */
-  private static final double[] STANDARD_RATINGS_KVA =
-      {100, 160, 200, 250, 315, 400, 500, 630, 800, 1000, 1250, 1600, 2000, 2500, 3150, 4000,
-          5000, 6300, 8000, 10000, 12500, 16000, 20000, 25000};
+  private static final double[] STANDARD_RATINGS_KVA = { 100, 160, 200, 250, 315, 400, 500, 630, 800, 1000, 1250, 1600,
+      2000, 2500, 3150, 4000, 5000, 6300, 8000, 10000, 12500, 16000, 20000, 25000 };
 
   private double ratedPowerKVA;
   private double primaryVoltageV;
@@ -51,8 +50,8 @@ public class Transformer implements java.io.Serializable {
    * Size the transformer based on the total load.
    *
    * @param totalLoadKVA total apparent power load in kVA
-   * @param primaryV primary voltage in V
-   * @param secondaryV secondary voltage in V
+   * @param primaryV     primary voltage in V
+   * @param secondaryV   secondary voltage in V
    */
   public void sizeTransformer(double totalLoadKVA, double primaryV, double secondaryV) {
     this.primaryVoltageV = primaryV;
@@ -108,7 +107,7 @@ public class Transformer implements java.io.Serializable {
   private double selectStandardRating(double requiredKVA) {
     for (double std : STANDARD_RATINGS_KVA) {
       if (std >= requiredKVA) {
-        return std;
+	return std;
       }
     }
     return Math.ceil(requiredKVA / 1000.0) * 1000.0;
@@ -156,7 +155,7 @@ public class Transformer implements java.io.Serializable {
    * Estimate transformer cost.
    *
    * @param ratingKVA transformer rating in kVA
-   * @param primaryV primary voltage in V
+   * @param primaryV  primary voltage in V
    * @return cost in USD
    */
   private double estimateCost(double ratingKVA, double primaryV) {
@@ -174,8 +173,7 @@ public class Transformer implements java.io.Serializable {
    */
   public String toJson() {
     Map<String, Object> map = toMap();
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(map);
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(map);
   }
 
   /**

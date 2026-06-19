@@ -2,8 +2,8 @@
  * Module contracts for AI-friendly validation.
  *
  * <p>
- * This package provides contract interfaces that define preconditions and postconditions for NeqSim
- * modules. AI agents can use these contracts to:
+ * This package provides contract interfaces that define preconditions and postconditions for NeqSim modules. AI agents
+ * can use these contracts to:
  * </p>
  *
  * <ul>
@@ -14,10 +14,8 @@
  *
  * <h2>Available Contracts:</h2>
  * <ul>
- * <li>{@link neqsim.util.validation.contracts.ThermodynamicSystemContract} - For SystemInterface
- * implementations</li>
- * <li>{@link neqsim.util.validation.contracts.StreamContract} - For StreamInterface
- * implementations</li>
+ * <li>{@link neqsim.util.validation.contracts.ThermodynamicSystemContract} - For SystemInterface implementations</li>
+ * <li>{@link neqsim.util.validation.contracts.StreamContract} - For StreamInterface implementations</li>
  * <li>{@link neqsim.util.validation.contracts.SeparatorContract} - For Separator equipment</li>
  * </ul>
  *

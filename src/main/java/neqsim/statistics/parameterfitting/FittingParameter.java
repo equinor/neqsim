@@ -26,37 +26,36 @@ public class FittingParameter implements Serializable {
   /**
    * Creates a default parameter definition for serialization frameworks.
    */
-  public FittingParameter() {}
+  public FittingParameter() {
+  }
 
   /**
    * Creates a bounded linear fitting parameter.
    *
-   * @param name parameter name
+   * @param name         parameter name
    * @param initialValue initial physical parameter value
-   * @param lowerBound lower physical parameter bound
-   * @param upperBound upper physical parameter bound
+   * @param lowerBound   lower physical parameter bound
+   * @param upperBound   upper physical parameter bound
    */
   public FittingParameter(String name, double initialValue, double lowerBound, double upperBound) {
-    this(name, initialValue, lowerBound, upperBound, "", ParameterTransform.LINEAR, "generic",
-        Double.NaN, Double.NaN);
+    this(name, initialValue, lowerBound, upperBound, "", ParameterTransform.LINEAR, "generic", Double.NaN, Double.NaN);
   }
 
   /**
    * Creates a complete fitting parameter definition.
    *
-   * @param name parameter name
-   * @param initialValue initial physical parameter value
-   * @param lowerBound lower physical parameter bound
-   * @param upperBound upper physical parameter bound
-   * @param unit parameter unit label
-   * @param transform parameter-space transform
-   * @param category parameter category or physical meaning
-   * @param priorValue optional prior value, or NaN when unused
+   * @param name                   parameter name
+   * @param initialValue           initial physical parameter value
+   * @param lowerBound             lower physical parameter bound
+   * @param upperBound             upper physical parameter bound
+   * @param unit                   parameter unit label
+   * @param transform              parameter-space transform
+   * @param category               parameter category or physical meaning
+   * @param priorValue             optional prior value, or NaN when unused
    * @param priorStandardDeviation optional prior standard deviation, or NaN when unused
    */
-  public FittingParameter(String name, double initialValue, double lowerBound, double upperBound,
-      String unit, ParameterTransform transform, String category, double priorValue,
-      double priorStandardDeviation) {
+  public FittingParameter(String name, double initialValue, double lowerBound, double upperBound, String unit,
+      ParameterTransform transform, String category, double priorValue, double priorStandardDeviation) {
     this.name = defaultString(name, "parameter");
     this.initialValue = initialValue;
     this.lowerBound = lowerBound;
@@ -259,8 +258,7 @@ public class FittingParameter implements Serializable {
    */
   @JsonIgnore
   public boolean hasPrior() {
-    return !Double.isNaN(priorValue) && !Double.isNaN(priorStandardDeviation)
-        && priorStandardDeviation > 0.0;
+    return !Double.isNaN(priorValue) && !Double.isNaN(priorStandardDeviation) && priorStandardDeviation > 0.0;
   }
 
   /**
@@ -298,7 +296,7 @@ public class FittingParameter implements Serializable {
   /**
    * Returns a default string when the value is null.
    *
-   * @param value user-supplied value
+   * @param value        user-supplied value
    * @param defaultValue fallback value
    * @return value or defaultValue
    */
@@ -309,7 +307,7 @@ public class FittingParameter implements Serializable {
   /**
    * Validates that a number is finite.
    *
-   * @param name value name used in exception messages
+   * @param name  value name used in exception messages
    * @param value value to validate
    */
   private static void validateFinite(String name, double value) {

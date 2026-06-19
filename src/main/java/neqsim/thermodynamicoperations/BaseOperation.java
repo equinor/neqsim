@@ -27,7 +27,8 @@ public abstract class BaseOperation implements OperationInterface {
    * Constructor for BaseOperation.
    * </p>
    */
-  public BaseOperation() {}
+  public BaseOperation() {
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -62,7 +63,8 @@ public abstract class BaseOperation implements OperationInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void printToFile(String name) {}
+  public void printToFile(String name) {
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -72,5 +74,6 @@ public abstract class BaseOperation implements OperationInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void addData(String name, double[][] data) {}
+  public void addData(String name, double[][] data) {
+  }
 }

@@ -14,8 +14,8 @@ import neqsim.process.util.event.ProcessEventListener;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Tests for ProcessModel simulation lifecycle hooks: ModelProgressListener, ProcessEventBus wiring,
- * and auto-validation.
+ * Tests for ProcessModel simulation lifecycle hooks: ModelProgressListener, ProcessEventBus wiring, and
+ * auto-validation.
  *
  * @author ESOL
  * @version 1.0
@@ -25,7 +25,7 @@ class ProcessModelHooksTest {
   /**
    * Builds a simple ProcessSystem: feed stream into a separator.
    *
-   * @param name name for the process
+   * @param name     name for the process
    * @param feedName name for the feed stream
    * @return configured ProcessSystem
    */
@@ -61,60 +61,54 @@ class ProcessModelHooksTest {
     model.setProgressListener(new ProcessModel.ModelProgressListener() {
       @Override
       public void onModelStart(int totalAreas) {
-        events.add("MODEL_START:" + totalAreas);
+	events.add("MODEL_START:" + totalAreas);
       }
 
       @Override
       public void onBeforeIteration(int iterationNumber) {
-        events.add("BEFORE_ITER:" + iterationNumber);
+	events.add("BEFORE_ITER:" + iterationNumber);
       }
 
       @Override
-      public void onBeforeProcessArea(String areaName, ProcessSystem process, int areaIndex,
-          int totalAreas, int iterationNumber) {
-        events.add("BEFORE_AREA:" + areaName + ":" + iterationNumber);
+      public void onBeforeProcessArea(String areaName, ProcessSystem process, int areaIndex, int totalAreas,
+	  int iterationNumber) {
+	events.add("BEFORE_AREA:" + areaName + ":" + iterationNumber);
       }
 
       @Override
-      public void onProcessAreaComplete(String areaName, ProcessSystem process, int areaIndex,
-          int totalAreas, int iterationNumber) {
-        events.add("AFTER_AREA:" + areaName + ":" + iterationNumber);
+      public void onProcessAreaComplete(String areaName, ProcessSystem process, int areaIndex, int totalAreas,
+	  int iterationNumber) {
+	events.add("AFTER_AREA:" + areaName + ":" + iterationNumber);
       }
 
       @Override
       public void onIterationComplete(int iterationNumber, boolean converged, double maxError) {
-        events.add("AFTER_ITER:" + iterationNumber + ":converged=" + converged);
+	events.add("AFTER_ITER:" + iterationNumber + ":converged=" + converged);
       }
 
       @Override
       public void onModelComplete(int totalIterations, boolean converged) {
-        events.add("MODEL_COMPLETE:" + totalIterations + ":converged=" + converged);
+	events.add("MODEL_COMPLETE:" + totalIterations + ":converged=" + converged);
       }
     });
 
     model.run();
 
     // Model start should be first
-    assertTrue(events.get(0).startsWith("MODEL_START:2"),
-        "First event should be MODEL_START with 2 areas");
+    assertTrue(events.get(0).startsWith("MODEL_START:2"), "First event should be MODEL_START with 2 areas");
 
     // Before-iteration should fire
     assertTrue(events.contains("BEFORE_ITER:1"), "Should have before-iteration for iter 1");
 
     // Before-area and after-area should fire for both areas
-    assertTrue(events.stream().anyMatch(e -> e.startsWith("BEFORE_AREA:area1:")),
-        "Should have before-area for area1");
-    assertTrue(events.stream().anyMatch(e -> e.startsWith("BEFORE_AREA:area2:")),
-        "Should have before-area for area2");
-    assertTrue(events.stream().anyMatch(e -> e.startsWith("AFTER_AREA:area1:")),
-        "Should have after-area for area1");
-    assertTrue(events.stream().anyMatch(e -> e.startsWith("AFTER_AREA:area2:")),
-        "Should have after-area for area2");
+    assertTrue(events.stream().anyMatch(e -> e.startsWith("BEFORE_AREA:area1:")), "Should have before-area for area1");
+    assertTrue(events.stream().anyMatch(e -> e.startsWith("BEFORE_AREA:area2:")), "Should have before-area for area2");
+    assertTrue(events.stream().anyMatch(e -> e.startsWith("AFTER_AREA:area1:")), "Should have after-area for area1");
+    assertTrue(events.stream().anyMatch(e -> e.startsWith("AFTER_AREA:area2:")), "Should have after-area for area2");
 
     // Model complete should be last
     String lastEvent = events.get(events.size() - 1);
-    assertTrue(lastEvent.startsWith("MODEL_COMPLETE:"),
-        "Last event should be MODEL_COMPLETE, got: " + lastEvent);
+    assertTrue(lastEvent.startsWith("MODEL_COMPLETE:"), "Last event should be MODEL_COMPLETE, got: " + lastEvent);
   }
 
   /**
@@ -129,15 +123,15 @@ class ProcessModelHooksTest {
 
     model.setProgressListener(new ProcessModel.ModelProgressListener() {
       @Override
-      public void onBeforeProcessArea(String areaName, ProcessSystem process, int areaIndex,
-          int totalAreas, int iterationNumber) {
-        events.add("BEFORE:" + areaName);
+      public void onBeforeProcessArea(String areaName, ProcessSystem process, int areaIndex, int totalAreas,
+	  int iterationNumber) {
+	events.add("BEFORE:" + areaName);
       }
 
       @Override
-      public void onProcessAreaComplete(String areaName, ProcessSystem process, int areaIndex,
-          int totalAreas, int iterationNumber) {
-        events.add("AFTER:" + areaName);
+      public void onProcessAreaComplete(String areaName, ProcessSystem process, int areaIndex, int totalAreas,
+	  int iterationNumber) {
+	events.add("AFTER:" + areaName);
       }
     });
 
@@ -166,7 +160,7 @@ class ProcessModelHooksTest {
     ProcessEventListener listener = new ProcessEventListener() {
       @Override
       public void onEvent(ProcessEvent event) {
-        captured.add(event);
+	captured.add(event);
       }
     };
 
@@ -175,10 +169,8 @@ class ProcessModelHooksTest {
       model.run();
 
       assertFalse(captured.isEmpty(), "Should have captured events via event bus");
-      assertTrue(
-          captured.stream()
-              .anyMatch(e -> e.getType() == ProcessEvent.EventType.SIMULATION_COMPLETE),
-          "Should have a SIMULATION_COMPLETE event from ProcessModel");
+      assertTrue(captured.stream().anyMatch(e -> e.getType() == ProcessEvent.EventType.SIMULATION_COMPLETE),
+	  "Should have a SIMULATION_COMPLETE event from ProcessModel");
     } finally {
       bus.unsubscribe(listener);
       bus.clearHistory();
@@ -201,10 +193,10 @@ class ProcessModelHooksTest {
     ProcessEventListener listener = new ProcessEventListener() {
       @Override
       public void onEvent(ProcessEvent event) {
-        // Filter to ProcessModel events only (ignore any from child ProcessSystem)
-        if ("ProcessModel".equals(event.getSource())) {
-          captured.add(event);
-        }
+	// Filter to ProcessModel events only (ignore any from child ProcessSystem)
+	if ("ProcessModel".equals(event.getSource())) {
+	  captured.add(event);
+	}
       }
     };
 
@@ -212,8 +204,7 @@ class ProcessModelHooksTest {
     try {
       model.run();
 
-      assertTrue(captured.isEmpty(),
-          "Should not have ProcessModel events when publishEvents is disabled");
+      assertTrue(captured.isEmpty(), "Should not have ProcessModel events when publishEvents is disabled");
     } finally {
       bus.unsubscribe(listener);
       bus.clearHistory();
@@ -251,16 +242,15 @@ class ProcessModelHooksTest {
     bus.subscribe(new ProcessEventListener() {
       @Override
       public void onEvent(ProcessEvent event) {
-        captured.add(event);
+	captured.add(event);
       }
     });
 
     model.run();
 
     // Should have completed successfully with at least start and complete events
-    assertTrue(
-        captured.stream().anyMatch(e -> e.getType() == ProcessEvent.EventType.SIMULATION_COMPLETE),
-        "Should have SIMULATION_COMPLETE event");
+    assertTrue(captured.stream().anyMatch(e -> e.getType() == ProcessEvent.EventType.SIMULATION_COMPLETE),
+	"Should have SIMULATION_COMPLETE event");
 
     bus.clearHistory();
   }
@@ -279,36 +269,33 @@ class ProcessModelHooksTest {
     model.setProgressListener(new ProcessModel.ModelProgressListener() {
       @Override
       public void onModelStart(int totalAreas) {
-        events.add("MODEL_START:" + totalAreas);
+	events.add("MODEL_START:" + totalAreas);
       }
 
       @Override
-      public void onBeforeProcessArea(String areaName, ProcessSystem process, int areaIndex,
-          int totalAreas, int iterationNumber) {
-        events.add("BEFORE_AREA:" + areaName);
+      public void onBeforeProcessArea(String areaName, ProcessSystem process, int areaIndex, int totalAreas,
+	  int iterationNumber) {
+	events.add("BEFORE_AREA:" + areaName);
       }
 
       @Override
-      public void onProcessAreaComplete(String areaName, ProcessSystem process, int areaIndex,
-          int totalAreas, int iterationNumber) {
-        events.add("AFTER_AREA:" + areaName);
+      public void onProcessAreaComplete(String areaName, ProcessSystem process, int areaIndex, int totalAreas,
+	  int iterationNumber) {
+	events.add("AFTER_AREA:" + areaName);
       }
 
       @Override
       public void onModelComplete(int totalIterations, boolean converged) {
-        events.add("MODEL_COMPLETE:" + totalIterations);
+	events.add("MODEL_COMPLETE:" + totalIterations);
       }
     });
 
     model.run();
 
     assertTrue(events.get(0).startsWith("MODEL_START:"), "Step mode should fire MODEL_START");
-    assertTrue(events.stream().anyMatch(e -> e.startsWith("BEFORE_AREA:area1")),
-        "Step mode should fire BEFORE_AREA");
-    assertTrue(events.stream().anyMatch(e -> e.startsWith("AFTER_AREA:area1")),
-        "Step mode should fire AFTER_AREA");
-    assertTrue(events.stream().anyMatch(e -> e.startsWith("MODEL_COMPLETE:")),
-        "Step mode should fire MODEL_COMPLETE");
+    assertTrue(events.stream().anyMatch(e -> e.startsWith("BEFORE_AREA:area1")), "Step mode should fire BEFORE_AREA");
+    assertTrue(events.stream().anyMatch(e -> e.startsWith("AFTER_AREA:area1")), "Step mode should fire AFTER_AREA");
+    assertTrue(events.stream().anyMatch(e -> e.startsWith("MODEL_COMPLETE:")), "Step mode should fire MODEL_COMPLETE");
   }
 
   /**
@@ -324,16 +311,15 @@ class ProcessModelHooksTest {
     // Only implement the required method — all new hooks have defaults
     model.setProgressListener(new ProcessModel.ModelProgressListener() {
       @Override
-      public void onProcessAreaComplete(String areaName, ProcessSystem process, int areaIndex,
-          int totalAreas, int iterationNumber) {
-        events.add("COMPLETE:" + areaName);
+      public void onProcessAreaComplete(String areaName, ProcessSystem process, int areaIndex, int totalAreas,
+	  int iterationNumber) {
+	events.add("COMPLETE:" + areaName);
       }
     });
 
     model.run();
 
-    assertTrue(events.stream().anyMatch(e -> e.startsWith("COMPLETE:area1")),
-        "Should have completion event for area1");
+    assertTrue(events.stream().anyMatch(e -> e.startsWith("COMPLETE:area1")), "Should have completion event for area1");
   }
 
   /**
@@ -372,7 +358,7 @@ class ProcessModelHooksTest {
     ProcessEventListener listener = new ProcessEventListener() {
       @Override
       public void onEvent(ProcessEvent event) {
-        completionEvents.add(event);
+	completionEvents.add(event);
       }
     };
 
@@ -382,8 +368,8 @@ class ProcessModelHooksTest {
 
       assertFalse(completionEvents.isEmpty(), "Should have SIMULATION_COMPLETE events");
       for (ProcessEvent event : completionEvents) {
-        assertEquals(ProcessEvent.EventType.SIMULATION_COMPLETE, event.getType(),
-            "All captured events should be SIMULATION_COMPLETE");
+	assertEquals(ProcessEvent.EventType.SIMULATION_COMPLETE, event.getType(),
+	    "All captured events should be SIMULATION_COMPLETE");
       }
     } finally {
       bus.unsubscribe(ProcessEvent.EventType.SIMULATION_COMPLETE, listener);

@@ -34,7 +34,7 @@ public class PHsolidFlash extends Flash {
    * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param ent a double
+   * @param ent    a double
    */
   public PHsolidFlash(SystemInterface system, double ent) {
     this.system = system;
@@ -87,17 +87,17 @@ public class PHsolidFlash extends Flash {
       err = Math.abs(f_func);
 
       if (iter < 2) {
-        if (f_func > 0) {
-          system.setTemperature(system.getTemperature() + 0.1);
-        } else if (f_func < 0) {
-          system.setTemperature(system.getTemperature() - 0.1);
-        }
+	if (f_func > 0) {
+	  system.setTemperature(system.getTemperature() + 0.1);
+	} else if (f_func < 0) {
+	  system.setTemperature(system.getTemperature() - 0.1);
+	}
       } else {
-        dt = f_func / df_func_dt;
-        if (Math.abs(dt) > 2.0) {
-          dt = Math.signum(dt) * 2.0;
-        }
-        system.setTemperature(system.getTemperature() - 0.8 * dt);
+	dt = f_func / df_func_dt;
+	if (Math.abs(dt) > 2.0) {
+	  dt = Math.signum(dt) * 2.0;
+	}
+	system.setTemperature(system.getTemperature() - 0.8 * dt);
       }
       tpFlash.run();
 

@@ -15,8 +15,8 @@ import org.apache.logging.log4j.Logger;
 /**
  * Verification test to ensure GERG-2008 caching optimizations don't change numerical results.
  *
- * This test compares results from: 1. Fresh GERG-2008 model (no caching) 2. Cached GERG-2008 model
- * 3. Native SystemGERG2008Eos 4. SRK + GERG property lookup
+ * This test compares results from: 1. Fresh GERG-2008 model (no caching) 2. Cached GERG-2008 model 3. Native
+ * SystemGERG2008Eos 4. SRK + GERG property lookup
  *
  * All methods should produce identical results within numerical precision.
  *
@@ -73,14 +73,13 @@ public class GERG2008ResultVerificationTest {
     // Compare results
     logger.info("Property                  | Call 1         | Call 2         | Call 3");
     logger.info("--------------------------|----------------|----------------|--------");
-    String[] propNames = {"Pressure (kPa)", "Z-factor", "dPdD", "d2PdD2", "d2PdTD", "dPdT",
-        "U (J/mol)", "H (J/mol)", "S (J/mol-K)", "Cv (J/mol-K)", "Cp (J/mol-K)", "W (m/s)",
-        "G (J/mol)", "JT (K/kPa)", "Kappa"};
+    String[] propNames = { "Pressure (kPa)", "Z-factor", "dPdD", "d2PdD2", "d2PdTD", "dPdT", "U (J/mol)", "H (J/mol)",
+	"S (J/mol-K)", "Cv (J/mol-K)", "Cp (J/mol-K)", "W (m/s)", "G (J/mol)", "JT (K/kPa)", "Kappa" };
 
     for (int i = 0; i < Math.min(props1.length, 15); i++) {
       String status = (props1[i] == props2[i] && props2[i] == props3[i]) ? "OK" : "FAIL";
       logger.printf(org.apache.logging.log4j.Level.INFO, "%-25s | %14.6f | %14.6f | %s%n",
-          i < propNames.length ? propNames[i] : "Prop " + i, props1[i], props2[i], status);
+	  i < propNames.length ? propNames[i] : "Prop " + i, props1[i], props2[i], status);
       assertEquals(props1[i], props2[i], TOLERANCE, "Property " + i + " mismatch between calls");
       assertEquals(props2[i], props3[i], TOLERANCE, "Property " + i + " mismatch between calls");
     }
@@ -133,18 +132,18 @@ public class GERG2008ResultVerificationTest {
 
     logger.info("Property     | Call 1         | Call 2         | Call 3         | Match");
     logger.info("-------------|----------------|----------------|----------------|------");
-    logger.printf(org.apache.logging.log4j.Level.INFO, "Density      | %14.6f | %14.6f | %14.6f | %s%n", density1, density2,
-        density3, density1 == density2 && density2 == density3 ? "OK" : "FAIL");
-    logger.printf(org.apache.logging.log4j.Level.INFO, "Enthalpy     | %14.6f | %14.6f | %14.6f | %s%n", enthalpy1, enthalpy2,
-        enthalpy3, enthalpy1 == enthalpy2 && enthalpy2 == enthalpy3 ? "OK" : "FAIL");
-    logger.printf(org.apache.logging.log4j.Level.INFO, "Entropy      | %14.6f | %14.6f | %14.6f | %s%n", entropy1, entropy2,
-        entropy3, entropy1 == entropy2 && entropy2 == entropy3 ? "OK" : "FAIL");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Density      | %14.6f | %14.6f | %14.6f | %s%n", density1,
+	density2, density3, density1 == density2 && density2 == density3 ? "OK" : "FAIL");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Enthalpy     | %14.6f | %14.6f | %14.6f | %s%n", enthalpy1,
+	enthalpy2, enthalpy3, enthalpy1 == enthalpy2 && enthalpy2 == enthalpy3 ? "OK" : "FAIL");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Entropy      | %14.6f | %14.6f | %14.6f | %s%n", entropy1,
+	entropy2, entropy3, entropy1 == entropy2 && entropy2 == entropy3 ? "OK" : "FAIL");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Cp           | %14.6f | %14.6f | %14.6f | %s%n", cp1, cp2, cp3,
-        cp1 == cp2 && cp2 == cp3 ? "OK" : "FAIL");
+	cp1 == cp2 && cp2 == cp3 ? "OK" : "FAIL");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Cv           | %14.6f | %14.6f | %14.6f | %s%n", cv1, cv2, cv3,
-        cv1 == cv2 && cv2 == cv3 ? "OK" : "FAIL");
+	cv1 == cv2 && cv2 == cv3 ? "OK" : "FAIL");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Z-factor     | %14.6f | %14.6f | %14.6f | %s%n", z1, z2, z3,
-        z1 == z2 && z2 == z3 ? "OK" : "FAIL");
+	z1 == z2 && z2 == z3 ? "OK" : "FAIL");
 
     // Verify exact equality (caching should return identical values)
     assertEquals(density1, density2, 0.0, "Density should be identical");
@@ -160,8 +159,8 @@ public class GERG2008ResultVerificationTest {
   }
 
   /**
-   * Verify that state changes correctly trigger recalculation. Disabled: SystemGERG2008Eos direct
-   * usage with TPflash returns NaN. Use SystemSrkEos with GERG property lookups instead.
+   * Verify that state changes correctly trigger recalculation. Disabled: SystemGERG2008Eos direct usage with TPflash
+   * returns NaN. Use SystemSrkEos with GERG property lookups instead.
    */
   @Disabled("SystemGERG2008Eos direct usage with TPflash returns NaN")
   @Test
@@ -194,31 +193,28 @@ public class GERG2008ResultVerificationTest {
 
     logger.info("State                    | Density (kg/m3) | Enthalpy (J/mol)");
     logger.info("-------------------------|-----------------|------------------");
-    logger.printf(org.apache.logging.log4j.Level.INFO, "T=300K, P=50bar          | %15.6f | %16.6f%n", density1, enthalpy1);
-    logger.printf(org.apache.logging.log4j.Level.INFO, "T=350K, P=50bar          | %15.6f | %16.6f%n", density2, enthalpy2);
-    logger.printf(org.apache.logging.log4j.Level.INFO, "T=350K, P=100bar         | %15.6f | %16.6f%n", density3, enthalpy3);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "T=300K, P=50bar          | %15.6f | %16.6f%n", density1,
+	enthalpy1);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "T=350K, P=50bar          | %15.6f | %16.6f%n", density2,
+	enthalpy2);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "T=350K, P=100bar         | %15.6f | %16.6f%n", density3,
+	enthalpy3);
 
     // Verify properties changed appropriately
     // Higher temperature at same pressure -> lower density
     logger.info("\nPhysics checks:");
-    System.out
-        .println("Higher T at same P -> lower density: " + (density2 < density1 ? "OK" : "FAIL"));
+    System.out.println("Higher T at same P -> lower density: " + (density2 < density1 ? "OK" : "FAIL"));
     // Higher pressure at same temperature -> higher density
-    System.out
-        .println("Higher P at same T -> higher density: " + (density3 > density2 ? "OK" : "FAIL"));
+    System.out.println("Higher P at same T -> higher density: " + (density3 > density2 ? "OK" : "FAIL"));
     // Higher temperature -> higher enthalpy
     logger.info("Higher T -> higher enthalpy: " + (enthalpy2 > enthalpy1 ? "OK" : "FAIL"));
 
     // Assert physical correctness
-    org.junit.jupiter.api.Assertions.assertTrue(density2 < density1,
-        "Higher T should give lower density at same P");
-    org.junit.jupiter.api.Assertions.assertTrue(density3 > density2,
-        "Higher P should give higher density at same T");
-    org.junit.jupiter.api.Assertions.assertTrue(enthalpy2 > enthalpy1,
-        "Higher T should give higher enthalpy");
+    org.junit.jupiter.api.Assertions.assertTrue(density2 < density1, "Higher T should give lower density at same P");
+    org.junit.jupiter.api.Assertions.assertTrue(density3 > density2, "Higher P should give higher density at same T");
+    org.junit.jupiter.api.Assertions.assertTrue(enthalpy2 > enthalpy1, "Higher T should give higher enthalpy");
 
-    logger
-        .info("\n✓ State changes correctly trigger recalculation with physically correct results");
+    logger.info("\n✓ State changes correctly trigger recalculation with physically correct results");
   }
 
   /**
@@ -263,42 +259,35 @@ public class GERG2008ResultVerificationTest {
     logger.info("------------------|-----------------|------------------|----------");
 
     // Compare key properties
-    double densityDiffPct =
-        100.0 * Math.abs(nativeGergProps[0] - srkGergProps[0]) / Math.abs(srkGergProps[0]);
-    double zDiffPct =
-        100.0 * Math.abs(nativeGergProps[1] - srkGergProps[1]) / Math.abs(srkGergProps[1]);
-    double enthalpyDiffPct =
-        100.0 * Math.abs(nativeGergProps[7] - srkGergProps[7]) / Math.abs(srkGergProps[7]);
-    double entropyDiffPct =
-        100.0 * Math.abs(nativeGergProps[8] - srkGergProps[8]) / Math.abs(srkGergProps[8]);
-    double cpDiffPct =
-        100.0 * Math.abs(nativeGergProps[10] - srkGergProps[10]) / Math.abs(srkGergProps[10]);
+    double densityDiffPct = 100.0 * Math.abs(nativeGergProps[0] - srkGergProps[0]) / Math.abs(srkGergProps[0]);
+    double zDiffPct = 100.0 * Math.abs(nativeGergProps[1] - srkGergProps[1]) / Math.abs(srkGergProps[1]);
+    double enthalpyDiffPct = 100.0 * Math.abs(nativeGergProps[7] - srkGergProps[7]) / Math.abs(srkGergProps[7]);
+    double entropyDiffPct = 100.0 * Math.abs(nativeGergProps[8] - srkGergProps[8]) / Math.abs(srkGergProps[8]);
+    double cpDiffPct = 100.0 * Math.abs(nativeGergProps[10] - srkGergProps[10]) / Math.abs(srkGergProps[10]);
 
-    logger.printf(org.apache.logging.log4j.Level.INFO, "Pressure (kPa)    | %15.6f | %16.6f | %8.6f%n", nativeGergProps[0],
-        srkGergProps[0], densityDiffPct);
-    logger.printf(org.apache.logging.log4j.Level.INFO, "Z-factor          | %15.6f | %16.6f | %8.6f%n", nativeGergProps[1],
-        srkGergProps[1], zDiffPct);
-    logger.printf(org.apache.logging.log4j.Level.INFO, "Enthalpy (J/mol)  | %15.6f | %16.6f | %8.6f%n", nativeGergProps[7],
-        srkGergProps[7], enthalpyDiffPct);
-    logger.printf(org.apache.logging.log4j.Level.INFO, "Entropy (J/mol-K) | %15.6f | %16.6f | %8.6f%n", nativeGergProps[8],
-        srkGergProps[8], entropyDiffPct);
-    logger.printf(org.apache.logging.log4j.Level.INFO, "Cp (J/mol-K)      | %15.6f | %16.6f | %8.6f%n", nativeGergProps[10],
-        srkGergProps[10], cpDiffPct);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Pressure (kPa)    | %15.6f | %16.6f | %8.6f%n",
+	nativeGergProps[0], srkGergProps[0], densityDiffPct);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Z-factor          | %15.6f | %16.6f | %8.6f%n",
+	nativeGergProps[1], srkGergProps[1], zDiffPct);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Enthalpy (J/mol)  | %15.6f | %16.6f | %8.6f%n",
+	nativeGergProps[7], srkGergProps[7], enthalpyDiffPct);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Entropy (J/mol-K) | %15.6f | %16.6f | %8.6f%n",
+	nativeGergProps[8], srkGergProps[8], entropyDiffPct);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Cp (J/mol-K)      | %15.6f | %16.6f | %8.6f%n",
+	nativeGergProps[10], srkGergProps[10], cpDiffPct);
 
     // Both should use the same GERG-2008 calculation, so results should be identical
     assertEquals(nativeGergProps[0], srkGergProps[0], TOLERANCE,
-        "Pressure should match between native GERG and SRK+GERG");
+	"Pressure should match between native GERG and SRK+GERG");
     assertEquals(nativeGergProps[1], srkGergProps[1], TOLERANCE,
-        "Z-factor should match between native GERG and SRK+GERG");
+	"Z-factor should match between native GERG and SRK+GERG");
     assertEquals(nativeGergProps[7], srkGergProps[7], TOLERANCE,
-        "Enthalpy should match between native GERG and SRK+GERG");
+	"Enthalpy should match between native GERG and SRK+GERG");
     assertEquals(nativeGergProps[8], srkGergProps[8], TOLERANCE,
-        "Entropy should match between native GERG and SRK+GERG");
-    assertEquals(nativeGergProps[10], srkGergProps[10], TOLERANCE,
-        "Cp should match between native GERG and SRK+GERG");
+	"Entropy should match between native GERG and SRK+GERG");
+    assertEquals(nativeGergProps[10], srkGergProps[10], TOLERANCE, "Cp should match between native GERG and SRK+GERG");
 
-    logger
-        .info("\n✓ Native GERG-2008 EoS and SRK + GERG property lookup produce identical results");
+    logger.info("\n✓ Native GERG-2008 EoS and SRK + GERG property lookup produce identical results");
   }
 
   /**
@@ -319,14 +308,13 @@ public class GERG2008ResultVerificationTest {
     fluid.addComponent("nitrogen", 1.5);
     fluid.setMixingRule("classic");
 
-    neqsim.process.equipment.stream.Stream inletStream =
-        new neqsim.process.equipment.stream.Stream("inlet", fluid);
+    neqsim.process.equipment.stream.Stream inletStream = new neqsim.process.equipment.stream.Stream("inlet", fluid);
     inletStream.setFlowRate(100.0, "kg/sec");
     inletStream.run();
 
     // Run compressor with GERG-2008
-    neqsim.process.equipment.compressor.Compressor compressor =
-        new neqsim.process.equipment.compressor.Compressor("compressor", inletStream);
+    neqsim.process.equipment.compressor.Compressor compressor = new neqsim.process.equipment.compressor.Compressor(
+	"compressor", inletStream);
     compressor.setOutletPressure(100.0, "bara");
     compressor.setPolytropicEfficiency(0.78);
     compressor.setUsePolytropicCalc(true);
@@ -352,11 +340,11 @@ public class GERG2008ResultVerificationTest {
     logger.info("Run | Power (kW)      | Outlet T (K)    | Polytropic Head (kJ/kg)");
     logger.info("----|-----------------|-----------------|------------------------");
     logger.printf(org.apache.logging.log4j.Level.INFO, "1   | %15.3f | %15.3f | %22.3f%n", power1 / 1000, outletTemp1,
-        polytropicHead1);
+	polytropicHead1);
     logger.printf(org.apache.logging.log4j.Level.INFO, "2   | %15.3f | %15.3f | %22.3f%n", power2 / 1000, outletTemp2,
-        polytropicHead2);
+	polytropicHead2);
     logger.printf(org.apache.logging.log4j.Level.INFO, "3   | %15.3f | %15.3f | %22.3f%n", power3 / 1000, outletTemp3,
-        polytropicHead3);
+	polytropicHead3);
 
     // Verify consistent results
     assertEquals(power1, power2, 1.0, "Power should be consistent between runs");
@@ -370,10 +358,9 @@ public class GERG2008ResultVerificationTest {
   }
 
   /**
-   * Test thermodynamic properties are accessible with GERG-2008. Note: Transport properties
-   * (viscosity, thermal conductivity) are NOT available for native GERG-2008 phases due to
-   * component compatibility issues. Disabled: SystemGERG2008Eos direct usage with TPflash returns
-   * NaN. Use SystemSrkEos with GERG property lookups instead.
+   * Test thermodynamic properties are accessible with GERG-2008. Note: Transport properties (viscosity, thermal
+   * conductivity) are NOT available for native GERG-2008 phases due to component compatibility issues. Disabled:
+   * SystemGERG2008Eos direct usage with TPflash returns NaN. Use SystemSrkEos with GERG property lookups instead.
    */
   @Disabled("SystemGERG2008Eos direct usage with TPflash returns NaN")
   @Test

@@ -16,8 +16,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Unit tests for the plant-wide exergy analysis API on {@link ProcessSystem} and
- * {@link ProcessModel}.
+ * Unit tests for the plant-wide exergy analysis API on {@link ProcessSystem} and {@link ProcessModel}.
  */
 public class ExergyAnalysisTest {
 
@@ -102,8 +101,7 @@ public class ExergyAnalysisTest {
     plant.add("Area-B", b);
 
     double sumAreas = a.getExergyDestruction("kW") + b.getExergyDestruction("kW");
-    assertEquals(sumAreas, plant.getExergyDestruction("kW"),
-        Math.max(Math.abs(sumAreas), 1.0) * 1.0e-9);
+    assertEquals(sumAreas, plant.getExergyDestruction("kW"), Math.max(Math.abs(sumAreas), 1.0) * 1.0e-9);
 
     ExergyAnalysisReport report = plant.getExergyAnalysis();
     assertEquals(8, report.size(), "expected 4 units per area × 2 areas");

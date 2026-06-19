@@ -19,16 +19,15 @@ import org.apache.logging.log4j.Logger;
  * Traces how a failure propagates through a process flowsheet.
  *
  * <p>
- * Given an initial trip event on a piece of equipment, this class determines the sequence of
- * downstream equipment that will be affected, estimates the propagation timing, and builds a
- * complete failure cascade chain. It answers the question: <em>"How did the failure propagate
- * through the plant?"</em>
+ * Given an initial trip event on a piece of equipment, this class determines the sequence of downstream equipment that
+ * will be affected, estimates the propagation timing, and builds a complete failure cascade chain. It answers the
+ * question: <em>"How did the failure propagate through the plant?"</em>
  * </p>
  *
  * <p>
- * The tracer uses the {@link ProcessTopologyAnalyzer} for flowsheet connectivity and the
- * {@link DependencyAnalyzer} for cascade impact analysis. It extends the static dependency analysis
- * with time-ordered propagation and severity assessment.
+ * The tracer uses the {@link ProcessTopologyAnalyzer} for flowsheet connectivity and the {@link DependencyAnalyzer} for
+ * cascade impact analysis. It extends the static dependency analysis with time-ordered propagation and severity
+ * assessment.
  * </p>
  *
  * <p>
@@ -40,8 +39,7 @@ import org.apache.logging.log4j.Logger;
  * PropagationResult result = tracer.trace("Compressor-1");
  *
  * for (PropagationStep step : result.getSteps()) {
- *   System.out.printf("%.0fs: %s (%s)%n", step.getEstimatedDelaySeconds(),
- *       step.getEquipmentName(), step.getEffect());
+ *   System.out.printf("%.0fs: %s (%s)%n", step.getEstimatedDelaySeconds(), step.getEquipmentName(), step.getEffect());
  * }
  * </pre>
  *
@@ -107,7 +105,7 @@ public class FailurePropagationTracer implements Serializable {
    *
    * @param sourceEquipment source equipment name
    * @param targetEquipment target equipment name
-   * @param delaySeconds propagation delay in seconds
+   * @param delaySeconds    propagation delay in seconds
    */
   public void setCustomDelay(String sourceEquipment, String targetEquipment, double delaySeconds) {
     customDelays.put(sourceEquipment + "->" + targetEquipment, delaySeconds);
@@ -141,21 +139,20 @@ public class FailurePropagationTracer implements Serializable {
     }
 
     // Use dependency analyzer for cascade analysis
-    DependencyAnalyzer.DependencyResult depResult =
-        dependencyAnalyzer.analyzeFailure(failedEquipmentName);
+    DependencyAnalyzer.DependencyResult depResult = dependencyAnalyzer.analyzeFailure(failedEquipmentName);
 
     // Build propagation chain with estimated timing
     Set<String> visited = new LinkedHashSet<>();
     visited.add(failedEquipmentName);
 
     // Add the initial failure as step 0
-    result.addStep(new PropagationStep(failedEquipmentName, 0.0, 0,
-        "Initial equipment failure/trip", PropagationStep.ImpactLevel.CRITICAL));
+    result.addStep(new PropagationStep(failedEquipmentName, 0.0, 0, "Initial equipment failure/trip",
+	PropagationStep.ImpactLevel.CRITICAL));
 
     // Trace direct downstream effects
     for (String directName : depResult.getDirectlyAffected()) {
       if (visited.contains(directName)) {
-        continue;
+	continue;
       }
       visited.add(directName);
       double delay = getDelay(failedEquipmentName, directName, true);
@@ -168,7 +165,7 @@ public class FailurePropagationTracer implements Serializable {
     double cumulativeDelay = DEFAULT_DIRECT_DELAY;
     for (String indirectName : depResult.getIndirectlyAffected()) {
       if (visited.contains(indirectName)) {
-        continue;
+	continue;
       }
       visited.add(indirectName);
       cumulativeDelay += DEFAULT_INDIRECT_DELAY;
@@ -183,13 +180,12 @@ public class FailurePropagationTracer implements Serializable {
     // Add equipment to monitor
     for (String watchEquip : depResult.getEquipmentToWatch()) {
       if (!visited.contains(watchEquip)) {
-        result.addEquipmentToMonitor(watchEquip);
+	result.addEquipmentToMonitor(watchEquip);
       }
     }
 
-    logger.info("Failure propagation from '{}': {} steps, {}% production impact",
-        failedEquipmentName, result.getSteps().size(),
-        String.format("%.1f", result.getTotalProductionLossPercent()));
+    logger.info("Failure propagation from '{}': {} steps, {}% production impact", failedEquipmentName,
+	result.getSteps().size(), String.format("%.1f", result.getTotalProductionLossPercent()));
 
     return result;
   }
@@ -240,8 +236,7 @@ public class FailurePropagationTracer implements Serializable {
       return "Loss of feed supply — compressor may surge or trip on low suction pressure";
     } else if (type.contains("separator")) {
       return "Feed disruption — separator levels will change, possible high/low level trip";
-    } else if (type.contains("cooler") || type.contains("heater")
-        || type.contains("heatexchanger")) {
+    } else if (type.contains("cooler") || type.contains("heater") || type.contains("heatexchanger")) {
       return "Flow disruption — heat duty mismatch, possible temperature excursion";
     } else if (type.contains("valve")) {
       return "Flow disruption — valve may need to close/reposition";
@@ -274,8 +269,7 @@ public class FailurePropagationTracer implements Serializable {
       return PropagationStep.ImpactLevel.HIGH;
     } else if (type.contains("separator") || type.contains("column")) {
       return PropagationStep.ImpactLevel.HIGH;
-    } else if (type.contains("heatexchanger") || type.contains("cooler")
-        || type.contains("heater")) {
+    } else if (type.contains("heatexchanger") || type.contains("cooler") || type.contains("heater")) {
       return PropagationStep.ImpactLevel.MEDIUM;
     } else if (type.contains("valve") || type.contains("pipe")) {
       return PropagationStep.ImpactLevel.LOW;
@@ -292,7 +286,7 @@ public class FailurePropagationTracer implements Serializable {
   private ProcessEquipmentInterface findEquipment(String name) {
     for (ProcessEquipmentInterface eq : processSystem.getUnitOperations()) {
       if (eq.getName().equals(name)) {
-        return eq;
+	return eq;
       }
     }
     return null;
@@ -327,14 +321,14 @@ public class FailurePropagationTracer implements Serializable {
     /**
      * Creates a propagation step.
      *
-     * @param equipmentName name of the affected equipment
+     * @param equipmentName         name of the affected equipment
      * @param estimatedDelaySeconds estimated delay from the initial failure
-     * @param cascadeDepth depth in the cascade chain (0 = initial failure)
-     * @param effect description of the effect on this equipment
-     * @param impactLevel impact level
+     * @param cascadeDepth          depth in the cascade chain (0 = initial failure)
+     * @param effect                description of the effect on this equipment
+     * @param impactLevel           impact level
      */
-    public PropagationStep(String equipmentName, double estimatedDelaySeconds, int cascadeDepth,
-        String effect, ImpactLevel impactLevel) {
+    public PropagationStep(String equipmentName, double estimatedDelaySeconds, int cascadeDepth, String effect,
+	ImpactLevel impactLevel) {
       this.equipmentName = equipmentName;
       this.estimatedDelaySeconds = estimatedDelaySeconds;
       this.cascadeDepth = cascadeDepth;
@@ -389,8 +383,8 @@ public class FailurePropagationTracer implements Serializable {
 
     @Override
     public String toString() {
-      return String.format("[%.0fs] %s (depth=%d, impact=%s): %s", estimatedDelaySeconds,
-          equipmentName, cascadeDepth, impactLevel, effect);
+      return String.format("[%.0fs] %s (depth=%d, impact=%s): %s", estimatedDelaySeconds, equipmentName, cascadeDepth,
+	  impactLevel, effect);
     }
   }
 
@@ -434,7 +428,7 @@ public class FailurePropagationTracer implements Serializable {
      */
     void addEquipmentToMonitor(String equipmentName) {
       if (!equipmentToMonitor.contains(equipmentName)) {
-        equipmentToMonitor.add(equipmentName);
+	equipmentToMonitor.add(equipmentName);
       }
     }
 
@@ -518,9 +512,9 @@ public class FailurePropagationTracer implements Serializable {
     public int getMaxCascadeDepth() {
       int max = 0;
       for (PropagationStep step : steps) {
-        if (step.getCascadeDepth() > max) {
-          max = step.getCascadeDepth();
-        }
+	if (step.getCascadeDepth() > max) {
+	  max = step.getCascadeDepth();
+	}
       }
       return max;
     }
@@ -535,32 +529,32 @@ public class FailurePropagationTracer implements Serializable {
       sb.append("{");
       sb.append("\"initiatingEquipment\": \"").append(initiatingEquipment).append("\", ");
       if (initiatingTripEvent != null) {
-        sb.append("\"initiatingTrip\": ").append(initiatingTripEvent.toJson()).append(", ");
+	sb.append("\"initiatingTrip\": ").append(initiatingTripEvent.toJson()).append(", ");
       }
       sb.append("\"totalProductionLossPercent\": ").append(totalProductionLossPercent).append(", ");
       sb.append("\"affectedCount\": ").append(getAffectedCount()).append(", ");
       sb.append("\"maxCascadeDepth\": ").append(getMaxCascadeDepth()).append(", ");
       sb.append("\"steps\": [");
       for (int i = 0; i < steps.size(); i++) {
-        PropagationStep step = steps.get(i);
-        if (i > 0) {
-          sb.append(", ");
-        }
-        sb.append("{");
-        sb.append("\"equipmentName\": \"").append(step.getEquipmentName()).append("\", ");
-        sb.append("\"delaySeconds\": ").append(step.getEstimatedDelaySeconds()).append(", ");
-        sb.append("\"cascadeDepth\": ").append(step.getCascadeDepth()).append(", ");
-        sb.append("\"impactLevel\": \"").append(step.getImpactLevel().name()).append("\", ");
-        sb.append("\"effect\": \"").append(escapeJson(step.getEffect())).append("\"");
-        sb.append("}");
+	PropagationStep step = steps.get(i);
+	if (i > 0) {
+	  sb.append(", ");
+	}
+	sb.append("{");
+	sb.append("\"equipmentName\": \"").append(step.getEquipmentName()).append("\", ");
+	sb.append("\"delaySeconds\": ").append(step.getEstimatedDelaySeconds()).append(", ");
+	sb.append("\"cascadeDepth\": ").append(step.getCascadeDepth()).append(", ");
+	sb.append("\"impactLevel\": \"").append(step.getImpactLevel().name()).append("\", ");
+	sb.append("\"effect\": \"").append(escapeJson(step.getEffect())).append("\"");
+	sb.append("}");
       }
       sb.append("], ");
       sb.append("\"equipmentToMonitor\": [");
       for (int i = 0; i < equipmentToMonitor.size(); i++) {
-        if (i > 0) {
-          sb.append(", ");
-        }
-        sb.append("\"").append(equipmentToMonitor.get(i)).append("\"");
+	if (i > 0) {
+	  sb.append(", ");
+	}
+	sb.append("\"").append(equipmentToMonitor.get(i)).append("\"");
       }
       sb.append("]");
       sb.append("}");
@@ -577,24 +571,22 @@ public class FailurePropagationTracer implements Serializable {
       sb.append("=== Failure Propagation Trace ===\n");
       sb.append("Initiating equipment: ").append(initiatingEquipment).append("\n");
       if (initiatingTripEvent != null) {
-        sb.append("Trip cause: ").append(initiatingTripEvent.getParameterName()).append(" ")
-            .append(initiatingTripEvent.isHighTrip() ? "HIGH" : "LOW").append(" (")
-            .append(String.format("%.2f", initiatingTripEvent.getActualValue()))
-            .append(" vs threshold ")
-            .append(String.format("%.2f", initiatingTripEvent.getThreshold())).append(")\n");
+	sb.append("Trip cause: ").append(initiatingTripEvent.getParameterName()).append(" ")
+	    .append(initiatingTripEvent.isHighTrip() ? "HIGH" : "LOW").append(" (")
+	    .append(String.format("%.2f", initiatingTripEvent.getActualValue())).append(" vs threshold ")
+	    .append(String.format("%.2f", initiatingTripEvent.getThreshold())).append(")\n");
       }
       sb.append("Total affected: ").append(getAffectedCount()).append(" equipment\n");
-      sb.append("Production impact: ")
-          .append(String.format("%.1f%%", totalProductionLossPercent)).append("\n");
+      sb.append("Production impact: ").append(String.format("%.1f%%", totalProductionLossPercent)).append("\n");
       sb.append("\nPropagation sequence:\n");
       for (PropagationStep step : steps) {
-        sb.append(step.toString()).append("\n");
+	sb.append(step.toString()).append("\n");
       }
       if (!equipmentToMonitor.isEmpty()) {
-        sb.append("\nEquipment to monitor:\n");
-        for (String eq : equipmentToMonitor) {
-          sb.append("  - ").append(eq).append("\n");
-        }
+	sb.append("\nEquipment to monitor:\n");
+	for (String eq : equipmentToMonitor) {
+	  sb.append("  - ").append(eq).append("\n");
+	}
       }
       return sb.toString();
     }
@@ -610,7 +602,6 @@ public class FailurePropagationTracer implements Serializable {
     if (s == null) {
       return "";
     }
-    return s.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n")
-        .replace("\r", "\\r").replace("\t", "\\t");
+    return s.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t");
   }
 }

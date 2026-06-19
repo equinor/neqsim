@@ -7,8 +7,8 @@ import java.util.List;
  * Collection of instrument specifications for a piece of process equipment.
  *
  * <p>
- * Acts as an instrument index (instrument list) for a single equipment item. Provides convenience
- * methods for I/O count summaries, cost aggregation, and tag number generation.
+ * Acts as an instrument index (instrument list) for a single equipment item. Provides convenience methods for I/O count
+ * summaries, cost aggregation, and tag number generation.
  * </p>
  *
  * @author Even Solbraa
@@ -75,7 +75,7 @@ public class InstrumentList implements java.io.Serializable {
     int count = 0;
     for (InstrumentSpecification spec : instruments) {
       if ("AI".equals(spec.getIoType())) {
-        count++;
+	count++;
       }
     }
     return count;
@@ -90,7 +90,7 @@ public class InstrumentList implements java.io.Serializable {
     int count = 0;
     for (InstrumentSpecification spec : instruments) {
       if ("AO".equals(spec.getIoType())) {
-        count++;
+	count++;
       }
     }
     return count;
@@ -105,7 +105,7 @@ public class InstrumentList implements java.io.Serializable {
     int count = 0;
     for (InstrumentSpecification spec : instruments) {
       if ("DI".equals(spec.getIoType())) {
-        count++;
+	count++;
       }
     }
     return count;
@@ -120,7 +120,7 @@ public class InstrumentList implements java.io.Serializable {
     int count = 0;
     for (InstrumentSpecification spec : instruments) {
       if ("DO".equals(spec.getIoType())) {
-        count++;
+	count++;
       }
     }
     return count;
@@ -144,7 +144,7 @@ public class InstrumentList implements java.io.Serializable {
     int count = 0;
     for (InstrumentSpecification spec : instruments) {
       if (spec.isSafetyRelated()) {
-        count++;
+	count++;
       }
     }
     return count;

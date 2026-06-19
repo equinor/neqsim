@@ -40,16 +40,14 @@ public class StratifiedFlowNode extends TwoPhaseFlowNode {
    * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface}
-   *        object
+   * @param pipe   a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
    */
   public StratifiedFlowNode(SystemInterface system, GeometryDefinitionInterface pipe) {
     super(system, pipe);
     this.flowNodeType = "stratified";
     this.interphaseTransportCoefficient = new InterphaseStratifiedFlow(this);
-    this.fluidBoundary =
-        new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
-            this);
+    this.fluidBoundary = new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
+	this);
   }
 
   /**
@@ -57,19 +55,17 @@ public class StratifiedFlowNode extends TwoPhaseFlowNode {
    * Constructor for StratifiedFlowNode.
    * </p>
    *
-   * @param system a {@link neqsim.thermo.system.SystemInterface} object
+   * @param system           a {@link neqsim.thermo.system.SystemInterface} object
    * @param interphaseSystem a {@link neqsim.thermo.system.SystemInterface} object
-   * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface}
-   *        object
+   * @param pipe             a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
    */
   public StratifiedFlowNode(SystemInterface system, SystemInterface interphaseSystem,
       GeometryDefinitionInterface pipe) {
     super(system, pipe);
     this.flowNodeType = "stratified";
     this.interphaseTransportCoefficient = new InterphaseStratifiedFlow(this);
-    this.fluidBoundary =
-        new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
-            this);
+    this.fluidBoundary = new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
+	this);
   }
 
   /** {@inheritDoc} */
@@ -108,22 +104,21 @@ public class StratifiedFlowNode extends TwoPhaseFlowNode {
 
       // Determine which phase exists and give it full wall contact
       if (phaseFraction[0] > phaseFraction[1]) {
-        // Phase 0 (could be oil or gas) fills the pipe
-        wallContactLength[0] = pi * pipe.getDiameter();
-        wallContactLength[1] = 0.0;
+	// Phase 0 (could be oil or gas) fills the pipe
+	wallContactLength[0] = pi * pipe.getDiameter();
+	wallContactLength[1] = 0.0;
       } else {
-        // Phase 1 fills the pipe
-        wallContactLength[0] = 0.0;
-        wallContactLength[1] = pi * pipe.getDiameter();
+	// Phase 1 fills the pipe
+	wallContactLength[0] = 0.0;
+	wallContactLength[1] = pi * pipe.getDiameter();
       }
       return wallContactLength[0] + wallContactLength[1];
     }
 
     // Two-phase stratified flow calculation
     // Phase 0 = gas (upper), Phase 1 = liquid (lower)
-    double phaseAngel =
-        pi * phaseFraction[1] + Math.pow(3.0 * pi / 2.0, 1.0 / 3.0) * (1.0 - 2.0 * phaseFraction[1]
-            + Math.pow(phaseFraction[1], 1.0 / 3.0) - Math.pow(phaseFraction[0], 1.0 / 3.0));
+    double phaseAngel = pi * phaseFraction[1] + Math.pow(3.0 * pi / 2.0, 1.0 / 3.0) * (1.0 - 2.0 * phaseFraction[1]
+	+ Math.pow(phaseFraction[1], 1.0 / 3.0) - Math.pow(phaseFraction[0], 1.0 / 3.0));
     wallContactLength[1] = phaseAngel * pipe.getDiameter();
     wallContactLength[0] = pi * pipe.getDiameter() - wallContactLength[1];
     interphaseContactLength[0] = pipe.getDiameter() * Math.sin(phaseAngel);
@@ -136,8 +131,8 @@ public class StratifiedFlowNode extends TwoPhaseFlowNode {
    * {@inheritDoc}
    *
    * <p>
-   * For stratified flow, the interfacial area per unit volume is calculated as: a = S_i / A where
-   * S_i is the interface chord length and A is the pipe cross-sectional area.
+   * For stratified flow, the interfacial area per unit volume is calculated as: a = S_i / A where S_i is the interface
+   * chord length and A is the pipe cross-sectional area.
    * </p>
    */
   @Override
@@ -226,17 +221,17 @@ public class StratifiedFlowNode extends TwoPhaseFlowNode {
       test.initFlowCalc();
       test.calcFluxes();
       if (i > 1 && (i % 1000) == 0) {
-        k++;
-        test.display("length " + length);
-        System.out.println("length " + length + " wt% MEG "
-            + test.getBulkSystem().getPhase("aqueous").getWtFrac("MEG") * 100.0);
-        // test.getBulkSystem().display("length " + length);
-        // test.getInterphaseSystem().display("length " + length);
-        // test.getFluidBoundary().display("length " + length);
-        // test.setLengthOfNode(0.000005 + test.getLengthOfNode() / 2.0);
-        temperatures2[0][k] = length;
-        temperatures2[1][k] = test.getGeometry().getInnerWallTemperature();
-        // test.getFluidBoundary().display("test");
+	k++;
+	test.display("length " + length);
+	System.out.println(
+	    "length " + length + " wt% MEG " + test.getBulkSystem().getPhase("aqueous").getWtFrac("MEG") * 100.0);
+	// test.getBulkSystem().display("length " + length);
+	// test.getInterphaseSystem().display("length " + length);
+	// test.getFluidBoundary().display("length " + length);
+	// test.setLengthOfNode(0.000005 + test.getLengthOfNode() / 2.0);
+	temperatures2[0][k] = length;
+	temperatures2[1][k] = test.getGeometry().getInnerWallTemperature();
+	// test.getFluidBoundary().display("test");
       }
 
       // test.getBulkSystem().display();

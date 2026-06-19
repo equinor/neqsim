@@ -101,30 +101,20 @@ class RiskMatrixTest {
 
   @Test
   void testProbabilityCategories() {
-    assertEquals(RiskMatrix.ProbabilityCategory.VERY_LOW,
-        RiskMatrix.ProbabilityCategory.fromFrequency(0.05));
-    assertEquals(RiskMatrix.ProbabilityCategory.LOW,
-        RiskMatrix.ProbabilityCategory.fromFrequency(0.3));
-    assertEquals(RiskMatrix.ProbabilityCategory.MEDIUM,
-        RiskMatrix.ProbabilityCategory.fromFrequency(0.7));
-    assertEquals(RiskMatrix.ProbabilityCategory.HIGH,
-        RiskMatrix.ProbabilityCategory.fromFrequency(1.5));
-    assertEquals(RiskMatrix.ProbabilityCategory.VERY_HIGH,
-        RiskMatrix.ProbabilityCategory.fromFrequency(3.0));
+    assertEquals(RiskMatrix.ProbabilityCategory.VERY_LOW, RiskMatrix.ProbabilityCategory.fromFrequency(0.05));
+    assertEquals(RiskMatrix.ProbabilityCategory.LOW, RiskMatrix.ProbabilityCategory.fromFrequency(0.3));
+    assertEquals(RiskMatrix.ProbabilityCategory.MEDIUM, RiskMatrix.ProbabilityCategory.fromFrequency(0.7));
+    assertEquals(RiskMatrix.ProbabilityCategory.HIGH, RiskMatrix.ProbabilityCategory.fromFrequency(1.5));
+    assertEquals(RiskMatrix.ProbabilityCategory.VERY_HIGH, RiskMatrix.ProbabilityCategory.fromFrequency(3.0));
   }
 
   @Test
   void testConsequenceCategories() {
-    assertEquals(RiskMatrix.ConsequenceCategory.NEGLIGIBLE,
-        RiskMatrix.ConsequenceCategory.fromProductionLoss(3.0));
-    assertEquals(RiskMatrix.ConsequenceCategory.MINOR,
-        RiskMatrix.ConsequenceCategory.fromProductionLoss(15.0));
-    assertEquals(RiskMatrix.ConsequenceCategory.MODERATE,
-        RiskMatrix.ConsequenceCategory.fromProductionLoss(35.0));
-    assertEquals(RiskMatrix.ConsequenceCategory.MAJOR,
-        RiskMatrix.ConsequenceCategory.fromProductionLoss(65.0));
-    assertEquals(RiskMatrix.ConsequenceCategory.CATASTROPHIC,
-        RiskMatrix.ConsequenceCategory.fromProductionLoss(90.0));
+    assertEquals(RiskMatrix.ConsequenceCategory.NEGLIGIBLE, RiskMatrix.ConsequenceCategory.fromProductionLoss(3.0));
+    assertEquals(RiskMatrix.ConsequenceCategory.MINOR, RiskMatrix.ConsequenceCategory.fromProductionLoss(15.0));
+    assertEquals(RiskMatrix.ConsequenceCategory.MODERATE, RiskMatrix.ConsequenceCategory.fromProductionLoss(35.0));
+    assertEquals(RiskMatrix.ConsequenceCategory.MAJOR, RiskMatrix.ConsequenceCategory.fromProductionLoss(65.0));
+    assertEquals(RiskMatrix.ConsequenceCategory.CATASTROPHIC, RiskMatrix.ConsequenceCategory.fromProductionLoss(90.0));
   }
 
   @Test

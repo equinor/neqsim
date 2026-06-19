@@ -14,15 +14,13 @@ import neqsim.thermo.system.SystemInterface;
  * Formula matrix (A) for the modified RAND method.
  *
  * <p>
- * Maps chemical components to their elemental composition. For NC components and NE elements, the
- * matrix A has dimensions (NE x NC), where A[k][i] is the number of atoms of element k in component
- * i.
+ * Maps chemical components to their elemental composition. For NC components and NE elements, the matrix A has
+ * dimensions (NE x NC), where A[k][i] is the number of atoms of element k in component i.
  * </p>
  *
  * <p>
- * The element balance constraint for simultaneous chemical and phase equilibrium is: A * n_total =
- * b where n_total[i] = sum over all phases j of n[i][j], and b[k] = sum_i A[k][i] * z[i] * F (total
- * element amounts from the feed).
+ * The element balance constraint for simultaneous chemical and phase equilibrium is: A * n_total = b where n_total[i] =
+ * sum over all phases j of n[i][j], and b[k] = sum_i A[k][i] * z[i] * F (total element amounts from the feed).
  * </p>
  *
  * <p>
@@ -65,9 +63,9 @@ public class FormulaMatrix implements java.io.Serializable {
    * Construct formula matrix from a NeqSim system.
    *
    * <p>
-   * Extracts elemental composition from each component's Element data (stored in the NeqSim
-   * database). Components without element data (e.g. pseudo-components) are assigned a unique
-   * pseudo-element so that their conservation is still enforced.
+   * Extracts elemental composition from each component's Element data (stored in the NeqSim database). Components
+   * without element data (e.g. pseudo-components) are assigned a unique pseudo-element so that their conservation is
+   * still enforced.
    * </p>
    *
    * @param system the thermodynamic system
@@ -90,24 +88,24 @@ public class FormulaMatrix implements java.io.Serializable {
       componentNames[i] = comp.getComponentName();
       ionicCharges[i] = comp.getIonicCharge();
       if (ionicCharges[i] != 0.0) {
-        hasIonicSpecies = true;
+	hasIonicSpecies = true;
       }
 
       Map<String, Double> elemMap = new LinkedHashMap<String, Double>();
       neqsim.thermo.atomelement.Element elems = comp.getElements();
 
       if (elems != null && elems.getElementNames() != null && elems.getElementNames().length > 0) {
-        String[] names = elems.getElementNames();
-        double[] coefs = elems.getElementCoefs();
-        for (int k = 0; k < names.length; k++) {
-          elementSet.add(names[k]);
-          elemMap.put(names[k], coefs[k]);
-        }
+	String[] names = elems.getElementNames();
+	double[] coefs = elems.getElementCoefs();
+	for (int k = 0; k < names.length; k++) {
+	  elementSet.add(names[k]);
+	  elemMap.put(names[k], coefs[k]);
+	}
       } else {
-        // No element data: assign a unique pseudo-element for mass conservation
-        String pseudoElem = "Pseudo_" + componentNames[i];
-        elementSet.add(pseudoElem);
-        elemMap.put(pseudoElem, 1.0);
+	// No element data: assign a unique pseudo-element for mass conservation
+	String pseudoElem = "Pseudo_" + componentNames[i];
+	elementSet.add(pseudoElem);
+	elemMap.put(pseudoElem, 1.0);
       }
       componentElements.add(elemMap);
     }
@@ -126,10 +124,10 @@ public class FormulaMatrix implements java.io.Serializable {
     for (int i = 0; i < numComponents; i++) {
       Map<String, Double> elemMap = componentElements.get(i);
       for (int k = 0; k < baseElements; k++) {
-        Double coef = elemMap.get(elementNames[k]);
-        if (coef != null) {
-          A[k][i] = coef;
-        }
+	Double coef = elemMap.get(elementNames[k]);
+	if (coef != null) {
+	  A[k][i] = coef;
+	}
       }
     }
 
@@ -138,7 +136,7 @@ public class FormulaMatrix implements java.io.Serializable {
     if (hasIonicSpecies) {
       int chargeRow = numElements - 1;
       for (int i = 0; i < numComponents; i++) {
-        A[chargeRow][i] = ionicCharges[i];
+	A[chargeRow][i] = ionicCharges[i];
       }
     }
   }
@@ -146,9 +144,9 @@ public class FormulaMatrix implements java.io.Serializable {
   /**
    * Construct formula matrix from explicit data.
    *
-   * @param elementNames array of element names
+   * @param elementNames   array of element names
    * @param componentNames array of component names
-   * @param A the formula matrix A[NE][NC]
+   * @param A              the formula matrix A[NE][NC]
    */
   public FormulaMatrix(String[] elementNames, String[] componentNames, double[][] A) {
     this.elementNames = elementNames.clone();
@@ -158,7 +156,7 @@ public class FormulaMatrix implements java.io.Serializable {
     this.A = new double[numElements][numComponents];
     for (int k = 0; k < numElements; k++) {
       for (int i = 0; i < numComponents; i++) {
-        this.A[k][i] = A[k][i];
+	this.A[k][i] = A[k][i];
       }
     }
     // Detect if charge row is present (named "Charge")
@@ -166,11 +164,11 @@ public class FormulaMatrix implements java.io.Serializable {
     this.ionicCharges = new double[numComponents];
     for (int k = 0; k < numElements; k++) {
       if ("Charge".equals(elementNames[k])) {
-        this.hasIonicSpecies = true;
-        for (int i = 0; i < numComponents; i++) {
-          this.ionicCharges[i] = A[k][i];
-        }
-        break;
+	this.hasIonicSpecies = true;
+	for (int i = 0; i < numComponents; i++) {
+	  this.ionicCharges[i] = A[k][i];
+	}
+	break;
       }
     }
   }
@@ -189,7 +187,7 @@ public class FormulaMatrix implements java.io.Serializable {
     double[] b = new double[numElements];
     for (int k = 0; k < numElements; k++) {
       for (int i = 0; i < numComponents; i++) {
-        b[k] += A[k][i] * z[i];
+	b[k] += A[k][i] * z[i];
       }
     }
     return b;
@@ -207,7 +205,7 @@ public class FormulaMatrix implements java.io.Serializable {
   /**
    * Return a single entry.
    *
-   * @param element row index
+   * @param element   row index
    * @param component column index
    * @return A[element][component]
    */
@@ -255,8 +253,8 @@ public class FormulaMatrix implements java.io.Serializable {
    * Compute the rank of the formula matrix using Gaussian elimination.
    *
    * <p>
-   * The rank equals the number of independent element constraints. The number of independent
-   * reactions is NR = NC - rank(A).
+   * The rank equals the number of independent element constraints. The number of independent reactions is NR = NC -
+   * rank(A).
    * </p>
    *
    * @return the rank of A
@@ -266,7 +264,7 @@ public class FormulaMatrix implements java.io.Serializable {
     double[][] M = new double[numElements][numComponents];
     for (int k = 0; k < numElements; k++) {
       for (int i = 0; i < numComponents; i++) {
-        M[k][i] = A[k][i];
+	M[k][i] = A[k][i];
       }
     }
 
@@ -280,13 +278,13 @@ public class FormulaMatrix implements java.io.Serializable {
       int pivotRow = -1;
       double maxVal = 1e-12;
       for (int row = 0; row < rows; row++) {
-        if (!rowUsed[row] && Math.abs(M[row][col]) > maxVal) {
-          maxVal = Math.abs(M[row][col]);
-          pivotRow = row;
-        }
+	if (!rowUsed[row] && Math.abs(M[row][col]) > maxVal) {
+	  maxVal = Math.abs(M[row][col]);
+	  pivotRow = row;
+	}
       }
       if (pivotRow == -1) {
-        continue;
+	continue;
       }
       rowUsed[pivotRow] = true;
       rank++;
@@ -294,12 +292,12 @@ public class FormulaMatrix implements java.io.Serializable {
       // Eliminate
       double pivot = M[pivotRow][col];
       for (int row = 0; row < rows; row++) {
-        if (row != pivotRow && Math.abs(M[row][col]) > 1e-15) {
-          double factor = M[row][col] / pivot;
-          for (int c = col; c < cols; c++) {
-            M[row][c] -= factor * M[pivotRow][c];
-          }
-        }
+	if (row != pivotRow && Math.abs(M[row][col]) > 1e-15) {
+	  double factor = M[row][col] / pivot;
+	  for (int c = col; c < cols; c++) {
+	    M[row][c] -= factor * M[pivotRow][c];
+	  }
+	}
       }
     }
     return rank;
@@ -322,8 +320,8 @@ public class FormulaMatrix implements java.io.Serializable {
    * Check whether the system contains ionic species.
    *
    * <p>
-   * When true, the formula matrix includes a charge balance row (electroneutrality constraint) as
-   * its last row, and the element name for that row is "Charge".
+   * When true, the formula matrix includes a charge balance row (electroneutrality constraint) as its last row, and the
+   * element name for that row is "Charge".
    * </p>
    *
    * @return true if any component has nonzero ionic charge
@@ -349,6 +347,6 @@ public class FormulaMatrix implements java.io.Serializable {
    */
   public boolean isIon(int componentIndex) {
     return ionicCharges != null && componentIndex >= 0 && componentIndex < numComponents
-        && ionicCharges[componentIndex] != 0.0;
+	&& ionicCharges[componentIndex] != 0.0;
   }
 }

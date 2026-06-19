@@ -8,8 +8,8 @@ class HAZOPFMEATest {
 
   @Test
   void hazopGridGeneratesAllCombinations() {
-    HAZOPTemplate hz = new HAZOPTemplate("Node-1", "Pump P-101 inlet")
-        .generateGrid(HAZOPTemplate.Parameter.FLOW, HAZOPTemplate.Parameter.PRESSURE);
+    HAZOPTemplate hz = new HAZOPTemplate("Node-1", "Pump P-101 inlet").generateGrid(HAZOPTemplate.Parameter.FLOW,
+	HAZOPTemplate.Parameter.PRESSURE);
     // 7 guide-words × 2 parameters = 14
     assertEquals(14, hz.getDeviations().size());
   }
@@ -17,10 +17,9 @@ class HAZOPFMEATest {
   @Test
   void hazopDocumentationPatternAddsDeviationAndReports() {
     HAZOPTemplate hz = new HAZOPTemplate("Node 3 - HP separator inlet",
-        "Route HP separator inlet flow within design pressure and liquid handling limits");
-    hz.addDeviation(HAZOPTemplate.GuideWord.MORE, HAZOPTemplate.Parameter.FLOW,
-        "Upstream pump runaway", "Liquid carry-over to flare KO drum",
-        "FT-101 high-flow alarm; BDV on overpressure", "Add HIPPS interlock");
+	"Route HP separator inlet flow within design pressure and liquid handling limits");
+    hz.addDeviation(HAZOPTemplate.GuideWord.MORE, HAZOPTemplate.Parameter.FLOW, "Upstream pump runaway",
+	"Liquid carry-over to flare KO drum", "FT-101 high-flow alarm; BDV on overpressure", "Add HIPPS interlock");
 
     assertEquals(1, hz.getDeviations().size());
     assertTrue(hz.report().contains("MORE + FLOW"));

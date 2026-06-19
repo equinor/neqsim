@@ -6,9 +6,8 @@ import neqsim.physicalproperties.system.PhysicalProperties;
  * High-pressure corrected diffusivity model for liquid systems.
  *
  * <p>
- * This model applies pressure corrections to low-pressure diffusion coefficients using the
- * Mathur-Thodos correlation. It is essential for accurate predictions at reservoir conditions
- * (pressures &gt; 100 bar).
+ * This model applies pressure corrections to low-pressure diffusion coefficients using the Mathur-Thodos correlation.
+ * It is essential for accurate predictions at reservoir conditions (pressures &gt; 100 bar).
  * </p>
  *
  * <p>
@@ -23,10 +22,10 @@ import neqsim.physicalproperties.system.PhysicalProperties;
  * References:
  * </p>
  * <ul>
- * <li>Mathur, G.P. and Thodos, G. (1965). "The self-diffusivity of substances in the gaseous and
- * liquid states." AIChE J., 11, 613-616.</li>
- * <li>Riazi, M.R. and Whitson, C.H. (1993). "Estimating diffusion coefficients of dense fluids."
- * Ind. Eng. Chem. Res., 32, 3081-3088.</li>
+ * <li>Mathur, G.P. and Thodos, G. (1965). "The self-diffusivity of substances in the gaseous and liquid states." AIChE
+ * J., 11, 613-616.</li>
+ * <li>Riazi, M.R. and Whitson, C.H. (1993). "Estimating diffusion coefficients of dense fluids." Ind. Eng. Chem. Res.,
+ * 32, 3081-3088.</li>
  * </ul>
  *
  * @author Even Solbraa
@@ -60,7 +59,7 @@ public class HighPressureDiffusivity extends Diffusivity {
    * Constructor with custom base model.
    *
    * @param liquidPhase a {@link neqsim.physicalproperties.system.PhysicalProperties} object
-   * @param baseModel the low-pressure diffusivity model to use as base
+   * @param baseModel   the low-pressure diffusivity model to use as base
    */
   public HighPressureDiffusivity(PhysicalProperties liquidPhase, Diffusivity baseModel) {
     super(liquidPhase);
@@ -91,8 +90,8 @@ public class HighPressureDiffusivity extends Diffusivity {
       double Vc = liquidPhase.getPhase().getComponent(i).getCriticalVolume(); // m³/mol
       double M = liquidPhase.getPhase().getComponent(i).getMolarMass(); // kg/mol
       if (Vc > 0 && M > 0) {
-        double rhoCi = M / Vc;
-        rhoCritMix += xi * rhoCi;
+	double rhoCi = M / Vc;
+	rhoCritMix += xi * rhoCi;
       }
     }
 
@@ -187,20 +186,17 @@ public class HighPressureDiffusivity extends Diffusivity {
 
   /** {@inheritDoc} */
   @Override
-  public double[][] calcDiffusionCoefficients(int binaryDiffusionCoefficientMethod,
-      int multicomponentDiffusionMethod) {
+  public double[][] calcDiffusionCoefficients(int binaryDiffusionCoefficientMethod, int multicomponentDiffusionMethod) {
     // First calculate base diffusion coefficients
-    baseDiffusivityModel.calcDiffusionCoefficients(binaryDiffusionCoefficientMethod,
-        multicomponentDiffusionMethod);
+    baseDiffusivityModel.calcDiffusionCoefficients(binaryDiffusionCoefficientMethod, multicomponentDiffusionMethod);
 
     // Then apply pressure correction to all
     double correctionFactor = calculatePressureCorrectionFactor();
 
     for (int i = 0; i < liquidPhase.getPhase().getNumberOfComponents(); i++) {
       for (int j = 0; j < liquidPhase.getPhase().getNumberOfComponents(); j++) {
-        binaryDiffusionCoefficients[i][j] =
-            baseDiffusivityModel.getMaxwellStefanBinaryDiffusionCoefficient(i, j)
-                * correctionFactor;
+	binaryDiffusionCoefficients[i][j] = baseDiffusivityModel.getMaxwellStefanBinaryDiffusionCoefficient(i, j)
+	    * correctionFactor;
       }
     }
 

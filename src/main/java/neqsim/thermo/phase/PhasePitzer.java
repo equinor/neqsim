@@ -69,15 +69,15 @@ public class PhasePitzer extends PhaseGE {
 
   /** {@inheritDoc} */
   @Override
-  public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
-      double temperature, double pressure, PhaseType pt) {
+  public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
+      PhaseType pt) {
     if (!parametersLoaded) {
       loadParametersFromDatabase();
     }
     double GE = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
-      GE += phase.getComponent(i).getx() * Math.log(((ComponentGePitzer) componentArray[i])
-          .getGamma(phase, numberOfComponents, temperature, pressure, pt));
+      GE += phase.getComponent(i).getx() * Math
+	  .log(((ComponentGePitzer) componentArray[i]).getGamma(phase, numberOfComponents, temperature, pressure, pt));
     }
     return R * temperature * numberOfMolesInPhase * GE;
   }
@@ -109,11 +109,11 @@ public class PhasePitzer extends PhaseGE {
   /**
    * Set binary Pitzer parameters.
    *
-   * @param i component i
-   * @param j component j
+   * @param i  component i
+   * @param j  component j
    * @param b0 beta0 parameter
    * @param b1 beta1 parameter
-   * @param c cPhi parameter
+   * @param c  cPhi parameter
    */
   public void setBinaryParameters(int i, int j, double b0, double b1, double c) {
     beta0[i][j] = b0;
@@ -127,8 +127,8 @@ public class PhasePitzer extends PhaseGE {
   /**
    * Set T-dependent coefficients for beta0 (Silvester-Pitzer form).
    *
-   * @param i component index i
-   * @param j component index j
+   * @param i  component index i
+   * @param j  component index j
    * @param t1 coefficient for (1/T - 1/Tr) term
    * @param t2 coefficient for ln(T/Tr) term
    */
@@ -142,8 +142,8 @@ public class PhasePitzer extends PhaseGE {
   /**
    * Set T-dependent coefficients for beta1 (Silvester-Pitzer form).
    *
-   * @param i component index i
-   * @param j component index j
+   * @param i  component index i
+   * @param j  component index j
    * @param t1 coefficient for (1/T - 1/Tr) term
    * @param t2 coefficient for ln(T/Tr) term
    */
@@ -157,8 +157,8 @@ public class PhasePitzer extends PhaseGE {
   /**
    * Set T-dependent coefficients for Cphi (Silvester-Pitzer form).
    *
-   * @param i component index i
-   * @param j component index j
+   * @param i  component index i
+   * @param j  component index j
    * @param t1 coefficient for (1/T - 1/Tr) term
    * @param t2 coefficient for ln(T/Tr) term
    */
@@ -173,67 +173,67 @@ public class PhasePitzer extends PhaseGE {
    * Loads Pitzer binary parameters from the PitzerParameters database table.
    *
    * <p>
-   * Matches ion names to components present in this phase and sets beta0, beta1, Cphi and their
-   * temperature-dependent coefficients.
+   * Matches ion names to components present in this phase and sets beta0, beta1, Cphi and their temperature-dependent
+   * coefficients.
    * </p>
    */
   public void loadParametersFromDatabase() {
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-        java.sql.ResultSet dataSet = database.getResultSet("SELECT * FROM pitzerparameters")) {
+	java.sql.ResultSet dataSet = database.getResultSet("SELECT * FROM pitzerparameters")) {
       while (dataSet.next()) {
-        String ion1Name = dataSet.getString("ion1").trim();
-        String ion2Name = dataSet.getString("ion2").trim();
+	String ion1Name = dataSet.getString("ion1").trim();
+	String ion2Name = dataSet.getString("ion2").trim();
 
-        int idx1 = -1;
-        int idx2 = -1;
-        for (int k = 0; k < numberOfComponents; k++) {
-          String compName = getComponent(k).getComponentName();
-          if (compName.equals(ion1Name)) {
-            idx1 = k;
-          }
-          if (compName.equals(ion2Name)) {
-            idx2 = k;
-          }
-        }
-        if (idx1 < 0 || idx2 < 0) {
-          continue;
-        }
+	int idx1 = -1;
+	int idx2 = -1;
+	for (int k = 0; k < numberOfComponents; k++) {
+	  String compName = getComponent(k).getComponentName();
+	  if (compName.equals(ion1Name)) {
+	    idx1 = k;
+	  }
+	  if (compName.equals(ion2Name)) {
+	    idx2 = k;
+	  }
+	}
+	if (idx1 < 0 || idx2 < 0) {
+	  continue;
+	}
 
-        double b0 = dataSet.getDouble("beta0_25");
-        double b1 = dataSet.getDouble("beta1_25");
-        double cp = dataSet.getDouble("Cphi_25");
-        setBinaryParameters(idx1, idx2, b0, b1, cp);
+	double b0 = dataSet.getDouble("beta0_25");
+	double b1 = dataSet.getDouble("beta1_25");
+	double cp = dataSet.getDouble("Cphi_25");
+	setBinaryParameters(idx1, idx2, b0, b1, cp);
 
-        // Load beta2 for 2-2 electrolytes
-        try {
-          double b2 = dataSet.getDouble("beta2_25");
-          if (Math.abs(b2) > 1e-20) {
-            beta2[idx1][idx2] = b2;
-            beta2[idx2][idx1] = b2;
-          }
-        } catch (Exception ex2) {
-          // Column may not exist in older databases
-        }
+	// Load beta2 for 2-2 electrolytes
+	try {
+	  double b2 = dataSet.getDouble("beta2_25");
+	  if (Math.abs(b2) > 1e-20) {
+	    beta2[idx1][idx2] = b2;
+	    beta2[idx2][idx1] = b2;
+	  }
+	} catch (Exception ex2) {
+	  // Column may not exist in older databases
+	}
 
-        double b0t1 = dataSet.getDouble("beta0_T1");
-        double b0t2 = dataSet.getDouble("beta0_T2");
-        double b1t1 = dataSet.getDouble("beta1_T1");
-        double b1t2 = dataSet.getDouble("beta1_T2");
-        double ct1 = dataSet.getDouble("Cphi_T1");
-        double ct2 = dataSet.getDouble("Cphi_T2");
+	double b0t1 = dataSet.getDouble("beta0_T1");
+	double b0t2 = dataSet.getDouble("beta0_T2");
+	double b1t1 = dataSet.getDouble("beta1_T1");
+	double b1t2 = dataSet.getDouble("beta1_T2");
+	double ct1 = dataSet.getDouble("Cphi_T1");
+	double ct2 = dataSet.getDouble("Cphi_T2");
 
-        beta0T1[idx1][idx2] = b0t1;
-        beta0T1[idx2][idx1] = b0t1;
-        beta0T2[idx1][idx2] = b0t2;
-        beta0T2[idx2][idx1] = b0t2;
-        beta1T1[idx1][idx2] = b1t1;
-        beta1T1[idx2][idx1] = b1t1;
-        beta1T2[idx1][idx2] = b1t2;
-        beta1T2[idx2][idx1] = b1t2;
-        cphiT1[idx1][idx2] = ct1;
-        cphiT1[idx2][idx1] = ct1;
-        cphiT2[idx1][idx2] = ct2;
-        cphiT2[idx2][idx1] = ct2;
+	beta0T1[idx1][idx2] = b0t1;
+	beta0T1[idx2][idx1] = b0t1;
+	beta0T2[idx1][idx2] = b0t2;
+	beta0T2[idx2][idx1] = b0t2;
+	beta1T1[idx1][idx2] = b1t1;
+	beta1T1[idx2][idx1] = b1t1;
+	beta1T2[idx1][idx2] = b1t2;
+	beta1T2[idx2][idx1] = b1t2;
+	cphiT1[idx1][idx2] = ct1;
+	cphiT1[idx2][idx1] = ct1;
+	cphiT2[idx1][idx2] = ct2;
+	cphiT2[idx2][idx1] = ct2;
       }
       parametersLoaded = true;
     } catch (Exception ex) {
@@ -245,8 +245,8 @@ public class PhasePitzer extends PhaseGE {
   /**
    * Get T-dependent beta0 parameter.
    *
-   * @param i component index i
-   * @param j component index j
+   * @param i  component index i
+   * @param j  component index j
    * @param TK temperature in Kelvin
    * @return beta0 at temperature T
    */
@@ -264,8 +264,8 @@ public class PhasePitzer extends PhaseGE {
   /**
    * Get T-dependent beta1 parameter.
    *
-   * @param i component index i
-   * @param j component index j
+   * @param i  component index i
+   * @param j  component index j
    * @param TK temperature in Kelvin
    * @return beta1 at temperature T
    */
@@ -282,8 +282,8 @@ public class PhasePitzer extends PhaseGE {
   /**
    * Get T-dependent Cphi parameter.
    *
-   * @param i component index i
-   * @param j component index j
+   * @param i  component index i
+   * @param j  component index j
    * @param TK temperature in Kelvin
    * @return Cphi at temperature T
    */
@@ -320,8 +320,8 @@ public class PhasePitzer extends PhaseGE {
   /**
    * Set beta2 parameter for 2-2 electrolytes.
    *
-   * @param i component index i
-   * @param j component index j
+   * @param i     component index i
+   * @param j     component index j
    * @param value beta2 value
    */
   public void setBeta2(int i, int j, double value) {
@@ -343,8 +343,8 @@ public class PhasePitzer extends PhaseGE {
   /**
    * Set theta mixing parameter for same-sign ion pair.
    *
-   * @param i component index i
-   * @param j component index j
+   * @param i     component index i
+   * @param j     component index j
    * @param value theta value
    */
   public void setTheta(int i, int j, double value) {
@@ -367,9 +367,9 @@ public class PhasePitzer extends PhaseGE {
   /**
    * Set psi ternary mixing parameter.
    *
-   * @param i component index i
-   * @param j component index j
-   * @param k component index k
+   * @param i     component index i
+   * @param j     component index j
+   * @param k     component index k
    * @param value psi value
    */
   public void setPsi(int i, int j, int k, double value) {
@@ -422,8 +422,7 @@ public class PhasePitzer extends PhaseGE {
   public double getIonicStrength() {
     double ionStrength = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
-      ionStrength +=
-          getComponent(i).getMolality(this) * Math.pow(getComponent(i).getIonicCharge(), 2.0);
+      ionStrength += getComponent(i).getMolality(this) * Math.pow(getComponent(i).getIonicCharge(), 2.0);
     }
     return 0.5 * ionStrength;
   }
@@ -437,7 +436,7 @@ public class PhasePitzer extends PhaseGE {
     double moles = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
       if (getComponent(i).getComponentName().equals("water")) {
-        moles += getComponent(i).getNumberOfMolesInPhase() * getComponent(i).getMolarMass();
+	moles += getComponent(i).getNumberOfMolesInPhase() * getComponent(i).getMolarMass();
       }
     }
     return moles;
@@ -453,10 +452,9 @@ public class PhasePitzer extends PhaseGE {
    * {@inheritDoc}
    *
    * <p>
-   * Computes brine density as a function of temperature, pressure, and salinity using the Rowe-Chou
-   * (1970) correlation for NaCl-equivalent brine, extended with pressure correction. Fall-back is
-   * pure water density from Kell (1975). Much more accurate than the inherited hard-coded 997
-   * kg/m3.
+   * Computes brine density as a function of temperature, pressure, and salinity using the Rowe-Chou (1970) correlation
+   * for NaCl-equivalent brine, extended with pressure correction. Fall-back is pure water density from Kell (1975).
+   * Much more accurate than the inherited hard-coded 997 kg/m3.
    * </p>
    */
   @Override
@@ -472,8 +470,7 @@ public class PhasePitzer extends PhaseGE {
     // Pure water density (Kell 1975 polynomial, 0-150°C at ~1 atm)
     double rhoW;
     if (TC <= 100.0) {
-      rhoW = 999.83 + 5.0948e-2 * TC - 7.5722e-3 * TC * TC + 3.8907e-5 * TC * TC * TC
-          - 1.2e-7 * TC * TC * TC * TC;
+      rhoW = 999.83 + 5.0948e-2 * TC - 7.5722e-3 * TC * TC + 3.8907e-5 * TC * TC * TC - 1.2e-7 * TC * TC * TC * TC;
     } else {
       // IAPWS approximate saturated-liquid density above 100°C
       double dT = TC - 100.0;
@@ -489,10 +486,10 @@ public class PhasePitzer extends PhaseGE {
     double waterMassKg = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
       if (Math.abs(getComponent(i).getIonicCharge()) > 0.5) {
-        ionMassKg += getComponent(i).getNumberOfMolesInPhase() * getComponent(i).getMolarMass();
+	ionMassKg += getComponent(i).getNumberOfMolesInPhase() * getComponent(i).getMolarMass();
       }
       if (getComponent(i).getComponentName().equals("water")) {
-        waterMassKg += getComponent(i).getNumberOfMolesInPhase() * getComponent(i).getMolarMass();
+	waterMassKg += getComponent(i).getNumberOfMolesInPhase() * getComponent(i).getMolarMass();
       }
     }
     double totalMass = ionMassKg + waterMassKg;
@@ -555,9 +552,9 @@ public class PhasePitzer extends PhaseGE {
    * {@inheritDoc}
    *
    * <p>
-   * Calculates the excess heat capacity via finite-difference temperature derivatives of the
-   * activity coefficients. In the current implementation the Pitzer binary parameters are
-   * temperature independent, so the residual contribution evaluates to zero.
+   * Calculates the excess heat capacity via finite-difference temperature derivatives of the activity coefficients. In
+   * the current implementation the Pitzer binary parameters are temperature independent, so the residual contribution
+   * evaluates to zero.
    * </p>
    */
   @Override

@@ -9,8 +9,8 @@ import neqsim.process.mechanicaldesign.absorber.AbsorberMechanicalDesign;
  * Cost estimation class for absorbers.
  *
  * <p>
- * This class provides absorber-specific cost estimation methods for gas absorption towers, TEG
- * contactors, amine columns, and other mass transfer equipment.
+ * This class provides absorber-specific cost estimation methods for gas absorption towers, TEG contactors, amine
+ * columns, and other mass transfer equipment.
  * </p>
  *
  * <p>
@@ -267,8 +267,7 @@ public class AbsorberCostEstimate extends UnitCostEstimateBaseClass {
     double shellWeight = Math.PI * columnDiameter * columnHeight * wallThickness * 7850.0;
 
     // Add heads weight (2 x 2:1 elliptical heads)
-    double headWeight =
-        2 * 0.9 * Math.PI / 4.0 * columnDiameter * columnDiameter * wallThickness * 7850.0;
+    double headWeight = 2 * 0.9 * Math.PI / 4.0 * columnDiameter * columnDiameter * wallThickness * 7850.0;
 
     double totalWeight = shellWeight + headWeight;
 
@@ -390,7 +389,7 @@ public class AbsorberCostEstimate extends UnitCostEstimateBaseClass {
    * Calculate annual operating cost.
    *
    * @param operatingHoursPerYear operating hours per year
-   * @param steamCostPerTonne steam cost in $/tonne
+   * @param steamCostPerTonne     steam cost in $/tonne
    * @param electricityCostPerKWh electricity cost in $/kWh
    * @return annual operating cost in USD
    */

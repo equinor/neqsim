@@ -15,20 +15,19 @@ class MultiphaseFlowRegimeTest {
   /**
    * Helper to configure a MultiphaseFlowRegime with common properties.
    *
-   * @param calc the calculator to configure
-   * @param vsg gas superficial velocity [m/s]
-   * @param vsl liquid superficial velocity [m/s]
-   * @param gasDensity gas density [kg/m3]
-   * @param liquidDensity liquid density [kg/m3]
-   * @param gasViscosity gas viscosity [Pa.s]
+   * @param calc            the calculator to configure
+   * @param vsg             gas superficial velocity [m/s]
+   * @param vsl             liquid superficial velocity [m/s]
+   * @param gasDensity      gas density [kg/m3]
+   * @param liquidDensity   liquid density [kg/m3]
+   * @param gasViscosity    gas viscosity [Pa.s]
    * @param liquidViscosity liquid viscosity [Pa.s]
-   * @param surfaceTension surface tension [N/m]
-   * @param pipeDiameter pipe diameter [m]
+   * @param surfaceTension  surface tension [N/m]
+   * @param pipeDiameter    pipe diameter [m]
    * @param pipeOrientation "horizontal" or "vertical"
    */
-  private void configure(MultiphaseFlowRegime calc, double vsg, double vsl, double gasDensity,
-      double liquidDensity, double gasViscosity, double liquidViscosity, double surfaceTension,
-      double pipeDiameter, String pipeOrientation) {
+  private void configure(MultiphaseFlowRegime calc, double vsg, double vsl, double gasDensity, double liquidDensity,
+      double gasViscosity, double liquidViscosity, double surfaceTension, double pipeDiameter, String pipeOrientation) {
     calc.setGasSuperficialVelocity(vsg);
     calc.setLiquidSuperficialVelocity(vsl);
     calc.setGasDensity(gasDensity);
@@ -51,11 +50,9 @@ class MultiphaseFlowRegimeTest {
     calc.predict();
     MultiphaseFlowRegime.FlowRegime regime = calc.getPredictedRegime();
     assertNotNull(regime);
-    assertTrue(
-        regime == MultiphaseFlowRegime.FlowRegime.STRATIFIED_SMOOTH
-            || regime == MultiphaseFlowRegime.FlowRegime.STRATIFIED_WAVY
-            || regime == MultiphaseFlowRegime.FlowRegime.SLUG,
-        "Low velocities should give stratified or slug regime, got: " + regime);
+    assertTrue(regime == MultiphaseFlowRegime.FlowRegime.STRATIFIED_SMOOTH
+	|| regime == MultiphaseFlowRegime.FlowRegime.STRATIFIED_WAVY || regime == MultiphaseFlowRegime.FlowRegime.SLUG,
+	"Low velocities should give stratified or slug regime, got: " + regime);
   }
 
   /**
@@ -69,9 +66,8 @@ class MultiphaseFlowRegimeTest {
     MultiphaseFlowRegime.FlowRegime regime = calc.getPredictedRegime();
     assertNotNull(regime);
     assertTrue(
-        regime == MultiphaseFlowRegime.FlowRegime.ANNULAR
-            || regime == MultiphaseFlowRegime.FlowRegime.ANNULAR_MIST,
-        "High gas velocity should give annular, got: " + regime);
+	regime == MultiphaseFlowRegime.FlowRegime.ANNULAR || regime == MultiphaseFlowRegime.FlowRegime.ANNULAR_MIST,
+	"High gas velocity should give annular, got: " + regime);
   }
 
   /**
@@ -85,9 +81,8 @@ class MultiphaseFlowRegimeTest {
     MultiphaseFlowRegime.FlowRegime regime = calc.getPredictedRegime();
     assertNotNull(regime);
     assertTrue(
-        regime == MultiphaseFlowRegime.FlowRegime.BUBBLE
-            || regime == MultiphaseFlowRegime.FlowRegime.DISPERSED_BUBBLE,
-        "Low gas velocity vertical should give bubble, got: " + regime);
+	regime == MultiphaseFlowRegime.FlowRegime.BUBBLE || regime == MultiphaseFlowRegime.FlowRegime.DISPERSED_BUBBLE,
+	"Low gas velocity vertical should give bubble, got: " + regime);
   }
 
   /**
@@ -101,10 +96,9 @@ class MultiphaseFlowRegimeTest {
     MultiphaseFlowRegime.FlowRegime regime = calc.getPredictedRegime();
     assertNotNull(regime);
     assertTrue(
-        regime == MultiphaseFlowRegime.FlowRegime.ANNULAR
-            || regime == MultiphaseFlowRegime.FlowRegime.CHURN
-            || regime == MultiphaseFlowRegime.FlowRegime.ANNULAR_MIST,
-        "High gas vertical should give annular/churn, got: " + regime);
+	regime == MultiphaseFlowRegime.FlowRegime.ANNULAR || regime == MultiphaseFlowRegime.FlowRegime.CHURN
+	    || regime == MultiphaseFlowRegime.FlowRegime.ANNULAR_MIST,
+	"High gas vertical should give annular/churn, got: " + regime);
   }
 
   /**
@@ -143,7 +137,6 @@ class MultiphaseFlowRegimeTest {
     MultiphaseFlowRegime calc = new MultiphaseFlowRegime();
     configure(calc, 15.0, 0.1, 50.0, 800.0, 1.0e-5, 1.0e-3, 0.025, 0.15, "horizontal");
     double fraction = calc.calcEntrainedLiquidFraction();
-    assertTrue(fraction >= 0.0 && fraction <= 1.0,
-        "Entrained fraction should be [0,1], got: " + fraction);
+    assertTrue(fraction >= 0.0 && fraction <= 1.0, "Entrained fraction should be [0,1], got: " + fraction);
   }
 }

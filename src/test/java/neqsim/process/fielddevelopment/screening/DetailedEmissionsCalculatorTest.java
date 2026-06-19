@@ -65,8 +65,7 @@ class DetailedEmissionsCalculatorTest {
 
     assertTrue(report.scope1Total > 0, "Scope 1 from flaring should be positive");
     assertTrue(report.scope1Breakdown.containsKey("Flaring"), "Should have flaring in breakdown");
-    assertTrue(report.scope1Breakdown.get("Flaring") > 0,
-        "Flaring emissions should be significant");
+    assertTrue(report.scope1Breakdown.get("Flaring") > 0, "Flaring emissions should be significant");
   }
 
   @Test
@@ -101,9 +100,8 @@ class DetailedEmissionsCalculatorTest {
     DetailedEmissionsReport report = calculator.calculate();
 
     assertTrue(report.scope1Total > 0, "Scope 1 should include fugitives");
-    assertTrue(
-        report.scope1Breakdown.containsKey("Fugitives") || report.emissionsBySource.size() > 0,
-        "Should have fugitive emissions");
+    assertTrue(report.scope1Breakdown.containsKey("Fugitives") || report.emissionsBySource.size() > 0,
+	"Should have fugitive emissions");
   }
 
   @Test
@@ -134,8 +132,7 @@ class DetailedEmissionsCalculatorTest {
     DetailedEmissionsReport euReport = calculator.calculate();
 
     // EU grid should have higher emissions than Nordic
-    assertTrue(euReport.scope2Total >= nordicReport.scope2Total,
-        "EU grid should have >= emissions than Nordic");
+    assertTrue(euReport.scope2Total >= nordicReport.scope2Total, "EU grid should have >= emissions than Nordic");
   }
 
   @Test

@@ -7,9 +7,9 @@ import java.util.List;
 import java.util.function.ToDoubleFunction;
 
 /**
- * Black-Oil PVT table with linear interpolation in pressure. Units (recommended): P: bar (or Pa,
- * but be consistent across inputs!) Rs: Sm3 gas / Sm3 oil Rv: Sm3 oil / Sm3 gas (often 0.0) Bo, Bg,
- * Bw: reservoir m3 per standard m3 (rm3 / Sm3) mu_*: Pa·s
+ * Black-Oil PVT table with linear interpolation in pressure. Units (recommended): P: bar (or Pa, but be consistent
+ * across inputs!) Rs: Sm3 gas / Sm3 oil Rv: Sm3 oil / Sm3 gas (often 0.0) Bo, Bg, Bw: reservoir m3 per standard m3 (rm3
+ * / Sm3) mu_*: Pa·s
  *
  * @author esol
  * @version 1.0
@@ -38,18 +38,18 @@ public class BlackOilPVTTable implements Serializable {
     /**
      * Constructor for Record.
      *
-     * @param p a double
-     * @param Rs a double
-     * @param Bo a double
+     * @param p    a double
+     * @param Rs   a double
+     * @param Bo   a double
      * @param mu_o a double
-     * @param Bg a double
+     * @param Bg   a double
      * @param mu_g a double
-     * @param Rv a double
-     * @param Bw a double
+     * @param Rv   a double
+     * @param Bw   a double
      * @param mu_w a double
      */
-    public Record(double p, double Rs, double Bo, double mu_o, double Bg, double mu_g, double Rv,
-        double Bw, double mu_w) {
+    public Record(double p, double Rs, double Bo, double mu_o, double Bg, double mu_g, double Rv, double Bw,
+	double mu_w) {
       this.p = p;
       this.Rs = Rs;
       this.Bo = Bo;
@@ -70,7 +70,7 @@ public class BlackOilPVTTable implements Serializable {
    * Constructor for BlackOilPVTTable.
    * </p>
    *
-   * @param records a {@link java.util.List} object
+   * @param records      a {@link java.util.List} object
    * @param bubblePointP a double
    */
   public BlackOilPVTTable(List<Record> records, double bubblePointP) {
@@ -104,8 +104,8 @@ public class BlackOilPVTTable implements Serializable {
       Record a = recs.get(i);
       Record b = recs.get(i + 1);
       if (p >= a.p && p <= b.p) {
-        double t = (p - a.p) / (b.p - a.p);
-        return f.applyAsDouble(a) * (1.0 - t) + f.applyAsDouble(b) * t;
+	double t = (p - a.p) / (b.p - a.p);
+	return f.applyAsDouble(a) * (1.0 - t) + f.applyAsDouble(b) * t;
       }
     }
     return f.applyAsDouble(recs.get(recs.size() - 1));

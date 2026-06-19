@@ -13,35 +13,33 @@ import neqsim.thermo.component.ComponentUMRCPAvolcor;
  * </p>
  *
  * <p>
- * Volume-translated UMR-CPA phase. It keeps the full UMR-CPA solve pipeline (PR physical term with
- * UMR/UNIFAC mixing, Mathias-Copeman alpha and the Wertheim association term) inherited from
- * {@link PhaseUMRCPA} and adds a consistent per-component Peneloux volume translation by overriding
- * the reduced residual Helmholtz energy primitives in the same way as {@link PhasePrEosvolcor}.
+ * Volume-translated UMR-CPA phase. It keeps the full UMR-CPA solve pipeline (PR physical term with UMR/UNIFAC mixing,
+ * Mathias-Copeman alpha and the Wertheim association term) inherited from {@link PhaseUMRCPA} and adds a consistent
+ * per-component Peneloux volume translation by overriding the reduced residual Helmholtz energy primitives in the same
+ * way as {@link PhasePrEosvolcor}.
  * </p>
  *
  * <p>
- * The translation parameter C (extensive) is introduced into the cubic g- and f-functions and into
- * every volume/temperature/mole derivative used by the solver and property routines. Because
- * {@link PhaseEos#getF()} reads the cached g and f values that are populated from the overridden
- * {@link #calcg()} and {@link #calcf()} during {@code init}, the translation propagates
- * automatically into the residual Helmholtz energy. The temperature derivatives, however, are
- * augmented explicitly with the C-temperature cross terms (FC, FTC, FCC, FCD) and the CPA
- * contribution, so density, fugacity coefficients and density-derived caloric/acoustic properties
- * are all consistent with the translated volume.
+ * The translation parameter C (extensive) is introduced into the cubic g- and f-functions and into every
+ * volume/temperature/mole derivative used by the solver and property routines. Because {@link PhaseEos#getF()} reads
+ * the cached g and f values that are populated from the overridden {@link #calcg()} and {@link #calcf()} during
+ * {@code init}, the translation propagates automatically into the residual Helmholtz energy. The temperature
+ * derivatives, however, are augmented explicitly with the C-temperature cross terms (FC, FTC, FCC, FCD) and the CPA
+ * contribution, so density, fugacity coefficients and density-derived caloric/acoustic properties are all consistent
+ * with the translated volume.
  * </p>
  *
  * <p>
- * The translation acts only on the cubic part (Option A): the association term is evaluated on the
- * physical co-volume b and on the (translated) physical molar volume returned by the solver. The
- * per-component translation c equals the inherited UMR-CPA Peneloux shift (PR shift for
- * non-associating compounds, zero for associating compounds until a UMR-CPA Rackett Z is
- * regressed).
+ * The translation acts only on the cubic part (Option A): the association term is evaluated on the physical co-volume b
+ * and on the (translated) physical molar volume returned by the solver. The per-component translation c equals the
+ * inherited UMR-CPA Peneloux shift (PR shift for non-associating compounds, zero for associating compounds until a
+ * UMR-CPA Rackett Z is regressed).
  * </p>
  *
  * <p>
- * Note: the cubic translation machinery is duplicated from {@link PhasePrEosvolcor} because Java
- * single inheritance prevents reusing both the UMR-CPA solver and the PRvolcor cubic phase. Keep
- * the two implementations in sync if either is changed.
+ * Note: the cubic translation machinery is duplicated from {@link PhasePrEosvolcor} because Java single inheritance
+ * prevents reusing both the UMR-CPA solver and the PRvolcor cubic phase. Keep the two implementations in sync if either
+ * is changed.
  * </p>
  *
  * @author Even Solbraa
@@ -72,8 +70,7 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt,
-      double beta) {
+  public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt, double beta) {
     super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
     cachedCi = null;
     cachedCiT = null;
@@ -141,9 +138,8 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
   /** {@inheritDoc} */
   @Override
   public double calcf() {
-    return (1.0 / (R * getB() * (delta1 - delta2))
-        * Math.log((1.0 + (delta1 * getb() + getc()) / molarVolume)
-            / (1.0 + (delta2 * getb() + getc()) / (molarVolume))));
+    return (1.0 / (R * getB() * (delta1 - delta2)) * Math
+	.log((1.0 + (delta1 * getb() + getc()) / molarVolume) / (1.0 + (delta2 * getb() + getc()) / (molarVolume))));
   }
 
   /**
@@ -151,13 +147,12 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
    * getcij - linear translation mixing rule c_ij = (c_i + c_j)/2.
    * </p>
    *
-   * @param compArray a {@link neqsim.thermo.component.ComponentEosInterface} object
+   * @param compArray  a {@link neqsim.thermo.component.ComponentEosInterface} object
    * @param compArray2 a {@link neqsim.thermo.component.ComponentEosInterface} object
    * @return a double
    */
   public double getcij(ComponentEosInterface compArray, ComponentEosInterface compArray2) {
-    return ((((ComponentUMRCPAvolcor) compArray).getc())
-        + (((ComponentUMRCPAvolcor) compArray2).getc())) * 0.5;
+    return ((((ComponentUMRCPAvolcor) compArray).getc()) + (((ComponentUMRCPAvolcor) compArray2).getc())) * 0.5;
   }
 
   /**
@@ -165,13 +160,12 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
    * getcijT - temperature derivative of the translation mixing rule.
    * </p>
    *
-   * @param compArray a {@link neqsim.thermo.component.ComponentEosInterface} object
+   * @param compArray  a {@link neqsim.thermo.component.ComponentEosInterface} object
    * @param compArray2 a {@link neqsim.thermo.component.ComponentEosInterface} object
    * @return a double
    */
   public double getcijT(ComponentEosInterface compArray, ComponentEosInterface compArray2) {
-    return (((ComponentUMRCPAvolcor) compArray).getcT()
-        + ((ComponentUMRCPAvolcor) compArray2).getcT()) * 0.5;
+    return (((ComponentUMRCPAvolcor) compArray).getcT() + ((ComponentUMRCPAvolcor) compArray2).getcT()) * 0.5;
   }
 
   /**
@@ -179,15 +173,14 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
    * calcCi.
    * </p>
    *
-   * @param compNumb a int
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param compNumb    a int
+   * @param phase       a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param temperature a double
-   * @param pressure a double
-   * @param numbcomp a int
+   * @param pressure    a double
+   * @param numbcomp    a int
    * @return a double
    */
-  public double calcCi(int compNumb, PhaseInterface phase, double temperature, double pressure,
-      int numbcomp) {
+  public double calcCi(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
     ensureCiCache(numbcomp);
     return cachedCi[compNumb];
   }
@@ -197,16 +190,16 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
    * calcCij.
    * </p>
    *
-   * @param compNumb a int
-   * @param compNumbj a int
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param compNumb    a int
+   * @param compNumbj   a int
+   * @param phase       a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param temperature a double
-   * @param pressure a double
-   * @param numbcomp a int
+   * @param pressure    a double
+   * @param numbcomp    a int
    * @return a double
    */
-  public double calcCij(int compNumb, int compNumbj, PhaseInterface phase, double temperature,
-      double pressure, int numbcomp) {
+  public double calcCij(int compNumb, int compNumbj, PhaseInterface phase, double temperature, double pressure,
+      int numbcomp) {
     ensureCijCache(numbcomp);
     return cachedCij[compNumb][compNumbj];
   }
@@ -216,15 +209,14 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
    * calcCiT.
    * </p>
    *
-   * @param compNumb a int
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param compNumb    a int
+   * @param phase       a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param temperature a double
-   * @param pressure a double
-   * @param numbcomp a int
+   * @param pressure    a double
+   * @param numbcomp    a int
    * @return a double
    */
-  public double calcCiT(int compNumb, PhaseInterface phase, double temperature, double pressure,
-      int numbcomp) {
+  public double calcCiT(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
     ensureCiTCache(numbcomp);
     return cachedCiT[compNumb];
   }
@@ -234,10 +226,10 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
    * calcCT.
    * </p>
    *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase       a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param temperature a double
-   * @param pressure a double
-   * @param numbcomp a int
+   * @param pressure    a double
+   * @param numbcomp    a int
    * @return a double
    */
   public double calcCT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
@@ -245,8 +237,8 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
     ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
     for (int i = 0; i < numbcomp; i++) {
       for (int j = 0; j < numbcomp; j++) {
-        locCT += compArray[i].getNumberOfMolesInPhase() * compArray[j].getNumberOfMolesInPhase()
-            * getcijT(compArray[i], compArray[j]);
+	locCT += compArray[i].getNumberOfMolesInPhase() * compArray[j].getNumberOfMolesInPhase()
+	    * getcijT(compArray[i], compArray[j]);
       }
     }
     return locCT / phase.getNumberOfMolesInPhase();
@@ -262,7 +254,7 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
     for (int i = 0; i < numbcomp; i++) {
       double CiVal = 0.0;
       for (int j = 0; j < numbcomp; j++) {
-        CiVal += compArray[j].getNumberOfMolesInPhase() * getcij(compArray[i], compArray[j]);
+	CiVal += compArray[j].getNumberOfMolesInPhase() * getcij(compArray[i], compArray[j]);
       }
       cachedCi[i] = (2.0 * CiVal - getC()) / totalMolesInPhase;
     }
@@ -278,7 +270,7 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
     for (int i = 0; i < numbcomp; i++) {
       double CiTVal = 0.0;
       for (int j = 0; j < numbcomp; j++) {
-        CiTVal += compArray[j].getNumberOfMolesInPhase() * getcijT(compArray[i], compArray[j]);
+	CiTVal += compArray[j].getNumberOfMolesInPhase() * getcijT(compArray[i], compArray[j]);
       }
       cachedCiT[i] = (2.0 * CiTVal - getCT()) / totalMolesInPhase;
     }
@@ -293,9 +285,9 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
     double totalMolesInPhase = getNumberOfMolesInPhase();
     for (int i = 0; i < numbcomp; i++) {
       for (int j = 0; j < numbcomp; j++) {
-        double cij = getcij(compArray[i], compArray[j]);
-        cachedCij[i][j] = (2.0 * cij - ((ComponentUMRCPAvolcor) compArray[i]).getCi()
-            - ((ComponentUMRCPAvolcor) compArray[j]).getCi()) / totalMolesInPhase;
+	double cij = getcij(compArray[i], compArray[j]);
+	cachedCij[i][j] = (2.0 * cij - ((ComponentUMRCPAvolcor) compArray[i]).getCi()
+	    - ((ComponentUMRCPAvolcor) compArray[j]).getCi()) / totalMolesInPhase;
       }
     }
   }
@@ -305,10 +297,10 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
    * calcC.
    * </p>
    *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase       a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param temperature a double
-   * @param pressure a double
-   * @param numbcomp a int
+   * @param pressure    a double
+   * @param numbcomp    a int
    * @return a double
    */
   public double calcC(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
@@ -316,8 +308,8 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
     ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
     for (int i = 0; i < numbcomp; i++) {
       for (int j = 0; j < numbcomp; j++) {
-        C += compArray[i].getNumberOfMolesInPhase() * compArray[j].getNumberOfMolesInPhase()
-            * getcij(compArray[i], compArray[j]);
+	C += compArray[i].getNumberOfMolesInPhase() * compArray[j].getNumberOfMolesInPhase()
+	    * getcij(compArray[i], compArray[j]);
       }
     }
     C /= phase.getNumberOfMolesInPhase();
@@ -355,8 +347,7 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
   /** {@inheritDoc} */
   @Override
   public double gV() {
-    return (getb() - getc())
-        / (molarVolume * (numberOfMolesInPhase * molarVolume + loc_C() - getB()));
+    return (getb() - getc()) / (molarVolume * (numberOfMolesInPhase * molarVolume + loc_C() - getB()));
   }
 
   /** {@inheritDoc} */
@@ -379,7 +370,7 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
   @Override
   public double fv() {
     return -1.0 / (R * (numberOfMolesInPhase * molarVolume + delta1 * getB() + loc_C())
-        * (numberOfMolesInPhase * molarVolume + delta2 * getB() + loc_C()));
+	* (numberOfMolesInPhase * molarVolume + delta2 * getB() + loc_C()));
   }
 
   /** {@inheritDoc} */
@@ -395,8 +386,7 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
   public double fVVV() {
     double val1 = numberOfMolesInPhase * molarVolume + getB() * delta1 + getC();
     double val2 = numberOfMolesInPhase * molarVolume + getB() * delta2 + getC();
-    return 1.0 / (R * getB() * (delta1 - delta2))
-        * (2.0 / (val1 * val1 * val1) - 2.0 / (val2 * val2 * val2));
+    return 1.0 / (R * getB() * (delta1 - delta2)) * (2.0 / (val1 * val1 * val1) - 2.0 / (val2 * val2 * val2));
   }
 
   /** {@inheritDoc} */
@@ -425,7 +415,7 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
    */
   public double fc() {
     return -1.0 / (R * (numberOfMolesInPhase * molarVolume + delta1 * getB() + loc_C())
-        * (numberOfMolesInPhase * molarVolume + delta2 * getB() + loc_C()));
+	* (numberOfMolesInPhase * molarVolume + delta2 * getB() + loc_C()));
   }
 
   /** {@inheritDoc} */
@@ -639,8 +629,7 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
   /** {@inheritDoc} */
   @Override
   public double dFdTdT() {
-    return (FTT() + 2.0 * FDT() * getAT() + FD() * getATT() + 2.0 * FTC() * getCT()
-        + FCC() * getCT() * getCT() + FC() * getCTT() + 2.0 * FCD() * getCT() * getAT())
-        + cpaon * dFCPAdTdT();
+    return (FTT() + 2.0 * FDT() * getAT() + FD() * getATT() + 2.0 * FTC() * getCT() + FCC() * getCT() * getCT()
+	+ FC() * getCTT() + 2.0 * FCD() * getCT() * getAT()) + cpaon * dFCPAdTdT();
   }
 }

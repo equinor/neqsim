@@ -15,13 +15,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * Speed benchmark for recycle-containing processes. Compares runOptimized() (which on master routes
- * recycle systems to sequential, on combined-speedup routes them to runHybrid) to baseline
- * runSequential() execution.
+ * Speed benchmark for recycle-containing processes. Compares runOptimized() (which on master routes recycle systems to
+ * sequential, on combined-speedup routes them to runHybrid) to baseline runSequential() execution.
  */
 public class RecycleSpeedBenchmarkTest {
   private static final Logger logger = LogManager.getLogger(RecycleSpeedBenchmarkTest.class);
-
 
   private SystemInterface makeFluid() {
     SystemInterface f = new SystemSrkEos(298.0, 80.0);
@@ -42,8 +40,8 @@ public class RecycleSpeedBenchmarkTest {
   }
 
   /**
-   * 3 parallel feed-forward compression trains THEN a recycle loop at the tail. Maximises the
-   * hybrid feed-forward-parallel opportunity before the tear.
+   * 3 parallel feed-forward compression trains THEN a recycle loop at the tail. Maximises the hybrid
+   * feed-forward-parallel opportunity before the tear.
    */
   private ProcessSystem buildParallelWithTailRecycle(boolean optimized) {
     ProcessSystem sys = new ProcessSystem("par-tail-recycle");
@@ -76,7 +74,7 @@ public class RecycleSpeedBenchmarkTest {
 
     // Tail recycle: split off a small fraction, valve it down, recycle to mixer
     Splitter tailSp = new Splitter("tailSplit", mx.getOutletStream(), 2);
-    tailSp.setSplitFactors(new double[] {0.95, 0.05});
+    tailSp.setSplitFactors(new double[] { 0.95, 0.05 });
     sys.add(tailSp);
 
     ThrottlingValve recValve = new ThrottlingValve("recValve", tailSp.getSplitStream(1));
@@ -120,10 +118,8 @@ public class RecycleSpeedBenchmarkTest {
     double optMs = (System.nanoTime() - t0) / (double) RUNS / 1e6;
 
     logger.printf(org.apache.logging.log4j.Level.INFO,
-        "  Sequential: %.1f ms  |  Optimized: %.1f ms  |  Speedup: %.2fx%n", seqMs, optMs,
-        seqMs / optMs);
-    logger.printf(org.apache.logging.log4j.Level.INFO,
-        "  hasRecycles: %b  |  Max parallelism: %d%n", opt.hasRecycles(),
-        opt.getParallelPartition().getMaxParallelism());
+	"  Sequential: %.1f ms  |  Optimized: %.1f ms  |  Speedup: %.2fx%n", seqMs, optMs, seqMs / optMs);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  hasRecycles: %b  |  Max parallelism: %d%n", opt.hasRecycles(),
+	opt.getParallelPartition().getMaxParallelism());
   }
 }

@@ -16,8 +16,7 @@ import org.apache.logging.log4j.Logger;
  * @author esol
  * @version $Id: $Id
  */
-public class AspenIP21Database
-    implements neqsim.util.util.FileSystemSettings, java.io.Serializable {
+public class AspenIP21Database implements neqsim.util.util.FileSystemSettings, java.io.Serializable {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
@@ -35,7 +34,7 @@ public class AspenIP21Database
   public AspenIP21Database() {
     try {
       if (dataBaseType.equals("Karsto")) {
-        Class.forName("sun.jdbc.odbc.JdbcOdbcDriver").getDeclaredConstructor().newInstance();
+	Class.forName("sun.jdbc.odbc.JdbcOdbcDriver").getDeclaredConstructor().newInstance();
       }
     } catch (Exception ex) {
       logger.error("error in Online Karsto ", ex);
@@ -57,7 +56,7 @@ public class AspenIP21Database
    *
    * @param database a {@link java.lang.String} object
    * @return a Connection object
-   * @throws java.sql.SQLException if any.
+   * @throws java.sql.SQLException            if any.
    * @throws java.lang.ClassNotFoundException if any.
    */
   public Connection openConnection(String database) throws SQLException, ClassNotFoundException {
@@ -70,11 +69,11 @@ public class AspenIP21Database
       logger.error("The Kaarsto database must be registered on the local DBMS to work.");
     } finally {
       try {
-        if (ctx != null) {
-          ctx.close();
-        }
+	if (ctx != null) {
+	  ctx.close();
+	}
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+	logger.error(ex.getMessage(), ex);
       }
     }
     return null;
@@ -108,7 +107,7 @@ public class AspenIP21Database
    * getResultSet.
    * </p>
    *
-   * @param database a {@link java.lang.String} object
+   * @param database  a {@link java.lang.String} object
    * @param sqlString a {@link java.lang.String} object
    * @return a ResultSet object
    */

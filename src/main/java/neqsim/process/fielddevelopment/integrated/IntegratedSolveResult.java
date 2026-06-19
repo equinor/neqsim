@@ -26,19 +26,19 @@ public class IntegratedSolveResult implements Serializable {
   /**
    * Creates an integrated solve result.
    *
-   * @param converged whether the network solve converged
-   * @param iterations solver iteration count
-   * @param fieldRate total field export rate in Sm3/day
-   * @param wellRates per-well rate in Sm3/day keyed by well name
-   * @param nodePressures node pressures in bara keyed by node name
-   * @param revenue revenue rate in currency per day
-   * @param energyKWhPerDay processing/compression energy in kWh per day
+   * @param converged         whether the network solve converged
+   * @param iterations        solver iteration count
+   * @param fieldRate         total field export rate in Sm3/day
+   * @param wellRates         per-well rate in Sm3/day keyed by well name
+   * @param nodePressures     node pressures in bara keyed by node name
+   * @param revenue           revenue rate in currency per day
+   * @param energyKWhPerDay   processing/compression energy in kWh per day
    * @param emissionsKgPerDay CO2 emissions in kg per day
-   * @param method solver method that produced the result
+   * @param method            solver method that produced the result
    */
-  public IntegratedSolveResult(boolean converged, int iterations, double fieldRate,
-      Map<String, Double> wellRates, Map<String, Double> nodePressures, double revenue,
-      double energyKWhPerDay, double emissionsKgPerDay, String method) {
+  public IntegratedSolveResult(boolean converged, int iterations, double fieldRate, Map<String, Double> wellRates,
+      Map<String, Double> nodePressures, double revenue, double energyKWhPerDay, double emissionsKgPerDay,
+      String method) {
     this.converged = converged;
     this.iterations = iterations;
     this.fieldRate = fieldRate;

@@ -14,15 +14,15 @@ import org.netlib.util.intW;
  * Test class for GERG-2008-H2 equation of state with improved hydrogen parameters.
  *
  * <p>
- * Tests verify that the improved hydrogen binary interaction parameters provide sensible results
- * for hydrogen-rich natural gas mixtures.
+ * Tests verify that the improved hydrogen binary interaction parameters provide sensible results for hydrogen-rich
+ * natural gas mixtures.
  * </p>
  */
 public class GERG2008H2Test {
   private static final Logger logger = LogManager.getLogger(GERG2008H2Test.class);
 
   private GERG2008H2 gerg;
-  
+
   @BeforeEach
   public void setUp() {
     gerg = new GERG2008H2();
@@ -97,8 +97,7 @@ public class GERG2008H2Test {
     doubleW Kappa = new doubleW(0.0);
     doubleW A = new doubleW(0.0);
 
-    gerg.PropertiesGERG(T, D.val, x, PP, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, W, G, JT,
-        Kappa, A);
+    gerg.PropertiesGERG(T, D.val, x, PP, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, W, G, JT, Kappa, A);
 
     assertTrue(Z.val > 0.9, "Z factor should be close to ideal at these conditions");
     assertTrue(Cp.val > Cv.val, "Cp should be greater than Cv");
@@ -163,8 +162,7 @@ public class GERG2008H2Test {
     // Verify molar mass calculation
     doubleW Mm = new doubleW(0.0);
     gerg.MolarMassGERG(x, Mm);
-    assertTrue(Mm.val > 10 && Mm.val < 20,
-        "Molar mass should be between 10 and 20 g/mol for this mixture");
+    assertTrue(Mm.val > 10 && Mm.val < 20, "Molar mass should be between 10 and 20 g/mol for this mixture");
   }
 
   @Test
@@ -252,13 +250,11 @@ public class GERG2008H2Test {
     doubleW Kappa = new doubleW(0.0);
     doubleW A = new doubleW(0.0);
 
-    gerg.PropertiesGERG(T, D.val, x, P, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, W, G, JT,
-        Kappa, A);
+    gerg.PropertiesGERG(T, D.val, x, P, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, W, G, JT, Kappa, A);
 
     // Hydrogen has very high speed of sound (~1300 m/s at 300K, 10 MPa)
     assertTrue(W.val > 1000, "Pure H2 speed of sound should be > 1000 m/s");
-    assertTrue(Z.val > 1.0,
-        "Pure H2 compressibility factor should be > 1 at high pressure (repulsive behavior)");
+    assertTrue(Z.val > 1.0, "Pure H2 compressibility factor should be > 1 at high pressure (repulsive behavior)");
 
     // Hydrogen has relatively low heat capacities
     assertTrue(Cv.val > 15 && Cv.val < 25, "H2 Cv should be around 20 J/(mol·K)");

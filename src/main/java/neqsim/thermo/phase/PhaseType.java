@@ -13,20 +13,20 @@ public enum PhaseType {
    * Gas hydrate phase type.
    *
    * <p>
-   * Gas hydrates are crystalline solid compounds formed when water molecules create a cage-like
-   * structure around small guest molecules (hydrate formers) such as methane, ethane, propane, CO2,
-   * H2S, etc. Structure I and Structure II hydrates are supported.
+   * Gas hydrates are crystalline solid compounds formed when water molecules create a cage-like structure around small
+   * guest molecules (hydrate formers) such as methane, ethane, propane, CO2, H2S, etc. Structure I and Structure II
+   * hydrates are supported.
    * </p>
    */
-  HYDRATE("gas hydrate", 4), WAX("wax", 5), SOLID("solid", 6), SOLIDCOMPLEX("solidComplex",
-      7), ASPHALTENE("asphaltene", 8),
+  HYDRATE("gas hydrate", 4), WAX("wax", 5), SOLID("solid", 6), SOLIDCOMPLEX("solidComplex", 7),
+  ASPHALTENE("asphaltene", 8),
   /**
    * Asphaltene-rich liquid phase for Pedersen's liquid-liquid approach.
    *
    * <p>
-   * This phase type is used when modeling asphaltene precipitation as a liquid-liquid equilibrium
-   * (Pedersen's classical cubic EOS approach) rather than as a solid precipitate. The
-   * LIQUID_ASPHALTENE phase behaves like a heavy oil phase with EOS-calculated properties.
+   * This phase type is used when modeling asphaltene precipitation as a liquid-liquid equilibrium (Pedersen's classical
+   * cubic EOS approach) rather than as a solid precipitate. The LIQUID_ASPHALTENE phase behaves like a heavy oil phase
+   * with EOS-calculated properties.
    * </p>
    */
   LIQUID_ASPHALTENE("asphaltene liquid", 9);
@@ -43,7 +43,7 @@ public enum PhaseType {
   /**
    * Constructor for PhaseType enum.
    *
-   * @param desc Single word descriptor of phase type
+   * @param desc  Single word descriptor of phase type
    * @param value Numeric value index for phase type
    */
   private PhaseType(String desc, int value) {
@@ -79,11 +79,10 @@ public enum PhaseType {
   public static PhaseType byName(String name) {
     for (PhaseType pt : copyOfValues) {
       if (pt.name().equals(name)) {
-        return pt;
+	return pt;
       }
     }
-    throw new RuntimeException(
-        new InvalidInputException("PhaseType", "byName", "name", "is not valid."));
+    throw new RuntimeException(new InvalidInputException("PhaseType", "byName", "name", "is not valid."));
   }
 
   /**
@@ -95,11 +94,10 @@ public enum PhaseType {
   public static PhaseType byDesc(String desc) {
     for (PhaseType pt : copyOfValues) {
       if (pt.getDesc().equals(desc)) {
-        return pt;
+	return pt;
       }
     }
-    throw new RuntimeException(
-        new InvalidInputException("PhaseType", "byDesc", "desc", "is not valid."));
+    throw new RuntimeException(new InvalidInputException("PhaseType", "byDesc", "desc", "is not valid."));
   }
 
   /**
@@ -111,10 +109,9 @@ public enum PhaseType {
   public static PhaseType byValue(int value) {
     for (PhaseType pt : copyOfValues) {
       if (pt.getValue() == (value)) {
-        return pt;
+	return pt;
       }
     }
-    throw new RuntimeException(
-        new InvalidInputException("PhaseType", "byValue", "value", "is not valid."));
+    throw new RuntimeException(new InvalidInputException("PhaseType", "byValue", "value", "is not valid."));
   }
 }

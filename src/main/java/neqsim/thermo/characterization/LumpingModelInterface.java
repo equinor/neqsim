@@ -96,8 +96,8 @@ public interface LumpingModelInterface {
    * Set custom carbon number boundaries for lumping.
    *
    * <p>
-   * This allows matching specific PVT lab report groupings. For example, boundaries [6, 10, 15, 20]
-   * would create groups: C6-C9, C10-C14, C15-C19, C20+
+   * This allows matching specific PVT lab report groupings. For example, boundaries [6, 10, 15, 20] would create
+   * groups: C6-C9, C10-C14, C15-C19, C20+
    * </p>
    *
    * @param boundaries array of starting carbon numbers for each group

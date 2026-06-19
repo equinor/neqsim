@@ -26,31 +26,31 @@ public class NewComponentTest extends neqsim.NeqSimTest {
       p.addComponent("", 0, 0, 0);
     });
     Assertions.assertEquals(
-        "neqsim.util.exception.InvalidInputException: PhaseSrkEos:addcomponent - Input name can not be empty.",
-        thrown.getMessage());
+	"neqsim.util.exception.InvalidInputException: PhaseSrkEos:addcomponent - Input name can not be empty.",
+	thrown.getMessage());
 
     RuntimeException thrown_2 = Assertions.assertThrows(RuntimeException.class, () -> {
       p.addComponent(null, 0, 0, 0);
     });
     Assertions.assertEquals(
-        "neqsim.util.exception.InvalidInputException: PhaseSrkEos:addcomponent - Input name can not be null",
-        thrown_2.getMessage());
+	"neqsim.util.exception.InvalidInputException: PhaseSrkEos:addcomponent - Input name can not be null",
+	thrown_2.getMessage());
 
     RuntimeException thrown_3 = Assertions.assertThrows(RuntimeException.class, () -> {
       p.addComponent("ethane", 0, 0, -1);
     });
     Assertions.assertEquals(
-        "neqsim.util.exception.InvalidInputException: PhaseSrkEos:addComponent - Input compNumber  must be valid index, i.e., between 0 and "
-            + ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS + ".",
-        thrown_3.getMessage());
+	"neqsim.util.exception.InvalidInputException: PhaseSrkEos:addComponent - Input compNumber  must be valid index, i.e., between 0 and "
+	    + ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS + ".",
+	thrown_3.getMessage());
 
     p.addComponent("ethane", 0, 0, 0);
     RuntimeException thrown_4 = Assertions.assertThrows(RuntimeException.class, () -> {
       p.addComponent("methane", 0, 0, 0);
     });
     Assertions.assertEquals(
-        "neqsim.util.exception.InvalidInputException: PhaseSrkEos:addComponent - Input compNumber number is already in use.",
-        thrown_4.getMessage());
+	"neqsim.util.exception.InvalidInputException: PhaseSrkEos:addComponent - Input compNumber number is already in use.",
+	thrown_4.getMessage());
   }
 
   @Test
@@ -162,8 +162,7 @@ public class NewComponentTest extends neqsim.NeqSimTest {
     } catch (Exception e) {
       logger.info("error in bubble point flash");
     }
-    assertEquals(3.447289881042099E-6,
-        thermoSystem.getPhase(0).getComponent("sulfuric acid").getx(), 100e-9);
+    assertEquals(3.447289881042099E-6, thermoSystem.getPhase(0).getComponent("sulfuric acid").getx(), 100e-9);
 
     thermoSystem = new SystemSrkEos(273.15 + 25.0, 100.6);
     thermoSystem.addComponent("nitric acid", 1.0);

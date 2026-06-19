@@ -11,9 +11,8 @@ import com.google.gson.GsonBuilder;
  * Result of a {@link ChokeCollapseAnalyzer} analysis.
  *
  * <p>
- * Holds the diagnosed flow regime, collapse mode, and the numerical margins used to reach the
- * verdict. The class is serialisable so it can be embedded in {@code ProcessAutomation} snapshots
- * and equipment reports.
+ * Holds the diagnosed flow regime, collapse mode, and the numerical margins used to reach the verdict. The class is
+ * serialisable so it can be embedded in {@code ProcessAutomation} snapshots and equipment reports.
  * </p>
  *
  * @author esol
@@ -70,7 +69,8 @@ public class ChokeCollapseResult implements Serializable {
   private final List<String> recommendations = new ArrayList<>();
 
   /** Default constructor. */
-  public ChokeCollapseResult() {}
+  public ChokeCollapseResult() {
+  }
 
   /**
    * @return diagnosed flow regime
@@ -297,7 +297,6 @@ public class ChokeCollapseResult implements Serializable {
     map.put("cavitationIndex", cavitationIndex);
     map.put("flashing", flashing);
     map.put("recommendations", recommendations);
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(map);
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(map);
   }
 }

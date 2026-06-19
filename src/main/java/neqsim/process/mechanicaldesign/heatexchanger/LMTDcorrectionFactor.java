@@ -4,9 +4,9 @@ package neqsim.process.mechanicaldesign.heatexchanger;
  * LMTD correction factor (F_t) calculations for multi-pass heat exchangers.
  *
  * <p>
- * For heat exchangers with multiple tube or shell passes, the true mean temperature difference
- * differs from the log-mean temperature difference (LMTD) of a pure counterflow arrangement. The
- * correction factor F_t accounts for this departure:
+ * For heat exchangers with multiple tube or shell passes, the true mean temperature difference differs from the
+ * log-mean temperature difference (LMTD) of a pure counterflow arrangement. The correction factor F_t accounts for this
+ * departure:
  * </p>
  *
  * <p>
@@ -22,8 +22,8 @@ package neqsim.process.mechanicaldesign.heatexchanger;
  * </ul>
  *
  * <p>
- * For detailed derivation see: Bowman, Mueller and Nagle (1940), "Mean Temperature Difference in
- * Design", Trans. ASME, Vol. 62, pp. 283-294.
+ * For detailed derivation see: Bowman, Mueller and Nagle (1940), "Mean Temperature Difference in Design", Trans. ASME,
+ * Vol. 62, pp. 283-294.
  * </p>
  *
  * @author NeqSim Development Team
@@ -39,41 +39,39 @@ public final class LMTDcorrectionFactor {
   /**
    * Private constructor to prevent instantiation.
    */
-  private LMTDcorrectionFactor() {}
+  private LMTDcorrectionFactor() {
+  }
 
   /**
-   * Calculates the LMTD correction factor for a 1-shell-pass, even-number-of-tube-passes (1-2N)
-   * TEMA E-shell exchanger.
+   * Calculates the LMTD correction factor for a 1-shell-pass, even-number-of-tube-passes (1-2N) TEMA E-shell exchanger.
    *
    * <p>
    * This is the most common configuration (e.g., 1 shell pass, 2 or 4 tube passes).
    * </p>
    *
-   * @param tHotIn hot stream inlet temperature (any consistent unit)
-   * @param tHotOut hot stream outlet temperature
-   * @param tColdIn cold stream inlet temperature
+   * @param tHotIn   hot stream inlet temperature (any consistent unit)
+   * @param tHotOut  hot stream outlet temperature
+   * @param tColdIn  cold stream inlet temperature
    * @param tColdOut cold stream outlet temperature
    * @return F_t correction factor (0 to 1.0), or 1.0 for pure counterflow
    */
-  public static double calcFt1ShellPass(double tHotIn, double tHotOut, double tColdIn,
-      double tColdOut) {
+  public static double calcFt1ShellPass(double tHotIn, double tHotOut, double tColdIn, double tColdOut) {
     double R = calcR(tHotIn, tHotOut, tColdIn, tColdOut);
     double P = calcP(tHotIn, tHotOut, tColdIn, tColdOut);
     return calcFtFromRP(R, P, 1);
   }
 
   /**
-   * Calculates the LMTD correction factor for a 2-shell-pass, 4-or-more-tube-pass (2-4) TEMA
-   * F-shell or two E-shells in series.
+   * Calculates the LMTD correction factor for a 2-shell-pass, 4-or-more-tube-pass (2-4) TEMA F-shell or two E-shells in
+   * series.
    *
-   * @param tHotIn hot stream inlet temperature (any consistent unit)
-   * @param tHotOut hot stream outlet temperature
-   * @param tColdIn cold stream inlet temperature
+   * @param tHotIn   hot stream inlet temperature (any consistent unit)
+   * @param tHotOut  hot stream outlet temperature
+   * @param tColdIn  cold stream inlet temperature
    * @param tColdOut cold stream outlet temperature
    * @return F_t correction factor (0 to 1.0)
    */
-  public static double calcFt2ShellPass(double tHotIn, double tHotOut, double tColdIn,
-      double tColdOut) {
+  public static double calcFt2ShellPass(double tHotIn, double tHotOut, double tColdIn, double tColdOut) {
     double R = calcR(tHotIn, tHotOut, tColdIn, tColdOut);
     double P = calcP(tHotIn, tHotOut, tColdIn, tColdOut);
     return calcFtFromRP(R, P, 2);
@@ -83,19 +81,18 @@ public final class LMTDcorrectionFactor {
    * Calculates the LMTD correction factor for N shell passes.
    *
    * <p>
-   * Uses the Bowman-Mueller-Nagle method: first compute the per-shell P from the overall P, then
-   * apply the single-shell F_t formula.
+   * Uses the Bowman-Mueller-Nagle method: first compute the per-shell P from the overall P, then apply the single-shell
+   * F_t formula.
    * </p>
    *
-   * @param tHotIn hot stream inlet temperature (any consistent unit)
-   * @param tHotOut hot stream outlet temperature
-   * @param tColdIn cold stream inlet temperature
-   * @param tColdOut cold stream outlet temperature
+   * @param tHotIn      hot stream inlet temperature (any consistent unit)
+   * @param tHotOut     hot stream outlet temperature
+   * @param tColdIn     cold stream inlet temperature
+   * @param tColdOut    cold stream outlet temperature
    * @param shellPasses number of shell passes (1, 2, 3, ...)
    * @return F_t correction factor (0 to 1.0)
    */
-  public static double calcFt(double tHotIn, double tHotOut, double tColdIn, double tColdOut,
-      int shellPasses) {
+  public static double calcFt(double tHotIn, double tHotOut, double tColdIn, double tColdOut, int shellPasses) {
     double R = calcR(tHotIn, tHotOut, tColdIn, tColdOut);
     double P = calcP(tHotIn, tHotOut, tColdIn, tColdOut);
     return calcFtFromRP(R, P, shellPasses);
@@ -104,8 +101,8 @@ public final class LMTDcorrectionFactor {
   /**
    * Calculates the LMTD correction factor from dimensionless R and P parameters.
    *
-   * @param R capacity ratio = (T_h_in - T_h_out) / (T_c_out - T_c_in)
-   * @param P thermal effectiveness = (T_c_out - T_c_in) / (T_h_in - T_c_in)
+   * @param R           capacity ratio = (T_h_in - T_h_out) / (T_c_out - T_c_in)
+   * @param P           thermal effectiveness = (T_c_out - T_c_in) / (T_h_in - T_c_in)
    * @param shellPasses number of shell passes (1, 2, 3, ...)
    * @return F_t correction factor (0 to 1.0)
    */
@@ -126,7 +123,7 @@ public final class LMTDcorrectionFactor {
     if (shellPasses > 1) {
       P1 = convertPtoPerShell(P, R, shellPasses);
       if (P1 <= 0.0 || P1 >= 1.0 || Double.isNaN(P1)) {
-        return 1.0;
+	return 1.0;
       }
     }
 
@@ -135,21 +132,19 @@ public final class LMTDcorrectionFactor {
   }
 
   /**
-   * Calculates the minimum number of shell passes required to achieve F_t above the minimum
-   * acceptable value.
+   * Calculates the minimum number of shell passes required to achieve F_t above the minimum acceptable value.
    *
-   * @param tHotIn hot stream inlet temperature
-   * @param tHotOut hot stream outlet temperature
-   * @param tColdIn cold stream inlet temperature
+   * @param tHotIn   hot stream inlet temperature
+   * @param tHotOut  hot stream outlet temperature
+   * @param tColdIn  cold stream inlet temperature
    * @param tColdOut cold stream outlet temperature
    * @return minimum number of shell passes (1 to 6), or -1 if not achievable
    */
-  public static int requiredShellPasses(double tHotIn, double tHotOut, double tColdIn,
-      double tColdOut) {
+  public static int requiredShellPasses(double tHotIn, double tHotOut, double tColdIn, double tColdOut) {
     for (int n = 1; n <= 6; n++) {
       double ft = calcFt(tHotIn, tHotOut, tColdIn, tColdOut, n);
       if (ft >= MIN_ACCEPTABLE_FT) {
-        return n;
+	return n;
       }
     }
     return -1;
@@ -158,9 +153,9 @@ public final class LMTDcorrectionFactor {
   /**
    * Calculates the dimensionless capacity ratio R.
    *
-   * @param tHotIn hot stream inlet temperature
-   * @param tHotOut hot stream outlet temperature
-   * @param tColdIn cold stream inlet temperature
+   * @param tHotIn   hot stream inlet temperature
+   * @param tHotOut  hot stream outlet temperature
+   * @param tColdIn  cold stream inlet temperature
    * @param tColdOut cold stream outlet temperature
    * @return R = (T_h_in - T_h_out) / (T_c_out - T_c_in)
    */
@@ -175,9 +170,9 @@ public final class LMTDcorrectionFactor {
   /**
    * Calculates the dimensionless thermal effectiveness P.
    *
-   * @param tHotIn hot stream inlet temperature
-   * @param tHotOut hot stream outlet temperature
-   * @param tColdIn cold stream inlet temperature
+   * @param tHotIn   hot stream inlet temperature
+   * @param tHotOut  hot stream outlet temperature
+   * @param tColdIn  cold stream inlet temperature
    * @param tColdOut cold stream outlet temperature
    * @return P = (T_c_out - T_c_in) / (T_h_in - T_c_in)
    */
@@ -196,8 +191,7 @@ public final class LMTDcorrectionFactor {
    * Uses the analytical formula:
    * </p>
    * <ul>
-   * <li>When R != 1: F = [sqrt(R²+1) * ln((1-P)/(1-R*P))] / [(R-1) * ln((2-P*(R+1-W)) /
-   * (2-P*(R+1+W)))]</li>
+   * <li>When R != 1: F = [sqrt(R²+1) * ln((1-P)/(1-R*P))] / [(R-1) * ln((2-P*(R+1-W)) / (2-P*(R+1+W)))]</li>
    * <li>where W = sqrt(R²+1)</li>
    * <li>When R = 1: F = [P*sqrt(2)] / [(1-P)*ln((2-P*(2-sqrt(2)))/(2-P*(2+sqrt(2))))]</li>
    * </ul>
@@ -220,11 +214,11 @@ public final class LMTDcorrectionFactor {
       double arg1 = 2.0 - P * (2.0 - sqrt2);
       double arg2 = 2.0 - P * (2.0 + sqrt2);
       if (arg1 <= 0.0 || arg2 <= 0.0 || arg1 / arg2 <= 0.0) {
-        return 0.0;
+	return 0.0;
       }
       double denominator = (1.0 - P) * Math.log(arg1 / arg2);
       if (Math.abs(denominator) < 1e-15) {
-        return 1.0;
+	return 1.0;
       }
       return numerator / denominator;
     }

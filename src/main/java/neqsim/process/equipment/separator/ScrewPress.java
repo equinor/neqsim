@@ -6,9 +6,8 @@ import neqsim.process.equipment.stream.StreamInterface;
  * Screw press for bio-processing dewatering.
  *
  * <p>
- * A mechanical press that uses a rotating screw to compress biomass or slurry, squeezing out
- * liquid. Commonly used for fiber dewatering, press-mud removal in sugar mills, and biosolids
- * dewatering in wastewater treatment.
+ * A mechanical press that uses a rotating screw to compress biomass or slurry, squeezing out liquid. Commonly used for
+ * fiber dewatering, press-mud removal in sugar mills, and biosolids dewatering in wastewater treatment.
  * </p>
  *
  * <p>
@@ -48,7 +47,7 @@ public class ScrewPress extends SolidsSeparator {
   /**
    * Constructor for ScrewPress with inlet stream.
    *
-   * @param name name of the screw press
+   * @param name        name of the screw press
    * @param inletStream the feed stream
    */
   public ScrewPress(String name, StreamInterface inletStream) {

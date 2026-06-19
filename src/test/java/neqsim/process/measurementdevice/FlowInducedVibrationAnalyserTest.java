@@ -20,7 +20,6 @@ import org.apache.logging.log4j.Logger;
 public class FlowInducedVibrationAnalyserTest {
   private static final Logger logger = LogManager.getLogger(FlowInducedVibrationAnalyserTest.class);
 
-
   @Test
   @DisplayName("Test LOF calculation method with Stiff support arrangement")
   public void testLOFCalculationWithStiffSupport() {
@@ -98,20 +97,17 @@ public class FlowInducedVibrationAnalyserTest {
     process.add(pipe);
 
     // Test with different support arrangements
-    FlowInducedVibrationAnalyser stiffAnalyzer =
-        new FlowInducedVibrationAnalyser("Stiff analyzer", pipe);
+    FlowInducedVibrationAnalyser stiffAnalyzer = new FlowInducedVibrationAnalyser("Stiff analyzer", pipe);
     stiffAnalyzer.setMethod("LOF");
     stiffAnalyzer.setSupportArrangement("Stiff");
     process.add(stiffAnalyzer);
 
-    FlowInducedVibrationAnalyser mediumStiffAnalyzer =
-        new FlowInducedVibrationAnalyser("Medium stiff analyzer", pipe);
+    FlowInducedVibrationAnalyser mediumStiffAnalyzer = new FlowInducedVibrationAnalyser("Medium stiff analyzer", pipe);
     mediumStiffAnalyzer.setMethod("LOF");
     mediumStiffAnalyzer.setSupportArrangement("Medium stiff");
     process.add(mediumStiffAnalyzer);
 
-    FlowInducedVibrationAnalyser mediumAnalyzer =
-        new FlowInducedVibrationAnalyser("Medium analyzer", pipe);
+    FlowInducedVibrationAnalyser mediumAnalyzer = new FlowInducedVibrationAnalyser("Medium analyzer", pipe);
     mediumAnalyzer.setMethod("LOF");
     mediumAnalyzer.setSupportArrangement("Medium");
     process.add(mediumAnalyzer);
@@ -165,8 +161,7 @@ public class FlowInducedVibrationAnalyserTest {
     pipe.setNumberOfIncrements(10);
 
     // Create flow induced vibration analyzer with FRMS method
-    FlowInducedVibrationAnalyser frmsAnalyzer =
-        new FlowInducedVibrationAnalyser("FRMS analyzer", pipe);
+    FlowInducedVibrationAnalyser frmsAnalyzer = new FlowInducedVibrationAnalyser("FRMS analyzer", pipe);
     frmsAnalyzer.setMethod("FRMS");
     frmsAnalyzer.setFRMSConstant(6.7); // Default constant
 
@@ -211,12 +206,11 @@ public class FlowInducedVibrationAnalyserTest {
     pipe.setNumberOfIncrements(10);
 
     // Create analyzers for different segments
-    FlowInducedVibrationAnalyser analyzerDefaultSegment =
-        new FlowInducedVibrationAnalyser("Default segment analyzer", pipe);
+    FlowInducedVibrationAnalyser analyzerDefaultSegment = new FlowInducedVibrationAnalyser("Default segment analyzer",
+	pipe);
     analyzerDefaultSegment.setMethod("LOF");
 
-    FlowInducedVibrationAnalyser analyzerSegment5 =
-        new FlowInducedVibrationAnalyser("Segment 5 analyzer", pipe);
+    FlowInducedVibrationAnalyser analyzerSegment5 = new FlowInducedVibrationAnalyser("Segment 5 analyzer", pipe);
     analyzerSegment5.setMethod("LOF");
     analyzerSegment5.setSegment(5); // Set to use segment 5
 
@@ -270,10 +264,9 @@ public class FlowInducedVibrationAnalyserTest {
     process.add(analyzer);
     process.run();
 
-    IllegalStateException ex =
-        assertThrows(IllegalStateException.class, () -> analyzer.getMeasuredValue("any"));
+    IllegalStateException ex = assertThrows(IllegalStateException.class, () -> analyzer.getMeasuredValue("any"));
     assertTrue(ex.getMessage().contains("wall thickness"),
-        "Exception message should explain the missing wall thickness");
+	"Exception message should explain the missing wall thickness");
   }
 
   @Test
@@ -299,7 +292,7 @@ public class FlowInducedVibrationAnalyserTest {
 
     // Invalid categories are rejected with a helpful message
     IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-        () -> analyzer.setSupportArrangement("Very Stiff"));
+	() -> analyzer.setSupportArrangement("Very Stiff"));
     assertTrue(ex.getMessage().contains("Valid values"));
     assertThrows(IllegalArgumentException.class, () -> analyzer.setSupportArrangement(null));
 

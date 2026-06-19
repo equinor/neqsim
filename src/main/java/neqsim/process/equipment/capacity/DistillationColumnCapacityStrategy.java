@@ -42,13 +42,14 @@ public class DistillationColumnCapacityStrategy implements EquipmentCapacityStra
   /**
    * Default constructor.
    */
-  public DistillationColumnCapacityStrategy() {}
+  public DistillationColumnCapacityStrategy() {
+  }
 
   /**
    * Constructor with custom constraints.
    *
-   * @param maxFloodingFactor maximum flooding factor (0-1)
-   * @param maxWeirLoading maximum weir loading (m3/hr per m)
+   * @param maxFloodingFactor   maximum flooding factor (0-1)
+   * @param maxWeirLoading      maximum weir loading (m3/hr per m)
    * @param maxTrayPressureDrop maximum tray pressure drop (mbar/tray)
    */
   public DistillationColumnCapacityStrategy(double maxFloodingFactor, double maxWeirLoading,
@@ -112,8 +113,8 @@ public class DistillationColumnCapacityStrategy implements EquipmentCapacityStra
     if (column.getReboiler() != null) {
       double reboilerDuty = column.getReboiler().getDuty();
       if (reboilerDuty > 0) {
-        // Estimate utilization based on typical design margins
-        maxUtilization = 0.7; // Assume 70% of design capacity without detailed calculations
+	// Estimate utilization based on typical design margins
+	maxUtilization = 0.7; // Assume 70% of design capacity without detailed calculations
       }
     }
 
@@ -121,7 +122,7 @@ public class DistillationColumnCapacityStrategy implements EquipmentCapacityStra
     if (column.getCondenser() != null) {
       double condenserDuty = column.getCondenser().getDuty();
       if (condenserDuty < 0) { // Condenser duty is typically negative
-        maxUtilization = Math.max(maxUtilization, 0.7);
+	maxUtilization = Math.max(maxUtilization, 0.7);
       }
     }
 
@@ -154,40 +155,35 @@ public class DistillationColumnCapacityStrategy implements EquipmentCapacityStra
 
     // Flooding factor constraint
     CapacityConstraint floodConstraint = new CapacityConstraint("floodingFactor")
-        .setDesignValue(maxFloodingFactor * 0.8).setMaxValue(maxFloodingFactor).setUnit("-")
-        .setSeverity(CapacityConstraint.ConstraintSeverity.HARD)
-        .setDescription("Tray flooding factor");
+	.setDesignValue(maxFloodingFactor * 0.8).setMaxValue(maxFloodingFactor).setUnit("-")
+	.setSeverity(CapacityConstraint.ConstraintSeverity.HARD).setDescription("Tray flooding factor");
     constraints.put("floodingFactor", floodConstraint);
 
     // Weir loading constraint
-    CapacityConstraint weirConstraint = new CapacityConstraint("weirLoading")
-        .setDesignValue(maxWeirLoading * 0.7).setMaxValue(maxWeirLoading).setUnit("m3/hr/m")
-        .setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
-        .setDescription("Liquid weir loading");
+    CapacityConstraint weirConstraint = new CapacityConstraint("weirLoading").setDesignValue(maxWeirLoading * 0.7)
+	.setMaxValue(maxWeirLoading).setUnit("m3/hr/m").setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
+	.setDescription("Liquid weir loading");
     constraints.put("weirLoading", weirConstraint);
 
     // Tray pressure drop constraint
     CapacityConstraint dpConstraint = new CapacityConstraint("trayPressureDrop")
-        .setDesignValue(maxTrayPressureDrop * 0.7).setMaxValue(maxTrayPressureDrop)
-        .setUnit("mbar/tray").setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
-        .setDescription("Tray pressure drop");
+	.setDesignValue(maxTrayPressureDrop * 0.7).setMaxValue(maxTrayPressureDrop).setUnit("mbar/tray")
+	.setSeverity(CapacityConstraint.ConstraintSeverity.SOFT).setDescription("Tray pressure drop");
     constraints.put("trayPressureDrop", dpConstraint);
 
     // Reboiler duty constraint
     if (column.getReboiler() != null) {
       CapacityConstraint reboilerConstraint = new CapacityConstraint("reboilerDuty").setUnit("kW")
-          .setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
-          .setDescription("Reboiler heat duty")
-          .setValueSupplier(() -> column.getReboiler().getDuty());
+	  .setSeverity(CapacityConstraint.ConstraintSeverity.SOFT).setDescription("Reboiler heat duty")
+	  .setValueSupplier(() -> column.getReboiler().getDuty());
       constraints.put("reboilerDuty", reboilerConstraint);
     }
 
     // Condenser duty constraint
     if (column.getCondenser() != null) {
       CapacityConstraint condenserConstraint = new CapacityConstraint("condenserDuty").setUnit("kW")
-          .setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
-          .setDescription("Condenser heat duty")
-          .setValueSupplier(() -> column.getCondenser().getDuty());
+	  .setSeverity(CapacityConstraint.ConstraintSeverity.SOFT).setDescription("Condenser heat duty")
+	  .setValueSupplier(() -> column.getCondenser().getDuty());
       constraints.put("condenserDuty", condenserConstraint);
     }
 
@@ -202,7 +198,7 @@ public class DistillationColumnCapacityStrategy implements EquipmentCapacityStra
 
     for (CapacityConstraint constraint : constraints.values()) {
       if (constraint.isViolated()) {
-        violations.add(constraint);
+	violations.add(constraint);
       }
     }
     return violations;
@@ -219,8 +215,8 @@ public class DistillationColumnCapacityStrategy implements EquipmentCapacityStra
     for (CapacityConstraint constraint : constraints.values()) {
       double util = constraint.getUtilization();
       if (!Double.isNaN(util) && util > maxUtil) {
-        maxUtil = util;
-        bottleneck = constraint;
+	maxUtil = util;
+	bottleneck = constraint;
       }
     }
     return bottleneck;
@@ -233,10 +229,10 @@ public class DistillationColumnCapacityStrategy implements EquipmentCapacityStra
 
     for (CapacityConstraint constraint : constraints.values()) {
       if (constraint.getSeverity() == CapacityConstraint.ConstraintSeverity.HARD
-          || constraint.getSeverity() == CapacityConstraint.ConstraintSeverity.CRITICAL) {
-        if (constraint.isHardLimitExceeded()) {
-          return false;
-        }
+	  || constraint.getSeverity() == CapacityConstraint.ConstraintSeverity.CRITICAL) {
+	if (constraint.isHardLimitExceeded()) {
+	  return false;
+	}
       }
     }
     return true;
@@ -249,7 +245,7 @@ public class DistillationColumnCapacityStrategy implements EquipmentCapacityStra
 
     for (CapacityConstraint constraint : constraints.values()) {
       if (constraint.getUtilization() > 1.0) {
-        return false;
+	return false;
       }
     }
     return true;

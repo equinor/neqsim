@@ -9,9 +9,8 @@ import java.util.List;
  * Collection of conformity check results for a separator or scrubber.
  *
  * <p>
- * Aggregates individual {@link ConformityResult} entries from vessel-level and
- * internals-level
- * checks. Provides summary methods and formatted printing.
+ * Aggregates individual {@link ConformityResult} entries from vessel-level and internals-level checks. Provides summary
+ * methods and formatted printing.
  * </p>
  *
  * @author NeqSim Development Team
@@ -80,7 +79,7 @@ public class ConformityReport implements Serializable {
   public boolean isConforming() {
     for (ConformityResult r : results) {
       if (r.getStatus() == ConformityResult.Status.FAIL) {
-        return false;
+	return false;
       }
     }
     return true;
@@ -95,7 +94,7 @@ public class ConformityReport implements Serializable {
     int count = 0;
     for (ConformityResult r : results) {
       if (r.getStatus() == ConformityResult.Status.FAIL) {
-        count++;
+	count++;
       }
     }
     return count;
@@ -110,7 +109,7 @@ public class ConformityReport implements Serializable {
     int count = 0;
     for (ConformityResult r : results) {
       if (r.getStatus() == ConformityResult.Status.WARNING) {
-        count++;
+	count++;
       }
     }
     return count;
@@ -125,7 +124,7 @@ public class ConformityReport implements Serializable {
     int count = 0;
     for (ConformityResult r : results) {
       if (r.getStatus() == ConformityResult.Status.PASS) {
-        count++;
+	count++;
       }
     }
     return count;
@@ -138,38 +137,35 @@ public class ConformityReport implements Serializable {
    */
   public String toTextReport() {
     StringBuilder sb = new StringBuilder();
-    String line = "----------------------------------------------------------------------"
-        + "--------------------";
+    String line = "----------------------------------------------------------------------" + "--------------------";
     sb.append(line).append('\n');
     sb.append("  CONFORMITY CHECK: ").append(equipmentName);
     sb.append("  [").append(standard).append("]\n");
     sb.append(line).append('\n');
-    sb.append(String.format("  %-25s %10s %10s %-6s %s\n",
-        "Check", "Actual", "Limit", "Unit", "Status"));
+    sb.append(String.format("  %-25s %10s %10s %-6s %s\n", "Check", "Actual", "Limit", "Unit", "Status"));
     sb.append(line).append('\n');
 
     for (ConformityResult r : results) {
       String statusStr;
       switch (r.getStatus()) {
-        case PASS:
-          statusStr = "PASS";
-          break;
-        case WARNING:
-          statusStr = "WARN";
-          break;
-        case FAIL:
-          statusStr = "FAIL";
-          break;
-        default:
-          statusStr = "N/A";
-          break;
+      case PASS:
+	statusStr = "PASS";
+	break;
+      case WARNING:
+	statusStr = "WARN";
+	break;
+      case FAIL:
+	statusStr = "FAIL";
+	break;
+      default:
+	statusStr = "N/A";
+	break;
       }
       if (r.getStatus() == ConformityResult.Status.NOT_APPLICABLE) {
-        sb.append(String.format("  %-25s %10s %10s %-6s %s\n",
-            r.getCheckName(), "-", "-", "", statusStr));
+	sb.append(String.format("  %-25s %10s %10s %-6s %s\n", r.getCheckName(), "-", "-", "", statusStr));
       } else {
-        sb.append(String.format("  %-25s %10.4f %10.4f %-6s %s\n",
-            r.getCheckName(), r.getActualValue(), r.getLimitValue(), r.getUnit(), statusStr));
+	sb.append(String.format("  %-25s %10.4f %10.4f %-6s %s\n", r.getCheckName(), r.getActualValue(),
+	    r.getLimitValue(), r.getUnit(), statusStr));
       }
     }
 

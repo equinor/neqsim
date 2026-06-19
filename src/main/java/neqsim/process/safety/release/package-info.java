@@ -4,12 +4,9 @@
  * <p>
  * This package provides tools for calculating release source terms for QRA consequence analysis:
  * <ul>
- * <li>{@link neqsim.process.safety.release.LeakModel} - Mass flow, jet velocity, and momentum
- * calculations</li>
- * <li>{@link neqsim.process.safety.release.SourceTermResult} - Time-series release data with export
- * capabilities</li>
- * <li>{@link neqsim.process.safety.release.ReleaseOrientation} - Jet orientation for dispersion
- * modeling</li>
+ * <li>{@link neqsim.process.safety.release.LeakModel} - Mass flow, jet velocity, and momentum calculations</li>
+ * <li>{@link neqsim.process.safety.release.SourceTermResult} - Time-series release data with export capabilities</li>
+ * <li>{@link neqsim.process.safety.release.ReleaseOrientation} - Jet orientation for dispersion modeling</li>
  * </ul>
  *
  * <p>

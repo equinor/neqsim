@@ -7,9 +7,9 @@ import neqsim.process.equipment.ProcessEquipmentBaseClass;
  * Simple battery storage unit maintaining a state of charge.
  *
  * <p>
- * The unit can be charged or discharged by supplying a power level and a duration. The state of
- * charge is updated accordingly and the energy stream of the unit reflects the power usage
- * (positive duty while charging and negative when discharging).
+ * The unit can be charged or discharged by supplying a power level and a duration. The state of charge is updated
+ * accordingly and the energy stream of the unit reflects the power usage (positive duty while charging and negative
+ * when discharging).
  * </p>
  *
  * @author esol
@@ -27,7 +27,7 @@ public class BatteryStorage extends ProcessEquipmentBaseClass {
   /**
    * Construct a battery with the given name and capacity.
    *
-   * @param name name of the unit
+   * @param name     name of the unit
    * @param capacity maximum energy capacity [J]
    */
   public BatteryStorage(String name, double capacity) {
@@ -136,4 +136,3 @@ public class BatteryStorage extends ProcessEquipmentBaseClass {
     setCalculationIdentifier(id);
   }
 }
-

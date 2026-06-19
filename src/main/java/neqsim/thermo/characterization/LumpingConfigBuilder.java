@@ -7,8 +7,8 @@ import org.apache.logging.log4j.Logger;
  * Builder class for configuring lumping models with a fluent API.
  *
  * <p>
- * This builder provides a clear and intuitive way to configure lumping settings, avoiding the
- * confusion between {@code setNumberOfLumpedComponents} and {@code setNumberOfPseudoComponents}.
+ * This builder provides a clear and intuitive way to configure lumping settings, avoiding the confusion between
+ * {@code setNumberOfLumpedComponents} and {@code setNumberOfPseudoComponents}.
  * </p>
  *
  * <p>
@@ -17,12 +17,10 @@ import org.apache.logging.log4j.Logger;
  *
  * <pre>
  * // For PVTlumpingModel: keep C6-C9 separate, lump C10+ into 5 groups
- * fluid.getCharacterization().configureLumping().model("PVTlumpingModel").plusFractionGroups(5)
- *     .build();
+ * fluid.getCharacterization().configureLumping().model("PVTlumpingModel").plusFractionGroups(5).build();
  *
  * // For standard model: create exactly 6 total pseudo-components from C6+
- * fluid.getCharacterization().configureLumping().model("standard").totalPseudoComponents(6)
- *     .build();
+ * fluid.getCharacterization().configureLumping().model("standard").totalPseudoComponents(6).build();
  *
  * // No lumping: keep all individual SCN components
  * fluid.getCharacterization().configureLumping().noLumping().build();
@@ -56,8 +54,7 @@ public class LumpingConfigBuilder {
    * Available models:
    * </p>
    * <ul>
-   * <li>{@code "PVTlumpingModel"} - Default. Keeps TBP fractions (C6-C9) separate, only lumps C10+
-   * </li>
+   * <li>{@code "PVTlumpingModel"} - Default. Keeps TBP fractions (C6-C9) separate, only lumps C10+</li>
    * <li>{@code "standard"} - Lumps all fractions from C6 into equal-weight groups</li>
    * <li>{@code "no lumping"} - Keeps all individual SCN components (C6-C80)</li>
    * </ul>
@@ -92,8 +89,8 @@ public class LumpingConfigBuilder {
    * </p>
    *
    * <p>
-   * This method directly controls how many lumped groups are created from the plus fraction (C10
-   * through C80). The TBP fractions (C6-C9) are kept as separate pseudo-components.
+   * This method directly controls how many lumped groups are created from the plus fraction (C10 through C80). The TBP
+   * fractions (C6-C9) are kept as separate pseudo-components.
    * </p>
    *
    * <p>
@@ -116,14 +113,14 @@ public class LumpingConfigBuilder {
    * </p>
    *
    * <p>
-   * This method controls the total number of pseudo-components created by lumping all heavy
-   * fractions (C6 through C80) into equal-weight groups.
+   * This method controls the total number of pseudo-components created by lumping all heavy fractions (C6 through C80)
+   * into equal-weight groups.
    * </p>
    *
    * <p>
-   * <strong>Warning:</strong> When used with {@code "PVTlumpingModel"}, the actual number of lumped
-   * groups is calculated as: totalPseudoComponents - numberOfTBPfractions. If this results in fewer
-   * groups than the default minimum, the setting may be overridden.
+   * <strong>Warning:</strong> When used with {@code "PVTlumpingModel"}, the actual number of lumped groups is
+   * calculated as: totalPseudoComponents - numberOfTBPfractions. If this results in fewer groups than the default
+   * minimum, the setting may be overridden.
    * </p>
    *
    * @param n total number of pseudo-components
@@ -147,8 +144,8 @@ public class LumpingConfigBuilder {
    * </pre>
    *
    * <p>
-   * Each value represents the starting carbon number for a group. The final group extends to the
-   * heaviest component (C80 typically).
+   * Each value represents the starting carbon number for a group. The final group extends to the heaviest component
+   * (C80 typically).
    * </p>
    *
    * @param boundaries starting carbon numbers for each group
@@ -175,11 +172,9 @@ public class LumpingConfigBuilder {
   public Characterise build() {
     // Validate configuration
     if (plusFractionGroups > 0 && totalPseudoComponents > 0) {
-      logger.warn(
-          "Both plusFractionGroups and totalPseudoComponents are set. "
-              + "plusFractionGroups ({}) will take precedence for PVTlumpingModel, "
-              + "totalPseudoComponents ({}) for standard model.",
-          plusFractionGroups, totalPseudoComponents);
+      logger.warn("Both plusFractionGroups and totalPseudoComponents are set. "
+	  + "plusFractionGroups ({}) will take precedence for PVTlumpingModel, "
+	  + "totalPseudoComponents ({}) for standard model.", plusFractionGroups, totalPseudoComponents);
     }
 
     // Set the model
@@ -188,8 +183,7 @@ public class LumpingConfigBuilder {
     // Apply custom boundaries if set
     if (customBoundaries != null && customBoundaries.length > 0) {
       characterise.getLumpingModel().setCustomBoundaries(customBoundaries);
-      logger.debug("Configured custom carbon number boundaries with {} groups",
-          customBoundaries.length);
+      logger.debug("Configured custom carbon number boundaries with {} groups", customBoundaries.length);
       return characterise;
     }
 
@@ -199,23 +193,21 @@ public class LumpingConfigBuilder {
       logger.debug("Configured 'no lumping' model - all SCN components will be preserved");
     } else if ("PVTlumpingModel".equalsIgnoreCase(modelName)) {
       if (plusFractionGroups > 0) {
-        characterise.getLumpingModel().setNumberOfLumpedComponents(plusFractionGroups);
-        logger.debug("Configured PVTlumpingModel with {} plus fraction groups", plusFractionGroups);
+	characterise.getLumpingModel().setNumberOfLumpedComponents(plusFractionGroups);
+	logger.debug("Configured PVTlumpingModel with {} plus fraction groups", plusFractionGroups);
       } else if (totalPseudoComponents > 0) {
-        logger.warn("Using totalPseudoComponents with PVTlumpingModel may have unexpected results. "
-            + "Consider using plusFractionGroups() instead.");
-        characterise.getLumpingModel().setNumberOfPseudoComponents(totalPseudoComponents);
+	logger.warn("Using totalPseudoComponents with PVTlumpingModel may have unexpected results. "
+	    + "Consider using plusFractionGroups() instead.");
+	characterise.getLumpingModel().setNumberOfPseudoComponents(totalPseudoComponents);
       }
     } else if ("standard".equalsIgnoreCase(modelName)) {
       if (totalPseudoComponents > 0) {
-        characterise.getLumpingModel().setNumberOfPseudoComponents(totalPseudoComponents);
-        logger.debug("Configured standard lumping model with {} total pseudo-components",
-            totalPseudoComponents);
+	characterise.getLumpingModel().setNumberOfPseudoComponents(totalPseudoComponents);
+	logger.debug("Configured standard lumping model with {} total pseudo-components", totalPseudoComponents);
       } else if (plusFractionGroups > 0) {
-        logger.warn(
-            "Using plusFractionGroups with standard model. This sets numberOfLumpedComponents "
-                + "which equals totalPseudoComponents for standard model.");
-        characterise.getLumpingModel().setNumberOfLumpedComponents(plusFractionGroups);
+	logger.warn("Using plusFractionGroups with standard model. This sets numberOfLumpedComponents "
+	    + "which equals totalPseudoComponents for standard model.");
+	characterise.getLumpingModel().setNumberOfLumpedComponents(plusFractionGroups);
       }
     }
 

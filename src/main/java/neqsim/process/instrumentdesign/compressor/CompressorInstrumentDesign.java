@@ -8,8 +8,8 @@ import neqsim.process.equipment.ProcessEquipmentInterface;
  * Instrument design for compressors.
  *
  * <p>
- * Determines the required instrumentation for a compressor following API 617 / API 670 practice. A
- * compressor typically requires:
+ * Determines the required instrumentation for a compressor following API 617 / API 670 practice. A compressor typically
+ * requires:
  * </p>
  * <ul>
  * <li>Pressure: suction PT, discharge PT, differential pressure (surge detection)</li>
@@ -17,8 +17,7 @@ import neqsim.process.equipment.ProcessEquipmentInterface;
  * <li>Flow: suction FT (for anti-surge control)</li>
  * <li>Vibration: 2x VT per bearing (X-Y probes, API 670)</li>
  * <li>Speed: 1x ST (shaft speed transmitter)</li>
- * <li>Safety: PSHH (discharge overpressure), TSHH (discharge overtemperature), VSLL (low lube oil
- * pressure)</li>
+ * <li>Safety: PSHH (discharge overpressure), TSHH (discharge overtemperature), VSLL (low lube oil pressure)</li>
  * </ul>
  *
  * @author Even Solbraa
@@ -51,73 +50,65 @@ public class CompressorInstrumentDesign extends InstrumentDesign {
     double maxPressure = getMaxDischargePressure();
 
     // === Pressure instrumentation ===
+    getInstrumentList().add(new InstrumentSpecification("PT", "Suction Pressure", 0.0, maxPressure, "bara", "AI"));
     getInstrumentList()
-        .add(new InstrumentSpecification("PT", "Suction Pressure", 0.0, maxPressure, "bara", "AI"));
-    getInstrumentList().add(new InstrumentSpecification("PT", "Discharge Pressure", 0.0,
-        maxPressure * 1.2, "bara", "AI"));
+	.add(new InstrumentSpecification("PT", "Discharge Pressure", 0.0, maxPressure * 1.2, "bara", "AI"));
 
     if (includeAntiSurge) {
-      getInstrumentList().add(new InstrumentSpecification("PDT", "Differential Pressure (Surge)",
-          0.0, maxPressure, "bar", "AI"));
+      getInstrumentList()
+	  .add(new InstrumentSpecification("PDT", "Differential Pressure (Surge)", 0.0, maxPressure, "bar", "AI"));
     }
 
     // PSHH: Discharge overpressure trip
     if (isIncludeSafetyInstruments()) {
-      getInstrumentList().add(new InstrumentSpecification("PSHH", "Discharge Overpressure Trip",
-          "DI", getDefaultSilLevel()));
+      getInstrumentList()
+	  .add(new InstrumentSpecification("PSHH", "Discharge Overpressure Trip", "DI", getDefaultSilLevel()));
     }
 
     // === Temperature instrumentation ===
-    getInstrumentList()
-        .add(new InstrumentSpecification("TT", "Suction Temperature", -50.0, 300.0, "degC", "AI"));
-    getInstrumentList().add(
-        new InstrumentSpecification("TT", "Discharge Temperature", -50.0, 400.0, "degC", "AI"));
+    getInstrumentList().add(new InstrumentSpecification("TT", "Suction Temperature", -50.0, 300.0, "degC", "AI"));
+    getInstrumentList().add(new InstrumentSpecification("TT", "Discharge Temperature", -50.0, 400.0, "degC", "AI"));
 
     // Bearing temperatures
     for (int i = 1; i <= numberOfBearings; i++) {
-      getInstrumentList().add(new InstrumentSpecification("TT", "Bearing " + i + " Temperature",
-          0.0, 150.0, "degC", "AI"));
+      getInstrumentList()
+	  .add(new InstrumentSpecification("TT", "Bearing " + i + " Temperature", 0.0, 150.0, "degC", "AI"));
     }
 
     // TSHH: Discharge overtemperature trip
     if (isIncludeSafetyInstruments()) {
-      getInstrumentList().add(new InstrumentSpecification("TSHH", "Discharge Overtemperature Trip",
-          "DI", getDefaultSilLevel()));
+      getInstrumentList()
+	  .add(new InstrumentSpecification("TSHH", "Discharge Overtemperature Trip", "DI", getDefaultSilLevel()));
     }
 
     // === Flow instrumentation ===
     if (includeAntiSurge) {
-      getInstrumentList().add(
-          new InstrumentSpecification("FT", "Suction Flow (Anti-Surge)", 0.0, 100.0, "%", "AI"));
+      getInstrumentList().add(new InstrumentSpecification("FT", "Suction Flow (Anti-Surge)", 0.0, 100.0, "%", "AI"));
       // Anti-surge valve position output
-      getInstrumentList().add(
-          new InstrumentSpecification("FCV", "Anti-Surge Valve Output", 0.0, 100.0, "%", "AO"));
+      getInstrumentList().add(new InstrumentSpecification("FCV", "Anti-Surge Valve Output", 0.0, 100.0, "%", "AO"));
     }
 
     // === Vibration monitoring (API 670) ===
     for (int i = 1; i <= numberOfBearings; i++) {
-      getInstrumentList().add(new InstrumentSpecification("VT", "Bearing " + i + " Vibration X",
-          0.0, 250.0, "um p-p", "AI"));
-      getInstrumentList().add(new InstrumentSpecification("VT", "Bearing " + i + " Vibration Y",
-          0.0, 250.0, "um p-p", "AI"));
+      getInstrumentList()
+	  .add(new InstrumentSpecification("VT", "Bearing " + i + " Vibration X", 0.0, 250.0, "um p-p", "AI"));
+      getInstrumentList()
+	  .add(new InstrumentSpecification("VT", "Bearing " + i + " Vibration Y", 0.0, 250.0, "um p-p", "AI"));
     }
 
     // Vibration high trip
     if (isIncludeSafetyInstruments()) {
-      getInstrumentList().add(
-          new InstrumentSpecification("VSHH", "High Vibration Trip", "DI", getDefaultSilLevel()));
+      getInstrumentList().add(new InstrumentSpecification("VSHH", "High Vibration Trip", "DI", getDefaultSilLevel()));
     }
 
     // === Speed measurement ===
-    getInstrumentList()
-        .add(new InstrumentSpecification("ST", "Shaft Speed", 0.0, 15000.0, "rpm", "AI"));
+    getInstrumentList().add(new InstrumentSpecification("ST", "Shaft Speed", 0.0, 15000.0, "rpm", "AI"));
 
     // === Lube oil ===
-    getInstrumentList()
-        .add(new InstrumentSpecification("PT", "Lube Oil Pressure", 0.0, 10.0, "bara", "AI"));
+    getInstrumentList().add(new InstrumentSpecification("PT", "Lube Oil Pressure", 0.0, 10.0, "bara", "AI"));
     if (isIncludeSafetyInstruments()) {
-      getInstrumentList().add(new InstrumentSpecification("PSLL", "Low Lube Oil Pressure Trip",
-          "DI", getDefaultSilLevel()));
+      getInstrumentList()
+	  .add(new InstrumentSpecification("PSLL", "Low Lube Oil Pressure Trip", "DI", getDefaultSilLevel()));
     }
   }
 

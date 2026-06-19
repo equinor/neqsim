@@ -10,19 +10,17 @@ import java.util.Map;
  * Gas-lift allocation optimiser using the equal-slope (Lagrangian) criterion.
  *
  * <p>
- * Given a fleet of gas-lifted wells, each with its own {@link GasLiftPerformanceCurve}, and a
- * limited total lift-gas budget, the optimal allocation maximises total oil when the incremental
- * oil response dq_oil/dq_lift is equal across all wells that receive gas (interior optimum) or a
- * well is driven to a bound. This is the classic result reproduced by Petex GAP's gas-lift
- * optimisation.
+ * Given a fleet of gas-lifted wells, each with its own {@link GasLiftPerformanceCurve}, and a limited total lift-gas
+ * budget, the optimal allocation maximises total oil when the incremental oil response dq_oil/dq_lift is equal across
+ * all wells that receive gas (interior optimum) or a well is driven to a bound. This is the classic result reproduced
+ * by Petex GAP's gas-lift optimisation.
  * </p>
  *
  * <p>
- * The optimiser performs a bisection on the common marginal slope &lambda;. For a trial &lambda;
- * each well's lift rate is the point where its incremental slope equals &lambda; (found by 1-D
- * search and clamped to its capacity). The total allocated gas increases monotonically as &lambda;
- * decreases, so bisection converges robustly to the budget. If the unconstrained optimum (every
- * well at its GLPC peak) uses less than the budget, the surplus is simply not injected.
+ * The optimiser performs a bisection on the common marginal slope &lambda;. For a trial &lambda; each well's lift rate
+ * is the point where its incremental slope equals &lambda; (found by 1-D search and clamped to its capacity). The total
+ * allocated gas increases monotonically as &lambda; decreases, so bisection converges robustly to the budget. If the
+ * unconstrained optimum (every well at its GLPC peak) uses less than the budget, the surplus is simply not injected.
  * </p>
  *
  * @author NeqSim
@@ -61,12 +59,12 @@ public class GasLiftNetworkOptimizer implements Serializable {
      * Creates an allocation result.
      *
      * @param liftRates per-well lift-gas allocation in Sm3/day
-     * @param oilRates per-well oil rate in Sm3/day
-     * @param totalOil total oil rate in Sm3/day
+     * @param oilRates  per-well oil rate in Sm3/day
+     * @param totalOil  total oil rate in Sm3/day
      * @param totalLift total lift gas used in Sm3/day
      */
-    public AllocationResult(Map<String, Double> liftRates, Map<String, Double> oilRates,
-        double totalOil, double totalLift) {
+    public AllocationResult(Map<String, Double> liftRates, Map<String, Double> oilRates, double totalOil,
+	double totalLift) {
       this.liftRates = liftRates;
       this.oilRates = oilRates;
       this.totalOil = totalOil;
@@ -115,7 +113,7 @@ public class GasLiftNetworkOptimizer implements Serializable {
   /**
    * Registers a gas-lifted well.
    *
-   * @param name unique well name
+   * @param name  unique well name
    * @param curve gas-lift performance curve for the well
    * @return this optimiser for chaining
    */
@@ -150,15 +148,15 @@ public class GasLiftNetworkOptimizer implements Serializable {
       lambda = 0.5 * (lambdaLow + lambdaHigh);
       double total = 0.0;
       for (LiftWell w : wells) {
-        total += liftForSlope(w.curve, lambda);
+	total += liftForSlope(w.curve, lambda);
       }
       if (total > totalLiftGasSm3PerDay) {
-        lambdaLow = lambda; // need higher slope -> less gas
+	lambdaLow = lambda; // need higher slope -> less gas
       } else {
-        lambdaHigh = lambda; // can afford lower slope -> more gas
+	lambdaHigh = lambda; // can afford lower slope -> more gas
       }
       if (Math.abs(lambdaHigh - lambdaLow) < 1.0e-9) {
-        break;
+	break;
       }
     }
 
@@ -178,7 +176,7 @@ public class GasLiftNetworkOptimizer implements Serializable {
   /**
    * Finds the lift-gas rate at which a curve's incremental slope equals a target value.
    *
-   * @param curve gas-lift performance curve
+   * @param curve       gas-lift performance curve
    * @param targetSlope target incremental slope
    * @return lift-gas rate in Sm3/day (clamped to [0, peak])
    */
@@ -196,9 +194,9 @@ public class GasLiftNetworkOptimizer implements Serializable {
       double mid = 0.5 * (lo + hi);
       double slope = curve.incrementalSlope(mid);
       if (slope > targetSlope) {
-        lo = mid; // slope decreases with lift, so move right
+	lo = mid; // slope decreases with lift, so move right
       } else {
-        hi = mid;
+	hi = mid;
       }
     }
     return 0.5 * (lo + hi);

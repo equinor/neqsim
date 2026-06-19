@@ -16,9 +16,9 @@ import neqsim.thermo.system.SystemSrkEos;
  * Quick equipment sizing runner for MCP integration.
  *
  * <p>
- * Performs approximate sizing for common process equipment based on thermodynamic flash results.
- * Supports separators (API 12J approach) and compressors (polytropic head / power). Results include
- * dimensions, duty/power, and design basis summary.
+ * Performs approximate sizing for common process equipment based on thermodynamic flash results. Supports separators
+ * (API 12J approach) and compressors (polytropic head / power). Results include dimensions, duty/power, and design
+ * basis summary.
  * </p>
  *
  * @author Even Solbraa
@@ -26,13 +26,13 @@ import neqsim.thermo.system.SystemSrkEos;
  */
 public final class EquipmentSizingRunner {
 
-  private static final Gson GSON =
-      new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+  private static final Gson GSON = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
 
   /**
    * Private constructor — all methods are static.
    */
-  private EquipmentSizingRunner() {}
+  private EquipmentSizingRunner() {
+  }
 
   /**
    * Runs an equipment sizing calculation from a JSON definition.
@@ -47,17 +47,15 @@ public final class EquipmentSizingRunner {
 
     try {
       JsonObject input = JsonParser.parseString(json).getAsJsonObject();
-      String equipmentType =
-          input.has("equipmentType") ? input.get("equipmentType").getAsString() : "";
+      String equipmentType = input.has("equipmentType") ? input.get("equipmentType").getAsString() : "";
 
       switch (equipmentType) {
-        case "separator":
-          return sizeSeparator(input);
-        case "compressor":
-          return sizeCompressor(input);
-        default:
-          return errorJson(
-              "Unknown equipmentType: " + equipmentType + ". Supported: separator, compressor");
+      case "separator":
+	return sizeSeparator(input);
+      case "compressor":
+	return sizeCompressor(input);
+      default:
+	return errorJson("Unknown equipmentType: " + equipmentType + ". Supported: separator, compressor");
       }
     } catch (Exception e) {
       return errorJson("Equipment sizing failed: " + e.getMessage());
@@ -73,11 +71,9 @@ public final class EquipmentSizingRunner {
   private static String sizeSeparator(JsonObject input) {
     SystemInterface fluid = buildFluid(input);
     double flowRateKgHr = extractFlowRate(input);
-    double retentionTimeMin =
-        input.has("liquidRetentionTime_min") ? input.get("liquidRetentionTime_min").getAsDouble()
-            : 5.0;
-    String orientation =
-        input.has("orientation") ? input.get("orientation").getAsString() : "horizontal";
+    double retentionTimeMin = input.has("liquidRetentionTime_min") ? input.get("liquidRetentionTime_min").getAsDouble()
+	: 5.0;
+    String orientation = input.has("orientation") ? input.get("orientation").getAsString() : "horizontal";
 
     // Build and run a simple stream + separator process
     Stream feed = new Stream("feed", fluid);
@@ -186,10 +182,8 @@ public final class EquipmentSizingRunner {
   private static String sizeCompressor(JsonObject input) {
     SystemInterface fluid = buildFluid(input);
     double flowRateKgHr = extractFlowRate(input);
-    double outletPressure =
-        input.has("outletPressure_bara") ? input.get("outletPressure_bara").getAsDouble() : 80.0;
-    double efficiency =
-        input.has("polytropicEfficiency") ? input.get("polytropicEfficiency").getAsDouble() : 0.75;
+    double outletPressure = input.has("outletPressure_bara") ? input.get("outletPressure_bara").getAsDouble() : 80.0;
+    double efficiency = input.has("polytropicEfficiency") ? input.get("polytropicEfficiency").getAsDouble() : 0.75;
 
     // Build and run compressor
     Stream feed = new Stream("feed", fluid);
@@ -285,7 +279,7 @@ public final class EquipmentSizingRunner {
   /**
    * Rounds a value to the specified number of decimal places.
    *
-   * @param value the value to round
+   * @param value    the value to round
    * @param decimals number of decimal places
    * @return rounded value
    */

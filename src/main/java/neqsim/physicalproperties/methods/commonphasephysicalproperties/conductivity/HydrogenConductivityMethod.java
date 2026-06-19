@@ -3,17 +3,16 @@ package neqsim.physicalproperties.methods.commonphasephysicalproperties.conducti
 import neqsim.physicalproperties.system.PhysicalProperties;
 
 /**
- * Thermal conductivity of normal hydrogen (n-H2) using polynomial correlations fitted to NIST
- * reference data.
+ * Thermal conductivity of normal hydrogen (n-H2) using polynomial correlations fitted to NIST reference data.
  *
  * <p>
- * The dilute-gas conductivity is computed from a cubic polynomial in (T/100) fitted to NIST WebBook
- * data from 80 K to 1000 K. Accuracy: better than 1% over the full range.
+ * The dilute-gas conductivity is computed from a cubic polynomial in (T/100) fitted to NIST WebBook data from 80 K to
+ * 1000 K. Accuracy: better than 1% over the full range.
  * </p>
  *
  * <p>
- * A pressure (density) correction is applied for high-pressure conditions using a linear scaling
- * with reduced density, calibrated against NIST data at pressures up to 500 bar.
+ * A pressure (density) correction is applied for high-pressure conditions using a linear scaling with reduced density,
+ * calibrated against NIST data at pressures up to 500 bar.
  * </p>
  *
  * <p>
@@ -21,9 +20,9 @@ import neqsim.physicalproperties.system.PhysicalProperties;
  * </p>
  * <ul>
  * <li>NIST WebBook - Thermophysical Properties of Fluid Systems (hydrogen at 1 bar)</li>
- * <li>Assael, M.J., Assael, J.-A.M., Huber, M.L., Perkins, R.A., Takata, Y. (2011). Correlation of
- * the Thermal Conductivity of Normal and Parahydrogen from the Triple Point to 1000 K and up to 100
- * MPa. J. Phys. Chem. Ref. Data 40(3), 033101.</li>
+ * <li>Assael, M.J., Assael, J.-A.M., Huber, M.L., Perkins, R.A., Takata, Y. (2011). Correlation of the Thermal
+ * Conductivity of Normal and Parahydrogen from the Triple Point to 1000 K and up to 100 MPa. J. Phys. Chem. Ref. Data
+ * 40(3), 033101.</li>
  * </ul>
  *
  * @author Even Solbraa
@@ -37,13 +36,12 @@ public class HydrogenConductivityMethod extends Conductivity {
   private static final double RHOC_H2 = 31.26;
 
   /**
-   * Dilute-gas thermal conductivity polynomial coefficients. lambda_0(T) = A0 + A1*(T/100) +
-   * A2*(T/100)^2 + A3*(T/100)^3 [W/(m*K)]. Fitted to NIST WebBook data for n-H2 at 1 bar, 80-1000
-   * K. Accuracy: better than 1% over the full range.
+   * Dilute-gas thermal conductivity polynomial coefficients. lambda_0(T) = A0 + A1*(T/100) + A2*(T/100)^2 +
+   * A3*(T/100)^3 [W/(m*K)]. Fitted to NIST WebBook data for n-H2 at 1 bar, 80-1000 K. Accuracy: better than 1% over the
+   * full range.
    *
    * <p>
-   * NIST reference points used for fitting: 100 K: 0.06799, 300 K: 0.1819, 600 K: 0.3020, 1000 K:
-   * 0.4111 W/(m*K).
+   * NIST reference points used for fitting: 100 K: 0.06799, 300 K: 0.1819, 600 K: 0.3020, 1000 K: 0.4111 W/(m*K).
    * </p>
    */
   private static final double A0 = -0.002249;
@@ -52,9 +50,9 @@ public class HydrogenConductivityMethod extends Conductivity {
   private static final double A3 = 1.7375e-4;
 
   /**
-   * Density correction coefficient. The thermal conductivity increases with density: lambda =
-   * lambda_0 * (1 + ALPHA_RHO * rho / rho_c). Calibrated against NIST data at 300 K, 200-500 bar.
-   * Typical correction: +9% at 200 bar, +22% at 500 bar (300 K).
+   * Density correction coefficient. The thermal conductivity increases with density: lambda = lambda_0 * (1 + ALPHA_RHO
+   * * rho / rho_c). Calibrated against NIST data at 300 K, 200-500 bar. Typical correction: +9% at 200 bar, +22% at 500
+   * bar (300 K).
    */
   private static final double ALPHA_RHO = 0.18;
 
@@ -102,8 +100,7 @@ public class HydrogenConductivityMethod extends Conductivity {
    * Calculates the dilute-gas thermal conductivity of n-H2.
    *
    * <p>
-   * Cubic polynomial in tau = T/100 fitted to NIST data. lambda_0 = A0 + A1*tau + A2*tau^2 +
-   * A3*tau^3 [W/(m*K)].
+   * Cubic polynomial in tau = T/100 fitted to NIST data. lambda_0 = A0 + A1*tau + A2*tau^2 + A3*tau^3 [W/(m*K)].
    * </p>
    *
    * @param temp temperature in K

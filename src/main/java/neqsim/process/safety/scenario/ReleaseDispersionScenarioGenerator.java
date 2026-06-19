@@ -29,11 +29,10 @@ import neqsim.thermo.system.SystemInterface;
  * Generates leak source terms and gas dispersion screening scenarios from a process flowsheet.
  *
  * <p>
- * The generator walks {@link ProcessSystem} unit operations, discovers standalone streams and
- * equipment outlet streams, builds a {@link LeakModel} for each pressurized stream candidate, and
- * sends the resulting {@link SourceTermResult} to {@link GasDispersionAnalyzer}. Optional scenario
- * taxonomy, weather envelopes, trapped-inventory results and consequence branches make the output
- * suitable for structured QRA and CFD source-term handoffs.
+ * The generator walks {@link ProcessSystem} unit operations, discovers standalone streams and equipment outlet streams,
+ * builds a {@link LeakModel} for each pressurized stream candidate, and sends the resulting {@link SourceTermResult} to
+ * {@link GasDispersionAnalyzer}. Optional scenario taxonomy, weather envelopes, trapped-inventory results and
+ * consequence branches make the output suitable for structured QRA and CFD source-term handoffs.
  * </p>
  *
  * @author ESOL
@@ -58,12 +57,10 @@ public class ReleaseDispersionScenarioGenerator implements Serializable {
   private double releaseHeightM = 1.0;
   private double minimumMassFlowRateKgPerS = 1.0e-9;
   private double minimumPressureBara = 1.2;
-  private double backPressureBara =
-      BoundaryConditions.defaultConditions().getAtmosphericPressureBar();
+  private double backPressureBara = BoundaryConditions.defaultConditions().getAtmosphericPressureBar();
   private boolean backPressureManuallySet;
   private ReleaseOrientation releaseOrientation = ReleaseOrientation.HORIZONTAL;
-  private GasDispersionAnalyzer.ModelSelection modelSelection =
-      GasDispersionAnalyzer.ModelSelection.AUTO;
+  private GasDispersionAnalyzer.ModelSelection modelSelection = GasDispersionAnalyzer.ModelSelection.AUTO;
   private String toxicComponentName;
   private double toxicThresholdPpm = Double.NaN;
   private boolean scenarioTaxonomyEnabled;
@@ -90,12 +87,11 @@ public class ReleaseDispersionScenarioGenerator implements Serializable {
    * @param boundaryConditions weather and ambient conditions
    * @return this generator
    */
-  public ReleaseDispersionScenarioGenerator boundaryConditions(
-      BoundaryConditions boundaryConditions) {
+  public ReleaseDispersionScenarioGenerator boundaryConditions(BoundaryConditions boundaryConditions) {
     if (boundaryConditions != null) {
       this.boundaryConditions = boundaryConditions;
       if (!backPressureManuallySet) {
-        this.backPressureBara = boundaryConditions.getAtmosphericPressureBar();
+	this.backPressureBara = boundaryConditions.getAtmosphericPressureBar();
       }
     }
     return this;
@@ -119,7 +115,7 @@ public class ReleaseDispersionScenarioGenerator implements Serializable {
    * Sets the representative leak hole diameter with unit conversion.
    *
    * @param holeDiameter hole diameter value, must be positive
-   * @param unit diameter unit, one of m, mm, or in
+   * @param unit         diameter unit, one of m, mm, or in
    * @return this generator
    */
   public ReleaseDispersionScenarioGenerator holeDiameter(double holeDiameter, String unit) {
@@ -130,7 +126,7 @@ public class ReleaseDispersionScenarioGenerator implements Serializable {
    * Sets the full-bore rupture diameter used by the taxonomy.
    *
    * @param diameter full-bore diameter value, must be positive
-   * @param unit diameter unit, one of m, mm, or in
+   * @param unit     diameter unit, one of m, mm, or in
    * @return this generator
    */
   public ReleaseDispersionScenarioGenerator fullBoreDiameter(double diameter, String unit) {
@@ -178,8 +174,7 @@ public class ReleaseDispersionScenarioGenerator implements Serializable {
    * @param inventoryCalculator configured trapped inventory calculator
    * @return this generator
    */
-  public ReleaseDispersionScenarioGenerator trappedInventory(
-      TrappedInventoryCalculator inventoryCalculator) {
+  public ReleaseDispersionScenarioGenerator trappedInventory(TrappedInventoryCalculator inventoryCalculator) {
     if (inventoryCalculator == null) {
       throw new IllegalArgumentException("inventoryCalculator must not be null");
     }
@@ -190,11 +185,10 @@ public class ReleaseDispersionScenarioGenerator implements Serializable {
    * Sets release duration and time step for generated source terms.
    *
    * @param releaseDurationSeconds release duration in seconds, must be positive
-   * @param timeStepSeconds time step in seconds, must be positive
+   * @param timeStepSeconds        time step in seconds, must be positive
    * @return this generator
    */
-  public ReleaseDispersionScenarioGenerator releaseDuration(double releaseDurationSeconds,
-      double timeStepSeconds) {
+  public ReleaseDispersionScenarioGenerator releaseDuration(double releaseDurationSeconds, double timeStepSeconds) {
     if (releaseDurationSeconds <= 0.0) {
       throw new IllegalArgumentException("releaseDurationSeconds must be positive");
     }
@@ -266,8 +260,7 @@ public class ReleaseDispersionScenarioGenerator implements Serializable {
    * @param releaseOrientation release direction, defaults to horizontal when null
    * @return this generator
    */
-  public ReleaseDispersionScenarioGenerator releaseOrientation(
-      ReleaseOrientation releaseOrientation) {
+  public ReleaseDispersionScenarioGenerator releaseOrientation(ReleaseOrientation releaseOrientation) {
     if (releaseOrientation != null) {
       this.releaseOrientation = releaseOrientation;
     }
@@ -280,8 +273,7 @@ public class ReleaseDispersionScenarioGenerator implements Serializable {
    * @param modelSelection dispersion model selection strategy, defaults to auto when null
    * @return this generator
    */
-  public ReleaseDispersionScenarioGenerator modelSelection(
-      GasDispersionAnalyzer.ModelSelection modelSelection) {
+  public ReleaseDispersionScenarioGenerator modelSelection(GasDispersionAnalyzer.ModelSelection modelSelection) {
     if (modelSelection != null) {
       this.modelSelection = modelSelection;
     }
@@ -292,11 +284,10 @@ public class ReleaseDispersionScenarioGenerator implements Serializable {
    * Adds a toxic endpoint calculation to every generated dispersion scenario.
    *
    * @param componentName component name in the NeqSim fluid
-   * @param thresholdPpm toxic threshold in ppm, must be positive
+   * @param thresholdPpm  toxic threshold in ppm, must be positive
    * @return this generator
    */
-  public ReleaseDispersionScenarioGenerator toxicEndpoint(String componentName,
-      double thresholdPpm) {
+  public ReleaseDispersionScenarioGenerator toxicEndpoint(String componentName, double thresholdPpm) {
     if (thresholdPpm <= 0.0) {
       throw new IllegalArgumentException("thresholdPpm must be positive");
     }
@@ -328,9 +319,9 @@ public class ReleaseDispersionScenarioGenerator implements Serializable {
     this.releaseCases.clear();
     if (releaseCases != null) {
       for (ReleaseCase releaseCase : releaseCases) {
-        if (releaseCase != null) {
-          this.releaseCases.add(releaseCase);
-        }
+	if (releaseCase != null) {
+	  this.releaseCases.add(releaseCase);
+	}
       }
     }
     return this;
@@ -339,12 +330,11 @@ public class ReleaseDispersionScenarioGenerator implements Serializable {
   /**
    * Adds a named weather case to the batch weather envelope.
    *
-   * @param name weather case name
+   * @param name       weather case name
    * @param conditions boundary conditions
    * @return this generator
    */
-  public ReleaseDispersionScenarioGenerator addWeatherCase(String name,
-      BoundaryConditions conditions) {
+  public ReleaseDispersionScenarioGenerator addWeatherCase(String name, BoundaryConditions conditions) {
     this.weatherCases.add(new WeatherCase(name, conditions));
     return this;
   }
@@ -411,13 +401,12 @@ public class ReleaseDispersionScenarioGenerator implements Serializable {
     List<ReleaseDispersionScenario> scenarios = new ArrayList<ReleaseDispersionScenario>();
     for (StreamCandidate candidate : candidates) {
       for (ReleaseCase releaseCase : cases) {
-        for (WeatherCase weatherCase : weatherEnvelope) {
-          ReleaseDispersionScenario scenario =
-              generateScenario(candidate, releaseCase, weatherCase);
-          if (scenario != null) {
-            scenarios.add(scenario);
-          }
-        }
+	for (WeatherCase weatherCase : weatherEnvelope) {
+	  ReleaseDispersionScenario scenario = generateScenario(candidate, releaseCase, weatherCase);
+	  if (scenario != null) {
+	    scenarios.add(scenario);
+	  }
+	}
       }
     }
     return Collections.unmodifiableList(scenarios);
@@ -463,21 +452,17 @@ public class ReleaseDispersionScenarioGenerator implements Serializable {
   public static List<WeatherCase> defaultWeatherEnvelope() {
     List<WeatherCase> cases = new ArrayList<WeatherCase>();
     cases.add(new WeatherCase("winter-D-low-wind-prevailing",
-        BoundaryConditions.builder().ambientTemperature(5.0, "C").windSpeed(2.0)
-            .windDirection(270.0).pasquillStabilityClass('D').isOffshore(true)
-            .surfaceRoughness(0.0002).build()));
+	BoundaryConditions.builder().ambientTemperature(5.0, "C").windSpeed(2.0).windDirection(270.0)
+	    .pasquillStabilityClass('D').isOffshore(true).surfaceRoughness(0.0002).build()));
     cases.add(new WeatherCase("winter-F-stable-low-wind",
-        BoundaryConditions.builder().ambientTemperature(5.0, "C").windSpeed(1.5)
-            .windDirection(270.0).pasquillStabilityClass('F').isOffshore(true)
-            .surfaceRoughness(0.0002).build()));
-    cases.add(new WeatherCase("winter-D-high-wind",
-        BoundaryConditions.builder().ambientTemperature(5.0, "C").windSpeed(15.0)
-            .windDirection(270.0).pasquillStabilityClass('D').isOffshore(true)
-            .surfaceRoughness(0.0002).build()));
-    cases.add(new WeatherCase("summer-C-prevailing",
-        BoundaryConditions.builder().ambientTemperature(15.0, "C").windSpeed(8.0)
-            .windDirection(270.0).pasquillStabilityClass('C').isOffshore(true)
-            .surfaceRoughness(0.0002).build()));
+	BoundaryConditions.builder().ambientTemperature(5.0, "C").windSpeed(1.5).windDirection(270.0)
+	    .pasquillStabilityClass('F').isOffshore(true).surfaceRoughness(0.0002).build()));
+    cases.add(
+	new WeatherCase("winter-D-high-wind", BoundaryConditions.builder().ambientTemperature(5.0, "C").windSpeed(15.0)
+	    .windDirection(270.0).pasquillStabilityClass('D').isOffshore(true).surfaceRoughness(0.0002).build()));
+    cases.add(
+	new WeatherCase("summer-C-prevailing", BoundaryConditions.builder().ambientTemperature(15.0, "C").windSpeed(8.0)
+	    .windDirection(270.0).pasquillStabilityClass('C').isOffshore(true).surfaceRoughness(0.0002).build()));
     cases.add(sectorWeather("sector-north-D", 0.0));
     cases.add(sectorWeather("sector-east-D", 90.0));
     cases.add(sectorWeather("sector-south-D", 180.0));
@@ -493,30 +478,28 @@ public class ReleaseDispersionScenarioGenerator implements Serializable {
   public static List<ConsequenceBranch> defaultConsequenceBranches() {
     List<ConsequenceBranch> branches = new ArrayList<ConsequenceBranch>();
     branches.add(new ConsequenceBranch("immediate-ignition", "Jet fire", 0.05, "immediate",
-        "Immediate ignition leading to jet fire."));
+	"Immediate ignition leading to jet fire."));
     branches.add(new ConsequenceBranch("delayed-ignition-vce", "VCE", 0.03, "delayed",
-        "Delayed ignition in congested or confined region."));
+	"Delayed ignition in congested or confined region."));
     branches.add(new ConsequenceBranch("delayed-ignition-flash-fire", "Flash fire", 0.07, "delayed",
-        "Delayed ignition without significant congestion."));
+	"Delayed ignition without significant congestion."));
     branches.add(new ConsequenceBranch("toxic-only", "Toxic dispersion", 0.10, "none",
-        "Unignited toxic exposure branch for sour or toxic releases."));
+	"Unignited toxic exposure branch for sour or toxic releases."));
     branches.add(new ConsequenceBranch("no-ignition", "Unignited dispersion", 0.75, "none",
-        "No ignition; dispersion endpoint only."));
+	"No ignition; dispersion endpoint only."));
     return branches;
   }
 
   /**
    * Creates a neutral-sector weather case.
    *
-   * @param name weather case name
+   * @param name             weather case name
    * @param windDirectionDeg wind direction in degrees
    * @return weather case
    */
   private static WeatherCase sectorWeather(String name, double windDirectionDeg) {
-    return new WeatherCase(name,
-        BoundaryConditions.builder().ambientTemperature(10.0, "C").windSpeed(5.0)
-            .windDirection(windDirectionDeg).pasquillStabilityClass('D').isOffshore(true)
-            .surfaceRoughness(0.0002).build());
+    return new WeatherCase(name, BoundaryConditions.builder().ambientTemperature(10.0, "C").windSpeed(5.0)
+	.windDirection(windDirectionDeg).pasquillStabilityClass('D').isOffshore(true).surfaceRoughness(0.0002).build());
   }
 
   /**
@@ -529,10 +512,10 @@ public class ReleaseDispersionScenarioGenerator implements Serializable {
     Set<String> seenStreamKeys = new HashSet<String>();
     for (ProcessEquipmentInterface equipment : processSystem.getUnitOperations()) {
       if (equipment instanceof StreamInterface) {
-        addCandidate(candidates, seenStreamKeys, equipment, (StreamInterface) equipment);
+	addCandidate(candidates, seenStreamKeys, equipment, (StreamInterface) equipment);
       }
       for (StreamInterface stream : equipment.getOutletStreams()) {
-        addCandidate(candidates, seenStreamKeys, equipment, stream);
+	addCandidate(candidates, seenStreamKeys, equipment, stream);
       }
     }
     return candidates;
@@ -541,10 +524,10 @@ public class ReleaseDispersionScenarioGenerator implements Serializable {
   /**
    * Adds a stream candidate if it is valid and has not already been added.
    *
-   * @param candidates target candidate list
+   * @param candidates     target candidate list
    * @param seenStreamKeys identity keys already added
-   * @param equipment owning or producing equipment
-   * @param stream stream to evaluate
+   * @param equipment      owning or producing equipment
+   * @param stream         stream to evaluate
    */
   private void addCandidate(List<StreamCandidate> candidates, Set<String> seenStreamKeys,
       ProcessEquipmentInterface equipment, StreamInterface stream) {
@@ -567,7 +550,7 @@ public class ReleaseDispersionScenarioGenerator implements Serializable {
     try {
       SystemInterface fluid = stream.getThermoSystem();
       return fluid != null && stream.getFlowRate("kg/sec") >= minimumMassFlowRateKgPerS
-          && stream.getPressure("bara") >= minimumPressureBara;
+	  && stream.getPressure("bara") >= minimumPressureBara;
     } catch (Exception ex) {
       return false;
     }
@@ -576,45 +559,41 @@ public class ReleaseDispersionScenarioGenerator implements Serializable {
   /**
    * Generates one release-dispersion scenario from a stream candidate.
    *
-   * @param candidate stream candidate to screen
+   * @param candidate   stream candidate to screen
    * @param releaseCase release taxonomy case
    * @param weatherCase weather case
    * @return generated scenario, or null if source-term generation gives no release
    */
-  private ReleaseDispersionScenario generateScenario(StreamCandidate candidate,
-      ReleaseCase releaseCase, WeatherCase weatherCase) {
+  private ReleaseDispersionScenario generateScenario(StreamCandidate candidate, ReleaseCase releaseCase,
+      WeatherCase weatherCase) {
     StreamInterface stream = candidate.stream;
-    double effectiveHoleDiameterM =
-        releaseCase.effectiveHoleDiameter(fullBoreDiameterM, holeDiameterM);
+    double effectiveHoleDiameterM = releaseCase.effectiveHoleDiameter(fullBoreDiameterM, holeDiameterM);
     double effectiveInventoryVolumeM3 = effectiveInventoryVolume();
     BoundaryConditions weather = weatherCase.getBoundaryConditions();
     String scenarioName = scenarioName(candidate, releaseCase, weatherCase);
-    SourceTermResult sourceTerm =
-        LeakModel.builder().fluid(stream.getThermoSystem()).holeDiameter(effectiveHoleDiameterM)
-            .orientation(releaseOrientation).vesselVolume(effectiveInventoryVolumeM3)
-            .backPressure(backPressureFor(weather), "bar").scenarioName(scenarioName).build()
-            .calculateSourceTerm(releaseDurationSeconds, timeStepSeconds);
+    SourceTermResult sourceTerm = LeakModel.builder().fluid(stream.getThermoSystem())
+	.holeDiameter(effectiveHoleDiameterM).orientation(releaseOrientation).vesselVolume(effectiveInventoryVolumeM3)
+	.backPressure(backPressureFor(weather), "bar").scenarioName(scenarioName).build()
+	.calculateSourceTerm(releaseDurationSeconds, timeStepSeconds);
 
     if (sourceTerm.getPeakMassFlowRate() <= 0.0) {
       return null;
     }
 
-    GasDispersionAnalyzer.Builder builder = GasDispersionAnalyzer.builder()
-        .scenarioName(scenarioName).fluid(stream.getThermoSystem()).sourceTerm(sourceTerm)
-        .boundaryConditions(weather).releaseHeight(releaseHeightM).modelSelection(modelSelection);
+    GasDispersionAnalyzer.Builder builder = GasDispersionAnalyzer.builder().scenarioName(scenarioName)
+	.fluid(stream.getThermoSystem()).sourceTerm(sourceTerm).boundaryConditions(weather)
+	.releaseHeight(releaseHeightM).modelSelection(modelSelection);
     if (toxicComponentName != null && Double.isFinite(toxicThresholdPpm)) {
       builder.toxicEndpoint(toxicComponentName, toxicThresholdPpm);
     }
     GasDispersionResult dispersionResult = builder.build().analyze();
 
     return new ReleaseDispersionScenario(safeName(processSystem.getName(), "process"), scenarioName,
-        safeName(candidate.equipment.getName(), "equipment"),
-        candidate.equipment.getClass().getSimpleName(), safeName(stream.getName(), "stream"),
-        stream.getPressure("bara"), stream.getTemperature(), stream.getFlowRate("kg/sec"),
-        effectiveHoleDiameterM, effectiveInventoryVolumeM3, releaseDurationSeconds, releaseHeightM,
-        releaseOrientation, releaseCase, weatherCase, sourceTerm, dispersionResult,
-        trappedInventoryResult, componentMoleFractions(stream.getThermoSystem()),
-        consequenceBranches);
+	safeName(candidate.equipment.getName(), "equipment"), candidate.equipment.getClass().getSimpleName(),
+	safeName(stream.getName(), "stream"), stream.getPressure("bara"), stream.getTemperature(),
+	stream.getFlowRate("kg/sec"), effectiveHoleDiameterM, effectiveInventoryVolumeM3, releaseDurationSeconds,
+	releaseHeightM, releaseOrientation, releaseCase, weatherCase, sourceTerm, dispersionResult,
+	trappedInventoryResult, componentMoleFractions(stream.getThermoSystem()), consequenceBranches);
   }
 
   /**
@@ -625,7 +604,7 @@ public class ReleaseDispersionScenarioGenerator implements Serializable {
   private List<ReleaseCase> activeReleaseCases() {
     if (scenarioTaxonomyEnabled) {
       if (releaseCases.isEmpty()) {
-        return defaultReleaseTaxonomy();
+	return defaultReleaseTaxonomy();
       }
       return new ArrayList<ReleaseCase>(releaseCases);
     }
@@ -672,23 +651,22 @@ public class ReleaseDispersionScenarioGenerator implements Serializable {
   /**
    * Creates a readable scenario name.
    *
-   * @param candidate stream candidate
+   * @param candidate   stream candidate
    * @param releaseCase release case
    * @param weatherCase weather case
    * @return scenario name
    */
-  private static String scenarioName(StreamCandidate candidate, ReleaseCase releaseCase,
-      WeatherCase weatherCase) {
+  private static String scenarioName(StreamCandidate candidate, ReleaseCase releaseCase, WeatherCase weatherCase) {
     String equipmentName = safeName(candidate.equipment.getName(), "equipment");
     String streamName = safeName(candidate.stream.getName(), "stream");
-    return "Leak from " + equipmentName + " / " + streamName + " - " + releaseCase.getCaseName()
-        + " - " + weatherCase.getName();
+    return "Leak from " + equipmentName + " / " + streamName + " - " + releaseCase.getCaseName() + " - "
+	+ weatherCase.getName();
   }
 
   /**
    * Returns a fallback name when a process object name is empty.
    *
-   * @param name original name
+   * @param name     original name
    * @param fallback fallback name
    * @return non-empty name
    */
@@ -703,7 +681,7 @@ public class ReleaseDispersionScenarioGenerator implements Serializable {
    * Converts a diameter value to meters.
    *
    * @param value diameter value
-   * @param unit diameter unit
+   * @param unit  diameter unit
    * @return diameter in m
    */
   private static double toMeters(double value, String unit) {
@@ -759,8 +737,8 @@ public class ReleaseDispersionScenarioGenerator implements Serializable {
       clonedFluid.init(0);
       PhaseInterface phase = clonedFluid.getPhase(0);
       for (int index = 0; index < phase.getNumberOfComponents(); index++) {
-        ComponentInterface component = phase.getComponent(index);
-        composition.put(component.getComponentName(), Double.valueOf(component.getx()));
+	ComponentInterface component = phase.getComponent(index);
+	composition.put(component.getComponentName(), Double.valueOf(component.getx()));
       }
     } catch (Exception ex) {
       return composition;
@@ -778,7 +756,7 @@ public class ReleaseDispersionScenarioGenerator implements Serializable {
      * Creates a stream candidate.
      *
      * @param equipment equipment that owns or produces the stream
-     * @param stream stream to screen
+     * @param stream    stream to screen
      */
     private StreamCandidate(ProcessEquipmentInterface equipment, StreamInterface stream) {
       this.equipment = equipment;
@@ -789,32 +767,25 @@ public class ReleaseDispersionScenarioGenerator implements Serializable {
   /** Built-in release cases for industrial screening taxonomies. */
   public enum ReleaseCase {
     /** Single configured leak case using the generator hole diameter. */
-    CONFIGURED("configured leak", "configured", Double.NaN, Double.NaN,
-        "Single user-configured hole size."),
+    CONFIGURED("configured leak", "configured", Double.NaN, Double.NaN, "Single user-configured hole size."),
     /** Five millimetre process leak. */
-    FIVE_MM_HOLE("5 mm process leak", "hole-size", 0.005, 1.0e-3,
-        "Small process leak screening case."),
+    FIVE_MM_HOLE("5 mm process leak", "hole-size", 0.005, 1.0e-3, "Small process leak screening case."),
     /** Ten millimetre process leak. */
-    TEN_MM_HOLE("10 mm process leak", "hole-size", 0.010, 3.0e-4,
-        "Medium process leak screening case."),
+    TEN_MM_HOLE("10 mm process leak", "hole-size", 0.010, 3.0e-4, "Medium process leak screening case."),
     /** Twenty-five millimetre process leak. */
-    TWENTY_FIVE_MM_HOLE("25 mm process leak", "hole-size", 0.025, 1.0e-4,
-        "Large process leak screening case."),
+    TWENTY_FIVE_MM_HOLE("25 mm process leak", "hole-size", 0.025, 1.0e-4, "Large process leak screening case."),
     /** Fifty millimetre process leak. */
-    FIFTY_MM_HOLE("50 mm process leak", "hole-size", 0.050, 3.0e-5,
-        "Major process leak screening case."),
+    FIFTY_MM_HOLE("50 mm process leak", "hole-size", 0.050, 3.0e-5, "Major process leak screening case."),
     /** Full-bore rupture using the configured full-bore diameter. */
     FULL_BORE_RUPTURE("full-bore rupture", "rupture", Double.NaN, 1.0e-6,
-        "Full-bore rupture; diameter is taken from fullBoreDiameter()."),
+	"Full-bore rupture; diameter is taken from fullBoreDiameter()."),
     /** Flange leak screening case. */
-    FLANGE_LEAK("flange leak", "failure-mode", 0.010, 1.0e-3,
-        "Representative flange or gasket leak."),
+    FLANGE_LEAK("flange leak", "failure-mode", 0.010, 1.0e-3, "Representative flange or gasket leak."),
     /** Instrument connection leak screening case. */
-    INSTRUMENT_LEAK("instrument leak", "failure-mode", 0.005, 2.0e-3,
-        "Small-bore instrument connection leak."),
+    INSTRUMENT_LEAK("instrument leak", "failure-mode", 0.005, 2.0e-3, "Small-bore instrument connection leak."),
     /** Dropped-object damage screening case. */
     DROPPED_OBJECT_DAMAGE("dropped-object damage", "failure-mode", 0.050, 1.0e-5,
-        "Large leak caused by impact or dropped object damage.");
+	"Large leak caused by impact or dropped object damage.");
 
     private final String caseName;
     private final String category;
@@ -825,14 +796,14 @@ public class ReleaseDispersionScenarioGenerator implements Serializable {
     /**
      * Creates a release case.
      *
-     * @param caseName readable case name
-     * @param category case category
-     * @param holeDiameterM representative hole diameter in m
+     * @param caseName                  readable case name
+     * @param category                  case category
+     * @param holeDiameterM             representative hole diameter in m
      * @param screeningFrequencyPerYear generic screening frequency in 1/year
-     * @param description case description
+     * @param description               case description
      */
-    ReleaseCase(String caseName, String category, double holeDiameterM,
-        double screeningFrequencyPerYear, String description) {
+    ReleaseCase(String caseName, String category, double holeDiameterM, double screeningFrequencyPerYear,
+	String description) {
       this.caseName = caseName;
       this.category = category;
       this.holeDiameterM = holeDiameterM;
@@ -879,16 +850,16 @@ public class ReleaseDispersionScenarioGenerator implements Serializable {
     /**
      * Gets the effective hole diameter.
      *
-     * @param fullBoreDiameterM full-bore diameter in m
+     * @param fullBoreDiameterM       full-bore diameter in m
      * @param configuredHoleDiameterM configured hole diameter in m
      * @return effective hole diameter in m
      */
     private double effectiveHoleDiameter(double fullBoreDiameterM, double configuredHoleDiameterM) {
       if (this == CONFIGURED) {
-        return configuredHoleDiameterM;
+	return configuredHoleDiameterM;
       }
       if (this == FULL_BORE_RUPTURE) {
-        return fullBoreDiameterM;
+	return fullBoreDiameterM;
       }
       return holeDiameterM;
     }
@@ -903,15 +874,15 @@ public class ReleaseDispersionScenarioGenerator implements Serializable {
     /**
      * Creates a weather case.
      *
-     * @param name weather case name
+     * @param name               weather case name
      * @param boundaryConditions boundary conditions
      */
     public WeatherCase(String name, BoundaryConditions boundaryConditions) {
       if (name == null || name.trim().isEmpty()) {
-        throw new IllegalArgumentException("weather case name must not be empty");
+	throw new IllegalArgumentException("weather case name must not be empty");
       }
       if (boundaryConditions == null) {
-        throw new IllegalArgumentException("boundaryConditions must not be null");
+	throw new IllegalArgumentException("boundaryConditions must not be null");
       }
       this.name = name;
       this.boundaryConditions = boundaryConditions;
@@ -964,16 +935,16 @@ public class ReleaseDispersionScenarioGenerator implements Serializable {
     /**
      * Creates a consequence branch.
      *
-     * @param branchId stable branch id
-     * @param consequenceType consequence type, for example Jet fire or VCE
+     * @param branchId               stable branch id
+     * @param consequenceType        consequence type, for example Jet fire or VCE
      * @param conditionalProbability branch probability conditional on the release, from 0 to 1
-     * @param ignitionTiming ignition timing, for example immediate, delayed or none
-     * @param description branch description
+     * @param ignitionTiming         ignition timing, for example immediate, delayed or none
+     * @param description            branch description
      */
     public ConsequenceBranch(String branchId, String consequenceType, double conditionalProbability,
-        String ignitionTiming, String description) {
+	String ignitionTiming, String description) {
       if (conditionalProbability < 0.0 || conditionalProbability > 1.0) {
-        throw new IllegalArgumentException("conditionalProbability must be in [0,1]");
+	throw new IllegalArgumentException("conditionalProbability must be in [0,1]");
       }
       this.branchId = branchId == null ? "branch" : branchId;
       this.consequenceType = consequenceType == null ? "unspecified" : consequenceType;
@@ -1062,35 +1033,33 @@ public class ReleaseDispersionScenarioGenerator implements Serializable {
     /**
      * Creates a release-dispersion scenario result.
      *
-     * @param processName process system name
-     * @param scenarioName scenario name
-     * @param equipmentName equipment name
-     * @param equipmentType equipment Java type
-     * @param streamName stream name
-     * @param streamPressureBara stream pressure in bara
-     * @param streamTemperatureK stream temperature in K
+     * @param processName              process system name
+     * @param scenarioName             scenario name
+     * @param equipmentName            equipment name
+     * @param equipmentType            equipment Java type
+     * @param streamName               stream name
+     * @param streamPressureBara       stream pressure in bara
+     * @param streamTemperatureK       stream temperature in K
      * @param streamMassFlowRateKgPerS stream mass flow rate in kg/s
-     * @param holeDiameterM leak hole diameter in m
-     * @param inventoryVolumeM3 representative inventory volume in m3
-     * @param releaseDurationSeconds source-term duration in s
-     * @param releaseHeightM release height in m
-     * @param releaseOrientation release orientation
-     * @param releaseCase release taxonomy case
-     * @param weatherCase weather case
-     * @param sourceTerm source-term result
-     * @param dispersionResult dispersion screening result
-     * @param trappedInventoryResult optional trapped inventory result
-     * @param componentMoleFractions stream component mole fractions
-     * @param consequenceBranches consequence branches
+     * @param holeDiameterM            leak hole diameter in m
+     * @param inventoryVolumeM3        representative inventory volume in m3
+     * @param releaseDurationSeconds   source-term duration in s
+     * @param releaseHeightM           release height in m
+     * @param releaseOrientation       release orientation
+     * @param releaseCase              release taxonomy case
+     * @param weatherCase              weather case
+     * @param sourceTerm               source-term result
+     * @param dispersionResult         dispersion screening result
+     * @param trappedInventoryResult   optional trapped inventory result
+     * @param componentMoleFractions   stream component mole fractions
+     * @param consequenceBranches      consequence branches
      */
     public ReleaseDispersionScenario(String processName, String scenarioName, String equipmentName,
-        String equipmentType, String streamName, double streamPressureBara,
-        double streamTemperatureK, double streamMassFlowRateKgPerS, double holeDiameterM,
-        double inventoryVolumeM3, double releaseDurationSeconds, double releaseHeightM,
-        ReleaseOrientation releaseOrientation, ReleaseCase releaseCase, WeatherCase weatherCase,
-        SourceTermResult sourceTerm, GasDispersionResult dispersionResult,
-        InventoryResult trappedInventoryResult, Map<String, Double> componentMoleFractions,
-        List<ConsequenceBranch> consequenceBranches) {
+	String equipmentType, String streamName, double streamPressureBara, double streamTemperatureK,
+	double streamMassFlowRateKgPerS, double holeDiameterM, double inventoryVolumeM3, double releaseDurationSeconds,
+	double releaseHeightM, ReleaseOrientation releaseOrientation, ReleaseCase releaseCase, WeatherCase weatherCase,
+	SourceTermResult sourceTerm, GasDispersionResult dispersionResult, InventoryResult trappedInventoryResult,
+	Map<String, Double> componentMoleFractions, List<ConsequenceBranch> consequenceBranches) {
       this.processName = processName;
       this.scenarioName = scenarioName;
       this.equipmentName = equipmentName;
@@ -1374,11 +1343,11 @@ public class ReleaseDispersionScenarioGenerator implements Serializable {
       map.put("totalMassReleasedKg", Double.valueOf(sourceTerm.getTotalMassReleased()));
       map.put("componentMoleFractions", componentMoleFractions);
       if (trappedInventoryResult != null) {
-        map.put("trappedInventory", trappedInventoryResult.toMap());
+	map.put("trappedInventory", trappedInventoryResult.toMap());
       }
       List<Map<String, Object>> branchMaps = new ArrayList<Map<String, Object>>();
       for (ConsequenceBranch branch : consequenceBranches) {
-        branchMaps.add(branch.toMap());
+	branchMaps.add(branch.toMap());
       }
       map.put("consequenceBranches", branchMaps);
       map.put("dispersionResult", dispersionResult.toJson());

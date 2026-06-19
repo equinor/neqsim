@@ -8,8 +8,8 @@ import java.util.Map;
  * Gymnasium (OpenAI Gym) compatible environment interface for NeqSim.
  *
  * <p>
- * This class provides a standardized interface compatible with Python's Gymnasium library, enabling
- * seamless integration with popular RL frameworks like stable-baselines3, RLlib, and CleanRL.
+ * This class provides a standardized interface compatible with Python's Gymnasium library, enabling seamless
+ * integration with popular RL frameworks like stable-baselines3, RLlib, and CleanRL.
  *
  * <h2>Python Usage via JPype:</h2>
  *
@@ -73,13 +73,13 @@ public abstract class GymEnvironment implements Serializable {
      * Constructor.
      *
      * @param observation next observation
-     * @param reward step reward
-     * @param terminated episode ended due to task completion/failure
-     * @param truncated episode ended due to time limit
-     * @param info additional info dictionary
+     * @param reward      step reward
+     * @param terminated  episode ended due to task completion/failure
+     * @param truncated   episode ended due to time limit
+     * @param info        additional info dictionary
      */
     public StepResult(double[] observation, double reward, boolean terminated, boolean truncated,
-        Map<String, Object> info) {
+	Map<String, Object> info) {
       this.observation = observation;
       this.reward = reward;
       this.terminated = terminated;
@@ -101,7 +101,7 @@ public abstract class GymEnvironment implements Serializable {
      * Constructor.
      *
      * @param observation initial observation
-     * @param info additional info dictionary
+     * @param info        additional info dictionary
      */
     public ResetResult(double[] observation, Map<String, Object> info) {
       this.observation = observation;
@@ -124,7 +124,7 @@ public abstract class GymEnvironment implements Serializable {
   /**
    * Reset the environment with optional seed and options.
    *
-   * @param seed random seed for reproducibility (nullable)
+   * @param seed    random seed for reproducibility (nullable)
    * @param options additional reset options (nullable)
    * @return ResetResult with initial observation and info
    */

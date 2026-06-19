@@ -18,9 +18,9 @@ import neqsim.physicalproperties.system.PhysicalProperties;
  * </p>
  *
  * <p>
- * The Rackett equation relates saturated liquid molar volume to reduced temperature using a single
- * substance-specific parameter Z_RA. The Spencer-Danner modification (1972) uses an empirical Z_RA
- * parameter fitted to experimental data instead of the critical compressibility factor Z_c.
+ * The Rackett equation relates saturated liquid molar volume to reduced temperature using a single substance-specific
+ * parameter Z_RA. The Spencer-Danner modification (1972) uses an empirical Z_RA parameter fitted to experimental data
+ * instead of the critical compressibility factor Z_c.
  * </p>
  *
  * <p>
@@ -38,8 +38,7 @@ import neqsim.physicalproperties.system.PhysicalProperties;
  * <ul>
  * <li>Rackett, H.G., J. Chem. Eng. Data 15, 514-517 (1970)</li>
  * <li>Spencer, C.F. and Danner, R.P., J. Chem. Eng. Data 17, 236-241 (1972)</li>
- * <li>Poling, B.E. et al., The Properties of Gases and Liquids, 5th ed., McGraw-Hill (2001),
- * Chapter 4</li>
+ * <li>Poling, B.E. et al., The Properties of Gases and Liquids, 5th ed., McGraw-Hill (2001), Chapter 4</li>
  * </ul>
  *
  * @author Even Solbraa
@@ -83,8 +82,7 @@ public class Rackett extends LiquidPhysicalPropertyMethod implements DensityInte
    * {@inheritDoc}
    *
    * <p>
-   * Calculates liquid density using the Spencer-Danner modified Rackett equation. Returns density
-   * in kg/m3.
+   * Calculates liquid density using the Spencer-Danner modified Rackett equation. Returns density in kg/m3.
    * </p>
    *
    * <p>
@@ -96,8 +94,7 @@ public class Rackett extends LiquidPhysicalPropertyMethod implements DensityInte
    * </pre>
    *
    * <p>
-   * For mixtures, the Li (1971) mixing rules are used to compute pseudo-critical properties and
-   * mixed Z_RA.
+   * For mixtures, the Li (1971) mixing rules are used to compute pseudo-critical properties and mixed Z_RA.
    * </p>
    */
   @Override
@@ -119,7 +116,7 @@ public class Rackett extends LiquidPhysicalPropertyMethod implements DensityInte
 
       double zci = 0.0;
       if (tci > 0.0) {
-        zci = pci * vci / (R_CM3_BAR * tci);
+	zci = pci * vci / (R_CM3_BAR * tci);
       }
 
       sumXiVci += xi * vci;
@@ -130,8 +127,7 @@ public class Rackett extends LiquidPhysicalPropertyMethod implements DensityInte
 
     if (sumXiVci <= 0.0) {
       logger.warn("Rackett: sum(xi*Vci) <= 0, falling back to EOS density");
-      return 1.0 / liquidPhase.getPhase().getMolarVolume() * liquidPhase.getPhase().getMolarMass()
-          * 1.0e5;
+      return 1.0 / liquidPhase.getPhase().getMolarVolume() * liquidPhase.getPhase().getMolarMass() * 1.0e5;
     }
 
     double tcMix = sumXiVciTci / sumXiVci;
@@ -141,16 +137,13 @@ public class Rackett extends LiquidPhysicalPropertyMethod implements DensityInte
     double reducedTemperature = temperature / tcMix;
 
     if (reducedTemperature >= 1.0) {
-      logger.warn("Rackett: reduced temperature {} >= 1.0, method not valid above Tc",
-          reducedTemperature);
-      return 1.0 / liquidPhase.getPhase().getMolarVolume() * liquidPhase.getPhase().getMolarMass()
-          * 1.0e5;
+      logger.warn("Rackett: reduced temperature {} >= 1.0, method not valid above Tc", reducedTemperature);
+      return 1.0 / liquidPhase.getPhase().getMolarVolume() * liquidPhase.getPhase().getMolarMass() * 1.0e5;
     }
 
     if (pcMix <= 0.0) {
       logger.warn("Rackett: pseudo-critical pressure <= 0, falling back to EOS density");
-      return 1.0 / liquidPhase.getPhase().getMolarVolume() * liquidPhase.getPhase().getMolarMass()
-          * 1.0e5;
+      return 1.0 / liquidPhase.getPhase().getMolarVolume() * liquidPhase.getPhase().getMolarMass() * 1.0e5;
     }
 
     // Rackett equation: V_s = (R * Tc / Pc) * Z_RA^(1 + (1 - Tr)^(2/7))
@@ -160,8 +153,7 @@ public class Rackett extends LiquidPhysicalPropertyMethod implements DensityInte
 
     if (vsLiquid <= 0.0) {
       logger.warn("Rackett: computed molar volume <= 0, falling back to EOS density");
-      return 1.0 / liquidPhase.getPhase().getMolarVolume() * liquidPhase.getPhase().getMolarMass()
-          * 1.0e5;
+      return 1.0 / liquidPhase.getPhase().getMolarVolume() * liquidPhase.getPhase().getMolarMass() * 1.0e5;
     }
 
     // Convert cm3/mol to density kg/m3: rho = M [kg/mol] / (V [cm3/mol] * 1e-6 [m3/cm3])
@@ -177,8 +169,7 @@ public class Rackett extends LiquidPhysicalPropertyMethod implements DensityInte
    * </p>
    * <ol>
    * <li>Database Z_RA value (Component.getRacketZ()) if positive</li>
-   * <li>Estimated from critical compressibility: Z_RA = 0.29056 - 0.08775 * omega (Yamada-Gunn,
-   * 1973)</li>
+   * <li>Estimated from critical compressibility: Z_RA = 0.29056 - 0.08775 * omega (Yamada-Gunn, 1973)</li>
    * </ol>
    *
    * @param compIdx component index in the phase

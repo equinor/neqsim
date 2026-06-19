@@ -24,7 +24,8 @@ public class FluidBoundaryNode implements FluidBoundaryNodeInterface {
    * Constructor for FluidBoundaryNode.
    * </p>
    */
-  public FluidBoundaryNode() {}
+  public FluidBoundaryNode() {
+  }
 
   /**
    * <p>

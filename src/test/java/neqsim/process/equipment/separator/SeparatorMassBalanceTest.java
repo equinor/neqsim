@@ -11,8 +11,8 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Comprehensive test suite for Separator mass balance and thermodynamic property calculations.
- * Tests edge cases including missing phases, zero flows, and negligible inlet flows.
+ * Comprehensive test suite for Separator mass balance and thermodynamic property calculations. Tests edge cases
+ * including missing phases, zero flows, and negligible inlet flows.
  */
 public class SeparatorMassBalanceTest {
   private SystemInterface thermoSystem;
@@ -78,8 +78,7 @@ public class SeparatorMassBalanceTest {
     procSys.run();
 
     double massBalance = sepGas.getMassBalance("kg/hr");
-    assertTrue(Math.abs(massBalance) < 10.0,
-        "Mass balance deviation for gas phase: " + massBalance);
+    assertTrue(Math.abs(massBalance) < 10.0, "Mass balance deviation for gas phase: " + massBalance);
   }
 
   /**
@@ -105,8 +104,7 @@ public class SeparatorMassBalanceTest {
     procSys.run();
 
     double massBalance = sep.getMassBalance("kg/hr");
-    assertTrue(Math.abs(massBalance) < 1e-6,
-        "Mass balance should be near zero for negligible flow");
+    assertTrue(Math.abs(massBalance) < 1e-6, "Mass balance should be near zero for negligible flow");
   }
 
   /**

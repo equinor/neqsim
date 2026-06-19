@@ -21,10 +21,10 @@ public class ComponentGERG2008Eos extends ComponentEos {
    * Constructor for ComponentGERG2008.
    * </p>
    *
-   * @param name Name of component.
-   * @param moles Total number of moles of component.
+   * @param name         Name of component.
+   * @param moles        Total number of moles of component.
    * @param molesInPhase Number of moles in phase.
-   * @param compIndex Index number of component in phase object component array.
+   * @param compIndex    Index number of component in phase object component array.
    */
 
   // --- DISCLAIMER BEGIN ---
@@ -42,11 +42,11 @@ public class ComponentGERG2008Eos extends ComponentEos {
    * </p>
    *
    * @param number a int. Not used.
-   * @param TC Critical temperature [K]
-   * @param PC Critical pressure [bara]
-   * @param M Molar mass
-   * @param a Acentric factor
-   * @param moles Total number of moles of component.
+   * @param TC     Critical temperature [K]
+   * @param PC     Critical pressure [bara]
+   * @param M      Molar mass
+   * @param a      Acentric factor
+   * @param moles  Total number of moles of component.
    */
   public ComponentGERG2008Eos(int number, double TC, double PC, double M, double a, double moles) {
     super(number, TC, PC, M, a, moles);
@@ -76,8 +76,8 @@ public class ComponentGERG2008Eos extends ComponentEos {
 
   /** {@inheritDoc} */
   @Override
-  public void Finit(PhaseInterface phase, double T, double p, double totalNumberOfMoles,
-      double beta, int numberOfComponents, int initType) {
+  public void Finit(PhaseInterface phase, double T, double p, double totalNumberOfMoles, double beta,
+      int numberOfComponents, int initType) {
     super.Finit(phase, T, p, totalNumberOfMoles, beta, numberOfComponents, initType);
 
     if (initType == 3) {
@@ -118,8 +118,7 @@ public class ComponentGERG2008Eos extends ComponentEos {
 
   /** {@inheritDoc} */
   @Override
-  public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
+  public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     PhaseGERG2008Eos ph = (PhaseGERG2008Eos) phase;
     double logXi = Math.log(getx());
     double ideal = ph.getAlpha0() != null ? ph.getAlpha0()[0].val : 0.0;
@@ -129,14 +128,13 @@ public class ComponentGERG2008Eos extends ComponentEos {
 
   /** {@inheritDoc} */
   @Override
-  public double dFdNdN(int i, PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
+  public double dFdNdN(int i, PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     double nTot = phase.getNumberOfMolesInPhase();
     double term = -1.0 / nTot;
     if (getComponentNumber() == i) {
       double n = getNumberOfMolesInPhase();
       if (n > 0.0) {
-        term += 1.0 / n;
+	term += 1.0 / n;
       }
     }
     PhaseGERG2008Eos ph = (PhaseGERG2008Eos) phase;
@@ -148,8 +146,7 @@ public class ComponentGERG2008Eos extends ComponentEos {
 
   /** {@inheritDoc} */
   @Override
-  public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
+  public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     PhaseGERG2008Eos ph = (PhaseGERG2008Eos) phase;
     double alphar = ph.getAlphaRes() != null ? ph.getAlphaRes()[0][1].val : 0.0;
     return -(1.0 + alphar) / phase.getVolume();
@@ -157,8 +154,7 @@ public class ComponentGERG2008Eos extends ComponentEos {
 
   /** {@inheritDoc} */
   @Override
-  public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
+  public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     PhaseGERG2008Eos ph = (PhaseGERG2008Eos) phase;
     double a0T = ph.getAlpha0() != null ? ph.getAlpha0()[1].val : 0.0;
     double arT = ph.getAlphaRes() != null ? ph.getAlphaRes()[1][0].val : 0.0;
@@ -170,8 +166,8 @@ public class ComponentGERG2008Eos extends ComponentEos {
   public double fugcoef(PhaseInterface phase) {
     double temperature = phase.getTemperature();
     double pressure = phase.getPressure();
-    double logFugacityCoefficient =
-        dFdN(phase, phase.getNumberOfComponents(), temperature, pressure) - Math.log(phase.getZ());
+    double logFugacityCoefficient = dFdN(phase, phase.getNumberOfComponents(), temperature, pressure)
+	- Math.log(phase.getZ());
     double fugacityCoefficient = Math.exp(logFugacityCoefficient);
     return fugacityCoefficient;
   }
@@ -209,10 +205,10 @@ public class ComponentGERG2008Eos extends ComponentEos {
     for (int i = 0; i < numberOfComponents; i++) {
       double ideal = -1.0 / nTot;
       if (getComponentNumber() == i) {
-        double n = getNumberOfMolesInPhase();
-        if (n > 0.0) {
-          ideal += 1.0 / n;
-        }
+	double n = getNumberOfMolesInPhase();
+	if (n > 0.0) {
+	  ideal += 1.0 / n;
+	}
       }
       double total = dFdNdN(i, phase, numberOfComponents, temperature, pressure);
       residual[i] = total - ideal;

@@ -38,9 +38,9 @@ class LNGshipTest {
     testShip.solveSteadyState(1, null);
     assertEquals(-176.43, testShip.getThermoSystem().getTemperature("C"), 1e-2);
     assertEquals(testSystem.getPhase("oil").getComponent("nitrogen").getx(),
-        testShip.getThermoSystem().getPhase("oil").getComponent("nitrogen").getx(), 1e-4);
+	testShip.getThermoSystem().getPhase("oil").getComponent("nitrogen").getx(), 1e-4);
     assertEquals(testSystem.getPhase("oil").getComponent("methane").getx(),
-        testShip.getThermoSystem().getPhase("oil").getComponent("methane").getx(), 1e-4);
+	testShip.getThermoSystem().getPhase("oil").getComponent("methane").getx(), 1e-4);
   }
 
   @Test
@@ -54,8 +54,8 @@ class LNGshipTest {
     testShip.solveTransient(0, null);
 
     assertEquals(testShip.numberOffTimeSteps, testShip.tankTemperature.length); // Check that the
-                                                                                // results have
-                                                                                // correct length
+										// results have
+										// correct length
     assertEquals(600_000.0, testShip.endVolume);
   }
 }

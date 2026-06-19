@@ -25,11 +25,11 @@ public class AttractiveTermPr1978 extends AttractiveTermPr {
     super(component);
     if (component.getAcentricFactor() > 0.49) {
       m = (0.379642 + 1.48503 * component.getAcentricFactor()
-          - 0.164423 * component.getAcentricFactor() * component.getAcentricFactor()
-          + 0.01666 * Math.pow(component.getAcentricFactor(), 3.0));
+	  - 0.164423 * component.getAcentricFactor() * component.getAcentricFactor()
+	  + 0.01666 * Math.pow(component.getAcentricFactor(), 3.0));
     } else {
       m = (0.37464 + 1.54226 * component.getAcentricFactor()
-          - 0.26992 * component.getAcentricFactor() * component.getAcentricFactor());
+	  - 0.26992 * component.getAcentricFactor() * component.getAcentricFactor());
     }
   }
 
@@ -37,13 +37,12 @@ public class AttractiveTermPr1978 extends AttractiveTermPr {
   @Override
   public void setm(double val) {
     this.m = val;
-    neqsim.mathlib.nonlinearsolver.NewtonRhapson solve =
-        new neqsim.mathlib.nonlinearsolver.NewtonRhapson();
+    neqsim.mathlib.nonlinearsolver.NewtonRhapson solve = new neqsim.mathlib.nonlinearsolver.NewtonRhapson();
     solve.setOrder(2);
-    double[] acentricConstants = {-0.26992, 1.54226, (0.37464 - this.m)};
+    double[] acentricConstants = { -0.26992, 1.54226, (0.37464 - this.m) };
     if (this.m > 0.49) {
       solve.setOrder(3);
-      acentricConstants = new double[] {0.01666, -0.164423, 1.48503, (0.379642 - this.m)};
+      acentricConstants = new double[] { 0.01666, -0.164423, 1.48503, (0.379642 - this.m) };
     }
     solve.setConstants(acentricConstants);
     getComponent().setAcentricFactor(solve.solve(0.2));
@@ -67,11 +66,11 @@ public class AttractiveTermPr1978 extends AttractiveTermPr {
   public void init() {
     if (getComponent().getAcentricFactor() > 0.49) {
       m = (0.379642 + 1.48503 * getComponent().getAcentricFactor()
-          - 0.164423 * getComponent().getAcentricFactor() * getComponent().getAcentricFactor()
-          + 0.01666 * Math.pow(getComponent().getAcentricFactor(), 3.0));
+	  - 0.164423 * getComponent().getAcentricFactor() * getComponent().getAcentricFactor()
+	  + 0.01666 * Math.pow(getComponent().getAcentricFactor(), 3.0));
     } else {
       m = (0.37464 + 1.54226 * getComponent().getAcentricFactor()
-          - 0.26992 * getComponent().getAcentricFactor() * getComponent().getAcentricFactor());
+	  - 0.26992 * getComponent().getAcentricFactor() * getComponent().getAcentricFactor());
     }
   }
 }

@@ -12,9 +12,9 @@ import com.google.gson.GsonBuilder;
  * SIL Verification Result.
  *
  * <p>
- * Contains the results of Safety Integrity Level (SIL) verification for a Safety Instrumented
- * Function (SIF) per IEC 61508/61511. Includes PFD calculation, architecture analysis, diagnostic
- * coverage, and systematic capability assessment.
+ * Contains the results of Safety Integrity Level (SIL) verification for a Safety Instrumented Function (SIF) per IEC
+ * 61508/61511. Includes PFD calculation, architecture analysis, diagnostic coverage, and systematic capability
+ * assessment.
  * </p>
  *
  * @author NeqSim Development Team
@@ -77,7 +77,7 @@ public class SILVerificationResult implements Serializable {
     }
 
     public VerificationIssue(IssueSeverity severity, IssueCategory category, String description,
-        String recommendation) {
+	String recommendation) {
       this.severity = severity;
       this.category = category;
       this.description = description;
@@ -122,8 +122,7 @@ public class SILVerificationResult implements Serializable {
     private double pfdContribution;
     private double percentOfTotal;
 
-    public ComponentContribution(String name, String type, double failureRate, double pfd,
-        double percent) {
+    public ComponentContribution(String name, String type, double failureRate, double pfd, double percent) {
       this.componentName = name;
       this.componentType = type;
       this.failureRate = failureRate;
@@ -196,23 +195,23 @@ public class SILVerificationResult implements Serializable {
   private void analyzeArchitecture() {
     String arch = sif.getArchitecture();
     switch (arch) {
-      case "1oo1":
-        hardwareFaultTolerance = 0;
-        break;
-      case "1oo2":
-        hardwareFaultTolerance = 1;
-        break;
-      case "2oo2":
-        hardwareFaultTolerance = 0;
-        break;
-      case "2oo3":
-        hardwareFaultTolerance = 1;
-        break;
-      case "1oo3":
-        hardwareFaultTolerance = 2;
-        break;
-      default:
-        hardwareFaultTolerance = 0;
+    case "1oo1":
+      hardwareFaultTolerance = 0;
+      break;
+    case "1oo2":
+      hardwareFaultTolerance = 1;
+      break;
+    case "2oo2":
+      hardwareFaultTolerance = 0;
+      break;
+    case "2oo3":
+      hardwareFaultTolerance = 1;
+      break;
+    case "1oo3":
+      hardwareFaultTolerance = 2;
+      break;
+    default:
+      hardwareFaultTolerance = 0;
     }
 
     // Systematic capability based on claimed SIL (simplified)
@@ -226,55 +225,51 @@ public class SILVerificationResult implements Serializable {
     // Check PFD vs target
     double targetPFD = SafetyInstrumentedFunction.getMaxPfdForSil(claimedSIL);
     if (pfdAverage > targetPFD) {
-      issues.add(new VerificationIssue(VerificationIssue.IssueSeverity.ERROR,
-          VerificationIssue.IssueCategory.PFD_EXCEEDED,
-          String.format("Calculated PFD (%.2e) exceeds SIL %d target (%.2e)", pfdAverage,
-              claimedSIL, targetPFD),
-          "Consider upgrading architecture, improving component reliability, or reducing proof test interval"));
+      issues.add(
+	  new VerificationIssue(VerificationIssue.IssueSeverity.ERROR, VerificationIssue.IssueCategory.PFD_EXCEEDED,
+	      String.format("Calculated PFD (%.2e) exceeds SIL %d target (%.2e)", pfdAverage, claimedSIL, targetPFD),
+	      "Consider upgrading architecture, improving component reliability, or reducing proof test interval"));
     }
 
     // Check architecture constraints per IEC 61511
     if (claimedSIL == 4 && hardwareFaultTolerance < 2) {
       issues.add(new VerificationIssue(VerificationIssue.IssueSeverity.ERROR,
-          VerificationIssue.IssueCategory.ARCHITECTURE,
-          "SIL 4 requires minimum hardware fault tolerance of 2",
-          "Upgrade to 1oo3 or higher redundancy architecture"));
+	  VerificationIssue.IssueCategory.ARCHITECTURE, "SIL 4 requires minimum hardware fault tolerance of 2",
+	  "Upgrade to 1oo3 or higher redundancy architecture"));
     } else if (claimedSIL == 3 && hardwareFaultTolerance < 1) {
-      issues.add(new VerificationIssue(VerificationIssue.IssueSeverity.WARNING,
-          VerificationIssue.IssueCategory.ARCHITECTURE,
-          "SIL 3 typically requires minimum hardware fault tolerance of 1",
-          "Consider upgrading to redundant architecture or demonstrating additional measures"));
+      issues.add(
+	  new VerificationIssue(VerificationIssue.IssueSeverity.WARNING, VerificationIssue.IssueCategory.ARCHITECTURE,
+	      "SIL 3 typically requires minimum hardware fault tolerance of 1",
+	      "Consider upgrading to redundant architecture or demonstrating additional measures"));
     }
 
     // Check proof test interval
     if (sif.getProofTestIntervalYears() > 5) {
       issues.add(new VerificationIssue(VerificationIssue.IssueSeverity.WARNING,
-          VerificationIssue.IssueCategory.PROOF_TEST_INTERVAL,
-          "Proof test interval exceeds 5 years",
-          "Consider more frequent proof testing to maintain PFD requirements"));
+	  VerificationIssue.IssueCategory.PROOF_TEST_INTERVAL, "Proof test interval exceeds 5 years",
+	  "Consider more frequent proof testing to maintain PFD requirements"));
     }
 
     // Check diagnostic coverage for higher SILs
     if (claimedSIL >= 3 && diagnosticCoverage < 0.9) {
       issues.add(new VerificationIssue(VerificationIssue.IssueSeverity.WARNING,
-          VerificationIssue.IssueCategory.DIAGNOSTIC_COVERAGE,
-          String.format("Diagnostic coverage (%.0f%%) may be insufficient for SIL %d",
-              diagnosticCoverage * 100, claimedSIL),
-          "Implement enhanced diagnostics or online testing capabilities"));
+	  VerificationIssue.IssueCategory.DIAGNOSTIC_COVERAGE,
+	  String.format("Diagnostic coverage (%.0f%%) may be insufficient for SIL %d", diagnosticCoverage * 100,
+	      claimedSIL),
+	  "Implement enhanced diagnostics or online testing capabilities"));
     }
   }
 
   /**
    * Adds component contribution to PFD.
    *
-   * @param name component name
-   * @param type component type (sensor, logic, final element)
+   * @param name        component name
+   * @param type        component type (sensor, logic, final element)
    * @param failureRate dangerous failure rate (per hour)
-   * @param pfd PFD contribution
-   * @param percent percentage of total PFD
+   * @param pfd         PFD contribution
+   * @param percent     percentage of total PFD
    */
-  public void addComponentContribution(String name, String type, double failureRate, double pfd,
-      double percent) {
+  public void addComponentContribution(String name, String type, double failureRate, double pfd, double percent) {
     componentContributions.add(new ComponentContribution(name, type, failureRate, pfd, percent));
   }
 
@@ -328,7 +323,7 @@ public class SILVerificationResult implements Serializable {
     List<VerificationIssue> errors = new ArrayList<>();
     for (VerificationIssue issue : issues) {
       if (issue.getSeverity() == VerificationIssue.IssueSeverity.ERROR) {
-        errors.add(issue);
+	errors.add(issue);
       }
     }
     return errors;
@@ -338,7 +333,7 @@ public class SILVerificationResult implements Serializable {
     List<VerificationIssue> warnings = new ArrayList<>();
     for (VerificationIssue issue : issues) {
       if (issue.getSeverity() == VerificationIssue.IssueSeverity.WARNING) {
-        warnings.add(issue);
+	warnings.add(issue);
       }
     }
     return warnings;
@@ -351,7 +346,7 @@ public class SILVerificationResult implements Serializable {
   public boolean hasErrors() {
     for (VerificationIssue issue : issues) {
       if (issue.getSeverity() == VerificationIssue.IssueSeverity.ERROR) {
-        return true;
+	return true;
       }
     }
     return false;
@@ -394,7 +389,7 @@ public class SILVerificationResult implements Serializable {
     if (!componentContributions.isEmpty()) {
       List<Map<String, Object>> contributions = new ArrayList<>();
       for (ComponentContribution cc : componentContributions) {
-        contributions.add(cc.toMap());
+	contributions.add(cc.toMap());
       }
       map.put("componentContributions", contributions);
     }
@@ -422,8 +417,7 @@ public class SILVerificationResult implements Serializable {
    * @return JSON representation
    */
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(toMap());
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(toMap());
   }
 
   /**
@@ -444,8 +438,7 @@ public class SILVerificationResult implements Serializable {
     sb.append(StringUtils.repeat("─", 40)).append("\n");
     sb.append(String.format("  Claimed SIL:    %d%n", claimedSIL));
     sb.append(String.format("  Achieved SIL:   %d%n", achievedSIL));
-    sb.append(String.format("  Target PFD:     %.2e%n",
-        SafetyInstrumentedFunction.getMaxPfdForSil(claimedSIL)));
+    sb.append(String.format("  Target PFD:     %.2e%n", SafetyInstrumentedFunction.getMaxPfdForSil(claimedSIL)));
     sb.append(String.format("  Calculated PFD: %.2e%n", pfdAverage));
     sb.append(String.format("  Status:         %s%n", silAchieved ? "✓ ACHIEVED" : "✗ NOT MET"));
     sb.append("\n");
@@ -461,8 +454,8 @@ public class SILVerificationResult implements Serializable {
       sb.append("Issues Found:\n");
       sb.append(StringUtils.repeat("─", 40)).append("\n");
       for (VerificationIssue issue : issues) {
-        sb.append(String.format("  [%s] %s%n", issue.getSeverity(), issue.getDescription()));
-        sb.append(String.format("    → %s%n", issue.getRecommendation()));
+	sb.append(String.format("  [%s] %s%n", issue.getSeverity(), issue.getDescription()));
+	sb.append(String.format("    → %s%n", issue.getRecommendation()));
       }
     } else {
       sb.append("No issues found.\n");
@@ -473,7 +466,7 @@ public class SILVerificationResult implements Serializable {
 
   @Override
   public String toString() {
-    return String.format("SILVerificationResult[%s: SIL %d claimed, SIL %d achieved, PFD=%.2e, %s]",
-        sif.getName(), claimedSIL, achievedSIL, pfdAverage, silAchieved ? "PASSED" : "FAILED");
+    return String.format("SILVerificationResult[%s: SIL %d claimed, SIL %d achieved, PFD=%.2e, %s]", sif.getName(),
+	claimedSIL, achievedSIL, pfdAverage, silAchieved ? "PASSED" : "FAILED");
   }
 }

@@ -18,7 +18,8 @@ public final class TDMAsolve {
   /**
    * Dummy constructor, not for use. Class is to be considered static.
    */
-  private TDMAsolve() {}
+  private TDMAsolve() {
+  }
 
   /**
    * <p>

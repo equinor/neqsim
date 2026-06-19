@@ -12,9 +12,9 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Tests for {@link ProcessSystem#setSolveFullyInModelStep(boolean)}: when a {@link ProcessModel} is
- * run in step mode, individual areas can be flagged to converge fully (recycles included) on each
- * model step while other areas advance only a single pass.
+ * Tests for {@link ProcessSystem#setSolveFullyInModelStep(boolean)}: when a {@link ProcessModel} is run in step mode,
+ * individual areas can be flagged to converge fully (recycles included) on each model step while other areas advance
+ * only a single pass.
  *
  * @author ESOL
  * @version 1.0
@@ -22,12 +22,11 @@ import neqsim.thermo.system.SystemSrkEos;
 class ProcessModelStepModeAreaTest {
 
   /**
-   * Builds a slowly converging recycle loop inside its own {@link ProcessSystem}: feed -&gt; mixer
-   * -&gt; heater -&gt; splitter, where 50% of the splitter outlet is product and 50% is recycled
-   * back to the mixer. The high recycle fraction makes convergence take many passes, so a single
-   * forced step-mode pass is clearly not yet converged.
+   * Builds a slowly converging recycle loop inside its own {@link ProcessSystem}: feed -&gt; mixer -&gt; heater -&gt;
+   * splitter, where 50% of the splitter outlet is product and 50% is recycled back to the mixer. The high recycle
+   * fraction makes convergence take many passes, so a single forced step-mode pass is clearly not yet converged.
    *
-   * @param areaName name for the process area
+   * @param areaName   name for the process area
    * @param solveFully whether the area should fully converge on each model step
    * @return the assembled process area
    */
@@ -50,7 +49,7 @@ class ProcessModelStepModeAreaTest {
     heater.setOutTemperature(30.0, "C");
 
     Splitter splitter = new Splitter(areaName + " splitter", heater.getOutletStream(), 2);
-    splitter.setSplitFactors(new double[] {0.5, 0.5});
+    splitter.setSplitFactors(new double[] { 0.5, 0.5 });
 
     Stream product = new Stream(areaName + " product", splitter.getSplitStream(0));
 
@@ -71,8 +70,8 @@ class ProcessModelStepModeAreaTest {
   }
 
   /**
-   * When the model runs in step mode, the area flagged with solveFullyInModelStep converges its
-   * recycle, while the unflagged area does not.
+   * When the model runs in step mode, the area flagged with solveFullyInModelStep converges its recycle, while the
+   * unflagged area does not.
    */
   @Test
   void testFlaggedAreaConvergesWhileOthersStep() {
@@ -92,10 +91,8 @@ class ProcessModelStepModeAreaTest {
     assertTrue(convergedArea.isSolveFullyInModelStep());
     assertFalse(steppedArea.isSolveFullyInModelStep());
 
-    assertTrue(convergedRecycle.solved(),
-        "Flagged area should fully converge its recycle on a single model step");
-    assertFalse(steppedRecycle.solved(),
-        "Unflagged area should only single-step and not converge its recycle");
+    assertTrue(convergedRecycle.solved(), "Flagged area should fully converge its recycle on a single model step");
+    assertFalse(steppedRecycle.solved(), "Unflagged area should only single-step and not converge its recycle");
   }
 
   /**

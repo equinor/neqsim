@@ -79,11 +79,10 @@ import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationResult;
  * // Run Monte Carlo simulation
  * SensitivityConfig config = new SensitivityConfig().numberOfTrials(1000).parallel(true);
  *
- * MonteCarloResult result = sensitivity.runMonteCarloOptimization(feedStream, 1000.0, 50000.0,
- *     "kg/hr", opt -> opt.getOptimalRate(), config);
+ * MonteCarloResult result = sensitivity.runMonteCarloOptimization(feedStream, 1000.0, 50000.0, "kg/hr",
+ *     opt -> opt.getOptimalRate(), config);
  *
- * System.out.printf("P10: %.0f, P50: %.0f, P90: %.0f%n", result.getP10(), result.getP50(),
- *     result.getP90());
+ * System.out.printf("P10: %.0f, P50: %.0f, P90: %.0f%n", result.getP10(), result.getP50(), result.getP90());
  * System.out.println(result.toTornadoMarkdown());
  * }</pre>
  *
@@ -112,39 +111,38 @@ public class SensitivityAnalysis implements Serializable {
    * Probability distribution types for uncertain parameters.
    *
    * <p>
-   * Each distribution is parameterized by P10, P50, and P90 percentiles, which are converted to the
-   * native distribution parameters internally.
+   * Each distribution is parameterized by P10, P50, and P90 percentiles, which are converted to the native distribution
+   * parameters internally.
    */
   public enum DistributionType {
     /**
      * Normal (Gaussian) distribution.
      * <p>
-     * Symmetric distribution defined by mean (P50) and standard deviation. The P10-P90 range spans
-     * approximately 2.56 standard deviations.
+     * Symmetric distribution defined by mean (P50) and standard deviation. The P10-P90 range spans approximately 2.56
+     * standard deviations.
      */
     NORMAL,
 
     /**
      * Log-normal distribution.
      * <p>
-     * Right-skewed distribution for strictly positive values. Useful for reservoir parameters,
-     * costs, and other non-negative quantities.
+     * Right-skewed distribution for strictly positive values. Useful for reservoir parameters, costs, and other
+     * non-negative quantities.
      */
     LOGNORMAL,
 
     /**
      * Triangular distribution.
      * <p>
-     * Defined by minimum (P10), mode (P50), and maximum (P90). Simple to elicit from experts and
-     * widely used in subsurface uncertainty.
+     * Defined by minimum (P10), mode (P50), and maximum (P90). Simple to elicit from experts and widely used in
+     * subsurface uncertainty.
      */
     TRIANGULAR,
 
     /**
      * Uniform distribution.
      * <p>
-     * Equal probability between minimum and maximum. Used when only range is known, not likely
-     * value.
+     * Equal probability between minimum and maximum. Used when only range is known, not likely value.
      */
     UNIFORM
   }
@@ -153,8 +151,8 @@ public class SensitivityAnalysis implements Serializable {
    * Uncertain parameter definition.
    *
    * <p>
-   * Encapsulates a parameter that varies between simulation runs, including its probability
-   * distribution and how to apply values to the process model.
+   * Encapsulates a parameter that varies between simulation runs, including its probability distribution and how to
+   * apply values to the process model.
    */
   public static final class UncertainParameter implements Serializable {
     private static final long serialVersionUID = 1000L;
@@ -170,16 +168,16 @@ public class SensitivityAnalysis implements Serializable {
     /**
      * Creates an uncertain parameter.
      *
-     * @param name parameter name for reporting
-     * @param p10 10th percentile (low case)
-     * @param p50 50th percentile (base case)
-     * @param p90 90th percentile (high case)
+     * @param name         parameter name for reporting
+     * @param p10          10th percentile (low case)
+     * @param p50          50th percentile (base case)
+     * @param p90          90th percentile (high case)
      * @param distribution probability distribution type
-     * @param unit engineering unit (for reporting)
-     * @param setter function to apply parameter value to process
+     * @param unit         engineering unit (for reporting)
+     * @param setter       function to apply parameter value to process
      */
-    public UncertainParameter(String name, double p10, double p50, double p90,
-        DistributionType distribution, String unit, BiConsumer<ProcessSystem, Double> setter) {
+    public UncertainParameter(String name, double p10, double p50, double p90, DistributionType distribution,
+	String unit, BiConsumer<ProcessSystem, Double> setter) {
       this.name = Objects.requireNonNull(name, "Parameter name is required");
       this.p10 = p10;
       this.p50 = p50;
@@ -189,84 +187,82 @@ public class SensitivityAnalysis implements Serializable {
       this.setter = Objects.requireNonNull(setter, "Setter is required");
 
       if (p10 > p50 || p50 > p90) {
-        throw new IllegalArgumentException("Percentiles must be ordered: P10 <= P50 <= P90");
+	throw new IllegalArgumentException("Percentiles must be ordered: P10 <= P50 <= P90");
       }
     }
 
     /**
      * Creates a triangular distribution parameter.
      *
-     * @param name parameter name
-     * @param min minimum value (P10)
-     * @param mode most likely value (P50)
-     * @param max maximum value (P90)
+     * @param name   parameter name
+     * @param min    minimum value (P10)
+     * @param mode   most likely value (P50)
+     * @param max    maximum value (P90)
      * @param setter function to apply value
      * @return uncertain parameter
      */
     public static UncertainParameter triangular(String name, double min, double mode, double max,
-        BiConsumer<ProcessSystem, Double> setter) {
-      return new UncertainParameter(name, min, mode, max, DistributionType.TRIANGULAR, null,
-          setter);
+	BiConsumer<ProcessSystem, Double> setter) {
+      return new UncertainParameter(name, min, mode, max, DistributionType.TRIANGULAR, null, setter);
     }
 
     /**
      * Creates a triangular distribution parameter with unit.
      *
-     * @param name parameter name
-     * @param min minimum value (P10)
-     * @param mode most likely value (P50)
-     * @param max maximum value (P90)
-     * @param unit engineering unit
+     * @param name   parameter name
+     * @param min    minimum value (P10)
+     * @param mode   most likely value (P50)
+     * @param max    maximum value (P90)
+     * @param unit   engineering unit
      * @param setter function to apply value
      * @return uncertain parameter
      */
-    public static UncertainParameter triangular(String name, double min, double mode, double max,
-        String unit, BiConsumer<ProcessSystem, Double> setter) {
-      return new UncertainParameter(name, min, mode, max, DistributionType.TRIANGULAR, unit,
-          setter);
+    public static UncertainParameter triangular(String name, double min, double mode, double max, String unit,
+	BiConsumer<ProcessSystem, Double> setter) {
+      return new UncertainParameter(name, min, mode, max, DistributionType.TRIANGULAR, unit, setter);
     }
 
     /**
      * Creates a normal distribution parameter.
      *
-     * @param name parameter name
-     * @param p10 10th percentile
-     * @param p50 50th percentile (mean)
-     * @param p90 90th percentile
+     * @param name   parameter name
+     * @param p10    10th percentile
+     * @param p50    50th percentile (mean)
+     * @param p90    90th percentile
      * @param setter function to apply value
      * @return uncertain parameter
      */
     public static UncertainParameter normal(String name, double p10, double p50, double p90,
-        BiConsumer<ProcessSystem, Double> setter) {
+	BiConsumer<ProcessSystem, Double> setter) {
       return new UncertainParameter(name, p10, p50, p90, DistributionType.NORMAL, null, setter);
     }
 
     /**
      * Creates a log-normal distribution parameter.
      *
-     * @param name parameter name
-     * @param p10 10th percentile
-     * @param p50 50th percentile
-     * @param p90 90th percentile
+     * @param name   parameter name
+     * @param p10    10th percentile
+     * @param p50    50th percentile
+     * @param p90    90th percentile
      * @param setter function to apply value
      * @return uncertain parameter
      */
     public static UncertainParameter lognormal(String name, double p10, double p50, double p90,
-        BiConsumer<ProcessSystem, Double> setter) {
+	BiConsumer<ProcessSystem, Double> setter) {
       return new UncertainParameter(name, p10, p50, p90, DistributionType.LOGNORMAL, null, setter);
     }
 
     /**
      * Creates a uniform distribution parameter.
      *
-     * @param name parameter name
-     * @param min minimum value
-     * @param max maximum value
+     * @param name   parameter name
+     * @param min    minimum value
+     * @param max    maximum value
      * @param setter function to apply value
      * @return uncertain parameter
      */
     public static UncertainParameter uniform(String name, double min, double max,
-        BiConsumer<ProcessSystem, Double> setter) {
+	BiConsumer<ProcessSystem, Double> setter) {
       double mid = (min + max) / 2.0;
       return new UncertainParameter(name, min, mid, max, DistributionType.UNIFORM, null, setter);
     }
@@ -279,16 +275,16 @@ public class SensitivityAnalysis implements Serializable {
      */
     public double sample(Random rng) {
       switch (distribution) {
-        case NORMAL:
-          return sampleNormal(rng);
-        case LOGNORMAL:
-          return sampleLognormal(rng);
-        case TRIANGULAR:
-          return sampleTriangular(rng);
-        case UNIFORM:
-          return sampleUniform(rng);
-        default:
-          return p50;
+      case NORMAL:
+	return sampleNormal(rng);
+      case LOGNORMAL:
+	return sampleLognormal(rng);
+      case TRIANGULAR:
+	return sampleTriangular(rng);
+      case UNIFORM:
+	return sampleUniform(rng);
+      default:
+	return p50;
       }
     }
 
@@ -320,15 +316,15 @@ public class SensitivityAnalysis implements Serializable {
       double b = p90; // max
 
       if (b == a) {
-        return a;
+	return a;
       }
 
       double fc = (c - a) / (b - a);
 
       if (u < fc) {
-        return a + Math.sqrt(u * (b - a) * (c - a));
+	return a + Math.sqrt(u * (b - a) * (c - a));
       } else {
-        return b - Math.sqrt((1 - u) * (b - a) * (b - c));
+	return b - Math.sqrt((1 - u) * (b - a) * (b - c));
       }
     }
 
@@ -340,7 +336,7 @@ public class SensitivityAnalysis implements Serializable {
      * Applies a value to the process system.
      *
      * @param process process to modify
-     * @param value value to apply
+     * @param value   value to apply
      */
     public void apply(ProcessSystem process, double value) {
       setter.accept(process, value);
@@ -411,8 +407,8 @@ public class SensitivityAnalysis implements Serializable {
 
     @Override
     public String toString() {
-      return String.format("UncertainParameter[%s: P10=%.2f, P50=%.2f, P90=%.2f, %s]", name, p10,
-          p50, p90, distribution);
+      return String.format("UncertainParameter[%s: P10=%.2f, P50=%.2f, P90=%.2f, %s]", name, p10, p50, p90,
+	  distribution);
     }
   }
 
@@ -435,15 +431,15 @@ public class SensitivityAnalysis implements Serializable {
     /**
      * Creates a trial result.
      *
-     * @param trialNumber trial index
+     * @param trialNumber       trial index
      * @param sampledParameters map of parameter name to sampled value
-     * @param outputValue output metric value
-     * @param bottleneck bottleneck equipment name (may be null)
-     * @param feasible true if solution was feasible
-     * @param converged true if simulation converged
+     * @param outputValue       output metric value
+     * @param bottleneck        bottleneck equipment name (may be null)
+     * @param feasible          true if solution was feasible
+     * @param converged         true if simulation converged
      */
-    public TrialResult(int trialNumber, Map<String, Double> sampledParameters, double outputValue,
-        String bottleneck, boolean feasible, boolean converged) {
+    public TrialResult(int trialNumber, Map<String, Double> sampledParameters, double outputValue, String bottleneck,
+	boolean feasible, boolean converged) {
       this.trialNumber = trialNumber;
       this.sampledParameters = new LinkedHashMap<>(sampledParameters);
       this.outputValue = outputValue;
@@ -516,8 +512,8 @@ public class SensitivityAnalysis implements Serializable {
    * Complete Monte Carlo analysis result.
    *
    * <p>
-   * Contains all trial results and computed statistics including percentiles, mean, standard
-   * deviation, and sensitivity rankings.
+   * Contains all trial results and computed statistics including percentiles, mean, standard deviation, and sensitivity
+   * rankings.
    */
   public static final class MonteCarloResult implements Serializable {
     private static final long serialVersionUID = 1000L;
@@ -540,13 +536,13 @@ public class SensitivityAnalysis implements Serializable {
     /**
      * Creates a Monte Carlo result.
      *
-     * @param trials list of trial results
+     * @param trials               list of trial results
      * @param tornadoSensitivities map of parameter name to sensitivity
-     * @param outputName name of output metric
-     * @param outputUnit unit of output metric
+     * @param outputName           name of output metric
+     * @param outputUnit           unit of output metric
      */
-    public MonteCarloResult(List<TrialResult> trials, Map<String, Double> tornadoSensitivities,
-        String outputName, String outputUnit) {
+    public MonteCarloResult(List<TrialResult> trials, Map<String, Double> tornadoSensitivities, String outputName,
+	String outputUnit) {
       this.trials = new ArrayList<>(trials);
       this.tornadoSensitivities = new LinkedHashMap<>(tornadoSensitivities);
       this.outputName = outputName;
@@ -569,14 +565,14 @@ public class SensitivityAnalysis implements Serializable {
       int converged = 0;
 
       for (TrialResult trial : trials) {
-        sum += trial.getOutputValue();
-        sumSq += trial.getOutputValue() * trial.getOutputValue();
-        if (trial.isFeasible()) {
-          feasible++;
-        }
-        if (trial.isConverged()) {
-          converged++;
-        }
+	sum += trial.getOutputValue();
+	sumSq += trial.getOutputValue() * trial.getOutputValue();
+	if (trial.isFeasible()) {
+	  feasible++;
+	}
+	if (trial.isConverged()) {
+	  converged++;
+	}
       }
 
       int n = trials.size();
@@ -587,13 +583,13 @@ public class SensitivityAnalysis implements Serializable {
 
       // Sort parameters by sensitivity
       this.mostSensitiveParameters = tornadoSensitivities.entrySet().stream()
-          .sorted(Map.Entry.<String, Double>comparingByValue().reversed()).map(Map.Entry::getKey)
-          .collect(Collectors.toList());
+	  .sorted(Map.Entry.<String, Double>comparingByValue().reversed()).map(Map.Entry::getKey)
+	  .collect(Collectors.toList());
     }
 
     private double getPercentileFromSorted(List<TrialResult> sorted, double percentile) {
       if (sorted.isEmpty()) {
-        return 0;
+	return 0;
       }
       int index = (int) Math.ceil(percentile * sorted.size()) - 1;
       index = Math.max(0, Math.min(index, sorted.size() - 1));
@@ -746,22 +742,22 @@ public class SensitivityAnalysis implements Serializable {
      */
     public double[][] getHistogramData(int numBins) {
       if (trials.isEmpty() || min >= max) {
-        return new double[0][0];
+	return new double[0][0];
       }
 
       double binWidth = (max - min) / numBins;
       int[] counts = new int[numBins];
 
       for (TrialResult trial : trials) {
-        int bin = (int) ((trial.getOutputValue() - min) / binWidth);
-        bin = Math.min(bin, numBins - 1);
-        counts[bin]++;
+	int bin = (int) ((trial.getOutputValue() - min) / binWidth);
+	bin = Math.min(bin, numBins - 1);
+	counts[bin]++;
       }
 
       double[][] result = new double[numBins][2];
       for (int i = 0; i < numBins; i++) {
-        result[i][0] = min + (i + 0.5) * binWidth;
-        result[i][1] = counts[i];
+	result[i][0] = min + (i + 0.5) * binWidth;
+	result[i][1] = counts[i];
       }
 
       return result;
@@ -780,8 +776,8 @@ public class SensitivityAnalysis implements Serializable {
 
       int rank = 1;
       for (String param : mostSensitiveParameters) {
-        double sens = tornadoSensitivities.getOrDefault(param, 0.0);
-        sb.append(String.format("| %s | %.2f | %d |\n", param, sens, rank++));
+	double sens = tornadoSensitivities.getOrDefault(param, 0.0);
+	sb.append(String.format("| %s | %.2f | %d |\n", param, sens, rank++));
       }
 
       return sb.toString();
@@ -795,10 +791,9 @@ public class SensitivityAnalysis implements Serializable {
     public String toSummaryMarkdown() {
       StringBuilder sb = new StringBuilder();
       sb.append("## Monte Carlo Results Summary\n\n");
-      sb.append(String.format("- **Output**: %s%s\n", outputName,
-          outputUnit != null ? " (" + outputUnit + ")" : ""));
-      sb.append(String.format("- **Trials**: %d (converged: %d, feasible: %d)\n", trials.size(),
-          convergedCount, feasibleCount));
+      sb.append(String.format("- **Output**: %s%s\n", outputName, outputUnit != null ? " (" + outputUnit + ")" : ""));
+      sb.append(String.format("- **Trials**: %d (converged: %d, feasible: %d)\n", trials.size(), convergedCount,
+	  feasibleCount));
       sb.append("\n### Statistics\n\n");
       sb.append(String.format("| Statistic | Value |\n"));
       sb.append("|---|---|\n");
@@ -825,20 +820,20 @@ public class SensitivityAnalysis implements Serializable {
       // Header
       sb.append("Trial,Output,Feasible,Bottleneck");
       for (String param : parameterNames) {
-        sb.append(",").append(param);
+	sb.append(",").append(param);
       }
       sb.append("\n");
 
       // Data rows
       for (TrialResult trial : trials) {
-        sb.append(trial.getTrialNumber()).append(",");
-        sb.append(trial.getOutputValue()).append(",");
-        sb.append(trial.isFeasible()).append(",");
-        sb.append(trial.getBottleneck() != null ? trial.getBottleneck() : "");
-        for (String param : parameterNames) {
-          sb.append(",").append(trial.getSampledParameters().getOrDefault(param, Double.NaN));
-        }
-        sb.append("\n");
+	sb.append(trial.getTrialNumber()).append(",");
+	sb.append(trial.getOutputValue()).append(",");
+	sb.append(trial.isFeasible()).append(",");
+	sb.append(trial.getBottleneck() != null ? trial.getBottleneck() : "");
+	for (String param : parameterNames) {
+	  sb.append(",").append(trial.getSampledParameters().getOrDefault(param, Double.NaN));
+	}
+	sb.append("\n");
       }
 
       return sb.toString();
@@ -865,7 +860,8 @@ public class SensitivityAnalysis implements Serializable {
     /**
      * Creates a default configuration.
      */
-    public SensitivityConfig() {}
+    public SensitivityConfig() {
+    }
 
     /**
      * Sets the number of Monte Carlo trials.
@@ -875,7 +871,7 @@ public class SensitivityAnalysis implements Serializable {
      */
     public SensitivityConfig numberOfTrials(int trials) {
       if (trials <= 0) {
-        throw new IllegalArgumentException("Number of trials must be positive");
+	throw new IllegalArgumentException("Number of trials must be positive");
       }
       this.numberOfTrials = trials;
       return this;
@@ -912,7 +908,7 @@ public class SensitivityAnalysis implements Serializable {
      */
     public SensitivityConfig parallelThreads(int threads) {
       if (threads <= 0) {
-        throw new IllegalArgumentException("Thread count must be positive");
+	throw new IllegalArgumentException("Thread count must be positive");
       }
       this.parallelThreads = threads;
       return this;
@@ -1000,9 +996,9 @@ public class SensitivityAnalysis implements Serializable {
     /**
      * Creates a spider point.
      *
-     * @param parameterValue actual parameter value
+     * @param parameterValue      actual parameter value
      * @param normalizedParameter normalized value (-1 to 1)
-     * @param outputValue resulting output
+     * @param outputValue         resulting output
      */
     public SpiderPoint(double parameterValue, double normalizedParameter, double outputValue) {
       this.parameterValue = parameterValue;
@@ -1036,7 +1032,7 @@ public class SensitivityAnalysis implements Serializable {
    * Creates a sensitivity analysis with specified RNG.
    *
    * @param process base process system
-   * @param rng random number generator
+   * @param rng     random number generator
    */
   public SensitivityAnalysis(ProcessSystem process, Random rng) {
     this.baseProcess = Objects.requireNonNull(process, "Process is required");
@@ -1086,17 +1082,16 @@ public class SensitivityAnalysis implements Serializable {
    * <li>Extract the output metric</li>
    * </ol>
    *
-   * @param feedStream feed stream for optimization
-   * @param lowerBound lower bound for rate
-   * @param upperBound upper bound for rate
-   * @param rateUnit rate unit
+   * @param feedStream   feed stream for optimization
+   * @param lowerBound   lower bound for rate
+   * @param upperBound   upper bound for rate
+   * @param rateUnit     rate unit
    * @param outputMetric function to extract output from optimization result
-   * @param config simulation configuration
+   * @param config       simulation configuration
    * @return Monte Carlo result with statistics
    */
-  public MonteCarloResult runMonteCarloOptimization(StreamInterface feedStream, double lowerBound,
-      double upperBound, String rateUnit, ToDoubleFunction<OptimizationResult> outputMetric,
-      SensitivityConfig config) {
+  public MonteCarloResult runMonteCarloOptimization(StreamInterface feedStream, double lowerBound, double upperBound,
+      String rateUnit, ToDoubleFunction<OptimizationResult> outputMetric, SensitivityConfig config) {
     Objects.requireNonNull(feedStream, "Feed stream is required");
     Objects.requireNonNull(outputMetric, "Output metric is required");
     Objects.requireNonNull(config, "Config is required");
@@ -1107,16 +1102,14 @@ public class SensitivityAnalysis implements Serializable {
     List<TrialResult> results;
 
     if (config.isParallel() && config.getNumberOfTrials() > 10) {
-      results = runParallelTrials(feedStream, lowerBound, upperBound, rateUnit, outputMetric,
-          config, localRng);
+      results = runParallelTrials(feedStream, lowerBound, upperBound, rateUnit, outputMetric, config, localRng);
     } else {
-      results = runSequentialTrials(feedStream, lowerBound, upperBound, rateUnit, outputMetric,
-          config, localRng);
+      results = runSequentialTrials(feedStream, lowerBound, upperBound, rateUnit, outputMetric, config, localRng);
     }
 
     // Run tornado analysis
-    Map<String, Double> tornadoSensitivities =
-        runTornadoAnalysisInternal(feedStream, lowerBound, upperBound, rateUnit, outputMetric);
+    Map<String, Double> tornadoSensitivities = runTornadoAnalysisInternal(feedStream, lowerBound, upperBound, rateUnit,
+	outputMetric);
 
     return new MonteCarloResult(results, tornadoSensitivities, "OptimalRate", rateUnit);
   }
@@ -1124,48 +1117,44 @@ public class SensitivityAnalysis implements Serializable {
   /**
    * Runs trials sequentially.
    *
-   * @param feedStream the feed stream for optimization
-   * @param lowerBound the lower bound of the rate search range
-   * @param upperBound the upper bound of the rate search range
-   * @param rateUnit the unit for rate values
+   * @param feedStream   the feed stream for optimization
+   * @param lowerBound   the lower bound of the rate search range
+   * @param upperBound   the upper bound of the rate search range
+   * @param rateUnit     the unit for rate values
    * @param outputMetric the function extracting the output metric from optimization results
-   * @param config the sensitivity analysis configuration
-   * @param localRng the random number generator for sampling
+   * @param config       the sensitivity analysis configuration
+   * @param localRng     the random number generator for sampling
    * @return the list of trial results
    */
-  private List<TrialResult> runSequentialTrials(StreamInterface feedStream, double lowerBound,
-      double upperBound, String rateUnit, ToDoubleFunction<OptimizationResult> outputMetric,
-      SensitivityConfig config, Random localRng) {
+  private List<TrialResult> runSequentialTrials(StreamInterface feedStream, double lowerBound, double upperBound,
+      String rateUnit, ToDoubleFunction<OptimizationResult> outputMetric, SensitivityConfig config, Random localRng) {
     List<TrialResult> results = new ArrayList<>();
     ProductionOptimizer optimizer = new ProductionOptimizer();
-    OptimizationConfig optConfig =
-        new OptimizationConfig(lowerBound, upperBound).rateUnit(rateUnit);
+    OptimizationConfig optConfig = new OptimizationConfig(lowerBound, upperBound).rateUnit(rateUnit);
 
     for (int trial = 0; trial < config.getNumberOfTrials(); trial++) {
       try {
-        // Sample parameters
-        Map<String, Double> sampled = new LinkedHashMap<>();
-        for (UncertainParameter param : parameters) {
-          double value = param.sample(localRng);
-          sampled.put(param.getName(), value);
-          param.apply(baseProcess, value);
-        }
+	// Sample parameters
+	Map<String, Double> sampled = new LinkedHashMap<>();
+	for (UncertainParameter param : parameters) {
+	  double value = param.sample(localRng);
+	  sampled.put(param.getName(), value);
+	  param.apply(baseProcess, value);
+	}
 
-        // Run optimization
-        OptimizationResult optResult = optimizer.optimize(baseProcess, feedStream, optConfig,
-            Collections.emptyList(), Collections.emptyList());
+	// Run optimization
+	OptimizationResult optResult = optimizer.optimize(baseProcess, feedStream, optConfig, Collections.emptyList(),
+	    Collections.emptyList());
 
-        double output = outputMetric.applyAsDouble(optResult);
-        String bottleneck =
-            optResult.getBottleneck() != null ? optResult.getBottleneck().getName() : null;
+	double output = outputMetric.applyAsDouble(optResult);
+	String bottleneck = optResult.getBottleneck() != null ? optResult.getBottleneck().getName() : null;
 
-        results
-            .add(new TrialResult(trial, sampled, output, bottleneck, optResult.isFeasible(), true));
+	results.add(new TrialResult(trial, sampled, output, bottleneck, optResult.isFeasible(), true));
 
       } catch (Exception e) {
-        // Record failed trial
-        Map<String, Double> sampled = new LinkedHashMap<>();
-        results.add(new TrialResult(trial, sampled, Double.NaN, null, false, false));
+	// Record failed trial
+	Map<String, Double> sampled = new LinkedHashMap<>();
+	results.add(new TrialResult(trial, sampled, Double.NaN, null, false, false));
       }
     }
 
@@ -1175,24 +1164,23 @@ public class SensitivityAnalysis implements Serializable {
   /**
    * Runs trials in parallel.
    *
-   * @param feedStream the feed stream for optimization
-   * @param lowerBound lower bound of the rate range
-   * @param upperBound upper bound of the rate range
-   * @param rateUnit unit for production rates
+   * @param feedStream   the feed stream for optimization
+   * @param lowerBound   lower bound of the rate range
+   * @param upperBound   upper bound of the rate range
+   * @param rateUnit     unit for production rates
    * @param outputMetric function to extract output metric from optimization result
-   * @param config sensitivity analysis configuration
-   * @param localRng random number generator for sampling
+   * @param config       sensitivity analysis configuration
+   * @param localRng     random number generator for sampling
    * @return list of trial results
    */
-  private List<TrialResult> runParallelTrials(StreamInterface feedStream, double lowerBound,
-      double upperBound, String rateUnit, ToDoubleFunction<OptimizationResult> outputMetric,
-      SensitivityConfig config, Random localRng) {
+  private List<TrialResult> runParallelTrials(StreamInterface feedStream, double lowerBound, double upperBound,
+      String rateUnit, ToDoubleFunction<OptimizationResult> outputMetric, SensitivityConfig config, Random localRng) {
     // Pre-generate all random samples (thread-safe)
     List<Map<String, Double>> allSamples = new ArrayList<>();
     for (int trial = 0; trial < config.getNumberOfTrials(); trial++) {
       Map<String, Double> sampled = new LinkedHashMap<>();
       for (UncertainParameter param : parameters) {
-        sampled.put(param.getName(), param.sample(localRng));
+	sampled.put(param.getName(), param.sample(localRng));
       }
       allSamples.add(sampled);
     }
@@ -1204,17 +1192,16 @@ public class SensitivityAnalysis implements Serializable {
       final int trialNum = trial;
       final Map<String, Double> sampled = allSamples.get(trial);
 
-      futures.add(executor.submit(() -> runSingleTrial(trialNum, sampled, feedStream, lowerBound,
-          upperBound, rateUnit, outputMetric)));
+      futures.add(executor
+	  .submit(() -> runSingleTrial(trialNum, sampled, feedStream, lowerBound, upperBound, rateUnit, outputMetric)));
     }
 
     List<TrialResult> results = new ArrayList<>();
     for (Future<TrialResult> future : futures) {
       try {
-        results.add(future.get());
+	results.add(future.get());
       } catch (Exception e) {
-        results.add(new TrialResult(results.size(), Collections.emptyMap(), Double.NaN, null, false,
-            false));
+	results.add(new TrialResult(results.size(), Collections.emptyMap(), Double.NaN, null, false, false));
       }
     }
 
@@ -1225,37 +1212,34 @@ public class SensitivityAnalysis implements Serializable {
   /**
    * Runs a single trial (used for parallel execution).
    *
-   * @param trialNum the trial number
-   * @param sampled map of sampled parameter values
-   * @param feedStream the feed stream for optimization
-   * @param lowerBound lower bound of the rate range
-   * @param upperBound upper bound of the rate range
-   * @param rateUnit unit for production rates
+   * @param trialNum     the trial number
+   * @param sampled      map of sampled parameter values
+   * @param feedStream   the feed stream for optimization
+   * @param lowerBound   lower bound of the rate range
+   * @param upperBound   upper bound of the rate range
+   * @param rateUnit     unit for production rates
    * @param outputMetric function to extract output metric from optimization result
    * @return the trial result
    */
-  private TrialResult runSingleTrial(int trialNum, Map<String, Double> sampled,
-      StreamInterface feedStream, double lowerBound, double upperBound, String rateUnit,
-      ToDoubleFunction<OptimizationResult> outputMetric) {
+  private TrialResult runSingleTrial(int trialNum, Map<String, Double> sampled, StreamInterface feedStream,
+      double lowerBound, double upperBound, String rateUnit, ToDoubleFunction<OptimizationResult> outputMetric) {
     try {
       // Apply parameters (note: this modifies shared state, may need cloning for true parallelism)
       for (UncertainParameter param : parameters) {
-        Double value = sampled.get(param.getName());
-        if (value != null) {
-          param.apply(baseProcess, value);
-        }
+	Double value = sampled.get(param.getName());
+	if (value != null) {
+	  param.apply(baseProcess, value);
+	}
       }
 
       ProductionOptimizer optimizer = new ProductionOptimizer();
-      OptimizationConfig optConfig =
-          new OptimizationConfig(lowerBound, upperBound).rateUnit(rateUnit);
+      OptimizationConfig optConfig = new OptimizationConfig(lowerBound, upperBound).rateUnit(rateUnit);
 
-      OptimizationResult optResult = optimizer.optimize(baseProcess, feedStream, optConfig,
-          Collections.emptyList(), Collections.emptyList());
+      OptimizationResult optResult = optimizer.optimize(baseProcess, feedStream, optConfig, Collections.emptyList(),
+	  Collections.emptyList());
 
       double output = outputMetric.applyAsDouble(optResult);
-      String bottleneck =
-          optResult.getBottleneck() != null ? optResult.getBottleneck().getName() : null;
+      String bottleneck = optResult.getBottleneck() != null ? optResult.getBottleneck().getName() : null;
 
       return new TrialResult(trialNum, sampled, output, bottleneck, optResult.isFeasible(), true);
 
@@ -1276,25 +1260,23 @@ public class SensitivityAnalysis implements Serializable {
    * <li>Calculate sensitivity as |output_P90 - output_P10|</li>
    * </ol>
    *
-   * @param feedStream feed stream for optimization
-   * @param lowerBound lower bound for rate
-   * @param upperBound upper bound for rate
-   * @param rateUnit rate unit
+   * @param feedStream   feed stream for optimization
+   * @param lowerBound   lower bound for rate
+   * @param upperBound   upper bound for rate
+   * @param rateUnit     rate unit
    * @param outputMetric function to extract output
    * @return map of parameter name to sensitivity magnitude
    */
-  public Map<String, Double> runTornadoAnalysis(StreamInterface feedStream, double lowerBound,
-      double upperBound, String rateUnit, ToDoubleFunction<OptimizationResult> outputMetric) {
+  public Map<String, Double> runTornadoAnalysis(StreamInterface feedStream, double lowerBound, double upperBound,
+      String rateUnit, ToDoubleFunction<OptimizationResult> outputMetric) {
     return runTornadoAnalysisInternal(feedStream, lowerBound, upperBound, rateUnit, outputMetric);
   }
 
-  private Map<String, Double> runTornadoAnalysisInternal(StreamInterface feedStream,
-      double lowerBound, double upperBound, String rateUnit,
-      ToDoubleFunction<OptimizationResult> outputMetric) {
+  private Map<String, Double> runTornadoAnalysisInternal(StreamInterface feedStream, double lowerBound,
+      double upperBound, String rateUnit, ToDoubleFunction<OptimizationResult> outputMetric) {
     Map<String, Double> sensitivities = new LinkedHashMap<>();
     ProductionOptimizer optimizer = new ProductionOptimizer();
-    OptimizationConfig optConfig =
-        new OptimizationConfig(lowerBound, upperBound).rateUnit(rateUnit);
+    OptimizationConfig optConfig = new OptimizationConfig(lowerBound, upperBound).rateUnit(rateUnit);
 
     // Set all to base case (P50)
     for (UncertainParameter param : parameters) {
@@ -1304,8 +1286,8 @@ public class SensitivityAnalysis implements Serializable {
     // Get base case output
     double baseOutput = 0;
     try {
-      OptimizationResult baseResult = optimizer.optimize(baseProcess, feedStream, optConfig,
-          Collections.emptyList(), Collections.emptyList());
+      OptimizationResult baseResult = optimizer.optimize(baseProcess, feedStream, optConfig, Collections.emptyList(),
+	  Collections.emptyList());
       baseOutput = outputMetric.applyAsDouble(baseResult);
     } catch (Exception e) {
       // Use 0 if base case fails
@@ -1314,27 +1296,27 @@ public class SensitivityAnalysis implements Serializable {
     // Vary each parameter
     for (UncertainParameter param : parameters) {
       try {
-        // Set to P10
-        param.apply(baseProcess, param.getP10());
-        OptimizationResult lowResult = optimizer.optimize(baseProcess, feedStream, optConfig,
-            Collections.emptyList(), Collections.emptyList());
-        double lowOutput = outputMetric.applyAsDouble(lowResult);
+	// Set to P10
+	param.apply(baseProcess, param.getP10());
+	OptimizationResult lowResult = optimizer.optimize(baseProcess, feedStream, optConfig, Collections.emptyList(),
+	    Collections.emptyList());
+	double lowOutput = outputMetric.applyAsDouble(lowResult);
 
-        // Set to P90
-        param.apply(baseProcess, param.getP90());
-        OptimizationResult highResult = optimizer.optimize(baseProcess, feedStream, optConfig,
-            Collections.emptyList(), Collections.emptyList());
-        double highOutput = outputMetric.applyAsDouble(highResult);
+	// Set to P90
+	param.apply(baseProcess, param.getP90());
+	OptimizationResult highResult = optimizer.optimize(baseProcess, feedStream, optConfig, Collections.emptyList(),
+	    Collections.emptyList());
+	double highOutput = outputMetric.applyAsDouble(highResult);
 
-        // Reset to P50
-        param.apply(baseProcess, param.getP50());
+	// Reset to P50
+	param.apply(baseProcess, param.getP50());
 
-        // Calculate sensitivity
-        double sensitivity = Math.abs(highOutput - lowOutput);
-        sensitivities.put(param.getName(), sensitivity);
+	// Calculate sensitivity
+	double sensitivity = Math.abs(highOutput - lowOutput);
+	sensitivities.put(param.getName(), sensitivity);
 
       } catch (Exception e) {
-        sensitivities.put(param.getName(), 0.0);
+	sensitivities.put(param.getName(), 0.0);
       }
     }
 
@@ -1345,49 +1327,47 @@ public class SensitivityAnalysis implements Serializable {
    * Generates spider plot data for each parameter.
    *
    * <p>
-   * Varies each parameter systematically from P10 to P90 while holding others at P50, recording the
-   * output at each step.
+   * Varies each parameter systematically from P10 to P90 while holding others at P50, recording the output at each
+   * step.
    *
-   * @param feedStream feed stream for optimization
-   * @param lowerBound lower bound for rate
-   * @param upperBound upper bound for rate
-   * @param rateUnit rate unit
+   * @param feedStream        feed stream for optimization
+   * @param lowerBound        lower bound for rate
+   * @param upperBound        upper bound for rate
+   * @param rateUnit          rate unit
    * @param stepsPerParameter number of steps from P10 to P90
-   * @param outputMetric function to extract output
+   * @param outputMetric      function to extract output
    * @return map of parameter name to list of spider points
    */
-  public Map<String, List<SpiderPoint>> runSpiderAnalysis(StreamInterface feedStream,
-      double lowerBound, double upperBound, String rateUnit, int stepsPerParameter,
-      ToDoubleFunction<OptimizationResult> outputMetric) {
+  public Map<String, List<SpiderPoint>> runSpiderAnalysis(StreamInterface feedStream, double lowerBound,
+      double upperBound, String rateUnit, int stepsPerParameter, ToDoubleFunction<OptimizationResult> outputMetric) {
     Map<String, List<SpiderPoint>> spiderData = new LinkedHashMap<>();
     ProductionOptimizer optimizer = new ProductionOptimizer();
-    OptimizationConfig optConfig =
-        new OptimizationConfig(lowerBound, upperBound).rateUnit(rateUnit);
+    OptimizationConfig optConfig = new OptimizationConfig(lowerBound, upperBound).rateUnit(rateUnit);
 
     for (UncertainParameter param : parameters) {
       List<SpiderPoint> points = new ArrayList<>();
 
       // Set all to P50
       for (UncertainParameter p : parameters) {
-        p.apply(baseProcess, p.getP50());
+	p.apply(baseProcess, p.getP50());
       }
 
       // Vary this parameter
       for (int step = 0; step <= stepsPerParameter; step++) {
-        double fraction = (double) step / stepsPerParameter;
-        double value = param.getP10() + fraction * (param.getP90() - param.getP10());
-        double normalized = -1.0 + 2.0 * fraction; // -1 at P10, +1 at P90
+	double fraction = (double) step / stepsPerParameter;
+	double value = param.getP10() + fraction * (param.getP90() - param.getP10());
+	double normalized = -1.0 + 2.0 * fraction; // -1 at P10, +1 at P90
 
-        param.apply(baseProcess, value);
+	param.apply(baseProcess, value);
 
-        try {
-          OptimizationResult result = optimizer.optimize(baseProcess, feedStream, optConfig,
-              Collections.emptyList(), Collections.emptyList());
-          double output = outputMetric.applyAsDouble(result);
-          points.add(new SpiderPoint(value, normalized, output));
-        } catch (Exception e) {
-          points.add(new SpiderPoint(value, normalized, Double.NaN));
-        }
+	try {
+	  OptimizationResult result = optimizer.optimize(baseProcess, feedStream, optConfig, Collections.emptyList(),
+	      Collections.emptyList());
+	  double output = outputMetric.applyAsDouble(result);
+	  points.add(new SpiderPoint(value, normalized, output));
+	} catch (Exception e) {
+	  points.add(new SpiderPoint(value, normalized, Double.NaN));
+	}
       }
 
       // Reset to P50
@@ -1429,4 +1409,3 @@ public class SensitivityAnalysis implements Serializable {
     return baseProcess;
   }
 }
-

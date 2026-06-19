@@ -13,9 +13,9 @@ import com.google.gson.JsonParser;
  * Normalized STID/P&amp;ID and tagreader JSON bridge for the open-drain review engine.
  *
  * <p>
- * This class does not connect to STID or plant historians directly. Retrieval, OCR, P&amp;ID
- * interpretation, and tagreader reads remain in Python/devtools or task workflows. The Java core
- * consumes normalized extracts so the review remains deterministic and testable.
+ * This class does not connect to STID or plant historians directly. Retrieval, OCR, P&amp;ID interpretation, and
+ * tagreader reads remain in Python/devtools or task workflows. The Java core consumes normalized extracts so the review
+ * remains deterministic and testable.
  * </p>
  *
  * @author NeqSim contributors
@@ -82,7 +82,7 @@ public class StidOpenDrainDataSource implements OpenDrainReviewDataSource {
    * Adds records from a named array.
    *
    * @param input input receiving records
-   * @param key source array key
+   * @param key   source array key
    */
   private void addArray(OpenDrainReviewInput input, String key) {
     if (!source.has(key) || !source.get(key).isJsonArray()) {
@@ -92,7 +92,7 @@ public class StidOpenDrainDataSource implements OpenDrainReviewDataSource {
     for (int i = 0; i < array.size(); i++) {
       JsonElement element = array.get(i);
       if (element.isJsonObject()) {
-        mergeItem(input, fromRecord(element.getAsJsonObject(), key));
+	mergeItem(input, fromRecord(element.getAsJsonObject(), key));
       }
     }
   }
@@ -101,7 +101,7 @@ public class StidOpenDrainDataSource implements OpenDrainReviewDataSource {
    * Merges one parsed item into the input by area identifier.
    *
    * @param input target input
-   * @param item parsed review item
+   * @param item  parsed review item
    */
   private void mergeItem(OpenDrainReviewInput input, OpenDrainReviewItem item) {
     OpenDrainReviewInput single = new OpenDrainReviewInput();
@@ -112,7 +112,7 @@ public class StidOpenDrainDataSource implements OpenDrainReviewDataSource {
   /**
    * Converts one normalized STID-like record to a review item.
    *
-   * @param record source record
+   * @param record    source record
    * @param sourceKey name of the source array
    * @return review item
    */
@@ -152,7 +152,7 @@ public class StidOpenDrainDataSource implements OpenDrainReviewDataSource {
     if (element.isJsonArray()) {
       List<Object> list = new ArrayList<Object>();
       for (JsonElement child : element.getAsJsonArray()) {
-        list.add(toObject(child));
+	list.add(toObject(child));
       }
       return list;
     }

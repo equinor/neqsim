@@ -13,15 +13,14 @@ import neqsim.thermo.util.humidair.HumidAir;
  * Air-cooled heat exchanger (fin-fan cooler) model.
  *
  * <p>
- * Models an air cooler with humid-air side energy balance, fin-tube thermal design (LMTD, UA),
- * bundle geometry, and fan power estimation. Supports ambient temperature correction, fan curve
- * modelling, and number-of-bays sizing.
+ * Models an air cooler with humid-air side energy balance, fin-tube thermal design (LMTD, UA), bundle geometry, and fan
+ * power estimation. Supports ambient temperature correction, fan curve modelling, and number-of-bays sizing.
  * </p>
  *
  * <p>
- * Thermal design follows the API 661 framework: the overall heat transfer coefficient considers
- * air-side (fin) and process-side components. The air-side coefficient uses the Briggs-Young
- * fin-tube correlation, and LMTD correction for cross-flow applies per TEMA.
+ * Thermal design follows the API 661 framework: the overall heat transfer coefficient considers air-side (fin) and
+ * process-side components. The air-side coefficient uses the Briggs-Young fin-tube correlation, and LMTD correction for
+ * cross-flow applies per TEMA.
  * </p>
  *
  * <p>
@@ -170,7 +169,7 @@ public class AirCooler extends Cooler {
   /**
    * Constructor for AirCooler with inlet stream.
    *
-   * @param name equipment name
+   * @param name     equipment name
    * @param inStream inlet process stream
    */
   public AirCooler(String name, StreamInterface inStream) {
@@ -183,7 +182,7 @@ public class AirCooler extends Cooler {
    * Set air inlet temperature.
    *
    * @param temperature temperature value
-   * @param unit "C" for Celsius, "K" for Kelvin
+   * @param unit        "C" for Celsius, "K" for Kelvin
    */
   public void setAirInletTemperature(double temperature, String unit) {
     airInletTemperature = unit.equalsIgnoreCase("C") ? temperature + 273.15 : temperature;
@@ -193,7 +192,7 @@ public class AirCooler extends Cooler {
    * Set air outlet temperature.
    *
    * @param temperature temperature value
-   * @param unit "C" for Celsius, "K" for Kelvin
+   * @param unit        "C" for Celsius, "K" for Kelvin
    */
   public void setAirOutletTemperature(double temperature, String unit) {
     airOutletTemperature = unit.equalsIgnoreCase("C") ? temperature + 273.15 : temperature;
@@ -396,7 +395,7 @@ public class AirCooler extends Cooler {
    * Set design ambient temperature (for ambient correction).
    *
    * @param temperature temperature value
-   * @param unit "C" or "K"
+   * @param unit        "C" or "K"
    */
   public void setDesignAmbientTemperature(double temperature, String unit) {
     designAmbientTemperature = unit.equalsIgnoreCase("C") ? temperature + 273.15 : temperature;
@@ -428,7 +427,7 @@ public class AirCooler extends Cooler {
    */
   public double getFanStaticPressure(double volumeFlow) {
     return fanCurveA0 + fanCurveA1 * volumeFlow + fanCurveA2 * volumeFlow * volumeFlow
-        + fanCurveA3 * volumeFlow * volumeFlow * volumeFlow;
+	+ fanCurveA3 * volumeFlow * volumeFlow * volumeFlow;
   }
 
   // ======================== Result getters ========================
@@ -609,8 +608,7 @@ public class AirCooler extends Cooler {
    * @param duty heat duty [W] (positive = heat rejection)
    */
   private void calcAirFlow(double duty) {
-    double W = HumidAir.humidityRatioFromRH(airInletTemperature, atmosphericPressure,
-        relativeHumidity);
+    double W = HumidAir.humidityRatioFromRH(airInletTemperature, atmosphericPressure, relativeHumidity);
     double hin = HumidAir.enthalpy(airInletTemperature, W);
     double hout = HumidAir.enthalpy(airOutletTemperature, W);
     double dh = hout - hin;
@@ -622,16 +620,14 @@ public class AirCooler extends Cooler {
     airMassFlow = duty / (dh * 1000.0);
     double Mda = 28.965e-3;
     double Mw = 18.01528e-3;
-    double volumePerKgDryAir =
-        ((1.0 / Mda) + (W / Mw)) * 8.314 * airInletTemperature / atmosphericPressure;
+    double volumePerKgDryAir = ((1.0 / Mda) + (W / Mw)) * 8.314 * airInletTemperature / atmosphericPressure;
     airVolumeFlow = airMassFlow * volumePerKgDryAir;
   }
 
   /**
-   * Calculate LMTD for cross-flow with F correction. Uses process inlet/outlet and air
-   * inlet/outlet temperatures.
+   * Calculate LMTD for cross-flow with F correction. Uses process inlet/outlet and air inlet/outlet temperatures.
    *
-   * @param tProcessIn process inlet temperature [K]
+   * @param tProcessIn  process inlet temperature [K]
    * @param tProcessOut process outlet temperature [K]
    */
   private void calcLMTD(double tProcessIn, double tProcessOut) {
@@ -640,7 +636,7 @@ public class AirCooler extends Cooler {
     if (dt1 <= 0 || dt2 <= 0) {
       lmtd = Math.max(dt1, dt2);
       if (lmtd <= 0) {
-        lmtd = 1.0;
+	lmtd = 1.0;
       }
       return;
     }
@@ -657,9 +653,8 @@ public class AirCooler extends Cooler {
    * Calculate air-side heat transfer coefficient using Briggs-Young correlation for finned tubes.
    *
    * <p>
-   * Briggs, D.E. and Young, E.H. (1963), "Convection Heat Transfer and Pressure Drop of Air
-   * Flowing Across Triangular Pitch Banks of Finned Tubes", Chemical Engineering Progress Symposium
-   * Series 59(41):1-10.
+   * Briggs, D.E. and Young, E.H. (1963), "Convection Heat Transfer and Pressure Drop of Air Flowing Across Triangular
+   * Pitch Banks of Finned Tubes", Chemical Engineering Progress Symposium Series 59(41):1-10.
    * </p>
    */
   private void calcAirSideHTC() {
@@ -706,8 +701,8 @@ public class AirCooler extends Cooler {
 
     // Briggs-Young: Nu = 0.134 * Re^0.681 * Pr^(1/3) * (finSpacing/finHeight)^0.2 *
     // (finSpacing/finThickness)^0.1134
-    double Nu = 0.134 * Math.pow(Re, 0.681) * Math.pow(prAir, 1.0 / 3.0)
-        * Math.pow(finSpacing / finHeight, 0.2) * Math.pow(finSpacing / finThickness, 0.1134);
+    double Nu = 0.134 * Math.pow(Re, 0.681) * Math.pow(prAir, 1.0 / 3.0) * Math.pow(finSpacing / finHeight, 0.2)
+	* Math.pow(finSpacing / finThickness, 0.1134);
 
     double hAir = Nu * kAir / tubeOuterDiameter;
 
@@ -744,8 +739,8 @@ public class AirCooler extends Cooler {
     calcAirSideHTC();
 
     // Overall U (bare tube basis): 1/U = 1/h_air + R_air + R_process + 1/h_process
-    double resistance = 1.0 / Math.max(airSideHTC, 1.0) + airFoulingResistance
-        + processFoulingResistance + 1.0 / Math.max(processSideHTC, 1.0);
+    double resistance = 1.0 / Math.max(airSideHTC, 1.0) + airFoulingResistance + processFoulingResistance
+	+ 1.0 / Math.max(processSideHTC, 1.0);
     overallU = 1.0 / resistance;
 
     // Required area
@@ -763,9 +758,8 @@ public class AirCooler extends Cooler {
 
     double finOD = tubeOuterDiameter + 2.0 * finHeight;
     double nFinsPerMeter = 1.0 / finPitch;
-    double aFinPerTube =
-        2.0 * Math.PI / 4.0 * (finOD * finOD - tubeOuterDiameter * tubeOuterDiameter)
-            * nFinsPerMeter * tubeLength;
+    double aFinPerTube = 2.0 * Math.PI / 4.0 * (finOD * finOD - tubeOuterDiameter * tubeOuterDiameter) * nFinsPerMeter
+	* tubeLength;
     totalFinArea = aFinPerTube * totalTubes;
 
     if (faceArea > 0 && airVolumeFlow > 0) {
@@ -794,8 +788,7 @@ public class AirCooler extends Cooler {
     }
     double sigmaRatio = aMin / transversePitch;
 
-    double vMax = (faceArea > 0 && airVolumeFlow > 0) ? airVolumeFlow / (faceArea * sigmaRatio)
-        : 4.0 / sigmaRatio;
+    double vMax = (faceArea > 0 && airVolumeFlow > 0) ? airVolumeFlow / (faceArea * sigmaRatio) : 4.0 / sigmaRatio;
     double gMax = rhoAir * vMax;
 
     double Re = gMax * tubeOuterDiameter / muAir;
@@ -804,9 +797,8 @@ public class AirCooler extends Cooler {
     }
 
     // Robinson-Briggs: f = 18.93 * Re^(-0.316) * (Pt/do)^(-0.927) * (Pt/finOD)^0.515
-    double f = 18.93 * Math.pow(Re, -0.316)
-        * Math.pow(transversePitch / tubeOuterDiameter, -0.927)
-        * Math.pow(transversePitch / finOD, 0.515);
+    double f = 18.93 * Math.pow(Re, -0.316) * Math.pow(transversePitch / tubeOuterDiameter, -0.927)
+	* Math.pow(transversePitch / finOD, 0.515);
 
     airSidePressureDrop = f * numberOfTubeRows * gMax * gMax / (2.0 * rhoAir);
   }
@@ -834,8 +826,8 @@ public class AirCooler extends Cooler {
   }
 
   /**
-   * Calculate ambient temperature correction factor. Ratio of available duty at actual ambient vs
-   * design ambient, based on the mean-temperature-difference method.
+   * Calculate ambient temperature correction factor. Ratio of available duty at actual ambient vs design ambient, based
+   * on the mean-temperature-difference method.
    */
   private void calcAmbientCorrection() {
     if (getInletStream() == null) {
@@ -901,13 +893,12 @@ public class AirCooler extends Cooler {
     try {
       SystemInterface fluid = getOutletStream().getFluid();
       if (fluid != null) {
-        fluid.initProperties();
-        if (fluid.hasPhaseType("gas") && !fluid.hasPhaseType("oil")
-            && !fluid.hasPhaseType("aqueous")) {
-          processSideHTC = 120.0;
-        } else if (fluid.hasPhaseType("oil") || fluid.hasPhaseType("aqueous")) {
-          processSideHTC = 500.0;
-        }
+	fluid.initProperties();
+	if (fluid.hasPhaseType("gas") && !fluid.hasPhaseType("oil") && !fluid.hasPhaseType("aqueous")) {
+	  processSideHTC = 120.0;
+	} else if (fluid.hasPhaseType("oil") || fluid.hasPhaseType("aqueous")) {
+	  processSideHTC = 500.0;
+	}
       }
     } catch (Exception ex) {
       logger.debug("Could not estimate process HTC: " + ex.getMessage());
@@ -928,12 +919,10 @@ public class AirCooler extends Cooler {
     // Operating conditions
     JsonObject operating = new JsonObject();
     if (getInletStream() != null) {
-      operating.addProperty("processInletTemperature_C",
-          getInletStream().getTemperature() - 273.15);
+      operating.addProperty("processInletTemperature_C", getInletStream().getTemperature() - 273.15);
     }
     if (getOutletStream() != null) {
-      operating.addProperty("processOutletTemperature_C",
-          getOutletStream().getTemperature() - 273.15);
+      operating.addProperty("processOutletTemperature_C", getOutletStream().getTemperature() - 273.15);
     }
     operating.addProperty("duty_kW", -getDuty() / 1000.0);
     operating.addProperty("airInletTemperature_C", airInletTemperature - 273.15);
@@ -988,7 +977,6 @@ public class AirCooler extends Cooler {
     fan.addProperty("totalFanPower_kW", fanPower / 1000.0);
     root.add("fanData", fan);
 
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(root);
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(root);
   }
 }

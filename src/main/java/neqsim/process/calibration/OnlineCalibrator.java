@@ -12,8 +12,8 @@ import neqsim.process.processmodel.ProcessSystem;
  * Online calibrator for continuously updating model parameters based on real-time data.
  *
  * <p>
- * Designed for integration with AI platforms that require auto-calibrating physics models. Supports
- * incremental updates for real-time applications and full recalibration for periodic maintenance.
+ * Designed for integration with AI platforms that require auto-calibrating physics models. Supports incremental updates
+ * for real-time applications and full recalibration for periodic maintenance.
  * </p>
  *
  * @author ESOL
@@ -43,7 +43,7 @@ public class OnlineCalibrator implements Serializable {
     private final Map<String, Double> conditions;
 
     public DataPoint(Map<String, Double> measurements, Map<String, Double> predictions,
-        Map<String, Double> conditions) {
+	Map<String, Double> conditions) {
       this.timestamp = Instant.now();
       this.measurements = new HashMap<>(measurements);
       this.predictions = new HashMap<>(predictions);
@@ -70,7 +70,7 @@ public class OnlineCalibrator implements Serializable {
       Double meas = measurements.get(variable);
       Double pred = predictions.get(variable);
       if (meas != null && pred != null) {
-        return meas - pred;
+	return meas - pred;
       }
       return Double.NaN;
     }
@@ -78,7 +78,7 @@ public class OnlineCalibrator implements Serializable {
     public double getRelativeError(String variable) {
       Double meas = measurements.get(variable);
       if (meas != null && Math.abs(meas) > 1e-10) {
-        return getError(variable) / meas;
+	return getError(variable) / meas;
       }
       return Double.NaN;
     }
@@ -127,11 +127,10 @@ public class OnlineCalibrator implements Serializable {
    * Records a data point and checks if calibration is needed.
    *
    * @param measurements actual measured values
-   * @param predictions model predicted values
+   * @param predictions  model predicted values
    * @return true if deviation exceeds threshold
    */
-  public boolean recordDataPoint(Map<String, Double> measurements,
-      Map<String, Double> predictions) {
+  public boolean recordDataPoint(Map<String, Double> measurements, Map<String, Double> predictions) {
     return recordDataPoint(measurements, predictions, new HashMap<>());
   }
 
@@ -139,8 +138,8 @@ public class OnlineCalibrator implements Serializable {
    * Records a data point with operating conditions.
    *
    * @param measurements actual measured values
-   * @param predictions model predicted values
-   * @param conditions operating conditions (P, T, etc.)
+   * @param predictions  model predicted values
+   * @param conditions   operating conditions (P, T, etc.)
    * @return true if deviation exceeds threshold
    */
   public boolean recordDataPoint(Map<String, Double> measurements, Map<String, Double> predictions,
@@ -167,7 +166,7 @@ public class OnlineCalibrator implements Serializable {
     for (String variable : point.getMeasurements().keySet()) {
       double relError = Math.abs(point.getRelativeError(variable));
       if (!Double.isNaN(relError) && relError > deviationThreshold) {
-        return true;
+	return true;
       }
     }
     return false;
@@ -177,11 +176,10 @@ public class OnlineCalibrator implements Serializable {
    * Performs incremental calibration update (fast, for real-time).
    *
    * @param measurements current measured values
-   * @param predictions current predicted values
+   * @param predictions  current predicted values
    * @return calibration result
    */
-  public CalibrationResult incrementalUpdate(Map<String, Double> measurements,
-      Map<String, Double> predictions) {
+  public CalibrationResult incrementalUpdate(Map<String, Double> measurements, Map<String, Double> predictions) {
     if (tunableParameters.isEmpty()) {
       return CalibrationResult.failure("No tunable parameters configured");
     }
@@ -195,9 +193,9 @@ public class OnlineCalibrator implements Serializable {
       Double meas = measurements.get(variable);
       Double pred = predictions.get(variable);
       if (meas != null && pred != null && Math.abs(pred) > 1e-10) {
-        double ratio = meas / pred;
-        totalError += Math.abs(1 - ratio);
-        errorCount++;
+	double ratio = meas / pred;
+	totalError += Math.abs(1 - ratio);
+	errorCount++;
       }
     }
 
@@ -233,17 +231,17 @@ public class OnlineCalibrator implements Serializable {
 
     for (DataPoint point : calibrationHistory) {
       for (String variable : point.getMeasurements().keySet()) {
-        double error = point.getError(variable);
-        if (!Double.isNaN(error)) {
-          // Simple feature: conditions
-          double[] feature = new double[point.getConditions().size()];
-          int i = 0;
-          for (Double val : point.getConditions().values()) {
-            feature[i++] = val;
-          }
-          features.add(feature);
-          targets.add(error);
-        }
+	double error = point.getError(variable);
+	if (!Double.isNaN(error)) {
+	  // Simple feature: conditions
+	  double[] feature = new double[point.getConditions().size()];
+	  int i = 0;
+	  for (Double val : point.getConditions().values()) {
+	    feature[i++] = val;
+	  }
+	  features.add(feature);
+	  targets.add(error);
+	}
       }
     }
 
@@ -279,7 +277,7 @@ public class OnlineCalibrator implements Serializable {
    * Calculates calibration quality metrics.
    *
    * @param samples the number of samples used
-   * @param rmse the root mean square error
+   * @param rmse    the root mean square error
    * @return the calibration quality assessment
    */
   private CalibrationQuality calculateQuality(int samples, double rmse) {
@@ -291,23 +289,23 @@ public class OnlineCalibrator implements Serializable {
 
     for (DataPoint point : calibrationHistory) {
       for (String variable : point.getMeasurements().keySet()) {
-        Double meas = point.getMeasurements().get(variable);
-        if (meas != null) {
-          mean += meas;
-          count++;
-        }
+	Double meas = point.getMeasurements().get(variable);
+	if (meas != null) {
+	  mean += meas;
+	  count++;
+	}
       }
     }
     mean = (count > 0) ? mean / count : 0;
 
     for (DataPoint point : calibrationHistory) {
       for (String variable : point.getMeasurements().keySet()) {
-        Double meas = point.getMeasurements().get(variable);
-        Double pred = point.getPredictions().get(variable);
-        if (meas != null && pred != null) {
-          sumSquaredTotal += (meas - mean) * (meas - mean);
-          sumSquaredResidual += (meas - pred) * (meas - pred);
-        }
+	Double meas = point.getMeasurements().get(variable);
+	Double pred = point.getPredictions().get(variable);
+	if (meas != null && pred != null) {
+	  sumSquaredTotal += (meas - mean) * (meas - mean);
+	  sumSquaredResidual += (meas - pred) * (meas - pred);
+	}
       }
     }
 

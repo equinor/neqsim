@@ -25,23 +25,22 @@ public class AbsorptionColumnDesignStandard extends DesignStandard {
    * Constructor for AbsorptionColumnDesignStandard.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
+   * @param name         a {@link java.lang.String} object
    * @param equipmentInn a {@link neqsim.process.mechanicaldesign.MechanicalDesign} object
    */
   public AbsorptionColumnDesignStandard(String name, MechanicalDesign equipmentInn) {
     super(name, equipmentInn);
 
     java.sql.ResultSet dataSet = null;
-    try (neqsim.util.database.NeqSimProcessDesignDataBase database =
-        new neqsim.util.database.NeqSimProcessDesignDataBase()) {
+    try (
+	neqsim.util.database.NeqSimProcessDesignDataBase database = new neqsim.util.database.NeqSimProcessDesignDataBase()) {
       dataSet = database.getResultSet(
-          ("SELECT * FROM technicalrequirements WHERE EQUIPMENTTYPE='Absorber' AND Company='"
-              + standardName + "'"));
+	  ("SELECT * FROM technicalrequirements WHERE EQUIPMENTTYPE='Absorber' AND Company='" + standardName + "'"));
       while (dataSet.next()) {
-        String specName = dataSet.getString("SPECIFICATION");
-        if (specName.equals("MolecularSieve3AWaterCapacity")) {
-          molecularSieveWaterCapacity = Double.parseDouble(dataSet.getString("MAXVALUE"));
-        }
+	String specName = dataSet.getString("SPECIFICATION");
+	if (specName.equals("MolecularSieve3AWaterCapacity")) {
+	  molecularSieveWaterCapacity = Double.parseDouble(dataSet.getString("MAXVALUE"));
+	}
       }
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);

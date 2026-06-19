@@ -10,21 +10,18 @@ import neqsim.process.chemistry.util.StandardsRegistry;
 import neqsim.process.corrosion.NorsokM506CorrosionRate;
 
 /**
- * Mechanistic CO2 corrosion model that combines a kinetic NORSOK M-506 baseline with Nesic-style
- * mass-transfer limitation and a Langmuir adsorption inhibitor isotherm.
+ * Mechanistic CO2 corrosion model that combines a kinetic NORSOK M-506 baseline with Nesic-style mass-transfer
+ * limitation and a Langmuir adsorption inhibitor isotherm.
  *
  * <p>
- * Three serial resistances control the observed corrosion rate of carbon steel under sweet (CO2)
- * service:
+ * Three serial resistances control the observed corrosion rate of carbon steel under sweet (CO2) service:
  *
  * <ol>
- * <li><b>Charge-transfer kinetics</b> — captured by the NORSOK M-506 (2005/2017) baseline rate
- * {@code CR_kinetic} which already accounts for fugacity, pH, scaling temperature and wall
- * shear.</li>
- * <li><b>Boundary-layer mass transfer</b> — described by the Berger-Hau correlation for Sherwood
- * number in turbulent pipe flow, {@code Sh = 0.0165 * Re^0.86 * Sc^0.33}, giving a mass-transfer
- * coefficient {@code k_m = Sh * D_CO2 / d}. The mass-transfer-limited rate is
- * {@code CR_MT = k_m * c_CO2 * 11.6 mm/yr per mol/L} (Nesic 2007).</li>
+ * <li><b>Charge-transfer kinetics</b> — captured by the NORSOK M-506 (2005/2017) baseline rate {@code CR_kinetic} which
+ * already accounts for fugacity, pH, scaling temperature and wall shear.</li>
+ * <li><b>Boundary-layer mass transfer</b> — described by the Berger-Hau correlation for Sherwood number in turbulent
+ * pipe flow, {@code Sh = 0.0165 * Re^0.86 * Sc^0.33}, giving a mass-transfer coefficient {@code k_m = Sh * D_CO2 / d}.
+ * The mass-transfer-limited rate is {@code CR_MT = k_m * c_CO2 * 11.6 mm/yr per mol/L} (Nesic 2007).</li>
  * <li><b>Inhibitor surface coverage</b> — governed by a Langmuir adsorption isotherm (see
  * {@link LangmuirInhibitorIsotherm}).</li>
  * </ol>
@@ -88,7 +85,8 @@ public class MechanisticCorrosionModel implements Serializable {
   /**
    * Default constructor.
    */
-  public MechanisticCorrosionModel() {}
+  public MechanisticCorrosionModel() {
+  }
 
   // ─── Setters ────────────────────────────────────────────
 
@@ -130,13 +128,12 @@ public class MechanisticCorrosionModel implements Serializable {
   /**
    * Sets aqueous-phase chemistry.
    *
-   * @param pH pH value (use -1 to compute equilibrium pH from CO2)
-   * @param bicarbMgL bicarbonate concentration [mg/L]
+   * @param pH            pH value (use -1 to compute equilibrium pH from CO2)
+   * @param bicarbMgL     bicarbonate concentration [mg/L]
    * @param ionicStrength ionic strength [mol/L]
    * @return this for chaining
    */
-  public MechanisticCorrosionModel setWaterChemistry(double pH, double bicarbMgL,
-      double ionicStrength) {
+  public MechanisticCorrosionModel setWaterChemistry(double pH, double bicarbMgL, double ionicStrength) {
     this.pH = pH;
     this.bicarbMgL = bicarbMgL;
     this.ionicStrengthMolL = ionicStrength;
@@ -146,9 +143,9 @@ public class MechanisticCorrosionModel implements Serializable {
   /**
    * Sets pipe and flow geometry.
    *
-   * @param velocityMs flow velocity [m/s]
-   * @param diameterM pipe ID [m]
-   * @param densityKgM3 liquid density [kg/m3]
+   * @param velocityMs   flow velocity [m/s]
+   * @param diameterM    pipe ID [m]
+   * @param densityKgM3  liquid density [kg/m3]
    * @param viscosityPas dynamic viscosity [Pa.s]
    * @return this for chaining
    */
@@ -165,11 +162,10 @@ public class MechanisticCorrosionModel implements Serializable {
    * Sets the inhibitor model and dose.
    *
    * @param inhibitor Langmuir isotherm (use {@code null} to keep default imidazoline)
-   * @param doseMgL inhibitor dose [mg/L]
+   * @param doseMgL   inhibitor dose [mg/L]
    * @return this for chaining
    */
-  public MechanisticCorrosionModel setInhibitor(LangmuirInhibitorIsotherm inhibitor,
-      double doseMgL) {
+  public MechanisticCorrosionModel setInhibitor(LangmuirInhibitorIsotherm inhibitor, double doseMgL) {
     if (inhibitor != null) {
       this.inhibitor = inhibitor;
     }
@@ -180,8 +176,8 @@ public class MechanisticCorrosionModel implements Serializable {
   // ─── Calculation ────────────────────────────────────────
 
   /**
-   * Runs the full mechanistic calculation: NORSOK kinetic baseline → mass-transfer-limited rate →
-   * mixed control → Langmuir inhibition.
+   * Runs the full mechanistic calculation: NORSOK kinetic baseline → mass-transfer-limited rate → mixed control →
+   * Langmuir inhibition.
    *
    * @return this for chaining
    */
@@ -337,8 +333,7 @@ public class MechanisticCorrosionModel implements Serializable {
    * @return list of standard reference maps
    */
   public List<Map<String, Object>> getStandardsApplied() {
-    return StandardsRegistry.toMapList(StandardsRegistry.NORSOK_M506,
-        StandardsRegistry.NACE_SP0775);
+    return StandardsRegistry.toMapList(StandardsRegistry.NORSOK_M506, StandardsRegistry.NACE_SP0775);
   }
 
   /**
@@ -373,8 +368,7 @@ public class MechanisticCorrosionModel implements Serializable {
    * @return pretty-printed JSON string
    */
   public String toJson() {
-    Gson gson = new GsonBuilder().setPrettyPrinting().serializeNulls()
-        .serializeSpecialFloatingPointValues().create();
+    Gson gson = new GsonBuilder().setPrettyPrinting().serializeNulls().serializeSpecialFloatingPointValues().create();
     return gson.toJson(toMap());
   }
 }

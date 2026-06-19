@@ -13,8 +13,8 @@ import neqsim.process.processmodel.ProcessSystem;
  * Environmental KPI reporter for field development.
  *
  * <p>
- * Calculates and reports environmental metrics aligned with Norwegian Continental Shelf (NCS)
- * regulatory requirements and industry best practices.
+ * Calculates and reports environmental metrics aligned with Norwegian Continental Shelf (NCS) regulatory requirements
+ * and industry best practices.
  * </p>
  *
  * <h2>Key Metrics</h2>
@@ -131,7 +131,8 @@ public class EnvironmentalReporter implements Serializable {
   /**
    * Creates an environmental reporter with default settings.
    */
-  public EnvironmentalReporter() {}
+  public EnvironmentalReporter() {
+  }
 
   /**
    * Creates an environmental reporter for a power supply type.
@@ -171,8 +172,8 @@ public class EnvironmentalReporter implements Serializable {
   /**
    * Sets annual production volumes.
    *
-   * @param oilSm3 oil production (Sm³/year)
-   * @param gasSm3 gas production (Sm³/year)
+   * @param oilSm3  oil production (Sm³/year)
+   * @param gasSm3  gas production (Sm³/year)
    * @param waterM3 water production (m³/year)
    * @return this for chaining
    */
@@ -202,18 +203,18 @@ public class EnvironmentalReporter implements Serializable {
 
     for (ProcessEquipmentInterface equip : facility.getUnitOperations()) {
       if (equip instanceof Compressor) {
-        Compressor comp = (Compressor) equip;
-        totalPower += Math.abs(comp.getPower("kW"));
+	Compressor comp = (Compressor) equip;
+	totalPower += Math.abs(comp.getPower("kW"));
       } else if (equip instanceof Pump) {
-        Pump pump = (Pump) equip;
-        totalPower += Math.abs(pump.getPower("kW"));
+	Pump pump = (Pump) equip;
+	totalPower += Math.abs(pump.getPower("kW"));
       } else if (equip instanceof Heater) {
-        Heater heater = (Heater) equip;
-        // Only count fired heaters, not exchangers
-        double duty = heater.getDuty();
-        if (duty > 0) {
-          totalPower += duty / 1000.0; // Convert W to kW
-        }
+	Heater heater = (Heater) equip;
+	// Only count fired heaters, not exchangers
+	double duty = heater.getDuty();
+	if (duty > 0) {
+	  totalPower += duty / 1000.0; // Convert W to kW
+	}
       }
     }
 
@@ -242,10 +243,10 @@ public class EnvironmentalReporter implements Serializable {
 
     for (ProcessEquipmentInterface equip : facility.getUnitOperations()) {
       if (equip instanceof Flare) {
-        Flare flare = (Flare) equip;
-        // Use NeqSim's built-in CO2 calculation
-        double co2KgH = flare.getCO2Emission("kg/hr");
-        totalCO2 += co2KgH * operatingHoursPerYear / 1000.0; // tonnes/year
+	Flare flare = (Flare) equip;
+	// Use NeqSim's built-in CO2 calculation
+	double co2KgH = flare.getCO2Emission("kg/hr");
+	totalCO2 += co2KgH * operatingHoursPerYear / 1000.0; // tonnes/year
       }
     }
 
@@ -321,12 +322,11 @@ public class EnvironmentalReporter implements Serializable {
   /**
    * Generates a comprehensive environmental report including water treatment.
    *
-   * @param facility process system
+   * @param facility  process system
    * @param treatment water treatment train
    * @return environmental report
    */
-  public EnvironmentalReport generateReport(ProcessSystem facility,
-      ProducedWaterTreatmentTrain treatment) {
+  public EnvironmentalReport generateReport(ProcessSystem facility, ProducedWaterTreatmentTrain treatment) {
     EnvironmentalReport report = generateReport(facility);
 
     // Add water treatment metrics
@@ -410,8 +410,7 @@ public class EnvironmentalReporter implements Serializable {
       sb.append("|--------|-------|------|\n");
       sb.append(String.format("| Total CO2 | %.0f | tonnes/year |\n", totalCO2TonnesYear));
       sb.append(String.format("| CO2 from Power | %.0f | tonnes/year |\n", co2FromPowerTonnesYear));
-      sb.append(
-          String.format("| CO2 from Flaring | %.0f | tonnes/year |\n", co2FromFlaringTonnesYear));
+      sb.append(String.format("| CO2 from Flaring | %.0f | tonnes/year |\n", co2FromFlaringTonnesYear));
       sb.append(String.format("| CO2 Intensity | %.1f | kg CO2/boe |\n", co2IntensityKgBoe));
       sb.append(String.format("| Power Consumption | %.0f | kW |\n", totalPowerKW));
       sb.append(String.format("| Power Supply | %s | - |\n", powerSupplyType));
@@ -419,28 +418,23 @@ public class EnvironmentalReporter implements Serializable {
       sb.append("\n## Water Discharge\n\n");
       sb.append("| Metric | Value | Unit | Compliant |\n");
       sb.append("|--------|-------|------|----------|\n");
-      sb.append(String.format("| OIW Concentration | %.1f | mg/L | %s |\n", oiwMgL,
-          isOIWCompliant ? "✓" : "✗"));
-      sb.append(String.format("| Annual Oil Discharge | %.1f | tonnes/year | - |\n",
-          oilDischargeTonnesYear));
+      sb.append(String.format("| OIW Concentration | %.1f | mg/L | %s |\n", oiwMgL, isOIWCompliant ? "✓" : "✗"));
+      sb.append(String.format("| Annual Oil Discharge | %.1f | tonnes/year | - |\n", oilDischargeTonnesYear));
 
       sb.append("\n## Economics\n\n");
       sb.append(String.format("| CO2 Tax (NCS) | %.0f | kNOK/year |\n", co2TaxNOK / 1000.0));
 
       sb.append("\n## Status\n\n");
-      sb.append(
-          String.format("- **Low Emitter (<10 kg/boe):** %s\n", isLowEmitter ? "✓ Yes" : "✗ No"));
-      sb.append(
-          String.format("- **OIW Compliant (<30 mg/L):** %s\n", isOIWCompliant ? "✓ Yes" : "✗ No"));
+      sb.append(String.format("- **Low Emitter (<10 kg/boe):** %s\n", isLowEmitter ? "✓ Yes" : "✗ No"));
+      sb.append(String.format("- **OIW Compliant (<30 mg/L):** %s\n", isOIWCompliant ? "✓ Yes" : "✗ No"));
 
       return sb.toString();
     }
 
     @Override
     public String toString() {
-      return String.format(
-          "EnvironmentalReport[CO2=%.0f t/yr, intensity=%.1f kg/boe, OIW=%.1f mg/L]",
-          totalCO2TonnesYear, co2IntensityKgBoe, oiwMgL);
+      return String.format("EnvironmentalReport[CO2=%.0f t/yr, intensity=%.1f kg/boe, OIW=%.1f mg/L]",
+	  totalCO2TonnesYear, co2IntensityKgBoe, oiwMgL);
     }
   }
 }

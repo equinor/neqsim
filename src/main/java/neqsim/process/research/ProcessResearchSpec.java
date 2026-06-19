@@ -10,9 +10,9 @@ import java.util.Map;
  * Input specification for a process research run.
  *
  * <p>
- * The specification describes feed composition, desired products, allowed unit operations, reaction
- * options, candidate-count limits, and optimization variables. It is intentionally declarative so
- * callers can generate the same process candidates from Java, Python, notebooks, or web APIs.
+ * The specification describes feed composition, desired products, allowed unit operations, reaction options,
+ * candidate-count limits, and optimization variables. It is intentionally declarative so callers can generate the same
+ * process candidates from Java, Python, notebooks, or web APIs.
  * </p>
  *
  * @author NeqSim Development Team
@@ -63,7 +63,8 @@ public class ProcessResearchSpec {
   /**
    * Creates an empty process research specification.
    */
-  public ProcessResearchSpec() {}
+  public ProcessResearchSpec() {
+  }
 
   /**
    * Creates a new builder.
@@ -356,7 +357,7 @@ public class ProcessResearchSpec {
     }
     for (String allowed : allowedUnitTypes) {
       if (allowed.equalsIgnoreCase(unitType)) {
-        return true;
+	return true;
       }
     }
     return false;
@@ -382,7 +383,7 @@ public class ProcessResearchSpec {
      */
     public ProductTarget(String name) {
       if (name == null || name.trim().isEmpty()) {
-        throw new IllegalArgumentException("Product target name cannot be empty");
+	throw new IllegalArgumentException("Product target name cannot be empty");
       }
       this.name = name;
     }
@@ -552,13 +553,13 @@ public class ProcessResearchSpec {
      * Creates a decision variable.
      *
      * @param equipmentName equipment name in the generated candidate
-     * @param propertyName property setter name without the set prefix
-     * @param lowerBound lower bound
-     * @param upperBound upper bound
-     * @param unit unit string accepted by the equipment setter
+     * @param propertyName  property setter name without the set prefix
+     * @param lowerBound    lower bound
+     * @param upperBound    upper bound
+     * @param unit          unit string accepted by the equipment setter
      */
-    public DecisionVariable(String equipmentName, String propertyName, double lowerBound,
-        double upperBound, String unit) {
+    public DecisionVariable(String equipmentName, String propertyName, double lowerBound, double upperBound,
+	String unit) {
       this.equipmentName = equipmentName;
       this.propertyName = propertyName;
       this.lowerBound = lowerBound;
@@ -649,7 +650,8 @@ public class ProcessResearchSpec {
     /**
      * Creates scoring weights with backwards-compatible product-focused defaults.
      */
-    public ScoringWeights() {}
+    public ScoringWeights() {
+    }
 
     /**
      * Sets the product flow reward weight.
@@ -847,7 +849,8 @@ public class ProcessResearchSpec {
     /**
      * Creates unconstrained synthesis acceptance criteria.
      */
-    public SynthesisConstraints() {}
+    public SynthesisConstraints() {
+    }
 
     /**
      * Sets the maximum equipment count.
@@ -921,8 +924,7 @@ public class ProcessResearchSpec {
      * @param maxAnnualOperatingCostProxyUSDPerYr maximum annual operating-cost proxy in USD/yr
      * @return this constraints object
      */
-    public SynthesisConstraints setMaxAnnualOperatingCostProxyUSDPerYr(
-        double maxAnnualOperatingCostProxyUSDPerYr) {
+    public SynthesisConstraints setMaxAnnualOperatingCostProxyUSDPerYr(double maxAnnualOperatingCostProxyUSDPerYr) {
       this.maxAnnualOperatingCostProxyUSDPerYr = maxAnnualOperatingCostProxyUSDPerYr;
       return this;
     }
@@ -1070,8 +1072,7 @@ public class ProcessResearchSpec {
      * @param electricityEmissionFactorKgCO2PerKWh kg CO2-equivalent per kWh
      * @return this assumptions object
      */
-    public EconomicAssumptions setElectricityEmissionFactorKgCO2PerKWh(
-        double electricityEmissionFactorKgCO2PerKWh) {
+    public EconomicAssumptions setElectricityEmissionFactorKgCO2PerKWh(double electricityEmissionFactorKgCO2PerKWh) {
       this.electricityEmissionFactorKgCO2PerKWh = electricityEmissionFactorKgCO2PerKWh;
       return this;
     }
@@ -1102,7 +1103,7 @@ public class ProcessResearchSpec {
      * Sets an equipment type cost proxy.
      *
      * @param equipmentType equipment type name
-     * @param costUsd cost proxy in USD
+     * @param costUsd       cost proxy in USD
      * @return this assumptions object
      */
     public EconomicAssumptions setEquipmentCostProxyUsd(String equipmentType, double costUsd) {
@@ -1340,7 +1341,7 @@ public class ProcessResearchSpec {
      * Sets feed flow rate.
      *
      * @param flowRate flow rate value
-     * @param unit flow rate unit
+     * @param unit     flow rate unit
      * @return this builder
      */
     public Builder setFeedFlowRate(double flowRate, String unit) {
@@ -1353,7 +1354,7 @@ public class ProcessResearchSpec {
      * Adds a feed component.
      *
      * @param componentName component name
-     * @param moleFraction mole fraction or relative amount
+     * @param moleFraction  mole fraction or relative amount
      * @return this builder
      */
     public Builder addFeedComponent(String componentName, double moleFraction) {
@@ -1577,8 +1578,7 @@ public class ProcessResearchSpec {
      * @return this builder
      */
     public Builder setSynthesisConstraints(SynthesisConstraints synthesisConstraints) {
-      spec.synthesisConstraints =
-          synthesisConstraints == null ? new SynthesisConstraints() : synthesisConstraints;
+      spec.synthesisConstraints = synthesisConstraints == null ? new SynthesisConstraints() : synthesisConstraints;
       return this;
     }
 
@@ -1589,8 +1589,7 @@ public class ProcessResearchSpec {
      * @return this builder
      */
     public Builder setEconomicAssumptions(EconomicAssumptions economicAssumptions) {
-      spec.economicAssumptions =
-          economicAssumptions == null ? new EconomicAssumptions() : economicAssumptions;
+      spec.economicAssumptions = economicAssumptions == null ? new EconomicAssumptions() : economicAssumptions;
       return this;
     }
 
@@ -1601,10 +1600,10 @@ public class ProcessResearchSpec {
      */
     public ProcessResearchSpec build() {
       if (spec.feedComponents.isEmpty()) {
-        throw new IllegalStateException("At least one feed component must be specified");
+	throw new IllegalStateException("At least one feed component must be specified");
       }
       if (spec.productTargets.isEmpty()) {
-        throw new IllegalStateException("At least one product target must be specified");
+	throw new IllegalStateException("At least one product target must be specified");
       }
       return spec;
     }

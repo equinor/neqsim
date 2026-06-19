@@ -7,8 +7,8 @@ import java.util.Map;
  * Decline Curve Analysis (DCA) for production forecasting.
  *
  * <p>
- * Implements the Arps family of decline curves used to forecast production rates and estimate
- * reserves (EUR) for oil and gas wells. The three classical Arps models are:
+ * Implements the Arps family of decline curves used to forecast production rates and estimate reserves (EUR) for oil
+ * and gas wells. The three classical Arps models are:
  *
  * <ul>
  * <li><b>Exponential</b> ($b = 0$): constant-percentage decline, most conservative</li>
@@ -23,12 +23,11 @@ import java.util.Map;
  * Rate at time $t$: $$ q(t) = q_i (1 + b D_i t)^{-1/b} $$
  *
  * <p>
- * Cumulative production at time $t$: $$ N_p(t) = \frac{q_i}{(1 - b) D_i} \left[ 1 - (1 + b D_i
- * t)^{(b-1)/b} \right] $$
+ * Cumulative production at time $t$: $$ N_p(t) = \frac{q_i}{(1 - b) D_i} \left[ 1 - (1 + b D_i t)^{(b-1)/b} \right] $$
  *
  * <p>
- * <b>Units:</b> This class is unit-agnostic for production rates. Times are in days by convention.
- * Users should ensure consistent units between rate, time, and decline rate:
+ * <b>Units:</b> This class is unit-agnostic for production rates. Times are in days by convention. Users should ensure
+ * consistent units between rate, time, and decline rate:
  * <ul>
  * <li>{@code qi} - initial rate (bbl/d, Sm3/d, MMscf/d, etc.)</li>
  * <li>{@code di} - initial decline rate (1/day, nominal)</li>
@@ -77,8 +76,8 @@ public final class DeclineCurveAnalysis {
    *
    * @param qi Initial production rate (any consistent unit, e.g. bbl/d)
    * @param di Initial nominal decline rate (1/day). Must be positive.
-   * @param b Arps decline exponent (dimensionless). Range: [0, 1]
-   * @param t Time since start of decline (days). Must be non-negative.
+   * @param b  Arps decline exponent (dimensionless). Range: [0, 1]
+   * @param t  Time since start of decline (days). Must be non-negative.
    * @return Production rate at time t (same unit as qi)
    */
   public static double rate(double qi, double di, double b, double t) {
@@ -101,7 +100,7 @@ public final class DeclineCurveAnalysis {
    *
    * @param qi Initial production rate
    * @param di Nominal decline rate (1/day)
-   * @param t Time (days)
+   * @param t  Time (days)
    * @return Rate at time t
    */
   public static double rateExponential(double qi, double di, double t) {
@@ -116,8 +115,8 @@ public final class DeclineCurveAnalysis {
    *
    * @param qi Initial production rate
    * @param di Initial nominal decline rate (1/day)
-   * @param b Arps exponent (0 &lt; b &lt; 1)
-   * @param t Time (days)
+   * @param b  Arps exponent (0 &lt; b &lt; 1)
+   * @param t  Time (days)
    * @return Rate at time t
    */
   public static double rateHyperbolic(double qi, double di, double b, double t) {
@@ -132,7 +131,7 @@ public final class DeclineCurveAnalysis {
    *
    * @param qi Initial production rate
    * @param di Initial nominal decline rate (1/day)
-   * @param t Time (days)
+   * @param t  Time (days)
    * @return Rate at time t
    */
   public static double rateHarmonic(double qi, double di, double t) {
@@ -156,8 +155,8 @@ public final class DeclineCurveAnalysis {
    *
    * @param qi Initial production rate
    * @param di Initial nominal decline rate (1/day)
-   * @param b Arps decline exponent [0, 1]
-   * @param t Time (days)
+   * @param b  Arps decline exponent [0, 1]
+   * @param t  Time (days)
    * @return Cumulative production (rate-unit * days, e.g. bbl if qi in bbl/d)
    */
   public static double cumulativeProduction(double qi, double di, double b, double t) {
@@ -185,7 +184,7 @@ public final class DeclineCurveAnalysis {
    *
    * @param qi Initial production rate
    * @param di Nominal decline rate (1/day)
-   * @param t Time (days)
+   * @param t  Time (days)
    * @return Cumulative production
    */
   public static double cumulativeExponential(double qi, double di, double t) {
@@ -197,7 +196,7 @@ public final class DeclineCurveAnalysis {
    *
    * @param qi Initial production rate
    * @param di Nominal decline rate (1/day)
-   * @param t Time (days)
+   * @param t  Time (days)
    * @return Cumulative production
    */
   public static double cumulativeHarmonic(double qi, double di, double t) {
@@ -232,8 +231,7 @@ public final class DeclineCurveAnalysis {
    */
   public static double effectiveAnnualToNominal(double dEffective) {
     if (dEffective <= 0.0 || dEffective >= 1.0) {
-      throw new IllegalArgumentException(
-          "Effective decline rate must be between 0 and 1, got " + dEffective);
+      throw new IllegalArgumentException("Effective decline rate must be between 0 and 1, got " + dEffective);
     }
     return -Math.log(1.0 - dEffective) / 365.25;
   }
@@ -248,8 +246,8 @@ public final class DeclineCurveAnalysis {
    * For exponential ($b = 0$), $D(t) = D_i$ (constant).
    *
    * @param di Initial nominal decline rate (1/day)
-   * @param b Arps exponent [0, 1]
-   * @param t Time (days)
+   * @param b  Arps exponent [0, 1]
+   * @param t  Time (days)
    * @return Instantaneous decline rate at time t (1/day)
    */
   public static double instantaneousDeclineRate(double di, double b, double t) {
@@ -273,9 +271,9 @@ public final class DeclineCurveAnalysis {
    * <li>$b &gt; 0$: $t = [(q_i/q_{lim})^b - 1] / (b D_i)$</li>
    * </ul>
    *
-   * @param qi Initial production rate
-   * @param di Nominal decline rate (1/day)
-   * @param b Arps exponent [0, 1]
+   * @param qi     Initial production rate
+   * @param di     Nominal decline rate (1/day)
+   * @param b      Arps exponent [0, 1]
    * @param qLimit Target rate (must be less than qi)
    * @return Time from start to reach qLimit (days)
    */
@@ -300,9 +298,9 @@ public final class DeclineCurveAnalysis {
    * <p>
    * Total cumulative production until the well reaches the economic limit rate.
    *
-   * @param qi Initial production rate
-   * @param di Nominal decline rate (1/day)
-   * @param b Arps exponent [0, 1]
+   * @param qi     Initial production rate
+   * @param di     Nominal decline rate (1/day)
+   * @param b      Arps exponent [0, 1]
    * @param qLimit Economic limit rate (same unit as qi)
    * @return EUR (rate-unit * days)
    */
@@ -317,15 +315,14 @@ public final class DeclineCurveAnalysis {
   /**
    * Remaining reserves from current time to economic limit.
    *
-   * @param qi Initial production rate
-   * @param di Initial nominal decline rate (1/day)
-   * @param b Arps exponent [0, 1]
+   * @param qi       Initial production rate
+   * @param di       Initial nominal decline rate (1/day)
+   * @param b        Arps exponent [0, 1]
    * @param tCurrent Current time since start of decline (days)
-   * @param qLimit Economic limit rate
+   * @param qLimit   Economic limit rate
    * @return Remaining reserves (rate-unit * days)
    */
-  public static double remainingReserves(double qi, double di, double b, double tCurrent,
-      double qLimit) {
+  public static double remainingReserves(double qi, double di, double b, double tCurrent, double qLimit) {
     double npCurrent = cumulativeProduction(qi, di, b, tCurrent);
     double eurTotal = eur(qi, di, b, qLimit);
     return eurTotal - npCurrent;
@@ -341,16 +338,15 @@ public final class DeclineCurveAnalysis {
    * <p>
    * Returns a 2D array: result[0] = times, result[1] = rates, result[2] = cumulative production.
    *
-   * @param qi Initial production rate
-   * @param di Nominal decline rate (1/day)
-   * @param b Arps exponent [0, 1]
+   * @param qi     Initial production rate
+   * @param di     Nominal decline rate (1/day)
+   * @param b      Arps exponent [0, 1]
    * @param tStart Start time (days)
-   * @param tEnd End time (days)
-   * @param tStep Time step (days)
+   * @param tEnd   End time (days)
+   * @param tStep  Time step (days)
    * @return 2D array [times, rates, cumulativeProduction]
    */
-  public static double[][] forecast(double qi, double di, double b, double tStart, double tEnd,
-      double tStep) {
+  public static double[][] forecast(double qi, double di, double b, double tStart, double tEnd, double tStep) {
     if (tStep <= 0.0) {
       throw new IllegalArgumentException("Time step must be positive");
     }
@@ -362,14 +358,14 @@ public final class DeclineCurveAnalysis {
     for (int i = 0; i < nPoints; i++) {
       double t = tStart + i * tStep;
       if (t > tEnd) {
-        t = tEnd;
+	t = tEnd;
       }
       times[i] = t;
       rates[i] = rate(qi, di, b, t);
       cumProd[i] = cumulativeProduction(qi, di, b, t);
     }
 
-    return new double[][] {times, rates, cumProd};
+    return new double[][] { times, rates, cumProd };
   }
 
   // ============================================================
@@ -402,8 +398,8 @@ public final class DeclineCurveAnalysis {
    * Estimate hyperbolic parameters from three rate-time data points.
    *
    * <p>
-   * Uses least-squares fitting via Newton-Raphson iteration. Falls back to exponential estimation
-   * if the data does not support a hyperbolic fit ($b \approx 0$).
+   * Uses least-squares fitting via Newton-Raphson iteration. Falls back to exponential estimation if the data does not
+   * support a hyperbolic fit ($b \approx 0$).
    *
    * @param q1 Rate at time t1
    * @param t1 First time point (days)
@@ -413,8 +409,8 @@ public final class DeclineCurveAnalysis {
    * @param t3 Third time point (days)
    * @return Map with keys "qi", "di", "b"
    */
-  public static Map<String, Double> estimateHyperbolicParameters(double q1, double t1, double q2,
-      double t2, double q3, double t3) {
+  public static Map<String, Double> estimateHyperbolicParameters(double q1, double t1, double q2, double t2, double q3,
+      double t3) {
     // Simple approach: use ratios to estimate b
     // For hyperbolic: q = qi / (1 + b*Di*t)^(1/b)
     // Ratio: q1/q2 = ((1 + b*Di*t2) / (1 + b*Di*t1))^(1/b)
@@ -435,12 +431,12 @@ public final class DeclineCurveAnalysis {
       double r = Math.pow(q1 / q3, bTry);
       double dTry;
       if (Math.abs(r - 1.0) < 1e-12) {
-        dTry = diEst;
+	dTry = diEst;
       } else {
-        dTry = (r - 1.0) / (bTry * (t3 - t1) + 1e-30);
+	dTry = (r - 1.0) / (bTry * (t3 - t1) + 1e-30);
       }
       if (dTry <= 0) {
-        continue;
+	continue;
       }
       // qi from q1
       double qiTry = q1 * Math.pow(1.0 + bTry * dTry * t1, 1.0 / (bTry + 1e-30));
@@ -449,8 +445,8 @@ public final class DeclineCurveAnalysis {
       double q2Pred = rate(qiTry, dTry, bTry, t2);
       double error = Math.abs(q2Pred - q2) / q2;
       if (error < bestError) {
-        bestError = error;
-        bestB = bTry;
+	bestError = error;
+	bestB = bTry;
       }
     }
 
@@ -487,9 +483,9 @@ public final class DeclineCurveAnalysis {
   /**
    * Generate a comprehensive DCA summary for given parameters.
    *
-   * @param qi Initial production rate
-   * @param di Nominal decline rate (1/day)
-   * @param b Arps exponent [0, 1]
+   * @param qi     Initial production rate
+   * @param di     Nominal decline rate (1/day)
+   * @param b      Arps exponent [0, 1]
    * @param qLimit Economic limit rate
    * @return Map of key DCA metrics
    */

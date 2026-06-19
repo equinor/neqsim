@@ -9,8 +9,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 /**
- * Tests for the stateless closed-loop automation methods on {@link AutomationRunner} —
- * {@code runLoop} (build-once / sweep-many) and {@code getAdjustableParameters}.
+ * Tests for the stateless closed-loop automation methods on {@link AutomationRunner} — {@code runLoop} (build-once /
+ * sweep-many) and {@code getAdjustableParameters}.
  *
  * @author Even Solbraa
  * @version 1.0
@@ -19,23 +19,21 @@ class AutomationLoopRunnerTest {
 
   /** A small compressor process with an adjustable discharge pressure. */
   private static String compressorProcessJson() {
-    return "{" + "\"fluid\": {" + "  \"model\": \"SRK\"," + "  \"temperature\": 298.15,"
-        + "  \"pressure\": 50.0," + "  \"mixingRule\": \"classic\","
-        + "  \"components\": {\"methane\": 0.85, \"ethane\": 0.10, \"propane\": 0.05}" + "},"
-        + "\"process\": [" + "  {\"type\": \"Stream\", \"name\": \"feed\","
-        + "   \"properties\": {\"flowRate\": [10000.0, \"kg/hr\"]}},"
-        + "  {\"type\": \"Compressor\", \"name\": \"Compressor\", \"inlet\": \"feed\","
-        + "   \"properties\": {\"outletPressure\": [100.0, \"bara\"]}}" + "]" + "}";
+    return "{" + "\"fluid\": {" + "  \"model\": \"SRK\"," + "  \"temperature\": 298.15," + "  \"pressure\": 50.0,"
+	+ "  \"mixingRule\": \"classic\","
+	+ "  \"components\": {\"methane\": 0.85, \"ethane\": 0.10, \"propane\": 0.05}" + "}," + "\"process\": ["
+	+ "  {\"type\": \"Stream\", \"name\": \"feed\"," + "   \"properties\": {\"flowRate\": [10000.0, \"kg/hr\"]}},"
+	+ "  {\"type\": \"Compressor\", \"name\": \"Compressor\", \"inlet\": \"feed\","
+	+ "   \"properties\": {\"outletPressure\": [100.0, \"bara\"]}}" + "]" + "}";
   }
 
   @Test
   void testRunLoopSweepsAllTrials() {
-    String trials = "[{\"Compressor.outletPressure\": 90.0},"
-        + "{\"Compressor.outletPressure\": 110.0}," + "{\"Compressor.outletPressure\": 130.0}]";
+    String trials = "[{\"Compressor.outletPressure\": 90.0}," + "{\"Compressor.outletPressure\": 110.0},"
+	+ "{\"Compressor.outletPressure\": 130.0}]";
     String readbacks = "[\"Compressor.power\"]";
 
-    String result =
-        AutomationRunner.runLoop(compressorProcessJson(), trials, readbacks, "bara", "kW");
+    String result = AutomationRunner.runLoop(compressorProcessJson(), trials, readbacks, "bara", "kW");
     assertNotNull(result);
     JsonObject root = JsonParser.parseString(result).getAsJsonObject();
     assertEquals("success", root.get("status").getAsString(), "runLoop failed: " + result);
@@ -57,8 +55,7 @@ class AutomationLoopRunnerTest {
   @Test
   void testRunLoopBadAddressDegradesSingleTrial() {
     // One good trial, one with an unknown address — the bad one must not crash the sweep.
-    String trials =
-        "[{\"Compressor.outletPressure\": 110.0}," + "{\"NoSuchUnit.outletPressure\": 120.0}]";
+    String trials = "[{\"Compressor.outletPressure\": 110.0}," + "{\"NoSuchUnit.outletPressure\": 120.0}]";
     String result = AutomationRunner.runLoop(compressorProcessJson(), trials, "[]", "bara", null);
     JsonObject root = JsonParser.parseString(result).getAsJsonObject();
     assertEquals("success", root.get("status").getAsString());
@@ -88,8 +85,7 @@ class AutomationLoopRunnerTest {
     String result = AutomationRunner.getAdjustableParameters(compressorProcessJson());
     assertNotNull(result);
     JsonObject root = JsonParser.parseString(result).getAsJsonObject();
-    assertEquals("success", root.get("status").getAsString(),
-        "getAdjustableParameters failed: " + result);
+    assertEquals("success", root.get("status").getAsString(), "getAdjustableParameters failed: " + result);
     JsonObject data = root.getAsJsonObject("data");
     assertTrue(data.has("parameters"), "Should expose a parameters array");
     assertTrue(data.has("count"));

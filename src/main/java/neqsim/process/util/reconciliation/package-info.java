@@ -6,16 +6,15 @@
  * </p>
  *
  * <p>
- * <b>1. Steady-State Detection (SSD)</b> — monitors process variables over a sliding window and
- * determines when the process has reached steady state using the R-statistic (ratio of filtered to
- * unfiltered variance), optional slope and std.dev tests. Only steady-state data should be fed into
- * reconciliation or model calibration.
+ * <b>1. Steady-State Detection (SSD)</b> — monitors process variables over a sliding window and determines when the
+ * process has reached steady state using the R-statistic (ratio of filtered to unfiltered variance), optional slope and
+ * std.dev tests. Only steady-state data should be fed into reconciliation or model calibration.
  * </p>
  *
  * <p>
- * <b>2. Data Reconciliation</b> — weighted least squares (WLS) adjustment of plant measurements so
- * that mass (and energy) balance constraints are exactly satisfied, with gross error detection via
- * normalized residual tests and iterative elimination of faulty sensors.
+ * <b>2. Data Reconciliation</b> — weighted least squares (WLS) adjustment of plant measurements so that mass (and
+ * energy) balance constraints are exactly satisfied, with gross error detection via normalized residual tests and
+ * iterative elimination of faulty sensors.
  * </p>
  *
  * <p>
@@ -23,18 +22,18 @@
  * </p>
  *
  * <ul>
- * <li>{@link neqsim.process.util.reconciliation.SteadyStateDetector} - Monitors variables and
- * evaluates steady-state status using R-statistic, slope, and std.dev criteria</li>
- * <li>{@link neqsim.process.util.reconciliation.SteadyStateVariable} - A monitored variable with
- * sliding window and computed statistics</li>
- * <li>{@link neqsim.process.util.reconciliation.SteadyStateResult} - Result of SSD evaluation with
- * per-variable diagnostics</li>
- * <li>{@link neqsim.process.util.reconciliation.DataReconciliationEngine} - WLS solver with gross
- * error detection and elimination</li>
- * <li>{@link neqsim.process.util.reconciliation.ReconciliationVariable} - A single measured
- * variable with value, uncertainty, and reconciled result</li>
- * <li>{@link neqsim.process.util.reconciliation.ReconciliationResult} - Complete reconciliation
- * result with statistics, JSON export, and text report</li>
+ * <li>{@link neqsim.process.util.reconciliation.SteadyStateDetector} - Monitors variables and evaluates steady-state
+ * status using R-statistic, slope, and std.dev criteria</li>
+ * <li>{@link neqsim.process.util.reconciliation.SteadyStateVariable} - A monitored variable with sliding window and
+ * computed statistics</li>
+ * <li>{@link neqsim.process.util.reconciliation.SteadyStateResult} - Result of SSD evaluation with per-variable
+ * diagnostics</li>
+ * <li>{@link neqsim.process.util.reconciliation.DataReconciliationEngine} - WLS solver with gross error detection and
+ * elimination</li>
+ * <li>{@link neqsim.process.util.reconciliation.ReconciliationVariable} - A single measured variable with value,
+ * uncertainty, and reconciled result</li>
+ * <li>{@link neqsim.process.util.reconciliation.ReconciliationResult} - Complete reconciliation result with statistics,
+ * JSON export, and text report</li>
  * </ul>
  *
  * <p>
@@ -57,7 +56,7 @@
  * // 3. When steady, reconcile
  * if (ssResult.isAtSteadyState()) {
  *   DataReconciliationEngine engine = ssd.createReconciliationEngine();
- *   engine.addMassBalanceConstraint("Sep", new String[] {"feed"}, new String[] {"gas", "liquid"});
+ *   engine.addMassBalanceConstraint("Sep", new String[] { "feed" }, new String[] { "gas", "liquid" });
  *   ReconciliationResult recResult = engine.reconcile();
  *   System.out.println(recResult.toReport());
  * }

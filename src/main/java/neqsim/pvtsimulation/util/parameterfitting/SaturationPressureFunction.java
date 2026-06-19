@@ -31,7 +31,7 @@ public class SaturationPressureFunction extends LevenbergMarquardtFunction {
     molarMass = params[0];
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       if (system.getPhase(0).getComponent(i).isIsPlusFraction()) {
-        plusNumber = i;
+	plusNumber = i;
       }
     }
     SystemInterface tempSystem = system.clone();

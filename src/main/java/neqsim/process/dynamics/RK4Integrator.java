@@ -12,12 +12,11 @@ package neqsim.process.dynamics;
  * </pre>
  *
  * <p>
- * Fourth-order accurate (local error {@code O(dt^5)}, global {@code O(dt^4)}); explicit and
- * therefore conditionally stable, but much more accurate per step than {@link ExplicitEulerIntegrator}
- * for non-stiff problems. Use this as the default for smooth, well-conditioned ODE-like dynamics
- * (pressure relaxation, level dynamics, smooth controller responses). For stiff problems prefer
- * {@link BDFIntegrator}; for problems where step size needs to adapt to local error, prefer
- * {@link AdaptiveRK45Integrator}.
+ * Fourth-order accurate (local error {@code O(dt^5)}, global {@code O(dt^4)}); explicit and therefore conditionally
+ * stable, but much more accurate per step than {@link ExplicitEulerIntegrator} for non-stiff problems. Use this as the
+ * default for smooth, well-conditioned ODE-like dynamics (pressure relaxation, level dynamics, smooth controller
+ * responses). For stiff problems prefer {@link BDFIntegrator}; for problems where step size needs to adapt to local
+ * error, prefer {@link AdaptiveRK45Integrator}.
  * </p>
  *
  * @author Even Solbraa

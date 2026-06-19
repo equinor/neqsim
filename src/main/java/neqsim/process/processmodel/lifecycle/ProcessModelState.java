@@ -38,8 +38,7 @@ import neqsim.process.processmodel.ProcessSystem;
  * <li><b>Multi-Process Checkpointing:</b> Save and restore complete multi-system models</li>
  * <li><b>Cross-Process Connections:</b> Track streams shared between ProcessSystems</li>
  * <li><b>Version Control:</b> Export models to JSON for Git-based versioning</li>
- * <li><b>Digital Twin Lifecycle:</b> Track model evolution through concept → design →
- * operation</li>
+ * <li><b>Digital Twin Lifecycle:</b> Track model evolution through concept → design → operation</li>
  * </ul>
  *
  * <h2>Usage Example:</h2>
@@ -71,8 +70,8 @@ public class ProcessModelState implements Serializable {
   private static final String CURRENT_SCHEMA_VERSION = "1.0";
 
   /** Logger for this class. */
-  private static final org.apache.logging.log4j.Logger logger =
-      org.apache.logging.log4j.LogManager.getLogger(ProcessModelState.class);
+  private static final org.apache.logging.log4j.Logger logger = org.apache.logging.log4j.LogManager
+      .getLogger(ProcessModelState.class);
 
   /** Schema version of this state (for migration support). */
   private String schemaVersion = CURRENT_SCHEMA_VERSION;
@@ -129,8 +128,7 @@ public class ProcessModelState implements Serializable {
     state.executionConfig.useAdaptiveModelParallelism = model.isUseAdaptiveModelParallelism();
     state.executionConfig.useIncrementalAreaExecution = model.isUseIncrementalAreaExecution();
     state.executionConfig.useFastRecycleConvergence = model.isUseFastRecycleConvergence();
-    state.executionConfig.useCoordinatedRecycleAcceleration =
-        model.isUseCoordinatedRecycleAcceleration();
+    state.executionConfig.useCoordinatedRecycleAcceleration = model.isUseCoordinatedRecycleAcceleration();
     state.executionConfig.useFlashWarmStart = model.isUseFlashWarmStart();
 
     // Capture each ProcessSystem's state
@@ -149,8 +147,8 @@ public class ProcessModelState implements Serializable {
    * Captures connections between different ProcessSystems in the model.
    *
    * <p>
-   * This detects when streams from one ProcessSystem are referenced by another, enabling proper
-   * reconstruction of complex multi-process models.
+   * This detects when streams from one ProcessSystem are referenced by another, enabling proper reconstruction of
+   * complex multi-process models.
    * </p>
    *
    * @param model the process model to analyze
@@ -160,11 +158,10 @@ public class ProcessModelState implements Serializable {
     Map<String, String> streamToProcess = new HashMap<>();
     for (ProcessSystem process : model.getAllProcesses()) {
       for (Object unit : process.getUnitOperations()) {
-        if (unit instanceof neqsim.process.equipment.stream.StreamInterface) {
-          neqsim.process.equipment.stream.StreamInterface stream =
-              (neqsim.process.equipment.stream.StreamInterface) unit;
-          streamToProcess.put(stream.getName(), process.getName());
-        }
+	if (unit instanceof neqsim.process.equipment.stream.StreamInterface) {
+	  neqsim.process.equipment.stream.StreamInterface stream = (neqsim.process.equipment.stream.StreamInterface) unit;
+	  streamToProcess.put(stream.getName(), process.getName());
+	}
       }
     }
 
@@ -173,36 +170,30 @@ public class ProcessModelState implements Serializable {
     for (ProcessSystem process : model.getAllProcesses()) {
       String processName = process.getName();
       for (Object unit : process.getUnitOperations()) {
-        // Check equipment that has input streams
-        try {
-          if (unit instanceof neqsim.process.equipment.separator.Separator) {
-            neqsim.process.equipment.separator.Separator sep =
-                (neqsim.process.equipment.separator.Separator) unit;
-            checkAndAddInterProcessConnection(sep.getFeedStream(), processName, streamToProcess);
-          } else if (unit instanceof neqsim.process.equipment.heatexchanger.Heater) {
-            neqsim.process.equipment.heatexchanger.Heater heater =
-                (neqsim.process.equipment.heatexchanger.Heater) unit;
-            checkAndAddInterProcessConnection(heater.getInletStream(), processName,
-                streamToProcess);
-          } else if (unit instanceof neqsim.process.equipment.valve.ThrottlingValve) {
-            neqsim.process.equipment.valve.ThrottlingValve valve =
-                (neqsim.process.equipment.valve.ThrottlingValve) unit;
-            checkAndAddInterProcessConnection(valve.getInletStream(), processName, streamToProcess);
-          } else if (unit instanceof neqsim.process.equipment.compressor.Compressor) {
-            neqsim.process.equipment.compressor.Compressor comp =
-                (neqsim.process.equipment.compressor.Compressor) unit;
-            checkAndAddInterProcessConnection(comp.getInletStream(), processName, streamToProcess);
-          } else if (unit instanceof neqsim.process.equipment.mixer.Mixer) {
-            neqsim.process.equipment.mixer.Mixer mixer =
-                (neqsim.process.equipment.mixer.Mixer) unit;
-            for (int i = 0; i < mixer.getNumberOfInputStreams(); i++) {
-              neqsim.process.equipment.stream.StreamInterface inStream = mixer.getStream(i);
-              checkAndAddInterProcessConnection(inStream, processName, streamToProcess);
-            }
-          }
-        } catch (Exception e) {
-          logger.debug("Could not analyze inter-process connections for: " + unit, e);
-        }
+	// Check equipment that has input streams
+	try {
+	  if (unit instanceof neqsim.process.equipment.separator.Separator) {
+	    neqsim.process.equipment.separator.Separator sep = (neqsim.process.equipment.separator.Separator) unit;
+	    checkAndAddInterProcessConnection(sep.getFeedStream(), processName, streamToProcess);
+	  } else if (unit instanceof neqsim.process.equipment.heatexchanger.Heater) {
+	    neqsim.process.equipment.heatexchanger.Heater heater = (neqsim.process.equipment.heatexchanger.Heater) unit;
+	    checkAndAddInterProcessConnection(heater.getInletStream(), processName, streamToProcess);
+	  } else if (unit instanceof neqsim.process.equipment.valve.ThrottlingValve) {
+	    neqsim.process.equipment.valve.ThrottlingValve valve = (neqsim.process.equipment.valve.ThrottlingValve) unit;
+	    checkAndAddInterProcessConnection(valve.getInletStream(), processName, streamToProcess);
+	  } else if (unit instanceof neqsim.process.equipment.compressor.Compressor) {
+	    neqsim.process.equipment.compressor.Compressor comp = (neqsim.process.equipment.compressor.Compressor) unit;
+	    checkAndAddInterProcessConnection(comp.getInletStream(), processName, streamToProcess);
+	  } else if (unit instanceof neqsim.process.equipment.mixer.Mixer) {
+	    neqsim.process.equipment.mixer.Mixer mixer = (neqsim.process.equipment.mixer.Mixer) unit;
+	    for (int i = 0; i < mixer.getNumberOfInputStreams(); i++) {
+	      neqsim.process.equipment.stream.StreamInterface inStream = mixer.getStream(i);
+	      checkAndAddInterProcessConnection(inStream, processName, streamToProcess);
+	    }
+	  }
+	} catch (Exception e) {
+	  logger.debug("Could not analyze inter-process connections for: " + unit, e);
+	}
       }
     }
   }
@@ -210,18 +201,17 @@ public class ProcessModelState implements Serializable {
   /**
    * Checks if a stream comes from a different process and adds an inter-process connection.
    *
-   * @param stream the stream to check
-   * @param currentProcess the name of the current process
+   * @param stream          the stream to check
+   * @param currentProcess  the name of the current process
    * @param streamToProcess map from stream names to their originating process
    */
-  private void checkAndAddInterProcessConnection(
-      neqsim.process.equipment.stream.StreamInterface stream, String currentProcess,
-      Map<String, String> streamToProcess) {
+  private void checkAndAddInterProcessConnection(neqsim.process.equipment.stream.StreamInterface stream,
+      String currentProcess, Map<String, String> streamToProcess) {
     if (stream != null) {
       String sourceProcess = streamToProcess.get(stream.getName());
       if (sourceProcess != null && !sourceProcess.equals(currentProcess)) {
-        interProcessConnections.add(
-            new InterProcessConnection(sourceProcess, stream.getName(), currentProcess, "inlet"));
+	interProcessConnections
+	    .add(new InterProcessConnection(sourceProcess, stream.getName(), currentProcess, "inlet"));
       }
     }
   }
@@ -230,8 +220,8 @@ public class ProcessModelState implements Serializable {
    * Reconstructs a ProcessModel from this state.
    *
    * <p>
-   * This creates ProcessSystems for each captured state. Full equipment reconstruction requires the
-   * original equipment classes to be available.
+   * This creates ProcessSystems for each captured state. Full equipment reconstruction requires the original equipment
+   * classes to be available.
    * </p>
    *
    * @return a new ProcessModel initialized with the captured state
@@ -277,19 +267,18 @@ public class ProcessModelState implements Serializable {
 
     try {
       if (filename.endsWith(".gz")) {
-        // Compressed JSON
-        try (
-            GZIPOutputStream gzOut =
-                new GZIPOutputStream(new BufferedOutputStream(new FileOutputStream(filename)));
-            OutputStreamWriter writer = new OutputStreamWriter(gzOut, StandardCharsets.UTF_8)) {
-          gson.toJson(this, writer);
-        }
+	// Compressed JSON
+	try (GZIPOutputStream gzOut = new GZIPOutputStream(new BufferedOutputStream(new FileOutputStream(filename)));
+	    OutputStreamWriter writer = new OutputStreamWriter(gzOut, StandardCharsets.UTF_8)) {
+	  gson.toJson(this, writer);
+	}
       } else {
-        // Plain JSON
-        try (OutputStreamWriter writer = new OutputStreamWriter(
-            new BufferedOutputStream(new FileOutputStream(filename)), StandardCharsets.UTF_8)) {
-          gson.toJson(this, writer);
-        }
+	// Plain JSON
+	try (
+	    OutputStreamWriter writer = new OutputStreamWriter(new BufferedOutputStream(new FileOutputStream(filename)),
+		StandardCharsets.UTF_8)) {
+	  gson.toJson(this, writer);
+	}
       }
       logger.debug("ProcessModelState saved to: " + filename);
     } catch (IOException e) {
@@ -310,24 +299,22 @@ public class ProcessModelState implements Serializable {
     try {
       ProcessModelState state;
       if (filename.endsWith(".gz")) {
-        // Compressed JSON
-        try (
-            GZIPInputStream gzIn =
-                new GZIPInputStream(new BufferedInputStream(new FileInputStream(filename)));
-            InputStreamReader reader = new InputStreamReader(gzIn, StandardCharsets.UTF_8)) {
-          state = gson.fromJson(reader, ProcessModelState.class);
-        }
+	// Compressed JSON
+	try (GZIPInputStream gzIn = new GZIPInputStream(new BufferedInputStream(new FileInputStream(filename)));
+	    InputStreamReader reader = new InputStreamReader(gzIn, StandardCharsets.UTF_8)) {
+	  state = gson.fromJson(reader, ProcessModelState.class);
+	}
       } else {
-        // Plain JSON
-        try (InputStreamReader reader = new InputStreamReader(
-            new BufferedInputStream(new FileInputStream(filename)), StandardCharsets.UTF_8)) {
-          state = gson.fromJson(reader, ProcessModelState.class);
-        }
+	// Plain JSON
+	try (InputStreamReader reader = new InputStreamReader(new BufferedInputStream(new FileInputStream(filename)),
+	    StandardCharsets.UTF_8)) {
+	  state = gson.fromJson(reader, ProcessModelState.class);
+	}
       }
 
       // Migrate if needed
       if (state != null) {
-        state.migrateIfNeeded();
+	state.migrateIfNeeded();
       }
 
       logger.debug("ProcessModelState loaded from: " + filename);
@@ -359,9 +346,8 @@ public class ProcessModelState implements Serializable {
    * @return configured Gson instance
    */
   private static Gson createGson() {
-    return new GsonBuilder().setPrettyPrinting().serializeNulls()
-        .serializeSpecialFloatingPointValues()
-        .registerTypeAdapter(Instant.class, new InstantAdapter()).create();
+    return new GsonBuilder().setPrettyPrinting().serializeNulls().serializeSpecialFloatingPointValues()
+	.registerTypeAdapter(Instant.class, new InstantAdapter()).create();
   }
 
   // ============ VALIDATION ============
@@ -435,9 +421,9 @@ public class ProcessModelState implements Serializable {
     List<InterProcessConnection> result = new ArrayList<>();
     if (interProcessConnections != null) {
       for (InterProcessConnection conn : interProcessConnections) {
-        if (processName.equals(conn.getTargetProcess())) {
-          result.add(conn);
-        }
+	if (processName.equals(conn.getTargetProcess())) {
+	  result.add(conn);
+	}
       }
     }
     return result;
@@ -454,7 +440,7 @@ public class ProcessModelState implements Serializable {
     String json = gson.toJson(this);
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     try (GZIPOutputStream gzos = new GZIPOutputStream(baos);
-        OutputStreamWriter writer = new OutputStreamWriter(gzos, StandardCharsets.UTF_8)) {
+	OutputStreamWriter writer = new OutputStreamWriter(gzos, StandardCharsets.UTF_8)) {
       writer.write(json);
     }
     return baos.toByteArray();
@@ -471,7 +457,7 @@ public class ProcessModelState implements Serializable {
     Gson gson = createGson();
     ByteArrayInputStream bais = new ByteArrayInputStream(data);
     try (GZIPInputStream gzis = new GZIPInputStream(bais);
-        InputStreamReader reader = new InputStreamReader(gzis, StandardCharsets.UTF_8)) {
+	InputStreamReader reader = new InputStreamReader(gzis, StandardCharsets.UTF_8)) {
       ProcessModelState state = gson.fromJson(reader, ProcessModelState.class);
       state.migrateIfNeeded();
       return state;
@@ -487,7 +473,7 @@ public class ProcessModelState implements Serializable {
   public String toJson(SerializationOptions options) {
     this.lastModifiedAt = Instant.now();
     GsonBuilder builder = new GsonBuilder().registerTypeAdapter(Instant.class, new InstantAdapter())
-        .serializeSpecialFloatingPointValues();
+	.serializeSpecialFloatingPointValues();
     if (options != null && options.isPrettyPrint()) {
       builder.setPrettyPrinting();
     }
@@ -503,41 +489,38 @@ public class ProcessModelState implements Serializable {
    */
   public static ModelDiff compare(ProcessModelState oldState, ProcessModelState newState) {
     ModelDiff diff = new ModelDiff();
-    Set<String> oldKeys =
-        oldState.processStates != null ? oldState.processStates.keySet() : new HashSet<String>();
-    Set<String> newKeys =
-        newState.processStates != null ? newState.processStates.keySet() : new HashSet<String>();
+    Set<String> oldKeys = oldState.processStates != null ? oldState.processStates.keySet() : new HashSet<String>();
+    Set<String> newKeys = newState.processStates != null ? newState.processStates.keySet() : new HashSet<String>();
 
     // Added processes
     for (String key : newKeys) {
       if (!oldKeys.contains(key)) {
-        diff.addedEquipment.add(key);
+	diff.addedEquipment.add(key);
       }
     }
 
     // Removed processes
     for (String key : oldKeys) {
       if (!newKeys.contains(key)) {
-        diff.removedEquipment.add(key);
+	diff.removedEquipment.add(key);
       }
     }
 
     // Modified - compare equipment counts and versions
     for (String key : newKeys) {
       if (oldKeys.contains(key)) {
-        ProcessSystemState oldPs = oldState.processStates.get(key);
-        ProcessSystemState newPs = newState.processStates.get(key);
-        int oldEqCount = oldPs.getEquipmentStates() != null ? oldPs.getEquipmentStates().size() : 0;
-        int newEqCount = newPs.getEquipmentStates() != null ? newPs.getEquipmentStates().size() : 0;
-        if (oldEqCount != newEqCount) {
-          diff.modifiedParameters.put(key, "equipmentCount: " + oldEqCount + " -> " + newEqCount);
-        }
+	ProcessSystemState oldPs = oldState.processStates.get(key);
+	ProcessSystemState newPs = newState.processStates.get(key);
+	int oldEqCount = oldPs.getEquipmentStates() != null ? oldPs.getEquipmentStates().size() : 0;
+	int newEqCount = newPs.getEquipmentStates() != null ? newPs.getEquipmentStates().size() : 0;
+	if (oldEqCount != newEqCount) {
+	  diff.modifiedParameters.put(key, "equipmentCount: " + oldEqCount + " -> " + newEqCount);
+	}
       }
     }
 
     // Compare versions
-    if (oldState.version != null && newState.version != null
-        && !oldState.version.equals(newState.version)) {
+    if (oldState.version != null && newState.version != null && !oldState.version.equals(newState.version)) {
       diff.modifiedParameters.put("version", oldState.version + " -> " + newState.version);
     }
 
@@ -547,7 +530,7 @@ public class ProcessModelState implements Serializable {
   /**
    * Migrates a ProcessModelState to the specified target schema version.
    *
-   * @param state the state to migrate
+   * @param state         the state to migrate
    * @param targetVersion the target schema version string
    * @return the migrated state (may be the same instance if already at target version)
    */
@@ -574,35 +557,33 @@ public class ProcessModelState implements Serializable {
     // Validate each process state
     if (processStates != null) {
       for (Map.Entry<String, ProcessSystemState> entry : processStates.entrySet()) {
-        String processName = entry.getKey();
-        ProcessSystemState processState = entry.getValue();
-        if (processState == null) {
-          result.addError("Null state for process: " + processName);
-        } else {
-          ProcessSystemState.ValidationResult psResult = processState.validate();
-          if (!psResult.isValid()) {
-            for (String error : psResult.getErrors()) {
-              result.addError("[" + processName + "] " + error);
-            }
-            for (String warning : psResult.getWarnings()) {
-              result.addWarning("[" + processName + "] " + warning);
-            }
-          }
-        }
+	String processName = entry.getKey();
+	ProcessSystemState processState = entry.getValue();
+	if (processState == null) {
+	  result.addError("Null state for process: " + processName);
+	} else {
+	  ProcessSystemState.ValidationResult psResult = processState.validate();
+	  if (!psResult.isValid()) {
+	    for (String error : psResult.getErrors()) {
+	      result.addError("[" + processName + "] " + error);
+	    }
+	    for (String warning : psResult.getWarnings()) {
+	      result.addWarning("[" + processName + "] " + warning);
+	    }
+	  }
+	}
       }
     }
 
     // Validate inter-process connections
     if (interProcessConnections != null) {
       for (InterProcessConnection conn : interProcessConnections) {
-        if (!processStates.containsKey(conn.sourceProcess)) {
-          result.addWarning(
-              "Inter-process connection references unknown source process: " + conn.sourceProcess);
-        }
-        if (!processStates.containsKey(conn.targetProcess)) {
-          result.addWarning(
-              "Inter-process connection references unknown target process: " + conn.targetProcess);
-        }
+	if (!processStates.containsKey(conn.sourceProcess)) {
+	  result.addWarning("Inter-process connection references unknown source process: " + conn.sourceProcess);
+	}
+	if (!processStates.containsKey(conn.targetProcess)) {
+	  result.addWarning("Inter-process connection references unknown target process: " + conn.targetProcess);
+	}
       }
     }
 
@@ -750,7 +731,7 @@ public class ProcessModelState implements Serializable {
   /**
    * Sets a custom property.
    *
-   * @param key property key
+   * @param key   property key
    * @param value property value
    */
   public void setCustomProperty(String key, Object value) {
@@ -791,18 +772,18 @@ public class ProcessModelState implements Serializable {
     /**
      * Default constructor.
      */
-    public InterProcessConnection() {}
+    public InterProcessConnection() {
+    }
 
     /**
      * Creates an inter-process connection.
      *
      * @param sourceProcess name of the source ProcessSystem
-     * @param streamName name of the connecting stream
+     * @param streamName    name of the connecting stream
      * @param targetProcess name of the target ProcessSystem
-     * @param targetPort port on the target equipment
+     * @param targetPort    port on the target equipment
      */
-    public InterProcessConnection(String sourceProcess, String streamName, String targetProcess,
-        String targetPort) {
+    public InterProcessConnection(String sourceProcess, String streamName, String targetProcess, String targetPort) {
       this.sourceProcess = sourceProcess;
       this.streamName = streamName;
       this.targetProcess = targetProcess;
@@ -1260,21 +1241,21 @@ public class ProcessModelState implements Serializable {
     @Override
     public void write(JsonWriter out, Instant value) throws IOException {
       if (value == null) {
-        out.nullValue();
+	out.nullValue();
       } else {
-        out.value(value.toString());
+	out.value(value.toString());
       }
     }
 
     @Override
     public Instant read(JsonReader in) throws IOException {
       if (in.peek() == com.google.gson.stream.JsonToken.NULL) {
-        in.nextNull();
-        return null;
+	in.nextNull();
+	return null;
       }
       String value = in.nextString();
       if (value == null || value.isEmpty()) {
-        return null;
+	return null;
       }
       return Instant.parse(value);
     }
@@ -1323,14 +1304,13 @@ public class ProcessModelState implements Serializable {
      * @return true if there are changes
      */
     public boolean hasChanges() {
-      return !addedEquipment.isEmpty() || !removedEquipment.isEmpty()
-          || !modifiedParameters.isEmpty();
+      return !addedEquipment.isEmpty() || !removedEquipment.isEmpty() || !modifiedParameters.isEmpty();
     }
 
     @Override
     public String toString() {
-      return "ModelDiff{added=" + addedEquipment.size() + ", removed=" + removedEquipment.size()
-          + ", modified=" + modifiedParameters.size() + "}";
+      return "ModelDiff{added=" + addedEquipment.size() + ", removed=" + removedEquipment.size() + ", modified="
+	  + modifiedParameters.size() + "}";
     }
   }
 

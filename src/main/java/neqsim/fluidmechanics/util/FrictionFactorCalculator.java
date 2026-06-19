@@ -4,8 +4,8 @@ package neqsim.fluidmechanics.util;
  * Utility class for calculating friction factors in pipe flow.
  *
  * <p>
- * This class provides static methods for calculating Darcy and Fanning friction factors for
- * laminar, transitional, and turbulent flow regimes. The correlations implemented include:
+ * This class provides static methods for calculating Darcy and Fanning friction factors for laminar, transitional, and
+ * turbulent flow regimes. The correlations implemented include:
  * </p>
  * <ul>
  * <li>Laminar flow (Re &lt; 2300): f = 64/Re (Hagen-Poiseuille)</li>
@@ -41,7 +41,7 @@ public final class FrictionFactorCalculator {
    * Note: The Darcy friction factor is 4 times the Fanning friction factor.
    * </p>
    *
-   * @param reynoldsNumber the Reynolds number (dimensionless)
+   * @param reynoldsNumber    the Reynolds number (dimensionless)
    * @param relativeRoughness the relative roughness ε/D (dimensionless)
    * @return the Darcy friction factor (dimensionless)
    */
@@ -59,8 +59,7 @@ public final class FrictionFactorCalculator {
       // Transition zone - linear interpolation
       double fLaminar = 64.0 / RE_LAMINAR_LIMIT;
       double fTurbulent = calcHaalandFrictionFactor(RE_TURBULENT_LIMIT, relativeRoughness);
-      return fLaminar + (fTurbulent - fLaminar) * (absRe - RE_LAMINAR_LIMIT)
-          / (RE_TURBULENT_LIMIT - RE_LAMINAR_LIMIT);
+      return fLaminar + (fTurbulent - fLaminar) * (absRe - RE_LAMINAR_LIMIT) / (RE_TURBULENT_LIMIT - RE_LAMINAR_LIMIT);
     } else {
       // Turbulent flow - Haaland equation
       return calcHaalandFrictionFactor(absRe, relativeRoughness);
@@ -78,7 +77,7 @@ public final class FrictionFactorCalculator {
    * Note: The Fanning friction factor is 1/4 of the Darcy friction factor.
    * </p>
    *
-   * @param reynoldsNumber the Reynolds number (dimensionless)
+   * @param reynoldsNumber    the Reynolds number (dimensionless)
    * @param relativeRoughness the relative roughness ε/D (dimensionless)
    * @return the Fanning friction factor (dimensionless)
    */
@@ -90,15 +89,15 @@ public final class FrictionFactorCalculator {
    * Calculates the friction factor using the Haaland equation.
    *
    * <p>
-   * The Haaland equation is an explicit approximation to the Colebrook-White equation and is valid
-   * for turbulent flow in rough pipes:
+   * The Haaland equation is an explicit approximation to the Colebrook-White equation and is valid for turbulent flow
+   * in rough pipes:
    * </p>
    *
    * <p>
    * 1/√f = -1.8 log₁₀[(ε/3.7D)^1.11 + 6.9/Re]
    * </p>
    *
-   * @param reynoldsNumber the Reynolds number (dimensionless), must be positive
+   * @param reynoldsNumber    the Reynolds number (dimensionless), must be positive
    * @param relativeRoughness the relative roughness ε/D (dimensionless)
    * @return the Darcy friction factor (dimensionless)
    */
@@ -130,13 +129,13 @@ public final class FrictionFactorCalculator {
    * Calculates the pressure drop per unit length using Darcy-Weisbach equation.
    *
    * @param frictionFactor the Darcy friction factor (dimensionless)
-   * @param diameter the pipe inner diameter (m)
-   * @param density the fluid density (kg/m³)
-   * @param velocity the fluid velocity (m/s)
+   * @param diameter       the pipe inner diameter (m)
+   * @param density        the fluid density (kg/m³)
+   * @param velocity       the fluid velocity (m/s)
    * @return pressure drop per unit length (Pa/m)
    */
-  public static double calcPressureDropPerLength(double frictionFactor, double diameter,
-      double density, double velocity) {
+  public static double calcPressureDropPerLength(double frictionFactor, double diameter, double density,
+      double velocity) {
     return frictionFactor * density * velocity * velocity / (2.0 * diameter);
   }
 }

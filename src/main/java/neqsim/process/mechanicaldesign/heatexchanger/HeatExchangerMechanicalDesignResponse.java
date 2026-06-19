@@ -6,8 +6,8 @@ import neqsim.process.mechanicaldesign.MechanicalDesignResponse;
  * Response class for heat exchanger mechanical design JSON export.
  *
  * <p>
- * Extends {@link MechanicalDesignResponse} with heat exchanger-specific parameters including TEMA
- * classification, thermal design data, and tube bundle specifications.
+ * Extends {@link MechanicalDesignResponse} with heat exchanger-specific parameters including TEMA classification,
+ * thermal design data, and tube bundle specifications.
  * </p>
  *
  * @author esol

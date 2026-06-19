@@ -6,9 +6,8 @@ import java.util.Map;
  * Interface for process equipment that has capacity constraints.
  *
  * <p>
- * This interface provides a standardized way to query capacity limits and utilization for any
- * process equipment. Equipment implementing this interface can participate in automated bottleneck
- * detection and optimization routines.
+ * This interface provides a standardized way to query capacity limits and utilization for any process equipment.
+ * Equipment implementing this interface can participate in automated bottleneck detection and optimization routines.
  * </p>
  *
  * <p>
@@ -32,15 +31,13 @@ public interface CapacityConstrainedEquipment {
    * Checks if capacity analysis is enabled for this equipment.
    *
    * <p>
-   * When disabled, this equipment is excluded from bottleneck detection, capacity utilization
-   * summaries, and optimization routines. The equipment still tracks its constraints but doesn't
-   * contribute to system-level analysis.
+   * When disabled, this equipment is excluded from bottleneck detection, capacity utilization summaries, and
+   * optimization routines. The equipment still tracks its constraints but doesn't contribute to system-level analysis.
    * </p>
    *
    * <p>
-   * Note: The actual field is stored in {@code ProcessEquipmentBaseClass} and is enabled by default
-   * for all equipment. Equipment classes should not override this method as it delegates to the
-   * base class implementation.
+   * Note: The actual field is stored in {@code ProcessEquipmentBaseClass} and is enabled by default for all equipment.
+   * Equipment classes should not override this method as it delegates to the base class implementation.
    * </p>
    *
    * @return true if capacity analysis is enabled (default is true)
@@ -63,8 +60,7 @@ public interface CapacityConstrainedEquipment {
    * </p>
    *
    * <p>
-   * Note: The actual field is stored in {@code ProcessEquipmentBaseClass} and is enabled by default
-   * for all equipment.
+   * Note: The actual field is stored in {@code ProcessEquipmentBaseClass} and is enabled by default for all equipment.
    * </p>
    *
    * @param enabled true to include in capacity analysis, false to exclude
@@ -75,9 +71,8 @@ public interface CapacityConstrainedEquipment {
    * Gets all capacity constraints defined for this equipment.
    *
    * <p>
-   * The map keys are constraint names (e.g., "speed", "gasLoadFactor") and values are the
-   * corresponding CapacityConstraint objects containing design values, current values, and
-   * utilization calculations.
+   * The map keys are constraint names (e.g., "speed", "gasLoadFactor") and values are the corresponding
+   * CapacityConstraint objects containing design values, current values, and utilization calculations.
    * </p>
    *
    * @return unmodifiable map of constraint name to CapacityConstraint
@@ -88,8 +83,8 @@ public interface CapacityConstrainedEquipment {
    * Gets the constraint with the highest utilization (the bottleneck).
    *
    * <p>
-   * This method identifies which constraint is closest to or exceeding its design limit. Use this
-   * to determine what is limiting equipment capacity.
+   * This method identifies which constraint is closest to or exceeding its design limit. Use this to determine what is
+   * limiting equipment capacity.
    * </p>
    *
    * @return the bottleneck constraint, or null if no constraints are defined
@@ -100,9 +95,8 @@ public interface CapacityConstrainedEquipment {
    * Checks if any capacity constraint is violated (exceeds 100% utilization).
    *
    * <p>
-   * A violated constraint means the equipment is operating beyond its design capacity. For HARD
-   * constraints, this may indicate equipment trip or failure. For SOFT constraints, this indicates
-   * reduced efficiency or accelerated wear.
+   * A violated constraint means the equipment is operating beyond its design capacity. For HARD constraints, this may
+   * indicate equipment trip or failure. For SOFT constraints, this indicates reduced efficiency or accelerated wear.
    * </p>
    *
    * @return true if any constraint utilization exceeds 1.0 (100%)
@@ -113,8 +107,8 @@ public interface CapacityConstrainedEquipment {
    * Checks if any HARD constraint limit is exceeded.
    *
    * <p>
-   * HARD limits represent absolute equipment limits (e.g., maximum speed) that cannot be exceeded
-   * without equipment trip or damage. This is more severe than general capacity exceedance.
+   * HARD limits represent absolute equipment limits (e.g., maximum speed) that cannot be exceeded without equipment
+   * trip or damage. This is more severe than general capacity exceedance.
    * </p>
    *
    * @return true if any HARD constraint's max value is exceeded
@@ -125,8 +119,8 @@ public interface CapacityConstrainedEquipment {
    * Gets the maximum utilization across all constraints.
    *
    * <p>
-   * This gives a single number representing how close the equipment is to its limiting constraint.
-   * Values above 1.0 indicate the equipment is over capacity.
+   * This gives a single number representing how close the equipment is to its limiting constraint. Values above 1.0
+   * indicate the equipment is over capacity.
    * </p>
    *
    * @return maximum utilization as fraction (1.0 = 100% of design capacity)
@@ -146,8 +140,8 @@ public interface CapacityConstrainedEquipment {
    * Gets the available margin (headroom) on the most limiting constraint.
    *
    * <p>
-   * Returns the remaining capacity before the bottleneck constraint reaches 100%. Negative values
-   * indicate the equipment is already over capacity.
+   * Returns the remaining capacity before the bottleneck constraint reaches 100%. Negative values indicate the
+   * equipment is already over capacity.
    * </p>
    *
    * @return available margin as fraction (0.2 = 20% headroom remaining)
@@ -169,8 +163,8 @@ public interface CapacityConstrainedEquipment {
    * Checks if any constraint is near its limit (above warning threshold).
    *
    * <p>
-   * The warning threshold is typically set at 90% of design capacity to provide early warning
-   * before constraints are violated. Only enabled constraints are checked.
+   * The warning threshold is typically set at 90% of design capacity to provide early warning before constraints are
+   * violated. Only enabled constraints are checked.
    * </p>
    *
    * @return true if any enabled constraint is above its warning threshold
@@ -182,7 +176,7 @@ public interface CapacityConstrainedEquipment {
     }
     for (CapacityConstraint constraint : constraints.values()) {
       if (constraint.isEnabled() && constraint.isNearLimit()) {
-        return true;
+	return true;
       }
     }
     return false;
@@ -192,8 +186,8 @@ public interface CapacityConstrainedEquipment {
    * Gets a summary of all constraint utilizations.
    *
    * <p>
-   * Returns a map of constraint names to their current utilization percentages. Only enabled
-   * constraints are included. Useful for reporting and visualization.
+   * Returns a map of constraint names to their current utilization percentages. Only enabled constraints are included.
+   * Useful for reporting and visualization.
    * </p>
    *
    * @return map of constraint name to utilization percentage
@@ -203,9 +197,9 @@ public interface CapacityConstrainedEquipment {
     java.util.Map<String, Double> summary = new java.util.LinkedHashMap<String, Double>();
     if (constraints != null) {
       for (Map.Entry<String, CapacityConstraint> entry : constraints.entrySet()) {
-        if (entry.getValue().isEnabled()) {
-          summary.put(entry.getKey(), entry.getValue().getUtilizationPercent());
-        }
+	if (entry.getValue().isEnabled()) {
+	  summary.put(entry.getKey(), entry.getValue().getUtilizationPercent());
+	}
       }
     }
     return summary;
@@ -215,8 +209,8 @@ public interface CapacityConstrainedEquipment {
    * Adds a new capacity constraint to this equipment.
    *
    * <p>
-   * This allows dynamic addition of constraints at runtime. Constraints can be added during
-   * equipment configuration or based on operating conditions.
+   * This allows dynamic addition of constraints at runtime. Constraints can be added during equipment configuration or
+   * based on operating conditions.
    * </p>
    *
    * @param constraint the constraint to add
@@ -240,9 +234,9 @@ public interface CapacityConstrainedEquipment {
    * Disables all capacity constraints for this equipment.
    *
    * <p>
-   * When constraints are disabled, they are excluded from utilization calculations, bottleneck
-   * detection, and optimization feasibility checks. Use this for what-if scenarios or to exclude
-   * specific equipment from capacity analysis.
+   * When constraints are disabled, they are excluded from utilization calculations, bottleneck detection, and
+   * optimization feasibility checks. Use this for what-if scenarios or to exclude specific equipment from capacity
+   * analysis.
    * </p>
    *
    * <p>
@@ -256,10 +250,10 @@ public interface CapacityConstrainedEquipment {
     int count = 0;
     if (constraints != null) {
       for (CapacityConstraint constraint : constraints.values()) {
-        if (constraint.isEnabled()) {
-          constraint.setEnabled(false);
-          count++;
-        }
+	if (constraint.isEnabled()) {
+	  constraint.setEnabled(false);
+	  count++;
+	}
       }
     }
     return count;
@@ -269,8 +263,8 @@ public interface CapacityConstrainedEquipment {
    * Enables all capacity constraints for this equipment.
    *
    * <p>
-   * Re-enables all constraints that were previously disabled. This restores the equipment to normal
-   * capacity analysis mode.
+   * Re-enables all constraints that were previously disabled. This restores the equipment to normal capacity analysis
+   * mode.
    * </p>
    *
    * @return the number of constraints that were enabled
@@ -280,10 +274,10 @@ public interface CapacityConstrainedEquipment {
     int count = 0;
     if (constraints != null) {
       for (CapacityConstraint constraint : constraints.values()) {
-        if (!constraint.isEnabled()) {
-          constraint.setEnabled(true);
-          count++;
-        }
+	if (!constraint.isEnabled()) {
+	  constraint.setEnabled(true);
+	  count++;
+	}
       }
     }
     return count;

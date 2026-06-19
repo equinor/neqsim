@@ -13,15 +13,12 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * Fixed-bed mercury removal unit operation using chemisorption (e.g. PuraSpec,
- * MRU).
+ * Fixed-bed mercury removal unit operation using chemisorption (e.g. PuraSpec, MRU).
  *
  * <p>
- * Models irreversible chemisorption of elemental mercury (Hg0) onto
- * metal-sulphide sorbents such as
- * CuS, FeS, or ZnS pellets commonly used in LNG pre-treatment. Unlike physical
- * adsorption the
- * reaction is non-regenerable: the bed is replaced when spent.
+ * Models irreversible chemisorption of elemental mercury (Hg0) onto metal-sulphide sorbents such as CuS, FeS, or ZnS
+ * pellets commonly used in LNG pre-treatment. Unlike physical adsorption the reaction is non-regenerable: the bed is
+ * replaced when spent.
  * </p>
  *
  * <p>
@@ -73,9 +70,8 @@ public class MercuryRemovalBed extends TwoPortEquipment {
   private double particleDiameter = 0.004;
 
   /**
-   * Maximum mercury loading capacity of the sorbent (mg Hg / kg sorbent). Typical
-   * PuraSpec values
-   * are 10–25 wt% Hg; default 10 wt% = 100 000 mg/kg.
+   * Maximum mercury loading capacity of the sorbent (mg Hg / kg sorbent). Typical PuraSpec values are 10–25 wt% Hg;
+   * default 10 wt% = 100 000 mg/kg.
    */
   private double maxMercuryCapacity = 100000.0;
 
@@ -84,10 +80,8 @@ public class MercuryRemovalBed extends TwoPortEquipment {
   // ======================================================================
 
   /**
-   * First-order rate constant for chemisorption (1/s). Relates to the
-   * linear-driving-force
-   * approximation: r = k * C_Hg * (1 - theta).
-   * Typical value for PuraSpec-type CuS sorbents: 0.3-0.8 s⁻¹.
+   * First-order rate constant for chemisorption (1/s). Relates to the linear-driving-force approximation: r = k * C_Hg
+   * * (1 - theta). Typical value for PuraSpec-type CuS sorbents: 0.3-0.8 s⁻¹.
    */
   private double reactionRateConstant = 0.5;
 
@@ -102,18 +96,14 @@ public class MercuryRemovalBed extends TwoPortEquipment {
   // ======================================================================
 
   /**
-   * Overall degradation factor (0–1). At 1.0 the bed is brand-new; at lower
-   * values the effective
-   * capacity and/or rate constant are reduced because of fouling, liquid
-   * carry-over, or other
-   * damage to column internals.
+   * Overall degradation factor (0–1). At 1.0 the bed is brand-new; at lower values the effective capacity and/or rate
+   * constant are reduced because of fouling, liquid carry-over, or other damage to column internals.
    */
   private double degradationFactor = 1.0;
 
   /**
-   * Fraction of bed that is bypassed due to channelling caused by degraded
-   * internals (0–1). At 0
-   * there is no bypass. Gas that bypasses does not contact sorbent.
+   * Fraction of bed that is bypassed due to channelling caused by degraded internals (0–1). At 0 there is no bypass.
+   * Gas that bypasses does not contact sorbent.
    */
   private double bypassFraction = 0.0;
 
@@ -141,11 +131,10 @@ public class MercuryRemovalBed extends TwoPortEquipment {
   // ======================================================================
 
   /**
-   * Practical sorbent utilisation at replacement (0–1). In practice operators
-   * change out sorbent when only a fraction of the theoretical capacity has been
-   * used, because the mass-transfer zone leaves the tail of the bed under-utilised
-   * and a safety margin is maintained before breakthrough. Typical values:
-   * 0.4–0.6 for single beds, 0.7–0.9 for lead–lag configurations.
+   * Practical sorbent utilisation at replacement (0–1). In practice operators change out sorbent when only a fraction
+   * of the theoretical capacity has been used, because the mass-transfer zone leaves the tail of the bed under-utilised
+   * and a safety margin is maintained before breakthrough. Typical values: 0.4–0.6 for single beds, 0.7–0.9 for
+   * lead–lag configurations.
    */
   private double replacementUtilisation = 0.50;
 
@@ -165,8 +154,7 @@ public class MercuryRemovalBed extends TwoPortEquipment {
   private boolean calculatePressureDrop = true;
 
   /**
-   * Index of the mercury component in the thermodynamic system (-1 if not
-   * present).
+   * Index of the mercury component in the thermodynamic system (-1 if not present).
    */
   private int mercuryIndex = -1;
 
@@ -204,9 +192,8 @@ public class MercuryRemovalBed extends TwoPortEquipment {
    * {@inheritDoc}
    *
    * <p>
-   * Steady-state mode assumes the bed is not yet saturated and calculates mercury
-   * removal based on
-   * the overall NTU/efficiency for the current bed geometry and kinetics.
+   * Steady-state mode assumes the bed is not yet saturated and calculates mercury removal based on the overall
+   * NTU/efficiency for the current bed geometry and kinetics.
    * </p>
    */
   @Override
@@ -237,7 +224,7 @@ public class MercuryRemovalBed extends TwoPortEquipment {
       double molesRemoved = efficiency * inletMoles;
       molesRemoved = Math.min(molesRemoved, inletMoles * 0.9999);
       if (molesRemoved > 1e-20) {
-        system.addComponent(mercuryIndex, -molesRemoved);
+	system.addComponent(mercuryIndex, -molesRemoved);
       }
     }
 
@@ -246,7 +233,7 @@ public class MercuryRemovalBed extends TwoPortEquipment {
       pressureDrop = calcErgunPressureDrop(system, superficialVelocity);
       double outPressure = system.getPressure("Pa") - pressureDrop;
       if (outPressure > 0) {
-        system.setPressure(outPressure, "Pa");
+	system.setPressure(outPressure, "Pa");
       }
     }
 
@@ -271,13 +258,9 @@ public class MercuryRemovalBed extends TwoPortEquipment {
    * {@inheritDoc}
    *
    * <p>
-   * Advances the bed state by {@code dt} seconds. The bed is discretised into
-   * axial cells; each
-   * cell tracks its local mercury loading and gas-phase Hg concentration. The
-   * irreversible
-   * chemisorption kinetics consume mercury from the gas phase and accumulate it
-   * on the sorbent until
-   * the local capacity is exhausted.
+   * Advances the bed state by {@code dt} seconds. The bed is discretised into axial cells; each cell tracks its local
+   * mercury loading and gas-phase Hg concentration. The irreversible chemisorption kinetics consume mercury from the
+   * gas phase and accumulate it on the sorbent until the local capacity is exhausted.
    * </p>
    *
    * @param dt time-step size in seconds
@@ -336,30 +319,30 @@ public class MercuryRemovalBed extends TwoPortEquipment {
       double[] newConc = new double[numberOfCells];
       double upstreamConc = inletHgConc * (1.0 - bypassFraction);
       for (int cell = 0; cell < numberOfCells; cell++) {
-        double convFlux = interstitialVelocity * (upstreamConc - cellHgConcentration[cell]) / cellLength;
-        newConc[cell] = cellHgConcentration[cell] + subDt * convFlux;
-        upstreamConc = cellHgConcentration[cell];
+	double convFlux = interstitialVelocity * (upstreamConc - cellHgConcentration[cell]) / cellLength;
+	newConc[cell] = cellHgConcentration[cell] + subDt * convFlux;
+	upstreamConc = cellHgConcentration[cell];
       }
 
       // 2) Chemisorption reaction in each cell
       for (int cell = 0; cell < numberOfCells; cell++) {
-        double theta = cellLoading[cell] / effectiveCapacity; // fractional saturation
-        theta = Math.min(theta, 1.0);
+	double theta = cellLoading[cell] / effectiveCapacity; // fractional saturation
+	theta = Math.min(theta, 1.0);
 
-        // Irreversible first-order: r = k * C * (1 - theta)
-        double reactionRate = kEff * newConc[cell] * (1.0 - theta);
+	// Irreversible first-order: r = k * C * (1 - theta)
+	double reactionRate = kEff * newConc[cell] * (1.0 - theta);
 
-        // Convert reaction rate from concentration to sorbent loading
-        // dq/dt in mg/kg/s = reactionRate (ug/Nm3/s) * cellVoidVolume / cellSorbentMass
-        // * 1e-3
-        double dqdt = reactionRate * cellVoidVolume / cellSorbentMass * 1e-3;
+	// Convert reaction rate from concentration to sorbent loading
+	// dq/dt in mg/kg/s = reactionRate (ug/Nm3/s) * cellVoidVolume / cellSorbentMass
+	// * 1e-3
+	double dqdt = reactionRate * cellVoidVolume / cellSorbentMass * 1e-3;
 
-        cellLoading[cell] += subDt * dqdt;
-        cellLoading[cell] = Math.min(cellLoading[cell], effectiveCapacity);
+	cellLoading[cell] += subDt * dqdt;
+	cellLoading[cell] = Math.min(cellLoading[cell], effectiveCapacity);
 
-        // Corresponding concentration decrease
-        newConc[cell] -= subDt * reactionRate;
-        newConc[cell] = Math.max(0.0, newConc[cell]);
+	// Corresponding concentration decrease
+	newConc[cell] -= subDt * reactionRate;
+	newConc[cell] = Math.max(0.0, newConc[cell]);
       }
 
       cellHgConcentration = newConc;
@@ -372,10 +355,9 @@ public class MercuryRemovalBed extends TwoPortEquipment {
     if (inletHgConc > 1e-15) {
       double ratio = outletHgConc / inletHgConc;
       if (ratio > breakthroughThreshold && !breakthroughOccurred) {
-        breakthroughOccurred = true;
-        breakthroughTimeHours = elapsedTimeHours;
-        logger.info("Mercury breakthrough at " + elapsedTimeHours + " hours (C/C0 = " + ratio
-            + ")");
+	breakthroughOccurred = true;
+	breakthroughTimeHours = elapsedTimeHours;
+	logger.info("Mercury breakthrough at " + elapsedTimeHours + " hours (C/C0 = " + ratio + ")");
       }
     }
 
@@ -387,7 +369,7 @@ public class MercuryRemovalBed extends TwoPortEquipment {
       pressureDrop = calcErgunPressureDrop(system, superficialVelocity);
       double outPressure = system.getPressure("Pa") - pressureDrop;
       if (outPressure > 0) {
-        system.setPressure(outPressure, "Pa");
+	system.setPressure(outPressure, "Pa");
       }
     }
 
@@ -427,9 +409,7 @@ public class MercuryRemovalBed extends TwoPortEquipment {
   /**
    * Pre-load the bed to simulate a partially spent sorbent.
    *
-   * @param fractionalSaturation fraction of maximum capacity already consumed (0
-   *                             = fresh, 1 =
-   *                             spent)
+   * @param fractionalSaturation fraction of maximum capacity already consumed (0 = fresh, 1 = spent)
    */
   public void preloadBed(double fractionalSaturation) {
     if (!transientInitialised) {
@@ -521,9 +501,8 @@ public class MercuryRemovalBed extends TwoPortEquipment {
    * Estimate the length of the mass transfer zone (MTZ).
    *
    * <p>
-   * The MTZ is defined as the axial distance over which the normalised gas-phase
-   * Hg concentration
-   * transitions from 0.05 to 0.95 of the inlet concentration.
+   * The MTZ is defined as the axial distance over which the normalised gas-phase Hg concentration transitions from 0.05
+   * to 0.95 of the inlet concentration.
    * </p>
    *
    * @return MTZ length in metres, 0 if not applicable
@@ -549,10 +528,10 @@ public class MercuryRemovalBed extends TwoPortEquipment {
     for (int cell = 0; cell < numberOfCells; cell++) {
       double cNorm = cellHgConcentration[cell] / inletConc;
       if (cNorm >= 0.05 && cellLow < 0) {
-        cellLow = cell;
+	cellLow = cell;
       }
       if (cNorm >= 0.95 && cellHigh < 0) {
-        cellHigh = cell;
+	cellHigh = cell;
       }
     }
     if (cellLow < 0 || cellHigh < 0 || cellHigh <= cellLow) {
@@ -562,8 +541,7 @@ public class MercuryRemovalBed extends TwoPortEquipment {
   }
 
   /**
-   * Estimate bed lifetime (hours) based on current inlet conditions and bed
-   * capacity.
+   * Estimate bed lifetime (hours) based on current inlet conditions and bed capacity.
    *
    * @return estimated lifetime in hours, or -1 if mercury is not present
    */
@@ -591,7 +569,7 @@ public class MercuryRemovalBed extends TwoPortEquipment {
 
     // Hg feed rate computed directly from molar flow to avoid mixing
     // concentration bases (process vs NTP). This is the most robust approach:
-    //   rate (mg/s) = x_Hg * molarFlow (mol/s) * MW_Hg (g/mol) * 1e3 (mg/g)
+    // rate (mg/s) = x_Hg * molarFlow (mol/s) * MW_Hg (g/mol) * 1e3 (mg/g)
     double xHg = refSys.getPhase(0).getComponent(mercuryIndex).getx();
     double totalMolarFlow = refSys.getTotalNumberOfMoles();
     double hgFeedRate = xHg * totalMolarFlow * 200.59 * 1e3; // mg/s
@@ -622,8 +600,7 @@ public class MercuryRemovalBed extends TwoPortEquipment {
   }
 
   /**
-   * Get the outlet mercury removal efficiency based on the most recent
-   * calculation.
+   * Get the outlet mercury removal efficiency based on the most recent calculation.
    *
    * @return removal efficiency (0 to 1), or -1 if not yet calculated
    */
@@ -664,23 +641,21 @@ public class MercuryRemovalBed extends TwoPortEquipment {
     for (int i = 0; i < sys.getPhase(0).getNumberOfComponents(); i++) {
       String name = sys.getPhase(0).getComponent(i).getComponentName();
       if ("mercury".equalsIgnoreCase(name) || "Hg".equalsIgnoreCase(name)) {
-        mercuryIndex = i;
-        return;
+	mercuryIndex = i;
+	return;
       }
     }
   }
 
   /**
-   * Calculate the temperature-corrected effective rate constant using an
-   * Arrhenius relation.
+   * Calculate the temperature-corrected effective rate constant using an Arrhenius relation.
    *
    * @param temperatureK temperature in Kelvin
    * @return effective rate constant (1/s)
    */
   private double effectiveRateConstant(double temperatureK) {
     double r = 8.314;
-    return reactionRateConstant
-        * Math.exp(-activationEnergy / r * (1.0 / temperatureK - 1.0 / referenceTemperature));
+    return reactionRateConstant * Math.exp(-activationEnergy / r * (1.0 / temperatureK - 1.0 / referenceTemperature));
   }
 
   /**
@@ -712,8 +687,7 @@ public class MercuryRemovalBed extends TwoPortEquipment {
    * @param outletConc outlet Hg concentration (microgram/Nm3)
    * @param inletConc  inlet Hg concentration (microgram/Nm3)
    */
-  private void setOutletMercuryFromConcentration(SystemInterface sys, double outletConc,
-      double inletConc) {
+  private void setOutletMercuryFromConcentration(SystemInterface sys, double outletConc, double inletConc) {
     if (mercuryIndex < 0 || inletConc <= 0) {
       return;
     }
@@ -807,13 +781,12 @@ public class MercuryRemovalBed extends TwoPortEquipment {
     if (cellLoading != null) {
       JsonArray loadingArr = new JsonArray();
       for (int i = 0; i < numberOfCells; i++) {
-        loadingArr.add(cellLoading[i]);
+	loadingArr.add(cellLoading[i]);
       }
       json.add("loadingProfile_mg_per_kg", loadingArr);
     }
 
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(json);
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(json);
   }
 
   // ======================================================================
@@ -826,28 +799,25 @@ public class MercuryRemovalBed extends TwoPortEquipment {
     neqsim.util.validation.ValidationResult result = super.validateSetup();
 
     if (bedDiameter <= 0) {
-      result.addError("geometry", "Bed diameter must be positive",
-          "Set bed diameter: setBedDiameter(value)");
+      result.addError("geometry", "Bed diameter must be positive", "Set bed diameter: setBedDiameter(value)");
     }
     if (bedLength <= 0) {
-      result.addError("geometry", "Bed length must be positive",
-          "Set bed length: setBedLength(value)");
+      result.addError("geometry", "Bed length must be positive", "Set bed length: setBedLength(value)");
     }
     if (voidFraction <= 0 || voidFraction >= 1) {
-      result.addError("geometry", "Void fraction must be between 0 and 1",
-          "Set void fraction: setVoidFraction(value)");
+      result.addError("geometry", "Void fraction must be between 0 and 1", "Set void fraction: setVoidFraction(value)");
     }
     if (maxMercuryCapacity <= 0) {
       result.addError("sorbent", "Mercury capacity must be positive",
-          "Set max mercury capacity: setMaxMercuryCapacity(value)");
+	  "Set max mercury capacity: setMaxMercuryCapacity(value)");
     }
     if (degradationFactor < 0 || degradationFactor > 1) {
       result.addError("degradation", "Degradation factor must be between 0 and 1",
-          "Set degradation factor: setDegradationFactor(value)");
+	  "Set degradation factor: setDegradationFactor(value)");
     }
     if (bypassFraction < 0 || bypassFraction >= 1) {
       result.addError("degradation", "Bypass fraction must be between 0 and <1",
-          "Set bypass fraction: setBypassFraction(value)");
+	  "Set bypass fraction: setBypassFraction(value)");
     }
 
     return result;
@@ -977,8 +947,7 @@ public class MercuryRemovalBed extends TwoPortEquipment {
   /**
    * Set the maximum mercury loading capacity of the sorbent.
    *
-   * @param capacity maximum capacity in mg Hg / kg sorbent (typical PuraSpec: 100
-   *                 000)
+   * @param capacity maximum capacity in mg Hg / kg sorbent (typical PuraSpec: 100 000)
    */
   public void setMaxMercuryCapacity(double capacity) {
     this.maxMercuryCapacity = capacity;
@@ -1012,9 +981,8 @@ public class MercuryRemovalBed extends TwoPortEquipment {
   }
 
   /**
-   * Set the practical replacement utilisation factor. This is the fraction of
-   * theoretical sorbent capacity that can be used before the bed must be replaced.
-   * Typical 0.4–0.6 for single beds, 0.7–0.9 for lead–lag.
+   * Set the practical replacement utilisation factor. This is the fraction of theoretical sorbent capacity that can be
+   * used before the bed must be replaced. Typical 0.4–0.6 for single beds, 0.7–0.9 for lead–lag.
    *
    * @param utilisation replacement utilisation factor (0 to 1)
    */
@@ -1053,10 +1021,8 @@ public class MercuryRemovalBed extends TwoPortEquipment {
    * Set the degradation factor for column internals or sorbent fouling.
    *
    * <p>
-   * A value of 1.0 means brand-new / undegraded bed. Lower values reduce both the
-   * effective
-   * capacity and the reaction rate to simulate fouling, liquid carry-over, or
-   * damaged internals.
+   * A value of 1.0 means brand-new / undegraded bed. Lower values reduce both the effective capacity and the reaction
+   * rate to simulate fouling, liquid carry-over, or damaged internals.
    * </p>
    *
    * @param factor degradation factor (0 to 1)

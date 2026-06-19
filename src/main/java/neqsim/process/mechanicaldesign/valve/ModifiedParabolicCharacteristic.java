@@ -4,9 +4,8 @@ package neqsim.process.mechanicaldesign.valve;
  * Represents a valve with a modified parabolic (or parabolic) flow characteristic.
  *
  * <p>
- * Modified parabolic valves provide a characteristic that falls between linear and equal
- * percentage. At low openings, it behaves more like equal percentage, and at high openings, it
- * approaches linear behavior.
+ * Modified parabolic valves provide a characteristic that falls between linear and equal percentage. At low openings,
+ * it behaves more like equal percentage, and at high openings, it approaches linear behavior.
  * </p>
  *
  * <p>
@@ -44,8 +43,8 @@ public class ModifiedParabolicCharacteristic implements ValveCharacteristic {
   private static final long serialVersionUID = 1000L;
 
   /**
-   * The exponent for the parabolic curve. Default is 2.0 for standard parabolic. Values between 1.5
-   * and 2.5 are common for modified parabolic characteristics.
+   * The exponent for the parabolic curve. Default is 2.0 for standard parabolic. Values between 1.5 and 2.5 are common
+   * for modified parabolic characteristics.
    */
   private double exponent = 2.0;
 

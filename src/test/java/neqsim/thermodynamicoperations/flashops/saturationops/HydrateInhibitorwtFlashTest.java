@@ -33,18 +33,17 @@ public class HydrateInhibitorwtFlashTest {
       // creates HydrateInhibitorwtFlash object and calls run on it.
       testOps.hydrateInhibitorConcentrationSet("MEG", 0.99);
       double cons = 100 * testSystem.getPhase(0).getComponent("MEG").getNumberOfmoles()
-          * testSystem.getPhase(0).getComponent("MEG").getMolarMass()
-          / (testSystem.getPhase(0).getComponent("MEG").getNumberOfmoles()
-              * testSystem.getPhase(0).getComponent("MEG").getMolarMass()
-              + testSystem.getPhase(0).getComponent("water").getNumberOfmoles()
-                  * testSystem.getPhase(0).getComponent("water").getMolarMass());
+	  * testSystem.getPhase(0).getComponent("MEG").getMolarMass()
+	  / (testSystem.getPhase(0).getComponent("MEG").getNumberOfmoles()
+	      * testSystem.getPhase(0).getComponent("MEG").getMolarMass()
+	      + testSystem.getPhase(0).getComponent("water").getNumberOfmoles()
+		  * testSystem.getPhase(0).getComponent("water").getMolarMass());
       Assertions.assertEquals(98.54736778391424, cons, 1e-3);
     } catch (Exception ex) {
       ex.toString();
     }
     // testSystem.display();
 
-    assertEquals(0.019690143220139962,
-        testSystem.getPhase(0).getComponent("MEG").getNumberOfmoles(), 1e-10);
+    assertEquals(0.019690143220139962, testSystem.getPhase(0).getComponent("MEG").getNumberOfmoles(), 1e-10);
   }
 }

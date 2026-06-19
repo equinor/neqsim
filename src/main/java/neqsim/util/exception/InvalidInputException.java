@@ -17,9 +17,9 @@ public class InvalidInputException extends neqsim.util.exception.ThermoException
    *
    * Input " + inputName + " was invalid.
    *
-   * @param className Class that exception is raised from
+   * @param className  Class that exception is raised from
    * @param methodName Method that exception is raised from
-   * @param inputName Name of invalid input
+   * @param inputName  Name of invalid input
    */
   public InvalidInputException(String className, String methodName, String inputName) {
     super(className, methodName, "Input " + inputName + " was invalid.");
@@ -30,10 +30,10 @@ public class InvalidInputException extends neqsim.util.exception.ThermoException
    *
    * "Input " + inputName + " " + msg
    *
-   * @param className Class that exception is raised from
+   * @param className  Class that exception is raised from
    * @param methodName Method that exception is raised from
-   * @param inputName Name of invalid input
-   * @param msg error message detailing input problem
+   * @param inputName  Name of invalid input
+   * @param msg        error message detailing input problem
    */
   public InvalidInputException(String className, String methodName, String inputName, String msg) {
     super(className, methodName, "Input " + inputName + " " + msg);
@@ -42,9 +42,9 @@ public class InvalidInputException extends neqsim.util.exception.ThermoException
   /**
    * Constructs an <code>InvalidInputException</code> with a default message.
    *
-   * @param obj Object that exception is raised from
+   * @param obj        Object that exception is raised from
    * @param methodName Method that exception is raised from
-   * @param inputName Name of invalid input
+   * @param inputName  Name of invalid input
    */
   public InvalidInputException(Object obj, String methodName, String inputName) {
     this(obj.getClass().getSimpleName(), methodName, inputName);
@@ -53,10 +53,10 @@ public class InvalidInputException extends neqsim.util.exception.ThermoException
   /**
    * Constructs an <code>InvalidInputException</code> with a default message.
    *
-   * @param obj Object that exception is raised from
+   * @param obj        Object that exception is raised from
    * @param methodName Method that exception is raised from
-   * @param inputName Name of invalid input
-   * @param msg error message detailing input problem
+   * @param inputName  Name of invalid input
+   * @param msg        error message detailing input problem
    */
   public InvalidInputException(Object obj, String methodName, String inputName, String msg) {
     this(obj.getClass().getSimpleName(), methodName, inputName, msg);

@@ -29,8 +29,8 @@ public class OsmoticCoefficient {
   @SuppressWarnings("unused")
   @ExcludeFromJacocoGeneratedReport
   public static void main(String args[]) {
-    SystemInterface testSystem =
-        new SystemElectrolyteCPAstatoil(298.0, ThermodynamicConstantsInterface.referencePressure);
+    SystemInterface testSystem = new SystemElectrolyteCPAstatoil(298.0,
+	ThermodynamicConstantsInterface.referencePressure);
     // SystemInterface testSystem = new SystemElectrolyteCPA(298.15,1.01325201325);
     // SystemInterface testSystem = new
     // SystemSrkCPAs(298.15,ThermodynamicConstantsInterface.referencePressure);

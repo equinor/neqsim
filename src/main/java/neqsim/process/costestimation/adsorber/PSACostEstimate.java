@@ -9,29 +9,25 @@ import neqsim.process.mechanicaldesign.adsorber.AdsorberMechanicalDesign;
  * CAPEX estimation for industrial Pressure-Swing-Adsorption (PSA) hydrogen-purification cascades.
  *
  * <p>
- * Uses a bed-count + bed-volume correlation calibrated to public benchmarks for blue-H2 plants (IEA
- * Global Hydrogen Review 2023; Voss, <em>Adsorption</em> 11 (2005) 527-529; Kvamsdal et al. "PSA
- * economics for SMR hydrogen plants", <em>Energy Procedia</em> 4 (2011) 1182-1189). Cost
- * components:
+ * Uses a bed-count + bed-volume correlation calibrated to public benchmarks for blue-H2 plants (IEA Global Hydrogen
+ * Review 2023; Voss, <em>Adsorption</em> 11 (2005) 527-529; Kvamsdal et al. "PSA economics for SMR hydrogen plants",
+ * <em>Energy Procedia</em> 4 (2011) 1182-1189). Cost components:
  * </p>
  *
  * <ol>
- * <li><strong>Pressure vessels</strong> — number-of-beds scaled by per-bed reference cost with a
- * scale exponent on bed volume (six-tenths rule for thick-wall ASME Section VIII Div. 1
- * vessels).</li>
- * <li><strong>Sorbent inventory</strong> — bulk mass &middot; unit sorbent price. Activated carbon
- * (~3-5 USD/kg) and zeolite 13X (~8-12 USD/kg) defaults from Yang (2003) updated to 2024
- * basis.</li>
- * <li><strong>Valve / switching skid</strong> — proportional to the number of beds. Industrial PSA
- * skids deploy 4-6 fast-acting butterfly or ball valves per bed.</li>
- * <li><strong>Balance of plant</strong> — controls, instrumentation, surge tank, vent silencer.
- * Optional; default included.</li>
+ * <li><strong>Pressure vessels</strong> — number-of-beds scaled by per-bed reference cost with a scale exponent on bed
+ * volume (six-tenths rule for thick-wall ASME Section VIII Div. 1 vessels).</li>
+ * <li><strong>Sorbent inventory</strong> — bulk mass &middot; unit sorbent price. Activated carbon (~3-5 USD/kg) and
+ * zeolite 13X (~8-12 USD/kg) defaults from Yang (2003) updated to 2024 basis.</li>
+ * <li><strong>Valve / switching skid</strong> — proportional to the number of beds. Industrial PSA skids deploy 4-6
+ * fast-acting butterfly or ball valves per bed.</li>
+ * <li><strong>Balance of plant</strong> — controls, instrumentation, surge tank, vent silencer. Optional; default
+ * included.</li>
  * </ol>
  *
  * <p>
- * Reference per-bed vessel cost: <strong>USD 250 000</strong> for a 2 m diameter &times; 4 m height
- * vessel rated to 30 barg at the 2024 CEPCI of 800. Scaled with bed volume to the
- * {@link #SCALE_EXPONENT} of 0.6.
+ * Reference per-bed vessel cost: <strong>USD 250 000</strong> for a 2 m diameter &times; 4 m height vessel rated to 30
+ * barg at the 2024 CEPCI of 800. Scaled with bed volume to the {@link #SCALE_EXPONENT} of 0.6.
  * </p>
  *
  * <table>
@@ -82,8 +78,7 @@ public class PSACostEstimate extends UnitCostEstimateBaseClass {
   private int numberOfBeds = 4;
 
   /** Sorbent selection (drives the unit price). */
-  private PressureSwingAdsorptionBed.SorbentType sorbent =
-      PressureSwingAdsorptionBed.SorbentType.ACTIVATED_CARBON;
+  private PressureSwingAdsorptionBed.SorbentType sorbent = PressureSwingAdsorptionBed.SorbentType.ACTIVATED_CARBON;
 
   /** Sorbent mass per bed (kg). */
   private double sorbentMassPerBedKg = 0.0;
@@ -191,8 +186,7 @@ public class PSACostEstimate extends UnitCostEstimateBaseClass {
    */
   public void setSorbentMassPerBedKg(double sorbentMassPerBedKg) {
     if (sorbentMassPerBedKg < 0.0) {
-      throw new IllegalArgumentException(
-          "sorbentMassPerBedKg must be non-negative, got " + sorbentMassPerBedKg);
+      throw new IllegalArgumentException("sorbentMassPerBedKg must be non-negative, got " + sorbentMassPerBedKg);
     }
     this.sorbentMassPerBedKg = sorbentMassPerBedKg;
     resetCostCache();
@@ -208,8 +202,8 @@ public class PSACostEstimate extends UnitCostEstimateBaseClass {
   }
 
   /**
-   * Set whether to include balance-of-plant (controls, surge tank, vent silencer). When
-   * {@code false} the correlation drops BoP, reducing cost by ~25%.
+   * Set whether to include balance-of-plant (controls, surge tank, vent silencer). When {@code false} the correlation
+   * drops BoP, reducing cost by ~25%.
    *
    * @param include true to include balance of plant
    */
@@ -250,14 +244,13 @@ public class PSACostEstimate extends UnitCostEstimateBaseClass {
    * {@inheritDoc}
    *
    * <p>
-   * Cost = numberOfBeds &times; [referenceBedCost &times; (bedVolume / referenceBedVolume)^SCALE +
-   * valveSkidCostPerBed + sorbentMassPerBed &middot; sorbentUnitPrice] &times; BoP factor &times;
-   * CEPCI ratio.
+   * Cost = numberOfBeds &times; [referenceBedCost &times; (bedVolume / referenceBedVolume)^SCALE + valveSkidCostPerBed
+   * + sorbentMassPerBed &middot; sorbentUnitPrice] &times; BoP factor &times; CEPCI ratio.
    * </p>
    *
    * <p>
-   * If a mechanical design is attached, the per-bed volume is derived from {@code internalDiameter}
-   * and {@code tantanLength}; otherwise the reference volume is used.
+   * If a mechanical design is attached, the per-bed volume is derived from {@code internalDiameter} and
+   * {@code tantanLength}; otherwise the reference volume is used.
    * </p>
    */
   @Override
@@ -268,7 +261,7 @@ public class PSACostEstimate extends UnitCostEstimateBaseClass {
       double dia = mech.getInnerDiameter();
       double len = mech.getTantanLength();
       if (dia > 0.0 && len > 0.0) {
-        bedVolume = Math.PI * 0.25 * dia * dia * len;
+	bedVolume = Math.PI * 0.25 * dia * dia * len;
       }
     }
 

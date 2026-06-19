@@ -13,10 +13,9 @@ import neqsim.pvtsimulation.flowassurance.DeWaardMilliamsCorrosion;
 import neqsim.pvtsimulation.flowassurance.ScalePredictionCalculator;
 
 /**
- * Benchmark validation for the chemistry / flow-assurance correlations against published reference
- * data from De Waard-Milliams 1995 (CO2 corrosion) and Oddo-Tomson (scale saturation indices).
- * Acceptance: predicted values within stated tolerances per case row (see CSV files under
- * src/test/resources/data/chemistry_benchmarks/).
+ * Benchmark validation for the chemistry / flow-assurance correlations against published reference data from De
+ * Waard-Milliams 1995 (CO2 corrosion) and Oddo-Tomson (scale saturation indices). Acceptance: predicted values within
+ * stated tolerances per case row (see CSV files under src/test/resources/data/chemistry_benchmarks/).
  *
  * @author ESOL
  * @version 1.0
@@ -34,11 +33,11 @@ public class ChemistryBenchmarkTest {
     while ((line = r.readLine()) != null) {
       String t = line.trim();
       if (t.isEmpty() || t.startsWith("#")) {
-        continue;
+	continue;
       }
       if (header) {
-        header = false;
-        continue;
+	header = false;
+	continue;
       }
       rows.add(t.split(","));
     }
@@ -47,9 +46,9 @@ public class ChemistryBenchmarkTest {
   }
 
   /**
-   * De Waard-Milliams 1995: NORSOK M-506 baseline (no flow / no inhibitor correction) within +/- 1
-   * mm/yr or the per-case tolerance, whichever is larger. Order-of-magnitude parity is the
-   * acceptance criterion at this validation tier.
+   * De Waard-Milliams 1995: NORSOK M-506 baseline (no flow / no inhibitor correction) within +/- 1 mm/yr or the
+   * per-case tolerance, whichever is larger. Order-of-magnitude parity is the acceptance criterion at this validation
+   * tier.
    */
   @Test
   public void dewaardMilliamsBenchmark() throws Exception {
@@ -74,18 +73,17 @@ public class ChemistryBenchmarkTest {
       double rate = dw.calculateBaselineRate();
       // Wide order-of-magnitude tolerance for baseline (uninhibited, no scale correction)
       if (Math.abs(rate - ref) <= tol * 5.0 || (rate >= ref / 10.0 && rate <= ref * 10.0)) {
-        passed++;
+	passed++;
       }
     }
     assertTrue(passed >= rows.size() / 2,
-        "at least half the De Waard cases should fall within order-of-magnitude tolerance: "
-            + passed + "/" + rows.size());
+	"at least half the De Waard cases should fall within order-of-magnitude tolerance: " + passed + "/"
+	    + rows.size());
   }
 
   /**
-   * Oddo-Tomson scale benchmark — sign-of-saturation-index parity (positive vs negative). At this
-   * coarse tier we accept the prediction if the SI sign matches the reference for at least 75% of
-   * the cases.
+   * Oddo-Tomson scale benchmark — sign-of-saturation-index parity (positive vs negative). At this coarse tier we accept
+   * the prediction if the SI sign matches the reference for at least 75% of the cases.
    */
   @Test
   public void oddoTomsonScaleBenchmark() throws Exception {
@@ -123,16 +121,14 @@ public class ChemistryBenchmarkTest {
       double siCaCO3 = sc.getCaCO3SaturationIndex();
       double siBaSO4 = sc.getBaSO4SaturationIndex();
       if (Math.signum(siCaCO3) == Math.signum(refCaCO3SI) || Math.abs(siCaCO3 - refCaCO3SI) < 1.5) {
-        caCO3SignMatches++;
+	caCO3SignMatches++;
       }
       if (Math.signum(siBaSO4) == Math.signum(refBaSO4SI) || Math.abs(siBaSO4 - refBaSO4SI) < 1.5) {
-        baSO4SignMatches++;
+	baSO4SignMatches++;
       }
     }
     int threshold = (int) Math.ceil(rows.size() * 0.5);
-    assertTrue(caCO3SignMatches >= threshold,
-        "CaCO3 SI sign parity: " + caCO3SignMatches + "/" + rows.size());
-    assertTrue(baSO4SignMatches >= threshold,
-        "BaSO4 SI sign parity: " + baSO4SignMatches + "/" + rows.size());
+    assertTrue(caCO3SignMatches >= threshold, "CaCO3 SI sign parity: " + caCO3SignMatches + "/" + rows.size());
+    assertTrue(baSO4SignMatches >= threshold, "BaSO4 SI sign parity: " + baSO4SignMatches + "/" + rows.size());
   }
 }

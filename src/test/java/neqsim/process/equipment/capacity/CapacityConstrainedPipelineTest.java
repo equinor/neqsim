@@ -151,7 +151,7 @@ class CapacityConstrainedPipelineTest {
       // AutoSize may fail due to numerical issues with thermodynamics
       // This is acceptable - the test verifies the method exists and runs
       assertTrue(e.getMessage().contains("compressibility") || e.getMessage().contains("NaN"),
-          "Exception should be related to thermodynamic calculation");
+	  "Exception should be related to thermodynamic calculation");
     }
   }
 
@@ -183,7 +183,7 @@ class CapacityConstrainedPipelineTest {
     for (CapacityConstraint c : constraints.values()) {
       assertNotNull(c.getName(), "Constraint name should not be null");
       assertTrue(c.getDesignValue() > 0 || Double.isInfinite(c.getDesignValue()),
-          "Design value should be set: " + c.getName());
+	  "Design value should be set: " + c.getName());
     }
   }
 
@@ -213,10 +213,8 @@ class CapacityConstrainedPipelineTest {
     // Test FIV analysis map
     Map<String, Object> fivAnalysis = pipe.getFIVAnalysis();
     assertNotNull(fivAnalysis, "FIV analysis should not be null");
-    assertTrue(fivAnalysis.containsKey("supportArrangement"),
-        "FIV analysis should contain support arrangement");
-    assertEquals("Stiff", fivAnalysis.get("supportArrangement"),
-        "Support arrangement should be Stiff");
+    assertTrue(fivAnalysis.containsKey("supportArrangement"), "FIV analysis should contain support arrangement");
+    assertEquals("Stiff", fivAnalysis.get("supportArrangement"), "Support arrangement should be Stiff");
   }
 
   @Test
@@ -257,7 +255,7 @@ class CapacityConstrainedPipelineTest {
   void testManifoldCapacityConstraints() {
     Manifold manifold = new Manifold("test manifold");
     manifold.addStream(gasStream);
-    manifold.setSplitFactors(new double[] {0.5, 0.5});
+    manifold.setSplitFactors(new double[] { 0.5, 0.5 });
     manifold.run();
 
     // Test capacity constraints
@@ -281,7 +279,7 @@ class CapacityConstrainedPipelineTest {
   void testManifoldFIVAnalysis() {
     Manifold manifold = new Manifold("fiv manifold");
     manifold.addStream(gasStream);
-    manifold.setSplitFactors(new double[] {0.5, 0.5});
+    manifold.setSplitFactors(new double[] { 0.5, 0.5 });
     manifold.setHeaderInnerDiameter(0.2, "m");
     manifold.setHeaderWallThickness(10, "mm");
     manifold.setBranchInnerDiameter(0.1, "m");
@@ -327,7 +325,7 @@ class CapacityConstrainedPipelineTest {
   void testManifoldAutoSizeAndConstraints() {
     Manifold manifold = new Manifold("auto-size manifold");
     manifold.addStream(gasStream);
-    manifold.setSplitFactors(new double[] {0.5, 0.5});
+    manifold.setSplitFactors(new double[] { 0.5, 0.5 });
 
     assertFalse(manifold.isAutoSized(), "Should not be auto-sized initially");
 
@@ -350,7 +348,7 @@ class CapacityConstrainedPipelineTest {
   void testManifoldBottleneckDetection() {
     Manifold manifold = new Manifold("bottleneck manifold");
     manifold.addStream(gasStream);
-    manifold.setSplitFactors(new double[] {0.5, 0.5});
+    manifold.setSplitFactors(new double[] { 0.5, 0.5 });
     manifold.setHeaderInnerDiameter(0.05, "m"); // Small header to cause high velocity
     manifold.run();
 
@@ -372,7 +370,7 @@ class CapacityConstrainedPipelineTest {
   void testManifoldConstraintManipulation() {
     Manifold manifold = new Manifold("constraint manipulation manifold");
     manifold.addStream(gasStream);
-    manifold.setSplitFactors(new double[] {1.0});
+    manifold.setSplitFactors(new double[] { 1.0 });
     manifold.run();
 
     // Get initial constraints
@@ -381,19 +379,16 @@ class CapacityConstrainedPipelineTest {
     assertTrue(initialCount > 0, "Should have initial constraints");
 
     // Add a custom constraint
-    CapacityConstraint customConstraint =
-        new CapacityConstraint("customTest", "units", CapacityConstraint.ConstraintType.SOFT)
-            .setDesignValue(100.0).setValueSupplier(() -> 50.0);
+    CapacityConstraint customConstraint = new CapacityConstraint("customTest", "units",
+	CapacityConstraint.ConstraintType.SOFT).setDesignValue(100.0).setValueSupplier(() -> 50.0);
     manifold.addCapacityConstraint(customConstraint);
 
-    assertTrue(manifold.getCapacityConstraints().containsKey("customTest"),
-        "Should contain custom constraint");
+    assertTrue(manifold.getCapacityConstraints().containsKey("customTest"), "Should contain custom constraint");
 
     // Remove the custom constraint
     boolean removed = manifold.removeCapacityConstraint("customTest");
     assertTrue(removed, "Should successfully remove constraint");
-    assertFalse(manifold.getCapacityConstraints().containsKey("customTest"),
-        "Custom constraint should be removed");
+    assertFalse(manifold.getCapacityConstraints().containsKey("customTest"), "Custom constraint should be removed");
 
     // Clear all constraints
     manifold.clearCapacityConstraints();
@@ -436,8 +431,8 @@ class CapacityConstrainedPipelineTest {
     boolean found = false;
     for (CapacityConstrainedEquipment equip : constrained) {
       if (equip instanceof PipeBeggsAndBrills) {
-        found = true;
-        break;
+	found = true;
+	break;
       }
     }
     assertTrue(found, "PipeBeggsAndBrills should be in constrained equipment list");
@@ -473,8 +468,8 @@ class CapacityConstrainedPipelineTest {
     boolean found = false;
     for (CapacityConstrainedEquipment equip : constrained) {
       if (equip instanceof AdiabaticPipe) {
-        found = true;
-        break;
+	found = true;
+	break;
       }
     }
     assertTrue(found, "AdiabaticPipe should be in constrained equipment list");
@@ -505,7 +500,7 @@ class CapacityConstrainedPipelineTest {
     Manifold manifold = new Manifold("production manifold");
     manifold.addStream(gasStream);
     manifold.addStream(gasStream2);
-    manifold.setSplitFactors(new double[] {0.6, 0.4});
+    manifold.setSplitFactors(new double[] { 0.6, 0.4 });
     manifold.setHeaderInnerDiameter(0.3, "m");
     manifold.setBranchInnerDiameter(0.15, "m");
     process.add(manifold);
@@ -521,16 +516,15 @@ class CapacityConstrainedPipelineTest {
     boolean found = false;
     for (CapacityConstrainedEquipment equip : constrained) {
       if (equip instanceof Manifold) {
-        found = true;
-        break;
+	found = true;
+	break;
       }
     }
     assertTrue(found, "Manifold should be in constrained equipment list");
 
     // Test utilization summary
     Map<String, Double> utilization = process.getCapacityUtilizationSummary();
-    assertTrue(utilization.containsKey("production manifold"),
-        "Should contain manifold in summary");
+    assertTrue(utilization.containsKey("production manifold"), "Should contain manifold in summary");
   }
 
   @Test
@@ -544,13 +538,12 @@ class CapacityConstrainedPipelineTest {
     // Add Manifold
     Manifold manifold = new Manifold("inlet manifold");
     manifold.addStream(gasStream);
-    manifold.setSplitFactors(new double[] {1.0});
+    manifold.setSplitFactors(new double[] { 1.0 });
     manifold.setHeaderInnerDiameter(0.25, "m");
     process.add(manifold);
 
     // Add PipeBeggsAndBrills after manifold
-    PipeBeggsAndBrills bbPipe =
-        new PipeBeggsAndBrills("beggs brill section", (Stream) manifold.getSplitStream(0));
+    PipeBeggsAndBrills bbPipe = new PipeBeggsAndBrills("beggs brill section", (Stream) manifold.getSplitStream(0));
     bbPipe.setLength(2000.0);
     bbPipe.setDiameter(0.2032);
     bbPipe.setElevation(0);
@@ -576,13 +569,13 @@ class CapacityConstrainedPipelineTest {
     boolean foundAdia = false;
     for (CapacityConstrainedEquipment equip : constrained) {
       if (equip instanceof Manifold) {
-        foundManifold = true;
+	foundManifold = true;
       }
       if (equip instanceof PipeBeggsAndBrills) {
-        foundBB = true;
+	foundBB = true;
       }
       if (equip instanceof AdiabaticPipe) {
-        foundAdia = true;
+	foundAdia = true;
       }
     }
     assertTrue(foundManifold, "Manifold should be in constrained list");
@@ -627,14 +620,13 @@ class CapacityConstrainedPipelineTest {
 
     Manifold manifold = new Manifold("inlet manifold");
     manifold.addStream(gasStream);
-    manifold.setSplitFactors(new double[] {1.0});
+    manifold.setSplitFactors(new double[] { 1.0 });
     manifold.setHeaderInnerDiameter(0.25, "m");
     inletSystem.add(manifold);
 
     // Create second ProcessSystem with pipeline
     ProcessSystem pipelineSystem = new ProcessSystem();
-    PipeBeggsAndBrills bbPipe =
-        new PipeBeggsAndBrills("export pipeline", (Stream) manifold.getSplitStream(0));
+    PipeBeggsAndBrills bbPipe = new PipeBeggsAndBrills("export pipeline", (Stream) manifold.getSplitStream(0));
     bbPipe.setLength(3000.0);
     bbPipe.setDiameter(0.2032);
     bbPipe.setElevation(0);
@@ -659,10 +651,10 @@ class CapacityConstrainedPipelineTest {
     boolean foundPipe = false;
     for (CapacityConstrainedEquipment equip : constrained) {
       if (equip instanceof Manifold) {
-        foundManifold = true;
+	foundManifold = true;
       }
       if (equip instanceof PipeBeggsAndBrills) {
-        foundPipe = true;
+	foundPipe = true;
       }
     }
     assertTrue(foundManifold, "Manifold should be in constrained list");
@@ -698,7 +690,7 @@ class CapacityConstrainedPipelineTest {
 
     Manifold manifold = new Manifold("gathering manifold");
     manifold.addStream(gasStream);
-    manifold.setSplitFactors(new double[] {1.0});
+    manifold.setSplitFactors(new double[] { 1.0 });
     manifold.setHeaderInnerDiameter(0.3, "m");
     manifoldSystem.add(manifold);
 
@@ -730,10 +722,10 @@ class CapacityConstrainedPipelineTest {
     boolean foundPipe = false;
     for (CapacityConstrainedEquipment equip : constrained) {
       if (equip instanceof Manifold) {
-        foundManifold = true;
+	foundManifold = true;
       }
       if (equip instanceof AdiabaticPipe) {
-        foundPipe = true;
+	foundPipe = true;
       }
     }
     assertTrue(foundManifold, "Should find manifold from nested module");
@@ -741,8 +733,7 @@ class CapacityConstrainedPipelineTest {
 
     // Test utilization summary includes all
     Map<String, Double> utilization = outerModule.getCapacityUtilizationSummary();
-    assertTrue(utilization.containsKey("gathering manifold"),
-        "Should contain manifold from nested");
+    assertTrue(utilization.containsKey("gathering manifold"), "Should contain manifold from nested");
     assertTrue(utilization.containsKey("transfer pipe"), "Should contain pipe");
 
     // Test bottleneck spans all modules
@@ -750,4 +741,3 @@ class CapacityConstrainedPipelineTest {
     assertNotNull(bottleneck, "Should find bottleneck across all nested modules");
   }
 }
-

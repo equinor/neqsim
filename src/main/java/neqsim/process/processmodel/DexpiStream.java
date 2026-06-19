@@ -13,8 +13,7 @@ public class DexpiStream extends Stream {
   private final String lineNumber;
   private final String fluidCode;
 
-  public DexpiStream(String name, SystemInterface fluid, String dexpiClass, String lineNumber,
-      String fluidCode) {
+  public DexpiStream(String name, SystemInterface fluid, String dexpiClass, String lineNumber, String fluidCode) {
     super(name, fluid);
     this.dexpiClass = dexpiClass;
     this.lineNumber = lineNumber;

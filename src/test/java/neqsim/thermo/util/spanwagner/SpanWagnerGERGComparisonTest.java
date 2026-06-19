@@ -20,8 +20,8 @@ public class SpanWagnerGERGComparisonTest {
     sys.init(3);
     PhaseInterface phase = sys.getPhase(0);
     double moles = phase.getNumberOfMolesInPhase();
-    return new double[] {phase.getCp() / moles, phase.getCv() / moles, phase.getSoundSpeed(),
-        phase.getJouleThomsonCoefficient(), phase.getDensity()};
+    return new double[] { phase.getCp() / moles, phase.getCv() / moles, phase.getSoundSpeed(),
+	phase.getJouleThomsonCoefficient(), phase.getDensity() };
   }
 
   private double[] getGERGProps(double temperature, double pressure) {
@@ -33,8 +33,8 @@ public class SpanWagnerGERGComparisonTest {
     sys.initProperties();
     PhaseInterface phase = sys.getPhase(0);
     double moles = phase.getNumberOfMolesInPhase();
-    return new double[] {phase.getCp() / moles, phase.getCv() / moles, phase.getSoundSpeed(),
-        phase.getJouleThomsonCoefficient(), phase.getDensity()};
+    return new double[] { phase.getCp() / moles, phase.getCv() / moles, phase.getSoundSpeed(),
+	phase.getJouleThomsonCoefficient(), phase.getDensity() };
   }
 
   private void compareAtPressure(double pressure) {

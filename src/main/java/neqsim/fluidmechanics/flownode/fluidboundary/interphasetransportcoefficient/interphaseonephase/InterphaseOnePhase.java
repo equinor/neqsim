@@ -17,7 +17,8 @@ public class InterphaseOnePhase extends InterphaseTransportCoefficientBaseClass 
    * Constructor for InterphaseOnePhase.
    * </p>
    */
-  public InterphaseOnePhase() {}
+  public InterphaseOnePhase() {
+  }
 
   /**
    * <p>

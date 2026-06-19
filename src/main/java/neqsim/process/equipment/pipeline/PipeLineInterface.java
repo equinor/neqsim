@@ -14,17 +14,16 @@ import neqsim.process.equipment.TwoPortInterface;
  * Common interface for all pipeline simulation models.
  *
  * <p>
- * This interface defines the standard methods that all pipeline models must implement, providing a
- * unified API for pipeline simulation regardless of the underlying physical model (single-phase,
- * two-phase, Beggs-Brill, two-fluid, etc.).
+ * This interface defines the standard methods that all pipeline models must implement, providing a unified API for
+ * pipeline simulation regardless of the underlying physical model (single-phase, two-phase, Beggs-Brill, two-fluid,
+ * etc.).
  * </p>
  *
  * <h2>Pipeline Model Categories</h2>
  * <ul>
  * <li><b>Simple models</b>: {@link AdiabaticPipe}, {@link SimpleTPoutPipeline}</li>
  * <li><b>Empirical correlations</b>: {@link PipeBeggsAndBrills}</li>
- * <li><b>Mechanistic models</b>: {@link TwoFluidPipe}, {@link OnePhasePipeLine},
- * {@link TwoPhasePipeLine}</li>
+ * <li><b>Mechanistic models</b>: {@link TwoFluidPipe}, {@link OnePhasePipeLine}, {@link TwoPhasePipeLine}</li>
  * <li><b>Specialized models</b>: {@link WaterHammerPipe}, {@link TubingPerformance}</li>
  * </ul>
  *
@@ -219,8 +218,8 @@ public interface PipeLineInterface extends SimulationInterface, TwoPortInterface
    * Set the outlet pressure for flow rate calculation mode.
    *
    * <p>
-   * When outlet pressure is specified, the pipeline model calculates the required flow rate to
-   * achieve the target outlet pressure.
+   * When outlet pressure is specified, the pipeline model calculates the required flow rate to achieve the target
+   * outlet pressure.
    * </p>
    *
    * @param pressure outlet pressure in bara
@@ -423,7 +422,7 @@ public interface PipeLineInterface extends SimulationInterface, TwoPortInterface
    * Set pipe specification from database.
    *
    * @param nominalDiameter nominal diameter in mm or inches
-   * @param specification pipe specification code (e.g., "API 5L", "ANSI B36.10")
+   * @param specification   pipe specification code (e.g., "API 5L", "ANSI B36.10")
    */
   public void setPipeSpecification(double nominalDiameter, String specification);
 
@@ -579,8 +578,8 @@ public interface PipeLineInterface extends SimulationInterface, TwoPortInterface
    * Set the outer (external) heat transfer coefficient.
    *
    * <p>
-   * This is the convective heat transfer coefficient between the pipe outer surface (or insulation
-   * outer surface if insulated) and the surrounding environment.
+   * This is the convective heat transfer coefficient between the pipe outer surface (or insulation outer surface if
+   * insulated) and the surrounding environment.
    * </p>
    *
    * <p>
@@ -609,8 +608,8 @@ public interface PipeLineInterface extends SimulationInterface, TwoPortInterface
    * Set the inner (fluid-side) heat transfer coefficient.
    *
    * <p>
-   * This is the convective heat transfer coefficient between the fluid and the pipe inner wall. If
-   * not set, it can be calculated automatically based on flow conditions.
+   * This is the convective heat transfer coefficient between the fluid and the pipe inner wall. If not set, it can be
+   * calculated automatically based on flow conditions.
    * </p>
    *
    * @param coefficient inner heat transfer coefficient in W/(m²·K)
@@ -766,7 +765,7 @@ public interface PipeLineInterface extends SimulationInterface, TwoPortInterface
    * Set design pressure with unit.
    *
    * @param pressure design pressure value
-   * @param unit pressure unit ("MPa", "bar", "bara", "psi")
+   * @param unit     pressure unit ("MPa", "bar", "bara", "psi")
    */
   public void setDesignPressure(double pressure, String unit);
 

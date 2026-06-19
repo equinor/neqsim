@@ -12,9 +12,8 @@ import neqsim.thermo.system.SystemInterface;
  * Objective function for PVT regression using Levenberg-Marquardt optimization.
  *
  * <p>
- * This function computes the calculated value for a given experimental data point using the current
- * parameter values. The Levenberg-Marquardt algorithm minimizes the sum of squared residuals
- * between calculated and experimental values.
+ * This function computes the calculated value for a given experimental data point using the current parameter values.
+ * The Levenberg-Marquardt algorithm minimizes the sum of squared residuals between calculated and experimental values.
  * </p>
  *
  * @author ESOL
@@ -28,12 +27,11 @@ public class PVTRegressionFunction extends LevenbergMarquardtFunction {
   /**
    * Create a PVT regression function.
    *
-   * @param baseFluid the base fluid to tune
-   * @param parameterConfigs list of parameter configurations
+   * @param baseFluid         the base fluid to tune
+   * @param parameterConfigs  list of parameter configurations
    * @param experimentWeights weights for each experiment type
    */
-  public PVTRegressionFunction(SystemInterface baseFluid,
-      List<RegressionParameterConfig> parameterConfigs,
+  public PVTRegressionFunction(SystemInterface baseFluid, List<RegressionParameterConfig> parameterConfigs,
       EnumMap<ExperimentType, Double> experimentWeights) {
     this.baseFluid = baseFluid;
     this.parameterConfigs = parameterConfigs;
@@ -55,7 +53,7 @@ public class PVTRegressionFunction extends LevenbergMarquardtFunction {
   @Override
   public PVTRegressionFunction clone() {
     PVTRegressionFunction cloned = new PVTRegressionFunction(baseFluid.clone(), parameterConfigs,
-        new EnumMap<>(experimentWeights));
+	new EnumMap<>(experimentWeights));
     if (this.params != null) {
       cloned.params = new double[this.params.length];
       System.arraycopy(this.params, 0, cloned.params, 0, this.params.length);
@@ -63,8 +61,8 @@ public class PVTRegressionFunction extends LevenbergMarquardtFunction {
     if (this.bounds != null) {
       cloned.bounds = new double[this.bounds.length][2];
       for (int i = 0; i < this.bounds.length; i++) {
-        cloned.bounds[i][0] = this.bounds[i][0];
-        cloned.bounds[i][1] = this.bounds[i][1];
+	cloned.bounds[i][0] = this.bounds[i][0];
+	cloned.bounds[i][1] = this.bounds[i][1];
       }
     }
     return cloned;
@@ -106,110 +104,106 @@ public class PVTRegressionFunction extends LevenbergMarquardtFunction {
 
     // Calculate appropriate property based on experiment type
     switch (experimentType) {
-      case CCE:
-        return calculateCCEValue(tunedFluid, pressure, temperature, propertyIndex);
-      case CVD:
-        return calculateCVDValue(tunedFluid, pressure, temperature, propertyIndex);
-      case DLE:
-        return calculateDLEValue(tunedFluid, pressure, temperature, propertyIndex);
-      case SEPARATOR:
-        double reservoirTemperature = dependentValues.length > 4 ? dependentValues[4] : temperature;
-        return calculateSeparatorValue(tunedFluid, pressure, temperature, propertyIndex,
-            reservoirTemperature);
-      case VISCOSITY:
-        return calculateViscosityValue(tunedFluid, pressure, temperature, propertyIndex);
-      default:
-        return 0.0;
+    case CCE:
+      return calculateCCEValue(tunedFluid, pressure, temperature, propertyIndex);
+    case CVD:
+      return calculateCVDValue(tunedFluid, pressure, temperature, propertyIndex);
+    case DLE:
+      return calculateDLEValue(tunedFluid, pressure, temperature, propertyIndex);
+    case SEPARATOR:
+      double reservoirTemperature = dependentValues.length > 4 ? dependentValues[4] : temperature;
+      return calculateSeparatorValue(tunedFluid, pressure, temperature, propertyIndex, reservoirTemperature);
+    case VISCOSITY:
+      return calculateViscosityValue(tunedFluid, pressure, temperature, propertyIndex);
+    default:
+      return 0.0;
     }
   }
 
   /**
    * Calculate CCE property value.
    */
-  private double calculateCCEValue(SystemInterface fluid, double pressure, double temperature,
-      int propertyIndex) {
+  private double calculateCCEValue(SystemInterface fluid, double pressure, double temperature, int propertyIndex) {
     ConstantMassExpansion cme = new ConstantMassExpansion(fluid);
-    cme.setPressures(new double[] {pressure});
+    cme.setPressures(new double[] { pressure });
     cme.setTemperature(temperature, "K");
     cme.runCalc();
 
     switch (propertyIndex) {
-      case 0: // Relative volume
-        double[] relVol = cme.getRelativeVolume();
-        return relVol != null && relVol.length > 0 ? relVol[0] : 1.0;
-      case 1: // Y-factor
-        double[] yFactor = cme.getYfactor();
-        return yFactor != null && yFactor.length > 0 ? yFactor[0] : 1.0;
-      default:
-        return 1.0;
+    case 0: // Relative volume
+      double[] relVol = cme.getRelativeVolume();
+      return relVol != null && relVol.length > 0 ? relVol[0] : 1.0;
+    case 1: // Y-factor
+      double[] yFactor = cme.getYfactor();
+      return yFactor != null && yFactor.length > 0 ? yFactor[0] : 1.0;
+    default:
+      return 1.0;
     }
   }
 
   /**
    * Calculate CVD property value.
    */
-  private double calculateCVDValue(SystemInterface fluid, double pressure, double temperature,
-      int propertyIndex) {
+  private double calculateCVDValue(SystemInterface fluid, double pressure, double temperature, int propertyIndex) {
     ConstantVolumeDepletion cvd = new ConstantVolumeDepletion(fluid);
-    cvd.setPressures(new double[] {pressure});
+    cvd.setPressures(new double[] { pressure });
     cvd.setTemperature(temperature, "K");
     cvd.runCalc();
 
     switch (propertyIndex) {
-      case 0: // Liquid dropout
-        double[] liquidVol = cvd.getLiquidRelativeVolume();
-        return liquidVol != null && liquidVol.length > 0 ? liquidVol[0] : 0.0;
-      case 1: // Z-factor
-        double[] zGas = cvd.getZgas();
-        return zGas != null && zGas.length > 0 ? zGas[0] : 1.0;
-      default:
-        return 0.0;
+    case 0: // Liquid dropout
+      double[] liquidVol = cvd.getLiquidRelativeVolume();
+      return liquidVol != null && liquidVol.length > 0 ? liquidVol[0] : 0.0;
+    case 1: // Z-factor
+      double[] zGas = cvd.getZgas();
+      return zGas != null && zGas.length > 0 ? zGas[0] : 1.0;
+    default:
+      return 0.0;
     }
   }
 
   /**
    * Calculate DLE property value.
    *
-   * @param fluid the thermodynamic system to use for calculation
-   * @param pressure the pressure in bara
-   * @param temperature the temperature in Kelvin
+   * @param fluid         the thermodynamic system to use for calculation
+   * @param pressure      the pressure in bara
+   * @param temperature   the temperature in Kelvin
    * @param propertyIndex the property index (0=Rs, 1=Bo, 2=Oil density)
    * @return the calculated DLE property value
    */
-  private double calculateDLEValue(SystemInterface fluid, double pressure, double temperature,
-      int propertyIndex) {
+  private double calculateDLEValue(SystemInterface fluid, double pressure, double temperature, int propertyIndex) {
     DifferentialLiberation dle = new DifferentialLiberation(fluid);
-    dle.setPressures(new double[] {pressure});
+    dle.setPressures(new double[] { pressure });
     dle.setTemperature(temperature, "K");
     dle.runCalc();
 
     switch (propertyIndex) {
-      case 0: // Rs
-        double[] rs = dle.getRs();
-        return rs != null && rs.length > 0 ? rs[0] : 0.0;
-      case 1: // Bo
-        double[] bo = dle.getBo();
-        return bo != null && bo.length > 0 ? bo[0] : 1.0;
-      case 2: // Oil density
-        double[] density = dle.getOilDensity();
-        return density != null && density.length > 0 ? density[0] : 800.0;
-      default:
-        return 0.0;
+    case 0: // Rs
+      double[] rs = dle.getRs();
+      return rs != null && rs.length > 0 ? rs[0] : 0.0;
+    case 1: // Bo
+      double[] bo = dle.getBo();
+      return bo != null && bo.length > 0 ? bo[0] : 1.0;
+    case 2: // Oil density
+      double[] density = dle.getOilDensity();
+      return density != null && density.length > 0 ? density[0] : 800.0;
+    default:
+      return 0.0;
     }
   }
 
   /**
    * Calculate separator test property value.
    *
-   * @param fluid the thermodynamic system to use for calculation
-   * @param separatorPressure the separator pressure in bara
+   * @param fluid                the thermodynamic system to use for calculation
+   * @param separatorPressure    the separator pressure in bara
    * @param separatorTemperature the separator temperature in Kelvin
-   * @param propertyIndex the property index (0=GOR, etc.)
+   * @param propertyIndex        the property index (0=GOR, etc.)
    * @param reservoirTemperature the reservoir temperature in Kelvin
    * @return the calculated separator property value
    */
-  private double calculateSeparatorValue(SystemInterface fluid, double separatorPressure,
-      double separatorTemperature, int propertyIndex, double reservoirTemperature) {
+  private double calculateSeparatorValue(SystemInterface fluid, double separatorPressure, double separatorTemperature,
+      int propertyIndex, double reservoirTemperature) {
     // Clone fluid and set reservoir conditions first
     SystemInterface reservoirFluid = fluid.clone();
     reservoirFluid.setTemperature(reservoirTemperature);
@@ -222,8 +216,8 @@ public class PVTRegressionFunction extends LevenbergMarquardtFunction {
     sepFluid.setTemperature(separatorTemperature);
     sepFluid.setPressure(separatorPressure);
     try {
-      neqsim.thermodynamicoperations.ThermodynamicOperations thermoOps =
-          new neqsim.thermodynamicoperations.ThermodynamicOperations(sepFluid);
+      neqsim.thermodynamicoperations.ThermodynamicOperations thermoOps = new neqsim.thermodynamicoperations.ThermodynamicOperations(
+	  sepFluid);
       thermoOps.TPflash();
     } catch (Exception e) {
       return 0.0;
@@ -232,31 +226,31 @@ public class PVTRegressionFunction extends LevenbergMarquardtFunction {
     sepFluid.initPhysicalProperties();
 
     switch (propertyIndex) {
-      case 0: // GOR
-        if (sepFluid.getNumberOfPhases() > 1) {
-          double gasVol = sepFluid.getPhase(0).getVolume(); // Gas phase
-          double oilVol = sepFluid.getPhase(1).getVolume(); // Oil phase
-          return gasVol / oilVol;
-        }
-        return 0.0;
-      case 1: // Bo
-        if (sepFluid.getNumberOfPhases() > 1) {
-          double oilVolRes = reservoirFluid.getPhase(1).getVolume();
-          double oilVolStd = sepFluid.getPhase(1).getVolume();
-          return oilVolRes / oilVolStd;
-        }
-        return 1.0;
-      default:
-        return 0.0;
+    case 0: // GOR
+      if (sepFluid.getNumberOfPhases() > 1) {
+	double gasVol = sepFluid.getPhase(0).getVolume(); // Gas phase
+	double oilVol = sepFluid.getPhase(1).getVolume(); // Oil phase
+	return gasVol / oilVol;
+      }
+      return 0.0;
+    case 1: // Bo
+      if (sepFluid.getNumberOfPhases() > 1) {
+	double oilVolRes = reservoirFluid.getPhase(1).getVolume();
+	double oilVolStd = sepFluid.getPhase(1).getVolume();
+	return oilVolRes / oilVolStd;
+      }
+      return 1.0;
+    default:
+      return 0.0;
     }
   }
 
   /**
    * Calculate viscosity property value.
    *
-   * @param fluid the thermodynamic system to use for calculation
-   * @param pressure the pressure in bara
-   * @param temperature the temperature in Kelvin
+   * @param fluid         the thermodynamic system to use for calculation
+   * @param pressure      the pressure in bara
+   * @param temperature   the temperature in Kelvin
    * @param propertyIndex phase index mapping, 0=gas, 1=oil/liquid, 2=aqueous/water, 3=phase zero
    * @return calculated dynamic viscosity in Pa s
    */
@@ -265,8 +259,8 @@ public class PVTRegressionFunction extends LevenbergMarquardtFunction {
     fluid.setTemperature(temperature);
     fluid.setPressure(pressure);
     try {
-      neqsim.thermodynamicoperations.ThermodynamicOperations thermoOps =
-          new neqsim.thermodynamicoperations.ThermodynamicOperations(fluid);
+      neqsim.thermodynamicoperations.ThermodynamicOperations thermoOps = new neqsim.thermodynamicoperations.ThermodynamicOperations(
+	  fluid);
       thermoOps.TPflash();
       fluid.initProperties();
     } catch (Exception e) {
@@ -274,26 +268,20 @@ public class PVTRegressionFunction extends LevenbergMarquardtFunction {
     }
 
     switch (propertyIndex) {
-      case 0:
-        return fluid.hasPhaseType("gas")
-            ? fluid.getPhase("gas").getPhysicalProperties().getViscosity()
-            : 0.0;
-      case 1:
-        if (fluid.hasPhaseType("oil")) {
-          return fluid.getPhase("oil").getPhysicalProperties().getViscosity();
-        }
-        return fluid.hasPhaseType("liquid")
-            ? fluid.getPhase("liquid").getPhysicalProperties().getViscosity()
-            : 0.0;
-      case 2:
-        if (fluid.hasPhaseType("aqueous")) {
-          return fluid.getPhase("aqueous").getPhysicalProperties().getViscosity();
-        }
-        return fluid.hasPhaseType("water")
-            ? fluid.getPhase("water").getPhysicalProperties().getViscosity()
-            : 0.0;
-      default:
-        return fluid.getPhase(0).getPhysicalProperties().getViscosity();
+    case 0:
+      return fluid.hasPhaseType("gas") ? fluid.getPhase("gas").getPhysicalProperties().getViscosity() : 0.0;
+    case 1:
+      if (fluid.hasPhaseType("oil")) {
+	return fluid.getPhase("oil").getPhysicalProperties().getViscosity();
+      }
+      return fluid.hasPhaseType("liquid") ? fluid.getPhase("liquid").getPhysicalProperties().getViscosity() : 0.0;
+    case 2:
+      if (fluid.hasPhaseType("aqueous")) {
+	return fluid.getPhase("aqueous").getPhysicalProperties().getViscosity();
+      }
+      return fluid.hasPhaseType("water") ? fluid.getPhase("water").getPhysicalProperties().getViscosity() : 0.0;
+    default:
+      return fluid.getPhase(0).getPhysicalProperties().getViscosity();
     }
   }
 

@@ -7,13 +7,12 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * Implementation of ISO 18453 - Natural gas - Correlation between water content and water dew
- * point.
+ * Implementation of ISO 18453 - Natural gas - Correlation between water content and water dew point.
  *
  * <p>
- * ISO 18453 provides a method for calculating the water dew point temperature of natural gas from
- * its water content, and vice versa. It uses the GERG-water equation of state (or compatible
- * thermodynamic model) for accurate water dew point calculations in natural gas systems.
+ * ISO 18453 provides a method for calculating the water dew point temperature of natural gas from its water content,
+ * and vice versa. It uses the GERG-water equation of state (or compatible thermodynamic model) for accurate water dew
+ * point calculations in natural gas systems.
  * </p>
  *
  * <p>
@@ -27,8 +26,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </ul>
  *
  * <p>
- * The standard is applicable to gas compositions within the normal range of natural gas (typically
- * methane content 40-100 mol%, pressure up to 300 bar, temperature -50 to +100 C).
+ * The standard is applicable to gas compositions within the normal range of natural gas (typically methane content
+ * 40-100 mol%, pressure up to 300 bar, temperature -50 to +100 C).
  * </p>
  *
  * @author ESOL
@@ -64,8 +63,7 @@ public class Standard_ISO18453 extends neqsim.standards.Standard {
   /**
    * Constructor for Standard_ISO18453.
    *
-   * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object representing the
-   *        natural gas composition
+   * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object representing the natural gas composition
    */
   public Standard_ISO18453(SystemInterface thermoSystem) {
     super("Standard_ISO18453", "Water dew point of natural gas (ISO 18453)", thermoSystem);
@@ -75,8 +73,8 @@ public class Standard_ISO18453 extends neqsim.standards.Standard {
     } else {
       this.internalThermoSystem = new SystemGERGwaterEos(initTemperature, getReferencePressure());
       for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
-        this.internalThermoSystem.addComponent(thermoSystem.getPhase(0).getComponent(i).getName(),
-            thermoSystem.getPhase(0).getComponent(i).getNumberOfmoles());
+	this.internalThermoSystem.addComponent(thermoSystem.getPhase(0).getComponent(i).getName(),
+	    thermoSystem.getPhase(0).getComponent(i).getNumberOfmoles());
       }
     }
 
@@ -127,10 +125,10 @@ public class Standard_ISO18453 extends neqsim.standards.Standard {
   public double getValue(String returnParameter, String returnUnit) {
     if ("dewPointTemperature".equals(returnParameter)) {
       if ("K".equals(returnUnit)) {
-        return dewPointTemperature + 273.15;
+	return dewPointTemperature + 273.15;
       }
       if ("F".equals(returnUnit)) {
-        return dewPointTemperature * 9.0 / 5.0 + 32.0;
+	return dewPointTemperature * 9.0 / 5.0 + 32.0;
       }
     }
     return dewPointTemperature;

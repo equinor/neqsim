@@ -19,8 +19,7 @@ public class TransferModelEnumsTest {
 
   @Test
   void testMassTransferModelDisplayNames() {
-    assertEquals("Krishna-Standart Film Model",
-        MassTransferModel.KRISHNA_STANDART_FILM.getDisplayName());
+    assertEquals("Krishna-Standart Film Model", MassTransferModel.KRISHNA_STANDART_FILM.getDisplayName());
     assertEquals("Penetration Theory", MassTransferModel.PENETRATION_THEORY.getDisplayName());
     assertEquals("Surface Renewal Theory", MassTransferModel.SURFACE_RENEWAL.getDisplayName());
   }
@@ -43,8 +42,7 @@ public class TransferModelEnumsTest {
   @Test
   void testInterfacialAreaModelDisplayNames() {
     assertEquals("Geometric Model", InterfacialAreaModel.GEOMETRIC.getDisplayName());
-    assertEquals("Empirical Correlation",
-        InterfacialAreaModel.EMPIRICAL_CORRELATION.getDisplayName());
+    assertEquals("Empirical Correlation", InterfacialAreaModel.EMPIRICAL_CORRELATION.getDisplayName());
     assertEquals("User Defined", InterfacialAreaModel.USER_DEFINED.getDisplayName());
   }
 
@@ -59,8 +57,7 @@ public class TransferModelEnumsTest {
 
   @Test
   void testWallHeatTransferModelDisplayNames() {
-    assertEquals("Constant Wall Temperature",
-        WallHeatTransferModel.CONSTANT_WALL_TEMPERATURE.getDisplayName());
+    assertEquals("Constant Wall Temperature", WallHeatTransferModel.CONSTANT_WALL_TEMPERATURE.getDisplayName());
     assertEquals("Constant Heat Flux", WallHeatTransferModel.CONSTANT_HEAT_FLUX.getDisplayName());
     assertEquals("Convective Boundary", WallHeatTransferModel.CONVECTIVE_BOUNDARY.getDisplayName());
     assertEquals("Adiabatic", WallHeatTransferModel.ADIABATIC.getDisplayName());

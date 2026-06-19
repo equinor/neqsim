@@ -6,8 +6,8 @@ import neqsim.process.mechanicaldesign.MechanicalDesignResponse;
  * Response class for pump mechanical design JSON export.
  *
  * <p>
- * Extends {@link MechanicalDesignResponse} with pump-specific parameters including hydraulic data,
- * driver sizing, NPSH requirements, and seal specifications per API 610.
+ * Extends {@link MechanicalDesignResponse} with pump-specific parameters including hydraulic data, driver sizing, NPSH
+ * requirements, and seal specifications per API 610.
  * </p>
  *
  * @author esol

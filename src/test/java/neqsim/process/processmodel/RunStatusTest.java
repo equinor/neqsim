@@ -19,8 +19,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Tests for the structured per-unit {@link RunStatus} exposed by {@link ProcessSystem} and
- * {@link ProcessModel}.
+ * Tests for the structured per-unit {@link RunStatus} exposed by {@link ProcessSystem} and {@link ProcessModel}.
  */
 class RunStatusTest {
 
@@ -108,7 +107,7 @@ class RunStatusTest {
     assertThrows(RuntimeException.class, new Executable() {
       @Override
       public void execute() {
-        process.run();
+	process.run();
       }
     });
 
@@ -151,7 +150,7 @@ class RunStatusTest {
     boolean sawArea = false;
     for (UnitRunStatus u : aggregate.getUnits()) {
       if ("area2".equals(u.getAreaName())) {
-        sawArea = true;
+	sawArea = true;
       }
     }
     assertTrue(sawArea, "aggregated units must carry their area name");

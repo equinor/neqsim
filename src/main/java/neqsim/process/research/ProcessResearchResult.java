@@ -9,8 +9,8 @@ import java.util.List;
  * Result from a process research run.
  *
  * <p>
- * The result contains all generated candidates sorted by score, plus study-level messages. Failed
- * candidates are retained so users can understand why process alternatives were rejected.
+ * The result contains all generated candidates sorted by score, plus study-level messages. Failed candidates are
+ * retained so users can understand why process alternatives were rejected.
  * </p>
  *
  * @author NeqSim Development Team
@@ -45,10 +45,10 @@ public class ProcessResearchResult {
     Collections.sort(candidates, new Comparator<ProcessCandidate>() {
       @Override
       public int compare(ProcessCandidate left, ProcessCandidate right) {
-        if (left.isFeasible() != right.isFeasible()) {
-          return left.isFeasible() ? -1 : 1;
-        }
-        return Double.compare(right.getScore(), left.getScore());
+	if (left.isFeasible() != right.isFeasible()) {
+	  return left.isFeasible() ? -1 : 1;
+	}
+	return Double.compare(right.getScore(), left.getScore());
       }
     });
   }
@@ -71,7 +71,7 @@ public class ProcessResearchResult {
     List<ProcessCandidate> nonDominated = new ArrayList<ProcessCandidate>();
     for (ProcessCandidate candidate : candidates) {
       if (candidate.isFeasible() && !candidate.isDominated()) {
-        nonDominated.add(candidate);
+	nonDominated.add(candidate);
       }
     }
     return Collections.unmodifiableList(nonDominated);
@@ -94,7 +94,7 @@ public class ProcessResearchResult {
   public ProcessCandidate getBestCandidate() {
     for (ProcessCandidate candidate : candidates) {
       if (candidate.isFeasible()) {
-        return candidate;
+	return candidate;
       }
     }
     return null;

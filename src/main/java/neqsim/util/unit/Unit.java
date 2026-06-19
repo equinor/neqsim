@@ -29,9 +29,9 @@ public interface Unit {
    * Convert value from a specified unit to a specified unit.
    * </p>
    *
-   * @param val a double
+   * @param val      a double
    * @param fromunit a {@link java.lang.String} object
-   * @param tounit a {@link java.lang.String} object
+   * @param tounit   a {@link java.lang.String} object
    * @return a double
    */
   double getValue(double val, String fromunit, String tounit);

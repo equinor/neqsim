@@ -8,9 +8,8 @@ import neqsim.physicalproperties.system.PhysicalProperties;
  * Wilke-Chang method for liquid-phase binary diffusion coefficients at infinite dilution.
  *
  * <p>
- * This is the most widely used and well-validated correlation for estimating liquid diffusion
- * coefficients. It is based on the Stokes-Einstein equation with an empirical association parameter
- * for the solvent.
+ * This is the most widely used and well-validated correlation for estimating liquid diffusion coefficients. It is based
+ * on the Stokes-Einstein equation with an empirical association parameter for the solvent.
  * </p>
  *
  * <p>
@@ -22,10 +21,9 @@ import neqsim.physicalproperties.system.PhysicalProperties;
  * </pre>
  *
  * <p>
- * where D_AB^0 is diffusivity at infinite dilution in cm^2/s, phi_B is the association parameter of
- * solvent B, M_B is the molecular weight of solvent in g/mol, T is temperature in K, eta_B is
- * solvent viscosity in cP, and V_A is the molar volume of solute at its normal boiling point in
- * cm^3/mol.
+ * where D_AB^0 is diffusivity at infinite dilution in cm^2/s, phi_B is the association parameter of solvent B, M_B is
+ * the molecular weight of solvent in g/mol, T is temperature in K, eta_B is solvent viscosity in cP, and V_A is the
+ * molar volume of solute at its normal boiling point in cm^3/mol.
  * </p>
  *
  * <p>
@@ -42,10 +40,10 @@ import neqsim.physicalproperties.system.PhysicalProperties;
  * References:
  * </p>
  * <ul>
- * <li>Wilke, C.R. and Chang, P. (1955). "Correlation of diffusion coefficients in dilute
- * solutions." AIChE J., 1, 264-270.</li>
- * <li>Poling, B.E., Prausnitz, J.M. and O'Connell, J.P. (2001). "The Properties of Gases and
- * Liquids." 5th ed., McGraw-Hill, Section 11-4.</li>
+ * <li>Wilke, C.R. and Chang, P. (1955). "Correlation of diffusion coefficients in dilute solutions." AIChE J., 1,
+ * 264-270.</li>
+ * <li>Poling, B.E., Prausnitz, J.M. and O'Connell, J.P. (2001). "The Properties of Gases and Liquids." 5th ed.,
+ * McGraw-Hill, Section 11-4.</li>
  * </ul>
  *
  * @author Even Solbraa
@@ -56,8 +54,8 @@ public class WilkeChangDiffusivity extends Diffusivity {
   private static final long serialVersionUID = 1000;
 
   /**
-   * Association parameters for common solvents. These account for the degree of hydrogen bonding or
-   * association in the solvent.
+   * Association parameters for common solvents. These account for the degree of hydrogen bonding or association in the
+   * solvent.
    */
   private static final Map<String, Double> ASSOCIATION_PARAMS = createAssociationParams();
 
@@ -122,8 +120,8 @@ public class WilkeChangDiffusivity extends Diffusivity {
    * Get the molar volume at normal boiling point for component i in cm^3/mol.
    *
    * <p>
-   * Uses normal liquid density if available, otherwise estimates from critical volume using the
-   * Tyn-Calus method: V_b = 0.285 * Vc^1.048.
+   * Uses normal liquid density if available, otherwise estimates from critical volume using the Tyn-Calus method: V_b =
+   * 0.285 * Vc^1.048.
    * </p>
    *
    * @param i the component index

@@ -15,57 +15,49 @@ class NetworkValidationBenchmarkTest {
 
   @Test
   void testSinglePipeBenchmark() {
-    NetworkValidationBenchmarks.BenchmarkResult result =
-        NetworkValidationBenchmarks.runSinglePipeBenchmark();
+    NetworkValidationBenchmarks.BenchmarkResult result = NetworkValidationBenchmarks.runSinglePipeBenchmark();
     assertNotNull(result);
     assertTrue(result.converged, "Single pipe benchmark should converge. " + result.getSummary());
   }
 
   @Test
   void testParallelPipeBenchmark() {
-    NetworkValidationBenchmarks.BenchmarkResult result =
-        NetworkValidationBenchmarks.runParallelPipeBenchmark();
+    NetworkValidationBenchmarks.BenchmarkResult result = NetworkValidationBenchmarks.runParallelPipeBenchmark();
     assertNotNull(result);
     assertTrue(result.converged, "Parallel pipe benchmark should converge. " + result.getSummary());
   }
 
   @Test
   void testTriangleMassBalance() {
-    NetworkValidationBenchmarks.BenchmarkResult result =
-        NetworkValidationBenchmarks.runTriangleMassBalance();
+    NetworkValidationBenchmarks.BenchmarkResult result = NetworkValidationBenchmarks.runTriangleMassBalance();
     assertNotNull(result);
     assertTrue(result.converged, "Triangle mass balance should converge. " + result.getSummary());
   }
 
   @Test
   void testSolverCrossVerification() {
-    NetworkValidationBenchmarks.BenchmarkResult result =
-        NetworkValidationBenchmarks.runSolverCrossVerification();
+    NetworkValidationBenchmarks.BenchmarkResult result = NetworkValidationBenchmarks.runSolverCrossVerification();
     assertNotNull(result);
-    assertTrue(result.converged,
-        "Solver cross-verification should converge. " + result.getSummary());
+    assertTrue(result.converged, "Solver cross-verification should converge. " + result.getSummary());
   }
 
   @Test
   void testPressureMonotonicity() {
-    NetworkValidationBenchmarks.BenchmarkResult result =
-        NetworkValidationBenchmarks.runPressureMonotonicity();
+    NetworkValidationBenchmarks.BenchmarkResult result = NetworkValidationBenchmarks.runPressureMonotonicity();
     assertNotNull(result);
     assertTrue(result.converged, "Pressure monotonicity should converge. " + result.getSummary());
   }
 
   @Test
   void testSparseVsDenseBenchmark() {
-    NetworkValidationBenchmarks.BenchmarkResult result =
-        NetworkValidationBenchmarks.runSparseVsDenseBenchmark();
+    NetworkValidationBenchmarks.BenchmarkResult result = NetworkValidationBenchmarks.runSparseVsDenseBenchmark();
     assertNotNull(result);
     assertTrue(result.converged, "Sparse vs Dense should agree. " + result.getSummary());
   }
 
   @Test
   void testRunAllBenchmarks() {
-    List<NetworkValidationBenchmarks.BenchmarkResult> results =
-        NetworkValidationBenchmarks.runAllBenchmarks();
+    List<NetworkValidationBenchmarks.BenchmarkResult> results = NetworkValidationBenchmarks.runAllBenchmarks();
     assertFalse(results.isEmpty(), "Should have benchmark results");
     assertEquals(6, results.size(), "Should have 6 benchmarks");
 
@@ -78,8 +70,7 @@ class NetworkValidationBenchmarkTest {
   @Test
   void testRunValidationBenchmarksFromNetwork() {
     // Verify the static convenience method on LoopedPipeNetwork
-    List<NetworkValidationBenchmarks.BenchmarkResult> results =
-        LoopedPipeNetwork.runValidationBenchmarks();
+    List<NetworkValidationBenchmarks.BenchmarkResult> results = LoopedPipeNetwork.runValidationBenchmarks();
     assertNotNull(results);
     assertFalse(results.isEmpty());
   }

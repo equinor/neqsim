@@ -173,17 +173,14 @@ class InstrumentTagTest {
     assertNull(process.getMeasurementDeviceByTag("nonexistent"));
 
     // Filter by role
-    List<MeasurementDeviceInterface> inputs =
-        process.getMeasurementDevicesByRole(InstrumentTagRole.INPUT);
+    List<MeasurementDeviceInterface> inputs = process.getMeasurementDevicesByRole(InstrumentTagRole.INPUT);
     assertEquals(1, inputs.size());
     assertEquals("PT-101", inputs.get(0).getName());
 
-    List<MeasurementDeviceInterface> benchmarks =
-        process.getMeasurementDevicesByRole(InstrumentTagRole.BENCHMARK);
+    List<MeasurementDeviceInterface> benchmarks = process.getMeasurementDevicesByRole(InstrumentTagRole.BENCHMARK);
     assertEquals(1, benchmarks.size());
 
-    List<MeasurementDeviceInterface> virtuals =
-        process.getMeasurementDevicesByRole(InstrumentTagRole.VIRTUAL);
+    List<MeasurementDeviceInterface> virtuals = process.getMeasurementDevicesByRole(InstrumentTagRole.VIRTUAL);
     assertEquals(1, virtuals.size());
   }
 

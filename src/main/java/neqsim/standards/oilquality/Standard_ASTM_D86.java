@@ -10,27 +10,24 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * ASTM D86 - Standard Test Method for Distillation of Petroleum Products and Liquid Fuels at
- * Atmospheric Pressure.
+ * ASTM D86 - Standard Test Method for Distillation of Petroleum Products and Liquid Fuels at Atmospheric Pressure.
  *
  * <p>
- * The atmospheric distillation curve is generated with a series of Pressure-Vapor-Fraction (PVF)
- * flash calculations at constant atmospheric pressure: pressure is held fixed and temperature is
- * solved for each target recovered fraction. The resulting curve maps percent distilled to boiling
- * temperature.
+ * The atmospheric distillation curve is generated with a series of Pressure-Vapor-Fraction (PVF) flash calculations at
+ * constant atmospheric pressure: pressure is held fixed and temperature is solved for each target recovered fraction.
+ * The resulting curve maps percent distilled to boiling temperature.
  * </p>
  *
  * <p>
- * The recovered fraction can be interpreted on three bases (see {@link D86Basis}): molar vapor
- * fraction (default), recovered liquid-volume fraction, or an empirical TBP&rarr;D86 conversion
- * (Riazi&ndash;Daubert / API). The class also derives the standard average boiling points (VABP,
- * MABP, WABP, CABP, MeABP), the Watson (UOP) characterization factor, the D86 slope, and a
- * recovery/loss/residue split, and supports a Sydney Young barometric-pressure correction.
+ * The recovered fraction can be interpreted on three bases (see {@link D86Basis}): molar vapor fraction (default),
+ * recovered liquid-volume fraction, or an empirical TBP&rarr;D86 conversion (Riazi&ndash;Daubert / API). The class also
+ * derives the standard average boiling points (VABP, MABP, WABP, CABP, MeABP), the Watson (UOP) characterization
+ * factor, the D86 slope, and a recovery/loss/residue split, and supports a Sydney Young barometric-pressure correction.
  * </p>
  *
  * <p>
- * This is the primary specification used for characterising crude oil cuts, gasoline, jet fuel,
- * diesel, and fuel oils for refinery planning and product quality.
+ * This is the primary specification used for characterising crude oil cuts, gasoline, jet fuel, diesel, and fuel oils
+ * for refinery planning and product quality.
  * </p>
  *
  * <p>
@@ -107,13 +104,13 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
   private final Map<String, Double> specLimitsC = new LinkedHashMap<String, Double>();
 
   /** Volume-percent breakpoints for the Riazi-Daubert ASTM D86 &harr; TBP interconversion. */
-  private static final double[] CONV_PCT = {0.0, 10.0, 30.0, 50.0, 70.0, 90.0, 95.0};
+  private static final double[] CONV_PCT = { 0.0, 10.0, 30.0, 50.0, 70.0, 90.0, 95.0 };
 
   /** Coefficient a for T_TBP = a (T_D86)^b at each breakpoint (Kelvin). */
-  private static final double[] CONV_A = {0.9177, 0.5564, 0.7617, 0.9013, 0.8821, 0.9552, 0.8177};
+  private static final double[] CONV_A = { 0.9177, 0.5564, 0.7617, 0.9013, 0.8821, 0.9552, 0.8177 };
 
   /** Exponent b for T_TBP = a (T_D86)^b at each breakpoint (Kelvin). */
-  private static final double[] CONV_B = {1.0019, 1.0900, 1.0425, 1.0176, 1.0226, 1.0110, 1.0355};
+  private static final double[] CONV_B = { 1.0019, 1.0900, 1.0425, 1.0176, 1.0226, 1.0110, 1.0355 };
 
   /**
    * Reporting basis for the recovered (distilled) fraction of an ASTM D86 curve.
@@ -133,8 +130,8 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
    * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object representing the oil
    */
   public Standard_ASTM_D86(SystemInterface thermoSystem) {
-    super("Standard_ASTM_D86",
-        "ASTM D86 - Distillation of Petroleum Products at Atmospheric " + "Pressure", thermoSystem);
+    super("Standard_ASTM_D86", "ASTM D86 - Distillation of Petroleum Products at Atmospheric " + "Pressure",
+	thermoSystem);
     initVolumeFractions();
   }
 
@@ -148,8 +145,8 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
     liquidVolumeFractions = new double[numberOfPoints];
     // IBP(~0.5%), 5%, 10%, 15%, 20%, 25%, 30%, 35%, 40%, 45%, 50%,
     // 55%, 60%, 65%, 70%, 75%, 80%, 85%, 90%, 95%
-    double[] fracs = {0.005, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50, 0.55, 0.60,
-        0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95};
+    double[] fracs = { 0.005, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50, 0.55, 0.60, 0.65, 0.70, 0.75,
+	0.80, 0.85, 0.90, 0.95 };
     for (int i = 0; i < numberOfPoints; i++) {
       volumeFractions[i] = fracs[i];
       temperatures[i] = Double.NaN;
@@ -190,9 +187,9 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
       zFeed[c] = comp.getz();
       double rho = 0.0;
       try {
-        rho = comp.getNormalLiquidDensity("kg/m3");
+	rho = comp.getNormalLiquidDensity("kg/m3");
       } catch (Exception e) {
-        rho = 0.0;
+	rho = 0.0;
       }
       vmFeed[c] = (rho > 1.0e-6) ? comp.getMolarMass() / rho : 0.0;
       sumVfeed += zFeed[c] * vmFeed[c];
@@ -208,20 +205,20 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
     ThermodynamicOperations flashOps = new ThermodynamicOperations(flashFluid);
     for (int i = 1; i < numberOfPoints; i++) {
       try {
-        flashOps.PVFflash(volumeFractions[i]);
-        double t = flashFluid.getTemperature();
-        if (Double.isNaN(t) || Double.isInfinite(t)) {
-          temperatures[i] = Double.NaN;
-          liquidVolumeFractions[i] = Double.NaN;
-        } else {
-          temperatures[i] = t;
-          liquidVolumeFractions[i] =
-              computeRecoveredLiquidVolume(flashFluid, volumeFractions[i], vmFeed, sumVfeed, nComp);
-        }
+	flashOps.PVFflash(volumeFractions[i]);
+	double t = flashFluid.getTemperature();
+	if (Double.isNaN(t) || Double.isInfinite(t)) {
+	  temperatures[i] = Double.NaN;
+	  liquidVolumeFractions[i] = Double.NaN;
+	} else {
+	  temperatures[i] = t;
+	  liquidVolumeFractions[i] = computeRecoveredLiquidVolume(flashFluid, volumeFractions[i], vmFeed, sumVfeed,
+	      nComp);
+	}
       } catch (Exception ex) {
-        logger.debug("PVF flash failed at {}%: {}", volumeFractions[i] * 100.0, ex.getMessage());
-        temperatures[i] = Double.NaN;
-        liquidVolumeFractions[i] = Double.NaN;
+	logger.debug("PVF flash failed at {}%: {}", volumeFractions[i] * 100.0, ex.getMessage());
+	temperatures[i] = Double.NaN;
+	liquidVolumeFractions[i] = Double.NaN;
       }
     }
 
@@ -246,51 +243,51 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
   @Override
   public double getValue(String returnParameter) {
     switch (returnParameter) {
-      case "IBP":
-        return reportedIBP();
-      case "T5":
-        return reportedTemperatureAtFractionK(0.05) - 273.15;
-      case "T10":
-        return reportedTemperatureAtFractionK(0.10) - 273.15;
-      case "T50":
-        return reportedTemperatureAtFractionK(0.50) - 273.15;
-      case "T90":
-        return reportedTemperatureAtFractionK(0.90) - 273.15;
-      case "T95":
-        return reportedTemperatureAtFractionK(0.95) - 273.15;
-      case "FBP":
-        return reportedFBP();
-      case "residue":
-        return residueFraction;
-      case "loss":
-        return lossFraction;
-      case "VABP":
-        return getVABP();
-      case "MABP":
-        return getMABP();
-      case "WABP":
-        return getWABP();
-      case "CABP":
-        return getCABP();
-      case "MeABP":
-        return getMeABP();
-      case "slope":
-        return getSlope();
-      case "WatsonK":
-      case "watsonK":
-      case "UOPK":
-        return getWatsonK();
-      default:
-        // Try interpreting as "Txx" where xx is percentage
-        if (returnParameter.startsWith("T") && returnParameter.length() > 1) {
-          try {
-            double pct = Double.parseDouble(returnParameter.substring(1));
-            return reportedTemperatureAtFractionK(pct / 100.0) - 273.15;
-          } catch (NumberFormatException e) {
-            logger.error("Unsupported parameter: {}", returnParameter);
-          }
-        }
-        return Double.NaN;
+    case "IBP":
+      return reportedIBP();
+    case "T5":
+      return reportedTemperatureAtFractionK(0.05) - 273.15;
+    case "T10":
+      return reportedTemperatureAtFractionK(0.10) - 273.15;
+    case "T50":
+      return reportedTemperatureAtFractionK(0.50) - 273.15;
+    case "T90":
+      return reportedTemperatureAtFractionK(0.90) - 273.15;
+    case "T95":
+      return reportedTemperatureAtFractionK(0.95) - 273.15;
+    case "FBP":
+      return reportedFBP();
+    case "residue":
+      return residueFraction;
+    case "loss":
+      return lossFraction;
+    case "VABP":
+      return getVABP();
+    case "MABP":
+      return getMABP();
+    case "WABP":
+      return getWABP();
+    case "CABP":
+      return getCABP();
+    case "MeABP":
+      return getMeABP();
+    case "slope":
+      return getSlope();
+    case "WatsonK":
+    case "watsonK":
+    case "UOPK":
+      return getWatsonK();
+    default:
+      // Try interpreting as "Txx" where xx is percentage
+      if (returnParameter.startsWith("T") && returnParameter.length() > 1) {
+	try {
+	  double pct = Double.parseDouble(returnParameter.substring(1));
+	  return reportedTemperatureAtFractionK(pct / 100.0) - 273.15;
+	} catch (NumberFormatException e) {
+	  logger.error("Unsupported parameter: {}", returnParameter);
+	}
+      }
+      return Double.NaN;
     }
   }
 
@@ -303,8 +300,8 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
     }
     // Dimensionless or non-temperature outputs are returned unchanged regardless of unit.
     if ("WatsonK".equalsIgnoreCase(returnParameter) || "watsonK".equalsIgnoreCase(returnParameter)
-        || "UOPK".equalsIgnoreCase(returnParameter) || "residue".equalsIgnoreCase(returnParameter)
-        || "loss".equalsIgnoreCase(returnParameter) || "slope".equalsIgnoreCase(returnParameter)) {
+	|| "UOPK".equalsIgnoreCase(returnParameter) || "residue".equalsIgnoreCase(returnParameter)
+	|| "loss".equalsIgnoreCase(returnParameter) || "slope".equalsIgnoreCase(returnParameter)) {
       return valueC;
     }
     if ("K".equalsIgnoreCase(returnUnit)) {
@@ -333,7 +330,7 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
     for (Map.Entry<String, Double> entry : specLimitsC.entrySet()) {
       double value = getValue(entry.getKey());
       if (Double.isNaN(value) || value > entry.getValue()) {
-        return false;
+	return false;
       }
     }
     return true;
@@ -343,8 +340,8 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
    * Linear interpolation helper for a monotonically increasing fraction axis.
    *
    * @param fractionAxis the recovered-fraction values (x-axis)
-   * @param temps the temperatures in Kelvin (y-axis)
-   * @param fraction the recovered fraction to interpolate at (0.0 to 1.0)
+   * @param temps        the temperatures in Kelvin (y-axis)
+   * @param fraction     the recovered fraction to interpolate at (0.0 to 1.0)
    * @return interpolated temperature in Kelvin
    */
   private double interpolateK(double[] fractionAxis, double[] temps, double fraction) {
@@ -353,24 +350,23 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
     }
     for (int i = 1; i < numberOfPoints; i++) {
       if (Double.isNaN(temps[i]) || Double.isNaN(temps[i - 1]) || Double.isNaN(fractionAxis[i])
-          || Double.isNaN(fractionAxis[i - 1])) {
-        continue;
+	  || Double.isNaN(fractionAxis[i - 1])) {
+	continue;
       }
       if (fraction <= fractionAxis[i]) {
-        double dx = fractionAxis[i] - fractionAxis[i - 1];
-        if (Math.abs(dx) < 1.0e-12) {
-          return temps[i];
-        }
-        double x = (fraction - fractionAxis[i - 1]) / dx;
-        return temps[i - 1] + x * (temps[i] - temps[i - 1]);
+	double dx = fractionAxis[i] - fractionAxis[i - 1];
+	if (Math.abs(dx) < 1.0e-12) {
+	  return temps[i];
+	}
+	double x = (fraction - fractionAxis[i - 1]) / dx;
+	return temps[i - 1] + x * (temps[i] - temps[i - 1]);
       }
     }
     return temps[numberOfPoints - 1];
   }
 
   /**
-   * Gets the temperature at a given distilled fraction on the molar (simulated) basis by linear
-   * interpolation.
+   * Gets the temperature at a given distilled fraction on the molar (simulated) basis by linear interpolation.
    *
    * @param fraction the recovered fraction (0.0 to 1.0)
    * @return temperature in Kelvin at the specified fraction
@@ -390,8 +386,8 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
   }
 
   /**
-   * Returns the reported temperature at a recovered fraction, honouring the active reporting basis
-   * and any barometric-pressure correction.
+   * Returns the reported temperature at a recovered fraction, honouring the active reporting basis and any
+   * barometric-pressure correction.
    *
    * @param fraction the recovered fraction (0.0 to 1.0)
    * @return temperature in Kelvin
@@ -399,15 +395,15 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
   private double reportedTemperatureAtFractionK(double fraction) {
     double tk;
     switch (basis) {
-      case LIQUID_VOLUME:
-        tk = liquidVolumeTemperatureAtFractionK(fraction);
-        break;
-      case TBP_CONVERTED:
-        tk = tbpToD86K(getTemperatureAtFraction(fraction), fraction * 100.0);
-        break;
-      default:
-        tk = getTemperatureAtFraction(fraction);
-        break;
+    case LIQUID_VOLUME:
+      tk = liquidVolumeTemperatureAtFractionK(fraction);
+      break;
+    case TBP_CONVERTED:
+      tk = tbpToD86K(getTemperatureAtFraction(fraction), fraction * 100.0);
+      break;
+    default:
+      tk = getTemperatureAtFraction(fraction);
+      break;
     }
     return applyBarometricCorrectionK(tk);
   }
@@ -439,8 +435,8 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
   }
 
   /**
-   * Applies the Sydney Young barometric-pressure correction used by ASTM D86 to convert an observed
-   * temperature to the equivalent at 760 mmHg.
+   * Applies the Sydney Young barometric-pressure correction used by ASTM D86 to convert an observed temperature to the
+   * equivalent at 760 mmHg.
    *
    * @param temperatureK the observed temperature in Kelvin
    * @return corrected temperature in Kelvin
@@ -463,27 +459,27 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
   private double[] conversionCoefficients(double percent) {
     int last = CONV_PCT.length - 1;
     if (percent <= CONV_PCT[0]) {
-      return new double[] {CONV_A[0], CONV_B[0]};
+      return new double[] { CONV_A[0], CONV_B[0] };
     }
     if (percent >= CONV_PCT[last]) {
-      return new double[] {CONV_A[last], CONV_B[last]};
+      return new double[] { CONV_A[last], CONV_B[last] };
     }
     for (int i = 1; i < CONV_PCT.length; i++) {
       if (percent <= CONV_PCT[i]) {
-        double t = (percent - CONV_PCT[i - 1]) / (CONV_PCT[i] - CONV_PCT[i - 1]);
-        double a = CONV_A[i - 1] + t * (CONV_A[i] - CONV_A[i - 1]);
-        double b = CONV_B[i - 1] + t * (CONV_B[i] - CONV_B[i - 1]);
-        return new double[] {a, b};
+	double t = (percent - CONV_PCT[i - 1]) / (CONV_PCT[i] - CONV_PCT[i - 1]);
+	double a = CONV_A[i - 1] + t * (CONV_A[i] - CONV_A[i - 1]);
+	double b = CONV_B[i - 1] + t * (CONV_B[i] - CONV_B[i - 1]);
+	return new double[] { a, b };
       }
     }
-    return new double[] {CONV_A[last], CONV_B[last]};
+    return new double[] { CONV_A[last], CONV_B[last] };
   }
 
   /**
-   * Converts a TBP temperature to the equivalent ASTM D86 temperature using the Riazi-Daubert
-   * relation T_TBP = a (T_D86)^b (temperatures in Kelvin).
+   * Converts a TBP temperature to the equivalent ASTM D86 temperature using the Riazi-Daubert relation T_TBP = a
+   * (T_D86)^b (temperatures in Kelvin).
    *
-   * @param tbpK TBP temperature in Kelvin
+   * @param tbpK    TBP temperature in Kelvin
    * @param percent the volume percent distilled (0 to 100)
    * @return ASTM D86 temperature in Kelvin
    */
@@ -496,10 +492,10 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
   }
 
   /**
-   * Converts an ASTM D86 temperature to the equivalent TBP temperature using the Riazi-Daubert
-   * relation T_TBP = a (T_D86)^b (temperatures in Kelvin).
+   * Converts an ASTM D86 temperature to the equivalent TBP temperature using the Riazi-Daubert relation T_TBP = a
+   * (T_D86)^b (temperatures in Kelvin).
    *
-   * @param d86K ASTM D86 temperature in Kelvin
+   * @param d86K    ASTM D86 temperature in Kelvin
    * @param percent the volume percent distilled (0 to 100)
    * @return TBP temperature in Kelvin
    */
@@ -512,18 +508,17 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
   }
 
   /**
-   * Computes the cumulative recovered liquid-volume fraction for the vapour formed at a flash
-   * point.
+   * Computes the cumulative recovered liquid-volume fraction for the vapour formed at a flash point.
    *
-   * @param fluid the flashed fluid holding gas and liquid phases
-   * @param beta the molar vapor fraction at this point
-   * @param vmFeed per-component liquid molar volume proxy (molar mass / liquid density)
+   * @param fluid    the flashed fluid holding gas and liquid phases
+   * @param beta     the molar vapor fraction at this point
+   * @param vmFeed   per-component liquid molar volume proxy (molar mass / liquid density)
    * @param sumVfeed the feed total liquid-volume proxy
-   * @param nComp the number of components
+   * @param nComp    the number of components
    * @return recovered liquid-volume fraction (0.0 to 1.0)
    */
-  private double computeRecoveredLiquidVolume(SystemInterface fluid, double beta, double[] vmFeed,
-      double sumVfeed, int nComp) {
+  private double computeRecoveredLiquidVolume(SystemInterface fluid, double beta, double[] vmFeed, double sumVfeed,
+      int nComp) {
     if (sumVfeed <= 0.0) {
       return beta;
     }
@@ -531,14 +526,14 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
       PhaseInterface gas = fluid.getPhase("gas");
       double sumVgas = 0.0;
       for (int c = 0; c < nComp; c++) {
-        sumVgas += gas.getComponent(c).getx() * vmFeed[c];
+	sumVgas += gas.getComponent(c).getx() * vmFeed[c];
       }
       double lv = beta * sumVgas / sumVfeed;
       if (lv < 0.0) {
-        lv = 0.0;
+	lv = 0.0;
       }
       if (lv > 1.0) {
-        lv = 1.0;
+	lv = 1.0;
       }
       return lv;
     } catch (Exception e) {
@@ -547,23 +542,22 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
   }
 
   /**
-   * Splits the unrecovered fraction into a light-ends loss (components boiling below the IBP) and a
-   * heavy residue, on a liquid-volume basis, so that recovery + loss + residue = 100%.
+   * Splits the unrecovered fraction into a light-ends loss (components boiling below the IBP) and a heavy residue, on a
+   * liquid-volume basis, so that recovery + loss + residue = 100%.
    *
-   * @param zFeed per-component overall mole fractions
-   * @param vmFeed per-component liquid molar volume proxy
+   * @param zFeed    per-component overall mole fractions
+   * @param vmFeed   per-component liquid molar volume proxy
    * @param sumVfeed the feed total liquid-volume proxy
-   * @param nComp the number of components
+   * @param nComp    the number of components
    */
-  private void computeRecoveryLossResidue(double[] zFeed, double[] vmFeed, double sumVfeed,
-      int nComp) {
+  private void computeRecoveryLossResidue(double[] zFeed, double[] vmFeed, double sumVfeed, int nComp) {
     double lossVol = 0.0;
     if (sumVfeed > 0.0 && !Double.isNaN(IBP)) {
       for (int c = 0; c < nComp; c++) {
-        double tb = thermoSystem.getComponent(c).getNormalBoilingPoint();
-        if (tb < IBP) {
-          lossVol += zFeed[c] * vmFeed[c];
-        }
+	double tb = thermoSystem.getComponent(c).getNormalBoilingPoint();
+	if (tb < IBP) {
+	  lossVol += zFeed[c] * vmFeed[c];
+	}
       }
       lossVol /= sumVfeed;
     }
@@ -574,8 +568,8 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
   }
 
   /**
-   * Computes the component-based average boiling points and specific gravity from the fluid normal
-   * boiling points and liquid densities.
+   * Computes the component-based average boiling points and specific gravity from the fluid normal boiling points and
+   * liquid densities.
    *
    * @return a four-element array {MABP_K, WABP_K, CABP_K, SG}
    */
@@ -603,27 +597,27 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
       wabpNum += mass * tb;
       double rho = 0.0;
       try {
-        rho = c.getNormalLiquidDensity("kg/m3");
+	rho = c.getNormalLiquidDensity("kg/m3");
       } catch (Exception e) {
-        rho = 0.0;
+	rho = 0.0;
       }
       if (rho > 1.0e-6) {
-        double vol = mass / rho;
-        sumVol += vol;
-        cabpNum += vol * Math.cbrt(tb);
+	double vol = mass / rho;
+	sumVol += vol;
+	cabpNum += vol * Math.cbrt(tb);
       }
     }
     double wabp = (sumMass > 0.0) ? wabpNum / sumMass : Double.NaN;
     double cabp = (sumVol > 0.0) ? Math.pow(cabpNum / sumVol, 3.0) : Double.NaN;
     double sg = (sumVol > 0.0) ? (sumMass / sumVol) / 999.016 : Double.NaN;
-    return new double[] {mabp, wabp, cabp, sg};
+    return new double[] { mabp, wabp, cabp, sg };
   }
 
   /**
    * Converts a temperature in Celsius to the requested unit.
    *
    * @param valueC the temperature in Celsius
-   * @param unit the target unit ("C", "K", "F" or "R")
+   * @param unit   the target unit ("C", "K", "F" or "R")
    * @return the converted temperature
    */
   private double convertTempFromC(double valueC, String unit) {
@@ -643,8 +637,7 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
   /**
    * Returns the full distillation curve data on the active reporting basis.
    *
-   * @return a two-dimensional array where [i][0] is volume percent and [i][1] is temperature in
-   *         Celsius
+   * @return a two-dimensional array where [i][0] is volume percent and [i][1] is temperature in Celsius
    */
   public double[][] getDistillationCurve() {
     double[][] curve = new double[numberOfPoints][2];
@@ -659,8 +652,7 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
    * Returns the full distillation curve data on the active reporting basis in a chosen unit.
    *
    * @param tempUnit the temperature unit ("C", "K", "F" or "R")
-   * @return a two-dimensional array where [i][0] is volume percent and [i][1] is temperature in the
-   *         requested unit
+   * @return a two-dimensional array where [i][0] is volume percent and [i][1] is temperature in the requested unit
    */
   public double[][] getDistillationCurve(String tempUnit) {
     double[][] curve = new double[numberOfPoints][2];
@@ -675,8 +667,7 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
   /**
    * Returns the full distillation curve data on the active reporting basis in Kelvin.
    *
-   * @return a two-dimensional array where [i][0] is volume percent and [i][1] is temperature in
-   *         Kelvin
+   * @return a two-dimensional array where [i][0] is volume percent and [i][1] is temperature in Kelvin
    */
   public double[][] getDistillationCurveKelvin() {
     double[][] curve = new double[numberOfPoints][2];
@@ -688,11 +679,9 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
   }
 
   /**
-   * Returns the simulated molar-equilibrium (TBP-like) distillation curve, independent of the
-   * active reporting basis.
+   * Returns the simulated molar-equilibrium (TBP-like) distillation curve, independent of the active reporting basis.
    *
-   * @return a two-dimensional array where [i][0] is volume percent and [i][1] is temperature in
-   *         Celsius
+   * @return a two-dimensional array where [i][0] is volume percent and [i][1] is temperature in Celsius
    */
   public double[][] getTBPCurve() {
     double[][] curve = new double[numberOfPoints][2];
@@ -704,19 +693,17 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
   }
 
   /**
-   * Returns the ASTM D86 curve obtained by converting the simulated molar-equilibrium (TBP-like)
-   * curve with the Riazi-Daubert TBP&rarr;D86 relation.
+   * Returns the ASTM D86 curve obtained by converting the simulated molar-equilibrium (TBP-like) curve with the
+   * Riazi-Daubert TBP&rarr;D86 relation.
    *
-   * @return a two-dimensional array where [i][0] is volume percent and [i][1] is temperature in
-   *         Celsius
+   * @return a two-dimensional array where [i][0] is volume percent and [i][1] is temperature in Celsius
    */
   public double[][] getD86Curve() {
     double[][] curve = new double[numberOfPoints][2];
     for (int i = 0; i < numberOfPoints; i++) {
       double pct = volumeFractions[i] * 100.0;
       curve[i][0] = pct;
-      curve[i][1] =
-          Double.isNaN(temperatures[i]) ? Double.NaN : tbpToD86K(temperatures[i], pct) - 273.15;
+      curve[i][1] = Double.isNaN(temperatures[i]) ? Double.NaN : tbpToD86K(temperatures[i], pct) - 273.15;
     }
     return curve;
   }
@@ -761,7 +748,7 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
    * Sets the barometric (ambient) pressure used for the Sydney Young correction.
    *
    * @param pressure the barometric pressure
-   * @param unit the unit ("mmHg", "bar", "bara", "kPa", "Pa", "atm" or "psia")
+   * @param unit     the unit ("mmHg", "bar", "bara", "kPa", "Pa", "atm" or "psia")
    */
   public void setBarometricPressure(double pressure, String unit) {
     double mmHg;
@@ -795,7 +782,7 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
   /**
    * Adds or updates a product specification limit checked by {@link #isOnSpec()}.
    *
-   * @param pointKey the report point (e.g. "T90", "FBP", "IBP")
+   * @param pointKey        the report point (e.g. "T90", "FBP", "IBP")
    * @param maxTemperatureC the maximum allowed temperature in Celsius
    */
   public void setSpecLimit(String pointKey, double maxTemperatureC) {
@@ -810,8 +797,8 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
   }
 
   /**
-   * Gets the volume average boiling point (VABP) from the reported curve, defined as the average of
-   * the temperatures at 10, 30, 50, 70 and 90 percent recovered.
+   * Gets the volume average boiling point (VABP) from the reported curve, defined as the average of the temperatures at
+   * 10, 30, 50, 70 and 90 percent recovered.
    *
    * @return VABP in Celsius
    */
@@ -923,8 +910,7 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
   }
 
   /**
-   * Gets the specific gravity (60/60 F) estimated as an ideal-solution mixture of the component
-   * liquid densities.
+   * Gets the specific gravity (60/60 F) estimated as an ideal-solution mixture of the component liquid densities.
    *
    * @return specific gravity (dimensionless)
    */

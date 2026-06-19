@@ -45,8 +45,7 @@ class CfdSourceTermCaseTest {
     assertTrue(json.has("sourceTerm"));
     assertTrue(json.has("ambient"));
     assertTrue(json.has("provenance"));
-    assertTrue(json.getAsJsonObject("provenance").get("notForFinalLayoutWithoutValidation")
-        .getAsBoolean());
+    assertTrue(json.getAsJsonObject("provenance").get("notForFinalLayoutWithoutValidation").getAsBoolean());
     assertTrue(json.getAsJsonArray("consequenceBranches").size() >= 5);
     assertTrue(json.getAsJsonObject("sourceTerm").getAsJsonArray("timeSeries").size() > 1);
   }
@@ -61,20 +60,18 @@ class CfdSourceTermCaseTest {
     Path openFoamRoot = tempDir.resolve("openfoam-case");
 
     exporter.exportJson(sourceTermCase, jsonFile.toString());
-    exporter.exportManifest(java.util.Collections.singletonList(sourceTermCase),
-        manifestFile.toString());
+    exporter.exportManifest(java.util.Collections.singletonList(sourceTermCase), manifestFile.toString());
     exporter.exportOpenFoamSkeleton(sourceTermCase, openFoamRoot.toString());
 
     assertTrue(Files.exists(jsonFile));
     assertTrue(Files.exists(manifestFile));
     assertTrue(Files.exists(openFoamRoot.resolve("case.json")));
     assertTrue(Files.exists(openFoamRoot.resolve("constant").resolve("releaseSourceProperties")));
-    assertTrue(Files.exists(
-        openFoamRoot.resolve("constant").resolve("sourceTimeSeries").resolve("massFlowRate")));
+    assertTrue(Files.exists(openFoamRoot.resolve("constant").resolve("sourceTimeSeries").resolve("massFlowRate")));
 
     String releaseSource = new String(
-        Files.readAllBytes(openFoamRoot.resolve("constant").resolve("releaseSourceProperties")),
-        StandardCharsets.UTF_8);
+	Files.readAllBytes(openFoamRoot.resolve("constant").resolve("releaseSourceProperties")),
+	StandardCharsets.UTF_8);
     String manifest = new String(Files.readAllBytes(manifestFile), StandardCharsets.UTF_8);
 
     assertTrue(releaseSource.contains("tabulatedMassMomentumTemperature"));
@@ -85,14 +82,14 @@ class CfdSourceTermCaseTest {
   private static CfdSourceTermCase createCfdCase() {
     ProcessSystem process = createProcess();
     List<ReleaseDispersionScenario> scenarios = new ReleaseDispersionScenarioGenerator(process)
-        .releaseCases(ReleaseCase.TEN_MM_HOLE).addWeatherCase("neutral-D", standardWeather())
-        .releaseDuration(20.0, 5.0).generateScenarios();
+	.releaseCases(ReleaseCase.TEN_MM_HOLE).addWeatherCase("neutral-D", standardWeather()).releaseDuration(20.0, 5.0)
+	.generateScenarios();
     return scenarios.get(0).toCfdSourceTermCase();
   }
 
   private static BoundaryConditions standardWeather() {
-    return BoundaryConditions.builder().ambientTemperature(15.0, "C").windSpeed(5.0)
-        .pasquillStabilityClass('D').isOffshore(false).surfaceRoughness(0.1).build();
+    return BoundaryConditions.builder().ambientTemperature(15.0, "C").windSpeed(5.0).pasquillStabilityClass('D')
+	.isOffshore(false).surfaceRoughness(0.1).build();
   }
 
   private static ProcessSystem createProcess() {

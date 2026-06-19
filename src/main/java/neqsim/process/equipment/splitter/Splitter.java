@@ -29,8 +29,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class Splitter extends ProcessEquipmentBaseClass
-    implements SplitterInterface, CapacityConstrainedEquipment {
+public class Splitter extends ProcessEquipmentBaseClass implements SplitterInterface, CapacityConstrainedEquipment {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
@@ -40,8 +39,7 @@ public class Splitter extends ProcessEquipmentBaseClass
   private SplitterMechanicalDesign mechanicalDesign;
 
   /** Splitter capacity constraints map. */
-  private java.util.Map<String, neqsim.process.equipment.capacity.CapacityConstraint> splitterCapacityConstraints =
-      new java.util.LinkedHashMap<String, neqsim.process.equipment.capacity.CapacityConstraint>();
+  private java.util.Map<String, neqsim.process.equipment.capacity.CapacityConstraint> splitterCapacityConstraints = new java.util.LinkedHashMap<String, neqsim.process.equipment.capacity.CapacityConstraint>();
 
   /** Whether capacity analysis is enabled. */
   private boolean splitterCapacityAnalysisEnabled = false;
@@ -82,7 +80,7 @@ public class Splitter extends ProcessEquipmentBaseClass
   /**
    * Constructor for Splitter.
    *
-   * @param name name of splitter
+   * @param name     name of splitter
    * @param inStream input stream
    */
   public Splitter(String name, StreamInterface inStream) {
@@ -118,8 +116,8 @@ public class Splitter extends ProcessEquipmentBaseClass
    * Constructor for Splitter.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
-   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
+   * @param name             a {@link java.lang.String} object
+   * @param inletStream      a {@link neqsim.process.equipment.stream.StreamInterface} object
    * @param number_of_splits an int
    */
   public Splitter(String name, StreamInterface inletStream, int number_of_splits) {
@@ -150,7 +148,7 @@ public class Splitter extends ProcessEquipmentBaseClass
     double sum = 0.0;
     for (int i = 0; i < splitFact.length; i++) {
       if (splitFact[i] < 0.0) {
-        splitFact[i] = 0.0;
+	splitFact[i] = 0.0;
       }
       sum += splitFact[i];
     }
@@ -169,7 +167,7 @@ public class Splitter extends ProcessEquipmentBaseClass
    * </p>
    *
    * @param flowRates an array of type double
-   * @param flowUnit a {@link java.lang.String} object
+   * @param flowUnit  a {@link java.lang.String} object
    */
   public void setFlowRates(double[] flowRates, String flowUnit) {
     if (flowRates.length != splitNumber) {
@@ -211,15 +209,15 @@ public class Splitter extends ProcessEquipmentBaseClass
     double sum = 0.0;
     for (int i = 0; i < flowRates.length; i++) {
       if (flowRates[i] > 0.0) {
-        sum += flowRates[i];
+	sum += flowRates[i];
       }
     }
 
     double missingFlowRate = 0.0;
     for (int i = 0; i < flowRates.length; i++) {
       if (flowRates[i] < -0.1) {
-        missingFlowRate = inletStream.getFlowRate(flowUnit) - sum;
-        sum += missingFlowRate;
+	missingFlowRate = inletStream.getFlowRate(flowUnit) - sum;
+	sum += missingFlowRate;
       }
     }
 
@@ -227,7 +225,7 @@ public class Splitter extends ProcessEquipmentBaseClass
     for (int i = 0; i < flowRates.length; i++) {
       splitFactor[i] = flowRates[i] / sum;
       if (flowRates[i] < -0.1) {
-        splitFactor[i] = missingFlowRate / sum;
+	splitFactor[i] = missingFlowRate / sum;
       }
     }
   }
@@ -239,11 +237,11 @@ public class Splitter extends ProcessEquipmentBaseClass
     if (splitStream == null || splitStream.length != splitNumber) {
       splitStream = new Stream[splitNumber];
       try {
-        for (int i = 0; i < splitNumber; i++) {
-          splitStream[i] = new Stream("Split Stream_" + i, inletStream.getThermoSystem().clone());
-        }
+	for (int i = 0; i < splitNumber; i++) {
+	  splitStream[i] = new Stream("Split Stream_" + i, inletStream.getThermoSystem().clone());
+	}
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+	logger.error(ex.getMessage(), ex);
       }
     }
   }
@@ -279,16 +277,15 @@ public class Splitter extends ProcessEquipmentBaseClass
     if (inletStream.needRecalculation()) {
       return true;
     }
-    if (lastComposition == null || inletStream.getFluid().getFlowRate("kg/hr") <= 0.0
-        || lastFlowRate <= 0.0) {
+    if (lastComposition == null || inletStream.getFluid().getFlowRate("kg/hr") <= 0.0 || lastFlowRate <= 0.0) {
       return true;
     }
     if (inletStream.getFluid().getTemperature() == lastTemperature
-        && inletStream.getFluid().getPressure() == lastPressure
-        && Math.abs(inletStream.getFluid().getFlowRate("kg/hr") - lastFlowRate)
-            / inletStream.getFluid().getFlowRate("kg/hr") < 1e-6
-        && Arrays.equals(splitFactor, oldSplitFactor)
-        && Arrays.equals(inletStream.getFluid().getMolarComposition(), lastComposition)) {
+	&& inletStream.getFluid().getPressure() == lastPressure
+	&& Math.abs(inletStream.getFluid().getFlowRate("kg/hr") - lastFlowRate)
+	    / inletStream.getFluid().getFlowRate("kg/hr") < 1e-6
+	&& Arrays.equals(splitFactor, oldSplitFactor)
+	&& Arrays.equals(inletStream.getFluid().getMolarComposition(), lastComposition)) {
       return false;
     } else {
       return true;
@@ -311,8 +308,8 @@ public class Splitter extends ProcessEquipmentBaseClass
 
     for (int i = 0; i < splitNumber; i++) {
       if (splitFactor[i] < 0) {
-        logger.debug("split factor negative = " + splitFactor[i]);
-        splitFactor[i] = 0.0;
+	logger.debug("split factor negative = " + splitFactor[i]);
+	splitFactor[i] = 0.0;
       }
       totSplit += splitFactor[i];
     }
@@ -327,13 +324,12 @@ public class Splitter extends ProcessEquipmentBaseClass
       thermoSystem.init(0);
       splitStream[i].setThermoSystem(thermoSystem);
       for (int j = 0; j < inletStream.getThermoSystem().getPhase(0).getNumberOfComponents(); j++) {
-        int index = inletStream.getThermoSystem().getPhase(0).getComponent(j).getComponentNumber();
-        double moles = inletStream.getThermoSystem().getPhase(0).getComponent(j).getNumberOfmoles();
-        double change = (moles * splitFactor[i] - moles > 0) ? 0.0 : moles * splitFactor[i] - moles;
-        splitStream[i].getThermoSystem().addComponent(index, change);
+	int index = inletStream.getThermoSystem().getPhase(0).getComponent(j).getComponentNumber();
+	double moles = inletStream.getThermoSystem().getPhase(0).getComponent(j).getNumberOfmoles();
+	double change = (moles * splitFactor[i] - moles > 0) ? 0.0 : moles * splitFactor[i] - moles;
+	splitStream[i].getThermoSystem().addComponent(index, change);
       }
-      ThermodynamicOperations thermoOps =
-          new ThermodynamicOperations(splitStream[i].getThermoSystem());
+      ThermodynamicOperations thermoOps = new ThermodynamicOperations(splitStream[i].getThermoSystem());
       thermoOps.TPflash();
     }
 
@@ -357,10 +353,10 @@ public class Splitter extends ProcessEquipmentBaseClass
       increaseTime(dt);
       Mixer mixer = new Mixer("tmpMixer");
       for (int i = 0; i < splitStream.length; i++) {
-        splitStream[i].setPressure(inletStream.getPressure());
-        splitStream[i].setTemperature(inletStream.getTemperature("C"), "C");
-        splitStream[i].run();
-        mixer.addStream(splitStream[i]);
+	splitStream[i].setPressure(inletStream.getPressure());
+	splitStream[i].setTemperature(inletStream.getTemperature("C"), "C");
+	splitStream[i].run();
+	mixer.addStream(splitStream[i]);
       }
       mixer.run();
 
@@ -374,10 +370,10 @@ public class Splitter extends ProcessEquipmentBaseClass
       double[] splits = new double[splitFactor.length];
       double totalFlow = 0.0;
       for (int i = 0; i < splitFactor.length; i++) {
-        totalFlow += splits[i];
+	totalFlow += splits[i];
       }
       for (int i = 0; i < splitFactor.length; i++) {
-        splits[i] = splitFactor[i] / totalFlow;
+	splits[i] = splitFactor[i] / totalFlow;
       }
       splitFactor = splits;
 
@@ -434,8 +430,7 @@ public class Splitter extends ProcessEquipmentBaseClass
   /** {@inheritDoc} */
   @Override
   public String toJson() {
-    return new GsonBuilder().serializeSpecialFloatingPointValues().create()
-        .toJson(new SplitterResponse(this));
+    return new GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(new SplitterResponse(this));
   }
 
   /** {@inheritDoc} */
@@ -452,7 +447,8 @@ public class Splitter extends ProcessEquipmentBaseClass
   /** {@inheritDoc} */
   @Override
   @ExcludeFromJacocoGeneratedReport
-  public void displayResult() {}
+  public void displayResult() {
+  }
 
   /**
    * {@inheritDoc}
@@ -470,28 +466,27 @@ public class Splitter extends ProcessEquipmentBaseClass
    */
   @Override
   public neqsim.util.validation.ValidationResult validateSetup() {
-    neqsim.util.validation.ValidationResult result =
-        new neqsim.util.validation.ValidationResult(getName());
+    neqsim.util.validation.ValidationResult result = new neqsim.util.validation.ValidationResult(getName());
 
     // Check: Equipment has a valid name
     if (getName() == null || getName().trim().isEmpty()) {
       result.addError("equipment", "Splitter has no name",
-          "Set splitter name in constructor: new Splitter(\"MySplitter\")");
+	  "Set splitter name in constructor: new Splitter(\"MySplitter\")");
     }
 
     // Check: Inlet stream is connected
     if (inletStream == null) {
       result.addError("stream", "No inlet stream connected",
-          "Set inlet stream: splitter.setInletStream(stream) or use constructor");
+	  "Set inlet stream: splitter.setInletStream(stream) or use constructor");
     } else if (inletStream.getThermoSystem() == null) {
       result.addError("stream", "Inlet stream has no fluid system",
-          "Ensure inlet stream has a valid thermodynamic system");
+	  "Ensure inlet stream has a valid thermodynamic system");
     }
 
     // Check: At least one split outlet
     if (splitNumber <= 0) {
       result.addError("split", "No split outlets defined (splitNumber=" + splitNumber + ")",
-          "Set number of splits: splitter.setSplitNumber(2)");
+	  "Set number of splits: splitter.setSplitNumber(2)");
     }
 
     // Check: Split factors are valid
@@ -499,27 +494,27 @@ public class Splitter extends ProcessEquipmentBaseClass
       double sum = 0.0;
       boolean hasNegative = false;
       for (int i = 0; i < splitFactor.length; i++) {
-        if (splitFactor[i] < 0) {
-          hasNegative = true;
-        }
-        sum += splitFactor[i];
+	if (splitFactor[i] < 0) {
+	  hasNegative = true;
+	}
+	sum += splitFactor[i];
       }
 
       if (hasNegative) {
-        result.addError("split", "Split factors contain negative values",
-            "All split factors must be >= 0: splitter.setSplitFactors(new double[]{0.5, 0.5})");
+	result.addError("split", "Split factors contain negative values",
+	    "All split factors must be >= 0: splitter.setSplitFactors(new double[]{0.5, 0.5})");
       }
 
       if (Math.abs(sum - 1.0) > 1e-6 && flowRates == null) {
-        result.addWarning("split", "Split factors sum to " + sum + " (expected 1.0)",
-            "Split factors are normalized automatically, but verify intended distribution");
+	result.addWarning("split", "Split factors sum to " + sum + " (expected 1.0)",
+	    "Split factors are normalized automatically, but verify intended distribution");
       }
     }
 
     // Check: Split streams are initialized
     if (splitStream == null || splitStream.length != splitNumber) {
       result.addWarning("stream", "Split streams not fully initialized",
-          "Call setInletStream() to initialize split streams");
+	  "Call setInletStream() to initialize split streams");
     }
 
     return result;
@@ -537,33 +532,31 @@ public class Splitter extends ProcessEquipmentBaseClass
 
     // Pressure drop constraint
     if (designPressureDrop > 0) {
-      neqsim.process.equipment.capacity.CapacityConstraint dpConstraint =
-          new neqsim.process.equipment.capacity.CapacityConstraint("pressureDrop", "bar",
-              neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT);
+      neqsim.process.equipment.capacity.CapacityConstraint dpConstraint = new neqsim.process.equipment.capacity.CapacityConstraint(
+	  "pressureDrop", "bar", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT);
       dpConstraint.setDesignValue(designPressureDrop);
       dpConstraint.setDescription("Pressure drop across splitter");
       dpConstraint.setValueSupplier(() -> {
-        // Splitter typically has minimal pressure drop
-        // In ideal case, all outlets have same pressure as inlet
-        return 0.0; // Ideal splitter
+	// Splitter typically has minimal pressure drop
+	// In ideal case, all outlets have same pressure as inlet
+	return 0.0; // Ideal splitter
       });
       splitterCapacityConstraints.put("pressureDrop", dpConstraint);
     }
 
     // Velocity constraint (if mechanical design available)
     if (mechanicalDesign != null && maxDesignVelocity > 0) {
-      neqsim.process.equipment.capacity.CapacityConstraint velConstraint =
-          new neqsim.process.equipment.capacity.CapacityConstraint("velocity", "m/s",
-              neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT);
+      neqsim.process.equipment.capacity.CapacityConstraint velConstraint = new neqsim.process.equipment.capacity.CapacityConstraint(
+	  "velocity", "m/s", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT);
       velConstraint.setDesignValue(maxDesignVelocity);
       velConstraint.setDescription("Velocity in distribution header");
       velConstraint.setValueSupplier(() -> {
-        if (inletStream != null && mechanicalDesign.getHeaderDiameter() > 0) {
-          double volumeFlow = inletStream.getFlowRate("m3/hr") / 3600.0;
-          double area = Math.PI * Math.pow(mechanicalDesign.getHeaderDiameter() / 2.0, 2);
-          return volumeFlow / area;
-        }
-        return 0.0;
+	if (inletStream != null && mechanicalDesign.getHeaderDiameter() > 0) {
+	  double volumeFlow = inletStream.getFlowRate("m3/hr") / 3600.0;
+	  double area = Math.PI * Math.pow(mechanicalDesign.getHeaderDiameter() / 2.0, 2);
+	  return volumeFlow / area;
+	}
+	return 0.0;
       });
       splitterCapacityConstraints.put("velocity", velConstraint);
     }
@@ -633,14 +626,13 @@ public class Splitter extends ProcessEquipmentBaseClass
   public neqsim.process.equipment.capacity.CapacityConstraint getBottleneckConstraint() {
     neqsim.process.equipment.capacity.CapacityConstraint bottleneck = null;
     double maxUtil = 0.0;
-    for (neqsim.process.equipment.capacity.CapacityConstraint constraint : splitterCapacityConstraints
-        .values()) {
+    for (neqsim.process.equipment.capacity.CapacityConstraint constraint : splitterCapacityConstraints.values()) {
       if (constraint.isEnabled()) {
-        double util = constraint.getUtilization();
-        if (util > maxUtil) {
-          maxUtil = util;
-          bottleneck = constraint;
-        }
+	double util = constraint.getUtilization();
+	if (util > maxUtil) {
+	  maxUtil = util;
+	  bottleneck = constraint;
+	}
       }
     }
     return bottleneck;
@@ -649,10 +641,9 @@ public class Splitter extends ProcessEquipmentBaseClass
   /** {@inheritDoc} */
   @Override
   public boolean isCapacityExceeded() {
-    for (neqsim.process.equipment.capacity.CapacityConstraint constraint : splitterCapacityConstraints
-        .values()) {
+    for (neqsim.process.equipment.capacity.CapacityConstraint constraint : splitterCapacityConstraints.values()) {
       if (constraint.isEnabled() && constraint.getUtilization() > 1.0) {
-        return true;
+	return true;
       }
     }
     return false;
@@ -661,13 +652,11 @@ public class Splitter extends ProcessEquipmentBaseClass
   /** {@inheritDoc} */
   @Override
   public boolean isHardLimitExceeded() {
-    for (neqsim.process.equipment.capacity.CapacityConstraint constraint : splitterCapacityConstraints
-        .values()) {
+    for (neqsim.process.equipment.capacity.CapacityConstraint constraint : splitterCapacityConstraints.values()) {
       if (constraint.isEnabled()
-          && constraint
-              .getType() == neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.HARD
-          && constraint.getUtilization() > 1.0) {
-        return true;
+	  && constraint.getType() == neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.HARD
+	  && constraint.getUtilization() > 1.0) {
+	return true;
       }
     }
     return false;
@@ -677,10 +666,9 @@ public class Splitter extends ProcessEquipmentBaseClass
   @Override
   public double getMaxUtilization() {
     double maxUtil = 0.0;
-    for (neqsim.process.equipment.capacity.CapacityConstraint constraint : splitterCapacityConstraints
-        .values()) {
+    for (neqsim.process.equipment.capacity.CapacityConstraint constraint : splitterCapacityConstraints.values()) {
       if (constraint.isEnabled()) {
-        maxUtil = Math.max(maxUtil, constraint.getUtilization());
+	maxUtil = Math.max(maxUtil, constraint.getUtilization());
       }
     }
     return maxUtil;
@@ -688,8 +676,7 @@ public class Splitter extends ProcessEquipmentBaseClass
 
   /** {@inheritDoc} */
   @Override
-  public void addCapacityConstraint(
-      neqsim.process.equipment.capacity.CapacityConstraint constraint) {
+  public void addCapacityConstraint(neqsim.process.equipment.capacity.CapacityConstraint constraint) {
     splitterCapacityConstraints.put(constraint.getName(), constraint);
   }
 

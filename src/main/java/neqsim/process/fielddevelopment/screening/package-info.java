@@ -2,9 +2,8 @@
  * Screening tools for flow assurance, safety, emissions, and economics.
  *
  * <p>
- * This package provides rapid screening assessments for concept-level evaluation. All screeners are
- * designed for early-phase decision support, providing classifications and recommendations without
- * requiring detailed engineering.
+ * This package provides rapid screening assessments for concept-level evaluation. All screeners are designed for
+ * early-phase decision support, providing classifications and recommendations without requiring detailed engineering.
  * </p>
  *
  * <h2>Flow Assurance Screening</h2>

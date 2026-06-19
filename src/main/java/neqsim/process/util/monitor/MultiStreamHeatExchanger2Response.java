@@ -22,22 +22,21 @@ public class MultiStreamHeatExchanger2Response extends BaseResponse {
    * Constructor for HXResponse.
    * </p>
    */
-  public MultiStreamHeatExchanger2Response() {}
+  public MultiStreamHeatExchanger2Response() {
+  }
 
   /**
    * <p>
    * Constructor for HXResponse.
    * </p>
    *
-   * @param inputHeatExchanger a
-   *        {@link neqsim.process.equipment.heatexchanger.MultiStreamHeatExchanger2} object
+   * @param inputHeatExchanger a {@link neqsim.process.equipment.heatexchanger.MultiStreamHeatExchanger2} object
    */
   public MultiStreamHeatExchanger2Response(MultiStreamHeatExchanger2 inputHeatExchanger) {
     super(inputHeatExchanger);
     temperatureApproach = inputHeatExchanger.getTemperatureApproach();
     compositeCurveResults = inputHeatExchanger.getCompositeCurve();
     data.put("temperature approach",
-        new Value(Double.toString(temperatureApproach),
-            neqsim.util.unit.Units.getSymbol("temperature")));
+	new Value(Double.toString(temperatureApproach), neqsim.util.unit.Units.getSymbol("temperature")));
   }
 }

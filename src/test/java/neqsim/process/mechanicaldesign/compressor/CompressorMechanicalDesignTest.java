@@ -41,16 +41,12 @@ public class CompressorMechanicalDesignTest {
     comp.getMechanicalDesign().calcDesign();
 
     // Verify basic design outputs are calculated
-    assertTrue(comp.getMechanicalDesign().getWeightTotal() > 0.0,
-        "Total weight should be positive");
+    assertTrue(comp.getMechanicalDesign().getWeightTotal() > 0.0, "Total weight should be positive");
     assertTrue(comp.getMechanicalDesign().getNumberOfStages() >= 1, "Should have at least 1 stage");
-    assertTrue(comp.getMechanicalDesign().getImpellerDiameter() > 0,
-        "Impeller diameter should be positive");
-    assertTrue(comp.getMechanicalDesign().getShaftDiameter() > 0,
-        "Shaft diameter should be positive");
+    assertTrue(comp.getMechanicalDesign().getImpellerDiameter() > 0, "Impeller diameter should be positive");
+    assertTrue(comp.getMechanicalDesign().getShaftDiameter() > 0, "Shaft diameter should be positive");
     assertTrue(comp.getMechanicalDesign().getDriverPower() > 0, "Driver power should be positive");
-    assertTrue(comp.getMechanicalDesign().getDesignPressure() > 40.0,
-        "Design pressure should be > discharge pressure");
+    assertTrue(comp.getMechanicalDesign().getDesignPressure() > 40.0, "Design pressure should be > discharge pressure");
   }
 
   @Test
@@ -78,9 +74,8 @@ public class CompressorMechanicalDesignTest {
     comp.getMechanicalDesign().calcDesign();
 
     // High pressure should result in barrel casing
-    assertEquals(CompressorMechanicalDesign.CasingType.BARREL,
-        comp.getMechanicalDesign().getCasingType(),
-        "High pressure compressor should have barrel casing");
+    assertEquals(CompressorMechanicalDesign.CasingType.BARREL, comp.getMechanicalDesign().getCasingType(),
+	"High pressure compressor should have barrel casing");
   }
 
   @Test
@@ -108,11 +103,9 @@ public class CompressorMechanicalDesignTest {
 
     // High pressure ratio should require multiple stages
     assertTrue(comp.getMechanicalDesign().getNumberOfStages() > 1,
-        "High pressure ratio should require multiple stages");
-    assertTrue(comp.getMechanicalDesign().getHeadPerStage() > 0,
-        "Head per stage should be positive");
-    assertTrue(comp.getMechanicalDesign().getHeadPerStage() <= 30.0,
-        "Head per stage should be <= 30 kJ/kg");
+	"High pressure ratio should require multiple stages");
+    assertTrue(comp.getMechanicalDesign().getHeadPerStage() > 0, "Head per stage should be positive");
+    assertTrue(comp.getMechanicalDesign().getHeadPerStage() <= 30.0, "Head per stage should be <= 30 kJ/kg");
   }
 
   @Test
@@ -140,8 +133,7 @@ public class CompressorMechanicalDesignTest {
     double driverPower = comp.getMechanicalDesign().getDriverPower();
 
     // Small compressors should have 25% margin
-    assertTrue(driverPower >= shaftPower * 1.20,
-        "Small compressor should have at least 20% driver margin");
+    assertTrue(driverPower >= shaftPower * 1.20, "Small compressor should have at least 20% driver margin");
   }
 
   // ============================================================================
@@ -284,12 +276,10 @@ public class CompressorMechanicalDesignTest {
     double maxTemp = design.getMaxDischargeTemperatureC();
 
     // Test within limit
-    assertTrue(design.validateDischargeTemperature(maxTemp - 20),
-        "Temperature 20C below max should pass");
+    assertTrue(design.validateDischargeTemperature(maxTemp - 20), "Temperature 20C below max should pass");
 
     // Test above limit
-    assertTrue(!design.validateDischargeTemperature(maxTemp + 20),
-        "Temperature 20C above max should fail");
+    assertTrue(!design.validateDischargeTemperature(maxTemp + 20), "Temperature 20C above max should fail");
   }
 
   @Test
@@ -321,7 +311,7 @@ public class CompressorMechanicalDesignTest {
     logger.info("Compressor validation valid: " + result.isValid());
     if (!result.isValid()) {
       for (String issue : result.getIssues()) {
-        logger.info("  Issue: " + issue);
+	logger.info("  Issue: " + issue);
       }
     }
   }

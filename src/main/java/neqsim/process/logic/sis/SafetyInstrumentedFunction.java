@@ -32,8 +32,8 @@ import neqsim.process.logic.ProcessLogic;
  *
  * <pre>
  * // Create fire detection SIF with 2oo3 voting
- * SafetyInstrumentedFunction fireSIF =
- *     new SafetyInstrumentedFunction("Fire Detection SIF", VotingLogic.TWO_OUT_OF_THREE);
+ * SafetyInstrumentedFunction fireSIF = new SafetyInstrumentedFunction("Fire Detection SIF",
+ *     VotingLogic.TWO_OUT_OF_THREE);
  *
  * // Add detectors
  * fireSIF.addDetector(new Detector("FD-101", DetectorType.FIRE, AlarmLevel.HIGH, 60.0, "°C"));
@@ -69,7 +69,7 @@ public class SafetyInstrumentedFunction implements ProcessLogic {
   /**
    * Creates a Safety Instrumented Function.
    *
-   * @param name SIF name/tag
+   * @param name        SIF name/tag
    * @param votingLogic voting pattern for detectors
    */
   public SafetyInstrumentedFunction(String name, VotingLogic votingLogic) {
@@ -89,8 +89,8 @@ public class SafetyInstrumentedFunction implements ProcessLogic {
    */
   public void addDetector(Detector detector) {
     if (detectors.size() >= votingLogic.getTotalSensors()) {
-      throw new IllegalStateException("Cannot add more than " + votingLogic.getTotalSensors()
-          + " detectors for " + votingLogic.getNotation() + " voting");
+      throw new IllegalStateException("Cannot add more than " + votingLogic.getTotalSensors() + " detectors for "
+	  + votingLogic.getNotation() + " voting");
     }
     detectors.add(detector);
   }
@@ -115,7 +115,7 @@ public class SafetyInstrumentedFunction implements ProcessLogic {
   public void update(double... measuredValues) {
     if (measuredValues.length != detectors.size()) {
       throw new IllegalArgumentException("Number of values (" + measuredValues.length
-          + ") doesn't match number of detectors (" + detectors.size() + ")");
+	  + ") doesn't match number of detectors (" + detectors.size() + ")");
     }
 
     // Update each detector
@@ -140,10 +140,10 @@ public class SafetyInstrumentedFunction implements ProcessLogic {
     int faultyCount = 0;
     for (Detector detector : detectors) {
       if (detector.isBypassed()) {
-        bypassedCount++;
+	bypassedCount++;
       }
       if (detector.isFaulty()) {
-        faultyCount++;
+	faultyCount++;
       }
     }
 
@@ -157,7 +157,7 @@ public class SafetyInstrumentedFunction implements ProcessLogic {
     int trippedCount = 0;
     for (Detector detector : detectors) {
       if (detector.isTripped()) {
-        trippedCount++;
+	trippedCount++;
       }
     }
 
@@ -172,7 +172,7 @@ public class SafetyInstrumentedFunction implements ProcessLogic {
 
       // Activate all linked logic sequences
       for (ProcessLogic logic : linkedLogics) {
-        logic.activate();
+	logic.activate();
       }
     }
   }
@@ -209,7 +209,7 @@ public class SafetyInstrumentedFunction implements ProcessLogic {
     // Check if all detectors are clear
     for (Detector detector : detectors) {
       if (detector.isTripped()) {
-        return false; // Cannot reset while detectors still tripped
+	return false; // Cannot reset while detectors still tripped
       }
     }
 
@@ -298,7 +298,7 @@ public class SafetyInstrumentedFunction implements ProcessLogic {
       state = LogicState.RUNNING;
 
       for (ProcessLogic logic : linkedLogics) {
-        logic.activate();
+	logic.activate();
       }
     }
   }
@@ -347,13 +347,13 @@ public class SafetyInstrumentedFunction implements ProcessLogic {
     int faultyCount = 0;
     for (Detector detector : detectors) {
       if (detector.isTripped()) {
-        trippedCount++;
+	trippedCount++;
       }
       if (detector.isBypassed()) {
-        bypassedCount++;
+	bypassedCount++;
       }
       if (detector.isFaulty()) {
-        faultyCount++;
+	faultyCount++;
       }
     }
 

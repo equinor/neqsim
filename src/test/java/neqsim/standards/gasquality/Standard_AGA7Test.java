@@ -101,8 +101,7 @@ class Standard_AGA7Test extends neqsim.NeqSimTest {
     standard.calculate();
 
     double deviation = standard.getValue("sosDeviation");
-    assertTrue(Math.abs(deviation) < 1.0,
-        "SOS deviation should be small when measured ~ calculated");
+    assertTrue(Math.abs(deviation) < 1.0, "SOS deviation should be small when measured ~ calculated");
     assertTrue(standard.isOnSpec(), "Should be on-spec when SOS deviation is small");
   }
 }

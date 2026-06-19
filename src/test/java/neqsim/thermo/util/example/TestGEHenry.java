@@ -20,7 +20,7 @@ public class TestGEHenry {
   private static final Logger logger = LogManager.getLogger(TestGEHenry.class);
 
   /** Logger object for class. */
-  
+
   /**
    * <p>
    * main.

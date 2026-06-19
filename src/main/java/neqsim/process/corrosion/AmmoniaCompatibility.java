@@ -12,9 +12,8 @@ import com.google.gson.GsonBuilder;
  * Ammonia compatibility assessment for materials in ammonia service.
  *
  * <p>
- * Evaluates material suitability for anhydrous ammonia, aqueous ammonia, and ammonia as a hydrogen
- * carrier. Covers SCC of carbon steel in anhydrous NH3, copper alloy incompatibility, and
- * temperature/stress limits.
+ * Evaluates material suitability for anhydrous ammonia, aqueous ammonia, and ammonia as a hydrogen carrier. Covers SCC
+ * of carbon steel in anhydrous NH3, copper alloy incompatibility, and temperature/stress limits.
  * </p>
  *
  * <h2>Key Failure Mechanisms</h2>
@@ -134,7 +133,8 @@ public class AmmoniaCompatibility implements Serializable {
   /**
    * Default constructor.
    */
-  public AmmoniaCompatibility() {}
+  public AmmoniaCompatibility() {
+  }
 
   // ─── Setters ────────────────────────────────────────────
 
@@ -239,26 +239,25 @@ public class AmmoniaCompatibility implements Serializable {
     String upperType = materialType.toUpperCase().trim();
 
     if (upperType.contains("COPPER") || upperType.contains("BRASS") || upperType.contains("BRONZE")
-        || upperType.contains("CU")) {
+	|| upperType.contains("CU")) {
       evaluateCopperAlloy();
-    } else if (upperType.contains("316") || upperType.contains("304")
-        || upperType.contains("AUSTENITIC")) {
+    } else if (upperType.contains("316") || upperType.contains("304") || upperType.contains("AUSTENITIC")) {
       evaluateAusteniticSS();
     } else if (upperType.contains("22CR") || upperType.contains("DUPLEX")) {
       evaluateDuplexSS();
-    } else if (upperType.contains("625") || upperType.contains("C276")
-        || upperType.contains("C-276") || upperType.contains("NICKEL")) {
+    } else if (upperType.contains("625") || upperType.contains("C276") || upperType.contains("C-276")
+	|| upperType.contains("NICKEL")) {
       evaluateNickelAlloy();
     } else {
       evaluateCarbonSteel();
     }
 
     if (temperatureC > 300.0 && !upperType.contains("625") && !upperType.contains("C276")
-        && !upperType.contains("C-276")) {
+	&& !upperType.contains("C-276")) {
       notes.add("WARNING: Nitridation risk at T > 300°C. "
-          + "Consider alloy 625 or specialized nitridation-resistant material.");
+	  + "Consider alloy 625 or specialized nitridation-resistant material.");
       if (primaryMechanism.isEmpty()) {
-        primaryMechanism = "Nitridation";
+	primaryMechanism = "Nitridation";
       }
     }
 
@@ -295,13 +294,12 @@ public class AmmoniaCompatibility implements Serializable {
     if (!o2InhibitorAdequate) {
       compatible = false;
       riskLevel = "Very High";
-      notes.add("CRITICAL: O2 inhibitor required at >= 0.1 wt% for anhydrous NH3 with CS. "
-          + "Current: " + o2InhibitorWtPct + " wt%.");
+      notes.add("CRITICAL: O2 inhibitor required at >= 0.1 wt% for anhydrous NH3 with CS. " + "Current: "
+	  + o2InhibitorWtPct + " wt%.");
     } else if (!hardnessOk) {
       compatible = false;
       riskLevel = "High";
-      notes.add("Hardness " + hardnessHRC + " HRC exceeds " + maxAllowableHRC
-          + " HRC limit for NH3 SCC resistance.");
+      notes.add("Hardness " + hardnessHRC + " HRC exceeds " + maxAllowableHRC + " HRC limit for NH3 SCC resistance.");
     } else if (!tempOk) {
       compatible = false;
       riskLevel = "High";
@@ -309,15 +307,15 @@ public class AmmoniaCompatibility implements Serializable {
     } else if (!pwhtApplied) {
       compatible = true;
       riskLevel = "High";
-      notes.add("PWHT strongly recommended for CS in anhydrous NH3 to reduce "
-          + "residual stress and SCC susceptibility.");
+      notes.add(
+	  "PWHT strongly recommended for CS in anhydrous NH3 to reduce " + "residual stress and SCC susceptibility.");
     } else {
       compatible = true;
       riskLevel = "Low";
     }
 
     recommendedMaterial = compatible ? "Carbon steel with O2 inhibitor + PWHT"
-        : "316L stainless steel (immune to NH3 SCC)";
+	: "316L stainless steel (immune to NH3 SCC)";
   }
 
   /**
@@ -331,8 +329,7 @@ public class AmmoniaCompatibility implements Serializable {
     if (nh3ConcentrationWtPct > 25.0 && temperatureC > 60.0) {
       compatible = false;
       riskLevel = "High";
-      notes.add(
-          "Concentrated aqueous NH3 at elevated temperature — " + "caustic embrittlement risk.");
+      notes.add("Concentrated aqueous NH3 at elevated temperature — " + "caustic embrittlement risk.");
       recommendedMaterial = "316L stainless steel";
     } else {
       compatible = true;
@@ -355,8 +352,8 @@ public class AmmoniaCompatibility implements Serializable {
     requiredO2InhibitorWtPct = Double.POSITIVE_INFINITY;
     recommendedMaterial = "316L stainless steel or carbon steel";
     notes.add("PROHIBITED: Copper and copper alloys are incompatible with ammonia. "
-        + "NH3 forms soluble copper-ammine complexes causing rapid dissolution and SCC. "
-        + "Replace with stainless steel or carbon steel.");
+	+ "NH3 forms soluble copper-ammine complexes causing rapid dissolution and SCC. "
+	+ "Replace with stainless steel or carbon steel.");
   }
 
   /**
@@ -371,8 +368,7 @@ public class AmmoniaCompatibility implements Serializable {
     o2InhibitorAdequate = true;
     requiredO2InhibitorWtPct = 0.0;
     recommendedMaterial = materialType;
-    notes.add("Austenitic stainless steel is immune to ammonia SCC and "
-        + "is an excellent choice for NH3 service.");
+    notes.add("Austenitic stainless steel is immune to ammonia SCC and " + "is an excellent choice for NH3 service.");
 
     if (temperatureC > 400.0) {
       compatible = false;
@@ -414,8 +410,7 @@ public class AmmoniaCompatibility implements Serializable {
     o2InhibitorAdequate = true;
     requiredO2InhibitorWtPct = 0.0;
     recommendedMaterial = materialType;
-    notes.add("Nickel alloys provide excellent ammonia compatibility "
-        + "including high-temperature service.");
+    notes.add("Nickel alloys provide excellent ammonia compatibility " + "including high-temperature service.");
   }
 
   // ─── Getters ────────────────────────────────────────────
@@ -536,8 +531,7 @@ public class AmmoniaCompatibility implements Serializable {
    * @return JSON representation
    */
   public String toJson() {
-    Gson gson =
-        new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+    Gson gson = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
     return gson.toJson(toMap());
   }
 }

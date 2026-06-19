@@ -18,8 +18,7 @@ import java.util.List;
 public final class OperationalEnvelopeReport implements Serializable {
   private static final long serialVersionUID = 1L;
 
-  private static final Gson GSON =
-      new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+  private static final Gson GSON = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
 
   /** Overall operating-envelope status. */
   public enum EnvelopeStatus {
@@ -66,15 +65,14 @@ public final class OperationalEnvelopeReport implements Serializable {
   /**
    * Creates a report.
    *
-   * @param timestampMillis evaluation timestamp in milliseconds
+   * @param timestampMillis       evaluation timestamp in milliseconds
    * @param evaluationTimeSeconds wall-clock evaluation time in seconds
-   * @param margins ranked operating margins
-   * @param tripPredictions trip predictions
+   * @param margins               ranked operating margins
+   * @param tripPredictions       trip predictions
    * @param mitigationSuggestions mitigation suggestions
    */
-  public OperationalEnvelopeReport(long timestampMillis, double evaluationTimeSeconds,
-      List<OperationalMargin> margins, List<TripPrediction> tripPredictions,
-      List<MitigationSuggestion> mitigationSuggestions) {
+  public OperationalEnvelopeReport(long timestampMillis, double evaluationTimeSeconds, List<OperationalMargin> margins,
+      List<TripPrediction> tripPredictions, List<MitigationSuggestion> mitigationSuggestions) {
     this.timestampMillis = timestampMillis;
     this.evaluationTimeSeconds = evaluationTimeSeconds;
     this.margins = copyMargins(margins);
@@ -156,7 +154,7 @@ public final class OperationalEnvelopeReport implements Serializable {
     int count = 0;
     for (OperationalMargin margin : margins) {
       if (margin.getStatus().getRank() >= OperationalMargin.Status.WARNING.getRank()) {
-        count++;
+	count++;
       }
     }
     return count;
@@ -170,7 +168,7 @@ public final class OperationalEnvelopeReport implements Serializable {
   public boolean hasHighUrgencyPrediction() {
     for (TripPrediction prediction : tripPredictions) {
       if (prediction.getSeverity().getRank() >= TripPrediction.Severity.HIGH.getRank()) {
-        return true;
+	return true;
       }
     }
     return false;
@@ -228,7 +226,7 @@ public final class OperationalEnvelopeReport implements Serializable {
    */
   private static List<OperationalMargin> copyMargins(List<OperationalMargin> source) {
     List<OperationalMargin> copy = source == null ? new ArrayList<OperationalMargin>()
-        : new ArrayList<OperationalMargin>(source);
+	: new ArrayList<OperationalMargin>(source);
     Collections.sort(copy);
     return copy;
   }
@@ -241,7 +239,7 @@ public final class OperationalEnvelopeReport implements Serializable {
    */
   private static List<TripPrediction> copyTrips(List<TripPrediction> source) {
     List<TripPrediction> copy = source == null ? new ArrayList<TripPrediction>()
-        : new ArrayList<TripPrediction>(source);
+	: new ArrayList<TripPrediction>(source);
     Collections.sort(copy);
     return copy;
   }
@@ -254,7 +252,7 @@ public final class OperationalEnvelopeReport implements Serializable {
    */
   private static List<MitigationSuggestion> copyMitigations(List<MitigationSuggestion> source) {
     List<MitigationSuggestion> copy = source == null ? new ArrayList<MitigationSuggestion>()
-        : new ArrayList<MitigationSuggestion>(source);
+	: new ArrayList<MitigationSuggestion>(source);
     Collections.sort(copy);
     return copy;
   }
@@ -270,7 +268,7 @@ public final class OperationalEnvelopeReport implements Serializable {
     for (OperationalMargin margin : margins) {
       EnvelopeStatus candidate = mapStatus(margin.getStatus());
       if (candidate.getRank() > status.getRank()) {
-        status = candidate;
+	status = candidate;
       }
     }
     return status;
@@ -301,8 +299,8 @@ public final class OperationalEnvelopeReport implements Serializable {
   /**
    * Builds a short report summary.
    *
-   * @param status overall status
-   * @param margins ranked margins
+   * @param status      overall status
+   * @param margins     ranked margins
    * @param predictions trip predictions
    * @return summary text
    */
@@ -312,8 +310,8 @@ public final class OperationalEnvelopeReport implements Serializable {
       return "No capacity constraints were available for operational envelope evaluation.";
     }
     StringBuilder builder = new StringBuilder();
-    builder.append("Operational envelope status ").append(status.name()).append(" with ")
-        .append(margins.size()).append(" evaluated margins");
+    builder.append("Operational envelope status ").append(status.name()).append(" with ").append(margins.size())
+	.append(" evaluated margins");
     if (!predictions.isEmpty()) {
       builder.append(" and ").append(predictions.size()).append(" trip prediction(s)");
     }

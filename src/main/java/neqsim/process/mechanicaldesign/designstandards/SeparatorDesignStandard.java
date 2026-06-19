@@ -52,32 +52,31 @@ public class SeparatorDesignStandard extends DesignStandard {
    * Constructor for SeparatorDesignStandard.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
+   * @param name         a {@link java.lang.String} object
    * @param equipmentInn a {@link neqsim.process.mechanicaldesign.MechanicalDesign} object
    */
   public SeparatorDesignStandard(String name, MechanicalDesign equipmentInn) {
     super(name, equipmentInn);
     safetyMargins = computeSafetyMargins();
     try (
-        neqsim.util.database.NeqSimProcessDesignDataBase database =
-            new neqsim.util.database.NeqSimProcessDesignDataBase();
-        java.sql.ResultSet dataSet = database.getResultSet(
-            ("SELECT * FROM technicalrequirements_process WHERE EQUIPMENTTYPE='Separator' AND Company='"
-                + resolveCompanyIdentifier() + "'"))) {
+	neqsim.util.database.NeqSimProcessDesignDataBase database = new neqsim.util.database.NeqSimProcessDesignDataBase();
+	java.sql.ResultSet dataSet = database
+	    .getResultSet(("SELECT * FROM technicalrequirements_process WHERE EQUIPMENTTYPE='Separator' AND Company='"
+		+ resolveCompanyIdentifier() + "'"))) {
       while (dataSet.next()) {
-        String specName = dataSet.getString("SPECIFICATION");
-        if (specName.equals("GasLoadFactor")) {
-          gasLoadFactor = (Double.parseDouble(dataSet.getString("MAXVALUE"))
-              + Double.parseDouble(dataSet.getString("MINVALUE"))) / 2.0;
-        }
-        if (specName.equals("Fg")) {
-          Fg = (Double.parseDouble(dataSet.getString("MAXVALUE"))
-              + Double.parseDouble(dataSet.getString("MINVALUE"))) / 2.0;
-        }
-        if (specName.equals("VolumetricDesignFactor")) {
-          volumetricDesignFactor = (Double.parseDouble(dataSet.getString("MAXVALUE"))
-              + Double.parseDouble(dataSet.getString("MINVALUE"))) / 2.0;
-        }
+	String specName = dataSet.getString("SPECIFICATION");
+	if (specName.equals("GasLoadFactor")) {
+	  gasLoadFactor = (Double.parseDouble(dataSet.getString("MAXVALUE"))
+	      + Double.parseDouble(dataSet.getString("MINVALUE"))) / 2.0;
+	}
+	if (specName.equals("Fg")) {
+	  Fg = (Double.parseDouble(dataSet.getString("MAXVALUE")) + Double.parseDouble(dataSet.getString("MINVALUE")))
+	      / 2.0;
+	}
+	if (specName.equals("VolumetricDesignFactor")) {
+	  volumetricDesignFactor = (Double.parseDouble(dataSet.getString("MAXVALUE"))
+	      + Double.parseDouble(dataSet.getString("MINVALUE"))) / 2.0;
+	}
       }
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
@@ -130,22 +129,22 @@ public class SeparatorDesignStandard extends DesignStandard {
    * getLiquidRetentionTime.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
+   * @param name         a {@link java.lang.String} object
    * @param equipmentInn a {@link neqsim.process.mechanicaldesign.MechanicalDesign} object
    * @return a double
    */
   public double getLiquidRetentionTime(String name, MechanicalDesign equipmentInn) {
     double retTime = 90.0;
-    double dens = ((SeparatorInterface) equipmentInn.getProcessEquipment()).getThermoSystem()
-        .getPhase(1).getPhysicalProperties().getDensity() / 1000.0;
+    double dens = ((SeparatorInterface) equipmentInn.getProcessEquipment()).getThermoSystem().getPhase(1)
+	.getPhysicalProperties().getDensity() / 1000.0;
 
     // select correct residensetime from database
     // to be implmented
     if (name.equals("API12J")) {
       if (dens < 0.85) {
-        retTime = 60.0;
+	retTime = 60.0;
       } else if (dens > 0.93) {
-        retTime = 180.0;
+	retTime = 180.0;
       }
     }
     return retTime;

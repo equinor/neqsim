@@ -268,7 +268,7 @@ public class UtilityAirSystem extends ProcessEquipmentBaseClass {
   /**
    * Constructor with capacity.
    *
-   * @param name system name
+   * @param name          system name
    * @param airDemandNm3h total air demand in Nm³/hr
    */
   public UtilityAirSystem(String name, double airDemandNm3h) {
@@ -279,9 +279,9 @@ public class UtilityAirSystem extends ProcessEquipmentBaseClass {
   /**
    * Constructor with quality specification.
    *
-   * @param name system name
+   * @param name          system name
    * @param airDemandNm3h total air demand
-   * @param qualityClass target air quality
+   * @param qualityClass  target air quality
    */
   public UtilityAirSystem(String name, double airDemandNm3h, AirQualityClass qualityClass) {
     super(name);
@@ -307,9 +307,9 @@ public class UtilityAirSystem extends ProcessEquipmentBaseClass {
   /**
    * Add an air consumer by parameters.
    *
-   * @param name consumer name
+   * @param name       consumer name
    * @param demandNm3h air demand [Nm³/hr]
-   * @param quality required quality class
+   * @param quality    required quality class
    */
   public void addConsumer(String name, double demandNm3h, AirQualityClass quality) {
     consumers.add(new AirConsumer(name, demandNm3h, quality));
@@ -368,7 +368,7 @@ public class UtilityAirSystem extends ProcessEquipmentBaseClass {
     // Calculate inlet air moisture content
     double saturationPressure = calculateSaturationPressure(inletTemperature);
     double inletMoistureKgKg = 0.622 * (inletRelativeHumidity / 100.0 * saturationPressure)
-        / (101.325 - inletRelativeHumidity / 100.0 * saturationPressure);
+	/ (101.325 - inletRelativeHumidity / 100.0 * saturationPressure);
 
     // Calculate air flow through compressor (accounting for dryer purge)
     double compressorFlowNm3h = totalAirDemand / dryerType.getAirYieldFraction();
@@ -384,8 +384,7 @@ public class UtilityAirSystem extends ProcessEquipmentBaseClass {
     double inletPressurePa = 101325.0;
     double flowM3s = compressorFlowNm3h / 3600.0;
     compressorPowerKW = (polytropicExponent / (polytropicExponent - 1)) * inletPressurePa * flowM3s
-        * (Math.pow(pressureRatio, (polytropicExponent - 1) / polytropicExponent) - 1)
-        / isentropicEfficiency / 1000.0;
+	* (Math.pow(pressureRatio, (polytropicExponent - 1) / polytropicExponent) - 1) / isentropicEfficiency / 1000.0;
 
     // Account for motor/drive efficiency
     compressorPowerKW = compressorPowerKW / 0.95;
@@ -396,7 +395,7 @@ public class UtilityAirSystem extends ProcessEquipmentBaseClass {
     // Condensate calculation (moisture removed by aftercooler and dryer)
     double aftercoolerSatPressure = calculateSaturationPressure(aftercoolerOutletTemp);
     double aftercoolerMoistureKgKg = 0.622 * aftercoolerSatPressure
-        / ((dischargePressure + 1.013) * 100.0 - aftercoolerSatPressure);
+	/ ((dischargePressure + 1.013) * 100.0 - aftercoolerSatPressure);
 
     double moistureRemoved = Math.max(0, inletMoistureKgKg - aftercoolerMoistureKgKg);
     double airMassKgh = compressorFlowNm3h * 1.293; // kg/hr at NTP
@@ -499,8 +498,7 @@ public class UtilityAirSystem extends ProcessEquipmentBaseClass {
    * @param operatingHoursPerYear annual operating hours
    * @return annual cost
    */
-  public double calculateAnnualOperatingCost(double electricityCostPerKWh,
-      double operatingHoursPerYear) {
+  public double calculateAnnualOperatingCost(double electricityCostPerKWh, double operatingHoursPerYear) {
     return compressorPowerKW * operatingHoursPerYear * electricityCostPerKWh;
   }
 
@@ -534,11 +532,11 @@ public class UtilityAirSystem extends ProcessEquipmentBaseClass {
     if (!consumers.isEmpty()) {
       List<Map<String, Object>> consumerList = new ArrayList<>();
       for (AirConsumer c : consumers) {
-        Map<String, Object> cmap = new LinkedHashMap<>();
-        cmap.put("name", c.getName());
-        cmap.put("demandNm3h", c.getDemandNm3h());
-        cmap.put("qualityClass", c.getRequiredQuality().name());
-        consumerList.add(cmap);
+	Map<String, Object> cmap = new LinkedHashMap<>();
+	cmap.put("name", c.getName());
+	cmap.put("demandNm3h", c.getDemandNm3h());
+	cmap.put("qualityClass", c.getRequiredQuality().name());
+	consumerList.add(cmap);
       }
       results.put("consumers", consumerList);
     }
@@ -731,9 +729,9 @@ public class UtilityAirSystem extends ProcessEquipmentBaseClass {
     /**
      * Creates an air consumer.
      *
-     * @param name consumer name
+     * @param name       consumer name
      * @param demandNm3h air demand [Nm³/hr]
-     * @param quality required air quality
+     * @param quality    required air quality
      */
     public AirConsumer(String name, double demandNm3h, AirQualityClass quality) {
       this.name = name;

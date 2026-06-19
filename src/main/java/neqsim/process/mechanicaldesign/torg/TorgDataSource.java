@@ -33,11 +33,10 @@ public interface TorgDataSource {
    * Load a TORG document by company and project name.
    *
    * @param companyIdentifier the company identifier
-   * @param projectName the project name
+   * @param projectName       the project name
    * @return optional containing the TORG if found
    */
-  Optional<TechnicalRequirementsDocument> loadByCompanyAndProject(String companyIdentifier,
-      String projectName);
+  Optional<TechnicalRequirementsDocument> loadByCompanyAndProject(String companyIdentifier, String projectName);
 
   /**
    * Get a list of available project identifiers.

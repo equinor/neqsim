@@ -8,8 +8,8 @@ import java.util.Map;
  * Model of a Variable Frequency Drive (VFD) for motor speed control.
  *
  * <p>
- * Supports sizing based on motor ratings, efficiency estimation, harmonic distortion calculation
- * per IEEE 519, and different topology types (2-level, 3-level, multi-level, AFE).
+ * Supports sizing based on motor ratings, efficiency estimation, harmonic distortion calculation per IEEE 519, and
+ * different topology types (2-level, 3-level, multi-level, AFE).
  * </p>
  *
  * @author Even Solbraa
@@ -55,8 +55,7 @@ public class VariableFrequencyDrive implements java.io.Serializable {
    * Size the VFD based on motor parameters.
    *
    * <p>
-   * Selects VFD ratings, topology, harmonic characteristics, and cost based on the motor's rated
-   * power and voltage.
+   * Selects VFD ratings, topology, harmonic characteristics, and cost based on the motor's rated power and voltage.
    * </p>
    *
    * @param motor the motor this VFD drives
@@ -101,24 +100,24 @@ public class VariableFrequencyDrive implements java.io.Serializable {
   /**
    * Select VFD topology based on power and voltage.
    *
-   * @param powerKW rated power in kW
+   * @param powerKW  rated power in kW
    * @param voltageV rated voltage in V
    */
   private void selectTopology(double powerKW, double voltageV) {
     if (voltageV > 3300) {
       // Medium voltage - use multi-level or 3-level
       if (powerKW > 2000) {
-        topologyType = "Multi-level";
-        pulseConfiguration = "AFE";
-        hasActiveRectifier = true;
-        thdCurrentPercent = 3.0;
-        requiresInputFilter = false;
+	topologyType = "Multi-level";
+	pulseConfiguration = "AFE";
+	hasActiveRectifier = true;
+	thdCurrentPercent = 3.0;
+	requiresInputFilter = false;
       } else {
-        topologyType = "3-level";
-        pulseConfiguration = "12-pulse";
-        hasActiveRectifier = false;
-        thdCurrentPercent = 10.0;
-        requiresInputFilter = false;
+	topologyType = "3-level";
+	pulseConfiguration = "12-pulse";
+	hasActiveRectifier = false;
+	thdCurrentPercent = 10.0;
+	requiresInputFilter = false;
       }
     } else if (powerKW > 250) {
       // High power LV - use AFE
@@ -172,7 +171,7 @@ public class VariableFrequencyDrive implements java.io.Serializable {
   /**
    * Get VFD efficiency at a given load and speed fraction.
    *
-   * @param loadFraction load fraction (0-1)
+   * @param loadFraction  load fraction (0-1)
    * @param speedFraction speed fraction (0-1)
    * @return efficiency in percent
    */
@@ -193,7 +192,7 @@ public class VariableFrequencyDrive implements java.io.Serializable {
   /**
    * Estimate VFD weight.
    *
-   * @param powerKW rated power in kW
+   * @param powerKW  rated power in kW
    * @param voltageV rated voltage in V
    * @return weight in kg
    */
@@ -212,7 +211,7 @@ public class VariableFrequencyDrive implements java.io.Serializable {
   /**
    * Estimate VFD cost in USD.
    *
-   * @param powerKW rated power in kW
+   * @param powerKW  rated power in kW
    * @param voltageV rated voltage in V
    * @return estimated cost in USD
    */
@@ -238,8 +237,7 @@ public class VariableFrequencyDrive implements java.io.Serializable {
    */
   public String toJson() {
     Map<String, Object> map = toMap();
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(map);
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(map);
   }
 
   /**

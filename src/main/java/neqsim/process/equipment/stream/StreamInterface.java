@@ -38,7 +38,7 @@ public interface StreamInterface extends ProcessEquipmentInterface {
    * </p>
    *
    * @param flowrate a double
-   * @param unit a {@link java.lang.String} object
+   * @param unit     a {@link java.lang.String} object
    */
   public void setFlowRate(double flowrate, String unit);
 
@@ -94,10 +94,9 @@ public interface StreamInterface extends ProcessEquipmentInterface {
    * getFlowRate. Wrapper for SystemInterface.getFlowRate().
    * </p>
    *
-   * @param unit Supported units are kg/sec, kg/min, kg/hr, kg/day, m3/sec, m3/min, m3/hr, Sm3/sec,
-   *        Sm3/hr, Sm3/day, MSm3/day, MSm3/hr, mole/sec, mol/sec, mole/min, mol/min, mole/hr,
-   *        mol/hr, kmole/sec, kmol/sec, kmole/min, kmol/min, kmole/hr, kmol/hr, kmole/day,
-   *        kmol/day, lbmole/hr, lb/hr, barrel/day, gallons/min
+   * @param unit Supported units are kg/sec, kg/min, kg/hr, kg/day, m3/sec, m3/min, m3/hr, Sm3/sec, Sm3/hr, Sm3/day,
+   *             MSm3/day, MSm3/hr, mole/sec, mol/sec, mole/min, mol/min, mole/hr, mol/hr, kmole/sec, kmol/sec,
+   *             kmole/min, kmol/min, kmole/hr, kmol/hr, kmole/day, kmol/day, lbmole/hr, lb/hr, barrel/day, gallons/min
    * @return flow rate in specified unit
    */
   public default double getFlowRate(String unit) {
@@ -110,7 +109,7 @@ public interface StreamInterface extends ProcessEquipmentInterface {
    * </p>
    *
    * @param referenceTemperature a double
-   * @param unit a {@link java.lang.String} object
+   * @param unit                 a {@link java.lang.String} object
    * @return a double
    */
   public double TVP(double referenceTemperature, String unit);
@@ -121,8 +120,8 @@ public interface StreamInterface extends ProcessEquipmentInterface {
    * </p>
    *
    * @param referenceTemperature a double
-   * @param unit a {@link java.lang.String} object
-   * @param returnUnit a {@link java.lang.String} object
+   * @param unit                 a {@link java.lang.String} object
+   * @param returnUnit           a {@link java.lang.String} object
    * @return a double
    */
   public double getTVP(double referenceTemperature, String unit, String returnUnit);
@@ -133,8 +132,8 @@ public interface StreamInterface extends ProcessEquipmentInterface {
    * </p>
    *
    * @param referenceTemperature a double
-   * @param unit a {@link java.lang.String} object
-   * @param returnUnit a {@link java.lang.String} object
+   * @param unit                 a {@link java.lang.String} object
+   * @param returnUnit           a {@link java.lang.String} object
    * @return a double
    */
   public double getRVP(double referenceTemperature, String unit, String returnUnit);
@@ -143,13 +142,12 @@ public interface StreamInterface extends ProcessEquipmentInterface {
    * Calculates the Reid Vapor Pressure (RVP) of the stream.
    *
    * @param referenceTemperature the reference temperature at which RVP is calculated
-   * @param unit the unit of the reference temperature
-   * @param returnUnit the unit in which the RVP should be returned
-   * @param rvpMethod the method used to calculate RVP
+   * @param unit                 the unit of the reference temperature
+   * @param returnUnit           the unit in which the RVP should be returned
+   * @param rvpMethod            the method used to calculate RVP
    * @return the calculated RVP in the specified return unit
    */
-  public double getRVP(double referenceTemperature, String unit, String returnUnit,
-      String rvpMethod);
+  public double getRVP(double referenceTemperature, String unit, String returnUnit, String rvpMethod);
 
   /**
    * <p>
@@ -209,7 +207,7 @@ public interface StreamInterface extends ProcessEquipmentInterface {
    * setThermoSystemFromPhase.
    * </p>
    *
-   * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
+   * @param thermoSystem  a {@link neqsim.thermo.system.SystemInterface} object
    * @param phaseTypeName a {@link java.lang.String} object
    */
   public void setThermoSystemFromPhase(SystemInterface thermoSystem, String phaseTypeName);
@@ -229,7 +227,7 @@ public interface StreamInterface extends ProcessEquipmentInterface {
    * </p>
    *
    * @param pressure a double
-   * @param unit a {@link java.lang.String} object
+   * @param unit     a {@link java.lang.String} object
    */
   public void setPressure(double pressure, String unit);
 
@@ -239,7 +237,7 @@ public interface StreamInterface extends ProcessEquipmentInterface {
    * </p>
    *
    * @param temperature a double
-   * @param unit a {@link java.lang.String} object
+   * @param unit        a {@link java.lang.String} object
    */
   public void setTemperature(double temperature, String unit);
 
@@ -257,8 +255,8 @@ public interface StreamInterface extends ProcessEquipmentInterface {
    * getGCV.
    * </p>
    *
-   * @param unit a String
-   * @param refTVolume a double in Celcius
+   * @param unit           a String
+   * @param refTVolume     a double in Celcius
    * @param refTCombustion a double in Celcius
    * @return a double
    */
@@ -269,8 +267,8 @@ public interface StreamInterface extends ProcessEquipmentInterface {
    * getWI.
    * </p>
    *
-   * @param unit a String
-   * @param refTVolume a double in Celcius
+   * @param unit           a String
+   * @param refTVolume     a double in Celcius
    * @param refTCombustion a double in Celcius
    * @return a double
    */
@@ -281,8 +279,8 @@ public interface StreamInterface extends ProcessEquipmentInterface {
    * getWI.
    * </p>
    *
-   * @param unit a String
-   * @param refTVolume a double in Celcius
+   * @param unit           a String
+   * @param refTVolume     a double in Celcius
    * @param refTCombustion a double in Celcius
    * @return a Standard_ISO6976
    */
@@ -308,12 +306,10 @@ public interface StreamInterface extends ProcessEquipmentInterface {
   /**
    * Calculates the hydrocarbon dew point of the stream.
    *
-   * @param temperatureUnit the unit of the temperature to be used (e.g., "C" for Celsius, "K" for
-   *        Kelvin)
-   * @param refpressure the reference pressure at which the dew point is to be calculated
+   * @param temperatureUnit the unit of the temperature to be used (e.g., "C" for Celsius, "K" for Kelvin)
+   * @param refpressure     the reference pressure at which the dew point is to be calculated
    * @param refPressureUnit the unit of the reference pressure (e.g., "bar", "Pa")
    * @return the hydrocarbon dew point temperature in the specified temperature unit
    */
-  public double getHydrocarbonDewPoint(String temperatureUnit, double refpressure,
-      String refPressureUnit);
+  public double getHydrocarbonDewPoint(String temperatureUnit, double refpressure, String refPressureUnit);
 }

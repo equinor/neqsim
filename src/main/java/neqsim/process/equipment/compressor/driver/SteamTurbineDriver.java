@@ -13,14 +13,18 @@ package neqsim.process.equipment.compressor.driver;
  * <li>Willans line efficiency characteristics</li>
  * </ul>
  *
- * <p><strong>Steam Turbine Types</strong></p>
+ * <p>
+ * <strong>Steam Turbine Types</strong>
+ * </p>
  * <ul>
  * <li><strong>Back-pressure:</strong> Exhaust at process steam pressure</li>
  * <li><strong>Condensing:</strong> Exhaust to condenser at vacuum</li>
  * <li><strong>Extraction:</strong> Steam taken from intermediate stage</li>
  * </ul>
  *
- * <p><strong>Example Usage</strong></p>
+ * <p>
+ * <strong>Example Usage</strong>
+ * </p>
  *
  * <pre>
  * SteamTurbineDriver turbine = new SteamTurbineDriver(5000, 6000, 0.75);
@@ -81,7 +85,7 @@ public class SteamTurbineDriver extends DriverCurveBase {
   /**
    * Constructor with rated power and efficiency.
    *
-   * @param ratedPowerKW rated power in kW
+   * @param ratedPowerKW     rated power in kW
    * @param designEfficiency design efficiency at rated conditions (0-1)
    */
   public SteamTurbineDriver(double ratedPowerKW, double designEfficiency) {
@@ -92,8 +96,8 @@ public class SteamTurbineDriver extends DriverCurveBase {
   /**
    * Constructor with full parameters.
    *
-   * @param ratedPowerKW rated power in kW
-   * @param ratedSpeedRPM rated speed in RPM
+   * @param ratedPowerKW     rated power in kW
+   * @param ratedSpeedRPM    rated speed in RPM
    * @param designEfficiency design efficiency at rated conditions (0-1)
    */
   public SteamTurbineDriver(double ratedPowerKW, double ratedSpeedRPM, double designEfficiency) {
@@ -158,8 +162,8 @@ public class SteamTurbineDriver extends DriverCurveBase {
       double coolingWaterTemp = ambientTemperature + 10.0; // Assume 10°C approach
       double baseTemp = 25.0;
       if (coolingWaterTemp > baseTemp) {
-        double tempRise = coolingWaterTemp - baseTemp;
-        return Math.max(0.8, 1.0 - 0.01 * tempRise);
+	double tempRise = coolingWaterTemp - baseTemp;
+	return Math.max(0.8, 1.0 - 0.01 * tempRise);
       }
     }
     return 1.0;
@@ -180,7 +184,7 @@ public class SteamTurbineDriver extends DriverCurveBase {
    * </p>
    *
    * @param powerOutput power output in kW
-   * @param speed operating speed in RPM
+   * @param speed       operating speed in RPM
    * @return steam consumption in kg/hr
    */
   public double getSteamConsumption(double powerOutput, double speed) {
@@ -337,7 +341,7 @@ public class SteamTurbineDriver extends DriverCurveBase {
   /**
    * Sets the Willans line parameters.
    *
-   * @param noLoadRate no-load steam rate in kg/kWh
+   * @param noLoadRate      no-load steam rate in kg/kWh
    * @param incrementalRate incremental steam rate in kg/kWh
    */
   public void setWillansLineParameters(double noLoadRate, double incrementalRate) {

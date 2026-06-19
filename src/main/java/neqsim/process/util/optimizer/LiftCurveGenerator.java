@@ -11,9 +11,8 @@ import neqsim.thermo.system.SystemInterface;
  * Generates lift curves (VLP tables) for reservoir simulator integration.
  *
  * <p>
- * This class generates flow rate vs. pressure tables for use in Eclipse and other reservoir
- * simulators. It sweeps through specified THP (outlet pressure) values and calculates the required
- * BHP (inlet pressure) for each flow rate.
+ * This class generates flow rate vs. pressure tables for use in Eclipse and other reservoir simulators. It sweeps
+ * through specified THP (outlet pressure) values and calculates the required BHP (inlet pressure) for each flow rate.
  * </p>
  *
  * <h2>Modes of Operation</h2>
@@ -35,8 +34,8 @@ import neqsim.thermo.system.SystemInterface;
  * generator.setMaxVelocity(20.0); // m/s constraint
  *
  * // Define operating envelope
- * double[] flowRates = {1000, 5000, 10000, 20000, 30000}; // kg/hr
- * double[] thpValues = {20, 40, 60, 80}; // bara
+ * double[] flowRates = { 1000, 5000, 10000, 20000, 30000 }; // kg/hr
+ * double[] thpValues = { 20, 40, 60, 80 }; // bara
  *
  * // Generate table
  * LiftCurveTable table = generator.generateTable(flowRates, thpValues, "bara", "kg/hr");
@@ -79,12 +78,11 @@ public class LiftCurveGenerator implements Serializable {
   /**
    * Creates a lift curve generator for a ProcessSystem.
    *
-   * @param processSystem the process system to analyze
-   * @param inletStreamName name of the inlet stream
+   * @param processSystem    the process system to analyze
+   * @param inletStreamName  name of the inlet stream
    * @param outletStreamName name of the outlet stream
    */
-  public LiftCurveGenerator(ProcessSystem processSystem, String inletStreamName,
-      String outletStreamName) {
+  public LiftCurveGenerator(ProcessSystem processSystem, String inletStreamName, String outletStreamName) {
     this.processSystem = processSystem;
     this.optimizer = new FlowRateOptimizer(processSystem, inletStreamName, outletStreamName);
   }
@@ -92,12 +90,11 @@ public class LiftCurveGenerator implements Serializable {
   /**
    * Creates a lift curve generator for a ProcessModel.
    *
-   * @param processModel the process model to analyze
-   * @param inletStreamName name of the inlet stream
+   * @param processModel     the process model to analyze
+   * @param inletStreamName  name of the inlet stream
    * @param outletStreamName name of the outlet stream
    */
-  public LiftCurveGenerator(ProcessModel processModel, String inletStreamName,
-      String outletStreamName) {
+  public LiftCurveGenerator(ProcessModel processModel, String inletStreamName, String outletStreamName) {
     this.processModel = processModel;
     this.optimizer = new FlowRateOptimizer(processModel, inletStreamName, outletStreamName);
   }
@@ -106,21 +103,19 @@ public class LiftCurveGenerator implements Serializable {
    * Generates a lift curve table with BHP values for given flow rates and THP values.
    *
    * <p>
-   * For each combination of flow rate and THP, this method calculates the required BHP (inlet
-   * pressure) to achieve that operating point. If the point is infeasible (e.g., due to constraint
-   * violations), the BHP is set to NaN.
+   * For each combination of flow rate and THP, this method calculates the required BHP (inlet pressure) to achieve that
+   * operating point. If the point is infeasible (e.g., due to constraint violations), the BHP is set to NaN.
    * </p>
    *
-   * @param flowRates array of flow rates to evaluate
-   * @param thpValues array of THP (outlet pressure) values
+   * @param flowRates    array of flow rates to evaluate
+   * @param thpValues    array of THP (outlet pressure) values
    * @param pressureUnit unit for pressure values
    * @param flowRateUnit unit for flow rates
    * @return generated lift curve table
    */
   public LiftCurveTable generateTable(double[] flowRates, double[] thpValues, String pressureUnit,
       String flowRateUnit) {
-    logger.info("Generating lift curve table: {} flow rates x {} THP values", flowRates.length,
-        thpValues.length);
+    logger.info("Generating lift curve table: {} flow rates x {} THP values", flowRates.length, thpValues.length);
 
     LiftCurveTable table = new LiftCurveTable(flowRates.length, thpValues.length);
     table.setFlowRates(flowRates.clone());
@@ -139,34 +134,32 @@ public class LiftCurveGenerator implements Serializable {
     // Calculate BHP for each flow rate and THP combination
     for (int i = 0; i < flowRates.length; i++) {
       for (int j = 0; j < thpValues.length; j++) {
-        double flowRate = flowRates[i];
-        double thp = thpValues[j];
+	double flowRate = flowRates[i];
+	double thp = thpValues[j];
 
-        try {
-          // Use optimizer to find required inlet pressure
-          FlowRateOptimizationResult result =
-              optimizer.findInletPressure(flowRate, flowRateUnit, thp, pressureUnit);
+	try {
+	  // Use optimizer to find required inlet pressure
+	  FlowRateOptimizationResult result = optimizer.findInletPressure(flowRate, flowRateUnit, thp, pressureUnit);
 
-          if (result.isFeasible()) {
-            table.setBHP(i, j, result.getInletPressure());
-            feasibleCount++;
-            logger.debug("Flow={} {}, THP={} {} -> BHP={} {}", flowRate, flowRateUnit, thp,
-                pressureUnit, result.getInletPressure(), pressureUnit);
-          } else {
-            table.setBHP(i, j, Double.NaN);
-            logger.debug("Flow={} {}, THP={} {} -> INFEASIBLE: {}", flowRate, flowRateUnit, thp,
-                pressureUnit, result.getInfeasibilityReason());
-          }
-        } catch (Exception e) {
-          logger.warn("Error calculating BHP for flow={}, THP={}: {}", flowRate, thp,
-              e.getMessage());
-          table.setBHP(i, j, Double.NaN);
-        }
+	  if (result.isFeasible()) {
+	    table.setBHP(i, j, result.getInletPressure());
+	    feasibleCount++;
+	    logger.debug("Flow={} {}, THP={} {} -> BHP={} {}", flowRate, flowRateUnit, thp, pressureUnit,
+		result.getInletPressure(), pressureUnit);
+	  } else {
+	    table.setBHP(i, j, Double.NaN);
+	    logger.debug("Flow={} {}, THP={} {} -> INFEASIBLE: {}", flowRate, flowRateUnit, thp, pressureUnit,
+		result.getInfeasibilityReason());
+	  }
+	} catch (Exception e) {
+	  logger.warn("Error calculating BHP for flow={}, THP={}: {}", flowRate, thp, e.getMessage());
+	  table.setBHP(i, j, Double.NaN);
+	}
       }
     }
 
-    logger.info("Lift curve generation complete: {}/{} points feasible ({}%)", feasibleCount,
-        totalCount, String.format("%.1f", 100.0 * feasibleCount / totalCount));
+    logger.info("Lift curve generation complete: {}/{} points feasible ({}%)", feasibleCount, totalCount,
+	String.format("%.1f", 100.0 * feasibleCount / totalCount));
 
     return table;
   }
@@ -175,20 +168,19 @@ public class LiftCurveGenerator implements Serializable {
    * Generates a lift curve table by calculating flow rates for given BHP and THP combinations.
    *
    * <p>
-   * This is the inverse of {@link #generateTable} - for each combination of BHP (inlet pressure)
-   * and THP (outlet pressure), it calculates the achievable flow rate.
+   * This is the inverse of {@link #generateTable} - for each combination of BHP (inlet pressure) and THP (outlet
+   * pressure), it calculates the achievable flow rate.
    * </p>
    *
-   * @param bhpValues array of BHP (inlet pressure) values
-   * @param thpValues array of THP (outlet pressure) values
+   * @param bhpValues    array of BHP (inlet pressure) values
+   * @param thpValues    array of THP (outlet pressure) values
    * @param pressureUnit unit for pressure values
    * @param flowRateUnit unit for output flow rates
    * @return generated table with flow rates instead of BHP
    */
-  public LiftCurveTable generateFlowRateTable(double[] bhpValues, double[] thpValues,
-      String pressureUnit, String flowRateUnit) {
-    logger.info("Generating flow rate table: {} BHP values x {} THP values", bhpValues.length,
-        thpValues.length);
+  public LiftCurveTable generateFlowRateTable(double[] bhpValues, double[] thpValues, String pressureUnit,
+      String flowRateUnit) {
+    logger.info("Generating flow rate table: {} BHP values x {} THP values", bhpValues.length, thpValues.length);
 
     LiftCurveTable table = new LiftCurveTable(bhpValues.length, thpValues.length);
     table.setFlowRates(bhpValues.clone()); // BHP as row headers
@@ -206,39 +198,39 @@ public class LiftCurveGenerator implements Serializable {
     // Calculate flow rate for each BHP and THP combination
     for (int i = 0; i < bhpValues.length; i++) {
       for (int j = 0; j < thpValues.length; j++) {
-        double bhp = bhpValues[i];
-        double thp = thpValues[j];
+	double bhp = bhpValues[i];
+	double thp = thpValues[j];
 
-        // Skip if BHP <= THP (no positive flow possible)
-        if (bhp <= thp) {
-          table.setBHP(i, j, Double.NaN);
-          continue;
-        }
+	// Skip if BHP <= THP (no positive flow possible)
+	if (bhp <= thp) {
+	  table.setBHP(i, j, Double.NaN);
+	  continue;
+	}
 
-        try {
-          // Use optimizer to find flow rate
-          FlowRateOptimizationResult result = optimizer.findFlowRate(bhp, thp, pressureUnit);
+	try {
+	  // Use optimizer to find flow rate
+	  FlowRateOptimizationResult result = optimizer.findFlowRate(bhp, thp, pressureUnit);
 
-          if (result.isFeasible()) {
-            // Store flow rate in the BHP matrix (reusing the structure)
-            table.setBHP(i, j, result.getFlowRate());
-            feasibleCount++;
-            logger.debug("BHP={} {}, THP={} {} -> Flow={} {}", bhp, pressureUnit, thp, pressureUnit,
-                result.getFlowRate(), result.getFlowRateUnit());
-          } else {
-            table.setBHP(i, j, Double.NaN);
-            logger.debug("BHP={} {}, THP={} {} -> INFEASIBLE: {}", bhp, pressureUnit, thp,
-                pressureUnit, result.getInfeasibilityReason());
-          }
-        } catch (Exception e) {
-          logger.warn("Error calculating flow for BHP={}, THP={}: {}", bhp, thp, e.getMessage());
-          table.setBHP(i, j, Double.NaN);
-        }
+	  if (result.isFeasible()) {
+	    // Store flow rate in the BHP matrix (reusing the structure)
+	    table.setBHP(i, j, result.getFlowRate());
+	    feasibleCount++;
+	    logger.debug("BHP={} {}, THP={} {} -> Flow={} {}", bhp, pressureUnit, thp, pressureUnit,
+		result.getFlowRate(), result.getFlowRateUnit());
+	  } else {
+	    table.setBHP(i, j, Double.NaN);
+	    logger.debug("BHP={} {}, THP={} {} -> INFEASIBLE: {}", bhp, pressureUnit, thp, pressureUnit,
+		result.getInfeasibilityReason());
+	  }
+	} catch (Exception e) {
+	  logger.warn("Error calculating flow for BHP={}, THP={}: {}", bhp, thp, e.getMessage());
+	  table.setBHP(i, j, Double.NaN);
+	}
       }
     }
 
     logger.info("Flow rate table generation complete: {}/{} points feasible", feasibleCount,
-        bhpValues.length * thpValues.length);
+	bhpValues.length * thpValues.length);
 
     return table;
   }
@@ -246,16 +238,16 @@ public class LiftCurveGenerator implements Serializable {
   /**
    * Generates a table with automatic range determination based on equipment limits.
    *
-   * @param numFlowPoints number of flow rate points
+   * @param numFlowPoints     number of flow rate points
    * @param numPressurePoints number of pressure points
-   * @param minTHP minimum THP value
-   * @param maxTHP maximum THP value
-   * @param pressureUnit pressure unit
-   * @param flowRateUnit flow rate unit
+   * @param minTHP            minimum THP value
+   * @param maxTHP            maximum THP value
+   * @param pressureUnit      pressure unit
+   * @param flowRateUnit      flow rate unit
    * @return generated table
    */
-  public LiftCurveTable generateTableAutoRange(int numFlowPoints, int numPressurePoints,
-      double minTHP, double maxTHP, String pressureUnit, String flowRateUnit) {
+  public LiftCurveTable generateTableAutoRange(int numFlowPoints, int numPressurePoints, double minTHP, double maxTHP,
+      String pressureUnit, String flowRateUnit) {
     // Generate evenly spaced THP values
     double[] thpValues = new double[numPressurePoints];
     for (int j = 0; j < numPressurePoints; j++) {
@@ -354,7 +346,7 @@ public class LiftCurveGenerator implements Serializable {
    * Sets optimizer parameters.
    *
    * @param maxIterations maximum iterations
-   * @param tolerance convergence tolerance
+   * @param tolerance     convergence tolerance
    */
   public void setOptimizerParameters(int maxIterations, double tolerance) {
     optimizer.setMaxIterations(maxIterations);

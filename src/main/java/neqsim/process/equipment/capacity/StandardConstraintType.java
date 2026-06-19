@@ -4,11 +4,8 @@ package neqsim.process.equipment.capacity;
  * Standard constraint types commonly used across process equipment.
  *
  * <p>
- * This enum provides predefined constraint definitions with standard names and
- * units. Use these
- * constants when creating CapacityConstraint objects for common constraint
- * types to ensure
- * consistency across the codebase.
+ * This enum provides predefined constraint definitions with standard names and units. Use these constants when creating
+ * CapacityConstraint objects for common constraint types to ensure consistency across the codebase.
  * </p>
  *
  * <p>
@@ -28,60 +25,50 @@ public enum StandardConstraintType {
   // ==================== Separator Constraints ====================
 
   /**
-   * Gas load factor (K-factor) for separators. Represents the ratio of actual gas
-   * velocity to
-   * design terminal velocity.
+   * Gas load factor (K-factor) for separators. Represents the ratio of actual gas velocity to design terminal velocity.
    */
   SEPARATOR_GAS_LOAD_FACTOR("gasLoadFactor", "m/s", CapacityConstraint.ConstraintType.SOFT,
       "Gas load factor (K-factor) - ratio of gas velocity to design terminal velocity"),
 
   /**
-   * K-value (Souders-Brown factor) at HLL for separators.
-   * Per Equinor TR3500 SR-50535: K-value must be less than 0.15 m/s.
+   * K-value (Souders-Brown factor) at HLL for separators. Per Equinor TR3500 SR-50535: K-value must be less than 0.15
+   * m/s.
    */
   SEPARATOR_K_VALUE("kValue", "m/s", CapacityConstraint.ConstraintType.SOFT,
       "K-value (Souders-Brown) at HLL - per TR3500 limit 0.15 m/s"),
 
   /**
-   * Droplet cut size in gas section above liquid level.
-   * Per Equinor TR3500 SR-50535: Must be less than 150 µm.
+   * Droplet cut size in gas section above liquid level. Per Equinor TR3500 SR-50535: Must be less than 150 µm.
    */
   SEPARATOR_DROPLET_CUTSIZE("dropletCutSize", "µm", CapacityConstraint.ConstraintType.SOFT,
       "Droplet cut size at HLL - per TR3500 limit 150 µm"),
 
   /**
-   * Inlet nozzle momentum flux.
-   * Per Equinor Revamp Limit: Must be less than 16000 Pa.
+   * Inlet nozzle momentum flux. Per Equinor Revamp Limit: Must be less than 16000 Pa.
    */
   SEPARATOR_INLET_MOMENTUM("inletMomentum", "Pa", CapacityConstraint.ConstraintType.SOFT,
       "Inlet nozzle momentum flux - Equinor revamp limit 16000 Pa"),
 
   /**
-   * Oil retention time between NIL and NLL.
-   * Per API 12J: Minimum 3-5 minutes for light oils.
+   * Oil retention time between NIL and NLL. Per API 12J: Minimum 3-5 minutes for light oils.
    */
   SEPARATOR_OIL_RETENTION_TIME("oilRetentionTime", "min", CapacityConstraint.ConstraintType.SOFT,
       "Oil retention time NIL-NLL - per API 12J minimum 3 min"),
 
   /**
-   * Water retention time below NIL.
-   * Per API 12J: Minimum 3-5 minutes.
+   * Water retention time below NIL. Per API 12J: Minimum 3-5 minutes.
    */
-  SEPARATOR_WATER_RETENTION_TIME("waterRetentionTime", "min",
-      CapacityConstraint.ConstraintType.SOFT,
+  SEPARATOR_WATER_RETENTION_TIME("waterRetentionTime", "min", CapacityConstraint.ConstraintType.SOFT,
       "Water retention time below NIL - per API 12J minimum 3 min"),
 
   /**
-   * Liquid load factor for separators. Represents liquid throughput relative to
-   * design capacity.
+   * Liquid load factor for separators. Represents liquid throughput relative to design capacity.
    */
-  SEPARATOR_LIQUID_LOAD_FACTOR("liquidLoadFactor", "m³/m²/hr",
-      CapacityConstraint.ConstraintType.SOFT,
+  SEPARATOR_LIQUID_LOAD_FACTOR("liquidLoadFactor", "m³/m²/hr", CapacityConstraint.ConstraintType.SOFT,
       "Liquid load factor - liquid throughput relative to design"),
 
   /**
-   * Liquid residence time in separators. Minimum time required for phase
-   * separation.
+   * Liquid residence time in separators. Minimum time required for phase separation.
    */
   SEPARATOR_RESIDENCE_TIME("residenceTime", "min", CapacityConstraint.ConstraintType.SOFT,
       "Liquid residence time - minimum time for adequate phase separation"),
@@ -89,8 +76,7 @@ public enum StandardConstraintType {
   // ==================== Compressor Constraints ====================
 
   /**
-   * Compressor rotational speed (max). Limited by mechanical design or curve
-   * maximum.
+   * Compressor rotational speed (max). Limited by mechanical design or curve maximum.
    */
   COMPRESSOR_SPEED("speed", "RPM", CapacityConstraint.ConstraintType.HARD,
       "Compressor rotational speed - limited by mechanical design or curve maximum"),
@@ -142,8 +128,7 @@ public enum StandardConstraintType {
   /**
    * Pump power consumption.
    */
-  PUMP_POWER("power", "kW", CapacityConstraint.ConstraintType.HARD,
-      "Pump power - limited by motor rating"),
+  PUMP_POWER("power", "kW", CapacityConstraint.ConstraintType.HARD, "Pump power - limited by motor rating"),
 
   // ==================== Heat Exchanger Constraints ====================
 
@@ -154,8 +139,7 @@ public enum StandardConstraintType {
       "Heat transfer duty relative to design capacity"),
 
   /**
-   * Heat exchanger approach temperature. Minimum temperature difference between
-   * streams.
+   * Heat exchanger approach temperature. Minimum temperature difference between streams.
    */
   HEAT_EXCHANGER_APPROACH_TEMP("approachTemp", "°C", CapacityConstraint.ConstraintType.SOFT,
       "Approach temperature - minimum feasible is ~3-5°C"),
@@ -177,8 +161,7 @@ public enum StandardConstraintType {
   /**
    * Valve pressure drop.
    */
-  VALVE_PRESSURE_DROP("pressureDrop", "bar", CapacityConstraint.ConstraintType.SOFT,
-      "Pressure drop across valve"),
+  VALVE_PRESSURE_DROP("pressureDrop", "bar", CapacityConstraint.ConstraintType.SOFT, "Pressure drop across valve"),
 
   /**
    * Valve opening position.
@@ -191,8 +174,7 @@ public enum StandardConstraintType {
   /**
    * Pipe fluid velocity.
    */
-  PIPE_VELOCITY("velocity", "m/s", CapacityConstraint.ConstraintType.SOFT,
-      "Fluid velocity in pipe"),
+  PIPE_VELOCITY("velocity", "m/s", CapacityConstraint.ConstraintType.SOFT, "Fluid velocity in pipe"),
 
   /**
    * Pipe erosional velocity ratio. Ratio of actual to erosional velocity.
@@ -226,8 +208,7 @@ public enum StandardConstraintType {
    * @param type        the constraint type
    * @param description the description
    */
-  StandardConstraintType(String name, String unit, CapacityConstraint.ConstraintType type,
-      String description) {
+  StandardConstraintType(String name, String unit, CapacityConstraint.ConstraintType type, String description) {
     this.name = name;
     this.unit = unit;
     this.type = type;
@@ -238,9 +219,8 @@ public enum StandardConstraintType {
    * Creates a new CapacityConstraint with this type's predefined settings.
    *
    * <p>
-   * The returned constraint has the name, unit, type, and description preset. You
-   * still need to set
-   * the design value, max value, and value supplier.
+   * The returned constraint has the name, unit, type, and description preset. You still need to set the design value,
+   * max value, and value supplier.
    * </p>
    *
    * @return a new CapacityConstraint with this type's settings

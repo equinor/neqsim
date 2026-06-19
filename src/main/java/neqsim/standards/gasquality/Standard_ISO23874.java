@@ -7,14 +7,12 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * Implementation of ISO 23874 - Natural gas - Gas chromatographic requirements for hydrocarbon dew
- * point calculation.
+ * Implementation of ISO 23874 - Natural gas - Gas chromatographic requirements for hydrocarbon dew point calculation.
  *
  * <p>
- * ISO 23874 specifies the minimum requirements for gas chromatographic (GC) analysis to provide
- * reliable input data for hydrocarbon dew point calculations. The standard requires extended C6+
- * analysis (up to at least C9 or C12) rather than just total C6+ fraction, because the heavy
- * hydrocarbon distribution significantly affects the cricondenbar.
+ * ISO 23874 specifies the minimum requirements for gas chromatographic (GC) analysis to provide reliable input data for
+ * hydrocarbon dew point calculations. The standard requires extended C6+ analysis (up to at least C9 or C12) rather
+ * than just total C6+ fraction, because the heavy hydrocarbon distribution significantly affects the cricondenbar.
  * </p>
  *
  * <p>
@@ -70,9 +68,8 @@ public class Standard_ISO23874 extends neqsim.standards.Standard {
    * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
    */
   public Standard_ISO23874(SystemInterface thermoSystem) {
-    super("Standard_ISO23874",
-        "Natural gas - Gas chromatographic requirements for hydrocarbon dew point calculation",
-        thermoSystem);
+    super("Standard_ISO23874", "Natural gas - Gas chromatographic requirements for hydrocarbon dew point calculation",
+	thermoSystem);
   }
 
   /**
@@ -112,13 +109,13 @@ public class Standard_ISO23874 extends neqsim.standards.Standard {
       // Step 2: Create HC-only system (exclude water, CO2, H2S for HC dew point)
       hcSystem = new SystemSrkEos(273.15 - 20.0, evaluationPressure);
       for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
-        String name = thermoSystem.getPhase(0).getComponent(i).getName();
-        String type = thermoSystem.getPhase(0).getComponent(i).getComponentType();
+	String name = thermoSystem.getPhase(0).getComponent(i).getName();
+	String type = thermoSystem.getPhase(0).getComponent(i).getComponentType();
 
-        // Include only hydrocarbons and inerts (N2, He) that affect HC dew point
-        if (!"water".equals(name) && !"H2S".equals(name)) {
-          hcSystem.addComponent(name, thermoSystem.getPhase(0).getComponent(i).getNumberOfmoles());
-        }
+	// Include only hydrocarbons and inerts (N2, He) that affect HC dew point
+	if (!"water".equals(name) && !"H2S".equals(name)) {
+	  hcSystem.addComponent(name, thermoSystem.getPhase(0).getComponent(i).getNumberOfmoles());
+	}
       }
       hcSystem.setMixingRule(2);
       hcSystem.init(0);
@@ -129,25 +126,25 @@ public class Standard_ISO23874 extends neqsim.standards.Standard {
       hcSystem.setTemperature(273.15 - 20.0);
       hcSystem.setPressure(evaluationPressure);
       try {
-        thermoOps.dewPointTemperatureFlash();
-        dewPointTemperature = hcSystem.getTemperature() - 273.15;
+	thermoOps.dewPointTemperatureFlash();
+	dewPointTemperature = hcSystem.getTemperature() - 273.15;
       } catch (Exception ex) {
-        logger.warn("HC dew point flash failed at {} bara", evaluationPressure);
-        dewPointTemperature = -999.0;
+	logger.warn("HC dew point flash failed at {} bara", evaluationPressure);
+	dewPointTemperature = -999.0;
       }
 
       // Step 4: Try to calculate cricondenbar via phase envelope
       try {
-        hcSystem.setTemperature(273.15 - 20.0);
-        hcSystem.setPressure(1.0);
-        thermoOps.calcPTphaseEnvelope();
-        double[] cricondenbar = thermoOps.get("cricondenbar");
-        if (cricondenbar != null && cricondenbar.length >= 2) {
-          cricondenbarTemperature = cricondenbar[0] - 273.15;
-          cricondenbarPressure = cricondenbar[1];
-        }
+	hcSystem.setTemperature(273.15 - 20.0);
+	hcSystem.setPressure(1.0);
+	thermoOps.calcPTphaseEnvelope();
+	double[] cricondenbar = thermoOps.get("cricondenbar");
+	if (cricondenbar != null && cricondenbar.length >= 2) {
+	  cricondenbarTemperature = cricondenbar[0] - 273.15;
+	  cricondenbarPressure = cricondenbar[1];
+	}
       } catch (Exception ex) {
-        logger.warn("Phase envelope calculation failed", ex);
+	logger.warn("Phase envelope calculation failed", ex);
       }
 
     } catch (Exception ex) {
@@ -168,7 +165,7 @@ public class Standard_ISO23874 extends neqsim.standards.Standard {
       // Check for individual heavy hydrocarbons
       int cn = estimateCarbonNumber(name, type);
       if (cn > maxCarbonNumber) {
-        maxCarbonNumber = cn;
+	maxCarbonNumber = cn;
       }
     }
 
@@ -198,8 +195,8 @@ public class Standard_ISO23874 extends neqsim.standards.Standard {
     if ("i-pentane".equals(name) || "n-pentane".equals(name) || "22-dim-C3".equals(name)) {
       return 5;
     }
-    if ("n-hexane".equals(name) || name.startsWith("2-m-C5") || name.startsWith("3-m-C5")
-        || "c-hexane".equals(name) || "benzene".equals(name)) {
+    if ("n-hexane".equals(name) || name.startsWith("2-m-C5") || name.startsWith("3-m-C5") || "c-hexane".equals(name)
+	|| "benzene".equals(name)) {
       return 6;
     }
     if ("n-heptane".equals(name) || name.contains("C7") || "toluene".equals(name)) {
@@ -258,8 +255,7 @@ public class Standard_ISO23874 extends neqsim.standards.Standard {
   /** {@inheritDoc} */
   @Override
   public String getUnit(String returnParameter) {
-    if ("dewPointTemperature".equals(returnParameter)
-        || "cricondenbarTemperature".equals(returnParameter)) {
+    if ("dewPointTemperature".equals(returnParameter) || "cricondenbarTemperature".equals(returnParameter)) {
       return "C";
     }
     if ("cricondenbarPressure".equals(returnParameter)) {

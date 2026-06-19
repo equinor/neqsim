@@ -20,7 +20,7 @@ public class OLGApropGenerator {
   private static final Logger logger = LogManager.getLogger(OLGApropGenerator.class);
 
   /** Logger object for class. */
-  
+
   /**
    * <p>
    * main.

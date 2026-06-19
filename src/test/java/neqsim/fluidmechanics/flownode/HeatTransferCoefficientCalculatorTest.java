@@ -21,16 +21,16 @@ class HeatTransferCoefficientCalculatorTest {
 
   @Test
   void testLiquidHeatTransferCoefficientStratified() {
-    double hL = HeatTransferCoefficientCalculator.calculateLiquidHeatTransferCoefficient(
-        FlowPattern.STRATIFIED, DIAMETER, 0.3, 5.0, 0.5, RHO_L, MU_L, CP_L, K_L);
+    double hL = HeatTransferCoefficientCalculator.calculateLiquidHeatTransferCoefficient(FlowPattern.STRATIFIED,
+	DIAMETER, 0.3, 5.0, 0.5, RHO_L, MU_L, CP_L, K_L);
     assertTrue(hL > 0, "Liquid heat transfer coefficient should be positive");
     assertTrue(hL < 10000, "h_L should be in reasonable range");
   }
 
   @Test
   void testGasHeatTransferCoefficientStratified() {
-    double hG = HeatTransferCoefficientCalculator.calculateGasHeatTransferCoefficient(
-        FlowPattern.STRATIFIED, DIAMETER, 0.3, 5.0, RHO_G, MU_G, CP_G, K_G);
+    double hG = HeatTransferCoefficientCalculator.calculateGasHeatTransferCoefficient(FlowPattern.STRATIFIED, DIAMETER,
+	0.3, 5.0, RHO_G, MU_G, CP_G, K_G);
     assertTrue(hG > 0, "Gas heat transfer coefficient should be positive");
     assertTrue(hG < 5000, "h_G should be in reasonable range");
   }
@@ -50,10 +50,8 @@ class HeatTransferCoefficientCalculatorTest {
     double re = 50000;
     double pr = 5.0;
 
-    double nuHeating =
-        HeatTransferCoefficientCalculator.calculateDittusBoelterNusselt(re, pr, true);
-    double nuCooling =
-        HeatTransferCoefficientCalculator.calculateDittusBoelterNusselt(re, pr, false);
+    double nuHeating = HeatTransferCoefficientCalculator.calculateDittusBoelterNusselt(re, pr, true);
+    double nuCooling = HeatTransferCoefficientCalculator.calculateDittusBoelterNusselt(re, pr, false);
 
     assertTrue(nuHeating > nuCooling, "Nu for heating should be greater than for cooling");
     assertTrue(nuHeating > 100, "Nu should be significant for turbulent flow");
@@ -70,29 +68,29 @@ class HeatTransferCoefficientCalculatorTest {
 
   @Test
   void testAnnularFlowHeatTransfer() {
-    double hL = HeatTransferCoefficientCalculator.calculateLiquidHeatTransferCoefficient(
-        FlowPattern.ANNULAR, DIAMETER, 0.1, 10.0, 0.2, RHO_L, MU_L, CP_L, K_L);
+    double hL = HeatTransferCoefficientCalculator.calculateLiquidHeatTransferCoefficient(FlowPattern.ANNULAR, DIAMETER,
+	0.1, 10.0, 0.2, RHO_L, MU_L, CP_L, K_L);
     assertTrue(hL > 0, "h_L for annular flow should be positive");
   }
 
   @Test
   void testBubbleFlowHeatTransfer() {
-    double hL = HeatTransferCoefficientCalculator.calculateLiquidHeatTransferCoefficient(
-        FlowPattern.BUBBLE, DIAMETER, 0.9, 1.0, 1.0, RHO_L, MU_L, CP_L, K_L);
+    double hL = HeatTransferCoefficientCalculator.calculateLiquidHeatTransferCoefficient(FlowPattern.BUBBLE, DIAMETER,
+	0.9, 1.0, 1.0, RHO_L, MU_L, CP_L, K_L);
     assertTrue(hL > 0, "h_L for bubble flow should be positive");
   }
 
   @Test
   void testSlugFlowHeatTransfer() {
-    double hL = HeatTransferCoefficientCalculator.calculateLiquidHeatTransferCoefficient(
-        FlowPattern.SLUG, DIAMETER, 0.5, 3.0, 0.5, RHO_L, MU_L, CP_L, K_L);
+    double hL = HeatTransferCoefficientCalculator.calculateLiquidHeatTransferCoefficient(FlowPattern.SLUG, DIAMETER,
+	0.5, 3.0, 0.5, RHO_L, MU_L, CP_L, K_L);
     assertTrue(hL > 0, "h_L for slug flow should be positive");
   }
 
   @Test
   void testDropletFlowHeatTransfer() {
-    double hG = HeatTransferCoefficientCalculator.calculateGasHeatTransferCoefficient(
-        FlowPattern.DROPLET, DIAMETER, 0.05, 20.0, RHO_G, MU_G, CP_G, K_G);
+    double hG = HeatTransferCoefficientCalculator.calculateGasHeatTransferCoefficient(FlowPattern.DROPLET, DIAMETER,
+	0.05, 20.0, RHO_G, MU_G, CP_G, K_G);
     assertTrue(hG > 0, "h_G for droplet flow should be positive");
   }
 
@@ -113,8 +111,8 @@ class HeatTransferCoefficientCalculatorTest {
     double hfg = 2e6; // J/kg (latent heat of water)
     double deltaT = 10.0; // K
 
-    double h = HeatTransferCoefficientCalculator.calculateCondensationHTC(RHO_L, RHO_G, K_L, hfg,
-        CP_L, MU_L, DIAMETER, deltaT);
+    double h = HeatTransferCoefficientCalculator.calculateCondensationHTC(RHO_L, RHO_G, K_L, hfg, CP_L, MU_L, DIAMETER,
+	deltaT);
     assertTrue(h > 0, "Condensation HTC should be positive");
     assertTrue(h > 100, "Condensation HTC should be significant");
   }
@@ -122,18 +120,18 @@ class HeatTransferCoefficientCalculatorTest {
   @Test
   void testInvalidInputsReturnZero() {
     // Test with zero diameter
-    double h1 = HeatTransferCoefficientCalculator.calculateLiquidHeatTransferCoefficient(
-        FlowPattern.STRATIFIED, 0, 0.3, 5.0, 0.5, RHO_L, MU_L, CP_L, K_L);
+    double h1 = HeatTransferCoefficientCalculator.calculateLiquidHeatTransferCoefficient(FlowPattern.STRATIFIED, 0, 0.3,
+	5.0, 0.5, RHO_L, MU_L, CP_L, K_L);
     assertEquals(0.0, h1);
 
     // Test with zero conductivity
-    double h2 = HeatTransferCoefficientCalculator.calculateLiquidHeatTransferCoefficient(
-        FlowPattern.STRATIFIED, DIAMETER, 0.3, 5.0, 0.5, RHO_L, MU_L, CP_L, 0.0);
+    double h2 = HeatTransferCoefficientCalculator.calculateLiquidHeatTransferCoefficient(FlowPattern.STRATIFIED,
+	DIAMETER, 0.3, 5.0, 0.5, RHO_L, MU_L, CP_L, 0.0);
     assertEquals(0.0, h2);
 
     // Test with negative density
-    double h3 = HeatTransferCoefficientCalculator.calculateGasHeatTransferCoefficient(
-        FlowPattern.STRATIFIED, DIAMETER, 0.3, 5.0, -RHO_G, MU_G, CP_G, K_G);
+    double h3 = HeatTransferCoefficientCalculator.calculateGasHeatTransferCoefficient(FlowPattern.STRATIFIED, DIAMETER,
+	0.3, 5.0, -RHO_G, MU_G, CP_G, K_G);
     assertEquals(0.0, h3);
   }
 
@@ -150,12 +148,12 @@ class HeatTransferCoefficientCalculatorTest {
 
   @Test
   void testChurnFlowHeatTransfer() {
-    double hL = HeatTransferCoefficientCalculator.calculateLiquidHeatTransferCoefficient(
-        FlowPattern.CHURN, DIAMETER, 0.4, 8.0, 1.0, RHO_L, MU_L, CP_L, K_L);
+    double hL = HeatTransferCoefficientCalculator.calculateLiquidHeatTransferCoefficient(FlowPattern.CHURN, DIAMETER,
+	0.4, 8.0, 1.0, RHO_L, MU_L, CP_L, K_L);
     assertTrue(hL > 0, "h_L for churn flow should be positive");
 
-    double hG = HeatTransferCoefficientCalculator.calculateGasHeatTransferCoefficient(
-        FlowPattern.CHURN, DIAMETER, 0.4, 8.0, RHO_G, MU_G, CP_G, K_G);
+    double hG = HeatTransferCoefficientCalculator.calculateGasHeatTransferCoefficient(FlowPattern.CHURN, DIAMETER, 0.4,
+	8.0, RHO_G, MU_G, CP_G, K_G);
     assertTrue(hG > 0, "h_G for churn flow should be positive");
   }
 
@@ -165,10 +163,10 @@ class HeatTransferCoefficientCalculatorTest {
     // at the same conditions - they should generally differ
 
     double hStratified = HeatTransferCoefficientCalculator.calculateLiquidHeatTransferCoefficient(
-        FlowPattern.STRATIFIED, DIAMETER, 0.3, 5.0, 0.5, RHO_L, MU_L, CP_L, K_L);
+	FlowPattern.STRATIFIED, DIAMETER, 0.3, 5.0, 0.5, RHO_L, MU_L, CP_L, K_L);
 
-    double hAnnular = HeatTransferCoefficientCalculator.calculateLiquidHeatTransferCoefficient(
-        FlowPattern.ANNULAR, DIAMETER, 0.3, 5.0, 0.5, RHO_L, MU_L, CP_L, K_L);
+    double hAnnular = HeatTransferCoefficientCalculator.calculateLiquidHeatTransferCoefficient(FlowPattern.ANNULAR,
+	DIAMETER, 0.3, 5.0, 0.5, RHO_L, MU_L, CP_L, K_L);
 
     // Annular flow typically has higher heat transfer than stratified
     // due to thin film and turbulence

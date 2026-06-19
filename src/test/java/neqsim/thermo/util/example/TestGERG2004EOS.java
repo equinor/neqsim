@@ -20,7 +20,7 @@ public class TestGERG2004EOS {
   private static final Logger logger = LogManager.getLogger(TestGERG2004EOS.class);
 
   /** Logger object for class. */
-  
+
   /**
    * <p>
    * main.

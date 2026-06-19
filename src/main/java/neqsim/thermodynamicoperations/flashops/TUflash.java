@@ -13,13 +13,13 @@ import neqsim.thermo.system.SystemInterface;
  * Temperature-Internal Energy (TU) flash calculation.
  *
  * <p>
- * Solves for pressure P given specified temperature T and internal energy U. Uses Newton iteration
- * with the thermodynamic derivative (∂U/∂P)_T.
+ * Solves for pressure P given specified temperature T and internal energy U. Uses Newton iteration with the
+ * thermodynamic derivative (∂U/∂P)_T.
  * </p>
  *
  * <p>
- * Using the relation U = H - PV: (∂U/∂P)_T = (∂H/∂P)_T - V - P(∂V/∂P)_T = V - T(∂V/∂T)_P - V -
- * P(∂V/∂P)_T = -T(∂V/∂T)_P - P(∂V/∂P)_T
+ * Using the relation U = H - PV: (∂U/∂P)_T = (∂H/∂P)_T - V - P(∂V/∂P)_T = V - T(∂V/∂T)_P - V - P(∂V/∂P)_T = -T(∂V/∂T)_P
+ * - P(∂V/∂P)_T
  * </p>
  *
  * @author Even Solbraa
@@ -39,7 +39,7 @@ public class TUflash extends QfuncFlash {
    * Constructor for TUflash.
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param Uspec specified internal energy in J
+   * @param Uspec  specified internal energy in J
    */
   public TUflash(SystemInterface system, double Uspec) {
     this.system = system;
@@ -60,8 +60,8 @@ public class TUflash extends QfuncFlash {
    * Calculates the derivative d²Q/dP² = (∂U/∂P)_T.
    *
    * <p>
-   * Using thermodynamic relation: (∂U/∂P)_T = -T(∂V/∂T)_P - P(∂V/∂P)_T With NeqSim sign
-   * conventions: dVdT = -(∂V/∂T)_P and dVdP = (∂V/∂P)_T So: (∂U/∂P)_T = T*dVdT - P*dVdP
+   * Using thermodynamic relation: (∂U/∂P)_T = -T(∂V/∂T)_P - P(∂V/∂P)_T With NeqSim sign conventions: dVdT = -(∂V/∂T)_P
+   * and dVdP = (∂V/∂P)_T So: (∂U/∂P)_T = T*dVdT - P*dVdP
    * </p>
    *
    * @return derivative of internal energy with respect to pressure at constant T
@@ -122,23 +122,23 @@ public class TUflash extends QfuncFlash {
       // Numerical derivative from previous iteration
       double dUdP_numerical = 0.0;
       if (iterations > 1 && Math.abs(pressureStep) > 1e-10) {
-        dUdP_numerical = (dU - olddU) / pressureStep;
+	dUdP_numerical = (dU - olddU) / pressureStep;
       }
 
       // Use analytical for first iterations, switch to numerical for stability
       double dUdP;
       if (iterations < 5 || Math.abs(dUdP_numerical) < 1e-10) {
-        dUdP = dUdP_analytical;
+	dUdP = dUdP_analytical;
       } else {
-        dUdP = dUdP_numerical;
+	dUdP = dUdP_numerical;
       }
 
       // Avoid division by zero
       if (Math.abs(dUdP) < 1.0) {
-        dUdP = Math.signum(dUdP) * 1.0;
-        if (dUdP == 0) {
-          dUdP = -1.0;
-        }
+	dUdP = Math.signum(dUdP) * 1.0;
+	if (dUdP == 0) {
+	  dUdP = -1.0;
+	}
       }
 
       // Newton step with damping
@@ -147,17 +147,17 @@ public class TUflash extends QfuncFlash {
 
       // Limit step size
       if (Math.abs(deltaP) > 0.5 * oldPres) {
-        deltaP = Math.signum(deltaP) * 0.5 * oldPres;
+	deltaP = Math.signum(deltaP) * 0.5 * oldPres;
       }
 
       nyPres = oldPres + deltaP;
 
       // Ensure pressure stays positive
       if (nyPres <= 0.01) {
-        nyPres = 0.01;
+	nyPres = 0.01;
       }
       if (nyPres > 10000.0) {
-        nyPres = 10000.0;
+	nyPres = 10000.0;
       }
 
       pressureStep = nyPres - oldPres;

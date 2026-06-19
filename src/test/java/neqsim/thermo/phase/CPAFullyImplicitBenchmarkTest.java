@@ -11,8 +11,8 @@ import neqsim.thermo.system.SystemSrkCPAstatoilFullyImplicit;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * Detailed benchmark comparing fully implicit CPA vs standard nested for multi-component gas-oil-
- * aqueous systems with MEG and oil components.
+ * Detailed benchmark comparing fully implicit CPA vs standard nested for multi-component gas-oil- aqueous systems with
+ * MEG and oil components.
  *
  * @author Even Solbraa
  * @version 1.0
@@ -134,16 +134,15 @@ class CPAFullyImplicitBenchmarkTest extends neqsim.NeqSimTest {
     logger.info("\n====================================================================");
     logger.info("  CPA Fully Implicit vs Standard Nested — Detailed Benchmark");
     logger.info("====================================================================");
-    logger.info(
-        String.format("%-45s %8s %8s %6s %6s", "Case", "Std(ms)", "Impl(ms)", "Ratio", "Phases"));
+    logger.info(String.format("%-45s %8s %8s %6s %6s", "Case", "Std(ms)", "Impl(ms)", "Ratio", "Phases"));
     logger.info("--------------------------------------------------------------------");
 
     // Case 1: Pure water sweep
     benchmarkCase("Pure water (T sweep)", new CaseBuilder() {
       @Override
       public void configure(SystemInterface sys, int idx) {
-        sys.addComponent("water", 1.0);
-        sys.setMixingRule(10);
+	sys.addComponent("water", 1.0);
+	sys.setMixingRule(10);
       }
     }, generateTP(273.15 + 10, 10, 1.0, 0));
 
@@ -151,10 +150,10 @@ class CPAFullyImplicitBenchmarkTest extends neqsim.NeqSimTest {
     benchmarkCase("Methane + water", new CaseBuilder() {
       @Override
       public void configure(SystemInterface sys, int idx) {
-        sys.addComponent("methane", 0.95);
-        sys.addComponent("water", 0.05);
-        sys.setMixingRule(10);
-        sys.setMultiPhaseCheck(true);
+	sys.addComponent("methane", 0.95);
+	sys.addComponent("water", 0.05);
+	sys.setMixingRule(10);
+	sys.setMultiPhaseCheck(true);
       }
     }, generateTP(273.15 + 5, 15, 50.0, 30));
 
@@ -162,14 +161,14 @@ class CPAFullyImplicitBenchmarkTest extends neqsim.NeqSimTest {
     benchmarkCase("NatGas + water + MEG", new CaseBuilder() {
       @Override
       public void configure(SystemInterface sys, int idx) {
-        sys.addComponent("methane", 0.80);
-        sys.addComponent("ethane", 0.06);
-        sys.addComponent("propane", 0.03);
-        sys.addComponent("n-butane", 0.01);
-        sys.addComponent("water", 0.08);
-        sys.addComponent("MEG", 0.02);
-        sys.setMixingRule(10);
-        sys.setMultiPhaseCheck(true);
+	sys.addComponent("methane", 0.80);
+	sys.addComponent("ethane", 0.06);
+	sys.addComponent("propane", 0.03);
+	sys.addComponent("n-butane", 0.01);
+	sys.addComponent("water", 0.08);
+	sys.addComponent("MEG", 0.02);
+	sys.setMixingRule(10);
+	sys.setMultiPhaseCheck(true);
       }
     }, generateTP(273.15 + 5, 20, 50.0, 30));
 
@@ -177,16 +176,16 @@ class CPAFullyImplicitBenchmarkTest extends neqsim.NeqSimTest {
     benchmarkCase("GasCondensate + water", new CaseBuilder() {
       @Override
       public void configure(SystemInterface sys, int idx) {
-        sys.addComponent("methane", 0.70);
-        sys.addComponent("ethane", 0.07);
-        sys.addComponent("propane", 0.05);
-        sys.addComponent("n-butane", 0.03);
-        sys.addComponent("n-pentane", 0.02);
-        sys.addComponent("n-hexane", 0.01);
-        sys.addComponent("n-heptane", 0.005);
-        sys.addComponent("water", 0.065);
-        sys.setMixingRule(10);
-        sys.setMultiPhaseCheck(true);
+	sys.addComponent("methane", 0.70);
+	sys.addComponent("ethane", 0.07);
+	sys.addComponent("propane", 0.05);
+	sys.addComponent("n-butane", 0.03);
+	sys.addComponent("n-pentane", 0.02);
+	sys.addComponent("n-hexane", 0.01);
+	sys.addComponent("n-heptane", 0.005);
+	sys.addComponent("water", 0.065);
+	sys.setMixingRule(10);
+	sys.setMultiPhaseCheck(true);
       }
     }, generateTP(273.15 + 20, 20, 80.0, 40));
 
@@ -194,18 +193,18 @@ class CPAFullyImplicitBenchmarkTest extends neqsim.NeqSimTest {
     benchmarkCase("Oil+Gas+Water+MEG", new CaseBuilder() {
       @Override
       public void configure(SystemInterface sys, int idx) {
-        sys.addComponent("methane", 0.40);
-        sys.addComponent("ethane", 0.05);
-        sys.addComponent("propane", 0.04);
-        sys.addComponent("n-butane", 0.03);
-        sys.addComponent("n-pentane", 0.03);
-        sys.addComponent("n-hexane", 0.04);
-        sys.addComponent("n-heptane", 0.08);
-        sys.addComponent("n-octane", 0.05);
-        sys.addComponent("water", 0.25);
-        sys.addComponent("MEG", 0.03);
-        sys.setMixingRule(10);
-        sys.setMultiPhaseCheck(true);
+	sys.addComponent("methane", 0.40);
+	sys.addComponent("ethane", 0.05);
+	sys.addComponent("propane", 0.04);
+	sys.addComponent("n-butane", 0.03);
+	sys.addComponent("n-pentane", 0.03);
+	sys.addComponent("n-hexane", 0.04);
+	sys.addComponent("n-heptane", 0.08);
+	sys.addComponent("n-octane", 0.05);
+	sys.addComponent("water", 0.25);
+	sys.addComponent("MEG", 0.03);
+	sys.setMixingRule(10);
+	sys.setMultiPhaseCheck(true);
       }
     }, generateTP(273.15 + 40, 20, 100.0, 50));
 
@@ -213,9 +212,9 @@ class CPAFullyImplicitBenchmarkTest extends neqsim.NeqSimTest {
     benchmarkCase("MEG + water (P sweep)", new CaseBuilder() {
       @Override
       public void configure(SystemInterface sys, int idx) {
-        sys.addComponent("MEG", 0.4);
-        sys.addComponent("water", 0.6);
-        sys.setMixingRule(10);
+	sys.addComponent("MEG", 0.4);
+	sys.addComponent("water", 0.6);
+	sys.setMixingRule(10);
       }
     }, generateTP(273.15 + 25, 0, 10.0, 40));
 
@@ -223,11 +222,11 @@ class CPAFullyImplicitBenchmarkTest extends neqsim.NeqSimTest {
     benchmarkCase("Methanol+Water+Methane", new CaseBuilder() {
       @Override
       public void configure(SystemInterface sys, int idx) {
-        sys.addComponent("methane", 0.85);
-        sys.addComponent("methanol", 0.05);
-        sys.addComponent("water", 0.10);
-        sys.setMixingRule(10);
-        sys.setMultiPhaseCheck(true);
+	sys.addComponent("methane", 0.85);
+	sys.addComponent("methanol", 0.05);
+	sys.addComponent("water", 0.10);
+	sys.setMixingRule(10);
+	sys.setMultiPhaseCheck(true);
       }
     }, generateTP(273.15 + 0, 15, 60.0, 30));
 
@@ -247,15 +246,13 @@ class CPAFullyImplicitBenchmarkTest extends neqsim.NeqSimTest {
     double P = 80.0;
 
     SystemInterface standard = createMultiComp(new SystemSrkCPAstatoil(T, P), true, true, true);
-    SystemInterface implicit =
-        createMultiComp(new SystemSrkCPAstatoilFullyImplicit(T, P), true, true, true);
+    SystemInterface implicit = createMultiComp(new SystemSrkCPAstatoilFullyImplicit(T, P), true, true, true);
 
     runFlash(standard);
     runFlash(implicit);
 
     logger.info("\n=== Phase Property Comparison (Oil+Gas+Water+MEG, 50C, 80bar) ===");
-    logger.info(String.format("%-12s %-10s %-15s %-15s %-8s", "Phase", "Property", "Standard",
-        "Implicit", "Err(%)"));
+    logger.info(String.format("%-12s %-10s %-15s %-15s %-8s", "Phase", "Property", "Standard", "Implicit", "Err(%)"));
     logger.info("----------------------------------------------------------------");
 
     int nPhStd = standard.getNumberOfPhases();
@@ -275,8 +272,7 @@ class CPAFullyImplicitBenchmarkTest extends neqsim.NeqSimTest {
       printProp(phName, "Z", zStd, zImpl);
       printProp(phName, "Beta", betaStd, betaImpl);
 
-      assertEquals(densStd, densImpl, Math.max(Math.abs(densStd) * 0.02, 0.01),
-          phName + " density mismatch");
+      assertEquals(densStd, densImpl, Math.max(Math.abs(densStd) * 0.02, 0.01), phName + " density mismatch");
       assertEquals(zStd, zImpl, Math.max(Math.abs(zStd) * 0.02, 1e-6), phName + " Z mismatch");
     }
     logger.info("----------------------------------------------------------------\n");
@@ -342,14 +338,13 @@ class CPAFullyImplicitBenchmarkTest extends neqsim.NeqSimTest {
     long timeImpl = System.nanoTime() - startImpl;
 
     double ratio = (double) timeImpl / timeStd;
-    logger.info(String.format("%-45s %8d %8d %6.2f %6d", label, timeStd / 1_000_000,
-        timeImpl / 1_000_000, ratio, nPhases));
+    logger.info(
+	String.format("%-45s %8d %8d %6.2f %6d", label, timeStd / 1_000_000, timeImpl / 1_000_000, ratio, nPhases));
   }
 
   private CompareResult compareFlash(double T, double P, boolean gas, boolean oil, boolean meg) {
     SystemInterface standard = createMultiComp(new SystemSrkCPAstatoil(T, P), gas, oil, meg);
-    SystemInterface implicit =
-        createMultiComp(new SystemSrkCPAstatoilFullyImplicit(T, P), gas, oil, meg);
+    SystemInterface implicit = createMultiComp(new SystemSrkCPAstatoilFullyImplicit(T, P), gas, oil, meg);
 
     runFlash(standard);
     runFlash(implicit);
@@ -357,8 +352,7 @@ class CPAFullyImplicitBenchmarkTest extends neqsim.NeqSimTest {
     return buildResult(standard, implicit);
   }
 
-  private SystemInterface createMultiComp(SystemInterface sys, boolean gas, boolean oil,
-      boolean meg) {
+  private SystemInterface createMultiComp(SystemInterface sys, boolean gas, boolean oil, boolean meg) {
     if (gas) {
       sys.addComponent("methane", 0.50);
       sys.addComponent("ethane", 0.05);
@@ -424,26 +418,21 @@ class CPAFullyImplicitBenchmarkTest extends neqsim.NeqSimTest {
   }
 
   private void printResult(String label, CompareResult r) {
-    double errDens =
-        Math.abs(r.densStdPh0) > 1e-6 ? Math.abs(r.densStdPh0 - r.densImplPh0) / r.densStdPh0 * 100
-            : 0;
-    double errZ =
-        Math.abs(r.zStdPh0) > 1e-6 ? Math.abs(r.zStdPh0 - r.zImplPh0) / r.zStdPh0 * 100 : 0;
-    logger.info(String.format("  %-40s phases=%d/%d  dens_err=%.4f%%  Z_err=%.4f%%", label,
-        r.nPhasesStd, r.nPhasesImpl, errDens, errZ));
+    double errDens = Math.abs(r.densStdPh0) > 1e-6 ? Math.abs(r.densStdPh0 - r.densImplPh0) / r.densStdPh0 * 100 : 0;
+    double errZ = Math.abs(r.zStdPh0) > 1e-6 ? Math.abs(r.zStdPh0 - r.zImplPh0) / r.zStdPh0 * 100 : 0;
+    logger.info(String.format("  %-40s phases=%d/%d  dens_err=%.4f%%  Z_err=%.4f%%", label, r.nPhasesStd, r.nPhasesImpl,
+	errDens, errZ));
   }
 
   private void printProp(String phase, String prop, double std, double impl) {
     double err = Math.abs(std) > 1e-10 ? Math.abs(std - impl) / std * 100.0 : 0.0;
-    System.out
-        .println(String.format("%-12s %-10s %15.6f %15.6f %7.4f%%", phase, prop, std, impl, err));
+    System.out.println(String.format("%-12s %-10s %15.6f %15.6f %7.4f%%", phase, prop, std, impl, err));
   }
 
   private void assertMatch(CompareResult r, double relTol) {
     assertEquals(r.nPhasesStd, r.nPhasesImpl, "Number of phases must match");
     assertEquals(r.densStdPh0, r.densImplPh0, Math.max(Math.abs(r.densStdPh0) * relTol, 0.01),
-        "Phase 0 density mismatch");
-    assertEquals(r.zStdPh0, r.zImplPh0, Math.max(Math.abs(r.zStdPh0) * relTol, 1e-6),
-        "Phase 0 Z mismatch");
+	"Phase 0 density mismatch");
+    assertEquals(r.zStdPh0, r.zImplPh0, Math.max(Math.abs(r.zStdPh0) * relTol, 1e-6), "Phase 0 Z mismatch");
   }
 }

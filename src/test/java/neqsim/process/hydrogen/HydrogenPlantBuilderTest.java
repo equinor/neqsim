@@ -15,8 +15,8 @@ public class HydrogenPlantBuilderTest extends neqsim.NeqSimTest {
 
   @Test
   public void testSmrBuilderCreatesRunnableTemplate() {
-    ProcessSystem process = new SMRHydrogenPlantBuilder().setName("SMR test")
-        .setMethaneFeedMolePerSec(5.0).setIncludePsa(false).build();
+    ProcessSystem process = new SMRHydrogenPlantBuilder().setName("SMR test").setMethaneFeedMolePerSec(5.0)
+	.setIncludePsa(false).build();
 
     assertNotNull(process.getUnit("SMR test reformer furnace"));
     process.run();
@@ -28,28 +28,25 @@ public class HydrogenPlantBuilderTest extends neqsim.NeqSimTest {
 
   @Test
   public void testAtrBuilderCreatesRunnableTemplate() {
-    ProcessSystem process = new ATRHydrogenPlantBuilder().setName("ATR test")
-        .setMethaneFeedMolePerSec(5.0).setIncludePsa(false).build();
+    ProcessSystem process = new ATRHydrogenPlantBuilder().setName("ATR test").setMethaneFeedMolePerSec(5.0)
+	.setIncludePsa(false).build();
 
     assertNotNull(process.getUnit("ATR test autothermal reformer"));
     process.run();
 
-    AutothermalReformer reformer =
-        (AutothermalReformer) process.getUnit("ATR test autothermal reformer");
+    AutothermalReformer reformer = (AutothermalReformer) process.getUnit("ATR test autothermal reformer");
     assertTrue(reformer.getMethaneConversion() >= 0.0);
     assertTrue(reformer.getSootRiskIndex() >= 0.0 && reformer.getSootRiskIndex() <= 1.0);
   }
 
   @Test
   public void testPoxBuilderCreatesRunnableTemplate() {
-    ProcessSystem process =
-        new POXHydrogenPlantBuilder().setName("POX test").setMethaneFeedMolePerSec(5.0).build();
+    ProcessSystem process = new POXHydrogenPlantBuilder().setName("POX test").setMethaneFeedMolePerSec(5.0).build();
 
     assertNotNull(process.getUnit("POX test partial oxidation"));
     process.run();
 
-    PartialOxidationReactor reactor =
-        (PartialOxidationReactor) process.getUnit("POX test partial oxidation");
+    PartialOxidationReactor reactor = (PartialOxidationReactor) process.getUnit("POX test partial oxidation");
     assertTrue(reactor.getMethaneConversion() >= 0.0);
     assertNotNull(reactor.getQuenchSection());
   }
@@ -57,7 +54,7 @@ public class HydrogenPlantBuilderTest extends neqsim.NeqSimTest {
   @Test
   public void testBlueHydrogenBuilderExposesCaptureReadiness() {
     BlueHydrogenPlantBuilder builder = new BlueHydrogenPlantBuilder().setCo2CaptureFraction(0.92)
-        .setMethaneFeedMolePerSec(5.0).setIncludePsa(true);
+	.setMethaneFeedMolePerSec(5.0).setIncludePsa(true);
     ProcessSystem process = builder.build();
 
     assertNotNull(process.getUnit("Blue Hydrogen Plant reformer furnace"));

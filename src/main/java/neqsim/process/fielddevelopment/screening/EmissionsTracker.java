@@ -58,7 +58,7 @@ public class EmissionsTracker {
   /**
    * Estimates emissions for a concept with facility configuration.
    *
-   * @param concept field concept
+   * @param concept        field concept
    * @param facilityConfig facility configuration
    * @return emissions report
    */
@@ -70,9 +70,9 @@ public class EmissionsTracker {
     builder.totalPowerMW(totalPowerMW);
 
     // Determine power source and calculate power emissions
-    InfrastructureInput.PowerSupply powerSupply =
-        concept.getInfrastructure() != null ? concept.getInfrastructure().getPowerSupply()
-            : InfrastructureInput.PowerSupply.GAS_TURBINE;
+    InfrastructureInput.PowerSupply powerSupply = concept.getInfrastructure() != null
+	? concept.getInfrastructure().getPowerSupply()
+	: InfrastructureInput.PowerSupply.GAS_TURBINE;
 
     double emissionFactor = getEmissionFactor(powerSupply);
     builder.powerSource(powerSupply.name());
@@ -101,8 +101,7 @@ public class EmissionsTracker {
     }
 
     // Total emissions
-    double totalEmissions =
-        annualPowerEmissionsTonnes + flaringEmissions + fugitiveEmissions + ventedCO2;
+    double totalEmissions = annualPowerEmissionsTonnes + flaringEmissions + fugitiveEmissions + ventedCO2;
     builder.totalEmissionsTonnesPerYear(totalEmissions);
 
     // Calculate intensity
@@ -129,18 +128,18 @@ public class EmissionsTracker {
    * Estimates lifecycle emissions from an annual production profile.
    *
    * <p>
-   * The calculation scales compression and utility power with production load while keeping a fixed
-   * base-load component. Flaring, fugitive emissions, and vented CO2 are calculated from annual gas
-   * throughput, so emissions follow decline profiles rather than a single annual screening value.
+   * The calculation scales compression and utility power with production load while keeping a fixed base-load
+   * component. Flaring, fugitive emissions, and vented CO2 are calculated from annual gas throughput, so emissions
+   * follow decline profiles rather than a single annual screening value.
    * </p>
    *
-   * @param concept field concept
-   * @param facilityConfig facility configuration
+   * @param concept           field concept
+   * @param facilityConfig    facility configuration
    * @param productionProfile annual production profile in Sm3/year for gas or bbl/year for oil
    * @return lifecycle emissions profile
    */
-  public LifecycleEmissionsProfile estimateLifecycle(FieldConcept concept,
-      FacilityConfig facilityConfig, Map<Integer, Double> productionProfile) {
+  public LifecycleEmissionsProfile estimateLifecycle(FieldConcept concept, FacilityConfig facilityConfig,
+      Map<Integer, Double> productionProfile) {
     if (productionProfile == null || productionProfile.isEmpty()) {
       return LifecycleEmissionsProfile.empty();
     }
@@ -152,12 +151,11 @@ public class EmissionsTracker {
       peakProduction = Math.max(peakProduction, value == null ? 0.0 : value.doubleValue());
     }
 
-    InfrastructureInput.PowerSupply powerSupply =
-        concept.getInfrastructure() != null ? concept.getInfrastructure().getPowerSupply()
-            : InfrastructureInput.PowerSupply.GAS_TURBINE;
+    InfrastructureInput.PowerSupply powerSupply = concept.getInfrastructure() != null
+	? concept.getInfrastructure().getPowerSupply()
+	: InfrastructureInput.PowerSupply.GAS_TURBINE;
     double emissionFactor = getEmissionFactor(powerSupply);
-    List<LifecycleEmissionsProfile.AnnualEmissions> annual =
-        new ArrayList<LifecycleEmissionsProfile.AnnualEmissions>();
+    List<LifecycleEmissionsProfile.AnnualEmissions> annual = new ArrayList<LifecycleEmissionsProfile.AnnualEmissions>();
 
     TreeMap<Integer, Double> sortedProfile = new TreeMap<Integer, Double>(productionProfile);
     for (Map.Entry<Integer, Double> entry : sortedProfile.entrySet()) {
@@ -166,14 +164,14 @@ public class EmissionsTracker {
       double powerMw = baseReport.getTotalPowerMW() * (0.35 + 0.65 * loadFactor);
       double powerEmissionsTonnes = powerMw * 8000.0 * emissionFactor / 1000.0;
       double gasProductionSm3d = getAnnualGasProductionSm3d(concept, production, gasConcept);
-      double flaringEmissionsTonnes =
-          gasProductionSm3d * 0.001 * 365.0 * FLARE_EFFICIENCY * FLARE_KG_CO2_PER_SM3 / 1000.0;
+      double flaringEmissionsTonnes = gasProductionSm3d * 0.001 * 365.0 * FLARE_EFFICIENCY * FLARE_KG_CO2_PER_SM3
+	  / 1000.0;
       double fugitiveEmissionsTonnes = estimateFugitiveEmissions(gasProductionSm3d);
       double ventedCo2Tonnes = estimateAnnualVentedCO2(concept, gasProductionSm3d);
       double productionBoe = getAnnualProductionBoe(concept, production, gasConcept);
-      annual.add(new LifecycleEmissionsProfile.AnnualEmissions(entry.getKey(), production,
-          productionBoe, loadFactor, powerMw, powerSupply.name(), powerEmissionsTonnes,
-          flaringEmissionsTonnes, fugitiveEmissionsTonnes, ventedCo2Tonnes));
+      annual.add(new LifecycleEmissionsProfile.AnnualEmissions(entry.getKey(), production, productionBoe, loadFactor,
+	  powerMw, powerSupply.name(), powerEmissionsTonnes, flaringEmissionsTonnes, fugitiveEmissionsTonnes,
+	  ventedCo2Tonnes));
     }
     return new LifecycleEmissionsProfile(annual);
   }
@@ -184,37 +182,36 @@ public class EmissionsTracker {
     if (facilityConfig != null) {
       // Compression
       for (BlockConfig block : facilityConfig.getBlocksOfType(BlockType.COMPRESSION)) {
-        int stages = block.getIntParameter("stages", 1);
-        power += stages * COMPRESSION_MW_PER_STAGE;
+	int stages = block.getIntParameter("stages", 1);
+	power += stages * COMPRESSION_MW_PER_STAGE;
       }
 
       // TEG dehydration
       if (facilityConfig.hasBlock(BlockType.TEG_DEHYDRATION)) {
-        power += TEG_REGEN_MW;
+	power += TEG_REGEN_MW;
       }
 
       // MEG regeneration
       if (facilityConfig.hasBlock(BlockType.MEG_REGENERATION)) {
-        power += MEG_REGEN_MW;
+	power += MEG_REGEN_MW;
       }
 
       // CO2 removal
       if (facilityConfig.hasCo2Removal() && concept.getReservoir() != null) {
-        power += concept.getReservoir().getCo2Percent() * CO2_REMOVAL_MW_PER_PERCENT;
+	power += concept.getReservoir().getCo2Percent() * CO2_REMOVAL_MW_PER_PERCENT;
       }
     } else {
       // Estimate based on concept alone
       if (concept.needsCO2Removal()) {
-        power += 5.0;
+	power += 5.0;
       }
       if (concept.needsDehydration()) {
-        power += 2.0;
+	power += 2.0;
       }
       if (concept.getWells() != null) {
-        double rate =
-            concept.getWells().getRatePerWellSm3d() * concept.getWells().getProducerCount();
-        // Assume ~2 stages compression for most cases
-        power += (rate / 1e6) * 3.0;
+	double rate = concept.getWells().getRatePerWellSm3d() * concept.getWells().getProducerCount();
+	// Assume ~2 stages compression for most cases
+	power += (rate / 1e6) * 3.0;
       }
     }
 
@@ -223,16 +220,16 @@ public class EmissionsTracker {
 
   private double getEmissionFactor(InfrastructureInput.PowerSupply powerSupply) {
     switch (powerSupply) {
-      case POWER_FROM_SHORE:
-        return GRID_POWER_KG_CO2_PER_MWH;
-      case GAS_TURBINE:
-        return GAS_TURBINE_KG_CO2_PER_MWH;
-      case COMBINED_CYCLE:
-        return GAS_TURBINE_KG_CO2_PER_MWH * 0.7; // More efficient
-      case DIESEL:
-        return GAS_TURBINE_KG_CO2_PER_MWH * 1.2; // Less efficient
-      default:
-        return GAS_TURBINE_KG_CO2_PER_MWH;
+    case POWER_FROM_SHORE:
+      return GRID_POWER_KG_CO2_PER_MWH;
+    case GAS_TURBINE:
+      return GAS_TURBINE_KG_CO2_PER_MWH;
+    case COMBINED_CYCLE:
+      return GAS_TURBINE_KG_CO2_PER_MWH * 0.7; // More efficient
+    case DIESEL:
+      return GAS_TURBINE_KG_CO2_PER_MWH * 1.2; // Less efficient
+    default:
+      return GAS_TURBINE_KG_CO2_PER_MWH;
     }
   }
 
@@ -294,13 +291,11 @@ public class EmissionsTracker {
       return true;
     }
     ReservoirInput.FluidType fluidType = concept.getReservoir().getFluidType();
-    return fluidType == ReservoirInput.FluidType.LEAN_GAS
-        || fluidType == ReservoirInput.FluidType.RICH_GAS
-        || fluidType == ReservoirInput.FluidType.GAS_CONDENSATE;
+    return fluidType == ReservoirInput.FluidType.LEAN_GAS || fluidType == ReservoirInput.FluidType.RICH_GAS
+	|| fluidType == ReservoirInput.FluidType.GAS_CONDENSATE;
   }
 
-  private double getAnnualGasProductionSm3d(FieldConcept concept, double annualProduction,
-      boolean gasConcept) {
+  private double getAnnualGasProductionSm3d(FieldConcept concept, double annualProduction, boolean gasConcept) {
     if (gasConcept) {
       return annualProduction / 365.0;
     }
@@ -318,8 +313,7 @@ public class EmissionsTracker {
     return annualCO2Sm3 * 1.98 / 1000.0;
   }
 
-  private double getAnnualProductionBoe(FieldConcept concept, double annualProduction,
-      boolean gasConcept) {
+  private double getAnnualProductionBoe(FieldConcept concept, double annualProduction, boolean gasConcept) {
     if (gasConcept) {
       return annualProduction / 6000.0;
     }
@@ -403,11 +397,11 @@ public class EmissionsTracker {
      */
     public String getIntensityClass() {
       if (intensityKgCO2PerBoe < 10) {
-        return "LOW";
+	return "LOW";
       } else if (intensityKgCO2PerBoe < 25) {
-        return "MEDIUM";
+	return "MEDIUM";
       } else {
-        return "HIGH";
+	return "HIGH";
       }
     }
 
@@ -419,29 +413,25 @@ public class EmissionsTracker {
     public String getSummary() {
       StringBuilder sb = new StringBuilder();
       sb.append("Emissions Assessment:\n");
-      sb.append("  Power: ").append(String.format("%.1f", totalPowerMW)).append(" MW (")
-          .append(powerSource).append(")\n");
+      sb.append("  Power: ").append(String.format("%.1f", totalPowerMW)).append(" MW (").append(powerSource)
+	  .append(")\n");
       sb.append("  Annual emissions: ").append(String.format("%.0f", totalEmissionsTonnesPerYear))
-          .append(" tonnes CO2e\n");
-      sb.append("    - Power: ").append(String.format("%.0f", powerEmissionsTonnesPerYear))
-          .append(" t\n");
-      sb.append("    - Flaring: ").append(String.format("%.0f", flaringEmissionsTonnesPerYear))
-          .append(" t\n");
-      sb.append("    - Fugitive: ").append(String.format("%.0f", fugitiveEmissionsTonnesPerYear))
-          .append(" t\n");
+	  .append(" tonnes CO2e\n");
+      sb.append("    - Power: ").append(String.format("%.0f", powerEmissionsTonnesPerYear)).append(" t\n");
+      sb.append("    - Flaring: ").append(String.format("%.0f", flaringEmissionsTonnesPerYear)).append(" t\n");
+      sb.append("    - Fugitive: ").append(String.format("%.0f", fugitiveEmissionsTonnesPerYear)).append(" t\n");
       if (ventedCO2TonnesPerYear > 0) {
-        sb.append("    - Vented CO2: ").append(String.format("%.0f", ventedCO2TonnesPerYear))
-            .append(" t\n");
+	sb.append("    - Vented CO2: ").append(String.format("%.0f", ventedCO2TonnesPerYear)).append(" t\n");
       }
-      sb.append("  Intensity: ").append(String.format("%.1f", intensityKgCO2PerBoe))
-          .append(" kg CO2e/boe (").append(getIntensityClass()).append(")\n");
+      sb.append("  Intensity: ").append(String.format("%.1f", intensityKgCO2PerBoe)).append(" kg CO2e/boe (")
+	  .append(getIntensityClass()).append(")\n");
       return sb.toString();
     }
 
     @Override
     public String toString() {
-      return String.format("EmissionsReport[%.0f t/yr, %.1f kg/boe (%s)]",
-          totalEmissionsTonnesPerYear, intensityKgCO2PerBoe, getIntensityClass());
+      return String.format("EmissionsReport[%.0f t/yr, %.1f kg/boe (%s)]", totalEmissionsTonnesPerYear,
+	  intensityKgCO2PerBoe, getIntensityClass());
     }
 
     /**
@@ -459,52 +449,52 @@ public class EmissionsTracker {
       private final Map<String, Double> emissionSources = new LinkedHashMap<>();
 
       public Builder totalPowerMW(double mw) {
-        this.totalPowerMW = mw;
-        return this;
+	this.totalPowerMW = mw;
+	return this;
       }
 
       public Builder powerSource(String source) {
-        this.powerSource = source;
-        return this;
+	this.powerSource = source;
+	return this;
       }
 
       public Builder powerEmissionsTonnesPerYear(double tonnes) {
-        this.powerEmissionsTonnesPerYear = tonnes;
-        return this;
+	this.powerEmissionsTonnesPerYear = tonnes;
+	return this;
       }
 
       public Builder flaringEmissionsTonnesPerYear(double tonnes) {
-        this.flaringEmissionsTonnesPerYear = tonnes;
-        return this;
+	this.flaringEmissionsTonnesPerYear = tonnes;
+	return this;
       }
 
       public Builder fugitiveEmissionsTonnesPerYear(double tonnes) {
-        this.fugitiveEmissionsTonnesPerYear = tonnes;
-        return this;
+	this.fugitiveEmissionsTonnesPerYear = tonnes;
+	return this;
       }
 
       public Builder ventedCO2TonnesPerYear(double tonnes) {
-        this.ventedCO2TonnesPerYear = tonnes;
-        return this;
+	this.ventedCO2TonnesPerYear = tonnes;
+	return this;
       }
 
       public Builder totalEmissionsTonnesPerYear(double tonnes) {
-        this.totalEmissionsTonnesPerYear = tonnes;
-        return this;
+	this.totalEmissionsTonnesPerYear = tonnes;
+	return this;
       }
 
       public Builder intensityKgCO2PerBoe(double intensity) {
-        this.intensityKgCO2PerBoe = intensity;
-        return this;
+	this.intensityKgCO2PerBoe = intensity;
+	return this;
       }
 
       public Builder addEmissionSource(String source, double tonnes) {
-        this.emissionSources.put(source, tonnes);
-        return this;
+	this.emissionSources.put(source, tonnes);
+	return this;
       }
 
       public EmissionsReport build() {
-        return new EmissionsReport(this);
+	return new EmissionsReport(this);
       }
     }
   }

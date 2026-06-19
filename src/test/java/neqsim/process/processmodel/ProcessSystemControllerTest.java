@@ -33,14 +33,15 @@ public class ProcessSystemControllerTest extends neqsim.NeqSimTest {
   }
 
   @Test
-  void testGetTime() {}
+  void testGetTime() {
+  }
 
   @Test
-  void testGetTimeStep() {}
+  void testGetTimeStep() {
+  }
 
   private SystemInterface getTestSystem() {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
     testSystem.addComponent("methane", 0.900);
     testSystem.addComponent("ethane", 0.100);
     testSystem.addComponent("n-heptane", 0.1);
@@ -70,8 +71,7 @@ public class ProcessSystemControllerTest extends neqsim.NeqSimTest {
     Separator separator_1 = new Separator("sep 1");
     separator_1.addStream(valve_1.getOutletStream());
 
-    VolumeFlowTransmitter flowTransmitter =
-        new VolumeFlowTransmitter(separator_1.getGasOutStream());
+    VolumeFlowTransmitter flowTransmitter = new VolumeFlowTransmitter(separator_1.getGasOutStream());
     flowTransmitter.setUnit("kg/hr");
     flowTransmitter.setMaximumValue(150.0);
     flowTransmitter.setMinimumValue(10.0);
@@ -95,22 +95,18 @@ public class ProcessSystemControllerTest extends neqsim.NeqSimTest {
     for (int i = 0; i < 55; i++) {
       flowController.setControllerSetPoint(65.0 + getRandomDistrurbanceFlowRate());
       p.runTransient();
-      logger.info(
-          "flow rate " + valve_1.getOutletStream().getFluid().getPhase("gas").getFlowRate("kg/hr")
-              + " controller response " + flowController.getResponse() + " valve opening "
-              + valve_1.getPercentValveOpening() + " pressure "
-              + separator_1.getGasOutStream().getPressure());
+      logger.info("flow rate " + valve_1.getOutletStream().getFluid().getPhase("gas").getFlowRate("kg/hr")
+	  + " controller response " + flowController.getResponse() + " valve opening "
+	  + valve_1.getPercentValveOpening() + " pressure " + separator_1.getGasOutStream().getPressure());
     }
 
     for (int i = 0; i < 100; i++) {
       flowController.setControllerSetPoint(55.0 + getRandomDistrurbanceFlowRate());
       // stream_1.runTransient(1.0);
       p.runTransient();
-      logger.info(
-          "flow rate " + valve_1.getOutletStream().getFluid().getPhase("gas").getFlowRate("kg/hr")
-              + " controller response " + flowController.getResponse() + " valve opening "
-              + valve_1.getPercentValveOpening() + " pressure "
-              + separator_1.getGasOutStream().getPressure());
+      logger.info("flow rate " + valve_1.getOutletStream().getFluid().getPhase("gas").getFlowRate("kg/hr")
+	  + " controller response " + flowController.getResponse() + " valve opening "
+	  + valve_1.getPercentValveOpening() + " pressure " + separator_1.getGasOutStream().getPressure());
     }
 
     // transient behaviour
@@ -118,11 +114,9 @@ public class ProcessSystemControllerTest extends neqsim.NeqSimTest {
     for (int i = 0; i < 55; i++) {
       flowController.setControllerSetPoint(75.0 + getRandomDistrurbanceFlowRate());
       p.runTransient();
-      logger.info(
-          "flow rate " + valve_1.getOutletStream().getFluid().getPhase("gas").getFlowRate("kg/hr")
-              + " controller response " + flowController.getResponse() + " valve opening "
-              + valve_1.getPercentValveOpening() + " pressure "
-              + separator_1.getGasOutStream().getPressure());
+      logger.info("flow rate " + valve_1.getOutletStream().getFluid().getPhase("gas").getFlowRate("kg/hr")
+	  + " controller response " + flowController.getResponse() + " valve opening "
+	  + valve_1.getPercentValveOpening() + " pressure " + separator_1.getGasOutStream().getPressure());
       // p.runTransient();
     }
   }

@@ -2,14 +2,13 @@
  * Equipment failure modeling for reliability and risk analysis.
  *
  * <p>
- * This package provides classes for modeling equipment failures, their effects on process
- * operations, and integration with risk analysis frameworks.
+ * This package provides classes for modeling equipment failures, their effects on process operations, and integration
+ * with risk analysis frameworks.
  * </p>
  *
  * <h2>Key Classes</h2>
  * <ul>
- * <li>{@link neqsim.process.equipment.failure.EquipmentFailureMode} - Defines failure types and
- * consequences</li>
+ * <li>{@link neqsim.process.equipment.failure.EquipmentFailureMode} - Defines failure types and consequences</li>
  * </ul>
  *
  * <h2>Usage Example</h2>

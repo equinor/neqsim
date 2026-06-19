@@ -184,7 +184,7 @@ public class Riser extends PipeBeggsAndBrills {
   /**
    * Constructor with name and inlet stream.
    *
-   * @param name equipment name
+   * @param name     equipment name
    * @param inStream inlet stream
    */
   public Riser(String name, StreamInterface inStream) {
@@ -196,8 +196,8 @@ public class Riser extends PipeBeggsAndBrills {
    * Constructor with riser type, name and inlet stream.
    *
    * @param riserType the type of riser
-   * @param name equipment name
-   * @param inStream inlet stream
+   * @param name      equipment name
+   * @param inStream  inlet stream
    */
   public Riser(RiserType riserType, String name, StreamInterface inStream) {
     super(name, inStream);
@@ -210,8 +210,8 @@ public class Riser extends PipeBeggsAndBrills {
   /**
    * Create a Steel Catenary Riser.
    *
-   * @param name equipment name
-   * @param inStream inlet stream
+   * @param name       equipment name
+   * @param inStream   inlet stream
    * @param waterDepth water depth in meters
    * @return configured SCR
    */
@@ -224,8 +224,8 @@ public class Riser extends PipeBeggsAndBrills {
   /**
    * Create a Top Tensioned Riser.
    *
-   * @param name equipment name
-   * @param inStream inlet stream
+   * @param name       equipment name
+   * @param inStream   inlet stream
    * @param waterDepth water depth in meters
    * @return configured TTR
    */
@@ -238,14 +238,13 @@ public class Riser extends PipeBeggsAndBrills {
   /**
    * Create a Lazy-Wave riser.
    *
-   * @param name equipment name
-   * @param inStream inlet stream
-   * @param waterDepth water depth in meters
+   * @param name          equipment name
+   * @param inStream      inlet stream
+   * @param waterDepth    water depth in meters
    * @param buoyancyDepth depth of buoyancy modules from surface
    * @return configured lazy-wave riser
    */
-  public static Riser createLazyWave(String name, StreamInterface inStream, double waterDepth,
-      double buoyancyDepth) {
+  public static Riser createLazyWave(String name, StreamInterface inStream, double waterDepth, double buoyancyDepth) {
     Riser riser = new Riser(RiserType.LAZY_WAVE, name, inStream);
     riser.setWaterDepth(waterDepth);
     riser.setBuoyancyModuleDepth(buoyancyDepth);
@@ -255,8 +254,8 @@ public class Riser extends PipeBeggsAndBrills {
   /**
    * Create a Flexible riser.
    *
-   * @param name equipment name
-   * @param inStream inlet stream
+   * @param name       equipment name
+   * @param inStream   inlet stream
    * @param waterDepth water depth in meters
    * @return configured flexible riser
    */
@@ -269,8 +268,8 @@ public class Riser extends PipeBeggsAndBrills {
   /**
    * Create a Hybrid riser.
    *
-   * @param name equipment name
-   * @param inStream inlet stream
+   * @param name       equipment name
+   * @param inStream   inlet stream
    * @param waterDepth water depth in meters
    * @return configured hybrid riser
    */
@@ -291,32 +290,32 @@ public class Riser extends PipeBeggsAndBrills {
    */
   public void updateGeometryFromType() {
     switch (riserType) {
-      case STEEL_CATENARY_RISER:
-        configureSCR();
-        break;
-      case FLEXIBLE_RISER:
-        configureFlexible();
-        break;
-      case TOP_TENSIONED_RISER:
-        configureTTR();
-        break;
-      case LAZY_WAVE:
-        configureLazyWave();
-        break;
-      case STEEP_WAVE:
-        configureSteepWave();
-        break;
-      case HYBRID_RISER:
-        configureHybrid();
-        break;
-      case FREE_STANDING:
-        configureFreeStanding();
-        break;
-      case VERTICAL:
-        configureVertical();
-        break;
-      default:
-        configureSCR();
+    case STEEL_CATENARY_RISER:
+      configureSCR();
+      break;
+    case FLEXIBLE_RISER:
+      configureFlexible();
+      break;
+    case TOP_TENSIONED_RISER:
+      configureTTR();
+      break;
+    case LAZY_WAVE:
+      configureLazyWave();
+      break;
+    case STEEP_WAVE:
+      configureSteepWave();
+      break;
+    case HYBRID_RISER:
+      configureHybrid();
+      break;
+    case FREE_STANDING:
+      configureFreeStanding();
+      break;
+    case VERTICAL:
+      configureVertical();
+      break;
+    default:
+      configureSCR();
     }
 
     // Set ambient temperature
@@ -823,7 +822,7 @@ public class Riser extends PipeBeggsAndBrills {
    */
   public boolean isCatenaryType() {
     return riserType == RiserType.STEEL_CATENARY_RISER || riserType == RiserType.FLEXIBLE_RISER
-        || riserType == RiserType.LAZY_WAVE || riserType == RiserType.STEEP_WAVE;
+	|| riserType == RiserType.LAZY_WAVE || riserType == RiserType.STEEP_WAVE;
   }
 
   /**
@@ -833,7 +832,7 @@ public class Riser extends PipeBeggsAndBrills {
    */
   public boolean isTensionedType() {
     return riserType == RiserType.TOP_TENSIONED_RISER || riserType == RiserType.HYBRID_RISER
-        || riserType == RiserType.FREE_STANDING;
+	|| riserType == RiserType.FREE_STANDING;
   }
 
   /**
@@ -851,7 +850,6 @@ public class Riser extends PipeBeggsAndBrills {
    * @return true if has buoyancy modules
    */
   public boolean hasBuoyancyModules() {
-    return riserType == RiserType.LAZY_WAVE || riserType == RiserType.STEEP_WAVE
-        || riserType == RiserType.HYBRID_RISER;
+    return riserType == RiserType.LAZY_WAVE || riserType == RiserType.STEEP_WAVE || riserType == RiserType.HYBRID_RISER;
   }
 }

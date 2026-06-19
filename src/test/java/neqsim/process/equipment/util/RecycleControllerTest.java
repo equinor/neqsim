@@ -341,18 +341,18 @@ class RecycleControllerTest {
       assertNotNull(accelerator);
 
       // Feed it some mock iteration data to build Jacobian
-      double[] input1 = {300.0, 50.0, 100.0};
-      double[] output1 = {301.0, 50.1, 100.5};
+      double[] input1 = { 300.0, 50.0, 100.0 };
+      double[] output1 = { 301.0, 50.1, 100.5 };
       double[] accel1 = accelerator.accelerate(input1, output1);
       assertNotNull(accel1);
 
       double[] input2 = accel1;
-      double[] output2 = {300.5, 50.05, 100.25};
+      double[] output2 = { 300.5, 50.05, 100.25 };
       double[] accel2 = accelerator.accelerate(input2, output2);
       assertNotNull(accel2);
 
       double[] input3 = accel2;
-      double[] output3 = {300.2, 50.02, 100.1};
+      double[] output3 = { 300.2, 50.02, 100.1 };
       accelerator.accelerate(input3, output3);
 
       // Now we should have sensitivity data

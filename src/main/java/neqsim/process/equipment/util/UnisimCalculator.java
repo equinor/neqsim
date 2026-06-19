@@ -11,15 +11,14 @@ import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * Generic UniSim calculation block used when importing UniSim operations that carry process stream
- * topology but do not have a one-to-one physical NeqSim equivalent.
+ * Generic UniSim calculation block used when importing UniSim operations that carry process stream topology but do not
+ * have a one-to-one physical NeqSim equivalent.
  *
  * <p>
- * The block behaves as a deterministic pass-through by default: the first connected inlet stream is
- * cloned to one outlet stream and optional outlet specifications are applied. This is useful for
- * UniSim balance blocks, virtual streams, template-interface placeholders, and lightweight
- * calculator blocks where preserving connectivity is more important than silently dropping the
- * operation.
+ * The block behaves as a deterministic pass-through by default: the first connected inlet stream is cloned to one
+ * outlet stream and optional outlet specifications are applied. This is useful for UniSim balance blocks, virtual
+ * streams, template-interface placeholders, and lightweight calculator blocks where preserving connectivity is more
+ * important than silently dropping the operation.
  * </p>
  *
  * @author ESOL
@@ -86,7 +85,7 @@ public class UnisimCalculator extends ProcessEquipmentBaseClass {
   /**
    * Creates a UniSim calculator block with one inlet stream.
    *
-   * @param name name of the imported UniSim calculation block
+   * @param name        name of the imported UniSim calculation block
    * @param inletStream inlet stream used as the pass-through reference
    * @throws IllegalArgumentException if the inlet stream is null
    */
@@ -213,7 +212,7 @@ public class UnisimCalculator extends ProcessEquipmentBaseClass {
    * Sets an outlet flow rate override.
    *
    * @param flowRate outlet flow rate value
-   * @param unit unit of the flow rate value
+   * @param unit     unit of the flow rate value
    */
   public void setOutletFlowRate(double flowRate, String unit) {
     outletFlowRate = flowRate;
@@ -225,7 +224,7 @@ public class UnisimCalculator extends ProcessEquipmentBaseClass {
    * Sets an outlet flow rate override using the generic stream-style setter name.
    *
    * @param flowRate outlet flow rate value
-   * @param unit unit of the flow rate value
+   * @param unit     unit of the flow rate value
    */
   public void setFlowRate(double flowRate, String unit) {
     setOutletFlowRate(flowRate, unit);
@@ -244,7 +243,7 @@ public class UnisimCalculator extends ProcessEquipmentBaseClass {
    * Sets an outlet pressure override.
    *
    * @param pressure outlet pressure value
-   * @param unit unit of the pressure value
+   * @param unit     unit of the pressure value
    */
   public void setOutletPressure(double pressure, String unit) {
     outletPressure = pressure;
@@ -256,7 +255,7 @@ public class UnisimCalculator extends ProcessEquipmentBaseClass {
    * Sets an outlet pressure override using the generic stream-style setter name.
    *
    * @param pressure outlet pressure value
-   * @param unit unit of the pressure value
+   * @param unit     unit of the pressure value
    */
   public void setPressure(double pressure, String unit) {
     setOutletPressure(pressure, unit);
@@ -275,7 +274,7 @@ public class UnisimCalculator extends ProcessEquipmentBaseClass {
    * Sets an outlet temperature override.
    *
    * @param temperature outlet temperature value
-   * @param unit unit of the temperature value
+   * @param unit        unit of the temperature value
    */
   public void setOutletTemperature(double temperature, String unit) {
     outletTemperature = temperature;
@@ -287,7 +286,7 @@ public class UnisimCalculator extends ProcessEquipmentBaseClass {
    * Sets an outlet temperature override using the generic stream-style setter name.
    *
    * @param temperature outlet temperature value
-   * @param unit unit of the temperature value
+   * @param unit        unit of the temperature value
    */
   public void setTemperature(double temperature, String unit) {
     setOutletTemperature(temperature, unit);
@@ -299,8 +298,7 @@ public class UnisimCalculator extends ProcessEquipmentBaseClass {
    * @param molarComposition component molar fractions in NeqSim component order
    */
   public void setMolarComposition(double[] molarComposition) {
-    outletMolarComposition =
-        molarComposition == null ? null : Arrays.copyOf(molarComposition, molarComposition.length);
+    outletMolarComposition = molarComposition == null ? null : Arrays.copyOf(molarComposition, molarComposition.length);
     outletMolarCompositionSpecified = molarComposition != null;
   }
 
@@ -358,9 +356,9 @@ public class UnisimCalculator extends ProcessEquipmentBaseClass {
     StreamInterface inletStream = getInletStream();
     if (inletStream != null) {
       if (outletStream == null) {
-        outletStream = createOutletStream(inletStream);
+	outletStream = createOutletStream(inletStream);
       } else {
-        outletStream.setThermoSystem(inletStream.getThermoSystem().clone());
+	outletStream.setThermoSystem(inletStream.getThermoSystem().clone());
       }
     }
     if (outletStream != null) {

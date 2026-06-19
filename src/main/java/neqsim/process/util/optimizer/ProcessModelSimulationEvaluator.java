@@ -23,19 +23,17 @@ import neqsim.process.processmodel.ProcessSystem;
  * Black-box evaluator for large multi-area {@link ProcessModel} optimization problems.
  *
  * <p>
- * This evaluator fills the gap between the single-flowsheet {@link ProcessSimulationEvaluator} and
- * integrated models composed of several named {@link ProcessSystem} areas. Decision variables are
- * addressed with the existing {@link ProcessAutomation} syntax, for example
- * {@code "Wells::Producer A.flowRate"}. This keeps external optimizers independent of the internal
- * Java object graph while still allowing objective and constraint functions to inspect the full
- * model.
+ * This evaluator fills the gap between the single-flowsheet {@link ProcessSimulationEvaluator} and integrated models
+ * composed of several named {@link ProcessSystem} areas. Decision variables are addressed with the existing
+ * {@link ProcessAutomation} syntax, for example {@code "Wells::Producer A.flowRate"}. This keeps external optimizers
+ * independent of the internal Java object graph while still allowing objective and constraint functions to inspect the
+ * full model.
  * </p>
  *
  * <p>
- * The intended use case is fixed-equipment throughput optimization: vary producer/feed rates, run
- * the full {@link ProcessModel}, and stop when installed capacity constraints reveal the active
- * bottleneck. Capacity constraints can be added explicitly to equipment or discovered through the
- * {@link EquipmentCapacityStrategyRegistry}.
+ * The intended use case is fixed-equipment throughput optimization: vary producer/feed rates, run the full
+ * {@link ProcessModel}, and stop when installed capacity constraints reveal the active bottleneck. Capacity constraints
+ * can be added explicitly to equipment or discovered through the {@link EquipmentCapacityStrategyRegistry}.
  * </p>
  *
  * @author NeqSim Development Team
@@ -110,15 +108,16 @@ public class ProcessModelSimulationEvaluator implements Serializable {
     private transient BiConsumer<ProcessModel, Double> setter;
 
     /** Default constructor for serialization frameworks. */
-    public ParameterDefinition() {}
+    public ParameterDefinition() {
+    }
 
     /**
      * Creates a decision variable whose name is the same as its address.
      *
-     * @param address the area-qualified automation address
+     * @param address    the area-qualified automation address
      * @param lowerBound lower optimization bound
      * @param upperBound upper optimization bound
-     * @param unit unit of measure used when setting the value
+     * @param unit       unit of measure used when setting the value
      */
     public ParameterDefinition(String address, double lowerBound, double upperBound, String unit) {
       this(address, address, lowerBound, upperBound, unit);
@@ -127,14 +126,13 @@ public class ProcessModelSimulationEvaluator implements Serializable {
     /**
      * Creates a decision variable.
      *
-     * @param name human readable parameter name
-     * @param address the area-qualified automation address
+     * @param name       human readable parameter name
+     * @param address    the area-qualified automation address
      * @param lowerBound lower optimization bound
      * @param upperBound upper optimization bound
-     * @param unit unit of measure used when setting the value
+     * @param unit       unit of measure used when setting the value
      */
-    public ParameterDefinition(String name, String address, double lowerBound, double upperBound,
-        String unit) {
+    public ParameterDefinition(String name, String address, double lowerBound, double upperBound, String unit) {
       this.name = name;
       this.address = address;
       this.lowerBound = lowerBound;
@@ -324,17 +322,17 @@ public class ProcessModelSimulationEvaluator implements Serializable {
     private transient ToDoubleFunction<ProcessModel> evaluator;
 
     /** Default constructor for serialization frameworks. */
-    public ObjectiveDefinition() {}
+    public ObjectiveDefinition() {
+    }
 
     /**
      * Creates an objective definition.
      *
-     * @param name objective name
+     * @param name      objective name
      * @param evaluator model-level evaluator
      * @param direction optimization direction
      */
-    public ObjectiveDefinition(String name, ToDoubleFunction<ProcessModel> evaluator,
-        Direction direction) {
+    public ObjectiveDefinition(String name, ToDoubleFunction<ProcessModel> evaluator, Direction direction) {
       this.name = name;
       this.evaluator = evaluator;
       this.direction = direction;
@@ -449,7 +447,7 @@ public class ProcessModelSimulationEvaluator implements Serializable {
      */
     public double evaluateRaw(ProcessModel model) {
       if (evaluator == null) {
-        throw new IllegalStateException("Objective evaluator is not set for " + name);
+	throw new IllegalStateException("Objective evaluator is not set for " + name);
       }
       return evaluator.applyAsDouble(model);
     }
@@ -520,17 +518,17 @@ public class ProcessModelSimulationEvaluator implements Serializable {
     private transient CapacityConstraint capturedCapacityConstraint;
 
     /** Default constructor for serialization frameworks. */
-    public ConstraintDefinition() {}
+    public ConstraintDefinition() {
+    }
 
     /**
      * Creates a lower-bound model constraint.
      *
-     * @param name constraint name
-     * @param evaluator model-level evaluator
+     * @param name       constraint name
+     * @param evaluator  model-level evaluator
      * @param lowerBound lower bound
      */
-    public ConstraintDefinition(String name, ToDoubleFunction<ProcessModel> evaluator,
-        double lowerBound) {
+    public ConstraintDefinition(String name, ToDoubleFunction<ProcessModel> evaluator, double lowerBound) {
       this.name = name;
       this.evaluator = evaluator;
       this.lowerBound = lowerBound;
@@ -540,13 +538,13 @@ public class ProcessModelSimulationEvaluator implements Serializable {
     /**
      * Creates a range model constraint.
      *
-     * @param name constraint name
-     * @param evaluator model-level evaluator
+     * @param name       constraint name
+     * @param evaluator  model-level evaluator
      * @param lowerBound lower bound
      * @param upperBound upper bound
      */
-    public ConstraintDefinition(String name, ToDoubleFunction<ProcessModel> evaluator,
-        double lowerBound, double upperBound) {
+    public ConstraintDefinition(String name, ToDoubleFunction<ProcessModel> evaluator, double lowerBound,
+	double upperBound) {
       this.name = name;
       this.evaluator = evaluator;
       this.lowerBound = lowerBound;
@@ -764,13 +762,13 @@ public class ProcessModelSimulationEvaluator implements Serializable {
     /**
      * Marks this definition as an equipment capacity constraint.
      *
-     * @param areaName process area name
-     * @param equipmentName equipment name
+     * @param areaName                process area name
+     * @param equipmentName           equipment name
      * @param equipmentConstraintName equipment constraint name
-     * @param capacityConstraint captured capacity constraint
+     * @param capacityConstraint      captured capacity constraint
      */
-    public void setCapacityMetadata(String areaName, String equipmentName,
-        String equipmentConstraintName, CapacityConstraint capacityConstraint) {
+    public void setCapacityMetadata(String areaName, String equipmentName, String equipmentConstraintName,
+	CapacityConstraint capacityConstraint) {
       this.capacityConstraint = true;
       this.areaName = areaName;
       this.equipmentName = equipmentName;
@@ -786,7 +784,7 @@ public class ProcessModelSimulationEvaluator implements Serializable {
      */
     public double evaluate(ProcessModel model) {
       if (evaluator == null) {
-        throw new IllegalStateException("Constraint evaluator is not set for " + name);
+	throw new IllegalStateException("Constraint evaluator is not set for " + name);
       }
       return evaluator.applyAsDouble(model);
     }
@@ -800,16 +798,16 @@ public class ProcessModelSimulationEvaluator implements Serializable {
     public double margin(ProcessModel model) {
       double value = evaluate(model);
       switch (type) {
-        case LOWER_BOUND:
-          return value - lowerBound;
-        case UPPER_BOUND:
-          return upperBound - value;
-        case RANGE:
-          return Math.min(value - lowerBound, upperBound - value);
-        case EQUALITY:
-          return equalityTolerance - Math.abs(value - lowerBound);
-        default:
-          return 0.0;
+      case LOWER_BOUND:
+	return value - lowerBound;
+      case UPPER_BOUND:
+	return upperBound - value;
+      case RANGE:
+	return Math.min(value - lowerBound, upperBound - value);
+      case EQUALITY:
+	return equalityTolerance - Math.abs(value - lowerBound);
+      default:
+	return 0.0;
       }
     }
 
@@ -832,7 +830,7 @@ public class ProcessModelSimulationEvaluator implements Serializable {
     public double penalty(ProcessModel model) {
       double margin = margin(model);
       if (margin >= 0.0) {
-        return 0.0;
+	return 0.0;
       }
       return penaltyWeight * margin * margin;
     }
@@ -882,23 +880,23 @@ public class ProcessModelSimulationEvaluator implements Serializable {
     private boolean feasible;
 
     /** Default constructor for serialization frameworks. */
-    public BottleneckStatus() {}
+    public BottleneckStatus() {
+    }
 
     /**
      * Creates a bottleneck status.
      *
-     * @param areaName process area name
-     * @param equipmentName equipment name
+     * @param areaName       process area name
+     * @param equipmentName  equipment name
      * @param constraintName constraint name
-     * @param utilization utilization fraction
-     * @param currentValue current constraint value
-     * @param designValue design constraint value
-     * @param unit constraint unit
-     * @param feasible true when utilization is less than or equal to one
+     * @param utilization    utilization fraction
+     * @param currentValue   current constraint value
+     * @param designValue    design constraint value
+     * @param unit           constraint unit
+     * @param feasible       true when utilization is less than or equal to one
      */
-    public BottleneckStatus(String areaName, String equipmentName, String constraintName,
-        double utilization, double currentValue, double designValue, String unit,
-        boolean feasible) {
+    public BottleneckStatus(String areaName, String equipmentName, String constraintName, double utilization,
+	double currentValue, double designValue, String unit, boolean feasible) {
       this.areaName = areaName;
       this.equipmentName = equipmentName;
       this.constraintName = constraintName;
@@ -943,7 +941,7 @@ public class ProcessModelSimulationEvaluator implements Serializable {
      */
     public String getQualifiedEquipmentName() {
       if (!isPresent()) {
-        return "";
+	return "";
       }
       return areaName + ProcessAutomation.AREA_SEPARATOR + equipmentName;
     }
@@ -1062,7 +1060,8 @@ public class ProcessModelSimulationEvaluator implements Serializable {
     private int evaluationNumber;
 
     /** Default constructor. */
-    public EvaluationResult() {}
+    public EvaluationResult() {
+    }
 
     /**
      * Gets the evaluated parameters.
@@ -1315,14 +1314,15 @@ public class ProcessModelSimulationEvaluator implements Serializable {
     public double getPenalizedObjective() {
       double objective = getObjective();
       if (Double.isNaN(objective)) {
-        return penaltySum;
+	return penaltySum;
       }
       return objective + penaltySum;
     }
   }
 
   /** Default constructor. */
-  public ProcessModelSimulationEvaluator() {}
+  public ProcessModelSimulationEvaluator() {
+  }
 
   /**
    * Creates an evaluator for a process model.
@@ -1354,14 +1354,14 @@ public class ProcessModelSimulationEvaluator implements Serializable {
   /**
    * Adds an automation-addressed decision variable.
    *
-   * @param address area-qualified automation address
+   * @param address    area-qualified automation address
    * @param lowerBound lower optimization bound
    * @param upperBound upper optimization bound
-   * @param unit unit used when setting the variable
+   * @param unit       unit used when setting the variable
    * @return this evaluator for chaining
    */
-  public ProcessModelSimulationEvaluator addParameter(String address, double lowerBound,
-      double upperBound, String unit) {
+  public ProcessModelSimulationEvaluator addParameter(String address, double lowerBound, double upperBound,
+      String unit) {
     parameters.add(new ParameterDefinition(address, lowerBound, upperBound, unit));
     return this;
   }
@@ -1369,15 +1369,15 @@ public class ProcessModelSimulationEvaluator implements Serializable {
   /**
    * Adds an automation-addressed decision variable with an explicit display name.
    *
-   * @param name human readable parameter name
-   * @param address area-qualified automation address
+   * @param name       human readable parameter name
+   * @param address    area-qualified automation address
    * @param lowerBound lower optimization bound
    * @param upperBound upper optimization bound
-   * @param unit unit used when setting the variable
+   * @param unit       unit used when setting the variable
    * @return this evaluator for chaining
    */
-  public ProcessModelSimulationEvaluator addParameter(String name, String address,
-      double lowerBound, double upperBound, String unit) {
+  public ProcessModelSimulationEvaluator addParameter(String name, String address, double lowerBound, double upperBound,
+      String unit) {
     parameters.add(new ParameterDefinition(name, address, lowerBound, upperBound, unit));
     return this;
   }
@@ -1385,17 +1385,16 @@ public class ProcessModelSimulationEvaluator implements Serializable {
   /**
    * Adds a decision variable controlled by a custom setter.
    *
-   * @param name human readable parameter name
-   * @param setter custom setter receiving the model and the bounded value
+   * @param name       human readable parameter name
+   * @param setter     custom setter receiving the model and the bounded value
    * @param lowerBound lower optimization bound
    * @param upperBound upper optimization bound
-   * @param unit unit used for reporting the parameter
+   * @param unit       unit used for reporting the parameter
    * @return this evaluator for chaining
    */
-  public ProcessModelSimulationEvaluator addParameterWithSetter(String name,
-      BiConsumer<ProcessModel, Double> setter, double lowerBound, double upperBound, String unit) {
-    ParameterDefinition parameter =
-        new ParameterDefinition(name, name, lowerBound, upperBound, unit);
+  public ProcessModelSimulationEvaluator addParameterWithSetter(String name, BiConsumer<ProcessModel, Double> setter,
+      double lowerBound, double upperBound, String unit) {
+    ParameterDefinition parameter = new ParameterDefinition(name, name, lowerBound, upperBound, unit);
     parameter.setSetter(setter);
     parameters.add(parameter);
     return this;
@@ -1422,25 +1421,24 @@ public class ProcessModelSimulationEvaluator implements Serializable {
   /**
    * Adds a minimization objective.
    *
-   * @param name objective name
+   * @param name      objective name
    * @param evaluator model-level objective evaluator
    * @return this evaluator for chaining
    */
-  public ProcessModelSimulationEvaluator addObjective(String name,
-      ToDoubleFunction<ProcessModel> evaluator) {
+  public ProcessModelSimulationEvaluator addObjective(String name, ToDoubleFunction<ProcessModel> evaluator) {
     return addObjective(name, evaluator, ObjectiveDefinition.Direction.MINIMIZE);
   }
 
   /**
    * Adds an objective with explicit direction.
    *
-   * @param name objective name
+   * @param name      objective name
    * @param evaluator model-level objective evaluator
    * @param direction optimization direction
    * @return this evaluator for chaining
    */
-  public ProcessModelSimulationEvaluator addObjective(String name,
-      ToDoubleFunction<ProcessModel> evaluator, ObjectiveDefinition.Direction direction) {
+  public ProcessModelSimulationEvaluator addObjective(String name, ToDoubleFunction<ProcessModel> evaluator,
+      ObjectiveDefinition.Direction direction) {
     objectives.add(new ObjectiveDefinition(name, evaluator, direction));
     return this;
   }
@@ -1466,13 +1464,13 @@ public class ProcessModelSimulationEvaluator implements Serializable {
   /**
    * Adds a lower-bound constraint.
    *
-   * @param name constraint name
-   * @param evaluator model-level constraint evaluator
+   * @param name       constraint name
+   * @param evaluator  model-level constraint evaluator
    * @param lowerBound lower bound
    * @return this evaluator for chaining
    */
-  public ProcessModelSimulationEvaluator addConstraintLowerBound(String name,
-      ToDoubleFunction<ProcessModel> evaluator, double lowerBound) {
+  public ProcessModelSimulationEvaluator addConstraintLowerBound(String name, ToDoubleFunction<ProcessModel> evaluator,
+      double lowerBound) {
     constraints.add(new ConstraintDefinition(name, evaluator, lowerBound));
     return this;
   }
@@ -1480,13 +1478,13 @@ public class ProcessModelSimulationEvaluator implements Serializable {
   /**
    * Adds an upper-bound constraint.
    *
-   * @param name constraint name
-   * @param evaluator model-level constraint evaluator
+   * @param name       constraint name
+   * @param evaluator  model-level constraint evaluator
    * @param upperBound upper bound
    * @return this evaluator for chaining
    */
-  public ProcessModelSimulationEvaluator addConstraintUpperBound(String name,
-      ToDoubleFunction<ProcessModel> evaluator, double upperBound) {
+  public ProcessModelSimulationEvaluator addConstraintUpperBound(String name, ToDoubleFunction<ProcessModel> evaluator,
+      double upperBound) {
     ConstraintDefinition constraint = new ConstraintDefinition();
     constraint.setName(name);
     constraint.setEvaluator(evaluator);
@@ -1499,14 +1497,14 @@ public class ProcessModelSimulationEvaluator implements Serializable {
   /**
    * Adds a range constraint.
    *
-   * @param name constraint name
-   * @param evaluator model-level constraint evaluator
+   * @param name       constraint name
+   * @param evaluator  model-level constraint evaluator
    * @param lowerBound lower bound
    * @param upperBound upper bound
    * @return this evaluator for chaining
    */
-  public ProcessModelSimulationEvaluator addConstraintRange(String name,
-      ToDoubleFunction<ProcessModel> evaluator, double lowerBound, double upperBound) {
+  public ProcessModelSimulationEvaluator addConstraintRange(String name, ToDoubleFunction<ProcessModel> evaluator,
+      double lowerBound, double upperBound) {
     constraints.add(new ConstraintDefinition(name, evaluator, lowerBound, upperBound));
     return this;
   }
@@ -1514,14 +1512,14 @@ public class ProcessModelSimulationEvaluator implements Serializable {
   /**
    * Adds an equality constraint.
    *
-   * @param name constraint name
+   * @param name      constraint name
    * @param evaluator model-level constraint evaluator
-   * @param target target value
+   * @param target    target value
    * @param tolerance allowed absolute deviation from target
    * @return this evaluator for chaining
    */
-  public ProcessModelSimulationEvaluator addConstraintEquality(String name,
-      ToDoubleFunction<ProcessModel> evaluator, double target, double tolerance) {
+  public ProcessModelSimulationEvaluator addConstraintEquality(String name, ToDoubleFunction<ProcessModel> evaluator,
+      double target, double tolerance) {
     ConstraintDefinition constraint = new ConstraintDefinition();
     constraint.setName(name);
     constraint.setEvaluator(evaluator);
@@ -1554,9 +1552,9 @@ public class ProcessModelSimulationEvaluator implements Serializable {
    * Adds installed equipment capacity constraints from all process areas.
    *
    * <p>
-   * Each enabled equipment capacity constraint becomes an upper-bound constraint where utilization
-   * must be less than or equal to 1.0. Constraint names are area-qualified as
-   * {@code "area::equipment/constraint"} so bottlenecks can be traced back to the full model.
+   * Each enabled equipment capacity constraint becomes an upper-bound constraint where utilization must be less than or
+   * equal to 1.0. Constraint names are area-qualified as {@code "area::equipment/constraint"} so bottlenecks can be
+   * traced back to the full model.
    * </p>
    *
    * @return this evaluator for chaining
@@ -1568,21 +1566,20 @@ public class ProcessModelSimulationEvaluator implements Serializable {
     for (String areaName : processModel.getProcessSystemNames()) {
       ProcessSystem area = processModel.get(areaName);
       if (area == null) {
-        continue;
+	continue;
       }
       for (ProcessEquipmentInterface equipment : area.getUnitOperations()) {
-        Map<String, CapacityConstraint> equipmentConstraints =
-            getAllCapacityConstraints(registry, equipment);
-        if (equipmentConstraints.isEmpty()) {
-          continue;
-        }
-        for (Map.Entry<String, CapacityConstraint> entry : equipmentConstraints.entrySet()) {
-          CapacityConstraint capacityConstraint = entry.getValue();
-          if (capacityConstraint == null || !capacityConstraint.isEnabled()) {
-            continue;
-          }
-          addCapacityConstraint(areaName, equipment.getName(), entry.getKey(), capacityConstraint);
-        }
+	Map<String, CapacityConstraint> equipmentConstraints = getAllCapacityConstraints(registry, equipment);
+	if (equipmentConstraints.isEmpty()) {
+	  continue;
+	}
+	for (Map.Entry<String, CapacityConstraint> entry : equipmentConstraints.entrySet()) {
+	  CapacityConstraint capacityConstraint = entry.getValue();
+	  if (capacityConstraint == null || !capacityConstraint.isEnabled()) {
+	    continue;
+	  }
+	  addCapacityConstraint(areaName, equipment.getName(), entry.getKey(), capacityConstraint);
+	}
       }
     }
     return this;
@@ -1591,19 +1588,18 @@ public class ProcessModelSimulationEvaluator implements Serializable {
   /**
    * Gets explicit and strategy-generated capacity constraints for equipment.
    *
-   * @param registry capacity strategy registry
+   * @param registry  capacity strategy registry
    * @param equipment equipment to inspect
    * @return merged constraint map with explicit equipment constraints taking precedence
    */
-  private Map<String, CapacityConstraint> getAllCapacityConstraints(
-      EquipmentCapacityStrategyRegistry registry, ProcessEquipmentInterface equipment) {
-    Map<String, CapacityConstraint> equipmentConstraints =
-        new LinkedHashMap<String, CapacityConstraint>();
+  private Map<String, CapacityConstraint> getAllCapacityConstraints(EquipmentCapacityStrategyRegistry registry,
+      ProcessEquipmentInterface equipment) {
+    Map<String, CapacityConstraint> equipmentConstraints = new LinkedHashMap<String, CapacityConstraint>();
 
     if (includeStrategyCapacityConstraints) {
       EquipmentCapacityStrategy strategy = registry.findStrategy(equipment);
       if (strategy != null) {
-        equipmentConstraints.putAll(strategy.getConstraints(equipment));
+	equipmentConstraints.putAll(strategy.getConstraints(equipment));
       }
     }
 
@@ -1618,15 +1614,14 @@ public class ProcessModelSimulationEvaluator implements Serializable {
   /**
    * Adds a single capacity constraint definition.
    *
-   * @param areaName process area name
-   * @param equipmentName equipment name
+   * @param areaName                process area name
+   * @param equipmentName           equipment name
    * @param equipmentConstraintName equipment constraint name
-   * @param capacityConstraint capacity constraint
+   * @param capacityConstraint      capacity constraint
    */
-  private void addCapacityConstraint(String areaName, String equipmentName,
-      String equipmentConstraintName, CapacityConstraint capacityConstraint) {
-    String constraintName =
-        areaName + ProcessAutomation.AREA_SEPARATOR + equipmentName + "/" + equipmentConstraintName;
+  private void addCapacityConstraint(String areaName, String equipmentName, String equipmentConstraintName,
+      CapacityConstraint capacityConstraint) {
+    String constraintName = areaName + ProcessAutomation.AREA_SEPARATOR + equipmentName + "/" + equipmentConstraintName;
     if (hasConstraint(constraintName)) {
       return;
     }
@@ -1641,15 +1636,13 @@ public class ProcessModelSimulationEvaluator implements Serializable {
       /** {@inheritDoc} */
       @Override
       public double applyAsDouble(ProcessModel ignoredModel) {
-        return capturedCapacityConstraint.getUtilization();
+	return capturedCapacityConstraint.getUtilization();
       }
     });
-    boolean hardConstraint =
-        capacityConstraint.getSeverity() == CapacityConstraint.ConstraintSeverity.CRITICAL
-            || capacityConstraint.getSeverity() == CapacityConstraint.ConstraintSeverity.HARD;
+    boolean hardConstraint = capacityConstraint.getSeverity() == CapacityConstraint.ConstraintSeverity.CRITICAL
+	|| capacityConstraint.getSeverity() == CapacityConstraint.ConstraintSeverity.HARD;
     definition.setHard(hardConstraint);
-    definition.setCapacityMetadata(areaName, equipmentName, equipmentConstraintName,
-        capacityConstraint);
+    definition.setCapacityMetadata(areaName, equipmentName, equipmentConstraintName, capacityConstraint);
     constraints.add(definition);
   }
 
@@ -1662,7 +1655,7 @@ public class ProcessModelSimulationEvaluator implements Serializable {
   private boolean hasConstraint(String constraintName) {
     for (ConstraintDefinition constraint : constraints) {
       if (constraintName.equals(constraint.getName())) {
-        return true;
+	return true;
       }
     }
     return false;
@@ -1690,7 +1683,7 @@ public class ProcessModelSimulationEvaluator implements Serializable {
   public List<double[]> getBoundsAsList() {
     List<double[]> bounds = new ArrayList<double[]>();
     for (ParameterDefinition parameter : parameters) {
-      bounds.add(new double[] {parameter.getLowerBound(), parameter.getUpperBound()});
+      bounds.add(new double[] { parameter.getLowerBound(), parameter.getUpperBound() });
     }
     return bounds;
   }
@@ -1743,9 +1736,9 @@ public class ProcessModelSimulationEvaluator implements Serializable {
   public EvaluationResult evaluate(double[] parameterValues) {
     ensureProcessModel();
     if (parameterValues == null || parameterValues.length != parameters.size()) {
-      throw new IllegalArgumentException("Parameter array length ("
-          + (parameterValues == null ? "null" : Integer.toString(parameterValues.length))
-          + ") must match parameter count (" + parameters.size() + ")");
+      throw new IllegalArgumentException(
+	  "Parameter array length (" + (parameterValues == null ? "null" : Integer.toString(parameterValues.length))
+	      + ") must match parameter count (" + parameters.size() + ")");
     }
 
     long startTime = System.currentTimeMillis();
@@ -1763,9 +1756,8 @@ public class ProcessModelSimulationEvaluator implements Serializable {
       double[] objectiveValues = new double[objectives.size()];
       double[] rawObjectiveValues = new double[objectives.size()];
       for (int objectiveIndex = 0; objectiveIndex < objectives.size(); objectiveIndex++) {
-        rawObjectiveValues[objectiveIndex] =
-            objectives.get(objectiveIndex).evaluateRaw(processModel);
-        objectiveValues[objectiveIndex] = objectives.get(objectiveIndex).evaluate(processModel);
+	rawObjectiveValues[objectiveIndex] = objectives.get(objectiveIndex).evaluateRaw(processModel);
+	objectiveValues[objectiveIndex] = objectives.get(objectiveIndex).evaluate(processModel);
       }
       result.setObjectives(objectiveValues);
       result.setObjectivesRaw(rawObjectiveValues);
@@ -1775,15 +1767,15 @@ public class ProcessModelSimulationEvaluator implements Serializable {
       double penaltySum = 0.0;
       boolean feasible = processModel.isModelConverged();
       for (int constraintIndex = 0; constraintIndex < constraints.size(); constraintIndex++) {
-        ConstraintDefinition constraint = constraints.get(constraintIndex);
-        constraintValues[constraintIndex] = constraint.evaluate(processModel);
-        margins[constraintIndex] = constraint.margin(processModel);
-        if (margins[constraintIndex] < 0.0) {
-          penaltySum += constraint.penalty(processModel);
-          if (constraint.isHard()) {
-            feasible = false;
-          }
-        }
+	ConstraintDefinition constraint = constraints.get(constraintIndex);
+	constraintValues[constraintIndex] = constraint.evaluate(processModel);
+	margins[constraintIndex] = constraint.margin(processModel);
+	if (margins[constraintIndex] < 0.0) {
+	  penaltySum += constraint.penalty(processModel);
+	  if (constraint.isHard()) {
+	    feasible = false;
+	  }
+	}
       }
       result.setConstraintValues(constraintValues);
       result.setConstraintMargins(margins);
@@ -1817,7 +1809,7 @@ public class ProcessModelSimulationEvaluator implements Serializable {
   /**
    * Sets bounded parameter values on the model.
    *
-   * @param model process model
+   * @param model           process model
    * @param parameterValues parameter values
    */
   private void setParameterValues(ProcessModel model, double[] parameterValues) {
@@ -1825,9 +1817,9 @@ public class ProcessModelSimulationEvaluator implements Serializable {
       ParameterDefinition parameter = parameters.get(parameterIndex);
       double value = parameter.clamp(parameterValues[parameterIndex]);
       if (parameter.getSetter() != null) {
-        parameter.getSetter().accept(model, value);
+	parameter.getSetter().accept(model, value);
       } else {
-        model.setVariableValue(parameter.getAddress(), value, parameter.getUnit());
+	model.setVariableValue(parameter.getAddress(), value, parameter.getUnit());
       }
     }
   }
@@ -1849,28 +1841,26 @@ public class ProcessModelSimulationEvaluator implements Serializable {
     for (String areaName : model.getProcessSystemNames()) {
       ProcessSystem area = model.get(areaName);
       if (area == null) {
-        continue;
+	continue;
       }
       for (ProcessEquipmentInterface equipment : area.getUnitOperations()) {
-        Map<String, CapacityConstraint> equipmentConstraints =
-            getAllCapacityConstraints(registry, equipment);
-        if (equipmentConstraints.isEmpty()) {
-          continue;
-        }
-        for (Map.Entry<String, CapacityConstraint> entry : equipmentConstraints.entrySet()) {
-          CapacityConstraint capacityConstraint = entry.getValue();
-          if (capacityConstraint == null || !capacityConstraint.isEnabled()) {
-            continue;
-          }
-          double utilization = capacityConstraint.getUtilization();
-          if (!Double.isNaN(utilization) && utilization > highestUtilization) {
-            highestUtilization = utilization;
-            active =
-                new BottleneckStatus(areaName, equipment.getName(), entry.getKey(), utilization,
-                    capacityConstraint.getCurrentValue(), capacityConstraint.getDesignValue(),
-                    capacityConstraint.getUnit(), utilization <= 1.0);
-          }
-        }
+	Map<String, CapacityConstraint> equipmentConstraints = getAllCapacityConstraints(registry, equipment);
+	if (equipmentConstraints.isEmpty()) {
+	  continue;
+	}
+	for (Map.Entry<String, CapacityConstraint> entry : equipmentConstraints.entrySet()) {
+	  CapacityConstraint capacityConstraint = entry.getValue();
+	  if (capacityConstraint == null || !capacityConstraint.isEnabled()) {
+	    continue;
+	  }
+	  double utilization = capacityConstraint.getUtilization();
+	  if (!Double.isNaN(utilization) && utilization > highestUtilization) {
+	    highestUtilization = utilization;
+	    active = new BottleneckStatus(areaName, equipment.getName(), entry.getKey(), utilization,
+		capacityConstraint.getCurrentValue(), capacityConstraint.getDesignValue(), capacityConstraint.getUnit(),
+		utilization <= 1.0);
+	  }
+	}
       }
     }
     return active;
@@ -1934,21 +1924,20 @@ public class ProcessModelSimulationEvaluator implements Serializable {
    * Estimates an objective gradient by finite differences.
    *
    * @param parameterValues parameter vector
-   * @param objectiveIndex objective index
+   * @param objectiveIndex  objective index
    * @return gradient vector
    */
   public double[] estimateGradient(double[] parameterValues, int objectiveIndex) {
     double[] gradient = new double[parameterValues.length];
     double baseValue = evaluate(parameterValues).getObjectives()[objectiveIndex];
     for (int parameterIndex = 0; parameterIndex < parameterValues.length; parameterIndex++) {
-      double step = useRelativeStep
-          ? finiteDifferenceStep * Math.max(Math.abs(parameterValues[parameterIndex]), 1.0)
-          : finiteDifferenceStep;
+      double step = useRelativeStep ? finiteDifferenceStep * Math.max(Math.abs(parameterValues[parameterIndex]), 1.0)
+	  : finiteDifferenceStep;
       double[] shiftedValues = Arrays.copyOf(parameterValues, parameterValues.length);
       shiftedValues[parameterIndex] += step;
       if (shiftedValues[parameterIndex] > parameters.get(parameterIndex).getUpperBound()) {
-        shiftedValues[parameterIndex] = parameterValues[parameterIndex] - step;
-        step = -step;
+	shiftedValues[parameterIndex] = parameterValues[parameterIndex] - step;
+	step = -step;
       }
       double shiftedValue = evaluate(shiftedValues).getObjectives()[objectiveIndex];
       gradient[parameterIndex] = (shiftedValue - baseValue) / step;
@@ -1966,19 +1955,18 @@ public class ProcessModelSimulationEvaluator implements Serializable {
     double[][] jacobian = new double[constraints.size()][parameterValues.length];
     double[] baseMargins = evaluate(parameterValues).getConstraintMargins();
     for (int parameterIndex = 0; parameterIndex < parameterValues.length; parameterIndex++) {
-      double step = useRelativeStep
-          ? finiteDifferenceStep * Math.max(Math.abs(parameterValues[parameterIndex]), 1.0)
-          : finiteDifferenceStep;
+      double step = useRelativeStep ? finiteDifferenceStep * Math.max(Math.abs(parameterValues[parameterIndex]), 1.0)
+	  : finiteDifferenceStep;
       double[] shiftedValues = Arrays.copyOf(parameterValues, parameterValues.length);
       shiftedValues[parameterIndex] += step;
       if (shiftedValues[parameterIndex] > parameters.get(parameterIndex).getUpperBound()) {
-        shiftedValues[parameterIndex] = parameterValues[parameterIndex] - step;
-        step = -step;
+	shiftedValues[parameterIndex] = parameterValues[parameterIndex] - step;
+	step = -step;
       }
       double[] shiftedMargins = evaluate(shiftedValues).getConstraintMargins();
       for (int constraintIndex = 0; constraintIndex < constraints.size(); constraintIndex++) {
-        jacobian[constraintIndex][parameterIndex] =
-            (shiftedMargins[constraintIndex] - baseMargins[constraintIndex]) / step;
+	jacobian[constraintIndex][parameterIndex] = (shiftedMargins[constraintIndex] - baseMargins[constraintIndex])
+	    / step;
       }
     }
     return jacobian;
@@ -2033,9 +2021,9 @@ public class ProcessModelSimulationEvaluator implements Serializable {
    * Sets whether strategy-generated equipment capacity constraints are included.
    *
    * <p>
-   * Direct constraints attached to equipment are always included. Disable this option for installed
-   * capacity studies where only explicit fixed-equipment limits from design data should determine
-   * feasibility and active bottleneck reporting.
+   * Direct constraints attached to equipment are always included. Disable this option for installed capacity studies
+   * where only explicit fixed-equipment limits from design data should determine feasibility and active bottleneck
+   * reporting.
    * </p>
    *
    * @param includeStrategyCapacityConstraints true to include strategy-generated constraints
@@ -2080,8 +2068,7 @@ public class ProcessModelSimulationEvaluator implements Serializable {
     Map<String, Object> definition = new LinkedHashMap<String, Object>();
     definition.put("type", "ProcessModelSimulationEvaluator");
     definition.put("areaCount", processModel == null ? 0 : processModel.size());
-    definition.put("areas",
-        processModel == null ? new ArrayList<String>() : processModel.getProcessSystemNames());
+    definition.put("areas", processModel == null ? new ArrayList<String>() : processModel.getProcessSystemNames());
 
     List<Map<String, Object>> parameterDefinitions = new ArrayList<Map<String, Object>>();
     for (ParameterDefinition parameter : parameters) {
@@ -2133,7 +2120,7 @@ public class ProcessModelSimulationEvaluator implements Serializable {
    */
   public String toJson() {
     return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(getProblemDefinition());
+	.toJson(getProblemDefinition());
   }
 
   /**

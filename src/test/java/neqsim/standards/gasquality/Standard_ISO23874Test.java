@@ -47,8 +47,7 @@ class Standard_ISO23874Test extends neqsim.NeqSimTest {
     standard.calculate();
     double dewPoint = standard.getValue("hydrocarbonDewPoint");
     // Dew point should be a reasonable temperature in Celsius
-    assertTrue(dewPoint > -80.0 && dewPoint < 50.0,
-        "HC dew point should be between -80 and 50 C but was " + dewPoint);
+    assertTrue(dewPoint > -80.0 && dewPoint < 50.0, "HC dew point should be between -80 and 50 C but was " + dewPoint);
   }
 
   /**

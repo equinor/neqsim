@@ -12,9 +12,9 @@ import neqsim.thermo.system.SystemSrkEos;
  * ASME PTC 10 Validation Test Cases.
  *
  * <p>
- * This test class validates NeqSim compressor calculations against published examples from ASME PTC
- * 10 (Performance Test Code on Compressors and Exhausters). The standard defines the Schultz
- * polytropic analysis method which accounts for real gas behavior.
+ * This test class validates NeqSim compressor calculations against published examples from ASME PTC 10 (Performance
+ * Test Code on Compressors and Exhausters). The standard defines the Schultz polytropic analysis method which accounts
+ * for real gas behavior.
  * </p>
  *
  * <p>
@@ -41,9 +41,8 @@ public class ASMEPTC10ValidationTest extends neqsim.NeqSimTest {
    * Test Case 1: Natural Gas Compression - Single Stage.
    *
    * <p>
-   * Validates polytropic head and efficiency calculations for a typical natural gas centrifugal
-   * compressor based on PTC 10 methodology. This test case uses Schultz factors for real gas
-   * correction.
+   * Validates polytropic head and efficiency calculations for a typical natural gas centrifugal compressor based on PTC
+   * 10 methodology. This test case uses Schultz factors for real gas correction.
    * </p>
    *
    * <p>
@@ -95,11 +94,11 @@ public class ASMEPTC10ValidationTest extends neqsim.NeqSimTest {
     // PTC 10 expected values for this case (calculated using Schultz method)
     // Polytropic head for PR=2 at these conditions is approximately 90-100 kJ/kg
     assertTrue(polytropicHead > 50.0 && polytropicHead < 150.0,
-        "Polytropic head should be in expected range: " + polytropicHead + " kJ/kg");
+	"Polytropic head should be in expected range: " + polytropicHead + " kJ/kg");
 
     // Discharge temperature should be approximately 90-110°C
     assertTrue(dischargeTemp > 70.0 && dischargeTemp < 130.0,
-        "Discharge temperature should be in expected range: " + dischargeTemp + " °C");
+	"Discharge temperature should be in expected range: " + dischargeTemp + " °C");
 
     // Power should be positive and reasonable
     assertTrue(power > 0.5 && power < 3.0, "Power should be in expected range: " + power + " MW");
@@ -118,8 +117,7 @@ public class ASMEPTC10ValidationTest extends neqsim.NeqSimTest {
    * <li>X = T/V * (dV/dT)p - 1</li>
    * <li>Y = -P/V * (dV/dP)T</li>
    * </ul>
-   * For an ideal gas, X = 0 and Y = 1. This test validates that real gas effects are properly
-   * captured.
+   * For an ideal gas, X = 0 and Y = 1. This test validates that real gas effects are properly captured.
    * </p>
    */
   @Test
@@ -166,26 +164,23 @@ public class ASMEPTC10ValidationTest extends neqsim.NeqSimTest {
     // Both methods should give similar results
     // Allow for larger differences since the methods use different approaches
     double headDiff = Math.abs(headSchultz - headStandard) / headSchultz * 100.0;
-    assertTrue(headDiff < 25.0,
-        "Schultz and standard methods should agree within 25%: diff = " + headDiff + "%");
+    assertTrue(headDiff < 25.0, "Schultz and standard methods should agree within 25%: diff = " + headDiff + "%");
 
     // Both should predict positive head
     assertTrue(headSchultz > 0, "Schultz head should be positive: " + headSchultz);
     assertTrue(headStandard > 0, "Standard head should be positive: " + headStandard);
 
     // Discharge temps should be reasonable
-    assertTrue(tempSchultz > inletTemperature,
-        "Schultz discharge temp should be higher than inlet");
-    assertTrue(tempStandard > inletTemperature,
-        "Standard discharge temp should be higher than inlet");
+    assertTrue(tempSchultz > inletTemperature, "Schultz discharge temp should be higher than inlet");
+    assertTrue(tempStandard > inletTemperature, "Standard discharge temp should be higher than inlet");
   }
 
   /**
    * Test Case 3: High Pressure Ratio Compression.
    *
    * <p>
-   * PTC 10 is particularly important for high pressure ratio applications where real gas effects
-   * are significant. This test validates compression with ratio > 3.
+   * PTC 10 is particularly important for high pressure ratio applications where real gas effects are significant. This
+   * test validates compression with ratio > 3.
    * </p>
    */
   @Test
@@ -223,8 +218,7 @@ public class ASMEPTC10ValidationTest extends neqsim.NeqSimTest {
     assertEquals(4.0, compressionRatio, 0.01, "Compression ratio should be 4.0");
 
     // For PR=4, polytropic head should be significantly higher (approx 150-200 kJ/kg)
-    assertTrue(polytropicHead > 100.0,
-        "High PR polytropic head should be > 100 kJ/kg: " + polytropicHead);
+    assertTrue(polytropicHead > 100.0, "High PR polytropic head should be > 100 kJ/kg: " + polytropicHead);
 
     // Discharge temperature should be high (> 150°C for this PR)
     assertTrue(dischargeTemp > 100.0, "High PR discharge temp should be > 100°C: " + dischargeTemp);
@@ -237,9 +231,9 @@ public class ASMEPTC10ValidationTest extends neqsim.NeqSimTest {
    * Test Case 4: Polytropic Exponent Validation.
    *
    * <p>
-   * The polytropic exponent (n) is a key parameter in PTC 10 calculations. For an ideal gas with
-   * constant Cp/Cv, n = k (isentropic exponent). For real gases, n differs from k based on the
-   * Schultz correction. This test validates the polytropic exponent calculation.
+   * The polytropic exponent (n) is a key parameter in PTC 10 calculations. For an ideal gas with constant Cp/Cv, n = k
+   * (isentropic exponent). For real gases, n differs from k based on the Schultz correction. This test validates the
+   * polytropic exponent calculation.
    * </p>
    */
   @Test
@@ -271,27 +265,24 @@ public class ASMEPTC10ValidationTest extends neqsim.NeqSimTest {
 
     // Polytropic exponent should be calculated and be reasonable (typically 1.1 to 1.6 for gases)
     assertTrue(polytropicExponent > 1.0 && polytropicExponent < 2.0,
-        "Polytropic exponent should be in reasonable range for gas compression: "
-            + polytropicExponent);
+	"Polytropic exponent should be in reasonable range for gas compression: " + polytropicExponent);
 
     // Validate that the calculation completed successfully by checking other outputs
     double polytropicHead = compressor.getPolytropicHead("kJ/kg");
     assertTrue(polytropicHead > 30.0 && polytropicHead < 150.0,
-        "Polytropic head should be reasonable for PR=2: " + polytropicHead + " kJ/kg");
+	"Polytropic head should be reasonable for PR=2: " + polytropicHead + " kJ/kg");
 
     // Discharge temperature should be higher than inlet
     double dischargeTemp = compressor.getOutletStream().getTemperature("C");
-    assertTrue(dischargeTemp > 30.0,
-        "Discharge temp should be higher than inlet: " + dischargeTemp + " °C");
+    assertTrue(dischargeTemp > 30.0, "Discharge temp should be higher than inlet: " + dischargeTemp + " °C");
   }
 
   /**
    * Test Case 5: Isentropic vs Polytropic Efficiency.
    *
    * <p>
-   * PTC 10 defines the relationship between isentropic and polytropic efficiency. For a given
-   * compression process, polytropic efficiency is always greater than isentropic efficiency. This
-   * test validates this relationship.
+   * PTC 10 defines the relationship between isentropic and polytropic efficiency. For a given compression process,
+   * polytropic efficiency is always greater than isentropic efficiency. This test validates this relationship.
    * </p>
    */
   @Test
@@ -325,27 +316,25 @@ public class ASMEPTC10ValidationTest extends neqsim.NeqSimTest {
     double isentropicEff = compressor.getIsentropicEfficiency();
 
     // Polytropic efficiency should match input
-    assertEquals(targetPolytropicEff, polytropicEff, 0.01,
-        "Polytropic efficiency should match input");
+    assertEquals(targetPolytropicEff, polytropicEff, 0.01, "Polytropic efficiency should match input");
 
     // When using polytropic calculation with specified efficiency, the isentropic
     // efficiency is back-calculated from the results. Validate it's reasonable.
     // Note: isentropicEff can be >= polytropicEff depending on the calculation path
     assertTrue(isentropicEff > 0.5 && isentropicEff <= 1.0,
-        "Isentropic efficiency should be between 0.5 and 1.0: " + isentropicEff);
+	"Isentropic efficiency should be between 0.5 and 1.0: " + isentropicEff);
 
     // Verify the compression actually occurred
     double dischargeTemp = compressor.getOutletStream().getTemperature("C");
-    assertTrue(dischargeTemp > 28.0,
-        "Discharge temperature should be higher than inlet: " + dischargeTemp + " °C");
+    assertTrue(dischargeTemp > 28.0, "Discharge temperature should be higher than inlet: " + dischargeTemp + " °C");
   }
 
   /**
    * Test Case 6: Power Calculation Validation.
    *
    * <p>
-   * PTC 10 defines gas power as: Power = mass_flow * head / efficiency This test validates the
-   * power calculation against the fundamental relationship.
+   * PTC 10 defines gas power as: Power = mass_flow * head / efficiency This test validates the power calculation
+   * against the fundamental relationship.
    * </p>
    */
   @Test
@@ -386,17 +375,16 @@ public class ASMEPTC10ValidationTest extends neqsim.NeqSimTest {
 
     // Power should be within 10% of expected (accounting for calculation method differences)
     double powerDiff = Math.abs(power - expectedPower) / expectedPower * 100.0;
-    assertTrue(powerDiff < 15.0, "Power should be within 15% of expected: actual=" + power
-        + " kW, expected=" + expectedPower + " kW, diff=" + powerDiff + "%");
+    assertTrue(powerDiff < 15.0, "Power should be within 15% of expected: actual=" + power + " kW, expected="
+	+ expectedPower + " kW, diff=" + powerDiff + "%");
   }
 
   /**
    * Test Case 7: GERG-2008 Equation of State Validation.
    *
    * <p>
-   * PTC 10 recommends using accurate equations of state for natural gas. This test validates
-   * compressor calculations using the GERG-2008 equation of state, which is the ISO standard for
-   * natural gas properties.
+   * PTC 10 recommends using accurate equations of state for natural gas. This test validates compressor calculations
+   * using the GERG-2008 equation of state, which is the ISO standard for natural gas properties.
    * </p>
    */
   @Test
@@ -450,21 +438,19 @@ public class ASMEPTC10ValidationTest extends neqsim.NeqSimTest {
 
     // SRK and GERG should agree within 5% for natural gas at these conditions
     double headDiff = Math.abs(headSRK - headGERG) / headSRK * 100.0;
-    assertTrue(headDiff < 10.0,
-        "SRK and GERG heads should agree within 10%: diff = " + headDiff + "%");
+    assertTrue(headDiff < 10.0, "SRK and GERG heads should agree within 10%: diff = " + headDiff + "%");
 
     // Temperature predictions should also be similar
     double tempDiff = Math.abs(tempSRK - tempGERG);
-    assertTrue(tempDiff < 10.0,
-        "SRK and GERG temps should agree within 10°C: diff = " + tempDiff + "°C");
+    assertTrue(tempDiff < 10.0, "SRK and GERG temps should agree within 10°C: diff = " + tempDiff + "°C");
   }
 
   /**
    * Test Case 8: Multi-stage Compression Simulation.
    *
    * <p>
-   * PTC 10 methodology can be applied to each stage of a multi-stage compressor. This test
-   * validates that staging with intercooling gives the expected overall results.
+   * PTC 10 methodology can be applied to each stage of a multi-stage compressor. This test validates that staging with
+   * intercooling gives the expected overall results.
    * </p>
    */
   @Test
@@ -528,25 +514,23 @@ public class ASMEPTC10ValidationTest extends neqsim.NeqSimTest {
     assertTrue(head2 > 0, "Stage 2 head should be positive: " + head2);
 
     // Total power should be reasonable for overall compression
-    assertTrue(totalPower > 0.3 && totalPower < 3.0,
-        "Total power should be reasonable: " + totalPower + " MW");
+    assertTrue(totalPower > 0.3 && totalPower < 3.0, "Total power should be reasonable: " + totalPower + " MW");
 
     // Stage 2 inlet temperature should be cooler than stage 1 outlet
     double stage1OutTemp = stage1.getOutletStream().getTemperature("C");
-    assertTrue(intercoolTemp < stage1OutTemp, "Intercool temp (" + intercoolTemp
-        + "°C) should be less than stage 1 outlet (" + stage1OutTemp + "°C)");
+    assertTrue(intercoolTemp < stage1OutTemp,
+	"Intercool temp (" + intercoolTemp + "°C) should be less than stage 1 outlet (" + stage1OutTemp + "°C)");
 
     // Final pressure should match target
-    assertEquals(finalPressure, stage2.getOutletPressure(), 0.1,
-        "Final pressure should match target");
+    assertEquals(finalPressure, stage2.getOutletPressure(), 0.1, "Final pressure should match target");
   }
 
   /**
    * Test Case 9: Head in Different Units.
    *
    * <p>
-   * PTC 10 uses polytropic head in both energy (kJ/kg) and height (meters) units. This test
-   * validates the unit conversion: h_meter = h_kJ/kg * 1000 / g where g = 9.81 m/s²
+   * PTC 10 uses polytropic head in both energy (kJ/kg) and height (meters) units. This test validates the unit
+   * conversion: h_meter = h_kJ/kg * 1000 / g where g = 9.81 m/s²
    * </p>
    */
   @Test
@@ -581,15 +565,15 @@ public class ASMEPTC10ValidationTest extends neqsim.NeqSimTest {
     double expectedHeadMeter = headKJkg * 1000.0 / 9.81;
 
     assertEquals(expectedHeadMeter, headMeter, expectedHeadMeter * 0.01,
-        "Head in meters should match conversion from kJ/kg");
+	"Head in meters should match conversion from kJ/kg");
   }
 
   /**
    * Test Case 10: Efficiency Back-Calculation from Discharge Temperature.
    *
    * <p>
-   * In field testing per PTC 10, the discharge temperature is measured and efficiency is
-   * back-calculated. This test validates the solveEfficiency method.
+   * In field testing per PTC 10, the discharge temperature is measured and efficiency is back-calculated. This test
+   * validates the solveEfficiency method.
    * </p>
    */
   @Test
@@ -632,16 +616,16 @@ public class ASMEPTC10ValidationTest extends neqsim.NeqSimTest {
 
     // Calculated efficiency should match the known efficiency within 5%
     double effDiff = Math.abs(calculatedEff - knownPolytropicEff) / knownPolytropicEff * 100.0;
-    assertTrue(effDiff < 5.0, "Back-calculated efficiency (" + calculatedEff
-        + ") should be within 5% of known (" + knownPolytropicEff + "): diff = " + effDiff + "%");
+    assertTrue(effDiff < 5.0, "Back-calculated efficiency (" + calculatedEff + ") should be within 5% of known ("
+	+ knownPolytropicEff + "): diff = " + effDiff + "%");
   }
 
   /**
    * Test that polytropic exponent is always calculated regardless of calculation method.
    *
    * <p>
-   * The polytropic exponent should be returned (not 0) for all calculation methods: isentropic,
-   * polytropic with Schultz method, polytropic with default method.
+   * The polytropic exponent should be returned (not 0) for all calculation methods: isentropic, polytropic with Schultz
+   * method, polytropic with default method.
    * </p>
    */
   @Test

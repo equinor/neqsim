@@ -17,8 +17,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Integration test for a complete FLNG liquefaction process using the five FLNG-specific equipment
- * classes:
+ * Integration test for a complete FLNG liquefaction process using the five FLNG-specific equipment classes:
  * <ul>
  * <li>{@link CryogenicSeparator} - feed quality verification</li>
  * <li>{@link ScrubColumn} - heavy HC removal before MCHE</li>
@@ -41,8 +40,8 @@ class FLNGprocessSimulationTest {
    * Test the full FLNG process train from pre-cooling through LNG storage.
    *
    * <p>
-   * Process flow: Lean gas feed -> CryogenicSeparator (feed quality check) -> Pre-cooling (C3) ->
-   * MCHE cooling (MR) -> JT Valve -> End Flash (N2 rejection) -> LNG Tank (BOG)
+   * Process flow: Lean gas feed -> CryogenicSeparator (feed quality check) -> Pre-cooling (C3) -> MCHE cooling (MR) ->
+   * JT Valve -> End Flash (N2 rejection) -> LNG Tank (BOG)
    * </p>
    *
    * <p>
@@ -127,20 +126,17 @@ class FLNGprocessSimulationTest {
 
     // ---- PRINT PROCESS PROFILE ----
     logger.info("\n===== FLNG Process Temperature Profile =====");
-    logger.info("Feed:        " + fmt(feedStream.getTemperature("C")) + " C, "
-        + fmt(feedStream.getPressure("bara")) + " bara");
-    System.out
-        .println("Pre-cool 1:  " + fmt(precool1.getOutletStream().getTemperature("C")) + " C");
-    System.out
-        .println("Pre-cool 2:  " + fmt(precool2.getOutletStream().getTemperature("C")) + " C");
-    System.out
-        .println("Pre-cool 3:  " + fmt(precool3.getOutletStream().getTemperature("C")) + " C");
+    logger.info(
+	"Feed:        " + fmt(feedStream.getTemperature("C")) + " C, " + fmt(feedStream.getPressure("bara")) + " bara");
+    System.out.println("Pre-cool 1:  " + fmt(precool1.getOutletStream().getTemperature("C")) + " C");
+    System.out.println("Pre-cool 2:  " + fmt(precool2.getOutletStream().getTemperature("C")) + " C");
+    System.out.println("Pre-cool 3:  " + fmt(precool3.getOutletStream().getTemperature("C")) + " C");
     logger.info("MCHE-1:      " + fmt(mche1.getOutletStream().getTemperature("C")) + " C");
     logger.info("MCHE-2:      " + fmt(mche2.getOutletStream().getTemperature("C")) + " C");
     logger.info("MCHE-3:      " + fmt(mche3.getOutletStream().getTemperature("C")) + " C");
     double jtOutTemp = jtValve.getOutletStream().getTemperature("C");
-    logger.info("JT valve:    " + fmt(jtOutTemp) + " C, "
-        + fmt(jtValve.getOutletStream().getPressure("bara")) + " bara");
+    logger
+	.info("JT valve:    " + fmt(jtOutTemp) + " C, " + fmt(jtValve.getOutletStream().getPressure("bara")) + " bara");
 
     // ---- VERIFY RESULTS ----
 
@@ -180,12 +176,10 @@ class FLNGprocessSimulationTest {
 
     // BOG and LNG product streams
     if (lngTank.getBOGStream() != null) {
-      System.out
-          .println("BOG stream T:   " + fmt(lngTank.getBOGStream().getTemperature("C")) + " C");
+      System.out.println("BOG stream T:   " + fmt(lngTank.getBOGStream().getTemperature("C")) + " C");
     }
     if (lngTank.getLNGProductStream() != null) {
-      logger
-          .info("LNG product T:  " + fmt(lngTank.getLNGProductStream().getTemperature("C")) + " C");
+      logger.info("LNG product T:  " + fmt(lngTank.getLNGProductStream().getTemperature("C")) + " C");
     }
   }
 
@@ -225,16 +219,13 @@ class FLNGprocessSimulationTest {
     assertNotNull(scrubCol.getLiquidOutStream(), "Scrub column should produce bottoms liquid");
 
     logger.info("\n===== Scrub Column Results =====");
-    logger.info(
-        "Heavy key overhead: " + String.format("%.6f", scrubCol.getHeavyKeyInOverheadMolFrac()));
+    logger.info("Heavy key overhead: " + String.format("%.6f", scrubCol.getHeavyKeyInOverheadMolFrac()));
     logger.info("NGL recovery: " + String.format("%.4f", scrubCol.getNGLRecovery()));
     logger.info("Freeze-out risk: " + scrubCol.hasFreezeOutRisk());
     logger.info("Overhead T: " + fmt(scrubCol.getGasOutStream().getTemperature("C")) + " C");
-    System.out
-        .println("Bottoms T: " + fmt(scrubCol.getLiquidOutStream().getTemperature("C")) + " C");
+    System.out.println("Bottoms T: " + fmt(scrubCol.getLiquidOutStream().getTemperature("C")) + " C");
 
-    assertTrue(scrubCol.getHeavyKeyInOverheadMolFrac() >= 0.0,
-        "Heavy key in overhead should be tracked");
+    assertTrue(scrubCol.getHeavyKeyInOverheadMolFrac() >= 0.0, "Heavy key in overhead should be tracked");
   }
 
   /**
@@ -377,15 +368,13 @@ class FLNGprocessSimulationTest {
 
     logger.info("End Flash N2 rejection test:");
     logger.info("  N2 in LNG: " + String.format("%.4f", endFlash.getN2InLNGMolFrac()));
-    System.out
-        .println("  N2 in flash gas: " + String.format("%.4f", endFlash.getN2InFlashGasMolFrac()));
+    System.out.println("  N2 in flash gas: " + String.format("%.4f", endFlash.getN2InFlashGasMolFrac()));
     logger.info("  CH4 in LNG: " + String.format("%.4f", endFlash.getMethaneInLNGMolFrac()));
     logger.info("  Flash gas ratio: " + String.format("%.4f", endFlash.getFlashGasRatio()));
     logger.info("  Spec met: " + endFlash.isLNGSpecMet());
 
     assertTrue(endFlash.getFlashGasRatio() >= 0.0, "Flash gas ratio should be non-negative");
-    assertTrue(endFlash.getMethaneInLNGMolFrac() > 0.5,
-        "Methane should be the major LNG component");
+    assertTrue(endFlash.getMethaneInLNGMolFrac() > 0.5, "Methane should be the major LNG component");
   }
 
   /**
@@ -400,12 +389,11 @@ class FLNGprocessSimulationTest {
     lngFluid.addComponent("nitrogen", 0.01);
     lngFluid.setMixingRule("classic");
 
-    LNGTank.InsulationType[] types = {LNGTank.InsulationType.MEMBRANE, LNGTank.InsulationType.MOSS,
-        LNGTank.InsulationType.PRISMATIC};
+    LNGTank.InsulationType[] types = { LNGTank.InsulationType.MEMBRANE, LNGTank.InsulationType.MOSS,
+	LNGTank.InsulationType.PRISMATIC };
 
     logger.info("\nLNG Tank Insulation Comparison:");
-    logger.info(String.format("%-12s  %-8s  %-12s  %-10s", "Type", "U (W/m2K)", "BOG (%/day)",
-        "BOG (kg/hr)"));
+    logger.info(String.format("%-12s  %-8s  %-12s  %-10s", "Type", "U (W/m2K)", "BOG (%/day)", "BOG (kg/hr)"));
 
     for (LNGTank.InsulationType type : types) {
       Stream lngIn = new Stream("LNG_" + type, lngFluid.clone());
@@ -424,9 +412,8 @@ class FLNGprocessSimulationTest {
       proc.add(tank);
       proc.run();
 
-      logger.info(String.format("%-12s  %-8.3f  %-12.4f  %-10.1f", type,
-          tank.getOverallHeatTransferCoefficient(), tank.getBoilOffRatePctPerDay(),
-          tank.getBOGMassFlowRate()));
+      logger.info(String.format("%-12s  %-8.3f  %-12.4f  %-10.1f", type, tank.getOverallHeatTransferCoefficient(),
+	  tank.getBoilOffRatePctPerDay(), tank.getBOGMassFlowRate()));
 
       assertTrue(tank.getBoilOffRatePctPerDay() > 0.0, "BOG rate should be positive for " + type);
       assertTrue(tank.getHeatIngress() > 0.0, "Heat ingress should be positive for " + type);

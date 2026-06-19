@@ -9,13 +9,12 @@ import neqsim.process.equipment.heatexchanger.Heater;
  * Electrical design for heat exchangers (heaters, coolers, and heat exchangers).
  *
  * <p>
- * Extends {@link ElectricalDesign} with heat-exchanger-specific electrical requirements. The
- * electrical design depends on the type of heat exchanger:
+ * Extends {@link ElectricalDesign} with heat-exchanger-specific electrical requirements. The electrical design depends
+ * on the type of heat exchanger:
  * </p>
  * <ul>
  * <li><b>Electric heater:</b> Full heating duty is electrical (resistance heating elements)</li>
- * <li><b>Air cooler:</b> Fan motor(s) sized based on cooling duty — typically 0.5-2% of thermal
- * duty, minimum 2 kW</li>
+ * <li><b>Air cooler:</b> Fan motor(s) sized based on cooling duty — typically 0.5-2% of thermal duty, minimum 2 kW</li>
  * <li><b>Shell-and-tube:</b> Cooling water pump and instrumentation only</li>
  * </ul>
  *
@@ -70,9 +69,8 @@ public class HeatExchangerElectricalDesign extends ElectricalDesign {
    * {@inheritDoc}
    *
    * <p>
-   * For electric heaters, the shaft power represents the heating element power derived from the
-   * process duty. For air coolers, this returns fan motor shaft power. For shell-and-tube, returns
-   * zero (auxiliary loads only).
+   * For electric heaters, the shaft power represents the heating element power derived from the process duty. For air
+   * coolers, this returns fan motor shaft power. For shell-and-tube, returns zero (auxiliary loads only).
    * </p>
    */
   @Override
@@ -85,16 +83,16 @@ public class HeatExchangerElectricalDesign extends ElectricalDesign {
     double dutyKW = dutyW / 1000.0;
 
     switch (heatExchangerType) {
-      case ELECTRIC_HEATER:
-        // Full thermal duty supplied as electrical power
-        return dutyKW;
-      case AIR_COOLER:
-        // Fan power is typically 0.5-2% of cooling duty, minimum 2 kW per fan
-        double fanPowerKW = Math.max(2.0 * numberOfFans, dutyKW * 0.01);
-        return fanPowerKW;
-      case SHELL_AND_TUBE:
-      default:
-        return 0.0;
+    case ELECTRIC_HEATER:
+      // Full thermal duty supplied as electrical power
+      return dutyKW;
+    case AIR_COOLER:
+      // Fan power is typically 0.5-2% of cooling duty, minimum 2 kW per fan
+      double fanPowerKW = Math.max(2.0 * numberOfFans, dutyKW * 0.01);
+      return fanPowerKW;
+    case SHELL_AND_TUBE:
+    default:
+      return 0.0;
     }
   }
 
@@ -103,34 +101,33 @@ public class HeatExchangerElectricalDesign extends ElectricalDesign {
   public void readDesignSpecifications() {
     double power = getProcessShaftPowerKW();
     switch (heatExchangerType) {
-      case ELECTRIC_HEATER:
-        if (power > 200) {
-          setRatedVoltageV(6600);
-        } else if (power > 75) {
-          setRatedVoltageV(690);
-        } else {
-          setRatedVoltageV(400);
-        }
-        break;
-      case AIR_COOLER:
-        if (power > 200) {
-          setRatedVoltageV(690);
-        } else {
-          setRatedVoltageV(400);
-        }
-        break;
-      case SHELL_AND_TUBE:
-      default:
-        setRatedVoltageV(400);
-        break;
+    case ELECTRIC_HEATER:
+      if (power > 200) {
+	setRatedVoltageV(6600);
+      } else if (power > 75) {
+	setRatedVoltageV(690);
+      } else {
+	setRatedVoltageV(400);
+      }
+      break;
+    case AIR_COOLER:
+      if (power > 200) {
+	setRatedVoltageV(690);
+      } else {
+	setRatedVoltageV(400);
+      }
+      break;
+    case SHELL_AND_TUBE:
+    default:
+      setRatedVoltageV(400);
+      break;
     }
   }
 
   /** {@inheritDoc} */
   @Override
   public void calcDesign() {
-    if (heatExchangerType == HeatExchangerType.ELECTRIC_HEATER
-        || heatExchangerType == HeatExchangerType.AIR_COOLER) {
+    if (heatExchangerType == HeatExchangerType.ELECTRIC_HEATER || heatExchangerType == HeatExchangerType.AIR_COOLER) {
       // Motor-driven or direct electrical — use base class motor/cable sizing
       super.calcDesign();
     } else {
@@ -144,8 +141,8 @@ public class HeatExchangerElectricalDesign extends ElectricalDesign {
     if (heatExchangerType == HeatExchangerType.SHELL_AND_TUBE) {
       setElectricalInputKW(totalAuxiliaryKW);
       if (totalAuxiliaryKW > 0 && getPowerFactor() > 0) {
-        setApparentPowerKVA(totalAuxiliaryKW / getPowerFactor());
-        setReactivePowerKVAR(getApparentPowerKVA() * Math.sin(Math.acos(getPowerFactor())));
+	setApparentPowerKVA(totalAuxiliaryKW / getPowerFactor());
+	setReactivePowerKVAR(getApparentPowerKVA() * Math.sin(Math.acos(getPowerFactor())));
       }
     }
   }

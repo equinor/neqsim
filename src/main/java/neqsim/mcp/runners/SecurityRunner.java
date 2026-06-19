@@ -28,8 +28,8 @@ import com.google.gson.JsonParser;
  * </ul>
  *
  * <p>
- * This is an application-level security layer. In production, combine with transport-level security
- * (TLS, OAuth2) provided by the deployment platform.
+ * This is an application-level security layer. In production, combine with transport-level security (TLS, OAuth2)
+ * provided by the deployment platform.
  * </p>
  *
  * @author Even Solbraa
@@ -37,20 +37,16 @@ import com.google.gson.JsonParser;
  */
 public final class SecurityRunner {
 
-  private static final Gson GSON =
-      new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+  private static final Gson GSON = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
 
   /** Registered API keys (in production, these would come from a database or vault). */
-  private static final ConcurrentHashMap<String, UserContext> API_KEYS =
-      new ConcurrentHashMap<String, UserContext>();
+  private static final ConcurrentHashMap<String, UserContext> API_KEYS = new ConcurrentHashMap<String, UserContext>();
 
   /** Audit log (in production, this would write to a persistent store). */
-  private static final List<AuditEntry> AUDIT_LOG =
-      Collections.synchronizedList(new ArrayList<AuditEntry>());
+  private static final List<AuditEntry> AUDIT_LOG = Collections.synchronizedList(new ArrayList<AuditEntry>());
 
   /** Rate limiting: requests per key in the current time window. */
-  private static final ConcurrentHashMap<String, RateState> RATE_LIMITS =
-      new ConcurrentHashMap<String, RateState>();
+  private static final ConcurrentHashMap<String, RateState> RATE_LIMITS = new ConcurrentHashMap<String, RateState>();
 
   /** Default rate limit: requests per minute. */
   private static final int DEFAULT_RATE_LIMIT = 60;
@@ -70,7 +66,8 @@ public final class SecurityRunner {
   /**
    * Private constructor — all methods are static.
    */
-  private SecurityRunner() {}
+  private SecurityRunner() {
+  }
 
   /**
    * Main entry point for security operations.
@@ -84,24 +81,23 @@ public final class SecurityRunner {
       String action = input.has("action") ? input.get("action").getAsString() : "";
 
       switch (action) {
-        case "createApiKey":
-          return createApiKey(input);
-        case "revokeApiKey":
-          return revokeApiKey(input);
-        case "authenticate":
-          return authenticate(input);
-        case "getAuditLog":
-          return getAuditLog(input);
-        case "getRateLimits":
-          return getRateLimits();
-        case "setConfig":
-          return setConfig(input);
-        case "getStatus":
-          return getStatus();
-        default:
-          return errorJson("UNKNOWN_ACTION", "Unknown security action: " + action,
-              "Use: createApiKey, revokeApiKey, authenticate, getAuditLog, "
-                  + "getRateLimits, setConfig, getStatus");
+      case "createApiKey":
+	return createApiKey(input);
+      case "revokeApiKey":
+	return revokeApiKey(input);
+      case "authenticate":
+	return authenticate(input);
+      case "getAuditLog":
+	return getAuditLog(input);
+      case "getRateLimits":
+	return getRateLimits();
+      case "setConfig":
+	return setConfig(input);
+      case "getStatus":
+	return getStatus();
+      default:
+	return errorJson("UNKNOWN_ACTION", "Unknown security action: " + action,
+	    "Use: createApiKey, revokeApiKey, authenticate, getAuditLog, " + "getRateLimits, setConfig, getStatus");
       }
     } catch (Exception e) {
       return errorJson("SECURITY_ERROR", e.getMessage(), "Check JSON format");
@@ -109,11 +105,11 @@ public final class SecurityRunner {
   }
 
   /**
-   * Checks authentication and rate limiting for an incoming request. Call this at the beginning of
-   * any protected tool invocation.
+   * Checks authentication and rate limiting for an incoming request. Call this at the beginning of any protected tool
+   * invocation.
    *
    * @param apiKey the API key (optional if security is disabled)
-   * @param tool the tool being invoked
+   * @param tool   the tool being invoked
    * @return null if allowed, or an error JSON string if denied
    */
   public static String checkAccess(String apiKey, String tool) {
@@ -129,23 +125,20 @@ public final class SecurityRunner {
     if (apiKey == null || apiKey.isEmpty()) {
       logAudit("anonymous", tool, "denied", "Missing API key");
       return errorJson("AUTH_REQUIRED", "API key required",
-          "Provide 'apiKey' field in request or disable security enforcement");
+	  "Provide 'apiKey' field in request or disable security enforcement");
     }
 
     UserContext user = API_KEYS.get(apiKey);
     if (user == null) {
-      logAudit("unknown:" + apiKey.substring(0, Math.min(8, apiKey.length())), tool, "denied",
-          "Invalid API key");
+      logAudit("unknown:" + apiKey.substring(0, Math.min(8, apiKey.length())), tool, "denied", "Invalid API key");
       return errorJson("AUTH_FAILED", "Invalid API key", "Check your API key");
     }
 
     // Check rate limit
     if (!checkRateLimit(apiKey, user.rateLimit)) {
-      logAudit(user.userId, tool, "rate_limited",
-          "Exceeded " + user.rateLimit + " requests/minute");
-      return errorJson("RATE_LIMITED",
-          "Rate limit exceeded: " + user.rateLimit + " requests/minute",
-          "Wait and retry, or request a higher rate limit");
+      logAudit(user.userId, tool, "rate_limited", "Exceeded " + user.rateLimit + " requests/minute");
+      return errorJson("RATE_LIMITED", "Rate limit exceeded: " + user.rateLimit + " requests/minute",
+	  "Wait and retry, or request a higher rate limit");
     }
 
     logAudit(user.userId, tool, "allowed", null);
@@ -188,7 +181,7 @@ public final class SecurityRunner {
     response.addProperty("role", role);
     response.addProperty("rateLimit", rateLimit);
     response.addProperty("note",
-        "Store this API key securely. Include it as 'apiKey' in requests when security is enabled.");
+	"Store this API key securely. Include it as 'apiKey' in requests when security is enabled.");
     return GSON.toJson(response);
   }
 
@@ -265,18 +258,18 @@ public final class SecurityRunner {
     synchronized (AUDIT_LOG) {
       // Iterate in reverse to get newest first
       for (int i = AUDIT_LOG.size() - 1; i >= 0 && count < limit; i--) {
-        AuditEntry entry = AUDIT_LOG.get(i);
+	AuditEntry entry = AUDIT_LOG.get(i);
 
-        // Apply filters
-        if (filterUser != null && !entry.userId.equals(filterUser)) {
-          continue;
-        }
-        if (filterTool != null && !entry.tool.equals(filterTool)) {
-          continue;
-        }
+	// Apply filters
+	if (filterUser != null && !entry.userId.equals(filterUser)) {
+	  continue;
+	}
+	if (filterTool != null && !entry.tool.equals(filterTool)) {
+	  continue;
+	}
 
-        entries.add(entry.toJson());
-        count++;
+	entries.add(entry.toJson());
+	count++;
       }
     }
 
@@ -306,8 +299,8 @@ public final class SecurityRunner {
 
       RateState rate = RATE_LIMITS.get(entry.getKey());
       if (rate != null) {
-        long remaining = Math.max(0, user.rateLimit - rate.getRequestCount(RATE_WINDOW_MS));
-        userInfo.addProperty("remainingRequests", remaining);
+	long remaining = Math.max(0, user.rateLimit - rate.getRequestCount(RATE_WINDOW_MS));
+	userInfo.addProperty("remainingRequests", remaining);
       }
       users.add(userInfo);
     }
@@ -357,7 +350,7 @@ public final class SecurityRunner {
   /**
    * Checks rate limiting for a key.
    *
-   * @param key the API key
+   * @param key   the API key
    * @param limit the max requests per window
    * @return true if within limits
    */
@@ -369,9 +362,9 @@ public final class SecurityRunner {
   /**
    * Logs an audit entry.
    *
-   * @param userId the user ID
-   * @param tool the tool invoked
-   * @param result the result (allowed, denied, rate_limited)
+   * @param userId  the user ID
+   * @param tool    the tool invoked
+   * @param result  the result (allowed, denied, rate_limited)
    * @param details additional details
    */
   private static void logAudit(String userId, String tool, String result, String details) {
@@ -394,8 +387,8 @@ public final class SecurityRunner {
   /**
    * Creates a standard error JSON response.
    *
-   * @param code the error code
-   * @param message the error message
+   * @param code        the error code
+   * @param message     the error message
    * @param remediation the fix
    * @return the JSON string
    */
@@ -447,7 +440,7 @@ public final class SecurityRunner {
      * Attempts to make a request within the rate limit.
      *
      * @param maxRequests max requests in the window
-     * @param windowMs window duration in milliseconds
+     * @param windowMs    window duration in milliseconds
      * @return true if allowed
      */
     boolean tryRequest(int maxRequests, long windowMs) {
@@ -456,16 +449,16 @@ public final class SecurityRunner {
 
       // Remove expired entries
       synchronized (requests) {
-        while (!requests.isEmpty() && requests.get(0) < cutoff) {
-          requests.remove(0);
-        }
+	while (!requests.isEmpty() && requests.get(0) < cutoff) {
+	  requests.remove(0);
+	}
 
-        if (requests.size() >= maxRequests) {
-          return false;
-        }
+	if (requests.size() >= maxRequests) {
+	  return false;
+	}
 
-        requests.add(now);
-        return true;
+	requests.add(now);
+	return true;
       }
     }
 
@@ -478,13 +471,13 @@ public final class SecurityRunner {
     long getRequestCount(long windowMs) {
       long cutoff = System.currentTimeMillis() - windowMs;
       synchronized (requests) {
-        int count = 0;
-        for (Long ts : requests) {
-          if (ts >= cutoff) {
-            count++;
-          }
-        }
-        return count;
+	int count = 0;
+	for (Long ts : requests) {
+	  if (ts >= cutoff) {
+	    count++;
+	  }
+	}
+	return count;
       }
     }
   }
@@ -523,7 +516,7 @@ public final class SecurityRunner {
       obj.addProperty("tool", tool);
       obj.addProperty("result", result);
       if (details != null) {
-        obj.addProperty("details", details);
+	obj.addProperty("details", details);
       }
       obj.addProperty("requestId", requestId);
       return obj;

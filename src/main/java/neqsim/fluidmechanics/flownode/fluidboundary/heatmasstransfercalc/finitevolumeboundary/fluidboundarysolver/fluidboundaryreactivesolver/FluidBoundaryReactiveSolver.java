@@ -22,5 +22,6 @@ public class FluidBoundaryReactiveSolver extends FluidBoundarySolver {
    * Constructor for FluidBoundaryReactiveSolver.
    * </p>
    */
-  public FluidBoundaryReactiveSolver() {}
+  public FluidBoundaryReactiveSolver() {
+  }
 }

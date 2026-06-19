@@ -9,9 +9,8 @@ import neqsim.thermo.system.SystemInterface;
  * Implementation of ISO 15112 - Natural gas - Energy determination.
  *
  * <p>
- * ISO 15112 specifies methods for the determination of energy (in joules) flowing through a natural
- * gas metering station. It bridges composition analysis (via ISO 6976) with volume measurement to
- * calculate energy flow.
+ * ISO 15112 specifies methods for the determination of energy (in joules) flowing through a natural gas metering
+ * station. It bridges composition analysis (via ISO 6976) with volume measurement to calculate energy flow.
  * </p>
  *
  * <p>
@@ -82,13 +81,13 @@ public class Standard_ISO15112 extends neqsim.standards.Standard {
   /**
    * Constructor for Standard_ISO15112 with specified conditions.
    *
-   * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
+   * @param thermoSystem      a {@link neqsim.thermo.system.SystemInterface} object
    * @param volumeFlowRateM3h volume flow rate at metering conditions in m3/h
-   * @param volumeRefTempC volume reference temperature in degrees C
-   * @param energyRefTempC energy reference temperature in degrees C
+   * @param volumeRefTempC    volume reference temperature in degrees C
+   * @param energyRefTempC    energy reference temperature in degrees C
    */
-  public Standard_ISO15112(SystemInterface thermoSystem, double volumeFlowRateM3h,
-      double volumeRefTempC, double energyRefTempC) {
+  public Standard_ISO15112(SystemInterface thermoSystem, double volumeFlowRateM3h, double volumeRefTempC,
+      double energyRefTempC) {
     this(thermoSystem);
     this.volumeFlowRate = volumeFlowRateM3h;
     this.volumeRefTempC = volumeRefTempC;
@@ -155,8 +154,7 @@ public class Standard_ISO15112 extends neqsim.standards.Standard {
       double zMeter = zStd; // Approximation for near-atmospheric metering
 
       if (volumeFlowRate > 0.0) {
-        standardVolumeFlowRate =
-            volumeFlowRate * (meteringPressure / pStd) * (tStdK / tMeterK) * (zStd / zMeter);
+	standardVolumeFlowRate = volumeFlowRate * (meteringPressure / pStd) * (tStdK / tMeterK) * (zStd / zMeter);
       }
 
       // Step 3: Calculate energy flow rate (E = Hs * Vs)
@@ -176,18 +174,18 @@ public class Standard_ISO15112 extends neqsim.standards.Standard {
 
     if ("energyFlowRate".equals(returnParameter)) {
       if ("kWh/h".equals(returnUnit) || "kW".equals(returnUnit)) {
-        return value / 3.6; // MJ/h to kW
+	return value / 3.6; // MJ/h to kW
       }
       if ("BTU/h".equals(returnUnit)) {
-        return value * 947.817; // MJ/h to BTU/h
+	return value * 947.817; // MJ/h to BTU/h
       }
     }
     if ("accumulatedEnergy".equals(returnParameter)) {
       if ("MWh".equals(returnUnit)) {
-        return value * 1000.0 / 3.6; // GJ to MWh (GJ*1000=MJ, MJ/3.6=kWh, kWh/1000=MWh)
+	return value * 1000.0 / 3.6; // GJ to MWh (GJ*1000=MJ, MJ/3.6=kWh, kWh/1000=MWh)
       }
       if ("therms".equals(returnUnit)) {
-        return value * 9.4781712; // GJ to therms
+	return value * 9.4781712; // GJ to therms
       }
     }
     return value;
@@ -217,8 +215,8 @@ public class Standard_ISO15112 extends neqsim.standards.Standard {
   /** {@inheritDoc} */
   @Override
   public String getUnit(String returnParameter) {
-    if ("GCV".equals(returnParameter) || "grossCalorificValue".equals(returnParameter)
-        || "NCV".equals(returnParameter) || "netCalorificValue".equals(returnParameter)) {
+    if ("GCV".equals(returnParameter) || "grossCalorificValue".equals(returnParameter) || "NCV".equals(returnParameter)
+	|| "netCalorificValue".equals(returnParameter)) {
       return "MJ/m3";
     }
     if ("energyFlowRate".equals(returnParameter)) {

@@ -23,8 +23,8 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Tests for {@link DexpiXmlWriter}, covering nozzle/connection export, native equipment reverse
- * mapping, sizing attribute export, and simulation results export.
+ * Tests for {@link DexpiXmlWriter}, covering nozzle/connection export, native equipment reverse mapping, sizing
+ * attribute export, and simulation results export.
  *
  * @author NeqSim
  * @version 1.0
@@ -50,8 +50,8 @@ public class DexpiXmlWriterTest extends NeqSimTest {
   }
 
   /**
-   * Tests that native equipment is exported with correct DEXPI ComponentClass reverse mapping and
-   * includes Nozzle children.
+   * Tests that native equipment is exported with correct DEXPI ComponentClass reverse mapping and includes Nozzle
+   * children.
    *
    * @throws IOException if writing fails
    */
@@ -69,8 +69,7 @@ public class DexpiXmlWriterTest extends NeqSimTest {
     String xml = out.toString(StandardCharsets.UTF_8.name());
 
     // Separator should be exported with ComponentClass="Separator"
-    assertTrue(xml.contains("ComponentClass=\"Separator\""),
-        "Should contain Separator ComponentClass");
+    assertTrue(xml.contains("ComponentClass=\"Separator\""), "Should contain Separator ComponentClass");
     // Should have Nozzle children
     assertTrue(xml.contains("<Nozzle"), "Should contain Nozzle elements");
   }
@@ -95,7 +94,7 @@ public class DexpiXmlWriterTest extends NeqSimTest {
     String xml = out.toString(StandardCharsets.UTF_8.name());
 
     assertTrue(xml.contains("ComponentClass=\"CentrifugalCompressor\""),
-        "Should map Compressor to CentrifugalCompressor");
+	"Should map Compressor to CentrifugalCompressor");
   }
 
   /**
@@ -117,18 +116,15 @@ public class DexpiXmlWriterTest extends NeqSimTest {
     DexpiXmlWriter.write(process, out);
     String xml = out.toString(StandardCharsets.UTF_8.name());
 
-    assertTrue(xml.contains("ComponentClass=\"GlobeValve\""),
-        "Should map ThrottlingValve to GlobeValve");
+    assertTrue(xml.contains("ComponentClass=\"GlobeValve\""), "Should map ThrottlingValve to GlobeValve");
     // Valves should be exported as PipingComponent inside PipingNetworkSegment
-    assertTrue(xml.contains("<PipingComponent"),
-        "Valve should be exported as PipingComponent, not Equipment");
+    assertTrue(xml.contains("<PipingComponent"), "Valve should be exported as PipingComponent, not Equipment");
     // Equipment elements may appear inside ShapeCatalogue (shape definitions).
     // Verify no Equipment element appears outside ShapeCatalogue by checking
     // the text before the ShapeCatalogue section.
     int shapeCatIdx = xml.indexOf("<ShapeCatalogue");
     String beforeShapes = shapeCatIdx > 0 ? xml.substring(0, shapeCatIdx) : xml;
-    assertFalse(beforeShapes.contains("<Equipment"),
-        "Valve should NOT appear as top-level Equipment");
+    assertFalse(beforeShapes.contains("<Equipment"), "Valve should NOT appear as top-level Equipment");
   }
 
   /**
@@ -170,8 +166,7 @@ public class DexpiXmlWriterTest extends NeqSimTest {
     DexpiXmlWriter.write(process, out);
     String xml = out.toString(StandardCharsets.UTF_8.name());
 
-    assertTrue(xml.contains("ComponentClass=\"AirCoolingSystem\""),
-        "Should map Cooler to AirCoolingSystem");
+    assertTrue(xml.contains("ComponentClass=\"AirCoolingSystem\""), "Should map Cooler to AirCoolingSystem");
   }
 
   /**
@@ -193,8 +188,7 @@ public class DexpiXmlWriterTest extends NeqSimTest {
     String xml = out.toString(StandardCharsets.UTF_8.name());
 
     assertTrue(xml.contains("ComponentClass=\"Tank\""), "Should map Tank to Tank");
-    assertTrue(xml.contains("STORAGE_TANK_SHAPE"),
-        "Tank symbol should be present in the ShapeCatalogue");
+    assertTrue(xml.contains("STORAGE_TANK_SHAPE"), "Tank symbol should be present in the ShapeCatalogue");
   }
 
   /**
@@ -216,8 +210,7 @@ public class DexpiXmlWriterTest extends NeqSimTest {
     String xml = out.toString(StandardCharsets.UTF_8.name());
 
     assertTrue(xml.contains("ComponentClass=\"Filter\""), "Should map Filter to Filter");
-    assertTrue(xml.contains("FILTER_SHAPE"),
-        "Filter symbol should be present in the ShapeCatalogue");
+    assertTrue(xml.contains("FILTER_SHAPE"), "Filter symbol should be present in the ShapeCatalogue");
   }
 
   /**
@@ -238,8 +231,7 @@ public class DexpiXmlWriterTest extends NeqSimTest {
     DexpiXmlWriter.write(process, out);
     String xml = out.toString(StandardCharsets.UTF_8.name());
 
-    assertTrue(xml.contains("ComponentClass=\"ThreePhaseSeparator\""),
-        "Should map ThreePhaseSeparator correctly");
+    assertTrue(xml.contains("ComponentClass=\"ThreePhaseSeparator\""), "Should map ThreePhaseSeparator correctly");
   }
 
   /**
@@ -279,7 +271,7 @@ public class DexpiXmlWriterTest extends NeqSimTest {
   @Test
   public void testSizingAttributeExport() throws IOException {
     DexpiProcessUnit unit = new DexpiProcessUnit("HP-Sep", "Separator",
-        neqsim.process.equipment.EquipmentEnum.Separator, null, null);
+	neqsim.process.equipment.EquipmentEnum.Separator, null, null);
     unit.setSizingAttribute(DexpiMetadata.INSIDE_DIAMETER, "2.5");
     unit.setSizingAttribute(DexpiMetadata.TANGENT_TO_TANGENT_LENGTH, "8.0");
 
@@ -293,8 +285,7 @@ public class DexpiXmlWriterTest extends NeqSimTest {
     // Should contain the sizing attributes
     assertTrue(xml.contains("InsideDiameter"), "Should export InsideDiameter sizing attribute");
     assertTrue(xml.contains("2.5"), "InsideDiameter value should be 2.5");
-    assertTrue(xml.contains("TangentToTangentLength"),
-        "Should export TangentToTangentLength sizing attribute");
+    assertTrue(xml.contains("TangentToTangentLength"), "Should export TangentToTangentLength sizing attribute");
     assertTrue(xml.contains("8.0"), "TangentToTangentLength value should be 8.0");
   }
 
@@ -319,7 +310,7 @@ public class DexpiXmlWriterTest extends NeqSimTest {
 
     // After running, simulation results should be exported as GenericAttributes
     assertTrue(xml.contains("OperatingPressureValue") || xml.contains("OperatingTemperatureValue"),
-        "Should export simulation result attributes after process run");
+	"Should export simulation result attributes after process run");
   }
 
   /**
@@ -369,8 +360,8 @@ public class DexpiXmlWriterTest extends NeqSimTest {
   }
 
   /**
-   * Tests that the standard writer declares the DEXPI namespace and exports originating-system
-   * metadata required by Proteus consumers.
+   * Tests that the standard writer declares the DEXPI namespace and exports originating-system metadata required by
+   * Proteus consumers.
    *
    * @throws IOException if writing fails
    */
@@ -383,18 +374,18 @@ public class DexpiXmlWriterTest extends NeqSimTest {
     String xml = out.toString(StandardCharsets.UTF_8.name());
 
     assertTrue(xml.contains("xmlns=\"http://sandbox.dexpi.org/xml\""),
-        "Standard export should include the DEXPI default namespace");
+	"Standard export should include the DEXPI default namespace");
     assertTrue(xml.contains("OriginatingSystem=\"NeqSim\""),
-        "PlantInformation should identify NeqSim as the originating system");
+	"PlantInformation should identify NeqSim as the originating system");
     assertTrue(xml.contains("OriginatingSystemVendor=\"Equinor / NeqSim\""),
-        "PlantInformation should identify the originating system vendor");
+	"PlantInformation should identify the originating system vendor");
     assertTrue(xml.contains("OriginatingSystemVersion="),
-        "PlantInformation should include originating system version metadata");
+	"PlantInformation should include originating system version metadata");
   }
 
   /**
-   * Tests that pyDEXPI-friendly export omits only the default namespace while retaining the
-   * originating-system metadata needed by pyDEXPI/Proteus loaders.
+   * Tests that pyDEXPI-friendly export omits only the default namespace while retaining the originating-system metadata
+   * needed by pyDEXPI/Proteus loaders.
    *
    * @throws IOException if writing fails
    */
@@ -407,17 +398,15 @@ public class DexpiXmlWriterTest extends NeqSimTest {
     String xml = out.toString(StandardCharsets.UTF_8.name());
 
     assertFalse(xml.contains("xmlns=\"http://sandbox.dexpi.org/xml\""),
-        "pyDEXPI export should omit the DEXPI default namespace");
+	"pyDEXPI export should omit the DEXPI default namespace");
     assertFalse(xml.contains("xmlns:xsi="), "pyDEXPI export should omit namespace declarations");
-    assertTrue(xml.contains("OriginatingSystem=\"NeqSim\""),
-        "pyDEXPI export should keep originating system metadata");
-    assertTrue(xml.contains("PlantInformation"),
-        "pyDEXPI export should keep unqualified PlantInformation elements");
+    assertTrue(xml.contains("OriginatingSystem=\"NeqSim\""), "pyDEXPI export should keep originating system metadata");
+    assertTrue(xml.contains("PlantInformation"), "pyDEXPI export should keep unqualified PlantInformation elements");
   }
 
   /**
-   * Tests that a separator produces multiple nozzles for gas and liquid outlets, and that stream
-   * identity-based connection building correctly wires downstream equipment to the right nozzles.
+   * Tests that a separator produces multiple nozzles for gas and liquid outlets, and that stream identity-based
+   * connection building correctly wires downstream equipment to the right nozzles.
    *
    * @throws IOException if writing fails
    */
@@ -458,8 +447,8 @@ public class DexpiXmlWriterTest extends NeqSimTest {
     int nozzleCount = countOccurrences(xml, "<Nozzle ");
     // feed (Stream, not exported) = 0, sep = 3, comp = 2, valve PipingComponent = 2,
     // inline PipingComponent for sep->comp connection = 2 => total >= 9
-    assertTrue(nozzleCount >= 7, "Separator should produce 3 nozzles (inlet + gas out + liquid out)"
-        + "; total nozzles=" + nozzleCount);
+    assertTrue(nozzleCount >= 7,
+	"Separator should produce 3 nozzles (inlet + gas out + liquid out)" + "; total nozzles=" + nozzleCount);
 
     // Connection system should contain connections
     assertTrue(xml.contains("Connection"), "Should contain Connection elements");
@@ -467,9 +456,9 @@ public class DexpiXmlWriterTest extends NeqSimTest {
   }
 
   /**
-   * Tests that the equipment data-bar label converts mechanical-design lengths from the
-   * internally-stored metres to millimetres, and that the placeholder design temperature (the 100.0
-   * K default) is suppressed unless a real design basis has been set.
+   * Tests that the equipment data-bar label converts mechanical-design lengths from the internally-stored metres to
+   * millimetres, and that the placeholder design temperature (the 100.0 K default) is suppressed unless a real design
+   * basis has been set.
    *
    * @throws IOException if writing fails
    */
@@ -494,22 +483,18 @@ public class DexpiXmlWriterTest extends NeqSimTest {
     String xml = out.toString(StandardCharsets.UTF_8.name());
 
     // 2.0 m inner diameter must render as 2000 mm, not "2 mm".
-    assertTrue(xml.contains("String=\"2000 mm\""),
-        "Inner diameter should be converted from metres to 2000 mm");
-    assertTrue(xml.contains("String=\"6000 mm\""),
-        "Tan-to-tan length should be converted from metres to 6000 mm");
-    assertTrue(xml.contains("String=\"20 mm\""),
-        "Wall thickness should be converted from metres to 20 mm");
+    assertTrue(xml.contains("String=\"2000 mm\""), "Inner diameter should be converted from metres to 2000 mm");
+    assertTrue(xml.contains("String=\"6000 mm\""), "Tan-to-tan length should be converted from metres to 6000 mm");
+    assertTrue(xml.contains("String=\"20 mm\""), "Wall thickness should be converted from metres to 20 mm");
 
     // The placeholder design temperature (100.0 K -> -173.1 C) must not leak into the bar label.
-    assertFalse(xml.contains("-173.1"),
-        "Placeholder design temperature (-173.1 C) should be suppressed");
+    assertFalse(xml.contains("-173.1"), "Placeholder design temperature (-173.1 C) should be suppressed");
   }
 
   /**
-   * Tests that a process system without any explicitly modelled measurement devices or controllers
-   * still exports a realistic set of synthesized ISA-5.1 instrumentation (transmitters and matched
-   * PID controllers) so the resulting P&amp;ID resembles a real engineering diagram.
+   * Tests that a process system without any explicitly modelled measurement devices or controllers still exports a
+   * realistic set of synthesized ISA-5.1 instrumentation (transmitters and matched PID controllers) so the resulting
+   * P&amp;ID resembles a real engineering diagram.
    *
    * @throws IOException if writing fails
    */
@@ -535,7 +520,7 @@ public class DexpiXmlWriterTest extends NeqSimTest {
 
     // Instrumentation function bubbles must be emitted even though the model defines none.
     assertTrue(xml.contains("ProcessInstrumentationFunction"),
-        "Synthesized instrumentation should produce ProcessInstrumentationFunction elements");
+	"Synthesized instrumentation should produce ProcessInstrumentationFunction elements");
     // Separator should get pressure, level and temperature transmitters.
     assertTrue(xml.contains("PT-2001"), "Separator should get a pressure transmitter");
     assertTrue(xml.contains("LT-2002"), "Separator should get a level transmitter");
@@ -552,8 +537,8 @@ public class DexpiXmlWriterTest extends NeqSimTest {
   }
 
   /**
-   * Tests that automatic instrumentation synthesis can be disabled, so a model without explicit
-   * measurement devices exports no instrumentation.
+   * Tests that automatic instrumentation synthesis can be disabled, so a model without explicit measurement devices
+   * exports no instrumentation.
    *
    * @throws IOException if writing fails
    */
@@ -574,10 +559,8 @@ public class DexpiXmlWriterTest extends NeqSimTest {
       String xml = out.toString(StandardCharsets.UTF_8.name());
       // The shape catalogue always references the ProcessInstrumentationFunction class, so assert
       // on the absence of synthesized instrument tags instead.
-      assertFalse(xml.contains("PT-2001"),
-          "Disabling synthesis should produce no synthesized pressure transmitter");
-      assertFalse(xml.contains("LT-2002"),
-          "Disabling synthesis should produce no synthesized level transmitter");
+      assertFalse(xml.contains("PT-2001"), "Disabling synthesis should produce no synthesized pressure transmitter");
+      assertFalse(xml.contains("LT-2002"), "Disabling synthesis should produce no synthesized level transmitter");
     } finally {
       DexpiXmlWriter.setAutoSynthesizeInstrumentation(true);
     }
@@ -587,7 +570,7 @@ public class DexpiXmlWriterTest extends NeqSimTest {
    * Counts occurrences of a substring in a string.
    *
    * @param text the text to search
-   * @param sub the substring to count
+   * @param sub  the substring to count
    * @return the number of occurrences
    */
   private int countOccurrences(String text, String sub) {

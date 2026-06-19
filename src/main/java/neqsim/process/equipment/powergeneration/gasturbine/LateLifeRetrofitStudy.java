@@ -9,20 +9,19 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * Late-life retrofit study: compares the operating cost and CO2 emissions of a baseline gas turbine
- * fleet against a proposed replacement fleet over a multi-year operating profile, and computes net
- * present value (NPV), cumulative CO2 avoided, and simple payback.
+ * Late-life retrofit study: compares the operating cost and CO2 emissions of a baseline gas turbine fleet against a
+ * proposed replacement fleet over a multi-year operating profile, and computes net present value (NPV), cumulative CO2
+ * avoided, and simple payback.
  *
  * <p>
- * Typical use: a platform currently operates two large aero-derivative turbines (e.g. 40+ MW) that
- * are running far below their design load because production has declined. This study quantifies
- * the savings from replacing them with smaller industrial turbines that match the actual load
- * profile, including CO2 tax escalation.
+ * Typical use: a platform currently operates two large aero-derivative turbines (e.g. 40+ MW) that are running far
+ * below their design load because production has declined. This study quantifies the savings from replacing them with
+ * smaller industrial turbines that match the actual load profile, including CO2 tax escalation.
  * </p>
  *
  * <p>
- * Inputs are deliberately framed in generic engineering terms — no operator, asset, or vendor names
- * appear in this class.
+ * Inputs are deliberately framed in generic engineering terms — no operator, asset, or vendor names appear in this
+ * class.
  * </p>
  *
  * @author neqsim
@@ -47,16 +46,15 @@ public class LateLifeRetrofitStudy implements Serializable {
   /**
    * Construct a study.
    *
-   * @param baselineFleet existing turbines (each with spec/ambient/degradation)
-   * @param retrofitFleet replacement turbines
-   * @param demandProfileMW year-by-year average demanded power [MW]
-   * @param startYear calendar year of the first demand entry
-   * @param co2TaxSchedule CO2 cost schedule
+   * @param baselineFleet     existing turbines (each with spec/ambient/degradation)
+   * @param retrofitFleet     replacement turbines
+   * @param demandProfileMW   year-by-year average demanded power [MW]
+   * @param startYear         calendar year of the first demand entry
+   * @param co2TaxSchedule    CO2 cost schedule
    * @param fuelPriceNOKPerKg fuel price [NOK/kg]
    */
-  public LateLifeRetrofitStudy(List<GasTurbineUnit> baselineFleet,
-      List<GasTurbineUnit> retrofitFleet, double[] demandProfileMW, int startYear,
-      CO2TaxSchedule co2TaxSchedule, double fuelPriceNOKPerKg) {
+  public LateLifeRetrofitStudy(List<GasTurbineUnit> baselineFleet, List<GasTurbineUnit> retrofitFleet,
+      double[] demandProfileMW, int startYear, CO2TaxSchedule co2TaxSchedule, double fuelPriceNOKPerKg) {
     this.baselineFleet = new ArrayList<GasTurbineUnit>(baselineFleet);
     this.retrofitFleet = new ArrayList<GasTurbineUnit>(retrofitFleet);
     this.demandProfileMW = demandProfileMW.clone();
@@ -107,15 +105,11 @@ public class LateLifeRetrofitStudy implements Serializable {
       double demandW = demandProfileMW[i] * 1.0e6;
       double co2Cost = co2TaxSchedule.getTotalNOKPerTonne(year);
 
-      TurbineDispatchOptimizer baselineDisp =
-          new TurbineDispatchOptimizer(fuelPriceNOKPerKg, co2Cost);
-      TurbineDispatchOptimizer retrofitDisp =
-          new TurbineDispatchOptimizer(fuelPriceNOKPerKg, co2Cost);
+      TurbineDispatchOptimizer baselineDisp = new TurbineDispatchOptimizer(fuelPriceNOKPerKg, co2Cost);
+      TurbineDispatchOptimizer retrofitDisp = new TurbineDispatchOptimizer(fuelPriceNOKPerKg, co2Cost);
 
-      TurbineDispatchOptimizer.DispatchResult baseDr =
-          baselineDisp.dispatch(baselineFleet, demandW);
-      TurbineDispatchOptimizer.DispatchResult retroDr =
-          retrofitDisp.dispatch(retrofitFleet, demandW);
+      TurbineDispatchOptimizer.DispatchResult baseDr = baselineDisp.dispatch(baselineFleet, demandW);
+      TurbineDispatchOptimizer.DispatchResult retroDr = retrofitDisp.dispatch(retrofitFleet, demandW);
 
       YearResult yr = new YearResult();
       yr.year = year;
@@ -125,18 +119,18 @@ public class LateLifeRetrofitStudy implements Serializable {
       yr.retrofitFeasible = retroDr.feasible;
 
       if (baseDr.feasible) {
-        yr.baselineFuelKgPerYr = baseDr.totalFuelKgPerHr * annualOperatingHours;
-        yr.baselineCO2TonneYr = baseDr.totalCO2KgPerHr * annualOperatingHours / 1.0e3;
-        yr.baselineCostMNOK = baseDr.totalCostNOKPerHr * annualOperatingHours / 1.0e6;
+	yr.baselineFuelKgPerYr = baseDr.totalFuelKgPerHr * annualOperatingHours;
+	yr.baselineCO2TonneYr = baseDr.totalCO2KgPerHr * annualOperatingHours / 1.0e3;
+	yr.baselineCostMNOK = baseDr.totalCostNOKPerHr * annualOperatingHours / 1.0e6;
       }
       if (retroDr.feasible) {
-        yr.retrofitFuelKgPerYr = retroDr.totalFuelKgPerHr * annualOperatingHours;
-        yr.retrofitCO2TonneYr = retroDr.totalCO2KgPerHr * annualOperatingHours / 1.0e3;
-        yr.retrofitCostMNOK = retroDr.totalCostNOKPerHr * annualOperatingHours / 1.0e6;
+	yr.retrofitFuelKgPerYr = retroDr.totalFuelKgPerHr * annualOperatingHours;
+	yr.retrofitCO2TonneYr = retroDr.totalCO2KgPerHr * annualOperatingHours / 1.0e3;
+	yr.retrofitCostMNOK = retroDr.totalCostNOKPerHr * annualOperatingHours / 1.0e6;
       }
       if (baseDr.feasible && retroDr.feasible) {
-        yr.savingsMNOK = yr.baselineCostMNOK - yr.retrofitCostMNOK;
-        yr.co2AvoidedTonne = yr.baselineCO2TonneYr - yr.retrofitCO2TonneYr;
+	yr.savingsMNOK = yr.baselineCostMNOK - yr.retrofitCostMNOK;
+	yr.co2AvoidedTonne = yr.baselineCO2TonneYr - yr.retrofitCO2TonneYr;
       }
       res.years.add(yr);
     }
@@ -155,7 +149,7 @@ public class LateLifeRetrofitStudy implements Serializable {
       res.npvMNOK += yr.savingsMNOK * disc;
       cum += yr.savingsMNOK;
       if (paybackYear < 0 && cum >= 0.0) {
-        paybackYear = startYear + i;
+	paybackYear = startYear + i;
       }
     }
     res.simplePaybackYear = paybackYear;

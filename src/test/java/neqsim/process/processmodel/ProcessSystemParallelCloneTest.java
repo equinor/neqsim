@@ -19,18 +19,18 @@ import neqsim.thermo.system.SystemSrkEos;
  * Thread-safety audit for the clone-and-run pattern used by parallel scenario sweeps.
  *
  * <p>
- * Agentic optimization and DoE workflows want to fan out many independent scenarios across threads.
- * The safe pattern is to {@link ProcessSystem#copy()} a base flowsheet once per scenario (a
- * serialization deep copy that produces a fully independent object graph) and run each copy on its
- * own thread. This test verifies that the deep copies are genuinely independent: running many
- * copies in parallel produces results bit-identical to running the same scenarios sequentially.
+ * Agentic optimization and DoE workflows want to fan out many independent scenarios across threads. The safe pattern is
+ * to {@link ProcessSystem#copy()} a base flowsheet once per scenario (a serialization deep copy that produces a fully
+ * independent object graph) and run each copy on its own thread. This test verifies that the deep copies are genuinely
+ * independent: running many copies in parallel produces results bit-identical to running the same scenarios
+ * sequentially.
  * </p>
  */
 class ProcessSystemParallelCloneTest {
 
   /**
-   * Builds a base feed/separator/compressor process whose compressor outlet pressure encodes the
-   * scenario, so each scenario produces a distinct, deterministic compressor power.
+   * Builds a base feed/separator/compressor process whose compressor outlet pressure encodes the scenario, so each
+   * scenario produces a distinct, deterministic compressor power.
    *
    * @param outletPressureBara compressor discharge pressure in bara
    * @return a constructed (not yet run) process system
@@ -90,22 +90,22 @@ class ProcessSystemParallelCloneTest {
     try {
       List<Future<Double>> futures = new ArrayList<Future<Double>>();
       for (int i = 0; i < scenarioCount; i++) {
-        final double outletPressure = 110.0 + i;
-        final ProcessSystem copy = base.copy();
-        ((Compressor) copy.getUnit("Compressor")).setOutletPressure(outletPressure);
-        futures.add(pool.submit(new Callable<Double>() {
-          @Override
-          public Double call() {
-            return runAndGetPower(copy);
-          }
-        }));
+	final double outletPressure = 110.0 + i;
+	final ProcessSystem copy = base.copy();
+	((Compressor) copy.getUnit("Compressor")).setOutletPressure(outletPressure);
+	futures.add(pool.submit(new Callable<Double>() {
+	  @Override
+	  public Double call() {
+	    return runAndGetPower(copy);
+	  }
+	}));
       }
       for (int i = 0; i < scenarioCount; i++) {
-        double parallelResult = futures.get(i).get();
-        double sequentialResult = sequential.get(i).doubleValue();
-        assertTrue(parallelResult > 0.0, "scenario " + i + " should produce positive power");
-        assertEquals(sequentialResult, parallelResult, Math.abs(sequentialResult) * 1.0e-9 + 1.0e-6,
-            "parallel clone-and-run must match sequential for scenario " + i);
+	double parallelResult = futures.get(i).get();
+	double sequentialResult = sequential.get(i).doubleValue();
+	assertTrue(parallelResult > 0.0, "scenario " + i + " should produce positive power");
+	assertEquals(sequentialResult, parallelResult, Math.abs(sequentialResult) * 1.0e-9 + 1.0e-6,
+	    "parallel clone-and-run must match sequential for scenario " + i);
       }
     } finally {
       pool.shutdownNow();
@@ -125,9 +125,7 @@ class ProcessSystemParallelCloneTest {
     double copyPower = ((Compressor) copy.getUnit("Compressor")).getPower();
 
     double basePowerAfter = ((Compressor) base.getUnit("Compressor")).getPower();
-    assertEquals(basePower, basePowerAfter, 1.0e-9,
-        "mutating and running a copy must not change the base process");
-    assertTrue(copyPower > basePower,
-        "higher discharge pressure on the copy must require more power");
+    assertEquals(basePower, basePowerAfter, 1.0e-9, "mutating and running a copy must not change the base process");
+    assertTrue(copyPower > basePower, "higher discharge pressure on the copy must require more power");
   }
 }

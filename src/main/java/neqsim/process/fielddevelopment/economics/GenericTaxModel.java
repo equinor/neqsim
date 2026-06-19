@@ -4,8 +4,8 @@ package neqsim.process.fielddevelopment.economics;
  * Generic tax model implementation driven by FiscalParameters.
  *
  * <p>
- * This class provides a parameter-driven implementation of the {@link TaxModel} interface that can
- * model any concessionary or PSC-type fiscal system based on the provided {@link FiscalParameters}.
+ * This class provides a parameter-driven implementation of the {@link TaxModel} interface that can model any
+ * concessionary or PSC-type fiscal system based on the provided {@link FiscalParameters}.
  * </p>
  *
  * <h2>Supported Features</h2>
@@ -103,8 +103,7 @@ public class GenericTaxModel implements TaxModel {
   }
 
   @Override
-  public TaxResult calculateTax(double grossRevenue, double opex, double depreciation,
-      double uplift) {
+  public TaxResult calculateTax(double grossRevenue, double opex, double depreciation, double uplift) {
     // Calculate royalty first (on gross revenue)
     double royalty = calculateRoyalty(grossRevenue);
     double revenueAfterRoyalty = grossRevenue - royalty;
@@ -115,14 +114,14 @@ public class GenericTaxModel implements TaxModel {
     // Apply loss carry-forward for corporate tax
     if (parameters.isLossCarryForward()) {
       if (corporateTaxBase > 0 && corporateTaxLossCarryForward > 0) {
-        double usedLoss = Math.min(corporateTaxBase, corporateTaxLossCarryForward);
-        corporateTaxBase -= usedLoss;
-        corporateTaxLossCarryForward -= usedLoss;
+	double usedLoss = Math.min(corporateTaxBase, corporateTaxLossCarryForward);
+	corporateTaxBase -= usedLoss;
+	corporateTaxLossCarryForward -= usedLoss;
       } else if (corporateTaxBase < 0) {
-        // Apply interest to carried-forward losses
-        double interest = corporateTaxLossCarryForward * parameters.getLossCarryForwardInterest();
-        corporateTaxLossCarryForward += Math.abs(corporateTaxBase) + interest;
-        corporateTaxBase = 0;
+	// Apply interest to carried-forward losses
+	double interest = corporateTaxLossCarryForward * parameters.getLossCarryForwardInterest();
+	corporateTaxLossCarryForward += Math.abs(corporateTaxBase) + interest;
+	corporateTaxBase = 0;
       }
     }
 
@@ -134,13 +133,13 @@ public class GenericTaxModel implements TaxModel {
     // Apply loss carry-forward for resource tax
     if (parameters.isLossCarryForward()) {
       if (resourceTaxBase > 0 && resourceTaxLossCarryForward > 0) {
-        double usedLoss = Math.min(resourceTaxBase, resourceTaxLossCarryForward);
-        resourceTaxBase -= usedLoss;
-        resourceTaxLossCarryForward -= usedLoss;
+	double usedLoss = Math.min(resourceTaxBase, resourceTaxLossCarryForward);
+	resourceTaxBase -= usedLoss;
+	resourceTaxLossCarryForward -= usedLoss;
       } else if (resourceTaxBase < 0) {
-        double interest = resourceTaxLossCarryForward * parameters.getLossCarryForwardInterest();
-        resourceTaxLossCarryForward += Math.abs(resourceTaxBase) + interest;
-        resourceTaxBase = 0;
+	double interest = resourceTaxLossCarryForward * parameters.getLossCarryForwardInterest();
+	resourceTaxLossCarryForward += Math.abs(resourceTaxBase) + interest;
+	resourceTaxBase = 0;
       }
     }
 
@@ -151,15 +150,15 @@ public class GenericTaxModel implements TaxModel {
     if (parameters.getWindfallTaxRate() > 0 && parameters.getWindfallTaxThreshold() > 0) {
       double excessProfit = resourceTaxBase - parameters.getWindfallTaxThreshold();
       if (excessProfit > 0) {
-        windfallTax = excessProfit * parameters.getWindfallTaxRate();
+	windfallTax = excessProfit * parameters.getWindfallTaxRate();
       }
     }
 
     double totalTax = corporateTax + resourceTax + windfallTax;
     double afterTaxIncome = grossRevenue - opex - royalty - totalTax;
 
-    return new TaxResult(grossRevenue, opex, depreciation, uplift, royalty, corporateTaxBase,
-        corporateTax, resourceTaxBase, resourceTax + windfallTax, totalTax, afterTaxIncome);
+    return new TaxResult(grossRevenue, opex, depreciation, uplift, royalty, corporateTaxBase, corporateTax,
+	resourceTaxBase, resourceTax + windfallTax, totalTax, afterTaxIncome);
   }
 
   @Override
@@ -169,29 +168,29 @@ public class GenericTaxModel implements TaxModel {
     }
 
     switch (parameters.getDepreciationMethod()) {
-      case STRAIGHT_LINE:
-        if (year > parameters.getDepreciationYears()) {
-          return 0.0;
-        }
-        return capex / parameters.getDepreciationYears();
+    case STRAIGHT_LINE:
+      if (year > parameters.getDepreciationYears()) {
+	return 0.0;
+      }
+      return capex / parameters.getDepreciationYears();
 
-      case DECLINING_BALANCE:
-        double rate = parameters.getDecliningBalanceRate();
-        double remainingValue = capex * Math.pow(1 - rate, year - 1);
-        return remainingValue * rate;
+    case DECLINING_BALANCE:
+      double rate = parameters.getDecliningBalanceRate();
+      double remainingValue = capex * Math.pow(1 - rate, year - 1);
+      return remainingValue * rate;
 
-      case IMMEDIATE:
-        return year == 1 ? capex : 0.0;
+    case IMMEDIATE:
+      return year == 1 ? capex : 0.0;
 
-      case UNIT_OF_PRODUCTION:
-        // Would need production profile - use straight-line as fallback
-        if (year > parameters.getDepreciationYears()) {
-          return 0.0;
-        }
-        return capex / parameters.getDepreciationYears();
+    case UNIT_OF_PRODUCTION:
+      // Would need production profile - use straight-line as fallback
+      if (year > parameters.getDepreciationYears()) {
+	return 0.0;
+      }
+      return capex / parameters.getDepreciationYears();
 
-      default:
-        return capex / parameters.getDepreciationYears();
+    default:
+      return capex / parameters.getDepreciationYears();
     }
   }
 
@@ -209,8 +208,7 @@ public class GenericTaxModel implements TaxModel {
   }
 
   @Override
-  public double calculateEffectiveTaxRate(double grossRevenue, double opex, double depreciation,
-      double uplift) {
+  public double calculateEffectiveTaxRate(double grossRevenue, double opex, double depreciation, double uplift) {
     if (grossRevenue <= 0) {
       return 0.0;
     }
@@ -288,8 +286,8 @@ public class GenericTaxModel implements TaxModel {
    * Calculates PSC-style profit sharing.
    *
    * <p>
-   * For PSC systems, after cost recovery, the profit oil/gas is split between the government and
-   * contractor according to the profit sharing terms.
+   * For PSC systems, after cost recovery, the profit oil/gas is split between the government and contractor according
+   * to the profit sharing terms.
    * </p>
    *
    * @param grossRevenue total revenue
@@ -298,7 +296,7 @@ public class GenericTaxModel implements TaxModel {
    */
   public double[] calculateProfitSharing(double grossRevenue, double costRecovery) {
     if (!parameters.isPscSystem()) {
-      return new double[] {0, grossRevenue - costRecovery};
+      return new double[] { 0, grossRevenue - costRecovery };
     }
 
     // Limit cost recovery
@@ -311,7 +309,7 @@ public class GenericTaxModel implements TaxModel {
     double governmentShare = profitOil * parameters.getProfitShareGovernment();
     double contractorShare = profitOil * parameters.getProfitShareContractor();
 
-    return new double[] {governmentShare, contractorShare};
+    return new double[] { governmentShare, contractorShare };
   }
 
   @Override

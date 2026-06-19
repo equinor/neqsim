@@ -11,8 +11,8 @@ import neqsim.process.processmodel.ProcessSystem;
  * Result container for design optimization.
  *
  * <p>
- * Holds the results from a design optimization run, including the optimized process, equipment
- * sizes, constraint status, and performance metrics.
+ * Holds the results from a design optimization run, including the optimized process, equipment sizes, constraint
+ * status, and performance metrics.
  * </p>
  *
  * @author NeqSim Development Team
@@ -107,7 +107,7 @@ public class DesignResult {
    * Record an optimized flow rate.
    *
    * @param streamName stream name
-   * @param flowRate flow rate in kg/hr
+   * @param flowRate   flow rate in kg/hr
    */
   public void addOptimizedFlowRate(String streamName, double flowRate) {
     optimizedFlowRates.put(streamName, flowRate);
@@ -126,8 +126,8 @@ public class DesignResult {
    * Record equipment size.
    *
    * @param equipmentName equipment name
-   * @param sizeName size parameter name (e.g., "diameter", "length")
-   * @param value size value
+   * @param sizeName      size parameter name (e.g., "diameter", "length")
+   * @param value         size value
    */
   public void addEquipmentSize(String equipmentName, String sizeName, double value) {
     equipmentSizes.computeIfAbsent(equipmentName, k -> new HashMap<>()).put(sizeName, value);
@@ -146,17 +146,17 @@ public class DesignResult {
   /**
    * Record constraint status.
    *
-   * @param equipmentName equipment name
+   * @param equipmentName  equipment name
    * @param constraintName constraint name
-   * @param currentValue current value
-   * @param limitValue limit value
-   * @param utilized utilization fraction (0-1)
+   * @param currentValue   current value
+   * @param limitValue     limit value
+   * @param utilized       utilization fraction (0-1)
    */
-  public void addConstraintStatus(String equipmentName, String constraintName, double currentValue,
-      double limitValue, double utilized) {
+  public void addConstraintStatus(String equipmentName, String constraintName, double currentValue, double limitValue,
+      double utilized) {
     String key = equipmentName + "." + constraintName;
     constraintStatus.put(key,
-        new ConstraintStatus(constraintName, currentValue, limitValue, utilized, utilized <= 1.0));
+	new ConstraintStatus(constraintName, currentValue, limitValue, utilized, utilized <= 1.0));
   }
 
   /**
@@ -257,8 +257,8 @@ public class DesignResult {
     if (!optimizedFlowRates.isEmpty()) {
       sb.append("Optimized Flow Rates:\n");
       for (Map.Entry<String, Double> entry : optimizedFlowRates.entrySet()) {
-        sb.append("  ").append(entry.getKey()).append(": ")
-            .append(String.format("%.2f", entry.getValue())).append(" kg/hr\n");
+	sb.append("  ").append(entry.getKey()).append(": ").append(String.format("%.2f", entry.getValue()))
+	    .append(" kg/hr\n");
       }
       sb.append("\n");
     }
@@ -266,10 +266,10 @@ public class DesignResult {
     if (!constraintStatus.isEmpty()) {
       sb.append("Constraint Status:\n");
       for (Map.Entry<String, ConstraintStatus> entry : constraintStatus.entrySet()) {
-        ConstraintStatus status = entry.getValue();
-        sb.append("  ").append(entry.getKey()).append(": ")
-            .append(String.format("%.1f%%", status.getUtilization() * 100))
-            .append(status.isSatisfied() ? " [OK]" : " [VIOLATED]").append("\n");
+	ConstraintStatus status = entry.getValue();
+	sb.append("  ").append(entry.getKey()).append(": ")
+	    .append(String.format("%.1f%%", status.getUtilization() * 100))
+	    .append(status.isSatisfied() ? " [OK]" : " [VIOLATED]").append("\n");
       }
       sb.append("\n");
     }
@@ -277,7 +277,7 @@ public class DesignResult {
     if (!violations.isEmpty()) {
       sb.append("VIOLATIONS:\n");
       for (String v : violations) {
-        sb.append("  - ").append(v).append("\n");
+	sb.append("  - ").append(v).append("\n");
       }
       sb.append("\n");
     }
@@ -285,7 +285,7 @@ public class DesignResult {
     if (!warnings.isEmpty()) {
       sb.append("Warnings:\n");
       for (String w : warnings) {
-        sb.append("  - ").append(w).append("\n");
+	sb.append("  - ").append(w).append("\n");
       }
     }
 
@@ -305,14 +305,14 @@ public class DesignResult {
     /**
      * Create constraint status.
      *
-     * @param name constraint name
+     * @param name         constraint name
      * @param currentValue current value
-     * @param limitValue limit value
-     * @param utilization utilization (0-1)
-     * @param satisfied whether satisfied
+     * @param limitValue   limit value
+     * @param utilization  utilization (0-1)
+     * @param satisfied    whether satisfied
      */
     public ConstraintStatus(String name, double currentValue, double limitValue, double utilization,
-        boolean satisfied) {
+	boolean satisfied) {
       this.name = name;
       this.currentValue = currentValue;
       this.limitValue = limitValue;

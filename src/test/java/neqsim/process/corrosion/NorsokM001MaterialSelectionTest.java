@@ -24,8 +24,7 @@ public class NorsokM001MaterialSelectionTest {
     selector.evaluate();
 
     String material = selector.getRecommendedMaterial();
-    assertTrue(material.contains("Carbon steel"),
-        "Low CO2 corrosion should recommend CS: " + material);
+    assertTrue(material.contains("Carbon steel"), "Low CO2 corrosion should recommend CS: " + material);
 
     assertEquals("Sweet service (CO2 only)", selector.getServiceCategory());
     assertEquals("Non-sour", selector.getSourClassification());
@@ -41,8 +40,7 @@ public class NorsokM001MaterialSelectionTest {
     selector.evaluate();
 
     String material = selector.getRecommendedMaterial();
-    assertTrue(material.contains("13Cr"),
-        "High CO2 corrosion without chlorides should recommend 13Cr: " + material);
+    assertTrue(material.contains("13Cr"), "High CO2 corrosion without chlorides should recommend 13Cr: " + material);
   }
 
   @Test
@@ -53,8 +51,7 @@ public class NorsokM001MaterialSelectionTest {
     selector.evaluate();
 
     String material = selector.getRecommendedMaterial();
-    assertFalse(material.contains("Carbon steel"),
-        "Very high corrosion should not recommend plain CS: " + material);
+    assertFalse(material.contains("Carbon steel"), "Very high corrosion should not recommend plain CS: " + material);
   }
 
   @Test
@@ -65,8 +62,7 @@ public class NorsokM001MaterialSelectionTest {
     selector.evaluate();
 
     String material = selector.getRecommendedMaterial();
-    assertTrue(material.contains("Duplex"),
-        "High corrosion + chlorides should recommend duplex: " + material);
+    assertTrue(material.contains("Duplex"), "High corrosion + chlorides should recommend duplex: " + material);
   }
 
   @Test
@@ -87,8 +83,8 @@ public class NorsokM001MaterialSelectionTest {
     boolean hasNACE = false;
     for (String note : notes) {
       if (note.contains("NACE") || note.contains("ISO 15156")) {
-        hasNACE = true;
-        break;
+	hasNACE = true;
+	break;
       }
     }
     assertTrue(hasNACE, "Notes should reference NACE/ISO 15156 for sour service");
@@ -105,8 +101,7 @@ public class NorsokM001MaterialSelectionTest {
     assertTrue(sour.contains("Severe"), "Should classify as severe sour: " + sour);
 
     String material = selector.getRecommendedMaterial();
-    assertFalse(material.contains("Carbon steel"),
-        "Severe sour should not recommend plain CS: " + material);
+    assertFalse(material.contains("Carbon steel"), "Severe sour should not recommend plain CS: " + material);
   }
 
   @Test
@@ -119,7 +114,7 @@ public class NorsokM001MaterialSelectionTest {
 
     String material = selector.getRecommendedMaterial();
     assertTrue(material.contains("C-276") || material.contains("625"),
-        "Severe sour + very high chlorides should recommend nickel alloy: " + material);
+	"Severe sour + very high chlorides should recommend nickel alloy: " + material);
   }
 
   @Test
@@ -134,8 +129,7 @@ public class NorsokM001MaterialSelectionTest {
     assertTrue(category.contains("Dry"), "No free water should be dry service: " + category);
 
     String material = selector.getRecommendedMaterial();
-    assertTrue(material.contains("Carbon steel"),
-        "Dry service should allow CS: " + material);
+    assertTrue(material.contains("Carbon steel"), "Dry service should allow CS: " + material);
   }
 
   @Test
@@ -180,8 +174,7 @@ public class NorsokM001MaterialSelectionTest {
     selector.evaluate();
     double caSour = selector.getRecommendedCorrosionAllowanceMm();
 
-    assertTrue(caSour > caSweet,
-        "Sour service should add extra CA: sour=" + caSour + " sweet=" + caSweet);
+    assertTrue(caSour > caSweet, "Sour service should add extra CA: sour=" + caSour + " sweet=" + caSweet);
   }
 
   @Test

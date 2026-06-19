@@ -11,15 +11,14 @@ import neqsim.thermo.system.SystemSrkEos;
  * Validation benchmark cases for pipeline network solvers.
  *
  * <p>
- * Provides analytically solvable or published benchmark cases for verifying the Hardy Cross and
- * Newton-Raphson solvers against known solutions. Each benchmark returns a result object with
- * computed values, expected values, and pass/fail status.
+ * Provides analytically solvable or published benchmark cases for verifying the Hardy Cross and Newton-Raphson solvers
+ * against known solutions. Each benchmark returns a result object with computed values, expected values, and pass/fail
+ * status.
  * </p>
  *
  * <h2>Benchmark Cases</h2>
  * <ul>
- * <li><b>Single Pipe (Darcy-Weisbach)</b>: Analytical ΔP from Swamee-Jain / Darcy-Weisbach
- * equation</li>
+ * <li><b>Single Pipe (Darcy-Weisbach)</b>: Analytical ΔP from Swamee-Jain / Darcy-Weisbach equation</li>
  * <li><b>Two Parallel Pipes</b>: Known flow split from equal/unequal diameter pipes</li>
  * <li><b>Triangle Loop</b>: Classic 3-pipe loop with Hardy Cross analytical solution</li>
  * <li><b>Two-Loop Network</b>: Cross (1936) textbook example with 5 pipes and 2 loops</li>
@@ -28,8 +27,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * </ul>
  *
  * <p>
- * Reference: Cross, H. (1936). "Analysis of Flow in Networks of Conduits or Conductors". Bulletin
- * 286, University of Illinois Engineering Experiment Station.
+ * Reference: Cross, H. (1936). "Analysis of Flow in Networks of Conduits or Conductors". Bulletin 286, University of
+ * Illinois Engineering Experiment Station.
  * </p>
  *
  * @author Even Solbraa
@@ -61,9 +60,8 @@ public class NetworkValidationBenchmarks {
    * Benchmark 1: Single pipe Darcy-Weisbach pressure drop.
    *
    * <p>
-   * Verifies: For a single straight pipe of known L, D, roughness, with a given mass flow, the
-   * network solver produces the same pressure drop as the Darcy-Weisbach equation with the
-   * Swamee-Jain friction factor.
+   * Verifies: For a single straight pipe of known L, D, roughness, with a given mass flow, the network solver produces
+   * the same pressure drop as the Darcy-Weisbach equation with the Swamee-Jain friction factor.
    * </p>
    *
    * <p>
@@ -81,8 +79,8 @@ public class NetworkValidationBenchmarks {
     BenchmarkResult result = new BenchmarkResult("Single Pipe Darcy-Weisbach");
 
     SystemInterface gas = createBenchmarkGas();
-    neqsim.thermodynamicoperations.ThermodynamicOperations ops =
-        new neqsim.thermodynamicoperations.ThermodynamicOperations(gas);
+    neqsim.thermodynamicoperations.ThermodynamicOperations ops = new neqsim.thermodynamicoperations.ThermodynamicOperations(
+	gas);
     try {
       ops.TPflash();
     } catch (Exception e) {
@@ -103,8 +101,7 @@ public class NetworkValidationBenchmarks {
     double velocity = massFlow / (density * area);
     double reynolds = density * velocity * diameter / viscosity;
     double relRough = roughness / diameter;
-    double swameeJainF =
-        0.25 / Math.pow(Math.log10(relRough / 3.7 + 5.74 / Math.pow(reynolds, 0.9)), 2);
+    double swameeJainF = 0.25 / Math.pow(Math.log10(relRough / 3.7 + 5.74 / Math.pow(reynolds, 0.9)), 2);
     double analyticalDp = swameeJainF * (length / diameter) * (density * velocity * velocity / 2.0);
 
     // Network solver
@@ -134,8 +131,8 @@ public class NetworkValidationBenchmarks {
    * Benchmark 2: Two parallel pipes with known flow split.
    *
    * <p>
-   * For two parallel pipes with the same L and roughness but different diameters D1 and D2, the
-   * flow split at steady state satisfies equal pressure drop across both paths:
+   * For two parallel pipes with the same L and roughness but different diameters D1 and D2, the flow split at steady
+   * state satisfies equal pressure drop across both paths:
    * </p>
    *
    * <pre>
@@ -207,8 +204,8 @@ public class NetworkValidationBenchmarks {
    * Benchmark 3: Triangle loop mass balance.
    *
    * <p>
-   * A triangle network (A-B-C-A) with one source at A and two sinks at B and C. Verifies that mass
-   * is conserved at all junction nodes and that the Hardy Cross solver correctly distributes flow.
+   * A triangle network (A-B-C-A) with one source at A and two sinks at B and C. Verifies that mass is conserved at all
+   * junction nodes and that the Hardy Cross solver correctly distributes flow.
    * </p>
    *
    * @return benchmark result
@@ -261,9 +258,8 @@ public class NetworkValidationBenchmarks {
    * Benchmark 4: Hardy Cross vs Newton-Raphson agreement.
    *
    * <p>
-   * Solves the same two-loop network with both methods and verifies that results agree within
-   * tolerance. This is a cross-verification benchmark — both solvers should converge to the same
-   * physical solution.
+   * Solves the same two-loop network with both methods and verifies that results agree within tolerance. This is a
+   * cross-verification benchmark — both solvers should converge to the same physical solution.
    * </p>
    *
    * @return benchmark result
@@ -301,10 +297,8 @@ public class NetworkValidationBenchmarks {
     result.addMetric("Q_AB agreement (kg/hr)", hcQAB, nrQAB, 5.0);
     result.addMetric("Q_BC agreement (kg/hr)", hcQBC, nrQBC, 5.0);
     result.addMetric("P_A agreement (bara)", hcPA, nrPA, 0.5);
-    result.addMetric("HC iterations", hcNetwork.getIterationCount(), hcNetwork.getIterationCount(),
-        0.0);
-    result.addMetric("NR iterations", nrNetwork.getIterationCount(), nrNetwork.getIterationCount(),
-        0.0);
+    result.addMetric("HC iterations", hcNetwork.getIterationCount(), hcNetwork.getIterationCount(), 0.0);
+    result.addMetric("NR iterations", nrNetwork.getIterationCount(), nrNetwork.getIterationCount(), 0.0);
 
     result.converged = hcConverged && nrConverged;
     result.solverIterations = hcNetwork.getIterationCount() + nrNetwork.getIterationCount();
@@ -316,9 +310,8 @@ public class NetworkValidationBenchmarks {
    * Benchmark 5: Pressure monotonicity along flow direction.
    *
    * <p>
-   * In a purely pipe-based network with no compressors, pressure must decrease along the flow
-   * direction. This benchmark verifies that the solver produces physically consistent pressure
-   * profiles.
+   * In a purely pipe-based network with no compressors, pressure must decrease along the flow direction. This benchmark
+   * verifies that the solver produces physically consistent pressure profiles.
    * </p>
    *
    * @return benchmark result
@@ -372,8 +365,8 @@ public class NetworkValidationBenchmarks {
    * Benchmark 6: Sparse vs Dense solver agreement for large networks.
    *
    * <p>
-   * Constructs a 10x10 grid network (100 nodes, ~200 pipes) and verifies that the sparse CSC solver
-   * and dense Gaussian elimination produce identical results. Reports timing for both.
+   * Constructs a 10x10 grid network (100 nodes, ~200 pipes) and verifies that the sparse CSC solver and dense Gaussian
+   * elimination produce identical results. Reports timing for both.
    * </p>
    *
    * @return benchmark result
@@ -390,18 +383,18 @@ public class NetworkValidationBenchmarks {
     for (int i = 0; i < n; i++) {
       matA[i][i] = 4.0 + i * 0.1; // Positive diagonal
       if (i > 0) {
-        matA[i][i - 1] = -1.0;
+	matA[i][i - 1] = -1.0;
       }
       if (i < n - 1) {
-        matA[i][i + 1] = -1.0;
+	matA[i][i + 1] = -1.0;
       }
       // Grid connectivity: connect to row above/below
       int gridSize = 6;
       if (i >= gridSize) {
-        matA[i][i - gridSize] = -0.5;
+	matA[i][i - gridSize] = -0.5;
       }
       if (i + gridSize < n) {
-        matA[i][i + gridSize] = -0.5;
+	matA[i][i + gridSize] = -0.5;
       }
       vecB[i] = 1.0 + 0.1 * i;
     }
@@ -462,20 +455,19 @@ public class NetworkValidationBenchmarks {
     int failed = 0;
     for (BenchmarkResult r : results) {
       if (r.allPassed) {
-        passed++;
+	passed++;
       } else {
-        failed++;
+	failed++;
       }
     }
-    logger
-        .info("Benchmarks: " + passed + " passed, " + failed + " failed out of " + results.size());
+    logger.info("Benchmarks: " + passed + " passed, " + failed + " failed out of " + results.size());
     return results;
   }
 
   /**
    * Build a standard two-loop network for benchmarking.
    *
-   * @param gas fluid template
+   * @param gas    fluid template
    * @param prefix name prefix
    * @return configured network
    */
@@ -529,9 +521,9 @@ public class NetworkValidationBenchmarks {
      * Add a metric comparison.
      *
      * @param metricName name of the metric
-     * @param computed computed value from the solver
-     * @param expected expected (analytical or reference) value
-     * @param tolerance acceptable absolute difference
+     * @param computed   computed value from the solver
+     * @param expected   expected (analytical or reference) value
+     * @param tolerance  acceptable absolute difference
      */
     public void addMetric(String metricName, double computed, double expected, double tolerance) {
       metrics.add(new MetricResult(metricName, computed, expected, tolerance));
@@ -543,10 +535,10 @@ public class NetworkValidationBenchmarks {
     public void evaluate() {
       allPassed = converged;
       for (MetricResult m : metrics) {
-        m.passed = Math.abs(m.computed - m.expected) <= m.tolerance;
-        if (!m.passed) {
-          allPassed = false;
-        }
+	m.passed = Math.abs(m.computed - m.expected) <= m.tolerance;
+	if (!m.passed) {
+	  allPassed = false;
+	}
       }
     }
 
@@ -563,8 +555,8 @@ public class NetworkValidationBenchmarks {
       sb.append(", OVERALL: ").append(allPassed ? "PASS" : "FAIL");
       sb.append("\n");
       for (MetricResult m : metrics) {
-        sb.append(String.format("  %-35s computed=%.6f  expected=%.6f  tol=%.6f  %s%n", m.name,
-            m.computed, m.expected, m.tolerance, m.passed ? "PASS" : "FAIL"));
+	sb.append(String.format("  %-35s computed=%.6f  expected=%.6f  tol=%.6f  %s%n", m.name, m.computed, m.expected,
+	    m.tolerance, m.passed ? "PASS" : "FAIL"));
       }
       return sb.toString();
     }
@@ -592,9 +584,9 @@ public class NetworkValidationBenchmarks {
     /**
      * Create a metric result.
      *
-     * @param name metric name
-     * @param computed computed value
-     * @param expected expected value
+     * @param name      metric name
+     * @param computed  computed value
+     * @param expected  expected value
      * @param tolerance tolerance
      */
     public MetricResult(String name, double computed, double expected, double tolerance) {

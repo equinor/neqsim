@@ -167,8 +167,7 @@ public class DynamicProcessHelperTest extends neqsim.NeqSimTest {
     ThrottlingValve inletValve = (ThrottlingValve) process.getUnit("inlet valve");
     Stream feed = (Stream) process.getUnit("feed");
 
-    ControllerDeviceInterface fc =
-        helper.addFlowController("101", inletValve, feed, 5000.0, "kg/hr");
+    ControllerDeviceInterface fc = helper.addFlowController("101", inletValve, feed, 5000.0, "kg/hr");
 
     assertNotNull(fc, "Flow controller should be created");
     assertNotNull(helper.getTransmitter("FT-101"), "Flow transmitter should be created");
@@ -213,9 +212,7 @@ public class DynamicProcessHelperTest extends neqsim.NeqSimTest {
     DynamicProcessHelper helper = new DynamicProcessHelper(process);
     helper.instrumentAndControl();
 
-    assertTrue(helper.getTransmitters().size() >= 3,
-        "Should have at least 3 transmitters for separator");
-    assertTrue(helper.getControllers().size() >= 2,
-        "Should have at least 2 controllers for separator");
+    assertTrue(helper.getTransmitters().size() >= 3, "Should have at least 3 transmitters for separator");
+    assertTrue(helper.getControllers().size() >= 2, "Should have at least 2 controllers for separator");
   }
 }

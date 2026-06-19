@@ -37,13 +37,14 @@ public class HeatExchangerCapacityStrategy implements EquipmentCapacityStrategy 
   /**
    * Default constructor.
    */
-  public HeatExchangerCapacityStrategy() {}
+  public HeatExchangerCapacityStrategy() {
+  }
 
   /**
    * Constructor with custom constraints.
    *
    * @param minApproachTemp minimum approach temperature in Celsius
-   * @param maxDutyRatio maximum duty ratio
+   * @param maxDutyRatio    maximum duty ratio
    */
   public HeatExchangerCapacityStrategy(double minApproachTemp, double maxDutyRatio) {
     this.minApproachTemp = minApproachTemp;
@@ -82,14 +83,14 @@ public class HeatExchangerCapacityStrategy implements EquipmentCapacityStrategy 
       double duty = Math.abs(heater.getDuty());
       double maxDuty = heater.getMaxDesignDuty();
       if (maxDuty > 0 && duty > 0) {
-        return duty / maxDuty;
+	return duty / maxDuty;
       }
     } else if (equipment instanceof MultiStreamHeatExchanger2) {
       MultiStreamHeatExchanger2 hx = (MultiStreamHeatExchanger2) equipment;
       double duty = Math.abs(hx.energyDiff());
       double maxDuty = hx.getCapacityMax();
       if (maxDuty > 0 && duty > 0) {
-        return duty / maxDuty;
+	return duty / maxDuty;
       }
     }
 
@@ -119,19 +120,18 @@ public class HeatExchangerCapacityStrategy implements EquipmentCapacityStrategy 
       double maxDuty = heater.getMaxDesignDuty();
 
       if (maxDuty > 0) {
-        CapacityConstraint dutyConstraint = new CapacityConstraint("duty").setDesignValue(maxDuty)
-            .setMaxValue(maxDuty * maxDutyRatio).setUnit("W")
-            .setSeverity(CapacityConstraint.ConstraintSeverity.SOFT).setWarningThreshold(0.9)
-            .setValueSupplier(() -> Math.abs(heater.getDuty()));
-        constraints.put("duty", dutyConstraint);
+	CapacityConstraint dutyConstraint = new CapacityConstraint("duty").setDesignValue(maxDuty)
+	    .setMaxValue(maxDuty * maxDutyRatio).setUnit("W").setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
+	    .setWarningThreshold(0.9).setValueSupplier(() -> Math.abs(heater.getDuty()));
+	constraints.put("duty", dutyConstraint);
       }
 
       // Outlet temperature constraint (for temperature-controlled heaters)
       if (heater.getOutletStream() != null && heater.getOutletStream().getThermoSystem() != null) {
-        CapacityConstraint tempConstraint = new CapacityConstraint("outletTemperature").setUnit("C")
-            .setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
-            .setValueSupplier(() -> heater.getOutletStream().getTemperature("C"));
-        constraints.put("outletTemperature", tempConstraint);
+	CapacityConstraint tempConstraint = new CapacityConstraint("outletTemperature").setUnit("C")
+	    .setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
+	    .setValueSupplier(() -> heater.getOutletStream().getTemperature("C"));
+	constraints.put("outletTemperature", tempConstraint);
       }
     } else if (equipment instanceof MultiStreamHeatExchanger2) {
       MultiStreamHeatExchanger2 hx = (MultiStreamHeatExchanger2) equipment;
@@ -140,11 +140,10 @@ public class HeatExchangerCapacityStrategy implements EquipmentCapacityStrategy 
       double maxDuty = hx.getCapacityMax();
 
       if (maxDuty > 0) {
-        CapacityConstraint dutyConstraint = new CapacityConstraint("duty").setDesignValue(maxDuty)
-            .setMaxValue(maxDuty * maxDutyRatio).setUnit("W")
-            .setSeverity(CapacityConstraint.ConstraintSeverity.SOFT).setWarningThreshold(0.9)
-            .setValueSupplier(() -> Math.abs(hx.energyDiff()));
-        constraints.put("duty", dutyConstraint);
+	CapacityConstraint dutyConstraint = new CapacityConstraint("duty").setDesignValue(maxDuty)
+	    .setMaxValue(maxDuty * maxDutyRatio).setUnit("W").setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
+	    .setWarningThreshold(0.9).setValueSupplier(() -> Math.abs(hx.energyDiff()));
+	constraints.put("duty", dutyConstraint);
       }
     }
 
@@ -159,7 +158,7 @@ public class HeatExchangerCapacityStrategy implements EquipmentCapacityStrategy 
 
     for (CapacityConstraint constraint : constraints.values()) {
       if (constraint.isViolated()) {
-        violations.add(constraint);
+	violations.add(constraint);
       }
     }
 
@@ -177,8 +176,8 @@ public class HeatExchangerCapacityStrategy implements EquipmentCapacityStrategy 
     for (CapacityConstraint constraint : constraints.values()) {
       double util = constraint.getUtilization();
       if (!Double.isNaN(util) && util > maxUtil) {
-        maxUtil = util;
-        bottleneck = constraint;
+	maxUtil = util;
+	bottleneck = constraint;
       }
     }
 
@@ -192,7 +191,7 @@ public class HeatExchangerCapacityStrategy implements EquipmentCapacityStrategy 
 
     for (CapacityConstraint constraint : constraints.values()) {
       if (constraint.isHardLimitExceeded()) {
-        return false;
+	return false;
       }
     }
 
@@ -206,7 +205,7 @@ public class HeatExchangerCapacityStrategy implements EquipmentCapacityStrategy 
 
     for (CapacityConstraint constraint : constraints.values()) {
       if (constraint.getUtilization() > 1.0) {
-        return false;
+	return false;
       }
     }
 

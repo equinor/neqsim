@@ -22,9 +22,8 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Tests for new engineering study deliverable classes: ThermalUtilitySummary,
- * ProcessFlowDiagramExporter, FireProtectionDesign extensions, SparePartsInventory, NoiseAssessment
- * extensions, and AlarmTripScheduleGenerator.
+ * Tests for new engineering study deliverable classes: ThermalUtilitySummary, ProcessFlowDiagramExporter,
+ * FireProtectionDesign extensions, SparePartsInventory, NoiseAssessment extensions, and AlarmTripScheduleGenerator.
  *
  * @author esol
  */
@@ -88,7 +87,7 @@ class EngineeringStudyDeliverablesTest {
 
       // At least one of cooling or heating should be non-zero (we have a cooler and heater)
       assertTrue(util.getTotalCoolingDutyKW() > 0 || util.getTotalHeatingDutyKW() > 0,
-          "Should have some thermal utility demand");
+	  "Should have some thermal utility demand");
     }
 
     @Test
@@ -104,8 +103,7 @@ class EngineeringStudyDeliverablesTest {
     void testInstrumentAir() {
       ThermalUtilitySummary util = new ThermalUtilitySummary(process);
       util.calcUtilities();
-      assertTrue(util.getInstrumentAirNm3hr() > 0,
-          "Instrument air should be positive for any process");
+      assertTrue(util.getInstrumentAirNm3hr() > 0, "Instrument air should be positive for any process");
     }
 
     @Test
@@ -137,7 +135,7 @@ class EngineeringStudyDeliverablesTest {
 
       // Wider deltaT should give lower flow for same duty
       assertTrue(util1.getCoolingWaterFlowM3hr() <= util2.getCoolingWaterFlowM3hr() + 0.01,
-          "Wider DeltaT should need less CW");
+	  "Wider DeltaT should need less CW");
     }
 
     @Test
@@ -195,8 +193,7 @@ class EngineeringStudyDeliverablesTest {
 
       ProcessFlowDiagramExporter exporter = new ProcessFlowDiagramExporter(ps);
       String dot = exporter.toDot();
-      assertTrue(dot.contains("TestFeed") && dot.contains("TestSep"),
-          "DOT should contain both nodes");
+      assertTrue(dot.contains("TestFeed") && dot.contains("TestSep"), "DOT should contain both nodes");
     }
   }
 
@@ -250,8 +247,8 @@ class EngineeringStudyDeliverablesTest {
     @Test
     @DisplayName("Fire scenario assessment should return non-null result")
     void testFireScenarioAssessment() {
-      FireProtectionDesign.FireScenarioResult result = FireProtectionDesign
-          .assessFireScenarios("V-100", 5000.0, 20.0, 50.0, 10.0, 2.0, 50000.0, 0.055);
+      FireProtectionDesign.FireScenarioResult result = FireProtectionDesign.assessFireScenarios("V-100", 5000.0, 20.0,
+	  50.0, 10.0, 2.0, 50000.0, 0.055);
       assertNotNull(result);
       assertTrue(result.poolFireHeatReleaseKW > 0);
       assertTrue(result.jetFireFlameLengthM > 0);
@@ -261,8 +258,8 @@ class EngineeringStudyDeliverablesTest {
     @Test
     @DisplayName("Fire scenario result toJson should be valid")
     void testFireScenarioResultJson() {
-      FireProtectionDesign.FireScenarioResult result = FireProtectionDesign
-          .assessFireScenarios("V-100", 5000.0, 20.0, 50.0, 10.0, 2.0, 50000.0, 0.055);
+      FireProtectionDesign.FireScenarioResult result = FireProtectionDesign.assessFireScenarios("V-100", 5000.0, 20.0,
+	  50.0, 10.0, 2.0, 50000.0, 0.055);
       String json = result.toJson();
       assertNotNull(json);
       assertTrue(json.contains("poolFire"));
@@ -291,8 +288,7 @@ class EngineeringStudyDeliverablesTest {
     void testCriticalItems() {
       SparePartsInventory inventory = new SparePartsInventory(process);
       inventory.generateInventory();
-      assertFalse(inventory.getEntriesByCriticality("Critical").isEmpty(),
-          "Should have critical spare parts");
+      assertFalse(inventory.getEntriesByCriticality("Critical").isEmpty(), "Should have critical spare parts");
     }
 
     @Test
@@ -337,8 +333,7 @@ class EngineeringStudyDeliverablesTest {
       double swl = 100.0; // dB(A)
       double splBasic = NoiseAssessment.splAtDistance(swl, 100.0);
       double splAtten = NoiseAssessment.splAtDistanceWithAttenuation(swl, 100.0, 20.0, 70.0);
-      assertTrue(splAtten < splBasic,
-          "Atmospheric absorption should reduce SPL below geometric-only");
+      assertTrue(splAtten < splBasic, "Atmospheric absorption should reduce SPL below geometric-only");
     }
 
     @Test
@@ -380,8 +375,7 @@ class EngineeringStudyDeliverablesTest {
     void testEquipmentFilter() {
       AlarmTripScheduleGenerator gen = new AlarmTripScheduleGenerator(process);
       gen.generate();
-      assertFalse(gen.getEntriesForEquipment("HP-Sep").isEmpty(),
-          "HP-Sep should have alarm entries");
+      assertFalse(gen.getEntriesForEquipment("HP-Sep").isEmpty(), "HP-Sep should have alarm entries");
     }
 
     @Test
@@ -404,10 +398,10 @@ class EngineeringStudyDeliverablesTest {
       gen.generate();
       boolean hasLevel = false;
       for (AlarmTripScheduleGenerator.AlarmTripEntry e : gen.getEntriesForEquipment("HP-Sep")) {
-        if (e.getServiceType() == AlarmTripScheduleGenerator.ServiceType.LEVEL) {
-          hasLevel = true;
-          break;
-        }
+	if (e.getServiceType() == AlarmTripScheduleGenerator.ServiceType.LEVEL) {
+	  hasLevel = true;
+	  break;
+	}
       }
       assertTrue(hasLevel, "Separator should have level alarms");
     }

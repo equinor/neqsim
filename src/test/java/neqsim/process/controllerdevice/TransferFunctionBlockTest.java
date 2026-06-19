@@ -35,7 +35,8 @@ class TransferFunctionBlockTest {
     }
 
     @Override
-    public void displayResult() {}
+    public void displayResult() {
+    }
 
     @Override
     public double getMeasuredValue(String unit) {
@@ -58,7 +59,8 @@ class TransferFunctionBlockTest {
     }
 
     @Override
-    public void setUnit(String unit) {}
+    public void setUnit(String unit) {
+    }
 
     @Override
     public double getMaximumValue() {
@@ -71,10 +73,12 @@ class TransferFunctionBlockTest {
     }
 
     @Override
-    public void setMaximumValue(double maxValue) {}
+    public void setMaximumValue(double maxValue) {
+    }
 
     @Override
-    public void setMinimumValue(double minValue) {}
+    public void setMinimumValue(double minValue) {
+    }
 
     @Override
     public boolean isLogging() {
@@ -82,7 +86,8 @@ class TransferFunctionBlockTest {
     }
 
     @Override
-    public void setLogging(boolean logging) {}
+    public void setLogging(boolean logging) {
+    }
 
     @Override
     public boolean isOnlineSignal() {
@@ -90,7 +95,8 @@ class TransferFunctionBlockTest {
     }
 
     @Override
-    public void setAlarmConfig(AlarmConfig config) {}
+    public void setAlarmConfig(AlarmConfig config) {
+    }
 
     @Override
     public AlarmConfig getAlarmConfig() {
@@ -118,7 +124,8 @@ class TransferFunctionBlockTest {
     }
 
     @Override
-    public void setTag(String tag) {}
+    public void setTag(String tag) {
+    }
 
     @Override
     public InstrumentTagRole getTagRole() {
@@ -126,7 +133,8 @@ class TransferFunctionBlockTest {
     }
 
     @Override
-    public void setTagRole(InstrumentTagRole role) {}
+    public void setTagRole(InstrumentTagRole role) {
+    }
 
     @Override
     public double getFieldValue() {
@@ -134,7 +142,8 @@ class TransferFunctionBlockTest {
     }
 
     @Override
-    public void setFieldValue(double value) {}
+    public void setFieldValue(double value) {
+    }
 
     @Override
     public boolean hasFieldValue() {
@@ -152,7 +161,8 @@ class TransferFunctionBlockTest {
     }
 
     @Override
-    public void setTagNumber(String tagNumber) {}
+    public void setTagNumber(String tagNumber) {
+    }
 
     @Override
     public String getTagNumber() {
@@ -163,8 +173,7 @@ class TransferFunctionBlockTest {
   @Test
   void testFirstOrderLagSteadyState() {
     // After many time steps, first-order lag should converge to K * u
-    TransferFunctionBlock block =
-        new TransferFunctionBlock("lag", TransferFunctionBlock.Type.FIRST_ORDER_LAG);
+    TransferFunctionBlock block = new TransferFunctionBlock("lag", TransferFunctionBlock.Type.FIRST_ORDER_LAG);
     block.setGain(2.0);
     block.setLagTime(10.0);
     block.setInputBias(0.0);
@@ -185,8 +194,7 @@ class TransferFunctionBlockTest {
 
   @Test
   void testFirstOrderLagTransientBehavior() {
-    TransferFunctionBlock block =
-        new TransferFunctionBlock("lag", TransferFunctionBlock.Type.FIRST_ORDER_LAG);
+    TransferFunctionBlock block = new TransferFunctionBlock("lag", TransferFunctionBlock.Type.FIRST_ORDER_LAG);
     block.setGain(1.0);
     block.setLagTime(10.0);
 
@@ -212,8 +220,7 @@ class TransferFunctionBlockTest {
   @Test
   void testLeadLagSteadyState() {
     // At steady state, lead-lag should pass through as K * u
-    TransferFunctionBlock block =
-        new TransferFunctionBlock("leadlag", TransferFunctionBlock.Type.LEAD_LAG);
+    TransferFunctionBlock block = new TransferFunctionBlock("leadlag", TransferFunctionBlock.Type.LEAD_LAG);
     block.setGain(1.5);
     block.setLeadTime(5.0);
     block.setLagTime(20.0);
@@ -232,8 +239,7 @@ class TransferFunctionBlockTest {
 
   @Test
   void testDeadTime() {
-    TransferFunctionBlock block =
-        new TransferFunctionBlock("delay", TransferFunctionBlock.Type.DEAD_TIME);
+    TransferFunctionBlock block = new TransferFunctionBlock("delay", TransferFunctionBlock.Type.DEAD_TIME);
     block.setGain(1.0);
     block.setDeadTime(5.0); // 5 second delay
 
@@ -263,8 +269,7 @@ class TransferFunctionBlockTest {
 
   @Test
   void testSecondOrderSteadyState() {
-    TransferFunctionBlock block =
-        new TransferFunctionBlock("2nd", TransferFunctionBlock.Type.SECOND_ORDER);
+    TransferFunctionBlock block = new TransferFunctionBlock("2nd", TransferFunctionBlock.Type.SECOND_ORDER);
     block.setGain(3.0);
     block.setLagTime(5.0);
     block.setLagTime2(10.0);
@@ -283,8 +288,7 @@ class TransferFunctionBlockTest {
 
   @Test
   void testWithBias() {
-    TransferFunctionBlock block =
-        new TransferFunctionBlock("bias", TransferFunctionBlock.Type.FIRST_ORDER_LAG);
+    TransferFunctionBlock block = new TransferFunctionBlock("bias", TransferFunctionBlock.Type.FIRST_ORDER_LAG);
     block.setGain(2.0);
     block.setLagTime(5.0);
     block.setInputBias(10.0);
@@ -305,8 +309,7 @@ class TransferFunctionBlockTest {
 
   @Test
   void testReset() {
-    TransferFunctionBlock block =
-        new TransferFunctionBlock("reset", TransferFunctionBlock.Type.FIRST_ORDER_LAG);
+    TransferFunctionBlock block = new TransferFunctionBlock("reset", TransferFunctionBlock.Type.FIRST_ORDER_LAG);
     block.setGain(1.0);
     block.setLagTime(5.0);
     block.setOutputBias(10.0);
@@ -326,8 +329,7 @@ class TransferFunctionBlockTest {
 
   @Test
   void testInactiveBlock() {
-    TransferFunctionBlock block =
-        new TransferFunctionBlock("inactive", TransferFunctionBlock.Type.FIRST_ORDER_LAG);
+    TransferFunctionBlock block = new TransferFunctionBlock("inactive", TransferFunctionBlock.Type.FIRST_ORDER_LAG);
     block.setGain(10.0);
     block.setActive(false);
 
@@ -343,8 +345,7 @@ class TransferFunctionBlockTest {
   @Test
   void testWithoutTransmitter() {
     // When no transmitter is attached, use initResponse as input
-    TransferFunctionBlock block =
-        new TransferFunctionBlock("noTx", TransferFunctionBlock.Type.FIRST_ORDER_LAG);
+    TransferFunctionBlock block = new TransferFunctionBlock("noTx", TransferFunctionBlock.Type.FIRST_ORDER_LAG);
     block.setGain(1.0);
     block.setLagTime(1.0);
 
@@ -359,8 +360,7 @@ class TransferFunctionBlockTest {
 
   @Test
   void testFirstOrderLagWithDeadTime() {
-    TransferFunctionBlock block =
-        new TransferFunctionBlock("lag+dt", TransferFunctionBlock.Type.FIRST_ORDER_LAG);
+    TransferFunctionBlock block = new TransferFunctionBlock("lag+dt", TransferFunctionBlock.Type.FIRST_ORDER_LAG);
     block.setGain(1.0);
     block.setLagTime(5.0);
     block.setDeadTime(3.0);
@@ -388,8 +388,7 @@ class TransferFunctionBlockTest {
 
   @Test
   void testGettersAndSetters() {
-    TransferFunctionBlock block =
-        new TransferFunctionBlock("props", TransferFunctionBlock.Type.LEAD_LAG);
+    TransferFunctionBlock block = new TransferFunctionBlock("props", TransferFunctionBlock.Type.LEAD_LAG);
     block.setGain(2.5);
     block.setLagTime(30.0);
     block.setLeadTime(10.0);

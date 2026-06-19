@@ -8,9 +8,8 @@ import java.util.Map;
  * A candidate root cause produced by {@link RootCauseAnalyser}.
  *
  * <p>
- * Each candidate carries a code, a human-readable description, the supporting evidence chain, a
- * normalised score (0..1) and a tag indicating whether it is the PRIMARY cause, a CONTRIBUTING
- * factor, or merely POSSIBLE.
+ * Each candidate carries a code, a human-readable description, the supporting evidence chain, a normalised score (0..1)
+ * and a tag indicating whether it is the PRIMARY cause, a CONTRIBUTING factor, or merely POSSIBLE.
  * </p>
  *
  * @author ESOL
@@ -45,14 +44,13 @@ public class RootCauseCandidate implements Serializable {
   /**
    * Builds a candidate.
    *
-   * @param code stable machine-readable code
-   * @param description plain-language description
-   * @param score normalised 0..1 score
-   * @param evidence narrative evidence chain
+   * @param code           stable machine-readable code
+   * @param description    plain-language description
+   * @param score          normalised 0..1 score
+   * @param evidence       narrative evidence chain
    * @param recommendation suggested mitigation
    */
-  public RootCauseCandidate(String code, String description, double score, String evidence,
-      String recommendation) {
+  public RootCauseCandidate(String code, String description, double score, String evidence, String recommendation) {
     this.code = code;
     this.description = description;
     this.score = score;

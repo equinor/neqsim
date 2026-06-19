@@ -8,9 +8,8 @@ import neqsim.process.equipment.capacity.CapacityConstraint;
  * Snapshot of one operating margin derived from an equipment capacity constraint.
  *
  * <p>
- * The margin is advisory: it does not replace the equipment-specific constraint source, but gives
- * operational workflows a consistent ranking and JSON representation for dashboards, MCP tools,
- * and plant-data evidence packages.
+ * The margin is advisory: it does not replace the equipment-specific constraint source, but gives operational workflows
+ * a consistent ranking and JSON representation for dashboards, MCP tools, and plant-data evidence packages.
  * </p>
  *
  * @author ESOL
@@ -81,24 +80,23 @@ public final class OperationalMargin implements Serializable, Comparable<Operati
   /**
    * Creates an operational margin snapshot.
    *
-   * @param equipmentName equipment name
-   * @param constraintName constraint name
-   * @param currentValue current value in the constraint unit
-   * @param limitValue design or minimum limit value in the constraint unit
+   * @param equipmentName      equipment name
+   * @param constraintName     constraint name
+   * @param currentValue       current value in the constraint unit
+   * @param limitValue         design or minimum limit value in the constraint unit
    * @param utilizationPercent current utilization in percent
-   * @param marginPercent remaining margin in percent
-   * @param unit engineering unit
-   * @param constraintType constraint type name
-   * @param severity constraint severity name
-   * @param dataSource design data source label
-   * @param description human-readable constraint description
-   * @param minimumConstraint true when lower values are worse
-   * @param hardLimitExceeded true when an absolute hard limit is exceeded
+   * @param marginPercent      remaining margin in percent
+   * @param unit               engineering unit
+   * @param constraintType     constraint type name
+   * @param severity           constraint severity name
+   * @param dataSource         design data source label
+   * @param description        human-readable constraint description
+   * @param minimumConstraint  true when lower values are worse
+   * @param hardLimitExceeded  true when an absolute hard limit is exceeded
    */
-  public OperationalMargin(String equipmentName, String constraintName, double currentValue,
-      double limitValue, double utilizationPercent, double marginPercent, String unit,
-      String constraintType, String severity, String dataSource, String description,
-      boolean minimumConstraint, boolean hardLimitExceeded) {
+  public OperationalMargin(String equipmentName, String constraintName, double currentValue, double limitValue,
+      double utilizationPercent, double marginPercent, String unit, String constraintType, String severity,
+      String dataSource, String description, boolean minimumConstraint, boolean hardLimitExceeded) {
     this.equipmentName = clean(equipmentName);
     this.constraintName = clean(constraintName);
     this.key = this.equipmentName + "." + this.constraintName;
@@ -120,7 +118,7 @@ public final class OperationalMargin implements Serializable, Comparable<Operati
    * Builds an operational margin from a capacity constraint.
    *
    * @param equipmentName equipment name
-   * @param constraint capacity constraint to read
+   * @param constraint    capacity constraint to read
    * @return operational margin snapshot
    * @throws IllegalArgumentException if the constraint is null
    */
@@ -129,17 +127,16 @@ public final class OperationalMargin implements Serializable, Comparable<Operati
       throw new IllegalArgumentException("constraint must not be null");
     }
     double current = constraint.getCurrentValue();
-    return new OperationalMargin(equipmentName, constraint.getName(), current,
-        constraint.getDisplayDesignValue(), constraint.getUtilizationPercent(),
-        constraint.getMarginPercent(), constraint.getUnit(), constraint.getType().name(),
-        constraint.getSeverity().name(), constraint.getDataSource(), constraint.getDescription(),
-        constraint.isMinimumConstraint(), constraint.isHardLimitExceeded());
+    return new OperationalMargin(equipmentName, constraint.getName(), current, constraint.getDisplayDesignValue(),
+	constraint.getUtilizationPercent(), constraint.getMarginPercent(), constraint.getUnit(),
+	constraint.getType().name(), constraint.getSeverity().name(), constraint.getDataSource(),
+	constraint.getDescription(), constraint.isMinimumConstraint(), constraint.isHardLimitExceeded());
   }
 
   /**
    * Classifies a margin value into an operational status.
    *
-   * @param marginPercent margin in percent
+   * @param marginPercent     margin in percent
    * @param hardLimitExceeded true when an absolute hard limit is exceeded
    * @return operational margin status
    */

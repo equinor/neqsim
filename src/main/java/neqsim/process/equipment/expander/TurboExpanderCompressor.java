@@ -13,14 +13,12 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * TurboExpanderCompressor models a coupled expander and compressor system with design and
- * performance parameters, polynomial curve fits for efficiency and head, and Newton-Raphson
- * iteration for speed matching.
+ * TurboExpanderCompressor models a coupled expander and compressor system with design and performance parameters,
+ * polynomial curve fits for efficiency and head, and Newton-Raphson iteration for speed matching.
  * <p>
- * This class provides configuration for impeller, speed, efficiency, and curve fit parameters, and
- * exposes all relevant design and result values via getters/setters. The main run() method matches
- * expander and compressor power using a robust Newton-Raphson approach, updating all result fields
- * and output streams.
+ * This class provides configuration for impeller, speed, efficiency, and curve fit parameters, and exposes all relevant
+ * design and result values via getters/setters. The main run() method matches expander and compressor power using a
+ * robust Newton-Raphson approach, updating all result fields and output streams.
  * </p>
  *
  * @author esol
@@ -93,9 +91,8 @@ public class TurboExpanderCompressor extends Expander {
   private double expanderIsentropicEfficiency = 1.0;
   private double expanderDesignIsentropicEfficiency = 1.0;
   /**
-   * Flag indicating that the expander outlet temperature is specified. When {@code true} the base
-   * (design) isentropic efficiency is back-calculated so the actual outlet temperature matches
-   * {@link #expanderOutTemperatureSpec}.
+   * Flag indicating that the expander outlet temperature is specified. When {@code true} the base (design) isentropic
+   * efficiency is back-calculated so the actual outlet temperature matches {@link #expanderOutTemperatureSpec}.
    */
   private boolean useOutTemperatureSpec = false;
   /** Target expander outlet temperature [K] used when {@link #useOutTemperatureSpec} is true. */
@@ -132,9 +129,9 @@ public class TurboExpanderCompressor extends Expander {
 
   // --- P2: IGV as a controllable degree of freedom ---
   /**
-   * When {@code true} the supplied {@link #IGVopening} is treated as a fixed control input and the
-   * model no longer recomputes the IGV opening from flow; an efficiency penalty curve is applied
-   * instead and the speed/power balance is solved around the imposed IGV position.
+   * When {@code true} the supplied {@link #IGVopening} is treated as a fixed control input and the model no longer
+   * recomputes the IGV opening from flow; an efficiency penalty curve is applied instead and the speed/power balance is
+   * solved around the imposed IGV position.
    */
   private boolean igvControlMode = false;
   /** IGV positions (fraction of maximum area, 0..1) for the efficiency penalty curve. */
@@ -145,7 +142,7 @@ public class TurboExpanderCompressor extends Expander {
   /**
    * Construct a TurboExpanderCompressor with the specified name and inlet stream.
    *
-   * @param name the name of the turbo expander compressor
+   * @param name        the name of the turbo expander compressor
    * @param inletStream the inlet stream for the expander
    */
   public TurboExpanderCompressor(String name, StreamInterface inletStream) {
@@ -162,8 +159,8 @@ public class TurboExpanderCompressor extends Expander {
    * {@inheritDoc}
    *
    * <p>
-   * Run the expander/compressor calculation, matching expander and compressor power using
-   * Newton-Raphson iteration. Updates all result fields and output streams.
+   * Run the expander/compressor calculation, matching expander and compressor power using Newton-Raphson iteration.
+   * Updates all result fields and output streams.
    * </p>
    */
   @Override
@@ -233,22 +230,22 @@ public class TurboExpanderCompressor extends Expander {
       Q_exp = expanderFeedStream.getFluid().getFlowRate("m3/sec");
       double CF_qn_exp = 1.0;
       if (applyExpanderQnCorrection && designQnExp > 0.0 && N > 0.0) {
-        qn_ratio_exp = (Q_exp * 60.0 / N) / designQnExp;
-        CF_qn_exp = getEfficiencyFromQN(qn_ratio_exp);
-        if (CF_qn_exp < 0.0) {
-          CF_qn_exp = 0.0;
-        }
+	qn_ratio_exp = (Q_exp * 60.0 / N) / designQnExp;
+	CF_qn_exp = getEfficiencyFromQN(qn_ratio_exp);
+	if (CF_qn_exp < 0.0) {
+	  CF_qn_exp = 0.0;
+	}
       } else {
-        qn_ratio_exp = 1.0;
+	qn_ratio_exp = 1.0;
       }
       eta_s = computeExpanderEfficiency(ucRaw, uc, IGVopening, CF_qn_exp);
       double CF_total = eta_s_design > 1e-9 ? eta_s / eta_s_design : 0.0;
       if (CF_total < 0.0) {
-        CF_total = 0.0;
+	CF_total = 0.0;
       }
       CF_total_converged = CF_total;
       if (useOutTemperatureSpec && eta_s_required > 0.0) {
-        eta_s = eta_s_required;
+	eta_s = eta_s_required;
       }
       W_expander = m1 * h_s * eta_s;
       m_comp = compressorFeedStream.getFluid().getFlowRate("kg/sec");
@@ -271,17 +268,17 @@ public class TurboExpanderCompressor extends Expander {
       double ucRaw2 = U2 / C;
       double CF_qn_exp2 = 1.0;
       if (applyExpanderQnCorrection && designQnExp > 0.0 && N2 > 0.0) {
-        qn_ratio_exp2 = (Q_exp * 60.0 / N2) / designQnExp;
-        CF_qn_exp2 = getEfficiencyFromQN(qn_ratio_exp2);
-        if (CF_qn_exp2 < 0.0) {
-          CF_qn_exp2 = 0.0;
-        }
+	qn_ratio_exp2 = (Q_exp * 60.0 / N2) / designQnExp;
+	CF_qn_exp2 = getEfficiencyFromQN(qn_ratio_exp2);
+	if (CF_qn_exp2 < 0.0) {
+	  CF_qn_exp2 = 0.0;
+	}
       } else {
-        qn_ratio_exp2 = 1.0;
+	qn_ratio_exp2 = 1.0;
       }
       eta_s2 = computeExpanderEfficiency(ucRaw2, uc2, IGVopening, CF_qn_exp2);
       if (useOutTemperatureSpec && eta_s_required > 0.0) {
-        eta_s2 = eta_s_required;
+	eta_s2 = eta_s_required;
       }
       double W_expander2 = m1 * h_s * eta_s2;
       qn_ratio2 = (Q_comp * 60.0 / N2) / designQn;
@@ -294,23 +291,22 @@ public class TurboExpanderCompressor extends Expander {
       double fN2 = W_expander2 - (W_compressor2 + W_bearing2);
       double df_dN = (fN2 - fN) / dN;
       if (Math.abs(df_dN) < 1e-8) {
-        dN += 10.0;
-        N += 10.0;
+	dN += 10.0;
+	N += 10.0;
       } else {
-        N = N - (1.0 + iter) / (iter + 5) * fN / df_dN;
+	N = N - (1.0 + iter) / (iter + 5) * fN / df_dN;
       }
       if (N > N_max) {
-        N = N_max;
-        break;
+	N = N_max;
+	break;
       }
       if (N < N_min) {
-        N = N_min;
-        break;
+	N = N_min;
+	break;
       }
       // System.out.println("speed: " + N + " iter: " + iter);
       iter++;
-    } while (Math.abs(W_expander - (W_compressor + W_bearing)) * 100 > 1e-3 && iter < maxIter
-        || iter < minIter);
+    } while (Math.abs(W_expander - (W_compressor + W_bearing)) * 100 > 1e-3 && iter < maxIter || iter < minIter);
     if (iter >= maxIter) {
       System.out.println("Warning: TurboExpanderCompressor did not converge.");
     }
@@ -356,13 +352,12 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * Calculate the actual isentropic efficiency required for the expander to reach a given outlet
-   * temperature at the configured {@link #expanderOutPressure}.
+   * Calculate the actual isentropic efficiency required for the expander to reach a given outlet temperature at the
+   * configured {@link #expanderOutPressure}.
    *
    * <p>
-   * The efficiency is defined as the ratio of the actual enthalpy drop (from inlet to the target
-   * outlet temperature at the outlet pressure) to the isentropic enthalpy drop (from inlet to the
-   * outlet pressure at constant entropy):
+   * The efficiency is defined as the ratio of the actual enthalpy drop (from inlet to the target outlet temperature at
+   * the outlet pressure) to the isentropic enthalpy drop (from inlet to the outlet pressure at constant entropy):
    * </p>
    *
    * <pre>
@@ -370,8 +365,8 @@ public class TurboExpanderCompressor extends Expander {
    * </pre>
    *
    * @param targetTemperature the desired expander outlet temperature [K]
-   * @return the required actual isentropic efficiency (dimensionless), or {@code -1.0} if the
-   *         isentropic enthalpy drop is non-positive
+   * @return the required actual isentropic efficiency (dimensionless), or {@code -1.0} if the isentropic enthalpy drop
+   *         is non-positive
    */
   private double calcRequiredExpanderEfficiencyForOutletT(double targetTemperature) {
     SystemInterface fluid = expanderFeedStream.getThermoSystem().clone();
@@ -593,7 +588,7 @@ public class TurboExpanderCompressor extends Expander {
   /**
    * Fit a constrained parabola: efficiency = a*(uc - h)^2 + k, with vertex at (h, k) = (1, 1).
    *
-   * @param ucValues array of uc values
+   * @param ucValues         array of uc values
    * @param efficiencyValues array of efficiency values
    */
   public void setUCcurve(double[] ucValues, double[] efficiencyValues) {
@@ -633,26 +628,24 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * Compute the expander isentropic efficiency for the current operating point. When a 2-D
-   * {@link ExpanderChartKhader} performance map (P1) has been supplied it is used directly;
-   * otherwise the fitted velocity-ratio parabola scaled by the design efficiency is used. The Q/N
-   * correction factor and the IGV efficiency penalty (P2) are then applied.
+   * Compute the expander isentropic efficiency for the current operating point. When a 2-D {@link ExpanderChartKhader}
+   * performance map (P1) has been supplied it is used directly; otherwise the fitted velocity-ratio parabola scaled by
+   * the design efficiency is used. The Q/N correction factor and the IGV efficiency penalty (P2) are then applied.
    *
-   * @param ucRaw the raw velocity ratio U/C (used for the 2-D map lookup)
-   * @param ucNorm the normalised velocity ratio U/C/designUC (used for the legacy parabola)
-   * @param igv the IGV opening (fraction of maximum area, 0..1)
+   * @param ucRaw        the raw velocity ratio U/C (used for the 2-D map lookup)
+   * @param ucNorm       the normalised velocity ratio U/C/designUC (used for the legacy parabola)
+   * @param igv          the IGV opening (fraction of maximum area, 0..1)
    * @param qnCorrection the multiplicative Q/N efficiency correction factor
    * @return the isentropic efficiency (0..1)
    */
-  private double computeExpanderEfficiency(double ucRaw, double ucNorm, double igv,
-      double qnCorrection) {
+  private double computeExpanderEfficiency(double ucRaw, double ucNorm, double igv, double qnCorrection) {
     double baseEff;
     if (expanderChart != null && expanderChart.isMapDefined()) {
       baseEff = expanderChart.getEfficiency(ucRaw, igv);
     } else {
       double cf = getEfficiencyFromUC(ucNorm);
       if (cf < 0.0) {
-        cf = 0.0;
+	cf = 0.0;
       }
       baseEff = expanderDesignIsentropicEfficiency * cf;
     }
@@ -665,9 +658,9 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * Evaluate the IGV efficiency penalty curve (P2) at a given IGV opening. The penalty is a
-   * multiplicative factor (1.0 = no loss). When no penalty curve has been configured the method
-   * returns 1.0, making the feature transparent. Linear interpolation with edge clamping is used.
+   * Evaluate the IGV efficiency penalty curve (P2) at a given IGV opening. The penalty is a multiplicative factor (1.0
+   * = no loss). When no penalty curve has been configured the method returns 1.0, making the feature transparent.
+   * Linear interpolation with edge clamping is used.
    *
    * @param igv the IGV opening (fraction of maximum area, 0..1)
    * @return the multiplicative efficiency penalty factor (0..1)
@@ -687,24 +680,22 @@ public class TurboExpanderCompressor extends Expander {
     }
     for (int i = 0; i < n - 1; i++) {
       if (igv >= x[i] && igv <= x[i + 1]) {
-        double t = (igv - x[i]) / (x[i + 1] - x[i]);
-        return y[i] + t * (y[i + 1] - y[i]);
+	double t = (igv - x[i]) / (x[i + 1] - x[i]);
+	return y[i] + t * (y[i + 1] - y[i]);
       }
     }
     return y[n - 1];
   }
 
   /**
-   * Set the IGV efficiency penalty curve (P2). The penalty is applied as a multiplicative factor to
-   * the expander efficiency, allowing the IGV schedule fitted to OEM data to act as a validatable
-   * control law.
+   * Set the IGV efficiency penalty curve (P2). The penalty is applied as a multiplicative factor to the expander
+   * efficiency, allowing the IGV schedule fitted to OEM data to act as a validatable control law.
    *
-   * @param openings array of IGV openings (fraction of maximum area, 0..1)
+   * @param openings       array of IGV openings (fraction of maximum area, 0..1)
    * @param penaltyFactors matching multiplicative efficiency penalty factors (0..1)
    */
   public void setIgvEfficiencyPenaltyCurve(double[] openings, double[] penaltyFactors) {
-    if (openings == null || penaltyFactors == null || openings.length != penaltyFactors.length
-        || openings.length < 2) {
+    if (openings == null || penaltyFactors == null || openings.length != penaltyFactors.length || openings.length < 2) {
       this.igvPenaltyOpenings = null;
       this.igvPenaltyFactors = null;
       return;
@@ -718,7 +709,7 @@ public class TurboExpanderCompressor extends Expander {
     Arrays.sort(pairs, new java.util.Comparator<double[]>() {
       @Override
       public int compare(double[] a, double[] b) {
-        return Double.compare(a[0], b[0]);
+	return Double.compare(a[0], b[0]);
       }
     });
     this.igvPenaltyOpenings = new double[n];
@@ -739,9 +730,9 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * Enable or disable IGV control mode (P2). When enabled the supplied IGV opening is held fixed
-   * and acts as the primary turndown actuator; the model solves the speed/power balance around it
-   * instead of recomputing the IGV opening from flow.
+   * Enable or disable IGV control mode (P2). When enabled the supplied IGV opening is held fixed and acts as the
+   * primary turndown actuator; the model solves the speed/power balance around it instead of recomputing the IGV
+   * opening from flow.
    *
    * @param igvControlMode {@code true} to treat IGV as a fixed control input
    */
@@ -759,9 +750,8 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * Set the 2-D Khader-style expander performance map (P1). When set it overrides the
-   * velocity-ratio parabola and provides composition-aware efficiency and head as a function of U/C
-   * and IGV.
+   * Set the 2-D Khader-style expander performance map (P1). When set it overrides the velocity-ratio parabola and
+   * provides composition-aware efficiency and head as a function of U/C and IGV.
    *
    * @param expanderChart the expander chart to use
    */
@@ -772,12 +762,12 @@ public class TurboExpanderCompressor extends Expander {
   /**
    * Fit a Q/N efficiency curve using cubic spline interpolation.
    *
-   * @param qnValues array of Q/N values (does not need to be sorted)
+   * @param qnValues         array of Q/N values (does not need to be sorted)
    * @param efficiencyValues array of efficiency values
    */
   public void setQNEfficiencycurve(double[] qnValues, double[] efficiencyValues) {
-    if (qnValues == null || efficiencyValues == null || qnValues.length < 2
-        || efficiencyValues.length < 2 || qnValues.length != efficiencyValues.length) {
+    if (qnValues == null || efficiencyValues == null || qnValues.length < 2 || efficiencyValues.length < 2
+	|| qnValues.length != efficiencyValues.length) {
       qnEffCurveQnValues = null;
       qnEffCurveEffValues = null;
       return;
@@ -799,15 +789,14 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * Evaluate the fitted Q/N efficiency curve at a given qn value using cubic spline interpolation.
-   * Linear extrapolation is used outside the data range.
+   * Evaluate the fitted Q/N efficiency curve at a given qn value using cubic spline interpolation. Linear extrapolation
+   * is used outside the data range.
    *
    * @param qn the Q/N value
    * @return the efficiency
    */
   public double getEfficiencyFromQN(double qn) {
-    if (qnEffCurveQnValues == null || qnEffCurveEffValues == null
-        || qnEffCurveQnValues.length < 2) {
+    if (qnEffCurveQnValues == null || qnEffCurveEffValues == null || qnEffCurveQnValues.length < 2) {
       return 1.0;
     }
     double[] x = qnEffCurveQnValues;
@@ -855,12 +844,12 @@ public class TurboExpanderCompressor extends Expander {
   /**
    * Fit a Q/N head curve using cubic spline interpolation.
    *
-   * @param qnValues array of Q/N values (does not need to be sorted)
+   * @param qnValues   array of Q/N values (does not need to be sorted)
    * @param headValues array of head values
    */
   public void setQNHeadcurve(double[] qnValues, double[] headValues) {
     if (qnValues == null || headValues == null || qnValues.length < 2 || headValues.length < 2
-        || qnValues.length != headValues.length) {
+	|| qnValues.length != headValues.length) {
       qnHeadCurveQnValues = null;
       qnHeadCurveHeadValues = null;
       return;
@@ -882,15 +871,14 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * Evaluate the fitted Q/N head curve at a given qn value using cubic spline interpolation. Linear
-   * extrapolation is used outside the data range.
+   * Evaluate the fitted Q/N head curve at a given qn value using cubic spline interpolation. Linear extrapolation is
+   * used outside the data range.
    *
    * @param qn the Q/N value
    * @return the head
    */
   public double getHeadFromQN(double qn) {
-    if (qnHeadCurveQnValues == null || qnHeadCurveHeadValues == null
-        || qnHeadCurveQnValues.length < 2) {
+    if (qnHeadCurveQnValues == null || qnHeadCurveHeadValues == null || qnHeadCurveQnValues.length < 2) {
       return 1.0;
     }
     double[] x = qnHeadCurveQnValues;
@@ -953,25 +941,21 @@ public class TurboExpanderCompressor extends Expander {
     if (currentIGVArea > 0.0) {
       return currentIGVArea;
     }
-    double massFlow =
-        expanderFeedStream != null ? expanderFeedStream.getFluid().getFlowRate("kg/sec") : 0.0;
-    double volumetricFlow =
-        expanderFeedStream != null ? expanderFeedStream.getFluid().getFlowRate("m3/sec") : 0.0;
+    double massFlow = expanderFeedStream != null ? expanderFeedStream.getFluid().getFlowRate("kg/sec") : 0.0;
+    double volumetricFlow = expanderFeedStream != null ? expanderFeedStream.getFluid().getFlowRate("m3/sec") : 0.0;
     IGVModelResult res = evaluateIGV(lastStageEnthalpyDrop, massFlow, volumetricFlow);
     return res.areaMm2;
   }
 
   /**
-   * Calculate the IGV (Inlet Guide Vane) opening using the current flow conditions and last
-   * computed stage enthalpy drop.
+   * Calculate the IGV (Inlet Guide Vane) opening using the current flow conditions and last computed stage enthalpy
+   * drop.
    *
    * @return IGV opening (fraction of max area, capped at 1.0)
    */
   public double calcIGVOpeningFromFlow() {
-    double massFlow =
-        expanderFeedStream != null ? expanderFeedStream.getFluid().getFlowRate("kg/sec") : 0.0;
-    double volumetricFlow =
-        expanderFeedStream != null ? expanderFeedStream.getFluid().getFlowRate("m3/sec") : 0.0;
+    double massFlow = expanderFeedStream != null ? expanderFeedStream.getFluid().getFlowRate("kg/sec") : 0.0;
+    double volumetricFlow = expanderFeedStream != null ? expanderFeedStream.getFluid().getFlowRate("m3/sec") : 0.0;
     IGVModelResult res = evaluateIGV(lastStageEnthalpyDrop, massFlow, volumetricFlow);
     return res.opening;
   }
@@ -995,38 +979,38 @@ public class TurboExpanderCompressor extends Expander {
     if (massFlow > 0.0 && stageDrop > 0.0) {
       double density = Double.NaN;
       if (expanderFeedStream != null) {
-        density = expanderFeedStream.getFluid().getDensity("kg/m3");
+	density = expanderFeedStream.getFluid().getDensity("kg/m3");
       }
       if (!(density > 0.0) && volumetricFlow > 0.0) {
-        density = massFlow / volumetricFlow;
+	density = massFlow / volumetricFlow;
       }
       if (density > 0.0) {
-        double deltaHigv = 0.5 * stageDrop;
-        if (deltaHigv <= 0.0) {
-          deltaHigv = Math.max(stageDrop * 0.5, 1.0);
-        }
-        double velocity = Math.sqrt(2.0 * Math.max(deltaHigv, 1e-6));
-        double requiredArea = massFlow / (density * velocity);
-        double baseArea = maximumIGVArea / 1.0e6;
-        double expandedArea = baseArea * igvAreaIncreaseFactor;
-        double availableArea = baseArea;
-        if (requiredArea > baseArea && expandedArea > baseArea) {
-          availableArea = expandedArea;
-          expanded = true;
-        }
-        if (availableArea > 0.0) {
-          opening = requiredArea / availableArea;
-        }
-        if (!Double.isFinite(opening) || opening < 0.0) {
-          opening = 0.0;
-        }
-        if (opening > 1.0) {
-          opening = 1.0;
-        }
-        areaMm2 = opening * availableArea * 1.0e6;
-        if (opening >= 1.0 && requiredArea > availableArea) {
-          areaMm2 = availableArea * 1.0e6;
-        }
+	double deltaHigv = 0.5 * stageDrop;
+	if (deltaHigv <= 0.0) {
+	  deltaHigv = Math.max(stageDrop * 0.5, 1.0);
+	}
+	double velocity = Math.sqrt(2.0 * Math.max(deltaHigv, 1e-6));
+	double requiredArea = massFlow / (density * velocity);
+	double baseArea = maximumIGVArea / 1.0e6;
+	double expandedArea = baseArea * igvAreaIncreaseFactor;
+	double availableArea = baseArea;
+	if (requiredArea > baseArea && expandedArea > baseArea) {
+	  availableArea = expandedArea;
+	  expanded = true;
+	}
+	if (availableArea > 0.0) {
+	  opening = requiredArea / availableArea;
+	}
+	if (!Double.isFinite(opening) || opening < 0.0) {
+	  opening = 0.0;
+	}
+	if (opening > 1.0) {
+	  opening = 1.0;
+	}
+	areaMm2 = opening * availableArea * 1.0e6;
+	if (opening >= 1.0 && requiredArea > availableArea) {
+	  areaMm2 = availableArea * 1.0e6;
+	}
       }
     }
     return new IGVModelResult(opening, areaMm2, expanded);
@@ -1106,8 +1090,7 @@ public class TurboExpanderCompressor extends Expander {
    */
   public void setMaximumIGVArea(double maximumIGVArea) {
     this.maximumIGVArea = maximumIGVArea;
-    double activeArea =
-        usingExpandedIGVArea ? maximumIGVArea * igvAreaIncreaseFactor : maximumIGVArea;
+    double activeArea = usingExpandedIGVArea ? maximumIGVArea * igvAreaIncreaseFactor : maximumIGVArea;
     currentIGVArea = IGVopening * activeArea;
   }
 
@@ -1118,8 +1101,7 @@ public class TurboExpanderCompressor extends Expander {
   public void setIgvAreaIncreaseFactor(double igvAreaIncreaseFactor) {
     double factor = igvAreaIncreaseFactor < 1.0 ? 1.0 : igvAreaIncreaseFactor;
     this.igvAreaIncreaseFactor = factor;
-    double activeArea =
-        usingExpandedIGVArea ? maximumIGVArea * this.igvAreaIncreaseFactor : maximumIGVArea;
+    double activeArea = usingExpandedIGVArea ? maximumIGVArea * this.igvAreaIncreaseFactor : maximumIGVArea;
     currentIGVArea = IGVopening * activeArea;
   }
 
@@ -1518,7 +1500,7 @@ public class TurboExpanderCompressor extends Expander {
   @Override
   public String toJson() {
     return new GsonBuilder().serializeSpecialFloatingPointValues().create()
-        .toJson(new TurboExpanderCompressorResponse(this));
+	.toJson(new TurboExpanderCompressorResponse(this));
   }
 
   /** {@inheritDoc} */
@@ -1577,16 +1559,15 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * Specify the desired expander outlet temperature. When set, the base (design) isentropic
-   * efficiency is automatically back-calculated during {@link #run(UUID)} so that the actual
-   * expander outlet temperature matches this target at the configured expander outlet pressure.
+   * Specify the desired expander outlet temperature. When set, the base (design) isentropic efficiency is automatically
+   * back-calculated during {@link #run(UUID)} so that the actual expander outlet temperature matches this target at the
+   * configured expander outlet pressure.
    *
    * @param temperature the target expander outlet temperature
-   * @param unit the temperature unit ("K", "C", "F" or "R")
+   * @param unit        the temperature unit ("K", "C", "F" or "R")
    */
   public void setExpanderOutTemperature(double temperature, String unit) {
-    this.expanderOutTemperatureSpec =
-        new neqsim.util.unit.TemperatureUnit(temperature, unit).getValue("K");
+    this.expanderOutTemperatureSpec = new neqsim.util.unit.TemperatureUnit(temperature, unit).getValue("K");
     this.useOutTemperatureSpec = true;
   }
 
@@ -1610,8 +1591,8 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * Enable or disable the expander outlet temperature specification. When disabled, the expander
-   * uses the configured design isentropic efficiency directly.
+   * Enable or disable the expander outlet temperature specification. When disabled, the expander uses the configured
+   * design isentropic efficiency directly.
    *
    * @param useOutTemperatureSpec {@code true} to activate the outlet temperature specification
    */
@@ -1626,13 +1607,11 @@ public class TurboExpanderCompressor extends Expander {
     double compressorBalance = 0.0;
 
     if (expanderFeedStream != null && expanderOutletStream != null) {
-      expanderBalance =
-          expanderOutletStream.getFlowRate(unit) - expanderFeedStream.getFlowRate(unit);
+      expanderBalance = expanderOutletStream.getFlowRate(unit) - expanderFeedStream.getFlowRate(unit);
     }
 
     if (compressorFeedStream != null && compressorOutletStream != null) {
-      compressorBalance =
-          compressorOutletStream.getFlowRate(unit) - compressorFeedStream.getFlowRate(unit);
+      compressorBalance = compressorOutletStream.getFlowRate(unit) - compressorFeedStream.getFlowRate(unit);
     }
 
     return expanderBalance + compressorBalance;

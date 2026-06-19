@@ -27,16 +27,16 @@ public class TEGAbsorberTest {
    */
   @ExcludeFromJacocoGeneratedReport
   public static void main(String args[]) {
-    neqsim.thermo.system.SystemSrkEos testSystem =
-        new neqsim.thermo.system.SystemSrkSchwartzentruberEos((273.15 + 20.0), 80.00);
+    neqsim.thermo.system.SystemSrkEos testSystem = new neqsim.thermo.system.SystemSrkSchwartzentruberEos(
+	(273.15 + 20.0), 80.00);
     testSystem.addComponent("methane", 120.00);
     testSystem.addComponent("water", 0.1);
     testSystem.addComponent("TEG", 1e-10);
     testSystem.createDatabase(true);
     testSystem.setMixingRule(2);
 
-    neqsim.thermo.system.SystemSrkEos testSystem2 =
-        new neqsim.thermo.system.SystemSrkSchwartzentruberEos((273.15 + 20.0), 80.00);
+    neqsim.thermo.system.SystemSrkEos testSystem2 = new neqsim.thermo.system.SystemSrkSchwartzentruberEos(
+	(273.15 + 20.0), 80.00);
     testSystem2.addComponent("methane", 1e-10);
     testSystem2.addComponent("water", 1e-9);
     testSystem2.addComponent("TEG", 0.10);
@@ -77,8 +77,8 @@ public class TEGAbsorberTest {
     ReBoiler reboiler = new ReBoiler("reboiler", LP_valve.getOutletStream());
     reboiler.setReboilerDuty(20000.0);
 
-    neqsim.thermo.system.SystemSrkEos testSystem3 =
-        new neqsim.thermo.system.SystemSrkSchwartzentruberEos((273.15 + 20.0), 1.500);
+    neqsim.thermo.system.SystemSrkEos testSystem3 = new neqsim.thermo.system.SystemSrkSchwartzentruberEos(
+	(273.15 + 20.0), 1.500);
     testSystem3.addComponent("methane", 0.39);
     testSystem3.addComponent("water", 1e-10);
     testSystem3.addComponent("TEG", 1e-10);
@@ -101,8 +101,7 @@ public class TEGAbsorberTest {
     // processSimulation.processEquipment.absorber.SimpleGlycolAbsorber(gasStreamIn);
     // TEGabsorber.setName("TEGabsorber");
 
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
     operations.add(fluidStreamIn);
     operations.add(gasScrubber);
     operations.add(gasToAbsorber);

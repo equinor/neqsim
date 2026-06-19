@@ -17,7 +17,8 @@ public class InterphaseTwoPhase extends InterphaseTransportCoefficientBaseClass 
    * Constructor for InterphaseTwoPhase.
    * </p>
    */
-  public InterphaseTwoPhase() {}
+  public InterphaseTwoPhase() {
+  }
 
   /**
    * <p>

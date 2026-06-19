@@ -79,8 +79,8 @@ public class ReactiveKrishnaStandartFilmModel extends KrishnaStandartFilmModel {
     int n = getBulkSystem().getPhase(0).getNumberOfComponents() - 1;
     for (int i = 0; i < n; i++) {
       for (int j = 0; j < n; j++) {
-        double val = totalMassTransferCoefficientMatrix[phase].get(i, j);
-        totalMassTransferCoefficientMatrix[phase].set(i, j, val * enhVec[i]);
+	double val = totalMassTransferCoefficientMatrix[phase].get(i, j);
+	totalMassTransferCoefficientMatrix[phase].set(i, j, val * enhVec[i]);
       }
     }
   }

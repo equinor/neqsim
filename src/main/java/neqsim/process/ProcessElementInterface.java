@@ -10,9 +10,8 @@ import neqsim.util.NamedInterface;
  * ({@link neqsim.process.controllerdevice.ControllerDeviceInterface}).
  *
  * <p>
- * This common super-type allows {@code ProcessSystem} to manage a single heterogeneous collection
- * of all process elements, simplifying topology queries, serialisation, and export to interchange
- * formats such as DEXPI.
+ * This common super-type allows {@code ProcessSystem} to manage a single heterogeneous collection of all process
+ * elements, simplifying topology queries, serialisation, and export to interchange formats such as DEXPI.
  * </p>
  *
  * @author Even Solbraa

@@ -13,8 +13,7 @@ import java.util.Map;
  * <p>
  * This class supports:
  * <ul>
- * <li><b>Lifecycle Phase Tracking:</b> Concept → Design → Commissioning → Operation →
- * Late-life</li>
+ * <li><b>Lifecycle Phase Tracking:</b> Concept → Design → Commissioning → Operation → Late-life</li>
  * <li><b>Validation History:</b> Track when and how the model was validated</li>
  * <li><b>Audit Trail:</b> Record model modifications for compliance and knowledge preservation</li>
  * <li><b>Quality Metrics:</b> Track model accuracy and calibration state</li>
@@ -91,7 +90,8 @@ public class ModelMetadata implements Serializable {
   /**
    * Default constructor.
    */
-  public ModelMetadata() {}
+  public ModelMetadata() {
+  }
 
   /**
    * Records a validation event.
@@ -118,7 +118,7 @@ public class ModelMetadata implements Serializable {
    * Records a model modification with author.
    *
    * @param description what was changed
-   * @param author who made the change
+   * @param author      who made the change
    */
   public void recordModification(String description, String author) {
     ModificationRecord record = new ModificationRecord(description, author);
@@ -128,7 +128,7 @@ public class ModelMetadata implements Serializable {
   /**
    * Updates calibration status.
    *
-   * @param status new calibration status
+   * @param status   new calibration status
    * @param accuracy relative accuracy achieved (e.g., 0.02 for 2%)
    */
   public void updateCalibration(CalibrationStatus status, double accuracy) {

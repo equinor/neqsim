@@ -2,18 +2,18 @@
  * Agentic engineering infrastructure for NeqSim.
  *
  * <p>
- * Provides session tracking, feedback collection, and result validation for AI agent workflows that
- * solve engineering tasks using NeqSim's thermodynamic and process simulation API.
+ * Provides session tracking, feedback collection, and result validation for AI agent workflows that solve engineering
+ * tasks using NeqSim's thermodynamic and process simulation API.
  * </p>
  *
  * <h2>Key Classes:</h2>
  * <ul>
- * <li>{@link neqsim.util.agentic.AgentSession} — Tracks a single agent workflow session from scope
- * through reporting, recording phases, tool invocations, and simulation runs</li>
- * <li>{@link neqsim.util.agentic.AgentFeedbackCollector} — Aggregates metrics across sessions for
- * continuous improvement: success rates, failure patterns, API gaps</li>
- * <li>{@link neqsim.util.agentic.TaskResultValidator} — Validates task results.json files against
- * the expected schema for the task-solving workflow</li>
+ * <li>{@link neqsim.util.agentic.AgentSession} — Tracks a single agent workflow session from scope through reporting,
+ * recording phases, tool invocations, and simulation runs</li>
+ * <li>{@link neqsim.util.agentic.AgentFeedbackCollector} — Aggregates metrics across sessions for continuous
+ * improvement: success rates, failure patterns, API gaps</li>
+ * <li>{@link neqsim.util.agentic.TaskResultValidator} — Validates task results.json files against the expected schema
+ * for the task-solving workflow</li>
  * </ul>
  *
  * <h2>Architecture:</h2>

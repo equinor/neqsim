@@ -20,9 +20,8 @@ public final class ProcessSafetyAnalysisSummary implements Serializable {
   private final Map<String, String> conditionMessages;
   private final Map<String, UnitKpiSnapshot> unitKpis;
 
-  public ProcessSafetyAnalysisSummary(String scenarioName, Set<String> affectedUnits,
-      String conditionMonitorReport, Map<String, String> conditionMessages,
-      Map<String, UnitKpiSnapshot> unitKpis) {
+  public ProcessSafetyAnalysisSummary(String scenarioName, Set<String> affectedUnits, String conditionMonitorReport,
+      Map<String, String> conditionMessages, Map<String, UnitKpiSnapshot> unitKpis) {
     this.scenarioName = Objects.requireNonNull(scenarioName, "scenarioName");
     this.affectedUnits = Collections.unmodifiableSet(new LinkedHashSet<>(affectedUnits));
     this.conditionMonitorReport = conditionMonitorReport == null ? "" : conditionMonitorReport;

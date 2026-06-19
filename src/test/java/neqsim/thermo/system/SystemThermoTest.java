@@ -39,8 +39,7 @@ class SystemThermoTest extends neqsim.NeqSimTest {
    */
   @Test
   public void testCp() {
-    neqsim.thermo.system.SystemPrEos testSystem =
-        new neqsim.thermo.system.SystemPrEos(273.15 + 40.0, 1.0);
+    neqsim.thermo.system.SystemPrEos testSystem = new neqsim.thermo.system.SystemPrEos(273.15 + 40.0, 1.0);
     testSystem.addComponent("methane", 10.01);
     testSystem.addTBPfraction("C20", 10.68, 0.3, 0.85);
     testSystem.setMixingRule("classic");
@@ -133,8 +132,7 @@ class SystemThermoTest extends neqsim.NeqSimTest {
     fluid.addComponent("nitrogen", 1.0);
     fluid.setPressure(0.0, "barg");
 
-    assertEquals(ThermodynamicConstantsInterface.referencePressure, fluid.getPressure("bara"),
-        1e-4);
+    assertEquals(ThermodynamicConstantsInterface.referencePressure, fluid.getPressure("bara"), 1e-4);
     assertEquals(0.0, fluid.getPressure("barg"), 1e-4);
   }
 
@@ -199,16 +197,14 @@ class SystemThermoTest extends neqsim.NeqSimTest {
     double expectedDensity = totalMass / totalVolume;
 
     double actualDensity = sys.getDensity();
-    assertEquals(expectedDensity, actualDensity, 1e-6,
-        "getDensity() should equal total_mass / total_volume");
+    assertEquals(expectedDensity, actualDensity, 1e-6, "getDensity() should equal total_mass / total_volume");
 
     // The density must lie between the lightest and densest phase densities
     double gasRho = sys.getPhase(0).getDensity();
     double liqRho = sys.getPhase(1).getDensity();
     double minRho = Math.min(gasRho, liqRho);
     double maxRho = Math.max(gasRho, liqRho);
-    assertTrue(actualDensity >= minRho && actualDensity <= maxRho,
-        "Mixture density must be between phase densities");
+    assertTrue(actualDensity >= minRho && actualDensity <= maxRho, "Mixture density must be between phase densities");
   }
 
   @Test
@@ -239,12 +235,12 @@ class SystemThermoTest extends neqsim.NeqSimTest {
 
     double actualDensity = sys.getDensity("kg/m3");
     assertEquals(expectedDensity, actualDensity, 1e-6,
-        "getDensity(kg/m3) should equal total_mass / total_shifted_volume");
+	"getDensity(kg/m3) should equal total_mass / total_shifted_volume");
 
     // Verify Mw/getMolarVolume("m3/mol") is consistent with getDensity("kg/m3")
     double densityFromMolarVolume = sys.getMolarMass() / sys.getMolarVolume("m3/mol");
     assertEquals(actualDensity, densityFromMolarVolume, actualDensity * 0.001,
-        "getDensity(kg/m3) and Mw/getMolarVolume(m3/mol) should be consistent");
+	"getDensity(kg/m3) and Mw/getMolarVolume(m3/mol) should be consistent");
   }
 
   @SuppressWarnings("deprecation")
@@ -269,8 +265,7 @@ class SystemThermoTest extends neqsim.NeqSimTest {
 
   @Test
   void waterNaClTest() {
-    neqsim.thermo.system.SystemSrkEos testSystem =
-        new neqsim.thermo.system.SystemSrkEos(298.15, 1.0);
+    neqsim.thermo.system.SystemSrkEos testSystem = new neqsim.thermo.system.SystemSrkEos(298.15, 1.0);
     testSystem.addComponent("methane", 0.01);
     testSystem.addComponent("water", 0.99);
     testSystem.addComponent("NaCl", 0.05);
@@ -283,14 +278,12 @@ class SystemThermoTest extends neqsim.NeqSimTest {
     // double density = testSystem.getDensity("kg/m3");
 
     assertEquals(1109.7640, testSystem.getPhase(PhaseType.AQUEOUS).getDensity("kg/m3"), 1e-2);
-    assertEquals(1099.66150816, testSystem.getPhase(PhaseType.AQUEOUS).getWaterDensity("kg/m3"),
-        1e-2);
+    assertEquals(1099.66150816, testSystem.getPhase(PhaseType.AQUEOUS).getWaterDensity("kg/m3"), 1e-2);
   }
 
   @Test
   void waterMegMixtureWaterDensityTest() {
-    neqsim.thermo.system.SystemSrkEos testSystem =
-        new neqsim.thermo.system.SystemSrkEos(293.15, 1.0);
+    neqsim.thermo.system.SystemSrkEos testSystem = new neqsim.thermo.system.SystemSrkEos(293.15, 1.0);
     testSystem.addComponent("MEG", 49.0);
     testSystem.addComponent("water", 49.0);
     testSystem.addComponent("NaCl", 2.0);
@@ -309,8 +302,7 @@ class SystemThermoTest extends neqsim.NeqSimTest {
 
   @Test
   void waterMethanolMixtureWaterDensityTest() {
-    neqsim.thermo.system.SystemSrkEos testSystem =
-        new neqsim.thermo.system.SystemSrkEos(293.15, 1.0);
+    neqsim.thermo.system.SystemSrkEos testSystem = new neqsim.thermo.system.SystemSrkEos(293.15, 1.0);
     testSystem.addComponent("methanol", 49.0);
     testSystem.addComponent("water", 49.0);
     testSystem.addComponent("NaCl", 2.0);
@@ -329,8 +321,7 @@ class SystemThermoTest extends neqsim.NeqSimTest {
 
   @Test
   void waterEthanolMixtureWaterDensityTest() {
-    neqsim.thermo.system.SystemSrkEos testSystem =
-        new neqsim.thermo.system.SystemSrkEos(293.15, 1.0);
+    neqsim.thermo.system.SystemSrkEos testSystem = new neqsim.thermo.system.SystemSrkEos(293.15, 1.0);
     testSystem.addComponent("ethanol", 49.0);
     testSystem.addComponent("water", 49.0);
     testSystem.addComponent("NaCl", 2.0);

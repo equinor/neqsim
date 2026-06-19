@@ -8,11 +8,10 @@ import java.util.List;
  * ALARP (As Low As Reasonably Practicable) audit report builder.
  *
  * <p>
- * Captures the demonstration that residual risk has been reduced ALARP per UK HSE R2P2 and NORSOK
- * Z-013: each candidate risk-reduction measure is evaluated in terms of risk reduction
- * (averted-fatalities-per-year-equivalent), implementation cost and resulting cost-per-averted-
- * fatality (ICAF). A measure is rejected only if ICAF exceeds the disproportion-adjusted gross
- * threshold (typically £4–10 M / fatality, NOK 30–80 M).
+ * Captures the demonstration that residual risk has been reduced ALARP per UK HSE R2P2 and NORSOK Z-013: each candidate
+ * risk-reduction measure is evaluated in terms of risk reduction (averted-fatalities-per-year-equivalent),
+ * implementation cost and resulting cost-per-averted- fatality (ICAF). A measure is rejected only if ICAF exceeds the
+ * disproportion-adjusted gross threshold (typically £4–10 M / fatality, NOK 30–80 M).
  *
  * <p>
  * <b>References:</b>
@@ -42,8 +41,7 @@ public class ALARPAuditReport implements Serializable {
   }
 
   /**
-   * Set the value of statistical life (VSL / VOSL) used to monetise averted fatalities.
-   * Defaults to 30 MNOK.
+   * Set the value of statistical life (VSL / VOSL) used to monetise averted fatalities. Defaults to 30 MNOK.
    *
    * @param vslNOK VSL in NOK
    * @return this report for chaining
@@ -67,13 +65,12 @@ public class ALARPAuditReport implements Serializable {
   /**
    * Add a candidate risk-reduction measure.
    *
-   * @param description measure description
+   * @param description          measure description
    * @param riskReductionPerYear averted fatality frequency per year
-   * @param annualisedCostNOK annualised implementation cost in NOK/year
+   * @param annualisedCostNOK    annualised implementation cost in NOK/year
    * @return this report for chaining
    */
-  public ALARPAuditReport addMeasure(String description, double riskReductionPerYear,
-      double annualisedCostNOK) {
+  public ALARPAuditReport addMeasure(String description, double riskReductionPerYear, double annualisedCostNOK) {
     if (riskReductionPerYear < 0.0 || annualisedCostNOK < 0.0) {
       throw new IllegalArgumentException("riskReduction and cost must be non-negative");
     }
@@ -90,12 +87,10 @@ public class ALARPAuditReport implements Serializable {
     List<EvaluationResult> out = new ArrayList<>();
     double threshold = valueOfStatisticalLifeNOK * disproportionFactor;
     for (MeasureRecord m : measures) {
-      double icaf = m.riskReductionPerYear == 0.0
-          ? Double.POSITIVE_INFINITY
-          : m.annualisedCostNOK / m.riskReductionPerYear;
+      double icaf = m.riskReductionPerYear == 0.0 ? Double.POSITIVE_INFINITY
+	  : m.annualisedCostNOK / m.riskReductionPerYear;
       String verdict = icaf <= threshold ? "IMPLEMENT (cost-effective)" : "REJECT (exceeds GDF threshold)";
-      out.add(new EvaluationResult(m.description, m.riskReductionPerYear, m.annualisedCostNOK,
-          icaf, verdict));
+      out.add(new EvaluationResult(m.description, m.riskReductionPerYear, m.annualisedCostNOK, icaf, verdict));
     }
     return out;
   }
@@ -108,13 +103,12 @@ public class ALARPAuditReport implements Serializable {
   public String report() {
     StringBuilder sb = new StringBuilder();
     sb.append("ALARP audit: ").append(studyName).append('\n');
-    sb.append(String.format("VSL = %.2e NOK   GDF = %.1f   threshold = %.2e NOK%n",
-        valueOfStatisticalLifeNOK, disproportionFactor,
-        valueOfStatisticalLifeNOK * disproportionFactor));
+    sb.append(String.format("VSL = %.2e NOK   GDF = %.1f   threshold = %.2e NOK%n", valueOfStatisticalLifeNOK,
+	disproportionFactor, valueOfStatisticalLifeNOK * disproportionFactor));
     sb.append("---------------------------------------------------\n");
     for (EvaluationResult r : evaluate()) {
-      sb.append(String.format("ΔF=%.4e /yr  C=%.2e NOK/yr  ICAF=%.2e NOK/fatality%n",
-          r.riskReductionPerYear, r.annualisedCostNOK, r.icaf));
+      sb.append(String.format("ΔF=%.4e /yr  C=%.2e NOK/yr  ICAF=%.2e NOK/fatality%n", r.riskReductionPerYear,
+	  r.annualisedCostNOK, r.icaf));
       sb.append("    ").append(r.description).append('\n');
       sb.append("    Verdict: ").append(r.verdict).append('\n');
     }
@@ -149,8 +143,8 @@ public class ALARPAuditReport implements Serializable {
     /** ALARP verdict text. */
     public final String verdict;
 
-    EvaluationResult(String description, double riskReductionPerYear, double annualisedCostNOK,
-        double icaf, String verdict) {
+    EvaluationResult(String description, double riskReductionPerYear, double annualisedCostNOK, double icaf,
+	String verdict) {
       this.description = description;
       this.riskReductionPerYear = riskReductionPerYear;
       this.annualisedCostNOK = annualisedCostNOK;

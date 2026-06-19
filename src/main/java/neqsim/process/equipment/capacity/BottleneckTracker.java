@@ -9,19 +9,17 @@ import java.util.Locale;
  * Records how the binding capacity bottleneck of a process changes over time.
  *
  * <p>
- * A single {@link BottleneckResult} answers <em>what limits the plant right now</em>. During a
- * field-life depletion, a dynamic transient, or any rate/allocation sweep the limiting constraint
- * typically <em>migrates</em> — for example from a topside separator early in life to a subsurface
- * well-drawdown limit late in life. {@code BottleneckTracker} captures that temporal dimension as a
- * first-class object: the caller records a {@link BottleneckResult} at each step (year, second,
- * iteration, ...) and the tracker surfaces the migration events, the peak loading, and a JSON
- * timeline that an agent can hand off downstream.
+ * A single {@link BottleneckResult} answers <em>what limits the plant right now</em>. During a field-life depletion, a
+ * dynamic transient, or any rate/allocation sweep the limiting constraint typically <em>migrates</em> — for example
+ * from a topside separator early in life to a subsurface well-drawdown limit late in life. {@code BottleneckTracker}
+ * captures that temporal dimension as a first-class object: the caller records a {@link BottleneckResult} at each step
+ * (year, second, iteration, ...) and the tracker surfaces the migration events, the peak loading, and a JSON timeline
+ * that an agent can hand off downstream.
  * </p>
  *
  * <p>
  * The tracker deliberately depends only on {@link BottleneckResult} (not on {@code ProcessModel} or
- * {@code ProcessSystem}) so it stays in the leaf {@code capacity} package with no circular
- * dependency. Typical usage:
+ * {@code ProcessSystem}) so it stays in the leaf {@code capacity} package with no circular dependency. Typical usage:
  * </p>
  *
  * <pre>
@@ -80,16 +78,16 @@ public class BottleneckTracker implements Serializable {
     /**
      * Creates an immutable bottleneck snapshot.
      *
-     * @param time the time stamp (caller-defined units)
-     * @param label optional human-readable label; null is stored as an empty string
-     * @param equipmentName the bottleneck equipment name
-     * @param constraintName the binding constraint name
+     * @param time               the time stamp (caller-defined units)
+     * @param label              optional human-readable label; null is stored as an empty string
+     * @param equipmentName      the bottleneck equipment name
+     * @param constraintName     the binding constraint name
      * @param utilizationPercent the utilization in percent (100.0 = 100%)
-     * @param exceeded true if the constraint is exceeded
-     * @param hasBottleneck true if a bottleneck equipment/constraint was present
+     * @param exceeded           true if the constraint is exceeded
+     * @param hasBottleneck      true if a bottleneck equipment/constraint was present
      */
-    public Snapshot(double time, String label, String equipmentName, String constraintName,
-        double utilizationPercent, boolean exceeded, boolean hasBottleneck) {
+    public Snapshot(double time, String label, String equipmentName, String constraintName, double utilizationPercent,
+	boolean exceeded, boolean hasBottleneck) {
       this.time = time;
       this.label = label != null ? label : "";
       this.equipmentName = equipmentName;
@@ -174,11 +172,9 @@ public class BottleneckTracker implements Serializable {
     /** {@inheritDoc} */
     @Override
     public String toString() {
-      String prefix = label.isEmpty()
-          ? String.format(Locale.ROOT, "t=%.3g", time)
-          : label;
-      return String.format(Locale.ROOT, "%s: %s -> %s @ %.1f%%%s", prefix, equipmentName,
-          constraintName, utilizationPercent, exceeded ? " [EXCEEDED]" : "");
+      String prefix = label.isEmpty() ? String.format(Locale.ROOT, "t=%.3g", time) : label;
+      return String.format(Locale.ROOT, "%s: %s -> %s @ %.1f%%%s", prefix, equipmentName, constraintName,
+	  utilizationPercent, exceeded ? " [EXCEEDED]" : "");
     }
   }
 
@@ -188,9 +184,8 @@ public class BottleneckTracker implements Serializable {
   /**
    * Records the binding bottleneck at a time step.
    *
-   * @param time the time stamp (caller-defined units)
-   * @param result the bottleneck result to record; an empty result is recorded as an unconstrained
-   *        snapshot
+   * @param time   the time stamp (caller-defined units)
+   * @param result the bottleneck result to record; an empty result is recorded as an unconstrained snapshot
    * @return the snapshot that was created and stored
    */
   public Snapshot record(double time, BottleneckResult result) {
@@ -200,10 +195,9 @@ public class BottleneckTracker implements Serializable {
   /**
    * Records the binding bottleneck at a labelled time step.
    *
-   * @param time the time stamp (caller-defined units)
-   * @param label a human-readable label for the step (may be null)
-   * @param result the bottleneck result to record; if null or empty an unconstrained snapshot is
-   *        recorded
+   * @param time   the time stamp (caller-defined units)
+   * @param label  a human-readable label for the step (may be null)
+   * @param result the bottleneck result to record; if null or empty an unconstrained snapshot is recorded
    * @return the snapshot that was created and stored
    */
   public Snapshot record(double time, String label, BottleneckResult result) {
@@ -212,7 +206,7 @@ public class BottleneckTracker implements Serializable {
       snapshot = new Snapshot(time, label, "None", "None", 0.0, false, false);
     } else {
       snapshot = new Snapshot(time, label, result.getEquipmentName(), result.getConstraintName(),
-          result.getUtilizationPercent(), result.isExceeded(), true);
+	  result.getUtilizationPercent(), result.isExceeded(), true);
     }
     snapshots.add(snapshot);
     return snapshot;
@@ -265,10 +259,10 @@ public class BottleneckTracker implements Serializable {
    * Returns the snapshots at which the binding bottleneck changed identity.
    *
    * <p>
-   * The first recorded snapshot is always treated as a migration event (the initial bottleneck).
-   * Thereafter a snapshot is a migration event when its {@code "equipment::constraint"} identity
-   * differs from the previous snapshot. This pinpoints exactly when — and to what — the limiting
-   * constraint handed over, e.g. topside separator to subsurface well drawdown.
+   * The first recorded snapshot is always treated as a migration event (the initial bottleneck). Thereafter a snapshot
+   * is a migration event when its {@code "equipment::constraint"} identity differs from the previous snapshot. This
+   * pinpoints exactly when — and to what — the limiting constraint handed over, e.g. topside separator to subsurface
+   * well drawdown.
    * </p>
    *
    * @return the list of migration-event snapshots in chronological order
@@ -279,7 +273,7 @@ public class BottleneckTracker implements Serializable {
     for (Snapshot snapshot : snapshots) {
       String identity = snapshot.getIdentity();
       if (previousIdentity == null || !identity.equals(previousIdentity)) {
-        events.add(snapshot);
+	events.add(snapshot);
       }
       previousIdentity = identity;
     }
@@ -306,7 +300,7 @@ public class BottleneckTracker implements Serializable {
     for (Snapshot snapshot : snapshots) {
       String name = snapshot.getEquipmentName();
       if (!distinct.contains(name)) {
-        distinct.add(name);
+	distinct.add(name);
       }
     }
     return distinct;
@@ -321,7 +315,7 @@ public class BottleneckTracker implements Serializable {
     Snapshot peak = null;
     for (Snapshot snapshot : snapshots) {
       if (peak == null || snapshot.getUtilizationPercent() > peak.getUtilizationPercent()) {
-        peak = snapshot;
+	peak = snapshot;
       }
     }
     return peak;
@@ -344,8 +338,8 @@ public class BottleneckTracker implements Serializable {
    */
   public String getTimelineSummary() {
     StringBuilder sb = new StringBuilder();
-    sb.append("Bottleneck migration timeline (").append(getMigrationCount())
-        .append(" transition(s) over ").append(size()).append(" steps):");
+    sb.append("Bottleneck migration timeline (").append(getMigrationCount()).append(" transition(s) over ")
+	.append(size()).append(" steps):");
     for (Snapshot event : getMigrationEvents()) {
       sb.append(System.lineSeparator()).append("  ").append(event.toString());
     }
@@ -356,9 +350,8 @@ public class BottleneckTracker implements Serializable {
    * Serializes the recorded timeline to a schema-versioned JSON string.
    *
    * <p>
-   * The JSON contains the full snapshot list, the migration-event list, the peak utilization and
-   * the distinct bottleneck equipment, so an agent can reason about the temporal capacity behaviour
-   * without re-running the study.
+   * The JSON contains the full snapshot list, the migration-event list, the peak utilization and the distinct
+   * bottleneck equipment, so an agent can reason about the temporal capacity behaviour without re-running the study.
    * </p>
    *
    * @return a JSON document describing the bottleneck timeline
@@ -373,7 +366,7 @@ public class BottleneckTracker implements Serializable {
     List<String> distinct = getDistinctBottleneckEquipment();
     for (int i = 0; i < distinct.size(); i++) {
       if (i > 0) {
-        sb.append(",");
+	sb.append(",");
       }
       sb.append("\"").append(escape(distinct.get(i))).append("\"");
     }
@@ -389,14 +382,14 @@ public class BottleneckTracker implements Serializable {
   /**
    * Appends a JSON array of snapshots to the supplied builder.
    *
-   * @param sb the builder to append to
+   * @param sb    the builder to append to
    * @param items the snapshots to serialize
    */
   private void appendSnapshotArray(StringBuilder sb, List<Snapshot> items) {
     sb.append("[");
     for (int i = 0; i < items.size(); i++) {
       if (i > 0) {
-        sb.append(",");
+	sb.append(",");
       }
       Snapshot s = items.get(i);
       sb.append("{\"time\":").append(formatNumber(s.getTime()));
@@ -438,24 +431,24 @@ public class BottleneckTracker implements Serializable {
     for (int i = 0; i < value.length(); i++) {
       char c = value.charAt(i);
       switch (c) {
-        case '\\':
-          sb.append("\\\\");
-          break;
-        case '"':
-          sb.append("\\\"");
-          break;
-        case '\n':
-          sb.append("\\n");
-          break;
-        case '\r':
-          sb.append("\\r");
-          break;
-        case '\t':
-          sb.append("\\t");
-          break;
-        default:
-          sb.append(c);
-          break;
+      case '\\':
+	sb.append("\\\\");
+	break;
+      case '"':
+	sb.append("\\\"");
+	break;
+      case '\n':
+	sb.append("\\n");
+	break;
+      case '\r':
+	sb.append("\\r");
+	break;
+      case '\t':
+	sb.append("\\t");
+	break;
+      default:
+	sb.append(c);
+	break;
       }
     }
     return sb.toString();

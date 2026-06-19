@@ -23,15 +23,14 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * Generates DEXPI XML files for testing in external DEXPI viewers. Run this test then open the
- * generated files from target/dexpi-viewer/.
+ * Generates DEXPI XML files for testing in external DEXPI viewers. Run this test then open the generated files from
+ * target/dexpi-viewer/.
  *
  * @author esol
  * @version 1.0
  */
 public class DexpiExportForViewerTest extends NeqSimTest {
   private static final Logger logger = LogManager.getLogger(DexpiExportForViewerTest.class);
-
 
   /**
    * Generates a gas processing flowsheet with separator, compressor, cooler, and valve. Writes to
@@ -64,8 +63,7 @@ public class DexpiExportForViewerTest extends NeqSimTest {
 
     Separator scrubber = new Separator("V-102 Scrubber", aftercooler.getOutletStream());
 
-    ThrottlingValve liqValve =
-        new ThrottlingValve("XV-103 Liquid Valve", inletSep.getLiquidOutStream());
+    ThrottlingValve liqValve = new ThrottlingValve("XV-103 Liquid Valve", inletSep.getLiquidOutStream());
     liqValve.setOutletPressure(10.0);
 
     Heater oilHeater = new Heater("E-102 Oil Heater", liqValve.getOutletStream());
@@ -87,8 +85,7 @@ public class DexpiExportForViewerTest extends NeqSimTest {
   }
 
   /**
-   * Generates a simple 2-stage compression flowsheet. Writes to
-   * target/dexpi-viewer/two_stage_compression.xml.
+   * Generates a simple 2-stage compression flowsheet. Writes to target/dexpi-viewer/two_stage_compression.xml.
    *
    * @throws Exception if export fails
    */
@@ -143,8 +140,7 @@ public class DexpiExportForViewerTest extends NeqSimTest {
     File source = new File("src/test/resources/dexpi/C01V04-VER.EX01.xml");
     File dest = new File("target/dexpi-viewer/official_dexpi_example.xml");
     dest.getParentFile().mkdirs();
-    java.nio.file.Files.copy(source.toPath(), dest.toPath(),
-        java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+    java.nio.file.Files.copy(source.toPath(), dest.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
     logger.info("Official DEXPI example copied to: " + dest.getAbsolutePath());
   }
 
@@ -190,15 +186,13 @@ public class DexpiExportForViewerTest extends NeqSimTest {
     PressureTransmitter ptSep = new PressureTransmitter("PT-1001", inletSep.getGasOutStream());
     transmitters.put("PT-1001", ptSep);
 
-    TemperatureTransmitter ttSep =
-        new TemperatureTransmitter("TT-1002", inletSep.getGasOutStream());
+    TemperatureTransmitter ttSep = new TemperatureTransmitter("TT-1002", inletSep.getGasOutStream());
     transmitters.put("TT-1002", ttSep);
 
     PressureTransmitter ptComp = new PressureTransmitter("PT-1003", compressor.getOutletStream());
     transmitters.put("PT-1003", ptComp);
 
-    TemperatureTransmitter ttCooler =
-        new TemperatureTransmitter("TT-1004", aftercooler.getOutletStream());
+    TemperatureTransmitter ttCooler = new TemperatureTransmitter("TT-1004", aftercooler.getOutletStream());
     transmitters.put("TT-1004", ttCooler);
 
     File outFile = new File("target/dexpi-viewer/instruments_test.xml");
@@ -207,9 +201,9 @@ public class DexpiExportForViewerTest extends NeqSimTest {
   }
 
   /**
-   * Generates a professional P&ID demonstrating all features: drawing border with title block, flow
-   * arrows, stream labels, stream table, valve layout with shape, and auto-collected instruments
-   * from ProcessSystem. Writes to target/dexpi-viewer/professional_pid.xml.
+   * Generates a professional P&ID demonstrating all features: drawing border with title block, flow arrows, stream
+   * labels, stream table, valve layout with shape, and auto-collected instruments from ProcessSystem. Writes to
+   * target/dexpi-viewer/professional_pid.xml.
    *
    * @throws Exception if export fails
    */
@@ -238,8 +232,7 @@ public class DexpiExportForViewerTest extends NeqSimTest {
 
     Separator scrubber = new Separator("V-102 Scrubber", aftercooler.getOutletStream());
 
-    ThrottlingValve liqValve =
-        new ThrottlingValve("XV-103 Liq Valve", inletSep.getLiquidOutStream());
+    ThrottlingValve liqValve = new ThrottlingValve("XV-103 Liq Valve", inletSep.getLiquidOutStream());
     liqValve.setOutletPressure(10.0);
 
     Heater oilHeater = new Heater("E-102 Oil Heater", liqValve.getOutletStream());
@@ -279,15 +272,13 @@ public class DexpiExportForViewerTest extends NeqSimTest {
     PressureTransmitter ptSep = new PressureTransmitter("PT-1001", inletSep.getGasOutStream());
     process.add(ptSep);
 
-    TemperatureTransmitter ttSep =
-        new TemperatureTransmitter("TT-1002", inletSep.getGasOutStream());
+    TemperatureTransmitter ttSep = new TemperatureTransmitter("TT-1002", inletSep.getGasOutStream());
     process.add(ttSep);
 
     PressureTransmitter ptComp = new PressureTransmitter("PT-1003", gasComp.getOutletStream());
     process.add(ptComp);
 
-    TemperatureTransmitter ttCooler =
-        new TemperatureTransmitter("TT-1004", aftercooler.getOutletStream());
+    TemperatureTransmitter ttCooler = new TemperatureTransmitter("TT-1004", aftercooler.getOutletStream());
     process.add(ttCooler);
 
     // Add controllers (auto-collected by DEXPI writer, matched to transmitters via tag)

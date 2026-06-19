@@ -42,7 +42,7 @@ public class IronIonSaturationStream extends Stream {
   /**
    * Constructor for IronIonSaturationStream.
    *
-   * @param name name of stream
+   * @param name   name of stream
    * @param stream input stream
    */
   public IronIonSaturationStream(String name, StreamInterface stream) {
@@ -54,7 +54,7 @@ public class IronIonSaturationStream extends Stream {
    * Constructor for IronIonSaturationStream.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
+   * @param name         a {@link java.lang.String} object
    * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
    */
   public IronIonSaturationStream(String name, SystemInterface thermoSystem) {
@@ -77,8 +77,7 @@ public class IronIonSaturationStream extends Stream {
   @Override
   public IronIonSaturationStream clone(String name) {
     if (this.getName() == name) {
-      throw new RuntimeException(
-          new InvalidInputException(this, "clone", "name", "- Same name as in original object"));
+      throw new RuntimeException(new InvalidInputException(this, "clone", "name", "- Same name as in original object"));
     }
     IronIonSaturationStream s = this.clone();
     s.setName(name);
@@ -106,8 +105,7 @@ public class IronIonSaturationStream extends Stream {
     // reactiveThermoSystem.display();
     try {
       logger.info("aqueous phase number " + reactiveThermoSystem.getPhaseNumberOfPhase("aqueous"));
-      thermoOps.addIonToScaleSaturation(reactiveThermoSystem.getPhaseNumberOfPhase("aqueous"),
-          "FeCO3", "Fe++");
+      thermoOps.addIonToScaleSaturation(reactiveThermoSystem.getPhaseNumberOfPhase("aqueous"), "FeCO3", "Fe++");
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
     }

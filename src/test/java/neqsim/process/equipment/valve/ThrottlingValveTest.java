@@ -14,17 +14,15 @@ public class ThrottlingValveTest {
   /**
    * Test method for calculating the flow coefficient (Cv) of a gas through a throttling valve.
    * <p>
-   * This test sets up a thermodynamic system using the SRK EOS model with methane as the component.
-   * It creates a stream with specified flow rate, pressure, and temperature, and then passes it
-   * through a throttling valve. The outlet pressure and valve opening percentage are set, and the
-   * valve is run. The test asserts that the calculated Cv values in both US and SI units are as
-   * expected.
+   * This test sets up a thermodynamic system using the SRK EOS model with methane as the component. It creates a stream
+   * with specified flow rate, pressure, and temperature, and then passes it through a throttling valve. The outlet
+   * pressure and valve opening percentage are set, and the valve is run. The test asserts that the calculated Cv values
+   * in both US and SI units are as expected.
    * </p>
    */
   @Test
   void testCalcCvGas() {
-    neqsim.thermo.system.SystemInterface testSystem2 =
-        new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
+    neqsim.thermo.system.SystemInterface testSystem2 = new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
     testSystem2.addComponent("methane", 1.0);
     testSystem2.setMixingRule(2);
 
@@ -68,8 +66,7 @@ public class ThrottlingValveTest {
 
   @Test
   void testZeroAndLowFlowBypassCalculation() {
-    neqsim.thermo.system.SystemInterface system =
-        new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 50.0);
+    neqsim.thermo.system.SystemInterface system = new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 50.0);
     system.addComponent("methane", 1.0);
     system.setMixingRule(2);
 
@@ -86,8 +83,7 @@ public class ThrottlingValveTest {
     assertEquals(0.0, zeroFlowValve.getOutletStream().getFlowRate("mole/sec"), 1e-12);
     assertEquals(30.0, zeroFlowValve.getOutletStream().getPressure("bara"), 1e-6);
 
-    neqsim.thermo.system.SystemInterface lowFlowSystem =
-        new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 50.0);
+    neqsim.thermo.system.SystemInterface lowFlowSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 50.0);
     lowFlowSystem.addComponent("methane", 1.0);
     lowFlowSystem.setMixingRule(2);
 
@@ -107,8 +103,7 @@ public class ThrottlingValveTest {
 
   @Test
   void testCalcProdChoke() {
-    neqsim.thermo.system.SystemInterface testSystem2 =
-        new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
+    neqsim.thermo.system.SystemInterface testSystem2 = new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
     testSystem2.addComponent("methane", 1.0);
     testSystem2.addComponent("nC10", 1.0);
     testSystem2.setMixingRule(2);
@@ -158,8 +153,7 @@ public class ThrottlingValveTest {
 
   @Test
   void testCalcCvGas_stdvalve() {
-    neqsim.thermo.system.SystemInterface testSystem2 =
-        new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
+    neqsim.thermo.system.SystemInterface testSystem2 = new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
     testSystem2.addComponent("methane", 1.0);
     testSystem2.setMixingRule(2);
 
@@ -203,17 +197,15 @@ public class ThrottlingValveTest {
   /**
    * Test method for calculating the flow coefficient (Cv) of a gas through a throttling valve.
    * <p>
-   * This test sets up a thermodynamic system using the SRK EOS model with methane as the component.
-   * It creates a stream with specified flow rate, pressure, and temperature, and then passes it
-   * through a throttling valve. The outlet pressure and valve opening percentage are set, and the
-   * valve is run. The test asserts that the calculated Cv values in both US and SI units are as
-   * expected.
+   * This test sets up a thermodynamic system using the SRK EOS model with methane as the component. It creates a stream
+   * with specified flow rate, pressure, and temperature, and then passes it through a throttling valve. The outlet
+   * pressure and valve opening percentage are set, and the valve is run. The test asserts that the calculated Cv values
+   * in both US and SI units are as expected.
    * </p>
    */
   @Test
   void testCalcCvGas2() {
-    neqsim.thermo.system.SystemInterface testSystem2 =
-        new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
+    neqsim.thermo.system.SystemInterface testSystem2 = new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
     testSystem2.addComponent("methane", 1.0);
     testSystem2.setMixingRule(2);
 
@@ -237,8 +229,7 @@ public class ThrottlingValveTest {
 
   @Test
   void testCalcCvGas3() {
-    neqsim.thermo.system.SystemInterface testSystem2 =
-        new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
+    neqsim.thermo.system.SystemInterface testSystem2 = new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
     testSystem2.addComponent("methane", 1.0);
     testSystem2.setMixingRule(2);
 
@@ -263,8 +254,7 @@ public class ThrottlingValveTest {
 
   @Test
   void testCalcCvWater3() {
-    neqsim.thermo.system.SystemInterface testSystem2 =
-        new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
+    neqsim.thermo.system.SystemInterface testSystem2 = new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
     testSystem2.addComponent("water", 1.0);
     testSystem2.setMixingRule(2);
 
@@ -292,8 +282,7 @@ public class ThrottlingValveTest {
 
   @Test
   void testCalcCvLiquid2() {
-    neqsim.thermo.system.SystemInterface testSystem2 =
-        new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
+    neqsim.thermo.system.SystemInterface testSystem2 = new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
     testSystem2.addComponent("water", 1.0);
     testSystem2.setMixingRule(2);
 
@@ -315,8 +304,7 @@ public class ThrottlingValveTest {
 
   @Test
   void testCalcCvLiquidPropane() {
-    neqsim.thermo.system.SystemInterface testSystem2 =
-        new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
+    neqsim.thermo.system.SystemInterface testSystem2 = new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
     testSystem2.addComponent("propane", 1.0);
     testSystem2.setMixingRule(2);
 
@@ -338,8 +326,7 @@ public class ThrottlingValveTest {
 
   @Test
   void testCalcCvLiquid() {
-    neqsim.thermo.system.SystemInterface testSystem2 =
-        new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
+    neqsim.thermo.system.SystemInterface testSystem2 = new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
     testSystem2.addComponent("water", 1.0);
     testSystem2.setMixingRule(2);
 
@@ -379,8 +366,7 @@ public class ThrottlingValveTest {
 
   @Test
   void testSetDeltaPressure() {
-    neqsim.thermo.system.SystemInterface testSystem2 =
-        new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
+    neqsim.thermo.system.SystemInterface testSystem2 = new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
     testSystem2.addComponent("methane", 1.0);
     testSystem2.setMixingRule(2);
 
@@ -406,8 +392,7 @@ public class ThrottlingValveTest {
 
   @Test
   void testSetDeltaPressure2() {
-    neqsim.thermo.system.SystemInterface testSystem2 =
-        new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
+    neqsim.thermo.system.SystemInterface testSystem2 = new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
     testSystem2.addComponent("methane", 1.0);
     testSystem2.setMixingRule(2);
 
@@ -432,8 +417,7 @@ public class ThrottlingValveTest {
 
   @Test
   void testValveClosureDoesNotProduceNaNInTransientFlow() {
-    neqsim.thermo.system.SystemInterface fluid =
-        new neqsim.thermo.system.SystemSrkEos(273.15 + 40.0, 18.0);
+    neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemSrkEos(273.15 + 40.0, 18.0);
     fluid.addComponent("methane", 50.0);
     fluid.addComponent("ethane", 5.0);
     fluid.addComponent("propane", 2.0);
@@ -475,8 +459,7 @@ public class ThrottlingValveTest {
   @Test
   void testCalculateValveOpeningFromFlowRateProdChoke() {
     // Test that calculateValveOpeningFromFlowRate correctly inverts the flow calculation
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
     testSystem.addComponent("methane", 1.0);
     testSystem.setMixingRule(2);
 
@@ -497,48 +480,44 @@ public class ThrottlingValveTest {
     double flowRate = valve1.getInletStream().getFlowRate("m3/sec");
 
     // Now calculate what opening we need to get this flow rate
-    ControlValveSizing_simple sizingMethod =
-        (ControlValveSizing_simple) valve1.getMechanicalDesign().getValveSizingMethod();
+    ControlValveSizing_simple sizingMethod = (ControlValveSizing_simple) valve1.getMechanicalDesign()
+	.getValveSizingMethod();
     double calculatedOpening = sizingMethod.calculateValveOpeningFromFlowRate(flowRate, Kv, 100.0,
-        valve1.getInletStream(), valve1.getOutletStream());
+	valve1.getInletStream(), valve1.getOutletStream());
 
     // Should be approximately 100% since we used 100% opening to generate the flow
     assertEquals(100.0, calculatedOpening, 1.0);
 
     // Test with a reduced flow rate - calculate what opening is needed for half the flow
     double halfFlow = flowRate * 0.5;
-    double calculatedOpeningHalfFlow = sizingMethod.calculateValveOpeningFromFlowRate(halfFlow, Kv,
-        100.0, valve1.getInletStream(), valve1.getOutletStream());
+    double calculatedOpeningHalfFlow = sizingMethod.calculateValveOpeningFromFlowRate(halfFlow, Kv, 100.0,
+	valve1.getInletStream(), valve1.getOutletStream());
 
     // Should be approximately 50% for half the flow (linear relationship in simple model)
     assertEquals(50.0, calculatedOpeningHalfFlow, 5.0);
 
     // Verify that the method no longer returns a constant 100%
-    assertTrue(calculatedOpeningHalfFlow < 100.0,
-        "calculateValveOpeningFromFlowRate should not return constant 100%");
-    assertTrue(calculatedOpeningHalfFlow > 0.0,
-        "calculateValveOpeningFromFlowRate should return positive value");
+    assertTrue(calculatedOpeningHalfFlow < 100.0, "calculateValveOpeningFromFlowRate should not return constant 100%");
+    assertTrue(calculatedOpeningHalfFlow > 0.0, "calculateValveOpeningFromFlowRate should return positive value");
   }
 
   /**
-   * Regression test for GitHub issue #1918: gas valve Cv was severely underestimated when using
-   * ProcessSystem because the sizing formula used actual volumetric flow instead of standard
-   * volumetric flow per IEC 60534-2-1.
+   * Regression test for GitHub issue #1918: gas valve Cv was severely underestimated when using ProcessSystem because
+   * the sizing formula used actual volumetric flow instead of standard volumetric flow per IEC 60534-2-1.
    *
    * <p>
-   * Test reproduces the exact scenario from the issue reporter: 50 bara, 25C, 90% CH4 / 10% C2H6,
-   * 10000 kg/hr. Expected Cv ~16.2 per IEC 60534 (verified against Python 'fluids' library).
+   * Test reproduces the exact scenario from the issue reporter: 50 bara, 25C, 90% CH4 / 10% C2H6, 10000 kg/hr. Expected
+   * Cv ~16.2 per IEC 60534 (verified against Python 'fluids' library).
    * </p>
    *
    * <p>
-   * The reporter observed Cv=0.71 with ProcessSystem (wrong, using actual flow) vs Cv=11.86 with
-   * standalone valve.run(). After fix, both paths should give ~16.2 (correct per IEC 60534).
+   * The reporter observed Cv=0.71 with ProcessSystem (wrong, using actual flow) vs Cv=11.86 with standalone
+   * valve.run(). After fix, both paths should give ~16.2 (correct per IEC 60534).
    * </p>
    */
   @Test
   void testGasValveCvWithProcessSystem_Issue1918() {
-    neqsim.thermo.system.SystemInterface fluid =
-        new neqsim.thermo.system.SystemSrkEos(273.15 + 25, 50);
+    neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemSrkEos(273.15 + 25, 50);
     fluid.addComponent("methane", 0.9);
     fluid.addComponent("ethane", 0.1);
     fluid.setMixingRule("classic");
@@ -564,12 +543,10 @@ public class ThrottlingValveTest {
 
     // IEC 60534 correct result: Cv ~ 16.2 (verified with Python fluids library, xT=0.75)
     // Old buggy result was Cv ~0.71 via ProcessSystem (using actual flow instead of std flow)
-    assertEquals(16.2, cv, 1.5,
-        "Gas valve Cv via ProcessSystem should match IEC 60534 (~16.2), not ~0.71");
+    assertEquals(16.2, cv, 1.5, "Gas valve Cv via ProcessSystem should match IEC 60534 (~16.2), not ~0.71");
 
     // Also verify standalone valve.run() gives same result
-    neqsim.thermo.system.SystemInterface fluid2 =
-        new neqsim.thermo.system.SystemSrkEos(273.15 + 25, 50);
+    neqsim.thermo.system.SystemInterface fluid2 = new neqsim.thermo.system.SystemSrkEos(273.15 + 25, 50);
     fluid2.addComponent("methane", 0.9);
     fluid2.addComponent("ethane", 0.1);
     fluid2.setMixingRule("classic");

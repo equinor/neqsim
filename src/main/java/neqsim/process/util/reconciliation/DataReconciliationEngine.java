@@ -12,9 +12,9 @@ import org.ejml.simple.SimpleMatrix;
  * Data reconciliation engine using weighted least squares (WLS) with linear constraints.
  *
  * <p>
- * Adjusts measured process variables so that mass (and optionally energy) balance constraints are
- * exactly satisfied, while minimizing the weighted sum of squared adjustments. The weights are
- * inversely proportional to the measurement variance (1/sigma^2).
+ * Adjusts measured process variables so that mass (and optionally energy) balance constraints are exactly satisfied,
+ * while minimizing the weighted sum of squared adjustments. The weights are inversely proportional to the measurement
+ * variance (1/sigma^2).
  * </p>
  *
  * <p>
@@ -28,8 +28,8 @@ import org.ejml.simple.SimpleMatrix;
  * $$x_{adj} = y - V \cdot A^T \cdot (A \cdot V \cdot A^T)^{-1} \cdot A \cdot y$$
  *
  * <p>
- * After reconciliation, a global chi-square test and per-variable normalized residual test are
- * applied to detect gross measurement errors at a configurable confidence level.
+ * After reconciliation, a global chi-square test and per-variable normalized residual test are applied to detect gross
+ * measurement errors at a configurable confidence level.
  * </p>
  *
  * <p>
@@ -72,8 +72,7 @@ public class DataReconciliationEngine implements java.io.Serializable {
   private final List<String> constraintNames;
 
   /**
-   * Gross error detection threshold (z-value). Default 1.96 for 95% confidence. Set to 2.576 for
-   * 99%.
+   * Gross error detection threshold (z-value). Default 1.96 for 95% confidence. Set to 2.576 for 99%.
    */
   private double grossErrorThreshold = 1.96;
 
@@ -101,12 +100,11 @@ public class DataReconciliationEngine implements java.io.Serializable {
    * Adds a linear constraint row: sum(coefficients[i] * variable[i]) = 0.
    *
    * <p>
-   * For a mass balance around a mixer with feed1, feed2 going in and product going out:
-   * {@code addConstraint(new double[]{1.0, 1.0, -1.0})} means feed1 + feed2 - product = 0.
+   * For a mass balance around a mixer with feed1, feed2 going in and product going out: {@code addConstraint(new
+   * double[]{1.0, 1.0, -1.0})} means feed1 + feed2 - product = 0.
    * </p>
    *
-   * @param coefficients array of coefficients, one per variable in order added. Use +1 for inlets,
-   *        -1 for outlets.
+   * @param coefficients array of coefficients, one per variable in order added. Use +1 for inlets, -1 for outlets.
    * @return this engine for chaining
    * @throws IllegalArgumentException if coefficients length does not match variable count
    */
@@ -118,14 +116,14 @@ public class DataReconciliationEngine implements java.io.Serializable {
    * Adds a named linear constraint row: sum(coefficients[i] * variable[i]) = 0.
    *
    * @param coefficients array of coefficients, one per variable
-   * @param name descriptive name for this constraint (e.g., "Separator mass balance")
+   * @param name         descriptive name for this constraint (e.g., "Separator mass balance")
    * @return this engine for chaining
    * @throws IllegalArgumentException if coefficients length does not match variable count
    */
   public DataReconciliationEngine addConstraint(double[] coefficients, String name) {
     if (coefficients.length != variables.size()) {
-      throw new IllegalArgumentException("Constraint length " + coefficients.length
-          + " does not match variable count " + variables.size());
+      throw new IllegalArgumentException(
+	  "Constraint length " + coefficients.length + " does not match variable count " + variables.size());
     }
     constraintRows.add(coefficients.clone());
     constraintNames.add(name);
@@ -238,8 +236,7 @@ public class DataReconciliationEngine implements java.io.Serializable {
     if (m >= n) {
       ReconciliationResult result = new ReconciliationResult(variables);
       result.setConverged(false);
-      result.setErrorMessage(
-          "Need more variables (" + n + ") than constraints (" + m + ") for reconciliation");
+      result.setErrorMessage("Need more variables (" + n + ") than constraints (" + m + ") for reconciliation");
       return result;
     }
 
@@ -259,13 +256,13 @@ public class DataReconciliationEngine implements java.io.Serializable {
    * Solves the weighted least squares reconciliation problem.
    *
    * <p>
-   * Builds the measurement vector y, covariance matrix V, and constraint matrix A, then applies the
-   * closed-form WLS formula. Computes constraint residuals before and after reconciliation,
-   * objective value, global chi-square test, and per-variable gross error detection.
+   * Builds the measurement vector y, covariance matrix V, and constraint matrix A, then applies the closed-form WLS
+   * formula. Computes constraint residuals before and after reconciliation, objective value, global chi-square test,
+   * and per-variable gross error detection.
    * </p>
    *
-   * @param n number of variables
-   * @param m number of constraints
+   * @param n         number of variables
+   * @param m         number of constraints
    * @param startTime system time when reconciliation started, for timing measurement
    * @return the reconciliation result
    */
@@ -288,7 +285,7 @@ public class DataReconciliationEngine implements java.io.Serializable {
     for (int i = 0; i < m; i++) {
       double[] row = constraintRows.get(i);
       for (int j = 0; j < n; j++) {
-        bigA.set(i, j, row[j]);
+	bigA.set(i, j, row[j]);
       }
     }
 
@@ -358,13 +355,13 @@ public class DataReconciliationEngine implements java.io.Serializable {
     // Collect gross errors
     for (ReconciliationVariable v : variables) {
       if (v.isGrossError()) {
-        result.addGrossError(v);
+	result.addGrossError(v);
       }
     }
 
     result.setComputeTimeMs(System.currentTimeMillis() - startTime);
-    logger.info("Data reconciliation completed in {} ms. Objective: {}, Gross errors: {}",
-        result.getComputeTimeMs(), objectiveValue, result.getGrossErrors().size());
+    logger.info("Data reconciliation completed in {} ms. Objective: {}, Gross errors: {}", result.getComputeTimeMs(),
+	objectiveValue, result.getGrossErrors().size());
 
     return result;
   }
@@ -384,7 +381,7 @@ public class DataReconciliationEngine implements java.io.Serializable {
    * If |r_i| exceeds the gross error threshold (z-value), the variable is flagged.
    * </p>
    *
-   * @param n number of variables
+   * @param n    number of variables
    * @param vAdj covariance matrix of reconciled adjustments (V - V*A^T*(AVA^T)^-1*A*V)
    */
   private void detectGrossErrors(int n, SimpleMatrix vAdj) {
@@ -397,15 +394,14 @@ public class DataReconciliationEngine implements java.io.Serializable {
 
       double normalizedResidual = 0.0;
       if (denominator > 1e-20) {
-        normalizedResidual =
-            (v.getReconciledValue() - v.getMeasuredValue()) / Math.sqrt(denominator);
+	normalizedResidual = (v.getReconciledValue() - v.getMeasuredValue()) / Math.sqrt(denominator);
       }
       v.setNormalizedResidual(normalizedResidual);
       v.setGrossError(Math.abs(normalizedResidual) > grossErrorThreshold);
 
       if (v.isGrossError()) {
-        logger.warn("Gross error detected: {} (|r|={} > {})", v.getName(),
-            Math.abs(normalizedResidual), grossErrorThreshold);
+	logger.warn("Gross error detected: {} (|r|={} > {})", v.getName(), Math.abs(normalizedResidual),
+	    grossErrorThreshold);
       }
     }
   }
@@ -414,8 +410,7 @@ public class DataReconciliationEngine implements java.io.Serializable {
    * Returns an approximate chi-square critical value at 95% confidence.
    *
    * <p>
-   * Uses the Wilson-Hilferty approximation for the chi-square distribution inverse CDF at the 95th
-   * percentile.
+   * Uses the Wilson-Hilferty approximation for the chi-square distribution inverse CDF at the 95th percentile.
    * </p>
    *
    * @param dof degrees of freedom (must be positive)
@@ -435,10 +430,9 @@ public class DataReconciliationEngine implements java.io.Serializable {
    * Performs reconciliation with iterative gross error elimination.
    *
    * <p>
-   * After each reconciliation, the variable with the largest normalized residual exceeding the
-   * threshold is removed (its uncertainty is set to a very large value, effectively ignoring it).
-   * The reconciliation is repeated until no gross errors remain or the maximum elimination count is
-   * reached.
+   * After each reconciliation, the variable with the largest normalized residual exceeding the threshold is removed
+   * (its uncertainty is set to a very large value, effectively ignoring it). The reconciliation is repeated until no
+   * gross errors remain or the maximum elimination count is reached.
    * </p>
    *
    * @param maxEliminations maximum number of variables to eliminate
@@ -457,21 +451,21 @@ public class DataReconciliationEngine implements java.io.Serializable {
     for (int iter = 0; iter < maxEliminations; iter++) {
       result = reconcile();
       if (!result.isConverged() || !result.hasGrossErrors()) {
-        break;
+	break;
       }
 
       // Find worst gross error
       ReconciliationVariable worst = null;
       double worstResidual = 0.0;
       for (ReconciliationVariable v : variables) {
-        if (v.isGrossError() && Math.abs(v.getNormalizedResidual()) > worstResidual) {
-          worst = v;
-          worstResidual = Math.abs(v.getNormalizedResidual());
-        }
+	if (v.isGrossError() && Math.abs(v.getNormalizedResidual()) > worstResidual) {
+	  worst = v;
+	  worstResidual = Math.abs(v.getNormalizedResidual());
+	}
       }
 
       if (worst == null) {
-        break;
+	break;
       }
 
       // Effectively remove this variable: set uncertainty very high
@@ -493,10 +487,10 @@ public class DataReconciliationEngine implements java.io.Serializable {
       result = reconcile();
       // Re-flag the eliminated variables
       for (ReconciliationVariable ge : allGrossErrors) {
-        ge.setGrossError(true);
-        if (!result.getGrossErrors().contains(ge)) {
-          result.addGrossError(ge);
-        }
+	ge.setGrossError(true);
+	if (!result.getGrossErrors().contains(ge)) {
+	  result.addGrossError(ge);
+	}
       }
     }
 
@@ -507,12 +501,12 @@ public class DataReconciliationEngine implements java.io.Serializable {
    * Convenience method to add a mass balance constraint around a node.
    *
    * <p>
-   * Specifies which variables are inlets (+1) and which are outlets (-1) by their names. All other
-   * variables get coefficient 0.
+   * Specifies which variables are inlets (+1) and which are outlets (-1) by their names. All other variables get
+   * coefficient 0.
    * </p>
    *
-   * @param name constraint name (e.g., "Separator mass balance")
-   * @param inletNames names of inlet variables
+   * @param name        constraint name (e.g., "Separator mass balance")
+   * @param inletNames  names of inlet variables
    * @param outletNames names of outlet variables
    * @return this engine for chaining
    * @throws IllegalArgumentException if a variable name is not found
@@ -525,7 +519,7 @@ public class DataReconciliationEngine implements java.io.Serializable {
     for (String inlet : inletNames) {
       int idx = findVariableIndex(inlet);
       if (idx < 0) {
-        throw new IllegalArgumentException("Variable not found: " + inlet);
+	throw new IllegalArgumentException("Variable not found: " + inlet);
       }
       coefficients[idx] = 1.0;
     }
@@ -533,7 +527,7 @@ public class DataReconciliationEngine implements java.io.Serializable {
     for (String outlet : outletNames) {
       int idx = findVariableIndex(outlet);
       if (idx < 0) {
-        throw new IllegalArgumentException("Variable not found: " + outlet);
+	throw new IllegalArgumentException("Variable not found: " + outlet);
       }
       coefficients[idx] = -1.0;
     }
@@ -544,14 +538,13 @@ public class DataReconciliationEngine implements java.io.Serializable {
   /**
    * Convenience method to add a mass balance constraint using arrays of names.
    *
-   * @param name constraint name
-   * @param inletNames inlet variable names
+   * @param name        constraint name
+   * @param inletNames  inlet variable names
    * @param outletNames outlet variable names
    * @return this engine for chaining
    * @throws IllegalArgumentException if a variable name is not found
    */
-  public DataReconciliationEngine addMassBalanceConstraint(String name, String[] inletNames,
-      String[] outletNames) {
+  public DataReconciliationEngine addMassBalanceConstraint(String name, String[] inletNames, String[] outletNames) {
     return addMassBalanceConstraint(name, Arrays.asList(inletNames), Arrays.asList(outletNames));
   }
 
@@ -564,7 +557,7 @@ public class DataReconciliationEngine implements java.io.Serializable {
   private int findVariableIndex(String name) {
     for (int i = 0; i < variables.size(); i++) {
       if (variables.get(i).getName().equals(name)) {
-        return i;
+	return i;
       }
     }
     return -1;

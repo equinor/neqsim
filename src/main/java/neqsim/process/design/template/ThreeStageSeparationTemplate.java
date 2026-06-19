@@ -92,8 +92,7 @@ public class ThreeStageSeparationTemplate implements ProcessTemplate {
     process.add(hpSeparator);
 
     // Create HP to MP valve
-    ThrottlingValve hpToMpValve =
-        new ThrottlingValve("HP-MP Valve", hpSeparator.getLiquidOutStream());
+    ThrottlingValve hpToMpValve = new ThrottlingValve("HP-MP Valve", hpSeparator.getLiquidOutStream());
     hpToMpValve.setOutletPressure(mpPressure, "bara");
     process.add(hpToMpValve);
 
@@ -102,8 +101,7 @@ public class ThreeStageSeparationTemplate implements ProcessTemplate {
     process.add(mpSeparator);
 
     // Create MP to LP valve
-    ThrottlingValve mpToLpValve =
-        new ThrottlingValve("MP-LP Valve", mpSeparator.getLiquidOutStream());
+    ThrottlingValve mpToLpValve = new ThrottlingValve("MP-LP Valve", mpSeparator.getLiquidOutStream());
     mpToLpValve.setOutletPressure(lpPressure, "bara");
     process.add(mpToLpValve);
 
@@ -117,8 +115,8 @@ public class ThreeStageSeparationTemplate implements ProcessTemplate {
   /**
    * Gets stage pressure from basis or returns default.
    *
-   * @param basis the process basis
-   * @param stageNumber the stage number (1=HP, 2=MP, 3=LP)
+   * @param basis           the process basis
+   * @param stageNumber     the stage number (1=HP, 2=MP, 3=LP)
    * @param defaultPressure the default pressure if not specified
    * @return the stage pressure in bara
    */
@@ -143,8 +141,8 @@ public class ThreeStageSeparationTemplate implements ProcessTemplate {
       SystemInterface testFluid = fluid.clone();
       testFluid.setTemperature(DEFAULT_INLET_TEMP_K, "K");
       testFluid.setPressure(DEFAULT_HP_PRESSURE, "bara");
-      neqsim.thermodynamicoperations.ThermodynamicOperations ops =
-          new neqsim.thermodynamicoperations.ThermodynamicOperations(testFluid);
+      neqsim.thermodynamicoperations.ThermodynamicOperations ops = new neqsim.thermodynamicoperations.ThermodynamicOperations(
+	  testFluid);
       ops.TPflash();
 
       // Check if we have both gas and liquid phases
@@ -160,17 +158,16 @@ public class ThreeStageSeparationTemplate implements ProcessTemplate {
   /** {@inheritDoc} */
   @Override
   public String[] getRequiredEquipmentTypes() {
-    return new String[] {"Separator", "ThrottlingValve"};
+    return new String[] { "Separator", "ThrottlingValve" };
   }
 
   /** {@inheritDoc} */
   @Override
   public String[] getExpectedOutputs() {
-    return new String[] {"HP Gas - Gas stream from HP separator",
-        "HP Liquid - Liquid stream from HP separator to MP valve",
-        "MP Gas - Gas stream from MP separator",
-        "MP Liquid - Liquid stream from MP separator to LP valve",
-        "LP Gas - Gas stream from LP separator", "LP Liquid - Stabilized oil from LP separator"};
+    return new String[] { "HP Gas - Gas stream from HP separator",
+	"HP Liquid - Liquid stream from HP separator to MP valve", "MP Gas - Gas stream from MP separator",
+	"MP Liquid - Liquid stream from MP separator to LP valve", "LP Gas - Gas stream from LP separator",
+	"LP Liquid - Stabilized oil from LP separator" };
   }
 
   /** {@inheritDoc} */
@@ -183,6 +180,6 @@ public class ThreeStageSeparationTemplate implements ProcessTemplate {
   @Override
   public String getDescription() {
     return "Standard three-stage oil/gas separation train with HP, MP, and LP separators. "
-        + "Suitable for oil stabilization and flash gas recovery.";
+	+ "Suitable for oil stabilization and flash gas recovery.";
   }
 }

@@ -13,26 +13,25 @@ import neqsim.process.util.report.Report;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * CombinedModelsTest is a test class for validating the combined process model which includes an
- * inlet model and a compressor process.
+ * CombinedModelsTest is a test class for validating the combined process model which includes an inlet model and a
+ * compressor process.
  *
  * <p>
- * The class contains methods to set up individual process systems and combine them into a single
- * process model. It also includes a test method to verify the behavior of the combined process
- * model.
+ * The class contains methods to set up individual process systems and combine them into a single process model. It also
+ * includes a test method to verify the behavior of the combined process model.
  *
  * <p>
  * Methods:
  * <ul>
- * <li>{@link #getinletModel()}: Sets up the inlet process model including a well stream and a
- * three-phase separator.</li>
- * <li>{@link #getCompressorProcess()}: Sets up the compressor process model including a gas feed
- * stream and a compressor.</li>
- * <li>{@link #getCombinedModel()}: Combines the inlet process model and the compressor process
- * model into a single process model.</li>
- * <li>{@link #testCombinedProcess()}: Tests the combined process model by configuring the
- * temperature and pressure for the well stream and the outlet pressure for the compressor, running
- * the process, and asserting the expected outlet temperature of the compressor.</li>
+ * <li>{@link #getinletModel()}: Sets up the inlet process model including a well stream and a three-phase
+ * separator.</li>
+ * <li>{@link #getCompressorProcess()}: Sets up the compressor process model including a gas feed stream and a
+ * compressor.</li>
+ * <li>{@link #getCombinedModel()}: Combines the inlet process model and the compressor process model into a single
+ * process model.</li>
+ * <li>{@link #testCombinedProcess()}: Tests the combined process model by configuring the temperature and pressure for
+ * the well stream and the outlet pressure for the compressor, running the process, and asserting the expected outlet
+ * temperature of the compressor.</li>
  * </ul>
  *
  * <p>
@@ -61,9 +60,8 @@ public class CombinedModelsTest {
     Stream wellStreamHP = new neqsim.process.equipment.stream.Stream("HP well stream", wellFluid);
     wellStreamHP.setFlowRate(10.0, "MSm3/day");
 
-    ThreePhaseSeparator firstStageSeparator =
-        new neqsim.process.equipment.separator.ThreePhaseSeparator("1st stage separator",
-            wellStreamHP);
+    ThreePhaseSeparator firstStageSeparator = new neqsim.process.equipment.separator.ThreePhaseSeparator(
+	"1st stage separator", wellStreamHP);
 
     ProcessSystem process1 = new ProcessSystem();
     process1.add(wellStreamHP);
@@ -73,8 +71,8 @@ public class CombinedModelsTest {
   }
 
   public ProcessSystem getCompressorProcess(StreamInterface gasFeedStream) {
-    neqsim.process.equipment.compressor.Compressor compressor1 =
-        new neqsim.process.equipment.compressor.Compressor("Compressor1", gasFeedStream);
+    neqsim.process.equipment.compressor.Compressor compressor1 = new neqsim.process.equipment.compressor.Compressor(
+	"Compressor1", gasFeedStream);
     compressor1.setPolytropicEfficiency(0.56);
     compressor1.setUsePolytropicCalc(true);
 
@@ -88,7 +86,7 @@ public class CombinedModelsTest {
   public ProcessModel getCombinedModel() {
     ProcessSystem inletProcess = getinletModel();
     ProcessSystem compressorProcess = getCompressorProcess(
-        ((ThreePhaseSeparator) inletProcess.getUnit("1st stage separator")).getGasOutStream());
+	((ThreePhaseSeparator) inletProcess.getUnit("1st stage separator")).getGasOutStream());
 
     ProcessModel combinedProcess = new ProcessModel();
     combinedProcess.add("feed process", inletProcess);
@@ -100,13 +98,11 @@ public class CombinedModelsTest {
   /**
    * Test method for the combined process model.
    *
-   * This test sets up a combined process model, configures the temperature and pressure for the "HP
-   * well stream" in the "feed process", and sets the outlet pressure for "Compressor1" in the
-   * "compressor process". The process is then run, and the test asserts that the outlet temperature
-   * of "Compressor1" is as expected.
+   * This test sets up a combined process model, configures the temperature and pressure for the "HP well stream" in the
+   * "feed process", and sets the outlet pressure for "Compressor1" in the "compressor process". The process is then
+   * run, and the test asserts that the outlet temperature of "Compressor1" is as expected.
    *
-   * The expected outlet temperature of "Compressor1" is 164.44139872 degrees Celsius with a
-   * tolerance of 0.1 degrees.
+   * The expected outlet temperature of "Compressor1" is 164.44139872 degrees Celsius with a tolerance of 0.1 degrees.
    */
   @Test
   public void testCombinedProcess() {
@@ -114,13 +110,10 @@ public class CombinedModelsTest {
     fullProcess.setRunStep(true);
 
     // Set fullProcess properties;
-    ((Stream) (fullProcess.get("feed process")).getUnit("HP well stream")).setTemperature(80.0,
-        "C");
-    ((Stream) (fullProcess.get("feed process")).getUnit("HP well stream")).setPressure(50.0,
-        "bara");
+    ((Stream) (fullProcess.get("feed process")).getUnit("HP well stream")).setTemperature(80.0, "C");
+    ((Stream) (fullProcess.get("feed process")).getUnit("HP well stream")).setPressure(50.0, "bara");
 
-    ((Compressor) (fullProcess.get("compressor process")).getUnit("Compressor1"))
-        .setOutletPressure(100.0, "bara");
+    ((Compressor) (fullProcess.get("compressor process")).getUnit("Compressor1")).setOutletPressure(100.0, "bara");
 
     try {
       fullProcess.run();
@@ -129,9 +122,9 @@ public class CombinedModelsTest {
     }
 
     Assertions.assertEquals(165.238244803687,
-        ((Compressor) fullProcess.get("compressor process").getUnit("Compressor1"))
-            .getOutletStream().getTemperature("C"),
-        0.1);
+	((Compressor) fullProcess.get("compressor process").getUnit("Compressor1")).getOutletStream()
+	    .getTemperature("C"),
+	0.1);
 
     Report reporter = new Report(fullProcess);
     Assertions.assertTrue(fullProcess.getReport_json().equals(reporter.generateJsonReport()));

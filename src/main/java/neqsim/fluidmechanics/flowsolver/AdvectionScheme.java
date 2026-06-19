@@ -4,9 +4,9 @@ package neqsim.fluidmechanics.flowsolver;
  * Advection schemes for compositional tracking in pipeline transient simulations.
  *
  * <p>
- * Different schemes offer trade-offs between accuracy, stability, and computational cost.
- * Higher-order schemes reduce numerical dispersion but may introduce oscillations near
- * discontinuities unless combined with flux limiters (TVD schemes).
+ * Different schemes offer trade-offs between accuracy, stability, and computational cost. Higher-order schemes reduce
+ * numerical dispersion but may introduce oscillations near discontinuities unless combined with flux limiters (TVD
+ * schemes).
  * </p>
  *
  * <h2>Numerical Dispersion</h2>
@@ -196,24 +196,24 @@ public enum AdvectionScheme {
    */
   public double getDispersionReductionFactor() {
     switch (this) {
-      case FIRST_ORDER_UPWIND:
-        return 1.0;
-      case SECOND_ORDER_UPWIND:
-        return 0.1; // ~10× reduction
-      case QUICK:
-        return 0.05; // ~20× reduction
-      case TVD_MINMOD:
-        return 0.3; // ~3× reduction (most diffusive TVD)
-      case TVD_VAN_LEER:
-        return 0.15; // ~7× reduction
-      case TVD_VAN_ALBADA:
-        return 0.2; // ~5× reduction
-      case TVD_SUPERBEE:
-        return 0.08; // ~12× reduction (least diffusive TVD)
-      case MUSCL_VAN_LEER:
-        return 0.15; // ~7× reduction
-      default:
-        return 1.0;
+    case FIRST_ORDER_UPWIND:
+      return 1.0;
+    case SECOND_ORDER_UPWIND:
+      return 0.1; // ~10× reduction
+    case QUICK:
+      return 0.05; // ~20× reduction
+    case TVD_MINMOD:
+      return 0.3; // ~3× reduction (most diffusive TVD)
+    case TVD_VAN_LEER:
+      return 0.15; // ~7× reduction
+    case TVD_VAN_ALBADA:
+      return 0.2; // ~5× reduction
+    case TVD_SUPERBEE:
+      return 0.08; // ~12× reduction (least diffusive TVD)
+    case MUSCL_VAN_LEER:
+      return 0.15; // ~7× reduction
+    default:
+      return 1.0;
     }
   }
 

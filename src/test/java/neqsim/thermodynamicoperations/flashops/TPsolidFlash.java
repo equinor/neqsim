@@ -16,8 +16,7 @@ class TPsolidFlash {
 
   @Test
   void testSolidFLash() {
-    neqsim.thermo.system.SystemPrEos testSystem =
-        new neqsim.thermo.system.SystemPrEos(283.15, 20.0);
+    neqsim.thermo.system.SystemPrEos testSystem = new neqsim.thermo.system.SystemPrEos(283.15, 20.0);
     testSystem.addComponent("CO2", 1.0);
     testSystem.addComponent("methane", 80.0);
     testSystem.addComponent("ethane", 5.0);
@@ -43,8 +42,7 @@ class TPsolidFlash {
 
   @Test
   void testSolidFLash2() {
-    neqsim.thermo.system.SystemPrEos testSystem =
-        new neqsim.thermo.system.SystemPrEos(283.15, 100.0);
+    neqsim.thermo.system.SystemPrEos testSystem = new neqsim.thermo.system.SystemPrEos(283.15, 100.0);
     testSystem.addComponent("nitrogen", 1.75);
     testSystem.addComponent("CO2", 0.23);
     testSystem.addComponent("methane", 93.84);

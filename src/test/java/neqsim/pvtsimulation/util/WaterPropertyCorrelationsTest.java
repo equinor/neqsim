@@ -69,8 +69,7 @@ class WaterPropertyCorrelationsTest {
 
   @Test
   void testWaterCompressibilityReasonableRange() {
-    double cw =
-        WaterPropertyCorrelations.waterCompressibilityMcCain(TEMP_K, PRESS_BARA, SALINITY_PPM);
+    double cw = WaterPropertyCorrelations.waterCompressibilityMcCain(TEMP_K, PRESS_BARA, SALINITY_PPM);
     // Water compressibility is small, ~3-5e-5 1/psia => ~4-7e-4 1/bara
     assertTrue(cw > 0.0 && cw < 0.01, "Water compressibility should be small positive, got " + cw);
   }
@@ -101,17 +100,16 @@ class WaterPropertyCorrelationsTest {
 
   @Test
   void testSolutionGasWaterRatioPositive() {
-    double rsw =
-        WaterPropertyCorrelations.solutionGasWaterRatioCulberson(TEMP_K, PRESS_BARA, SALINITY_PPM);
+    double rsw = WaterPropertyCorrelations.solutionGasWaterRatioCulberson(TEMP_K, PRESS_BARA, SALINITY_PPM);
     assertTrue(rsw > 0, "Rsw should be positive at reservoir conditions, got " + rsw);
   }
 
   @Test
   void testSolutionGasWaterRatioIncreasesWithPressure() {
     double rsw1 = WaterPropertyCorrelations.solutionGasWaterRatioCulberson(TEMP_K, 34.47, 0.0); // ~500
-                                                                                                // psia
+												// psia
     double rsw2 = WaterPropertyCorrelations.solutionGasWaterRatioCulberson(TEMP_K, PRESS_BARA, 0.0); // ~3000
-                                                                                                     // psia
+												     // psia
     assertTrue(rsw2 > rsw1, "Rsw should increase with pressure");
   }
 
@@ -135,8 +133,7 @@ class WaterPropertyCorrelationsTest {
 
   @Test
   void testWaterPropertiesSummaryContainsAllKeys() {
-    Map<String, Double> summary =
-        WaterPropertyCorrelations.waterPropertiesSummary(TEMP_K, PRESS_BARA, SALINITY_PPM);
+    Map<String, Double> summary = WaterPropertyCorrelations.waterPropertiesSummary(TEMP_K, PRESS_BARA, SALINITY_PPM);
 
     assertTrue(summary.containsKey("temperature_K"));
     assertTrue(summary.containsKey("pressure_bara"));

@@ -38,7 +38,7 @@ public class ProcessValidatorTest {
     validator.validate();
 
     assertTrue(validator.isValid(),
-        "A well-configured process should pass validation. Errors: " + validator.getErrorCount());
+	"A well-configured process should pass validation. Errors: " + validator.getErrorCount());
   }
 
   @Test

@@ -22,16 +22,16 @@ import org.apache.logging.log4j.Logger;
  * Formal NLP and multi-objective optimizer for pipeline network production allocation.
  *
  * <p>
- * Replaces the gradient-finite-difference approach in {@link LoopedPipeNetwork} with mathematically
- * rigorous optimization using Apache Commons Math:
+ * Replaces the gradient-finite-difference approach in {@link LoopedPipeNetwork} with mathematically rigorous
+ * optimization using Apache Commons Math:
  * </p>
  * <ul>
- * <li><b>BOBYQA</b>: Bound Optimization BY Quadratic Approximation — derivative-free trust-region
- * method. Best for smooth objectives with 2–20 decision variables.</li>
- * <li><b>CMA-ES</b>: Covariance Matrix Adaptation Evolution Strategy — global optimizer for
- * non-convex, noisy, or multi-modal landscapes. Robust for 5–50 variables.</li>
- * <li><b>Multi-objective</b>: Weighted-sum scalarization with Pareto front exploration via
- * systematic weight sweep.</li>
+ * <li><b>BOBYQA</b>: Bound Optimization BY Quadratic Approximation — derivative-free trust-region method. Best for
+ * smooth objectives with 2–20 decision variables.</li>
+ * <li><b>CMA-ES</b>: Covariance Matrix Adaptation Evolution Strategy — global optimizer for non-convex, noisy, or
+ * multi-modal landscapes. Robust for 5–50 variables.</li>
+ * <li><b>Multi-objective</b>: Weighted-sum scalarization with Pareto front exploration via systematic weight
+ * sweep.</li>
  * </ul>
  *
  * @author Even Solbraa
@@ -47,16 +47,16 @@ public class NetworkOptimizer {
    */
   public enum Algorithm {
     /**
-     * BOBYQA (Bound Optimization BY Quadratic Approximation). Derivative-free, trust-region method
-     * by M.J.D. Powell. Best for smooth objectives with box constraints and 2–20 variables. Builds
-     * a local quadratic model and iteratively improves it.
+     * BOBYQA (Bound Optimization BY Quadratic Approximation). Derivative-free, trust-region method by M.J.D. Powell.
+     * Best for smooth objectives with box constraints and 2–20 variables. Builds a local quadratic model and
+     * iteratively improves it.
      */
     BOBYQA,
 
     /**
-     * CMA-ES (Covariance Matrix Adaptation Evolution Strategy). Population-based global optimizer
-     * by N. Hansen. Robust for non-convex, noisy, or multi-modal objectives. Uses 5–50 variables
-     * effectively but requires more function evaluations than BOBYQA.
+     * CMA-ES (Covariance Matrix Adaptation Evolution Strategy). Population-based global optimizer by N. Hansen. Robust
+     * for non-convex, noisy, or multi-modal objectives. Uses 5–50 variables effectively but requires more function
+     * evaluations than BOBYQA.
      */
     CMAES
   }
@@ -228,8 +228,8 @@ public class NetworkOptimizer {
    * Run single-objective optimization of choke openings.
    *
    * <p>
-   * Discovers all choke elements, constructs bounds, and runs the selected algorithm (BOBYQA or
-   * CMA-ES) to optimize the specified objective.
+   * Discovers all choke elements, constructs bounds, and runs the selected algorithm (BOBYQA or CMA-ES) to optimize the
+   * specified objective.
    * </p>
    *
    * @return optimization result with optimal choke openings, objective value, and diagnostics
@@ -262,15 +262,15 @@ public class NetworkOptimizer {
     int evaluationCount;
 
     switch (algorithm) {
-      case CMAES:
-        result = runCMAES(x0);
-        evaluationCount = maxEvaluations; // CMA-ES doesn't expose exact count easily
-        break;
-      case BOBYQA:
-      default:
-        result = runBOBYQA(x0);
-        evaluationCount = maxEvaluations;
-        break;
+    case CMAES:
+      result = runCMAES(x0);
+      evaluationCount = maxEvaluations; // CMA-ES doesn't expose exact count easily
+      break;
+    case BOBYQA:
+    default:
+      result = runBOBYQA(x0);
+      evaluationCount = maxEvaluations;
+      break;
     }
 
     // Apply optimal solution
@@ -295,15 +295,14 @@ public class NetworkOptimizer {
     for (String name : chokeNames) {
       LoopedPipeNetwork.NetworkPipe pipe = network.getPipe(name);
       double rate = Math.abs(pipe.getFlowRate()) * 3600.0; // kg/hr
-      lastResult.wellResults.put(name,
-          new double[] {rate, pipe.getChokeOpening(), pipe.getHeadLoss() / 1e5});
+      lastResult.wellResults.put(name, new double[] { rate, pipe.getChokeOpening(), pipe.getHeadLoss() / 1e5 });
     }
 
     double totalProd = network.getTotalSinkFlow() * 3600.0;
     lastResult.totalProductionKgHr = totalProd;
 
     logger.info(String.format("Optimization complete: obj=%.4f, production=%.0f kg/hr, time=%d ms",
-        lastResult.objectiveValue, totalProd, lastResult.elapsedMs));
+	lastResult.objectiveValue, totalProd, lastResult.elapsedMs));
 
     return lastResult;
   }
@@ -320,8 +319,7 @@ public class NetworkOptimizer {
    * </pre>
    *
    * <p>
-   * Returns a list of Pareto-optimal solutions, each with its production, power, and choke
-   * settings.
+   * Returns a list of Pareto-optimal solutions, each with its production, power, and choke settings.
    * </p>
    *
    * @return list of Pareto-optimal results ordered by increasing production weight
@@ -351,50 +349,50 @@ public class NetworkOptimizer {
       // Create weighted objective function
       final double weight = w;
       ObjectiveFunction objFunc = new ObjectiveFunction(x -> {
-        try {
-          applyChokeOpenings(x);
-          network.run();
+	try {
+	  applyChokeOpenings(x);
+	  network.run();
 
-          double production = network.getTotalSinkFlow() * 3600.0; // kg/hr
-          double power = getTotalCompressorPower(); // kW
+	  double production = network.getTotalSinkFlow() * 3600.0; // kg/hr
+	  double power = getTotalCompressorPower(); // kW
 
-          // Normalize: production in thousands of kg/hr, power in MW
-          double normProd = production / 1000.0;
-          double normPower = power / 1000.0;
+	  // Normalize: production in thousands of kg/hr, power in MW
+	  double normProd = production / 1000.0;
+	  double normPower = power / 1000.0;
 
-          double penalty = computePenalty();
-          double objective = weight * normProd - (1.0 - weight) * normPower - penalty;
-          if (Double.isNaN(objective) || Double.isInfinite(objective)) {
-            return 1e12;
-          }
-          return -objective; // Minimize negative of objective
-        } catch (Exception ex) {
-          logger.debug("Multi-objective evaluation failed: " + ex.getMessage());
-          return 1e12;
-        }
+	  double penalty = computePenalty();
+	  double objective = weight * normProd - (1.0 - weight) * normPower - penalty;
+	  if (Double.isNaN(objective) || Double.isInfinite(objective)) {
+	    return 1e12;
+	  }
+	  return -objective; // Minimize negative of objective
+	} catch (Exception ex) {
+	  logger.debug("Multi-objective evaluation failed: " + ex.getMessage());
+	  return 1e12;
+	}
       });
 
       // Use current position as start (warm-start from previous Pareto point)
       double[] x0;
       if (p == 0 || paretoFront.isEmpty()) {
-        x0 = originalOpenings.clone();
+	x0 = originalOpenings.clone();
       } else {
-        x0 = paretoFront.get(paretoFront.size() - 1).chokeOpenings.clone();
+	x0 = paretoFront.get(paretoFront.size() - 1).chokeOpenings.clone();
       }
 
       PointValuePair result;
       try {
-        int interpPts = Math.min(2 * n + 1, (n + 1) * (n + 2) / 2);
-        interpPts = Math.max(interpPts, n + 2);
-        double trustRadius = 10.0;
-        double stopRadius = 0.01;
-        BOBYQAOptimizer optimizer = new BOBYQAOptimizer(interpPts, trustRadius, stopRadius);
-        int evalBudget = Math.max(maxEvaluations / paretoPoints + 50, 100);
-        result = optimizer.optimize(new MaxEval(evalBudget), objFunc, GoalType.MINIMIZE,
-            new InitialGuess(x0), new SimpleBounds(lowerBounds, upperBounds));
+	int interpPts = Math.min(2 * n + 1, (n + 1) * (n + 2) / 2);
+	interpPts = Math.max(interpPts, n + 2);
+	double trustRadius = 10.0;
+	double stopRadius = 0.01;
+	BOBYQAOptimizer optimizer = new BOBYQAOptimizer(interpPts, trustRadius, stopRadius);
+	int evalBudget = Math.max(maxEvaluations / paretoPoints + 50, 100);
+	result = optimizer.optimize(new MaxEval(evalBudget), objFunc, GoalType.MINIMIZE, new InitialGuess(x0),
+	    new SimpleBounds(lowerBounds, upperBounds));
       } catch (Exception e) {
-        logger.warn("Pareto point w=" + w + " failed: " + e.getMessage());
-        continue;
+	logger.warn("Pareto point w=" + w + " failed: " + e.getMessage());
+	continue;
       }
 
       // Apply and capture result
@@ -421,8 +419,7 @@ public class NetworkOptimizer {
     network.run();
 
     long elapsed = System.currentTimeMillis() - startTime;
-    logger.info("Multi-objective optimization: " + paretoFront.size() + " Pareto points in "
-        + elapsed + " ms");
+    logger.info("Multi-objective optimization: " + paretoFront.size() + " Pareto points in " + elapsed + " ms");
 
     return paretoFront;
   }
@@ -444,31 +441,31 @@ public class NetworkOptimizer {
 
     ObjectiveFunction objFunc = new ObjectiveFunction(x -> {
       try {
-        applyChokeOpenings(x);
-        network.run();
-        double obj = evaluateObjective();
-        if (Double.isNaN(obj) || Double.isInfinite(obj)) {
-          return 1e12;
-        }
-        return -obj; // BOBYQA minimizes; we want to maximize
+	applyChokeOpenings(x);
+	network.run();
+	double obj = evaluateObjective();
+	if (Double.isNaN(obj) || Double.isInfinite(obj)) {
+	  return 1e12;
+	}
+	return -obj; // BOBYQA minimizes; we want to maximize
       } catch (Exception ex) {
-        logger.debug("Objective evaluation failed: " + ex.getMessage());
-        return 1e12; // Large penalty for failed evaluations
+	logger.debug("Objective evaluation failed: " + ex.getMessage());
+	return 1e12; // Large penalty for failed evaluations
       }
     });
 
     try {
-      return optimizer.optimize(new MaxEval(maxEvaluations), objFunc, GoalType.MINIMIZE,
-          new InitialGuess(x0), new SimpleBounds(lowerBounds, upperBounds));
+      return optimizer.optimize(new MaxEval(maxEvaluations), objFunc, GoalType.MINIMIZE, new InitialGuess(x0),
+	  new SimpleBounds(lowerBounds, upperBounds));
     } catch (Exception e) {
       logger.warn("BOBYQA optimization exception: " + e.getMessage());
       // Return initial point if optimization fails
       try {
-        applyChokeOpenings(x0);
-        network.run();
-        return new PointValuePair(x0, -evaluateObjective());
+	applyChokeOpenings(x0);
+	network.run();
+	return new PointValuePair(x0, -evaluateObjective());
       } catch (Exception ex2) {
-        return new PointValuePair(x0, 1e12);
+	return new PointValuePair(x0, 1e12);
       }
     }
   }
@@ -485,36 +482,36 @@ public class NetworkOptimizer {
     Arrays.fill(sigma, 10.0); // Initial step size: 10% opening
 
     int populationSize = 4 + (int) (3.0 * Math.log(n));
-    CMAESOptimizer optimizer =
-        new CMAESOptimizer(maxEvaluations, 1e-6, true, 0, 10, new MersenneTwister(42), false, null);
+    CMAESOptimizer optimizer = new CMAESOptimizer(maxEvaluations, 1e-6, true, 0, 10, new MersenneTwister(42), false,
+	null);
 
     ObjectiveFunction objFunc = new ObjectiveFunction(x -> {
       try {
-        applyChokeOpenings(x);
-        network.run();
-        double obj = evaluateObjective();
-        if (Double.isNaN(obj) || Double.isInfinite(obj)) {
-          return 1e12;
-        }
-        return -obj; // CMA-ES minimizes
+	applyChokeOpenings(x);
+	network.run();
+	double obj = evaluateObjective();
+	if (Double.isNaN(obj) || Double.isInfinite(obj)) {
+	  return 1e12;
+	}
+	return -obj; // CMA-ES minimizes
       } catch (Exception ex) {
-        logger.debug("Objective evaluation failed: " + ex.getMessage());
-        return 1e12;
+	logger.debug("Objective evaluation failed: " + ex.getMessage());
+	return 1e12;
       }
     });
 
     try {
-      return optimizer.optimize(new MaxEval(maxEvaluations), objFunc, GoalType.MINIMIZE,
-          new InitialGuess(x0), new SimpleBounds(lowerBounds, upperBounds),
-          new CMAESOptimizer.Sigma(sigma), new CMAESOptimizer.PopulationSize(populationSize));
+      return optimizer.optimize(new MaxEval(maxEvaluations), objFunc, GoalType.MINIMIZE, new InitialGuess(x0),
+	  new SimpleBounds(lowerBounds, upperBounds), new CMAESOptimizer.Sigma(sigma),
+	  new CMAESOptimizer.PopulationSize(populationSize));
     } catch (Exception e) {
       logger.warn("CMA-ES optimization exception: " + e.getMessage());
       try {
-        applyChokeOpenings(x0);
-        network.run();
-        return new PointValuePair(x0, -evaluateObjective());
+	applyChokeOpenings(x0);
+	network.run();
+	return new PointValuePair(x0, -evaluateObjective());
       } catch (Exception ex2) {
-        return new PointValuePair(x0, 1e12);
+	return new PointValuePair(x0, 1e12);
       }
     }
   }
@@ -529,32 +526,32 @@ public class NetworkOptimizer {
     double penalty = computePenalty();
 
     switch (objectiveType) {
-      case MAX_REVENUE:
-        double revenue = 0.0;
-        Map<String, double[]> alloc = network.getWellAllocationResults();
-        if (alloc != null && !alloc.isEmpty()) {
-          for (double[] vals : alloc.values()) {
-            revenue += vals[1]; // revenue column
-          }
-        } else {
-          revenue = production; // Fallback: use mass flow
-        }
-        return revenue - penalty;
+    case MAX_REVENUE:
+      double revenue = 0.0;
+      Map<String, double[]> alloc = network.getWellAllocationResults();
+      if (alloc != null && !alloc.isEmpty()) {
+	for (double[] vals : alloc.values()) {
+	  revenue += vals[1]; // revenue column
+	}
+      } else {
+	revenue = production; // Fallback: use mass flow
+      }
+      return revenue - penalty;
 
-      case MIN_COMPRESSOR_POWER:
-        double power = getTotalCompressorPower();
-        return -power - penalty; // Negate power (minimizing)
+    case MIN_COMPRESSOR_POWER:
+      double power = getTotalCompressorPower();
+      return -power - penalty; // Negate power (minimizing)
 
-      case MAX_SPECIFIC_PRODUCTION:
-        double totalPower = getTotalCompressorPower();
-        if (totalPower < 1.0) {
-          totalPower = 1.0; // Avoid division by zero
-        }
-        return (production / totalPower) - penalty;
+    case MAX_SPECIFIC_PRODUCTION:
+      double totalPower = getTotalCompressorPower();
+      if (totalPower < 1.0) {
+	totalPower = 1.0; // Avoid division by zero
+      }
+      return (production / totalPower) - penalty;
 
-      case MAX_PRODUCTION:
-      default:
-        return production - penalty;
+    case MAX_PRODUCTION:
+    default:
+      return production - penalty;
     }
   }
 
@@ -579,9 +576,8 @@ public class NetworkOptimizer {
     double total = 0.0;
     for (String pipeName : network.getPipeNames()) {
       LoopedPipeNetwork.NetworkPipe pipe = network.getPipe(pipeName);
-      if (pipe != null
-          && pipe.getElementType() == LoopedPipeNetwork.NetworkElementType.COMPRESSOR) {
-        total += pipe.getCompressorPower();
+      if (pipe != null && pipe.getElementType() == LoopedPipeNetwork.NetworkElementType.COMPRESSOR) {
+	total += pipe.getCompressorPower();
       }
     }
     return total;
@@ -595,7 +591,7 @@ public class NetworkOptimizer {
     for (String pipeName : network.getPipeNames()) {
       LoopedPipeNetwork.NetworkPipe pipe = network.getPipe(pipeName);
       if (pipe != null && pipe.getElementType() == LoopedPipeNetwork.NetworkElementType.CHOKE) {
-        chokeNames.add(pipeName);
+	chokeNames.add(pipeName);
       }
     }
     int n = chokeNames.size();
@@ -614,8 +610,8 @@ public class NetworkOptimizer {
     for (int i = 0; i < chokeNames.size(); i++) {
       LoopedPipeNetwork.NetworkPipe pipe = network.getPipe(chokeNames.get(i));
       if (pipe != null) {
-        double clipped = Math.max(lowerBounds[i], Math.min(upperBounds[i], openings[i]));
-        pipe.setChokeOpening(clipped);
+	double clipped = Math.max(lowerBounds[i], Math.min(upperBounds[i], openings[i]));
+	pipe.setChokeOpening(clipped);
       }
     }
   }
@@ -623,7 +619,7 @@ public class NetworkOptimizer {
   /**
    * Set custom bounds for a specific choke element.
    *
-   * @param chokeName name of the choke element
+   * @param chokeName  name of the choke element
    * @param minOpening minimum opening in % (default 1)
    * @param maxOpening maximum opening in % (default 100)
    */
@@ -697,14 +693,14 @@ public class NetworkOptimizer {
       sb.append(String.format("Objective value: %.4f%n", objectiveValue));
       sb.append(String.format("Total production: %.0f kg/hr%n", totalProductionKgHr));
       if (totalCompressorPowerKW > 0) {
-        sb.append(String.format("Compressor power: %.1f kW%n", totalCompressorPowerKW));
+	sb.append(String.format("Compressor power: %.1f kW%n", totalCompressorPowerKW));
       }
       sb.append(String.format("Time: %d ms, Evaluations: %d%n", elapsedMs, functionEvaluations));
       if (chokeNames != null && chokeOpenings != null) {
-        sb.append("Choke openings:\n");
-        for (int i = 0; i < chokeNames.size(); i++) {
-          sb.append(String.format("  %s: %.1f%%%n", chokeNames.get(i), chokeOpenings[i]));
-        }
+	sb.append("Choke openings:\n");
+	for (int i = 0; i < chokeNames.size(); i++) {
+	  sb.append(String.format("  %s: %.1f%%%n", chokeNames.get(i), chokeOpenings[i]));
+	}
       }
       return sb.toString();
     }

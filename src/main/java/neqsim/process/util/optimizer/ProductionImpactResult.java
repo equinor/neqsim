@@ -13,8 +13,7 @@ import neqsim.process.equipment.failure.EquipmentFailureMode;
  * Result of a production impact analysis for equipment failure scenarios.
  *
  * <p>
- * This class contains comprehensive information about the impact of equipment failure on
- * production, including:
+ * This class contains comprehensive information about the impact of equipment failure on production, including:
  * </p>
  * <ul>
  * <li>Baseline (normal) production rates</li>
@@ -132,7 +131,7 @@ public class ProductionImpactResult implements Serializable {
    * Creates a production impact result for a specific equipment failure.
    *
    * @param equipmentName name of the failed equipment
-   * @param failureMode the failure mode
+   * @param failureMode   the failure mode
    */
   public ProductionImpactResult(String equipmentName, EquipmentFailureMode failureMode) {
     this();
@@ -188,15 +187,14 @@ public class ProductionImpactResult implements Serializable {
       recommendationReason = "No production possible with failed equipment";
     } else if (percentLoss < 20.0 && lossVsFullShutdown > 0) {
       recommendedAction = RecommendedAction.REDUCE_THROUGHPUT;
-      recommendationReason = String
-          .format("Degraded operation produces %.1f kg/hr more than shutdown", lossVsFullShutdown);
+      recommendationReason = String.format("Degraded operation produces %.1f kg/hr more than shutdown",
+	  lossVsFullShutdown);
     } else if (percentLoss >= 50.0 && lossVsFullShutdown < absoluteLoss * 0.1) {
       recommendedAction = RecommendedAction.FULL_SHUTDOWN;
       recommendationReason = "Large production loss with marginal benefit vs shutdown";
     } else {
       recommendedAction = RecommendedAction.REDUCE_THROUGHPUT;
-      recommendationReason =
-          String.format("Reduce throughput to %.1f%% of normal", 100.0 - percentLoss);
+      recommendationReason = String.format("Reduce throughput to %.1f%% of normal", 100.0 - percentLoss);
     }
   }
 
@@ -503,7 +501,7 @@ public class ProductionImpactResult implements Serializable {
    * Adds an optimized setpoint.
    *
    * @param equipmentName the equipment name
-   * @param setpoint the recommended setpoint
+   * @param setpoint      the recommended setpoint
    */
   public void addOptimizedSetpoint(String equipmentName, double setpoint) {
     this.optimizedSetpoints.put(equipmentName, setpoint);
@@ -726,16 +724,15 @@ public class ProductionImpactResult implements Serializable {
    * @return JSON representation
    */
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(toMap());
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(toMap());
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("=== Production Impact Analysis ===\n");
-    sb.append(String.format("Equipment: %s (%s)\n", equipmentName,
-        failureMode != null ? failureMode.getName() : "Unknown"));
+    sb.append(
+	String.format("Equipment: %s (%s)\n", equipmentName, failureMode != null ? failureMode.getName() : "Unknown"));
     sb.append(String.format("Baseline Production: %.1f kg/hr\n", baselineProductionRate));
     sb.append(String.format("Production with Failure: %.1f kg/hr\n", productionWithFailure));
     sb.append(String.format("Production Loss: %.1f kg/hr (%.1f%%)\n", absoluteLoss, percentLoss));
@@ -743,8 +740,7 @@ public class ProductionImpactResult implements Serializable {
     sb.append(String.format("Recommended Action: %s\n", recommendedAction));
     sb.append(String.format("Reason: %s\n", recommendationReason));
     if (newBottleneck != null) {
-      sb.append(String.format("New Bottleneck: %s (%.1f%% utilized)\n", newBottleneck,
-          newBottleneckUtilization * 100));
+      sb.append(String.format("New Bottleneck: %s (%.1f%% utilized)\n", newBottleneck, newBottleneckUtilization * 100));
     }
     return sb.toString();
   }

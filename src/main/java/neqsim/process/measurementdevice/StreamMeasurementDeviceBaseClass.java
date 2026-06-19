@@ -19,8 +19,8 @@ public abstract class StreamMeasurementDeviceBaseClass extends MeasurementDevice
   /**
    * Constructor for MeasurementDeviceBaseClass.
    *
-   * @param name Name of the object
-   * @param unit Engineering unit of the measurement
+   * @param name   Name of the object
+   * @param unit   Engineering unit of the measurement
    * @param stream Streaminterface object to measure from
    */
   public StreamMeasurementDeviceBaseClass(String name, String unit, StreamInterface stream) {

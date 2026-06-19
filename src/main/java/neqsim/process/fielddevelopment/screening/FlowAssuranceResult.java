@@ -4,22 +4,20 @@ package neqsim.process.fielddevelopment.screening;
  * Result classification for flow assurance screening.
  *
  * <p>
- * Represents a three-tier envelope classification for flow assurance parameters such as hydrate
- * risk, wax deposition, and corrosion.
+ * Represents a three-tier envelope classification for flow assurance parameters such as hydrate risk, wax deposition,
+ * and corrosion.
  *
  * @author ESOL
  * @version 1.0
  */
 public enum FlowAssuranceResult {
   /**
-   * Operating conditions are clearly within safe envelope. No flow assurance interventions
-   * required.
+   * Operating conditions are clearly within safe envelope. No flow assurance interventions required.
    */
   PASS("Pass", "Within safe operating envelope"),
 
   /**
-   * Operating conditions are near envelope boundaries. Flow assurance mitigation may be required
-   * under some scenarios.
+   * Operating conditions are near envelope boundaries. Flow assurance mitigation may be required under some scenarios.
    */
   MARGINAL("Marginal", "Near envelope boundary - mitigation may be required"),
 

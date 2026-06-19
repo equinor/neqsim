@@ -7,9 +7,9 @@ import java.util.function.DoubleSupplier;
  * Represents a capacity constraint for process equipment.
  *
  * <p>
- * A capacity constraint defines a limit on equipment operation, such as maximum speed, flow rate,
- * or load factor. It tracks the current value, design value, and maximum allowable value, and
- * calculates utilization as a percentage of design capacity.
+ * A capacity constraint defines a limit on equipment operation, such as maximum speed, flow rate, or load factor. It
+ * tracks the current value, design value, and maximum allowable value, and calculates utilization as a percentage of
+ * design capacity.
  * </p>
  *
  * <p>
@@ -30,9 +30,9 @@ public class CapacityConstraint implements Serializable {
   private static final long serialVersionUID = 1000L;
 
   /**
-   * Maximum utilization value returned by {@link #getUtilization()}. Caps extreme values (e.g.,
-   * when design value is near zero or current value is far beyond design) to prevent unbounded
-   * utilization percentages that confuse optimization and reporting.
+   * Maximum utilization value returned by {@link #getUtilization()}. Caps extreme values (e.g., when design value is
+   * near zero or current value is far beyond design) to prevent unbounded utilization percentages that confuse
+   * optimization and reporting.
    */
   private static final double MAX_UTILIZATION = 9.99;
 
@@ -41,14 +41,14 @@ public class CapacityConstraint implements Serializable {
    */
   public enum ConstraintType {
     /**
-     * Hard constraint that cannot be exceeded (e.g., max speed, surge limit). Exceeding this
-     * constraint causes equipment failure or trip.
+     * Hard constraint that cannot be exceeded (e.g., max speed, surge limit). Exceeding this constraint causes
+     * equipment failure or trip.
      */
     HARD,
 
     /**
-     * Soft constraint that can be temporarily exceeded (e.g., design flow rate). Exceeding this
-     * constraint may reduce equipment life or efficiency.
+     * Soft constraint that can be temporarily exceeded (e.g., design flow rate). Exceeding this constraint may reduce
+     * equipment life or efficiency.
      */
     SOFT,
 
@@ -72,26 +72,26 @@ public class CapacityConstraint implements Serializable {
    */
   public enum ConstraintSeverity {
     /**
-     * Critical violation - exceeding causes equipment damage or safety hazard. Examples: surge,
-     * overspeed, over-temperature. Optimizer must stop immediately when this is violated.
+     * Critical violation - exceeding causes equipment damage or safety hazard. Examples: surge, overspeed,
+     * over-temperature. Optimizer must stop immediately when this is violated.
      */
     CRITICAL,
 
     /**
-     * Hard violation - exceeding means solution is infeasible. Examples: design capacity, maximum
-     * power. Optimizer marks solution as infeasible.
+     * Hard violation - exceeding means solution is infeasible. Examples: design capacity, maximum power. Optimizer
+     * marks solution as infeasible.
      */
     HARD,
 
     /**
-     * Soft violation - exceeding is undesirable but acceptable. Examples: efficiency targets,
-     * recommended operating range. Optimizer applies penalty to objective function.
+     * Soft violation - exceeding is undesirable but acceptable. Examples: efficiency targets, recommended operating
+     * range. Optimizer applies penalty to objective function.
      */
     SOFT,
 
     /**
-     * Advisory only - information for reporting. Examples: turndown ratio, design point deviation.
-     * No impact on optimization.
+     * Advisory only - information for reporting. Examples: turndown ratio, design point deviation. No impact on
+     * optimization.
      */
     ADVISORY
   }
@@ -124,9 +124,8 @@ public class CapacityConstraint implements Serializable {
   private double warningThreshold = 0.9;
 
   /**
-   * Supplier function to get current value from equipment. Marked transient because lambdas/method
-   * references are not serializable. After deserialization, this will be null and the cached
-   * currentValue will be used instead.
+   * Supplier function to get current value from equipment. Marked transient because lambdas/method references are not
+   * serializable. After deserialization, this will be null and the cached currentValue will be used instead.
    */
   private transient DoubleSupplier valueSupplier;
 
@@ -159,12 +158,11 @@ public class CapacityConstraint implements Serializable {
    * Marginal economic value (shadow price) of relaxing this constraint.
    *
    * <p>
-   * The shadow price is the incremental objective improvement obtained per unit of additional
-   * capacity when this constraint is binding — for example currency-per-day gained per extra unit
-   * of design rate, or per percentage point of utilisation headroom unlocked. It is zero by default
-   * and is populated by a debottlenecking study (see
-   * {@code neqsim.process.optimization.valuechain.DebottleneckingAdvisor}). A non-binding
-   * constraint has a shadow price of zero.
+   * The shadow price is the incremental objective improvement obtained per unit of additional capacity when this
+   * constraint is binding — for example currency-per-day gained per extra unit of design rate, or per percentage point
+   * of utilisation headroom unlocked. It is zero by default and is populated by a debottlenecking study (see
+   * {@code neqsim.process.optimization.valuechain.DebottleneckingAdvisor}). A non-binding constraint has a shadow price
+   * of zero.
    * </p>
    */
   private double shadowPrice = 0.0;
@@ -186,8 +184,8 @@ public class CapacityConstraint implements Serializable {
    * Creates a new capacity constraint with default type SOFT and empty unit.
    *
    * <p>
-   * This constructor is a convenience for building constraints where the unit and type can be set
-   * later using the fluent API.
+   * This constructor is a convenience for building constraints where the unit and type can be set later using the
+   * fluent API.
    * </p>
    *
    * @param name the name of the constraint
@@ -275,8 +273,8 @@ public class CapacityConstraint implements Serializable {
    * Checks if this is a critical violation that requires immediate action.
    *
    * <p>
-   * Critical violations indicate equipment damage or safety hazard. The optimizer should stop
-   * immediately when this returns true.
+   * Critical violations indicate equipment damage or safety hazard. The optimizer should stop immediately when this
+   * returns true.
    * </p>
    *
    * @return true if constraint is CRITICAL severity and violated
@@ -308,8 +306,8 @@ public class CapacityConstraint implements Serializable {
   }
 
   /**
-   * Sets the current value directly. Use this when you want to set the value manually rather than
-   * using a supplier function.
+   * Sets the current value directly. Use this when you want to set the value manually rather than using a supplier
+   * function.
    *
    * <p>
    * Note: If a value supplier is set, it will override this value when getCurrentValue() is called.
@@ -355,8 +353,8 @@ public class CapacityConstraint implements Serializable {
    * Gets the utilization as a fraction of design value.
    *
    * <p>
-   * For normal constraints (higher is worse), returns current/design. For minimum constraints
-   * (lower is worse), returns design/current.
+   * For normal constraints (higher is worse), returns current/design. For minimum constraints (lower is worse), returns
+   * design/current.
    * </p>
    *
    * @return utilization as fraction (1.0 = 100% of design)
@@ -366,7 +364,7 @@ public class CapacityConstraint implements Serializable {
     if (minValue > 0 && designValue == Double.MAX_VALUE) {
       // This is a minimum constraint (e.g., residence time)
       if (current <= 0) {
-        return MAX_UTILIZATION;
+	return MAX_UTILIZATION;
       }
       return Math.min(minValue / current, MAX_UTILIZATION);
     }
@@ -472,8 +470,8 @@ public class CapacityConstraint implements Serializable {
   }
 
   /**
-   * Gets the display design value for reporting purposes. For minimum constraints (where
-   * designValue is MAX_VALUE), this returns the minValue instead.
+   * Gets the display design value for reporting purposes. For minimum constraints (where designValue is MAX_VALUE),
+   * this returns the minValue instead.
    *
    * @return the design value for display purposes
    */
@@ -533,8 +531,8 @@ public class CapacityConstraint implements Serializable {
    * Checks if this constraint is enabled for capacity analysis.
    *
    * <p>
-   * Disabled constraints are excluded from bottleneck detection and optimization. They still track
-   * values but don't contribute to utilization summaries.
+   * Disabled constraints are excluded from bottleneck detection and optimization. They still track values but don't
+   * contribute to utilization summaries.
    * </p>
    *
    * @return true if the constraint is enabled
@@ -570,9 +568,9 @@ public class CapacityConstraint implements Serializable {
    * Gets the data source that provided the design value for this constraint.
    *
    * <p>
-   * The data source indicates where the design/limit value came from, helping operators and agents
-   * understand the basis of utilization calculations. Common values: "equipment",
-   * "designCapacities", "mechanicalDesign", "default", "not_set".
+   * The data source indicates where the design/limit value came from, helping operators and agents understand the basis
+   * of utilization calculations. Common values: "equipment", "designCapacities", "mechanicalDesign", "default",
+   * "not_set".
    * </p>
    *
    * @return the data source string
@@ -596,10 +594,10 @@ public class CapacityConstraint implements Serializable {
    * Gets the marginal economic value (shadow price) of relaxing this constraint.
    *
    * <p>
-   * Returns the incremental objective improvement obtainable per unit of additional capacity while
-   * this constraint is binding. The value is zero unless it has been populated by a debottlenecking
-   * study. See {@code neqsim.process.optimization.valuechain.DebottleneckingAdvisor} for the
-   * companion analysis that computes and sets this value.
+   * Returns the incremental objective improvement obtainable per unit of additional capacity while this constraint is
+   * binding. The value is zero unless it has been populated by a debottlenecking study. See
+   * {@code neqsim.process.optimization.valuechain.DebottleneckingAdvisor} for the companion analysis that computes and
+   * sets this value.
    * </p>
    *
    * @return the shadow price (objective units per unit of relaxed capacity); zero if not set

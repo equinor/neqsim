@@ -97,16 +97,11 @@ public class ModelMetadataTest {
 
   @Test
   void testLifecyclePhaseOrdering() {
-    assertTrue(ModelMetadata.LifecyclePhase.CONCEPT.ordinal() < ModelMetadata.LifecyclePhase.DESIGN
-        .ordinal());
-    assertTrue(ModelMetadata.LifecyclePhase.DESIGN
-        .ordinal() < ModelMetadata.LifecyclePhase.COMMISSIONING.ordinal());
-    assertTrue(ModelMetadata.LifecyclePhase.COMMISSIONING
-        .ordinal() < ModelMetadata.LifecyclePhase.OPERATION.ordinal());
-    assertTrue(ModelMetadata.LifecyclePhase.OPERATION
-        .ordinal() < ModelMetadata.LifecyclePhase.LATE_LIFE.ordinal());
-    assertTrue(ModelMetadata.LifecyclePhase.LATE_LIFE
-        .ordinal() < ModelMetadata.LifecyclePhase.ARCHIVED.ordinal());
+    assertTrue(ModelMetadata.LifecyclePhase.CONCEPT.ordinal() < ModelMetadata.LifecyclePhase.DESIGN.ordinal());
+    assertTrue(ModelMetadata.LifecyclePhase.DESIGN.ordinal() < ModelMetadata.LifecyclePhase.COMMISSIONING.ordinal());
+    assertTrue(ModelMetadata.LifecyclePhase.COMMISSIONING.ordinal() < ModelMetadata.LifecyclePhase.OPERATION.ordinal());
+    assertTrue(ModelMetadata.LifecyclePhase.OPERATION.ordinal() < ModelMetadata.LifecyclePhase.LATE_LIFE.ordinal());
+    assertTrue(ModelMetadata.LifecyclePhase.LATE_LIFE.ordinal() < ModelMetadata.LifecyclePhase.ARCHIVED.ordinal());
   }
 
   @Test

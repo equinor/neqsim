@@ -21,7 +21,7 @@ public class AmineFlash {
   private static final Logger logger = LogManager.getLogger(AmineFlash.class);
 
   /** Logger object for class. */
-  
+
   /**
    * <p>
    * main.
@@ -32,7 +32,7 @@ public class AmineFlash {
   @ExcludeFromJacocoGeneratedReport
   public static void main(String args[]) {
     SystemInterface testSystem = new SystemFurstElectrolyteEos(273.15 + 50,
-        ThermodynamicConstantsInterface.referencePressure);
+	ThermodynamicConstantsInterface.referencePressure);
     // SystemInterface testSystem = new SystemElectrolyteCPA(273.15+40,
     // ThermodynamicConstantsInterface.referencePressure);
     double molMDEA = 0.1;
@@ -58,8 +58,7 @@ public class AmineFlash {
     }
     double molprMDEA = (molMDEA / (1.0 + 0.30 * molMDEA));
     logger.info("mol % MDEA " + molprMDEA);
-    logger.info("molCO2/liter "
-        + loading * molprMDEA / testSystem.getPhase(1).getMolarMass() * density / 1e3);
+    logger.info("molCO2/liter " + loading * molprMDEA / testSystem.getPhase(1).getMolarMass() * density / 1e3);
     logger.info("pressure " + testSystem.getPressure());
     logger.info("pH " + testSystem.getPhase(1).getpH());
     logger.info("Henrys Constant CO2 " + testSystem.calcHenrysConstant("CO2"));

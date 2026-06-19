@@ -10,22 +10,20 @@ import com.google.gson.GsonBuilder;
  * Emulsion viscosity and phase inversion prediction for oil-water systems.
  *
  * <p>
- * Calculates effective viscosity of oil-water emulsions using industry-standard correlations, and
- * predicts the phase inversion point where a water-in-oil (W/O) emulsion transitions to an
- * oil-in-water (O/W) emulsion.
+ * Calculates effective viscosity of oil-water emulsions using industry-standard correlations, and predicts the phase
+ * inversion point where a water-in-oil (W/O) emulsion transitions to an oil-in-water (O/W) emulsion.
  * </p>
  *
  * <p>
  * Implemented models:
  * </p>
  * <ul>
- * <li><b>Einstein (1906)</b> - Dilute suspensions (water cut &lt; 2%): mu_eff = mu_c * (1 + 2.5 *
- * phi)</li>
- * <li><b>Taylor (1932)</b> - Dilute emulsions with internal circulation: mu_eff = mu_c * (1 + 2.5 *
- * phi * (mu_d + 0.4*mu_c) / (mu_d + mu_c))</li>
+ * <li><b>Einstein (1906)</b> - Dilute suspensions (water cut &lt; 2%): mu_eff = mu_c * (1 + 2.5 * phi)</li>
+ * <li><b>Taylor (1932)</b> - Dilute emulsions with internal circulation: mu_eff = mu_c * (1 + 2.5 * phi * (mu_d +
+ * 0.4*mu_c) / (mu_d + mu_c))</li>
  * <li><b>Brinkman (1952)</b> - Moderate concentrations: mu_eff = mu_c * (1 - phi)^(-2.5)</li>
- * <li><b>Pal-Rhodes (1989)</b> - Full range with maximum packing: mu_eff = mu_c * (1 -
- * phi/phi_max)^(-2.5 * phi_max)</li>
+ * <li><b>Pal-Rhodes (1989)</b> - Full range with maximum packing: mu_eff = mu_c * (1 - phi/phi_max)^(-2.5 *
+ * phi_max)</li>
  * <li><b>Woelflin (1942)</b> - Empirical for oilfield emulsions</li>
  * <li><b>Richardson (1950)</b> - Exponential model: mu_eff = mu_c * exp(k * phi)</li>
  * </ul>
@@ -92,14 +90,12 @@ public class EmulsionViscosityCalculator implements Serializable {
   private double maxPackingFraction = 0.74;
 
   /**
-   * Viscosity model to use: "einstein", "taylor", "brinkman", "pal_rhodes", "woelflin",
-   * "richardson".
+   * Viscosity model to use: "einstein", "taylor", "brinkman", "pal_rhodes", "woelflin", "richardson".
    */
   private String model = "pal_rhodes";
 
   /**
-   * Emulsion tightness factor (0.0 = loose, 1.0 = tight). Tight emulsions have smaller droplets and
-   * higher viscosity.
+   * Emulsion tightness factor (0.0 = loose, 1.0 = tight). Tight emulsions have smaller droplets and higher viscosity.
    */
   private double tightnessFactor = 0.5;
 
@@ -215,20 +211,20 @@ public class EmulsionViscosityCalculator implements Serializable {
     }
 
     switch (model.toLowerCase()) {
-      case "einstein":
-        return calculateEinstein(phi);
-      case "taylor":
-        return calculateTaylor(phi, muC, muD);
-      case "brinkman":
-        return calculateBrinkman(phi);
-      case "pal_rhodes":
-        return calculatePalRhodes(phi);
-      case "woelflin":
-        return calculateWoelflin(phi);
-      case "richardson":
-        return calculateRichardson(phi);
-      default:
-        return calculatePalRhodes(phi);
+    case "einstein":
+      return calculateEinstein(phi);
+    case "taylor":
+      return calculateTaylor(phi, muC, muD);
+    case "brinkman":
+      return calculateBrinkman(phi);
+    case "pal_rhodes":
+      return calculatePalRhodes(phi);
+    case "woelflin":
+      return calculateWoelflin(phi);
+    case "richardson":
+      return calculateRichardson(phi);
+    default:
+      return calculatePalRhodes(phi);
     }
   }
 
@@ -403,9 +399,8 @@ public class EmulsionViscosityCalculator implements Serializable {
    *
    * @param waterCutMin minimum water cut (volume fraction)
    * @param waterCutMax maximum water cut (volume fraction)
-   * @param steps number of data points
-   * @return a two-dimensional array where [i][0] is water cut and [i][1] is effective viscosity in
-   *         mPa.s
+   * @param steps       number of data points
+   * @return a two-dimensional array where [i][0] is water cut and [i][1] is effective viscosity in mPa.s
    */
   public double[][] calculateViscosityCurve(double waterCutMin, double waterCutMax, int steps) {
     double[][] curve = new double[steps][2];
@@ -550,8 +545,7 @@ public class EmulsionViscosityCalculator implements Serializable {
   /**
    * Sets the maximum packing fraction for the Pal-Rhodes model.
    *
-   * @param maxPackingFraction maximum packing fraction (0.5 to 0.95, default 0.74 for random close
-   *        packing)
+   * @param maxPackingFraction maximum packing fraction (0.5 to 0.95, default 0.74 for random close packing)
    */
   public void setMaxPackingFraction(double maxPackingFraction) {
     this.maxPackingFraction = maxPackingFraction;
@@ -560,8 +554,7 @@ public class EmulsionViscosityCalculator implements Serializable {
   /**
    * Sets the viscosity model.
    *
-   * @param model model name: "einstein", "taylor", "brinkman", "pal_rhodes", "woelflin",
-   *        "richardson"
+   * @param model model name: "einstein", "taylor", "brinkman", "pal_rhodes", "woelflin", "richardson"
    */
   public void setModel(String model) {
     this.model = model;
@@ -689,8 +682,7 @@ public class EmulsionViscosityCalculator implements Serializable {
    * @return a JSON string
    */
   public String toJson() {
-    Gson gson =
-        new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+    Gson gson = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
     return gson.toJson(toMap());
   }
 }

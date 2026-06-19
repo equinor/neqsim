@@ -6,9 +6,8 @@ import neqsim.process.equipment.stream.StreamInterface;
  * Rotary vacuum filter for bio-processing solid-liquid separation.
  *
  * <p>
- * A continuous vacuum filtration unit for separating solids from liquids. Commonly used in sugar
- * processing, starch recovery, and biomass dewatering. Lower energy consumption than centrifuges
- * but generally produces wetter cake.
+ * A continuous vacuum filtration unit for separating solids from liquids. Commonly used in sugar processing, starch
+ * recovery, and biomass dewatering. Lower energy consumption than centrifuges but generally produces wetter cake.
  * </p>
  *
  * <p>
@@ -52,7 +51,7 @@ public class RotaryVacuumFilter extends SolidsSeparator {
   /**
    * Constructor for RotaryVacuumFilter with inlet stream.
    *
-   * @param name name of the filter
+   * @param name        name of the filter
    * @param inletStream the feed stream
    */
   public RotaryVacuumFilter(String name, StreamInterface inletStream) {

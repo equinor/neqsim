@@ -37,7 +37,8 @@ public class MaterialRecommendation implements Serializable {
   /**
    * Creates an empty recommendation.
    */
-  public MaterialRecommendation() {}
+  public MaterialRecommendation() {
+  }
 
   /**
    * Sets the recommended material.
@@ -65,8 +66,7 @@ public class MaterialRecommendation implements Serializable {
    * @param recommendedCorrosionAllowanceMm corrosion allowance in millimetres
    * @return this recommendation for fluent construction
    */
-  public MaterialRecommendation setRecommendedCorrosionAllowanceMm(
-      double recommendedCorrosionAllowanceMm) {
+  public MaterialRecommendation setRecommendedCorrosionAllowanceMm(double recommendedCorrosionAllowanceMm) {
     this.recommendedCorrosionAllowanceMm = Math.max(0.0, recommendedCorrosionAllowanceMm);
     return this;
   }
@@ -98,8 +98,7 @@ public class MaterialRecommendation implements Serializable {
    * @return this recommendation for fluent construction
    */
   public MaterialRecommendation addAlternativeMaterial(String material) {
-    if (material != null && !material.trim().isEmpty()
-        && !alternativeMaterials.contains(material)) {
+    if (material != null && !material.trim().isEmpty() && !alternativeMaterials.contains(material)) {
       alternativeMaterials.add(material);
     }
     return this;

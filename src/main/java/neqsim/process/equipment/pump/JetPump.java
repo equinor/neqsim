@@ -9,26 +9,26 @@ import neqsim.process.equipment.stream.StreamInterface;
  * Hydraulic jet pump (eductor) artificial-lift model.
  *
  * <p>
- * A jet pump has no moving downhole parts: a high-pressure power fluid is accelerated through a
- * nozzle, entrains the produced (suction) fluid in a throat, and the combined stream recovers
- * pressure in a diffuser. This class implements the classic dimensionless performance relationship
- * (Cunningham / Gosline-O'Brien) used by PROSPER and Pipesim to size jet pumps.
+ * A jet pump has no moving downhole parts: a high-pressure power fluid is accelerated through a nozzle, entrains the
+ * produced (suction) fluid in a throat, and the combined stream recovers pressure in a diffuser. This class implements
+ * the classic dimensionless performance relationship (Cunningham / Gosline-O'Brien) used by PROSPER and Pipesim to size
+ * jet pumps.
  * </p>
  *
  * <p>
- * With area ratio R = A_nozzle / A_throat and operating flow ratio M = q_suction / q_nozzle, the
- * dimensionless head ratio H = (p_d - p_s) / (p_n - p_d) follows
+ * With area ratio R = A_nozzle / A_throat and operating flow ratio M = q_suction / q_nozzle, the dimensionless head
+ * ratio H = (p_d - p_s) / (p_n - p_d) follows
  * </p>
  *
  * <p>
- * H = [2R + (1-2R)(RM/(1-R))&sup2; - (1+K_td)R&sup2;(1+M)&sup2;] / [(1+K_n) - 2R -
- * (1-2R)(RM/(1-R))&sup2; + (1+K_td)R&sup2;(1+M)&sup2;]
+ * H = [2R + (1-2R)(RM/(1-R))&sup2; - (1+K_td)R&sup2;(1+M)&sup2;] / [(1+K_n) - 2R - (1-2R)(RM/(1-R))&sup2; +
+ * (1+K_td)R&sup2;(1+M)&sup2;]
  * </p>
  *
  * <p>
- * from which the discharge pressure p_d = (p_s + H&middot;p_n) / (1 + H) and the pump efficiency
- * &eta; = M&middot;H are obtained. The model treats the device as a pressure booster: in
- * {@link #run(UUID)} the inlet stream is boosted to the computed discharge pressure.
+ * from which the discharge pressure p_d = (p_s + H&middot;p_n) / (1 + H) and the pump efficiency &eta; = M&middot;H are
+ * obtained. The model treats the device as a pressure booster: in {@link #run(UUID)} the inlet stream is boosted to the
+ * computed discharge pressure.
  * </p>
  *
  * @author NeqSim
@@ -68,7 +68,7 @@ public class JetPump extends Pump {
   /**
    * Constructor for JetPump.
    *
-   * @param name name of jet pump
+   * @param name        name of jet pump
    * @param inletStream suction (produced fluid) inlet stream
    */
   public JetPump(String name, StreamInterface inletStream) {
@@ -183,8 +183,8 @@ public class JetPump extends Pump {
    * {@inheritDoc}
    *
    * <p>
-   * Computes jet-pump performance from the current configuration and boosts the inlet stream to the
-   * computed discharge pressure.
+   * Computes jet-pump performance from the current configuration and boosts the inlet stream to the computed discharge
+   * pressure.
    * </p>
    */
   @Override
@@ -201,8 +201,7 @@ public class JetPump extends Pump {
     efficiency = operatingFlowRatio * headRatio;
     // Nozzle (power-fluid) flow from Bernoulli through the nozzle pressure drop.
     double dpNozzle = Math.max(0.0, (powerFluidPressure - suctionPressure) * 1.0e5);
-    double nozzleFlow =
-        nozzleDischargeCoeff * nozzleArea * Math.sqrt(2.0 * dpNozzle / powerFluidDensity);
+    double nozzleFlow = nozzleDischargeCoeff * nozzleArea * Math.sqrt(2.0 * dpNozzle / powerFluidDensity);
     producedRate = operatingFlowRatio * nozzleFlow;
     setOutletPressure(dischargePressure, "bara");
     super.run(id);

@@ -24,7 +24,8 @@ public abstract class TwoPhaseFlowSystem extends FlowSystem {
    * Constructor for TwoPhaseFlowSystem.
    * </p>
    */
-  public TwoPhaseFlowSystem() {}
+  public TwoPhaseFlowSystem() {
+  }
 
   /**
    * <p>
@@ -33,5 +34,6 @@ public abstract class TwoPhaseFlowSystem extends FlowSystem {
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
-  public TwoPhaseFlowSystem(SystemInterface system) {}
+  public TwoPhaseFlowSystem(SystemInterface system) {
+  }
 }

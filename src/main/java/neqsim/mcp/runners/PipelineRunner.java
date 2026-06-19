@@ -23,8 +23,8 @@ import neqsim.thermo.system.SystemUMRPRUMCEos;
  * Stateless pipeline simulation runner for MCP integration.
  *
  * <p>
- * Supports multiphase pipeline flow calculations using Beggs and Brill correlation, including
- * pressure drop, liquid holdup, flow regime, and temperature profile along a pipeline.
+ * Supports multiphase pipeline flow calculations using Beggs and Brill correlation, including pressure drop, liquid
+ * holdup, flow regime, and temperature profile along a pipeline.
  * </p>
  *
  * @author Even Solbraa
@@ -32,13 +32,13 @@ import neqsim.thermo.system.SystemUMRPRUMCEos;
  */
 public class PipelineRunner {
 
-  private static final Gson GSON =
-      new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+  private static final Gson GSON = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
 
   /**
    * Private constructor — all methods are static.
    */
-  private PipelineRunner() {}
+  private PipelineRunner() {
+  }
 
   /**
    * Runs a pipeline simulation from a JSON input string.
@@ -48,21 +48,19 @@ public class PipelineRunner {
    */
   public static String run(String json) {
     if (json == null || json.trim().isEmpty()) {
-      return errorJson("INPUT_ERROR", "JSON input is null or empty",
-          "Provide a valid JSON pipeline specification");
+      return errorJson("INPUT_ERROR", "JSON input is null or empty", "Provide a valid JSON pipeline specification");
     }
 
     JsonObject input;
     try {
       input = JsonParser.parseString(json).getAsJsonObject();
     } catch (Exception e) {
-      return errorJson("JSON_PARSE_ERROR", "Failed to parse JSON: " + e.getMessage(),
-          "Ensure the JSON is well-formed");
+      return errorJson("JSON_PARSE_ERROR", "Failed to parse JSON: " + e.getMessage(), "Ensure the JSON is well-formed");
     }
 
     String analysis = getString(input, "analysis", getString(input, "mode", "beggsAndBrill"));
     if ("waterHammer".equalsIgnoreCase(analysis) || "liquidHammer".equalsIgnoreCase(analysis)
-        || "hydraulicTransient".equalsIgnoreCase(analysis)) {
+	|| "hydraulicTransient".equalsIgnoreCase(analysis)) {
       return WaterHammerRunner.run(json);
     }
 
@@ -70,8 +68,7 @@ public class PipelineRunner {
 
     // --- Create fluid ---
     if (!input.has("components")) {
-      return errorJson("MISSING_COMPONENTS", "No 'components' specified",
-          "Provide a components map for the fluid");
+      return errorJson("MISSING_COMPONENTS", "No 'components' specified", "Provide a components map for the fluid");
     }
 
     try {
@@ -80,9 +77,8 @@ public class PipelineRunner {
       // --- Create feed stream ---
       Stream feed = new Stream("Pipeline Feed", fluid);
       if (input.has("flowRate")) {
-        JsonObject fr = input.getAsJsonObject("flowRate");
-        feed.setFlowRate(fr.get("value").getAsDouble(),
-            fr.has("unit") ? fr.get("unit").getAsString() : "kg/hr");
+	JsonObject fr = input.getAsJsonObject("flowRate");
+	feed.setFlowRate(fr.get("value").getAsDouble(), fr.has("unit") ? fr.get("unit").getAsString() : "kg/hr");
       }
 
       // --- Create pipeline ---
@@ -102,8 +98,7 @@ public class PipelineRunner {
       JsonObject data = new JsonObject();
       data.addProperty("inletPressure_bara", feed.getPressure());
       data.addProperty("outletPressure_bara", pipe.getOutletStream().getPressure());
-      data.addProperty("pressureDrop_bara",
-          feed.getPressure() - pipe.getOutletStream().getPressure());
+      data.addProperty("pressureDrop_bara", feed.getPressure() - pipe.getOutletStream().getPressure());
       data.addProperty("inletTemperature_C", feed.getTemperature() - 273.15);
       data.addProperty("outletTemperature_C", pipe.getOutletStream().getTemperature() - 273.15);
       JsonObject pipeInput = getPipeInput(input);
@@ -125,7 +120,7 @@ public class PipelineRunner {
       return GSON.toJson(result);
     } catch (Exception e) {
       return errorJson("PIPELINE_ERROR", "Pipeline simulation failed: " + e.getMessage(),
-          "Check fluid definition and pipeline parameters");
+	  "Check fluid definition and pipeline parameters");
     }
   }
 
@@ -159,7 +154,7 @@ public class PipelineRunner {
     if (input.has("components")) {
       JsonObject comps = input.getAsJsonObject("components");
       for (Map.Entry<String, JsonElement> entry : comps.entrySet()) {
-        fluid.addComponent(entry.getKey(), entry.getValue().getAsDouble());
+	fluid.addComponent(entry.getKey(), entry.getValue().getAsDouble());
       }
     }
     String mixingRule = input.has("mixingRule") ? input.get("mixingRule").getAsString() : "classic";
@@ -169,10 +164,9 @@ public class PipelineRunner {
   }
 
   /**
-   * Applies pipe geometry and solver settings from either top-level JSON fields or a nested
-   * {@code pipe} object.
+   * Applies pipe geometry and solver settings from either top-level JSON fields or a nested {@code pipe} object.
    *
-   * @param pipe the pipeline object to configure
+   * @param pipe  the pipeline object to configure
    * @param input the runner input JSON containing optional pipe settings
    */
   private static void applyPipeConfiguration(PipeBeggsAndBrills pipe, JsonObject input) {
@@ -188,8 +182,7 @@ public class PipelineRunner {
       pipe.setDiameter(diameter.doubleValue());
     }
 
-    Double roughness =
-        getOptionalDouble(input, pipeInput, "pipeWallRoughness_m", "roughness_m", "roughness");
+    Double roughness = getOptionalDouble(input, pipeInput, "pipeWallRoughness_m", "roughness_m", "roughness");
     if (roughness != null) {
       pipe.setPipeWallRoughness(roughness.doubleValue());
     }
@@ -210,8 +203,8 @@ public class PipelineRunner {
       pipe.setAngle(angle.doubleValue());
     }
 
-    Integer numberOfSegments =
-        getOptionalInt(input, pipeInput, "numberOfSegments", "numberOfIncrements", "numberOfNodes");
+    Integer numberOfSegments = getOptionalInt(input, pipeInput, "numberOfSegments", "numberOfIncrements",
+	"numberOfNodes");
     if (numberOfSegments != null) {
       pipe.setNumberOfIncrements(numberOfSegments.intValue());
     }
@@ -233,13 +226,12 @@ public class PipelineRunner {
   /**
    * Reads the first matching double value from a primary or secondary JSON object.
    *
-   * @param primary the JSON object checked first
+   * @param primary   the JSON object checked first
    * @param secondary the JSON object checked when the primary has no matching field
-   * @param names accepted field names in priority order
+   * @param names     accepted field names in priority order
    * @return the parsed double value, or {@code null} when no field is present
    */
-  private static Double getOptionalDouble(JsonObject primary, JsonObject secondary,
-      String... names) {
+  private static Double getOptionalDouble(JsonObject primary, JsonObject secondary, String... names) {
     JsonElement element = getOptionalElement(primary, names);
     if (element == null && secondary != primary) {
       element = getOptionalElement(secondary, names);
@@ -250,9 +242,9 @@ public class PipelineRunner {
   /**
    * Reads the first matching integer value from a primary or secondary JSON object.
    *
-   * @param primary the JSON object checked first
+   * @param primary   the JSON object checked first
    * @param secondary the JSON object checked when the primary has no matching field
-   * @param names accepted field names in priority order
+   * @param names     accepted field names in priority order
    * @return the parsed integer value, or {@code null} when no field is present
    */
   private static Integer getOptionalInt(JsonObject primary, JsonObject secondary, String... names) {
@@ -267,7 +259,7 @@ public class PipelineRunner {
    * Finds the first non-null JSON field matching one of the supplied names.
    *
    * @param object the JSON object to inspect
-   * @param names accepted field names in priority order
+   * @param names  accepted field names in priority order
    * @return the matching JSON element, or {@code null} when no field is present
    */
   private static JsonElement getOptionalElement(JsonObject object, String... names) {
@@ -276,7 +268,7 @@ public class PipelineRunner {
     }
     for (String name : names) {
       if (object.has(name) && !object.get(name).isJsonNull()) {
-        return object.get(name);
+	return object.get(name);
       }
     }
     return null;
@@ -292,18 +284,18 @@ public class PipelineRunner {
    */
   private static SystemInterface createFluid(String model, double tempK, double pBara) {
     switch (model.toUpperCase()) {
-      case "PR":
-        return new SystemPrEos(tempK, pBara);
-      case "CPA":
-        return new SystemSrkCPAstatoil(tempK, pBara);
-      case "GERG2008":
-        return new SystemGERG2008Eos(tempK, pBara);
-      case "PCSAFT":
-        return new SystemPCSAFT(tempK, pBara);
-      case "UMRPRU":
-        return new SystemUMRPRUMCEos(tempK, pBara);
-      default:
-        return new SystemSrkEos(tempK, pBara);
+    case "PR":
+      return new SystemPrEos(tempK, pBara);
+    case "CPA":
+      return new SystemSrkCPAstatoil(tempK, pBara);
+    case "GERG2008":
+      return new SystemGERG2008Eos(tempK, pBara);
+    case "PCSAFT":
+      return new SystemPCSAFT(tempK, pBara);
+    case "UMRPRU":
+      return new SystemUMRPRUMCEos(tempK, pBara);
+    default:
+      return new SystemSrkEos(tempK, pBara);
     }
   }
 
@@ -321,12 +313,12 @@ public class PipelineRunner {
     double value = obj.get("value").getAsDouble();
     String unit = obj.has("unit") ? obj.get("unit").getAsString() : "K";
     switch (unit) {
-      case "C":
-        return value + 273.15;
-      case "F":
-        return (value - 32.0) * 5.0 / 9.0 + 273.15;
-      default:
-        return value;
+    case "C":
+      return value + 273.15;
+    case "F":
+      return (value - 32.0) * 5.0 / 9.0 + 273.15;
+    default:
+      return value;
     }
   }
 
@@ -344,28 +336,28 @@ public class PipelineRunner {
     double value = obj.get("value").getAsDouble();
     String unit = obj.has("unit") ? obj.get("unit").getAsString() : "bara";
     switch (unit) {
-      case "barg":
-        return value + 1.01325;
-      case "Pa":
-        return value / 100000.0;
-      case "kPa":
-        return value / 100.0;
-      case "MPa":
-        return value * 10.0;
-      case "psi":
-        return value / 14.696;
-      case "atm":
-        return value * 1.01325;
-      default:
-        return value;
+    case "barg":
+      return value + 1.01325;
+    case "Pa":
+      return value / 100000.0;
+    case "kPa":
+      return value / 100.0;
+    case "MPa":
+      return value * 10.0;
+    case "psi":
+      return value / 14.696;
+    case "atm":
+      return value * 1.01325;
+    default:
+      return value;
     }
   }
 
   /**
    * Gets a string field from a JSON object with a fallback value.
    *
-   * @param input source JSON object
-   * @param name field name
+   * @param input        source JSON object
+   * @param name         field name
    * @param defaultValue fallback value when the field is missing
    * @return string field value or fallback value
    */
@@ -379,8 +371,8 @@ public class PipelineRunner {
   /**
    * Creates a standard error JSON string.
    *
-   * @param code the error code
-   * @param message the error message
+   * @param code        the error code
+   * @param message     the error message
    * @param remediation the fix suggestion
    * @return the error JSON string
    */

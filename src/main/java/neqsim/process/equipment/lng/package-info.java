@@ -2,8 +2,8 @@
  * LNG cargo ageing and transport simulation package.
  *
  * <p>
- * Provides a layered, transient model for simulating LNG composition and quality drift during
- * storage and marine transport. Key capabilities include:
+ * Provides a layered, transient model for simulating LNG composition and quality drift during storage and marine
+ * transport. Key capabilities include:
  * </p>
  * <ul>
  * <li>Multi-layer tank model with stratification detection</li>
@@ -16,8 +16,8 @@
  * </ul>
  *
  * <p>
- * The main entry point is {@link neqsim.process.equipment.lng.LNGAgeingScenario} which orchestrates
- * the time-stepping simulation across all submodels.
+ * The main entry point is {@link neqsim.process.equipment.lng.LNGAgeingScenario} which orchestrates the time-stepping
+ * simulation across all submodels.
  * </p>
  *
  * @author NeqSim

@@ -37,12 +37,13 @@ public class SplitterCapacityStrategy implements EquipmentCapacityStrategy {
   /**
    * Default constructor.
    */
-  public SplitterCapacityStrategy() {}
+  public SplitterCapacityStrategy() {
+  }
 
   /**
    * Constructor with custom constraints.
    *
-   * @param maxVelocity maximum header velocity (m/s)
+   * @param maxVelocity     maximum header velocity (m/s)
    * @param maxPressureDrop maximum pressure drop (bar)
    */
   public SplitterCapacityStrategy(double maxVelocity, double maxPressureDrop) {
@@ -106,12 +107,12 @@ public class SplitterCapacityStrategy implements EquipmentCapacityStrategy {
     if (splitFactors != null) {
       double sum = 0.0;
       for (double factor : splitFactors) {
-        sum += factor;
+	sum += factor;
       }
       // Deviation from 1.0 indicates potential issues
       double deviation = Math.abs(sum - 1.0);
       if (deviation > 0.01) {
-        maxUtilization = Math.max(maxUtilization, deviation * 10.0);
+	maxUtilization = Math.max(maxUtilization, deviation * 10.0);
       }
     }
 
@@ -143,31 +144,29 @@ public class SplitterCapacityStrategy implements EquipmentCapacityStrategy {
     }
 
     // Pressure drop constraint
-    CapacityConstraint dpConstraint = new CapacityConstraint("pressureDrop")
-        .setDesignValue(maxPressureDrop).setMaxValue(maxPressureDrop * 1.2).setUnit("bar")
-        .setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
-        .setDescription("Pressure drop across splitter").setValueSupplier(() -> 0.0); // Ideal
-                                                                                      // splitter
-                                                                                      // has zero
-                                                                                      // pressure
-                                                                                      // drop
+    CapacityConstraint dpConstraint = new CapacityConstraint("pressureDrop").setDesignValue(maxPressureDrop)
+	.setMaxValue(maxPressureDrop * 1.2).setUnit("bar").setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
+	.setDescription("Pressure drop across splitter").setValueSupplier(() -> 0.0); // Ideal
+										      // splitter
+										      // has zero
+										      // pressure
+										      // drop
     constraints.put("pressureDrop", dpConstraint);
 
     // Flow distribution constraint
-    CapacityConstraint flowDistConstraint =
-        new CapacityConstraint("flowDistribution").setDesignValue(1.0).setUnit("-")
-            .setSeverity(CapacityConstraint.ConstraintSeverity.ADVISORY)
-            .setDescription("Split ratio sum (should be 1.0)").setValueSupplier(() -> {
-              double[] factors = splitter.getSplitFactors();
-              if (factors == null) {
-                return 0.0;
-              }
-              double sum = 0.0;
-              for (double f : factors) {
-                sum += f;
-              }
-              return sum;
-            });
+    CapacityConstraint flowDistConstraint = new CapacityConstraint("flowDistribution").setDesignValue(1.0).setUnit("-")
+	.setSeverity(CapacityConstraint.ConstraintSeverity.ADVISORY).setDescription("Split ratio sum (should be 1.0)")
+	.setValueSupplier(() -> {
+	  double[] factors = splitter.getSplitFactors();
+	  if (factors == null) {
+	    return 0.0;
+	  }
+	  double sum = 0.0;
+	  for (double f : factors) {
+	    sum += f;
+	  }
+	  return sum;
+	});
     constraints.put("flowDistribution", flowDistConstraint);
 
     return constraints;
@@ -181,7 +180,7 @@ public class SplitterCapacityStrategy implements EquipmentCapacityStrategy {
 
     for (CapacityConstraint constraint : constraints.values()) {
       if (constraint.isViolated()) {
-        violations.add(constraint);
+	violations.add(constraint);
       }
     }
     return violations;
@@ -198,8 +197,8 @@ public class SplitterCapacityStrategy implements EquipmentCapacityStrategy {
     for (CapacityConstraint constraint : constraints.values()) {
       double util = constraint.getUtilization();
       if (!Double.isNaN(util) && util > maxUtil) {
-        maxUtil = util;
-        bottleneck = constraint;
+	maxUtil = util;
+	bottleneck = constraint;
       }
     }
     return bottleneck;
@@ -212,10 +211,10 @@ public class SplitterCapacityStrategy implements EquipmentCapacityStrategy {
 
     for (CapacityConstraint constraint : constraints.values()) {
       if (constraint.getSeverity() == CapacityConstraint.ConstraintSeverity.HARD
-          || constraint.getSeverity() == CapacityConstraint.ConstraintSeverity.CRITICAL) {
-        if (constraint.isHardLimitExceeded()) {
-          return false;
-        }
+	  || constraint.getSeverity() == CapacityConstraint.ConstraintSeverity.CRITICAL) {
+	if (constraint.isHardLimitExceeded()) {
+	  return false;
+	}
       }
     }
     return true;
@@ -228,7 +227,7 @@ public class SplitterCapacityStrategy implements EquipmentCapacityStrategy {
 
     for (CapacityConstraint constraint : constraints.values()) {
       if (constraint.getUtilization() > 1.0) {
-        return false;
+	return false;
       }
     }
     return true;

@@ -6,17 +6,16 @@ import java.io.Serializable;
  * Utility calculations for para/ortho hydrogen spin-isomer corrections.
  *
  * <p>
- * The model uses the rigid-rotor rotational partition function for molecular hydrogen with the
- * correct nuclear spin statistical weights. It is intended for cryogenic hydrogen screening,
- * liquefaction pre-design and agent workflows where normal hydrogen properties need a first-order
- * correction for equilibrium para-hydrogen enrichment below about 100 K.
+ * The model uses the rigid-rotor rotational partition function for molecular hydrogen with the correct nuclear spin
+ * statistical weights. It is intended for cryogenic hydrogen screening, liquefaction pre-design and agent workflows
+ * where normal hydrogen properties need a first-order correction for equilibrium para-hydrogen enrichment below about
+ * 100 K.
  * </p>
  *
  * <p>
- * The class does not replace detailed NIST/Leachman property calls. Use it to estimate the
- * equilibrium para fraction, heat released by conversion from normal hydrogen, additional
- * equilibrium rotational heat capacity, a bounded thermal-conductivity correction factor and a
- * screening conversion time for common catalysts.
+ * The class does not replace detailed NIST/Leachman property calls. Use it to estimate the equilibrium para fraction,
+ * heat released by conversion from normal hydrogen, additional equilibrium rotational heat capacity, a bounded
+ * thermal-conductivity correction factor and a screening conversion time for common catalysts.
  * </p>
  *
  * @author ESOL
@@ -48,7 +47,7 @@ public final class ParaOrthoH2Correction implements Serializable {
     /**
      * Creates a catalyst entry for conversion-time screening.
      *
-     * @param referenceTimeSeconds time constant at 77 K in seconds
+     * @param referenceTimeSeconds   time constant at 77 K in seconds
      * @param activationTemperatureK empirical temperature sensitivity in K
      */
     ConversionCatalyst(double referenceTimeSeconds, double activationTemperatureK) {
@@ -60,7 +59,8 @@ public final class ParaOrthoH2Correction implements Serializable {
   /**
    * Private constructor for utility class.
    */
-  private ParaOrthoH2Correction() {}
+  private ParaOrthoH2Correction() {
+  }
 
   /**
    * Returns the normal hydrogen para fraction at room-temperature equilibrium.
@@ -103,16 +103,15 @@ public final class ParaOrthoH2Correction implements Serializable {
    * @return exothermic conversion heat in J/kg, positive when heat is released
    */
   public static double getNormalToEquilibriumHeatJPerKg(double temperatureK) {
-    return getConversionHeatJPerKg(NORMAL_PARA_FRACTION, getEquilibriumParaFraction(temperatureK),
-        temperatureK);
+    return getConversionHeatJPerKg(NORMAL_PARA_FRACTION, getEquilibriumParaFraction(temperatureK), temperatureK);
   }
 
   /**
    * Calculates the heat released between two spin-isomer compositions at fixed temperature.
    *
    * @param initialParaFraction initial para fraction in the range 0 to 1
-   * @param finalParaFraction final para fraction in the range 0 to 1
-   * @param temperatureK hydrogen temperature in K, must be greater than 0
+   * @param finalParaFraction   final para fraction in the range 0 to 1
+   * @param temperatureK        hydrogen temperature in K, must be greater than 0
    * @return heat released in J/kg, positive when the final state has lower rotational energy
    */
   public static double getConversionHeatJPerKg(double initialParaFraction, double finalParaFraction,
@@ -154,8 +153,7 @@ public final class ParaOrthoH2Correction implements Serializable {
    * @return equilibrium minus frozen-normal rotational heat capacity in J/(kg K)
    */
   public static double getCpCorrectionJPerKgK(double temperatureK) {
-    return getEquilibriumRotationalCpJPerKgK(temperatureK)
-        - getFrozenNormalRotationalCpJPerKgK(temperatureK);
+    return getEquilibriumRotationalCpJPerKgK(temperatureK) - getFrozenNormalRotationalCpJPerKgK(temperatureK);
   }
 
   /**
@@ -165,24 +163,22 @@ public final class ParaOrthoH2Correction implements Serializable {
    * @return factor to multiply normal-hydrogen thermal conductivity by
    */
   public static double getThermalConductivityCorrectionFactor(double temperatureK) {
-    return getThermalConductivityCorrectionFactor(temperatureK,
-        getEquilibriumParaFraction(temperatureK));
+    return getThermalConductivityCorrectionFactor(temperatureK, getEquilibriumParaFraction(temperatureK));
   }
 
   /**
    * Estimates a bounded thermal-conductivity correction factor from para content.
    *
    * <p>
-   * The correlation is deliberately conservative: it approaches 1.0 above cryogenic temperatures
-   * and limits the correction to a narrow band for screening use.
+   * The correlation is deliberately conservative: it approaches 1.0 above cryogenic temperatures and limits the
+   * correction to a narrow band for screening use.
    * </p>
    *
    * @param temperatureK hydrogen temperature in K, must be greater than 0
    * @param paraFraction para-hydrogen fraction in the range 0 to 1
    * @return factor to multiply normal-hydrogen thermal conductivity by
    */
-  public static double getThermalConductivityCorrectionFactor(double temperatureK,
-      double paraFraction) {
+  public static double getThermalConductivityCorrectionFactor(double temperatureK, double paraFraction) {
     validateTemperature(temperatureK);
     validateFraction(paraFraction, "paraFraction");
     double cryogenicWeight = 1.0 / (1.0 + Math.exp((temperatureK - 120.0) / 20.0));
@@ -195,11 +191,10 @@ public final class ParaOrthoH2Correction implements Serializable {
    * Estimates para/ortho conversion time for a catalyst family.
    *
    * @param temperatureK hydrogen temperature in K, must be greater than 0
-   * @param catalyst conversion catalyst family, not null
+   * @param catalyst     conversion catalyst family, not null
    * @return first-order conversion time constant in seconds
    */
-  public static double estimateEquilibrationTimeSeconds(double temperatureK,
-      ConversionCatalyst catalyst) {
+  public static double estimateEquilibrationTimeSeconds(double temperatureK, ConversionCatalyst catalyst) {
     validateTemperature(temperatureK);
     if (catalyst == null) {
       throw new IllegalArgumentException("catalyst cannot be null");
@@ -207,8 +202,7 @@ public final class ParaOrthoH2Correction implements Serializable {
     if (catalyst == ConversionCatalyst.NONE) {
       return Double.POSITIVE_INFINITY;
     }
-    double exponent = catalyst.activationTemperatureK
-        * (1.0 / temperatureK - 1.0 / REFERENCE_CONVERSION_TEMPERATURE_K);
+    double exponent = catalyst.activationTemperatureK * (1.0 / temperatureK - 1.0 / REFERENCE_CONVERSION_TEMPERATURE_K);
     double time = catalyst.referenceTimeSeconds * Math.exp(exponent);
     return Math.max(1.0, Math.min(1.0e12, time));
   }
@@ -217,7 +211,7 @@ public final class ParaOrthoH2Correction implements Serializable {
    * Calculates a rotational partition function for either para or ortho states.
    *
    * @param temperatureK hydrogen temperature in K
-   * @param para true for even-J para states, false for odd-J ortho states
+   * @param para         true for even-J para states, false for odd-J ortho states
    * @return partition function and average rotational energy data
    */
   private static RotationalPartition calculatePartition(double temperatureK, boolean para) {
@@ -245,15 +239,14 @@ public final class ParaOrthoH2Correction implements Serializable {
   private static double rotationalEnergyJPerMol(double temperatureK, double paraFraction) {
     RotationalPartition para = calculatePartition(temperatureK, true);
     RotationalPartition ortho = calculatePartition(temperatureK, false);
-    return paraFraction * para.averageEnergyJPerMol
-        + (1.0 - paraFraction) * ortho.averageEnergyJPerMol;
+    return paraFraction * para.averageEnergyJPerMol + (1.0 - paraFraction) * ortho.averageEnergyJPerMol;
   }
 
   /**
    * Calculates heat capacity by finite-difference differentiation of rotational energy.
    *
    * @param temperatureK hydrogen temperature in K
-   * @param equilibrium true for spin-equilibrium composition, false for frozen normal composition
+   * @param equilibrium  true for spin-equilibrium composition, false for frozen normal composition
    * @return heat capacity in J/(kg K)
    */
   private static double numericalCp(double temperatureK, boolean equilibrium) {
@@ -272,12 +265,11 @@ public final class ParaOrthoH2Correction implements Serializable {
    * Calculates rotational energy for the finite-difference heat capacity routine.
    *
    * @param temperatureK hydrogen temperature in K
-   * @param equilibrium true for spin-equilibrium composition, false for frozen normal composition
+   * @param equilibrium  true for spin-equilibrium composition, false for frozen normal composition
    * @return rotational energy in J/mol
    */
   private static double rotationalEnergyForCp(double temperatureK, boolean equilibrium) {
-    double paraFraction =
-        equilibrium ? getEquilibriumParaFraction(temperatureK) : NORMAL_PARA_FRACTION;
+    double paraFraction = equilibrium ? getEquilibriumParaFraction(temperatureK) : NORMAL_PARA_FRACTION;
     return rotationalEnergyJPerMol(temperatureK, paraFraction);
   }
 
@@ -296,7 +288,7 @@ public final class ParaOrthoH2Correction implements Serializable {
    * Validates a composition fraction.
    *
    * @param fraction fraction value
-   * @param name parameter name for diagnostics
+   * @param name     parameter name for diagnostics
    */
   private static void validateFraction(double fraction, String name) {
     if (!Double.isFinite(fraction) || fraction < 0.0 || fraction > 1.0) {
@@ -312,7 +304,7 @@ public final class ParaOrthoH2Correction implements Serializable {
     /**
      * Creates rotational partition data.
      *
-     * @param partitionFunction rotational partition function
+     * @param partitionFunction    rotational partition function
      * @param averageEnergyJPerMol average rotational energy in J/mol
      */
     private RotationalPartition(double partitionFunction, double averageEnergyJPerMol) {

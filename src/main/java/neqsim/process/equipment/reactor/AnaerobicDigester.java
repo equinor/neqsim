@@ -18,10 +18,9 @@ import neqsim.thermo.system.SystemSrkEos;
  * Anaerobic digester for biogas production from organic substrates.
  *
  * <p>
- * Models single-stage continuous stirred-tank reactor (CSTR) anaerobic digestion using
- * stoichiometric conversion of a defined organic substrate to biogas (CH4 + CO2). The digester
- * extends {@link Fermenter} to reuse its reactor vessel, mixing, and stream management
- * infrastructure, adding biogas-specific calculations.
+ * Models single-stage continuous stirred-tank reactor (CSTR) anaerobic digestion using stoichiometric conversion of a
+ * defined organic substrate to biogas (CH4 + CO2). The digester extends {@link Fermenter} to reuse its reactor vessel,
+ * mixing, and stream management infrastructure, adding biogas-specific calculations.
  * </p>
  *
  * <h2>Key Parameters</h2>
@@ -126,8 +125,8 @@ public class AnaerobicDigester extends Fermenter {
      * Creates a substrate type enum constant.
      *
      * @param specificMethaneYield Nm3 CH4 / kg VS destroyed
-     * @param vsDestruction VS destruction fraction
-     * @param vstsRatio VS/TS ratio
+     * @param vsDestruction        VS destruction fraction
+     * @param vstsRatio            VS/TS ratio
      */
     SubstrateType(double specificMethaneYield, double vsDestruction, double vstsRatio) {
       this.specificMethaneYield = specificMethaneYield;
@@ -233,7 +232,7 @@ public class AnaerobicDigester extends Fermenter {
   /**
    * Creates an anaerobic digester with the given name and inlet stream.
    *
-   * @param name equipment name
+   * @param name        equipment name
    * @param inletStream the sludge/substrate inlet stream
    */
   public AnaerobicDigester(String name, StreamInterface inletStream) {
@@ -243,8 +242,7 @@ public class AnaerobicDigester extends Fermenter {
   }
 
   /**
-   * Sets the substrate type. This sets default values for specific methane yield, VS destruction,
-   * and VS/TS ratio.
+   * Sets the substrate type. This sets default values for specific methane yield, VS destruction, and VS/TS ratio.
    *
    * @param type the substrate type
    */
@@ -313,7 +311,7 @@ public class AnaerobicDigester extends Fermenter {
    * Sets the digester temperature with unit specification.
    *
    * @param temperature temperature value
-   * @param unit unit string ("K", "C", "F")
+   * @param unit        unit string ("K", "C", "F")
    */
   public void setDigesterTemperature(double temperature, String unit) {
     if ("C".equalsIgnoreCase(unit)) {
@@ -469,11 +467,9 @@ public class AnaerobicDigester extends Fermenter {
 
     // ── Step 1: Resolve parameters ──
     double effVstsRatio = Double.isNaN(vstsFraction) ? substrateType.getVstsRatio() : vstsFraction;
-    actualVsDestruction =
-        Double.isNaN(vsDestruction) ? substrateType.getVsDestruction() : vsDestruction;
-    actualSpecificMethaneYield =
-        Double.isNaN(specificMethaneYield) ? substrateType.getSpecificMethaneYield()
-            : specificMethaneYield;
+    actualVsDestruction = Double.isNaN(vsDestruction) ? substrateType.getVsDestruction() : vsDestruction;
+    actualSpecificMethaneYield = Double.isNaN(specificMethaneYield) ? substrateType.getSpecificMethaneYield()
+	: specificMethaneYield;
 
     // ── Step 2: Mass flow calculations ──
     double feedKgPerDay = feedRateKgPerHr * 24.0;
@@ -483,8 +479,7 @@ public class AnaerobicDigester extends Fermenter {
 
     // ── Step 3: Biogas production ──
     methaneProductionNm3PerDay = vsDestroyedKgPerDay * actualSpecificMethaneYield;
-    biogasFlowRateNm3PerDay =
-        methaneFraction > 0.0 ? methaneProductionNm3PerDay / methaneFraction : 0.0;
+    biogasFlowRateNm3PerDay = methaneFraction > 0.0 ? methaneProductionNm3PerDay / methaneFraction : 0.0;
     double co2ProductionNm3PerDay = biogasFlowRateNm3PerDay - methaneProductionNm3PerDay;
 
     // ── Step 4: Operational parameters ──
@@ -577,8 +572,7 @@ public class AnaerobicDigester extends Fermenter {
    */
   @Override
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(getResults());
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(getResults());
   }
 
   /** {@inheritDoc} */
@@ -590,13 +584,11 @@ public class AnaerobicDigester extends Fermenter {
     StringBuilder sb = new StringBuilder();
     sb.append("AnaerobicDigester '").append(getName()).append("'\n");
     sb.append(String.format("  Substrate: %s, Regime: %s%n", substrateType, temperatureRegime));
-    sb.append(String.format("  T = %.1f C, V = %.0f m3%n", digesterTemperature - 273.15,
-        getVesselVolume()));
-    sb.append(String.format("  Biogas = %.0f Nm3/day (%.0f%% CH4)%n", biogasFlowRateNm3PerDay,
-        methaneFraction * 100));
+    sb.append(String.format("  T = %.1f C, V = %.0f m3%n", digesterTemperature - 273.15, getVesselVolume()));
+    sb.append(String.format("  Biogas = %.0f Nm3/day (%.0f%% CH4)%n", biogasFlowRateNm3PerDay, methaneFraction * 100));
     sb.append(String.format("  CH4 = %.0f Nm3/day%n", methaneProductionNm3PerDay));
     sb.append(String.format("  OLR = %.2f kg VS/(m3*day), HRT = %.1f days%n", organicLoadingRate,
-        hydraulicRetentionTimeDays));
+	hydraulicRetentionTimeDays));
     sb.append(String.format("  VS Destruction = %.0f%%%n", actualVsDestruction * 100));
     return sb.toString();
   }

@@ -38,9 +38,9 @@ public class SolarPanel extends ProcessEquipmentBaseClass {
   /**
    * Create a solar panel with initial parameters.
    *
-   * @param name name of equipment
+   * @param name       name of equipment
    * @param irradiance solar irradiance [W/m^2]
-   * @param panelArea panel area [m^2]
+   * @param panelArea  panel area [m^2]
    * @param efficiency electrical efficiency (0-1)
    */
   public SolarPanel(String name, double irradiance, double panelArea, double efficiency) {
@@ -95,4 +95,3 @@ public class SolarPanel extends ProcessEquipmentBaseClass {
     setCalculationIdentifier(id);
   }
 }
-

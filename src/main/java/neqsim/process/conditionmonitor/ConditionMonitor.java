@@ -23,7 +23,8 @@ public class ConditionMonitor implements java.io.Serializable, Runnable {
    * Constructor for ConditionMonitor.
    * </p>
    */
-  public ConditionMonitor() {}
+  public ConditionMonitor() {
+  }
 
   /**
    * <p>
@@ -45,12 +46,10 @@ public class ConditionMonitor implements java.io.Serializable, Runnable {
    * @param unitName a {@link java.lang.String} object
    */
   public void conditionAnalysis(String unitName) {
-    neqsim.process.equipment.ProcessEquipmentBaseClass refUn =
-        (neqsim.process.equipment.ProcessEquipmentBaseClass) refprocess.getUnit(unitName);
-    process.getUnit(unitName)
-        .runConditionAnalysis(refUn);
-    report += process.getUnit(unitName)
-        .getConditionAnalysisMessage();
+    neqsim.process.equipment.ProcessEquipmentBaseClass refUn = (neqsim.process.equipment.ProcessEquipmentBaseClass) refprocess
+	.getUnit(unitName);
+    process.getUnit(unitName).runConditionAnalysis(refUn);
+    report += process.getUnit(unitName).getConditionAnalysisMessage();
   }
 
   /**

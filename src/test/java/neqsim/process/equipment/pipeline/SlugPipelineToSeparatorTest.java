@@ -32,8 +32,8 @@ import org.apache.logging.log4j.Logger;
  * </ul>
  *
  * <p>
- * The test verifies that the system responds correctly to slugging conditions and that the level
- * controller maintains stability.
+ * The test verifies that the system responds correctly to slugging conditions and that the level controller maintains
+ * stability.
  *
  * @author NeqSim Team
  */
@@ -100,9 +100,9 @@ class SlugPipelineToSeparatorTest {
     for (int i = 0; i < 20; i++) {
       double x = (i + 1.0) / 20.0;
       if (x < 0.5) {
-        elevations[i] = -10.0 * x / 0.5; // Downhill to -10m
+	elevations[i] = -10.0 * x / 0.5; // Downhill to -10m
       } else {
-        elevations[i] = -10.0 + 30.0 * (x - 0.5) / 0.5; // Up to +20m
+	elevations[i] = -10.0 + 30.0 * (x - 0.5) / 0.5; // Up to +20m
       }
     }
     pipeline.setElevationProfile(elevations);
@@ -135,8 +135,7 @@ class SlugPipelineToSeparatorTest {
     logger.info("  Length: 6.0 m");
 
     // ========== LEVEL CONTROL ==========
-    ThrottlingValve liquidValve =
-        new ThrottlingValve("LiquidValve", separator.getLiquidOutStream());
+    ThrottlingValve liquidValve = new ThrottlingValve("LiquidValve", separator.getLiquidOutStream());
     liquidValve.setOutletPressure(10.0);
     liquidValve.setCalculateSteadyState(false);
     liquidValve.setPercentValveOpening(50.0);
@@ -192,7 +191,7 @@ class SlugPipelineToSeparatorTest {
       double time = step * 2.0;
 
       if (step > 0) {
-        process.runTransient(2.0, simId);
+	process.runTransient(2.0, simId);
       }
 
       double pipeOutFlow = pipeline.getOutletStream().getFlowRate("kg/sec");
@@ -203,8 +202,7 @@ class SlugPipelineToSeparatorTest {
       flows.add(pipeOutFlow);
 
       if (step % 5 == 0) {
-        logger.info(
-            String.format("%6.0f   %12.2f  %8.1f  %10.1f", time, pipeOutFlow, level * 100, sepP));
+	logger.info(String.format("%6.0f   %12.2f  %8.1f  %10.1f", time, pipeOutFlow, level * 100, sepP));
       }
     }
 
@@ -272,8 +270,7 @@ class SlugPipelineToSeparatorTest {
 
     double inletP = pressures[0] / 1e5; // Convert to bar
     logger.info("Inlet pressure: " + String.format("%.1f", inletP) + " bara");
-    logger.info("Outlet pressure: " + String.format("%.1f", pressures[pressures.length - 1] / 1e5)
-        + " bara");
+    logger.info("Outlet pressure: " + String.format("%.1f", pressures[pressures.length - 1] / 1e5) + " bara");
 
     // Inlet pressure should be close to specified value
     assertEquals(50.0, inletP, 5.0, "Inlet pressure should be near specified value");
@@ -285,8 +282,8 @@ class SlugPipelineToSeparatorTest {
    * Test that verifies pipeline outlet variables (flow, pressure, holdup) vary during transient.
    *
    * <p>
-   * This test demonstrates that the TwoFluidPipe model produces time-varying outlet conditions when
-   * subjected to terrain-induced slugging conditions.
+   * This test demonstrates that the TwoFluidPipe model produces time-varying outlet conditions when subjected to
+   * terrain-induced slugging conditions.
    */
   @Test
   @DisplayName("Verify pipeline outlet flow, pressure and holdup variations")
@@ -330,15 +327,15 @@ class SlugPipelineToSeparatorTest {
     for (int i = 0; i < 40; i++) {
       double x = (i + 1.0) / 40.0;
       if (x < 0.4) {
-        // Downhill to -30m
-        elevations[i] = -30.0 * x / 0.4;
+	// Downhill to -30m
+	elevations[i] = -30.0 * x / 0.4;
       } else if (x < 0.6) {
-        // Low point (liquid accumulation zone)
-        double dip = (x - 0.4) / 0.2;
-        elevations[i] = -30.0 - 10.0 * Math.sin(dip * Math.PI);
+	// Low point (liquid accumulation zone)
+	double dip = (x - 0.4) / 0.2;
+	elevations[i] = -30.0 - 10.0 * Math.sin(dip * Math.PI);
       } else {
-        // Riser to +40m
-        elevations[i] = -40.0 + 80.0 * (x - 0.6) / 0.4;
+	// Riser to +40m
+	elevations[i] = -40.0 + 80.0 * (x - 0.6) / 0.4;
       }
     }
     pipe.setElevationProfile(elevations);
@@ -369,7 +366,7 @@ class SlugPipelineToSeparatorTest {
       double time = step * dt;
 
       if (step > 0) {
-        pipe.runTransient(dt, simId);
+	pipe.runTransient(dt, simId);
       }
 
       // Get outlet mass flow
@@ -377,17 +374,16 @@ class SlugPipelineToSeparatorTest {
 
       // Get pressure profile
       double[] pressures = pipe.getPressureProfile();
-      double outletP =
-          (pressures != null && pressures.length > 0) ? pressures[pressures.length - 1] / 1e5 : 0;
+      double outletP = (pressures != null && pressures.length > 0) ? pressures[pressures.length - 1] / 1e5 : 0;
 
       // Get liquid holdup profile and calculate average
       double[] holdups = pipe.getLiquidHoldupProfile();
       double avgHoldup = 0;
       if (holdups != null && holdups.length > 0) {
-        for (double h : holdups) {
-          avgHoldup += h;
-        }
-        avgHoldup /= holdups.length;
+	for (double h : holdups) {
+	  avgHoldup += h;
+	}
+	avgHoldup /= holdups.length;
       }
 
       times.add(time);
@@ -397,8 +393,7 @@ class SlugPipelineToSeparatorTest {
 
       // Print every 10 seconds
       if (step % 10 == 0) {
-        logger.info(
-            String.format("%6.0f    %10.3f   %12.2f   %10.4f", time, outFlow, outletP, avgHoldup));
+	logger.info(String.format("%6.0f    %10.3f   %12.2f   %10.4f", time, outFlow, outletP, avgHoldup));
       }
     }
 

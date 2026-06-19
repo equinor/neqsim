@@ -36,7 +36,7 @@ public class ScalePotentialCheckStream extends Stream {
   /**
    * Constructor for ScalePotentialCheckStream.
    *
-   * @param name name of stream
+   * @param name   name of stream
    * @param stream input stream
    */
   public ScalePotentialCheckStream(String name, StreamInterface stream) {
@@ -48,7 +48,7 @@ public class ScalePotentialCheckStream extends Stream {
    * Constructor for ScalePotentialCheckStream.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
+   * @param name         a {@link java.lang.String} object
    * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
    */
   public ScalePotentialCheckStream(String name, SystemInterface thermoSystem) {
@@ -71,8 +71,7 @@ public class ScalePotentialCheckStream extends Stream {
   @Override
   public ScalePotentialCheckStream clone(String name) {
     if (this.getName() == name) {
-      throw new RuntimeException(
-          new InvalidInputException(this, "clone", "name", "- Same name as in original object"));
+      throw new RuntimeException(new InvalidInputException(this, "clone", "name", "- Same name as in original object"));
     }
     ScalePotentialCheckStream s = this.clone();
     s.setName(name);

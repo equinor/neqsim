@@ -8,20 +8,19 @@ import neqsim.thermo.component.ComponentEosInterface;
  * </p>
  *
  * <p>
- * Five-parameter Mathias-Copeman alpha function for the Peng-Robinson based UMR-CPA equation of
- * state. The alpha function reads
+ * Five-parameter Mathias-Copeman alpha function for the Peng-Robinson based UMR-CPA equation of state. The alpha
+ * function reads
  * </p>
  *
  * <p>
- * alpha(T) = [1 + c1 (1 - sqrt(Tr)) + c2 (1 - sqrt(Tr))^2 + c3 (1 - sqrt(Tr))^3 + c4 (1 -
- * sqrt(Tr))^4 + c5 (1 - sqrt(Tr))^5]^2
+ * alpha(T) = [1 + c1 (1 - sqrt(Tr)) + c2 (1 - sqrt(Tr))^2 + c3 (1 - sqrt(Tr))^3 + c4 (1 - sqrt(Tr))^4 + c5 (1 -
+ * sqrt(Tr))^5]^2
  * </p>
  *
  * <p>
- * The five-parameter form is used by Tasios et al. (Fluid Phase Equilibria, 2025,
- * doi:10.1016/j.fluid.2024.114241) for the non-self-associating compounds in the UMR-CPA model. The
- * five coefficients are dimensionless and are stored in the UMRCPA_MC1..UMRCPA_MC5 columns of
- * COMP.csv.
+ * The five-parameter form is used by Tasios et al. (Fluid Phase Equilibria, 2025, doi:10.1016/j.fluid.2024.114241) for
+ * the non-self-associating compounds in the UMR-CPA model. The five coefficients are dimensionless and are stored in
+ * the UMRCPA_MC1..UMRCPA_MC5 columns of COMP.csv.
  * </p>
  *
  * @author esol
@@ -34,9 +33,9 @@ public class AttractiveTermMatCop5PRUMR extends AttractiveTermPr {
   /** Five Mathias-Copeman coefficients c1..c5. */
   private double[] mcParams = new double[5];
   /**
-   * Use the standard PR alpha for supercritical temperatures. The UMR-PRU/UMR-CPA family
-   * extrapolates the Mathias-Copeman polynomial above the critical temperature (consistent with
-   * {@code AtractiveTermMatCopPRUMRNew}), so this defaults to false.
+   * Use the standard PR alpha for supercritical temperatures. The UMR-PRU/UMR-CPA family extrapolates the
+   * Mathias-Copeman polynomial above the critical temperature (consistent with {@code AtractiveTermMatCopPRUMRNew}), so
+   * this defaults to false.
    */
   private boolean useStandardAlphaForSupercritical = false;
 
@@ -50,7 +49,7 @@ public class AttractiveTermMatCop5PRUMR extends AttractiveTermPr {
   public AttractiveTermMatCop5PRUMR(ComponentEosInterface component) {
     super(component);
     m = (0.37464 + 1.54226 * component.getAcentricFactor()
-        - 0.26992 * component.getAcentricFactor() * component.getAcentricFactor());
+	- 0.26992 * component.getAcentricFactor() * component.getAcentricFactor());
   }
 
   /**
@@ -59,7 +58,7 @@ public class AttractiveTermMatCop5PRUMR extends AttractiveTermPr {
    * </p>
    *
    * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
-   * @param params an array of type double with up to five Mathias-Copeman coefficients
+   * @param params    an array of type double with up to five Mathias-Copeman coefficients
    */
   public AttractiveTermMatCop5PRUMR(ComponentEosInterface component, double[] params) {
     this(component);
@@ -83,16 +82,15 @@ public class AttractiveTermMatCop5PRUMR extends AttractiveTermPr {
 
   /**
    * <p>
-   * Returns true when the standard PR alpha function should be used instead of the Mathias-Copeman
-   * form (supercritical temperatures or unset coefficients).
+   * Returns true when the standard PR alpha function should be used instead of the Mathias-Copeman form (supercritical
+   * temperatures or unset coefficients).
    * </p>
    *
    * @param temperature temperature in Kelvin
    * @return true if the standard PR alpha should be used
    */
   private boolean useStandardAlpha(double temperature) {
-    return (useStandardAlphaForSupercritical && temperature / getComponent().getTC() > 1.0)
-        || allCoefficientsZero();
+    return (useStandardAlphaForSupercritical && temperature / getComponent().getTC() > 1.0) || allCoefficientsZero();
   }
 
   /**
@@ -105,7 +103,7 @@ public class AttractiveTermMatCop5PRUMR extends AttractiveTermPr {
   private boolean allCoefficientsZero() {
     for (int k = 0; k < mcParams.length; k++) {
       if (Math.abs(mcParams[k]) > 1e-20) {
-        return false;
+	return false;
       }
     }
     return true;
@@ -113,8 +111,8 @@ public class AttractiveTermMatCop5PRUMR extends AttractiveTermPr {
 
   /**
    * <p>
-   * Computes the inner Mathias-Copeman polynomial S = 1 + sum c_k (1 - sqrt(Tr))^k and its first
-   * two temperature derivatives.
+   * Computes the inner Mathias-Copeman polynomial S = 1 + sum c_k (1 - sqrt(Tr))^k and its first two temperature
+   * derivatives.
    * </p>
    *
    * @param temperature temperature in Kelvin
@@ -140,7 +138,7 @@ public class AttractiveTermMatCop5PRUMR extends AttractiveTermPr {
       double upowKm2 = (k >= 2) ? Math.pow(u, k - 2) : 0.0;
       d2sdt2 += ck * (k * (k - 1) * upowKm2 * dudt * dudt + k * upowKm1 * d2udt2);
     }
-    return new double[] {s, dsdt, d2sdt2};
+    return new double[] { s, dsdt, d2sdt2 };
   }
 
   /** {@inheritDoc} */

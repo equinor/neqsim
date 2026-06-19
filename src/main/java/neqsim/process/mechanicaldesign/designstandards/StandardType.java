@@ -8,9 +8,8 @@ import java.util.List;
  * Enumeration of supported international and industry design standards for mechanical design.
  *
  * <p>
- * Each standard type includes metadata about its code, name, applicable equipment types, default
- * version, and the design standard category it belongs to. Standards can be looked up by code or
- * filtered by equipment type.
+ * Each standard type includes metadata about its code, name, applicable equipment types, default version, and the
+ * design standard category it belongs to. Standards can be looked up by code or filtered by equipment type.
  * </p>
  *
  * <p>
@@ -33,94 +32,84 @@ import java.util.List;
 public enum StandardType {
 
   // NORSOK Standards (Norwegian Shelf)
-  NORSOK_L_001("NORSOK-L-001", "Pipeline systems", "Rev 6",
-      new String[] {"Pipeline", "AdiabaticPipe", "Pipe"},
-      "pipeline design codes"), NORSOK_P_001("NORSOK-P-001", "Process design", "Rev 5",
-          new String[] {"Separator", "ThreePhaseSeparator", "GasScrubber", "Scrubber"},
-          "separator process design"), NORSOK_P_002("NORSOK-P-002", "Process system design",
-              "Rev 5", new String[] {"Separator", "ThreePhaseSeparator", "Compressor", "Pump"},
-              "separator process design"), NORSOK_M_001("NORSOK-M-001", "Materials selection",
-                  "Rev 6", new String[] {"Pipeline", "Separator", "ThreePhaseSeparator"},
-                  "material plate design codes"), NORSOK_M_630("NORSOK-M-630",
-                      "Material data sheets for piping", "Rev 7",
-                      new String[] {"AdiabaticPipe", "Pipe", "Valve"},
-                      "material pipe design codes"),
+  NORSOK_L_001("NORSOK-L-001", "Pipeline systems", "Rev 6", new String[] { "Pipeline", "AdiabaticPipe", "Pipe" },
+      "pipeline design codes"),
+  NORSOK_P_001("NORSOK-P-001", "Process design", "Rev 5",
+      new String[] { "Separator", "ThreePhaseSeparator", "GasScrubber", "Scrubber" }, "separator process design"),
+  NORSOK_P_002("NORSOK-P-002", "Process system design", "Rev 5",
+      new String[] { "Separator", "ThreePhaseSeparator", "Compressor", "Pump" }, "separator process design"),
+  NORSOK_M_001("NORSOK-M-001", "Materials selection", "Rev 6",
+      new String[] { "Pipeline", "Separator", "ThreePhaseSeparator" }, "material plate design codes"),
+  NORSOK_M_630("NORSOK-M-630", "Material data sheets for piping", "Rev 7",
+      new String[] { "AdiabaticPipe", "Pipe", "Valve" }, "material pipe design codes"),
 
   // ASME Standards (American Society of Mechanical Engineers)
   ASME_VIII_DIV1("ASME-VIII-Div1", "Pressure Vessels Division 1", "2021",
-      new String[] {"Separator", "ThreePhaseSeparator", "GasScrubber", "Scrubber", "Adsorber"},
-      "pressure vessel design code"), ASME_VIII_DIV2("ASME-VIII-Div2",
-          "Pressure Vessels Division 2", "2021",
-          new String[] {"Separator", "ThreePhaseSeparator", "GasScrubber", "Scrubber"},
-          "pressure vessel design code"), ASME_B31_3("ASME-B31.3", "Process Piping", "2022",
-              new String[] {"AdiabaticPipe", "Pipe", "Valve"}, "pipeline design codes"), ASME_B31_4(
-                  "ASME-B31.4", "Pipeline Transportation Liquid Hydrocarbons", "2022",
-                  new String[] {"Pipeline", "AdiabaticPipe"}, "pipeline design codes"), ASME_B31_8(
-                      "ASME-B31.8", "Gas Transmission and Distribution Piping", "2022",
-                      new String[] {"Pipeline", "AdiabaticPipe"}, "pipeline design codes"),
+      new String[] { "Separator", "ThreePhaseSeparator", "GasScrubber", "Scrubber", "Adsorber" },
+      "pressure vessel design code"),
+  ASME_VIII_DIV2("ASME-VIII-Div2", "Pressure Vessels Division 2", "2021",
+      new String[] { "Separator", "ThreePhaseSeparator", "GasScrubber", "Scrubber" }, "pressure vessel design code"),
+  ASME_B31_3("ASME-B31.3", "Process Piping", "2022", new String[] { "AdiabaticPipe", "Pipe", "Valve" },
+      "pipeline design codes"),
+  ASME_B31_4("ASME-B31.4", "Pipeline Transportation Liquid Hydrocarbons", "2022",
+      new String[] { "Pipeline", "AdiabaticPipe" }, "pipeline design codes"),
+  ASME_B31_8("ASME-B31.8", "Gas Transmission and Distribution Piping", "2022",
+      new String[] { "Pipeline", "AdiabaticPipe" }, "pipeline design codes"),
 
   // API Standards (American Petroleum Institute)
-  API_617("API-617", "Axial and Centrifugal Compressors", "8th Ed", new String[] {"Compressor"},
-      "compressor design codes"), API_610("API-610", "Centrifugal Pumps", "12th Ed",
-          new String[] {"Pump"}, "pump design codes"), API_650("API-650",
-              "Welded Tanks for Oil Storage", "13th Ed", new String[] {"Tank", "SimpleTankFiller"},
-              "pressure vessel design code"), API_620("API-620",
-                  "Large Welded Low-Pressure Storage Tanks", "13th Ed",
-                  new String[] {"Tank", "SimpleTankFiller"},
-                  "pressure vessel design code"), API_660("API-660",
-                      "Shell and Tube Heat Exchangers", "9th Ed",
-                      new String[] {"HeatExchanger", "Heater", "Cooler"},
-                      "heat exchanger design codes"), API_661("API-661",
-                          "Air-Cooled Heat Exchangers", "7th Ed",
-                          new String[] {"HeatExchanger", "Cooler"},
-                          "heat exchanger design codes"), API_521("API-521",
-                              "Pressure-relieving and Depressuring Systems", "7th Ed",
-                              new String[] {"Valve", "ThrottlingValve"},
-                              "valve design codes"), API_526("API-526",
-                                  "Flanged Steel Pressure Relief Valves", "7th Ed",
-                                  new String[] {"Valve", "ThrottlingValve"},
-                                  "valve design codes"), API_5L("API-5L", "Line Pipe", "46th Ed",
-                                      new String[] {"Pipeline", "AdiabaticPipe", "Pipe"},
-                                      "material pipe design codes"), API_12J("API-12J",
-                                          "Oil and Gas Separators", "8th Ed", new String[] {
-                                              "Separator", "ThreePhaseSeparator", "GasScrubber"},
-                                          "separator process design"),
+  API_617("API-617", "Axial and Centrifugal Compressors", "8th Ed", new String[] { "Compressor" },
+      "compressor design codes"),
+  API_610("API-610", "Centrifugal Pumps", "12th Ed", new String[] { "Pump" }, "pump design codes"),
+  API_650("API-650", "Welded Tanks for Oil Storage", "13th Ed", new String[] { "Tank", "SimpleTankFiller" },
+      "pressure vessel design code"),
+  API_620("API-620", "Large Welded Low-Pressure Storage Tanks", "13th Ed", new String[] { "Tank", "SimpleTankFiller" },
+      "pressure vessel design code"),
+  API_660("API-660", "Shell and Tube Heat Exchangers", "9th Ed", new String[] { "HeatExchanger", "Heater", "Cooler" },
+      "heat exchanger design codes"),
+  API_661("API-661", "Air-Cooled Heat Exchangers", "7th Ed", new String[] { "HeatExchanger", "Cooler" },
+      "heat exchanger design codes"),
+  API_521("API-521", "Pressure-relieving and Depressuring Systems", "7th Ed",
+      new String[] { "Valve", "ThrottlingValve" }, "valve design codes"),
+  API_526("API-526", "Flanged Steel Pressure Relief Valves", "7th Ed", new String[] { "Valve", "ThrottlingValve" },
+      "valve design codes"),
+  API_5L("API-5L", "Line Pipe", "46th Ed", new String[] { "Pipeline", "AdiabaticPipe", "Pipe" },
+      "material pipe design codes"),
+  API_12J("API-12J", "Oil and Gas Separators", "8th Ed",
+      new String[] { "Separator", "ThreePhaseSeparator", "GasScrubber" }, "separator process design"),
 
   // DNV Standards (Det Norske Veritas)
-  DNV_ST_F101("DNV-ST-F101", "Submarine Pipeline Systems", "2021",
-      new String[] {"Pipeline", "AdiabaticPipe"},
-      "pipeline design codes"), DNV_OS_F101("DNV-OS-F101", "Submarine Pipeline Systems (Legacy)",
-          "2013", new String[] {"Pipeline", "AdiabaticPipe"},
-          "pipeline design codes"), DNV_RP_F105("DNV-RP-F105", "Free Spanning Pipelines", "2021",
-              new String[] {"Pipeline", "AdiabaticPipe"}, "pipeline design codes"),
+  DNV_ST_F101("DNV-ST-F101", "Submarine Pipeline Systems", "2021", new String[] { "Pipeline", "AdiabaticPipe" },
+      "pipeline design codes"),
+  DNV_OS_F101("DNV-OS-F101", "Submarine Pipeline Systems (Legacy)", "2013",
+      new String[] { "Pipeline", "AdiabaticPipe" }, "pipeline design codes"),
+  DNV_RP_F105("DNV-RP-F105", "Free Spanning Pipelines", "2021", new String[] { "Pipeline", "AdiabaticPipe" },
+      "pipeline design codes"),
 
   // ISO Standards
-  ISO_13623("ISO-13623", "Pipeline Transportation Systems", "2017",
-      new String[] {"Pipeline", "AdiabaticPipe"}, "pipeline design codes"), ISO_15649("ISO-15649",
-          "Petroleum and Natural Gas Process Piping", "2001",
-          new String[] {"AdiabaticPipe", "Pipe"}, "pipeline design codes"), ISO_16812("ISO-16812",
-              "Shell and Tube Heat Exchangers", "2019",
-              new String[] {"HeatExchanger", "Heater", "Cooler"}, "heat exchanger design codes"),
+  ISO_13623("ISO-13623", "Pipeline Transportation Systems", "2017", new String[] { "Pipeline", "AdiabaticPipe" },
+      "pipeline design codes"),
+  ISO_15649("ISO-15649", "Petroleum and Natural Gas Process Piping", "2001", new String[] { "AdiabaticPipe", "Pipe" },
+      "pipeline design codes"),
+  ISO_16812("ISO-16812", "Shell and Tube Heat Exchangers", "2019", new String[] { "HeatExchanger", "Heater", "Cooler" },
+      "heat exchanger design codes"),
 
   // ASTM Standards (American Society for Testing and Materials)
-  ASTM_A106("ASTM-A106", "Seamless Carbon Steel Pipe", "2022",
-      new String[] {"AdiabaticPipe", "Pipe", "Pipeline"},
-      "material pipe design codes"), ASTM_A516("ASTM-A516", "Pressure Vessel Plates Carbon Steel",
-          "2022", new String[] {"Separator", "ThreePhaseSeparator", "GasScrubber", "Adsorber"},
-          "material plate design codes"), ASTM_A333("ASTM-A333",
-              "Seamless Pipe for Low-Temperature Service", "2022",
-              new String[] {"AdiabaticPipe", "Pipe", "Pipeline"}, "material pipe design codes"),
+  ASTM_A106("ASTM-A106", "Seamless Carbon Steel Pipe", "2022", new String[] { "AdiabaticPipe", "Pipe", "Pipeline" },
+      "material pipe design codes"),
+  ASTM_A516("ASTM-A516", "Pressure Vessel Plates Carbon Steel", "2022",
+      new String[] { "Separator", "ThreePhaseSeparator", "GasScrubber", "Adsorber" }, "material plate design codes"),
+  ASTM_A333("ASTM-A333", "Seamless Pipe for Low-Temperature Service", "2022",
+      new String[] { "AdiabaticPipe", "Pipe", "Pipeline" }, "material pipe design codes"),
 
   // EN Standards (European)
-  EN_13480("EN-13480", "Metallic Industrial Piping", "2017", new String[] {"AdiabaticPipe", "Pipe"},
-      "pipeline design codes"), EN_13445("EN-13445", "Unfired Pressure Vessels", "2021",
-          new String[] {"Separator", "ThreePhaseSeparator", "GasScrubber"},
-          "pressure vessel design code"),
+  EN_13480("EN-13480", "Metallic Industrial Piping", "2017", new String[] { "AdiabaticPipe", "Pipe" },
+      "pipeline design codes"),
+  EN_13445("EN-13445", "Unfired Pressure Vessels", "2021",
+      new String[] { "Separator", "ThreePhaseSeparator", "GasScrubber" }, "pressure vessel design code"),
 
   // PD Standards (Published Document - UK)
   PD_5500("PD-5500", "Specification for Unfired Pressure Vessels", "2021",
-      new String[] {"Separator", "ThreePhaseSeparator", "GasScrubber"},
-      "pressure vessel design code");
+      new String[] { "Separator", "ThreePhaseSeparator", "GasScrubber" }, "pressure vessel design code");
 
   private final String code;
   private final String name;
@@ -131,11 +120,11 @@ public enum StandardType {
   /**
    * Constructor for StandardType.
    *
-   * @param code the standard code identifier
-   * @param name the full name of the standard
-   * @param defaultVersion the default version to use
+   * @param code                     the standard code identifier
+   * @param name                     the full name of the standard
+   * @param defaultVersion           the default version to use
    * @param applicableEquipmentTypes equipment types this standard applies to
-   * @param designStandardCategory the NeqSim design standard category key
+   * @param designStandardCategory   the NeqSim design standard category key
    */
   StandardType(String code, String name, String defaultVersion, String[] applicableEquipmentTypes,
       String designStandardCategory) {
@@ -186,8 +175,8 @@ public enum StandardType {
    * Get the NeqSim design standard category key.
    *
    * <p>
-   * This corresponds to the keys used in {@code MechanicalDesign.getDesignStandard()} hashtable,
-   * such as "pressure vessel design code", "separator process design", "pipeline design codes".
+   * This corresponds to the keys used in {@code MechanicalDesign.getDesignStandard()} hashtable, such as "pressure
+   * vessel design code", "separator process design", "pipeline design codes".
    * </p>
    *
    * @return the design standard category key
@@ -209,7 +198,7 @@ public enum StandardType {
     String normalizedType = equipmentType.trim().toLowerCase();
     for (String type : applicableEquipmentTypes) {
       if (type.toLowerCase().equals(normalizedType)) {
-        return true;
+	return true;
       }
     }
     return false;
@@ -228,7 +217,7 @@ public enum StandardType {
     String normalizedCode = code.trim().toUpperCase().replace("_", "-");
     for (StandardType type : values()) {
       if (type.getCode().toUpperCase().replace("_", "-").equals(normalizedCode)) {
-        return type;
+	return type;
       }
     }
     return null;
@@ -244,7 +233,7 @@ public enum StandardType {
     List<StandardType> applicable = new ArrayList<StandardType>();
     for (StandardType type : values()) {
       if (type.appliesTo(equipmentType)) {
-        applicable.add(type);
+	applicable.add(type);
       }
     }
     return applicable;
@@ -259,7 +248,7 @@ public enum StandardType {
     List<StandardType> norsok = new ArrayList<StandardType>();
     for (StandardType type : values()) {
       if (type.getCode().startsWith("NORSOK")) {
-        norsok.add(type);
+	norsok.add(type);
       }
     }
     return norsok;
@@ -274,7 +263,7 @@ public enum StandardType {
     List<StandardType> asme = new ArrayList<StandardType>();
     for (StandardType type : values()) {
       if (type.getCode().startsWith("ASME")) {
-        asme.add(type);
+	asme.add(type);
       }
     }
     return asme;
@@ -289,7 +278,7 @@ public enum StandardType {
     List<StandardType> api = new ArrayList<StandardType>();
     for (StandardType type : values()) {
       if (type.getCode().startsWith("API")) {
-        api.add(type);
+	api.add(type);
       }
     }
     return api;
@@ -304,7 +293,7 @@ public enum StandardType {
     List<StandardType> dnv = new ArrayList<StandardType>();
     for (StandardType type : values()) {
       if (type.getCode().startsWith("DNV")) {
-        dnv.add(type);
+	dnv.add(type);
       }
     }
     return dnv;
@@ -314,8 +303,8 @@ public enum StandardType {
    * Get all standards for a specific design standard category.
    *
    * <p>
-   * Categories include: "pressure vessel design code", "separator process design", "pipeline design
-   * codes", "compressor design codes", etc.
+   * Categories include: "pressure vessel design code", "separator process design", "pipeline design codes", "compressor
+   * design codes", etc.
    * </p>
    *
    * @param category the design standard category key
@@ -329,7 +318,7 @@ public enum StandardType {
     String normalizedCategory = category.trim().toLowerCase();
     for (StandardType type : values()) {
       if (type.getDesignStandardCategory().toLowerCase().equals(normalizedCategory)) {
-        result.add(type);
+	result.add(type);
       }
     }
     return result;
@@ -344,7 +333,7 @@ public enum StandardType {
     List<StandardType> iso = new ArrayList<StandardType>();
     for (StandardType type : values()) {
       if (type.getCode().startsWith("ISO")) {
-        iso.add(type);
+	iso.add(type);
       }
     }
     return iso;
@@ -359,7 +348,7 @@ public enum StandardType {
     List<StandardType> astm = new ArrayList<StandardType>();
     for (StandardType type : values()) {
       if (type.getCode().startsWith("ASTM")) {
-        astm.add(type);
+	astm.add(type);
       }
     }
     return astm;
@@ -374,7 +363,7 @@ public enum StandardType {
     List<StandardType> en = new ArrayList<StandardType>();
     for (StandardType type : values()) {
       if (type.getCode().startsWith("EN")) {
-        en.add(type);
+	en.add(type);
       }
     }
     return en;
@@ -389,7 +378,7 @@ public enum StandardType {
     List<String> categories = new ArrayList<String>();
     for (StandardType type : values()) {
       if (!categories.contains(type.getDesignStandardCategory())) {
-        categories.add(type.getDesignStandardCategory());
+	categories.add(type.getDesignStandardCategory());
       }
     }
     return categories;

@@ -12,7 +12,7 @@ public class SystemThermoSetMolarCompositionTest extends neqsim.NeqSimTest {
   private static final Logger logger = LogManager.getLogger(SystemThermoSetMolarCompositionTest.class);
 
   /** Logger object for class. */
-  
+
   SystemInterface sys;
 
   @BeforeEach
@@ -25,7 +25,7 @@ public class SystemThermoSetMolarCompositionTest extends neqsim.NeqSimTest {
 
   @Test
   void testSetMolarComposition() {
-    sys.setMolarComposition(new double[] {1, 1.5, 1.75});
+    sys.setMolarComposition(new double[] { 1, 1.5, 1.75 });
     double[] molarComposition = sys.getMolarComposition();
     Assertions.assertEquals(0.23529411764705882, molarComposition[0], 0.0000001);
     Assertions.assertEquals(0.35294117647058826, molarComposition[1], 0.0000001);
@@ -37,7 +37,7 @@ public class SystemThermoSetMolarCompositionTest extends neqsim.NeqSimTest {
   @Test
   void setMolarCompositionPlus() {
     sys.getCharacterization().characterisePlusFraction();
-    sys.setMolarCompositionPlus(new double[] {1, 1.5, 1.75});
+    sys.setMolarCompositionPlus(new double[] { 1, 1.5, 1.75 });
     double[] molarComposition = sys.getMolarComposition();
 
     Assertions.assertEquals(0.3999998435802131, molarComposition[0], 0.0000001);
@@ -48,7 +48,7 @@ public class SystemThermoSetMolarCompositionTest extends neqsim.NeqSimTest {
 
   @Test
   void testSetMolarCompositionOfPlusFluid() {
-    sys.setMolarCompositionOfPlusFluid(new double[] {1, 1.5, 1.75});
+    sys.setMolarCompositionOfPlusFluid(new double[] { 1, 1.5, 1.75 });
     double[] molarComposition = sys.getMolarComposition();
 
     Assertions.assertEquals(0.39999999999999997, molarComposition[0], 0.0000001);
@@ -61,33 +61,33 @@ public class SystemThermoSetMolarCompositionTest extends neqsim.NeqSimTest {
   void testNoFlow() {
     sys.reset();
     RuntimeException thrown = Assertions.assertThrows(RuntimeException.class, () -> {
-      sys.setMolarComposition(new double[] {1, 1.5, 1.75});
+      sys.setMolarComposition(new double[] { 1, 1.5, 1.75 });
     });
     Assertions.assertEquals(
-        "neqsim.util.exception.InvalidInputException: SystemSrkEos:setMolarComposition - Input totalFlow must be larger than 0 (1e-100) when setting molar composition",
-        thrown.getMessage());
+	"neqsim.util.exception.InvalidInputException: SystemSrkEos:setMolarComposition - Input totalFlow must be larger than 0 (1e-100) when setting molar composition",
+	thrown.getMessage());
   }
 
   @Test
   void testNoFlowPlus() {
     sys.reset();
     RuntimeException thrown = Assertions.assertThrows(RuntimeException.class, () -> {
-      sys.setMolarCompositionPlus(new double[] {1, 1.5, 1.75});
+      sys.setMolarCompositionPlus(new double[] { 1, 1.5, 1.75 });
     });
     Assertions.assertEquals(
-        "neqsim.util.exception.InvalidInputException: SystemSrkEos:setMolarComposition - Input totalFlow must be larger than 0 (1e-100) when setting molar composition",
-        thrown.getMessage());
+	"neqsim.util.exception.InvalidInputException: SystemSrkEos:setMolarComposition - Input totalFlow must be larger than 0 (1e-100) when setting molar composition",
+	thrown.getMessage());
   }
 
   @Test
   void testNoFlowPlusFluid() {
     sys.reset();
     RuntimeException thrown = Assertions.assertThrows(RuntimeException.class, () -> {
-      sys.setMolarCompositionOfPlusFluid(new double[] {1, 1.5, 1.75});
+      sys.setMolarCompositionOfPlusFluid(new double[] { 1, 1.5, 1.75 });
     });
     Assertions.assertEquals(
-        "neqsim.util.exception.InvalidInputException: SystemSrkEos:setMolarComposition - Input totalFlow must be larger than 0 (1e-100) when setting molar composition",
-        thrown.getMessage());
+	"neqsim.util.exception.InvalidInputException: SystemSrkEos:setMolarComposition - Input totalFlow must be larger than 0 (1e-100) when setting molar composition",
+	thrown.getMessage());
   }
 
   @Test
@@ -209,16 +209,14 @@ public class SystemThermoSetMolarCompositionTest extends neqsim.NeqSimTest {
     fluid.setMixingRule("classic");
 
     // Use "mole/hr" spelling (should work via case-insensitive match)
-    fluid.setComponentFlowRates(new double[] {3600.0, 7200.0}, "mole/hr");
+    fluid.setComponentFlowRates(new double[] { 3600.0, 7200.0 }, "mole/hr");
     assertEquals(1.0, fluid.getPhase(0).getComponent("methane").getNumberOfmoles(), 1e-6);
     assertEquals(2.0, fluid.getPhase(0).getComponent("ethane").getNumberOfmoles(), 1e-6);
 
     // Use "kmole/hr" spelling
-    fluid.setComponentFlowRates(new double[] {1.0, 2.0}, "kmole/hr");
-    assertEquals(1000.0 / 3600.0, fluid.getPhase(0).getComponent("methane").getNumberOfmoles(),
-        1e-6);
-    assertEquals(2000.0 / 3600.0, fluid.getPhase(0).getComponent("ethane").getNumberOfmoles(),
-        1e-6);
+    fluid.setComponentFlowRates(new double[] { 1.0, 2.0 }, "kmole/hr");
+    assertEquals(1000.0 / 3600.0, fluid.getPhase(0).getComponent("methane").getNumberOfmoles(), 1e-6);
+    assertEquals(2000.0 / 3600.0, fluid.getPhase(0).getComponent("ethane").getNumberOfmoles(), 1e-6);
   }
 
   @Test
@@ -226,15 +224,13 @@ public class SystemThermoSetMolarCompositionTest extends neqsim.NeqSimTest {
     SystemInterface weightSystem = new SystemSrkEos(298.0, 50.0);
     weightSystem.addComponent("methane", 1.0);
     weightSystem.addComponent("ethane", 1.0);
-    weightSystem.setMolarComposition(new double[] {0.25, 0.75});
+    weightSystem.setMolarComposition(new double[] { 0.25, 0.75 });
 
     double[] weightComposition = weightSystem.getWeightBasedComposition();
 
     double mixtureMolarMass = weightSystem.getMolarMass();
-    double expectedFirst =
-        weightSystem.getPhase(0).getComponent(0).getMolarMass() * 0.25 / mixtureMolarMass;
-    double expectedSecond =
-        weightSystem.getPhase(0).getComponent(1).getMolarMass() * 0.75 / mixtureMolarMass;
+    double expectedFirst = weightSystem.getPhase(0).getComponent(0).getMolarMass() * 0.25 / mixtureMolarMass;
+    double expectedSecond = weightSystem.getPhase(0).getComponent(1).getMolarMass() * 0.75 / mixtureMolarMass;
 
     assertEquals(expectedFirst, weightComposition[0]);
     assertEquals(expectedSecond, weightComposition[1]);

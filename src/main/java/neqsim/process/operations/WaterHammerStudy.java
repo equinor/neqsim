@@ -20,25 +20,24 @@ import neqsim.thermo.system.SystemSrkEos;
  * Runs fast water-hammer and liquid-hammer screening studies from process, STID, and tag data.
  *
  * <p>
- * The study facade converts a compact JSON specification into a {@link WaterHammerPipe}, applies
- * route geometry from a pipe object or STID-style segment list, optionally overrides operating data
- * from tagreader values, runs valve-closure transients, and returns a structured JSON result for
- * notebooks, agents, and MCP tools.
+ * The study facade converts a compact JSON specification into a {@link WaterHammerPipe}, applies route geometry from a
+ * pipe object or STID-style segment list, optionally overrides operating data from tagreader values, runs valve-closure
+ * transients, and returns a structured JSON result for notebooks, agents, and MCP tools.
  * </p>
  *
  * @author Even Solbraa
  * @version 1.0
  */
 public final class WaterHammerStudy {
-  private static final Gson GSON =
-      new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+  private static final Gson GSON = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
   private static final double DEFAULT_MINOR_LOSS_FRICTION_FACTOR = 0.02;
   private static final int MAX_TIME_STEPS = 100000;
 
   /**
    * Private constructor for utility class.
    */
-  private WaterHammerStudy() {}
+  private WaterHammerStudy() {
+  }
 
   /**
    * Runs a water-hammer study from a JSON input specification.
@@ -50,7 +49,7 @@ public final class WaterHammerStudy {
     JsonObject root = new JsonObject();
     try {
       if (studyJson == null || studyJson.trim().isEmpty()) {
-        throw new IllegalArgumentException("Water-hammer input JSON cannot be null or empty");
+	throw new IllegalArgumentException("Water-hammer input JSON cannot be null or empty");
       }
       JsonObject input = JsonParser.parseString(studyJson).getAsJsonObject();
       return GSON.toJson(run(input));
@@ -58,7 +57,7 @@ public final class WaterHammerStudy {
       root.addProperty("status", "error");
       root.addProperty("message", e.getMessage());
       root.addProperty("remediation",
-          "Provide components, temperature/pressure, flowRate, and pipe or route geometry.");
+	  "Provide components, temperature/pressure, flowRate, and pipe or route geometry.");
       return GSON.toJson(root);
     }
   }
@@ -88,12 +87,10 @@ public final class WaterHammerStudy {
     double requestedTimeStep = getDoubleAny(input, stableTimeStep, "timeStep_s", "dt_s");
     double timeStep = Math.min(requestedTimeStep, stableTimeStep);
     if (requestedTimeStep > stableTimeStep) {
-      warnings.add("Requested time step exceeded the Courant limit and was reduced to "
-          + stableTimeStep + " s");
+      warnings.add("Requested time step exceeded the Courant limit and was reduced to " + stableTimeStep + " s");
     }
 
-    double defaultDuration = Math.max(pipe.getWaveRoundTripTime() * 3.0,
-        getDefaultClosureDuration(input) * 4.0);
+    double defaultDuration = Math.max(pipe.getWaveRoundTripTime() * 3.0, getDefaultClosureDuration(input) * 4.0);
     double simulationTime = getDoubleAny(input, defaultDuration, "simulationTime_s", "duration_s");
     int numberOfSteps = (int) Math.ceil(simulationTime / timeStep);
     if (numberOfSteps > MAX_TIME_STEPS) {
@@ -107,15 +104,15 @@ public final class WaterHammerStudy {
     JsonArray sampledOutletPressure = new JsonArray();
     JsonArray sampledValveOpening = new JsonArray();
     addSample(sampledTime, sampledOutletPressure, sampledValveOpening, 0.0, initialOutletPressureBar,
-        pipe.getValveOpening());
+	pipe.getValveOpening());
 
     for (int step = 1; step <= numberOfSteps; step++) {
       double time = step * timeStep;
       applyValveEvents(pipe, events, time);
       pipe.runTransient(timeStep, id);
       if (step % sampleInterval == 0 || step == numberOfSteps) {
-        addSample(sampledTime, sampledOutletPressure, sampledValveOpening, time,
-            last(pipe.getPressureProfile("bar")), pipe.getValveOpening());
+	addSample(sampledTime, sampledOutletPressure, sampledValveOpening, time, last(pipe.getPressureProfile("bar")),
+	    pipe.getValveOpening());
       }
     }
 
@@ -125,17 +122,16 @@ public final class WaterHammerStudy {
     result.addProperty("studyName", getString(input, "studyName", "Water hammer screening"));
     result.addProperty("calculation", "Method of Characteristics single-line acoustic transient");
     result.add("inputSummary", buildInputSummary(input, geometry, pipe, feed));
-    result.add("keyResults", buildKeyResults(input, pipe, initialOutletPressureBar,
-        initialVelocity, timeStep, simulationTime));
-    result.add("timeSeries", buildTimeSeries(sampledTime, sampledOutletPressure,
-        sampledValveOpening));
+    result.add("keyResults",
+	buildKeyResults(input, pipe, initialOutletPressureBar, initialVelocity, timeStep, simulationTime));
+    result.add("timeSeries", buildTimeSeries(sampledTime, sampledOutletPressure, sampledValveOpening));
     result.add("pressureEnvelope", buildPressureEnvelope(pipe));
     result.add("validation", buildValidation(input, pipe, warnings));
     result.add("sourceReferences", getSourceReferences(input, geometry));
     result.add("warnings", toJsonArray(warnings));
     result.addProperty("screeningLimitations",
-        "Equivalent single-line acoustic model. Validate high-risk cases with detailed surge "
-            + "software, vendor valve curves, support loads, and as-built isometrics.");
+	"Equivalent single-line acoustic model. Validate high-risk cases with detailed surge "
+	    + "software, vendor valve curves, support loads, and as-built isometrics.");
     return result;
   }
 
@@ -147,12 +143,10 @@ public final class WaterHammerStudy {
    */
   private static SystemInterface createFluid(JsonObject input) {
     JsonObject fieldData = getObject(input, "fieldData", "tagreader", "tags");
-    double temperatureC = getDoubleAny(fieldData,
-        getDoubleAny(input, 20.0, "temperature_C", "inletTemperature_C"), "temperature_C",
-        "inletTemperature_C");
-    double pressureBara = getDoubleAny(fieldData,
-        getDoubleAny(input, 10.0, "pressure_bara", "inletPressure_bara"), "pressure_bara",
-        "inletPressure_bara");
+    double temperatureC = getDoubleAny(fieldData, getDoubleAny(input, 20.0, "temperature_C", "inletTemperature_C"),
+	"temperature_C", "inletTemperature_C");
+    double pressureBara = getDoubleAny(fieldData, getDoubleAny(input, 10.0, "pressure_bara", "inletPressure_bara"),
+	"pressure_bara", "inletPressure_bara");
     String model = getString(input, "model", "SRK").toUpperCase(Locale.ROOT);
 
     SystemInterface fluid;
@@ -167,7 +161,7 @@ public final class WaterHammerStudy {
       fluid.addComponent("water", 1.0);
     } else {
       for (String component : components.keySet()) {
-        fluid.addComponent(component, components.get(component).getAsDouble());
+	fluid.addComponent(component, components.get(component).getAsDouble());
       }
     }
     fluid.createDatabase(true);
@@ -200,14 +194,13 @@ public final class WaterHammerStudy {
   /**
    * Creates and configures the water-hammer pipe from normalized geometry and input options.
    *
-   * @param input parsed JSON input
+   * @param input    parsed JSON input
    * @param geometry normalized pipe geometry
-   * @param feed feed stream
+   * @param feed     feed stream
    * @return configured water-hammer pipe
    */
   private static WaterHammerPipe createPipe(JsonObject input, PipeGeometry geometry, Stream feed) {
-    WaterHammerPipe pipe = new WaterHammerPipe(getString(input, "pipeName", "water hammer pipe"),
-        feed);
+    WaterHammerPipe pipe = new WaterHammerPipe(getString(input, "pipeName", "water hammer pipe"), feed);
     JsonObject pipeInput = getObject(input, "pipe", "pipeline");
     JsonObject fieldData = getObject(input, "fieldData", "tagreader", "tags");
     pipe.setLength(geometry.lengthMeters);
@@ -215,46 +208,41 @@ public final class WaterHammerStudy {
     pipe.setElevationChange(geometry.elevationChangeMeters);
     pipe.setPipeWallRoughness(geometry.roughnessMeters);
     pipe.setWallThickness(geometry.wallThicknessMeters);
-    pipe.setNumberOfNodes((int) Math.round(getDoubleAny(pipeInput,
-        getDoubleAny(input, 80.0, "numberOfNodes", "nodes"), "numberOfNodes", "nodes")));
-    pipe.setCourantNumber(getDoubleAny(pipeInput,
-        getDoubleAny(input, 0.9, "courantNumber"), "courantNumber"));
-    double waveSpeed = getDoubleAny(pipeInput, getDoubleAny(input, Double.NaN, "waveSpeed_m_s",
-        "waveSpeed"), "waveSpeed_m_s", "waveSpeed");
+    pipe.setNumberOfNodes((int) Math
+	.round(getDoubleAny(pipeInput, getDoubleAny(input, 80.0, "numberOfNodes", "nodes"), "numberOfNodes", "nodes")));
+    pipe.setCourantNumber(getDoubleAny(pipeInput, getDoubleAny(input, 0.9, "courantNumber"), "courantNumber"));
+    double waveSpeed = getDoubleAny(pipeInput, getDoubleAny(input, Double.NaN, "waveSpeed_m_s", "waveSpeed"),
+	"waveSpeed_m_s", "waveSpeed");
     if (!Double.isNaN(waveSpeed)) {
       pipe.setWaveSpeed(waveSpeed);
     }
     pipe.setUpstreamBoundary(getString(input, "upstreamBoundary", "RESERVOIR"));
     pipe.setDownstreamBoundary(getString(input, "downstreamBoundary", "VALVE"));
-    pipe.setValveOpening(getDoubleAny(fieldData,
-        getDoubleAny(input, 1.0, "valveOpening", "initialValveOpening"), "valveOpening",
-        "initialValveOpening"));
+    pipe.setValveOpening(getDoubleAny(fieldData, getDoubleAny(input, 1.0, "valveOpening", "initialValveOpening"),
+	"valveOpening", "initialValveOpening"));
     return pipe;
   }
 
   /**
    * Reads pipe geometry from pipe fields or a STID-style route segment list.
    *
-   * @param input parsed JSON input
+   * @param input    parsed JSON input
    * @param warnings mutable warning list
    * @return normalized equivalent pipe geometry
    */
   private static PipeGeometry readGeometry(JsonObject input, List<String> warnings) {
     JsonObject pipe = getObject(input, "pipe", "pipeline");
     PipeGeometry geometry = new PipeGeometry();
-    geometry.lengthMeters = getDoubleAny(pipe, getDoubleAny(input, 1000.0, "length_m"),
-        "length_m", "lengthMeters", "length");
-    geometry.diameterMeters = getDoubleAny(pipe, getDoubleAny(input, 0.2, "diameter_m"),
-        "diameter_m", "internalDiameter_m", "diameterMeters", "diameter");
-    geometry.wallThicknessMeters = getDoubleAny(pipe,
-        getDoubleAny(input, 0.01, "wallThickness_m", "wallThickness"), "wallThickness_m",
-        "wallThickness", "wall_thickness_m");
-    geometry.roughnessMeters = getDoubleAny(pipe,
-        getDoubleAny(input, 4.6e-5, "roughness_m", "pipeWallRoughness"), "roughness_m",
-        "pipeWallRoughness", "roughness");
-    geometry.elevationChangeMeters = getDoubleAny(pipe,
-        getDoubleAny(input, 0.0, "elevation_m", "elevationChange_m"), "elevation_m",
-        "elevationChange_m", "elevationChange");
+    geometry.lengthMeters = getDoubleAny(pipe, getDoubleAny(input, 1000.0, "length_m"), "length_m", "lengthMeters",
+	"length");
+    geometry.diameterMeters = getDoubleAny(pipe, getDoubleAny(input, 0.2, "diameter_m"), "diameter_m",
+	"internalDiameter_m", "diameterMeters", "diameter");
+    geometry.wallThicknessMeters = getDoubleAny(pipe, getDoubleAny(input, 0.01, "wallThickness_m", "wallThickness"),
+	"wallThickness_m", "wallThickness", "wall_thickness_m");
+    geometry.roughnessMeters = getDoubleAny(pipe, getDoubleAny(input, 4.6e-5, "roughness_m", "pipeWallRoughness"),
+	"roughness_m", "pipeWallRoughness", "roughness");
+    geometry.elevationChangeMeters = getDoubleAny(pipe, getDoubleAny(input, 0.0, "elevation_m", "elevationChange_m"),
+	"elevation_m", "elevationChange_m", "elevationChange");
 
     JsonObject route = getObject(input, "stidRoute", "route", "lineListRoute");
     if (route != null && route.has("segments") && route.get("segments").isJsonArray()) {
@@ -270,8 +258,7 @@ public final class WaterHammerStudy {
    * @param geometry geometry object to update
    * @param warnings mutable warning list
    */
-  private static void applyRouteSegments(JsonArray segments, PipeGeometry geometry,
-      List<String> warnings) {
+  private static void applyRouteSegments(JsonArray segments, PipeGeometry geometry, List<String> warnings) {
     double totalLength = 0.0;
     double totalElevation = 0.0;
     double firstDiameter = Double.NaN;
@@ -281,23 +268,22 @@ public final class WaterHammerStudy {
     for (JsonElement element : segments) {
       JsonObject segment = element.getAsJsonObject();
       double segmentLength = getDoubleAny(segment, 0.0, "length_m", "lengthMeters", "length");
-      double diameter = getDoubleAny(segment, geometry.diameterMeters, "diameter_m",
-          "internalDiameter_m", "diameterMeters", "diameter");
-      double wallThickness = getDoubleAny(segment, geometry.wallThicknessMeters,
-          "wallThickness_m", "wallThickness", "wall_thickness_m");
-      double roughness = getDoubleAny(segment, geometry.roughnessMeters, "roughness_m",
-          "pipeWallRoughness", "roughness");
+      double diameter = getDoubleAny(segment, geometry.diameterMeters, "diameter_m", "internalDiameter_m",
+	  "diameterMeters", "diameter");
+      double wallThickness = getDoubleAny(segment, geometry.wallThicknessMeters, "wallThickness_m", "wallThickness",
+	  "wall_thickness_m");
+      double roughness = getDoubleAny(segment, geometry.roughnessMeters, "roughness_m", "pipeWallRoughness",
+	  "roughness");
       if (Double.isNaN(firstDiameter)) {
-        firstDiameter = diameter;
-        firstWallThickness = wallThickness;
-        firstRoughness = roughness;
+	firstDiameter = diameter;
+	firstWallThickness = wallThickness;
+	firstRoughness = roughness;
       } else if (Math.abs(diameter - firstDiameter) > 1.0e-6) {
-        warnings.add("Route has varying diameters; equivalent screening uses the first segment "
-            + "diameter. Split into separate studies for final checks.");
+	warnings.add("Route has varying diameters; equivalent screening uses the first segment "
+	    + "diameter. Split into separate studies for final checks.");
       }
       totalLength += segmentLength;
-      totalElevation += getDoubleAny(segment, 0.0, "elevation_m", "elevationChange_m",
-          "elevationChange");
+      totalElevation += getDoubleAny(segment, 0.0, "elevation_m", "elevationChange_m", "elevationChange");
       equivalentMinorLossLength += estimateEquivalentMinorLossLength(segment, diameter);
     }
     if (totalLength > 0.0) {
@@ -313,7 +299,7 @@ public final class WaterHammerStudy {
   /**
    * Estimates equivalent length for segment minor losses using a screening friction factor.
    *
-   * @param segment route segment JSON object
+   * @param segment  route segment JSON object
    * @param diameter segment diameter in meters
    * @return equivalent length added by minor losses in meters
    */
@@ -333,7 +319,7 @@ public final class WaterHammerStudy {
   /**
    * Returns the event schedule or creates a default valve closure event.
    *
-   * @param input parsed JSON input
+   * @param input          parsed JSON input
    * @param initialOpening initial valve opening fraction
    * @return event schedule array
    */
@@ -365,9 +351,9 @@ public final class WaterHammerStudy {
   /**
    * Applies all active valve events at the current transient time.
    *
-   * @param pipe transient pipe
+   * @param pipe   transient pipe
    * @param events event schedule array
-   * @param time current simulation time in seconds
+   * @param time   current simulation time in seconds
    */
   private static void applyValveEvents(WaterHammerPipe pipe, JsonArray events, double time) {
     Double opening = null;
@@ -375,19 +361,17 @@ public final class WaterHammerStudy {
       JsonObject event = element.getAsJsonObject();
       String type = getString(event, "type", "VALVE_CLOSURE").toUpperCase(Locale.ROOT);
       if (!type.contains("VALVE")) {
-        continue;
+	continue;
       }
       double startTime = getDoubleAny(event, 0.0, "startTime_s", "time_s");
       double duration = Math.max(1.0e-12, getDoubleAny(event, 0.0, "duration_s"));
-      double startOpening = getDoubleAny(event, pipe.getValveOpening(), "startOpening",
-          "startOpeningFraction");
-      double endOpening = getDoubleAny(event, type.contains("OPEN") ? 1.0 : 0.0, "endOpening",
-          "endOpeningFraction");
+      double startOpening = getDoubleAny(event, pipe.getValveOpening(), "startOpening", "startOpeningFraction");
+      double endOpening = getDoubleAny(event, type.contains("OPEN") ? 1.0 : 0.0, "endOpening", "endOpeningFraction");
       if (time >= startTime + duration) {
-        opening = endOpening;
+	opening = endOpening;
       } else if (time >= startTime) {
-        double fraction = (time - startTime) / duration;
-        opening = startOpening + fraction * (endOpening - startOpening);
+	double fraction = (time - startTime) / duration;
+	opening = startOpening + fraction * (endOpening - startOpening);
       }
     }
     if (opening != null) {
@@ -398,15 +382,15 @@ public final class WaterHammerStudy {
   /**
    * Adds a sampled transient point to the output arrays.
    *
-   * @param timeArray time output array
+   * @param timeArray     time output array
    * @param pressureArray pressure output array
-   * @param openingArray valve opening output array
-   * @param time time in seconds
-   * @param pressureBar outlet pressure in bar
-   * @param valveOpening valve opening fraction
+   * @param openingArray  valve opening output array
+   * @param time          time in seconds
+   * @param pressureBar   outlet pressure in bar
+   * @param valveOpening  valve opening fraction
    */
-  private static void addSample(JsonArray timeArray, JsonArray pressureArray,
-      JsonArray openingArray, double time, double pressureBar, double valveOpening) {
+  private static void addSample(JsonArray timeArray, JsonArray pressureArray, JsonArray openingArray, double time,
+      double pressureBar, double valveOpening) {
     timeArray.add(time);
     pressureArray.add(pressureBar);
     openingArray.add(valveOpening);
@@ -415,14 +399,14 @@ public final class WaterHammerStudy {
   /**
    * Builds the input summary for the JSON result.
    *
-   * @param input parsed JSON input
+   * @param input    parsed JSON input
    * @param geometry normalized geometry
-   * @param pipe configured pipe
-   * @param feed inlet stream
+   * @param pipe     configured pipe
+   * @param feed     inlet stream
    * @return input summary JSON object
    */
-  private static JsonObject buildInputSummary(JsonObject input, PipeGeometry geometry,
-      WaterHammerPipe pipe, Stream feed) {
+  private static JsonObject buildInputSummary(JsonObject input, PipeGeometry geometry, WaterHammerPipe pipe,
+      Stream feed) {
     JsonObject summary = new JsonObject();
     summary.addProperty("temperature_C", feed.getTemperature("C"));
     summary.addProperty("pressure_bara", feed.getPressure("bara"));
@@ -443,17 +427,16 @@ public final class WaterHammerStudy {
   /**
    * Builds key study results.
    *
-   * @param input parsed JSON input
-   * @param pipe simulated pipe
+   * @param input                    parsed JSON input
+   * @param pipe                     simulated pipe
    * @param initialOutletPressureBar initial outlet pressure in bar
-   * @param initialVelocity initial pipe velocity in meters per second
-   * @param timeStep time step used in seconds
-   * @param simulationTime simulated duration in seconds
+   * @param initialVelocity          initial pipe velocity in meters per second
+   * @param timeStep                 time step used in seconds
+   * @param simulationTime           simulated duration in seconds
    * @return key results JSON object
    */
-  private static JsonObject buildKeyResults(JsonObject input, WaterHammerPipe pipe,
-      double initialOutletPressureBar, double initialVelocity, double timeStep,
-      double simulationTime) {
+  private static JsonObject buildKeyResults(JsonObject input, WaterHammerPipe pipe, double initialOutletPressureBar,
+      double initialVelocity, double timeStep, double simulationTime) {
     JsonObject key = new JsonObject();
     double maxPressureBar = pipe.getMaxPressure("bar");
     double minPressureBar = pipe.getMinPressure("bar");
@@ -469,17 +452,17 @@ public final class WaterHammerStudy {
     key.addProperty("maxStableTimeStep_s", pipe.getMaxStableTimeStep());
     key.addProperty("timeStepUsed_s", timeStep);
     key.addProperty("simulationTime_s", simulationTime);
-    key.addProperty("closureRegime", getDefaultClosureDuration(input) <= pipe.getWaveRoundTripTime()
-        ? "fast_closure" : "slow_closure");
+    key.addProperty("closureRegime",
+	getDefaultClosureDuration(input) <= pipe.getWaveRoundTripTime() ? "fast_closure" : "slow_closure");
     return key;
   }
 
   /**
    * Builds sampled transient time-series output.
    *
-   * @param sampledTime sampled time array
+   * @param sampledTime           sampled time array
    * @param sampledOutletPressure sampled outlet pressure array
-   * @param sampledValveOpening sampled valve opening array
+   * @param sampledValveOpening   sampled valve opening array
    * @return time-series JSON object
    */
   private static JsonObject buildTimeSeries(JsonArray sampledTime, JsonArray sampledOutletPressure,
@@ -509,36 +492,35 @@ public final class WaterHammerStudy {
   /**
    * Builds validation and design-margin output.
    *
-   * @param input parsed JSON input
-   * @param pipe simulated pipe
+   * @param input    parsed JSON input
+   * @param pipe     simulated pipe
    * @param warnings warning list
    * @return validation JSON object
    */
-  private static JsonObject buildValidation(JsonObject input, WaterHammerPipe pipe,
-      List<String> warnings) {
+  private static JsonObject buildValidation(JsonObject input, WaterHammerPipe pipe, List<String> warnings) {
     JsonObject validation = new JsonObject();
     validation.addProperty("method", "MOC transient with Courant-limited time step");
     validation.addProperty("timeStepWithinCourantLimit", true);
-    double designPressure = getDoubleAny(input, Double.NaN, "designPressure_bara",
-        "maxAllowablePressure_bara", "MAOP_bara");
+    double designPressure = getDoubleAny(input, Double.NaN, "designPressure_bara", "maxAllowablePressure_bara",
+	"MAOP_bara");
     if (!Double.isNaN(designPressure)) {
       double maxPressure = pipe.getMaxPressure("bar");
       validation.addProperty("designPressure_bara", designPressure);
       validation.addProperty("maxPressureToDesignPressureRatio", maxPressure / designPressure);
       validation.addProperty("designPressureExceeded", maxPressure > designPressure);
       if (maxPressure > designPressure) {
-        warnings.add("Calculated peak pressure exceeds the supplied design pressure.");
+	warnings.add("Calculated peak pressure exceeds the supplied design pressure.");
       }
     }
-    validation.addProperty("requiresDetailedSurgeStudy", pipe.getMaxPressure("bar")
-        - last(pipe.getPressureProfile("bar")) > 5.0 || warnings.size() > 0);
+    validation.addProperty("requiresDetailedSurgeStudy",
+	pipe.getMaxPressure("bar") - last(pipe.getPressureProfile("bar")) > 5.0 || warnings.size() > 0);
     return validation;
   }
 
   /**
    * Gets source references from top-level input and route geometry.
    *
-   * @param input parsed JSON input
+   * @param input    parsed JSON input
    * @param geometry normalized geometry
    * @return source reference JSON array
    */
@@ -546,7 +528,7 @@ public final class WaterHammerStudy {
     JsonArray references = new JsonArray();
     if (input.has("sourceReferences") && input.get("sourceReferences").isJsonArray()) {
       for (JsonElement element : input.getAsJsonArray("sourceReferences")) {
-        references.add(element);
+	references.add(element);
       }
     }
     for (String reference : geometry.sourceReferences) {
@@ -581,7 +563,7 @@ public final class WaterHammerStudy {
     }
     for (String name : names) {
       if (input.has(name) && input.get(name).isJsonObject()) {
-        return input.getAsJsonObject(name);
+	return input.getAsJsonObject(name);
       }
     }
     return null;
@@ -590,8 +572,8 @@ public final class WaterHammerStudy {
   /**
    * Gets a string field with a default value.
    *
-   * @param input source JSON object
-   * @param name field name
+   * @param input        source JSON object
+   * @param name         field name
    * @param defaultValue default value if missing
    * @return string value or default
    */
@@ -605,9 +587,9 @@ public final class WaterHammerStudy {
   /**
    * Gets the first matching finite double from a JSON object.
    *
-   * @param input source JSON object
+   * @param input        source JSON object
    * @param defaultValue default value if fields are missing
-   * @param names accepted field names
+   * @param names        accepted field names
    * @return field value or default
    */
   private static double getDoubleAny(JsonObject input, double defaultValue, String... names) {
@@ -616,7 +598,7 @@ public final class WaterHammerStudy {
     }
     for (String name : names) {
       if (input.has(name) && !input.get(name).isJsonNull()) {
-        return input.get(name).getAsDouble();
+	return input.get(name).getAsDouble();
       }
     }
     return defaultValue;

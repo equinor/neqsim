@@ -31,7 +31,8 @@ public class onePhasePipeFlowNode extends onePhaseFlowNode {
    * Constructor for onePhasePipeFlowNode.
    * </p>
    */
-  public onePhasePipeFlowNode() {}
+  public onePhasePipeFlowNode() {
+  }
 
   /**
    * <p>
@@ -39,8 +40,7 @@ public class onePhasePipeFlowNode extends onePhaseFlowNode {
    * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface}
-   *        object
+   * @param pipe   a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
    */
   public onePhasePipeFlowNode(SystemInterface system, GeometryDefinitionInterface pipe) {
     super(system, pipe);
@@ -66,7 +66,7 @@ public class onePhasePipeFlowNode extends onePhaseFlowNode {
   @Override
   public double calcReynoldsNumber() {
     reynoldsNumber[0] = getVelocity() * pipe.getDiameter()
-        / getBulkSystem().getPhases()[0].getPhysicalProperties().getKinematicViscosity();
+	/ getBulkSystem().getPhases()[0].getPhysicalProperties().getKinematicViscosity();
     return reynoldsNumber[0];
   }
 
@@ -99,8 +99,7 @@ public class onePhasePipeFlowNode extends onePhaseFlowNode {
     test[0].init();
 
     // test[0].getVolumetricFlow();
-    System.out.println("flow: " + test[0].getVolumetricFlow() + " velocity: "
-        + test[0].getVelocity() + " reynolds number " + test[0].getReynoldsNumber() + "friction : "
-        + test[0].getWallFrictionFactor());
+    System.out.println("flow: " + test[0].getVolumetricFlow() + " velocity: " + test[0].getVelocity()
+	+ " reynolds number " + test[0].getReynoldsNumber() + "friction : " + test[0].getWallFrictionFactor());
   }
 }

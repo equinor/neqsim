@@ -21,8 +21,8 @@ import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Coverage for the chemistry package's new advanced features (Phase 6): stream adapter, hydrate /
- * wax / asphaltene performance, injection-point equipment, and uncertainty analyser.
+ * Coverage for the chemistry package's new advanced features (Phase 6): stream adapter, hydrate / wax / asphaltene
+ * performance, injection-point equipment, and uncertainty analyser.
  *
  * @author ESOL
  * @version 1.0
@@ -117,8 +117,7 @@ public class ChemistryAdvancedFeaturesTest {
     assertTrue(wax.isEvaluated());
     assertTrue(wax.getPourPointDepressionC() > 0.0);
     assertTrue(wax.getInhibitedPourPointC() < 25.0);
-    assertTrue(
-        wax.getYieldStressReductionFraction() > 0.0 && wax.getYieldStressReductionFraction() < 1.0);
+    assertTrue(wax.getYieldStressReductionFraction() > 0.0 && wax.getYieldStressReductionFraction() < 1.0);
     assertNotNull(wax.toJson());
   }
 
@@ -159,8 +158,8 @@ public class ChemistryAdvancedFeaturesTest {
     mc.run(new java.util.function.ToDoubleFunction<double[]>() {
       @Override
       public double applyAsDouble(double[] x) {
-        // simple linear residual-rate model
-        return 1.0 - x[1] * (x[0] / (x[0] + 50.0));
+	// simple linear residual-rate model
+	return 1.0 - x[1] * (x[0] / (x[0] + 50.0));
       }
     });
     assertTrue(mc.isEvaluated());
@@ -170,8 +169,8 @@ public class ChemistryAdvancedFeaturesTest {
   }
 
   /**
-   * The Bayesian RCA update must produce posteriors that sum to ~1.0 and rerank candidates
-   * according to the supplied likelihoods.
+   * The Bayesian RCA update must produce posteriors that sum to ~1.0 and rerank candidates according to the supplied
+   * likelihoods.
    */
   @Test
   public void bayesianRcaUpdatesPosteriorsAndReranks() {
@@ -210,13 +209,9 @@ public class ChemistryAdvancedFeaturesTest {
     StreamInterface s = buildProducedStream();
     assertFalse(ChemicalCompatibilityAssessor.fromStream(s).getStandardsApplied().isEmpty());
     assertFalse(ScaleControlAssessor.fromStream(s).getStandardsApplied().isEmpty());
-    assertFalse(
-        CorrosionInhibitorPerformance.fromStream(s, 0.1, 2.0).getStandardsApplied().isEmpty());
-    assertFalse(new neqsim.process.chemistry.scavenger.H2SScavengerPerformance()
-        .getStandardsApplied().isEmpty());
-    assertFalse(new neqsim.process.chemistry.scale.ScaleInhibitorPerformance().getStandardsApplied()
-        .isEmpty());
-    assertFalse(
-        new neqsim.process.chemistry.acid.AcidTreatmentSimulator().getStandardsApplied().isEmpty());
+    assertFalse(CorrosionInhibitorPerformance.fromStream(s, 0.1, 2.0).getStandardsApplied().isEmpty());
+    assertFalse(new neqsim.process.chemistry.scavenger.H2SScavengerPerformance().getStandardsApplied().isEmpty());
+    assertFalse(new neqsim.process.chemistry.scale.ScaleInhibitorPerformance().getStandardsApplied().isEmpty());
+    assertFalse(new neqsim.process.chemistry.acid.AcidTreatmentSimulator().getStandardsApplied().isEmpty());
   }
 }

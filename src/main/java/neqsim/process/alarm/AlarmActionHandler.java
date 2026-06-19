@@ -52,35 +52,33 @@ public interface AlarmActionHandler extends Serializable {
    * Creates a handler that activates process logic when alarm conditions are met.
    *
    * @param sourceName the alarm source name to match (e.g., "PT-101")
-   * @param level the alarm level to match (HIHI, HI, LO, LOLO)
-   * @param eventType the event type to match (ACTIVATED, CLEARED, ACKNOWLEDGED)
-   * @param logic the process logic to activate
+   * @param level      the alarm level to match (HIHI, HI, LO, LOLO)
+   * @param eventType  the event type to match (ACTIVATED, CLEARED, ACKNOWLEDGED)
+   * @param logic      the process logic to activate
    * @return alarm action handler
    */
-  static AlarmActionHandler activateLogic(String sourceName, AlarmLevel level,
-      AlarmEventType eventType, ProcessLogic logic) {
+  static AlarmActionHandler activateLogic(String sourceName, AlarmLevel level, AlarmEventType eventType,
+      ProcessLogic logic) {
     return new AlarmActionHandler() {
       private static final long serialVersionUID = 1000L;
 
       @Override
       public boolean handle(AlarmEvent event) {
-        if (event.getSource().equals(sourceName) && event.getLevel() == level
-            && event.getType() == eventType) {
-          logic.activate();
-          return true;
-        }
-        return false;
+	if (event.getSource().equals(sourceName) && event.getLevel() == level && event.getType() == eventType) {
+	  logic.activate();
+	  return true;
+	}
+	return false;
       }
 
       @Override
       public String getActionDescription() {
-        return String.format("Activate %s on %s %s %s", logic.getName(), sourceName, level,
-            eventType);
+	return String.format("Activate %s on %s %s %s", logic.getName(), sourceName, level, eventType);
       }
 
       @Override
       public int getPriority() {
-        return 100; // High priority for safety logic
+	return 100; // High priority for safety logic
       }
     };
   }
@@ -89,7 +87,7 @@ public interface AlarmActionHandler extends Serializable {
    * Creates a handler that activates process logic when HIHI alarm is activated.
    *
    * @param sourceName the alarm source name to match
-   * @param logic the process logic to activate
+   * @param logic      the process logic to activate
    * @return alarm action handler
    */
   static AlarmActionHandler activateLogicOnHIHI(String sourceName, ProcessLogic logic) {
@@ -100,7 +98,7 @@ public interface AlarmActionHandler extends Serializable {
    * Creates a handler that activates process logic when LOLO alarm is activated.
    *
    * @param sourceName the alarm source name to match
-   * @param logic the process logic to activate
+   * @param logic      the process logic to activate
    * @return alarm action handler
    */
   static AlarmActionHandler activateLogicOnLOLO(String sourceName, ProcessLogic logic) {
@@ -119,18 +117,18 @@ public interface AlarmActionHandler extends Serializable {
 
       @Override
       public boolean handle(AlarmEvent event) {
-        boolean anyHandled = false;
-        for (AlarmActionHandler handler : handlers) {
-          if (handler.handle(event)) {
-            anyHandled = true;
-          }
-        }
-        return anyHandled;
+	boolean anyHandled = false;
+	for (AlarmActionHandler handler : handlers) {
+	  if (handler.handle(event)) {
+	    anyHandled = true;
+	  }
+	}
+	return anyHandled;
       }
 
       @Override
       public String getActionDescription() {
-        return "Composite handler with " + handlers.size() + " actions";
+	return "Composite handler with " + handlers.size() + " actions";
       }
     };
   }

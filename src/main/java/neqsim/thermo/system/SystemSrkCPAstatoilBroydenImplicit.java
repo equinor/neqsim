@@ -8,9 +8,8 @@ import neqsim.thermo.phase.PhaseSrkCPABroydenImplicit;
  * Thermodynamic system using the Broyden quasi-Newton implicit CPA-EOS algorithm.
  *
  * <p>
- * Uses Broyden rank-1 updates of the inverse Jacobian after the first full Newton step to reduce
- * per-iteration cost from O(n_s^3) to O(n_s^2). Falls back to standard nested approach if the
- * solver does not converge.
+ * Uses Broyden rank-1 updates of the inverse Jacobian after the first full Newton step to reduce per-iteration cost
+ * from O(n_s^3) to O(n_s^2). Falls back to standard nested approach if the solver does not converge.
  * </p>
  *
  * @author Even Solbraa
@@ -40,8 +39,8 @@ public class SystemSrkCPAstatoilBroydenImplicit extends SystemSrkCPAstatoil {
   /**
    * Constructor of a fluid object using the Broyden implicit CPA-EoS.
    *
-   * @param T The temperature in unit Kelvin
-   * @param P The pressure in unit bara (absolute pressure)
+   * @param T              The temperature in unit Kelvin
+   * @param P              The pressure in unit bara (absolute pressure)
    * @param checkForSolids Set true to do solid phase check and calculations
    */
   public SystemSrkCPAstatoilBroydenImplicit(double T, double P, boolean checkForSolids) {

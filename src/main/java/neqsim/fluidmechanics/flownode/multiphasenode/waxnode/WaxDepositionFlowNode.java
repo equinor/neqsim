@@ -42,16 +42,14 @@ public class WaxDepositionFlowNode extends MultiPhaseFlowNode {
    * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface}
-   *        object
+   * @param pipe   a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
    */
   public WaxDepositionFlowNode(SystemInterface system, GeometryDefinitionInterface pipe) {
     super(system, pipe);
     this.flowNodeType = "wax deposition node";
     this.interphaseTransportCoefficient = new InterphaseStratifiedFlow(this);
-    this.fluidBoundary =
-        new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
-            this);
+    this.fluidBoundary = new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
+	this);
   }
 
   /**
@@ -59,10 +57,9 @@ public class WaxDepositionFlowNode extends MultiPhaseFlowNode {
    * Constructor for WaxDepositionFlowNode.
    * </p>
    *
-   * @param system a {@link neqsim.thermo.system.SystemInterface} object
+   * @param system           a {@link neqsim.thermo.system.SystemInterface} object
    * @param interphaseSystem a {@link neqsim.thermo.system.SystemInterface} object
-   * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface}
-   *        object
+   * @param pipe             a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
    */
   public WaxDepositionFlowNode(SystemInterface system, SystemInterface interphaseSystem,
       GeometryDefinitionInterface pipe) {
@@ -94,9 +91,8 @@ public class WaxDepositionFlowNode extends MultiPhaseFlowNode {
   /** {@inheritDoc} */
   @Override
   public double calcContactLength() {
-    double phaseAngel =
-        pi * phaseFraction[1] + Math.pow(3.0 * pi / 2.0, 1.0 / 3.0) * (1.0 - 2.0 * phaseFraction[1]
-            + Math.pow(phaseFraction[1], 1.0 / 3.0) - Math.pow(phaseFraction[0], 1.0 / 3.0));
+    double phaseAngel = pi * phaseFraction[1] + Math.pow(3.0 * pi / 2.0, 1.0 / 3.0) * (1.0 - 2.0 * phaseFraction[1]
+	+ Math.pow(phaseFraction[1], 1.0 / 3.0) - Math.pow(phaseFraction[0], 1.0 / 3.0));
     wallContactLength[1] = phaseAngel * pipe.getDiameter();
     wallContactLength[0] = pi * pipe.getDiameter() - wallContactLength[1];
     interphaseContactLength[0] = pipe.getDiameter() * Math.sin(phaseAngel);
@@ -169,21 +165,20 @@ public class WaxDepositionFlowNode extends MultiPhaseFlowNode {
     /*
      * double length = 0;
      *
-     * double[][] temperatures2 = new double[3][1000]; int k = 0; for (int i = 0; i < 11; i++) {
-     * length += test.getLengthOfNode(); test.initFlowCalc(); test.calcFluxes(); if (i > 1 && (i %
-     * 1) == 0) { k++; test.display("length " + length); test.getBulkSystem().display("length " +
-     * length); test.getInterphaseSystem().display("length " + length);
-     * //test.getFluidBoundary().display("length " + length); test.setLengthOfNode(0.000005 +
-     * test.getLengthOfNode() / 2.0); temperatures2[0][k] = length; temperatures2[1][k] =
-     * test.getGeometry().getTemperature(); test.getFluidBoundary().display("test"); }
+     * double[][] temperatures2 = new double[3][1000]; int k = 0; for (int i = 0; i < 11; i++) { length +=
+     * test.getLengthOfNode(); test.initFlowCalc(); test.calcFluxes(); if (i > 1 && (i % 1) == 0) { k++;
+     * test.display("length " + length); test.getBulkSystem().display("length " + length);
+     * test.getInterphaseSystem().display("length " + length); //test.getFluidBoundary().display("length " + length);
+     * test.setLengthOfNode(0.000005 + test.getLengthOfNode() / 2.0); temperatures2[0][k] = length; temperatures2[1][k]
+     * = test.getGeometry().getTemperature(); test.getFluidBoundary().display("test"); }
      *
-     * //test.getBulkSystem().display(); test.update(); test.getFluidBoundary().display("length " +
-     * length); test.getInterphaseSystem().display("length " + length);
+     * //test.getBulkSystem().display(); test.update(); test.getFluidBoundary().display("length " + length);
+     * test.getInterphaseSystem().display("length " + length);
      *
      * //test.getFluidBoundary().display("test"); }
      *
-     * for (int i = 0; i < k; i++) { System.out.println("len temp  " + temperatures2[0][i] + " " +
-     * temperatures2[1][i]); }
+     * for (int i = 0; i < k; i++) { System.out.println("len temp  " + temperatures2[0][i] + " " + temperatures2[1][i]);
+     * }
      */
   }
 }

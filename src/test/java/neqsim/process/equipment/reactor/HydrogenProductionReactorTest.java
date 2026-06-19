@@ -58,7 +58,7 @@ public class HydrogenProductionReactorTest extends neqsim.NeqSimTest {
 
     assertNotNull(atr.getOutletStream());
     assertTrue(atr.getOxygenToCarbonRatio() > 0.55 && atr.getOxygenToCarbonRatio() < 0.65,
-        "O2/C=" + atr.getOxygenToCarbonRatio());
+	"O2/C=" + atr.getOxygenToCarbonRatio());
     assertTrue(atr.getSteamToCarbonRatio() > 1.45 && atr.getSteamToCarbonRatio() < 1.55);
     assertTrue(atr.getSootRiskIndex() >= 0.0 && atr.getSootRiskIndex() <= 1.0);
     assertTrue(atr.toJson().contains("burnerSafetyWarning"));
@@ -73,8 +73,7 @@ public class HydrogenProductionReactorTest extends neqsim.NeqSimTest {
     shift.run();
 
     assertNotNull(shift.getOutletStream());
-    assertTrue(
-        shift.getCarbonMonoxideConversion() >= 0.0 && shift.getCarbonMonoxideConversion() <= 1.0);
+    assertTrue(shift.getCarbonMonoxideConversion() >= 0.0 && shift.getCarbonMonoxideConversion() <= 1.0);
     assertTrue(shift.getHydrogenMoleFlowGain() > -1.0e-8);
     assertTrue(shift.toJson().contains("carbonMonoxideConversion"));
   }
@@ -97,34 +96,29 @@ public class HydrogenProductionReactorTest extends neqsim.NeqSimTest {
 
   @Test
   public void testEquipmentFactoryCreatesHydrogenReactors() {
-    assertTrue(EquipmentFactory.createEquipment("smr",
-        "catalytictubereformer") instanceof CatalyticTubeReformer);
-    assertTrue(
-        EquipmentFactory.createEquipment("furnace", "reformerfurnace") instanceof ReformerFurnace);
+    assertTrue(EquipmentFactory.createEquipment("smr", "catalytictubereformer") instanceof CatalyticTubeReformer);
+    assertTrue(EquipmentFactory.createEquipment("furnace", "reformerfurnace") instanceof ReformerFurnace);
     assertTrue(EquipmentFactory.createEquipment("atr", "atr") instanceof AutothermalReformer);
     assertTrue(EquipmentFactory.createEquipment("pox", "pox") instanceof PartialOxidationReactor);
-    assertTrue(
-        EquipmentFactory.createEquipment("quench", "quenchsection") instanceof QuenchSection);
+    assertTrue(EquipmentFactory.createEquipment("quench", "quenchsection") instanceof QuenchSection);
     assertTrue(EquipmentFactory.createEquipment("shift", "wgs") instanceof WaterGasShiftReactor);
-    assertTrue(
-        EquipmentFactory.createEquipment("capture", "co2capture") instanceof ComponentCaptureUnit);
+    assertTrue(EquipmentFactory.createEquipment("capture", "co2capture") instanceof ComponentCaptureUnit);
   }
 
   /**
    * Creates a water-gas shift benchmark feed stream.
    *
-   * @param name stream name
+   * @param name                      stream name
    * @param carbonMonoxideMolesPerSec carbon monoxide flow in mole/sec
-   * @param waterMolesPerSec water flow in mole/sec
-   * @param hydrogenMolesPerSec hydrogen flow in mole/sec
-   * @param carbonDioxideMolesPerSec carbon dioxide flow in mole/sec
-   * @param temperatureK temperature in Kelvin
-   * @param pressureBara pressure in bara
+   * @param waterMolesPerSec          water flow in mole/sec
+   * @param hydrogenMolesPerSec       hydrogen flow in mole/sec
+   * @param carbonDioxideMolesPerSec  carbon dioxide flow in mole/sec
+   * @param temperatureK              temperature in Kelvin
+   * @param pressureBara              pressure in bara
    * @return configured stream
    */
-  private Stream createShiftFeed(String name, double carbonMonoxideMolesPerSec,
-      double waterMolesPerSec, double hydrogenMolesPerSec, double carbonDioxideMolesPerSec,
-      double temperatureK, double pressureBara) {
+  private Stream createShiftFeed(String name, double carbonMonoxideMolesPerSec, double waterMolesPerSec,
+      double hydrogenMolesPerSec, double carbonDioxideMolesPerSec, double temperatureK, double pressureBara) {
     SystemInterface system = createBaseSystem(temperatureK, pressureBara);
     system.addComponent("CO", carbonMonoxideMolesPerSec, "mole/sec");
     system.addComponent("water", waterMolesPerSec, "mole/sec");
@@ -142,37 +136,35 @@ public class HydrogenProductionReactorTest extends neqsim.NeqSimTest {
   /**
    * Creates a methane and steam feed stream.
    *
-   * @param name stream name
+   * @param name               stream name
    * @param methaneMolesPerSec methane flow in mole/sec
-   * @param steamToCarbon steam-to-carbon ratio
-   * @param temperatureK temperature in Kelvin
-   * @param pressureBara pressure in bara
+   * @param steamToCarbon      steam-to-carbon ratio
+   * @param temperatureK       temperature in Kelvin
+   * @param pressureBara       pressure in bara
    * @return configured stream
    */
-  private Stream createMethaneSteamFeed(String name, double methaneMolesPerSec,
-      double steamToCarbon, double temperatureK, double pressureBara) {
-    return createMethaneSteamOxygenFeed(name, methaneMolesPerSec, steamToCarbon, 0.0, temperatureK,
-        pressureBara);
+  private Stream createMethaneSteamFeed(String name, double methaneMolesPerSec, double steamToCarbon,
+      double temperatureK, double pressureBara) {
+    return createMethaneSteamOxygenFeed(name, methaneMolesPerSec, steamToCarbon, 0.0, temperatureK, pressureBara);
   }
 
   /**
    * Creates a methane, steam, and oxygen feed stream.
    *
-   * @param name stream name
+   * @param name               stream name
    * @param methaneMolesPerSec methane flow in mole/sec
-   * @param steamToCarbon steam-to-carbon ratio
-   * @param oxygenToCarbon oxygen-to-carbon ratio
-   * @param temperatureK temperature in Kelvin
-   * @param pressureBara pressure in bara
+   * @param steamToCarbon      steam-to-carbon ratio
+   * @param oxygenToCarbon     oxygen-to-carbon ratio
+   * @param temperatureK       temperature in Kelvin
+   * @param pressureBara       pressure in bara
    * @return configured stream
    */
-  private Stream createMethaneSteamOxygenFeed(String name, double methaneMolesPerSec,
-      double steamToCarbon, double oxygenToCarbon, double temperatureK, double pressureBara) {
+  private Stream createMethaneSteamOxygenFeed(String name, double methaneMolesPerSec, double steamToCarbon,
+      double oxygenToCarbon, double temperatureK, double pressureBara) {
     SystemInterface system = createBaseSystem(temperatureK, pressureBara);
     system.addComponent("methane", methaneMolesPerSec, "mole/sec");
     system.addComponent("water", methaneMolesPerSec * steamToCarbon, "mole/sec");
-    system.addComponent("oxygen", Math.max(1.0e-20, methaneMolesPerSec * oxygenToCarbon),
-        "mole/sec");
+    system.addComponent("oxygen", Math.max(1.0e-20, methaneMolesPerSec * oxygenToCarbon), "mole/sec");
     addTraceProducts(system);
     Stream stream = new Stream(name, system);
     stream.run();
@@ -182,14 +174,13 @@ public class HydrogenProductionReactorTest extends neqsim.NeqSimTest {
   /**
    * Creates a methane fuel stream.
    *
-   * @param name stream name
+   * @param name               stream name
    * @param methaneMolesPerSec methane flow in mole/sec
-   * @param temperatureK temperature in Kelvin
-   * @param pressureBara pressure in bara
+   * @param temperatureK       temperature in Kelvin
+   * @param pressureBara       pressure in bara
    * @return configured stream
    */
-  private Stream createMethaneFuel(String name, double methaneMolesPerSec, double temperatureK,
-      double pressureBara) {
+  private Stream createMethaneFuel(String name, double methaneMolesPerSec, double temperatureK, double pressureBara) {
     SystemInterface system = createBaseSystem(temperatureK, pressureBara);
     system.addComponent("methane", methaneMolesPerSec, "mole/sec");
     system.addComponent("oxygen", 1.0e-20, "mole/sec");
@@ -203,14 +194,13 @@ public class HydrogenProductionReactorTest extends neqsim.NeqSimTest {
   /**
    * Creates an air stream.
    *
-   * @param name stream name
+   * @param name              stream name
    * @param oxygenMolesPerSec oxygen flow in mole/sec
-   * @param temperatureK temperature in Kelvin
-   * @param pressureBara pressure in bara
+   * @param temperatureK      temperature in Kelvin
+   * @param pressureBara      pressure in bara
    * @return configured stream
    */
-  private Stream createAir(String name, double oxygenMolesPerSec, double temperatureK,
-      double pressureBara) {
+  private Stream createAir(String name, double oxygenMolesPerSec, double temperatureK, double pressureBara) {
     SystemInterface system = createBaseSystem(temperatureK, pressureBara);
     system.addComponent("oxygen", oxygenMolesPerSec, "mole/sec");
     system.addComponent("nitrogen", oxygenMolesPerSec * 3.76, "mole/sec");

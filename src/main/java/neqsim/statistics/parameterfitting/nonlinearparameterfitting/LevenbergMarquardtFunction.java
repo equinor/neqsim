@@ -16,7 +16,8 @@ public class LevenbergMarquardtFunction extends BaseFunction {
    * Constructor for LevenbergMarquardtFunction.
    * </p>
    */
-  public LevenbergMarquardtFunction() {}
+  public LevenbergMarquardtFunction() {
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -65,7 +66,7 @@ public class LevenbergMarquardtFunction extends BaseFunction {
    * </p>
    *
    * @param parameterNumber a int
-   * @param parameterVal a double
+   * @param parameterVal    a double
    */
   public void setFittingParam(int parameterNumber, double parameterVal) {
     params[parameterNumber] = parameterVal;

@@ -9,9 +9,9 @@ import neqsim.process.equipment.filter.SulfurFilter;
  * Mechanical design for sulfur filter vessels per ASME VIII Div 1.
  *
  * <p>
- * Extends the general {@link FilterMechanicalDesign} with sulfur-specific behaviour: reading gas
- * flow rate and element count from {@link SulfurFilter}, providing sulfur removal data in the JSON
- * report, and calculating maintenance intervals based on solid S8 loading rates.
+ * Extends the general {@link FilterMechanicalDesign} with sulfur-specific behaviour: reading gas flow rate and element
+ * count from {@link SulfurFilter}, providing sulfur removal data in the JSON report, and calculating maintenance
+ * intervals based on solid S8 loading rates.
  * </p>
  *
  * <p>
@@ -23,8 +23,7 @@ import neqsim.process.equipment.filter.SulfurFilter;
  * SulfurFilter filter = new SulfurFilter("S8 Filter", stream);
  * filter.run();
  * filter.initMechanicalDesign();
- * SulfurFilterMechanicalDesign design =
- *     (SulfurFilterMechanicalDesign) filter.getMechanicalDesign();
+ * SulfurFilterMechanicalDesign design = (SulfurFilterMechanicalDesign) filter.getMechanicalDesign();
  * design.setMaxOperationPressure(20.0);
  * design.setMaxOperationTemperature(273.15 + 50.0);
  * design.calcDesign();

@@ -18,8 +18,7 @@ import neqsim.process.processmodel.SimulationResult;
  * Parametric study runner for sensitivity analysis and optimization sweeps.
  *
  * <p>
- * Enables license-free batch exploration of a process design space. A typical cooperative
- * UniSim–NeqSim workflow:
+ * Enables license-free batch exploration of a process design space. A typical cooperative UniSim–NeqSim workflow:
  * </p>
  * <ol>
  * <li>Engineer builds the base case in UniSim (industry-accepted model)</li>
@@ -41,13 +40,13 @@ import neqsim.process.processmodel.SimulationResult;
  */
 public class ParametricStudyRunner {
 
-  private static final Gson GSON =
-      new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+  private static final Gson GSON = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
 
   /** Maximum total cases to prevent resource exhaustion. */
   private static final int MAX_TOTAL_CASES = 5000;
 
-  private ParametricStudyRunner() {}
+  private ParametricStudyRunner() {
+  }
 
   /**
    * Runs a parametric study by sweeping input variables and recording outputs.
@@ -65,23 +64,21 @@ public class ParametricStudyRunner {
   public static String run(String json) {
     if (json == null || json.trim().isEmpty()) {
       return errorJson("INPUT_ERROR", "JSON input is null or empty",
-          "Provide JSON with 'baseProcess', 'sweeps', and 'outputs'");
+	  "Provide JSON with 'baseProcess', 'sweeps', and 'outputs'");
     }
 
     JsonObject input;
     try {
       input = JsonParser.parseString(json).getAsJsonObject();
     } catch (Exception e) {
-      return errorJson("JSON_PARSE_ERROR", "Failed to parse: " + e.getMessage(),
-          "Ensure well-formed JSON");
+      return errorJson("JSON_PARSE_ERROR", "Failed to parse: " + e.getMessage(), "Ensure well-formed JSON");
     }
 
     if (!input.has("baseProcess")) {
       return errorJson("MISSING_FIELD", "'baseProcess' is required", "Include full process JSON");
     }
     if (!input.has("sweeps") || !input.get("sweeps").isJsonArray()) {
-      return errorJson("MISSING_FIELD", "'sweeps' array is required",
-          "Define at least one sweep variable");
+      return errorJson("MISSING_FIELD", "'sweeps' array is required", "Define at least one sweep variable");
     }
 
     JsonObject baseProcess = input.getAsJsonObject("baseProcess");
@@ -96,23 +93,22 @@ public class ParametricStudyRunner {
       def.unit = sw.has("unit") ? sw.get("unit").getAsString() : "";
 
       if (sw.has("values") && sw.get("values").isJsonArray()) {
-        for (JsonElement v : sw.getAsJsonArray("values")) {
-          def.values.add(v.getAsDouble());
-        }
+	for (JsonElement v : sw.getAsJsonArray("values")) {
+	  def.values.add(v.getAsDouble());
+	}
       } else if (sw.has("from") && sw.has("to") && sw.has("steps")) {
-        double from = sw.get("from").getAsDouble();
-        double to = sw.get("to").getAsDouble();
-        int steps = sw.get("steps").getAsInt();
-        if (steps < 2) {
-          steps = 2;
-        }
-        for (int i = 0; i < steps; i++) {
-          def.values.add(from + (to - from) * i / (steps - 1));
-        }
+	double from = sw.get("from").getAsDouble();
+	double to = sw.get("to").getAsDouble();
+	int steps = sw.get("steps").getAsInt();
+	if (steps < 2) {
+	  steps = 2;
+	}
+	for (int i = 0; i < steps; i++) {
+	  def.values.add(from + (to - from) * i / (steps - 1));
+	}
       } else {
-        return errorJson("INVALID_SWEEP",
-            "Sweep for '" + def.address + "' needs 'values' array or 'from'/'to'/'steps'",
-            "Provide either explicit values or a range specification");
+	return errorJson("INVALID_SWEEP", "Sweep for '" + def.address + "' needs 'values' array or 'from'/'to'/'steps'",
+	    "Provide either explicit values or a range specification");
       }
       sweeps.add(def);
     }
@@ -121,9 +117,9 @@ public class ParametricStudyRunner {
     List<OutputDef> outputs = new ArrayList<>();
     if (input.has("outputs") && input.get("outputs").isJsonArray()) {
       for (JsonElement elem : input.getAsJsonArray("outputs")) {
-        JsonObject out = elem.getAsJsonObject();
-        outputs.add(new OutputDef(out.get("address").getAsString(),
-            out.has("unit") ? out.get("unit").getAsString() : ""));
+	JsonObject out = elem.getAsJsonObject();
+	outputs
+	    .add(new OutputDef(out.get("address").getAsString(), out.has("unit") ? out.get("unit").getAsString() : ""));
       }
     }
 
@@ -137,8 +133,8 @@ public class ParametricStudyRunner {
 
     if (cases.size() > MAX_TOTAL_CASES) {
       return errorJson("TOO_MANY_CASES",
-          "Parametric study generates " + cases.size() + " cases (max " + MAX_TOTAL_CASES + ")",
-          "Reduce sweep resolution or use one_at_a_time mode");
+	  "Parametric study generates " + cases.size() + " cases (max " + MAX_TOTAL_CASES + ")",
+	  "Reduce sweep resolution or use one_at_a_time mode");
     }
 
     // Run all cases
@@ -151,7 +147,7 @@ public class ParametricStudyRunner {
       JsonObject caseResult = runCase(baseProcess, sweeps, inputValues, outputs, i);
       caseResults.add(caseResult);
       if (caseResult.has("converged") && caseResult.get("converged").getAsBoolean()) {
-        convergedCount++;
+	convergedCount++;
       }
     }
 
@@ -177,14 +173,14 @@ public class ParametricStudyRunner {
    * Runs a single parametric case.
    *
    * @param baseProcess the base process JSON definition
-   * @param sweeps the sweep parameter definitions
+   * @param sweeps      the sweep parameter definitions
    * @param inputValues the input values for this case
-   * @param outputs the output definitions to collect
-   * @param caseIndex the index of this case
+   * @param outputs     the output definitions to collect
+   * @param caseIndex   the index of this case
    * @return a JsonObject containing the case results
    */
-  private static JsonObject runCase(JsonObject baseProcess, List<SweepDef> sweeps,
-      Map<String, Double> inputValues, List<OutputDef> outputs, int caseIndex) {
+  private static JsonObject runCase(JsonObject baseProcess, List<SweepDef> sweeps, Map<String, Double> inputValues,
+      List<OutputDef> outputs, int caseIndex) {
     JsonObject caseResult = new JsonObject();
     caseResult.addProperty("caseIndex", caseIndex);
 
@@ -201,9 +197,9 @@ public class ParametricStudyRunner {
       SimulationResult simResult = ProcessSystem.fromJsonAndRun(jsonStr);
 
       if (simResult.isError()) {
-        caseResult.addProperty("converged", false);
-        caseResult.addProperty("error", simResult.getErrors().toString());
-        return caseResult;
+	caseResult.addProperty("converged", false);
+	caseResult.addProperty("error", simResult.getErrors().toString());
+	return caseResult;
       }
 
       ProcessSystem process = simResult.getProcessSystem();
@@ -211,8 +207,8 @@ public class ParametricStudyRunner {
 
       // Set sweep variables
       for (SweepDef sweep : sweeps) {
-        double value = inputValues.get(sweep.address);
-        auto.setVariableValue(sweep.address, value, sweep.unit);
+	double value = inputValues.get(sweep.address);
+	auto.setVariableValue(sweep.address, value, sweep.unit);
       }
 
       // Re-run the process
@@ -222,16 +218,16 @@ public class ParametricStudyRunner {
 
       // Extract outputs
       if (!outputs.isEmpty()) {
-        JsonObject outputVals = new JsonObject();
-        for (OutputDef out : outputs) {
-          try {
-            double val = auto.getVariableValue(out.address, out.unit);
-            outputVals.addProperty(out.address, val);
-          } catch (Exception e) {
-            outputVals.addProperty(out.address + "_error", e.getMessage());
-          }
-        }
-        caseResult.add("outputs", outputVals);
+	JsonObject outputVals = new JsonObject();
+	for (OutputDef out : outputs) {
+	  try {
+	    double val = auto.getVariableValue(out.address, out.unit);
+	    outputVals.addProperty(out.address, val);
+	  } catch (Exception e) {
+	    outputVals.addProperty(out.address + "_error", e.getMessage());
+	  }
+	}
+	caseResult.add("outputs", outputVals);
       }
     } catch (Exception e) {
       caseResult.addProperty("converged", false);
@@ -253,8 +249,8 @@ public class ParametricStudyRunner {
     return cases;
   }
 
-  private static void generateFactorialRecursive(List<SweepDef> sweeps, int depth,
-      Map<String, Double> current, List<Map<String, Double>> cases) {
+  private static void generateFactorialRecursive(List<SweepDef> sweeps, int depth, Map<String, Double> current,
+      List<Map<String, Double>> cases) {
     if (depth == sweeps.size()) {
       cases.add(new LinkedHashMap<>(current));
       return;
@@ -285,9 +281,9 @@ public class ParametricStudyRunner {
     // For each sweep, vary it while keeping all others at midpoint
     for (SweepDef sweep : sweeps) {
       for (double val : sweep.values) {
-        Map<String, Double> caseMap = new LinkedHashMap<>(midpoints);
-        caseMap.put(sweep.address, val);
-        cases.add(caseMap);
+	Map<String, Double> caseMap = new LinkedHashMap<>(midpoints);
+	caseMap.put(sweep.address, val);
+	cases.add(caseMap);
       }
     }
 
@@ -297,7 +293,7 @@ public class ParametricStudyRunner {
   /**
    * Builds summary statistics for each output variable across all converged cases.
    *
-   * @param outputs the output variable definitions
+   * @param outputs     the output variable definitions
    * @param caseResults the JSON array of individual case results
    * @return JSON object containing min, max, mean, and std for each output
    */
@@ -307,27 +303,26 @@ public class ParametricStudyRunner {
     for (OutputDef out : outputs) {
       List<Double> values = new ArrayList<>();
       for (JsonElement elem : caseResults) {
-        JsonObject c = elem.getAsJsonObject();
-        if (c.has("converged") && c.get("converged").getAsBoolean() && c.has("outputs")
-            && c.getAsJsonObject("outputs").has(out.address)) {
-          values.add(c.getAsJsonObject("outputs").get(out.address).getAsDouble());
-        }
+	JsonObject c = elem.getAsJsonObject();
+	if (c.has("converged") && c.get("converged").getAsBoolean() && c.has("outputs")
+	    && c.getAsJsonObject("outputs").has(out.address)) {
+	  values.add(c.getAsJsonObject("outputs").get(out.address).getAsDouble());
+	}
       }
 
       if (!values.isEmpty()) {
-        JsonObject stats = new JsonObject();
-        double min = values.stream().mapToDouble(Double::doubleValue).min().orElse(0);
-        double max = values.stream().mapToDouble(Double::doubleValue).max().orElse(0);
-        double mean = values.stream().mapToDouble(Double::doubleValue).average().orElse(0);
-        stats.addProperty("min", min);
-        stats.addProperty("max", max);
-        stats.addProperty("mean", mean);
-        stats.addProperty("range", max - min);
-        stats.addProperty("rangePct",
-            mean != 0 ? Math.round(((max - min) / Math.abs(mean)) * 10000.0) / 100.0 : 0);
-        stats.addProperty("sampleCount", values.size());
-        stats.addProperty("unit", out.unit);
-        summary.add(out.address, stats);
+	JsonObject stats = new JsonObject();
+	double min = values.stream().mapToDouble(Double::doubleValue).min().orElse(0);
+	double max = values.stream().mapToDouble(Double::doubleValue).max().orElse(0);
+	double mean = values.stream().mapToDouble(Double::doubleValue).average().orElse(0);
+	stats.addProperty("min", min);
+	stats.addProperty("max", max);
+	stats.addProperty("mean", mean);
+	stats.addProperty("range", max - min);
+	stats.addProperty("rangePct", mean != 0 ? Math.round(((max - min) / Math.abs(mean)) * 10000.0) / 100.0 : 0);
+	stats.addProperty("sampleCount", values.size());
+	stats.addProperty("unit", out.unit);
+	summary.add(out.address, stats);
       }
     }
 

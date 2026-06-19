@@ -20,7 +20,7 @@ public class TestSurfaceTenison {
   private static final Logger logger = LogManager.getLogger(TestSurfaceTenison.class);
 
   /** Logger object for class. */
-  
+
   /**
    * <p>
    * main.

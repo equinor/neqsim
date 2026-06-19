@@ -70,20 +70,20 @@ public final class MitigationSuggestion implements Serializable, Comparable<Miti
   /**
    * Creates a mitigation suggestion.
    *
-   * @param marginKey margin key that triggered the suggestion
-   * @param description suggested action description
-   * @param targetEquipment target equipment name
-   * @param targetVariable target variable or constraint name
-   * @param suggestedValue suggested value, or {@link Double#NaN} when qualitative
-   * @param unit engineering unit
-   * @param priority priority level
-   * @param category action category
+   * @param marginKey           margin key that triggered the suggestion
+   * @param description         suggested action description
+   * @param targetEquipment     target equipment name
+   * @param targetVariable      target variable or constraint name
+   * @param suggestedValue      suggested value, or {@link Double#NaN} when qualitative
+   * @param unit                engineering unit
+   * @param priority            priority level
+   * @param category            action category
    * @param expectedImprovement expected improvement text
-   * @param confidence confidence from 0.0 to 1.0
+   * @param confidence          confidence from 0.0 to 1.0
    */
-  public MitigationSuggestion(String marginKey, String description, String targetEquipment,
-      String targetVariable, double suggestedValue, String unit, Priority priority,
-      Category category, String expectedImprovement, double confidence) {
+  public MitigationSuggestion(String marginKey, String description, String targetEquipment, String targetVariable,
+      double suggestedValue, String unit, Priority priority, Category category, String expectedImprovement,
+      double confidence) {
     this.marginKey = clean(marginKey);
     this.description = clean(description);
     this.targetEquipment = clean(targetEquipment);
@@ -107,13 +107,12 @@ public final class MitigationSuggestion implements Serializable, Comparable<Miti
     Category category = chooseCategory(margin);
     double suggestedValue = suggestedValue(margin);
     String direction = margin.isMinimumConstraint() ? "increase" : "reduce";
-    String description = "Review " + margin.getEquipmentName() + " "
-        + margin.getConstraintName() + " and " + direction + " loading away from the limit.";
+    String description = "Review " + margin.getEquipmentName() + " " + margin.getConstraintName() + " and " + direction
+	+ " loading away from the limit.";
     String expected = "Restore margin above " + OperationalMargin.WARNING_MARGIN_PERCENT
-        + "% and confirm against plant data.";
-    return new MitigationSuggestion(margin.getKey(), description, margin.getEquipmentName(),
-        margin.getConstraintName(), suggestedValue, margin.getUnit(), priority, category, expected,
-        0.6);
+	+ "% and confirm against plant data.";
+    return new MitigationSuggestion(margin.getKey(), description, margin.getEquipmentName(), margin.getConstraintName(),
+	suggestedValue, margin.getUnit(), priority, category, expected, 0.6);
   }
 
   /**

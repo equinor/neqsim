@@ -10,8 +10,8 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * Comprehensive tests for Q-function based flash calculations. Tests TSFlash, VUflash, VHflash,
- * VSflash, and PSflash implementations based on Michelsen's Q-function methodology.
+ * Comprehensive tests for Q-function based flash calculations. Tests TSFlash, VUflash, VHflash, VSflash, and PSflash
+ * implementations based on Michelsen's Q-function methodology.
  *
  * @author AI-generated based on Michelsen (1999) methodology
  * @version 1.0
@@ -46,11 +46,10 @@ class QfuncFlashTest {
     // Verify entropy matches specification
     double resultEntropy = testSystem.getEntropy();
     assertEquals(originalEntropy, resultEntropy, Math.abs(originalEntropy) * 0.01,
-        "TSFlash should converge to specified entropy");
+	"TSFlash should converge to specified entropy");
 
     // Temperature should remain unchanged (it's a TS flash)
-    assertEquals(originalTemperature, testSystem.getTemperature(), 0.1,
-        "Temperature should remain at specified value");
+    assertEquals(originalTemperature, testSystem.getTemperature(), 0.1, "Temperature should remain at specified value");
   }
 
   /**
@@ -75,7 +74,7 @@ class QfuncFlashTest {
 
     double resultEntropy = testSystem.getEntropy();
     assertEquals(originalEntropy, resultEntropy, Math.abs(originalEntropy) * 0.02,
-        "TSFlash should converge in two-phase region");
+	"TSFlash should converge in two-phase region");
   }
 
   /**
@@ -103,9 +102,9 @@ class QfuncFlashTest {
 
     // Verify volume and internal energy match specifications
     assertEquals(originalVolume, testSystem.getVolume(), Math.abs(originalVolume) * 0.01,
-        "VUFlash should converge to specified volume");
-    assertEquals(originalInternalEnergy, testSystem.getInternalEnergy(),
-        Math.abs(originalInternalEnergy) * 0.01, "VUFlash should converge to specified energy");
+	"VUFlash should converge to specified volume");
+    assertEquals(originalInternalEnergy, testSystem.getInternalEnergy(), Math.abs(originalInternalEnergy) * 0.01,
+	"VUFlash should converge to specified energy");
   }
 
   /**
@@ -131,9 +130,9 @@ class QfuncFlashTest {
     testOps.VUflash(originalVolume, originalInternalEnergy);
 
     assertEquals(originalVolume, testSystem.getVolume(), Math.abs(originalVolume) * 0.02,
-        "VUFlash should converge in two-phase region");
-    assertEquals(originalInternalEnergy, testSystem.getInternalEnergy(),
-        Math.abs(originalInternalEnergy) * 0.02, "VUFlash energy should converge in two-phase");
+	"VUFlash should converge in two-phase region");
+    assertEquals(originalInternalEnergy, testSystem.getInternalEnergy(), Math.abs(originalInternalEnergy) * 0.02,
+	"VUFlash energy should converge in two-phase");
   }
 
   /**
@@ -159,9 +158,9 @@ class QfuncFlashTest {
     testOps.VHflash(originalVolume, originalEnthalpy);
 
     assertEquals(originalVolume, testSystem.getVolume(), Math.abs(originalVolume) * 0.01,
-        "VHFlash should converge to specified volume");
+	"VHFlash should converge to specified volume");
     assertEquals(originalEnthalpy, testSystem.getEnthalpy(), Math.abs(originalEnthalpy) * 0.01,
-        "VHFlash should converge to specified enthalpy");
+	"VHFlash should converge to specified enthalpy");
   }
 
   /**
@@ -187,9 +186,9 @@ class QfuncFlashTest {
     testOps.VHflash(originalVolume, originalEnthalpy);
 
     assertEquals(originalVolume, testSystem.getVolume(), Math.abs(originalVolume) * 0.02,
-        "VHFlash should converge in two-phase region");
+	"VHFlash should converge in two-phase region");
     assertEquals(originalEnthalpy, testSystem.getEnthalpy(), Math.abs(originalEnthalpy) * 0.02,
-        "VHFlash enthalpy should converge in two-phase");
+	"VHFlash enthalpy should converge in two-phase");
   }
 
   /**
@@ -215,9 +214,9 @@ class QfuncFlashTest {
     testOps.VSflash(originalVolume, originalEntropy);
 
     assertEquals(originalVolume, testSystem.getVolume(), Math.abs(originalVolume) * 0.01,
-        "VSFlash should converge to specified volume");
+	"VSFlash should converge to specified volume");
     assertEquals(originalEntropy, testSystem.getEntropy(), Math.abs(originalEntropy) * 0.01,
-        "VSFlash should converge to specified entropy");
+	"VSFlash should converge to specified entropy");
   }
 
   /**
@@ -243,9 +242,9 @@ class QfuncFlashTest {
     testOps.VSflash(originalVolume, originalEntropy);
 
     assertEquals(originalVolume, testSystem.getVolume(), Math.abs(originalVolume) * 0.02,
-        "VSFlash should converge in two-phase region");
+	"VSFlash should converge in two-phase region");
     assertEquals(originalEntropy, testSystem.getEntropy(), Math.abs(originalEntropy) * 0.02,
-        "VSFlash entropy should converge in two-phase");
+	"VSFlash entropy should converge in two-phase");
   }
 
   /**
@@ -271,9 +270,8 @@ class QfuncFlashTest {
     testOps.PSflash(originalEntropy);
 
     assertEquals(originalEntropy, testSystem.getEntropy(), Math.abs(originalEntropy) * 0.01,
-        "PSFlash should converge to specified entropy");
-    assertEquals(originalPressure, testSystem.getPressure(), 0.01,
-        "Pressure should remain at specified value");
+	"PSFlash should converge to specified entropy");
+    assertEquals(originalPressure, testSystem.getPressure(), 0.01, "Pressure should remain at specified value");
   }
 
   /**
@@ -298,9 +296,8 @@ class QfuncFlashTest {
     testOps.PSflash(originalEntropy);
 
     assertEquals(originalEntropy, testSystem.getEntropy(), Math.abs(originalEntropy) * 0.02,
-        "PSFlash should converge in two-phase region");
-    assertEquals(originalPressure, testSystem.getPressure(), 0.01,
-        "Pressure should remain constant in PSFlash");
+	"PSFlash should converge in two-phase region");
+    assertEquals(originalPressure, testSystem.getPressure(), 0.01, "Pressure should remain constant in PSFlash");
   }
 
   /**
@@ -327,12 +324,10 @@ class QfuncFlashTest {
 
     // Should converge within reasonable tolerance
     double volumeError = Math.abs(testSystem.getVolume() - originalVolume) / originalVolume;
-    double energyError =
-        Math.abs(testSystem.getInternalEnergy() - originalInternalEnergy) / originalInternalEnergy;
+    double energyError = Math.abs(testSystem.getInternalEnergy() - originalInternalEnergy) / originalInternalEnergy;
 
     assertTrue(volumeError < 0.05, "VUFlash should converge even with large initial deviation");
-    assertTrue(energyError < 0.05,
-        "VUFlash energy should converge even with large initial deviation");
+    assertTrue(energyError < 0.05, "VUFlash energy should converge even with large initial deviation");
   }
 
   /**
@@ -359,7 +354,7 @@ class QfuncFlashTest {
 
     // Near-critical requires looser tolerance
     assertEquals(originalVolume, testSystem.getVolume(), Math.abs(originalVolume) * 0.05,
-        "VHFlash should handle near-critical conditions");
+	"VHFlash should handle near-critical conditions");
   }
 
   /**
@@ -391,8 +386,7 @@ class QfuncFlashTest {
     testSystem.setTemperature(330.0);
     testSystem.setPressure(50.0);
     testOps.VUflash(volume, internalEnergy);
-    assertEquals(volume, testSystem.getVolume(), Math.abs(volume) * 0.02,
-        "Multi-component VU flash volume");
+    assertEquals(volume, testSystem.getVolume(), Math.abs(volume) * 0.02, "Multi-component VU flash volume");
 
     // Reset and test VH flash
     testSystem.setTemperature(originalT);
@@ -403,8 +397,7 @@ class QfuncFlashTest {
     testSystem.setTemperature(330.0);
     testSystem.setPressure(50.0);
     testOps.VHflash(volume, enthalpy);
-    assertEquals(volume, testSystem.getVolume(), Math.abs(volume) * 0.02,
-        "Multi-component VH flash volume");
+    assertEquals(volume, testSystem.getVolume(), Math.abs(volume) * 0.02, "Multi-component VH flash volume");
   }
 
   // ============== NEW FLASH TYPE TESTS ==============
@@ -435,11 +428,10 @@ class QfuncFlashTest {
     // Verify enthalpy matches specification
     double resultEnthalpy = testSystem.getEnthalpy();
     assertEquals(originalEnthalpy, resultEnthalpy, Math.abs(originalEnthalpy) * 0.01,
-        "THFlash should converge to specified enthalpy");
+	"THFlash should converge to specified enthalpy");
 
     // Temperature should remain unchanged (it's a TH flash)
-    assertEquals(originalTemperature, testSystem.getTemperature(), 0.1,
-        "Temperature should remain at specified value");
+    assertEquals(originalTemperature, testSystem.getTemperature(), 0.1, "Temperature should remain at specified value");
   }
 
   /**
@@ -464,7 +456,7 @@ class QfuncFlashTest {
 
     double resultEnthalpy = testSystem.getEnthalpy();
     assertEquals(originalEnthalpy, resultEnthalpy, Math.abs(originalEnthalpy) * 0.02,
-        "THFlash should converge in two-phase region");
+	"THFlash should converge in two-phase region");
   }
 
   /**
@@ -492,13 +484,11 @@ class QfuncFlashTest {
 
     // Verify internal energy matches specification
     double resultInternalEnergy = testSystem.getInternalEnergy();
-    assertEquals(originalInternalEnergy, resultInternalEnergy,
-        Math.abs(originalInternalEnergy) * 0.01,
-        "TUFlash should converge to specified internal energy");
+    assertEquals(originalInternalEnergy, resultInternalEnergy, Math.abs(originalInternalEnergy) * 0.01,
+	"TUFlash should converge to specified internal energy");
 
     // Temperature should remain unchanged
-    assertEquals(originalTemperature, testSystem.getTemperature(), 0.1,
-        "Temperature should remain at specified value");
+    assertEquals(originalTemperature, testSystem.getTemperature(), 0.1, "Temperature should remain at specified value");
   }
 
   /**
@@ -522,8 +512,8 @@ class QfuncFlashTest {
     testOps.TUflash(originalInternalEnergy);
 
     double resultInternalEnergy = testSystem.getInternalEnergy();
-    assertEquals(originalInternalEnergy, resultInternalEnergy,
-        Math.abs(originalInternalEnergy) * 0.02, "TUFlash should converge in two-phase region");
+    assertEquals(originalInternalEnergy, resultInternalEnergy, Math.abs(originalInternalEnergy) * 0.02,
+	"TUFlash should converge in two-phase region");
   }
 
   /**
@@ -552,11 +542,10 @@ class QfuncFlashTest {
     // Verify volume matches specification
     double resultVolume = testSystem.getVolume();
     assertEquals(originalVolume, resultVolume, Math.abs(originalVolume) * 0.01,
-        "PVFlash should converge to specified volume");
+	"PVFlash should converge to specified volume");
 
     // Pressure should remain unchanged (it's a PV flash)
-    assertEquals(originalPressure, testSystem.getPressure(), 0.01,
-        "Pressure should remain at specified value");
+    assertEquals(originalPressure, testSystem.getPressure(), 0.01, "Pressure should remain at specified value");
   }
 
   /**
@@ -581,7 +570,7 @@ class QfuncFlashTest {
 
     double resultVolume = testSystem.getVolume();
     assertEquals(originalVolume, resultVolume, Math.abs(originalVolume) * 0.02,
-        "PVFlash should converge in two-phase region");
+	"PVFlash should converge in two-phase region");
   }
 
   /**
@@ -605,7 +594,7 @@ class QfuncFlashTest {
 
     double resultVolume = testSystem.getVolume();
     assertEquals(originalVolume, resultVolume, Math.abs(originalVolume) * 0.01,
-        "PVFlash should converge for single-phase liquid");
+	"PVFlash should converge for single-phase liquid");
   }
 
   /**
@@ -635,8 +624,7 @@ class QfuncFlashTest {
     // Test TH flash
     testSystem.setPressure(60.0);
     testOps.THflash(enthalpy);
-    assertEquals(enthalpy, testSystem.getEnthalpy(), Math.abs(enthalpy) * 0.02,
-        "Multi-component TH flash enthalpy");
+    assertEquals(enthalpy, testSystem.getEnthalpy(), Math.abs(enthalpy) * 0.02, "Multi-component TH flash enthalpy");
 
     // Reset and test TU flash
     testSystem.setTemperature(originalT);
@@ -647,7 +635,7 @@ class QfuncFlashTest {
     testSystem.setPressure(60.0);
     testOps.TUflash(internalEnergy);
     assertEquals(internalEnergy, testSystem.getInternalEnergy(), Math.abs(internalEnergy) * 0.02,
-        "Multi-component TU flash internal energy");
+	"Multi-component TU flash internal energy");
 
     // Reset and test PV flash
     testSystem.setTemperature(originalT);
@@ -657,7 +645,6 @@ class QfuncFlashTest {
 
     testSystem.setTemperature(350.0);
     testOps.PVflash(volume);
-    assertEquals(volume, testSystem.getVolume(), Math.abs(volume) * 0.02,
-        "Multi-component PV flash volume");
+    assertEquals(volume, testSystem.getVolume(), Math.abs(volume) * 0.02, "Multi-component PV flash volume");
   }
 }

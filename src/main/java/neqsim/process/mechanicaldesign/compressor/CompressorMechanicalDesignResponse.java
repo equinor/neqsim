@@ -7,8 +7,8 @@ import neqsim.process.mechanicaldesign.MechanicalDesignResponse;
  * Response class for compressor mechanical design JSON export.
  *
  * <p>
- * Extends {@link MechanicalDesignResponse} with compressor-specific parameters including staging,
- * driver sizing, and rotordynamic data per API 617.
+ * Extends {@link MechanicalDesignResponse} with compressor-specific parameters including staging, driver sizing, and
+ * rotordynamic data per API 617.
  * </p>
  *
  * @author esol

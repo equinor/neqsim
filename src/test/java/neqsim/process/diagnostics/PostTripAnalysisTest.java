@@ -74,8 +74,7 @@ class PostTripAnalysisTest {
 
   @Test
   void testTripEventCreation() {
-    TripEvent event =
-        new TripEvent("Compressor", "pressure", 120.0, 125.0, true, 10.0, TripEvent.Severity.HIGH);
+    TripEvent event = new TripEvent("Compressor", "pressure", 120.0, 125.0, true, 10.0, TripEvent.Severity.HIGH);
 
     assertEquals("Compressor", event.getEquipmentName());
     assertEquals("pressure", event.getParameterName());
@@ -89,19 +88,16 @@ class PostTripAnalysisTest {
 
   @Test
   void testTripEventDeviation() {
-    TripEvent event =
-        new TripEvent("Compressor", "pressure", 100.0, 120.0, true, 0.0, TripEvent.Severity.MEDIUM);
+    TripEvent event = new TripEvent("Compressor", "pressure", 100.0, 120.0, true, 0.0, TripEvent.Severity.MEDIUM);
     assertEquals(20.0, event.getDeviation(), 0.001);
 
-    TripEvent lowTrip =
-        new TripEvent("Compressor", "pressure", 10.0, 5.0, false, 0.0, TripEvent.Severity.LOW);
+    TripEvent lowTrip = new TripEvent("Compressor", "pressure", 10.0, 5.0, false, 0.0, TripEvent.Severity.LOW);
     assertEquals(5.0, lowTrip.getDeviation(), 0.001);
   }
 
   @Test
   void testTripEventToJson() {
-    TripEvent event =
-        new TripEvent("Compressor", "pressure", 120.0, 125.0, true, 0.0, TripEvent.Severity.HIGH);
+    TripEvent event = new TripEvent("Compressor", "pressure", 120.0, 125.0, true, 0.0, TripEvent.Severity.HIGH);
     String json = event.toJson();
     assertNotNull(json);
     assertTrue(json.contains("\"equipmentName\""));
@@ -116,16 +112,14 @@ class PostTripAnalysisTest {
     TripEventDetector detector = new TripEventDetector(process);
 
     // Add a trip condition that the compressor discharge pressure exceeds 150 bara
-    detector.addTripCondition("Export Compressor", "pressure", 150.0, true,
-        TripEvent.Severity.HIGH);
+    detector.addTripCondition("Export Compressor", "pressure", 150.0, true, TripEvent.Severity.HIGH);
 
     // Should not trigger — compressor outlet is at 100 bara
     List<TripEvent> trips = detector.check(0.0);
     assertTrue(trips.isEmpty(), "Should not trip at normal conditions");
 
     // Add a trip condition that the pressure is above 80 bara — should trigger
-    detector.addTripCondition("Export Compressor", "pressure", 80.0, true,
-        TripEvent.Severity.MEDIUM);
+    detector.addTripCondition("Export Compressor", "pressure", 80.0, true, TripEvent.Severity.MEDIUM);
 
     trips = detector.check(1.0);
     assertFalse(trips.isEmpty(), "Should detect trip when threshold exceeded");
@@ -141,8 +135,7 @@ class PostTripAnalysisTest {
     TripEventDetector detector = new TripEventDetector(process);
 
     // Low trip: pressure below 200 bara — should trigger since compressor outlet < 200
-    detector.addTripCondition("Export Compressor", "pressure", 200.0, false,
-        TripEvent.Severity.LOW);
+    detector.addTripCondition("Export Compressor", "pressure", 200.0, false, TripEvent.Severity.LOW);
 
     List<TripEvent> trips = detector.check(0.0);
     assertFalse(trips.isEmpty(), "Should detect low trip");
@@ -204,8 +197,7 @@ class PostTripAnalysisTest {
 
   @Test
   void testFailurePropagationByTripEvent() {
-    TripEvent trip = new TripEvent("Export Compressor", "pressure", 120.0, 130.0, true, 0.0,
-        TripEvent.Severity.HIGH);
+    TripEvent trip = new TripEvent("Export Compressor", "pressure", 120.0, 130.0, true, 0.0, TripEvent.Severity.HIGH);
 
     FailurePropagationTracer tracer = new FailurePropagationTracer(process);
     FailurePropagationTracer.PropagationResult result = tracer.trace(trip);
@@ -281,8 +273,7 @@ class PostTripAnalysisTest {
 
   @Test
   void testRestartPlanFromTripEvent() {
-    TripEvent trip = new TripEvent("Export Compressor", "pressure", 120.0, 130.0, true, 0.0,
-        TripEvent.Severity.HIGH);
+    TripEvent trip = new TripEvent("Export Compressor", "pressure", 120.0, 130.0, true, 0.0, TripEvent.Severity.HIGH);
 
     FailurePropagationTracer tracer = new FailurePropagationTracer(process);
     FailurePropagationTracer.PropagationResult propagation = tracer.trace(trip);
@@ -336,11 +327,10 @@ class PostTripAnalysisTest {
     // time
     boolean found = false;
     for (RestartStep step : plan.getSteps()) {
-      if ("Export Compressor".equals(step.getEquipmentName())
-          && step.getRecommendedDelaySeconds() > 0) {
-        assertEquals(300.0, step.getRecommendedDelaySeconds(), 0.001);
-        found = true;
-        break;
+      if ("Export Compressor".equals(step.getEquipmentName()) && step.getRecommendedDelaySeconds() > 0) {
+	assertEquals(300.0, step.getRecommendedDelaySeconds(), 0.001);
+	found = true;
+	break;
       }
     }
     assertTrue(found, "Should have a restart step for Export Compressor with custom ramp-up time");
@@ -380,7 +370,7 @@ class PostTripAnalysisTest {
     RestartSequenceGenerator.RestartPlan plan = generator.generate(propagation);
     assertNotNull(plan);
     assertTrue(plan.getStepCount() > 3); // safety + root cause + utilities + at least one
-                                         // equipment
+					 // equipment
 
     // Verify the plan is reasonable
     assertTrue(plan.getEstimatedTotalTimeMinutes() > 0);

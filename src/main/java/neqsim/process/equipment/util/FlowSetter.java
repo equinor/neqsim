@@ -27,8 +27,8 @@ public class FlowSetter extends TwoPortEquipment {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   private static final Logger logger = LogManager.getLogger(FlowSetter.class);
-  double[] pressure = new double[] {1.01325};
-  double[] temperature = new double[] {15.0};
+  double[] pressure = new double[] { 1.01325 };
+  double[] temperature = new double[] { 15.0 };
   String unitT = "C";
   String unitP = "bara";
 
@@ -46,7 +46,7 @@ public class FlowSetter extends TwoPortEquipment {
    * Constructor for FlowSetter.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
+   * @param name   a {@link java.lang.String} object
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public FlowSetter(String name, StreamInterface stream) {
@@ -81,20 +81,20 @@ public class FlowSetter extends TwoPortEquipment {
   public void setGasFlowRate(double flowRate, String flowUnit) {
     double conversionFactor = 1.0;
     switch (flowUnit) {
-      case "Sm3/sec":
-        conversionFactor = 1.0;
-        break;
-      case "Sm3/hr":
-        conversionFactor = 1.0 / 3600.0;
-        break;
-      case "Sm3/day":
-        conversionFactor = 1.0 / 3600.0 / 24.0;
-        break;
-      case "MSm3/day":
-        conversionFactor = 1.0 / 3600.0 / 24.0 * 1e6;
-        break;
-      default:
-        throw new RuntimeException("unit not supported " + flowUnit);
+    case "Sm3/sec":
+      conversionFactor = 1.0;
+      break;
+    case "Sm3/hr":
+      conversionFactor = 1.0 / 3600.0;
+      break;
+    case "Sm3/day":
+      conversionFactor = 1.0 / 3600.0 / 24.0;
+      break;
+    case "MSm3/day":
+      conversionFactor = 1.0 / 3600.0 / 24.0 * 1e6;
+      break;
+    default:
+      throw new RuntimeException("unit not supported " + flowUnit);
     }
     gasFlowRate = flowRate * conversionFactor;
   }
@@ -110,20 +110,20 @@ public class FlowSetter extends TwoPortEquipment {
   public double getGasFlowRate(String flowUnit) {
     double conversionFactor = 1.0;
     switch (flowUnit) {
-      case "Sm3/sec":
-        conversionFactor = 1.0;
-        break;
-      case "Sm3/hr":
-        conversionFactor = 1.0 * 3600.0;
-        break;
-      case "Sm3/day":
-        conversionFactor = 1.0 * 3600.0 * 24.0;
-        break;
-      case "MSm3/day":
-        conversionFactor = 1.0 * 3600.0 * 24.0 / 1e6;
-        break;
-      default:
-        throw new RuntimeException("unit not supported " + flowUnit);
+    case "Sm3/sec":
+      conversionFactor = 1.0;
+      break;
+    case "Sm3/hr":
+      conversionFactor = 1.0 * 3600.0;
+      break;
+    case "Sm3/day":
+      conversionFactor = 1.0 * 3600.0 * 24.0;
+      break;
+    case "MSm3/day":
+      conversionFactor = 1.0 * 3600.0 * 24.0 / 1e6;
+      break;
+    default:
+      throw new RuntimeException("unit not supported " + flowUnit);
     }
     return gasFlowRate * conversionFactor;
   }
@@ -139,17 +139,17 @@ public class FlowSetter extends TwoPortEquipment {
   public void setOilFlowRate(double flowRate, String flowUnit) {
     double conversionFactor = 1.0;
     switch (flowUnit) {
-      case "m3/sec":
-        conversionFactor = 1.0;
-        break;
-      case "m3/hr":
-        conversionFactor = 1.0 / 3600.0;
-        break;
-      case "m3/day":
-        conversionFactor = 1.0 / 3600.0 / 24.0;
-        break;
-      default:
-        throw new RuntimeException("unit not supported " + flowUnit);
+    case "m3/sec":
+      conversionFactor = 1.0;
+      break;
+    case "m3/hr":
+      conversionFactor = 1.0 / 3600.0;
+      break;
+    case "m3/day":
+      conversionFactor = 1.0 / 3600.0 / 24.0;
+      break;
+    default:
+      throw new RuntimeException("unit not supported " + flowUnit);
     }
     oilFlowRate = flowRate * conversionFactor;
   }
@@ -165,17 +165,17 @@ public class FlowSetter extends TwoPortEquipment {
   public double getOilFlowRate(String flowUnit) {
     double conversionFactor = 1.0;
     switch (flowUnit) {
-      case "m3/sec":
-        conversionFactor = 1.0;
-        break;
-      case "m3/hr":
-        conversionFactor = 1.0 * 3600.0;
-        break;
-      case "m3/day":
-        conversionFactor = 1.0 * 3600.0 * 24.0;
-        break;
-      default:
-        throw new RuntimeException("unit not supported " + flowUnit);
+    case "m3/sec":
+      conversionFactor = 1.0;
+      break;
+    case "m3/hr":
+      conversionFactor = 1.0 * 3600.0;
+      break;
+    case "m3/day":
+      conversionFactor = 1.0 * 3600.0 * 24.0;
+      break;
+    default:
+      throw new RuntimeException("unit not supported " + flowUnit);
     }
     return oilFlowRate * conversionFactor;
   }
@@ -191,17 +191,17 @@ public class FlowSetter extends TwoPortEquipment {
   public void setWaterFlowRate(double flowRate, String flowUnit) {
     double conversionFactor = 1.0;
     switch (flowUnit) {
-      case "m3/sec":
-        conversionFactor = 1.0;
-        break;
-      case "m3/hr":
-        conversionFactor = 1.0 / 3600.0;
-        break;
-      case "m3/day":
-        conversionFactor = 1.0 / 3600.0 / 24.0;
-        break;
-      default:
-        throw new RuntimeException("unit not supported " + flowUnit);
+    case "m3/sec":
+      conversionFactor = 1.0;
+      break;
+    case "m3/hr":
+      conversionFactor = 1.0 / 3600.0;
+      break;
+    case "m3/day":
+      conversionFactor = 1.0 / 3600.0 / 24.0;
+      break;
+    default:
+      throw new RuntimeException("unit not supported " + flowUnit);
     }
     waterFlowRate = flowRate * conversionFactor;
   }
@@ -217,17 +217,17 @@ public class FlowSetter extends TwoPortEquipment {
   public double getWaterFlowRate(String flowUnit) {
     double conversionFactor = 1.0;
     switch (flowUnit) {
-      case "m3/sec":
-        conversionFactor = 1.0;
-        break;
-      case "m3/hr":
-        conversionFactor = 1.0 * 3600.0;
-        break;
-      case "m3/day":
-        conversionFactor = 1.0 * 3600.0 * 24.0;
-        break;
-      default:
-        throw new RuntimeException("unit not supported " + flowUnit);
+    case "m3/sec":
+      conversionFactor = 1.0;
+      break;
+    case "m3/hr":
+      conversionFactor = 1.0 * 3600.0;
+      break;
+    case "m3/day":
+      conversionFactor = 1.0 * 3600.0 * 24.0;
+      break;
+    default:
+      throw new RuntimeException("unit not supported " + flowUnit);
     }
     return waterFlowRate * conversionFactor;
   }
@@ -251,34 +251,25 @@ public class FlowSetter extends TwoPortEquipment {
       error = 0.0;
       ((StreamInterface) referenceProcess.getUnit("feed stream")).setFluid(tempFluid);
       referenceProcess.run();
-      referenceProcess.getUnit("gas").getFluid()
-          .initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
-      referenceProcess.getUnit("oil").getFluid()
-          .initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
+      referenceProcess.getUnit("gas").getFluid().initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
+      referenceProcess.getUnit("oil").getFluid().initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
 
       double[] moleChange = new double[tempFluid.getNumberOfComponents()];
       for (int i = 0; i < tempFluid.getNumberOfComponents(); i++) {
-        moleChange[i] =
-            referenceProcess.getUnit("gas").getFluid().getComponent(i).getNumberOfMolesInPhase()
-                * (getGasFlowRate("Sm3/hr")
-                    / ((StreamInterface) referenceProcess.getUnit("gas")).getFlowRate("Sm3/hr"))
-                - referenceProcess.getUnit("gas").getFluid().getComponent(i)
-                    .getNumberOfMolesInPhase()
+	moleChange[i] = referenceProcess.getUnit("gas").getFluid().getComponent(i).getNumberOfMolesInPhase()
+	    * (getGasFlowRate("Sm3/hr") / ((StreamInterface) referenceProcess.getUnit("gas")).getFlowRate("Sm3/hr"))
+	    - referenceProcess.getUnit("gas").getFluid().getComponent(i).getNumberOfMolesInPhase()
 
-                + referenceProcess.getUnit("oil").getFluid().getComponent(i)
-                    .getNumberOfMolesInPhase()
-                    * (getOilFlowRate("m3/hr")
-                        / ((StreamInterface) referenceProcess.getUnit("oil")).getFlowRate("m3/hr"))
-                - referenceProcess.getUnit("oil").getFluid().getComponent(i)
-                    .getNumberOfMolesInPhase();
-        error += Math.abs(moleChange[i]);
+	    + referenceProcess.getUnit("oil").getFluid().getComponent(i).getNumberOfMolesInPhase()
+		* (getOilFlowRate("m3/hr") / ((StreamInterface) referenceProcess.getUnit("oil")).getFlowRate("m3/hr"))
+	    - referenceProcess.getUnit("oil").getFluid().getComponent(i).getNumberOfMolesInPhase();
+	error += Math.abs(moleChange[i]);
       }
       tempFluid.init(0);
       for (int i = 0; i < tempFluid.getNumberOfComponents(); i++) {
-        tempFluid.addComponent(i, moleChange[i]);
+	tempFluid.addComponent(i, moleChange[i]);
       }
-    } while (error > referenceProcess.getUnit("feed stream").getFluid().getTotalNumberOfMoles()
-        / 1e6);
+    } while (error > referenceProcess.getUnit("feed stream").getFluid().getTotalNumberOfMoles() / 1e6);
 
     if (waterFlowRate > 0) {
       tempFluid.addComponent("water", getWaterFlowRate("m3/hr") * 1000.0, "kg/hr");
@@ -315,8 +306,7 @@ public class FlowSetter extends TwoPortEquipment {
     feedStream1.setPressure(pressure[0], unitP);
     referenceProcess.add(feedStream1);
 
-    ThreePhaseSeparator separator1ststage =
-        new ThreePhaseSeparator("1st stage separator", feedStream1);
+    ThreePhaseSeparator separator1ststage = new ThreePhaseSeparator("1st stage separator", feedStream1);
     referenceProcess.add(separator1ststage);
 
     Mixer gasMixer = new Mixer("gas mixer");
@@ -327,7 +317,7 @@ public class FlowSetter extends TwoPortEquipment {
 
     if (temperature.length == 0 || temperature == null) {
       throw new RuntimeException(
-          new InvalidInputException(this, "getReferenceProcess", "temperature", "can not be null"));
+	  new InvalidInputException(this, "getReferenceProcess", "temperature", "can not be null"));
     } else if (temperature.length == 1) {
       oilExport = new Stream("oil", separator1ststage.getOilOutStream());
     } else if (temperature.length == 2) {
@@ -336,8 +326,8 @@ public class FlowSetter extends TwoPortEquipment {
       heater2ndstage.setOutTemperature(temperature[1], unitT);
       referenceProcess.add(heater2ndstage);
 
-      ThreePhaseSeparator separator2ndstage =
-          new ThreePhaseSeparator("2nd stage separator", heater2ndstage.getOutletStream());
+      ThreePhaseSeparator separator2ndstage = new ThreePhaseSeparator("2nd stage separator",
+	  heater2ndstage.getOutletStream());
       referenceProcess.add(separator2ndstage);
 
       gasMixer.addStream(separator2ndstage.getGasOutStream());
@@ -348,8 +338,8 @@ public class FlowSetter extends TwoPortEquipment {
       heater2ndstage.setOutTemperature(temperature[1], unitT);
       referenceProcess.add(heater2ndstage);
 
-      ThreePhaseSeparator separator2ndstage =
-          new ThreePhaseSeparator("2nd stage separator", heater2ndstage.getOutletStream());
+      ThreePhaseSeparator separator2ndstage = new ThreePhaseSeparator("2nd stage separator",
+	  heater2ndstage.getOutletStream());
       referenceProcess.add(separator2ndstage);
 
       Heater heater3rdstage = new Heater("3rd stage heater", separator2ndstage.getOilOutStream());
@@ -357,8 +347,8 @@ public class FlowSetter extends TwoPortEquipment {
       heater3rdstage.setOutTemperature(temperature[2], unitT);
       referenceProcess.add(heater3rdstage);
 
-      ThreePhaseSeparator separator3rdstage =
-          new ThreePhaseSeparator("3rd stage separator", heater3rdstage.getOutletStream());
+      ThreePhaseSeparator separator3rdstage = new ThreePhaseSeparator("3rd stage separator",
+	  heater3rdstage.getOutletStream());
       referenceProcess.add(separator3rdstage);
 
       gasMixer.addStream(separator2ndstage.getGasOutStream());
@@ -389,10 +379,10 @@ public class FlowSetter extends TwoPortEquipment {
    * setSeparationPT.
    * </p>
    *
-   * @param pressure an array of type double
-   * @param unitP a {@link java.lang.String} object
+   * @param pressure    an array of type double
+   * @param unitP       a {@link java.lang.String} object
    * @param temperature an array of type double
-   * @param unitT a {@link java.lang.String} object
+   * @param unitT       a {@link java.lang.String} object
    */
   public void setSeparationPT(double[] pressure, String unitP, double[] temperature, String unitT) {
     this.pressure = pressure;

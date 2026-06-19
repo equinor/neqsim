@@ -10,8 +10,7 @@
  * <li><b>HAZOP Mapping:</b> Connect to standard deviation types</li>
  * <li><b>Combination Generation:</b> Multi-failure scenarios</li>
  * <li><b>Prioritization:</b> Rank by severity and likelihood</li>
- * <li><b>Release Dispersion:</b> Generate leak source terms and gas cloud endpoints from process
- * streams</li>
+ * <li><b>Release Dispersion:</b> Generate leak source terms and gas cloud endpoints from process streams</li>
  * </ul>
  *
  * <h2>Supported Failure Modes:</h2>

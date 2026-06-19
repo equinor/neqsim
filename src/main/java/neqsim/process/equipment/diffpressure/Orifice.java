@@ -10,9 +10,9 @@ import neqsim.thermo.system.SystemInterface;
  * </p>
  *
  * <p>
- * This class supports both steady-state and transient/dynamic simulations. In transient mode, the
- * orifice calculates flow based on the pressure differential across the plate using ISO 5167
- * equations, making it suitable for depressurization and blowdown scenarios.
+ * This class supports both steady-state and transient/dynamic simulations. In transient mode, the orifice calculates
+ * flow based on the pressure differential across the plate using ISO 5167 equations, making it suitable for
+ * depressurization and blowdown scenarios.
  * </p>
  *
  * <p>
@@ -55,20 +55,18 @@ public class Orifice extends TwoPortEquipment {
    * Constructor for Orifice with full ISO 5167 parameters.
    *
    * <p>
-   * Creates an orifice plate flow restriction device with specified geometry and operating
-   * conditions. This constructor is typically used for transient/dynamic simulations where the
-   * orifice controls flow based on pressure differential.
+   * Creates an orifice plate flow restriction device with specified geometry and operating conditions. This constructor
+   * is typically used for transient/dynamic simulations where the orifice controls flow based on pressure differential.
    * </p>
    *
-   * @param name Name of the orifice equipment
-   * @param diameter Upstream pipe internal diameter in meters
-   * @param orificeDiameter Orifice bore diameter in meters
-   * @param pressureUpstream Upstream design pressure in bara (used for reference)
-   * @param pressureDownstream Downstream boundary pressure in bara (e.g., flare header pressure).
-   *        This value is used in transient simulations to establish the driving pressure
-   *        differential.
-   * @param dischargeCoefficient Orifice discharge coefficient (typically 0.60-0.62 for sharp-edged
-   *        orifices, or calculated using Reader-Harris/Gallagher method)
+   * @param name                 Name of the orifice equipment
+   * @param diameter             Upstream pipe internal diameter in meters
+   * @param orificeDiameter      Orifice bore diameter in meters
+   * @param pressureUpstream     Upstream design pressure in bara (used for reference)
+   * @param pressureDownstream   Downstream boundary pressure in bara (e.g., flare header pressure). This value is used
+   *                             in transient simulations to establish the driving pressure differential.
+   * @param dischargeCoefficient Orifice discharge coefficient (typically 0.60-0.62 for sharp-edged orifices, or
+   *                             calculated using Reader-Harris/Gallagher method)
    */
   public Orifice(String name, double diameter, double orificeDiameter, double pressureUpstream,
       double pressureDownstream, double dischargeCoefficient) {
@@ -84,14 +82,13 @@ public class Orifice extends TwoPortEquipment {
    * Set orifice parameters for legacy compatibility.
    *
    * <p>
-   * <b>Note:</b> These parameters are currently not used in the ISO 5167 calculations. Use the
-   * constructor with diameter, orificeDiameter, and dischargeCoefficient instead for transient
-   * simulations.
+   * <b>Note:</b> These parameters are currently not used in the ISO 5167 calculations. Use the constructor with
+   * diameter, orificeDiameter, and dischargeCoefficient instead for transient simulations.
    * </p>
    *
-   * @param diameter Orifice diameter
+   * @param diameter       Orifice diameter
    * @param diameter_outer Outer diameter
-   * @param C Discharge coefficient
+   * @param C              Discharge coefficient
    * @deprecated Use constructor parameters instead
    */
   @Deprecated
@@ -105,9 +102,9 @@ public class Orifice extends TwoPortEquipment {
    * Calculate the non-recoverable pressure drop across the orifice.
    *
    * <p>
-   * This method calculates the permanent pressure loss (deltaW) across an orifice plate, which
-   * represents the portion of pressure drop that is not recovered downstream. The calculation is
-   * based on the discharge coefficient and beta ratio.
+   * This method calculates the permanent pressure loss (deltaW) across an orifice plate, which represents the portion
+   * of pressure drop that is not recovered downstream. The calculation is based on the discharge coefficient and beta
+   * ratio.
    * </p>
    *
    * @return Non-recoverable pressure drop in bar
@@ -119,10 +116,9 @@ public class Orifice extends TwoPortEquipment {
     double dP = pressureUpstream - pressureDownstream;
 
     double deltaW = (Math.sqrt(1.0 - beta4 * (1.0 - dischargeCoefficient * dischargeCoefficient))
-        - dischargeCoefficient * beta2)
-        / (Math.sqrt(1.0 - beta4 * (1.0 - dischargeCoefficient * dischargeCoefficient))
-            + dischargeCoefficient * beta2)
-        * dP;
+	- dischargeCoefficient * beta2)
+	/ (Math.sqrt(1.0 - beta4 * (1.0 - dischargeCoefficient * dischargeCoefficient)) + dischargeCoefficient * beta2)
+	* dP;
 
     return deltaW;
   }
@@ -130,16 +126,16 @@ public class Orifice extends TwoPortEquipment {
   /**
    * Calculates the orifice discharge coefficient using the Reader-Harris Gallagher method.
    *
-   * @param D Upstream internal pipe diameter, in meters.
-   * @param Do Diameter of orifice at flow conditions, in meters.
-   * @param rho Density of fluid at P1, in kg/m^3.
-   * @param mu Viscosity of fluid at P1, in Pa*s.
-   * @param m Mass flow rate of fluid through the orifice, in kg/s.
+   * @param D    Upstream internal pipe diameter, in meters.
+   * @param Do   Diameter of orifice at flow conditions, in meters.
+   * @param rho  Density of fluid at P1, in kg/m^3.
+   * @param mu   Viscosity of fluid at P1, in Pa*s.
+   * @param m    Mass flow rate of fluid through the orifice, in kg/s.
    * @param taps Tap type ("corner", "flange", "D", or "D/2").
    * @return Discharge coefficient of the orifice.
    */
-  public static double calculateDischargeCoefficient(double D, double Do, double rho, double mu,
-      double m, String taps) {
+  public static double calculateDischargeCoefficient(double D, double Do, double rho, double mu, double m,
+      String taps) {
     double A_pipe = 0.25 * Math.PI * D * D;
     double v = m / (A_pipe * rho);
     double Re_D = rho * v * D / mu;
@@ -165,14 +161,12 @@ public class Orifice extends TwoPortEquipment {
     double A = Math.pow(19000 * beta / Re_D, 0.8);
     double M2_prime = 2.0 * L2_prime / (1.0 - beta);
 
-    double deltaCUpstream = ((0.043 + 0.08 * Math.exp(-10 * L1) - 0.123 * Math.exp(-7 * L1))
-        * (1.0 - 0.11 * A) * beta4 / (1.0 - beta4));
+    double deltaCUpstream = ((0.043 + 0.08 * Math.exp(-10 * L1) - 0.123 * Math.exp(-7 * L1)) * (1.0 - 0.11 * A) * beta4
+	/ (1.0 - beta4));
 
-    double deltaCDownstream =
-        -0.031 * (M2_prime - 0.8 * Math.pow(M2_prime, 1.1)) * Math.pow(beta, 1.3);
-    double C_inf_C_s =
-        0.5961 + 0.0261 * beta2 - 0.216 * beta8 + 0.000521 * Math.pow(1e6 * beta / Re_D, 0.7)
-            + (0.0188 + 0.0063 * A) * Math.pow(beta, 3.5) * Math.pow(1e6 / Re_D, 0.3);
+    double deltaCDownstream = -0.031 * (M2_prime - 0.8 * Math.pow(M2_prime, 1.1)) * Math.pow(beta, 1.3);
+    double C_inf_C_s = 0.5961 + 0.0261 * beta2 - 0.216 * beta8 + 0.000521 * Math.pow(1e6 * beta / Re_D, 0.7)
+	+ (0.0188 + 0.0063 * A) * Math.pow(beta, 3.5) * Math.pow(1e6 / Re_D, 0.3);
 
     return C_inf_C_s + deltaCUpstream + deltaCDownstream;
   }
@@ -180,11 +174,11 @@ public class Orifice extends TwoPortEquipment {
   /**
    * Calculates the expansibility factor for orifice plate calculations.
    *
-   * @param D Upstream internal pipe diameter, in meters.
+   * @param D  Upstream internal pipe diameter, in meters.
    * @param Do Diameter of orifice at flow conditions, in meters.
    * @param P1 Static pressure of fluid upstream, in Pa.
    * @param P2 Static pressure of fluid downstream, in Pa.
-   * @param k Isentropic exponent of fluid.
+   * @param k  Isentropic exponent of fluid.
    * @return Expansibility factor (1 for incompressible fluids).
    */
   public static double calculateExpansibility(double D, double Do, double P1, double P2, double k) {
@@ -196,11 +190,11 @@ public class Orifice extends TwoPortEquipment {
   /**
    * Calculates the non-recoverable pressure drop across the orifice plate.
    *
-   * @param D Upstream internal pipe diameter, in meters.
+   * @param D  Upstream internal pipe diameter, in meters.
    * @param Do Diameter of orifice at flow conditions, in meters.
    * @param P1 Static pressure of fluid upstream, in Pa.
    * @param P2 Static pressure of fluid downstream, in Pa.
-   * @param C Discharge coefficient.
+   * @param C  Discharge coefficient.
    * @return Non-recoverable pressure drop, in Pa.
    */
   public static double calculatePressureDrop(double D, double Do, double P1, double P2, double C) {
@@ -209,14 +203,14 @@ public class Orifice extends TwoPortEquipment {
     double beta4 = beta2 * beta2;
     double dP = P1 - P2;
     double deltaW = (Math.sqrt(1.0 - beta4 * (1.0 - C * C)) - C * beta2)
-        / (Math.sqrt(1.0 - beta4 * (1.0 - C * C)) + C * beta2) * dP;
+	/ (Math.sqrt(1.0 - beta4 * (1.0 - C * C)) + C * beta2) * dP;
     return deltaW;
   }
 
   /**
    * Calculates the diameter ratio (beta) of the orifice plate.
    *
-   * @param D Upstream internal pipe diameter, in meters.
+   * @param D  Upstream internal pipe diameter, in meters.
    * @param Do Diameter of orifice at flow conditions, in meters.
    * @return Diameter ratio (beta).
    */
@@ -228,22 +222,22 @@ public class Orifice extends TwoPortEquipment {
    * Calculates the mass flow rate through an orifice plate using the ISO 5167 formulation.
    *
    * <p>
-   * Inputs and output are all in SI units. The method iterates the Reader-Harris/Gallagher
-   * discharge coefficient until convergence.
+   * Inputs and output are all in SI units. The method iterates the Reader-Harris/Gallagher discharge coefficient until
+   * convergence.
    * </p>
    *
-   * @param D upstream internal pipe diameter in meters
-   * @param Do orifice diameter in meters
-   * @param P1 upstream static pressure in Pa
-   * @param P2 downstream static pressure in Pa
-   * @param rho fluid density in kg/m3 at P1
-   * @param mu fluid viscosity in Pa*s at P1
-   * @param k isentropic exponent of the fluid
+   * @param D    upstream internal pipe diameter in meters
+   * @param Do   orifice diameter in meters
+   * @param P1   upstream static pressure in Pa
+   * @param P2   downstream static pressure in Pa
+   * @param rho  fluid density in kg/m3 at P1
+   * @param mu   fluid viscosity in Pa*s at P1
+   * @param k    isentropic exponent of the fluid
    * @param taps pressure tap type ("corner", "flange", "D", or "D/2")
    * @return mass flow rate in kg/s
    */
-  public static double calculateMassFlowRate(double D, double Do, double P1, double P2, double rho,
-      double mu, double k, String taps) {
+  public static double calculateMassFlowRate(double D, double Do, double P1, double P2, double rho, double mu, double k,
+      String taps) {
     final int MAX_ITERATIONS = 50;
     double m = 1.0;
     for (int i = 0; i < MAX_ITERATIONS; i++) {
@@ -251,10 +245,9 @@ public class Orifice extends TwoPortEquipment {
       double epsilon = calculateExpansibility(D, Do, P1, P2, k);
       double beta = calculateBetaRatio(D, Do);
       double beta2 = beta * beta;
-      double mCalc = 0.25 * Math.PI * Do * Do * C * epsilon
-          * Math.sqrt(2.0 * rho * (P1 - P2) / (1.0 - beta2 * beta2));
+      double mCalc = 0.25 * Math.PI * Do * Do * C * epsilon * Math.sqrt(2.0 * rho * (P1 - P2) / (1.0 - beta2 * beta2));
       if (Math.abs(mCalc - m) / m < 1e-8) {
-        break;
+	break;
       }
       m = mCalc;
     }
@@ -277,8 +270,8 @@ public class Orifice extends TwoPortEquipment {
    * Run transient simulation for the orifice.
    *
    * <p>
-   * In transient mode, the orifice acts as a pressure-driven flow restriction device. The flow rate
-   * through the orifice is calculated based on the pressure differential using ISO 5167 equations:
+   * In transient mode, the orifice acts as a pressure-driven flow restriction device. The flow rate through the orifice
+   * is calculated based on the pressure differential using ISO 5167 equations:
    * </p>
    *
    * <pre>
@@ -298,16 +291,15 @@ public class Orifice extends TwoPortEquipment {
    * </ul>
    *
    * <p>
-   * The downstream pressure is taken from the stored pressureDownstream value if available (e.g.,
-   * flare header pressure), otherwise it reads from the outlet stream. This ensures proper flow
-   * calculation even when stream pressures aren't updated in the flow network.
+   * The downstream pressure is taken from the stored pressureDownstream value if available (e.g., flare header
+   * pressure), otherwise it reads from the outlet stream. This ensures proper flow calculation even when stream
+   * pressures aren't updated in the flow network.
    * </p>
    *
    * <p>
-   * <b>Important:</b> In dynamic simulations, the orifice DETERMINES the flow rate based on
-   * available ΔP. This is different from steady-state mode where flow may be specified upstream.
-   * The calculated flow is set on both the thermoSystem and inStream to ensure consistency in the
-   * process network.
+   * <b>Important:</b> In dynamic simulations, the orifice DETERMINES the flow rate based on available ΔP. This is
+   * different from steady-state mode where flow may be specified upstream. The calculated flow is set on both the
+   * thermoSystem and inStream to ensure consistency in the process network.
    * </p>
    *
    * @param dt Time step in seconds (not used for orifice as it has no accumulation/storage)
@@ -358,8 +350,7 @@ public class Orifice extends TwoPortEquipment {
 
       // Calculate actual mass flow through orifice based on ISO 5167
       // m = A * C * ε * sqrt(2 * ρ * ΔP / (1 - β⁴))
-      double calculatedFlow_kgs =
-          A_orifice * C * epsilon * Math.sqrt(2.0 * rho * dP_Pa / (1.0 - beta4));
+      double calculatedFlow_kgs = A_orifice * C * epsilon * Math.sqrt(2.0 * rho * dP_Pa / (1.0 - beta4));
 
       // In dynamic mode, the orifice DETERMINES the flow (not just limits it)
       // Set this as the actual flow through the orifice

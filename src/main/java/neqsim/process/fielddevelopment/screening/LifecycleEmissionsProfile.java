@@ -25,8 +25,7 @@ public final class LifecycleEmissionsProfile implements Serializable {
     if (annualEmissions == null) {
       this.annualEmissions = Collections.emptyList();
     } else {
-      this.annualEmissions =
-          Collections.unmodifiableList(new ArrayList<AnnualEmissions>(annualEmissions));
+      this.annualEmissions = Collections.unmodifiableList(new ArrayList<AnnualEmissions>(annualEmissions));
     }
   }
 
@@ -118,20 +117,20 @@ public final class LifecycleEmissionsProfile implements Serializable {
     /**
      * Creates an annual emissions record.
      *
-     * @param year calendar year
-     * @param production annual production in the source profile unit
-     * @param productionBoe annual production in boe
-     * @param loadFactor production load factor from zero to one
-     * @param powerMw average power demand in MW
-     * @param powerSource power source description
-     * @param powerEmissionsTonnes power emissions in tonnes CO2e
-     * @param flaringEmissionsTonnes flaring emissions in tonnes CO2e
+     * @param year                    calendar year
+     * @param production              annual production in the source profile unit
+     * @param productionBoe           annual production in boe
+     * @param loadFactor              production load factor from zero to one
+     * @param powerMw                 average power demand in MW
+     * @param powerSource             power source description
+     * @param powerEmissionsTonnes    power emissions in tonnes CO2e
+     * @param flaringEmissionsTonnes  flaring emissions in tonnes CO2e
      * @param fugitiveEmissionsTonnes fugitive emissions in tonnes CO2e
-     * @param ventedCo2Tonnes vented CO2 in tonnes
+     * @param ventedCo2Tonnes         vented CO2 in tonnes
      */
-    public AnnualEmissions(int year, double production, double productionBoe, double loadFactor,
-        double powerMw, String powerSource, double powerEmissionsTonnes,
-        double flaringEmissionsTonnes, double fugitiveEmissionsTonnes, double ventedCo2Tonnes) {
+    public AnnualEmissions(int year, double production, double productionBoe, double loadFactor, double powerMw,
+	String powerSource, double powerEmissionsTonnes, double flaringEmissionsTonnes, double fugitiveEmissionsTonnes,
+	double ventedCo2Tonnes) {
       this.year = year;
       this.production = production;
       this.productionBoe = productionBoe;
@@ -142,8 +141,8 @@ public final class LifecycleEmissionsProfile implements Serializable {
       this.flaringEmissionsTonnes = flaringEmissionsTonnes;
       this.fugitiveEmissionsTonnes = fugitiveEmissionsTonnes;
       this.ventedCo2Tonnes = ventedCo2Tonnes;
-      this.totalEmissionsTonnes =
-          powerEmissionsTonnes + flaringEmissionsTonnes + fugitiveEmissionsTonnes + ventedCo2Tonnes;
+      this.totalEmissionsTonnes = powerEmissionsTonnes + flaringEmissionsTonnes + fugitiveEmissionsTonnes
+	  + ventedCo2Tonnes;
     }
 
     /**

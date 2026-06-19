@@ -29,10 +29,9 @@ import neqsim.process.mechanicaldesign.MechanicalDesign;
  * </ul>
  *
  * <p>
- * Supports both standard heat exchangers (shell-and-tube, plate, air-cooler, double-pipe) and LNG
- * cryogenic BAHX (plate-fin). When used with {@link LNGHeatExchanger}, additional BAHX-specific
- * checks are performed: mercury risk, freeze-out risk, thermal stress, flow maldistribution, and
- * MITA margin.
+ * Supports both standard heat exchangers (shell-and-tube, plate, air-cooler, double-pipe) and LNG cryogenic BAHX
+ * (plate-fin). When used with {@link LNGHeatExchanger}, additional BAHX-specific checks are performed: mercury risk,
+ * freeze-out risk, thermal stress, flow maldistribution, and MITA margin.
  * </p>
  *
  * @author NeqSim
@@ -155,8 +154,8 @@ public class HeatExchangerDesignFeasibilityReport {
    * Generate the complete feasibility report.
    *
    * <p>
-   * Runs all assessment steps in sequence: capture operating point, run mechanical design, run cost
-   * estimation, match suppliers, check feasibility, determine verdict.
+   * Runs all assessment steps in sequence: capture operating point, run mechanical design, run cost estimation, match
+   * suppliers, check feasibility, determine verdict.
    * </p>
    */
   public void generateReport() {
@@ -173,8 +172,8 @@ public class HeatExchangerDesignFeasibilityReport {
     // Determine verdict
     for (FeasibilityIssue issue : issues) {
       if (issue.getSeverity() == IssueSeverity.BLOCKER) {
-        feasible = false;
-        break;
+	feasible = false;
+	break;
       }
     }
 
@@ -193,41 +192,41 @@ public class HeatExchangerDesignFeasibilityReport {
       double[][] hotCurve = lngHX.getHotCompositeCurve();
       double[][] coldCurve = lngHX.getColdCompositeCurve();
       if (hotCurve != null && hotCurve.length > 1) {
-        hotInletTempC = hotCurve[hotCurve.length - 1][1];
-        hotOutletTempC = hotCurve[0][1];
+	hotInletTempC = hotCurve[hotCurve.length - 1][1];
+	hotOutletTempC = hotCurve[0][1];
       }
       if (coldCurve != null && coldCurve.length > 1) {
-        coldInletTempC = coldCurve[0][1];
-        coldOutletTempC = coldCurve[coldCurve.length - 1][1];
+	coldInletTempC = coldCurve[0][1];
+	coldOutletTempC = coldCurve[coldCurve.length - 1][1];
       }
 
       // Pressure from streams
       List<neqsim.process.equipment.stream.StreamInterface> inStreams = lngHX.getInletStreams();
       for (neqsim.process.equipment.stream.StreamInterface s : inStreams) {
-        double p = s.getPressure("bara");
-        if (p > maxPressureBara) {
-          maxPressureBara = p;
-        }
-        double t = s.getTemperature("C");
-        if (t < minTempC || minTempC == 0.0) {
-          minTempC = t;
-        }
+	double p = s.getPressure("bara");
+	if (p > maxPressureBara) {
+	  maxPressureBara = p;
+	}
+	double t = s.getTemperature("C");
+	if (t < minTempC || minTempC == 0.0) {
+	  minTempC = t;
+	}
       }
 
       // Area from core geometry or UA
       LNGHeatExchanger.CoreGeometry core = lngHX.getCoreGeometry();
       if (core != null && core.getWeight() > 0) {
-        // Estimate area from core volume and surface area density
-        double coreVolume = core.getLength() * core.getWidth() * core.getHeight();
-        heatTransferAreaM2 = coreVolume * 1000.0; // beta ~ 1000 m2/m3
+	// Estimate area from core volume and surface area density
+	double coreVolume = core.getLength() * core.getWidth() * core.getHeight();
+	heatTransferAreaM2 = coreVolume * 1000.0; // beta ~ 1000 m2/m3
       }
       double[] uaPerZone = lngHX.getUAPerZone();
       double totalUA = 0;
       for (double ua : uaPerZone) {
-        totalUA += ua;
+	totalUA += ua;
       }
       if (totalUA > 0) {
-        heatTransferAreaM2 = totalUA / 400.0; // h ~ 400 W/(m2 K)
+	heatTransferAreaM2 = totalUA / 400.0; // h ~ 400 W/(m2 K)
       }
     } else {
       HeatExchanger hx = (HeatExchanger) heatExchanger;
@@ -235,11 +234,11 @@ public class HeatExchangerDesignFeasibilityReport {
       hotInletTempC = hx.getInStream(0).getTemperature("C");
       hotOutletTempC = hx.getOutStream(0).getTemperature("C");
       if (hx.getInStream(1) != null) {
-        coldInletTempC = hx.getInStream(1).getTemperature("C");
-        coldOutletTempC = hx.getOutStream(1).getTemperature("C");
+	coldInletTempC = hx.getInStream(1).getTemperature("C");
+	coldOutletTempC = hx.getOutStream(1).getTemperature("C");
       }
       maxPressureBara = Math.max(hx.getInStream(0).getPressure("bara"),
-          hx.getInStream(1) != null ? hx.getInStream(1).getPressure("bara") : 0);
+	  hx.getInStream(1) != null ? hx.getInStream(1).getPressure("bara") : 0);
       minTempC = Math.min(hotOutletTempC, coldInletTempC);
     }
   }
@@ -277,8 +276,8 @@ public class HeatExchangerDesignFeasibilityReport {
       annualMaintenanceCostUSD = costEst.getAnnualMaintenanceCostUSD();
       costBreakdown = costEst.getCostBreakdown();
     } else {
-      HeatExchangerCostEstimate costEst =
-          new HeatExchangerCostEstimate((HeatExchangerMechanicalDesign) mechanicalDesign);
+      HeatExchangerCostEstimate costEst = new HeatExchangerCostEstimate(
+	  (HeatExchangerMechanicalDesign) mechanicalDesign);
       costEst.setExchangerType(exchangerType);
       purchasedEquipmentCostUSD = costEst.getPurchasedEquipmentCost();
       installedCostUSD = purchasedEquipmentCostUSD * 3.5;
@@ -296,7 +295,7 @@ public class HeatExchangerDesignFeasibilityReport {
     List<SupplierMatch> allSuppliers = loadSupplierDatabase();
     for (SupplierMatch supplier : allSuppliers) {
       if (isSupplierMatch(supplier)) {
-        matchingSuppliers.add(supplier);
+	matchingSuppliers.add(supplier);
       }
     }
   }
@@ -316,15 +315,14 @@ public class HeatExchangerDesignFeasibilityReport {
     // Check duty range
     if (dutyKW > 0) {
       if (dutyKW < supplier.getMinDutyKW() || dutyKW > supplier.getMaxDutyKW()) {
-        return false;
+	return false;
       }
     }
 
     // Check area range
     if (heatTransferAreaM2 > 0) {
-      if (heatTransferAreaM2 < supplier.getMinAreaM2()
-          || heatTransferAreaM2 > supplier.getMaxAreaM2()) {
-        return false;
+      if (heatTransferAreaM2 < supplier.getMinAreaM2() || heatTransferAreaM2 > supplier.getMaxAreaM2()) {
+	return false;
       }
     }
 
@@ -344,7 +342,7 @@ public class HeatExchangerDesignFeasibilityReport {
   /**
    * Check if the supplier type matches the requested type.
    *
-   * @param supplierType supplier's exchanger type
+   * @param supplierType  supplier's exchanger type
    * @param requestedType requested exchanger type
    * @return true if types are compatible
    */
@@ -396,19 +394,17 @@ public class HeatExchangerDesignFeasibilityReport {
    */
   private void checkTemperatureRange() {
     if (minTempC < -269.0) {
-      issues.add(new FeasibilityIssue(IssueSeverity.BLOCKER, "TEMPERATURE", "Minimum temperature "
-          + String.format("%.1f", minTempC) + " C is below absolute zero limit for BAHX."));
+      issues.add(new FeasibilityIssue(IssueSeverity.BLOCKER, "TEMPERATURE",
+	  "Minimum temperature " + String.format("%.1f", minTempC) + " C is below absolute zero limit for BAHX."));
     } else if (minTempC < -196.0 && !isBAHX) {
-      issues.add(new FeasibilityIssue(IssueSeverity.WARNING, "TEMPERATURE",
-          "Temperature " + String.format("%.1f", minTempC)
-              + " C requires cryogenic materials. Consider BAHX or stainless steel."));
+      issues.add(new FeasibilityIssue(IssueSeverity.WARNING, "TEMPERATURE", "Temperature "
+	  + String.format("%.1f", minTempC) + " C requires cryogenic materials. Consider BAHX or stainless steel."));
     }
 
     double maxTempC = Math.max(hotInletTempC, coldOutletTempC);
     if (isBAHX && maxTempC > 65.0) {
-      issues.add(new FeasibilityIssue(IssueSeverity.WARNING, "TEMPERATURE",
-          "Hot inlet temperature " + String.format("%.1f", maxTempC)
-              + " C exceeds typical BAHX limit of 65 C for aluminium brazing."));
+      issues.add(new FeasibilityIssue(IssueSeverity.WARNING, "TEMPERATURE", "Hot inlet temperature "
+	  + String.format("%.1f", maxTempC) + " C exceeds typical BAHX limit of 65 C for aluminium brazing."));
     }
   }
 
@@ -418,12 +414,10 @@ public class HeatExchangerDesignFeasibilityReport {
   private void checkPressureRange() {
     if (isBAHX && maxPressureBara > 120.0) {
       issues.add(new FeasibilityIssue(IssueSeverity.BLOCKER, "PRESSURE",
-          "Pressure " + String.format("%.1f", maxPressureBara)
-              + " bara exceeds typical BAHX limit of 120 bara."));
+	  "Pressure " + String.format("%.1f", maxPressureBara) + " bara exceeds typical BAHX limit of 120 bara."));
     } else if (isBAHX && maxPressureBara > 80.0) {
       issues.add(new FeasibilityIssue(IssueSeverity.WARNING, "PRESSURE",
-          "Pressure " + String.format("%.1f", maxPressureBara)
-              + " bara is high for BAHX. Verify with vendor."));
+	  "Pressure " + String.format("%.1f", maxPressureBara) + " bara is high for BAHX. Verify with vendor."));
     }
   }
 
@@ -433,13 +427,12 @@ public class HeatExchangerDesignFeasibilityReport {
   private void checkAreaRange() {
     if (isBAHX && heatTransferAreaM2 > 30000.0) {
       issues.add(new FeasibilityIssue(IssueSeverity.WARNING, "AREA",
-          "Heat transfer area " + String.format("%.0f", heatTransferAreaM2)
-              + " m2 exceeds typical single BAHX core limit. "
-              + "Consider multiple cores in parallel."));
+	  "Heat transfer area " + String.format("%.0f", heatTransferAreaM2)
+	      + " m2 exceeds typical single BAHX core limit. " + "Consider multiple cores in parallel."));
     }
     if (heatTransferAreaM2 <= 0) {
       issues.add(new FeasibilityIssue(IssueSeverity.INFO, "AREA",
-          "Heat transfer area not calculated. Run the exchanger first."));
+	  "Heat transfer area not calculated. Run the exchanger first."));
     }
   }
 
@@ -450,14 +443,13 @@ public class HeatExchangerDesignFeasibilityReport {
     if (purchasedEquipmentCostUSD > 0 && heatTransferAreaM2 > 0) {
       double costPerM2 = purchasedEquipmentCostUSD / heatTransferAreaM2;
       if (isBAHX) {
-        if (costPerM2 > 3000.0) {
-          issues.add(new FeasibilityIssue(IssueSeverity.INFO, "COST",
-              "Specific cost " + String.format("%.0f", costPerM2)
-                  + " USD/m2 is high for BAHX. Typical range is 800-2000 USD/m2."));
-        } else if (costPerM2 < 500.0) {
-          issues.add(new FeasibilityIssue(IssueSeverity.INFO, "COST", "Specific cost "
-              + String.format("%.0f", costPerM2) + " USD/m2 is low. Estimate may be optimistic."));
-        }
+	if (costPerM2 > 3000.0) {
+	  issues.add(new FeasibilityIssue(IssueSeverity.INFO, "COST", "Specific cost "
+	      + String.format("%.0f", costPerM2) + " USD/m2 is high for BAHX. Typical range is 800-2000 USD/m2."));
+	} else if (costPerM2 < 500.0) {
+	  issues.add(new FeasibilityIssue(IssueSeverity.INFO, "COST",
+	      "Specific cost " + String.format("%.0f", costPerM2) + " USD/m2 is low. Estimate may be optimistic."));
+	}
       }
     }
   }
@@ -468,8 +460,7 @@ public class HeatExchangerDesignFeasibilityReport {
   private void checkSupplierAvailability() {
     if (matchingSuppliers.isEmpty()) {
       issues.add(new FeasibilityIssue(IssueSeverity.WARNING, "SUPPLIER",
-          "No matching suppliers found in database for specified requirements. "
-              + "Custom inquiry required."));
+	  "No matching suppliers found in database for specified requirements. " + "Custom inquiry required."));
     }
   }
 
@@ -482,49 +473,45 @@ public class HeatExchangerDesignFeasibilityReport {
     // Mercury risk
     if (lngHX.isMercuryRiskPresent()) {
       issues.add(new FeasibilityIssue(IssueSeverity.BLOCKER, "MERCURY",
-          "Mercury risk detected. Aluminium BAHX is at risk of liquid metal "
-              + "embrittlement. Install mercury removal upstream."));
+	  "Mercury risk detected. Aluminium BAHX is at risk of liquid metal "
+	      + "embrittlement. Install mercury removal upstream."));
     }
 
     // Freeze-out risk
     if (lngHX.hasFreezeOutRisk()) {
       issues.add(new FeasibilityIssue(IssueSeverity.WARNING, "FREEZE_OUT",
-          "CO2 or heavy hydrocarbon freeze-out risk detected in one or more zones. "
-              + "Review feed composition and consider upstream removal."));
+	  "CO2 or heavy hydrocarbon freeze-out risk detected in one or more zones. "
+	      + "Review feed composition and consider upstream removal."));
     }
 
     // Thermal stress
     if (lngHX.hasThermalStressWarning()) {
       issues.add(new FeasibilityIssue(IssueSeverity.WARNING, "THERMAL_STRESS",
-          "Thermal gradient exceeds recommended limit in one or more zones. "
-              + "Risk of fatigue cracking at brazed joints. "
-              + "Consider lower cool-down rate or additional zones."));
+	  "Thermal gradient exceeds recommended limit in one or more zones. "
+	      + "Risk of fatigue cracking at brazed joints. " + "Consider lower cool-down rate or additional zones."));
     }
 
     // MITA check
     double mita = lngHX.getMITA();
     if (mita < 1.0 && mita > 0) {
-      issues.add(new FeasibilityIssue(IssueSeverity.WARNING, "MITA",
-          "MITA of " + String.format("%.2f", mita) + " C is very small. Risk of temperature cross. "
-              + "Consider adding heat transfer area."));
+      issues.add(new FeasibilityIssue(IssueSeverity.WARNING, "MITA", "MITA of " + String.format("%.2f", mita)
+	  + " C is very small. Risk of temperature cross. " + "Consider adding heat transfer area."));
     } else if (mita > 5.0) {
-      issues.add(new FeasibilityIssue(IssueSeverity.INFO, "MITA", "MITA of "
-          + String.format("%.1f", mita) + " C is large. The exchanger may be oversized."));
+      issues.add(new FeasibilityIssue(IssueSeverity.INFO, "MITA",
+	  "MITA of " + String.format("%.1f", mita) + " C is large. The exchanger may be oversized."));
     }
 
     // Thermal fatigue
     if (mechanicalDesign instanceof BAHXMechanicalDesign) {
       BAHXMechanicalDesign bahxDesign = (BAHXMechanicalDesign) mechanicalDesign;
       if (!bahxDesign.isFatiguePassed()) {
-        issues.add(new FeasibilityIssue(IssueSeverity.BLOCKER, "FATIGUE",
-            "Thermal fatigue utilisation "
-                + String.format("%.2f", bahxDesign.getFatigueUtilisation())
-                + " exceeds 1.0. Reduce thermal gradients or increase core length."));
+	issues.add(new FeasibilityIssue(IssueSeverity.BLOCKER, "FATIGUE",
+	    "Thermal fatigue utilisation " + String.format("%.2f", bahxDesign.getFatigueUtilisation())
+		+ " exceeds 1.0. Reduce thermal gradients or increase core length."));
       } else if (bahxDesign.getFatigueUtilisation() > 0.5) {
-        issues.add(new FeasibilityIssue(IssueSeverity.WARNING, "FATIGUE",
-            "Thermal fatigue utilisation "
-                + String.format("%.2f", bahxDesign.getFatigueUtilisation())
-                + " is above 50%. Monitor thermal cycles closely."));
+	issues.add(new FeasibilityIssue(IssueSeverity.WARNING, "FATIGUE",
+	    "Thermal fatigue utilisation " + String.format("%.2f", bahxDesign.getFatigueUtilisation())
+		+ " is above 50%. Monitor thermal cycles closely."));
       }
     }
 
@@ -532,9 +519,8 @@ public class HeatExchangerDesignFeasibilityReport {
     double etaII = lngHX.getSecondLawEfficiency();
     if (etaII > 0 && etaII < 0.80) {
       issues.add(new FeasibilityIssue(IssueSeverity.WARNING, "EXERGY",
-          "Second-law efficiency " + String.format("%.1f", etaII * 100)
-              + "% is below typical MCHE target of 85%. "
-              + "Consider adding zones or revising temperature approaches."));
+	  "Second-law efficiency " + String.format("%.1f", etaII * 100) + "% is below typical MCHE target of 85%. "
+	      + "Consider adding zones or revising temperature approaches."));
     }
   }
 
@@ -552,19 +538,19 @@ public class HeatExchangerDesignFeasibilityReport {
     try {
       InputStream is = getClass().getResourceAsStream("/designdata/HeatExchangerSuppliers.csv");
       if (is == null) {
-        return suppliers;
+	return suppliers;
       }
       BufferedReader reader = new BufferedReader(new InputStreamReader(is, "UTF-8"));
       String header = reader.readLine(); // skip header
       String line;
       while ((line = reader.readLine()) != null) {
-        if (line.trim().isEmpty()) {
-          continue;
-        }
-        SupplierMatch supplier = parseSupplierLine(line);
-        if (supplier != null) {
-          suppliers.add(supplier);
-        }
+	if (line.trim().isEmpty()) {
+	  continue;
+	}
+	SupplierMatch supplier = parseSupplierLine(line);
+	if (supplier != null) {
+	  suppliers.add(supplier);
+	}
       }
       reader.close();
     } catch (Exception ex) {
@@ -583,7 +569,7 @@ public class HeatExchangerDesignFeasibilityReport {
     try {
       List<String> fields = parseCsvLine(line);
       if (fields.size() < 15) {
-        return null;
+	return null;
       }
       SupplierMatch supplier = new SupplierMatch();
       supplier.setManufacturer(fields.get(1));
@@ -601,7 +587,7 @@ public class HeatExchangerDesignFeasibilityReport {
       supplier.setApplications(fields.get(13));
       supplier.setWebsite(fields.get(14));
       if (fields.size() > 15) {
-        supplier.setNotes(fields.get(15));
+	supplier.setNotes(fields.get(15));
       }
       return supplier;
     } catch (Exception ex) {
@@ -622,12 +608,12 @@ public class HeatExchangerDesignFeasibilityReport {
     for (int i = 0; i < line.length(); i++) {
       char c = line.charAt(i);
       if (c == '"') {
-        inQuotes = !inQuotes;
+	inQuotes = !inQuotes;
       } else if (c == ',' && !inQuotes) {
-        fields.add(current.toString().trim());
-        current = new StringBuilder();
+	fields.add(current.toString().trim());
+	current = new StringBuilder();
       } else {
-        current.append(c);
+	current.append(c);
       }
     }
     fields.add(current.toString().trim());
@@ -637,7 +623,7 @@ public class HeatExchangerDesignFeasibilityReport {
   /**
    * Safely parse a double value.
    *
-   * @param value string value
+   * @param value        string value
    * @param defaultValue default if parsing fails
    * @return parsed value
    */
@@ -667,7 +653,7 @@ public class HeatExchangerDesignFeasibilityReport {
     }
     for (FeasibilityIssue issue : issues) {
       if (issue.getSeverity() == IssueSeverity.WARNING) {
-        return "FEASIBLE_WITH_WARNINGS";
+	return "FEASIBLE_WITH_WARNINGS";
       }
     }
     return "FEASIBLE";
@@ -777,18 +763,17 @@ public class HeatExchangerDesignFeasibilityReport {
       mechDesign.put("wallThickness_mm", round(mechanicalDesign.getWallThickness(), 2));
 
       if (mechanicalDesign instanceof BAHXMechanicalDesign) {
-        BAHXMechanicalDesign bahx = (BAHXMechanicalDesign) mechanicalDesign;
-        mechDesign.put("coreMaterial", bahx.getCoreMaterialGrade());
-        mechDesign.put("headerMaterial", bahx.getHeaderMaterialGrade());
-        mechDesign.put("coreLength_m", round(bahx.getCoreLengthM(), 2));
-        mechDesign.put("coreWidth_m", round(bahx.getCoreWidthM(), 2));
-        mechDesign.put("coreHeight_m", round(bahx.getCoreHeightM(), 2));
-        mechDesign.put("requiredPartingSheetThickness_mm",
-            round(bahx.getRequiredPartingSheetThicknessMm(), 2));
-        mechDesign.put("requiredHeaderThickness_mm", round(bahx.getRequiredHeaderThicknessMm(), 1));
-        mechDesign.put("maxThermalGradient_CperM", round(bahx.getMaxThermalGradient(), 2));
-        mechDesign.put("fatigueUtilisation", round(bahx.getFatigueUtilisation(), 4));
-        mechDesign.put("fatiguePassed", bahx.isFatiguePassed());
+	BAHXMechanicalDesign bahx = (BAHXMechanicalDesign) mechanicalDesign;
+	mechDesign.put("coreMaterial", bahx.getCoreMaterialGrade());
+	mechDesign.put("headerMaterial", bahx.getHeaderMaterialGrade());
+	mechDesign.put("coreLength_m", round(bahx.getCoreLengthM(), 2));
+	mechDesign.put("coreWidth_m", round(bahx.getCoreWidthM(), 2));
+	mechDesign.put("coreHeight_m", round(bahx.getCoreHeightM(), 2));
+	mechDesign.put("requiredPartingSheetThickness_mm", round(bahx.getRequiredPartingSheetThicknessMm(), 2));
+	mechDesign.put("requiredHeaderThickness_mm", round(bahx.getRequiredHeaderThicknessMm(), 1));
+	mechDesign.put("maxThermalGradient_CperM", round(bahx.getMaxThermalGradient(), 2));
+	mechDesign.put("fatigueUtilisation", round(bahx.getFatigueUtilisation(), 4));
+	mechDesign.put("fatiguePassed", bahx.isFatiguePassed());
       }
       report.put("mechanicalDesign", mechDesign);
     }
@@ -802,7 +787,7 @@ public class HeatExchangerDesignFeasibilityReport {
       cost.put("totalInstalledCost_USD", round(installedCostUSD, 0));
       cost.put("annualMaintenanceCost_USD", round(annualMaintenanceCostUSD, 0));
       if (heatTransferAreaM2 > 0 && purchasedEquipmentCostUSD > 0) {
-        cost.put("specificCost_USDperM2", round(purchasedEquipmentCostUSD / heatTransferAreaM2, 0));
+	cost.put("specificCost_USDperM2", round(purchasedEquipmentCostUSD / heatTransferAreaM2, 0));
       }
       report.put("costEstimation", cost);
     }
@@ -816,8 +801,7 @@ public class HeatExchangerDesignFeasibilityReport {
       sup.put("dutyRange_kW", supplier.getMinDutyKW() + " - " + supplier.getMaxDutyKW());
       sup.put("areaRange_m2", supplier.getMinAreaM2() + " - " + supplier.getMaxAreaM2());
       sup.put("maxPressure_bara", supplier.getMaxPressureBara());
-      sup.put("temperatureRange_C",
-          supplier.getMinTemperatureC() + " to " + supplier.getMaxTemperatureC());
+      sup.put("temperatureRange_C", supplier.getMinTemperatureC() + " to " + supplier.getMaxTemperatureC());
       sup.put("materials", supplier.getMaterials());
       sup.put("applications", supplier.getApplications());
       sup.put("website", supplier.getWebsite());
@@ -850,14 +834,13 @@ public class HeatExchangerDesignFeasibilityReport {
     }
     report.put("issues", issueList);
 
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(report);
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(report);
   }
 
   /**
    * Round a double value to the specified number of decimal places.
    *
-   * @param value the value to round
+   * @param value    the value to round
    * @param decimals number of decimal places
    * @return rounded value
    */
@@ -898,7 +881,7 @@ public class HeatExchangerDesignFeasibilityReport {
      *
      * @param severity issue severity
      * @param category category code
-     * @param message descriptive message
+     * @param message  descriptive message
      */
     public FeasibilityIssue(IssueSeverity severity, String category, String message) {
       this.severity = severity;

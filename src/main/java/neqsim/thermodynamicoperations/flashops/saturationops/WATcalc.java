@@ -50,11 +50,10 @@ public class WATcalc extends ConstantDutyTemperatureFlash {
 
       sumx = 0.0;
       for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-        system.getPhases()[5].getComponent(i)
-            .setx(Ksolid[i] * system.getPhase(0).getComponent(i).getx());
-        Ksolid[i] = system.getPhase(0).getComponent(i).getFugacityCoefficient()
-            / system.getPhases()[5].getComponent(i).fugcoef(system.getPhases()[5]);
-        sumx += Ksolid[i] * system.getPhase(0).getComponent(i).getx();
+	system.getPhases()[5].getComponent(i).setx(Ksolid[i] * system.getPhase(0).getComponent(i).getx());
+	Ksolid[i] = system.getPhase(0).getComponent(i).getFugacityCoefficient()
+	    / system.getPhases()[5].getComponent(i).fugcoef(system.getPhases()[5]);
+	sumx += Ksolid[i] * system.getPhase(0).getComponent(i).getx();
       }
       double funk = sumx - 1.0;
       double dfunkdt = (funk - funkOld) / deltaT;
@@ -62,9 +61,9 @@ public class WATcalc extends ConstantDutyTemperatureFlash {
       double dT = -funk / dfunkdt;
       double oldTemp = system.getTemperature();
       if (iter > 1) {
-        system.setTemperature(system.getTemperature() + dT * iter * 1.0 / (5.0 + iter));
+	system.setTemperature(system.getTemperature() + dT * iter * 1.0 / (5.0 + iter));
       } else {
-        system.setTemperature(system.getTemperature() - 0.1);
+	system.setTemperature(system.getTemperature() - 0.1);
       }
       deltaT = system.getTemperature() - oldTemp;
       // logger.info("sumx " + sumx + " deltaT "+ deltaT + " dT "+dT + " temperature "
@@ -80,5 +79,6 @@ public class WATcalc extends ConstantDutyTemperatureFlash {
 
   /** {@inheritDoc} */
   @Override
-  public void printToFile(String name) {}
+  public void printToFile(String name) {
+  }
 }

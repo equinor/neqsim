@@ -32,7 +32,7 @@ public class NeqStream extends Stream {
   /**
    * Constructor for NeqStream.
    *
-   * @param name name of stream
+   * @param name   name of stream
    * @param stream input stream
    */
   public NeqStream(String name, StreamInterface stream) {
@@ -44,7 +44,7 @@ public class NeqStream extends Stream {
    * Constructor for NeqStream.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
+   * @param name         a {@link java.lang.String} object
    * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
    */
   public NeqStream(String name, SystemInterface thermoSystem) {
@@ -73,8 +73,7 @@ public class NeqStream extends Stream {
   @Override
   public NeqStream clone(String name) {
     if (this.getName().equals(name)) {
-      throw new RuntimeException(
-          new InvalidInputException(this, "clone", "name", "- Same name as in original object"));
+      throw new RuntimeException(new InvalidInputException(this, "clone", "name", "- Same name as in original object"));
     }
     NeqStream s = this.clone();
     s.setName(name);

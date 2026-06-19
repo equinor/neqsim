@@ -9,17 +9,17 @@ import java.io.Serializable;
  * IEC 81346 defines three orthogonal aspects for identifying objects in industrial plants:
  * </p>
  * <ul>
- * <li><strong>Function aspect</strong> (prefix {@code =}): What the system <em>does</em> (e.g.
- * {@code =K1} for cooling function 1)</li>
- * <li><strong>Product aspect</strong> (prefix {@code -}): What the physical equipment <em>is</em>
- * (e.g. {@code -B1} for heat exchanger 1)</li>
- * <li><strong>Location aspect</strong> (prefix {@code +}): Where the equipment <em>is
- * installed</em> (e.g. {@code +R1.L2} for room 1, level 2)</li>
+ * <li><strong>Function aspect</strong> (prefix {@code =}): What the system <em>does</em> (e.g. {@code =K1} for cooling
+ * function 1)</li>
+ * <li><strong>Product aspect</strong> (prefix {@code -}): What the physical equipment <em>is</em> (e.g. {@code -B1} for
+ * heat exchanger 1)</li>
+ * <li><strong>Location aspect</strong> (prefix {@code +}): Where the equipment <em>is installed</em> (e.g.
+ * {@code +R1.L2} for room 1, level 2)</li>
  * </ul>
  *
  * <p>
- * This class stores the three aspects independently and composes the full reference designation
- * string on demand. It also stores the IEC 81346-2 letter code that classifies the equipment.
+ * This class stores the three aspects independently and composes the full reference designation string on demand. It
+ * also stores the IEC 81346-2 letter code that classifies the equipment.
  * </p>
  *
  * <p>
@@ -56,7 +56,8 @@ public class ReferenceDesignation implements Serializable {
   /**
    * Creates an empty reference designation.
    */
-  public ReferenceDesignation() {}
+  public ReferenceDesignation() {
+  }
 
   /**
    * Parses an IEC 81346 reference designation string into its three aspects.
@@ -72,8 +73,7 @@ public class ReferenceDesignation implements Serializable {
    * </ul>
    *
    * @param designationString the reference designation string to parse
-   * @return a new {@link ReferenceDesignation} instance, or an empty instance if the input is null
-   *         or empty
+   * @return a new {@link ReferenceDesignation} instance, or an empty instance if the input is null or empty
    */
   public static ReferenceDesignation parse(String designationString) {
     if (designationString == null || designationString.trim().isEmpty()) {
@@ -111,21 +111,21 @@ public class ReferenceDesignation implements Serializable {
     if (!prod.isEmpty()) {
       char firstChar = Character.toUpperCase(prod.charAt(0));
       try {
-        letterCode = IEC81346LetterCode.valueOf(String.valueOf(firstChar));
+	letterCode = IEC81346LetterCode.valueOf(String.valueOf(firstChar));
       } catch (IllegalArgumentException ignored) {
-        // Not a valid letter code — keep default A
+	// Not a valid letter code — keep default A
       }
       // Extract sequence number from remaining digits
       StringBuilder digits = new StringBuilder();
       for (int i = 1; i < prod.length(); i++) {
-        if (Character.isDigit(prod.charAt(i))) {
-          digits.append(prod.charAt(i));
-        } else {
-          break;
-        }
+	if (Character.isDigit(prod.charAt(i))) {
+	  digits.append(prod.charAt(i));
+	} else {
+	  break;
+	}
       }
       if (digits.length() > 0) {
-        seqNum = Integer.parseInt(digits.toString());
+	seqNum = Integer.parseInt(digits.toString());
       }
     }
 
@@ -133,10 +133,10 @@ public class ReferenceDesignation implements Serializable {
   }
 
   /**
-   * Finds the index of the next aspect prefix character ({@code =}, {@code -}, or {@code +}) after
-   * the given start position.
+   * Finds the index of the next aspect prefix character ({@code =}, {@code -}, or {@code +}) after the given start
+   * position.
    *
-   * @param s the string to search
+   * @param s    the string to search
    * @param from the starting index (exclusive of the current prefix)
    * @return the index of the next prefix, or the end of string if none found
    */
@@ -144,7 +144,7 @@ public class ReferenceDesignation implements Serializable {
     for (int i = from; i < s.length(); i++) {
       char c = s.charAt(i);
       if (c == '=' || c == '-' || c == '+') {
-        return i;
+	return i;
       }
     }
     return s.length();
@@ -154,13 +154,13 @@ public class ReferenceDesignation implements Serializable {
    * Creates a reference designation with the specified aspects and letter code.
    *
    * @param functionDesignation the function aspect (without {@code =} prefix), e.g. "A1.K1"
-   * @param productDesignation the product aspect (without {@code -} prefix), e.g. "B1"
+   * @param productDesignation  the product aspect (without {@code -} prefix), e.g. "B1"
    * @param locationDesignation the location aspect (without {@code +} prefix), e.g. "P1.M1"
-   * @param letterCode the IEC 81346-2 letter code classifying this equipment
-   * @param sequenceNumber the sequence number within the letter code category (1-based)
+   * @param letterCode          the IEC 81346-2 letter code classifying this equipment
+   * @param sequenceNumber      the sequence number within the letter code category (1-based)
    */
-  public ReferenceDesignation(String functionDesignation, String productDesignation,
-      String locationDesignation, IEC81346LetterCode letterCode, int sequenceNumber) {
+  public ReferenceDesignation(String functionDesignation, String productDesignation, String locationDesignation,
+      IEC81346LetterCode letterCode, int sequenceNumber) {
     this.functionDesignation = functionDesignation != null ? functionDesignation : "";
     this.productDesignation = productDesignation != null ? productDesignation : "";
     this.locationDesignation = locationDesignation != null ? locationDesignation : "";
@@ -298,8 +298,7 @@ public class ReferenceDesignation implements Serializable {
    * Composes the full IEC 81346 reference designation from all three aspects.
    *
    * <p>
-   * The format is: {@code =function-product+location}, e.g. {@code =A1.K1-B1+P1.M1}. Empty aspects
-   * are omitted.
+   * The format is: {@code =function-product+location}, e.g. {@code =A1.K1-B1+P1.M1}. Empty aspects are omitted.
    * </p>
    *
    * @return the full reference designation string, or empty string if no aspects are set
@@ -332,7 +331,7 @@ public class ReferenceDesignation implements Serializable {
    */
   public boolean isSet() {
     return !functionDesignation.trim().isEmpty() || !productDesignation.trim().isEmpty()
-        || !locationDesignation.trim().isEmpty();
+	|| !locationDesignation.trim().isEmpty();
   }
 
   /** {@inheritDoc} */
@@ -352,9 +351,8 @@ public class ReferenceDesignation implements Serializable {
       return false;
     }
     ReferenceDesignation other = (ReferenceDesignation) obj;
-    return functionDesignation.equals(other.functionDesignation)
-        && productDesignation.equals(other.productDesignation)
-        && locationDesignation.equals(other.locationDesignation);
+    return functionDesignation.equals(other.functionDesignation) && productDesignation.equals(other.productDesignation)
+	&& locationDesignation.equals(other.locationDesignation);
   }
 
   /** {@inheritDoc} */

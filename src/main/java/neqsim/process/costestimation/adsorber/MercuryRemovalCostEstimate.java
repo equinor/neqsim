@@ -59,11 +59,9 @@ public class MercuryRemovalCostEstimate extends UnitCostEstimateBaseClass {
     MercuryRemovalMechanicalDesign design = (MercuryRemovalMechanicalDesign) mechanicalEquipment;
 
     // Vessel shell + internals steel cost
-    double vesselSteelWeight =
-        design.getWeigthVesselShell() + design.getInternalsWeight() + design.getWeightNozzle();
+    double vesselSteelWeight = design.getWeigthVesselShell() + design.getInternalsWeight() + design.getWeightNozzle();
 
-    double vesselCost =
-        vesselSteelWeight * steelCostPerKg * getCostCalculator().getMaterialFactor();
+    double vesselCost = vesselSteelWeight * steelCostPerKg * getCostCalculator().getMaterialFactor();
 
     // Initial sorbent charge cost
     double sorbentCost = design.getSorbentChargeWeight() * sorbentUnitPrice;
@@ -136,8 +134,7 @@ public class MercuryRemovalCostEstimate extends UnitCostEstimateBaseClass {
     MercuryRemovalMechanicalDesign design = (MercuryRemovalMechanicalDesign) mechanicalEquipment;
 
     JsonObject json = new JsonObject();
-    json.addProperty("equipmentName",
-        design != null ? design.getProcessEquipment().getName() : "unknown");
+    json.addProperty("equipmentName", design != null ? design.getProcessEquipment().getName() : "unknown");
     json.addProperty("equipmentType", "MercuryRemovalBed");
 
     // CAPEX
@@ -164,8 +161,7 @@ public class MercuryRemovalCostEstimate extends UnitCostEstimateBaseClass {
     rates.addProperty("maintenanceFactor", maintenanceFactor);
     json.add("costRateAssumptions", rates);
 
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(json);
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(json);
   }
 
   // ======================================================================

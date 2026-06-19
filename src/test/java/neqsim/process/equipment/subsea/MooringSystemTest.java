@@ -30,21 +30,17 @@ class MooringSystemTest {
 
     // Fairlead tension should be resultant of H and V
     double expectedFairleadT = Math.sqrt(2500.0 * 2500.0 + 500.0 * 500.0);
-    assertEquals(expectedFairleadT, ms.getFairleadTension(), 1.0,
-        "Fairlead tension should be resultant of H and V");
+    assertEquals(expectedFairleadT, ms.getFairleadTension(), 1.0, "Fairlead tension should be resultant of H and V");
 
     // Line length should be positive and reasonable
     assertTrue(ms.getLineLength() > 0, "Line length must be positive");
-    assertTrue(ms.getLineLength() > 250.0,
-        "Line length should exceed water depth");
+    assertTrue(ms.getLineLength() > 250.0, "Line length should exceed water depth");
 
     // MBL check
-    assertTrue(ms.getMinimumBreakingLoad() > 0,
-        "Minimum breaking load must be positive");
+    assertTrue(ms.getMinimumBreakingLoad() > 0, "Minimum breaking load must be positive");
 
     // Safety factor should be calculated
-    assertTrue(ms.getBreakingStrengthSafetyFactor() > 0,
-        "Safety factor must be positive");
+    assertTrue(ms.getBreakingStrengthSafetyFactor() > 0, "Safety factor must be positive");
   }
 
   @Test
@@ -75,8 +71,7 @@ class MooringSystemTest {
     chainOnly.setAnchorRadius(800.0);
     chainOnly.run();
 
-    assertTrue(ms.getTotalWeight() < chainOnly.getTotalWeight(),
-        "Hybrid mooring should be lighter than all-chain");
+    assertTrue(ms.getTotalWeight() < chainOnly.getTotalWeight(), "Hybrid mooring should be lighter than all-chain");
   }
 
   @Test
@@ -93,8 +88,7 @@ class MooringSystemTest {
     ms.run();
 
     // With 127mm R4 chain, SF should exceed 1.80 for moderate loads
-    assertTrue(ms.getBreakingStrengthSafetyFactor() > 1.0,
-        "Safety factor should exceed 1.0");
+    assertTrue(ms.getBreakingStrengthSafetyFactor() > 1.0, "Safety factor should exceed 1.0");
   }
 
   @Test
@@ -152,9 +146,7 @@ class MooringSystemTest {
     ms.setAnchorRadius(800.0);
     ms.run();
 
-    assertTrue(ms.getRestoringStiffness() > 0,
-        "Restoring stiffness should be positive");
-    assertTrue(ms.getMaxOffset() > 0,
-        "Max offset should be positive");
+    assertTrue(ms.getRestoringStiffness() > 0, "Restoring stiffness should be positive");
+    assertTrue(ms.getMaxOffset() > 0, "Max offset should be positive");
   }
 }

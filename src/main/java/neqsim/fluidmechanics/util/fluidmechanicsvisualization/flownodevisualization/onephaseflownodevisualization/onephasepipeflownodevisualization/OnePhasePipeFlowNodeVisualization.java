@@ -23,7 +23,8 @@ public class OnePhasePipeFlowNodeVisualization extends OnePhaseFlowNodeVisualiza
    * Constructor for OnePhasePipeFlowNodeVisualization.
    * </p>
    */
-  public OnePhasePipeFlowNodeVisualization() {}
+  public OnePhasePipeFlowNodeVisualization() {
+  }
 
   /** {@inheritDoc} */
   @Override

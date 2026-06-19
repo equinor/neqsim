@@ -8,9 +8,8 @@ import java.util.Map;
  * Model for hazardous area classification of process equipment locations.
  *
  * <p>
- * Supports IEC 60079 / ATEX zone classification (Zone 0, 1, 2 for gas, Zone 20, 21, 22 for dust)
- * and API RP 500/505 classification. Determines required Ex protection type for electrical
- * equipment in classified areas.
+ * Supports IEC 60079 / ATEX zone classification (Zone 0, 1, 2 for gas, Zone 20, 21, 22 for dust) and API RP 500/505
+ * classification. Determines required Ex protection type for electrical equipment in classified areas.
  * </p>
  *
  * @author Even Solbraa
@@ -32,16 +31,15 @@ public class HazardousAreaClassification implements java.io.Serializable {
    * Determine the hazardous area classification for a given equipment type.
    *
    * <p>
-   * Sets the zone, gas group, temperature class and required Ex protection level based on the
-   * equipment type and process fluid properties.
+   * Sets the zone, gas group, temperature class and required Ex protection level based on the equipment type and
+   * process fluid properties.
    * </p>
    *
-   * @param equipmentType type of process equipment (Compressor, Pump, Separator, etc.)
+   * @param equipmentType        type of process equipment (Compressor, Pump, Separator, etc.)
    * @param containsHydrocarbons whether process fluid contains hydrocarbons
-   * @param maxSurfaceTempC maximum surface temperature in degrees C
+   * @param maxSurfaceTempC      maximum surface temperature in degrees C
    */
-  public void classify(String equipmentType, boolean containsHydrocarbons,
-      double maxSurfaceTempC) {
+  public void classify(String equipmentType, boolean containsHydrocarbons, double maxSurfaceTempC) {
     if (!containsHydrocarbons) {
       zone = "Safe area";
       requiredExProtection = "None";
@@ -101,8 +99,7 @@ public class HazardousAreaClassification implements java.io.Serializable {
     if ("Safe area".equals(zone)) {
       return "None";
     }
-    return requiredExProtection + " " + gasGroup + " " + temperatureClass + " "
-        + equipmentProtectionLevel;
+    return requiredExProtection + " " + gasGroup + " " + temperatureClass + " " + equipmentProtectionLevel;
   }
 
   /**

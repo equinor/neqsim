@@ -14,8 +14,7 @@ public class MultiphaseChokeFlowFactoryTest {
 
   @Test
   void testCreateSachdevaModel() {
-    MultiphaseChokeFlow model =
-        MultiphaseChokeFlowFactory.createModel(MultiphaseChokeFlowFactory.ModelType.SACHDEVA);
+    MultiphaseChokeFlow model = MultiphaseChokeFlowFactory.createModel(MultiphaseChokeFlowFactory.ModelType.SACHDEVA);
 
     assertNotNull(model);
     assertTrue(model instanceof SachdevaChokeFlow);
@@ -24,8 +23,7 @@ public class MultiphaseChokeFlowFactoryTest {
 
   @Test
   void testCreateGilbertModel() {
-    MultiphaseChokeFlow model =
-        MultiphaseChokeFlowFactory.createModel(MultiphaseChokeFlowFactory.ModelType.GILBERT);
+    MultiphaseChokeFlow model = MultiphaseChokeFlowFactory.createModel(MultiphaseChokeFlowFactory.ModelType.GILBERT);
 
     assertNotNull(model);
     assertTrue(model instanceof GilbertChokeFlow);
@@ -34,8 +32,7 @@ public class MultiphaseChokeFlowFactoryTest {
 
   @Test
   void testCreateBaxendellModel() {
-    MultiphaseChokeFlow model =
-        MultiphaseChokeFlowFactory.createModel(MultiphaseChokeFlowFactory.ModelType.BAXENDELL);
+    MultiphaseChokeFlow model = MultiphaseChokeFlowFactory.createModel(MultiphaseChokeFlowFactory.ModelType.BAXENDELL);
 
     assertNotNull(model);
     assertTrue(model instanceof GilbertChokeFlow);
@@ -44,8 +41,7 @@ public class MultiphaseChokeFlowFactoryTest {
 
   @Test
   void testCreateRosModel() {
-    MultiphaseChokeFlow model =
-        MultiphaseChokeFlowFactory.createModel(MultiphaseChokeFlowFactory.ModelType.ROS);
+    MultiphaseChokeFlow model = MultiphaseChokeFlowFactory.createModel(MultiphaseChokeFlowFactory.ModelType.ROS);
 
     assertNotNull(model);
     assertTrue(model instanceof GilbertChokeFlow);
@@ -54,8 +50,7 @@ public class MultiphaseChokeFlowFactoryTest {
 
   @Test
   void testCreateAchongModel() {
-    MultiphaseChokeFlow model =
-        MultiphaseChokeFlowFactory.createModel(MultiphaseChokeFlowFactory.ModelType.ACHONG);
+    MultiphaseChokeFlow model = MultiphaseChokeFlowFactory.createModel(MultiphaseChokeFlowFactory.ModelType.ACHONG);
 
     assertNotNull(model);
     assertTrue(model instanceof GilbertChokeFlow);
@@ -65,8 +60,8 @@ public class MultiphaseChokeFlowFactoryTest {
   @Test
   void testCreateModelWithDiameter() {
     double diameter = 0.0254; // 1 inch
-    MultiphaseChokeFlow model = MultiphaseChokeFlowFactory
-        .createModel(MultiphaseChokeFlowFactory.ModelType.SACHDEVA, diameter);
+    MultiphaseChokeFlow model = MultiphaseChokeFlowFactory.createModel(MultiphaseChokeFlowFactory.ModelType.SACHDEVA,
+	diameter);
 
     assertNotNull(model);
     assertEquals(diameter, model.getChokeDiameter(), 1e-6);
@@ -120,8 +115,7 @@ public class MultiphaseChokeFlowFactoryTest {
   @Test
   void testRecommendModelSubcritical() {
     // Subcritical flow should always recommend Sachdeva
-    MultiphaseChokeFlowFactory.ModelType recommended =
-        MultiphaseChokeFlowFactory.recommendModel(1000, false);
+    MultiphaseChokeFlowFactory.ModelType recommended = MultiphaseChokeFlowFactory.recommendModel(1000, false);
 
     assertEquals(MultiphaseChokeFlowFactory.ModelType.SACHDEVA, recommended);
   }
@@ -129,8 +123,7 @@ public class MultiphaseChokeFlowFactoryTest {
   @Test
   void testRecommendModelHighGLR() {
     // High GLR critical flow should recommend Achong
-    MultiphaseChokeFlowFactory.ModelType recommended =
-        MultiphaseChokeFlowFactory.recommendModel(10000, true);
+    MultiphaseChokeFlowFactory.ModelType recommended = MultiphaseChokeFlowFactory.recommendModel(10000, true);
 
     assertEquals(MultiphaseChokeFlowFactory.ModelType.ACHONG, recommended);
   }
@@ -138,8 +131,7 @@ public class MultiphaseChokeFlowFactoryTest {
   @Test
   void testRecommendModelLowGLR() {
     // Low GLR critical flow should recommend Gilbert
-    MultiphaseChokeFlowFactory.ModelType recommended =
-        MultiphaseChokeFlowFactory.recommendModel(50, true);
+    MultiphaseChokeFlowFactory.ModelType recommended = MultiphaseChokeFlowFactory.recommendModel(50, true);
 
     assertEquals(MultiphaseChokeFlowFactory.ModelType.GILBERT, recommended);
   }
@@ -147,8 +139,7 @@ public class MultiphaseChokeFlowFactoryTest {
   @Test
   void testRecommendModelModerateGLR() {
     // Moderate GLR critical flow should recommend Sachdeva
-    MultiphaseChokeFlowFactory.ModelType recommended =
-        MultiphaseChokeFlowFactory.recommendModel(500, true);
+    MultiphaseChokeFlowFactory.ModelType recommended = MultiphaseChokeFlowFactory.recommendModel(500, true);
 
     assertEquals(MultiphaseChokeFlowFactory.ModelType.SACHDEVA, recommended);
   }

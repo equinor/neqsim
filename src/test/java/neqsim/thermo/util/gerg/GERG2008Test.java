@@ -15,7 +15,7 @@ public class GERG2008Test {
   private static final Logger logger = LogManager.getLogger(GERG2008Test.class);
 
   private GERG2008 gerg;
-  
+
   @BeforeEach
   public void setUp() {
     gerg = new GERG2008();
@@ -82,8 +82,7 @@ public class GERG2008Test {
     doubleW JT = new doubleW(0.0);
     doubleW Kappa = new doubleW(0.0);
     doubleW A = new doubleW(0.0);
-    gerg.PropertiesGERG(T, D, x, P, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, W, G, JT, Kappa,
-        A);
+    gerg.PropertiesGERG(T, D, x, P, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, W, G, JT, Kappa, A);
     assertTrue(P.val > 0);
     assertTrue(Z.val > 0);
     assertTrue(U.val != 0);
@@ -126,8 +125,7 @@ public class GERG2008Test {
     // GERG2008fluid.setP
 
     double enthalpgas = GERG2008fluid.getPhase("gas").getEnthalpy("J/mol");
-    assertEquals(GERG2008fluid.getPhase("gas").getDensity(),
-        SRKfluid.getPhase("gas").getDensity_GERG2008(), 1e-5);
+    assertEquals(GERG2008fluid.getPhase("gas").getDensity(), SRKfluid.getPhase("gas").getDensity_GERG2008(), 1e-5);
     assertEquals(SRKfluid.getPhase("gas").getProperties_GERG2008()[7], enthalpgas, 1e-9);
 
     GERG2008fluid.setNumberOfPhases(1);
@@ -146,35 +144,32 @@ public class GERG2008Test {
     SRKfluid.getPhase("gas").getPhysicalProperties().setViscosityModel("PFCT");
     SRKfluid.getPhase("gas").initPhysicalProperties();
 
-    neqsim.process.equipment.stream.Stream gasstream =
-        new neqsim.process.equipment.stream.Stream("gas", GERG2008fluid);
+    neqsim.process.equipment.stream.Stream gasstream = new neqsim.process.equipment.stream.Stream("gas", GERG2008fluid);
     gasstream.setFlowRate(10000.0, "kg/hr");
     gasstream.run();
 
-    neqsim.process.equipment.stream.Stream gasstream_SKR =
-        new neqsim.process.equipment.stream.Stream("gas", SRKfluid);
+    neqsim.process.equipment.stream.Stream gasstream_SKR = new neqsim.process.equipment.stream.Stream("gas", SRKfluid);
     gasstream_SKR.setFlowRate(10000.0, "kg/hr");
     gasstream_SKR.run();
 
-    neqsim.process.equipment.compressor.Compressor compressor =
-        new neqsim.process.equipment.compressor.Compressor("compressor 1", gasstream);
+    neqsim.process.equipment.compressor.Compressor compressor = new neqsim.process.equipment.compressor.Compressor(
+	"compressor 1", gasstream);
     // compressor.setUseGERG2008(true);
     compressor.setOutletPressure(20.0);
     compressor.setPolytropicMethod("schultz");
     compressor.run();
 
-    neqsim.process.equipment.compressor.Compressor compressor_SRK =
-        new neqsim.process.equipment.compressor.Compressor("compressor 2", gasstream_SKR);
+    neqsim.process.equipment.compressor.Compressor compressor_SRK = new neqsim.process.equipment.compressor.Compressor(
+	"compressor 2", gasstream_SKR);
     compressor_SRK.setUseGERG2008(true);
     compressor_SRK.setOutletPressure(20.0);
     compressor_SRK.run();
 
-    assertEquals(compressor_SRK.getOutletStream().getTemperature("C"),
-        compressor.getOutletStream().getTemperature("C"), 1e-5);
+    assertEquals(compressor_SRK.getOutletStream().getTemperature("C"), compressor.getOutletStream().getTemperature("C"),
+	1e-5);
 
-    neqsim.process.equipment.pipeline.PipeBeggsAndBrills pipeline =
-        new neqsim.process.equipment.pipeline.PipeBeggsAndBrills("pipe 1",
-            compressor.getOutletStream());
+    neqsim.process.equipment.pipeline.PipeBeggsAndBrills pipeline = new neqsim.process.equipment.pipeline.PipeBeggsAndBrills(
+	"pipe 1", compressor.getOutletStream());
     pipeline.setLength(5000.0);
     pipeline.setDiameter(0.2);
     pipeline.setElevation(0);
@@ -211,31 +206,30 @@ public class GERG2008Test {
     SRKfluid.setPhaseType(0, "GAS");
     SRKfluid.getPhase("gas").getPhysicalProperties().setViscosityModel("PFCT");
 
-    neqsim.process.equipment.stream.Stream GERG2008stream =
-        new neqsim.process.equipment.stream.Stream("gas", GERG2008fluid);
+    neqsim.process.equipment.stream.Stream GERG2008stream = new neqsim.process.equipment.stream.Stream("gas",
+	GERG2008fluid);
     GERG2008stream.setFlowRate(130.0, "MSm3/day");
     GERG2008stream.run();
 
-    neqsim.process.equipment.stream.Stream SRKstream =
-        new neqsim.process.equipment.stream.Stream("gas", SRKfluid);
+    neqsim.process.equipment.stream.Stream SRKstream = new neqsim.process.equipment.stream.Stream("gas", SRKfluid);
     SRKstream.setFlowRate(130.0, "MSm3/day");
     SRKstream.run();
 
-    neqsim.process.equipment.compressor.Compressor GERG2008compressor =
-        new neqsim.process.equipment.compressor.Compressor("compressor 1", GERG2008stream);
+    neqsim.process.equipment.compressor.Compressor GERG2008compressor = new neqsim.process.equipment.compressor.Compressor(
+	"compressor 1", GERG2008stream);
     GERG2008compressor.setOutletPressure(20.0, "bara");
     GERG2008compressor.setPolytropicEfficiency(0.75);
     GERG2008compressor.run();
 
-    neqsim.process.equipment.compressor.Compressor SRKcompressor =
-        new neqsim.process.equipment.compressor.Compressor("compressor 2", SRKstream);
+    neqsim.process.equipment.compressor.Compressor SRKcompressor = new neqsim.process.equipment.compressor.Compressor(
+	"compressor 2", SRKstream);
     SRKcompressor.setOutletPressure(20.0, "bara");
     SRKcompressor.setPolytropicEfficiency(0.75);
     SRKcompressor.setUseGERG2008(true);
     SRKcompressor.run();
 
     assertEquals(GERG2008compressor.getOutletStream().getTemperature("C"),
-        SRKcompressor.getOutletStream().getTemperature("C"), 1e-8);
+	SRKcompressor.getOutletStream().getTemperature("C"), 1e-8);
     assertEquals(GERG2008compressor.getPower("MW"), SRKcompressor.getPower("MW"), 1e-8);
     assertEquals(GERG2008compressor.getPolytropicHead(), SRKcompressor.getPolytropicHead(), 1e-5);
   }
@@ -258,19 +252,19 @@ public class GERG2008Test {
     // Leachmanfluid.getPhase("gas").getPhysicalProperties().setViscosityModel("PFCT");
     GERG2008fluid.getPhase("gas").initPhysicalProperties();
 
-    neqsim.process.equipment.stream.Stream gasstream_GERG2008 =
-        new neqsim.process.equipment.stream.Stream("gas", GERG2008fluid);
+    neqsim.process.equipment.stream.Stream gasstream_GERG2008 = new neqsim.process.equipment.stream.Stream("gas",
+	GERG2008fluid);
     gasstream_GERG2008.setFlowRate(60.0, "MSm3/day");
     gasstream_GERG2008.run();
 
-    neqsim.process.equipment.compressor.Compressor compressor_GERG2008 =
-        new neqsim.process.equipment.compressor.Compressor("compressor 1", gasstream_GERG2008);
+    neqsim.process.equipment.compressor.Compressor compressor_GERG2008 = new neqsim.process.equipment.compressor.Compressor(
+	"compressor 1", gasstream_GERG2008);
     compressor_GERG2008.setOutletPressure(120.0);
     compressor_GERG2008.setPolytropicEfficiency(0.77);
     compressor_GERG2008.run();
 
-    neqsim.process.equipment.compressor.Compressor compressor_Schultz =
-        new neqsim.process.equipment.compressor.Compressor("compressor 2", gasstream_GERG2008);
+    neqsim.process.equipment.compressor.Compressor compressor_Schultz = new neqsim.process.equipment.compressor.Compressor(
+	"compressor 2", gasstream_GERG2008);
     compressor_Schultz.setOutletPressure(120.0);
     compressor_Schultz.setPolytropicEfficiency(0.77);
     compressor_Schultz.setUsePolytropicCalc(true);
@@ -279,14 +273,12 @@ public class GERG2008Test {
 
     logger.debug("Density before compressor " + GERG2008fluid.getDensity("kg/m3"));
     logger.debug("-----------------Normal-----------------");
-    logger.debug(
-        "Temperature out of Compr." + compressor_GERG2008.getOutletStream().getTemperature("C"));
+    logger.debug("Temperature out of Compr." + compressor_GERG2008.getOutletStream().getTemperature("C"));
     logger.debug("Power out of Compr." + compressor_GERG2008.getPower("MW"));
     logger.debug("Polytropic Head out of Compr." + compressor_GERG2008.getPolytropicHead("kJ/kg"));
 
     logger.debug("-----------------Schultz-----------------");
-    logger.debug(
-        "Temperature out of Compr." + compressor_Schultz.getOutletStream().getTemperature("C"));
+    logger.debug("Temperature out of Compr." + compressor_Schultz.getOutletStream().getTemperature("C"));
     logger.debug("Power out of Compr." + compressor_Schultz.getPower("MW"));
     logger.debug("Polytropic Head out of Compr." + compressor_Schultz.getPolytropicHead("kJ/kg"));
   }

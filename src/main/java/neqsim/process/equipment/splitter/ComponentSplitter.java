@@ -51,7 +51,7 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
    * Constructor for Splitter.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
+   * @param name        a {@link java.lang.String} object
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public ComponentSplitter(String name, StreamInterface inletStream) {
@@ -102,8 +102,8 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
     splitStream = new Stream[2];
     try {
       for (int i = 0; i < splitStream.length; i++) {
-        // todo: why not inletStream.clone("Split Stream_" + i)
-        splitStream[i] = new Stream("Split Stream_" + i, inletStream.getThermoSystem().clone());
+	// todo: why not inletStream.clone("Split Stream_" + i)
+	splitStream[i] = new Stream("Split Stream_" + i, inletStream.getThermoSystem().clone());
       }
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
@@ -159,29 +159,26 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
       thermoSystem.setEmptyFluid();
       double totalMoles = 0.0;
       if (i == 0) {
-        for (int k = 0; k < thermoSystem.getNumberOfComponents(); k++) {
-          double moles =
-              inletStream.getThermoSystem().getComponent(k).getNumberOfmoles() * splitFactor[k];
-          thermoSystem.addComponent(k, moles);
-          totalMoles += moles;
-        }
+	for (int k = 0; k < thermoSystem.getNumberOfComponents(); k++) {
+	  double moles = inletStream.getThermoSystem().getComponent(k).getNumberOfmoles() * splitFactor[k];
+	  thermoSystem.addComponent(k, moles);
+	  totalMoles += moles;
+	}
       } else {
-        for (int k = 0; k < thermoSystem.getNumberOfComponents(); k++) {
-          double moles = inletStream.getThermoSystem().getComponent(k).getNumberOfmoles()
-              * (1.0 - splitFactor[k]);
-          thermoSystem.addComponent(k, moles);
-          totalMoles += moles;
-        }
+	for (int k = 0; k < thermoSystem.getNumberOfComponents(); k++) {
+	  double moles = inletStream.getThermoSystem().getComponent(k).getNumberOfmoles() * (1.0 - splitFactor[k]);
+	  thermoSystem.addComponent(k, moles);
+	  totalMoles += moles;
+	}
       }
 
       if (totalMoles > 0.0) {
-        thermoSystem.init(0);
-        splitStream[i].setThermoSystem(thermoSystem);
-        ThermodynamicOperations thermoOps =
-            new ThermodynamicOperations(splitStream[i].getThermoSystem());
-        thermoOps.TPflash();
+	thermoSystem.init(0);
+	splitStream[i].setThermoSystem(thermoSystem);
+	ThermodynamicOperations thermoOps = new ThermodynamicOperations(splitStream[i].getThermoSystem());
+	thermoOps.TPflash();
       } else {
-        splitStream[i].setThermoSystem(thermoSystem);
+	splitStream[i].setThermoSystem(thermoSystem);
       }
     }
     setCalculationIdentifier(id);
@@ -201,8 +198,7 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
   /** {@inheritDoc} */
   @Override
   public String toJson() {
-    return new GsonBuilder().serializeSpecialFloatingPointValues().create()
-        .toJson(new ComponentSplitterResponse(this));
+    return new GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(new ComponentSplitterResponse(this));
   }
 
   /** {@inheritDoc} */
@@ -219,5 +215,6 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
   /** {@inheritDoc} */
   @Override
   @ExcludeFromJacocoGeneratedReport
-  public void displayResult() {}
+  public void displayResult() {
+  }
 }

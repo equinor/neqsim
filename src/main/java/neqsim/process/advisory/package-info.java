@@ -2,8 +2,8 @@
  * Advisory systems for real-time process operations.
  *
  * <p>
- * This package provides infrastructure for operator advisory systems that predict future plant
- * behavior and suggest optimal actions. Key capabilities:
+ * This package provides infrastructure for operator advisory systems that predict future plant behavior and suggest
+ * optimal actions. Key capabilities:
  * </p>
  *
  * <ul>

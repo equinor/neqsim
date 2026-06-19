@@ -9,8 +9,8 @@ import neqsim.process.mechanicaldesign.MechanicalDesign;
  * Cost estimation class for mixers.
  *
  * <p>
- * This class provides mixer-specific cost estimation methods for static mixers, inline mixers, and
- * mixing tees used in process applications.
+ * This class provides mixer-specific cost estimation methods for static mixers, inline mixers, and mixing tees used in
+ * process applications.
  * </p>
  *
  * <p>
@@ -225,7 +225,7 @@ public class MixerCostEstimate extends UnitCostEstimateBaseClass {
     // Two flanges (inlet and outlet)
     double baseFlangePrice = 50.0 + 30.0 * Math.pow(pipeDiameter, 1.2);
     return 2 * baseFlangePrice * getMaterialFactor() * getPressureClassFactor()
-        * (getCostCalculator().getCurrentCepci() / 607.5);
+	* (getCostCalculator().getCurrentCepci() / 607.5);
   }
 
   /**

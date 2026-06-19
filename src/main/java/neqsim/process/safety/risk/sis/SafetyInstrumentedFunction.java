@@ -11,8 +11,8 @@ import com.google.gson.GsonBuilder;
  * Represents a Safety Instrumented Function (SIF) for risk reduction calculation.
  *
  * <p>
- * A SIF is a safety function implemented by a Safety Instrumented System (SIS) that brings the
- * process to a safe state when a dangerous condition is detected. Key metrics include:
+ * A SIF is a safety function implemented by a Safety Instrumented System (SIS) that brings the process to a safe state
+ * when a dangerous condition is detected. Key metrics include:
  * </p>
  * <ul>
  * <li>Safety Integrity Level (SIL 1-4)</li>
@@ -56,8 +56,7 @@ import com.google.gson.GsonBuilder;
  * {@code
  * SafetyInstrumentedFunction hipps = SafetyInstrumentedFunction.builder().name("HIPPS-001")
  *     .description("High Integrity Pipeline Protection System").sil(3).pfd(0.001)
- *     .protectedEquipment(Arrays.asList("Export Pipeline", "Riser"))
- *     .initiatingEvent("Overpressure").build();
+ *     .protectedEquipment(Arrays.asList("Export Pipeline", "Riser")).initiatingEvent("Overpressure").build();
  *
  * double unmitigatedFrequency = 0.1; // per year
  * double mitigatedFrequency = hipps.getMitigatedFrequency(unmitigatedFrequency);
@@ -158,8 +157,8 @@ public class SafetyInstrumentedFunction implements Serializable {
    * Creates a SIF with basic parameters.
    *
    * @param name SIF name
-   * @param sil Safety Integrity Level (1-4)
-   * @param pfd Probability of Failure on Demand
+   * @param sil  Safety Integrity Level (1-4)
+   * @param pfd  Probability of Failure on Demand
    */
   public SafetyInstrumentedFunction(String name, int sil, double pfd) {
     this();
@@ -260,7 +259,7 @@ public class SafetyInstrumentedFunction implements Serializable {
 
     public SafetyInstrumentedFunction build() {
       if (sif.pfdAvg > 0 && sif.sil > 0) {
-        sif.pfdAvg = sif.validatePfd(sif.pfdAvg, sif.sil);
+	sif.pfdAvg = sif.validatePfd(sif.pfdAvg, sif.sil);
       }
       return sif;
     }
@@ -276,13 +275,12 @@ public class SafetyInstrumentedFunction implements Serializable {
   }
 
   private double validatePfd(double pfd, int sil) {
-    double[] minPfd = {0, 0.01, 0.001, 0.0001, 0.00001};
-    double[] maxPfd = {1, 0.1, 0.01, 0.001, 0.0001};
+    double[] minPfd = { 0, 0.01, 0.001, 0.0001, 0.00001 };
+    double[] maxPfd = { 1, 0.1, 0.01, 0.001, 0.0001 };
 
     if (pfd < minPfd[sil] || pfd > maxPfd[sil]) {
       // Warning but don't fail
-      System.err.printf("Warning: PFD %.2e outside SIL %d range [%.2e, %.2e]%n", pfd, sil,
-          minPfd[sil], maxPfd[sil]);
+      System.err.printf("Warning: PFD %.2e outside SIL %d range [%.2e, %.2e]%n", pfd, sil, minPfd[sil], maxPfd[sil]);
     }
     return pfd;
   }
@@ -315,7 +313,7 @@ public class SafetyInstrumentedFunction implements Serializable {
    * Calculates required SIF capability for target risk reduction.
    *
    * @param unmitigatedFrequency current frequency
-   * @param targetFrequency target frequency
+   * @param targetFrequency      target frequency
    * @return required PFD
    */
   public static double calculateRequiredPfd(double unmitigatedFrequency, double targetFrequency) {
@@ -351,16 +349,16 @@ public class SafetyInstrumentedFunction implements Serializable {
    */
   public static double getMaxPfdForSil(int sil) {
     switch (sil) {
-      case 1:
-        return 0.1;
-      case 2:
-        return 0.01;
-      case 3:
-        return 0.001;
-      case 4:
-        return 0.0001;
-      default:
-        return 1.0;
+    case 1:
+      return 0.1;
+    case 2:
+      return 0.01;
+    case 3:
+      return 0.001;
+    case 4:
+      return 0.0001;
+    default:
+      return 1.0;
     }
   }
 
@@ -376,7 +374,7 @@ public class SafetyInstrumentedFunction implements Serializable {
   /**
    * Calculates PFD from component failure rates (simplified 1oo1 model).
    *
-   * @param lambdaDU dangerous undetected failure rate (per hour)
+   * @param lambdaDU     dangerous undetected failure rate (per hour)
    * @param testInterval proof test interval (hours)
    * @return average PFD
    */
@@ -388,7 +386,7 @@ public class SafetyInstrumentedFunction implements Serializable {
   /**
    * Calculates PFD for 1oo2 architecture.
    *
-   * @param lambdaDU dangerous undetected failure rate per channel (per hour)
+   * @param lambdaDU     dangerous undetected failure rate per channel (per hour)
    * @param testInterval proof test interval (hours)
    * @return average PFD
    */
@@ -401,7 +399,7 @@ public class SafetyInstrumentedFunction implements Serializable {
   /**
    * Calculates PFD for 2oo3 architecture.
    *
-   * @param lambdaDU dangerous undetected failure rate per channel (per hour)
+   * @param lambdaDU     dangerous undetected failure rate per channel (per hour)
    * @param testInterval proof test interval (hours)
    * @return average PFD
    */
@@ -415,7 +413,7 @@ public class SafetyInstrumentedFunction implements Serializable {
    * Calculates availability including SIF spurious trips.
    *
    * @param baseAvailability baseline availability without spurious trips
-   * @param mttrHours mean time to restore after spurious trip
+   * @param mttrHours        mean time to restore after spurious trip
    * @return availability accounting for spurious trips
    */
   public double getAvailabilityWithSpuriousTrips(double baseAvailability, double mttrHours) {
@@ -594,13 +592,12 @@ public class SafetyInstrumentedFunction implements Serializable {
    * @return JSON representation
    */
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(toMap());
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(toMap());
   }
 
   @Override
   public String toString() {
-    return String.format("SIF[%s: SIL%d, PFD=%.2e, RRF=%.0f, protects=%d equipment]", name, sil,
-        pfdAvg, getRiskReductionFactor(), protectedEquipment.size());
+    return String.format("SIF[%s: SIL%d, PFD=%.2e, RRF=%.0f, protects=%d equipment]", name, sil, pfdAvg,
+	getRiskReductionFactor(), protectedEquipment.size());
   }
 }

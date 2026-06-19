@@ -22,4 +22,3 @@ public class BatteryStorageTest extends neqsim.NeqSimTest {
     assertEquals(-50.0, battery.getEnergyStream().getDuty(), 1e-6);
   }
 }
-

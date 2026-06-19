@@ -94,12 +94,10 @@ public class FuelGasSystemTest {
   @Test
   public void testConsumerTypes() {
     // Gas turbine should require highest pressure
-    assertTrue(ConsumerType.GAS_TURBINE.getTypicalPressureBarg() > ConsumerType.FIRED_HEATER
-        .getTypicalPressureBarg());
+    assertTrue(ConsumerType.GAS_TURBINE.getTypicalPressureBarg() > ConsumerType.FIRED_HEATER.getTypicalPressureBarg());
 
     // Gas turbine should require most superheat
-    assertTrue(
-        ConsumerType.GAS_TURBINE.getMinSuperheatC() > ConsumerType.INCINERATOR.getMinSuperheatC());
+    assertTrue(ConsumerType.GAS_TURBINE.getMinSuperheatC() > ConsumerType.INCINERATOR.getMinSuperheatC());
 
     // Gas turbine should have strictest H2S limit
     assertTrue(ConsumerType.GAS_TURBINE.getMaxH2Sppmv() < ConsumerType.INCINERATOR.getMaxH2Sppmv());
@@ -171,8 +169,7 @@ public class FuelGasSystemTest {
 
   @Test
   public void testFuelGasConsumerClass() {
-    FuelGasSystem.FuelGasConsumer consumer =
-        new FuelGasSystem.FuelGasConsumer("GT-1", ConsumerType.GAS_TURBINE, 500.0);
+    FuelGasSystem.FuelGasConsumer consumer = new FuelGasSystem.FuelGasConsumer("GT-1", ConsumerType.GAS_TURBINE, 500.0);
 
     assertEquals("GT-1", consumer.getName());
     assertEquals(ConsumerType.GAS_TURBINE, consumer.getType());
@@ -188,8 +185,8 @@ public class FuelGasSystemTest {
 
   @Test
   public void testConsumerEfficiency() {
-    FuelGasSystem.FuelGasConsumer consumer =
-        new FuelGasSystem.FuelGasConsumer("GT-1", ConsumerType.GAS_TURBINE, 1000.0);
+    FuelGasSystem.FuelGasConsumer consumer = new FuelGasSystem.FuelGasConsumer("GT-1", ConsumerType.GAS_TURBINE,
+	1000.0);
 
     consumer.setEfficiencyPercent(35.0);
     double usefulPower = consumer.getUsefulThermalPowerKW(45.0);

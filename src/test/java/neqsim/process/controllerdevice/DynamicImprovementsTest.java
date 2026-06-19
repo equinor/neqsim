@@ -9,8 +9,8 @@ import neqsim.process.measurementdevice.MeasurementDeviceBaseClass;
 import neqsim.process.measurementdevice.SensorFaultType;
 
 /**
- * Tests for the dynamic simulation improvements: NIP-04 (controller modes and bumpless transfer),
- * NIP-05 (split-range and override control structures), and NIP-07 (sensor fault injection).
+ * Tests for the dynamic simulation improvements: NIP-04 (controller modes and bumpless transfer), NIP-05 (split-range
+ * and override control structures), and NIP-07 (sensor fault injection).
  */
 class DynamicImprovementsTest {
 
@@ -152,8 +152,8 @@ class DynamicImprovementsTest {
     pid.setTransmitter(tx);
     pid.setControllerSetPoint(50.0, "C");
 
-    double[] low = {0.0, 40.0, 80.0};
-    double[] high = {40.0, 80.0, 100.0};
+    double[] low = { 0.0, 40.0, 80.0 };
+    double[] high = { 40.0, 80.0, 100.0 };
     SplitRangeControllerStructure sr = new SplitRangeControllerStructure(pid, low, high);
     Assertions.assertEquals(3, sr.getNumberOfElements());
   }
@@ -161,8 +161,7 @@ class DynamicImprovementsTest {
   @Test
   void testSplitRangeRejectsLessThan2() {
     ControllerDeviceBaseClass pid = new ControllerDeviceBaseClass("PID-SR4");
-    Assertions.assertThrows(IllegalArgumentException.class,
-        () -> new SplitRangeControllerStructure(pid, 1));
+    Assertions.assertThrows(IllegalArgumentException.class, () -> new SplitRangeControllerStructure(pid, 1));
   }
 
   // ─── NIP-05: Override control ───
@@ -181,9 +180,8 @@ class DynamicImprovementsTest {
     override.setControllerParameters(2.0, 300.0, 0.0);
 
     OverrideControllerStructure os = new OverrideControllerStructure(primary, override,
-        OverrideControllerStructure.SelectionType.HIGH_SELECT);
-    Assertions.assertEquals(OverrideControllerStructure.SelectionType.HIGH_SELECT,
-        os.getSelectionType());
+	OverrideControllerStructure.SelectionType.HIGH_SELECT);
+    Assertions.assertEquals(OverrideControllerStructure.SelectionType.HIGH_SELECT, os.getSelectionType());
   }
 
   @Test
@@ -198,10 +196,9 @@ class DynamicImprovementsTest {
     override.setControllerSetPoint(50.0, "C");
 
     OverrideControllerStructure os = new OverrideControllerStructure(primary, override,
-        OverrideControllerStructure.SelectionType.LOW_SELECT);
+	OverrideControllerStructure.SelectionType.LOW_SELECT);
     os.runTransient(1.0);
-    Assertions.assertFalse(os.isOverrideActive() && os.getOutput() == 0.0,
-        "Output should be valid after runTransient");
+    Assertions.assertFalse(os.isOverrideActive() && os.getOutput() == 0.0, "Output should be valid after runTransient");
   }
 
   // ─── NIP-07: Sensor fault injection ───

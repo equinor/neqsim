@@ -8,10 +8,9 @@ import neqsim.thermo.phase.PhaseSrkCPAreduced;
  * Thermodynamic system using the reduced-dimension CPA-EOS solver with Broyden acceleration.
  *
  * <p>
- * Combines association site symmetry reduction (grouping equivalent sites by charge pattern) with
- * Broyden rank-1 inverse-Jacobian updates for compounded speedup. For systems with high site
- * symmetry (e.g., water + MEG, both 4C), the coupled Newton system is reduced from (n_s+1) to (p+1)
- * dimensions where p is the number of unique site types.
+ * Combines association site symmetry reduction (grouping equivalent sites by charge pattern) with Broyden rank-1
+ * inverse-Jacobian updates for compounded speedup. For systems with high site symmetry (e.g., water + MEG, both 4C),
+ * the coupled Newton system is reduced from (n_s+1) to (p+1) dimensions where p is the number of unique site types.
  * </p>
  *
  * @author Even Solbraa
@@ -41,8 +40,8 @@ public class SystemSrkCPAstatoilReduced extends SystemSrkCPAstatoil {
   /**
    * Constructor of a fluid object using the reduced CPA-EoS.
    *
-   * @param T The temperature in unit Kelvin
-   * @param P The pressure in unit bara (absolute pressure)
+   * @param T              The temperature in unit Kelvin
+   * @param P              The pressure in unit bara (absolute pressure)
    * @param checkForSolids Set true to do solid phase check and calculations
    */
   public SystemSrkCPAstatoilReduced(double T, double P, boolean checkForSolids) {

@@ -8,9 +8,8 @@ import org.apache.logging.log4j.Logger;
  * Models sloshing-induced mixing enhancement in LNG cargo tanks.
  *
  * <p>
- * Ship motion causes the LNG liquid to slosh within the tank. The resulting turbulence enhances
- * mixing between stratified layers and increases the surface renewal rate (BOG enhancement).
- * Sloshing intensity depends on:
+ * Ship motion causes the LNG liquid to slosh within the tank. The resulting turbulence enhances mixing between
+ * stratified layers and increases the surface renewal rate (BOG enhancement). Sloshing intensity depends on:
  * </p>
  * <ul>
  * <li><b>Significant wave height (Hs):</b> Primary driver of ship motion amplitude</li>
@@ -23,8 +22,7 @@ import org.apache.logging.log4j.Logger;
  * The model produces two outputs:
  * </p>
  * <ul>
- * <li><b>Mixing factor:</b> Enhancement to inter-layer mass transfer (diffusion coefficient
- * multiplier)</li>
+ * <li><b>Mixing factor:</b> Enhancement to inter-layer mass transfer (diffusion coefficient multiplier)</li>
  * <li><b>BOG enhancement factor:</b> Enhancement to surface evaporation rate</li>
  * </ul>
  *
@@ -56,7 +54,8 @@ public class LNGSloshingModel implements Serializable {
   /**
    * Default constructor.
    */
-  public LNGSloshingModel() {}
+  public LNGSloshingModel() {
+  }
 
   /**
    * Constructor with containment type.
@@ -75,29 +74,29 @@ public class LNGSloshingModel implements Serializable {
    */
   private void setContainmentDefaults(TankGeometry.ContainmentType type) {
     switch (type) {
-      case MEMBRANE:
-        // Membrane tanks have more free-surface movement
-        sloshingCoefficient = 1.0;
-        maxMixingFactor = 10.0;
-        break;
-      case MOSS:
-        // Spherical tanks have less sloshing due to shape
-        sloshingCoefficient = 0.6;
-        maxMixingFactor = 6.0;
-        break;
-      case TYPE_C:
-        // Cylindrical tanks — moderate sloshing
-        sloshingCoefficient = 0.8;
-        maxMixingFactor = 8.0;
-        break;
-      case SPB:
-        // SPB similar to membrane
-        sloshingCoefficient = 0.9;
-        maxMixingFactor = 9.0;
-        break;
-      default:
-        sloshingCoefficient = 1.0;
-        break;
+    case MEMBRANE:
+      // Membrane tanks have more free-surface movement
+      sloshingCoefficient = 1.0;
+      maxMixingFactor = 10.0;
+      break;
+    case MOSS:
+      // Spherical tanks have less sloshing due to shape
+      sloshingCoefficient = 0.6;
+      maxMixingFactor = 6.0;
+      break;
+    case TYPE_C:
+      // Cylindrical tanks — moderate sloshing
+      sloshingCoefficient = 0.8;
+      maxMixingFactor = 8.0;
+      break;
+    case SPB:
+      // SPB similar to membrane
+      sloshingCoefficient = 0.9;
+      maxMixingFactor = 9.0;
+      break;
+    default:
+      sloshingCoefficient = 1.0;
+      break;
     }
   }
 
@@ -105,8 +104,8 @@ public class LNGSloshingModel implements Serializable {
    * Calculate the mixing enhancement factor due to sloshing.
    *
    * <p>
-   * The mixing factor enhances inter-layer diffusion and is applied as a multiplier to the
-   * effective diffusion coefficient. The factor depends on wave height and fill level:
+   * The mixing factor enhances inter-layer diffusion and is applied as a multiplier to the effective diffusion
+   * coefficient. The factor depends on wave height and fill level:
    * </p>
    *
    * <pre>
@@ -117,7 +116,7 @@ public class LNGSloshingModel implements Serializable {
    * </p>
    *
    * @param significantWaveHeight significant wave height Hs (m)
-   * @param fillFraction tank fill fraction (0.0 to 1.0)
+   * @param fillFraction          tank fill fraction (0.0 to 1.0)
    * @return mixing enhancement factor (1.0 = no enhancement)
    */
   public double calculateMixingFactor(double significantWaveHeight, double fillFraction) {
@@ -143,12 +142,12 @@ public class LNGSloshingModel implements Serializable {
    * Calculate the BOG enhancement factor due to surface renewal from sloshing.
    *
    * <p>
-   * Sloshing increases the liquid surface renewal rate, which enhances evaporation. The effect is
-   * smaller than the mixing enhancement and primarily affects the surface layer.
+   * Sloshing increases the liquid surface renewal rate, which enhances evaporation. The effect is smaller than the
+   * mixing enhancement and primarily affects the surface layer.
    * </p>
    *
    * @param significantWaveHeight significant wave height Hs (m)
-   * @param fillFraction tank fill fraction (0.0 to 1.0)
+   * @param fillFraction          tank fill fraction (0.0 to 1.0)
    * @return BOG enhancement factor (1.0 = no enhancement)
    */
   public double calculateBOGEnhancement(double significantWaveHeight, double fillFraction) {

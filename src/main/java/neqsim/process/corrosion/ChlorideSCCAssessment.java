@@ -9,13 +9,11 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 /**
- * Chloride stress corrosion cracking (Cl-SCC) assessment for austenitic and duplex stainless
- * steels.
+ * Chloride stress corrosion cracking (Cl-SCC) assessment for austenitic and duplex stainless steels.
  *
  * <p>
- * Evaluates whether an alloy is susceptible to chloride-induced SCC based on temperature, chloride
- * concentration, and material type. Each alloy family has a defined temperature-chloride envelope
- * beyond which SCC risk is unacceptable.
+ * Evaluates whether an alloy is susceptible to chloride-induced SCC based on temperature, chloride concentration, and
+ * material type. Each alloy family has a defined temperature-chloride envelope beyond which SCC risk is unacceptable.
  * </p>
  *
  * <h2>Standards</h2>
@@ -102,7 +100,8 @@ public class ChlorideSCCAssessment implements Serializable {
   /**
    * Default constructor.
    */
-  public ChlorideSCCAssessment() {}
+  public ChlorideSCCAssessment() {
+  }
 
   // ─── Setters ────────────────────────────────────────────
 
@@ -127,8 +126,7 @@ public class ChlorideSCCAssessment implements Serializable {
   /**
    * Sets material type.
    *
-   * @param type material type (e.g., "316L", "304", "22Cr duplex", "25Cr super duplex", "Alloy
-   *        625")
+   * @param type material type (e.g., "316L", "304", "22Cr duplex", "25Cr super duplex", "Alloy 625")
    */
   public void setMaterialType(String type) {
     this.materialType = type;
@@ -172,13 +170,11 @@ public class ChlorideSCCAssessment implements Serializable {
     String upperType = materialType.toUpperCase().trim();
 
     if (upperType.contains("625") || upperType.contains("C276") || upperType.contains("C-276")
-        || upperType.contains("INCONEL") || upperType.contains("HASTELLOY")) {
+	|| upperType.contains("INCONEL") || upperType.contains("HASTELLOY")) {
       evaluateNickelAlloy();
-    } else if (upperType.contains("25CR") || upperType.contains("SUPER")
-        || upperType.contains("2507")) {
+    } else if (upperType.contains("25CR") || upperType.contains("SUPER") || upperType.contains("2507")) {
       evaluate25CrSuperDuplex();
-    } else if (upperType.contains("22CR") || upperType.contains("DUPLEX")
-        || upperType.contains("2205")) {
+    } else if (upperType.contains("22CR") || upperType.contains("DUPLEX") || upperType.contains("2205")) {
       evaluate22CrDuplex();
     } else if (upperType.contains("13CR")) {
       evaluate13Cr();
@@ -191,11 +187,11 @@ public class ChlorideSCCAssessment implements Serializable {
 
     if (oxygenPresent) {
       notes.add("WARNING: Dissolved oxygen present — reduces SCC threshold temperature by "
-          + "approximately 20-30°C for austenitic grades.");
+	  + "approximately 20-30°C for austenitic grades.");
       if ("316".contains(upperType) || "304".contains(upperType)) {
-        maxAllowableTemperatureC -= 25.0;
-        temperatureMarginC = temperatureC - maxAllowableTemperatureC;
-        determineRisk();
+	maxAllowableTemperatureC -= 25.0;
+	temperatureMarginC = temperatureC - maxAllowableTemperatureC;
+	determineRisk();
       }
     }
 
@@ -298,8 +294,8 @@ public class ChlorideSCCAssessment implements Serializable {
     } else {
       sccAcceptable = false;
       riskLevel = "Very High";
-      notes.add("ABOVE Cl-SCC limit by " + String.format("%.0f", temperatureMarginC)
-          + "°C — upgrade to " + recommendedUpgrade);
+      notes.add("ABOVE Cl-SCC limit by " + String.format("%.0f", temperatureMarginC) + "°C — upgrade to "
+	  + recommendedUpgrade);
     }
   }
 
@@ -454,8 +450,7 @@ public class ChlorideSCCAssessment implements Serializable {
    * @return JSON representation
    */
   public String toJson() {
-    Gson gson =
-        new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+    Gson gson = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
     return gson.toJson(toMap());
   }
 }

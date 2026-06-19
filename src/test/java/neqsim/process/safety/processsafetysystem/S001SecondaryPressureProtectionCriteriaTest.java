@@ -18,18 +18,12 @@ class S001SecondaryPressureProtectionCriteriaTest {
    */
   @Test
   void defaultTargetFrequencyFollowsPressureBands() {
-    assertEquals(1.0e-2,
-        S001SecondaryPressureProtectionCriteria.getDefaultTargetFrequencyPerYear(90.0, 100.0,
-            150.0),
-        1.0e-12);
-    assertEquals(1.0e-3,
-        S001SecondaryPressureProtectionCriteria.getDefaultTargetFrequencyPerYear(120.0, 100.0,
-            150.0),
-        1.0e-12);
-    assertEquals(1.0e-4,
-        S001SecondaryPressureProtectionCriteria.getDefaultTargetFrequencyPerYear(175.0, 100.0,
-            150.0),
-        1.0e-12);
+    assertEquals(1.0e-2, S001SecondaryPressureProtectionCriteria.getDefaultTargetFrequencyPerYear(90.0, 100.0, 150.0),
+	1.0e-12);
+    assertEquals(1.0e-3, S001SecondaryPressureProtectionCriteria.getDefaultTargetFrequencyPerYear(120.0, 100.0, 150.0),
+	1.0e-12);
+    assertEquals(1.0e-4, S001SecondaryPressureProtectionCriteria.getDefaultTargetFrequencyPerYear(175.0, 100.0, 150.0),
+	1.0e-12);
   }
 
   /**
@@ -38,10 +32,9 @@ class S001SecondaryPressureProtectionCriteriaTest {
   @Test
   void completeCriteriaPasses() {
     S001SecondaryPressureProtectionResult result = new S001SecondaryPressureProtectionCriteria()
-        .setMaximumEventPressureBara(120.0).setDesignPressureBara(100.0)
-        .setTestPressureBara(150.0).setDemandFrequencyPerYear(1.0e-4)
-        .setReliefLeakageAssessed(Boolean.TRUE).setReliefLeakageToSafeLocation(Boolean.TRUE)
-        .setProofTestIntervalMonths(6.0).evaluate();
+	.setMaximumEventPressureBara(120.0).setDesignPressureBara(100.0).setTestPressureBara(150.0)
+	.setDemandFrequencyPerYear(1.0e-4).setReliefLeakageAssessed(Boolean.TRUE)
+	.setReliefLeakageToSafeLocation(Boolean.TRUE).setProofTestIntervalMonths(6.0).evaluate();
 
     assertTrue(result.isAcceptable());
     assertTrue(result.toJson().contains("10.4.7"));
@@ -53,10 +46,9 @@ class S001SecondaryPressureProtectionCriteriaTest {
   @Test
   void eventPressureAboveTestPressureFails() {
     S001SecondaryPressureProtectionResult result = new S001SecondaryPressureProtectionCriteria()
-        .setMaximumEventPressureBara(175.0).setDesignPressureBara(100.0)
-        .setTestPressureBara(150.0).setDemandFrequencyPerYear(1.0e-5)
-        .setReliefLeakageAssessed(Boolean.TRUE).setReliefLeakageToSafeLocation(Boolean.TRUE)
-        .setProofTestIntervalMonths(6.0).evaluate();
+	.setMaximumEventPressureBara(175.0).setDesignPressureBara(100.0).setTestPressureBara(150.0)
+	.setDemandFrequencyPerYear(1.0e-5).setReliefLeakageAssessed(Boolean.TRUE)
+	.setReliefLeakageToSafeLocation(Boolean.TRUE).setProofTestIntervalMonths(6.0).evaluate();
 
     assertFalse(result.isAcceptable());
     assertFalse(result.isPressureWithinTestPressure());

@@ -17,21 +17,18 @@ import neqsim.process.processmodel.ProcessModel;
 import neqsim.process.processmodel.ProcessSystem;
 
 /**
- * Generates IEC 81346 reference designations for all elements in a {@link ProcessSystem} or
- * {@link ProcessModel}.
+ * Generates IEC 81346 reference designations for all elements in a {@link ProcessSystem} or {@link ProcessModel}.
  *
  * <p>
- * The generator walks the process topology and automatically assigns reference designations based
- * on the three IEC 81346 aspects:
+ * The generator walks the process topology and automatically assigns reference designations based on the three IEC
+ * 81346 aspects:
  * </p>
  * <ul>
- * <li><strong>Function aspect</strong> ({@code =}): Derived from the process area name or a
- * user-defined prefix. In a {@link ProcessModel}, each process area becomes a function
- * sub-level.</li>
- * <li><strong>Product aspect</strong> ({@code -}): Derived from the IEC 81346-2 letter code (mapped
- * from equipment type) and a sequence number within that category.</li>
- * <li><strong>Location aspect</strong> ({@code +}): User-defined location prefix, e.g. "P1" for
- * Platform 1.</li>
+ * <li><strong>Function aspect</strong> ({@code =}): Derived from the process area name or a user-defined prefix. In a
+ * {@link ProcessModel}, each process area becomes a function sub-level.</li>
+ * <li><strong>Product aspect</strong> ({@code -}): Derived from the IEC 81346-2 letter code (mapped from equipment
+ * type) and a sequence number within that category.</li>
+ * <li><strong>Location aspect</strong> ({@code +}): User-defined location prefix, e.g. "P1" for Platform 1.</li>
  * </ul>
  *
  * <p>
@@ -94,9 +91,9 @@ public class ReferenceDesignationGenerator implements Serializable {
   private boolean includeMeasurementDevices = true;
 
   /**
-   * Whether to use hierarchical function designations in multi-area models. When true, each area
-   * function prefix is formed by appending to the top-level function prefix with a dot separator
-   * (e.g. "A1.A1", "A1.A2"). When false (default), areas use flat numbering ("A1", "A2").
+   * Whether to use hierarchical function designations in multi-area models. When true, each area function prefix is
+   * formed by appending to the top-level function prefix with a dot separator (e.g. "A1.A1", "A1.A2"). When false
+   * (default), areas use flat numbering ("A1", "A2").
    */
   private boolean useHierarchicalFunctions = false;
 
@@ -145,8 +142,8 @@ public class ReferenceDesignationGenerator implements Serializable {
    * Sets the function prefix for the top-level function aspect.
    *
    * <p>
-   * For a single {@link ProcessSystem}, this is used directly (e.g. "A1" produces "=A1"). For a
-   * {@link ProcessModel}, each area gets a sub-level (e.g. first area becomes "A1", second "A2").
+   * For a single {@link ProcessSystem}, this is used directly (e.g. "A1" produces "=A1"). For a {@link ProcessModel},
+   * each area gets a sub-level (e.g. first area becomes "A1", second "A2").
    * </p>
    *
    * @param functionPrefix the function prefix without the {@code =} character
@@ -219,9 +216,9 @@ public class ReferenceDesignationGenerator implements Serializable {
   }
 
   /**
-   * Sets whether to use hierarchical function designations in multi-area models. When true, each
-   * area function prefix is formed by appending to the top-level function prefix with a dot (e.g.
-   * "A1.A1", "A1.A2"). When false (default), areas use flat numbering ("A1", "A2").
+   * Sets whether to use hierarchical function designations in multi-area models. When true, each area function prefix
+   * is formed by appending to the top-level function prefix with a dot (e.g. "A1.A1", "A1.A2"). When false (default),
+   * areas use flat numbering ("A1", "A2").
    *
    * @param useHierarchicalFunctions true for hierarchical, false for flat
    */
@@ -261,7 +258,7 @@ public class ReferenceDesignationGenerator implements Serializable {
       generateForSystem(processSystem, functionPrefix, locationPrefix);
     } else {
       throw new IllegalStateException(
-          "No process system or model bound. Use generate(ProcessSystem) or generate(ProcessModel).");
+	  "No process system or model bound. Use generate(ProcessSystem) or generate(ProcessModel).");
     }
 
     generated = true;
@@ -305,17 +302,17 @@ public class ReferenceDesignationGenerator implements Serializable {
     for (String areaName : areaNames) {
       ProcessSystem areaSystem = processModel.get(areaName);
       if (areaSystem == null) {
-        continue;
+	continue;
       }
 
       // Each area gets a function sub-level
       String areaFunctionPrefix;
       if (useHierarchicalFunctions) {
-        // Hierarchical: A1.A1, A1.A2, A1.A3 (nested under top-level functionPrefix)
-        areaFunctionPrefix = functionPrefix + ".A" + areaIndex;
+	// Hierarchical: A1.A1, A1.A2, A1.A3 (nested under top-level functionPrefix)
+	areaFunctionPrefix = functionPrefix + ".A" + areaIndex;
       } else {
-        // Flat: A1, A2, A3 (default)
-        areaFunctionPrefix = "A" + areaIndex;
+	// Flat: A1, A2, A3 (default)
+	areaFunctionPrefix = "A" + areaIndex;
       }
       generateForSystem(areaSystem, areaFunctionPrefix, locationPrefix);
       areaIndex++;
@@ -325,32 +322,30 @@ public class ReferenceDesignationGenerator implements Serializable {
   /**
    * Generates designations for a single process system.
    *
-   * @param system the process system
+   * @param system     the process system
    * @param funcPrefix the function prefix for this system
-   * @param locPrefix the location prefix for this system
+   * @param locPrefix  the location prefix for this system
    */
   private void generateForSystem(ProcessSystem system, String funcPrefix, String locPrefix) {
     // Counter per letter code for generating sequence numbers
-    Map<IEC81346LetterCode, Integer> counters =
-        new EnumMap<IEC81346LetterCode, Integer>(IEC81346LetterCode.class);
+    Map<IEC81346LetterCode, Integer> counters = new EnumMap<IEC81346LetterCode, Integer>(IEC81346LetterCode.class);
 
     for (ProcessEquipmentInterface unit : system.getUnitOperations()) {
       // Skip streams unless explicitly included
       if (!includeStreams && unit instanceof neqsim.process.equipment.stream.StreamInterface) {
-        continue;
+	continue;
       }
 
       IEC81346LetterCode letterCode = IEC81346LetterCode.fromEquipment(unit);
       int seq = incrementCounter(counters, letterCode);
 
       String productDes = letterCode.name() + seq;
-      ReferenceDesignation refDes =
-          new ReferenceDesignation(funcPrefix, productDes, locPrefix, letterCode, seq);
+      ReferenceDesignation refDes = new ReferenceDesignation(funcPrefix, productDes, locPrefix, letterCode, seq);
 
       unit.setReferenceDesignation(refDes);
 
       entries.add(new DesignationEntry(unit.getName(), unit.getClass().getSimpleName(),
-          refDes.toReferenceDesignationString(), letterCode, seq, funcPrefix));
+	  refDes.toReferenceDesignationString(), letterCode, seq, funcPrefix));
     }
 
     // Process measurement devices if requested
@@ -363,10 +358,9 @@ public class ReferenceDesignationGenerator implements Serializable {
   }
 
   /**
-   * Enriches any explicit {@link neqsim.process.processmodel.ProcessConnection} objects in the
-   * given process system with IEC 81346 reference designation strings. For each connection, the
-   * source and target equipment names are looked up and their reference designation strings are
-   * copied to the connection metadata.
+   * Enriches any explicit {@link neqsim.process.processmodel.ProcessConnection} objects in the given process system
+   * with IEC 81346 reference designation strings. For each connection, the source and target equipment names are looked
+   * up and their reference designation strings are copied to the connection metadata.
    *
    * @param system the process system whose connections should be enriched
    */
@@ -375,18 +369,18 @@ public class ReferenceDesignationGenerator implements Serializable {
       // Resolve source equipment ref des
       ProcessEquipmentInterface sourceUnit = system.getUnit(conn.getSourceEquipment());
       if (sourceUnit != null) {
-        String srcRefDes = sourceUnit.getReferenceDesignationString();
-        if (srcRefDes != null && !srcRefDes.isEmpty()) {
-          conn.setSourceReferenceDesignation(srcRefDes);
-        }
+	String srcRefDes = sourceUnit.getReferenceDesignationString();
+	if (srcRefDes != null && !srcRefDes.isEmpty()) {
+	  conn.setSourceReferenceDesignation(srcRefDes);
+	}
       }
       // Resolve target equipment ref des
       ProcessEquipmentInterface targetUnit = system.getUnit(conn.getTargetEquipment());
       if (targetUnit != null) {
-        String tgtRefDes = targetUnit.getReferenceDesignationString();
-        if (tgtRefDes != null && !tgtRefDes.isEmpty()) {
-          conn.setTargetReferenceDesignation(tgtRefDes);
-        }
+	String tgtRefDes = targetUnit.getReferenceDesignationString();
+	if (tgtRefDes != null && !tgtRefDes.isEmpty()) {
+	  conn.setTargetReferenceDesignation(tgtRefDes);
+	}
       }
     }
   }
@@ -394,37 +388,36 @@ public class ReferenceDesignationGenerator implements Serializable {
   /**
    * Generates designations for measurement devices in a process system.
    *
-   * @param system the process system
+   * @param system     the process system
    * @param funcPrefix the function prefix
-   * @param locPrefix the location prefix
-   * @param counters the letter code counters (shared with equipment)
+   * @param locPrefix  the location prefix
+   * @param counters   the letter code counters (shared with equipment)
    */
-  private void generateForMeasurementDevices(ProcessSystem system, String funcPrefix,
-      String locPrefix, Map<IEC81346LetterCode, Integer> counters) {
+  private void generateForMeasurementDevices(ProcessSystem system, String funcPrefix, String locPrefix,
+      Map<IEC81346LetterCode, Integer> counters) {
 
     List<ProcessElementInterface> allElements = system.getAllElements();
 
     for (ProcessElementInterface element : allElements) {
       if (element instanceof MeasurementDeviceInterface) {
-        MeasurementDeviceInterface device = (MeasurementDeviceInterface) element;
+	MeasurementDeviceInterface device = (MeasurementDeviceInterface) element;
 
-        // Measurement devices are always classified as S (Sensing)
-        IEC81346LetterCode letterCode = IEC81346LetterCode.S;
-        int seq = incrementCounter(counters, letterCode);
+	// Measurement devices are always classified as S (Sensing)
+	IEC81346LetterCode letterCode = IEC81346LetterCode.S;
+	int seq = incrementCounter(counters, letterCode);
 
-        String productDes = letterCode.name() + seq;
-        ReferenceDesignation refDes =
-            new ReferenceDesignation(funcPrefix, productDes, locPrefix, letterCode, seq);
+	String productDes = letterCode.name() + seq;
+	ReferenceDesignation refDes = new ReferenceDesignation(funcPrefix, productDes, locPrefix, letterCode, seq);
 
-        // Measurement devices don't implement ProcessEquipmentInterface,
-        // so we store the designation as the tag number if not already set
-        String existingTag = device.getTag();
-        if (existingTag == null || existingTag.trim().isEmpty()) {
-          device.setTag(refDes.toReferenceDesignationString());
-        }
+	// Measurement devices don't implement ProcessEquipmentInterface,
+	// so we store the designation as the tag number if not already set
+	String existingTag = device.getTag();
+	if (existingTag == null || existingTag.trim().isEmpty()) {
+	  device.setTag(refDes.toReferenceDesignationString());
+	}
 
-        entries.add(new DesignationEntry(device.getName(), device.getClass().getSimpleName(),
-            refDes.toReferenceDesignationString(), letterCode, seq, funcPrefix));
+	entries.add(new DesignationEntry(device.getName(), device.getClass().getSimpleName(),
+	    refDes.toReferenceDesignationString(), letterCode, seq, funcPrefix));
       }
     }
   }
@@ -432,12 +425,11 @@ public class ReferenceDesignationGenerator implements Serializable {
   /**
    * Increments and returns the counter for a given letter code.
    *
-   * @param counters the counter map
+   * @param counters   the counter map
    * @param letterCode the letter code to increment
    * @return the new sequence number (1-based)
    */
-  private int incrementCounter(Map<IEC81346LetterCode, Integer> counters,
-      IEC81346LetterCode letterCode) {
+  private int incrementCounter(Map<IEC81346LetterCode, Integer> counters, IEC81346LetterCode letterCode) {
     Integer current = counters.get(letterCode);
     int next = (current != null) ? current + 1 : 1;
     counters.put(letterCode, next);
@@ -480,7 +472,7 @@ public class ReferenceDesignationGenerator implements Serializable {
   public DesignationEntry findByName(String equipmentName) {
     for (DesignationEntry entry : entries) {
       if (entry.getEquipmentName().equals(equipmentName)) {
-        return entry;
+	return entry;
       }
     }
     return null;
@@ -495,7 +487,7 @@ public class ReferenceDesignationGenerator implements Serializable {
   public DesignationEntry findByDesignation(String referenceDesignation) {
     for (DesignationEntry entry : entries) {
       if (entry.getReferenceDesignation().equals(referenceDesignation)) {
-        return entry;
+	return entry;
       }
     }
     return null;
@@ -511,7 +503,7 @@ public class ReferenceDesignationGenerator implements Serializable {
     List<DesignationEntry> result = new ArrayList<DesignationEntry>();
     for (DesignationEntry entry : entries) {
       if (entry.getLetterCode() == letterCode) {
-        result.add(entry);
+	result.add(entry);
       }
     }
     return Collections.unmodifiableList(result);
@@ -523,8 +515,7 @@ public class ReferenceDesignationGenerator implements Serializable {
    * @return map of letter code to count of equipment with that code
    */
   public Map<IEC81346LetterCode, Integer> getLetterCodeSummary() {
-    Map<IEC81346LetterCode, Integer> summary =
-        new EnumMap<IEC81346LetterCode, Integer>(IEC81346LetterCode.class);
+    Map<IEC81346LetterCode, Integer> summary = new EnumMap<IEC81346LetterCode, Integer>(IEC81346LetterCode.class);
     for (DesignationEntry entry : entries) {
       Integer count = summary.get(entry.getLetterCode());
       summary.put(entry.getLetterCode(), (count != null) ? count + 1 : 1);
@@ -570,8 +561,8 @@ public class ReferenceDesignationGenerator implements Serializable {
    * <li>{@code locationPrefix}: The location prefix used</li>
    * <li>{@code designationCount}: Number of generated designations</li>
    * <li>{@code letterCodeSummary}: Count per letter code</li>
-   * <li>{@code designations}: Array of designation entries with name, type, designation,
-   * letterCode, and description</li>
+   * <li>{@code designations}: Array of designation entries with name, type, designation, letterCode, and
+   * description</li>
    * </ul>
    *
    * @return JSON string representation of all generated designations
@@ -587,8 +578,7 @@ public class ReferenceDesignationGenerator implements Serializable {
     JsonObject summaryObj = new JsonObject();
     Map<IEC81346LetterCode, Integer> summary = getLetterCodeSummary();
     for (Map.Entry<IEC81346LetterCode, Integer> entry : summary.entrySet()) {
-      summaryObj.addProperty(entry.getKey().name() + " (" + entry.getKey().getDescription() + ")",
-          entry.getValue());
+      summaryObj.addProperty(entry.getKey().name() + " (" + entry.getKey().getDescription() + ")", entry.getValue());
     }
     root.add("letterCodeSummary", summaryObj);
 
@@ -614,8 +604,8 @@ public class ReferenceDesignationGenerator implements Serializable {
    * Represents a single generated IEC 81346 designation entry.
    *
    * <p>
-   * Each entry captures the mapping from a NeqSim equipment name to its IEC 81346 reference
-   * designation, along with classification metadata.
+   * Each entry captures the mapping from a NeqSim equipment name to its IEC 81346 reference designation, along with
+   * classification metadata.
    * </p>
    *
    * @author Even Solbraa
@@ -646,15 +636,15 @@ public class ReferenceDesignationGenerator implements Serializable {
     /**
      * Creates a new designation entry.
      *
-     * @param equipmentName the original equipment name
-     * @param equipmentType the simple class name of the equipment
+     * @param equipmentName        the original equipment name
+     * @param equipmentType        the simple class name of the equipment
      * @param referenceDesignation the full reference designation string
-     * @param letterCode the IEC 81346-2 letter code
-     * @param sequenceNumber the sequence number within the letter code category
-     * @param functionArea the function area identifier
+     * @param letterCode           the IEC 81346-2 letter code
+     * @param sequenceNumber       the sequence number within the letter code category
+     * @param functionArea         the function area identifier
      */
     public DesignationEntry(String equipmentName, String equipmentType, String referenceDesignation,
-        IEC81346LetterCode letterCode, int sequenceNumber, String functionArea) {
+	IEC81346LetterCode letterCode, int sequenceNumber, String functionArea) {
       this.equipmentName = equipmentName;
       this.equipmentType = equipmentType;
       this.referenceDesignation = referenceDesignation;
@@ -721,7 +711,7 @@ public class ReferenceDesignationGenerator implements Serializable {
     @Override
     public String toString() {
       return equipmentName + " -> " + referenceDesignation + " [" + letterCode.name() + ": "
-          + letterCode.getDescription() + "]";
+	  + letterCode.getDescription() + "]";
     }
   }
 }

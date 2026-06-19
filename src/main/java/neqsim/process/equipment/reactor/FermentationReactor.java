@@ -18,10 +18,9 @@ import neqsim.thermo.system.SystemSrkEos;
  * Fermentation reactor with Monod and Contois kinetics for bio-chemical conversion.
  *
  * <p>
- * Extends {@link Fermenter} with mechanistic kinetic models (Monod, Contois) for microbial growth,
- * substrate consumption, and product formation. Supports substrate inhibition, product inhibition,
- * and fed-batch operation modes. Suitable for modelling ethanol fermentation, organic acid
- * production, and other biofuel/bioproduct pathways.
+ * Extends {@link Fermenter} with mechanistic kinetic models (Monod, Contois) for microbial growth, substrate
+ * consumption, and product formation. Supports substrate inhibition, product inhibition, and fed-batch operation modes.
+ * Suitable for modelling ethanol fermentation, organic acid production, and other biofuel/bioproduct pathways.
  * </p>
  *
  * <h2>Kinetic Models</h2>
@@ -214,7 +213,7 @@ public class FermentationReactor extends Fermenter {
   /**
    * Creates a fermentation reactor with inlet stream.
    *
-   * @param name equipment name
+   * @param name        equipment name
    * @param inletStream feed stream
    */
   public FermentationReactor(String name, StreamInterface inletStream) {
@@ -684,22 +683,21 @@ public class FermentationReactor extends Fermenter {
   public double computeGrowthRate(double s, double x, double p) {
     double mu;
     switch (kineticModel) {
-      case CONTOIS:
-        mu = muMax * s / (contoisConstant * x + s);
-        break;
-      case SUBSTRATE_INHIBITED:
-        mu = muMax * s / (monodConstant + s + s * s / substrateInhibitionConstant);
-        break;
-      case PRODUCT_INHIBITED:
-        double monodTerm = muMax * s / (monodConstant + s);
-        double inhibFactor = Math.pow(Math.max(0.0, 1.0 - p / productInhibitionConcentration),
-            productInhibitionExponent);
-        mu = monodTerm * inhibFactor;
-        break;
-      case MONOD:
-      default:
-        mu = muMax * s / (monodConstant + s);
-        break;
+    case CONTOIS:
+      mu = muMax * s / (contoisConstant * x + s);
+      break;
+    case SUBSTRATE_INHIBITED:
+      mu = muMax * s / (monodConstant + s + s * s / substrateInhibitionConstant);
+      break;
+    case PRODUCT_INHIBITED:
+      double monodTerm = muMax * s / (monodConstant + s);
+      double inhibFactor = Math.pow(Math.max(0.0, 1.0 - p / productInhibitionConcentration), productInhibitionExponent);
+      mu = monodTerm * inhibFactor;
+      break;
+    case MONOD:
+    default:
+      mu = muMax * s / (monodConstant + s);
+      break;
     }
     return mu;
   }
@@ -727,7 +725,7 @@ public class FermentationReactor extends Fermenter {
   /**
    * Runs continuous CSTR simulation solving steady-state mass balances.
    *
-   * @param id UUID for this run
+   * @param id   UUID for this run
    * @param volL reactor volume in liters
    */
   private void runContinuous(UUID id, double volL) {
@@ -750,13 +748,13 @@ public class FermentationReactor extends Fermenter {
       double sNew = solveSteadyStateSubstrate(dilutionRate);
 
       if (sNew < 0 || sNew > substrateConcentration) {
-        // Washout condition: D > muMax, no conversion
-        finalSubstrateConc = substrateConcentration;
-        finalBiomassConc = 0.0;
-        finalProductConc = 0.0;
-        substrateConversion = 0.0;
-        specificGrowthRate = 0.0;
-        break;
+	// Washout condition: D > muMax, no conversion
+	finalSubstrateConc = substrateConcentration;
+	finalBiomassConc = 0.0;
+	finalProductConc = 0.0;
+	substrateConversion = 0.0;
+	specificGrowthRate = 0.0;
+	break;
       }
 
       double substrateConsumedPerL = substrateConcentration - sNew;
@@ -764,10 +762,10 @@ public class FermentationReactor extends Fermenter {
       double pNew = initialProductConcentration + yieldProduct * substrateConsumedPerL;
 
       if (Math.abs(sNew - s) < 1e-8) {
-        s = sNew;
-        x = xNew;
-        p = pNew;
-        break;
+	s = sNew;
+	x = xNew;
+	p = pNew;
+	break;
       }
       s = sNew;
       x = xNew;
@@ -777,15 +775,13 @@ public class FermentationReactor extends Fermenter {
     finalSubstrateConc = Math.max(0.0, s);
     finalBiomassConc = Math.max(0.0, x);
     finalProductConc = Math.max(0.0, p);
-    substrateConversion =
-        substrateConcentration > 0 ? 1.0 - finalSubstrateConc / substrateConcentration : 0.0;
+    substrateConversion = substrateConcentration > 0 ? 1.0 - finalSubstrateConc / substrateConcentration : 0.0;
     specificGrowthRate = computeGrowthRate(finalSubstrateConc, finalBiomassConc, finalProductConc);
     productivity = tau > 0 ? finalProductConc / tau : 0.0;
 
     // Mass flows
     double volumetricFlowLPerHr = volL / Math.max(1e-10, tau);
-    substrateConsumedKgPerHr =
-        (substrateConcentration - finalSubstrateConc) * volumetricFlowLPerHr / 1000.0;
+    substrateConsumedKgPerHr = (substrateConcentration - finalSubstrateConc) * volumetricFlowLPerHr / 1000.0;
     productFormedKgPerHr = finalProductConc * volumetricFlowLPerHr / 1000.0;
 
     buildOutputStreams(id, volumetricFlowLPerHr);
@@ -794,7 +790,7 @@ public class FermentationReactor extends Fermenter {
   /**
    * Runs batch or fed-batch simulation using time integration.
    *
-   * @param id UUID for this run
+   * @param id   UUID for this run
    * @param volL reactor volume in liters
    */
   private void runBatch(UUID id, double volL) {
@@ -818,11 +814,11 @@ public class FermentationReactor extends Fermenter {
 
       // Fed-batch feeding
       if (operationMode == OperationMode.FED_BATCH && feedingRate > 0) {
-        double feedFrac = feedingRate / Math.max(1e-10, v);
-        dsdt += feedFrac * (feedSubstrateConcentration - s);
-        dxdt -= feedFrac * x;
-        dpdt -= feedFrac * p;
-        v += feedingRate * dt;
+	double feedFrac = feedingRate / Math.max(1e-10, v);
+	dsdt += feedFrac * (feedSubstrateConcentration - s);
+	dxdt -= feedFrac * x;
+	dpdt -= feedFrac * p;
+	v += feedingRate * dt;
       }
 
       s = Math.max(0.0, s + dsdt * dt);
@@ -830,20 +826,18 @@ public class FermentationReactor extends Fermenter {
       p = Math.max(0.0, p + dpdt * dt);
 
       if (s <= 0.0) {
-        break;
+	break;
       }
     }
 
     finalSubstrateConc = s;
     finalBiomassConc = x;
     finalProductConc = p;
-    substrateConversion =
-        substrateConcentration > 0 ? 1.0 - finalSubstrateConc / substrateConcentration : 0.0;
+    substrateConversion = substrateConcentration > 0 ? 1.0 - finalSubstrateConc / substrateConcentration : 0.0;
     specificGrowthRate = computeGrowthRate(finalSubstrateConc, finalBiomassConc, finalProductConc);
     productivity = batchTime > 0 ? finalProductConc / batchTime : 0.0;
 
-    substrateConsumedKgPerHr =
-        (substrateConcentration - finalSubstrateConc) * volL / (1000.0 * batchTime);
+    substrateConsumedKgPerHr = (substrateConcentration - finalSubstrateConc) * volL / (1000.0 * batchTime);
     productFormedKgPerHr = finalProductConc * volL / (1000.0 * batchTime);
 
     double volumetricFlowLPerHr = volL / Math.max(1e-10, batchTime);
@@ -859,21 +853,21 @@ public class FermentationReactor extends Fermenter {
   private double solveSteadyStateSubstrate(double dilutionRate) {
     // At steady state mu = D, solve for S
     switch (kineticModel) {
-      case CONTOIS:
-        // D = muMax * S / (Ksx * X + S), but X depends on S - use iterative
-        return solveIterative(dilutionRate);
-      case SUBSTRATE_INHIBITED:
-        // D = muMax * S / (Ks + S + S^2/Ki) - quadratic
-        return solveSubstrateInhibited(dilutionRate);
-      case PRODUCT_INHIBITED:
-        return solveIterative(dilutionRate);
-      case MONOD:
-      default:
-        // D = muMax * S / (Ks + S) => S = Ks * D / (muMax - D)
-        if (dilutionRate >= muMax) {
-          return substrateConcentration; // washout
-        }
-        return monodConstant * dilutionRate / (muMax - dilutionRate);
+    case CONTOIS:
+      // D = muMax * S / (Ksx * X + S), but X depends on S - use iterative
+      return solveIterative(dilutionRate);
+    case SUBSTRATE_INHIBITED:
+      // D = muMax * S / (Ks + S + S^2/Ki) - quadratic
+      return solveSubstrateInhibited(dilutionRate);
+    case PRODUCT_INHIBITED:
+      return solveIterative(dilutionRate);
+    case MONOD:
+    default:
+      // D = muMax * S / (Ks + S) => S = Ks * D / (muMax - D)
+      if (dilutionRate >= muMax) {
+	return substrateConcentration; // washout
+      }
+      return monodConstant * dilutionRate / (muMax - dilutionRate);
     }
   }
 
@@ -927,7 +921,7 @@ public class FermentationReactor extends Fermenter {
       double error = mu - d;
 
       if (Math.abs(error) < 1e-10) {
-        break;
+	break;
       }
 
       // Bisection: if mu > D, S is too high; if mu < D, S is too low
@@ -936,7 +930,7 @@ public class FermentationReactor extends Fermenter {
       sNew = Math.max(0.0, Math.min(substrateConcentration, sNew));
 
       if (Math.abs(sNew - s) < 1e-10) {
-        break;
+	break;
       }
       s = sNew;
     }
@@ -946,12 +940,11 @@ public class FermentationReactor extends Fermenter {
   /**
    * Creates the liquid and gas output streams from fermentation results.
    *
-   * @param id UUID for this run
+   * @param id                   UUID for this run
    * @param volumetricFlowLPerHr volumetric flow in L/hr
    */
   private void buildOutputStreams(UUID id, double volumetricFlowLPerHr) {
-    double reactorTemp =
-        Double.isNaN(getReactorTemperature()) ? 273.15 + 30.0 : getReactorTemperature();
+    double reactorTemp = Double.isNaN(getReactorTemperature()) ? 273.15 + 30.0 : getReactorTemperature();
     double reactorPres = Double.isNaN(getReactorPressure()) ? 1.01325 : getReactorPressure();
 
     // ── Liquid product stream ──
@@ -959,14 +952,13 @@ public class FermentationReactor extends Fermenter {
     double waterMolPerHr = waterKgPerHr * 1000.0 / 18.015;
     double productMolPerHr = productFormedKgPerHr * 1000.0 / 46.07; // ethanol MW
     double substrateMolPerHr = finalSubstrateConc * volumetricFlowLPerHr / 1000.0 * 1000.0 / 86.18; // n-hexane
-                                                                                                    // MW
+												    // MW
 
     SystemInterface liquidFluid = new SystemSrkEos(reactorTemp, reactorPres);
     liquidFluid.addComponent("water", Math.max(1e-10, waterMolPerHr), "mole/hr");
     liquidFluid.addComponent(productComponentName, Math.max(1e-10, productMolPerHr), "mole/hr");
     if (finalSubstrateConc > 0.01) {
-      liquidFluid.addComponent(substrateComponentName, Math.max(1e-10, substrateMolPerHr),
-          "mole/hr");
+      liquidFluid.addComponent(substrateComponentName, Math.max(1e-10, substrateMolPerHr), "mole/hr");
     }
     liquidFluid.setMixingRule("classic");
     liquidFluid.init(0);
@@ -1034,7 +1026,6 @@ public class FermentationReactor extends Fermenter {
   /** {@inheritDoc} */
   @Override
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(getResults());
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(getResults());
   }
 }

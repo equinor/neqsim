@@ -39,13 +39,13 @@ class SeparatorPerformanceCalculatorTest {
     String orientation = "horizontal";
     double liquidLevelFrac = 0.5;
 
-    calc.calculate(gasDensity, oilDensity, waterDensity, gasViscosity, oilViscosity, waterViscosity,
-        gasVelocity, diameter, length, orientation, liquidLevelFrac);
+    calc.calculate(gasDensity, oilDensity, waterDensity, gasViscosity, oilViscosity, waterViscosity, gasVelocity,
+	diameter, length, orientation, liquidLevelFrac);
 
     // Check results
     double overallEff = calc.getOverallGasLiquidEfficiency();
-    assertTrue(overallEff > 0.99, "With 100 um DSD and wire mesh, overall efficiency should be "
-        + ">99%. Got: " + overallEff);
+    assertTrue(overallEff > 0.99,
+	"With 100 um DSD and wire mesh, overall efficiency should be " + ">99%. Got: " + overallEff);
 
     double oilInGas = calc.getOilInGasFraction();
     assertTrue(oilInGas < 0.01, "Oil-in-gas should be very low. Got: " + oilInGas);
@@ -68,8 +68,7 @@ class SeparatorPerformanceCalculatorTest {
     calc.calculate(60.0, 850.0, 0.0, 1.5e-5, 3.0e-3, 0.0, 2.0, 1.0, 4.0, "vertical", 0.1);
 
     double efficiency = calc.getOverallGasLiquidEfficiency();
-    assertTrue(efficiency > 0.50,
-        "Vertical scrubber should have reasonable efficiency with vane pack");
+    assertTrue(efficiency > 0.50, "Vertical scrubber should have reasonable efficiency with vane pack");
 
     // Gravity cut diameter should be reasonable
     double dCut = calc.getGravityCutDiameter();
@@ -96,9 +95,9 @@ class SeparatorPerformanceCalculatorTest {
 
     // Liquid-liquid results should be between 0 and 1
     assertTrue(calc.getOilInWaterFraction() >= 0 && calc.getOilInWaterFraction() <= 1,
-        "Oil-in-water should be between 0 and 1");
+	"Oil-in-water should be between 0 and 1");
     assertTrue(calc.getWaterInOilFraction() >= 0 && calc.getWaterInOilFraction() <= 1,
-        "Water-in-oil should be between 0 and 1");
+	"Water-in-oil should be between 0 and 1");
   }
 
   @Test
@@ -113,12 +112,11 @@ class SeparatorPerformanceCalculatorTest {
     calc.calculate(30.0, 750.0, 0.0, 1.2e-5, 2.0e-3, 0.0, 0.5, 3.0, 12.0, "horizontal", 0.5);
 
     // Should still have some gravity separation
-    assertTrue(calc.getGravitySectionEfficiency() > 0.0,
-        "Gravity section should provide some separation");
+    assertTrue(calc.getGravitySectionEfficiency() > 0.0, "Gravity section should provide some separation");
 
     // But without mist eliminator, fine droplets pass through
     assertEquals(0.0, calc.getMistEliminatorEfficiency(), 1e-10,
-        "Mist eliminator efficiency should be 0 when not installed");
+	"Mist eliminator efficiency should be 0 when not installed");
 
     // Overall = gravity only
     assertEquals(calc.getGravitySectionEfficiency(), calc.getOverallGasLiquidEfficiency(), 1e-10);
@@ -153,8 +151,7 @@ class SeparatorPerformanceCalculatorTest {
 
     // Gas carry-under should be between 0 and 1
     double gasInOil = calc.getGasInOilFraction();
-    assertTrue(gasInOil >= 0 && gasInOil <= 1,
-        "Gas-in-oil should be between 0 and 1. Got: " + gasInOil);
+    assertTrue(gasInOil >= 0 && gasInOil <= 1, "Gas-in-oil should be between 0 and 1. Got: " + gasInOil);
   }
 
   @Test
@@ -182,13 +179,11 @@ class SeparatorPerformanceCalculatorTest {
     calc.setGasLiquidDSD(DropletSizeDistribution.rosinRammler(100e-6, 2.6));
     calc.setMistEliminatorCurve(GradeEfficiencyCurve.wireMeshDefault());
 
-    calc.calculate(40.0, 800.0, 0.0, 1.4e-5, 3.0e-3, 0.0,
-        4.0, 1.0, 4.0, "horizontal", 0.2);
+    calc.calculate(40.0, 800.0, 0.0, 1.4e-5, 3.0e-3, 0.0, 4.0, 1.0, 4.0, "horizontal", 0.2);
 
-    assertNotNull(calc.getApiComplianceResult(),
-        "API 12J compliance result should be populated after calculate()");
+    assertNotNull(calc.getApiComplianceResult(), "API 12J compliance result should be populated after calculate()");
     assertEquals(calc.getKFactorUtilization() > 1.0, calc.isMistEliminatorFlooded(),
-        "Flooding flag should be consistent with K-factor utilization");
+	"Flooding flag should be consistent with K-factor utilization");
   }
 
   @Test
@@ -243,10 +238,9 @@ class SeparatorPerformanceCalculatorTest {
     double measuredGasInOil = modelGasInOil * 0.75;
     double measuredWaterInOil = modelWaterInOil * 1.20;
 
-    SeparatorPerformanceCalculator.CalibrationSummary summary = calc
-        .calibrateFromMeasuredFractions(measuredOilInGas, calc.getWaterInGasFraction() * 1.40,
-            measuredGasInOil, calc.getGasInWaterFraction() * 0.75, calc.getOilInWaterFraction() * 1.20,
-            measuredWaterInOil, 1e-12);
+    SeparatorPerformanceCalculator.CalibrationSummary summary = calc.calibrateFromMeasuredFractions(measuredOilInGas,
+	calc.getWaterInGasFraction() * 1.40, measuredGasInOil, calc.getGasInWaterFraction() * 0.75,
+	calc.getOilInWaterFraction() * 1.20, measuredWaterInOil, 1e-12);
 
     assertTrue(summary.liquidInGasPointsUsed >= 1);
     assertTrue(summary.gasCarryUnderPointsUsed >= 1);
@@ -270,8 +264,8 @@ class SeparatorPerformanceCalculatorTest {
     calc.setGasCarryUnderCalibrationFactor(0.9);
     calc.setLiquidLiquidCalibrationFactor(1.3);
 
-    SeparatorPerformanceCalculator.CalibrationSummary summary = calc
-        .calibrateFromMeasuredFractions(0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 1e-6);
+    SeparatorPerformanceCalculator.CalibrationSummary summary = calc.calibrateFromMeasuredFractions(0.01, 0.01, 0.01,
+	0.01, 0.01, 0.01, 1e-6);
 
     assertEquals(1.1, calc.getLiquidInGasCalibrationFactor(), 1e-12);
     assertEquals(0.9, calc.getGasCarryUnderCalibrationFactor(), 1e-12);
@@ -317,19 +311,18 @@ class SeparatorPerformanceCalculatorTest {
       writer.close();
     }
 
-    List<SeparatorPerformanceCalculator.CalibrationCase> cases =
-        SeparatorPerformanceCalculator.loadCalibrationCasesFromCsv(tmp.getAbsolutePath());
+    List<SeparatorPerformanceCalculator.CalibrationCase> cases = SeparatorPerformanceCalculator
+	.loadCalibrationCasesFromCsv(tmp.getAbsolutePath());
     assertEquals(2, cases.size());
 
     SeparatorPerformanceCalculator calc = new SeparatorPerformanceCalculator();
-    SeparatorPerformanceCalculator.BatchCalibrationSummary summary =
-        calc.calibrateFromCaseLibrary(cases, 1e-12);
+    SeparatorPerformanceCalculator.BatchCalibrationSummary summary = calc.calibrateFromCaseLibrary(cases, 1e-12);
 
     assertTrue(summary.liquidInGasPointsUsed > 0);
     assertTrue(summary.gasCarryUnderPointsUsed > 0);
     assertTrue(summary.liquidLiquidPointsUsed > 0);
     assertTrue(summary.mapeAfter <= summary.mapeBefore + 1e-15,
-        "Batch calibration should not increase average percentage error");
+	"Batch calibration should not increase average percentage error");
 
     // Expected means from two rows:
     // lig ratios: 1.5 and 1.5, 1.5 and 1.5 => mean 1.5
@@ -356,11 +349,10 @@ class SeparatorPerformanceCalculatorTest {
       writer.close();
     }
 
-    List<SeparatorPerformanceCalculator.CalibrationCase> cases =
-        SeparatorPerformanceCalculator.loadCalibrationCasesFromCsv(tmpCsv.getAbsolutePath());
+    List<SeparatorPerformanceCalculator.CalibrationCase> cases = SeparatorPerformanceCalculator
+	.loadCalibrationCasesFromCsv(tmpCsv.getAbsolutePath());
     SeparatorPerformanceCalculator calc = new SeparatorPerformanceCalculator();
-    SeparatorPerformanceCalculator.BatchCalibrationSummary summary =
-        calc.calibrateFromCaseLibrary(cases, 1e-12);
+    SeparatorPerformanceCalculator.BatchCalibrationSummary summary = calc.calibrateFromCaseLibrary(cases, 1e-12);
 
     String json = calc.buildBatchCalibrationReportJson(cases, summary, 1e-12);
     assertTrue(json.contains("\"casesProcessed\""));

@@ -12,8 +12,8 @@ import org.apache.logging.log4j.Logger;
  * Examples and templates for integrating external ML frameworks with the risk system.
  *
  * <p>
- * This class provides patterns and examples for integrating machine learning models from external
- * frameworks like TensorFlow, PyTorch, ONNX, and scikit-learn with the NeqSim risk framework.
+ * This class provides patterns and examples for integrating machine learning models from external frameworks like
+ * TensorFlow, PyTorch, ONNX, and scikit-learn with the NeqSim risk framework.
  * </p>
  *
  * <h2>Supported Integration Patterns</h2>
@@ -28,13 +28,11 @@ import org.apache.logging.log4j.Logger;
  *
  * <pre>
  * // Create adapter for external model
- * MLModelAdapter adapter =
- *     MLIntegrationExamples.createOnnxAdapter("/models/failure_predictor.onnx");
+ * MLModelAdapter adapter = MLIntegrationExamples.createOnnxAdapter("/models/failure_predictor.onnx");
  *
  * // Register with risk interface
  * RiskMLInterface mlInterface = new RiskMLInterface();
- * mlInterface.registerModel("failure_predictor", RiskMLInterface.ModelType.FAILURE_PREDICTION,
- *     adapter::predict);
+ * mlInterface.registerModel("failure_predictor", RiskMLInterface.ModelType.FAILURE_PREDICTION, adapter::predict);
  * </pre>
  *
  * @author NeqSim Development Team
@@ -113,12 +111,12 @@ public class MLIntegrationExamples {
     protected float[] prepareInput(Map<String, Double> features) {
       float[] input = new float[inputFeatures.size()];
       for (int i = 0; i < inputFeatures.size(); i++) {
-        String featureName = inputFeatures.get(i);
-        Double value = features.get(featureName);
-        if (value == null) {
-          value = featureDefaults.getOrDefault(featureName, 0.0);
-        }
-        input[i] = value.floatValue();
+	String featureName = inputFeatures.get(i);
+	Double value = features.get(featureName);
+	if (value == null) {
+	  value = featureDefaults.getOrDefault(featureName, 0.0);
+	}
+	input[i] = value.floatValue();
       }
       return input;
     }
@@ -137,8 +135,8 @@ public class MLIntegrationExamples {
    * Adapter for ONNX Runtime models.
    *
    * <p>
-   * ONNX (Open Neural Network Exchange) provides a platform-independent format for ML models. This
-   * adapter loads ONNX models using the ONNX Runtime Java API.
+   * ONNX (Open Neural Network Exchange) provides a platform-independent format for ML models. This adapter loads ONNX
+   * models using the ONNX Runtime Java API.
    * </p>
    *
    * <h2>Dependencies Required</h2>
@@ -161,7 +159,7 @@ public class MLIntegrationExamples {
     /**
      * Creates an ONNX adapter.
      *
-     * @param modelPath path to ONNX model file
+     * @param modelPath     path to ONNX model file
      * @param inputFeatures list of input feature names in order
      */
     public OnnxAdapter(String modelPath, List<String> inputFeatures) {
@@ -194,7 +192,7 @@ public class MLIntegrationExamples {
     @Override
     public double predict(Map<String, Double> features) {
       if (!isLoaded) {
-        load();
+	load();
       }
 
       float[] input = prepareInput(features);
@@ -208,7 +206,7 @@ public class MLIntegrationExamples {
       // Placeholder: simple threshold model
       double sum = 0;
       for (float v : input) {
-        sum += v;
+	sum += v;
       }
       return Math.min(1.0, Math.max(0.0, sum / input.length / 100.0));
     }
@@ -251,13 +249,13 @@ public class MLIntegrationExamples {
     /**
      * Creates a TensorFlow adapter.
      *
-     * @param modelDir path to SavedModel directory
-     * @param inputFeatures input feature names
-     * @param inputTensorName name of input tensor
+     * @param modelDir         path to SavedModel directory
+     * @param inputFeatures    input feature names
+     * @param inputTensorName  name of input tensor
      * @param outputTensorName name of output tensor
      */
     public TensorFlowAdapter(String modelDir, List<String> inputFeatures, String inputTensorName,
-        String outputTensorName) {
+	String outputTensorName) {
       super("TensorFlow:" + modelDir);
       this.modelDir = modelDir;
       this.inputFeatures = new ArrayList<>(inputFeatures);
@@ -286,7 +284,7 @@ public class MLIntegrationExamples {
     @Override
     public double predict(Map<String, Double> features) {
       if (!isLoaded) {
-        load();
+	load();
       }
 
       float[] input = prepareInput(features);
@@ -305,7 +303,7 @@ public class MLIntegrationExamples {
       // Placeholder
       double sum = 0;
       for (float v : input) {
-        sum += v;
+	sum += v;
       }
       return Math.min(1.0, Math.max(0.0, sum / input.length / 100.0));
     }
@@ -315,8 +313,7 @@ public class MLIntegrationExamples {
    * Adapter for REST API-based model serving.
    *
    * <p>
-   * Connects to external model serving endpoints like TensorFlow Serving, TorchServe, or custom
-   * APIs.
+   * Connects to external model serving endpoints like TensorFlow Serving, TorchServe, or custom APIs.
    * </p>
    */
   public static class RestApiAdapter extends BaseMLAdapter {
@@ -329,7 +326,7 @@ public class MLIntegrationExamples {
     /**
      * Creates a REST API adapter.
      *
-     * @param endpoint model serving endpoint URL
+     * @param endpoint      model serving endpoint URL
      * @param inputFeatures input feature names
      */
     public RestApiAdapter(String endpoint, List<String> inputFeatures) {
@@ -353,7 +350,7 @@ public class MLIntegrationExamples {
     /**
      * Adds a request header.
      *
-     * @param name header name
+     * @param name  header name
      * @param value header value
      */
     public void addHeader(String name, String value) {
@@ -381,9 +378,9 @@ public class MLIntegrationExamples {
       // Placeholder
       double sum = 0;
       for (Double v : features.values()) {
-        if (v != null) {
-          sum += v;
-        }
+	if (v != null) {
+	  sum += v;
+	}
       }
       return Math.min(1.0, Math.max(0.0, sum / features.size() / 100.0));
     }
@@ -431,9 +428,9 @@ public class MLIntegrationExamples {
     /**
      * Adds a threshold rule.
      *
-     * @param feature feature name
+     * @param feature   feature name
      * @param threshold threshold value
-     * @param weight contribution weight when threshold exceeded
+     * @param weight    contribution weight when threshold exceeded
      */
     public void addThreshold(String feature, double threshold, double weight) {
       inputFeatures.add(feature);
@@ -445,15 +442,15 @@ public class MLIntegrationExamples {
     public double predict(Map<String, Double> features) {
       double score = 0;
       for (String feature : inputFeatures) {
-        Double value = features.get(feature);
-        Double threshold = thresholds.get(feature);
-        Double weight = weights.get(feature);
+	Double value = features.get(feature);
+	Double threshold = thresholds.get(feature);
+	Double weight = weights.get(feature);
 
-        if (value != null && threshold != null && weight != null) {
-          if (value > threshold) {
-            score += weight;
-          }
-        }
+	if (value != null && threshold != null && weight != null) {
+	  if (value > threshold) {
+	    score += weight;
+	  }
+	}
       }
       return Math.min(1.0, Math.max(0.0, score));
     }
@@ -546,12 +543,11 @@ public class MLIntegrationExamples {
 
     // Register threshold-based models (for testing without actual ML)
     ThresholdModel failureModel = createTestFailurePredictor();
-    RiskMLInterface.MLModel failureMlModel =
-        mlInterface.createFailurePredictionModel("failure_predictor", "Failure Predictor");
+    RiskMLInterface.MLModel failureMlModel = mlInterface.createFailurePredictionModel("failure_predictor",
+	"Failure Predictor");
     failureMlModel.setPredictor(features -> {
       double score = failureModel.predict(features);
-      RiskMLInterface.MLPrediction pred =
-          new RiskMLInterface.MLPrediction(failureMlModel.getModelId());
+      RiskMLInterface.MLPrediction pred = new RiskMLInterface.MLPrediction(failureMlModel.getModelId());
       pred.setPrediction(score);
       pred.setConfidence(0.85);
       pred.setLabel(score > 0.5 ? "HIGH_RISK" : "LOW_RISK");
@@ -559,12 +555,11 @@ public class MLIntegrationExamples {
     });
 
     ThresholdModel anomalyModel = createTestAnomalyDetector();
-    RiskMLInterface.MLModel anomalyMlModel =
-        mlInterface.createAnomalyDetectionModel("anomaly_detector", "Anomaly Detector");
+    RiskMLInterface.MLModel anomalyMlModel = mlInterface.createAnomalyDetectionModel("anomaly_detector",
+	"Anomaly Detector");
     anomalyMlModel.setPredictor(features -> {
       double score = anomalyModel.predict(features);
-      RiskMLInterface.MLPrediction pred =
-          new RiskMLInterface.MLPrediction(anomalyMlModel.getModelId());
+      RiskMLInterface.MLPrediction pred = new RiskMLInterface.MLPrediction(anomalyMlModel.getModelId());
       pred.setPrediction(score);
       pred.setConfidence(0.85);
       pred.setLabel(score > 0.5 ? "ANOMALY" : "NORMAL");
@@ -583,14 +578,11 @@ public class MLIntegrationExamples {
     testFeatures.put("flow_deviation", 10.0);
 
     // Run predictions
-    RiskMLInterface.MLPrediction failurePred =
-        mlInterface.predict("failure_predictor", testFeatures);
-    RiskMLInterface.MLPrediction anomalyPred =
-        mlInterface.predict("anomaly_detector", testFeatures);
+    RiskMLInterface.MLPrediction failurePred = mlInterface.predict("failure_predictor", testFeatures);
+    RiskMLInterface.MLPrediction anomalyPred = mlInterface.predict("anomaly_detector", testFeatures);
 
     System.out.println("Equipment: Compressor-1");
-    System.out
-        .println("Failure Probability: " + String.format("%.2f", failurePred.getPrediction()));
+    System.out.println("Failure Probability: " + String.format("%.2f", failurePred.getPrediction()));
     System.out.println("Anomaly Score: " + String.format("%.2f", anomalyPred.getPrediction()));
 
     System.out.println("\n=== Production Integration ===");

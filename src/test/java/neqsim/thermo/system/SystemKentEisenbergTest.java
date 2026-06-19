@@ -9,13 +9,11 @@ import org.junit.jupiter.api.Test;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * Tests for the Kent-Eisenberg thermodynamic model used for acid gas (H2S/CO2) solubility in amine
- * solutions.
+ * Tests for the Kent-Eisenberg thermodynamic model used for acid gas (H2S/CO2) solubility in amine solutions.
  *
  * <p>
- * The Kent-Eisenberg model uses chemical equilibrium with apparent equilibrium constants where
- * non-ideality is absorbed into the K values (gamma = 1.0). This is a simplified approach compared
- * to rigorous electrolyte models.
+ * The Kent-Eisenberg model uses chemical equilibrium with apparent equilibrium constants where non-ideality is absorbed
+ * into the K values (gamma = 1.0). This is a simplified approach compared to rigorous electrolyte models.
  * </p>
  *
  * @author Even Solbraa
@@ -58,8 +56,8 @@ class SystemKentEisenbergTest {
   }
 
   /**
-   * Test Kent-Eisenberg model for H2S absorption in MDEA solution. The model should show H2S
-   * partitioning between gas and liquid.
+   * Test Kent-Eisenberg model for H2S absorption in MDEA solution. The model should show H2S partitioning between gas
+   * and liquid.
    */
   @Test
   void testH2SAbsorptionInMDEA() {
@@ -78,9 +76,8 @@ class SystemKentEisenbergTest {
   }
 
   /**
-   * Test that the Kent-Eisenberg model can perform a bubble point pressure flash. This is the
-   * typical use case: given a loaded amine solution, find the equilibrium vapor pressure of acid
-   * gas.
+   * Test that the Kent-Eisenberg model can perform a bubble point pressure flash. This is the typical use case: given a
+   * loaded amine solution, find the equilibrium vapor pressure of acid gas.
    */
   @Test
   void testBubblePointPressureFlash() {
@@ -140,13 +137,12 @@ class SystemKentEisenbergTest {
   }
 
   /**
-   * Test Kent-Eisenberg model for CO2 partial pressure over MDEA solution. Literature reference:
-   * Kent, R.L. and Eisenberg, B. (1976). "Better Data for Amine Treating", Hydrocarbon Processing,
-   * 55(2), pp.87-90.
+   * Test Kent-Eisenberg model for CO2 partial pressure over MDEA solution. Literature reference: Kent, R.L. and
+   * Eisenberg, B. (1976). "Better Data for Amine Treating", Hydrocarbon Processing, 55(2), pp.87-90.
    *
    * <p>
-   * At 50°C (323.15 K) and moderate CO2 loadings in ~50 wt% MDEA, the equilibrium CO2 partial
-   * pressure should be on the order of 0.01-1.0 bar depending on loading.
+   * At 50°C (323.15 K) and moderate CO2 loadings in ~50 wt% MDEA, the equilibrium CO2 partial pressure should be on the
+   * order of 0.01-1.0 bar depending on loading.
    * </p>
    */
   @Test
@@ -169,19 +165,17 @@ class SystemKentEisenbergTest {
   }
 
   /**
-   * Regression guard for the H2S first-dissociation equilibrium constant (reaction
-   * <code>water-H2S</code>: H2S + H2O &harr; HS&minus; + H3O+).
+   * Regression guard for the H2S first-dissociation equilibrium constant (reaction <code>water-H2S</code>: H2S + H2O
+   * &harr; HS&minus; + H3O+).
    *
    * <p>
-   * The Kent-Eisenberg reaction quotient is evaluated on a mole-fraction basis
-   * ({@code ChemicalReaction.calcKx} uses {@code getx()}), so the molality-based literature
-   * constants of Edwards, Maurer, Newman and Prausnitz (AIChE J., 1976/1978) must be converted by
-   * subtracting <code>ln(55.51) = 4.0167</code> per net dissolved solute. The other acid-gas
-   * reactions (CO2water, carbonate, waterreac) were converted, but the H2S first dissociation
-   * originally retained the raw molality constant K1 = 214.582, making its mole-fraction Kx too
-   * large by a factor of ~55.5 and over-predicting H2S ionization / absorption. The corrected,
-   * mole-fraction-consistent value is K1 = 210.565345. This test fails if the constant silently
-   * reverts.
+   * The Kent-Eisenberg reaction quotient is evaluated on a mole-fraction basis ({@code ChemicalReaction.calcKx} uses
+   * {@code getx()}), so the molality-based literature constants of Edwards, Maurer, Newman and Prausnitz (AIChE J.,
+   * 1976/1978) must be converted by subtracting <code>ln(55.51) = 4.0167</code> per net dissolved solute. The other
+   * acid-gas reactions (CO2water, carbonate, waterreac) were converted, but the H2S first dissociation originally
+   * retained the raw molality constant K1 = 214.582, making its mole-fraction Kx too large by a factor of ~55.5 and
+   * over-predicting H2S ionization / absorption. The corrected, mole-fraction-consistent value is K1 = 210.565345. This
+   * test fails if the constant silently reverts.
    * </p>
    */
   @Test
@@ -195,15 +189,15 @@ class SystemKentEisenbergTest {
     testSystem.createDatabase(true);
     testSystem.setMixingRule(4);
 
-    neqsim.chemicalreactions.chemicalreaction.ChemicalReaction h2sReaction =
-        testSystem.getChemicalReactionOperations().getReactionList().getReaction("water-H2S");
+    neqsim.chemicalreactions.chemicalreaction.ChemicalReaction h2sReaction = testSystem.getChemicalReactionOperations()
+	.getReactionList().getReaction("water-H2S");
     assertNotNull(h2sReaction, "water-H2S reaction should be loaded");
 
     double[] kCoefs = h2sReaction.getK();
     // K1 (constant term) must be the mole-fraction-converted value, not the raw molality value.
     assertEquals(210.565345, kCoefs[0], 1.0e-6,
-        "H2S first-dissociation K1 must be on the mole-fraction basis (Edwards molality value "
-            + "214.582 minus ln(55.51)); a value near 214.582 indicates the conversion regressed");
+	"H2S first-dissociation K1 must be on the mole-fraction basis (Edwards molality value "
+	    + "214.582 minus ln(55.51)); a value near 214.582 indicates the conversion regressed");
     // K2 and K3 (temperature-dependent terms) match Edwards (1978) and are unchanged.
     assertEquals(-12995.4, kCoefs[1], 1.0e-3, "H2S K2 (B/T term) should be unchanged");
     assertEquals(-33.5471, kCoefs[2], 1.0e-4, "H2S K3 (ln T term) should be unchanged");
@@ -213,32 +207,29 @@ class SystemKentEisenbergTest {
     double lnK = kCoefs[0] + kCoefs[1] / t + kCoefs[2] * Math.log(t) + kCoefs[3] * t;
     double legacyLnK = 214.582 + kCoefs[1] / t + kCoefs[2] * Math.log(t) + kCoefs[3] * t;
     assertEquals(Math.log(55.51), legacyLnK - lnK, 1.0e-2,
-        "Correction should reduce ln K by ln(55.51) relative to the legacy molality constant");
+	"Correction should reduce ln K by ln(55.51) relative to the legacy molality constant");
   }
 
   /**
-   * Demonstrates simultaneous CO2 and H2S absorption into an aqueous MDEA solution using the
-   * Kent-Eisenberg equilibrium model, and reports the resulting acid-gas loadings and treated-gas
-   * partial pressures.
+   * Demonstrates simultaneous CO2 and H2S absorption into an aqueous MDEA solution using the Kent-Eisenberg equilibrium
+   * model, and reports the resulting acid-gas loadings and treated-gas partial pressures.
    *
    * <p>
-   * A sour natural-gas stream (CO2 + H2S + methane) is contacted with a ~50 wt% MDEA solution at
-   * typical absorber conditions (40&deg;C, 50 bar). After a single equilibrium-stage flash the test
-   * computes:
+   * A sour natural-gas stream (CO2 + H2S + methane) is contacted with a ~50 wt% MDEA solution at typical absorber
+   * conditions (40&deg;C, 50 bar). After a single equilibrium-stage flash the test computes:
    * </p>
    *
    * <ul>
-   * <li>the acid-gas <em>loading</em> (mol acid gas absorbed per mol total amine, where total amine
-   * = free MDEA + protonated MDEA+), a key amine-treating design metric; and</li>
-   * <li>the <em>treated-gas partial pressures</em> p<sub>CO2</sub> and p<sub>H2S</sub> =
-   * y&middot;P, which determine whether the sweet-gas acid-gas specification is met.</li>
+   * <li>the acid-gas <em>loading</em> (mol acid gas absorbed per mol total amine, where total amine = free MDEA +
+   * protonated MDEA+), a key amine-treating design metric; and</li>
+   * <li>the <em>treated-gas partial pressures</em> p<sub>CO2</sub> and p<sub>H2S</sub> = y&middot;P, which determine
+   * whether the sweet-gas acid-gas specification is met.</li>
    * </ul>
    *
    * <p>
-   * This is the building block used by stage-based absorber equipment (e.g.
-   * {@code SimpleAbsorber}): each stage performs such an equilibrium flash. The test asserts a
-   * physically consistent outcome (two phases form, acid gases partition into the loaded amine, and
-   * loadings/partial pressures are positive and finite).
+   * This is the building block used by stage-based absorber equipment (e.g. {@code SimpleAbsorber}): each stage
+   * performs such an equilibrium flash. The test asserts a physically consistent outcome (two phases form, acid gases
+   * partition into the loaded amine, and loadings/partial pressures are positive and finite).
    * </p>
    */
   @Test
@@ -260,8 +251,7 @@ class SystemKentEisenbergTest {
     ops.TPflash();
     testSystem.init(3);
 
-    assertTrue(testSystem.getNumberOfPhases() >= 2,
-        "A gas and a loaded-amine liquid phase should both be present");
+    assertTrue(testSystem.getNumberOfPhases() >= 2, "A gas and a loaded-amine liquid phase should both be present");
 
     // Identify gas (phase 0) and liquid (phase 1) phases.
     double pressure = testSystem.getPressure();
@@ -271,10 +261,8 @@ class SystemKentEisenbergTest {
     // Treated-gas partial pressures (bar).
     double pCO2 = pressure * yCO2;
     double pH2S = pressure * yH2S;
-    assertTrue(pCO2 > 0.0 && Double.isFinite(pCO2),
-        "CO2 partial pressure should be positive/finite");
-    assertTrue(pH2S > 0.0 && Double.isFinite(pH2S),
-        "H2S partial pressure should be positive/finite");
+    assertTrue(pCO2 > 0.0 && Double.isFinite(pCO2), "CO2 partial pressure should be positive/finite");
+    assertTrue(pH2S > 0.0 && Double.isFinite(pH2S), "H2S partial pressure should be positive/finite");
 
     // Total amine in the liquid = free MDEA + protonated MDEA+.
     double mdea = testSystem.getPhase(1).getComponent("MDEA").getNumberOfMolesInPhase();
@@ -295,19 +283,16 @@ class SystemKentEisenbergTest {
     double co2Loading = co2Absorbed / totalAmine;
     double h2sLoading = h2sAbsorbed / totalAmine;
 
-    assertTrue(co2Loading >= 0.0 && Double.isFinite(co2Loading),
-        "CO2 loading should be non-negative/finite");
-    assertTrue(h2sLoading >= 0.0 && Double.isFinite(h2sLoading),
-        "H2S loading should be non-negative/finite");
+    assertTrue(co2Loading >= 0.0 && Double.isFinite(co2Loading), "CO2 loading should be non-negative/finite");
+    assertTrue(h2sLoading >= 0.0 && Double.isFinite(h2sLoading), "H2S loading should be non-negative/finite");
 
     // Both acid gases should be substantially absorbed by the amine solution.
     assertTrue(co2Absorbed > 0.0, "CO2 should be absorbed into the amine liquid");
     assertTrue(h2sAbsorbed > 0.0, "H2S should be absorbed into the amine liquid");
 
     logger.printf(org.apache.logging.log4j.Level.INFO,
-        "Kent-Eisenberg CO2+H2S/MDEA absorber demo:%n"
-            + "  Treated-gas pCO2 = %.4e bar, pH2S = %.4e bar%n"
-            + "  CO2 loading = %.4f, H2S loading = %.4f (mol acid gas / mol total amine)%n",
-        pCO2, pH2S, co2Loading, h2sLoading);
+	"Kent-Eisenberg CO2+H2S/MDEA absorber demo:%n" + "  Treated-gas pCO2 = %.4e bar, pH2S = %.4e bar%n"
+	    + "  CO2 loading = %.4f, H2S loading = %.4f (mol acid gas / mol total amine)%n",
+	pCO2, pH2S, co2Loading, h2sLoading);
   }
 }

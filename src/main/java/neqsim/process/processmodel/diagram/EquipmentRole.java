@@ -4,8 +4,8 @@ package neqsim.process.processmodel.diagram;
  * Classifies process equipment by its functional role in the process.
  *
  * <p>
- * This classification is used by the layout intelligence layer to determine optimal positioning in
- * professional PFD diagrams. Equipment role follows oil &amp; gas industry conventions:
+ * This classification is used by the layout intelligence layer to determine optimal positioning in professional PFD
+ * diagrams. Equipment role follows oil &amp; gas industry conventions:
  * </p>
  * <ul>
  * <li><b>GAS</b> - Equipment handling predominantly gas phase (compressors, gas coolers)</li>
@@ -82,10 +82,10 @@ public enum EquipmentRole {
   /**
    * Constructor for EquipmentRole.
    *
-   * @param displayName human-readable name
+   * @param displayName   human-readable name
    * @param preferredZone preferred zone in layout
-   * @param defaultColor default color in hex format
-   * @param rankPriority rank priority for vertical layout
+   * @param defaultColor  default color in hex format
+   * @param rankPriority  rank priority for vertical layout
    */
   EquipmentRole(String displayName, String preferredZone, String defaultColor, int rankPriority) {
     this.displayName = displayName;

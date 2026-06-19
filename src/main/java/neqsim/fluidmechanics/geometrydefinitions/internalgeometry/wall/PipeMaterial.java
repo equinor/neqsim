@@ -4,8 +4,8 @@ package neqsim.fluidmechanics.geometrydefinitions.internalgeometry.wall;
  * Enumeration of common pipe wall materials with their thermal properties.
  *
  * <p>
- * Provides predefined thermal properties for materials commonly used in pipe construction,
- * insulation, and coatings. Properties are at approximately 20°C (293 K).
+ * Provides predefined thermal properties for materials commonly used in pipe construction, insulation, and coatings.
+ * Properties are at approximately 20°C (293 K).
  * </p>
  *
  * @author ESOL
@@ -115,13 +115,12 @@ public enum PipeMaterial {
   /**
    * Constructor for PipeMaterial.
    *
-   * @param displayName Human-readable material name
-   * @param thermalConductivity Thermal conductivity in W/(m·K)
-   * @param density Density in kg/m³
+   * @param displayName          Human-readable material name
+   * @param thermalConductivity  Thermal conductivity in W/(m·K)
+   * @param density              Density in kg/m³
    * @param specificHeatCapacity Specific heat capacity in J/(kg·K)
    */
-  PipeMaterial(String displayName, double thermalConductivity, double density,
-      double specificHeatCapacity) {
+  PipeMaterial(String displayName, double thermalConductivity, double density, double specificHeatCapacity) {
     this.displayName = displayName;
     this.thermalConductivity = thermalConductivity;
     this.density = density;

@@ -108,8 +108,7 @@ public class LNGAgeingTest {
     assertEquals(1, model.getLayers().size());
 
     double temp = model.getBulkTemperature();
-    assertTrue(temp > 100.0 && temp < 120.0,
-        "Bulk temperature should be near LNG boiling point, got " + temp);
+    assertTrue(temp > 100.0 && temp < 120.0, "Bulk temperature should be near LNG boiling point, got " + temp);
 
     double rho = model.getBulkDensity();
     assertTrue(rho > 400.0 && rho < 500.0, "Bulk density should be in LNG range, got " + rho);
@@ -135,8 +134,7 @@ public class LNGAgeingTest {
     assertTrue(result.getDensity() > 0, "Density should be positive");
     assertTrue(result.getBogMassFlowRate() >= 0, "BOG rate should be non-negative");
 
-    assertTrue(model.getTotalLiquidMoles() <= initialMoles,
-        "Moles should not increase after boil-off");
+    assertTrue(model.getTotalLiquidMoles() <= initialMoles, "Moles should not increase after boil-off");
   }
 
   @Test
@@ -457,8 +455,7 @@ public class LNGAgeingTest {
     assertFalse(mixed.isEmpty());
     assertTrue(mixed.containsKey("methane"));
     double xCH4 = mixed.get("methane");
-    assertTrue(xCH4 >= 0.92 && xCH4 <= 0.97,
-        "Mixed methane fraction should be between heel and cargo: " + xCH4);
+    assertTrue(xCH4 >= 0.92 && xCH4 <= 0.97, "Mixed methane fraction should be between heel and cargo: " + xCH4);
   }
 
   // ────────────────────────── LNGAgeingResult ──────────────────────────
@@ -505,7 +502,7 @@ public class LNGAgeingTest {
     TankGeometry geom = TankGeometry.createQMax();
     assertEquals(TankGeometry.ContainmentType.MEMBRANE, geom.getContainmentType());
     assertTrue(geom.getTotalVolume() > 170000 && geom.getTotalVolume() < 180000,
-        "QMax volume should be ~174000 m3, got " + geom.getTotalVolume());
+	"QMax volume should be ~174000 m3, got " + geom.getTotalVolume());
     assertTrue(geom.getTotalSurfaceArea() > 5000, "Surface area should be significant");
     assertTrue(geom.getBottomArea() > 0);
     assertTrue(geom.getRoofArea() > 0);
@@ -591,8 +588,7 @@ public class LNGAgeingTest {
     double q2 = htModel.calculateTotalHeatIngress(111.0);
 
     // Higher ambient temp should give more heat ingress
-    assertTrue(q2 > q1 || Math.abs(q2 - q1) < 100.0,
-        "Higher ambient should give more heat ingress");
+    assertTrue(q2 > q1 || Math.abs(q2 - q1) < 100.0, "Higher ambient should give more heat ingress");
   }
 
   // ────────────────────────── MethaneNumberCalculator ──────────────────────────
@@ -693,7 +689,7 @@ public class LNGAgeingTest {
 
     // Mid fill levels should have more sloshing effect than extremes
     assertTrue(factorMid > factorLow || factorMid > factorHigh,
-        "Mid fill should have more mixing than at least one extreme");
+	"Mid fill should have more mixing than at least one extreme");
   }
 
   @Test
@@ -787,8 +783,7 @@ public class LNGAgeingTest {
     assertFalse(ship.getShipResults().isEmpty());
 
     // Ship results should aggregate BOG from both tanks
-    LNGShipModel.ShipResult lastResult =
-        ship.getShipResults().get(ship.getShipResults().size() - 1);
+    LNGShipModel.ShipResult lastResult = ship.getShipResults().get(ship.getShipResults().size() - 1);
     assertTrue(lastResult.totalLiquidMass > 0, "Should have total liquid mass");
     assertTrue(lastResult.numberOfTanks == 2, "Should report 2 active tanks");
   }
@@ -813,7 +808,7 @@ public class LNGAgeingTest {
   @Test
   public void testOperationalEvent() {
     LNGAgeingScenario.OperationalEvent event = new LNGAgeingScenario.OperationalEvent(
-        LNGAgeingScenario.OperationalEvent.EventType.LOADING, 0, 12.0);
+	LNGAgeingScenario.OperationalEvent.EventType.LOADING, 0, 12.0);
     event.setDescription("Loading at Ras Laffan");
     event.setRateM3PerHour(12000.0);
 
@@ -837,8 +832,8 @@ public class LNGAgeingTest {
     scenario.setSimulationTime(24.0);
     scenario.setTimeStepHours(8.0);
 
-    scenario.addOperationalEvent(new LNGAgeingScenario.OperationalEvent(
-        LNGAgeingScenario.OperationalEvent.EventType.LADEN_VOYAGE, 0, 480.0));
+    scenario.addOperationalEvent(
+	new LNGAgeingScenario.OperationalEvent(LNGAgeingScenario.OperationalEvent.EventType.LADEN_VOYAGE, 0, 480.0));
 
     assertFalse(scenario.getOperationalEvents().isEmpty());
     assertEquals(1, scenario.getOperationalEvents().size());
@@ -870,7 +865,7 @@ public class LNGAgeingTest {
 
     LNGAgeingResult initial = results.get(0);
     assertTrue(initial.getTemperature() > 100 && initial.getTemperature() < 130,
-        "Initial temp should be near LNG boiling point");
+	"Initial temp should be near LNG boiling point");
 
     String summary = scenario.getResultsSummary();
     assertNotNull(summary);

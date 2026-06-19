@@ -85,7 +85,7 @@ class EngineeringDeliverablesPackageTest {
       Set<DeliverableType> required = StudyClass.CLASS_A.getRequiredDeliverables();
       assertEquals(DeliverableType.values().length, required.size());
       for (DeliverableType type : DeliverableType.values()) {
-        assertTrue(StudyClass.CLASS_A.requires(type), "Class A should require " + type);
+	assertTrue(StudyClass.CLASS_A.requires(type), "Class A should require " + type);
       }
     }
 
@@ -121,8 +121,8 @@ class EngineeringDeliverablesPackageTest {
     @DisplayName("DeliverableType should have display names")
     void deliverableTypeShouldHaveDisplayNames() {
       for (DeliverableType type : DeliverableType.values()) {
-        assertNotNull(type.getDisplayName());
-        assertFalse(type.getDisplayName().trim().isEmpty());
+	assertNotNull(type.getDisplayName());
+	assertFalse(type.getDisplayName().trim().isEmpty());
       }
     }
 
@@ -143,8 +143,7 @@ class EngineeringDeliverablesPackageTest {
     @Test
     @DisplayName("Should throw for null process system")
     void shouldThrowForNullProcess() {
-      assertThrows(IllegalArgumentException.class,
-          () -> new EngineeringDeliverablesPackage(null, StudyClass.CLASS_A));
+      assertThrows(IllegalArgumentException.class, () -> new EngineeringDeliverablesPackage(null, StudyClass.CLASS_A));
     }
 
     @Test
@@ -157,8 +156,7 @@ class EngineeringDeliverablesPackageTest {
     @Test
     @DisplayName("Should not be generated before calling generate()")
     void shouldNotBeGeneratedInitially() {
-      EngineeringDeliverablesPackage pkg =
-          new EngineeringDeliverablesPackage(process, StudyClass.CLASS_A);
+      EngineeringDeliverablesPackage pkg = new EngineeringDeliverablesPackage(process, StudyClass.CLASS_A);
       assertFalse(pkg.isGenerated());
       assertFalse(pkg.isComplete());
     }
@@ -166,8 +164,7 @@ class EngineeringDeliverablesPackageTest {
     @Test
     @DisplayName("Class A should generate all 8 deliverables")
     void classAShouldGenerateAll() {
-      EngineeringDeliverablesPackage pkg =
-          new EngineeringDeliverablesPackage(process, StudyClass.CLASS_A);
+      EngineeringDeliverablesPackage pkg = new EngineeringDeliverablesPackage(process, StudyClass.CLASS_A);
       pkg.generate();
 
       assertTrue(pkg.isGenerated());
@@ -179,8 +176,7 @@ class EngineeringDeliverablesPackageTest {
     @Test
     @DisplayName("Class B should generate 5 deliverables")
     void classBShouldGenerateThree() {
-      EngineeringDeliverablesPackage pkg =
-          new EngineeringDeliverablesPackage(process, StudyClass.CLASS_B);
+      EngineeringDeliverablesPackage pkg = new EngineeringDeliverablesPackage(process, StudyClass.CLASS_B);
       pkg.generate();
 
       assertTrue(pkg.isGenerated());
@@ -191,8 +187,7 @@ class EngineeringDeliverablesPackageTest {
     @Test
     @DisplayName("Class C should generate 1 deliverable")
     void classCShouldGenerateOne() {
-      EngineeringDeliverablesPackage pkg =
-          new EngineeringDeliverablesPackage(process, StudyClass.CLASS_C);
+      EngineeringDeliverablesPackage pkg = new EngineeringDeliverablesPackage(process, StudyClass.CLASS_C);
       pkg.generate();
 
       assertTrue(pkg.isGenerated());
@@ -203,8 +198,7 @@ class EngineeringDeliverablesPackageTest {
     @Test
     @DisplayName("Should produce PFD DOT output")
     void shouldProducePfd() {
-      EngineeringDeliverablesPackage pkg =
-          new EngineeringDeliverablesPackage(process, StudyClass.CLASS_A);
+      EngineeringDeliverablesPackage pkg = new EngineeringDeliverablesPackage(process, StudyClass.CLASS_A);
       pkg.generate();
 
       String dot = pkg.getPfdDot();
@@ -215,8 +209,7 @@ class EngineeringDeliverablesPackageTest {
     @Test
     @DisplayName("Should produce thermal utility summary")
     void shouldProduceThermalUtilities() {
-      EngineeringDeliverablesPackage pkg =
-          new EngineeringDeliverablesPackage(process, StudyClass.CLASS_A);
+      EngineeringDeliverablesPackage pkg = new EngineeringDeliverablesPackage(process, StudyClass.CLASS_A);
       pkg.generate();
 
       ThermalUtilitySummary util = pkg.getThermalUtilities();
@@ -226,8 +219,7 @@ class EngineeringDeliverablesPackageTest {
     @Test
     @DisplayName("Should produce alarm/trip schedule")
     void shouldProduceAlarmTrip() {
-      EngineeringDeliverablesPackage pkg =
-          new EngineeringDeliverablesPackage(process, StudyClass.CLASS_A);
+      EngineeringDeliverablesPackage pkg = new EngineeringDeliverablesPackage(process, StudyClass.CLASS_A);
       pkg.generate();
 
       AlarmTripScheduleGenerator alarms = pkg.getAlarmTripSchedule();
@@ -238,8 +230,7 @@ class EngineeringDeliverablesPackageTest {
     @Test
     @DisplayName("Should produce spare parts inventory")
     void shouldProduceSpares() {
-      EngineeringDeliverablesPackage pkg =
-          new EngineeringDeliverablesPackage(process, StudyClass.CLASS_A);
+      EngineeringDeliverablesPackage pkg = new EngineeringDeliverablesPackage(process, StudyClass.CLASS_A);
       pkg.generate();
 
       SparePartsInventory spares = pkg.getSparePartsInventory();
@@ -250,8 +241,7 @@ class EngineeringDeliverablesPackageTest {
     @Test
     @DisplayName("Should produce fire scenario JSON")
     void shouldProduceFireScenarios() {
-      EngineeringDeliverablesPackage pkg =
-          new EngineeringDeliverablesPackage(process, StudyClass.CLASS_A);
+      EngineeringDeliverablesPackage pkg = new EngineeringDeliverablesPackage(process, StudyClass.CLASS_A);
       pkg.generate();
 
       String json = pkg.getFireScenarioJson();
@@ -262,8 +252,7 @@ class EngineeringDeliverablesPackageTest {
     @Test
     @DisplayName("Should produce noise assessment JSON")
     void shouldProduceNoiseAssessment() {
-      EngineeringDeliverablesPackage pkg =
-          new EngineeringDeliverablesPackage(process, StudyClass.CLASS_A);
+      EngineeringDeliverablesPackage pkg = new EngineeringDeliverablesPackage(process, StudyClass.CLASS_A);
       pkg.generate();
 
       String json = pkg.getNoiseAssessmentJson();
@@ -274,8 +263,7 @@ class EngineeringDeliverablesPackageTest {
     @Test
     @DisplayName("Class B should not produce alarm/trip or spare parts")
     void classBShouldSkipAlarmAndSpares() {
-      EngineeringDeliverablesPackage pkg =
-          new EngineeringDeliverablesPackage(process, StudyClass.CLASS_B);
+      EngineeringDeliverablesPackage pkg = new EngineeringDeliverablesPackage(process, StudyClass.CLASS_B);
       pkg.generate();
 
       assertNull(pkg.getAlarmTripSchedule());
@@ -286,8 +274,7 @@ class EngineeringDeliverablesPackageTest {
     @Test
     @DisplayName("Should produce comprehensive JSON")
     void shouldProduceJson() {
-      EngineeringDeliverablesPackage pkg =
-          new EngineeringDeliverablesPackage(process, StudyClass.CLASS_A);
+      EngineeringDeliverablesPackage pkg = new EngineeringDeliverablesPackage(process, StudyClass.CLASS_A);
       pkg.generate();
 
       String json = pkg.toJson();
@@ -301,25 +288,22 @@ class EngineeringDeliverablesPackageTest {
     @Test
     @DisplayName("Status map should have entries for all required deliverables")
     void statusMapShouldCoverAllRequired() {
-      EngineeringDeliverablesPackage pkg =
-          new EngineeringDeliverablesPackage(process, StudyClass.CLASS_A);
+      EngineeringDeliverablesPackage pkg = new EngineeringDeliverablesPackage(process, StudyClass.CLASS_A);
       pkg.generate();
 
-      Map<DeliverableType, EngineeringDeliverablesPackage.DeliverableStatus> statusMap =
-          pkg.getStatusMap();
+      Map<DeliverableType, EngineeringDeliverablesPackage.DeliverableStatus> statusMap = pkg.getStatusMap();
       assertEquals(8, statusMap.size());
       for (EngineeringDeliverablesPackage.DeliverableStatus status : statusMap.values()) {
-        assertTrue(status.isSuccess());
-        assertTrue(status.getDurationMs() >= 0);
-        assertNotNull(status.getMessage());
+	assertTrue(status.isSuccess());
+	assertTrue(status.getDurationMs() >= 0);
+	assertNotNull(status.getMessage());
       }
     }
 
     @Test
     @DisplayName("toString should include study class and status")
     void toStringShouldBeDescriptive() {
-      EngineeringDeliverablesPackage pkg =
-          new EngineeringDeliverablesPackage(process, StudyClass.CLASS_A);
+      EngineeringDeliverablesPackage pkg = new EngineeringDeliverablesPackage(process, StudyClass.CLASS_A);
       pkg.generate();
 
       String str = pkg.toString();
@@ -337,8 +321,7 @@ class EngineeringDeliverablesPackageTest {
     @Test
     @DisplayName("Should generate deliverables when study class is set")
     void shouldGenerateDeliverablesWithStudyClass() {
-      FieldDevelopmentDesignOrchestrator orch =
-          new FieldDevelopmentDesignOrchestrator(process, "DELIV-001");
+      FieldDevelopmentDesignOrchestrator orch = new FieldDevelopmentDesignOrchestrator(process, "DELIV-001");
       orch.setStudyClass(StudyClass.CLASS_A);
       orch.runCompleteDesignWorkflow();
 
@@ -352,8 +335,7 @@ class EngineeringDeliverablesPackageTest {
     @Test
     @DisplayName("Should not generate deliverables when study class is null")
     void shouldNotGenerateDeliverablesWithoutStudyClass() {
-      FieldDevelopmentDesignOrchestrator orch =
-          new FieldDevelopmentDesignOrchestrator(process, "NO-DELIV");
+      FieldDevelopmentDesignOrchestrator orch = new FieldDevelopmentDesignOrchestrator(process, "NO-DELIV");
       // study class is null by default
       orch.runCompleteDesignWorkflow();
 
@@ -363,8 +345,7 @@ class EngineeringDeliverablesPackageTest {
     @Test
     @DisplayName("Report should include deliverables section")
     void reportShouldIncludeDeliverables() {
-      FieldDevelopmentDesignOrchestrator orch =
-          new FieldDevelopmentDesignOrchestrator(process, "RPT-001");
+      FieldDevelopmentDesignOrchestrator orch = new FieldDevelopmentDesignOrchestrator(process, "RPT-001");
       orch.setStudyClass(StudyClass.CLASS_A);
       orch.runCompleteDesignWorkflow();
 
@@ -377,27 +358,24 @@ class EngineeringDeliverablesPackageTest {
     @Test
     @DisplayName("Workflow history should include deliverables step")
     void workflowHistoryShouldIncludeDeliverablesStep() {
-      FieldDevelopmentDesignOrchestrator orch =
-          new FieldDevelopmentDesignOrchestrator(process, "HIST-001");
+      FieldDevelopmentDesignOrchestrator orch = new FieldDevelopmentDesignOrchestrator(process, "HIST-001");
       orch.setStudyClass(StudyClass.CLASS_B);
       orch.runCompleteDesignWorkflow();
 
       boolean hasDeliverablesStep = false;
       for (FieldDevelopmentDesignOrchestrator.WorkflowStep step : orch.getWorkflowHistory()) {
-        if (step.getStepName().contains("Deliverables")) {
-          hasDeliverablesStep = true;
-          break;
-        }
+	if (step.getStepName().contains("Deliverables")) {
+	  hasDeliverablesStep = true;
+	  break;
+	}
       }
-      assertTrue(hasDeliverablesStep,
-          "Workflow history should contain an Engineering Deliverables step");
+      assertTrue(hasDeliverablesStep, "Workflow history should contain an Engineering Deliverables step");
     }
 
     @Test
     @DisplayName("setStudyClass should support method chaining")
     void setStudyClassShouldChain() {
-      FieldDevelopmentDesignOrchestrator orch =
-          new FieldDevelopmentDesignOrchestrator(process, "CHAIN-001");
+      FieldDevelopmentDesignOrchestrator orch = new FieldDevelopmentDesignOrchestrator(process, "CHAIN-001");
       FieldDevelopmentDesignOrchestrator result = orch.setStudyClass(StudyClass.CLASS_B);
       assertEquals(orch, result);
       assertEquals(StudyClass.CLASS_B, orch.getStudyClass());
@@ -406,8 +384,7 @@ class EngineeringDeliverablesPackageTest {
     @Test
     @DisplayName("Class B orchestrator should produce 5 deliverables")
     void classBOrchestratorShouldProduceThree() {
-      FieldDevelopmentDesignOrchestrator orch =
-          new FieldDevelopmentDesignOrchestrator(process, "CLASSB-001");
+      FieldDevelopmentDesignOrchestrator orch = new FieldDevelopmentDesignOrchestrator(process, "CLASSB-001");
       orch.setStudyClass(StudyClass.CLASS_B);
       orch.runCompleteDesignWorkflow();
 

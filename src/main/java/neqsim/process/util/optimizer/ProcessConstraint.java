@@ -7,18 +7,16 @@ import neqsim.process.processmodel.ProcessSystem;
  *
  * <p>
  * This interface provides a common contract for constraints used by both internal NeqSim optimizers
- * ({@link ProductionOptimizer}, {@link ProcessOptimizationEngine}) and external optimizers (SciPy,
- * NLopt, Pyomo, etc.) through {@link ProcessSimulationEvaluator}.
+ * ({@link ProductionOptimizer}, {@link ProcessOptimizationEngine}) and external optimizers (SciPy, NLopt, Pyomo, etc.)
+ * through {@link ProcessSimulationEvaluator}.
  * </p>
  *
  * <p>
  * All constraint types in the system implement this interface:
  * </p>
  * <ul>
- * <li>{@link ProductionOptimizer.OptimizationConstraint} — functional constraints on process-level
- * metrics</li>
- * <li>{@link ProcessSimulationEvaluator.ConstraintDefinition} — NLP-style bounds for external
- * optimizers</li>
+ * <li>{@link ProductionOptimizer.OptimizationConstraint} — functional constraints on process-level metrics</li>
+ * <li>{@link ProcessSimulationEvaluator.ConstraintDefinition} — NLP-style bounds for external optimizers</li>
  * <li>Equipment capacity constraints via {@link CapacityConstraintAdapter}</li>
  * </ul>
  *
@@ -102,8 +100,7 @@ public interface ProcessConstraint {
    * Returns the penalty weight for this constraint.
    *
    * <p>
-   * Higher weight means constraint violations are penalized more strongly in penalty-based
-   * optimization methods.
+   * Higher weight means constraint violations are penalized more strongly in penalty-based optimization methods.
    * </p>
    *
    * @return penalty weight (non-negative)
@@ -114,8 +111,8 @@ public interface ProcessConstraint {
    * Computes the penalty for the current constraint violation.
    *
    * <p>
-   * Returns 0 when satisfied, positive value proportional to violation magnitude when violated.
-   * Default implementation uses quadratic penalty: {@code weight * margin^2}.
+   * Returns 0 when satisfied, positive value proportional to violation magnitude when violated. Default implementation
+   * uses quadratic penalty: {@code weight * margin^2}.
    * </p>
    *
    * @param process the process system

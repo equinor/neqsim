@@ -12,11 +12,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * LNG storage tank model with boil-off gas (BOG) generation.
  *
  * <p>
- * Models an LNG storage tank (membrane or Moss sphere type) with heat ingress
- * through insulation,
- * generating a boil-off gas (BOG) stream. The BOG rate depends on tank
- * geometry, insulation
- * properties, ambient temperature, and LNG composition.
+ * Models an LNG storage tank (membrane or Moss sphere type) with heat ingress through insulation, generating a boil-off
+ * gas (BOG) stream. The BOG rate depends on tank geometry, insulation properties, ambient temperature, and LNG
+ * composition.
  * </p>
  *
  * <p>
@@ -29,8 +27,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </pre>
  *
  * <p>
- * Typical boil-off rates are 0.05 - 0.15 %/day of total LNG volume for modern
- * insulated tanks.
+ * Typical boil-off rates are 0.05 - 0.15 %/day of total LNG volume for modern insulated tanks.
  * </p>
  *
  * @author NeqSim
@@ -119,18 +116,18 @@ public class LNGTank extends Tank {
   public void setInsulationType(InsulationType type) {
     this.insulationType = type;
     switch (type) {
-      case MEMBRANE:
-        overallHeatTransferCoeff = 0.04;
-        break;
-      case MOSS:
-        overallHeatTransferCoeff = 0.05;
-        break;
-      case PRISMATIC:
-        overallHeatTransferCoeff = 0.045;
-        break;
-      default:
-        overallHeatTransferCoeff = 0.04;
-        break;
+    case MEMBRANE:
+      overallHeatTransferCoeff = 0.04;
+      break;
+    case MOSS:
+      overallHeatTransferCoeff = 0.05;
+      break;
+    case PRISMATIC:
+      overallHeatTransferCoeff = 0.045;
+      break;
+    default:
+      overallHeatTransferCoeff = 0.04;
+      break;
     }
   }
 
@@ -326,18 +323,15 @@ public class LNGTank extends Tank {
       ops.TPflash();
       flashSystem.initProperties();
 
-      if (flashSystem.getNumberOfPhases() > 1 && flashSystem.hasPhaseType("gas")
-          && flashSystem.hasPhaseType("oil")) {
-        double hGas = flashSystem.getPhase("gas").getEnthalpy()
-            / flashSystem.getPhase("gas").getNumberOfMolesInPhase()
-            / flashSystem.getPhase("gas").getMolarMass("kg/mol");
-        double hLiq = flashSystem.getPhase("oil").getEnthalpy()
-            / flashSystem.getPhase("oil").getNumberOfMolesInPhase()
-            / flashSystem.getPhase("oil").getMolarMass("kg/mol");
-        double calcLatentHeat = Math.abs(hGas - hLiq);
-        if (calcLatentHeat > 100.0) {
-          latentHeat = calcLatentHeat;
-        }
+      if (flashSystem.getNumberOfPhases() > 1 && flashSystem.hasPhaseType("gas") && flashSystem.hasPhaseType("oil")) {
+	double hGas = flashSystem.getPhase("gas").getEnthalpy() / flashSystem.getPhase("gas").getNumberOfMolesInPhase()
+	    / flashSystem.getPhase("gas").getMolarMass("kg/mol");
+	double hLiq = flashSystem.getPhase("oil").getEnthalpy() / flashSystem.getPhase("oil").getNumberOfMolesInPhase()
+	    / flashSystem.getPhase("oil").getMolarMass("kg/mol");
+	double calcLatentHeat = Math.abs(hGas - hLiq);
+	if (calcLatentHeat > 100.0) {
+	  latentHeat = calcLatentHeat;
+	}
       }
     } catch (Exception ex) {
       logger.warn("Failed to calculate latent heat, using default: " + latentHeat, ex);
@@ -360,23 +354,23 @@ public class LNGTank extends Tank {
       bogOps.TPflash();
 
       if (bogSystem.hasPhaseType("gas")) {
-        SystemInterface gasPhase = bogSystem.phaseToSystem("gas");
-        bogStream = new Stream(getName() + "_BOG", gasPhase);
-        bogStream.setFlowRate(bogMassFlowRate, "kg/hr");
-        bogStream.run(id);
+	SystemInterface gasPhase = bogSystem.phaseToSystem("gas");
+	bogStream = new Stream(getName() + "_BOG", gasPhase);
+	bogStream.setFlowRate(bogMassFlowRate, "kg/hr");
+	bogStream.run(id);
       }
 
       if (bogSystem.hasPhaseType("oil")) {
-        SystemInterface liqPhase = bogSystem.phaseToSystem("oil");
-        lngProductStream = new Stream(getName() + "_LNG", liqPhase);
-        lngProductStream.run(id);
+	SystemInterface liqPhase = bogSystem.phaseToSystem("oil");
+	lngProductStream = new Stream(getName() + "_LNG", liqPhase);
+	lngProductStream.run(id);
       }
     } catch (Exception ex) {
       logger.warn("Failed to create BOG/LNG streams", ex);
     }
 
-    logger.info(String.format("LNG Tank '%s': Q_ingress=%.1f kW, BOG=%.1f kg/hr (%.4f %%/day)",
-        getName(), heatIngress / 1000.0, bogMassFlowRate, boilOffRatePctPerDay));
+    logger.info(String.format("LNG Tank '%s': Q_ingress=%.1f kW, BOG=%.1f kg/hr (%.4f %%/day)", getName(),
+	heatIngress / 1000.0, bogMassFlowRate, boilOffRatePctPerDay));
 
     setCalculationIdentifier(id);
   }

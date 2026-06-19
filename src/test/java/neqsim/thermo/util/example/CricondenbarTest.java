@@ -20,7 +20,7 @@ public class CricondenbarTest {
   private static final Logger logger = LogManager.getLogger(CricondenbarTest.class);
 
   /** Logger object for class. */
-  
+
   /**
    * <p>
    * main.

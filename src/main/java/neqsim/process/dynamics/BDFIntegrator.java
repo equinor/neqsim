@@ -8,16 +8,16 @@ package neqsim.process.dynamics;
  * </pre>
  *
  * <p>
- * Solved by Newton iteration. Implicit Euler is L-stable and well suited for stiff thermal,
- * inventory, and pressure-dynamics problems that arise in dynamic process simulation (vessel
- * pressure decay, large-tank temperature dynamics, slow level loops).
+ * Solved by Newton iteration. Implicit Euler is L-stable and well suited for stiff thermal, inventory, and
+ * pressure-dynamics problems that arise in dynamic process simulation (vessel pressure decay, large-tank temperature
+ * dynamics, slow level loops).
  * </p>
  *
  * <p>
  * The Jacobian ∂f/∂x is approximated by a central finite difference with step
  * {@code max(jacobianEps, jacobianEps · |x|)}. Newton stops when {@code |Δx| < tolerance} or after
- * {@code maxIterations}, whichever comes first; if Newton fails to converge the integrator falls
- * back to a single explicit-Euler step so that the simulation remains stable rather than throwing.
+ * {@code maxIterations}, whichever comes first; if Newton fails to converge the integrator falls back to a single
+ * explicit-Euler step so that the simulation remains stable rather than throwing.
  * </p>
  *
  * @author Even Solbraa
@@ -42,9 +42,9 @@ public class BDFIntegrator implements IntegratorStrategy {
   /**
    * Constructor with custom Newton settings.
    *
-   * @param tolerance Newton tolerance on |Δx| (must be {@code > 0})
+   * @param tolerance     Newton tolerance on |Δx| (must be {@code > 0})
    * @param maxIterations maximum Newton iterations (must be {@code >= 1})
-   * @param jacobianEps finite-difference perturbation (must be {@code > 0})
+   * @param jacobianEps   finite-difference perturbation (must be {@code > 0})
    */
   public BDFIntegrator(double tolerance, int maxIterations, double jacobianEps) {
     if (!(tolerance > 0.0)) {
@@ -68,8 +68,8 @@ public class BDFIntegrator implements IntegratorStrategy {
   }
 
   /**
-   * Indicates whether the most recent {@link #step} call had to fall back to explicit Euler because
-   * Newton iteration did not converge.
+   * Indicates whether the most recent {@link #step} call had to fall back to explicit Euler because Newton iteration
+   * did not converge.
    *
    * @return true when last step fell back
    */
@@ -116,12 +116,12 @@ public class BDFIntegrator implements IntegratorStrategy {
       double dfdx = (slope.dxdt(tNext, x + h) - slope.dxdt(tNext, x - h)) / (2.0 * h);
       double dgdx = 1.0 - dt * dfdx;
       if (Math.abs(dgdx) < 1.0e-14) {
-        break;
+	break;
       }
       double dx = -g / dgdx;
       x += dx;
       if (Math.abs(dx) < tolerance) {
-        return x;
+	return x;
       }
     }
     // Fall back to explicit Euler for this step

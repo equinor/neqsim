@@ -26,10 +26,10 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * Helper function to create component. Typically called from constructors.
    * </p>
    *
-   * @param name Name of component.
-   * @param moles Total number of moles of component in system.
+   * @param name         Name of component.
+   * @param moles        Total number of moles of component in system.
    * @param molesInPhase Number of moles in phase.
-   * @param compIndex Index number of component in phase object component array.
+   * @param compIndex    Index number of component in phase object component array.
    */
   public void createComponent(String name, double moles, double molesInPhase, int compIndex);
 
@@ -155,10 +155,9 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   /**
    * method to return flow rate of a component.
    *
-   * @param flowunit Supported units are kg/sec, kg/min, kg/hr, tonnes/year, m3/sec, m3/min, m3/hr,
-   *        mole/sec, mol/sec, mole/min, mol/min, mole/hr, mol/hr, kmole/sec, kmol/sec, kmole/min,
-   *        kmol/min, kmole/hr, kmol/hr, kmole/day, kmol/day, lbmole/hr, lbmol/hr, lb/hr,
-   *        barrel/day, bbl/day
+   * @param flowunit Supported units are kg/sec, kg/min, kg/hr, tonnes/year, m3/sec, m3/min, m3/hr, mole/sec, mol/sec,
+   *                 mole/min, mol/min, mole/hr, mol/hr, kmole/sec, kmol/sec, kmole/min, kmol/min, kmole/hr, kmol/hr,
+   *                 kmole/day, kmol/day, lbmole/hr, lbmol/hr, lb/hr, barrel/day, bbl/day
    * @return flow rate in specified unit
    */
   public double getFlowRate(String flowunit);
@@ -166,9 +165,9 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   /**
    * method to return total flow rate of a component.
    *
-   * @param flowunit Supported units are kg/sec, kg/min, kg/hr, mole/sec, mol/sec, mole/min,
-   *        mol/min, mole/hr, mol/hr, kmole/sec, kmol/sec, kmole/min, kmol/min, kmole/hr, kmol/hr,
-   *        kmole/day, kmol/day, lbmole/hr, lbmol/hr, lb/hr, barrel/day, bbl/day
+   * @param flowunit Supported units are kg/sec, kg/min, kg/hr, mole/sec, mol/sec, mole/min, mol/min, mole/hr, mol/hr,
+   *                 kmole/sec, kmol/sec, kmole/min, kmol/min, kmole/hr, kmol/hr, kmole/day, kmol/day, lbmole/hr,
+   *                 lbmol/hr, lb/hr, barrel/day, bbl/day
    * @return total flow rate in specified unit
    */
   public double getTotalFlowRate(String flowunit);
@@ -297,7 +296,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * </p>
    *
    * @param factNum a int
-   * @param val a double
+   * @param val     a double
    */
   public void setSurfTensInfluenceParam(int factNum, double val);
 
@@ -334,7 +333,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * getChemicalPotentialdN.
    * </p>
    *
-   * @param i a int
+   * @param i     a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
    */
@@ -356,7 +355,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * </p>
    *
    * @param temperature a double
-   * @param pressure a double
+   * @param pressure    a double
    * @return a double
    */
   public double getChemicalPotential(double temperature, double pressure);
@@ -384,7 +383,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * getChemicalPotentialdNTV.
    * </p>
    *
-   * @param i a int
+   * @param i     a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
    */
@@ -468,8 +467,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * Calculate, set and return fugacity coefficient.
    * </p>
    *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object to get fugacity coefficient
-   *        of.
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object to get fugacity coefficient of.
    * @return Fugacity coefficient
    */
   public double fugcoef(PhaseInterface phase);
@@ -488,28 +486,28 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * fugcoefDiffPresNumeric.
    * </p>
    *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase              a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
-   * @param temperature a double
-   * @param pressure a double
+   * @param temperature        a double
+   * @param pressure           a double
    * @return a double
    */
-  public double fugcoefDiffPresNumeric(PhaseInterface phase, int numberOfComponents,
-      double temperature, double pressure);
+  public double fugcoefDiffPresNumeric(PhaseInterface phase, int numberOfComponents, double temperature,
+      double pressure);
 
   /**
    * <p>
    * fugcoefDiffTempNumeric.
    * </p>
    *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase              a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
-   * @param temperature a double
-   * @param pressure a double
+   * @param temperature        a double
+   * @param pressure           a double
    * @return a double
    */
-  public double fugcoefDiffTempNumeric(PhaseInterface phase, int numberOfComponents,
-      double temperature, double pressure);
+  public double fugcoefDiffTempNumeric(PhaseInterface phase, int numberOfComponents, double temperature,
+      double pressure);
 
   /**
    * <p>
@@ -527,7 +525,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param k a int
+   * @param k     a int
    * @return a double
    */
   public double logfugcoefdNi(PhaseInterface phase, int k);
@@ -575,7 +573,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * setdfugdn.
    * </p>
    *
-   * @param i a int
+   * @param i   a int
    * @param val a double
    */
   public void setdfugdn(int i, double val);
@@ -585,7 +583,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * setdfugdx.
    * </p>
    *
-   * @param i a int
+   * @param i   a int
    * @param val a double
    */
   public void setdfugdx(int i, double val);
@@ -650,7 +648,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * </p>
    *
    * @param molarMass a double
-   * @param unit a String
+   * @param unit      a String
    */
   public void setMolarMass(double molarMass, String unit);
 
@@ -738,8 +736,8 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * Change the number of moles of component of phase,i.e., <code>numberOfMolesInPhase</code> but do
-   * not change the total number of moles of component in system.
+   * Change the number of moles of component of phase,i.e., <code>numberOfMolesInPhase</code> but do not change the
+   * total number of moles of component in system.
    * </p>
    *
    * @param dn Number of moles of component added to phase
@@ -750,9 +748,8 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * Change the number of moles of component of phase, i.e., <code>numberOfMolesInPhase</code>, and
-   * total number of moles of component in system, i.e., <code>numberOfMoles</code> with the same
-   * amount.
+   * Change the number of moles of component of phase, i.e., <code>numberOfMolesInPhase</code>, and total number of
+   * moles of component in system, i.e., <code>numberOfMoles</code> with the same amount.
    * </p>
    *
    * @param dn Number of moles of component added to phase and system
@@ -763,12 +760,11 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * Change the number of moles of component of phase, i.e., <code>numberOfMolesInPhase</code>, and
-   * total number of moles of component in system, i.e., <code>numberOfMoles</code> with separate
-   * amounts.
+   * Change the number of moles of component of phase, i.e., <code>numberOfMolesInPhase</code>, and total number of
+   * moles of component in system, i.e., <code>numberOfMoles</code> with separate amounts.
    * </p>
    *
-   * @param dn Number of moles of component to add to phase
+   * @param dn    Number of moles of component to add to phase
    * @param totdn Number of moles of component to add to system
    */
   public void addMolesChemReac(double dn, double totdn);
@@ -796,7 +792,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * setTC.
    * </p>
    *
-   * @param val a double
+   * @param val  a double
    * @param unit a String
    */
   public void setTC(double val, String unit);
@@ -815,7 +811,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * Setter for critical pressure in specified unit.
    * </p>
    *
-   * @param val Critical pressure in unit specified by <code>unit</code>.
+   * @param val  Critical pressure in unit specified by <code>unit</code>.
    * @param unit Engineering unit.
    */
   public void setPC(double val, String unit);
@@ -854,36 +850,34 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * Initialize component.
    * </p>
    *
-   * @param temperature Temperature in unit ?. Used to calculate <code>K</code>.
-   * @param pressure Pressure in unit ?. Used to calculate <code>K</code>.
+   * @param temperature        Temperature in unit ?. Used to calculate <code>K</code>.
+   * @param pressure           Pressure in unit ?. Used to calculate <code>K</code>.
    * @param totalNumberOfMoles Total number of moles of component.
-   * @param beta Beta value, i.e.,
-   * @param initType Init type. Calculate <code>K</code>, <code>z</code>, <code>x</code> if type ==
-   *        0.
+   * @param beta               Beta value, i.e.,
+   * @param initType           Init type. Calculate <code>K</code>, <code>z</code>, <code>x</code> if type == 0.
    */
-  public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
-      int initType);
+  public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int initType);
 
   /**
    * <p>
    * Finit.
    * </p>
    *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param temperature a double
-   * @param pressure a double
+   * @param phase              a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param temperature        a double
+   * @param pressure           a double
    * @param totalNumberOfMoles a double
-   * @param beta a double
+   * @param beta               a double
    * @param numberOfComponents a int
-   * @param initType a int
+   * @param initType           a int
    */
-  public void Finit(PhaseInterface phase, double temperature, double pressure,
-      double totalNumberOfMoles, double beta, int numberOfComponents, int initType);
+  public void Finit(PhaseInterface phase, double temperature, double pressure, double totalNumberOfMoles, double beta,
+      int numberOfComponents, int initType);
 
   /**
    * <p>
-   * Getter for property x, i.e., the mole fraction of a component in a specific phase. For the mole
-   * fraction for a specific phase see {@link getz} NB! init(0) must be called first from system.
+   * Getter for property x, i.e., the mole fraction of a component in a specific phase. For the mole fraction for a
+   * specific phase see {@link getz} NB! init(0) must be called first from system.
    * </p>
    *
    * @return a double
@@ -892,8 +886,8 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * Getter for property z, i.e., the mole fraction of a component in the fluid. For the mole
-   * fraction for a specific phase see {@link getx} NB! init(0) must be called first from system.
+   * Getter for property z, i.e., the mole fraction of a component in the fluid. For the mole fraction for a specific
+   * phase see {@link getx} NB! init(0) must be called first from system.
    * </p>
    *
    * @return a double
@@ -902,8 +896,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * The distribution coefficient y/x between gas and liquid for a component. NB! init must be
-   * called first.
+   * The distribution coefficient y/x between gas and liquid for a component. NB! init must be called first.
    * </p>
    *
    * @return a double
@@ -1009,7 +1002,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * </p>
    *
    * @param number a double
-   * @param i a int
+   * @param i      a int
    */
   public void setLiquidConductivityParameter(double number, int i);
 
@@ -1239,9 +1232,8 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * Return the ideal-gas molar heat capacity of a chemical using polynomial regressed coefficients
-   * as described by Poling, Bruce E. The Properties of Gases and Liquids. 5th edition. New York:
-   * McGraw-Hill Professional, 2000.
+   * Return the ideal-gas molar heat capacity of a chemical using polynomial regressed coefficients as described by
+   * Poling, Bruce E. The Properties of Gases and Liquids. 5th edition. New York: McGraw-Hill Professional, 2000.
    * </p>
    *
    * @param temperature a double
@@ -1283,8 +1275,8 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * Get molar mass of component.
    *
    * <p>
-   * Note: the return value is in kg/mol (SI), not g/mol. Multiply by 1000 to convert to g/mol, or
-   * use {@link #getMolarMass(String)} with unit "g/mol".
+   * Note: the return value is in kg/mol (SI), not g/mol. Multiply by 1000 to convert to g/mol, or use
+   * {@link #getMolarMass(String)} with unit "g/mol".
    * </p>
    *
    * @return molar mass in unit kg/mol
@@ -1323,7 +1315,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * </p>
    *
    * @param temperature a double
-   * @param pressure a double
+   * @param pressure    a double
    * @return a double
    */
   public double getEntropy(double temperature, double pressure);
@@ -1459,7 +1451,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * </p>
    *
    * @param temperature a double
-   * @param pressure a double
+   * @param pressure    a double
    * @return a double
    */
   public double getGibbsEnergy(double temperature, double pressure);
@@ -1475,8 +1467,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * This function handles the retrieval of a chemical’s dipole moment. Dipole moment, [debye] as a
-   * double
+   * This function handles the retrieval of a chemical’s dipole moment. Dipole moment, [debye] as a double
    * </p>
    *
    * @return a double
@@ -1525,16 +1516,14 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   public double getCriticalVolume();
 
   /**
-   * Get the COSTALD characteristic volume V* in cm3/mol. If zero, the critical volume should be
-   * used as fallback.
+   * Get the COSTALD characteristic volume V* in cm3/mol. If zero, the critical volume should be used as fallback.
    *
    * @return COSTALD characteristic volume V* in cm3/mol
    */
   public double getCostaldCharacteristicVolume();
 
   /**
-   * Set the COSTALD characteristic volume V* in cm3/mol. Set to 0 to use critical volume as
-   * fallback.
+   * Set the COSTALD characteristic volume V* in cm3/mol. Set to 0 to use critical volume as fallback.
    *
    * @param costaldCharacteristicVolume COSTALD characteristic volume V* in cm3/mol
    */
@@ -1619,7 +1608,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * </p>
    *
    * @param number a double
-   * @param i a int
+   * @param i      a int
    */
   public void setLiquidViscosityParameter(double number, int i);
 
@@ -1646,7 +1635,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * setSchwartzentruberParams.
    * </p>
    *
-   * @param i a int
+   * @param i     a int
    * @param param a double
    */
   public void setSchwartzentruberParams(int i, double param);
@@ -1665,7 +1654,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * setTwuCoonParams.
    * </p>
    *
-   * @param i a int
+   * @param i     a int
    * @param param a double
    */
   public void setTwuCoonParams(int i, double param);
@@ -1690,8 +1679,8 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * getPureComponentSolidDensity. Calculates the pure component solid density in kg/liter Should
-   * only be used in the valid temperature range (specified in component database).
+   * getPureComponentSolidDensity. Calculates the pure component solid density in kg/liter Should only be used in the
+   * valid temperature range (specified in component database).
    * </p>
    *
    * @param temperature a double
@@ -1701,9 +1690,8 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * getPureComponentLiquidDensity. Calculates the pure component liquid density in kg/liter Should
-   * only be used in the valid temperature range (specified in component database). This method
-   * seems to give bad results at the moment
+   * getPureComponentLiquidDensity. Calculates the pure component liquid density in kg/liter Should only be used in the
+   * valid temperature range (specified in component database). This method seems to give bad results at the moment
    * </p>
    *
    * @param temperature a double
@@ -1789,7 +1777,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * setMatiascopemanParams.
    * </p>
    *
-   * @param index a int
+   * @param index               a int
    * @param matiascopemanParams a double
    */
   public void setMatiascopemanParams(int index, double matiascopemanParams);
@@ -2012,9 +2000,8 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * getCCsolidVaporPressure. Calculates the pure comonent solid vapor pressure (bar) with the C-C
-   * equation, based on Hsub Should only be used in the valid temperature range below the triple
-   * point (specified in component database).
+   * getCCsolidVaporPressure. Calculates the pure comonent solid vapor pressure (bar) with the C-C equation, based on
+   * Hsub Should only be used in the valid temperature range below the triple point (specified in component database).
    * </p>
    *
    * @param temperature a double
@@ -2024,9 +2011,9 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * getCCsolidVaporPressuredT. Calculates the DT of pure comonent solid vapor pressure (bar) with
-   * the C-C equation, based on Hsub Should only be used in the valid temperature range below the
-   * triple point (specified in component database).
+   * getCCsolidVaporPressuredT. Calculates the DT of pure comonent solid vapor pressure (bar) with the C-C equation,
+   * based on Hsub Should only be used in the valid temperature range below the triple point (specified in component
+   * database).
    * </p>
    *
    * @param temperature a double
@@ -2063,8 +2050,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * getHenryCoef. Getter for property Henrys Coefficient. Unit is bar. ln H = C1 + C2/T + C3lnT +
-   * C4*T
+   * getHenryCoef. Getter for property Henrys Coefficient. Unit is bar. ln H = C1 + C2/T + C3lnT + C4*T
    * </p>
    *
    * @param temperature a double
@@ -2315,8 +2301,8 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   public void setAssociationEnergySAFT(double associationEnergySAFT);
 
   /**
-   * Get the association energy for SAFT-VR Mie EOS. Returns the VR-Mie-specific value if set,
-   * otherwise falls back to the PC-SAFT/CPA association energy.
+   * Get the association energy for SAFT-VR Mie EOS. Returns the VR-Mie-specific value if set, otherwise falls back to
+   * the PC-SAFT/CPA association energy.
    *
    * @return association energy in J/mol for SAFT-VR Mie
    */
@@ -2330,8 +2316,8 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   public void setAssociationEnergySAFTVRMie(double associationEnergySAFTVRMie);
 
   /**
-   * Get the SAFT-VR Mie bond volume K_HB in m^3 (Lafitte 2013 Eq. 39). For water: 101.69 Ang^3 =
-   * 1.0169e-28 m^3. Returns 0 if not set (caller should fall back to kappa * sigma^3).
+   * Get the SAFT-VR Mie bond volume K_HB in m^3 (Lafitte 2013 Eq. 39). For water: 101.69 Ang^3 = 1.0169e-28 m^3.
+   * Returns 0 if not set (caller should fall back to kappa * sigma^3).
    *
    * @return bond volume K_HB in m^3
    */
@@ -2462,8 +2448,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   /**
    * Get lookup map for component name alias.
    *
-   * @return a {@link java.util.LinkedHashMap} Map with component alias name as key and component
-   *         name as value.
+   * @return a {@link java.util.LinkedHashMap} Map with component alias name as key and component name as value.
    */
   public static LinkedHashMap<String, String> getComponentNameMap() {
     LinkedHashMap<String, String> c = new LinkedHashMap<>();

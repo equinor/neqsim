@@ -109,8 +109,8 @@ public class ScenarioExecutionSummary {
   /**
    * Adds a logic execution result.
    *
-   * @param logicName name of the logic sequence
-   * @param finalState final state of the logic
+   * @param logicName         name of the logic sequence
+   * @param finalState        final state of the logic
    * @param statusDescription detailed status description
    */
   public void addLogicResult(String logicName, LogicState finalState, String statusDescription) {
@@ -190,22 +190,22 @@ public class ScenarioExecutionSummary {
     if (!errors.isEmpty()) {
       System.out.println("Errors:");
       for (String error : errors) {
-        System.out.println("  - " + error);
+	System.out.println("  - " + error);
       }
     }
 
     if (!warnings.isEmpty()) {
       System.out.println("Warnings:");
       for (String warning : warnings) {
-        System.out.println("  - " + warning);
+	System.out.println("  - " + warning);
       }
     }
 
     System.out.println("Logic Results:");
     for (Map.Entry<String, LogicResult> entry : logicResults.entrySet()) {
       LogicResult result = entry.getValue();
-      System.out.println("  " + entry.getKey() + ": " + result.getFinalState() + " ("
-          + result.getStatusDescription() + ")");
+      System.out
+	  .println("  " + entry.getKey() + ": " + result.getFinalState() + " (" + result.getStatusDescription() + ")");
     }
     System.out.println();
   }
@@ -220,7 +220,7 @@ public class ScenarioExecutionSummary {
     /**
      * Creates a logic result.
      *
-     * @param finalState final state of the logic
+     * @param finalState        final state of the logic
      * @param statusDescription status description
      */
     public LogicResult(LogicState finalState, String statusDescription) {

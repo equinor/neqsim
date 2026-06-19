@@ -29,7 +29,7 @@ public class DistillationOptimizationTest {
     assertEquals(0.62, column.getMurphreeEfficiency(3), 1.0e-12);
     assertEquals(0.75, column.getMurphreeEfficiency(2), 1.0e-12);
 
-    column.setMurphreeEfficiencies(new double[] {1.0, 0.95, Double.NaN, 0.70, 1.2, 0.10, 0.0});
+    column.setMurphreeEfficiencies(new double[] { 1.0, 0.95, Double.NaN, 0.70, 1.2, 0.10, 0.0 });
     assertEquals(1.0, column.getMurphreeEfficiency(0), 1.0e-12);
     assertEquals(0.95, column.getMurphreeEfficiency(1), 1.0e-12);
     assertEquals(0.75, column.getMurphreeEfficiency(2), 1.0e-12);
@@ -38,8 +38,7 @@ public class DistillationOptimizationTest {
 
     column.clearPerStageMurphreeEfficiency();
     assertEquals(0.75, column.getMurphreeEfficiency(3), 1.0e-12);
-    assertThrows(IllegalArgumentException.class,
-        () -> column.setMurphreeEfficiencies(new double[] {0.8, 0.8}));
+    assertThrows(IllegalArgumentException.class, () -> column.setMurphreeEfficiencies(new double[] { 0.8, 0.8 }));
     assertThrows(IndexOutOfBoundsException.class, () -> column.getMurphreeEfficiency(7));
   }
 
@@ -70,10 +69,9 @@ public class DistillationOptimizationTest {
 
     if (!column.solved()) {
       assertEquals(DistillationColumn.SolveStatus.FALLBACK_PRODUCTS, column.getLastSolveStatus(),
-          "Non-rigorous auto-feed products should be reported explicitly: "
-              + column.getConvergenceDiagnostics());
+	  "Non-rigorous auto-feed products should be reported explicitly: " + column.getConvergenceDiagnostics());
       assertTrue(column.wasFeedFlashFallbackApplied(),
-          "Fallback products should be visible when the auto-feed case is not rigorously solved");
+	  "Fallback products should be visible when the auto-feed case is not rigorously solved");
     }
     assertEquals(0.0, column.getMassBalance("kg/hr"), 1.0e-6);
 
@@ -85,10 +83,10 @@ public class DistillationOptimizationTest {
     boolean feedAssigned = false;
     for (int i = 0; i < column.getTrays().size(); i++) {
       if (column.getTray(i).getNumberOfInputStreams() > 0) {
-        if (Math.abs(column.getTray(i).getStream(0).getFlowRate("kg/hr") - 1000.0) < 1.0) {
-          feedAssigned = true;
-          logger.info("Feed assigned to tray: " + i);
-        }
+	if (Math.abs(column.getTray(i).getStream(0).getFlowRate("kg/hr") - 1000.0) < 1.0) {
+	  feedAssigned = true;
+	  logger.info("Feed assigned to tray: " + i);
+	}
       }
     }
     assertTrue(feedAssigned, "Feed should be assigned");
@@ -191,8 +189,8 @@ public class DistillationOptimizationTest {
     column.setMaxNumberOfIterations(25);
 
     double targetPropaneMoleFraction = 0.60;
-    DistillationColumn.TrayOptimizationResult result =
-        column.findOptimalTrayConfiguration(targetPropaneMoleFraction, "propane", true, 8);
+    DistillationColumn.TrayOptimizationResult result = column.findOptimalTrayConfiguration(targetPropaneMoleFraction,
+	"propane", true, 8);
 
     assertTrue(result.isFeasible(), result.getMessage());
     assertEquals(result.getNumberOfTrays(), column.getTrays().size());
@@ -233,12 +231,11 @@ public class DistillationOptimizationTest {
     column.setMaxTrayOptimizationCandidates(8);
     column.setMaxTrayOptimizationTimeSeconds(20.0);
 
-    DistillationColumnMechanicalDesign design =
-        (DistillationColumnMechanicalDesign) column.getMechanicalDesign();
+    DistillationColumnMechanicalDesign design = (DistillationColumnMechanicalDesign) column.getMechanicalDesign();
     design.setTrayEfficiency(0.70);
 
-    DistillationColumn.EconomicTrayOptimizationResult result =
-        design.optimizeEconomicTrayConfiguration(0.60, "propane", true, 8);
+    DistillationColumn.EconomicTrayOptimizationResult result = design.optimizeEconomicTrayConfiguration(0.60, "propane",
+	true, 8);
 
     assertTrue(result.isFeasible(), result.getMessage());
     assertEquals(result.getNumberOfTrays(), column.getTrays().size());
@@ -284,15 +281,13 @@ public class DistillationOptimizationTest {
     assertEquals(2, column.getMaxTrayOptimizationCandidates());
     assertEquals(30.0, column.getMaxTrayOptimizationTimeSeconds(), 1.0e-12);
 
-    DistillationColumn.TrayOptimizationResult result =
-        column.findOptimalTrayConfiguration(0.99, "propane", true, 20);
+    DistillationColumn.TrayOptimizationResult result = column.findOptimalTrayConfiguration(0.99, "propane", true, 20);
 
     assertTrue(!result.isFeasible(), "Budget-limited search should not report feasibility");
     assertEquals(2, result.getEvaluatedCases());
     assertTrue(result.getMessage().contains("search budget"), result.getMessage());
     assertThrows(IllegalArgumentException.class, () -> column.setMaxTrayOptimizationCandidates(0));
-    assertThrows(IllegalArgumentException.class,
-        () -> column.setMaxTrayOptimizationTimeSeconds(Double.NaN));
+    assertThrows(IllegalArgumentException.class, () -> column.setMaxTrayOptimizationTimeSeconds(Double.NaN));
   }
 
   @Test
@@ -334,22 +329,21 @@ public class DistillationOptimizationTest {
 
     // Feature 2: Use a light target so this unit test does not run a full design study.
     double targetPropaneMoleFraction = 0.60;
-    int optimalTrays =
-        column.findOptimalNumberOfTrays(targetPropaneMoleFraction, "propane", true, 8);
+    int optimalTrays = column.findOptimalNumberOfTrays(targetPropaneMoleFraction, "propane", true, 8);
     logger.info("Optimal trays found: " + optimalTrays);
 
     assertTrue(optimalTrays > 0, "Should find a solution");
-    assertTrue(column.getGasOutStream().getFluid().getComponent("propane")
-        .getz() >= targetPropaneMoleFraction, "Top product should meet spec");
+    assertTrue(column.getGasOutStream().getFluid().getComponent("propane").getz() >= targetPropaneMoleFraction,
+	"Top product should meet spec");
 
     // Verify feed was assigned
     boolean feedAssigned = false;
     for (int i = 0; i < column.getTrays().size(); i++) {
       if (column.getTray(i).getNumberOfInputStreams() > 0) {
-        if (Math.abs(column.getTray(i).getStream(0).getFlowRate("kg/hr") - 1000.0) < 1.0) {
-          feedAssigned = true;
-          logger.info("Feed assigned to tray: " + i);
-        }
+	if (Math.abs(column.getTray(i).getStream(0).getFlowRate("kg/hr") - 1000.0) < 1.0) {
+	  feedAssigned = true;
+	  logger.info("Feed assigned to tray: " + i);
+	}
       }
     }
     assertTrue(feedAssigned, "Feed should be assigned to a tray");
@@ -393,13 +387,12 @@ public class DistillationOptimizationTest {
 
     // Feature 2: Use a light target so the Inside-Out smoke test does not run a full design study.
     double targetPropaneMoleFraction = 0.60;
-    int optimalTrays =
-        column.findOptimalNumberOfTrays(targetPropaneMoleFraction, "propane", true, 8);
+    int optimalTrays = column.findOptimalNumberOfTrays(targetPropaneMoleFraction, "propane", true, 8);
 
     logger.info("Optimal trays found (Inside-Out): " + optimalTrays);
 
     assertTrue(optimalTrays > 0, "Should find a solution with Inside-Out solver");
-    assertTrue(column.getGasOutStream().getFluid().getComponent("propane")
-        .getz() >= targetPropaneMoleFraction, "Top product should meet spec");
+    assertTrue(column.getGasOutStream().getFluid().getComponent("propane").getz() >= targetPropaneMoleFraction,
+	"Top product should meet spec");
   }
 }

@@ -6,8 +6,8 @@ import neqsim.process.mechanicaldesign.MechanicalDesignResponse;
  * Response class for separator mechanical design JSON export.
  *
  * <p>
- * Extends {@link MechanicalDesignResponse} with separator-specific parameters including vessel
- * sizing, internals, and process design data per API 12J and ASME VIII.
+ * Extends {@link MechanicalDesignResponse} with separator-specific parameters including vessel sizing, internals, and
+ * process design data per API 12J and ASME VIII.
  * </p>
  *
  * @author esol

@@ -7,8 +7,8 @@ import java.io.Serializable;
  * Quantitative result from a controller tuning or performance screening study.
  *
  * <p>
- * The metrics are calculated from time, process-value, and controller-output histories and can be
- * used with existing NeqSim controllers, measurement devices, or imported tagreader data.
+ * The metrics are calculated from time, process-value, and controller-output histories and can be used with existing
+ * NeqSim controllers, measurement devices, or imported tagreader data.
  * </p>
  *
  * @author ESOL
@@ -32,22 +32,21 @@ public class ControllerTuningResult implements Serializable {
   /**
    * Creates a controller tuning result.
    *
-   * @param controllerName controller name
-   * @param setPoint controller set point
-   * @param meanAbsoluteError mean absolute control error
-   * @param maxAbsoluteError maximum absolute control error
-   * @param integralAbsoluteError integral absolute error
-   * @param integralSquaredError integral squared error
-   * @param overshootPercent overshoot as percent of step magnitude
-   * @param settlingTimeSeconds settling time in seconds, or NaN if not settled
+   * @param controllerName           controller name
+   * @param setPoint                 controller set point
+   * @param meanAbsoluteError        mean absolute control error
+   * @param maxAbsoluteError         maximum absolute control error
+   * @param integralAbsoluteError    integral absolute error
+   * @param integralSquaredError     integral squared error
+   * @param overshootPercent         overshoot as percent of step magnitude
+   * @param settlingTimeSeconds      settling time in seconds, or NaN if not settled
    * @param outputSaturationFraction fraction of samples at output limits
-   * @param stableAtEnd true if the final response is within tolerance with low variation
-   * @param recommendation short tuning recommendation
+   * @param stableAtEnd              true if the final response is within tolerance with low variation
+   * @param recommendation           short tuning recommendation
    */
-  ControllerTuningResult(String controllerName, double setPoint, double meanAbsoluteError,
-      double maxAbsoluteError, double integralAbsoluteError, double integralSquaredError,
-      double overshootPercent, double settlingTimeSeconds, double outputSaturationFraction,
-      boolean stableAtEnd, String recommendation) {
+  ControllerTuningResult(String controllerName, double setPoint, double meanAbsoluteError, double maxAbsoluteError,
+      double integralAbsoluteError, double integralSquaredError, double overshootPercent, double settlingTimeSeconds,
+      double outputSaturationFraction, boolean stableAtEnd, String recommendation) {
     this.controllerName = controllerName;
     this.setPoint = setPoint;
     this.meanAbsoluteError = meanAbsoluteError;

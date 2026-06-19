@@ -17,13 +17,11 @@ import neqsim.process.processmodel.ProcessSystem;
  * A proposal carries:
  * </p>
  * <ul>
- * <li>the recommended {@link ProcessSystem} (already built and ready to {@link ProcessSystem#run()
- * run}),</li>
+ * <li>the recommended {@link ProcessSystem} (already built and ready to {@link ProcessSystem#run() run}),</li>
  * <li>a human-readable rationale string explaining why this structure was chosen,</li>
  * <li>a discrete {@link Strategy} tag (single flash, two-stage flash, distillation, …),</li>
  * <li>per-product purity predictions keyed by component name,</li>
- * <li>an ordered list of alternatives that were considered but not selected, with the reason for
- * rejection.</li>
+ * <li>an ordered list of alternatives that were considered but not selected, with the reason for rejection.</li>
  * </ul>
  *
  * @author Even Solbraa
@@ -57,27 +55,26 @@ public final class FlowsheetProposal implements Serializable {
   /**
    * Creates a proposal.
    *
-   * @param strategy the structural choice
-   * @param rationale human-readable explanation
-   * @param processSystem the assembled flowsheet
-   * @param topProductPredicted predicted top-product mole fractions keyed by component
+   * @param strategy               the structural choice
+   * @param rationale              human-readable explanation
+   * @param processSystem          the assembled flowsheet
+   * @param topProductPredicted    predicted top-product mole fractions keyed by component
    * @param bottomProductPredicted predicted bottom-product mole fractions keyed by component
-   * @param alternatives alternative proposals considered, with their rejection reason
-   * @param specsMet true when all duty specs are predicted to be satisfied
+   * @param alternatives           alternative proposals considered, with their rejection reason
+   * @param specsMet               true when all duty specs are predicted to be satisfied
    */
   public FlowsheetProposal(Strategy strategy, String rationale, ProcessSystem processSystem,
-      Map<String, Double> topProductPredicted, Map<String, Double> bottomProductPredicted,
-      List<String> alternatives, boolean specsMet) {
+      Map<String, Double> topProductPredicted, Map<String, Double> bottomProductPredicted, List<String> alternatives,
+      boolean specsMet) {
     this.strategy = strategy;
     this.rationale = rationale;
     this.processSystem = processSystem;
     this.topProductPredicted = topProductPredicted == null ? Collections.<String, Double>emptyMap()
-        : Collections.unmodifiableMap(new LinkedHashMap<String, Double>(topProductPredicted));
-    this.bottomProductPredicted = bottomProductPredicted == null
-        ? Collections.<String, Double>emptyMap()
-        : Collections.unmodifiableMap(new LinkedHashMap<String, Double>(bottomProductPredicted));
+	: Collections.unmodifiableMap(new LinkedHashMap<String, Double>(topProductPredicted));
+    this.bottomProductPredicted = bottomProductPredicted == null ? Collections.<String, Double>emptyMap()
+	: Collections.unmodifiableMap(new LinkedHashMap<String, Double>(bottomProductPredicted));
     this.alternatives = alternatives == null ? Collections.<String>emptyList()
-        : Collections.unmodifiableList(new ArrayList<String>(alternatives));
+	: Collections.unmodifiableList(new ArrayList<String>(alternatives));
     this.specsMet = specsMet;
   }
 

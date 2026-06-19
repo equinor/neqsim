@@ -19,8 +19,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * Links field development concepts to detailed process models.
  *
  * <p>
- * Bridges the gap between high-level field development concepts (DG0-DG2) and detailed process
- * simulation models (DG3+). Auto-generates process flowsheets based on concept parameters.
+ * Bridges the gap between high-level field development concepts (DG0-DG2) and detailed process simulation models
+ * (DG3+). Auto-generates process flowsheets based on concept parameters.
  * </p>
  *
  * <h2>Capabilities</h2>
@@ -128,7 +128,7 @@ public class ConceptToProcessLinker implements Serializable {
   /**
    * Generate a complete process system from a field concept.
    *
-   * @param concept the field concept
+   * @param concept  the field concept
    * @param fidelity fidelity level
    * @return generated process system
    */
@@ -147,17 +147,17 @@ public class ConceptToProcessLinker implements Serializable {
 
     // Generate based on template and fidelity
     switch (template) {
-      case OIL_PROCESSING:
-        generateOilProcessing(process, inlet, concept, fidelity);
-        break;
-      case GAS_PROCESSING:
-        generateGasProcessing(process, inlet, concept, fidelity);
-        break;
-      case GAS_CONDENSATE:
-        generateGasCondensateProcessing(process, inlet, concept, fidelity);
-        break;
-      default:
-        generateOilProcessing(process, inlet, concept, fidelity);
+    case OIL_PROCESSING:
+      generateOilProcessing(process, inlet, concept, fidelity);
+      break;
+    case GAS_PROCESSING:
+      generateGasProcessing(process, inlet, concept, fidelity);
+      break;
+    case GAS_CONDENSATE:
+      generateGasCondensateProcessing(process, inlet, concept, fidelity);
+      break;
+    default:
+      generateOilProcessing(process, inlet, concept, fidelity);
     }
 
     return process;
@@ -172,15 +172,15 @@ public class ConceptToProcessLinker implements Serializable {
   private ProcessTemplate determineTemplate(FieldConcept concept) {
     if (concept.getReservoir() != null) {
       switch (concept.getReservoir().getFluidType()) {
-        case LEAN_GAS:
-        case RICH_GAS:
-          return ProcessTemplate.GAS_PROCESSING;
-        case GAS_CONDENSATE:
-          return ProcessTemplate.GAS_CONDENSATE;
-        case HEAVY_OIL:
-          return ProcessTemplate.HEAVY_OIL;
-        default:
-          return ProcessTemplate.OIL_PROCESSING;
+      case LEAN_GAS:
+      case RICH_GAS:
+	return ProcessTemplate.GAS_PROCESSING;
+      case GAS_CONDENSATE:
+	return ProcessTemplate.GAS_CONDENSATE;
+      case HEAVY_OIL:
+	return ProcessTemplate.HEAVY_OIL;
+      default:
+	return ProcessTemplate.OIL_PROCESSING;
       }
     }
     return ProcessTemplate.OIL_PROCESSING;
@@ -220,8 +220,7 @@ public class ConceptToProcessLinker implements Serializable {
 
     // Set flow rate from concept
     if (concept.getWells() != null) {
-      double totalRate =
-          concept.getWells().getProducerCount() * concept.getWells().getRatePerWell();
+      double totalRate = concept.getWells().getProducerCount() * concept.getWells().getRatePerWell();
       inlet.setFlowRate(totalRate, "kg/hr");
     } else {
       inlet.setFlowRate(100000.0, "kg/hr");
@@ -233,9 +232,9 @@ public class ConceptToProcessLinker implements Serializable {
   /**
    * Generate oil processing train.
    *
-   * @param process the process system to add equipment to
-   * @param inlet the inlet stream
-   * @param concept the field concept with production parameters
+   * @param process  the process system to add equipment to
+   * @param inlet    the inlet stream
+   * @param concept  the field concept with production parameters
    * @param fidelity the model fidelity level
    */
   private void generateOilProcessing(ProcessSystem process, Stream inlet, FieldConcept concept,
@@ -251,8 +250,8 @@ public class ConceptToProcessLinker implements Serializable {
 
     // LP Separator
     StreamInterface oilFromHp = hpSep.getOilOutStream();
-    neqsim.process.equipment.valve.ThrottlingValve toLP =
-        new neqsim.process.equipment.valve.ThrottlingValve("To-LP", oilFromHp);
+    neqsim.process.equipment.valve.ThrottlingValve toLP = new neqsim.process.equipment.valve.ThrottlingValve("To-LP",
+	oilFromHp);
     toLP.setOutletPressure(lpSeparatorPressureBar);
     process.add(toLP);
 
@@ -265,8 +264,7 @@ public class ConceptToProcessLinker implements Serializable {
     hpScrubCooler.setOutTemperature(273.15 + 30.0);
     process.add(hpScrubCooler);
 
-    Compressor exportCompressor =
-        new Compressor("Export-Compressor", hpScrubCooler.getOutletStream());
+    Compressor exportCompressor = new Compressor("Export-Compressor", hpScrubCooler.getOutletStream());
     exportCompressor.setOutletPressure(exportGasPressureBar);
     exportCompressor.setIsentropicEfficiency(compressionEfficiency);
     process.add(exportCompressor);
@@ -294,13 +292,13 @@ public class ConceptToProcessLinker implements Serializable {
   /**
    * Generate gas processing train.
    *
-   * @param process the process system to add equipment to
-   * @param inlet the inlet stream
-   * @param concept the field concept with production parameters
+   * @param process  the process system to add equipment to
+   * @param inlet    the inlet stream
+   * @param concept  the field concept with production parameters
    * @param fidelity the model fidelity level
    */
-  private void generateGasProcessing(ProcessSystem process, StreamInterface inlet,
-      FieldConcept concept, FidelityLevel fidelity) {
+  private void generateGasProcessing(ProcessSystem process, StreamInterface inlet, FieldConcept concept,
+      FidelityLevel fidelity) {
     // Inlet separator (slug catcher)
     ThreePhaseSeparator slugCatcher = new ThreePhaseSeparator("Slug-Catcher", inlet);
     process.add(slugCatcher);
@@ -331,13 +329,13 @@ public class ConceptToProcessLinker implements Serializable {
   /**
    * Generate gas condensate processing train.
    *
-   * @param process the process system to add equipment to
-   * @param inlet the inlet stream
-   * @param concept the field concept with production parameters
+   * @param process  the process system to add equipment to
+   * @param inlet    the inlet stream
+   * @param concept  the field concept with production parameters
    * @param fidelity the model fidelity level
    */
-  private void generateGasCondensateProcessing(ProcessSystem process, Stream inlet,
-      FieldConcept concept, FidelityLevel fidelity) {
+  private void generateGasCondensateProcessing(ProcessSystem process, Stream inlet, FieldConcept concept,
+      FidelityLevel fidelity) {
     // HP Separator
     ThreePhaseSeparator hpSep = new ThreePhaseSeparator("HP-Separator", inlet);
     process.add(hpSep);
@@ -348,14 +346,12 @@ public class ConceptToProcessLinker implements Serializable {
     stabHeater.setOutTemperature(273.15 + 80.0);
     process.add(stabHeater);
 
-    neqsim.process.equipment.valve.ThrottlingValve stabValve =
-        new neqsim.process.equipment.valve.ThrottlingValve("Stab-Valve",
-            stabHeater.getOutletStream());
+    neqsim.process.equipment.valve.ThrottlingValve stabValve = new neqsim.process.equipment.valve.ThrottlingValve(
+	"Stab-Valve", stabHeater.getOutletStream());
     stabValve.setOutletPressure(lpSeparatorPressureBar);
     process.add(stabValve);
 
-    ThreePhaseSeparator stabilizer =
-        new ThreePhaseSeparator("Stabilizer", stabValve.getOutletStream());
+    ThreePhaseSeparator stabilizer = new ThreePhaseSeparator("Stabilizer", stabValve.getOutletStream());
     process.add(stabilizer);
 
     // Gas processing similar to gas field
@@ -378,9 +374,9 @@ public class ConceptToProcessLinker implements Serializable {
     for (int i = 0; i < process.size(); i++) {
       Object unit = process.getUnitOperations().get(i);
       if (unit instanceof Compressor) {
-        totalPower += Math.abs(((Compressor) unit).getPower("MW"));
+	totalPower += Math.abs(((Compressor) unit).getPower("MW"));
       } else if (unit instanceof Pump) {
-        totalPower += Math.abs(((Pump) unit).getPower("MW"));
+	totalPower += Math.abs(((Pump) unit).getPower("MW"));
       }
     }
 
@@ -399,10 +395,10 @@ public class ConceptToProcessLinker implements Serializable {
     for (int i = 0; i < process.size(); i++) {
       Object unit = process.getUnitOperations().get(i);
       if (unit instanceof Heater) {
-        double duty = ((Heater) unit).getDuty();
-        if (duty > 0) {
-          totalHeating += duty / 1e6; // Convert to MW
-        }
+	double duty = ((Heater) unit).getDuty();
+	if (duty > 0) {
+	  totalHeating += duty / 1e6; // Convert to MW
+	}
       }
     }
 
@@ -421,8 +417,8 @@ public class ConceptToProcessLinker implements Serializable {
     for (int i = 0; i < process.size(); i++) {
       Object unit = process.getUnitOperations().get(i);
       if (unit instanceof Cooler) {
-        double duty = ((Cooler) unit).getDuty();
-        totalCooling += Math.abs(duty) / 1e6; // Convert to MW
+	double duty = ((Cooler) unit).getDuty();
+	totalCooling += Math.abs(duty) / 1e6; // Convert to MW
       }
     }
 

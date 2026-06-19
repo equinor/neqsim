@@ -29,8 +29,7 @@ class StandardRegistryTest {
 
   @Test
   void testCreateStandardWithType() {
-    DesignStandard standard =
-        StandardRegistry.createStandard(StandardType.ASME_VIII_DIV1, mechanicalDesign);
+    DesignStandard standard = StandardRegistry.createStandard(StandardType.ASME_VIII_DIV1, mechanicalDesign);
 
     assertNotNull(standard);
     assertTrue(standard instanceof PressureVesselDesignStandard);
@@ -39,8 +38,7 @@ class StandardRegistryTest {
 
   @Test
   void testCreateStandardWithVersion() {
-    DesignStandard standard =
-        StandardRegistry.createStandard(StandardType.ASME_VIII_DIV1, "2019", mechanicalDesign);
+    DesignStandard standard = StandardRegistry.createStandard(StandardType.ASME_VIII_DIV1, "2019", mechanicalDesign);
 
     assertNotNull(standard);
     assertTrue(standard.getStandardName().contains("2019"));
@@ -48,30 +46,25 @@ class StandardRegistryTest {
 
   @Test
   void testCreateStandardThrowsOnNull() {
-    assertThrows(IllegalArgumentException.class,
-        () -> StandardRegistry.createStandard(null, mechanicalDesign));
+    assertThrows(IllegalArgumentException.class, () -> StandardRegistry.createStandard(null, mechanicalDesign));
   }
 
   @Test
   void testCreateDifferentStandardTypes() {
     // Pressure vessel
-    DesignStandard pvStandard =
-        StandardRegistry.createStandard(StandardType.ASME_VIII_DIV1, mechanicalDesign);
+    DesignStandard pvStandard = StandardRegistry.createStandard(StandardType.ASME_VIII_DIV1, mechanicalDesign);
     assertTrue(pvStandard instanceof PressureVesselDesignStandard);
 
     // Separator
-    DesignStandard sepStandard =
-        StandardRegistry.createStandard(StandardType.API_12J, mechanicalDesign);
+    DesignStandard sepStandard = StandardRegistry.createStandard(StandardType.API_12J, mechanicalDesign);
     assertTrue(sepStandard instanceof SeparatorDesignStandard);
 
     // Pipeline
-    DesignStandard pipeStandard =
-        StandardRegistry.createStandard(StandardType.NORSOK_L_001, mechanicalDesign);
+    DesignStandard pipeStandard = StandardRegistry.createStandard(StandardType.NORSOK_L_001, mechanicalDesign);
     assertTrue(pipeStandard instanceof PipelineDesignStandard);
 
     // Compressor
-    DesignStandard compStandard =
-        StandardRegistry.createStandard(StandardType.API_617, mechanicalDesign);
+    DesignStandard compStandard = StandardRegistry.createStandard(StandardType.API_617, mechanicalDesign);
     assertTrue(compStandard instanceof CompressorDesignStandard);
   }
 
@@ -82,8 +75,7 @@ class StandardRegistryTest {
     assertEquals("2019", StandardRegistry.getEffectiveVersion(StandardType.ASME_VIII_DIV1));
 
     // Create standard uses override
-    DesignStandard standard =
-        StandardRegistry.createStandard(StandardType.ASME_VIII_DIV1, mechanicalDesign);
+    DesignStandard standard = StandardRegistry.createStandard(StandardType.ASME_VIII_DIV1, mechanicalDesign);
     assertTrue(standard.getStandardName().contains("2019"));
 
     // Clear override
@@ -128,8 +120,7 @@ class StandardRegistryTest {
 
   @Test
   void testGetStandardsByCategory() {
-    List<StandardType> pvStandards =
-        StandardRegistry.getStandardsByCategory("pressure vessel design code");
+    List<StandardType> pvStandards = StandardRegistry.getStandardsByCategory("pressure vessel design code");
     assertFalse(pvStandards.isEmpty());
     assertTrue(pvStandards.contains(StandardType.ASME_VIII_DIV1));
   }
@@ -165,8 +156,7 @@ class StandardRegistryTest {
 
   @Test
   void testGetRecommendedStandards() {
-    Map<String, List<StandardType>> recommended =
-        StandardRegistry.getRecommendedStandards("Separator");
+    Map<String, List<StandardType>> recommended = StandardRegistry.getRecommendedStandards("Separator");
 
     assertFalse(recommended.isEmpty());
     assertTrue(recommended.containsKey("pressure vessel design code"));

@@ -20,7 +20,7 @@ public class TestMBWR32 {
   private static final Logger logger = LogManager.getLogger(TestMBWR32.class);
 
   /** Logger object for class. */
-  
+
   /**
    * <p>
    * main.

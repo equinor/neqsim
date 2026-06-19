@@ -33,8 +33,7 @@ public interface FlowLegInterface {
    * setEquipmentGeometry.
    * </p>
    *
-   * @param equipmentGeometry a
-   *        {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
+   * @param equipmentGeometry a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
    */
   public void setEquipmentGeometry(GeometryDefinitionInterface equipmentGeometry);
 
@@ -53,7 +52,7 @@ public interface FlowLegInterface {
    * </p>
    *
    * @param startHeightCoordinate a double
-   * @param endHeightCoordinate a double
+   * @param endHeightCoordinate   a double
    */
   public void setHeightCoordinates(double startHeightCoordinate, double endHeightCoordinate);
 
@@ -73,10 +72,9 @@ public interface FlowLegInterface {
    * </p>
    *
    * @param startLongitudionalCoordinate a double
-   * @param endLongitudionalCoordinate a double
+   * @param endLongitudionalCoordinate   a double
    */
-  public void setLongitudionalCoordinates(double startLongitudionalCoordinate,
-      double endLongitudionalCoordinate);
+  public void setLongitudionalCoordinates(double startLongitudionalCoordinate, double endLongitudionalCoordinate);
 
   /**
    * <p>
@@ -128,10 +126,9 @@ public interface FlowLegInterface {
    * </p>
    *
    * @param startHeatTransferCoefficient a double
-   * @param endHeatTransferCoefficient a double
+   * @param endHeatTransferCoefficient   a double
    */
-  public void setOuterHeatTransferCoefficients(double startHeatTransferCoefficient,
-      double endHeatTransferCoefficient);
+  public void setOuterHeatTransferCoefficients(double startHeatTransferCoefficient, double endHeatTransferCoefficient);
 
   /**
    * <p>
@@ -139,10 +136,9 @@ public interface FlowLegInterface {
    * </p>
    *
    * @param startHeatTransferCoefficient a double
-   * @param endHeatTransferCoefficient a double
+   * @param endHeatTransferCoefficient   a double
    */
-  public void setWallHeatTransferCoefficients(double startHeatTransferCoefficient,
-      double endHeatTransferCoefficient);
+  public void setWallHeatTransferCoefficients(double startHeatTransferCoefficient, double endHeatTransferCoefficient);
 
   /**
    * <p>

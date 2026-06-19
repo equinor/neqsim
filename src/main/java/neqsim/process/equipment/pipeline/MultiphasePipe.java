@@ -18,9 +18,8 @@ import neqsim.thermo.system.SystemInterface;
  * Multiphase pipe flow simulation model using non-equilibrium two-phase flow.
  *
  * <p>
- * This class provides a process equipment wrapper around {@link TwoPhasePipeFlowSystem}, making it
- * compatible with the standard NeqSim process simulation framework through the
- * {@link PipeLineInterface}.
+ * This class provides a process equipment wrapper around {@link TwoPhasePipeFlowSystem}, making it compatible with the
+ * standard NeqSim process simulation framework through the {@link PipeLineInterface}.
  * </p>
  *
  * <h2>Features</h2>
@@ -101,7 +100,7 @@ public class MultiphasePipe extends Pipeline {
   /**
    * Constructor for MultiphasePipe with inlet stream.
    *
-   * @param name the equipment name
+   * @param name     the equipment name
    * @param inStream the inlet stream
    */
   public MultiphasePipe(String name, StreamInterface inStream) {
@@ -112,8 +111,8 @@ public class MultiphasePipe extends Pipeline {
    * Enable non-equilibrium mass transfer between phases.
    *
    * <p>
-   * When enabled, mass transfer is calculated using the Krishna-Standart film model, which accounts
-   * for finite-rate mass transfer at the gas-liquid interface.
+   * When enabled, mass transfer is calculated using the Krishna-Standart film model, which accounts for finite-rate
+   * mass transfer at the gas-liquid interface.
    * </p>
    */
   public void enableNonEquilibriumMassTransfer() {
@@ -274,8 +273,7 @@ public class MultiphasePipe extends Pipeline {
     GeometryDefinitionInterface[] pipeGeometry = new PipeData[numberOfLegs + 1];
     for (int i = 0; i < pipeGeometry.length; i++) {
       double d = (pipeDiameters != null && i < pipeDiameters.length) ? pipeDiameters[i] : diameter;
-      double r = (pipeWallRoughness != null && i < pipeWallRoughness.length) ? pipeWallRoughness[i]
-          : roughness;
+      double r = (pipeWallRoughness != null && i < pipeWallRoughness.length) ? pipeWallRoughness[i] : roughness;
       pipeGeometry[i] = new PipeData(d, r);
     }
     flowSystem.setEquipmentGeometry(pipeGeometry);
@@ -287,7 +285,7 @@ public class MultiphasePipe extends Pipeline {
       // Create linear elevation profile
       double[] heights = new double[numberOfLegs + 1];
       for (int i = 0; i <= numberOfLegs; i++) {
-        heights[i] = inletElevation + (outletElevation - inletElevation) * i / numberOfLegs;
+	heights[i] = inletElevation + (outletElevation - inletElevation) * i / numberOfLegs;
       }
       flowSystem.setLegHeights(heights);
     }
@@ -298,7 +296,7 @@ public class MultiphasePipe extends Pipeline {
       // Create uniform leg positions
       double[] positions = new double[numberOfLegs + 1];
       for (int i = 0; i <= numberOfLegs; i++) {
-        positions[i] = length * i / numberOfLegs;
+	positions[i] = length * i / numberOfLegs;
       }
       flowSystem.setLegPositions(positions);
     }
@@ -317,7 +315,7 @@ public class MultiphasePipe extends Pipeline {
     } else {
       double[] temps = new double[numberOfLegs + 1];
       for (int i = 0; i < temps.length; i++) {
-        temps[i] = ambientTemperature;
+	temps[i] = ambientTemperature;
       }
       flowSystem.setLegOuterTemperatures(temps);
     }
@@ -329,11 +327,11 @@ public class MultiphasePipe extends Pipeline {
       // Calculate overall U-value if insulation is present
       double uValue = calculateOverallHeatTransferCoefficient();
       if (uValue > 0) {
-        double[] coeffs = new double[numberOfLegs + 1];
-        for (int i = 0; i < coeffs.length; i++) {
-          coeffs[i] = uValue;
-        }
-        flowSystem.setLegOuterHeatTransferCoefficients(coeffs);
+	double[] coeffs = new double[numberOfLegs + 1];
+	for (int i = 0; i < coeffs.length; i++) {
+	  coeffs[i] = uValue;
+	}
+	flowSystem.setLegOuterHeatTransferCoefficients(coeffs);
       }
     }
 
@@ -428,12 +426,12 @@ public class MultiphasePipe extends Pipeline {
     if (flowSystem != null) {
       double[] profile = flowSystem.getPressureProfile();
       if (profile != null) {
-        // Convert from Pa to bar
-        double[] profileBar = new double[profile.length];
-        for (int i = 0; i < profile.length; i++) {
-          profileBar[i] = profile[i] / 1e5;
-        }
-        return profileBar;
+	// Convert from Pa to bar
+	double[] profileBar = new double[profile.length];
+	for (int i = 0; i < profile.length; i++) {
+	  profileBar[i] = profile[i] / 1e5;
+	}
+	return profileBar;
       }
     }
     return pressureProfile;
@@ -474,7 +472,7 @@ public class MultiphasePipe extends Pipeline {
       // Get mixture velocity at outlet
       double[] velocities = flowSystem.getMixtureVelocityProfile();
       if (velocities != null && velocities.length > 0) {
-        return velocities[velocities.length - 1];
+	return velocities[velocities.length - 1];
       }
     }
     return velocity;

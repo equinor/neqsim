@@ -10,10 +10,10 @@ import java.util.Map;
  * Demand and capacity data for one safety-system barrier performance check.
  *
  * <p>
- * A demand case represents the calculated or extracted requirement imposed on a barrier by a
- * scenario, such as a jet-fire heat flux, required deluge application rate, detector response time,
- * or minimum availability. Values may come from NeqSim consequence analysis, STID/firewater/PFP
- * documents, SIS verification reports, or manual engineering input.
+ * A demand case represents the calculated or extracted requirement imposed on a barrier by a scenario, such as a
+ * jet-fire heat flux, required deluge application rate, detector response time, or minimum availability. Values may
+ * come from NeqSim consequence analysis, STID/firewater/PFP documents, SIS verification reports, or manual engineering
+ * input.
  * </p>
  *
  * @author ESOL

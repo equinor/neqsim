@@ -21,8 +21,7 @@ import neqsim.fluidmechanics.geometrydefinitions.surrounding.PipeSurroundingEnvi
  * <pre>
  * // Create an insulated carbon steel pipe
  * PipeWall wall = PipeWallBuilder.barePipe(0.1, PipeMaterial.CARBON_STEEL, 0.010)
- *     .addInsulation(PipeMaterial.MINERAL_WOOL, 0.050).addCoating(PipeMaterial.POLYETHYLENE, 0.003)
- *     .build();
+ *     .addInsulation(PipeMaterial.MINERAL_WOOL, 0.050).addCoating(PipeMaterial.POLYETHYLENE, 0.003).build();
  *
  * // Create a typical subsea pipeline
  * PipeWall subseaWall = PipeWallBuilder.subseaPipe(0.15, 0.020, 0.040, 0.070).build();
@@ -51,13 +50,12 @@ public class PipeWallBuilder {
   /**
    * Creates a builder for a bare (uninsulated) pipe.
    *
-   * @param innerRadius Inner pipe radius in meters
-   * @param pipeMaterial Pipe material
+   * @param innerRadius   Inner pipe radius in meters
+   * @param pipeMaterial  Pipe material
    * @param wallThickness Pipe wall thickness in meters
    * @return PipeWallBuilder for method chaining
    */
-  public static PipeWallBuilder barePipe(double innerRadius, PipeMaterial pipeMaterial,
-      double wallThickness) {
+  public static PipeWallBuilder barePipe(double innerRadius, PipeMaterial pipeMaterial, double wallThickness) {
     PipeWallBuilder builder = new PipeWallBuilder(innerRadius);
     builder.pipeWall.addMaterialLayer(new MaterialLayer(pipeMaterial, wallThickness));
     return builder;
@@ -88,16 +86,15 @@ public class PipeWallBuilder {
   /**
    * Creates a builder for a pre-configured insulated pipe.
    *
-   * @param innerDiameter Inner pipe diameter in meters
-   * @param pipeThickness Pipe wall thickness in meters
-   * @param insulation Insulation material
+   * @param innerDiameter       Inner pipe diameter in meters
+   * @param pipeThickness       Pipe wall thickness in meters
+   * @param insulation          Insulation material
    * @param insulationThickness Insulation thickness in meters
    * @return PipeWallBuilder for method chaining
    */
-  public static PipeWallBuilder insulatedPipe(double innerDiameter, double pipeThickness,
-      PipeMaterial insulation, double insulationThickness) {
-    return carbonSteelPipe(innerDiameter, pipeThickness).addInsulation(insulation,
-        insulationThickness);
+  public static PipeWallBuilder insulatedPipe(double innerDiameter, double pipeThickness, PipeMaterial insulation,
+      double insulationThickness) {
+    return carbonSteelPipe(innerDiameter, pipeThickness).addInsulation(insulation, insulationThickness);
   }
 
   /**
@@ -113,18 +110,18 @@ public class PipeWallBuilder {
    * <li>Concrete weight coating</li>
    * </ol>
    *
-   * @param innerDiameter Inner pipe diameter in meters
-   * @param pipeThickness Pipe wall thickness in meters
+   * @param innerDiameter       Inner pipe diameter in meters
+   * @param pipeThickness       Pipe wall thickness in meters
    * @param insulationThickness Insulation thickness in meters
-   * @param concreteThickness Concrete coating thickness in meters
+   * @param concreteThickness   Concrete coating thickness in meters
    * @return PipeWallBuilder for method chaining
    */
-  public static PipeWallBuilder subseaPipe(double innerDiameter, double pipeThickness,
-      double insulationThickness, double concreteThickness) {
-    return carbonSteelPipe(innerDiameter, pipeThickness)
-        .addCoating(PipeMaterial.FUSION_BONDED_EPOXY, 0.0004) // ~0.4mm FBE
-        .addInsulation(PipeMaterial.POLYPROPYLENE, insulationThickness)
-        .addCoating(PipeMaterial.CONCRETE, concreteThickness);
+  public static PipeWallBuilder subseaPipe(double innerDiameter, double pipeThickness, double insulationThickness,
+      double concreteThickness) {
+    return carbonSteelPipe(innerDiameter, pipeThickness).addCoating(PipeMaterial.FUSION_BONDED_EPOXY, 0.0004) // ~0.4mm
+													      // FBE
+	.addInsulation(PipeMaterial.POLYPROPYLENE, insulationThickness)
+	.addCoating(PipeMaterial.CONCRETE, concreteThickness);
   }
 
   /**
@@ -144,9 +141,8 @@ public class PipeWallBuilder {
    * @return PipeWallBuilder for method chaining
    */
   public static PipeWallBuilder buriedPipe(double innerDiameter, double pipeThickness) {
-    return carbonSteelPipe(innerDiameter, pipeThickness)
-        .addCoating(PipeMaterial.FUSION_BONDED_EPOXY, 0.0004)
-        .addCoating(PipeMaterial.POLYETHYLENE, 0.003);
+    return carbonSteelPipe(innerDiameter, pipeThickness).addCoating(PipeMaterial.FUSION_BONDED_EPOXY, 0.0004)
+	.addCoating(PipeMaterial.POLYETHYLENE, 0.003);
   }
 
   /**
@@ -174,7 +170,7 @@ public class PipeWallBuilder {
   /**
    * Adds the primary pipe wall layer.
    *
-   * @param material Pipe material
+   * @param material  Pipe material
    * @param thickness Wall thickness in meters
    * @return this builder for method chaining
    */
@@ -186,7 +182,7 @@ public class PipeWallBuilder {
   /**
    * Adds an insulation layer.
    *
-   * @param material Insulation material
+   * @param material  Insulation material
    * @param thickness Insulation thickness in meters
    * @return this builder for method chaining
    */
@@ -201,7 +197,7 @@ public class PipeWallBuilder {
   /**
    * Adds a coating layer.
    *
-   * @param material Coating material
+   * @param material  Coating material
    * @param thickness Coating thickness in meters
    * @return this builder for method chaining
    */
@@ -213,17 +209,16 @@ public class PipeWallBuilder {
   /**
    * Adds a custom material layer.
    *
-   * @param name Material name
-   * @param thickness Layer thickness in meters
+   * @param name         Material name
+   * @param thickness    Layer thickness in meters
    * @param conductivity Thermal conductivity in W/(m·K)
-   * @param density Density in kg/m³
+   * @param density      Density in kg/m³
    * @param specificHeat Specific heat capacity in J/(kg·K)
    * @return this builder for method chaining
    */
-  public PipeWallBuilder addCustomLayer(String name, double thickness, double conductivity,
-      double density, double specificHeat) {
-    pipeWall
-        .addMaterialLayer(new MaterialLayer(name, thickness, conductivity, density, specificHeat));
+  public PipeWallBuilder addCustomLayer(String name, double thickness, double conductivity, double density,
+      double specificHeat) {
+    pipeWall.addMaterialLayer(new MaterialLayer(name, thickness, conductivity, density, specificHeat));
     return this;
   }
 
@@ -292,7 +287,7 @@ public class PipeWallBuilder {
   /**
    * Sets the surrounding environment for air exposure.
    *
-   * @param temperatureK Air temperature in Kelvin
+   * @param temperatureK   Air temperature in Kelvin
    * @param windVelocityMs Wind velocity in m/s
    * @return this builder for method chaining
    */
@@ -305,12 +300,11 @@ public class PipeWallBuilder {
    * Sets the surrounding environment for subsea operation.
    *
    * @param seawaterTemperatureK Seawater temperature in Kelvin
-   * @param currentVelocityMs Current velocity in m/s
+   * @param currentVelocityMs    Current velocity in m/s
    * @return this builder for method chaining
    */
   public PipeWallBuilder subseaEnvironment(double seawaterTemperatureK, double currentVelocityMs) {
-    this.environment =
-        PipeSurroundingEnvironment.subseaPipe(seawaterTemperatureK, currentVelocityMs);
+    this.environment = PipeSurroundingEnvironment.subseaPipe(seawaterTemperatureK, currentVelocityMs);
     return this;
   }
 
@@ -318,15 +312,13 @@ public class PipeWallBuilder {
    * Sets the surrounding environment for buried pipe.
    *
    * @param groundTemperatureK Ground temperature in Kelvin
-   * @param burialDepthM Burial depth to pipe centerline in meters
-   * @param soilType Soil material type
+   * @param burialDepthM       Burial depth to pipe centerline in meters
+   * @param soilType           Soil material type
    * @return this builder for method chaining
    */
-  public PipeWallBuilder buriedInSoil(double groundTemperatureK, double burialDepthM,
-      PipeMaterial soilType) {
+  public PipeWallBuilder buriedInSoil(double groundTemperatureK, double burialDepthM, PipeMaterial soilType) {
     double outerRadius = pipeWall.getOuterRadius();
-    this.environment = PipeSurroundingEnvironment.buriedPipe(groundTemperatureK, burialDepthM,
-        outerRadius, soilType);
+    this.environment = PipeSurroundingEnvironment.buriedPipe(groundTemperatureK, burialDepthM, outerRadius, soilType);
     return this;
   }
 
@@ -334,7 +326,7 @@ public class PipeWallBuilder {
    * Sets the surrounding environment for a buried pipe with typical soil.
    *
    * @param groundTemperatureK Ground temperature in Kelvin
-   * @param burialDepthM Burial depth to pipe centerline in meters
+   * @param burialDepthM       Burial depth to pipe centerline in meters
    * @return this builder for method chaining
    */
   public PipeWallBuilder buriedInTypicalSoil(double groundTemperatureK, double burialDepthM) {
@@ -395,8 +387,7 @@ public class PipeWallBuilder {
     double innerFilmResistance = 1.0 / (2.0 * Math.PI * innerRadius * innerFilmCoefficient);
 
     // Outside film resistance (per unit length)
-    double outerFilmResistance =
-        1.0 / (2.0 * Math.PI * outerRadius * environment.getHeatTransferCoefficient());
+    double outerFilmResistance = 1.0 / (2.0 * Math.PI * outerRadius * environment.getHeatTransferCoefficient());
 
     // Total resistance
     double totalResistance = innerFilmResistance + wallResistance + outerFilmResistance;

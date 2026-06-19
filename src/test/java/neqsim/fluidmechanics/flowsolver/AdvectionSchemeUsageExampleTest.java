@@ -62,8 +62,7 @@ public class AdvectionSchemeUsageExampleTest {
       logger.info("  Order of accuracy: " + scheme.getOrder());
       logger.info("  Max CFL: " + scheme.getMaxCFL());
       logger.info("  Uses TVD limiter: " + scheme.usesTVD());
-      logger.info("  Dispersion reduction: "
-          + String.format("%.0f×", 1.0 / scheme.getDispersionReductionFactor()));
+      logger.info("  Dispersion reduction: " + String.format("%.0f×", 1.0 / scheme.getDispersionReductionFactor()));
 
     }
 
@@ -114,24 +113,20 @@ public class AdvectionSchemeUsageExampleTest {
     logger.info("  Requirements: Sharp front, no oscillations");
     logger.info("  Recommended: TVD_VAN_LEER or TVD_SUPERBEE");
 
-
     logger.info("SCENARIO: Pipeline commissioning with gradually changing composition");
     logger.info("  Problem: Smooth composition gradient transport");
     logger.info("  Requirements: High accuracy, smooth profile");
     logger.info("  Recommended: QUICK or SECOND_ORDER_UPWIND");
-
 
     logger.info("SCENARIO: Rapid transient with shocks");
     logger.info("  Problem: Fast pressure/composition changes");
     logger.info("  Requirements: Stability first, then accuracy");
     logger.info("  Recommended: TVD_MINMOD or TVD_VAN_ALBADA");
 
-
     logger.info("SCENARIO: Coarse grid for quick estimates");
     logger.info("  Problem: Large grid spacing, few nodes");
     logger.info("  Requirements: Maximum stability");
     logger.info("  Recommended: FIRST_ORDER_UPWIND");
-
 
     logger.info("=== Grid Sizing with Higher-Order Schemes ===\n");
 
@@ -145,15 +140,13 @@ public class AdvectionSchemeUsageExampleTest {
     logger.info("Pipe length: " + (pipeLength / 1000) + " km");
     logger.info("Velocity: " + velocity + " m/s");
 
-
-    for (AdvectionScheme scheme : new AdvectionScheme[] {AdvectionScheme.FIRST_ORDER_UPWIND,
-        AdvectionScheme.TVD_VAN_LEER, AdvectionScheme.TVD_SUPERBEE}) {
+    for (AdvectionScheme scheme : new AdvectionScheme[] { AdvectionScheme.FIRST_ORDER_UPWIND,
+	AdvectionScheme.TVD_VAN_LEER, AdvectionScheme.TVD_SUPERBEE }) {
       // sigma = sqrt(2 * D_num * t) where D_num = (v*dx/2)*(1-CFL)*reductionFactor
       // sigma_target = sqrt(dx * L * (1-CFL) * reductionFactor)
       // dx = sigma_target^2 / (L * (1-CFL) * reductionFactor)
       double reductionFactor = scheme.getDispersionReductionFactor();
-      double maxDx =
-          targetFrontWidth * targetFrontWidth / (pipeLength * (1 - CFL) * reductionFactor);
+      double maxDx = targetFrontWidth * targetFrontWidth / (pipeLength * (1 - CFL) * reductionFactor);
       int minNodes = (int) Math.ceil(pipeLength / maxDx);
 
       logger.info(scheme.getDisplayName() + ":");
@@ -176,18 +169,14 @@ public class AdvectionSchemeUsageExampleTest {
     logger.info("r > 1: Steepening front");
     logger.info("r → ∞: Approaching discontinuity from upstream");
 
-
     logger.info("Limiter values φ(r) for different r:");
-    logger.info(String.format("%-8s %-10s %-10s %-10s %-10s", "r", "Minmod", "Van Leer", "Superbee",
-        "Van Albada"));
+    logger.info(String.format("%-8s %-10s %-10s %-10s %-10s", "r", "Minmod", "Van Leer", "Superbee", "Van Albada"));
     logger.info("---------------------------------------------------");
 
-    for (double r : new double[] {-1.0, 0.0, 0.5, 1.0, 2.0, 5.0, 10.0}) {
-      System.out
-          .println(String.format("%-8.1f %-10.3f %-10.3f %-10.3f %-10.3f", r, FluxLimiter.minmod(r),
-              FluxLimiter.vanLeer(r), FluxLimiter.superbee(r), FluxLimiter.vanAlbada(r)));
+    for (double r : new double[] { -1.0, 0.0, 0.5, 1.0, 2.0, 5.0, 10.0 }) {
+      System.out.println(String.format("%-8.1f %-10.3f %-10.3f %-10.3f %-10.3f", r, FluxLimiter.minmod(r),
+	  FluxLimiter.vanLeer(r), FluxLimiter.superbee(r), FluxLimiter.vanAlbada(r)));
     }
-
 
     logger.info("Key observations:");
     logger.info("- All limiters = 0 for r < 0 (preserves monotonicity)");

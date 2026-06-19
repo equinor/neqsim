@@ -42,16 +42,17 @@ public class Kinetics implements java.io.Serializable {
    * calcKinetics.
    * </p>
    */
-  public void calcKinetics() {}
+  public void calcKinetics() {
+  }
 
   /**
    * <p>
    * calcReacMatrix.
    * </p>
    *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase      a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param interPhase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param comp a int
+   * @param comp       a int
    * @return a double
    */
   public double calcReacMatrix(PhaseInterface phase, PhaseInterface interPhase, int comp) {
@@ -60,8 +61,7 @@ public class Kinetics implements java.io.Serializable {
     double irr = 0.0;
     double ktemp = 0.0;
     double exponent = 0.0;
-    Iterator<ChemicalReaction> e =
-        operations.getReactionList().getChemicalReactionList().iterator();
+    Iterator<ChemicalReaction> e = operations.getReactionList().getChemicalReactionList().iterator();
     phase.getPhysicalProperties().calcEffectiveDiffusionCoefficients();
 
     while (e.hasNext()) {
@@ -70,44 +70,41 @@ public class Kinetics implements java.io.Serializable {
       irr = 1.0 / reaction.getK(phase);
       // System.out.println("reaction heat " + reaction.getReactionHeat(phase));
       for (int j = 0; j < reaction.getNames().length; j++) {
-        irr *= Math.pow(
-            interPhase.getComponent(reaction.getNames()[j]).getx()
-                * phase.getPhysicalProperties().getDensity()
-                / phase.getComponent(reaction.getNames()[j]).getMolarMass(),
-            -reaction.getStocCoefs()[j]);
-        // System.out.println("reac names " + reaction.getNames()[j]);
-        // System.out.println("stoc coefs " + reaction.getStocCoefs()[j]);
-        if (phase.getComponents()[comp].getName().equals(reaction.getNames()[j])) {
-          for (int k = 0; k < reaction.getNames().length; k++) {
-            if (reaction.getStocCoefs()[k] * reaction.getStocCoefs()[j] > 0 && !(k == j)
-                && !(phase.getComponent(reaction.getNames()[k]).getName().equals("water"))) {
-              exponent = reaction.getStocCoefs()[k] / reaction.getStocCoefs()[j];
-              double molConsAint = interPhase.getComponent(comp).getx()
-                  * interPhase.getPhysicalProperties().getDensity()
-                  / phase.getComponent(comp).getMolarMass();
-              double molConsB = phase.getComponent(reaction.getNames()[k]).getx()
-                  * phase.getPhysicalProperties().getDensity()
-                  / phase.getComponent(reaction.getNames()[k]).getMolarMass();
-              ktemp *= Math.pow(molConsB, exponent);
-              phiInfinite = Math
-                  .sqrt(phase.getPhysicalProperties().getEffectiveDiffusionCoefficient(comp)
-                      / phase.getPhysicalProperties().getEffectiveDiffusionCoefficient(
-                          phase.getComponent(reaction.getNames()[k]).getComponentNumber()))
-                  + Math
-                      .sqrt(phase.getPhysicalProperties().getEffectiveDiffusionCoefficient(
-                          phase.getComponent(reaction.getNames()[k]).getComponentNumber())
-                          / phase.getPhysicalProperties().getEffectiveDiffusionCoefficient(comp))
-                      * molConsB / (exponent * molConsAint);
-              // System.out.println("reac names " + reaction.getNames()[k]);
-              // System.out.println("phi inf " + phiInfinite);
-            }
-          }
-        }
+	irr *= Math.pow(interPhase.getComponent(reaction.getNames()[j]).getx()
+	    * phase.getPhysicalProperties().getDensity() / phase.getComponent(reaction.getNames()[j]).getMolarMass(),
+	    -reaction.getStocCoefs()[j]);
+	// System.out.println("reac names " + reaction.getNames()[j]);
+	// System.out.println("stoc coefs " + reaction.getStocCoefs()[j]);
+	if (phase.getComponents()[comp].getName().equals(reaction.getNames()[j])) {
+	  for (int k = 0; k < reaction.getNames().length; k++) {
+	    if (reaction.getStocCoefs()[k] * reaction.getStocCoefs()[j] > 0 && !(k == j)
+		&& !(phase.getComponent(reaction.getNames()[k]).getName().equals("water"))) {
+	      exponent = reaction.getStocCoefs()[k] / reaction.getStocCoefs()[j];
+	      double molConsAint = interPhase.getComponent(comp).getx()
+		  * interPhase.getPhysicalProperties().getDensity() / phase.getComponent(comp).getMolarMass();
+	      double molConsB = phase.getComponent(reaction.getNames()[k]).getx()
+		  * phase.getPhysicalProperties().getDensity()
+		  / phase.getComponent(reaction.getNames()[k]).getMolarMass();
+	      ktemp *= Math.pow(molConsB, exponent);
+	      phiInfinite = Math
+		  .sqrt(phase.getPhysicalProperties().getEffectiveDiffusionCoefficient(comp)
+		      / phase.getPhysicalProperties().getEffectiveDiffusionCoefficient(
+			  phase.getComponent(reaction.getNames()[k]).getComponentNumber()))
+		  + Math
+		      .sqrt(phase.getPhysicalProperties().getEffectiveDiffusionCoefficient(
+			  phase.getComponent(reaction.getNames()[k]).getComponentNumber())
+			  / phase.getPhysicalProperties().getEffectiveDiffusionCoefficient(comp))
+		      * molConsB / (exponent * molConsAint);
+	      // System.out.println("reac names " + reaction.getNames()[k]);
+	      // System.out.println("phi inf " + phiInfinite);
+	    }
+	  }
+	}
       }
       reacCoef += ktemp;
       // System.out.println("irr " + irr);
       if (Math.abs(irr) < 1e-3) {
-        isIrreversible = true;
+	isIrreversible = true;
       }
     }
     return reacCoef;
@@ -129,9 +126,9 @@ public class Kinetics implements java.io.Serializable {
    * getPseudoFirstOrderCoef.
    * </p>
    *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase      a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param interPhase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param comp a int
+   * @param comp       a int
    * @return a double
    */
   public double getPseudoFirstOrderCoef(PhaseInterface phase, PhaseInterface interPhase, int comp) {

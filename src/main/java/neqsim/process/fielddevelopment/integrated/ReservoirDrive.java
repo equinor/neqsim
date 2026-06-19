@@ -6,10 +6,10 @@ import java.io.Serializable;
  * A reservoir drive (material balance) model for integrated reservoir-to-market simulation.
  *
  * <p>
- * A drive model translates cumulative produced volume into an average reservoir pressure, providing
- * the coupling that lets the {@link IntegratedProductionModel} march a field forward in time. The
- * pressure returned here is the boundary pressure applied to the reservoir nodes of the
- * {@link NetworkNewtonSolver}, so well deliverability falls naturally as the reservoir depletes.
+ * A drive model translates cumulative produced volume into an average reservoir pressure, providing the coupling that
+ * lets the {@link IntegratedProductionModel} march a field forward in time. The pressure returned here is the boundary
+ * pressure applied to the reservoir nodes of the {@link NetworkNewtonSolver}, so well deliverability falls naturally as
+ * the reservoir depletes.
  * </p>
  *
  * @author NeqSim
@@ -31,7 +31,7 @@ public interface ReservoirDrive extends Serializable {
    * Advances the drive by producing a volume over a time step.
    *
    * @param producedVolumeSm3 surface volume produced during the step in Sm3
-   * @param dtDays length of the time step in days
+   * @param dtDays            length of the time step in days
    */
   void produce(double producedVolumeSm3, double dtDays);
 

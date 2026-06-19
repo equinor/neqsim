@@ -14,16 +14,16 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * where $\mu$ is the gas viscosity and $Z$ is the gas compressibility factor.
  *
  * <p>
- * <b>Default units:</b> All public methods use Kelvin and bara. The EOS-based path produces
- * results in bara^2/cP. The correlation-based path also uses bara/K and produces bara^2/cP.
+ * <b>Default units:</b> All public methods use Kelvin and bara. The EOS-based path produces results in bara^2/cP. The
+ * correlation-based path also uses bara/K and produces bara^2/cP.
  *
  * <p>
  * Two calculation modes are supported:
  * <ul>
- * <li><b>EOS-based</b>: Uses a NeqSim thermodynamic system to compute Z and viscosity at each
- * pressure step via rigorous equation of state. Most accurate for known compositions.</li>
- * <li><b>Correlation-based</b>: Uses empirical correlations for Z-factor and viscosity.
- * Suitable when only gas specific gravity is known.</li>
+ * <li><b>EOS-based</b>: Uses a NeqSim thermodynamic system to compute Z and viscosity at each pressure step via
+ * rigorous equation of state. Most accurate for known compositions.</li>
+ * <li><b>Correlation-based</b>: Uses empirical correlations for Z-factor and viscosity. Suitable when only gas specific
+ * gravity is known.</li>
  * </ul>
  *
  * <p>
@@ -78,7 +78,7 @@ public class GasPseudoPressure {
   /**
    * Calculate the pseudopressure difference m(P) - m(Pref) using an EOS-based approach.
    *
-   * @param pressure Upper pressure limit (bara)
+   * @param pressure          Upper pressure limit (bara)
    * @param referencePressure Lower pressure limit (bara)
    * @return Pseudopressure difference (bara^2/cP)
    */
@@ -89,9 +89,9 @@ public class GasPseudoPressure {
   /**
    * Calculate the pseudopressure difference with specified pressure units.
    *
-   * @param pressure Upper pressure limit
+   * @param pressure          Upper pressure limit
    * @param referencePressure Lower pressure limit
-   * @param pressureUnit Pressure unit: "bara", "psia", "Pa", "MPa", "atm"
+   * @param pressureUnit      Pressure unit: "bara", "psia", "Pa", "MPa", "atm"
    * @return Pseudopressure difference in consistent units (pressure^2 / viscosity)
    */
   public double calculate(double pressure, double referencePressure, String pressureUnit) {
@@ -123,7 +123,7 @@ public class GasPseudoPressure {
    *
    * @param pressureMin Minimum pressure (bara)
    * @param pressureMax Maximum pressure (bara)
-   * @param nPoints Number of pressure points
+   * @param nPoints     Number of pressure points
    * @return 2D array [pressures (bara), pseudopressures (bara^2/cP)]
    */
   public double[][] pseudoPressureProfile(double pressureMin, double pressureMax, int nPoints) {
@@ -136,44 +136,41 @@ public class GasPseudoPressure {
       mP[i] = integrateEOS(pressureMin, pressures[i]);
     }
 
-    return new double[][] {pressures, mP};
+    return new double[][] { pressures, mP };
   }
 
   /**
    * Calculate pseudopressure using correlation-based approach (no EOS).
    *
    * <p>
-   * Uses the Lee-Gonzalez-Eakin viscosity correlation and Hall-Yarborough Z-factor.
-   * Suitable when only basic gas properties are available (no compositional data).
+   * Uses the Lee-Gonzalez-Eakin viscosity correlation and Hall-Yarborough Z-factor. Suitable when only basic gas
+   * properties are available (no compositional data).
    *
-   * @param pressureBara Upper pressure (bara)
+   * @param pressureBara          Upper pressure (bara)
    * @param referencePressureBara Lower pressure (bara)
-   * @param temperatureK Temperature (Kelvin)
-   * @param gammaG Gas specific gravity (air = 1.0)
-   * @param molecularWeight Gas molecular weight
+   * @param temperatureK          Temperature (Kelvin)
+   * @param gammaG                Gas specific gravity (air = 1.0)
+   * @param molecularWeight       Gas molecular weight
    * @return Pseudopressure difference (bara^2/cP)
    */
-  public static double calculateFromCorrelation(double pressureBara,
-      double referencePressureBara, double temperatureK, double gammaG,
-      double molecularWeight) {
-    return integrateCorrelation(referencePressureBara, pressureBara, temperatureK, gammaG,
-        molecularWeight, 200);
+  public static double calculateFromCorrelation(double pressureBara, double referencePressureBara, double temperatureK,
+      double gammaG, double molecularWeight) {
+    return integrateCorrelation(referencePressureBara, pressureBara, temperatureK, gammaG, molecularWeight, 200);
   }
 
   /**
    * Calculate delta pseudopressure between two pressures using correlations.
    *
-   * @param p1Bara First pressure (bara)
-   * @param p2Bara Second pressure (bara)
-   * @param temperatureK Temperature (Kelvin)
-   * @param gammaG Gas specific gravity (air = 1.0)
+   * @param p1Bara          First pressure (bara)
+   * @param p2Bara          Second pressure (bara)
+   * @param temperatureK    Temperature (Kelvin)
+   * @param gammaG          Gas specific gravity (air = 1.0)
    * @param molecularWeight Gas molecular weight
    * @return |m(p1) - m(p2)| in bara^2/cP
    */
-  public static double deltaPseudoPressure(double p1Bara, double p2Bara, double temperatureK,
-      double gammaG, double molecularWeight) {
-    return Math.abs(
-        calculateFromCorrelation(p1Bara, p2Bara, temperatureK, gammaG, molecularWeight));
+  public static double deltaPseudoPressure(double p1Bara, double p2Bara, double temperatureK, double gammaG,
+      double molecularWeight) {
+    return Math.abs(calculateFromCorrelation(p1Bara, p2Bara, temperatureK, gammaG, molecularWeight));
   }
 
   // ==================== INTERNAL INTEGRATION METHODS ====================
@@ -181,7 +178,7 @@ public class GasPseudoPressure {
   /**
    * Integrate pseudopressure using EOS-based Z and viscosity (Simpson's rule).
    *
-   * @param pLow Lower pressure (bara)
+   * @param pLow  Lower pressure (bara)
    * @param pHigh Upper pressure (bara)
    * @return Pseudopressure integral (bara^2/cP)
    */
@@ -202,9 +199,9 @@ public class GasPseudoPressure {
       double p = pLow + i * h;
       double f = evaluateIntegrandEOS(p);
       if (i % 2 == 0) {
-        sum += 2.0 * f;
+	sum += 2.0 * f;
       } else {
-        sum += 4.0 * f;
+	sum += 4.0 * f;
       }
     }
 
@@ -230,7 +227,7 @@ public class GasPseudoPressure {
       double muCP = muPaS * 1000.0;
 
       if (z <= 0.0 || muCP <= 0.0) {
-        return 0.0;
+	return 0.0;
       }
 
       return 2.0 * pBara / (muCP * z);
@@ -242,16 +239,16 @@ public class GasPseudoPressure {
   /**
    * Integrate pseudopressure using correlation-based Z and viscosity.
    *
-   * @param pLow Lower pressure (bara)
-   * @param pHigh Upper pressure (bara)
+   * @param pLow         Lower pressure (bara)
+   * @param pHigh        Upper pressure (bara)
    * @param temperatureK Temperature (Kelvin)
-   * @param gammaG Gas specific gravity
-   * @param mw Gas molecular weight
-   * @param nSteps Number of integration steps
+   * @param gammaG       Gas specific gravity
+   * @param mw           Gas molecular weight
+   * @param nSteps       Number of integration steps
    * @return Pseudopressure integral (bara^2/cP)
    */
-  private static double integrateCorrelation(double pLow, double pHigh, double temperatureK,
-      double gammaG, double mw, int nSteps) {
+  private static double integrateCorrelation(double pLow, double pHigh, double temperatureK, double gammaG, double mw,
+      int nSteps) {
     if (Math.abs(pHigh - pLow) < 1e-10) {
       return 0.0;
     }
@@ -263,15 +260,15 @@ public class GasPseudoPressure {
 
     double h = (pHigh - pLow) / n;
     double sum = evaluateIntegrandCorrelation(pLow, temperatureK, gammaG, mw)
-        + evaluateIntegrandCorrelation(pHigh, temperatureK, gammaG, mw);
+	+ evaluateIntegrandCorrelation(pHigh, temperatureK, gammaG, mw);
 
     for (int i = 1; i < n; i++) {
       double p = pLow + i * h;
       double f = evaluateIntegrandCorrelation(p, temperatureK, gammaG, mw);
       if (i % 2 == 0) {
-        sum += 2.0 * f;
+	sum += 2.0 * f;
       } else {
-        sum += 4.0 * f;
+	sum += 4.0 * f;
       }
     }
 
@@ -282,17 +279,16 @@ public class GasPseudoPressure {
    * Evaluate the pseudopressure integrand using correlations.
    *
    * <p>
-   * Internally converts K to Rankine and bara to psia for correlation coefficients,
-   * then returns the integrand in bara/cP so the integral result is in bara^2/cP.
+   * Internally converts K to Rankine and bara to psia for correlation coefficients, then returns the integrand in
+   * bara/cP so the integral result is in bara^2/cP.
    *
-   * @param pBara Pressure (bara)
+   * @param pBara        Pressure (bara)
    * @param temperatureK Temperature (Kelvin)
-   * @param gammaG Gas specific gravity
-   * @param mw Gas molecular weight
+   * @param gammaG       Gas specific gravity
+   * @param mw           Gas molecular weight
    * @return Integrand value: 2P/(mu*Z) in bara/cP
    */
-  private static double evaluateIntegrandCorrelation(double pBara, double temperatureK,
-      double gammaG, double mw) {
+  private static double evaluateIntegrandCorrelation(double pBara, double temperatureK, double gammaG, double mw) {
     double tRankine = temperatureK * K_TO_R;
     double pPsia = pBara * BARA_TO_PSIA;
 
@@ -325,8 +321,8 @@ public class GasPseudoPressure {
    * Hall-Yarborough Z-factor correlation (1973).
    *
    * <p>
-   * Solves the Hall-Yarborough equation implicitly using Newton-Raphson iteration. Valid for Tpr
-   * &gt; 1.0 and Ppr &lt; 25.
+   * Solves the Hall-Yarborough equation implicitly using Newton-Raphson iteration. Valid for Tpr &gt; 1.0 and Ppr &lt;
+   * 25.
    *
    * @param tPR Pseudoreduced temperature (T/Tc)
    * @param pPR Pseudoreduced pressure (P/Pc)
@@ -345,27 +341,26 @@ public class GasPseudoPressure {
 
     double y = 0.001;
     for (int iter = 0; iter < 100; iter++) {
-      double fy = a * pPR + (y + y * y + y * y * y - y * y * y * y) / Math.pow(1.0 - y, 3)
-          - b * y * y + c * Math.pow(y, d);
-      double dfy =
-          (1.0 + 4.0 * y + 4.0 * y * y - 4.0 * y * y * y + y * y * y * y) / Math.pow(1.0 - y, 4)
-              - 2.0 * b * y + c * d * Math.pow(y, d - 1.0);
+      double fy = a * pPR + (y + y * y + y * y * y - y * y * y * y) / Math.pow(1.0 - y, 3) - b * y * y
+	  + c * Math.pow(y, d);
+      double dfy = (1.0 + 4.0 * y + 4.0 * y * y - 4.0 * y * y * y + y * y * y * y) / Math.pow(1.0 - y, 4) - 2.0 * b * y
+	  + c * d * Math.pow(y, d - 1.0);
 
       if (Math.abs(dfy) < 1e-30) {
-        break;
+	break;
       }
 
       double yNew = y - fy / dfy;
       if (yNew < 0.0) {
-        yNew = y / 2.0;
+	yNew = y / 2.0;
       }
       if (yNew > 1.0) {
-        yNew = (y + 1.0) / 2.0;
+	yNew = (y + 1.0) / 2.0;
       }
 
       if (Math.abs(yNew - y) < 1e-12) {
-        y = yNew;
-        break;
+	y = yNew;
+	break;
       }
       y = yNew;
     }
@@ -383,7 +378,7 @@ public class GasPseudoPressure {
    * Convert pressure to bara.
    *
    * @param pressure Pressure value
-   * @param unit Pressure unit string
+   * @param unit     Pressure unit string
    * @return Pressure in bara
    */
   private static double convertToBara(double pressure, String unit) {

@@ -17,8 +17,7 @@ public class FluidBuilderTest extends neqsim.NeqSimTest {
   @Test
   public void testFluentBuilder() {
     SystemInterface fluid = FluidBuilder.create(273.15 + 25.0, 60.0).addComponent("methane", 0.85)
-        .addComponent("ethane", 0.10).addComponent("propane", 0.05).withMixingRule("classic")
-        .build();
+	.addComponent("ethane", 0.10).addComponent("propane", 0.05).withMixingRule("classic").build();
 
     assertNotNull(fluid);
     assertEquals(3, fluid.getNumberOfComponents());
@@ -33,9 +32,9 @@ public class FluidBuilderTest extends neqsim.NeqSimTest {
 
   @Test
   public void testBuilderWithPR() {
-    SystemInterface fluid = FluidBuilder.create(273.15 + 80.0, 200.0)
-        .withEOS(FluidBuilder.EOSType.PR).addComponent("methane", 0.50)
-        .addComponent("n-hexane", 0.50).withMixingRule("classic").withMultiPhaseCheck().build();
+    SystemInterface fluid = FluidBuilder.create(273.15 + 80.0, 200.0).withEOS(FluidBuilder.EOSType.PR)
+	.addComponent("methane", 0.50).addComponent("n-hexane", 0.50).withMixingRule("classic").withMultiPhaseCheck()
+	.build();
 
     assertNotNull(fluid);
     assertTrue(fluid instanceof SystemPrEos, "Should be PR EOS");
@@ -133,9 +132,8 @@ public class FluidBuilderTest extends neqsim.NeqSimTest {
 
   @Test
   public void testBuilderWithCPAMixingRule() {
-    SystemInterface fluid = FluidBuilder.create(273.15 + 25.0, 10.0)
-        .withEOS(FluidBuilder.EOSType.SRK_CPA).addComponent("methane", 0.90)
-        .addComponent("water", 0.10).withMixingRule(10).withMultiPhaseCheck().build();
+    SystemInterface fluid = FluidBuilder.create(273.15 + 25.0, 10.0).withEOS(FluidBuilder.EOSType.SRK_CPA)
+	.addComponent("methane", 0.90).addComponent("water", 0.10).withMixingRule(10).withMultiPhaseCheck().build();
 
     assertNotNull(fluid);
 

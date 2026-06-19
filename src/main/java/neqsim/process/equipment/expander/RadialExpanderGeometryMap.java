@@ -9,51 +9,48 @@ import neqsim.thermo.system.SystemInterface;
  * Geometry-based performance-map generator for a 90&deg; radial-inflow (IFR) turbo-expander.
  *
  * <p>
- * Commercial turbomachinery design codes (AxSTREAM, Concepts NREC) generate performance maps from
- * blade geometry using mean-line and through-flow methods. NeqSim is primarily map-driven; this
- * class closes part of that gap by producing a physically-shaped {@link ExpanderChartKhader} from a
- * small set of mean-line geometric inputs. It is a <em>preliminary</em> mean-line model intended
- * for concept screening and to seed a digitised map when no OEM curve is available, not a
- * replacement for a full blade-to-blade or CFD design code.
+ * Commercial turbomachinery design codes (AxSTREAM, Concepts NREC) generate performance maps from blade geometry using
+ * mean-line and through-flow methods. NeqSim is primarily map-driven; this class closes part of that gap by producing a
+ * physically-shaped {@link ExpanderChartKhader} from a small set of mean-line geometric inputs. It is a
+ * <em>preliminary</em> mean-line model intended for concept screening and to seed a digitised map when no OEM curve is
+ * available, not a replacement for a full blade-to-blade or CFD design code.
  * </p>
  *
  * <p>
- * The efficiency model is a classic mean-line loss accounting for a 90&deg; IFR turbine (Dixon
- * &amp; Hall, <i>Fluid Mechanics and Thermodynamics of Turbomachinery</i>; Whitfield &amp; Baines,
- * <i>Design of Radial Turbomachines</i>). Working with the velocity ratio
+ * The efficiency model is a classic mean-line loss accounting for a 90&deg; IFR turbine (Dixon &amp; Hall, <i>Fluid
+ * Mechanics and Thermodynamics of Turbomachinery</i>; Whitfield &amp; Baines, <i>Design of Radial Turbomachines</i>).
+ * Working with the velocity ratio
  * </p>
  *
  * $$ \nu = \frac{U_2}{c_0}, \qquad c_0 = \sqrt{2\,\Delta h_{0s}} $$
  *
  * <p>
- * and an absolute rotor-inlet flow angle \( \alpha_2 \) measured from the meridional (radial)
- * direction, the nominal (zero-incidence) velocity ratio is
+ * and an absolute rotor-inlet flow angle \( \alpha_2 \) measured from the meridional (radial) direction, the nominal
+ * (zero-incidence) velocity ratio is
  * </p>
  *
  * $$ \nu_{opt} = \sqrt{1-R}\,\sin\alpha_2 $$
  *
  * <p>
- * where \(R\) is the stage degree of reaction. The total-to-static efficiency over a sweep of
- * velocity ratio is then
+ * where \(R\) is the stage degree of reaction. The total-to-static efficiency over a sweep of velocity ratio is then
  * </p>
  *
- * $$ \eta_{ts}(\nu) = 1 - \Big[ f_i(\nu_{opt}-\nu)^2 + \zeta_n(1-R) + \zeta_r\big(r_r^2\nu^2 +
- * (1-R)\cos^2\alpha_2\big) + (1-R)\cos^2\alpha_2 \Big] $$
+ * $$ \eta_{ts}(\nu) = 1 - \Big[ f_i(\nu_{opt}-\nu)^2 + \zeta_n(1-R) + \zeta_r\big(r_r^2\nu^2 + (1-R)\cos^2\alpha_2\big)
+ * + (1-R)\cos^2\alpha_2 \Big] $$
  *
  * <p>
- * with incidence-loss factor \(f_i\), nozzle loss coefficient \(\zeta_n\), rotor loss coefficient
- * \(\zeta_r\) and exit/inlet radius ratio \(r_r = r_3/r_2\). The incidence term produces the
- * characteristic efficiency peak near \(\nu_{opt}\approx 0.7\); the friction term shifts the peak
- * slightly below \(\nu_{opt}\); the constant nozzle/exit terms cap the peak below unity.
+ * with incidence-loss factor \(f_i\), nozzle loss coefficient \(\zeta_n\), rotor loss coefficient \(\zeta_r\) and
+ * exit/inlet radius ratio \(r_r = r_3/r_2\). The incidence term produces the characteristic efficiency peak near
+ * \(\nu_{opt}\approx 0.7\); the friction term shifts the peak slightly below \(\nu_{opt}\); the constant nozzle/exit
+ * terms cap the peak below unity.
  * </p>
  *
  * <p>
- * Inlet-guide-vane (IGV) modulation is represented by supplying one nozzle angle per IGV position;
- * closing the vanes increases \(\alpha_2\) (more swirl) which shifts \(\nu_{opt}\) and the peak
- * efficiency. The available isentropic stage head drop is assumed constant across the
- * velocity-ratio sweep at a given IGV (it is fixed by the imposed pressure ratio, not by the
- * machine), and is fed to the chart in kJ/kg where {@link ExpanderChartKhader} rescales it for the
- * actual fluid sound speed.
+ * Inlet-guide-vane (IGV) modulation is represented by supplying one nozzle angle per IGV position; closing the vanes
+ * increases \(\alpha_2\) (more swirl) which shifts \(\nu_{opt}\) and the peak efficiency. The available isentropic
+ * stage head drop is assumed constant across the velocity-ratio sweep at a given IGV (it is fixed by the imposed
+ * pressure ratio, not by the machine), and is fed to the chart in kJ/kg where {@link ExpanderChartKhader} rescales it
+ * for the actual fluid sound speed.
  * </p>
  *
  * @author NeqSim
@@ -102,17 +99,17 @@ public class RadialExpanderGeometryMap implements Serializable {
   /**
    * Default constructor using representative cryogenic turbo-expander geometry.
    */
-  public RadialExpanderGeometryMap() {}
+  public RadialExpanderGeometryMap() {
+  }
 
   /**
    * Constructs a generator for a specific rotor geometry.
    *
    * @param impellerOuterDiameter the rotor inlet (tip) diameter in m
-   * @param radiusRatio the exit/inlet radius ratio r3/r2 (0..1)
-   * @param degreeOfReaction the stage degree of reaction (0..1)
+   * @param radiusRatio           the exit/inlet radius ratio r3/r2 (0..1)
+   * @param degreeOfReaction      the stage degree of reaction (0..1)
    */
-  public RadialExpanderGeometryMap(double impellerOuterDiameter, double radiusRatio,
-      double degreeOfReaction) {
+  public RadialExpanderGeometryMap(double impellerOuterDiameter, double radiusRatio, double degreeOfReaction) {
     setImpellerOuterDiameter(impellerOuterDiameter);
     setRadiusRatio(radiusRatio);
     setDegreeOfReaction(degreeOfReaction);
@@ -121,20 +118,19 @@ public class RadialExpanderGeometryMap implements Serializable {
   /**
    * Generates an {@link ExpanderChartKhader} from blade geometry for the supplied IGV schedule.
    *
-   * @param igvPositions IGV positions (fraction of maximum area, 0..1), strictly increasing
-   * @param nozzleAngleDeg absolute rotor-inlet flow angle (from the meridional/radial direction) in
-   *        degrees, one value per IGV position; larger angles correspond to more closed vanes
+   * @param igvPositions   IGV positions (fraction of maximum area, 0..1), strictly increasing
+   * @param nozzleAngleDeg absolute rotor-inlet flow angle (from the meridional/radial direction) in degrees, one value
+   *                       per IGV position; larger angles correspond to more closed vanes
    * @return a populated {@link ExpanderChartKhader} ready for use by a turbo-expander model
-   * @throws IllegalArgumentException if the inputs are null, empty or of mismatched length, or if
-   *         any nozzle angle is outside the open interval (0, 90) degrees
+   * @throws IllegalArgumentException if the inputs are null, empty or of mismatched length, or if any nozzle angle is
+   *                                  outside the open interval (0, 90) degrees
    */
   public ExpanderChartKhader generateChart(double[] igvPositions, double[] nozzleAngleDeg) {
     if (igvPositions == null || nozzleAngleDeg == null) {
       throw new IllegalArgumentException("igvPositions and nozzleAngleDeg must not be null");
     }
     if (igvPositions.length == 0 || igvPositions.length != nozzleAngleDeg.length) {
-      throw new IllegalArgumentException(
-          "igvPositions and nozzleAngleDeg must be non-empty and of equal length");
+      throw new IllegalArgumentException("igvPositions and nozzleAngleDeg must be non-empty and of equal length");
     }
     int nIgv = igvPositions.length;
     double[][] uc = new double[nIgv][pointsPerCurve];
@@ -144,8 +140,8 @@ public class RadialExpanderGeometryMap implements Serializable {
     for (int i = 0; i < nIgv; i++) {
       double alpha2 = Math.toRadians(nozzleAngleDeg[i]);
       if (nozzleAngleDeg[i] <= 0.0 || nozzleAngleDeg[i] >= 90.0) {
-        throw new IllegalArgumentException(
-            "nozzleAngleDeg must be in the open interval (0, 90); got " + nozzleAngleDeg[i]);
+	throw new IllegalArgumentException(
+	    "nozzleAngleDeg must be in the open interval (0, 90); got " + nozzleAngleDeg[i]);
       }
       double cosA = Math.cos(alpha2);
       double sinA = Math.sin(alpha2);
@@ -158,18 +154,16 @@ public class RadialExpanderGeometryMap implements Serializable {
       double headAtIgv = designHeadDropKjPerKg * headScale;
 
       for (int j = 0; j < pointsPerCurve; j++) {
-        double nu = minVelocityRatio
-            + (maxVelocityRatio - minVelocityRatio) * j / (double) (pointsPerCurve - 1);
-        double incidence = incidenceLossFactor * (nuOpt - nu) * (nuOpt - nu);
-        double rotorLoss = rotorLossCoefficient
-            * (radiusRatio * radiusRatio * nu * nu + reactionTerm * cosA * cosA);
-        double efficiency = 1.0 - (incidence + constantLoss + rotorLoss);
-        if (efficiency < 0.0) {
-          efficiency = 0.0;
-        }
-        uc[i][j] = nu;
-        eta[i][j] = efficiency;
-        headDrop[i][j] = headAtIgv;
+	double nu = minVelocityRatio + (maxVelocityRatio - minVelocityRatio) * j / (double) (pointsPerCurve - 1);
+	double incidence = incidenceLossFactor * (nuOpt - nu) * (nuOpt - nu);
+	double rotorLoss = rotorLossCoefficient * (radiusRatio * radiusRatio * nu * nu + reactionTerm * cosA * cosA);
+	double efficiency = 1.0 - (incidence + constantLoss + rotorLoss);
+	if (efficiency < 0.0) {
+	  efficiency = 0.0;
+	}
+	uc[i][j] = nu;
+	eta[i][j] = efficiency;
+	headDrop[i][j] = headAtIgv;
       }
     }
 
@@ -188,8 +182,7 @@ public class RadialExpanderGeometryMap implements Serializable {
    */
   public double nominalVelocityRatio(double nozzleAngleDeg) {
     if (nozzleAngleDeg <= 0.0 || nozzleAngleDeg >= 90.0) {
-      throw new IllegalArgumentException(
-          "nozzleAngleDeg must be in the open interval (0, 90); got " + nozzleAngleDeg);
+      throw new IllegalArgumentException("nozzleAngleDeg must be in the open interval (0, 90); got " + nozzleAngleDeg);
     }
     return Math.sqrt(1.0 - degreeOfReaction) * Math.sin(Math.toRadians(nozzleAngleDeg));
   }
@@ -244,8 +237,7 @@ public class RadialExpanderGeometryMap implements Serializable {
    */
   public void setDegreeOfReaction(double degreeOfReaction) {
     if (degreeOfReaction < 0.0 || degreeOfReaction >= 1.0) {
-      throw new IllegalArgumentException(
-          "degreeOfReaction must be in the half-open interval [0, 1)");
+      throw new IllegalArgumentException("degreeOfReaction must be in the half-open interval [0, 1)");
     }
     this.degreeOfReaction = degreeOfReaction;
   }

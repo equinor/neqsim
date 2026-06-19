@@ -13,8 +13,8 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
 public class SystemBWRSEos extends SystemEos {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
-  double[][] TBPfractionCoefs = {{163.12, 86.052, 0.43475, -1877.4, 0.0},
-      {-0.13408, 2.5019, 208.46, -3987.2, 1.0}, {0.7431, 0.004812, 0.009671, -3.7e-6, 0.0}};
+  double[][] TBPfractionCoefs = { { 163.12, 86.052, 0.43475, -1877.4, 0.0 }, { -0.13408, 2.5019, 208.46, -3987.2, 1.0 },
+      { 0.7431, 0.004812, 0.009671, -3.7e-6, 0.0 } };
 
   /**
    * <p>
@@ -42,8 +42,8 @@ public class SystemBWRSEos extends SystemEos {
    * Constructor for SystemBWRSEos.
    * </p>
    *
-   * @param T The temperature in unit Kelvin
-   * @param P The pressure in unit bara (absolute pressure)
+   * @param T              The temperature in unit Kelvin
+   * @param P              The pressure in unit bara (absolute pressure)
    * @param checkForSolids Set true to do solid phase check and calculations
    */
   public SystemBWRSEos(double T, double P, boolean checkForSolids) {

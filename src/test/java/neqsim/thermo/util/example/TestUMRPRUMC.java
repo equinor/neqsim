@@ -20,7 +20,7 @@ public class TestUMRPRUMC {
   private static final Logger logger = LogManager.getLogger(TestUMRPRUMC.class);
 
   /** Logger object for class. */
-  
+
   /**
    * <p>
    * main.

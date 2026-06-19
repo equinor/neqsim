@@ -6,8 +6,8 @@ import java.io.Serializable;
  * Interface for country-specific tax model calculations.
  *
  * <p>
- * This interface defines the contract for calculating taxes and deductions under any fiscal regime.
- * Implementations handle the specific rules for different countries and regions.
+ * This interface defines the contract for calculating taxes and deductions under any fiscal regime. Implementations
+ * handle the specific rules for different countries and regions.
  * </p>
  *
  * <h2>Implementations</h2>
@@ -61,9 +61,9 @@ public interface TaxModel extends Serializable {
    * Calculates tax for a single year.
    *
    * @param grossRevenue total revenue for the year
-   * @param opex operating expenditure for the year
+   * @param opex         operating expenditure for the year
    * @param depreciation depreciation deduction for the year
-   * @param uplift uplift/incentive deduction for the year
+   * @param uplift       uplift/incentive deduction for the year
    * @return tax calculation result
    */
   TaxResult calculateTax(double grossRevenue, double opex, double depreciation, double uplift);
@@ -72,7 +72,7 @@ public interface TaxModel extends Serializable {
    * Calculates annual depreciation.
    *
    * @param capex total capital expenditure
-   * @param year year number (1 = first year of depreciation)
+   * @param year  year number (1 = first year of depreciation)
    * @return depreciation amount for the specified year
    */
   double calculateDepreciation(double capex, int year);
@@ -81,7 +81,7 @@ public interface TaxModel extends Serializable {
    * Calculates uplift/investment incentive deduction.
    *
    * @param capex total capital expenditure
-   * @param year year number (1 = first year of eligibility)
+   * @param year  year number (1 = first year of eligibility)
    * @return uplift amount for the specified year
    */
   double calculateUplift(double capex, int year);
@@ -98,13 +98,12 @@ public interface TaxModel extends Serializable {
    * Calculates the effective tax rate.
    *
    * @param grossRevenue total revenue
-   * @param opex operating expenditure
+   * @param opex         operating expenditure
    * @param depreciation depreciation deduction
-   * @param uplift uplift deduction
+   * @param uplift       uplift deduction
    * @return effective tax rate (0-1)
    */
-  double calculateEffectiveTaxRate(double grossRevenue, double opex, double depreciation,
-      double uplift);
+  double calculateEffectiveTaxRate(double grossRevenue, double opex, double depreciation, double uplift);
 
   /**
    * Gets the total marginal tax rate.
@@ -151,21 +150,21 @@ public interface TaxModel extends Serializable {
     /**
      * Creates a new tax result.
      *
-     * @param grossRevenue gross revenue
-     * @param opex operating expenditure
-     * @param depreciation depreciation
-     * @param uplift uplift deduction
-     * @param royalty royalty
+     * @param grossRevenue     gross revenue
+     * @param opex             operating expenditure
+     * @param depreciation     depreciation
+     * @param uplift           uplift deduction
+     * @param royalty          royalty
      * @param corporateTaxBase corporate tax base
-     * @param corporateTax corporate tax
-     * @param resourceTaxBase resource tax base
-     * @param resourceTax resource tax
-     * @param totalTax total tax
-     * @param afterTaxIncome after-tax income
+     * @param corporateTax     corporate tax
+     * @param resourceTaxBase  resource tax base
+     * @param resourceTax      resource tax
+     * @param totalTax         total tax
+     * @param afterTaxIncome   after-tax income
      */
-    public TaxResult(double grossRevenue, double opex, double depreciation, double uplift,
-        double royalty, double corporateTaxBase, double corporateTax, double resourceTaxBase,
-        double resourceTax, double totalTax, double afterTaxIncome) {
+    public TaxResult(double grossRevenue, double opex, double depreciation, double uplift, double royalty,
+	double corporateTaxBase, double corporateTax, double resourceTaxBase, double resourceTax, double totalTax,
+	double afterTaxIncome) {
       this.grossRevenue = grossRevenue;
       this.opex = opex;
       this.depreciation = depreciation;
@@ -183,22 +182,21 @@ public interface TaxModel extends Serializable {
     /**
      * Creates a tax result without royalty (for backward compatibility).
      *
-     * @param grossRevenue gross revenue
-     * @param opex operating expenditure
-     * @param depreciation depreciation
-     * @param uplift uplift deduction
+     * @param grossRevenue     gross revenue
+     * @param opex             operating expenditure
+     * @param depreciation     depreciation
+     * @param uplift           uplift deduction
      * @param corporateTaxBase corporate tax base
-     * @param corporateTax corporate tax
-     * @param resourceTaxBase resource tax base
-     * @param resourceTax resource tax
-     * @param totalTax total tax
-     * @param afterTaxIncome after-tax income
+     * @param corporateTax     corporate tax
+     * @param resourceTaxBase  resource tax base
+     * @param resourceTax      resource tax
+     * @param totalTax         total tax
+     * @param afterTaxIncome   after-tax income
      */
-    public TaxResult(double grossRevenue, double opex, double depreciation, double uplift,
-        double corporateTaxBase, double corporateTax, double resourceTaxBase, double resourceTax,
-        double totalTax, double afterTaxIncome) {
-      this(grossRevenue, opex, depreciation, uplift, 0.0, corporateTaxBase, corporateTax,
-          resourceTaxBase, resourceTax, totalTax, afterTaxIncome);
+    public TaxResult(double grossRevenue, double opex, double depreciation, double uplift, double corporateTaxBase,
+	double corporateTax, double resourceTaxBase, double resourceTax, double totalTax, double afterTaxIncome) {
+      this(grossRevenue, opex, depreciation, uplift, 0.0, corporateTaxBase, corporateTax, resourceTaxBase, resourceTax,
+	  totalTax, afterTaxIncome);
     }
 
     // Getters
@@ -276,7 +274,7 @@ public interface TaxModel extends Serializable {
      */
     public double getEffectiveTaxRate() {
       if (grossRevenue <= 0) {
-        return 0.0;
+	return 0.0;
       }
       return totalTax / grossRevenue;
     }
@@ -288,15 +286,15 @@ public interface TaxModel extends Serializable {
      */
     public double getGovernmentTakePercentage() {
       if (grossRevenue <= 0) {
-        return 0.0;
+	return 0.0;
       }
       return governmentTake / grossRevenue;
     }
 
     @Override
     public String toString() {
-      return String.format("TaxResult[revenue=%.2f, tax=%.2f (%.1f%%), afterTax=%.2f]",
-          grossRevenue, totalTax, getEffectiveTaxRate() * 100, afterTaxIncome);
+      return String.format("TaxResult[revenue=%.2f, tax=%.2f (%.1f%%), afterTax=%.2f]", grossRevenue, totalTax,
+	  getEffectiveTaxRate() * 100, afterTaxIncome);
     }
   }
 }

@@ -20,7 +20,7 @@ public class PressureLoadingCurve {
   private static final Logger logger = LogManager.getLogger(PressureLoadingCurve.class);
 
   /** Logger object for class. */
-  
+
   /**
    * This method is just meant to test the thermo package.
    *
@@ -55,20 +55,20 @@ public class PressureLoadingCurve {
     testSystem.display();
     logger.info("pressure " + testSystem.getPressure());
     int reactionNumber = 0;
-    logger.info("K " + testSystem.getChemicalReactionOperations().getReactionList()
-        .getReaction(reactionNumber).calcK(testSystem, 1));
-    logger.info("Kx " + testSystem.getChemicalReactionOperations().getReactionList()
-        .getReaction(reactionNumber).calcKx(testSystem, 1));
-    logger.info("Kgamma " + testSystem.getChemicalReactionOperations().getReactionList()
-        .getReaction(reactionNumber).calcKgamma(testSystem, 1));
+    logger.info("K " + testSystem.getChemicalReactionOperations().getReactionList().getReaction(reactionNumber)
+	.calcK(testSystem, 1));
+    logger.info("Kx " + testSystem.getChemicalReactionOperations().getReactionList().getReaction(reactionNumber)
+	.calcKx(testSystem, 1));
+    logger.info("Kgamma " + testSystem.getChemicalReactionOperations().getReactionList().getReaction(reactionNumber)
+	.calcKgamma(testSystem, 1));
     testSystem.setPressure(100.0);
     testSystem.getChemicalReactionOperations().solveChemEq(1);
-    logger.info("K " + testSystem.getChemicalReactionOperations().getReactionList()
-        .getReaction(reactionNumber).calcK(testSystem, 1));
-    logger.info("Kx " + testSystem.getChemicalReactionOperations().getReactionList()
-        .getReaction(reactionNumber).calcKx(testSystem, 1));
-    logger.info("Kgamma " + testSystem.getChemicalReactionOperations().getReactionList()
-        .getReaction(reactionNumber).calcKgamma(testSystem, 1));
+    logger.info("K " + testSystem.getChemicalReactionOperations().getReactionList().getReaction(reactionNumber)
+	.calcK(testSystem, 1));
+    logger.info("Kx " + testSystem.getChemicalReactionOperations().getReactionList().getReaction(reactionNumber)
+	.calcKx(testSystem, 1));
+    logger.info("Kgamma " + testSystem.getChemicalReactionOperations().getReactionList().getReaction(reactionNumber)
+	.calcKgamma(testSystem, 1));
 
     testSystem.display();
     // thermo.ThermodynamicModelTest testModel = new

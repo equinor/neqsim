@@ -11,9 +11,9 @@ import neqsim.thermo.phase.PhaseInterface;
  * Friction theory (f-theory) thermal conductivity method for both gas and liquid phases.
  *
  * <p>
- * The method decomposes thermal conductivity into a dilute-gas contribution (modified Eucken with
- * Mason-Saxena mixing) and a dense-fluid residual contribution. The residual conductivity is
- * obtained from the residual viscosity using the generalized Eucken relation:
+ * The method decomposes thermal conductivity into a dilute-gas contribution (modified Eucken with Mason-Saxena mixing)
+ * and a dense-fluid residual contribution. The residual conductivity is obtained from the residual viscosity using the
+ * generalized Eucken relation:
  * </p>
  *
  * <p>
@@ -21,25 +21,23 @@ import neqsim.thermo.phase.PhaseInterface;
  * </p>
  *
  * <p>
- * where f_Eucken = (Cv0 + 1.25*R) is the Eucken correction factor, and eta/eta_0 are the total and
- * dilute-gas viscosities from the phase's existing viscosity model.
+ * where f_Eucken = (Cv0 + 1.25*R) is the Eucken correction factor, and eta/eta_0 are the total and dilute-gas
+ * viscosities from the phase's existing viscosity model.
  * </p>
  *
  * <p>
  * References:
  * </p>
  * <ul>
- * <li>Chung, T.-H., Ajlan, M., Lee, L. L., Starling, K. E. (1988). Ind. Eng. Chem. Res. 27(4),
- * 671-679.</li>
- * <li>Poling, B.E., Prausnitz, J.M., O'Connell, J.P. (2001). The Properties of Gases and Liquids,
- * 5th edition, Chapter 10.</li>
+ * <li>Chung, T.-H., Ajlan, M., Lee, L. L., Starling, K. E. (1988). Ind. Eng. Chem. Res. 27(4), 671-679.</li>
+ * <li>Poling, B.E., Prausnitz, J.M., O'Connell, J.P. (2001). The Properties of Gases and Liquids, 5th edition, Chapter
+ * 10.</li>
  * </ul>
  *
  * @author Even Solbraa
  * @version 1.0
  */
-public class FrictionTheoryConductivityMethod extends Conductivity
-    implements ThermodynamicConstantsInterface {
+public class FrictionTheoryConductivityMethod extends Conductivity implements ThermodynamicConstantsInterface {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
@@ -92,14 +90,13 @@ public class FrictionTheoryConductivityMethod extends Conductivity
     for (int i = 0; i < numComp; i++) {
       double denominator = 0.0;
       for (int j = 0; j < numComp; j++) {
-        double aij = Math
-            .pow(1.0 + Math.sqrt(pureComponentConductivity[i] / pureComponentConductivity[j])
-                * Math.pow(localPhase.getComponent(i).getMolarMass()
-                    / localPhase.getComponent(j).getMolarMass(), 0.25),
-                2.0)
-            / Math.sqrt(8.0 * (1.0 + localPhase.getComponent(i).getMolarMass()
-                / localPhase.getComponent(j).getMolarMass()));
-        denominator += localPhase.getComponent(j).getx() * aij;
+	double aij = Math.pow(
+	    1.0 + Math.sqrt(pureComponentConductivity[i] / pureComponentConductivity[j])
+		* Math.pow(localPhase.getComponent(i).getMolarMass() / localPhase.getComponent(j).getMolarMass(), 0.25),
+	    2.0)
+	    / Math.sqrt(
+		8.0 * (1.0 + localPhase.getComponent(i).getMolarMass() / localPhase.getComponent(j).getMolarMass()));
+	denominator += localPhase.getComponent(j).getx() * aij;
       }
       lambda0 += localPhase.getComponent(i).getx() * pureComponentConductivity[i] / denominator;
     }
@@ -113,14 +110,13 @@ public class FrictionTheoryConductivityMethod extends Conductivity
     for (int i = 0; i < numComp; i++) {
       double denominator = 0.0;
       for (int j = 0; j < numComp; j++) {
-        double phiIJ = Math
-            .pow(1.0 + Math.sqrt(pureComponentViscosity[i] / pureComponentViscosity[j])
-                * Math.pow(localPhase.getComponent(j).getMolarMass()
-                    / localPhase.getComponent(i).getMolarMass(), 0.25),
-                2.0)
-            / Math.sqrt(8.0 * (1.0 + localPhase.getComponent(i).getMolarMass()
-                / localPhase.getComponent(j).getMolarMass()));
-        denominator += localPhase.getComponent(j).getx() * phiIJ;
+	double phiIJ = Math.pow(
+	    1.0 + Math.sqrt(pureComponentViscosity[i] / pureComponentViscosity[j])
+		* Math.pow(localPhase.getComponent(j).getMolarMass() / localPhase.getComponent(i).getMolarMass(), 0.25),
+	    2.0)
+	    / Math.sqrt(
+		8.0 * (1.0 + localPhase.getComponent(i).getMolarMass() / localPhase.getComponent(j).getMolarMass()));
+	denominator += localPhase.getComponent(j).getx() * phiIJ;
       }
       visc0 += localPhase.getComponent(i).getx() * pureComponentViscosity[i] / denominator;
     }
@@ -129,8 +125,7 @@ public class FrictionTheoryConductivityMethod extends Conductivity
     double cv0Mix = 0.0;
     double mwMixKg = localPhase.getMolarMass(); // kg/mol
     for (int i = 0; i < numComp; i++) {
-      cv0Mix += localPhase.getComponent(i).getx()
-          * localPhase.getComponent(i).getCv0(localPhase.getTemperature());
+      cv0Mix += localPhase.getComponent(i).getx() * localPhase.getComponent(i).getCv0(localPhase.getTemperature());
     }
 
     // Eucken factor: f = (Cv0 + 1.25*R) for converting viscosity excess to conductivity
@@ -152,8 +147,7 @@ public class FrictionTheoryConductivityMethod extends Conductivity
   }
 
   /**
-   * Initializes pure component dilute-gas conductivities and viscosities using the Chung et al.
-   * (1988) method.
+   * Initializes pure component dilute-gas conductivities and viscosities using the Chung et al. (1988) method.
    */
   private void initPureComponentProperties() {
     PhaseInterface localPhase = phase.getPhase();
@@ -163,17 +157,16 @@ public class FrictionTheoryConductivityMethod extends Conductivity
       ComponentInterface comp = localPhase.getComponent(i);
 
       // Fc correction
-      double relativeDipole =
-          131.3 * comp.getDebyeDipoleMoment() / Math.sqrt(comp.getCriticalVolume() * comp.getTC());
+      double relativeDipole = 131.3 * comp.getDebyeDipoleMoment() / Math.sqrt(comp.getCriticalVolume() * comp.getTC());
       fc[i] = 1.0 - 0.2756 * comp.getAcentricFactor() + 0.059035 * Math.pow(relativeDipole, 4.0);
 
       double tStar = 1.2593 * temperature / comp.getTC();
       omegaCond[i] = CHUNG_A / Math.pow(tStar, CHUNG_B) + CHUNG_C / Math.exp(CHUNG_D * tStar)
-          + CHUNG_E / Math.exp(CHUNG_F * tStar);
+	  + CHUNG_E / Math.exp(CHUNG_F * tStar);
 
       // Pure component viscosity in micropoise (Chung)
       double viscMicroP = 40.785 * Math.sqrt(comp.getMolarMass() * 1000.0 * temperature)
-          / (Math.pow(comp.getCriticalVolume(), 2.0 / 3.0) * omegaCond[i]) * fc[i];
+	  / (Math.pow(comp.getCriticalVolume(), 2.0 / 3.0) * omegaCond[i]) * fc[i];
 
       // Store in Pa*s for dilute mixing
       pureComponentViscosity[i] = viscMicroP * 1e-7;
@@ -184,18 +177,17 @@ public class FrictionTheoryConductivityMethod extends Conductivity
       // Alpha correction (modified Eucken, Chung formulation)
       double cvR = cv0 / R - 1.5;
       double beta = 0.7862 - 0.7109 * comp.getAcentricFactor()
-          + 1.3168 * comp.getAcentricFactor() * comp.getAcentricFactor();
+	  + 1.3168 * comp.getAcentricFactor() * comp.getAcentricFactor();
       double z = 2.0 + 10.5 * (temperature / comp.getTC()) * (temperature / comp.getTC());
-      double alpha = 1.0 + cvR * ((0.215 + 0.28288 * cvR - 1.061 * beta + 0.26665 * z)
-          / (0.6366 + beta * z + 1.061 * cvR * beta));
+      double alpha = 1.0
+	  + cvR * ((0.215 + 0.28288 * cvR - 1.061 * beta + 0.26665 * z) / (0.6366 + beta * z + 1.061 * cvR * beta));
 
       // Pure component conductivity in W/(m*K):
       // lambda = (eta_PaS / M_kg) * 3.75 * R * Psi
-      pureComponentConductivity[i] =
-          (pureComponentViscosity[i] / comp.getMolarMass()) * 3.75 * R * alpha;
+      pureComponentConductivity[i] = (pureComponentViscosity[i] / comp.getMolarMass()) * 3.75 * R * alpha;
 
       if (pureComponentConductivity[i] < 1e-50) {
-        pureComponentConductivity[i] = 1e-50;
+	pureComponentConductivity[i] = 1e-50;
       }
     }
   }

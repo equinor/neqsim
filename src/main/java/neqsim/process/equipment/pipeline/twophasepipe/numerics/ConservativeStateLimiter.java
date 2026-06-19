@@ -6,20 +6,20 @@ package neqsim.process.equipment.pipeline.twophasepipe.numerics;
 public final class ConservativeStateLimiter {
   private static final double EPS = 1e-12;
 
-  private ConservativeStateLimiter() {}
+  private ConservativeStateLimiter() {
+  }
 
   /**
-   * Enforce non-negative gas, oil, and water masses while preserving total mass whenever the
-   * incoming cell state has a positive total inventory.
+   * Enforce non-negative gas, oil, and water masses while preserving total mass whenever the incoming cell state has a
+   * positive total inventory.
    *
    * <p>
-   * Momentum is scaled with the phase mass correction so phase velocities are preserved. If the
-   * total mass is non-positive, positivity and conservation cannot both be satisfied; the method
-   * then falls back to the previous finite state when available.
+   * Momentum is scaled with the phase mass correction so phase velocities are preserved. If the total mass is
+   * non-positive, positivity and conservation cannot both be satisfied; the method then falls back to the previous
+   * finite state when available.
    * </p>
    *
-   * @param state conservative cell state [gasMass, oilMass, waterMass, gasMom, oilMom, waterMom,
-   *        energy]
+   * @param state    conservative cell state [gasMass, oilMass, waterMass, gasMom, oilMom, waterMom, energy]
    * @param fallback previous finite conservative state, or {@code null}
    */
   public static void enforceThreePhaseMassPositivity(double[] state, double[] fallback) {
@@ -39,14 +39,14 @@ public final class ConservativeStateLimiter {
     for (int i = 0; i < massCount; i++) {
       double mass = state[i];
       if (!Double.isFinite(mass)) {
-        restoreFiniteFallback(state, fallback);
-        return;
+	restoreFiniteFallback(state, fallback);
+	return;
       }
       totalMass += mass;
       if (mass < 0.0) {
-        hasNegativeMass = true;
+	hasNegativeMass = true;
       } else {
-        positiveMass += mass;
+	positiveMass += mass;
       }
     }
 
@@ -69,7 +69,7 @@ public final class ConservativeStateLimiter {
   private static boolean hasNonFinite(double[] state) {
     for (double value : state) {
       if (!Double.isFinite(value)) {
-        return true;
+	return true;
       }
     }
     return false;
@@ -80,31 +80,30 @@ public final class ConservativeStateLimiter {
       int n = Math.min(state.length, fallback.length);
       boolean fallbackFinite = true;
       for (int i = 0; i < n; i++) {
-        if (!Double.isFinite(fallback[i])) {
-          fallbackFinite = false;
-          break;
-        }
+	if (!Double.isFinite(fallback[i])) {
+	  fallbackFinite = false;
+	  break;
+	}
       }
       if (fallbackFinite) {
-        System.arraycopy(fallback, 0, state, 0, n);
-        for (int i = n; i < state.length; i++) {
-          if (!Double.isFinite(state[i])) {
-            state[i] = 0.0;
-          }
-        }
-        return;
+	System.arraycopy(fallback, 0, state, 0, n);
+	for (int i = n; i < state.length; i++) {
+	  if (!Double.isFinite(state[i])) {
+	    state[i] = 0.0;
+	  }
+	}
+	return;
       }
     }
 
     for (int i = 0; i < state.length; i++) {
       if (!Double.isFinite(state[i])) {
-        state[i] = 0.0;
+	state[i] = 0.0;
       }
     }
   }
 
-  private static void redistributePositiveMass(double[] state, int massCount, double totalMass,
-      double positiveMass) {
+  private static void redistributePositiveMass(double[] state, int massCount, double totalMass, double positiveMass) {
     double massScale = totalMass / positiveMass;
 
     for (int i = 0; i < massCount; i++) {
@@ -113,11 +112,11 @@ public final class ConservativeStateLimiter {
       int momentumIndex = i + 3;
 
       if (momentumIndex < state.length) {
-        if (oldMass > EPS && Double.isFinite(state[momentumIndex])) {
-          state[momentumIndex] *= newMass / oldMass;
-        } else {
-          state[momentumIndex] = 0.0;
-        }
+	if (oldMass > EPS && Double.isFinite(state[momentumIndex])) {
+	  state[momentumIndex] *= newMass / oldMass;
+	} else {
+	  state[momentumIndex] = 0.0;
+	}
       }
 
       state[i] = newMass;
@@ -132,7 +131,7 @@ public final class ConservativeStateLimiter {
     double totalMass = 0.0;
     for (int i = 0; i < massCount; i++) {
       if (!Double.isFinite(fallback[i]) || fallback[i] < 0.0) {
-        return false;
+	return false;
       }
       totalMass += fallback[i];
     }
@@ -144,7 +143,7 @@ public final class ConservativeStateLimiter {
       state[i] = 0.0;
       int momentumIndex = i + 3;
       if (momentumIndex < state.length) {
-        state[momentumIndex] = 0.0;
+	state[momentumIndex] = 0.0;
       }
     }
   }

@@ -9,14 +9,14 @@ import com.google.gson.GsonBuilder;
  * Screening model for hydrogen-production catalyst deactivation.
  *
  * <p>
- * The model combines simple first-order damage rates for sulfur poisoning, chloride poisoning,
- * coking and thermal sintering. It is intended for early SMR, WGS and ammonia-cracking studies
- * where a reactor or {@link CatalystBed} needs a transparent activity factor over operating time.
+ * The model combines simple first-order damage rates for sulfur poisoning, chloride poisoning, coking and thermal
+ * sintering. It is intended for early SMR, WGS and ammonia-cracking studies where a reactor or {@link CatalystBed}
+ * needs a transparent activity factor over operating time.
  * </p>
  *
  * <p>
- * The constants are deliberately conservative order-of-magnitude defaults. Vendor-specific
- * catalysts should replace the defaults with measured rates before detailed design.
+ * The constants are deliberately conservative order-of-magnitude defaults. Vendor-specific catalysts should replace the
+ * defaults with measured rates before detailed design.
  * </p>
  *
  * @author ESOL
@@ -31,13 +31,11 @@ public class CatalystDeactivationKinetics implements Serializable {
     /** Nickel reforming catalyst for SMR, pre-reforming and methanation side service. */
     NICKEL_REFORMING("Nickel reforming", 1.5e-4, 4.0e-5, 2.0e-4, 2.0e7, 220000.0, 923.15),
     /** Iron-chromium high-temperature shift catalyst. */
-    IRON_CHROMIUM_HT_SHIFT("Iron-chromium HT shift", 3.0e-5, 2.0e-5, 1.0e-5, 5.0e6, 210000.0,
-        673.15),
+    IRON_CHROMIUM_HT_SHIFT("Iron-chromium HT shift", 3.0e-5, 2.0e-5, 1.0e-5, 5.0e6, 210000.0, 673.15),
     /** Copper-zinc low-temperature shift catalyst. */
     COPPER_ZINC_LT_SHIFT("Copper-zinc LT shift", 8.0e-4, 2.5e-4, 5.0e-6, 1.0e5, 140000.0, 523.15),
     /** Ruthenium catalyst for ammonia cracking. */
-    RUTHENIUM_AMMONIA_CRACKING("Ruthenium ammonia cracking", 4.0e-4, 1.0e-4, 5.0e-5, 1.0e7,
-        200000.0, 823.15);
+    RUTHENIUM_AMMONIA_CRACKING("Ruthenium ammonia cracking", 4.0e-4, 1.0e-4, 5.0e-5, 1.0e7, 200000.0, 823.15);
 
     private final String displayName;
     private final double sulfurCoefficientPerHourPerPpm;
@@ -50,18 +48,17 @@ public class CatalystDeactivationKinetics implements Serializable {
     /**
      * Creates a catalyst-family default data set.
      *
-     * @param displayName human-readable catalyst name
-     * @param sulfurCoefficientPerHourPerPpm sulfur poisoning coefficient in 1/(h ppmv)
+     * @param displayName                      human-readable catalyst name
+     * @param sulfurCoefficientPerHourPerPpm   sulfur poisoning coefficient in 1/(h ppmv)
      * @param chlorideCoefficientPerHourPerPpm chloride poisoning coefficient in 1/(h ppmv)
-     * @param cokingCoefficientPerHour coking damage coefficient in 1/h
-     * @param sinteringPreExponentialPerHour sintering pre-exponential factor in 1/h
+     * @param cokingCoefficientPerHour         coking damage coefficient in 1/h
+     * @param sinteringPreExponentialPerHour   sintering pre-exponential factor in 1/h
      * @param sinteringActivationEnergyJPerMol sintering activation energy in J/mol
-     * @param sinteringOnsetTemperatureK sintering onset temperature in K
+     * @param sinteringOnsetTemperatureK       sintering onset temperature in K
      */
-    CatalystFamily(String displayName, double sulfurCoefficientPerHourPerPpm,
-        double chlorideCoefficientPerHourPerPpm, double cokingCoefficientPerHour,
-        double sinteringPreExponentialPerHour, double sinteringActivationEnergyJPerMol,
-        double sinteringOnsetTemperatureK) {
+    CatalystFamily(String displayName, double sulfurCoefficientPerHourPerPpm, double chlorideCoefficientPerHourPerPpm,
+	double cokingCoefficientPerHour, double sinteringPreExponentialPerHour, double sinteringActivationEnergyJPerMol,
+	double sinteringOnsetTemperatureK) {
       this.displayName = displayName;
       this.sulfurCoefficientPerHourPerPpm = sulfurCoefficientPerHourPerPpm;
       this.chlorideCoefficientPerHourPerPpm = chlorideCoefficientPerHourPerPpm;
@@ -92,7 +89,8 @@ public class CatalystDeactivationKinetics implements Serializable {
   /**
    * Creates a catalyst deactivation model with nickel reforming defaults.
    */
-  public CatalystDeactivationKinetics() {}
+  public CatalystDeactivationKinetics() {
+  }
 
   /**
    * Creates a catalyst deactivation model for a catalyst family.
@@ -219,8 +217,7 @@ public class CatalystDeactivationKinetics implements Serializable {
   public double getCokingRatePerHour() {
     double steamProtection = Math.exp(-0.6 * Math.max(0.0, steamToCarbonRatio - 1.0));
     double lowSteamPenalty = steamToCarbonRatio < 2.0 ? 1.0 + (2.0 - steamToCarbonRatio) : 1.0;
-    return catalystFamily.cokingCoefficientPerHour * carbonPotential * steamProtection
-        * lowSteamPenalty;
+    return catalystFamily.cokingCoefficientPerHour * carbonPotential * steamProtection * lowSteamPenalty;
   }
 
   /**
@@ -232,8 +229,8 @@ public class CatalystDeactivationKinetics implements Serializable {
     if (temperatureK <= catalystFamily.sinteringOnsetTemperatureK) {
       return 0.0;
     }
-    double arrhenius = catalystFamily.sinteringPreExponentialPerHour * Math
-        .exp(-catalystFamily.sinteringActivationEnergyJPerMol / (GAS_CONSTANT * temperatureK));
+    double arrhenius = catalystFamily.sinteringPreExponentialPerHour
+	* Math.exp(-catalystFamily.sinteringActivationEnergyJPerMol / (GAS_CONSTANT * temperatureK));
     double severity = 1.0 + (temperatureK - catalystFamily.sinteringOnsetTemperatureK) / 100.0;
     return arrhenius * severity;
   }
@@ -244,8 +241,8 @@ public class CatalystDeactivationKinetics implements Serializable {
    * @return total deactivation rate in 1/h
    */
   public double getTotalDeactivationRatePerHour() {
-    return getSulfurPoisoningRatePerHour() + getChloridePoisoningRatePerHour()
-        + getCokingRatePerHour() + getThermalSinteringRatePerHour();
+    return getSulfurPoisoningRatePerHour() + getChloridePoisoningRatePerHour() + getCokingRatePerHour()
+	+ getThermalSinteringRatePerHour();
   }
 
   /**
@@ -281,8 +278,7 @@ public class CatalystDeactivationKinetics implements Serializable {
    * @return time in hours, or positive infinity when no deactivation rate is present
    */
   public double estimateTimeToActivity(double activityThreshold) {
-    if (!Double.isFinite(activityThreshold) || activityThreshold <= 0.0
-        || activityThreshold > 1.0) {
+    if (!Double.isFinite(activityThreshold) || activityThreshold <= 0.0 || activityThreshold > 1.0) {
       throw new IllegalArgumentException("activityThreshold must be in the interval (0, 1]");
     }
     double rate = getTotalDeactivationRatePerHour();
@@ -303,8 +299,8 @@ public class CatalystDeactivationKinetics implements Serializable {
     double maxRate = 0.0;
     for (Map.Entry<String, Double> entry : rates.entrySet()) {
       if (entry.getValue() > maxRate) {
-        dominant = entry.getKey();
-        maxRate = entry.getValue();
+	dominant = entry.getKey();
+	maxRate = entry.getValue();
       }
     }
     return dominant;
@@ -422,7 +418,7 @@ public class CatalystDeactivationKinetics implements Serializable {
    * Validates a finite non-negative input.
    *
    * @param value value to validate
-   * @param name parameter name for diagnostics
+   * @param name  parameter name for diagnostics
    */
   private static void validateNonNegative(double value, String name) {
     if (!Double.isFinite(value) || value < 0.0) {

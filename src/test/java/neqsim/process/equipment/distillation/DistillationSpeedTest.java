@@ -31,7 +31,8 @@ public class DistillationSpeedTest {
     logger.printf(org.apache.logging.log4j.Level.INFO, "DIRECT_SUBSTITUTION avg time: %.2f ms%n", directTime);
     logger.printf(org.apache.logging.log4j.Level.INFO, "INSIDE_OUT avg time:          %.2f ms%n", insideOutTime);
     if (insideOutTime > 0) {
-      logger.printf(org.apache.logging.log4j.Level.INFO, "Speedup (IO vs Direct):       %.2fx%n", directTime / insideOutTime);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "Speedup (IO vs Direct):       %.2fx%n",
+	  directTime / insideOutTime);
     }
   }
 
@@ -47,7 +48,7 @@ public class DistillationSpeedTest {
       long end = System.nanoTime();
 
       if (!column.solved()) {
-        logger.info("Warning: Solver " + solver + " did not converge in run " + i);
+	logger.info("Warning: Solver " + solver + " did not converge in run " + i);
       }
 
       totalTime += (end - start);

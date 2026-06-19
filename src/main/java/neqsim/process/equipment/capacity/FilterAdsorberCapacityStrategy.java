@@ -33,7 +33,8 @@ public class FilterAdsorberCapacityStrategy implements EquipmentCapacityStrategy
   /**
    * Default constructor.
    */
-  public FilterAdsorberCapacityStrategy() {}
+  public FilterAdsorberCapacityStrategy() {
+  }
 
   /**
    * Constructor with custom maximum pressure drop.
@@ -75,10 +76,10 @@ public class FilterAdsorberCapacityStrategy implements EquipmentCapacityStrategy
     double maxUtil = 0.0;
     for (CapacityConstraint c : constraints.values()) {
       if (c.isEnabled()) {
-        double util = c.getUtilization();
-        if (!Double.isNaN(util) && util > maxUtil) {
-          maxUtil = util;
-        }
+	double util = c.getUtilization();
+	if (!Double.isNaN(util) && util > maxUtil) {
+	  maxUtil = util;
+	}
       }
     }
     return maxUtil;
@@ -108,15 +109,14 @@ public class FilterAdsorberCapacityStrategy implements EquipmentCapacityStrategy
    * Adds constraints specific to filter equipment.
    *
    * @param constraints map to add constraints to
-   * @param filter the filter
+   * @param filter      the filter
    */
   private void addFilterConstraints(Map<String, CapacityConstraint> constraints, Filter filter) {
     // Pressure drop constraint
-    CapacityConstraint dpConstraint =
-        new CapacityConstraint("pressureDrop").setDesignValue(maxDpBar).setMaxValue(maxDpBar * 1.2)
-            .setUnit("bar").setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
-            .setWarningThreshold(0.8).setDescription("Filter pressure drop vs maximum allowable")
-            .setValueSupplier(() -> Math.abs(filter.getDeltaP()));
+    CapacityConstraint dpConstraint = new CapacityConstraint("pressureDrop").setDesignValue(maxDpBar)
+	.setMaxValue(maxDpBar * 1.2).setUnit("bar").setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
+	.setWarningThreshold(0.8).setDescription("Filter pressure drop vs maximum allowable")
+	.setValueSupplier(() -> Math.abs(filter.getDeltaP()));
     constraints.put("pressureDrop", dpConstraint);
   }
 
@@ -124,18 +124,15 @@ public class FilterAdsorberCapacityStrategy implements EquipmentCapacityStrategy
    * Adds constraints specific to adsorber equipment.
    *
    * @param constraints map to add constraints to
-   * @param adsorber the adsorber
+   * @param adsorber    the adsorber
    */
-  private void addAdsorberConstraints(Map<String, CapacityConstraint> constraints,
-      SimpleAdsorber adsorber) {
+  private void addAdsorberConstraints(Map<String, CapacityConstraint> constraints, SimpleAdsorber adsorber) {
     // NTU constraint
     double ntu = adsorber.getNTU();
     if (ntu > 0) {
-      CapacityConstraint ntuConstraint =
-          new CapacityConstraint("NTU").setDesignValue(ntu).setMaxValue(ntu * 1.5).setUnit("")
-              .setSeverity(CapacityConstraint.ConstraintSeverity.SOFT).setWarningThreshold(0.9)
-              .setDescription("Number of transfer units vs design")
-              .setValueSupplier(() -> adsorber.getNTU());
+      CapacityConstraint ntuConstraint = new CapacityConstraint("NTU").setDesignValue(ntu).setMaxValue(ntu * 1.5)
+	  .setUnit("").setSeverity(CapacityConstraint.ConstraintSeverity.SOFT).setWarningThreshold(0.9)
+	  .setDescription("Number of transfer units vs design").setValueSupplier(() -> adsorber.getNTU());
       constraints.put("NTU", ntuConstraint);
     }
   }
@@ -146,7 +143,7 @@ public class FilterAdsorberCapacityStrategy implements EquipmentCapacityStrategy
     List<CapacityConstraint> violations = new ArrayList<CapacityConstraint>();
     for (CapacityConstraint c : getConstraints(equipment).values()) {
       if (c.isViolated()) {
-        violations.add(c);
+	violations.add(c);
       }
     }
     return violations;
@@ -160,8 +157,8 @@ public class FilterAdsorberCapacityStrategy implements EquipmentCapacityStrategy
     for (CapacityConstraint c : getConstraints(equipment).values()) {
       double util = c.getUtilization();
       if (!Double.isNaN(util) && util > maxUtil) {
-        maxUtil = util;
-        bottleneck = c;
+	maxUtil = util;
+	bottleneck = c;
       }
     }
     return bottleneck;
@@ -172,10 +169,10 @@ public class FilterAdsorberCapacityStrategy implements EquipmentCapacityStrategy
   public boolean isWithinHardLimits(ProcessEquipmentInterface equipment) {
     for (CapacityConstraint c : getConstraints(equipment).values()) {
       if (c.getSeverity() == CapacityConstraint.ConstraintSeverity.HARD
-          || c.getSeverity() == CapacityConstraint.ConstraintSeverity.CRITICAL) {
-        if (c.isHardLimitExceeded()) {
-          return false;
-        }
+	  || c.getSeverity() == CapacityConstraint.ConstraintSeverity.CRITICAL) {
+	if (c.isHardLimitExceeded()) {
+	  return false;
+	}
       }
     }
     return true;
@@ -186,7 +183,7 @@ public class FilterAdsorberCapacityStrategy implements EquipmentCapacityStrategy
   public boolean isWithinSoftLimits(ProcessEquipmentInterface equipment) {
     for (CapacityConstraint c : getConstraints(equipment).values()) {
       if (c.isViolated()) {
-        return false;
+	return false;
       }
     }
     return true;

@@ -8,8 +8,7 @@ import com.google.gson.GsonBuilder;
  * Calculator for riser-specific mechanical design.
  *
  * <p>
- * This class extends PipeMechanicalDesignCalculator to provide riser-specific calculations
- * including:
+ * This class extends PipeMechanicalDesignCalculator to provide riser-specific calculations including:
  * </p>
  * <ul>
  * <li>Top tension calculation (catenary and TTR)</li>
@@ -32,20 +31,20 @@ import com.google.gson.GsonBuilder;
  *
  * <h3>Catenary Top Tension</h3>
  * <p>
- * For a catenary riser, the top tension is: T_top = w × H / sin(θ_top) where w = submerged weight
- * per meter, H = water depth, θ_top = top angle from horizontal
+ * For a catenary riser, the top tension is: T_top = w × H / sin(θ_top) where w = submerged weight per meter, H = water
+ * depth, θ_top = top angle from horizontal
  * </p>
  *
  * <h3>VIV Response</h3>
  * <p>
- * Vortex shedding frequency: f_v = St × V / D where St = Strouhal number (~0.2), V = current
- * velocity, D = outer diameter
+ * Vortex shedding frequency: f_v = St × V / D where St = Strouhal number (~0.2), V = current velocity, D = outer
+ * diameter
  * </p>
  *
  * <h3>Touchdown Point Stress</h3>
  * <p>
- * Bending stress at TDP: σ_b = E × D / (2 × R_TDP) where E = Young's modulus, D = outer diameter,
- * R_TDP = radius of curvature at touchdown
+ * Bending stress at TDP: σ_b = E × D / (2 × R_TDP) where E = Young's modulus, D = outer diameter, R_TDP = radius of
+ * curvature at touchdown
  * </p>
  *
  * @author ASMF
@@ -235,8 +234,8 @@ public class RiserMechanicalDesignCalculator extends PipeMechanicalDesignCalcula
    * Calculate top tension for catenary riser (SCR, flexible, lazy-wave).
    *
    * <p>
-   * For a catenary riser, the tension distribution follows: T(s) = T_bottom + w × s where s = arc
-   * length from seabed, w = submerged weight per unit length
+   * For a catenary riser, the tension distribution follows: T(s) = T_bottom + w × s where s = arc length from seabed, w
+   * = submerged weight per unit length
    * </p>
    *
    * @return top tension in kN
@@ -286,8 +285,7 @@ public class RiserMechanicalDesignCalculator extends PipeMechanicalDesignCalcula
    * Calculate tension for Top Tensioned Riser.
    *
    * <p>
-   * For TTR, the applied tension must exceed the riser weight to maintain positive tension
-   * throughout the riser length.
+   * For TTR, the applied tension must exceed the riser weight to maintain positive tension throughout the riser length.
    * </p>
    *
    * @return required top tension in kN
@@ -348,8 +346,8 @@ public class RiserMechanicalDesignCalculator extends PipeMechanicalDesignCalcula
    * Calculate stress at the touchdown point.
    *
    * <p>
-   * The touchdown point (TDP) is where the riser contacts the seabed. This is a critical fatigue
-   * location due to cyclic bending as the TDP moves with wave action.
+   * The touchdown point (TDP) is where the riser contacts the seabed. This is a critical fatigue location due to cyclic
+   * bending as the TDP moves with wave action.
    * </p>
    *
    * @return touchdown point stress in MPa
@@ -402,8 +400,8 @@ public class RiserMechanicalDesignCalculator extends PipeMechanicalDesignCalcula
    * Calculate length of the touchdown zone.
    *
    * <p>
-   * The touchdown zone is where the riser transitions from suspended catenary to resting on seabed.
-   * This zone experiences cyclic motion with wave action.
+   * The touchdown zone is where the riser transitions from suspended catenary to resting on seabed. This zone
+   * experiences cyclic motion with wave action.
    * </p>
    *
    * @return touchdown zone length in meters
@@ -452,8 +450,8 @@ public class RiserMechanicalDesignCalculator extends PipeMechanicalDesignCalcula
    * Calculate VIV (Vortex-Induced Vibration) response.
    *
    * <p>
-   * VIV occurs when vortex shedding frequency approaches the riser natural frequency. This can
-   * cause significant fatigue damage.
+   * VIV occurs when vortex shedding frequency approaches the riser natural frequency. This can cause significant
+   * fatigue damage.
    * </p>
    *
    * @return VIV amplitude as A/D ratio
@@ -649,8 +647,7 @@ public class RiserMechanicalDesignCalculator extends PipeMechanicalDesignCalcula
     heaveInducedStress = E * strain;
 
     // Combined dynamic stress
-    combinedDynamicStress =
-        Math.sqrt(waveInducedStress * waveInducedStress + heaveInducedStress * heaveInducedStress);
+    combinedDynamicStress = Math.sqrt(waveInducedStress * waveInducedStress + heaveInducedStress * heaveInducedStress);
 
     return heaveInducedStress;
   }
@@ -698,8 +695,7 @@ public class RiserMechanicalDesignCalculator extends PipeMechanicalDesignCalcula
     }
 
     // Total damage rate (Miner's rule)
-    totalFatigueDamageRate =
-        vivFatigueDamage + waveFatigueDamage + tdpFatigueDamage + heaveFatigueDamage;
+    totalFatigueDamageRate = vivFatigueDamage + waveFatigueDamage + tdpFatigueDamage + heaveFatigueDamage;
 
     // Fatigue life
     if (totalFatigueDamageRate > 0) {
@@ -1500,8 +1496,7 @@ public class RiserMechanicalDesignCalculator extends PipeMechanicalDesignCalcula
     Map<String, Object> viv = new HashMap<String, Object>();
     viv.put("vortexSheddingFrequency_Hz", vortexSheddingFrequency);
     viv.put("naturalFrequency_Hz", naturalFrequency);
-    viv.put("frequencyRatio",
-        naturalFrequency > 0 ? vortexSheddingFrequency / naturalFrequency : 0.0);
+    viv.put("frequencyRatio", naturalFrequency > 0 ? vortexSheddingFrequency / naturalFrequency : 0.0);
     viv.put("vivAmplitude_A_D", vivAmplitude);
     viv.put("vivStressRange_MPa", vivStressRange);
     viv.put("vivLockIn", vivLockIn);
@@ -1540,8 +1535,7 @@ public class RiserMechanicalDesignCalculator extends PipeMechanicalDesignCalcula
    * @return JSON string
    */
   public String toRiserJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(toRiserMap());
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(toRiserMap());
   }
 
   /** {@inheritDoc} */

@@ -11,9 +11,9 @@ import neqsim.process.equipment.ProcessEquipmentBaseClass;
  * Mooring system design for floating offshore structures.
  *
  * <p>
- * Calculates catenary mooring line geometry, tensions, anchor loads, and provides concept-level
- * mooring design per applicable standards. Supports single-line and multi-line configurations with
- * chain, wire rope, and polyester rope segments.
+ * Calculates catenary mooring line geometry, tensions, anchor loads, and provides concept-level mooring design per
+ * applicable standards. Supports single-line and multi-line configurations with chain, wire rope, and polyester rope
+ * segments.
  * </p>
  *
  * <h2>Key Calculations</h2>
@@ -46,15 +46,15 @@ import neqsim.process.equipment.ProcessEquipmentBaseClass;
  *
  * <pre>{@code
  * MooringSystem ms = new MooringSystem("Mooring Alpha");
- * ms.setWaterDepth(265.0);          // m
+ * ms.setWaterDepth(265.0); // m
  * ms.setNumberOfLines(3);
  * ms.setLineType(MooringSystem.LineType.CHAIN_POLYESTER_CHAIN);
- * ms.setChainDiameter(0.127);       // m (127 mm)
+ * ms.setChainDiameter(0.127); // m (127 mm)
  * ms.setDesignHorizontalForce(2500.0); // kN (per line)
- * ms.setDesignVerticalForce(500.0);    // kN
- * ms.setAnchorRadius(800.0);        // m
+ * ms.setDesignVerticalForce(500.0); // kN
+ * ms.setAnchorRadius(800.0); // m
  * ms.run();
- * double tension = ms.getFairleadTension();  // kN
+ * double tension = ms.getFairleadTension(); // kN
  * double safetyFactor = ms.getBreakingStrengthSafetyFactor();
  * }</pre>
  *
@@ -258,42 +258,42 @@ public class MooringSystem extends ProcessEquipmentBaseClass {
     double effectiveDepth = waterDepth - fairleadDepth;
 
     switch (lineType) {
-      case CHAIN:
-        // R4 studless chain: weight ~ 21.9 * d^2 kg/m (d in mm)
-        double dMm = chainDiameter * 1000.0;
-        lineWeightPerMeter = getChainWeightPerMeter(dMm);
-        bottomChainLength = 0;
-        middleSegmentLength = 0;
-        topChainLength = 0;
-        // Entire line is chain for pure chain mooring
-        break;
+    case CHAIN:
+      // R4 studless chain: weight ~ 21.9 * d^2 kg/m (d in mm)
+      double dMm = chainDiameter * 1000.0;
+      lineWeightPerMeter = getChainWeightPerMeter(dMm);
+      bottomChainLength = 0;
+      middleSegmentLength = 0;
+      topChainLength = 0;
+      // Entire line is chain for pure chain mooring
+      break;
 
-      case WIRE_ROPE:
-        double dWireMm = wireRopeDiameter * 1000.0;
-        lineWeightPerMeter = 0.034 * dWireMm * dWireMm / 1000.0; // kN/m approx
-        break;
+    case WIRE_ROPE:
+      double dWireMm = wireRopeDiameter * 1000.0;
+      lineWeightPerMeter = 0.034 * dWireMm * dWireMm / 1000.0; // kN/m approx
+      break;
 
-      case POLYESTER:
-        double dPolyMm = polyesterDiameter * 1000.0;
-        lineWeightPerMeter = 0.005 * dPolyMm * dPolyMm / 1000.0; // kN/m approx (nearly neutral)
-        break;
+    case POLYESTER:
+      double dPolyMm = polyesterDiameter * 1000.0;
+      lineWeightPerMeter = 0.005 * dPolyMm * dPolyMm / 1000.0; // kN/m approx (nearly neutral)
+      break;
 
-      case CHAIN_POLYESTER_CHAIN:
-        // Bottom chain + polyester middle + top chain
-        double dChainMm = chainDiameter * 1000.0;
-        double chainWeight = getChainWeightPerMeter(dChainMm);
+    case CHAIN_POLYESTER_CHAIN:
+      // Bottom chain + polyester middle + top chain
+      double dChainMm = chainDiameter * 1000.0;
+      double chainWeight = getChainWeightPerMeter(dChainMm);
 
-        // Bottom chain: ~100-200m on seabed for catenary
-        bottomChainLength = 200.0;
-        // Top chain: depth + some catenary
-        topChainLength = fairleadDepth + 50.0;
-        // Middle: polyester covering most of the depth
-        middleSegmentLength = effectiveDepth * 1.05; // 5% margin
-        lineWeightPerMeter = chainWeight; // Critical section is chain
-        break;
+      // Bottom chain: ~100-200m on seabed for catenary
+      bottomChainLength = 200.0;
+      // Top chain: depth + some catenary
+      topChainLength = fairleadDepth + 50.0;
+      // Middle: polyester covering most of the depth
+      middleSegmentLength = effectiveDepth * 1.05; // 5% margin
+      lineWeightPerMeter = chainWeight; // Critical section is chain
+      break;
 
-      default:
-        lineWeightPerMeter = 0.1;
+    default:
+      lineWeightPerMeter = 0.1;
     }
   }
 
@@ -317,11 +317,9 @@ public class MooringSystem extends ProcessEquipmentBaseClass {
     double effectiveDepth = waterDepth - fairleadDepth;
 
     // Fairlead tension from components
-    fairleadTension =
-        Math.sqrt(designHorizontalForce * designHorizontalForce
-            + designVerticalForce * designVerticalForce);
-    fairleadAngle =
-        Math.toDegrees(Math.atan2(designVerticalForce, designHorizontalForce));
+    fairleadTension = Math
+	.sqrt(designHorizontalForce * designHorizontalForce + designVerticalForce * designVerticalForce);
+    fairleadAngle = Math.toDegrees(Math.atan2(designVerticalForce, designHorizontalForce));
 
     if (lineType == LineType.CHAIN || lineType == LineType.WIRE_ROPE) {
       // Classic catenary equations
@@ -334,32 +332,32 @@ public class MooringSystem extends ProcessEquipmentBaseClass {
       double w = lineWeightPerMeter; // kN/m
 
       if (w > 0 && h > 0) {
-        // Catenary parameter a = H/w
-        double a = h / w;
+	// Catenary parameter a = H/w
+	double a = h / w;
 
-        // Suspended line length: s = a * sinh(x_h / a)
-        // where x_h is horizontal distance of suspended line
-        // From depth: d = a * (cosh(x_h/a) - 1)
-        // Solve for x_h: x_h = a * acosh(d/a + 1)
+	// Suspended line length: s = a * sinh(x_h / a)
+	// where x_h is horizontal distance of suspended line
+	// From depth: d = a * (cosh(x_h/a) - 1)
+	// Solve for x_h: x_h = a * acosh(d/a + 1)
 
-        double coshArg = effectiveDepth / a + 1.0;
-        double xSuspended = a * Math.log(coshArg + Math.sqrt(coshArg * coshArg - 1.0));
+	double coshArg = effectiveDepth / a + 1.0;
+	double xSuspended = a * Math.log(coshArg + Math.sqrt(coshArg * coshArg - 1.0));
 
-        // Suspended line length
-        double sSuspended = a * Math.sinh(xSuspended / a);
+	// Suspended line length
+	double sSuspended = a * Math.sinh(xSuspended / a);
 
-        // Touchdown length (line on seabed)
-        touchdownLength = Math.max(0, anchorRadius - xSuspended);
+	// Touchdown length (line on seabed)
+	touchdownLength = Math.max(0, anchorRadius - xSuspended);
 
-        lineLength = sSuspended + touchdownLength;
-        maxLineTension = fairleadTension; // Max at fairlead for catenary
+	lineLength = sSuspended + touchdownLength;
+	maxLineTension = fairleadTension; // Max at fairlead for catenary
 
-        // Anchor tension (horizontal only if touchdown > 0)
-        if (touchdownLength > 0) {
-          anchorTension = h; // Pure horizontal at anchor
-        } else {
-          anchorTension = fairleadTension; // Taut mooring
-        }
+	// Anchor tension (horizontal only if touchdown > 0)
+	if (touchdownLength > 0) {
+	  anchorTension = h; // Pure horizontal at anchor
+	} else {
+	  anchorTension = fairleadTension; // Taut mooring
+	}
       }
     } else if (lineType == LineType.CHAIN_POLYESTER_CHAIN) {
       // Hybrid line: chain catenary at bottom, taut polyester in middle
@@ -404,7 +402,7 @@ public class MooringSystem extends ProcessEquipmentBaseClass {
       // Polyester is much lighter
       double polyWeightPerM = 0.02; // tonnes/m approx
       totalWeight = (bottomChainLength + topChainLength) * chainWeightAir * numberOfLines
-          + middleSegmentLength * polyWeightPerM * numberOfLines;
+	  + middleSegmentLength * polyWeightPerM * numberOfLines;
     }
   }
 
@@ -415,26 +413,26 @@ public class MooringSystem extends ProcessEquipmentBaseClass {
     double dMm = chainDiameter * 1000.0;
 
     switch (lineType) {
-      case CHAIN:
-      case CHAIN_POLYESTER_CHAIN:
-        // MBL for R4 studless chain: MBL = 0.0274 * d^2 * (44 - 0.08*d) kN (d in mm)
-        minimumBreakingLoad = 0.0274 * dMm * dMm * (44.0 - 0.08 * dMm);
-        if (chainGrade == 3) {
-          minimumBreakingLoad *= 0.85;
-        } else if (chainGrade == 5) {
-          minimumBreakingLoad *= 1.15;
-        }
-        break;
-      case WIRE_ROPE:
-        double dWireMm = wireRopeDiameter * 1000.0;
-        minimumBreakingLoad = 0.5 * dWireMm * dWireMm; // kN approx for 6-strand
-        break;
-      case POLYESTER:
-        double dPolyMm = polyesterDiameter * 1000.0;
-        minimumBreakingLoad = 0.12 * dPolyMm * dPolyMm; // kN approx
-        break;
-      default:
-        minimumBreakingLoad = 10000.0;
+    case CHAIN:
+    case CHAIN_POLYESTER_CHAIN:
+      // MBL for R4 studless chain: MBL = 0.0274 * d^2 * (44 - 0.08*d) kN (d in mm)
+      minimumBreakingLoad = 0.0274 * dMm * dMm * (44.0 - 0.08 * dMm);
+      if (chainGrade == 3) {
+	minimumBreakingLoad *= 0.85;
+      } else if (chainGrade == 5) {
+	minimumBreakingLoad *= 1.15;
+      }
+      break;
+    case WIRE_ROPE:
+      double dWireMm = wireRopeDiameter * 1000.0;
+      minimumBreakingLoad = 0.5 * dWireMm * dWireMm; // kN approx for 6-strand
+      break;
+    case POLYESTER:
+      double dPolyMm = polyesterDiameter * 1000.0;
+      minimumBreakingLoad = 0.12 * dPolyMm * dPolyMm; // kN approx
+      break;
+    default:
+      minimumBreakingLoad = 10000.0;
     }
 
     safetyFactor = maxLineTension > 0 ? minimumBreakingLoad / maxLineTension : 0.0;
@@ -451,8 +449,8 @@ public class MooringSystem extends ProcessEquipmentBaseClass {
     // For suction piles: account for vertical component if taut mooring
     if (anchorType == AnchorType.SUCTION_PILE && touchdownLength <= 0) {
       double verticalAtAnchor = designVerticalForce;
-      requiredAnchorCapacity = Math.sqrt(anchorTension * anchorTension
-          + verticalAtAnchor * verticalAtAnchor) * anchorDesignFactor;
+      requiredAnchorCapacity = Math.sqrt(anchorTension * anchorTension + verticalAtAnchor * verticalAtAnchor)
+	  * anchorDesignFactor;
     }
   }
 
@@ -468,8 +466,7 @@ public class MooringSystem extends ProcessEquipmentBaseClass {
 
     if (w > 0 && h > 0) {
       double denominatorTerm = h + w * depth;
-      restoringStiffness =
-          numberOfLines * w * (h / denominatorTerm) * (h / denominatorTerm) * 1.5;
+      restoringStiffness = numberOfLines * w * (h / denominatorTerm) * (h / denominatorTerm) * 1.5;
     }
 
     if (restoringStiffness > 0) {
@@ -489,43 +486,43 @@ public class MooringSystem extends ProcessEquipmentBaseClass {
 
     double lineCost = 0;
     switch (lineType) {
-      case CHAIN:
-        lineCost = lineLength * chainCostPerM * numberOfLines / 1.0e6; // MNOK
-        break;
-      case CHAIN_POLYESTER_CHAIN:
-        double polyesterCostPerM = 800.0; // NOK/m
-        lineCost = ((bottomChainLength + topChainLength) * chainCostPerM
-            + middleSegmentLength * polyesterCostPerM) * numberOfLines / 1.0e6;
-        break;
-      case WIRE_ROPE:
-        double wireCostPerM = 1500.0;
-        lineCost = lineLength * wireCostPerM * numberOfLines / 1.0e6;
-        break;
-      case POLYESTER:
-        double polyCostPerM = 600.0;
-        lineCost = lineLength * polyCostPerM * numberOfLines / 1.0e6;
-        break;
-      default:
-        lineCost = 10.0;
+    case CHAIN:
+      lineCost = lineLength * chainCostPerM * numberOfLines / 1.0e6; // MNOK
+      break;
+    case CHAIN_POLYESTER_CHAIN:
+      double polyesterCostPerM = 800.0; // NOK/m
+      lineCost = ((bottomChainLength + topChainLength) * chainCostPerM + middleSegmentLength * polyesterCostPerM)
+	  * numberOfLines / 1.0e6;
+      break;
+    case WIRE_ROPE:
+      double wireCostPerM = 1500.0;
+      lineCost = lineLength * wireCostPerM * numberOfLines / 1.0e6;
+      break;
+    case POLYESTER:
+      double polyCostPerM = 600.0;
+      lineCost = lineLength * polyCostPerM * numberOfLines / 1.0e6;
+      break;
+    default:
+      lineCost = 10.0;
     }
 
     // Anchor cost
     double anchorCostPerUnit;
     switch (anchorType) {
-      case DRAG_EMBEDMENT:
-        anchorCostPerUnit = 2.0; // MNOK
-        break;
-      case SUCTION_PILE:
-        anchorCostPerUnit = 5.0; // MNOK
-        break;
-      case DRIVEN_PILE:
-        anchorCostPerUnit = 8.0; // MNOK
-        break;
-      case GRAVITY:
-        anchorCostPerUnit = 3.0; // MNOK
-        break;
-      default:
-        anchorCostPerUnit = 5.0;
+    case DRAG_EMBEDMENT:
+      anchorCostPerUnit = 2.0; // MNOK
+      break;
+    case SUCTION_PILE:
+      anchorCostPerUnit = 5.0; // MNOK
+      break;
+    case DRIVEN_PILE:
+      anchorCostPerUnit = 8.0; // MNOK
+      break;
+    case GRAVITY:
+      anchorCostPerUnit = 3.0; // MNOK
+      break;
+    default:
+      anchorCostPerUnit = 5.0;
     }
     double anchorCost = anchorCostPerUnit * numberOfLines;
 
@@ -708,8 +705,8 @@ public class MooringSystem extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Get catenary profile as list of (x, z) coordinate pairs.
-   * x is horizontal distance from fairlead [m], z is depth below waterline [m].
+   * Get catenary profile as list of (x, z) coordinate pairs. x is horizontal distance from fairlead [m], z is depth
+   * below waterline [m].
    *
    * @param nPoints number of points along the line
    * @return list of double arrays [x, z]
@@ -723,10 +720,10 @@ public class MooringSystem extends ProcessEquipmentBaseClass {
     if (w <= 0 || h <= 0 || lineType == LineType.POLYESTER) {
       // Taut mooring — straight line
       for (int i = 0; i <= nPoints; i++) {
-        double t = (double) i / nPoints;
-        double x = t * anchorRadius;
-        double z = fairleadDepth + t * effectiveDepth;
-        profile.add(new double[] {x, z});
+	double t = (double) i / nPoints;
+	double x = t * anchorRadius;
+	double z = fairleadDepth + t * effectiveDepth;
+	profile.add(new double[] { x, z });
       }
       return profile;
     }
@@ -744,16 +741,16 @@ public class MooringSystem extends ProcessEquipmentBaseClass {
       // Convert to waterline reference
       double x = xCat;
       double z = waterDepth - zCat;
-      profile.add(new double[] {x, z});
+      profile.add(new double[] { x, z });
     }
 
     // Add touchdown segment
     if (touchdownLength > 0) {
       for (int i = 1; i <= 10; i++) {
-        double t = (double) i / 10;
-        double x = xSuspended + t * touchdownLength;
-        double z = waterDepth;
-        profile.add(new double[] {x, z});
+	double t = (double) i / 10;
+	double x = xSuspended + t * touchdownLength;
+	double z = waterDepth;
+	profile.add(new double[] { x, z });
       }
     }
 

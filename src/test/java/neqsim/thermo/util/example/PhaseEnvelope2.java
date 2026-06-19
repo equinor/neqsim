@@ -20,7 +20,7 @@ public class PhaseEnvelope2 {
   private static final Logger logger = LogManager.getLogger(PhaseEnvelope2.class);
 
   /** Logger object for class. */
-  
+
   /**
    * <p>
    * main.

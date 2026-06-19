@@ -20,8 +20,8 @@ import neqsim.thermo.system.SystemInterface;
  * CMG (Computer Modelling Group) reservoir simulator EOS/PVT exporter.
  *
  * <p>
- * Exports NeqSim compositional fluids or Black-Oil PVT tables to CMG-compatible format for use in
- * IMEX, GEM, and STARS simulators.
+ * Exports NeqSim compositional fluids or Black-Oil PVT tables to CMG-compatible format for use in IMEX, GEM, and STARS
+ * simulators.
  * </p>
  *
  * <h2>Supported CMG Keywords</h2>
@@ -125,7 +125,7 @@ public final class CMGEOSExporter {
     /**
      * Set standard conditions for stock tank properties.
      *
-     * @param pressure pressure in kPa
+     * @param pressure    pressure in kPa
      * @param temperature temperature in Kelvin
      * @return this config for chaining
      */
@@ -187,7 +187,7 @@ public final class CMGEOSExporter {
   /**
    * Export a compositional fluid to a CMG file using default settings.
    *
-   * @param fluid NeqSim compositional fluid
+   * @param fluid      NeqSim compositional fluid
    * @param outputPath output file path
    * @throws IOException if writing fails
    */
@@ -198,26 +198,24 @@ public final class CMGEOSExporter {
   /**
    * Export a compositional fluid to a CMG file for a specific simulator.
    *
-   * @param fluid NeqSim compositional fluid
+   * @param fluid      NeqSim compositional fluid
    * @param outputPath output file path
-   * @param simulator target CMG simulator
+   * @param simulator  target CMG simulator
    * @throws IOException if writing fails
    */
-  public static void toFile(SystemInterface fluid, Path outputPath, Simulator simulator)
-      throws IOException {
+  public static void toFile(SystemInterface fluid, Path outputPath, Simulator simulator) throws IOException {
     toFile(fluid, outputPath, new ExportConfig().setSimulator(simulator));
   }
 
   /**
    * Export a compositional fluid to a CMG file.
    *
-   * @param fluid NeqSim compositional fluid
+   * @param fluid      NeqSim compositional fluid
    * @param outputPath output file path
-   * @param config export configuration
+   * @param config     export configuration
    * @throws IOException if writing fails
    */
-  public static void toFile(SystemInterface fluid, Path outputPath, ExportConfig config)
-      throws IOException {
+  public static void toFile(SystemInterface fluid, Path outputPath, ExportConfig config) throws IOException {
     Objects.requireNonNull(fluid, "fluid cannot be null");
     Objects.requireNonNull(outputPath, "outputPath cannot be null");
     Objects.requireNonNull(config, "config cannot be null");
@@ -240,7 +238,7 @@ public final class CMGEOSExporter {
   /**
    * Export a compositional fluid to a CMG format string.
    *
-   * @param fluid NeqSim compositional fluid
+   * @param fluid  NeqSim compositional fluid
    * @param config export configuration
    * @return CMG format content
    */
@@ -260,31 +258,31 @@ public final class CMGEOSExporter {
   /**
    * Export a Black-Oil PVT table to a CMG file.
    *
-   * @param pvt Black-Oil PVT table
-   * @param rhoOilSc oil density at standard conditions (kg/m³)
-   * @param rhoGasSc gas density at standard conditions (kg/m³)
+   * @param pvt        Black-Oil PVT table
+   * @param rhoOilSc   oil density at standard conditions (kg/m³)
+   * @param rhoGasSc   gas density at standard conditions (kg/m³)
    * @param rhoWaterSc water density at standard conditions (kg/m³)
    * @param outputPath output file path
    * @throws IOException if writing fails
    */
-  public static void toFile(BlackOilPVTTable pvt, double rhoOilSc, double rhoGasSc,
-      double rhoWaterSc, Path outputPath) throws IOException {
+  public static void toFile(BlackOilPVTTable pvt, double rhoOilSc, double rhoGasSc, double rhoWaterSc, Path outputPath)
+      throws IOException {
     toFile(pvt, rhoOilSc, rhoGasSc, rhoWaterSc, outputPath, new ExportConfig());
   }
 
   /**
    * Export a Black-Oil PVT table to a CMG file.
    *
-   * @param pvt Black-Oil PVT table
-   * @param rhoOilSc oil density at standard conditions (kg/m³)
-   * @param rhoGasSc gas density at standard conditions (kg/m³)
+   * @param pvt        Black-Oil PVT table
+   * @param rhoOilSc   oil density at standard conditions (kg/m³)
+   * @param rhoGasSc   gas density at standard conditions (kg/m³)
    * @param rhoWaterSc water density at standard conditions (kg/m³)
    * @param outputPath output file path
-   * @param config export configuration
+   * @param config     export configuration
    * @throws IOException if writing fails
    */
-  public static void toFile(BlackOilPVTTable pvt, double rhoOilSc, double rhoGasSc,
-      double rhoWaterSc, Path outputPath, ExportConfig config) throws IOException {
+  public static void toFile(BlackOilPVTTable pvt, double rhoOilSc, double rhoGasSc, double rhoWaterSc, Path outputPath,
+      ExportConfig config) throws IOException {
     Objects.requireNonNull(pvt, "pvt cannot be null");
     Objects.requireNonNull(outputPath, "outputPath cannot be null");
     Objects.requireNonNull(config, "config cannot be null");
@@ -297,29 +295,28 @@ public final class CMGEOSExporter {
   /**
    * Export a Black-Oil PVT table to a CMG format string.
    *
-   * @param pvt Black-Oil PVT table
-   * @param rhoOilSc oil density at standard conditions (kg/m³)
-   * @param rhoGasSc gas density at standard conditions (kg/m³)
+   * @param pvt        Black-Oil PVT table
+   * @param rhoOilSc   oil density at standard conditions (kg/m³)
+   * @param rhoGasSc   gas density at standard conditions (kg/m³)
    * @param rhoWaterSc water density at standard conditions (kg/m³)
    * @return CMG format content
    */
-  public static String toString(BlackOilPVTTable pvt, double rhoOilSc, double rhoGasSc,
-      double rhoWaterSc) {
+  public static String toString(BlackOilPVTTable pvt, double rhoOilSc, double rhoGasSc, double rhoWaterSc) {
     return toString(pvt, rhoOilSc, rhoGasSc, rhoWaterSc, new ExportConfig());
   }
 
   /**
    * Export a Black-Oil PVT table to a CMG format string.
    *
-   * @param pvt Black-Oil PVT table
-   * @param rhoOilSc oil density at standard conditions (kg/m³)
-   * @param rhoGasSc gas density at standard conditions (kg/m³)
+   * @param pvt        Black-Oil PVT table
+   * @param rhoOilSc   oil density at standard conditions (kg/m³)
+   * @param rhoGasSc   gas density at standard conditions (kg/m³)
    * @param rhoWaterSc water density at standard conditions (kg/m³)
-   * @param config export configuration
+   * @param config     export configuration
    * @return CMG format content
    */
-  public static String toString(BlackOilPVTTable pvt, double rhoOilSc, double rhoGasSc,
-      double rhoWaterSc, ExportConfig config) {
+  public static String toString(BlackOilPVTTable pvt, double rhoOilSc, double rhoGasSc, double rhoWaterSc,
+      ExportConfig config) {
     Objects.requireNonNull(pvt, "pvt cannot be null");
     Objects.requireNonNull(config, "config cannot be null");
 
@@ -332,8 +329,7 @@ public final class CMGEOSExporter {
     return sb.toString();
   }
 
-  private static void toWriter(SystemInterface fluid, Writer writer, ExportConfig config)
-      throws IOException {
+  private static void toWriter(SystemInterface fluid, Writer writer, ExportConfig config) throws IOException {
     // Generate pressure grid if not provided
     double[] pressures = config.pressureGrid;
     if (pressures == null || pressures.length < 2) {
@@ -344,16 +340,15 @@ public final class CMGEOSExporter {
     double stdPressureBar = config.standardPressure / 100.0; // kPa to bar
 
     // Convert compositional fluid to Black-Oil
-    BlackOilConverter.Result result = BlackOilConverter.convert(fluid, config.referenceTemperature,
-        pressures, stdPressureBar, config.standardTemperature);
+    BlackOilConverter.Result result = BlackOilConverter.convert(fluid, config.referenceTemperature, pressures,
+	stdPressureBar, config.standardTemperature);
 
     writePVTTable(result.pvt, result.rho_o_sc, result.rho_g_sc, result.rho_w_sc, writer, config);
   }
 
-  private static void writePVTTable(BlackOilPVTTable pvt, double rhoOilSc, double rhoGasSc,
-      double rhoWaterSc, Writer writer, ExportConfig config) throws IOException {
-    BufferedWriter bw =
-        (writer instanceof BufferedWriter) ? (BufferedWriter) writer : new BufferedWriter(writer);
+  private static void writePVTTable(BlackOilPVTTable pvt, double rhoOilSc, double rhoGasSc, double rhoWaterSc,
+      Writer writer, ExportConfig config) throws IOException {
+    BufferedWriter bw = (writer instanceof BufferedWriter) ? (BufferedWriter) writer : new BufferedWriter(writer);
 
     // Unit conversion factors (internal units are bar, kg/m³, Sm³/Sm³, Pa·s)
     double pFactor = 100.0; // bar to kPa
@@ -383,14 +378,13 @@ public final class CMGEOSExporter {
       bw.write("** ============================================================\n");
       bw.write("** CMG Black-Oil PVT Data Generated by NeqSim\n");
       bw.write("** Target Simulator: " + config.simulator.name() + "\n");
-      bw.write("** Generated: "
-          + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) + "\n");
+      bw.write(
+	  "** Generated: " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) + "\n");
       bw.write("** Units: " + config.units.name() + "\n");
-      bw.write("** Bubble Point: " + String.format(Locale.US, "%.2f", bubblePoint * pFactor) + " "
-          + pUnit + "\n");
+      bw.write("** Bubble Point: " + String.format(Locale.US, "%.2f", bubblePoint * pFactor) + " " + pUnit + "\n");
       bw.write("** Model Name: " + config.modelName + "\n");
       if (!config.comment.isEmpty()) {
-        bw.write("** " + config.comment.replace("\n", "\n** ") + "\n");
+	bw.write("** " + config.comment.replace("\n", "\n** ") + "\n");
       }
       bw.write("** ============================================================\n\n");
     }
@@ -400,27 +394,27 @@ public final class CMGEOSExporter {
 
     // Write based on simulator type
     switch (config.simulator) {
-      case IMEX:
-        writeIMEXFormat(bw, pvt, rhoOilSc, rhoGasSc, rhoWaterSc, pressurePoints, bubblePoint,
-            pFactor, rhoFactor, rsFactor, viscFactor, pUnit, rhoUnit, rsUnit, viscUnit);
-        break;
-      case GEM:
-        writeGEMFormat(bw, pvt, rhoOilSc, rhoGasSc, rhoWaterSc, pressurePoints, bubblePoint,
-            pFactor, rhoFactor, rsFactor, viscFactor, pUnit, rhoUnit, rsUnit, viscUnit);
-        break;
-      case STARS:
-        writeSTARSFormat(bw, pvt, rhoOilSc, rhoGasSc, rhoWaterSc, pressurePoints, bubblePoint,
-            pFactor, rhoFactor, rsFactor, viscFactor, pUnit, rhoUnit, rsUnit, viscUnit);
-        break;
+    case IMEX:
+      writeIMEXFormat(bw, pvt, rhoOilSc, rhoGasSc, rhoWaterSc, pressurePoints, bubblePoint, pFactor, rhoFactor,
+	  rsFactor, viscFactor, pUnit, rhoUnit, rsUnit, viscUnit);
+      break;
+    case GEM:
+      writeGEMFormat(bw, pvt, rhoOilSc, rhoGasSc, rhoWaterSc, pressurePoints, bubblePoint, pFactor, rhoFactor, rsFactor,
+	  viscFactor, pUnit, rhoUnit, rsUnit, viscUnit);
+      break;
+    case STARS:
+      writeSTARSFormat(bw, pvt, rhoOilSc, rhoGasSc, rhoWaterSc, pressurePoints, bubblePoint, pFactor, rhoFactor,
+	  rsFactor, viscFactor, pUnit, rhoUnit, rsUnit, viscUnit);
+      break;
     }
 
     bw.flush();
   }
 
-  private static void writeIMEXFormat(BufferedWriter bw, BlackOilPVTTable pvt, double rhoOilSc,
-      double rhoGasSc, double rhoWaterSc, List<Double> pressurePoints, double bubblePoint,
-      double pFactor, double rhoFactor, double rsFactor, double viscFactor, String pUnit,
-      String rhoUnit, String rsUnit, String viscUnit) throws IOException {
+  private static void writeIMEXFormat(BufferedWriter bw, BlackOilPVTTable pvt, double rhoOilSc, double rhoGasSc,
+      double rhoWaterSc, List<Double> pressurePoints, double bubblePoint, double pFactor, double rhoFactor,
+      double rsFactor, double viscFactor, String pUnit, String rhoUnit, String rsUnit, String viscUnit)
+      throws IOException {
     // Model type
     bw.write("*MODEL *BLACKOIL\n\n");
 
@@ -436,8 +430,8 @@ public final class CMGEOSExporter {
     bw.write(String.format(Locale.US, "*DENSITY *WATER %.4f\n\n", rhoWaterSc * rhoFactor));
 
     // Reference pressure (bubble point)
-    bw.write(String.format(Locale.US, "*REFPW %.4f  ** Reference pressure for water (%s)\n\n",
-        bubblePoint * pFactor, pUnit));
+    bw.write(String.format(Locale.US, "*REFPW %.4f  ** Reference pressure for water (%s)\n\n", bubblePoint * pFactor,
+	pUnit));
 
     // Water properties
     double bw_val = pvt.Bw(bubblePoint);
@@ -452,17 +446,16 @@ public final class CMGEOSExporter {
 
     // Oil PVT table (similar to PVTO)
     bw.write("** Live Oil PVT Table\n");
-    bw.write(
-        "** Rs (" + rsUnit + "), Pressure (" + pUnit + "), Bo, Viscosity (" + viscUnit + ")\n");
+    bw.write("** Rs (" + rsUnit + "), Pressure (" + pUnit + "), Bo, Viscosity (" + viscUnit + ")\n");
     bw.write("*PVT *BG 1  ** Use table number 1 for gas Bg\n");
     bw.write("*BOTOIL\n");
 
     for (Double p : pressurePoints) {
       if (p <= bubblePoint) {
-        double rs = pvt.Rs(p) * rsFactor;
-        double bo = pvt.Bo(p);
-        double muO = pvt.mu_o(p) * viscFactor;
-        bw.write(String.format(Locale.US, "  %.4f  %.4f  %.6f  %.6e\n", rs, p * pFactor, bo, muO));
+	double rs = pvt.Rs(p) * rsFactor;
+	double bo = pvt.Bo(p);
+	double muO = pvt.mu_o(p) * viscFactor;
+	bw.write(String.format(Locale.US, "  %.4f  %.4f  %.6f  %.6e\n", rs, p * pFactor, bo, muO));
       }
     }
     bw.write("\n");
@@ -476,16 +469,16 @@ public final class CMGEOSExporter {
       double bg = pvt.Bg(p);
       double muG = pvt.mu_g(p) * viscFactor;
       if (!Double.isNaN(bg) && bg > 0) {
-        bw.write(String.format(Locale.US, "  %.4f  %.8f  %.8e\n", p * pFactor, bg, muG));
+	bw.write(String.format(Locale.US, "  %.4f  %.8f  %.8e\n", p * pFactor, bg, muG));
       }
     }
     bw.write("\n");
   }
 
-  private static void writeGEMFormat(BufferedWriter bw, BlackOilPVTTable pvt, double rhoOilSc,
-      double rhoGasSc, double rhoWaterSc, List<Double> pressurePoints, double bubblePoint,
-      double pFactor, double rhoFactor, double rsFactor, double viscFactor, String pUnit,
-      String rhoUnit, String rsUnit, String viscUnit) throws IOException {
+  private static void writeGEMFormat(BufferedWriter bw, BlackOilPVTTable pvt, double rhoOilSc, double rhoGasSc,
+      double rhoWaterSc, List<Double> pressurePoints, double bubblePoint, double pFactor, double rhoFactor,
+      double rsFactor, double viscFactor, String pUnit, String rhoUnit, String rsUnit, String viscUnit)
+      throws IOException {
     // GEM is compositional but can use PVT tables for comparison
     bw.write("** GEM Black-Oil Table (for comparison/validation)\n\n");
 
@@ -494,21 +487,16 @@ public final class CMGEOSExporter {
 
     // Stock tank densities
     bw.write("** Stock Tank Densities (" + rhoUnit + ")\n");
-    bw.write(
-        String.format(Locale.US, "*DENSTO %.4f  ** Oil density at SC\n", rhoOilSc * rhoFactor));
-    bw.write(
-        String.format(Locale.US, "*DENSTG %.6f  ** Gas density at SC\n", rhoGasSc * rhoFactor));
-    bw.write(String.format(Locale.US, "*DENSTW %.4f  ** Water density at SC\n\n",
-        rhoWaterSc * rhoFactor));
+    bw.write(String.format(Locale.US, "*DENSTO %.4f  ** Oil density at SC\n", rhoOilSc * rhoFactor));
+    bw.write(String.format(Locale.US, "*DENSTG %.6f  ** Gas density at SC\n", rhoGasSc * rhoFactor));
+    bw.write(String.format(Locale.US, "*DENSTW %.4f  ** Water density at SC\n\n", rhoWaterSc * rhoFactor));
 
     // Bubble point
-    bw.write(
-        String.format(Locale.US, "** Bubble Point: %.4f %s\n\n", bubblePoint * pFactor, pUnit));
+    bw.write(String.format(Locale.US, "** Bubble Point: %.4f %s\n\n", bubblePoint * pFactor, pUnit));
 
     // Write PVT as a lookup table for validation
     bw.write("** PVT Data Table for Model Validation\n");
-    bw.write("** P(" + pUnit + ")  Rs(" + rsUnit + ")  Bo  Bg  mu_o(" + viscUnit + ")  mu_g("
-        + viscUnit + ")\n");
+    bw.write("** P(" + pUnit + ")  Rs(" + rsUnit + ")  Bo  Bg  mu_o(" + viscUnit + ")  mu_g(" + viscUnit + ")\n");
     bw.write("*PVTTABLE\n");
 
     for (Double p : pressurePoints) {
@@ -519,35 +507,30 @@ public final class CMGEOSExporter {
       double muG = pvt.mu_g(p) * viscFactor;
 
       if (!Double.isNaN(bg)) {
-        bw.write(String.format(Locale.US, "  %.4f  %.4f  %.6f  %.8f  %.6e  %.6e\n", p * pFactor, rs,
-            bo, bg, muO, muG));
+	bw.write(String.format(Locale.US, "  %.4f  %.4f  %.6f  %.8f  %.6e  %.6e\n", p * pFactor, rs, bo, bg, muO, muG));
       }
     }
     bw.write("\n");
   }
 
-  private static void writeSTARSFormat(BufferedWriter bw, BlackOilPVTTable pvt, double rhoOilSc,
-      double rhoGasSc, double rhoWaterSc, List<Double> pressurePoints, double bubblePoint,
-      double pFactor, double rhoFactor, double rsFactor, double viscFactor, String pUnit,
-      String rhoUnit, String rsUnit, String viscUnit) throws IOException {
+  private static void writeSTARSFormat(BufferedWriter bw, BlackOilPVTTable pvt, double rhoOilSc, double rhoGasSc,
+      double rhoWaterSc, List<Double> pressurePoints, double bubblePoint, double pFactor, double rhoFactor,
+      double rsFactor, double viscFactor, String pUnit, String rhoUnit, String rsUnit, String viscUnit)
+      throws IOException {
     // STARS format for thermal simulation
     bw.write("** STARS Component Properties (from Black-Oil model)\n\n");
 
     // Reference densities
     bw.write("** Component Densities at Standard Conditions\n");
-    bw.write(
-        String.format(Locale.US, "*DENSITY 'OIL' %.4f  ** %s\n", rhoOilSc * rhoFactor, rhoUnit));
-    bw.write(
-        String.format(Locale.US, "*DENSITY 'GAS' %.6f  ** %s\n", rhoGasSc * rhoFactor, rhoUnit));
-    bw.write(String.format(Locale.US, "*DENSITY 'WATER' %.4f  ** %s\n\n", rhoWaterSc * rhoFactor,
-        rhoUnit));
+    bw.write(String.format(Locale.US, "*DENSITY 'OIL' %.4f  ** %s\n", rhoOilSc * rhoFactor, rhoUnit));
+    bw.write(String.format(Locale.US, "*DENSITY 'GAS' %.6f  ** %s\n", rhoGasSc * rhoFactor, rhoUnit));
+    bw.write(String.format(Locale.US, "*DENSITY 'WATER' %.4f  ** %s\n\n", rhoWaterSc * rhoFactor, rhoUnit));
 
     // K-value table (approximate from Rs)
     bw.write("** Approximate K-values from Black-Oil Model\n");
     bw.write("*KVTABLIM 1\n");
-    bw.write(String.format(Locale.US, "  %.4f %.4f  ** Pmin, Pmax (%s)\n",
-        pressurePoints.get(0) * pFactor, pressurePoints.get(pressurePoints.size() - 1) * pFactor,
-        pUnit));
+    bw.write(String.format(Locale.US, "  %.4f %.4f  ** Pmin, Pmax (%s)\n", pressurePoints.get(0) * pFactor,
+	pressurePoints.get(pressurePoints.size() - 1) * pFactor, pUnit));
     bw.write("\n");
 
     // Viscosity tables
@@ -558,7 +541,7 @@ public final class CMGEOSExporter {
     for (Double p : pressurePoints) {
       double muO = pvt.mu_o(p) * viscFactor;
       if (!Double.isNaN(muO)) {
-        bw.write(String.format(Locale.US, "  %.4f  %.6e\n", p * pFactor, muO));
+	bw.write(String.format(Locale.US, "  %.4f  %.6e\n", p * pFactor, muO));
       }
     }
     bw.write("\n");
@@ -570,7 +553,7 @@ public final class CMGEOSExporter {
     for (Double p : pressurePoints) {
       double muG = pvt.mu_g(p) * viscFactor;
       if (!Double.isNaN(muG)) {
-        bw.write(String.format(Locale.US, "  %.4f  %.6e\n", p * pFactor, muG));
+	bw.write(String.format(Locale.US, "  %.4f  %.6e\n", p * pFactor, muG));
       }
     }
     bw.write("\n");
@@ -581,7 +564,7 @@ public final class CMGEOSExporter {
 
     if (config.pressureGrid != null && config.pressureGrid.length > 0) {
       for (double p : config.pressureGrid) {
-        pressures.add(p);
+	pressures.add(p);
       }
     } else {
       // Generate default pressure points
@@ -590,12 +573,12 @@ public final class CMGEOSExporter {
       int nPoints = 10;
 
       for (int i = 0; i < nPoints; i++) {
-        double p = pMin + (pMax - pMin) * i / (nPoints - 1);
-        pressures.add(p);
+	double p = pMin + (pMax - pMin) * i / (nPoints - 1);
+	pressures.add(p);
       }
       // Ensure bubble point is included
       if (!pressures.contains(bubblePoint)) {
-        pressures.add(bubblePoint);
+	pressures.add(bubblePoint);
       }
     }
 

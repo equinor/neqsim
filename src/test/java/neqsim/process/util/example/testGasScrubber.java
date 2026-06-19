@@ -31,8 +31,7 @@ public class testGasScrubber {
    */
   @ExcludeFromJacocoGeneratedReport
   public static void main(String args[]) {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos((273.15 + 20.0), 66.00);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 20.0), 66.00);
     testSystem.addComponent("methane", 600e3, "kg/hr");
     testSystem.addComponent("ethane", 7.00e3, "kg/hr");
     testSystem.addComponent("propane", 12.0e3, "kg/hr");
@@ -71,8 +70,7 @@ public class testGasScrubber {
 
     StreamInterface stream_3 = pipe.getOutletStream();
 
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
     operations.add(stream_1);
     operations.add(scrubber);
     operations.add(stream_2);
@@ -103,8 +101,7 @@ public class testGasScrubber {
     // scrubber.getMechanicalDesign().setDesignStandard("BS 5500 - Pressure
     // Vessel");
 
-    logger.info("vane top veight "
-        + scrubber.getSeparatorSection("inlet vane").getMechanicalDesign().getTotalWeight());
+    logger.info("vane top veight " + scrubber.getSeparatorSection("inlet vane").getMechanicalDesign().getTotalWeight());
 
     logger.info("curryover " + scrubber.calcLiquidCarryoverFraction());
     logger.info("gas vel " + scrubber.getGasSuperficialVelocity());
@@ -114,8 +111,7 @@ public class testGasScrubber {
     // logger.info("derated gas load factor water " +
     // scrubber.getDeRatedGasLoadFactor(2));
 
-    logger.info("minimum liquid seal height "
-        + scrubber.getSeparatorSection(0).getMinimumLiquidSealHeight());
+    logger.info("minimum liquid seal height " + scrubber.getSeparatorSection(0).getMinimumLiquidSealHeight());
     scrubber.getMechanicalDesign().displayResults();
   }
 }

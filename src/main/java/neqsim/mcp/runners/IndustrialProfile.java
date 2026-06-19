@@ -17,17 +17,16 @@ import neqsim.mcp.model.ApiEnvelope;
  * Industrial deployment profiles for the NeqSim MCP server.
  *
  * <p>
- * Provides opinionated deployment modes that control which tools are exposed, whether
- * human-approval gates are required for execution tools, and which validation level is enforced.
- * Each profile is designed for a specific industry use case:
+ * Provides opinionated deployment modes that control which tools are exposed, whether human-approval gates are required
+ * for execution tools, and which validation level is enforced. Each profile is designed for a specific industry use
+ * case:
  * </p>
  *
  * <ul>
  * <li><b>DESKTOP_ENGINEER</b> — Full access for a single engineer working on studies.</li>
  * <li><b>STUDY_TEAM</b> — Collaborative mode with session isolation and audit logging.</li>
  * <li><b>DIGITAL_TWIN</b> — Read-heavy advisory mode for plant operations support.</li>
- * <li><b>ENTERPRISE</b> — Restricted mode with approval gates, rate limiting, and minimal execution
- * tools.</li>
+ * <li><b>ENTERPRISE</b> — Restricted mode with approval gates, rate limiting, and minimal execution tools.</li>
  * </ul>
  *
  * @author Even Solbraa
@@ -35,8 +34,7 @@ import neqsim.mcp.model.ApiEnvelope;
  */
 public final class IndustrialProfile {
 
-  private static final Gson GSON =
-      new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+  private static final Gson GSON = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
 
   /**
    * Deployment mode for the MCP server.
@@ -71,18 +69,18 @@ public final class IndustrialProfile {
    */
   public enum ToolTier {
     /**
-     * Tier 1 — Trusted core. Validated against NIST/experimental data, documented accuracy bounds,
-     * clear error behavior. Available in all deployment modes including ENTERPRISE.
+     * Tier 1 — Trusted core. Validated against NIST/experimental data, documented accuracy bounds, clear error
+     * behavior. Available in all deployment modes including ENTERPRISE.
      */
     TRUSTED_CORE,
     /**
-     * Tier 2 — Engineering advanced. Tested against literature/industry cases, suitable for
-     * screening studies. Available in DESKTOP_ENGINEER and STUDY_TEAM.
+     * Tier 2 — Engineering advanced. Tested against literature/industry cases, suitable for screening studies.
+     * Available in DESKTOP_ENGINEER and STUDY_TEAM.
      */
     ENGINEERING_ADVANCED,
     /**
-     * Tier 3 — Experimental/research. Functional but limited validation, or high-autonomy tools
-     * that are hard to validate. Available in DESKTOP_ENGINEER only.
+     * Tier 3 — Experimental/research. Functional but limited validation, or high-autonomy tools that are hard to
+     * validate. Available in DESKTOP_ENGINEER only.
      */
     EXPERIMENTAL
   }
@@ -100,8 +98,7 @@ public final class IndustrialProfile {
   private static final String ADMIN_TOKEN_ENV = "NEQSIM_MCP_ADMIN_TOKEN";
 
   /** One-shot approvals keyed by MCP tool name. */
-  private static final Set<String> APPROVED_ONCE =
-      Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
+  private static final Set<String> APPROVED_ONCE = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
 
   /** Active deployment mode. */
   private static volatile DeploymentMode activeMode = initialDeploymentMode();
@@ -115,7 +112,8 @@ public final class IndustrialProfile {
   /**
    * Private constructor — utility class.
    */
-  private IndustrialProfile() {}
+  private IndustrialProfile() {
+  }
 
   /**
    * Determines the initial deployment mode from system property or environment.
@@ -143,40 +141,36 @@ public final class IndustrialProfile {
   private static final Map<String, ToolCategory> TOOL_CATEGORIES = buildToolCategories();
 
   /**
-   * Tier 1 — Trusted core. Validated against NIST/experimental data, documented accuracy bounds,
-   * clear error behavior. This is the smallest credible surface for enterprise adoption.
+   * Tier 1 — Trusted core. Validated against NIST/experimental data, documented accuracy bounds, clear error behavior.
+   * This is the smallest credible surface for enterprise adoption.
    */
   private static final Set<String> INDUSTRIAL_CORE = Collections
-      .unmodifiableSet(new HashSet<>(Arrays.asList("runFlash", "runProcess", "validateInput",
-          "validateResults", "calculateStandard", "searchComponents", "getCapabilities",
-          "getExample", "getSchema", "getPropertyTable", "getPhaseEnvelope", "getBenchmarkTrust",
-          "checkToolAccess", "manageIndustrialProfile", "listSimulationUnits", "listUnitVariables",
-          "getSimulationVariable", "compareSimulationStates", "diagnoseAutomation",
-          "getAutomationLearningReport", "getProgress", "getAdjustableParameters")));
+      .unmodifiableSet(new HashSet<>(Arrays.asList("runFlash", "runProcess", "validateInput", "validateResults",
+	  "calculateStandard", "searchComponents", "getCapabilities", "getExample", "getSchema", "getPropertyTable",
+	  "getPhaseEnvelope", "getBenchmarkTrust", "checkToolAccess", "manageIndustrialProfile", "listSimulationUnits",
+	  "listUnitVariables", "getSimulationVariable", "compareSimulationStates", "diagnoseAutomation",
+	  "getAutomationLearningReport", "getProgress", "getAdjustableParameters")));
 
   /**
-   * Tier 2 — Engineering advanced. Tested against literature/industry cases, suitable for screening
-   * studies and engineering workflows. Available in DESKTOP_ENGINEER and STUDY_TEAM.
+   * Tier 2 — Engineering advanced. Tested against literature/industry cases, suitable for screening studies and
+   * engineering workflows. Available in DESKTOP_ENGINEER and STUDY_TEAM.
    */
-  private static final Set<String> ENGINEERING_ADVANCED =
-      Collections.unmodifiableSet(new HashSet<>(Arrays.asList("runPVT", "runPipeline",
-          "runWaterHammer", "runRootCauseAnalysis", "runFlowAssurance", "runChemistry",
-          "crossValidateModels", "runParametricStudy", "runBatch", "sizeEquipment",
-          "compareProcesses", "generateReport", "generateVisualization", "queryDataCatalog",
-          "setSimulationVariable", "saveSimulationState", "runMaterialsReview",
-          "runOpenDrainReview", "runNorsokS001Clause10Review", "runOperationalStudy", "runRelief",
-          "runLOPA", "runSIL", "runRiskMatrix", "runFlareNetwork", "runHAZOP", "runBarrierRegister",
-          "runSafetySystemPerformance", "runAgenticEngineering", "runProcessLoop")));
+  private static final Set<String> ENGINEERING_ADVANCED = Collections
+      .unmodifiableSet(new HashSet<>(Arrays.asList("runPVT", "runPipeline", "runWaterHammer", "runRootCauseAnalysis",
+	  "runFlowAssurance", "runChemistry", "crossValidateModels", "runParametricStudy", "runBatch", "sizeEquipment",
+	  "compareProcesses", "generateReport", "generateVisualization", "queryDataCatalog", "setSimulationVariable",
+	  "saveSimulationState", "runMaterialsReview", "runOpenDrainReview", "runNorsokS001Clause10Review",
+	  "runOperationalStudy", "runRelief", "runLOPA", "runSIL", "runRiskMatrix", "runFlareNetwork", "runHAZOP",
+	  "runBarrierRegister", "runSafetySystemPerformance", "runAgenticEngineering", "runProcessLoop")));
 
   /**
-   * Tier 3 — Experimental/research. Functional but limited validation, or high-autonomy tools that
-   * are difficult to validate for industrial use. Available in DESKTOP_ENGINEER only.
+   * Tier 3 — Experimental/research. Functional but limited validation, or high-autonomy tools that are difficult to
+   * validate for industrial use. Available in DESKTOP_ENGINEER only.
    */
-  private static final Set<String> EXPERIMENTAL_TOOLS =
-      Collections.unmodifiableSet(new HashSet<>(Arrays.asList("runReservoir", "runFieldEconomics",
-          "runDynamic", "runBioprocess", "solveTask", "composeWorkflow", "manageSession",
-          "streamSimulation", "composeMultiServerWorkflow", "manageSecurity", "manageState",
-          "manageValidationProfile", "runPlugin", "bridgeTaskWorkflow")));
+  private static final Set<String> EXPERIMENTAL_TOOLS = Collections
+      .unmodifiableSet(new HashSet<>(Arrays.asList("runReservoir", "runFieldEconomics", "runDynamic", "runBioprocess",
+	  "solveTask", "composeWorkflow", "manageSession", "streamSimulation", "composeMultiServerWorkflow",
+	  "manageSecurity", "manageState", "manageValidationProfile", "runPlugin", "bridgeTaskWorkflow")));
 
   /**
    * Builds the tool-to-category mapping.
@@ -274,30 +268,29 @@ public final class IndustrialProfile {
   }
 
   /**
-   * Sets the deployment mode. This changes which tools are accessible and which governance controls
-   * are active.
+   * Sets the deployment mode. This changes which tools are accessible and which governance controls are active.
    *
    * @param mode the deployment mode to activate
    */
   public static void setActiveMode(DeploymentMode mode) {
     activeMode = mode;
     switch (mode) {
-      case DESKTOP_ENGINEER:
-        autoValidationEnabled = true;
-        approvalGateEnabled = false;
-        break;
-      case STUDY_TEAM:
-        autoValidationEnabled = true;
-        approvalGateEnabled = false;
-        break;
-      case DIGITAL_TWIN:
-        autoValidationEnabled = true;
-        approvalGateEnabled = true;
-        break;
-      case ENTERPRISE:
-        autoValidationEnabled = true;
-        approvalGateEnabled = true;
-        break;
+    case DESKTOP_ENGINEER:
+      autoValidationEnabled = true;
+      approvalGateEnabled = false;
+      break;
+    case STUDY_TEAM:
+      autoValidationEnabled = true;
+      approvalGateEnabled = false;
+      break;
+    case DIGITAL_TWIN:
+      autoValidationEnabled = true;
+      approvalGateEnabled = true;
+      break;
+    case ENTERPRISE:
+      autoValidationEnabled = true;
+      approvalGateEnabled = true;
+      break;
     }
   }
 
@@ -315,33 +308,32 @@ public final class IndustrialProfile {
    * Checks whether a tool is accessible in a specific deployment mode.
    *
    * @param toolName the MCP tool name
-   * @param mode the deployment mode to evaluate
+   * @param mode     the deployment mode to evaluate
    * @return true if the tool is allowed in the supplied mode
    */
   private static boolean isToolAllowedInMode(String toolName, DeploymentMode mode) {
     switch (mode) {
-      case DESKTOP_ENGINEER:
-        return true; // all tiers available — engineer chooses risk
-      case STUDY_TEAM:
-        // Tier 1 + Tier 2 only; experimental and platform tools blocked
-        return INDUSTRIAL_CORE.contains(toolName) || ENGINEERING_ADVANCED.contains(toolName);
-      case DIGITAL_TWIN:
-        // Advisory + Calculation from Tier 1 only — no write, no experimental
-        ToolCategory cat = TOOL_CATEGORIES.get(toolName);
-        return INDUSTRIAL_CORE.contains(toolName)
-            && (cat == ToolCategory.ADVISORY || cat == ToolCategory.CALCULATION);
-      case ENTERPRISE:
-        // Tier 1 only
-        return INDUSTRIAL_CORE.contains(toolName);
-      default:
-        return true;
+    case DESKTOP_ENGINEER:
+      return true; // all tiers available — engineer chooses risk
+    case STUDY_TEAM:
+      // Tier 1 + Tier 2 only; experimental and platform tools blocked
+      return INDUSTRIAL_CORE.contains(toolName) || ENGINEERING_ADVANCED.contains(toolName);
+    case DIGITAL_TWIN:
+      // Advisory + Calculation from Tier 1 only — no write, no experimental
+      ToolCategory cat = TOOL_CATEGORIES.get(toolName);
+      return INDUSTRIAL_CORE.contains(toolName) && (cat == ToolCategory.ADVISORY || cat == ToolCategory.CALCULATION);
+    case ENTERPRISE:
+      // Tier 1 only
+      return INDUSTRIAL_CORE.contains(toolName);
+    default:
+      return true;
     }
   }
 
   /**
-   * Enforces tool access for the current deployment mode. Returns an error JSON string if the tool
-   * is blocked, or null if the tool is allowed. Call at the top of every @Tool method to prove
-   * governance is enforced in code, not just described in docs.
+   * Enforces tool access for the current deployment mode. Returns an error JSON string if the tool is blocked, or null
+   * if the tool is allowed. Call at the top of every @Tool method to prove governance is enforced in code, not just
+   * described in docs.
    *
    * @param toolName the MCP tool name being invoked
    * @return null if allowed, or a JSON error string if blocked
@@ -350,46 +342,43 @@ public final class IndustrialProfile {
     String securityBlocked = SecurityRunner.checkAccess(null, toolName);
     if (securityBlocked != null) {
       return policyErrorJson("blocked", toolName, "SECURITY", "Security policy denied access",
-          "Inspect manageSecurity/getStatus and provide valid credentials when security is enabled.");
+	  "Inspect manageSecurity/getStatus and provide valid credentials when security is enabled.");
     }
     if (isToolAllowed(toolName)) {
       if (requiresApproval(toolName) && !consumeApproval(toolName)) {
-        return policyErrorJson("approval_required", toolName, "APPROVAL_REQUIRED",
-            "Tool '" + toolName + "' requires explicit approval in " + activeMode.name() + " mode.",
-            "Call manageIndustrialProfile with action approveTool using an admin token, then retry once.");
+	return policyErrorJson("approval_required", toolName, "APPROVAL_REQUIRED",
+	    "Tool '" + toolName + "' requires explicit approval in " + activeMode.name() + " mode.",
+	    "Call manageIndustrialProfile with action approveTool using an admin token, then retry once.");
       }
       return null;
     }
     ToolTier tier = getToolTier(toolName);
     String tierName = tier != null ? tier.name() : "UNKNOWN";
-    return policyErrorJson("blocked", toolName, tierName,
-        "Tool '" + toolName + "' is not available in " + activeMode.name()
-            + " mode. This mode allows "
-            + (activeMode == DeploymentMode.ENTERPRISE ? "Tier 1 (TRUSTED_CORE) only."
-                : activeMode == DeploymentMode.STUDY_TEAM
-                    ? "Tier 1 (TRUSTED_CORE) and Tier 2 (ENGINEERING_ADVANCED) only."
-                    : "a restricted subset of tools."),
-        "Switch the startup profile to DESKTOP_ENGINEER for local engineering, or request an "
-            + "approved profile from the MCP administrator.");
+    return policyErrorJson("blocked", toolName, tierName, "Tool '" + toolName + "' is not available in "
+	+ activeMode.name() + " mode. This mode allows "
+	+ (activeMode == DeploymentMode.ENTERPRISE ? "Tier 1 (TRUSTED_CORE) only."
+	    : activeMode == DeploymentMode.STUDY_TEAM ? "Tier 1 (TRUSTED_CORE) and Tier 2 (ENGINEERING_ADVANCED) only."
+		: "a restricted subset of tools."),
+	"Switch the startup profile to DESKTOP_ENGINEER for local engineering, or request an "
+	    + "approved profile from the MCP administrator.");
   }
 
   /**
    * Approves the next invocation of a governed tool.
    *
-   * @param toolName the MCP tool name to approve
+   * @param toolName   the MCP tool name to approve
    * @param adminToken the administrator token
    * @return null if approval was recorded, or an error JSON string if denied
    */
   public static String approveNextInvocation(String toolName, String adminToken) {
     if (!isAdminAuthorized(adminToken)) {
       return policyErrorJson("blocked", toolName, "ADMIN_REQUIRED",
-          "Admin authorization is required to approve governed tool execution.",
-          "Set NEQSIM_MCP_ADMIN_TOKEN and pass it as adminToken.");
+	  "Admin authorization is required to approve governed tool execution.",
+	  "Set NEQSIM_MCP_ADMIN_TOKEN and pass it as adminToken.");
     }
     if (getToolCategory(toolName) == null) {
-      return policyErrorJson("blocked", toolName, "UNKNOWN_TOOL",
-          "Cannot approve unknown MCP tool '" + toolName + "'.",
-          "Use checkToolAccess or getCapabilities to choose a valid tool name.");
+      return policyErrorJson("blocked", toolName, "UNKNOWN_TOOL", "Cannot approve unknown MCP tool '" + toolName + "'.",
+	  "Use checkToolAccess or getCapabilities to choose a valid tool name.");
     }
     APPROVED_ONCE.add(toolName);
     JsonObject response = new JsonObject();
@@ -398,8 +387,8 @@ public final class IndustrialProfile {
     response.addProperty("approval", "next_invocation");
     response.addProperty("message", "Next invocation of " + toolName + " is approved once.");
     ApiEnvelope.applyStandardFields(response, "manageIndustrialProfile", null,
-        ApiEnvelope.validationStatus(true, "policy", "Approval recorded"),
-        ApiEnvelope.qualityGate("approved", "One-shot approval recorded", false));
+	ApiEnvelope.validationStatus(true, "policy", "Approval recorded"),
+	ApiEnvelope.qualityGate("approved", "One-shot approval recorded", false));
     return GSON.toJson(response);
   }
 
@@ -411,8 +400,7 @@ public final class IndustrialProfile {
    */
   public static boolean isAdminAuthorized(String adminToken) {
     String configured = getConfiguredAdminToken();
-    return configured != null && !configured.isEmpty() && adminToken != null
-        && configured.equals(adminToken);
+    return configured != null && !configured.isEmpty() && adminToken != null && configured.equals(adminToken);
   }
 
   /**
@@ -451,10 +439,10 @@ public final class IndustrialProfile {
   /**
    * Builds a standardized policy error response.
    *
-   * @param status policy status string
-   * @param toolName the MCP tool name
-   * @param code policy reason code or tier name
-   * @param reason human-readable reason
+   * @param status      policy status string
+   * @param toolName    the MCP tool name
+   * @param code        policy reason code or tier name
+   * @param reason      human-readable reason
    * @param remediation recommended remediation
    * @return JSON policy response
    */
@@ -578,8 +566,7 @@ public final class IndustrialProfile {
       profile.addProperty("name", mode.name());
       profile.addProperty("description", getProfileDescription(mode));
       profile.addProperty("toolCount", countAllowedTools(mode));
-      profile.addProperty("approvalGate",
-          mode == DeploymentMode.DIGITAL_TWIN || mode == DeploymentMode.ENTERPRISE);
+      profile.addProperty("approvalGate", mode == DeploymentMode.DIGITAL_TWIN || mode == DeploymentMode.ENTERPRISE);
       profile.addProperty("auditLogging", mode != DeploymentMode.DESKTOP_ENGINEER);
       profile.addProperty("sessionIsolation", mode != DeploymentMode.DESKTOP_ENGINEER);
       profile.addProperty("rateLimiting", mode == DeploymentMode.ENTERPRISE);
@@ -626,26 +613,25 @@ public final class IndustrialProfile {
    */
   private static String getProfileDescription(DeploymentMode mode) {
     switch (mode) {
-      case DESKTOP_ENGINEER:
-        return "Full access for a single engineer. Core, advanced, and experimental "
-            + "tools available with clear tier labeling. Auto-validation on. "
-            + "No approval gates. Ideal for study work and exploration.";
-      case STUDY_TEAM:
-        return "Collaborative mode for engineering teams. Core and advanced tools "
-            + "available. Session isolation and audit logging enabled. "
-            + "Auto-validation enforced on all calculations.";
-      case DIGITAL_TWIN:
-        return "Advisory-only mode for plant operations support. Advisory and "
-            + "calculation tools only — no direct plant control, no write-back to "
-            + "operational systems, no autonomous action execution without separate "
-            + "approval architecture. Ideal for operator decision support and "
-            + "what-if analysis.";
-      case ENTERPRISE:
-        return "Restricted mode for governed deployments. Approved industrial core "
-            + "tools only. Approval gates on all state-modifying operations. "
-            + "Rate limiting and full audit logging. Recommended for enterprise integration.";
-      default:
-        return "Unknown mode";
+    case DESKTOP_ENGINEER:
+      return "Full access for a single engineer. Core, advanced, and experimental "
+	  + "tools available with clear tier labeling. Auto-validation on. "
+	  + "No approval gates. Ideal for study work and exploration.";
+    case STUDY_TEAM:
+      return "Collaborative mode for engineering teams. Core and advanced tools "
+	  + "available. Session isolation and audit logging enabled. "
+	  + "Auto-validation enforced on all calculations.";
+    case DIGITAL_TWIN:
+      return "Advisory-only mode for plant operations support. Advisory and "
+	  + "calculation tools only — no direct plant control, no write-back to "
+	  + "operational systems, no autonomous action execution without separate "
+	  + "approval architecture. Ideal for operator decision support and " + "what-if analysis.";
+    case ENTERPRISE:
+      return "Restricted mode for governed deployments. Approved industrial core "
+	  + "tools only. Approval gates on all state-modifying operations. "
+	  + "Rate limiting and full audit logging. Recommended for enterprise integration.";
+    default:
+      return "Unknown mode";
     }
   }
 
@@ -659,7 +645,7 @@ public final class IndustrialProfile {
     int count = 0;
     for (String tool : TOOL_CATEGORIES.keySet()) {
       if (isToolAllowedInMode(tool, mode)) {
-        count++;
+	count++;
       }
     }
     return count;

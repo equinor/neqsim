@@ -4,10 +4,9 @@ package neqsim.process.util.fire;
  * Dynamic relief valve (PSV) sizing for fire scenarios per API 521.
  *
  * <p>
- * This class provides methods for sizing pressure safety valves (PSVs) for gas-filled vessels
- * subject to fire exposure. Unlike the traditional conservative API 521 approach which sizes for
- * peak flow, this implementation supports dynamic sizing that accounts for the transient nature of
- * fire-induced blowdown.
+ * This class provides methods for sizing pressure safety valves (PSVs) for gas-filled vessels subject to fire exposure.
+ * Unlike the traditional conservative API 521 approach which sizes for peak flow, this implementation supports dynamic
+ * sizing that accounts for the transient nature of fire-induced blowdown.
  * </p>
  *
  * <p>
@@ -23,8 +22,8 @@ package neqsim.process.util.fire;
  * References:
  * <ul>
  * <li>API Standard 521, 7th Edition (2020) - Pressure-relieving and Depressuring Systems</li>
- * <li>Andreasen, A. (2021). HydDown: A Python package for calculation of hydrogen (or other gas)
- * pressure vessel filling and discharge. Journal of Open Source Software, 6(66), 3695.</li>
+ * <li>Andreasen, A. (2021). HydDown: A Python package for calculation of hydrogen (or other gas) pressure vessel
+ * filling and discharge. Journal of Open Source Software, 6(66), 3695.</li>
  * </ul>
  *
  * @author ESOL
@@ -32,18 +31,19 @@ package neqsim.process.util.fire;
  */
 public final class ReliefValveSizing {
 
-  private ReliefValveSizing() {}
+  private ReliefValveSizing() {
+  }
 
   /** Gas constant [J/(mol*K)]. */
   public static final double R_GAS = 8314.0;
 
   /** Standard API 520 orifice areas [in²]. */
-  public static final double[] STANDARD_ORIFICE_AREAS_IN2 = {0.110, 0.196, 0.307, 0.503, 0.785,
-      1.287, 1.838, 2.853, 3.600, 4.340, 6.380, 11.05, 16.0, 26.0};
+  public static final double[] STANDARD_ORIFICE_AREAS_IN2 = { 0.110, 0.196, 0.307, 0.503, 0.785, 1.287, 1.838, 2.853,
+      3.600, 4.340, 6.380, 11.05, 16.0, 26.0 };
 
   /** Standard API 520 orifice letter designations. */
-  public static final String[] STANDARD_ORIFICE_LETTERS =
-      {"D", "E", "F", "G", "H", "J", "K", "L", "M", "N", "P", "Q", "R", "T"};
+  public static final String[] STANDARD_ORIFICE_LETTERS = { "D", "E", "F", "G", "H", "J", "K", "L", "M", "N", "P", "Q",
+      "R", "T" };
 
   /**
    * Result container for PSV sizing calculations.
@@ -64,21 +64,21 @@ public final class ReliefValveSizing {
     /**
      * Creates a PSV sizing result.
      *
-     * @param requiredArea Required orifice area [m²]
-     * @param requiredAreaIn2 Required orifice area [in²]
-     * @param massFlowCapacity Mass flow capacity at set pressure [kg/s]
-     * @param recommendedOrifice Recommended standard orifice letter
-     * @param selectedArea Selected standard orifice area [m²]
-     * @param selectedAreaIn2 Selected standard orifice area [in²]
+     * @param requiredArea         Required orifice area [m²]
+     * @param requiredAreaIn2      Required orifice area [in²]
+     * @param massFlowCapacity     Mass flow capacity at set pressure [kg/s]
+     * @param recommendedOrifice   Recommended standard orifice letter
+     * @param selectedArea         Selected standard orifice area [m²]
+     * @param selectedAreaIn2      Selected standard orifice area [in²]
      * @param overpressureFraction Overpressure fraction (typically 0.1 or 0.21)
      * @param backPressureFraction Back pressure / set pressure ratio
-     * @param kd Discharge coefficient
-     * @param kb Back pressure correction factor
-     * @param kc Combination correction factor
+     * @param kd                   Discharge coefficient
+     * @param kb                   Back pressure correction factor
+     * @param kc                   Combination correction factor
      */
     public PSVSizingResult(double requiredArea, double requiredAreaIn2, double massFlowCapacity,
-        String recommendedOrifice, double selectedArea, double selectedAreaIn2,
-        double overpressureFraction, double backPressureFraction, double kd, double kb, double kc) {
+	String recommendedOrifice, double selectedArea, double selectedAreaIn2, double overpressureFraction,
+	double backPressureFraction, double kd, double kb, double kc) {
       this.requiredArea = requiredArea;
       this.requiredAreaIn2 = requiredAreaIn2;
       this.massFlowCapacity = massFlowCapacity;
@@ -147,22 +147,21 @@ public final class ReliefValveSizing {
    * A = W / (C * Kd * P1 * Kb * Kc) * sqrt(T * Z / M)
    * </pre>
    *
-   * @param massFlowRate Required relieving rate [kg/s]
-   * @param setPressure PSV set pressure [Pa absolute]
+   * @param massFlowRate         Required relieving rate [kg/s]
+   * @param setPressure          PSV set pressure [Pa absolute]
    * @param overpressureFraction Overpressure fraction (0.10 for fire, 0.21 for external fire)
-   * @param backPressure Downstream/back pressure [Pa absolute]
-   * @param temperature Relieving temperature [K]
-   * @param molecularWeight Molecular weight [kg/mol]
-   * @param compressibility Compressibility factor Z
-   * @param specificHeatRatio Cp/Cv ratio (gamma/k)
-   * @param isBalancedBellows true for balanced-bellows PSV
-   * @param hasRuptureDisk true if rupture disk is installed upstream
+   * @param backPressure         Downstream/back pressure [Pa absolute]
+   * @param temperature          Relieving temperature [K]
+   * @param molecularWeight      Molecular weight [kg/mol]
+   * @param compressibility      Compressibility factor Z
+   * @param specificHeatRatio    Cp/Cv ratio (gamma/k)
+   * @param isBalancedBellows    true for balanced-bellows PSV
+   * @param hasRuptureDisk       true if rupture disk is installed upstream
    * @return PSV sizing result
    */
   public static PSVSizingResult calculateRequiredArea(double massFlowRate, double setPressure,
       double overpressureFraction, double backPressure, double temperature, double molecularWeight,
-      double compressibility, double specificHeatRatio, boolean isBalancedBellows,
-      boolean hasRuptureDisk) {
+      double compressibility, double specificHeatRatio, boolean isBalancedBellows, boolean hasRuptureDisk) {
     if (massFlowRate <= 0.0) {
       throw new IllegalArgumentException("Mass flow rate must be positive");
     }
@@ -185,27 +184,25 @@ public final class ReliefValveSizing {
     double kc = hasRuptureDisk ? 0.9 : 1.0;
 
     // Calculate critical pressure ratio
-    double criticalRatio =
-        Math.pow(2.0 / (specificHeatRatio + 1.0), specificHeatRatio / (specificHeatRatio - 1.0));
+    double criticalRatio = Math.pow(2.0 / (specificHeatRatio + 1.0), specificHeatRatio / (specificHeatRatio - 1.0));
 
     // Back pressure correction factor (Kb)
     double kb = 1.0;
     if (isBalancedBellows) {
       // For balanced-bellows PSV, Kb depends on back pressure
       if (backPressureFraction > criticalRatio) {
-        // Subcritical flow correction
-        double r = backPressureFraction;
-        kb = Math.sqrt((specificHeatRatio / (specificHeatRatio - 1.0))
-            * (Math.pow(r, 2.0 / specificHeatRatio)
-                - Math.pow(r, (specificHeatRatio + 1.0) / specificHeatRatio))
-            / (1.0 - criticalRatio));
-        kb = Math.min(kb, 1.0);
+	// Subcritical flow correction
+	double r = backPressureFraction;
+	kb = Math.sqrt((specificHeatRatio / (specificHeatRatio - 1.0))
+	    * (Math.pow(r, 2.0 / specificHeatRatio) - Math.pow(r, (specificHeatRatio + 1.0) / specificHeatRatio))
+	    / (1.0 - criticalRatio));
+	kb = Math.min(kb, 1.0);
       }
     } else {
       // Conventional PSV - back pressure reduces capacity
       if (backPressureFraction > 0.5) {
-        kb = 1.0 - (backPressureFraction - 0.5) * 2.0; // Linear reduction above 50%
-        kb = Math.max(kb, 0.1);
+	kb = 1.0 - (backPressureFraction - 0.5) * 2.0; // Linear reduction above 50%
+	kb = Math.max(kb, 0.1);
       }
     }
 
@@ -233,34 +230,34 @@ public final class ReliefValveSizing {
     double selectedArea_in2 = STANDARD_ORIFICE_AREAS_IN2[STANDARD_ORIFICE_AREAS_IN2.length - 1];
     for (int i = 0; i < STANDARD_ORIFICE_AREAS_IN2.length; i++) {
       if (STANDARD_ORIFICE_AREAS_IN2[i] >= A_in2) {
-        selectedOrifice = STANDARD_ORIFICE_LETTERS[i];
-        selectedArea_in2 = STANDARD_ORIFICE_AREAS_IN2[i];
-        break;
+	selectedOrifice = STANDARD_ORIFICE_LETTERS[i];
+	selectedArea_in2 = STANDARD_ORIFICE_AREAS_IN2[i];
+	break;
       }
     }
     double selectedArea_m2 = selectedArea_in2 * 6.4516e-4;
 
-    return new PSVSizingResult(A_m2, A_in2, massFlowRate, selectedOrifice, selectedArea_m2,
-        selectedArea_in2, overpressureFraction, backPressureFraction, kd, kb, kc);
+    return new PSVSizingResult(A_m2, A_in2, massFlowRate, selectedOrifice, selectedArea_m2, selectedArea_in2,
+	overpressureFraction, backPressureFraction, kd, kb, kc);
   }
 
   /**
    * Calculates the mass flow capacity of a PSV for gas/vapor service.
    *
-   * @param orificeArea Effective orifice area [m²]
-   * @param setPressure PSV set pressure [Pa absolute]
+   * @param orificeArea          Effective orifice area [m²]
+   * @param setPressure          PSV set pressure [Pa absolute]
    * @param overpressureFraction Overpressure fraction
-   * @param backPressure Back pressure [Pa absolute]
-   * @param temperature Relieving temperature [K]
-   * @param molecularWeight Molecular weight [kg/mol]
-   * @param compressibility Compressibility factor Z
-   * @param specificHeatRatio Cp/Cv ratio
+   * @param backPressure         Back pressure [Pa absolute]
+   * @param temperature          Relieving temperature [K]
+   * @param molecularWeight      Molecular weight [kg/mol]
+   * @param compressibility      Compressibility factor Z
+   * @param specificHeatRatio    Cp/Cv ratio
    * @param dischargeCoefficient Discharge coefficient (typically 0.975)
    * @return Mass flow capacity [kg/s]
    */
-  public static double calculateMassFlowCapacity(double orificeArea, double setPressure,
-      double overpressureFraction, double backPressure, double temperature, double molecularWeight,
-      double compressibility, double specificHeatRatio, double dischargeCoefficient) {
+  public static double calculateMassFlowCapacity(double orificeArea, double setPressure, double overpressureFraction,
+      double backPressure, double temperature, double molecularWeight, double compressibility, double specificHeatRatio,
+      double dischargeCoefficient) {
     double P1 = setPressure * (1.0 + overpressureFraction);
     double k = specificHeatRatio;
 
@@ -274,25 +271,23 @@ public final class ReliefValveSizing {
       C = Math.sqrt(k * Math.pow(2.0 / (k + 1.0), (k + 1.0) / (k - 1.0)));
     } else {
       // Subsonic flow
-      C = Math.sqrt(2.0 * k / (k - 1.0)
-          * (Math.pow(pressureRatio, 2.0 / k) - Math.pow(pressureRatio, (k + 1.0) / k)));
+      C = Math.sqrt(2.0 * k / (k - 1.0) * (Math.pow(pressureRatio, 2.0 / k) - Math.pow(pressureRatio, (k + 1.0) / k)));
     }
 
     // Mass flow rate
     return dischargeCoefficient * orificeArea * P1 * C
-        * Math.sqrt(molecularWeight / (compressibility * R_GAS * temperature));
+	* Math.sqrt(molecularWeight / (compressibility * R_GAS * temperature));
   }
 
   /**
    * Calculates the required heat absorption rate for a given PSV size during fire.
    *
    * <p>
-   * This is useful for determining if a given PSV size can handle the heat input from a fire
-   * scenario.
+   * This is useful for determining if a given PSV size can handle the heat input from a fire scenario.
    * </p>
    *
    * @param massFlowCapacity PSV mass flow capacity [kg/s]
-   * @param latentHeat Latent heat of vaporization (or Cp*dT for sensible heating) [J/kg]
+   * @param latentHeat       Latent heat of vaporization (or Cp*dT for sensible heating) [J/kg]
    * @return Maximum heat absorption rate [W]
    */
   public static double calculateMaxHeatAbsorption(double massFlowCapacity, double latentHeat) {
@@ -303,27 +298,26 @@ public final class ReliefValveSizing {
    * Dynamic sizing calculation for fire scenarios.
    *
    * <p>
-   * Unlike static sizing which uses peak flow, this method evaluates the transient response and can
-   * result in smaller (more realistic) PSV sizes.
+   * Unlike static sizing which uses peak flow, this method evaluates the transient response and can result in smaller
+   * (more realistic) PSV sizes.
    * </p>
    *
-   * @param initialMass Initial fluid inventory [kg]
-   * @param initialPressure Initial pressure [Pa]
-   * @param setPressure PSV set pressure [Pa]
+   * @param initialMass        Initial fluid inventory [kg]
+   * @param initialPressure    Initial pressure [Pa]
+   * @param setPressure        PSV set pressure [Pa]
    * @param initialTemperature Initial temperature [K]
-   * @param fireHeatInput Constant fire heat input [W]
-   * @param vesselVolume Vessel volume [m³]
-   * @param molecularWeight Molecular weight [kg/mol]
-   * @param specificHeatRatio Cp/Cv ratio
-   * @param compressibility Compressibility factor
-   * @param heatCapacity Heat capacity [J/(kg*K)]
-   * @param blowdownTime Target blowdown time [s] (typically 15 minutes = 900s per API 521)
+   * @param fireHeatInput      Constant fire heat input [W]
+   * @param vesselVolume       Vessel volume [m³]
+   * @param molecularWeight    Molecular weight [kg/mol]
+   * @param specificHeatRatio  Cp/Cv ratio
+   * @param compressibility    Compressibility factor
+   * @param heatCapacity       Heat capacity [J/(kg*K)]
+   * @param blowdownTime       Target blowdown time [s] (typically 15 minutes = 900s per API 521)
    * @return PSV sizing result for fire case
    */
-  public static PSVSizingResult dynamicFireSizing(double initialMass, double initialPressure,
-      double setPressure, double initialTemperature, double fireHeatInput, double vesselVolume,
-      double molecularWeight, double specificHeatRatio, double compressibility, double heatCapacity,
-      double blowdownTime) {
+  public static PSVSizingResult dynamicFireSizing(double initialMass, double initialPressure, double setPressure,
+      double initialTemperature, double fireHeatInput, double vesselVolume, double molecularWeight,
+      double specificHeatRatio, double compressibility, double heatCapacity, double blowdownTime) {
     // API 521 fire case: 21% overpressure for first PSV, 16% for additional
     double overpressureFraction = 0.21;
     double relievingPressure = setPressure * (1.0 + overpressureFraction);
@@ -349,14 +343,14 @@ public final class ReliefValveSizing {
     // Atmospheric back pressure
     double backPressure = 101325.0;
 
-    return calculateRequiredArea(designMassFlow, setPressure, overpressureFraction, backPressure,
-        relievingTemperature, molecularWeight, compressibility, specificHeatRatio, false, false);
+    return calculateRequiredArea(designMassFlow, setPressure, overpressureFraction, backPressure, relievingTemperature,
+	molecularWeight, compressibility, specificHeatRatio, false, false);
   }
 
   /**
    * Calculates the blowdown (reseat) pressure for a PSV.
    *
-   * @param setPressure PSV set pressure [Pa]
+   * @param setPressure     PSV set pressure [Pa]
    * @param blowdownPercent Blowdown percentage (typically 7-10%)
    * @return Blowdown/reseat pressure [Pa]
    */
@@ -371,7 +365,7 @@ public final class ReliefValveSizing {
    * This allows the PSV to be modeled as an equivalent control valve in process simulations.
    * </p>
    *
-   * @param orificeArea Orifice area [m²]
+   * @param orificeArea          Orifice area [m²]
    * @param dischargeCoefficient Discharge coefficient
    * @return Flow coefficient Cv [gpm/sqrt(psi)]
    */
@@ -385,7 +379,7 @@ public final class ReliefValveSizing {
   /**
    * Validates PSV sizing against API 521 requirements.
    *
-   * @param result PSV sizing result to validate
+   * @param result     PSV sizing result to validate
    * @param isFireCase true if this is a fire scenario
    * @return Validation message (empty if valid, otherwise describes issues)
    */
@@ -424,7 +418,7 @@ public final class ReliefValveSizing {
   public static String getNextLargerOrifice(String currentOrifice) {
     for (int i = 0; i < STANDARD_ORIFICE_LETTERS.length - 1; i++) {
       if (STANDARD_ORIFICE_LETTERS[i].equals(currentOrifice)) {
-        return STANDARD_ORIFICE_LETTERS[i + 1];
+	return STANDARD_ORIFICE_LETTERS[i + 1];
       }
     }
     return "T";
@@ -439,7 +433,7 @@ public final class ReliefValveSizing {
   public static double getStandardOrificeArea(String orifice) {
     for (int i = 0; i < STANDARD_ORIFICE_LETTERS.length; i++) {
       if (STANDARD_ORIFICE_LETTERS[i].equals(orifice)) {
-        return STANDARD_ORIFICE_AREAS_IN2[i] * 6.4516e-4;
+	return STANDARD_ORIFICE_AREAS_IN2[i] * 6.4516e-4;
       }
     }
     throw new IllegalArgumentException("Unknown orifice designation: " + orifice);
@@ -466,19 +460,18 @@ public final class ReliefValveSizing {
     /**
      * Creates a liquid PSV sizing result.
      *
-     * @param requiredAreaM2 Required orifice area [m2]
-     * @param requiredAreaIn2 Required orifice area [in2]
-     * @param massFlowRate Mass flow rate [kg/s]
-     * @param volumeFlowRate Volume flow rate [m3/s]
+     * @param requiredAreaM2     Required orifice area [m2]
+     * @param requiredAreaIn2    Required orifice area [in2]
+     * @param massFlowRate       Mass flow rate [kg/s]
+     * @param volumeFlowRate     Volume flow rate [m3/s]
      * @param recommendedOrifice Recommended standard orifice letter
-     * @param selectedAreaIn2 Selected standard orifice area [in2]
-     * @param kd Discharge coefficient
-     * @param kw Back pressure correction factor
-     * @param kv Viscosity correction factor
+     * @param selectedAreaIn2    Selected standard orifice area [in2]
+     * @param kd                 Discharge coefficient
+     * @param kw                 Back pressure correction factor
+     * @param kv                 Viscosity correction factor
      */
     public LiquidPSVSizingResult(double requiredAreaM2, double requiredAreaIn2, double massFlowRate,
-        double volumeFlowRate, String recommendedOrifice, double selectedAreaIn2, double kd,
-        double kw, double kv) {
+	double volumeFlowRate, String recommendedOrifice, double selectedAreaIn2, double kd, double kw, double kv) {
       this.requiredAreaM2 = requiredAreaM2;
       this.requiredAreaIn2 = requiredAreaIn2;
       this.massFlowRate = massFlowRate;
@@ -584,22 +577,22 @@ public final class ReliefValveSizing {
    * </pre>
    *
    * <p>
-   * where Q is volume flow in US gpm, G is specific gravity, P1 is upstream relieving pressure
-   * [psig], and P2 is back pressure [psig].
+   * where Q is volume flow in US gpm, G is specific gravity, P1 is upstream relieving pressure [psig], and P2 is back
+   * pressure [psig].
    * </p>
    *
-   * @param volumeFlowRate Volume flow rate at relieving conditions [m3/s]
-   * @param liquidDensity Liquid density at relieving conditions [kg/m3]
-   * @param setPressure PSV set pressure [Pa absolute]
+   * @param volumeFlowRate       Volume flow rate at relieving conditions [m3/s]
+   * @param liquidDensity        Liquid density at relieving conditions [kg/m3]
+   * @param setPressure          PSV set pressure [Pa absolute]
    * @param overpressureFraction Overpressure fraction (0.10 or 0.25 for fire)
-   * @param backPressure Downstream/back pressure [Pa absolute]
-   * @param viscosity Dynamic viscosity [Pa*s]
-   * @param isBalancedBellows true for balanced-bellows PSV
+   * @param backPressure         Downstream/back pressure [Pa absolute]
+   * @param viscosity            Dynamic viscosity [Pa*s]
+   * @param isBalancedBellows    true for balanced-bellows PSV
    * @return Liquid PSV sizing result
    */
-  public static LiquidPSVSizingResult calculateLiquidReliefArea(double volumeFlowRate,
-      double liquidDensity, double setPressure, double overpressureFraction, double backPressure,
-      double viscosity, boolean isBalancedBellows) {
+  public static LiquidPSVSizingResult calculateLiquidReliefArea(double volumeFlowRate, double liquidDensity,
+      double setPressure, double overpressureFraction, double backPressure, double viscosity,
+      boolean isBalancedBellows) {
     if (volumeFlowRate <= 0.0) {
       throw new IllegalArgumentException("Volume flow rate must be positive");
     }
@@ -624,8 +617,8 @@ public final class ReliefValveSizing {
     if (isBalancedBellows) {
       double bpRatio = backPressure / relievingPressure;
       if (bpRatio > 0.5) {
-        kw = 1.0 - 0.5 * (bpRatio - 0.5);
-        kw = Math.max(kw, 0.1);
+	kw = 1.0 - 0.5 * (bpRatio - 0.5);
+	kw = Math.max(kw, 0.1);
       }
     }
 
@@ -644,10 +637,10 @@ public final class ReliefValveSizing {
       double velocity = volumeFlowRate / areaSi;
       double reynolds = liquidDensity * velocity * equivalentDiameter / viscosity;
       if (reynolds > 0 && reynolds < 100000) {
-        // API 520 viscosity correction: Kv = (0.9935 + 2.878/Re^0.5 + 342.75/Re^1.5)^(-1)
-        kv = 1.0 / (0.9935 + 2.878 / Math.sqrt(reynolds) + 342.75 / Math.pow(reynolds, 1.5));
-        kv = Math.max(kv, 0.2);
-        kv = Math.min(kv, 1.0);
+	// API 520 viscosity correction: Kv = (0.9935 + 2.878/Re^0.5 + 342.75/Re^1.5)^(-1)
+	kv = 1.0 / (0.9935 + 2.878 / Math.sqrt(reynolds) + 342.75 / Math.pow(reynolds, 1.5));
+	kv = Math.max(kv, 0.2);
+	kv = Math.min(kv, 1.0);
       }
     }
 
@@ -667,14 +660,14 @@ public final class ReliefValveSizing {
     double selectedAreaIn2 = STANDARD_ORIFICE_AREAS_IN2[STANDARD_ORIFICE_AREAS_IN2.length - 1];
     for (int i = 0; i < STANDARD_ORIFICE_AREAS_IN2.length; i++) {
       if (STANDARD_ORIFICE_AREAS_IN2[i] >= aIn2) {
-        selectedOrifice = STANDARD_ORIFICE_LETTERS[i];
-        selectedAreaIn2 = STANDARD_ORIFICE_AREAS_IN2[i];
-        break;
+	selectedOrifice = STANDARD_ORIFICE_LETTERS[i];
+	selectedAreaIn2 = STANDARD_ORIFICE_AREAS_IN2[i];
+	break;
       }
     }
 
-    return new LiquidPSVSizingResult(aM2, aIn2, massFlowRate, volumeFlowRate, selectedOrifice,
-        selectedAreaIn2, kd, kw, kv);
+    return new LiquidPSVSizingResult(aM2, aIn2, massFlowRate, volumeFlowRate, selectedOrifice, selectedAreaIn2, kd, kw,
+	kv);
   }
 
   // ============================================================================
@@ -682,37 +675,36 @@ public final class ReliefValveSizing {
   // ============================================================================
 
   /**
-   * Estimates the required relief area for two-phase (gas + liquid) service using the omega method
-   * per API 520 Appendix D (Leung's omega method).
+   * Estimates the required relief area for two-phase (gas + liquid) service using the omega method per API 520 Appendix
+   * D (Leung's omega method).
    *
    * <p>
-   * The omega parameter characterizes the two-phase mixture compressibility. For flashing flow
-   * through a nozzle, omega accounts for the vapour generation during depressurization.
+   * The omega parameter characterizes the two-phase mixture compressibility. For flashing flow through a nozzle, omega
+   * accounts for the vapour generation during depressurization.
    * </p>
    *
-   * @param massFlowRate Total two-phase mass flow rate [kg/s]
-   * @param setPressure PSV set pressure [Pa absolute]
+   * @param massFlowRate         Total two-phase mass flow rate [kg/s]
+   * @param setPressure          PSV set pressure [Pa absolute]
    * @param overpressureFraction Overpressure fraction
-   * @param backPressure Back pressure [Pa absolute]
-   * @param inletTemperature Inlet temperature [K]
-   * @param gasFraction Mass fraction of gas at inlet conditions
-   * @param gasDensity Gas density at inlet [kg/m3]
-   * @param liquidDensity Liquid density at inlet [kg/m3]
-   * @param latentHeat Latent heat of vaporization [J/kg]
-   * @param liquidCp Liquid heat capacity [J/(kg*K)]
+   * @param backPressure         Back pressure [Pa absolute]
+   * @param inletTemperature     Inlet temperature [K]
+   * @param gasFraction          Mass fraction of gas at inlet conditions
+   * @param gasDensity           Gas density at inlet [kg/m3]
+   * @param liquidDensity        Liquid density at inlet [kg/m3]
+   * @param latentHeat           Latent heat of vaporization [J/kg]
+   * @param liquidCp             Liquid heat capacity [J/(kg*K)]
    * @return Required orifice area [m2]
    */
-  public static double calculateTwoPhaseReliefArea(double massFlowRate, double setPressure,
-      double overpressureFraction, double backPressure, double inletTemperature, double gasFraction,
-      double gasDensity, double liquidDensity, double latentHeat, double liquidCp) {
+  public static double calculateTwoPhaseReliefArea(double massFlowRate, double setPressure, double overpressureFraction,
+      double backPressure, double inletTemperature, double gasFraction, double gasDensity, double liquidDensity,
+      double latentHeat, double liquidCp) {
     double P0 = setPressure * (1.0 + overpressureFraction);
 
     // Omega parameter (Leung 1986)
     double vG = 1.0 / gasDensity;
     double vL = 1.0 / liquidDensity;
-    double omega = gasFraction * vG / (gasFraction * vG + (1.0 - gasFraction) * vL)
-        + liquidCp * inletTemperature * P0 * Math.pow(vG - vL, 2)
-            / (Math.pow(latentHeat, 2) * (gasFraction * vG + (1.0 - gasFraction) * vL));
+    double omega = gasFraction * vG / (gasFraction * vG + (1.0 - gasFraction) * vL) + liquidCp * inletTemperature * P0
+	* Math.pow(vG - vL, 2) / (Math.pow(latentHeat, 2) * (gasFraction * vG + (1.0 - gasFraction) * vL));
 
     // Critical pressure ratio
     double etaC;
@@ -748,13 +740,12 @@ public final class ReliefValveSizing {
    * Uses Q = C1 * F * Aws^alpha where C1 and alpha depend on drainage and fire-fighting facilities.
    * </p>
    *
-   * @param wettedAreaM2 Wetted surface area [m2]
-   * @param hasDrainage true if adequate drainage exists
+   * @param wettedAreaM2    Wetted surface area [m2]
+   * @param hasDrainage     true if adequate drainage exists
    * @param hasFireFighting true if firefighting equipment available
    * @return Heat absorption rate [W]
    */
-  public static double calculateAPI521FireHeatInput(double wettedAreaM2, boolean hasDrainage,
-      boolean hasFireFighting) {
+  public static double calculateAPI521FireHeatInput(double wettedAreaM2, boolean hasDrainage, boolean hasFireFighting) {
     double awsFt2 = wettedAreaM2 * 10.7639; // m2 to ft2
     double environmentFactor = 1.0;
     if (hasDrainage && hasFireFighting) {

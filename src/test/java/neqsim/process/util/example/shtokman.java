@@ -26,8 +26,7 @@ public class shtokman {
    */
   @ExcludeFromJacocoGeneratedReport
   public static void main(String args[]) {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkCPAs((273.15 + 35.0), 135.00);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkCPAs((273.15 + 35.0), 135.00);
 
     // testSystem.addComponent("MEG", 30.0);
     testSystem.addComponent("CO2", 10.44);
@@ -49,12 +48,11 @@ public class shtokman {
     Separator separator = new Separator("Separator 1", stream_1);
     StreamInterface stream_2 = separator.getGasOutStream();
 
-    neqsim.process.equipment.heatexchanger.Heater heater =
-        new neqsim.process.equipment.heatexchanger.Heater("heater", stream_2);
+    neqsim.process.equipment.heatexchanger.Heater heater = new neqsim.process.equipment.heatexchanger.Heater("heater",
+	stream_2);
     heater.setOutTemperature(273.15 + 35);
     heater.setPressureDrop(134);
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
     operations.add(stream_1);
     operations.add(separator);
     operations.add(stream_2);
@@ -70,11 +68,10 @@ public class shtokman {
     /*
      * try { // ops.TPflash();
      *
-     * ops.waterPrecipitationTemperature(); stream_2.getThermoSystem().display();
-     * stream_2.getThermoSystem().init(0); ops.hydrateFormationTemperature(2);
-     * stream_2.getThermoSystem().display(); // stream_2.getThermoSystem().display(); //
-     * stream_2.getThermoSystem().setTemperature(250.0); // ops.dewPointTemperatureFlash(); } catch
-     * (Exception ex) { logger.error(ex.getMessage(), ex); } double wtMEG =
+     * ops.waterPrecipitationTemperature(); stream_2.getThermoSystem().display(); stream_2.getThermoSystem().init(0);
+     * ops.hydrateFormationTemperature(2); stream_2.getThermoSystem().display(); //
+     * stream_2.getThermoSystem().display(); // stream_2.getThermoSystem().setTemperature(250.0); //
+     * ops.dewPointTemperatureFlash(); } catch (Exception ex) { logger.error(ex.getMessage(), ex); } double wtMEG =
      * stream_2.getThermoSystem().getPhase(1).getComponent("MEG").getx()*stream_2.
      * getThermoSystem().getPhase(1).getComponent("MEG").getMolarMass(); double wtwater =
      * stream_2.getThermoSystem().getPhase(1).getComponent("water").getx()*stream_2.

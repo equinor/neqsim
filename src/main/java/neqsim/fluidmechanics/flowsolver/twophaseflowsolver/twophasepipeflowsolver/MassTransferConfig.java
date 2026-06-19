@@ -4,18 +4,18 @@ package neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolv
  * Configuration class for mass transfer calculations in two-phase pipe flow.
  *
  * <p>
- * Provides user-configurable parameters for transfer limiting, convergence, stability, and model
- * options. Default values are based on literature recommendations and numerical stability analysis.
+ * Provides user-configurable parameters for transfer limiting, convergence, stability, and model options. Default
+ * values are based on literature recommendations and numerical stability analysis.
  * </p>
  *
  * <p>
  * <strong>Literature References:</strong>
  * </p>
  * <ul>
- * <li>Krishna, R., Standart, G.L. (1976). Mass and energy transfer in multicomponent systems.
- * Chemical Engineering Communications, 3(4-5), 201-275.</li>
- * <li>Solbraa, E. (2002). Measurement and modelling of absorption of carbon dioxide into
- * methyldiethanolamine solutions at high pressures. PhD thesis, NTNU.</li>
+ * <li>Krishna, R., Standart, G.L. (1976). Mass and energy transfer in multicomponent systems. Chemical Engineering
+ * Communications, 3(4-5), 201-275.</li>
+ * <li>Solbraa, E. (2002). Measurement and modelling of absorption of carbon dioxide into methyldiethanolamine solutions
+ * at high pressures. PhD thesis, NTNU.</li>
  * <li>Taylor, R., Krishna, R. (1993). Multicomponent Mass Transfer. Wiley.</li>
  * </ul>
  *
@@ -27,33 +27,33 @@ public class MassTransferConfig {
   // ==================== TRANSFER LIMITS ====================
 
   /**
-   * Maximum fraction of available moles that can transfer in BIDIRECTIONAL mode per node. Default
-   * 0.9 (90%) provides good stability for most cases.
+   * Maximum fraction of available moles that can transfer in BIDIRECTIONAL mode per node. Default 0.9 (90%) provides
+   * good stability for most cases.
    *
    * <p>
-   * Literature: Krishna &amp; Standart (1976) recommend limiting single-node transfer to prevent
-   * numerical oscillations.
+   * Literature: Krishna &amp; Standart (1976) recommend limiting single-node transfer to prevent numerical
+   * oscillations.
    * </p>
    */
   private double maxTransferFractionBidirectional = 0.9;
 
   /**
-   * Maximum fraction of available moles that can transfer in directional modes per node. Default
-   * 0.5 (50%) is more conservative for single-direction scenarios.
+   * Maximum fraction of available moles that can transfer in directional modes per node. Default 0.5 (50%) is more
+   * conservative for single-direction scenarios.
    */
   private double maxTransferFractionDirectional = 0.5;
 
   /**
-   * Whether to use adaptive limiting based on local Courant-like condition. When true, the transfer
-   * limit adapts to local conditions (flow rate, interfacial area, etc.).
+   * Whether to use adaptive limiting based on local Courant-like condition. When true, the transfer limit adapts to
+   * local conditions (flow rate, interfacial area, etc.).
    */
   private boolean useAdaptiveLimiting = true;
 
   // ==================== CONVERGENCE ====================
 
   /**
-   * Convergence tolerance for mass transfer calculations. Default 1e-4 provides good balance
-   * between accuracy and speed.
+   * Convergence tolerance for mass transfer calculations. Default 1e-4 provides good balance between accuracy and
+   * speed.
    */
   private double convergenceTolerance = 1e-4;
 
@@ -70,8 +70,8 @@ public class MassTransferConfig {
   // ==================== STABILITY ====================
 
   /**
-   * Minimum relative mole fraction below which a component is considered depleted. This is relative
-   * to total system moles.
+   * Minimum relative mole fraction below which a component is considered depleted. This is relative to total system
+   * moles.
    */
   private double minMolesFraction = 1e-15;
 
@@ -81,14 +81,12 @@ public class MassTransferConfig {
   private double absoluteMinMoles = 1e-20;
 
   /**
-   * Maximum temperature change allowed per node (K). Prevents numerical instabilities from large
-   * enthalpy changes.
+   * Maximum temperature change allowed per node (K). Prevents numerical instabilities from large enthalpy changes.
    */
   private double maxTemperatureChangePerNode = 50.0;
 
   /**
-   * Maximum fraction of a phase that can disappear in a single node. For complete evaporation or
-   * dissolution scenarios.
+   * Maximum fraction of a phase that can disappear in a single node. For complete evaporation or dissolution scenarios.
    */
   private double maxPhaseDepletionPerNode = 0.95;
 
@@ -100,12 +98,12 @@ public class MassTransferConfig {
   // ==================== MODEL OPTIONS ====================
 
   /**
-   * Whether to include Marangoni effect correction for surface-active components. Reduces mass
-   * transfer coefficient for species with high surface activity.
+   * Whether to include Marangoni effect correction for surface-active components. Reduces mass transfer coefficient for
+   * species with high surface activity.
    *
    * <p>
-   * Reference: Springer, T.G., Pigford, R.L. (1970). Influence of surface turbulence and
-   * surfactants on gas transport through liquid interfaces. Ind. Eng. Chem. Fundam., 9(3), 458-465.
+   * Reference: Springer, T.G., Pigford, R.L. (1970). Influence of surface turbulence and surfactants on gas transport
+   * through liquid interfaces. Ind. Eng. Chem. Fundam., 9(3), 458-465.
    * </p>
    */
   private boolean includeMarangoniEffect = false;
@@ -114,8 +112,8 @@ public class MassTransferConfig {
    * Whether to include droplet entrainment in annular flow interfacial area calculation.
    *
    * <p>
-   * Reference: Ishii, M., Mishima, K. (1989). Droplet entrainment correlation in annular two-phase
-   * flow. Int. J. Heat Mass Transfer, 32(10), 1835-1846.
+   * Reference: Ishii, M., Mishima, K. (1989). Droplet entrainment correlation in annular two-phase flow. Int. J. Heat
+   * Mass Transfer, 32(10), 1835-1846.
    * </p>
    */
   private boolean includeEntrainment = true;
@@ -124,8 +122,8 @@ public class MassTransferConfig {
    * Whether to include wave enhancement for stratified wavy flow interfacial area.
    *
    * <p>
-   * Reference: Tzotzi, C., Andritsos, N. (2013). Interfacial shear stress in wavy stratified
-   * gas-liquid flow. Chem. Eng. Sci., 86, 49-57.
+   * Reference: Tzotzi, C., Andritsos, N. (2013). Interfacial shear stress in wavy stratified gas-liquid flow. Chem.
+   * Eng. Sci., 86, 49-57.
    * </p>
    */
   private boolean includeWaveEnhancement = true;
@@ -136,8 +134,8 @@ public class MassTransferConfig {
   private boolean includeTurbulenceEffects = true;
 
   /**
-   * Whether to couple heat and mass transfer iteratively. When true, the evaporative cooling /
-   * heating effect is properly accounted for.
+   * Whether to couple heat and mass transfer iteratively. When true, the evaporative cooling / heating effect is
+   * properly accounted for.
    */
   private boolean coupledHeatMassTransfer = true;
 
@@ -185,7 +183,8 @@ public class MassTransferConfig {
   /**
    * Creates a MassTransferConfig with default values.
    */
-  public MassTransferConfig() {}
+  public MassTransferConfig() {
+  }
 
   /**
    * Creates a MassTransferConfig optimized for evaporation scenarios.
@@ -673,10 +672,8 @@ public class MassTransferConfig {
     StringBuilder sb = new StringBuilder();
     sb.append("MassTransferConfig {\n");
     sb.append("  Transfer Limits:\n");
-    sb.append("    maxTransferFractionBidirectional = ").append(maxTransferFractionBidirectional)
-        .append("\n");
-    sb.append("    maxTransferFractionDirectional = ").append(maxTransferFractionDirectional)
-        .append("\n");
+    sb.append("    maxTransferFractionBidirectional = ").append(maxTransferFractionBidirectional).append("\n");
+    sb.append("    maxTransferFractionDirectional = ").append(maxTransferFractionDirectional).append("\n");
     sb.append("    useAdaptiveLimiting = ").append(useAdaptiveLimiting).append("\n");
     sb.append("  Convergence:\n");
     sb.append("    convergenceTolerance = ").append(convergenceTolerance).append("\n");

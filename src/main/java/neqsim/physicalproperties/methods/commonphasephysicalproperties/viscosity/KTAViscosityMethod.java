@@ -29,7 +29,7 @@ public class KTAViscosityMethod extends Viscosity {
   public double calcViscosity() {
     // Check if there are other components than helium
     if (phase.getPhase().getNumberOfComponents() > 1
-        || !phase.getPhase().getComponent(0).getName().equalsIgnoreCase("helium")) {
+	|| !phase.getPhase().getComponent(0).getName().equalsIgnoreCase("helium")) {
       throw new Error("This method only supports PURE HELIUM.");
     }
 

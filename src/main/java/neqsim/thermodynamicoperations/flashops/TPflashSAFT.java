@@ -10,9 +10,9 @@ import neqsim.thermo.system.SystemSAFTVRMie;
  * TP flash for SAFT-VR Mie equation of state.
  *
  * <p>
- * Uses successive substitution with separate single-phase systems for liquid and gas volume
- * solving. This avoids the issue where the SAFT volume solver cannot find both gas and liquid roots
- * at the feed composition (unlike cubic EOS where the cubic always has mathematical roots).
+ * Uses successive substitution with separate single-phase systems for liquid and gas volume solving. This avoids the
+ * issue where the SAFT volume solver cannot find both gas and liquid roots at the feed composition (unlike cubic EOS
+ * where the cubic always has mathematical roots).
  * </p>
  *
  * @author Even Solbraa
@@ -42,7 +42,7 @@ public class TPflashSAFT extends TPflash {
   /**
    * Constructor for TPflashSAFT.
    *
-   * @param system the thermodynamic system to flash
+   * @param system         the thermodynamic system to flash
    * @param checkForSolids Set true to do solid phase check
    */
   public TPflashSAFT(SystemInterface system, boolean checkForSolids) {
@@ -68,7 +68,7 @@ public class TPflashSAFT extends TPflash {
     for (int i = 0; i < nc; i++) {
       K[i] = system.getPhase(0).getComponent(i).getK();
       if (K[i] <= 0 || Double.isNaN(K[i])) {
-        K[i] = 1.0;
+	K[i] = 1.0;
       }
     }
 
@@ -83,25 +83,25 @@ public class TPflashSAFT extends TPflash {
       beta = solveRachfordRice(z, K, beta);
 
       if (beta < BETA_MIN || beta > 1.0 - BETA_MIN) {
-        break;
+	break;
       }
 
       // Compute phase compositions
       for (int i = 0; i < nc; i++) {
-        x[i] = z[i] / (1.0 + beta * (K[i] - 1.0));
-        y[i] = K[i] * x[i];
+	x[i] = z[i] / (1.0 + beta * (K[i] - 1.0));
+	y[i] = K[i] * x[i];
       }
 
       // Normalize (numerical safety)
       double sumx = 0;
       double sumy = 0;
       for (int i = 0; i < nc; i++) {
-        sumx += x[i];
-        sumy += y[i];
+	sumx += x[i];
+	sumy += y[i];
       }
       for (int i = 0; i < nc; i++) {
-        x[i] /= sumx;
-        y[i] /= sumy;
+	x[i] /= sumx;
+	y[i] /= sumy;
       }
 
       // Create separate systems for each phase and solve volumes
@@ -109,25 +109,25 @@ public class TPflashSAFT extends TPflash {
       double[] phiG = computeFugacityCoefficients(T, P, y, PhaseType.GAS);
 
       if (phiL == null || phiG == null) {
-        logger.debug("SAFT flash: fugacity computation failed at iter {}", iter);
-        break;
+	logger.debug("SAFT flash: fugacity computation failed at iter {}", iter);
+	break;
       }
 
       // Update K-values: K_i = phi_liquid_i / phi_gas_i
       double maxDeltaK = 0;
       for (int i = 0; i < nc; i++) {
-        double Knew = phiL[i] / phiG[i];
-        if (Double.isNaN(Knew) || Knew <= 0) {
-          Knew = K[i];
-        }
-        double dK = Math.abs(Knew - K[i]) / Math.max(Math.abs(K[i]), 1e-10);
-        maxDeltaK = Math.max(maxDeltaK, dK);
-        K[i] = Knew;
+	double Knew = phiL[i] / phiG[i];
+	if (Double.isNaN(Knew) || Knew <= 0) {
+	  Knew = K[i];
+	}
+	double dK = Math.abs(Knew - K[i]) / Math.max(Math.abs(K[i]), 1e-10);
+	maxDeltaK = Math.max(maxDeltaK, dK);
+	K[i] = Knew;
       }
 
       if (maxDeltaK < K_TOL) {
-        converged = true;
-        break;
+	converged = true;
+	break;
       }
     }
 
@@ -138,8 +138,8 @@ public class TPflashSAFT extends TPflash {
       system.setBeta(beta);
 
       for (int i = 0; i < nc; i++) {
-        system.getPhase(0).getComponent(i).setK(K[i]);
-        system.getPhase(1).getComponent(i).setK(K[i]);
+	system.getPhase(0).getComponent(i).setK(K[i]);
+	system.getPhase(1).getComponent(i).setK(K[i]);
       }
       system.calc_x_y();
 
@@ -150,7 +150,7 @@ public class TPflashSAFT extends TPflash {
 
       // If multi-phase check enabled, try to split liquid phase into two
       if (system.doMultiPhaseCheck()) {
-        tryLiquidLiquidSplit(T, P, z, K, beta, x, y);
+	tryLiquidLiquidSplit(T, P, z, K, beta, x, y);
       }
     } else {
       // Single phase: determine if gas or liquid by Gibbs energy
@@ -160,11 +160,11 @@ public class TPflashSAFT extends TPflash {
       double gLiq = computeGibbsEnergy(T, P, z, PhaseType.LIQUID);
 
       if (Double.isFinite(gGas) && Double.isFinite(gLiq)) {
-        if (gGas < gLiq) {
-          system.setPhaseType(0, PhaseType.GAS);
-        } else {
-          system.setPhaseType(0, PhaseType.LIQUID);
-        }
+	if (gGas < gLiq) {
+	  system.setPhaseType(0, PhaseType.GAS);
+	} else {
+	  system.setPhaseType(0, PhaseType.LIQUID);
+	}
       }
 
       system.init(1);
@@ -175,20 +175,20 @@ public class TPflashSAFT extends TPflash {
    * Attempt to split the liquid phase into two liquid phases (VLLE).
    *
    * <p>
-   * After a converged VLE flash, checks if the liquid phase is unstable with respect to
-   * liquid-liquid splitting. Uses successive substitution on a 3-phase Rachford-Rice formulation.
+   * After a converged VLE flash, checks if the liquid phase is unstable with respect to liquid-liquid splitting. Uses
+   * successive substitution on a 3-phase Rachford-Rice formulation.
    * </p>
    *
-   * @param T temperature in K
-   * @param P pressure in bar
-   * @param z feed mole fractions
-   * @param Kvle VLE K-values from 2-phase flash
+   * @param T       temperature in K
+   * @param P       pressure in bar
+   * @param z       feed mole fractions
+   * @param Kvle    VLE K-values from 2-phase flash
    * @param betaVLE vapor fraction from 2-phase flash
-   * @param xLiq liquid composition from 2-phase flash
-   * @param yGas gas composition from 2-phase flash
+   * @param xLiq    liquid composition from 2-phase flash
+   * @param yGas    gas composition from 2-phase flash
    */
-  private void tryLiquidLiquidSplit(double T, double P, double[] z, double[] Kvle, double betaVLE,
-      double[] xLiq, double[] yGas) {
+  private void tryLiquidLiquidSplit(double T, double P, double[] z, double[] Kvle, double betaVLE, double[] xLiq,
+      double[] yGas) {
     int nc = z.length;
 
     // Initialize K_LL values for liquid-liquid split
@@ -207,34 +207,33 @@ public class TPflashSAFT extends TPflash {
     for (int trial = 0; trial < nc && !foundInstability; trial++) {
       double[] wTrial = new double[nc];
       for (int i = 0; i < nc; i++) {
-        wTrial[i] = 0.01 / (nc - 1);
+	wTrial[i] = 0.01 / (nc - 1);
       }
       wTrial[trial] = 0.99;
 
       double[] phiTrial = computeFugacityCoefficients(T, P, wTrial, PhaseType.LIQUID);
       if (phiTrial == null) {
-        continue;
+	continue;
       }
 
       // Tangent plane distance: TPD = sum_i w_i * [ln(w_i) + ln(phi_trial_i) - ln(x_i) -
       // ln(phi_x_i)]
       double tpd = 0;
       for (int i = 0; i < nc; i++) {
-        if (wTrial[i] > 1e-15 && xLiq[i] > 1e-15) {
-          tpd += wTrial[i] * (Math.log(wTrial[i]) + Math.log(phiTrial[i]) - Math.log(xLiq[i])
-              - Math.log(phiL[i]));
-        }
+	if (wTrial[i] > 1e-15 && xLiq[i] > 1e-15) {
+	  tpd += wTrial[i] * (Math.log(wTrial[i]) + Math.log(phiTrial[i]) - Math.log(xLiq[i]) - Math.log(phiL[i]));
+	}
       }
 
       if (tpd < -1e-4) {
-        foundInstability = true;
-        for (int i = 0; i < nc; i++) {
-          K_LL[i] = (phiL[i] > 1e-15) ? phiTrial[i] / phiL[i] : 1.0;
-          if (K_LL[i] <= 0 || Double.isNaN(K_LL[i])) {
-            K_LL[i] = 1.0;
-          }
-        }
-        logger.debug("SAFT VLLE: TPD={} for trial enriched in component {}", tpd, trial);
+	foundInstability = true;
+	for (int i = 0; i < nc; i++) {
+	  K_LL[i] = (phiL[i] > 1e-15) ? phiTrial[i] / phiL[i] : 1.0;
+	  if (K_LL[i] <= 0 || Double.isNaN(K_LL[i])) {
+	    K_LL[i] = 1.0;
+	  }
+	}
+	logger.debug("SAFT VLLE: TPD={} for trial enriched in component {}", tpd, trial);
       }
     }
 
@@ -266,23 +265,23 @@ public class TPflashSAFT extends TPflash {
       double sumX1 = 0;
       double sumW = 0;
       for (int i = 0; i < nc; i++) {
-        double denom = 1.0 + betaV * (K_V[i] - 1.0) + betaL1 * (K_LL[i] - 1.0);
-        if (denom < 1e-15) {
-          denom = 1e-15;
-        }
-        s[i] = z[i] / denom;
-        x1[i] = K_LL[i] * s[i];
-        w[i] = K_V[i] * s[i];
-        sumS += s[i];
-        sumX1 += x1[i];
-        sumW += w[i];
+	double denom = 1.0 + betaV * (K_V[i] - 1.0) + betaL1 * (K_LL[i] - 1.0);
+	if (denom < 1e-15) {
+	  denom = 1e-15;
+	}
+	s[i] = z[i] / denom;
+	x1[i] = K_LL[i] * s[i];
+	w[i] = K_V[i] * s[i];
+	sumS += s[i];
+	sumX1 += x1[i];
+	sumW += w[i];
       }
 
       // Normalize
       for (int i = 0; i < nc; i++) {
-        s[i] /= sumS;
-        x1[i] /= sumX1;
-        w[i] /= sumW;
+	s[i] /= sumS;
+	x1[i] /= sumX1;
+	w[i] /= sumW;
       }
 
       // Compute fugacity coefficients for all three phases
@@ -291,28 +290,28 @@ public class TPflashSAFT extends TPflash {
       double[] phiL2 = computeFugacityCoefficients(T, P, s, PhaseType.LIQUID);
 
       if (phiG == null || phiL1 == null || phiL2 == null) {
-        return;
+	return;
       }
 
       // Update K-values
       double maxDeltaK = 0;
       for (int i = 0; i < nc; i++) {
-        double newKV = phiL2[i] / phiG[i];
-        double newKLL = phiL2[i] / phiL1[i];
+	double newKV = phiL2[i] / phiG[i];
+	double newKLL = phiL2[i] / phiL1[i];
 
-        if (Double.isNaN(newKV) || newKV <= 0) {
-          newKV = K_V[i];
-        }
-        if (Double.isNaN(newKLL) || newKLL <= 0) {
-          newKLL = K_LL[i];
-        }
+	if (Double.isNaN(newKV) || newKV <= 0) {
+	  newKV = K_V[i];
+	}
+	if (Double.isNaN(newKLL) || newKLL <= 0) {
+	  newKLL = K_LL[i];
+	}
 
-        double dKV = Math.abs(newKV - K_V[i]) / Math.max(Math.abs(K_V[i]), 1e-10);
-        double dKLL = Math.abs(newKLL - K_LL[i]) / Math.max(Math.abs(K_LL[i]), 1e-10);
-        maxDeltaK = Math.max(maxDeltaK, Math.max(dKV, dKLL));
+	double dKV = Math.abs(newKV - K_V[i]) / Math.max(Math.abs(K_V[i]), 1e-10);
+	double dKLL = Math.abs(newKLL - K_LL[i]) / Math.max(Math.abs(K_LL[i]), 1e-10);
+	maxDeltaK = Math.max(maxDeltaK, Math.max(dKV, dKLL));
 
-        K_V[i] = newKV;
-        K_LL[i] = newKLL;
+	K_V[i] = newKV;
+	K_LL[i] = newKLL;
       }
 
       // Solve 3-phase Rachford-Rice for betaV and betaL1
@@ -322,17 +321,17 @@ public class TPflashSAFT extends TPflash {
 
       // Check convergence
       if (maxDeltaK < K_TOL) {
-        betaL2 = 1.0 - betaV - betaL1;
-        if (betaV > BETA_MIN && betaL1 > BETA_MIN && betaL2 > BETA_MIN) {
-          vlleConverged = true;
-        }
-        break;
+	betaL2 = 1.0 - betaV - betaL1;
+	if (betaV > BETA_MIN && betaL1 > BETA_MIN && betaL2 > BETA_MIN) {
+	  vlleConverged = true;
+	}
+	break;
       }
 
       // Check if any phase vanishes
       betaL2 = 1.0 - betaV - betaL1;
       if (betaV < BETA_MIN || betaL1 < BETA_MIN || betaL2 < BETA_MIN) {
-        break;
+	break;
       }
     }
 
@@ -392,8 +391,8 @@ public class TPflashSAFT extends TPflash {
       system.setNumberOfPhases(2);
       system.setBeta(betaVLE);
       for (int i = 0; i < nc; i++) {
-        system.getPhase(0).getComponent(i).setK(Kvle[i]);
-        system.getPhase(1).getComponent(i).setK(Kvle[i]);
+	system.getPhase(0).getComponent(i).setK(Kvle[i]);
+	system.getPhase(1).getComponent(i).setK(Kvle[i]);
       }
       system.calc_x_y();
       system.setPhaseType(0, PhaseType.GAS);
@@ -406,8 +405,8 @@ public class TPflashSAFT extends TPflash {
   /**
    * Solve Rachford-Rice equation for vapor fraction using bisection.
    *
-   * @param z feed mole fractions
-   * @param K K-values
+   * @param z         feed mole fractions
+   * @param K         K-values
    * @param betaGuess initial guess for vapor fraction
    * @return vapor fraction beta
    */
@@ -419,16 +418,16 @@ public class TPflashSAFT extends TPflash {
     for (int iter = 0; iter < 200; iter++) {
       double f = 0;
       for (int i = 0; i < z.length; i++) {
-        f += z[i] * (K[i] - 1.0) / (1.0 + beta * (K[i] - 1.0));
+	f += z[i] * (K[i] - 1.0) / (1.0 + beta * (K[i] - 1.0));
       }
       if (f > 0) {
-        lo = beta;
+	lo = beta;
       } else {
-        hi = beta;
+	hi = beta;
       }
       beta = 0.5 * (lo + hi);
       if (hi - lo < 1e-14) {
-        break;
+	break;
       }
     }
     return beta;
@@ -438,20 +437,18 @@ public class TPflashSAFT extends TPflash {
    * Solve 3-phase Rachford-Rice equations using Newton's method.
    *
    * <p>
-   * The 3-phase R-R equations are: F1 = sum_i z_i*(K_V_i-1) / [1 + betaV*(K_V_i-1) +
-   * betaL1*(K_LL_i-1)] = 0 F2 = sum_i z_i*(K_LL_i-1) / [1 + betaV*(K_V_i-1) + betaL1*(K_LL_i-1)] =
-   * 0
+   * The 3-phase R-R equations are: F1 = sum_i z_i*(K_V_i-1) / [1 + betaV*(K_V_i-1) + betaL1*(K_LL_i-1)] = 0 F2 = sum_i
+   * z_i*(K_LL_i-1) / [1 + betaV*(K_V_i-1) + betaL1*(K_LL_i-1)] = 0
    * </p>
    *
-   * @param z feed mole fractions
-   * @param KV vapor K-values (relative to L2 reference phase)
-   * @param KLL liquid-liquid K-values (L2/L1)
-   * @param betaV0 initial guess for vapor fraction
+   * @param z       feed mole fractions
+   * @param KV      vapor K-values (relative to L2 reference phase)
+   * @param KLL     liquid-liquid K-values (L2/L1)
+   * @param betaV0  initial guess for vapor fraction
    * @param betaL10 initial guess for liquid1 fraction
    * @return array {betaV, betaL1}
    */
-  private double[] solve3PhaseRachfordRice(double[] z, double[] KV, double[] KLL, double betaV0,
-      double betaL10) {
+  private double[] solve3PhaseRachfordRice(double[] z, double[] KV, double[] KLL, double betaV0, double betaL10) {
     double betaV = betaV0;
     double betaL1 = betaL10;
     int nc = z.length;
@@ -465,25 +462,25 @@ public class TPflashSAFT extends TPflash {
       double df2dL1 = 0;
 
       for (int i = 0; i < nc; i++) {
-        double denom = 1.0 + betaV * (KV[i] - 1.0) + betaL1 * (KLL[i] - 1.0);
-        if (Math.abs(denom) < 1e-15) {
-          denom = 1e-15;
-        }
-        double denom2 = denom * denom;
+	double denom = 1.0 + betaV * (KV[i] - 1.0) + betaL1 * (KLL[i] - 1.0);
+	if (Math.abs(denom) < 1e-15) {
+	  denom = 1e-15;
+	}
+	double denom2 = denom * denom;
 
-        f1 += z[i] * (KV[i] - 1.0) / denom;
-        f2 += z[i] * (KLL[i] - 1.0) / denom;
+	f1 += z[i] * (KV[i] - 1.0) / denom;
+	f2 += z[i] * (KLL[i] - 1.0) / denom;
 
-        df1dV -= z[i] * (KV[i] - 1.0) * (KV[i] - 1.0) / denom2;
-        df1dL1 -= z[i] * (KV[i] - 1.0) * (KLL[i] - 1.0) / denom2;
-        df2dV -= z[i] * (KLL[i] - 1.0) * (KV[i] - 1.0) / denom2;
-        df2dL1 -= z[i] * (KLL[i] - 1.0) * (KLL[i] - 1.0) / denom2;
+	df1dV -= z[i] * (KV[i] - 1.0) * (KV[i] - 1.0) / denom2;
+	df1dL1 -= z[i] * (KV[i] - 1.0) * (KLL[i] - 1.0) / denom2;
+	df2dV -= z[i] * (KLL[i] - 1.0) * (KV[i] - 1.0) / denom2;
+	df2dL1 -= z[i] * (KLL[i] - 1.0) * (KLL[i] - 1.0) / denom2;
       }
 
       // Newton step: solve [J] * [delta] = -[F]
       double det = df1dV * df2dL1 - df1dL1 * df2dV;
       if (Math.abs(det) < 1e-30) {
-        break;
+	break;
       }
 
       double dBetaV = -(df2dL1 * f1 - df1dL1 * f2) / det;
@@ -492,22 +489,22 @@ public class TPflashSAFT extends TPflash {
       // Damping to keep in feasible region
       double scale = 1.0;
       while (scale > 0.01) {
-        double newBV = betaV + scale * dBetaV;
-        double newBL1 = betaL1 + scale * dBetaL1;
-        if (newBV > BETA_MIN && newBL1 > BETA_MIN && (newBV + newBL1) < 1.0 - BETA_MIN) {
-          betaV = newBV;
-          betaL1 = newBL1;
-          break;
-        }
-        scale *= 0.5;
+	double newBV = betaV + scale * dBetaV;
+	double newBL1 = betaL1 + scale * dBetaL1;
+	if (newBV > BETA_MIN && newBL1 > BETA_MIN && (newBV + newBL1) < 1.0 - BETA_MIN) {
+	  betaV = newBV;
+	  betaL1 = newBL1;
+	  break;
+	}
+	scale *= 0.5;
       }
 
       if (Math.abs(f1) < 1e-12 && Math.abs(f2) < 1e-12) {
-        break;
+	break;
       }
     }
 
-    return new double[] {betaV, betaL1};
+    return new double[] { betaV, betaL1 };
   }
 
   /**
@@ -522,7 +519,7 @@ public class TPflashSAFT extends TPflash {
     }
     if (sum > 0) {
       for (int i = 0; i < comp.length; i++) {
-        comp[i] /= sum;
+	comp[i] /= sum;
       }
     }
   }
@@ -530,10 +527,10 @@ public class TPflashSAFT extends TPflash {
   /**
    * Compute fugacity coefficients for a given composition using a fresh SAFT system.
    *
-   * @param T temperature in K
-   * @param P pressure in bar
+   * @param T    temperature in K
+   * @param P    pressure in bar
    * @param comp mole fractions
-   * @param pt phase type (determines which volume root to find)
+   * @param pt   phase type (determines which volume root to find)
    * @return array of fugacity coefficients, or null if computation fails
    */
   private double[] computeFugacityCoefficients(double T, double P, double[] comp, PhaseType pt) {
@@ -560,7 +557,7 @@ public class TPflashSAFT extends TPflash {
     for (int i = 0; i < nc; i++) {
       phi[i] = sys.getPhase(0).getComponent(i).getFugacityCoefficient();
       if (phi[i] <= 0 || Double.isNaN(phi[i])) {
-        return null;
+	return null;
       }
     }
     return phi;
@@ -569,10 +566,10 @@ public class TPflashSAFT extends TPflash {
   /**
    * Compute Gibbs energy for a composition and phase type.
    *
-   * @param T temperature in K
-   * @param P pressure in bar
+   * @param T    temperature in K
+   * @param P    pressure in bar
    * @param comp mole fractions
-   * @param pt phase type
+   * @param pt   phase type
    * @return Gibbs energy, or NaN if computation fails
    */
   private double computeGibbsEnergy(double T, double P, double[] comp, PhaseType pt) {

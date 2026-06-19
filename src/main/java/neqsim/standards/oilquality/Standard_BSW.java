@@ -9,8 +9,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * BS&amp;W - Basic Sediment and Water determination for crude oil.
  *
  * <p>
- * Calculates the volume fraction of water and sediment in crude oil, per practices described in
- * ASTM D4007 (centrifuge method) and API MPMS Chapter 10. BS&amp;W is a critical specification for:
+ * Calculates the volume fraction of water and sediment in crude oil, per practices described in ASTM D4007 (centrifuge
+ * method) and API MPMS Chapter 10. BS&amp;W is a critical specification for:
  * </p>
  * <ul>
  * <li>Crude oil custody transfer (typically max 0.5% or 1.0%)</li>
@@ -20,8 +20,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </ul>
  *
  * <p>
- * This implementation determines the water volume fraction in the liquid phase at given conditions
- * via thermodynamic flash and reports it as BS&amp;W percentage.
+ * This implementation determines the water volume fraction in the liquid phase at given conditions via thermodynamic
+ * flash and reports it as BS&amp;W percentage.
  * </p>
  *
  * <p>
@@ -69,8 +69,7 @@ public class Standard_BSW extends neqsim.standards.Standard {
    * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object representing the oil
    */
   public Standard_BSW(SystemInterface thermoSystem) {
-    super("Standard_BSW", "BS&W - Basic Sediment and Water (ASTM D4007 / API MPMS Ch10)",
-        thermoSystem);
+    super("Standard_BSW", "BS&W - Basic Sediment and Water (ASTM D4007 / API MPMS Ch10)", thermoSystem);
   }
 
   /** {@inheritDoc} */
@@ -89,30 +88,30 @@ public class Standard_BSW extends neqsim.standards.Standard {
       double oilVolume = 0.0;
 
       for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
-        String phaseType = fluid.getPhase(i).getType().toString();
-        double phaseMoles = fluid.getPhase(i).getNumberOfMolesInPhase();
-        double phaseMolarMass = fluid.getPhase(i).getMolarMass(); // kg/mol
-        double phaseDensity = fluid.getPhase(i).getDensity("kg/m3");
+	String phaseType = fluid.getPhase(i).getType().toString();
+	double phaseMoles = fluid.getPhase(i).getNumberOfMolesInPhase();
+	double phaseMolarMass = fluid.getPhase(i).getMolarMass(); // kg/mol
+	double phaseDensity = fluid.getPhase(i).getDensity("kg/m3");
 
-        if (phaseDensity > 0) {
-          double phaseVolume = phaseMoles * phaseMolarMass / phaseDensity;
+	if (phaseDensity > 0) {
+	  double phaseVolume = phaseMoles * phaseMolarMass / phaseDensity;
 
-          if ("aqueous".equals(phaseType) || "water".equals(phaseType)) {
-            waterVolume += phaseVolume;
-          } else if ("oil".equals(phaseType) || "liquid".equals(phaseType)) {
-            oilVolume += phaseVolume;
-          }
-        }
+	  if ("aqueous".equals(phaseType) || "water".equals(phaseType)) {
+	    waterVolume += phaseVolume;
+	  } else if ("oil".equals(phaseType) || "liquid".equals(phaseType)) {
+	    oilVolume += phaseVolume;
+	  }
+	}
       }
 
       double totalLiquidVolume = waterVolume + oilVolume;
       if (totalLiquidVolume > 0) {
-        waterCutVolPct = (waterVolume / totalLiquidVolume) * 100.0;
-        // BS&W approximates water cut for thermodynamic calculation (no sediment model)
-        bswVolPct = waterCutVolPct;
+	waterCutVolPct = (waterVolume / totalLiquidVolume) * 100.0;
+	// BS&W approximates water cut for thermodynamic calculation (no sediment model)
+	bswVolPct = waterCutVolPct;
       } else {
-        bswVolPct = 0.0;
-        waterCutVolPct = 0.0;
+	bswVolPct = 0.0;
+	waterCutVolPct = 0.0;
       }
     } catch (Exception ex) {
       logger.error("BS&W calculation failed: {}", ex.getMessage());
@@ -123,14 +122,14 @@ public class Standard_BSW extends neqsim.standards.Standard {
   @Override
   public double getValue(String returnParameter) {
     switch (returnParameter) {
-      case "BSW":
-      case "BS&W":
-        return bswVolPct;
-      case "waterCut":
-        return waterCutVolPct;
-      default:
-        logger.error("Unsupported parameter: {}", returnParameter);
-        return Double.NaN;
+    case "BSW":
+    case "BS&W":
+      return bswVolPct;
+    case "waterCut":
+      return waterCutVolPct;
+    default:
+      logger.error("Unsupported parameter: {}", returnParameter);
+      return Double.NaN;
     }
   }
 

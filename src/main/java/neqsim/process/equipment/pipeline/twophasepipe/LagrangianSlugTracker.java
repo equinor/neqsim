@@ -43,8 +43,7 @@ import neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime;
  * <li>Bendiksen, K.H. et al. (1991) - The Dynamic Two-Fluid Model OLGA</li>
  * <li>Nydal, O.J. and Banerjee, S. (1996) - Dynamic Slug Tracking Simulations</li>
  * <li>Kjølaas, J. et al. (2013) - Lagrangian slug flow modeling and sensitivity</li>
- * <li>Issa, R.I. and Kempf, M.H.W. (2003) - Simulation of slug flow in horizontal and nearly
- * horizontal pipes</li>
+ * <li>Issa, R.I. and Kempf, M.H.W. (2003) - Simulation of slug flow in horizontal and nearly horizontal pipes</li>
  * </ul>
  *
  * @author Even Solbraa
@@ -168,9 +167,9 @@ public class LagrangianSlugTracker implements Serializable {
 
     @Override
     public String toString() {
-      return String.format("Slug#%d[pos=%.1fm, Ls=%.1fm, Lb=%.1fm, vf=%.2fm/s, H=%.2f, %s]", id,
-          frontPosition, slugLength, bubbleLength, frontVelocity, slugHoldup,
-          isGrowing ? "GROWING" : (isDecaying ? "DECAYING" : "STABLE"));
+      return String.format("Slug#%d[pos=%.1fm, Ls=%.1fm, Lb=%.1fm, vf=%.2fm/s, H=%.2f, %s]", id, frontPosition,
+	  slugLength, bubbleLength, frontVelocity, slugHoldup,
+	  isGrowing ? "GROWING" : (isDecaying ? "DECAYING" : "STABLE"));
     }
   }
 
@@ -347,7 +346,7 @@ public class LagrangianSlugTracker implements Serializable {
    * </ol>
    *
    * @param sections pipe sections array
-   * @param dt time step (s)
+   * @param dt       time step (s)
    */
   public void advanceTimeStep(PipeSection[] sections, double dt) {
     if (sections == null || sections.length == 0 || dt <= 0) {
@@ -393,7 +392,7 @@ public class LagrangianSlugTracker implements Serializable {
    * Check conditions for slug initiation.
    *
    * @param sections pipe sections
-   * @param dt time step (s)
+   * @param dt       time step (s)
    */
   private void checkSlugInitiation(PipeSection[] sections, double dt) {
     // Inlet slug generation
@@ -413,12 +412,12 @@ public class LagrangianSlugTracker implements Serializable {
    * Check for inlet slug generation based on frequency correlation.
    *
    * <p>
-   * Uses the Zabaras (2000) frequency correlation modified for inclination. Slugs are generated
-   * probabilistically based on expected frequency.
+   * Uses the Zabaras (2000) frequency correlation modified for inclination. Slugs are generated probabilistically based
+   * on expected frequency.
    * </p>
    *
    * @param sections pipe sections
-   * @param dt time step (s)
+   * @param dt       time step (s)
    */
   private void checkInletSlugGeneration(PipeSection[] sections, double dt) {
     if (sections.length == 0) {
@@ -532,16 +531,15 @@ public class LagrangianSlugTracker implements Serializable {
    * Initialize slug from terrain-induced accumulation.
    *
    * <p>
-   * Called externally when liquid accumulation tracker detects slug-out conditions at a terrain low
-   * point.
+   * Called externally when liquid accumulation tracker detects slug-out conditions at a terrain low point.
    * </p>
    *
    * @param characteristics slug characteristics from accumulation tracker
-   * @param sections pipe sections
+   * @param sections        pipe sections
    * @return new slug unit
    */
-  public SlugBubbleUnit initializeTerrainSlug(
-      LiquidAccumulationTracker.SlugCharacteristics characteristics, PipeSection[] sections) {
+  public SlugBubbleUnit initializeTerrainSlug(LiquidAccumulationTracker.SlugCharacteristics characteristics,
+      PipeSection[] sections) {
 
     if (!enableTerrainSlugGeneration) {
       return null;
@@ -607,7 +605,7 @@ public class LagrangianSlugTracker implements Serializable {
    * Check for stochastic slug initiation from instabilities.
    *
    * @param sections pipe sections
-   * @param dt time step (s)
+   * @param dt       time step (s)
    */
   private void checkStochasticInitiation(PipeSection[] sections, double dt) {
     // Check each section for potential instability-driven slug initiation
@@ -616,12 +614,12 @@ public class LagrangianSlugTracker implements Serializable {
 
       // Only in stratified wavy regime
       if (section.getFlowRegime() != FlowRegime.STRATIFIED_WAVY) {
-        continue;
+	continue;
       }
 
       // Check if holdup is above threshold
       if (section.getLiquidHoldup() < initiationHoldupThreshold) {
-        continue;
+	continue;
       }
 
       // Kelvin-Helmholtz instability criterion
@@ -634,19 +632,19 @@ public class LagrangianSlugTracker implements Serializable {
 
       // Critical velocity difference for instability
       double sigma = 0.03; // Surface tension N/m (approximate)
-      double deltaU_crit = Math.sqrt(
-          (rhoL - rhoG) * GRAVITY * h_L / (rhoG * rhoL / (rhoG + rhoL)) + sigma / (rhoG * h_L));
+      double deltaU_crit = Math
+	  .sqrt((rhoL - rhoG) * GRAVITY * h_L / (rhoG * rhoL / (rhoG + rhoL)) + sigma / (rhoG * h_L));
 
       double deltaU = Math.abs(U_G - U_L);
 
       // Probability of initiation based on excess velocity
       if (deltaU > deltaU_crit) {
-        double excess = (deltaU - deltaU_crit) / deltaU_crit;
-        double probability = 0.01 * excess * dt; // Small probability per time step
+	double excess = (deltaU - deltaU_crit) / deltaU_crit;
+	double probability = 0.01 * excess * dt; // Small probability per time step
 
-        if (random.nextDouble() < probability) {
-          generateInstabilitySlug(section, i, sections);
-        }
+	if (random.nextDouble() < probability) {
+	  generateInstabilitySlug(section, i, sections);
+	}
       }
     }
   }
@@ -654,13 +652,12 @@ public class LagrangianSlugTracker implements Serializable {
   /**
    * Generate slug from flow instability.
    *
-   * @param section section where instability occurs
+   * @param section      section where instability occurs
    * @param sectionIndex index of the section
-   * @param sections all pipe sections
+   * @param sections     all pipe sections
    * @return new slug unit
    */
-  private SlugBubbleUnit generateInstabilitySlug(PipeSection section, int sectionIndex,
-      PipeSection[] sections) {
+  private SlugBubbleUnit generateInstabilitySlug(PipeSection section, int sectionIndex, PipeSection[] sections) {
 
     SlugBubbleUnit slug = new SlugBubbleUnit();
     slug.id = ++slugIdCounter;
@@ -719,9 +716,9 @@ public class LagrangianSlugTracker implements Serializable {
   /**
    * Advance a single slug by one time step.
    *
-   * @param slug the slug to advance
+   * @param slug     the slug to advance
    * @param sections pipe sections
-   * @param dt time step (s)
+   * @param dt       time step (s)
    */
   private void advanceSlug(SlugBubbleUnit slug, PipeSection[] sections, double dt) {
     slug.age += dt;
@@ -810,11 +807,10 @@ public class LagrangianSlugTracker implements Serializable {
    * The slug front moves at the Taylor bubble velocity: V_front = C0 * U_m + U_drift
    * </p>
    * <p>
-   * The tail velocity is determined by mass balance: V_tail = V_front - (pickup - shedding) / (A *
-   * (H_slug - H_film))
+   * The tail velocity is determined by mass balance: V_tail = V_front - (pickup - shedding) / (A * (H_slug - H_film))
    * </p>
    *
-   * @param slug the slug unit
+   * @param slug    the slug unit
    * @param section pipe section at slug location
    */
   private void calculateSlugVelocities(SlugBubbleUnit slug, PipeSection section) {
@@ -888,10 +884,10 @@ public class LagrangianSlugTracker implements Serializable {
   /**
    * Calculate drift velocity using Bendiksen (1984) correlation.
    *
-   * @param D pipe diameter (m)
-   * @param theta pipe inclination (radians)
+   * @param D        pipe diameter (m)
+   * @param theta    pipe inclination (radians)
    * @param deltaRho density difference (kg/m³)
-   * @param rhoL liquid density (kg/m³)
+   * @param rhoL     liquid density (kg/m³)
    * @return drift velocity (m/s)
    */
   private double calculateDriftVelocity(double D, double theta, double deltaRho, double rhoL) {
@@ -933,13 +929,13 @@ public class LagrangianSlugTracker implements Serializable {
    * Calculate mass exchange at slug front and tail.
    *
    * <p>
-   * Pickup rate at front: liquid is scooped from stratified film Shedding rate at tail: liquid is
-   * shed into film behind slug
+   * Pickup rate at front: liquid is scooped from stratified film Shedding rate at tail: liquid is shed into film behind
+   * slug
    * </p>
    *
-   * @param slug the slug unit
+   * @param slug    the slug unit
    * @param section pipe section
-   * @param dt time step (s)
+   * @param dt      time step (s)
    */
   private void calculateMassExchange(SlugBubbleUnit slug, PipeSection section, double dt) {
     double rhoL = section.getLiquidDensity();
@@ -978,7 +974,7 @@ public class LagrangianSlugTracker implements Serializable {
   /**
    * Update Taylor bubble length.
    *
-   * @param slug the slug unit
+   * @param slug    the slug unit
    * @param section pipe section
    */
   private void updateBubbleLength(SlugBubbleUnit slug, PipeSection section) {
@@ -1059,8 +1055,8 @@ public class LagrangianSlugTracker implements Serializable {
    * Update wake effects between consecutive slugs.
    *
    * <p>
-   * OLGA wake model: A slug following closely behind another experiences accelerated motion due to
-   * reduced liquid hold-up in the wake region.
+   * OLGA wake model: A slug following closely behind another experiences accelerated motion due to reduced liquid
+   * hold-up in the wake region.
    * </p>
    *
    * @param sections pipe sections
@@ -1084,16 +1080,15 @@ public class LagrangianSlugTracker implements Serializable {
       double wakeLength = wakeLengthDiameters * D;
 
       if (distance > 0 && distance < wakeLength) {
-        current.inWakeRegion = true;
+	current.inWakeRegion = true;
 
-        // Wake coefficient increases as slug gets closer
-        // Linear interpolation: 1.0 at wake edge, maxWakeAcceleration at zero distance
-        double normalizedDistance = distance / wakeLength;
-        current.wakeCoefficient =
-            maxWakeAcceleration - (maxWakeAcceleration - 1.0) * normalizedDistance;
+	// Wake coefficient increases as slug gets closer
+	// Linear interpolation: 1.0 at wake edge, maxWakeAcceleration at zero distance
+	double normalizedDistance = distance / wakeLength;
+	current.wakeCoefficient = maxWakeAcceleration - (maxWakeAcceleration - 1.0) * normalizedDistance;
       } else {
-        current.inWakeRegion = false;
-        current.wakeCoefficient = 1.0;
+	current.inWakeRegion = false;
+	current.wakeCoefficient = 1.0;
       }
     }
   }
@@ -1121,10 +1116,10 @@ public class LagrangianSlugTracker implements Serializable {
       double gap = preceding.tailPosition - following.frontPosition;
 
       if (gap <= mergeDistanceThreshold) {
-        // Merge: following slug absorbs preceding slug
-        mergeSlugPair(following, preceding, sections);
-        toRemove.add(preceding);
-        totalSlugsMerged++;
+	// Merge: following slug absorbs preceding slug
+	mergeSlugPair(following, preceding, sections);
+	toRemove.add(preceding);
+	totalSlugsMerged++;
       }
     }
 
@@ -1138,8 +1133,7 @@ public class LagrangianSlugTracker implements Serializable {
    * @param absorbed the absorbed slug (preceding)
    * @param sections pipe sections
    */
-  private void mergeSlugPair(SlugBubbleUnit survivor, SlugBubbleUnit absorbed,
-      PipeSection[] sections) {
+  private void mergeSlugPair(SlugBubbleUnit survivor, SlugBubbleUnit absorbed, PipeSection[] sections) {
 
     // Extend survivor to include absorbed slug
     survivor.frontPosition = absorbed.frontPosition;
@@ -1157,9 +1151,8 @@ public class LagrangianSlugTracker implements Serializable {
 
     // Update holdup (weighted average)
     double totalLength = survivor.slugLength + absorbed.slugLength;
-    survivor.slugHoldup =
-        (survivor.slugHoldup * survivor.slugLength + absorbed.slugHoldup * absorbed.slugLength)
-            / totalLength;
+    survivor.slugHoldup = (survivor.slugHoldup * survivor.slugLength + absorbed.slugHoldup * absorbed.slugLength)
+	/ totalLength;
 
     // Bubble length from absorbed slug
     survivor.bubbleLength = absorbed.bubbleLength;
@@ -1185,21 +1178,21 @@ public class LagrangianSlugTracker implements Serializable {
 
       // Check if slug has exited
       if (slug.tailPosition > pipeLength) {
-        slug.hasExited = true;
-        recordSlugAtOutlet(slug);
-        totalMassReturned += slug.slugLiquidMass;
-        totalSlugsExited++;
-        iter.remove();
-        continue;
+	slug.hasExited = true;
+	recordSlugAtOutlet(slug);
+	totalMassReturned += slug.slugLiquidMass;
+	totalSlugsExited++;
+	iter.remove();
+	continue;
       }
 
       // Check if slug has dissipated (too short after sufficient time)
       double minLength = minSlugLengthDiameters * slug.localDiameter;
       if (slug.slugLength < minLength && slug.age > 10.0) {
-        returnMassToEulerian(slug, sections);
-        totalMassReturned += slug.slugLiquidMass;
-        totalSlugsDissipated++;
-        iter.remove();
+	returnMassToEulerian(slug, sections);
+	totalMassReturned += slug.slugLiquidMass;
+	totalSlugsDissipated++;
+	iter.remove();
       }
     }
   }
@@ -1228,7 +1221,7 @@ public class LagrangianSlugTracker implements Serializable {
   /**
    * Return mass from dissipating slug to Eulerian cells.
    *
-   * @param slug the dissipating slug
+   * @param slug     the dissipating slug
    * @param sections pipe sections
    */
   private void returnMassToEulerian(SlugBubbleUnit slug, PipeSection[] sections) {
@@ -1265,11 +1258,11 @@ public class LagrangianSlugTracker implements Serializable {
       double cellVolume = section.getArea() * section.getLength();
 
       if (rhoL > 0 && cellVolume > 0) {
-        double deltaHoldup = massToReturn / (rhoL * cellVolume);
-        double newHoldup = Math.min(1.0, section.getLiquidHoldup() + deltaHoldup);
-        section.setLiquidHoldup(newHoldup);
-        section.setGasHoldup(1.0 - newHoldup);
-        section.updateDerivedQuantities();
+	double deltaHoldup = massToReturn / (rhoL * cellVolume);
+	double newHoldup = Math.min(1.0, section.getLiquidHoldup() + deltaHoldup);
+	section.setLiquidHoldup(newHoldup);
+	section.setGasHoldup(1.0 - newHoldup);
+	section.updateDerivedQuantities();
       }
     }
   }
@@ -1297,22 +1290,22 @@ public class LagrangianSlugTracker implements Serializable {
   private void markSlugSections(PipeSection[] sections) {
     for (SlugBubbleUnit slug : slugs) {
       for (PipeSection section : sections) {
-        double secStart = section.getPosition();
-        double secEnd = secStart + section.getLength();
+	double secStart = section.getPosition();
+	double secEnd = secStart + section.getLength();
 
-        // Check overlap with slug body
-        if (secStart < slug.frontPosition && secEnd > slug.tailPosition) {
-          section.setInSlugBody(true);
-          section.setSlugHoldup(slug.slugHoldup);
-        }
+	// Check overlap with slug body
+	if (secStart < slug.frontPosition && secEnd > slug.tailPosition) {
+	  section.setInSlugBody(true);
+	  section.setSlugHoldup(slug.slugHoldup);
+	}
 
-        // Check overlap with bubble region (behind tail)
-        double bubbleStart = slug.tailPosition - slug.bubbleLength;
-        double bubbleEnd = slug.tailPosition;
-        if (secStart < bubbleEnd && secEnd > bubbleStart && !section.isInSlugBody()) {
-          section.setInSlugBubble(true);
-          section.setSlugHoldup(slug.filmHoldup);
-        }
+	// Check overlap with bubble region (behind tail)
+	double bubbleStart = slug.tailPosition - slug.bubbleLength;
+	double bubbleEnd = slug.tailPosition;
+	if (secStart < bubbleEnd && secEnd > bubbleStart && !section.isInSlugBody()) {
+	  section.setInSlugBubble(true);
+	  section.setSlugHoldup(slug.filmHoldup);
+	}
       }
     }
   }
@@ -1326,7 +1319,7 @@ public class LagrangianSlugTracker implements Serializable {
     Collections.sort(slugs, new Comparator<SlugBubbleUnit>() {
       @Override
       public int compare(SlugBubbleUnit a, SlugBubbleUnit b) {
-        return Double.compare(b.frontPosition, a.frontPosition);
+	return Double.compare(b.frontPosition, a.frontPosition);
       }
     });
   }
@@ -1343,7 +1336,7 @@ public class LagrangianSlugTracker implements Serializable {
       double start = sections[i].getPosition();
       double end = start + sections[i].getLength();
       if (position >= start && position <= end) {
-        return i;
+	return i;
       }
     }
     return -1;
@@ -1381,7 +1374,7 @@ public class LagrangianSlugTracker implements Serializable {
     for (SlugBubbleUnit slug : slugs) {
       sumLength += slug.slugLength;
       if (slug.slugLength > maxObservedSlugLength) {
-        maxObservedSlugLength = slug.slugLength;
+	maxObservedSlugLength = slug.slugLength;
       }
     }
 
@@ -1391,7 +1384,7 @@ public class LagrangianSlugTracker implements Serializable {
     if (outletInterArrivalTimes.size() > 0) {
       double sumTime = 0;
       for (Double t : outletInterArrivalTimes) {
-        sumTime += t;
+	sumTime += t;
       }
       double avgPeriod = sumTime / outletInterArrivalTimes.size();
       outletSlugFrequency = 1.0 / (avgPeriod + 1e-10);
@@ -1705,7 +1698,7 @@ public class LagrangianSlugTracker implements Serializable {
     sb.append(String.format("  - Merged: %d\n", totalSlugsMerged));
     sb.append(String.format("  - Dissipated: %d\n", totalSlugsDissipated));
     sb.append(String.format("Inlet frequency: %.4f Hz (period: %.1f s)\n", inletSlugFrequency,
-        1.0 / (inletSlugFrequency + 1e-10)));
+	1.0 / (inletSlugFrequency + 1e-10)));
     sb.append(String.format("Outlet frequency: %.4f Hz\n", outletSlugFrequency));
     sb.append(String.format("Average slug length: %.2f m\n", averageSlugLength));
     sb.append(String.format("Max slug length: %.2f m\n", maxObservedSlugLength));
@@ -1762,7 +1755,7 @@ public class LagrangianSlugTracker implements Serializable {
       sb.append(String.format("      \"inWakeRegion\": %b\n", slug.inWakeRegion));
       sb.append("    }");
       if (i < slugs.size() - 1) {
-        sb.append(",");
+	sb.append(",");
       }
       sb.append("\n");
     }

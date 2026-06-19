@@ -22,8 +22,7 @@ class DeclineCurveAnalysisTest {
 
   @Test
   void testRateAtTimeZero() {
-    assertEquals(QI, DeclineCurveAnalysis.rate(QI, DI, B_HYP, 0.0), 1e-10,
-        "Rate at t=0 should equal qi");
+    assertEquals(QI, DeclineCurveAnalysis.rate(QI, DI, B_HYP, 0.0), 1e-10, "Rate at t=0 should equal qi");
   }
 
   @Test
@@ -135,10 +134,8 @@ class DeclineCurveAnalysisTest {
 
   @Test
   void testEffectiveDeclineValidation() {
-    assertThrows(IllegalArgumentException.class,
-        () -> DeclineCurveAnalysis.effectiveAnnualToNominal(0.0));
-    assertThrows(IllegalArgumentException.class,
-        () -> DeclineCurveAnalysis.effectiveAnnualToNominal(1.0));
+    assertThrows(IllegalArgumentException.class, () -> DeclineCurveAnalysis.effectiveAnnualToNominal(0.0));
+    assertThrows(IllegalArgumentException.class, () -> DeclineCurveAnalysis.effectiveAnnualToNominal(1.0));
   }
 
   @Test
@@ -191,8 +188,7 @@ class DeclineCurveAnalysisTest {
     double remaining = DeclineCurveAnalysis.remainingReserves(QI, DI, B_HYP, 365.25, 50.0);
     double produced = DeclineCurveAnalysis.cumulativeProduction(QI, DI, B_HYP, 365.25);
 
-    assertEquals(eurTotal, remaining + produced, eurTotal * 0.001,
-        "Remaining + produced should equal EUR");
+    assertEquals(eurTotal, remaining + produced, eurTotal * 0.001, "Remaining + produced should equal EUR");
   }
 
   // ========== FORECAST ==========
@@ -218,8 +214,7 @@ class DeclineCurveAnalysisTest {
 
   @Test
   void testForecastInvalidStep() {
-    assertThrows(IllegalArgumentException.class,
-        () -> DeclineCurveAnalysis.forecast(QI, DI, B_HYP, 0, 3650, 0));
+    assertThrows(IllegalArgumentException.class, () -> DeclineCurveAnalysis.forecast(QI, DI, B_HYP, 0, 3650, 0));
   }
 
   // ========== PARAMETER ESTIMATION ==========
@@ -237,9 +232,9 @@ class DeclineCurveAnalysisTest {
   @Test
   void testEstimateExponentialDeclineValidation() {
     assertThrows(IllegalArgumentException.class,
-        () -> DeclineCurveAnalysis.estimateExponentialDecline(100, 0, 200, 365));
+	() -> DeclineCurveAnalysis.estimateExponentialDecline(100, 0, 200, 365));
     assertThrows(IllegalArgumentException.class,
-        () -> DeclineCurveAnalysis.estimateExponentialDecline(100, 365, 50, 0));
+	() -> DeclineCurveAnalysis.estimateExponentialDecline(100, 365, 50, 0));
   }
 
   @Test
@@ -252,8 +247,7 @@ class DeclineCurveAnalysisTest {
     double q2 = DeclineCurveAnalysis.rate(qiTrue, diTrue, bTrue, 365.0);
     double q3 = DeclineCurveAnalysis.rate(qiTrue, diTrue, bTrue, 730.0);
 
-    Map<String, Double> est =
-        DeclineCurveAnalysis.estimateHyperbolicParameters(q1, 0.0, q2, 365.0, q3, 730.0);
+    Map<String, Double> est = DeclineCurveAnalysis.estimateHyperbolicParameters(q1, 0.0, q2, 365.0, q3, 730.0);
 
     assertTrue(est.containsKey("qi"));
     assertTrue(est.containsKey("di"));

@@ -31,19 +31,16 @@ public class FieldDevelopmentReportExporter {
    */
   public String exportTiebackOptionsMarkdown(TiebackReport report) {
     StringBuilder table = new StringBuilder();
-    table.append(
-        "| Host | Route | Distance km | Installed km | CAPEX MUSD | NPV MUSD | Feasible |\n");
-    table.append(
-        "|------|-------|-------------|--------------|------------|----------|----------|\n");
+    table.append("| Host | Route | Distance km | Installed km | CAPEX MUSD | NPV MUSD | Feasible |\n");
+    table.append("|------|-------|-------------|--------------|------------|----------|----------|\n");
     if (report == null) {
       return table.toString();
     }
     for (TiebackOption option : report.getOptions()) {
-      table.append(String.format("| %s | %s | %.1f | %.1f | %.0f | %.0f | %s |%n",
-          option.getHostName(), emptyAsDash(option.getRouteNetworkName()), option.getDistanceKm(),
-          option.getRouteInstalledLengthKm() > 0.0 ? option.getRouteInstalledLengthKm()
-              : option.getDistanceKm(),
-          option.getTotalCapexMusd(), option.getNpvMusd(), option.isFeasible() ? "Yes" : "No"));
+      table.append(String.format("| %s | %s | %.1f | %.1f | %.0f | %.0f | %s |%n", option.getHostName(),
+	  emptyAsDash(option.getRouteNetworkName()), option.getDistanceKm(),
+	  option.getRouteInstalledLengthKm() > 0.0 ? option.getRouteInstalledLengthKm() : option.getDistanceKm(),
+	  option.getTotalCapexMusd(), option.getNpvMusd(), option.isFeasible() ? "Yes" : "No"));
     }
     return table.toString();
   }
@@ -56,21 +53,17 @@ public class FieldDevelopmentReportExporter {
    */
   public String exportTemplateComparisonMarkdown(List<DevelopmentCaseTemplate> templates) {
     StringBuilder table = new StringBuilder();
-    table.append(
-        "| Case | Type | CAPEX MUSD | NPV MUSD | Power MW | Lifecycle CO2 kt | P50 resource |\n");
-    table.append(
-        "|------|------|------------|----------|----------|------------------|--------------|\n");
+    table.append("| Case | Type | CAPEX MUSD | NPV MUSD | Power MW | Lifecycle CO2 kt | P50 resource |\n");
+    table.append("|------|------|------------|----------|----------|------------------|--------------|\n");
     if (templates == null) {
       return table.toString();
     }
     for (DevelopmentCaseTemplate template : templates) {
-      double lifecycleKt =
-          template.getLifecycleEmissionsProfile().getTotalLifecycleEmissionsTonnes() / 1000.0;
-      table.append(String.format("| %s | %s | %.0f | %.0f | %.1f | %.1f | %.2f %s |%n",
-          template.getCaseName(), template.getCaseType(), template.getTotalCapexMusd(),
-          template.getEconomics().getNpv(), template.getPowerMw(), lifecycleKt,
-          template.getUncertainty().getResource().getP50(),
-          template.getUncertainty().getResource().getUnit()));
+      double lifecycleKt = template.getLifecycleEmissionsProfile().getTotalLifecycleEmissionsTonnes() / 1000.0;
+      table.append(String.format("| %s | %s | %.0f | %.0f | %.1f | %.1f | %.2f %s |%n", template.getCaseName(),
+	  template.getCaseType(), template.getTotalCapexMusd(), template.getEconomics().getNpv(), template.getPowerMw(),
+	  lifecycleKt, template.getUncertainty().getResource().getP50(),
+	  template.getUncertainty().getResource().getUnit()));
     }
     return table.toString();
   }
@@ -89,8 +82,8 @@ public class FieldDevelopmentReportExporter {
       return table.toString();
     }
     for (SensitivityAnalyzer.TornadoItem item : tornado.getItems()) {
-      table.append(String.format("| %s | %.1f | %.1f | %.1f | %s |%n", item.getParameterName(),
-          item.getLowNpv(), item.getHighNpv(), item.getSwing(), item.getImpactLevel()));
+      table.append(String.format("| %s | %.1f | %.1f | %.1f | %s |%n", item.getParameterName(), item.getLowNpv(),
+	  item.getHighNpv(), item.getSwing(), item.getImpactLevel()));
     }
     return table.toString();
   }
@@ -110,8 +103,8 @@ public class FieldDevelopmentReportExporter {
     }
     for (ConceptKPIs item : kpis) {
       table.append(String.format("| %s | %.0f | %.0f | %.1f | %s | %.2f |%n", item.getConceptName(),
-          item.getTotalCapexMUSD(), item.getNpv10MUSD(), item.getCo2IntensityKgPerBoe(),
-          item.getFlowAssuranceOverall().getDisplayName(), item.getOverallScore()));
+	  item.getTotalCapexMUSD(), item.getNpv10MUSD(), item.getCo2IntensityKgPerBoe(),
+	  item.getFlowAssuranceOverall().getDisplayName(), item.getOverallScore()));
     }
     return table.toString();
   }
@@ -128,8 +121,7 @@ public class FieldDevelopmentReportExporter {
       return rows;
     }
     for (DevelopmentCaseTemplate template : templates) {
-      rows.add(new String[] {template.getCaseName(),
-          String.format("%.3f", template.getEconomics().getNpv())});
+      rows.add(new String[] { template.getCaseName(), String.format("%.3f", template.getEconomics().getNpv()) });
     }
     return rows;
   }

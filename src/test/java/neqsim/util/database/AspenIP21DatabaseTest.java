@@ -17,8 +17,8 @@ public class AspenIP21DatabaseTest {
     AspenIP21Database database = new AspenIP21Database();
     try (ResultSet dataSet = database.getResultSet("Karsto", "....'")) {
       while (dataSet.next()) {
-        // logger.info("dataset " + dataSet.getString(4));
-        // logger.info("dataset value " + dataSet.getDouble("..."));
+	// logger.info("dataset " + dataSet.getString(4));
+	// logger.info("dataset value " + dataSet.getDouble("..."));
       }
       failed = false;
     } catch (Exception ex) {

@@ -228,8 +228,7 @@ public class ProcessSystemStateTest {
 
   @Test
   void testLoadNonExistentCompressedFile() {
-    ProcessSystemState loaded =
-        ProcessSystemState.loadFromCompressedFile("/non/existent/path.neqsim");
+    ProcessSystemState loaded = ProcessSystemState.loadFromCompressedFile("/non/existent/path.neqsim");
 
     assertNull(loaded);
   }
@@ -303,16 +302,14 @@ public class ProcessSystemStateTest {
 
     state.setVersion("new-version");
 
-    assertTrue(state.getLastModifiedAt().isAfter(initialModified)
-        || state.getLastModifiedAt().equals(initialModified));
+    assertTrue(state.getLastModifiedAt().isAfter(initialModified) || state.getLastModifiedAt().equals(initialModified));
   }
 
   @Test
   void testEquipmentStateFromEquipment() {
     Stream feed = (Stream) process.getUnit("feed");
 
-    ProcessSystemState.EquipmentState eqState =
-        ProcessSystemState.EquipmentState.fromEquipment(feed);
+    ProcessSystemState.EquipmentState eqState = ProcessSystemState.EquipmentState.fromEquipment(feed);
 
     assertNotNull(eqState);
     assertEquals("feed", eqState.getName());

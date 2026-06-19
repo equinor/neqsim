@@ -17,26 +17,23 @@ import neqsim.thermo.system.SystemSrkEos;
  * LedaFlow parity tests for the TwoFluidPipe model.
  *
  * <p>
- * Validates that NeqSim's TwoFluidPipe produces results comparable to commercial transient
- * multiphase flow simulators (LedaFlow, OLGA) for one-phase, two-phase, and three-phase flow. Tests
- * cover both steady-state and transient scenarios against published experimental data.
+ * Validates that NeqSim's TwoFluidPipe produces results comparable to commercial transient multiphase flow simulators
+ * (LedaFlow, OLGA) for one-phase, two-phase, and three-phase flow. Tests cover both steady-state and transient
+ * scenarios against published experimental data.
  * </p>
  *
  * <h2>Published Reference Data Sources</h2>
  * <ol>
- * <li>Eaton, B.A. et al. (1967). "The Prediction of Flow Patterns, Liquid Holdup, and Pressure
- * Losses Occurring During Continuous Two-Phase Flow in Horizontal Pipelines". JPT, 19(6),
- * 815-828.</li>
- * <li>Beggs, H.D. and Brill, J.P. (1973). "A Study of Two-Phase Flow in Inclined Pipes". JPT,
- * 25(5), 607-617.</li>
- * <li>Taitel, Y. and Dukler, A.E. (1976). "A Model for Predicting Flow Regime Transitions in
- * Horizontal and Near Horizontal Gas-Liquid Flow". AIChE J., 22(1), 47-55.</li>
- * <li>Bendiksen, K.H. et al. (1991). "The Dynamic Two-Fluid Model OLGA". SPE Prod. Eng., 6(2),
- * 171-180.</li>
- * <li>Nossen, J. et al. (2000). "An Experimental Investigation of Two-Phase Flow in Horizontal
- * Pipes". Int. J. Multiphase Flow, 26(10), 1583-1596.</li>
- * <li>Kjeldby, T.K. et al. (2013). "Lagrangian slug flow modeling and sensitivity on hydrodynamic
- * slug initiation". Int. J. Multiphase Flow, 53, 29-39.</li>
+ * <li>Eaton, B.A. et al. (1967). "The Prediction of Flow Patterns, Liquid Holdup, and Pressure Losses Occurring During
+ * Continuous Two-Phase Flow in Horizontal Pipelines". JPT, 19(6), 815-828.</li>
+ * <li>Beggs, H.D. and Brill, J.P. (1973). "A Study of Two-Phase Flow in Inclined Pipes". JPT, 25(5), 607-617.</li>
+ * <li>Taitel, Y. and Dukler, A.E. (1976). "A Model for Predicting Flow Regime Transitions in Horizontal and Near
+ * Horizontal Gas-Liquid Flow". AIChE J., 22(1), 47-55.</li>
+ * <li>Bendiksen, K.H. et al. (1991). "The Dynamic Two-Fluid Model OLGA". SPE Prod. Eng., 6(2), 171-180.</li>
+ * <li>Nossen, J. et al. (2000). "An Experimental Investigation of Two-Phase Flow in Horizontal Pipes". Int. J.
+ * Multiphase Flow, 26(10), 1583-1596.</li>
+ * <li>Kjeldby, T.K. et al. (2013). "Lagrangian slug flow modeling and sensitivity on hydrodynamic slug initiation".
+ * Int. J. Multiphase Flow, 53, 29-39.</li>
  * </ol>
  *
  * @author Even Solbraa
@@ -51,8 +48,8 @@ public class TwoFluidPipeLedaFlowParityTest {
    * Single-phase validation against analytical Darcy-Weisbach.
    *
    * <p>
-   * LedaFlow and OLGA must reproduce single-phase friction exactly. The TwoFluidPipe should match
-   * within 10% for gas and liquid.
+   * LedaFlow and OLGA must reproduce single-phase friction exactly. The TwoFluidPipe should match within 10% for gas
+   * and liquid.
    * </p>
    */
   @Nested
@@ -63,8 +60,8 @@ public class TwoFluidPipeLedaFlowParityTest {
      * Single-phase gas: methane at 50 bara through 10 km horizontal pipe.
      *
      * <p>
-     * Reference: Moody (1944) friction factor. At Re ~ 2e6, f ~ 0.013 (smooth pipe). Published
-     * LedaFlow benchmark cases show agreement within 5% for single-phase gas.
+     * Reference: Moody (1944) friction factor. At Re ~ 2e6, f ~ 0.013 (smooth pipe). Published LedaFlow benchmark cases
+     * show agreement within 5% for single-phase gas.
      * </p>
      */
     @Test
@@ -120,7 +117,7 @@ public class TwoFluidPipeLedaFlowParityTest {
       // Single-phase: models must agree within 10%
       assertTrue(dp > 0, "Pressure drop must be positive");
       assertTrue(ratio > 0.85 && ratio < 1.15,
-          "Single-phase gas: TwoFluid and B&B should agree within 15%. Ratio=" + ratio);
+	  "Single-phase gas: TwoFluid and B&B should agree within 15%. Ratio=" + ratio);
     }
 
     /**
@@ -203,8 +200,8 @@ public class TwoFluidPipeLedaFlowParityTest {
    * Two-phase gas-liquid validation using published data points.
    *
    * <p>
-   * Compares with Eaton et al. (1967) holdup data and Beggs-Brill (1973) pressure drop
-   * correlations. LedaFlow typically matches these within 20-30%.
+   * Compares with Eaton et al. (1967) holdup data and Beggs-Brill (1973) pressure drop correlations. LedaFlow typically
+   * matches these within 20-30%.
    * </p>
    */
   @Nested
@@ -215,8 +212,8 @@ public class TwoFluidPipeLedaFlowParityTest {
      * Wet gas stratified flow: high GOR, low liquid loading.
      *
      * <p>
-     * Reference: Nossen et al. (2000) data for horizontal gas-liquid flow. At high gas rates with
-     * low liquid fraction, expect stratified flow with holdup = 2-15%.
+     * Reference: Nossen et al. (2000) data for horizontal gas-liquid flow. At high gas rates with low liquid fraction,
+     * expect stratified flow with holdup = 2-15%.
      * </p>
      */
     @Test
@@ -257,19 +254,17 @@ public class TwoFluidPipeLedaFlowParityTest {
 
       assertTrue(dp > 0, "dP must be positive");
       // Published range: Nossen et al. (2000): dP/km = 0.1-2.0 bar/km for similar conditions
-      assertTrue(dpPerKm > 0.01 && dpPerKm < 5,
-          "Wet gas dP/km should be in range 0.01-5 bar/km. Got " + dpPerKm);
+      assertTrue(dpPerKm > 0.01 && dpPerKm < 5, "Wet gas dP/km should be in range 0.01-5 bar/km. Got " + dpPerKm);
       // Stratified flow holdup: 2-20%
-      assertTrue(avgHoldup > 0.001 && avgHoldup < 0.5,
-          "Wet gas holdup should be < 50%. Got " + avgHoldup);
+      assertTrue(avgHoldup > 0.001 && avgHoldup < 0.5, "Wet gas holdup should be < 50%. Got " + avgHoldup);
     }
 
     /**
      * Slug flow: intermediate GOR, moderate liquid loading.
      *
      * <p>
-     * Reference: Beggs-Brill (1973) - intermediate flow conditions with slug formation. Holdup
-     * typically 0.2-0.6 range. LedaFlow and OLGA predict similar magnitudes.
+     * Reference: Beggs-Brill (1973) - intermediate flow conditions with slug formation. Holdup typically 0.2-0.6 range.
+     * LedaFlow and OLGA predict similar magnitudes.
      * </p>
      */
     @Test
@@ -313,16 +308,15 @@ public class TwoFluidPipeLedaFlowParityTest {
 
       assertTrue(dp > 0, "dP must be positive");
       // Slug flow: holdup 0.15-0.75 (Beggs-Brill 1973, Fig 8)
-      assertTrue(avgHoldup > 0.1 && avgHoldup < 0.85,
-          "Slug holdup should be in 0.1-0.85 range. Got " + avgHoldup);
+      assertTrue(avgHoldup > 0.1 && avgHoldup < 0.85, "Slug holdup should be in 0.1-0.85 range. Got " + avgHoldup);
     }
 
     /**
      * Vertical riser: 200 m riser at end of pipeline.
      *
      * <p>
-     * Reference: Bendiksen et al. (1991) OLGA verification. Riser dP is dominated by hydrostatic
-     * head. Two-phase holdup should increase in vertical section.
+     * Reference: Bendiksen et al. (1991) OLGA verification. Riser dP is dominated by hydrostatic head. Two-phase holdup
+     * should increase in vertical section.
      * </p>
      */
     @Test
@@ -343,7 +337,7 @@ public class TwoFluidPipeLedaFlowParityTest {
       double height = 200.0;
       double[] elevations = new double[nSec];
       for (int i = 0; i < nSec; i++) {
-        elevations[i] = height * i / (nSec - 1);
+	elevations[i] = height * i / (nSec - 1);
       }
 
       TwoFluidPipe pipe = new TwoFluidPipe("riser", inlet);
@@ -374,8 +368,8 @@ public class TwoFluidPipeLedaFlowParityTest {
      * Downhill flow: gravity-aided pressure recovery.
      *
      * <p>
-     * Both LedaFlow and OLGA predict pressure recovery in steep downhill sections. The hydrostatic
-     * component subtracts from friction, potentially resulting in lower dP than horizontal.
+     * Both LedaFlow and OLGA predict pressure recovery in steep downhill sections. The hydrostatic component subtracts
+     * from friction, potentially resulting in lower dP than horizontal.
      * </p>
      */
     @Test
@@ -395,7 +389,7 @@ public class TwoFluidPipeLedaFlowParityTest {
       double elevDrop = pipeLen * Math.sin(Math.toRadians(5.0));
       double[] downElev = new double[nSec];
       for (int i = 0; i < nSec; i++) {
-        downElev[i] = elevDrop * (1.0 - (double) i / (nSec - 1));
+	downElev[i] = elevDrop * (1.0 - (double) i / (nSec - 1));
       }
 
       Stream inlet = new Stream("down-in", fluid);
@@ -442,8 +436,7 @@ public class TwoFluidPipeLedaFlowParityTest {
       logger.info("  Elev drop   = " + String.format("%.1f m", elevDrop));
 
       // Downhill should have lower dP than horizontal
-      assertTrue(dpDown < dpFlat,
-          "Downhill (" + dpDown + ") should be less than horizontal (" + dpFlat + ")");
+      assertTrue(dpDown < dpFlat, "Downhill (" + dpDown + ") should be less than horizontal (" + dpFlat + ")");
     }
   }
 
@@ -453,9 +446,8 @@ public class TwoFluidPipeLedaFlowParityTest {
    * Three-phase gas-oil-water flow tests.
    *
    * <p>
-   * LedaFlow is a 3-field model (gas, oil, water) with separate momentum equations. The
-   * TwoFluidPipe approximates 3-phase flow with a 2-fluid model (gas vs effective liquid) plus
-   * oil-water sub-model. Tests verify:
+   * LedaFlow is a 3-field model (gas, oil, water) with separate momentum equations. The TwoFluidPipe approximates
+   * 3-phase flow with a 2-fluid model (gas vs effective liquid) plus oil-water sub-model. Tests verify:
    * </p>
    * <ul>
    * <li>Water cut tracking along pipe</li>
@@ -521,8 +513,8 @@ public class TwoFluidPipeLedaFlowParityTest {
      * Three-phase flow with high water cut (50%) — mature field conditions.
      *
      * <p>
-     * At high water cut, oil-water emulsion viscosity increases significantly. The model should
-     * predict higher pressure drop compared to low water cut.
+     * At high water cut, oil-water emulsion viscosity increases significantly. The model should predict higher pressure
+     * drop compared to low water cut.
      * </p>
      */
     @Test
@@ -572,8 +564,8 @@ public class TwoFluidPipeLedaFlowParityTest {
      * Three-phase with undulating terrain — water accumulation in valleys.
      *
      * <p>
-     * LedaFlow's 3-field model predicts water stratification at low points. NeqSim's oil-water
-     * sub-model should show increased water cut in valleys.
+     * LedaFlow's 3-field model predicts water stratification at low points. NeqSim's oil-water sub-model should show
+     * increased water cut in valleys.
      * </p>
      */
     @Test
@@ -597,8 +589,8 @@ public class TwoFluidPipeLedaFlowParityTest {
       double pipeLen = 10000.0;
       double[] elevations = new double[nSec];
       for (int i = 0; i < nSec; i++) {
-        double x = (double) i / (nSec - 1);
-        elevations[i] = 30.0 * Math.sin(2 * Math.PI * x * 2); // Two full sine waves
+	double x = (double) i / (nSec - 1);
+	elevations[i] = 30.0 * Math.sin(2 * Math.PI * x * 2); // Two full sine waves
       }
 
       TwoFluidPipe pipe = new TwoFluidPipe("terrain-pipe", inlet);
@@ -618,8 +610,8 @@ public class TwoFluidPipeLedaFlowParityTest {
 
       logger.info("=== Three-Phase Terrain: 10 km, undulating ===");
       logger.info("  dP = " + String.format("%.3f bar", dp));
-      logger.info("  Holdup range: [" + String.format("%.4f", min(holdup)) + ", "
-          + String.format("%.4f", max(holdup)) + "]");
+      logger.info(
+	  "  Holdup range: [" + String.format("%.4f", min(holdup)) + ", " + String.format("%.4f", max(holdup)) + "]");
 
       // Note: dP can be negative for undulating terrain with liquid accumulation
       // in valleys (hydrostatic head at low spots). This is physical behavior.
@@ -632,8 +624,7 @@ public class TwoFluidPipeLedaFlowParityTest {
 
       // Holdup should vary along undulating terrain (not flat)
       double holdupVariation = max(holdup) - min(holdup);
-      assertTrue(holdupVariation > 0.001,
-          "Holdup should vary along undulating terrain. Variation: " + holdupVariation);
+      assertTrue(holdupVariation > 0.001, "Holdup should vary along undulating terrain. Variation: " + holdupVariation);
     }
   }
 
@@ -643,8 +634,8 @@ public class TwoFluidPipeLedaFlowParityTest {
    * Transient flow validation.
    *
    * <p>
-   * LedaFlow and OLGA are transient codes. NeqSim's TwoFluidPipe also supports transient
-   * simulation. These tests verify physical transient behavior:
+   * LedaFlow and OLGA are transient codes. NeqSim's TwoFluidPipe also supports transient simulation. These tests verify
+   * physical transient behavior:
    * </p>
    * <ul>
    * <li>Flow rate step response</li>
@@ -660,8 +651,8 @@ public class TwoFluidPipeLedaFlowParityTest {
      * Transient step change: double the flow rate.
      *
      * <p>
-     * Reference: Bendiksen et al. (1991) - OLGA transient verification. After a step increase,
-     * pressure at outlet should increase (higher friction) and holdup should eventually adjust.
+     * Reference: Bendiksen et al. (1991) - OLGA transient verification. After a step increase, pressure at outlet
+     * should increase (higher friction) and holdup should eventually adjust.
      * </p>
      */
     @Test
@@ -706,16 +697,16 @@ public class TwoFluidPipeLedaFlowParityTest {
       logger.info("  Initial outlet P: " + String.format("%.3f bara", initialOutletP));
 
       for (int step = 0; step < nSteps; step++) {
-        pipe.runTransient(dt, UUID.randomUUID());
+	pipe.runTransient(dt, UUID.randomUUID());
 
-        double outP = pipe.getOutletStream().getPressure("bara");
-        assertTrue(!Double.isNaN(outP), "Outlet P must not be NaN at step " + step);
-        assertTrue(outP > 0.1, "Outlet P must be positive at step " + step);
+	double outP = pipe.getOutletStream().getPressure("bara");
+	assertTrue(!Double.isNaN(outP), "Outlet P must not be NaN at step " + step);
+	assertTrue(outP > 0.1, "Outlet P must be positive at step " + step);
       }
 
       double[] finalHoldup = pipe.getLiquidHoldupProfile();
       for (double h : finalHoldup) {
-        assertTrue(h >= 0 && h <= 1.0, "Final holdup must be in [0,1]. Got " + h);
+	assertTrue(h >= 0 && h <= 1.0, "Final holdup must be in [0,1]. Got " + h);
       }
 
       logger.info("  Transient completed without crash or NaN — PASS");
@@ -725,8 +716,8 @@ public class TwoFluidPipeLedaFlowParityTest {
      * Transient: single-phase gas pressure wave.
      *
      * <p>
-     * For single-phase gas, a step change should propagate as a pressure wave. The speed of sound
-     * determines propagation time.
+     * For single-phase gas, a step change should propagate as a pressure wave. The speed of sound determines
+     * propagation time.
      * </p>
      */
     @Test
@@ -763,7 +754,7 @@ public class TwoFluidPipeLedaFlowParityTest {
       // Run transient
       int nSteps = 10;
       for (int step = 0; step < nSteps; step++) {
-        pipe.runTransient(0.2, UUID.randomUUID());
+	pipe.runTransient(0.2, UUID.randomUUID());
       }
 
       double dpFinal = inlet.getPressure("bara") - pipe.getOutletStream().getPressure("bara");
@@ -783,8 +774,8 @@ public class TwoFluidPipeLedaFlowParityTest {
      * Transient three-phase flow stability.
      *
      * <p>
-     * Three-phase transient flow should maintain numerical stability and physical holdup bounds
-     * throughout the simulation.
+     * Three-phase transient flow should maintain numerical stability and physical holdup bounds throughout the
+     * simulation.
      * </p>
      */
     @Test
@@ -824,19 +815,19 @@ public class TwoFluidPipeLedaFlowParityTest {
       int boundaryViolations = 0;
 
       for (int step = 0; step < nSteps; step++) {
-        pipe.runTransient(dt, UUID.randomUUID());
+	pipe.runTransient(dt, UUID.randomUUID());
 
-        double[] holdup = pipe.getLiquidHoldupProfile();
-        double[] pressure = pipe.getPressureProfile();
+	double[] holdup = pipe.getLiquidHoldupProfile();
+	double[] pressure = pipe.getPressureProfile();
 
-        for (int j = 0; j < holdup.length; j++) {
-          if (Double.isNaN(holdup[j]) || Double.isNaN(pressure[j])) {
-            nanCount++;
-          }
-          if (holdup[j] < -0.01 || holdup[j] > 1.01) {
-            boundaryViolations++;
-          }
-        }
+	for (int j = 0; j < holdup.length; j++) {
+	  if (Double.isNaN(holdup[j]) || Double.isNaN(pressure[j])) {
+	    nanCount++;
+	  }
+	  if (holdup[j] < -0.01 || holdup[j] > 1.01) {
+	    boundaryViolations++;
+	  }
+	}
       }
 
       logger.info("=== Three-Phase Transient Stability ===");
@@ -864,46 +855,45 @@ public class TwoFluidPipeLedaFlowParityTest {
     @Test
     @DisplayName("dP increases monotonically with flow rate")
     void testPressureDropMonotonicity() {
-      double[] flows = {5000, 10000, 20000, 40000};
+      double[] flows = { 5000, 10000, 20000, 40000 };
       double prevDp = 0;
 
       logger.info("=== dP Monotonicity ===");
       logger.info("Flow (kg/hr) | dP (bar)");
 
       for (double flow : flows) {
-        SystemInterface fluid = new SystemSrkEos(273.15 + 40.0, 60.0);
-        fluid.addComponent("methane", 0.85);
-        fluid.addComponent("n-pentane", 0.10);
-        fluid.addComponent("n-heptane", 0.05);
-        fluid.setMixingRule("classic");
-        fluid.setMultiPhaseCheck(true);
+	SystemInterface fluid = new SystemSrkEos(273.15 + 40.0, 60.0);
+	fluid.addComponent("methane", 0.85);
+	fluid.addComponent("n-pentane", 0.10);
+	fluid.addComponent("n-heptane", 0.05);
+	fluid.setMixingRule("classic");
+	fluid.setMultiPhaseCheck(true);
 
-        Stream inlet = new Stream("in", fluid);
-        inlet.setFlowRate(flow, "kg/hr");
-        inlet.run();
+	Stream inlet = new Stream("in", fluid);
+	inlet.setFlowRate(flow, "kg/hr");
+	inlet.run();
 
-        int nSec = 20;
-        TwoFluidPipe pipe = new TwoFluidPipe("mono-pipe", inlet);
-        pipe.setLength(5000.0);
-        pipe.setDiameter(0.203);
-        pipe.setRoughness(4.6e-5);
-        pipe.setNumberOfSections(nSec);
-        double[] flat = new double[nSec];
-        pipe.setElevationProfile(flat);
+	int nSec = 20;
+	TwoFluidPipe pipe = new TwoFluidPipe("mono-pipe", inlet);
+	pipe.setLength(5000.0);
+	pipe.setDiameter(0.203);
+	pipe.setRoughness(4.6e-5);
+	pipe.setNumberOfSections(nSec);
+	double[] flat = new double[nSec];
+	pipe.setElevationProfile(flat);
 
-        ProcessSystem proc = new ProcessSystem();
-        proc.add(inlet);
-        proc.add(pipe);
-        proc.run();
+	ProcessSystem proc = new ProcessSystem();
+	proc.add(inlet);
+	proc.add(pipe);
+	proc.run();
 
-        double dp = inlet.getPressure("bara") - pipe.getOutletStream().getPressure("bara");
-        logger.printf(org.apache.logging.log4j.Level.INFO, "  %10.0f | %8.3f%n", flow, dp);
+	double dp = inlet.getPressure("bara") - pipe.getOutletStream().getPressure("bara");
+	logger.printf(org.apache.logging.log4j.Level.INFO, "  %10.0f | %8.3f%n", flow, dp);
 
-        if (prevDp > 0) {
-          assertTrue(dp > prevDp * 0.8,
-              "dP should increase with flow. Current: " + dp + ", Previous: " + prevDp);
-        }
-        prevDp = dp;
+	if (prevDp > 0) {
+	  assertTrue(dp > prevDp * 0.8, "dP should increase with flow. Current: " + dp + ", Previous: " + prevDp);
+	}
+	prevDp = dp;
       }
     }
 
@@ -941,9 +931,8 @@ public class TwoFluidPipeLedaFlowParityTest {
 
       double[] holdup = pipe.getLiquidHoldupProfile();
       for (int i = 0; i < holdup.length; i++) {
-        double alphaL = holdup[i];
-        assertTrue(alphaL >= -0.001 && alphaL <= 1.001,
-            "Holdup at section " + i + " must be in [0,1]. Got " + alphaL);
+	double alphaL = holdup[i];
+	assertTrue(alphaL >= -0.001 && alphaL <= 1.001, "Holdup at section " + i + " must be in [0,1]. Got " + alphaL);
       }
     }
 
@@ -953,45 +942,44 @@ public class TwoFluidPipeLedaFlowParityTest {
     @Test
     @DisplayName("Larger pipe diameter gives lower dP")
     void testDiameterEffect() {
-      double[] diameters = {0.1, 0.15, 0.2, 0.3}; // 100mm to 300mm
+      double[] diameters = { 0.1, 0.15, 0.2, 0.3 }; // 100mm to 300mm
       double prevDp = Double.MAX_VALUE;
 
       logger.info("=== Diameter Effect ===");
       logger.info("Diameter (mm) | dP (bar)");
 
       for (double d : diameters) {
-        SystemInterface fluid = new SystemSrkEos(273.15 + 40.0, 60.0);
-        fluid.addComponent("methane", 0.85);
-        fluid.addComponent("n-pentane", 0.10);
-        fluid.addComponent("n-heptane", 0.05);
-        fluid.setMixingRule("classic");
-        fluid.setMultiPhaseCheck(true);
+	SystemInterface fluid = new SystemSrkEos(273.15 + 40.0, 60.0);
+	fluid.addComponent("methane", 0.85);
+	fluid.addComponent("n-pentane", 0.10);
+	fluid.addComponent("n-heptane", 0.05);
+	fluid.setMixingRule("classic");
+	fluid.setMultiPhaseCheck(true);
 
-        Stream inlet = new Stream("dia-in", fluid);
-        inlet.setFlowRate(20000.0, "kg/hr");
-        inlet.run();
+	Stream inlet = new Stream("dia-in", fluid);
+	inlet.setFlowRate(20000.0, "kg/hr");
+	inlet.run();
 
-        int nSec = 20;
-        TwoFluidPipe pipe = new TwoFluidPipe("dia-pipe", inlet);
-        pipe.setLength(5000.0);
-        pipe.setDiameter(d);
-        pipe.setRoughness(4.6e-5);
-        pipe.setNumberOfSections(nSec);
-        double[] flat = new double[nSec];
-        pipe.setElevationProfile(flat);
+	int nSec = 20;
+	TwoFluidPipe pipe = new TwoFluidPipe("dia-pipe", inlet);
+	pipe.setLength(5000.0);
+	pipe.setDiameter(d);
+	pipe.setRoughness(4.6e-5);
+	pipe.setNumberOfSections(nSec);
+	double[] flat = new double[nSec];
+	pipe.setElevationProfile(flat);
 
-        ProcessSystem proc = new ProcessSystem();
-        proc.add(inlet);
-        proc.add(pipe);
-        proc.run();
+	ProcessSystem proc = new ProcessSystem();
+	proc.add(inlet);
+	proc.add(pipe);
+	proc.run();
 
-        double dp = inlet.getPressure("bara") - pipe.getOutletStream().getPressure("bara");
-        logger.printf(org.apache.logging.log4j.Level.INFO, "  %13.0f | %8.3f%n", d * 1000, dp);
+	double dp = inlet.getPressure("bara") - pipe.getOutletStream().getPressure("bara");
+	logger.printf(org.apache.logging.log4j.Level.INFO, "  %13.0f | %8.3f%n", d * 1000, dp);
 
-        // dP should decrease with increasing diameter
-        assertTrue(dp < prevDp,
-            "dP should decrease with larger diameter. D=" + d * 1000 + "mm, dp=" + dp);
-        prevDp = dp;
+	// dP should decrease with increasing diameter
+	assertTrue(dp < prevDp, "dP should decrease with larger diameter. D=" + d * 1000 + "mm, dp=" + dp);
+	prevDp = dp;
       }
     }
   }
@@ -1022,7 +1010,7 @@ public class TwoFluidPipeLedaFlowParityTest {
     double m = arr[0];
     for (double v : arr) {
       if (v < m) {
-        m = v;
+	m = v;
       }
     }
     return m;
@@ -1038,7 +1026,7 @@ public class TwoFluidPipeLedaFlowParityTest {
     double m = arr[0];
     for (double v : arr) {
       if (v > m) {
-        m = v;
+	m = v;
       }
     }
     return m;

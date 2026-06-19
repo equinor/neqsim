@@ -28,7 +28,7 @@ public class StreamValidator {
    */
   public static ValidationResult validateStream(StreamInterface stream) {
     ValidationBuilder builder = new ValidationBuilder(
-        "Stream: " + (stream != null && stream.getName() != null ? stream.getName() : "unnamed"));
+	"Stream: " + (stream != null && stream.getName() != null ? stream.getName() : "unnamed"));
 
     // Check: Stream exists
     builder.checkNotNull(stream, "stream");
@@ -39,52 +39,46 @@ public class StreamValidator {
     // Check: Fluid present
     try {
       if (stream.getFluid() == null) {
-        builder.checkTrue(false, "Stream has no fluid",
-            "Create stream with fluid: new Stream(\"name\", system)");
+	builder.checkTrue(false, "Stream has no fluid", "Create stream with fluid: new Stream(\"name\", system)");
       }
     } catch (Exception e) {
-      builder.addWarning("stream", "Could not access stream fluid",
-          "Ensure stream is properly initialized");
+      builder.addWarning("stream", "Could not access stream fluid", "Ensure stream is properly initialized");
     }
 
     // Check: Temperature valid
     try {
       double temp = stream.getFluid().getTemperature();
       if (temp < 1.0) {
-        builder.checkTrue(false, CommonErrors.INVALID_TEMPERATURE,
-            CommonErrors.REMEDIATION_INVALID_TEMPERATURE);
+	builder.checkTrue(false, CommonErrors.INVALID_TEMPERATURE, CommonErrors.REMEDIATION_INVALID_TEMPERATURE);
       }
       if (temp < 200.0) {
-        builder.addWarning("stream", "Stream temperature very low (< 200 K)",
-            "Verify this is intentional. Most equipment operates above 250 K");
+	builder.addWarning("stream", "Stream temperature very low (< 200 K)",
+	    "Verify this is intentional. Most equipment operates above 250 K");
       }
     } catch (Exception e) {
       builder.addWarning("stream", "Could not verify temperature",
-          "Set stream temperature: stream.setTemperature(value)");
+	  "Set stream temperature: stream.setTemperature(value)");
     }
 
     // Check: Pressure valid
     try {
       double pressure = stream.getFluid().getPressure();
       if (pressure <= 0) {
-        builder.checkTrue(false, CommonErrors.INVALID_PRESSURE,
-            CommonErrors.REMEDIATION_INVALID_PRESSURE);
+	builder.checkTrue(false, CommonErrors.INVALID_PRESSURE, CommonErrors.REMEDIATION_INVALID_PRESSURE);
       }
     } catch (Exception e) {
-      builder.addWarning("stream", "Could not verify pressure",
-          "Set stream pressure: stream.setPressure(value)");
+      builder.addWarning("stream", "Could not verify pressure", "Set stream pressure: stream.setPressure(value)");
     }
 
     // Check: Flowrate positive
     try {
       double flowrate = stream.getFlowRate("kg/hr");
       if (flowrate <= 0) {
-        builder.checkTrue(false, "Flowrate is zero or negative",
-            "Set positive flowrate: stream.setFlowRate(value, \"kg/hr\")");
+	builder.checkTrue(false, "Flowrate is zero or negative",
+	    "Set positive flowrate: stream.setFlowRate(value, \"kg/hr\")");
       }
     } catch (Exception e) {
-      builder.addWarning("stream", "Could not verify flowrate",
-          "Set stream flowrate: stream.setFlowRate(value, unit)");
+      builder.addWarning("stream", "Could not verify flowrate", "Set stream flowrate: stream.setFlowRate(value, unit)");
     }
 
     // Check: Composition valid
@@ -99,13 +93,13 @@ public class StreamValidator {
    * Validate stream composition (helper for validateStream).
    *
    * @param builder the validation builder to add results to
-   * @param phase the phase object to validate composition for
+   * @param phase   the phase object to validate composition for
    */
   private static void validateComposition(ValidationBuilder builder, Object phase) {
     // This is a simplified check due to varying phase implementations
     try {
       builder.addWarning("stream", "Composition normalization not automatically verified",
-          "Ensure component mole fractions sum to ~1.0");
+	  "Ensure component mole fractions sum to ~1.0");
     } catch (Exception e) {
       // Skip if phase interface varies
     }
@@ -118,12 +112,11 @@ public class StreamValidator {
    * @return ValidationResult indicating if stream has been run
    */
   public static ValidationResult validateStreamHasRun(StreamInterface stream) {
-    ValidationBuilder builder = new ValidationBuilder("Stream execution: "
-        + (stream != null && stream.getName() != null ? stream.getName() : "unnamed"));
+    ValidationBuilder builder = new ValidationBuilder(
+	"Stream execution: " + (stream != null && stream.getName() != null ? stream.getName() : "unnamed"));
 
     if (stream == null) {
-      builder.checkTrue(false, "Stream is null",
-          "Create and initialize stream before checking execution");
+      builder.checkTrue(false, "Stream is null", "Create and initialize stream before checking execution");
       return builder.build();
     }
 
@@ -134,7 +127,7 @@ public class StreamValidator {
       double enthalpy = stream.getFluid().getEnthalpy();
 
       if (Double.isNaN(temp) || Double.isNaN(pressure) || Double.isNaN(enthalpy)) {
-        builder.checkTrue(false, CommonErrors.STREAM_NOT_RUN, CommonErrors.REMEDIATION_STREAM_RUN);
+	builder.checkTrue(false, CommonErrors.STREAM_NOT_RUN, CommonErrors.REMEDIATION_STREAM_RUN);
       }
     } catch (Exception e) {
       builder.checkTrue(false, CommonErrors.STREAM_NOT_RUN, CommonErrors.REMEDIATION_STREAM_RUN);
@@ -144,15 +137,13 @@ public class StreamValidator {
   }
 
   /**
-   * Validate state consistency between two streams (e.g., outlet of equipment A matches inlet of
-   * equipment B).
+   * Validate state consistency between two streams (e.g., outlet of equipment A matches inlet of equipment B).
    *
    * @param outlet the outlet stream
-   * @param inlet the inlet stream
+   * @param inlet  the inlet stream
    * @return validation result with any errors or warnings
    */
-  public static ValidationResult validateStreamConnection(StreamInterface outlet,
-      StreamInterface inlet) {
+  public static ValidationResult validateStreamConnection(StreamInterface outlet, StreamInterface inlet) {
     ValidationBuilder builder = new ValidationBuilder("Stream Connection");
 
     builder.checkNotNull(outlet, "outlet stream");
@@ -165,25 +156,24 @@ public class StreamValidator {
     try {
       // Check: Fluids exist
       if (outlet.getFluid() == null || inlet.getFluid() == null) {
-        builder.checkTrue(false, "Outlet or inlet fluid is null",
-            "Ensure both streams are properly initialized");
+	builder.checkTrue(false, "Outlet or inlet fluid is null", "Ensure both streams are properly initialized");
       }
 
       // Check: Outlet has been executed
       double outletTemp = outlet.getFluid().getTemperature();
       if (Double.isNaN(outletTemp)) {
-        builder.checkTrue(false, "Outlet stream has not been executed",
-            "Call outlet.run() or equipment.run() to calculate outlet properties");
+	builder.checkTrue(false, "Outlet stream has not been executed",
+	    "Call outlet.run() or equipment.run() to calculate outlet properties");
       }
 
       // Check: Compositions similar (same components)
       // Note: This is a simplified check - actual matching depends on cloning behavior
       builder.addWarning("connection", "Component matching not automatically verified",
-          "Ensure outlet and inlet have same components");
+	  "Ensure outlet and inlet have same components");
 
     } catch (Exception e) {
       builder.addWarning("connection", "Could not verify stream connection",
-          "Manually verify outlet properties match inlet expectations");
+	  "Manually verify outlet properties match inlet expectations");
     }
 
     return builder.build();

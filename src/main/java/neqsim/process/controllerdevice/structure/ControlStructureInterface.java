@@ -1,9 +1,9 @@
 package neqsim.process.controllerdevice.structure;
 
 /**
- * Generic interface for multi-loop control structures coordinating one or more regulators. Examples
- * include cascade, ratio and feed-forward control. The structure produces a single output signal
- * that can be connected to a manipulated variable in the process.
+ * Generic interface for multi-loop control structures coordinating one or more regulators. Examples include cascade,
+ * ratio and feed-forward control. The structure produces a single output signal that can be connected to a manipulated
+ * variable in the process.
  *
  * @author esol
  */

@@ -106,8 +106,7 @@ public class MultiScenarioVFPGeneratorTest {
    */
   @Test
   void testConstruction() {
-    MultiScenarioVFPGenerator generator =
-        new MultiScenarioVFPGenerator(processFactory, "Inlet", "Pipeline");
+    MultiScenarioVFPGenerator generator = new MultiScenarioVFPGenerator(processFactory, "Inlet", "Pipeline");
 
     assertNotNull(generator);
   }
@@ -117,14 +116,13 @@ public class MultiScenarioVFPGeneratorTest {
    */
   @Test
   void testConfiguration() {
-    MultiScenarioVFPGenerator generator =
-        new MultiScenarioVFPGenerator(processFactory, "Inlet", "Pipeline");
+    MultiScenarioVFPGenerator generator = new MultiScenarioVFPGenerator(processFactory, "Inlet", "Pipeline");
     generator.setFlashGenerator(flashGenerator);
 
-    generator.setFlowRates(new double[] {5000, 10000, 20000});
-    generator.setOutletPressures(new double[] {50, 70});
-    generator.setWaterCuts(new double[] {0.0, 0.20});
-    generator.setGORs(new double[] {500, 1000});
+    generator.setFlowRates(new double[] { 5000, 10000, 20000 });
+    generator.setOutletPressures(new double[] { 50, 70 });
+    generator.setWaterCuts(new double[] { 0.0, 0.20 });
+    generator.setGORs(new double[] { 500, 1000 });
 
     assertNotNull(generator.getFlowRates());
     assertEquals(3, generator.getFlowRates().length);
@@ -138,13 +136,12 @@ public class MultiScenarioVFPGeneratorTest {
    */
   @Test
   void testValidationMissingFlashGenerator() {
-    MultiScenarioVFPGenerator generator =
-        new MultiScenarioVFPGenerator(processFactory, "Inlet", "Pipeline");
+    MultiScenarioVFPGenerator generator = new MultiScenarioVFPGenerator(processFactory, "Inlet", "Pipeline");
 
-    generator.setFlowRates(new double[] {5000, 10000});
-    generator.setOutletPressures(new double[] {50, 70});
-    generator.setWaterCuts(new double[] {0.0, 0.20});
-    generator.setGORs(new double[] {500, 1000});
+    generator.setFlowRates(new double[] { 5000, 10000 });
+    generator.setOutletPressures(new double[] { 50, 70 });
+    generator.setWaterCuts(new double[] { 0.0, 0.20 });
+    generator.setGORs(new double[] { 500, 1000 });
 
     // Should fail without flash generator
     assertThrows(IllegalStateException.class, () -> generator.generateVFPTable());
@@ -155,14 +152,13 @@ public class MultiScenarioVFPGeneratorTest {
    */
   @Test
   void testValidationMissingParameters() {
-    MultiScenarioVFPGenerator generator =
-        new MultiScenarioVFPGenerator(processFactory, "Inlet", "Pipeline");
+    MultiScenarioVFPGenerator generator = new MultiScenarioVFPGenerator(processFactory, "Inlet", "Pipeline");
     generator.setFlashGenerator(flashGenerator);
 
     // Missing flow rates
-    generator.setOutletPressures(new double[] {50});
-    generator.setWaterCuts(new double[] {0.0});
-    generator.setGORs(new double[] {500});
+    generator.setOutletPressures(new double[] { 50 });
+    generator.setWaterCuts(new double[] { 0.0 });
+    generator.setGORs(new double[] { 500 });
 
     assertThrows(IllegalStateException.class, () -> generator.generateVFPTable());
   }
@@ -172,13 +168,12 @@ public class MultiScenarioVFPGeneratorTest {
    */
   @Test
   void testVFPTableMethods() {
-    double[] rates = {5000, 10000};
-    double[] thps = {50, 60};
-    double[] wcs = {0.0, 0.30};
-    double[] gors = {500, 1000};
+    double[] rates = { 5000, 10000 };
+    double[] thps = { 50, 60 };
+    double[] wcs = { 0.0, 0.30 };
+    double[] gors = { 500, 1000 };
 
-    MultiScenarioVFPGenerator.VFPTable table =
-        new MultiScenarioVFPGenerator.VFPTable(rates, thps, wcs, gors);
+    MultiScenarioVFPGenerator.VFPTable table = new MultiScenarioVFPGenerator.VFPTable(rates, thps, wcs, gors);
 
     assertEquals(16, table.getTotalPoints()); // 2*2*2*2
     assertEquals(0, table.getFeasibleCount()); // All NaN initially
@@ -194,8 +189,7 @@ public class MultiScenarioVFPGeneratorTest {
    */
   @Test
   void testParallelExecutionSetting() {
-    MultiScenarioVFPGenerator generator =
-        new MultiScenarioVFPGenerator(processFactory, "Inlet", "Pipeline");
+    MultiScenarioVFPGenerator generator = new MultiScenarioVFPGenerator(processFactory, "Inlet", "Pipeline");
 
     generator.setEnableParallel(true);
     generator.setNumberOfWorkers(4);
@@ -210,8 +204,7 @@ public class MultiScenarioVFPGeneratorTest {
    */
   @Test
   void testFlowRateUnit() {
-    MultiScenarioVFPGenerator generator =
-        new MultiScenarioVFPGenerator(processFactory, "Inlet", "Pipeline");
+    MultiScenarioVFPGenerator generator = new MultiScenarioVFPGenerator(processFactory, "Inlet", "Pipeline");
 
     generator.setFlowRateUnit("kg/hr");
     assertEquals("kg/hr", generator.getFlowRateUnit());
@@ -225,8 +218,7 @@ public class MultiScenarioVFPGeneratorTest {
    */
   @Test
   void testPressureSettings() {
-    MultiScenarioVFPGenerator generator =
-        new MultiScenarioVFPGenerator(processFactory, "Inlet", "Pipeline");
+    MultiScenarioVFPGenerator generator = new MultiScenarioVFPGenerator(processFactory, "Inlet", "Pipeline");
 
     generator.setMinInletPressure(20.0);
     generator.setMaxInletPressure(250.0);
@@ -243,8 +235,7 @@ public class MultiScenarioVFPGeneratorTest {
    */
   @Test
   void testInletTemperatureSetting() {
-    MultiScenarioVFPGenerator generator =
-        new MultiScenarioVFPGenerator(processFactory, "Inlet", "Pipeline");
+    MultiScenarioVFPGenerator generator = new MultiScenarioVFPGenerator(processFactory, "Inlet", "Pipeline");
 
     generator.setInletTemperature(373.15); // 100°C
     assertEquals(373.15, generator.getInletTemperature(), 0.01);
@@ -255,13 +246,12 @@ public class MultiScenarioVFPGeneratorTest {
    */
   @Test
   void testVFPTablePrintSlice() {
-    double[] rates = {5000, 10000};
-    double[] thps = {50, 60};
-    double[] wcs = {0.0, 0.30};
-    double[] gors = {500, 1000};
+    double[] rates = { 5000, 10000 };
+    double[] thps = { 50, 60 };
+    double[] wcs = { 0.0, 0.30 };
+    double[] gors = { 500, 1000 };
 
-    MultiScenarioVFPGenerator.VFPTable table =
-        new MultiScenarioVFPGenerator.VFPTable(rates, thps, wcs, gors);
+    MultiScenarioVFPGenerator.VFPTable table = new MultiScenarioVFPGenerator.VFPTable(rates, thps, wcs, gors);
 
     // Should not throw
     assertDoesNotThrow(() -> table.printSlice(0, 0));
@@ -272,8 +262,7 @@ public class MultiScenarioVFPGeneratorTest {
    */
   @Test
   void testGetFlashGenerator() {
-    MultiScenarioVFPGenerator generator =
-        new MultiScenarioVFPGenerator(processFactory, "Inlet", "Pipeline");
+    MultiScenarioVFPGenerator generator = new MultiScenarioVFPGenerator(processFactory, "Inlet", "Pipeline");
 
     generator.setFlashGenerator(flashGenerator);
 
@@ -286,8 +275,7 @@ public class MultiScenarioVFPGeneratorTest {
    */
   @Test
   void testExportWithoutGeneration() {
-    MultiScenarioVFPGenerator generator =
-        new MultiScenarioVFPGenerator(processFactory, "Inlet", "Pipeline");
+    MultiScenarioVFPGenerator generator = new MultiScenarioVFPGenerator(processFactory, "Inlet", "Pipeline");
 
     assertThrows(IllegalStateException.class, () -> generator.toVFPEXPString(1));
   }
@@ -297,13 +285,12 @@ public class MultiScenarioVFPGeneratorTest {
    */
   @Test
   void testVFPTableBHPAccess() {
-    double[] rates = {5000, 10000};
-    double[] thps = {50, 60};
-    double[] wcs = {0.0, 0.30};
-    double[] gors = {500, 1000};
+    double[] rates = { 5000, 10000 };
+    double[] thps = { 50, 60 };
+    double[] wcs = { 0.0, 0.30 };
+    double[] gors = { 500, 1000 };
 
-    MultiScenarioVFPGenerator.VFPTable table =
-        new MultiScenarioVFPGenerator.VFPTable(rates, thps, wcs, gors);
+    MultiScenarioVFPGenerator.VFPTable table = new MultiScenarioVFPGenerator.VFPTable(rates, thps, wcs, gors);
 
     // Initially all NaN
     assertTrue(Double.isNaN(table.getBHP(0, 0, 0, 0)));
@@ -325,13 +312,12 @@ public class MultiScenarioVFPGeneratorTest {
    */
   @Test
   void testVFPTableFlowRateUnit() {
-    double[] rates = {5000};
-    double[] thps = {50};
-    double[] wcs = {0.0};
-    double[] gors = {500};
+    double[] rates = { 5000 };
+    double[] thps = { 50 };
+    double[] wcs = { 0.0 };
+    double[] gors = { 500 };
 
-    MultiScenarioVFPGenerator.VFPTable table =
-        new MultiScenarioVFPGenerator.VFPTable(rates, thps, wcs, gors);
+    MultiScenarioVFPGenerator.VFPTable table = new MultiScenarioVFPGenerator.VFPTable(rates, thps, wcs, gors);
 
     table.setFlowRateUnit("kg/hr");
     assertEquals("kg/hr", table.getFlowRateUnit());
@@ -344,8 +330,7 @@ public class MultiScenarioVFPGeneratorTest {
   void testWithProcessSystemCopy() {
     ProcessSystem process = createSimplePipeline();
 
-    MultiScenarioVFPGenerator generator =
-        new MultiScenarioVFPGenerator(process, "Inlet", "Pipeline");
+    MultiScenarioVFPGenerator generator = new MultiScenarioVFPGenerator(process, "Inlet", "Pipeline");
 
     assertNotNull(generator);
     // Just verify construction works - don't run full generation

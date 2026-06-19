@@ -11,11 +11,10 @@ import java.util.Map;
  * Flexible service-condition envelope for a material review item.
  *
  * <p>
- * The envelope stores normalized process and integrity parameters such as temperature, pressure,
- * CO2/H2S/H2 content, chloride concentration, free-water presence, oxygen, coating age, insulation
- * type, wall thickness, and inspection data. A map-backed representation keeps the class compatible
- * with STID, line-list, inspection, and project technical database extracts where fields vary
- * between projects.
+ * The envelope stores normalized process and integrity parameters such as temperature, pressure, CO2/H2S/H2 content,
+ * chloride concentration, free-water presence, oxygen, coating age, insulation type, wall thickness, and inspection
+ * data. A map-backed representation keeps the class compatible with STID, line-list, inspection, and project technical
+ * database extracts where fields vary between projects.
  * </p>
  *
  * @author NeqSim contributors
@@ -31,7 +30,8 @@ public class MaterialServiceEnvelope implements Serializable {
   /**
    * Creates an empty service envelope.
    */
-  public MaterialServiceEnvelope() {}
+  public MaterialServiceEnvelope() {
+  }
 
   /**
    * Creates an envelope from an existing map.
@@ -43,7 +43,7 @@ public class MaterialServiceEnvelope implements Serializable {
     MaterialServiceEnvelope envelope = new MaterialServiceEnvelope();
     if (source != null) {
       for (Map.Entry<String, Object> entry : source.entrySet()) {
-        envelope.set(entry.getKey(), entry.getValue());
+	envelope.set(entry.getKey(), entry.getValue());
       }
     }
     return envelope;
@@ -52,7 +52,7 @@ public class MaterialServiceEnvelope implements Serializable {
   /**
    * Adds or replaces one service-envelope value.
    *
-   * @param key normalized key name
+   * @param key   normalized key name
    * @param value value to store
    * @return this envelope for fluent construction
    */
@@ -86,7 +86,7 @@ public class MaterialServiceEnvelope implements Serializable {
   /**
    * Reads a value as a double.
    *
-   * @param key key to retrieve
+   * @param key          key to retrieve
    * @param defaultValue value returned when missing or not numeric
    * @return numeric value or default value
    */
@@ -97,9 +97,9 @@ public class MaterialServiceEnvelope implements Serializable {
     }
     if (value instanceof String) {
       try {
-        return Double.parseDouble(((String) value).trim());
+	return Double.parseDouble(((String) value).trim());
       } catch (NumberFormatException ex) {
-        return defaultValue;
+	return defaultValue;
       }
     }
     return defaultValue;
@@ -108,7 +108,7 @@ public class MaterialServiceEnvelope implements Serializable {
   /**
    * Reads a value as a string.
    *
-   * @param key key to retrieve
+   * @param key          key to retrieve
    * @param defaultValue value returned when missing
    * @return string value or default value
    */
@@ -123,7 +123,7 @@ public class MaterialServiceEnvelope implements Serializable {
   /**
    * Reads a value as a boolean.
    *
-   * @param key key to retrieve
+   * @param key          key to retrieve
    * @param defaultValue value returned when missing or not boolean-like
    * @return boolean value or default value
    */
@@ -134,13 +134,13 @@ public class MaterialServiceEnvelope implements Serializable {
     }
     if (value instanceof String) {
       String text = ((String) value).trim();
-      if ("true".equalsIgnoreCase(text) || "yes".equalsIgnoreCase(text)
-          || "y".equalsIgnoreCase(text) || "1".equals(text)) {
-        return true;
+      if ("true".equalsIgnoreCase(text) || "yes".equalsIgnoreCase(text) || "y".equalsIgnoreCase(text)
+	  || "1".equals(text)) {
+	return true;
       }
-      if ("false".equalsIgnoreCase(text) || "no".equalsIgnoreCase(text)
-          || "n".equalsIgnoreCase(text) || "0".equals(text)) {
-        return false;
+      if ("false".equalsIgnoreCase(text) || "no".equalsIgnoreCase(text) || "n".equalsIgnoreCase(text)
+	  || "0".equals(text)) {
+	return false;
       }
     }
     return defaultValue;
@@ -157,9 +157,9 @@ public class MaterialServiceEnvelope implements Serializable {
     if (value instanceof List<?>) {
       List<String> result = new ArrayList<String>();
       for (Object item : (List<?>) value) {
-        if (item != null) {
-          result.add(String.valueOf(item));
-        }
+	if (item != null) {
+	  result.add(String.valueOf(item));
+	}
       }
       return result;
     }

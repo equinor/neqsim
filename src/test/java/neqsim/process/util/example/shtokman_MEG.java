@@ -29,8 +29,8 @@ public class shtokman_MEG {
    */
   @ExcludeFromJacocoGeneratedReport
   public static void main(String args[]) {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkCPAstatoil((273.15 + 42.0), 130.00);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkCPAstatoil((273.15 + 42.0),
+	130.00);
     testSystem.addComponent("methane", 1.0);
     // testSystem.addComponent("ethane", 10.039);
     // testSystem.addComponent("propane", 5.858);
@@ -44,8 +44,7 @@ public class shtokman_MEG {
     Separator separator = new Separator("Separator 1", stream_1);
     StreamInterface stream_2 = separator.getGasOutStream();
 
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
     operations.add(stream_1);
     try {
       operations.add(separator);

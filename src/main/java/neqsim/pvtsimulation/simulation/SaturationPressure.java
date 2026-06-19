@@ -60,35 +60,34 @@ public class SaturationPressure extends BasePVTsimulation {
       boolean previousIsTwoPhase = isTwoPhaseAtPressure(previousPressure);
 
       for (double trialPressure = previousPressure
-          + SEARCH_PRESSURE_STEP_BARA; trialPressure <= MAXIMUM_SEARCH_PRESSURE_BARA; trialPressure +=
-              SEARCH_PRESSURE_STEP_BARA) {
-        boolean trialIsTwoPhase = isTwoPhaseAtPressure(trialPressure);
-        if (previousIsTwoPhase && !trialIsTwoPhase) {
-          twoPhasePressure = previousPressure;
-          singlePhasePressure = trialPressure;
-        }
-        previousPressure = trialPressure;
-        previousIsTwoPhase = trialIsTwoPhase;
+	  + SEARCH_PRESSURE_STEP_BARA; trialPressure <= MAXIMUM_SEARCH_PRESSURE_BARA; trialPressure += SEARCH_PRESSURE_STEP_BARA) {
+	boolean trialIsTwoPhase = isTwoPhaseAtPressure(trialPressure);
+	if (previousIsTwoPhase && !trialIsTwoPhase) {
+	  twoPhasePressure = previousPressure;
+	  singlePhasePressure = trialPressure;
+	}
+	previousPressure = trialPressure;
+	previousIsTwoPhase = trialIsTwoPhase;
       }
 
       if (previousPressure < MAXIMUM_SEARCH_PRESSURE_BARA) {
-        boolean trialIsTwoPhase = isTwoPhaseAtPressure(MAXIMUM_SEARCH_PRESSURE_BARA);
-        if (previousIsTwoPhase && !trialIsTwoPhase) {
-          twoPhasePressure = previousPressure;
-          singlePhasePressure = MAXIMUM_SEARCH_PRESSURE_BARA;
-        }
+	boolean trialIsTwoPhase = isTwoPhaseAtPressure(MAXIMUM_SEARCH_PRESSURE_BARA);
+	if (previousIsTwoPhase && !trialIsTwoPhase) {
+	  twoPhasePressure = previousPressure;
+	  singlePhasePressure = MAXIMUM_SEARCH_PRESSURE_BARA;
+	}
       }
 
       if (Double.isNaN(twoPhasePressure) || Double.isNaN(singlePhasePressure)) {
-        getThermoSystem().setPressure(MAXIMUM_SEARCH_PRESSURE_BARA);
-        thermoOps.TPflash();
-        return getThermoSystem().getPressure();
+	getThermoSystem().setPressure(MAXIMUM_SEARCH_PRESSURE_BARA);
+	thermoOps.TPflash();
+	return getThermoSystem().getPressure();
       }
 
       return refineUpperSaturationPressure(twoPhasePressure, singlePhasePressure);
     } finally {
       if (isMultiPhaseCheckChanged) {
-        getThermoSystem().setMultiPhaseCheck(false);
+	getThermoSystem().setMultiPhaseCheck(false);
       }
     }
   }
@@ -108,12 +107,11 @@ public class SaturationPressure extends BasePVTsimulation {
   /**
    * Refines the upper saturation pressure between a two-phase and a single-phase point.
    *
-   * @param twoPhasePressure lower pressure known to be inside a two-phase region, in bara
+   * @param twoPhasePressure    lower pressure known to be inside a two-phase region, in bara
    * @param singlePhasePressure higher pressure known to be outside the two-phase region, in bara
    * @return refined upper saturation pressure in bara
    */
-  private double refineUpperSaturationPressure(double twoPhasePressure,
-      double singlePhasePressure) {
+  private double refineUpperSaturationPressure(double twoPhasePressure, double singlePhasePressure) {
     double minPres = twoPhasePressure;
     double maxPres = singlePhasePressure;
     int iteration = 0;
@@ -121,12 +119,11 @@ public class SaturationPressure extends BasePVTsimulation {
       iteration++;
       double trialPressure = (minPres + maxPres) / 2.0;
       if (isTwoPhaseAtPressure(trialPressure)) {
-        minPres = trialPressure;
+	minPres = trialPressure;
       } else {
-        maxPres = trialPressure;
+	maxPres = trialPressure;
       }
-    } while (Math.abs(maxPres - minPres) > PRESSURE_TOLERANCE_BARA
-        && iteration < MAXIMUM_BISECTION_ITERATIONS);
+    } while (Math.abs(maxPres - minPres) > PRESSURE_TOLERANCE_BARA && iteration < MAXIMUM_BISECTION_ITERATIONS);
     getThermoSystem().setPressure(maxPres);
     thermoOps.TPflash();
     return getThermoSystem().getPressure();
@@ -178,9 +175,8 @@ public class SaturationPressure extends BasePVTsimulation {
     /*
      * double saturationPressure = 350.0; double saturationTemperature = 273.15 + 80;
      *
-     * TuningInterface tuning = new TuneToSaturation(satPresSim);
-     * tuning.setSaturationConditions(saturationTemperature, saturationPressure); tuning.run();
-     * tuning.getSimulation().getThermoSystem().display();
+     * TuningInterface tuning = new TuneToSaturation(satPresSim); tuning.setSaturationConditions(saturationTemperature,
+     * saturationPressure); tuning.run(); tuning.getSimulation().getThermoSystem().display();
      */
   }
 

@@ -6,9 +6,9 @@ import neqsim.process.equipment.stream.StreamInterface;
  * Enzyme treatment reactor for bio-processing.
  *
  * <p>
- * Models an enzymatic hydrolysis or treatment process. This is a specialized
- * {@link StirredTankReactor} optimized for enzyme-catalyzed reactions, typically operating at mild
- * temperatures (30-60°C), near-neutral pH, and atmospheric pressure.
+ * Models an enzymatic hydrolysis or treatment process. This is a specialized {@link StirredTankReactor} optimized for
+ * enzyme-catalyzed reactions, typically operating at mild temperatures (30-60°C), near-neutral pH, and atmospheric
+ * pressure.
  * </p>
  *
  * <p>
@@ -87,7 +87,7 @@ public class EnzymeTreatment extends StirredTankReactor {
   /**
    * Constructor for EnzymeTreatment with inlet stream.
    *
-   * @param name name of the enzyme treatment unit
+   * @param name        name of the enzyme treatment unit
    * @param inletStream the feed stream
    */
   public EnzymeTreatment(String name, StreamInterface inletStream) {

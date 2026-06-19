@@ -7,9 +7,9 @@ import neqsim.util.unit.TemperatureUnit;
  * Specification object describing the utility side of a single-stream heater or cooler.
  *
  * <p>
- * This class stores the supply and return temperatures together with optional minimum approach,
- * heat-capacity rate and assumed overall heat-transfer coefficient so the mechanical design package
- * can derive an approximate size when only the process stream has been simulated.
+ * This class stores the supply and return temperatures together with optional minimum approach, heat-capacity rate and
+ * assumed overall heat-transfer coefficient so the mechanical design package can derive an approximate size when only
+ * the process stream has been simulated.
  * </p>
  */
 public class UtilityStreamSpecification implements Serializable {
@@ -79,7 +79,7 @@ public class UtilityStreamSpecification implements Serializable {
    * Set the utility supply temperature using the specified unit.
    *
    * @param temperature supply temperature value
-   * @param unit unit of the supplied temperature
+   * @param unit        unit of the supplied temperature
    */
   public void setSupplyTemperature(double temperature, String unit) {
     this.supplyTemperature = new TemperatureUnit(temperature, unit).getValue("K");
@@ -98,7 +98,7 @@ public class UtilityStreamSpecification implements Serializable {
    * Set the utility return temperature using the specified unit.
    *
    * @param temperature return temperature value
-   * @param unit unit of the supplied temperature
+   * @param unit        unit of the supplied temperature
    */
   public void setReturnTemperature(double temperature, String unit) {
     this.returnTemperature = new TemperatureUnit(temperature, unit).getValue("K");
@@ -117,24 +117,24 @@ public class UtilityStreamSpecification implements Serializable {
    * Set the minimum approach temperature (absolute difference) using the specified unit.
    *
    * @param approach approach temperature value
-   * @param unit unit of the supplied temperature difference
+   * @param unit     unit of the supplied temperature difference
    */
   public void setApproachTemperature(double approach, String unit) {
     switch (unit) {
-      case "K":
-        this.approachTemperature = approach;
-        break;
-      case "C":
-        this.approachTemperature = approach;
-        break;
-      case "F":
-        this.approachTemperature = approach * 5.0 / 9.0;
-        break;
-      case "R":
-        this.approachTemperature = approach * 5.0 / 9.0;
-        break;
-      default:
-        throw new IllegalArgumentException("Unsupported unit for temperature difference: " + unit);
+    case "K":
+      this.approachTemperature = approach;
+      break;
+    case "C":
+      this.approachTemperature = approach;
+      break;
+    case "F":
+      this.approachTemperature = approach * 5.0 / 9.0;
+      break;
+    case "R":
+      this.approachTemperature = approach * 5.0 / 9.0;
+      break;
+    default:
+      throw new IllegalArgumentException("Unsupported unit for temperature difference: " + unit);
     }
   }
 

@@ -20,7 +20,7 @@ public class TestSRKWS {
   private static final Logger logger = LogManager.getLogger(TestSRKWS.class);
 
   /** Logger object for class. */
-  
+
   /**
    * <p>
    * main.

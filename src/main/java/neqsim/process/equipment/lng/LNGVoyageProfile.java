@@ -9,9 +9,9 @@ import java.util.List;
  * Defines the environmental and operational profile for an LNG voyage.
  *
  * <p>
- * A voyage is divided into segments, each with its own ambient temperature, sea state, wind speed,
- * and solar radiation. This allows the simulation to vary heat ingress and sloshing effects along
- * the route (e.g., cold departure from Arctic terminal, warm transit through equatorial waters).
+ * A voyage is divided into segments, each with its own ambient temperature, sea state, wind speed, and solar radiation.
+ * This allows the simulation to vary heat ingress and sloshing effects along the route (e.g., cold departure from
+ * Arctic terminal, warm transit through equatorial waters).
  * </p>
  *
  * <p>
@@ -68,8 +68,8 @@ public class LNGVoyageProfile implements Serializable {
    * Get the voyage environment conditions at a given time.
    *
    * <p>
-   * Linearly interpolates between segment boundaries. If time is before the first segment or after
-   * the last, the nearest segment's conditions are used.
+   * Linearly interpolates between segment boundaries. If time is before the first segment or after the last, the
+   * nearest segment's conditions are used.
    * </p>
    *
    * @param timeHours elapsed time since voyage start (hours)
@@ -83,15 +83,15 @@ public class LNGVoyageProfile implements Serializable {
     // Find the segment containing this time
     for (Segment seg : segments) {
       if (timeHours >= seg.startTimeHours && timeHours < seg.endTimeHours) {
-        return new EnvironmentConditions(seg.ambientTemperature, seg.significantWaveHeight,
-            seg.windSpeed, seg.solarRadiation);
+	return new EnvironmentConditions(seg.ambientTemperature, seg.significantWaveHeight, seg.windSpeed,
+	    seg.solarRadiation);
       }
     }
 
     // If past last segment, use last segment's conditions
     Segment last = segments.get(segments.size() - 1);
-    return new EnvironmentConditions(last.ambientTemperature, last.significantWaveHeight,
-        last.windSpeed, last.solarRadiation);
+    return new EnvironmentConditions(last.ambientTemperature, last.significantWaveHeight, last.windSpeed,
+	last.solarRadiation);
   }
 
   /**
@@ -180,13 +180,12 @@ public class LNGVoyageProfile implements Serializable {
   /**
    * Create a uniform voyage with constant conditions.
    *
-   * @param name voyage name
-   * @param durationHours total voyage duration (hours)
+   * @param name                voyage name
+   * @param durationHours       total voyage duration (hours)
    * @param ambientTemperatureK constant ambient temperature (K)
    * @return configured voyage profile
    */
-  public static LNGVoyageProfile createUniform(String name, double durationHours,
-      double ambientTemperatureK) {
+  public static LNGVoyageProfile createUniform(String name, double durationHours, double ambientTemperatureK) {
     LNGVoyageProfile profile = new LNGVoyageProfile(name);
     profile.addSegment(new Segment(0, durationHours, ambientTemperatureK, 1.5, 8.0, 200.0));
     return profile;
@@ -199,7 +198,7 @@ public class LNGVoyageProfile implements Serializable {
     double maxEnd = 0;
     for (Segment seg : segments) {
       if (seg.endTimeHours > maxEnd) {
-        maxEnd = seg.endTimeHours;
+	maxEnd = seg.endTimeHours;
       }
     }
     this.totalDurationHours = maxEnd;
@@ -233,15 +232,15 @@ public class LNGVoyageProfile implements Serializable {
     /**
      * Constructor for voyage Segment.
      *
-     * @param startTimeHours start time (hours from voyage start)
-     * @param endTimeHours end time (hours from voyage start)
-     * @param ambientTemperature ambient temperature (K)
+     * @param startTimeHours        start time (hours from voyage start)
+     * @param endTimeHours          end time (hours from voyage start)
+     * @param ambientTemperature    ambient temperature (K)
      * @param significantWaveHeight significant wave height (m)
-     * @param windSpeed wind speed (m/s)
-     * @param solarRadiation solar radiation (W/m2)
+     * @param windSpeed             wind speed (m/s)
+     * @param solarRadiation        solar radiation (W/m2)
      */
-    public Segment(double startTimeHours, double endTimeHours, double ambientTemperature,
-        double significantWaveHeight, double windSpeed, double solarRadiation) {
+    public Segment(double startTimeHours, double endTimeHours, double ambientTemperature, double significantWaveHeight,
+	double windSpeed, double solarRadiation) {
       this.startTimeHours = startTimeHours;
       this.endTimeHours = endTimeHours;
       this.ambientTemperature = ambientTemperature;
@@ -336,13 +335,13 @@ public class LNGVoyageProfile implements Serializable {
     /**
      * Constructor for EnvironmentConditions.
      *
-     * @param ambientTemperature ambient temperature (K)
+     * @param ambientTemperature    ambient temperature (K)
      * @param significantWaveHeight wave height (m)
-     * @param windSpeed wind speed (m/s)
-     * @param solarRadiation solar radiation (W/m2)
+     * @param windSpeed             wind speed (m/s)
+     * @param solarRadiation        solar radiation (W/m2)
      */
-    public EnvironmentConditions(double ambientTemperature, double significantWaveHeight,
-        double windSpeed, double solarRadiation) {
+    public EnvironmentConditions(double ambientTemperature, double significantWaveHeight, double windSpeed,
+	double solarRadiation) {
       this.ambientTemperature = ambientTemperature;
       this.significantWaveHeight = significantWaveHeight;
       this.windSpeed = windSpeed;

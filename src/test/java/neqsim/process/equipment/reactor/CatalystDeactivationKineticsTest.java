@@ -12,8 +12,8 @@ public class CatalystDeactivationKineticsTest extends neqsim.NeqSimTest {
 
   @Test
   public void testFreshCleanCatalystRetainsActivity() {
-    CatalystDeactivationKinetics kinetics =
-        new CatalystDeactivationKinetics().setTemperature(800.0).setOperationHours(1000.0);
+    CatalystDeactivationKinetics kinetics = new CatalystDeactivationKinetics().setTemperature(800.0)
+	.setOperationHours(1000.0);
 
     assertEquals(1.0, kinetics.calculateActivity(), 1.0e-12);
     assertEquals("none", kinetics.getDominantMechanism());
@@ -21,12 +21,10 @@ public class CatalystDeactivationKineticsTest extends neqsim.NeqSimTest {
 
   @Test
   public void testCopperZincShiftIsMoreSulfurSensitiveThanIronChromium() {
-    CatalystDeactivationKinetics copper =
-        new CatalystDeactivationKinetics(CatalystFamily.COPPER_ZINC_LT_SHIFT).setTemperature(500.0)
-            .setSulfurPpmv(0.1).setOperationHours(1000.0);
-    CatalystDeactivationKinetics iron =
-        new CatalystDeactivationKinetics(CatalystFamily.IRON_CHROMIUM_HT_SHIFT)
-            .setTemperature(650.0).setSulfurPpmv(0.1).setOperationHours(1000.0);
+    CatalystDeactivationKinetics copper = new CatalystDeactivationKinetics(CatalystFamily.COPPER_ZINC_LT_SHIFT)
+	.setTemperature(500.0).setSulfurPpmv(0.1).setOperationHours(1000.0);
+    CatalystDeactivationKinetics iron = new CatalystDeactivationKinetics(CatalystFamily.IRON_CHROMIUM_HT_SHIFT)
+	.setTemperature(650.0).setSulfurPpmv(0.1).setOperationHours(1000.0);
 
     assertTrue(copper.getSulfurPoisoningRatePerHour() > iron.getSulfurPoisoningRatePerHour());
     assertTrue(copper.calculateActivity() < iron.calculateActivity());
@@ -34,10 +32,10 @@ public class CatalystDeactivationKineticsTest extends neqsim.NeqSimTest {
 
   @Test
   public void testLowSteamPromotesNickelCoking() {
-    CatalystDeactivationKinetics lowSteam = new CatalystDeactivationKinetics()
-        .setCarbonPotential(1.0).setSteamToCarbonRatio(1.2).setOperationHours(2000.0);
-    CatalystDeactivationKinetics highSteam = new CatalystDeactivationKinetics()
-        .setCarbonPotential(1.0).setSteamToCarbonRatio(4.0).setOperationHours(2000.0);
+    CatalystDeactivationKinetics lowSteam = new CatalystDeactivationKinetics().setCarbonPotential(1.0)
+	.setSteamToCarbonRatio(1.2).setOperationHours(2000.0);
+    CatalystDeactivationKinetics highSteam = new CatalystDeactivationKinetics().setCarbonPotential(1.0)
+	.setSteamToCarbonRatio(4.0).setOperationHours(2000.0);
 
     assertTrue(lowSteam.getCokingRatePerHour() > highSteam.getCokingRatePerHour());
     assertTrue(lowSteam.calculateActivity() < highSteam.calculateActivity());
@@ -45,10 +43,10 @@ public class CatalystDeactivationKineticsTest extends neqsim.NeqSimTest {
 
   @Test
   public void testThermalSinteringIncreasesAboveOnsetTemperature() {
-    CatalystDeactivationKinetics moderate =
-        new CatalystDeactivationKinetics().setTemperature(900.0).setOperationHours(1000.0);
-    CatalystDeactivationKinetics hot =
-        new CatalystDeactivationKinetics().setTemperature(1173.15).setOperationHours(1000.0);
+    CatalystDeactivationKinetics moderate = new CatalystDeactivationKinetics().setTemperature(900.0)
+	.setOperationHours(1000.0);
+    CatalystDeactivationKinetics hot = new CatalystDeactivationKinetics().setTemperature(1173.15)
+	.setOperationHours(1000.0);
 
     assertEquals(0.0, moderate.getThermalSinteringRatePerHour(), 1.0e-15);
     assertTrue(hot.getThermalSinteringRatePerHour() > 0.0);
@@ -57,9 +55,8 @@ public class CatalystDeactivationKineticsTest extends neqsim.NeqSimTest {
 
   @Test
   public void testDominantMechanismAndTimeToActivity() {
-    CatalystDeactivationKinetics kinetics =
-        new CatalystDeactivationKinetics(CatalystFamily.RUTHENIUM_AMMONIA_CRACKING)
-            .setTemperature(850.0).setSulfurPpmv(0.5).setOperationHours(1000.0);
+    CatalystDeactivationKinetics kinetics = new CatalystDeactivationKinetics(CatalystFamily.RUTHENIUM_AMMONIA_CRACKING)
+	.setTemperature(850.0).setSulfurPpmv(0.5).setOperationHours(1000.0);
 
     assertEquals("sulfur_poisoning", kinetics.getDominantMechanism());
     assertTrue(kinetics.estimateTimeToActivity(0.8) > 0.0);
@@ -70,7 +67,7 @@ public class CatalystDeactivationKineticsTest extends neqsim.NeqSimTest {
   public void testApplyToCatalystBed() {
     CatalystBed bed = new CatalystBed();
     CatalystDeactivationKinetics kinetics = new CatalystDeactivationKinetics().setSulfurPpmv(0.2)
-        .setCarbonPotential(0.5).setOperationHours(1000.0);
+	.setCarbonPotential(0.5).setOperationHours(1000.0);
 
     double activity = kinetics.applyTo(bed);
 
@@ -80,8 +77,8 @@ public class CatalystDeactivationKineticsTest extends neqsim.NeqSimTest {
 
   @Test
   public void testJsonContainsActivityAndMechanism() {
-    CatalystDeactivationKinetics kinetics =
-        new CatalystDeactivationKinetics().setSulfurPpmv(0.1).setOperationHours(100.0);
+    CatalystDeactivationKinetics kinetics = new CatalystDeactivationKinetics().setSulfurPpmv(0.1)
+	.setOperationHours(100.0);
 
     String json = kinetics.toJson();
 

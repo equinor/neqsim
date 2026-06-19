@@ -10,8 +10,7 @@ import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.separator.Separator;
 
 /**
- * Tests for
- * {@link ProcessSystem#replaceObject(String, neqsim.process.equipment.ProcessEquipmentBaseClass)}.
+ * Tests for {@link ProcessSystem#replaceObject(String, neqsim.process.equipment.ProcessEquipmentBaseClass)}.
  */
 public class ProcessSystemReplaceObjectTest extends neqsim.NeqSimTest {
   @Test
@@ -25,8 +24,7 @@ public class ProcessSystemReplaceObjectTest extends neqsim.NeqSimTest {
     system.replaceObject("second", replacement);
 
     assertSame(replacement, system.getUnitOperations().get(1));
-    assertEquals("second", replacement.getName(),
-        "Replacement should adopt the original unit name");
+    assertEquals("second", replacement.getName(), "Replacement should adopt the original unit name");
     assertSame(replacement, system.getUnit("second"));
     assertNotNull(system.getUnit("first"));
   }
@@ -38,7 +36,6 @@ public class ProcessSystemReplaceObjectTest extends neqsim.NeqSimTest {
 
     Pump replacement = new Pump("replacement");
 
-    assertThrows(IllegalArgumentException.class,
-        () -> system.replaceObject("unknown", replacement));
+    assertThrows(IllegalArgumentException.class, () -> system.replaceObject("unknown", replacement));
   }
 }

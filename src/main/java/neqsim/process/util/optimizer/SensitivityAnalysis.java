@@ -19,9 +19,9 @@ import neqsim.process.processmodel.ProcessSystem;
  * One-dimensional parameter sensitivity analysis for process simulations.
  *
  * <p>
- * Varies a single process parameter across a range while tracking one or more output variables.
- * Each evaluation runs a fresh copy of the process system to avoid state contamination. This is the
- * workhorse utility for "what-if" engineering studies.
+ * Varies a single process parameter across a range while tracking one or more output variables. Each evaluation runs a
+ * fresh copy of the process system to avoid state contamination. This is the workhorse utility for "what-if"
+ * engineering studies.
  * </p>
  *
  * <h2>Usage:</h2>
@@ -77,8 +77,7 @@ public class SensitivityAnalysis implements Serializable {
   private double currentValue;
 
   /** Named output extractors. */
-  private final transient Map<String, Function<ProcessSystem, Double>> outputExtractors =
-      new LinkedHashMap<>();
+  private final transient Map<String, Function<ProcessSystem, Double>> outputExtractors = new LinkedHashMap<>();
 
   /**
    * Creates a SensitivityAnalysis for the given base process.
@@ -95,12 +94,12 @@ public class SensitivityAnalysis implements Serializable {
   /**
    * Defines the parameter to vary.
    *
-   * @param name descriptive name of the parameter
+   * @param name     descriptive name of the parameter
    * @param minValue minimum value of the sweep range
    * @param maxValue maximum value of the sweep range
-   * @param steps number of evaluation points (inclusive of endpoints)
-   * @param setter action that applies the current parameter value to a process system copy; use
-   *        {@link #getCurrentValue()} to get the value inside the setter
+   * @param steps    number of evaluation points (inclusive of endpoints)
+   * @param setter   action that applies the current parameter value to a process system copy; use
+   *                 {@link #getCurrentValue()} to get the value inside the setter
    * @return this for chaining
    */
   public SensitivityAnalysis setParameter(String name, double minValue, double maxValue, int steps,
@@ -117,15 +116,15 @@ public class SensitivityAnalysis implements Serializable {
    * Defines the parameter to vary, with the value passed directly to the setter.
    *
    * <p>
-   * This is a convenience overload that passes the current parameter value as the second argument
-   * to the setter, avoiding the need to call {@link #getCurrentValue()}.
+   * This is a convenience overload that passes the current parameter value as the second argument to the setter,
+   * avoiding the need to call {@link #getCurrentValue()}.
    * </p>
    *
-   * @param name descriptive name of the parameter
+   * @param name     descriptive name of the parameter
    * @param minValue minimum value of the sweep range
    * @param maxValue maximum value of the sweep range
-   * @param steps number of evaluation points (inclusive of endpoints)
-   * @param setter action that receives the process copy and parameter value
+   * @param steps    number of evaluation points (inclusive of endpoints)
+   * @param setter   action that receives the process copy and parameter value
    * @return this for chaining
    */
   public SensitivityAnalysis setParameter(String name, double minValue, double maxValue, int steps,
@@ -154,7 +153,7 @@ public class SensitivityAnalysis implements Serializable {
   /**
    * Adds an output variable to track during the sweep.
    *
-   * @param name descriptive name of the output (e.g., "power (kW)")
+   * @param name      descriptive name of the output (e.g., "power (kW)")
    * @param extractor function that extracts the output value from a process system after it runs
    * @return this for chaining
    */
@@ -191,27 +190,24 @@ public class SensitivityAnalysis implements Serializable {
 
     for (int i = 0; i < steps; i++) {
       currentValue = parameterValues[i];
-      logger.debug("SensitivityAnalysis: {} = {} (step {}/{})", parameterName, currentValue, i + 1,
-          steps);
+      logger.debug("SensitivityAnalysis: {} = {} (step {}/{})", parameterName, currentValue, i + 1, steps);
 
       try {
-        ProcessSystem copy = baseProcess.copy();
-        parameterSetter.accept(copy);
-        copy.run();
+	ProcessSystem copy = baseProcess.copy();
+	parameterSetter.accept(copy);
+	copy.run();
 
-        for (Map.Entry<String, Function<ProcessSystem, Double>> entry : outputExtractors
-            .entrySet()) {
-          double value = entry.getValue().apply(copy);
-          outputs.get(entry.getKey())[i] = value;
-        }
-        succeeded[i] = true;
+	for (Map.Entry<String, Function<ProcessSystem, Double>> entry : outputExtractors.entrySet()) {
+	  double value = entry.getValue().apply(copy);
+	  outputs.get(entry.getKey())[i] = value;
+	}
+	succeeded[i] = true;
       } catch (Exception e) {
-        logger.warn("SensitivityAnalysis failed at {} = {}: {}", parameterName, currentValue,
-            e.getMessage());
-        for (String name : outputs.keySet()) {
-          outputs.get(name)[i] = Double.NaN;
-        }
-        succeeded[i] = false;
+	logger.warn("SensitivityAnalysis failed at {} = {}: {}", parameterName, currentValue, e.getMessage());
+	for (String name : outputs.keySet()) {
+	  outputs.get(name)[i] = Double.NaN;
+	}
+	succeeded[i] = false;
       }
     }
 
@@ -241,13 +237,13 @@ public class SensitivityAnalysis implements Serializable {
     /**
      * Creates a sensitivity result.
      *
-     * @param parameterName name of varied parameter
+     * @param parameterName   name of varied parameter
      * @param parameterValues array of parameter values
-     * @param outputs map of output name to value arrays
-     * @param succeeded success flag per step
+     * @param outputs         map of output name to value arrays
+     * @param succeeded       success flag per step
      */
     SensitivityResult(String parameterName, double[] parameterValues, Map<String, double[]> outputs,
-        boolean[] succeeded) {
+	boolean[] succeeded) {
       this.parameterName = parameterName;
       this.parameterValues = parameterValues;
       this.outputs = outputs;
@@ -299,9 +295,9 @@ public class SensitivityAnalysis implements Serializable {
     public int getSuccessCount() {
       int count = 0;
       for (boolean s : succeeded) {
-        if (s) {
-          count++;
-        }
+	if (s) {
+	  count++;
+	}
       }
       return count;
     }
@@ -319,22 +315,21 @@ public class SensitivityAnalysis implements Serializable {
 
       JsonArray valuesArray = new JsonArray();
       for (double v : parameterValues) {
-        valuesArray.add(v);
+	valuesArray.add(v);
       }
       json.add("parameterValues", valuesArray);
 
       JsonObject outputsJson = new JsonObject();
       for (Map.Entry<String, double[]> entry : outputs.entrySet()) {
-        JsonArray arr = new JsonArray();
-        for (double v : entry.getValue()) {
-          arr.add(v);
-        }
-        outputsJson.add(entry.getKey(), arr);
+	JsonArray arr = new JsonArray();
+	for (double v : entry.getValue()) {
+	  arr.add(v);
+	}
+	outputsJson.add(entry.getKey(), arr);
       }
       json.add("outputs", outputsJson);
 
-      return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-          .toJson(json);
+      return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(json);
     }
 
     /**
@@ -346,17 +341,17 @@ public class SensitivityAnalysis implements Serializable {
       StringBuilder sb = new StringBuilder();
       sb.append(parameterName);
       for (String name : outputs.keySet()) {
-        sb.append(",").append(name);
+	sb.append(",").append(name);
       }
       sb.append(",succeeded\n");
 
       for (int i = 0; i < parameterValues.length; i++) {
-        sb.append(parameterValues[i]);
-        for (double[] values : outputs.values()) {
-          sb.append(",").append(values[i]);
-        }
-        sb.append(",").append(succeeded[i]);
-        sb.append("\n");
+	sb.append(parameterValues[i]);
+	for (double[] values : outputs.values()) {
+	  sb.append(",").append(values[i]);
+	}
+	sb.append(",").append(succeeded[i]);
+	sb.append("\n");
       }
       return sb.toString();
     }

@@ -8,10 +8,9 @@ import java.util.List;
  * A time-marched production profile produced by {@link IntegratedProductionModel#runProfile}.
  *
  * <p>
- * Each profile point captures the field rate, revenue, energy and emission rates, and the average
- * reservoir pressure at a point in time. Aggregate cumulative production and revenue over the
- * horizon are also stored. The profile is the natural input for field-economics (NPV/IRR) and
- * emissions reporting.
+ * Each profile point captures the field rate, revenue, energy and emission rates, and the average reservoir pressure at
+ * a point in time. Aggregate cumulative production and revenue over the horizon are also stored. The profile is the
+ * natural input for field-economics (NPV/IRR) and emissions reporting.
  * </p>
  *
  * @author NeqSim
@@ -39,15 +38,15 @@ public class ProductionProfile implements Serializable {
     /**
      * Creates a profile point.
      *
-     * @param timeYears time in years
-     * @param rateSm3PerDay field rate in Sm3/day
-     * @param revenuePerDay revenue in currency per day
-     * @param energyKWhPerDay energy in kWh per day
-     * @param emissionsKgPerDay emissions in kg CO2 per day
+     * @param timeYears             time in years
+     * @param rateSm3PerDay         field rate in Sm3/day
+     * @param revenuePerDay         revenue in currency per day
+     * @param energyKWhPerDay       energy in kWh per day
+     * @param emissionsKgPerDay     emissions in kg CO2 per day
      * @param reservoirPressureBara average reservoir pressure in bara
      */
-    public Point(double timeYears, double rateSm3PerDay, double revenuePerDay,
-        double energyKWhPerDay, double emissionsKgPerDay, double reservoirPressureBara) {
+    public Point(double timeYears, double rateSm3PerDay, double revenuePerDay, double energyKWhPerDay,
+	double emissionsKgPerDay, double reservoirPressureBara) {
       this.timeYears = timeYears;
       this.rateSm3PerDay = rateSm3PerDay;
       this.revenuePerDay = revenuePerDay;
@@ -118,17 +117,17 @@ public class ProductionProfile implements Serializable {
   /**
    * Adds a point to the profile.
    *
-   * @param timeYears time in years
-   * @param rateSm3PerDay field rate in Sm3/day
-   * @param revenuePerDay revenue in currency per day
-   * @param energyKWhPerDay energy in kWh per day
-   * @param emissionsKgPerDay emissions in kg CO2 per day
+   * @param timeYears             time in years
+   * @param rateSm3PerDay         field rate in Sm3/day
+   * @param revenuePerDay         revenue in currency per day
+   * @param energyKWhPerDay       energy in kWh per day
+   * @param emissionsKgPerDay     emissions in kg CO2 per day
    * @param reservoirPressureBara average reservoir pressure in bara
    */
-  public void add(double timeYears, double rateSm3PerDay, double revenuePerDay,
-      double energyKWhPerDay, double emissionsKgPerDay, double reservoirPressureBara) {
-    points.add(new Point(timeYears, rateSm3PerDay, revenuePerDay, energyKWhPerDay,
-        emissionsKgPerDay, reservoirPressureBara));
+  public void add(double timeYears, double rateSm3PerDay, double revenuePerDay, double energyKWhPerDay,
+      double emissionsKgPerDay, double reservoirPressureBara) {
+    points.add(
+	new Point(timeYears, rateSm3PerDay, revenuePerDay, energyKWhPerDay, emissionsKgPerDay, reservoirPressureBara));
   }
 
   /**

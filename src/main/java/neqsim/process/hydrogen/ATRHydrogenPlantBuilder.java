@@ -9,9 +9,9 @@ import neqsim.process.processmodel.ProcessSystem;
  * Builder for an autothermal-reforming hydrogen plant template.
  *
  * <p>
- * The template wires a methane, steam, and oxygen feed into a dedicated
- * {@link AutothermalReformer}, followed by optional PSA purification. It is a practical starting
- * point for ATR versus SMR route comparisons and blue-hydrogen concept screening.
+ * The template wires a methane, steam, and oxygen feed into a dedicated {@link AutothermalReformer}, followed by
+ * optional PSA purification. It is a practical starting point for ATR versus SMR route comparisons and blue-hydrogen
+ * concept screening.
  * </p>
  *
  * @author NeqSim contributors
@@ -134,8 +134,8 @@ public class ATRHydrogenPlantBuilder extends HydrogenPlantBuilderBase {
    */
   public ProcessSystem build() {
     ProcessSystem process = new ProcessSystem();
-    Stream feed = createMethaneSteamOxygenFeed(name + " feed", methaneFeedMolePerSec,
-        steamToCarbonRatio, oxygenToCarbonRatio, feedTemperatureK, pressureBara);
+    Stream feed = createMethaneSteamOxygenFeed(name + " feed", methaneFeedMolePerSec, steamToCarbonRatio,
+	oxygenToCarbonRatio, feedTemperatureK, pressureBara);
 
     AutothermalReformer reformer = new AutothermalReformer(name + " autothermal reformer", feed);
     reformer.setOxygenToCarbonTarget(oxygenToCarbonRatio);
@@ -158,7 +158,7 @@ public class ATRHydrogenPlantBuilder extends HydrogenPlantBuilderBase {
   /**
    * Validates positive finite values.
    *
-   * @param value value to validate
+   * @param value         value to validate
    * @param parameterName parameter name for exception text
    */
   private void validatePositive(double value, String parameterName) {

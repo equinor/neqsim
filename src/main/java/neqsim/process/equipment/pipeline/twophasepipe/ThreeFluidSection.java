@@ -4,8 +4,8 @@ package neqsim.process.equipment.pipeline.twophasepipe;
  * Extended section state for three-phase (gas-oil-water) pipe flow.
  *
  * <p>
- * Extends TwoFluidSection to include a water phase alongside gas and liquid (oil). Uses a layered
- * stratified model where water settles at the bottom, oil in the middle, and gas at the top.
+ * Extends TwoFluidSection to include a water phase alongside gas and liquid (oil). Uses a layered stratified model
+ * where water settles at the bottom, oil in the middle, and gas at the top.
  * </p>
  *
  * <h2>Conservation Variables</h2> The three-fluid model tracks 7 PDEs:
@@ -89,7 +89,7 @@ public class ThreeFluidSection extends TwoFluidSection {
    * Constructor with basic parameters.
    *
    * @param position Distance from inlet (m)
-   * @param length Section length (m)
+   * @param length   Section length (m)
    * @param diameter Pipe diameter (m)
    */
   public ThreeFluidSection(double position, double length, double diameter) {
@@ -100,9 +100,9 @@ public class ThreeFluidSection extends TwoFluidSection {
   /**
    * Constructor with inclination.
    *
-   * @param position Distance from inlet (m)
-   * @param length Section length (m)
-   * @param diameter Pipe diameter (m)
+   * @param position    Distance from inlet (m)
+   * @param length      Section length (m)
+   * @param diameter    Pipe diameter (m)
    * @param inclination Pipe inclination (radians)
    */
   public ThreeFluidSection(double position, double length, double diameter, double inclination) {
@@ -136,8 +136,8 @@ public class ThreeFluidSection extends TwoFluidSection {
   /**
    * Set holdups for all three phases. Must sum to 1.0.
    *
-   * @param gasHoldup Gas holdup (0-1)
-   * @param oilHoldup Oil holdup (0-1)
+   * @param gasHoldup   Gas holdup (0-1)
+   * @param oilHoldup   Oil holdup (0-1)
    * @param waterHoldup Water holdup (0-1)
    */
   public void setHoldups(double gasHoldup, double oilHoldup, double waterHoldup) {
@@ -265,7 +265,7 @@ public class ThreeFluidSection extends TwoFluidSection {
    * Calculate liquid level from cross-sectional area using Newton iteration.
    *
    * @param targetArea target cross-sectional area in m²
-   * @param d pipe diameter in meters
+   * @param d          pipe diameter in meters
    * @return liquid level height in meters
    */
   private double calculateLevelFromArea(double targetArea, double d) {
@@ -300,14 +300,14 @@ public class ThreeFluidSection extends TwoFluidSection {
 
       double error = area - targetArea;
       if (Math.abs(error) < 1e-12 * totalArea) {
-        break;
+	break;
       }
 
       if (dArea_dh > 1e-12) {
-        double correction = error / dArea_dh;
-        // Limit step size to prevent overshooting
-        correction = Math.max(-h * 0.5, Math.min((d - h) * 0.5, correction));
-        h = h - correction;
+	double correction = error / dArea_dh;
+	// Limit step size to prevent overshooting
+	correction = Math.max(-h * 0.5, Math.min((d - h) * 0.5, correction));
+	h = h - correction;
       }
     }
 

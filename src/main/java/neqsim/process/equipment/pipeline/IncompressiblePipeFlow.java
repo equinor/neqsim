@@ -10,9 +10,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * Incompressible pipe flow model for liquid flow with fittings.
  *
  * <p>
- * This class models incompressible (liquid) flow through pipes using the Darcy-Weisbach equation.
- * It extends {@link AdiabaticPipe} and inherits fitting support from the {@link Pipeline} base
- * class.
+ * This class models incompressible (liquid) flow through pipes using the Darcy-Weisbach equation. It extends
+ * {@link AdiabaticPipe} and inherits fitting support from the {@link Pipeline} base class.
  * </p>
  *
  * <h2>Pressure Drop Calculation</h2>
@@ -41,9 +40,9 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  *
  * <h2>Equivalent Length Method for Fittings</h2>
  * <p>
- * Pipe fittings (bends, valves, tees, etc.) add pressure loss that is accounted for using the
- * equivalent length method. Each fitting is assigned an L/D ratio representing the length of
- * straight pipe (in diameters) that would produce the same pressure drop.
+ * Pipe fittings (bends, valves, tees, etc.) add pressure loss that is accounted for using the equivalent length method.
+ * Each fitting is assigned an L/D ratio representing the length of straight pipe (in diameters) that would produce the
+ * same pressure drop.
  * </p>
  *
  * <pre>
@@ -108,7 +107,7 @@ public class IncompressiblePipeFlow extends AdiabaticPipe {
   /**
    * Constructor for IncompressiblePipeFlow with inlet stream.
    *
-   * @param name name of pipe
+   * @param name     name of pipe
    * @param inStream input stream
    */
   public IncompressiblePipeFlow(String name, StreamInterface inStream) {
@@ -143,7 +142,7 @@ public class IncompressiblePipeFlow extends AdiabaticPipe {
 
     // Calculate Reynolds number and friction factor
     double reynoldsNumber = velocity * insideDiameter
-        / system.getPhase(0).getPhysicalProperties().getKinematicViscosity();
+	/ system.getPhase(0).getPhysicalProperties().getKinematicViscosity();
     double frictionFactor = calcWallFrictionFactor(reynoldsNumber);
 
     // Friction pressure drop using Darcy-Weisbach with effective length
@@ -152,7 +151,7 @@ public class IncompressiblePipeFlow extends AdiabaticPipe {
 
     // Elevation pressure change: ΔP = ρg(z_in - z_out)
     dp += (getInletElevation() - getOutletElevation()) * density
-        * neqsim.thermo.ThermodynamicConstantsInterface.gravity;
+	* neqsim.thermo.ThermodynamicConstantsInterface.gravity;
 
     return (system.getPressure() * 1e5 + dp) / 1.0e5;
   }
@@ -184,8 +183,7 @@ public class IncompressiblePipeFlow extends AdiabaticPipe {
    */
   @ExcludeFromJacocoGeneratedReport
   public static void main(String[] name) {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
     testSystem.addComponent("water", 100.0 * 1e3, "kg/hr");
     testSystem.createDatabase(true);
     testSystem.setMixingRule(2);
@@ -208,8 +206,7 @@ public class IncompressiblePipeFlow extends AdiabaticPipe {
     pipe2.setInletElevation(10);
     pipe2.setOutletElevation(0);
 
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
     operations.add(stream_1);
     operations.add(pipe);
     operations.add(pipe2);

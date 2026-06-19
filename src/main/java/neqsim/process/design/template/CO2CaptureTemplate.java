@@ -16,9 +16,9 @@ import neqsim.thermo.system.SystemInterface;
  * Template for creating amine-based CO2 capture systems.
  *
  * <p>
- * This template creates a standard amine-based CO2 absorption unit consisting of an absorber
- * column, solvent regeneration system, and heat integration equipment. Supports various amine
- * solvents including MEA, MDEA, and proprietary blends.
+ * This template creates a standard amine-based CO2 absorption unit consisting of an absorber column, solvent
+ * regeneration system, and heat integration equipment. Supports various amine solvents including MEA, MDEA, and
+ * proprietary blends.
  * </p>
  *
  * <h2>Features</h2>
@@ -104,8 +104,7 @@ public class CO2CaptureTemplate implements ProcessTemplate {
     private final double reboilerTemp;
     private final double maxRichLoading;
 
-    AmineType(String name, double typicalConcentration, double reboilerTemp,
-        double maxRichLoading) {
+    AmineType(String name, double typicalConcentration, double reboilerTemp, double maxRichLoading) {
       this.name = name;
       this.typicalConcentration = typicalConcentration;
       this.reboilerTemp = reboilerTemp;
@@ -193,14 +192,12 @@ public class CO2CaptureTemplate implements ProcessTemplate {
     String amineTypeStr = basis.getParameterString("amineType", amineType.getAmineName());
     amineType = parseAmineType(amineTypeStr);
 
-    double amineConcentration =
-        basis.getParameter("amineConcentration", amineType.getTypicalConcentration());
+    double amineConcentration = basis.getParameter("amineConcentration", amineType.getTypicalConcentration());
     double reboilerTemp = basis.getParameter("reboilerTemperature", amineType.getReboilerTemp());
     double leanAmineTemp = basis.getParameter("leanAmineTemperature", DEFAULT_LEAN_AMINE_TEMP_C);
     double co2RemovalTarget = basis.getParameter("co2RemovalTarget", 0.90);
     int absorberStages = (int) basis.getParameter("absorberStages", DEFAULT_ABSORBER_STAGES);
-    int regeneratorStages =
-        (int) basis.getParameter("regeneratorStages", DEFAULT_REGENERATOR_STAGES);
+    int regeneratorStages = (int) basis.getParameter("regeneratorStages", DEFAULT_REGENERATOR_STAGES);
 
     // Get flow rate
     double gasFlowRate = basis.getFeedFlowRate();
@@ -209,8 +206,7 @@ public class CO2CaptureTemplate implements ProcessTemplate {
     }
 
     // Estimate amine circulation rate
-    double amineRate =
-        estimateAmineCirculationRate(feedFluid, gasFlowRate, amineConcentration, co2RemovalTarget);
+    double amineRate = estimateAmineCirculationRate(feedFluid, gasFlowRate, amineConcentration, co2RemovalTarget);
 
     // Create feed gas stream
     SystemInterface feedGas = feedFluid.clone();
@@ -235,8 +231,7 @@ public class CO2CaptureTemplate implements ProcessTemplate {
     process.add(absorber);
 
     // Rich amine flash drum
-    ThrottlingValve richAmineValve =
-        new ThrottlingValve("Rich Amine Valve", absorber.getSolventOutStream());
+    ThrottlingValve richAmineValve = new ThrottlingValve("Rich Amine Valve", absorber.getSolventOutStream());
     richAmineValve.setOutletPressure(3.0); // Flash at 3 bara
     process.add(richAmineValve);
 
@@ -276,9 +271,9 @@ public class CO2CaptureTemplate implements ProcessTemplate {
   /**
    * Creates an amine solvent fluid.
    *
-   * @param type amine type
+   * @param type          amine type
    * @param concentration amine mass fraction
-   * @param pressure system pressure in bara
+   * @param pressure      system pressure in bara
    * @return amine fluid system
    */
   private SystemInterface createAmineFluid(AmineType type, double concentration, double pressure) {
@@ -294,28 +289,28 @@ public class CO2CaptureTemplate implements ProcessTemplate {
   /**
    * Adds amine components to fluid.
    *
-   * @param fluid fluid system
-   * @param type amine type
+   * @param fluid         fluid system
+   * @param type          amine type
    * @param concentration amine mass fraction
    */
   private void addAmineComponents(SystemInterface fluid, AmineType type, double concentration) {
     switch (type) {
-      case MEA:
-        fluid.addComponent("MEA", concentration);
-        break;
-      case DEA:
-        fluid.addComponent("DEA", concentration);
-        break;
-      case MDEA:
-      case MDEA_PZ:
-        fluid.addComponent("MDEA", concentration);
-        if (type == AmineType.MDEA_PZ) {
-          // Add piperazine for activated MDEA
-          fluid.addComponent("piperazine", 0.05);
-        }
-        break;
-      default:
-        fluid.addComponent("MDEA", concentration);
+    case MEA:
+      fluid.addComponent("MEA", concentration);
+      break;
+    case DEA:
+      fluid.addComponent("DEA", concentration);
+      break;
+    case MDEA:
+    case MDEA_PZ:
+      fluid.addComponent("MDEA", concentration);
+      if (type == AmineType.MDEA_PZ) {
+	// Add piperazine for activated MDEA
+	fluid.addComponent("piperazine", 0.05);
+      }
+      break;
+    default:
+      fluid.addComponent("MDEA", concentration);
     }
     fluid.addComponent("water", 1.0 - concentration);
     fluid.addComponent("CO2", 0.001); // Small amount to establish equilibrium
@@ -334,7 +329,7 @@ public class CO2CaptureTemplate implements ProcessTemplate {
     String upper = amineStr.toUpperCase().trim();
     for (AmineType type : AmineType.values()) {
       if (type.getAmineName().equalsIgnoreCase(upper)) {
-        return type;
+	return type;
       }
     }
     return AmineType.MDEA;
@@ -343,21 +338,21 @@ public class CO2CaptureTemplate implements ProcessTemplate {
   /**
    * Estimates amine circulation rate for given CO2 removal.
    *
-   * @param feedFluid feed fluid system
-   * @param gasFlowRate gas flow rate in kg/hr
+   * @param feedFluid          feed fluid system
+   * @param gasFlowRate        gas flow rate in kg/hr
    * @param amineConcentration amine mass fraction
-   * @param removalTarget CO2 removal fraction (0-1)
+   * @param removalTarget      CO2 removal fraction (0-1)
    * @return estimated amine circulation rate in kg/hr
    */
-  private double estimateAmineCirculationRate(SystemInterface feedFluid, double gasFlowRate,
-      double amineConcentration, double removalTarget) {
+  private double estimateAmineCirculationRate(SystemInterface feedFluid, double gasFlowRate, double amineConcentration,
+      double removalTarget) {
     // Estimate CO2 in feed
     double co2Fraction = 0.15; // Default 15%
     for (int i = 0; i < feedFluid.getNumberOfComponents(); i++) {
       String name = feedFluid.getComponent(i).getName().toLowerCase();
       if (name.equals("co2") || name.contains("carbon dioxide")) {
-        co2Fraction = feedFluid.getComponent(i).getz();
-        break;
+	co2Fraction = feedFluid.getComponent(i).getz();
+	break;
       }
     }
 
@@ -402,8 +397,8 @@ public class CO2CaptureTemplate implements ProcessTemplate {
     for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
       String name = fluid.getComponent(i).getName().toLowerCase();
       if (name.equals("co2") || name.contains("carbon dioxide")) {
-        hasCO2 = true;
-        break;
+	hasCO2 = true;
+	break;
       }
     }
 
@@ -413,17 +408,15 @@ public class CO2CaptureTemplate implements ProcessTemplate {
   /** {@inheritDoc} */
   @Override
   public String[] getRequiredEquipmentTypes() {
-    return new String[] {"SimpleTEGAbsorber", "Separator", "Heater", "Pump", "Cooler",
-        "ThrottlingValve"};
+    return new String[] { "SimpleTEGAbsorber", "Separator", "Heater", "Pump", "Cooler", "ThrottlingValve" };
   }
 
   /** {@inheritDoc} */
   @Override
   public String[] getExpectedOutputs() {
-    return new String[] {"Treated Gas - CO2-depleted gas stream",
-        "CO2 Product - High purity CO2 from regenerator overhead",
-        "Flash Gas - Hydrocarbon-rich gas from flash drum",
-        "Heat Duty - Reboiler heat requirement"};
+    return new String[] { "Treated Gas - CO2-depleted gas stream",
+	"CO2 Product - High purity CO2 from regenerator overhead", "Flash Gas - Hydrocarbon-rich gas from flash drum",
+	"Heat Duty - Reboiler heat requirement" };
   }
 
   /** {@inheritDoc} */
@@ -436,39 +429,38 @@ public class CO2CaptureTemplate implements ProcessTemplate {
   @Override
   public String getDescription() {
     return "Amine-based CO2 capture system with absorber, flash drum, "
-        + "lean-rich heat exchanger, and regeneration column. "
-        + "Supports MEA, DEA, MDEA, and activated MDEA solvents. "
-        + "Suitable for flue gas treatment and natural gas sweetening.";
+	+ "lean-rich heat exchanger, and regeneration column. "
+	+ "Supports MEA, DEA, MDEA, and activated MDEA solvents. "
+	+ "Suitable for flue gas treatment and natural gas sweetening.";
   }
 
   /**
    * Calculates specific reboiler duty for amine regeneration.
    *
-   * @param amineType type of amine
+   * @param amineType   type of amine
    * @param richLoading rich amine loading (mol CO2/mol amine)
    * @param leanLoading lean amine loading (mol CO2/mol amine)
    * @return specific reboiler duty in GJ/ton CO2
    */
-  public static double calculateSpecificReboilerDuty(AmineType amineType, double richLoading,
-      double leanLoading) {
+  public static double calculateSpecificReboilerDuty(AmineType amineType, double richLoading, double leanLoading) {
     // Typical specific duties (GJ/ton CO2):
     // MEA: 3.5-4.0, DEA: 3.0-3.5, MDEA: 2.5-3.0, MDEA+PZ: 2.3-2.8
     double baseduty;
     switch (amineType) {
-      case MEA:
-        baseduty = 3.8;
-        break;
-      case DEA:
-        baseduty = 3.2;
-        break;
-      case MDEA:
-        baseduty = 2.8;
-        break;
-      case MDEA_PZ:
-        baseduty = 2.5;
-        break;
-      default:
-        baseduty = 3.0;
+    case MEA:
+      baseduty = 3.8;
+      break;
+    case DEA:
+      baseduty = 3.2;
+      break;
+    case MDEA:
+      baseduty = 2.8;
+      break;
+    case MDEA_PZ:
+      baseduty = 2.5;
+      break;
+    default:
+      baseduty = 3.0;
     }
 
     // Adjust for loading difference
@@ -482,7 +474,7 @@ public class CO2CaptureTemplate implements ProcessTemplate {
   /**
    * Estimates amine loss rate.
    *
-   * @param amineType type of amine
+   * @param amineType   type of amine
    * @param gasFlowRate gas flow rate in MMscfd
    * @return amine loss rate in kg/MMscf
    */
@@ -496,22 +488,22 @@ public class CO2CaptureTemplate implements ProcessTemplate {
     double degradationLoss;
 
     switch (amineType) {
-      case MEA:
-        vaporLoss = 0.4;
-        degradationLoss = 0.4;
-        break;
-      case DEA:
-        vaporLoss = 0.2;
-        degradationLoss = 0.3;
-        break;
-      case MDEA:
-      case MDEA_PZ:
-        vaporLoss = 0.1;
-        degradationLoss = 0.2;
-        break;
-      default:
-        vaporLoss = 0.2;
-        degradationLoss = 0.3;
+    case MEA:
+      vaporLoss = 0.4;
+      degradationLoss = 0.4;
+      break;
+    case DEA:
+      vaporLoss = 0.2;
+      degradationLoss = 0.3;
+      break;
+    case MDEA:
+    case MDEA_PZ:
+      vaporLoss = 0.1;
+      degradationLoss = 0.2;
+      break;
+    default:
+      vaporLoss = 0.2;
+      degradationLoss = 0.3;
     }
 
     return mechanicalLoss + vaporLoss + degradationLoss;

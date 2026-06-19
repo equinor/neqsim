@@ -14,7 +14,7 @@ public class AmmoniaTest extends neqsim.NeqSimTest {
   private static final Logger logger = LogManager.getLogger(AmmoniaTest.class);
 
   /** Logger object for class. */
-    static SystemInterface thermoSystem = null;
+  static SystemInterface thermoSystem = null;
 
   /**
    * @throws java.lang.Exception

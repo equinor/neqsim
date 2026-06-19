@@ -18,9 +18,9 @@ import neqsim.process.processmodel.ProcessSystem;
  * Pre-built biorefinery module for biogas-to-grid injection.
  *
  * <p>
- * Composes an {@link AnaerobicDigester}, {@link BiogasUpgrader}, compressor, and cooler into a
- * complete biogas-to-grid process. The module takes a substrate feed stream and produces a
- * grid-quality biomethane stream at the specified injection pressure.
+ * Composes an {@link AnaerobicDigester}, {@link BiogasUpgrader}, compressor, and cooler into a complete biogas-to-grid
+ * process. The module takes a substrate feed stream and produces a grid-quality biomethane stream at the specified
+ * injection pressure.
  * </p>
  *
  * <p>
@@ -50,11 +50,9 @@ public class BiogasToGridModule extends ProcessModule {
   /** Hydraulic retention time in days. */
   private double hydraulicRetentionTimeDays = 25.0;
   /** Upgrading technology. */
-  private BiogasUpgrader.UpgradingTechnology upgradingTechnology =
-      BiogasUpgrader.UpgradingTechnology.MEMBRANE;
+  private BiogasUpgrader.UpgradingTechnology upgradingTechnology = BiogasUpgrader.UpgradingTechnology.MEMBRANE;
   /** Substrate type for digester. */
-  private AnaerobicDigester.SubstrateType substrateType =
-      AnaerobicDigester.SubstrateType.FOOD_WASTE;
+  private AnaerobicDigester.SubstrateType substrateType = AnaerobicDigester.SubstrateType.FOOD_WASTE;
 
   // ── Internal equipment ──
   private transient AnaerobicDigester digester;
@@ -208,8 +206,7 @@ public class BiogasToGridModule extends ProcessModule {
     logger.info("Running BiogasToGridModule: " + getName());
 
     if (feedStream == null) {
-      throw new RuntimeException(
-          "BiogasToGridModule: feed stream not set. Call setFeedStream() first.");
+      throw new RuntimeException("BiogasToGridModule: feed stream not set. Call setFeedStream() first.");
     }
 
     // ── Step 1: Anaerobic Digestion ──
@@ -307,7 +304,6 @@ public class BiogasToGridModule extends ProcessModule {
    * @return JSON string
    */
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(getResults());
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(getResults());
   }
 }

@@ -38,7 +38,7 @@ public class AttractiveTermTwuCoonParam extends AttractiveTermBaseClass {
    * </p>
    *
    * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
-   * @param params an array of type double
+   * @param params    an array of type double
    */
   public AttractiveTermTwuCoonParam(ComponentEosInterface component, double[] params) {
     this(component);
@@ -128,10 +128,9 @@ public class AttractiveTermTwuCoonParam extends AttractiveTermBaseClass {
     double TC = getComponent().getTC();
     double Tr = (t / TC);
 
-    return Math.pow((Tr), (c * (b - 1))) * c * (b - 1) / t
-        * Math.exp(a * (1 - Math.pow((Tr), (b * c))))
-        - Math.pow((Tr), (c * (b - 1))) * a * Math.pow((Tr), (b * c)) * b * c / t
-            * Math.exp(a * (1 - Math.pow((Tr), (b * c))));
+    return Math.pow((Tr), (c * (b - 1))) * c * (b - 1) / t * Math.exp(a * (1 - Math.pow((Tr), (b * c))))
+	- Math.pow((Tr), (c * (b - 1))) * a * Math.pow((Tr), (b * c)) * b * c / t
+	    * Math.exp(a * (1 - Math.pow((Tr), (b * c))));
   }
 
   /** {@inheritDoc} */
@@ -144,17 +143,16 @@ public class AttractiveTermTwuCoonParam extends AttractiveTermBaseClass {
     double TC = getComponent().getTC();
     double Tr = (t / TC);
     return Math.pow(Tr, (c * (b - 1))) * (c * c) * (b - 1) * (b - 1) / (t * t)
-        * Math.exp(a * (1 - Math.pow(Tr, (b * c))))
-        - Math.pow(Tr, (c * (b - 1))) * c * (b - 1) / (t * t)
-            * Math.exp(a * (1 - Math.pow(Tr, (b * c))))
-        - 2 * Math.pow(Tr, (c * (b - 1))) * (c * c) * (b - 1) / (t * t) * a * Math.pow(Tr, (b * c))
-            * b * Math.exp(a * (1 - Math.pow(Tr, (b * c))))
-        - Math.pow(Tr, (c * (b - 1))) * a * Math.pow(Tr, (b * c)) * (b * b) * (c * c) / (t * t)
-            * Math.exp(a * (1 - Math.pow(Tr, (b * c))))
-        + Math.pow(Tr, (c * (b - 1))) * a * Math.pow(Tr, (b * c)) * b * c / (t * t)
-            * Math.exp(a * (1 - Math.pow(Tr, (b * c))))
-        + Math.pow(Tr, (c * (b - 1))) * (a * a) * (Math.pow(Tr, (2 * b * c))) * (b * b) * (c * c)
-            / (t * t) * Math.exp(a * (1 - Math.pow(Tr, (b * c))));
+	* Math.exp(a * (1 - Math.pow(Tr, (b * c))))
+	- Math.pow(Tr, (c * (b - 1))) * c * (b - 1) / (t * t) * Math.exp(a * (1 - Math.pow(Tr, (b * c))))
+	- 2 * Math.pow(Tr, (c * (b - 1))) * (c * c) * (b - 1) / (t * t) * a * Math.pow(Tr, (b * c)) * b
+	    * Math.exp(a * (1 - Math.pow(Tr, (b * c))))
+	- Math.pow(Tr, (c * (b - 1))) * a * Math.pow(Tr, (b * c)) * (b * b) * (c * c) / (t * t)
+	    * Math.exp(a * (1 - Math.pow(Tr, (b * c))))
+	+ Math.pow(Tr, (c * (b - 1))) * a * Math.pow(Tr, (b * c)) * b * c / (t * t)
+	    * Math.exp(a * (1 - Math.pow(Tr, (b * c))))
+	+ Math.pow(Tr, (c * (b - 1))) * (a * a) * (Math.pow(Tr, (2 * b * c))) * (b * b) * (c * c) / (t * t)
+	    * Math.exp(a * (1 - Math.pow(Tr, (b * c))));
   }
 
   /** {@inheritDoc} */

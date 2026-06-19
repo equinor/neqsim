@@ -3,8 +3,7 @@ package neqsim.thermo.system;
 import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEosMod2004;
 
 /**
- * This class defines a thermodynamic system using the electrolyte the Modified Furst Electrolyte
- * Eos.
+ * This class defines a thermodynamic system using the electrolyte the Modified Furst Electrolyte Eos.
  *
  * @author Even Solbraa
  * @version $Id: $Id

@@ -37,7 +37,7 @@ public abstract class ConstantDutyFlash implements ConstantDutyFlashInterface {
   double[] lnOldK;
   double[] oldDeltalnK;
   double[] deltalnK;
-  double[] tm = {1, 1};
+  double[] tm = { 1, 1 };
   int lowestGibbsEnergyPhase = 0; // lowestGibbsEnergyPhase
 
   /**
@@ -45,7 +45,8 @@ public abstract class ConstantDutyFlash implements ConstantDutyFlashInterface {
    * Constructor for constantDutyFlash.
    * </p>
    */
-  public ConstantDutyFlash() {}
+  public ConstantDutyFlash() {
+  }
 
   /**
    * <p>
@@ -82,12 +83,10 @@ public abstract class ConstantDutyFlash implements ConstantDutyFlashInterface {
       system.init(2);
 
       for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
-        system.getPhases()[0].getComponent(i)
-            .setK(system.getPhases()[0].getComponent(i).getFugacityCoefficient()
-                / system.getPhases()[1].getComponent(i).getFugacityCoefficient());
-        system.getPhases()[1].getComponent(i)
-            .setK(system.getPhases()[0].getComponent(i).getFugacityCoefficient()
-                / system.getPhases()[1].getComponent(i).getFugacityCoefficient());
+	system.getPhases()[0].getComponent(i).setK(system.getPhases()[0].getComponent(i).getFugacityCoefficient()
+	    / system.getPhases()[1].getComponent(i).getFugacityCoefficient());
+	system.getPhases()[1].getComponent(i).setK(system.getPhases()[0].getComponent(i).getFugacityCoefficient()
+	    / system.getPhases()[1].getComponent(i).getFugacityCoefficient());
       }
 
       system.calc_x_y();
@@ -96,17 +95,14 @@ public abstract class ConstantDutyFlash implements ConstantDutyFlashInterface {
       deriv = 0e0;
 
       for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
-        dkidt = (system.getPhases()[0].getComponent(i).getdfugdt()
-            - system.getPhases()[1].getComponent(i).getdfugdt())
-            * system.getPhases()[0].getComponent(i).getK();
-        dxidt = -system.getPhases()[0].getComponent(i).getx()
-            * system.getPhases()[0].getComponent(i).getx() * 1.0
-            / system.getPhases()[0].getComponent(i).getz() * system.getBeta() * dkidt;
-        dyidt = dkidt * system.getPhases()[0].getComponent(i).getx()
-            + system.getPhases()[0].getComponent(i).getK() * dxidt;
-        funk = funk + system.getPhases()[1].getComponent(i).getx()
-            - system.getPhases()[0].getComponent(i).getx();
-        deriv = deriv + dyidt - dxidt;
+	dkidt = (system.getPhases()[0].getComponent(i).getdfugdt() - system.getPhases()[1].getComponent(i).getdfugdt())
+	    * system.getPhases()[0].getComponent(i).getK();
+	dxidt = -system.getPhases()[0].getComponent(i).getx() * system.getPhases()[0].getComponent(i).getx() * 1.0
+	    / system.getPhases()[0].getComponent(i).getz() * system.getBeta() * dkidt;
+	dyidt = dkidt * system.getPhases()[0].getComponent(i).getx()
+	    + system.getPhases()[0].getComponent(i).getK() * dxidt;
+	funk = funk + system.getPhases()[1].getComponent(i).getx() - system.getPhases()[0].getComponent(i).getx();
+	deriv = deriv + dyidt - dxidt;
       }
 
       Told = system.getTemperature();
@@ -157,5 +153,6 @@ public abstract class ConstantDutyFlash implements ConstantDutyFlashInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void addData(String name, double[][] data) {}
+  public void addData(String name, double[][] data) {
+  }
 }

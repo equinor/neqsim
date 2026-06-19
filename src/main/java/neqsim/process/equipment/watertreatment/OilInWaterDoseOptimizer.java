@@ -11,9 +11,9 @@ import neqsim.process.equipment.watertreatment.OilInWaterMonthlyComplianceMonito
  * Decision-support optimizer for demulsifier dose and monthly OIW warning workflows.
  *
  * <p>
- * The optimizer combines a calibrated dose-response model, chemical lag model, analyzer drift
- * model, and monthly weighted OIW monitor. It scans a bounded dose range and returns the lowest
- * dose expected to satisfy the tighter of the regulatory target and remaining monthly budget.
+ * The optimizer combines a calibrated dose-response model, chemical lag model, analyzer drift model, and monthly
+ * weighted OIW monitor. It scans a bounded dose range and returns the lowest dose expected to satisfy the tighter of
+ * the regulatory target and remaining monthly budget.
  * </p>
  *
  * @author ESOL
@@ -32,8 +32,7 @@ public class OilInWaterDoseOptimizer implements Serializable {
   private OilInWaterAnalyzerDriftModel analyzerDriftModel = new OilInWaterAnalyzerDriftModel();
 
   /** Monthly weighted OIW monitor. */
-  private OilInWaterMonthlyComplianceMonitor monthlyMonitor =
-      new OilInWaterMonthlyComplianceMonitor();
+  private OilInWaterMonthlyComplianceMonitor monthlyMonitor = new OilInWaterMonthlyComplianceMonitor();
 
   /** Minimum dose scanned by the optimizer in ppm. */
   private double minimumDosePpm = 0.0;
@@ -89,18 +88,18 @@ public class OilInWaterDoseOptimizer implements Serializable {
     /**
      * Creates a dose recommendation result.
      *
-     * @param setpointDosePpm setpoint dose in ppm
-     * @param effectiveDosePpm effective dose in ppm
-     * @param predictedOilInWaterMgL predicted true OIW in mg/L
+     * @param setpointDosePpm                setpoint dose in ppm
+     * @param effectiveDosePpm               effective dose in ppm
+     * @param predictedOilInWaterMgL         predicted true OIW in mg/L
      * @param predictedMeasuredOilInWaterMgL predicted measured OIW in mg/L
-     * @param targetOilInWaterMgL target OIW in mg/L
-     * @param feasible true if the target can be met within the configured dose range
-     * @param status recommendation status
-     * @param message recommendation message
+     * @param targetOilInWaterMgL            target OIW in mg/L
+     * @param feasible                       true if the target can be met within the configured dose range
+     * @param status                         recommendation status
+     * @param message                        recommendation message
      */
-    public DoseRecommendation(double setpointDosePpm, double effectiveDosePpm,
-        double predictedOilInWaterMgL, double predictedMeasuredOilInWaterMgL,
-        double targetOilInWaterMgL, boolean feasible, String status, String message) {
+    public DoseRecommendation(double setpointDosePpm, double effectiveDosePpm, double predictedOilInWaterMgL,
+	double predictedMeasuredOilInWaterMgL, double targetOilInWaterMgL, boolean feasible, String status,
+	String message) {
       this.setpointDosePpm = setpointDosePpm;
       this.effectiveDosePpm = effectiveDosePpm;
       this.predictedOilInWaterMgL = predictedOilInWaterMgL;
@@ -187,28 +186,28 @@ public class OilInWaterDoseOptimizer implements Serializable {
   /**
    * Creates an optimizer with default model instances.
    */
-  public OilInWaterDoseOptimizer() {}
+  public OilInWaterDoseOptimizer() {
+  }
 
   /**
    * Recommends the lowest demulsifier dose meeting the current monthly OIW target.
    *
    * @param untreatedOilInWaterMgL untreated or pre-chemical OIW in mg/L
-   * @param waterRateM3h produced-water flow rate in m3/h
-   * @param dayOfMonth current day of month, starting at 1
+   * @param waterRateM3h           produced-water flow rate in m3/h
+   * @param dayOfMonth             current day of month, starting at 1
    * @return dose recommendation
    */
-  public DoseRecommendation recommendDose(double untreatedOilInWaterMgL, double waterRateM3h,
-      int dayOfMonth) {
+  public DoseRecommendation recommendDose(double untreatedOilInWaterMgL, double waterRateM3h, int dayOfMonth) {
     return recommendDose(untreatedOilInWaterMgL, waterRateM3h, 0.0, dayOfMonth);
   }
 
   /**
    * Recommends the lowest dose while accounting for analyzer drift age.
    *
-   * @param untreatedOilInWaterMgL untreated or pre-chemical OIW in mg/L
-   * @param waterRateM3h produced-water flow rate in m3/h
+   * @param untreatedOilInWaterMgL       untreated or pre-chemical OIW in mg/L
+   * @param waterRateM3h                 produced-water flow rate in m3/h
    * @param daysSinceAnalyzerCalibration days since analyzer calibration
-   * @param dayOfMonth current day of month, starting at 1
+   * @param dayOfMonth                   current day of month, starting at 1
    * @return dose recommendation
    */
   public DoseRecommendation recommendDose(double untreatedOilInWaterMgL, double waterRateM3h,
@@ -219,29 +218,27 @@ public class OilInWaterDoseOptimizer implements Serializable {
 
     for (double dose = minimumDosePpm; dose <= maximumDosePpm + 1.0e-9; dose += doseStepPpm) {
       DoseRecommendation candidate = evaluateDose(dose, untreatedOilInWaterMgL, waterRateM3h,
-          daysSinceAnalyzerCalibration, targetOilInWater);
+	  daysSinceAnalyzerCalibration, targetOilInWater);
       if (candidate.getPredictedMeasuredOilInWaterMgL() <= targetOilInWater) {
-        bestRecommendation = candidate;
-        break;
+	bestRecommendation = candidate;
+	break;
       }
       bestRecommendation = candidate;
     }
 
-    if (bestRecommendation != null
-        && bestRecommendation.getPredictedMeasuredOilInWaterMgL() <= targetOilInWater) {
+    if (bestRecommendation != null && bestRecommendation.getPredictedMeasuredOilInWaterMgL() <= targetOilInWater) {
       lastRecommendation = new DoseRecommendation(bestRecommendation.getSetpointDosePpm(),
-          bestRecommendation.getEffectiveDosePpm(), bestRecommendation.getPredictedOilInWaterMgL(),
-          bestRecommendation.getPredictedMeasuredOilInWaterMgL(), targetOilInWater, true, "OK",
-          monthlyStatus.getRecommendation());
+	  bestRecommendation.getEffectiveDosePpm(), bestRecommendation.getPredictedOilInWaterMgL(),
+	  bestRecommendation.getPredictedMeasuredOilInWaterMgL(), targetOilInWater, true, "OK",
+	  monthlyStatus.getRecommendation());
     } else if (bestRecommendation != null) {
       lastRecommendation = new DoseRecommendation(bestRecommendation.getSetpointDosePpm(),
-          bestRecommendation.getEffectiveDosePpm(), bestRecommendation.getPredictedOilInWaterMgL(),
-          bestRecommendation.getPredictedMeasuredOilInWaterMgL(), targetOilInWater, false,
-          "NO_FEASIBLE_DOSE", "Maximum configured dose does not meet the OIW target");
+	  bestRecommendation.getEffectiveDosePpm(), bestRecommendation.getPredictedOilInWaterMgL(),
+	  bestRecommendation.getPredictedMeasuredOilInWaterMgL(), targetOilInWater, false, "NO_FEASIBLE_DOSE",
+	  "Maximum configured dose does not meet the OIW target");
     } else {
-      lastRecommendation =
-          new DoseRecommendation(0.0, 0.0, untreatedOilInWaterMgL, untreatedOilInWaterMgL,
-              targetOilInWater, false, "NO_EVALUATION", "No dose could be evaluated");
+      lastRecommendation = new DoseRecommendation(0.0, 0.0, untreatedOilInWaterMgL, untreatedOilInWaterMgL,
+	  targetOilInWater, false, "NO_EVALUATION", "No dose could be evaluated");
     }
     return lastRecommendation;
   }
@@ -272,8 +269,7 @@ public class OilInWaterDoseOptimizer implements Serializable {
     data.put("doseResponse", doseResponseModel.getModelParameters());
     data.put("monthlyWeightedAverageMgL", monthlyMonitor.getWeightedAverageMgL());
     data.put("lastRecommendation", lastRecommendation);
-    Gson gson =
-        new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+    Gson gson = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
     return gson.toJson(data);
   }
 
@@ -294,28 +290,28 @@ public class OilInWaterDoseOptimizer implements Serializable {
   /**
    * Evaluates one setpoint dose.
    *
-   * @param setpointDosePpm setpoint dose in ppm
-   * @param untreatedOilInWaterMgL untreated OIW in mg/L
-   * @param waterRateM3h produced-water flow rate in m3/h
+   * @param setpointDosePpm              setpoint dose in ppm
+   * @param untreatedOilInWaterMgL       untreated OIW in mg/L
+   * @param waterRateM3h                 produced-water flow rate in m3/h
    * @param daysSinceAnalyzerCalibration days since analyzer calibration
-   * @param targetOilInWaterMgL target OIW in mg/L
+   * @param targetOilInWaterMgL          target OIW in mg/L
    * @return dose recommendation candidate
    */
-  private DoseRecommendation evaluateDose(double setpointDosePpm, double untreatedOilInWaterMgL,
-      double waterRateM3h, double daysSinceAnalyzerCalibration, double targetOilInWaterMgL) {
+  private DoseRecommendation evaluateDose(double setpointDosePpm, double untreatedOilInWaterMgL, double waterRateM3h,
+      double daysSinceAnalyzerCalibration, double targetOilInWaterMgL) {
     double effectiveDose = predictEffectiveDose(setpointDosePpm, waterRateM3h);
     double trueOiw = doseResponseModel.predictOilInWater(untreatedOilInWaterMgL, effectiveDose);
-    double measuredOiw = analyzerDriftModel.measureConservative(trueOiw,
-        daysSinceAnalyzerCalibration, analyzerConfidenceMultiplier);
-    return new DoseRecommendation(setpointDosePpm, effectiveDose, trueOiw, measuredOiw,
-        targetOilInWaterMgL, measuredOiw <= targetOilInWaterMgL, "CANDIDATE", "Candidate dose");
+    double measuredOiw = analyzerDriftModel.measureConservative(trueOiw, daysSinceAnalyzerCalibration,
+	analyzerConfidenceMultiplier);
+    return new DoseRecommendation(setpointDosePpm, effectiveDose, trueOiw, measuredOiw, targetOilInWaterMgL,
+	measuredOiw <= targetOilInWaterMgL, "CANDIDATE", "Candidate dose");
   }
 
   /**
    * Predicts effective dose from setpoint without mutating the optimizer lag state.
    *
    * @param setpointDosePpm setpoint dose in ppm
-   * @param waterRateM3h water rate in m3/h
+   * @param waterRateM3h    water rate in m3/h
    * @return effective dose in ppm
    */
   private double predictEffectiveDose(double setpointDosePpm, double waterRateM3h) {
@@ -408,7 +404,7 @@ public class OilInWaterDoseOptimizer implements Serializable {
    *
    * @param minimumDosePpm minimum dose in ppm
    * @param maximumDosePpm maximum dose in ppm
-   * @param doseStepPpm scan step in ppm
+   * @param doseStepPpm    scan step in ppm
    */
   public void setDoseRange(double minimumDosePpm, double maximumDosePpm, double doseStepPpm) {
     this.minimumDosePpm = Math.max(0.0, minimumDosePpm);

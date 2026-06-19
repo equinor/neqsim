@@ -118,8 +118,7 @@ public class LangmuirAdsorptionTest {
     assertTrue(total > 0, "Total surface excess should be positive");
 
     // Check mole fractions sum to 1
-    double sumMolFrac =
-        adsorption.getAdsorbedPhaseMoleFraction(0) + adsorption.getAdsorbedPhaseMoleFraction(1);
+    double sumMolFrac = adsorption.getAdsorbedPhaseMoleFraction(0) + adsorption.getAdsorbedPhaseMoleFraction(1);
     assertEquals(1.0, sumMolFrac, 1e-6, "Adsorbed phase mole fractions should sum to 1");
   }
 
@@ -187,7 +186,7 @@ public class LangmuirAdsorptionTest {
 
     // Adsorption should decrease with temperature (exothermic process)
     assertTrue(lowTAds.getSurfaceExcess(0) > highTAds.getSurfaceExcess(0),
-        "Adsorption should decrease with increasing temperature");
+	"Adsorption should decrease with increasing temperature");
   }
 
   /**

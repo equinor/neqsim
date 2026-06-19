@@ -11,9 +11,8 @@ import java.util.Map;
  * One area, drain system, bunded equipment group, or STID-derived item in an open-drain review.
  *
  * <p>
- * The class is intentionally map-backed so STID/P&amp;ID extracts, line-list records, area safety
- * charts, and tagreader summaries can be normalized outside the Java core and then evaluated by a
- * deterministic review engine.
+ * The class is intentionally map-backed so STID/P&amp;ID extracts, line-list records, area safety charts, and tagreader
+ * summaries can be normalized outside the Java core and then evaluated by a deterministic review engine.
  * </p>
  *
  * @author NeqSim contributors
@@ -37,7 +36,8 @@ public class OpenDrainReviewItem implements Serializable {
   /**
    * Creates an empty open-drain review item.
    */
-  public OpenDrainReviewItem() {}
+  public OpenDrainReviewItem() {
+  }
 
   /**
    * Creates a review item from a generic map.
@@ -60,18 +60,18 @@ public class OpenDrainReviewItem implements Serializable {
     if (sourceDocument != null) {
       item.addSourceReference(String.valueOf(sourceDocument));
     }
-    for (String key : new String[] {"design", "requirements", "service", "operationalData",
-        "tagreaderData", "historianData"}) {
+    for (String key : new String[] { "design", "requirements", "service", "operationalData", "tagreaderData",
+	"historianData" }) {
       Object nested = source.get(key);
       if (nested instanceof Map<?, ?>) {
-        for (Map.Entry<String, Object> entry : ((Map<String, Object>) nested).entrySet()) {
-          item.put(entry.getKey(), entry.getValue());
-        }
+	for (Map.Entry<String, Object> entry : ((Map<String, Object>) nested).entrySet()) {
+	  item.put(entry.getKey(), entry.getValue());
+	}
       }
     }
     for (Map.Entry<String, Object> entry : source.entrySet()) {
       if (!isCoreKey(entry.getKey())) {
-        item.put(entry.getKey(), entry.getValue());
+	item.put(entry.getKey(), entry.getValue());
       }
     }
     return item;
@@ -162,7 +162,7 @@ public class OpenDrainReviewItem implements Serializable {
   /**
    * Adds or replaces one normalized value.
    *
-   * @param key normalized key
+   * @param key   normalized key
    * @param value value to store
    * @return this item for fluent construction
    */
@@ -210,7 +210,7 @@ public class OpenDrainReviewItem implements Serializable {
   public boolean hasAny(String... keys) {
     for (String key : keys) {
       if (has(key)) {
-        return true;
+	return true;
       }
     }
     return false;
@@ -230,21 +230,21 @@ public class OpenDrainReviewItem implements Serializable {
    * Reads the first present value as a double.
    *
    * @param defaultValue value returned when no numeric key is present
-   * @param keys keys to test in order
+   * @param keys         keys to test in order
    * @return numeric value or default value
    */
   public double getDouble(double defaultValue, String... keys) {
     for (String key : keys) {
       Object value = get(key);
       if (value instanceof Number) {
-        return ((Number) value).doubleValue();
+	return ((Number) value).doubleValue();
       }
       if (value instanceof String) {
-        try {
-          return Double.parseDouble(((String) value).trim());
-        } catch (NumberFormatException ex) {
-          return defaultValue;
-        }
+	try {
+	  return Double.parseDouble(((String) value).trim());
+	} catch (NumberFormatException ex) {
+	  return defaultValue;
+	}
       }
     }
     return defaultValue;
@@ -260,18 +260,18 @@ public class OpenDrainReviewItem implements Serializable {
     for (String key : keys) {
       Object value = get(key);
       if (value instanceof Boolean) {
-        return (Boolean) value;
+	return (Boolean) value;
       }
       if (value instanceof String) {
-        String text = ((String) value).trim();
-        if ("true".equalsIgnoreCase(text) || "yes".equalsIgnoreCase(text)
-            || "y".equalsIgnoreCase(text) || "1".equals(text)) {
-          return Boolean.TRUE;
-        }
-        if ("false".equalsIgnoreCase(text) || "no".equalsIgnoreCase(text)
-            || "n".equalsIgnoreCase(text) || "0".equals(text)) {
-          return Boolean.FALSE;
-        }
+	String text = ((String) value).trim();
+	if ("true".equalsIgnoreCase(text) || "yes".equalsIgnoreCase(text) || "y".equalsIgnoreCase(text)
+	    || "1".equals(text)) {
+	  return Boolean.TRUE;
+	}
+	if ("false".equalsIgnoreCase(text) || "no".equalsIgnoreCase(text) || "n".equalsIgnoreCase(text)
+	    || "0".equals(text)) {
+	  return Boolean.FALSE;
+	}
       }
     }
     return null;
@@ -281,7 +281,7 @@ public class OpenDrainReviewItem implements Serializable {
    * Reads the first present value as a boolean.
    *
    * @param defaultValue value returned when no boolean-like key is present
-   * @param keys keys to test in order
+   * @param keys         keys to test in order
    * @return boolean value or default value
    */
   public boolean getBoolean(boolean defaultValue, String... keys) {
@@ -293,14 +293,14 @@ public class OpenDrainReviewItem implements Serializable {
    * Reads the first present value as a string.
    *
    * @param defaultValue value returned when missing
-   * @param keys keys to test in order
+   * @param keys         keys to test in order
    * @return string value or default value
    */
   public String getString(String defaultValue, String... keys) {
     for (String key : keys) {
       Object value = get(key);
       if (value != null) {
-        return String.valueOf(value);
+	return String.valueOf(value);
       }
     }
     return defaultValue;
@@ -316,16 +316,16 @@ public class OpenDrainReviewItem implements Serializable {
     for (String key : keys) {
       Object value = get(key);
       if (value instanceof List<?>) {
-        List<String> result = new ArrayList<String>();
-        for (Object item : (List<?>) value) {
-          if (item != null) {
-            result.add(String.valueOf(item));
-          }
-        }
-        return result;
+	List<String> result = new ArrayList<String>();
+	for (Object item : (List<?>) value) {
+	  if (item != null) {
+	    result.add(String.valueOf(item));
+	  }
+	}
+	return result;
       }
       if (value != null) {
-        return Collections.singletonList(String.valueOf(value));
+	return Collections.singletonList(String.valueOf(value));
       }
     }
     return Collections.emptyList();
@@ -381,15 +381,15 @@ public class OpenDrainReviewItem implements Serializable {
   /**
    * Adds one or more references from an object.
    *
-   * @param item item receiving source references
+   * @param item       item receiving source references
    * @param references source reference object
    */
   private static void addReferences(OpenDrainReviewItem item, Object references) {
     if (references instanceof List<?>) {
       for (Object reference : (List<?>) references) {
-        if (reference != null) {
-          item.addSourceReference(String.valueOf(reference));
-        }
+	if (reference != null) {
+	  item.addSourceReference(String.valueOf(reference));
+	}
       }
     } else if (references != null) {
       item.addSourceReference(String.valueOf(references));
@@ -400,7 +400,7 @@ public class OpenDrainReviewItem implements Serializable {
    * Returns the first non-empty string value.
    *
    * @param source source map
-   * @param keys keys to test
+   * @param keys   keys to test
    * @return first non-empty string, or an empty string
    */
   private static String firstString(Map<String, Object> source, String... keys) {
@@ -412,13 +412,13 @@ public class OpenDrainReviewItem implements Serializable {
    * Returns the first non-null object value.
    *
    * @param source source map
-   * @param keys keys to test
+   * @param keys   keys to test
    * @return first non-null value, or null
    */
   private static Object firstObject(Map<String, Object> source, String... keys) {
     for (String key : keys) {
       if (source.containsKey(key) && source.get(key) != null) {
-        return source.get(key);
+	return source.get(key);
       }
     }
     return null;
@@ -431,13 +431,12 @@ public class OpenDrainReviewItem implements Serializable {
    * @return true if the key is an identity or nested-data key
    */
   private static boolean isCoreKey(String key) {
-    return "areaId".equals(key) || "area".equals(key) || "tag".equals(key)
-        || "lineNumber".equals(key) || "name".equals(key) || "areaType".equals(key)
-        || "type".equals(key) || "mainArea".equals(key) || "service".equals(key)
-        || "drainSystemType".equals(key) || "drainType".equals(key) || "systemType".equals(key)
-        || "sourceReferences".equals(key) || "sourceRefs".equals(key) || "evidenceRefs".equals(key)
-        || "sourceDocument".equals(key) || "documentId".equals(key) || "stidDocument".equals(key)
-        || "design".equals(key) || "requirements".equals(key) || "operationalData".equals(key)
-        || "tagreaderData".equals(key) || "historianData".equals(key);
+    return "areaId".equals(key) || "area".equals(key) || "tag".equals(key) || "lineNumber".equals(key)
+	|| "name".equals(key) || "areaType".equals(key) || "type".equals(key) || "mainArea".equals(key)
+	|| "service".equals(key) || "drainSystemType".equals(key) || "drainType".equals(key) || "systemType".equals(key)
+	|| "sourceReferences".equals(key) || "sourceRefs".equals(key) || "evidenceRefs".equals(key)
+	|| "sourceDocument".equals(key) || "documentId".equals(key) || "stidDocument".equals(key)
+	|| "design".equals(key) || "requirements".equals(key) || "operationalData".equals(key)
+	|| "tagreaderData".equals(key) || "historianData".equals(key);
   }
 }

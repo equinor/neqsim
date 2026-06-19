@@ -17,10 +17,9 @@ import neqsim.thermo.system.SystemSrkEos;
  * End-to-end integration tests for {@link BatchParameterEstimator}.
  *
  * <p>
- * These tests verify that the Levenberg-Marquardt optimizer actually converges when fitting process
- * model parameters to synthetic plant data. Each test generates "truth" data from a known process
- * configuration, then uses the estimator to recover the true parameter values from a deliberately
- * wrong initial guess.
+ * These tests verify that the Levenberg-Marquardt optimizer actually converges when fitting process model parameters to
+ * synthetic plant data. Each test generates "truth" data from a known process configuration, then uses the estimator to
+ * recover the true parameter values from a deliberately wrong initial guess.
  * </p>
  *
  * @author ESOL
@@ -30,16 +29,15 @@ import neqsim.thermo.system.SystemSrkEos;
 class BatchParameterEstimatorIntegrationTest extends neqsim.NeqSimTest {
 
   /**
-   * Tests single-parameter estimation: recovers compressor polytropic efficiency from outlet
-   * temperature measurements at multiple discharge pressures.
+   * Tests single-parameter estimation: recovers compressor polytropic efficiency from outlet temperature measurements
+   * at multiple discharge pressures.
    *
    * <p>
-   * The test creates a compressor with a known efficiency (0.75), runs the process at several
-   * discharge pressures to generate synthetic outlet temperature measurements, then uses
-   * {@code BatchParameterEstimator} to recover the efficiency starting from an initial guess of
-   * 0.60. Discharge pressure is used as the varying condition because
-   * {@code setOutletPressure(double)} has a single-argument setter compatible with the
-   * reflection-based property accessor.
+   * The test creates a compressor with a known efficiency (0.75), runs the process at several discharge pressures to
+   * generate synthetic outlet temperature measurements, then uses {@code BatchParameterEstimator} to recover the
+   * efficiency starting from an initial guess of 0.60. Discharge pressure is used as the varying condition because
+   * {@code setOutletPressure(double)} has a single-argument setter compatible with the reflection-based property
+   * accessor.
    * </p>
    */
   @Test
@@ -70,7 +68,7 @@ class BatchParameterEstimatorIntegrationTest extends neqsim.NeqSimTest {
     // temperature changes with pressure ratio, producing observations at different
     // operating points for the same efficiency.
     double trueEfficiency = 0.75;
-    double[] dischargePressures = {50.0, 60.0, 70.0, 80.0, 90.0};
+    double[] dischargePressures = { 50.0, 60.0, 70.0, 80.0, 90.0 };
     double[] measuredTemps = new double[dischargePressures.length];
 
     for (int i = 0; i < dischargePressures.length; i++) {
@@ -114,28 +112,27 @@ class BatchParameterEstimatorIntegrationTest extends neqsim.NeqSimTest {
     double estimatedEfficiency = result.getEstimate(0);
 
     // Should recover the true efficiency within 5% tolerance
-    assertEquals(trueEfficiency, estimatedEfficiency, 0.05,
-        "Estimated efficiency should be close to true value. " + "True=" + trueEfficiency
-            + " Estimated=" + estimatedEfficiency);
+    assertEquals(trueEfficiency, estimatedEfficiency, 0.05, "Estimated efficiency should be close to true value. "
+	+ "True=" + trueEfficiency + " Estimated=" + estimatedEfficiency);
 
     // R-squared should be high for synthetic noiseless data
     if (!Double.isNaN(result.getRSquared())) {
       assertTrue(result.getRSquared() > 0.90,
-          "R-squared should be high for noiseless data, got: " + result.getRSquared());
+	  "R-squared should be high for noiseless data, got: " + result.getRSquared());
     }
 
     result.printSummary();
   }
 
   /**
-   * Tests two-parameter estimation: recovers both heater outlet temperatures from mixed stream
-   * temperature measurements at multiple operating conditions.
+   * Tests two-parameter estimation: recovers both heater outlet temperatures from mixed stream temperature measurements
+   * at multiple operating conditions.
    *
    * <p>
-   * Uses two heaters feeding into a mixer. The measured variable is the mixer outlet temperature.
-   * Instead of varying flow rates (which requires two-argument setters), the outlet pressure of
-   * each heater is varied. Both the heater set-point temperatures and the mixer outlet temperature
-   * are used. The estimator must recover both heater set-points simultaneously.
+   * Uses two heaters feeding into a mixer. The measured variable is the mixer outlet temperature. Instead of varying
+   * flow rates (which requires two-argument setters), the outlet pressure of each heater is varied. Both the heater
+   * set-point temperatures and the mixer outlet temperature are used. The estimator must recover both heater set-points
+   * simultaneously.
    * </p>
    */
   @Test
@@ -151,8 +148,8 @@ class BatchParameterEstimatorIntegrationTest extends neqsim.NeqSimTest {
     feed1.setTemperature(20.0, "C");
     feed1.setPressure(50.0, "bara");
 
-    neqsim.process.equipment.heatexchanger.Heater heater1 =
-        new neqsim.process.equipment.heatexchanger.Heater("heater1", feed1);
+    neqsim.process.equipment.heatexchanger.Heater heater1 = new neqsim.process.equipment.heatexchanger.Heater("heater1",
+	feed1);
     heater1.setOutletTemperature(273.15 + 50.0); // 50 C in K
 
     Stream feed2 = new Stream("feed2", fluid.clone());
@@ -160,8 +157,8 @@ class BatchParameterEstimatorIntegrationTest extends neqsim.NeqSimTest {
     feed2.setTemperature(20.0, "C");
     feed2.setPressure(50.0, "bara");
 
-    neqsim.process.equipment.heatexchanger.Heater heater2 =
-        new neqsim.process.equipment.heatexchanger.Heater("heater2", feed2);
+    neqsim.process.equipment.heatexchanger.Heater heater2 = new neqsim.process.equipment.heatexchanger.Heater("heater2",
+	feed2);
     heater2.setOutletTemperature(273.15 + 70.0); // 70 C in K
 
     neqsim.process.equipment.mixer.Mixer mixer = new neqsim.process.equipment.mixer.Mixer("mixer");
@@ -183,7 +180,7 @@ class BatchParameterEstimatorIntegrationTest extends neqsim.NeqSimTest {
     double trueT2 = 273.15 + 70.0;
 
     // Use different heater2 outlet pressures to create data diversity
-    double[] heater2Pressures = {40.0, 45.0, 50.0, 55.0};
+    double[] heater2Pressures = { 40.0, 45.0, 50.0, 55.0 };
     double[] mixerTemps = new double[heater2Pressures.length];
 
     for (int i = 0; i < heater2Pressures.length; i++) {
@@ -198,10 +195,8 @@ class BatchParameterEstimatorIntegrationTest extends neqsim.NeqSimTest {
     BatchParameterEstimator estimator = new BatchParameterEstimator(process);
 
     // Start with wrong guesses (40 C and 60 C instead of 50 and 70)
-    estimator.addTunableParameter("heater1.outletTemperature", "K", 273.15 + 30.0, 273.15 + 80.0,
-        273.15 + 40.0);
-    estimator.addTunableParameter("heater2.outletTemperature", "K", 273.15 + 40.0, 273.15 + 90.0,
-        273.15 + 60.0);
+    estimator.addTunableParameter("heater1.outletTemperature", "K", 273.15 + 30.0, 273.15 + 80.0, 273.15 + 40.0);
+    estimator.addTunableParameter("heater2.outletTemperature", "K", 273.15 + 40.0, 273.15 + 90.0, 273.15 + 60.0);
     estimator.addMeasuredVariable("mixer.outletStream.temperature", "K", 0.5);
 
     for (int i = 0; i < heater2Pressures.length; i++) {
@@ -227,10 +222,8 @@ class BatchParameterEstimatorIntegrationTest extends neqsim.NeqSimTest {
     double estT2 = result.getEstimate(1);
 
     // Should recover within ~3 K
-    assertEquals(trueT1, estT1, 3.0,
-        "Heater1 temp: true=" + (trueT1 - 273.15) + "C est=" + (estT1 - 273.15) + "C");
-    assertEquals(trueT2, estT2, 3.0,
-        "Heater2 temp: true=" + (trueT2 - 273.15) + "C est=" + (estT2 - 273.15) + "C");
+    assertEquals(trueT1, estT1, 3.0, "Heater1 temp: true=" + (trueT1 - 273.15) + "C est=" + (estT1 - 273.15) + "C");
+    assertEquals(trueT2, estT2, 3.0, "Heater2 temp: true=" + (trueT2 - 273.15) + "C est=" + (estT2 - 273.15) + "C");
 
     result.printSummary();
   }

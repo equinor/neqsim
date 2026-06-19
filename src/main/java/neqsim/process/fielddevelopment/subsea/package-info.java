@@ -2,15 +2,15 @@
  * Subsea production system modeling for field development workflow.
  *
  * <p>
- * This package provides high-level abstractions for modeling subsea production systems including
- * wells, flowlines, manifolds, and gathering networks. It integrates with the tieback analysis and
- * economics framework for end-to-end field development studies.
+ * This package provides high-level abstractions for modeling subsea production systems including wells, flowlines,
+ * manifolds, and gathering networks. It integrates with the tieback analysis and economics framework for end-to-end
+ * field development studies.
  * </p>
  *
  * <h2>Key Classes</h2>
  * <ul>
- * <li>{@link neqsim.process.fielddevelopment.subsea.SubseaProductionSystem} - Main orchestrator for
- * subsea system modeling</li>
+ * <li>{@link neqsim.process.fielddevelopment.subsea.SubseaProductionSystem} - Main orchestrator for subsea system
+ * modeling</li>
  * </ul>
  *
  * <h2>Architecture Types Supported</h2>

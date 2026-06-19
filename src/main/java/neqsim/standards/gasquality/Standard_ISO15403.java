@@ -24,8 +24,7 @@ public class Standard_ISO15403 extends neqsim.standards.Standard {
    * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
    */
   public Standard_ISO15403(SystemInterface thermoSystem) {
-    super("Standard_ISO15403",
-        "Natural gas — Natural gas for use as a compressed fuel for vehicles", thermoSystem);
+    super("Standard_ISO15403", "Natural gas — Natural gas for use as a compressed fuel for vehicles", thermoSystem);
   }
 
   private double getMolefraction(String name) {
@@ -39,10 +38,9 @@ public class Standard_ISO15403 extends neqsim.standards.Standard {
   /** {@inheritDoc} */
   @Override
   public void calculate() {
-    MON = 137.78 * getMolefraction("methane") + 29.948 * getMolefraction("ethane")
-        - 18.193 * getMolefraction("propane")
-        - 167.062 * (getMolefraction("n-butane") + getMolefraction("i-butane"))
-        + 181.233 * getMolefraction("CO2") + 26.944 * getMolefraction("nitrogen");
+    MON = 137.78 * getMolefraction("methane") + 29.948 * getMolefraction("ethane") - 18.193 * getMolefraction("propane")
+	- 167.062 * (getMolefraction("n-butane") + getMolefraction("i-butane")) + 181.233 * getMolefraction("CO2")
+	+ 26.944 * getMolefraction("nitrogen");
 
     NM = 1.445 * MON - 103.42;
   }
@@ -55,8 +53,8 @@ public class Standard_ISO15403 extends neqsim.standards.Standard {
     } else if (returnParameter.equals("NM")) {
       return NM;
     } else {
-      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "getValue",
-          "returnParameter", "parameter not supported"));
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "getValue", "returnParameter",
+	  "parameter not supported"));
     }
   }
 

@@ -22,10 +22,10 @@ public interface EosMixingRulesInterface extends MixingRulesInterface {
    * calcA.
    * </p>
    *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase       a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param temperature a double
-   * @param pressure a double
-   * @param numbcomp a int
+   * @param pressure    a double
+   * @param numbcomp    a int
    * @return a double
    */
   double calcA(PhaseInterface phase, double temperature, double pressure, int numbcomp);
@@ -35,10 +35,10 @@ public interface EosMixingRulesInterface extends MixingRulesInterface {
    * calcB.
    * </p>
    *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase       a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param temperature a double
-   * @param pressure a double
-   * @param numbcomp a int
+   * @param pressure    a double
+   * @param numbcomp    a int
    * @return a double
    */
   double calcB(PhaseInterface phase, double temperature, double pressure, int numbcomp);
@@ -48,70 +48,66 @@ public interface EosMixingRulesInterface extends MixingRulesInterface {
    * calcAi.
    * </p>
    *
-   * @param compnumb a int
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param compnumb    a int
+   * @param phase       a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param temperature a double
-   * @param pressure a double
-   * @param numbcomp a int
+   * @param pressure    a double
+   * @param numbcomp    a int
    * @return a double
    */
-  double calcAi(int compnumb, PhaseInterface phase, double temperature, double pressure,
-      int numbcomp);
+  double calcAi(int compnumb, PhaseInterface phase, double temperature, double pressure, int numbcomp);
 
   /**
    * <p>
    * calcBi.
    * </p>
    *
-   * @param compnumb a int
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param compnumb    a int
+   * @param phase       a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param temperature a double
-   * @param pressure a double
-   * @param numbcomp a int
+   * @param pressure    a double
+   * @param numbcomp    a int
    * @return a double
    */
-  double calcBi(int compnumb, PhaseInterface phase, double temperature, double pressure,
-      int numbcomp);
+  double calcBi(int compnumb, PhaseInterface phase, double temperature, double pressure, int numbcomp);
 
   /**
    * <p>
    * calcBij.
    * </p>
    *
-   * @param compnumb a int
-   * @param j a int
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param compnumb    a int
+   * @param j           a int
+   * @param phase       a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param temperature a double
-   * @param pressure a double
-   * @param numbcomp a int
+   * @param pressure    a double
+   * @param numbcomp    a int
    * @return a double
    */
-  double calcBij(int compnumb, int j, PhaseInterface phase, double temperature, double pressure,
-      int numbcomp);
+  double calcBij(int compnumb, int j, PhaseInterface phase, double temperature, double pressure, int numbcomp);
 
   /**
    * <p>
    * calcAij.
    * </p>
    *
-   * @param compnumb a int
-   * @param j a int
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param compnumb    a int
+   * @param j           a int
+   * @param phase       a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param temperature a double
-   * @param pressure a double
-   * @param numbcomp a int
+   * @param pressure    a double
+   * @param numbcomp    a int
    * @return a double
    */
-  double calcAij(int compnumb, int j, PhaseInterface phase, double temperature, double pressure,
-      int numbcomp);
+  double calcAij(int compnumb, int j, PhaseInterface phase, double temperature, double pressure, int numbcomp);
 
   /**
    * <p>
    * setBinaryInteractionParameterji.
    * </p>
    *
-   * @param i a int
-   * @param j a int
+   * @param i     a int
+   * @param j     a int
    * @param value a double
    */
   public void setBinaryInteractionParameterji(int i, int j, double value);
@@ -121,10 +117,10 @@ public interface EosMixingRulesInterface extends MixingRulesInterface {
    * calcAT.
    * </p>
    *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase       a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param temperature a double
-   * @param pressure a double
-   * @param numbcomp a int
+   * @param pressure    a double
+   * @param numbcomp    a int
    * @return a double
    */
   public double calcAT(PhaseInterface phase, double temperature, double pressure, int numbcomp);
@@ -134,10 +130,10 @@ public interface EosMixingRulesInterface extends MixingRulesInterface {
    * calcATT.
    * </p>
    *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase       a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param temperature a double
-   * @param pressure a double
-   * @param numbcomp a int
+   * @param pressure    a double
+   * @param numbcomp    a int
    * @return a double
    */
   public double calcATT(PhaseInterface phase, double temperature, double pressure, int numbcomp);
@@ -147,23 +143,22 @@ public interface EosMixingRulesInterface extends MixingRulesInterface {
    * calcAiT.
    * </p>
    *
-   * @param compNumb a int
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param compNumb    a int
+   * @param phase       a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param temperature a double
-   * @param pressure a double
-   * @param numbcomp a int
+   * @param pressure    a double
+   * @param numbcomp    a int
    * @return a double
    */
-  public double calcAiT(int compNumb, PhaseInterface phase, double temperature, double pressure,
-      int numbcomp);
+  public double calcAiT(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp);
 
   /**
    * <p>
    * setBinaryInteractionParameter.
    * </p>
    *
-   * @param i a int
-   * @param j a int
+   * @param i     a int
+   * @param j     a int
    * @param value a double
    */
   public void setBinaryInteractionParameter(int i, int j, double value);
@@ -184,8 +179,8 @@ public interface EosMixingRulesInterface extends MixingRulesInterface {
    * setBinaryInteractionParameterT1.
    * </p>
    *
-   * @param i a int
-   * @param j a int
+   * @param i     a int
+   * @param j     a int
    * @param value a double
    */
   public void setBinaryInteractionParameterT1(int i, int j, double value);
@@ -233,8 +228,8 @@ public interface EosMixingRulesInterface extends MixingRulesInterface {
    * setBinaryInteractionParameterij.
    * </p>
    *
-   * @param i a int
-   * @param j a int
+   * @param i     a int
+   * @param j     a int
    * @param value a double
    */
   public void setBinaryInteractionParameterij(int i, int j, double value);

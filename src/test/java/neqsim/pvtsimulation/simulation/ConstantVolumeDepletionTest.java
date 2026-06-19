@@ -35,11 +35,10 @@ public class ConstantVolumeDepletionTest {
 
     ConstantVolumeDepletion CVDsim = new ConstantVolumeDepletion(tempSystem);
     CVDsim.setTemperature(315.0);
-    CVDsim.setPressures(new double[] {400, 300.0, 200.0, 150.0, 100.0, 50.0});
+    CVDsim.setPressures(new double[] { 400, 300.0, 200.0, 150.0, 100.0, 50.0 });
     CVDsim.runCalc();
-    CVDsim.setTemperaturesAndPressures(new double[] {313, 313, 313, 313},
-        new double[] {400, 300.0, 200.0, 100.0});
-    double[][] expData = {{0.95, 0.99, 1.0, 1.1}};
+    CVDsim.setTemperaturesAndPressures(new double[] { 313, 313, 313, 313 }, new double[] { 400, 300.0, 200.0, 100.0 });
+    double[][] expData = { { 0.95, 0.99, 1.0, 1.1 } };
     CVDsim.setExperimentalData(expData);
     assertEquals(2.28906918375221, CVDsim.getRelativeVolume()[4], 0.001);
   }
@@ -59,8 +58,7 @@ public class ConstantVolumeDepletionTest {
 
     ConstantVolumeDepletion CVDsim = new ConstantVolumeDepletion(fluid1);
     CVDsim.setTemperature(90.0, "C");
-    CVDsim.setPressures(
-        new double[] {200.0, 154.0, 139.0, 127.0, 117.0, 108.0, 91.0, 82.0, 62.0, 38.0});
+    CVDsim.setPressures(new double[] { 200.0, 154.0, 139.0, 127.0, 117.0, 108.0, 91.0, 82.0, 62.0, 38.0 });
     CVDsim.runCalc();
     CVDsim.getThermoSystem().initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
     double gasdens = CVDsim.getThermoSystem().getPhase("gas").getDensity("kg/m3");

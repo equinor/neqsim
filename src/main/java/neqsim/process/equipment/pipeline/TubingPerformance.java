@@ -12,9 +12,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Tubing Performance model for vertical lift performance (VLP) calculations.
  *
  * <p>
- * This class provides GAP-level VLP modeling capabilities with multiple multiphase flow
- * correlations and temperature models for wellbore flow. It calculates pressure drop in production
- * tubing accounting for gravity, friction, and acceleration.
+ * This class provides GAP-level VLP modeling capabilities with multiple multiphase flow correlations and temperature
+ * models for wellbore flow. It calculates pressure drop in production tubing accounting for gravity, friction, and
+ * acceleration.
  * </p>
  *
  * <h2>VLP Correlations</h2>
@@ -121,7 +121,7 @@ public class TubingPerformance extends Pipeline {
   /**
    * Constructor with inlet stream.
    *
-   * @param name equipment name
+   * @param name        equipment name
    * @param inletStream inlet stream
    */
   public TubingPerformance(String name, StreamInterface inletStream) {
@@ -163,22 +163,22 @@ public class TubingPerformance extends Pipeline {
    * Calculate pressure drop using selected correlation.
    *
    * @param system thermodynamic system
-   * @param ops thermodynamic operations
+   * @param ops    thermodynamic operations
    * @return pressure drop in bar
    */
   private double calculatePressureDrop(SystemInterface system, ThermodynamicOperations ops) {
     switch (correlationType) {
-      case HAGEDORN_BROWN:
-        return calculateHagedornBrown(system, ops);
-      case GRAY:
-        return calculateGray(system, ops);
-      case HASAN_KABIR:
-        return calculateHasanKabir(system, ops);
-      case DUNS_ROS:
-        return calculateDunsRos(system, ops);
-      case BEGGS_BRILL:
-      default:
-        return calculateBeggsBrill(system, ops);
+    case HAGEDORN_BROWN:
+      return calculateHagedornBrown(system, ops);
+    case GRAY:
+      return calculateGray(system, ops);
+    case HASAN_KABIR:
+      return calculateHasanKabir(system, ops);
+    case DUNS_ROS:
+      return calculateDunsRos(system, ops);
+    case BEGGS_BRILL:
+    default:
+      return calculateBeggsBrill(system, ops);
     }
   }
 
@@ -186,7 +186,7 @@ public class TubingPerformance extends Pipeline {
    * Calculate pressure drop using Beggs-Brill correlation.
    *
    * @param system thermodynamic system
-   * @param ops thermodynamic operations
+   * @param ops    thermodynamic operations
    * @return pressure drop in bar
    */
   private double calculateBeggsBrill(SystemInterface system, ThermodynamicOperations ops) {
@@ -224,8 +224,7 @@ public class TubingPerformance extends Pipeline {
       double nFr = vm * vm / (ThermodynamicConstantsInterface.gravity * diameter);
 
       // Liquid velocity number
-      double nLv =
-          vsL * Math.pow(rhoL / (ThermodynamicConstantsInterface.gravity * sigma + 1e-10), 0.25);
+      double nLv = vsL * Math.pow(rhoL / (ThermodynamicConstantsInterface.gravity * sigma + 1e-10), 0.25);
 
       // Determine flow pattern and holdup
       double holdup = calculateBeggsBrillHoldup(lambdaL, nFr, inclination);
@@ -250,15 +249,15 @@ public class TubingPerformance extends Pipeline {
       // Update pressure for next segment
       currentPressure -= dpSegment;
       if (currentPressure < 1.0) {
-        currentPressure = 1.0;
+	currentPressure = 1.0;
       }
       workingSystem.setPressure(currentPressure, "bara");
 
       // Update temperature if using gradient
       if (temperatureModel != TemperatureModel.ISOTHERMAL) {
-        double depth = length - (i + 1) * segmentLength;
-        double temp = calculateTemperatureAtDepth(depth);
-        workingSystem.setTemperature(temp, "C");
+	double depth = length - (i + 1) * segmentLength;
+	double temp = calculateTemperatureAtDepth(depth);
+	workingSystem.setTemperature(temp, "C");
       }
     }
 
@@ -269,8 +268,8 @@ public class TubingPerformance extends Pipeline {
    * Calculate Beggs-Brill liquid holdup.
    *
    * @param lambdaL input liquid fraction
-   * @param nFr Froude number
-   * @param angle inclination angle (degrees from horizontal)
+   * @param nFr     Froude number
+   * @param angle   inclination angle (degrees from horizontal)
    * @return liquid holdup
    */
   private double calculateBeggsBrillHoldup(double lambdaL, double nFr, double angle) {
@@ -303,10 +302,10 @@ public class TubingPerformance extends Pipeline {
     if (sinBeta >= 0) {
       // Uphill flow
       double nLv = 1.0; // simplified
-      double C = (1.0 - lambdaL) * Math
-          .log(2.96 * Math.pow(lambdaL, 0.305) * Math.pow(nFr, 0.0978) * Math.pow(nLv, 0.0609));
+      double C = (1.0 - lambdaL)
+	  * Math.log(2.96 * Math.pow(lambdaL, 0.305) * Math.pow(nFr, 0.0978) * Math.pow(nLv, 0.0609));
       if (C < 0) {
-        C = 0;
+	C = 0;
       }
       psi = 1.0 + C * (sinBeta - 0.333 * Math.pow(sinBeta, 3));
     } else {
@@ -329,7 +328,7 @@ public class TubingPerformance extends Pipeline {
    * Calculate pressure drop using Hagedorn-Brown correlation.
    *
    * @param system thermodynamic system
-   * @param ops thermodynamic operations
+   * @param ops    thermodynamic operations
    * @return pressure drop in bar
    */
   private double calculateHagedornBrown(SystemInterface system, ThermodynamicOperations ops) {
@@ -345,10 +344,10 @@ public class TubingPerformance extends Pipeline {
     for (int i = 0; i < numberOfSegments; i++) {
       ops = new ThermodynamicOperations(workingSystem);
       try {
-        ops.TPflash();
+	ops.TPflash();
       } catch (Exception e) {
-        // If flash fails, use properties from previous segment
-        logger.warn("TPflash failed in segment " + i + ", using previous properties");
+	// If flash fails, use properties from previous segment
+	logger.warn("TPflash failed in segment " + i + ", using previous properties");
       }
 
       double rhoL = workingSystem.getPhase(1).getDensity("kg/m3");
@@ -357,13 +356,13 @@ public class TubingPerformance extends Pipeline {
 
       // Check for invalid values
       if (Double.isNaN(rhoL) || Double.isNaN(rhoG) || rhoL <= 0 || rhoG <= 0) {
-        logger.warn("Invalid density in segment " + i + ", using simplified calculation");
-        // Use a simplified single-phase approach
-        rhoL = 800.0; // Default liquid density
-        rhoG = workingSystem.getDensity("kg/m3");
-        if (Double.isNaN(rhoG) || rhoG <= 0) {
-          rhoG = 50.0; // Default gas density
-        }
+	logger.warn("Invalid density in segment " + i + ", using simplified calculation");
+	// Use a simplified single-phase approach
+	rhoL = 800.0; // Default liquid density
+	rhoG = workingSystem.getDensity("kg/m3");
+	if (Double.isNaN(rhoG) || rhoG <= 0) {
+	  rhoG = 50.0; // Default gas density
+	}
       }
 
       double area = Math.PI * diameter * diameter / 4.0;
@@ -391,7 +390,7 @@ public class TubingPerformance extends Pipeline {
 
       currentPressure -= dpSegment;
       if (currentPressure < 1.0) {
-        currentPressure = 1.0;
+	currentPressure = 1.0;
       }
       workingSystem.setPressure(currentPressure, "bara");
     }
@@ -402,16 +401,15 @@ public class TubingPerformance extends Pipeline {
   /**
    * Calculate Hagedorn-Brown holdup.
    *
-   * @param vsL superficial liquid velocity (m/s)
-   * @param vsG superficial gas velocity (m/s)
+   * @param vsL  superficial liquid velocity (m/s)
+   * @param vsG  superficial gas velocity (m/s)
    * @param rhoL liquid density (kg/m³)
    * @param rhoG gas density (kg/m³)
-   * @param muL liquid viscosity (Pa·s)
-   * @param d pipe diameter (m)
+   * @param muL  liquid viscosity (Pa·s)
+   * @param d    pipe diameter (m)
    * @return liquid holdup fraction (dimensionless)
    */
-  private double calculateHBHoldup(double vsL, double vsG, double rhoL, double rhoG, double muL,
-      double d) {
+  private double calculateHBHoldup(double vsL, double vsG, double rhoL, double rhoG, double muL, double d) {
     double vm = vsL + vsG;
     double lambdaL = vsL / (vm + 1e-10);
 
@@ -422,8 +420,7 @@ public class TubingPerformance extends Pipeline {
     double nGv = 1.938 * vsG * Math.pow(rhoL / 72.0, 0.25);
 
     // Dimensionless holdup
-    double a = -0.10306 + 0.61777 * Math.log10(nLv + 1) + 0.63295 * Math.log10(nD)
-        - 0.29598 * Math.log10(nL * nLv + 1);
+    double a = -0.10306 + 0.61777 * Math.log10(nLv + 1) + 0.63295 * Math.log10(nD) - 0.29598 * Math.log10(nL * nLv + 1);
     double holdup = Math.pow(10, a);
 
     if (holdup > 1.0) {
@@ -440,7 +437,7 @@ public class TubingPerformance extends Pipeline {
    * Calculate pressure drop using Gray correlation (gas wells).
    *
    * @param system thermodynamic system
-   * @param ops thermodynamic operations
+   * @param ops    thermodynamic operations
    * @return pressure drop in bar
    */
   private double calculateGray(SystemInterface system, ThermodynamicOperations ops) {
@@ -471,7 +468,7 @@ public class TubingPerformance extends Pipeline {
       // Simplified Gray holdup - assumes mist flow dominance
       double holdup = lambdaL * 1.2; // Gray adjustment for entrainment
       if (holdup > 1.0) {
-        holdup = 1.0;
+	holdup = 1.0;
       }
 
       double rhoM = holdup * rhoL + (1 - holdup) * rhoG;
@@ -489,7 +486,7 @@ public class TubingPerformance extends Pipeline {
 
       currentPressure -= dpSegment;
       if (currentPressure < 1.0) {
-        currentPressure = 1.0;
+	currentPressure = 1.0;
       }
       workingSystem.setPressure(currentPressure, "bara");
     }
@@ -501,7 +498,7 @@ public class TubingPerformance extends Pipeline {
    * Calculate pressure drop using Hasan-Kabir mechanistic model.
    *
    * @param system thermodynamic system
-   * @param ops thermodynamic operations
+   * @param ops    thermodynamic operations
    * @return pressure drop in bar
    */
   private double calculateHasanKabir(SystemInterface system, ThermodynamicOperations ops) {
@@ -529,22 +526,22 @@ public class TubingPerformance extends Pipeline {
 
       // Hasan-Kabir uses drift-flux model
       double C0 = 1.2; // Distribution coefficient
-      double vd = 1.53 * Math.pow(
-          ThermodynamicConstantsInterface.gravity * sigma * (rhoL - rhoG) / (rhoL * rhoL + 1e-10),
-          0.25); // Drift velocity
+      double vd = 1.53
+	  * Math.pow(ThermodynamicConstantsInterface.gravity * sigma * (rhoL - rhoG) / (rhoL * rhoL + 1e-10), 0.25); // Drift
+														     // velocity
 
       double lambdaL = vsL / (vm + 1e-10);
       double holdup;
       if (vsG < 0.001) {
-        holdup = 1.0;
+	holdup = 1.0;
       } else {
-        holdup = 1 - vsG / (C0 * vm + vd);
-        if (holdup < 0) {
-          holdup = lambdaL;
-        }
-        if (holdup > 1) {
-          holdup = 1.0;
-        }
+	holdup = 1 - vsG / (C0 * vm + vd);
+	if (holdup < 0) {
+	  holdup = lambdaL;
+	}
+	if (holdup > 1) {
+	  holdup = 1.0;
+	}
       }
 
       double rhoM = holdup * rhoL + (1 - holdup) * rhoG;
@@ -562,7 +559,7 @@ public class TubingPerformance extends Pipeline {
 
       currentPressure -= dpSegment;
       if (currentPressure < 1.0) {
-        currentPressure = 1.0;
+	currentPressure = 1.0;
       }
       workingSystem.setPressure(currentPressure, "bara");
     }
@@ -574,7 +571,7 @@ public class TubingPerformance extends Pipeline {
    * Calculate pressure drop using Duns-Ros correlation.
    *
    * @param system thermodynamic system
-   * @param ops thermodynamic operations
+   * @param ops    thermodynamic operations
    * @return pressure drop in bar
    */
   private double calculateDunsRos(SystemInterface system, ThermodynamicOperations ops) {
@@ -612,10 +609,10 @@ public class TubingPerformance extends Pipeline {
       // Simplified holdup
       double holdup = lambdaL * (1 + 0.3 * nGv / (nLv + 1));
       if (holdup > 1) {
-        holdup = 1.0;
+	holdup = 1.0;
       }
       if (holdup < lambdaL) {
-        holdup = lambdaL;
+	holdup = lambdaL;
       }
 
       double rhoM = holdup * rhoL + (1 - holdup) * rhoG;
@@ -632,7 +629,7 @@ public class TubingPerformance extends Pipeline {
 
       currentPressure -= dpSegment;
       if (currentPressure < 1.0) {
-        currentPressure = 1.0;
+	currentPressure = 1.0;
       }
       workingSystem.setPressure(currentPressure, "bara");
     }
@@ -643,9 +640,9 @@ public class TubingPerformance extends Pipeline {
   /**
    * Calculate Darcy friction factor using Colebrook-White equation.
    *
-   * @param Re Reynolds number
+   * @param Re  Reynolds number
    * @param eps absolute roughness (m)
-   * @param d diameter (m)
+   * @param d   diameter (m)
    * @return Darcy friction factor
    */
   private double calculateFrictionFactor(double Re, double eps, double d) {
@@ -669,15 +666,15 @@ public class TubingPerformance extends Pipeline {
    */
   private double calculateOutletTemperature(double inletTemp) {
     switch (temperatureModel) {
-      case LINEAR_GRADIENT:
-        return surfaceTemperature;
-      case RAMEY:
-        return calculateRameyTemperature(inletTemp);
-      case HASAN_KABIR:
-        return calculateHKTemperature(inletTemp);
-      case ISOTHERMAL:
-      default:
-        return inletTemp;
+    case LINEAR_GRADIENT:
+      return surfaceTemperature;
+    case RAMEY:
+      return calculateRameyTemperature(inletTemp);
+    case HASAN_KABIR:
+      return calculateHKTemperature(inletTemp);
+    case ISOTHERMAL:
+    default:
+      return inletTemp;
     }
   }
 
@@ -689,13 +686,13 @@ public class TubingPerformance extends Pipeline {
    */
   private double calculateTemperatureAtDepth(double depth) {
     switch (temperatureModel) {
-      case LINEAR_GRADIENT:
-        return surfaceTemperature + (bottomholeTemperature - surfaceTemperature) * depth / length;
-      case RAMEY:
-        return surfaceTemperature + geothermalGradient * depth;
-      case ISOTHERMAL:
-      default:
-        return bottomholeTemperature;
+    case LINEAR_GRADIENT:
+      return surfaceTemperature + (bottomholeTemperature - surfaceTemperature) * depth / length;
+    case RAMEY:
+      return surfaceTemperature + geothermalGradient * depth;
+    case ISOTHERMAL:
+    default:
+      return bottomholeTemperature;
     }
   }
 
@@ -716,8 +713,7 @@ public class TubingPerformance extends Pipeline {
     double Tgeo = surfaceTemperature + geothermalGradient * length;
 
     // Time function f(t)
-    double tD = formationThermalConductivity * productionTime * 86400
-        / (2.0 * 1000.0 * diameter * diameter);
+    double tD = formationThermalConductivity * productionTime * 86400 / (2.0 * 1000.0 * diameter * diameter);
     double ft = Math.log(2 * Math.sqrt(tD)) - 0.29;
 
     // Outlet temperature
@@ -780,29 +776,28 @@ public class TubingPerformance extends Pipeline {
       double tolerance = 0.5; // bar
 
       for (int iter = 0; iter < 20; iter++) {
-        system.setPressure(bhp, "bara");
+	system.setPressure(bhp, "bara");
 
-        // Create temporary stream
-        neqsim.process.equipment.stream.Stream tempStream =
-            new neqsim.process.equipment.stream.Stream("temp", system);
-        tempStream.setFlowRate(flowRates[i], "MSm3/day");
-        tempStream.run();
+	// Create temporary stream
+	neqsim.process.equipment.stream.Stream tempStream = new neqsim.process.equipment.stream.Stream("temp", system);
+	tempStream.setFlowRate(flowRates[i], "MSm3/day");
+	tempStream.run();
 
-        setInletStream(tempStream);
-        run();
+	setInletStream(tempStream);
+	run();
 
-        double calculatedWHP = getOutletStream().getPressure("bara");
-        double error = calculatedWHP - wellheadPressure;
+	double calculatedWHP = getOutletStream().getPressure("bara");
+	double error = calculatedWHP - wellheadPressure;
 
-        if (Math.abs(error) < tolerance) {
-          break;
-        }
+	if (Math.abs(error) < tolerance) {
+	  break;
+	}
 
-        // Adjust BHP
-        bhp += error * 0.5;
-        if (bhp < wellheadPressure + 1) {
-          bhp = wellheadPressure + 1;
-        }
+	// Adjust BHP
+	bhp += error * 0.5;
+	if (bhp < wellheadPressure + 1) {
+	  bhp = wellheadPressure + 1;
+	}
       }
 
       result[1][i] = bhp;

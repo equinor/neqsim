@@ -20,7 +20,7 @@ public class MEGwaterComplexFlash {
   private static final Logger logger = LogManager.getLogger(MEGwaterComplexFlash.class);
 
   /** Logger object for class. */
-  
+
   /**
    * <p>
    * main.

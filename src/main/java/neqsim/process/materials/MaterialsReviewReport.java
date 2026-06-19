@@ -21,8 +21,7 @@ public class MaterialsReviewReport implements Serializable {
   private static final long serialVersionUID = 1000L;
 
   /** JSON serializer for report output. */
-  private static final Gson GSON =
-      new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+  private static final Gson GSON = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
 
   /** Project or asset name. */
   private String projectName = "materials-review";
@@ -43,8 +42,7 @@ public class MaterialsReviewReport implements Serializable {
    * @return this report for fluent construction
    */
   public MaterialsReviewReport setProjectName(String projectName) {
-    this.projectName =
-        projectName == null || projectName.trim().isEmpty() ? "materials-review" : projectName;
+    this.projectName = projectName == null || projectName.trim().isEmpty() ? "materials-review" : projectName;
     return this;
   }
 
@@ -121,9 +119,9 @@ public class MaterialsReviewReport implements Serializable {
     Set<String> standards = new LinkedHashSet<String>();
     for (MaterialReviewResult result : results) {
       if ("FAIL".equals(result.getVerdict())) {
-        failed++;
+	failed++;
       } else if ("PASS_WITH_WARNINGS".equals(result.getVerdict())) {
-        warnings++;
+	warnings++;
       }
       standards.addAll(result.getStandardsApplied());
       resultMaps.add(result.toMap());

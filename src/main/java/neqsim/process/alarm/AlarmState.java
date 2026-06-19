@@ -28,15 +28,14 @@ public class AlarmState implements Serializable {
   /**
    * Evaluates the alarm state using the supplied configuration and measurement.
    *
-   * @param config alarm configuration
-   * @param value measured value
-   * @param dt simulation time step
+   * @param config      alarm configuration
+   * @param value       measured value
+   * @param dt          simulation time step
    * @param currentTime simulation time of the evaluation
-   * @param source originating measurement name
+   * @param source      originating measurement name
    * @return list of events produced during the evaluation
    */
-  public List<AlarmEvent> evaluate(AlarmConfig config, double value, double dt, double currentTime,
-      String source) {
+  public List<AlarmEvent> evaluate(AlarmConfig config, double value, double dt, double currentTime, String source) {
     updateLast(value, currentTime);
 
     // Check shelve expiry
@@ -63,8 +62,8 @@ public class AlarmState implements Serializable {
       pendingLevel = null;
       pendingTimer = 0.0;
       if (activeLevel != null && isClearedByValue(config, value, activeLevel)) {
-        events.add(AlarmEvent.cleared(source, activeLevel, currentTime, value));
-        clearActiveInternal();
+	events.add(AlarmEvent.cleared(source, activeLevel, currentTime, value));
+	clearActiveInternal();
       }
       return events;
     }
@@ -87,12 +86,12 @@ public class AlarmState implements Serializable {
     } else if (comparison < 0) {
       // Attempting to transition to a lower severity
       if (isClearedByValue(config, value, activeLevel)) {
-        events.add(AlarmEvent.cleared(source, activeLevel, currentTime, value));
-        clearActiveInternal();
-        handlePending(config, candidate, dt, currentTime, source, events);
+	events.add(AlarmEvent.cleared(source, activeLevel, currentTime, value));
+	clearActiveInternal();
+	handlePending(config, candidate, dt, currentTime, source, events);
       } else {
-        pendingLevel = null;
-        pendingTimer = 0.0;
+	pendingLevel = null;
+	pendingTimer = 0.0;
       }
     } else {
       pendingLevel = null;
@@ -102,8 +101,8 @@ public class AlarmState implements Serializable {
     return events;
   }
 
-  private void handlePending(AlarmConfig config, AlarmLevel candidate, double dt,
-      double currentTime, String source, List<AlarmEvent> events) {
+  private void handlePending(AlarmConfig config, AlarmLevel candidate, double dt, double currentTime, String source,
+      List<AlarmEvent> events) {
     if (pendingLevel != candidate) {
       pendingLevel = candidate;
       pendingTimer = 0.0;
@@ -111,7 +110,7 @@ public class AlarmState implements Serializable {
     pendingTimer += Math.max(0.0, dt);
     if (pendingTimer >= config.getDelay()) {
       if (activeLevel != null) {
-        events.add(AlarmEvent.cleared(source, activeLevel, currentTime, lastValue));
+	events.add(AlarmEvent.cleared(source, activeLevel, currentTime, lastValue));
       }
       activeLevel = candidate;
       acknowledged = false;
@@ -140,16 +139,16 @@ public class AlarmState implements Serializable {
   private boolean isClearedByValue(AlarmConfig config, double value, AlarmLevel level) {
     double deadband = config.getDeadband();
     switch (level) {
-      case HIHI:
-        return config.getHighHighLimit() == null || value <= config.getHighHighLimit() - deadband;
-      case HI:
-        return config.getHighLimit() == null || value <= config.getHighLimit() - deadband;
-      case LOLO:
-        return config.getLowLowLimit() == null || value >= config.getLowLowLimit() + deadband;
-      case LO:
-        return config.getLowLimit() == null || value >= config.getLowLimit() + deadband;
-      default:
-        return true;
+    case HIHI:
+      return config.getHighHighLimit() == null || value <= config.getHighHighLimit() - deadband;
+    case HI:
+      return config.getHighLimit() == null || value <= config.getHighLimit() - deadband;
+    case LOLO:
+      return config.getLowLowLimit() == null || value >= config.getLowLowLimit() + deadband;
+    case LO:
+      return config.getLowLimit() == null || value >= config.getLowLimit() + deadband;
+    default:
+      return true;
     }
   }
 
@@ -202,8 +201,7 @@ public class AlarmState implements Serializable {
   }
 
   /**
-   * Returns the last measured value supplied to
-   * {@link #evaluate(AlarmConfig, double, double, double, String)}.
+   * Returns the last measured value supplied to {@link #evaluate(AlarmConfig, double, double, double, String)}.
    *
    * @return last measured value
    */
@@ -223,7 +221,7 @@ public class AlarmState implements Serializable {
   /**
    * Acknowledges the active alarm if one exists.
    *
-   * @param source name of the originating measurement
+   * @param source      name of the originating measurement
    * @param currentTime simulation time
    * @return acknowledgement event, or {@code null} if nothing was acknowledged
    */
@@ -236,8 +234,7 @@ public class AlarmState implements Serializable {
   }
 
   /**
-   * Creates a snapshot description of the currently active alarm, or {@code null} if there is no
-   * active alarm.
+   * Creates a snapshot description of the currently active alarm, or {@code null} if there is no active alarm.
    *
    * @param source name of originating measurement
    * @return snapshot or {@code null}
@@ -250,8 +247,8 @@ public class AlarmState implements Serializable {
   }
 
   /**
-   * Shelves (suppresses) this alarm point indefinitely. While shelved, no alarm events are
-   * generated during evaluation. The underlying measurement continues to be tracked.
+   * Shelves (suppresses) this alarm point indefinitely. While shelved, no alarm events are generated during evaluation.
+   * The underlying measurement continues to be tracked.
    *
    * @param reason operator-provided reason for shelving
    */
@@ -262,10 +259,10 @@ public class AlarmState implements Serializable {
   }
 
   /**
-   * Shelves this alarm point until the specified simulation time. After expiry, normal alarm
-   * evaluation resumes automatically.
+   * Shelves this alarm point until the specified simulation time. After expiry, normal alarm evaluation resumes
+   * automatically.
    *
-   * @param reason operator-provided reason for shelving
+   * @param reason     operator-provided reason for shelving
    * @param expiryTime simulation time when shelving expires
    */
   public void shelve(String reason, double expiryTime) {

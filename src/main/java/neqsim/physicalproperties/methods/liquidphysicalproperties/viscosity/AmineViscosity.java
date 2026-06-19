@@ -8,17 +8,16 @@ import neqsim.physicalproperties.system.PhysicalProperties;
  * Calculates the viscosity of aqueous amine solutions (MEA, DEA, MDEA, aMDEA).
  *
  * <p>
- * Uses published correlations from Weiland et al. (1998) for CO2-loaded solutions and Teng et al.
- * (1994) for MDEA. Supports single amines and activated MDEA blends (MDEA + piperazine).
+ * Uses published correlations from Weiland et al. (1998) for CO2-loaded solutions and Teng et al. (1994) for MDEA.
+ * Supports single amines and activated MDEA blends (MDEA + piperazine).
  * </p>
  *
  * <p>
  * References:
  * </p>
  * <ul>
- * <li>Weiland, R.H., Dingman, J.C., Cronin, D.B., Browning, G.J. (1998). Density, Viscosity, and
- * Surface Tension of Partially Carbonated Aqueous Alkanolamine Solutions. J. Chem. Eng. Data, 43,
- * 378-382.</li>
+ * <li>Weiland, R.H., Dingman, J.C., Cronin, D.B., Browning, G.J. (1998). Density, Viscosity, and Surface Tension of
+ * Partially Carbonated Aqueous Alkanolamine Solutions. J. Chem. Eng. Data, 43, 378-382.</li>
  * <li>Teng, T.T., Maham, Y., Hepler, L.G., Mather, A.E. (1994). Viscosity of Aqueous Solutions of
  * N-Methyldiethanolamine and of Diethanolamine. J. Chem. Eng. Data, 39, 290-293.</li>
  * </ul>
@@ -66,21 +65,21 @@ public class AmineViscosity extends Viscosity {
     double viscosity;
 
     switch (type) {
-      case MEA:
-        viscosity = calcMEAViscosity(T);
-        break;
-      case DEA:
-        viscosity = calcDEAViscosity(T);
-        break;
-      case MDEA:
-        viscosity = calcMDEAViscosity(T);
-        break;
-      case AMDEA:
-        viscosity = calcAMDEAViscosity(T);
-        break;
-      default:
-        viscosity = calcMDEAViscosity(T);
-        break;
+    case MEA:
+      viscosity = calcMEAViscosity(T);
+      break;
+    case DEA:
+      viscosity = calcDEAViscosity(T);
+      break;
+    case MDEA:
+      viscosity = calcMDEAViscosity(T);
+      break;
+    case AMDEA:
+      viscosity = calcAMDEAViscosity(T);
+      break;
+    default:
+      viscosity = calcMDEAViscosity(T);
+      break;
     }
 
     return viscosity;
@@ -128,22 +127,20 @@ public class AmineViscosity extends Viscosity {
    * Gets the effective weight fraction of an amine, including its protonated form.
    *
    * @param amineName the neutral amine name (e.g., "MEA")
-   * @param ionName the protonated ion name (e.g., "MEA+")
+   * @param ionName   the protonated ion name (e.g., "MEA+")
    * @return the combined weight fraction of amine + ion
    */
   private double getAmineWtFrac(String amineName, String ionName) {
     double wtFrac = 0.0;
     try {
       wtFrac += liquidPhase.getPhase().getComponent(amineName).getx()
-          * liquidPhase.getPhase().getComponent(amineName).getMolarMass()
-          / liquidPhase.getPhase().getMolarMass();
+	  * liquidPhase.getPhase().getComponent(amineName).getMolarMass() / liquidPhase.getPhase().getMolarMass();
     } catch (Exception e) {
       // component not present
     }
     try {
       wtFrac += liquidPhase.getPhase().getComponent(ionName).getx()
-          * liquidPhase.getPhase().getComponent(ionName).getMolarMass()
-          / liquidPhase.getPhase().getMolarMass();
+	  * liquidPhase.getPhase().getComponent(ionName).getMolarMass() / liquidPhase.getPhase().getMolarMass();
     } catch (Exception e) {
       // component not present
     }
@@ -165,8 +162,8 @@ public class AmineViscosity extends Viscosity {
    * Calculates the viscosity of a loaded MEA solution.
    *
    * <p>
-   * Uses the Weiland et al. (1998) correlation for loaded MEA solutions: ln(mu/mu_w) = [(alpha*a +
-   * b)*w/T + (alpha*c + d)*w] * (alpha*e + 1)
+   * Uses the Weiland et al. (1998) correlation for loaded MEA solutions: ln(mu/mu_w) = [(alpha*a + b)*w/T + (alpha*c +
+   * d)*w] * (alpha*e + 1)
    * </p>
    *
    * @param T temperature in Kelvin
@@ -226,8 +223,8 @@ public class AmineViscosity extends Viscosity {
    * Calculates the viscosity of a loaded MDEA solution.
    *
    * <p>
-   * Uses the Teng et al. (1994) correlation for unloaded MDEA. For loaded solutions, applies
-   * Weiland et al. (1998) loading correction via blending.
+   * Uses the Teng et al. (1994) correlation for unloaded MDEA. For loaded solutions, applies Weiland et al. (1998)
+   * loading correction via blending.
    * </p>
    *
    * @param T temperature in Kelvin
@@ -278,15 +275,13 @@ public class AmineViscosity extends Viscosity {
     double wPZ = 0.0;
     try {
       wPZ = liquidPhase.getPhase().getComponent("Piperazine").getx()
-          * liquidPhase.getPhase().getComponent("Piperazine").getMolarMass()
-          / liquidPhase.getPhase().getMolarMass();
+	  * liquidPhase.getPhase().getComponent("Piperazine").getMolarMass() / liquidPhase.getPhase().getMolarMass();
     } catch (Exception e) {
       // no piperazine
     }
     try {
       wPZ += liquidPhase.getPhase().getComponent("Piperazine+").getx()
-          * liquidPhase.getPhase().getComponent("Piperazine+").getMolarMass()
-          / liquidPhase.getPhase().getMolarMass();
+	  * liquidPhase.getPhase().getComponent("Piperazine+").getMolarMass() / liquidPhase.getPhase().getMolarMass();
     } catch (Exception e) {
       // no Piperazine+
     }
@@ -320,7 +315,7 @@ public class AmineViscosity extends Viscosity {
    * </p>
    *
    * @param amineName the neutral amine component name
-   * @param ionName the protonated ion component name
+   * @param ionName   the protonated ion component name
    * @return estimated CO2 loading (dimensionless)
    */
   private double estimateCO2Loading(String amineName, String ionName) {
@@ -329,7 +324,7 @@ public class AmineViscosity extends Viscosity {
       double xIon = liquidPhase.getPhase().getComponent(ionName).getx();
       double totalAmine = xAmine + xIon;
       if (totalAmine < 1.0e-20) {
-        return 0.0;
+	return 0.0;
       }
       return xIon / totalAmine;
     } catch (Exception e) {

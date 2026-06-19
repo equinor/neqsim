@@ -68,7 +68,7 @@ public class AsphalteneOnsetFittingTest extends neqsim.NeqSimTest {
     assertNotNull(function);
 
     // Set initial guess
-    double[] guess = {3500.0, 0.005};
+    double[] guess = { 3500.0, 0.005 };
     function.setInitialGuess(guess);
 
     assertEquals(3500.0, function.getFittingParams(0), 0.01);
@@ -131,7 +131,6 @@ public class AsphalteneOnsetFittingTest extends neqsim.NeqSimTest {
     logger.info("ASPHALTENE ONSET FITTING - WORKFLOW DEMONSTRATION");
     logger.info(StringUtils.repeat("=", 70));
 
-
     logger.info("Step 1: Create fluid system with asphaltene component");
     logger.info("  SystemInterface fluid = new SystemSrkCPAstatoil(373.15, 200.0);");
     logger.info("  fluid.addComponent(\"methane\", 0.30);");
@@ -139,34 +138,27 @@ public class AsphalteneOnsetFittingTest extends neqsim.NeqSimTest {
     logger.info("  fluid.addComponent(\"asphaltene\", 0.05);");
     logger.info("  fluid.setMixingRule(\"classic\");");
 
-
     logger.info("Step 2: Create fitter and add experimental onset data");
     logger.info("  AsphalteneOnsetFitting fitter = new AsphalteneOnsetFitting(fluid);");
     logger.info("  fitter.addOnsetPoint(353.15, 350.0);  // T=353K, P_onset=350 bar");
     logger.info("  fitter.addOnsetPoint(373.15, 320.0);  // T=373K, P_onset=320 bar");
     logger.info("  fitter.addOnsetPoint(393.15, 280.0);  // T=393K, P_onset=280 bar");
 
-
     logger.info("Step 3: Set initial parameter guesses");
     logger.info("  fitter.setInitialGuess(3500.0, 0.005);  // epsilon/R=3500K, kappa=0.005");
-
 
     logger.info("Step 4: Configure pressure search range (optional)");
     logger.info("  fitter.setPressureRange(500.0, 10.0, 10.0);");
 
-
     logger.info("Step 5: Run fitting");
     logger.info("  boolean success = fitter.solve();");
-
 
     logger.info("Step 6: Get fitted parameters");
     logger.info("  double epsilonR = fitter.getFittedAssociationEnergy();");
     logger.info("  double kappa = fitter.getFittedAssociationVolume();");
 
-
     logger.info("Step 7: Use fitted parameters to predict onset at new conditions");
     logger.info("  double onsetP = fitter.calculateOnsetPressure(400.0);  // T=400K");
-
 
     logger.info(StringUtils.repeat("=", 70));
 
@@ -188,7 +180,6 @@ public class AsphalteneOnsetFittingTest extends neqsim.NeqSimTest {
     logger.info(StringUtils.repeat("=", 70));
     logger.info("TYPICAL CPA PARAMETERS FOR ASPHALTENE");
     logger.info(StringUtils.repeat("=", 70));
-
 
     logger.info("Based on literature (Li & Firoozabadi, Vargas et al.):");
 

@@ -43,7 +43,8 @@ public class NewtonRhapson implements java.io.Serializable {
    * Constructor for newtonRhapson.
    * </p>
    */
-  public NewtonRhapson() {}
+  public NewtonRhapson() {
+  }
 
   /**
    * <p>
@@ -151,30 +152,28 @@ public class NewtonRhapson implements java.io.Serializable {
 
       // System.out.println("Z : " + x);
       if (Math.abs(funkValue(xNew)) < Math.abs(funkValue(xNew2))) {
-        x = xNew;
+	x = xNew;
       } else {
-        x = xNew2;
+	x = xNew2;
       }
       if (derivValue(x) * derivValue(x) - 2.0 * funkValue(x) * dubDerivValue(x) > 0) {
-        xNew = x - derivValue(x) / dubDerivValue(x)
-            + Math.sqrt(derivValue(x) * derivValue(x) - 2 * funkValue(x) * dubDerivValue(x))
-                / dubDerivValue(x);
-        xNew2 = x - derivValue(x) / dubDerivValue(x)
-            - Math.sqrt(derivValue(x) * derivValue(x) - 2 * funkValue(x) * dubDerivValue(x))
-                / dubDerivValue(x);
+	xNew = x - derivValue(x) / dubDerivValue(x)
+	    + Math.sqrt(derivValue(x) * derivValue(x) - 2 * funkValue(x) * dubDerivValue(x)) / dubDerivValue(x);
+	xNew2 = x - derivValue(x) / dubDerivValue(x)
+	    - Math.sqrt(derivValue(x) * derivValue(x) - 2 * funkValue(x) * dubDerivValue(x)) / dubDerivValue(x);
       } else {
-        // System.out.println("using first order newton-rhapson...........");
-        xNew = x - funkValue(x) / derivValue(x);
-        xNew2 = xNew;
+	// System.out.println("using first order newton-rhapson...........");
+	xNew = x - funkValue(x) / derivValue(x);
+	xNew2 = xNew;
       }
 
       if (xNew < -0.99) {
-        xNew = -0.99;
-        // System.out.println("x++...........");
+	xNew = -0.99;
+	// System.out.println("x++...........");
       }
       if (xNew > 1.5) {
-        xNew = 1;
-        // System.out.println("x--...........");
+	xNew = 1;
+	// System.out.println("x--...........");
       }
     } while (Math.abs(funkValue(x)) > EPS && iterations <= maxIterations);
 
@@ -228,7 +227,7 @@ public class NewtonRhapson implements java.io.Serializable {
     NewtonRhapson test = new NewtonRhapson();
     test.setOrder(3);
 
-    double[] constants = new double[] {-0.003058, -0.01806, -0.266, -0.2999};
+    double[] constants = new double[] { -0.003058, -0.01806, -0.266, -0.2999 };
     test.setConstants(constants);
 
     System.out.println("val : " + test.funkValue(-0.0));

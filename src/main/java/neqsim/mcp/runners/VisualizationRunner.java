@@ -13,8 +13,8 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * Generates inline visual content (SVG charts, Mermaid diagrams, HTML tables) that can be rendered
- * directly in chat interfaces supporting rich content.
+ * Generates inline visual content (SVG charts, Mermaid diagrams, HTML tables) that can be rendered directly in chat
+ * interfaces supporting rich content.
  *
  * <p>
  * Output types:
@@ -30,13 +30,13 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  */
 public final class VisualizationRunner {
 
-  private static final Gson GSON =
-      new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+  private static final Gson GSON = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
 
   /**
    * Private constructor — all methods are static.
    */
-  private VisualizationRunner() {}
+  private VisualizationRunner() {
+  }
 
   /**
    * Main entry point for visualization generation.
@@ -50,24 +50,23 @@ public final class VisualizationRunner {
       String type = input.has("type") ? input.get("type").getAsString() : "";
 
       switch (type) {
-        case "phaseEnvelope":
-          return generatePhaseEnvelopeSVG(input);
-        case "flowsheet":
-          return generateFlowsheetDiagram(input);
-        case "compressorMap":
-          return generateCompressorMapSVG(input);
-        case "propertyTable":
-          return generateStyledTable(input);
-        case "barChart":
-          return generateBarChartSVG(input);
-        case "pieChart":
-          return generatePieChartSVG(input);
-        case "lineChart":
-          return generateLineChartSVG(input);
-        default:
-          return errorJson("Unknown visualization type: " + type
-              + ". Use: phaseEnvelope, flowsheet, compressorMap, propertyTable, barChart, "
-              + "pieChart, lineChart");
+      case "phaseEnvelope":
+	return generatePhaseEnvelopeSVG(input);
+      case "flowsheet":
+	return generateFlowsheetDiagram(input);
+      case "compressorMap":
+	return generateCompressorMapSVG(input);
+      case "propertyTable":
+	return generateStyledTable(input);
+      case "barChart":
+	return generateBarChartSVG(input);
+      case "pieChart":
+	return generatePieChartSVG(input);
+      case "lineChart":
+	return generateLineChartSVG(input);
+      default:
+	return errorJson("Unknown visualization type: " + type
+	    + ". Use: phaseEnvelope, flowsheet, compressorMap, propertyTable, barChart, " + "pieChart, lineChart");
       }
     } catch (Exception e) {
       return errorJson("Visualization failed: " + e.getMessage());
@@ -81,8 +80,7 @@ public final class VisualizationRunner {
    * @return JSON with SVG string and data points
    */
   private static String generatePhaseEnvelopeSVG(JsonObject input) {
-    JsonObject components =
-        input.has("components") ? input.getAsJsonObject("components") : new JsonObject();
+    JsonObject components = input.has("components") ? input.getAsJsonObject("components") : new JsonObject();
     String model = input.has("model") ? input.get("model").getAsString() : "SRK";
 
     try {
@@ -91,7 +89,7 @@ public final class VisualizationRunner {
       double refPres = 50.0;
       SystemInterface fluid = FlashRunner.createFluid(model, refTemp, refPres);
       for (Map.Entry<String, com.google.gson.JsonElement> entry : components.entrySet()) {
-        fluid.addComponent(entry.getKey(), entry.getValue().getAsDouble());
+	fluid.addComponent(entry.getKey(), entry.getValue().getAsDouble());
       }
       fluid.setMixingRule("classic");
 
@@ -102,7 +100,7 @@ public final class VisualizationRunner {
       // envData[0] = pressure, envData[1] = temperature
 
       if (envData == null || envData.length < 2 || envData[0].length < 3) {
-        return errorJson("Phase envelope calculation returned insufficient data points");
+	return errorJson("Phase envelope calculation returned insufficient data points");
       }
 
       // Find bounds
@@ -113,20 +111,20 @@ public final class VisualizationRunner {
 
       List<double[]> validPoints = new ArrayList<double[]>();
       for (int i = 0; i < envData[0].length; i++) {
-        double p = envData[0][i];
-        double t = envData[1][i] - 273.15; // Convert to Celsius
-        if (!Double.isNaN(p) && !Double.isNaN(t) && !Double.isInfinite(p) && !Double.isInfinite(t)
-            && p > 0 && t > -274) {
-          validPoints.add(new double[] {t, p});
-          minT = Math.min(minT, t);
-          maxT = Math.max(maxT, t);
-          minP = Math.min(minP, p);
-          maxP = Math.max(maxP, p);
-        }
+	double p = envData[0][i];
+	double t = envData[1][i] - 273.15; // Convert to Celsius
+	if (!Double.isNaN(p) && !Double.isNaN(t) && !Double.isInfinite(p) && !Double.isInfinite(t) && p > 0
+	    && t > -274) {
+	  validPoints.add(new double[] { t, p });
+	  minT = Math.min(minT, t);
+	  maxT = Math.max(maxT, t);
+	  minP = Math.min(minP, p);
+	  maxP = Math.max(maxP, p);
+	}
       }
 
       if (validPoints.size() < 3) {
-        return errorJson("Not enough valid phase envelope points");
+	return errorJson("Not enough valid phase envelope points");
       }
 
       // Generate SVG
@@ -165,27 +163,27 @@ public final class VisualizationRunner {
       // Plot phase envelope curve
       svg.append("<polyline points='");
       for (double[] pt : validPoints) {
-        double x = margin + (pt[0] - minT) / (maxT - minT) * plotW;
-        double y = (height - margin) - (pt[1] - minP) / (maxP - minP) * plotH;
-        svg.append(String.format(Locale.US, "%.1f,%.1f ", x, y));
+	double x = margin + (pt[0] - minT) / (maxT - minT) * plotW;
+	double y = (height - margin) - (pt[1] - minP) / (maxP - minP) * plotH;
+	svg.append(String.format(Locale.US, "%.1f,%.1f ", x, y));
       }
       svg.append("' fill='none' stroke='#2196F3' stroke-width='2'/>\n");
 
       // Axis tick labels (5 ticks each)
       for (int i = 0; i <= 4; i++) {
-        double tVal = minT + (maxT - minT) * i / 4.0;
-        double x = margin + plotW * i / 4.0;
-        svg.append("<text x='").append(String.format(Locale.US, "%.0f", x));
-        svg.append("' y='").append(height - margin + 15);
-        svg.append("' text-anchor='middle' font-size='10'>");
-        svg.append(String.format(Locale.US, "%.0f", tVal)).append("</text>\n");
+	double tVal = minT + (maxT - minT) * i / 4.0;
+	double x = margin + plotW * i / 4.0;
+	svg.append("<text x='").append(String.format(Locale.US, "%.0f", x));
+	svg.append("' y='").append(height - margin + 15);
+	svg.append("' text-anchor='middle' font-size='10'>");
+	svg.append(String.format(Locale.US, "%.0f", tVal)).append("</text>\n");
 
-        double pVal = minP + (maxP - minP) * i / 4.0;
-        double y = (height - margin) - plotH * i / 4.0;
-        svg.append("<text x='").append(margin - 5);
-        svg.append("' y='").append(String.format(Locale.US, "%.0f", y + 4));
-        svg.append("' text-anchor='end' font-size='10'>");
-        svg.append(String.format(Locale.US, "%.1f", pVal)).append("</text>\n");
+	double pVal = minP + (maxP - minP) * i / 4.0;
+	double y = (height - margin) - plotH * i / 4.0;
+	svg.append("<text x='").append(margin - 5);
+	svg.append("' y='").append(String.format(Locale.US, "%.0f", y + 4));
+	svg.append("' text-anchor='end' font-size='10'>");
+	svg.append(String.format(Locale.US, "%.1f", pVal)).append("</text>\n");
       }
 
       svg.append("</svg>");
@@ -199,10 +197,10 @@ public final class VisualizationRunner {
 
       JsonArray dataPoints = new JsonArray();
       for (double[] pt : validPoints) {
-        JsonObject dp = new JsonObject();
-        dp.addProperty("temperature_C", pt[0]);
-        dp.addProperty("pressure_bar", pt[1]);
-        dataPoints.add(dp);
+	JsonObject dp = new JsonObject();
+	dp.addProperty("temperature_C", pt[0]);
+	dp.addProperty("pressure_bar", pt[1]);
+	dataPoints.add(dp);
       }
       response.add("dataPoints", dataPoints);
       response.addProperty("pointCount", validPoints.size());
@@ -230,48 +228,48 @@ public final class VisualizationRunner {
       JsonArray equipment = input.getAsJsonArray("equipment");
 
       for (int i = 0; i < equipment.size(); i++) {
-        JsonObject eq = equipment.get(i).getAsJsonObject();
-        String name = eq.has("name") ? eq.get("name").getAsString() : "Unit" + i;
-        String type = eq.has("type") ? eq.get("type").getAsString() : "Equipment";
-        String safeName = name.replaceAll("[^a-zA-Z0-9]", "_");
+	JsonObject eq = equipment.get(i).getAsJsonObject();
+	String name = eq.has("name") ? eq.get("name").getAsString() : "Unit" + i;
+	String type = eq.has("type") ? eq.get("type").getAsString() : "Equipment";
+	String safeName = name.replaceAll("[^a-zA-Z0-9]", "_");
 
-        // Use different shapes for different equipment types
-        String shape = getEquipmentShape(type);
-        mermaid.append("    ").append(safeName).append(shape.replace("NAME", name));
-        mermaid.append("\n");
+	// Use different shapes for different equipment types
+	String shape = getEquipmentShape(type);
+	mermaid.append("    ").append(safeName).append(shape.replace("NAME", name));
+	mermaid.append("\n");
       }
 
       // Add connections if provided
       if (input.has("connections") && input.get("connections").isJsonArray()) {
-        JsonArray connections = input.getAsJsonArray("connections");
-        for (int i = 0; i < connections.size(); i++) {
-          JsonObject conn = connections.get(i).getAsJsonObject();
-          String from = conn.has("from") ? conn.get("from").getAsString() : "";
-          String to = conn.has("to") ? conn.get("to").getAsString() : "";
-          String label = conn.has("label") ? conn.get("label").getAsString() : "";
-          String safeFrom = from.replaceAll("[^a-zA-Z0-9]", "_");
-          String safeTo = to.replaceAll("[^a-zA-Z0-9]", "_");
+	JsonArray connections = input.getAsJsonArray("connections");
+	for (int i = 0; i < connections.size(); i++) {
+	  JsonObject conn = connections.get(i).getAsJsonObject();
+	  String from = conn.has("from") ? conn.get("from").getAsString() : "";
+	  String to = conn.has("to") ? conn.get("to").getAsString() : "";
+	  String label = conn.has("label") ? conn.get("label").getAsString() : "";
+	  String safeFrom = from.replaceAll("[^a-zA-Z0-9]", "_");
+	  String safeTo = to.replaceAll("[^a-zA-Z0-9]", "_");
 
-          if (label.isEmpty()) {
-            mermaid.append("    ").append(safeFrom).append(" --> ").append(safeTo).append("\n");
-          } else {
-            mermaid.append("    ").append(safeFrom).append(" -->|").append(label).append("| ")
-                .append(safeTo).append("\n");
-          }
-        }
+	  if (label.isEmpty()) {
+	    mermaid.append("    ").append(safeFrom).append(" --> ").append(safeTo).append("\n");
+	  } else {
+	    mermaid.append("    ").append(safeFrom).append(" -->|").append(label).append("| ").append(safeTo)
+		.append("\n");
+	  }
+	}
       } else {
-        // Auto-connect sequentially
-        for (int i = 0; i < equipment.size() - 1; i++) {
-          String name1 = equipment.get(i).getAsJsonObject().has("name")
-              ? equipment.get(i).getAsJsonObject().get("name").getAsString()
-              : "Unit" + i;
-          String name2 = equipment.get(i + 1).getAsJsonObject().has("name")
-              ? equipment.get(i + 1).getAsJsonObject().get("name").getAsString()
-              : "Unit" + (i + 1);
-          mermaid.append("    ").append(name1.replaceAll("[^a-zA-Z0-9]", "_"));
-          mermaid.append(" --> ");
-          mermaid.append(name2.replaceAll("[^a-zA-Z0-9]", "_")).append("\n");
-        }
+	// Auto-connect sequentially
+	for (int i = 0; i < equipment.size() - 1; i++) {
+	  String name1 = equipment.get(i).getAsJsonObject().has("name")
+	      ? equipment.get(i).getAsJsonObject().get("name").getAsString()
+	      : "Unit" + i;
+	  String name2 = equipment.get(i + 1).getAsJsonObject().has("name")
+	      ? equipment.get(i + 1).getAsJsonObject().get("name").getAsString()
+	      : "Unit" + (i + 1);
+	  mermaid.append("    ").append(name1.replaceAll("[^a-zA-Z0-9]", "_"));
+	  mermaid.append(" --> ");
+	  mermaid.append(name2.replaceAll("[^a-zA-Z0-9]", "_")).append("\n");
+	}
       }
     }
 
@@ -345,8 +343,7 @@ public final class VisualizationRunner {
     svg.append(escapeXml(yLabel)).append("</text>\n");
 
     // Bars
-    String[] colors =
-        {"#2196F3", "#4CAF50", "#FF9800", "#E91E63", "#9C27B0", "#00BCD4", "#795548", "#607D8B"};
+    String[] colors = { "#2196F3", "#4CAF50", "#FF9800", "#E91E63", "#9C27B0", "#00BCD4", "#795548", "#607D8B" };
 
     for (int i = 0; i < n; i++) {
       double v = vals.get(i);
@@ -390,16 +387,12 @@ public final class VisualizationRunner {
    */
   private static String generateCompressorMapSVG(JsonObject input) {
     double inletFlow = input.has("inletFlow") ? input.get("inletFlow").getAsDouble() : 5000;
-    double outletPressure =
-        input.has("outletPressure") ? input.get("outletPressure").getAsDouble() : 100;
-    double inletPressure = input.has("inletPressure") ? input.get("inletPressure").getAsDouble()
-        : outletPressure / 3.0;
+    double outletPressure = input.has("outletPressure") ? input.get("outletPressure").getAsDouble() : 100;
+    double inletPressure = input.has("inletPressure") ? input.get("inletPressure").getAsDouble() : outletPressure / 3.0;
     double efficiency = input.has("efficiency") ? input.get("efficiency").getAsDouble() : 0.80;
     double power = input.has("power_kW") ? input.get("power_kW").getAsDouble() : 2500;
-    double surgeFlow =
-        input.has("surgeFlow") ? input.get("surgeFlow").getAsDouble() : inletFlow * 0.6;
-    double stonewall =
-        input.has("stonewallFlow") ? input.get("stonewallFlow").getAsDouble() : inletFlow * 1.4;
+    double surgeFlow = input.has("surgeFlow") ? input.get("surgeFlow").getAsDouble() : inletFlow * 0.6;
+    double stonewall = input.has("stonewallFlow") ? input.get("stonewallFlow").getAsDouble() : inletFlow * 1.4;
     double pressureRatio;
     if (input.has("pressureRatio")) {
       pressureRatio = input.get("pressureRatio").getAsDouble();
@@ -483,8 +476,7 @@ public final class VisualizationRunner {
     svg.append("' font-size='10'>PR: ").append(String.format(Locale.US, "%.2f", pressureRatio));
     svg.append("</text>\n");
     svg.append("<text x='").append(width - margin - 130).append("' y='").append(margin + 50);
-    svg.append("' font-size='10'>Eff: ")
-        .append(String.format(Locale.US, "%.1f%%", efficiency * 100));
+    svg.append("' font-size='10'>Eff: ").append(String.format(Locale.US, "%.1f%%", efficiency * 100));
     svg.append("</text>\n");
     svg.append("<text x='").append(width - margin - 130).append("' y='").append(margin + 64);
     svg.append("' font-size='10'>Power: ").append(String.format(Locale.US, "%.0f", power));
@@ -532,9 +524,9 @@ public final class VisualizationRunner {
       String bg = r % 2 == 0 ? "#f5f5f5" : "white";
       html.append("<tr style='background:").append(bg).append(";'>\n");
       for (int c = 0; c < row.size(); c++) {
-        html.append("  <td style='padding:6px 12px;border:1px solid #ddd;'>");
-        html.append(escapeHtml(row.get(c).getAsString()));
-        html.append("</td>\n");
+	html.append("  <td style='padding:6px 12px;border:1px solid #ddd;'>");
+	html.append(escapeHtml(row.get(c).getAsString()));
+	html.append("</td>\n");
       }
       html.append("</tr>\n");
     }
@@ -597,8 +589,8 @@ public final class VisualizationRunner {
     if (text == null) {
       return "";
     }
-    return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-        .replace("'", "&apos;").replace("\"", "&quot;");
+    return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("'", "&apos;").replace("\"",
+	"&quot;");
   }
 
   /**
@@ -611,8 +603,7 @@ public final class VisualizationRunner {
     if (text == null) {
       return "";
     }
-    return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"",
-        "&quot;");
+    return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;");
   }
 
   /**
@@ -636,8 +627,7 @@ public final class VisualizationRunner {
    */
   private static String generatePieChartSVG(JsonObject input) {
     String title = input.has("title") ? input.get("title").getAsString() : "Pie Chart";
-    JsonArray categories =
-        input.has("categories") ? input.getAsJsonArray("categories") : new JsonArray();
+    JsonArray categories = input.has("categories") ? input.getAsJsonArray("categories") : new JsonArray();
     JsonArray values = input.has("values") ? input.getAsJsonArray("values") : new JsonArray();
 
     if (categories.size() == 0 || values.size() == 0) {
@@ -661,8 +651,7 @@ public final class VisualizationRunner {
     int cy = 180;
     int r = 120;
 
-    String[] colors =
-        {"#2196F3", "#4CAF50", "#FF9800", "#E91E63", "#9C27B0", "#00BCD4", "#795548", "#607D8B"};
+    String[] colors = { "#2196F3", "#4CAF50", "#FF9800", "#E91E63", "#9C27B0", "#00BCD4", "#795548", "#607D8B" };
 
     StringBuilder svg = new StringBuilder();
     svg.append("<svg xmlns='http://www.w3.org/2000/svg' ");
@@ -708,8 +697,7 @@ public final class VisualizationRunner {
       svg.append("<text x='").append(legendX + 18).append("' y='").append(legendY + i * 22 + 11);
       svg.append("' font-size='10'>");
       svg.append(escapeXml(categories.get(i).getAsString()));
-      svg.append(" (").append(String.format(Locale.US, "%.1f%%", vals.get(i) / total * 100))
-          .append(")");
+      svg.append(" (").append(String.format(Locale.US, "%.1f%%", vals.get(i) / total * 100)).append(")");
       svg.append("</text>\n");
     }
 
@@ -828,9 +816,9 @@ public final class VisualizationRunner {
       int px = margin + (int) ((xVals.get(i) - xMin) / (xMax - xMin) * plotW);
       int py = (height - margin) - (int) ((yVals.get(i) - yMin) / (yMax - yMin) * plotH);
       if (i == 0) {
-        path.append("M ").append(px).append(",").append(py);
+	path.append("M ").append(px).append(",").append(py);
       } else {
-        path.append(" L ").append(px).append(",").append(py);
+	path.append(" L ").append(px).append(",").append(py);
       }
     }
     svg.append("<path d='").append(path.toString());

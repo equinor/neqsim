@@ -9,16 +9,16 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 /**
- * Evaluates compatibility of a set of production chemicals with each other and with the produced
- * fluid / equipment material.
+ * Evaluates compatibility of a set of production chemicals with each other and with the produced fluid / equipment
+ * material.
  *
  * <p>
  * The assessor combines two information sources:
  * </p>
  * <ol>
  * <li>A rule base loaded by {@link ChemicalInteractionRule#loadDefaultRules()} (CSV-driven).</li>
- * <li>Operating conditions and water chemistry supplied by the caller (temperature, pressure,
- * Ca/Fe/HCO3 concentrations, material).</li>
+ * <li>Operating conditions and water chemistry supplied by the caller (temperature, pressure, Ca/Fe/HCO3
+ * concentrations, material).</li>
  * </ol>
  *
  * <p>
@@ -33,8 +33,7 @@ import com.google.gson.GsonBuilder;
  * </ul>
  *
  * <p>
- * Pattern: configure with setters, call {@link #evaluate()}, then read the getters or
- * {@link #toJson()}.
+ * Pattern: configure with setters, call {@link #evaluate()}, then read the getters or {@link #toJson()}.
  * </p>
  *
  * @author ESOL
@@ -89,8 +88,7 @@ public class ChemicalCompatibilityAssessor implements Serializable {
   private final List<Map<String, Object>> issues = new ArrayList<Map<String, Object>>();
 
   /** Pairwise interaction matrix (chemical name × chemical name → severity label). */
-  private final Map<String, Map<String, String>> matrix =
-      new LinkedHashMap<String, Map<String, String>>();
+  private final Map<String, Map<String, String>> matrix = new LinkedHashMap<String, Map<String, String>>();
 
   /** Temperature stability flags per chemical. */
   private final Map<String, Boolean> thermalStability = new LinkedHashMap<String, Boolean>();
@@ -109,21 +107,21 @@ public class ChemicalCompatibilityAssessor implements Serializable {
   /**
    * Default constructor.
    */
-  public ChemicalCompatibilityAssessor() {}
+  public ChemicalCompatibilityAssessor() {
+  }
 
   /**
-   * Convenience factory: builds an assessor and seeds operating conditions and aqueous-phase
-   * concentrations from any NeqSim {@link neqsim.process.equipment.stream.StreamInterface} via
+   * Convenience factory: builds an assessor and seeds operating conditions and aqueous-phase concentrations from any
+   * NeqSim {@link neqsim.process.equipment.stream.StreamInterface} via
    * {@link neqsim.process.chemistry.util.StreamChemistryAdapter}.
    *
    * @param stream produced fluid stream
    * @return assessor pre-loaded with T, P, Ca, Fe, HCO3
    */
-  public static ChemicalCompatibilityAssessor fromStream(
-      neqsim.process.equipment.stream.StreamInterface stream) {
+  public static ChemicalCompatibilityAssessor fromStream(neqsim.process.equipment.stream.StreamInterface stream) {
     ChemicalCompatibilityAssessor a = new ChemicalCompatibilityAssessor();
-    neqsim.process.chemistry.util.StreamChemistryAdapter ad =
-        new neqsim.process.chemistry.util.StreamChemistryAdapter(stream);
+    neqsim.process.chemistry.util.StreamChemistryAdapter ad = new neqsim.process.chemistry.util.StreamChemistryAdapter(
+	stream);
     a.setTemperatureCelsius(ad.getTemperatureCelsius());
     a.setPressureBara(ad.getPressureBara());
     a.setCalciumMgL(ad.getCalciumMgL());
@@ -216,8 +214,7 @@ public class ChemicalCompatibilityAssessor implements Serializable {
   // ─── Evaluation ─────────────────────────────────────────
 
   /**
-   * Runs the evaluation. Populates the issues list, pairwise matrix, thermal stability flags and
-   * the overall verdict.
+   * Runs the evaluation. Populates the issues list, pairwise matrix, thermal stability flags and the overall verdict.
    */
   public void evaluate() {
     issues.clear();
@@ -230,17 +227,16 @@ public class ChemicalCompatibilityAssessor implements Serializable {
       ProductionChemical a = chemicals.get(i);
       Map<String, String> row = new LinkedHashMap<String, String>();
       for (int j = 0; j < chemicals.size(); j++) {
-        ProductionChemical b = chemicals.get(j);
-        row.put(b.getName(), i == j ? "SELF" : "OK");
+	ProductionChemical b = chemicals.get(j);
+	row.put(b.getName(), i == j ? "SELF" : "OK");
       }
       matrix.put(a.getName(), row);
       thermalStability.put(a.getName(), a.isStableAt(temperatureC));
       if (!a.isStableAt(temperatureC)) {
-        addIssue(a, null, "Thermal stability exceeded",
-            "Chemical " + a.getName() + " has stability range [" + a.getMinTemperatureC() + ", "
-                + a.getMaxTemperatureC() + "] C; operating temperature is " + temperatureC + " C",
-            "Switch to a chemistry rated for the operating temperature",
-            ChemicalInteractionRule.Severity.HIGH);
+	addIssue(a, null, "Thermal stability exceeded",
+	    "Chemical " + a.getName() + " has stability range [" + a.getMinTemperatureC() + ", "
+		+ a.getMaxTemperatureC() + "] C; operating temperature is " + temperatureC + " C",
+	    "Switch to a chemistry rated for the operating temperature", ChemicalInteractionRule.Severity.HIGH);
       }
     }
 
@@ -248,49 +244,49 @@ public class ChemicalCompatibilityAssessor implements Serializable {
     for (int i = 0; i < chemicals.size(); i++) {
       ProductionChemical a = chemicals.get(i);
       for (int j = i + 1; j < chemicals.size(); j++) {
-        ProductionChemical b = chemicals.get(j);
-        for (ChemicalInteractionRule rule : rules) {
-          if (rule.isEnvironmentRule()) {
-            continue;
-          }
-          if (rule.matches(a, b)) {
-            addIssue(a, b, "Chemical-chemical interaction (" + rule.getCondition() + ")",
-                rule.getMechanism(), rule.getMitigation(), rule.getSeverity());
-            String label = rule.getSeverity().name();
-            updateMatrix(a.getName(), b.getName(), label);
-          }
-        }
+	ProductionChemical b = chemicals.get(j);
+	for (ChemicalInteractionRule rule : rules) {
+	  if (rule.isEnvironmentRule()) {
+	    continue;
+	  }
+	  if (rule.matches(a, b)) {
+	    addIssue(a, b, "Chemical-chemical interaction (" + rule.getCondition() + ")", rule.getMechanism(),
+		rule.getMitigation(), rule.getSeverity());
+	    String label = rule.getSeverity().name();
+	    updateMatrix(a.getName(), b.getName(), label);
+	  }
+	}
       }
     }
 
     // Environment rules (chemical vs water/material/temperature)
     for (ProductionChemical a : chemicals) {
       for (ChemicalInteractionRule rule : rules) {
-        if (!rule.isEnvironmentRule()) {
-          continue;
-        }
-        if (!rule.matches(a, null)) {
-          continue;
-        }
-        if (rule.environmentMatches(temperatureC, calciumMgL, ironMgL, bicarbonateMgL, material)) {
-          addIssue(a, null, "Chemical-environment interaction (" + rule.getCondition() + ")",
-              rule.getMechanism(), rule.getMitigation(), rule.getSeverity());
-        }
+	if (!rule.isEnvironmentRule()) {
+	  continue;
+	}
+	if (!rule.matches(a, null)) {
+	  continue;
+	}
+	if (rule.environmentMatches(temperatureC, calciumMgL, ironMgL, bicarbonateMgL, material)) {
+	  addIssue(a, null, "Chemical-environment interaction (" + rule.getCondition() + ")", rule.getMechanism(),
+	      rule.getMitigation(), rule.getSeverity());
+	}
       }
     }
 
     // Verdict
     switch (highestSeverity) {
-      case HIGH:
-        verdict = Verdict.INCOMPATIBLE;
-        break;
-      case MEDIUM:
-      case LOW:
-        verdict = Verdict.CAUTION;
-        break;
-      default:
-        verdict = Verdict.COMPATIBLE;
-        break;
+    case HIGH:
+      verdict = Verdict.INCOMPATIBLE;
+      break;
+    case MEDIUM:
+    case LOW:
+      verdict = Verdict.CAUTION;
+      break;
+    default:
+      verdict = Verdict.COMPATIBLE;
+      break;
     }
     evaluated = true;
   }
@@ -298,15 +294,15 @@ public class ChemicalCompatibilityAssessor implements Serializable {
   /**
    * Records an issue and bumps the highest severity.
    *
-   * @param a primary chemical
-   * @param b secondary chemical (may be null)
-   * @param category short category label
-   * @param mechanism mechanism description
+   * @param a          primary chemical
+   * @param b          secondary chemical (may be null)
+   * @param category   short category label
+   * @param mechanism  mechanism description
    * @param mitigation recommended mitigation
-   * @param severity severity classification
+   * @param severity   severity classification
    */
-  private void addIssue(ProductionChemical a, ProductionChemical b, String category,
-      String mechanism, String mitigation, ChemicalInteractionRule.Severity severity) {
+  private void addIssue(ProductionChemical a, ProductionChemical b, String category, String mechanism,
+      String mitigation, ChemicalInteractionRule.Severity severity) {
     Map<String, Object> issue = new LinkedHashMap<String, Object>();
     issue.put("category", category);
     issue.put("severity", severity.name());
@@ -323,8 +319,8 @@ public class ChemicalCompatibilityAssessor implements Serializable {
   /**
    * Updates a cell in the symmetric pairwise matrix, keeping the worst severity seen.
    *
-   * @param a row key
-   * @param b column key
+   * @param a     row key
+   * @param b     column key
    * @param label severity label
    */
   private void updateMatrix(String a, String b, String label) {
@@ -335,8 +331,8 @@ public class ChemicalCompatibilityAssessor implements Serializable {
   /**
    * Sets a single matrix cell, keeping the worst severity seen.
    *
-   * @param a row key
-   * @param b column key
+   * @param a     row key
+   * @param b     column key
    * @param label new severity label
    */
   private void setMatrixCell(String a, String b, String label) {
@@ -353,7 +349,7 @@ public class ChemicalCompatibilityAssessor implements Serializable {
   /**
    * Returns true if {@code newLabel} is worse than {@code currentLabel} on the severity scale.
    *
-   * @param newLabel new severity label
+   * @param newLabel     new severity label
    * @param currentLabel current severity label
    * @return true if newLabel is worse
    */
@@ -475,8 +471,8 @@ public class ChemicalCompatibilityAssessor implements Serializable {
    */
   public java.util.List<java.util.Map<String, Object>> getStandardsApplied() {
     return neqsim.process.chemistry.util.StandardsRegistry.toMapList(
-        neqsim.process.chemistry.util.StandardsRegistry.NACE_MR0175,
-        neqsim.process.chemistry.util.StandardsRegistry.NORSOK_M001);
+	neqsim.process.chemistry.util.StandardsRegistry.NACE_MR0175,
+	neqsim.process.chemistry.util.StandardsRegistry.NORSOK_M001);
   }
 
   /**

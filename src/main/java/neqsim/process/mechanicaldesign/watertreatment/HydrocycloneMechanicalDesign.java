@@ -11,26 +11,40 @@ import neqsim.process.mechanicaldesign.separator.SeparatorMechanicalDesignRespon
  * Mechanical design for de-oiling hydrocyclone packages.
  *
  * <p>
- * Provides pressure vessel sizing, wall thickness calculation, nozzle sizing, weight estimation,
- * and cost estimation for multi-liner hydrocyclone packages used in produced water treatment.
+ * Provides pressure vessel sizing, wall thickness calculation, nozzle sizing, weight estimation, and cost estimation
+ * for multi-liner hydrocyclone packages used in produced water treatment.
  * </p>
  *
  * <h2>Design Standards</h2>
  * <table>
  * <caption>Applicable standards for hydrocyclone mechanical design</caption>
- * <tr><th>Standard</th><th>Scope</th></tr>
- * <tr><td>ASME VIII Div 1</td><td>Pressure vessel shell and head design</td></tr>
- * <tr><td>NORSOK P-001</td><td>Process design requirements</td></tr>
- * <tr><td>NORSOK M-001</td><td>Material selection</td></tr>
- * <tr><td>API RP 14E</td><td>Nozzle velocity limits</td></tr>
+ * <tr>
+ * <th>Standard</th>
+ * <th>Scope</th>
+ * </tr>
+ * <tr>
+ * <td>ASME VIII Div 1</td>
+ * <td>Pressure vessel shell and head design</td>
+ * </tr>
+ * <tr>
+ * <td>NORSOK P-001</td>
+ * <td>Process design requirements</td>
+ * </tr>
+ * <tr>
+ * <td>NORSOK M-001</td>
+ * <td>Material selection</td>
+ * </tr>
+ * <tr>
+ * <td>API RP 14E</td>
+ * <td>Nozzle velocity limits</td>
+ * </tr>
  * </table>
  *
  * <h2>Vessel Sizing Approach</h2>
  *
  * <p>
- * A hydrocyclone package consists of one or more pressure vessels, each housing multiple liner
- * inserts. The vessel inner diameter is sized to accommodate the liners in a circular arrangement.
- * Key design equations:
+ * A hydrocyclone package consists of one or more pressure vessels, each housing multiple liner inserts. The vessel
+ * inner diameter is sized to accommodate the liners in a circular arrangement. Key design equations:
  * </p>
  *
  * <pre>
@@ -220,9 +234,9 @@ public class HydrocycloneMechanicalDesign extends SeparatorMechanicalDesign {
    * Calculates vessel inner diameter and length based on liner packing.
    *
    * <p>
-   * The vessel must accommodate the liners plus header/manifold space. The diameter is estimated
-   * from the number of liners per vessel packed in a circular cross-section. The vessel length
-   * depends on the liner effective length plus inlet/outlet header space.
+   * The vessel must accommodate the liners plus header/manifold space. The diameter is estimated from the number of
+   * liners per vessel packed in a circular cross-section. The vessel length depends on the liner effective length plus
+   * inlet/outlet header space.
    * </p>
    */
   private void calcVesselDimensions() {
@@ -233,8 +247,7 @@ public class HydrocycloneMechanicalDesign extends SeparatorMechanicalDesign {
 
     // Packing factor: for circular arrangement, vessel ID ~ linerOD * sqrt(n) * 1.3
     // This accounts for the circular packing geometry and annular clearance
-    vesselInnerDiameterM =
-        linerOuterDiameterM * Math.sqrt(totalLinersInVessel) * 1.3;
+    vesselInnerDiameterM = linerOuterDiameterM * Math.sqrt(totalLinersInVessel) * 1.3;
     // Minimum vessel ID for access (man-way requirement)
     if (vesselInnerDiameterM < 0.4) {
       vesselInnerDiameterM = 0.4;
@@ -257,22 +270,20 @@ public class HydrocycloneMechanicalDesign extends SeparatorMechanicalDesign {
    * </p>
    *
    * <pre>
-   *   t = (P * R) / (S * E - 0.6 * P) + CA
+   * t = (P * R) / (S * E - 0.6 * P) + CA
    * </pre>
    *
    * <p>
-   * where P = design pressure (MPa), R = inside radius (mm), S = allowable stress (MPa), E =
-   * joint efficiency, CA = corrosion allowance (mm).
+   * where P = design pressure (MPa), R = inside radius (mm), S = allowable stress (MPa), E = joint efficiency, CA =
+   * corrosion allowance (mm).
    * </p>
    */
   private void calcWallThickness() {
     double designPressureMPa = designPressureBarg * 0.1; // barg -> MPa
     double insideRadiusMm = vesselInnerDiameterM * 1000.0 / 2.0;
 
-    double tRequired =
-        (designPressureMPa * insideRadiusMm)
-            / (allowableStressMPa * vesselJointEfficiency - 0.6 * designPressureMPa)
-            + corrosionAllowanceMm;
+    double tRequired = (designPressureMPa * insideRadiusMm)
+	/ (allowableStressMPa * vesselJointEfficiency - 0.6 * designPressureMPa) + corrosionAllowanceMm;
 
     // Round up to nearest 0.5 mm
     vesselWallThicknessMm = Math.ceil(tRequired * 2.0) / 2.0;
@@ -283,11 +294,8 @@ public class HydrocycloneMechanicalDesign extends SeparatorMechanicalDesign {
     }
 
     // Head thickness (2:1 ellipsoidal per ASME UG-32)
-    headThicknessMm =
-        (designPressureMPa * insideRadiusMm * 2.0)
-            / (2.0 * allowableStressMPa * vesselJointEfficiency
-                - 0.2 * designPressureMPa)
-            + corrosionAllowanceMm;
+    headThicknessMm = (designPressureMPa * insideRadiusMm * 2.0)
+	/ (2.0 * allowableStressMPa * vesselJointEfficiency - 0.2 * designPressureMPa) + corrosionAllowanceMm;
     headThicknessMm = Math.ceil(headThicknessMm * 2.0) / 2.0;
     if (headThicknessMm < vesselWallThicknessMm) {
       headThicknessMm = vesselWallThicknessMm;
@@ -336,11 +344,10 @@ public class HydrocycloneMechanicalDesign extends SeparatorMechanicalDesign {
    */
   private double roundUpToStandardNozzle(double idMm) {
     // Standard pipe NPS sizes in mm (approximate ID)
-    double[] standardSizes =
-        {25.0, 40.0, 50.0, 80.0, 100.0, 150.0, 200.0, 250.0, 300.0, 350.0, 400.0};
+    double[] standardSizes = { 25.0, 40.0, 50.0, 80.0, 100.0, 150.0, 200.0, 250.0, 300.0, 350.0, 400.0 };
     for (double size : standardSizes) {
       if (size >= idMm) {
-        return size;
+	return size;
       }
     }
     return standardSizes[standardSizes.length - 1];
@@ -355,14 +362,12 @@ public class HydrocycloneMechanicalDesign extends SeparatorMechanicalDesign {
     // Shell weight: pi * D * L * t * density_steel
     double steelDensity = 7850.0; // kg/m3 for stainless steel
     double shellThicknessM = vesselWallThicknessMm / 1000.0;
-    double shellWeight =
-        Math.PI * vesselInnerDiameterM * vesselLengthM * shellThicknessM * steelDensity;
+    double shellWeight = Math.PI * vesselInnerDiameterM * vesselLengthM * shellThicknessM * steelDensity;
 
     // Head weight (two 2:1 ellipsoidal heads)
     // Approximate: head weight ~ 0.5 * shell diameter * head thickness * density
     double headThicknessM = headThicknessMm / 1000.0;
-    double headWeight = 2.0 * 0.9 * Math.PI * Math.pow(vesselInnerDiameterM / 2.0, 2.0)
-        * headThicknessM * steelDensity;
+    double headWeight = 2.0 * 0.9 * Math.PI * Math.pow(vesselInnerDiameterM / 2.0, 2.0) * headThicknessM * steelDensity;
 
     emptyVesselWeightKg = shellWeight + headWeight;
 
@@ -384,8 +389,8 @@ public class HydrocycloneMechanicalDesign extends SeparatorMechanicalDesign {
     double eiWeight = (emptyVesselWeightKg + linerWeightPerVesselKg) * 0.08;
 
     // Per-vessel totals
-    double perVesselTotal = emptyVesselWeightKg + linerWeightPerVesselKg
-        + nozzleWeight + pipingWeight + structuralWeight + eiWeight;
+    double perVesselTotal = emptyVesselWeightKg + linerWeightPerVesselKg + nozzleWeight + pipingWeight
+	+ structuralWeight + eiWeight;
 
     // Total package weight (all vessels)
     double totalWeight = perVesselTotal * numberOfVessels;
@@ -445,8 +450,7 @@ public class HydrocycloneMechanicalDesign extends SeparatorMechanicalDesign {
     response.addSpecificParameter("totalActiveLiners", totalActiveLiners);
     response.addSpecificParameter("spareLiners", spareLiners);
     response.addSpecificParameter("linerDiameterMm", linerDiameterMm);
-    response.addSpecificParameter("vesselInnerDiameterMm",
-        vesselInnerDiameterM * 1000.0);
+    response.addSpecificParameter("vesselInnerDiameterMm", vesselInnerDiameterM * 1000.0);
     response.addSpecificParameter("vesselWallThicknessMm", vesselWallThicknessMm);
     response.addSpecificParameter("headThicknessMm", headThicknessMm);
     response.addSpecificParameter("vesselLengthM", vesselLengthM);

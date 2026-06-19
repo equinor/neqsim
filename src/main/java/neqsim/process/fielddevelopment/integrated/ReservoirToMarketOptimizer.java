@@ -9,19 +9,18 @@ import java.util.Map;
  * Reservoir-to-market production optimiser.
  *
  * <p>
- * Optimises the field-wide operating point of an {@link IntegratedProductionModel} - the per-well
- * choke openings and, optionally, the export-header pressure - to maximise an economic objective
- * (revenue or total rate) subject to a facility throughput capacity constraint. This closes the
- * loop between reservoir deliverability, gathering hydraulics and the topside/market boundary, the
- * same coupling performed by Petex GAP and Schlumberger Pipesim network optimisation.
+ * Optimises the field-wide operating point of an {@link IntegratedProductionModel} - the per-well choke openings and,
+ * optionally, the export-header pressure - to maximise an economic objective (revenue or total rate) subject to a
+ * facility throughput capacity constraint. This closes the loop between reservoir deliverability, gathering hydraulics
+ * and the topside/market boundary, the same coupling performed by Petex GAP and Schlumberger Pipesim network
+ * optimisation.
  * </p>
  *
  * <p>
- * The search is a self-contained bounded coordinate-ascent over the choke decision variables (each
- * in [0, 1]) with a quadratic penalty for exceeding the facility capacity. Every candidate is
- * evaluated by a full network solve, but the well deliverability surrogates keep each evaluation
- * cheap. The optimiser never throws and returns a schema-versioned JSON result, so it is safe to
- * drive from an agentic loop.
+ * The search is a self-contained bounded coordinate-ascent over the choke decision variables (each in [0, 1]) with a
+ * quadratic penalty for exceeding the facility capacity. Every candidate is evaluated by a full network solve, but the
+ * well deliverability surrogates keep each evaluation cheap. The optimiser never throws and returns a schema-versioned
+ * JSON result, so it is safe to drive from an agentic loop.
  * </p>
  *
  * @author NeqSim
@@ -58,17 +57,16 @@ public class ReservoirToMarketOptimizer implements Serializable {
     /**
      * Creates an optimisation result.
      *
-     * @param feasible whether the capacity constraint is satisfied
+     * @param feasible       whether the capacity constraint is satisfied
      * @param objectiveValue best objective value found
-     * @param fieldRate field rate at the optimum in Sm3/day
-     * @param revenue revenue at the optimum in currency per day
-     * @param chokeSettings per-well choke openings (0..1)
-     * @param wellRates per-well rate in Sm3/day
-     * @param evaluations number of network solves performed
+     * @param fieldRate      field rate at the optimum in Sm3/day
+     * @param revenue        revenue at the optimum in currency per day
+     * @param chokeSettings  per-well choke openings (0..1)
+     * @param wellRates      per-well rate in Sm3/day
+     * @param evaluations    number of network solves performed
      */
-    public OptimizationResult(boolean feasible, double objectiveValue, double fieldRate,
-        double revenue, Map<String, Double> chokeSettings, Map<String, Double> wellRates,
-        int evaluations) {
+    public OptimizationResult(boolean feasible, double objectiveValue, double fieldRate, double revenue,
+	Map<String, Double> chokeSettings, Map<String, Double> wellRates, int evaluations) {
       this.feasible = feasible;
       this.objectiveValue = objectiveValue;
       this.fieldRate = fieldRate;
@@ -164,16 +162,16 @@ public class ReservoirToMarketOptimizer implements Serializable {
     /**
      * Appends a string-double map as JSON key-values.
      *
-     * @param sb target builder
+     * @param sb  target builder
      * @param map map to append
      */
     private void appendMap(StringBuilder sb, Map<String, Double> map) {
       int i = 0;
       for (Map.Entry<String, Double> e : map.entrySet()) {
-        if (i++ > 0) {
-          sb.append(",");
-        }
-        sb.append("\"").append(e.getKey()).append("\":").append(num(e.getValue()));
+	if (i++ > 0) {
+	  sb.append(",");
+	}
+	sb.append("\"").append(e.getKey()).append("\":").append(num(e.getValue()));
       }
     }
 
@@ -185,7 +183,7 @@ public class ReservoirToMarketOptimizer implements Serializable {
      */
     private String num(double v) {
       if (Double.isNaN(v) || Double.isInfinite(v)) {
-        return "null";
+	return "null";
       }
       return String.format(java.util.Locale.US, "%.6g", v);
     }
@@ -195,9 +193,9 @@ public class ReservoirToMarketOptimizer implements Serializable {
   private Objective objective = Objective.REVENUE;
   private double facilityCapacity = Double.MAX_VALUE; // Sm3/day
   /**
-   * Dimensionless penalty multiplier. The capacity penalty slope is this multiple of the marginal
-   * objective value, so values &gt; 1 make the throughput constraint bind tightly (the optimiser
-   * always prefers backing off a choke to exceeding capacity).
+   * Dimensionless penalty multiplier. The capacity penalty slope is this multiple of the marginal objective value, so
+   * values &gt; 1 make the throughput constraint bind tightly (the optimiser always prefers backing off a choke to
+   * exceeding capacity).
    */
   private double capacityPenaltyWeight = 50.0;
   private int maxIterations = 40;
@@ -253,8 +251,8 @@ public class ReservoirToMarketOptimizer implements Serializable {
     try {
       return optimizeInternal();
     } catch (RuntimeException ex) {
-      return new OptimizationResult(false, Double.NEGATIVE_INFINITY, 0.0, 0.0,
-          new LinkedHashMap<String, Double>(), new LinkedHashMap<String, Double>(), 0);
+      return new OptimizationResult(false, Double.NEGATIVE_INFINITY, 0.0, 0.0, new LinkedHashMap<String, Double>(),
+	  new LinkedHashMap<String, Double>(), 0);
     }
   }
 
@@ -277,30 +275,30 @@ public class ReservoirToMarketOptimizer implements Serializable {
     for (int sweep = 0; sweep < maxIterations; sweep++) {
       boolean improved = false;
       for (int i = 0; i < n; i++) {
-        double current = choke[i];
-        double[] candidates = new double[] {clamp(current + step), clamp(current - step)};
-        for (int c = 0; c < candidates.length; c++) {
-          double cand = candidates[c];
-          if (cand == current) {
-            continue;
-          }
-          wells.get(i).getWellBranch().setChokeFactor(cand);
-          double s = score(evalCount);
-          if (s > bestScore + 1.0e-9) {
-            bestScore = s;
-            choke[i] = cand;
-            current = cand;
-            improved = true;
-          } else {
-            wells.get(i).getWellBranch().setChokeFactor(current);
-          }
-        }
+	double current = choke[i];
+	double[] candidates = new double[] { clamp(current + step), clamp(current - step) };
+	for (int c = 0; c < candidates.length; c++) {
+	  double cand = candidates[c];
+	  if (cand == current) {
+	    continue;
+	  }
+	  wells.get(i).getWellBranch().setChokeFactor(cand);
+	  double s = score(evalCount);
+	  if (s > bestScore + 1.0e-9) {
+	    bestScore = s;
+	    choke[i] = cand;
+	    current = cand;
+	    improved = true;
+	  } else {
+	    wells.get(i).getWellBranch().setChokeFactor(current);
+	  }
+	}
       }
       if (!improved) {
-        step *= 0.5;
-        if (step < 1.0e-3) {
-          break;
-        }
+	step *= 0.5;
+	if (step < 1.0e-3) {
+	  break;
+	}
       }
     }
     // Final evaluation at the best chokes.
@@ -314,18 +312,18 @@ public class ReservoirToMarketOptimizer implements Serializable {
     }
     boolean feasible = res.getFieldRate() <= facilityCapacity * 1.0001;
     double objVal = objective == Objective.REVENUE ? res.getRevenue() : res.getFieldRate();
-    return new OptimizationResult(feasible, objVal, res.getFieldRate(), res.getRevenue(), chokeMap,
-        res.getWellRates(), evalCount[0]);
+    return new OptimizationResult(feasible, objVal, res.getFieldRate(), res.getRevenue(), chokeMap, res.getWellRates(),
+	evalCount[0]);
   }
 
   /**
    * Scores the current choke configuration with a capacity penalty.
    *
    * <p>
-   * The penalty is expressed in objective units (revenue or rate) and uses a steep linear term
-   * whose slope is {@code capacityPenaltyWeight} times the marginal objective value, plus a smooth
-   * quadratic term. Because the linear slope exceeds the marginal gain from opening a choke, the
-   * optimiser drives the field rate down onto the capacity bound instead of overshooting it.
+   * The penalty is expressed in objective units (revenue or rate) and uses a steep linear term whose slope is
+   * {@code capacityPenaltyWeight} times the marginal objective value, plus a smooth quadratic term. Because the linear
+   * slope exceeds the marginal gain from opening a choke, the optimiser drives the field rate down onto the capacity
+   * bound instead of overshooting it.
    * </p>
    *
    * @param evalCount single-element evaluation counter, incremented per call
@@ -339,15 +337,12 @@ public class ReservoirToMarketOptimizer implements Serializable {
     double over = fieldRate - facilityCapacity;
     if (over > 0.0) {
       // Marginal objective value per unit field rate (revenue: price; rate: 1.0).
-      double marginal =
-          objective == Objective.REVENUE ? (fieldRate > 0.0 ? res.getRevenue() / fieldRate : 0.0)
-              : 1.0;
+      double marginal = objective == Objective.REVENUE ? (fieldRate > 0.0 ? res.getRevenue() / fieldRate : 0.0) : 1.0;
       if (marginal <= 0.0) {
-        marginal = 1.0;
+	marginal = 1.0;
       }
       double overFraction = over / Math.max(1.0, facilityCapacity);
-      base -= capacityPenaltyWeight * marginal * over
-          + capacityPenaltyWeight * marginal * over * overFraction;
+      base -= capacityPenaltyWeight * marginal * over + capacityPenaltyWeight * marginal * over * overFraction;
     }
     return base;
   }

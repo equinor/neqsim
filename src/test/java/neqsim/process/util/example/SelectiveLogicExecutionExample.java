@@ -36,7 +36,6 @@ import org.apache.logging.log4j.Logger;
 public class SelectiveLogicExecutionExample {
   private static final Logger logger = LogManager.getLogger(SelectiveLogicExecutionExample.class);
 
-
   @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     logger.info("╔════════════════════════════════════════════════════════════════╗");
@@ -68,23 +67,22 @@ public class SelectiveLogicExecutionExample {
       logger.info("  - " + logic.getName());
     }
 
-
     // Scenario 1: Test HIPPS independently
     String separator = new String(new char[70]).replace("\0", "=");
     logger.info("\n" + separator);
     logger.info("SCENARIO 1: HIPPS PROTECTION ONLY");
     logger.info(separator);
 
-    ProcessSafetyScenario highPressure =
-        ProcessSafetyScenario.builder("High Pressure").customManipulator("Feed", equipment -> {
-          if (equipment instanceof Stream) {
-            ((Stream) equipment).setPressure(75.0, "bara");
-          }
-        }).build();
+    ProcessSafetyScenario highPressure = ProcessSafetyScenario.builder("High Pressure")
+	.customManipulator("Feed", equipment -> {
+	  if (equipment instanceof Stream) {
+	    ((Stream) equipment).setPressure(75.0, "bara");
+	  }
+	}).build();
 
     runner.activateLogic("HIPPS Protection");
-    ScenarioExecutionSummary summary1 = runner.runScenarioWithLogic("HIPPS Only Test", highPressure,
-        15.0, 1.0, java.util.Collections.singletonList("HIPPS Protection"));
+    ScenarioExecutionSummary summary1 = runner.runScenarioWithLogic("HIPPS Only Test", highPressure, 15.0, 1.0,
+	java.util.Collections.singletonList("HIPPS Protection"));
     summary1.printResults();
     runner.reset();
 
@@ -94,8 +92,8 @@ public class SelectiveLogicExecutionExample {
     logger.info(separator);
 
     runner.activateLogic("ESD Level 1");
-    ScenarioExecutionSummary summary2 = runner.runScenarioWithLogic("ESD Only Test", null, 15.0,
-        1.0, java.util.Collections.singletonList("ESD Level 1"));
+    ScenarioExecutionSummary summary2 = runner.runScenarioWithLogic("ESD Only Test", null, 15.0, 1.0,
+	java.util.Collections.singletonList("ESD Level 1"));
     summary2.printResults();
     runner.reset();
 
@@ -106,8 +104,8 @@ public class SelectiveLogicExecutionExample {
 
     runner.activateLogic("HIPPS Protection");
     runner.activateLogic("ESD Level 1");
-    ScenarioExecutionSummary summary3 =
-        runner.runScenario("Combined Test", highPressure, 15.0, 1.0); // null = all logic
+    ScenarioExecutionSummary summary3 = runner.runScenario("Combined Test", highPressure, 15.0, 1.0); // null = all
+												      // logic
     summary3.printResults();
 
     logger.info("\n╔════════════════════════════════════════════════════════════════╗");
@@ -155,8 +153,7 @@ public class SelectiveLogicExecutionExample {
     system.add(separator);
     system.add(esdValve);
 
-    logger
-        .info("Built simple process system with " + system.getUnitOperations().size() + " units\n");
+    logger.info("Built simple process system with " + system.getUnitOperations().size() + " units\n");
 
     return system;
   }

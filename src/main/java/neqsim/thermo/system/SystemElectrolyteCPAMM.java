@@ -15,8 +15,8 @@ import neqsim.thermo.util.constants.IonParametersMM;
  * Thermodynamic system class using the Maribo-Mogensen electrolyte CPA (e-CPA) equation of state.
  *
  * <p>
- * This model is based on the PhD thesis: "Development of an Electrolyte CPA Equation of State for
- * Mixed Solvent Electrolytes" by Bjørn Maribo-Mogensen, Technical University of Denmark, 2014.
+ * This model is based on the PhD thesis: "Development of an Electrolyte CPA Equation of State for Mixed Solvent
+ * Electrolytes" by Bjørn Maribo-Mogensen, Technical University of Denmark, 2014.
  * </p>
  *
  * <p>
@@ -90,8 +90,8 @@ public class SystemElectrolyteCPAMM extends SystemSrkCPA {
   /**
    * Constructor for SystemElectrolyteCPAMM with specified number of phases.
    *
-   * @param T temperature in Kelvin
-   * @param P pressure in bar (absolute)
+   * @param T              temperature in Kelvin
+   * @param P              pressure in bar (absolute)
    * @param checkForSolids whether to include solid phase check
    */
   public SystemElectrolyteCPAMM(double T, double P, boolean checkForSolids) {
@@ -122,7 +122,7 @@ public class SystemElectrolyteCPAMM extends SystemSrkCPA {
   public void setDebyeHuckelOn(boolean on) {
     for (int i = 0; i < numberOfPhases; i++) {
       if (phaseArray[i] instanceof PhaseElectrolyteCPAMM) {
-        ((PhaseElectrolyteCPAMM) phaseArray[i]).setDebyeHuckelOn(on);
+	((PhaseElectrolyteCPAMM) phaseArray[i]).setDebyeHuckelOn(on);
       }
     }
   }
@@ -135,7 +135,7 @@ public class SystemElectrolyteCPAMM extends SystemSrkCPA {
   public void setBornOn(boolean on) {
     for (int i = 0; i < numberOfPhases; i++) {
       if (phaseArray[i] instanceof PhaseElectrolyteCPAMM) {
-        ((PhaseElectrolyteCPAMM) phaseArray[i]).setBornOn(on);
+	((PhaseElectrolyteCPAMM) phaseArray[i]).setBornOn(on);
       }
     }
   }
@@ -198,7 +198,7 @@ public class SystemElectrolyteCPAMM extends SystemSrkCPA {
   public void setDielectricMixingRule(PhaseElectrolyteCPAMM.DielectricMixingRule rule) {
     for (int i = 0; i < numberOfPhases; i++) {
       if (phaseArray[i] instanceof PhaseElectrolyteCPAMM) {
-        ((PhaseElectrolyteCPAMM) phaseArray[i]).setDielectricMixingRule(rule);
+	((PhaseElectrolyteCPAMM) phaseArray[i]).setDielectricMixingRule(rule);
       }
     }
   }
@@ -206,12 +206,12 @@ public class SystemElectrolyteCPAMM extends SystemSrkCPA {
   /**
    * Set the dielectric constant mixing rule by name for all phases.
    *
-   * @param ruleName the name of the mixing rule: "MOLAR_AVERAGE", "VOLUME_AVERAGE", "LOOYENGA",
-   *        "OSTER", or "LICHTENECKER"
+   * @param ruleName the name of the mixing rule: "MOLAR_AVERAGE", "VOLUME_AVERAGE", "LOOYENGA", "OSTER", or
+   *                 "LICHTENECKER"
    */
   public void setDielectricMixingRule(String ruleName) {
-    PhaseElectrolyteCPAMM.DielectricMixingRule rule =
-        PhaseElectrolyteCPAMM.DielectricMixingRule.valueOf(ruleName.toUpperCase());
+    PhaseElectrolyteCPAMM.DielectricMixingRule rule = PhaseElectrolyteCPAMM.DielectricMixingRule
+	.valueOf(ruleName.toUpperCase());
     setDielectricMixingRule(rule);
   }
 
@@ -223,7 +223,7 @@ public class SystemElectrolyteCPAMM extends SystemSrkCPA {
   public void setShortRangeOn(boolean on) {
     for (int i = 0; i < numberOfPhases; i++) {
       if (phaseArray[i] instanceof PhaseElectrolyteCPAMM) {
-        ((PhaseElectrolyteCPAMM) phaseArray[i]).setShortRangeOn(on);
+	((PhaseElectrolyteCPAMM) phaseArray[i]).setShortRangeOn(on);
       }
     }
   }
@@ -232,15 +232,13 @@ public class SystemElectrolyteCPAMM extends SystemSrkCPA {
    * Initialize Huron-Vidal parameters for ion-solvent interactions.
    *
    * <p>
-   * This method sets up the NRTL parameters in the Huron-Vidal mixing rule using the ion-solvent
-   * interaction parameters from the Maribo-Mogensen thesis (Table 6.11). Call this method AFTER
-   * setting mixing rule 4 or 7 (Huron-Vidal).
+   * This method sets up the NRTL parameters in the Huron-Vidal mixing rule using the ion-solvent interaction parameters
+   * from the Maribo-Mogensen thesis (Table 6.11). Call this method AFTER setting mixing rule 4 or 7 (Huron-Vidal).
    * </p>
    *
    * <p>
-   * The ion-solvent interaction energy follows: ΔU_iw(T) = u0 + uT × (T - T_ref) and we need τ(T) =
-   * ΔU_iw(T) / T. The HV NRTL uses τ = Dij/T + DijT, so we set: Dij = u0 - uT × T_ref and DijT =
-   * uT.
+   * The ion-solvent interaction energy follows: ΔU_iw(T) = u0 + uT × (T - T_ref) and we need τ(T) = ΔU_iw(T) / T. The
+   * HV NRTL uses τ = Dij/T + DijT, so we set: Dij = u0 - uT × T_ref and DijT = uT.
    * </p>
    *
    * @param alphaValue the NRTL non-randomness parameter (typically 0.2 for electrolytes)
@@ -248,57 +246,57 @@ public class SystemElectrolyteCPAMM extends SystemSrkCPA {
   public void initHuronVidalIonParameters(double alphaValue) {
     for (int phaseNum = 0; phaseNum < numberOfPhases; phaseNum++) {
       if (!(phaseArray[phaseNum] instanceof PhaseEos)) {
-        continue;
+	continue;
       }
       PhaseEos phase = (PhaseEos) phaseArray[phaseNum];
       if (!(phase.getEosMixingRule() instanceof HVMixingRulesInterface)) {
-        continue;
+	continue;
       }
       HVMixingRulesInterface hvRule = (HVMixingRulesInterface) phase.getEosMixingRule();
 
       int nComp = phase.getNumberOfComponents();
       for (int i = 0; i < nComp; i++) {
-        String name_i = phase.getComponent(i).getComponentName();
-        int charge_i = (int) Math.round(phase.getComponent(i).getIonicCharge());
+	String name_i = phase.getComponent(i).getComponentName();
+	int charge_i = (int) Math.round(phase.getComponent(i).getIonicCharge());
 
-        for (int j = 0; j < nComp; j++) {
-          String name_j = phase.getComponent(j).getComponentName();
-          int charge_j = (int) Math.round(phase.getComponent(j).getIonicCharge());
+	for (int j = 0; j < nComp; j++) {
+	  String name_j = phase.getComponent(j).getComponentName();
+	  int charge_j = (int) Math.round(phase.getComponent(j).getIonicCharge());
 
-          // Set ion-solvent parameters (ion i with solvent j)
-          if (charge_i != 0 && charge_j == 0) {
-            IonParametersMM.IonData ionData = IonParametersMM.getIonData(name_i);
-            if (ionData != null) {
-              double u0 = IonParametersMM.getU0(name_i, name_j);
-              double uT = IonParametersMM.getUT(name_i, name_j);
+	  // Set ion-solvent parameters (ion i with solvent j)
+	  if (charge_i != 0 && charge_j == 0) {
+	    IonParametersMM.IonData ionData = IonParametersMM.getIonData(name_i);
+	    if (ionData != null) {
+	      double u0 = IonParametersMM.getU0(name_i, name_j);
+	      double uT = IonParametersMM.getUT(name_i, name_j);
 
-              // Convert MM parameters to HV NRTL format:
-              // MM: ΔU(T) = u0 + uT*(T - T_ref), τ = ΔU/T
-              // HV: τ = Dij/T + DijT
-              // Matching: Dij = u0 - uT*T_ref, DijT = uT
-              double hvDij = u0 - uT * IonParametersMM.T_REF;
-              hvRule.setHVDijParameter(i, j, hvDij);
-              hvRule.setHVDijTParameter(i, j, uT);
-              hvRule.setHValphaParameter(i, j, alphaValue);
-              hvRule.setClassicOrHV(i, j, "HV");
-            }
-          }
-          // Set solvent-ion parameters (solvent i with ion j)
-          else if (charge_i == 0 && charge_j != 0) {
-            IonParametersMM.IonData ionData = IonParametersMM.getIonData(name_j);
-            if (ionData != null) {
-              double u0 = IonParametersMM.getU0(name_j, name_i);
-              double uT = IonParametersMM.getUT(name_j, name_i);
+	      // Convert MM parameters to HV NRTL format:
+	      // MM: ΔU(T) = u0 + uT*(T - T_ref), τ = ΔU/T
+	      // HV: τ = Dij/T + DijT
+	      // Matching: Dij = u0 - uT*T_ref, DijT = uT
+	      double hvDij = u0 - uT * IonParametersMM.T_REF;
+	      hvRule.setHVDijParameter(i, j, hvDij);
+	      hvRule.setHVDijTParameter(i, j, uT);
+	      hvRule.setHValphaParameter(i, j, alphaValue);
+	      hvRule.setClassicOrHV(i, j, "HV");
+	    }
+	  }
+	  // Set solvent-ion parameters (solvent i with ion j)
+	  else if (charge_i == 0 && charge_j != 0) {
+	    IonParametersMM.IonData ionData = IonParametersMM.getIonData(name_j);
+	    if (ionData != null) {
+	      double u0 = IonParametersMM.getU0(name_j, name_i);
+	      double uT = IonParametersMM.getUT(name_j, name_i);
 
-              // Convert MM parameters to HV NRTL format (same conversion)
-              double hvDij = u0 - uT * IonParametersMM.T_REF;
-              hvRule.setHVDijParameter(i, j, hvDij);
-              hvRule.setHVDijTParameter(i, j, uT);
-              hvRule.setHValphaParameter(i, j, alphaValue);
-              hvRule.setClassicOrHV(i, j, "HV");
-            }
-          }
-        }
+	      // Convert MM parameters to HV NRTL format (same conversion)
+	      double hvDij = u0 - uT * IonParametersMM.T_REF;
+	      hvRule.setHVDijParameter(i, j, hvDij);
+	      hvRule.setHVDijTParameter(i, j, uT);
+	      hvRule.setHValphaParameter(i, j, alphaValue);
+	      hvRule.setClassicOrHV(i, j, "HV");
+	    }
+	  }
+	}
       }
     }
   }

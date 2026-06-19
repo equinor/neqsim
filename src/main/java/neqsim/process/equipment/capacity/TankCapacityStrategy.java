@@ -36,7 +36,8 @@ public class TankCapacityStrategy implements EquipmentCapacityStrategy {
   /**
    * Default constructor.
    */
-  public TankCapacityStrategy() {}
+  public TankCapacityStrategy() {
+  }
 
   /**
    * Constructor with custom constraints.
@@ -134,18 +135,16 @@ public class TankCapacityStrategy implements EquipmentCapacityStrategy {
     }
 
     // Liquid level constraint
-    CapacityConstraint levelConstraint =
-        new CapacityConstraint("liquidLevel").setDesignValue(maxLiquidLevel * 0.7)
-            .setMaxValue(maxLiquidLevel).setMinValue(minLiquidLevel).setUnit("fraction")
-            .setSeverity(CapacityConstraint.ConstraintSeverity.HARD).setWarningThreshold(0.9)
-            .setDescription("Liquid level fraction").setValueSupplier(tank::getLiquidLevel);
+    CapacityConstraint levelConstraint = new CapacityConstraint("liquidLevel").setDesignValue(maxLiquidLevel * 0.7)
+	.setMaxValue(maxLiquidLevel).setMinValue(minLiquidLevel).setUnit("fraction")
+	.setSeverity(CapacityConstraint.ConstraintSeverity.HARD).setWarningThreshold(0.9)
+	.setDescription("Liquid level fraction").setValueSupplier(tank::getLiquidLevel);
     constraints.put("liquidLevel", levelConstraint);
 
     // Volume utilization constraint
-    CapacityConstraint volConstraint =
-        new CapacityConstraint("volumeUtilization").setDesignValue(0.7).setMaxValue(0.85)
-            .setUnit("fraction").setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
-            .setDescription("Tank volume utilization");
+    CapacityConstraint volConstraint = new CapacityConstraint("volumeUtilization").setDesignValue(0.7).setMaxValue(0.85)
+	.setUnit("fraction").setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
+	.setDescription("Tank volume utilization");
     constraints.put("volumeUtilization", volConstraint);
 
     return constraints;
@@ -159,7 +158,7 @@ public class TankCapacityStrategy implements EquipmentCapacityStrategy {
 
     for (CapacityConstraint constraint : constraints.values()) {
       if (constraint.isViolated()) {
-        violations.add(constraint);
+	violations.add(constraint);
       }
     }
     return violations;
@@ -176,8 +175,8 @@ public class TankCapacityStrategy implements EquipmentCapacityStrategy {
     for (CapacityConstraint constraint : constraints.values()) {
       double util = constraint.getUtilization();
       if (!Double.isNaN(util) && util > maxUtil) {
-        maxUtil = util;
-        bottleneck = constraint;
+	maxUtil = util;
+	bottleneck = constraint;
       }
     }
     return bottleneck;
@@ -190,10 +189,10 @@ public class TankCapacityStrategy implements EquipmentCapacityStrategy {
 
     for (CapacityConstraint constraint : constraints.values()) {
       if (constraint.getSeverity() == CapacityConstraint.ConstraintSeverity.HARD
-          || constraint.getSeverity() == CapacityConstraint.ConstraintSeverity.CRITICAL) {
-        if (constraint.isHardLimitExceeded()) {
-          return false;
-        }
+	  || constraint.getSeverity() == CapacityConstraint.ConstraintSeverity.CRITICAL) {
+	if (constraint.isHardLimitExceeded()) {
+	  return false;
+	}
       }
     }
     return true;
@@ -206,7 +205,7 @@ public class TankCapacityStrategy implements EquipmentCapacityStrategy {
 
     for (CapacityConstraint constraint : constraints.values()) {
       if (constraint.getUtilization() > 1.0) {
-        return false;
+	return false;
       }
     }
     return true;

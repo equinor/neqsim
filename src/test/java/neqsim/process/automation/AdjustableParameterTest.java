@@ -24,8 +24,8 @@ import neqsim.thermo.system.SystemSrkEos;
 class AdjustableParameterTest {
 
   /**
-   * Builds a small process with a separator, compressor, cooler, and an adjuster whose name does
-   * not match the variable it actually drives.
+   * Builds a small process with a separator, compressor, cooler, and an adjuster whose name does not match the variable
+   * it actually drives.
    *
    * @return the constructed and run process system
    */
@@ -81,8 +81,8 @@ class AdjustableParameterTest {
     AdjustableParameter adjusterParam = null;
     for (AdjustableParameter p : params) {
       if (p.getSource() == AdjustableParameter.Source.ADJUSTER) {
-        adjusterParam = p;
-        break;
+	adjusterParam = p;
+	break;
       }
     }
     assertNotNull(adjusterParam, "registry should expose the adjuster as an adjustable parameter");
@@ -108,10 +108,10 @@ class AdjustableParameterTest {
     boolean foundInput = false;
     for (AdjustableParameter p : params) {
       if (p.getSource() == AdjustableParameter.Source.INPUT_VARIABLE) {
-        foundInput = true;
-        assertNotNull(p.getAddress());
-        assertNotNull(p.getName());
-        assertNotNull(p.getTargetUnitName());
+	foundInput = true;
+	assertNotNull(p.getAddress());
+	assertNotNull(p.getName());
+	assertNotNull(p.getTargetUnitName());
       }
     }
     assertTrue(foundInput, "registry should expose writable INPUT variables");
@@ -139,9 +139,9 @@ class AdjustableParameterTest {
       assertTrue(p.has("address"));
       assertTrue(p.has("source"));
       if ("ADJUSTER".equals(p.get("source").getAsString())) {
-        adjusterInJson = true;
-        assertEquals("HT injection cooler", p.get("targetUnitName").getAsString());
-        assertEquals("temperature", p.get("targetProperty").getAsString());
+	adjusterInJson = true;
+	assertEquals("HT injection cooler", p.get("targetUnitName").getAsString());
+	assertEquals("temperature", p.get("targetProperty").getAsString());
       }
     }
     assertTrue(adjusterInJson, "JSON registry should include the adjuster-sourced parameter");

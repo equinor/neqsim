@@ -61,8 +61,8 @@ class SystemGERG2008EosH2Test {
     // Check that phases have the correct model type
     for (int i = 0; i < system.getNumberOfPhases(); i++) {
       if (system.getPhase(i) instanceof PhaseGERG2008Eos) {
-        PhaseGERG2008Eos phase = (PhaseGERG2008Eos) system.getPhase(i);
-        assertEquals(GERG2008Type.HYDROGEN_ENHANCED, phase.getGergModelType());
+	PhaseGERG2008Eos phase = (PhaseGERG2008Eos) system.getPhase(i);
+	assertEquals(GERG2008Type.HYDROGEN_ENHANCED, phase.getGergModelType());
       }
     }
   }

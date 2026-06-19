@@ -8,11 +8,10 @@ import neqsim.process.equipment.stream.StreamInterface;
  * {@link FlowsheetSynthesisEngine#proposeAndBuildCompression(CompressionDuty)}.
  *
  * <p>
- * A compression duty specifies a feed stream and a target discharge pressure. The synthesis engine
- * decides on the number of compression stages from the overall pressure ratio (limited per-stage
- * by {@link #getMaxStageRatio()}), inserts inter-stage coolers to control discharge temperature,
- * and returns a fully wired {@link neqsim.process.processmodel.ProcessSystem} with all units
- * named.
+ * A compression duty specifies a feed stream and a target discharge pressure. The synthesis engine decides on the
+ * number of compression stages from the overall pressure ratio (limited per-stage by {@link #getMaxStageRatio()}),
+ * inserts inter-stage coolers to control discharge temperature, and returns a fully wired
+ * {@link neqsim.process.processmodel.ProcessSystem} with all units named.
  * </p>
  *
  * <p>
@@ -42,10 +41,10 @@ public final class CompressionDuty implements Serializable {
   /**
    * Creates a compression duty.
    *
-   * @param name short identifier used in the generated flowsheet
-   * @param feed the feed stream; must have been {@code run()} so that flow, T and P are valid
-   * @param dischargePressureBara target discharge pressure of the train, in bara; must be strictly
-   *        greater than the feed pressure
+   * @param name                  short identifier used in the generated flowsheet
+   * @param feed                  the feed stream; must have been {@code run()} so that flow, T and P are valid
+   * @param dischargePressureBara target discharge pressure of the train, in bara; must be strictly greater than the
+   *                              feed pressure
    */
   public CompressionDuty(String name, StreamInterface feed, double dischargePressureBara) {
     if (name == null || name.trim().isEmpty()) {
@@ -59,7 +58,7 @@ public final class CompressionDuty implements Serializable {
     }
     if (!(dischargePressureBara > feed.getPressure("bara"))) {
       throw new IllegalArgumentException("dischargePressureBara (" + dischargePressureBara
-          + ") must be > feed pressure (" + feed.getPressure("bara") + ")");
+	  + ") must be > feed pressure (" + feed.getPressure("bara") + ")");
     }
     this.name = name;
     this.feed = feed;
@@ -106,12 +105,10 @@ public final class CompressionDuty implements Serializable {
   }
 
   /**
-   * Configures whether a final after-cooler is added downstream of the last stage and at what
-   * temperature.
+   * Configures whether a final after-cooler is added downstream of the last stage and at what temperature.
    *
-   * @param enabled true to add an after-cooler (default), false to leave the last stage discharge
-   *        uncooled
-   * @param tC after-cooler outlet temperature in °C; ignored when {@code enabled} is false
+   * @param enabled true to add an after-cooler (default), false to leave the last stage discharge uncooled
+   * @param tC      after-cooler outlet temperature in °C; ignored when {@code enabled} is false
    * @return this duty for chaining
    */
   public CompressionDuty setAfterCooler(boolean enabled, double tC) {
@@ -184,8 +181,7 @@ public final class CompressionDuty implements Serializable {
   }
 
   /**
-   * Returns the after-cooler outlet temperature in °C (ignored when {@link #hasAfterCooler()} is
-   * false).
+   * Returns the after-cooler outlet temperature in °C (ignored when {@link #hasAfterCooler()} is false).
    *
    * @return after-cooler outlet temperature
    */

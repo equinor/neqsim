@@ -14,19 +14,17 @@ class PropertyTableRunnerTest {
   @Test
   void testTemperatureSweep() {
     String json = "{" + "\"model\": \"SRK\","
-        + "\"components\": {\"methane\": 0.85, \"ethane\": 0.10, \"propane\": 0.05},"
-        + "\"sweep\": \"temperature\"," + "\"sweepFrom\": {\"value\": -20.0, \"unit\": \"C\"},"
-        + "\"sweepTo\": {\"value\": 60.0, \"unit\": \"C\"}," + "\"points\": 10,"
-        + "\"fixedPressure\": {\"value\": 50.0, \"unit\": \"bara\"},"
-        + "\"properties\": [\"density\", \"viscosity\", \"Cp\", \"Z\"]" + "}";
+	+ "\"components\": {\"methane\": 0.85, \"ethane\": 0.10, \"propane\": 0.05}," + "\"sweep\": \"temperature\","
+	+ "\"sweepFrom\": {\"value\": -20.0, \"unit\": \"C\"}," + "\"sweepTo\": {\"value\": 60.0, \"unit\": \"C\"},"
+	+ "\"points\": 10," + "\"fixedPressure\": {\"value\": 50.0, \"unit\": \"bara\"},"
+	+ "\"properties\": [\"density\", \"viscosity\", \"Cp\", \"Z\"]" + "}";
 
     String result = PropertyTableRunner.run(json);
     assertNotNull(result);
 
     JsonObject obj = JsonParser.parseString(result).getAsJsonObject();
     assertTrue(obj.has("status"));
-    assertTrue("success".equals(obj.get("status").getAsString()),
-        "Expected success but got: " + result);
+    assertTrue("success".equals(obj.get("status").getAsString()), "Expected success but got: " + result);
     assertTrue(obj.has("table"));
     assertTrue(obj.has("apiVersion"));
     assertTrue(obj.has("tool"));
@@ -49,14 +47,13 @@ class PropertyTableRunnerTest {
   @Test
   void testPressureSweep() {
     String json = "{" + "\"model\": \"PR\"," + "\"components\": {\"methane\": 0.90, \"CO2\": 0.10},"
-        + "\"sweep\": \"pressure\"," + "\"sweepFrom\": {\"value\": 10.0, \"unit\": \"bara\"},"
-        + "\"sweepTo\": {\"value\": 100.0, \"unit\": \"bara\"}," + "\"points\": 5,"
-        + "\"fixedTemperature\": {\"value\": 25.0, \"unit\": \"C\"}" + "}";
+	+ "\"sweep\": \"pressure\"," + "\"sweepFrom\": {\"value\": 10.0, \"unit\": \"bara\"},"
+	+ "\"sweepTo\": {\"value\": 100.0, \"unit\": \"bara\"}," + "\"points\": 5,"
+	+ "\"fixedTemperature\": {\"value\": 25.0, \"unit\": \"C\"}" + "}";
 
     String result = PropertyTableRunner.run(json);
     JsonObject obj = JsonParser.parseString(result).getAsJsonObject();
-    assertTrue("success".equals(obj.get("status").getAsString()),
-        "Expected success but got: " + result);
+    assertTrue("success".equals(obj.get("status").getAsString()), "Expected success but got: " + result);
     assertTrue(obj.getAsJsonArray("table").size() == 5);
   }
 

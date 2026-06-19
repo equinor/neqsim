@@ -65,9 +65,9 @@ public class TiebackReport implements Serializable {
   /**
    * Creates a new tieback report.
    *
-   * @param discoveryName name of the discovery
-   * @param options list of evaluated options (will be sorted by NPV)
-   * @param discoveryLatitude discovery latitude
+   * @param discoveryName      name of the discovery
+   * @param options            list of evaluated options (will be sorted by NPV)
+   * @param discoveryLatitude  discovery latitude
    * @param discoveryLongitude discovery longitude
    */
   public TiebackReport(String discoveryName, List<TiebackOption> options, double discoveryLatitude,
@@ -103,7 +103,7 @@ public class TiebackReport implements Serializable {
   public TiebackOption getBestFeasibleOption() {
     for (TiebackOption opt : options) {
       if (opt.isFeasible()) {
-        return opt;
+	return opt;
       }
     }
     return null;
@@ -118,7 +118,7 @@ public class TiebackReport implements Serializable {
     List<TiebackOption> feasible = new ArrayList<TiebackOption>();
     for (TiebackOption opt : options) {
       if (opt.isFeasible()) {
-        feasible.add(opt);
+	feasible.add(opt);
       }
     }
     return feasible;
@@ -133,7 +133,7 @@ public class TiebackReport implements Serializable {
     List<TiebackOption> profitable = new ArrayList<TiebackOption>();
     for (TiebackOption opt : options) {
       if (opt.isFeasible() && opt.getNpvMusd() > 0) {
-        profitable.add(opt);
+	profitable.add(opt);
       }
     }
     return profitable;
@@ -157,7 +157,7 @@ public class TiebackReport implements Serializable {
     int count = 0;
     for (TiebackOption opt : options) {
       if (opt.isFeasible()) {
-        count++;
+	count++;
       }
     }
     return count;
@@ -172,7 +172,7 @@ public class TiebackReport implements Serializable {
     int count = 0;
     for (TiebackOption opt : options) {
       if (opt.isFeasible() && opt.getNpvMusd() > 0) {
-        count++;
+	count++;
       }
     }
     return count;
@@ -205,7 +205,7 @@ public class TiebackReport implements Serializable {
   public TiebackOption getOptionByHost(String hostName) {
     for (TiebackOption opt : options) {
       if (opt.getHostName().equals(hostName)) {
-        return opt;
+	return opt;
       }
     }
     return null;
@@ -226,20 +226,20 @@ public class TiebackReport implements Serializable {
 
     for (TiebackOption opt : options) {
       if (opt.isFeasible()) {
-        if (opt.getNpvMusd() < min) {
-          min = opt.getNpvMusd();
-        }
-        if (opt.getNpvMusd() > max) {
-          max = opt.getNpvMusd();
-        }
+	if (opt.getNpvMusd() < min) {
+	  min = opt.getNpvMusd();
+	}
+	if (opt.getNpvMusd() > max) {
+	  max = opt.getNpvMusd();
+	}
       }
     }
 
     if (min == Double.MAX_VALUE) {
-      return new double[] {0, 0};
+      return new double[] { 0, 0 };
     }
 
-    return new double[] {min, max};
+    return new double[] { min, max };
   }
 
   /**
@@ -253,21 +253,21 @@ public class TiebackReport implements Serializable {
 
     for (TiebackOption opt : options) {
       if (opt.isFeasible()) {
-        double capex = opt.getTotalCapexMusd();
-        if (capex < min) {
-          min = capex;
-        }
-        if (capex > max) {
-          max = capex;
-        }
+	double capex = opt.getTotalCapexMusd();
+	if (capex < min) {
+	  min = capex;
+	}
+	if (capex > max) {
+	  max = capex;
+	}
       }
     }
 
     if (min == Double.MAX_VALUE) {
-      return new double[] {0, 0};
+      return new double[] { 0, 0 };
     }
 
-    return new double[] {min, max};
+    return new double[] { min, max };
   }
 
   /**
@@ -287,15 +287,13 @@ public class TiebackReport implements Serializable {
 
     StringBuilder sb = new StringBuilder();
     sb.append("Comparison: ").append(host1).append(" vs ").append(host2).append("\n");
-    sb.append(String.format("  Distance:      %.1f km vs %.1f km (Δ %.1f km)%n",
-        opt1.getDistanceKm(), opt2.getDistanceKm(), opt1.getDistanceKm() - opt2.getDistanceKm()));
-    sb.append(String.format("  CAPEX:         %.1f MUSD vs %.1f MUSD (Δ %.1f MUSD)%n",
-        opt1.getTotalCapexMusd(), opt2.getTotalCapexMusd(),
-        opt1.getTotalCapexMusd() - opt2.getTotalCapexMusd()));
-    sb.append(String.format("  NPV:           %.1f MUSD vs %.1f MUSD (Δ %.1f MUSD)%n",
-        opt1.getNpvMusd(), opt2.getNpvMusd(), opt1.getNpvMusd() - opt2.getNpvMusd()));
-    sb.append(String.format("  IRR:           %.1f%% vs %.1f%%", opt1.getIrr() * 100,
-        opt2.getIrr() * 100));
+    sb.append(String.format("  Distance:      %.1f km vs %.1f km (Δ %.1f km)%n", opt1.getDistanceKm(),
+	opt2.getDistanceKm(), opt1.getDistanceKm() - opt2.getDistanceKm()));
+    sb.append(String.format("  CAPEX:         %.1f MUSD vs %.1f MUSD (Δ %.1f MUSD)%n", opt1.getTotalCapexMusd(),
+	opt2.getTotalCapexMusd(), opt1.getTotalCapexMusd() - opt2.getTotalCapexMusd()));
+    sb.append(String.format("  NPV:           %.1f MUSD vs %.1f MUSD (Δ %.1f MUSD)%n", opt1.getNpvMusd(),
+	opt2.getNpvMusd(), opt1.getNpvMusd() - opt2.getNpvMusd()));
+    sb.append(String.format("  IRR:           %.1f%% vs %.1f%%", opt1.getIrr() * 100, opt2.getIrr() * 100));
 
     return sb.toString();
   }
@@ -314,8 +312,7 @@ public class TiebackReport implements Serializable {
     sb.append(repeatChar('=', 70)).append("\n");
     sb.append("TIEBACK ANALYSIS REPORT: ").append(discoveryName).append("\n");
     sb.append(repeatChar('=', 70)).append("\n");
-    sb.append(String.format("Discovery location: %.4f°N, %.4f°E%n", discoveryLatitude,
-        discoveryLongitude));
+    sb.append(String.format("Discovery location: %.4f°N, %.4f°E%n", discoveryLatitude, discoveryLongitude));
     sb.append(String.format("Options evaluated: %d%n", options.size()));
     sb.append(String.format("Feasible options: %d%n", getFeasibleOptionCount()));
     sb.append(String.format("Profitable options: %d%n", getProfitableOptionCount()));
@@ -323,17 +320,14 @@ public class TiebackReport implements Serializable {
 
     if (!options.isEmpty()) {
       sb.append(repeatChar('-', 70)).append("\n");
-      sb.append(String.format("%-20s %8s %10s %10s %8s %10s%n", "Host", "Distance", "CAPEX", "NPV",
-          "IRR", "Status"));
-      sb.append(String.format("%-20s %8s %10s %10s %8s %10s%n", "", "(km)", "(MUSD)", "(MUSD)",
-          "(%)", ""));
+      sb.append(String.format("%-20s %8s %10s %10s %8s %10s%n", "Host", "Distance", "CAPEX", "NPV", "IRR", "Status"));
+      sb.append(String.format("%-20s %8s %10s %10s %8s %10s%n", "", "(km)", "(MUSD)", "(MUSD)", "(%)", ""));
       sb.append(repeatChar('-', 70)).append("\n");
 
       for (TiebackOption opt : options) {
-        String status = opt.isFeasible() ? (opt.getNpvMusd() > 0 ? "VIABLE" : "NEGATIVE") : "FAIL";
-        sb.append(String.format("%-20s %8.1f %10.1f %10.1f %8.1f %10s%n",
-            truncate(opt.getHostName(), 20), opt.getDistanceKm(), opt.getTotalCapexMusd(),
-            opt.getNpvMusd(), opt.getIrr() * 100, status));
+	String status = opt.isFeasible() ? (opt.getNpvMusd() > 0 ? "VIABLE" : "NEGATIVE") : "FAIL";
+	sb.append(String.format("%-20s %8.1f %10.1f %10.1f %8.1f %10s%n", truncate(opt.getHostName(), 20),
+	    opt.getDistanceKm(), opt.getTotalCapexMusd(), opt.getNpvMusd(), opt.getIrr() * 100, status));
       }
 
       sb.append(repeatChar('-', 70)).append("\n");
@@ -366,8 +360,8 @@ public class TiebackReport implements Serializable {
     if (best == null) {
       return discoveryName + ": No feasible tieback option";
     }
-    return String.format("%s: Best = %s (NPV %.1f MUSD, IRR %.1f%%)", discoveryName,
-        best.getHostName(), best.getNpvMusd(), best.getIrr() * 100);
+    return String.format("%s: Best = %s (NPV %.1f MUSD, IRR %.1f%%)", discoveryName, best.getHostName(),
+	best.getNpvMusd(), best.getIrr() * 100);
   }
 
   /**
@@ -387,22 +381,18 @@ public class TiebackReport implements Serializable {
     }
 
     if (best.getIrr() < 0.10) {
-      return String.format(
-          "Best option (%s) has low return (IRR %.1f%%). Proceed with caution or optimize scope.",
-          best.getHostName(), best.getIrr() * 100);
+      return String.format("Best option (%s) has low return (IRR %.1f%%). Proceed with caution or optimize scope.",
+	  best.getHostName(), best.getIrr() * 100);
     }
 
     if (best.hasFlowAssuranceIssues()) {
-      return String.format(
-          "Best option (%s) has good economics but flow assurance issues. Detailed FA study "
-              + "required before sanction.",
-          best.getHostName());
+      return String.format("Best option (%s) has good economics but flow assurance issues. Detailed FA study "
+	  + "required before sanction.", best.getHostName());
     }
 
     return String.format(
-        "Recommend tieback to %s. NPV %.1f MUSD, IRR %.1f%%, payback %.1f years. "
-            + "Proceed to detailed engineering.",
-        best.getHostName(), best.getNpvMusd(), best.getIrr() * 100, best.getPaybackYears());
+	"Recommend tieback to %s. NPV %.1f MUSD, IRR %.1f%%, payback %.1f years. " + "Proceed to detailed engineering.",
+	best.getHostName(), best.getNpvMusd(), best.getIrr() * 100, best.getPaybackYears());
   }
 
   // ============================================================================
@@ -416,14 +406,13 @@ public class TiebackReport implements Serializable {
    */
   public String toCsv() {
     StringBuilder sb = new StringBuilder();
-    sb.append("Host,Distance_km,WaterDepth_m,Wells,CAPEX_MUSD,NPV_MUSD,IRR_pct,Payback_yr,"
-        + "Feasible,FlowAssurance\n");
+    sb.append(
+	"Host,Distance_km,WaterDepth_m,Wells,CAPEX_MUSD,NPV_MUSD,IRR_pct,Payback_yr," + "Feasible,FlowAssurance\n");
 
     for (TiebackOption opt : options) {
-      sb.append(String.format("%s,%.1f,%.0f,%d,%.1f,%.1f,%.1f,%.1f,%s,%s%n", opt.getHostName(),
-          opt.getDistanceKm(), opt.getMaxWaterDepthM(), opt.getWellCount(), opt.getTotalCapexMusd(),
-          opt.getNpvMusd(), opt.getIrr() * 100, opt.getPaybackYears(),
-          opt.isFeasible() ? "Yes" : "No", opt.getOverallFlowAssuranceResult()));
+      sb.append(String.format("%s,%.1f,%.0f,%d,%.1f,%.1f,%.1f,%.1f,%s,%s%n", opt.getHostName(), opt.getDistanceKm(),
+	  opt.getMaxWaterDepthM(), opt.getWellCount(), opt.getTotalCapexMusd(), opt.getNpvMusd(), opt.getIrr() * 100,
+	  opt.getPaybackYears(), opt.isFeasible() ? "Yes" : "No", opt.getOverallFlowAssuranceResult()));
     }
 
     return sb.toString();
@@ -440,11 +429,9 @@ public class TiebackReport implements Serializable {
     sb.append("|------|--------------|--------------|------------|---------|--------|\n");
 
     for (TiebackOption opt : options) {
-      String status =
-          opt.isFeasible() ? (opt.getNpvMusd() > 0 ? "✓ Viable" : "⚠ Negative") : "✗ Fail";
-      sb.append(String.format("| %s | %.1f | %.1f | %.1f | %.1f | %s |%n", opt.getHostName(),
-          opt.getDistanceKm(), opt.getTotalCapexMusd(), opt.getNpvMusd(), opt.getIrr() * 100,
-          status));
+      String status = opt.isFeasible() ? (opt.getNpvMusd() > 0 ? "✓ Viable" : "⚠ Negative") : "✗ Fail";
+      sb.append(String.format("| %s | %.1f | %.1f | %.1f | %.1f | %s |%n", opt.getHostName(), opt.getDistanceKm(),
+	  opt.getTotalCapexMusd(), opt.getNpvMusd(), opt.getIrr() * 100, status));
     }
 
     return sb.toString();
@@ -497,7 +484,7 @@ public class TiebackReport implements Serializable {
   /**
    * Truncates a string to the specified length.
    *
-   * @param s string to truncate
+   * @param s      string to truncate
    * @param maxLen maximum length
    * @return truncated string
    */

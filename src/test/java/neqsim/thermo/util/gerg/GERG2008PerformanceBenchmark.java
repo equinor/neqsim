@@ -14,9 +14,9 @@ import org.apache.logging.log4j.Logger;
 /**
  * Performance benchmark for GERG-2008 caching optimization.
  *
- * This benchmark demonstrates the performance improvement from caching the GERG-2008 model
- * initialization. The SetupGERG() method initializes ~3000 lines of constant parameters, which was
- * previously called on every property calculation.
+ * This benchmark demonstrates the performance improvement from caching the GERG-2008 model initialization. The
+ * SetupGERG() method initializes ~3000 lines of constant parameters, which was previously called on every property
+ * calculation.
  *
  * @author esol
  */
@@ -26,8 +26,8 @@ public class GERG2008PerformanceBenchmark {
   /**
    * Benchmark to measure the speedup from GERG-2008 caching.
    *
-   * This simulates what happens during compressor performance estimation with detailed polytropic
-   * method: many repeated flash calculations and property lookups.
+   * This simulates what happens during compressor performance estimation with detailed polytropic method: many repeated
+   * flash calculations and property lookups.
    */
   @Test
   void benchmarkGERG2008Caching() {
@@ -69,10 +69,9 @@ public class GERG2008PerformanceBenchmark {
     double cachedTimeMs = (endCached - startCached) / 1_000_000.0;
 
     logger.info("\n=== Results ===");
-    logger.info("Total time for " + iterations + " GERG-2008 calculations: "
-        + String.format("%.2f", cachedTimeMs) + " ms");
-    logger.info("Average time per calculation: " + String.format("%.3f", cachedTimeMs / iterations)
-        + " ms");
+    logger.info(
+	"Total time for " + iterations + " GERG-2008 calculations: " + String.format("%.2f", cachedTimeMs) + " ms");
+    logger.info("Average time per calculation: " + String.format("%.3f", cachedTimeMs / iterations) + " ms");
 
     // Estimate speedup from caching
     // The SetupGERG() method has ~3000 lines of array initialization
@@ -93,9 +92,9 @@ public class GERG2008PerformanceBenchmark {
 
     logger.info("\nSetupGERG() time: " + String.format("%.3f", setupTimeMs) + " ms");
     logger.info("Without caching, " + iterations + " calculations would add ~"
-        + String.format("%.1f", setupTimeMs * iterations) + " ms of setup overhead");
-    logger.info("Estimated speedup: ~" + String.format("%.1fx",
-        setupTimeMs * iterations / (cachedTimeMs > 0 ? cachedTimeMs : 1) + 1) + " faster");
+	+ String.format("%.1f", setupTimeMs * iterations) + " ms of setup overhead");
+    logger.info("Estimated speedup: ~"
+	+ String.format("%.1fx", setupTimeMs * iterations / (cachedTimeMs > 0 ? cachedTimeMs : 1) + 1) + " faster");
 
     // For compressor solveEfficiency context
     logger.info("\n=== Compressor Performance Context ===");
@@ -104,10 +103,9 @@ public class GERG2008PerformanceBenchmark {
     logger.info("Property calls per step: ~3 (PSflash, properties, etc.)");
     int typicalCalls = 30 * 20 * 3; // 30 iterations, 20 steps, 3 calls
     logger.info("Typical total GERG calls: " + typicalCalls);
-    logger.info("Saved setup time per operating point: ~"
-        + String.format("%.0f", setupTimeMs * typicalCalls) + " ms");
-    logger.info("For 5 operating points: ~"
-        + String.format("%.1f", setupTimeMs * typicalCalls * 5 / 1000) + " seconds saved");
+    logger.info("Saved setup time per operating point: ~" + String.format("%.0f", setupTimeMs * typicalCalls) + " ms");
+    logger.info(
+	"For 5 operating points: ~" + String.format("%.1f", setupTimeMs * typicalCalls * 5 / 1000) + " seconds saved");
   }
 
   /**
@@ -186,8 +184,7 @@ public class GERG2008PerformanceBenchmark {
     logger.info("  Total GERG calls: " + totalCalls);
     logger.info("  OLD approach: ~" + String.format("%.1f", oldTotalSec) + " seconds");
     logger.info("  NEW approach: ~" + String.format("%.1f", newTotalSec) + " seconds");
-    System.out
-        .println("  Time saved: ~" + String.format("%.1f", oldTotalSec - newTotalSec) + " seconds");
+    System.out.println("  Time saved: ~" + String.format("%.1f", oldTotalSec - newTotalSec) + " seconds");
   }
 
   /**
@@ -212,8 +209,7 @@ public class GERG2008PerformanceBenchmark {
 
     // Verify the model name contains GERG2008
     logger.info("GERG2008Eos model name: " + gergFluid.getModelName());
-    Assertions.assertTrue(gergFluid.getModelName().contains("GERG2008"),
-        "Fluid should be GERG2008 model");
+    Assertions.assertTrue(gergFluid.getModelName().contains("GERG2008"), "Fluid should be GERG2008 model");
 
     // Test with an SRK system that we manually name to contain GERG2008
     // This tests the auto-detection pattern matching
@@ -227,8 +223,7 @@ public class GERG2008PerformanceBenchmark {
 
     // Verify SRK doesn't contain GERG2008 in name
     logger.info("SRK model name: " + srkFluid.getModelName());
-    Assertions.assertFalse(srkFluid.getModelName().contains("GERG2008"),
-        "SRK should not have GERG2008 in model name");
+    Assertions.assertFalse(srkFluid.getModelName().contains("GERG2008"), "SRK should not have GERG2008 in model name");
 
     // Create stream and compressor with SRK fluid
     Stream inletStream = new Stream("inlet", srkFluid);
@@ -249,23 +244,21 @@ public class GERG2008PerformanceBenchmark {
     compressor.run();
 
     // After running SRK fluid, useGERG2008 should remain false
-    Assertions.assertFalse(compressor.isUseGERG2008(),
-        "useGERG2008 should remain false for SRK fluid");
+    Assertions.assertFalse(compressor.isUseGERG2008(), "useGERG2008 should remain false for SRK fluid");
 
     logger.info("SRK Compressor run completed");
-    logger.info("Outlet temperature: "
-        + String.format("%.2f", compressor.getOutletStream().getTemperature() - 273.15) + " °C");
+    logger.info(
+	"Outlet temperature: " + String.format("%.2f", compressor.getOutletStream().getTemperature() - 273.15) + " °C");
     logger.info("Power: " + String.format("%.2f", compressor.getPower() / 1000) + " MW");
 
     // Now test that manually setting useGERG2008 works
     compressor.setUseGERG2008(true);
     compressor.run();
-    Assertions.assertTrue(compressor.isUseGERG2008(),
-        "useGERG2008 should remain true when explicitly set");
+    Assertions.assertTrue(compressor.isUseGERG2008(), "useGERG2008 should remain true when explicitly set");
 
     logger.info("\nWith GERG2008 enabled:");
-    logger.info("Outlet temperature: "
-        + String.format("%.2f", compressor.getOutletStream().getTemperature() - 273.15) + " °C");
+    logger.info(
+	"Outlet temperature: " + String.format("%.2f", compressor.getOutletStream().getTemperature() - 273.15) + " °C");
     logger.info("Power: " + String.format("%.2f", compressor.getPower() / 1000) + " MW");
     Assertions.assertTrue(compressor.getPower() > 0, "Power should be positive");
   }
@@ -297,11 +290,11 @@ public class GERG2008PerformanceBenchmark {
 
     // Benchmark: solveEfficiency for multiple operating points (like Streamlit app)
     int numOperatingPoints = 5;
-    double[] outletTemperatures = {388.15, 378.15, 368.15, 360.15, 355.15}; // Various T_out values
-    double[] outletPressures = {100.0, 95.0, 90.0, 85.0, 80.0};
+    double[] outletTemperatures = { 388.15, 378.15, 368.15, 360.15, 355.15 }; // Various T_out values
+    double[] outletPressures = { 100.0, 95.0, 90.0, 85.0, 80.0 };
 
-    logger.info("Running " + numOperatingPoints
-        + " operating points with solveEfficiency (detailed method + GERG-2008)...\n");
+    logger.info(
+	"Running " + numOperatingPoints + " operating points with solveEfficiency (detailed method + GERG-2008)...\n");
 
     long totalStartTime = System.nanoTime();
 
@@ -329,9 +322,8 @@ public class GERG2008PerformanceBenchmark {
 
       double pointTimeMs = (pointEnd - pointStart) / 1_000_000.0;
       logger.info("Point " + (i + 1) + ": P_out=" + outletPressures[i] + " bara, T_out="
-          + String.format("%.1f", outletTemperatures[i] - 273.15) + "°C -> η="
-          + String.format("%.1f%%", efficiency * 100) + " (" + String.format("%.0f", pointTimeMs)
-          + " ms)");
+	  + String.format("%.1f", outletTemperatures[i] - 273.15) + "°C -> η="
+	  + String.format("%.1f%%", efficiency * 100) + " (" + String.format("%.0f", pointTimeMs) + " ms)");
     }
 
     long totalEndTime = System.nanoTime();
@@ -339,18 +331,16 @@ public class GERG2008PerformanceBenchmark {
     double avgTimeMs = totalTimeMs / numOperatingPoints;
 
     logger.info("\n=== Performance Summary ===");
-    logger.info("Total time for " + numOperatingPoints + " points: "
-        + String.format("%.0f", totalTimeMs) + " ms");
+    logger.info("Total time for " + numOperatingPoints + " points: " + String.format("%.0f", totalTimeMs) + " ms");
     logger.info("Average time per point: " + String.format("%.0f", avgTimeMs) + " ms");
-    logger.info(
-        "\nNote: With caching + 0.01K tolerance, this is ~10-15x faster than before optimization.");
+    logger.info("\nNote: With caching + 0.01K tolerance, this is ~10-15x faster than before optimization.");
   }
 
   /**
    * Benchmark using native GERG-2008 EoS with forced single-phase gas.
    *
-   * This tests the performance when using SystemGERG2008Eos directly with numberOfPhases=1 to force
-   * single-phase gas calculations (no flash needed).
+   * This tests the performance when using SystemGERG2008Eos directly with numberOfPhases=1 to force single-phase gas
+   * calculations (no flash needed).
    */
   @Test
   void benchmarkNativeGERG2008SinglePhaseGas() {
@@ -375,7 +365,6 @@ public class GERG2008PerformanceBenchmark {
     logger.info("Number of phases: " + gergFluid.getNumberOfPhases());
     logger.info("Phase type: " + gergFluid.getPhase(0).getType());
 
-
     // Warm up
     for (int i = 0; i < 5; i++) {
       gergFluid.getPhase(0).getProperties_GERG2008();
@@ -394,17 +383,15 @@ public class GERG2008PerformanceBenchmark {
       double[] props = gergFluid.getPhase(0).getProperties_GERG2008();
       // Use props to prevent optimization
       if (props[0] < 0) {
-        logger.info("Unexpected");
+	logger.info("Unexpected");
       }
     }
     long endTime = System.nanoTime();
     double totalMs = (endTime - startTime) / 1_000_000.0;
 
     logger.info("=== Results (with init(2) - changing T,P) ===");
-    logger.info("Total time for " + iterations + " calculations: " + String.format("%.1f", totalMs)
-        + " ms");
-    logger.info(
-        "Average time per calculation: " + String.format("%.3f", totalMs / iterations) + " ms");
+    logger.info("Total time for " + iterations + " calculations: " + String.format("%.1f", totalMs) + " ms");
+    logger.info("Average time per calculation: " + String.format("%.3f", totalMs / iterations) + " ms");
 
     // Test 1b: With init(2) on every iteration - SAME T,P (caching should help)
     gergFluid.setTemperature(350.0);
@@ -416,17 +403,15 @@ public class GERG2008PerformanceBenchmark {
       gergFluid.init(2); // Should skip GERG calculations due to caching
       double[] props = gergFluid.getPhase(0).getProperties_GERG2008();
       if (props[0] < 0) {
-        logger.info("Unexpected");
+	logger.info("Unexpected");
       }
     }
     long endTimeCached = System.nanoTime();
     double totalMsCached = (endTimeCached - startTimeCached) / 1_000_000.0;
 
     logger.info("\n=== Results (with init(2) - SAME T,P, caching active) ===");
-    logger.info("Total time for " + iterations + " calculations: "
-        + String.format("%.1f", totalMsCached) + " ms");
-    logger.info("Average time per calculation: " + String.format("%.3f", totalMsCached / iterations)
-        + " ms");
+    logger.info("Total time for " + iterations + " calculations: " + String.format("%.1f", totalMsCached) + " ms");
+    logger.info("Average time per calculation: " + String.format("%.3f", totalMsCached / iterations) + " ms");
     logger.info("Speedup from caching: " + String.format("%.1fx", totalMs / totalMsCached));
 
     // Test 2: Without init(2) - just update T,P and get properties directly
@@ -438,16 +423,14 @@ public class GERG2008PerformanceBenchmark {
       // Skip init(2) - just call GERG directly
       double[] props = gergFluid.getPhase(0).getProperties_GERG2008();
       if (props[0] < 0) {
-        logger.info("Unexpected");
+	logger.info("Unexpected");
       }
     }
     long endTime2 = System.nanoTime();
     double totalMs2 = (endTime2 - startTime2) / 1_000_000.0;
 
-    logger.info("Total time for " + iterations + " calculations: " + String.format("%.1f", totalMs2)
-        + " ms");
-    logger.info(
-        "Average time per calculation: " + String.format("%.3f", totalMs2 / iterations) + " ms");
+    logger.info("Total time for " + iterations + " calculations: " + String.format("%.1f", totalMs2) + " ms");
+    logger.info("Average time per calculation: " + String.format("%.3f", totalMs2 / iterations) + " ms");
 
     // Compare with SRK + GERG flag approach
     logger.info("\n--- Comparison with SRK + GERG flag ---\n");
@@ -476,32 +459,26 @@ public class GERG2008PerformanceBenchmark {
       srkFluid.init(2);
       double[] props = srkFluid.getPhase(0).getProperties_GERG2008();
       if (props[0] < 0) {
-        logger.info("Unexpected");
+	logger.info("Unexpected");
       }
     }
     long endTimeSRK = System.nanoTime();
     double totalMsSRK = (endTimeSRK - startTimeSRK) / 1_000_000.0;
 
     logger.info("SRK + GERG flag total time: " + String.format("%.1f", totalMsSRK) + " ms");
-    logger.info(
-        "SRK + GERG flag avg per calc: " + String.format("%.3f", totalMsSRK / iterations) + " ms");
+    logger.info("SRK + GERG flag avg per calc: " + String.format("%.3f", totalMsSRK / iterations) + " ms");
 
     logger.info("\n--- Summary ---");
-    logger.info("Native GERG-2008 EoS (with init): " + String.format("%.3f", totalMs / iterations)
-        + " ms/calc");
-    logger.info("Native GERG-2008 EoS (skip init): " + String.format("%.3f", totalMs2 / iterations)
-        + " ms/calc");
-    logger.info(
-        "SRK + GERG property: " + String.format("%.3f", totalMsSRK / iterations) + " ms/calc");
+    logger.info("Native GERG-2008 EoS (with init): " + String.format("%.3f", totalMs / iterations) + " ms/calc");
+    logger.info("Native GERG-2008 EoS (skip init): " + String.format("%.3f", totalMs2 / iterations) + " ms/calc");
+    logger.info("SRK + GERG property: " + String.format("%.3f", totalMsSRK / iterations) + " ms/calc");
 
     logger.info("\n--- Key Insight ---");
-    System.out
-        .println("Skipping init(2) when using GERG-2008 EoS provides the fastest performance");
-    System.out
-        .println("because getProperties_GERG2008() recalculates everything internally anyway.");
+    System.out.println("Skipping init(2) when using GERG-2008 EoS provides the fastest performance");
+    System.out.println("because getProperties_GERG2008() recalculates everything internally anyway.");
     if (totalMs2 < totalMsSRK) {
       logger.info("Native GERG-2008 (skip init) is " + String.format("%.1fx", totalMsSRK / totalMs2)
-          + " faster than SRK + GERG");
+	  + " faster than SRK + GERG");
     }
   }
 
@@ -540,7 +517,7 @@ public class GERG2008PerformanceBenchmark {
       opsNormal.TPflash();
       double[] props = fluidNormal.getPhase(0).getProperties_GERG2008();
       if (props[0] < 0) {
-        logger.info("Unexpected");
+	logger.info("Unexpected");
       }
     }
     long endNormal = System.nanoTime();
@@ -548,8 +525,7 @@ public class GERG2008PerformanceBenchmark {
 
     logger.info("=== WITHOUT setForceSinglePhase (normal TPflash) ===");
     logger.info("Total time: " + String.format("%.1f", totalMsNormal) + " ms");
-    System.out
-        .println("Avg per calc: " + String.format("%.3f", totalMsNormal / iterations) + " ms");
+    System.out.println("Avg per calc: " + String.format("%.3f", totalMsNormal / iterations) + " ms");
 
     // Test 2: WITH setForceSinglePhase("GAS")
     SystemInterface fluidForced = new SystemGERG2008Eos(303.15, 50.0);
@@ -576,7 +552,7 @@ public class GERG2008PerformanceBenchmark {
       fluidForced.init(2);
       double[] props = fluidForced.getPhase(0).getProperties_GERG2008();
       if (props[0] < 0) {
-        logger.info("Unexpected");
+	logger.info("Unexpected");
       }
     }
     long endForced = System.nanoTime();
@@ -584,17 +560,13 @@ public class GERG2008PerformanceBenchmark {
 
     logger.info("\n=== WITH setForceSinglePhase(\"GAS\") ===");
     logger.info("Total time: " + String.format("%.1f", totalMsForced) + " ms");
-    System.out
-        .println("Avg per calc: " + String.format("%.3f", totalMsForced / iterations) + " ms");
+    System.out.println("Avg per calc: " + String.format("%.3f", totalMsForced / iterations) + " ms");
 
     // Summary
     logger.info("\n=== Performance Summary ===");
-    logger.info(
-        "Normal (TPflash): " + String.format("%.3f", totalMsNormal / iterations) + " ms/calc");
-    logger.info(
-        "ForceSinglePhase: " + String.format("%.3f", totalMsForced / iterations) + " ms/calc");
+    logger.info("Normal (TPflash): " + String.format("%.3f", totalMsNormal / iterations) + " ms/calc");
+    logger.info("ForceSinglePhase: " + String.format("%.3f", totalMsForced / iterations) + " ms/calc");
     double speedup = totalMsNormal / totalMsForced;
-    logger.info("Speedup: " + String.format("%.1fx", speedup)
-        + " faster with setForceSinglePhase(\"GAS\")");
+    logger.info("Speedup: " + String.format("%.1fx", speedup) + " faster with setForceSinglePhase(\"GAS\")");
   }
 }

@@ -14,8 +14,8 @@ import neqsim.util.validation.contracts.ThermodynamicSystemContract;
  * AI-friendly validation helper for NeqSim simulations.
  *
  * <p>
- * Provides a unified interface for validating NeqSim objects. AI agents can use this class to
- * validate setup before execution and get actionable remediation advice.
+ * Provides a unified interface for validating NeqSim objects. AI agents can use this class to validate setup before
+ * execution and get actionable remediation advice.
  * </p>
  *
  * <h2>Usage:</h2>
@@ -83,7 +83,7 @@ public final class SimulationValidator {
     // Unknown type - return empty valid result
     ValidationResult result = new ValidationResult(obj.getClass().getSimpleName());
     result.addWarning("type", "No specific validator for " + obj.getClass().getSimpleName(),
-        "Consider using validateSetup() if available");
+	"Consider using validateSetup() if available");
     return result;
   }
 
@@ -152,9 +152,9 @@ public final class SimulationValidator {
     // Merge results
     for (ValidationResult.ValidationIssue issue : postResult.getIssues()) {
       if (issue.getSeverity() == ValidationResult.Severity.CRITICAL) {
-        preResult.addError(issue.getCategory(), issue.getMessage(), issue.getRemediation());
+	preResult.addError(issue.getCategory(), issue.getMessage(), issue.getRemediation());
       } else {
-        preResult.addWarning(issue.getCategory(), issue.getMessage(), issue.getRemediation());
+	preResult.addWarning(issue.getCategory(), issue.getMessage(), issue.getRemediation());
       }
     }
 
@@ -176,17 +176,16 @@ public final class SimulationValidator {
     try {
       processSystem.run();
     } catch (Exception e) {
-      preResult.addError("execution", "Process run failed: " + e.getMessage(),
-          getExceptionRemediation(e));
+      preResult.addError("execution", "Process run failed: " + e.getMessage(), getExceptionRemediation(e));
       return preResult;
     }
 
     ValidationResult postResult = validateOutput(processSystem);
     for (ValidationResult.ValidationIssue issue : postResult.getIssues()) {
       if (issue.getSeverity() == ValidationResult.Severity.CRITICAL) {
-        preResult.addError(issue.getCategory(), issue.getMessage(), issue.getRemediation());
+	preResult.addError(issue.getCategory(), issue.getMessage(), issue.getRemediation());
       } else {
-        preResult.addWarning(issue.getCategory(), issue.getMessage(), issue.getRemediation());
+	preResult.addWarning(issue.getCategory(), issue.getMessage(), issue.getRemediation());
       }
     }
 
@@ -245,7 +244,7 @@ public final class SimulationValidator {
     for (Object obj : objects) {
       ValidationResult result = validate(obj);
       if (!result.isValid()) {
-        allValid = false;
+	allValid = false;
       }
       sb.append(result.getReport()).append("\n");
     }

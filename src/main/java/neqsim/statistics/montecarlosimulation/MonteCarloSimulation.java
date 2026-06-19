@@ -29,7 +29,8 @@ public class MonteCarloSimulation {
    * Constructor for MonteCarloSimulation.
    * </p>
    */
-  public MonteCarloSimulation() {}
+  public MonteCarloSimulation() {
+  }
 
   /**
    * <p>
@@ -48,7 +49,7 @@ public class MonteCarloSimulation {
    * </p>
    *
    * @param baseStatClass a {@link neqsim.statistics.parameterfitting.StatisticsBaseClass} object
-   * @param numberOfRuns a int
+   * @param numberOfRuns  a int
    */
   public MonteCarloSimulation(StatisticsBaseClass baseStatClass, int numberOfRuns) {
     this.baseStatClass = baseStatClass;
@@ -91,10 +92,8 @@ public class MonteCarloSimulation {
     for (int i = 0; i < numberOfRuns; i++) {
       reportMatrix[0][i] = i;
 
-      for (int j = 0; j < statClasses[0].getSampleSet().getSample(0).getFunction()
-          .getNumberOfFittingParams(); j++) {
-        reportMatrix[j + 1][i] =
-            statClasses[i].getSampleSet().getSample(0).getFunction().getFittingParams(j);
+      for (int j = 0; j < statClasses[0].getSampleSet().getSample(0).getFunction().getNumberOfFittingParams(); j++) {
+	reportMatrix[j + 1][i] = statClasses[i].getSampleSet().getSample(0).getFunction().getFittingParams(j);
       }
     }
 

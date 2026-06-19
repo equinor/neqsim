@@ -20,5 +20,6 @@ public class NumericalIntegration {
    * Constructor for NumericalIntegration.
    * </p>
    */
-  public NumericalIntegration() {}
+  public NumericalIntegration() {
+  }
 }

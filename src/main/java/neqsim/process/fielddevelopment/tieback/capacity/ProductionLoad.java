@@ -6,10 +6,9 @@ import java.io.Serializable;
  * Immutable production load for one planning period in a host tie-in study.
  *
  * <p>
- * Rates are average daily rates for the period. Volumes are calculated by multiplying rates by the
- * period length in days. Oil is reported in stock-tank barrels per day, while liquid capacity
- * checks use cubic metres per day; if an explicit total-liquid rate is not provided, oil is
- * converted to cubic metres and added to water.
+ * Rates are average daily rates for the period. Volumes are calculated by multiplying rates by the period length in
+ * days. Oil is reported in stock-tank barrels per day, while liquid capacity checks use cubic metres per day; if an
+ * explicit total-liquid rate is not provided, oil is converted to cubic metres and added to water.
  * </p>
  *
  * @author ESOL
@@ -58,52 +57,49 @@ public final class ProductionLoad implements Serializable {
   /**
    * Creates a production load with a default period name and one-year length.
    *
-   * @param year calendar year for the period
-   * @param gasRateMSm3d average gas rate in MSm3/d
-   * @param oilRateBopd average oil rate in bbl/d
-   * @param waterRateM3d average water rate in m3/d
+   * @param year          calendar year for the period
+   * @param gasRateMSm3d  average gas rate in MSm3/d
+   * @param oilRateBopd   average oil rate in bbl/d
+   * @param waterRateM3d  average water rate in m3/d
    * @param liquidRateM3d explicit total-liquid rate in m3/d, or zero to infer from oil and water
    */
-  public ProductionLoad(int year, double gasRateMSm3d, double oilRateBopd, double waterRateM3d,
-      double liquidRateM3d) {
-    this("Y" + year, year, gasRateMSm3d, oilRateBopd, waterRateM3d, liquidRateM3d, 365.0, 0.0, 0.0,
-        0.0, 0.0);
+  public ProductionLoad(int year, double gasRateMSm3d, double oilRateBopd, double waterRateM3d, double liquidRateM3d) {
+    this("Y" + year, year, gasRateMSm3d, oilRateBopd, waterRateM3d, liquidRateM3d, 365.0, 0.0, 0.0, 0.0, 0.0);
   }
 
   /**
    * Creates a production load with a named period and one-year length.
    *
-   * @param periodName display name for the period
-   * @param year calendar year for the period
-   * @param gasRateMSm3d average gas rate in MSm3/d
-   * @param oilRateBopd average oil rate in bbl/d
-   * @param waterRateM3d average water rate in m3/d
+   * @param periodName    display name for the period
+   * @param year          calendar year for the period
+   * @param gasRateMSm3d  average gas rate in MSm3/d
+   * @param oilRateBopd   average oil rate in bbl/d
+   * @param waterRateM3d  average water rate in m3/d
    * @param liquidRateM3d explicit total-liquid rate in m3/d, or zero to infer from oil and water
    */
-  public ProductionLoad(String periodName, int year, double gasRateMSm3d, double oilRateBopd,
-      double waterRateM3d, double liquidRateM3d) {
-    this(periodName, year, gasRateMSm3d, oilRateBopd, waterRateM3d, liquidRateM3d, 365.0, 0.0, 0.0,
-        0.0, 0.0);
+  public ProductionLoad(String periodName, int year, double gasRateMSm3d, double oilRateBopd, double waterRateM3d,
+      double liquidRateM3d) {
+    this(periodName, year, gasRateMSm3d, oilRateBopd, waterRateM3d, liquidRateM3d, 365.0, 0.0, 0.0, 0.0, 0.0);
   }
 
   /**
    * Creates a fully specified production load.
    *
-   * @param periodName display name for the period
-   * @param year calendar year for the period
-   * @param gasRateMSm3d average gas rate in MSm3/d
-   * @param oilRateBopd average oil rate in bbl/d
-   * @param waterRateM3d average water rate in m3/d
-   * @param liquidRateM3d explicit total-liquid rate in m3/d, or zero to infer from oil and water
-   * @param periodLengthDays number of days represented by the period
-   * @param gasValueUsdPerMSm3 gas value in USD/MSm3
-   * @param oilValueUsdPerBbl oil value in USD/bbl
-   * @param waterValueUsdPerM3 water value in USD/m3
+   * @param periodName          display name for the period
+   * @param year                calendar year for the period
+   * @param gasRateMSm3d        average gas rate in MSm3/d
+   * @param oilRateBopd         average oil rate in bbl/d
+   * @param waterRateM3d        average water rate in m3/d
+   * @param liquidRateM3d       explicit total-liquid rate in m3/d, or zero to infer from oil and water
+   * @param periodLengthDays    number of days represented by the period
+   * @param gasValueUsdPerMSm3  gas value in USD/MSm3
+   * @param oilValueUsdPerBbl   oil value in USD/bbl
+   * @param waterValueUsdPerM3  water value in USD/m3
    * @param liquidValueUsdPerM3 liquid value in USD/m3
    */
-  public ProductionLoad(String periodName, int year, double gasRateMSm3d, double oilRateBopd,
-      double waterRateM3d, double liquidRateM3d, double periodLengthDays, double gasValueUsdPerMSm3,
-      double oilValueUsdPerBbl, double waterValueUsdPerM3, double liquidValueUsdPerM3) {
+  public ProductionLoad(String periodName, int year, double gasRateMSm3d, double oilRateBopd, double waterRateM3d,
+      double liquidRateM3d, double periodLengthDays, double gasValueUsdPerMSm3, double oilValueUsdPerBbl,
+      double waterValueUsdPerM3, double liquidValueUsdPerM3) {
     this.periodName = periodName == null || periodName.trim().isEmpty() ? "Y" + year : periodName;
     this.year = year;
     this.gasRateMSm3d = Math.max(0.0, gasRateMSm3d);
@@ -120,7 +116,7 @@ public final class ProductionLoad implements Serializable {
   /**
    * Creates a zero load for a planning period.
    *
-   * @param year calendar year for the period
+   * @param year       calendar year for the period
    * @param periodName display name for the period
    * @return zero production load
    */
@@ -281,8 +277,8 @@ public final class ProductionLoad implements Serializable {
    * @return daily value in USD/d
    */
   public double getDailyValueUsd() {
-    return gasRateMSm3d * gasValueUsdPerMSm3 + oilRateBopd * oilValueUsdPerBbl
-        + waterRateM3d * waterValueUsdPerM3 + getTotalLiquidRateM3d() * liquidValueUsdPerM3;
+    return gasRateMSm3d * gasValueUsdPerMSm3 + oilRateBopd * oilValueUsdPerBbl + waterRateM3d * waterValueUsdPerM3
+	+ getTotalLiquidRateM3d() * liquidValueUsdPerM3;
   }
 
   /**
@@ -307,29 +303,27 @@ public final class ProductionLoad implements Serializable {
    * Creates a load with a different period name and year.
    *
    * @param newPeriodName new period name
-   * @param newYear new calendar year
+   * @param newYear       new calendar year
    * @return copied load with the new period identity
    */
   public ProductionLoad withPeriod(String newPeriodName, int newYear) {
-    return new ProductionLoad(newPeriodName, newYear, gasRateMSm3d, oilRateBopd, waterRateM3d,
-        liquidRateM3d, periodLengthDays, gasValueUsdPerMSm3, oilValueUsdPerBbl, waterValueUsdPerM3,
-        liquidValueUsdPerM3);
+    return new ProductionLoad(newPeriodName, newYear, gasRateMSm3d, oilRateBopd, waterRateM3d, liquidRateM3d,
+	periodLengthDays, gasValueUsdPerMSm3, oilValueUsdPerBbl, waterValueUsdPerM3, liquidValueUsdPerM3);
   }
 
   /**
    * Creates a load with updated commodity values.
    *
-   * @param gasUsdPerMSm3 gas value in USD/MSm3
-   * @param oilUsdPerBbl oil value in USD/bbl
-   * @param waterUsdPerM3 water value in USD/m3
+   * @param gasUsdPerMSm3  gas value in USD/MSm3
+   * @param oilUsdPerBbl   oil value in USD/bbl
+   * @param waterUsdPerM3  water value in USD/m3
    * @param liquidUsdPerM3 liquid value in USD/m3
    * @return copied load with updated values
    */
-  public ProductionLoad withCommodityValues(double gasUsdPerMSm3, double oilUsdPerBbl,
-      double waterUsdPerM3, double liquidUsdPerM3) {
-    return new ProductionLoad(periodName, year, gasRateMSm3d, oilRateBopd, waterRateM3d,
-        liquidRateM3d, periodLengthDays, gasUsdPerMSm3, oilUsdPerBbl, waterUsdPerM3,
-        liquidUsdPerM3);
+  public ProductionLoad withCommodityValues(double gasUsdPerMSm3, double oilUsdPerBbl, double waterUsdPerM3,
+      double liquidUsdPerM3) {
+    return new ProductionLoad(periodName, year, gasRateMSm3d, oilRateBopd, waterRateM3d, liquidRateM3d,
+	periodLengthDays, gasUsdPerMSm3, oilUsdPerBbl, waterUsdPerM3, liquidUsdPerM3);
   }
 
   /**
@@ -339,9 +333,8 @@ public final class ProductionLoad implements Serializable {
    * @return copied load with updated period length
    */
   public ProductionLoad withPeriodLengthDays(double newPeriodLengthDays) {
-    return new ProductionLoad(periodName, year, gasRateMSm3d, oilRateBopd, waterRateM3d,
-        liquidRateM3d, newPeriodLengthDays, gasValueUsdPerMSm3, oilValueUsdPerBbl,
-        waterValueUsdPerM3, liquidValueUsdPerM3);
+    return new ProductionLoad(periodName, year, gasRateMSm3d, oilRateBopd, waterRateM3d, liquidRateM3d,
+	newPeriodLengthDays, gasValueUsdPerMSm3, oilValueUsdPerBbl, waterValueUsdPerM3, liquidValueUsdPerM3);
   }
 
   /**
@@ -353,8 +346,8 @@ public final class ProductionLoad implements Serializable {
   public ProductionLoad scale(double factor) {
     double safeFactor = Math.max(0.0, factor);
     return new ProductionLoad(periodName, year, gasRateMSm3d * safeFactor, oilRateBopd * safeFactor,
-        waterRateM3d * safeFactor, liquidRateM3d * safeFactor, periodLengthDays, gasValueUsdPerMSm3,
-        oilValueUsdPerBbl, waterValueUsdPerM3, liquidValueUsdPerM3);
+	waterRateM3d * safeFactor, liquidRateM3d * safeFactor, periodLengthDays, gasValueUsdPerMSm3, oilValueUsdPerBbl,
+	waterValueUsdPerM3, liquidValueUsdPerM3);
   }
 
   /**
@@ -367,10 +360,9 @@ public final class ProductionLoad implements Serializable {
     if (other == null) {
       return this;
     }
-    return new ProductionLoad(periodName, year, gasRateMSm3d + other.gasRateMSm3d,
-        oilRateBopd + other.oilRateBopd, waterRateM3d + other.waterRateM3d,
-        combineLiquidRates(this, other), periodLengthDays, gasValueUsdPerMSm3, oilValueUsdPerBbl,
-        waterValueUsdPerM3, liquidValueUsdPerM3);
+    return new ProductionLoad(periodName, year, gasRateMSm3d + other.gasRateMSm3d, oilRateBopd + other.oilRateBopd,
+	waterRateM3d + other.waterRateM3d, combineLiquidRates(this, other), periodLengthDays, gasValueUsdPerMSm3,
+	oilValueUsdPerBbl, waterValueUsdPerM3, liquidValueUsdPerM3);
   }
 
   /**
@@ -384,16 +376,15 @@ public final class ProductionLoad implements Serializable {
       return this;
     }
     return new ProductionLoad(periodName, year, Math.max(0.0, gasRateMSm3d - other.gasRateMSm3d),
-        Math.max(0.0, oilRateBopd - other.oilRateBopd),
-        Math.max(0.0, waterRateM3d - other.waterRateM3d),
-        Math.max(0.0, getTotalLiquidRateM3d() - other.getTotalLiquidRateM3d()), periodLengthDays,
-        gasValueUsdPerMSm3, oilValueUsdPerBbl, waterValueUsdPerM3, liquidValueUsdPerM3);
+	Math.max(0.0, oilRateBopd - other.oilRateBopd), Math.max(0.0, waterRateM3d - other.waterRateM3d),
+	Math.max(0.0, getTotalLiquidRateM3d() - other.getTotalLiquidRateM3d()), periodLengthDays, gasValueUsdPerMSm3,
+	oilValueUsdPerBbl, waterValueUsdPerM3, liquidValueUsdPerM3);
   }
 
   /**
    * Combines explicit liquid rates when either load uses them.
    *
-   * @param first first load
+   * @param first  first load
    * @param second second load
    * @return combined explicit total-liquid rate or zero when both loads infer liquid rate
    */
@@ -406,7 +397,7 @@ public final class ProductionLoad implements Serializable {
 
   @Override
   public String toString() {
-    return String.format("ProductionLoad[%s: gas=%.3f MSm3/d, oil=%.0f bbl/d, water=%.0f m3/d]",
-        periodName, gasRateMSm3d, oilRateBopd, waterRateM3d);
+    return String.format("ProductionLoad[%s: gas=%.3f MSm3/d, oil=%.0f bbl/d, water=%.0f m3/d]", periodName,
+	gasRateMSm3d, oilRateBopd, waterRateM3d);
   }
 }

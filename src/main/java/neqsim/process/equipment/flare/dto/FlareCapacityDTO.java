@@ -19,9 +19,9 @@ public class FlareCapacityDTO implements Serializable {
   private final double molarUtilization;
   private final boolean overloaded;
 
-  public FlareCapacityDTO(double heatDutyW, double designHeatDutyW, double heatUtilization,
-      double massRateKgS, double designMassRateKgS, double massUtilization, double molarRateMoleS,
-      double designMolarRateMoleS, double molarUtilization, boolean overloaded) {
+  public FlareCapacityDTO(double heatDutyW, double designHeatDutyW, double heatUtilization, double massRateKgS,
+      double designMassRateKgS, double massUtilization, double molarRateMoleS, double designMolarRateMoleS,
+      double molarUtilization, boolean overloaded) {
     this.heatDutyW = heatDutyW;
     this.designHeatDutyW = designHeatDutyW;
     this.heatUtilization = heatUtilization;

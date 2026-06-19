@@ -53,8 +53,7 @@ public class ThermalDesignCalculatorTest {
     // Same temperatures, 2 shell passes should give higher Ft than 1 shell pass
     double ft1 = LMTDcorrectionFactor.calcFt(150.0, 90.0, 30.0, 80.0, 1);
     double ft2 = LMTDcorrectionFactor.calcFt(150.0, 90.0, 30.0, 80.0, 2);
-    assertTrue(ft2 >= ft1,
-        "2 shell passes should give >= Ft than 1 pass: ft1=" + ft1 + " ft2=" + ft2);
+    assertTrue(ft2 >= ft1, "2 shell passes should give >= Ft than 1 pass: ft1=" + ft1 + " ft2=" + ft2);
   }
 
   @Test
@@ -101,8 +100,7 @@ public class ThermalDesignCalculatorTest {
     double tubePitch = 0.02381; // 15/16 inch (1.25 * OD)
     double de = BellDelawareMethod.calcShellEquivDiameter(tubeOD, tubePitch, true);
     assertTrue(de > 0, "Equivalent diameter should be positive: " + de);
-    assertTrue(de > tubeOD * 0.3 && de < tubeOD * 3.0,
-        "Equivalent diameter should be reasonable: " + de);
+    assertTrue(de > tubeOD * 0.3 && de < tubeOD * 3.0, "Equivalent diameter should be reasonable: " + de);
   }
 
   @Test
@@ -114,7 +112,7 @@ public class ThermalDesignCalculatorTest {
     assertTrue(deSq > 0, "Square layout equiv diameter should be positive");
     // Square and triangular layouts should give different but comparable results
     assertTrue(Math.abs(deTri - deSq) / deTri < 1.0,
-        "Triangular and square equiv diameters should be in same order of magnitude");
+	"Triangular and square equiv diameters should be in same order of magnitude");
   }
 
   @Test
@@ -152,8 +150,7 @@ public class ThermalDesignCalculatorTest {
     double rho = 50.0; // kg/m3
     double mu = 1.5e-5;
 
-    double dp = BellDelawareMethod.calcKernShellSidePressureDrop(massFlux, de, shellDiameter,
-        baffleCount, rho, mu, mu);
+    double dp = BellDelawareMethod.calcKernShellSidePressureDrop(massFlux, de, shellDiameter, baffleCount, rho, mu, mu);
     assertTrue(dp > 0, "Kern shell DP should be positive: " + dp);
     assertTrue(dp < 1e6, "Kern shell DP should be less than 1 MPa: " + dp);
   }
@@ -213,26 +210,24 @@ public class ThermalDesignCalculatorTest {
   void testNaturalFrequency() {
     // Standard 3/4" tube, 0.5m unsupported span, carbon steel (E=200 GPa, rho=7800)
     double fn = VibrationAnalysis.calcNaturalFrequency(0.01905, // OD
-        0.01483, // ID
-        0.5, // span
-        200e9, // E
-        7800.0, // tube density
-        800.0, // tube fluid density
-        50.0, // shell fluid density
-        "pinned");
+	0.01483, // ID
+	0.5, // span
+	200e9, // E
+	7800.0, // tube density
+	800.0, // tube fluid density
+	50.0, // shell fluid density
+	"pinned");
     assertTrue(fn > 0, "Natural frequency should be positive: " + fn);
-    assertTrue(fn > 10 && fn < 5000,
-        "Natural frequency should be in realistic range (10-5000 Hz): " + fn);
+    assertTrue(fn > 10 && fn < 5000, "Natural frequency should be in realistic range (10-5000 Hz): " + fn);
   }
 
   @Test
   void testNaturalFrequencyEndConditions() {
-    double fnPinned = VibrationAnalysis.calcNaturalFrequency(0.01905, 0.01483, 0.5, 200e9, 7800.0,
-        800.0, 50.0, "pinned");
-    double fnFixed = VibrationAnalysis.calcNaturalFrequency(0.01905, 0.01483, 0.5, 200e9, 7800.0,
-        800.0, 50.0, "fixed");
-    double fnClamped = VibrationAnalysis.calcNaturalFrequency(0.01905, 0.01483, 0.5, 200e9, 7800.0,
-        800.0, 50.0, "clamped-pinned");
+    double fnPinned = VibrationAnalysis.calcNaturalFrequency(0.01905, 0.01483, 0.5, 200e9, 7800.0, 800.0, 50.0,
+	"pinned");
+    double fnFixed = VibrationAnalysis.calcNaturalFrequency(0.01905, 0.01483, 0.5, 200e9, 7800.0, 800.0, 50.0, "fixed");
+    double fnClamped = VibrationAnalysis.calcNaturalFrequency(0.01905, 0.01483, 0.5, 200e9, 7800.0, 800.0, 50.0,
+	"clamped-pinned");
 
     assertTrue(fnFixed > fnClamped, "Fixed > Clamped-pinned frequency");
     assertTrue(fnClamped > fnPinned, "Clamped-pinned > Pinned frequency");
@@ -254,8 +249,7 @@ public class ThermalDesignCalculatorTest {
     double mEff = 1.5; // kg/m
     double rhoShell = 50.0;
 
-    double vCrit = VibrationAnalysis.calcCriticalVelocityConnors(fn, tubeOD, dampingRatio, mEff,
-        rhoShell, true);
+    double vCrit = VibrationAnalysis.calcCriticalVelocityConnors(fn, tubeOD, dampingRatio, mEff, rhoShell, true);
     assertTrue(vCrit > 0, "Critical velocity should be positive: " + vCrit);
     assertTrue(vCrit < 100, "Critical velocity should be reasonable: " + vCrit);
   }
@@ -272,22 +266,21 @@ public class ThermalDesignCalculatorTest {
   void testPerformScreeningPass() {
     // Conditions that should pass: low velocity, distant from resonance
     VibrationAnalysis.VibrationResult result = VibrationAnalysis.performScreening(0.01905, // tubeOD
-        0.01483, // tubeID
-        0.4, // unsupported span (short = high fn)
-        0.02381, // tube pitch
-        200e9, // E (steel)
-        7800.0, // tube density
-        0.5, // crossflow velocity (low)
-        50.0, // shell fluid density
-        800.0, // tube fluid density
-        0.5, // shell ID
-        340.0, // sonic velocity
-        0.03, // damping ratio
-        true); // triangular
+	0.01483, // tubeID
+	0.4, // unsupported span (short = high fn)
+	0.02381, // tube pitch
+	200e9, // E (steel)
+	7800.0, // tube density
+	0.5, // crossflow velocity (low)
+	50.0, // shell fluid density
+	800.0, // tube fluid density
+	0.5, // shell ID
+	340.0, // sonic velocity
+	0.03, // damping ratio
+	true); // triangular
 
     assertTrue(result.naturalFrequencyHz > 0, "Natural frequency should be computed");
-    assertFalse(result.fluidElasticCritical,
-        "Should not be fluid-elastic critical at low velocity");
+    assertFalse(result.fluidElasticCritical, "Should not be fluid-elastic critical at low velocity");
     assertTrue(result.passed, "Should pass overall at benign conditions");
     assertNotNull(result.getSummary(), "Summary should not be null");
   }
@@ -302,15 +295,13 @@ public class ThermalDesignCalculatorTest {
     calc.setShellSideMethod(ThermalDesignCalculator.ShellSideMethod.KERN);
     calc.calculate();
 
-    assertTrue(calc.getTubeSideHTC() > 0,
-        "Tube-side HTC should be positive: " + calc.getTubeSideHTC());
-    assertTrue(calc.getShellSideHTC() > 0,
-        "Shell-side HTC should be positive: " + calc.getShellSideHTC());
+    assertTrue(calc.getTubeSideHTC() > 0, "Tube-side HTC should be positive: " + calc.getTubeSideHTC());
+    assertTrue(calc.getShellSideHTC() > 0, "Shell-side HTC should be positive: " + calc.getShellSideHTC());
     assertTrue(calc.getOverallU() > 0, "Overall U should be positive: " + calc.getOverallU());
     assertTrue(calc.getOverallU() < calc.getTubeSideHTC(),
-        "Overall U should be less than tube-side HTC (resistance in series)");
+	"Overall U should be less than tube-side HTC (resistance in series)");
     assertTrue(calc.getOverallU() < calc.getShellSideHTC(),
-        "Overall U should be less than shell-side HTC (resistance in series)");
+	"Overall U should be less than shell-side HTC (resistance in series)");
   }
 
   @Test
@@ -391,8 +382,7 @@ public class ThermalDesignCalculatorTest {
     calcFouled.calculate();
     double uFouled = calcFouled.getOverallU();
 
-    assertTrue(uClean > uFouled,
-        "Fouled U should be lower than clean U: clean=" + uClean + " fouled=" + uFouled);
+    assertTrue(uClean > uFouled, "Fouled U should be lower than clean U: clean=" + uClean + " fouled=" + uFouled);
   }
 
   // ============================================================================
@@ -455,7 +445,7 @@ public class ThermalDesignCalculatorTest {
     hx.setRatingArea(50.0); // m2
 
     assertEquals(HeatExchanger.DesignMode.RATING, hx.getDesignMode(),
-        "Setting rating calculator should switch to RATING mode");
+	"Setting rating calculator should switch to RATING mode");
 
     ProcessSystem ps = new ProcessSystem();
     ps.add(hot);
@@ -471,8 +461,7 @@ public class ThermalDesignCalculatorTest {
   @Test
   void testHeatExchangerDefaultSizingMode() {
     HeatExchanger hx = createSizingHeatExchanger();
-    assertEquals(HeatExchanger.DesignMode.SIZING, hx.getDesignMode(),
-        "Default mode should be SIZING");
+    assertEquals(HeatExchanger.DesignMode.SIZING, hx.getDesignMode(), "Default mode should be SIZING");
   }
 
   // ============================================================================

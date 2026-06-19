@@ -8,8 +8,8 @@ import java.util.List;
  * Common validation result container for NeqSim components.
  *
  * <p>
- * Used to collect validation errors and warnings with remediation advice. Compatible with AI agents
- * that can use error messages to self-correct simulation setup.
+ * Used to collect validation errors and warnings with remediation advice. Compatible with AI agents that can use error
+ * messages to self-correct simulation setup.
  * </p>
  *
  * <h2>Usage:</h2>
@@ -54,9 +54,9 @@ public class ValidationResult {
     /**
      * Create a validation issue.
      *
-     * @param severity issue severity
-     * @param category issue category (e.g., "thermo", "equipment", "stream")
-     * @param message description of the issue
+     * @param severity    issue severity
+     * @param category    issue category (e.g., "thermo", "equipment", "stream")
+     * @param message     description of the issue
      * @param remediation how to fix the issue
      */
     public ValidationIssue(Severity severity, String category, String message, String remediation) {
@@ -111,8 +111,8 @@ public class ValidationResult {
   /**
    * Add a critical error.
    *
-   * @param category issue category
-   * @param message error description
+   * @param category    issue category
+   * @param message     error description
    * @param remediation how to fix
    */
   public void addError(String category, String message, String remediation) {
@@ -131,8 +131,8 @@ public class ValidationResult {
   /**
    * Add a warning.
    *
-   * @param category issue category
-   * @param message warning description
+   * @param category   issue category
+   * @param message    warning description
    * @param suggestion how to improve
    */
   public void addWarning(String category, String message, String suggestion) {
@@ -202,7 +202,7 @@ public class ValidationResult {
     List<ValidationIssue> errors = new ArrayList<>();
     for (ValidationIssue issue : issues) {
       if (issue.getSeverity() == Severity.CRITICAL) {
-        errors.add(issue);
+	errors.add(issue);
       }
     }
     return errors;
@@ -217,7 +217,7 @@ public class ValidationResult {
     List<ValidationIssue> warnings = new ArrayList<>();
     for (ValidationIssue issue : issues) {
       if (issue.getSeverity() == Severity.MAJOR) {
-        warnings.add(issue);
+	warnings.add(issue);
       }
     }
     return warnings;
@@ -260,7 +260,7 @@ public class ValidationResult {
 
     if (!issues.isEmpty()) {
       for (ValidationIssue issue : issues) {
-        sb.append(issue).append("\n");
+	sb.append(issue).append("\n");
       }
     } else {
       sb.append("No issues found.\n");

@@ -10,8 +10,8 @@ import neqsim.thermo.system.SystemInterface;
  * </p>
  * <ul>
  * <li>Metering reference condition: 15 degrees C (288.15 K) and 101.325 kPa</li>
- * <li>Combustion reference condition: 25 degrees C (298.15 K) for enthalpy of combustion of
- * components, 15 degrees C (288.15 K) for volume of the gas</li>
+ * <li>Combustion reference condition: 25 degrees C (298.15 K) for enthalpy of combustion of components, 15 degrees C
+ * (288.15 K) for volume of the gas</li>
  * </ul>
  *
  * <p>
@@ -24,8 +24,8 @@ import neqsim.thermo.system.SystemInterface;
  * </ul>
  *
  * <p>
- * This class provides utilities for converting gas volumes and properties between different
- * reference conditions, including the ideal-gas and real-gas volume conversions.
+ * This class provides utilities for converting gas volumes and properties between different reference conditions,
+ * including the ideal-gas and real-gas volume conversions.
  * </p>
  *
  * @author ESOL
@@ -95,13 +95,12 @@ public class Standard_ISO13443 extends neqsim.standards.Standard {
   /**
    * Sets the conversion from one reference condition to another.
    *
-   * @param fromTempK source reference temperature in Kelvin
+   * @param fromTempK       source reference temperature in Kelvin
    * @param fromPressureKPa source reference pressure in kPa
-   * @param toTempK target reference temperature in Kelvin
-   * @param toPressureKPa target reference pressure in kPa
+   * @param toTempK         target reference temperature in Kelvin
+   * @param toPressureKPa   target reference pressure in kPa
    */
-  public void setConversionConditions(double fromTempK, double fromPressureKPa, double toTempK,
-      double toPressureKPa) {
+  public void setConversionConditions(double fromTempK, double fromPressureKPa, double toTempK, double toPressureKPa) {
     this.refTemp1 = fromTempK;
     this.refPressure1 = fromPressureKPa;
     this.refTemp2 = toTempK;
@@ -112,7 +111,7 @@ public class Standard_ISO13443 extends neqsim.standards.Standard {
    * Sets conversion using named reference conditions.
    *
    * @param fromCondition "15C", "0C", "60F", or "20C"
-   * @param toCondition "15C", "0C", "60F", or "20C"
+   * @param toCondition   "15C", "0C", "60F", or "20C"
    */
   public void setConversionConditions(String fromCondition, String toCondition) {
     refTemp1 = getTemperatureForCondition(fromCondition);
@@ -154,14 +153,12 @@ public class Standard_ISO13443 extends neqsim.standards.Standard {
     molarVolume2 = R * refTemp2 / (refPressure2 * 1000.0); // m3/mol
 
     // Get compression factors using ISO 6976 summation factor method
-    Standard_ISO6976 iso6976Cond1 =
-        new Standard_ISO6976(thermoSystem, refTemp1 - 273.15, refTemp1 - 273.15, "volume");
+    Standard_ISO6976 iso6976Cond1 = new Standard_ISO6976(thermoSystem, refTemp1 - 273.15, refTemp1 - 273.15, "volume");
     iso6976Cond1.setReferenceState("real");
     iso6976Cond1.calculate();
     z1 = iso6976Cond1.getValue("CompressionFactor");
 
-    Standard_ISO6976 iso6976Cond2 =
-        new Standard_ISO6976(thermoSystem, refTemp2 - 273.15, refTemp2 - 273.15, "volume");
+    Standard_ISO6976 iso6976Cond2 = new Standard_ISO6976(thermoSystem, refTemp2 - 273.15, refTemp2 - 273.15, "volume");
     iso6976Cond2.setReferenceState("real");
     iso6976Cond2.calculate();
     z2 = iso6976Cond2.getValue("CompressionFactor");
@@ -218,7 +215,7 @@ public class Standard_ISO13443 extends neqsim.standards.Standard {
   @Override
   public String getUnit(String returnParameter) {
     if ("volumeConversionFactor".equals(returnParameter) || "Z1".equals(returnParameter)
-        || "Z2".equals(returnParameter)) {
+	|| "Z2".equals(returnParameter)) {
       return "-";
     }
     if ("molarVolume1".equals(returnParameter) || "molarVolume2".equals(returnParameter)) {

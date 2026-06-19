@@ -24,4 +24,3 @@ public class WindTurbineTest extends neqsim.NeqSimTest {
     assertTrue(turbine instanceof WindTurbine);
   }
 }
-

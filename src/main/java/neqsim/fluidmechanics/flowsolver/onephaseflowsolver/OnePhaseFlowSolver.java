@@ -23,5 +23,6 @@ public abstract class OnePhaseFlowSolver extends neqsim.fluidmechanics.flowsolve
    * Constructor for OnePhaseFlowSolver.
    * </p>
    */
-  public OnePhaseFlowSolver() {}
+  public OnePhaseFlowSolver() {
+  }
 }

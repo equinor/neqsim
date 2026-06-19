@@ -8,8 +8,8 @@ import java.util.Map;
  * Model of an electrical power cable for process equipment.
  *
  * <p>
- * Supports cable sizing based on load current, voltage drop calculation, derating factors for
- * ambient temperature, grouping, and installation method per IEC 60502 and IEC 60364.
+ * Supports cable sizing based on load current, voltage drop calculation, derating factors for ambient temperature,
+ * grouping, and installation method per IEC 60502 and IEC 60364.
  * </p>
  *
  * @author Even Solbraa
@@ -20,16 +20,15 @@ public class ElectricalCable implements java.io.Serializable {
   private static final long serialVersionUID = 1000L;
 
   /** Standard cable cross-sections in mm2 per IEC 60228. */
-  private static final double[] STANDARD_CROSS_SECTIONS =
-      {1.5, 2.5, 4.0, 6.0, 10.0, 16.0, 25.0, 35.0, 50.0, 70.0, 95.0, 120.0, 150.0, 185.0,
-          240.0, 300.0, 400.0, 500.0, 630.0};
+  private static final double[] STANDARD_CROSS_SECTIONS = { 1.5, 2.5, 4.0, 6.0, 10.0, 16.0, 25.0, 35.0, 50.0, 70.0,
+      95.0, 120.0, 150.0, 185.0, 240.0, 300.0, 400.0, 500.0, 630.0 };
 
   /**
-   * Approximate base ampacity for XLPE copper cables in tray (3-core), per IEC 60502. Index
-   * matches STANDARD_CROSS_SECTIONS.
+   * Approximate base ampacity for XLPE copper cables in tray (3-core), per IEC 60502. Index matches
+   * STANDARD_CROSS_SECTIONS.
    */
-  private static final double[] BASE_AMPACITY_XLPE_TRAY =
-      {18, 25, 33, 43, 60, 80, 106, 131, 158, 200, 241, 278, 315, 360, 420, 480, 560, 640, 740};
+  private static final double[] BASE_AMPACITY_XLPE_TRAY = { 18, 25, 33, 43, 60, 80, 106, 131, 158, 200, 241, 278, 315,
+      360, 420, 480, 560, 640, 740 };
 
   private double lengthM = 50.0;
   private double crossSectionMM2;
@@ -64,18 +63,18 @@ public class ElectricalCable implements java.io.Serializable {
    * Size the cable based on load current and conditions.
    *
    * <p>
-   * Selects the cable cross-section to carry the load current with appropriate derating, then
-   * calculates voltage drop to verify it meets limits.
+   * Selects the cable cross-section to carry the load current with appropriate derating, then calculates voltage drop
+   * to verify it meets limits.
    * </p>
    *
-   * @param loadCurrentA load current in A
-   * @param voltageV system voltage in V
-   * @param cableLengthM cable length in meters
+   * @param loadCurrentA  load current in A
+   * @param voltageV      system voltage in V
+   * @param cableLengthM  cable length in meters
    * @param installMethod installation method (Tray, Conduit, Direct burial, Ladder)
-   * @param ambientTempC ambient temperature in degrees C
+   * @param ambientTempC  ambient temperature in degrees C
    */
-  public void sizeCable(double loadCurrentA, double voltageV, double cableLengthM,
-      String installMethod, double ambientTempC) {
+  public void sizeCable(double loadCurrentA, double voltageV, double cableLengthM, String installMethod,
+      double ambientTempC) {
     this.lengthM = cableLengthM;
     this.installationMethod = installMethod;
 
@@ -83,8 +82,7 @@ public class ElectricalCable implements java.io.Serializable {
     ambientTempDeratingFactor = calculateAmbientTempDerating(ambientTempC);
     groupingDeratingFactor = calculateGroupingDerating(installMethod);
 
-    double totalDerating = ambientTempDeratingFactor * groupingDeratingFactor
-        * burialDepthDeratingFactor;
+    double totalDerating = ambientTempDeratingFactor * groupingDeratingFactor * burialDepthDeratingFactor;
 
     // Required ampacity before derating
     double requiredAmpacity = loadCurrentA / totalDerating;
@@ -94,14 +92,14 @@ public class ElectricalCable implements java.io.Serializable {
     baseAmpacityA = BASE_AMPACITY_XLPE_TRAY[0];
     for (int i = 0; i < STANDARD_CROSS_SECTIONS.length; i++) {
       if (BASE_AMPACITY_XLPE_TRAY[i] >= requiredAmpacity) {
-        crossSectionMM2 = STANDARD_CROSS_SECTIONS[i];
-        baseAmpacityA = BASE_AMPACITY_XLPE_TRAY[i];
-        break;
+	crossSectionMM2 = STANDARD_CROSS_SECTIONS[i];
+	baseAmpacityA = BASE_AMPACITY_XLPE_TRAY[i];
+	break;
       }
       if (i == STANDARD_CROSS_SECTIONS.length - 1) {
-        // Need parallel cables - select largest size
-        crossSectionMM2 = STANDARD_CROSS_SECTIONS[i];
-        baseAmpacityA = BASE_AMPACITY_XLPE_TRAY[i];
+	// Need parallel cables - select largest size
+	crossSectionMM2 = STANDARD_CROSS_SECTIONS[i];
+	baseAmpacityA = BASE_AMPACITY_XLPE_TRAY[i];
       }
     }
 
@@ -119,7 +117,7 @@ public class ElectricalCable implements java.io.Serializable {
 
     // Check voltage drop - may need to upsize
     while (voltageDropPercent > maxVoltageDropPercent
-        && crossSectionMM2 < STANDARD_CROSS_SECTIONS[STANDARD_CROSS_SECTIONS.length - 1]) {
+	&& crossSectionMM2 < STANDARD_CROSS_SECTIONS[STANDARD_CROSS_SECTIONS.length - 1]) {
       crossSectionMM2 = selectNextSizeUp(crossSectionMM2 + 1);
       voltageDropPercent = calculateVoltageDrop(loadCurrentA, voltageV);
     }
@@ -141,7 +139,7 @@ public class ElectricalCable implements java.io.Serializable {
   private double selectNextSizeUp(double minCrossSection) {
     for (double std : STANDARD_CROSS_SECTIONS) {
       if (std >= minCrossSection) {
-        return std;
+	return std;
       }
     }
     return STANDARD_CROSS_SECTIONS[STANDARD_CROSS_SECTIONS.length - 1];
@@ -173,8 +171,7 @@ public class ElectricalCable implements java.io.Serializable {
     double sinPhiVd = Math.sin(Math.acos(cosPhiVd));
 
     // 3-phase voltage drop
-    double vDrop =
-        Math.sqrt(3) * currentA * lengthM * (rPerMeter * cosPhiVd + xPerMeter * sinPhiVd);
+    double vDrop = Math.sqrt(3) * currentA * lengthM * (rPerMeter * cosPhiVd + xPerMeter * sinPhiVd);
 
     return (vDrop / voltageV) * 100.0;
   }
@@ -192,8 +189,7 @@ public class ElectricalCable implements java.io.Serializable {
     if (ambientTempC <= baseAmbient) {
       return 1.0;
     }
-    double factor =
-        Math.sqrt((maxConductorTemp - ambientTempC) / (maxConductorTemp - baseAmbient));
+    double factor = Math.sqrt((maxConductorTemp - ambientTempC) / (maxConductorTemp - baseAmbient));
     return Math.max(0.5, Math.min(1.0, factor));
   }
 
@@ -218,7 +214,7 @@ public class ElectricalCable implements java.io.Serializable {
    * Calculate short-circuit thermal withstand (1s basis) per IEC 60949.
    *
    * @param crossSection cable cross section in mm2
-   * @param duration fault duration in seconds
+   * @param duration     fault duration in seconds
    * @return withstand current in kA
    */
   private double calculateShortCircuitWithstand(double crossSection, double duration) {
@@ -231,7 +227,7 @@ public class ElectricalCable implements java.io.Serializable {
    * Estimate cable cost per meter.
    *
    * @param crossSection cross-section in mm2
-   * @param voltageV rated voltage
+   * @param voltageV     rated voltage
    * @return cost per meter in USD
    */
   private double estimateCostPerMeter(double crossSection, double voltageV) {
@@ -254,8 +250,7 @@ public class ElectricalCable implements java.io.Serializable {
    */
   public String toJson() {
     Map<String, Object> map = toMap();
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(map);
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(map);
   }
 
   /**

@@ -67,8 +67,7 @@ public class PipeMukherjeeAndBrillTest {
     Assertions.assertTrue(dp > 0, "Two-phase uphill dp should be positive");
 
     double holdup = pipe.getLiquidHoldup();
-    Assertions.assertTrue(holdup >= 0.0 && holdup <= 1.0,
-        "Liquid holdup should be between 0 and 1, got: " + holdup);
+    Assertions.assertTrue(holdup >= 0.0 && holdup <= 1.0, "Liquid holdup should be between 0 and 1, got: " + holdup);
 
     String fp = pipe.getFlowPattern();
     Assertions.assertNotNull(fp, "Flow pattern should not be null");

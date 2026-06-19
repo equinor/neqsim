@@ -21,9 +21,8 @@ import org.apache.logging.log4j.Logger;
  *
  * <p>
  * The registry combines built-in vendor-style presets with entries loaded from
- * {@code src/main/resources/designdata/Packing.csv}. Names are matched with a forgiving normalized
- * key, so values such as {@code Pall-Ring-50}, {@code pallring 50}, and CSV names all map to the
- * same specification where possible.
+ * {@code src/main/resources/designdata/Packing.csv}. Names are matched with a forgiving normalized key, so values such
+ * as {@code Pall-Ring-50}, {@code pallring 50}, and CSV names all map to the same specification where possible.
  * </p>
  *
  * @author NeqSim
@@ -34,8 +33,7 @@ public final class PackingSpecificationLibrary {
   private static final Logger logger = LogManager.getLogger(PackingSpecificationLibrary.class);
 
   /** Registered specifications keyed by normalized aliases. */
-  private static final Map<String, PackingSpecification> PACKINGS =
-      new LinkedHashMap<String, PackingSpecification>();
+  private static final Map<String, PackingSpecification> PACKINGS = new LinkedHashMap<String, PackingSpecification>();
 
   /** Registered display names in deterministic order. */
   private static final Set<String> DISPLAY_NAMES = new LinkedHashSet<String>();
@@ -48,7 +46,8 @@ public final class PackingSpecificationLibrary {
   /**
    * Private constructor for utility class.
    */
-  private PackingSpecificationLibrary() {}
+  private PackingSpecificationLibrary() {
+  }
 
   /**
    * Register a packing specification.
@@ -67,7 +66,7 @@ public final class PackingSpecificationLibrary {
   /**
    * Register an extra alias for an existing packing specification.
    *
-   * @param alias alias to register
+   * @param alias         alias to register
    * @param specification specification to associate with the alias
    * @throws IllegalArgumentException if alias or specification is invalid
    */
@@ -136,91 +135,87 @@ public final class PackingSpecificationLibrary {
    */
   private static void registerBuiltIns() {
     registerRandom("Pall-Ring-25", "metal", 25.0, 210.0, 0.94, 157.0, 1.0, 0.40,
-        "built-in Kister/Onda engineering estimate");
+	"built-in Kister/Onda engineering estimate");
     registerRandom("Pall-Ring-38", "metal", 38.0, 164.0, 0.95, 92.0, 1.0, 0.40,
-        "built-in Kister/Onda engineering estimate");
+	"built-in Kister/Onda engineering estimate");
     registerRandom("Pall-Ring-50", "metal", 50.0, 120.0, 0.96, 66.0, 1.0, 0.40,
-        "built-in Kister/Onda engineering estimate");
+	"built-in Kister/Onda engineering estimate");
     registerRandom("Raschig-Ring-25", "ceramic", 25.0, 190.0, 0.68, 580.0, 1.0, 0.40,
-        "built-in Kister/Onda engineering estimate");
+	"built-in Kister/Onda engineering estimate");
     registerRandom("Raschig-Ring-50", "ceramic", 50.0, 95.0, 0.74, 155.0, 1.0, 0.40,
-        "built-in Kister/Onda engineering estimate");
+	"built-in Kister/Onda engineering estimate");
     registerRandom("IMTP-25", "metal", 25.0, 226.0, 0.97, 134.0, 1.05, 0.42,
-        "built-in vendor-style engineering estimate");
+	"built-in vendor-style engineering estimate");
     registerRandom("IMTP-40", "metal", 40.0, 151.0, 0.97, 79.0, 1.05, 0.42,
-        "built-in vendor-style engineering estimate");
+	"built-in vendor-style engineering estimate");
     registerRandom("IMTP-50", "metal", 50.0, 102.0, 0.98, 56.0, 1.05, 0.42,
-        "built-in vendor-style engineering estimate");
+	"built-in vendor-style engineering estimate");
     registerRandom("IMTP-70", "metal", 70.0, 72.0, 0.98, 36.0, 1.05, 0.42,
-        "built-in vendor-style engineering estimate");
+	"built-in vendor-style engineering estimate");
     registerRandom("Berl-Saddle-25", "ceramic", 25.0, 260.0, 0.68, 360.0, 0.95, 0.38,
-        "built-in Kister/Onda engineering estimate");
+	"built-in Kister/Onda engineering estimate");
     registerRandom("Berl-Saddle-38", "ceramic", 38.0, 165.0, 0.70, 220.0, 0.95, 0.38,
-        "built-in Kister/Onda engineering estimate");
+	"built-in Kister/Onda engineering estimate");
     registerRandom("Berl-Saddle-50", "ceramic", 50.0, 105.0, 0.72, 150.0, 0.95, 0.38,
-        "built-in Kister/Onda engineering estimate");
+	"built-in Kister/Onda engineering estimate");
     registerRandom("Intalox-Saddle-25", "ceramic", 25.0, 255.0, 0.78, 200.0, 1.0, 0.40,
-        "built-in vendor-style engineering estimate");
+	"built-in vendor-style engineering estimate");
 
     registerStructured("Mellapak-125Y", "metal", 125.0, 0.99, 33.0, 1.2, 0.45,
-        "built-in Sulzer-style engineering estimate");
+	"built-in Sulzer-style engineering estimate");
     registerStructured("Mellapak-250Y", "metal", 250.0, 0.98, 66.0, 1.2, 0.45,
-        "built-in Sulzer-style engineering estimate");
+	"built-in Sulzer-style engineering estimate");
     registerStructured("Mellapak-350Y", "metal", 350.0, 0.97, 105.0, 1.2, 0.45,
-        "built-in Sulzer-style engineering estimate");
+	"built-in Sulzer-style engineering estimate");
     registerStructured("Mellapak-500Y", "metal", 500.0, 0.96, 180.0, 1.2, 0.45,
-        "built-in Sulzer-style engineering estimate");
+	"built-in Sulzer-style engineering estimate");
     registerStructured("Flexipac-1Y", "metal", 135.0, 0.99, 36.0, 1.15, 0.44,
-        "built-in Koch-Glitsch-style engineering estimate");
+	"built-in Koch-Glitsch-style engineering estimate");
     registerStructured("Flexipac-2Y", "metal", 220.0, 0.98, 60.0, 1.15, 0.44,
-        "built-in Koch-Glitsch-style engineering estimate");
+	"built-in Koch-Glitsch-style engineering estimate");
     registerStructured("Flexipac-3Y", "metal", 340.0, 0.97, 100.0, 1.15, 0.44,
-        "built-in Koch-Glitsch-style engineering estimate");
+	"built-in Koch-Glitsch-style engineering estimate");
     registerStructured("Sulzer-BX", "metal", 500.0, 0.90, 140.0, 1.3, 0.50,
-        "built-in wire-gauze structured packing estimate");
+	"built-in wire-gauze structured packing estimate");
     registerStructured("Sulzer-CY", "metal", 750.0, 0.88, 220.0, 1.3, 0.50,
-        "built-in wire-gauze structured packing estimate");
+	"built-in wire-gauze structured packing estimate");
   }
 
   /**
    * Register a random packing.
    *
-   * @param name packing name
-   * @param material packing material
-   * @param nominalSizeMm nominal size in millimetres
-   * @param specificArea specific surface area in m2/m3
-   * @param voidFraction void fraction
-   * @param packingFactor packing factor in 1/m
+   * @param name                 packing name
+   * @param material             packing material
+   * @param nominalSizeMm        nominal size in millimetres
+   * @param specificArea         specific surface area in m2/m3
+   * @param voidFraction         void fraction
+   * @param packingFactor        packing factor in 1/m
    * @param billetLiquidConstant Billet-Schultes liquid constant
-   * @param billetGasConstant Billet-Schultes gas constant
-   * @param source data source description
+   * @param billetGasConstant    Billet-Schultes gas constant
+   * @param source               data source description
    */
-  private static void registerRandom(String name, String material, double nominalSizeMm,
-      double specificArea, double voidFraction, double packingFactor, double billetLiquidConstant,
-      double billetGasConstant, String source) {
-    register(new PackingSpecification(name, "random", material, nominalSizeMm, specificArea,
-        voidFraction, packingFactor, criticalSurfaceTension(material), billetLiquidConstant,
-        billetGasConstant, source));
+  private static void registerRandom(String name, String material, double nominalSizeMm, double specificArea,
+      double voidFraction, double packingFactor, double billetLiquidConstant, double billetGasConstant, String source) {
+    register(new PackingSpecification(name, "random", material, nominalSizeMm, specificArea, voidFraction,
+	packingFactor, criticalSurfaceTension(material), billetLiquidConstant, billetGasConstant, source));
   }
 
   /**
    * Register a structured packing.
    *
-   * @param name packing name
-   * @param material packing material
-   * @param specificArea specific surface area in m2/m3
-   * @param voidFraction void fraction
-   * @param packingFactor packing factor in 1/m
+   * @param name                 packing name
+   * @param material             packing material
+   * @param specificArea         specific surface area in m2/m3
+   * @param voidFraction         void fraction
+   * @param packingFactor        packing factor in 1/m
    * @param billetLiquidConstant Billet-Schultes liquid constant
-   * @param billetGasConstant Billet-Schultes gas constant
-   * @param source data source description
+   * @param billetGasConstant    Billet-Schultes gas constant
+   * @param source               data source description
    */
-  private static void registerStructured(String name, String material, double specificArea,
-      double voidFraction, double packingFactor, double billetLiquidConstant,
-      double billetGasConstant, String source) {
-    register(new PackingSpecification(name, "structured", material, 0.0, specificArea, voidFraction,
-        packingFactor, criticalSurfaceTension(material), billetLiquidConstant, billetGasConstant,
-        source));
+  private static void registerStructured(String name, String material, double specificArea, double voidFraction,
+      double packingFactor, double billetLiquidConstant, double billetGasConstant, String source) {
+    register(new PackingSpecification(name, "structured", material, 0.0, specificArea, voidFraction, packingFactor,
+	criticalSurfaceTension(material), billetLiquidConstant, billetGasConstant, source));
   }
 
   /**
@@ -228,7 +223,7 @@ public final class PackingSpecificationLibrary {
    */
   private static void loadCsvPackings() {
     InputStream stream = PackingSpecificationLibrary.class.getClassLoader()
-        .getResourceAsStream("designdata/Packing.csv");
+	.getResourceAsStream("designdata/Packing.csv");
     if (stream == null) {
       return;
     }
@@ -237,20 +232,20 @@ public final class PackingSpecificationLibrary {
       reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8));
       String line = reader.readLine();
       while ((line = reader.readLine()) != null) {
-        PackingSpecification specification = parseCsvLine(line);
-        if (specification != null) {
-          register(specification);
-        }
+	PackingSpecification specification = parseCsvLine(line);
+	if (specification != null) {
+	  register(specification);
+	}
       }
     } catch (IOException ex) {
       logger.warn("Could not read packing data resource", ex);
     } finally {
       if (reader != null) {
-        try {
-          reader.close();
-        } catch (IOException ex) {
-          logger.debug("Could not close packing data reader", ex);
-        }
+	try {
+	  reader.close();
+	} catch (IOException ex) {
+	  logger.debug("Could not close packing data reader", ex);
+	}
       }
     }
   }
@@ -277,14 +272,13 @@ public final class PackingSpecificationLibrary {
       double cp = fields.size() > 8 ? parseDouble(fields.get(8), 1.0) : 1.0;
       double ch = fields.size() > 10 ? parseDouble(fields.get(10), 0.4) : 0.4;
       if (specificArea <= 0.0 || voidFraction <= 0.0 || packingFactor <= 0.0) {
-        return null;
+	return null;
       }
       String displayName = displayName(rawName, category, size);
       double billetLiquidConstant = cp > 0.0 ? cp : 1.0;
       double billetGasConstant = ch > 0.0 ? ch / 6.0 : 0.4;
-      return new PackingSpecification(displayName, category, material, size, specificArea,
-          voidFraction, packingFactor, criticalSurfaceTension(material), billetLiquidConstant,
-          billetGasConstant, "designdata/Packing.csv");
+      return new PackingSpecification(displayName, category, material, size, specificArea, voidFraction, packingFactor,
+	  criticalSurfaceTension(material), billetLiquidConstant, billetGasConstant, "designdata/Packing.csv");
     } catch (RuntimeException ex) {
       logger.debug("Skipping packing data line: " + line, ex);
       return null;
@@ -304,12 +298,12 @@ public final class PackingSpecificationLibrary {
     for (int i = 0; i < line.length(); i++) {
       char character = line.charAt(i);
       if (character == '"') {
-        inQuotes = !inQuotes;
+	inQuotes = !inQuotes;
       } else if (character == ',' && !inQuotes) {
-        fields.add(field.toString().trim());
-        field.setLength(0);
+	fields.add(field.toString().trim());
+	field.setLength(0);
       } else {
-        field.append(character);
+	field.append(character);
       }
     }
     fields.add(field.toString().trim());
@@ -319,7 +313,7 @@ public final class PackingSpecificationLibrary {
   /**
    * Parse a double with fallback.
    *
-   * @param text value text to parse
+   * @param text     value text to parse
    * @param fallback fallback value when text is empty or invalid
    * @return parsed double or fallback
    */
@@ -337,9 +331,9 @@ public final class PackingSpecificationLibrary {
   /**
    * Build a display name from CSV fields.
    *
-   * @param rawName raw packing name from CSV
+   * @param rawName  raw packing name from CSV
    * @param category packing category
-   * @param size nominal size in millimetres
+   * @param size     nominal size in millimetres
    * @return display name used by the registry
    */
   private static String displayName(String rawName, String category, double size) {
@@ -351,8 +345,7 @@ public final class PackingSpecificationLibrary {
     if (normalized.contains("pallring")) {
       return "Pall-Ring-" + roundedSize;
     }
-    if (normalized.contains("rashig") || normalized.contains("raschig")
-        || normalized.contains("rachig")) {
+    if (normalized.contains("rashig") || normalized.contains("raschig") || normalized.contains("rachig")) {
       return "Raschig-Ring-" + roundedSize;
     }
     return rawName + "-" + roundedSize;

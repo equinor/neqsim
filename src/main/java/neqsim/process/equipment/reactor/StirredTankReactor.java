@@ -14,9 +14,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Stirred tank reactor (CSTR) for bio-processing and chemical operations.
  *
  * <p>
- * Models a continuous stirred-tank reactor (CSTR) or batch reactor with one or more stoichiometric
- * reactions. The reactor applies each reaction in sequence to the feed, then performs a flash
- * calculation at the specified outlet conditions.
+ * Models a continuous stirred-tank reactor (CSTR) or batch reactor with one or more stoichiometric reactions. The
+ * reactor applies each reaction in sequence to the feed, then performs a flash calculation at the specified outlet
+ * conditions.
  * </p>
  *
  * <p>
@@ -80,7 +80,7 @@ public class StirredTankReactor extends TwoPortEquipment {
   /**
    * Constructor for StirredTankReactor with inlet stream.
    *
-   * @param name name of the reactor
+   * @param name        name of the reactor
    * @param inletStream inlet feed stream
    */
   public StirredTankReactor(String name, StreamInterface inletStream) {
@@ -126,7 +126,7 @@ public class StirredTankReactor extends TwoPortEquipment {
    * Set the reactor operating temperature with unit.
    *
    * @param temperature temperature value
-   * @param unit temperature unit ("K", "C", "F")
+   * @param unit        temperature unit ("K", "C", "F")
    */
   public void setReactorTemperature(double temperature, String unit) {
     if ("C".equalsIgnoreCase(unit)) {
@@ -308,9 +308,9 @@ public class StirredTankReactor extends TwoPortEquipment {
     // Apply all reactions to the system
     for (StoichiometricReaction rxn : reactions) {
       try {
-        rxn.react(system);
+	rxn.react(system);
       } catch (Exception ex) {
-        logger.warn("Reaction '{}' failed: {}", rxn.getName(), ex.getMessage());
+	logger.warn("Reaction '{}' failed: {}", rxn.getName(), ex.getMessage());
       }
     }
 
@@ -329,10 +329,10 @@ public class StirredTankReactor extends TwoPortEquipment {
     ThermodynamicOperations ops = new ThermodynamicOperations(system);
     try {
       if (isothermal) {
-        ops.TPflash();
+	ops.TPflash();
       } else {
-        // Adiabatic: use inlet enthalpy
-        ops.PHflash(inletEnthalpy, 0);
+	// Adiabatic: use inlet enthalpy
+	ops.PHflash(inletEnthalpy, 0);
       }
     } catch (Exception ex) {
       logger.error("Flash calculation failed in reactor '{}': {}", getName(), ex.getMessage());
@@ -356,8 +356,7 @@ public class StirredTankReactor extends TwoPortEquipment {
   /** {@inheritDoc} */
   @Override
   public String toJson() {
-    return new com.google.gson.GsonBuilder().serializeSpecialFloatingPointValues().create()
-        .toJson(toMap());
+    return new com.google.gson.GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(toMap());
   }
 
   /**

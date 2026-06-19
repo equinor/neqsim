@@ -10,8 +10,8 @@ public interface BoundaryCurveInterface extends java.io.Serializable {
    * Define the curve from arrays of flow and head values with optional chart conditions.
    *
    * @param chartConditions conditions for the reference curve, or null
-   * @param flow array of flow values
-   * @param head array of head values
+   * @param flow            array of flow values
+   * @param head            array of head values
    */
   void setCurve(double[] chartConditions, double[] flow, double[] head);
 
@@ -46,4 +46,3 @@ public interface BoundaryCurveInterface extends java.io.Serializable {
    */
   void setActive(boolean isActive);
 }
-

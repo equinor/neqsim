@@ -31,24 +31,24 @@ public interface ElectrolyteMixingRulesInterface extends MixingRulesInterface {
    * calcWij.
    * </p>
    *
-   * @param compNumbi a int
-   * @param compNumj a int
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param compNumbi   a int
+   * @param compNumj    a int
+   * @param phase       a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param temperature a double
-   * @param pressure a double
-   * @param numbcomp a int
+   * @param pressure    a double
+   * @param numbcomp    a int
    * @return a double
    */
-  public double calcWij(int compNumbi, int compNumj, PhaseInterface phase, double temperature,
-      double pressure, int numbcomp);
+  public double calcWij(int compNumbi, int compNumj, PhaseInterface phase, double temperature, double pressure,
+      int numbcomp);
 
   /**
    * <p>
    * setWijParameter.
    * </p>
    *
-   * @param i a int
-   * @param j a int
+   * @param i     a int
+   * @param j     a int
    * @param value a double
    */
   public void setWijParameter(int i, int j, double value);
@@ -69,8 +69,8 @@ public interface ElectrolyteMixingRulesInterface extends MixingRulesInterface {
    * setWijT1Parameter.
    * </p>
    *
-   * @param i a int
-   * @param j a int
+   * @param i     a int
+   * @param j     a int
    * @param value a double
    */
   public void setWijT1Parameter(int i, int j, double value);
@@ -91,8 +91,8 @@ public interface ElectrolyteMixingRulesInterface extends MixingRulesInterface {
    * setWijT2Parameter.
    * </p>
    *
-   * @param i a int
-   * @param j a int
+   * @param i     a int
+   * @param j     a int
    * @param value a double
    */
   public void setWijT2Parameter(int i, int j, double value);
@@ -113,8 +113,8 @@ public interface ElectrolyteMixingRulesInterface extends MixingRulesInterface {
    * getWij.
    * </p>
    *
-   * @param i a int
-   * @param j a int
+   * @param i           a int
+   * @param j           a int
    * @param temperature a double
    * @return a double
    */
@@ -125,8 +125,8 @@ public interface ElectrolyteMixingRulesInterface extends MixingRulesInterface {
    * getWijT.
    * </p>
    *
-   * @param i a int
-   * @param j a int
+   * @param i           a int
+   * @param j           a int
    * @param temperature a double
    * @return a double
    */
@@ -137,8 +137,8 @@ public interface ElectrolyteMixingRulesInterface extends MixingRulesInterface {
    * getWijTT.
    * </p>
    *
-   * @param i a int
-   * @param j a int
+   * @param i           a int
+   * @param j           a int
    * @param temperature a double
    * @return a double
    */
@@ -149,10 +149,10 @@ public interface ElectrolyteMixingRulesInterface extends MixingRulesInterface {
    * calcW.
    * </p>
    *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase       a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param temperature a double
-   * @param pressure a double
-   * @param numbcomp a int
+   * @param pressure    a double
+   * @param numbcomp    a int
    * @return a double
    */
   public double calcW(PhaseInterface phase, double temperature, double pressure, int numbcomp);
@@ -162,40 +162,38 @@ public interface ElectrolyteMixingRulesInterface extends MixingRulesInterface {
    * calcWi.
    * </p>
    *
-   * @param compNumb a int
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param compNumb    a int
+   * @param phase       a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param temperature a double
-   * @param pressure a double
-   * @param numbcomp a int
+   * @param pressure    a double
+   * @param numbcomp    a int
    * @return a double
    */
-  public double calcWi(int compNumb, PhaseInterface phase, double temperature, double pressure,
-      int numbcomp);
+  public double calcWi(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp);
 
   /**
    * <p>
    * calcWiT.
    * </p>
    *
-   * @param compNumb a int
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param compNumb    a int
+   * @param phase       a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param temperature a double
-   * @param pressure a double
-   * @param numbcomp a int
+   * @param pressure    a double
+   * @param numbcomp    a int
    * @return a double
    */
-  public double calcWiT(int compNumb, PhaseInterface phase, double temperature, double pressure,
-      int numbcomp);
+  public double calcWiT(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp);
 
   /**
    * <p>
    * calcWT.
    * </p>
    *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase       a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param temperature a double
-   * @param pressure a double
-   * @param numbcomp a int
+   * @param pressure    a double
+   * @param numbcomp    a int
    * @return a double
    */
   public double calcWT(PhaseInterface phase, double temperature, double pressure, int numbcomp);
@@ -205,10 +203,10 @@ public interface ElectrolyteMixingRulesInterface extends MixingRulesInterface {
    * calcWTT.
    * </p>
    *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase       a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param temperature a double
-   * @param pressure a double
-   * @param numbcomp a int
+   * @param pressure    a double
+   * @param numbcomp    a int
    * @return a double
    */
   public double calcWTT(PhaseInterface phase, double temperature, double pressure, int numbcomp);

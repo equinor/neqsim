@@ -5,8 +5,8 @@ import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * Classifies a process stream into a P&amp;ID service category and supplies the corresponding
- * line-style attributes (line weight, line type and colour) used when drawing the connecting pipe.
+ * Classifies a process stream into a P&amp;ID service category and supplies the corresponding line-style attributes
+ * (line weight, line type and colour) used when drawing the connecting pipe.
  *
  * <p>
  * The classification and styling follow widely used process-industry drawing conventions:
@@ -52,8 +52,7 @@ import neqsim.thermo.system.SystemInterface;
  * </table>
  *
  * <p>
- * The DEXPI {@code LineType} integer codes used here are: 0 = solid, 1 = dashed, 2 = dotted, 3 =
- * dash-dot.
+ * The DEXPI {@code LineType} integer codes used here are: 0 = solid, 1 = dashed, 2 = dotted, 3 = dash-dot.
  * </p>
  *
  * @author NeqSim
@@ -69,7 +68,8 @@ final class DexpiServiceClassifier {
   static final double WEIGHT_UTILITY = 0.18;
 
   /** Private constructor — utility class. */
-  private DexpiServiceClassifier() {}
+  private DexpiServiceClassifier() {
+  }
 
   /**
    * P&amp;ID service categories with their associated drawing style.
@@ -103,10 +103,10 @@ final class DexpiServiceClassifier {
      * Creates a service type.
      *
      * @param lineWeight ISO 15519-1 line weight in mm
-     * @param lineType DEXPI line type code
-     * @param colorR presentation red component (0-1)
-     * @param colorG presentation green component (0-1)
-     * @param colorB presentation blue component (0-1)
+     * @param lineType   DEXPI line type code
+     * @param colorR     presentation red component (0-1)
+     * @param colorG     presentation green component (0-1)
+     * @param colorB     presentation blue component (0-1)
      */
     ServiceType(double lineWeight, int lineType, String colorR, String colorG, String colorB) {
       this.lineWeight = lineWeight;
@@ -165,29 +165,28 @@ final class DexpiServiceClassifier {
      * Returns the NORSOK Z-003 / PIP fluid (service) code for this service category.
      *
      * <p>
-     * The codes follow common process-industry usage: {@code PG} process gas/general process,
-     * {@code FL} flare/relief, {@code DR} drains, {@code FG} fuel gas, {@code UT} utility and
-     * {@code PL} secondary process liquid. The code is used when composing a full
-     * line-identification number.
+     * The codes follow common process-industry usage: {@code PG} process gas/general process, {@code FL} flare/relief,
+     * {@code DR} drains, {@code FG} fuel gas, {@code UT} utility and {@code PL} secondary process liquid. The code is
+     * used when composing a full line-identification number.
      * </p>
      *
      * @return the two-letter fluid code (never null)
      */
     String getFluidCode() {
       switch (this) {
-        case FLARE:
-          return "FL";
-        case DRAIN:
-          return "DR";
-        case FUEL_GAS:
-          return "FG";
-        case UTILITY:
-          return "UT";
-        case SECONDARY_PROCESS:
-          return "PL";
-        case MAIN_PROCESS:
-        default:
-          return "PG";
+      case FLARE:
+	return "FL";
+      case DRAIN:
+	return "DR";
+      case FUEL_GAS:
+	return "FG";
+      case UTILITY:
+	return "UT";
+      case SECONDARY_PROCESS:
+	return "PL";
+      case MAIN_PROCESS:
+      default:
+	return "PG";
       }
     }
   }
@@ -196,9 +195,9 @@ final class DexpiServiceClassifier {
    * Classifies a stream by its name into a service category.
    *
    * <p>
-   * Name-based classification keys off common process-industry naming such as "flare", "vent",
-   * "relief", "drain", "fuel", "steam", "cooling water", "instrument air" and "nitrogen". Anything
-   * not matching a utility or special header is treated as a process stream.
+   * Name-based classification keys off common process-industry naming such as "flare", "vent", "relief", "drain",
+   * "fuel", "steam", "cooling water", "instrument air" and "nitrogen". Anything not matching a utility or special
+   * header is treated as a process stream.
    * </p>
    *
    * @param name the stream name (may be null)
@@ -209,8 +208,7 @@ final class DexpiServiceClassifier {
       return ServiceType.MAIN_PROCESS;
     }
     String n = name.toLowerCase(Locale.ROOT);
-    if (n.contains("flare") || n.contains("vent") || n.contains("relief")
-        || n.contains("blowdown")) {
+    if (n.contains("flare") || n.contains("vent") || n.contains("relief") || n.contains("blowdown")) {
       return ServiceType.FLARE;
     }
     if (n.contains("drain") || n.contains("sewer") || n.contains("sump")) {
@@ -219,10 +217,9 @@ final class DexpiServiceClassifier {
     if (n.contains("fuel")) {
       return ServiceType.FUEL_GAS;
     }
-    if (n.contains("steam") || n.contains("cooling water") || n.contains("cw ")
-        || n.contains("instrument air") || n.contains("utility") || n.contains("nitrogen")
-        || n.contains(" n2") || n.startsWith("n2") || n.contains("glycol") || n.contains("seal gas")
-        || n.contains("flush")) {
+    if (n.contains("steam") || n.contains("cooling water") || n.contains("cw ") || n.contains("instrument air")
+	|| n.contains("utility") || n.contains("nitrogen") || n.contains(" n2") || n.startsWith("n2")
+	|| n.contains("glycol") || n.contains("seal gas") || n.contains("flush")) {
       return ServiceType.UTILITY;
     }
     return ServiceType.MAIN_PROCESS;
@@ -232,14 +229,14 @@ final class DexpiServiceClassifier {
    * Classifies a stream using its name and, when available, its fluid contents and flow rate.
    *
    * <p>
-   * Name keywords take precedence. When the name is non-committal, a small flow relative to the
-   * supplied main-process reference flow demotes the stream to
-   * {@link ServiceType#SECONDARY_PROCESS} so the line-weight hierarchy of ISO 15519-1 is respected.
+   * Name keywords take precedence. When the name is non-committal, a small flow relative to the supplied main-process
+   * reference flow demotes the stream to {@link ServiceType#SECONDARY_PROCESS} so the line-weight hierarchy of ISO
+   * 15519-1 is respected.
    * </p>
    *
-   * @param stream the process stream (may be null)
-   * @param mainProcessFlowKgHr the reference main-process flow in kg/hr used to scale weight, or a
-   *        non-positive value to skip the relative-weight demotion
+   * @param stream              the process stream (may be null)
+   * @param mainProcessFlowKgHr the reference main-process flow in kg/hr used to scale weight, or a non-positive value
+   *                            to skip the relative-weight demotion
    * @return the classified service type (never null)
    */
   static ServiceType classify(StreamInterface stream, double mainProcessFlowKgHr) {
@@ -264,12 +261,12 @@ final class DexpiServiceClassifier {
     if (mainProcessFlowKgHr > 0.0) {
       double flow = 0.0;
       try {
-        flow = stream.getFlowRate("kg/hr");
+	flow = stream.getFlowRate("kg/hr");
       } catch (RuntimeException ex) {
-        flow = 0.0;
+	flow = 0.0;
       }
       if (flow > 0.0 && flow < 0.2 * mainProcessFlowKgHr) {
-        return ServiceType.SECONDARY_PROCESS;
+	return ServiceType.SECONDARY_PROCESS;
       }
     }
     return ServiceType.MAIN_PROCESS;
@@ -284,7 +281,7 @@ final class DexpiServiceClassifier {
   private static boolean isPredominantlyWater(SystemInterface fluid) {
     try {
       if (!fluid.getPhase(0).hasComponent("water")) {
-        return false;
+	return false;
       }
       double z = fluid.getPhase(0).getComponent("water").getz();
       return z > 0.5;

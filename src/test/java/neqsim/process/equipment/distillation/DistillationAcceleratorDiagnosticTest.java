@@ -10,14 +10,12 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Diagnostic that bypasses the {@link ColumnSolverFactory} fallback wrapper and calls each
- * accelerator's inner solve method directly on the 5-tray deethanizer benchmark, then dumps the
- * pre-fallback convergence state. Used to investigate why accelerators silently fall back to damped
- * substitution on small heavy-rich columns.
+ * Diagnostic that bypasses the {@link ColumnSolverFactory} fallback wrapper and calls each accelerator's inner solve
+ * method directly on the 5-tray deethanizer benchmark, then dumps the pre-fallback convergence state. Used to
+ * investigate why accelerators silently fall back to damped substitution on small heavy-rich columns.
  */
 public class DistillationAcceleratorDiagnosticTest {
-  private static final Logger logger =
-      LogManager.getLogger(DistillationAcceleratorDiagnosticTest.class);
+  private static final Logger logger = LogManager.getLogger(DistillationAcceleratorDiagnosticTest.class);
 
   /**
    * Build a deethanizer feed matching the benchmark test's composition.
@@ -52,8 +50,7 @@ public class DistillationAcceleratorDiagnosticTest {
     feed.setFlowRate(100.0, "kg/hr");
     feed.run();
 
-    DistillationColumn column =
-        new DistillationColumn("deethanizer_" + solverType.name(), 5, true, false);
+    DistillationColumn column = new DistillationColumn("deethanizer_" + solverType.name(), 5, true, false);
     column.addFeedStream(feed, 5);
     column.getReboiler().setOutTemperature(105.0 + 273.15);
     column.setTopPressure(30.0);
@@ -64,20 +61,17 @@ public class DistillationAcceleratorDiagnosticTest {
   }
 
   /**
-   * Run each accelerator's inner solve method directly (bypassing the factory fallback) and print
-   * pre-fallback diagnostics. Read the stdout of this test to see which gate (mass residual,
-   * external mass balance, internal traffic, bottom phase) triggers the silent fallback.
+   * Run each accelerator's inner solve method directly (bypassing the factory fallback) and print pre-fallback
+   * diagnostics. Read the stdout of this test to see which gate (mass residual, external mass balance, internal
+   * traffic, bottom phase) triggers the silent fallback.
    */
   @Test
   public void dumpAcceleratorPreFallbackState() {
-    DistillationColumn.SolverType[] accelerators = {
-        DistillationColumn.SolverType.DIRECT_SUBSTITUTION,
-        DistillationColumn.SolverType.DAMPED_SUBSTITUTION, DistillationColumn.SolverType.INSIDE_OUT,
-        DistillationColumn.SolverType.MATRIX_INSIDE_OUT, DistillationColumn.SolverType.WEGSTEIN,
-        DistillationColumn.SolverType.SUM_RATES, DistillationColumn.SolverType.NEWTON,
-        DistillationColumn.SolverType.MESH_RESIDUAL,
-        DistillationColumn.SolverType.NAPHTALI_SANDHOLM};
-
+    DistillationColumn.SolverType[] accelerators = { DistillationColumn.SolverType.DIRECT_SUBSTITUTION,
+	DistillationColumn.SolverType.DAMPED_SUBSTITUTION, DistillationColumn.SolverType.INSIDE_OUT,
+	DistillationColumn.SolverType.MATRIX_INSIDE_OUT, DistillationColumn.SolverType.WEGSTEIN,
+	DistillationColumn.SolverType.SUM_RATES, DistillationColumn.SolverType.NEWTON,
+	DistillationColumn.SolverType.MESH_RESIDUAL, DistillationColumn.SolverType.NAPHTALI_SANDHOLM };
 
     logger.info("=== Accelerator pre-fallback diagnostic (5-tray deethanizer) ===");
     for (DistillationColumn.SolverType type : accelerators) {
@@ -86,11 +80,10 @@ public class DistillationAcceleratorDiagnosticTest {
       // products and then call the inner solve method directly.
       UUID id = UUID.randomUUID();
       try {
-        callInnerSolver(column, type, id);
+	callInnerSolver(column, type, id);
       } catch (RuntimeException ex) {
-        logger.info(
-            type.name() + ": EXCEPTION " + ex.getClass().getSimpleName() + ": " + ex.getMessage());
-        continue;
+	logger.info(type.name() + ": EXCEPTION " + ex.getClass().getSimpleName() + ": " + ex.getMessage());
+	continue;
       }
 
       logger.info("--- " + type.name() + " ---");
@@ -103,35 +96,29 @@ public class DistillationAcceleratorDiagnosticTest {
       logger.info("  lastEnergyResidual             = " + column.getLastEnergyResidual());
       logger.info("  lastMeshResidualNorm           = " + column.getLastMeshResidualNorm());
       logger.info("  lastMeshMaterialResidualNorm   = " + column.getLastMeshMaterialResidualNorm());
-      logger.info(
-          "  lastMeshEquilibriumResidualNorm= " + column.getLastMeshEquilibriumResidualNorm());
-      logger
-          .info("  lastMeshSummationResidualNorm  = " + column.getLastMeshSummationResidualNorm());
+      logger.info("  lastMeshEquilibriumResidualNorm= " + column.getLastMeshEquilibriumResidualNorm());
+      logger.info("  lastMeshSummationResidualNorm  = " + column.getLastMeshSummationResidualNorm());
       logger.info("  lastMeshEnergyResidualNorm     = " + column.getLastMeshEnergyResidualNorm());
-      logger.info(
-          "  lastMeshProductDrawResidualNorm= " + column.getLastMeshProductDrawResidualNorm());
+      logger.info("  lastMeshProductDrawResidualNorm= " + column.getLastMeshProductDrawResidualNorm());
       logger.info("  lastInternalTrafficRatio       = " + column.getLastInternalTrafficRatio());
-      logger.info(
-          "  gasOut flow (kg/hr)            = " + column.getGasOutStream().getFlowRate("kg/hr"));
-      logger.info(
-          "  liquidOut flow (kg/hr)         = " + column.getLiquidOutStream().getFlowRate("kg/hr"));
+      logger.info("  gasOut flow (kg/hr)            = " + column.getGasOutStream().getFlowRate("kg/hr"));
+      logger.info("  liquidOut flow (kg/hr)         = " + column.getLiquidOutStream().getFlowRate("kg/hr"));
       // Direct tray reads — what the inner solver actually computed BEFORE fallback overwrite
       try {
-        double topTrayGas =
-            column.getTray(column.getNumberOfTrays() - 1).getGasOutStream().getFlowRate("kg/hr");
-        double botTrayLiq = column.getTray(0).getLiquidOutStream().getFlowRate("kg/hr");
-        logger.info("  topTray gasOut    (kg/hr)      = " + topTrayGas);
-        logger.info("  botTray liquidOut (kg/hr)      = " + botTrayLiq);
-        // Bottom tray phase inventory
-        SystemInterface bot = column.getTray(0).getLiquidOutStream().getThermoSystem();
-        logger.info("  botTray hasPhase oil/liq/aq    = " + bot.hasPhaseType("oil") + "/"
-            + bot.hasPhaseType("liquid") + "/" + bot.hasPhaseType("aqueous"));
-        logger.info("  botTray numberOfPhases         = " + bot.getNumberOfPhases());
-        if (bot.getNumberOfPhases() > 0) {
-          logger.info("  botTray phase0 name            = " + bot.getPhase(0).getPhaseTypeName());
-        }
+	double topTrayGas = column.getTray(column.getNumberOfTrays() - 1).getGasOutStream().getFlowRate("kg/hr");
+	double botTrayLiq = column.getTray(0).getLiquidOutStream().getFlowRate("kg/hr");
+	logger.info("  topTray gasOut    (kg/hr)      = " + topTrayGas);
+	logger.info("  botTray liquidOut (kg/hr)      = " + botTrayLiq);
+	// Bottom tray phase inventory
+	SystemInterface bot = column.getTray(0).getLiquidOutStream().getThermoSystem();
+	logger.info("  botTray hasPhase oil/liq/aq    = " + bot.hasPhaseType("oil") + "/" + bot.hasPhaseType("liquid")
+	    + "/" + bot.hasPhaseType("aqueous"));
+	logger.info("  botTray numberOfPhases         = " + bot.getNumberOfPhases());
+	if (bot.getNumberOfPhases() > 0) {
+	  logger.info("  botTray phase0 name            = " + bot.getPhase(0).getPhaseTypeName());
+	}
       } catch (RuntimeException re) {
-        logger.info("  tray read failed: " + re.getMessage());
+	logger.info("  tray read failed: " + re.getMessage());
       }
       // Reflection probes for private gates
       probePrivate(column, "internalTrafficSatisfied");
@@ -147,48 +134,47 @@ public class DistillationAcceleratorDiagnosticTest {
    * Dispatch to the inner solve method for the given solver type.
    *
    * @param column column to drive
-   * @param type solver type
-   * @param id calculation identifier
+   * @param type   solver type
+   * @param id     calculation identifier
    */
-  private void callInnerSolver(DistillationColumn column, DistillationColumn.SolverType type,
-      UUID id) {
+  private void callInnerSolver(DistillationColumn column, DistillationColumn.SolverType type, UUID id) {
     switch (type) {
-      case DIRECT_SUBSTITUTION:
-        column.solveDirectSubstitution(id);
-        return;
-      case DAMPED_SUBSTITUTION:
-        column.solveDampedSubstitution(id);
-        return;
-      case INSIDE_OUT:
-        column.solveInsideOut(id);
-        return;
-      case MATRIX_INSIDE_OUT:
-        column.solveMatrixInsideOut(id);
-        return;
-      case WEGSTEIN:
-        column.solveWegstein(id);
-        return;
-      case SUM_RATES:
-        column.solveSumRates(id);
-        return;
-      case NEWTON:
-        column.solveNewton(id);
-        return;
-      case MESH_RESIDUAL:
-        column.solveMeshResidual(id);
-        return;
-      case NAPHTALI_SANDHOLM:
-        column.solveNaphtaliSandholm(id);
-        return;
-      default:
-        throw new IllegalArgumentException("Unsupported solver: " + type);
+    case DIRECT_SUBSTITUTION:
+      column.solveDirectSubstitution(id);
+      return;
+    case DAMPED_SUBSTITUTION:
+      column.solveDampedSubstitution(id);
+      return;
+    case INSIDE_OUT:
+      column.solveInsideOut(id);
+      return;
+    case MATRIX_INSIDE_OUT:
+      column.solveMatrixInsideOut(id);
+      return;
+    case WEGSTEIN:
+      column.solveWegstein(id);
+      return;
+    case SUM_RATES:
+      column.solveSumRates(id);
+      return;
+    case NEWTON:
+      column.solveNewton(id);
+      return;
+    case MESH_RESIDUAL:
+      column.solveMeshResidual(id);
+      return;
+    case NAPHTALI_SANDHOLM:
+      column.solveNaphtaliSandholm(id);
+      return;
+    default:
+      throw new IllegalArgumentException("Unsupported solver: " + type);
     }
   }
 
   /**
    * Reflection helper to invoke a private no-arg method on the column and print the result.
    *
-   * @param column column instance
+   * @param column     column instance
    * @param methodName method to invoke
    */
   private void probePrivate(DistillationColumn column, String methodName) {

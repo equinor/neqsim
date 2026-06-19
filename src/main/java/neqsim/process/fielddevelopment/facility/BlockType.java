@@ -4,8 +4,8 @@ package neqsim.process.fielddevelopment.facility;
  * Pre-defined facility block types for rapid facility assembly.
  *
  * <p>
- * Each block type represents a common process unit or module that can be assembled into a complete
- * facility using the {@link FacilityBuilder}.
+ * Each block type represents a common process unit or module that can be assembled into a complete facility using the
+ * {@link FacilityBuilder}.
  *
  * @author ESOL
  * @version 1.0
@@ -13,8 +13,8 @@ package neqsim.process.fielddevelopment.facility;
  */
 public enum BlockType {
   /**
-   * Inlet separation - initial phase separation at arrival pressure. Handles slug catching and
-   * initial gas/liquid separation.
+   * Inlet separation - initial phase separation at arrival pressure. Handles slug catching and initial gas/liquid
+   * separation.
    */
   INLET_SEPARATION("Inlet Separation", "Initial phase separation"),
 
@@ -158,7 +158,6 @@ public enum BlockType {
    * @return true if high CAPEX item
    */
   public boolean isHighCapex() {
-    return this == COMPRESSION || this == CO2_REMOVAL_AMINE || this == NGL_RECOVERY
-        || this == SUBSEA_BOOSTING;
+    return this == COMPRESSION || this == CO2_REMOVAL_AMINE || this == NGL_RECOVERY || this == SUBSEA_BOOSTING;
   }
 }

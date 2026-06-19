@@ -7,9 +7,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Fitting function for asphaltene onset pressure/temperature.
  *
  * <p>
- * This function calculates the asphaltene onset pressure at a given temperature by adjusting CPA
- * association parameters (association energy epsilon/R and association volume kappa) to match
- * experimental onset data.
+ * This function calculates the asphaltene onset pressure at a given temperature by adjusting CPA association parameters
+ * (association energy epsilon/R and association volume kappa) to match experimental onset data.
  * </p>
  *
  * <p>
@@ -73,8 +72,7 @@ public class AsphalteneOnsetFunction extends LevenbergMarquardtFunction {
   }
 
   /**
-   * Constructor for AsphalteneOnsetFunction. Initializes with 2 parameters: association energy and
-   * volume.
+   * Constructor for AsphalteneOnsetFunction. Initializes with 2 parameters: association energy and volume.
    */
   public AsphalteneOnsetFunction() {
     params = new double[2];
@@ -123,37 +121,37 @@ public class AsphalteneOnsetFunction extends LevenbergMarquardtFunction {
     }
 
     switch (parameterType) {
-      case ASSOCIATION_PARAMETERS:
-        // params[0] = epsilon/R (association energy in K)
-        // params[1] = kappa (association volume, dimensionless)
-        // Apply to all phases for consistency
-        for (int phaseNum = 0; phaseNum < system.getNumberOfPhases(); phaseNum++) {
-          system.getPhase(phaseNum).getComponent(asphalteneIndex).setAssociationEnergy(params[0]);
-          system.getPhase(phaseNum).getComponent(asphalteneIndex).setAssociationVolume(params[1]);
-        }
-        break;
+    case ASSOCIATION_PARAMETERS:
+      // params[0] = epsilon/R (association energy in K)
+      // params[1] = kappa (association volume, dimensionless)
+      // Apply to all phases for consistency
+      for (int phaseNum = 0; phaseNum < system.getNumberOfPhases(); phaseNum++) {
+	system.getPhase(phaseNum).getComponent(asphalteneIndex).setAssociationEnergy(params[0]);
+	system.getPhase(phaseNum).getComponent(asphalteneIndex).setAssociationVolume(params[1]);
+      }
+      break;
 
-      case BINARY_INTERACTION:
-        // params[0] = kij with n-heptane or specified component
-        // Binary interaction parameters would be set here
-        break;
+    case BINARY_INTERACTION:
+      // params[0] = kij with n-heptane or specified component
+      // Binary interaction parameters would be set here
+      break;
 
-      case MOLAR_MASS:
-        // params[0] = molar mass of asphaltene (g/mol)
-        for (int phaseNum = 0; phaseNum < system.getNumberOfPhases(); phaseNum++) {
-          system.getPhase(phaseNum).getComponent(asphalteneIndex).setMolarMass(params[0] / 1000.0);
-        }
-        break;
+    case MOLAR_MASS:
+      // params[0] = molar mass of asphaltene (g/mol)
+      for (int phaseNum = 0; phaseNum < system.getNumberOfPhases(); phaseNum++) {
+	system.getPhase(phaseNum).getComponent(asphalteneIndex).setMolarMass(params[0] / 1000.0);
+      }
+      break;
 
-      case COMBINED:
-        // params[0] = epsilon/R
-        // params[1] = kij (not implemented yet - uses fixed kappa)
-        for (int phaseNum = 0; phaseNum < system.getNumberOfPhases(); phaseNum++) {
-          system.getPhase(phaseNum).getComponent(asphalteneIndex).setAssociationEnergy(params[0]);
-          system.getPhase(phaseNum).getComponent(asphalteneIndex).setAssociationVolume(0.005); // Fixed
-                                                                                               // kappa
-        }
-        break;
+    case COMBINED:
+      // params[0] = epsilon/R
+      // params[1] = kij (not implemented yet - uses fixed kappa)
+      for (int phaseNum = 0; phaseNum < system.getNumberOfPhases(); phaseNum++) {
+	system.getPhase(phaseNum).getComponent(asphalteneIndex).setAssociationEnergy(params[0]);
+	system.getPhase(phaseNum).getComponent(asphalteneIndex).setAssociationVolume(0.005); // Fixed
+											     // kappa
+      }
+      break;
     }
   }
 
@@ -165,9 +163,8 @@ public class AsphalteneOnsetFunction extends LevenbergMarquardtFunction {
   private int findAsphalteneIndex() {
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       String name = system.getPhase(0).getComponent(i).getComponentName();
-      if (name.equalsIgnoreCase(asphalteneComponentName)
-          || name.toLowerCase().contains("asphaltene")) {
-        return i;
+      if (name.equalsIgnoreCase(asphalteneComponentName) || name.toLowerCase().contains("asphaltene")) {
+	return i;
       }
     }
     return -1;
@@ -193,17 +190,17 @@ public class AsphalteneOnsetFunction extends LevenbergMarquardtFunction {
       system.setPressure(currentPressure);
 
       try {
-        ops.TPflash();
+	ops.TPflash();
       } catch (Exception e) {
-        currentPressure -= pressureStep;
-        continue;
+	currentPressure -= pressureStep;
+	continue;
       }
 
       boolean hasAsphaltene = checkForAsphaltenePrecipitation();
 
       if (hasAsphaltene && wasStable) {
-        // Found transition - refine with bisection
-        return refinePressure(previousPressure, currentPressure, ops);
+	// Found transition - refine with bisection
+	return refinePressure(previousPressure, currentPressure, ops);
       }
 
       wasStable = !hasAsphaltene;
@@ -225,16 +222,16 @@ public class AsphalteneOnsetFunction extends LevenbergMarquardtFunction {
       system.setPressure(mid);
 
       try {
-        ops.TPflash();
+	ops.TPflash();
       } catch (Exception e) {
-        high = mid;
-        continue;
+	high = mid;
+	continue;
       }
 
       if (checkForAsphaltenePrecipitation()) {
-        low = mid;
+	low = mid;
       } else {
-        high = mid;
+	high = mid;
       }
     }
 
@@ -247,11 +244,11 @@ public class AsphalteneOnsetFunction extends LevenbergMarquardtFunction {
   private boolean checkForAsphaltenePrecipitation() {
     if (system.hasPhaseType("solid")) {
       try {
-        if (system.getPhaseOfType("solid").getNumberOfMolesInPhase() > 1e-10) {
-          return true;
-        }
+	if (system.getPhaseOfType("solid").getNumberOfMolesInPhase() > 1e-10) {
+	  return true;
+	}
       } catch (Exception e) {
-        // Phase check failed
+	// Phase check failed
       }
     }
     return false;
@@ -276,8 +273,8 @@ public class AsphalteneOnsetFunction extends LevenbergMarquardtFunction {
    * Sets the pressure search range.
    *
    * @param start starting pressure (bara)
-   * @param min minimum pressure (bara)
-   * @param step pressure step (bara)
+   * @param min   minimum pressure (bara)
+   * @param step  pressure step (bara)
    */
   public void setPressureRange(double start, double min, double step) {
     this.startPressure = start;
@@ -293,16 +290,16 @@ public class AsphalteneOnsetFunction extends LevenbergMarquardtFunction {
   public void setParameterType(FittingParameterType type) {
     this.parameterType = type;
     switch (type) {
-      case ASSOCIATION_PARAMETERS:
-        params = new double[2];
-        break;
-      case BINARY_INTERACTION:
-      case MOLAR_MASS:
-        params = new double[1];
-        break;
-      case COMBINED:
-        params = new double[2];
-        break;
+    case ASSOCIATION_PARAMETERS:
+      params = new double[2];
+      break;
+    case BINARY_INTERACTION:
+    case MOLAR_MASS:
+      params = new double[1];
+      break;
+    case COMBINED:
+      params = new double[2];
+      break;
     }
   }
 

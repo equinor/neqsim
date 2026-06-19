@@ -4,10 +4,9 @@ package neqsim.process.safety.barrier;
  * Classification of safety-system barrier functions used in performance assessments.
  *
  * <p>
- * The categories are intentionally aligned with common safety critical systems extracted from STID,
- * P&amp;ID, cause-and-effect, safety requirement, firewater, and passive fire protection
- * documentation. They provide a stable bridge between document-derived barrier registers and NeqSim
- * consequence, SIS, LOPA, and escalation analyses.
+ * The categories are intentionally aligned with common safety critical systems extracted from STID, P&amp;ID,
+ * cause-and-effect, safety requirement, firewater, and passive fire protection documentation. They provide a stable
+ * bridge between document-derived barrier registers and NeqSim consequence, SIS, LOPA, and escalation analyses.
  * </p>
  *
  * @author ESOL

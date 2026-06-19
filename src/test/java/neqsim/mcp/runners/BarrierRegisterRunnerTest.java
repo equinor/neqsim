@@ -43,34 +43,24 @@ class BarrierRegisterRunnerTest {
    */
   @Test
   void testDocumentationExampleRuns() {
-    String json = "{\"action\":\"audit\",\"register\":{"
-        + "\"registerId\":\"BR-HP-SEP-001\","
-        + "\"name\":\"HP separator overpressure barrier register\","
-        + "\"evidence\":[{\"evidenceId\":\"EV-SRS-001\","
-        + "\"documentId\":\"SRS-HP-101\","
-        + "\"documentTitle\":\"HIPPS safety requirements specification\","
-        + "\"revision\":\"1\",\"section\":\"Performance requirements\","
-        + "\"page\":12,\"sourceReference\":\"SIF-HIPPS-101 table\","
-        + "\"excerpt\":\"SIF-HIPPS-101 shall achieve PFDavg <= 1E-3.\","
-        + "\"confidence\":0.95}],"
-        + "\"performanceStandards\":[{\"id\":\"PS-HIPPS-101\","
-        + "\"title\":\"HIPPS overpressure protection\","
-        + "\"safetyFunction\":\"Prevent HP separator overpressure from blocked outlet\","
-        + "\"demandMode\":\"LOW_DEMAND\",\"targetPfd\":0.001,"
-        + "\"requiredAvailability\":0.99,\"proofTestIntervalHours\":8760,"
-        + "\"responseTimeSeconds\":2.0,"
-        + "\"acceptanceCriteria\":[\"Close inlet ESD valve before separator MAWP is exceeded\"],"
-        + "\"evidenceRefs\":[\"EV-SRS-001\"]}],"
-        + "\"barriers\":[{\"id\":\"B-HIPPS-101\","
-        + "\"name\":\"HIPPS inlet shutdown\",\"type\":\"PREVENTION\","
-        + "\"status\":\"AVAILABLE\",\"pfd\":0.001,"
-        + "\"performanceStandardId\":\"PS-HIPPS-101\","
-        + "\"equipmentTags\":[\"V-101\",\"ESDV-101\"],"
-        + "\"hazardIds\":[\"HAZ-OP-001\"],\"evidenceRefs\":[\"EV-SRS-001\"]}],"
-        + "\"safetyCriticalElements\":[{\"id\":\"SCE-V-101\",\"tag\":\"V-101\","
-        + "\"name\":\"HP separator pressure protection\",\"type\":\"PROCESS_EQUIPMENT\","
-        + "\"equipmentTags\":[\"V-101\"],\"barrierRefs\":[\"B-HIPPS-101\"],"
-        + "\"evidenceRefs\":[\"EV-SRS-001\"]}]}}";
+    String json = "{\"action\":\"audit\",\"register\":{" + "\"registerId\":\"BR-HP-SEP-001\","
+	+ "\"name\":\"HP separator overpressure barrier register\"," + "\"evidence\":[{\"evidenceId\":\"EV-SRS-001\","
+	+ "\"documentId\":\"SRS-HP-101\"," + "\"documentTitle\":\"HIPPS safety requirements specification\","
+	+ "\"revision\":\"1\",\"section\":\"Performance requirements\","
+	+ "\"page\":12,\"sourceReference\":\"SIF-HIPPS-101 table\","
+	+ "\"excerpt\":\"SIF-HIPPS-101 shall achieve PFDavg <= 1E-3.\"," + "\"confidence\":0.95}],"
+	+ "\"performanceStandards\":[{\"id\":\"PS-HIPPS-101\"," + "\"title\":\"HIPPS overpressure protection\","
+	+ "\"safetyFunction\":\"Prevent HP separator overpressure from blocked outlet\","
+	+ "\"demandMode\":\"LOW_DEMAND\",\"targetPfd\":0.001,"
+	+ "\"requiredAvailability\":0.99,\"proofTestIntervalHours\":8760," + "\"responseTimeSeconds\":2.0,"
+	+ "\"acceptanceCriteria\":[\"Close inlet ESD valve before separator MAWP is exceeded\"],"
+	+ "\"evidenceRefs\":[\"EV-SRS-001\"]}]," + "\"barriers\":[{\"id\":\"B-HIPPS-101\","
+	+ "\"name\":\"HIPPS inlet shutdown\",\"type\":\"PREVENTION\"," + "\"status\":\"AVAILABLE\",\"pfd\":0.001,"
+	+ "\"performanceStandardId\":\"PS-HIPPS-101\"," + "\"equipmentTags\":[\"V-101\",\"ESDV-101\"],"
+	+ "\"hazardIds\":[\"HAZ-OP-001\"],\"evidenceRefs\":[\"EV-SRS-001\"]}],"
+	+ "\"safetyCriticalElements\":[{\"id\":\"SCE-V-101\",\"tag\":\"V-101\","
+	+ "\"name\":\"HP separator pressure protection\",\"type\":\"PROCESS_EQUIPMENT\","
+	+ "\"equipmentTags\":[\"V-101\"],\"barrierRefs\":[\"B-HIPPS-101\"]," + "\"evidenceRefs\":[\"EV-SRS-001\"]}]}}";
     JsonObject obj = JsonParser.parseString(BarrierRegisterRunner.run(json)).getAsJsonObject();
 
     assertEquals("success", obj.get("status").getAsString());
@@ -84,8 +74,8 @@ class BarrierRegisterRunnerTest {
   @Test
   void testMissingEvidenceReturnsValidationFindings() {
     String json = "{\"register\":{\"registerId\":\"BR-X\",\"barriers\":[{"
-        + "\"id\":\"B-X\",\"name\":\"Manual isolation\",\"status\":\"AVAILABLE\","
-        + "\"type\":\"PREVENTION\",\"pfd\":0.1}]}}";
+	+ "\"id\":\"B-X\",\"name\":\"Manual isolation\",\"status\":\"AVAILABLE\","
+	+ "\"type\":\"PREVENTION\",\"pfd\":0.1}]}}";
     String result = BarrierRegisterRunner.run(json);
     JsonObject obj = JsonParser.parseString(result).getAsJsonObject();
 

@@ -14,15 +14,14 @@ import neqsim.thermo.system.SystemInterface;
  * Sour service material assessment per NACE MR0175 / ISO 15156.
  *
  * <p>
- * Evaluates whether materials are suitable for hydrogen sulfide (H2S)-containing environments by
- * classifying the sour severity region and checking material limits for sulfide stress cracking
- * (SSC), hydrogen-induced cracking (HIC), and stress-oriented hydrogen-induced cracking (SOHIC).
+ * Evaluates whether materials are suitable for hydrogen sulfide (H2S)-containing environments by classifying the sour
+ * severity region and checking material limits for sulfide stress cracking (SSC), hydrogen-induced cracking (HIC), and
+ * stress-oriented hydrogen-induced cracking (SOHIC).
  * </p>
  *
  * <h2>ISO 15156 Sour Service Regions</h2>
  * <ul>
- * <li><b>Region 0</b> — Non-sour: pH2S &lt; 0.3 kPa (0.003 bar) or total P &lt; 0.4 MPa with H2S
- * &lt; 10%</li>
+ * <li><b>Region 0</b> — Non-sour: pH2S &lt; 0.3 kPa (0.003 bar) or total P &lt; 0.4 MPa with H2S &lt; 10%</li>
  * <li><b>Region 1</b> — Mildly sour: Low pH2S with moderate pH</li>
  * <li><b>Region 2</b> — Moderately sour: Intermediate pH2S range</li>
  * <li><b>Region 3</b> — Severely sour: High pH2S and/or low pH</li>
@@ -173,7 +172,8 @@ public class SourServiceAssessment implements Serializable {
   /**
    * Default constructor.
    */
-  public SourServiceAssessment() {}
+  public SourServiceAssessment() {
+  }
 
   // ─── Setters ────────────────────────────────────────────
 
@@ -298,12 +298,10 @@ public class SourServiceAssessment implements Serializable {
     if (fluid.hasPhaseType("gas")) {
       int gasIdx = fluid.getPhaseNumberOfPhase("gas");
       if (fluid.getPhase(gasIdx).hasComponent("H2S")) {
-        this.h2sPartialPressureBar =
-            totalPressureBar * fluid.getPhase(gasIdx).getComponent("H2S").getx();
+	this.h2sPartialPressureBar = totalPressureBar * fluid.getPhase(gasIdx).getComponent("H2S").getx();
       }
       if (fluid.getPhase(gasIdx).hasComponent("CO2")) {
-        this.co2PartialPressureBar =
-            totalPressureBar * fluid.getPhase(gasIdx).getComponent("CO2").getx();
+	this.co2PartialPressureBar = totalPressureBar * fluid.getPhase(gasIdx).getComponent("CO2").getx();
       }
     }
   }
@@ -328,11 +326,11 @@ public class SourServiceAssessment implements Serializable {
 
     if (elementalSulfurPresent) {
       notes.add("WARNING: Elemental sulfur present — increases cracking susceptibility. "
-          + "Consult ISO 15156-2 Annex B for additional restrictions.");
+	  + "Consult ISO 15156-2 Annex B for additional restrictions.");
     }
     if (!freeWaterPresent) {
       notes.add("No free water present — sour service restrictions may be relaxed "
-          + "if dry conditions can be guaranteed throughout service life.");
+	  + "if dry conditions can be guaranteed throughout service life.");
     }
     evaluated = true;
   }
@@ -346,8 +344,7 @@ public class SourServiceAssessment implements Serializable {
     // Region 0: Non-sour
     if (h2sKPa < 0.3) {
       sourRegion = 0;
-      notes.add("Region 0 (non-sour): pH2S < 0.3 kPa. "
-          + "ISO 15156 sour service requirements do not apply.");
+      notes.add("Region 0 (non-sour): pH2S < 0.3 kPa. " + "ISO 15156 sour service requirements do not apply.");
       return;
     }
 
@@ -370,8 +367,8 @@ public class SourServiceAssessment implements Serializable {
       sourRegion = 1;
     }
 
-    notes.add("Sour Region " + sourRegion + " per ISO 15156-2 Figure B.1 " + "(pH2S="
-        + String.format("%.2f", h2sKPa) + " kPa, pH=" + String.format("%.1f", inSituPH) + ").");
+    notes.add("Sour Region " + sourRegion + " per ISO 15156-2 Figure B.1 " + "(pH2S=" + String.format("%.2f", h2sKPa)
+	+ " kPa, pH=" + String.format("%.1f", inSituPH) + ").");
   }
 
   /**
@@ -402,14 +399,14 @@ public class SourServiceAssessment implements Serializable {
       sscAcceptable = hardnessOk && strengthOk;
       sscRiskLevel = sscAcceptable ? "Low" : "High";
       if (!hardnessOk) {
-        notes.add("SSC: Hardness " + hardnessHRC + " HRC exceeds max " + maxAllowableHardnessHRC
-            + " HRC for Region 1.");
+	notes
+	    .add("SSC: Hardness " + hardnessHRC + " HRC exceeds max " + maxAllowableHardnessHRC + " HRC for Region 1.");
       }
     } else if (sourRegion == 2) {
       sscAcceptable = hardnessOk && strengthOk && pwhtApplied;
       sscRiskLevel = sscAcceptable ? "Medium" : "High";
       if (!pwhtApplied) {
-        notes.add("SSC: PWHT required for Region 2 sour service — not applied.");
+	notes.add("SSC: PWHT required for Region 2 sour service — not applied.");
       }
     } else {
       // Region 3
@@ -417,8 +414,7 @@ public class SourServiceAssessment implements Serializable {
       sscRiskLevel = sscAcceptable ? "Medium" : "Very High";
       maxAllowableYieldStrengthMPa = 550.0;
       if (yieldStrengthMPa > 550.0) {
-        notes.add(
-            "SSC: Yield strength " + yieldStrengthMPa + " MPa exceeds 550 MPa limit for Region 3.");
+	notes.add("SSC: Yield strength " + yieldStrengthMPa + " MPa exceeds 550 MPa limit for Region 3.");
       }
     }
   }
@@ -429,29 +425,27 @@ public class SourServiceAssessment implements Serializable {
   private void evaluateCRAForSSC() {
     String upperGrade = materialGrade.toUpperCase().trim();
 
-    if (upperGrade.contains("316") || upperGrade.contains("304")
-        || upperGrade.contains("AUSTENITIC")) {
+    if (upperGrade.contains("316") || upperGrade.contains("304") || upperGrade.contains("AUSTENITIC")) {
       // Austenitic SS — generally resistant to SSC but susceptible to Cl-SCC
       sscAcceptable = true;
       sscRiskLevel = "Low";
       if (chlorideConcentrationMgL > 50 && temperatureC > 60) {
-        notes.add("Austenitic SS: chloride SCC risk at " + temperatureC + "°C with "
-            + chlorideConcentrationMgL + " mg/L Cl⁻.");
+	notes.add("Austenitic SS: chloride SCC risk at " + temperatureC + "°C with " + chlorideConcentrationMgL
+	    + " mg/L Cl⁻.");
       }
-    } else if (upperGrade.contains("22CR") || upperGrade.contains("DUPLEX")
-        || upperGrade.contains("2205")) {
+    } else if (upperGrade.contains("22CR") || upperGrade.contains("DUPLEX") || upperGrade.contains("2205")) {
       sscAcceptable = temperatureC <= 232;
       sscRiskLevel = sscAcceptable ? "Low" : "Medium";
       if (h2sPartialPressureBar > 1.0 && temperatureC > 150) {
-        sscAcceptable = false;
-        sscRiskLevel = "High";
-        notes.add("22Cr duplex: pH2S > 1 bar at " + temperatureC + "°C exceeds EFC 17 limits.");
+	sscAcceptable = false;
+	sscRiskLevel = "High";
+	notes.add("22Cr duplex: pH2S > 1 bar at " + temperatureC + "°C exceeds EFC 17 limits.");
       }
     } else if (upperGrade.contains("25CR") || upperGrade.contains("SUPER")) {
       sscAcceptable = temperatureC <= 232;
       sscRiskLevel = "Low";
-    } else if (upperGrade.contains("625") || upperGrade.contains("C276")
-        || upperGrade.contains("NICKEL") || upperGrade.contains("INCONEL")) {
+    } else if (upperGrade.contains("625") || upperGrade.contains("C276") || upperGrade.contains("NICKEL")
+	|| upperGrade.contains("INCONEL")) {
       sscAcceptable = true;
       sscRiskLevel = "None";
     } else if (upperGrade.contains("13CR")) {
@@ -492,7 +486,7 @@ public class SourServiceAssessment implements Serializable {
       hicRiskLevel = "High";
       hicAcceptable = false;
       notes.add("HIC: Region 3 — HIC-resistant steel mandatory. "
-          + "Must pass NACE TM0284 testing with CLR < 15%, CTR < 5%.");
+	  + "Must pass NACE TM0284 testing with CLR < 15%, CTR < 5%.");
     }
 
     if (elementalSulfurPresent) {
@@ -553,9 +547,9 @@ public class SourServiceAssessment implements Serializable {
       recommendedMaterial = "HIC-resistant carbon steel + PWHT (or 22Cr duplex for high Cl⁻)";
     } else {
       if (chlorideConcentrationMgL > 50000 || temperatureC > 150) {
-        recommendedMaterial = "Nickel alloy (625/C276) or 25Cr super duplex";
+	recommendedMaterial = "Nickel alloy (625/C276) or 25Cr super duplex";
       } else {
-        recommendedMaterial = "22Cr duplex or HIC-resistant CS with PWHT + full NACE TM0284";
+	recommendedMaterial = "22Cr duplex or HIC-resistant CS with PWHT + full NACE TM0284";
       }
     }
   }
@@ -680,11 +674,10 @@ public class SourServiceAssessment implements Serializable {
    */
   private boolean isCRAMaterial(String grade) {
     String upper = grade.toUpperCase().trim();
-    return upper.contains("13CR") || upper.contains("22CR") || upper.contains("25CR")
-        || upper.contains("DUPLEX") || upper.contains("316") || upper.contains("304")
-        || upper.contains("625") || upper.contains("C276") || upper.contains("INCONEL")
-        || upper.contains("HASTELLOY") || upper.contains("SUPER") || upper.contains("AUSTENITIC")
-        || upper.contains("NICKEL") || upper.contains("2205") || upper.contains("2507");
+    return upper.contains("13CR") || upper.contains("22CR") || upper.contains("25CR") || upper.contains("DUPLEX")
+	|| upper.contains("316") || upper.contains("304") || upper.contains("625") || upper.contains("C276")
+	|| upper.contains("INCONEL") || upper.contains("HASTELLOY") || upper.contains("SUPER")
+	|| upper.contains("AUSTENITIC") || upper.contains("NICKEL") || upper.contains("2205") || upper.contains("2507");
   }
 
   /**
@@ -751,8 +744,7 @@ public class SourServiceAssessment implements Serializable {
    * @return JSON representation of the assessment
    */
   public String toJson() {
-    Gson gson =
-        new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+    Gson gson = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
     return gson.toJson(toMap());
   }
 }

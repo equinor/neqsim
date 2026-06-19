@@ -8,12 +8,10 @@ import org.apache.logging.log4j.Logger;
  * Tray hydraulics calculator for distillation column internals sizing.
  *
  * <p>
- * Calculates per-tray hydraulics for sieve, valve, and bubble-cap trays using industry-standard
- * correlations including:
+ * Calculates per-tray hydraulics for sieve, valve, and bubble-cap trays using industry-standard correlations including:
  * </p>
  * <ul>
- * <li>Flooding velocity — Fair correlation (Souders-Brown with tray spacing and FLV
- * correction)</li>
+ * <li>Flooding velocity — Fair correlation (Souders-Brown with tray spacing and FLV correction)</li>
  * <li>Weeping — Sinnott correlation (minimum vapor velocity to prevent liquid weeping)</li>
  * <li>Entrainment — Fair entrainment correlation (fractional entrainment vs percent flood)</li>
  * <li>Downcomer backup — Francis weir formula and backup height calculation</li>
@@ -23,8 +21,8 @@ import org.apache.logging.log4j.Logger;
  * </ul>
  *
  * <p>
- * References: Kister, H.Z. "Distillation Design" (1992); Ludwig, E.E. "Applied Process Design vol.
- * 2" (2001); Fair, J.R. Petro/Chem Eng. (1961); Sinnott, R.K. "Chemical Engineering Design" (2005).
+ * References: Kister, H.Z. "Distillation Design" (1992); Ludwig, E.E. "Applied Process Design vol. 2" (2001); Fair,
+ * J.R. Petro/Chem Eng. (1961); Sinnott, R.K. "Chemical Engineering Design" (2005).
  * </p>
  *
  * @author NeqSim
@@ -168,14 +166,14 @@ public class TrayHydraulicsCalculator implements Serializable {
   /**
    * Default constructor.
    */
-  public TrayHydraulicsCalculator() {}
+  public TrayHydraulicsCalculator() {
+  }
 
   /**
    * Perform all tray hydraulic calculations.
    *
    * <p>
-   * Call this after setting all geometry and operating parameters. Results are available through
-   * getter methods.
+   * Call this after setting all geometry and operating parameters. Results are available through getter methods.
    * </p>
    */
   public void calculate() {
@@ -225,9 +223,8 @@ public class TrayHydraulicsCalculator implements Serializable {
    * Calculate flooding velocity using the Fair correlation.
    *
    * <p>
-   * Uses the Souders-Brown equation with the capacity factor K from the Fair plot as a function of
-   * tray spacing and flow parameter (FLV). Surface tension correction is applied per the
-   * Kister-Haas modification.
+   * Uses the Souders-Brown equation with the capacity factor K from the Fair plot as a function of tray spacing and
+   * flow parameter (FLV). Surface tension correction is applied per the Kister-Haas modification.
    * </p>
    */
   private void calculateFloodingVelocity() {
@@ -263,12 +260,11 @@ public class TrayHydraulicsCalculator implements Serializable {
    * Get the Fair capacity factor K as a function of tray spacing and flow parameter.
    *
    * <p>
-   * Implements a curve fit to the Fair flooding correlation for sieve trays. Data from Kister
-   * (1992), Table 6.3.
+   * Implements a curve fit to the Fair flooding correlation for sieve trays. Data from Kister (1992), Table 6.3.
    * </p>
    *
    * @param spacing tray spacing [m]
-   * @param flv flow parameter [-]
+   * @param flv     flow parameter [-]
    * @return capacity factor K [m/s]
    */
   private double getCapacityFactor(double spacing, double flv) {
@@ -329,8 +325,8 @@ public class TrayHydraulicsCalculator implements Serializable {
    * Check for weeping condition (sieve and valve trays).
    *
    * <p>
-   * Uses the Sinnott correlation: minimum vapor velocity through holes to prevent weeping: u_min =
-   * [K_w - 0.90 * (25.4 - d_h)] / sqrt(rho_v), where K_w is from the weeping chart.
+   * Uses the Sinnott correlation: minimum vapor velocity through holes to prevent weeping: u_min = [K_w - 0.90 * (25.4
+   * - d_h)] / sqrt(rho_v), where K_w is from the weeping chart.
    * </p>
    */
   private void calculateWeepingCheck() {
@@ -391,8 +387,8 @@ public class TrayHydraulicsCalculator implements Serializable {
    * Calculate entrainment using Fair's correlation.
    *
    * <p>
-   * Fractional entrainment (psi) as a function of percent flood and flow parameter. High
-   * entrainment (&gt; 0.1) reduces tray efficiency.
+   * Fractional entrainment (psi) as a function of percent flood and flow parameter. High entrainment (&gt; 0.1) reduces
+   * tray efficiency.
    * </p>
    */
   private void calculateEntrainment() {
@@ -436,9 +432,8 @@ public class TrayHydraulicsCalculator implements Serializable {
    * Calculate tray pressure drop components.
    *
    * <p>
-   * Total tray DP = dry tray DP + liquid head + residual head. Dry tray DP uses the orifice
-   * equation. Liquid head includes weir crest. Residual head accounts for surface tension at hole
-   * rim.
+   * Total tray DP = dry tray DP + liquid head + residual head. Dry tray DP uses the orifice equation. Liquid head
+   * includes weir crest. Residual head accounts for surface tension at hole rim.
    * </p>
    */
   private void calculatePressureDrop() {
@@ -500,8 +495,8 @@ public class TrayHydraulicsCalculator implements Serializable {
    * Calculate downcomer backup height.
    *
    * <p>
-   * Downcomer backup = tray pressure drop (as liquid head) + liquid head in downcomer + friction
-   * under downcomer. Must be less than tray spacing + weir height to prevent flooding.
+   * Downcomer backup = tray pressure drop (as liquid head) + liquid head in downcomer + friction under downcomer. Must
+   * be less than tray spacing + weir height to prevent flooding.
    * </p>
    */
   private void calculateDowncommerBackup() {
@@ -540,8 +535,8 @@ public class TrayHydraulicsCalculator implements Serializable {
    * Calculate tray efficiency using the O'Connell correlation.
    *
    * <p>
-   * E_o = 51 - 32.5 * log10(alpha * mu_L) where alpha is relative volatility and mu_L is liquid
-   * viscosity in centipoise. Valid range: alpha*mu from 0.1 to 10.
+   * E_o = 51 - 32.5 * log10(alpha * mu_L) where alpha is relative volatility and mu_L is liquid viscosity in
+   * centipoise. Valid range: alpha*mu from 0.1 to 10.
    * </p>
    */
   private void calculateTrayEfficiency() {
@@ -573,24 +568,23 @@ public class TrayHydraulicsCalculator implements Serializable {
    * Assess overall design feasibility.
    */
   private void assessDesign() {
-    designOk = weepingOk && entrainmentOk && downcommerBackupOk && percentFlood >= 50.0
-        && percentFlood <= 85.0;
+    designOk = weepingOk && entrainmentOk && downcommerBackupOk && percentFlood >= 50.0 && percentFlood <= 85.0;
     if (!designOk) {
       StringBuilder sb = new StringBuilder("Tray hydraulics issues: ");
       if (!weepingOk) {
-        sb.append("[WEEPING: vapor velocity below minimum] ");
+	sb.append("[WEEPING: vapor velocity below minimum] ");
       }
       if (!entrainmentOk) {
-        sb.append("[ENTRAINMENT: > 10%, tray spacing or diameter too small] ");
+	sb.append("[ENTRAINMENT: > 10%, tray spacing or diameter too small] ");
       }
       if (!downcommerBackupOk) {
-        sb.append("[DOWNCOMER BACKUP: > 50% of spacing, increase diameter or spacing] ");
+	sb.append("[DOWNCOMER BACKUP: > 50% of spacing, increase diameter or spacing] ");
       }
       if (percentFlood > 85.0) {
-        sb.append("[FLOODING: > 85%, increase column diameter] ");
+	sb.append("[FLOODING: > 85%, increase column diameter] ");
       }
       if (percentFlood < 50.0) {
-        sb.append("[LOW LOAD: < 50% flood, column oversized or turndown issue] ");
+	sb.append("[LOW LOAD: < 50% flood, column oversized or turndown issue] ");
       }
       logger.warn(sb.toString());
     }
@@ -600,8 +594,8 @@ public class TrayHydraulicsCalculator implements Serializable {
    * Size column diameter for a given design flooding fraction.
    *
    * <p>
-   * Given the operating conditions, calculates the minimum column diameter required to stay below
-   * the design flooding fraction. The diameter is rounded up to the nearest standard vessel size.
+   * Given the operating conditions, calculates the minimum column diameter required to stay below the design flooding
+   * fraction. The diameter is rounded up to the nearest standard vessel size.
    * </p>
    *
    * @return required column diameter [m]
@@ -636,11 +630,11 @@ public class TrayHydraulicsCalculator implements Serializable {
    * @return nearest standard diameter in meters (rounded up)
    */
   private double roundToStandardDiameter(double diameter) {
-    double[] standardSizes = {0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.4, 1.5, 1.6, 1.8, 2.0, 2.2,
-        2.4, 2.6, 2.8, 3.0, 3.2, 3.4, 3.6, 3.8, 4.0, 4.5, 5.0, 5.5, 6.0, 7.0, 8.0, 9.0, 10.0};
+    double[] standardSizes = { 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.4, 1.5, 1.6, 1.8, 2.0, 2.2, 2.4, 2.6, 2.8, 3.0,
+	3.2, 3.4, 3.6, 3.8, 4.0, 4.5, 5.0, 5.5, 6.0, 7.0, 8.0, 9.0, 10.0 };
     for (double stdSize : standardSizes) {
       if (stdSize >= diameter) {
-        return stdSize;
+	return stdSize;
       }
     }
     return Math.ceil(diameter * 2.0) / 2.0; // Round to nearest 0.5 m

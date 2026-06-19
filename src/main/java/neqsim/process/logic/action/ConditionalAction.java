@@ -23,8 +23,7 @@ import neqsim.process.logic.LogicCondition;
  * LogicAction openCooling = new OpenValveAction(coolingValve);
  * LogicAction openBypass = new OpenValveAction(bypassValve);
  *
- * ConditionalAction conditional =
- *     new ConditionalAction(highTemp, openCooling, openBypass, "Temperature Control");
+ * ConditionalAction conditional = new ConditionalAction(highTemp, openCooling, openBypass, "Temperature Control");
  *
  * // In sequence
  * startupLogic.addAction(conditional, 0.0);
@@ -48,25 +47,24 @@ public class ConditionalAction implements LogicAction {
   /**
    * Creates a conditional action with primary action only (no alternative).
    *
-   * @param condition condition to evaluate
+   * @param condition     condition to evaluate
    * @param primaryAction action to execute if condition is true
-   * @param description description of this conditional
+   * @param description   description of this conditional
    */
-  public ConditionalAction(LogicCondition condition, LogicAction primaryAction,
-      String description) {
+  public ConditionalAction(LogicCondition condition, LogicAction primaryAction, String description) {
     this(condition, primaryAction, null, description);
   }
 
   /**
    * Creates a conditional action with both primary and alternative actions.
    *
-   * @param condition condition to evaluate
-   * @param primaryAction action to execute if condition is true
+   * @param condition         condition to evaluate
+   * @param primaryAction     action to execute if condition is true
    * @param alternativeAction action to execute if condition is false (can be null)
-   * @param description description of this conditional
+   * @param description       description of this conditional
    */
-  public ConditionalAction(LogicCondition condition, LogicAction primaryAction,
-      LogicAction alternativeAction, String description) {
+  public ConditionalAction(LogicCondition condition, LogicAction primaryAction, LogicAction alternativeAction,
+      String description) {
     this.condition = condition;
     this.primaryAction = primaryAction;
     this.alternativeAction = alternativeAction;
@@ -109,8 +107,7 @@ public class ConditionalAction implements LogicAction {
 
     if (evaluated && selectedAction != null) {
       boolean conditionMet = (selectedAction == primaryAction);
-      sb.append(String.format(" [%s → %s]", condition.getDescription(),
-          conditionMet ? "PRIMARY" : "ALTERNATIVE"));
+      sb.append(String.format(" [%s → %s]", condition.getDescription(), conditionMet ? "PRIMARY" : "ALTERNATIVE"));
     } else {
       sb.append(String.format(" [IF: %s]", condition.getDescription()));
     }

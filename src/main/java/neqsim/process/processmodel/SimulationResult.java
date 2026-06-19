@@ -14,8 +14,8 @@ import com.google.gson.JsonParser;
  * Structured result of a simulation build or execution.
  *
  * <p>
- * Provides a standardized response format for web API integration including status, errors,
- * warnings, and simulation results in JSON. Designed for external Python callers and web services.
+ * Provides a standardized response format for web API integration including status, errors, warnings, and simulation
+ * results in JSON. Designed for external Python callers and web services.
  * </p>
  *
  * <h2>Success Response:</h2>
@@ -55,9 +55,9 @@ public class SimulationResult {
     /**
      * Creates an error detail.
      *
-     * @param code error code (e.g., "MISSING_INLET", "FLUID_ERROR")
-     * @param message human-readable error description
-     * @param unit name of the equipment that caused the error (nullable)
+     * @param code        error code (e.g., "MISSING_INLET", "FLUID_ERROR")
+     * @param message     human-readable error description
+     * @param unit        name of the equipment that caused the error (nullable)
      * @param remediation actionable fix description
      */
     public ErrorDetail(String code, String message, String unit, String remediation) {
@@ -113,10 +113,10 @@ public class SimulationResult {
       obj.addProperty("code", code);
       obj.addProperty("message", message);
       if (unit != null) {
-        obj.addProperty("unit", unit);
+	obj.addProperty("unit", unit);
       }
       if (remediation != null) {
-        obj.addProperty("remediation", remediation);
+	obj.addProperty("remediation", remediation);
       }
       return obj;
     }
@@ -124,7 +124,7 @@ public class SimulationResult {
     @Override
     public String toString() {
       return "[" + code + "] " + message + (unit != null ? " (unit: " + unit + ")" : "")
-          + (remediation != null ? " | Fix: " + remediation : "");
+	  + (remediation != null ? " | Fix: " + remediation : "");
     }
   }
 
@@ -138,29 +138,29 @@ public class SimulationResult {
   /**
    * Private constructor — use static factory methods.
    *
-   * @param status the result status
+   * @param status        the result status
    * @param processSystem the built process system (nullable on error)
-   * @param reportJson the simulation report JSON (nullable if not run)
-   * @param errors list of errors
-   * @param warnings list of warnings
+   * @param reportJson    the simulation report JSON (nullable if not run)
+   * @param errors        list of errors
+   * @param warnings      list of warnings
    */
-  private SimulationResult(Status status, ProcessSystem processSystem, String reportJson,
-      List<ErrorDetail> errors, List<String> warnings) {
+  private SimulationResult(Status status, ProcessSystem processSystem, String reportJson, List<ErrorDetail> errors,
+      List<String> warnings) {
     this(status, processSystem, reportJson, errors, warnings, null);
   }
 
   /**
    * Private constructor — use static factory methods.
    *
-   * @param status the result status
+   * @param status        the result status
    * @param processSystem the built process system (nullable on error)
-   * @param reportJson the simulation report JSON (nullable if not run)
-   * @param errors list of errors
-   * @param warnings list of warnings
-   * @param metadata optional build metadata from advanced JSON sections
+   * @param reportJson    the simulation report JSON (nullable if not run)
+   * @param errors        list of errors
+   * @param warnings      list of warnings
+   * @param metadata      optional build metadata from advanced JSON sections
    */
-  private SimulationResult(Status status, ProcessSystem processSystem, String reportJson,
-      List<ErrorDetail> errors, List<String> warnings, JsonObject metadata) {
+  private SimulationResult(Status status, ProcessSystem processSystem, String reportJson, List<ErrorDetail> errors,
+      List<String> warnings, JsonObject metadata) {
     this.status = status;
     this.processSystem = processSystem;
     this.reportJson = reportJson;
@@ -172,36 +172,34 @@ public class SimulationResult {
   /**
    * Creates a success result.
    *
-   * @param process the built and optionally run process system
+   * @param process    the built and optionally run process system
    * @param reportJson the simulation report JSON (nullable if not run)
-   * @param warnings list of non-fatal warnings
+   * @param warnings   list of non-fatal warnings
    * @return the success result
    */
-  public static SimulationResult success(ProcessSystem process, String reportJson,
-      List<String> warnings) {
-    return new SimulationResult(Status.SUCCESS, process, reportJson,
-        Collections.<ErrorDetail>emptyList(), warnings);
+  public static SimulationResult success(ProcessSystem process, String reportJson, List<String> warnings) {
+    return new SimulationResult(Status.SUCCESS, process, reportJson, Collections.<ErrorDetail>emptyList(), warnings);
   }
 
   /**
    * Creates a success result with build metadata.
    *
-   * @param process the built and optionally run process system
+   * @param process    the built and optionally run process system
    * @param reportJson the simulation report JSON (nullable if not run)
-   * @param warnings list of non-fatal warnings
-   * @param metadata optional build metadata from advanced JSON sections
+   * @param warnings   list of non-fatal warnings
+   * @param metadata   optional build metadata from advanced JSON sections
    * @return the success result
    */
-  public static SimulationResult success(ProcessSystem process, String reportJson,
-      List<String> warnings, JsonObject metadata) {
-    return new SimulationResult(Status.SUCCESS, process, reportJson,
-        Collections.<ErrorDetail>emptyList(), warnings, metadata);
+  public static SimulationResult success(ProcessSystem process, String reportJson, List<String> warnings,
+      JsonObject metadata) {
+    return new SimulationResult(Status.SUCCESS, process, reportJson, Collections.<ErrorDetail>emptyList(), warnings,
+	metadata);
   }
 
   /**
    * Creates a failure result with no process system.
    *
-   * @param errors the list of errors
+   * @param errors   the list of errors
    * @param warnings the list of warnings
    * @return the failure result
    */
@@ -212,21 +210,20 @@ public class SimulationResult {
   /**
    * Creates a failure result with a partially built process system.
    *
-   * @param process the partially built process system
-   * @param errors the list of errors
+   * @param process  the partially built process system
+   * @param errors   the list of errors
    * @param warnings the list of warnings
    * @return the failure result
    */
-  public static SimulationResult failure(ProcessSystem process, List<ErrorDetail> errors,
-      List<String> warnings) {
+  public static SimulationResult failure(ProcessSystem process, List<ErrorDetail> errors, List<String> warnings) {
     return new SimulationResult(Status.ERROR, process, null, errors, warnings);
   }
 
   /**
    * Creates a single-error failure result.
    *
-   * @param code error code
-   * @param message error message
+   * @param code        error code
+   * @param message     error message
    * @param remediation how to fix
    * @return the failure result
    */
@@ -312,10 +309,9 @@ public class SimulationResult {
    * Gets optional metadata captured while building the process.
    *
    * <p>
-   * The metadata object is used for advanced JSON process model sections that are not themselves
-   * process equipment, such as advisory equipment design data, data-connection descriptors, and
-   * design-capacity application reports. A defensive copy is returned so callers cannot mutate the
-   * result object.
+   * The metadata object is used for advanced JSON process model sections that are not themselves process equipment,
+   * such as advisory equipment design data, data-connection descriptors, and design-capacity application reports. A
+   * defensive copy is returned so callers cannot mutate the result object.
    * </p>
    *
    * @return metadata JSON object, or an empty object when no metadata was captured
@@ -350,7 +346,7 @@ public class SimulationResult {
     if (!errors.isEmpty()) {
       JsonArray errArray = new JsonArray();
       for (ErrorDetail err : errors) {
-        errArray.add(err.toJsonObject());
+	errArray.add(err.toJsonObject());
       }
       root.add("errors", errArray);
     }
@@ -359,7 +355,7 @@ public class SimulationResult {
     if (!warnings.isEmpty()) {
       JsonArray warnArray = new JsonArray();
       for (String w : warnings) {
-        warnArray.add(w);
+	warnArray.add(w);
       }
       root.add("warnings", warnArray);
     }
@@ -371,14 +367,13 @@ public class SimulationResult {
     // Report (embedded as parsed JSON to avoid double-escaping)
     if (reportJson != null) {
       try {
-        root.add("report", com.google.gson.JsonParser.parseString(reportJson));
+	root.add("report", com.google.gson.JsonParser.parseString(reportJson));
       } catch (Exception e) {
-        root.addProperty("report", reportJson);
+	root.addProperty("report", reportJson);
       }
     }
 
-    Gson gson =
-        new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+    Gson gson = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
     return gson.toJson(root);
   }
 
@@ -399,11 +394,10 @@ public class SimulationResult {
   @Override
   public String toString() {
     if (isSuccess()) {
-      return "SimulationResult[SUCCESS"
-          + (hasWarnings() ? ", " + warnings.size() + " warnings" : "") + "]";
+      return "SimulationResult[SUCCESS" + (hasWarnings() ? ", " + warnings.size() + " warnings" : "") + "]";
     } else {
       return "SimulationResult[ERROR, " + errors.size() + " errors"
-          + (hasWarnings() ? ", " + warnings.size() + " warnings" : "") + "]";
+	  + (hasWarnings() ? ", " + warnings.size() + " warnings" : "") + "]";
     }
   }
 }

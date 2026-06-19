@@ -18,12 +18,12 @@ public class ViscositySimTest {
     tempSystem.init(0);
 
     ViscositySim sepSim = new ViscositySim(tempSystem);
-    double[] temps = {300.15, 293.15, 283.15, 273.15, 264.15};
-    double[] pres = {5, 5, 5, 5.0, 5.0};
+    double[] temps = { 300.15, 293.15, 283.15, 273.15, 264.15 };
+    double[] pres = { 5, 5, 5, 5.0, 5.0 };
     sepSim.setTemperaturesAndPressures(temps, pres);
     sepSim.runCalc();
 
-    double[][] expData = {{2e-4, 3e-4, 4e-4, 5e-4, 6e-4},};
+    double[][] expData = { { 2e-4, 3e-4, 4e-4, 5e-4, 6e-4 }, };
     sepSim.setExperimentalData(expData);
     // sepSim.runTuning();
     sepSim.runCalc();
@@ -31,8 +31,8 @@ public class ViscositySimTest {
   }
 
   /**
-   * ~Seawater: 35 g NaCl per 1 kg water (≈3.5 wt%) at 25 °C, 1 bar. Expected ≈ 0.94 mPa·s → 9.4e-4
-   * Pa·s (tolerance ±1.5e-4).
+   * ~Seawater: 35 g NaCl per 1 kg water (≈3.5 wt%) at 25 °C, 1 bar. Expected ≈ 0.94 mPa·s → 9.4e-4 Pa·s (tolerance
+   * ±1.5e-4).
    */
   @Test
   void testNaCl_35gPerKg_25C_1bar() {

@@ -6,9 +6,9 @@ import neqsim.process.equipment.stream.StreamInterface;
  * Level control valve (LCV) for automatic level regulation in vessels.
  *
  * <p>
- * LevelControlValve automatically modulates its opening to maintain a vessel level setpoint. It
- * extends ControlValve and adds level control logic with proportional control action. This is
- * essential for separator level control and liquid discharge applications.
+ * LevelControlValve automatically modulates its opening to maintain a vessel level setpoint. It extends ControlValve
+ * and adds level control logic with proportional control action. This is essential for separator level control and
+ * liquid discharge applications.
  * </p>
  *
  * <p>
@@ -24,8 +24,7 @@ import neqsim.process.equipment.stream.StreamInterface;
  * <p>
  * Control action:
  * <ul>
- * <li>DIRECT: Increase opening increases outflow, decreases level (most common for liquid
- * discharge)</li>
+ * <li>DIRECT: Increase opening increases outflow, decreases level (most common for liquid discharge)</li>
  * <li>REVERSE: Increase opening decreases outflow, increases level (rare)</li>
  * </ul>
  *
@@ -69,8 +68,7 @@ public class LevelControlValve extends ControlValve {
   /** Control action enumeration. */
   public enum ControlAction {
     /**
-     * Direct action: increase opening increases outflow, decreases level (normal for discharge
-     * valves).
+     * Direct action: increase opening increases outflow, decreases level (normal for discharge valves).
      */
     DIRECT,
     /** Reverse action: increase opening decreases outflow, increases level. */
@@ -110,7 +108,7 @@ public class LevelControlValve extends ControlValve {
   /**
    * Constructor for LevelControlValve.
    *
-   * @param name name of the level control valve
+   * @param name     name of the level control valve
    * @param inStream inlet stream
    */
   public LevelControlValve(String name, StreamInterface inStream) {
@@ -284,8 +282,8 @@ public class LevelControlValve extends ControlValve {
   @Override
   public String toString() {
     return String.format(
-        "%s [Level Control Valve] - Mode: %s, Action: %s, SP: %.1f%%, PV: %.1f%%, Error: %.1f%%, Opening: %.1f%%",
-        getName(), autoMode ? "AUTO" : "MANUAL", controlAction, levelSetpoint, measuredLevel,
-        controlError, getPercentValveOpening());
+	"%s [Level Control Valve] - Mode: %s, Action: %s, SP: %.1f%%, PV: %.1f%%, Error: %.1f%%, Opening: %.1f%%",
+	getName(), autoMode ? "AUTO" : "MANUAL", controlAction, levelSetpoint, measuredLevel, controlError,
+	getPercentValveOpening());
   }
 }

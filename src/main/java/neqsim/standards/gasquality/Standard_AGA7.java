@@ -6,14 +6,13 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * Implementation of AGA Report No. 7 / ISO 12242 - Measurement of gas flow in closed conduits -
- * Ultrasonic meters for gas.
+ * Implementation of AGA Report No. 7 / ISO 12242 - Measurement of gas flow in closed conduits - Ultrasonic meters for
+ * gas.
  *
  * <p>
- * AGA 7 (and the international standard ISO 12242) specifies performance requirements and
- * installation conditions for multi-path ultrasonic transit-time gas meters used for custody
- * transfer of natural gas. Ultrasonic meters are now the dominant technology for fiscal-quality
- * metering in the gas industry.
+ * AGA 7 (and the international standard ISO 12242) specifies performance requirements and installation conditions for
+ * multi-path ultrasonic transit-time gas meters used for custody transfer of natural gas. Ultrasonic meters are now the
+ * dominant technology for fiscal-quality metering in the gas industry.
  * </p>
  *
  * <p>
@@ -29,8 +28,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </ul>
  *
  * <p>
- * Per AGA 7/ISO 12242, the maximum allowable error for an ultrasonic meter is +/-0.7% for flow
- * rates between qt and qmax, and +/-1.4% between qmin and qt.
+ * Per AGA 7/ISO 12242, the maximum allowable error for an ultrasonic meter is +/-0.7% for flow rates between qt and
+ * qmax, and +/-1.4% between qmin and qt.
  * </p>
  *
  * @author ESOL
@@ -93,8 +92,7 @@ public class Standard_AGA7 extends neqsim.standards.Standard {
    * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
    */
   public Standard_AGA7(SystemInterface thermoSystem) {
-    super("Standard_AGA7", "Measurement of gas flow by ultrasonic meters (AGA 7 / ISO 12242)",
-        thermoSystem);
+    super("Standard_AGA7", "Measurement of gas flow by ultrasonic meters (AGA 7 / ISO 12242)", thermoSystem);
   }
 
   /**
@@ -174,8 +172,7 @@ public class Standard_AGA7 extends neqsim.standards.Standard {
 
       // Speed of sound diagnostic
       if (measuredSpeedOfSound > 0.0 && calculatedSpeedOfSound > 0.0) {
-        sosDeviation =
-            (measuredSpeedOfSound - calculatedSpeedOfSound) / calculatedSpeedOfSound * 100.0;
+	sosDeviation = (measuredSpeedOfSound - calculatedSpeedOfSound) / calculatedSpeedOfSound * 100.0;
       }
 
       // Calculate volume flow rate at line conditions
@@ -197,13 +194,13 @@ public class Standard_AGA7 extends neqsim.standards.Standard {
 
       // Standard volume flow rate
       if (standardDensity > 0.0) {
-        standardVolumeFlowRate = massFlowRate / standardDensity; // Sm3/h
+	standardVolumeFlowRate = massFlowRate / standardDensity; // Sm3/h
       }
 
       // Reynolds number
       if (viscosity > 0.0 && pipeDiameter > 0.0) {
-        double avgVelocity = measuredVelocity;
-        reynoldsNumber = flowingDensity * avgVelocity * pipeDiameter / viscosity;
+	double avgVelocity = measuredVelocity;
+	reynoldsNumber = flowingDensity * avgVelocity * pipeDiameter / viscosity;
       }
 
     } catch (Exception ex) {
@@ -217,10 +214,10 @@ public class Standard_AGA7 extends neqsim.standards.Standard {
     double value = getValue(returnParameter);
     if ("standardVolumeFlowRate".equals(returnParameter)) {
       if ("SCFD".equals(returnUnit) || "scf/d".equals(returnUnit)) {
-        return value * 24.0 * 35.3147;
+	return value * 24.0 * 35.3147;
       }
       if ("MMSCFD".equals(returnUnit)) {
-        return value * 24.0 * 35.3147 / 1.0e6;
+	return value * 24.0 * 35.3147 / 1.0e6;
       }
     }
     return value;
@@ -263,7 +260,7 @@ public class Standard_AGA7 extends neqsim.standards.Standard {
   @Override
   public String getUnit(String returnParameter) {
     if ("calculatedSpeedOfSound".equals(returnParameter) || "SOS".equals(returnParameter)
-        || "measuredSpeedOfSound".equals(returnParameter)) {
+	|| "measuredSpeedOfSound".equals(returnParameter)) {
       return "m/s";
     }
     if ("sosDeviation".equals(returnParameter)) {
@@ -272,8 +269,7 @@ public class Standard_AGA7 extends neqsim.standards.Standard {
     if ("flowingDensity".equals(returnParameter) || "standardDensity".equals(returnParameter)) {
       return "kg/m3";
     }
-    if ("lineVolumeFlowRate".equals(returnParameter)
-        || "standardVolumeFlowRate".equals(returnParameter)) {
+    if ("lineVolumeFlowRate".equals(returnParameter) || "standardVolumeFlowRate".equals(returnParameter)) {
       return "Sm3/h";
     }
     if ("massFlowRate".equals(returnParameter)) {

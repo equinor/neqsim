@@ -9,15 +9,14 @@ import com.google.gson.GsonBuilder;
  * Precise separator geometry calculations for horizontal and vertical vessels.
  *
  * <p>
- * This class computes the gas and liquid volumes, cross-sectional areas, effective settling
- * heights, and residence times needed for accurate separation performance prediction in both
- * horizontal and vertical separators.
+ * This class computes the gas and liquid volumes, cross-sectional areas, effective settling heights, and residence
+ * times needed for accurate separation performance prediction in both horizontal and vertical separators.
  * </p>
  *
  * Horizontal Separator Geometry:
  * <p>
- * For a horizontal vessel with liquid level at height h in a cylinder of diameter D, the liquid and
- * gas cross-sectional areas are computed from circular segment geometry:
+ * For a horizontal vessel with liquid level at height h in a cylinder of diameter D, the liquid and gas cross-sectional
+ * areas are computed from circular segment geometry:
  * </p>
  *
  * $$ A_{liq} = \frac{D^2}{4}\left[\cos^{-1}\left(\frac{D-2h}{D}\right) -
@@ -27,19 +26,17 @@ import com.google.gson.GsonBuilder;
  *
  * Vertical Separator Geometry:
  * <p>
- * For vertical vessels, the gas and liquid occupy the full cross section at different heights. The
- * gas residence time depends on the gas travel height above the liquid level to the mist
- * eliminator.
+ * For vertical vessels, the gas and liquid occupy the full cross section at different heights. The gas residence time
+ * depends on the gas travel height above the liquid level to the mist eliminator.
  * </p>
  *
  * <p>
  * <b>References:</b>
  * </p>
  * <ul>
- * <li>Arnold, K., Stewart, M. (2008), <i>Surface Production Operations</i>, Vol. 1, Gulf
- * Professional Publishing.</li>
- * <li>Svrcek, W.Y., Monnery, W.D. (1993), "Design Two-Phase Separators within the Right Limits",
- * <i>Chemical Engineering Progress</i>, October, 53-60.</li>
+ * <li>Arnold, K., Stewart, M. (2008), <i>Surface Production Operations</i>, Vol. 1, Gulf Professional Publishing.</li>
+ * <li>Svrcek, W.Y., Monnery, W.D. (1993), "Design Two-Phase Separators within the Right Limits", <i>Chemical
+ * Engineering Progress</i>, October, 53-60.</li>
  * <li>API RP 12J (2008), "Specification for Oil and Gas Separators".</li>
  * </ul>
  *
@@ -95,7 +92,7 @@ public class SeparatorGeometryCalculator implements Serializable {
   /**
    * Calculates all geometry parameters for a two-phase separator.
    *
-   * @param gasVolumeFlow actual gas volume flow rate [m3/s]
+   * @param gasVolumeFlow    actual gas volume flow rate [m3/s]
    * @param liquidVolumeFlow actual liquid volume flow rate [m3/s]
    */
   public void calculate(double gasVolumeFlow, double liquidVolumeFlow) {
@@ -111,27 +108,26 @@ public class SeparatorGeometryCalculator implements Serializable {
   /**
    * Calculates all geometry parameters for a three-phase separator.
    *
-   * @param gasVolumeFlow actual gas volume flow rate [m3/s]
-   * @param oilVolumeFlow actual oil volume flow rate [m3/s]
-   * @param waterVolumeFlow actual water volume flow rate [m3/s]
+   * @param gasVolumeFlow    actual gas volume flow rate [m3/s]
+   * @param oilVolumeFlow    actual oil volume flow rate [m3/s]
+   * @param waterVolumeFlow  actual water volume flow rate [m3/s]
    * @param oilLevelFraction fraction of liquid height occupied by oil (above weir height)
    */
-  public void calculateThreePhase(double gasVolumeFlow, double oilVolumeFlow,
-      double waterVolumeFlow, double oilLevelFraction) {
+  public void calculateThreePhase(double gasVolumeFlow, double oilVolumeFlow, double waterVolumeFlow,
+      double oilLevelFraction) {
     totalArea = Math.PI * internalDiameter * internalDiameter / 4.0;
 
     if ("vertical".equalsIgnoreCase(orientation)) {
       calculateVertical(gasVolumeFlow, oilVolumeFlow + waterVolumeFlow);
     } else {
-      calculateHorizontalThreePhase(gasVolumeFlow, oilVolumeFlow, waterVolumeFlow,
-          oilLevelFraction);
+      calculateHorizontalThreePhase(gasVolumeFlow, oilVolumeFlow, waterVolumeFlow, oilLevelFraction);
     }
   }
 
   /**
    * Calculates geometry for a horizontal two-phase separator.
    *
-   * @param gasVolumeFlow gas flow [m3/s]
+   * @param gasVolumeFlow    gas flow [m3/s]
    * @param liquidVolumeFlow liquid flow [m3/s]
    */
   private void calculateHorizontal(double gasVolumeFlow, double liquidVolumeFlow) {
@@ -173,13 +169,13 @@ public class SeparatorGeometryCalculator implements Serializable {
   /**
    * Calculates geometry for a horizontal three-phase separator with weir.
    *
-   * @param gasVolumeFlow gas flow [m3/s]
-   * @param oilVolumeFlow oil flow [m3/s]
-   * @param waterVolumeFlow water flow [m3/s]
+   * @param gasVolumeFlow    gas flow [m3/s]
+   * @param oilVolumeFlow    oil flow [m3/s]
+   * @param waterVolumeFlow  water flow [m3/s]
    * @param oilLevelFraction fraction of total liquid height that is oil
    */
-  private void calculateHorizontalThreePhase(double gasVolumeFlow, double oilVolumeFlow,
-      double waterVolumeFlow, double oilLevelFraction) {
+  private void calculateHorizontalThreePhase(double gasVolumeFlow, double oilVolumeFlow, double waterVolumeFlow,
+      double oilLevelFraction) {
     double liquidHeight = normalLiquidLevel * internalDiameter;
 
     // Oil-water interface
@@ -207,7 +203,7 @@ public class SeparatorGeometryCalculator implements Serializable {
 
     // Volumes
     double oilArea = calcSegmentArea(internalDiameter, liquidHeight)
-        - calcSegmentArea(internalDiameter, waterLayerHeight);
+	- calcSegmentArea(internalDiameter, waterLayerHeight);
     double waterArea = calcSegmentArea(internalDiameter, waterLayerHeight);
     gasVolume = gasArea * tangentToTangentLength;
     liquidVolume = liquidArea * tangentToTangentLength;
@@ -234,7 +230,7 @@ public class SeparatorGeometryCalculator implements Serializable {
   /**
    * Calculates geometry for a vertical two-phase separator.
    *
-   * @param gasVolumeFlow gas flow [m3/s]
+   * @param gasVolumeFlow    gas flow [m3/s]
    * @param liquidVolumeFlow liquid flow [m3/s]
    */
   private void calculateVertical(double gasVolumeFlow, double liquidVolumeFlow) {
@@ -288,7 +284,7 @@ public class SeparatorGeometryCalculator implements Serializable {
    * </p>
    *
    * @param diameter vessel internal diameter [m]
-   * @param height liquid height from bottom [m]
+   * @param height   liquid height from bottom [m]
    * @return segment area [m2]
    */
   public static double calcSegmentArea(double diameter, double height) {
@@ -309,8 +305,8 @@ public class SeparatorGeometryCalculator implements Serializable {
    *
    * $$ K = V_g \sqrt{\frac{\rho_g}{\rho_l - \rho_g}} $$
    *
-   * @param gasVelocity actual gas velocity in gas section [m/s]
-   * @param gasDensity gas density [kg/m3]
+   * @param gasVelocity   actual gas velocity in gas section [m/s]
+   * @param gasDensity    gas density [kg/m3]
    * @param liquidDensity liquid density [kg/m3]
    * @return K-factor [m/s]
    */
@@ -347,8 +343,7 @@ public class SeparatorGeometryCalculator implements Serializable {
       result.put("oilPadThickness_m", oilPadThickness);
       result.put("waterLayerHeight_m", waterLayerHeight);
     }
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(result);
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(result);
   }
 
   // ----- Getters and Setters -----

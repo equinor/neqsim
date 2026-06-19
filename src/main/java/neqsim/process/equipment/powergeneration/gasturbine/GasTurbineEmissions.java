@@ -7,15 +7,14 @@ import neqsim.thermo.system.SystemInterface;
  * Compute combustion emissions for a gas turbine running on a hydrocarbon fuel stream.
  *
  * <p>
- * CO2 is computed from a full carbon balance on the fuel composition (every component's carbon
- * atoms become CO2 at complete combustion). NOx is estimated from a vendor ppm @ 15 % O2 figure
- * converted to a mass flow on the actual exhaust. Methane slip is an optional flat percentage of
- * the fuel methane content.
+ * CO2 is computed from a full carbon balance on the fuel composition (every component's carbon atoms become CO2 at
+ * complete combustion). NOx is estimated from a vendor ppm @ 15 % O2 figure converted to a mass flow on the actual
+ * exhaust. Methane slip is an optional flat percentage of the fuel methane content.
  * </p>
  *
  * <p>
- * The class makes no assumption about the air-side stoichiometry; it just needs the fuel
- * composition and an exhaust mass flow.
+ * The class makes no assumption about the air-side stoichiometry; it just needs the fuel composition and an exhaust
+ * mass flow.
  * </p>
  *
  * @author neqsim
@@ -55,7 +54,7 @@ public class GasTurbineEmissions implements Serializable {
   /**
    * Compute the CO2 mass flow from a hydrocarbon fuel stream.
    *
-   * @param fuel fuel system
+   * @param fuel                 fuel system
    * @param fuelMolarFlowMolPerS fuel molar flow [mol/s]
    * @return CO2 mass flow [kg/s]
    */
@@ -75,10 +74,10 @@ public class GasTurbineEmissions implements Serializable {
     if (methaneSlipFraction > 0.0) {
       double methaneFraction = 0.0;
       for (int i = 0; i < n; i++) {
-        if ("methane".equalsIgnoreCase(fuel.getComponent(i).getComponentName())) {
-          methaneFraction = fuel.getComponent(i).getz();
-          break;
-        }
+	if ("methane".equalsIgnoreCase(fuel.getComponent(i).getComponentName())) {
+	  methaneFraction = fuel.getComponent(i).getz();
+	  break;
+	}
       }
       effectiveCarbon -= methaneSlipFraction * methaneFraction;
     }
@@ -93,7 +92,7 @@ public class GasTurbineEmissions implements Serializable {
   /**
    * Compute the methane slip mass flow.
    *
-   * @param fuel fuel system
+   * @param fuel                 fuel system
    * @param fuelMolarFlowMolPerS fuel molar flow [mol/s]
    * @return methane slip mass flow [kg/s]
    */
@@ -105,8 +104,8 @@ public class GasTurbineEmissions implements Serializable {
     int n = fuel.getNumberOfComponents();
     for (int i = 0; i < n; i++) {
       if ("methane".equalsIgnoreCase(fuel.getComponent(i).getComponentName())) {
-        methaneFraction = fuel.getComponent(i).getz();
-        break;
+	methaneFraction = fuel.getComponent(i).getz();
+	break;
       }
     }
     return methaneFraction * methaneSlipFraction * fuelMolarFlowMolPerS * 1.0e-3 * MW_CH4;
@@ -115,13 +114,12 @@ public class GasTurbineEmissions implements Serializable {
   /**
    * Compute the NOx mass flow expressed as NO2 from a ppmv-on-exhaust figure.
    *
-   * @param noxPpm NOx concentration [ppmv at 15 % O2]
-   * @param exhaustMassFlowKgPerS exhaust mass flow [kg/s]
+   * @param noxPpm                    NOx concentration [ppmv at 15 % O2]
+   * @param exhaustMassFlowKgPerS     exhaust mass flow [kg/s]
    * @param exhaustMolarMassKgPerKmol exhaust gas molar mass [kg/kmol] (typical ≈ 28.7)
    * @return NOx mass flow [kg/s]
    */
-  public double computeNOxKgPerS(double noxPpm, double exhaustMassFlowKgPerS,
-      double exhaustMolarMassKgPerKmol) {
+  public double computeNOxKgPerS(double noxPpm, double exhaustMassFlowKgPerS, double exhaustMolarMassKgPerKmol) {
     if (noxPpm <= 0.0 || exhaustMassFlowKgPerS <= 0.0 || exhaustMolarMassKgPerKmol <= 0.0) {
       return 0.0;
     }
@@ -131,8 +129,8 @@ public class GasTurbineEmissions implements Serializable {
   }
 
   /**
-   * Count carbon atoms in a NeqSim component name. Supports nC1–nC30 paraffin naming,
-   * methane–decane longhand, CO2, and CO. Other components return 0.
+   * Count carbon atoms in a NeqSim component name. Supports nC1–nC30 paraffin naming, methane–decane longhand, CO2, and
+   * CO. Other components return 0.
    *
    * @param componentName NeqSim component name
    * @return number of carbon atoms (0 if not a hydrocarbon)
@@ -154,12 +152,10 @@ public class GasTurbineEmissions implements Serializable {
     if (n.equals("propane")) {
       return 3.0;
     }
-    if (n.equals("n-butane") || n.equals("i-butane") || n.equals("ibutane")
-        || n.equals("nbutane")) {
+    if (n.equals("n-butane") || n.equals("i-butane") || n.equals("ibutane") || n.equals("nbutane")) {
       return 4.0;
     }
-    if (n.equals("n-pentane") || n.equals("i-pentane") || n.equals("ipentane")
-        || n.equals("npentane")) {
+    if (n.equals("n-pentane") || n.equals("i-pentane") || n.equals("ipentane") || n.equals("npentane")) {
       return 5.0;
     }
     if (n.equals("n-hexane") || n.equals("nhexane")) {
@@ -181,19 +177,19 @@ public class GasTurbineEmissions implements Serializable {
     if (n.startsWith("c") && n.length() >= 2) {
       StringBuilder digits = new StringBuilder();
       for (int i = 1; i < n.length(); i++) {
-        char c = n.charAt(i);
-        if (Character.isDigit(c)) {
-          digits.append(c);
-        } else if (digits.length() > 0) {
-          break;
-        }
+	char c = n.charAt(i);
+	if (Character.isDigit(c)) {
+	  digits.append(c);
+	} else if (digits.length() > 0) {
+	  break;
+	}
       }
       if (digits.length() > 0) {
-        try {
-          return Double.parseDouble(digits.toString());
-        } catch (NumberFormatException ignore) {
-          return 0.0;
-        }
+	try {
+	  return Double.parseDouble(digits.toString());
+	} catch (NumberFormatException ignore) {
+	  return 0.0;
+	}
       }
     }
     return 0.0;

@@ -11,9 +11,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * LNG scrub column model for heavy hydrocarbon removal prior to liquefaction.
  *
  * <p>
- * The scrub column removes C5+ (and optionally C3+/C4+) heavy hydrocarbons from the feed gas before
- * it enters the main cryogenic heat exchanger. This prevents freeze-out of heavy hydrocarbons
- * (particularly benzene, cyclohexane) in the MCHE at cryogenic temperatures.
+ * The scrub column removes C5+ (and optionally C3+/C4+) heavy hydrocarbons from the feed gas before it enters the main
+ * cryogenic heat exchanger. This prevents freeze-out of heavy hydrocarbons (particularly benzene, cyclohexane) in the
+ * MCHE at cryogenic temperatures.
  * </p>
  *
  * <p>
@@ -57,10 +57,10 @@ public class ScrubColumn extends DistillationColumn {
   /**
    * Constructor for ScrubColumn.
    *
-   * @param name name of the scrub column
+   * @param name          name of the scrub column
    * @param numberOfTrays number of theoretical trays (excluding condenser/reboiler)
-   * @param hasReboiler set true to include a reboiler
-   * @param hasCondenser set true to include a condenser
+   * @param hasReboiler   set true to include a reboiler
+   * @param hasCondenser  set true to include a condenser
    */
   public ScrubColumn(String name, int numberOfTrays, boolean hasReboiler, boolean hasCondenser) {
     super(name, numberOfTrays, hasReboiler, hasCondenser);
@@ -106,7 +106,7 @@ public class ScrubColumn extends DistillationColumn {
    * Set the minimum bottoms temperature to avoid freeze-out.
    *
    * @param temperature minimum temperature
-   * @param unit temperature unit ("K" or "C")
+   * @param unit        temperature unit ("K" or "C")
    */
   public void setMinimumBottomsTemperature(double temperature, String unit) {
     if ("C".equalsIgnoreCase(unit)) {
@@ -183,15 +183,13 @@ public class ScrubColumn extends DistillationColumn {
     calculateNGLRecovery();
 
     if (freezeOutRisk) {
-      logger.warn(String.format(
-          "Scrub Column '%s': Freeze-out risk detected! Bottoms T=%.1f K, freeze-out T=%.1f K",
-          getName(), liqOut != null ? liqOut.getTemperature() : 0.0, freezeOutTemperature));
+      logger.warn(String.format("Scrub Column '%s': Freeze-out risk detected! Bottoms T=%.1f K, freeze-out T=%.1f K",
+	  getName(), liqOut != null ? liqOut.getTemperature() : 0.0, freezeOutTemperature));
     }
 
     if (heavyKeyInOverheadMolFrac > maxHeavyKeyInOverhead) {
-      logger
-          .warn(String.format("Scrub Column '%s': Heavy key %s in overhead = %.4f exceeds max %.4f",
-              getName(), heavyKeyComponent, heavyKeyInOverheadMolFrac, maxHeavyKeyInOverhead));
+      logger.warn(String.format("Scrub Column '%s': Heavy key %s in overhead = %.4f exceeds max %.4f", getName(),
+	  heavyKeyComponent, heavyKeyInOverheadMolFrac, maxHeavyKeyInOverhead));
     }
 
     setCalculationIdentifier(id);
@@ -207,7 +205,7 @@ public class ScrubColumn extends DistillationColumn {
     heavyKeyInOverheadMolFrac = 0.0;
     try {
       if (gasSystem.getPhase(0).hasComponent(heavyKeyComponent)) {
-        heavyKeyInOverheadMolFrac = gasSystem.getPhase(0).getComponent(heavyKeyComponent).getz();
+	heavyKeyInOverheadMolFrac = gasSystem.getPhase(0).getComponent(heavyKeyComponent).getz();
       }
     } catch (Exception ex) {
       logger.debug("Heavy key component '" + heavyKeyComponent + "' not found in overhead", ex);
@@ -234,9 +232,9 @@ public class ScrubColumn extends DistillationColumn {
       ThermodynamicOperations ops = new ThermodynamicOperations(checkSystem);
       ops.TPSolidflash();
       if (checkSystem.hasPhaseType("solid")) {
-        freezeOutRisk = true;
-        freezeOutTemperature = bottomsTemp;
-        logger.info("Solid phase detected at bottoms temperature: " + bottomsTemp + " K");
+	freezeOutRisk = true;
+	freezeOutTemperature = bottomsTemp;
+	logger.info("Solid phase detected at bottoms temperature: " + bottomsTemp + " K");
       }
     } catch (Exception ex) {
       // Solid flash may not be available for all systems
@@ -265,15 +263,15 @@ public class ScrubColumn extends DistillationColumn {
 
     try {
       if (gasSystem.getPhase(0).hasComponent(heavyKeyComponent)
-          && liqSystem.getPhase(0).hasComponent(heavyKeyComponent)) {
-        double molesInGas = gasSystem.getPhase(0).getComponent(heavyKeyComponent).getz()
-            * gasSystem.getTotalNumberOfMoles();
-        double molesInLiq = liqSystem.getPhase(0).getComponent(heavyKeyComponent).getz()
-            * liqSystem.getTotalNumberOfMoles();
-        double totalMoles = molesInGas + molesInLiq;
-        if (totalMoles > 0) {
-          nglRecovery = molesInLiq / totalMoles;
-        }
+	  && liqSystem.getPhase(0).hasComponent(heavyKeyComponent)) {
+	double molesInGas = gasSystem.getPhase(0).getComponent(heavyKeyComponent).getz()
+	    * gasSystem.getTotalNumberOfMoles();
+	double molesInLiq = liqSystem.getPhase(0).getComponent(heavyKeyComponent).getz()
+	    * liqSystem.getTotalNumberOfMoles();
+	double totalMoles = molesInGas + molesInLiq;
+	if (totalMoles > 0) {
+	  nglRecovery = molesInLiq / totalMoles;
+	}
       }
     } catch (Exception ex) {
       logger.debug("NGL recovery calculation failed", ex);

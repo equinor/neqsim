@@ -20,10 +20,9 @@ class FlashRunnerTypedTest {
 
   @Test
   void testRunTyped_simpleGas() {
-    FlashRequest request = new FlashRequest().setModel("SRK")
-        .setTemperature(new ValueWithUnit(25.0, "C")).setPressure(new ValueWithUnit(50.0, "bara"))
-        .setFlashType("TP").addComponent("methane", 0.85).addComponent("ethane", 0.10)
-        .addComponent("propane", 0.05);
+    FlashRequest request = new FlashRequest().setModel("SRK").setTemperature(new ValueWithUnit(25.0, "C"))
+	.setPressure(new ValueWithUnit(50.0, "bara")).setFlashType("TP").addComponent("methane", 0.85)
+	.addComponent("ethane", 0.10).addComponent("propane", 0.05);
 
     ApiEnvelope<FlashResult> result = FlashRunner.runTyped(request);
 
@@ -37,9 +36,8 @@ class FlashRunnerTypedTest {
 
   @Test
   void testRunTyped_twoPhase() {
-    FlashRequest request = new FlashRequest().setModel("SRK")
-        .setTemperature(new ValueWithUnit(-20.0, "C")).setPressure(new ValueWithUnit(10.0, "bara"))
-        .addComponent("methane", 0.50).addComponent("propane", 0.50);
+    FlashRequest request = new FlashRequest().setModel("SRK").setTemperature(new ValueWithUnit(-20.0, "C"))
+	.setPressure(new ValueWithUnit(10.0, "bara")).addComponent("methane", 0.50).addComponent("propane", 0.50);
 
     ApiEnvelope<FlashResult> result = FlashRunner.runTyped(request);
 
@@ -50,9 +48,8 @@ class FlashRunnerTypedTest {
 
   @Test
   void testRunTyped_prModel() {
-    FlashRequest request = new FlashRequest().setModel("PR")
-        .setTemperature(new ValueWithUnit(300.0, "K")).setPressure(new ValueWithUnit(10.0, "bara"))
-        .addComponent("methane", 0.7).addComponent("propane", 0.3);
+    FlashRequest request = new FlashRequest().setModel("PR").setTemperature(new ValueWithUnit(300.0, "K"))
+	.setPressure(new ValueWithUnit(10.0, "bara")).addComponent("methane", 0.7).addComponent("propane", 0.3);
 
     ApiEnvelope<FlashResult> result = FlashRunner.runTyped(request);
 
@@ -101,9 +98,8 @@ class FlashRunnerTypedTest {
 
   @Test
   void testRunTyped_dewPointT() {
-    FlashRequest request = new FlashRequest().setFlashType("dewPointT")
-        .setPressure(new ValueWithUnit(50.0, "bara")).addComponent("methane", 0.80)
-        .addComponent("ethane", 0.10).addComponent("propane", 0.10);
+    FlashRequest request = new FlashRequest().setFlashType("dewPointT").setPressure(new ValueWithUnit(50.0, "bara"))
+	.addComponent("methane", 0.80).addComponent("ethane", 0.10).addComponent("propane", 0.10);
 
     ApiEnvelope<FlashResult> result = FlashRunner.runTyped(request);
 
@@ -123,12 +119,9 @@ class FlashRunnerTypedTest {
 
   @Test
   void testConvertTemperatureToKelvin() {
-    assertEquals(298.15, FlashRunner.convertTemperatureToKelvin(new ValueWithUnit(25.0, "C")),
-        0.01);
-    assertEquals(300.0, FlashRunner.convertTemperatureToKelvin(new ValueWithUnit(300.0, "K")),
-        0.01);
-    assertEquals(373.15, FlashRunner.convertTemperatureToKelvin(new ValueWithUnit(212.0, "F")),
-        0.1);
+    assertEquals(298.15, FlashRunner.convertTemperatureToKelvin(new ValueWithUnit(25.0, "C")), 0.01);
+    assertEquals(300.0, FlashRunner.convertTemperatureToKelvin(new ValueWithUnit(300.0, "K")), 0.01);
+    assertEquals(373.15, FlashRunner.convertTemperatureToKelvin(new ValueWithUnit(212.0, "F")), 0.1);
     assertEquals(288.15, FlashRunner.convertTemperatureToKelvin(null), 0.01);
     assertTrue(Double.isNaN(FlashRunner.convertTemperatureToKelvin(new ValueWithUnit(25.0, "X"))));
   }

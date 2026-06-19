@@ -7,8 +7,8 @@ import neqsim.process.equipment.ProcessEquipmentInterface;
  * Electrical design for separators.
  *
  * <p>
- * Extends {@link ElectricalDesign} with separator-specific electrical requirements. Separators have
- * no rotating equipment (no shaft power) but consume electrical power through auxiliary loads:
+ * Extends {@link ElectricalDesign} with separator-specific electrical requirements. Separators have no rotating
+ * equipment (no shaft power) but consume electrical power through auxiliary loads:
  * </p>
  * <ul>
  * <li>Actuated control valves (level, pressure, dump): typically 0.5-2 kW each</li>
@@ -46,8 +46,7 @@ public class SeparatorElectricalDesign extends ElectricalDesign {
    * {@inheritDoc}
    *
    * <p>
-   * Separators have no rotating equipment, so shaft power is zero. All electrical loads are
-   * auxiliary.
+   * Separators have no rotating equipment, so shaft power is zero. All electrical loads are auxiliary.
    * </p>
    */
   @Override
@@ -78,8 +77,7 @@ public class SeparatorElectricalDesign extends ElectricalDesign {
     // Size cable for auxiliary power feed
     double current = getFullLoadCurrentA();
     if (current > 0) {
-      getPowerCable().sizeCable(current, getRatedVoltageV(), getPowerCable().getLengthM(), "Tray",
-          40.0);
+      getPowerCable().sizeCable(current, getRatedVoltageV(), getPowerCable().getLengthM(), "Tray", 40.0);
       getSwitchgear().sizeSwitchgear(current, totalAuxiliaryKW, getRatedVoltageV(), false);
     }
   }

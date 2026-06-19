@@ -63,7 +63,7 @@ public class MPFMfitter extends TwoPortEquipment {
    * Constructor for MPFMfitter.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
+   * @param name   a {@link java.lang.String} object
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public MPFMfitter(String name, StreamInterface stream) {
@@ -110,7 +110,7 @@ public class MPFMfitter extends TwoPortEquipment {
    * </p>
    *
    * @param pressure a double
-   * @param unitP a {@link java.lang.String} object
+   * @param unitP    a {@link java.lang.String} object
    */
   public void setPressure(double pressure, String unitP) {
     this.pressure = pressure;
@@ -129,7 +129,7 @@ public class MPFMfitter extends TwoPortEquipment {
    * </p>
    *
    * @param temperature a double
-   * @param unitT a {@link java.lang.String} object
+   * @param unitT       a {@link java.lang.String} object
    */
   public void setTemperature(double temperature, String unitT) {
     this.temperature = temperature;
@@ -156,9 +156,9 @@ public class MPFMfitter extends TwoPortEquipment {
       tempFluid.removePhase(0);
       ThermodynamicOperations thermoOps = new ThermodynamicOperations(tempFluid);
       try {
-        thermoOps.TPflash();
+	thermoOps.TPflash();
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+	logger.error(ex.getMessage(), ex);
       }
       outStream.setThermoSystem(tempFluid);
       return;
@@ -178,13 +178,11 @@ public class MPFMfitter extends TwoPortEquipment {
       return;
     }
     tempFluid.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
-    double currGOR = tempFluid.getPhase("gas").getCorrectedVolume()
-        / tempFluid.getPhase("oil").getCorrectedVolume();
+    double currGOR = tempFluid.getPhase("gas").getCorrectedVolume() / tempFluid.getPhase("oil").getCorrectedVolume();
 
     if (fitAsGVF) {
-      GOR = tempFluid.getPhase("oil").getCorrectedVolume() * getGOR()
-          / (tempFluid.getPhase("oil").getCorrectedVolume()
-              - tempFluid.getPhase("oil").getCorrectedVolume() * getGOR());
+      GOR = tempFluid.getPhase("oil").getCorrectedVolume() * getGOR() / (tempFluid.getPhase("oil").getCorrectedVolume()
+	  - tempFluid.getPhase("oil").getCorrectedVolume() * getGOR());
       // GVF*Vo/(Vo-GVF*Vo)
       // currGOR = tempFluid.getPhase("gas").getCorrectedVolume()
       // / (tempFluid.getPhase("oil").getCorrectedVolume() +
@@ -196,8 +194,7 @@ public class MPFMfitter extends TwoPortEquipment {
 
     double[] moleChange = new double[tempFluid.getNumberOfComponents()];
     for (int i = 0; i < tempFluid.getNumberOfComponents(); i++) {
-      moleChange[i] =
-          (dev - 1.0) * tempFluid.getPhase("gas").getComponent(i).getNumberOfMolesInPhase();
+      moleChange[i] = (dev - 1.0) * tempFluid.getPhase("gas").getComponent(i).getNumberOfMolesInPhase();
     }
     tempFluid.init(0);
     for (int i = 0; i < tempFluid.getNumberOfComponents(); i++) {
@@ -217,8 +214,7 @@ public class MPFMfitter extends TwoPortEquipment {
       GVF = 0.0;
     } else if (tempFluid.hasPhaseType("gas") && tempFluid.hasPhaseType("oil")) {
       GVF = tempFluid.getPhase("gas").getCorrectedVolume()
-          / (tempFluid.getPhase("oil").getCorrectedVolume()
-              + tempFluid.getPhase("gas").getCorrectedVolume());
+	  / (tempFluid.getPhase("oil").getCorrectedVolume() + tempFluid.getPhase("gas").getCorrectedVolume());
     } else {
       GVF = Double.NaN;
     }

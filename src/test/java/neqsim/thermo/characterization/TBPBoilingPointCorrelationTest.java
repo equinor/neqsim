@@ -63,11 +63,10 @@ public class TBPBoilingPointCorrelationTest {
 
     // Verify component was added
     assertEquals(initialComponentCount + 1, testSystem.getNumberOfComponents(),
-        "Component should have been added to system");
+	"Component should have been added to system");
 
     // Verify the component has the correct properties
-    ComponentInterface addedComponent =
-        testSystem.getComponent(testSystem.getNumberOfComponents() - 1);
+    ComponentInterface addedComponent = testSystem.getComponent(testSystem.getNumberOfComponents() - 1);
     assertEquals("TestFraction_PC", addedComponent.getName(), "Component name should match");
     assertEquals(moles, addedComponent.getNumberOfmoles(), 1e-10, "Moles should match");
     assertEquals(molarMass, addedComponent.getMolarMass(), 1e-10, "Molar mass should match");
@@ -80,8 +79,7 @@ public class TBPBoilingPointCorrelationTest {
     double density = 0.83; // kg/mol
 
     // Calculate density using TBP boiling point correlation
-    double calculatedMolarmass =
-        testSystem.calculateMolarMassFromDensityAndBoilingPoint(density, boilingPoint);
+    double calculatedMolarmass = testSystem.calculateMolarMassFromDensityAndBoilingPoint(density, boilingPoint);
 
     // Verify density is in reasonable range for petroleum fractions
     assertTrue(calculatedMolarmass > 0.07, "");
@@ -102,16 +100,15 @@ public class TBPBoilingPointCorrelationTest {
 
     // Verify component was added
     assertEquals(initialComponentCount + 1, testSystem.getNumberOfComponents(),
-        "Component should have been added to system");
+	"Component should have been added to system");
 
     // Verify the component has the correct properties
-    ComponentInterface addedComponent =
-        testSystem.getComponent(testSystem.getNumberOfComponents() - 1);
+    ComponentInterface addedComponent = testSystem.getComponent(testSystem.getNumberOfComponents() - 1);
     assertEquals("TestFraction3_PC", addedComponent.getName(), "Component name should match");
     assertEquals(moles, addedComponent.getNumberOfmoles(), 1e-10, "Moles should match");
     // Optionally check molar mass is reasonable
     assertTrue(addedComponent.getMolarMass() > 0.05 && addedComponent.getMolarMass() < 0.5,
-        "Molar mass should be in a reasonable range");
+	"Molar mass should be in a reasonable range");
   }
 
   @Test
@@ -122,7 +119,7 @@ public class TBPBoilingPointCorrelationTest {
 
     // Calculate molar mass using TBP correlation
     double calculatedMolarMass = ((neqsim.thermo.system.SystemThermo) testSystem)
-        .calculateMolarMassFromDensityAndBoilingPoint(density, boilingPoint);
+	.calculateMolarMassFromDensityAndBoilingPoint(density, boilingPoint);
 
     // Verify molar mass is in reasonable range for nC10 (should be close to 0.142 kg/mol)
     assertTrue(calculatedMolarMass > 0.13, "Molar mass should be greater than 0.13");
@@ -144,11 +141,10 @@ public class TBPBoilingPointCorrelationTest {
 
     // Verify component was added
     assertEquals(initialComponentCount + 1, testSystem.getNumberOfComponents(),
-        "Component should have been added to system");
+	"Component should have been added to system");
 
     // Verify the component has the correct properties
-    ComponentInterface addedComponent =
-        testSystem.getComponent(testSystem.getNumberOfComponents() - 1);
+    ComponentInterface addedComponent = testSystem.getComponent(testSystem.getNumberOfComponents() - 1);
     assertEquals("TestFraction_PC", addedComponent.getName(), "Component name should match");
     assertEquals(moles, addedComponent.getNumberOfmoles(), 1e-10, "Moles should match");
     assertEquals(molarMass, addedComponent.getMolarMass(), 1e-10, "Molar mass should match");

@@ -9,9 +9,9 @@ import java.util.Map;
  * Regional cost adjustment factors for field development economics.
  *
  * <p>
- * This class provides location-specific multipliers to adjust base cost estimates for different
- * regions worldwide. The base costs in {@link EconomicsEstimator} are calibrated for the Norwegian
- * Continental Shelf (NCS). Use these factors to adjust estimates for other regions.
+ * This class provides location-specific multipliers to adjust base cost estimates for different regions worldwide. The
+ * base costs in {@link EconomicsEstimator} are calibrated for the Norwegian Continental Shelf (NCS). Use these factors
+ * to adjust estimates for other regions.
  * </p>
  *
  * <h2>Factor Categories</h2>
@@ -53,9 +53,8 @@ import java.util.Map;
  *
  * <h2>Data Sources</h2>
  * <p>
- * Cost factors are based on industry benchmarks and public data. They represent typical ratios
- * relative to NCS costs and should be validated against project-specific data for detailed
- * estimates.
+ * Cost factors are based on industry benchmarks and public data. They represent typical ratios relative to NCS costs
+ * and should be validated against project-specific data for detailed estimates.
  * </p>
  *
  * @author ESOL
@@ -69,101 +68,99 @@ public final class RegionalCostFactors implements Serializable {
   // PREDEFINED REGIONS
   // ============================================================================
 
-  private static final Map<String, RegionalCostFactors> REGISTRY =
-      new LinkedHashMap<String, RegionalCostFactors>();
+  private static final Map<String, RegionalCostFactors> REGISTRY = new LinkedHashMap<String, RegionalCostFactors>();
 
   static {
     // Norwegian Continental Shelf (baseline)
     register(new RegionalCostFactors("NO", "Norwegian Continental Shelf", 1.0, 1.0, 1.0, 1.0,
-        "High-cost mature basin with excellent infrastructure"));
+	"High-cost mature basin with excellent infrastructure"));
 
     // United Kingdom Continental Shelf
     register(new RegionalCostFactors("UK", "UK Continental Shelf", 0.95, 0.90, 0.90, 0.95,
-        "Similar to NCS but slightly lower costs"));
+	"Similar to NCS but slightly lower costs"));
 
     // United States - Gulf of Mexico
     register(new RegionalCostFactors("US-GOM", "Gulf of Mexico", 0.85, 0.80, 0.75, 0.85,
-        "Mature basin with extensive infrastructure and competitive contractor market"));
+	"Mature basin with extensive infrastructure and competitive contractor market"));
 
     // United States - Permian Basin
     register(new RegionalCostFactors("US-PERMIAN", "Permian Basin", 0.60, 0.55, 0.50, 0.70,
-        "Onshore shale with highly competitive drilling market"));
+	"Onshore shale with highly competitive drilling market"));
 
     // Brazil - Offshore
     register(new RegionalCostFactors("BR", "Brazil Offshore", 1.10, 1.05, 1.15, 0.80,
-        "Deep water pre-salt with local content requirements"));
+	"Deep water pre-salt with local content requirements"));
 
     // Brazil - Pre-Salt
     register(new RegionalCostFactors("BR-PS", "Brazil Pre-Salt", 1.20, 1.10, 1.25, 0.80,
-        "Ultra-deep water with technical complexity"));
+	"Ultra-deep water with technical complexity"));
 
     // Angola - Offshore
     register(new RegionalCostFactors("AO", "Angola Offshore", 1.15, 1.10, 1.20, 0.60,
-        "Deep water with logistics challenges"));
+	"Deep water with logistics challenges"));
 
     // Nigeria - Offshore
     register(new RegionalCostFactors("NG", "Nigeria Offshore", 1.10, 1.15, 1.10, 0.55,
-        "Security and logistics challenges offset lower labor"));
+	"Security and logistics challenges offset lower labor"));
 
     // Australia - Offshore
     register(new RegionalCostFactors("AU", "Australia Offshore", 1.15, 1.10, 1.10, 1.10,
-        "Remote location with high labor costs"));
+	"Remote location with high labor costs"));
 
     // Australia - Browse/Carnarvon
     register(new RegionalCostFactors("AU-NW", "Australia NW Shelf", 1.20, 1.15, 1.15, 1.15,
-        "Remote location with cyclone exposure"));
+	"Remote location with cyclone exposure"));
 
     // Malaysia
     register(new RegionalCostFactors("MY", "Malaysia Offshore", 0.70, 0.65, 0.70, 0.50,
-        "Established basin with lower labor costs"));
+	"Established basin with lower labor costs"));
 
     // Indonesia
     register(new RegionalCostFactors("ID", "Indonesia Offshore", 0.65, 0.60, 0.65, 0.45,
-        "Lower costs but regulatory complexity"));
+	"Lower costs but regulatory complexity"));
 
     // United Arab Emirates
     register(new RegionalCostFactors("AE", "UAE Offshore", 0.80, 0.75, 0.85, 0.70,
-        "Shallow water with good infrastructure"));
+	"Shallow water with good infrastructure"));
 
     // Saudi Arabia
     register(new RegionalCostFactors("SA", "Saudi Arabia", 0.70, 0.65, 0.75, 0.65,
-        "State-supported infrastructure, lower costs"));
+	"State-supported infrastructure, lower costs"));
 
     // Qatar
-    register(new RegionalCostFactors("QA", "Qatar Offshore", 0.75, 0.70, 0.80, 0.70,
-        "Mature gas infrastructure"));
+    register(new RegionalCostFactors("QA", "Qatar Offshore", 0.75, 0.70, 0.80, 0.70, "Mature gas infrastructure"));
 
     // Canada - Atlantic
     register(new RegionalCostFactors("CA-ATL", "Canada Atlantic", 1.10, 1.05, 1.05, 1.00,
-        "Harsh environment, mature infrastructure"));
+	"Harsh environment, mature infrastructure"));
 
     // Canada - Alberta
-    register(new RegionalCostFactors("CA-AB", "Canada Alberta", 0.75, 0.70, 0.65, 0.90,
-        "Onshore with competitive market"));
+    register(
+	new RegionalCostFactors("CA-AB", "Canada Alberta", 0.75, 0.70, 0.65, 0.90, "Onshore with competitive market"));
 
     // Guyana
     register(new RegionalCostFactors("GY", "Guyana Offshore", 0.95, 0.90, 1.00, 0.50,
-        "Emerging basin with limited infrastructure"));
+	"Emerging basin with limited infrastructure"));
 
     // Egypt
     register(new RegionalCostFactors("EG", "Egypt Offshore", 0.75, 0.70, 0.80, 0.50,
-        "Established infrastructure, lower labor costs"));
+	"Established infrastructure, lower labor costs"));
 
     // Kazakhstan - Caspian
     register(new RegionalCostFactors("KZ", "Kazakhstan Caspian", 0.85, 0.80, 0.90, 0.55,
-        "Challenging logistics, established operators"));
+	"Challenging logistics, established operators"));
 
     // Mozambique
     register(new RegionalCostFactors("MZ", "Mozambique Offshore", 1.25, 1.20, 1.30, 0.50,
-        "Emerging basin with limited infrastructure"));
+	"Emerging basin with limited infrastructure"));
 
     // Trinidad and Tobago
     register(new RegionalCostFactors("TT", "Trinidad & Tobago", 0.80, 0.75, 0.85, 0.65,
-        "Mature gas basin with good infrastructure"));
+	"Mature gas basin with good infrastructure"));
 
     // Mexico - Gulf
     register(new RegionalCostFactors("MX", "Mexico Gulf", 0.80, 0.75, 0.80, 0.60,
-        "Emerging competitive market post-reform"));
+	"Emerging competitive market post-reform"));
   }
 
   // ============================================================================
@@ -185,16 +182,16 @@ public final class RegionalCostFactors implements Serializable {
   /**
    * Creates regional cost factors.
    *
-   * @param regionCode region code (e.g., "BR", "US-GOM")
-   * @param regionName full region name
-   * @param capexFactor CAPEX multiplier relative to NCS (1.0 = NCS baseline)
-   * @param opexFactor OPEX multiplier relative to NCS
+   * @param regionCode     region code (e.g., "BR", "US-GOM")
+   * @param regionName     full region name
+   * @param capexFactor    CAPEX multiplier relative to NCS (1.0 = NCS baseline)
+   * @param opexFactor     OPEX multiplier relative to NCS
    * @param wellCostFactor well cost multiplier relative to NCS
-   * @param laborFactor labor cost multiplier relative to NCS
-   * @param notes additional notes about the region
+   * @param laborFactor    labor cost multiplier relative to NCS
+   * @param notes          additional notes about the region
    */
-  public RegionalCostFactors(String regionCode, String regionName, double capexFactor,
-      double opexFactor, double wellCostFactor, double laborFactor, String notes) {
+  public RegionalCostFactors(String regionCode, String regionName, double capexFactor, double opexFactor,
+      double wellCostFactor, double laborFactor, String notes) {
     this.regionCode = regionCode;
     this.regionName = regionName;
     this.capexFactor = capexFactor;
@@ -207,8 +204,8 @@ public final class RegionalCostFactors implements Serializable {
   /**
    * Creates regional cost factors with a single overall factor.
    *
-   * @param regionCode region code
-   * @param regionName full region name
+   * @param regionCode    region code
+   * @param regionName    full region name
    * @param overallFactor single factor applied to all cost categories
    */
   public RegionalCostFactors(String regionCode, String regionName, double overallFactor) {
@@ -400,14 +397,13 @@ public final class RegionalCostFactors implements Serializable {
    */
   public static String getSummaryTable() {
     StringBuilder sb = new StringBuilder();
-    sb.append(String.format("%-10s %-25s %8s %8s %8s %8s%n", "Code", "Region", "CAPEX", "OPEX",
-        "Well", "Labor"));
+    sb.append(String.format("%-10s %-25s %8s %8s %8s %8s%n", "Code", "Region", "CAPEX", "OPEX", "Well", "Labor"));
     sb.append(repeatChar('-', 75)).append("\n");
 
     for (RegionalCostFactors f : REGISTRY.values()) {
-      sb.append(String.format("%-10s %-25s %8.2f %8.2f %8.2f %8.2f%n", f.getRegionCode(),
-          truncate(f.getRegionName(), 25), f.getCapexFactor(), f.getOpexFactor(),
-          f.getWellCostFactor(), f.getLaborFactor()));
+      sb.append(
+	  String.format("%-10s %-25s %8.2f %8.2f %8.2f %8.2f%n", f.getRegionCode(), truncate(f.getRegionName(), 25),
+	      f.getCapexFactor(), f.getOpexFactor(), f.getWellCostFactor(), f.getLaborFactor()));
     }
 
     return sb.toString();
@@ -430,7 +426,7 @@ public final class RegionalCostFactors implements Serializable {
 
   @Override
   public String toString() {
-    return String.format("RegionalCostFactors[%s: CAPEX=%.2f, OPEX=%.2f, Wells=%.2f]", regionCode,
-        capexFactor, opexFactor, wellCostFactor);
+    return String.format("RegionalCostFactors[%s: CAPEX=%.2f, OPEX=%.2f, Wells=%.2f]", regionCode, capexFactor,
+	opexFactor, wellCostFactor);
   }
 }

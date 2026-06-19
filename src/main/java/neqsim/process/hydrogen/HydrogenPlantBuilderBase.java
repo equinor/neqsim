@@ -8,9 +8,9 @@ import neqsim.thermo.system.SystemSrkEos;
  * Shared stream factory methods for hydrogen-production plant builders.
  *
  * <p>
- * The helper creates simple methane, steam, oxygen, fuel, and air streams with the syngas product
- * components seeded at trace amounts so equilibrium reactors can form hydrogen, carbon monoxide,
- * and carbon dioxide without requiring callers to remember the component bookkeeping.
+ * The helper creates simple methane, steam, oxygen, fuel, and air streams with the syngas product components seeded at
+ * trace amounts so equilibrium reactors can form hydrogen, carbon monoxide, and carbon dioxide without requiring
+ * callers to remember the component bookkeeping.
  * </p>
  *
  * @author NeqSim contributors
@@ -23,15 +23,15 @@ abstract class HydrogenPlantBuilderBase {
   /**
    * Creates a methane and steam feed stream.
    *
-   * @param name stream name
+   * @param name               stream name
    * @param methaneMolesPerSec methane flow in mole/sec
-   * @param steamToCarbon steam-to-carbon molar ratio
-   * @param temperatureK feed temperature in Kelvin
-   * @param pressureBara feed pressure in bara
+   * @param steamToCarbon      steam-to-carbon molar ratio
+   * @param temperatureK       feed temperature in Kelvin
+   * @param pressureBara       feed pressure in bara
    * @return configured stream
    */
-  protected Stream createMethaneSteamFeed(String name, double methaneMolesPerSec,
-      double steamToCarbon, double temperatureK, double pressureBara) {
+  protected Stream createMethaneSteamFeed(String name, double methaneMolesPerSec, double steamToCarbon,
+      double temperatureK, double pressureBara) {
     SystemInterface system = createBaseSystem(temperatureK, pressureBara);
     system.addComponent("methane", methaneMolesPerSec, "mole/sec");
     system.addComponent("water", methaneMolesPerSec * steamToCarbon, "mole/sec");
@@ -44,16 +44,16 @@ abstract class HydrogenPlantBuilderBase {
   /**
    * Creates a methane, steam, and oxygen feed stream.
    *
-   * @param name stream name
+   * @param name               stream name
    * @param methaneMolesPerSec methane flow in mole/sec
-   * @param steamToCarbon steam-to-carbon molar ratio
-   * @param oxygenToCarbon oxygen-to-carbon molar ratio
-   * @param temperatureK feed temperature in Kelvin
-   * @param pressureBara feed pressure in bara
+   * @param steamToCarbon      steam-to-carbon molar ratio
+   * @param oxygenToCarbon     oxygen-to-carbon molar ratio
+   * @param temperatureK       feed temperature in Kelvin
+   * @param pressureBara       feed pressure in bara
    * @return configured stream
    */
-  protected Stream createMethaneSteamOxygenFeed(String name, double methaneMolesPerSec,
-      double steamToCarbon, double oxygenToCarbon, double temperatureK, double pressureBara) {
+  protected Stream createMethaneSteamOxygenFeed(String name, double methaneMolesPerSec, double steamToCarbon,
+      double oxygenToCarbon, double temperatureK, double pressureBara) {
     SystemInterface system = createBaseSystem(temperatureK, pressureBara);
     system.addComponent("methane", methaneMolesPerSec, "mole/sec");
     system.addComponent("water", methaneMolesPerSec * steamToCarbon, "mole/sec");
@@ -67,14 +67,13 @@ abstract class HydrogenPlantBuilderBase {
   /**
    * Creates a methane fuel stream.
    *
-   * @param name stream name
+   * @param name               stream name
    * @param methaneMolesPerSec methane flow in mole/sec
-   * @param temperatureK temperature in Kelvin
-   * @param pressureBara pressure in bara
+   * @param temperatureK       temperature in Kelvin
+   * @param pressureBara       pressure in bara
    * @return configured stream
    */
-  protected Stream createMethaneFuel(String name, double methaneMolesPerSec, double temperatureK,
-      double pressureBara) {
+  protected Stream createMethaneFuel(String name, double methaneMolesPerSec, double temperatureK, double pressureBara) {
     SystemInterface system = createBaseSystem(temperatureK, pressureBara);
     system.addComponent("methane", methaneMolesPerSec, "mole/sec");
     system.addComponent("CO2", TRACE, "mole/sec");
@@ -91,14 +90,13 @@ abstract class HydrogenPlantBuilderBase {
   /**
    * Creates a dry air stream.
    *
-   * @param name stream name
+   * @param name              stream name
    * @param oxygenMolesPerSec oxygen flow in mole/sec
-   * @param temperatureK temperature in Kelvin
-   * @param pressureBara pressure in bara
+   * @param temperatureK      temperature in Kelvin
+   * @param pressureBara      pressure in bara
    * @return configured air stream
    */
-  protected Stream createAir(String name, double oxygenMolesPerSec, double temperatureK,
-      double pressureBara) {
+  protected Stream createAir(String name, double oxygenMolesPerSec, double temperatureK, double pressureBara) {
     SystemInterface system = createBaseSystem(temperatureK, pressureBara);
     system.addComponent("oxygen", oxygenMolesPerSec, "mole/sec");
     system.addComponent("nitrogen", oxygenMolesPerSec * 3.76, "mole/sec");

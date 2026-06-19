@@ -27,17 +27,16 @@ public class AirPhysicalProperties extends GasPhysicalProperties {
    * Constructor for AirPhysicalProperties.
    * </p>
    *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase                            a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param binaryDiffusionCoefficientMethod a int
-   * @param multicomponentDiffusionMethod a int
+   * @param multicomponentDiffusionMethod    a int
    */
   public AirPhysicalProperties(PhaseInterface phase, int binaryDiffusionCoefficientMethod,
       int multicomponentDiffusionMethod) {
     super(phase, binaryDiffusionCoefficientMethod, multicomponentDiffusionMethod);
     conductivityCalc = new ChungConductivityMethod(this);
     viscosityCalc = new ChungViscosityMethod(this);
-    diffusivityCalc =
-        new neqsim.physicalproperties.methods.gasphysicalproperties.diffusivity.Diffusivity(this);
+    diffusivityCalc = new neqsim.physicalproperties.methods.gasphysicalproperties.diffusivity.Diffusivity(this);
     // diffusivityCalc = new WilkeLeeDiffusivity(this);
 
     densityCalc = new neqsim.physicalproperties.methods.gasphysicalproperties.density.Density(this);

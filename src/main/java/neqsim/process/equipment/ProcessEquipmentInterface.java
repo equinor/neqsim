@@ -42,7 +42,8 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
    * Initialize a <code>initMechanicalDesign</code> for the equipment.
    * </p>
    */
-  default void initMechanicalDesign() {}
+  default void initMechanicalDesign() {
+  }
 
   /**
    * <p>
@@ -58,7 +59,8 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
    * Initialize an <code>electricalDesign</code> for the equipment.
    * </p>
    */
-  default void initElectricalDesign() {}
+  default void initElectricalDesign() {
+  }
 
   /**
    * <p>
@@ -74,7 +76,8 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
   /**
    * Initialize an <code>instrumentDesign</code> for the equipment.
    */
-  default void initInstrumentDesign() {}
+  default void initInstrumentDesign() {
+  }
 
   /**
    * Get an <code>instrumentDesign</code> for the equipment.
@@ -151,7 +154,7 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
   /**
    * Adds a controller to this equipment with the given tag name.
    *
-   * @param tag a unique tag identifying the controller (e.g. "PC-101", "LC-101")
+   * @param tag        a unique tag identifying the controller (e.g. "PC-101", "LC-101")
    * @param controller a {@link neqsim.process.controllerdevice.ControllerDeviceInterface} object
    */
   public default void addController(String tag, ControllerDeviceInterface controller) {
@@ -182,9 +185,8 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
   }
 
   /**
-   * Returns all inlet streams connected to this equipment. Subclasses override to report their
-   * specific inlets. Used by graph builders, DEXPI export, and auto-instrumentation to discover
-   * topology without {@code instanceof} checks.
+   * Returns all inlet streams connected to this equipment. Subclasses override to report their specific inlets. Used by
+   * graph builders, DEXPI export, and auto-instrumentation to discover topology without {@code instanceof} checks.
    *
    * @return unmodifiable list of inlet streams (empty by default)
    */
@@ -193,9 +195,8 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
   }
 
   /**
-   * Returns all outlet streams produced by this equipment. Subclasses override to report their
-   * specific outlets. Used by graph builders, DEXPI export, and auto-instrumentation to discover
-   * topology without {@code instanceof} checks.
+   * Returns all outlet streams produced by this equipment. Subclasses override to report their specific outlets. Used
+   * by graph builders, DEXPI export, and auto-instrumentation to discover topology without {@code instanceof} checks.
    *
    * @return unmodifiable list of outlet streams (empty by default)
    */
@@ -309,7 +310,7 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
   /**
    * Get exergy change production of the process equipment.
    *
-   * @param unit Supported units are J and kJ
+   * @param unit                   Supported units are J and kJ
    * @param surroundingTemperature The surrounding temperature in Kelvin
    * @return change in exergy in specified unit
    */
@@ -395,19 +396,18 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
   }
 
   /**
-   * Exergy destruction rate of the unit operation, based on the universal relation
-   * {@code E_destroyed = T0 * S_gen} where {@code S_gen} is the entropy generation across the unit
-   * and {@code T0} is the surrounding ("dead state") temperature. The returned value is always
-   * non-negative.
+   * Exergy destruction rate of the unit operation, based on the universal relation {@code E_destroyed = T0 * S_gen}
+   * where {@code S_gen} is the entropy generation across the unit and {@code T0} is the surrounding ("dead state")
+   * temperature. The returned value is always non-negative.
    *
    * <p>
-   * The default implementation uses {@link #getEntropyProduction(String)} expressed in J/K. For
-   * adiabatic equipment (valves, separators, mixers, compressors, pumps) this gives the exact
-   * exergy destruction. For units with heat crossing the boundary at a known source temperature
-   * (heaters, coolers), override this method to include the Carnot-weighted heat exergy.
+   * The default implementation uses {@link #getEntropyProduction(String)} expressed in J/K. For adiabatic equipment
+   * (valves, separators, mixers, compressors, pumps) this gives the exact exergy destruction. For units with heat
+   * crossing the boundary at a known source temperature (heaters, coolers), override this method to include the
+   * Carnot-weighted heat exergy.
    * </p>
    *
-   * @param unit target unit, one of J, kJ, MJ, W, kW, MW
+   * @param unit                   target unit, one of J, kJ, MJ, W, kW, MW
    * @param surroundingTemperature surrounding (dead-state) temperature in K
    * @return non-negative exergy destruction rate in the requested unit
    */
@@ -484,8 +484,7 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
    * @return validation result with errors and warnings
    */
   public default neqsim.util.validation.ValidationResult validateSetup() {
-    neqsim.util.validation.ValidationResult result =
-        new neqsim.util.validation.ValidationResult(getName());
+    neqsim.util.validation.ValidationResult result = new neqsim.util.validation.ValidationResult(getName());
 
     // Check: Equipment has a valid name
     if (getName() == null || getName().isEmpty()) {
@@ -499,9 +498,8 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
    * Checks if the current simulation result is physically valid.
    *
    * <p>
-   * Returns false if calculated values are outside physically possible ranges. This method should
-   * be overridden by specific equipment types to perform equipment-specific validation. For
-   * example:
+   * Returns false if calculated values are outside physically possible ranges. This method should be overridden by
+   * specific equipment types to perform equipment-specific validation. For example:
    * <ul>
    * <li>Compressor: power must be positive, head must be positive</li>
    * <li>Heat exchanger: duty direction must match temperature change</li>
@@ -531,8 +529,8 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
    * Gets validation errors for the current simulation state.
    *
    * <p>
-   * Returns a list of human-readable error messages describing why the simulation result is
-   * invalid. Returns an empty list if the simulation is valid.
+   * Returns a list of human-readable error messages describing why the simulation result is invalid. Returns an empty
+   * list if the simulation is valid.
    * </p>
    *
    * @return list of validation error messages, empty if valid
@@ -561,8 +559,8 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
    * Checks if the equipment is operating within its valid operating envelope.
    *
    * <p>
-   * This is different from capacity utilization - it checks whether the equipment can physically
-   * operate at the current conditions, not whether it's operating efficiently. For example:
+   * This is different from capacity utilization - it checks whether the equipment can physically operate at the current
+   * conditions, not whether it's operating efficiently. For example:
    * <ul>
    * <li>Compressor: checks if between surge and stonewall</li>
    * <li>Pump: checks if above minimum flow (no cavitation)</li>
@@ -599,8 +597,8 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
    * Returns the temperature of the primary outlet stream in the specified unit.
    *
    * <p>
-   * Works uniformly across all equipment types by using {@link #getOutletStreams()}. For equipment
-   * with multiple outlets (e.g., separators), returns the first outlet's temperature.
+   * Works uniformly across all equipment types by using {@link #getOutletStreams()}. For equipment with multiple
+   * outlets (e.g., separators), returns the first outlet's temperature.
    * </p>
    *
    * @param unit temperature unit, e.g. "C", "K"
@@ -618,8 +616,8 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
    * Returns the pressure of the primary outlet stream in the specified unit.
    *
    * <p>
-   * Works uniformly across all equipment types by using {@link #getOutletStreams()}. For equipment
-   * with multiple outlets, returns the first outlet's pressure.
+   * Works uniformly across all equipment types by using {@link #getOutletStreams()}. For equipment with multiple
+   * outlets, returns the first outlet's pressure.
    * </p>
    *
    * @param unit pressure unit, e.g. "bara", "barg", "Pa"
@@ -637,8 +635,8 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
    * Returns the total flow rate across all outlet streams in the specified unit.
    *
    * <p>
-   * For single-outlet equipment (compressor, heater, valve), returns the outlet flow rate. For
-   * multi-outlet equipment (separator), returns the sum of all outlet flow rates.
+   * For single-outlet equipment (compressor, heater, valve), returns the outlet flow rate. For multi-outlet equipment
+   * (separator), returns the sum of all outlet flow rates.
    * </p>
    *
    * @param unit flow unit, e.g. "kg/hr", "Sm3/hr", "m3/hr"
@@ -664,30 +662,28 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
    * Returns a map of key equipment properties with values and units.
    *
    * <p>
-   * Provides a unified way to access equipment state without knowing the specific equipment type.
-   * Each entry in the outer map has a property name (e.g. "temperature", "pressure"). Each inner
-   * map contains "value" (Double) and "unit" (String).
+   * Provides a unified way to access equipment state without knowing the specific equipment type. Each entry in the
+   * outer map has a property name (e.g. "temperature", "pressure"). Each inner map contains "value" (Double) and "unit"
+   * (String).
    * </p>
    *
    * <p>
-   * The default implementation uses {@link #getOutletStreams()} to report outlet conditions.
-   * Subclasses override this to add equipment-specific properties (e.g., valve opening, compressor
-   * power, separator liquid levels).
+   * The default implementation uses {@link #getOutletStreams()} to report outlet conditions. Subclasses override this
+   * to add equipment-specific properties (e.g., valve opening, compressor power, separator liquid levels).
    * </p>
    *
    * @param temperatureUnit temperature unit (e.g. "C")
-   * @param pressureUnit pressure unit (e.g. "bara")
-   * @param flowUnit flow unit (e.g. "kg/hr")
+   * @param pressureUnit    pressure unit (e.g. "bara")
+   * @param flowUnit        flow unit (e.g. "kg/hr")
    * @return map of property name to value/unit maps
    */
-  public default Map<String, Map<String, Object>> getEquipmentState(String temperatureUnit,
-      String pressureUnit, String flowUnit) {
+  public default Map<String, Map<String, Object>> getEquipmentState(String temperatureUnit, String pressureUnit,
+      String flowUnit) {
     Map<String, Map<String, Object>> state = new LinkedHashMap<String, Map<String, Object>>();
     List<StreamInterface> outlets = getOutletStreams();
     if (!outlets.isEmpty()) {
       StreamInterface primary = outlets.get(0);
-      state.put("temperature",
-          createStateEntry(primary.getTemperature(temperatureUnit), temperatureUnit));
+      state.put("temperature", createStateEntry(primary.getTemperature(temperatureUnit), temperatureUnit));
       state.put("pressure", createStateEntry(primary.getPressure(pressureUnit), pressureUnit));
       state.put("flow", createStateEntry(primary.getFlowRate(flowUnit), flowUnit));
     }
@@ -698,7 +694,7 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
    * Helper to create a state entry map with value and unit.
    *
    * @param value the numeric value
-   * @param unit the unit string
+   * @param unit  the unit string
    * @return map with "value" and "unit" keys
    */
   static Map<String, Object> createStateEntry(double value, String unit) {
@@ -716,8 +712,8 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
    * Returns the IEC 81346 reference designation for this equipment.
    *
    * <p>
-   * The reference designation encodes three aspects per IEC 81346: function (what the system does),
-   * product (what the equipment is), and location (where it is installed).
+   * The reference designation encodes three aspects per IEC 81346: function (what the system does), product (what the
+   * equipment is), and location (where it is installed).
    * </p>
    *
    * @return the reference designation object, never null
@@ -739,8 +735,7 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
    * Returns the full IEC 81346 reference designation string.
    *
    * <p>
-   * Convenience method equivalent to
-   * {@code getReferenceDesignation().toReferenceDesignationString()}.
+   * Convenience method equivalent to {@code getReferenceDesignation().toReferenceDesignationString()}.
    * </p>
    *
    * @return the formatted reference designation string, e.g. "=A1.K1-B1+P1.M1"
@@ -757,10 +752,9 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
    * Gets all capacity constraints defined for this equipment.
    *
    * <p>
-   * Returns an unmodifiable map of constraint name to constraint object. Constraints are used by
-   * the optimization framework to detect bottlenecks, enforce limits, and guide production
-   * allocation. Equipment subclasses populate this map via
-   * {@link #addCapacityConstraint(CapacityConstraint)}.
+   * Returns an unmodifiable map of constraint name to constraint object. Constraints are used by the optimization
+   * framework to detect bottlenecks, enforce limits, and guide production allocation. Equipment subclasses populate
+   * this map via {@link #addCapacityConstraint(CapacityConstraint)}.
    * </p>
    *
    * @return unmodifiable map of constraint name to constraint, empty if none defined
@@ -773,9 +767,8 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
    * Adds a capacity constraint to this equipment.
    *
    * <p>
-   * Constraints can be added at any time. If a constraint with the same name already exists, it is
-   * replaced. Use the fluent builder API on {@link CapacityConstraint} to configure the constraint
-   * before adding.
+   * Constraints can be added at any time. If a constraint with the same name already exists, it is replaced. Use the
+   * fluent builder API on {@link CapacityConstraint} to configure the constraint before adding.
    * </p>
    *
    * @param constraint the capacity constraint to add (ignored if null)
@@ -785,24 +778,22 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
   }
 
   /**
-   * Derives capacity constraints from this equipment's mechanical-design limits and registers them
-   * for capacity/utilization analysis.
+   * Derives capacity constraints from this equipment's mechanical-design limits and registers them for
+   * capacity/utilization analysis.
    *
    * <p>
-   * This is the opt-in bridge that makes the limits configured on the equipment's
-   * {@link MechanicalDesign} (for example {@code getMechanicalDesign().setMaxDesignPower(kW)} or
-   * {@code setMaxDesignVolumeFlow(...)}) surface in {@link #getMaxUtilization()},
-   * {@link #getBottleneckConstraint()} and the utilization snapshot. Call it after the design
-   * limits have been set and after the process has run, since the derived metrics depend on live
-   * stream conditions. The constraints use stable names, so the method is idempotent.
+   * This is the opt-in bridge that makes the limits configured on the equipment's {@link MechanicalDesign} (for example
+   * {@code getMechanicalDesign().setMaxDesignPower(kW)} or {@code setMaxDesignVolumeFlow(...)}) surface in
+   * {@link #getMaxUtilization()}, {@link #getBottleneckConstraint()} and the utilization snapshot. Call it after the
+   * design limits have been set and after the process has run, since the derived metrics depend on live stream
+   * conditions. The constraints use stable names, so the method is idempotent.
    * </p>
    *
    * <p>
-   * The default implementation reads {@link MechanicalDesign#getDesignCapacityConstraints()} and
-   * registers each derived constraint through {@link #addCapacityConstraint(CapacityConstraint)}.
-   * It never throws &mdash; failures to read the mechanical design are treated as "no derived
-   * constraints". {@link neqsim.process.equipment.ProcessEquipmentBaseClass} overrides this with
-   * the same behaviour plus logging.
+   * The default implementation reads {@link MechanicalDesign#getDesignCapacityConstraints()} and registers each derived
+   * constraint through {@link #addCapacityConstraint(CapacityConstraint)}. It never throws &mdash; failures to read the
+   * mechanical design are treated as "no derived constraints".
+   * {@link neqsim.process.equipment.ProcessEquipmentBaseClass} overrides this with the same behaviour plus logging.
    * </p>
    *
    * @return the number of mechanical-design-derived constraints that were registered
@@ -812,15 +803,15 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
     try {
       MechanicalDesign design = getMechanicalDesign();
       if (design != null) {
-        List<CapacityConstraint> derived = design.getDesignCapacityConstraints();
-        if (derived != null) {
-          for (CapacityConstraint constraint : derived) {
-            if (constraint != null) {
-              addCapacityConstraint(constraint);
-              added++;
-            }
-          }
-        }
+	List<CapacityConstraint> derived = design.getDesignCapacityConstraints();
+	if (derived != null) {
+	  for (CapacityConstraint constraint : derived) {
+	    if (constraint != null) {
+	      addCapacityConstraint(constraint);
+	      added++;
+	    }
+	  }
+	}
       }
     } catch (RuntimeException ex) {
       // Treated as "no derived constraints" — never throws.
@@ -832,8 +823,8 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
    * Gets the bottleneck (most limiting) constraint for this equipment.
    *
    * <p>
-   * Returns the enabled constraint with the highest utilization ratio. If no constraints are
-   * defined or enabled, returns null.
+   * Returns the enabled constraint with the highest utilization ratio. If no constraints are defined or enabled,
+   * returns null.
    * </p>
    *
    * @return the most limiting constraint, or null if none
@@ -847,11 +838,11 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
     double maxUtil = -1.0;
     for (CapacityConstraint c : constraints.values()) {
       if (c.isEnabled()) {
-        double util = c.getUtilization();
-        if (util > maxUtil) {
-          maxUtil = util;
-          bottleneck = c;
-        }
+	double util = c.getUtilization();
+	if (util > maxUtil) {
+	  maxUtil = util;
+	  bottleneck = c;
+	}
       }
     }
     return bottleneck;
@@ -861,9 +852,8 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
    * Checks if any capacity constraint is violated (exceeds 100% utilization).
    *
    * <p>
-   * A violated constraint means the equipment is operating beyond its design capacity. For HARD
-   * constraints, this may indicate equipment trip or failure. For SOFT constraints, this indicates
-   * reduced efficiency or accelerated wear.
+   * A violated constraint means the equipment is operating beyond its design capacity. For HARD constraints, this may
+   * indicate equipment trip or failure. For SOFT constraints, this indicates reduced efficiency or accelerated wear.
    * </p>
    *
    * @return true if any enabled constraint utilization exceeds 1.0 (100%)
@@ -875,7 +865,7 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
     }
     for (CapacityConstraint c : constraints.values()) {
       if (c.isEnabled() && c.isViolated()) {
-        return true;
+	return true;
       }
     }
     return false;
@@ -885,8 +875,8 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
    * Checks if any HARD constraint limit is exceeded.
    *
    * <p>
-   * HARD limits represent absolute equipment limits (e.g., maximum speed) that cannot be exceeded
-   * without equipment trip or damage. This is more severe than general capacity exceedance.
+   * HARD limits represent absolute equipment limits (e.g., maximum speed) that cannot be exceeded without equipment
+   * trip or damage. This is more severe than general capacity exceedance.
    * </p>
    *
    * @return true if any enabled HARD constraint's max value is exceeded
@@ -898,7 +888,7 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
     }
     for (CapacityConstraint c : constraints.values()) {
       if (c.isEnabled() && c.isHardLimitExceeded()) {
-        return true;
+	return true;
       }
     }
     return false;
@@ -908,8 +898,8 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
    * Gets the maximum utilization across all enabled constraints.
    *
    * <p>
-   * Returns the highest utilization ratio across all enabled constraints. Values above 1.0 indicate
-   * the equipment is over capacity. Returns 0.0 if no constraints are defined or enabled.
+   * Returns the highest utilization ratio across all enabled constraints. Values above 1.0 indicate the equipment is
+   * over capacity. Returns 0.0 if no constraints are defined or enabled.
    * </p>
    *
    * @return maximum utilization as fraction (1.0 = 100% of design capacity)
@@ -922,10 +912,10 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
     double maxUtil = 0.0;
     for (CapacityConstraint c : constraints.values()) {
       if (c.isEnabled()) {
-        double util = c.getUtilization();
-        if (util > maxUtil) {
-          maxUtil = util;
-        }
+	double util = c.getUtilization();
+	if (util > maxUtil) {
+	  maxUtil = util;
+	}
       }
     }
     return maxUtil;
@@ -944,8 +934,8 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
    * Gets the available margin (headroom) on the most limiting constraint.
    *
    * <p>
-   * Returns the remaining capacity before the bottleneck constraint reaches 100%. Negative values
-   * indicate the equipment is already over capacity.
+   * Returns the remaining capacity before the bottleneck constraint reaches 100%. Negative values indicate the
+   * equipment is already over capacity.
    * </p>
    *
    * @return available margin as fraction (0.2 = 20% headroom remaining)
@@ -967,8 +957,8 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
    * Checks if any enabled constraint is near its limit (above warning threshold).
    *
    * <p>
-   * The warning threshold is typically set at 90% of design capacity to provide early warning
-   * before constraints are violated.
+   * The warning threshold is typically set at 90% of design capacity to provide early warning before constraints are
+   * violated.
    * </p>
    *
    * @return true if any enabled constraint is above its warning threshold
@@ -980,7 +970,7 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
     }
     for (CapacityConstraint c : constraints.values()) {
       if (c.isEnabled() && c.isNearLimit()) {
-        return true;
+	return true;
       }
     }
     return false;
@@ -990,8 +980,7 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
    * Gets a summary of all enabled constraint utilizations.
    *
    * <p>
-   * Returns a map of constraint names to their current utilization percentages. Useful for
-   * reporting and visualization.
+   * Returns a map of constraint names to their current utilization percentages. Useful for reporting and visualization.
    * </p>
    *
    * @return map of constraint name to utilization percentage
@@ -1005,7 +994,7 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
     for (Map.Entry<String, CapacityConstraint> entry : constraints.entrySet()) {
       CapacityConstraint c = entry.getValue();
       if (c.isEnabled()) {
-        summary.put(entry.getKey(), c.getUtilization() * 100.0);
+	summary.put(entry.getKey(), c.getUtilization() * 100.0);
       }
     }
     return summary;
@@ -1016,8 +1005,8 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
    *
    * <p>
    * Equipment that has been auto-bypassed via
-   * {@link neqsim.process.equipment.ProcessEquipmentBaseClass#checkAndHandleLowFlow} or manually
-   * locked inactive via {@link #setLockedInactive(boolean)} returns {@code false}.
+   * {@link neqsim.process.equipment.ProcessEquipmentBaseClass#checkAndHandleLowFlow} or manually locked inactive via
+   * {@link #setLockedInactive(boolean)} returns {@code false}.
    * </p>
    *
    * @return true if the equipment will be run by the scheduler
@@ -1028,13 +1017,13 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
 
   /**
    * Sets the transient active flag. The flag is reset to {@code true} by
-   * {@link neqsim.process.processmodel.ProcessSystem} at the start of each run for equipment that
-   * is not locked inactive.
+   * {@link neqsim.process.processmodel.ProcessSystem} at the start of each run for equipment that is not locked
+   * inactive.
    *
    * <p>
-   * Implementation note: the default implementation is a no-op. Equipment classes that participate
-   * in the low-flow bypass mechanism must override this method together with {@link #isActive()}
-   * (see {@link neqsim.process.equipment.ProcessEquipmentBaseClass}).
+   * Implementation note: the default implementation is a no-op. Equipment classes that participate in the low-flow
+   * bypass mechanism must override this method together with {@link #isActive()} (see
+   * {@link neqsim.process.equipment.ProcessEquipmentBaseClass}).
    *
    * @param active true to mark active, false to skip on the next solver pass
    */
@@ -1055,21 +1044,19 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
    * Manually lock or unlock this equipment in the inactive state.
    *
    * <p>
-   * Implementation note: the default implementation is a no-op. Equipment classes that participate
-   * in the low-flow bypass mechanism must override this method together with
-   * {@link #isLockedInactive()} to persist the locked state across runs.
+   * Implementation note: the default implementation is a no-op. Equipment classes that participate in the low-flow
+   * bypass mechanism must override this method together with {@link #isLockedInactive()} to persist the locked state
+   * across runs.
    *
-   * @param lockedInactive true to bypass this equipment indefinitely; false to allow normal
-   *        execution
+   * @param lockedInactive true to bypass this equipment indefinitely; false to allow normal execution
    */
   public default void setLockedInactive(boolean lockedInactive) {
     // default no-op; ProcessEquipmentBaseClass overrides
   }
 
   /**
-   * Returns the low-flow bypass threshold (kg/hr). Equipment whose primary inlet flow is below this
-   * value auto-bypasses via
-   * {@link neqsim.process.equipment.ProcessEquipmentBaseClass#checkAndHandleLowFlow}.
+   * Returns the low-flow bypass threshold (kg/hr). Equipment whose primary inlet flow is below this value auto-bypasses
+   * via {@link neqsim.process.equipment.ProcessEquipmentBaseClass#checkAndHandleLowFlow}.
    *
    * @return low-flow cutoff in kg/hr
    */
@@ -1081,9 +1068,9 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
    * Sets the low-flow bypass threshold (kg/hr) for this equipment.
    *
    * <p>
-   * Implementation note: the default implementation is a no-op. Equipment classes that participate
-   * in the low-flow bypass mechanism must override this method together with
-   * {@link #getMinimumFlow()} to persist the configured threshold.
+   * Implementation note: the default implementation is a no-op. Equipment classes that participate in the low-flow
+   * bypass mechanism must override this method together with {@link #getMinimumFlow()} to persist the configured
+   * threshold.
    *
    * @param minimumFlow low-flow cutoff in kg/hr (must be &gt;= 0)
    */

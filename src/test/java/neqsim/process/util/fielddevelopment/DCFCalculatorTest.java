@@ -87,7 +87,7 @@ public class DCFCalculatorTest {
 
     dcf.addCapex(0, 300.0);
 
-    double[] production = new double[] {0, 10, 50, 100, 100};
+    double[] production = new double[] { 0, 10, 50, 100, 100 };
     dcf.setAnnualProduction(production);
     dcf.setProductPrice(2.0);
     dcf.setAnnualOpex(20.0);
@@ -109,7 +109,7 @@ public class DCFCalculatorTest {
 
     dcf.addCapex(0, 100.0);
 
-    double[] production = new double[] {0, 50, 50, 50, 50};
+    double[] production = new double[] { 0, 50, 50, 50, 50 };
     dcf.setAnnualProduction(production);
     dcf.setProductPrice(1.0);
     dcf.setAnnualOpex(0.0);
@@ -127,7 +127,7 @@ public class DCFCalculatorTest {
     dcf.setProjectLifeYears(5);
     dcf.addCapex(0, 1000.0);
 
-    double[] prod = new double[] {0, 100, 100, 100, 100};
+    double[] prod = new double[] { 0, 100, 100, 100, 100 };
     dcf.setAnnualProduction(prod);
     dcf.setProductPrice(5.0);
 
@@ -151,7 +151,7 @@ public class DCFCalculatorTest {
     dcf.setDepreciationYears(0);
 
     dcf.addCapex(0, 200.0);
-    double[] production = new double[] {0, 100, 100};
+    double[] production = new double[] { 0, 100, 100 };
     dcf.setAnnualProduction(production);
     dcf.setProductPrice(1.0);
     dcf.setAnnualOpex(0.0);

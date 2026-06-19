@@ -12,20 +12,19 @@ import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
 import neqsim.pvtsimulation.flowassurance.ScalePredictionCalculator;
 
 /**
- * Integrates scale-deposition risk along a {@link PipeBeggsAndBrills} segmented pipeline by
- * evaluating an {@link ScalePredictionCalculator} at each segment temperature and pressure, then
- * estimating cumulative deposit thickness on the wall and time-to-blockage.
+ * Integrates scale-deposition risk along a {@link PipeBeggsAndBrills} segmented pipeline by evaluating an
+ * {@link ScalePredictionCalculator} at each segment temperature and pressure, then estimating cumulative deposit
+ * thickness on the wall and time-to-blockage.
  *
  * <p>
- * This is a screening-level model (NACE TM0374, NORSOK M-001 informational) intended for relative
- * ranking of pipeline segments rather than absolute mass-balance prediction.
+ * This is a screening-level model (NACE TM0374, NORSOK M-001 informational) intended for relative ranking of pipeline
+ * segments rather than absolute mass-balance prediction.
  *
  * <p>
- * The deposition driving force per segment is taken as
- * {@code max(0, exp(SI*ln10) - 1) * baseRate_kg_m2_yr}, where {@code SI} is the CaCO3 saturation
- * index (other phases optionally added by client) and {@code baseRate_kg_m2_yr} defaults to a
- * field-typical 0.5 kg/(m^2.yr). This keeps the model tunable without requiring kinetic data the
- * user usually does not have at screening stage.
+ * The deposition driving force per segment is taken as {@code max(0, exp(SI*ln10) - 1) * baseRate_kg_m2_yr}, where
+ * {@code SI} is the CaCO3 saturation index (other phases optionally added by client) and {@code baseRate_kg_m2_yr}
+ * defaults to a field-typical 0.5 kg/(m^2.yr). This keeps the model tunable without requiring kinetic data the user
+ * usually does not have at screening stage.
  *
  * @author ESOL
  * @version 1.0
@@ -68,16 +67,16 @@ public class ScaleDepositionAccumulator implements Serializable {
   /**
    * Sets aqueous-phase chemistry used to evaluate the saturation index per segment.
    *
-   * @param caMgL calcium concentration [mg/L]
+   * @param caMgL  calcium concentration [mg/L]
    * @param hcoMgL bicarbonate concentration [mg/L]
-   * @param soMgL sulphate concentration [mg/L]
-   * @param baMgL barium concentration [mg/L]
-   * @param naMgL sodium concentration [mg/L]
+   * @param soMgL  sulphate concentration [mg/L]
+   * @param baMgL  barium concentration [mg/L]
+   * @param naMgL  sodium concentration [mg/L]
    * @param tdsMgL total dissolved solids [mg/L]
    * @return this for chaining
    */
-  public ScaleDepositionAccumulator setBrineChemistry(double caMgL, double hcoMgL, double soMgL,
-      double baMgL, double naMgL, double tdsMgL) {
+  public ScaleDepositionAccumulator setBrineChemistry(double caMgL, double hcoMgL, double soMgL, double baMgL,
+      double naMgL, double tdsMgL) {
     this.calciumMgL = caMgL;
     this.bicarbonateMgL = hcoMgL;
     this.sulphateMgL = soMgL;
@@ -90,7 +89,7 @@ public class ScaleDepositionAccumulator implements Serializable {
   /**
    * Sets pH and CO2 partial pressure used by the scale calculator.
    *
-   * @param pH pH of the aqueous phase
+   * @param pH      pH of the aqueous phase
    * @param pco2Bar CO2 partial pressure [bar]
    * @return this for chaining
    */
@@ -145,9 +144,9 @@ public class ScaleDepositionAccumulator implements Serializable {
   }
 
   /**
-   * Walks each Beggs-and-Brills segment, evaluates the CaCO3 saturation index, and integrates
-   * deposit mass and wall thickness. Sets timeToBlockage as the years until the maximum-thickness
-   * segment occludes 50% of the pipe cross-section.
+   * Walks each Beggs-and-Brills segment, evaluates the CaCO3 saturation index, and integrates deposit mass and wall
+   * thickness. Sets timeToBlockage as the years until the maximum-thickness segment occludes 50% of the pipe
+   * cross-section.
    *
    * @return this for chaining
    */
@@ -164,8 +163,7 @@ public class ScaleDepositionAccumulator implements Serializable {
       evaluated = true;
       return this;
     }
-    int profileSize =
-        Math.min(pipe.getTemperatureProfileList().size(), pipe.getPressureProfileList().size());
+    int profileSize = Math.min(pipe.getTemperatureProfileList().size(), pipe.getPressureProfileList().size());
     if (profileSize <= 0) {
       evaluated = true;
       return this;
@@ -202,7 +200,7 @@ public class ScaleDepositionAccumulator implements Serializable {
       double thicknessMm = thicknessM * 1000.0;
       segmentThicknessMm.add(thicknessMm);
       if (thicknessMm > maxThicknessMm) {
-        maxThicknessMm = thicknessMm;
+	maxThicknessMm = thicknessMm;
       }
     }
     // Time to blockage: 50% of inner radius blocked at the worst segment (linear extrapolation)
@@ -263,8 +261,8 @@ public class ScaleDepositionAccumulator implements Serializable {
   }
 
   /**
-   * Returns the projected time until the worst segment occludes half the pipe cross-section
-   * [years]. Positive infinity when no deposition is expected.
+   * Returns the projected time until the worst segment occludes half the pipe cross-section [years]. Positive infinity
+   * when no deposition is expected.
    *
    * @return years to 50% occlusion
    */
@@ -287,8 +285,7 @@ public class ScaleDepositionAccumulator implements Serializable {
    * @return list of standard reference maps
    */
   public List<Map<String, Object>> getStandardsApplied() {
-    return StandardsRegistry.toMapList(StandardsRegistry.NACE_TM0374,
-        StandardsRegistry.NORSOK_M001);
+    return StandardsRegistry.toMapList(StandardsRegistry.NACE_TM0374, StandardsRegistry.NORSOK_M001);
   }
 
   /**
@@ -316,8 +313,7 @@ public class ScaleDepositionAccumulator implements Serializable {
    * @return pretty-printed JSON string
    */
   public String toJson() {
-    Gson gson = new GsonBuilder().setPrettyPrinting().serializeNulls()
-        .serializeSpecialFloatingPointValues().create();
+    Gson gson = new GsonBuilder().setPrettyPrinting().serializeNulls().serializeSpecialFloatingPointValues().create();
     return gson.toJson(toMap());
   }
 }

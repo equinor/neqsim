@@ -99,8 +99,7 @@ class TemperatureDropComparisonTest {
     double inletTemp = tempProfile[0];
     double outletTemp = tempProfile[tempProfile.length - 1];
     assertEquals(inletTemp, outletTemp, 1.0,
-        "Adiabatic pipe should have minimal temperature change. Inlet=" + inletTemp + ", Outlet="
-            + outletTemp);
+	"Adiabatic pipe should have minimal temperature change. Inlet=" + inletTemp + ", Outlet=" + outletTemp);
   }
 
   /**
@@ -130,7 +129,7 @@ class TemperatureDropComparisonTest {
     for (int i = 1; i < tempProfile.length; i++) {
       double temp = tempProfile[i];
       assertTrue(temp <= maxTemp + 1.0, // Allow small numerical tolerance
-          "Temperature should not spike at section " + i);
+	  "Temperature should not spike at section " + i);
       maxTemp = Math.max(maxTemp, temp);
       minTemp = Math.min(minTemp, temp);
     }
@@ -272,8 +271,7 @@ class TemperatureDropComparisonTest {
     // Profiles should match point-by-point (reproducible)
     assertEquals(tempProfile1.length, tempProfile2.length, "Profiles should have same length");
     for (int i = 0; i < tempProfile1.length; i++) {
-      assertEquals(tempProfile1[i], tempProfile2[i], 1e-9,
-          "Temperature at section " + i + " should be reproducible");
+      assertEquals(tempProfile1[i], tempProfile2[i], 1e-9, "Temperature at section " + i + " should be reproducible");
     }
   }
 
@@ -360,14 +358,13 @@ class TemperatureDropComparisonTest {
 
     // All temperatures must be positive (Kelvin scale)
     for (int i = 0; i < tempProfile.length; i++) {
-      assertTrue(tempProfile[i] > 0,
-          "Temperature at section " + i + " must be positive (K): " + tempProfile[i]);
+      assertTrue(tempProfile[i] > 0, "Temperature at section " + i + " must be positive (K): " + tempProfile[i]);
     }
 
     // Outlet should be reasonable (not lower than absolute zero, not higher than inlet + margin)
     double outletTemp = tempProfile[tempProfile.length - 1];
     assertTrue(outletTemp <= inletTemp + 5.0, // Allow small margin for numerical effects
-        "Outlet temp should not be much higher than inlet (adiabatic conditions)");
+	"Outlet temp should not be much higher than inlet (adiabatic conditions)");
   }
 
   /**
@@ -470,11 +467,9 @@ class TemperatureDropComparisonTest {
     logger.info("Heat transfer pipe temperature drop: " + htDrop + " K");
 
     // Heat transfer disabled for adiabatic
-    assertFalse(adiabaticPipe.isHeatTransferEnabled(),
-        "Adiabatic pipe should not have heat transfer");
+    assertFalse(adiabaticPipe.isHeatTransferEnabled(), "Adiabatic pipe should not have heat transfer");
     // Heat transfer enabled for the other
-    assertTrue(heatTransferPipe.isHeatTransferEnabled(),
-        "Heat transfer pipe should have heat transfer enabled");
+    assertTrue(heatTransferPipe.isHeatTransferEnabled(), "Heat transfer pipe should have heat transfer enabled");
 
     // Both should have positive outlet temperatures
     assertTrue(adiabaticTemp[adiabaticTemp.length - 1] > 0, "Adiabatic outlet > 0");
@@ -633,11 +628,11 @@ class TemperatureDropComparisonTest {
     double[] htcProfile = new double[30];
     for (int i = 0; i < 30; i++) {
       if (i < 10) {
-        htcProfile[i] = 5.0; // Good insulation (first 1 km)
+	htcProfile[i] = 5.0; // Good insulation (first 1 km)
       } else if (i < 20) {
-        htcProfile[i] = 50.0; // Poor insulation (middle 1 km)
+	htcProfile[i] = 50.0; // Poor insulation (middle 1 km)
       } else {
-        htcProfile[i] = 5.0; // Good insulation (last 1 km)
+	htcProfile[i] = 5.0; // Good insulation (last 1 km)
       }
     }
     pipe.setHeatTransferProfile(htcProfile);
@@ -653,8 +648,7 @@ class TemperatureDropComparisonTest {
 
     // Temperature should drop more in middle section
     double[] tempC = pipe.getTemperatureProfile("C");
-    logger.info("Variable HTC test - Inlet: " + tempC[0] + " °C, Outlet: " + tempC[tempC.length - 1]
-        + " °C");
+    logger.info("Variable HTC test - Inlet: " + tempC[0] + " °C, Outlet: " + tempC[tempC.length - 1] + " °C");
   }
 
   /**
@@ -700,9 +694,9 @@ class TemperatureDropComparisonTest {
     pipeBuried.run();
 
     double dropNoSoil = pipeNoSoil.getTemperatureProfile()[0]
-        - pipeNoSoil.getTemperatureProfile()[pipeNoSoil.getTemperatureProfile().length - 1];
+	- pipeNoSoil.getTemperatureProfile()[pipeNoSoil.getTemperatureProfile().length - 1];
     double dropBuried = pipeBuried.getTemperatureProfile()[0]
-        - pipeBuried.getTemperatureProfile()[pipeBuried.getTemperatureProfile().length - 1];
+	- pipeBuried.getTemperatureProfile()[pipeBuried.getTemperatureProfile().length - 1];
 
     logger.info("Temperature drop without soil resistance: " + dropNoSoil + " K");
     logger.info("Temperature drop with soil resistance: " + dropBuried + " K");

@@ -43,38 +43,31 @@ public class StaticMixer extends Mixer {
     int index = 0;
     String compName = new String();
     for (int k = 1; k < streams.size(); k++) {
-      for (int i = 0; i < streams.get(k).getThermoSystem().getPhases()[0]
-          .getNumberOfComponents(); i++) {
-        boolean gotComponent = false;
-        String componentName =
-            streams.get(k).getThermoSystem().getPhases()[0].getComponent(i).getName();
-        // System.out.println("adding: " + componentName);
-        double moles =
-            streams.get(k).getThermoSystem().getPhases()[0].getComponent(i).getNumberOfmoles();
-        // System.out.println("moles: " + moles + " " +
-        // mixedStream.getThermoSystem().getPhases()[0].getNumberOfComponents());
-        for (int p = 0; p < mixedStream.getThermoSystem().getPhases()[0]
-            .getNumberOfComponents(); p++) {
-          if (mixedStream.getThermoSystem().getPhases()[0].getComponent(p).getName()
-              .equals(componentName)) {
-            gotComponent = true;
-            index = mixedStream.getThermoSystem().getPhases()[0].getComponent(p)
-                .getComponentNumber();
-            compName = mixedStream.getThermoSystem().getPhases()[0].getComponent(p)
-                .getComponentName();
-            break;
-          }
-        }
+      for (int i = 0; i < streams.get(k).getThermoSystem().getPhases()[0].getNumberOfComponents(); i++) {
+	boolean gotComponent = false;
+	String componentName = streams.get(k).getThermoSystem().getPhases()[0].getComponent(i).getName();
+	// System.out.println("adding: " + componentName);
+	double moles = streams.get(k).getThermoSystem().getPhases()[0].getComponent(i).getNumberOfmoles();
+	// System.out.println("moles: " + moles + " " +
+	// mixedStream.getThermoSystem().getPhases()[0].getNumberOfComponents());
+	for (int p = 0; p < mixedStream.getThermoSystem().getPhases()[0].getNumberOfComponents(); p++) {
+	  if (mixedStream.getThermoSystem().getPhases()[0].getComponent(p).getName().equals(componentName)) {
+	    gotComponent = true;
+	    index = mixedStream.getThermoSystem().getPhases()[0].getComponent(p).getComponentNumber();
+	    compName = mixedStream.getThermoSystem().getPhases()[0].getComponent(p).getComponentName();
+	    break;
+	  }
+	}
 
-        if (gotComponent) {
-          // System.out.println("adding moles starting....");
-          mixedStream.getThermoSystem().addComponent(index, moles, 0);
-          // mixedStream.getThermoSystem().init_x_y();
-          // System.out.println("adding moles finished");
-        } else {
-          // System.out.println("ikke gaa hit");
-          mixedStream.getThermoSystem().addComponent(compName, moles, 0);
-        }
+	if (gotComponent) {
+	  // System.out.println("adding moles starting....");
+	  mixedStream.getThermoSystem().addComponent(index, moles, 0);
+	  // mixedStream.getThermoSystem().init_x_y();
+	  // System.out.println("adding moles finished");
+	} else {
+	  // System.out.println("ikke gaa hit");
+	  mixedStream.getThermoSystem().addComponent(compName, moles, 0);
+	}
       }
     }
   }
@@ -84,9 +77,8 @@ public class StaticMixer extends Mixer {
   public double guessTemperature() {
     double gtemp = 0;
     for (int k = 0; k < streams.size(); k++) {
-      gtemp += streams.get(k).getThermoSystem().getTemperature()
-          * streams.get(k).getThermoSystem().getNumberOfMoles()
-          / mixedStream.getThermoSystem().getNumberOfMoles();
+      gtemp += streams.get(k).getThermoSystem().getTemperature() * streams.get(k).getThermoSystem().getNumberOfMoles()
+	  / mixedStream.getThermoSystem().getNumberOfMoles();
     }
     return gtemp;
   }
@@ -121,10 +113,10 @@ public class StaticMixer extends Mixer {
     ThermodynamicOperations testOps = new ThermodynamicOperations(mixedStream.getThermoSystem());
     try {
       if (Double.isNaN(enthalpy)) {
-        logger.error("error in StaticMixer calc0 - enthalpy NaN");
-        testOps.TPflash();
+	logger.error("error in StaticMixer calc0 - enthalpy NaN");
+	testOps.TPflash();
       } else {
-        testOps.PHflash(enthalpy, 0);
+	testOps.PHflash(enthalpy, 0);
       }
       // System.out.println("enthalp ok " + enthalpy);
     } catch (Exception ex) {
@@ -132,8 +124,7 @@ public class StaticMixer extends Mixer {
     }
     // System.out.println("temp " + mixedStream.getThermoSystem().getTemperature());
     mixedStream.getThermoSystem().initProperties();
-    if (mixedStream.getFluid().getClass().getName()
-        .equals("neqsim.thermo.system.SystemSoreideWhitson")) {
+    if (mixedStream.getFluid().getClass().getName().equals("neqsim.thermo.system.SystemSoreideWhitson")) {
       ((SystemSoreideWhitson) mixedStream.getFluid()).setSalinity(getMixedSalinity(), "mole/sec");
       mixedStream.run();
     }
@@ -144,8 +135,7 @@ public class StaticMixer extends Mixer {
   /** {@inheritDoc} */
   @Override
   public String toJson() {
-    return new GsonBuilder().serializeSpecialFloatingPointValues().create()
-        .toJson(new MixerResponse(this));
+    return new GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(new MixerResponse(this));
   }
 
   /** {@inheritDoc} */

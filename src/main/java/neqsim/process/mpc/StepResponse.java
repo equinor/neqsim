@@ -6,8 +6,8 @@ import java.io.Serializable;
  * Represents a step response from a single input to a single output.
  *
  * <p>
- * A step response captures how a controlled variable responds over time to a step change in a
- * manipulated variable. This data is used for system identification and model-based control.
+ * A step response captures how a controlled variable responds over time to a step change in a manipulated variable.
+ * This data is used for system identification and model-based control.
  * </p>
  *
  * <p>
@@ -64,18 +64,18 @@ public class StepResponse implements Serializable {
   /**
    * Construct a step response.
    *
-   * @param mvName name of the manipulated variable
-   * @param cvName name of the controlled variable
-   * @param time array of time points (seconds)
-   * @param response array of CV response values
-   * @param stepSize the step size applied to MV
+   * @param mvName        name of the manipulated variable
+   * @param cvName        name of the controlled variable
+   * @param time          array of time points (seconds)
+   * @param response      array of CV response values
+   * @param stepSize      the step size applied to MV
    * @param baselineValue CV value before the step
-   * @param sampleTime sample interval in seconds
-   * @param mvUnit unit for MV
-   * @param cvUnit unit for CV
+   * @param sampleTime    sample interval in seconds
+   * @param mvUnit        unit for MV
+   * @param cvUnit        unit for CV
    */
-  public StepResponse(String mvName, String cvName, double[] time, double[] response,
-      double stepSize, double baselineValue, double sampleTime, String mvUnit, String cvUnit) {
+  public StepResponse(String mvName, String cvName, double[] time, double[] response, double stepSize,
+      double baselineValue, double sampleTime, String mvUnit, String cvUnit) {
     this.mvName = mvName;
     this.cvName = cvName;
     this.time = time != null ? time.clone() : new double[0];
@@ -132,7 +132,7 @@ public class StepResponse implements Serializable {
     double[] normalized = new double[response.length];
     for (int i = 0; i < response.length; i++) {
       if (Math.abs(stepSize) > 1e-12) {
-        normalized[i] = (response[i] - baselineValue) / stepSize;
+	normalized[i] = (response[i] - baselineValue) / stepSize;
       }
     }
     return normalized;
@@ -199,8 +199,8 @@ public class StepResponse implements Serializable {
    * Fit a first-order plus dead-time (FOPDT) model to the response.
    *
    * <p>
-   * The FOPDT model is: y(t) = K * (1 - exp(-(t-θ)/τ)) for t &gt; θ, else 0 where K is gain, τ is
-   * time constant, θ is dead time.
+   * The FOPDT model is: y(t) = K * (1 - exp(-(t-θ)/τ)) for t &gt; θ, else 0 where K is gain, τ is time constant, θ is
+   * dead time.
    * </p>
    *
    * @return this step response with fitted parameters
@@ -227,8 +227,8 @@ public class StepResponse implements Serializable {
     for (int i = 0; i < response.length; i++) {
       boolean reached = deltaY > 0 ? response[i] > threshold5 : response[i] < threshold5;
       if (reached) {
-        fittedDeadTime = i > 0 ? time[i - 1] : 0.0;
-        break;
+	fittedDeadTime = i > 0 ? time[i - 1] : 0.0;
+	break;
       }
     }
 
@@ -238,8 +238,8 @@ public class StepResponse implements Serializable {
     for (int i = 0; i < response.length; i++) {
       boolean reached = deltaY > 0 ? response[i] > threshold63 : response[i] < threshold63;
       if (reached) {
-        fittedTimeConstant = Math.max(0.1, time[i] - fittedDeadTime);
-        break;
+	fittedTimeConstant = Math.max(0.1, time[i] - fittedDeadTime);
+	break;
       }
     }
 
@@ -266,11 +266,10 @@ public class StepResponse implements Serializable {
       double t = time[i];
       double predicted;
       if (t <= fittedDeadTime) {
-        predicted = baselineValue;
+	predicted = baselineValue;
       } else {
-        double tEffective = t - fittedDeadTime;
-        predicted = baselineValue
-            + fittedGain * stepSize * (1.0 - Math.exp(-tEffective / fittedTimeConstant));
+	double tEffective = t - fittedDeadTime;
+	predicted = baselineValue + fittedGain * stepSize * (1.0 - Math.exp(-tEffective / fittedTimeConstant));
       }
       double error = response[i] - predicted;
       sumSquaredError += error * error;
@@ -320,8 +319,8 @@ public class StepResponse implements Serializable {
    * Get step response coefficients for DMC-style controllers.
    *
    * <p>
-   * Returns the normalized step response at each sample time, which can be used directly in Dynamic
-   * Matrix Control algorithms.
+   * Returns the normalized step response at each sample time, which can be used directly in Dynamic Matrix Control
+   * algorithms.
    * </p>
    *
    * @param numCoefficients number of coefficients to return
@@ -333,10 +332,10 @@ public class StepResponse implements Serializable {
 
     for (int i = 0; i < numCoefficients; i++) {
       if (i < normalized.length) {
-        coefficients[i] = normalized[i];
+	coefficients[i] = normalized[i];
       } else if (normalized.length > 0) {
-        // Extend with steady-state value
-        coefficients[i] = normalized[normalized.length - 1];
+	// Extend with steady-state value
+	coefficients[i] = normalized[normalized.length - 1];
       }
     }
     return coefficients;
@@ -356,12 +355,12 @@ public class StepResponse implements Serializable {
     for (int k = 0; k < horizon; k++) {
       cvTrajectory[k] = baselineValue;
       for (int i = 0; i <= k && i < mvMoves.length; i++) {
-        int coeffIndex = k - i;
-        if (coeffIndex < stepCoeffs.length) {
-          cvTrajectory[k] += stepCoeffs[coeffIndex] * mvMoves[i];
-        } else if (stepCoeffs.length > 0) {
-          cvTrajectory[k] += stepCoeffs[stepCoeffs.length - 1] * mvMoves[i];
-        }
+	int coeffIndex = k - i;
+	if (coeffIndex < stepCoeffs.length) {
+	  cvTrajectory[k] += stepCoeffs[coeffIndex] * mvMoves[i];
+	} else if (stepCoeffs.length > 0) {
+	  cvTrajectory[k] += stepCoeffs[stepCoeffs.length - 1] * mvMoves[i];
+	}
       }
     }
     return cvTrajectory;
@@ -386,7 +385,7 @@ public class StepResponse implements Serializable {
     for (int i = 0; i < response.length; i++) {
       boolean reached = deltaY > 0 ? response[i] >= threshold95 : response[i] <= threshold95;
       if (reached) {
-        return time[i];
+	return time[i];
       }
     }
     return time[time.length - 1];
@@ -415,16 +414,16 @@ public class StepResponse implements Serializable {
     for (int i = 0; i < response.length; i++) {
       boolean reached10 = deltaY > 0 ? response[i] >= threshold10 : response[i] <= threshold10;
       if (reached10) {
-        time10 = time[i];
-        break;
+	time10 = time[i];
+	break;
       }
     }
 
     for (int i = 0; i < response.length; i++) {
       boolean reached90 = deltaY > 0 ? response[i] >= threshold90 : response[i] <= threshold90;
       if (reached90) {
-        time90 = time[i];
-        break;
+	time90 = time[i];
+	break;
       }
     }
 
@@ -450,10 +449,10 @@ public class StepResponse implements Serializable {
     for (int i = 1; i < Math.min(response.length / 4, 10); i++) {
       double initialChange = response[i] - baselineValue;
       if (Math.abs(initialChange) > 0.05 * Math.abs(finalChange)) {
-        // Significant initial change - check direction
-        if (initialChange * finalChange < 0) {
-          return true;
-        }
+	// Significant initial change - check direction
+	if (initialChange * finalChange < 0) {
+	  return true;
+	}
       }
     }
     return false;

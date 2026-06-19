@@ -20,7 +20,7 @@ public class LNGfilling {
   private static final Logger logger = LogManager.getLogger(LNGfilling.class);
 
   /** Logger object for class. */
-  
+
   /**
    * <p>
    * main.

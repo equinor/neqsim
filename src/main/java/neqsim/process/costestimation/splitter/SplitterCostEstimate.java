@@ -9,8 +9,8 @@ import neqsim.process.mechanicaldesign.MechanicalDesign;
  * Cost estimation class for splitters.
  *
  * <p>
- * This class provides splitter-specific cost estimation methods for flow dividers, manifolds, and
- * headers used to split process streams.
+ * This class provides splitter-specific cost estimation methods for flow dividers, manifolds, and headers used to split
+ * process streams.
  * </p>
  *
  * <p>
@@ -295,8 +295,7 @@ public class SplitterCostEstimate extends UnitCostEstimateBaseClass {
       splitterCost = calcManifoldCost();
     }
 
-    breakdown.put("splitterBodyCost_USD",
-        splitterCost * getMaterialFactor() * getPressureClassFactor());
+    breakdown.put("splitterBodyCost_USD", splitterCost * getMaterialFactor() * getPressureClassFactor());
 
     if (includeControlValves) {
       breakdown.put("controlValvesCost_USD", calcControlValvesCost());

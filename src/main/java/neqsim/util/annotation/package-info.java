@@ -2,9 +2,9 @@
  * Annotations for AI/ML integration.
  *
  * <p>
- * This package provides annotations that help AI agents discover and understand NeqSim's API.
- * Methods and classes marked with these annotations can be automatically discovered and their
- * metadata used to generate structured prompts or documentation.
+ * This package provides annotations that help AI agents discover and understand NeqSim's API. Methods and classes
+ * marked with these annotations can be automatically discovered and their metadata used to generate structured prompts
+ * or documentation.
  * </p>
  *
  * <h2>Available Annotations:</h2>

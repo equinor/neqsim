@@ -42,8 +42,7 @@ class Standard_ISO6974Test extends neqsim.NeqSimTest {
     Standard_ISO6974 standard = new Standard_ISO6974(testSystem);
     standard.calculate();
     double factor = standard.getValue("normalisationFactor");
-    assertTrue(Math.abs(factor - 1.0) < 0.01,
-        "Normalisation factor should be ~1.0 but was " + factor);
+    assertTrue(Math.abs(factor - 1.0) < 0.01, "Normalisation factor should be ~1.0 but was " + factor);
   }
 
   /**
@@ -84,8 +83,7 @@ class Standard_ISO6974Test extends neqsim.NeqSimTest {
     for (Double v : normComp.values()) {
       sum += v;
     }
-    assertTrue(Math.abs(sum - 1.0) < 1e-8,
-        "Normalised composition should sum to 1.0 but was " + sum);
+    assertTrue(Math.abs(sum - 1.0) < 1e-8, "Normalised composition should sum to 1.0 but was " + sum);
   }
 
   /**

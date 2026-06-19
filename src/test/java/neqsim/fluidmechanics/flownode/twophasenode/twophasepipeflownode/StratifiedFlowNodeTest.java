@@ -35,15 +35,13 @@ public class StratifiedFlowNodeTest {
       test.calcFluxes();
       test.update();
       /*
-       * logger.info( "flux methane " + test.getFluidBoundary().getInterphaseMolarFlux(0) +
-       * " [mol/m2*sec]"); logger.info( "flux nC10 " +
-       * test.getFluidBoundary().getInterphaseMolarFlux(1) + " [mol/m2*sec]");
-       * logger.info("gas velocity " + test.getSuperficialVelocity(0) + " m/sec");
-       * logger.info("liquid velocity " + test.getVelocity(1) + " m/sec");
-       * logger.info("liquid holdup " + test.getPhaseFraction(1) + "-");
+       * logger.info( "flux methane " + test.getFluidBoundary().getInterphaseMolarFlux(0) + " [mol/m2*sec]");
+       * logger.info( "flux nC10 " + test.getFluidBoundary().getInterphaseMolarFlux(1) + " [mol/m2*sec]");
+       * logger.info("gas velocity " + test.getSuperficialVelocity(0) + " m/sec"); logger.info("liquid velocity " +
+       * test.getVelocity(1) + " m/sec"); logger.info("liquid holdup " + test.getPhaseFraction(1) + "-");
        * logger.info("interface contact area " + test.getInterphaseContactLength(0) + "m2/m");
-       * logger.info("gas flow rate " + test.getMassFlowRate(0) * 60 * 60 + " kg/hr");
-       * logger.info("liquid flow rate " + test.getMassFlowRate(1) * 60 * 60 + " kg/hr");
+       * logger.info("gas flow rate " + test.getMassFlowRate(0) * 60 * 60 + " kg/hr"); logger.info("liquid flow rate " +
+       * test.getMassFlowRate(1) * 60 * 60 + " kg/hr");
        */
     }
   }
@@ -76,9 +74,8 @@ public class StratifiedFlowNodeTest {
     SystemInterface oilPhase = testSystem.phaseToSystem("oil");
 
     oilPhase.addComponent("methane",
-        test.getFluidBoundary().getInterphaseMolarFlux(0) * 1.0 * test.getInterphaseContactArea());
-    oilPhase.addComponent(1,
-        test.getFluidBoundary().getInterphaseMolarFlux(1) * 1.0 * test.getInterphaseContactArea());
+	test.getFluidBoundary().getInterphaseMolarFlux(0) * 1.0 * test.getInterphaseContactArea());
+    oilPhase.addComponent(1, test.getFluidBoundary().getInterphaseMolarFlux(1) * 1.0 * test.getInterphaseContactArea());
     oilPhase.initBeta();
     oilPhase.init_x_y();
     oilPhase.initProperties();
@@ -104,10 +101,10 @@ public class StratifiedFlowNodeTest {
     // logger.info(
     // "flux nC10 " + test2.getFluidBoundary().getInterphaseMolarFlux(1) + " [mol/m2*sec]");
 
-    oilPhase.addComponent(0, test2.getFluidBoundary().getInterphaseMolarFlux(0) * 100.0
-        * test.getInterphaseContactArea());
-    oilPhase.addComponent(1, test2.getFluidBoundary().getInterphaseMolarFlux(1) * 100.0
-        * test.getInterphaseContactArea());
+    oilPhase.addComponent(0,
+	test2.getFluidBoundary().getInterphaseMolarFlux(0) * 100.0 * test.getInterphaseContactArea());
+    oilPhase.addComponent(1,
+	test2.getFluidBoundary().getInterphaseMolarFlux(1) * 100.0 * test.getInterphaseContactArea());
     oilPhase.initBeta();
     oilPhase.init_x_y();
     oilPhase.initProperties();
@@ -167,37 +164,37 @@ public class StratifiedFlowNodeTest {
 
     for (int time = 0; time < 100; time++) {
       for (int i = 0; i < 9; i++) {
-        fluids[i] = new SystemSrkEos(278.3, 100.01325);
-        fluids[i].addFluid(gasPhases[i], 0);
-        fluids[i].addFluid(oilPhases[i], 1);
-        fluids[i].setMixingRule(2);
-        fluids[i].initProperties();
+	fluids[i] = new SystemSrkEos(278.3, 100.01325);
+	fluids[i].addFluid(gasPhases[i], 0);
+	fluids[i].addFluid(oilPhases[i], 1);
+	fluids[i].setMixingRule(2);
+	fluids[i].initProperties();
 
-        pipes[i] = new PipeData(1.1, 0.00025);
+	pipes[i] = new PipeData(1.1, 0.00025);
 
-        nodes[i] = new StratifiedFlowNode(fluids[i], pipes[i]);
-        nodes[i].setInterphaseModelType(1);
-        nodes[i].setLengthOfNode(1.0);
-        nodes[i].getFluidBoundary().setHeatTransferCalc(false);
-        nodes[i].getFluidBoundary().setMassTransferCalc(true);
-        nodes[i].getFluidBoundary().useFiniteFluxCorrection(false);
+	nodes[i] = new StratifiedFlowNode(fluids[i], pipes[i]);
+	nodes[i].setInterphaseModelType(1);
+	nodes[i].setLengthOfNode(1.0);
+	nodes[i].getFluidBoundary().setHeatTransferCalc(false);
+	nodes[i].getFluidBoundary().setMassTransferCalc(true);
+	nodes[i].getFluidBoundary().useFiniteFluxCorrection(false);
 
-        nodes[i].initFlowCalc();
-        nodes[i].calcFluxes();
+	nodes[i].initFlowCalc();
+	nodes[i].calcFluxes();
 
-        try {
-          nodes[i].update(1.0);
-          if (i <= 9) {
-            gasPhases[i + 1] = nodes[i].getBulkSystem().phaseToSystem(0);
-          }
-          oilPhases[i] = nodes[i].getBulkSystem().phaseToSystem(1);
-        } catch (Exception e) {
-          logger.error(e.getMessage());
-        }
+	try {
+	  nodes[i].update(1.0);
+	  if (i <= 9) {
+	    gasPhases[i + 1] = nodes[i].getBulkSystem().phaseToSystem(0);
+	  }
+	  oilPhases[i] = nodes[i].getBulkSystem().phaseToSystem(1);
+	} catch (Exception e) {
+	  logger.error(e.getMessage());
+	}
 
-        // gasPhases[i + 1].prettyPrint();
-        // logger.info("time " + time + " node " + i + " mass oil "
-        // + oilPhases[i].getFlowRate("kg/hr") + " gas velocity " + nodes[i].getVelocity(0));
+	// gasPhases[i + 1].prettyPrint();
+	// logger.info("time " + time + " node " + i + " mass oil "
+	// + oilPhases[i].getFlowRate("kg/hr") + " gas velocity " + nodes[i].getVelocity(0));
       }
 
       // oilPhases[0].prettyPrint();
@@ -213,36 +210,36 @@ public class StratifiedFlowNodeTest {
 
     for (int time = 0; time < 20; time++) {
       for (int i = 0; i < 9; i++) {
-        fluids[i] = new SystemSrkEos(278.3, 100.01325);
-        fluids[i].addFluid(gasPhases[i], 0);
-        fluids[i].addFluid(oilPhases[i], 1);
-        fluids[i].setMixingRule(2);
-        fluids[i].initProperties();
+	fluids[i] = new SystemSrkEos(278.3, 100.01325);
+	fluids[i].addFluid(gasPhases[i], 0);
+	fluids[i].addFluid(oilPhases[i], 1);
+	fluids[i].setMixingRule(2);
+	fluids[i].initProperties();
 
-        pipes[i] = new PipeData(1.1, 0.00025);
+	pipes[i] = new PipeData(1.1, 0.00025);
 
-        nodes[i] = new StratifiedFlowNode(fluids[i], pipes[i]);
-        nodes[i].setInterphaseModelType(1);
-        nodes[i].setLengthOfNode(1.0);
-        nodes[i].getFluidBoundary().setHeatTransferCalc(false);
-        nodes[i].getFluidBoundary().setMassTransferCalc(true);
-        nodes[i].getFluidBoundary().useFiniteFluxCorrection(false);
+	nodes[i] = new StratifiedFlowNode(fluids[i], pipes[i]);
+	nodes[i].setInterphaseModelType(1);
+	nodes[i].setLengthOfNode(1.0);
+	nodes[i].getFluidBoundary().setHeatTransferCalc(false);
+	nodes[i].getFluidBoundary().setMassTransferCalc(true);
+	nodes[i].getFluidBoundary().useFiniteFluxCorrection(false);
 
-        nodes[i].initFlowCalc();
-        nodes[i].calcFluxes();
-        try {
-          nodes[i].update(1.0);
-          if (i <= 9) {
-            gasPhases[i + 1] = nodes[i].getBulkSystem().phaseToSystem(0);
-          }
-          oilPhases[i] = nodes[i].getBulkSystem().phaseToSystem(1);
-        } catch (Exception e) {
-          logger.error(e.getMessage());
-        }
+	nodes[i].initFlowCalc();
+	nodes[i].calcFluxes();
+	try {
+	  nodes[i].update(1.0);
+	  if (i <= 9) {
+	    gasPhases[i + 1] = nodes[i].getBulkSystem().phaseToSystem(0);
+	  }
+	  oilPhases[i] = nodes[i].getBulkSystem().phaseToSystem(1);
+	} catch (Exception e) {
+	  logger.error(e.getMessage());
+	}
 
-        // gasPhases[i + 1].prettyPrint();
-        // logger.info("time " + time + " node " + i + " mass oil "
-        // + oilPhases[i].getFlowRate("kg/hr") + " gas velocity " + nodes[i].getVelocity(0));
+	// gasPhases[i + 1].prettyPrint();
+	// logger.info("time " + time + " node " + i + " mass oil "
+	// + oilPhases[i].getFlowRate("kg/hr") + " gas velocity " + nodes[i].getVelocity(0));
       }
 
       // oilPhases[0].prettyPrint();
@@ -287,32 +284,29 @@ public class StratifiedFlowNodeTest {
     double totalWallContact = gasWallContact + liquidWallContact;
     double pipeCircumference = Math.PI * pipe.getDiameter();
 
-    logger.printf(org.apache.logging.log4j.Level.INFO,
-        "Gas fraction: %.4f, Liquid fraction: %.4f%n", gasFraction, liquidFraction);
-    logger.printf(org.apache.logging.log4j.Level.INFO,
-        "Gas wall contact: %.6f m, Liquid wall contact: %.6f m%n", gasWallContact,
-        liquidWallContact);
-    logger.printf(org.apache.logging.log4j.Level.INFO,
-        "Total wall contact: %.6f m, Pipe circumference: %.6f m%n", totalWallContact,
-        pipeCircumference);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Gas fraction: %.4f, Liquid fraction: %.4f%n", gasFraction,
+	liquidFraction);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Gas wall contact: %.6f m, Liquid wall contact: %.6f m%n",
+	gasWallContact, liquidWallContact);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Total wall contact: %.6f m, Pipe circumference: %.6f m%n",
+	totalWallContact, pipeCircumference);
 
     // Verify we have two phases
-    org.junit.jupiter.api.Assertions.assertEquals(2, testSystem.getNumberOfPhases(),
-        "Should have two phases");
+    org.junit.jupiter.api.Assertions.assertEquals(2, testSystem.getNumberOfPhases(), "Should have two phases");
 
     // Gas fraction should be dominant (about 88%)
     org.junit.jupiter.api.Assertions.assertTrue(gasFraction > 0.8,
-        "Gas should be the dominant phase, got " + gasFraction);
+	"Gas should be the dominant phase, got " + gasFraction);
 
     // Gas wall contact should be positive and larger than liquid wall contact
     org.junit.jupiter.api.Assertions.assertTrue(gasWallContact > 0,
-        "Gas wall contact length should be positive, got " + gasWallContact);
+	"Gas wall contact length should be positive, got " + gasWallContact);
     org.junit.jupiter.api.Assertions.assertTrue(gasWallContact > liquidWallContact,
-        "Gas wall contact should be larger than liquid wall contact since gas is 93% of flow");
+	"Gas wall contact should be larger than liquid wall contact since gas is 93% of flow");
 
     // Total wall contact should equal pipe circumference
     org.junit.jupiter.api.Assertions.assertEquals(pipeCircumference, totalWallContact, 0.001,
-        "Total wall contact should equal pipe circumference");
+	"Total wall contact should equal pipe circumference");
   }
 
   @Test

@@ -184,8 +184,7 @@ public class MechanicalDesignJsonExportTest {
     String json = sysMecDesign.toJson();
 
     // Check discipline categories are present
-    assertTrue(json.contains("Mechanical") || json.contains("mechanical"),
-        "Should have mechanical discipline");
+    assertTrue(json.contains("Mechanical") || json.contains("mechanical"), "Should have mechanical discipline");
   }
 
   @Test
@@ -196,8 +195,7 @@ public class MechanicalDesignJsonExportTest {
     String json = sysMecDesign.toJson();
 
     // Check that equipment names appear in the JSON
-    assertTrue(json.contains("separator") || json.contains("compressor"),
-        "Should have equipment names in list");
+    assertTrue(json.contains("separator") || json.contains("compressor"), "Should have equipment names in list");
   }
 
   @Test
@@ -209,7 +207,7 @@ public class MechanicalDesignJsonExportTest {
 
     // Verify it's the correct subtype
     assertTrue(response instanceof CompressorMechanicalDesignResponse,
-        "Should return CompressorMechanicalDesignResponse");
+	"Should return CompressorMechanicalDesignResponse");
 
     CompressorMechanicalDesignResponse compResponse = (CompressorMechanicalDesignResponse) response;
 
@@ -230,7 +228,7 @@ public class MechanicalDesignJsonExportTest {
 
     // Verify it's the correct subtype
     assertTrue(response instanceof SeparatorMechanicalDesignResponse,
-        "Should return SeparatorMechanicalDesignResponse");
+	"Should return SeparatorMechanicalDesignResponse");
 
     // Verify separator-specific fields are present
     String json = separator.getMechanicalDesign().toJson();
@@ -246,8 +244,7 @@ public class MechanicalDesignJsonExportTest {
     MechanicalDesignResponse response = valve.getMechanicalDesign().getResponse();
 
     // Verify it's the correct subtype
-    assertTrue(response instanceof ValveMechanicalDesignResponse,
-        "Should return ValveMechanicalDesignResponse");
+    assertTrue(response instanceof ValveMechanicalDesignResponse, "Should return ValveMechanicalDesignResponse");
 
     // Verify valve-specific fields are present
     String json = valve.getMechanicalDesign().toJson();
@@ -260,8 +257,8 @@ public class MechanicalDesignJsonExportTest {
   @Test
   public void testSpecializedResponseInheritance() {
     compressor.getMechanicalDesign().calcDesign();
-    CompressorMechanicalDesignResponse response =
-        (CompressorMechanicalDesignResponse) compressor.getMechanicalDesign().getResponse();
+    CompressorMechanicalDesignResponse response = (CompressorMechanicalDesignResponse) compressor.getMechanicalDesign()
+	.getResponse();
 
     // Verify inherited fields from base class are populated
     assertNotNull(response.getName());

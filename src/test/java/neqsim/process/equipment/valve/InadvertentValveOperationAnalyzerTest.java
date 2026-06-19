@@ -37,9 +37,8 @@ public class InadvertentValveOperationAnalyzerTest {
   @Test
   void spuriousCloseOfBlockValve_flagsBlockedOutletAndOverpressure() {
     ThrottlingValve v = buildValve(150.0, 50.0);
-    InadvertentValveOperationResult r =
-        new InadvertentValveOperationAnalyzer(v).setRole(ValveRole.BLOCK)
-            .setMode(IvoMode.SPURIOUS_CLOSE).setDesignPressure(100.0, "bara").analyze();
+    InadvertentValveOperationResult r = new InadvertentValveOperationAnalyzer(v).setRole(ValveRole.BLOCK)
+	.setMode(IvoMode.SPURIOUS_CLOSE).setDesignPressure(100.0, "bara").analyze();
 
     assertNotNull(r);
     assertTrue(r.isBlockedOutlet());
@@ -51,9 +50,8 @@ public class InadvertentValveOperationAnalyzerTest {
   @Test
   void spuriousOpenOfBypass_intoLowPressureSegment_flagsOverpressure() {
     ThrottlingValve v = buildValve(150.0, 145.0);
-    InadvertentValveOperationResult r =
-        new InadvertentValveOperationAnalyzer(v).setRole(ValveRole.BYPASS)
-            .setMode(IvoMode.SPURIOUS_OPEN).setDownstreamDesignPressure(50.0, "bara").analyze();
+    InadvertentValveOperationResult r = new InadvertentValveOperationAnalyzer(v).setRole(ValveRole.BYPASS)
+	.setMode(IvoMode.SPURIOUS_OPEN).setDownstreamDesignPressure(50.0, "bara").analyze();
 
     assertEquals(3.0, r.getOverpressureFactor(), 1e-6);
     assertEquals(ConsequenceSeverity.SAFETY_CRITICAL, r.getSeverity());
@@ -63,9 +61,8 @@ public class InadvertentValveOperationAnalyzerTest {
   @Test
   void psvIsolationValveClosed_flagsLossOfReliefPath() {
     ThrottlingValve v = buildValve(60.0, 59.0);
-    InadvertentValveOperationResult r =
-        new InadvertentValveOperationAnalyzer(v).setRole(ValveRole.PSV_ISOLATION)
-            .setMode(IvoMode.SPURIOUS_CLOSE).setDesignPressure(80.0, "bara").analyze();
+    InadvertentValveOperationResult r = new InadvertentValveOperationAnalyzer(v).setRole(ValveRole.PSV_ISOLATION)
+	.setMode(IvoMode.SPURIOUS_CLOSE).setDesignPressure(80.0, "bara").analyze();
 
     assertTrue(r.isLossOfReliefPath());
     assertEquals(ConsequenceSeverity.SAFETY_CRITICAL, r.getSeverity());
@@ -74,9 +71,8 @@ public class InadvertentValveOperationAnalyzerTest {
   @Test
   void esdStuckOpen_failsToIsolateOnDemand() {
     ThrottlingValve v = buildValve(100.0, 99.0);
-    InadvertentValveOperationResult r =
-        new InadvertentValveOperationAnalyzer(v).setRole(ValveRole.ESD).setMode(IvoMode.STUCK_OPEN)
-            .setDesignPressure(110.0, "bara").analyze();
+    InadvertentValveOperationResult r = new InadvertentValveOperationAnalyzer(v).setRole(ValveRole.ESD)
+	.setMode(IvoMode.STUCK_OPEN).setDesignPressure(110.0, "bara").analyze();
 
     assertTrue(r.isFailureToIsolateOnDemand());
     assertEquals(ConsequenceSeverity.SAFETY_CRITICAL, r.getSeverity());
@@ -85,9 +81,8 @@ public class InadvertentValveOperationAnalyzerTest {
   @Test
   void checkValveStuckOpen_flagsReverseFlow() {
     ThrottlingValve v = buildValve(50.0, 49.0);
-    InadvertentValveOperationResult r =
-        new InadvertentValveOperationAnalyzer(v).setRole(ValveRole.CHECK)
-            .setMode(IvoMode.STUCK_OPEN).setDesignPressure(70.0, "bara").analyze();
+    InadvertentValveOperationResult r = new InadvertentValveOperationAnalyzer(v).setRole(ValveRole.CHECK)
+	.setMode(IvoMode.STUCK_OPEN).setDesignPressure(70.0, "bara").analyze();
 
     assertTrue(r.isReverseFlowRisk());
     assertEquals(ConsequenceSeverity.MAJOR, r.getSeverity());
@@ -96,25 +91,22 @@ public class InadvertentValveOperationAnalyzerTest {
   @Test
   void defaultFrequencyAppliedWhenNotOverridden() {
     ThrottlingValve v = buildValve(60.0, 50.0);
-    InadvertentValveOperationResult spurious =
-        new InadvertentValveOperationAnalyzer(v).setRole(ValveRole.BLOCK)
-            .setMode(IvoMode.SPURIOUS_CLOSE).setDesignPressure(80.0, "bara").analyze();
-    assertEquals(InadvertentValveOperationAnalyzer.DEFAULT_SPURIOUS_FREQUENCY_PER_YEAR,
-        spurious.getFrequencyPerYear(), 1e-12);
+    InadvertentValveOperationResult spurious = new InadvertentValveOperationAnalyzer(v).setRole(ValveRole.BLOCK)
+	.setMode(IvoMode.SPURIOUS_CLOSE).setDesignPressure(80.0, "bara").analyze();
+    assertEquals(InadvertentValveOperationAnalyzer.DEFAULT_SPURIOUS_FREQUENCY_PER_YEAR, spurious.getFrequencyPerYear(),
+	1e-12);
 
-    InadvertentValveOperationResult stuck =
-        new InadvertentValveOperationAnalyzer(v).setRole(ValveRole.ESD).setMode(IvoMode.STUCK_OPEN)
-            .setDesignPressure(80.0, "bara").analyze();
-    assertEquals(InadvertentValveOperationAnalyzer.DEFAULT_STUCK_FREQUENCY_PER_YEAR,
-        stuck.getFrequencyPerYear(), 1e-12);
+    InadvertentValveOperationResult stuck = new InadvertentValveOperationAnalyzer(v).setRole(ValveRole.ESD)
+	.setMode(IvoMode.STUCK_OPEN).setDesignPressure(80.0, "bara").analyze();
+    assertEquals(InadvertentValveOperationAnalyzer.DEFAULT_STUCK_FREQUENCY_PER_YEAR, stuck.getFrequencyPerYear(),
+	1e-12);
   }
 
   @Test
   void resultToJsonContainsKeyFields() {
     ThrottlingValve v = buildValve(80.0, 60.0);
-    InadvertentValveOperationResult r = new InadvertentValveOperationAnalyzer(v)
-        .setRole(ValveRole.BLOCK).setMode(IvoMode.SPURIOUS_CLOSE).setDesignPressure(70.0, "bara")
-        .setFrequencyPerYear(0.05).analyze();
+    InadvertentValveOperationResult r = new InadvertentValveOperationAnalyzer(v).setRole(ValveRole.BLOCK)
+	.setMode(IvoMode.SPURIOUS_CLOSE).setDesignPressure(70.0, "bara").setFrequencyPerYear(0.05).analyze();
     String json = r.toJson();
     assertNotNull(json);
     assertTrue(json.contains("\"valveName\""));
@@ -126,8 +118,7 @@ public class InadvertentValveOperationAnalyzerTest {
   @Test
   void convenienceMethodOnThrottlingValveReturnsResult() {
     ThrottlingValve v = buildValve(120.0, 100.0);
-    InadvertentValveOperationResult r =
-        v.analyseInadvertentOperation(ValveRole.BLOCK, IvoMode.SPURIOUS_CLOSE, 110.0);
+    InadvertentValveOperationResult r = v.analyseInadvertentOperation(ValveRole.BLOCK, IvoMode.SPURIOUS_CLOSE, 110.0);
     assertNotNull(r);
     assertEquals("XV-100", r.getValveName());
     assertEquals(ValveRole.BLOCK, r.getRole());

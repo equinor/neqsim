@@ -43,8 +43,7 @@ class Standard_GPA2145Test extends neqsim.NeqSimTest {
     standard.calculate();
     double molarMass = standard.getValue("molarMass");
     // Methane dominant gas: should be around 17-20 g/mol
-    assertTrue(molarMass > 16.0 && molarMass < 22.0,
-        "Molar mass should be 16-22 g/mol but was " + molarMass);
+    assertTrue(molarMass > 16.0 && molarMass < 22.0, "Molar mass should be 16-22 g/mol but was " + molarMass);
   }
 
   /**

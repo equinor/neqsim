@@ -11,10 +11,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * Loads mechanical design limits from a CSV file. The file is expected to contain the columns
- * {@code EQUIPMENTTYPE}, {@code COMPANY}, {@code MAXPRESSURE}, {@code MINPRESSURE},
- * {@code MAXTEMPERATURE}, {@code MINTEMPERATURE}, {@code CORROSIONALLOWANCE}, and
- * {@code JOINTEFFICIENCY}. Column order is flexible as long as the header matches.
+ * Loads mechanical design limits from a CSV file. The file is expected to contain the columns {@code EQUIPMENTTYPE},
+ * {@code COMPANY}, {@code MAXPRESSURE}, {@code MINPRESSURE}, {@code MAXTEMPERATURE}, {@code MINTEMPERATURE},
+ * {@code CORROSIONALLOWANCE}, and {@code JOINTEFFICIENCY}. Column order is flexible as long as the header matches.
  */
 public class CsvMechanicalDesignDataSource implements MechanicalDesignDataSource {
   private static final Logger logger = LogManager.getLogger(CsvMechanicalDesignDataSource.class);
@@ -26,8 +25,7 @@ public class CsvMechanicalDesignDataSource implements MechanicalDesignDataSource
   }
 
   @Override
-  public Optional<DesignLimitData> getDesignLimits(String equipmentTypeName,
-      String companyIdentifier) {
+  public Optional<DesignLimitData> getDesignLimits(String equipmentTypeName, String companyIdentifier) {
     if (csvPath == null) {
       return Optional.empty();
     }
@@ -43,23 +41,23 @@ public class CsvMechanicalDesignDataSource implements MechanicalDesignDataSource
     try (BufferedReader reader = Files.newBufferedReader(csvPath)) {
       String header = reader.readLine();
       if (header == null) {
-        return Optional.empty();
+	return Optional.empty();
       }
       String[] columns = header.split(",");
       ColumnIndex index = ColumnIndex.from(columns);
       String line;
       while ((line = reader.readLine()) != null) {
-        String[] tokens = line.split(",");
-        if (tokens.length < index.requiredLength()) {
-          continue;
-        }
-        if (!normalize(tokens[index.equipmentTypeIndex]).equals(normalizedEquipment)) {
-          continue;
-        }
-        if (!normalize(tokens[index.companyIndex]).equals(normalizedCompany)) {
-          continue;
-        }
-        return Optional.of(parse(tokens, index));
+	String[] tokens = line.split(",");
+	if (tokens.length < index.requiredLength()) {
+	  continue;
+	}
+	if (!normalize(tokens[index.equipmentTypeIndex]).equals(normalizedEquipment)) {
+	  continue;
+	}
+	if (!normalize(tokens[index.companyIndex]).equals(normalizedCompany)) {
+	  continue;
+	}
+	return Optional.of(parse(tokens, index));
       }
     } catch (IOException ex) {
       logger.error("Failed to read mechanical design CSV {}", csvPath, ex);
@@ -103,9 +101,8 @@ public class CsvMechanicalDesignDataSource implements MechanicalDesignDataSource
     private final int corrosionAllowanceIndex;
     private final int jointEfficiencyIndex;
 
-    private ColumnIndex(int equipmentTypeIndex, int companyIndex, int maxPressureIndex,
-        int minPressureIndex, int maxTemperatureIndex, int minTemperatureIndex,
-        int corrosionAllowanceIndex, int jointEfficiencyIndex) {
+    private ColumnIndex(int equipmentTypeIndex, int companyIndex, int maxPressureIndex, int minPressureIndex,
+	int maxTemperatureIndex, int minTemperatureIndex, int corrosionAllowanceIndex, int jointEfficiencyIndex) {
       this.equipmentTypeIndex = equipmentTypeIndex;
       this.companyIndex = companyIndex;
       this.maxPressureIndex = maxPressureIndex;
@@ -125,21 +122,22 @@ public class CsvMechanicalDesignDataSource implements MechanicalDesignDataSource
       int minTemperature = indexOf(columns, "MINTEMPERATURE");
       int corrosionAllowance = indexOf(columns, "CORROSIONALLOWANCE");
       int jointEfficiency = indexOf(columns, "JOINTEFFICIENCY");
-      return new ColumnIndex(equipment, company, maxPressure, minPressure, maxTemperature,
-          minTemperature, corrosionAllowance, jointEfficiency);
+      return new ColumnIndex(equipment, company, maxPressure, minPressure, maxTemperature, minTemperature,
+	  corrosionAllowance, jointEfficiency);
     }
 
     int requiredLength() {
-      return Math.max(Math.max(Math.max(Math.max(Math.max(Math.max(Math.max(equipmentTypeIndex,
-          companyIndex), maxPressureIndex), minPressureIndex), maxTemperatureIndex),
-          minTemperatureIndex), corrosionAllowanceIndex), jointEfficiencyIndex) + 1;
+      return Math.max(Math.max(Math.max(
+	  Math.max(Math.max(Math.max(Math.max(equipmentTypeIndex, companyIndex), maxPressureIndex), minPressureIndex),
+	      maxTemperatureIndex),
+	  minTemperatureIndex), corrosionAllowanceIndex), jointEfficiencyIndex) + 1;
     }
 
     private static int indexOf(String[] columns, String name) {
       for (int i = 0; i < columns.length; i++) {
-        if (name.equalsIgnoreCase(columns[i].trim())) {
-          return i;
-        }
+	if (name.equalsIgnoreCase(columns[i].trim())) {
+	  return i;
+	}
       }
       return -1;
     }

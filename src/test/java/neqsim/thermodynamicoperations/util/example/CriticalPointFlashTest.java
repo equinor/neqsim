@@ -34,12 +34,12 @@ public class CriticalPointFlashTest {
     assertDoesNotThrow(new Executable() {
       @Override
       public void execute() {
-        testOps.calcCricondenBar();
+	testOps.calcCricondenBar();
       }
     });
 
     assertTrue(testSystem.getPressure("bara") > 0.0,
-        "System pressure should remain physically valid after cricondenbar calculation");
+	"System pressure should remain physically valid after cricondenbar calculation");
   }
 
   @Test
@@ -55,11 +55,11 @@ public class CriticalPointFlashTest {
     assertDoesNotThrow(new Executable() {
       @Override
       public void execute() {
-        testOps.criticalPointFlash();
+	testOps.criticalPointFlash();
       }
     });
 
     assertTrue(testSystem.getPressure("bara") > 0.0,
-        "System pressure should remain physically valid after critical point flash calculation");
+	"System pressure should remain physically valid after critical point flash calculation");
   }
 }

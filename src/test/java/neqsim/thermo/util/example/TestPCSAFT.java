@@ -21,7 +21,7 @@ public class TestPCSAFT {
   private static final Logger logger = LogManager.getLogger(TestPCSAFT.class);
 
   /** Logger object for class. */
-  
+
   /**
    * <p>
    * main.
@@ -75,6 +75,6 @@ public class TestPCSAFT {
     logger.info("fugacity gas" + testSystem.getPhase(0).getFugacity(0));
     logger.info("fugacity liquid" + testSystem.getPhase(1).getFugacity(0));
     logger.info("K " + testSystem.getPhase(1).getComponent(0).getFugacityCoefficient()
-        / testSystem.getPhase(0).getComponent(0).getFugacityCoefficient());
+	/ testSystem.getPhase(0).getComponent(0).getFugacityCoefficient());
   }
 }

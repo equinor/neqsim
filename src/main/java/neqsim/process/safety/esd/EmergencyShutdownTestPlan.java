@@ -16,10 +16,9 @@ import neqsim.process.safety.ProcessSafetyScenario;
  * Configuration for one emergency shutdown dynamic test.
  *
  * <p>
- * A plan combines the process disturbance, enabled and triggered logic sequences, monitored
- * tagreader or automation signals, document references, and acceptance criteria. It is
- * intentionally plant-agnostic so public NeqSim models can use logical tags while private historian
- * tag names stay in the {@link OperationalTagMap} supplied by the caller.
+ * A plan combines the process disturbance, enabled and triggered logic sequences, monitored tagreader or automation
+ * signals, document references, and acceptance criteria. It is intentionally plant-agnostic so public NeqSim models can
+ * use logical tags while private historian tag names stay in the {@link OperationalTagMap} supplied by the caller.
  * </p>
  *
  * @author NeqSim contributors
@@ -59,20 +58,14 @@ public final class EmergencyShutdownTestPlan implements Serializable {
     initializeSteadyState = builder.initializeSteadyState;
     tagMap = builder.tagMap == null ? new OperationalTagMap() : builder.tagMap;
     fieldData = Collections.unmodifiableMap(new LinkedHashMap<String, Double>(builder.fieldData));
-    criteria = Collections
-        .unmodifiableList(new ArrayList<EmergencyShutdownTestCriterion>(builder.criteria));
-    enabledLogicNames =
-        Collections.unmodifiableList(new ArrayList<String>(builder.enabledLogicNames));
-    triggerLogicNames =
-        Collections.unmodifiableList(new ArrayList<String>(builder.triggerLogicNames));
+    criteria = Collections.unmodifiableList(new ArrayList<EmergencyShutdownTestCriterion>(builder.criteria));
+    enabledLogicNames = Collections.unmodifiableList(new ArrayList<String>(builder.enabledLogicNames));
+    triggerLogicNames = Collections.unmodifiableList(new ArrayList<String>(builder.triggerLogicNames));
     monitoredLogicalTags = Collections.unmodifiableSet(collectMonitoredTags(builder));
     monitoredUnits = Collections.unmodifiableMap(collectMonitorUnits(builder));
-    evidenceReferences =
-        Collections.unmodifiableList(new ArrayList<String>(builder.evidenceReferences));
-    standardReferences =
-        Collections.unmodifiableList(new ArrayList<String>(builder.standardReferences));
-    defaultFieldComparisonToleranceFraction =
-        Math.max(0.0, builder.defaultFieldComparisonToleranceFraction);
+    evidenceReferences = Collections.unmodifiableList(new ArrayList<String>(builder.evidenceReferences));
+    standardReferences = Collections.unmodifiableList(new ArrayList<String>(builder.standardReferences));
+    defaultFieldComparisonToleranceFraction = Math.max(0.0, builder.defaultFieldComparisonToleranceFraction);
   }
 
   /**
@@ -239,12 +232,12 @@ public final class EmergencyShutdownTestPlan implements Serializable {
     Set<String> tags = new LinkedHashSet<String>(builder.monitoredLogicalTags);
     if (builder.tagMap != null) {
       for (OperationalTagBinding binding : builder.tagMap.getBindings()) {
-        tags.add(binding.getLogicalTag());
+	tags.add(binding.getLogicalTag());
       }
     }
     for (EmergencyShutdownTestCriterion criterion : builder.criteria) {
       if (!criterion.getLogicalTag().isEmpty()) {
-        tags.add(criterion.getLogicalTag());
+	tags.add(criterion.getLogicalTag());
       }
     }
     return tags;
@@ -260,14 +253,14 @@ public final class EmergencyShutdownTestPlan implements Serializable {
     Map<String, String> units = new LinkedHashMap<String, String>(builder.monitoredUnits);
     if (builder.tagMap != null) {
       for (OperationalTagBinding binding : builder.tagMap.getBindings()) {
-        if (!binding.getUnit().isEmpty()) {
-          units.put(binding.getLogicalTag(), binding.getUnit());
-        }
+	if (!binding.getUnit().isEmpty()) {
+	  units.put(binding.getLogicalTag(), binding.getUnit());
+	}
       }
     }
     for (EmergencyShutdownTestCriterion criterion : builder.criteria) {
       if (!criterion.getLogicalTag().isEmpty() && !criterion.getUnit().isEmpty()) {
-        units.put(criterion.getLogicalTag(), criterion.getUnit());
+	units.put(criterion.getLogicalTag(), criterion.getUnit());
       }
     }
     return units;
@@ -276,7 +269,7 @@ public final class EmergencyShutdownTestPlan implements Serializable {
   /**
    * Requires a positive numeric value.
    *
-   * @param value value to validate
+   * @param value     value to validate
    * @param fieldName field name for error messages
    * @return validated value
    */
@@ -290,7 +283,7 @@ public final class EmergencyShutdownTestPlan implements Serializable {
   /**
    * Requires a non-empty text value.
    *
-   * @param text text value
+   * @param text      text value
    * @param fieldName field name for error messages
    * @return trimmed text
    */
@@ -312,8 +305,7 @@ public final class EmergencyShutdownTestPlan implements Serializable {
     private boolean initializeSteadyState = true;
     private OperationalTagMap tagMap = new OperationalTagMap();
     private final Map<String, Double> fieldData = new LinkedHashMap<String, Double>();
-    private final List<EmergencyShutdownTestCriterion> criteria =
-        new ArrayList<EmergencyShutdownTestCriterion>();
+    private final List<EmergencyShutdownTestCriterion> criteria = new ArrayList<EmergencyShutdownTestCriterion>();
     private final List<String> enabledLogicNames = new ArrayList<String>();
     private final List<String> triggerLogicNames = new ArrayList<String>();
     private final Set<String> monitoredLogicalTags = new LinkedHashSet<String>();
@@ -400,13 +392,13 @@ public final class EmergencyShutdownTestPlan implements Serializable {
     /**
      * Adds field data from tagreader or a saved historian snapshot.
      *
-     * @param tag logical or historian tag
+     * @param tag   logical or historian tag
      * @param value field value
      * @return this builder
      */
     public Builder fieldData(String tag, double value) {
       if (tag != null && !tag.trim().isEmpty()) {
-        fieldData.put(tag.trim(), value);
+	fieldData.put(tag.trim(), value);
       }
       return this;
     }
@@ -419,11 +411,11 @@ public final class EmergencyShutdownTestPlan implements Serializable {
      */
     public Builder fieldData(Map<String, Double> values) {
       if (values != null) {
-        for (Map.Entry<String, Double> entry : values.entrySet()) {
-          if (entry.getValue() != null) {
-            fieldData(entry.getKey(), entry.getValue().doubleValue());
-          }
-        }
+	for (Map.Entry<String, Double> entry : values.entrySet()) {
+	  if (entry.getValue() != null) {
+	    fieldData(entry.getKey(), entry.getValue().doubleValue());
+	  }
+	}
       }
       return this;
     }
@@ -436,7 +428,7 @@ public final class EmergencyShutdownTestPlan implements Serializable {
      */
     public Builder criterion(EmergencyShutdownTestCriterion criterion) {
       if (criterion != null) {
-        criteria.add(criterion);
+	criteria.add(criterion);
       }
       return this;
     }
@@ -467,16 +459,16 @@ public final class EmergencyShutdownTestPlan implements Serializable {
      * Adds a monitored logical tag or direct automation address.
      *
      * @param logicalTag logical tag or automation address
-     * @param unit engineering unit
+     * @param unit       engineering unit
      * @return this builder
      */
     public Builder monitor(String logicalTag, String unit) {
       if (logicalTag != null && !logicalTag.trim().isEmpty()) {
-        String key = logicalTag.trim();
-        monitoredLogicalTags.add(key);
-        if (unit != null && !unit.trim().isEmpty()) {
-          monitoredUnits.put(key, unit.trim());
-        }
+	String key = logicalTag.trim();
+	monitoredLogicalTags.add(key);
+	if (unit != null && !unit.trim().isEmpty()) {
+	  monitoredUnits.put(key, unit.trim());
+	}
       }
       return this;
     }
@@ -527,11 +519,11 @@ public final class EmergencyShutdownTestPlan implements Serializable {
      * Adds non-empty text to a list.
      *
      * @param target target list
-     * @param value text value
+     * @param value  text value
      */
     private static void addText(List<String> target, String value) {
       if (value != null && !value.trim().isEmpty()) {
-        target.add(value.trim());
+	target.add(value.trim());
       }
     }
   }

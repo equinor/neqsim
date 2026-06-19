@@ -7,17 +7,16 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Regression tests verifying that {@link Mixer} conserves mass even when two inlet streams carry a
- * component with the same name but a different molar mass (e.g. independently characterized
- * pseudo/plus-fractions).
+ * Regression tests verifying that {@link Mixer} conserves mass even when two inlet streams carry a component with the
+ * same name but a different molar mass (e.g. independently characterized pseudo/plus-fractions).
  *
  * @author ESOL
  */
 class MixerMassConservationTest {
 
   /**
-   * Two inlets carry a component with the SAME name and the SAME molar mass. Total outlet mass must
-   * equal the sum of the inlet masses.
+   * Two inlets carry a component with the SAME name and the SAME molar mass. Total outlet mass must equal the sum of
+   * the inlet masses.
    */
   @Test
   void testMassConservedSameMolarMass() {
@@ -55,9 +54,8 @@ class MixerMassConservationTest {
   }
 
   /**
-   * Base stream (stream 0) is MISSING a pseudo-component that a later inlet carries. The component
-   * gets added to the mixed stream via the new-component path. Total outlet mass must still equal
-   * the sum of the inlet masses.
+   * Base stream (stream 0) is MISSING a pseudo-component that a later inlet carries. The component gets added to the
+   * mixed stream via the new-component path. Total outlet mass must still equal the sum of the inlet masses.
    */
   @Test
   void testMassConservedBaseMissingComponent() {
@@ -95,9 +93,9 @@ class MixerMassConservationTest {
   }
 
   /**
-   * Two inlets carry a component with the SAME name ("C7") but a DIFFERENT molar mass (two
-   * independent characterizations). Without molar-mass scaling, moles are conserved but mass is
-   * not. The mixer must scale moles so total outlet mass equals the sum of the inlet masses.
+   * Two inlets carry a component with the SAME name ("C7") but a DIFFERENT molar mass (two independent
+   * characterizations). Without molar-mass scaling, moles are conserved but mass is not. The mixer must scale moles so
+   * total outlet mass equals the sum of the inlet masses.
    */
   @Test
   void testMassConservedDifferentMolarMass() {

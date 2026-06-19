@@ -43,7 +43,7 @@ public abstract class Standard extends NamedBaseClass implements StandardInterfa
   /**
    * Constructor for Standard.
    *
-   * @param name name of standard
+   * @param name        name of standard
    * @param description description
    */
   public Standard(String name, String description) {
@@ -54,8 +54,8 @@ public abstract class Standard extends NamedBaseClass implements StandardInterfa
   /**
    * Constructor for Standard.
    *
-   * @param name name of standard
-   * @param thermoSyst input fluid
+   * @param name        name of standard
+   * @param thermoSyst  input fluid
    * @param description description of standard
    */
   public Standard(String name, String description, SystemInterface thermoSyst) {
@@ -131,7 +131,7 @@ public abstract class Standard extends NamedBaseClass implements StandardInterfa
 
     for (int i = 0; i < thermoSystem.getPhases()[0].getNumberOfComponents() + 30; i++) {
       for (int j = 0; j < 6; j++) {
-        table[i][j] = "";
+	table[i][j] = "";
       }
     }
     for (int i = 0; i < thermoSystem.getNumberOfPhases(); i++) {
@@ -142,12 +142,11 @@ public abstract class Standard extends NamedBaseClass implements StandardInterfa
     FieldPosition test = new FieldPosition(0);
     for (int i = 0; i < thermoSystem.getNumberOfPhases(); i++) {
       for (int j = 0; j < thermoSystem.getPhases()[0].getNumberOfComponents(); j++) {
-        table[j + 1][0] = thermoSystem.getPhases()[0].getComponent(j).getName();
-        buf = new StringBuffer();
-        table[j + 1][i + 1] =
-            nf.format(thermoSystem.getPhase(thermoSystem.getPhaseIndex(i)).getComponent(j).getx(),
-                buf, test).toString();
-        table[j + 1][4] = "[-]";
+	table[j + 1][0] = thermoSystem.getPhases()[0].getComponent(j).getName();
+	buf = new StringBuffer();
+	table[j + 1][i + 1] = nf
+	    .format(thermoSystem.getPhase(thermoSystem.getPhaseIndex(i)).getComponent(j).getx(), buf, test).toString();
+	table[j + 1][4] = "[-]";
       }
     }
 
@@ -163,7 +162,7 @@ public abstract class Standard extends NamedBaseClass implements StandardInterfa
     Container dialogContentPane = dialog.getContentPane();
     dialogContentPane.setLayout(new BorderLayout());
 
-    String[] names = {"", "Phase 1", "Phase 2", "Phase 3", "Unit"};
+    String[] names = { "", "Phase 1", "Phase 2", "Phase 3", "Unit" };
     String[][] table = createTable(name);
     JTable Jtab = new JTable(table, names);
     JScrollPane scrollpane = new JScrollPane(Jtab);

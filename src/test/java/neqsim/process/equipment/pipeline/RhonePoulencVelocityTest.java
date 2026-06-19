@@ -27,8 +27,7 @@ public class RhonePoulencVelocityTest {
     @Test
     @DisplayName("Non-corrosive gas: power-law formula at various densities")
     void testNonCorrosivePowerLaw() {
-      RhonePoulencVelocity calc =
-          new RhonePoulencVelocity(RhonePoulencVelocity.ServiceType.NON_CORROSIVE_GAS);
+      RhonePoulencVelocity calc = new RhonePoulencVelocity(RhonePoulencVelocity.ServiceType.NON_CORROSIVE_GAS);
 
       // At density=1 kg/m3: V = 60 * 1^(-0.44) = 60 m/s (upper limit)
       assertEquals(60.0, calc.getMaxVelocity(1.0), 0.1);
@@ -49,43 +48,38 @@ public class RhonePoulencVelocityTest {
     @Test
     @DisplayName("Corrosive gas: lower velocity limits")
     void testCorrosivePowerLaw() {
-      RhonePoulencVelocity calc =
-          new RhonePoulencVelocity(RhonePoulencVelocity.ServiceType.CORROSIVE_GAS);
+      RhonePoulencVelocity calc = new RhonePoulencVelocity(RhonePoulencVelocity.ServiceType.CORROSIVE_GAS);
 
       // At density=1 kg/m3: V = 30 * 1^(-0.44) = 30 m/s (upper limit)
       assertEquals(30.0, calc.getMaxVelocity(1.0), 0.1);
 
       // Corrosive should always be less than non-corrosive
-      RhonePoulencVelocity nonCorrosive =
-          new RhonePoulencVelocity(RhonePoulencVelocity.ServiceType.NON_CORROSIVE_GAS);
-      double[] densities = {1.0, 5.0, 10.0, 50.0, 100.0, 300.0};
+      RhonePoulencVelocity nonCorrosive = new RhonePoulencVelocity(RhonePoulencVelocity.ServiceType.NON_CORROSIVE_GAS);
+      double[] densities = { 1.0, 5.0, 10.0, 50.0, 100.0, 300.0 };
       for (double rho : densities) {
-        assertTrue(calc.getMaxVelocity(rho) <= nonCorrosive.getMaxVelocity(rho),
-            "Corrosive velocity should be <= non-corrosive at density=" + rho);
+	assertTrue(calc.getMaxVelocity(rho) <= nonCorrosive.getMaxVelocity(rho),
+	    "Corrosive velocity should be <= non-corrosive at density=" + rho);
       }
     }
 
     @Test
     @DisplayName("Velocity decreases monotonically with increasing density")
     void testMonotonicDecrease() {
-      RhonePoulencVelocity calc =
-          new RhonePoulencVelocity(RhonePoulencVelocity.ServiceType.NON_CORROSIVE_GAS);
+      RhonePoulencVelocity calc = new RhonePoulencVelocity(RhonePoulencVelocity.ServiceType.NON_CORROSIVE_GAS);
 
       double prevVelocity = Double.MAX_VALUE;
-      double[] densities = {0.5, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0, 100.0, 200.0, 500.0, 1000.0};
+      double[] densities = { 0.5, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0, 100.0, 200.0, 500.0, 1000.0 };
       for (double rho : densities) {
-        double v = calc.getMaxVelocity(rho);
-        assertTrue(v <= prevVelocity,
-            "Velocity should decrease with density: at rho=" + rho + " got v=" + v);
-        prevVelocity = v;
+	double v = calc.getMaxVelocity(rho);
+	assertTrue(v <= prevVelocity, "Velocity should decrease with density: at rho=" + rho + " got v=" + v);
+	prevVelocity = v;
       }
     }
 
     @Test
     @DisplayName("Log-log interpolation matches tabulated data points")
     void testInterpolationMatchesTable() {
-      RhonePoulencVelocity calc =
-          new RhonePoulencVelocity(RhonePoulencVelocity.ServiceType.NON_CORROSIVE_GAS);
+      RhonePoulencVelocity calc = new RhonePoulencVelocity(RhonePoulencVelocity.ServiceType.NON_CORROSIVE_GAS);
       calc.setUseInterpolation(true);
 
       // Exact table points should return exact values
@@ -103,14 +97,12 @@ public class RhonePoulencVelocityTest {
     @Test
     @DisplayName("Interpolated values between table points are reasonable")
     void testInterpolationBetweenPoints() {
-      RhonePoulencVelocity calc =
-          new RhonePoulencVelocity(RhonePoulencVelocity.ServiceType.NON_CORROSIVE_GAS);
+      RhonePoulencVelocity calc = new RhonePoulencVelocity(RhonePoulencVelocity.ServiceType.NON_CORROSIVE_GAS);
       calc.setUseInterpolation(true);
 
       // Between 10 and 20 kg/m3: should be between 16 and 22 m/s
       double v15 = calc.getMaxVelocity(15.0);
-      assertTrue(v15 > 16.0 && v15 < 22.0,
-          "At 15 kg/m3, expected between 16-22 m/s but got " + v15);
+      assertTrue(v15 > 16.0 && v15 < 22.0, "At 15 kg/m3, expected between 16-22 m/s but got " + v15);
 
       // Between 50 and 100 kg/m3: should be between 8 and 11 m/s
       double v75 = calc.getMaxVelocity(75.0);
@@ -152,8 +144,7 @@ public class RhonePoulencVelocityTest {
     @Test
     @DisplayName("Description string contains key information")
     void testDescription() {
-      RhonePoulencVelocity calc =
-          new RhonePoulencVelocity(RhonePoulencVelocity.ServiceType.CORROSIVE_GAS);
+      RhonePoulencVelocity calc = new RhonePoulencVelocity(RhonePoulencVelocity.ServiceType.CORROSIVE_GAS);
       String desc = calc.getDescription();
 
       assertTrue(desc.contains("Rhone-Poulenc"), "Should mention Rhone-Poulenc");
@@ -240,8 +231,7 @@ public class RhonePoulencVelocityTest {
 
       // Max allowable should use Rhone-Poulenc
       double maxAllowable = pipe.getMaxAllowableVelocity();
-      assertEquals(rpMaxVel, maxAllowable, 0.001,
-          "Max allowable should equal Rhone-Poulenc velocity when enabled");
+      assertEquals(rpMaxVel, maxAllowable, 0.001, "Max allowable should equal Rhone-Poulenc velocity when enabled");
 
       // FIV analysis should contain Rhone-Poulenc info
       java.util.Map<String, Object> fivAnalysis = pipe.getFIVAnalysis();
@@ -283,7 +273,7 @@ public class RhonePoulencVelocityTest {
       double corrosiveVel = pipe.getRhonePoulencMaxVelocity();
 
       assertTrue(nonCorrosiveVel > corrosiveVel, "Non-corrosive max velocity (" + nonCorrosiveVel
-          + ") should be higher than corrosive (" + corrosiveVel + ")");
+	  + ") should be higher than corrosive (" + corrosiveVel + ")");
     }
   }
 
@@ -328,8 +318,7 @@ public class RhonePoulencVelocityTest {
 
       assertTrue(erosionalVel > 0, "Erosional velocity should be positive");
       assertTrue(rpMaxVel > 0, "Rhone-Poulenc max velocity should be positive");
-      assertEquals(rpMaxVel, maxAllowable, 0.001,
-          "Max allowable should use Rhone-Poulenc when enabled");
+      assertEquals(rpMaxVel, maxAllowable, 0.001, "Max allowable should use Rhone-Poulenc when enabled");
       assertEquals("RHONE_POULENC", pipe.getMaxVelocityMethod());
 
       // FIV analysis should include Rhone-Poulenc info
@@ -371,7 +360,7 @@ public class RhonePoulencVelocityTest {
       double maxAllowable = pipe.getMaxAllowableVelocity();
 
       assertEquals(erosionalVel, maxAllowable, 0.001,
-          "Without Rhone-Poulenc, max allowable should equal erosional velocity");
+	  "Without Rhone-Poulenc, max allowable should equal erosional velocity");
       assertEquals("API_RP_14E", pipe.getMaxVelocityMethod());
     }
 
@@ -408,8 +397,7 @@ public class RhonePoulencVelocityTest {
 
       double rpMaxVel = pipe.getRhonePoulencMaxVelocity();
       assertTrue(rpMaxVel > 0, "Interpolated Rhone-Poulenc velocity should be positive");
-      assertTrue(pipe.getRhonePoulencCalculator().isUseInterpolation(),
-          "Interpolation mode should be active");
+      assertTrue(pipe.getRhonePoulencCalculator().isUseInterpolation(), "Interpolation mode should be active");
     }
   }
 }

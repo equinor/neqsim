@@ -56,7 +56,7 @@ public interface SeparatorInterface extends SimulationInterface {
    * Set heat input to the separator with specified unit.
    *
    * @param heatInput heat duty value
-   * @param unit heat duty unit (W, kW, MW, J/s, etc.)
+   * @param unit      heat duty unit (W, kW, MW, J/s, etc.)
    */
   public void setHeatInput(double heatInput, String unit);
 

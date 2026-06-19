@@ -7,8 +7,8 @@ import neqsim.process.fielddevelopment.screening.FlowAssuranceResult;
  * Represents a specific tie-back option evaluated by the TiebackAnalyzer.
  *
  * <p>
- * A TiebackOption encapsulates all the technical and economic parameters for connecting a satellite
- * field to a host facility. It includes:
+ * A TiebackOption encapsulates all the technical and economic parameters for connecting a satellite field to a host
+ * facility. It includes:
  * </p>
  * <ul>
  * <li><b>Technical parameters</b>: Distance, pipeline size, flow assurance requirements</li>
@@ -197,7 +197,7 @@ public class TiebackOption implements Serializable, Comparable<TiebackOption> {
    * Creates a new tieback option.
    *
    * @param discoveryName name of the satellite field
-   * @param hostName name of the host facility
+   * @param hostName      name of the host facility
    */
   public TiebackOption(String discoveryName, String hostName) {
     this.discoveryName = discoveryName;
@@ -219,8 +219,8 @@ public class TiebackOption implements Serializable, Comparable<TiebackOption> {
    * @return total CAPEX in MUSD
    */
   public double calculateTotalCapex() {
-    this.totalCapexMusd = subseaCapexMusd + pipelineCapexMusd + umbilicalCapexMusd
-        + drillingCapexMusd + hostModificationCapexMusd;
+    this.totalCapexMusd = subseaCapexMusd + pipelineCapexMusd + umbilicalCapexMusd + drillingCapexMusd
+	+ hostModificationCapexMusd;
     return totalCapexMusd;
   }
 
@@ -242,7 +242,7 @@ public class TiebackOption implements Serializable, Comparable<TiebackOption> {
    */
   public boolean hasFlowAssuranceIssues() {
     return hydrateResult == FlowAssuranceResult.FAIL || waxResult == FlowAssuranceResult.FAIL
-        || corrosionResult == FlowAssuranceResult.FAIL;
+	|| corrosionResult == FlowAssuranceResult.FAIL;
   }
 
   /**
@@ -252,11 +252,11 @@ public class TiebackOption implements Serializable, Comparable<TiebackOption> {
    */
   public FlowAssuranceResult getOverallFlowAssuranceResult() {
     if (hydrateResult == FlowAssuranceResult.FAIL || waxResult == FlowAssuranceResult.FAIL
-        || corrosionResult == FlowAssuranceResult.FAIL) {
+	|| corrosionResult == FlowAssuranceResult.FAIL) {
       return FlowAssuranceResult.FAIL;
     }
     if (hydrateResult == FlowAssuranceResult.MARGINAL || waxResult == FlowAssuranceResult.MARGINAL
-        || corrosionResult == FlowAssuranceResult.MARGINAL) {
+	|| corrosionResult == FlowAssuranceResult.MARGINAL) {
       return FlowAssuranceResult.MARGINAL;
     }
     return FlowAssuranceResult.PASS;
@@ -318,23 +318,22 @@ public class TiebackOption implements Serializable, Comparable<TiebackOption> {
     if (routeSummary != null && !routeSummary.isEmpty()) {
       sb.append("Route: ").append(routeSummary).append("\n");
     }
-    sb.append(String.format("Production: %.2f %s, Field life: %.1f years\n", maxProductionRate,
-        rateUnit, fieldLifeYears));
+    sb.append(
+	String.format("Production: %.2f %s, Field life: %.1f years\n", maxProductionRate, rateUnit, fieldLifeYears));
     sb.append(String.format("CAPEX: %.0f MUSD (%.1f MUSD/km)\n", totalCapexMusd, getCapexPerKm()));
-    sb.append(String.format("NPV: %.0f MUSD, IRR: %.1f%%, Payback: %.1f years\n", npvMusd,
-        irr * 100, paybackYears));
-    sb.append(String.format("Arrival: %.1f bara, %.1f C, hydraulic=%s\n", arrivalPressureBara,
-        arrivalTemperatureC, hydraulicFeasible ? "PASS" : "CHECK"));
-    sb.append(String.format("Flow Assurance: Hydrate=%s, Wax=%s, Corrosion=%s\n", hydrateResult,
-        waxResult, corrosionResult));
+    sb.append(String.format("NPV: %.0f MUSD, IRR: %.1f%%, Payback: %.1f years\n", npvMusd, irr * 100, paybackYears));
+    sb.append(String.format("Arrival: %.1f bara, %.1f C, hydraulic=%s\n", arrivalPressureBara, arrivalTemperatureC,
+	hydraulicFeasible ? "PASS" : "CHECK"));
+    sb.append(
+	String.format("Flow Assurance: Hydrate=%s, Wax=%s, Corrosion=%s\n", hydrateResult, waxResult, corrosionResult));
     sb.append(String.format("Feasible: %s", feasible ? "YES" : "NO - " + infeasibilityReason));
     return sb.toString();
   }
 
   @Override
   public String toString() {
-    return String.format("TiebackOption[%s, %.0fkm, NPV=%.0f MUSD, %s]", optionId, distanceKm,
-        npvMusd, feasible ? "FEASIBLE" : "INFEASIBLE");
+    return String.format("TiebackOption[%s, %.0fkm, NPV=%.0f MUSD, %s]", optionId, distanceKm, npvMusd,
+	feasible ? "FEASIBLE" : "INFEASIBLE");
   }
 
   // ============================================================================

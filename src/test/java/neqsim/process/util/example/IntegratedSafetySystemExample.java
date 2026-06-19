@@ -70,8 +70,7 @@ public class IntegratedSafetySystemExample {
     private boolean activated = false;
     private boolean voting2oo2 = true; // 2 out of 2 voting for higher integrity
 
-    public HIPPSController(String name, PressureTransmitter pt1, PressureTransmitter pt2,
-        ThrottlingValve valve) {
+    public HIPPSController(String name, PressureTransmitter pt1, PressureTransmitter pt2, ThrottlingValve valve) {
       super(name);
       this.pt1 = pt1;
       this.pt2 = pt2;
@@ -84,22 +83,22 @@ public class IntegratedSafetySystemExample {
 
       // 2oo2 voting logic (both must detect high pressure)
       if (voting2oo2) {
-        if (p1 >= HIPPS_ACTIVATION_PRESSURE && p2 >= HIPPS_ACTIVATION_PRESSURE) {
-          if (!activated) {
-            logger.info(">>> HIPPS ACTIVATED (SIL-3) - Both pressure sensors confirm <<<");
-            activated = true;
-          }
-          hippsValve.setPercentValveOpening(0.0); // Close immediately
-        }
+	if (p1 >= HIPPS_ACTIVATION_PRESSURE && p2 >= HIPPS_ACTIVATION_PRESSURE) {
+	  if (!activated) {
+	    logger.info(">>> HIPPS ACTIVATED (SIL-3) - Both pressure sensors confirm <<<");
+	    activated = true;
+	  }
+	  hippsValve.setPercentValveOpening(0.0); // Close immediately
+	}
       } else {
-        // 1oo2 voting (either sensor can trigger - less safe but more available)
-        if (p1 >= HIPPS_ACTIVATION_PRESSURE || p2 >= HIPPS_ACTIVATION_PRESSURE) {
-          if (!activated) {
-            logger.info(">>> HIPPS ACTIVATED (SIL-3) - Pressure sensor triggered <<<");
-            activated = true;
-          }
-          hippsValve.setPercentValveOpening(0.0);
-        }
+	// 1oo2 voting (either sensor can trigger - less safe but more available)
+	if (p1 >= HIPPS_ACTIVATION_PRESSURE || p2 >= HIPPS_ACTIVATION_PRESSURE) {
+	  if (!activated) {
+	    logger.info(">>> HIPPS ACTIVATED (SIL-3) - Pressure sensor triggered <<<");
+	    activated = true;
+	  }
+	  hippsValve.setPercentValveOpening(0.0);
+	}
       }
     }
 
@@ -124,8 +123,8 @@ public class IntegratedSafetySystemExample {
     private BlowdownValve blowdownValve;
     private boolean activated = false;
 
-    public ESDController(String name, PressureTransmitter pt, TemperatureTransmitter tt,
-        PushButton manual, ThrottlingValve esdValve, BlowdownValve bdValve) {
+    public ESDController(String name, PressureTransmitter pt, TemperatureTransmitter tt, PushButton manual,
+	ThrottlingValve esdValve, BlowdownValve bdValve) {
       super(name);
       this.pressureMonitor = pt;
       this.tempMonitor = tt;
@@ -140,23 +139,23 @@ public class IntegratedSafetySystemExample {
 
       // ESD activation conditions (SIL-2)
       if (!activated) {
-        if (pressure >= HIGH_HIGH_PRESSURE_ALARM) {
-          logger.info(">>> ESD ACTIVATED (SIL-2) - High-High Pressure <<<");
-          activated = true;
-        } else if (temperature >= FIRE_DETECTION_TEMPERATURE) {
-          logger.info(">>> ESD ACTIVATED (SIL-2) - Fire Detected <<<");
-          activated = true;
-        } else if (manualESD.isPushed()) {
-          logger.info(">>> ESD ACTIVATED (SIL-2) - Manual Push Button <<<");
-          activated = true;
-        }
+	if (pressure >= HIGH_HIGH_PRESSURE_ALARM) {
+	  logger.info(">>> ESD ACTIVATED (SIL-2) - High-High Pressure <<<");
+	  activated = true;
+	} else if (temperature >= FIRE_DETECTION_TEMPERATURE) {
+	  logger.info(">>> ESD ACTIVATED (SIL-2) - Fire Detected <<<");
+	  activated = true;
+	} else if (manualESD.isPushed()) {
+	  logger.info(">>> ESD ACTIVATED (SIL-2) - Manual Push Button <<<");
+	  activated = true;
+	}
       }
 
       if (activated) {
-        esdValve.setPercentValveOpening(0.0); // Close inlet valve
-        if (!blowdownValve.isActivated()) {
-          blowdownValve.activate(); // Open blowdown valve
-        }
+	esdValve.setPercentValveOpening(0.0); // Close inlet valve
+	if (!blowdownValve.isActivated()) {
+	  blowdownValve.activate(); // Open blowdown valve
+	}
       }
     }
 
@@ -185,14 +184,14 @@ public class IntegratedSafetySystemExample {
     public void monitor() {
       int fireCount = 0;
       for (TemperatureTransmitter sensor : tempSensors) {
-        if (sensor.getMeasuredValue() >= FIRE_DETECTION_TEMPERATURE) {
-          fireCount++;
-        }
+	if (sensor.getMeasuredValue() >= FIRE_DETECTION_TEMPERATURE) {
+	  fireCount++;
+	}
       }
 
       if (fireCount >= sensorVoting && !fireDetected) {
-        logger.info(">>> FIRE DETECTED - " + fireCount + " sensors confirm <<<");
-        fireDetected = true;
+	logger.info(">>> FIRE DETECTED - " + fireCount + " sensors confirm <<<");
+	fireDetected = true;
       }
     }
 
@@ -266,7 +265,7 @@ public class IntegratedSafetySystemExample {
 
     // Splitter for process/blowdown routing
     Splitter gasSplitter = new Splitter("Gas Splitter", separatorGasOut, 2);
-    gasSplitter.setSplitFactors(new double[] {1.0, 0.0});
+    gasSplitter.setSplitFactors(new double[] { 1.0, 0.0 });
 
     Stream processStream = new Stream("To Process", gasSplitter.getSplitStream(0));
     Stream blowdownStream = new Stream("To Blowdown", gasSplitter.getSplitStream(1));
@@ -300,51 +299,45 @@ public class IntegratedSafetySystemExample {
     flare.setTipDiameter(1.0);
 
     // Initialize controllers
-    HIPPSController hippsController =
-        new HIPPSController("HIPPS-Logic-001", hippsPT1, hippsPT2, hippsValve);
+    HIPPSController hippsController = new HIPPSController("HIPPS-Logic-001", hippsPT1, hippsPT2, hippsValve);
 
     BlowdownValve bdValveForESD = bdValve; // Reference for ESD controller
-    ESDController esdController = new ESDController("ESD-Logic-201", separatorPT, separatorTT,
-        esdButton, esdInletValve, bdValveForESD);
+    ESDController esdController = new ESDController("ESD-Logic-201", separatorPT, separatorTT, esdButton, esdInletValve,
+	bdValveForESD);
 
-    FireDetectionSystem fireSystem =
-        new FireDetectionSystem(new TemperatureTransmitter[] {fireTT1, fireTT2, fireTT3}, 2);
+    FireDetectionSystem fireSystem = new FireDetectionSystem(new TemperatureTransmitter[] { fireTT1, fireTT2, fireTT3 },
+	2);
 
     // Print system configuration
     printSystemConfiguration();
 
     // Run scenarios
-    runScenario1_NormalOperation(highPressureFeed, hippsValve, esdInletValve, separatorInlet,
-        separator, separatorGasOut, gasSplitter, processStream, blowdownStream, bdValve, psv,
-        psvOutlet, flareHeader, flareHeaderOutlet, flare, hippsPT1, hippsPT2, separatorPT,
-        separatorTT, hippsController, esdController, fireSystem);
+    runScenario1_NormalOperation(highPressureFeed, hippsValve, esdInletValve, separatorInlet, separator,
+	separatorGasOut, gasSplitter, processStream, blowdownStream, bdValve, psv, psvOutlet, flareHeader,
+	flareHeaderOutlet, flare, hippsPT1, hippsPT2, separatorPT, separatorTT, hippsController, esdController,
+	fireSystem);
 
     // Reset system
-    resetSystem(hippsValve, esdInletValve, gasSplitter, bdValve, separator, hippsController,
-        esdController, esdButton);
+    resetSystem(hippsValve, esdInletValve, gasSplitter, bdValve, separator, hippsController, esdController, esdButton);
 
-    runScenario2_HIPPSActivation(highPressureFeed, hippsValve, esdInletValve, separatorInlet,
-        separator, separatorGasOut, gasSplitter, processStream, blowdownStream, bdValve, psv,
-        psvOutlet, flareHeader, flareHeaderOutlet, flare, hippsPT1, hippsPT2, separatorPT,
-        separatorTT, hippsController, esdController, fireSystem);
-
-    // Reset system
-    resetSystem(hippsValve, esdInletValve, gasSplitter, bdValve, separator, hippsController,
-        esdController, esdButton);
-
-    runScenario3_ESDAndBlowdown(highPressureFeed, hippsValve, esdInletValve, separatorInlet,
-        separator, separatorGasOut, gasSplitter, processStream, blowdownStream, bdValve, psv,
-        psvOutlet, flareHeader, flareHeaderOutlet, flare, hippsPT1, hippsPT2, separatorPT,
-        separatorTT, hippsController, esdController, fireSystem, esdButton);
+    runScenario2_HIPPSActivation(highPressureFeed, hippsValve, esdInletValve, separatorInlet, separator,
+	separatorGasOut, gasSplitter, processStream, blowdownStream, bdValve, psv, psvOutlet, flareHeader,
+	flareHeaderOutlet, flare, hippsPT1, hippsPT2, separatorPT, separatorTT, hippsController, esdController,
+	fireSystem);
 
     // Reset system
-    resetSystem(hippsValve, esdInletValve, gasSplitter, bdValve, separator, hippsController,
-        esdController, esdButton);
+    resetSystem(hippsValve, esdInletValve, gasSplitter, bdValve, separator, hippsController, esdController, esdButton);
 
-    runScenario4_PSVRelief(highPressureFeed, hippsValve, esdInletValve, separatorInlet, separator,
-        separatorGasOut, gasSplitter, processStream, blowdownStream, bdValve, psv, psvOutlet,
-        flareHeader, flareHeaderOutlet, flare, hippsPT1, hippsPT2, separatorPT, separatorTT,
-        hippsController, esdController, fireSystem);
+    runScenario3_ESDAndBlowdown(highPressureFeed, hippsValve, esdInletValve, separatorInlet, separator, separatorGasOut,
+	gasSplitter, processStream, blowdownStream, bdValve, psv, psvOutlet, flareHeader, flareHeaderOutlet, flare,
+	hippsPT1, hippsPT2, separatorPT, separatorTT, hippsController, esdController, fireSystem, esdButton);
+
+    // Reset system
+    resetSystem(hippsValve, esdInletValve, gasSplitter, bdValve, separator, hippsController, esdController, esdButton);
+
+    runScenario4_PSVRelief(highPressureFeed, hippsValve, esdInletValve, separatorInlet, separator, separatorGasOut,
+	gasSplitter, processStream, blowdownStream, bdValve, psv, psvOutlet, flareHeader, flareHeaderOutlet, flare,
+	hippsPT1, hippsPT2, separatorPT, separatorTT, hippsController, esdController, fireSystem);
 
     logger.info("\n╔════════════════════════════════════════════════════════════════╗");
     logger.info("║     ALL SAFETY SCENARIOS COMPLETED                             ║");
@@ -361,8 +354,7 @@ public class IntegratedSafetySystemExample {
 
     logger.info("SAFETY LAYERS (Defense in Depth):");
     logger.info("1. High Pressure Alarm (SIL-1): " + HIGH_PRESSURE_ALARM + " bara");
-    System.out
-        .println("2. High-High Pressure / ESD (SIL-2): " + HIGH_HIGH_PRESSURE_ALARM + " bara");
+    System.out.println("2. High-High Pressure / ESD (SIL-2): " + HIGH_HIGH_PRESSURE_ALARM + " bara");
     logger.info("3. HIPPS Protection (SIL-3): " + HIPPS_ACTIVATION_PRESSURE + " bara");
     logger.info("4. PSV Relief (Mechanical): " + PSV_SET_PRESSURE + " bara");
 
@@ -375,37 +367,35 @@ public class IntegratedSafetySystemExample {
   /**
    * Scenario 1: Normal operation with monitoring.
    *
-   * @param highPressureFeed high pressure feed stream
-   * @param hippsValve HIPPS valve
-   * @param esdInletValve ESD inlet valve
-   * @param separatorInlet separator inlet stream
-   * @param separator separator equipment
-   * @param separatorGasOut separator gas outlet stream
-   * @param gasSplitter gas splitter
-   * @param processStream process stream
-   * @param blowdownStream blowdown stream
-   * @param bdValve blowdown valve
-   * @param psv pressure safety valve
-   * @param psvOutlet PSV outlet stream
-   * @param flareHeader flare header mixer
+   * @param highPressureFeed  high pressure feed stream
+   * @param hippsValve        HIPPS valve
+   * @param esdInletValve     ESD inlet valve
+   * @param separatorInlet    separator inlet stream
+   * @param separator         separator equipment
+   * @param separatorGasOut   separator gas outlet stream
+   * @param gasSplitter       gas splitter
+   * @param processStream     process stream
+   * @param blowdownStream    blowdown stream
+   * @param bdValve           blowdown valve
+   * @param psv               pressure safety valve
+   * @param psvOutlet         PSV outlet stream
+   * @param flareHeader       flare header mixer
    * @param flareHeaderOutlet flare header outlet stream
-   * @param flare flare equipment
-   * @param hippsPT1 HIPPS pressure transmitter 1
-   * @param hippsPT2 HIPPS pressure transmitter 2
-   * @param separatorPT separator pressure transmitter
-   * @param separatorTT separator temperature transmitter
-   * @param hippsController HIPPS controller
-   * @param esdController ESD controller
-   * @param fireSystem fire detection system
+   * @param flare             flare equipment
+   * @param hippsPT1          HIPPS pressure transmitter 1
+   * @param hippsPT2          HIPPS pressure transmitter 2
+   * @param separatorPT       separator pressure transmitter
+   * @param separatorTT       separator temperature transmitter
+   * @param hippsController   HIPPS controller
+   * @param esdController     ESD controller
+   * @param fireSystem        fire detection system
    */
-  private static void runScenario1_NormalOperation(Stream highPressureFeed,
-      ThrottlingValve hippsValve, ThrottlingValve esdInletValve, Stream separatorInlet,
-      Separator separator, Stream separatorGasOut, Splitter gasSplitter, Stream processStream,
-      Stream blowdownStream, BlowdownValve bdValve, SafetyValve psv, Stream psvOutlet,
-      Mixer flareHeader, Stream flareHeaderOutlet, Flare flare, PressureTransmitter hippsPT1,
-      PressureTransmitter hippsPT2, PressureTransmitter separatorPT,
-      TemperatureTransmitter separatorTT, HIPPSController hippsController,
-      ESDController esdController, FireDetectionSystem fireSystem) {
+  private static void runScenario1_NormalOperation(Stream highPressureFeed, ThrottlingValve hippsValve,
+      ThrottlingValve esdInletValve, Stream separatorInlet, Separator separator, Stream separatorGasOut,
+      Splitter gasSplitter, Stream processStream, Stream blowdownStream, BlowdownValve bdValve, SafetyValve psv,
+      Stream psvOutlet, Mixer flareHeader, Stream flareHeaderOutlet, Flare flare, PressureTransmitter hippsPT1,
+      PressureTransmitter hippsPT2, PressureTransmitter separatorPT, TemperatureTransmitter separatorTT,
+      HIPPSController hippsController, ESDController esdController, FireDetectionSystem fireSystem) {
     logger.info("╔════════════════════════════════════════════════════════════════╗");
     logger.info("║     SCENARIO 1: NORMAL OPERATION                               ║");
     logger.info("╚════════════════════════════════════════════════════════════════╝\n");
@@ -414,9 +404,8 @@ public class IntegratedSafetySystemExample {
     highPressureFeed.setPressure(55.0, "bara");
 
     // Run system
-    runSystem(highPressureFeed, hippsValve, esdInletValve, separatorInlet, separator,
-        separatorGasOut, gasSplitter, processStream, blowdownStream, bdValve, psv, psvOutlet,
-        flareHeader, flareHeaderOutlet, flare);
+    runSystem(highPressureFeed, hippsValve, esdInletValve, separatorInlet, separator, separatorGasOut, gasSplitter,
+	processStream, blowdownStream, bdValve, psv, psvOutlet, flareHeader, flareHeaderOutlet, flare);
 
     // Run controllers
     hippsController.runController(1.0);
@@ -426,62 +415,58 @@ public class IntegratedSafetySystemExample {
     // Report status
     logger.info("═══ NORMAL OPERATION STATUS ═══");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Feed pressure: %.1f bara%n",
-        highPressureFeed.getPressure("bara"));
-    logger.printf(org.apache.logging.log4j.Level.INFO, "HIPPS PT-101A: %.2f bara%n",
-        hippsPT1.getMeasuredValue());
-    logger.printf(org.apache.logging.log4j.Level.INFO, "HIPPS PT-101B: %.2f bara%n",
-        hippsPT2.getMeasuredValue());
+	highPressureFeed.getPressure("bara"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "HIPPS PT-101A: %.2f bara%n", hippsPT1.getMeasuredValue());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "HIPPS PT-101B: %.2f bara%n", hippsPT2.getMeasuredValue());
     logger.printf(org.apache.logging.log4j.Level.INFO, "Separator pressure (PT-301): %.2f bara%n",
-        separatorPT.getMeasuredValue());
+	separatorPT.getMeasuredValue());
     logger.printf(org.apache.logging.log4j.Level.INFO, "Separator temperature (TT-301): %.1f C%n",
-        separatorTT.getMeasuredValue());
+	separatorTT.getMeasuredValue());
     logger.printf(org.apache.logging.log4j.Level.INFO, "Process flow: %.1f kg/hr%n",
-        processStream.getFlowRate("kg/hr"));
+	processStream.getFlowRate("kg/hr"));
     logger.printf(org.apache.logging.log4j.Level.INFO, "HIPPS status: %s%n",
-        hippsController.isActivated() ? "ACTIVATED" : "NORMAL");
+	hippsController.isActivated() ? "ACTIVATED" : "NORMAL");
     logger.printf(org.apache.logging.log4j.Level.INFO, "ESD status: %s%n",
-        esdController.isActivated() ? "ACTIVATED" : "NORMAL");
+	esdController.isActivated() ? "ACTIVATED" : "NORMAL");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Fire detection: %s%n",
-        fireSystem.isFireDetected() ? "FIRE" : "NORMAL");
+	fireSystem.isFireDetected() ? "FIRE" : "NORMAL");
     logger.printf(org.apache.logging.log4j.Level.INFO, "PSV status: %s (%.1f%% open)%n",
-        psv.getPercentValveOpening() > 0 ? "RELIEVING" : "CLOSED", psv.getPercentValveOpening());
+	psv.getPercentValveOpening() > 0 ? "RELIEVING" : "CLOSED", psv.getPercentValveOpening());
     logger.info("\n✓ All systems operating normally\n");
   }
 
   /**
    * Scenario 2: HIPPS activation due to high pressure.
    *
-   * @param highPressureFeed High pressure feed stream
-   * @param hippsValve HIPPS valve
-   * @param esdInletValve ESD inlet valve
-   * @param separatorInlet Separator inlet stream
-   * @param separator Separator vessel
-   * @param separatorGasOut Separator gas outlet
-   * @param gasSplitter Gas stream splitter
-   * @param processStream Process stream
-   * @param blowdownStream Blowdown stream
-   * @param bdValve Blowdown valve
-   * @param psv Pressure safety valve
-   * @param psvOutlet PSV outlet stream
-   * @param flareHeader Flare header mixer
+   * @param highPressureFeed  High pressure feed stream
+   * @param hippsValve        HIPPS valve
+   * @param esdInletValve     ESD inlet valve
+   * @param separatorInlet    Separator inlet stream
+   * @param separator         Separator vessel
+   * @param separatorGasOut   Separator gas outlet
+   * @param gasSplitter       Gas stream splitter
+   * @param processStream     Process stream
+   * @param blowdownStream    Blowdown stream
+   * @param bdValve           Blowdown valve
+   * @param psv               Pressure safety valve
+   * @param psvOutlet         PSV outlet stream
+   * @param flareHeader       Flare header mixer
    * @param flareHeaderOutlet Flare header outlet
-   * @param flare Flare system
-   * @param hippsPT1 HIPPS pressure transmitter 1
-   * @param hippsPT2 HIPPS pressure transmitter 2
-   * @param separatorPT Separator pressure transmitter
-   * @param separatorTT Separator temperature transmitter
-   * @param hippsController HIPPS controller
-   * @param esdController ESD controller
-   * @param fireSystem Fire and gas detection system
+   * @param flare             Flare system
+   * @param hippsPT1          HIPPS pressure transmitter 1
+   * @param hippsPT2          HIPPS pressure transmitter 2
+   * @param separatorPT       Separator pressure transmitter
+   * @param separatorTT       Separator temperature transmitter
+   * @param hippsController   HIPPS controller
+   * @param esdController     ESD controller
+   * @param fireSystem        Fire and gas detection system
    */
-  private static void runScenario2_HIPPSActivation(Stream highPressureFeed,
-      ThrottlingValve hippsValve, ThrottlingValve esdInletValve, Stream separatorInlet,
-      Separator separator, Stream separatorGasOut, Splitter gasSplitter, Stream processStream,
-      Stream blowdownStream, BlowdownValve bdValve, SafetyValve psv, Stream psvOutlet,
-      Mixer flareHeader, Stream flareHeaderOutlet, Flare flare, PressureTransmitter hippsPT1,
-      PressureTransmitter hippsPT2, PressureTransmitter separatorPT,
-      TemperatureTransmitter separatorTT, HIPPSController hippsController,
-      ESDController esdController, FireDetectionSystem fireSystem) {
+  private static void runScenario2_HIPPSActivation(Stream highPressureFeed, ThrottlingValve hippsValve,
+      ThrottlingValve esdInletValve, Stream separatorInlet, Separator separator, Stream separatorGasOut,
+      Splitter gasSplitter, Stream processStream, Stream blowdownStream, BlowdownValve bdValve, SafetyValve psv,
+      Stream psvOutlet, Mixer flareHeader, Stream flareHeaderOutlet, Flare flare, PressureTransmitter hippsPT1,
+      PressureTransmitter hippsPT2, PressureTransmitter separatorPT, TemperatureTransmitter separatorTT,
+      HIPPSController hippsController, ESDController esdController, FireDetectionSystem fireSystem) {
     logger.info("╔════════════════════════════════════════════════════════════════╗");
     logger.info("║     SCENARIO 2: HIPPS ACTIVATION (SIL-3)                       ║");
     logger.info("╚════════════════════════════════════════════════════════════════╝\n");
@@ -496,23 +481,19 @@ public class IntegratedSafetySystemExample {
     for (double time = 0; time <= 15.0; time += 1.0) {
       // Gradually close HIPPS valve if activated
       if (hippsController.isActivated() && hippsValve.getPercentValveOpening() > 0) {
-        double newOpening =
-            Math.max(0, hippsValve.getPercentValveOpening() - 100.0 / HIPPS_CLOSURE_TIME);
-        hippsValve.setPercentValveOpening(newOpening);
+	double newOpening = Math.max(0, hippsValve.getPercentValveOpening() - 100.0 / HIPPS_CLOSURE_TIME);
+	hippsValve.setPercentValveOpening(newOpening);
       }
 
-      runSystem(highPressureFeed, hippsValve, esdInletValve, separatorInlet, separator,
-          separatorGasOut, gasSplitter, processStream, blowdownStream, bdValve, psv, psvOutlet,
-          flareHeader, flareHeaderOutlet, flare);
+      runSystem(highPressureFeed, hippsValve, esdInletValve, separatorInlet, separator, separatorGasOut, gasSplitter,
+	  processStream, blowdownStream, bdValve, psv, psvOutlet, flareHeader, flareHeaderOutlet, flare);
 
       hippsController.runController(1.0);
       esdController.runController(1.0);
 
-      logger.printf(org.apache.logging.log4j.Level.INFO,
-          "%8.1f | %6.1f | %10.1f%% | %5.1f | %12s | %10s%n", time,
-          highPressureFeed.getPressure("bara"), hippsValve.getPercentValveOpening(),
-          separatorPT.getMeasuredValue(), hippsController.isActivated() ? "ACTIVATED" : "NORMAL",
-          esdController.isActivated() ? "ACTIVATED" : "NORMAL");
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%8.1f | %6.1f | %10.1f%% | %5.1f | %12s | %10s%n", time,
+	  highPressureFeed.getPressure("bara"), hippsValve.getPercentValveOpening(), separatorPT.getMeasuredValue(),
+	  hippsController.isActivated() ? "ACTIVATED" : "NORMAL", esdController.isActivated() ? "ACTIVATED" : "NORMAL");
     }
 
     logger.info("\n✓ HIPPS successfully prevented overpressure (SIL-3 protection)\n");
@@ -521,38 +502,37 @@ public class IntegratedSafetySystemExample {
   /**
    * Scenario 3: ESD activation and blowdown.
    *
-   * @param highPressureFeed High pressure feed stream
-   * @param hippsValve HIPPS valve
-   * @param esdInletValve ESD inlet valve
-   * @param separatorInlet Separator inlet stream
-   * @param separator Separator vessel
-   * @param separatorGasOut Separator gas outlet
-   * @param gasSplitter Gas stream splitter
-   * @param processStream Process stream
-   * @param blowdownStream Blowdown stream
-   * @param bdValve Blowdown valve
-   * @param psv Pressure safety valve
-   * @param psvOutlet PSV outlet stream
-   * @param flareHeader Flare header mixer
+   * @param highPressureFeed  High pressure feed stream
+   * @param hippsValve        HIPPS valve
+   * @param esdInletValve     ESD inlet valve
+   * @param separatorInlet    Separator inlet stream
+   * @param separator         Separator vessel
+   * @param separatorGasOut   Separator gas outlet
+   * @param gasSplitter       Gas stream splitter
+   * @param processStream     Process stream
+   * @param blowdownStream    Blowdown stream
+   * @param bdValve           Blowdown valve
+   * @param psv               Pressure safety valve
+   * @param psvOutlet         PSV outlet stream
+   * @param flareHeader       Flare header mixer
    * @param flareHeaderOutlet Flare header outlet
-   * @param flare Flare system
-   * @param hippsPT1 HIPPS pressure transmitter 1
-   * @param hippsPT2 HIPPS pressure transmitter 2
-   * @param separatorPT Separator pressure transmitter
-   * @param separatorTT Separator temperature transmitter
-   * @param hippsController HIPPS controller
-   * @param esdController ESD controller
-   * @param fireSystem Fire and gas detection system
-   * @param esdButton ESD push button
+   * @param flare             Flare system
+   * @param hippsPT1          HIPPS pressure transmitter 1
+   * @param hippsPT2          HIPPS pressure transmitter 2
+   * @param separatorPT       Separator pressure transmitter
+   * @param separatorTT       Separator temperature transmitter
+   * @param hippsController   HIPPS controller
+   * @param esdController     ESD controller
+   * @param fireSystem        Fire and gas detection system
+   * @param esdButton         ESD push button
    */
-  private static void runScenario3_ESDAndBlowdown(Stream highPressureFeed,
-      ThrottlingValve hippsValve, ThrottlingValve esdInletValve, Stream separatorInlet,
-      Separator separator, Stream separatorGasOut, Splitter gasSplitter, Stream processStream,
-      Stream blowdownStream, BlowdownValve bdValve, SafetyValve psv, Stream psvOutlet,
-      Mixer flareHeader, Stream flareHeaderOutlet, Flare flare, PressureTransmitter hippsPT1,
-      PressureTransmitter hippsPT2, PressureTransmitter separatorPT,
-      TemperatureTransmitter separatorTT, HIPPSController hippsController,
-      ESDController esdController, FireDetectionSystem fireSystem, PushButton esdButton) {
+  private static void runScenario3_ESDAndBlowdown(Stream highPressureFeed, ThrottlingValve hippsValve,
+      ThrottlingValve esdInletValve, Stream separatorInlet, Separator separator, Stream separatorGasOut,
+      Splitter gasSplitter, Stream processStream, Stream blowdownStream, BlowdownValve bdValve, SafetyValve psv,
+      Stream psvOutlet, Mixer flareHeader, Stream flareHeaderOutlet, Flare flare, PressureTransmitter hippsPT1,
+      PressureTransmitter hippsPT2, PressureTransmitter separatorPT, TemperatureTransmitter separatorTT,
+      HIPPSController hippsController, ESDController esdController, FireDetectionSystem fireSystem,
+      PushButton esdButton) {
     logger.info("╔════════════════════════════════════════════════════════════════╗");
     logger.info("║     SCENARIO 3: ESD ACTIVATION & BLOWDOWN (SIL-2)              ║");
     logger.info("╚════════════════════════════════════════════════════════════════╝\n");
@@ -561,24 +541,21 @@ public class IntegratedSafetySystemExample {
     highPressureFeed.setPressure(55.0, "bara");
 
     // Initialize system
-    runSystem(highPressureFeed, hippsValve, esdInletValve, separatorInlet, separator,
-        separatorGasOut, gasSplitter, processStream, blowdownStream, bdValve, psv, psvOutlet,
-        flareHeader, flareHeaderOutlet, flare);
+    runSystem(highPressureFeed, hippsValve, esdInletValve, separatorInlet, separator, separatorGasOut, gasSplitter,
+	processStream, blowdownStream, bdValve, psv, psvOutlet, flareHeader, flareHeaderOutlet, flare);
 
     // Operator pushes ESD button
     logger.info(">>> OPERATOR ACTIVATES MANUAL ESD <<<\n");
     esdButton.push();
 
     // Switch to blowdown routing
-    gasSplitter.setSplitFactors(new double[] {0.0, 1.0});
+    gasSplitter.setSplitFactors(new double[] { 0.0, 1.0 });
 
     // Switch separator to transient mode
     separator.setCalculateSteadyState(false);
 
-    System.out
-        .println("Time (s) | Sep P | ESD Valve | BD Valve | BD Flow | Flare Heat | Cum Gas BD");
-    System.out
-        .println("---------|-------|-----------|----------|---------|------------|------------");
+    System.out.println("Time (s) | Sep P | ESD Valve | BD Valve | BD Flow | Flare Heat | Cum Gas BD");
+    System.out.println("---------|-------|-----------|----------|---------|------------|------------");
 
     double timeStep = 1.0;
     for (double time = 0; time <= 30.0; time += timeStep) {
@@ -587,14 +564,13 @@ public class IntegratedSafetySystemExample {
 
       // Gradually close ESD valve
       if (esdController.isActivated() && esdInletValve.getPercentValveOpening() > 0) {
-        double newOpening =
-            Math.max(0, esdInletValve.getPercentValveOpening() - 100.0 / ESD_CLOSURE_TIME);
-        esdInletValve.setPercentValveOpening(newOpening);
+	double newOpening = Math.max(0, esdInletValve.getPercentValveOpening() - 100.0 / ESD_CLOSURE_TIME);
+	esdInletValve.setPercentValveOpening(newOpening);
       }
 
       // Control feed based on ESD valve
       if (esdInletValve.getPercentValveOpening() < 1.0) {
-        separatorInlet.getThermoSystem().setTotalFlowRate(0.1, "kg/hr");
+	separatorInlet.getThermoSystem().setTotalFlowRate(0.1, "kg/hr");
       }
 
       // Run system
@@ -614,57 +590,54 @@ public class IntegratedSafetySystemExample {
       flare.run();
       flare.updateCumulative(timeStep);
 
-      logger.printf(org.apache.logging.log4j.Level.INFO,
-          "%8.1f | %5.1f | %8.1f%% | %7.1f%% | %7.0f | %9.2f | %10.1f%n", time,
-          separatorPT.getMeasuredValue(), esdInletValve.getPercentValveOpening(),
-          bdValve.getPercentValveOpening(), blowdownStream.getFlowRate("kg/hr"),
-          flare.getHeatDuty("MW"), flare.getCumulativeGasBurned("kg"));
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%8.1f | %5.1f | %8.1f%% | %7.1f%% | %7.0f | %9.2f | %10.1f%n",
+	  time, separatorPT.getMeasuredValue(), esdInletValve.getPercentValveOpening(),
+	  bdValve.getPercentValveOpening(), blowdownStream.getFlowRate("kg/hr"), flare.getHeatDuty("MW"),
+	  flare.getCumulativeGasBurned("kg"));
     }
 
     logger.info("\n═══ ESD & BLOWDOWN SUMMARY ═══");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Total gas blown down: %.1f kg%n",
-        flare.getCumulativeGasBurned("kg"));
+	flare.getCumulativeGasBurned("kg"));
     logger.printf(org.apache.logging.log4j.Level.INFO, "Total heat released: %.2f GJ%n",
-        flare.getCumulativeHeatReleased("GJ"));
+	flare.getCumulativeHeatReleased("GJ"));
     logger.printf(org.apache.logging.log4j.Level.INFO, "Final separator pressure: %.1f bara%n",
-        separatorPT.getMeasuredValue());
+	separatorPT.getMeasuredValue());
     logger.info("\n✓ ESD and blowdown completed successfully (SIL-2 protection)\n");
   }
 
   /**
    * Scenario 4: PSV relief (final protection layer).
    *
-   * @param highPressureFeed the high pressure feed stream
-   * @param hippsValve the HIPPS valve
-   * @param esdInletValve the ESD inlet valve
-   * @param separatorInlet the separator inlet stream
-   * @param separator the separator equipment
-   * @param separatorGasOut the separator gas outlet stream
-   * @param gasSplitter the gas splitter
-   * @param processStream the main process stream
-   * @param blowdownStream the blowdown stream
-   * @param bdValve the blowdown valve
-   * @param psv the pressure safety valve
-   * @param psvOutlet the PSV outlet stream
-   * @param flareHeader the flare header mixer
+   * @param highPressureFeed  the high pressure feed stream
+   * @param hippsValve        the HIPPS valve
+   * @param esdInletValve     the ESD inlet valve
+   * @param separatorInlet    the separator inlet stream
+   * @param separator         the separator equipment
+   * @param separatorGasOut   the separator gas outlet stream
+   * @param gasSplitter       the gas splitter
+   * @param processStream     the main process stream
+   * @param blowdownStream    the blowdown stream
+   * @param bdValve           the blowdown valve
+   * @param psv               the pressure safety valve
+   * @param psvOutlet         the PSV outlet stream
+   * @param flareHeader       the flare header mixer
    * @param flareHeaderOutlet the flare header outlet stream
-   * @param flare the flare equipment
-   * @param hippsPT1 the first HIPPS pressure transmitter
-   * @param hippsPT2 the second HIPPS pressure transmitter
-   * @param separatorPT the separator pressure transmitter
-   * @param separatorTT the separator temperature transmitter
-   * @param hippsController the HIPPS controller
-   * @param esdController the ESD controller
-   * @param fireSystem the fire detection system
+   * @param flare             the flare equipment
+   * @param hippsPT1          the first HIPPS pressure transmitter
+   * @param hippsPT2          the second HIPPS pressure transmitter
+   * @param separatorPT       the separator pressure transmitter
+   * @param separatorTT       the separator temperature transmitter
+   * @param hippsController   the HIPPS controller
+   * @param esdController     the ESD controller
+   * @param fireSystem        the fire detection system
    */
   private static void runScenario4_PSVRelief(Stream highPressureFeed, ThrottlingValve hippsValve,
-      ThrottlingValve esdInletValve, Stream separatorInlet, Separator separator,
-      Stream separatorGasOut, Splitter gasSplitter, Stream processStream, Stream blowdownStream,
-      BlowdownValve bdValve, SafetyValve psv, Stream psvOutlet, Mixer flareHeader,
-      Stream flareHeaderOutlet, Flare flare, PressureTransmitter hippsPT1,
-      PressureTransmitter hippsPT2, PressureTransmitter separatorPT,
-      TemperatureTransmitter separatorTT, HIPPSController hippsController,
-      ESDController esdController, FireDetectionSystem fireSystem) {
+      ThrottlingValve esdInletValve, Stream separatorInlet, Separator separator, Stream separatorGasOut,
+      Splitter gasSplitter, Stream processStream, Stream blowdownStream, BlowdownValve bdValve, SafetyValve psv,
+      Stream psvOutlet, Mixer flareHeader, Stream flareHeaderOutlet, Flare flare, PressureTransmitter hippsPT1,
+      PressureTransmitter hippsPT2, PressureTransmitter separatorPT, TemperatureTransmitter separatorTT,
+      HIPPSController hippsController, ESDController esdController, FireDetectionSystem fireSystem) {
     logger.info("╔════════════════════════════════════════════════════════════════╗");
     logger.info("║     SCENARIO 4: PSV RELIEF (FINAL PROTECTION)                  ║");
     logger.info("╚════════════════════════════════════════════════════════════════╝\n");
@@ -678,14 +651,12 @@ public class IntegratedSafetySystemExample {
     logger.info("---------|-------|------------|----------|------------");
 
     for (double time = 0; time <= 20.0; time += 1.0) {
-      runSystem(highPressureFeed, hippsValve, esdInletValve, separatorInlet, separator,
-          separatorGasOut, gasSplitter, processStream, blowdownStream, bdValve, psv, psvOutlet,
-          flareHeader, flareHeaderOutlet, flare);
+      runSystem(highPressureFeed, hippsValve, esdInletValve, separatorInlet, separator, separatorGasOut, gasSplitter,
+	  processStream, blowdownStream, bdValve, psv, psvOutlet, flareHeader, flareHeaderOutlet, flare);
 
-      logger.printf(org.apache.logging.log4j.Level.INFO, "%8.1f | %5.1f | %10s | %8.0f | %10.2f%n",
-          time, separatorPT.getMeasuredValue(),
-          psv.getPercentValveOpening() > 0 ? "RELIEVING" : "CLOSED", psvOutlet.getFlowRate("kg/hr"),
-          flare.getHeatDuty("MW"));
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%8.1f | %5.1f | %10s | %8.0f | %10.2f%n", time,
+	  separatorPT.getMeasuredValue(), psv.getPercentValveOpening() > 0 ? "RELIEVING" : "CLOSED",
+	  psvOutlet.getFlowRate("kg/hr"), flare.getHeatDuty("MW"));
     }
 
     logger.info("\n✓ PSV provided final mechanical protection\n");
@@ -694,26 +665,25 @@ public class IntegratedSafetySystemExample {
   /**
    * Run all equipment in the system.
    *
-   * @param highPressureFeed high pressure feed stream
-   * @param hippsValve HIPPS valve
-   * @param esdInletValve ESD inlet valve
-   * @param separatorInlet separator inlet stream
-   * @param separator separator equipment
-   * @param separatorGasOut separator gas outlet stream
-   * @param gasSplitter gas splitter
-   * @param processStream process stream
-   * @param blowdownStream blowdown stream
-   * @param bdValve blowdown valve
-   * @param psv pressure safety valve
-   * @param psvOutlet PSV outlet stream
-   * @param flareHeader flare header mixer
+   * @param highPressureFeed  high pressure feed stream
+   * @param hippsValve        HIPPS valve
+   * @param esdInletValve     ESD inlet valve
+   * @param separatorInlet    separator inlet stream
+   * @param separator         separator equipment
+   * @param separatorGasOut   separator gas outlet stream
+   * @param gasSplitter       gas splitter
+   * @param processStream     process stream
+   * @param blowdownStream    blowdown stream
+   * @param bdValve           blowdown valve
+   * @param psv               pressure safety valve
+   * @param psvOutlet         PSV outlet stream
+   * @param flareHeader       flare header mixer
    * @param flareHeaderOutlet flare header outlet stream
-   * @param flare flare equipment
+   * @param flare             flare equipment
    */
-  private static void runSystem(Stream highPressureFeed, ThrottlingValve hippsValve,
-      ThrottlingValve esdInletValve, Stream separatorInlet, Separator separator,
-      Stream separatorGasOut, Splitter gasSplitter, Stream processStream, Stream blowdownStream,
-      BlowdownValve bdValve, SafetyValve psv, Stream psvOutlet, Mixer flareHeader,
+  private static void runSystem(Stream highPressureFeed, ThrottlingValve hippsValve, ThrottlingValve esdInletValve,
+      Stream separatorInlet, Separator separator, Stream separatorGasOut, Splitter gasSplitter, Stream processStream,
+      Stream blowdownStream, BlowdownValve bdValve, SafetyValve psv, Stream psvOutlet, Mixer flareHeader,
       Stream flareHeaderOutlet, Flare flare) {
     highPressureFeed.run();
     hippsValve.run();
@@ -735,22 +705,22 @@ public class IntegratedSafetySystemExample {
   /**
    * Reset system to normal operation.
    *
-   * @param hippsValve the HIPPS isolation valve to reset
-   * @param esdInletValve the ESD inlet valve to reset
-   * @param gasSplitter the gas splitter to reset split factors
-   * @param bdValve the blowdown valve to reset
-   * @param separator the separator to reset to steady-state calculation
+   * @param hippsValve      the HIPPS isolation valve to reset
+   * @param esdInletValve   the ESD inlet valve to reset
+   * @param gasSplitter     the gas splitter to reset split factors
+   * @param bdValve         the blowdown valve to reset
+   * @param separator       the separator to reset to steady-state calculation
    * @param hippsController the HIPPS controller to reset
-   * @param esdController the ESD controller to reset
-   * @param esdButton the ESD push button to reset
+   * @param esdController   the ESD controller to reset
+   * @param esdButton       the ESD push button to reset
    */
-  private static void resetSystem(ThrottlingValve hippsValve, ThrottlingValve esdInletValve,
-      Splitter gasSplitter, BlowdownValve bdValve, Separator separator,
-      HIPPSController hippsController, ESDController esdController, PushButton esdButton) {
+  private static void resetSystem(ThrottlingValve hippsValve, ThrottlingValve esdInletValve, Splitter gasSplitter,
+      BlowdownValve bdValve, Separator separator, HIPPSController hippsController, ESDController esdController,
+      PushButton esdButton) {
     logger.info(">>> RESETTING SYSTEM FOR NEXT SCENARIO <<<\n");
     hippsValve.setPercentValveOpening(100.0);
     esdInletValve.setPercentValveOpening(100.0);
-    gasSplitter.setSplitFactors(new double[] {1.0, 0.0});
+    gasSplitter.setSplitFactors(new double[] { 1.0, 0.0 });
     bdValve.reset();
     separator.setCalculateSteadyState(true);
     hippsController.reset();

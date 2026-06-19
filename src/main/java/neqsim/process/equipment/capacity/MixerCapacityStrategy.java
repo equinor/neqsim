@@ -36,12 +36,13 @@ public class MixerCapacityStrategy implements EquipmentCapacityStrategy {
   /**
    * Default constructor.
    */
-  public MixerCapacityStrategy() {}
+  public MixerCapacityStrategy() {
+  }
 
   /**
    * Constructor with custom constraints.
    *
-   * @param maxVelocity maximum header velocity (m/s)
+   * @param maxVelocity     maximum header velocity (m/s)
    * @param maxPressureDrop maximum pressure drop (bar)
    */
   public MixerCapacityStrategy(double maxVelocity, double maxPressureDrop) {
@@ -105,15 +106,15 @@ public class MixerCapacityStrategy implements EquipmentCapacityStrategy {
       double minInletPressure = Double.MAX_VALUE;
 
       for (int i = 0; i < mixer.getNumberOfInputStreams(); i++) {
-        double inletP = mixer.getStream(i).getPressure("bara");
-        minInletPressure = Math.min(minInletPressure, inletP);
+	double inletP = mixer.getStream(i).getPressure("bara");
+	minInletPressure = Math.min(minInletPressure, inletP);
       }
 
       // Pressure drop utilization
       if (minInletPressure > 0 && minInletPressure < Double.MAX_VALUE) {
-        double pressureDrop = minInletPressure - outletPressure;
-        double dpUtilization = pressureDrop / maxPressureDrop;
-        maxUtilization = Math.max(maxUtilization, dpUtilization);
+	double pressureDrop = minInletPressure - outletPressure;
+	double dpUtilization = pressureDrop / maxPressureDrop;
+	maxUtilization = Math.max(maxUtilization, dpUtilization);
       }
     }
 
@@ -145,21 +146,18 @@ public class MixerCapacityStrategy implements EquipmentCapacityStrategy {
     }
 
     // Pressure drop constraint
-    CapacityConstraint dpConstraint = new CapacityConstraint("pressureDrop")
-        .setDesignValue(maxPressureDrop).setMaxValue(maxPressureDrop * 1.2).setUnit("bar")
-        .setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
-        .setDescription("Pressure drop across mixer").setValueSupplier(() -> {
-          if (mixer.getOutletStream() != null && mixer.getNumberOfInputStreams() > 0) {
-            double minInletP = Double.MAX_VALUE;
-            for (int i = 0; i < mixer.getNumberOfInputStreams(); i++) {
-              minInletP = Math.min(minInletP, mixer.getStream(i).getPressure("bara"));
-            }
-            return minInletP < Double.MAX_VALUE
-                ? minInletP - mixer.getOutletStream().getPressure("bara")
-                : 0.0;
-          }
-          return 0.0;
-        });
+    CapacityConstraint dpConstraint = new CapacityConstraint("pressureDrop").setDesignValue(maxPressureDrop)
+	.setMaxValue(maxPressureDrop * 1.2).setUnit("bar").setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
+	.setDescription("Pressure drop across mixer").setValueSupplier(() -> {
+	  if (mixer.getOutletStream() != null && mixer.getNumberOfInputStreams() > 0) {
+	    double minInletP = Double.MAX_VALUE;
+	    for (int i = 0; i < mixer.getNumberOfInputStreams(); i++) {
+	      minInletP = Math.min(minInletP, mixer.getStream(i).getPressure("bara"));
+	    }
+	    return minInletP < Double.MAX_VALUE ? minInletP - mixer.getOutletStream().getPressure("bara") : 0.0;
+	  }
+	  return 0.0;
+	});
     constraints.put("pressureDrop", dpConstraint);
 
     return constraints;
@@ -173,7 +171,7 @@ public class MixerCapacityStrategy implements EquipmentCapacityStrategy {
 
     for (CapacityConstraint constraint : constraints.values()) {
       if (constraint.isViolated()) {
-        violations.add(constraint);
+	violations.add(constraint);
       }
     }
     return violations;
@@ -190,8 +188,8 @@ public class MixerCapacityStrategy implements EquipmentCapacityStrategy {
     for (CapacityConstraint constraint : constraints.values()) {
       double util = constraint.getUtilization();
       if (!Double.isNaN(util) && util > maxUtil) {
-        maxUtil = util;
-        bottleneck = constraint;
+	maxUtil = util;
+	bottleneck = constraint;
       }
     }
     return bottleneck;
@@ -204,10 +202,10 @@ public class MixerCapacityStrategy implements EquipmentCapacityStrategy {
 
     for (CapacityConstraint constraint : constraints.values()) {
       if (constraint.getSeverity() == CapacityConstraint.ConstraintSeverity.HARD
-          || constraint.getSeverity() == CapacityConstraint.ConstraintSeverity.CRITICAL) {
-        if (constraint.isHardLimitExceeded()) {
-          return false;
-        }
+	  || constraint.getSeverity() == CapacityConstraint.ConstraintSeverity.CRITICAL) {
+	if (constraint.isHardLimitExceeded()) {
+	  return false;
+	}
       }
     }
     return true;
@@ -220,7 +218,7 @@ public class MixerCapacityStrategy implements EquipmentCapacityStrategy {
 
     for (CapacityConstraint constraint : constraints.values()) {
       if (constraint.getUtilization() > 1.0) {
-        return false;
+	return false;
       }
     }
     return true;

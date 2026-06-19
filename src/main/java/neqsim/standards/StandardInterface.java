@@ -24,7 +24,7 @@ public interface StandardInterface {
    * </p>
    *
    * @param returnParameter a {@link java.lang.String} object
-   * @param returnUnit a {@link java.lang.String} object
+   * @param returnUnit      a {@link java.lang.String} object
    * @return a double
    */
   double getValue(String returnParameter, String returnUnit);

@@ -4,15 +4,14 @@ package neqsim.process.mechanicaldesign.heatexchanger;
  * Shah condensation heat transfer correlation for in-tube and shell-side condensation.
  *
  * <p>
- * Implements the Shah (1979, 2009) correlation for film condensation inside horizontal tubes. This
- * is one of the most widely used correlations for condensation of pure fluids and mixtures in
- * horizontal tubes, validated against a large experimental database spanning refrigerants,
- * hydrocarbons, water, and organic fluids.
+ * Implements the Shah (1979, 2009) correlation for film condensation inside horizontal tubes. This is one of the most
+ * widely used correlations for condensation of pure fluids and mixtures in horizontal tubes, validated against a large
+ * experimental database spanning refrigerants, hydrocarbons, water, and organic fluids.
  * </p>
  *
  * <p>
- * The Shah correlation computes the local condensation coefficient as a function of vapor quality,
- * reduced pressure, and liquid-only Reynolds number:
+ * The Shah correlation computes the local condensation coefficient as a function of vapor quality, reduced pressure,
+ * and liquid-only Reynolds number:
  * </p>
  *
  * <pre>
@@ -20,8 +19,8 @@ package neqsim.process.mechanicaldesign.heatexchanger;
  * </pre>
  *
  * <p>
- * where h_lo is the liquid-only heat transfer coefficient (all mass flowing as liquid) computed
- * from Dittus-Boelter or Gnielinski.
+ * where h_lo is the liquid-only heat transfer coefficient (all mass flowing as liquid) computed from Dittus-Boelter or
+ * Gnielinski.
  * </p>
  *
  * <p>
@@ -29,10 +28,9 @@ package neqsim.process.mechanicaldesign.heatexchanger;
  * </p>
  *
  * <p>
- * Reference: Shah, M.M. (1979). "A general correlation for heat transfer during film condensation
- * inside pipes." Int. J. Heat Mass Transfer, 22, 547-556. Shah, M.M. (2009). "An Improved and
- * Extended General Correlation for Heat Transfer During Condensation in Plain Tubes." HVAC&amp;R
- * Research, 15(5), 889-913.
+ * Reference: Shah, M.M. (1979). "A general correlation for heat transfer during film condensation inside pipes." Int.
+ * J. Heat Mass Transfer, 22, 547-556. Shah, M.M. (2009). "An Improved and Extended General Correlation for Heat
+ * Transfer During Condensation in Plain Tubes." HVAC&amp;R Research, 15(5), 889-913.
  * </p>
  *
  * @author NeqSim Development Team
@@ -50,7 +48,8 @@ public final class ShahCondensation {
   /**
    * Private constructor to prevent instantiation.
    */
-  private ShahCondensation() {}
+  private ShahCondensation() {
+  }
 
   /**
    * Calculates the local condensation heat transfer coefficient using the Shah (1979) correlation.
@@ -59,14 +58,13 @@ public final class ShahCondensation {
    * Valid for: horizontal tubes, Re_lo &gt; 350, 0.002 &lt; P_r &lt; 0.44, vapor quality 0 to 1.
    * </p>
    *
-   * @param hLiquidOnly liquid-only heat transfer coefficient (W/(m2*K)), i.e., the coefficient if
-   *        the total mass flow were all liquid, calculated using Dittus-Boelter or Gnielinski
-   * @param vaporQuality local vapor quality (mass fraction of vapor), range 0 to 1
+   * @param hLiquidOnly     liquid-only heat transfer coefficient (W/(m2*K)), i.e., the coefficient if the total mass
+   *                        flow were all liquid, calculated using Dittus-Boelter or Gnielinski
+   * @param vaporQuality    local vapor quality (mass fraction of vapor), range 0 to 1
    * @param reducedPressure reduced pressure P/P_crit, dimensionless
    * @return local condensation heat transfer coefficient (W/(m2*K))
    */
-  public static double calcLocalHTC(double hLiquidOnly, double vaporQuality,
-      double reducedPressure) {
+  public static double calcLocalHTC(double hLiquidOnly, double vaporQuality, double reducedPressure) {
     if (hLiquidOnly <= 0 || reducedPressure <= 0) {
       return 0.0;
     }
@@ -93,11 +91,11 @@ public final class ShahCondensation {
    * h_lo = 0.023 * (k_l / D) * Re_lo ^ 0.8 * Pr_l ^ 0.4
    * </pre>
    *
-   * @param massFluxTotal total mass flux G = m_dot / A_cross (kg/(m2*s))
-   * @param tubeID tube inner diameter (m)
-   * @param liquidDensity liquid density (kg/m3)
-   * @param liquidViscosity liquid dynamic viscosity (Pa*s)
-   * @param liquidCp liquid heat capacity (J/(kg*K))
+   * @param massFluxTotal      total mass flux G = m_dot / A_cross (kg/(m2*s))
+   * @param tubeID             tube inner diameter (m)
+   * @param liquidDensity      liquid density (kg/m3)
+   * @param liquidViscosity    liquid dynamic viscosity (Pa*s)
+   * @param liquidCp           liquid heat capacity (J/(kg*K))
    * @param liquidConductivity liquid thermal conductivity (W/(m*K))
    * @return liquid-only heat transfer coefficient (W/(m2*K))
    */
@@ -119,19 +117,19 @@ public final class ShahCondensation {
    * Calculates the average condensation HTC over a quality range by numerical integration.
    *
    * <p>
-   * Integrates the local Shah correlation over the quality range using Simpson's rule with the
-   * specified number of intervals.
+   * Integrates the local Shah correlation over the quality range using Simpson's rule with the specified number of
+   * intervals.
    * </p>
    *
-   * @param hLiquidOnly liquid-only heat transfer coefficient (W/(m2*K))
+   * @param hLiquidOnly     liquid-only heat transfer coefficient (W/(m2*K))
    * @param reducedPressure reduced pressure P/P_crit
-   * @param qualityIn vapor quality at inlet of zone (0 to 1)
-   * @param qualityOut vapor quality at outlet of zone (0 to 1)
-   * @param intervals number of integration intervals (must be even, minimum 4)
+   * @param qualityIn       vapor quality at inlet of zone (0 to 1)
+   * @param qualityOut      vapor quality at outlet of zone (0 to 1)
+   * @param intervals       number of integration intervals (must be even, minimum 4)
    * @return average condensation HTC over the quality range (W/(m2*K))
    */
-  public static double calcAverageHTC(double hLiquidOnly, double reducedPressure, double qualityIn,
-      double qualityOut, int intervals) {
+  public static double calcAverageHTC(double hLiquidOnly, double reducedPressure, double qualityIn, double qualityOut,
+      int intervals) {
     if (hLiquidOnly <= 0 || reducedPressure <= 0) {
       return 0.0;
     }
@@ -151,8 +149,7 @@ public final class ShahCondensation {
     }
 
     double dx = (xOut - xIn) / n;
-    double sum = calcLocalHTC(hLiquidOnly, xIn, reducedPressure)
-        + calcLocalHTC(hLiquidOnly, xOut, reducedPressure);
+    double sum = calcLocalHTC(hLiquidOnly, xIn, reducedPressure) + calcLocalHTC(hLiquidOnly, xOut, reducedPressure);
 
     for (int i = 1; i < n; i++) {
       double x = xIn + i * dx;
@@ -178,18 +175,17 @@ public final class ShahCondensation {
    * When J_g &lt; 0.98, gravity-dominated regime applies with Nusselt theory enhancement.
    * </p>
    *
-   * @param hLiquidOnly liquid-only HTC (W/(m2*K))
-   * @param vaporQuality local vapor quality (0 to 1)
+   * @param hLiquidOnly     liquid-only HTC (W/(m2*K))
+   * @param vaporQuality    local vapor quality (0 to 1)
    * @param reducedPressure reduced pressure P/P_crit
-   * @param massFlux total mass flux (kg/(m2*s))
-   * @param tubeID tube inner diameter (m)
-   * @param vaporDensity vapor density (kg/m3)
-   * @param liquidDensity liquid density (kg/m3)
+   * @param massFlux        total mass flux (kg/(m2*s))
+   * @param tubeID          tube inner diameter (m)
+   * @param vaporDensity    vapor density (kg/m3)
+   * @param liquidDensity   liquid density (kg/m3)
    * @return condensation HTC for vertical tube (W/(m2*K))
    */
-  public static double calcVerticalTubeHTC(double hLiquidOnly, double vaporQuality,
-      double reducedPressure, double massFlux, double tubeID, double vaporDensity,
-      double liquidDensity) {
+  public static double calcVerticalTubeHTC(double hLiquidOnly, double vaporQuality, double reducedPressure,
+      double massFlux, double tubeID, double vaporDensity, double liquidDensity) {
     if (hLiquidOnly <= 0 || reducedPressure <= 0 || tubeID <= 0) {
       return 0.0;
     }
@@ -222,12 +218,11 @@ public final class ShahCondensation {
    * Checks if operating conditions are within the validated range of the Shah correlation.
    *
    * @param reducedPressure reduced pressure P/P_crit
-   * @param reLiquidOnly liquid-only Reynolds number
-   * @param massFlux mass flux (kg/(m2*s))
+   * @param reLiquidOnly    liquid-only Reynolds number
+   * @param massFlux        mass flux (kg/(m2*s))
    * @return true if within validated range, false otherwise
    */
-  public static boolean isInValidRange(double reducedPressure, double reLiquidOnly,
-      double massFlux) {
+  public static boolean isInValidRange(double reducedPressure, double reLiquidOnly, double massFlux) {
     if (reducedPressure < MIN_REDUCED_PRESSURE || reducedPressure > MAX_REDUCED_PRESSURE) {
       return false;
     }

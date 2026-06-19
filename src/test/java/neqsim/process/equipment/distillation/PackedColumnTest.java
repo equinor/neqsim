@@ -99,8 +99,7 @@ public class PackedColumnTest {
     feedStream.setTemperature(60.0, "C");
     feedStream.setPressure(10.0, "bara");
 
-    PackedColumn column =
-        new PackedColumn("Packed Distillation", 5.0, "Pall-Ring-25", true, true);
+    PackedColumn column = new PackedColumn("Packed Distillation", 5.0, "Pall-Ring-25", true, true);
     column.addFeedStream(feedStream, 5);
     column.setPackedHeight(5.0);
 

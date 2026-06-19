@@ -35,7 +35,8 @@ public class CompressorResponse extends BaseResponse {
    * Constructor for CompressorResponse.
    * </p>
    */
-  public CompressorResponse() {}
+  public CompressorResponse() {
+  }
 
   /**
    * <p>
@@ -62,8 +63,7 @@ public class CompressorResponse extends BaseResponse {
     power = inputCompressor.getPower("kW");
     speed = inputCompressor.getSpeed();
     if (inputCompressor.getAntiSurge().isActive()) {
-      internalVolumeFlow =
-          inputCompressor.getCompressorChart().getSurgeCurve().getSurgeFlow(polytropicHead);
+      internalVolumeFlow = inputCompressor.getCompressorChart().getSurgeCurve().getSurgeFlow(polytropicHead);
     }
   }
 

@@ -108,11 +108,9 @@ public class ProcessCostEstimateTest {
 
     // Print summary
     logger.info("\n=== Mechanical Design via ProcessSystem ===");
-    System.out
-        .println("Total Weight: " + String.format("%,.0f", mecDesign.getTotalWeight()) + " kg");
+    System.out.println("Total Weight: " + String.format("%,.0f", mecDesign.getTotalWeight()) + " kg");
     logger.info("Equipment Count: " + mecDesign.getEquipmentList().size());
-    logger
-        .info("Total Power: " + String.format("%,.1f", mecDesign.getTotalPowerRequired()) + " kW");
+    logger.info("Total Power: " + String.format("%,.1f", mecDesign.getTotalPowerRequired()) + " kW");
   }
 
   @Test
@@ -143,8 +141,7 @@ public class ProcessCostEstimateTest {
     String json = process.getMechanicalDesignAndCostEstimateJson();
     assertNotNull(json, "JSON should not be null");
     assertTrue(json.contains("processName"), "JSON should contain process name");
-    assertTrue(json.contains("mechanicalDesignSummary"),
-        "JSON should contain mechanical design summary");
+    assertTrue(json.contains("mechanicalDesignSummary"), "JSON should contain mechanical design summary");
     assertTrue(json.contains("costEstimateSummary"), "JSON should contain cost estimate summary");
     assertTrue(json.contains("purchasedEquipmentCost_USD"), "JSON should contain PEC");
     assertTrue(json.contains("grassRootsCost_USD"), "JSON should contain grass roots cost");
@@ -157,32 +154,28 @@ public class ProcessCostEstimateTest {
   @Test
   void testEquipmentSpecificCostEstimate() {
     // Get cost estimate for specific equipment
-    neqsim.process.costestimation.UnitCostEstimateBaseClass compressorCost =
-        process.getEquipmentCostEstimate("MainCompressor");
+    neqsim.process.costestimation.UnitCostEstimateBaseClass compressorCost = process
+	.getEquipmentCostEstimate("MainCompressor");
 
     assertNotNull(compressorCost, "Compressor cost estimate should not be null");
     assertTrue(compressorCost.getPurchasedEquipmentCost() > 0, "Compressor PEC should be positive");
 
     logger.info("\n=== Compressor Cost Estimate ===");
-    logger.info(
-        "Compressor PEC: $" + String.format("%,.0f", compressorCost.getPurchasedEquipmentCost()));
-    System.out
-        .println("Compressor BMC: $" + String.format("%,.0f", compressorCost.getBareModuleCost()));
+    logger.info("Compressor PEC: $" + String.format("%,.0f", compressorCost.getPurchasedEquipmentCost()));
+    System.out.println("Compressor BMC: $" + String.format("%,.0f", compressorCost.getBareModuleCost()));
   }
 
   @Test
   void testEquipmentSpecificMechanicalDesign() {
     // Get mechanical design for specific equipment
-    neqsim.process.mechanicaldesign.MechanicalDesign sepDesign =
-        process.getEquipmentMechanicalDesign("InletSeparator");
+    neqsim.process.mechanicaldesign.MechanicalDesign sepDesign = process.getEquipmentMechanicalDesign("InletSeparator");
 
     assertNotNull(sepDesign, "Separator mechanical design should not be null");
     assertTrue(sepDesign.getWeightTotal() > 0, "Separator weight should be positive");
 
     logger.info("\n=== Separator Mechanical Design ===");
     logger.info("Weight: " + String.format("%,.0f", sepDesign.getWeightTotal()) + " kg");
-    logger.info(
-        "Design Pressure: " + String.format("%,.1f", sepDesign.getMaxDesignPressure()) + " bara");
+    logger.info("Design Pressure: " + String.format("%,.1f", sepDesign.getMaxDesignPressure()) + " bara");
   }
 
   @Test
@@ -209,8 +202,7 @@ public class ProcessCostEstimateTest {
     // Generate summary report
     String summaryReport = costEst.generateSummaryReport();
     assertNotNull(summaryReport, "Summary report should not be null");
-    assertTrue(summaryReport.contains("CAPITAL COST SUMMARY"),
-        "Should contain capital cost summary");
+    assertTrue(summaryReport.contains("CAPITAL COST SUMMARY"), "Should contain capital cost summary");
 
     logger.info("\n=== Cost Summary Report ===");
     logger.info(summaryReport);
@@ -218,8 +210,7 @@ public class ProcessCostEstimateTest {
     // Generate equipment list report
     String equipmentReport = costEst.generateEquipmentListReport();
     assertNotNull(equipmentReport, "Equipment report should not be null");
-    assertTrue(equipmentReport.contains("EQUIPMENT COST LIST"),
-        "Should contain equipment cost list");
+    assertTrue(equipmentReport.contains("EQUIPMENT COST LIST"), "Should contain equipment cost list");
 
     logger.info(equipmentReport);
   }
@@ -255,7 +246,7 @@ public class ProcessCostEstimateTest {
 
     // Adjusted should be higher
     assertTrue(adjustedGrassRoots > defaultGrassRoots,
-        "Adjusted grass roots should be higher with location and complexity factors");
+	"Adjusted grass roots should be higher with location and complexity factors");
 
     logger.info("\n=== Location/Complexity Factor Test ===");
     logger.info("Default Grass Roots: $" + String.format("%,.0f", defaultGrassRoots));

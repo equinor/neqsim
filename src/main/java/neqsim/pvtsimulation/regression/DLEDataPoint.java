@@ -18,14 +18,13 @@ public class DLEDataPoint {
   /**
    * Create a DLE data point.
    *
-   * @param pressure pressure in bar
-   * @param rs solution gas-oil ratio (Sm³/Sm³)
-   * @param bo oil formation volume factor (m³/Sm³)
-   * @param oilDensity oil density (kg/m³)
+   * @param pressure    pressure in bar
+   * @param rs          solution gas-oil ratio (Sm³/Sm³)
+   * @param bo          oil formation volume factor (m³/Sm³)
+   * @param oilDensity  oil density (kg/m³)
    * @param temperature temperature in K
    */
-  public DLEDataPoint(double pressure, double rs, double bo, double oilDensity,
-      double temperature) {
+  public DLEDataPoint(double pressure, double rs, double bo, double oilDensity, double temperature) {
     this.pressure = pressure;
     this.rs = rs;
     this.bo = bo;

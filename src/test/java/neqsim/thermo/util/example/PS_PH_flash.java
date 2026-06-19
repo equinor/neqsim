@@ -53,10 +53,10 @@ public class PS_PH_flash {
      * testSystem.addTBPfraction("CH5", 0.16517408370, 0.1857899932861330, 0.861050009727478);
      * testSystem.addTBPfraction("CH6", 0.279571933746338, 0.2410899963378910, 0.902539968490601);
      * testSystem.addTBPfraction("CH7", 0.2404942512512, 0.4045100097656250, 0.955269992351531);
-     * testSystem.addTBPfraction("CH8", 0.1131200218, 0.9069699, 1.0074599981308); //
-     * testSystem.addComponent("ethane", 0.05); testSystem.addComponent("water", 1.19299e-1); //
-     * testSystem.addComponent("n-butane", 3.53465e-1); // testSystem.addComponent("propane", 50);
-     * //testSystem.addComponent("CO2", 50); //testSystem.addComponent("water", 20);
+     * testSystem.addTBPfraction("CH8", 0.1131200218, 0.9069699, 1.0074599981308); // testSystem.addComponent("ethane",
+     * 0.05); testSystem.addComponent("water", 1.19299e-1); // testSystem.addComponent("n-butane", 3.53465e-1); //
+     * testSystem.addComponent("propane", 50); //testSystem.addComponent("CO2", 50); //testSystem.addComponent("water",
+     * 20);
      */
     testSystem.createDatabase(true);
     testSystem.setMixingRule(2);
@@ -77,9 +77,9 @@ public class PS_PH_flash {
 
     double entropy = testSystem.getEntropy();
     /*
-     * testSystem.setTemperature(273.15 + 0.0); testSystem.setPressure(100.0); try {
-     * testOps.TPflash(); // testOps.bubblePointTemperatureFlash(); } catch (Exception ex) { }
-     * testSystem.init(2); testSystem.setPressure(100.0); // logger.info("entropy spec" + entropy);
+     * testSystem.setTemperature(273.15 + 0.0); testSystem.setPressure(100.0); try { testOps.TPflash(); //
+     * testOps.bubblePointTemperatureFlash(); } catch (Exception ex) { } testSystem.init(2);
+     * testSystem.setPressure(100.0); // logger.info("entropy spec" + entropy);
      *
      * // testSystem.setPressure(20.894745);
      */

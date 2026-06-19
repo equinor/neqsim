@@ -29,7 +29,7 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
   double referenceTemperature = 37.8;
   String referenceTemperatureUnit = "C";
   String methodRVP = "VPCR4"; // RVP_ASTM_D6377 // RVP_ASTM_D323_73_79
-                              // RVP_ASTM_D323_82 // VPCR4_no_water // VPCR4
+			      // RVP_ASTM_D323_82 // VPCR4_no_water // VPCR4
 
   private double VPCR4_no_water = 0.0;
   private double VPCR4 = 0.0;
@@ -90,11 +90,11 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
      */
     public static RvpMethod fromLabel(String label) {
       if (label != null) {
-        for (RvpMethod method : values()) {
-          if (method.label.equals(label) || method.name().equals(label)) {
-            return method;
-          }
-        }
+	for (RvpMethod method : values()) {
+	  if (method.label.equals(label) || method.name().equals(label)) {
+	    return method;
+	  }
+	}
       }
       throw new IllegalArgumentException("Unknown RVP method: " + label);
     }
@@ -104,10 +104,9 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
    * Immutable structured result of an RVP calculation.
    *
    * <p>
-   * Bundles the computed value with the method, reference temperature and a validity flag so callers
-   * (especially agentic workflows) can detect a failed calculation instead of silently receiving a
-   * zero or {@link Double#NaN}. A result is considered valid when its value is a finite positive
-   * number.
+   * Bundles the computed value with the method, reference temperature and a validity flag so callers (especially
+   * agentic workflows) can detect a failed calculation instead of silently receiving a zero or {@link Double#NaN}. A
+   * result is considered valid when its value is a finite positive number.
    * </p>
    *
    * @author NeqSim
@@ -129,8 +128,8 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
     /**
      * Creates an RVP result.
      *
-     * @param value computed RVP value in bara
-     * @param method method used to compute the value
+     * @param value                 computed RVP value in bara
+     * @param method                method used to compute the value
      * @param referenceTemperatureC reference temperature in degrees Celsius
      */
     public RvpResult(double value, RvpMethod method, double referenceTemperatureC) {
@@ -179,8 +178,8 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
     /**
      * Serializes this result to a compact JSON string.
      *
-     * @return a JSON representation with {@code value}, {@code method}, {@code referenceTemperatureC}
-     *         and {@code valid} fields
+     * @return a JSON representation with {@code value}, {@code method}, {@code referenceTemperatureC} and {@code valid}
+     *         fields
      */
     public String toJson() {
       com.google.gson.JsonObject root = new com.google.gson.JsonObject();
@@ -245,25 +244,24 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
   }
 
   /**
-   * Returns the RVP value (in bara) computed for the supplied method during the last
-   * {@link #calculate()} call.
+   * Returns the RVP value (in bara) computed for the supplied method during the last {@link #calculate()} call.
    *
    * @param method the method whose value should be returned
    * @return the RVP value in bara for the requested method
    */
   private double valueForMethod(RvpMethod method) {
     switch (method) {
-      case RVP_ASTM_D6377:
-        return RVP_ASTM_D6377;
-      case RVP_ASTM_D323_73_79:
-        return RVP_ASTM_D323_73_79;
-      case RVP_ASTM_D323_82:
-        return RVP_ASTM_D323_82;
-      case VPCR4_NO_WATER:
-        return VPCR4_no_water;
-      case VPCR4:
-      default:
-        return VPCR4;
+    case RVP_ASTM_D6377:
+      return RVP_ASTM_D6377;
+    case RVP_ASTM_D323_73_79:
+      return RVP_ASTM_D323_73_79;
+    case RVP_ASTM_D323_82:
+      return RVP_ASTM_D323_82;
+    case VPCR4_NO_WATER:
+      return VPCR4_no_water;
+    case VPCR4:
+    default:
+      return VPCR4;
     }
   }
 
@@ -271,9 +269,9 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
    * Returns a structured RVP result for the currently configured method.
    *
    * <p>
-   * Call {@link #calculate()} first. The returned {@link RvpResult} carries the value, the method,
-   * the reference temperature and a validity flag so a failed calculation (which historically left
-   * the value at zero) is detectable via {@link RvpResult#isValid()}.
+   * Call {@link #calculate()} first. The returned {@link RvpResult} carries the value, the method, the reference
+   * temperature and a validity flag so a failed calculation (which historically left the value at zero) is detectable
+   * via {@link RvpResult#isValid()}.
    * </p>
    *
    * @return the structured RVP result for the configured method
@@ -286,8 +284,8 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
    * Returns a structured RVP result for a specific method.
    *
    * <p>
-   * Call {@link #calculate()} first. All method values are populated by a single
-   * {@link #calculate()} call, so this does not trigger a recalculation.
+   * Call {@link #calculate()} first. All method values are populated by a single {@link #calculate()} call, so this
+   * does not trigger a recalculation.
    * </p>
    *
    * @param method the method whose result should be returned; must not be null
@@ -383,13 +381,11 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
   public double getValue(String returnParameter, String returnUnit) {
     if ("RVP".equals(returnParameter)) {
       double RVPlocal = getValue("RVP");
-      neqsim.util.unit.PressureUnit presConversion =
-          new neqsim.util.unit.PressureUnit(RVPlocal, "bara");
+      neqsim.util.unit.PressureUnit presConversion = new neqsim.util.unit.PressureUnit(RVPlocal, "bara");
       return presConversion.getValue(returnUnit);
     }
     if ("TVP".equals(returnParameter)) {
-      neqsim.util.unit.PressureUnit presConversion =
-          new neqsim.util.unit.PressureUnit(getValue("TVP"), "bara");
+      neqsim.util.unit.PressureUnit presConversion = new neqsim.util.unit.PressureUnit(getValue("TVP"), "bara");
       return presConversion.getValue(returnUnit);
     } else {
       return RVP;
@@ -401,18 +397,18 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
   public double getValue(String returnParameter) {
     if (returnParameter.equals("RVP")) {
       switch (methodRVP) {
-        case "RVP_ASTM_D6377":
-          return RVP_ASTM_D6377;
-        case "RVP_ASTM_D323_73_79":
-          return RVP_ASTM_D323_73_79;
-        case "VPCR4":
-          return VPCR4;
-        case "RVP_ASTM_D323_82":
-          return RVP_ASTM_D323_82;
-        case "VPCR4_no_water":
-          return VPCR4_no_water;
-        default:
-          return VPCR4;
+      case "RVP_ASTM_D6377":
+	return RVP_ASTM_D6377;
+      case "RVP_ASTM_D323_73_79":
+	return RVP_ASTM_D323_73_79;
+      case "VPCR4":
+	return VPCR4;
+      case "RVP_ASTM_D323_82":
+	return RVP_ASTM_D323_82;
+      case "VPCR4_no_water":
+	return VPCR4_no_water;
+      default:
+	return VPCR4;
       }
     } else if (returnParameter.equals("TVP")) {
       return TVP;
@@ -427,12 +423,11 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
    * setReferenceTemperature.
    * </p>
    *
-   * @param refTemp a double
+   * @param refTemp     a double
    * @param refTempUnit a {@link java.lang.String} object
    */
   public void setReferenceTemperature(double refTemp, String refTempUnit) {
-    neqsim.util.unit.TemperatureUnit tempConversion =
-        new neqsim.util.unit.TemperatureUnit(refTemp, refTempUnit);
+    neqsim.util.unit.TemperatureUnit tempConversion = new neqsim.util.unit.TemperatureUnit(refTemp, refTempUnit);
     referenceTemperature = tempConversion.getValue(refTemp, refTempUnit, "C");
   }
 

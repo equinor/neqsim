@@ -50,34 +50,33 @@ public class PhaseSpanWagnerEos extends PhaseEos {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt,
-      double beta) {
+  public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt, double beta) {
     super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
     if (initType >= 1) {
       // Check if we can skip Span-Wagner calculations (state unchanged)
       if (propertiesCalculated && !hasStateChanged()) {
-        // State unchanged - skip expensive Span-Wagner calculations
-        return;
+	// State unchanged - skip expensive Span-Wagner calculations
+	return;
       }
 
       // Determine correct phase type before calling Span-Wagner
       // CO2 critical point: Tc = 304.1282 K, Pc = 7.3773 MPa = 73.773 bar
       PhaseType effectiveType = pt;
       if (temperature < 304.1282) {
-        // Below critical temperature: determine phase from saturation pressure
-        double pSat = NeqSimSpanWagner.getSaturationPressure(temperature);
-        if (pressure * 1e5 > pSat) {
-          // Above saturation pressure = liquid
-          effectiveType = PhaseType.LIQUID;
-        } else {
-          // Below saturation pressure = gas
-          effectiveType = PhaseType.GAS;
-        }
+	// Below critical temperature: determine phase from saturation pressure
+	double pSat = NeqSimSpanWagner.getSaturationPressure(temperature);
+	if (pressure * 1e5 > pSat) {
+	  // Above saturation pressure = liquid
+	  effectiveType = PhaseType.LIQUID;
+	} else {
+	  // Below saturation pressure = gas
+	  effectiveType = PhaseType.GAS;
+	}
       } else {
-        // Supercritical: use density-based criterion
-        // At critical point, rhoc = 467.6 kg/m3 = 10624.9 mol/m3
-        // Use gas-like initial guess and let algorithm find the solution
-        effectiveType = pt;
+	// Supercritical: use density-based criterion
+	// At critical point, rhoc = 467.6 kg/m3 = 10624.9 mol/m3
+	// Use gas-like initial guess and let algorithm find the solution
+	effectiveType = pt;
       }
 
       double[] props = NeqSimSpanWagner.getProperties(temperature, pressure * 1e5, effectiveType);
@@ -95,9 +94,9 @@ public class PhaseSpanWagnerEos extends PhaseEos {
       // Set phase type based on calculated density
       // CO2 critical density: 10624.9 mol/m3
       if (molarDensity > 10624.9 * 0.5) {
-        setType(PhaseType.LIQUID);
+	setType(PhaseType.LIQUID);
       } else {
-        setType(PhaseType.GAS);
+	setType(PhaseType.GAS);
       }
 
       // Cache current state after successful calculation
@@ -212,17 +211,17 @@ public class PhaseSpanWagnerEos extends PhaseEos {
     double refDensity = molarDensity * getMolarMass(); // density in kg/m3
     double conversionFactor = 1.0;
     switch (unit) {
-      case "kg/m3":
-        conversionFactor = 1.0;
-        break;
-      case "mol/m3":
-        conversionFactor = 1.0 / getMolarMass();
-        break;
-      case "lb/ft3":
-        conversionFactor = 0.0624279606;
-        break;
-      default:
-        throw new RuntimeException("unit not supported " + unit);
+    case "kg/m3":
+      conversionFactor = 1.0;
+      break;
+    case "mol/m3":
+      conversionFactor = 1.0 / getMolarMass();
+      break;
+    case "lb/ft3":
+      conversionFactor = 0.0624279606;
+      break;
+    default:
+      throw new RuntimeException("unit not supported " + unit);
     }
     return refDensity * conversionFactor;
   }

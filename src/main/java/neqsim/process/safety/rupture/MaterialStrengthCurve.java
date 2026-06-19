@@ -14,11 +14,10 @@ import neqsim.util.database.NeqSimProcessDesignDataBase;
  * Temperature-dependent material strength curve for fire rupture screening.
  *
  * <p>
- * The curve stores room-temperature yield and tensile strength together with a generic retained
- * strength factor versus metal temperature. The default carbon-steel curve is intended for
- * screening studies based on industry practice where detailed certified material data is not yet
- * available. Project-specific studies should replace the curve with verified values from the
- * applicable material certificate, pressure-piping code, or finite-element assessment.
+ * The curve stores room-temperature yield and tensile strength together with a generic retained strength factor versus
+ * metal temperature. The default carbon-steel curve is intended for screening studies based on industry practice where
+ * detailed certified material data is not yet available. Project-specific studies should replace the curve with
+ * verified values from the applicable material certificate, pressure-piping code, or finite-element assessment.
  * </p>
  *
  * @author ESOL
@@ -42,18 +41,16 @@ public class MaterialStrengthCurve implements Serializable {
   /**
    * Creates a material strength curve.
    *
-   * @param materialName material or grade name; must not be empty
-   * @param ambientYieldStrengthPa yield strength at ambient temperature in Pa; must be positive
+   * @param materialName             material or grade name; must not be empty
+   * @param ambientYieldStrengthPa   yield strength at ambient temperature in Pa; must be positive
    * @param ambientTensileStrengthPa tensile strength at ambient temperature in Pa; must be positive
-   * @param temperatureK temperature grid in K; must be strictly increasing
-   * @param retainedStrengthFactor retained strength factors on the temperature grid; each value
-   *        must be positive
-   * @param dataSource short description of the data source or assumption basis
+   * @param temperatureK             temperature grid in K; must be strictly increasing
+   * @param retainedStrengthFactor   retained strength factors on the temperature grid; each value must be positive
+   * @param dataSource               short description of the data source or assumption basis
    * @throws IllegalArgumentException if the curve input is invalid
    */
-  public MaterialStrengthCurve(String materialName, double ambientYieldStrengthPa,
-      double ambientTensileStrengthPa, double[] temperatureK, double[] retainedStrengthFactor,
-      String dataSource) {
+  public MaterialStrengthCurve(String materialName, double ambientYieldStrengthPa, double ambientTensileStrengthPa,
+      double[] temperatureK, double[] retainedStrengthFactor, String dataSource) {
     if (materialName == null || materialName.trim().isEmpty()) {
       throw new IllegalArgumentException("materialName must not be empty");
     }
@@ -64,32 +61,30 @@ public class MaterialStrengthCurve implements Serializable {
     this.ambientYieldStrengthPa = ambientYieldStrengthPa;
     this.ambientTensileStrengthPa = ambientTensileStrengthPa;
     this.temperatureK = Arrays.copyOf(temperatureK, temperatureK.length);
-    this.retainedStrengthFactor =
-        Arrays.copyOf(retainedStrengthFactor, retainedStrengthFactor.length);
+    this.retainedStrengthFactor = Arrays.copyOf(retainedStrengthFactor, retainedStrengthFactor.length);
     this.dataSource = dataSource == null ? "" : dataSource.trim();
   }
 
   /**
    * Creates a generic carbon-steel curve from ambient strengths.
    *
-   * @param materialName material name
-   * @param yieldStrengthPa ambient yield strength in Pa
+   * @param materialName      material name
+   * @param yieldStrengthPa   ambient yield strength in Pa
    * @param tensileStrengthPa ambient tensile strength in Pa
    * @return generic carbon-steel temperature-strength curve
    */
   public static MaterialStrengthCurve carbonSteel(String materialName, double yieldStrengthPa,
       double tensileStrengthPa) {
-    return new MaterialStrengthCurve(materialName, yieldStrengthPa, tensileStrengthPa,
-        defaultCarbonSteelTemperatures(), defaultCarbonSteelFactors(),
-        "Generic carbon-steel retained-strength curve for fire screening");
+    return new MaterialStrengthCurve(materialName, yieldStrengthPa, tensileStrengthPa, defaultCarbonSteelTemperatures(),
+	defaultCarbonSteelFactors(), "Generic carbon-steel retained-strength curve for fire screening");
   }
 
   /**
    * Loads an API 5L pipe grade from the NeqSim design database.
    *
    * <p>
-   * If the database table is unavailable, a small built-in fallback table is used for common API 5L
-   * grades. Strengths from {@code MaterialPipeProperties} are stored in psi and converted to Pa.
+   * If the database table is unavailable, a small built-in fallback table is used for common API 5L grades. Strengths
+   * from {@code MaterialPipeProperties} are stored in psi and converted to Pa.
    * </p>
    *
    * @param grade API 5L grade, for example B, X52, X65, or X70
@@ -106,8 +101,8 @@ public class MaterialStrengthCurve implements Serializable {
       strengths = fallbackApi5LStrengths(normalizedGrade);
     }
     return new MaterialStrengthCurve("API 5L " + normalizedGrade, strengths[0], strengths[1],
-        defaultCarbonSteelTemperatures(), defaultCarbonSteelFactors(),
-        "API 5L ambient SMYS/SMTS with generic fire-temperature reduction");
+	defaultCarbonSteelTemperatures(), defaultCarbonSteelFactors(),
+	"API 5L ambient SMYS/SMTS with generic fire-temperature reduction");
   }
 
   /**
@@ -181,9 +176,8 @@ public class MaterialStrengthCurve implements Serializable {
   /**
    * Calculates allowable rupture stress at metal temperature.
    *
-   * @param metalTemperatureK metal temperature in K; must be positive
-   * @param tensileStrengthFactor fraction of retained tensile strength accepted for rupture
-   *        screening; must be positive
+   * @param metalTemperatureK     metal temperature in K; must be positive
+   * @param tensileStrengthFactor fraction of retained tensile strength accepted for rupture screening; must be positive
    * @return allowable stress in Pa
    */
   public double allowableRuptureStressAt(double metalTemperatureK, double tensileStrengthFactor) {
@@ -226,19 +220,18 @@ public class MaterialStrengthCurve implements Serializable {
     try (NeqSimProcessDesignDataBase database = new NeqSimProcessDesignDataBase()) {
       String safeGrade = grade.replace("'", "''");
       String query = "SELECT minimumYeildStrength, minimumTensileStrength "
-          + "FROM MaterialPipeProperties WHERE grade='" + safeGrade + "'";
+	  + "FROM MaterialPipeProperties WHERE grade='" + safeGrade + "'";
       try (ResultSet dataSet = database.getResultSet(query)) {
-        if (dataSet.next()) {
-          double yieldPa = dataSet.getDouble("minimumYeildStrength") * PSI_TO_PA;
-          double tensilePa = dataSet.getDouble("minimumTensileStrength") * PSI_TO_PA;
-          if (yieldPa > 0.0 && tensilePa > 0.0) {
-            return new double[] {yieldPa, tensilePa};
-          }
-        }
+	if (dataSet.next()) {
+	  double yieldPa = dataSet.getDouble("minimumYeildStrength") * PSI_TO_PA;
+	  double tensilePa = dataSet.getDouble("minimumTensileStrength") * PSI_TO_PA;
+	  if (yieldPa > 0.0 && tensilePa > 0.0) {
+	    return new double[] { yieldPa, tensilePa };
+	  }
+	}
       }
     } catch (Exception ex) {
-      logger.debug("Could not load API 5L material grade {} from design database: {}", grade,
-          ex.getMessage());
+      logger.debug("Could not load API 5L material grade {} from design database: {}", grade, ex.getMessage());
     }
     return null;
   }
@@ -278,12 +271,12 @@ public class MaterialStrengthCurve implements Serializable {
   /**
    * Converts psi strengths to Pa.
    *
-   * @param yieldPsi yield strength in psi
+   * @param yieldPsi   yield strength in psi
    * @param tensilePsi tensile strength in psi
    * @return two-element array with yield and tensile strength in Pa
    */
   private static double[] psiStrengths(double yieldPsi, double tensilePsi) {
-    return new double[] {yieldPsi * PSI_TO_PA, tensilePsi * PSI_TO_PA};
+    return new double[] { yieldPsi * PSI_TO_PA, tensilePsi * PSI_TO_PA };
   }
 
   /**
@@ -292,7 +285,7 @@ public class MaterialStrengthCurve implements Serializable {
    * @return temperature grid in K
    */
   private static double[] defaultCarbonSteelTemperatures() {
-    return new double[] {293.15, 373.15, 473.15, 573.15, 673.15, 773.15, 873.15, 973.15, 1073.15};
+    return new double[] { 293.15, 373.15, 473.15, 573.15, 673.15, 773.15, 873.15, 973.15, 1073.15 };
   }
 
   /**
@@ -301,28 +294,26 @@ public class MaterialStrengthCurve implements Serializable {
    * @return retained-strength factors
    */
   private static double[] defaultCarbonSteelFactors() {
-    return new double[] {1.00, 0.95, 0.85, 0.72, 0.52, 0.32, 0.16, 0.07, 0.03};
+    return new double[] { 1.00, 0.95, 0.85, 0.72, 0.52, 0.32, 0.16, 0.07, 0.03 };
   }
 
   /**
    * Validates a strength curve grid.
    *
    * @param temperatures temperature grid in K
-   * @param factors retained-strength factors
+   * @param factors      retained-strength factors
    * @throws IllegalArgumentException if the curve is invalid
    */
   private static void validateCurve(double[] temperatures, double[] factors) {
-    if (temperatures == null || factors == null || temperatures.length != factors.length
-        || temperatures.length < 2) {
-      throw new IllegalArgumentException(
-          "temperature and factor arrays must have equal length >= 2");
+    if (temperatures == null || factors == null || temperatures.length != factors.length || temperatures.length < 2) {
+      throw new IllegalArgumentException("temperature and factor arrays must have equal length >= 2");
     }
     double previous = 0.0;
     for (int i = 0; i < temperatures.length; i++) {
       validatePositive(temperatures[i], "temperatureK[" + i + "]");
       validatePositive(factors[i], "retainedStrengthFactor[" + i + "]");
       if (i > 0 && temperatures[i] <= previous) {
-        throw new IllegalArgumentException("temperature grid must be strictly increasing");
+	throw new IllegalArgumentException("temperature grid must be strictly increasing");
       }
       previous = temperatures[i];
     }
@@ -332,7 +323,7 @@ public class MaterialStrengthCurve implements Serializable {
    * Validates that a numeric value is positive and finite.
    *
    * @param value value to validate
-   * @param name parameter name used in exception messages
+   * @param name  parameter name used in exception messages
    * @throws IllegalArgumentException if the value is invalid
    */
   private static void validatePositive(double value, String name) {
@@ -344,7 +335,7 @@ public class MaterialStrengthCurve implements Serializable {
   /**
    * Interpolates a value on a piecewise-linear curve.
    *
-   * @param x interpolation coordinate
+   * @param x  interpolation coordinate
    * @param xs x-grid
    * @param ys y-grid
    * @return interpolated or endpoint-clamped value
@@ -359,8 +350,8 @@ public class MaterialStrengthCurve implements Serializable {
     }
     for (int i = 1; i < xs.length; i++) {
       if (x <= xs[i]) {
-        double fraction = (x - xs[i - 1]) / (xs[i] - xs[i - 1]);
-        return ys[i - 1] + fraction * (ys[i] - ys[i - 1]);
+	double fraction = (x - xs[i - 1]) / (xs[i] - xs[i - 1]);
+	return ys[i - 1] + fraction * (ys[i] - ys[i - 1]);
       }
     }
     return ys[last];

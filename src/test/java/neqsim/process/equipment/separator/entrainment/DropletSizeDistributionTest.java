@@ -70,8 +70,7 @@ class DropletSizeDistributionTest {
     DropletSizeDistribution dsd = DropletSizeDistribution.rosinRammler(100e-6, 2.6);
     double d32 = dsd.getSauterMeanDiameter();
     // d_32 should be positive and in a reasonable range relative to d0
-    assertTrue(d32 > 0 && d32 < 500e-6,
-        "Sauter mean diameter should be positive and reasonable, got: " + d32);
+    assertTrue(d32 > 0 && d32 < 500e-6, "Sauter mean diameter should be positive and reasonable, got: " + d32);
   }
 
   @Test
@@ -100,13 +99,12 @@ class DropletSizeDistributionTest {
     double pipeDiameter = 0.2; // m
     double surfaceTension = 0.02; // N/m (20 mN/m)
 
-    DropletSizeDistribution dsd = DropletSizeDistribution.fromHinzeCorrelation(gasDensity, velocity,
-        pipeDiameter, surfaceTension, 2.6);
+    DropletSizeDistribution dsd = DropletSizeDistribution.fromHinzeCorrelation(gasDensity, velocity, pipeDiameter,
+	surfaceTension, 2.6);
 
     // Should produce a reasonable distribution
     double d50 = dsd.getD50();
-    assertTrue(d50 > 1e-6 && d50 < 1e-3,
-        "Hinze d_50 should be in the range 1 um to 1 mm. Got: " + d50 * 1e6 + " um");
+    assertTrue(d50 > 1e-6 && d50 < 1e-3, "Hinze d_50 should be in the range 1 um to 1 mm. Got: " + d50 * 1e6 + " um");
   }
 
   @Test

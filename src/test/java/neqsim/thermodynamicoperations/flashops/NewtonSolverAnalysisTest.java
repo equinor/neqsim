@@ -17,8 +17,8 @@ import org.apache.logging.log4j.Logger;
  * Analysis tests for Newton solver improvements.
  *
  * <p>
- * Benchmarks JAMA vs EJML linear solve, init level costs, and measures the overhead of T/P
- * derivatives vs composition-only derivatives.
+ * Benchmarks JAMA vs EJML linear solve, init level costs, and measures the overhead of T/P derivatives vs
+ * composition-only derivatives.
  * </p>
  *
  * @author benchmarking
@@ -27,18 +27,17 @@ import org.apache.logging.log4j.Logger;
 class NewtonSolverAnalysisTest {
   private static final Logger logger = LogManager.getLogger(NewtonSolverAnalysisTest.class);
 
-
   /**
    * Benchmark JAMA vs EJML dense linear solve (Ax = b) for typical flash sizes.
    *
    * <p>
-   * JAMA uses full LU decomposition via double[][] arrays. EJML uses optimized row-major storage
-   * with native-tuned operations.
+   * JAMA uses full LU decomposition via double[][] arrays. EJML uses optimized row-major storage with native-tuned
+   * operations.
    * </p>
    */
   @Test
   void benchmarkJAMAvsEJML() {
-    int[] sizes = {3, 5, 10, 15, 20, 30};
+    int[] sizes = { 3, 5, 10, 15, 20, 30 };
     int warmup = 2000;
     int N = 20000;
     Random rng = new Random(42);
@@ -51,48 +50,48 @@ class NewtonSolverAnalysisTest {
       double[][] aData = new double[n][n];
       double[] bData = new double[n];
       for (int i = 0; i < n; i++) {
-        bData[i] = rng.nextDouble();
-        for (int j = 0; j < n; j++) {
-          aData[i][j] = rng.nextDouble();
-        }
-        aData[i][i] += n; // Make diagonally dominant
+	bData[i] = rng.nextDouble();
+	for (int j = 0; j < n; j++) {
+	  aData[i][j] = rng.nextDouble();
+	}
+	aData[i][i] += n; // Make diagonally dominant
       }
 
       // JAMA warmup
       Matrix jamaMat = new Matrix(aData);
       Matrix jamab = new Matrix(n, 1);
       for (int i = 0; i < n; i++) {
-        jamab.set(i, 0, bData[i]);
+	jamab.set(i, 0, bData[i]);
       }
       for (int w = 0; w < warmup; w++) {
-        jamaMat.solve(jamab);
+	jamaMat.solve(jamab);
       }
 
       // EJML warmup
       DMatrixRMaj ejmlMat = new DMatrixRMaj(aData);
       DMatrixRMaj ejmlb = new DMatrixRMaj(n, 1);
       for (int i = 0; i < n; i++) {
-        ejmlb.set(i, 0, bData[i]);
+	ejmlb.set(i, 0, bData[i]);
       }
       DMatrixRMaj ejmlx = new DMatrixRMaj(n, 1);
       LinearSolverDense<DMatrixRMaj> solver = LinearSolverFactory_DDRM.lu(n);
       for (int w = 0; w < warmup; w++) {
-        solver.setA(ejmlMat.copy());
-        solver.solve(ejmlb, ejmlx);
+	solver.setA(ejmlMat.copy());
+	solver.solve(ejmlb, ejmlx);
       }
 
       // JAMA benchmark
       long start = System.nanoTime();
       for (int iter = 0; iter < N; iter++) {
-        jamaMat.solve(jamab);
+	jamaMat.solve(jamab);
       }
       long jamaTime = System.nanoTime() - start;
 
       // EJML benchmark
       start = System.nanoTime();
       for (int iter = 0; iter < N; iter++) {
-        solver.setA(ejmlMat.copy());
-        solver.solve(ejmlb, ejmlx);
+	solver.setA(ejmlMat.copy());
+	solver.solve(ejmlb, ejmlx);
       }
       long ejmlTime = System.nanoTime() - start;
 
@@ -100,32 +99,30 @@ class NewtonSolverAnalysisTest {
       double ejmlPerCall = (double) ejmlTime / N;
       double speedup = jamaPerCall / ejmlPerCall;
 
-      logger.info(
-          String.format("%-6d %-12.0f %-12.0f %-10.2fx", n, jamaPerCall, ejmlPerCall, speedup));
+      logger.info(String.format("%-6d %-12.0f %-12.0f %-10.2fx", n, jamaPerCall, ejmlPerCall, speedup));
 
       // Just verify both return reasonable values
       assertTrue(jamaPerCall > 0);
       assertTrue(ejmlPerCall > 0);
     }
 
-
     // Also benchmark EJML with in-place solve (no copy)
     logger.info("=== EJML In-Place vs Copy Solve ===");
-    for (int n : new int[] {10, 20}) {
+    for (int n : new int[] { 10, 20 }) {
       double[][] aData = new double[n][n];
       double[] bData = new double[n];
       for (int i = 0; i < n; i++) {
-        bData[i] = rng.nextDouble();
-        for (int j = 0; j < n; j++) {
-          aData[i][j] = rng.nextDouble();
-        }
-        aData[i][i] += n;
+	bData[i] = rng.nextDouble();
+	for (int j = 0; j < n; j++) {
+	  aData[i][j] = rng.nextDouble();
+	}
+	aData[i][i] += n;
       }
 
       DMatrixRMaj ejmlMat = new DMatrixRMaj(aData);
       DMatrixRMaj ejmlb = new DMatrixRMaj(n, 1);
       for (int i = 0; i < n; i++) {
-        ejmlb.set(i, 0, bData[i]);
+	ejmlb.set(i, 0, bData[i]);
       }
       DMatrixRMaj ejmlx = new DMatrixRMaj(n, 1);
       DMatrixRMaj ejmlMatCopy = new DMatrixRMaj(n, n);
@@ -133,28 +130,26 @@ class NewtonSolverAnalysisTest {
 
       // Warmup
       for (int w = 0; w < warmup; w++) {
-        ejmlMatCopy.setTo(ejmlMat);
-        solver2.setA(ejmlMatCopy);
-        solver2.solve(ejmlb, ejmlx);
+	ejmlMatCopy.setTo(ejmlMat);
+	solver2.setA(ejmlMatCopy);
+	solver2.solve(ejmlb, ejmlx);
       }
 
       // With pre-allocated copy
       long start = System.nanoTime();
       for (int iter = 0; iter < N; iter++) {
-        ejmlMatCopy.setTo(ejmlMat);
-        solver2.setA(ejmlMatCopy);
-        solver2.solve(ejmlb, ejmlx);
+	ejmlMatCopy.setTo(ejmlMat);
+	solver2.setA(ejmlMatCopy);
+	solver2.solve(ejmlb, ejmlx);
       }
       long time = System.nanoTime() - start;
-      System.out
-          .println(String.format("n=%d EJML pre-alloc copy: %.0f ns/call", n, (double) time / N));
+      System.out.println(String.format("n=%d EJML pre-alloc copy: %.0f ns/call", n, (double) time / N));
     }
 
   }
 
   /**
-   * Benchmark init(3) vs init(1) + logfugcoefdN only, to measure cost of unnecessary T/P derivative
-   * computation.
+   * Benchmark init(3) vs init(1) + logfugcoefdN only, to measure cost of unnecessary T/P derivative computation.
    */
   @Test
   void benchmarkInitLevelBreakdown() {
@@ -194,15 +189,10 @@ class NewtonSolverAnalysisTest {
 
     logger.info("=== Init Level Cost Breakdown (10-comp SRK) ===");
     logger.info(String.format("init(1) fugacities:       %6.1f us", init1us));
-    logger.info(
-        String.format("init(2) + T,P derivs:    %6.1f us (delta: +%.1f us)", init2us, tpDerivCost));
-    logger.info(String.format("init(3) + comp derivs:   %6.1f us (delta: +%.1f us)", init3us,
-        compDerivCost));
-    logger.info(String.format("T,P derivative cost:     %6.1f us (%.1f%% of init(3))", tpDerivCost,
-        wastedPercent));
-    logger
-        .info(String.format("Wasted per Newton iter:  %6.1f us (logfugcoefdT + dP)", tpDerivCost));
-
+    logger.info(String.format("init(2) + T,P derivs:    %6.1f us (delta: +%.1f us)", init2us, tpDerivCost));
+    logger.info(String.format("init(3) + comp derivs:   %6.1f us (delta: +%.1f us)", init3us, compDerivCost));
+    logger.info(String.format("T,P derivative cost:     %6.1f us (%.1f%% of init(3))", tpDerivCost, wastedPercent));
+    logger.info(String.format("Wasted per Newton iter:  %6.1f us (logfugcoefdT + dP)", tpDerivCost));
 
     // T/P derivatives should be a measurable fraction of init(3)
     assertTrue(tpDerivCost >= 0, "T,P derivative cost should be non-negative");
@@ -263,8 +253,8 @@ class NewtonSolverAnalysisTest {
       SystemInterface sysCopy = sys.clone();
       // Apply small perturbation to compositions
       for (int i = 0; i < sysCopy.getPhase(0).getNumberOfComponents(); i++) {
-        double x0 = sysCopy.getPhase(0).getComponent(i).getx();
-        sysCopy.getPhase(0).getComponent(i).setx(x0 * (1.0 + 0.01 * (i % 3 - 1)));
+	double x0 = sysCopy.getPhase(0).getComponent(i).getx();
+	sysCopy.getPhase(0).getComponent(i).setx(x0 * (1.0 + 0.01 * (i % 3 - 1)));
       }
       sysCopy.getPhase(0).normalize();
       sysCopy.init(1);
@@ -275,7 +265,7 @@ class NewtonSolverAnalysisTest {
       sysCopy.init(1, 1);
       long elapsed = System.nanoTime() - start;
       if (w >= warmup) {
-        totalSS += elapsed;
+	totalSS += elapsed;
       }
     }
 
@@ -285,14 +275,14 @@ class NewtonSolverAnalysisTest {
       SystemInterface sysCopy = sys.clone();
       sysCopy.init(1);
 
-      SysNewtonRhapsonTPflash solver =
-          new SysNewtonRhapsonTPflash(sysCopy, 2, sysCopy.getPhase(0).getNumberOfComponents());
+      SysNewtonRhapsonTPflash solver = new SysNewtonRhapsonTPflash(sysCopy, 2,
+	  sysCopy.getPhase(0).getNumberOfComponents());
 
       long start = System.nanoTime();
       solver.solve();
       long elapsed = System.nanoTime() - start;
       if (w >= warmup) {
-        totalNewton += elapsed;
+	totalNewton += elapsed;
       }
     }
 
@@ -305,8 +295,7 @@ class NewtonSolverAnalysisTest {
   }
 
   /**
-   * Measure allocation overhead: JAMA creates new Matrix objects each solve. EJML can reuse
-   * pre-allocated buffers.
+   * Measure allocation overhead: JAMA creates new Matrix objects each solve. EJML can reuse pre-allocated buffers.
    */
   @Test
   void benchmarkAllocationOverhead() {
@@ -319,7 +308,7 @@ class NewtonSolverAnalysisTest {
     for (int i = 0; i < n; i++) {
       bData[i] = rng.nextDouble();
       for (int j = 0; j < n; j++) {
-        aData[i][j] = rng.nextDouble();
+	aData[i][j] = rng.nextDouble();
       }
       aData[i][i] += n;
     }

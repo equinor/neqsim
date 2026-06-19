@@ -41,7 +41,7 @@ public interface FlowSystemVisualizationInterface {
    * setNextData.
    * </p>
    *
-   * @param system a {@link neqsim.fluidmechanics.flowsystem.FlowSystemInterface} object
+   * @param system  a {@link neqsim.fluidmechanics.flowsystem.FlowSystemInterface} object
    * @param abstime a double
    */
   public void setNextData(FlowSystemInterface system, double abstime);

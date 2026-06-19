@@ -121,8 +121,7 @@ class ExampleCatalogTest {
     assertEquals(2, processExamples.size());
     assertTrue(ExampleCatalog.getExampleNames("root-cause").contains("compressor-high-vibration"));
     assertTrue(ExampleCatalog.getExampleNames("open-drain-review").contains("norsok-s001-stid"));
-    assertTrue(
-        ExampleCatalog.getExampleNames("process-safety-review").contains("norsok-s001-clause10"));
+    assertTrue(ExampleCatalog.getExampleNames("process-safety-review").contains("norsok-s001-clause10"));
 
     List<String> unknown = ExampleCatalog.getExampleNames("unknown");
     assertTrue(unknown.isEmpty());
@@ -212,8 +211,7 @@ class ExampleCatalogTest {
     JsonObject input = JsonParser.parseString(example).getAsJsonObject();
     assertEquals("HIGH_VIBRATION", input.get("symptom").getAsString());
     assertTrue(input.has("processJson"));
-    JsonObject processJson =
-        JsonParser.parseString(input.get("processJson").getAsString()).getAsJsonObject();
+    JsonObject processJson = JsonParser.parseString(input.get("processJson").getAsString()).getAsJsonObject();
     assertTrue(processJson.has("process"));
 
     String result = RootCauseRunner.run(example);

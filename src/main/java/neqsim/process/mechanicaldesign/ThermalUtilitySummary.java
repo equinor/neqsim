@@ -14,9 +14,8 @@ import neqsim.process.processmodel.ProcessSystem;
  * Aggregates thermal utility requirements across a process system.
  *
  * <p>
- * Extends the power-focused utility summary with cooling water, steam, fuel gas, and other thermal
- * utility demands. Each cooling or heating duty is mapped to a utility type with flow rate
- * estimation.
+ * Extends the power-focused utility summary with cooling water, steam, fuel gas, and other thermal utility demands.
+ * Each cooling or heating duty is mapped to a utility type with flow rate estimation.
  * </p>
  *
  * <p>
@@ -133,24 +132,23 @@ public class ThermalUtilitySummary implements Serializable {
       equipmentCount++;
 
       if (equip instanceof Heater) {
-        Heater heater = (Heater) equip;
-        double dutyW = heater.getDuty();
-        double dutyKW = dutyW / 1000.0;
+	Heater heater = (Heater) equip;
+	double dutyW = heater.getDuty();
+	double dutyKW = dutyW / 1000.0;
 
-        if (dutyKW < 0) {
-          // Cooling duty
-          double absDutyKW = Math.abs(dutyKW);
-          totalCoolingDutyKW += absDutyKW;
-          double cwFlow = calcCoolingWaterFlow(absDutyKW);
-          coolingWaterFlowM3hr += cwFlow;
-          consumers.add(
-              new UtilityConsumer(equip.getName(), "Cooling Water", absDutyKW, cwFlow, "m3/hr"));
-        } else if (dutyKW > 0) {
-          // Heating duty - classify by temperature
-          totalHeatingDutyKW += dutyKW;
-          double outTempC = heater.getOutletStream().getTemperature() - 273.15;
-          classifyHeatingDuty(equip.getName(), dutyKW, outTempC);
-        }
+	if (dutyKW < 0) {
+	  // Cooling duty
+	  double absDutyKW = Math.abs(dutyKW);
+	  totalCoolingDutyKW += absDutyKW;
+	  double cwFlow = calcCoolingWaterFlow(absDutyKW);
+	  coolingWaterFlowM3hr += cwFlow;
+	  consumers.add(new UtilityConsumer(equip.getName(), "Cooling Water", absDutyKW, cwFlow, "m3/hr"));
+	} else if (dutyKW > 0) {
+	  // Heating duty - classify by temperature
+	  totalHeatingDutyKW += dutyKW;
+	  double outTempC = heater.getOutletStream().getTemperature() - 273.15;
+	  classifyHeatingDuty(equip.getName(), dutyKW, outTempC);
+	}
       }
     }
 
@@ -176,8 +174,8 @@ public class ThermalUtilitySummary implements Serializable {
   /**
    * Classifies a heating duty as LP/MP/HP steam based on required temperature.
    *
-   * @param name equipment name
-   * @param dutyKW heating duty in kW
+   * @param name     equipment name
+   * @param dutyKW   heating duty in kW
    * @param outTempC outlet temperature in Celsius
    */
   private void classifyHeatingDuty(String name, double dutyKW, double outTempC) {
@@ -304,8 +302,7 @@ public class ThermalUtilitySummary implements Serializable {
     }
     root.add("consumers", arr);
 
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(root);
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(root);
   }
 
   /**
@@ -324,13 +321,12 @@ public class ThermalUtilitySummary implements Serializable {
      * Creates a utility consumer record.
      *
      * @param equipmentName equipment name
-     * @param utilityType utility type (e.g. "Cooling Water", "LP Steam")
-     * @param dutyKW duty in kW
-     * @param flow utility flow rate
-     * @param flowUnit unit for the flow rate
+     * @param utilityType   utility type (e.g. "Cooling Water", "LP Steam")
+     * @param dutyKW        duty in kW
+     * @param flow          utility flow rate
+     * @param flowUnit      unit for the flow rate
      */
-    public UtilityConsumer(String equipmentName, String utilityType, double dutyKW, double flow,
-        String flowUnit) {
+    public UtilityConsumer(String equipmentName, String utilityType, double dutyKW, double flow, String flowUnit) {
       this.equipmentName = equipmentName;
       this.utilityType = utilityType;
       this.dutyKW = dutyKW;

@@ -10,18 +10,16 @@ import neqsim.process.fielddevelopment.concept.FieldConcept;
  * Fluent builder for assembling facility configurations from modular blocks.
  *
  * <p>
- * This builder enables rapid, concept-level facility configuration using pre-validated process
- * blocks. Blocks are assembled in sequence and can later be instantiated into actual process
- * equipment via a facility instantiator.
+ * This builder enables rapid, concept-level facility configuration using pre-validated process blocks. Blocks are
+ * assembled in sequence and can later be instantiated into actual process equipment via a facility instantiator.
  *
  * <p>
  * Example usage:
  *
  * <pre>
- * FacilityConfig config =
- *     FacilityBuilder.forConcept(myConcept).addBlock(BlockConfig.inletSeparation(80, 25))
- *         .addBlock(BlockConfig.compression(2, 180)).addBlock(BlockConfig.tegDehydration(50))
- *         .addBlock(BlockConfig.co2Membrane(2.5)).withRedundancy("compression", 1).build();
+ * FacilityConfig config = FacilityBuilder.forConcept(myConcept).addBlock(BlockConfig.inletSeparation(80, 25))
+ *     .addBlock(BlockConfig.compression(2, 180)).addBlock(BlockConfig.tegDehydration(50))
+ *     .addBlock(BlockConfig.co2Membrane(2.5)).withRedundancy("compression", 1).build();
  * </pre>
  *
  * @author ESOL
@@ -77,20 +75,18 @@ public final class FacilityBuilder implements Serializable {
     builder.name = concept.getName() + " Auto-Generated Facility";
 
     // Always have inlet separation
-    double inletPressure =
-        concept.getWells() != null ? concept.getWells().getTubeheadPressure() : 80.0;
+    double inletPressure = concept.getWells() != null ? concept.getWells().getTubeheadPressure() : 80.0;
     builder.addBlock(BlockConfig.inletSeparation(inletPressure, 25.0));
 
     // Check if CO2 removal needed
     if (concept.needsCO2Removal()) {
-      double co2Percent =
-          concept.getReservoir() != null ? concept.getReservoir().getCo2Percent() : 0;
+      double co2Percent = concept.getReservoir() != null ? concept.getReservoir().getCo2Percent() : 0;
       if (co2Percent > 10) {
-        // High CO2 - use amine
-        builder.addBlock(BlockConfig.co2Amine(2.5));
+	// High CO2 - use amine
+	builder.addBlock(BlockConfig.co2Amine(2.5));
       } else {
-        // Moderate CO2 - use membrane
-        builder.addBlock(BlockConfig.co2Membrane(2.5));
+	// Moderate CO2 - use membrane
+	builder.addBlock(BlockConfig.co2Membrane(2.5));
       }
     }
 
@@ -100,9 +96,8 @@ public final class FacilityBuilder implements Serializable {
     }
 
     // Check if compression needed
-    double exportPressure =
-        concept.getInfrastructure() != null ? concept.getInfrastructure().getExportPressure()
-            : 180.0;
+    double exportPressure = concept.getInfrastructure() != null ? concept.getInfrastructure().getExportPressure()
+	: 180.0;
     if (inletPressure < exportPressure) {
       double ratio = exportPressure / inletPressure;
       int stages = (int) Math.ceil(Math.log(ratio) / Math.log(3.0)); // max 3:1 per stage
@@ -174,7 +169,7 @@ public final class FacilityBuilder implements Serializable {
   /**
    * Adds compression with specified stages and outlet pressure.
    *
-   * @param stages compression stages
+   * @param stages         compression stages
    * @param outletPressure target outlet pressure in bara
    * @return this builder
    */
@@ -219,7 +214,7 @@ public final class FacilityBuilder implements Serializable {
   /**
    * Specifies that a block type should have redundancy (n+x).
    *
-   * @param blockName name of block requiring redundancy
+   * @param blockName  name of block requiring redundancy
    * @param spareCount number of spare units (e.g., 1 for n+1)
    * @return this builder
    */
@@ -278,6 +273,6 @@ public final class FacilityBuilder implements Serializable {
     }
 
     return new FacilityConfig(name, concept, Collections.unmodifiableList(finalBlocks),
-        Collections.unmodifiableList(new ArrayList<>(redundancyRequirements)), designMargin);
+	Collections.unmodifiableList(new ArrayList<>(redundancyRequirements)), designMargin);
   }
 }

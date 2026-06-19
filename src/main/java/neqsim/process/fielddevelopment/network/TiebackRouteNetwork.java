@@ -9,10 +9,9 @@ import java.util.List;
  * Describes a multi-segment subsea tieback route for screening studies.
  *
  * <p>
- * The network keeps a lightweight topology model for early field-development decisions. It is not a
- * detailed hydraulic simulator; instead it provides route metadata and equivalent hydraulic
- * properties that existing screening calculations can use while preserving the segment breakdown
- * for reporting.
+ * The network keeps a lightweight topology model for early field-development decisions. It is not a detailed hydraulic
+ * simulator; instead it provides route metadata and equivalent hydraulic properties that existing screening
+ * calculations can use while preserving the segment breakdown for reporting.
  * </p>
  *
  * @author ESOL
@@ -111,7 +110,7 @@ public final class TiebackRouteNetwork implements Serializable {
     double length = 0.0;
     for (RouteSegment segment : segments) {
       if (segment.getType() != SegmentType.BRANCH) {
-        length += segment.getLengthKm();
+	length += segment.getLengthKm();
       }
     }
     return length > 0.0 ? length : getInstalledLengthKm();
@@ -126,7 +125,7 @@ public final class TiebackRouteNetwork implements Serializable {
     double length = 0.0;
     for (RouteSegment segment : segments) {
       if (segment.isShared() || segment.getType() == SegmentType.SHARED_CORRIDOR) {
-        length += segment.getLengthKm();
+	length += segment.getLengthKm();
       }
     }
     return length;
@@ -174,8 +173,8 @@ public final class TiebackRouteNetwork implements Serializable {
     double length = 0.0;
     for (RouteSegment segment : segments) {
       if (segment.getType() != SegmentType.BRANCH && segment.getDiameterInches() > 0.0) {
-        weighted += segment.getDiameterInches() * segment.getLengthKm();
-        length += segment.getLengthKm();
+	weighted += segment.getDiameterInches() * segment.getLengthKm();
+	length += segment.getLengthKm();
       }
     }
     if (length <= 0.0) {
@@ -194,8 +193,8 @@ public final class TiebackRouteNetwork implements Serializable {
     double length = 0.0;
     for (RouteSegment segment : segments) {
       if (segment.getType() != SegmentType.BRANCH && segment.getLengthKm() > 0.0) {
-        weighted += segment.getSeabedTemperatureC() * segment.getLengthKm();
-        length += segment.getLengthKm();
+	weighted += segment.getSeabedTemperatureC() * segment.getLengthKm();
+	length += segment.getLengthKm();
       }
     }
     if (length <= 0.0) {
@@ -214,8 +213,8 @@ public final class TiebackRouteNetwork implements Serializable {
     double length = 0.0;
     for (RouteSegment segment : segments) {
       if (segment.getType() != SegmentType.BRANCH && segment.getLengthKm() > 0.0) {
-        weighted += segment.getHeatTransferCoefficientWm2K() * segment.getLengthKm();
-        length += segment.getLengthKm();
+	weighted += segment.getHeatTransferCoefficientWm2K() * segment.getLengthKm();
+	length += segment.getLengthKm();
       }
     }
     if (length <= 0.0) {
@@ -237,10 +236,10 @@ public final class TiebackRouteNetwork implements Serializable {
     RouteSegment lastMain = null;
     for (RouteSegment segment : segments) {
       if (segment.getType() != SegmentType.BRANCH) {
-        if (firstMain == null) {
-          firstMain = segment;
-        }
-        lastMain = segment;
+	if (firstMain == null) {
+	  firstMain = segment;
+	}
+	lastMain = segment;
       }
     }
     if (firstMain == null || lastMain == null) {
@@ -257,8 +256,7 @@ public final class TiebackRouteNetwork implements Serializable {
   public String getSummary() {
     StringBuilder summary = new StringBuilder();
     summary.append(name).append(": ");
-    summary.append(String.format("%.1f km main / %.1f km installed", getScreeningLengthKm(),
-        getInstalledLengthKm()));
+    summary.append(String.format("%.1f km main / %.1f km installed", getScreeningLengthKm(), getInstalledLengthKm()));
     if (getBranchCount() > 0) {
       summary.append(String.format(", %d branches", getBranchCount()));
     }
@@ -284,7 +282,7 @@ public final class TiebackRouteNetwork implements Serializable {
     int count = 0;
     for (RouteSegment segment : segments) {
       if (segment.getType() == type) {
-        count++;
+	count++;
       }
     }
     return count;
@@ -321,83 +319,77 @@ public final class TiebackRouteNetwork implements Serializable {
     /**
      * Adds a generic route segment.
      *
-     * @param name segment name
-     * @param type segment type
-     * @param lengthKm segment length in kilometres; must be non-negative
-     * @param diameterInches inner diameter in inches; must be non-negative
-     * @param inletWaterDepthM inlet water depth in metres; must be non-negative
-     * @param outletWaterDepthM outlet water depth in metres; must be non-negative
-     * @param seabedTemperatureC representative seabed temperature in Celsius
+     * @param name                        segment name
+     * @param type                        segment type
+     * @param lengthKm                    segment length in kilometres; must be non-negative
+     * @param diameterInches              inner diameter in inches; must be non-negative
+     * @param inletWaterDepthM            inlet water depth in metres; must be non-negative
+     * @param outletWaterDepthM           outlet water depth in metres; must be non-negative
+     * @param seabedTemperatureC          representative seabed temperature in Celsius
      * @param heatTransferCoefficientWm2K heat-transfer coefficient in W/m2K; zero means adiabatic
-     * @param shared true if this segment is shared by several discoveries or phases
+     * @param shared                      true if this segment is shared by several discoveries or phases
      * @return this builder
      */
     public Builder addSegment(String name, SegmentType type, double lengthKm, double diameterInches,
-        double inletWaterDepthM, double outletWaterDepthM, double seabedTemperatureC,
-        double heatTransferCoefficientWm2K, boolean shared) {
-      segments.add(new RouteSegment(name, type, lengthKm, diameterInches, inletWaterDepthM,
-          outletWaterDepthM, seabedTemperatureC, heatTransferCoefficientWm2K, shared));
+	double inletWaterDepthM, double outletWaterDepthM, double seabedTemperatureC,
+	double heatTransferCoefficientWm2K, boolean shared) {
+      segments.add(new RouteSegment(name, type, lengthKm, diameterInches, inletWaterDepthM, outletWaterDepthM,
+	  seabedTemperatureC, heatTransferCoefficientWm2K, shared));
       return this;
     }
 
     /**
      * Adds a main flowline segment.
      *
-     * @param name segment name
-     * @param lengthKm length in kilometres
+     * @param name           segment name
+     * @param lengthKm       length in kilometres
      * @param diameterInches diameter in inches
-     * @param waterDepthM representative water depth in metres
+     * @param waterDepthM    representative water depth in metres
      * @return this builder
      */
-    public Builder addFlowline(String name, double lengthKm, double diameterInches,
-        double waterDepthM) {
-      return addSegment(name, SegmentType.FLOWLINE, lengthKm, diameterInches, waterDepthM,
-          waterDepthM, 4.0, 5.0, false);
+    public Builder addFlowline(String name, double lengthKm, double diameterInches, double waterDepthM) {
+      return addSegment(name, SegmentType.FLOWLINE, lengthKm, diameterInches, waterDepthM, waterDepthM, 4.0, 5.0,
+	  false);
     }
 
     /**
      * Adds a shared corridor segment.
      *
-     * @param name segment name
-     * @param lengthKm length in kilometres
+     * @param name           segment name
+     * @param lengthKm       length in kilometres
      * @param diameterInches diameter in inches
-     * @param waterDepthM representative water depth in metres
+     * @param waterDepthM    representative water depth in metres
      * @return this builder
      */
-    public Builder addSharedCorridor(String name, double lengthKm, double diameterInches,
-        double waterDepthM) {
-      return addSegment(name, SegmentType.SHARED_CORRIDOR, lengthKm, diameterInches, waterDepthM,
-          waterDepthM, 4.0, 5.0, true);
+    public Builder addSharedCorridor(String name, double lengthKm, double diameterInches, double waterDepthM) {
+      return addSegment(name, SegmentType.SHARED_CORRIDOR, lengthKm, diameterInches, waterDepthM, waterDepthM, 4.0, 5.0,
+	  true);
     }
 
     /**
      * Adds a riser segment.
      *
-     * @param name segment name
-     * @param lengthKm length in kilometres
+     * @param name           segment name
+     * @param lengthKm       length in kilometres
      * @param diameterInches diameter in inches
-     * @param seabedDepthM water depth at riser base in metres
+     * @param seabedDepthM   water depth at riser base in metres
      * @return this builder
      */
-    public Builder addRiser(String name, double lengthKm, double diameterInches,
-        double seabedDepthM) {
-      return addSegment(name, SegmentType.RISER, lengthKm, diameterInches, seabedDepthM, 0.0, 4.0,
-          8.0, false);
+    public Builder addRiser(String name, double lengthKm, double diameterInches, double seabedDepthM) {
+      return addSegment(name, SegmentType.RISER, lengthKm, diameterInches, seabedDepthM, 0.0, 4.0, 8.0, false);
     }
 
     /**
      * Adds a branch segment.
      *
-     * @param name segment name
-     * @param lengthKm length in kilometres
+     * @param name           segment name
+     * @param lengthKm       length in kilometres
      * @param diameterInches diameter in inches
-     * @param waterDepthM representative water depth in metres
+     * @param waterDepthM    representative water depth in metres
      * @return this builder
      */
-    public Builder addBranch(String name, double lengthKm, double diameterInches,
-        double waterDepthM) {
-      return addSegment(name, SegmentType.BRANCH, lengthKm, diameterInches, waterDepthM,
-          waterDepthM, 4.0, 5.0, false);
+    public Builder addBranch(String name, double lengthKm, double diameterInches, double waterDepthM) {
+      return addSegment(name, SegmentType.BRANCH, lengthKm, diameterInches, waterDepthM, waterDepthM, 4.0, 5.0, false);
     }
 
     /**
@@ -429,19 +421,18 @@ public final class TiebackRouteNetwork implements Serializable {
     /**
      * Creates a route segment.
      *
-     * @param name segment name
-     * @param type segment type
-     * @param lengthKm length in kilometres
-     * @param diameterInches diameter in inches
-     * @param inletWaterDepthM inlet water depth in metres
-     * @param outletWaterDepthM outlet water depth in metres
-     * @param seabedTemperatureC seabed temperature in Celsius
+     * @param name                        segment name
+     * @param type                        segment type
+     * @param lengthKm                    length in kilometres
+     * @param diameterInches              diameter in inches
+     * @param inletWaterDepthM            inlet water depth in metres
+     * @param outletWaterDepthM           outlet water depth in metres
+     * @param seabedTemperatureC          seabed temperature in Celsius
      * @param heatTransferCoefficientWm2K heat-transfer coefficient in W/m2K
-     * @param shared true if shared by multiple fields or phases
+     * @param shared                      true if shared by multiple fields or phases
      */
-    private RouteSegment(String name, SegmentType type, double lengthKm, double diameterInches,
-        double inletWaterDepthM, double outletWaterDepthM, double seabedTemperatureC,
-        double heatTransferCoefficientWm2K, boolean shared) {
+    private RouteSegment(String name, SegmentType type, double lengthKm, double diameterInches, double inletWaterDepthM,
+	double outletWaterDepthM, double seabedTemperatureC, double heatTransferCoefficientWm2K, boolean shared) {
       this.name = name == null ? "segment" : name;
       this.type = type == null ? SegmentType.FLOWLINE : type;
       this.lengthKm = Math.max(0.0, lengthKm);

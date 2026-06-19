@@ -80,14 +80,12 @@ public class ParameterFittingReport implements Serializable {
     builder.append("\n");
     builder.append("Objective: ").append(objectiveFunctionType.name()).append('\n');
     builder.append("\n");
-    builder.append("Converged: ").append(converged).append(" (").append(convergenceReason)
-        .append(")\n");
+    builder.append("Converged: ").append(converged).append(" (").append(convergenceReason).append(")\n");
     builder.append("\n");
     builder.append("| Parameter | Value |\n");
     builder.append("|-----------|-------|\n");
     for (int i = 0; i < parameterNames.length; i++) {
-      builder.append("| ").append(parameterNames[i]).append(" | ").append(fittedParameters[i])
-          .append(" |\n");
+      builder.append("| ").append(parameterNames[i]).append(" | ").append(fittedParameters[i]).append(" |\n");
     }
     builder.append("\n");
     builder.append("RMSE: ").append(rootMeanSquareError).append('\n');

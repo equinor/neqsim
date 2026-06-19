@@ -9,37 +9,35 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * Screening analyzer for <em>gravity dump-flood</em> seawater injection wells — i.e. pump-less
- * injection where the hydrostatic head of a seawater column from the seabed (or sea surface) down to
- * a strongly depleted reservoir provides the entire driving pressure.
+ * Screening analyzer for <em>gravity dump-flood</em> seawater injection wells — i.e. pump-less injection where the
+ * hydrostatic head of a seawater column from the seabed (or sea surface) down to a strongly depleted reservoir provides
+ * the entire driving pressure.
  *
  * <p>
  * The analyzer answers the central flow-assurance questions that arise for this concept:
  * </p>
  * <ul>
- * <li><b>Can gravity head overcome the reservoir back-pressure?</b> It integrates the hydrostatic
- * head of the sub-seabed seawater column and compares it with the (depleted, but rising) reservoir
- * pore pressure.</li>
- * <li><b>Where does the excess head have to be dissipated?</b> If the column head exceeds the
- * reservoir pressure, the required wellhead (seabed) pressure to hold the well liquid-full would be
- * negative. The well then cannot be throttled at the wellhead: the upper tubing partially empties and
- * a low-pressure vapour cavity forms. The analyzer locates the vapour-cavity onset depth and reports
- * the down-hole back-pressure that a deep choke / ICD / tail-pipe must absorb instead.</li>
- * <li><b>Will a wellhead choke cavitate?</b> It evaluates the ISA-75 / IEC 60534 cavitation index
- * (sigma) for a hypothetical wellhead choke taking the full pressure drop, using the true seawater
- * vapour pressure (a few mbar — <em>not</em> 0.01 bar of liquid).</li>
- * <li><b>Could friction alone dissipate the head?</b> It sizes the tail-pipe inner diameter whose
- * frictional pressure drop at the design rate equals the excess head.</li>
+ * <li><b>Can gravity head overcome the reservoir back-pressure?</b> It integrates the hydrostatic head of the
+ * sub-seabed seawater column and compares it with the (depleted, but rising) reservoir pore pressure.</li>
+ * <li><b>Where does the excess head have to be dissipated?</b> If the column head exceeds the reservoir pressure, the
+ * required wellhead (seabed) pressure to hold the well liquid-full would be negative. The well then cannot be throttled
+ * at the wellhead: the upper tubing partially empties and a low-pressure vapour cavity forms. The analyzer locates the
+ * vapour-cavity onset depth and reports the down-hole back-pressure that a deep choke / ICD / tail-pipe must absorb
+ * instead.</li>
+ * <li><b>Will a wellhead choke cavitate?</b> It evaluates the ISA-75 / IEC 60534 cavitation index (sigma) for a
+ * hypothetical wellhead choke taking the full pressure drop, using the true seawater vapour pressure (a few mbar —
+ * <em>not</em> 0.01 bar of liquid).</li>
+ * <li><b>Could friction alone dissipate the head?</b> It sizes the tail-pipe inner diameter whose frictional pressure
+ * drop at the design rate equals the excess head.</li>
  * </ul>
  *
  * <p>
- * Sign convention: flow is downward (injection). Going downward, gravity adds pressure
- * (\(+\rho g L\)) and friction subtracts pressure in the flow direction (\(-\Delta p_f\)). The steady
- * sandface pressure is therefore
+ * Sign convention: flow is downward (injection). Going downward, gravity adds pressure (\(+\rho g L\)) and friction
+ * subtracts pressure in the flow direction (\(-\Delta p_f\)). The steady sandface pressure is therefore
  * </p>
  *
  * <pre>
- * p_sandface = p_wellhead + rho*g*L - dp_friction
+ * p_sandface = p_wellhead + rho * g * L - dp_friction
  * </pre>
  *
  * <p>
@@ -47,7 +45,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </p>
  *
  * <pre>
- * p_wellhead_required = p_res + dp_friction - rho*g*L
+ * p_wellhead_required = p_res + dp_friction - rho * g * L
  * </pre>
  *
  * <p>
@@ -61,8 +59,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </p>
  *
  * <p>
- * Standards informational: ISA-75.01.01 / IEC 60534-2-1 (control-valve cavitation index), API RP 14E
- * (erosional velocity), Joukowsky (1900) surge equation for transient screening done elsewhere.
+ * Standards informational: ISA-75.01.01 / IEC 60534-2-1 (control-valve cavitation index), API RP 14E (erosional
+ * velocity), Joukowsky (1900) surge equation for transient screening done elsewhere.
  * </p>
  *
  * <p>
@@ -223,9 +221,9 @@ public class GravityDumpFloodInjectionAnalyzer implements Serializable {
   }
 
   /**
-   * Overrides the pressure available at the top of the tubing (wellhead) at the seabed. When not
-   * set, the analyzer reports the wellhead pressure that would be required, and the down-hole
-   * back-pressure to absorb is computed assuming a low (≈ vapour-pressure) wellhead pressure.
+   * Overrides the pressure available at the top of the tubing (wellhead) at the seabed. When not set, the analyzer
+   * reports the wellhead pressure that would be required, and the down-hole back-pressure to absorb is computed
+   * assuming a low (≈ vapour-pressure) wellhead pressure.
    *
    * @param bara wellhead supply pressure [bara]
    */
@@ -245,12 +243,11 @@ public class GravityDumpFloodInjectionAnalyzer implements Serializable {
   /**
    * Supplies seawater physical properties directly (bypasses the NeqSim fluid calculation).
    *
-   * @param densityKgM3 seawater density [kg/m3], must be positive
-   * @param viscosityCp seawater dynamic viscosity [cP], must be positive
+   * @param densityKgM3        seawater density [kg/m3], must be positive
+   * @param viscosityCp        seawater dynamic viscosity [cP], must be positive
    * @param vapourPressureBara true seawater vapour pressure at seabed temperature [bara]
    */
-  public void setSeawaterProperties(double densityKgM3, double viscosityCp,
-      double vapourPressureBara) {
+  public void setSeawaterProperties(double densityKgM3, double viscosityCp, double vapourPressureBara) {
     this.seawaterDensityKgM3 = densityKgM3;
     this.seawaterViscosityCp = viscosityCp;
     this.vapourPressureBara = vapourPressureBara;
@@ -258,9 +255,9 @@ public class GravityDumpFloodInjectionAnalyzer implements Serializable {
   }
 
   /**
-   * Auto-computes seawater density, viscosity and vapour pressure from a NeqSim fluid at seabed
-   * conditions. The fluid is cloned; the original is not modified. On any thermodynamic failure the
-   * previously set (or default) properties are retained and a note is added to the recommendations.
+   * Auto-computes seawater density, viscosity and vapour pressure from a NeqSim fluid at seabed conditions. The fluid
+   * is cloned; the original is not modified. On any thermodynamic failure the previously set (or default) properties
+   * are retained and a note is added to the recommendations.
    *
    * @param fluid seawater fluid (e.g. SystemElectrolyteCPAstatoil with major ions)
    */
@@ -282,14 +279,12 @@ public class GravityDumpFloodInjectionAnalyzer implements Serializable {
       this.seawaterViscosityCp = f.getPhase(aq).getViscosity("cP");
       this.propertiesSet = true;
     } catch (Exception ex) {
-      recommendations
-          .add("computePropertiesFromFluid: density/viscosity flash failed (" + ex.getMessage()
-              + "); using supplied properties.");
+      recommendations.add("computePropertiesFromFluid: density/viscosity flash failed (" + ex.getMessage()
+	  + "); using supplied properties.");
     }
     // Vapour pressure: use a robust pure-water CPA bubble point with a salinity activity reduction.
     try {
-      SystemInterface w = new neqsim.thermo.system.SystemSrkCPAstatoil(seabedTemperatureC + 273.15,
-          1.0);
+      SystemInterface w = new neqsim.thermo.system.SystemSrkCPAstatoil(seabedTemperatureC + 273.15, 1.0);
       w.addComponent("water", 1.0);
       w.setMixingRule(10);
       ThermodynamicOperations wops = new ThermodynamicOperations(w);
@@ -298,16 +293,15 @@ public class GravityDumpFloodInjectionAnalyzer implements Serializable {
       // Raoult-type activity reduction for ~3.5 wt% salts (x_water ≈ 0.98).
       this.vapourPressureBara = 0.98 * pvapPure;
     } catch (Exception ex) {
-      recommendations.add("computePropertiesFromFluid: vapour-pressure flash failed ("
-          + ex.getMessage() + "); using supplied vapour pressure.");
+      recommendations.add("computePropertiesFromFluid: vapour-pressure flash failed (" + ex.getMessage()
+	  + "); using supplied vapour pressure.");
     }
   }
 
   // ─── Core analysis ──────────────────────────────────────
 
   /**
-   * Runs the full gravity dump-flood screening. Populates the results map, typed getters, and the
-   * recommendations list.
+   * Runs the full gravity dump-flood screening. Populates the results map, typed getters, and the recommendations list.
    *
    * @return this analyzer (for chaining)
    */
@@ -328,33 +322,28 @@ public class GravityDumpFloodInjectionAnalyzer implements Serializable {
     frictionPressureDropBar = frictionDropBar(injectionRateSm3PerDay, tubingIdM, subSeabedLengthM);
 
     // Static (no-flow) sandface pressure if the well were full of seawater to the sea surface.
-    staticSandfacePressureBara =
-        1.01325 + rho * G * reservoirDepthTvdM / 1.0e5;
+    staticSandfacePressureBara = 1.01325 + rho * G * reservoirDepthTvdM / 1.0e5;
     gravityOverpressureBar = staticSandfacePressureBara - reservoirPressureBara;
 
     // Wellhead pressure required to land the sandface exactly on reservoir pressure (incl. friction).
-    // p_sandface = p_wh + rho*g*L - dp_fric  =>  p_wh = p_res + dp_fric - rho*g*L
-    wellheadPressureRequiredBara =
-        reservoirPressureBara + frictionPressureDropBar - subSeabedColumnHeadBar;
+    // p_sandface = p_wh + rho*g*L - dp_fric => p_wh = p_res + dp_fric - rho*g*L
+    wellheadPressureRequiredBara = reservoirPressureBara + frictionPressureDropBar - subSeabedColumnHeadBar;
     freeFalling = wellheadPressureRequiredBara < seabedHydrostaticBara
-        || wellheadPressureRequiredBara < vapourPressureBara;
+	|| wellheadPressureRequiredBara < vapourPressureBara;
 
     // Vapour-cavity onset: liquid-full height that the reservoir can support from below.
-    // rho*g*(L - d) + Pvap ≈ p_res  =>  d = L - (p_res - Pvap)/(rho*g)
-    double liquidSupportHeightM =
-        (reservoirPressureBara - vapourPressureBara) * 1.0e5 / (rho * G);
+    // rho*g*(L - d) + Pvap ≈ p_res => d = L - (p_res - Pvap)/(rho*g)
+    double liquidSupportHeightM = (reservoirPressureBara - vapourPressureBara) * 1.0e5 / (rho * G);
     vapourCavityDepthBelowSeabedM = Math.max(0.0, subSeabedLengthM - liquidSupportHeightM);
 
     // Down-hole back-pressure that a deep choke / ICD / tail-pipe must dissipate.
-    double whSupply =
-        Double.isNaN(wellheadSupplyPressureBara) ? vapourPressureBara : wellheadSupplyPressureBara;
-    downholeBackPressureRequiredBar =
-        Math.max(0.0, whSupply + subSeabedColumnHeadBar - frictionPressureDropBar
-            - reservoirPressureBara);
+    double whSupply = Double.isNaN(wellheadSupplyPressureBara) ? vapourPressureBara : wellheadSupplyPressureBara;
+    downholeBackPressureRequiredBar = Math.max(0.0,
+	whSupply + subSeabedColumnHeadBar - frictionPressureDropBar - reservoirPressureBara);
 
     // Tail-pipe ID whose friction equals the excess head to dissipate.
-    frictionTailpipeIdMm = sizeFrictionTailpipeIdMm(downholeBackPressureRequiredBar,
-        injectionRateSm3PerDay, subSeabedLengthM);
+    frictionTailpipeIdMm = sizeFrictionTailpipeIdMm(downholeBackPressureRequiredBar, injectionRateSm3PerDay,
+	subSeabedLengthM);
 
     // Wellhead-choke cavitation index for a hypothetical choke taking the full drop.
     // sigma = (p2 - pv) / (p1 - p2), with p1 = seabed supply, p2 = vapour-limited downstream.
@@ -377,8 +366,7 @@ public class GravityDumpFloodInjectionAnalyzer implements Serializable {
   private void validateInputs() {
     if (reservoirDepthTvdM <= waterDepthM) {
       throw new IllegalStateException(
-          "reservoir depth (" + reservoirDepthTvdM + " m) must exceed water depth (" + waterDepthM
-              + " m)");
+	  "reservoir depth (" + reservoirDepthTvdM + " m) must exceed water depth (" + waterDepthM + " m)");
     }
     if (tubingIdM <= 0.0) {
       throw new IllegalStateException("tubing ID must be positive");
@@ -387,8 +375,8 @@ public class GravityDumpFloodInjectionAnalyzer implements Serializable {
       throw new IllegalStateException("reservoir pressure must be positive");
     }
     if (!propertiesSet) {
-      recommendations.add(
-          "Seawater properties not explicitly set; using defaults (rho=1025, mu=1.6 cP, Pvap=0.0075 bara).");
+      recommendations
+	  .add("Seawater properties not explicitly set; using defaults (rho=1025, mu=1.6 cP, Pvap=0.0075 bara).");
     }
   }
 
@@ -396,8 +384,8 @@ public class GravityDumpFloodInjectionAnalyzer implements Serializable {
    * Darcy-Weisbach frictional pressure drop using the explicit Haaland friction factor.
    *
    * @param rateSm3PerDay volumetric rate [Sm3/day] (≈ actual for near-incompressible water)
-   * @param idM pipe inner diameter [m]
-   * @param lengthM pipe length [m]
+   * @param idM           pipe inner diameter [m]
+   * @param lengthM       pipe length [m]
    * @return frictional pressure drop [bar]
    */
   private double frictionDropBar(double rateSm3PerDay, double idM, double lengthM) {
@@ -422,12 +410,12 @@ public class GravityDumpFloodInjectionAnalyzer implements Serializable {
   }
 
   /**
-   * Sizes the tail-pipe inner diameter whose friction over the sub-seabed length equals the target
-   * back-pressure at the design rate. Solves by bisection on diameter.
+   * Sizes the tail-pipe inner diameter whose friction over the sub-seabed length equals the target back-pressure at the
+   * design rate. Solves by bisection on diameter.
    *
-   * @param targetBar target frictional dissipation [bar]
+   * @param targetBar     target frictional dissipation [bar]
    * @param rateSm3PerDay design rate [Sm3/day]
-   * @param lengthM available length [m]
+   * @param lengthM       available length [m]
    * @return tail-pipe inner diameter [mm], or 0 if no dissipation is required
    */
   private double sizeFrictionTailpipeIdMm(double targetBar, double rateSm3PerDay, double lengthM) {
@@ -440,9 +428,9 @@ public class GravityDumpFloodInjectionAnalyzer implements Serializable {
       double mid = 0.5 * (lo + hi);
       double dp = frictionDropBar(rateSm3PerDay, mid, lengthM);
       if (dp > targetBar) {
-        lo = mid; // too much friction → larger ID
+	lo = mid; // too much friction → larger ID
       } else {
-        hi = mid; // too little friction → smaller ID
+	hi = mid; // too little friction → smaller ID
       }
     }
     return 0.5 * (lo + hi) * 1000.0;
@@ -454,35 +442,33 @@ public class GravityDumpFloodInjectionAnalyzer implements Serializable {
   private void buildRecommendations() {
     if (freeFalling) {
       recommendations.add("The sub-seabed seawater column head (" + round(subSeabedColumnHeadBar)
-          + " bar) exceeds the reservoir pressure (" + round(reservoirPressureBara)
-          + " bara). The well cannot be controlled by a wellhead/seabed choke — the required "
-          + "wellhead pressure is " + round(wellheadPressureRequiredBara)
-          + " bara (below the seabed hydrostatic / vapour pressure).");
-      recommendations.add("The upper tubing will partially empty; a low-pressure vapour cavity "
-          + "forms down to ~" + round(vapourCavityDepthBelowSeabedM) + " m below the seabed (~"
-          + round(waterDepthM + vapourCavityDepthBelowSeabedM) + " m TVD).");
+	  + " bar) exceeds the reservoir pressure (" + round(reservoirPressureBara)
+	  + " bara). The well cannot be controlled by a wellhead/seabed choke — the required " + "wellhead pressure is "
+	  + round(wellheadPressureRequiredBara) + " bara (below the seabed hydrostatic / vapour pressure).");
+      recommendations.add("The upper tubing will partially empty; a low-pressure vapour cavity " + "forms down to ~"
+	  + round(vapourCavityDepthBelowSeabedM) + " m below the seabed (~"
+	  + round(waterDepthM + vapourCavityDepthBelowSeabedM) + " m TVD).");
       recommendations.add("Dissipate the excess head DOWN-HOLE near the sandface: a down-hole choke, "
-          + "ICD/AICD completion, or small-ID tail-pipe absorbing ~"
-          + round(downholeBackPressureRequiredBar) + " bar. Friction-only sizing needs an ID of ~"
-          + round(frictionTailpipeIdMm) + " mm (erosion / plugging trade-off — API RP 14E).");
+	  + "ICD/AICD completion, or small-ID tail-pipe absorbing ~" + round(downholeBackPressureRequiredBar)
+	  + " bar. Friction-only sizing needs an ID of ~" + round(frictionTailpipeIdMm)
+	  + " mm (erosion / plugging trade-off — API RP 14E).");
     } else {
       recommendations.add("Gravity head does not over-pressure the reservoir; a wellhead choke can "
-          + "in principle set the rate. Verify cavitation margin (sigma=" + round(cavitationIndex)
-          + ").");
+	  + "in principle set the rate. Verify cavitation margin (sigma=" + round(cavitationIndex) + ").");
     }
     if (cavitationIndex < cavitationThreshold) {
-      recommendations.add("A wellhead choke taking the full drop would cavitate hard (sigma="
-          + round(cavitationIndex) + " < " + cavitationThreshold
-          + "): severe flashing / flow-induced vibration / erosion. Do not dissipate the head at a "
-          + "single wellhead choke.");
+      recommendations.add("A wellhead choke taking the full drop would cavitate hard (sigma=" + round(cavitationIndex)
+	  + " < " + cavitationThreshold
+	  + "): severe flashing / flow-induced vibration / erosion. Do not dissipate the head at a "
+	  + "single wellhead choke.");
     }
-    recommendations.add("True seawater vapour pressure at " + round(seabedTemperatureC) + " C is ~"
-        + round(vapourPressureBara * 1000.0)
-        + " mbar — a near-vacuum vapour, NOT 0.01 bar of liquid. Joule-Thomson cooling of "
-        + "near-incompressible liquid water across a throttle is negligible; icing/hydrate risk only "
-        + "arises locally if flashing occurs and a hydrocarbon source is present.");
+    recommendations.add(
+	"True seawater vapour pressure at " + round(seabedTemperatureC) + " C is ~" + round(vapourPressureBara * 1000.0)
+	    + " mbar — a near-vacuum vapour, NOT 0.01 bar of liquid. Joule-Thomson cooling of "
+	    + "near-incompressible liquid water across a throttle is negligible; icing/hydrate risk only "
+	    + "arises locally if flashing occurs and a hydrocarbon source is present.");
     recommendations.add("Gradual near-well plugging raises back-pressure over time and is "
-        + "self-regulating / beneficial; injection is ultimately formation-injectivity limited.");
+	+ "self-regulating / beneficial; injection is ultimately formation-injectivity limited.");
   }
 
   /**
@@ -568,8 +554,8 @@ public class GravityDumpFloodInjectionAnalyzer implements Serializable {
   }
 
   /**
-   * Returns the wellhead pressure required to land the sandface on the reservoir pressure. A
-   * negative value indicates a free-falling / vapour-capped column.
+   * Returns the wellhead pressure required to land the sandface on the reservoir pressure. A negative value indicates a
+   * free-falling / vapour-capped column.
    *
    * @return required wellhead pressure [bara]
    */

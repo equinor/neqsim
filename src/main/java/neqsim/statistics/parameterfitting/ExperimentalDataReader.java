@@ -31,35 +31,35 @@ public final class ExperimentalDataReader {
   /**
    * Utility class constructor.
    */
-  private ExperimentalDataReader() {}
+  private ExperimentalDataReader() {
+  }
 
   /**
    * Reads an experimental data set from a CSV file.
    *
-   * @param file CSV file with a header row
-   * @param name data set name
-   * @param responseName response name and default measured-value column
-   * @param responseUnit response unit used in the resulting data set
+   * @param file                   CSV file with a header row
+   * @param name                   data set name
+   * @param responseName           response name and default measured-value column
+   * @param responseUnit           response unit used in the resulting data set
    * @param dependentVariableNames independent variable names and default column names
    * @param dependentVariableUnits independent variable units used in the resulting data set
    * @return experimental data set
    * @throws IOException if the file cannot be read
    */
-  public static ExperimentalDataSet fromCsv(File file, String name, String responseName,
-      String responseUnit, String[] dependentVariableNames, String[] dependentVariableUnits)
-      throws IOException {
+  public static ExperimentalDataSet fromCsv(File file, String name, String responseName, String responseUnit,
+      String[] dependentVariableNames, String[] dependentVariableUnits) throws IOException {
     CsvOptions options = new CsvOptions(name, responseName, responseUnit, dependentVariableNames,
-        dependentVariableUnits);
+	dependentVariableUnits);
     return fromCsv(file, options);
   }
 
   /**
    * Reads an experimental data set from a CSV file.
    *
-   * @param file CSV file with a header row
+   * @param file    CSV file with a header row
    * @param options CSV mapping options
    * @return experimental data set
-   * @throws IOException if the file cannot be read
+   * @throws IOException              if the file cannot be read
    * @throws IllegalArgumentException if required columns are missing or values are invalid
    */
   public static ExperimentalDataSet fromCsv(File file, CsvOptions options) throws IOException {
@@ -74,45 +74,41 @@ public final class ExperimentalDataReader {
     try {
       String headerLine = reader.readLine();
       if (headerLine == null) {
-        throw new IllegalArgumentException("CSV file is empty: " + file);
+	throw new IllegalArgumentException("CSV file is empty: " + file);
       }
       List<String> header = parseCsvLine(headerLine);
       Map<String, Integer> headerIndex = createHeaderIndex(header);
-      ExperimentalDataSet dataSet = new ExperimentalDataSet(options.getName(),
-          options.getResponseName(), options.getResponseUnit(), options.getDependentVariableNames(),
-          options.getDependentVariableUnits());
+      ExperimentalDataSet dataSet = new ExperimentalDataSet(options.getName(), options.getResponseName(),
+	  options.getResponseUnit(), options.getDependentVariableNames(), options.getDependentVariableUnits());
       String measuredColumn = options.resolveMeasuredValueColumn();
       String standardDeviationColumn = options.resolveStandardDeviationColumn(headerIndex);
       String line;
       int lineNumber = 1;
       while ((line = reader.readLine()) != null) {
-        lineNumber++;
-        if (line.trim().isEmpty()) {
-          continue;
-        }
-        List<String> values = parseCsvLine(line);
-        double measuredValue = parseDouble(getColumnValue(values, headerIndex, measuredColumn),
-            measuredColumn, lineNumber);
-        measuredValue = convertAbsoluteValue(options.getResponseName(), measuredValue,
-            options.getSourceResponseUnit(), options.getResponseUnit());
-        double standardDeviation =
-            parseDouble(getColumnValue(values, headerIndex, standardDeviationColumn),
-                standardDeviationColumn, lineNumber);
-        standardDeviation = convertDeltaValue(options.getResponseName(), standardDeviation,
-            options.getSourceResponseUnit(), options.getResponseUnit());
-        double[] dependentValues = new double[options.getDependentVariableNames().length];
-        for (int i = 0; i < dependentValues.length; i++) {
-          String column = options.resolveDependentVariableColumn(i);
-          double value =
-              parseDouble(getColumnValue(values, headerIndex, column), column, lineNumber);
-          dependentValues[i] = convertAbsoluteValue(options.getDependentVariableNames()[i], value,
-              options.getSourceDependentVariableUnits()[i], options.getDependentVariableUnits()[i]);
-        }
-        String reference = optionalColumnValue(values, headerIndex, options.getReferenceColumn());
-        String description =
-            optionalColumnValue(values, headerIndex, options.getDescriptionColumn());
-        dataSet.addPoint(measuredValue, Math.max(standardDeviation, MINIMUM_WEIGHT),
-            dependentValues, reference, description);
+	lineNumber++;
+	if (line.trim().isEmpty()) {
+	  continue;
+	}
+	List<String> values = parseCsvLine(line);
+	double measuredValue = parseDouble(getColumnValue(values, headerIndex, measuredColumn), measuredColumn,
+	    lineNumber);
+	measuredValue = convertAbsoluteValue(options.getResponseName(), measuredValue, options.getSourceResponseUnit(),
+	    options.getResponseUnit());
+	double standardDeviation = parseDouble(getColumnValue(values, headerIndex, standardDeviationColumn),
+	    standardDeviationColumn, lineNumber);
+	standardDeviation = convertDeltaValue(options.getResponseName(), standardDeviation,
+	    options.getSourceResponseUnit(), options.getResponseUnit());
+	double[] dependentValues = new double[options.getDependentVariableNames().length];
+	for (int i = 0; i < dependentValues.length; i++) {
+	  String column = options.resolveDependentVariableColumn(i);
+	  double value = parseDouble(getColumnValue(values, headerIndex, column), column, lineNumber);
+	  dependentValues[i] = convertAbsoluteValue(options.getDependentVariableNames()[i], value,
+	      options.getSourceDependentVariableUnits()[i], options.getDependentVariableUnits()[i]);
+	}
+	String reference = optionalColumnValue(values, headerIndex, options.getReferenceColumn());
+	String description = optionalColumnValue(values, headerIndex, options.getDescriptionColumn());
+	dataSet.addPoint(measuredValue, Math.max(standardDeviation, MINIMUM_WEIGHT), dependentValues, reference,
+	    description);
       }
       return dataSet;
     } finally {
@@ -177,8 +173,7 @@ public final class ExperimentalDataReader {
     String[] dependentNames = readStringArray(root, "dependentVariableNames");
     String[] dependentUnits = readStringArray(root, "dependentVariableUnits");
     ExperimentalDataSet dataSet = new ExperimentalDataSet(readText(root, "name", "data set"),
-        readText(root, "responseName", "response"), readText(root, "responseUnit", ""),
-        dependentNames, dependentUnits);
+	readText(root, "responseName", "response"), readText(root, "responseUnit", ""), dependentNames, dependentUnits);
     JsonNode points = root.get("points");
     if (points == null || !points.isArray()) {
       throw new IllegalArgumentException("data set document must contain an array named points");
@@ -186,8 +181,8 @@ public final class ExperimentalDataReader {
     for (int i = 0; i < points.size(); i++) {
       JsonNode point = points.get(i);
       dataSet.addPoint(readDouble(point, "measuredValue"), readDouble(point, "standardDeviation"),
-          readDoubleArray(point, "dependentValues"), readText(point, "reference", "unknown"),
-          readText(point, "description", "unknown"));
+	  readDoubleArray(point, "dependentValues"), readText(point, "reference", "unknown"),
+	  readText(point, "description", "unknown"));
     }
     return dataSet;
   }
@@ -205,17 +200,17 @@ public final class ExperimentalDataReader {
     for (int i = 0; i < line.length(); i++) {
       char character = line.charAt(i);
       if (character == '"') {
-        if (quoted && i + 1 < line.length() && line.charAt(i + 1) == '"') {
-          current.append('"');
-          i++;
-        } else {
-          quoted = !quoted;
-        }
+	if (quoted && i + 1 < line.length() && line.charAt(i + 1) == '"') {
+	  current.append('"');
+	  i++;
+	} else {
+	  quoted = !quoted;
+	}
       } else if (character == ',' && !quoted) {
-        values.add(current.toString().trim());
-        current.setLength(0);
+	values.add(current.toString().trim());
+	current.setLength(0);
       } else {
-        current.append(character);
+	current.append(character);
       }
     }
     values.add(current.toString().trim());
@@ -239,13 +234,12 @@ public final class ExperimentalDataReader {
   /**
    * Returns a required column value.
    *
-   * @param values row values
+   * @param values      row values
    * @param headerIndex header index map
-   * @param column column name
+   * @param column      column name
    * @return column value text
    */
-  private static String getColumnValue(List<String> values, Map<String, Integer> headerIndex,
-      String column) {
+  private static String getColumnValue(List<String> values, Map<String, Integer> headerIndex, String column) {
     Integer index = headerIndex.get(column);
     if (index == null) {
       throw new IllegalArgumentException("Missing required CSV column: " + column);
@@ -259,13 +253,12 @@ public final class ExperimentalDataReader {
   /**
    * Returns an optional column value.
    *
-   * @param values row values
+   * @param values      row values
    * @param headerIndex header index map
-   * @param column optional column name
+   * @param column      optional column name
    * @return column value text, or unknown when unavailable
    */
-  private static String optionalColumnValue(List<String> values, Map<String, Integer> headerIndex,
-      String column) {
+  private static String optionalColumnValue(List<String> values, Map<String, Integer> headerIndex, String column) {
     if (column == null || column.trim().isEmpty() || !headerIndex.containsKey(column)) {
       return "unknown";
     }
@@ -280,8 +273,8 @@ public final class ExperimentalDataReader {
   /**
    * Parses a finite double value from CSV text.
    *
-   * @param value value text
-   * @param column column name
+   * @param value      value text
+   * @param column     column name
    * @param lineNumber one-based line number
    * @return parsed value
    */
@@ -289,12 +282,11 @@ public final class ExperimentalDataReader {
     try {
       double parsed = Double.parseDouble(value);
       if (Double.isNaN(parsed) || Double.isInfinite(parsed)) {
-        throw new NumberFormatException("not finite");
+	throw new NumberFormatException("not finite");
       }
       return parsed;
     } catch (NumberFormatException ex) {
-      throw new IllegalArgumentException(
-          "Invalid numeric value in column " + column + " at line " + lineNumber, ex);
+      throw new IllegalArgumentException("Invalid numeric value in column " + column + " at line " + lineNumber, ex);
     }
   }
 
@@ -302,13 +294,12 @@ public final class ExperimentalDataReader {
    * Converts an absolute value between recognized units.
    *
    * @param variableName variable name used for diagnostics
-   * @param value value to convert
-   * @param fromUnit source unit
-   * @param toUnit target unit
+   * @param value        value to convert
+   * @param fromUnit     source unit
+   * @param toUnit       target unit
    * @return converted value
    */
-  private static double convertAbsoluteValue(String variableName, double value, String fromUnit,
-      String toUnit) {
+  private static double convertAbsoluteValue(String variableName, double value, String fromUnit, String toUnit) {
     if (sameOrEmptyUnit(fromUnit, toUnit)) {
       return value;
     }
@@ -319,20 +310,19 @@ public final class ExperimentalDataReader {
       return new PressureUnit(value, fromUnit).getValue(toUnit);
     }
     throw new IllegalArgumentException(
-        "No unit conversion available for " + variableName + ": " + fromUnit + " to " + toUnit);
+	"No unit conversion available for " + variableName + ": " + fromUnit + " to " + toUnit);
   }
 
   /**
    * Converts a standard deviation between recognized units without applying offsets.
    *
    * @param variableName variable name used for diagnostics
-   * @param value standard deviation value
-   * @param fromUnit source unit
-   * @param toUnit target unit
+   * @param value        standard deviation value
+   * @param fromUnit     source unit
+   * @param toUnit       target unit
    * @return converted standard deviation
    */
-  private static double convertDeltaValue(String variableName, double value, String fromUnit,
-      String toUnit) {
+  private static double convertDeltaValue(String variableName, double value, String fromUnit, String toUnit) {
     if (sameOrEmptyUnit(fromUnit, toUnit)) {
       return value;
     }
@@ -347,14 +337,14 @@ public final class ExperimentalDataReader {
       return value * Math.abs(one - zero);
     }
     throw new IllegalArgumentException(
-        "No unit conversion available for " + variableName + ": " + fromUnit + " to " + toUnit);
+	"No unit conversion available for " + variableName + ": " + fromUnit + " to " + toUnit);
   }
 
   /**
    * Returns whether units are effectively equal or unspecified.
    *
    * @param fromUnit source unit
-   * @param toUnit target unit
+   * @param toUnit   target unit
    * @return true if no conversion is needed
    */
   private static boolean sameOrEmptyUnit(String fromUnit, String toUnit) {
@@ -380,16 +370,15 @@ public final class ExperimentalDataReader {
    * @return true for common pressure units supported by NeqSim
    */
   private static boolean isPressureUnit(String unit) {
-    return "bara".equals(unit) || "bar".equals(unit) || "barg".equals(unit) || "psi".equals(unit)
-        || "psia".equals(unit) || "psig".equals(unit) || "Pa".equals(unit) || "kPa".equals(unit)
-        || "MPa".equals(unit) || "atm".equals(unit);
+    return "bara".equals(unit) || "bar".equals(unit) || "barg".equals(unit) || "psi".equals(unit) || "psia".equals(unit)
+	|| "psig".equals(unit) || "Pa".equals(unit) || "kPa".equals(unit) || "MPa".equals(unit) || "atm".equals(unit);
   }
 
   /**
    * Reads a text value from a JSON/YAML node.
    *
-   * @param node parent node
-   * @param field field name
+   * @param node         parent node
+   * @param field        field name
    * @param defaultValue fallback value
    * @return text value or fallback
    */
@@ -401,7 +390,7 @@ public final class ExperimentalDataReader {
   /**
    * Reads a required double value from a JSON/YAML node.
    *
-   * @param node parent node
+   * @param node  parent node
    * @param field field name
    * @return double value
    */
@@ -416,7 +405,7 @@ public final class ExperimentalDataReader {
   /**
    * Reads a string array from a JSON/YAML node.
    *
-   * @param node parent node
+   * @param node  parent node
    * @param field field name
    * @return string array
    */
@@ -435,7 +424,7 @@ public final class ExperimentalDataReader {
   /**
    * Reads a double array from a JSON/YAML node.
    *
-   * @param node parent node
+   * @param node  parent node
    * @param field field name
    * @return double array
    */
@@ -495,19 +484,20 @@ public final class ExperimentalDataReader {
     /**
      * Creates empty options for serialization frameworks.
      */
-    public CsvOptions() {}
+    public CsvOptions() {
+    }
 
     /**
      * Creates CSV options from data-set metadata.
      *
-     * @param name data set name
-     * @param responseName response name
-     * @param responseUnit response unit
+     * @param name                   data set name
+     * @param responseName           response name
+     * @param responseUnit           response unit
      * @param dependentVariableNames independent variable names
      * @param dependentVariableUnits independent variable target units
      */
-    public CsvOptions(String name, String responseName, String responseUnit,
-        String[] dependentVariableNames, String[] dependentVariableUnits) {
+    public CsvOptions(String name, String responseName, String responseUnit, String[] dependentVariableNames,
+	String[] dependentVariableUnits) {
       this.name = name;
       this.responseName = responseName;
       this.responseUnit = responseUnit;
@@ -522,22 +512,20 @@ public final class ExperimentalDataReader {
      */
     public void validate() {
       if (dependentVariableNames == null || dependentVariableNames.length == 0) {
-        throw new IllegalArgumentException("dependentVariableNames must not be empty");
+	throw new IllegalArgumentException("dependentVariableNames must not be empty");
       }
-      if (dependentVariableUnits == null
-          || dependentVariableUnits.length != dependentVariableNames.length) {
-        throw new IllegalArgumentException("dependentVariableUnits length must match names");
+      if (dependentVariableUnits == null || dependentVariableUnits.length != dependentVariableNames.length) {
+	throw new IllegalArgumentException("dependentVariableUnits length must match names");
       }
       if (sourceDependentVariableUnits == null
-          || sourceDependentVariableUnits.length != dependentVariableNames.length) {
-        sourceDependentVariableUnits = copyArray(dependentVariableUnits);
+	  || sourceDependentVariableUnits.length != dependentVariableNames.length) {
+	sourceDependentVariableUnits = copyArray(dependentVariableUnits);
       }
-      if (dependentVariableColumns != null
-          && dependentVariableColumns.length != dependentVariableNames.length) {
-        throw new IllegalArgumentException("dependentVariableColumns length must match names");
+      if (dependentVariableColumns != null && dependentVariableColumns.length != dependentVariableNames.length) {
+	throw new IllegalArgumentException("dependentVariableColumns length must match names");
       }
       if (sourceResponseUnit == null || sourceResponseUnit.trim().isEmpty()) {
-        sourceResponseUnit = responseUnit;
+	sourceResponseUnit = responseUnit;
       }
     }
 
@@ -547,8 +535,7 @@ public final class ExperimentalDataReader {
      * @return measured-value column name
      */
     public String resolveMeasuredValueColumn() {
-      return measuredValueColumn == null || measuredValueColumn.trim().isEmpty() ? responseName
-          : measuredValueColumn;
+      return measuredValueColumn == null || measuredValueColumn.trim().isEmpty() ? responseName : measuredValueColumn;
     }
 
     /**
@@ -559,10 +546,10 @@ public final class ExperimentalDataReader {
      */
     public String resolveStandardDeviationColumn(Map<String, Integer> headerIndex) {
       if (standardDeviationColumn != null && headerIndex.containsKey(standardDeviationColumn)) {
-        return standardDeviationColumn;
+	return standardDeviationColumn;
       }
       if (headerIndex.containsKey("stdDev")) {
-        return "stdDev";
+	return "stdDev";
       }
       return DEFAULT_STANDARD_DEVIATION_COLUMN;
     }
@@ -575,8 +562,8 @@ public final class ExperimentalDataReader {
      */
     public String resolveDependentVariableColumn(int index) {
       if (dependentVariableColumns == null || dependentVariableColumns[index] == null
-          || dependentVariableColumns[index].trim().isEmpty()) {
-        return dependentVariableNames[index];
+	  || dependentVariableColumns[index].trim().isEmpty()) {
+	return dependentVariableNames[index];
       }
       return dependentVariableColumns[index];
     }
@@ -805,7 +792,7 @@ public final class ExperimentalDataReader {
      */
     private static String[] copyArray(String[] values) {
       if (values == null) {
-        return null;
+	return null;
       }
       String[] copy = new String[values.length];
       System.arraycopy(values, 0, copy, 0, values.length);

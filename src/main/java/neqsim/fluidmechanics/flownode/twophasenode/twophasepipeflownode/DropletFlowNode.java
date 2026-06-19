@@ -38,16 +38,14 @@ public class DropletFlowNode extends TwoPhaseFlowNode {
    * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface}
-   *        object
+   * @param pipe   a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
    */
   public DropletFlowNode(SystemInterface system, GeometryDefinitionInterface pipe) {
     super(system, pipe);
     this.flowNodeType = "droplet";
     this.interphaseTransportCoefficient = new InterphaseDropletFlow(this);
-    this.fluidBoundary =
-        new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
-            this);
+    this.fluidBoundary = new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
+	this);
   }
 
   /**
@@ -55,19 +53,16 @@ public class DropletFlowNode extends TwoPhaseFlowNode {
    * Constructor for DropletFlowNode.
    * </p>
    *
-   * @param system a {@link neqsim.thermo.system.SystemInterface} object
+   * @param system           a {@link neqsim.thermo.system.SystemInterface} object
    * @param interphaseSystem a {@link neqsim.thermo.system.SystemInterface} object
-   * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface}
-   *        object
+   * @param pipe             a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
    */
-  public DropletFlowNode(SystemInterface system, SystemInterface interphaseSystem,
-      GeometryDefinitionInterface pipe) {
+  public DropletFlowNode(SystemInterface system, SystemInterface interphaseSystem, GeometryDefinitionInterface pipe) {
     super(system, pipe);
     this.flowNodeType = "droplet";
     this.interphaseTransportCoefficient = new InterphaseDropletFlow(this);
-    this.fluidBoundary =
-        new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
-            this);
+    this.fluidBoundary = new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
+	this);
   }
 
   /** {@inheritDoc} */
@@ -113,9 +108,8 @@ public class DropletFlowNode extends TwoPhaseFlowNode {
   /** {@inheritDoc} */
   @Override
   public double calcContactLength() {
-    double phaseAngel =
-        pi * phaseFraction[1] + Math.pow(3.0 * pi / 2.0, 1.0 / 3.0) * (1.0 - 2.0 * phaseFraction[1]
-            + Math.pow(phaseFraction[1], 1.0 / 3.0) - Math.pow(phaseFraction[0], 1.0 / 3.0));
+    double phaseAngel = pi * phaseFraction[1] + Math.pow(3.0 * pi / 2.0, 1.0 / 3.0) * (1.0 - 2.0 * phaseFraction[1]
+	+ Math.pow(phaseFraction[1], 1.0 / 3.0) - Math.pow(phaseFraction[0], 1.0 / 3.0));
     wallContactLength[1] = phaseAngel * pipe.getDiameter();
     wallContactLength[0] = pi * pipe.getDiameter() - wallContactLength[1];
     interphaseContactLength[0] = pipe.getDiameter() * Math.sin(phaseAngel);
@@ -135,8 +129,8 @@ public class DropletFlowNode extends TwoPhaseFlowNode {
    * {@inheritDoc}
    *
    * <p>
-   * For droplet/mist flow, the interfacial area per unit volume is calculated using Sauter mean
-   * diameter: a = 6 * α_L / d_32
+   * For droplet/mist flow, the interfacial area per unit volume is calculated using Sauter mean diameter: a = 6 * α_L /
+   * d_32
    * </p>
    */
   @Override
@@ -152,8 +146,8 @@ public class DropletFlowNode extends TwoPhaseFlowNode {
    * {@inheritDoc}
    *
    * <p>
-   * For droplet flow, uses critical Weber number to calculate maximum stable droplet size: d_max =
-   * We_crit * σ / (ρ_G * u_G²)
+   * For droplet flow, uses critical Weber number to calculate maximum stable droplet size: d_max = We_crit * σ / (ρ_G *
+   * u_G²)
    * </p>
    */
   @Override
@@ -171,7 +165,7 @@ public class DropletFlowNode extends TwoPhaseFlowNode {
       // Use d_32 ≈ 0.6 * d_max for Sauter mean diameter
       double d32 = 0.6 * dMax;
       if (d32 > 0 && phaseFraction[1] > 0) {
-        return 6.0 * phaseFraction[1] / d32;
+	return 6.0 * phaseFraction[1] / d32;
       }
     }
     return calcGeometricInterfacialAreaPerVolume();
@@ -246,16 +240,16 @@ public class DropletFlowNode extends TwoPhaseFlowNode {
       test.calcFluxes();
 
       if (i > 1 && (i % 1) == 0) {
-        k++;
-        // test.display("length " + length);
-        // test.getBulkSystem().display("length " + length);
-        // test.getInterphaseSystem().display("length " + length);
-        // test.getFluidBoundary().display("length " + length);
-        // test.setLengthOfNode(0.000005 + test.getLengthOfNode() / 2.0);
-        temperatures2[0][k] = length;
-        temperatures2[1][k] = test.getGeometry().getInnerWallTemperature();
-        System.out.println(test.getBulkSystem().getPhase(0).getComponent("water").getx());
-        // test.getFluidBoundary().display("test");
+	k++;
+	// test.display("length " + length);
+	// test.getBulkSystem().display("length " + length);
+	// test.getInterphaseSystem().display("length " + length);
+	// test.getFluidBoundary().display("length " + length);
+	// test.setLengthOfNode(0.000005 + test.getLengthOfNode() / 2.0);
+	temperatures2[0][k] = length;
+	temperatures2[1][k] = test.getGeometry().getInnerWallTemperature();
+	System.out.println(test.getBulkSystem().getPhase(0).getComponent("water").getx());
+	// test.getFluidBoundary().display("test");
       }
 
       // test.getBulkSystem().display();
@@ -325,16 +319,16 @@ public class DropletFlowNode extends TwoPhaseFlowNode {
       test.calcFluxes();
 
       if (i > 1 && (i % 1) == 0) {
-        k++;
-        // test.display("length " + length);
-        // test.getBulkSystem().display("length " + length);
-        // test.getInterphaseSystem().display("length " + length);
-        // test.getFluidBoundary().display("length " + length);
-        // test.setLengthOfNode(0.000005 + test.getLengthOfNode() / 2.0);
-        temperatures2[0][k] = length;
-        temperatures2[1][k] = test.getGeometry().getInnerWallTemperature();
-        System.out.println(test.getBulkSystem().getPhase(0).getComponent("water").getx());
-        // test.getFluidBoundary().display("test");
+	k++;
+	// test.display("length " + length);
+	// test.getBulkSystem().display("length " + length);
+	// test.getInterphaseSystem().display("length " + length);
+	// test.getFluidBoundary().display("length " + length);
+	// test.setLengthOfNode(0.000005 + test.getLengthOfNode() / 2.0);
+	temperatures2[0][k] = length;
+	temperatures2[1][k] = test.getGeometry().getInnerWallTemperature();
+	System.out.println(test.getBulkSystem().getPhase(0).getComponent("water").getx());
+	// test.getFluidBoundary().display("test");
       }
 
       // test.getBulkSystem().display();

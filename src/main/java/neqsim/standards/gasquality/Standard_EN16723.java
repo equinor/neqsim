@@ -5,8 +5,8 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * Implementation of EN 16723 - Natural gas and biomethane for use in transport and biomethane for
- * injection in the natural gas network.
+ * Implementation of EN 16723 - Natural gas and biomethane for use in transport and biomethane for injection in the
+ * natural gas network.
  *
  * <p>
  * EN 16723 specifies quality requirements for biomethane (renewable natural gas):
@@ -30,8 +30,8 @@ import neqsim.thermo.system.SystemInterface;
  * </ul>
  *
  * <p>
- * This implementation also checks the standard natural gas quality parameters (Wobbe, CO2, O2, H2S)
- * using EN 16726 limits as baseline, with additional biomethane-specific checks.
+ * This implementation also checks the standard natural gas quality parameters (Wobbe, CO2, O2, H2S) using EN 16726
+ * limits as baseline, with additional biomethane-specific checks.
  * </p>
  *
  * @author ESOL
@@ -106,12 +106,11 @@ public class Standard_EN16723 extends neqsim.standards.Standard {
    * Constructor for Standard_EN16723 with part specification.
    *
    * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
-   * @param part 1 for grid injection, 2 for automotive
+   * @param part         1 for grid injection, 2 for automotive
    */
   public Standard_EN16723(SystemInterface thermoSystem, int part) {
-    super("Standard_EN16723",
-        "Natural gas and biomethane for use in transport and biomethane for injection",
-        thermoSystem);
+    super("Standard_EN16723", "Natural gas and biomethane for use in transport and biomethane for injection",
+	thermoSystem);
     this.part = part;
     this.en16726 = new Standard_EN16726(thermoSystem);
   }
@@ -201,16 +200,15 @@ public class Standard_EN16723 extends neqsim.standards.Standard {
   /** {@inheritDoc} */
   @Override
   public String getUnit(String returnParameter) {
-    if ("methane".equals(returnParameter) || "methaneContent".equals(returnParameter)
-        || "CO2".equals(returnParameter) || "O2".equals(returnParameter)
-        || "H2".equals(returnParameter) || "totalInerts".equals(returnParameter)) {
+    if ("methane".equals(returnParameter) || "methaneContent".equals(returnParameter) || "CO2".equals(returnParameter)
+	|| "O2".equals(returnParameter) || "H2".equals(returnParameter) || "totalInerts".equals(returnParameter)) {
       return "mol%";
     }
     if ("WobbeIndex".equals(returnParameter) || "WI".equals(returnParameter)) {
       return "MJ/m3";
     }
     if ("siloxaneLimit".equals(returnParameter) || "ammoniaLimit".equals(returnParameter)
-        || "amineLimit".equals(returnParameter)) {
+	|| "amineLimit".equals(returnParameter)) {
       return "mg/m3";
     }
     return "MJ/m3";

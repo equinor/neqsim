@@ -149,13 +149,12 @@ public class Umbilical extends ProcessEquipmentBaseClass {
     /**
      * Constructor for tubes/hoses.
      *
-     * @param elementType element type
-     * @param name element name
-     * @param innerDiameterMm inner diameter in mm
+     * @param elementType       element type
+     * @param name              element name
+     * @param innerDiameterMm   inner diameter in mm
      * @param designPressureBar design pressure in bar
      */
-    public UmbilicalElement(String elementType, String name, double innerDiameterMm,
-        double designPressureBar) {
+    public UmbilicalElement(String elementType, String name, double innerDiameterMm, double designPressureBar) {
       this.elementType = elementType;
       this.name = name;
       this.innerDiameterMm = innerDiameterMm;
@@ -165,7 +164,7 @@ public class Umbilical extends ProcessEquipmentBaseClass {
     /**
      * Constructor for electrical cables.
      *
-     * @param name cable name
+     * @param name          cable name
      * @param numberOfCores number of cores
      * @param voltageRating voltage rating in V
      */
@@ -313,13 +312,12 @@ public class Umbilical extends ProcessEquipmentBaseClass {
   /**
    * Add hydraulic control line.
    *
-   * @param name line name/function
-   * @param innerDiameterMm inner diameter in mm
+   * @param name              line name/function
+   * @param innerDiameterMm   inner diameter in mm
    * @param designPressureBar design pressure in bar
    */
   public void addHydraulicLine(String name, double innerDiameterMm, double designPressureBar) {
-    UmbilicalElement element =
-        new UmbilicalElement("hydraulic", name, innerDiameterMm, designPressureBar);
+    UmbilicalElement element = new UmbilicalElement("hydraulic", name, innerDiameterMm, designPressureBar);
     element.setMaterial(umbilicalType == UmbilicalType.STEEL_TUBE ? "Super Duplex" : "Nylon PA11");
     elements.add(element);
     hydraulicLineCount++;
@@ -328,13 +326,12 @@ public class Umbilical extends ProcessEquipmentBaseClass {
   /**
    * Add chemical injection line.
    *
-   * @param name chemical name (MEG, MeOH, Scale Inhibitor, etc.)
-   * @param innerDiameterMm inner diameter in mm
+   * @param name              chemical name (MEG, MeOH, Scale Inhibitor, etc.)
+   * @param innerDiameterMm   inner diameter in mm
    * @param designPressureBar design pressure in bar
    */
   public void addChemicalLine(String name, double innerDiameterMm, double designPressureBar) {
-    UmbilicalElement element =
-        new UmbilicalElement("chemical", name, innerDiameterMm, designPressureBar);
+    UmbilicalElement element = new UmbilicalElement("chemical", name, innerDiameterMm, designPressureBar);
     element.setMaterial(umbilicalType == UmbilicalType.STEEL_TUBE ? "Super Duplex" : "PVDF");
     elements.add(element);
     chemicalLineCount++;
@@ -343,7 +340,7 @@ public class Umbilical extends ProcessEquipmentBaseClass {
   /**
    * Add electrical power/signal cable.
    *
-   * @param name cable name/function
+   * @param name          cable name/function
    * @param numberOfCores number of conductor cores
    * @param voltageRating voltage rating in V
    */
@@ -357,7 +354,7 @@ public class Umbilical extends ProcessEquipmentBaseClass {
   /**
    * Add fiber optic cable.
    *
-   * @param name cable name/function
+   * @param name           cable name/function
    * @param numberOfFibers number of optical fibers
    */
   public void addFiberOptic(String name, int numberOfFibers) {
@@ -386,11 +383,11 @@ public class Umbilical extends ProcessEquipmentBaseClass {
     double totalArea = 0.0;
     for (UmbilicalElement element : elements) {
       if (element.getOuterDiameterMm() > 0) {
-        totalArea += Math.PI * element.getOuterDiameterMm() * element.getOuterDiameterMm() / 4.0;
+	totalArea += Math.PI * element.getOuterDiameterMm() * element.getOuterDiameterMm() / 4.0;
       } else if (element.getInnerDiameterMm() > 0) {
-        // Estimate outer diameter
-        double od = element.getInnerDiameterMm() * 1.5; // Rough estimate
-        totalArea += Math.PI * od * od / 4.0;
+	// Estimate outer diameter
+	double od = element.getInnerDiameterMm() * 1.5; // Rough estimate
+	totalArea += Math.PI * od * od / 4.0;
       }
     }
     return totalArea;
@@ -439,19 +436,18 @@ public class Umbilical extends ProcessEquipmentBaseClass {
 
     // Steel tubes/armor
     for (UmbilicalElement element : elements) {
-      if ("hydraulic".equals(element.getElementType())
-          || "chemical".equals(element.getElementType())) {
-        if (umbilicalType == UmbilicalType.STEEL_TUBE) {
-          // Steel tube weight
-          double od = element.getOuterDiameterMm() > 0 ? element.getOuterDiameterMm()
-              : element.getInnerDiameterMm() * 1.3;
-          double id = element.getInnerDiameterMm();
-          double tubeArea = Math.PI * (od * od - id * id) / 4.0 / 1e6; // m²
-          totalDryWeight += tubeArea * steelDensity;
-        }
+      if ("hydraulic".equals(element.getElementType()) || "chemical".equals(element.getElementType())) {
+	if (umbilicalType == UmbilicalType.STEEL_TUBE) {
+	  // Steel tube weight
+	  double od = element.getOuterDiameterMm() > 0 ? element.getOuterDiameterMm()
+	      : element.getInnerDiameterMm() * 1.3;
+	  double id = element.getInnerDiameterMm();
+	  double tubeArea = Math.PI * (od * od - id * id) / 4.0 / 1e6; // m²
+	  totalDryWeight += tubeArea * steelDensity;
+	}
       } else if ("electrical".equals(element.getElementType())) {
-        // Copper cable weight (approximate)
-        totalDryWeight += element.getNumberOfCores() * 0.5; // kg/m per core (rough)
+	// Copper cable weight (approximate)
+	totalDryWeight += element.getNumberOfCores() * 0.5; // kg/m per core (rough)
       }
     }
 

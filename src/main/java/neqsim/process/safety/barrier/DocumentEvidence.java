@@ -9,9 +9,9 @@ import com.google.gson.GsonBuilder;
  * Traceable evidence extracted from technical documentation for a safety decision.
  *
  * <p>
- * The evidence object is intentionally small and serializable so agents can carry references from
- * P&amp;IDs, cause and effect charts, safety requirement specifications, technical requirements,
- * inspection reports, and vendor data sheets into barrier registers and audit reports.
+ * The evidence object is intentionally small and serializable so agents can carry references from P&amp;IDs, cause and
+ * effect charts, safety requirement specifications, technical requirements, inspection reports, and vendor data sheets
+ * into barrier registers and audit reports.
  * </p>
  *
  * @author ESOL
@@ -33,19 +33,18 @@ public class DocumentEvidence implements Serializable {
   /**
    * Creates a document evidence record.
    *
-   * @param evidenceId stable evidence identifier
-   * @param documentId source document identifier or number
-   * @param documentTitle source document title
-   * @param revision document revision identifier
-   * @param section clause, drawing zone, table, or section reference
-   * @param page one-based page number, or 0 when not applicable
+   * @param evidenceId      stable evidence identifier
+   * @param documentId      source document identifier or number
+   * @param documentTitle   source document title
+   * @param revision        document revision identifier
+   * @param section         clause, drawing zone, table, or section reference
+   * @param page            one-based page number, or 0 when not applicable
    * @param sourceReference path, URI, tag reference, or repository-local source pointer
-   * @param excerpt short supporting text extracted from the source
-   * @param confidence extraction confidence in the range 0 to 1
+   * @param excerpt         short supporting text extracted from the source
+   * @param confidence      extraction confidence in the range 0 to 1
    */
-  public DocumentEvidence(String evidenceId, String documentId, String documentTitle,
-      String revision, String section, int page, String sourceReference, String excerpt,
-      double confidence) {
+  public DocumentEvidence(String evidenceId, String documentId, String documentTitle, String revision, String section,
+      int page, String sourceReference, String excerpt, double confidence) {
     this.evidenceId = normalize(evidenceId);
     this.documentId = normalize(documentId);
     this.documentTitle = normalize(documentTitle);

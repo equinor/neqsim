@@ -217,21 +217,19 @@ public class MechanicalDesign implements java.io.Serializable {
   // ============================================================
 
   /**
-   * Builds capacity constraints from the mechanical-design limits that have been explicitly set on
-   * this design.
+   * Builds capacity constraints from the mechanical-design limits that have been explicitly set on this design.
    *
    * <p>
-   * A constraint is created for every {@code maxDesign*} limit that has been set to a positive
-   * value <em>and</em> for which a finite current operating value is currently available. Each
-   * constraint uses {@code dataSource = "mechanicalDesign"}, constraint type
-   * {@link CapacityConstraint.ConstraintType#DESIGN}, a warning threshold of 0.9, and a live value
-   * supplier so the utilization tracks the simulation. This is the single, equipment-agnostic place
-   * that maps mechanical-design limits to capacity utilization.
+   * A constraint is created for every {@code maxDesign*} limit that has been set to a positive value <em>and</em> for
+   * which a finite current operating value is currently available. Each constraint uses
+   * {@code dataSource = "mechanicalDesign"}, constraint type {@link CapacityConstraint.ConstraintType#DESIGN}, a
+   * warning threshold of 0.9, and a live value supplier so the utilization tracks the simulation. This is the single,
+   * equipment-agnostic place that maps mechanical-design limits to capacity utilization.
    * </p>
    *
    * <p>
-   * The following metrics are derived universally from the attached equipment's inlet/outlet
-   * streams and therefore work for every equipment type:
+   * The following metrics are derived universally from the attached equipment's inlet/outlet streams and therefore work
+   * for every equipment type:
    * </p>
    * <ul>
    * <li>total inlet volumetric flow vs {@code maxDesignVolumeFlow} (actual m3/hr)</li>
@@ -239,102 +237,95 @@ public class MechanicalDesign implements java.io.Serializable {
    * </ul>
    *
    * <p>
-   * The remaining metrics (phase volumetric flows, power, duty, Cv, velocity) are read through the
-   * protected {@code getOperating*} hooks. These return {@link Double#NaN} by default and are
-   * overridden by equipment-specific mechanical-design subclasses (e.g. compressor power, pipe
-   * velocity) so that the matching unit convention is used.
+   * The remaining metrics (phase volumetric flows, power, duty, Cv, velocity) are read through the protected
+   * {@code getOperating*} hooks. These return {@link Double#NaN} by default and are overridden by equipment-specific
+   * mechanical-design subclasses (e.g. compressor power, pipe velocity) so that the matching unit convention is used.
    * </p>
    *
    * @return a list of capacity constraints (possibly empty, never {@code null})
    */
   public List<CapacityConstraint> getDesignCapacityConstraints() {
     List<CapacityConstraint> constraints = new ArrayList<CapacityConstraint>();
-    addDesignConstraint(constraints, "design volume flow", "m3/hr", maxDesignVolumeFlow,
-        getOperatingVolumeFlow(), new DoubleSupplier() {
-          @Override
-          public double getAsDouble() {
-            return getOperatingVolumeFlow();
-          }
-        });
+    addDesignConstraint(constraints, "design volume flow", "m3/hr", maxDesignVolumeFlow, getOperatingVolumeFlow(),
+	new DoubleSupplier() {
+	  @Override
+	  public double getAsDouble() {
+	    return getOperatingVolumeFlow();
+	  }
+	});
     addDesignConstraint(constraints, "design gas volume flow", "m3/hr", maxDesignGassVolumeFlow,
-        getOperatingGasVolumeFlow(), new DoubleSupplier() {
-          @Override
-          public double getAsDouble() {
-            return getOperatingGasVolumeFlow();
-          }
-        });
+	getOperatingGasVolumeFlow(), new DoubleSupplier() {
+	  @Override
+	  public double getAsDouble() {
+	    return getOperatingGasVolumeFlow();
+	  }
+	});
     addDesignConstraint(constraints, "design oil volume flow", "m3/hr", maxDesignOilVolumeFlow,
-        getOperatingOilVolumeFlow(), new DoubleSupplier() {
-          @Override
-          public double getAsDouble() {
-            return getOperatingOilVolumeFlow();
-          }
-        });
+	getOperatingOilVolumeFlow(), new DoubleSupplier() {
+	  @Override
+	  public double getAsDouble() {
+	    return getOperatingOilVolumeFlow();
+	  }
+	});
     addDesignConstraint(constraints, "design water volume flow", "m3/hr", maxDesignWaterVolumeFlow,
-        getOperatingWaterVolumeFlow(), new DoubleSupplier() {
-          @Override
-          public double getAsDouble() {
-            return getOperatingWaterVolumeFlow();
-          }
-        });
-    addDesignConstraint(constraints, "design power", "kW", maxDesignPower, getOperatingPower(),
-        new DoubleSupplier() {
-          @Override
-          public double getAsDouble() {
-            return getOperatingPower();
-          }
-        });
-    addDesignConstraint(constraints, "design duty", "kW", maxDesignDuty, getOperatingDuty(),
-        new DoubleSupplier() {
-          @Override
-          public double getAsDouble() {
-            return getOperatingDuty();
-          }
-        });
-    addDesignConstraint(constraints, "design Cv", "", maxDesignCv, getOperatingCv(),
-        new DoubleSupplier() {
-          @Override
-          public double getAsDouble() {
-            return getOperatingCv();
-          }
-        });
-    addDesignConstraint(constraints, "design velocity", "m/s", maxDesignVelocity,
-        getOperatingVelocity(), new DoubleSupplier() {
-          @Override
-          public double getAsDouble() {
-            return getOperatingVelocity();
-          }
-        });
-    addDesignConstraint(constraints, "design pressure drop", "bara", maxDesignPressureDrop,
-        getOperatingPressureDrop(), new DoubleSupplier() {
-          @Override
-          public double getAsDouble() {
-            return getOperatingPressureDrop();
-          }
-        });
+	getOperatingWaterVolumeFlow(), new DoubleSupplier() {
+	  @Override
+	  public double getAsDouble() {
+	    return getOperatingWaterVolumeFlow();
+	  }
+	});
+    addDesignConstraint(constraints, "design power", "kW", maxDesignPower, getOperatingPower(), new DoubleSupplier() {
+      @Override
+      public double getAsDouble() {
+	return getOperatingPower();
+      }
+    });
+    addDesignConstraint(constraints, "design duty", "kW", maxDesignDuty, getOperatingDuty(), new DoubleSupplier() {
+      @Override
+      public double getAsDouble() {
+	return getOperatingDuty();
+      }
+    });
+    addDesignConstraint(constraints, "design Cv", "", maxDesignCv, getOperatingCv(), new DoubleSupplier() {
+      @Override
+      public double getAsDouble() {
+	return getOperatingCv();
+      }
+    });
+    addDesignConstraint(constraints, "design velocity", "m/s", maxDesignVelocity, getOperatingVelocity(),
+	new DoubleSupplier() {
+	  @Override
+	  public double getAsDouble() {
+	    return getOperatingVelocity();
+	  }
+	});
+    addDesignConstraint(constraints, "design pressure drop", "bara", maxDesignPressureDrop, getOperatingPressureDrop(),
+	new DoubleSupplier() {
+	  @Override
+	  public double getAsDouble() {
+	    return getOperatingPressureDrop();
+	  }
+	});
     return constraints;
   }
 
   /**
-   * Adds a single design-derived capacity constraint when the limit is set and the current value is
-   * finite.
+   * Adds a single design-derived capacity constraint when the limit is set and the current value is finite.
    *
-   * @param constraints the list to add to
-   * @param name the constraint name (e.g. "design power")
-   * @param unit the unit of measurement (e.g. "kW")
-   * @param designLimit the design limit value; only used when greater than zero
+   * @param constraints  the list to add to
+   * @param name         the constraint name (e.g. "design power")
+   * @param unit         the unit of measurement (e.g. "kW")
+   * @param designLimit  the design limit value; only used when greater than zero
    * @param currentValue the current operating value evaluated once for the set/finite check
-   * @param supplier a live supplier used to track the current value during simulation
+   * @param supplier     a live supplier used to track the current value during simulation
    */
-  private void addDesignConstraint(List<CapacityConstraint> constraints, String name, String unit,
-      double designLimit, double currentValue, DoubleSupplier supplier) {
+  private void addDesignConstraint(List<CapacityConstraint> constraints, String name, String unit, double designLimit,
+      double currentValue, DoubleSupplier supplier) {
     if (designLimit > 0.0 && Double.isFinite(currentValue)) {
-      CapacityConstraint constraint =
-          new CapacityConstraint(name, unit, CapacityConstraint.ConstraintType.DESIGN)
-              .setDesignValue(designLimit).setWarningThreshold(0.9)
-              .setDataSource("mechanicalDesign")
-              .setDescription("Derived from mechanical design limit").setValueSupplier(supplier)
-              .setCurrentValue(currentValue);
+      CapacityConstraint constraint = new CapacityConstraint(name, unit, CapacityConstraint.ConstraintType.DESIGN)
+	  .setDesignValue(designLimit).setWarningThreshold(0.9).setDataSource("mechanicalDesign")
+	  .setDescription("Derived from mechanical design limit").setValueSupplier(supplier)
+	  .setCurrentValue(currentValue);
       constraint.setEnabled(true);
       constraints.add(constraint);
     }
@@ -344,9 +335,9 @@ public class MechanicalDesign implements java.io.Serializable {
    * Computes equipment utilization from the explicitly set mechanical-design limits.
    *
    * <p>
-   * Utilization is the current operating value divided by the design limit (1.0 == 100% of design).
-   * Only metrics with a positive design limit and a finite current operating value are returned.
-   * See {@link #getDesignCapacityConstraints()} for the set of supported metrics.
+   * Utilization is the current operating value divided by the design limit (1.0 == 100% of design). Only metrics with a
+   * positive design limit and a finite current operating value are returned. See
+   * {@link #getDesignCapacityConstraints()} for the set of supported metrics.
    * </p>
    *
    * @return a map from metric name to utilization fraction (possibly empty, never {@code null})
@@ -356,7 +347,7 @@ public class MechanicalDesign implements java.io.Serializable {
     for (CapacityConstraint constraint : getDesignCapacityConstraints()) {
       double value = constraint.getUtilization();
       if (!Double.isNaN(value)) {
-        utilization.put(constraint.getName(), value);
+	utilization.put(constraint.getName(), value);
       }
     }
     return utilization;
@@ -365,14 +356,14 @@ public class MechanicalDesign implements java.io.Serializable {
   /**
    * Returns the highest utilization across all mechanical-design-derived metrics.
    *
-   * @return the maximum utilization fraction (1.0 == 100% of design), or 0.0 when no design limit
-   *         is set or no operating value is available
+   * @return the maximum utilization fraction (1.0 == 100% of design), or 0.0 when no design limit is set or no
+   *         operating value is available
    */
   public double getMaxDesignUtilization() {
     double max = 0.0;
     for (Double value : getDesignUtilization().values()) {
       if (value != null && !Double.isNaN(value) && value > max) {
-        max = value;
+	max = value;
       }
     }
     return max;
@@ -382,8 +373,8 @@ public class MechanicalDesign implements java.io.Serializable {
    * Returns the pressure drop across the attached equipment in bara.
    *
    * <p>
-   * Computed universally as |Pin - Pout| from the first inlet and first outlet stream. Returns
-   * {@link Double#NaN} when the equipment, an inlet, or an outlet stream is unavailable.
+   * Computed universally as |Pin - Pout| from the first inlet and first outlet stream. Returns {@link Double#NaN} when
+   * the equipment, an inlet, or an outlet stream is unavailable.
    * </p>
    *
    * @return pressure drop in bara, or {@link Double#NaN} if it cannot be determined
@@ -396,12 +387,12 @@ public class MechanicalDesign implements java.io.Serializable {
       List<StreamInterface> inlets = processEquipment.getInletStreams();
       List<StreamInterface> outlets = processEquipment.getOutletStreams();
       if (inlets.isEmpty() || outlets.isEmpty()) {
-        return Double.NaN;
+	return Double.NaN;
       }
       double pin = inlets.get(0).getPressure("bara");
       double pout = outlets.get(0).getPressure("bara");
       if (Double.isNaN(pin) || Double.isNaN(pout)) {
-        return Double.NaN;
+	return Double.NaN;
       }
       return Math.abs(pin - pout);
     } catch (RuntimeException ex) {
@@ -413,8 +404,8 @@ public class MechanicalDesign implements java.io.Serializable {
    * Returns the total actual inlet volumetric flow in m3/hr.
    *
    * <p>
-   * Computed universally as the sum of the actual volumetric flow of all inlet streams. Returns
-   * {@link Double#NaN} when the equipment has no inlet streams or the flow cannot be determined.
+   * Computed universally as the sum of the actual volumetric flow of all inlet streams. Returns {@link Double#NaN} when
+   * the equipment has no inlet streams or the flow cannot be determined.
    * </p>
    *
    * @return total inlet volumetric flow in m3/hr, or {@link Double#NaN} if it cannot be determined
@@ -426,16 +417,16 @@ public class MechanicalDesign implements java.io.Serializable {
     try {
       List<StreamInterface> inlets = processEquipment.getInletStreams();
       if (inlets.isEmpty()) {
-        return Double.NaN;
+	return Double.NaN;
       }
       double total = 0.0;
       boolean any = false;
       for (StreamInterface stream : inlets) {
-        double flow = stream.getFlowRate("m3/hr");
-        if (!Double.isNaN(flow)) {
-          total += flow;
-          any = true;
-        }
+	double flow = stream.getFlowRate("m3/hr");
+	if (!Double.isNaN(flow)) {
+	  total += flow;
+	  any = true;
+	}
       }
       return any ? total : Double.NaN;
     } catch (RuntimeException ex) {
@@ -447,9 +438,9 @@ public class MechanicalDesign implements java.io.Serializable {
    * Returns the actual gas-phase volumetric flow in m3/hr.
    *
    * <p>
-   * Default implementation returns {@link Double#NaN}. Equipment-specific mechanical-design
-   * subclasses (e.g. separators) override this to supply the gas volumetric flow in the unit that
-   * matches {@code maxDesignGassVolumeFlow}.
+   * Default implementation returns {@link Double#NaN}. Equipment-specific mechanical-design subclasses (e.g.
+   * separators) override this to supply the gas volumetric flow in the unit that matches
+   * {@code maxDesignGassVolumeFlow}.
    * </p>
    *
    * @return gas volumetric flow in m3/hr, or {@link Double#NaN} if not applicable
@@ -488,9 +479,8 @@ public class MechanicalDesign implements java.io.Serializable {
    * Returns the operating shaft power in kW.
    *
    * <p>
-   * Default implementation returns {@link Double#NaN}. Equipment-specific mechanical-design
-   * subclasses for rotating equipment (compressors, pumps, expanders) override this to supply the
-   * operating power.
+   * Default implementation returns {@link Double#NaN}. Equipment-specific mechanical-design subclasses for rotating
+   * equipment (compressors, pumps, expanders) override this to supply the operating power.
    * </p>
    *
    * @return operating power in kW, or {@link Double#NaN} if not applicable
@@ -503,9 +493,8 @@ public class MechanicalDesign implements java.io.Serializable {
    * Returns the operating thermal duty in kW.
    *
    * <p>
-   * Default implementation returns {@link Double#NaN}. Equipment-specific mechanical-design
-   * subclasses for thermal equipment (heaters, coolers, heat exchangers) override this to supply
-   * the operating duty.
+   * Default implementation returns {@link Double#NaN}. Equipment-specific mechanical-design subclasses for thermal
+   * equipment (heaters, coolers, heat exchangers) override this to supply the operating duty.
    * </p>
    *
    * @return operating duty in kW, or {@link Double#NaN} if not applicable
@@ -518,8 +507,8 @@ public class MechanicalDesign implements java.io.Serializable {
    * Returns the operating valve flow coefficient (Cv).
    *
    * <p>
-   * Default implementation returns {@link Double#NaN}. Valve mechanical-design subclasses override
-   * this to supply the operating Cv.
+   * Default implementation returns {@link Double#NaN}. Valve mechanical-design subclasses override this to supply the
+   * operating Cv.
    * </p>
    *
    * @return operating Cv, or {@link Double#NaN} if not applicable
@@ -532,8 +521,8 @@ public class MechanicalDesign implements java.io.Serializable {
    * Returns the operating fluid velocity in m/s.
    *
    * <p>
-   * Default implementation returns {@link Double#NaN}. Pipe and pipeline mechanical-design
-   * subclasses override this to supply the operating velocity.
+   * Default implementation returns {@link Double#NaN}. Pipe and pipeline mechanical-design subclasses override this to
+   * supply the operating velocity.
    * </p>
    *
    * @return operating velocity in m/s, or {@link Double#NaN} if not applicable
@@ -549,8 +538,7 @@ public class MechanicalDesign implements java.io.Serializable {
   // private String valveDesignStandard="Statoil";
   private double tensileStrength = 483; // MPa
   private double jointEfficiency = 1.0; // fully radiographed
-  private MaterialPlateDesignStandard materialPlateDesignStandard =
-      new MaterialPlateDesignStandard();
+  private MaterialPlateDesignStandard materialPlateDesignStandard = new MaterialPlateDesignStandard();
   private MaterialPipeDesignStandard materialPipeDesignStandard = new MaterialPipeDesignStandard();
   private String construtionMaterial = "steel";
   private double corrosionAllowance = 0.0; // mm
@@ -608,11 +596,10 @@ public class MechanicalDesign implements java.io.Serializable {
     String companyIdentifier = Objects.toString(companySpecificDesignStandards, "");
     DesignLimitData loadedData = null;
     for (MechanicalDesignDataSource dataSource : getActiveDesignDataSources()) {
-      Optional<DesignLimitData> candidate =
-          dataSource.getDesignLimits(equipmentType, companyIdentifier);
+      Optional<DesignLimitData> candidate = dataSource.getDesignLimits(equipmentType, companyIdentifier);
       if (candidate.isPresent()) {
-        loadedData = candidate.get();
-        break;
+	loadedData = candidate.get();
+	break;
       }
     }
 
@@ -732,39 +719,33 @@ public class MechanicalDesign implements java.io.Serializable {
    * @return computed margin result.
    */
   public MechanicalDesignMarginResult validateOperatingEnvelope() {
-    return validateOperatingEnvelope(maxOperationPressure, minOperationPressure,
-        maxOperationTemperature, minOperationTemperature, corrosionAllowance, jointEfficiency);
+    return validateOperatingEnvelope(maxOperationPressure, minOperationPressure, maxOperationTemperature,
+	minOperationTemperature, corrosionAllowance, jointEfficiency);
   }
 
   /**
    * Validate a specific operating envelope against design limits.
    *
-   * @param operatingMaxPressure maximum operating pressure.
-   * @param operatingMinPressure minimum operating pressure.
-   * @param operatingMaxTemperature maximum operating temperature.
-   * @param operatingMinTemperature minimum operating temperature.
+   * @param operatingMaxPressure        maximum operating pressure.
+   * @param operatingMinPressure        minimum operating pressure.
+   * @param operatingMaxTemperature     maximum operating temperature.
+   * @param operatingMinTemperature     minimum operating temperature.
    * @param operatingCorrosionAllowance corrosion allowance used in operation.
-   * @param operatingJointEfficiency joint efficiency achieved in operation.
+   * @param operatingJointEfficiency    joint efficiency achieved in operation.
    * @return computed margin result.
    */
   public MechanicalDesignMarginResult validateOperatingEnvelope(double operatingMaxPressure,
       double operatingMinPressure, double operatingMaxTemperature, double operatingMinTemperature,
       double operatingCorrosionAllowance, double operatingJointEfficiency) {
-    double maxPressureMargin =
-        marginToUpperLimit(designLimitData.getMaxPressure(), operatingMaxPressure);
-    double minPressureMargin =
-        marginFromLowerLimit(operatingMinPressure, designLimitData.getMinPressure());
-    double maxTemperatureMargin =
-        marginToUpperLimit(designLimitData.getMaxTemperature(), operatingMaxTemperature);
-    double minTemperatureMargin =
-        marginFromLowerLimit(operatingMinTemperature, designLimitData.getMinTemperature());
-    double corrosionMargin =
-        marginFromLowerLimit(operatingCorrosionAllowance, designLimitData.getCorrosionAllowance());
-    double jointMargin =
-        marginFromLowerLimit(operatingJointEfficiency, designLimitData.getJointEfficiency());
+    double maxPressureMargin = marginToUpperLimit(designLimitData.getMaxPressure(), operatingMaxPressure);
+    double minPressureMargin = marginFromLowerLimit(operatingMinPressure, designLimitData.getMinPressure());
+    double maxTemperatureMargin = marginToUpperLimit(designLimitData.getMaxTemperature(), operatingMaxTemperature);
+    double minTemperatureMargin = marginFromLowerLimit(operatingMinTemperature, designLimitData.getMinTemperature());
+    double corrosionMargin = marginFromLowerLimit(operatingCorrosionAllowance, designLimitData.getCorrosionAllowance());
+    double jointMargin = marginFromLowerLimit(operatingJointEfficiency, designLimitData.getJointEfficiency());
 
-    lastMarginResult = new MechanicalDesignMarginResult(maxPressureMargin, minPressureMargin,
-        maxTemperatureMargin, minTemperatureMargin, corrosionMargin, jointMargin);
+    lastMarginResult = new MechanicalDesignMarginResult(maxPressureMargin, minPressureMargin, maxTemperatureMargin,
+	minTemperatureMargin, corrosionMargin, jointMargin);
     return lastMarginResult;
   }
 
@@ -824,7 +805,8 @@ public class MechanicalDesign implements java.io.Serializable {
    * readDesignSpecifications.
    * </p>
    */
-  public void readDesignSpecifications() {}
+  public void readDesignSpecifications() {
+  }
 
   /**
    * <p>
@@ -1099,53 +1081,40 @@ public class MechanicalDesign implements java.io.Serializable {
    * @param companySpecificDesignStandards the companySpecificDesignStandards to set
    */
   public void setCompanySpecificDesignStandards(String companySpecificDesignStandards) {
-    this.companySpecificDesignStandards =
-        companySpecificDesignStandards == null ? "" : companySpecificDesignStandards;
+    this.companySpecificDesignStandards = companySpecificDesignStandards == null ? "" : companySpecificDesignStandards;
 
     if (this.companySpecificDesignStandards.equals("StatoilTR")) {
       getDesignStandard().put("pressure vessel design code",
-          new PressureVesselDesignStandard("ASME - Pressure Vessel Code", this));
-      getDesignStandard().put("separator process design",
-          new SeparatorDesignStandard("StatoilTR", this));
-      getDesignStandard().put("gas scrubber process design",
-          new GasScrubberDesignStandard("Statoil_TR1414", this));
+	  new PressureVesselDesignStandard("ASME - Pressure Vessel Code", this));
+      getDesignStandard().put("separator process design", new SeparatorDesignStandard("StatoilTR", this));
+      getDesignStandard().put("gas scrubber process design", new GasScrubberDesignStandard("Statoil_TR1414", this));
       getDesignStandard().put("adsorption dehydration process design",
-          new AdsorptionDehydrationDesignStandard("", this));
-      getDesignStandard().put("pipeline design codes",
-          new PipelineDesignStandard("Statoil_TR1414", this));
-      getDesignStandard().put("compressor design codes",
-          new CompressorDesignStandard("Statoil_TR1414", this));
-      getDesignStandard().put("material plate design codes",
-          new MaterialPlateDesignStandard("Statoil_TR1414", this));
+	  new AdsorptionDehydrationDesignStandard("", this));
+      getDesignStandard().put("pipeline design codes", new PipelineDesignStandard("Statoil_TR1414", this));
+      getDesignStandard().put("compressor design codes", new CompressorDesignStandard("Statoil_TR1414", this));
+      getDesignStandard().put("material plate design codes", new MaterialPlateDesignStandard("Statoil_TR1414", this));
       getDesignStandard().put("plate Joint Efficiency design codes",
-          new JointEfficiencyPlateStandard("Statoil_TR1414", this));
-      getDesignStandard().put("material pipe design codes",
-          new MaterialPipeDesignStandard("Statoil_TR1414", this));
+	  new JointEfficiencyPlateStandard("Statoil_TR1414", this));
+      getDesignStandard().put("material pipe design codes", new MaterialPipeDesignStandard("Statoil_TR1414", this));
 
       // pressureVesselDesignStandard = "ASME - Pressure Vessel Code";
       // setPipingDesignStandard("TR1945_Statoil");
       // setValveDesignStandard("TR1903_Statoil");
     } else {
-      System.out.println("using default mechanical design standards...no design standard "
-          + this.companySpecificDesignStandards);
+      System.out.println(
+	  "using default mechanical design standards...no design standard " + this.companySpecificDesignStandards);
       getDesignStandard().put("pressure vessel design code",
-          new PressureVesselDesignStandard("ASME - Pressure Vessel Code", this));
-      getDesignStandard().put("separator process design",
-          new SeparatorDesignStandard("StatoilTR", this));
-      getDesignStandard().put("gas scrubber process design",
-          new GasScrubberDesignStandard("Statoil_TR1414", this));
+	  new PressureVesselDesignStandard("ASME - Pressure Vessel Code", this));
+      getDesignStandard().put("separator process design", new SeparatorDesignStandard("StatoilTR", this));
+      getDesignStandard().put("gas scrubber process design", new GasScrubberDesignStandard("Statoil_TR1414", this));
       getDesignStandard().put("adsorption dehydration process design",
-          new AdsorptionDehydrationDesignStandard("", this));
-      getDesignStandard().put("pipeline design codes",
-          new PipelineDesignStandard("Statoil_TR1414", this));
-      getDesignStandard().put("compressor design codes",
-          new CompressorDesignStandard("Statoil_TR1414", this));
-      getDesignStandard().put("material plate design codes",
-          new MaterialPlateDesignStandard("Statoil_TR1414", this));
+	  new AdsorptionDehydrationDesignStandard("", this));
+      getDesignStandard().put("pipeline design codes", new PipelineDesignStandard("Statoil_TR1414", this));
+      getDesignStandard().put("compressor design codes", new CompressorDesignStandard("Statoil_TR1414", this));
+      getDesignStandard().put("material plate design codes", new MaterialPlateDesignStandard("Statoil_TR1414", this));
       getDesignStandard().put("plate Joint Efficiency design codes",
-          new JointEfficiencyPlateStandard("Statoil_TR1414", this));
-      getDesignStandard().put("material pipe design codes",
-          new MaterialPipeDesignStandard("Statoil_TR1414", this));
+	  new JointEfficiencyPlateStandard("Statoil_TR1414", this));
+      getDesignStandard().put("material pipe design codes", new MaterialPipeDesignStandard("Statoil_TR1414", this));
     }
     hasSetCompanySpecificDesignStandards = true;
     initMechanicalDesign();
@@ -1155,8 +1124,8 @@ public class MechanicalDesign implements java.io.Serializable {
    * Set a design standard using an international standard type.
    *
    * <p>
-   * This method allows setting design standards based on international standards like NORSOK, ASME,
-   * API, DNV, ISO, ASTM, etc. The standard is placed in the appropriate category based on its type.
+   * This method allows setting design standards based on international standards like NORSOK, ASME, API, DNV, ISO,
+   * ASTM, etc. The standard is placed in the appropriate category based on its type.
    * </p>
    *
    * <p>
@@ -1185,7 +1154,7 @@ public class MechanicalDesign implements java.io.Serializable {
    * Set a design standard using an international standard type with a specific version.
    *
    * @param standardType the international standard type to use
-   * @param version the specific version of the standard (e.g., "2021", "Rev 6")
+   * @param version      the specific version of the standard (e.g., "2021", "Rev 6")
    * @throws IllegalArgumentException if standardType is null
    */
   public void setDesignStandard(StandardType standardType, String version) {
@@ -1202,8 +1171,8 @@ public class MechanicalDesign implements java.io.Serializable {
    * Set multiple design standards using international standard types.
    *
    * <p>
-   * Each standard is placed in its appropriate category. If multiple standards have the same
-   * category, the last one in the list takes precedence.
+   * Each standard is placed in its appropriate category. If multiple standards have the same category, the last one in
+   * the list takes precedence.
    * </p>
    *
    * @param standardTypes the list of standard types to apply
@@ -1214,7 +1183,7 @@ public class MechanicalDesign implements java.io.Serializable {
     }
     for (StandardType type : standardTypes) {
       if (type != null) {
-        setDesignStandard(type);
+	setDesignStandard(type);
       }
     }
   }
@@ -1243,9 +1212,8 @@ public class MechanicalDesign implements java.io.Serializable {
    * Set a design standard for a specific category.
    *
    * <p>
-   * This method allows direct assignment of a DesignStandard instance to a specific design
-   * category. It is used internally by the TorgManager and can be used for custom standard
-   * configurations.
+   * This method allows direct assignment of a DesignStandard instance to a specific design category. It is used
+   * internally by the TorgManager and can be used for custom standard configurations.
    * </p>
    *
    * @param category the design category (e.g., "pressure vessel design code")
@@ -1803,7 +1771,7 @@ public class MechanicalDesign implements java.io.Serializable {
     table[1][0] = getProcessEquipment().getName();
     table[1][1] = Double.toString(getWeightTotal());
     table[1][2] = Double.toString(getVolumeTotal());
-    String[] names = {"", "Volume", "Weight"};
+    String[] names = { "", "Volume", "Weight" };
     JTable Jtab = new JTable(table, names);
     JScrollPane scrollpane = new JScrollPane(Jtab);
     dialogContentPane.add(scrollpane);
@@ -1841,8 +1809,7 @@ public class MechanicalDesign implements java.io.Serializable {
    *
    * @param hasSetCompanySpecificDesignStandards the hasSetCompanySpecificDesignStandards to set
    */
-  public void setHasSetCompanySpecificDesignStandards(
-      boolean hasSetCompanySpecificDesignStandards) {
+  public void setHasSetCompanySpecificDesignStandards(boolean hasSetCompanySpecificDesignStandards) {
     this.hasSetCompanySpecificDesignStandards = hasSetCompanySpecificDesignStandards;
   }
 
@@ -1905,9 +1872,8 @@ public class MechanicalDesign implements java.io.Serializable {
    * Export mechanical design data to JSON format.
    *
    * <p>
-   * This method creates a {@link MechanicalDesignResponse} object and serializes it to JSON using
-   * Gson. The JSON includes equipment identification, weight breakdown, design conditions,
-   * dimensions, and materials information.
+   * This method creates a {@link MechanicalDesignResponse} object and serializes it to JSON using Gson. The JSON
+   * includes equipment identification, weight breakdown, design conditions, dimensions, and materials information.
    * </p>
    *
    * <p>
@@ -1943,8 +1909,8 @@ public class MechanicalDesign implements java.io.Serializable {
    * Get the mechanical design response object.
    *
    * <p>
-   * This method returns a {@link MechanicalDesignResponse} object that can be further customized or
-   * combined with other data before serialization.
+   * This method returns a {@link MechanicalDesignResponse} object that can be further customized or combined with other
+   * data before serialization.
    * </p>
    *
    * @return MechanicalDesignResponse object
@@ -1961,8 +1927,8 @@ public class MechanicalDesign implements java.io.Serializable {
    * Calculate cost estimates for this equipment.
    *
    * <p>
-   * This method calculates purchased equipment cost, bare module cost, total module cost, and grass
-   * roots cost based on the equipment weight and design parameters.
+   * This method calculates purchased equipment cost, bare module cost, total module cost, and grass roots cost based on
+   * the equipment weight and design parameters.
    * </p>
    *
    * <p>
@@ -2000,8 +1966,8 @@ public class MechanicalDesign implements java.io.Serializable {
    * Get the bare module cost.
    *
    * <p>
-   * Bare module cost includes the purchased equipment cost plus installation, piping,
-   * instrumentation, and other direct costs.
+   * Bare module cost includes the purchased equipment cost plus installation, piping, instrumentation, and other direct
+   * costs.
    * </p>
    *
    * @return bare module cost in USD
@@ -2033,8 +1999,7 @@ public class MechanicalDesign implements java.io.Serializable {
    * Get the grass roots cost.
    *
    * <p>
-   * Grass roots cost is the total cost for a new facility including site development, buildings,
-   * and offsites.
+   * Grass roots cost is the total cost for a new facility including site development, buildings, and offsites.
    * </p>
    *
    * @return grass roots cost in USD
@@ -2118,16 +2083,15 @@ public class MechanicalDesign implements java.io.Serializable {
   /** {@inheritDoc} */
   @Override
   public int hashCode() {
-    return Objects.hash(companySpecificDesignStandards, construtionMaterial, corrosionAllowance,
-        costEstimate, designStandard, hasSetCompanySpecificDesignStandards, innerDiameter,
-        jointEfficiency, materialPipeDesignStandard, materialPlateDesignStandard,
-        maxDesignGassVolumeFlow, maxDesignOilVolumeFlow, maxDesignVolumeFlow,
-        maxDesignWaterVolumeFlow, maxOperationPressure, maxOperationTemperature,
-        minDesignGassVolumeFLow, minDesignOilFLow, minDesignVolumeFLow, minDesignWaterVolumeFLow,
-        minOperationPressure, minOperationTemperature, moduleHeight, moduleLength, moduleWidth,
-        outerDiameter, pressureMarginFactor, processEquipment, tantanLength, tensileStrength,
-        volumeTotal, wallThickness, weightElectroInstrument, weightNozzle, weightPiping,
-        weightStructualSteel, weightTotal, weightVessel, weigthInternals, weigthVesselShell);
+    return Objects.hash(companySpecificDesignStandards, construtionMaterial, corrosionAllowance, costEstimate,
+	designStandard, hasSetCompanySpecificDesignStandards, innerDiameter, jointEfficiency,
+	materialPipeDesignStandard, materialPlateDesignStandard, maxDesignGassVolumeFlow, maxDesignOilVolumeFlow,
+	maxDesignVolumeFlow, maxDesignWaterVolumeFlow, maxOperationPressure, maxOperationTemperature,
+	minDesignGassVolumeFLow, minDesignOilFLow, minDesignVolumeFLow, minDesignWaterVolumeFLow, minOperationPressure,
+	minOperationTemperature, moduleHeight, moduleLength, moduleWidth, outerDiameter, pressureMarginFactor,
+	processEquipment, tantanLength, tensileStrength, volumeTotal, wallThickness, weightElectroInstrument,
+	weightNozzle, weightPiping, weightStructualSteel, weightTotal, weightVessel, weigthInternals,
+	weigthVesselShell);
   }
 
   /** {@inheritDoc} */
@@ -2144,64 +2108,43 @@ public class MechanicalDesign implements java.io.Serializable {
     }
     MechanicalDesign other = (MechanicalDesign) obj;
     return Objects.equals(companySpecificDesignStandards, other.companySpecificDesignStandards)
-        && Objects.equals(construtionMaterial, other.construtionMaterial)
-        && Double.doubleToLongBits(corrosionAllowance) == Double
-            .doubleToLongBits(other.corrosionAllowance)
-        && Objects.equals(costEstimate, other.costEstimate)
-        && Objects.equals(designStandard, other.designStandard)
-        && hasSetCompanySpecificDesignStandards == other.hasSetCompanySpecificDesignStandards
-        && Double.doubleToLongBits(innerDiameter) == Double.doubleToLongBits(other.innerDiameter)
-        && Double.doubleToLongBits(jointEfficiency) == Double
-            .doubleToLongBits(other.jointEfficiency)
-        && Objects.equals(materialPipeDesignStandard, other.materialPipeDesignStandard)
-        && Objects.equals(materialPlateDesignStandard, other.materialPlateDesignStandard)
-        && Double.doubleToLongBits(maxDesignGassVolumeFlow) == Double
-            .doubleToLongBits(other.maxDesignGassVolumeFlow)
-        && Double.doubleToLongBits(maxDesignOilVolumeFlow) == Double
-            .doubleToLongBits(other.maxDesignOilVolumeFlow)
-        && Double.doubleToLongBits(maxDesignVolumeFlow) == Double
-            .doubleToLongBits(other.maxDesignVolumeFlow)
-        && Double.doubleToLongBits(maxDesignWaterVolumeFlow) == Double
-            .doubleToLongBits(other.maxDesignWaterVolumeFlow)
-        && Double.doubleToLongBits(maxOperationPressure) == Double
-            .doubleToLongBits(other.maxOperationPressure)
-        && Double.doubleToLongBits(maxOperationTemperature) == Double
-            .doubleToLongBits(other.maxOperationTemperature)
-        && Double.doubleToLongBits(minDesignGassVolumeFLow) == Double
-            .doubleToLongBits(other.minDesignGassVolumeFLow)
-        && Double.doubleToLongBits(minDesignOilFLow) == Double
-            .doubleToLongBits(other.minDesignOilFLow)
-        && Double.doubleToLongBits(minDesignVolumeFLow) == Double
-            .doubleToLongBits(other.minDesignVolumeFLow)
-        && Double.doubleToLongBits(minDesignWaterVolumeFLow) == Double
-            .doubleToLongBits(other.minDesignWaterVolumeFLow)
-        && Double.doubleToLongBits(minOperationPressure) == Double
-            .doubleToLongBits(other.minOperationPressure)
-        && Double.doubleToLongBits(minOperationTemperature) == Double
-            .doubleToLongBits(other.minOperationTemperature)
-        && Double.doubleToLongBits(moduleHeight) == Double.doubleToLongBits(other.moduleHeight)
-        && Double.doubleToLongBits(moduleLength) == Double.doubleToLongBits(other.moduleLength)
-        && Double.doubleToLongBits(moduleWidth) == Double.doubleToLongBits(other.moduleWidth)
-        && Double.doubleToLongBits(outerDiameter) == Double.doubleToLongBits(other.outerDiameter)
-        && Double.doubleToLongBits(pressureMarginFactor) == Double
-            .doubleToLongBits(other.pressureMarginFactor)
-        && Objects.equals(processEquipment, other.processEquipment)
-        && Double.doubleToLongBits(tantanLength) == Double.doubleToLongBits(other.tantanLength)
-        && Double.doubleToLongBits(tensileStrength) == Double
-            .doubleToLongBits(other.tensileStrength)
-        && Double.doubleToLongBits(volumeTotal) == Double.doubleToLongBits(other.volumeTotal)
-        && Double.doubleToLongBits(wallThickness) == Double.doubleToLongBits(other.wallThickness)
-        && Double.doubleToLongBits(weightElectroInstrument) == Double
-            .doubleToLongBits(other.weightElectroInstrument)
-        && Double.doubleToLongBits(weightNozzle) == Double.doubleToLongBits(other.weightNozzle)
-        && Double.doubleToLongBits(weightPiping) == Double.doubleToLongBits(other.weightPiping)
-        && Double.doubleToLongBits(weightStructualSteel) == Double
-            .doubleToLongBits(other.weightStructualSteel)
-        && Double.doubleToLongBits(weightTotal) == Double.doubleToLongBits(other.weightTotal)
-        && Double.doubleToLongBits(weightVessel) == Double.doubleToLongBits(other.weightVessel)
-        && Double.doubleToLongBits(weigthInternals) == Double
-            .doubleToLongBits(other.weigthInternals)
-        && Double.doubleToLongBits(weigthVesselShell) == Double
-            .doubleToLongBits(other.weigthVesselShell);
+	&& Objects.equals(construtionMaterial, other.construtionMaterial)
+	&& Double.doubleToLongBits(corrosionAllowance) == Double.doubleToLongBits(other.corrosionAllowance)
+	&& Objects.equals(costEstimate, other.costEstimate) && Objects.equals(designStandard, other.designStandard)
+	&& hasSetCompanySpecificDesignStandards == other.hasSetCompanySpecificDesignStandards
+	&& Double.doubleToLongBits(innerDiameter) == Double.doubleToLongBits(other.innerDiameter)
+	&& Double.doubleToLongBits(jointEfficiency) == Double.doubleToLongBits(other.jointEfficiency)
+	&& Objects.equals(materialPipeDesignStandard, other.materialPipeDesignStandard)
+	&& Objects.equals(materialPlateDesignStandard, other.materialPlateDesignStandard)
+	&& Double.doubleToLongBits(maxDesignGassVolumeFlow) == Double.doubleToLongBits(other.maxDesignGassVolumeFlow)
+	&& Double.doubleToLongBits(maxDesignOilVolumeFlow) == Double.doubleToLongBits(other.maxDesignOilVolumeFlow)
+	&& Double.doubleToLongBits(maxDesignVolumeFlow) == Double.doubleToLongBits(other.maxDesignVolumeFlow)
+	&& Double.doubleToLongBits(maxDesignWaterVolumeFlow) == Double.doubleToLongBits(other.maxDesignWaterVolumeFlow)
+	&& Double.doubleToLongBits(maxOperationPressure) == Double.doubleToLongBits(other.maxOperationPressure)
+	&& Double.doubleToLongBits(maxOperationTemperature) == Double.doubleToLongBits(other.maxOperationTemperature)
+	&& Double.doubleToLongBits(minDesignGassVolumeFLow) == Double.doubleToLongBits(other.minDesignGassVolumeFLow)
+	&& Double.doubleToLongBits(minDesignOilFLow) == Double.doubleToLongBits(other.minDesignOilFLow)
+	&& Double.doubleToLongBits(minDesignVolumeFLow) == Double.doubleToLongBits(other.minDesignVolumeFLow)
+	&& Double.doubleToLongBits(minDesignWaterVolumeFLow) == Double.doubleToLongBits(other.minDesignWaterVolumeFLow)
+	&& Double.doubleToLongBits(minOperationPressure) == Double.doubleToLongBits(other.minOperationPressure)
+	&& Double.doubleToLongBits(minOperationTemperature) == Double.doubleToLongBits(other.minOperationTemperature)
+	&& Double.doubleToLongBits(moduleHeight) == Double.doubleToLongBits(other.moduleHeight)
+	&& Double.doubleToLongBits(moduleLength) == Double.doubleToLongBits(other.moduleLength)
+	&& Double.doubleToLongBits(moduleWidth) == Double.doubleToLongBits(other.moduleWidth)
+	&& Double.doubleToLongBits(outerDiameter) == Double.doubleToLongBits(other.outerDiameter)
+	&& Double.doubleToLongBits(pressureMarginFactor) == Double.doubleToLongBits(other.pressureMarginFactor)
+	&& Objects.equals(processEquipment, other.processEquipment)
+	&& Double.doubleToLongBits(tantanLength) == Double.doubleToLongBits(other.tantanLength)
+	&& Double.doubleToLongBits(tensileStrength) == Double.doubleToLongBits(other.tensileStrength)
+	&& Double.doubleToLongBits(volumeTotal) == Double.doubleToLongBits(other.volumeTotal)
+	&& Double.doubleToLongBits(wallThickness) == Double.doubleToLongBits(other.wallThickness)
+	&& Double.doubleToLongBits(weightElectroInstrument) == Double.doubleToLongBits(other.weightElectroInstrument)
+	&& Double.doubleToLongBits(weightNozzle) == Double.doubleToLongBits(other.weightNozzle)
+	&& Double.doubleToLongBits(weightPiping) == Double.doubleToLongBits(other.weightPiping)
+	&& Double.doubleToLongBits(weightStructualSteel) == Double.doubleToLongBits(other.weightStructualSteel)
+	&& Double.doubleToLongBits(weightTotal) == Double.doubleToLongBits(other.weightTotal)
+	&& Double.doubleToLongBits(weightVessel) == Double.doubleToLongBits(other.weightVessel)
+	&& Double.doubleToLongBits(weigthInternals) == Double.doubleToLongBits(other.weigthInternals)
+	&& Double.doubleToLongBits(weigthVesselShell) == Double.doubleToLongBits(other.weigthVesselShell);
   }
 }

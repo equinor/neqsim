@@ -50,7 +50,7 @@ public final class BlockConfig implements Serializable {
   /**
    * Creates a block configuration with parameters.
    *
-   * @param type block type
+   * @param type       block type
    * @param parameters configuration parameters
    * @return block configuration
    */
@@ -75,7 +75,7 @@ public final class BlockConfig implements Serializable {
   /**
    * Creates a compression block with specified stages and outlet pressure.
    *
-   * @param stages number of compression stages
+   * @param stages         number of compression stages
    * @param outletPressure target outlet pressure in bara
    * @return compression block config
    */
@@ -133,7 +133,7 @@ public final class BlockConfig implements Serializable {
   /**
    * Creates an inlet separation block.
    *
-   * @param pressure separation pressure in bara
+   * @param pressure    separation pressure in bara
    * @param temperature separation temperature in degC
    * @return inlet sep block config
    */
@@ -148,7 +148,7 @@ public final class BlockConfig implements Serializable {
    * Creates an oil stabilization block.
    *
    * @param stages number of flash stages
-   * @param rvp target RVP in bara
+   * @param rvp    target RVP in bara
    * @return stabilization block config
    */
   public static BlockConfig oilStabilization(int stages, double rvp) {

@@ -26,16 +26,16 @@ public class FluidBoundarySystem implements FluidBoundarySystemInterface {
    * Constructor for FluidBoundarySystem.
    * </p>
    */
-  public FluidBoundarySystem() {}
+  public FluidBoundarySystem() {
+  }
 
   /**
    * <p>
    * Constructor for FluidBoundarySystem.
    * </p>
    *
-   * @param boundary a
-   *        {@link neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.FluidBoundaryInterface}
-   *        object
+   * @param boundary a {@link neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.FluidBoundaryInterface}
+   *                 object
    */
   public FluidBoundarySystem(FluidBoundaryInterface boundary) {
     this.boundary = boundary;
@@ -92,7 +92,8 @@ public class FluidBoundarySystem implements FluidBoundarySystemInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void createSystem() {}
+  public void createSystem() {
+  }
 
   /** {@inheritDoc} */
   @Override

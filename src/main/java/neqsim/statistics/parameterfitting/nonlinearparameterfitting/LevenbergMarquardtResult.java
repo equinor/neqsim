@@ -58,17 +58,16 @@ public final class LevenbergMarquardtResult implements Serializable {
   /**
    * Creates a Levenberg-Marquardt result.
    *
-   * @param convergenceReason reason why the optimizer stopped
-   * @param iterations number of solver iterations performed
-   * @param finalChiSquare final weighted chi-square value
-   * @param gradientNorm final norm of the weighted gradient vector
-   * @param covarianceMatrix fitted-parameter covariance matrix, or null if unavailable
-   * @param correlationMatrix fitted-parameter correlation matrix, or null if unavailable
+   * @param convergenceReason       reason why the optimizer stopped
+   * @param iterations              number of solver iterations performed
+   * @param finalChiSquare          final weighted chi-square value
+   * @param gradientNorm            final norm of the weighted gradient vector
+   * @param covarianceMatrix        fitted-parameter covariance matrix, or null if unavailable
+   * @param correlationMatrix       fitted-parameter correlation matrix, or null if unavailable
    * @param parameterStandardErrors fitted-parameter standard errors, or null if unavailable
    */
-  public LevenbergMarquardtResult(ConvergenceReason convergenceReason, int iterations,
-      double finalChiSquare, double gradientNorm, Matrix covarianceMatrix, Matrix correlationMatrix,
-      double[] parameterStandardErrors) {
+  public LevenbergMarquardtResult(ConvergenceReason convergenceReason, int iterations, double finalChiSquare,
+      double gradientNorm, Matrix covarianceMatrix, Matrix correlationMatrix, double[] parameterStandardErrors) {
     this.convergenceReason = convergenceReason;
     this.iterations = iterations;
     this.finalChiSquare = finalChiSquare;
@@ -84,8 +83,7 @@ public final class LevenbergMarquardtResult implements Serializable {
    * @return a result with {@link ConvergenceReason#NOT_RUN}
    */
   public static LevenbergMarquardtResult notRun() {
-    return new LevenbergMarquardtResult(ConvergenceReason.NOT_RUN, 0, Double.NaN, Double.NaN, null,
-        null, null);
+    return new LevenbergMarquardtResult(ConvergenceReason.NOT_RUN, 0, Double.NaN, Double.NaN, null, null, null);
   }
 
   /**

@@ -12,10 +12,9 @@ import neqsim.thermo.system.SystemInterface;
  * Partial oxidation reactor model for high-temperature syngas production.
  *
  * <p>
- * The model applies oxygen-to-carbon control, adiabatic high-temperature equilibrium in a
- * {@link SyngasBurnerZone}, optional fast quench, refractory-temperature screening, and soot/coke
- * risk metrics. It is suitable for route comparison and process integration studies before a
- * detailed burner, refractory, or soot-kinetics model is available.
+ * The model applies oxygen-to-carbon control, adiabatic high-temperature equilibrium in a {@link SyngasBurnerZone},
+ * optional fast quench, refractory-temperature screening, and soot/coke risk metrics. It is suitable for route
+ * comparison and process integration studies before a detailed burner, refractory, or soot-kinetics model is available.
  * </p>
  *
  * @author NeqSim contributors
@@ -88,11 +87,10 @@ public class PartialOxidationReactor extends TwoPortEquipment {
   /**
    * Creates a partial oxidation reactor with an inlet stream.
    *
-   * @param name equipment name
+   * @param name        equipment name
    * @param inletStream feed stream containing methane and oxygen or ratio-controlled basis
    */
-  public PartialOxidationReactor(String name,
-      neqsim.process.equipment.stream.StreamInterface inletStream) {
+  public PartialOxidationReactor(String name, neqsim.process.equipment.stream.StreamInterface inletStream) {
     super(name, inletStream);
   }
 
@@ -263,11 +261,10 @@ public class PartialOxidationReactor extends TwoPortEquipment {
     burnerZone.setMaximumFlameTemperature(refractoryTemperatureLimitK);
     burnerZone.run(id);
 
-    refractoryTemperatureK =
-        burnerZone.getFlameTemperature() * (1.0 - 0.5 * refractoryHeatLossFraction);
+    refractoryTemperatureK = burnerZone.getFlameTemperature() * (1.0 - 0.5 * refractoryHeatLossFraction);
     refractoryWarning = refractoryTemperatureK > refractoryTemperatureLimitK
-        ? "refractory hot-face temperature above screening limit"
-        : "ok";
+	? "refractory hot-face temperature above screening limit"
+	: "ok";
 
     SystemInterface productSystem = burnerZone.getOutletStream().getThermoSystem().clone();
     if (quenchEnabled) {
@@ -280,8 +277,7 @@ public class PartialOxidationReactor extends TwoPortEquipment {
     }
     productSystem.init(3);
 
-    methaneConversion =
-        HydrogenProductionUtils.calculateMethaneConversion(controlledFeed, productSystem);
+    methaneConversion = HydrogenProductionUtils.calculateMethaneConversion(controlledFeed, productSystem);
     hydrogenToCarbonMonoxideRatio = calculateH2ToCoRatio(productSystem);
     drySyngasLhvMjPerNm3 = HydrogenProductionUtils.estimateDrySyngasLhvMjPerNm3(productSystem);
     sootRiskIndex = calculateSootRiskIndex();
@@ -312,7 +308,7 @@ public class PartialOxidationReactor extends TwoPortEquipment {
     }
     if (outStream != null && outStream.getThermoSystem() != null) {
       results.put("syngasComposition_molFrac",
-          HydrogenProductionUtils.extractSyngasComposition(outStream.getThermoSystem()));
+	  HydrogenProductionUtils.extractSyngasComposition(outStream.getThermoSystem()));
     }
     return results;
   }
@@ -320,8 +316,7 @@ public class PartialOxidationReactor extends TwoPortEquipment {
   /** {@inheritDoc} */
   @Override
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(getResults());
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(getResults());
   }
 
   /**
@@ -368,9 +363,8 @@ public class PartialOxidationReactor extends TwoPortEquipment {
   private double calculateSootRiskIndex() {
     double oxygenPenalty = oxygenToCarbonRatio < 0.48 ? (0.48 - oxygenToCarbonRatio) / 0.48 : 0.0;
     double steamCredit = Math.min(0.25, 0.25 * steamToCarbonRatio);
-    double quenchPenalty =
-        quenchEnabled && quenchSection != null && quenchSection.getQuenchSeverity() > 700.0 ? 0.0
-            : 0.25;
+    double quenchPenalty = quenchEnabled && quenchSection != null && quenchSection.getQuenchSeverity() > 700.0 ? 0.0
+	: 0.25;
     return HydrogenProductionUtils.clamp(oxygenPenalty + quenchPenalty - steamCredit, 0.0, 1.0);
   }
 
@@ -378,7 +372,7 @@ public class PartialOxidationReactor extends TwoPortEquipment {
    * Validates a non-negative finite input.
    *
    * @param value value to validate
-   * @param name parameter name used in exception text
+   * @param name  parameter name used in exception text
    */
   private void validateNonNegative(double value, String name) {
     if (!Double.isFinite(value) || value < 0.0) {

@@ -10,17 +10,15 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * High-level analysis module for dry gas seal condensation risk assessment in centrifugal
- * compressors. Combines isenthalpic expansion modelling, retrograde condensation mapping, dead-leg
- * cooldown simulation, condensate accumulation rate estimation, and flash vaporisation impact
- * pressure calculation into a single orchestrated analysis.
+ * High-level analysis module for dry gas seal condensation risk assessment in centrifugal compressors. Combines
+ * isenthalpic expansion modelling, retrograde condensation mapping, dead-leg cooldown simulation, condensate
+ * accumulation rate estimation, and flash vaporisation impact pressure calculation into a single orchestrated analysis.
  *
  * <p>
- * This analyzer addresses a well-documented failure mode in high-pressure gas compressors (API
- * 692): gas leaking through the primary dry gas seal clearance undergoes isenthalpic
- * (Joule-Thomson) expansion from seal cavity pressure to primary vent pressure. When the seal gas
- * contains C3+ hydrocarbons, this expansion can produce liquid condensation in the primary vent
- * piping, standpipe dead-legs, and seal faces.
+ * This analyzer addresses a well-documented failure mode in high-pressure gas compressors (API 692): gas leaking
+ * through the primary dry gas seal clearance undergoes isenthalpic (Joule-Thomson) expansion from seal cavity pressure
+ * to primary vent pressure. When the seal gas contains C3+ hydrocarbons, this expansion can produce liquid condensation
+ * in the primary vent piping, standpipe dead-legs, and seal faces.
  * </p>
  *
  * <p>
@@ -155,8 +153,7 @@ public class DryGasSealAnalyzer {
   // ═══════════════════════════════════════════════════════════════════
 
   /**
-   * Sets the seal gas thermodynamic system. The fluid is cloned internally so the original is not
-   * modified.
+   * Sets the seal gas thermodynamic system. The fluid is cloned internally so the original is not modified.
    *
    * @param sealGas the thermodynamic system representing the seal gas composition
    */
@@ -168,7 +165,7 @@ public class DryGasSealAnalyzer {
    * Sets the seal cavity pressure (upstream of the seal gap).
    *
    * @param pressure the pressure value
-   * @param unit pressure unit: "bara", "barg", "Pa", "MPa"
+   * @param unit     pressure unit: "bara", "barg", "Pa", "MPa"
    */
   public void setSealCavityPressure(double pressure, String unit) {
     this.sealCavityPressureBara = convertPressureToBara(pressure, unit);
@@ -178,7 +175,7 @@ public class DryGasSealAnalyzer {
    * Sets the seal cavity temperature (upstream of the seal gap).
    *
    * @param temperature the temperature value
-   * @param unit temperature unit: "C", "K", "F"
+   * @param unit        temperature unit: "C", "K", "F"
    */
   public void setSealCavityTemperature(double temperature, String unit) {
     this.sealCavityTemperatureK = convertTemperatureToKelvin(temperature, unit);
@@ -188,7 +185,7 @@ public class DryGasSealAnalyzer {
    * Sets the primary vent back-pressure (downstream of seal gap).
    *
    * @param pressure the pressure value
-   * @param unit pressure unit: "bara", "barg", "Pa", "MPa"
+   * @param unit     pressure unit: "bara", "barg", "Pa", "MPa"
    */
   public void setPrimaryVentPressure(double pressure, String unit) {
     this.primaryVentPressureBara = convertPressureToBara(pressure, unit);
@@ -198,7 +195,7 @@ public class DryGasSealAnalyzer {
    * Sets the primary seal radial clearance.
    *
    * @param clearance the clearance in the specified unit
-   * @param unit length unit: "m", "mm", "um"
+   * @param unit      length unit: "m", "mm", "um"
    */
   public void setSealClearance(double clearance, String unit) {
     if ("mm".equals(unit)) {
@@ -230,7 +227,7 @@ public class DryGasSealAnalyzer {
   /**
    * Sets the standpipe (dead-leg) geometry.
    *
-   * @param lengthM length in metres
+   * @param lengthM        length in metres
    * @param innerDiameterM inner diameter in metres
    */
   public void setStandpipeGeometry(double lengthM, double innerDiameterM) {
@@ -259,7 +256,7 @@ public class DryGasSealAnalyzer {
   /**
    * Sets the pipe insulation properties.
    *
-   * @param thicknessM insulation thickness in metres (0 for bare pipe)
+   * @param thicknessM   insulation thickness in metres (0 for bare pipe)
    * @param conductivity insulation thermal conductivity in W/(m K)
    */
   public void setInsulation(double thicknessM, double conductivity) {
@@ -271,7 +268,7 @@ public class DryGasSealAnalyzer {
    * Sets the ambient temperature.
    *
    * @param temperature the temperature value
-   * @param unit temperature unit: "C", "K", "F"
+   * @param unit        temperature unit: "C", "K", "F"
    */
   public void setAmbientTemperature(double temperature, String unit) {
     this.ambientTemperatureK = convertTemperatureToKelvin(temperature, unit);
@@ -290,7 +287,7 @@ public class DryGasSealAnalyzer {
    * Sets the GCU superheat and subcool margins per API 692.
    *
    * @param superheatK margin above dew point for reheating in Kelvin
-   * @param subcoolK margin below dew point for cooling in Kelvin
+   * @param subcoolK   margin below dew point for cooling in Kelvin
    */
   public void setGCUMargins(double superheatK, double subcoolK) {
     this.gcuSuperheatMarginK = superheatK;
@@ -302,8 +299,8 @@ public class DryGasSealAnalyzer {
   // ═══════════════════════════════════════════════════════════════════
 
   /**
-   * Runs the complete dry gas seal condensation analysis. This is the main entry point that chains
-   * all sub-analyses in sequence.
+   * Runs the complete dry gas seal condensation analysis. This is the main entry point that chains all sub-analyses in
+   * sequence.
    *
    * <p>
    * Sub-analyses executed:
@@ -386,25 +383,23 @@ public class DryGasSealAnalyzer {
   // ═══════════════════════════════════════════════════════════════════
 
   /**
-   * Models isenthalpic (constant enthalpy) expansion of seal gas leaking through the dry gas seal
-   * clearance from seal cavity pressure to primary vent pressure.
+   * Models isenthalpic (constant enthalpy) expansion of seal gas leaking through the dry gas seal clearance from seal
+   * cavity pressure to primary vent pressure.
    *
    * <p>
-   * Physics: Gas leaks through the narrow annular seal gap (typically 3-5 um operating, up to 0.23
-   * mm static). The process is approximately isenthalpic (negligible heat transfer in the short
-   * transit through the seal). The PH-flash at each outlet pressure gives the temperature and phase
-   * distribution after expansion.
+   * Physics: Gas leaks through the narrow annular seal gap (typically 3-5 um operating, up to 0.23 mm static). The
+   * process is approximately isenthalpic (negligible heat transfer in the short transit through the seal). The PH-flash
+   * at each outlet pressure gives the temperature and phase distribution after expansion.
    * </p>
    *
    * <p>
    * Governing equation (Joule-Thomson coefficient):
    * </p>
    *
-   * $$\mu_{JT} = \left(\frac{\partial T}{\partial P}\right)_H = \frac{1}{C_p}\left[T
-   * \left(\frac{\partial V}{\partial T}\right)_P - V\right]$$
+   * $$\mu_{JT} = \left(\frac{\partial T}{\partial P}\right)_H = \frac{1}{C_p}\left[T \left(\frac{\partial V}{\partial
+   * T}\right)_P - V\right]$$
    *
-   * @return map with outlet temperatures, liquid fractions, and JT coefficients at each pressure
-   *         step
+   * @return map with outlet temperatures, liquid fractions, and JT coefficients at each pressure step
    */
   private Map<String, Object> runIsenthalpicExpansionAnalysis() {
     Map<String, Object> result = new LinkedHashMap<>();
@@ -439,57 +434,56 @@ public class DryGasSealAnalyzer {
     for (int i = 0; i <= nSteps; i++) {
       double pOut = pStart - i * dp;
       if (pOut < 1.0) {
-        pOut = 1.0;
+	pOut = 1.0;
       }
 
       try {
-        SystemInterface expandedFluid = sealGas.clone();
-        expandedFluid.setTemperature(sealCavityTemperatureK);
-        expandedFluid.setPressure(sealCavityPressureBara);
+	SystemInterface expandedFluid = sealGas.clone();
+	expandedFluid.setTemperature(sealCavityTemperatureK);
+	expandedFluid.setPressure(sealCavityPressureBara);
 
-        ThermodynamicOperations ops = new ThermodynamicOperations(expandedFluid);
-        ops.TPflash();
-        double enthalpy = expandedFluid.getEnthalpy("J/mol");
+	ThermodynamicOperations ops = new ThermodynamicOperations(expandedFluid);
+	ops.TPflash();
+	double enthalpy = expandedFluid.getEnthalpy("J/mol");
 
-        // Now do PH flash at the lower outlet pressure
-        expandedFluid.setPressure(pOut);
-        ops.PHflash(enthalpy, "J/mol");
-        expandedFluid.initProperties();
+	// Now do PH flash at the lower outlet pressure
+	expandedFluid.setPressure(pOut);
+	ops.PHflash(enthalpy, "J/mol");
+	expandedFluid.initProperties();
 
-        double outletTempC = expandedFluid.getTemperature("C");
-        double liquidVolFraction = 0.0;
-        double liquidMolFraction = 0.0;
-        double liquidDensity = 0.0;
+	double outletTempC = expandedFluid.getTemperature("C");
+	double liquidVolFraction = 0.0;
+	double liquidMolFraction = 0.0;
+	double liquidDensity = 0.0;
 
-        if (expandedFluid.getNumberOfPhases() > 1 && expandedFluid.hasPhaseType("oil")) {
-          liquidVolFraction =
-              expandedFluid.getPhase("oil").getVolume("m3") / expandedFluid.getVolume("m3") * 100.0;
-          liquidMolFraction = expandedFluid.getPhase("oil").getBeta();
-          liquidDensity = expandedFluid.getPhase("oil").getDensity("kg/m3");
-        }
+	if (expandedFluid.getNumberOfPhases() > 1 && expandedFluid.hasPhaseType("oil")) {
+	  liquidVolFraction = expandedFluid.getPhase("oil").getVolume("m3") / expandedFluid.getVolume("m3") * 100.0;
+	  liquidMolFraction = expandedFluid.getPhase("oil").getBeta();
+	  liquidDensity = expandedFluid.getPhase("oil").getDensity("kg/m3");
+	}
 
-        double jtCoeff = expandedFluid.getJouleThomsonCoefficient();
+	double jtCoeff = expandedFluid.getJouleThomsonCoefficient();
 
-        Map<String, Object> point = new LinkedHashMap<>();
-        point.put("pressure_bara", pOut);
-        point.put("temperature_C", outletTempC);
-        point.put("liquid_vol_pct", liquidVolFraction);
-        point.put("liquid_mol_fraction", liquidMolFraction);
-        point.put("liquid_density_kg_m3", liquidDensity);
-        point.put("jt_coefficient_K_per_bar", jtCoeff * 1e5);
-        point.put("number_of_phases", expandedFluid.getNumberOfPhases());
-        expansionPath.add(point);
+	Map<String, Object> point = new LinkedHashMap<>();
+	point.put("pressure_bara", pOut);
+	point.put("temperature_C", outletTempC);
+	point.put("liquid_vol_pct", liquidVolFraction);
+	point.put("liquid_mol_fraction", liquidMolFraction);
+	point.put("liquid_density_kg_m3", liquidDensity);
+	point.put("jt_coefficient_K_per_bar", jtCoeff * 1e5);
+	point.put("number_of_phases", expandedFluid.getNumberOfPhases());
+	expansionPath.add(point);
 
-        if (liquidVolFraction > maxLiquidFraction) {
-          maxLiquidFraction = liquidVolFraction;
-          maxLiquidPressure = pOut;
-        }
-        if (outletTempC < minOutletTemperatureC) {
-          minOutletTemperatureC = outletTempC;
-        }
+	if (liquidVolFraction > maxLiquidFraction) {
+	  maxLiquidFraction = liquidVolFraction;
+	  maxLiquidPressure = pOut;
+	}
+	if (outletTempC < minOutletTemperatureC) {
+	  minOutletTemperatureC = outletTempC;
+	}
 
       } catch (Exception ex) {
-        logger.warn("PH flash failed at P={} bara: {}", pOut, ex.getMessage());
+	logger.warn("PH flash failed at P={} bara: {}", pOut, ex.getMessage());
       }
     }
 
@@ -527,12 +521,11 @@ public class DryGasSealAnalyzer {
       vent.put("number_of_phases", ventFluid.getNumberOfPhases());
 
       if (ventFluid.hasPhaseType("oil")) {
-        double liqVol =
-            ventFluid.getPhase("oil").getVolume("m3") / ventFluid.getVolume("m3") * 100.0;
-        vent.put("liquid_vol_pct", liqVol);
-        vent.put("liquid_density_kg_m3", ventFluid.getPhase("oil").getDensity("kg/m3"));
+	double liqVol = ventFluid.getPhase("oil").getVolume("m3") / ventFluid.getVolume("m3") * 100.0;
+	vent.put("liquid_vol_pct", liqVol);
+	vent.put("liquid_density_kg_m3", ventFluid.getPhase("oil").getDensity("kg/m3"));
       } else {
-        vent.put("liquid_vol_pct", 0.0);
+	vent.put("liquid_vol_pct", 0.0);
       }
     } catch (Exception ex) {
       vent.put("error", ex.getMessage());
@@ -545,12 +538,12 @@ public class DryGasSealAnalyzer {
   // ═══════════════════════════════════════════════════════════════════
 
   /**
-   * Maps the retrograde condensation region by performing TP flash calculations over a grid of
-   * temperatures and pressures covering the seal gas standstill operating envelope.
+   * Maps the retrograde condensation region by performing TP flash calculations over a grid of temperatures and
+   * pressures covering the seal gas standstill operating envelope.
    *
    * <p>
-   * This produces the condensation contour map used for operational planning: any T-P condition in
-   * the two-phase region will produce liquid in the seal gas piping.
+   * This produces the condensation contour map used for operational planning: any T-P condition in the two-phase region
+   * will produce liquid in the seal gas piping.
    * </p>
    *
    * @return map with condensation grid data, dew point curve, and maximum condensation conditions
@@ -583,55 +576,54 @@ public class DryGasSealAnalyzer {
 
       // Find dew point temperature at this pressure
       try {
-        SystemInterface dewFluid = sealGas.clone();
-        dewFluid.setPressure(pBara);
-        dewFluid.setTemperature(273.15 + 0.0);
-        ThermodynamicOperations dewOps = new ThermodynamicOperations(dewFluid);
-        dewOps.dewPointTemperatureFlash();
-        double dewTempC = dewFluid.getTemperature("C");
-        Map<String, Object> dewPt = new LinkedHashMap<>();
-        dewPt.put("pressure_bara", pBara);
-        dewPt.put("dew_point_C", dewTempC);
-        dewPointCurve.add(dewPt);
+	SystemInterface dewFluid = sealGas.clone();
+	dewFluid.setPressure(pBara);
+	dewFluid.setTemperature(273.15 + 0.0);
+	ThermodynamicOperations dewOps = new ThermodynamicOperations(dewFluid);
+	dewOps.dewPointTemperatureFlash();
+	double dewTempC = dewFluid.getTemperature("C");
+	Map<String, Object> dewPt = new LinkedHashMap<>();
+	dewPt.put("pressure_bara", pBara);
+	dewPt.put("dew_point_C", dewTempC);
+	dewPointCurve.add(dewPt);
       } catch (Exception ex) {
-        // Dew point calc can fail near cricondenbar or above
-        logger.debug("Dew point calc failed at P={}: {}", pBara, ex.getMessage());
+	// Dew point calc can fail near cricondenbar or above
+	logger.debug("Dew point calc failed at P={}: {}", pBara, ex.getMessage());
       }
 
       // Sweep temperature at this pressure
       for (int i = 0; i <= nT; i++) {
-        double tC = tMinC + i * dtC;
+	double tC = tMinC + i * dtC;
 
-        try {
-          SystemInterface gridFluid = sealGas.clone();
-          gridFluid.setTemperature(273.15 + tC);
-          gridFluid.setPressure(pBara);
-          gridFluid.setMultiPhaseCheck(true);
+	try {
+	  SystemInterface gridFluid = sealGas.clone();
+	  gridFluid.setTemperature(273.15 + tC);
+	  gridFluid.setPressure(pBara);
+	  gridFluid.setMultiPhaseCheck(true);
 
-          ThermodynamicOperations gridOps = new ThermodynamicOperations(gridFluid);
-          gridOps.TPflash();
+	  ThermodynamicOperations gridOps = new ThermodynamicOperations(gridFluid);
+	  gridOps.TPflash();
 
-          double liquidVolPct = 0.0;
-          if (gridFluid.getNumberOfPhases() > 1 && gridFluid.hasPhaseType("oil")) {
-            liquidVolPct =
-                gridFluid.getPhase("oil").getVolume("m3") / gridFluid.getVolume("m3") * 100.0;
-          }
+	  double liquidVolPct = 0.0;
+	  if (gridFluid.getNumberOfPhases() > 1 && gridFluid.hasPhaseType("oil")) {
+	    liquidVolPct = gridFluid.getPhase("oil").getVolume("m3") / gridFluid.getVolume("m3") * 100.0;
+	  }
 
-          Map<String, Object> pt = new LinkedHashMap<>();
-          pt.put("temperature_C", tC);
-          pt.put("pressure_bara", pBara);
-          pt.put("liquid_vol_pct", liquidVolPct);
-          pt.put("n_phases", gridFluid.getNumberOfPhases());
-          gridPoints.add(pt);
+	  Map<String, Object> pt = new LinkedHashMap<>();
+	  pt.put("temperature_C", tC);
+	  pt.put("pressure_bara", pBara);
+	  pt.put("liquid_vol_pct", liquidVolPct);
+	  pt.put("n_phases", gridFluid.getNumberOfPhases());
+	  gridPoints.add(pt);
 
-          if (liquidVolPct > maxLiquid) {
-            maxLiquid = liquidVolPct;
-            maxLiquidTC = tC;
-            maxLiquidPBara = pBara;
-          }
-        } catch (Exception ex) {
-          // Skip failed points
-        }
+	  if (liquidVolPct > maxLiquid) {
+	    maxLiquid = liquidVolPct;
+	    maxLiquidTC = tC;
+	    maxLiquidPBara = pBara;
+	  }
+	} catch (Exception ex) {
+	  // Skip failed points
+	}
       }
     }
 
@@ -640,8 +632,8 @@ public class DryGasSealAnalyzer {
     result.put("max_liquid_vol_pct", maxLiquid);
     result.put("max_liquid_temperature_C", maxLiquidTC);
     result.put("max_liquid_pressure_bara", maxLiquidPBara);
-    result.put("grid_temperature_range_C", new double[] {tMinC, tMaxC});
-    result.put("grid_pressure_range_bara", new double[] {pMin, pMax});
+    result.put("grid_temperature_range_C", new double[] { tMinC, tMaxC });
+    result.put("grid_pressure_range_bara", new double[] { pMin, pMax });
 
     return result;
   }
@@ -651,9 +643,8 @@ public class DryGasSealAnalyzer {
   // ═══════════════════════════════════════════════════════════════════
 
   /**
-   * Simulates the transient cooldown of gas trapped in a standpipe dead-leg after compressor
-   * shutdown. Uses a lumped thermal capacitance model combining natural convection and radiation
-   * heat loss from the pipe exterior.
+   * Simulates the transient cooldown of gas trapped in a standpipe dead-leg after compressor shutdown. Uses a lumped
+   * thermal capacitance model combining natural convection and radiation heat loss from the pipe exterior.
    *
    * <p>
    * Governing equation (lumped thermal model):
@@ -672,8 +663,8 @@ public class DryGasSealAnalyzer {
    * </ul>
    *
    * <p>
-   * At each time step, the gas T-P state is re-flashed (TP flash) to detect when condensation first
-   * occurs during cooldown and how liquid fraction evolves.
+   * At each time step, the gas T-P state is re-flashed (TP flash) to detect when condensation first occurs during
+   * cooldown and how liquid fraction evolves.
    * </p>
    *
    * @return map with cooldown temperature profile, time to dew point, and liquid accumulation
@@ -737,51 +728,50 @@ public class DryGasSealAnalyzer {
       // TP flash at current conditions
       double liquidVolPct = 0.0;
       try {
-        SystemInterface stepFluid = sealGas.clone();
-        stepFluid.setTemperature(currentTK);
-        stepFluid.setPressure(initialPBara);
-        stepFluid.setMultiPhaseCheck(true);
-        ThermodynamicOperations stepOps = new ThermodynamicOperations(stepFluid);
-        stepOps.TPflash();
+	SystemInterface stepFluid = sealGas.clone();
+	stepFluid.setTemperature(currentTK);
+	stepFluid.setPressure(initialPBara);
+	stepFluid.setMultiPhaseCheck(true);
+	ThermodynamicOperations stepOps = new ThermodynamicOperations(stepFluid);
+	stepOps.TPflash();
 
-        if (stepFluid.getNumberOfPhases() > 1 && stepFluid.hasPhaseType("oil")) {
-          liquidVolPct =
-              stepFluid.getPhase("oil").getVolume("m3") / stepFluid.getVolume("m3") * 100.0;
+	if (stepFluid.getNumberOfPhases() > 1 && stepFluid.hasPhaseType("oil")) {
+	  liquidVolPct = stepFluid.getPhase("oil").getVolume("m3") / stepFluid.getVolume("m3") * 100.0;
 
-          if (!condensationStarted) {
-            condensationStarted = true;
-            dewPointTimeHours = timeHours;
-          }
-        }
-        if (liquidVolPct > maxLiquidFraction) {
-          maxLiquidFraction = liquidVolPct;
-        }
+	  if (!condensationStarted) {
+	    condensationStarted = true;
+	    dewPointTimeHours = timeHours;
+	  }
+	}
+	if (liquidVolPct > maxLiquidFraction) {
+	  maxLiquidFraction = liquidVolPct;
+	}
 
-        // Update gas Cp for next step
-        stepFluid.initProperties();
-        gasCp = stepFluid.getCp("J/kgK");
-        gasDensity = stepFluid.getDensity("kg/m3");
-        gasMass = gasDensity * volume;
-        gasThermalCapacity = gasMass * gasCp;
-        totalThermalCap = gasThermalCapacity + steelThermalCapacity;
+	// Update gas Cp for next step
+	stepFluid.initProperties();
+	gasCp = stepFluid.getCp("J/kgK");
+	gasDensity = stepFluid.getDensity("kg/m3");
+	gasMass = gasDensity * volume;
+	gasThermalCapacity = gasMass * gasCp;
+	totalThermalCap = gasThermalCapacity + steelThermalCapacity;
       } catch (Exception ex) {
-        // Use previous Cp values
+	// Use previous Cp values
       }
 
       // Record point every 15 minutes (or at key events)
       if (step % Math.max(1, (int) (900.0 / dt)) == 0 || step == 0
-          || (condensationStarted && step == (int) (dewPointTimeHours * 3600.0 / dt))) {
-        Map<String, Object> pt = new LinkedHashMap<>();
-        pt.put("time_hours", timeHours);
-        pt.put("temperature_C", currentTK - 273.15);
-        pt.put("liquid_vol_pct", liquidVolPct);
-        pt.put("condensation_started", condensationStarted);
-        cooldownProfile.add(pt);
+	  || (condensationStarted && step == (int) (dewPointTimeHours * 3600.0 / dt))) {
+	Map<String, Object> pt = new LinkedHashMap<>();
+	pt.put("time_hours", timeHours);
+	pt.put("temperature_C", currentTK - 273.15);
+	pt.put("liquid_vol_pct", liquidVolPct);
+	pt.put("condensation_started", condensationStarted);
+	cooldownProfile.add(pt);
       }
 
       // Stop if gas has reached ambient temperature
       if (Math.abs(currentTK - ambientTemperatureK) < 0.1) {
-        break;
+	break;
       }
 
       // Calculate heat loss
@@ -793,7 +783,7 @@ public class DryGasSealAnalyzer {
       double dT = -qLoss * dt / totalThermalCap;
       currentTK += dT;
       if (currentTK < ambientTemperatureK) {
-        currentTK = ambientTemperatureK;
+	currentTK = ambientTemperatureK;
       }
     }
 
@@ -810,8 +800,8 @@ public class DryGasSealAnalyzer {
   }
 
   /**
-   * Calculates the external heat transfer coefficient combining forced convection (wind) and
-   * radiation from a horizontal/vertical cylinder in air.
+   * Calculates the external heat transfer coefficient combining forced convection (wind) and radiation from a
+   * horizontal/vertical cylinder in air.
    *
    * <p>
    * Forced convection uses the Churchill-Bernstein correlation for cross-flow over a cylinder:
@@ -826,7 +816,7 @@ public class DryGasSealAnalyzer {
    *
    * $$h_{rad} = \varepsilon \sigma (T_s^2 + T_{amb}^2)(T_s + T_{amb})$$
    *
-   * @param outerRadius outer radius of pipe (including insulation) in metres
+   * @param outerRadius         outer radius of pipe (including insulation) in metres
    * @param surfaceTemperatureK pipe surface temperature in Kelvin
    * @return combined external heat transfer coefficient in W/(m2 K)
    */
@@ -846,16 +836,16 @@ public class DryGasSealAnalyzer {
     double hForced = 5.0; // minimum natural convection
     if (re > 1.0) {
       double nuForced = 0.3 + 0.62 * Math.pow(re, 0.5) * Math.pow(airPr, 1.0 / 3.0)
-          / Math.pow(1.0 + Math.pow(0.4 / airPr, 2.0 / 3.0), 0.25)
-          * Math.pow(1.0 + Math.pow(re / 282000.0, 5.0 / 8.0), 4.0 / 5.0);
+	  / Math.pow(1.0 + Math.pow(0.4 / airPr, 2.0 / 3.0), 0.25)
+	  * Math.pow(1.0 + Math.pow(re / 282000.0, 5.0 / 8.0), 4.0 / 5.0);
       hForced = nuForced * airK / dOuter;
     }
 
     // Radiation
     double emissivity = 0.9; // oxidised steel
     double hRad = emissivity * STEFAN_BOLTZMANN
-        * (surfaceTemperatureK * surfaceTemperatureK + ambientTemperatureK * ambientTemperatureK)
-        * (surfaceTemperatureK + ambientTemperatureK);
+	* (surfaceTemperatureK * surfaceTemperatureK + ambientTemperatureK * ambientTemperatureK)
+	* (surfaceTemperatureK + ambientTemperatureK);
 
     return hForced + hRad;
   }
@@ -867,19 +857,19 @@ public class DryGasSealAnalyzer {
    * For cylindrical geometry:
    * </p>
    *
-   * $$\frac{1}{U} = \frac{r_{ins}}{r_i h_{int}} + \frac{r_{ins} \ln(r_o/r_i)}{k_{steel}} +
-   * \frac{r_{ins} \ln(r_{ins}/r_o)}{k_{ins}} + \frac{1}{h_{ext}}$$
+   * $$\frac{1}{U} = \frac{r_{ins}}{r_i h_{int}} + \frac{r_{ins} \ln(r_o/r_i)}{k_{steel}} + \frac{r_{ins}
+   * \ln(r_{ins}/r_o)}{k_{ins}} + \frac{1}{h_{ext}}$$
    *
    * <p>
-   * Internal convection is assumed to be dominated by natural convection at low velocities
-   * (stagnant dead-leg), approximated as h_int = 5 W/(m2 K).
+   * Internal convection is assumed to be dominated by natural convection at low velocities (stagnant dead-leg),
+   * approximated as h_int = 5 W/(m2 K).
    * </p>
    *
-   * @param ri inner radius in metres
-   * @param ro outer radius of steel wall in metres
-   * @param rIns outer radius including insulation in metres
+   * @param ri     inner radius in metres
+   * @param ro     outer radius of steel wall in metres
+   * @param rIns   outer radius including insulation in metres
    * @param steelK steel thermal conductivity in W/(m K)
-   * @param hExt external heat transfer coefficient in W/(m2 K)
+   * @param hExt   external heat transfer coefficient in W/(m2 K)
    * @return overall heat transfer coefficient in W/(m2 K) based on outer area
    */
   private double calculateOverallU(double ri, double ro, double rIns, double steelK, double hExt) {
@@ -901,14 +891,12 @@ public class DryGasSealAnalyzer {
   // ═══════════════════════════════════════════════════════════════════
 
   /**
-   * Calculates the condensate accumulation rate from continuous seal leakage, considering both the
-   * JT expansion mechanism (primary) and retrograde condensation from gas cooling in dead-legs
-   * (secondary).
+   * Calculates the condensate accumulation rate from continuous seal leakage, considering both the JT expansion
+   * mechanism (primary) and retrograde condensation from gas cooling in dead-legs (secondary).
    *
    * <p>
-   * Method: Converts the seal leakage rate from NL/min to actual molar flow at standard conditions,
-   * then applies the liquid mole fraction from the isenthalpic expansion to get the liquid
-   * production rate.
+   * Method: Converts the seal leakage rate from NL/min to actual molar flow at standard conditions, then applies the
+   * liquid mole fraction from the isenthalpic expansion to get the liquid production rate.
    * </p>
    *
    * <p>
@@ -918,9 +906,8 @@ public class DryGasSealAnalyzer {
    * $$\dot{V}_{liq} = \dot{n}_{leak} \cdot x_{liq} \cdot \frac{MW_{liq}}{\rho_{liq}}$$
    *
    * <p>
-   * where $\dot{n}_{leak}$ is the molar leakage rate, $x_{liq}$ is the liquid mole fraction from
-   * PH-flash at vent conditions, $MW_{liq}$ is the liquid molar mass, and $\rho_{liq}$ is the
-   * liquid density.
+   * where $\dot{n}_{leak}$ is the molar leakage rate, $x_{liq}$ is the liquid mole fraction from PH-flash at vent
+   * conditions, $MW_{liq}$ is the liquid molar mass, and $\rho_{liq}$ is the liquid density.
    * </p>
    *
    * @return map with accumulation rates, standpipe fill times, and daily volumes
@@ -931,8 +918,7 @@ public class DryGasSealAnalyzer {
     // Convert NL/min to mol/s using ideal gas law at standard conditions
     // PV = nRT => n = PV/(RT)
     double volumeFlowAtStdM3perSec = sealLeakageNLmin / 1000.0 / 60.0;
-    double molarFlowMolPerSec =
-        STD_PRESSURE_BARA * 1e5 * volumeFlowAtStdM3perSec / (8.314 * STD_TEMPERATURE_K);
+    double molarFlowMolPerSec = STD_PRESSURE_BARA * 1e5 * volumeFlowAtStdM3perSec / (8.314 * STD_TEMPERATURE_K);
 
     result.put("seal_leakage_NLmin", sealLeakageNLmin);
     result.put("seal_leakage_mol_per_sec", molarFlowMolPerSec);
@@ -960,9 +946,9 @@ public class DryGasSealAnalyzer {
       double liquidMW = 0.080; // kg/mol default
 
       if (ventFluid.getNumberOfPhases() > 1 && ventFluid.hasPhaseType("oil")) {
-        liquidMolFraction = ventFluid.getPhase("oil").getBeta();
-        liquidDensity = ventFluid.getPhase("oil").getDensity("kg/m3");
-        liquidMW = ventFluid.getPhase("oil").getMolarMass("kg/mol");
+	liquidMolFraction = ventFluid.getPhase("oil").getBeta();
+	liquidDensity = ventFluid.getPhase("oil").getDensity("kg/m3");
+	liquidMW = ventFluid.getPhase("oil").getMolarMass("kg/mol");
       }
 
       // Liquid molar flow rate
@@ -975,8 +961,7 @@ public class DryGasSealAnalyzer {
       double liquidLPerHour = liquidLPerDay / 24.0;
 
       // Standpipe fill time
-      double standpipeVolumeL =
-          Math.PI * Math.pow(standpipeIDM / 2.0, 2) * standpipeLengthM * 1000.0;
+      double standpipeVolumeL = Math.PI * Math.pow(standpipeIDM / 2.0, 2) * standpipeLengthM * 1000.0;
       double totalDeadLegVolumeL = standpipeVolumeL * standpipeCount;
       double fillTimeHours = totalDeadLegVolumeL / liquidLPerHour;
 
@@ -1005,24 +990,23 @@ public class DryGasSealAnalyzer {
   // ═══════════════════════════════════════════════════════════════════
 
   /**
-   * Estimates the pressure impulse generated when accumulated liquid condensate flashes to vapour
-   * during rapid repressurisation of the seal gas system.
+   * Estimates the pressure impulse generated when accumulated liquid condensate flashes to vapour during rapid
+   * repressurisation of the seal gas system.
    *
    * <p>
-   * Physics: When liquid condensate trapped in a standpipe dead-leg is suddenly exposed to high
-   * pressure gas during compressor restart or re-pressurisation, the liquid evaporates rapidly. The
-   * volume expansion generates a pressure wave that propagates through the piping and can impact
-   * the seal faces.
+   * Physics: When liquid condensate trapped in a standpipe dead-leg is suddenly exposed to high pressure gas during
+   * compressor restart or re-pressurisation, the liquid evaporates rapidly. The volume expansion generates a pressure
+   * wave that propagates through the piping and can impact the seal faces.
    * </p>
    *
    * <p>
    * The analysis uses two approaches:
    * </p>
    * <ol>
-   * <li><b>Confined flash pressure:</b> TV flash of liquid at original dead-leg volume to find the
-   * equilibrium pressure after complete evaporation</li>
-   * <li><b>Water hammer analogy:</b> Pressure rise from slug deceleration in a confined pipe using
-   * the Joukowsky equation: $\Delta P = \rho \cdot c \cdot \Delta v$</li>
+   * <li><b>Confined flash pressure:</b> TV flash of liquid at original dead-leg volume to find the equilibrium pressure
+   * after complete evaporation</li>
+   * <li><b>Water hammer analogy:</b> Pressure rise from slug deceleration in a confined pipe using the Joukowsky
+   * equation: $\Delta P = \rho \cdot c \cdot \Delta v$</li>
    * </ol>
    *
    * @return map with flash pressure, slug velocity, impact pressure, and slug acceleration
@@ -1060,8 +1044,8 @@ public class DryGasSealAnalyzer {
       double condensateDensity = 550.0;
       double condensateMW = 0.080;
       if (ventFluid.hasPhaseType("oil")) {
-        condensateDensity = ventFluid.getPhase("oil").getDensity("kg/m3");
-        condensateMW = ventFluid.getPhase("oil").getMolarMass("kg/mol");
+	condensateDensity = ventFluid.getPhase("oil").getDensity("kg/m3");
+	condensateMW = ventFluid.getPhase("oil").getMolarMass("kg/mol");
       }
 
       double condensateMass = condensateDensity * liquidVolumeM3;
@@ -1085,11 +1069,11 @@ public class DryGasSealAnalyzer {
       // This gives the confined pressure rise
       flashFluid.setTemperature(repressT);
       try {
-        flashOps.TVflash(molarVolAtCondensation, "m3/mol");
-        double confinedPressureBara = flashFluid.getPressure("bara");
-        result.put("confined_flash_pressure_bara", confinedPressureBara);
+	flashOps.TVflash(molarVolAtCondensation, "m3/mol");
+	double confinedPressureBara = flashFluid.getPressure("bara");
+	result.put("confined_flash_pressure_bara", confinedPressureBara);
       } catch (Exception tvEx) {
-        result.put("confined_flash_pressure_note", "TV flash not converged");
+	result.put("confined_flash_pressure_note", "TV flash not converged");
       }
 
       // Method 2: Water hammer / Joukowsky pressure rise
@@ -1100,17 +1084,17 @@ public class DryGasSealAnalyzer {
 
       // Get actual speed of sound from NeqSim
       try {
-        SystemInterface soundFluid = sealGas.clone();
-        soundFluid.setTemperature(sealCavityTemperatureK);
-        soundFluid.setPressure(sealCavityPressureBara);
-        ThermodynamicOperations soundOps = new ThermodynamicOperations(soundFluid);
-        soundOps.TPflash();
-        soundFluid.initProperties();
-        if (soundFluid.hasPhaseType("gas")) {
-          gasSpeedOfSound = soundFluid.getPhase("gas").getSoundSpeed();
-        }
+	SystemInterface soundFluid = sealGas.clone();
+	soundFluid.setTemperature(sealCavityTemperatureK);
+	soundFluid.setPressure(sealCavityPressureBara);
+	ThermodynamicOperations soundOps = new ThermodynamicOperations(soundFluid);
+	soundOps.TPflash();
+	soundFluid.initProperties();
+	if (soundFluid.hasPhaseType("gas")) {
+	  gasSpeedOfSound = soundFluid.getPhase("gas").getSoundSpeed();
+	}
       } catch (Exception sEx) {
-        // use default
+	// use default
       }
 
       // Slug acceleration: dP/dx = rho * a for the liquid slug
@@ -1163,9 +1147,9 @@ public class DryGasSealAnalyzer {
   // ═══════════════════════════════════════════════════════════════════
 
   /**
-   * Sizes a Gas Conditioning Unit (GCU) per API 692 guidelines. The GCU removes heavy hydrocarbons
-   * from the seal gas by cooling below the dew point, separating the condensed liquid, and
-   * reheating the dry gas above the dew point plus a safety margin.
+   * Sizes a Gas Conditioning Unit (GCU) per API 692 guidelines. The GCU removes heavy hydrocarbons from the seal gas by
+   * cooling below the dew point, separating the condensed liquid, and reheating the dry gas above the dew point plus a
+   * safety margin.
    *
    * <p>
    * GCU design basis (per API 692):
@@ -1189,8 +1173,7 @@ public class DryGasSealAnalyzer {
    *
    * $$Q_{heat} = \dot{m}_{dry} \cdot (h_{out} - h_{separated})$$
    *
-   * @return map with GCU sizing data: duties, temperatures, liquid production, and dry gas
-   *         composition
+   * @return map with GCU sizing data: duties, temperatures, liquid production, and dry gas composition
    */
   private Map<String, Object> runGCUSizing() {
     Map<String, Object> result = new LinkedHashMap<>();
@@ -1210,21 +1193,21 @@ public class DryGasSealAnalyzer {
       double dpSearch = (pSearchMax - pSearchMin) / nSearch;
 
       for (int i = 0; i <= nSearch; i++) {
-        double pSearch = pSearchMin + i * dpSearch;
-        try {
-          SystemInterface dewSweep = sealGas.clone();
-          dewSweep.setPressure(pSearch);
-          dewSweep.setTemperature(273.15 + 0.0);
-          ThermodynamicOperations dewSweepOps = new ThermodynamicOperations(dewSweep);
-          dewSweepOps.dewPointTemperatureFlash();
-          double dewTempC = dewSweep.getTemperature("C");
-          if (dewTempC > maxDewPointC) {
-            maxDewPointC = dewTempC;
-            maxDewPointPBara = pSearch;
-          }
-        } catch (Exception dewEx) {
-          // Dew point calc can fail near or above cricondenbar — skip
-        }
+	double pSearch = pSearchMin + i * dpSearch;
+	try {
+	  SystemInterface dewSweep = sealGas.clone();
+	  dewSweep.setPressure(pSearch);
+	  dewSweep.setTemperature(273.15 + 0.0);
+	  ThermodynamicOperations dewSweepOps = new ThermodynamicOperations(dewSweep);
+	  dewSweepOps.dewPointTemperatureFlash();
+	  double dewTempC = dewSweep.getTemperature("C");
+	  if (dewTempC > maxDewPointC) {
+	    maxDewPointC = dewTempC;
+	    maxDewPointPBara = pSearch;
+	  }
+	} catch (Exception dewEx) {
+	  // Dew point calc can fail near or above cricondenbar — skip
+	}
       }
     } catch (Exception sweepEx) {
       logger.warn("GCU dew point sweep failed: {}", sweepEx.getMessage());
@@ -1289,9 +1272,8 @@ public class DryGasSealAnalyzer {
       double liquidVolPct = 0.0;
       double liquidMolFraction = 0.0;
       if (coldFluid.getNumberOfPhases() > 1 && coldFluid.hasPhaseType("oil")) {
-        liquidVolPct =
-            coldFluid.getPhase("oil").getVolume("m3") / coldFluid.getVolume("m3") * 100.0;
-        liquidMolFraction = coldFluid.getPhase("oil").getBeta();
+	liquidVolPct = coldFluid.getPhase("oil").getVolume("m3") / coldFluid.getVolume("m3") * 100.0;
+	liquidMolFraction = coldFluid.getPhase("oil").getBeta();
       }
       result.put("liquid_separated_vol_pct", liquidVolPct);
       result.put("liquid_separated_mol_fraction", liquidMolFraction);
@@ -1354,9 +1336,9 @@ public class DryGasSealAnalyzer {
   }
 
   /**
-   * Returns whether the seal gas system is safe from condensation at the configured conditions. The
-   * system is considered safe only if no liquid is produced at any point in the isenthalpic
-   * expansion path and no retrograde condensation occurs at ambient conditions.
+   * Returns whether the seal gas system is safe from condensation at the configured conditions. The system is
+   * considered safe only if no liquid is produced at any point in the isenthalpic expansion path and no retrograde
+   * condensation occurs at ambient conditions.
    *
    * @return true if no condensation risk, false if condensation is predicted
    */
@@ -1371,7 +1353,7 @@ public class DryGasSealAnalyzer {
       Map<String, Object> jt = (Map<String, Object>) jtResult;
       Object maxLiq = jt.get("max_liquid_vol_pct");
       if (maxLiq instanceof Number && ((Number) maxLiq).doubleValue() > 0.01) {
-        return false;
+	return false;
       }
     }
 
@@ -1381,7 +1363,7 @@ public class DryGasSealAnalyzer {
       Map<String, Object> retro = (Map<String, Object>) retroResult;
       Object maxRetroLiq = retro.get("max_liquid_vol_pct");
       if (maxRetroLiq instanceof Number && ((Number) maxRetroLiq).doubleValue() > 0.01) {
-        return false;
+	return false;
       }
     }
 
@@ -1389,8 +1371,8 @@ public class DryGasSealAnalyzer {
   }
 
   /**
-   * Returns the estimated time in hours for the standpipe dead-legs to fill with condensate from
-   * continuous seal leakage.
+   * Returns the estimated time in hours for the standpipe dead-legs to fill with condensate from continuous seal
+   * leakage.
    *
    * @return fill time in hours, or -1 if no condensation occurs or analysis not complete
    */
@@ -1405,7 +1387,7 @@ public class DryGasSealAnalyzer {
       Map<String, Object> accum = (Map<String, Object>) accumResult;
       Object fillTime = accum.get("fill_time_hours");
       if (fillTime instanceof Number) {
-        return ((Number) fillTime).doubleValue();
+	return ((Number) fillTime).doubleValue();
       }
     }
     return -1.0;
@@ -1427,7 +1409,7 @@ public class DryGasSealAnalyzer {
       Map<String, Object> jt = (Map<String, Object>) jtResult;
       Object maxLiq = jt.get("max_liquid_vol_pct");
       if (maxLiq instanceof Number) {
-        return ((Number) maxLiq).doubleValue();
+	return ((Number) maxLiq).doubleValue();
       }
     }
     return 0.0;
@@ -1457,8 +1439,8 @@ public class DryGasSealAnalyzer {
    * @return JSON representation of all results
    */
   public String toJson() {
-    return new com.google.gson.GsonBuilder().setPrettyPrinting()
-        .serializeSpecialFloatingPointValues().create().toJson(results);
+    return new com.google.gson.GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
+	.toJson(results);
   }
 
   // ═══════════════════════════════════════════════════════════════════
@@ -1469,7 +1451,7 @@ public class DryGasSealAnalyzer {
    * Converts a pressure value to bara.
    *
    * @param pressure the pressure value
-   * @param unit the unit string
+   * @param unit     the unit string
    * @return pressure in bara
    */
   private static double convertPressureToBara(double pressure, String unit) {
@@ -1490,7 +1472,7 @@ public class DryGasSealAnalyzer {
    * Converts a temperature value to Kelvin.
    *
    * @param temperature the temperature value
-   * @param unit the unit string
+   * @param unit        the unit string
    * @return temperature in Kelvin
    */
   private static double convertTemperatureToKelvin(double temperature, String unit) {

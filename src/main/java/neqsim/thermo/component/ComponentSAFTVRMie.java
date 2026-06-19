@@ -8,15 +8,14 @@ import neqsim.thermo.phase.PhaseSAFTVRMie;
  * Component class for the SAFT-VR Mie equation of state.
  *
  * <p>
- * Implements the Lafitte et al. (2013) SAFT-VR Mie formulation with variable-range Mie potential.
- * The Mie potential generalizes the Lennard-Jones potential with adjustable repulsive (lambda_r)
- * and attractive (lambda_a) exponents.
+ * Implements the Lafitte et al. (2013) SAFT-VR Mie formulation with variable-range Mie potential. The Mie potential
+ * generalizes the Lennard-Jones potential with adjustable repulsive (lambda_r) and attractive (lambda_a) exponents.
  * </p>
  *
  * <p>
- * Reference: Lafitte, T., Apostolakou, A., Avendano, C., Galindo, A., Adjiman, C.S., Mueller, E.A.,
- * Jackson, G. (2013). Accurate statistical associating fluid theory for chain molecules formed from
- * Mie segments. J. Chem. Phys., 139, 154504.
+ * Reference: Lafitte, T., Apostolakou, A., Avendano, C., Galindo, A., Adjiman, C.S., Mueller, E.A., Jackson, G. (2013).
+ * Accurate statistical associating fluid theory for chain molecules formed from Mie segments. J. Chem. Phys., 139,
+ * 154504.
  * </p>
  *
  * @author Even Solbraa
@@ -70,10 +69,10 @@ public class ComponentSAFTVRMie extends ComponentSrk {
   /**
    * Constructor for ComponentSAFTVRMie.
    *
-   * @param name component name
-   * @param moles number of moles
+   * @param name         component name
+   * @param moles        number of moles
    * @param molesInPhase number of moles in phase
-   * @param compNumber component number
+   * @param compNumber   component number
    */
   public ComponentSAFTVRMie(String name, double moles, double molesInPhase, int compNumber) {
     super(name, moles, molesInPhase, compNumber);
@@ -125,7 +124,7 @@ public class ComponentSAFTVRMie extends ComponentSrk {
     try {
       clonedComponent = (ComponentSAFTVRMie) super.clone();
       if (xsiteAssoc != null) {
-        clonedComponent.xsiteAssoc = xsiteAssoc.clone();
+	clonedComponent.xsiteAssoc = xsiteAssoc.clone();
       }
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
@@ -136,8 +135,7 @@ public class ComponentSAFTVRMie extends ComponentSrk {
   // ===== Association methods =====
 
   /**
-   * Initializes the association site fraction arrays. Called from
-   * PhaseSAFTVRMie.initAssociationSchemes.
+   * Initializes the association site fraction arrays. Called from PhaseSAFTVRMie.initAssociationSchemes.
    *
    * @param nSites number of association sites for this component
    */
@@ -162,7 +160,7 @@ public class ComponentSAFTVRMie extends ComponentSrk {
    * Sets a site fraction value.
    *
    * @param siteIndex site index
-   * @param value new XA value
+   * @param value     new XA value
    */
   public void setXsiteAssoc(int siteIndex, double value) {
     if (xsiteAssoc != null && siteIndex < xsiteAssoc.length) {
@@ -180,18 +178,16 @@ public class ComponentSAFTVRMie extends ComponentSrk {
   }
 
   /**
-   * Calculates the association contribution to dF/dNi. dFCPAdN = sum_A [ln(X_A^i)] - hcpatot/2 *
-   * d(ln I)/d(ni), where I is the Dufal 2015 association integral used for the SAFT-VR Mie
-   * association strength.
+   * Calculates the association contribution to dF/dNi. dFCPAdN = sum_A [ln(X_A^i)] - hcpatot/2 * d(ln I)/d(ni), where I
+   * is the Dufal 2015 association integral used for the SAFT-VR Mie association strength.
    *
-   * @param phase the phase
+   * @param phase              the phase
    * @param numberOfComponents number of components
-   * @param temperature temperature in K
-   * @param pressure pressure in Pa
+   * @param temperature        temperature in K
+   * @param pressure           pressure in Pa
    * @return dF_ASSOC/dNi
    */
-  public double dFCPAdN(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
+  public double dFCPAdN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     PhaseSAFTVRMie sp = (PhaseSAFTVRMie) phase;
     if (sp.getUseASSOC() == 0 || nAssocSites == 0) {
       return 0.0;
@@ -219,9 +215,8 @@ public class ComponentSAFTVRMie extends ComponentSrk {
       totalSegMoles += xSk;
       double sigk = ck.getSigmaSAFTi();
       sigma3x += xSk * xSk * sigk * sigk * sigk;
-      if (epsRef == 0.0 && ck.getNumberOfAssociationSites() > 0
-          && ck.getAssociationEnergySAFTVRMie() != 0.0) {
-        epsRef = ck.getEpsikSAFT();
+      if (epsRef == 0.0 && ck.getNumberOfAssociationSites() > 0 && ck.getAssociationEnergySAFTVRMie() != 0.0) {
+	epsRef = ck.getEpsikSAFT();
       }
     }
     if (totalSegMoles > 0) {
@@ -257,18 +252,17 @@ public class ComponentSAFTVRMie extends ComponentSrk {
   }
 
   /**
-   * Initializes component temperature-dependent diameter using the Barker-Henderson integral for
-   * the Mie potential (evaluated analytically following Lafitte et al. 2013).
+   * Initializes component temperature-dependent diameter using the Barker-Henderson integral for the Mie potential
+   * (evaluated analytically following Lafitte et al. 2013).
    *
-   * @param temperature temperature in K
-   * @param pressure pressure in Pa
+   * @param temperature        temperature in K
+   * @param pressure           pressure in Pa
    * @param totalNumberOfMoles total moles
-   * @param beta phase fraction
-   * @param initType initialization type
+   * @param beta               phase fraction
+   * @param initType           initialization type
    */
   @Override
-  public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
-      int initType) {
+  public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int initType) {
     super.init(temperature, pressure, totalNumberOfMoles, beta, initType);
     componentTemperature = temperature;
     double sigma = getSigmaSAFTi();
@@ -285,50 +279,49 @@ public class ComponentSAFTVRMie extends ComponentSrk {
   }
 
   /**
-   * Recalculates the temperature-dependent effective BH diameter without running the full
-   * Component.init(). Used by numerical derivatives that perturb temperature on cloned phases.
+   * Recalculates the temperature-dependent effective BH diameter without running the full Component.init(). Used by
+   * numerical derivatives that perturb temperature on cloned phases.
    *
    * @param temperature temperature in K
    */
   public void recalcSAFTDiameter(double temperature) {
     componentTemperature = temperature;
-    dSAFTi = calcEffectiveDiameter(getSigmaSAFTi(), getEpsikSAFT(), temperature,
-        getLambdaRSAFTVRMie(), getLambdaASAFTVRMie());
+    dSAFTi = calcEffectiveDiameter(getSigmaSAFTi(), getEpsikSAFT(), temperature, getLambdaRSAFTVRMie(),
+	getLambdaASAFTVRMie());
   }
 
   /**
    * Calculates effective BH diameter by numerical Gauss-Legendre quadrature of the Mie potential.
    *
-   * @param sigma segment diameter in m
-   * @param epsk energy parameter eps/k in K
+   * @param sigma       segment diameter in m
+   * @param epsk        energy parameter eps/k in K
    * @param temperature temperature in K
-   * @param lr repulsive exponent
-   * @param la attractive exponent
+   * @param lr          repulsive exponent
+   * @param la          attractive exponent
    * @return effective diameter in m
    */
-  public static double calcEffectiveDiameter(double sigma, double epsk, double temperature,
-      double lr, double la) {
+  public static double calcEffectiveDiameter(double sigma, double epsk, double temperature, double lr, double la) {
     double cMie = calcMiePrefactor(lr, la);
     double theta = cMie * epsk / temperature;
 
     // 10-point Gauss-Legendre nodes and weights on [0,1]
-    double[] glNodes10 = {0.01304673574, 0.06746831665, 0.16029521585, 0.28330230294, 0.42556283050,
-        0.57443716950, 0.71669769706, 0.83970478415, 0.93253168335, 0.98695326426};
-    double[] glWeights10 = {0.03333567215, 0.07472567458, 0.10954318126, 0.13463335965,
-        0.14776211236, 0.14776211236, 0.13463335965, 0.10954318126, 0.07472567458, 0.03333567215};
+    double[] glNodes10 = { 0.01304673574, 0.06746831665, 0.16029521585, 0.28330230294, 0.42556283050, 0.57443716950,
+	0.71669769706, 0.83970478415, 0.93253168335, 0.98695326426 };
+    double[] glWeights10 = { 0.03333567215, 0.07472567458, 0.10954318126, 0.13463335965, 0.14776211236, 0.14776211236,
+	0.13463335965, 0.10954318126, 0.07472567458, 0.03333567215 };
 
     if (theta <= 1.0) {
       // Weak coupling: standard 10-point GL on [0, sigma]
       double sum = 0.0;
       for (int i = 0; i < 10; i++) {
-        double x = glNodes10[i];
-        if (x < 1.0e-20) {
-          sum += glWeights10[i];
-          continue;
-        }
-        double xInv = 1.0 / x;
-        double uRed = theta * (Math.pow(xInv, lr) - Math.pow(xInv, la));
-        sum += glWeights10[i] * (1.0 - Math.exp(-uRed));
+	double x = glNodes10[i];
+	if (x < 1.0e-20) {
+	  sum += glWeights10[i];
+	  continue;
+	}
+	double xInv = 1.0 / x;
+	double uRed = theta * (Math.pow(xInv, lr) - Math.pow(xInv, la));
+	sum += glWeights10[i] * (1.0 - Math.exp(-uRed));
       }
       return sum * sigma;
     }
@@ -351,8 +344,8 @@ public class ComponentSAFTVRMie extends ComponentSrk {
     for (int i = 0; i < 10; i++) {
       double x = midPoint + halfWidth * (2.0 * glNodes10[i] - 1.0);
       if (x < 1.0e-20) {
-        sumHigh += glWeights10[i] * (b - a);
-        continue;
+	sumHigh += glWeights10[i] * (b - a);
+	continue;
       }
       double xInv = 1.0 / x;
       double uRed = theta * (Math.pow(xInv, lr) - Math.pow(xInv, la));
@@ -366,17 +359,17 @@ public class ComponentSAFTVRMie extends ComponentSrk {
   /**
    * Initializes SAFT-VR Mie component derivatives within the phase context.
    *
-   * @param phase the phase
-   * @param temperature temperature in K
-   * @param pressure pressure in Pa
+   * @param phase              the phase
+   * @param temperature        temperature in K
+   * @param pressure           pressure in Pa
    * @param totalNumberOfMoles total moles
-   * @param beta phase fraction
+   * @param beta               phase fraction
    * @param numberOfComponents number of components
-   * @param initType initialization type
+   * @param initType           initialization type
    */
   @Override
-  public void Finit(PhaseInterface phase, double temperature, double pressure,
-      double totalNumberOfMoles, double beta, int numberOfComponents, int initType) {
+  public void Finit(PhaseInterface phase, double temperature, double pressure, double totalNumberOfMoles, double beta,
+      int numberOfComponents, int initType) {
     PhaseSAFTVRMie saftPhase = (PhaseSAFTVRMie) phase;
 
     dnSAFTdi = calcdnSAFTdi(phase, numberOfComponents, temperature, pressure);
@@ -389,30 +382,27 @@ public class ComponentSAFTVRMie extends ComponentSrk {
     dF_DISP_SAFTdN = dF_DISP_SAFTdN(phase, numberOfComponents, temperature, pressure);
 
     // Compute EOS-level quantities (Bi, Ai, voli) needed for logfugcoefdT/dP/dN
-    super.Finit(phase, temperature, pressure, totalNumberOfMoles, beta, numberOfComponents,
-        initType);
+    super.Finit(phase, temperature, pressure, totalNumberOfMoles, beta, numberOfComponents, initType);
   }
 
   /**
-   * Returns the derivative of the reduced residual Helmholtz energy with respect to moles of
-   * component i at constant T and total volume V.
+   * Returns the derivative of the reduced residual Helmholtz energy with respect to moles of component i at constant T
+   * and total volume V.
    *
    * <p>
-   * For a pure component, uses the exact thermodynamic identity: dF/dN = F/n - v * dF/dV_neqsim,
-   * where v is the molar volume and dF/dV is the already-computed analytical volume derivative from
-   * the phase. This avoids numerical differentiation issues where perturbing moles at constant
-   * total volume causes the packing fraction eta to cancel.
+   * For a pure component, uses the exact thermodynamic identity: dF/dN = F/n - v * dF/dV_neqsim, where v is the molar
+   * volume and dF/dV is the already-computed analytical volume derivative from the phase. This avoids numerical
+   * differentiation issues where perturbing moles at constant total volume causes the packing fraction eta to cancel.
    * </p>
    *
-   * @param phase the phase
+   * @param phase              the phase
    * @param numberOfComponents number of components
-   * @param temperature temperature in K
-   * @param pressure pressure in Pa
+   * @param temperature        temperature in K
+   * @param pressure           pressure in Pa
    * @return dF/dNi
    */
   @Override
-  public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
+  public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     PhaseSAFTVRMie sp = (PhaseSAFTVRMie) phase;
     double n = phase.getNumberOfMolesInPhase();
     double v = phase.getMolarVolume();
@@ -425,8 +415,8 @@ public class ComponentSAFTVRMie extends ComponentSrk {
     // Mixture: analytical dF/dN_i = dF_HC/dN_i + dF_DISP/dN_i + dF_ASSOC/dN_i
     // Compute on-the-fly (not from cached fields) so this works on cloned phases
     return dF_HC_SAFTdN(phase, numberOfComponents, temperature, pressure)
-        + dF_DISP_SAFTdN(phase, numberOfComponents, temperature, pressure)
-        + dFCPAdN(phase, numberOfComponents, temperature, pressure);
+	+ dF_DISP_SAFTdN(phase, numberOfComponents, temperature, pressure)
+	+ dFCPAdN(phase, numberOfComponents, temperature, pressure);
   }
 
   /**
@@ -437,8 +427,7 @@ public class ComponentSAFTVRMie extends ComponentSrk {
    * </p>
    */
   @Override
-  public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
+  public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     PhaseSAFTVRMie sp = (PhaseSAFTVRMie) phase;
     double n = phase.getNumberOfMolesInPhase();
     double v = phase.getMolarVolume();
@@ -457,8 +446,8 @@ public class ComponentSAFTVRMie extends ComponentSrk {
       ((ComponentSAFTVRMie) pPlus.getComponent(i)).recalcSAFTDiameter(temperature + dT);
     }
     pPlus.volInit();
-    double dFdNplus = ((ComponentSAFTVRMie) pPlus.getComponent(getComponentNumber())).dFdN(pPlus,
-        numberOfComponents, temperature + dT, pressure);
+    double dFdNplus = ((ComponentSAFTVRMie) pPlus.getComponent(getComponentNumber())).dFdN(pPlus, numberOfComponents,
+	temperature + dT, pressure);
 
     PhaseSAFTVRMie pMinus = sp.clone();
     pMinus.setTemperature(temperature - dT);
@@ -466,8 +455,8 @@ public class ComponentSAFTVRMie extends ComponentSrk {
       ((ComponentSAFTVRMie) pMinus.getComponent(i)).recalcSAFTDiameter(temperature - dT);
     }
     pMinus.volInit();
-    double dFdNminus = ((ComponentSAFTVRMie) pMinus.getComponent(getComponentNumber())).dFdN(pMinus,
-        numberOfComponents, temperature - dT, pressure);
+    double dFdNminus = ((ComponentSAFTVRMie) pMinus.getComponent(getComponentNumber())).dFdN(pMinus, numberOfComponents,
+	temperature - dT, pressure);
 
     return (dFdNplus - dFdNminus) / (2.0 * dT);
   }
@@ -476,13 +465,12 @@ public class ComponentSAFTVRMie extends ComponentSrk {
    * {@inheritDoc}
    *
    * <p>
-   * Analytical formula: dFdNdV = -v * dFdVdV, derived from d/dV of dFdN = F/n - v*dFdV at constant
-   * N (where v = V/n, so dv/dV = 1/n).
+   * Analytical formula: dFdNdV = -v * dFdVdV, derived from d/dV of dFdN = F/n - v*dFdV at constant N (where v = V/n, so
+   * dv/dV = 1/n).
    * </p>
    */
   @Override
-  public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
+  public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     PhaseSAFTVRMie sp = (PhaseSAFTVRMie) phase;
     double n = phase.getNumberOfMolesInPhase();
     double v = phase.getMolarVolume();
@@ -498,14 +486,14 @@ public class ComponentSAFTVRMie extends ComponentSrk {
     PhaseSAFTVRMie pPlus = sp.clone();
     pPlus.setMolarVolume((totalVolume + dV) / n);
     pPlus.volInit();
-    double dFdNplus = ((ComponentSAFTVRMie) pPlus.getComponent(getComponentNumber())).dFdN(pPlus,
-        numberOfComponents, temperature, pressure);
+    double dFdNplus = ((ComponentSAFTVRMie) pPlus.getComponent(getComponentNumber())).dFdN(pPlus, numberOfComponents,
+	temperature, pressure);
 
     PhaseSAFTVRMie pMinus = sp.clone();
     pMinus.setMolarVolume((totalVolume - dV) / n);
     pMinus.volInit();
-    double dFdNminus = ((ComponentSAFTVRMie) pMinus.getComponent(getComponentNumber())).dFdN(pMinus,
-        numberOfComponents, temperature, pressure);
+    double dFdNminus = ((ComponentSAFTVRMie) pMinus.getComponent(getComponentNumber())).dFdN(pMinus, numberOfComponents,
+	temperature, pressure);
 
     return (dFdNplus - dFdNminus) / (2.0 * dV);
   }
@@ -514,15 +502,13 @@ public class ComponentSAFTVRMie extends ComponentSrk {
    * {@inheritDoc}
    *
    * <p>
-   * Numerical differentiation of dFdN with respect to moles of component j. Clones the phase,
-   * perturbs N_j while keeping total volume constant, and computes the central difference of the
-   * analytical dFdN. The reinit helper only calls init + volInit (no Finit) to avoid infinite
-   * recursion.
+   * Numerical differentiation of dFdN with respect to moles of component j. Clones the phase, perturbs N_j while
+   * keeping total volume constant, and computes the central difference of the analytical dFdN. The reinit helper only
+   * calls init + volInit (no Finit) to avoid infinite recursion.
    * </p>
    */
   @Override
-  public double dFdNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
+  public double dFdNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     double nj = phase.getComponent(j).getNumberOfMolesInPhase();
     double totalVolume = phase.getMolarVolume() * phase.getNumberOfMolesInPhase();
     double totalMoles = phase.getNumberOfMolesInPhase();
@@ -536,8 +522,8 @@ public class ComponentSAFTVRMie extends ComponentSrk {
     plus.numberOfMolesInPhase = newTotalPlus;
     plus.setMolarVolume(totalVolume / newTotalPlus);
     reinitSAFTOnPhase(plus, numberOfComponents, temperature, pressure);
-    double dFdNplus = ((ComponentSAFTVRMie) plus.getComponent(getComponentNumber())).dFdN(plus,
-        numberOfComponents, temperature, pressure);
+    double dFdNplus = ((ComponentSAFTVRMie) plus.getComponent(getComponentNumber())).dFdN(plus, numberOfComponents,
+	temperature, pressure);
 
     if (nj > h * 1.5) {
       // Central difference
@@ -547,30 +533,28 @@ public class ComponentSAFTVRMie extends ComponentSrk {
       minus.numberOfMolesInPhase = newTotalMinus;
       minus.setMolarVolume(totalVolume / newTotalMinus);
       reinitSAFTOnPhase(minus, numberOfComponents, temperature, pressure);
-      double dFdNminus = ((ComponentSAFTVRMie) minus.getComponent(getComponentNumber())).dFdN(minus,
-          numberOfComponents, temperature, pressure);
+      double dFdNminus = ((ComponentSAFTVRMie) minus.getComponent(getComponentNumber())).dFdN(minus, numberOfComponents,
+	  temperature, pressure);
       return (dFdNplus - dFdNminus) / (2.0 * h);
     } else {
       // Forward difference (when nj is too small for central)
-      double dFdNcenter = ((ComponentSAFTVRMie) phase.getComponent(getComponentNumber()))
-          .dFdN(phase, numberOfComponents, temperature, pressure);
+      double dFdNcenter = ((ComponentSAFTVRMie) phase.getComponent(getComponentNumber())).dFdN(phase,
+	  numberOfComponents, temperature, pressure);
       return (dFdNplus - dFdNcenter) / h;
     }
   }
 
   /**
-   * Reinitializes SAFT quantities on a cloned phase for numerical differentiation. Updates
-   * component mole fractions based on the perturbed numberOfMolesInPhase values and recalculates
-   * SAFT variables via volInit. Does NOT call Component.init to avoid corrupting system-level
-   * moles.
+   * Reinitializes SAFT quantities on a cloned phase for numerical differentiation. Updates component mole fractions
+   * based on the perturbed numberOfMolesInPhase values and recalculates SAFT variables via volInit. Does NOT call
+   * Component.init to avoid corrupting system-level moles.
    *
-   * @param phase the phase to reinitialize
+   * @param phase              the phase to reinitialize
    * @param numberOfComponents number of components
-   * @param temperature temperature in K
-   * @param pressure pressure in Pa
+   * @param temperature        temperature in K
+   * @param pressure           pressure in Pa
    */
-  private void reinitSAFTOnPhase(PhaseSAFTVRMie phase, int numberOfComponents, double temperature,
-      double pressure) {
+  private void reinitSAFTOnPhase(PhaseSAFTVRMie phase, int numberOfComponents, double temperature, double pressure) {
     double totalMolesInPhase = phase.getNumberOfMolesInPhase();
     if (totalMolesInPhase <= 0.0) {
       totalMolesInPhase = 1.0e-50;
@@ -589,9 +573,9 @@ public class ComponentSAFTVRMie extends ComponentSrk {
    * Derivative of packing fraction with respect to moles of component i.
    *
    * @param phase the phase
-   * @param nc number of components
-   * @param temp temperature
-   * @param pres pressure
+   * @param nc    number of components
+   * @param temp  temperature
+   * @param pres  pressure
    * @return dnSAFT/dNi
    */
   public double calcdnSAFTdi(PhaseInterface phase, int nc, double temp, double pres) {
@@ -601,16 +585,16 @@ public class ComponentSAFTVRMie extends ComponentSrk {
     double term2 = 1.0 / sp.getVolumeSAFT() * sp.getDSAFT();
     double term3 = -nMoles / sp.getVolumeSAFT() * sp.getDSAFT() / nMoles;
     return ThermodynamicConstantsInterface.pi / 6.0 * ThermodynamicConstantsInterface.avagadroNumber
-        * (term1 + term2 + term3);
+	* (term1 + term2 + term3);
   }
 
   /**
    * Derivative of hard-sphere RDF with respect to moles of component i.
    *
    * @param phase the phase
-   * @param nc number of components
-   * @param temp temperature
-   * @param pres pressure
+   * @param nc    number of components
+   * @param temp  temperature
+   * @param pres  pressure
    * @return dghs/dNi
    */
   public double calcdghsSAFTdi(PhaseInterface phase, int nc, double temp, double pres) {
@@ -622,16 +606,15 @@ public class ComponentSAFTVRMie extends ComponentSrk {
    * Derivative of hard-sphere Helmholtz energy with respect to moles of component i.
    *
    * @param phase the phase
-   * @param nc number of components
-   * @param temp temperature
-   * @param pres pressure
+   * @param nc    number of components
+   * @param temp  temperature
+   * @param pres  pressure
    * @return dahs/dNi
    */
   public double calcdahsSAFTdi(PhaseInterface phase, int nc, double temp, double pres) {
     PhaseSAFTVRMie sp = (PhaseSAFTVRMie) phase;
     double n = sp.getNSAFT();
-    double dAdN =
-        (4.0 - 6.0 * n) * Math.pow(1.0 - n, 2.0) - (4.0 * n - 3.0 * n * n) * (-2.0) * (1.0 - n);
+    double dAdN = (4.0 - 6.0 * n) * Math.pow(1.0 - n, 2.0) - (4.0 * n - 3.0 * n * n) * (-2.0) * (1.0 - n);
     return dAdN / Math.pow(1.0 - n, 4.0) * getDnSAFTdi();
   }
 
@@ -639,40 +622,39 @@ public class ComponentSAFTVRMie extends ComponentSrk {
    * Derivative of segment number with respect to moles of component i.
    *
    * @param phase the phase
-   * @param nc number of components
-   * @param temp temperature
-   * @param pres pressure
+   * @param nc    number of components
+   * @param temp  temperature
+   * @param pres  pressure
    * @return dm/dNi
    */
   public double calcdmSAFTdi(PhaseInterface phase, int nc, double temp, double pres) {
     PhaseSAFTVRMie sp = (PhaseSAFTVRMie) phase;
-    return mSAFTi / phase.getNumberOfMolesInPhase()
-        - sp.getmSAFT() / phase.getNumberOfMolesInPhase();
+    return mSAFTi / phase.getNumberOfMolesInPhase() - sp.getmSAFT() / phase.getNumberOfMolesInPhase();
   }
 
   /**
    * Derivative of dispersion volume term with respect to moles of component i.
    *
    * @param phase the phase
-   * @param nc number of components
-   * @param temp temperature
-   * @param pres pressure
+   * @param nc    number of components
+   * @param temp  temperature
+   * @param pres  pressure
    * @return dVolTerm/dNi
    */
   public double calcdF1dispVolTermdn(PhaseInterface phase, int nc, double temp, double pres) {
     PhaseSAFTVRMie sp = (PhaseSAFTVRMie) phase;
     double nMoles = phase.getNumberOfMolesInPhase();
     return sp.getF1dispVolTerm() / nMoles
-        + nMoles / sp.getVolumeSAFT() * sp.getdDSAFTdTprime(getmSAFTi(), getdSAFTi(), nMoles);
+	+ nMoles / sp.getVolumeSAFT() * sp.getdDSAFTdTprime(getmSAFTi(), getdSAFTi(), nMoles);
   }
 
   /**
    * Calculates derivative of first-order dispersion sum term w.r.t. moles.
    *
    * @param phase the phase
-   * @param nc number of components
-   * @param temp temperature
-   * @param pres pressure
+   * @param nc    number of components
+   * @param temp  temperature
+   * @param pres  pressure
    * @return d(F1dispSumTerm)/dNi
    */
   public double calcF1dispSumTermdn(PhaseInterface phase, int nc, double temp, double pres) {
@@ -695,9 +677,9 @@ public class ComponentSAFTVRMie extends ComponentSrk {
    * Calculates derivative of first-order dispersion integral (I1) w.r.t. moles.
    *
    * @param phase the phase
-   * @param nc number of components
-   * @param temp temperature
-   * @param pres pressure
+   * @param nc    number of components
+   * @param temp  temperature
+   * @param pres  pressure
    * @return dI1/dNi
    */
   public double calcF1dispI1dn(PhaseInterface phase, int nc, double temp, double pres) {
@@ -709,9 +691,9 @@ public class ComponentSAFTVRMie extends ComponentSrk {
    * Calculates derivative of second-order dispersion sum term w.r.t. moles.
    *
    * @param phase the phase
-   * @param nc number of components
-   * @param temp temperature
-   * @param pres pressure
+   * @param nc    number of components
+   * @param temp  temperature
+   * @param pres  pressure
    * @return d(F2dispSumTerm)/dNi
    */
   public double calcF2dispSumTermdn(PhaseInterface phase, int nc, double temp, double pres) {
@@ -734,9 +716,9 @@ public class ComponentSAFTVRMie extends ComponentSrk {
    * Calculates derivative of second-order compression factor correction w.r.t. moles.
    *
    * @param phase the phase
-   * @param nc number of components
-   * @param temp temperature
-   * @param pres pressure
+   * @param nc    number of components
+   * @param temp  temperature
+   * @param pres  pressure
    * @return d(F2dispZHC)/dNi
    */
   public double calcF2dispZHCdn(PhaseInterface phase, int nc, double temp, double pres) {
@@ -746,17 +728,17 @@ public class ComponentSAFTVRMie extends ComponentSrk {
 
     double g1 = (8.0 + 20.0 * n - 4.0 * n * n) / Math.pow(1.0 - n, 5.0);
     double g2 = (20.0 - 54.0 * n + 36.0 * n * n) / Math.pow((1.0 - n) * (2.0 - n), 2.0);
-    double g3 = (20.0 * n - 27.0 * n * n + 12.0 * Math.pow(n, 3.0) - 2.0 * Math.pow(n, 4.0))
-        * (-6.0 + 4.0 * n) / Math.pow((1.0 - n) * (2.0 - n), 3.0);
+    double g3 = (20.0 * n - 27.0 * n * n + 12.0 * Math.pow(n, 3.0) - 2.0 * Math.pow(n, 4.0)) * (-6.0 + 4.0 * n)
+	/ Math.pow((1.0 - n) * (2.0 - n), 3.0);
 
     double F = m * g1 + (1.0 - m) * (g2 + g3);
     double Fp = m * (60.0 + 72.0 * n - 12.0 * n * n) / Math.pow(1.0 - n, 6.0)
-        + (1.0 - m) * (2.0 * (-36.0 * Math.pow(n, 3.0) + 81.0 * n * n - 49.0 * n + 6.0)
-            / (Math.pow(1.0 - n, 4.0) * Math.pow(2.0 - n, 4.0))
-            + 2.0
-                * (4.0 * Math.pow(n, 6.0) - 36.0 * Math.pow(n, 5.0) + 140.0 * Math.pow(n, 4.0)
-                    - 244.0 * Math.pow(n, 3.0) + 123.0 * n * n + 124.0 * n - 120.0)
-                / (Math.pow(1.0 - n, 4.0) * Math.pow(2.0 - n, 4.0)));
+	+ (1.0 - m) * (2.0 * (-36.0 * Math.pow(n, 3.0) + 81.0 * n * n - 49.0 * n + 6.0)
+	    / (Math.pow(1.0 - n, 4.0) * Math.pow(2.0 - n, 4.0))
+	    + 2.0
+		* (4.0 * Math.pow(n, 6.0) - 36.0 * Math.pow(n, 5.0) + 140.0 * Math.pow(n, 4.0)
+		    - 244.0 * Math.pow(n, 3.0) + 123.0 * n * n + 124.0 * n - 120.0)
+		/ (Math.pow(1.0 - n, 4.0) * Math.pow(2.0 - n, 4.0)));
 
     double ZHC = sp.getF2dispZHC();
     return -Math.pow(ZHC, 2.0) * (F * dnSAFTdi + (g1 - g2 - g3) * dmSAFTdi);
@@ -765,13 +747,13 @@ public class ComponentSAFTVRMie extends ComponentSrk {
   // ===== dFdN contributions =====
 
   /**
-   * Hard-chain contribution to dF/dNi. Computes all intermediate derivatives from the phase to work
-   * correctly on cloned phases (no reliance on cached component fields).
+   * Hard-chain contribution to dF/dNi. Computes all intermediate derivatives from the phase to work correctly on cloned
+   * phases (no reliance on cached component fields).
    *
    * @param phase the phase
-   * @param nc number of components
-   * @param temp temperature
-   * @param pres pressure
+   * @param nc    number of components
+   * @param temp  temperature
+   * @param pres  pressure
    * @return dF_HC/dNi
    */
   public double dF_HC_SAFTdN(PhaseInterface phase, int nc, double temp, double pres) {
@@ -785,8 +767,8 @@ public class ComponentSAFTVRMie extends ComponentSrk {
 
     // Compute deta/dn_i = pi/6 * NA * mi * di^3 / V
     double volSAFT = sp.getVolumeSAFT();
-    double dndi = ThermodynamicConstantsInterface.pi / 6.0
-        * ThermodynamicConstantsInterface.avagadroNumber * mi * di * di * di / volSAFT;
+    double dndi = ThermodynamicConstantsInterface.pi / 6.0 * ThermodynamicConstantsInterface.avagadroNumber * mi * di
+	* di * di / volSAFT;
 
     // dahsSAFTdi = (daHS/deta) * dndi
     double dahsdi = sp.getDaHSSAFTdN() * dndi;
@@ -794,18 +776,17 @@ public class ComponentSAFTVRMie extends ComponentSrk {
     // dlogghsSAFTdi = (1/gHS) * (dgHS/deta) * dndi
     double dlogghsdi = sp.getDgHSSAFTdN() / sp.getGhsSAFT() * dndi;
 
-    return mi * aHS + nMoles * sp.getmSAFT() * dahsdi - (mi - 1.0) * lnGHS
-        - nMoles * mmin1 * dlogghsdi;
+    return mi * aHS + nMoles * sp.getmSAFT() * dahsdi - (mi - 1.0) * lnGHS - nMoles * mmin1 * dlogghsdi;
   }
 
   /**
-   * Dispersion contribution to dF/dNi. Uses the pair-summed quantities from volInit. Computes
-   * deta/dn_i inline to work on cloned phases.
+   * Dispersion contribution to dF/dNi. Uses the pair-summed quantities from volInit. Computes deta/dn_i inline to work
+   * on cloned phases.
    *
    * @param phase the phase
-   * @param nc number of components
-   * @param temp temperature
-   * @param pres pressure
+   * @param nc    number of components
+   * @param temp  temperature
+   * @param pres  pressure
    * @return dF_DISP/dNi
    */
   public double dF_DISP_SAFTdN(PhaseInterface phase, int nc, double temp, double pres) {
@@ -819,8 +800,8 @@ public class ComponentSAFTVRMie extends ComponentSrk {
 
     // Compute deta/dn_i = pi/6 * NA * mi * di^3 / V
     double volSAFT = sp.getVolumeSAFT();
-    double dndi = ThermodynamicConstantsInterface.pi / 6.0
-        * ThermodynamicConstantsInterface.avagadroNumber * mi * di * di * di / volSAFT;
+    double dndi = ThermodynamicConstantsInterface.pi / 6.0 * ThermodynamicConstantsInterface.avagadroNumber * mi * di
+	* di * di / volSAFT;
 
     return mi * (2.0 * aDispI - aDisp) + nMoles * sp.getmSAFT() * daDispDeta * dndi;
   }
@@ -855,8 +836,8 @@ public class ComponentSAFTVRMie extends ComponentSrk {
   }
 
   /**
-   * Gets the temperature derivative of the BH effective diameter for this component. Computed by
-   * central finite difference of the Gauss-Legendre BH quadrature.
+   * Gets the temperature derivative of the BH effective diameter for this component. Computed by central finite
+   * difference of the Gauss-Legendre BH quadrature.
    *
    * @return dd_i/dT in m/K
    */

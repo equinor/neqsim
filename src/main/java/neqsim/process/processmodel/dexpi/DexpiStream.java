@@ -7,8 +7,7 @@ import neqsim.thermo.system.SystemInterface;
  * Stream created from DEXPI piping segments while preserving key metadata.
  *
  * <p>
- * This class extends the standard {@link Stream} to carry DEXPI-specific metadata such as line
- * numbers and fluid codes.
+ * This class extends the standard {@link Stream} to carry DEXPI-specific metadata such as line numbers and fluid codes.
  * </p>
  *
  * @author NeqSim
@@ -24,14 +23,13 @@ public class DexpiStream extends Stream {
   /**
    * Creates a new DEXPI stream.
    *
-   * @param name the stream name
-   * @param fluid the thermodynamic system
+   * @param name       the stream name
+   * @param fluid      the thermodynamic system
    * @param dexpiClass the original DEXPI component class
    * @param lineNumber the line number reference (may be null)
-   * @param fluidCode the fluid code reference (may be null)
+   * @param fluidCode  the fluid code reference (may be null)
    */
-  public DexpiStream(String name, SystemInterface fluid, String dexpiClass, String lineNumber,
-      String fluidCode) {
+  public DexpiStream(String name, SystemInterface fluid, String dexpiClass, String lineNumber, String fluidCode) {
     super(name, fluid);
     this.dexpiClass = dexpiClass;
     this.lineNumber = lineNumber;

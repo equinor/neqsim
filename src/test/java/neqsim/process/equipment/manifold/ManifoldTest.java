@@ -15,7 +15,7 @@ public class ManifoldTest {
     testSystem.addComponent("propane", 10.0);
 
     SystemSrkEos testSystem2 = testSystem.clone();
-    testSystem2.setMolarComposition(new double[] {0.1, 0.4, 0.4});
+    testSystem2.setMolarComposition(new double[] { 0.1, 0.4, 0.4 });
 
     Stream inletStream = new Stream("inlet stream", testSystem);
     inletStream.setPressure(10.0, "bara");
@@ -32,12 +32,12 @@ public class ManifoldTest {
     Manifold manifold1 = new Manifold("manifold 1");
     manifold1.addStream(inletStream);
     manifold1.addStream(inletStream2);
-    manifold1.setSplitFactors(new double[] {0.1, 0.5, 0.4});
+    manifold1.setSplitFactors(new double[] { 0.1, 0.5, 0.4 });
     manifold1.run();
 
     assertEquals(0.5, manifold1.getSplitStream(0).getFlowRate("MSm3/day"), 0.01);
     assertEquals(manifold1.getSplitStream(1).getFluid().getComponent(0).getx(),
-        manifold1.getSplitStream(0).getFluid().getComponent(0).getx(), 1e-6);
+	manifold1.getSplitStream(0).getFluid().getComponent(0).getx(), 1e-6);
     assertEquals(5.0, manifold1.getMixedStream().getFlowRate("MSm3/day"), 0.01);
   }
 
@@ -49,7 +49,7 @@ public class ManifoldTest {
     testSystem.addComponent("propane", 10.0);
 
     SystemSrkEos testSystem2 = testSystem.clone();
-    testSystem2.setMolarComposition(new double[] {0.1, 0.4, 0.4});
+    testSystem2.setMolarComposition(new double[] { 0.1, 0.4, 0.4 });
 
     ProcessSystem processOps = new ProcessSystem();
 
@@ -66,7 +66,7 @@ public class ManifoldTest {
     Manifold manifold1 = new Manifold("manifold 1");
     manifold1.addStream(inletStream);
     manifold1.addStream(inletStream2);
-    manifold1.setSplitFactors(new double[] {0.1, 0.5, 0.4});
+    manifold1.setSplitFactors(new double[] { 0.1, 0.5, 0.4 });
 
     Stream stream1FromManifold = new Stream("stream 1 from manifold", manifold1.getSplitStream(0));
 
@@ -78,9 +78,9 @@ public class ManifoldTest {
 
     assertEquals(0.5, manifold1.getSplitStream(0).getFlowRate("MSm3/day"), 0.01);
     assertEquals(manifold1.getSplitStream(1).getFluid().getComponent(0).getx(),
-        manifold1.getSplitStream(0).getFluid().getComponent(0).getx(), 1e-6);
+	manifold1.getSplitStream(0).getFluid().getComponent(0).getx(), 1e-6);
     assertEquals(stream1FromManifold.getFluid().getComponent(0).getx(),
-        manifold1.getSplitStream(0).getFluid().getComponent(0).getx(), 1e-6);
+	manifold1.getSplitStream(0).getFluid().getComponent(0).getx(), 1e-6);
     assertEquals(5.0, manifold1.getMixedStream().getFlowRate("MSm3/day"), 0.01);
   }
 }

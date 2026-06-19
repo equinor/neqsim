@@ -58,25 +58,24 @@ class AgentFeedbackCollectorTest {
   @DisplayName("Failure classification works correctly")
   void testFailureClassification() {
     assertEquals(AgentFeedbackCollector.FailureCategory.CONVERGENCE,
-        AgentFeedbackCollector.classifyFailure("Flash convergence failed after 100 iterations"));
+	AgentFeedbackCollector.classifyFailure("Flash convergence failed after 100 iterations"));
 
     assertEquals(AgentFeedbackCollector.FailureCategory.MISSING_API,
-        AgentFeedbackCollector.classifyFailure("Method not found: getColumnDiameter"));
+	AgentFeedbackCollector.classifyFailure("Method not found: getColumnDiameter"));
 
     assertEquals(AgentFeedbackCollector.FailureCategory.INVALID_INPUT,
-        AgentFeedbackCollector.classifyFailure("Invalid input: negative pressure -5 bara"));
+	AgentFeedbackCollector.classifyFailure("Invalid input: negative pressure -5 bara"));
 
     assertEquals(AgentFeedbackCollector.FailureCategory.CODE_ERROR,
-        AgentFeedbackCollector.classifyFailure("NullPointerException in separator"));
+	AgentFeedbackCollector.classifyFailure("NullPointerException in separator"));
 
     assertEquals(AgentFeedbackCollector.FailureCategory.TIMEOUT,
-        AgentFeedbackCollector.classifyFailure("Operation timeout after 300s"));
+	AgentFeedbackCollector.classifyFailure("Operation timeout after 300s"));
 
     assertEquals(AgentFeedbackCollector.FailureCategory.OTHER,
-        AgentFeedbackCollector.classifyFailure("Something unexpected happened"));
+	AgentFeedbackCollector.classifyFailure("Something unexpected happened"));
 
-    assertEquals(AgentFeedbackCollector.FailureCategory.OTHER,
-        AgentFeedbackCollector.classifyFailure(null));
+    assertEquals(AgentFeedbackCollector.FailureCategory.OTHER, AgentFeedbackCollector.classifyFailure(null));
   }
 
   @Test

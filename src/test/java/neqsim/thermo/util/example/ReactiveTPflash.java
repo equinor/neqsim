@@ -20,7 +20,7 @@ public class ReactiveTPflash {
   private static final Logger logger = LogManager.getLogger(ReactiveTPflash.class);
 
   /** Logger object for class. */
-  
+
   /**
    * <p>
    * main.
@@ -73,8 +73,7 @@ public class ReactiveTPflash {
     testSystem.display();
     // logger.info("pH " + testSystem.getPhase(1).getpH());
     logger.info("pH " + testSystem.getPhase(1).getpH());
-    logger.info(
-        "activity coefficiet water " + testSystem.getPhase("aqueous").getActivityCoefficient(2));
+    logger.info("activity coefficiet water " + testSystem.getPhase("aqueous").getActivityCoefficient(2));
 
     // for(int i=0;i<23;i++){
     // try{

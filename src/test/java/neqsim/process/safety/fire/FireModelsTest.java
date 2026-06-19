@@ -42,7 +42,7 @@ class FireModelsTest {
     BLEVECalculator b = new BLEVECalculator(1000.0, 46.0e6, 0.30);
     double D = b.fireballDiameterM();
     double t = b.fireballDurationS();
-    // 5.8 * 10 = 58 m;  0.45 * 10 = 4.5 s
+    // 5.8 * 10 = 58 m; 0.45 * 10 = 4.5 s
     assertEquals(58.0, D, 0.5);
     assertEquals(4.5, t, 0.05);
   }

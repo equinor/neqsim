@@ -13,8 +13,8 @@ import java.util.Map;
  * Normalized STID, C&amp;E, SRS, PSV list, and tagreader JSON bridge for Clause 10 reviews.
  *
  * <p>
- * This class does not connect to STID, document-management systems, or historians directly. Those
- * systems should normalize evidence into JSON and pass it to this deterministic Java adapter.
+ * This class does not connect to STID, document-management systems, or historians directly. Those systems should
+ * normalize evidence into JSON and pass it to this deterministic Java adapter.
  * </p>
  *
  * @author NeqSim contributors
@@ -22,11 +22,10 @@ import java.util.Map;
  */
 public class StidProcessSafetySystemDataSource {
   /** Top-level arrays interpreted as process safety review items. */
-  public static final String[] REVIEW_ARRAY_KEYS = new String[] {"items", "processSafetyFunctions",
-      "safetyFunctions", "psdValves", "shutdownValves", "psvs", "psvValves", "alarms",
-      "alarmActions", "sifs", "safetyInstrumentedFunctions", "secondaryPressureProtection",
-      "utilityDependencies", "survivabilityItems", "logicSolvers", "causeAndEffectActions",
-      "instrumentData", "tagreaderEvidence"};
+  public static final String[] REVIEW_ARRAY_KEYS = new String[] { "items", "processSafetyFunctions", "safetyFunctions",
+      "psdValves", "shutdownValves", "psvs", "psvValves", "alarms", "alarmActions", "sifs",
+      "safetyInstrumentedFunctions", "secondaryPressureProtection", "utilityDependencies", "survivabilityItems",
+      "logicSolvers", "causeAndEffectActions", "instrumentData", "tagreaderEvidence" };
 
   private final JsonObject source;
 
@@ -103,7 +102,7 @@ public class StidProcessSafetySystemDataSource {
    * Adds records from one named array.
    *
    * @param input input receiving records
-   * @param key source array key
+   * @param key   source array key
    */
   private void addArray(ProcessSafetySystemReviewInput input, String key) {
     if (!source.has(key) || !source.get(key).isJsonArray()) {
@@ -113,10 +112,10 @@ public class StidProcessSafetySystemDataSource {
     for (int index = 0; index < array.size(); index++) {
       JsonElement element = array.get(index);
       if (element.isJsonObject()) {
-        ProcessSafetySystemReviewItem item = fromRecord(element.getAsJsonObject(), key);
-        ProcessSafetySystemReviewInput single = new ProcessSafetySystemReviewInput();
-        single.addItem(item);
-        input.mergeFrom(single);
+	ProcessSafetySystemReviewItem item = fromRecord(element.getAsJsonObject(), key);
+	ProcessSafetySystemReviewInput single = new ProcessSafetySystemReviewInput();
+	single.addItem(item);
+	input.mergeFrom(single);
       }
     }
   }
@@ -124,7 +123,7 @@ public class StidProcessSafetySystemDataSource {
   /**
    * Converts one record to a review item.
    *
-   * @param record source record
+   * @param record    source record
    * @param sourceKey source array key
    * @return review item
    */
@@ -168,7 +167,7 @@ public class StidProcessSafetySystemDataSource {
     if (element.isJsonArray()) {
       List<Object> list = new ArrayList<Object>();
       for (JsonElement child : element.getAsJsonArray()) {
-        list.add(toObject(child));
+	list.add(toObject(child));
       }
       return list;
     }

@@ -24,14 +24,15 @@ public class DesignStandard implements java.io.Serializable {
    * Constructor for DesignStandard.
    * </p>
    */
-  public DesignStandard() {}
+  public DesignStandard() {
+  }
 
   /**
    * <p>
    * Constructor for DesignStandard.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
+   * @param name         a {@link java.lang.String} object
    * @param equipmentInn a {@link neqsim.process.mechanicaldesign.MechanicalDesign} object
    */
   public DesignStandard(String name, MechanicalDesign equipmentInn) {
@@ -125,7 +126,6 @@ public class DesignStandard implements java.io.Serializable {
       return false;
     }
     DesignStandard other = (DesignStandard) obj;
-    return Objects.equals(equipment, other.equipment)
-        && Objects.equals(standardName, other.standardName);
+    return Objects.equals(equipment, other.equipment) && Objects.equals(standardName, other.standardName);
   }
 }

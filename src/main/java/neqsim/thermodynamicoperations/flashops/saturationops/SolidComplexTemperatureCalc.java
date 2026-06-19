@@ -45,8 +45,8 @@ public class SolidComplexTemperatureCalc extends ConstantDutyTemperatureFlash {
    * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param comp1 a {@link java.lang.String} object
-   * @param comp2 a {@link java.lang.String} object
+   * @param comp1  a {@link java.lang.String} object
+   * @param comp2  a {@link java.lang.String} object
    */
   public SolidComplexTemperatureCalc(SystemInterface system, String comp1, String comp2) {
     this(system);
@@ -95,23 +95,23 @@ public class SolidComplexTemperatureCalc extends ConstantDutyTemperatureFlash {
       iter++;
       ops.TPflash();
       for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-        if (system.getPhases()[5].getComponent(i).getName().equals("water")
-            || system.getPhases()[5].getComponent(i).getName().equals("MEG")) {
-          system.getPhases()[5].getComponent(i).setx(0.5);
-        } else {
-          system.getPhases()[5].getComponent(i).setx(1e-20);
-        }
+	if (system.getPhases()[5].getComponent(i).getName().equals("water")
+	    || system.getPhases()[5].getComponent(i).getName().equals("MEG")) {
+	  system.getPhases()[5].getComponent(i).setx(0.5);
+	} else {
+	  system.getPhases()[5].getComponent(i).setx(1e-20);
+	}
       }
       logger.info("Temperaure  " + system.getTemperature() + " sumx " + sumx);
       sumx = 0.0;
       for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-        // system.getPhases()[5].getComponent(i).setx(Ksolid[i] *
-        // system.getPhase(0).getComponent(i).getx());
-        // if (system.getPhases()[5].getComponent(i).getx() > 0.000001) {
-        Ksolid[i] = system.getPhase(0).getComponent(i).getFugacityCoefficient()
-            / system.getPhases()[5].getComponent(i).fugcoef(system.getPhases()[5]);
-        sumx += Ksolid[i] * system.getPhase(0).getComponent(i).getx();
-        // }
+	// system.getPhases()[5].getComponent(i).setx(Ksolid[i] *
+	// system.getPhase(0).getComponent(i).getx());
+	// if (system.getPhases()[5].getComponent(i).getx() > 0.000001) {
+	Ksolid[i] = system.getPhase(0).getComponent(i).getFugacityCoefficient()
+	    / system.getPhases()[5].getComponent(i).fugcoef(system.getPhases()[5]);
+	sumx += Ksolid[i] * system.getPhase(0).getComponent(i).getx();
+	// }
       }
       double funk = sumx - 1.0;
       double dfunkdt = (funk - funkOld) / deltaT;
@@ -119,9 +119,9 @@ public class SolidComplexTemperatureCalc extends ConstantDutyTemperatureFlash {
       double dT = -funk / dfunkdt;
       double oldTemp = system.getTemperature();
       if (iter > 1) {
-        system.setTemperature(system.getTemperature() + dT * iter * 1.0 / (5.0 + iter));
+	system.setTemperature(system.getTemperature() + dT * iter * 1.0 / (5.0 + iter));
       } else {
-        system.setTemperature(system.getTemperature() + 0.01);
+	system.setTemperature(system.getTemperature() + 0.01);
       }
       deltaT = system.getTemperature() - oldTemp;
       logger.info("Temperaure  " + system.getTemperature() + " sumx " + sumx);
@@ -161,33 +161,32 @@ public class SolidComplexTemperatureCalc extends ConstantDutyTemperatureFlash {
       // reading activity coefficients
 
       double complexActivity = system.getPhaseOfType("aqueous").getActivityCoefficient(compNumber_1)
-          * system.getPhaseOfType("aqueous").getComponent(compNumber_1).getx()
-          * system.getPhaseOfType("aqueous").getActivityCoefficient(compNumber_2)
-          * system.getPhaseOfType("aqueous").getComponent(compNumber_2).getx();
+	  * system.getPhaseOfType("aqueous").getComponent(compNumber_1).getx()
+	  * system.getPhaseOfType("aqueous").getActivityCoefficient(compNumber_2)
+	  * system.getPhaseOfType("aqueous").getComponent(compNumber_2).getx();
 
       if (complexActivity < 1e-5) {
-        complexActivity = 1e-5;
+	complexActivity = 1e-5;
       }
       // logger.info("activityMix.... " + complexActivity);
 
-      double rightSide =
-          neqsim.thermo.ThermodynamicConstantsInterface.R * Math.log(complexActivity);
+      double rightSide = neqsim.thermo.ThermodynamicConstantsInterface.R * Math.log(complexActivity);
       // logger.info("right.... " + rightSide);
       double leftSide = neqsim.thermo.ThermodynamicConstantsInterface.R * Math.log(Kcomplex)
-          + HrefComplex * (1.0 / TrefComplex - 1.0 / system.getTemperature());
+	  + HrefComplex * (1.0 / TrefComplex - 1.0 / system.getTemperature());
       // logger.info("left.... " + leftSide);
       error = rightSide - leftSide;
       double dErrordT = (error - oldError) / (temperature - oldTemperature);
       if (iteration >= 2 && testFalse) {
-        deltaT = -error / dErrordT;
+	deltaT = -error / dErrordT;
       } else {
-        deltaT = (rightSide - leftSide);
+	deltaT = (rightSide - leftSide);
       }
       if (Math.abs(deltaT) > 10.0) {
-        testFalse = !testFalse;
-        deltaT = Math.signum(deltaT) * 10.0;
+	testFalse = !testFalse;
+	deltaT = Math.signum(deltaT) * 10.0;
       } else {
-        testFalse = true;
+	testFalse = true;
       }
       oldTemperature = temperature;
       oldError = error;
@@ -198,7 +197,8 @@ public class SolidComplexTemperatureCalc extends ConstantDutyTemperatureFlash {
 
   /** {@inheritDoc} */
   @Override
-  public void printToFile(String name) {}
+  public void printToFile(String name) {
+  }
 
   /**
    * <p>

@@ -7,12 +7,12 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Holds the result of evaluating a fixed turbo-expander-compressor mechanical design against a set
- * of operating conditions (pressures, temperatures, flows, compositions).
+ * Holds the result of evaluating a fixed turbo-expander-compressor mechanical design against a set of operating
+ * conditions (pressures, temperatures, flows, compositions).
  *
  * <p>
- * Each margin is expressed as a fraction (positive = within limit, negative = exceeded). Warnings
- * are raised when margin &lt; 15 %, failures when margin &lt; 0 %.
+ * Each margin is expressed as a fraction (positive = within limit, negative = exceeded). Warnings are raised when
+ * margin &lt; 15 %, failures when margin &lt; 0 %.
  * </p>
  *
  * @author NeqSim Development Team
@@ -95,7 +95,8 @@ public class DesignEvaluationResult implements Serializable {
   /**
    * Construct an empty evaluation result.
    */
-  public DesignEvaluationResult() {}
+  public DesignEvaluationResult() {
+  }
 
   // ============================================================================
   // Margin setters with automatic warning / failure detection
@@ -205,8 +206,8 @@ public class DesignEvaluationResult implements Serializable {
    * Set the shear pin torque margin and check limits.
    *
    * <p>
-   * Margin = (breakingTorque - operatingTorque) / breakingTorque. A negative margin means the pins
-   * would shear during normal operation.
+   * Margin = (breakingTorque - operatingTorque) / breakingTorque. A negative margin means the pins would shear during
+   * normal operation.
    * </p>
    *
    * @param margin fractional margin
@@ -220,8 +221,8 @@ public class DesignEvaluationResult implements Serializable {
    * Set the seal gas differential pressure margin and check limits.
    *
    * <p>
-   * Margin = (sealGasSupplyP - processP - minDp) / minDp. A negative margin means seal gas supply
-   * pressure is insufficient to maintain the buffer.
+   * Margin = (sealGasSupplyP - processP - minDp) / minDp. A negative margin means seal gas supply pressure is
+   * insufficient to maintain the buffer.
    * </p>
    *
    * @param margin fractional margin
@@ -235,8 +236,8 @@ public class DesignEvaluationResult implements Serializable {
    * Set the anti-surge margin and check limits.
    *
    * <p>
-   * Margin = (operatingFlow - surgeControlLineFlow) / surgeControlLineFlow. A negative margin means
-   * the compressor is inside the surge control line.
+   * Margin = (operatingFlow - surgeControlLineFlow) / surgeControlLineFlow. A negative margin means the compressor is
+   * inside the surge control line.
    * </p>
    *
    * @param margin fractional margin
@@ -249,13 +250,13 @@ public class DesignEvaluationResult implements Serializable {
   /**
    * Set detailed thrust balance values.
    *
-   * @param expanderThrustN expander axial thrust [N]
+   * @param expanderThrustN   expander axial thrust [N]
    * @param compressorThrustN compressor axial thrust [N]
-   * @param netThrustN net axial thrust [N] (positive = towards compressor end)
-   * @param reversalDetected true if thrust direction reversed vs design
+   * @param netThrustN        net axial thrust [N] (positive = towards compressor end)
+   * @param reversalDetected  true if thrust direction reversed vs design
    */
-  public void setThrustBalanceDetails(double expanderThrustN, double compressorThrustN,
-      double netThrustN, boolean reversalDetected) {
+  public void setThrustBalanceDetails(double expanderThrustN, double compressorThrustN, double netThrustN,
+      boolean reversalDetected) {
     this.expanderAxialThrustN = expanderThrustN;
     this.compressorAxialThrustN = compressorThrustN;
     this.netAxialThrustN = netThrustN;
@@ -497,7 +498,7 @@ public class DesignEvaluationResult implements Serializable {
   /**
    * Check a margin against thresholds and record warnings / failures.
    *
-   * @param name human-readable name of the parameter
+   * @param name   human-readable name of the parameter
    * @param margin fractional margin
    */
   private void checkMargin(String name, double margin) {

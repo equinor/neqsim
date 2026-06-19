@@ -37,8 +37,7 @@ public class NewEquipmentCostEstimateTest {
 
     costEst.calculateCostEstimate();
 
-    assertTrue(costEst.getPurchasedEquipmentCost() > 0,
-        "Fixed cone roof tank cost should be positive");
+    assertTrue(costEst.getPurchasedEquipmentCost() > 0, "Fixed cone roof tank cost should be positive");
     // BMC calculation depends on equipment type - just verify it's non-negative
     assertTrue(costEst.getBareModuleCost() >= 0, "BMC should be non-negative");
 
@@ -64,7 +63,7 @@ public class NewEquipmentCostEstimateTest {
     floatingRoof.calculateCostEstimate();
 
     assertTrue(floatingRoof.getPurchasedEquipmentCost() > coneRoof.getPurchasedEquipmentCost(),
-        "Floating roof should cost more than fixed cone roof");
+	"Floating roof should cost more than fixed cone roof");
   }
 
   @Test
@@ -128,7 +127,7 @@ public class NewEquipmentCostEstimateTest {
     cryoCost.calculateCostEstimate();
 
     assertTrue(cryoCost.getPurchasedEquipmentCost() > standardCost.getPurchasedEquipmentCost(),
-        "Cryogenic expander should cost more");
+	"Cryogenic expander should cost more");
   }
 
   // ============================================================================
@@ -175,9 +174,9 @@ public class NewEquipmentCostEstimateTest {
     teeMixer.calculateCostEstimate();
 
     assertTrue(inlineMixer.getPurchasedEquipmentCost() > staticMixer.getPurchasedEquipmentCost(),
-        "Inline mixer should cost more than static");
+	"Inline mixer should cost more than static");
     assertTrue(staticMixer.getPurchasedEquipmentCost() > teeMixer.getPurchasedEquipmentCost(),
-        "Static mixer should cost more than tee");
+	"Static mixer should cost more than tee");
   }
 
   // ============================================================================
@@ -221,7 +220,7 @@ public class NewEquipmentCostEstimateTest {
     withValves.calculateCostEstimate();
 
     assertTrue(withValves.getPurchasedEquipmentCost() > withoutValves.getPurchasedEquipmentCost(),
-        "Splitter with control valves should cost more");
+	"Splitter with control valves should cost more");
   }
 
   // ============================================================================
@@ -269,9 +268,9 @@ public class NewEquipmentCostEstimateTest {
     liquidEjector.calculateCostEstimate();
 
     assertTrue(gasEjector.getPurchasedEquipmentCost() > steamEjector.getPurchasedEquipmentCost(),
-        "Gas ejector should cost more than steam");
+	"Gas ejector should cost more than steam");
     assertTrue(steamEjector.getPurchasedEquipmentCost() > liquidEjector.getPurchasedEquipmentCost(),
-        "Steam ejector should cost more than liquid");
+	"Steam ejector should cost more than liquid");
   }
 
   // ============================================================================
@@ -404,8 +403,7 @@ public class NewEquipmentCostEstimateTest {
 
     // Test EUR formatting
     calc.setCurrencyCode("EUR");
-    assertTrue(
-        calc.formatCost(1000000.0).contains("\u20AC") || calc.formatCost(1000000.0).contains("€"));
+    assertTrue(calc.formatCost(1000000.0).contains("\u20AC") || calc.formatCost(1000000.0).contains("€"));
 
     // Test NOK formatting
     calc.setCurrencyCode("NOK");
@@ -450,8 +448,7 @@ public class NewEquipmentCostEstimateTest {
 
     // Test payback period calculation
     double payback = costEst.calculatePaybackPeriod(5000000.0);
-    assertTrue(payback >= 0 || Double.isInfinite(payback),
-        "Payback should be positive or infinite");
+    assertTrue(payback >= 0 || Double.isInfinite(payback), "Payback should be positive or infinite");
 
     // Test ROI calculation
     double roi = costEst.calculateROI(5000000.0);

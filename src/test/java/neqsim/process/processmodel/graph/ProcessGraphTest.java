@@ -115,7 +115,7 @@ public class ProcessGraphTest {
     feed.run();
 
     Splitter splitter = new Splitter("splitter", feed);
-    splitter.setSplitFactors(new double[] {0.5, 0.5});
+    splitter.setSplitFactors(new double[] { 0.5, 0.5 });
     splitter.run();
 
     Heater heater1 = new Heater("heater1", splitter.getSplitStream(0));
@@ -350,8 +350,7 @@ public class ProcessGraphTest {
     assertEquals(ProcessEdge.EdgeType.MATERIAL, materialEdge.getEdgeType());
     assertFalse(materialEdge.isRecycle());
 
-    ProcessEdge recycleEdge =
-        new ProcessEdge(1, node2, node1, null, "recycle", ProcessEdge.EdgeType.RECYCLE);
+    ProcessEdge recycleEdge = new ProcessEdge(1, node2, node1, null, "recycle", ProcessEdge.EdgeType.RECYCLE);
     assertEquals(ProcessEdge.EdgeType.RECYCLE, recycleEdge.getEdgeType());
     assertTrue(recycleEdge.isRecycle());
 
@@ -370,8 +369,7 @@ public class ProcessGraphTest {
     graph.addNode(isolatedStream);
 
     List<String> issues = graph.validate();
-    assertTrue(issues.stream().anyMatch(s -> s.contains("Isolated")),
-        "Should detect isolated node");
+    assertTrue(issues.stream().anyMatch(s -> s.contains("Isolated")), "Should detect isolated node");
   }
 
   @Test
@@ -461,8 +459,7 @@ public class ProcessGraphTest {
     system.add(feed);
     system.add(heater);
 
-    neqsim.process.processmodel.ProcessModule module =
-        new neqsim.process.processmodel.ProcessModule("Test Module");
+    neqsim.process.processmodel.ProcessModule module = new neqsim.process.processmodel.ProcessModule("Test Module");
     module.add(system);
 
     ProcessModelGraph modelGraph = module.buildModelGraph();
@@ -501,8 +498,7 @@ public class ProcessGraphTest {
     system2.add(heater);
 
     // Combine into a module
-    neqsim.process.processmodel.ProcessModule module =
-        new neqsim.process.processmodel.ProcessModule("Combined Plant");
+    neqsim.process.processmodel.ProcessModule module = new neqsim.process.processmodel.ProcessModule("Combined Plant");
     module.add(system1);
     module.add(system2);
 
@@ -534,8 +530,7 @@ public class ProcessGraphTest {
     system.add(feed);
     system.add(heater);
 
-    neqsim.process.processmodel.ProcessModule module =
-        new neqsim.process.processmodel.ProcessModule("Test Module");
+    neqsim.process.processmodel.ProcessModule module = new neqsim.process.processmodel.ProcessModule("Test Module");
     module.add(system);
 
     // Test convenience methods
@@ -569,8 +564,7 @@ public class ProcessGraphTest {
     feed2.run();
     system2.add(feed2);
 
-    ProcessModelGraph modelGraph =
-        ProcessModelGraphBuilder.buildModelGraph("Combined", system1, system2);
+    ProcessModelGraph modelGraph = ProcessModelGraphBuilder.buildModelGraph("Combined", system1, system2);
 
     assertEquals("Combined", modelGraph.getModelName());
     assertEquals(2, modelGraph.getSubSystemCount());
@@ -586,8 +580,8 @@ public class ProcessGraphTest {
     innerFeed.run();
     innerSystem.add(innerFeed);
 
-    neqsim.process.processmodel.ProcessModule innerModule =
-        new neqsim.process.processmodel.ProcessModule("Inner Module");
+    neqsim.process.processmodel.ProcessModule innerModule = new neqsim.process.processmodel.ProcessModule(
+	"Inner Module");
     innerModule.add(innerSystem);
 
     // Create outer module containing the inner module
@@ -597,8 +591,8 @@ public class ProcessGraphTest {
     outerFeed.run();
     outerSystem.add(outerFeed);
 
-    neqsim.process.processmodel.ProcessModule outerModule =
-        new neqsim.process.processmodel.ProcessModule("Outer Module");
+    neqsim.process.processmodel.ProcessModule outerModule = new neqsim.process.processmodel.ProcessModule(
+	"Outer Module");
     outerModule.add(outerSystem);
     outerModule.add(innerModule);
 
@@ -628,8 +622,7 @@ public class ProcessGraphTest {
     system.add(h1);
     system.add(h2);
 
-    neqsim.process.processmodel.ProcessModule module =
-        new neqsim.process.processmodel.ProcessModule("Stats Module");
+    neqsim.process.processmodel.ProcessModule module = new neqsim.process.processmodel.ProcessModule("Stats Module");
     module.add(system);
 
     ProcessModelGraph modelGraph = module.buildModelGraph();
@@ -676,8 +669,8 @@ public class ProcessGraphTest {
     system3.add(heater3);
 
     // Add to module
-    neqsim.process.processmodel.ProcessModule module =
-        new neqsim.process.processmodel.ProcessModule("Multi-Train Plant");
+    neqsim.process.processmodel.ProcessModule module = new neqsim.process.processmodel.ProcessModule(
+	"Multi-Train Plant");
     module.add(system1);
     module.add(system2);
     module.add(system3);
@@ -689,10 +682,9 @@ public class ProcessGraphTest {
 
     // All three systems are independent - should all be at level 0
     assertTrue(modelGraph.isParallelSubSystemExecutionBeneficial(),
-        "Parallel should be beneficial with 3 independent systems");
+	"Parallel should be beneficial with 3 independent systems");
 
-    ProcessModelGraph.ModuleParallelPartition partition =
-        modelGraph.partitionSubSystemsForParallelExecution();
+    ProcessModelGraph.ModuleParallelPartition partition = modelGraph.partitionSubSystemsForParallelExecution();
     assertEquals(1, partition.getLevelCount(), "All independent systems should be at same level");
     assertEquals(3, partition.getMaxParallelism(), "Max parallelism should be 3");
 
@@ -728,8 +720,8 @@ public class ProcessGraphTest {
     system2.add(gasFromSep);
     system2.add(heater);
 
-    neqsim.process.processmodel.ProcessModule module =
-        new neqsim.process.processmodel.ProcessModule("Sequential Plant");
+    neqsim.process.processmodel.ProcessModule module = new neqsim.process.processmodel.ProcessModule(
+	"Sequential Plant");
     module.add(system1);
     module.add(system2);
 
@@ -739,8 +731,7 @@ public class ProcessGraphTest {
     logger.info(modelGraph.getSummary());
 
     // Sequential dependency - cannot parallelize
-    ProcessModelGraph.ModuleParallelPartition partition =
-        modelGraph.partitionSubSystemsForParallelExecution();
+    ProcessModelGraph.ModuleParallelPartition partition = modelGraph.partitionSubSystemsForParallelExecution();
 
     // Should have 2 levels (Upstream first, then Downstream)
     assertEquals(2, partition.getLevelCount(), "Sequential systems should have 2 levels");
@@ -748,7 +739,7 @@ public class ProcessGraphTest {
 
     // Check that parallel is NOT beneficial
     assertFalse(modelGraph.isParallelSubSystemExecutionBeneficial(),
-        "Parallel should not be beneficial with sequential dependency");
+	"Parallel should not be beneficial with sequential dependency");
 
     // Check dependencies
     java.util.Map<String, java.util.Set<String>> deps = modelGraph.getSubSystemDependencies();
@@ -772,7 +763,7 @@ public class ProcessGraphTest {
     feed.setFlowRate(2000.0, "kg/hr");
     feed.run();
     Splitter splitter = new Splitter("splitter", feed);
-    splitter.setSplitFactors(new double[] {0.5, 0.5});
+    splitter.setSplitFactors(new double[] { 0.5, 0.5 });
     splitter.run();
     feedSystem.add(feed);
     feedSystem.add(splitter);
@@ -803,8 +794,7 @@ public class ProcessGraphTest {
     mergeSystem.add(mixer);
     mergeSystem.add(product);
 
-    neqsim.process.processmodel.ProcessModule module =
-        new neqsim.process.processmodel.ProcessModule("Diamond Plant");
+    neqsim.process.processmodel.ProcessModule module = new neqsim.process.processmodel.ProcessModule("Diamond Plant");
     module.add(feedSystem);
     module.add(trainA);
     module.add(trainB);
@@ -816,11 +806,10 @@ public class ProcessGraphTest {
     logger.info(modelGraph.getSummary());
 
     // Diamond pattern: Level 0 = Feed, Level 1 = [TrainA, TrainB], Level 2 = Merge
-    ProcessModelGraph.ModuleParallelPartition partition =
-        modelGraph.partitionSubSystemsForParallelExecution();
+    ProcessModelGraph.ModuleParallelPartition partition = modelGraph.partitionSubSystemsForParallelExecution();
 
     assertTrue(modelGraph.isParallelSubSystemExecutionBeneficial(),
-        "Parallel should be beneficial with diamond pattern");
+	"Parallel should be beneficial with diamond pattern");
     assertEquals(3, partition.getLevelCount(), "Diamond should have 3 levels");
     assertEquals(2, partition.getMaxParallelism(), "Max parallelism should be 2 (TrainA + TrainB)");
 
@@ -828,7 +817,7 @@ public class ProcessGraphTest {
     java.util.List<java.util.List<String>> levelNames = partition.getLevelNames();
     assertTrue(levelNames.get(0).contains("Feed System"), "Level 0 should contain Feed System");
     assertTrue(levelNames.get(1).contains("Train A") && levelNames.get(1).contains("Train B"),
-        "Level 1 should contain Train A and Train B");
+	"Level 1 should contain Train A and Train B");
     assertTrue(levelNames.get(2).contains("Merge System"), "Level 2 should contain Merge System");
 
     logger.info("========================================================\n");
@@ -836,8 +825,7 @@ public class ProcessGraphTest {
 
   @Test
   void testEmptyProcessModule() {
-    neqsim.process.processmodel.ProcessModule module =
-        new neqsim.process.processmodel.ProcessModule("Empty Module");
+    neqsim.process.processmodel.ProcessModule module = new neqsim.process.processmodel.ProcessModule("Empty Module");
 
     List<String> issues = module.validateStructure();
     assertFalse(issues.isEmpty(), "Empty module should have validation issues");
@@ -1004,8 +992,7 @@ public class ProcessGraphTest {
     oilHeater.setOutTemperature(320.0);
 
     // Second stage separator
-    ThreePhaseSeparator separator2nd =
-        new ThreePhaseSeparator("2nd stage separator", oilHeater.getOutletStream());
+    ThreePhaseSeparator separator2nd = new ThreePhaseSeparator("2nd stage separator", oilHeater.getOutletStream());
 
     // Valve to third stage
     ThrottlingValve valve2 = new ThrottlingValve("valve2", separator2nd.getLiquidOutStream());
@@ -1147,8 +1134,7 @@ public class ProcessGraphTest {
     double gasFlowGraph = sep2.getGasOutStream().getFlowRate("kg/hr");
 
     // Results should be the same
-    assertEquals(gasFlowDefault, gasFlowGraph, 1e-3,
-        "Graph-based execution should produce same results");
+    assertEquals(gasFlowDefault, gasFlowGraph, 1e-3, "Graph-based execution should produce same results");
 
     // Verify graph structure
     String summary = process.getGraphSummary();
@@ -1192,15 +1178,14 @@ public class ProcessGraphTest {
 
     // Anti-surge splitter
     Splitter splitter = new Splitter("antisurge splitter", compressor.getOutletStream());
-    splitter.setSplitFactors(new double[] {0.95, 0.05});
+    splitter.setSplitFactors(new double[] { 0.95, 0.05 });
 
     // Anti-surge cooler
     Cooler recycleHx = new Cooler("recycle cooler", splitter.getSplitStream(1));
     recycleHx.setOutTemperature(303.0);
 
     // Anti-surge valve
-    ThrottlingValve recycleValve =
-        new ThrottlingValve("recycle valve", recycleHx.getOutletStream());
+    ThrottlingValve recycleValve = new ThrottlingValve("recycle valve", recycleHx.getOutletStream());
     recycleValve.setOutletPressure(55.0);
 
     // Recycle unit
@@ -1320,7 +1305,7 @@ public class ProcessGraphTest {
     comp.setOutletPressure(60.0);
 
     Splitter splitter = new Splitter("splitter", comp.getOutletStream());
-    splitter.setSplitFactors(new double[] {0.9, 0.1});
+    splitter.setSplitFactors(new double[] { 0.9, 0.1 });
 
     ThrottlingValve recycleValve = new ThrottlingValve("recycle valve", splitter.getSplitStream(1));
     recycleValve.setOutletPressure(50.0);
@@ -1372,8 +1357,8 @@ public class ProcessGraphTest {
   // ====== Performance Comparison Tests ======
 
   /**
-   * Benchmark comparing insertion-order vs graph-based execution speed. This test measures relative
-   * performance and prints timing information.
+   * Benchmark comparing insertion-order vs graph-based execution speed. This test measures relative performance and
+   * prints timing information.
    */
   @Test
   void testExecutionSpeedComparison() {
@@ -1429,41 +1414,35 @@ public class ProcessGraphTest {
     logger.info("Process: " + process.getUnitOperations().size() + " units");
     logger.info("Iterations: " + timedIterations);
 
-    logger.printf(org.apache.logging.log4j.Level.INFO, "Insertion-order execution: %.3f ms/run%n",
-        insertionOrderMs);
-    logger.printf(org.apache.logging.log4j.Level.INFO, "Graph-based execution:     %.3f ms/run%n",
-        graphBasedMs);
-    logger.printf(org.apache.logging.log4j.Level.INFO, "Graph build (one-time):    %.3f ms%n",
-        graphBuildMs);
-
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Insertion-order execution: %.3f ms/run%n", insertionOrderMs);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Graph-based execution:     %.3f ms/run%n", graphBasedMs);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Graph build (one-time):    %.3f ms%n", graphBuildMs);
 
     double speedup = insertionOrderMs / graphBasedMs;
     if (speedup > 1.0) {
       logger.printf(org.apache.logging.log4j.Level.INFO, "Graph-based is %.2fx FASTER%n", speedup);
     } else {
-      logger.printf(org.apache.logging.log4j.Level.INFO, "Insertion-order is %.2fx faster%n",
-          1.0 / speedup);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "Insertion-order is %.2fx faster%n", 1.0 / speedup);
     }
 
     // Calculate break-even point (how many runs to amortize graph build cost)
     if (graphBasedMs < insertionOrderMs) {
       double savingsPerRun = insertionOrderMs - graphBasedMs;
       double breakEvenRuns = graphBuildMs / savingsPerRun;
-      logger.printf(org.apache.logging.log4j.Level.INFO, "Break-even point: %.1f runs%n",
-          breakEvenRuns);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "Break-even point: %.1f runs%n", breakEvenRuns);
     }
     logger.info("======================================\n");
 
     // Verify both produce the same result
     process.setUseGraphBasedExecution(false);
     process.run();
-    double resultInsertion = process.getUnitOperations().get(process.getUnitOperations().size() - 1)
-        .getFluid().getFlowRate("kg/hr");
+    double resultInsertion = process.getUnitOperations().get(process.getUnitOperations().size() - 1).getFluid()
+	.getFlowRate("kg/hr");
 
     process.setUseGraphBasedExecution(true);
     process.run();
-    double resultGraph = process.getUnitOperations().get(process.getUnitOperations().size() - 1)
-        .getFluid().getFlowRate("kg/hr");
+    double resultGraph = process.getUnitOperations().get(process.getUnitOperations().size() - 1).getFluid()
+	.getFlowRate("kg/hr");
 
     assertEquals(resultInsertion, resultGraph, 1e-6, "Both methods should produce same result");
   }
@@ -1505,12 +1484,9 @@ public class ProcessGraphTest {
 
     logger.info("\n===== Graph Construction Overhead =====");
     logger.info("Process: " + process.getUnitOperations().size() + " units");
-    logger.printf(org.apache.logging.log4j.Level.INFO, "Graph build (fresh):  %.4f ms%n",
-        avgBuildMs);
-    logger.printf(org.apache.logging.log4j.Level.INFO, "Graph build (cached): %.4f ms%n",
-        avgCacheMs);
-    logger.printf(org.apache.logging.log4j.Level.INFO, "Cache speedup: %.1fx%n",
-        avgBuildMs / avgCacheMs);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Graph build (fresh):  %.4f ms%n", avgBuildMs);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Graph build (cached): %.4f ms%n", avgCacheMs);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Cache speedup: %.1fx%n", avgBuildMs / avgCacheMs);
     logger.info("=======================================\n");
 
     // Cache should be significantly faster
@@ -1560,14 +1536,10 @@ public class ProcessGraphTest {
     double avgPartMs = totalPartTime / 1_000_000.0 / iterations;
 
     logger.info("\n===== Graph Algorithm Performance =====");
-    System.out
-        .println("Graph: " + graph.getNodeCount() + " nodes, " + graph.getEdgeCount() + " edges");
-    logger.printf(org.apache.logging.log4j.Level.INFO, "Topological sort:      %.4f ms%n",
-        avgTopoMs);
-    logger.printf(org.apache.logging.log4j.Level.INFO, "SCC analysis:          %.4f ms%n",
-        avgSccMs);
-    logger.printf(org.apache.logging.log4j.Level.INFO, "Parallel partitioning: %.4f ms%n",
-        avgPartMs);
+    System.out.println("Graph: " + graph.getNodeCount() + " nodes, " + graph.getEdgeCount() + " edges");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Topological sort:      %.4f ms%n", avgTopoMs);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "SCC analysis:          %.4f ms%n", avgSccMs);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Parallel partitioning: %.4f ms%n", avgPartMs);
     logger.info("=======================================\n");
 
     // All should be fast for typical process sizes
@@ -1634,9 +1606,9 @@ public class ProcessGraphTest {
   // ====== Equipment Coverage Tests ======
 
   /**
-   * Test that all common equipment types are properly handled by the graph builder. This includes:
-   * Stream, Heater, Cooler, Separator, ThreePhaseSeparator, Compressor, Pump, Expander, Valve,
-   * Mixer, Splitter, Filter, HeatExchanger, and utility units.
+   * Test that all common equipment types are properly handled by the graph builder. This includes: Stream, Heater,
+   * Cooler, Separator, ThreePhaseSeparator, Compressor, Pump, Expander, Valve, Mixer, Splitter, Filter, HeatExchanger,
+   * and utility units.
    */
   @Test
   void testComprehensiveEquipmentCoverage() {
@@ -1662,8 +1634,7 @@ public class ProcessGraphTest {
     process.add(heater);
 
     // 3. ThreePhaseSeparator
-    ThreePhaseSeparator threePhaseSep =
-        new ThreePhaseSeparator("3-phase sep", heater.getOutletStream());
+    ThreePhaseSeparator threePhaseSep = new ThreePhaseSeparator("3-phase sep", heater.getOutletStream());
     process.add(threePhaseSep);
 
     // 4. Compressor (on gas stream)
@@ -1682,7 +1653,7 @@ public class ProcessGraphTest {
 
     // 7. Splitter (split gas stream)
     Splitter splitter = new Splitter("splitter", separator.getGasOutStream());
-    splitter.setSplitFactors(new double[] {0.7, 0.3});
+    splitter.setSplitFactors(new double[] { 0.7, 0.3 });
     process.add(splitter);
 
     // 8. Mixer (combine split streams with another)
@@ -1722,8 +1693,8 @@ public class ProcessGraphTest {
       ProcessNode node = graph.getNode(unit);
       int inEdges = node != null ? node.getIncomingEdges().size() : -1;
       int outEdges = node != null ? node.getOutgoingEdges().size() : -1;
-      logger.printf(org.apache.logging.log4j.Level.INFO, "  %s [%s]: in=%d, out=%d%n",
-          unit.getName(), unit.getClass().getSimpleName(), inEdges, outEdges);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  %s [%s]: in=%d, out=%d%n", unit.getName(),
+	  unit.getClass().getSimpleName(), inEdges, outEdges);
     }
     logger.info("===================================\n");
 
@@ -1750,9 +1721,9 @@ public class ProcessGraphTest {
   }
 
   /**
-   * Test that transmitters (measurement devices) work alongside graph-connected equipment. Note:
-   * Transmitters are MeasurementDeviceInterface, not ProcessEquipmentInterface, so they are NOT
-   * included in the process graph but work alongside it.
+   * Test that transmitters (measurement devices) work alongside graph-connected equipment. Note: Transmitters are
+   * MeasurementDeviceInterface, not ProcessEquipmentInterface, so they are NOT included in the process graph but work
+   * alongside it.
    */
   @Test
   void testTransmittersWithGraph() {
@@ -1780,18 +1751,15 @@ public class ProcessGraphTest {
 
     // Add transmitters to the process (they monitor streams/equipment)
     // Transmitters are MeasurementDeviceInterface, not ProcessEquipmentInterface
-    TemperatureTransmitter tempTransmitter =
-        new TemperatureTransmitter("TT-001", separator.getGasOutStream());
+    TemperatureTransmitter tempTransmitter = new TemperatureTransmitter("TT-001", separator.getGasOutStream());
     tempTransmitter.setUnit("C");
     process.add(tempTransmitter);
 
-    PressureTransmitter pressTransmitter =
-        new PressureTransmitter("PT-001", separator.getGasOutStream());
+    PressureTransmitter pressTransmitter = new PressureTransmitter("PT-001", separator.getGasOutStream());
     pressTransmitter.setUnit("bara");
     process.add(pressTransmitter);
 
-    VolumeFlowTransmitter flowTransmitter =
-        new VolumeFlowTransmitter("FT-001", separator.getGasOutStream());
+    VolumeFlowTransmitter flowTransmitter = new VolumeFlowTransmitter("FT-001", separator.getGasOutStream());
     flowTransmitter.setUnit("Am3/hr");
     process.add(flowTransmitter);
 
@@ -1856,8 +1824,8 @@ public class ProcessGraphTest {
       ProcessNode node = graph.getNode(unit);
       int in = node != null ? node.getIncomingEdges().size() : -1;
       int out = node != null ? node.getOutgoingEdges().size() : -1;
-      logger.printf(org.apache.logging.log4j.Level.INFO, "  %s [%s]: in=%d, out=%d%n",
-          unit.getName(), unit.getClass().getSimpleName(), in, out);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  %s [%s]: in=%d, out=%d%n", unit.getName(),
+	  unit.getClass().getSimpleName(), in, out);
     }
     logger.info("==================================\n");
 
@@ -1910,8 +1878,8 @@ public class ProcessGraphTest {
       ProcessNode node = graph.getNode(unit);
       int in = node != null ? node.getIncomingEdges().size() : -1;
       int out = node != null ? node.getOutgoingEdges().size() : -1;
-      logger.printf(org.apache.logging.log4j.Level.INFO, "  %s [%s]: in=%d, out=%d%n",
-          unit.getName(), unit.getClass().getSimpleName(), in, out);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  %s [%s]: in=%d, out=%d%n", unit.getName(),
+	  unit.getClass().getSimpleName(), in, out);
     }
     logger.info("===============================\n");
 
@@ -1922,7 +1890,7 @@ public class ProcessGraphTest {
     ProcessNode hxNode = graph.getNode(heatEx);
     assertNotNull(hxNode, "Heat exchanger should be in graph");
     assertEquals(2, hxNode.getIncomingEdges().size(),
-        "HeatExchanger should have 2 incoming edges (hot and cold streams)");
+	"HeatExchanger should have 2 incoming edges (hot and cold streams)");
   }
 
   /**
@@ -1985,7 +1953,7 @@ public class ProcessGraphTest {
     process.add(feed);
 
     ComponentSplitter compSplitter = new ComponentSplitter("comp splitter", feed);
-    compSplitter.setSplitFactors(new double[] {1.0, 0.5, 0.0}); // All methane, half ethane
+    compSplitter.setSplitFactors(new double[] { 1.0, 0.5, 0.0 }); // All methane, half ethane
     process.add(compSplitter);
 
     ProcessGraph graph = process.buildGraph();
@@ -2079,8 +2047,8 @@ public class ProcessGraphTest {
     compressorFeed.setPressure(30.0, "bara");
     process.add(compressorFeed);
 
-    neqsim.process.equipment.expander.TurboExpanderCompressor tec =
-        new neqsim.process.equipment.expander.TurboExpanderCompressor("TEC", expanderFeed);
+    neqsim.process.equipment.expander.TurboExpanderCompressor tec = new neqsim.process.equipment.expander.TurboExpanderCompressor(
+	"TEC", expanderFeed);
     tec.setCompressorFeedStream(compressorFeed);
     tec.setExpanderOutPressure(40.0);
     process.add(tec);
@@ -2092,8 +2060,8 @@ public class ProcessGraphTest {
       ProcessNode node = graph.getNode(unit);
       int in = node != null ? node.getIncomingEdges().size() : -1;
       int out = node != null ? node.getOutgoingEdges().size() : -1;
-      logger.printf(org.apache.logging.log4j.Level.INFO, "  %s [%s]: in=%d, out=%d%n",
-          unit.getName(), unit.getClass().getSimpleName(), in, out);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  %s [%s]: in=%d, out=%d%n", unit.getName(),
+	  unit.getClass().getSimpleName(), in, out);
     }
     logger.info("========================================\n");
 
@@ -2102,8 +2070,7 @@ public class ProcessGraphTest {
     // TEC should have 2 incoming edges (expander feed + compressor feed)
     ProcessNode tecNode = graph.getNode(tec);
     assertNotNull(tecNode);
-    assertEquals(2, tecNode.getIncomingEdges().size(),
-        "TurboExpanderCompressor should have 2 incoming edges");
+    assertEquals(2, tecNode.getIncomingEdges().size(), "TurboExpanderCompressor should have 2 incoming edges");
   }
 
   /**
@@ -2146,10 +2113,10 @@ public class ProcessGraphTest {
     stream3.setPressure(50.0, "bara");
     process.add(stream3);
 
-    java.util.List<neqsim.process.equipment.stream.StreamInterface> inStreams =
-        java.util.Arrays.asList(stream1, stream2, stream3);
-    neqsim.process.equipment.heatexchanger.MultiStreamHeatExchanger mshx =
-        new neqsim.process.equipment.heatexchanger.MultiStreamHeatExchanger("MSHX", inStreams);
+    java.util.List<neqsim.process.equipment.stream.StreamInterface> inStreams = java.util.Arrays.asList(stream1,
+	stream2, stream3);
+    neqsim.process.equipment.heatexchanger.MultiStreamHeatExchanger mshx = new neqsim.process.equipment.heatexchanger.MultiStreamHeatExchanger(
+	"MSHX", inStreams);
     process.add(mshx);
 
     ProcessGraph graph = process.buildGraph();
@@ -2159,8 +2126,8 @@ public class ProcessGraphTest {
       ProcessNode node = graph.getNode(unit);
       int in = node != null ? node.getIncomingEdges().size() : -1;
       int out = node != null ? node.getOutgoingEdges().size() : -1;
-      logger.printf(org.apache.logging.log4j.Level.INFO, "  %s [%s]: in=%d, out=%d%n",
-          unit.getName(), unit.getClass().getSimpleName(), in, out);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  %s [%s]: in=%d, out=%d%n", unit.getName(),
+	  unit.getClass().getSimpleName(), in, out);
     }
     logger.info("=========================================\n");
 
@@ -2169,8 +2136,7 @@ public class ProcessGraphTest {
     // MSHX should have 3 incoming edges (from all 3 streams)
     ProcessNode mshxNode = graph.getNode(mshx);
     assertNotNull(mshxNode);
-    assertEquals(3, mshxNode.getIncomingEdges().size(),
-        "MultiStreamHeatExchanger should have 3 incoming edges");
+    assertEquals(3, mshxNode.getIncomingEdges().size(), "MultiStreamHeatExchanger should have 3 incoming edges");
   }
 
   /**
@@ -2231,15 +2197,14 @@ public class ProcessGraphTest {
     for (java.util.List<ProcessNode> level : partition.getLevels()) {
       logger.printf(org.apache.logging.log4j.Level.INFO, "  Level %d: ", levelNum++);
       for (ProcessNode node : level) {
-        System.out.print(node.getName() + " ");
+	System.out.print(node.getName() + " ");
       }
 
     }
     logger.info("====================================\n");
 
     // Should have at least 2 units that can run in parallel (the two feeds)
-    assertTrue(partition.getMaxParallelism() >= 2,
-        "Should have at least 2 units that can run in parallel");
+    assertTrue(partition.getMaxParallelism() >= 2, "Should have at least 2 units that can run in parallel");
 
     // Run using parallel execution
     long startParallel = System.nanoTime();
@@ -2251,7 +2216,7 @@ public class ProcessGraphTest {
     assertTrue(sep2.getGasOutStream().getFlowRate("kg/hr") > 0);
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "Parallel execution time: %.2f ms%n",
-        parallelTime / 1_000_000.0);
+	parallelTime / 1_000_000.0);
   }
 
   /**
@@ -2307,12 +2272,9 @@ public class ProcessGraphTest {
     }
     long parTime = (System.nanoTime() - startPar) / 3;
 
-    logger.printf(org.apache.logging.log4j.Level.INFO, "Sequential avg: %.2f ms%n",
-        seqTime / 1_000_000.0);
-    logger.printf(org.apache.logging.log4j.Level.INFO, "Parallel avg:   %.2f ms%n",
-        parTime / 1_000_000.0);
-    logger.printf(org.apache.logging.log4j.Level.INFO, "Speedup: %.2fx%n",
-        (double) seqTime / parTime);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Sequential avg: %.2f ms%n", seqTime / 1_000_000.0);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Parallel avg:   %.2f ms%n", parTime / 1_000_000.0);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Speedup: %.2fx%n", (double) seqTime / parTime);
     logger.info("==============================================\n");
 
     // Both should complete successfully
@@ -2392,21 +2354,21 @@ public class ProcessGraphTest {
       ProcessSystem parallelProcess = new ProcessSystem("Parallel Process");
 
       for (int i = 1; i <= 4; i++) {
-        SystemInterface fluid = new SystemSrkEos(298.0, 50.0);
-        fluid.addComponent("methane", 0.90);
-        fluid.addComponent("ethane", 0.10);
-        fluid.setMixingRule("classic");
+	SystemInterface fluid = new SystemSrkEos(298.0, 50.0);
+	fluid.addComponent("methane", 0.90);
+	fluid.addComponent("ethane", 0.10);
+	fluid.setMixingRule("classic");
 
-        Stream feed = new Stream("feed" + i, fluid.clone());
-        feed.setFlowRate(5000, "kg/hr");
-        parallelProcess.add(feed);
+	Stream feed = new Stream("feed" + i, fluid.clone());
+	feed.setFlowRate(5000, "kg/hr");
+	parallelProcess.add(feed);
 
-        Heater heater = new Heater("heater" + i, feed);
-        heater.setOutTemperature(350.0);
-        parallelProcess.add(heater);
+	Heater heater = new Heater("heater" + i, feed);
+	heater.setOutTemperature(350.0);
+	parallelProcess.add(heater);
 
-        Separator sep = new Separator("sep" + i, heater.getOutletStream());
-        parallelProcess.add(sep);
+	Separator sep = new Separator("sep" + i, heater.getOutletStream());
+	parallelProcess.add(sep);
       }
 
       boolean beneficial = parallelProcess.isParallelExecutionBeneficial();
@@ -2466,16 +2428,14 @@ public class ProcessGraphTest {
     }
     long avgTime = (System.nanoTime() - start) / 5;
 
-    logger.printf(org.apache.logging.log4j.Level.INFO, "runOptimal() avg: %.2f ms%n",
-        avgTime / 1_000_000.0);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "runOptimal() avg: %.2f ms%n", avgTime / 1_000_000.0);
     logger.info("====================================\n");
 
     assertTrue(avgTime > 0);
   }
 
   /**
-   * Test Manifold equipment graph support. Manifold combines N inputs -> M outputs (mixer +
-   * splitter internally).
+   * Test Manifold equipment graph support. Manifold combines N inputs -> M outputs (mixer + splitter internally).
    */
   @Test
   void testManifoldGraphSupport() {
@@ -2501,11 +2461,10 @@ public class ProcessGraphTest {
     system.add(inlet2);
 
     // Create manifold (N inputs -> M outputs)
-    neqsim.process.equipment.manifold.Manifold manifold =
-        new neqsim.process.equipment.manifold.Manifold("manifold");
+    neqsim.process.equipment.manifold.Manifold manifold = new neqsim.process.equipment.manifold.Manifold("manifold");
     manifold.addStream(inlet1);
     manifold.addStream(inlet2);
-    manifold.setSplitFactors(new double[] {0.3, 0.5, 0.2});
+    manifold.setSplitFactors(new double[] { 0.3, 0.5, 0.2 });
     system.add(manifold);
 
     // Add downstream equipment on one of the outputs
@@ -2530,8 +2489,7 @@ public class ProcessGraphTest {
     assertNotNull(manifoldNode, "Manifold node should exist");
 
     // Manifold should have incoming edges from both inlet streams
-    assertTrue(manifoldNode.getIncomingEdges().size() >= 2,
-        "Manifold should have at least 2 incoming edges");
+    assertTrue(manifoldNode.getIncomingEdges().size() >= 2, "Manifold should have at least 2 incoming edges");
 
     // Verify calculation order
     List<ProcessEquipmentInterface> order = graph.getCalculationOrder();
@@ -2548,8 +2506,7 @@ public class ProcessGraphTest {
     system.run();
 
     // Verify results
-    assertEquals(5.0, manifold.getMixedStream().getFlowRate("MSm3/day"), 0.01,
-        "Mixed flow should be sum of inputs");
+    assertEquals(5.0, manifold.getMixedStream().getFlowRate("MSm3/day"), 0.01, "Mixed flow should be sum of inputs");
 
     logger.info("Calculation order:");
     for (int i = 0; i < order.size(); i++) {
@@ -2615,8 +2572,7 @@ public class ProcessGraphTest {
     logger.info("\n===== Tear Stream Selection Test =====");
     logger.info("Tear streams: " + result.getTearStreamCount());
     for (ProcessEdge tear : result.getTearStreams()) {
-      logger.info("  " + tear.getName() + ": " + tear.getSource().getName() + " -> "
-          + tear.getTarget().getName());
+      logger.info("  " + tear.getName() + ": " + tear.getSource().getName() + " -> " + tear.getTarget().getName());
     }
     logger.info("======================================\n");
 
@@ -2624,8 +2580,7 @@ public class ProcessGraphTest {
     assertTrue(result.getTearStreamCount() >= 1, "Should select at least one tear stream");
 
     // Verify tear streams break all cycles
-    assertTrue(graph.validateTearStreams(result.getTearStreams()),
-        "Selected tear streams should break all cycles");
+    assertTrue(graph.validateTearStreams(result.getTearStreams()), "Selected tear streams should break all cycles");
   }
 
   @Test
@@ -2646,10 +2601,9 @@ public class ProcessGraphTest {
     ProcessGraph graph = system.buildGraph();
 
     // No cycles means no tear streams needed
-    assertTrue(graph.validateTearStreams(null),
-        "Null tear streams should be valid for acyclic graph");
+    assertTrue(graph.validateTearStreams(null), "Null tear streams should be valid for acyclic graph");
     assertTrue(graph.validateTearStreams(java.util.Collections.emptyList()),
-        "Empty tear streams should be valid for acyclic graph");
+	"Empty tear streams should be valid for acyclic graph");
   }
 
   @Test
@@ -2686,8 +2640,7 @@ public class ProcessGraphTest {
 
     // The algorithm should select at least one tear stream
     assertTrue(result.getTearStreamCount() >= 1, "Should have at least one tear stream");
-    assertTrue(graph.validateTearStreams(result.getTearStreams()),
-        "Tear streams should break cycles");
+    assertTrue(graph.validateTearStreams(result.getTearStreams()), "Tear streams should break cycles");
   }
 
   @Test
@@ -2727,9 +2680,8 @@ public class ProcessGraphTest {
     assertNotNull(best, "Should identify a best tear stream");
 
     for (ProcessEdge edge : analysis.getRankedTearCandidates()) {
-      assertTrue(
-          analysis.getEdgeSensitivities().get(best) <= analysis.getEdgeSensitivities().get(edge),
-          "Best tear stream should have lowest or equal sensitivity");
+      assertTrue(analysis.getEdgeSensitivities().get(best) <= analysis.getEdgeSensitivities().get(edge),
+	  "Best tear stream should have lowest or equal sensitivity");
     }
   }
 
@@ -2759,8 +2711,7 @@ public class ProcessGraphTest {
 
     assertNotNull(result);
     assertTrue(result.getTearStreamCount() >= 1, "Should select at least one tear stream");
-    assertTrue(graph.validateTearStreams(result.getTearStreams()),
-        "Tear streams should break all cycles");
+    assertTrue(graph.validateTearStreams(result.getTearStreams()), "Tear streams should break all cycles");
   }
 
   @Test
@@ -2813,8 +2764,7 @@ public class ProcessGraphTest {
 
     String report = graph.getSensitivityAnalysisReport();
 
-    assertTrue(report.contains("No recycle loops found"),
-        "Should indicate no recycle loops for linear process");
+    assertTrue(report.contains("No recycle loops found"), "Should indicate no recycle loops for linear process");
   }
 
   @Test
@@ -2845,8 +2795,7 @@ public class ProcessGraphTest {
 
     assertTrue(recycleLoops.size() >= 1);
 
-    ProcessGraph.SensitivityAnalysisResult analysis =
-        graph.analyzeTearStreamSensitivity(recycleLoops.get(0));
+    ProcessGraph.SensitivityAnalysisResult analysis = graph.analyzeTearStreamSensitivity(recycleLoops.get(0));
 
     // Verify that sensitivities are computed
     assertFalse(analysis.getEdgeSensitivities().isEmpty());
@@ -2892,7 +2841,7 @@ public class ProcessGraphTest {
 
     if (graph.hasCycles()) {
       assertTrue(summary.contains("Suggested tear streams:"),
-          "Summary should include tear stream info for cyclic graphs");
+	  "Summary should include tear stream info for cyclic graphs");
     }
   }
 }

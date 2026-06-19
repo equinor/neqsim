@@ -25,10 +25,10 @@ public class ComponentWaxWilson extends ComponentSolid {
    * Constructor for ComponentWaxWilson.
    * </p>
    *
-   * @param name Name of component.
-   * @param moles Total number of moles of component.
+   * @param name         Name of component.
+   * @param moles        Total number of moles of component.
    * @param molesInPhase Number of moles in phase.
-   * @param compIndex Index number of component in phase object component array.
+   * @param compIndex    Index number of component in phase object component array.
    */
   public ComponentWaxWilson(String name, double moles, double molesInPhase, int compIndex) {
     super(name, moles, molesInPhase, compIndex);
@@ -53,8 +53,7 @@ public class ComponentWaxWilson extends ComponentSolid {
     refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 1, PhaseType.LIQUID, 1.0);
     refPhase.getComponent(0).fugcoef(refPhase);
 
-    double liquidPhaseFugacity =
-        refPhase.getComponent(0).getFugacityCoefficient() * refPhase.getPressure();
+    double liquidPhaseFugacity = refPhase.getComponent(0).getFugacityCoefficient() * refPhase.getPressure();
 
     // Melting temperature and heat of fusion using Pedersen (1991) correlation
     // MW in g/mol for the correlations
@@ -76,12 +75,12 @@ public class ComponentWaxWilson extends ComponentSolid {
     double solidActivityCoefficient = getWilsonActivityCoefficient(phase1);
 
     SolidFug = getx() * liquidPhaseFugacity
-        * Math.exp(-getHeatOfFusion() / (R * phase1.getTemperature())
-            * (1.0 - phase1.getTemperature() / getTriplePointTemperature())
-            + deltaCpSL / R
-                * (getTriplePointTemperature() / phase1.getTemperature() - 1.0
-                    - Math.log(getTriplePointTemperature() / phase1.getTemperature()))
-            - deltaSolVol * (phase1.getPressure() - 1.0) * 1e5 / (R * phase1.getTemperature()));
+	* Math.exp(-getHeatOfFusion() / (R * phase1.getTemperature())
+	    * (1.0 - phase1.getTemperature() / getTriplePointTemperature())
+	    + deltaCpSL / R
+		* (getTriplePointTemperature() / phase1.getTemperature() - 1.0
+		    - Math.log(getTriplePointTemperature() / phase1.getTemperature()))
+	    - deltaSolVol * (phase1.getPressure() - 1.0) * 1e5 / (R * phase1.getTemperature()));
 
     fugacityCoefficient = solidActivityCoefficient * SolidFug / (phase1.getPressure() * getx());
     return fugacityCoefficient;
@@ -101,15 +100,16 @@ public class ComponentWaxWilson extends ComponentSolid {
     double tempSum = 0.0;
 
     for (int i = 0; i < phase1.getNumberOfComponents(); i++) {
-      sum1 += phase1.getComponent(i).getx() * ((ComponentWaxWilson) phase1.getComponent(i))
-          .getCharEnergyParamter(phase1, this.getComponentNumber(), i);
+      sum1 += phase1.getComponent(i).getx()
+	  * ((ComponentWaxWilson) phase1.getComponent(i)).getCharEnergyParamter(phase1, this.getComponentNumber(), i);
       tempSum = 0.0;
       for (int j = 0; j < phase1.getNumberOfComponents(); j++) {
-        tempSum += phase1.getComponent(j).getx()
-            * ((ComponentWaxWilson) phase1.getComponent(j)).getCharEnergyParamter(phase1, i, j);
+	tempSum += phase1.getComponent(j).getx()
+	    * ((ComponentWaxWilson) phase1.getComponent(j)).getCharEnergyParamter(phase1, i, j);
       }
-      sum2 += phase1.getComponent(i).getx() * ((ComponentWaxWilson) phase1.getComponent(i))
-          .getCharEnergyParamter(phase1, i, this.getComponentNumber()) / tempSum;
+      sum2 += phase1.getComponent(i).getx()
+	  * ((ComponentWaxWilson) phase1.getComponent(i)).getCharEnergyParamter(phase1, i, this.getComponentNumber())
+	  / tempSum;
     }
 
     return Math.exp(1.0 - Math.log(sum1) - sum2);
@@ -121,8 +121,8 @@ public class ComponentWaxWilson extends ComponentSolid {
    * </p>
    *
    * @param phase1 a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param comp1 a int
-   * @param comp2 a int
+   * @param comp1  a int
+   * @param comp2  a int
    * @return a double
    */
   public double getCharEnergyParamter(PhaseInterface phase1, int comp1, int comp2) {
@@ -133,8 +133,7 @@ public class ComponentWaxWilson extends ComponentSolid {
 
     // this need to be corrected according to how to select energy of shortest
     // carbon molecule .....
-    if ((phase1.getComponent(comp1).getMolarMass() - 1.0e-10) > phase1.getComponent(comp2)
-        .getMolarMass()) {
+    if ((phase1.getComponent(comp1).getMolarMass() - 1.0e-10) > phase1.getComponent(comp2).getMolarMass()) {
       // enthalpy sublimation nC16 134.9kj/mol; nC14 117.6kj/mol
       // param1 = -2/6*(117.6 * 1e3 - R*phase1.getTemperature());
       // param2 = -2/6*(134.9 * 1e3 - R*phase1.getTemperature());
@@ -145,17 +144,16 @@ public class ComponentWaxWilson extends ComponentSolid {
       param2 = 1.0;
     }
 
-    return Math
-        .exp(-(param2 - param1) / (ThermodynamicConstantsInterface.R * phase1.getTemperature()));
+    return Math.exp(-(param2 - param1) / (ThermodynamicConstantsInterface.R * phase1.getTemperature()));
   }
 
   /**
    * Calculates the Wilson interaction energy parameter for this component in the wax phase.
    *
    * <p>
-   * Based on the sublimation enthalpy: lambda_ii = -2/z * (DH_sub - RT). Uses Morgan-Kobayashi
-   * correlation for vaporization enthalpy and Pedersen correlations for fusion properties. All
-   * molecular-weight-dependent correlations use MW in g/mol.
+   * Based on the sublimation enthalpy: lambda_ii = -2/z * (DH_sub - RT). Uses Morgan-Kobayashi correlation for
+   * vaporization enthalpy and Pedersen correlations for fusion properties. All molecular-weight-dependent correlations
+   * use MW in g/mol.
    * </p>
    *
    * @param phase1 a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -169,15 +167,12 @@ public class ComponentWaxWilson extends ComponentSolid {
 
     // Vaporization enthalpy (Morgan-Kobayashi, 1982) using Pitzer correlation
     double x = 1.0 - phase1.getTemperature() / getTC();
-    double deltaHvap0 =
-        5.2804 * Math.pow(x, 0.3333) + 12.865 * Math.pow(x, 0.8333) + 1.171 * Math.pow(x, 1.2083)
-            - 13.166 * x + 0.4858 * Math.pow(x, 2.0) - 1.088 * Math.pow(x, 3.0);
-    double deltaHvap1 =
-        0.80022 * Math.pow(x, 0.3333) + 273.23 * Math.pow(x, 0.8333) + 465.08 * Math.pow(x, 1.2083)
-            - 638.51 * x - 145.12 * Math.pow(x, 2.0) - 74.049 * Math.pow(x, 3.0);
-    double deltaHvap2 =
-        7.2543 * Math.pow(x, 0.3333) - 346.45 * Math.pow(x, 0.8333) - 610.48 * Math.pow(x, 1.2083)
-            + 839.89 * x + 160.05 * Math.pow(x, 2.0) - 50.711 * Math.pow(x, 3.0);
+    double deltaHvap0 = 5.2804 * Math.pow(x, 0.3333) + 12.865 * Math.pow(x, 0.8333) + 1.171 * Math.pow(x, 1.2083)
+	- 13.166 * x + 0.4858 * Math.pow(x, 2.0) - 1.088 * Math.pow(x, 3.0);
+    double deltaHvap1 = 0.80022 * Math.pow(x, 0.3333) + 273.23 * Math.pow(x, 0.8333) + 465.08 * Math.pow(x, 1.2083)
+	- 638.51 * x - 145.12 * Math.pow(x, 2.0) - 74.049 * Math.pow(x, 3.0);
+    double deltaHvap2 = 7.2543 * Math.pow(x, 0.3333) - 346.45 * Math.pow(x, 0.8333) - 610.48 * Math.pow(x, 1.2083)
+	+ 839.89 * x + 160.05 * Math.pow(x, 2.0) - 50.711 * Math.pow(x, 3.0);
 
     double omega = 0.0520750 + 0.0448946 * carbonnumber - 0.000185397 * carbonnumber * carbonnumber;
 

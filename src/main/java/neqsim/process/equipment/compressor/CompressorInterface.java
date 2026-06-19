@@ -170,4 +170,3 @@ public interface CompressorInterface extends ProcessEquipmentInterface, TwoPortI
     }
   }
 }
-

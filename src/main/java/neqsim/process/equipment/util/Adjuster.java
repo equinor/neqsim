@@ -76,14 +76,12 @@ public class Adjuster extends ProcessEquipmentBaseClass {
    */
   private boolean isNearBound(double value) {
     double boundTolerance = Math.max(Math.abs(value) * 1e-6, 1e-10);
-    return Math.abs(value - maxAdjustedValue) < boundTolerance
-        || Math.abs(value - minAdjustedValue) < boundTolerance;
+    return Math.abs(value - maxAdjustedValue) < boundTolerance || Math.abs(value - minAdjustedValue) < boundTolerance;
   }
 
   /**
-   * Helper method to get a StreamInterface from equipment. If the equipment is a StreamInterface,
-   * returns it directly. Otherwise, tries to get the outlet stream from TwoPortInterface or
-   * MixerInterface.
+   * Helper method to get a StreamInterface from equipment. If the equipment is a StreamInterface, returns it directly.
+   * Otherwise, tries to get the outlet stream from TwoPortInterface or MixerInterface.
    *
    * @param equipment the equipment to get stream from
    * @return StreamInterface or null if not available
@@ -105,11 +103,10 @@ public class Adjuster extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @param adjustedEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
-   * @param adjstedVariable a {@link java.lang.String} object
-   * @param unit a string
+   * @param adjstedVariable   a {@link java.lang.String} object
+   * @param unit              a string
    */
-  public void setAdjustedVariable(ProcessEquipmentInterface adjustedEquipment,
-      String adjstedVariable, String unit) {
+  public void setAdjustedVariable(ProcessEquipmentInterface adjustedEquipment, String adjstedVariable, String unit) {
     this.adjustedEquipment = adjustedEquipment;
     this.adjustedVariable = adjstedVariable;
     this.adjustedVariableUnit = unit;
@@ -121,10 +118,9 @@ public class Adjuster extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @param adjustedEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
-   * @param adjstedVariable a {@link java.lang.String} object
+   * @param adjstedVariable   a {@link java.lang.String} object
    */
-  public void setAdjustedVariable(ProcessEquipmentInterface adjustedEquipment,
-      String adjstedVariable) {
+  public void setAdjustedVariable(ProcessEquipmentInterface adjustedEquipment, String adjstedVariable) {
     this.adjustedEquipment = adjustedEquipment;
     this.adjustedVariable = adjstedVariable;
   }
@@ -157,7 +153,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @param targetEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
-   * @param targetVariable a {@link java.lang.String} object
+   * @param targetVariable  a {@link java.lang.String} object
    */
   public void setTargetVariable(ProcessEquipmentInterface targetEquipment, String targetVariable) {
     this.targetEquipment = targetEquipment;
@@ -170,12 +166,12 @@ public class Adjuster extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @param targetEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
-   * @param targetVariable a {@link java.lang.String} object
-   * @param targetValue a double
-   * @param targetUnit a {@link java.lang.String} object
+   * @param targetVariable  a {@link java.lang.String} object
+   * @param targetValue     a double
+   * @param targetUnit      a {@link java.lang.String} object
    */
-  public void setTargetVariable(ProcessEquipmentInterface targetEquipment, String targetVariable,
-      double targetValue, String targetUnit) {
+  public void setTargetVariable(ProcessEquipmentInterface targetEquipment, String targetVariable, double targetValue,
+      String targetUnit) {
     this.targetEquipment = targetEquipment;
     this.targetVariable = targetVariable;
     this.targetValue = targetValue;
@@ -188,13 +184,13 @@ public class Adjuster extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @param targetEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
-   * @param targetVariable a {@link java.lang.String} object
-   * @param targetValue a double
-   * @param targetUnit a {@link java.lang.String} object
-   * @param targetPhase a {@link java.lang.String} object
+   * @param targetVariable  a {@link java.lang.String} object
+   * @param targetValue     a double
+   * @param targetUnit      a {@link java.lang.String} object
+   * @param targetPhase     a {@link java.lang.String} object
    */
-  public void setTargetVariable(ProcessEquipmentInterface targetEquipment, String targetVariable,
-      double targetValue, String targetUnit, String targetPhase) {
+  public void setTargetVariable(ProcessEquipmentInterface targetEquipment, String targetVariable, double targetValue,
+      String targetUnit, String targetPhase) {
     this.targetEquipment = targetEquipment;
     this.targetVariable = targetVariable;
     this.targetValue = targetValue;
@@ -208,14 +204,14 @@ public class Adjuster extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @param targetEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
-   * @param targetVariable a {@link java.lang.String} object
-   * @param targetValue a double
-   * @param targetUnit a {@link java.lang.String} object
-   * @param targetPhase a {@link java.lang.String} object
+   * @param targetVariable  a {@link java.lang.String} object
+   * @param targetValue     a double
+   * @param targetUnit      a {@link java.lang.String} object
+   * @param targetPhase     a {@link java.lang.String} object
    * @param targetComponent a {@link java.lang.String} object
    */
-  public void setTargetVariable(ProcessEquipmentInterface targetEquipment, String targetVariable,
-      double targetValue, String targetUnit, String targetPhase, String targetComponent) {
+  public void setTargetVariable(ProcessEquipmentInterface targetEquipment, String targetVariable, double targetValue,
+      String targetUnit, String targetPhase, String targetComponent) {
     this.targetEquipment = targetEquipment;
     this.targetVariable = targetVariable;
     this.targetValue = targetValue;
@@ -275,7 +271,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
     // Only require adjustedStream when NOT using custom functional interfaces
     if (adjustedStream == null && adjustedValueGetter == null) {
       logger.error("Adjuster: Cannot get stream from adjusted equipment: "
-          + (adjustedEquipment != null ? adjustedEquipment.getName() : "null"));
+	  + (adjustedEquipment != null ? adjustedEquipment.getName() : "null"));
       setCalculationIdentifier(id);
       return;
     }
@@ -284,14 +280,12 @@ public class Adjuster extends ProcessEquipmentBaseClass {
       inputValue = adjustedValueGetter.apply(adjustedEquipment);
     } else if (adjustedVariable.equals("mass flow")) {
       inputValue = adjustedStream.getThermoSystem().getFlowRate("kg/hr");
-    } else if (adjustedVariable.equals("flow") && adjustedVariableUnit != null
-        && !adjustedVariableUnit.isEmpty()) {
+    } else if (adjustedVariable.equals("flow") && adjustedVariableUnit != null && !adjustedVariableUnit.isEmpty()) {
       inputValue = adjustedStream.getThermoSystem().getFlowRate(adjustedVariableUnit);
-    } else if (adjustedVariable.equals("pressure") && adjustedVariableUnit != null
-        && !adjustedVariableUnit.isEmpty()) {
+    } else if (adjustedVariable.equals("pressure") && adjustedVariableUnit != null && !adjustedVariableUnit.isEmpty()) {
       inputValue = adjustedStream.getPressure(adjustedVariableUnit);
     } else if (adjustedVariable.equals("temperature") && adjustedVariableUnit != null
-        && !adjustedVariableUnit.isEmpty()) {
+	&& !adjustedVariableUnit.isEmpty()) {
       inputValue = adjustedStream.getTemperature(adjustedVariableUnit);
     } else {
       inputValue = adjustedStream.getThermoSystem().getNumberOfMoles();
@@ -302,13 +296,11 @@ public class Adjuster extends ProcessEquipmentBaseClass {
       targetValueCurrent = targetValueCalculator.apply(targetEquipment);
     } else if (targetStream == null) {
       logger.error("Adjuster: Cannot get stream from target equipment: "
-          + (targetEquipment != null ? targetEquipment.getName() : "null"));
+	  + (targetEquipment != null ? targetEquipment.getName() : "null"));
       setCalculationIdentifier(id);
       return;
-    } else if (targetVariable.equals("mass fraction") && !targetPhase.equals("")
-        && !targetComponent.equals("")) {
-      targetValueCurrent =
-          targetStream.getThermoSystem().getPhase(targetPhase).getWtFrac(targetComponent);
+    } else if (targetVariable.equals("mass fraction") && !targetPhase.equals("") && !targetComponent.equals("")) {
+      targetValueCurrent = targetStream.getThermoSystem().getPhase(targetPhase).getWtFrac(targetComponent);
     } else if (targetVariable.equals("gasVolumeFlow")) {
       targetValueCurrent = targetStream.getThermoSystem().getFlowRate(targetUnit);
     } else if (targetVariable.equals("pressure")) {
@@ -331,13 +323,13 @@ public class Adjuster extends ProcessEquipmentBaseClass {
 
     if (iterations >= 2 && Math.abs(inputValue - oldInputValue) < 1e-12) {
       if (Math.abs(error) < tolerance) {
-        return;
+	return;
       }
       // Value is at or near a bound and target is unreachable - accept current state
       if (isNearBound(inputValue)) {
-        error = tolerance * 0.9;
-        setCalculationIdentifier(id);
-        return;
+	error = tolerance * 0.9;
+	setCalculationIdentifier(id);
+	return;
       }
       iterations = 1;
     }
@@ -346,36 +338,35 @@ public class Adjuster extends ProcessEquipmentBaseClass {
 
     if (iterations < 2) {
       if (adjustedValueSetter != null) {
-        double perturbation = inputValue * 0.01 * Math.signum(deviation);
-        if (Math.abs(perturbation) < 1e-6) {
-          perturbation = 1e-3 * Math.signum(deviation);
-        }
-        newAdjustedValue = inputValue + perturbation;
+	double perturbation = inputValue * 0.01 * Math.signum(deviation);
+	if (Math.abs(perturbation) < 1e-6) {
+	  perturbation = 1e-3 * Math.signum(deviation);
+	}
+	newAdjustedValue = inputValue + perturbation;
       } else if (adjustedVariable.equals("mass flow")) {
-        newAdjustedValue = inputValue + deviation;
-      } else if (adjustedVariable.equals("flow") && adjustedVariableUnit != null
-          && !adjustedVariableUnit.isEmpty()) {
-        newAdjustedValue = inputValue + Math.signum(deviation) * inputValue / 100.0;
+	newAdjustedValue = inputValue + deviation;
+      } else if (adjustedVariable.equals("flow") && adjustedVariableUnit != null && !adjustedVariableUnit.isEmpty()) {
+	newAdjustedValue = inputValue + Math.signum(deviation) * inputValue / 100.0;
       } else if (adjustedVariable.equals("pressure") && adjustedVariableUnit != null
-          && !adjustedVariableUnit.isEmpty()) {
-        newAdjustedValue = inputValue + deviation / 10.0;
+	  && !adjustedVariableUnit.isEmpty()) {
+	newAdjustedValue = inputValue + deviation / 10.0;
       } else if (adjustedVariable.equals("temperature") && adjustedVariableUnit != null
-          && !adjustedVariableUnit.isEmpty()) {
-        newAdjustedValue = inputValue + deviation / 10.0;
+	  && !adjustedVariableUnit.isEmpty()) {
+	newAdjustedValue = inputValue + deviation / 10.0;
       } else {
-        newAdjustedValue = inputValue + deviation;
+	newAdjustedValue = inputValue + deviation;
       }
     } else {
       double derivate = (error - oldError) / (inputValue - oldInputValue);
       if (Math.abs(derivate) < 1e-12) {
-        derivate = 1e-12;
+	derivate = 1e-12;
       }
       double newVal = error / derivate;
 
       // Apply step damping: limit the step to MAX_RELATIVE_STEP of the current value
       double maxStep = Math.max(Math.abs(inputValue) * MAX_RELATIVE_STEP, 1e-6);
       if (Math.abs(newVal) > maxStep) {
-        newVal = Math.signum(newVal) * maxStep;
+	newVal = Math.signum(newVal) * maxStep;
       }
 
       newAdjustedValue = inputValue - newVal;
@@ -395,9 +386,9 @@ public class Adjuster extends ProcessEquipmentBaseClass {
     if (hitBound) {
       consecutiveBoundHits++;
       if (consecutiveBoundHits >= MAX_CONSECUTIVE_BOUND_HITS) {
-        // Target is unreachable within bounds - accept current state
-        error = tolerance * 0.9;
-        consecutiveBoundHits = 0;
+	// Target is unreachable within bounds - accept current state
+	error = tolerance * 0.9;
+	consecutiveBoundHits = 0;
       }
     } else {
       consecutiveBoundHits = 0;
@@ -408,14 +399,12 @@ public class Adjuster extends ProcessEquipmentBaseClass {
       adjustedValueSetter.accept(adjustedEquipment, newAdjustedValue);
     } else if (adjustedVariable.equals("mass flow")) {
       adjustedStream.getThermoSystem().setTotalFlowRate(newAdjustedValue, "kg/hr");
-    } else if (adjustedVariable.equals("flow") && adjustedVariableUnit != null
-        && !adjustedVariableUnit.isEmpty()) {
+    } else if (adjustedVariable.equals("flow") && adjustedVariableUnit != null && !adjustedVariableUnit.isEmpty()) {
       adjustedStream.getThermoSystem().setTotalFlowRate(newAdjustedValue, adjustedVariableUnit);
-    } else if (adjustedVariable.equals("pressure") && adjustedVariableUnit != null
-        && !adjustedVariableUnit.isEmpty()) {
+    } else if (adjustedVariable.equals("pressure") && adjustedVariableUnit != null && !adjustedVariableUnit.isEmpty()) {
       adjustedStream.setPressure(newAdjustedValue, adjustedVariableUnit);
     } else if (adjustedVariable.equals("temperature") && adjustedVariableUnit != null
-        && !adjustedVariableUnit.isEmpty()) {
+	&& !adjustedVariableUnit.isEmpty()) {
       adjustedStream.setTemperature(newAdjustedValue, adjustedVariableUnit);
     } else {
       adjustedStream.getThermoSystem().setTotalFlowRate(newAdjustedValue, "mol/sec");
@@ -454,8 +443,8 @@ public class Adjuster extends ProcessEquipmentBaseClass {
    * Sets the active state of this Adjuster.
    *
    * <p>
-   * This can be used to temporarily disable an Adjuster during optimization to prevent it from
-   * interfering with the optimization search.
+   * This can be used to temporarily disable an Adjuster during optimization to prevent it from interfering with the
+   * optimization search.
    * </p>
    *
    * @param active true to enable the Adjuster, false to disable
@@ -467,7 +456,8 @@ public class Adjuster extends ProcessEquipmentBaseClass {
   /** {@inheritDoc} */
   @Override
   @ExcludeFromJacocoGeneratedReport
-  public void displayResult() {}
+  public void displayResult() {
+  }
 
   /**
    * <p>
@@ -523,8 +513,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
   @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     // test code for adjuster...
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 20.00);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 20.00);
     testSystem.addComponent("methane", 1000.00);
     testSystem.createDatabase(true);
     testSystem.setMixingRule(2);
@@ -534,8 +523,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
     adjuster1.setAdjustedVariable(stream_1, "molarFlow");
     adjuster1.setTargetVariable(stream_1, "gasVolumeFlow", 10.0, "MSm3/day", "");
 
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
     operations.add(stream_1);
     operations.add(adjuster1);
 
@@ -666,8 +654,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
    *
    * @param targetValueCalculator a {@link java.util.function.Function} object
    */
-  public void setTargetValueCalculator(
-      Function<ProcessEquipmentInterface, Double> targetValueCalculator) {
+  public void setTargetValueCalculator(Function<ProcessEquipmentInterface, Double> targetValueCalculator) {
     this.targetValueCalculator = targetValueCalculator;
   }
 
@@ -689,8 +676,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
    *
    * @param adjustedValueGetter a {@link java.util.function.Function} object
    */
-  public void setAdjustedValueGetter(
-      Function<ProcessEquipmentInterface, Double> adjustedValueGetter) {
+  public void setAdjustedValueGetter(Function<ProcessEquipmentInterface, Double> adjustedValueGetter) {
     this.adjustedValueGetter = adjustedValueGetter;
   }
 
@@ -712,8 +698,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
    *
    * @param adjustedValueSetter a {@link java.util.function.BiConsumer} object
    */
-  public void setAdjustedValueSetter(
-      BiConsumer<ProcessEquipmentInterface, Double> adjustedValueSetter) {
+  public void setAdjustedValueSetter(BiConsumer<ProcessEquipmentInterface, Double> adjustedValueSetter) {
     this.adjustedValueSetter = adjustedValueSetter;
   }
 
@@ -744,53 +729,51 @@ public class Adjuster extends ProcessEquipmentBaseClass {
    */
   @Override
   public neqsim.util.validation.ValidationResult validateSetup() {
-    neqsim.util.validation.ValidationResult result =
-        new neqsim.util.validation.ValidationResult(getName());
+    neqsim.util.validation.ValidationResult result = new neqsim.util.validation.ValidationResult(getName());
 
     // Check: Equipment has a valid name
     if (getName() == null || getName().trim().isEmpty()) {
       result.addError("equipment", "Adjuster has no name",
-          "Set adjuster name in constructor: new Adjuster(\"MyAdjuster\")");
+	  "Set adjuster name in constructor: new Adjuster(\"MyAdjuster\")");
     }
 
     // Check: Adjusted equipment is set
     if (adjustedEquipment == null) {
       result.addError("adjusted", "No adjusted equipment set",
-          "Set adjusted equipment: adjuster.setAdjustedVariable(equipment, \"variableName\")");
+	  "Set adjusted equipment: adjuster.setAdjustedVariable(equipment, \"variableName\")");
     }
 
     // Check: Target equipment or calculator is set
     if (targetEquipment == null && targetValueCalculator == null) {
       result.addWarning("target", "No target equipment or value calculator set",
-          "Set target: adjuster.setTargetVariable(equipment, \"variableName\", targetValue)");
+	  "Set target: adjuster.setTargetVariable(equipment, \"variableName\", targetValue)");
     }
 
     // Check: Adjusted variable is specified (if not using custom getter/setter)
     if (adjustedEquipment != null && adjustedValueGetter == null
-        && (adjustedVariable == null || adjustedVariable.trim().isEmpty())) {
+	&& (adjustedVariable == null || adjustedVariable.trim().isEmpty())) {
       result.addWarning("adjusted", "Adjusted variable name not specified",
-          "Specify variable: adjuster.setAdjustedVariable(equipment, \"variableName\")");
+	  "Specify variable: adjuster.setAdjustedVariable(equipment, \"variableName\")");
     }
 
     // Check: Target variable is specified (if not using custom calculator)
     if (targetEquipment != null && targetValueCalculator == null
-        && (targetVariable == null || targetVariable.trim().isEmpty())) {
+	&& (targetVariable == null || targetVariable.trim().isEmpty())) {
       result.addWarning("target", "Target variable name not specified",
-          "Specify variable: adjuster.setTargetVariable(equipment, \"variableName\", value)");
+	  "Specify variable: adjuster.setTargetVariable(equipment, \"variableName\", value)");
     }
 
     // Check: Tolerance is positive
     if (tolerance <= 0) {
       result.addError("tolerance", "Tolerance must be positive: " + tolerance,
-          "Set positive tolerance: adjuster.setTolerance(1e-6)");
+	  "Set positive tolerance: adjuster.setTolerance(1e-6)");
     }
 
     // Check: Min/max adjusted value bounds are consistent
     if (maxAdjustedValue <= minAdjustedValue) {
       result.addWarning("bounds",
-          "Max adjusted value (" + maxAdjustedValue + ") <= min adjusted value (" + minAdjustedValue
-              + ")",
-          "Set consistent bounds: adjuster.setMaxAdjustedValue(max); adjuster.setMinAdjustedValue(min)");
+	  "Max adjusted value (" + maxAdjustedValue + ") <= min adjusted value (" + minAdjustedValue + ")",
+	  "Set consistent bounds: adjuster.setMaxAdjustedValue(max); adjuster.setMinAdjustedValue(min)");
     }
 
     return result;

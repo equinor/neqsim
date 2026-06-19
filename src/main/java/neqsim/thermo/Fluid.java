@@ -27,7 +27,8 @@ public class Fluid {
    * Constructor for Fluid.
    * </p>
    */
-  public Fluid() {}
+  public Fluid() {
+  }
 
   /**
    * <p>
@@ -62,12 +63,11 @@ public class Fluid {
    * </p>
    *
    * @param componentNames an array of {@link java.lang.String} objects
-   * @param flowrate an array of type double
-   * @param unit a {@link java.lang.String} object
+   * @param flowrate       an array of type double
+   * @param unit           a {@link java.lang.String} object
    * @return a {@link neqsim.thermo.system.SystemInterface} object
    */
-  public neqsim.thermo.system.SystemInterface create2(String[] componentNames, double[] flowrate,
-      String unit) {
+  public neqsim.thermo.system.SystemInterface create2(String[] componentNames, double[] flowrate, String unit) {
     setThermoModel();
     createFluid(componentNames, flowrate, unit);
     if (isHasWater()) {
@@ -98,98 +98,89 @@ public class Fluid {
     double[] flowrate = null;
     this.setThermoModel();
     if (fluidType.equals("water")) {
-      compNames = new String[] {"water"};
-      flowrate = new double[] {1.0};
+      compNames = new String[] { "water" };
+      flowrate = new double[] { 1.0 };
       createFluid(compNames, flowrate, "mole/sec");
     }
     if (fluidType.equals("dry gas")) {
-      compNames =
-          new String[] {"nitrogen", "CO2", "methane", "ethane", "propane", "i-butane", "n-butane"};
-      flowrate = new double[] {0.01, 0.02, 0.82, 0.11, 0.05, 0.01, 0.012};
+      compNames = new String[] { "nitrogen", "CO2", "methane", "ethane", "propane", "i-butane", "n-butane" };
+      flowrate = new double[] { 0.01, 0.02, 0.82, 0.11, 0.05, 0.01, 0.012 };
       createFluid(compNames, flowrate, "mole/sec");
     } else if (fluidType.equals("rich gas")) {
-      compNames =
-          new String[] {"nitrogen", "CO2", "methane", "ethane", "propane", "i-butane", "n-butane",
-              "i-pentane", "n-pentane", "n-hexane", "n-heptane", "n-octane", "n-nonane", "nC10"};
-      flowrate = new double[] {0.01, 0.02, 0.82, 0.11, 0.05, 0.01, 0.012, 0.01, 0.01, 0.01, 0.01,
-          0.01, 0.01, 0.01};
+      compNames = new String[] { "nitrogen", "CO2", "methane", "ethane", "propane", "i-butane", "n-butane", "i-pentane",
+	  "n-pentane", "n-hexane", "n-heptane", "n-octane", "n-nonane", "nC10" };
+      flowrate = new double[] { 0.01, 0.02, 0.82, 0.11, 0.05, 0.01, 0.012, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01 };
       createFluid(compNames, flowrate, "mole/sec");
     } else if (fluidType.equals("air")) {
-      compNames = new String[] {"nitrogen", "oxygen"};
-      flowrate = new double[] {0.78, 0.22};
+      compNames = new String[] { "nitrogen", "oxygen" };
+      flowrate = new double[] { 0.78, 0.22 };
       createFluid(compNames, flowrate, "mole/sec");
     } else if (fluidType.equals("combustion air")) {
-      compNames = new String[] {"nitrogen", "oxygen", "CO2", "water"};
-      flowrate = new double[] {0.78084, 0.20946, 0.033, 0.1};
+      compNames = new String[] { "nitrogen", "oxygen", "CO2", "water" };
+      flowrate = new double[] { 0.78084, 0.20946, 0.033, 0.1 };
       createFluid(compNames, flowrate, "mole/sec");
     } else if (fluidType.equals("gas condensate")) {
-      compNames =
-          new String[] {"nitrogen", "CO2", "methane", "ethane", "propane", "i-butane", "n-butane",
-              "i-pentane", "n-pentane", "n-hexane", "n-heptane", "n-octane", "n-nonane", "nC10"};
-      flowrate = new double[] {0.01, 0.02, 0.32, 0.05, 0.03, 0.01, 0.012, 0.01, 0.01, 0.01, 0.01,
-          0.01, 0.01, 0.01};
+      compNames = new String[] { "nitrogen", "CO2", "methane", "ethane", "propane", "i-butane", "n-butane", "i-pentane",
+	  "n-pentane", "n-hexane", "n-heptane", "n-octane", "n-nonane", "nC10" };
+      flowrate = new double[] { 0.01, 0.02, 0.32, 0.05, 0.03, 0.01, 0.012, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01 };
       createFluid(compNames, flowrate, "mole/sec");
-      String[] charNames = new String[] {"C10-C15", "C16-C19", "C20-C30", "C31-C50"};
-      double[] charFlowrate = new double[] {0.1, 0.08, 0.05, 0.01};
-      double[] molarMass = new double[] {0.20, 0.3, 0.36, 0.4};
-      double[] density = new double[] {700.0e-3, 810.0e-3, 880.0e-3, 920.0e-3};
+      String[] charNames = new String[] { "C10-C15", "C16-C19", "C20-C30", "C31-C50" };
+      double[] charFlowrate = new double[] { 0.1, 0.08, 0.05, 0.01 };
+      double[] molarMass = new double[] { 0.20, 0.3, 0.36, 0.4 };
+      double[] density = new double[] { 700.0e-3, 810.0e-3, 880.0e-3, 920.0e-3 };
       getFluid().addCharacterized(charNames, charFlowrate, molarMass, density);
     } else if (fluidType.equals("petrol")) {
-      compNames = new String[] {"n-pentane", "n-hexane", "n-heptane", "n-octane", "n-nonane",
-          "nC10", "nC11", "nC12"};
-      flowrate = new double[] {0.1, 0.1, 0.1, 0.1, 0.3, 0.1, 0.1, 0.1};
+      compNames = new String[] { "n-pentane", "n-hexane", "n-heptane", "n-octane", "n-nonane", "nC10", "nC11", "nC12" };
+      flowrate = new double[] { 0.1, 0.1, 0.1, 0.1, 0.3, 0.1, 0.1, 0.1 };
       createFluid(compNames, flowrate, "mole/sec");
     } else if (fluidType.equals("diesel")) {
-      compNames = new String[] {"n-heptane", "n-octane", "n-nonane", "nC10", "nC11", "nC12", "nC13",
-          "nC14"};
-      flowrate = new double[] {0.1, 0.1, 0.1, 0.3, 0.1, 0.1, 0.1, 0.1};
+      compNames = new String[] { "n-heptane", "n-octane", "n-nonane", "nC10", "nC11", "nC12", "nC13", "nC14" };
+      flowrate = new double[] { 0.1, 0.1, 0.1, 0.3, 0.1, 0.1, 0.1, 0.1 };
       createFluid(compNames, flowrate, "mole/sec");
     } else if (fluidType.equals("light oil")) {
-      compNames =
-          new String[] {"nitrogen", "CO2", "methane", "ethane", "propane", "i-butane", "n-butane",
-              "i-pentane", "n-pentane", "n-hexane", "n-heptane", "n-octane", "n-nonane", "nC10"};
-      flowrate = new double[] {0.01, 0.02, 0.52, 0.11, 0.05, 0.01, 0.012, 0.01, 0.01, 0.01, 0.01,
-          0.01, 0.01, 0.01};
+      compNames = new String[] { "nitrogen", "CO2", "methane", "ethane", "propane", "i-butane", "n-butane", "i-pentane",
+	  "n-pentane", "n-hexane", "n-heptane", "n-octane", "n-nonane", "nC10" };
+      flowrate = new double[] { 0.01, 0.02, 0.52, 0.11, 0.05, 0.01, 0.012, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01 };
       createFluid(compNames, flowrate, "mole/sec");
-      String[] charNames = new String[] {"C10-C15", "C16-C19", "C20-C30", "C31-C50"};
-      double[] charFlowrate = new double[] {0.2, 0.1, 0.05, 0.01};
-      double[] molarMass = new double[] {0.20, 0.3, 0.36, 0.4};
-      double[] density = new double[] {700.0e-3, 810.0e-3, 880.0e-3, 920.0e-3};
+      String[] charNames = new String[] { "C10-C15", "C16-C19", "C20-C30", "C31-C50" };
+      double[] charFlowrate = new double[] { 0.2, 0.1, 0.05, 0.01 };
+      double[] molarMass = new double[] { 0.20, 0.3, 0.36, 0.4 };
+      double[] density = new double[] { 700.0e-3, 810.0e-3, 880.0e-3, 920.0e-3 };
       getFluid().addCharacterized(charNames, charFlowrate, molarMass, density);
     } else if (fluidType.equals("black oil")) {
-      compNames = new String[] {"nitrogen", "CO2", "methane", "ethane", "propane", "i-butane",
-          "n-butane", "i-pentane", "n-pentane", "n-hexane"};
-      flowrate = new double[] {0.01, 0.02, 0.22, 0.11, 0.05, 0.01, 0.012, 0.01, 0.01, 0.01};
+      compNames = new String[] { "nitrogen", "CO2", "methane", "ethane", "propane", "i-butane", "n-butane", "i-pentane",
+	  "n-pentane", "n-hexane" };
+      flowrate = new double[] { 0.01, 0.02, 0.22, 0.11, 0.05, 0.01, 0.012, 0.01, 0.01, 0.01 };
       createFluid(compNames, flowrate, "mole/sec");
-      String[] charNames = new String[] {"C10-C15", "C16-C19", "C20-C30", "C31-C50", "C51-C80"};
-      double[] charFlowrate = new double[] {0.2, 0.1, 0.1, 0.05, 0.01};
-      double[] molarMass = new double[] {0.20, 0.25, 0.3, 0.36, 0.4};
-      double[] density = new double[] {700.0e-3, 750.0e-3, 810.0e-3, 880.0e-3, 920.0e-3};
+      String[] charNames = new String[] { "C10-C15", "C16-C19", "C20-C30", "C31-C50", "C51-C80" };
+      double[] charFlowrate = new double[] { 0.2, 0.1, 0.1, 0.05, 0.01 };
+      double[] molarMass = new double[] { 0.20, 0.25, 0.3, 0.36, 0.4 };
+      double[] density = new double[] { 700.0e-3, 750.0e-3, 810.0e-3, 880.0e-3, 920.0e-3 };
       getFluid().addCharacterized(charNames, charFlowrate, molarMass, density);
     } else if (fluidType.equals("black oil with water")) {
-      compNames = new String[] {"nitrogen", "CO2", "methane", "ethane", "propane", "i-butane",
-          "n-butane", "i-pentane", "n-pentane", "n-hexane"};
-      flowrate = new double[] {0.01, 0.02, 0.22, 0.11, 0.05, 0.01, 0.012, 0.01, 0.01, 0.01};
+      compNames = new String[] { "nitrogen", "CO2", "methane", "ethane", "propane", "i-butane", "n-butane", "i-pentane",
+	  "n-pentane", "n-hexane" };
+      flowrate = new double[] { 0.01, 0.02, 0.22, 0.11, 0.05, 0.01, 0.012, 0.01, 0.01, 0.01 };
       createFluid(compNames, flowrate, "mole/sec");
-      String[] charNames = new String[] {"C10-C15", "C16-C19", "C20-C30", "C31-C50", "C51-C80"};
-      double[] charFlowrate = new double[] {0.2, 0.1, 0.1, 0.05, 0.01};
-      double[] molarMass = new double[] {0.20, 0.25, 0.3, 0.36, 0.4};
-      double[] density = new double[] {700.0e-3, 750.0e-3, 810.0e-3, 880.0e-3, 920.0e-3};
+      String[] charNames = new String[] { "C10-C15", "C16-C19", "C20-C30", "C31-C50", "C51-C80" };
+      double[] charFlowrate = new double[] { 0.2, 0.1, 0.1, 0.05, 0.01 };
+      double[] molarMass = new double[] { 0.20, 0.25, 0.3, 0.36, 0.4 };
+      double[] density = new double[] { 700.0e-3, 750.0e-3, 810.0e-3, 880.0e-3, 920.0e-3 };
       getFluid().addCharacterized(charNames, charFlowrate, molarMass, density);
       setHasWater(true);
     } else if (fluidType.equals("heavy oil")) {
-      compNames = new String[] {"nitrogen", "CO2", "methane", "ethane", "propane", "i-butane",
-          "n-butane", "i-pentane", "n-pentane", "n-hexane"};
-      flowrate = new double[] {0.01, 0.01, 0.12, 0.11, 0.05, 0.01, 0.012, 0.01, 0.01, 0.01};
+      compNames = new String[] { "nitrogen", "CO2", "methane", "ethane", "propane", "i-butane", "n-butane", "i-pentane",
+	  "n-pentane", "n-hexane" };
+      flowrate = new double[] { 0.01, 0.01, 0.12, 0.11, 0.05, 0.01, 0.012, 0.01, 0.01, 0.01 };
       createFluid(compNames, flowrate, "mole/sec");
-      String[] charNames = new String[] {"C10-C15", "C16-C19", "C20-C30", "C31-C50", "C51-C80"};
-      double[] charFlowrate = new double[] {0.2, 0.2, 0.2, 0.1, 0.1};
-      double[] molarMass = new double[] {0.20, 0.25, 0.3, 0.36, 0.4};
-      double[] density = new double[] {700.0e-3, 750.0e-3, 810.0e-3, 880.0e-3, 920.0e-3};
+      String[] charNames = new String[] { "C10-C15", "C16-C19", "C20-C30", "C31-C50", "C51-C80" };
+      double[] charFlowrate = new double[] { 0.2, 0.2, 0.2, 0.1, 0.1 };
+      double[] molarMass = new double[] { 0.20, 0.25, 0.3, 0.36, 0.4 };
+      double[] density = new double[] { 700.0e-3, 750.0e-3, 810.0e-3, 880.0e-3, 920.0e-3 };
       getFluid().addCharacterized(charNames, charFlowrate, molarMass, density);
     } else if (neqsim.util.database.NeqSimDataBase.hasComponent(fluidType)) {
-      compNames = new String[] {fluidType};
-      flowrate = new double[] {1.0};
+      compNames = new String[] { fluidType };
+      flowrate = new double[] { 1.0 };
       createFluid(compNames, flowrate, "mole/sec");
     } else {
       return null;
@@ -216,12 +207,11 @@ public class Fluid {
    * </p>
    *
    * @param componentNames an array of {@link java.lang.String} objects
-   * @param flowrate an array of type double
-   * @param unit a {@link java.lang.String} object
+   * @param flowrate       an array of type double
+   * @param unit           a {@link java.lang.String} object
    * @return a {@link neqsim.thermo.system.SystemInterface} object
    */
-  public neqsim.thermo.system.SystemInterface createFluid(String[] componentNames,
-      double[] flowrate, String unit) {
+  public neqsim.thermo.system.SystemInterface createFluid(String[] componentNames, double[] flowrate, String unit) {
     setThermoModel();
     if (componentNames.length != flowrate.length) {
       logger.error("component names and mole fractions need to be same length...");

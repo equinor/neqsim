@@ -150,8 +150,7 @@ public class AdsorptionBedTest {
     // Outlet should have less total moles than inlet (some adsorbed)
     double inletMoles = feedStream.getThermoSystem().getTotalNumberOfMoles();
     double outletMoles = outlet.getThermoSystem().getTotalNumberOfMoles();
-    assertTrue(outletMoles <= inletMoles,
-        "Outlet moles should not exceed inlet moles (adsorption removes species)");
+    assertTrue(outletMoles <= inletMoles, "Outlet moles should not exceed inlet moles (adsorption removes species)");
   }
 
   /**
@@ -170,8 +169,8 @@ public class AdsorptionBedTest {
     double outletCO2Frac = outletFluid.getPhase(0).getComponent("CO2").getx();
 
     // CO2 fraction should decrease more than methane fraction
-    assertTrue(outletCO2Frac < inletCO2Frac, "CO2 should be preferentially removed: inlet="
-        + inletCO2Frac + ", outlet=" + outletCO2Frac);
+    assertTrue(outletCO2Frac < inletCO2Frac,
+	"CO2 should be preferentially removed: inlet=" + inletCO2Frac + ", outlet=" + outletCO2Frac);
   }
 
   /**
@@ -196,8 +195,7 @@ public class AdsorptionBedTest {
    */
   @Test
   public void testMultipleIsothermModels() {
-    IsothermType[] types =
-        new IsothermType[] {IsothermType.LANGMUIR, IsothermType.FREUNDLICH, IsothermType.SIPS};
+    IsothermType[] types = new IsothermType[] { IsothermType.LANGMUIR, IsothermType.FREUNDLICH, IsothermType.SIPS };
 
     for (IsothermType type : types) {
       AdsorptionBed testBed = new AdsorptionBed("Bed_" + type.name(), feedStream);
@@ -208,8 +206,7 @@ public class AdsorptionBedTest {
       testBed.run(UUID.randomUUID());
 
       StreamInterface outlet = testBed.getOutletStream();
-      assertNotNull(outlet.getThermoSystem(),
-          "Outlet should exist for isotherm type " + type.name());
+      assertNotNull(outlet.getThermoSystem(), "Outlet should exist for isotherm type " + type.name());
     }
   }
 
@@ -279,8 +276,7 @@ public class AdsorptionBedTest {
       secondHalf += loading[cell];
     }
     assertTrue(firstHalf >= secondHalf,
-        "First half of bed should have more loading than second half: " + firstHalf + " vs "
-            + secondHalf);
+	"First half of bed should have more loading than second half: " + firstHalf + " vs " + secondHalf);
   }
 
   /**
@@ -339,10 +335,9 @@ public class AdsorptionBedTest {
    * Test desorption mode reduces loading in the first cell.
    *
    * <p>
-   * During desorption the inlet concentration is zero, so the first cell receives clean gas and its
-   * equilibrium loading drops, causing net desorption. This test tracks the first cell specifically
-   * rather than the bed average, because downstream cells may still be absorbing gas released from
-   * upstream.
+   * During desorption the inlet concentration is zero, so the first cell receives clean gas and its equilibrium loading
+   * drops, causing net desorption. This test tracks the first cell specifically rather than the bed average, because
+   * downstream cells may still be absorbing gas released from upstream.
    * </p>
    */
   @Test
@@ -371,9 +366,8 @@ public class AdsorptionBedTest {
     }
     double[] loadingAfterDes = bed.getLoadingProfile(1);
     double firstCellAfterDes = loadingAfterDes[0];
-    assertTrue(firstCellAfterDes < firstCellAfterAds,
-        "First cell loading should decrease during desorption: before=" + firstCellAfterAds
-            + ", after=" + firstCellAfterDes);
+    assertTrue(firstCellAfterDes < firstCellAfterAds, "First cell loading should decrease during desorption: before="
+	+ firstCellAfterAds + ", after=" + firstCellAfterDes);
   }
 
   // =============================================
@@ -419,8 +413,8 @@ public class AdsorptionBedTest {
     fastBed.run(UUID.randomUUID());
     double fastOutletMoles = fastBed.getOutletStream().getThermoSystem().getTotalNumberOfMoles();
 
-    assertTrue(fastOutletMoles < slowOutletMoles, "Higher kLDF should remove more moles: fast="
-        + fastOutletMoles + ", slow=" + slowOutletMoles);
+    assertTrue(fastOutletMoles < slowOutletMoles,
+	"Higher kLDF should remove more moles: fast=" + fastOutletMoles + ", slow=" + slowOutletMoles);
   }
 
   // =============================================
@@ -433,8 +427,7 @@ public class AdsorptionBedTest {
   @Test
   public void testValidationPasses() {
     neqsim.util.validation.ValidationResult result = bed.validateSetup();
-    assertTrue(result.getErrors().isEmpty(),
-        "Valid configuration should pass validation: " + result.getErrors());
+    assertTrue(result.getErrors().isEmpty(), "Valid configuration should pass validation: " + result.getErrors());
   }
 
   /**

@@ -8,8 +8,7 @@ import java.util.Map;
  * Empirical performance model for oilfield scale inhibitors.
  *
  * <p>
- * Predicts the Minimum Inhibitor Concentration (MIC) required to suppress mineral scale
- * precipitation as a function of:
+ * Predicts the Minimum Inhibitor Concentration (MIC) required to suppress mineral scale precipitation as a function of:
  * </p>
  * <ul>
  * <li>Scale type (CaCO3, BaSO4, SrSO4, CaSO4, FeCO3)</li>
@@ -29,10 +28,9 @@ import java.util.Map;
  * </pre>
  *
  * <p>
- * Default base concentrations and exponents come from SPE 130901 (Kan and Tomson, 2010), SPE 169787
- * (Sorbie and Mackay, 2000) and BP/Statoil internal correlations as compiled in NACE TM 0374. The
- * model is intended for screening; vendor static / dynamic tube blocking tests remain the
- * deployment basis.
+ * Default base concentrations and exponents come from SPE 130901 (Kan and Tomson, 2010), SPE 169787 (Sorbie and Mackay,
+ * 2000) and BP/Statoil internal correlations as compiled in NACE TM 0374. The model is intended for screening; vendor
+ * static / dynamic tube blocking tests remain the deployment basis.
  * </p>
  *
  * <p>
@@ -183,10 +181,10 @@ public class ScaleInhibitorPerformance implements Serializable {
     if (availableDoseMgL > 0.0) {
       double ratio = availableDoseMgL / minimumInhibitorConcentrationMgL;
       if (ratio >= 1.0) {
-        efficiency = Math.min(1.0, 0.85 + 0.15 * (1.0 - Math.exp(-(ratio - 1.0))));
+	efficiency = Math.min(1.0, 0.85 + 0.15 * (1.0 - Math.exp(-(ratio - 1.0))));
       } else {
-        // Below MIC: efficiency drops sharply
-        efficiency = 0.85 * ratio;
+	// Below MIC: efficiency drops sharply
+	efficiency = 0.85 * ratio;
       }
       adequate = ratio >= 1.0;
     } else {
@@ -197,19 +195,19 @@ public class ScaleInhibitorPerformance implements Serializable {
     // Warnings
     if (chemistry == InhibitorChemistry.PHOSPHONATE && temperatureC > 175.0) {
       warnings.put("thermal_degradation",
-          "Phosphonate inhibitors hydrolyse above 175 C; switch to polymeric chemistry");
+	  "Phosphonate inhibitors hydrolyse above 175 C; switch to polymeric chemistry");
     }
     if (chemistry == InhibitorChemistry.PHOSPHONATE && calciumMgL > 2000.0) {
       warnings.put("calcium_phosphonate_precipitation",
-          "Risk of Ca-phosphonate precipitation above 2000 mg/L Ca; use polyacrylate or phosphate ester");
+	  "Risk of Ca-phosphonate precipitation above 2000 mg/L Ca; use polyacrylate or phosphate ester");
     }
     if (saturationRatio > 100.0) {
       warnings.put("extreme_supersaturation",
-          "SR > 100; nucleation outpaces inhibition — consider mechanical removal or water exclusion");
+	  "SR > 100; nucleation outpaces inhibition — consider mechanical removal or water exclusion");
     }
     if (chemistry == InhibitorChemistry.PHOSPHATE_ESTER && temperatureC < 40.0) {
       warnings.put("low_temperature_solubility",
-          "Phosphate ester may have limited solubility below 40 C in produced water");
+	  "Phosphate ester may have limited solubility below 40 C in produced water");
     }
     evaluated = true;
   }
@@ -218,49 +216,49 @@ public class ScaleInhibitorPerformance implements Serializable {
    * Base MIC at standard reference conditions (60 C, TDS 50 g/L, SR=5, Ca=1000 mg/L).
    *
    * @param scale scale type
-   * @param chem inhibitor chemistry
+   * @param chem  inhibitor chemistry
    * @return base MIC in mg/L
    */
   private static double baseMic(ScaleType scale, InhibitorChemistry chem) {
     double base;
     switch (scale) {
-      case CACO3:
-        base = 5.0;
-        break;
-      case BASO4:
-        base = 10.0;
-        break;
-      case SRSO4:
-        base = 8.0;
-        break;
-      case CASO4:
-        base = 6.0;
-        break;
-      case FECO3:
-        base = 12.0;
-        break;
-      default:
-        base = 10.0;
+    case CACO3:
+      base = 5.0;
+      break;
+    case BASO4:
+      base = 10.0;
+      break;
+    case SRSO4:
+      base = 8.0;
+      break;
+    case CASO4:
+      base = 6.0;
+      break;
+    case FECO3:
+      base = 12.0;
+      break;
+    default:
+      base = 10.0;
     }
     double chemFactor;
     switch (chem) {
-      case PHOSPHONATE:
-        chemFactor = 1.0;
-        break;
-      case POLYMALEATE:
-        chemFactor = 1.2;
-        break;
-      case POLYACRYLATE:
-        chemFactor = 1.4;
-        break;
-      case PHOSPHATE_ESTER:
-        chemFactor = 1.1;
-        break;
-      case VINYL_SULPHONATE:
-        chemFactor = 1.3;
-        break;
-      default:
-        chemFactor = 1.5;
+    case PHOSPHONATE:
+      chemFactor = 1.0;
+      break;
+    case POLYMALEATE:
+      chemFactor = 1.2;
+      break;
+    case POLYACRYLATE:
+      chemFactor = 1.4;
+      break;
+    case PHOSPHATE_ESTER:
+      chemFactor = 1.1;
+      break;
+    case VINYL_SULPHONATE:
+      chemFactor = 1.3;
+      break;
+    default:
+      chemFactor = 1.5;
     }
     // Specific scale-chemistry preferences
     if (scale == ScaleType.BASO4 && chem == InhibitorChemistry.PHOSPHONATE) {
@@ -276,32 +274,32 @@ public class ScaleInhibitorPerformance implements Serializable {
    * Temperature scaling factor (Arrhenius-like ramp above an inhibitor-specific knee).
    *
    * @param chem inhibitor chemistry
-   * @param tC temperature in Celsius
+   * @param tC   temperature in Celsius
    * @return multiplier on base MIC
    */
   private static double temperatureFactor(InhibitorChemistry chem, double tC) {
     double knee;
     double slope;
     switch (chem) {
-      case PHOSPHONATE:
-        knee = 100.0;
-        slope = 0.015;
-        break;
-      case POLYMALEATE:
-        knee = 130.0;
-        slope = 0.012;
-        break;
-      case POLYACRYLATE:
-        knee = 120.0;
-        slope = 0.013;
-        break;
-      case PHOSPHATE_ESTER:
-        knee = 150.0;
-        slope = 0.010;
-        break;
-      default:
-        knee = 100.0;
-        slope = 0.015;
+    case PHOSPHONATE:
+      knee = 100.0;
+      slope = 0.015;
+      break;
+    case POLYMALEATE:
+      knee = 130.0;
+      slope = 0.012;
+      break;
+    case POLYACRYLATE:
+      knee = 120.0;
+      slope = 0.013;
+      break;
+    case PHOSPHATE_ESTER:
+      knee = 150.0;
+      slope = 0.010;
+      break;
+    default:
+      knee = 100.0;
+      slope = 0.015;
     }
     if (tC <= knee) {
       return 1.0;
@@ -336,7 +334,7 @@ public class ScaleInhibitorPerformance implements Serializable {
   /**
    * Calcium tolerance factor (penalises phosphonate in high-Ca brines).
    *
-   * @param chem inhibitor chemistry
+   * @param chem  inhibitor chemistry
    * @param caMgL calcium in mg/L
    * @return multiplier
    */
@@ -437,6 +435,6 @@ public class ScaleInhibitorPerformance implements Serializable {
    */
   public java.util.List<java.util.Map<String, Object>> getStandardsApplied() {
     return neqsim.process.chemistry.util.StandardsRegistry
-        .toMapList(neqsim.process.chemistry.util.StandardsRegistry.NACE_TM0374);
+	.toMapList(neqsim.process.chemistry.util.StandardsRegistry.NACE_TM0374);
   }
 }

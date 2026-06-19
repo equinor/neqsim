@@ -15,11 +15,10 @@ import neqsim.process.equipment.stream.StreamInterface;
  *
  * <p>
  * This unit couples an existing {@link FurnaceBurner} flue-gas equilibrium calculation to a
- * {@link CatalyticTubeReformer}. The coupling is a screening heat-balance layer: available radiant
- * heat from burner fuel is compared with tube-side reforming duty, and the tube reformer can be
- * rerun at a reduced effective outlet temperature if fuel firing is insufficient. Detailed burner
- * geometry, view factors, and tube-row radiation are intentionally left for future high-fidelity
- * models.
+ * {@link CatalyticTubeReformer}. The coupling is a screening heat-balance layer: available radiant heat from burner
+ * fuel is compared with tube-side reforming duty, and the tube reformer can be rerun at a reduced effective outlet
+ * temperature if fuel firing is insufficient. Detailed burner geometry, view factors, and tube-row radiation are
+ * intentionally left for future high-fidelity models.
  * </p>
  *
  * @author NeqSim contributors
@@ -107,7 +106,7 @@ public class ReformerFurnace extends ProcessEquipmentBaseClass {
   /**
    * Creates a reformer furnace with a process inlet stream.
    *
-   * @param name equipment name
+   * @param name               equipment name
    * @param processInletStream tube-side feed stream
    */
   public ReformerFurnace(String name, StreamInterface processInletStream) {
@@ -161,9 +160,9 @@ public class ReformerFurnace extends ProcessEquipmentBaseClass {
   /**
    * Sets tube geometry.
    *
-   * @param lengthM heated tube length in metres
+   * @param lengthM        heated tube length in metres
    * @param innerDiameterM tube inside diameter in metres
-   * @param tubes number of tubes
+   * @param tubes          number of tubes
    */
   public void setTubeGeometry(double lengthM, double innerDiameterM, int tubes) {
     validatePositive(lengthM, "lengthM");
@@ -325,8 +324,7 @@ public class ReformerFurnace extends ProcessEquipmentBaseClass {
     if (enforceHeatBalance && heatBalanceRatio < 1.0 && tubeHeatDemandKW > 0.0) {
       double inletTemperature = processInletStream.getTemperature("K");
       double fraction = HydrogenProductionUtils.clamp(heatBalanceRatio, 0.20, 1.0);
-      effectiveReformingTemperatureK =
-          inletTemperature + (targetReformingTemperatureK - inletTemperature) * fraction;
+      effectiveReformingTemperatureK = inletTemperature + (targetReformingTemperatureK - inletTemperature) * fraction;
       tubeReformer = createTubeReformer(effectiveReformingTemperatureK);
       tubeReformer.run(id);
       tubeHeatDemandKW = tubeReformer.getHeatDuty("kW");
@@ -341,12 +339,12 @@ public class ReformerFurnace extends ProcessEquipmentBaseClass {
   /** {@inheritDoc} */
   @Override
   public double getMassBalance(String unit) {
-    if (processInletStream == null || fuelInletStream == null || airInletStream == null
-        || syngasOutStream == null || flueGasOutStream == null) {
+    if (processInletStream == null || fuelInletStream == null || airInletStream == null || syngasOutStream == null
+	|| flueGasOutStream == null) {
       return Double.NaN;
     }
     double inletMass = processInletStream.getFlowRate(unit) + fuelInletStream.getFlowRate(unit)
-        + airInletStream.getFlowRate(unit);
+	+ airInletStream.getFlowRate(unit);
     double outletMass = syngasOutStream.getFlowRate(unit) + flueGasOutStream.getFlowRate(unit);
     return outletMass - inletMass;
   }
@@ -397,8 +395,7 @@ public class ReformerFurnace extends ProcessEquipmentBaseClass {
   /** {@inheritDoc} */
   @Override
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(getResults());
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(getResults());
   }
 
   /**
@@ -408,8 +405,7 @@ public class ReformerFurnace extends ProcessEquipmentBaseClass {
    * @return configured tube reformer
    */
   private CatalyticTubeReformer createTubeReformer(double reformingTemperatureK) {
-    CatalyticTubeReformer reformer =
-        new CatalyticTubeReformer(getName() + " tube reformer", processInletStream);
+    CatalyticTubeReformer reformer = new CatalyticTubeReformer(getName() + " tube reformer", processInletStream);
     reformer.setReformingTemperature(reformingTemperatureK);
     reformer.setPressureDrop(tubePressureDropBar);
     reformer.setTubeGeometry(tubeLengthM, tubeInnerDiameterM, numberOfTubes);
@@ -443,7 +439,7 @@ public class ReformerFurnace extends ProcessEquipmentBaseClass {
    * Validates positive finite inputs.
    *
    * @param value value to validate
-   * @param name parameter name used in exception text
+   * @param name  parameter name used in exception text
    */
   private void validatePositive(double value, String name) {
     if (!Double.isFinite(value) || value <= 0.0) {

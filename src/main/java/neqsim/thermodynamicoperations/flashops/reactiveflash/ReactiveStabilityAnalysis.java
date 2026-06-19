@@ -11,22 +11,21 @@ import neqsim.thermo.system.SystemInterface;
  * Reactive stability analysis for simultaneous chemical and phase equilibrium.
  *
  * <p>
- * Implements tangent plane distance (TPD) analysis adapted for reactive systems. The approach
- * follows Ascani, Sadowski, Held (2023, Molecules 28, 1768):
+ * Implements tangent plane distance (TPD) analysis adapted for reactive systems. The approach follows Ascani, Sadowski,
+ * Held (2023, Molecules 28, 1768):
  * <ol>
- * <li>First, a homogeneous chemical equilibrium (CE) is computed by minimizing Gibbs energy of the
- * single-phase feed subject to element balance constraints using the modified RAND method.</li>
- * <li>Then, standard (non-reactive) tangent plane stability analysis is performed on the chemically
- * equilibrated feed composition to check for additional phases.</li>
- * <li>For each new trial phase found to be unstable, a homogeneous CE is solved again to bring it
- * to the chemical equilibrium surface.</li>
+ * <li>First, a homogeneous chemical equilibrium (CE) is computed by minimizing Gibbs energy of the single-phase feed
+ * subject to element balance constraints using the modified RAND method.</li>
+ * <li>Then, standard (non-reactive) tangent plane stability analysis is performed on the chemically equilibrated feed
+ * composition to check for additional phases.</li>
+ * <li>For each new trial phase found to be unstable, a homogeneous CE is solved again to bring it to the chemical
+ * equilibrium surface.</li>
  * </ol>
  *
  * <p>
- * The key rationale is that the tangent plane condition for reactive stability uses the element
- * mole-fraction space (reduced composition), but for practical purposes using the full component
- * TPD on the chemically equilibrated feed gives equivalent results (Ung and Doherty, 1995; Ascani
- * et al., 2023).
+ * The key rationale is that the tangent plane condition for reactive stability uses the element mole-fraction space
+ * (reduced composition), but for practical purposes using the full component TPD on the chemically equilibrated feed
+ * gives equivalent results (Ung and Doherty, 1995; Ascani et al., 2023).
  * </p>
  *
  * <p>
@@ -79,7 +78,7 @@ public class ReactiveStabilityAnalysis implements java.io.Serializable {
   /**
    * Constructor.
    *
-   * @param system the thermodynamic system at feed conditions
+   * @param system        the thermodynamic system at feed conditions
    * @param formulaMatrix the element-component formula matrix
    */
   public ReactiveStabilityAnalysis(SystemInterface system, FormulaMatrix formulaMatrix) {
@@ -122,11 +121,11 @@ public class ReactiveStabilityAnalysis implements java.io.Serializable {
     for (double[] trial : trialPhases) {
       double tpd = runStabilityTrial(trial);
       if (tpd < TPD_THRESHOLD) {
-        // Unstable - this trial composition represents a new phase
-        double[] equilibratedTrial = solveTrialChemicalEquilibrium(trial);
-        unstableTrialCompositions.add(equilibratedTrial);
-        tpdValues.add(tpd);
-        logger.debug("ReactiveStabilityAnalysis: found unstable trial, TPD = " + tpd);
+	// Unstable - this trial composition represents a new phase
+	double[] equilibratedTrial = solveTrialChemicalEquilibrium(trial);
+	unstableTrialCompositions.add(equilibratedTrial);
+	tpdValues.add(tpd);
+	logger.debug("ReactiveStabilityAnalysis: found unstable trial, TPD = " + tpd);
       }
     }
 
@@ -137,8 +136,8 @@ public class ReactiveStabilityAnalysis implements java.io.Serializable {
    * Solve homogeneous (single-phase) chemical equilibrium on the feed.
    *
    * <p>
-   * This brings the feed composition to the chemical equilibrium surface while remaining in a
-   * single phase. Uses the ModifiedRANDSolver with a single phase.
+   * This brings the feed composition to the chemical equilibrium surface while remaining in a single phase. Uses the
+   * ModifiedRANDSolver with a single phase.
    * </p>
    */
   private void solveHomogeneousChemicalEquilibrium() {
@@ -163,7 +162,7 @@ public class ReactiveStabilityAnalysis implements java.io.Serializable {
       // Update the feed composition in the main system with the CE result
       double[][] xCE = ceSolver.getMoleFractions();
       for (int i = 0; i < nc; i++) {
-        system.getPhase(0).getComponent(i).setx(xCE[0][i]);
+	system.getPhase(0).getComponent(i).setx(xCE[0][i]);
       }
       system.init(1);
       logger.debug("Homogeneous CE converged in " + ceSolver.getIterationsUsed() + " iterations");
@@ -173,8 +172,7 @@ public class ReactiveStabilityAnalysis implements java.io.Serializable {
   }
 
   /**
-   * Compute reference chemical potentials d[i] = ln(x_i) + ln(phi_i) from the equilibrated feed
-   * phase.
+   * Compute reference chemical potentials d[i] = ln(x_i) + ln(phi_i) from the equilibrated feed phase.
    */
   private void computeReferencePotentials() {
     d = new double[nc];
@@ -182,13 +180,13 @@ public class ReactiveStabilityAnalysis implements java.io.Serializable {
     for (int i = 0; i < nc; i++) {
       double xi = refPhase.getComponent(i).getx();
       if (xi > MIN_MOLES) {
-        d[i] = Math.log(xi) + refPhase.getComponent(i).getLogFugacityCoefficient();
+	d[i] = Math.log(xi) + refPhase.getComponent(i).getLogFugacityCoefficient();
       } else {
-        d[i] = -100.0; // effectively absent
+	d[i] = -100.0; // effectively absent
       }
       // Ions don't participate in phase equilibrium
       if (refPhase.getComponent(i).getIonicCharge() != 0) {
-        d[i] = -1000.0;
+	d[i] = -1000.0;
       }
     }
   }
@@ -216,13 +214,13 @@ public class ReactiveStabilityAnalysis implements java.io.Serializable {
       double pc = system.getPhase(0).getComponent(i).getPC();
       double omega = system.getPhase(0).getComponent(i).getAcentricFactor();
       if (pc > 0 && tc > 0) {
-        wilsonK[i] = (pc / P) * Math.exp(5.373 * (1.0 + omega) * (1.0 - tc / T));
-        wilsonK[i] = Math.max(wilsonK[i], 1e-20);
+	wilsonK[i] = (pc / P) * Math.exp(5.373 * (1.0 + omega) * (1.0 - tc / T));
+	wilsonK[i] = Math.max(wilsonK[i], 1e-20);
       } else {
-        wilsonK[i] = 1.0;
+	wilsonK[i] = 1.0;
       }
       if (Math.abs(Math.log(wilsonK[i])) > 0.01) {
-        allKnearOne = false;
+	allKnearOne = false;
       }
     }
 
@@ -230,8 +228,8 @@ public class ReactiveStabilityAnalysis implements java.io.Serializable {
     if (!allKnearOne) {
       double[] liquidTrial = new double[nc];
       for (int i = 0; i < nc; i++) {
-        double zi = system.getPhase(0).getComponent(i).getx();
-        liquidTrial[i] = zi > MIN_MOLES ? zi / wilsonK[i] : MIN_MOLES;
+	double zi = system.getPhase(0).getComponent(i).getx();
+	liquidTrial[i] = zi > MIN_MOLES ? zi / wilsonK[i] : MIN_MOLES;
       }
       trials.add(liquidTrial);
     }
@@ -240,8 +238,8 @@ public class ReactiveStabilityAnalysis implements java.io.Serializable {
     if (!allKnearOne) {
       double[] vaporTrial = new double[nc];
       for (int i = 0; i < nc; i++) {
-        double zi = system.getPhase(0).getComponent(i).getx();
-        vaporTrial[i] = zi > MIN_MOLES ? wilsonK[i] * zi : MIN_MOLES;
+	double zi = system.getPhase(0).getComponent(i).getx();
+	vaporTrial[i] = zi > MIN_MOLES ? wilsonK[i] * zi : MIN_MOLES;
       }
       trials.add(vaporTrial);
     }
@@ -249,12 +247,12 @@ public class ReactiveStabilityAnalysis implements java.io.Serializable {
     // Pure component trials
     for (int j = 0; j < nc; j++) {
       if (system.getPhase(0).getComponent(j).getx() > 1e-100
-          && system.getPhase(0).getComponent(j).getIonicCharge() == 0) {
-        double[] pureTrial = new double[nc];
-        for (int i = 0; i < nc; i++) {
-          pureTrial[i] = (i == j) ? 1.0 : 1e-12;
-        }
-        trials.add(pureTrial);
+	  && system.getPhase(0).getComponent(j).getIonicCharge() == 0) {
+	double[] pureTrial = new double[nc];
+	for (int i = 0; i < nc; i++) {
+	  pureTrial[i] = (i == j) ? 1.0 : 1e-12;
+	}
+	trials.add(pureTrial);
       }
     }
 
@@ -262,12 +260,11 @@ public class ReactiveStabilityAnalysis implements java.io.Serializable {
   }
 
   /**
-   * Run a single stability trial using successive substitution on the tangent plane distance
-   * function.
+   * Run a single stability trial using successive substitution on the tangent plane distance function.
    *
    * <p>
-   * The TPD at the stationary point is: TPD = 1 + sum_i W_i * (ln(W_i) + ln(phi_i(W)) - d_i - 1) If
-   * TPD &lt; 0, the system is unstable with respect to formation of a phase with this composition.
+   * The TPD at the stationary point is: TPD = 1 + sum_i W_i * (ln(W_i) + ln(phi_i(W)) - d_i - 1) If TPD &lt; 0, the
+   * system is unstable with respect to formation of a phase with this composition.
    * </p>
    *
    * @param initialW initial trial composition (unnormalized)
@@ -299,38 +296,38 @@ public class ReactiveStabilityAnalysis implements java.io.Serializable {
     // Successive substitution
     for (int iter = 0; iter < MAX_SS_ITER; iter++) {
       for (int i = 0; i < nc; i++) {
-        oldLogW[i] = logW[i];
+	oldLogW[i] = logW[i];
       }
 
       try {
-        trialSystem.init(1);
+	trialSystem.init(1);
       } catch (Exception ex) {
-        logger.debug("Trial init failed: " + ex.getMessage());
-        return 10.0; // return positive (stable)
+	logger.debug("Trial init failed: " + ex.getMessage());
+	return 10.0; // return positive (stable)
       }
 
       double err = 0.0;
       sumW = 0.0;
       for (int i = 0; i < nc; i++) {
-        if (system.getPhase(0).getComponent(i).getIonicCharge() != 0) {
-          logW[i] = -1000.0;
-          continue;
-        }
-        if (system.getPhase(0).getComponent(i).getx() > 1e-100) {
-          logW[i] = d[i] - trialSystem.getPhase(0).getComponent(i).getLogFugacityCoefficient();
-        }
-        err += Math.abs(logW[i] - oldLogW[i]);
-        sumW += Math.exp(logW[i]);
+	if (system.getPhase(0).getComponent(i).getIonicCharge() != 0) {
+	  logW[i] = -1000.0;
+	  continue;
+	}
+	if (system.getPhase(0).getComponent(i).getx() > 1e-100) {
+	  logW[i] = d[i] - trialSystem.getPhase(0).getComponent(i).getLogFugacityCoefficient();
+	}
+	err += Math.abs(logW[i] - oldLogW[i]);
+	sumW += Math.exp(logW[i]);
       }
 
       // Update trial composition
       for (int i = 0; i < nc; i++) {
-        double w = Math.exp(logW[i]);
-        trialSystem.getPhase(0).getComponent(i).setx(w / sumW);
+	double w = Math.exp(logW[i]);
+	trialSystem.getPhase(0).getComponent(i).setx(w / sumW);
       }
 
       if (err < SS_TOL) {
-        break;
+	break;
       }
     }
 
@@ -338,16 +335,16 @@ public class ReactiveStabilityAnalysis implements java.io.Serializable {
     double tpd = 1.0;
     for (int i = 0; i < nc; i++) {
       if (system.getPhase(0).getComponent(i).getIonicCharge() == 0
-          && system.getPhase(0).getComponent(i).getx() > 1e-100) {
-        tpd -= Math.exp(logW[i]);
+	  && system.getPhase(0).getComponent(i).getx() > 1e-100) {
+	tpd -= Math.exp(logW[i]);
       }
     }
 
     // Check for trivial solution (trial ≈ reference)
     double trivialCheck = 0.0;
     for (int i = 0; i < nc; i++) {
-      trivialCheck += Math.abs(trialSystem.getPhase(0).getComponent(i).getx()
-          - system.getPhase(0).getComponent(i).getx());
+      trivialCheck += Math
+	  .abs(trialSystem.getPhase(0).getComponent(i).getx() - system.getPhase(0).getComponent(i).getx());
     }
     if (trivialCheck < 1e-4) {
       return 10.0; // trivial solution
@@ -360,8 +357,8 @@ public class ReactiveStabilityAnalysis implements java.io.Serializable {
    * Solve homogeneous chemical equilibrium for a trial phase composition.
    *
    * <p>
-   * After finding an unstable trial phase, this brings the trial composition to the chemical
-   * equilibrium surface before using it as initial guess for the multiphase flash.
+   * After finding an unstable trial phase, this brings the trial composition to the chemical equilibrium surface before
+   * using it as initial guess for the multiphase flash.
    * </p>
    *
    * @param trialW unnormalized trial composition
@@ -453,8 +450,8 @@ public class ReactiveStabilityAnalysis implements java.io.Serializable {
     double bestTpd = tpdValues.get(0);
     for (int i = 1; i < tpdValues.size(); i++) {
       if (tpdValues.get(i) < bestTpd) {
-        bestTpd = tpdValues.get(i);
-        bestIdx = i;
+	bestTpd = tpdValues.get(i);
+	bestIdx = i;
       }
     }
     return unstableTrialCompositions.get(bestIdx);

@@ -17,9 +17,9 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Verifies that {@link ProcessSystem#runTransient(double, java.util.UUID)} fires events scheduled
- * on an attached {@link EventScheduler} at the correct simulation time, and that the pluggable
- * {@link IntegratorStrategy} hook is reachable via getter/setter.
+ * Verifies that {@link ProcessSystem#runTransient(double, java.util.UUID)} fires events scheduled on an attached
+ * {@link EventScheduler} at the correct simulation time, and that the pluggable {@link IntegratorStrategy} hook is
+ * reachable via getter/setter.
  *
  * @author Even Solbraa
  * @version 1.0
@@ -49,8 +49,7 @@ public class RunTransientEventSchedulerTest {
   }
 
   /**
-   * Event scheduled at t=1.5s with dt=0.5s must fire exactly once and only after the third step
-   * (current time 1.5s).
+   * Event scheduled at t=1.5s with dt=0.5s must fire exactly once and only after the third step (current time 1.5s).
    */
   @Test
   public void testEventFiresAtCorrectStep() {
@@ -62,7 +61,7 @@ public class RunTransientEventSchedulerTest {
     s.scheduleEvent(1.5, "trip", new Runnable() {
       @Override
       public void run() {
-        count.incrementAndGet();
+	count.incrementAndGet();
       }
     });
 
@@ -82,19 +81,18 @@ public class RunTransientEventSchedulerTest {
   }
 
   /**
-   * Event Runnable mutates an external flag — verifies the action actually runs inside the
-   * transient loop.
+   * Event Runnable mutates an external flag — verifies the action actually runs inside the transient loop.
    */
   @Test
   public void testEventRunnableMutatesFlag() {
     ProcessSystem p = buildMinimalProcess();
     EventScheduler s = new EventScheduler();
     p.setEventScheduler(s);
-    final boolean[] fired = new boolean[] {false};
+    final boolean[] fired = new boolean[] { false };
     s.scheduleEvent(0.5, "esd", new Runnable() {
       @Override
       public void run() {
-        fired[0] = true;
+	fired[0] = true;
       }
     });
     p.runTransient(0.5, UUID.randomUUID());
@@ -102,8 +100,7 @@ public class RunTransientEventSchedulerTest {
   }
 
   /**
-   * IntegratorStrategy default is ExplicitEulerIntegrator; setter+getter roundtrip; null restores
-   * default.
+   * IntegratorStrategy default is ExplicitEulerIntegrator; setter+getter roundtrip; null restores default.
    */
   @Test
   public void testIntegratorStrategyAccessors() {
@@ -118,12 +115,12 @@ public class RunTransientEventSchedulerTest {
 
     p.setIntegratorStrategy(null);
     assertTrue(p.getIntegratorStrategy() instanceof ExplicitEulerIntegrator,
-        "null must restore default explicit Euler");
+	"null must restore default explicit Euler");
   }
 
   /**
-   * Shared scheduler attached via ProcessModel propagates to all child ProcessSystems and fires
-   * during ProcessModel.runTransient.
+   * Shared scheduler attached via ProcessModel propagates to all child ProcessSystems and fires during
+   * ProcessModel.runTransient.
    */
   @Test
   public void testProcessModelPropagatesScheduler() {
@@ -142,7 +139,7 @@ public class RunTransientEventSchedulerTest {
     shared.scheduleEvent(0.5, "ioa", new Runnable() {
       @Override
       public void run() {
-        count.incrementAndGet();
+	count.incrementAndGet();
       }
     });
 

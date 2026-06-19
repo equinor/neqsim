@@ -41,12 +41,10 @@ public class SolutionGasWaterRatioTest {
     assertEquals(SolutionGasWaterRatio.CalculationMethod.MCCAIN, rswCalc.getCalculationMethod());
 
     rswCalc.setCalculationMethod(SolutionGasWaterRatio.CalculationMethod.SOREIDE_WHITSON);
-    assertEquals(SolutionGasWaterRatio.CalculationMethod.SOREIDE_WHITSON,
-        rswCalc.getCalculationMethod());
+    assertEquals(SolutionGasWaterRatio.CalculationMethod.SOREIDE_WHITSON, rswCalc.getCalculationMethod());
 
     rswCalc.setCalculationMethod(SolutionGasWaterRatio.CalculationMethod.ELECTROLYTE_CPA);
-    assertEquals(SolutionGasWaterRatio.CalculationMethod.ELECTROLYTE_CPA,
-        rswCalc.getCalculationMethod());
+    assertEquals(SolutionGasWaterRatio.CalculationMethod.ELECTROLYTE_CPA, rswCalc.getCalculationMethod());
   }
 
   @Test
@@ -60,12 +58,10 @@ public class SolutionGasWaterRatioTest {
     assertEquals(SolutionGasWaterRatio.CalculationMethod.MCCAIN, rswCalc.getCalculationMethod());
 
     rswCalc.setCalculationMethod("Soreide-Whitson");
-    assertEquals(SolutionGasWaterRatio.CalculationMethod.SOREIDE_WHITSON,
-        rswCalc.getCalculationMethod());
+    assertEquals(SolutionGasWaterRatio.CalculationMethod.SOREIDE_WHITSON, rswCalc.getCalculationMethod());
 
     rswCalc.setCalculationMethod("Electrolyte-CPA");
-    assertEquals(SolutionGasWaterRatio.CalculationMethod.ELECTROLYTE_CPA,
-        rswCalc.getCalculationMethod());
+    assertEquals(SolutionGasWaterRatio.CalculationMethod.ELECTROLYTE_CPA, rswCalc.getCalculationMethod());
   }
 
   @Test
@@ -90,8 +86,7 @@ public class SolutionGasWaterRatioTest {
   @Test
   void testInvalidMethodName() {
     SolutionGasWaterRatio rswCalc = new SolutionGasWaterRatio(gasSystem);
-    assertThrows(IllegalArgumentException.class,
-        () -> rswCalc.setCalculationMethod("InvalidMethod"));
+    assertThrows(IllegalArgumentException.class, () -> rswCalc.setCalculationMethod("InvalidMethod"));
   }
 
   @Test
@@ -106,8 +101,8 @@ public class SolutionGasWaterRatioTest {
     rswCalc.setCalculationMethod(SolutionGasWaterRatio.CalculationMethod.MCCAIN);
     rswCalc.setSalinity(0.0); // Pure water
 
-    double[] temps = {373.15}; // 100°C
-    double[] pres = {100.0}; // 100 bara
+    double[] temps = { 373.15 }; // 100°C
+    double[] pres = { 100.0 }; // 100 bara
     rswCalc.setTemperaturesAndPressures(temps, pres);
     rswCalc.runCalc();
 
@@ -126,8 +121,8 @@ public class SolutionGasWaterRatioTest {
     SolutionGasWaterRatio rswCalc = new SolutionGasWaterRatio(gasSystem);
     rswCalc.setCalculationMethod(SolutionGasWaterRatio.CalculationMethod.MCCAIN);
 
-    double[] temps = {373.15}; // 100°C
-    double[] pres = {100.0}; // 100 bara
+    double[] temps = { 373.15 }; // 100°C
+    double[] pres = { 100.0 }; // 100 bara
 
     // Calculate for pure water
     rswCalc.setSalinity(0.0);
@@ -150,8 +145,8 @@ public class SolutionGasWaterRatioTest {
     rswCalc.setCalculationMethod(SolutionGasWaterRatio.CalculationMethod.MCCAIN);
     rswCalc.setSalinity(0.0);
 
-    double[] temps = {373.15, 373.15, 373.15};
-    double[] pres = {50.0, 100.0, 200.0};
+    double[] temps = { 373.15, 373.15, 373.15 };
+    double[] pres = { 50.0, 100.0, 200.0 };
     rswCalc.setTemperaturesAndPressures(temps, pres);
     rswCalc.runCalc();
 
@@ -174,8 +169,8 @@ public class SolutionGasWaterRatioTest {
     rswCalc.setCalculationMethod(SolutionGasWaterRatio.CalculationMethod.SOREIDE_WHITSON);
     rswCalc.setSalinity(0.0);
 
-    double[] temps = {323.15}; // 50°C
-    double[] pres = {50.0}; // 50 bara
+    double[] temps = { 323.15 }; // 50°C
+    double[] pres = { 50.0 }; // 50 bara
     rswCalc.setTemperaturesAndPressures(temps, pres);
     rswCalc.runCalc();
 
@@ -192,8 +187,8 @@ public class SolutionGasWaterRatioTest {
     rswCalc.setCalculationMethod(SolutionGasWaterRatio.CalculationMethod.ELECTROLYTE_CPA);
     rswCalc.setSalinity(0.0); // Pure water uses regular CPA
 
-    double[] temps = {323.15}; // 50°C
-    double[] pres = {50.0}; // 50 bara
+    double[] temps = { 323.15 }; // 50°C
+    double[] pres = { 50.0 }; // 50 bara
     rswCalc.setTemperaturesAndPressures(temps, pres);
     rswCalc.runCalc();
 
@@ -208,11 +203,10 @@ public class SolutionGasWaterRatioTest {
   void testMismatchedArrayLengths() {
     SolutionGasWaterRatio rswCalc = new SolutionGasWaterRatio(gasSystem);
 
-    double[] temps = {373.15, 373.15};
-    double[] pres = {100.0};
+    double[] temps = { 373.15, 373.15 };
+    double[] pres = { 100.0 };
 
-    assertThrows(IllegalArgumentException.class,
-        () -> rswCalc.setTemperaturesAndPressures(temps, pres));
+    assertThrows(IllegalArgumentException.class, () -> rswCalc.setTemperaturesAndPressures(temps, pres));
   }
 
   @Test

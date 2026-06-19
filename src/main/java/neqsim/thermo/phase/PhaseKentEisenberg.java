@@ -19,7 +19,8 @@ public class PhaseKentEisenberg extends PhaseGENRTL {
    * Constructor for PhaseKentEisenberg.
    * </p>
    */
-  public PhaseKentEisenberg() {}
+  public PhaseKentEisenberg() {
+  }
 
   /** {@inheritDoc} */
   @Override

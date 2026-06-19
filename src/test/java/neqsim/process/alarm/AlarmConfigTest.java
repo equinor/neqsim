@@ -8,8 +8,7 @@ import org.junit.jupiter.api.Test;
 class AlarmConfigTest {
   @Test
   void builderSanitizesNonFiniteDeadbandAndDelay() {
-    AlarmConfig config = AlarmConfig.builder().deadband(Double.NaN)
-        .delay(Double.POSITIVE_INFINITY).build();
+    AlarmConfig config = AlarmConfig.builder().deadband(Double.NaN).delay(Double.POSITIVE_INFINITY).build();
 
     assertEquals(0.0, config.getDeadband());
     assertEquals(0.0, config.getDelay());

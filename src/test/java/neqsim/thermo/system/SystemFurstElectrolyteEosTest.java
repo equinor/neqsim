@@ -58,7 +58,7 @@ public class SystemFurstElectrolyteEosTest extends neqsim.NeqSimTest {
   @Test
   public void testinitPhysicalProperties() {
     assertEquals(thermoSystem.getPhase(0).getPhysicalProperties().getDensity(),
-        thermoSystem.getPhase(0).getPhysicalProperties().getDensity());
+	thermoSystem.getPhase(0).getPhysicalProperties().getDensity());
   }
 
   /**

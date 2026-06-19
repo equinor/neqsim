@@ -8,8 +8,7 @@ import java.util.Map;
  * Result container for network solver.
  *
  * <p>
- * Contains all outputs from a network solution including well rates, pressures, and convergence
- * information.
+ * Contains all outputs from a network solution including well rates, pressures, and convergence information.
  * </p>
  *
  * @author ESOL
@@ -80,7 +79,7 @@ public class NetworkResult implements Serializable {
    * Gets a well's production rate.
    *
    * @param wellName well name
-   * @param unit rate unit
+   * @param unit     rate unit
    * @return well rate
    */
   public double getWellRate(String wellName, String unit) {
@@ -140,10 +139,8 @@ public class NetworkResult implements Serializable {
   public String getSummaryTable() {
     StringBuilder sb = new StringBuilder();
     sb.append("# Network: ").append(networkName).append("\n\n");
-    sb.append("**Manifold Pressure:** ").append(String.format("%.1f bara", manifoldPressure))
-        .append("\n");
-    sb.append("**Total Rate:** ").append(String.format("%.2f MSm3/day", totalRate / 1e6))
-        .append("\n");
+    sb.append("**Manifold Pressure:** ").append(String.format("%.1f bara", manifoldPressure)).append("\n");
+    sb.append("**Total Rate:** ").append(String.format("%.2f MSm3/day", totalRate / 1e6)).append("\n");
     sb.append("**Converged:** ").append(converged ? "Yes" : "No");
     sb.append(" (").append(iterations).append(" iterations)\n\n");
 
@@ -156,8 +153,8 @@ public class NetworkResult implements Serializable {
       double whp = wellheadPressures.getOrDefault(wellName, 0.0);
       double dp = flowlinePressureDrops.getOrDefault(wellName, 0.0);
 
-      sb.append(String.format("| %s | %s | %.2f | %.1f | %.1f |\n", wellName,
-          enabled ? "ON" : "OFF", rate / 1e6, whp, dp));
+      sb.append(
+	  String.format("| %s | %s | %.2f | %.1f | %.1f |\n", wellName, enabled ? "ON" : "OFF", rate / 1e6, whp, dp));
     }
 
     return sb.toString();
@@ -165,7 +162,7 @@ public class NetworkResult implements Serializable {
 
   @Override
   public String toString() {
-    return String.format("NetworkResult[%s, rate=%.2f MSm3/d, pManifold=%.1f bar, converged=%s]",
-        networkName, totalRate / 1e6, manifoldPressure, converged);
+    return String.format("NetworkResult[%s, rate=%.2f MSm3/d, pManifold=%.1f bar, converged=%s]", networkName,
+	totalRate / 1e6, manifoldPressure, converged);
   }
 }

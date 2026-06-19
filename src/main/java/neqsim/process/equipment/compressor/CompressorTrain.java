@@ -19,9 +19,8 @@ import neqsim.process.equipment.stream.StreamInterface;
  * Composite equipment representing a single compressor stage (train).
  *
  * <p>
- * A CompressorTrain wraps the common pattern of inlet separator (scrubber), compressor, and
- * aftercooler into a single reusable equipment unit. This simplifies process model construction and
- * provides aggregate performance reporting.
+ * A CompressorTrain wraps the common pattern of inlet separator (scrubber), compressor, and aftercooler into a single
+ * reusable equipment unit. This simplifies process model construction and provides aggregate performance reporting.
  * </p>
  *
  * <h2>Equipment Sequence</h2>
@@ -78,7 +77,7 @@ public class CompressorTrain extends TwoPortEquipment implements CapacityConstra
   /**
    * Constructor with name and inlet stream.
    *
-   * @param name train name
+   * @param name        train name
    * @param inletStream inlet stream
    */
   public CompressorTrain(String name, StreamInterface inletStream) {
@@ -221,7 +220,7 @@ public class CompressorTrain extends TwoPortEquipment implements CapacityConstra
    * Set the aftercooler outlet temperature with units.
    *
    * @param temperature temperature value
-   * @param unit temperature unit ("C" or "K")
+   * @param unit        temperature unit ("C" or "K")
    */
   public void setAftercoolerTemperature(double temperature, String unit) {
     if ("C".equalsIgnoreCase(unit)) {
@@ -433,11 +432,10 @@ public class CompressorTrain extends TwoPortEquipment implements CapacityConstra
     sb.append("CompressorTrain: ").append(getName()).append("\n");
 
     if (compressor != null) {
-      sb.append(String.format("  Inlet P: %.2f bara, Outlet P: %.2f bara%n",
-          compressor.getInletPressure(), compressor.getOutletPressure()));
+      sb.append(String.format("  Inlet P: %.2f bara, Outlet P: %.2f bara%n", compressor.getInletPressure(),
+	  compressor.getOutletPressure()));
       sb.append(String.format("  Compression Ratio: %.3f%n", getCompressionRatio()));
-      sb.append(
-          String.format("  Polytropic Efficiency: %.1f%%%n", getPolytropicEfficiency() * 100.0));
+      sb.append(String.format("  Polytropic Efficiency: %.1f%%%n", getPolytropicEfficiency() * 100.0));
       sb.append(String.format("  Power: %.1f kW%n", getPower("kW")));
       sb.append(String.format("  Polytropic Head: %.1f kJ/kg%n", getPolytropicHead()));
       sb.append(String.format("  Speed: %.0f RPM%n", compressor.getSpeed()));

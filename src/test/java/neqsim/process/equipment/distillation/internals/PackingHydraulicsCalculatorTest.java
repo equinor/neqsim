@@ -8,8 +8,8 @@ import org.junit.jupiter.api.Test;
  * Unit tests for {@link PackingHydraulicsCalculator}.
  *
  * <p>
- * Tests packing hydraulics including flooding, pressure drop, HETP, mass transfer coefficients,
- * wetting check, and column sizing for random and structured packings.
+ * Tests packing hydraulics including flooding, pressure drop, HETP, mass transfer coefficients, wetting check, and
+ * column sizing for random and structured packings.
  * </p>
  */
 public class PackingHydraulicsCalculatorTest {
@@ -92,12 +92,12 @@ public class PackingHydraulicsCalculatorTest {
 
     // Structured packing should have lower HETP (better mass transfer)
     assertTrue(structCalc.getHETP() < randomCalc.getHETP(),
-        "Structured packing (Mellapak-250Y) should have lower HETP than Pall-Ring-50. Struct="
-            + structCalc.getHETP() + " Random=" + randomCalc.getHETP());
+	"Structured packing (Mellapak-250Y) should have lower HETP than Pall-Ring-50. Struct=" + structCalc.getHETP()
+	    + " Random=" + randomCalc.getHETP());
 
     // Structured packing should give more theoretical stages for same bed height
-    assertTrue(structCalc.getNumberOfTheoreticalStages() > randomCalc
-        .getNumberOfTheoreticalStages(), "Structured packing should give more stages");
+    assertTrue(structCalc.getNumberOfTheoreticalStages() > randomCalc.getNumberOfTheoreticalStages(),
+	"Structured packing should give more stages");
   }
 
   /**
@@ -128,15 +128,13 @@ public class PackingHydraulicsCalculatorTest {
    */
   @Test
   public void testPackingPresets() {
-    String[] presets =
-        {"Pall-Ring-25", "Pall-Ring-38", "Raschig-Ring-25", "IMTP-40", "Berl-Saddle-25"};
+    String[] presets = { "Pall-Ring-25", "Pall-Ring-38", "Raschig-Ring-25", "IMTP-40", "Berl-Saddle-25" };
 
     for (String preset : presets) {
       PackingHydraulicsCalculator calc = new PackingHydraulicsCalculator();
       calc.setPackingPreset(preset);
 
-      assertTrue(calc.getSpecificSurfaceArea() > 50,
-          preset + " should have specific surface area > 50");
+      assertTrue(calc.getSpecificSurfaceArea() > 50, preset + " should have specific surface area > 50");
       assertTrue(calc.getVoidFraction() > 0.5, preset + " should have void fraction > 0.5");
       assertTrue(calc.getPackingFactor() > 10, preset + " should have packing factor > 10");
     }
@@ -147,17 +145,15 @@ public class PackingHydraulicsCalculatorTest {
    */
   @Test
   public void testStructuredPackingPresets() {
-    String[] presets = {"Mellapak-125Y", "Mellapak-250Y", "Mellapak-500Y", "Flexipac-2Y"};
+    String[] presets = { "Mellapak-125Y", "Mellapak-250Y", "Mellapak-500Y", "Flexipac-2Y" };
 
     for (String preset : presets) {
       PackingHydraulicsCalculator calc = new PackingHydraulicsCalculator();
       calc.setStructuredPackingPreset(preset);
 
-      assertTrue(calc.getSpecificSurfaceArea() > 100,
-          preset + " should have specific surface area > 100");
+      assertTrue(calc.getSpecificSurfaceArea() > 100, preset + " should have specific surface area > 100");
       assertTrue(calc.getVoidFraction() > 0.9, preset + " should have void fraction > 0.9");
-      assertEquals("structured", calc.getPackingCategory(),
-          preset + " should set category to structured");
+      assertEquals("structured", calc.getPackingCategory(), preset + " should set category to structured");
     }
   }
 
@@ -228,6 +224,6 @@ public class PackingHydraulicsCalculatorTest {
     calcHigh.calculate();
 
     assertTrue(calcHigh.getPressureDropPerMeter() > calcLow.getPressureDropPerMeter(),
-        "Higher vapor flow should give higher DP");
+	"Higher vapor flow should give higher DP");
   }
 }

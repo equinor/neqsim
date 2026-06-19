@@ -7,8 +7,8 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * Implementation of ISO 6974 - Natural gas - Determination of composition and associated
- * uncertainty by gas chromatography.
+ * Implementation of ISO 6974 - Natural gas - Determination of composition and associated uncertainty by gas
+ * chromatography.
  *
  * <p>
  * ISO 6974 consists of multiple parts:
@@ -23,10 +23,10 @@ import neqsim.thermo.system.SystemInterface;
  * </ul>
  *
  * <p>
- * This implementation focuses on Parts 1 and 2: normalising the reported GC composition and
- * propagating measurement uncertainties through to derived physical properties (calorific value,
- * Wobbe index, relative density). The uncertainty propagation follows the GUM (Guide to the
- * expression of Uncertainty in Measurement) approach outlined in ISO 6974-2.
+ * This implementation focuses on Parts 1 and 2: normalising the reported GC composition and propagating measurement
+ * uncertainties through to derived physical properties (calorific value, Wobbe index, relative density). The
+ * uncertainty propagation follows the GUM (Guide to the expression of Uncertainty in Measurement) approach outlined in
+ * ISO 6974-2.
  * </p>
  *
  * <p>
@@ -53,8 +53,8 @@ public class Standard_ISO6974 extends GasChromotograpyhBase {
   private double coverageFactor = 2.0;
 
   /**
-   * Standard uncertainties (1 sigma) for each component in mol fraction. These are typical values
-   * for a well-maintained GC; users should override with their own calibration data.
+   * Standard uncertainties (1 sigma) for each component in mol fraction. These are typical values for a well-maintained
+   * GC; users should override with their own calibration data.
    */
   private Map<String, Double> componentStdUncertainty = new HashMap<String, Double>();
 
@@ -102,9 +102,9 @@ public class Standard_ISO6974 extends GasChromotograpyhBase {
   }
 
   /**
-   * Initializes default standard uncertainties for common natural gas components. Values are
-   * approximate 1-sigma values in mol fraction. Users should set their own values from calibration
-   * certificates via {@link #setComponentUncertainty(String, double)}.
+   * Initializes default standard uncertainties for common natural gas components. Values are approximate 1-sigma values
+   * in mol fraction. Users should set their own values from calibration certificates via
+   * {@link #setComponentUncertainty(String, double)}.
    */
   private void initDefaultUncertainties() {
     componentStdUncertainty.put("methane", 0.0015);
@@ -126,7 +126,7 @@ public class Standard_ISO6974 extends GasChromotograpyhBase {
   /**
    * Sets the standard uncertainty (1 sigma) for a specific component.
    *
-   * @param componentName name of the component
+   * @param componentName             name of the component
    * @param stdUncertaintyMolFraction standard uncertainty in mol fraction
    */
   public void setComponentUncertainty(String componentName, double stdUncertaintyMolFraction) {
@@ -169,9 +169,9 @@ public class Standard_ISO6974 extends GasChromotograpyhBase {
    * Normalises the raw GC composition so the mole fractions sum to exactly 1.0.
    *
    * <p>
-   * Per ISO 6974-1 clause 8: when the sum of the reported mole fractions differs from 1.0, the
-   * results should be normalised. The normalisation factor is the sum of raw mole fractions. If the
-   * deviation exceeds the tolerance, the analysis should be investigated.
+   * Per ISO 6974-1 clause 8: when the sum of the reported mole fractions differs from 1.0, the results should be
+   * normalised. The normalisation factor is the sum of raw mole fractions. If the deviation exceeds the tolerance, the
+   * analysis should be investigated.
    * </p>
    */
   private void normaliseComposition() {
@@ -194,13 +194,12 @@ public class Standard_ISO6974 extends GasChromotograpyhBase {
   }
 
   /**
-   * Propagates measurement uncertainties through to physical property calculations using a
-   * numerical perturbation (finite difference) approach consistent with the GUM framework.
+   * Propagates measurement uncertainties through to physical property calculations using a numerical perturbation
+   * (finite difference) approach consistent with the GUM framework.
    *
    * <p>
-   * For each component i, the sensitivity coefficient for property P is estimated by central
-   * difference. The combined standard uncertainty is calculated by root-sum-squares of
-   * sensitivity-weighted component uncertainties.
+   * For each component i, the sensitivity coefficient for property P is estimated by central difference. The combined
+   * standard uncertainty is calculated by root-sum-squares of sensitivity-weighted component uncertainties.
    * </p>
    */
   private void propagateUncertainties() {
@@ -212,53 +211,53 @@ public class Standard_ISO6974 extends GasChromotograpyhBase {
       int nComp = thermoSystem.getPhase(0).getNumberOfComponents();
 
       for (int i = 0; i < nComp; i++) {
-        String name = thermoSystem.getPhase(0).getComponent(i).getName();
-        double z = thermoSystem.getPhase(0).getComponent(i).getz();
-        double u = getStdUncertainty(name);
+	String name = thermoSystem.getPhase(0).getComponent(i).getName();
+	double z = thermoSystem.getPhase(0).getComponent(i).getz();
+	double u = getStdUncertainty(name);
 
-        if (u <= 0.0 || z <= 0.0) {
-          continue;
-        }
+	if (u <= 0.0 || z <= 0.0) {
+	  continue;
+	}
 
-        // Perturbation step
-        double delta = u;
-        if (delta > z * 0.5) {
-          delta = z * 0.5;
-        }
+	// Perturbation step
+	double delta = u;
+	if (delta > z * 0.5) {
+	  delta = z * 0.5;
+	}
 
-        // Forward perturbation
-        SystemInterface pertSys = thermoSystem.clone();
-        pertSys.getPhase(0).getComponent(i).setz(z + delta);
-        renormaliseAfterPerturbation(pertSys, i, z + delta);
-        Standard_ISO6976 pertCalc = new Standard_ISO6976(pertSys);
-        pertCalc.setReferenceType("volume");
-        pertCalc.calculate();
-        double gcvPlus = pertCalc.getValue("SuperiorCalorificValue");
-        double wobbePlus = pertCalc.getValue("SuperiorWobbeIndex");
-        double rdPlus = pertCalc.getValue("RelativeDensity");
+	// Forward perturbation
+	SystemInterface pertSys = thermoSystem.clone();
+	pertSys.getPhase(0).getComponent(i).setz(z + delta);
+	renormaliseAfterPerturbation(pertSys, i, z + delta);
+	Standard_ISO6976 pertCalc = new Standard_ISO6976(pertSys);
+	pertCalc.setReferenceType("volume");
+	pertCalc.calculate();
+	double gcvPlus = pertCalc.getValue("SuperiorCalorificValue");
+	double wobbePlus = pertCalc.getValue("SuperiorWobbeIndex");
+	double rdPlus = pertCalc.getValue("RelativeDensity");
 
-        // Backward perturbation
-        pertSys = thermoSystem.clone();
-        pertSys.getPhase(0).getComponent(i).setz(z - delta);
-        renormaliseAfterPerturbation(pertSys, i, z - delta);
-        pertCalc = new Standard_ISO6976(pertSys);
-        pertCalc.setReferenceType("volume");
-        pertCalc.calculate();
-        double gcvMinus = pertCalc.getValue("SuperiorCalorificValue");
-        double wobbeMinus = pertCalc.getValue("SuperiorWobbeIndex");
-        double rdMinus = pertCalc.getValue("RelativeDensity");
+	// Backward perturbation
+	pertSys = thermoSystem.clone();
+	pertSys.getPhase(0).getComponent(i).setz(z - delta);
+	renormaliseAfterPerturbation(pertSys, i, z - delta);
+	pertCalc = new Standard_ISO6976(pertSys);
+	pertCalc.setReferenceType("volume");
+	pertCalc.calculate();
+	double gcvMinus = pertCalc.getValue("SuperiorCalorificValue");
+	double wobbeMinus = pertCalc.getValue("SuperiorWobbeIndex");
+	double rdMinus = pertCalc.getValue("RelativeDensity");
 
-        // Sensitivity coefficients (central difference)
-        double sensGCV = (gcvPlus - gcvMinus) / (2.0 * delta);
-        double sensWobbe = (wobbePlus - wobbeMinus) / (2.0 * delta);
-        double sensRD = (rdPlus - rdMinus) / (2.0 * delta);
+	// Sensitivity coefficients (central difference)
+	double sensGCV = (gcvPlus - gcvMinus) / (2.0 * delta);
+	double sensWobbe = (wobbePlus - wobbeMinus) / (2.0 * delta);
+	double sensRD = (rdPlus - rdMinus) / (2.0 * delta);
 
-        sumSqGCV += sensGCV * sensGCV * u * u;
-        sumSqWobbe += sensWobbe * sensWobbe * u * u;
-        sumSqRD += sensRD * sensRD * u * u;
+	sumSqGCV += sensGCV * sensGCV * u * u;
+	sumSqWobbe += sensWobbe * sensWobbe * u * u;
+	sumSqRD += sensRD * sensRD * u * u;
 
-        // Store expanded uncertainty for this component
-        expandedUncertainties.put(name, coverageFactor * u * 100.0); // in mol%
+	// Store expanded uncertainty for this component
+	expandedUncertainties.put(name, coverageFactor * u * 100.0); // in mol%
       }
 
       uncertaintyGCV = coverageFactor * Math.sqrt(sumSqGCV);
@@ -273,26 +272,26 @@ public class Standard_ISO6974 extends GasChromotograpyhBase {
   /**
    * Renormalises remaining components after perturbing component at index pertIndex.
    *
-   * @param sys the perturbed system
+   * @param sys       the perturbed system
    * @param pertIndex index of the perturbed component
-   * @param newZ new mol fraction for the perturbed component
+   * @param newZ      new mol fraction for the perturbed component
    */
   private void renormaliseAfterPerturbation(SystemInterface sys, int pertIndex, double newZ) {
     int nComp = sys.getPhase(0).getNumberOfComponents();
     double sumOthers = 0.0;
     for (int j = 0; j < nComp; j++) {
       if (j != pertIndex) {
-        sumOthers += sys.getPhase(0).getComponent(j).getz();
+	sumOthers += sys.getPhase(0).getComponent(j).getz();
       }
     }
     double remaining = 1.0 - newZ;
     if (sumOthers > 0.0 && remaining > 0.0) {
       double scale = remaining / sumOthers;
       for (int j = 0; j < nComp; j++) {
-        if (j != pertIndex) {
-          double oldZ = sys.getPhase(0).getComponent(j).getz();
-          sys.getPhase(0).getComponent(j).setz(oldZ * scale);
-        }
+	if (j != pertIndex) {
+	  double oldZ = sys.getPhase(0).getComponent(j).getz();
+	  sys.getPhase(0).getComponent(j).setz(oldZ * scale);
+	}
       }
     }
   }
@@ -334,8 +333,7 @@ public class Standard_ISO6974 extends GasChromotograpyhBase {
   @Override
   public double getValue(String returnParameter, String returnUnit) {
     if (returnParameter.startsWith("uncertainty") || returnParameter.startsWith("U_")
-        || "normalisationFactor".equals(returnParameter)
-        || "coverageFactor".equals(returnParameter)) {
+	|| "normalisationFactor".equals(returnParameter) || "coverageFactor".equals(returnParameter)) {
       return getValue(returnParameter);
     }
     return super.getValue(returnParameter, returnUnit);

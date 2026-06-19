@@ -47,8 +47,7 @@ public class InstrumentDesignTest {
 
   @Test
   void testInstrumentSpecificationAnalog() {
-    InstrumentSpecification spec =
-        new InstrumentSpecification("PT", "Inlet Pressure", 0.0, 100.0, "barg", "AI");
+    InstrumentSpecification spec = new InstrumentSpecification("PT", "Inlet Pressure", 0.0, 100.0, "barg", "AI");
     assertEquals("PT", spec.getIsaSymbol());
     assertEquals("Inlet Pressure", spec.getService());
     assertEquals(0.0, spec.getRangeMin(), 0.001);
@@ -60,8 +59,7 @@ public class InstrumentDesignTest {
 
   @Test
   void testInstrumentSpecificationDiscrete() {
-    InstrumentSpecification spec =
-        new InstrumentSpecification("PSH", "High Pressure Switch", "DI", 2);
+    InstrumentSpecification spec = new InstrumentSpecification("PSH", "High Pressure Switch", "DI", 2);
     assertEquals("PSH", spec.getIsaSymbol());
     assertEquals("DI", spec.getIoType());
     assertTrue(spec.isSafetyRelated());
@@ -105,20 +103,17 @@ public class InstrumentDesignTest {
     Separator separator = new Separator("TestSep", testStream);
     separator.run();
 
-    SeparatorInstrumentDesign instrDesign =
-        (SeparatorInstrumentDesign) separator.getInstrumentDesign();
+    SeparatorInstrumentDesign instrDesign = (SeparatorInstrumentDesign) separator.getInstrumentDesign();
     assertNotNull(instrDesign, "Separator should have instrument design");
 
     instrDesign.calcDesign();
 
     InstrumentList list = instrDesign.getInstrumentList();
     assertNotNull(list);
-    assertTrue(list.getAll().size() >= 8,
-        "Separator should have at least 8 instruments: " + list.getAll().size());
-    assertTrue(list.getAnalogInputCount() >= 4,
-        "Should have multiple analog inputs: " + list.getAnalogInputCount());
+    assertTrue(list.getAll().size() >= 8, "Separator should have at least 8 instruments: " + list.getAll().size());
+    assertTrue(list.getAnalogInputCount() >= 4, "Should have multiple analog inputs: " + list.getAnalogInputCount());
     assertTrue(list.getSafetyInstrumentCount() >= 2,
-        "Should have safety instruments: " + list.getSafetyInstrumentCount());
+	"Should have safety instruments: " + list.getSafetyInstrumentCount());
 
     String json = instrDesign.toJson();
     assertNotNull(json);
@@ -131,18 +126,16 @@ public class InstrumentDesignTest {
     compressor.setOutletPressure(50.0);
     compressor.run();
 
-    CompressorInstrumentDesign instrDesign =
-        (CompressorInstrumentDesign) compressor.getInstrumentDesign();
+    CompressorInstrumentDesign instrDesign = (CompressorInstrumentDesign) compressor.getInstrumentDesign();
     assertNotNull(instrDesign, "Compressor should have instrument design");
 
     instrDesign.calcDesign();
 
     InstrumentList list = instrDesign.getInstrumentList();
     assertNotNull(list);
-    assertTrue(list.getAll().size() >= 10,
-        "Compressor should have many instruments: " + list.getAll().size());
+    assertTrue(list.getAll().size() >= 10, "Compressor should have many instruments: " + list.getAll().size());
     assertTrue(list.getSafetyInstrumentCount() >= 3,
-        "Should have multiple safety instruments: " + list.getSafetyInstrumentCount());
+	"Should have multiple safety instruments: " + list.getSafetyInstrumentCount());
 
     String json = instrDesign.toJson();
     assertNotNull(json);
@@ -154,16 +147,14 @@ public class InstrumentDesignTest {
     heater.setOutTemperature(273.15 + 80.0);
     heater.run();
 
-    HeatExchangerInstrumentDesign instrDesign =
-        (HeatExchangerInstrumentDesign) heater.getInstrumentDesign();
+    HeatExchangerInstrumentDesign instrDesign = (HeatExchangerInstrumentDesign) heater.getInstrumentDesign();
     assertNotNull(instrDesign, "Heater should have instrument design");
 
     instrDesign.calcDesign();
 
     InstrumentList list = instrDesign.getInstrumentList();
     assertNotNull(list);
-    assertTrue(list.getAll().size() >= 5,
-        "Heater should have instruments: " + list.getAll().size());
+    assertTrue(list.getAll().size() >= 5, "Heater should have instruments: " + list.getAll().size());
 
     String json = instrDesign.toJson();
     assertNotNull(json);
@@ -175,16 +166,14 @@ public class InstrumentDesignTest {
     cooler.setOutTemperature(273.15 + 10.0);
     cooler.run();
 
-    HeatExchangerInstrumentDesign instrDesign =
-        (HeatExchangerInstrumentDesign) cooler.getInstrumentDesign();
+    HeatExchangerInstrumentDesign instrDesign = (HeatExchangerInstrumentDesign) cooler.getInstrumentDesign();
     assertNotNull(instrDesign, "Cooler should have instrument design");
 
     instrDesign.calcDesign();
 
     InstrumentList list = instrDesign.getInstrumentList();
     assertNotNull(list);
-    assertTrue(list.getAll().size() >= 5,
-        "Cooler should have instruments: " + list.getAll().size());
+    assertTrue(list.getAll().size() >= 5, "Cooler should have instruments: " + list.getAll().size());
   }
 
   @Test
@@ -201,10 +190,8 @@ public class InstrumentDesignTest {
 
     InstrumentList list = instrDesign.getInstrumentList();
     assertNotNull(list);
-    assertTrue(list.getAll().size() >= 5,
-        "Pipeline should have instruments: " + list.getAll().size());
-    assertTrue(list.getDigitalInputCount() >= 2,
-        "Should have pig detection DI: " + list.getDigitalInputCount());
+    assertTrue(list.getAll().size() >= 5, "Pipeline should have instruments: " + list.getAll().size());
+    assertTrue(list.getDigitalInputCount() >= 2, "Should have pig detection DI: " + list.getDigitalInputCount());
   }
 
   @Test
@@ -232,7 +219,7 @@ public class InstrumentDesignTest {
 
     InstrumentList list = instrDesign.getInstrumentList();
     assertEquals(0, list.getDigitalInputCount(),
-        "No pig/leak/safety detection should yield zero DI: " + list.getDigitalInputCount());
+	"No pig/leak/safety detection should yield zero DI: " + list.getDigitalInputCount());
   }
 
   @Test
@@ -246,8 +233,7 @@ public class InstrumentDesignTest {
 
     InstrumentList list = instrDesign.getInstrumentList();
     assertNotNull(list);
-    assertTrue(list.getAll().size() >= 2,
-        "Valve should have at least ZT and ZC: " + list.getAll().size());
+    assertTrue(list.getAll().size() >= 2, "Valve should have at least ZT and ZC: " + list.getAll().size());
     assertTrue(list.getAnalogInputCount() >= 1, "Should have ZT analog input");
     assertTrue(list.getAnalogOutputCount() >= 1, "Should have ZC analog output");
   }
@@ -291,14 +277,11 @@ public class InstrumentDesignTest {
 
     SystemInstrumentDesign sysDesign = process.getSystemInstrumentDesign();
     assertNotNull(sysDesign, "System instrument design should not be null");
-    assertTrue(sysDesign.getTotalAI() > 0,
-        "Total AI should be positive: " + sysDesign.getTotalAI());
-    assertTrue(sysDesign.getTotalIO() > 0,
-        "Total I/O should be positive: " + sysDesign.getTotalIO());
-    assertTrue(sysDesign.getDcsCabinets() > 0,
-        "DCS cabinets should be positive: " + sysDesign.getDcsCabinets());
+    assertTrue(sysDesign.getTotalAI() > 0, "Total AI should be positive: " + sysDesign.getTotalAI());
+    assertTrue(sysDesign.getTotalIO() > 0, "Total I/O should be positive: " + sysDesign.getTotalIO());
+    assertTrue(sysDesign.getDcsCabinets() > 0, "DCS cabinets should be positive: " + sysDesign.getDcsCabinets());
     assertTrue(sysDesign.getTotalInstrumentCostUSD() > 0,
-        "Total cost should be positive: " + sysDesign.getTotalInstrumentCostUSD());
+	"Total cost should be positive: " + sysDesign.getTotalInstrumentCostUSD());
 
     String json = sysDesign.toJson();
     assertNotNull(json);
@@ -336,8 +319,7 @@ public class InstrumentDesignTest {
 
     // Should aggregate instruments from separator, compressor, and cooler
     assertTrue(sysDesign.getTotalIO() > 10,
-        "Multiple equipment should yield many I/O points: " + sysDesign.getTotalIO());
-    assertTrue(sysDesign.getTotalSafetyIO() > 0,
-        "Should have safety I/O: " + sysDesign.getTotalSafetyIO());
+	"Multiple equipment should yield many I/O points: " + sysDesign.getTotalIO());
+    assertTrue(sysDesign.getTotalSafetyIO() > 0, "Should have safety I/O: " + sysDesign.getTotalSafetyIO());
   }
 }

@@ -38,20 +38,19 @@ final class ColumnMeshState implements Serializable {
   /**
    * Create a state snapshot.
    *
-   * @param componentNames component names included in the state
-   * @param trayTemperatures tray temperatures in Kelvin
-   * @param vaporFlowsMolHr vapor molar flows in mol/hr
-   * @param liquidFlowsMolHr liquid molar flows in mol/hr
-   * @param vaporComponentFlowsMolHr vapor component flows in mol/hr
+   * @param componentNames            component names included in the state
+   * @param trayTemperatures          tray temperatures in Kelvin
+   * @param vaporFlowsMolHr           vapor molar flows in mol/hr
+   * @param liquidFlowsMolHr          liquid molar flows in mol/hr
+   * @param vaporComponentFlowsMolHr  vapor component flows in mol/hr
    * @param liquidComponentFlowsMolHr liquid component flows in mol/hr
-   * @param feedComponentFlowsMolHr feed component flows in mol/hr
-   * @param vaporMoleFractions vapor mole fractions
-   * @param liquidMoleFractions liquid mole fractions
+   * @param feedComponentFlowsMolHr   feed component flows in mol/hr
+   * @param vaporMoleFractions        vapor mole fractions
+   * @param liquidMoleFractions       liquid mole fractions
    */
-  private ColumnMeshState(String[] componentNames, double[] trayTemperatures,
-      double[] vaporFlowsMolHr, double[] liquidFlowsMolHr, double[][] vaporComponentFlowsMolHr,
-      double[][] liquidComponentFlowsMolHr, double[][] feedComponentFlowsMolHr,
-      double[][] vaporMoleFractions, double[][] liquidMoleFractions) {
+  private ColumnMeshState(String[] componentNames, double[] trayTemperatures, double[] vaporFlowsMolHr,
+      double[] liquidFlowsMolHr, double[][] vaporComponentFlowsMolHr, double[][] liquidComponentFlowsMolHr,
+      double[][] feedComponentFlowsMolHr, double[][] vaporMoleFractions, double[][] liquidMoleFractions) {
     this.componentNames = componentNames.clone();
     this.trayTemperatures = trayTemperatures.clone();
     this.vaporFlowsMolHr = vaporFlowsMolHr.clone();
@@ -90,24 +89,22 @@ final class ColumnMeshState implements Serializable {
       vaporFlows[trayIndex] = flowRate(vapor, "mol/hr");
       liquidFlows[trayIndex] = flowRate(liquid, "mol/hr");
       for (int compIndex = 0; compIndex < componentCount; compIndex++) {
-        String componentName = componentNames[compIndex];
-        vaporComponentFlows[trayIndex][compIndex] = componentFlow(vapor, componentName);
-        liquidComponentFlows[trayIndex][compIndex] = componentFlow(liquid, componentName);
-        vaporFractions[trayIndex][compIndex] = componentFraction(vapor, componentName);
-        liquidFractions[trayIndex][compIndex] = componentFraction(liquid, componentName);
+	String componentName = componentNames[compIndex];
+	vaporComponentFlows[trayIndex][compIndex] = componentFlow(vapor, componentName);
+	liquidComponentFlows[trayIndex][compIndex] = componentFlow(liquid, componentName);
+	vaporFractions[trayIndex][compIndex] = componentFraction(vapor, componentName);
+	liquidFractions[trayIndex][compIndex] = componentFraction(liquid, componentName);
       }
       List<StreamInterface> feeds = column.getExternalFeedStreams(trayIndex);
       for (StreamInterface feed : feeds) {
-        for (int compIndex = 0; compIndex < componentCount; compIndex++) {
-          feedComponentFlows[trayIndex][compIndex] +=
-              componentFlow(feed, componentNames[compIndex]);
-        }
+	for (int compIndex = 0; compIndex < componentCount; compIndex++) {
+	  feedComponentFlows[trayIndex][compIndex] += componentFlow(feed, componentNames[compIndex]);
+	}
       }
     }
 
-    return new ColumnMeshState(componentNames, trayTemperatures, vaporFlows, liquidFlows,
-        vaporComponentFlows, liquidComponentFlows, feedComponentFlows, vaporFractions,
-        liquidFractions);
+    return new ColumnMeshState(componentNames, trayTemperatures, vaporFlows, liquidFlows, vaporComponentFlows,
+	liquidComponentFlows, feedComponentFlows, vaporFractions, liquidFractions);
   }
 
   /**
@@ -128,11 +125,11 @@ final class ColumnMeshState implements Serializable {
     for (SimpleTray tray : column.getTrays()) {
       String[] trayNames = componentNames(tray.getGasOutStream());
       if (trayNames.length > 0) {
-        return trayNames;
+	return trayNames;
       }
       trayNames = componentNames(tray.getLiquidOutStream());
       if (trayNames.length > 0) {
-        return trayNames;
+	return trayNames;
       }
     }
     return new String[0];
@@ -148,7 +145,7 @@ final class ColumnMeshState implements Serializable {
     try {
       SystemInterface system = stream.getThermoSystem();
       if (system == null || system.getNumberOfComponents() == 0) {
-        return new String[0];
+	return new String[0];
       }
       return system.getCompNames();
     } catch (Exception ex) {
@@ -160,7 +157,7 @@ final class ColumnMeshState implements Serializable {
    * Get a total stream flow rate.
    *
    * @param stream stream to inspect
-   * @param unit unit for flow
+   * @param unit   unit for flow
    * @return flow rate, or zero if unavailable
    */
   private static double flowRate(StreamInterface stream, String unit) {
@@ -174,7 +171,7 @@ final class ColumnMeshState implements Serializable {
   /**
    * Get a component flow from a stream.
    *
-   * @param stream stream to inspect
+   * @param stream        stream to inspect
    * @param componentName component name
    * @return component molar flow in mol/hr, or zero if unavailable
    */
@@ -189,7 +186,7 @@ final class ColumnMeshState implements Serializable {
   /**
    * Get a component mole fraction from a stream.
    *
-   * @param stream stream to inspect
+   * @param stream        stream to inspect
    * @param componentName component name
    * @return component mole fraction, or zero if unavailable
    */
@@ -255,7 +252,7 @@ final class ColumnMeshState implements Serializable {
   /**
    * Get vapor component flow.
    *
-   * @param trayIndex tray index
+   * @param trayIndex      tray index
    * @param componentIndex component index
    * @return molar component flow in mol/hr
    */
@@ -266,7 +263,7 @@ final class ColumnMeshState implements Serializable {
   /**
    * Get liquid component flow.
    *
-   * @param trayIndex tray index
+   * @param trayIndex      tray index
    * @param componentIndex component index
    * @return molar component flow in mol/hr
    */
@@ -277,7 +274,7 @@ final class ColumnMeshState implements Serializable {
   /**
    * Get feed component flow.
    *
-   * @param trayIndex tray index
+   * @param trayIndex      tray index
    * @param componentIndex component index
    * @return molar component flow in mol/hr
    */
@@ -288,7 +285,7 @@ final class ColumnMeshState implements Serializable {
   /**
    * Get vapor mole fraction.
    *
-   * @param trayIndex tray index
+   * @param trayIndex      tray index
    * @param componentIndex component index
    * @return vapor mole fraction
    */
@@ -299,7 +296,7 @@ final class ColumnMeshState implements Serializable {
   /**
    * Get liquid mole fraction.
    *
-   * @param trayIndex tray index
+   * @param trayIndex      tray index
    * @param componentIndex component index
    * @return liquid mole fraction
    */

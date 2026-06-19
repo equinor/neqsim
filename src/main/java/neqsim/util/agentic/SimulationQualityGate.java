@@ -25,8 +25,8 @@ import neqsim.thermo.system.SystemInterface;
  * </ul>
  *
  * <p>
- * Designed to be called between Step 2 (analysis) and Step 3 (reporting) of the task-solving
- * workflow. When called from Python via jpype, enables automated QA gates in notebooks.
+ * Designed to be called between Step 2 (analysis) and Step 3 (reporting) of the task-solving workflow. When called from
+ * Python via jpype, enables automated QA gates in notebooks.
  * </p>
  *
  * <h2>Usage in Java:</h2>
@@ -103,8 +103,8 @@ public class SimulationQualityGate implements Serializable {
     validated = true;
     for (QualityIssue issue : issues) {
       if (issue.severity == Severity.ERROR) {
-        passed = false;
-        break;
+	passed = false;
+	break;
       }
     }
   }
@@ -113,9 +113,8 @@ public class SimulationQualityGate implements Serializable {
    * Check overall mass balance closure across the process.
    *
    * <p>
-   * Compares total inlet mass flow to total outlet mass flow. Uses the first and last equipment in
-   * the process to identify boundary streams. Tolerance is configurable via
-   * {@link #setMassBalanceTolerance(double)}.
+   * Compares total inlet mass flow to total outlet mass flow. Uses the first and last equipment in the process to
+   * identify boundary streams. Tolerance is configurable via {@link #setMassBalanceTolerance(double)}.
    * </p>
    */
   private void checkMassBalance() {
@@ -132,14 +131,14 @@ public class SimulationQualityGate implements Serializable {
     if (firstUnit != null) {
       List<StreamInterface> inlets = firstUnit.getInletStreams();
       if (inlets != null) {
-        for (StreamInterface stream : inlets) {
-          if (stream != null && stream.getThermoSystem() != null) {
-            double flow = stream.getThermoSystem().getFlowRate("kg/sec");
-            if (!Double.isNaN(flow) && !Double.isInfinite(flow) && flow > 0) {
-              totalInletMass += flow;
-            }
-          }
-        }
+	for (StreamInterface stream : inlets) {
+	  if (stream != null && stream.getThermoSystem() != null) {
+	    double flow = stream.getThermoSystem().getFlowRate("kg/sec");
+	    if (!Double.isNaN(flow) && !Double.isInfinite(flow) && flow > 0) {
+	      totalInletMass += flow;
+	    }
+	  }
+	}
       }
     }
 
@@ -148,14 +147,14 @@ public class SimulationQualityGate implements Serializable {
     if (lastUnit != null) {
       List<StreamInterface> outlets = lastUnit.getOutletStreams();
       if (outlets != null) {
-        for (StreamInterface stream : outlets) {
-          if (stream != null && stream.getThermoSystem() != null) {
-            double flow = stream.getThermoSystem().getFlowRate("kg/sec");
-            if (!Double.isNaN(flow) && !Double.isInfinite(flow) && flow > 0) {
-              totalOutletMass += flow;
-            }
-          }
-        }
+	for (StreamInterface stream : outlets) {
+	  if (stream != null && stream.getThermoSystem() != null) {
+	    double flow = stream.getThermoSystem().getFlowRate("kg/sec");
+	    if (!Double.isNaN(flow) && !Double.isInfinite(flow) && flow > 0) {
+	      totalOutletMass += flow;
+	    }
+	  }
+	}
       }
     }
 
@@ -163,51 +162,48 @@ public class SimulationQualityGate implements Serializable {
     for (int i = 0; i < units.size(); i++) {
       ProcessEquipmentInterface unit = units.get(i);
       if (unit == null || unit == lastUnit) {
-        continue;
+	continue;
       }
       List<StreamInterface> outlets = unit.getOutletStreams();
       if (outlets == null) {
-        continue;
+	continue;
       }
       for (StreamInterface stream : outlets) {
-        if (stream == null || stream.getThermoSystem() == null) {
-          continue;
-        }
-        // Check if this outlet stream is consumed by a downstream unit
-        boolean isConsumed = false;
-        for (int j = i + 1; j < units.size(); j++) {
-          ProcessEquipmentInterface downstream = units.get(j);
-          if (downstream == null) {
-            continue;
-          }
-          List<StreamInterface> downInlets = downstream.getInletStreams();
-          if (downInlets != null && downInlets.contains(stream)) {
-            isConsumed = true;
-            break;
-          }
-        }
-        if (!isConsumed) {
-          double flow = stream.getThermoSystem().getFlowRate("kg/sec");
-          if (!Double.isNaN(flow) && !Double.isInfinite(flow) && flow > 0) {
-            totalOutletMass += flow;
-          }
-        }
+	if (stream == null || stream.getThermoSystem() == null) {
+	  continue;
+	}
+	// Check if this outlet stream is consumed by a downstream unit
+	boolean isConsumed = false;
+	for (int j = i + 1; j < units.size(); j++) {
+	  ProcessEquipmentInterface downstream = units.get(j);
+	  if (downstream == null) {
+	    continue;
+	  }
+	  List<StreamInterface> downInlets = downstream.getInletStreams();
+	  if (downInlets != null && downInlets.contains(stream)) {
+	    isConsumed = true;
+	    break;
+	  }
+	}
+	if (!isConsumed) {
+	  double flow = stream.getThermoSystem().getFlowRate("kg/sec");
+	  if (!Double.isNaN(flow) && !Double.isInfinite(flow) && flow > 0) {
+	    totalOutletMass += flow;
+	  }
+	}
       }
     }
 
     if (totalInletMass > 0.0 && totalOutletMass > 0.0) {
       double relativeError = Math.abs(totalInletMass - totalOutletMass) / totalInletMass;
       if (relativeError > massBalanceTolerance) {
-        addIssue(Severity.ERROR, "mass_balance",
-            String.format(
-                "Mass balance not closed: inlet=%.4f kg/s, outlet=%.4f kg/s, error=%.4f%%",
-                totalInletMass, totalOutletMass, relativeError * 100.0),
-            "Check for leaks in the flowsheet — missing outlet streams or disconnected equipment");
+	addIssue(Severity.ERROR, "mass_balance",
+	    String.format("Mass balance not closed: inlet=%.4f kg/s, outlet=%.4f kg/s, error=%.4f%%", totalInletMass,
+		totalOutletMass, relativeError * 100.0),
+	    "Check for leaks in the flowsheet — missing outlet streams or disconnected equipment");
       } else {
-        addIssue(Severity.INFO, "mass_balance",
-            String.format("Mass balance closed: error=%.6f%% (tolerance=%.2f%%)",
-                relativeError * 100.0, massBalanceTolerance * 100.0),
-            "No action needed");
+	addIssue(Severity.INFO, "mass_balance", String.format("Mass balance closed: error=%.6f%% (tolerance=%.2f%%)",
+	    relativeError * 100.0, massBalanceTolerance * 100.0), "No action needed");
       }
     }
   }
@@ -216,8 +212,8 @@ public class SimulationQualityGate implements Serializable {
    * Check overall energy balance closure across the process.
    *
    * <p>
-   * Compares total inlet enthalpy flow to total outlet enthalpy flow plus external duties.
-   * Tolerance is configurable via {@link #setEnergyBalanceTolerance(double)}.
+   * Compares total inlet enthalpy flow to total outlet enthalpy flow plus external duties. Tolerance is configurable
+   * via {@link #setEnergyBalanceTolerance(double)}.
    * </p>
    */
   private void checkEnergyBalance() {
@@ -235,51 +231,50 @@ public class SimulationQualityGate implements Serializable {
     if (firstUnit != null) {
       List<StreamInterface> inlets = firstUnit.getInletStreams();
       if (inlets != null) {
-        for (StreamInterface stream : inlets) {
-          if (stream != null && stream.getThermoSystem() != null) {
-            double h = stream.getThermoSystem().getEnthalpy();
-            if (!Double.isNaN(h) && !Double.isInfinite(h)) {
-              totalInletEnthalpy += h;
-              hasValidEnthalpy = true;
-            }
-          }
-        }
+	for (StreamInterface stream : inlets) {
+	  if (stream != null && stream.getThermoSystem() != null) {
+	    double h = stream.getThermoSystem().getEnthalpy();
+	    if (!Double.isNaN(h) && !Double.isInfinite(h)) {
+	      totalInletEnthalpy += h;
+	      hasValidEnthalpy = true;
+	    }
+	  }
+	}
       }
     }
 
     // Sum outlet enthalpy from all boundary streams
     for (ProcessEquipmentInterface unit : units) {
       if (unit == null) {
-        continue;
+	continue;
       }
       List<StreamInterface> outlets = unit.getOutletStreams();
       if (outlets == null) {
-        continue;
+	continue;
       }
       for (StreamInterface stream : outlets) {
-        if (stream == null || stream.getThermoSystem() == null) {
-          continue;
-        }
-        double h = stream.getThermoSystem().getEnthalpy();
-        if (!Double.isNaN(h) && !Double.isInfinite(h)) {
-          totalOutletEnthalpy += h;
-        }
+	if (stream == null || stream.getThermoSystem() == null) {
+	  continue;
+	}
+	double h = stream.getThermoSystem().getEnthalpy();
+	if (!Double.isNaN(h) && !Double.isInfinite(h)) {
+	  totalOutletEnthalpy += h;
+	}
       }
     }
 
     if (hasValidEnthalpy && totalInletEnthalpy != 0.0) {
-      double relativeError =
-          Math.abs(totalInletEnthalpy - totalOutletEnthalpy) / Math.abs(totalInletEnthalpy);
+      double relativeError = Math.abs(totalInletEnthalpy - totalOutletEnthalpy) / Math.abs(totalInletEnthalpy);
       if (relativeError > energyBalanceTolerance) {
-        addIssue(Severity.WARNING, "energy_balance",
-            String.format("Energy balance deviation: inlet=%.2f W, outlet=%.2f W, error=%.2f%%",
-                totalInletEnthalpy, totalOutletEnthalpy, relativeError * 100.0),
-            "Check heat exchanger duties, compressor work, and external energy sources/sinks");
+	addIssue(Severity.WARNING, "energy_balance",
+	    String.format("Energy balance deviation: inlet=%.2f W, outlet=%.2f W, error=%.2f%%", totalInletEnthalpy,
+		totalOutletEnthalpy, relativeError * 100.0),
+	    "Check heat exchanger duties, compressor work, and external energy sources/sinks");
       } else {
-        addIssue(Severity.INFO, "energy_balance",
-            String.format("Energy balance acceptable: error=%.4f%% (tolerance=%.2f%%)",
-                relativeError * 100.0, energyBalanceTolerance * 100.0),
-            "No action needed");
+	addIssue(Severity.INFO, "energy_balance",
+	    String.format("Energy balance acceptable: error=%.4f%% (tolerance=%.2f%%)", relativeError * 100.0,
+		energyBalanceTolerance * 100.0),
+	    "No action needed");
       }
     }
   }
@@ -290,18 +285,18 @@ public class SimulationQualityGate implements Serializable {
   private void checkPhysicalBounds() {
     for (ProcessEquipmentInterface equipment : process.getUnitOperations()) {
       if (equipment == null) {
-        continue;
+	continue;
       }
 
       List<StreamInterface> outlets = equipment.getOutletStreams();
       if (outlets == null) {
-        continue;
+	continue;
       }
       for (StreamInterface stream : outlets) {
-        if (stream == null || stream.getThermoSystem() == null) {
-          continue;
-        }
-        checkStreamPhysicalBounds(stream);
+	if (stream == null || stream.getThermoSystem() == null) {
+	  continue;
+	}
+	checkStreamPhysicalBounds(stream);
       }
     }
   }
@@ -318,29 +313,28 @@ public class SimulationQualityGate implements Serializable {
     // Temperature check: must be > 0 K
     double temp = fluid.getTemperature();
     if (temp <= 0.0 || Double.isNaN(temp) || Double.isInfinite(temp)) {
-      addIssue(Severity.ERROR, "physical_bounds",
-          "Stream '" + streamName + "' has invalid temperature: " + temp + " K",
-          "Check upstream equipment calculations and inlet conditions");
+      addIssue(Severity.ERROR, "physical_bounds", "Stream '" + streamName + "' has invalid temperature: " + temp + " K",
+	  "Check upstream equipment calculations and inlet conditions");
     } else if (temp < 100.0) {
       addIssue(Severity.WARNING, "physical_bounds",
-          "Stream '" + streamName + "' has very low temperature: " + (temp - 273.15) + " C",
-          "Verify this is physically reasonable for the process");
+	  "Stream '" + streamName + "' has very low temperature: " + (temp - 273.15) + " C",
+	  "Verify this is physically reasonable for the process");
     } else if (temp > 2500.0) {
       addIssue(Severity.WARNING, "physical_bounds",
-          "Stream '" + streamName + "' has very high temperature: " + (temp - 273.15) + " C",
-          "Temperatures above 2200 C are unusual for process equipment");
+	  "Stream '" + streamName + "' has very high temperature: " + (temp - 273.15) + " C",
+	  "Temperatures above 2200 C are unusual for process equipment");
     }
 
     // Pressure check: must be > 0
     double press = fluid.getPressure();
     if (press <= 0.0 || Double.isNaN(press) || Double.isInfinite(press)) {
       addIssue(Severity.ERROR, "physical_bounds",
-          "Stream '" + streamName + "' has invalid pressure: " + press + " bara",
-          "Check equipment pressure settings and valve configurations");
+	  "Stream '" + streamName + "' has invalid pressure: " + press + " bara",
+	  "Check equipment pressure settings and valve configurations");
     } else if (press > 1500.0) {
       addIssue(Severity.WARNING, "physical_bounds",
-          "Stream '" + streamName + "' has very high pressure: " + press + " bara",
-          "Verify this is within equipment design limits");
+	  "Stream '" + streamName + "' has very high pressure: " + press + " bara",
+	  "Verify this is within equipment design limits");
     }
   }
 
@@ -350,43 +344,40 @@ public class SimulationQualityGate implements Serializable {
   private void checkStreamConsistency() {
     for (ProcessEquipmentInterface equipment : process.getUnitOperations()) {
       if (equipment == null) {
-        continue;
+	continue;
       }
 
       List<StreamInterface> outlets = equipment.getOutletStreams();
       if (outlets == null) {
-        continue;
+	continue;
       }
       for (StreamInterface stream : outlets) {
-        if (stream == null || stream.getThermoSystem() == null) {
-          continue;
-        }
-        SystemInterface fluid = stream.getThermoSystem();
-        String streamName = stream.getName();
+	if (stream == null || stream.getThermoSystem() == null) {
+	  continue;
+	}
+	SystemInterface fluid = stream.getThermoSystem();
+	String streamName = stream.getName();
 
-        // Check flow rate
-        double flowRate = fluid.getFlowRate("kg/sec");
-        if (Double.isNaN(flowRate) || Double.isInfinite(flowRate)) {
-          addIssue(Severity.ERROR, "stream_consistency",
-              "Stream '" + streamName + "' has NaN/Inf flow rate",
-              "Check feed stream specifications and fluid initialization");
-        } else if (flowRate < 0.0) {
-          addIssue(Severity.ERROR, "stream_consistency",
-              "Stream '" + streamName + "' has negative flow rate: " + flowRate + " kg/s",
-              "Negative flow indicates reversed stream — check equipment connections");
-        } else if (flowRate == 0.0) {
-          addIssue(Severity.WARNING, "stream_consistency",
-              "Stream '" + streamName + "' has zero flow rate",
-              "Zero flow may indicate disconnected or bypassed equipment");
-        }
+	// Check flow rate
+	double flowRate = fluid.getFlowRate("kg/sec");
+	if (Double.isNaN(flowRate) || Double.isInfinite(flowRate)) {
+	  addIssue(Severity.ERROR, "stream_consistency", "Stream '" + streamName + "' has NaN/Inf flow rate",
+	      "Check feed stream specifications and fluid initialization");
+	} else if (flowRate < 0.0) {
+	  addIssue(Severity.ERROR, "stream_consistency",
+	      "Stream '" + streamName + "' has negative flow rate: " + flowRate + " kg/s",
+	      "Negative flow indicates reversed stream — check equipment connections");
+	} else if (flowRate == 0.0) {
+	  addIssue(Severity.WARNING, "stream_consistency", "Stream '" + streamName + "' has zero flow rate",
+	      "Zero flow may indicate disconnected or bypassed equipment");
+	}
 
-        // Check enthalpy
-        double enthalpy = fluid.getEnthalpy();
-        if (Double.isNaN(enthalpy) || Double.isInfinite(enthalpy)) {
-          addIssue(Severity.WARNING, "stream_consistency",
-              "Stream '" + streamName + "' has NaN/Inf enthalpy",
-              "May affect energy balance. Check flash calculation convergence");
-        }
+	// Check enthalpy
+	double enthalpy = fluid.getEnthalpy();
+	if (Double.isNaN(enthalpy) || Double.isInfinite(enthalpy)) {
+	  addIssue(Severity.WARNING, "stream_consistency", "Stream '" + streamName + "' has NaN/Inf enthalpy",
+	      "May affect energy balance. Check flash calculation convergence");
+	}
       }
     }
   }
@@ -397,46 +388,44 @@ public class SimulationQualityGate implements Serializable {
   private void checkCompositionNormalization() {
     for (ProcessEquipmentInterface equipment : process.getUnitOperations()) {
       if (equipment == null) {
-        continue;
+	continue;
       }
 
       List<StreamInterface> outlets = equipment.getOutletStreams();
       if (outlets == null) {
-        continue;
+	continue;
       }
       for (StreamInterface stream : outlets) {
-        if (stream == null || stream.getThermoSystem() == null) {
-          continue;
-        }
-        SystemInterface fluid = stream.getThermoSystem();
-        String streamName = stream.getName();
+	if (stream == null || stream.getThermoSystem() == null) {
+	  continue;
+	}
+	SystemInterface fluid = stream.getThermoSystem();
+	String streamName = stream.getName();
 
-        for (int p = 0; p < fluid.getNumberOfPhases(); p++) {
-          double sumZ = 0.0;
-          for (int c = 0; c < fluid.getPhase(p).getNumberOfComponents(); c++) {
-            double z = fluid.getPhase(p).getComponent(c).getx();
-            if (Double.isNaN(z) || Double.isInfinite(z)) {
-              addIssue(Severity.ERROR, "composition",
-                  "Stream '" + streamName + "' phase " + p + " component " + c + " has NaN/Inf "
-                      + "mole fraction",
-                  "Flash calculation likely failed — check convergence and mixing rules");
-              break;
-            }
-            if (z < -1e-10) {
-              addIssue(Severity.ERROR, "composition",
-                  "Stream '" + streamName + "' phase " + p + " has negative mole fraction for "
-                      + fluid.getPhase(p).getComponent(c).getComponentName(),
-                  "Indicates flash calculation error");
-            }
-            sumZ += z;
-          }
-          if (Math.abs(sumZ - 1.0) > 0.01) {
-            addIssue(Severity.WARNING, "composition",
-                "Stream '" + streamName + "' phase " + p + " mole fractions sum to " + sumZ
-                    + " (expected 1.0)",
-                "May indicate flash convergence issues or improper normalization");
-          }
-        }
+	for (int p = 0; p < fluid.getNumberOfPhases(); p++) {
+	  double sumZ = 0.0;
+	  for (int c = 0; c < fluid.getPhase(p).getNumberOfComponents(); c++) {
+	    double z = fluid.getPhase(p).getComponent(c).getx();
+	    if (Double.isNaN(z) || Double.isInfinite(z)) {
+	      addIssue(Severity.ERROR, "composition",
+		  "Stream '" + streamName + "' phase " + p + " component " + c + " has NaN/Inf " + "mole fraction",
+		  "Flash calculation likely failed — check convergence and mixing rules");
+	      break;
+	    }
+	    if (z < -1e-10) {
+	      addIssue(
+		  Severity.ERROR, "composition", "Stream '" + streamName + "' phase " + p
+		      + " has negative mole fraction for " + fluid.getPhase(p).getComponent(c).getComponentName(),
+		  "Indicates flash calculation error");
+	    }
+	    sumZ += z;
+	  }
+	  if (Math.abs(sumZ - 1.0) > 0.01) {
+	    addIssue(Severity.WARNING, "composition",
+		"Stream '" + streamName + "' phase " + p + " mole fractions sum to " + sumZ + " (expected 1.0)",
+		"May indicate flash convergence issues or improper normalization");
+	  }
+	}
       }
     }
   }
@@ -444,9 +433,9 @@ public class SimulationQualityGate implements Serializable {
   /**
    * Add a quality issue.
    *
-   * @param severity issue severity
-   * @param category check category
-   * @param message description of the issue
+   * @param severity    issue severity
+   * @param category    check category
+   * @param message     description of the issue
    * @param remediation suggested fix
    */
   private void addIssue(Severity severity, String category, String message, String remediation) {
@@ -474,7 +463,7 @@ public class SimulationQualityGate implements Serializable {
     int count = 0;
     for (QualityIssue issue : issues) {
       if (issue.severity == Severity.ERROR) {
-        count++;
+	count++;
       }
     }
     return count;
@@ -489,7 +478,7 @@ public class SimulationQualityGate implements Serializable {
     int count = 0;
     for (QualityIssue issue : issues) {
       if (issue.severity == Severity.WARNING) {
-        count++;
+	count++;
       }
     }
     return count;
@@ -580,9 +569,9 @@ public class SimulationQualityGate implements Serializable {
     /**
      * Constructor for QualityIssue.
      *
-     * @param severity issue severity
-     * @param category check category
-     * @param message description
+     * @param severity    issue severity
+     * @param category    check category
+     * @param message     description
      * @param remediation suggested fix
      */
     public QualityIssue(Severity severity, String category, String message, String remediation) {

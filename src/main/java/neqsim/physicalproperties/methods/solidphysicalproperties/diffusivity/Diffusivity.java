@@ -32,8 +32,8 @@ public class Diffusivity extends SolidPhysicalPropertyMethod implements Diffusiv
    */
   public Diffusivity(PhysicalProperties solidPhase) {
     super(solidPhase);
-    binaryDiffusionCoefficients = new double[solidPhase.getPhase()
-        .getNumberOfComponents()][solidPhase.getPhase().getNumberOfComponents()];
+    binaryDiffusionCoefficients = new double[solidPhase.getPhase().getNumberOfComponents()][solidPhase.getPhase()
+	.getNumberOfComponents()];
     effectiveDiffusionCoefficient = new double[solidPhase.getPhase().getNumberOfComponents()];
   }
 
@@ -50,16 +50,13 @@ public class Diffusivity extends SolidPhysicalPropertyMethod implements Diffusiv
     if (this.binaryDiffusionCoefficients != null && this.binaryDiffusionCoefficients.length > 0) {
       properties.binaryDiffusionCoefficients = this.binaryDiffusionCoefficients.clone();
       for (int i = 0; i < this.binaryDiffusionCoefficients.length; i++) {
-        if (this.binaryDiffusionCoefficients[i] != null
-            && properties.binaryDiffusionCoefficients[i] != null) {
-          System.arraycopy(this.binaryDiffusionCoefficients[i], 0,
-              properties.binaryDiffusionCoefficients[i], 0,
-              this.binaryDiffusionCoefficients[i].length);
-        }
+	if (this.binaryDiffusionCoefficients[i] != null && properties.binaryDiffusionCoefficients[i] != null) {
+	  System.arraycopy(this.binaryDiffusionCoefficients[i], 0, properties.binaryDiffusionCoefficients[i], 0,
+	      this.binaryDiffusionCoefficients[i].length);
+	}
       }
     }
-    if (this.effectiveDiffusionCoefficient != null
-        && this.effectiveDiffusionCoefficient.length > 0) {
+    if (this.effectiveDiffusionCoefficient != null && this.effectiveDiffusionCoefficient.length > 0) {
       properties.effectiveDiffusionCoefficient = this.effectiveDiffusionCoefficient.clone();
     }
     return properties;
@@ -67,14 +64,14 @@ public class Diffusivity extends SolidPhysicalPropertyMethod implements Diffusiv
 
   /** {@inheritDoc} */
   @Override
-  public double[][] calcDiffusionCoefficients(int binaryDiffusionCoefficientMethod,
-      int multicomponentDiffusionMethod) {
+  public double[][] calcDiffusionCoefficients(int binaryDiffusionCoefficientMethod, int multicomponentDiffusionMethod) {
     return binaryDiffusionCoefficients;
   }
 
   /** {@inheritDoc} */
   @Override
-  public void calcEffectiveDiffusionCoefficients() {}
+  public void calcEffectiveDiffusionCoefficients() {
+  }
 
   /** {@inheritDoc} */
   @Override

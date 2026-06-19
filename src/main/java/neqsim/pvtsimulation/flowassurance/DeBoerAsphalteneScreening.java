@@ -9,8 +9,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * De Boer plot-based screening for asphaltene precipitation risk.
  *
  * <p>
- * The De Boer plot is an empirical screening tool developed from field experience that correlates
- * asphaltene problems with two key parameters:
+ * The De Boer plot is an empirical screening tool developed from field experience that correlates asphaltene problems
+ * with two key parameters:
  * </p>
  * <ul>
  * <li>Undersaturation pressure: ΔP = P_reservoir - P_saturation (bubble point)</li>
@@ -18,14 +18,14 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </ul>
  *
  * <p>
- * The plot divides the P-density space into regions of varying asphaltene precipitation risk. Light
- * oils (high API, low density) with high undersaturation are most prone to asphaltene problems.
+ * The plot divides the P-density space into regions of varying asphaltene precipitation risk. Light oils (high API, low
+ * density) with high undersaturation are most prone to asphaltene problems.
  * </p>
  *
  * <p>
- * Reference: de Boer, R.B., Leerlooyer, K., Eigner, M.R.P., and van Bergen, A.R.D. (1995).
- * "Screening of Crude Oils for Asphalt Precipitation: Theory, Practice, and the Selection of
- * Inhibitors." SPE Production &amp; Facilities, February 1995.
+ * Reference: de Boer, R.B., Leerlooyer, K., Eigner, M.R.P., and van Bergen, A.R.D. (1995). "Screening of Crude Oils for
+ * Asphalt Precipitation: Theory, Practice, and the Selection of Inhibitors." SPE Production &amp; Facilities, February
+ * 1995.
  * </p>
  *
  * <p>
@@ -130,17 +130,17 @@ public class DeBoerAsphalteneScreening {
   /**
    * Default constructor.
    */
-  public DeBoerAsphalteneScreening() {}
+  public DeBoerAsphalteneScreening() {
+  }
 
   /**
    * Constructor with key parameters.
    *
-   * @param reservoirPressure reservoir pressure (bara)
+   * @param reservoirPressure  reservoir pressure (bara)
    * @param saturationPressure bubble point pressure (bara)
-   * @param inSituDensity in-situ oil density (kg/m3)
+   * @param inSituDensity      in-situ oil density (kg/m3)
    */
-  public DeBoerAsphalteneScreening(double reservoirPressure, double saturationPressure,
-      double inSituDensity) {
+  public DeBoerAsphalteneScreening(double reservoirPressure, double saturationPressure, double inSituDensity) {
     this.reservoirPressure = reservoirPressure;
     this.saturationPressure = saturationPressure;
     this.inSituDensity = inSituDensity;
@@ -149,12 +149,11 @@ public class DeBoerAsphalteneScreening {
   /**
    * Constructor with thermodynamic system.
    *
-   * @param system thermodynamic system for property calculations
-   * @param reservoirPressure reservoir pressure (bara)
+   * @param system               thermodynamic system for property calculations
+   * @param reservoirPressure    reservoir pressure (bara)
    * @param reservoirTemperature reservoir temperature (K)
    */
-  public DeBoerAsphalteneScreening(SystemInterface system, double reservoirPressure,
-      double reservoirTemperature) {
+  public DeBoerAsphalteneScreening(SystemInterface system, double reservoirPressure, double reservoirTemperature) {
     this.system = system.clone();
     this.reservoirPressure = reservoirPressure;
     this.reservoirTemperature = reservoirTemperature;
@@ -188,8 +187,8 @@ public class DeBoerAsphalteneScreening {
    * Calculates the De Boer risk index.
    *
    * <p>
-   * The risk index is a normalized value indicating the position relative to the De Boer boundary
-   * lines. Higher values indicate greater risk.
+   * The risk index is a normalized value indicating the position relative to the De Boer boundary lines. Higher values
+   * indicate greater risk.
    * </p>
    *
    * @return risk index (0 = no risk, 1 = boundary of severe problems, &gt;1 = severe)
@@ -199,8 +198,7 @@ public class DeBoerAsphalteneScreening {
 
     // Calculate the "critical" undersaturation for this density
     // This is the undersaturation at which problems begin
-    double criticalDeltaP =
-        calculateBoundary(inSituDensity, NO_PROBLEM_A, NO_PROBLEM_B, NO_PROBLEM_C);
+    double criticalDeltaP = calculateBoundary(inSituDensity, NO_PROBLEM_A, NO_PROBLEM_B, NO_PROBLEM_C);
 
     if (criticalDeltaP <= 0) {
       criticalDeltaP = 50.0; // Minimum threshold
@@ -215,7 +213,7 @@ public class DeBoerAsphalteneScreening {
       // Typical adjustment: 5% asphaltenes doubles risk
       double asphalteneMultiplier = 1.0 + (asphalteneContent - 0.02) / 0.05;
       if (asphalteneMultiplier < 0.5) {
-        asphalteneMultiplier = 0.5;
+	asphalteneMultiplier = 0.5;
       }
       riskIndex *= asphalteneMultiplier;
     }
@@ -234,8 +232,7 @@ public class DeBoerAsphalteneScreening {
     // Calculate quadratic boundary values for this density
     double severeThreshold = calculateBoundary(inSituDensity, SEVERE_A, SEVERE_B, SEVERE_C);
     double slightThreshold = calculateBoundary(inSituDensity, SLIGHT_A, SLIGHT_B, SLIGHT_C);
-    double noProblemsThreshold =
-        calculateBoundary(inSituDensity, NO_PROBLEM_A, NO_PROBLEM_B, NO_PROBLEM_C);
+    double noProblemsThreshold = calculateBoundary(inSituDensity, NO_PROBLEM_A, NO_PROBLEM_B, NO_PROBLEM_C);
 
     // Classify based on position relative to boundaries.
     // Use max(0, threshold) to avoid negative thresholds at extreme densities,
@@ -255,9 +252,9 @@ public class DeBoerAsphalteneScreening {
    * Evaluates a quadratic boundary curve at the given density.
    *
    * @param density in-situ density (kg/m3)
-   * @param a quadratic coefficient
-   * @param b linear coefficient
-   * @param c constant term
+   * @param a       quadratic coefficient
+   * @param b       linear coefficient
+   * @param c       constant term
    * @return boundary undersaturation pressure (bar)
    */
   private double calculateBoundary(double density, double a, double b, double c) {
@@ -309,9 +306,9 @@ public class DeBoerAsphalteneScreening {
 
       // Get oil phase density (usually phase 0 or 1 depending on conditions)
       if (workSystem.hasPhaseType("oil")) {
-        inSituDensity = workSystem.getPhase("oil").getDensity("kg/m3");
+	inSituDensity = workSystem.getPhase("oil").getDensity("kg/m3");
       } else if (workSystem.getNumberOfPhases() > 0) {
-        inSituDensity = workSystem.getPhase(0).getDensity("kg/m3");
+	inSituDensity = workSystem.getPhase(0).getDensity("kg/m3");
       }
       return inSituDensity;
     } catch (Exception e) {
@@ -332,12 +329,12 @@ public class DeBoerAsphalteneScreening {
     // Calculate properties if system available
     if (system != null) {
       if (Double.isNaN(saturationPressure) || saturationPressure <= 0) {
-        result.append("Calculating saturation pressure...\n");
-        calculateSaturationPressure();
+	result.append("Calculating saturation pressure...\n");
+	calculateSaturationPressure();
       }
       if (Double.isNaN(inSituDensity) || inSituDensity <= 0) {
-        result.append("Calculating in-situ density...\n");
-        calculateInSituDensity();
+	result.append("Calculating in-situ density...\n");
+	calculateInSituDensity();
       }
     }
 
@@ -367,12 +364,9 @@ public class DeBoerAsphalteneScreening {
     result.append("DE BOER PLOT POSITION:\n");
     double severeThreshold = calculateBoundary(inSituDensity, SEVERE_A, SEVERE_B, SEVERE_C);
     double slightThreshold = calculateBoundary(inSituDensity, SLIGHT_A, SLIGHT_B, SLIGHT_C);
-    result.append(
-        String.format("  Severe problem boundary: %.1f bar%n", Math.max(0, severeThreshold)));
-    result.append(
-        String.format("  Slight problem boundary: %.1f bar%n", Math.max(0, slightThreshold)));
-    result.append(
-        String.format("  Current undersaturation: %.1f bar%n", getUndersaturationPressure()));
+    result.append(String.format("  Severe problem boundary: %.1f bar%n", Math.max(0, severeThreshold)));
+    result.append(String.format("  Slight problem boundary: %.1f bar%n", Math.max(0, slightThreshold)));
+    result.append(String.format("  Current undersaturation: %.1f bar%n", getUndersaturationPressure()));
 
     return result.toString();
   }
@@ -386,7 +380,7 @@ public class DeBoerAsphalteneScreening {
    *
    * @param minDensity minimum density for plot (kg/m3)
    * @param maxDensity maximum density for plot (kg/m3)
-   * @param numPoints number of points per curve
+   * @param numPoints  number of points per curve
    * @return 2D array: [0]=densities, [1]=no problem line, [2]=slight line, [3]=severe line
    */
   public double[][] generatePlotData(double minDensity, double maxDensity, int numPoints) {
@@ -396,8 +390,7 @@ public class DeBoerAsphalteneScreening {
     for (int i = 0; i < numPoints; i++) {
       double density = minDensity + i * step;
       data[0][i] = density;
-      data[1][i] =
-          Math.max(0, calculateBoundary(density, NO_PROBLEM_A, NO_PROBLEM_B, NO_PROBLEM_C));
+      data[1][i] = Math.max(0, calculateBoundary(density, NO_PROBLEM_A, NO_PROBLEM_B, NO_PROBLEM_C));
       data[2][i] = Math.max(0, calculateBoundary(density, SLIGHT_A, SLIGHT_B, SLIGHT_C));
       data[3][i] = Math.max(0, calculateBoundary(density, SEVERE_A, SEVERE_B, SEVERE_C));
     }

@@ -11,8 +11,8 @@ import com.google.gson.GsonBuilder;
  * Calculator for manifold mechanical design based on industry standards.
  *
  * <p>
- * This class provides methods to calculate wall thickness, velocity limits, support design,
- * vibration analysis, and structural analysis for manifolds including:
+ * This class provides methods to calculate wall thickness, velocity limits, support design, vibration analysis, and
+ * structural analysis for manifolds including:
  * </p>
  * <ul>
  * <li>Topside manifolds (offshore platforms)</li>
@@ -250,22 +250,22 @@ public class ManifoldMechanicalDesignCalculator implements Serializable {
   static {
     // Material -> [Allowable at 20C, 100C, 200C, 300C, 400C]
     ASME_ALLOWABLE_STRESSES = new HashMap<String, double[]>();
-    ASME_ALLOWABLE_STRESSES.put("A106-B", new double[] {138.0, 138.0, 138.0, 132.0, 121.0});
-    ASME_ALLOWABLE_STRESSES.put("A312-TP316", new double[] {138.0, 115.0, 103.0, 92.0, 84.0});
-    ASME_ALLOWABLE_STRESSES.put("A312-TP316L", new double[] {115.0, 103.0, 92.0, 83.0, 76.0});
-    ASME_ALLOWABLE_STRESSES.put("A790-S31803", new double[] {207.0, 192.0, 177.0, 165.0, 0.0});
-    ASME_ALLOWABLE_STRESSES.put("A790-S32750", new double[] {241.0, 226.0, 211.0, 197.0, 0.0});
+    ASME_ALLOWABLE_STRESSES.put("A106-B", new double[] { 138.0, 138.0, 138.0, 132.0, 121.0 });
+    ASME_ALLOWABLE_STRESSES.put("A312-TP316", new double[] { 138.0, 115.0, 103.0, 92.0, 84.0 });
+    ASME_ALLOWABLE_STRESSES.put("A312-TP316L", new double[] { 115.0, 103.0, 92.0, 83.0, 76.0 });
+    ASME_ALLOWABLE_STRESSES.put("A790-S31803", new double[] { 207.0, 192.0, 177.0, 165.0, 0.0 });
+    ASME_ALLOWABLE_STRESSES.put("A790-S32750", new double[] { 241.0, 226.0, 211.0, 197.0, 0.0 });
 
     // Subsea grades: [SMYS (MPa), SMTS (MPa), Density (kg/m3)]
     SUBSEA_MATERIAL_PROPERTIES = new HashMap<String, double[]>();
-    SUBSEA_MATERIAL_PROPERTIES.put("X52", new double[] {359.0, 455.0, 7850.0});
-    SUBSEA_MATERIAL_PROPERTIES.put("X60", new double[] {414.0, 517.0, 7850.0});
-    SUBSEA_MATERIAL_PROPERTIES.put("X65", new double[] {448.0, 531.0, 7850.0});
-    SUBSEA_MATERIAL_PROPERTIES.put("X70", new double[] {483.0, 565.0, 7850.0});
-    SUBSEA_MATERIAL_PROPERTIES.put("22Cr-Duplex", new double[] {450.0, 620.0, 7800.0});
-    SUBSEA_MATERIAL_PROPERTIES.put("25Cr-SuperDuplex", new double[] {550.0, 750.0, 7800.0});
-    SUBSEA_MATERIAL_PROPERTIES.put("6Mo", new double[] {300.0, 650.0, 8000.0});
-    SUBSEA_MATERIAL_PROPERTIES.put("Inconel-625", new double[] {414.0, 827.0, 8440.0});
+    SUBSEA_MATERIAL_PROPERTIES.put("X52", new double[] { 359.0, 455.0, 7850.0 });
+    SUBSEA_MATERIAL_PROPERTIES.put("X60", new double[] { 414.0, 517.0, 7850.0 });
+    SUBSEA_MATERIAL_PROPERTIES.put("X65", new double[] { 448.0, 531.0, 7850.0 });
+    SUBSEA_MATERIAL_PROPERTIES.put("X70", new double[] { 483.0, 565.0, 7850.0 });
+    SUBSEA_MATERIAL_PROPERTIES.put("22Cr-Duplex", new double[] { 450.0, 620.0, 7800.0 });
+    SUBSEA_MATERIAL_PROPERTIES.put("25Cr-SuperDuplex", new double[] { 550.0, 750.0, 7800.0 });
+    SUBSEA_MATERIAL_PROPERTIES.put("6Mo", new double[] { 300.0, 650.0, 8000.0 });
+    SUBSEA_MATERIAL_PROPERTIES.put("Inconel-625", new double[] { 414.0, 827.0, 8440.0 });
   }
 
   /**
@@ -299,7 +299,8 @@ public class ManifoldMechanicalDesignCalculator implements Serializable {
   /**
    * Default constructor.
    */
-  public ManifoldMechanicalDesignCalculator() {}
+  public ManifoldMechanicalDesignCalculator() {
+  }
 
   // ============================================================================
   // WALL THICKNESS CALCULATIONS
@@ -312,12 +313,12 @@ public class ManifoldMechanicalDesignCalculator implements Serializable {
    */
   public double calculateMinimumWallThickness() {
     switch (location) {
-      case SUBSEA:
-        return calculateWallThicknessDNV();
-      case TOPSIDE:
-      case ONSHORE:
-      default:
-        return calculateWallThicknessASME();
+    case SUBSEA:
+      return calculateWallThicknessDNV();
+    case TOPSIDE:
+    case ONSHORE:
+    default:
+      return calculateWallThicknessASME();
     }
   }
 
@@ -528,20 +529,20 @@ public class ManifoldMechanicalDesignCalculator implements Serializable {
       // For topside/onshore, use ASME B31.3
       double[] stresses = ASME_ALLOWABLE_STRESSES.get(materialGrade);
       if (stresses == null) {
-        stresses = ASME_ALLOWABLE_STRESSES.get("A106-B");
+	stresses = ASME_ALLOWABLE_STRESSES.get("A106-B");
       }
 
       double temp = designTemperature;
       if (temp <= 20) {
-        allowableStress = stresses[0];
+	allowableStress = stresses[0];
       } else if (temp <= 100) {
-        allowableStress = stresses[0] + (stresses[1] - stresses[0]) * (temp - 20) / 80;
+	allowableStress = stresses[0] + (stresses[1] - stresses[0]) * (temp - 20) / 80;
       } else if (temp <= 200) {
-        allowableStress = stresses[1] + (stresses[2] - stresses[1]) * (temp - 100) / 100;
+	allowableStress = stresses[1] + (stresses[2] - stresses[1]) * (temp - 100) / 100;
       } else if (temp <= 300) {
-        allowableStress = stresses[2] + (stresses[3] - stresses[2]) * (temp - 200) / 100;
+	allowableStress = stresses[2] + (stresses[3] - stresses[2]) * (temp - 200) / 100;
       } else {
-        allowableStress = stresses[3] + (stresses[4] - stresses[3]) * (temp - 300) / 100;
+	allowableStress = stresses[3] + (stresses[4] - stresses[3]) * (temp - 300) / 100;
       }
     }
 
@@ -582,13 +583,13 @@ public class ManifoldMechanicalDesignCalculator implements Serializable {
       double od = headerOuterDiameter;
 
       if (od <= 0.1143) {
-        supportSpacing = 2.7;
+	supportSpacing = 2.7;
       } else if (od <= 0.2191) {
-        supportSpacing = 3.7;
+	supportSpacing = 3.7;
       } else if (od <= 0.3239) {
-        supportSpacing = 4.3;
+	supportSpacing = 4.3;
       } else {
-        supportSpacing = 5.0;
+	supportSpacing = 5.0;
       }
 
       numberOfSupports = (int) Math.ceil(headerLength / supportSpacing) + 1;
@@ -605,7 +606,7 @@ public class ManifoldMechanicalDesignCalculator implements Serializable {
   /**
    * Calculate acoustic power level for AIV screening.
    *
-   * @param upstreamPressure upstream pressure in bara
+   * @param upstreamPressure   upstream pressure in bara
    * @param downstreamPressure downstream pressure in bara
    * @return acoustic power level in W
    */
@@ -615,8 +616,7 @@ public class ManifoldMechanicalDesignCalculator implements Serializable {
     double tempK = designTemperature + 273.15;
     double pressureRatio = Math.min(1.0, Math.max(0, (p1 - p2) / p1));
 
-    acousticPowerLevel =
-        3.2e-9 * massFlowRate * p1 * Math.pow(pressureRatio, 3.6) * Math.pow(tempK / 273.15, 0.8);
+    acousticPowerLevel = 3.2e-9 * massFlowRate * p1 * Math.pow(pressureRatio, 3.6) * Math.pow(tempK / 273.15, 0.8);
 
     appliedStandards.add("Energy Institute Guidelines - AIV");
     return acousticPowerLevel;
@@ -667,8 +667,7 @@ public class ManifoldMechanicalDesignCalculator implements Serializable {
     double idb = Db - 2 * tb;
     double branchArea = Math.PI / 4.0 * (Db * Db - idb * idb);
     double branchLength = 1.5; // Assume 1.5m per branch
-    double branchWeight =
-        branchArea * branchLength * steelDensity * (numberOfInlets + numberOfOutlets);
+    double branchWeight = branchArea * branchLength * steelDensity * (numberOfInlets + numberOfOutlets);
 
     // Valve weights (estimate based on size)
     double valveWeight = numberOfValves * 50.0 * Math.pow(D / 0.1, 2);
@@ -682,8 +681,8 @@ public class ManifoldMechanicalDesignCalculator implements Serializable {
     // Add reinforcement pads if required
     if (reinforcementRequired) {
       int numBranches = numberOfInlets + numberOfOutlets;
-      double padWeight = numBranches * Math.PI * branchOuterDiameter * reinforcementPadThickness
-          * branchOuterDiameter * steelDensity;
+      double padWeight = numBranches * Math.PI * branchOuterDiameter * reinforcementPadThickness * branchOuterDiameter
+	  * steelDensity;
       totalDryWeight += padWeight;
     }
 
@@ -727,7 +726,7 @@ public class ManifoldMechanicalDesignCalculator implements Serializable {
     calculateMinimumWallThickness();
     calculateBranchWallThickness();
     wallThicknessCheckPassed = headerWallThickness >= minHeaderWallThickness
-        && branchWallThickness >= minBranchWallThickness;
+	&& branchWallThickness >= minBranchWallThickness;
     allPassed = allPassed && wallThicknessCheckPassed;
 
     // Velocity check
@@ -813,8 +812,7 @@ public class ManifoldMechanicalDesignCalculator implements Serializable {
     velocity.put("headerVelocity_m_s", headerVelocity);
     velocity.put("branchVelocity_m_s", branchVelocity);
     velocity.put("erosionalVelocity_m_s", erosionalVelocity);
-    velocity.put("maxAllowedVelocity_m_s",
-        liquidFraction < 0.01 ? maxGasVelocity : maxMultiphaseVelocity);
+    velocity.put("maxAllowedVelocity_m_s", liquidFraction < 0.01 ? maxGasVelocity : maxMultiphaseVelocity);
     velocity.put("velocityCheckPassed", velocityCheckPassed);
     result.put("velocityAnalysis", velocity);
 
@@ -848,8 +846,7 @@ public class ManifoldMechanicalDesignCalculator implements Serializable {
    * @return JSON string
    */
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(toMap());
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(toMap());
   }
 
   // ============================================================================

@@ -20,7 +20,7 @@ public class LNGFlash {
   private static final Logger logger = LogManager.getLogger(LNGFlash.class);
 
   /** Logger object for class. */
-  
+
   /**
    * <p>
    * main.
@@ -65,11 +65,10 @@ public class LNGFlash {
       logger.error(ex.getMessage(), ex);
     }
     /*
-     * testSystem.reset(); testSystem.addComponent("methane", 1.0);
-     * testSystem.addComponent("n-hexane", 0.000000009); testOps = new
-     * ThermodynamicOperations(testSystem); try { testOps.TPflash(); // testSystem.display(); //
-     * testOps.freezingPointTemperatureFlash(); // testOps.calcWAT(); testSystem.display(); } catch
-     * (Exception ex) { logger.error(ex.getMessage(),e); } }
+     * testSystem.reset(); testSystem.addComponent("methane", 1.0); testSystem.addComponent("n-hexane", 0.000000009);
+     * testOps = new ThermodynamicOperations(testSystem); try { testOps.TPflash(); // testSystem.display(); //
+     * testOps.freezingPointTemperatureFlash(); // testOps.calcWAT(); testSystem.display(); } catch (Exception ex) {
+     * logger.error(ex.getMessage(),e); } }
      */
   }
 }

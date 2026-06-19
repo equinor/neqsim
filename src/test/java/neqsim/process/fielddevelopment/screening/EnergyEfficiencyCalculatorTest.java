@@ -55,8 +55,7 @@ class EnergyEfficiencyCalculatorTest {
 
     // SEC = (5000 kW × 24 hr) / 10000 boe = 12 kWh/boe
     double expectedSEC = 5000.0 * 24.0 / 10000.0;
-    assertEquals(expectedSEC, report.specificEnergyConsumption, 0.1,
-        "SEC should be calculated correctly");
+    assertEquals(expectedSEC, report.specificEnergyConsumption, 0.1, "SEC should be calculated correctly");
   }
 
   @Test
@@ -70,8 +69,7 @@ class EnergyEfficiencyCalculatorTest {
 
     // EEI = actual SEC / reference SEC
     double expectedEEI = report.specificEnergyConsumption / 50.0;
-    assertEquals(expectedEEI, report.energyEfficiencyIndex, 0.01,
-        "EEI should be correctly calculated");
+    assertEquals(expectedEEI, report.energyEfficiencyIndex, 0.01, "EEI should be correctly calculated");
   }
 
   @Test
@@ -86,10 +84,8 @@ class EnergyEfficiencyCalculatorTest {
 
     // Low EEI should give good rating
     assertTrue(report.energyEfficiencyIndex < 1.0, "Should have EEI below reference");
-    assertTrue(
-        report.getEfficiencyRating().startsWith("A") || report.getEfficiencyRating().startsWith("B")
-            || report.getEfficiencyRating().startsWith("C"),
-        "Should have good efficiency rating");
+    assertTrue(report.getEfficiencyRating().startsWith("A") || report.getEfficiencyRating().startsWith("B")
+	|| report.getEfficiencyRating().startsWith("C"), "Should have good efficiency rating");
   }
 
   @Test
@@ -125,8 +121,7 @@ class EnergyEfficiencyCalculatorTest {
     EnergyReport report = calculator.calculate();
 
     // Check losses are calculated
-    assertTrue(report.energyLosses.containsKey("Compressor inefficiency"),
-        "Should have compressor losses");
+    assertTrue(report.energyLosses.containsKey("Compressor inefficiency"), "Should have compressor losses");
     assertTrue(report.energyLosses.containsKey("Pump inefficiency"), "Should have pump losses");
 
     // Compressor loss = 5000 * (1 - 0.75) = 1250 kW
@@ -156,9 +151,8 @@ class EnergyEfficiencyCalculatorTest {
 
     // Should identify waste heat sources
     assertTrue(report.wasteHeatSources.containsKey("Compressor discharge"),
-        "Should identify compressor discharge heat");
-    assertTrue(report.wasteHeatSources.containsKey("Gas turbine exhaust"),
-        "Should identify turbine exhaust heat");
+	"Should identify compressor discharge heat");
+    assertTrue(report.wasteHeatSources.containsKey("Gas turbine exhaust"), "Should identify turbine exhaust heat");
     assertTrue(report.totalAvailableWasteHeatKW > 0, "Should have available waste heat");
   }
 
@@ -197,10 +191,9 @@ class EnergyEfficiencyCalculatorTest {
     EnergyReport fpsoReport = calculator.calculate();
 
     // Same SEC, different EEI due to different reference
-    assertEquals(platformReport.specificEnergyConsumption, fpsoReport.specificEnergyConsumption,
-        0.1, "SEC should be the same");
-    assertTrue(platformReport.referenceSEC < fpsoReport.referenceSEC,
-        "Platform reference should be lower than FPSO");
+    assertEquals(platformReport.specificEnergyConsumption, fpsoReport.specificEnergyConsumption, 0.1,
+	"SEC should be the same");
+    assertTrue(platformReport.referenceSEC < fpsoReport.referenceSEC, "Platform reference should be lower than FPSO");
   }
 
   @Test

@@ -7,8 +7,8 @@ import neqsim.process.mechanicaldesign.separator.SeparatorMechanicalDesign;
  * Cost estimation class for separators.
  *
  * <p>
- * This class provides separator-specific cost estimation methods using chemical engineering cost
- * correlations for pressure vessels.
+ * This class provides separator-specific cost estimation methods using chemical engineering cost correlations for
+ * pressure vessels.
  * </p>
  *
  * @author ESOL
@@ -21,8 +21,7 @@ public class SeparatorCostEstimate extends UnitCostEstimateBaseClass {
   /**
    * Constructor for SeparatorCostEstimate.
    *
-   * @param mechanicalEquipment a
-   *        {@link neqsim.process.mechanicaldesign.separator.SeparatorMechanicalDesign} object
+   * @param mechanicalEquipment a {@link neqsim.process.mechanicaldesign.separator.SeparatorMechanicalDesign} object
    */
   public SeparatorCostEstimate(SeparatorMechanicalDesign mechanicalEquipment) {
     super(mechanicalEquipment);

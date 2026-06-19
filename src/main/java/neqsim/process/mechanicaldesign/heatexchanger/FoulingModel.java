@@ -6,12 +6,11 @@ import java.util.Map;
 import com.google.gson.GsonBuilder;
 
 /**
- * Dynamic fouling model for heat exchangers based on the Ebert-Panchal (1997) threshold fouling
- * correlation.
+ * Dynamic fouling model for heat exchangers based on the Ebert-Panchal (1997) threshold fouling correlation.
  *
  * <p>
- * Predicts time-dependent fouling resistance growth as a function of velocity, wall temperature,
- * and fluid properties. Unlike the traditional fixed-resistance TEMA approach, this model captures:
+ * Predicts time-dependent fouling resistance growth as a function of velocity, wall temperature, and fluid properties.
+ * Unlike the traditional fixed-resistance TEMA approach, this model captures:
  * </p>
  * <ul>
  * <li>The threshold condition below which fouling is negligible</li>
@@ -57,13 +56,12 @@ import com.google.gson.GsonBuilder;
  * References:
  * </p>
  * <ul>
- * <li>Ebert, W. and Panchal, C.B. (1997). "Analysis of Exxon Crude-Oil Slip-Stream Coking Data."
- * Fouling Mitigation of Industrial Heat-Exchange Equipment, Begell House, 451-460.</li>
- * <li>Kern, D.Q. and Seaton, R.E. (1959). "A Theoretical Analysis of Thermal Surface Fouling."
- * British Chemical Engineering, 4(5), 258-262.</li>
- * <li>Polley, G.T., Wilson, D.I., Yeap, B.L., and Pugh, S.J. (2002). "Evaluation of laboratory
- * crude oil threshold fouling data for application to refinery pre-heat trains." Applied Thermal
- * Engineering, 22, 777-788.</li>
+ * <li>Ebert, W. and Panchal, C.B. (1997). "Analysis of Exxon Crude-Oil Slip-Stream Coking Data." Fouling Mitigation of
+ * Industrial Heat-Exchange Equipment, Begell House, 451-460.</li>
+ * <li>Kern, D.Q. and Seaton, R.E. (1959). "A Theoretical Analysis of Thermal Surface Fouling." British Chemical
+ * Engineering, 4(5), 258-262.</li>
+ * <li>Polley, G.T., Wilson, D.I., Yeap, B.L., and Pugh, S.J. (2002). "Evaluation of laboratory crude oil threshold
+ * fouling data for application to refinery pre-heat trains." Applied Thermal Engineering, 22, 777-788.</li>
  * </ul>
  *
  * @author NeqSim Development Team
@@ -146,7 +144,8 @@ public class FoulingModel implements Serializable {
   /**
    * Constructs a FoulingModel with default FIXED type.
    */
-  public FoulingModel() {}
+  public FoulingModel() {
+  }
 
   /**
    * Constructs a FoulingModel with specified type.
@@ -164,12 +163,12 @@ public class FoulingModel implements Serializable {
    */
   public double getFoulingResistance() {
     switch (modelType) {
-      case EBERT_PANCHAL:
-        return currentFoulingResistance;
-      case KERN_SEATON:
-        return calcKernSeatonResistance(operatingTimeHours);
-      default:
-        return fixedFoulingResistance;
+    case EBERT_PANCHAL:
+      return currentFoulingResistance;
+    case KERN_SEATON:
+      return calcKernSeatonResistance(operatingTimeHours);
+    default:
+      return fixedFoulingResistance;
     }
   }
 
@@ -181,12 +180,12 @@ public class FoulingModel implements Serializable {
    */
   public double getFoulingResistance(double timeHours) {
     switch (modelType) {
-      case EBERT_PANCHAL:
-        return calcEbertPanchalResistance(timeHours);
-      case KERN_SEATON:
-        return calcKernSeatonResistance(timeHours);
-      default:
-        return fixedFoulingResistance;
+    case EBERT_PANCHAL:
+      return calcEbertPanchalResistance(timeHours);
+    case KERN_SEATON:
+      return calcKernSeatonResistance(timeHours);
+    default:
+      return fixedFoulingResistance;
     }
   }
 
@@ -207,7 +206,7 @@ public class FoulingModel implements Serializable {
 
     // Deposition rate
     double deposition = alpha * Math.pow(reynoldsNumber, beta)
-        * Math.exp(-activationEnergy / (R_GAS * wallTemperature));
+	* Math.exp(-activationEnergy / (R_GAS * wallTemperature));
 
     // Removal rate
     double removal = gamma * wallShearStress * currentRf;
@@ -219,8 +218,7 @@ public class FoulingModel implements Serializable {
   }
 
   /**
-   * Calculates the fouling resistance at a given time using Ebert-Panchal model with simple Euler
-   * integration.
+   * Calculates the fouling resistance at a given time using Ebert-Panchal model with simple Euler integration.
    *
    * @param timeHours operating time (hours)
    * @return fouling resistance (m2*K/W)
@@ -232,7 +230,7 @@ public class FoulingModel implements Serializable {
 
     // Analytical solution approximation using asymptotic behaviour
     double depositionRate = alpha * Math.pow(reynoldsNumber, beta)
-        * Math.exp(-activationEnergy / (R_GAS * wallTemperature));
+	* Math.exp(-activationEnergy / (R_GAS * wallTemperature));
 
     double removalCoeff = gamma * wallShearStress;
 
@@ -282,8 +280,8 @@ public class FoulingModel implements Serializable {
    * </pre>
    *
    * <p>
-   * In practice, the threshold is the temperature at which dRf/dt becomes negligibly small. Uses
-   * the Polley (2002) threshold condition: fouling rate at Rf=0 equals a target threshold rate.
+   * In practice, the threshold is the temperature at which dRf/dt becomes negligibly small. Uses the Polley (2002)
+   * threshold condition: fouling rate at Rf=0 equals a target threshold rate.
    * </p>
    *
    * @param thresholdRate target fouling rate at Rf=0 (m2*K/(W*s)), typical: 1e-10 to 1e-9
@@ -307,8 +305,8 @@ public class FoulingModel implements Serializable {
    * Calculates the threshold velocity above which fouling is suppressed.
    *
    * <p>
-   * Uses the condition that the removal rate exceeds the deposition rate. Requires a diameter and
-   * fluid properties to convert between velocity, Reynolds number, and shear stress.
+   * Uses the condition that the removal rate exceeds the deposition rate. Requires a diameter and fluid properties to
+   * convert between velocity, Reynolds number, and shear stress.
    * </p>
    *
    * @return threshold velocity (m/s), or 0 if fouling cannot be suppressed at this temperature
@@ -328,14 +326,13 @@ public class FoulingModel implements Serializable {
       double f = ThermalDesignCalculator.calcDarcyFriction(Re);
       double tau = f / 8.0 * fluidDensity * vMid * vMid;
 
-      double deposition =
-          alpha * Math.pow(Re, beta) * Math.exp(-activationEnergy / (R_GAS * wallTemperature));
+      double deposition = alpha * Math.pow(Re, beta) * Math.exp(-activationEnergy / (R_GAS * wallTemperature));
       double rfAsymptotic = (gamma * tau > 0) ? deposition / (gamma * tau) : Double.MAX_VALUE;
 
       if (rfAsymptotic > fixedFoulingResistance) {
-        vLow = vMid;
+	vLow = vMid;
       } else {
-        vHigh = vMid;
+	vHigh = vMid;
       }
     }
 
@@ -345,10 +342,10 @@ public class FoulingModel implements Serializable {
   /**
    * Updates the operating conditions from fluid properties.
    *
-   * @param velocity fluid velocity (m/s)
-   * @param density fluid density (kg/m3)
-   * @param viscosity fluid dynamic viscosity (Pa*s)
-   * @param wallTemp wall temperature (K)
+   * @param velocity      fluid velocity (m/s)
+   * @param density       fluid density (kg/m3)
+   * @param viscosity     fluid dynamic viscosity (Pa*s)
+   * @param wallTemp      wall temperature (K)
    * @param innerDiameter tube inner diameter (m)
    */
   public void updateConditions(double velocity, double density, double viscosity, double wallTemp,
@@ -395,15 +392,15 @@ public class FoulingModel implements Serializable {
    */
   public double getAsymptoticFoulingResistance() {
     switch (modelType) {
-      case EBERT_PANCHAL:
-        double deposition = alpha * Math.pow(reynoldsNumber, beta)
-            * Math.exp(-activationEnergy / (R_GAS * wallTemperature));
-        double removalCoeff = gamma * wallShearStress;
-        return (removalCoeff > 0) ? deposition / removalCoeff : Double.MAX_VALUE;
-      case KERN_SEATON:
-        return rfMax;
-      default:
-        return fixedFoulingResistance;
+    case EBERT_PANCHAL:
+      double deposition = alpha * Math.pow(reynoldsNumber, beta)
+	  * Math.exp(-activationEnergy / (R_GAS * wallTemperature));
+      double removalCoeff = gamma * wallShearStress;
+      return (removalCoeff > 0) ? deposition / removalCoeff : Double.MAX_VALUE;
+    case KERN_SEATON:
+      return rfMax;
+    default:
+      return fixedFoulingResistance;
     }
   }
 
@@ -421,14 +418,14 @@ public class FoulingModel implements Serializable {
     }
 
     switch (modelType) {
-      case EBERT_PANCHAL:
-        double removalCoeff = gamma * wallShearStress;
-        double tauHours = (removalCoeff > 0) ? 1.0 / (removalCoeff * 3600.0) : Double.MAX_VALUE;
-        return -tauHours * Math.log(1.0 - targetRf / rfAsymptotic);
-      case KERN_SEATON:
-        return -timeConstant * Math.log(1.0 - targetRf / rfMax);
-      default:
-        return 0.0;
+    case EBERT_PANCHAL:
+      double removalCoeff = gamma * wallShearStress;
+      double tauHours = (removalCoeff > 0) ? 1.0 / (removalCoeff * 3600.0) : Double.MAX_VALUE;
+      return -tauHours * Math.log(1.0 - targetRf / rfAsymptotic);
+    case KERN_SEATON:
+      return -timeConstant * Math.log(1.0 - targetRf / rfMax);
+    default:
+      return 0.0;
     }
   }
 
@@ -478,8 +475,7 @@ public class FoulingModel implements Serializable {
    * @return JSON string with pretty printing
    */
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(toMap());
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(toMap());
   }
 
   // ============================================================================
@@ -538,7 +534,7 @@ public class FoulingModel implements Serializable {
    * Creates a Kern-Seaton model for cooling water service.
    *
    * @param rfMaxValue maximum fouling resistance (m2*K/W), typical 0.0002-0.0005
-   * @param tauHours time constant (hours), typical 1000-4000
+   * @param tauHours   time constant (hours), typical 1000-4000
    * @return configured FoulingModel for cooling water
    */
   public static FoulingModel createCoolingWaterModel(double rfMaxValue, double tauHours) {

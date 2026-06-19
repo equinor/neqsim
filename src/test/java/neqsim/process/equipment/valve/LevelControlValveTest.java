@@ -129,8 +129,7 @@ class LevelControlValveTest {
     valve.setOutletPressure(15.0);
     valve.run();
 
-    assertEquals(5.0, valve.getControlError(), 0.01,
-        "Control error should be setpoint - measured level");
+    assertEquals(5.0, valve.getControlError(), 0.01, "Control error should be setpoint - measured level");
   }
 
   @Test
@@ -156,8 +155,7 @@ class LevelControlValveTest {
     valve.setOutletPressure(15.0);
     valve.run();
 
-    assertEquals(40.0, valve.getPercentValveOpening(), 0.1,
-        "Manual mode should maintain set opening");
+    assertEquals(40.0, valve.getPercentValveOpening(), 0.1, "Manual mode should maintain set opening");
   }
 
   @Test

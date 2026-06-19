@@ -15,8 +15,7 @@ import neqsim.thermo.system.SystemInterface;
  * Pipeline End Manifold (PLEM) equipment class.
  *
  * <p>
- * A PLEM is a subsea structure that provides multiple pipeline terminations and connections,
- * typically used to:
+ * A PLEM is a subsea structure that provides multiple pipeline terminations and connections, typically used to:
  * </p>
  * <ul>
  * <li>Connect multiple flowlines to a single export line</li>
@@ -175,7 +174,7 @@ public class PLEM extends ProcessEquipmentBaseClass {
   /**
    * Constructor with name and number of slots.
    *
-   * @param name equipment name
+   * @param name          equipment name
    * @param numberOfSlots number of connection slots
    */
   public PLEM(String name, int numberOfSlots) {
@@ -199,15 +198,13 @@ public class PLEM extends ProcessEquipmentBaseClass {
    */
   public void addInletStream(StreamInterface stream) {
     if (inletStreams.size() >= numberOfSlots) {
-      throw new IllegalStateException(
-          "Cannot add more streams than available slots (" + numberOfSlots + ")");
+      throw new IllegalStateException("Cannot add more streams than available slots (" + numberOfSlots + ")");
     }
     inletStreams.add(stream);
 
     // Add corresponding isolation valve
     if (branchIsolationValves) {
-      ThrottlingValve valve =
-          new ThrottlingValve(getName() + " Branch Valve " + inletStreams.size(), stream);
+      ThrottlingValve valve = new ThrottlingValve(getName() + " Branch Valve " + inletStreams.size(), stream);
       valve.setPercentValveOpening(100.0);
       branchValves.add(valve);
     }
@@ -226,11 +223,11 @@ public class PLEM extends ProcessEquipmentBaseClass {
     // Run branch valves if present
     if (branchIsolationValves) {
       for (int i = 0; i < branchValves.size(); i++) {
-        ThrottlingValve valve = branchValves.get(i);
-        valve.setInletStream(inletStreams.get(i));
-        valve.run(id);
-        // Update mixer with valve outlet
-        // Note: mixer already has original streams, we'd need to update for valved flow
+	ThrottlingValve valve = branchValves.get(i);
+	valve.setInletStream(inletStreams.get(i));
+	valve.run(id);
+	// Update mixer with valve outlet
+	// Note: mixer already has original streams, we'd need to update for valved flow
       }
     }
 
@@ -246,8 +243,8 @@ public class PLEM extends ProcessEquipmentBaseClass {
       SystemInterface fluid = outletStream.getFluid().clone();
       double outPressure = fluid.getPressure() - headerPressureDrop;
       if (outPressure > 0) {
-        fluid.setPressure(outPressure);
-        outletStream.setFluid(fluid);
+	fluid.setPressure(outPressure);
+	outletStream.setFluid(fluid);
       }
     }
 

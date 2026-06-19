@@ -106,8 +106,7 @@ public class AdsorptionCycleControllerTest {
 
     // Advance past purge
     controller.advance(6.0, id);
-    assertEquals(AdsorptionCycleController.CyclePhase.REPRESSURISATION,
-        controller.getCurrentPhase());
+    assertEquals(AdsorptionCycleController.CyclePhase.REPRESSURISATION, controller.getCurrentPhase());
   }
 
   /**
@@ -135,18 +134,16 @@ public class AdsorptionCycleControllerTest {
   @Test
   public void testCustomStepAddition() {
     AdsorptionCycleController controller = new AdsorptionCycleController(bed);
+    controller.addStep(new AdsorptionCycleController.PhaseStep(AdsorptionCycleController.CyclePhase.ADSORPTION, 300));
     controller.addStep(new AdsorptionCycleController.PhaseStep(
-        AdsorptionCycleController.CyclePhase.ADSORPTION, 300));
-    controller.addStep(new AdsorptionCycleController.PhaseStep(
-        AdsorptionCycleController.CyclePhase.COCURRENT_DEPRESSURISATION, 30, 5.0, -1.0));
-    controller.addStep(new AdsorptionCycleController.PhaseStep(
-        AdsorptionCycleController.CyclePhase.BLOWDOWN, 60, 1.0, -1.0));
-    controller.addStep(
-        new AdsorptionCycleController.PhaseStep(AdsorptionCycleController.CyclePhase.STANDBY, 30));
+	AdsorptionCycleController.CyclePhase.COCURRENT_DEPRESSURISATION, 30, 5.0, -1.0));
+    controller
+	.addStep(new AdsorptionCycleController.PhaseStep(AdsorptionCycleController.CyclePhase.BLOWDOWN, 60, 1.0, -1.0));
+    controller.addStep(new AdsorptionCycleController.PhaseStep(AdsorptionCycleController.CyclePhase.STANDBY, 30));
 
     assertEquals(4, controller.getSchedule().size());
     assertEquals(AdsorptionCycleController.CyclePhase.COCURRENT_DEPRESSURISATION,
-        controller.getSchedule().get(1).getPhase());
+	controller.getSchedule().get(1).getPhase());
   }
 
   /**

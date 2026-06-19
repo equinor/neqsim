@@ -3,10 +3,9 @@ package neqsim.process.processmodel.dexpi;
 import java.io.Serializable;
 
 /**
- * Holds metadata for an instrument parsed from a DEXPI XML file. Because DEXPI instruments are not
- * directly connected to live process streams, this lightweight value object stores the tag,
- * category (P/L/T/F), functions (IC/T/CSA), and loop information so that callers can wire up real
- * transmitters and controllers later.
+ * Holds metadata for an instrument parsed from a DEXPI XML file. Because DEXPI instruments are not directly connected
+ * to live process streams, this lightweight value object stores the tag, category (P/L/T/F), functions (IC/T/CSA), and
+ * loop information so that callers can wire up real transmitters and controllers later.
  *
  * @author NeqSim
  * @version 1.0
@@ -26,17 +25,17 @@ public class DexpiInstrumentInfo implements Serializable {
   /**
    * Creates a DEXPI instrument info record.
    *
-   * @param id the DEXPI XML element ID
-   * @param tagName the instrument tag name (e.g. "PICSA 4712.02")
-   * @param category the ISA category letter (e.g. "P" for pressure)
-   * @param functions the ISA function letters (e.g. "ICSA")
+   * @param id               the DEXPI XML element ID
+   * @param tagName          the instrument tag name (e.g. "PICSA 4712.02")
+   * @param category         the ISA category letter (e.g. "P" for pressure)
+   * @param functions        the ISA function letters (e.g. "ICSA")
    * @param instrumentNumber the instrument number
-   * @param loopNumber the instrumentation loop number (may be null)
-   * @param measurementUnit the measurement unit (may be null)
-   * @param actuatingTag the associated actuating function tag (may be null)
+   * @param loopNumber       the instrumentation loop number (may be null)
+   * @param measurementUnit  the measurement unit (may be null)
+   * @param actuatingTag     the associated actuating function tag (may be null)
    */
-  public DexpiInstrumentInfo(String id, String tagName, String category, String functions,
-      String instrumentNumber, String loopNumber, String measurementUnit, String actuatingTag) {
+  public DexpiInstrumentInfo(String id, String tagName, String category, String functions, String instrumentNumber,
+      String loopNumber, String measurementUnit, String actuatingTag) {
     this.id = id;
     this.tagName = tagName;
     this.category = category;

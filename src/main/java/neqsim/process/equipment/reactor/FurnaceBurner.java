@@ -13,9 +13,9 @@ import neqsim.process.util.report.ReportConfig.DetailLevel;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * FurnaceBurner mixes a fuel gas stream with combustion air and evaluates combustion using the
- * {@link GibbsReactor}. The unit supports adiabatic and cooled designs, returning the reacted
- * outlet stream together with emission estimates and heat release.
+ * FurnaceBurner mixes a fuel gas stream with combustion air and evaluates combustion using the {@link GibbsReactor}.
+ * The unit supports adiabatic and cooled designs, returning the reacted outlet stream together with emission estimates
+ * and heat release.
  */
 public class FurnaceBurner extends ProcessEquipmentBaseClass {
   private static final long serialVersionUID = 1L;
@@ -80,9 +80,8 @@ public class FurnaceBurner extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Provide a cooling factor (0-1) that pulls the flame temperature towards the surroundings. A
-   * value of 0.0 keeps adiabatic operation, while 1.0 forces the products to the surroundings
-   * temperature.
+   * Provide a cooling factor (0-1) that pulls the flame temperature towards the surroundings. A value of 0.0 keeps
+   * adiabatic operation, while 1.0 forces the products to the surroundings temperature.
    *
    * @param factor cooling factor between 0 and 1
    */
@@ -109,8 +108,8 @@ public class FurnaceBurner extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Set the air-fuel ratio on a mass basis. When set, the air flow rate will be calculated from the
-   * fuel flow rate and this ratio during execution.
+   * Set the air-fuel ratio on a mass basis. When set, the air flow rate will be calculated from the fuel flow rate and
+   * this ratio during execution.
    *
    * @param ratio air-fuel ratio (mass air / mass fuel)
    */
@@ -206,11 +205,10 @@ public class FurnaceBurner extends ProcessEquipmentBaseClass {
 
     fuelSystem.addFluid(airSystem);
     fuelSystem.createDatabase(true);
-    String[] tracked =
-        {"CO2", "CO", "NO", "NO2", "SO2", "SO3", "H2S", "oxygen", "water", "nitrogen"};
+    String[] tracked = { "CO2", "CO", "NO", "NO2", "SO2", "SO3", "H2S", "oxygen", "water", "nitrogen" };
     for (String compName : tracked) {
       if (!fuelSystem.hasComponent(compName)) {
-        fuelSystem.addComponent(compName, 0.0, "mole/sec");
+	fuelSystem.addComponent(compName, 0.0, "mole/sec");
       }
     }
     fuelSystem.init(3);
@@ -231,7 +229,6 @@ public class FurnaceBurner extends ProcessEquipmentBaseClass {
     reactor.setUseAllDatabaseSpecies(false);
     reactor.setDampingComposition(1e-4);
 
-
     reactor.setEnergyMode(GibbsReactor.EnergyMode.ADIABATIC);
     reactor.run(id);
 
@@ -245,9 +242,8 @@ public class FurnaceBurner extends ProcessEquipmentBaseClass {
     boolean applyCooling = burnerDesign == BurnerDesign.COOLED || coolingFactor > 0.0;
     if (applyCooling) {
       double ambientTemp = Double.isNaN(surroundingsTemperatureK) ? airSystem.getTemperature()
-          : surroundingsTemperatureK;
-      double cooledTemperature =
-          ambientTemp + (flameTemperature - ambientTemp) * (1.0 - coolingFactor);
+	  : surroundingsTemperatureK;
+      double cooledTemperature = ambientTemp + (flameTemperature - ambientTemp) * (1.0 - coolingFactor);
 
       SystemInterface cooledFeed = mixedStream.getThermoSystem().clone();
       cooledFeed.setTemperature(cooledTemperature);
@@ -256,8 +252,7 @@ public class FurnaceBurner extends ProcessEquipmentBaseClass {
       Stream cooledStream = new Stream(getName() + " cooled mixture", cooledFeed);
       cooledStream.run(id);
 
-      GibbsReactor cooledReactor =
-          new GibbsReactor(getName() + " cooled Gibbs reactor", cooledStream);
+      GibbsReactor cooledReactor = new GibbsReactor(getName() + " cooled Gibbs reactor", cooledStream);
       cooledReactor.setUseAllDatabaseSpecies(false);
       cooledReactor.setEnergyMode(GibbsReactor.EnergyMode.ISOTHERMAL);
       cooledReactor.run(id);
@@ -275,13 +270,12 @@ public class FurnaceBurner extends ProcessEquipmentBaseClass {
     emissionRatesKgPerHr.clear();
     for (String compName : tracked) {
       if (outletSystem.hasComponent(compName)) {
-        double rate = outletSystem.getComponent(compName).getFlowRate("kg/sec") * 3600.0;
-        emissionRatesKgPerHr.put(compName, rate);
+	double rate = outletSystem.getComponent(compName).getFlowRate("kg/sec") * 3600.0;
+	emissionRatesKgPerHr.put(compName, rate);
       }
     }
     if (emissionRatesKgPerHr.containsKey("NO") || emissionRatesKgPerHr.containsKey("NO2")) {
-      double nox = emissionRatesKgPerHr.getOrDefault("NO", 0.0)
-          + emissionRatesKgPerHr.getOrDefault("NO2", 0.0);
+      double nox = emissionRatesKgPerHr.getOrDefault("NO", 0.0) + emissionRatesKgPerHr.getOrDefault("NO2", 0.0);
       emissionRatesKgPerHr.put("NOx", nox);
     }
 

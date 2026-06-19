@@ -33,16 +33,14 @@ public class DexpiTopologyResolverTest extends NeqSimTest {
   @Test
   public void testSimpleTopology() throws Exception {
     String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<PlantModel>" + "  <Equipment>"
-        + "    <CentrifugalPump ComponentClass=\"CentrifugalPump\" ID=\"Pump-1\">"
-        + "      <Nozzle ID=\"Nozzle-1\"/>" + "      <Nozzle ID=\"Nozzle-2\"/>"
-        + "    </CentrifugalPump>" + "  </Equipment>" + "  <Equipment>"
-        + "    <PlateHeatExchanger ComponentClass=\"PlateHeatExchanger\" ID=\"HX-1\">"
-        + "      <Nozzle ID=\"Nozzle-3\"/>" + "      <Nozzle ID=\"Nozzle-4\"/>"
-        + "    </PlateHeatExchanger>" + "  </Equipment>"
-        + "  <PipingNetworkSystem ID=\"PNS-1\" ComponentClass=\"PipingNetworkSystem\">"
-        + "    <PipingNetworkSegment ID=\"Seg-1\" ComponentClass=\"PipingNetworkSegment\">"
-        + "      <Connection FromID=\"Nozzle-2\" FromNode=\"1\" ToID=\"Nozzle-3\" ToNode=\"1\"/>"
-        + "    </PipingNetworkSegment>" + "  </PipingNetworkSystem>" + "</PlantModel>";
+	+ "    <CentrifugalPump ComponentClass=\"CentrifugalPump\" ID=\"Pump-1\">" + "      <Nozzle ID=\"Nozzle-1\"/>"
+	+ "      <Nozzle ID=\"Nozzle-2\"/>" + "    </CentrifugalPump>" + "  </Equipment>" + "  <Equipment>"
+	+ "    <PlateHeatExchanger ComponentClass=\"PlateHeatExchanger\" ID=\"HX-1\">"
+	+ "      <Nozzle ID=\"Nozzle-3\"/>" + "      <Nozzle ID=\"Nozzle-4\"/>" + "    </PlateHeatExchanger>"
+	+ "  </Equipment>" + "  <PipingNetworkSystem ID=\"PNS-1\" ComponentClass=\"PipingNetworkSystem\">"
+	+ "    <PipingNetworkSegment ID=\"Seg-1\" ComponentClass=\"PipingNetworkSegment\">"
+	+ "      <Connection FromID=\"Nozzle-2\" FromNode=\"1\" ToID=\"Nozzle-3\" ToNode=\"1\"/>"
+	+ "    </PipingNetworkSegment>" + "  </PipingNetworkSystem>" + "</PlantModel>";
 
     Document doc = parseXml(xml);
     ResolvedTopology topology = DexpiTopologyResolver.resolve(doc);
@@ -68,20 +66,18 @@ public class DexpiTopologyResolverTest extends NeqSimTest {
   @Test
   public void testTopologyWithPipingComponent() throws Exception {
     String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<PlantModel>" + "  <Equipment>"
-        + "    <Tank ComponentClass=\"Tank\" ID=\"Tank-1\">" + "      <Nozzle ID=\"Nozzle-1\"/>"
-        + "    </Tank>" + "  </Equipment>" + "  <Equipment>"
-        + "    <CentrifugalPump ComponentClass=\"CentrifugalPump\" ID=\"Pump-1\">"
-        + "      <Nozzle ID=\"Nozzle-2\"/>" + "    </CentrifugalPump>" + "  </Equipment>"
-        + "  <PipingNetworkSystem ID=\"PNS-1\" ComponentClass=\"PipingNetworkSystem\">"
-        + "    <PipingNetworkSegment ID=\"Seg-1\" ComponentClass=\"PipingNetworkSegment\">"
-        + "      <PipingComponent ID=\"PC-wrapper\">"
-        + "        <BallValve ComponentClass=\"BallValve\" ID=\"BV-1\"/>"
-        + "      </PipingComponent>"
-        + "      <Connection FromID=\"Nozzle-1\" FromNode=\"1\" ToID=\"BV-1\" ToNode=\"1\"/>"
-        + "    </PipingNetworkSegment>"
-        + "    <PipingNetworkSegment ID=\"Seg-2\" ComponentClass=\"PipingNetworkSegment\">"
-        + "      <Connection FromID=\"BV-1\" FromNode=\"1\" ToID=\"Nozzle-2\" ToNode=\"1\"/>"
-        + "    </PipingNetworkSegment>" + "  </PipingNetworkSystem>" + "</PlantModel>";
+	+ "    <Tank ComponentClass=\"Tank\" ID=\"Tank-1\">" + "      <Nozzle ID=\"Nozzle-1\"/>" + "    </Tank>"
+	+ "  </Equipment>" + "  <Equipment>" + "    <CentrifugalPump ComponentClass=\"CentrifugalPump\" ID=\"Pump-1\">"
+	+ "      <Nozzle ID=\"Nozzle-2\"/>" + "    </CentrifugalPump>" + "  </Equipment>"
+	+ "  <PipingNetworkSystem ID=\"PNS-1\" ComponentClass=\"PipingNetworkSystem\">"
+	+ "    <PipingNetworkSegment ID=\"Seg-1\" ComponentClass=\"PipingNetworkSegment\">"
+	+ "      <PipingComponent ID=\"PC-wrapper\">" + "        <BallValve ComponentClass=\"BallValve\" ID=\"BV-1\"/>"
+	+ "      </PipingComponent>"
+	+ "      <Connection FromID=\"Nozzle-1\" FromNode=\"1\" ToID=\"BV-1\" ToNode=\"1\"/>"
+	+ "    </PipingNetworkSegment>"
+	+ "    <PipingNetworkSegment ID=\"Seg-2\" ComponentClass=\"PipingNetworkSegment\">"
+	+ "      <Connection FromID=\"BV-1\" FromNode=\"1\" ToID=\"Nozzle-2\" ToNode=\"1\"/>"
+	+ "    </PipingNetworkSegment>" + "  </PipingNetworkSystem>" + "</PlantModel>";
 
     Document doc = parseXml(xml);
     ResolvedTopology topology = DexpiTopologyResolver.resolve(doc);
@@ -92,9 +88,8 @@ public class DexpiTopologyResolverTest extends NeqSimTest {
 
     boolean foundTankToPump = false;
     for (TopologyEdge edge : topology.getEdges()) {
-      if ("Tank-1".equals(edge.getSourceEquipmentId())
-          && "Pump-1".equals(edge.getTargetEquipmentId())) {
-        foundTankToPump = true;
+      if ("Tank-1".equals(edge.getSourceEquipmentId()) && "Pump-1".equals(edge.getTargetEquipmentId())) {
+	foundTankToPump = true;
       }
     }
     assertTrue(foundTankToPump, "Should find collapsed edge Tank-1 -> Pump-1");
@@ -108,9 +103,8 @@ public class DexpiTopologyResolverTest extends NeqSimTest {
   @Test
   public void testNozzleToEquipmentMapping() throws Exception {
     String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<PlantModel>" + "  <Equipment>"
-        + "    <CentrifugalPump ComponentClass=\"CentrifugalPump\" ID=\"Pump-1\">"
-        + "      <Nozzle ID=\"N-1\"/>" + "      <Nozzle ID=\"N-2\"/>" + "    </CentrifugalPump>"
-        + "  </Equipment>" + "</PlantModel>";
+	+ "    <CentrifugalPump ComponentClass=\"CentrifugalPump\" ID=\"Pump-1\">" + "      <Nozzle ID=\"N-1\"/>"
+	+ "      <Nozzle ID=\"N-2\"/>" + "    </CentrifugalPump>" + "  </Equipment>" + "</PlantModel>";
 
     Document doc = parseXml(xml);
     ResolvedTopology topology = DexpiTopologyResolver.resolve(doc);
@@ -128,9 +122,9 @@ public class DexpiTopologyResolverTest extends NeqSimTest {
   @Test
   public void testEquipmentElements() throws Exception {
     String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<PlantModel>" + "  <Equipment>"
-        + "    <Tank ComponentClass=\"Tank\" ID=\"Tank-1\"/>" + "  </Equipment>" + "  <Equipment>"
-        + "    <CentrifugalPump ComponentClass=\"CentrifugalPump\" ID=\"Pump-1\"/>"
-        + "  </Equipment>" + "</PlantModel>";
+	+ "    <Tank ComponentClass=\"Tank\" ID=\"Tank-1\"/>" + "  </Equipment>" + "  <Equipment>"
+	+ "    <CentrifugalPump ComponentClass=\"CentrifugalPump\" ID=\"Pump-1\"/>" + "  </Equipment>"
+	+ "</PlantModel>";
 
     Document doc = parseXml(xml);
     ResolvedTopology topology = DexpiTopologyResolver.resolve(doc);
@@ -148,11 +142,10 @@ public class DexpiTopologyResolverTest extends NeqSimTest {
   @Test
   public void testSubComponentsSkipped() throws Exception {
     String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<PlantModel>" + "  <Equipment>"
-        + "    <ShellAndTubeHeatExchanger ComponentClass=\"ShellAndTubeHeatExchanger\" ID=\"HX-1\">"
-        + "      <Chamber ComponentClass=\"Chamber\" ID=\"Chamber-1\">"
-        + "        <Nozzle ID=\"N-1\"/>" + "      </Chamber>"
-        + "      <TubeBundle ComponentClass=\"TubeBundle\" ID=\"TB-1\"/>"
-        + "    </ShellAndTubeHeatExchanger>" + "  </Equipment>" + "</PlantModel>";
+	+ "    <ShellAndTubeHeatExchanger ComponentClass=\"ShellAndTubeHeatExchanger\" ID=\"HX-1\">"
+	+ "      <Chamber ComponentClass=\"Chamber\" ID=\"Chamber-1\">" + "        <Nozzle ID=\"N-1\"/>"
+	+ "      </Chamber>" + "      <TubeBundle ComponentClass=\"TubeBundle\" ID=\"TB-1\"/>"
+	+ "    </ShellAndTubeHeatExchanger>" + "  </Equipment>" + "</PlantModel>";
 
     Document doc = parseXml(xml);
     ResolvedTopology topology = DexpiTopologyResolver.resolve(doc);
@@ -172,19 +165,17 @@ public class DexpiTopologyResolverTest extends NeqSimTest {
   @Test
   public void testEdgeQueries() throws Exception {
     String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<PlantModel>" + "  <Equipment>"
-        + "    <Tank ComponentClass=\"Tank\" ID=\"Tank-1\">" + "      <Nozzle ID=\"N-1\"/>"
-        + "    </Tank>" + "  </Equipment>" + "  <Equipment>"
-        + "    <CentrifugalPump ComponentClass=\"CentrifugalPump\" ID=\"Pump-1\">"
-        + "      <Nozzle ID=\"N-2\"/>" + "      <Nozzle ID=\"N-3\"/>" + "    </CentrifugalPump>"
-        + "  </Equipment>" + "  <Equipment>"
-        + "    <PlateHeatExchanger ComponentClass=\"PlateHeatExchanger\" ID=\"HX-1\">"
-        + "      <Nozzle ID=\"N-4\"/>" + "    </PlateHeatExchanger>" + "  </Equipment>"
-        + "  <PipingNetworkSystem ID=\"PNS-1\" ComponentClass=\"PipingNetworkSystem\">"
-        + "    <PipingNetworkSegment ID=\"Seg-1\" ComponentClass=\"PipingNetworkSegment\">"
-        + "      <Connection FromID=\"N-1\" ToID=\"N-2\"/>" + "    </PipingNetworkSegment>"
-        + "    <PipingNetworkSegment ID=\"Seg-2\" ComponentClass=\"PipingNetworkSegment\">"
-        + "      <Connection FromID=\"N-3\" ToID=\"N-4\"/>" + "    </PipingNetworkSegment>"
-        + "  </PipingNetworkSystem>" + "</PlantModel>";
+	+ "    <Tank ComponentClass=\"Tank\" ID=\"Tank-1\">" + "      <Nozzle ID=\"N-1\"/>" + "    </Tank>"
+	+ "  </Equipment>" + "  <Equipment>" + "    <CentrifugalPump ComponentClass=\"CentrifugalPump\" ID=\"Pump-1\">"
+	+ "      <Nozzle ID=\"N-2\"/>" + "      <Nozzle ID=\"N-3\"/>" + "    </CentrifugalPump>" + "  </Equipment>"
+	+ "  <Equipment>" + "    <PlateHeatExchanger ComponentClass=\"PlateHeatExchanger\" ID=\"HX-1\">"
+	+ "      <Nozzle ID=\"N-4\"/>" + "    </PlateHeatExchanger>" + "  </Equipment>"
+	+ "  <PipingNetworkSystem ID=\"PNS-1\" ComponentClass=\"PipingNetworkSystem\">"
+	+ "    <PipingNetworkSegment ID=\"Seg-1\" ComponentClass=\"PipingNetworkSegment\">"
+	+ "      <Connection FromID=\"N-1\" ToID=\"N-2\"/>" + "    </PipingNetworkSegment>"
+	+ "    <PipingNetworkSegment ID=\"Seg-2\" ComponentClass=\"PipingNetworkSegment\">"
+	+ "      <Connection FromID=\"N-3\" ToID=\"N-4\"/>" + "    </PipingNetworkSegment>" + "  </PipingNetworkSystem>"
+	+ "</PlantModel>";
 
     Document doc = parseXml(xml);
     ResolvedTopology topology = DexpiTopologyResolver.resolve(doc);
@@ -205,16 +196,14 @@ public class DexpiTopologyResolverTest extends NeqSimTest {
   @Test
   public void testHasCycleReturnsFalseForLinear() throws Exception {
     String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<PlantModel>" + "  <Equipment>"
-        + "    <CentrifugalPump ComponentClass=\"CentrifugalPump\" ID=\"Pump-1\">"
-        + "      <Nozzle ID=\"N-1\"/>" + "      <Nozzle ID=\"N-2\"/>" + "    </CentrifugalPump>"
-        + "  </Equipment>" + "  <Equipment>"
-        + "    <PlateHeatExchanger ComponentClass=\"PlateHeatExchanger\" ID=\"HX-1\">"
-        + "      <Nozzle ID=\"N-3\"/>" + "      <Nozzle ID=\"N-4\"/>" + "    </PlateHeatExchanger>"
-        + "  </Equipment>"
-        + "  <PipingNetworkSystem ID=\"PNS-1\" ComponentClass=\"PipingNetworkSystem\">"
-        + "    <PipingNetworkSegment ID=\"Seg-1\" ComponentClass=\"PipingNetworkSegment\">"
-        + "      <Connection FromID=\"N-2\" FromNode=\"1\" ToID=\"N-3\" ToNode=\"1\"/>"
-        + "    </PipingNetworkSegment>" + "  </PipingNetworkSystem>" + "</PlantModel>";
+	+ "    <CentrifugalPump ComponentClass=\"CentrifugalPump\" ID=\"Pump-1\">" + "      <Nozzle ID=\"N-1\"/>"
+	+ "      <Nozzle ID=\"N-2\"/>" + "    </CentrifugalPump>" + "  </Equipment>" + "  <Equipment>"
+	+ "    <PlateHeatExchanger ComponentClass=\"PlateHeatExchanger\" ID=\"HX-1\">" + "      <Nozzle ID=\"N-3\"/>"
+	+ "      <Nozzle ID=\"N-4\"/>" + "    </PlateHeatExchanger>" + "  </Equipment>"
+	+ "  <PipingNetworkSystem ID=\"PNS-1\" ComponentClass=\"PipingNetworkSystem\">"
+	+ "    <PipingNetworkSegment ID=\"Seg-1\" ComponentClass=\"PipingNetworkSegment\">"
+	+ "      <Connection FromID=\"N-2\" FromNode=\"1\" ToID=\"N-3\" ToNode=\"1\"/>" + "    </PipingNetworkSegment>"
+	+ "  </PipingNetworkSystem>" + "</PlantModel>";
 
     Document doc = parseXml(xml);
     ResolvedTopology topology = DexpiTopologyResolver.resolve(doc);
@@ -242,18 +231,16 @@ public class DexpiTopologyResolverTest extends NeqSimTest {
   @Test
   public void testHasCycleReturnsTrueForCycle() throws Exception {
     String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<PlantModel>" + "  <Equipment>"
-        + "    <CentrifugalPump ComponentClass=\"CentrifugalPump\" ID=\"A\">"
-        + "      <Nozzle ID=\"N-A-in\"/>" + "      <Nozzle ID=\"N-A-out\"/>"
-        + "    </CentrifugalPump>" + "  </Equipment>" + "  <Equipment>"
-        + "    <PlateHeatExchanger ComponentClass=\"PlateHeatExchanger\" ID=\"B\">"
-        + "      <Nozzle ID=\"N-B-in\"/>" + "      <Nozzle ID=\"N-B-out\"/>"
-        + "    </PlateHeatExchanger>" + "  </Equipment>"
-        + "  <PipingNetworkSystem ID=\"PNS-1\" ComponentClass=\"PipingNetworkSystem\">"
-        + "    <PipingNetworkSegment ID=\"Seg-1\" ComponentClass=\"PipingNetworkSegment\">"
-        + "      <Connection FromID=\"N-A-out\" ToID=\"N-B-in\"/>" + "    </PipingNetworkSegment>"
-        + "    <PipingNetworkSegment ID=\"Seg-2\" ComponentClass=\"PipingNetworkSegment\">"
-        + "      <Connection FromID=\"N-B-out\" ToID=\"N-A-in\"/>" + "    </PipingNetworkSegment>"
-        + "  </PipingNetworkSystem>" + "</PlantModel>";
+	+ "    <CentrifugalPump ComponentClass=\"CentrifugalPump\" ID=\"A\">" + "      <Nozzle ID=\"N-A-in\"/>"
+	+ "      <Nozzle ID=\"N-A-out\"/>" + "    </CentrifugalPump>" + "  </Equipment>" + "  <Equipment>"
+	+ "    <PlateHeatExchanger ComponentClass=\"PlateHeatExchanger\" ID=\"B\">" + "      <Nozzle ID=\"N-B-in\"/>"
+	+ "      <Nozzle ID=\"N-B-out\"/>" + "    </PlateHeatExchanger>" + "  </Equipment>"
+	+ "  <PipingNetworkSystem ID=\"PNS-1\" ComponentClass=\"PipingNetworkSystem\">"
+	+ "    <PipingNetworkSegment ID=\"Seg-1\" ComponentClass=\"PipingNetworkSegment\">"
+	+ "      <Connection FromID=\"N-A-out\" ToID=\"N-B-in\"/>" + "    </PipingNetworkSegment>"
+	+ "    <PipingNetworkSegment ID=\"Seg-2\" ComponentClass=\"PipingNetworkSegment\">"
+	+ "      <Connection FromID=\"N-B-out\" ToID=\"N-A-in\"/>" + "    </PipingNetworkSegment>"
+	+ "  </PipingNetworkSystem>" + "</PlantModel>";
 
     Document doc = parseXml(xml);
     ResolvedTopology topology = DexpiTopologyResolver.resolve(doc);

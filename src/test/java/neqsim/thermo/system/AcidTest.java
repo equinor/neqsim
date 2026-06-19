@@ -13,7 +13,7 @@ public class AcidTest extends neqsim.NeqSimTest {
   private static final Logger logger = LogManager.getLogger(AcidTest.class);
 
   /** Logger object for class. */
-  
+
   /**
    * <p>
    * testAcid.
@@ -40,7 +40,7 @@ public class AcidTest extends neqsim.NeqSimTest {
   @DisplayName("test bublepoint of formic acid")
   public void testtestBubpAcid() {
     neqsim.thermo.system.SystemSrkCPAstatoil testSystem = new neqsim.thermo.system.SystemSrkCPAstatoil(373.0,
-        1.3501325);
+	1.3501325);
     testSystem.addComponent("formic acid", 25.0, "kg/sec");
     testSystem.setMixingRule(10);
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
@@ -64,16 +64,14 @@ public class AcidTest extends neqsim.NeqSimTest {
     // assertEquals(1002.54762, dens, 0.001);
 
     String scheme = testSystem.getPhase(PhaseType.AQUEOUS).getComponent("formic acid").getAssociationScheme();
-    double aCPA = ((ComponentSrkCPA) testSystem.getPhase(PhaseType.AQUEOUS).getComponent("formic acid"))
-        .geta();
-    double bCPA = ((ComponentSrkCPA) testSystem.getPhase(PhaseType.AQUEOUS).getComponent("formic acid"))
-        .getb();
+    double aCPA = ((ComponentSrkCPA) testSystem.getPhase(PhaseType.AQUEOUS).getComponent("formic acid")).geta();
+    double bCPA = ((ComponentSrkCPA) testSystem.getPhase(PhaseType.AQUEOUS).getComponent("formic acid")).getb();
     double boundvol = ((ComponentSrkCPA) testSystem.getPhase(PhaseType.AQUEOUS).getComponent("formic acid"))
-        .getAssociationVolume();
+	.getAssociationVolume();
     double assenergy = ((ComponentSrkCPA) testSystem.getPhase(PhaseType.AQUEOUS).getComponent("formic acid"))
-        .getAssociationEnergy();
+	.getAssociationEnergy();
     double m = ((ComponentSrkCPA) testSystem.getPhase(PhaseType.AQUEOUS).getComponent("formic acid"))
-        .getAttractiveTerm().getm();
+	.getAttractiveTerm().getm();
     assertEquals("1A", scheme);
     assertEquals(53663.0, aCPA);
     assertEquals(3.0, bCPA);
@@ -91,7 +89,7 @@ public class AcidTest extends neqsim.NeqSimTest {
   @DisplayName("test bublepoint of acetic acid")
   public void testtestBubpaceticacid() {
     neqsim.thermo.system.SystemSrkCPAstatoil testSystem = new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 117.9,
-        10.01325);
+	10.01325);
     testSystem.addComponent("acetic acid", 25.0, "kg/sec");
     testSystem.setMixingRule(10);
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
@@ -117,12 +115,10 @@ public class AcidTest extends neqsim.NeqSimTest {
     String scheme = testSystem.getPhase(PhaseType.AQUEOUS).getComponent(0).getAssociationScheme();
     double aCPA = ((ComponentSrkCPA) testSystem.getPhase(PhaseType.AQUEOUS).getComponent(0)).geta();
     double bCPA = ((ComponentSrkCPA) testSystem.getPhase(PhaseType.AQUEOUS).getComponent(0)).getb();
-    double boundvol = ((ComponentSrkCPA) testSystem.getPhase(PhaseType.AQUEOUS).getComponent(0))
-        .getAssociationVolume();
+    double boundvol = ((ComponentSrkCPA) testSystem.getPhase(PhaseType.AQUEOUS).getComponent(0)).getAssociationVolume();
     double assenergy = ((ComponentSrkCPA) testSystem.getPhase(PhaseType.AQUEOUS).getComponent(0))
-        .getAssociationEnergy();
-    double m = ((ComponentSrkCPA) testSystem.getPhase(PhaseType.AQUEOUS).getComponent(0))
-        .getAttractiveTerm().getm();
+	.getAssociationEnergy();
+    double m = ((ComponentSrkCPA) testSystem.getPhase(PhaseType.AQUEOUS).getComponent(0)).getAttractiveTerm().getm();
     assertEquals("1A", scheme);
     assertEquals(91195.7, aCPA);
     assertEquals(4.6818, bCPA);
@@ -152,12 +148,10 @@ public class AcidTest extends neqsim.NeqSimTest {
     String scheme = testSystem.getPhase(PhaseType.AQUEOUS).getComponent(0).getAssociationScheme();
     double aCPA = ((ComponentSrkCPA) testSystem.getPhase(PhaseType.AQUEOUS).getComponent(0)).geta();
     double bCPA = ((ComponentSrkCPA) testSystem.getPhase(PhaseType.AQUEOUS).getComponent(0)).getb();
-    double boundvol = ((ComponentSrkCPA) testSystem.getPhase(PhaseType.AQUEOUS).getComponent(0))
-        .getAssociationVolume();
+    double boundvol = ((ComponentSrkCPA) testSystem.getPhase(PhaseType.AQUEOUS).getComponent(0)).getAssociationVolume();
     double assenergy = ((ComponentSrkCPA) testSystem.getPhase(PhaseType.AQUEOUS).getComponent(0))
-        .getAssociationEnergy();
-    double m = ((ComponentSrkCPA) testSystem.getPhase(PhaseType.AQUEOUS).getComponent(0))
-        .getAttractiveTerm().getm();
+	.getAssociationEnergy();
+    double m = ((ComponentSrkCPA) testSystem.getPhase(PhaseType.AQUEOUS).getComponent(0)).getAttractiveTerm().getm();
     assertEquals("4C", scheme);
     assertEquals(12277.0, aCPA);
     assertEquals(1.4515, bCPA);
@@ -187,12 +181,10 @@ public class AcidTest extends neqsim.NeqSimTest {
     String scheme = testSystem.getPhase(PhaseType.AQUEOUS).getComponent(0).getAssociationScheme();
     double aCPA = ((ComponentSrkCPA) testSystem.getPhase(PhaseType.AQUEOUS).getComponent(0)).geta();
     double bCPA = ((ComponentSrkCPA) testSystem.getPhase(PhaseType.AQUEOUS).getComponent(0)).getb();
-    double boundvol = ((ComponentSrkCPA) testSystem.getPhase(PhaseType.AQUEOUS).getComponent(0))
-        .getAssociationVolume();
+    double boundvol = ((ComponentSrkCPA) testSystem.getPhase(PhaseType.AQUEOUS).getComponent(0)).getAssociationVolume();
     double assenergy = ((ComponentSrkCPA) testSystem.getPhase(PhaseType.AQUEOUS).getComponent(0))
-        .getAssociationEnergy();
-    double m = ((ComponentSrkCPA) testSystem.getPhase(PhaseType.AQUEOUS).getComponent(0))
-        .getAttractiveTerm().getm();
+	.getAssociationEnergy();
+    double m = ((ComponentSrkCPA) testSystem.getPhase(PhaseType.AQUEOUS).getComponent(0)).getAttractiveTerm().getm();
     assertEquals("4C", scheme);
     assertEquals(108190.0, aCPA);
     assertEquals(5.14, bCPA);

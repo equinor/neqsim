@@ -9,16 +9,14 @@ import org.apache.logging.log4j.Logger;
  * Refractive index-based approach for asphaltene stability screening.
  *
  * <p>
- * This method uses the difference between the refractive index (RI) of the crude oil and the RI at
- * the asphaltene flocculation point to assess stability. It is based on the observation that
- * asphaltenes precipitate when the oil's RI drops below a critical value during titration with a
- * poor solvent (typically n-heptane).
+ * This method uses the difference between the refractive index (RI) of the crude oil and the RI at the asphaltene
+ * flocculation point to assess stability. It is based on the observation that asphaltenes precipitate when the oil's RI
+ * drops below a critical value during titration with a poor solvent (typically n-heptane).
  * </p>
  *
  * <h2>Theoretical Background</h2>
  * <p>
- * The RI of a liquid mixture is related to its density and polarizability through the
- * Lorentz-Lorenz equation:
+ * The RI of a liquid mixture is related to its density and polarizability through the Lorentz-Lorenz equation:
  * </p>
  *
  * <pre>
@@ -48,12 +46,11 @@ import org.apache.logging.log4j.Logger;
  * References:
  * </p>
  * <ul>
- * <li>Buckley, J.S. et al. (1998). "Asphaltene Precipitation and Solvent Properties of Crude Oils."
- * Petroleum Science and Technology, 16(3-4), 251-285.</li>
- * <li>Fan, T., Wang, J., Buckley, J.S. (2002). "Evaluating Crude Oils by SARA Analysis." SPE
- * 75228.</li>
- * <li>Wattana, P. et al. (2003). "Characterization of Polarity-Based Asphaltene Subfractions."
- * Energy and Fuels, 17, 1532-1539.</li>
+ * <li>Buckley, J.S. et al. (1998). "Asphaltene Precipitation and Solvent Properties of Crude Oils." Petroleum Science
+ * and Technology, 16(3-4), 251-285.</li>
+ * <li>Fan, T., Wang, J., Buckley, J.S. (2002). "Evaluating Crude Oils by SARA Analysis." SPE 75228.</li>
+ * <li>Wattana, P. et al. (2003). "Characterization of Polarity-Based Asphaltene Subfractions." Energy and Fuels, 17,
+ * 1532-1539.</li>
  * </ul>
  *
  * @author ESOL
@@ -62,8 +59,7 @@ import org.apache.logging.log4j.Logger;
 public class RefractiveIndexAsphalteneScreening {
 
   /** Logger object for class. */
-  private static final Logger logger =
-      LogManager.getLogger(RefractiveIndexAsphalteneScreening.class);
+  private static final Logger logger = LogManager.getLogger(RefractiveIndexAsphalteneScreening.class);
 
   /** Refractive index of the crude oil at measurement conditions. */
   private double riOil = Double.NaN;
@@ -124,12 +120,13 @@ public class RefractiveIndexAsphalteneScreening {
   /**
    * Default constructor.
    */
-  public RefractiveIndexAsphalteneScreening() {}
+  public RefractiveIndexAsphalteneScreening() {
+  }
 
   /**
    * Constructor with measured RI values.
    *
-   * @param riOil refractive index of the crude oil
+   * @param riOil   refractive index of the crude oil
    * @param riOnset refractive index at onset (from titration)
    */
   public RefractiveIndexAsphalteneScreening(double riOil, double riOnset) {
@@ -141,13 +138,12 @@ public class RefractiveIndexAsphalteneScreening {
    * Estimates the refractive index from oil density using the Lorentz-Lorenz derived correlation.
    *
    * <p>
-   * The correlation used is: n = 1.0 + 0.5 * FRI, where FRI (function of RI) = 0.0003889 * rho -
-   * 0.02755 for rho in kg/m3.
+   * The correlation used is: n = 1.0 + 0.5 * FRI, where FRI (function of RI) = 0.0003889 * rho - 0.02755 for rho in
+   * kg/m3.
    * </p>
    *
    * <p>
-   * Alternative simplified correlation (Buckley, 1998): n = 1.0 + 0.2867 * (rho/1000) ^0.5 + 0.1439
-   * * (rho/1000)
+   * Alternative simplified correlation (Buckley, 1998): n = 1.0 + 0.2867 * (rho/1000) ^0.5 + 0.1439 * (rho/1000)
    * </p>
    *
    * @param density oil density at conditions (kg/m3)
@@ -224,8 +220,7 @@ public class RefractiveIndexAsphalteneScreening {
    * @return critical dilution ratio
    */
   public double getCriticalDilutionRatio() {
-    if (Double.isNaN(heptaneFractionAtOnset) || heptaneFractionAtOnset <= 0
-        || heptaneFractionAtOnset >= 1.0) {
+    if (Double.isNaN(heptaneFractionAtOnset) || heptaneFractionAtOnset <= 0 || heptaneFractionAtOnset >= 1.0) {
       return Double.NaN;
     }
     return heptaneFractionAtOnset / (1.0 - heptaneFractionAtOnset);
@@ -235,18 +230,16 @@ public class RefractiveIndexAsphalteneScreening {
    * Estimates onset RI from SARA fractions using Buckley correlation.
    *
    * <p>
-   * Correlation from Buckley et al. (1998): RI_onset correlates with asphaltene solubility class
-   * and R/A ratio.
+   * Correlation from Buckley et al. (1998): RI_onset correlates with asphaltene solubility class and R/A ratio.
    * </p>
    *
-   * @param saturates weight fraction of saturates
-   * @param aromatics weight fraction of aromatics
-   * @param resins weight fraction of resins
+   * @param saturates   weight fraction of saturates
+   * @param aromatics   weight fraction of aromatics
+   * @param resins      weight fraction of resins
    * @param asphaltenes weight fraction of asphaltenes
    * @return estimated onset RI
    */
-  public double estimateOnsetRIFromSARA(double saturates, double aromatics, double resins,
-      double asphaltenes) {
+  public double estimateOnsetRIFromSARA(double saturates, double aromatics, double resins, double asphaltenes) {
     // Improved correlation based on Buckley et al. (2007), Fan et al. (2002),
     // and Wattana et al. (2003). PRI is an intrinsic property of the asphaltene
     // that depends on asphaltene polarity and solvent environment.

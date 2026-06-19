@@ -6,25 +6,21 @@ import java.util.Map;
 import com.google.gson.GsonBuilder;
 
 /**
- * Population Balance Model (PBM) for tracking the evolution of particle size distributions over
- * time.
+ * Population Balance Model (PBM) for tracking the evolution of particle size distributions over time.
  *
  * <p>
- * This class solves the discretized General Dynamic Equation (GDE) for aerosol/particle populations
- * subject to:
+ * This class solves the discretized General Dynamic Equation (GDE) for aerosol/particle populations subject to:
  * </p>
  * <ul>
  * <li><b>Nucleation</b>: Formation of new particles at the critical size from CNT</li>
- * <li><b>Condensation growth</b>: Particle size increase by vapor condensation (Fuchs-interpolated
- * growth rate)</li>
- * <li><b>Brownian coagulation</b>: Particle-particle collisions merging smaller particles into
- * larger ones (Smoluchowski kernel)</li>
+ * <li><b>Condensation growth</b>: Particle size increase by vapor condensation (Fuchs-interpolated growth rate)</li>
+ * <li><b>Brownian coagulation</b>: Particle-particle collisions merging smaller particles into larger ones
+ * (Smoluchowski kernel)</li>
  * </ul>
  *
  * <p>
- * The size space is discretized into geometrically-spaced sections (bins). The model uses operator
- * splitting: nucleation source, then growth (advection), then coagulation, each sub-step at the
- * current time step.
+ * The size space is discretized into geometrically-spaced sections (bins). The model uses operator splitting:
+ * nucleation source, then growth (advection), then coagulation, each sub-step at the current time step.
  * </p>
  *
  * <p>
@@ -60,10 +56,9 @@ import com.google.gson.GsonBuilder;
  * References:
  * </p>
  * <ul>
- * <li>Seinfeld, J.H. and Pandis, S.N. (2016). Atmospheric Chemistry and Physics, 3rd ed., Chapters
- * 12-13.</li>
- * <li>Gelbard, F. and Seinfeld, J.H. (1980). Simulation of multicomponent aerosol dynamics. J.
- * Colloid Interface Sci. 78, 485-501.</li>
+ * <li>Seinfeld, J.H. and Pandis, S.N. (2016). Atmospheric Chemistry and Physics, 3rd ed., Chapters 12-13.</li>
+ * <li>Gelbard, F. and Seinfeld, J.H. (1980). Simulation of multicomponent aerosol dynamics. J. Colloid Interface Sci.
+ * 78, 485-501.</li>
  * <li>Jacobson, M.Z. (2005). Fundamentals of Atmospheric Modeling, 2nd ed., Chapter 13.</li>
  * </ul>
  *
@@ -133,8 +128,7 @@ public class PopulationBalanceModel {
   private boolean solved = false;
 
   /**
-   * Creates a PopulationBalanceModel using nucleation parameters from a ClassicalNucleationTheory
-   * model.
+   * Creates a PopulationBalanceModel using nucleation parameters from a ClassicalNucleationTheory model.
    *
    * <p>
    * The CNT model must have been calculated before passing to this constructor.
@@ -286,7 +280,7 @@ public class PopulationBalanceModel {
 
     for (int i = 0; i < numberOfBins; i++) {
       if (diameter >= binEdges[i] && diameter < binEdges[i + 1]) {
-        return i;
+	return i;
       }
     }
     return numberOfBins - 1;
@@ -296,14 +290,14 @@ public class PopulationBalanceModel {
    * Adds nucleated particles to the nucleation bin.
    *
    * @param nucleationBin the bin index for newly nucleated particles
-   * @param rate nucleation rate in particles/(m3*s)
-   * @param dt time step in seconds
+   * @param rate          nucleation rate in particles/(m3*s)
+   * @param dt            time step in seconds
    */
   private void applyNucleation(int nucleationBin, double rate, double dt) {
     if (rate > 0.0 && nucleationBin >= 0 && nucleationBin < numberOfBins) {
       double newParticles = rate * dt;
       if (newParticles > 1e30) {
-        newParticles = 1e30; // Physical cap
+	newParticles = 1e30; // Physical cap
       }
       numberDensity[nucleationBin] += newParticles;
     }
@@ -313,12 +307,12 @@ public class PopulationBalanceModel {
    * Applies condensation growth by shifting particles to larger bins.
    *
    * <p>
-   * Uses a first-order upstream differencing scheme. For each bin, the growth velocity determines
-   * how many particles move to the next larger bin during the time step.
+   * Uses a first-order upstream differencing scheme. For each bin, the growth velocity determines how many particles
+   * move to the next larger bin during the time step.
    * </p>
    *
    * @param growthRateRad growth rate dr/dt in m/s
-   * @param dt time step in seconds
+   * @param dt            time step in seconds
    */
   private void applyCondensationGrowth(double growthRateRad, double dt) {
     if (growthRateRad <= 0.0) {
@@ -330,7 +324,7 @@ public class PopulationBalanceModel {
 
     for (int i = 0; i < numberOfBins - 1; i++) {
       if (numberDensity[i] <= 0.0) {
-        continue;
+	continue;
       }
 
       // Growth velocity in diameter space: dD/dt = 2 * dr/dt
@@ -340,7 +334,7 @@ public class PopulationBalanceModel {
 
       // Cap at 1.0 (CFL condition)
       if (fractionOut > 1.0) {
-        fractionOut = 1.0;
+	fractionOut = 1.0;
       }
 
       double nTransfer = numberDensity[i] * fractionOut;
@@ -358,12 +352,12 @@ public class PopulationBalanceModel {
    * Applies Brownian coagulation using a simplified sectional approach.
    *
    * <p>
-   * Uses the constant kernel approximation (Smoluchowski) for the continuum regime. Coagulation
-   * moves volume from two smaller bins into a larger bin.
+   * Uses the constant kernel approximation (Smoluchowski) for the continuum regime. Coagulation moves volume from two
+   * smaller bins into a larger bin.
    * </p>
    *
    * @param kernel coagulation kernel K in m3/s
-   * @param dt time step in seconds
+   * @param dt     time step in seconds
    */
   private void applyCoagulation(double kernel, double dt) {
     if (kernel <= 0.0) {
@@ -387,20 +381,20 @@ public class PopulationBalanceModel {
     // For efficiency, use only the self-coagulation (i=j) and near-neighbor terms
     for (int i = 0; i < numberOfBins; i++) {
       if (numberDensity[i] < 1.0) {
-        continue;
+	continue;
       }
 
       // Self-coagulation: rate = 0.5 * K * N_i^2
       double selfRate = 0.5 * kernel * numberDensity[i] * numberDensity[i] * dt;
       if (selfRate > numberDensity[i] * 0.5) {
-        selfRate = numberDensity[i] * 0.5; // Don't remove more than half
+	selfRate = numberDensity[i] * 0.5; // Don't remove more than half
       }
 
       // Two particles of size i merge to form one particle of size 2^(1/3)*d_i
       // This roughly goes to bin i+1 (since bins are geometrically spaced)
       newDensity[i] -= 2.0 * selfRate;
       if (i + 1 < numberOfBins) {
-        newDensity[i + 1] += selfRate;
+	newDensity[i + 1] += selfRate;
       }
     }
 
@@ -430,9 +424,9 @@ public class PopulationBalanceModel {
       meanDiameter += n * d;
 
       if (n > 0.0 && d > 0.0) {
-        double logD = Math.log(d);
-        sumNlogD += n * logD;
-        sumNlogD2 += n * logD * logD;
+	double logD = Math.log(d);
+	sumNlogD += n * logD;
+	sumNlogD2 += n * logD * logD;
       }
     }
 
@@ -445,9 +439,9 @@ public class PopulationBalanceModel {
       // Geometric standard deviation
       double logDVar = sumNlogD2 / totalNumberDensity - logDMean * logDMean;
       if (logDVar > 0.0) {
-        geometricStdDev = Math.exp(Math.sqrt(logDVar));
+	geometricStdDev = Math.exp(Math.sqrt(logDVar));
       } else {
-        geometricStdDev = 1.0;
+	geometricStdDev = 1.0;
       }
     }
 
@@ -473,8 +467,8 @@ public class PopulationBalanceModel {
     for (int i = 0; i < numberOfBins; i++) {
       cumulative += numberDensity[i];
       if (cumulative >= halfN) {
-        medianDiameter = binDiameters[i];
-        return;
+	medianDiameter = binDiameters[i];
+	return;
       }
     }
     medianDiameter = binDiameters[numberOfBins - 1];
@@ -649,7 +643,7 @@ public class PopulationBalanceModel {
       Map<String, Object> bins = new LinkedHashMap<String, Object>();
       double[] dUm = new double[numberOfBins];
       for (int i = 0; i < numberOfBins; i++) {
-        dUm[i] = binDiameters[i] * 1e6;
+	dUm[i] = binDiameters[i] * 1e6;
       }
       bins.put("diameters_um", dUm);
       bins.put("numberDensity_per_m3", Arrays.copyOf(numberDensity, numberOfBins));
@@ -665,8 +659,7 @@ public class PopulationBalanceModel {
    * @return JSON string
    */
   public String toJson() {
-    return new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().create()
-        .toJson(toMap());
+    return new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().create().toJson(toMap());
   }
 
   /** {@inheritDoc} */
@@ -675,9 +668,7 @@ public class PopulationBalanceModel {
     if (!solved) {
       return "PopulationBalanceModel [not solved]";
     }
-    return String.format(
-        "PBM: N=%.2e/m3, d_mean=%.2f um, d_50=%.2f um, sigma_g=%.2f, mass=%.3f mg/m3",
-        totalNumberDensity, meanDiameter * 1e6, medianDiameter * 1e6, geometricStdDev,
-        totalMassConcentration * 1e6);
+    return String.format("PBM: N=%.2e/m3, d_mean=%.2f um, d_50=%.2f um, sigma_g=%.2f, mass=%.3f mg/m3",
+	totalNumberDensity, meanDiameter * 1e6, medianDiameter * 1e6, geometricStdDev, totalMassConcentration * 1e6);
   }
 }

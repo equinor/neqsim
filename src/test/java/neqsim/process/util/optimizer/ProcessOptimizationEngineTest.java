@@ -22,8 +22,7 @@ import org.apache.logging.log4j.Logger;
  * Unit tests for ProcessOptimizationEngine.
  *
  * <p>
- * Tests the gradient-based optimization, sensitivity analysis, and FlowRateOptimizer integration
- * features.
+ * Tests the gradient-based optimization, sensitivity analysis, and FlowRateOptimizer integration features.
  * </p>
  *
  * @author NeqSim Development Team
@@ -66,8 +65,7 @@ class ProcessOptimizationEngineTest {
   void testDefaultConstructor() {
     ProcessOptimizationEngine defaultEngine = new ProcessOptimizationEngine();
     assertNotNull(defaultEngine);
-    assertEquals(ProcessOptimizationEngine.SearchAlgorithm.GOLDEN_SECTION,
-        defaultEngine.getSearchAlgorithm());
+    assertEquals(ProcessOptimizationEngine.SearchAlgorithm.GOLDEN_SECTION, defaultEngine.getSearchAlgorithm());
     assertEquals(1e-6, defaultEngine.getTolerance(), 1e-10);
     assertEquals(100, defaultEngine.getMaxIterations());
   }
@@ -75,12 +73,10 @@ class ProcessOptimizationEngineTest {
   @Test
   void testSetSearchAlgorithm() {
     engine.setSearchAlgorithm(ProcessOptimizationEngine.SearchAlgorithm.BINARY_SEARCH);
-    assertEquals(ProcessOptimizationEngine.SearchAlgorithm.BINARY_SEARCH,
-        engine.getSearchAlgorithm());
+    assertEquals(ProcessOptimizationEngine.SearchAlgorithm.BINARY_SEARCH, engine.getSearchAlgorithm());
 
     engine.setSearchAlgorithm(ProcessOptimizationEngine.SearchAlgorithm.GRADIENT_DESCENT);
-    assertEquals(ProcessOptimizationEngine.SearchAlgorithm.GRADIENT_DESCENT,
-        engine.getSearchAlgorithm());
+    assertEquals(ProcessOptimizationEngine.SearchAlgorithm.GRADIENT_DESCENT, engine.getSearchAlgorithm());
   }
 
   @Test
@@ -113,8 +109,7 @@ class ProcessOptimizationEngineTest {
     engine.setSearchAlgorithm(ProcessOptimizationEngine.SearchAlgorithm.GOLDEN_SECTION);
     engine.setEnforceConstraints(false);
 
-    ProcessOptimizationEngine.OptimizationResult result =
-        engine.findMaximumThroughput(50.0, 10.0, 1000.0, 50000.0);
+    ProcessOptimizationEngine.OptimizationResult result = engine.findMaximumThroughput(50.0, 10.0, 1000.0, 50000.0);
 
     assertNotNull(result);
     assertEquals("Maximum Throughput", result.getObjective());
@@ -128,8 +123,7 @@ class ProcessOptimizationEngineTest {
     engine.setSearchAlgorithm(ProcessOptimizationEngine.SearchAlgorithm.BINARY_SEARCH);
     engine.setEnforceConstraints(false);
 
-    ProcessOptimizationEngine.OptimizationResult result =
-        engine.findMaximumThroughput(50.0, 10.0, 1000.0, 50000.0);
+    ProcessOptimizationEngine.OptimizationResult result = engine.findMaximumThroughput(50.0, 10.0, 1000.0, 50000.0);
 
     assertNotNull(result);
     assertTrue(result.getOptimalValue() >= 1000.0);
@@ -141,8 +135,7 @@ class ProcessOptimizationEngineTest {
     engine.setSearchAlgorithm(ProcessOptimizationEngine.SearchAlgorithm.GRADIENT_DESCENT);
     engine.setEnforceConstraints(false);
 
-    ProcessOptimizationEngine.OptimizationResult result =
-        engine.findMaximumThroughput(50.0, 10.0, 1000.0, 50000.0);
+    ProcessOptimizationEngine.OptimizationResult result = engine.findMaximumThroughput(50.0, 10.0, 1000.0, 50000.0);
 
     assertNotNull(result);
     assertTrue(result.getOptimalValue() >= 1000.0);
@@ -151,8 +144,7 @@ class ProcessOptimizationEngineTest {
 
   @Test
   void testFindMaximumThroughputArmijoWolfe() {
-    engine.setSearchAlgorithm(
-        ProcessOptimizationEngine.SearchAlgorithm.GRADIENT_DESCENT_ARMIJO_WOLFE);
+    engine.setSearchAlgorithm(ProcessOptimizationEngine.SearchAlgorithm.GRADIENT_DESCENT_ARMIJO_WOLFE);
     engine.setEnforceConstraints(false);
 
     // Configure Armijo-Wolfe parameters
@@ -160,8 +152,7 @@ class ProcessOptimizationEngineTest {
     engine.setWolfeC2(0.9);
     engine.setMaxLineSearchIterations(20);
 
-    ProcessOptimizationEngine.OptimizationResult result =
-        engine.findMaximumThroughput(50.0, 10.0, 1000.0, 50000.0);
+    ProcessOptimizationEngine.OptimizationResult result = engine.findMaximumThroughput(50.0, 10.0, 1000.0, 50000.0);
 
     assertNotNull(result);
     assertTrue(result.getOptimalValue() >= 1000.0, "Flow should be above min");
@@ -177,8 +168,7 @@ class ProcessOptimizationEngineTest {
     // Configure BFGS parameters
     engine.setBfgsGradientTolerance(1e-6);
 
-    ProcessOptimizationEngine.OptimizationResult result =
-        engine.findMaximumThroughput(50.0, 10.0, 1000.0, 50000.0);
+    ProcessOptimizationEngine.OptimizationResult result = engine.findMaximumThroughput(50.0, 10.0, 1000.0, 50000.0);
 
     assertNotNull(result);
     assertTrue(result.getOptimalValue() >= 1000.0, "Flow should be above min");
@@ -199,8 +189,7 @@ class ProcessOptimizationEngineTest {
     engine.setSearchAlgorithm(ProcessOptimizationEngine.SearchAlgorithm.GRADIENT_DESCENT);
     results[1] = engine.findMaximumThroughput(50.0, 10.0, 1000.0, 50000.0).getOptimalValue();
 
-    engine.setSearchAlgorithm(
-        ProcessOptimizationEngine.SearchAlgorithm.GRADIENT_DESCENT_ARMIJO_WOLFE);
+    engine.setSearchAlgorithm(ProcessOptimizationEngine.SearchAlgorithm.GRADIENT_DESCENT_ARMIJO_WOLFE);
     results[2] = engine.findMaximumThroughput(50.0, 10.0, 1000.0, 50000.0).getOptimalValue();
 
     engine.setSearchAlgorithm(ProcessOptimizationEngine.SearchAlgorithm.BFGS);
@@ -237,8 +226,7 @@ class ProcessOptimizationEngineTest {
 
   @Test
   void testFindRequiredInletPressure() {
-    ProcessOptimizationEngine.OptimizationResult result =
-        engine.findRequiredInletPressure(5000.0, 10.0, 20.0, 100.0);
+    ProcessOptimizationEngine.OptimizationResult result = engine.findRequiredInletPressure(5000.0, 10.0, 20.0, 100.0);
 
     assertNotNull(result);
     assertEquals("Required Inlet Pressure", result.getObjective());
@@ -249,13 +237,12 @@ class ProcessOptimizationEngineTest {
 
   @Test
   void testGenerateLiftCurve() {
-    double[] pressures = {30.0, 40.0, 50.0};
-    double[] temperatures = {298.15};
-    double[] waterCuts = {0.0};
-    double[] gors = {100.0};
+    double[] pressures = { 30.0, 40.0, 50.0 };
+    double[] temperatures = { 298.15 };
+    double[] waterCuts = { 0.0 };
+    double[] gors = { 100.0 };
 
-    ProcessOptimizationEngine.LiftCurveData curve =
-        engine.generateLiftCurve(pressures, temperatures, waterCuts, gors);
+    ProcessOptimizationEngine.LiftCurveData curve = engine.generateLiftCurve(pressures, temperatures, waterCuts, gors);
 
     assertNotNull(curve);
     assertNotNull(curve.getPoints());
@@ -269,8 +256,7 @@ class ProcessOptimizationEngineTest {
 
   @Test
   void testOptimizationResultClass() {
-    ProcessOptimizationEngine.OptimizationResult result =
-        new ProcessOptimizationEngine.OptimizationResult();
+    ProcessOptimizationEngine.OptimizationResult result = new ProcessOptimizationEngine.OptimizationResult();
 
     result.setObjective("Test");
     result.setOptimalValue(1234.5);
@@ -288,18 +274,15 @@ class ProcessOptimizationEngineTest {
 
   @Test
   void testConstraintReportClass() {
-    ProcessOptimizationEngine.ConstraintReport report =
-        new ProcessOptimizationEngine.ConstraintReport();
+    ProcessOptimizationEngine.ConstraintReport report = new ProcessOptimizationEngine.ConstraintReport();
 
-    ProcessOptimizationEngine.EquipmentConstraintStatus status1 =
-        new ProcessOptimizationEngine.EquipmentConstraintStatus();
+    ProcessOptimizationEngine.EquipmentConstraintStatus status1 = new ProcessOptimizationEngine.EquipmentConstraintStatus();
     status1.setEquipmentName("Compressor1");
     status1.setEquipmentType("Compressor");
     status1.setUtilization(0.85);
     status1.setWithinLimits(true);
 
-    ProcessOptimizationEngine.EquipmentConstraintStatus status2 =
-        new ProcessOptimizationEngine.EquipmentConstraintStatus();
+    ProcessOptimizationEngine.EquipmentConstraintStatus status2 = new ProcessOptimizationEngine.EquipmentConstraintStatus();
     status2.setEquipmentName("Separator1");
     status2.setEquipmentType("Separator");
     status2.setUtilization(0.95);
@@ -318,8 +301,7 @@ class ProcessOptimizationEngineTest {
 
   @Test
   void testEquipmentConstraintStatusClass() {
-    ProcessOptimizationEngine.EquipmentConstraintStatus status =
-        new ProcessOptimizationEngine.EquipmentConstraintStatus();
+    ProcessOptimizationEngine.EquipmentConstraintStatus status = new ProcessOptimizationEngine.EquipmentConstraintStatus();
 
     status.setEquipmentName("TestCompressor");
     status.setEquipmentType("Compressor");
@@ -338,8 +320,7 @@ class ProcessOptimizationEngineTest {
   void testLiftCurveDataClass() {
     ProcessOptimizationEngine.LiftCurveData data = new ProcessOptimizationEngine.LiftCurveData();
 
-    ProcessOptimizationEngine.LiftCurvePoint point1 =
-        new ProcessOptimizationEngine.LiftCurvePoint();
+    ProcessOptimizationEngine.LiftCurvePoint point1 = new ProcessOptimizationEngine.LiftCurvePoint();
     point1.setInletPressure(50.0);
     point1.setTemperature(300.0);
     point1.setWaterCut(0.1);
@@ -372,8 +353,7 @@ class ProcessOptimizationEngineTest {
 
   @Test
   void testSensitivityResultClass() {
-    ProcessOptimizationEngine.SensitivityResult result =
-        new ProcessOptimizationEngine.SensitivityResult();
+    ProcessOptimizationEngine.SensitivityResult result = new ProcessOptimizationEngine.SensitivityResult();
 
     result.setBaseFlow(5000.0);
     result.setFlowGradient(0.5);
@@ -393,8 +373,7 @@ class ProcessOptimizationEngineTest {
 
   @Test
   void testSensitivityResultNotAtCapacity() {
-    ProcessOptimizationEngine.SensitivityResult result =
-        new ProcessOptimizationEngine.SensitivityResult();
+    ProcessOptimizationEngine.SensitivityResult result = new ProcessOptimizationEngine.SensitivityResult();
     result.setTightestMargin(0.15); // 15% margin
 
     assertFalse(result.isAtCapacity());
@@ -404,8 +383,7 @@ class ProcessOptimizationEngineTest {
   void testAnalyzeSensitivity() {
     engine.setEnforceConstraints(false);
 
-    ProcessOptimizationEngine.SensitivityResult sensitivity =
-        engine.analyzeSensitivity(5000.0, 50.0, 10.0);
+    ProcessOptimizationEngine.SensitivityResult sensitivity = engine.analyzeSensitivity(5000.0, 50.0, 10.0);
 
     assertNotNull(sensitivity);
     assertEquals(5000.0, sensitivity.getBaseFlow(), 0.01);
@@ -430,8 +408,7 @@ class ProcessOptimizationEngineTest {
 
   @Test
   void testEvaluateConstraintsWithCache() {
-    ProcessConstraintEvaluator.ConstraintEvaluationResult result =
-        engine.evaluateConstraintsWithCache();
+    ProcessConstraintEvaluator.ConstraintEvaluationResult result = engine.evaluateConstraintsWithCache();
 
     assertNotNull(result);
     assertNotNull(result.getEquipmentSummaries());
@@ -454,8 +431,7 @@ class ProcessOptimizationEngineTest {
 
   @Test
   void testCreateFlowRateOptimizer() {
-    neqsim.process.util.optimizer.FlowRateOptimizer flowOptimizer =
-        engine.createFlowRateOptimizer();
+    neqsim.process.util.optimizer.FlowRateOptimizer flowOptimizer = engine.createFlowRateOptimizer();
 
     assertNotNull(flowOptimizer);
   }
@@ -471,10 +447,10 @@ class ProcessOptimizationEngineTest {
 
   @Test
   void testGenerateComprehensiveLiftCurve() {
-    double[] inletPressures = {40.0, 50.0, 60.0};
+    double[] inletPressures = { 40.0, 50.0, 60.0 };
 
-    neqsim.process.util.optimizer.FlowRateOptimizer optimizer =
-        engine.generateComprehensiveLiftCurve("feed", inletPressures, 10.0);
+    neqsim.process.util.optimizer.FlowRateOptimizer optimizer = engine.generateComprehensiveLiftCurve("feed",
+	inletPressures, 10.0);
 
     assertNotNull(optimizer);
   }
@@ -492,4 +468,3 @@ class ProcessOptimizationEngineTest {
     assertTrue(report.getEquipmentStatuses().isEmpty());
   }
 }
-

@@ -12,9 +12,9 @@ import neqsim.process.safety.risk.bowtie.BowTieModel;
  * Safety barrier or protection layer with document evidence and performance-standard links.
  *
  * <p>
- * A safety barrier may represent a technical, operational, or organizational barrier. It can be
- * linked to process equipment tags, bow-tie hazards, performance standards, and source documents
- * extracted by agents from technical documentation.
+ * A safety barrier may represent a technical, operational, or organizational barrier. It can be linked to process
+ * equipment tags, bow-tie hazards, performance standards, and source documents extracted by agents from technical
+ * documentation.
  * </p>
  *
  * @author ESOL
@@ -77,9 +77,9 @@ public class SafetyBarrier implements Serializable {
    * @return safety barrier with copied type, PFD, owner, and status data
    */
   public static SafetyBarrier fromBowTieBarrier(BowTieModel.Barrier bowTieBarrier) {
-    SafetyBarrier barrier = new SafetyBarrier(bowTieBarrier.getId())
-        .setName(bowTieBarrier.getDescription()).setDescription(bowTieBarrier.getDescription())
-        .setPfd(bowTieBarrier.getPfd()).setOwner(bowTieBarrier.getOwner());
+    SafetyBarrier barrier = new SafetyBarrier(bowTieBarrier.getId()).setName(bowTieBarrier.getDescription())
+	.setDescription(bowTieBarrier.getDescription()).setPfd(bowTieBarrier.getPfd())
+	.setOwner(bowTieBarrier.getOwner());
     if (bowTieBarrier.getBarrierType() == BowTieModel.BarrierType.MITIGATION) {
       barrier.setType(BarrierType.MITIGATION);
     } else if (bowTieBarrier.getBarrierType() == BowTieModel.BarrierType.BOTH) {
@@ -87,12 +87,10 @@ public class SafetyBarrier implements Serializable {
     } else {
       barrier.setType(BarrierType.PREVENTION);
     }
-    barrier.setStatus(
-        bowTieBarrier.isFunctional() ? BarrierStatus.AVAILABLE : BarrierStatus.OUT_OF_SERVICE);
-    if (bowTieBarrier.getVerificationStatus() != null
-        && !bowTieBarrier.getVerificationStatus().trim().isEmpty()) {
+    barrier.setStatus(bowTieBarrier.isFunctional() ? BarrierStatus.AVAILABLE : BarrierStatus.OUT_OF_SERVICE);
+    if (bowTieBarrier.getVerificationStatus() != null && !bowTieBarrier.getVerificationStatus().trim().isEmpty()) {
       barrier.addEvidence(new DocumentEvidence("verification-" + bowTieBarrier.getId(), "", "", "",
-          "verificationStatus", 0, "BowTieModel", bowTieBarrier.getVerificationStatus(), 1.0));
+	  "verificationStatus", 0, "BowTieModel", bowTieBarrier.getVerificationStatus(), 1.0));
     }
     return barrier;
   }
@@ -394,7 +392,7 @@ public class SafetyBarrier implements Serializable {
   public boolean hasTraceableEvidence() {
     for (DocumentEvidence item : evidence) {
       if (item.isTraceable()) {
-        return true;
+	return true;
       }
     }
     return performanceStandard != null && performanceStandard.hasTraceableEvidence();
@@ -430,7 +428,7 @@ public class SafetyBarrier implements Serializable {
     } else {
       List<String> standardFindings = performanceStandard.validate();
       for (String finding : standardFindings) {
-        findings.add("Performance standard " + performanceStandard.getId() + ": " + finding);
+	findings.add("Performance standard " + performanceStandard.getId() + ": " + finding);
       }
     }
     if (!hasTraceableEvidence()) {
@@ -458,8 +456,7 @@ public class SafetyBarrier implements Serializable {
     map.put("riskReductionFactor", getRiskReductionFactor());
     map.put("linkedEquipmentTags", new ArrayList<String>(linkedEquipmentTags));
     map.put("linkedHazardIds", new ArrayList<String>(linkedHazardIds));
-    map.put("performanceStandard",
-        performanceStandard == null ? null : performanceStandard.toMap());
+    map.put("performanceStandard", performanceStandard == null ? null : performanceStandard.toMap());
 
     List<Map<String, Object>> evidenceList = new ArrayList<Map<String, Object>>();
     for (DocumentEvidence item : evidence) {
@@ -476,7 +473,6 @@ public class SafetyBarrier implements Serializable {
    * @return JSON representation
    */
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(toMap());
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(toMap());
   }
 }

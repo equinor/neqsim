@@ -49,13 +49,11 @@ public class VUflash {
       testOps.TPflash();
       testSystem.display();
 
-      logger.info("Volume " + testSystem.getVolume() * 1.1 + " internalEnergy "
-          + testSystem.getInternalEnergy());
+      logger.info("Volume " + testSystem.getVolume() * 1.1 + " internalEnergy " + testSystem.getInternalEnergy());
       // testSystem.setPressure(5);
       // testOps.PHflash(testSystem.getEnthalpy(), 0);
       testOps.VUflash(testSystem.getVolume() * 1.1, testSystem.getInternalEnergy());
-      logger.info(
-          "Volume " + testSystem.getVolume() + " internalEnergy " + testSystem.getInternalEnergy());
+      logger.info("Volume " + testSystem.getVolume() + " internalEnergy " + testSystem.getInternalEnergy());
 
       testSystem.display();
     } catch (Exception ex) {

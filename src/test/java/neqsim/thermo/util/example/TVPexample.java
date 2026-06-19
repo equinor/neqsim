@@ -20,7 +20,7 @@ public class TVPexample {
   private static final Logger logger = LogManager.getLogger(TVPexample.class);
 
   /** Logger object for class. */
-  
+
   /**
    * <p>
    * main.

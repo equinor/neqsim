@@ -39,16 +39,16 @@ public class ProcessSafetySystemAssessment implements Serializable {
   /**
    * Creates an assessment.
    *
-   * @param requirementId stable requirement identifier
-   * @param standard standard identifier
-   * @param clause clause identifier
-   * @param status requirement status
-   * @param severity severity string such as LOW, MEDIUM, HIGH, or CRITICAL
-   * @param message finding message
+   * @param requirementId  stable requirement identifier
+   * @param standard       standard identifier
+   * @param clause         clause identifier
+   * @param status         requirement status
+   * @param severity       severity string such as LOW, MEDIUM, HIGH, or CRITICAL
+   * @param message        finding message
    * @param recommendation recommended action
    */
-  public ProcessSafetySystemAssessment(String requirementId, String standard, String clause,
-      Status status, String severity, String message, String recommendation) {
+  public ProcessSafetySystemAssessment(String requirementId, String standard, String clause, Status status,
+      String severity, String message, String recommendation) {
     this.requirementId = normalize(requirementId);
     this.standard = normalize(standard);
     this.clause = normalize(clause);
@@ -61,88 +61,82 @@ public class ProcessSafetySystemAssessment implements Serializable {
   /**
    * Creates a passing assessment.
    *
-   * @param requirementId stable requirement identifier
-   * @param clause clause identifier
-   * @param message finding message
+   * @param requirementId  stable requirement identifier
+   * @param clause         clause identifier
+   * @param message        finding message
    * @param recommendation recommended action
    * @return passing assessment
    */
-  public static ProcessSafetySystemAssessment pass(String requirementId, String clause,
-      String message, String recommendation) {
-    return new ProcessSafetySystemAssessment(requirementId,
-        ProcessSafetySystemReviewEngine.NORSOK_S001, clause, Status.PASS, "LOW", message,
-        recommendation);
+  public static ProcessSafetySystemAssessment pass(String requirementId, String clause, String message,
+      String recommendation) {
+    return new ProcessSafetySystemAssessment(requirementId, ProcessSafetySystemReviewEngine.NORSOK_S001, clause,
+	Status.PASS, "LOW", message, recommendation);
   }
 
   /**
    * Creates a warning assessment.
    *
-   * @param requirementId stable requirement identifier
-   * @param clause clause identifier
-   * @param severity severity string
-   * @param message finding message
+   * @param requirementId  stable requirement identifier
+   * @param clause         clause identifier
+   * @param severity       severity string
+   * @param message        finding message
    * @param recommendation recommended action
    * @return warning assessment
    */
-  public static ProcessSafetySystemAssessment warning(String requirementId, String clause,
-      String severity, String message, String recommendation) {
-    return new ProcessSafetySystemAssessment(requirementId,
-        ProcessSafetySystemReviewEngine.NORSOK_S001, clause, Status.WARNING, severity, message,
-        recommendation);
+  public static ProcessSafetySystemAssessment warning(String requirementId, String clause, String severity,
+      String message, String recommendation) {
+    return new ProcessSafetySystemAssessment(requirementId, ProcessSafetySystemReviewEngine.NORSOK_S001, clause,
+	Status.WARNING, severity, message, recommendation);
   }
 
   /**
    * Creates a failing assessment.
    *
-   * @param requirementId stable requirement identifier
-   * @param clause clause identifier
-   * @param severity severity string
-   * @param message finding message
+   * @param requirementId  stable requirement identifier
+   * @param clause         clause identifier
+   * @param severity       severity string
+   * @param message        finding message
    * @param recommendation recommended action
    * @return failing assessment
    */
-  public static ProcessSafetySystemAssessment fail(String requirementId, String clause,
-      String severity, String message, String recommendation) {
-    return new ProcessSafetySystemAssessment(requirementId,
-        ProcessSafetySystemReviewEngine.NORSOK_S001, clause, Status.FAIL, severity, message,
-        recommendation);
+  public static ProcessSafetySystemAssessment fail(String requirementId, String clause, String severity, String message,
+      String recommendation) {
+    return new ProcessSafetySystemAssessment(requirementId, ProcessSafetySystemReviewEngine.NORSOK_S001, clause,
+	Status.FAIL, severity, message, recommendation);
   }
 
   /**
    * Creates an informational assessment.
    *
-   * @param requirementId stable requirement identifier
-   * @param clause clause identifier
-   * @param message finding message
+   * @param requirementId  stable requirement identifier
+   * @param clause         clause identifier
+   * @param message        finding message
    * @param recommendation recommended action
    * @return informational assessment
    */
-  public static ProcessSafetySystemAssessment info(String requirementId, String clause,
-      String message, String recommendation) {
-    return new ProcessSafetySystemAssessment(requirementId,
-        ProcessSafetySystemReviewEngine.NORSOK_S001, clause, Status.INFO, "LOW", message,
-        recommendation);
+  public static ProcessSafetySystemAssessment info(String requirementId, String clause, String message,
+      String recommendation) {
+    return new ProcessSafetySystemAssessment(requirementId, ProcessSafetySystemReviewEngine.NORSOK_S001, clause,
+	Status.INFO, "LOW", message, recommendation);
   }
 
   /**
    * Creates a not-applicable assessment.
    *
    * @param requirementId stable requirement identifier
-   * @param clause clause identifier
-   * @param message not-applicable reason
+   * @param clause        clause identifier
+   * @param message       not-applicable reason
    * @return not-applicable assessment
    */
-  public static ProcessSafetySystemAssessment notApplicable(String requirementId, String clause,
-      String message) {
-    return new ProcessSafetySystemAssessment(requirementId,
-        ProcessSafetySystemReviewEngine.NORSOK_S001, clause, Status.NOT_APPLICABLE, "LOW",
-        message, "No action required for this review item.");
+  public static ProcessSafetySystemAssessment notApplicable(String requirementId, String clause, String message) {
+    return new ProcessSafetySystemAssessment(requirementId, ProcessSafetySystemReviewEngine.NORSOK_S001, clause,
+	Status.NOT_APPLICABLE, "LOW", message, "No action required for this review item.");
   }
 
   /**
    * Adds a JSON-safe detail value.
    *
-   * @param key detail key
+   * @param key   detail key
    * @param value detail value
    * @return this assessment for fluent construction
    */

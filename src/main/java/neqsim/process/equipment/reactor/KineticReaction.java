@@ -9,10 +9,9 @@ import neqsim.thermo.system.SystemInterface;
  * General kinetic reaction model for plug flow and stirred tank reactors.
  *
  * <p>
- * Supports power-law, Langmuir-Hinshelwood-Hougen-Watson (LHHW), and reversible equilibrium rate
- * expressions with Arrhenius temperature dependence. Reaction stoichiometry and kinetic parameters
- * are defined independently, allowing flexible modeling of homogeneous and heterogeneous catalytic
- * reactions.
+ * Supports power-law, Langmuir-Hinshelwood-Hougen-Watson (LHHW), and reversible equilibrium rate expressions with
+ * Arrhenius temperature dependence. Reaction stoichiometry and kinetic parameters are defined independently, allowing
+ * flexible modeling of homogeneous and heterogeneous catalytic reactions.
  * </p>
  *
  * <p>
@@ -126,8 +125,8 @@ public class KineticReaction implements Serializable {
   private boolean reversible = false;
 
   /**
-   * Equilibrium constant correlation coefficients. ln(Keq) = eqCoeffs[0] + eqCoeffs[1]/T +
-   * eqCoeffs[2]*ln(T) + eqCoeffs[3]*T.
+   * Equilibrium constant correlation coefficients. ln(Keq) = eqCoeffs[0] + eqCoeffs[1]/T + eqCoeffs[2]*ln(T) +
+   * eqCoeffs[3]*T.
    */
   private double[] eqCoeffs = new double[4];
 
@@ -156,8 +155,8 @@ public class KineticReaction implements Serializable {
    * Add a reactant with stoichiometric coefficient and reaction order.
    *
    * @param componentName component name matching NeqSim database
-   * @param stoichCoeff positive stoichiometric coefficient (stored internally as negative)
-   * @param order kinetic order for this species in the rate expression
+   * @param stoichCoeff   positive stoichiometric coefficient (stored internally as negative)
+   * @param order         kinetic order for this species in the rate expression
    */
   public void addReactant(String componentName, double stoichCoeff, double order) {
     stoichiometry.put(componentName, -Math.abs(stoichCoeff));
@@ -168,7 +167,7 @@ public class KineticReaction implements Serializable {
    * Add a product with stoichiometric coefficient.
    *
    * @param componentName component name matching NeqSim database
-   * @param stoichCoeff positive stoichiometric coefficient
+   * @param stoichCoeff   positive stoichiometric coefficient
    */
   public void addProduct(String componentName, double stoichCoeff) {
     stoichiometry.put(componentName, Math.abs(stoichCoeff));
@@ -178,8 +177,8 @@ public class KineticReaction implements Serializable {
    * Add a product with stoichiometric coefficient and reverse reaction order.
    *
    * @param componentName component name matching NeqSim database
-   * @param stoichCoeff positive stoichiometric coefficient
-   * @param reverseOrder kinetic order in reverse rate expression (for reversible reactions)
+   * @param stoichCoeff   positive stoichiometric coefficient
+   * @param reverseOrder  kinetic order in reverse rate expression (for reversible reactions)
    */
   public void addProduct(String componentName, double stoichCoeff, double reverseOrder) {
     stoichiometry.put(componentName, Math.abs(stoichCoeff));
@@ -197,7 +196,7 @@ public class KineticReaction implements Serializable {
    * For LHHW: r = k(T) * drivingForce / (adsorptionTerm)^m
    * </p>
    *
-   * @param system the thermodynamic system with current T, P, composition
+   * @param system     the thermodynamic system with current T, P, composition
    * @param phaseIndex phase to evaluate concentrations in (0=combined, typically 0 or gas phase)
    * @return reaction rate in units consistent with rateBasis
    */
@@ -243,17 +242,17 @@ public class KineticReaction implements Serializable {
    */
   public double calculateEquilibriumConstant(double temperature) {
     double lnKeq = eqCoeffs[0] + eqCoeffs[1] / temperature + eqCoeffs[2] * Math.log(temperature)
-        + eqCoeffs[3] * temperature;
+	+ eqCoeffs[3] * temperature;
     return Math.exp(lnKeq);
   }
 
   /**
    * Calculate power-law rate.
    *
-   * @param system thermodynamic system
-   * @param phaseIndex phase index
+   * @param system       thermodynamic system
+   * @param phaseIndex   phase index
    * @param rateConstant pre-calculated k(T)
-   * @param temperature temperature [K]
+   * @param temperature  temperature [K]
    * @return rate [units per rateBasis]
    */
   private double calculatePowerLawRate(SystemInterface system, int phaseIndex, double rateConstant,
@@ -265,7 +264,7 @@ public class KineticReaction implements Serializable {
       double order = entry.getValue();
       double concentration = getConcentration(system, phaseIndex, comp);
       if (concentration <= 0.0 && order > 0.0) {
-        return 0.0;
+	return 0.0;
       }
       forwardRate *= Math.pow(Math.max(concentration, 0.0), order);
     }
@@ -294,14 +293,13 @@ public class KineticReaction implements Serializable {
   /**
    * Calculate LHHW rate.
    *
-   * @param system thermodynamic system
-   * @param phaseIndex phase index
+   * @param system       thermodynamic system
+   * @param phaseIndex   phase index
    * @param rateConstant pre-calculated k(T)
-   * @param temperature temperature [K]
+   * @param temperature  temperature [K]
    * @return LHHW rate
    */
-  private double calculateLHHWRate(SystemInterface system, int phaseIndex, double rateConstant,
-      double temperature) {
+  private double calculateLHHWRate(SystemInterface system, int phaseIndex, double rateConstant, double temperature) {
     // Numerator: same as power-law forward rate
     double numerator = rateConstant;
     for (Map.Entry<String, Double> entry : reactionOrders.entrySet()) {
@@ -309,15 +307,14 @@ public class KineticReaction implements Serializable {
       double order = entry.getValue();
       double concentration = getConcentration(system, phaseIndex, comp);
       if (concentration <= 0.0 && order > 0.0) {
-        return 0.0;
+	return 0.0;
       }
       numerator *= Math.pow(Math.max(concentration, 0.0), order);
     }
 
     // Denominator: (1 + sum(Ki * Ci^ni))^m
     double denomSum = 1.0;
-    double kAds =
-        adsorptionPreExpFactor * Math.exp(-adsorptionActivationEnergy / (R_GAS * temperature));
+    double kAds = adsorptionPreExpFactor * Math.exp(-adsorptionActivationEnergy / (R_GAS * temperature));
     for (Map.Entry<String, double[]> entry : adsorptionTerms.entrySet()) {
       String comp = entry.getKey();
       double[] params = entry.getValue(); // [Ki_factor, adsorption order]
@@ -336,8 +333,8 @@ public class KineticReaction implements Serializable {
   /**
    * Get molar concentration of a component in the specified phase.
    *
-   * @param system thermodynamic system
-   * @param phaseIndex phase index
+   * @param system        thermodynamic system
+   * @param phaseIndex    phase index
    * @param componentName component name
    * @return concentration in mol/m3
    */
@@ -532,12 +529,12 @@ public class KineticReaction implements Serializable {
   /**
    * Add an LHHW adsorption term for a component.
    *
-   * @param componentName component name
-   * @param kiFactor relative adsorption constant factor
+   * @param componentName   component name
+   * @param kiFactor        relative adsorption constant factor
    * @param adsorptionOrder adsorption concentration order
    */
   public void addAdsorptionTerm(String componentName, double kiFactor, double adsorptionOrder) {
-    adsorptionTerms.put(componentName, new double[] {kiFactor, adsorptionOrder});
+    adsorptionTerms.put(componentName, new double[] { kiFactor, adsorptionOrder });
   }
 
   /**

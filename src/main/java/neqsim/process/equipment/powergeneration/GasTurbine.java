@@ -26,16 +26,14 @@ import neqsim.thermo.system.SystemInterface;
  * Gas turbine model with integrated air compression, combustion, and expansion.
  *
  * <p>
- * Implements {@link CapacityConstrainedEquipment} and {@link AutoSizeable} for integration with the
- * production optimization framework. Capacity constraints track power output vs rated capacity and
- * thermal efficiency.
+ * Implements {@link CapacityConstrainedEquipment} and {@link AutoSizeable} for integration with the production
+ * optimization framework. Capacity constraints track power output vs rated capacity and thermal efficiency.
  * </p>
  *
  * @author asmund
  * @version $Id: $Id
  */
-public class GasTurbine extends TwoPortEquipment
-    implements CapacityConstrainedEquipment, AutoSizeable {
+public class GasTurbine extends TwoPortEquipment implements CapacityConstrainedEquipment, AutoSizeable {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
@@ -47,8 +45,8 @@ public class GasTurbine extends TwoPortEquipment
   public double combustionpressure = 2.5;
   double airGasRatio = 2.8;
   /**
-   * Excess-air factor applied on top of the stoichiometric air demand. Gas turbines run with large
-   * excess air (typically 2-3x stoichiometric) to limit the turbine inlet temperature.
+   * Excess-air factor applied on top of the stoichiometric air demand. Gas turbines run with large excess air
+   * (typically 2-3x stoichiometric) to limit the turbine inlet temperature.
    */
   private double excessAirFactor = 2.5;
   double expanderPower = 0.0;
@@ -64,8 +62,7 @@ public class GasTurbine extends TwoPortEquipment
   private boolean autoSized = false;
 
   /** Storage for capacity constraints. */
-  private final Map<String, CapacityConstraint> capacityConstraints =
-      new LinkedHashMap<String, CapacityConstraint>();
+  private final Map<String, CapacityConstraint> capacityConstraints = new LinkedHashMap<String, CapacityConstraint>();
 
   /**
    * <p>
@@ -100,7 +97,7 @@ public class GasTurbine extends TwoPortEquipment
    * Constructor for GasTurbine.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
+   * @param name        a {@link java.lang.String} object
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public GasTurbine(String name, StreamInterface inletStream) {
@@ -120,8 +117,7 @@ public class GasTurbine extends TwoPortEquipment
    * </p>
    *
    * <p>
-   * Returns the exhaust heat rejected by the turbine cooler (the energy a HRSG or bottoming cycle
-   * could recover).
+   * Returns the exhaust heat rejected by the turbine cooler (the energy a HRSG or bottoming cycle could recover).
    * </p>
    *
    * @return exhaust heat duty in watts (W)
@@ -136,8 +132,8 @@ public class GasTurbine extends TwoPortEquipment
    * </p>
    *
    * <p>
-   * Returns the net shaft power available to the load, computed as the expander work minus the
-   * internal air-compressor work. A positive value means the turbine delivers net power.
+   * Returns the net shaft power available to the load, computed as the expander work minus the internal air-compressor
+   * work. A positive value means the turbine delivers net power.
    * </p>
    *
    * @return net shaft power in watts (W)
@@ -228,7 +224,7 @@ public class GasTurbine extends TwoPortEquipment
     SystemInterface air = airStream.getThermoSystem();
     for (int i = 0; i < air.getNumberOfComponents(); i++) {
       if ("oxygen".equals(air.getComponent(i).getName())) {
-        return air.getComponent(i).getz();
+	return air.getComponent(i).getz();
       }
     }
     return 0.0;
@@ -238,8 +234,8 @@ public class GasTurbine extends TwoPortEquipment
    * Calculate the stoichiometric oxygen demand of the fuel for complete combustion.
    *
    * <p>
-   * For each hydrocarbon with C carbon and H hydrogen atoms the demand is (C + H/4) mol O2 per mol
-   * of that component, weighted by its mole fraction.
+   * For each hydrocarbon with C carbon and H hydrogen atoms the demand is (C + H/4) mol O2 per mol of that component,
+   * weighted by its mole fraction.
    * </p>
    *
    * @return stoichiometric oxygen demand in mol O2 per mol fuel
@@ -248,9 +244,9 @@ public class GasTurbine extends TwoPortEquipment
     double o2 = 0.0;
     for (int i = 0; i < thermoSystem.getNumberOfComponents(); i++) {
       if (thermoSystem.getComponent(i).isHydrocarbon()) {
-        double c = thermoSystem.getComponent(i).getElements().getNumberOfElements("C");
-        double h = thermoSystem.getComponent(i).getElements().getNumberOfElements("H");
-        o2 += thermoSystem.getComponent(i).getz() * (c + h / 4.0);
+	double c = thermoSystem.getComponent(i).getElements().getNumberOfElements("C");
+	double h = thermoSystem.getComponent(i).getElements().getNumberOfElements("H");
+	o2 += thermoSystem.getComponent(i).getz() * (c + h / 4.0);
       }
     }
     return o2;
@@ -260,8 +256,8 @@ public class GasTurbine extends TwoPortEquipment
    * Apply combustion stoichiometry to a combined air + fuel fluid.
    *
    * <p>
-   * Every hydrocarbon component is oxidised to CO2 and water, consuming oxygen. The burned fraction
-   * is limited by the oxygen available in the fluid so the oxygen inventory never goes negative.
+   * Every hydrocarbon component is oxidised to CO2 and water, consuming oxygen. The burned fraction is limited by the
+   * oxygen available in the fluid so the oxygen inventory never goes negative.
    * </p>
    *
    * @param fluid the combined combustion fluid to modify in place
@@ -272,13 +268,13 @@ public class GasTurbine extends TwoPortEquipment
     int n = fluid.getNumberOfComponents();
     for (int i = 0; i < n; i++) {
       if ("oxygen".equals(fluid.getComponent(i).getName())) {
-        availableO2 = fluid.getComponent(i).getNumberOfmoles();
+	availableO2 = fluid.getComponent(i).getNumberOfmoles();
       }
       if (fluid.getComponent(i).isHydrocarbon()) {
-        double moles = fluid.getComponent(i).getNumberOfmoles();
-        double c = fluid.getComponent(i).getElements().getNumberOfElements("C");
-        double h = fluid.getComponent(i).getElements().getNumberOfElements("H");
-        requiredO2 += moles * (c + h / 4.0);
+	double moles = fluid.getComponent(i).getNumberOfmoles();
+	double c = fluid.getComponent(i).getElements().getNumberOfElements("C");
+	double h = fluid.getComponent(i).getElements().getNumberOfElements("H");
+	requiredO2 += moles * (c + h / 4.0);
       }
     }
     if (requiredO2 <= 0.0) {
@@ -293,15 +289,15 @@ public class GasTurbine extends TwoPortEquipment
     List<Double> hcBurn = new ArrayList<Double>();
     for (int i = 0; i < n; i++) {
       if (fluid.getComponent(i).isHydrocarbon()) {
-        double moles = fluid.getComponent(i).getNumberOfmoles();
-        double c = fluid.getComponent(i).getElements().getNumberOfElements("C");
-        double h = fluid.getComponent(i).getElements().getNumberOfElements("H");
-        double burned = moles * burnFraction;
-        totalCO2 += burned * c;
-        totalH2O += burned * h / 2.0;
-        totalO2Consumed += burned * (c + h / 4.0);
-        hcNames.add(fluid.getComponent(i).getName());
-        hcBurn.add(burned);
+	double moles = fluid.getComponent(i).getNumberOfmoles();
+	double c = fluid.getComponent(i).getElements().getNumberOfElements("C");
+	double h = fluid.getComponent(i).getElements().getNumberOfElements("H");
+	double burned = moles * burnFraction;
+	totalCO2 += burned * c;
+	totalH2O += burned * h / 2.0;
+	totalO2Consumed += burned * (c + h / 4.0);
+	hcNames.add(fluid.getComponent(i).getName());
+	hcBurn.add(burned);
       }
     }
     for (int k = 0; k < hcNames.size(); k++) {
@@ -346,13 +342,12 @@ public class GasTurbine extends TwoPortEquipment
     double wtFracHC = 0.0;
     for (int i = 0; i < thermoSystem.getNumberOfComponents(); i++) {
       if (thermoSystem.getComponent(i).isHydrocarbon()) {
-        sumHC += thermoSystem.getComponent(i).getz();
-        molMassHC +=
-            thermoSystem.getComponent(i).getz() * thermoSystem.getComponent(i).getMolarMass();
-        elementsC += thermoSystem.getComponent(i).getz()
-            * thermoSystem.getComponent(i).getElements().getNumberOfElements("C");
-        elementsH += thermoSystem.getComponent(i).getz()
-            * thermoSystem.getComponent(i).getElements().getNumberOfElements("H");
+	sumHC += thermoSystem.getComponent(i).getz();
+	molMassHC += thermoSystem.getComponent(i).getz() * thermoSystem.getComponent(i).getMolarMass();
+	elementsC += thermoSystem.getComponent(i).getz()
+	    * thermoSystem.getComponent(i).getElements().getNumberOfElements("C");
+	elementsH += thermoSystem.getComponent(i).getz()
+	    * thermoSystem.getComponent(i).getElements().getNumberOfElements("H");
       }
     }
 
@@ -378,14 +373,14 @@ public class GasTurbine extends TwoPortEquipment
    */
   public double getPower(String unit) {
     switch (unit) {
-      case "kW":
-        return power / 1000.0;
-      case "MW":
-        return power / 1.0e6;
-      case "hp":
-        return power / 745.7;
-      default:
-        return power;
+    case "kW":
+      return power / 1000.0;
+    case "MW":
+      return power / 1.0e6;
+    case "hp":
+      return power / 745.7;
+    default:
+      return power;
     }
   }
 
@@ -406,14 +401,14 @@ public class GasTurbine extends TwoPortEquipment
    */
   public double getRatedPower(String unit) {
     switch (unit) {
-      case "kW":
-        return ratedPowerW / 1000.0;
-      case "MW":
-        return ratedPowerW / 1.0e6;
-      case "hp":
-        return ratedPowerW / 745.7;
-      default:
-        return ratedPowerW;
+    case "kW":
+      return ratedPowerW / 1000.0;
+    case "MW":
+      return ratedPowerW / 1.0e6;
+    case "hp":
+      return ratedPowerW / 745.7;
+    default:
+      return ratedPowerW;
     }
   }
 
@@ -431,21 +426,21 @@ public class GasTurbine extends TwoPortEquipment
    * Set the rated (maximum) power output with unit.
    *
    * @param ratedPower rated power value
-   * @param unit power unit ("W", "kW", "MW", "hp")
+   * @param unit       power unit ("W", "kW", "MW", "hp")
    */
   public void setRatedPower(double ratedPower, String unit) {
     switch (unit) {
-      case "kW":
-        this.ratedPowerW = ratedPower * 1000.0;
-        break;
-      case "MW":
-        this.ratedPowerW = ratedPower * 1.0e6;
-        break;
-      case "hp":
-        this.ratedPowerW = ratedPower * 745.7;
-        break;
-      default:
-        this.ratedPowerW = ratedPower;
+    case "kW":
+      this.ratedPowerW = ratedPower * 1000.0;
+      break;
+    case "MW":
+      this.ratedPowerW = ratedPower * 1.0e6;
+      break;
+    case "hp":
+      this.ratedPowerW = ratedPower * 745.7;
+      break;
+    default:
+      this.ratedPowerW = ratedPower;
     }
     initializeCapacityConstraints();
   }
@@ -468,11 +463,10 @@ public class GasTurbine extends TwoPortEquipment
   private void initializeCapacityConstraints() {
     capacityConstraints.clear();
     if (ratedPowerW > 0) {
-      addCapacityConstraint(
-          new CapacityConstraint("power", "kW", CapacityConstraint.ConstraintType.HARD)
-              .setDesignValue(ratedPowerW / 1000.0).setMaxValue(ratedPowerW / 1000.0 * 1.1)
-              .setWarningThreshold(0.9).setDescription("Gas turbine power output vs rated capacity")
-              .setValueSupplier(() -> Math.abs(this.power) / 1000.0));
+      addCapacityConstraint(new CapacityConstraint("power", "kW", CapacityConstraint.ConstraintType.HARD)
+	  .setDesignValue(ratedPowerW / 1000.0).setMaxValue(ratedPowerW / 1000.0 * 1.1).setWarningThreshold(0.9)
+	  .setDescription("Gas turbine power output vs rated capacity")
+	  .setValueSupplier(() -> Math.abs(this.power) / 1000.0));
     }
   }
 
@@ -490,8 +484,8 @@ public class GasTurbine extends TwoPortEquipment
     for (CapacityConstraint c : capacityConstraints.values()) {
       double util = c.getUtilization();
       if (!Double.isNaN(util) && util > maxUtil) {
-        maxUtil = util;
-        bottleneck = c;
+	maxUtil = util;
+	bottleneck = c;
       }
     }
     return bottleneck;
@@ -502,7 +496,7 @@ public class GasTurbine extends TwoPortEquipment
   public boolean isCapacityExceeded() {
     for (CapacityConstraint c : capacityConstraints.values()) {
       if (c.isViolated()) {
-        return true;
+	return true;
       }
     }
     return false;
@@ -513,7 +507,7 @@ public class GasTurbine extends TwoPortEquipment
   public boolean isHardLimitExceeded() {
     for (CapacityConstraint c : capacityConstraints.values()) {
       if (c.isHardLimitExceeded()) {
-        return true;
+	return true;
       }
     }
     return false;
@@ -526,7 +520,7 @@ public class GasTurbine extends TwoPortEquipment
     for (CapacityConstraint c : capacityConstraints.values()) {
       double util = c.getUtilization();
       if (!Double.isNaN(util)) {
-        maxUtil = Math.max(maxUtil, util);
+	maxUtil = Math.max(maxUtil, util);
       }
     }
     return maxUtil;
@@ -570,13 +564,10 @@ public class GasTurbine extends TwoPortEquipment
     sb.append("Equipment: ").append(getName()).append("\n");
     sb.append("Auto-sized: ").append(autoSized).append("\n");
     sb.append("\n--- Operating Conditions ---\n");
-    sb.append("Power Output: ").append(String.format("%.2f kW", Math.abs(power) / 1000.0))
-        .append("\n");
+    sb.append("Power Output: ").append(String.format("%.2f kW", Math.abs(power) / 1000.0)).append("\n");
     if (ratedPowerW > 0) {
-      sb.append("Rated Power: ").append(String.format("%.2f kW", ratedPowerW / 1000.0))
-          .append("\n");
-      sb.append("Utilization: ")
-          .append(String.format("%.1f%%", Math.abs(power) / ratedPowerW * 100)).append("\n");
+      sb.append("Rated Power: ").append(String.format("%.2f kW", ratedPowerW / 1000.0)).append("\n");
+      sb.append("Utilization: ").append(String.format("%.1f%%", Math.abs(power) / ratedPowerW * 100)).append("\n");
     }
     return sb.toString();
   }

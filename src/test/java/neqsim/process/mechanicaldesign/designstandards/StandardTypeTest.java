@@ -36,8 +36,7 @@ class StandardTypeTest {
   @Test
   void testGetDesignStandardCategory() {
     assertEquals("pipeline design codes", StandardType.NORSOK_L_001.getDesignStandardCategory());
-    assertEquals("pressure vessel design code",
-        StandardType.ASME_VIII_DIV1.getDesignStandardCategory());
+    assertEquals("pressure vessel design code", StandardType.ASME_VIII_DIV1.getDesignStandardCategory());
     assertEquals("separator process design", StandardType.API_12J.getDesignStandardCategory());
     assertEquals("compressor design codes", StandardType.API_617.getDesignStandardCategory());
   }
@@ -63,7 +62,7 @@ class StandardTypeTest {
   void testFromCode() {
     assertEquals(StandardType.NORSOK_L_001, StandardType.fromCode("NORSOK-L-001"));
     assertEquals(StandardType.NORSOK_L_001, StandardType.fromCode("norsok-l-001")); // Case
-                                                                                    // insensitive
+										    // insensitive
     assertEquals(StandardType.ASME_VIII_DIV1, StandardType.fromCode("ASME-VIII-Div1"));
     assertEquals(StandardType.API_617, StandardType.fromCode("API-617"));
     assertNull(StandardType.fromCode("INVALID-CODE"));

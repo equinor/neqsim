@@ -14,8 +14,8 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Tests for the section-level low-flow bypass feature: auto-bypass via {@code minimumFlow}
- * threshold and manual section deactivation via {@code deactivateSection(String)}.
+ * Tests for the section-level low-flow bypass feature: auto-bypass via {@code minimumFlow} threshold and manual section
+ * deactivation via {@code deactivateSection(String)}.
  */
 public class ProcessSystemLowFlowBypassTest extends neqsim.NeqSimTest {
 
@@ -58,7 +58,7 @@ public class ProcessSystemLowFlowBypassTest extends neqsim.NeqSimTest {
     Stream feed = new Stream("feed", makeGas(2000.0));
 
     Splitter split = new Splitter("split", feed, 2);
-    split.setSplitFactors(new double[] {0.5, 0.5});
+    split.setSplitFactors(new double[] { 0.5, 0.5 });
 
     Heater hA = new Heater("hA", split.getSplitStream(0));
     hA.setOutTemperature(320.0);

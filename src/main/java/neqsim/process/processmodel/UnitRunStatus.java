@@ -4,12 +4,12 @@ import java.io.Serializable;
 import com.google.gson.JsonObject;
 
 /**
- * Immutable record of the outcome of running a single unit operation within a {@link ProcessSystem}
- * or {@link ProcessModel}.
+ * Immutable record of the outcome of running a single unit operation within a {@link ProcessSystem} or
+ * {@link ProcessModel}.
  *
  * <p>
- * Each instance captures whether the unit ran successfully, the unit's type, an optional error
- * message when it failed, and the owning process area (for multi-area {@link ProcessModel} runs).
+ * Each instance captures whether the unit ran successfully, the unit's type, an optional error message when it failed,
+ * and the owning process area (for multi-area {@link ProcessModel} runs).
  * </p>
  *
  * @author NeqSim
@@ -28,14 +28,13 @@ public class UnitRunStatus implements Serializable {
   /**
    * Creates a new unit run status record.
    *
-   * @param unitName the unit operation name
-   * @param unitType the unit operation type (simple class name), or null if unknown
-   * @param success true if the unit ran without error
+   * @param unitName     the unit operation name
+   * @param unitType     the unit operation type (simple class name), or null if unknown
+   * @param success      true if the unit ran without error
    * @param errorMessage the error message if the unit failed, or null on success
-   * @param areaName the owning process area name, or null for a single-area process
+   * @param areaName     the owning process area name, or null for a single-area process
    */
-  public UnitRunStatus(String unitName, String unitType, boolean success, String errorMessage,
-      String areaName) {
+  public UnitRunStatus(String unitName, String unitType, boolean success, String errorMessage, String areaName) {
     this.unitName = unitName;
     this.unitType = unitType;
     this.success = success;
@@ -108,7 +107,6 @@ public class UnitRunStatus implements Serializable {
   /** {@inheritDoc} */
   @Override
   public String toString() {
-    return (areaName == null ? "" : areaName + "::") + unitName + " [" + (success ? "OK" : "FAILED")
-        + "]";
+    return (areaName == null ? "" : areaName + "::") + unitName + " [" + (success ? "OK" : "FAILED") + "]";
   }
 }

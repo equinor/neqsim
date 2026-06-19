@@ -8,8 +8,8 @@ import java.util.Map;
  * Detailed results from flow assurance screening.
  *
  * <p>
- * Contains individual pass/marginal/fail assessments for each flow assurance concern along with
- * margins and recommended mitigations.
+ * Contains individual pass/marginal/fail assessments for each flow assurance concern along with margins and recommended
+ * mitigations.
  *
  * @author ESOL
  * @version 1.0
@@ -152,8 +152,7 @@ public final class FlowAssuranceReport implements Serializable {
    */
   public String getSummary() {
     StringBuilder sb = new StringBuilder();
-    sb.append("Flow Assurance Assessment: ").append(getOverallResult().getDisplayName())
-        .append("\n");
+    sb.append("Flow Assurance Assessment: ").append(getOverallResult().getDisplayName()).append("\n");
     sb.append("  Hydrate: ").append(hydrateResult.getDisplayName());
     sb.append(" (margin: ").append(String.format("%.1f", hydrateMarginC)).append("°C)\n");
     sb.append("  Wax: ").append(waxResult.getDisplayName());
@@ -167,8 +166,8 @@ public final class FlowAssuranceReport implements Serializable {
 
   @Override
   public String toString() {
-    return String.format("FlowAssuranceReport[overall=%s, hydrate=%s(%.1f°C), wax=%s(%.1f°C)]",
-        getOverallResult(), hydrateResult, hydrateMarginC, waxResult, waxMarginC);
+    return String.format("FlowAssuranceReport[overall=%s, hydrate=%s(%.1f°C), wax=%s(%.1f°C)]", getOverallResult(),
+	hydrateResult, hydrateMarginC, waxResult, waxMarginC);
   }
 
   /**

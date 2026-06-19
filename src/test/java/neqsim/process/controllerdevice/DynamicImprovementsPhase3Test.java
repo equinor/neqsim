@@ -15,9 +15,8 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Tests for Phase 3 dynamic simulation improvements: transmitter first-order filter, alarm
- * shelving, separator internals wiring, HX fluid accumulation ODE, and distillation MESH energy
- * balance with vapor hydraulic model.
+ * Tests for Phase 3 dynamic simulation improvements: transmitter first-order filter, alarm shelving, separator
+ * internals wiring, HX fluid accumulation ODE, and distillation MESH energy balance with vapor hydraulic model.
  *
  * @author NeqSim
  * @version 1.0
@@ -28,16 +27,13 @@ class DynamicImprovementsPhase3Test {
 
   @Test
   void testFirstOrderFilterDefaultDisabled() {
-    DynamicImprovementsTest.StubTransmitter tx =
-        new DynamicImprovementsTest.StubTransmitter("TT-01");
-    Assertions.assertEquals(0.0, tx.getFirstOrderTimeConstant(), 1e-10,
-        "Default time constant should be 0 (disabled)");
+    DynamicImprovementsTest.StubTransmitter tx = new DynamicImprovementsTest.StubTransmitter("TT-01");
+    Assertions.assertEquals(0.0, tx.getFirstOrderTimeConstant(), 1e-10, "Default time constant should be 0 (disabled)");
   }
 
   @Test
   void testFirstOrderFilterSetGet() {
-    DynamicImprovementsTest.StubTransmitter tx =
-        new DynamicImprovementsTest.StubTransmitter("TT-02");
+    DynamicImprovementsTest.StubTransmitter tx = new DynamicImprovementsTest.StubTransmitter("TT-02");
     tx.setFirstOrderTimeConstant(5.0);
     Assertions.assertEquals(5.0, tx.getFirstOrderTimeConstant(), 1e-10);
     // Negative should be clamped to 0
@@ -47,8 +43,7 @@ class DynamicImprovementsPhase3Test {
 
   @Test
   void testFirstOrderFilterSmoothsStepChange() {
-    DynamicImprovementsTest.StubTransmitter tx =
-        new DynamicImprovementsTest.StubTransmitter("TT-03");
+    DynamicImprovementsTest.StubTransmitter tx = new DynamicImprovementsTest.StubTransmitter("TT-03");
     tx.setFirstOrderTimeConstant(5.0);
 
     // First reading at value 50
@@ -58,14 +53,13 @@ class DynamicImprovementsPhase3Test {
     tx.setValue(100.0);
     double val2 = tx.getMeasuredValue();
     Assertions.assertTrue(val2 < 100.0 && val2 > 50.0,
-        "Filtered value should be between 50 and 100 after step, got " + val2);
+	"Filtered value should be between 50 and 100 after step, got " + val2);
 
     // Multiple readings should approach 100
     double prev = val2;
     for (int i = 0; i < 20; i++) {
       double v = tx.getMeasuredValue();
-      Assertions.assertTrue(v >= prev - 0.01,
-          "Filtered value should converge monotonically, iter=" + i);
+      Assertions.assertTrue(v >= prev - 0.01, "Filtered value should converge monotonically, iter=" + i);
       prev = v;
     }
     // After many readings, should be close to 100
@@ -74,8 +68,7 @@ class DynamicImprovementsPhase3Test {
 
   @Test
   void testFilterDisabledPassesThrough() {
-    DynamicImprovementsTest.StubTransmitter tx =
-        new DynamicImprovementsTest.StubTransmitter("TT-04");
+    DynamicImprovementsTest.StubTransmitter tx = new DynamicImprovementsTest.StubTransmitter("TT-04");
     // No filter (default timeConstant = 0)
     tx.setValue(50.0);
     tx.getMeasuredValue(); // prime
@@ -145,8 +138,7 @@ class DynamicImprovementsPhase3Test {
 
   @Test
   void testMeasurementDeviceShelveConvenience() {
-    DynamicImprovementsTest.StubTransmitter tx =
-        new DynamicImprovementsTest.StubTransmitter("TT-05");
+    DynamicImprovementsTest.StubTransmitter tx = new DynamicImprovementsTest.StubTransmitter("TT-05");
     tx.setAlarmConfig(AlarmConfig.builder().highLimit(80.0).build());
 
     Assertions.assertFalse(tx.isAlarmShelved());
@@ -222,8 +214,7 @@ class DynamicImprovementsPhase3Test {
 
     // Gas pressure should be reduced by the mist eliminator pressure drop
     Assertions.assertTrue(gasPAfter <= gasPBefore,
-        "Gas out pressure should be reduced by ME DP: before=" + gasPBefore + " after="
-            + gasPAfter);
+	"Gas out pressure should be reduced by ME DP: before=" + gasPBefore + " after=" + gasPAfter);
   }
 
   // ─── 4. HX fluid accumulation ODE ───
@@ -279,8 +270,7 @@ class DynamicImprovementsPhase3Test {
     double hotOutWithHoldup = hxWithHoldup.getOutStream(0).getTemperature("C");
 
     Assertions.assertFalse(Double.isNaN(hotOutNoHoldup), "No-holdup hot outlet should be valid");
-    Assertions.assertFalse(Double.isNaN(hotOutWithHoldup),
-        "With-holdup hot outlet should be valid");
+    Assertions.assertFalse(Double.isNaN(hotOutWithHoldup), "With-holdup hot outlet should be valid");
 
     // With holdup, the hot outlet should be closer to the inlet (more inertia → less cooling)
     // or at least different from no-holdup case
@@ -289,7 +279,7 @@ class DynamicImprovementsPhase3Test {
     double distWithHoldup = Math.abs(hotInlet - hotOutWithHoldup);
     // The holdup model adds fluid thermal mass, so the response should be different
     Assertions.assertNotEquals(hotOutNoHoldup, hotOutWithHoldup, 0.001,
-        "With holdup should differ from without holdup");
+	"With holdup should differ from without holdup");
   }
 
   @Test
@@ -335,8 +325,7 @@ class DynamicImprovementsPhase3Test {
     double wallTAfter = hx.getWallTemperature();
     // Wall temperature should be a valid number (not NaN/Inf)
     Assertions.assertFalse(Double.isNaN(wallTAfter), "Wall T should not be NaN after transient");
-    Assertions.assertFalse(Double.isInfinite(wallTAfter),
-        "Wall T should not be Inf after transient");
+    Assertions.assertFalse(Double.isInfinite(wallTAfter), "Wall T should not be Inf after transient");
     // Wall T should have moved from its initial value if HX is exchanging heat
     // (this is a smoke test, not a precision test)
   }
@@ -390,11 +379,9 @@ class DynamicImprovementsPhase3Test {
     col.runTransient(1.0, testId);
 
     // Enthalpy array should be null (energy balance not active)
-    Assertions.assertNull(col.getTrayEnthalpy(),
-        "Enthalpy tracking should be null when energy balance disabled");
+    Assertions.assertNull(col.getTrayEnthalpy(), "Enthalpy tracking should be null when energy balance disabled");
     // Holdup array should be initialized
-    Assertions.assertNotNull(col.getTrayLiquidHoldup(),
-        "Holdup should be initialized after transient step");
+    Assertions.assertNotNull(col.getTrayLiquidHoldup(), "Holdup should be initialized after transient step");
   }
 
   @Test
@@ -432,8 +419,8 @@ class DynamicImprovementsPhase3Test {
     boolean anyNonZero = false;
     for (double h : enthalpies) {
       if (Math.abs(h) > 1.0) {
-        anyNonZero = true;
-        break;
+	anyNonZero = true;
+	break;
       }
     }
     Assertions.assertTrue(anyNonZero, "At least one tray should have non-zero enthalpy");

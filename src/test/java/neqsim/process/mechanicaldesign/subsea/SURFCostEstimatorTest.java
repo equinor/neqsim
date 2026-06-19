@@ -16,7 +16,6 @@ import org.apache.logging.log4j.Logger;
 class SURFCostEstimatorTest {
   private static final Logger logger = LogManager.getLogger(SURFCostEstimatorTest.class);
 
-
   /**
    * Test a typical NCS subsea tieback: 6 wells, 300m water depth, 10 km infield + 80 km export.
    */
@@ -81,7 +80,7 @@ class SURFCostEstimatorTest {
 
     // Sum of categories should equal total
     double categorySum = est.getSubseaCostUSD() + est.getUmbilicalCostUSD() + est.getRiserCostUSD()
-        + est.getFlowlineCostUSD();
+	+ est.getFlowlineCostUSD();
     assertEquals(totalUSD, categorySum, 1.0, "Category sum should equal total");
 
     // Flowlines typically dominate for long export pipelines (>50%)
@@ -90,15 +89,11 @@ class SURFCostEstimatorTest {
 
     logger.info("=== SURF Cost Estimate (NCS 6-well tieback) ===");
     logger.info("  S (Subsea) : " + String.format("%,.0f", est.getSubseaCostUSD()) + " USD");
-    System.out
-        .println("  U (Umbilicals): " + String.format("%,.0f", est.getUmbilicalCostUSD()) + " USD");
-    System.out
-        .println("  R (Risers)   : " + String.format("%,.0f", est.getRiserCostUSD()) + " USD");
-    System.out
-        .println("  F (Flowlines): " + String.format("%,.0f", est.getFlowlineCostUSD()) + " USD");
+    System.out.println("  U (Umbilicals): " + String.format("%,.0f", est.getUmbilicalCostUSD()) + " USD");
+    System.out.println("  R (Risers)   : " + String.format("%,.0f", est.getRiserCostUSD()) + " USD");
+    System.out.println("  F (Flowlines): " + String.format("%,.0f", est.getFlowlineCostUSD()) + " USD");
     logger.info("  TOTAL SURF   : " + String.format("%,.0f", totalUSD) + " USD");
-    logger.info(
-        "  TOTAL NOK    : " + String.format("%,.0f", est.getTotalCostInCurrency(10.5)) + " NOK");
+    logger.info("  TOTAL NOK    : " + String.format("%,.0f", est.getTotalCostInCurrency(10.5)) + " NOK");
   }
 
   /**
@@ -154,8 +149,7 @@ class SURFCostEstimatorTest {
    */
   @Test
   void testRegionCostAdjustment() {
-    SURFCostEstimator estNorway =
-        new SURFCostEstimator(4, 300.0, SubseaCostEstimator.Region.NORWAY);
+    SURFCostEstimator estNorway = new SURFCostEstimator(4, 300.0, SubseaCostEstimator.Region.NORWAY);
     estNorway.setNumberOfJumpers(4);
     estNorway.setNumberOfPLETs(2);
     estNorway.calculate();
@@ -167,7 +161,7 @@ class SURFCostEstimatorTest {
 
     // Norway should be more expensive than GOM (factor 1.35 vs 1.0)
     assertTrue(estNorway.getTotalSURFCostUSD() > estGOM.getTotalSURFCostUSD(),
-        "Norway SURF should be more expensive than GOM");
+	"Norway SURF should be more expensive than GOM");
   }
 
   /**

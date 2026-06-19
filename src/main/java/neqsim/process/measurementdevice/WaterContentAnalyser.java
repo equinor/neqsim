@@ -31,7 +31,7 @@ public class WaterContentAnalyser extends StreamMeasurementDeviceBaseClass {
    * Constructor for WaterContentAnalyser.
    * </p>
    *
-   * @param name Name of WaterContentAnalyser
+   * @param name   Name of WaterContentAnalyser
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public WaterContentAnalyser(String name, StreamInterface stream) {
@@ -44,11 +44,10 @@ public class WaterContentAnalyser extends StreamMeasurementDeviceBaseClass {
   public void displayResult() {
     try {
       System.out.println("total water production [kg/dag]"
-          + stream.getThermoSystem().getPhase(0).getComponent("water").getNumberOfmoles()
-              * stream.getThermoSystem().getPhase(0).getComponent("water").getMolarMass() * 3600
-              * 24);
-      System.out.println("water in phase 1 (ppm) "
-          + stream.getThermoSystem().getPhase(0).getComponent("water").getx() * 1e6);
+	  + stream.getThermoSystem().getPhase(0).getComponent("water").getNumberOfmoles()
+	      * stream.getThermoSystem().getPhase(0).getComponent("water").getMolarMass() * 3600 * 24);
+      System.out
+	  .println("water in phase 1 (ppm) " + stream.getThermoSystem().getPhase(0).getComponent("water").getx() * 1e6);
     } finally {
     }
   }
@@ -56,10 +55,8 @@ public class WaterContentAnalyser extends StreamMeasurementDeviceBaseClass {
   /** {@inheritDoc} */
   @Override
   public double getMeasuredValue(String unit) {
-    double raw =
-        stream.getThermoSystem().getPhase(0).getComponent("water").getNumberOfmoles()
-            * stream.getThermoSystem().getPhase(0).getComponent("water").getMolarMass() * 3600
-            * 24;
+    double raw = stream.getThermoSystem().getPhase(0).getComponent("water").getNumberOfmoles()
+	* stream.getThermoSystem().getPhase(0).getComponent("water").getMolarMass() * 3600 * 24;
     return applySignalModifiers(raw);
   }
 }

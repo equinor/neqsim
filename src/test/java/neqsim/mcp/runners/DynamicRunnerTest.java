@@ -11,9 +11,9 @@ import com.google.gson.JsonParser;
  * Tests for {@link DynamicRunner}.
  *
  * <p>
- * Covers the runDynamic JSON \u2192 transient simulation path used by the MCP server, with focus on
- * the depressurization / blowdown scenario that previously NPE'd inside
- * {@code Separator.runTransient} because {@code gasOutStream} was null.
+ * Covers the runDynamic JSON \u2192 transient simulation path used by the MCP server, with focus on the
+ * depressurization / blowdown scenario that previously NPE'd inside {@code Separator.runTransient} because
+ * {@code gasOutStream} was null.
  * </p>
  *
  * @author Even Solbraa
@@ -22,17 +22,15 @@ import com.google.gson.JsonParser;
 class DynamicRunnerTest {
 
   /**
-   * Minimal methane / n-decane separator with continuous feed, dynamically time-stepped. This is
-   * the canonical happy path \u2014 the MCP server's runDynamic tool must succeed end-to-end.
+   * Minimal methane / n-decane separator with continuous feed, dynamically time-stepped. This is the canonical happy
+   * path \u2014 the MCP server's runDynamic tool must succeed end-to-end.
    */
   @Test
   void testRun_methaneDecaneSeparatorTransient() {
-    String processJson = "{"
-        + "\"fluid\": {\"model\": \"SRK\", \"temperature\": 298.15, \"pressure\": 50.0,"
-        + "  \"mixingRule\": \"classic\"," + "  \"components\": {\"methane\": 0.9, \"nC10\": 0.1}},"
-        + "\"process\": [" + "  {\"type\": \"Stream\", \"name\": \"feed\","
-        + "   \"properties\": {\"flowRate\": [1000.0, \"kg/hr\"]}},"
-        + "  {\"type\": \"Separator\", \"name\": \"HP Sep\", \"inlet\": \"feed\"}" + "]}";
+    String processJson = "{" + "\"fluid\": {\"model\": \"SRK\", \"temperature\": 298.15, \"pressure\": 50.0,"
+	+ "  \"mixingRule\": \"classic\"," + "  \"components\": {\"methane\": 0.9, \"nC10\": 0.1}}," + "\"process\": ["
+	+ "  {\"type\": \"Stream\", \"name\": \"feed\"," + "   \"properties\": {\"flowRate\": [1000.0, \"kg/hr\"]}},"
+	+ "  {\"type\": \"Separator\", \"name\": \"HP Sep\", \"inlet\": \"feed\"}" + "]}";
 
     JsonObject input = new JsonObject();
     input.addProperty("processJson", processJson);
@@ -43,7 +41,7 @@ class DynamicRunnerTest {
     JsonObject root = JsonParser.parseString(result).getAsJsonObject();
 
     assertEquals("success", root.get("status").getAsString(),
-        "runDynamic must succeed for a wired separator: " + result);
+	"runDynamic must succeed for a wired separator: " + result);
     assertTrue(root.has("apiVersion"));
     assertTrue(root.has("tool"));
     assertTrue(root.has("validation"));
@@ -55,20 +53,19 @@ class DynamicRunnerTest {
     assertTrue(data.has("transmitters"));
     JsonObject transmitters = data.getAsJsonObject("transmitters");
     assertTrue(transmitters.has("PT-HP Sep"),
-        "Pressure transmitter must be auto-instrumented on the separator gas outlet");
+	"Pressure transmitter must be auto-instrumented on the separator gas outlet");
   }
 
   /**
-   * Regression for the gasOutStream NPE: a separator without an inlet must not produce a raw
-   * NullPointerException. The runner must surface a clear, actionable diagnostic instead.
+   * Regression for the gasOutStream NPE: a separator without an inlet must not produce a raw NullPointerException. The
+   * runner must surface a clear, actionable diagnostic instead.
    */
   @Test
   void testRun_orphanSeparatorGivesClearError() {
     // Separator declared with no 'inlet' \u2014 previously NPE'd at the first time step.
-    String processJson = "{"
-        + "\"fluid\": {\"model\": \"SRK\", \"temperature\": 298.15, \"pressure\": 50.0,"
-        + "  \"mixingRule\": \"classic\"," + "  \"components\": {\"methane\": 0.9, \"nC10\": 0.1}},"
-        + "\"process\": [" + "  {\"type\": \"Separator\", \"name\": \"OrphanSep\"}" + "]}";
+    String processJson = "{" + "\"fluid\": {\"model\": \"SRK\", \"temperature\": 298.15, \"pressure\": 50.0,"
+	+ "  \"mixingRule\": \"classic\"," + "  \"components\": {\"methane\": 0.9, \"nC10\": 0.1}}," + "\"process\": ["
+	+ "  {\"type\": \"Separator\", \"name\": \"OrphanSep\"}" + "]}";
 
     JsonObject input = new JsonObject();
     input.addProperty("processJson", processJson);
@@ -85,7 +82,6 @@ class DynamicRunnerTest {
     assertTrue(root.has("validation"));
     assertTrue(root.has("qualityGate"));
     String body = result.toLowerCase();
-    assertTrue(!body.contains("nullpointerexception"),
-        "Response must not leak a raw NullPointerException: " + result);
+    assertTrue(!body.contains("nullpointerexception"), "Response must not leak a raw NullPointerException: " + result);
   }
 }

@@ -7,10 +7,9 @@ import java.util.Arrays;
  * Gas-lift performance curve (GLPC) relating injected lift-gas rate to produced oil rate.
  *
  * <p>
- * A gas-lifted well shows a characteristic response: as lift-gas rate increases the produced oil
- * rate first rises (reduced flowing gradient) then falls (excess friction from the added gas),
- * passing through a single optimum. This class stores that response either as tabulated points or
- * as a smooth parametric form
+ * A gas-lifted well shows a characteristic response: as lift-gas rate increases the produced oil rate first rises
+ * (reduced flowing gradient) then falls (excess friction from the added gas), passing through a single optimum. This
+ * class stores that response either as tabulated points or as a smooth parametric form
  * </p>
  *
  * <p>
@@ -18,9 +17,9 @@ import java.util.Arrays;
  * </p>
  *
  * <p>
- * which has a unique maximum at q_lift* = (a / 2b)&sup2;. The incremental slope dq_oil/dq_lift is
- * used by {@link GasLiftNetworkOptimizer} to allocate a limited lift-gas budget across wells by the
- * equal-slope (Lagrangian) optimality criterion.
+ * which has a unique maximum at q_lift* = (a / 2b)&sup2;. The incremental slope dq_oil/dq_lift is used by
+ * {@link GasLiftNetworkOptimizer} to allocate a limited lift-gas budget across wells by the equal-slope (Lagrangian)
+ * optimality criterion.
  * </p>
  *
  * @author NeqSim
@@ -42,8 +41,8 @@ public class GasLiftPerformanceCurve implements Serializable {
    * Creates a parametric gas-lift performance curve.
    *
    * @param baseOilRateSm3PerDay oil rate at zero lift in Sm3/day
-   * @param coeffA square-root response coefficient (&gt; 0)
-   * @param coeffB linear friction-penalty coefficient (&gt; 0)
+   * @param coeffA               square-root response coefficient (&gt; 0)
+   * @param coeffB               linear friction-penalty coefficient (&gt; 0)
    * @param maxLiftRateSm3PerDay maximum lift-gas rate in Sm3/day
    */
   public GasLiftPerformanceCurve(double baseOilRateSm3PerDay, double coeffA, double coeffB,
@@ -61,11 +60,11 @@ public class GasLiftPerformanceCurve implements Serializable {
    * Creates a tabulated gas-lift performance curve.
    *
    * @param liftRatesSm3PerDay lift-gas rates in Sm3/day, strictly ascending; length &ge; 2
-   * @param oilRatesSm3PerDay corresponding oil rates in Sm3/day
+   * @param oilRatesSm3PerDay  corresponding oil rates in Sm3/day
    */
   public GasLiftPerformanceCurve(double[] liftRatesSm3PerDay, double[] oilRatesSm3PerDay) {
-    if (liftRatesSm3PerDay == null || oilRatesSm3PerDay == null
-        || liftRatesSm3PerDay.length != oilRatesSm3PerDay.length || liftRatesSm3PerDay.length < 2) {
+    if (liftRatesSm3PerDay == null || oilRatesSm3PerDay == null || liftRatesSm3PerDay.length != oilRatesSm3PerDay.length
+	|| liftRatesSm3PerDay.length < 2) {
       throw new IllegalArgumentException("lift and oil arrays must be equal length, >= 2 points");
     }
     this.parametric = false;
@@ -129,7 +128,7 @@ public class GasLiftPerformanceCurve implements Serializable {
   public double optimalLiftRate() {
     if (parametric) {
       if (coeffB <= 0.0) {
-        return maxLiftRate;
+	return maxLiftRate;
       }
       double qStar = (coeffA / (2.0 * coeffB)) * (coeffA / (2.0 * coeffB));
       return Math.max(0.0, Math.min(maxLiftRate, qStar));
@@ -138,8 +137,8 @@ public class GasLiftPerformanceCurve implements Serializable {
     double bestOil = oilRates[0];
     for (int i = 1; i < liftRates.length; i++) {
       if (oilRates[i] > bestOil) {
-        bestOil = oilRates[i];
-        best = liftRates[i];
+	bestOil = oilRates[i];
+	best = liftRates[i];
       }
     }
     return best;

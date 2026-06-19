@@ -12,14 +12,13 @@ import neqsim.thermo.system.SystemInterface;
  * De-oiling hydrocyclone for produced water treatment.
  *
  * <p>
- * Models a multi-liner de-oiling hydrocyclone package used on offshore platforms for primary
- * produced water treatment. The implementation is based on the equilibrium-orbit theory (Bradley
- * 1965, Svarovsky 1984) combined with the Stokes-law centrifugal settling model. It covers:
+ * Models a multi-liner de-oiling hydrocyclone package used on offshore platforms for primary produced water treatment.
+ * The implementation is based on the equilibrium-orbit theory (Bradley 1965, Svarovsky 1984) combined with the
+ * Stokes-law centrifugal settling model. It covers:
  * </p>
  * <ul>
  * <li><b>Physics-based d50 prediction</b> from fluid properties and liner geometry</li>
- * <li><b>Rosin-Rammler grade efficiency curve</b> integrated over a log-normal droplet size
- * distribution</li>
+ * <li><b>Rosin-Rammler grade efficiency curve</b> integrated over a log-normal droplet size distribution</li>
  * <li><b>Multi-liner sizing</b> with standard liner diameters (35, 45, 60 mm)</li>
  * <li><b>PDR (Pressure Drop Ratio)</b> model for reject stream control</li>
  * <li><b>Turndown behaviour</b> with min/max flow per liner and efficiency degradation</li>
@@ -34,43 +33,87 @@ import neqsim.thermo.system.SystemInterface;
  * </p>
  *
  * <pre>
- * d50 = sqrt(C * mu * Q / (deltaRho * D^2))
+ * d50 = sqrt(C * mu * Q / (deltaRho * D ^ 2))
  * </pre>
  *
  * <p>
- * which simplifies for a standard deoiling liner to a correlation with flow, viscosity, and density
- * difference. The grade efficiency for droplet diameter d is:
+ * which simplifies for a standard deoiling liner to a correlation with flow, viscosity, and density difference. The
+ * grade efficiency for droplet diameter d is:
  * </p>
  *
  * <pre>
- * eta(d) = 1 - exp(-0.693 * (d / d50)^n)
+ * eta(d) = 1 - exp(-0.693 * (d / d50) ^ n)
  * </pre>
  *
  * <p>
- * where n is the sharpness-of-cut index (typically 2-4, default 3). The overall efficiency is
- * obtained by integrating eta(d) over the droplet size distribution.
+ * where n is the sharpness-of-cut index (typically 2-4, default 3). The overall efficiency is obtained by integrating
+ * eta(d) over the droplet size distribution.
  * </p>
  *
  * <h2>Design Standards</h2>
  * <table>
  * <caption>Applicable standards for hydrocyclone design</caption>
- * <tr><th>Standard</th><th>Scope</th></tr>
- * <tr><td>NORSOK P-001</td><td>Process design, produced water treatment</td></tr>
- * <tr><td>OLF 052 (NOROG)</td><td>Produced water management NCS</td></tr>
- * <tr><td>OSPAR Rec 2001/1</td><td>30 mg/L OIW discharge limit</td></tr>
+ * <tr>
+ * <th>Standard</th>
+ * <th>Scope</th>
+ * </tr>
+ * <tr>
+ * <td>NORSOK P-001</td>
+ * <td>Process design, produced water treatment</td>
+ * </tr>
+ * <tr>
+ * <td>OLF 052 (NOROG)</td>
+ * <td>Produced water management NCS</td>
+ * </tr>
+ * <tr>
+ * <td>OSPAR Rec 2001/1</td>
+ * <td>30 mg/L OIW discharge limit</td>
+ * </tr>
  * </table>
  *
  * <h2>Typical Operating Ranges</h2>
  * <table>
  * <caption>Operating ranges for oil-water hydrocyclones</caption>
- * <tr><th>Parameter</th><th>Range</th><th>Unit</th></tr>
- * <tr><td>d50 cut size</td><td>8-15</td><td>microns</td></tr>
- * <tr><td>Reject ratio (PDR-controlled)</td><td>1-3</td><td>% of feed</td></tr>
- * <tr><td>Pressure drop (inlet to overflow)</td><td>1-3</td><td>bar</td></tr>
- * <tr><td>Differential pressure (inlet-overflow)</td><td>2-6</td><td>bar</td></tr>
- * <tr><td>Turndown ratio</td><td>2.5:1 to 4:1</td><td>-</td></tr>
- * <tr><td>PDR</td><td>1.4-2.0</td><td>-</td></tr>
- * <tr><td>Oil removal (bulk)</td><td>90-98</td><td>%</td></tr>
+ * <tr>
+ * <th>Parameter</th>
+ * <th>Range</th>
+ * <th>Unit</th>
+ * </tr>
+ * <tr>
+ * <td>d50 cut size</td>
+ * <td>8-15</td>
+ * <td>microns</td>
+ * </tr>
+ * <tr>
+ * <td>Reject ratio (PDR-controlled)</td>
+ * <td>1-3</td>
+ * <td>% of feed</td>
+ * </tr>
+ * <tr>
+ * <td>Pressure drop (inlet to overflow)</td>
+ * <td>1-3</td>
+ * <td>bar</td>
+ * </tr>
+ * <tr>
+ * <td>Differential pressure (inlet-overflow)</td>
+ * <td>2-6</td>
+ * <td>bar</td>
+ * </tr>
+ * <tr>
+ * <td>Turndown ratio</td>
+ * <td>2.5:1 to 4:1</td>
+ * <td>-</td>
+ * </tr>
+ * <tr>
+ * <td>PDR</td>
+ * <td>1.4-2.0</td>
+ * <td>-</td>
+ * </tr>
+ * <tr>
+ * <td>Oil removal (bulk)</td>
+ * <td>90-98</td>
+ * <td>%</td>
+ * </tr>
  * </table>
  *
  * @author ESOL
@@ -97,7 +140,7 @@ public class Hydrocyclone extends Separator {
   // ---------------------------------------------------------------------------
 
   /** Standard liner cone diameters in mm. */
-  public static final double[] STANDARD_LINER_SIZES_MM = {35.0, 45.0, 60.0};
+  public static final double[] STANDARD_LINER_SIZES_MM = { 35.0, 45.0, 60.0 };
 
   /** Liner cone diameter (mm). Default 35 mm is most common for oil-water. */
   private double linerDiameterMm = 35.0;
@@ -231,7 +274,7 @@ public class Hydrocyclone extends Separator {
   /**
    * Creates a hydrocyclone with an inlet stream.
    *
-   * @param name equipment name/tag
+   * @param name        equipment name/tag
    * @param inletStream produced water stream containing dispersed oil
    */
   public Hydrocyclone(String name, StreamInterface inletStream) {
@@ -276,9 +319,9 @@ public class Hydrocyclone extends Separator {
    * Sets the liner cone diameter from standard sizes: 35, 45, or 60 mm.
    *
    * <p>
-   * The liner diameter determines the design, minimum, and maximum flow per liner. Smaller liners
-   * (35 mm) give finer cut sizes and are preferred for deoiling. Larger liners (60 mm) handle
-   * higher flow per liner and are used where coarser separation is acceptable.
+   * The liner diameter determines the design, minimum, and maximum flow per liner. Smaller liners (35 mm) give finer
+   * cut sizes and are preferred for deoiling. Larger liners (60 mm) handle higher flow per liner and are used where
+   * coarser separation is acceptable.
    * </p>
    *
    * @param diameterMm liner cone diameter in mm (35, 45, or 60)
@@ -301,9 +344,8 @@ public class Hydrocyclone extends Separator {
    * Updates flow-per-liner capacity based on liner diameter.
    *
    * <p>
-   * Flow capacity scales approximately with D^2 (cross-sectional area). The reference is a 35 mm
-   * liner at 5 m3/h design flow. These values are based on typical vendor data for deoiling
-   * hydrocyclones (Vortoil, CDS Natco).
+   * Flow capacity scales approximately with D^2 (cross-sectional area). The reference is a 35 mm liner at 5 m3/h design
+   * flow. These values are based on typical vendor data for deoiling hydrocyclones (Vortoil, CDS Natco).
    * </p>
    */
   private void updateLinerCapacityFromDiameter() {
@@ -460,8 +502,8 @@ public class Hydrocyclone extends Separator {
    * Sets the Pressure Drop Ratio. PDR = (P_inlet - P_reject) / (P_inlet - P_overflow).
    *
    * <p>
-   * PDR controls the reject split. Higher PDR drives more flow to reject, increasing oil removal
-   * but also water loss. Typical 1.4-2.0.
+   * PDR controls the reject split. Higher PDR drives more flow to reject, increasing oil removal but also water loss.
+   * Typical 1.4-2.0.
    * </p>
    *
    * @param pdr pressure drop ratio (typically 1.4-2.0)
@@ -524,8 +566,8 @@ public class Hydrocyclone extends Separator {
    * Sets the volume-weighted median droplet diameter of the inlet DSD.
    *
    * <p>
-   * Typical values for produced water after a separator are 20-50 microns. Lower values (10-20)
-   * indicate heavy/viscous oil or shear from choke valves.
+   * Typical values for produced water after a separator are 20-50 microns. Lower values (10-20) indicate heavy/viscous
+   * oil or shear from choke valves.
    * </p>
    *
    * @param dv50 volume median diameter in microns
@@ -621,8 +663,8 @@ public class Hydrocyclone extends Separator {
    * Auto-sizes the hydrocyclone for the current inlet stream flow rate.
    *
    * <p>
-   * Determines the number of liners, vessels, and updates capacity utilization. Should be called
-   * after the inlet stream has been configured and run.
+   * Determines the number of liners, vessels, and updates capacity utilization. Should be called after the inlet stream
+   * has been configured and run.
    * </p>
    */
   @Override
@@ -630,13 +672,13 @@ public class Hydrocyclone extends Separator {
     if (getInletStreams() != null && !getInletStreams().isEmpty()) {
       StreamInterface inlet = getInletStreams().get(0);
       if (inlet != null && inlet.getFluid() != null) {
-        SystemInterface fluid = inlet.getFluid();
-        try {
-          double volM3s = fluid.getVolume("m3");
-          feedFlowM3h = volM3s * 3600.0;
-        } catch (Exception ex) {
-          // Use default
-        }
+	SystemInterface fluid = inlet.getFluid();
+	try {
+	  double volM3s = fluid.getVolume("m3");
+	  feedFlowM3h = volM3s * 3600.0;
+	} catch (Exception ex) {
+	  // Use default
+	}
       }
     }
 
@@ -750,9 +792,9 @@ public class Hydrocyclone extends Separator {
    * Calculates the d50 cut size from the centrifugal Stokes settling model.
    *
    * <p>
-   * The cut size depends on the flow rate per liner, water viscosity, density difference between oil
-   * and water, and liner geometry. The simplified correlation is calibrated so that a 35 mm liner at
-   * 5 m3/h with water at 20 degC and deltaRho 175 kg/m3 gives d50 of approximately 12 microns.
+   * The cut size depends on the flow rate per liner, water viscosity, density difference between oil and water, and
+   * liner geometry. The simplified correlation is calibrated so that a 35 mm liner at 5 m3/h with water at 20 degC and
+   * deltaRho 175 kg/m3 gives d50 of approximately 12 microns.
    * </p>
    *
    * @return calculated d50 in microns
@@ -793,12 +835,11 @@ public class Hydrocyclone extends Separator {
   }
 
   /**
-   * Integrates the grade efficiency curve over a log-normal droplet size distribution to calculate
-   * the overall separation efficiency.
+   * Integrates the grade efficiency curve over a log-normal droplet size distribution to calculate the overall
+   * separation efficiency.
    *
    * <p>
-   * Uses 50-point numerical quadrature over the log-normal distribution from 0.5 micron to 5x the
-   * median diameter.
+   * Uses 50-point numerical quadrature over the log-normal distribution from 0.5 micron to 5x the median diameter.
    * </p>
    *
    * @return overall efficiency (0.0-1.0) weighted by volume
@@ -847,8 +888,8 @@ public class Hydrocyclone extends Separator {
    * Estimates the reject ratio from the Pressure Drop Ratio.
    *
    * <p>
-   * The reject ratio is approximately RR = 0.01 * PDR^1.5 for standard deoiling hydrocyclones.
-   * Gives RR approximately 1.5% at PDR 1.4 and approximately 2.5% at PDR 2.0.
+   * The reject ratio is approximately RR = 0.01 * PDR^1.5 for standard deoiling hydrocyclones. Gives RR approximately
+   * 1.5% at PDR 1.4 and approximately 2.5% at PDR 2.0.
    * </p>
    *
    * @return estimated reject ratio
@@ -861,8 +902,8 @@ public class Hydrocyclone extends Separator {
    * Estimates the efficiency correction factor based on PDR.
    *
    * <p>
-   * Efficiency is optimum at PDR around 1.8. Below 1.3, short-circuiting degrades performance.
-   * Above 2.5, excessive water loss without much efficiency gain.
+   * Efficiency is optimum at PDR around 1.8. Below 1.3, short-circuiting degrades performance. Above 2.5, excessive
+   * water loss without much efficiency gain.
    * </p>
    *
    * @return PDR correction factor (multiply with base efficiency)
@@ -914,27 +955,25 @@ public class Hydrocyclone extends Separator {
    * Calculates the required inlet pressure given downstream back-pressures.
    *
    * @param waterOutletPressureBar water outlet back-pressure (bar)
-   * @param rejectValveDPBar pressure drop across reject control valve (bar)
-   * @param rejectLineDPBar pressure drop in reject piping (bar)
-   * @param heightDifferenceDPBar static head difference to reject destination (bar)
+   * @param rejectValveDPBar       pressure drop across reject control valve (bar)
+   * @param rejectLineDPBar        pressure drop in reject piping (bar)
+   * @param heightDifferenceDPBar  static head difference to reject destination (bar)
    * @return required inlet pressure (bar)
    */
   public double calcRequiredInletPressure(double waterOutletPressureBar, double rejectValveDPBar,
       double rejectLineDPBar, double heightDifferenceDPBar) {
-    return waterOutletPressureBar + pressureDrop + rejectValveDPBar + rejectLineDPBar
-        + heightDifferenceDPBar;
+    return waterOutletPressureBar + pressureDrop + rejectValveDPBar + rejectLineDPBar + heightDifferenceDPBar;
   }
 
   /**
-   * Estimates oil removal efficiency based on available differential pressure and water
-   * temperature.
+   * Estimates oil removal efficiency based on available differential pressure and water temperature.
    *
    * <p>
-   * Higher dP improves efficiency. Lower temperature (higher viscosity) reduces efficiency. Base
-   * efficiency is at 20 degC and 5 bar dP.
+   * Higher dP improves efficiency. Lower temperature (higher viscosity) reduces efficiency. Base efficiency is at 20
+   * degC and 5 bar dP.
    * </p>
    *
-   * @param availableDPBar available differential pressure (bar)
+   * @param availableDPBar    available differential pressure (bar)
    * @param waterTemperatureC water temperature (degrees Celsius)
    * @return estimated oil removal efficiency (0.0-1.0)
    */
@@ -966,8 +1005,8 @@ public class Hydrocyclone extends Separator {
    * Gets the capacity utilization as the ratio of actual flow per liner to design flow.
    *
    * <p>
-   * Values below 0.4 indicate under-utilisation (poor separation). Values above 1.5 indicate
-   * significant overload (droplet re-entrainment). Optimum is 0.7-1.2.
+   * Values below 0.4 indicate under-utilisation (poor separation). Values above 1.5 indicate significant overload
+   * (droplet re-entrainment). Optimum is 0.7-1.2.
    * </p>
    *
    * @return capacity utilization (0.0 = empty, 1.0 = design flow)
@@ -1039,14 +1078,14 @@ public class Hydrocyclone extends Separator {
 
     try {
       if (fluid.hasPhaseType("aqueous")) {
-        waterDensityKgm3 = fluid.getPhase("aqueous").getDensity("kg/m3");
-        waterViscosityPas = fluid.getPhase("aqueous").getViscosity("kg/msec");
-        if (waterViscosityPas <= 0.0) {
-          waterViscosityPas = 1.0e-3;
-        }
+	waterDensityKgm3 = fluid.getPhase("aqueous").getDensity("kg/m3");
+	waterViscosityPas = fluid.getPhase("aqueous").getViscosity("kg/msec");
+	if (waterViscosityPas <= 0.0) {
+	  waterViscosityPas = 1.0e-3;
+	}
       }
       if (fluid.hasPhaseType("oil")) {
-        oilDensityKgm3 = fluid.getPhase("oil").getDensity("kg/m3");
+	oilDensityKgm3 = fluid.getPhase("oil").getDensity("kg/m3");
       }
     } catch (Exception ex) {
       // Use defaults if property extraction fails
@@ -1180,20 +1219,19 @@ public class Hydrocyclone extends Separator {
     sb.append(String.format("Feed flow:            %.1f m3/h\n", feedFlowM3h));
     sb.append(String.format("Flow per liner:       %.1f m3/h\n", flowPerLinerM3h));
     sb.append(String.format("Capacity utilization: %.0f%%\n", capacityUtilization * 100.0));
-    sb.append(String.format("Within range:         %s\n",
-        isWithinOperatingRange() ? "OK" : "OUT OF RANGE"));
+    sb.append(String.format("Within range:         %s\n", isWithinOperatingRange() ? "OK" : "OUT OF RANGE"));
     sb.append(String.format("Overloaded:           %s\n", isOverloaded() ? "YES" : "No"));
     sb.append('\n');
 
     sb.append("--- Separation Performance ---\n");
     sb.append(String.format("d50 cut size:         %.1f microns%s\n", d50Microns,
-        d50UserSet ? " (user-set)" : " (calculated)"));
+	d50UserSet ? " (user-set)" : " (calculated)"));
     if (!d50UserSet) {
       sb.append(String.format("  Calc d50 (Stokes):  %.1f microns\n", calculatedD50));
     }
     sb.append(String.format("Sharpness index n:    %.1f\n", sharpnessIndex));
     sb.append(String.format("Oil removal eff:      %.1f%%%s\n", oilRemovalEfficiency * 100.0,
-        efficiencyUserSet ? " (user-set)" : " (calculated)"));
+	efficiencyUserSet ? " (user-set)" : " (calculated)"));
     if (!efficiencyUserSet) {
       sb.append(String.format("  DSD efficiency:     %.1f%%\n", calculatedEfficiency * 100.0));
       sb.append(String.format("  PDR eff. factor:    %.3f\n", getPDREfficiencyFactor()));
@@ -1201,10 +1239,9 @@ public class Hydrocyclone extends Separator {
     sb.append('\n');
 
     sb.append("--- Pressure & PDR ---\n");
-    sb.append(String.format("Pressure drop:        %.1f bar (min: %.1f, recommended: %.1f)\n",
-        pressureDrop, MIN_DESIGN_DP_BAR, RECOMMENDED_DP_BAR));
-    sb.append(String.format("dP adequate:          %s\n",
-        isDifferentialPressureAdequate() ? "OK" : "INSUFFICIENT"));
+    sb.append(String.format("Pressure drop:        %.1f bar (min: %.1f, recommended: %.1f)\n", pressureDrop,
+	MIN_DESIGN_DP_BAR, RECOMMENDED_DP_BAR));
+    sb.append(String.format("dP adequate:          %s\n", isDifferentialPressureAdequate() ? "OK" : "INSUFFICIENT"));
     sb.append(String.format("PDR:                  %.2f\n", pdr));
     sb.append(String.format("Reject ratio:         %.1f%%\n", rejectRatio * 100.0));
     sb.append('\n');
@@ -1212,16 +1249,15 @@ public class Hydrocyclone extends Separator {
     sb.append("--- OIW Performance ---\n");
     sb.append(String.format("Inlet OIW:            %.0f mg/L\n", inletOilMgL));
     sb.append(String.format("Outlet OIW:           %.0f mg/L\n", outletOilMgL));
-    sb.append(String.format("OSPAR compliant:      %s (limit: %.0f mg/L)\n",
-        isOSPARCompliant() ? "YES" : "NO", OSPAR_OIW_LIMIT_MGL));
+    sb.append(String.format("OSPAR compliant:      %s (limit: %.0f mg/L)\n", isOSPARCompliant() ? "YES" : "NO",
+	OSPAR_OIW_LIMIT_MGL));
     sb.append('\n');
 
     sb.append("--- Fluid Properties ---\n");
     sb.append(String.format("Water viscosity:      %.4f mPa.s\n", waterViscosityPas * 1000.0));
     sb.append(String.format("Water density:        %.0f kg/m3\n", waterDensityKgm3));
     sb.append(String.format("Oil density:          %.0f kg/m3\n", oilDensityKgm3));
-    sb.append(
-        String.format("Density difference:   %.0f kg/m3\n", waterDensityKgm3 - oilDensityKgm3));
+    sb.append(String.format("Density difference:   %.0f kg/m3\n", waterDensityKgm3 - oilDensityKgm3));
     sb.append('\n');
 
     sb.append("--- DSD Parameters ---\n");
@@ -1266,4 +1302,3 @@ public class Hydrocyclone extends Separator {
     return results;
   }
 }
-

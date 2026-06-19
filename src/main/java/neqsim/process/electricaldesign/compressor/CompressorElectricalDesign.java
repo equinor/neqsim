@@ -9,9 +9,9 @@ import neqsim.process.equipment.compressor.DriverType;
  * Electrical design for compressors.
  *
  * <p>
- * Extends {@link ElectricalDesign} with compressor-specific electrical requirements including
- * auxiliary loads (lube oil system, seal gas system, cooling fans, instrumentation) and integration
- * with the compressor's driver type and VFD settings.
+ * Extends {@link ElectricalDesign} with compressor-specific electrical requirements including auxiliary loads (lube oil
+ * system, seal gas system, cooling fans, instrumentation) and integration with the compressor's driver type and VFD
+ * settings.
  * </p>
  *
  * <p>
@@ -66,7 +66,7 @@ public class CompressorElectricalDesign extends ElectricalDesign {
     // Check if compressor uses electric motor with VFD
     if (comp.getDriver() != null) {
       if (comp.getDriver().getDriverType() == DriverType.VFD_MOTOR) {
-        setUseVFD(true);
+	setUseVFD(true);
       }
     }
   }
@@ -129,8 +129,7 @@ public class CompressorElectricalDesign extends ElectricalDesign {
       coolingFanKW = Math.max(5.0, mainPowerKW * 0.05);
     }
 
-    totalAuxiliaryKW =
-        lubeOilPumpKW + lubeOilHeaterKW + sealGasSystemKW + coolingFanKW + instrumentationKW;
+    totalAuxiliaryKW = lubeOilPumpKW + lubeOilHeaterKW + sealGasSystemKW + coolingFanKW + instrumentationKW;
   }
 
   /**

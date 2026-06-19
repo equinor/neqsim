@@ -20,8 +20,8 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
 
 /**
- * Test class for transient separator simulation using improved VU flash calculations. This test
- * replicates a complex oil processing scenario with control systems.
+ * Test class for transient separator simulation using improved VU flash calculations. This test replicates a complex
+ * oil processing scenario with control systems.
  */
 public class TransientSeparatorVUFlashTest {
   private static final Logger logger = LogManager.getLogger(TransientSeparatorVUFlashTest.class);
@@ -184,8 +184,8 @@ public class TransientSeparatorVUFlashTest {
     double initialLevel = v001.getLiquidLevel();
     double initialPressure = v001.getThermoSystem().getPressure();
 
-    logger.printf(org.apache.logging.log4j.Level.INFO,
-        "Initial conditions: Level=%.3f, Pressure=%.3f bar%n", initialLevel, initialPressure);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Initial conditions: Level=%.3f, Pressure=%.3f bar%n",
+	initialLevel, initialPressure);
 
     // Data collection for monitoring
     List<Double> timeData = new ArrayList<>();
@@ -202,40 +202,37 @@ public class TransientSeparatorVUFlashTest {
     int steps = (int) (TOTAL_TIME / TIME_STEP);
     for (int i = 0; i < steps; i++) {
       try {
-        double currentTime = oilProcess.getTime();
-        double currentLevel = v001.getLiquidLevel();
-        double currentPressure = v001.getThermoSystem().getPressure();
-        double liquidVolume = v001.calcLiquidVolume();
-        double valveOpening = lcv00.getPercentValveOpening();
+	double currentTime = oilProcess.getTime();
+	double currentLevel = v001.getLiquidLevel();
+	double currentPressure = v001.getThermoSystem().getPressure();
+	double liquidVolume = v001.calcLiquidVolume();
+	double valveOpening = lcv00.getPercentValveOpening();
 
-        // Store data
-        timeData.add(currentTime);
-        levelData.add(currentLevel);
-        pressureData.add(currentPressure);
-        liquidVolumeData.add(liquidVolume);
-        valveOpeningData.add(valveOpening);
+	// Store data
+	timeData.add(currentTime);
+	levelData.add(currentLevel);
+	pressureData.add(currentPressure);
+	liquidVolumeData.add(liquidVolume);
+	valveOpeningData.add(valveOpening);
 
-        // Print progress every 5 steps
-        if (i % 5 == 0) {
-          logger.printf(org.apache.logging.log4j.Level.INFO,
-              "Step %d: Time=%.1f s, Level=%.3f, Pressure=%.3f bar, "
-                  + "LiqVol=%.3f m³, ValveOpening=%.1f%%%n",
-              i, currentTime, currentLevel, currentPressure, liquidVolume, valveOpening);
-        }
+	// Print progress every 5 steps
+	if (i % 5 == 0) {
+	  logger.printf(org.apache.logging.log4j.Level.INFO,
+	      "Step %d: Time=%.1f s, Level=%.3f, Pressure=%.3f bar, " + "LiqVol=%.3f m³, ValveOpening=%.1f%%%n", i,
+	      currentTime, currentLevel, currentPressure, liquidVolume, valveOpening);
+	}
 
-        // Assertions to verify physical consistency
-        assertTrue(currentLevel >= 0.0 && currentLevel <= 1.0,
-            "Liquid level must be between 0 and 1");
-        assertTrue(currentPressure > 0.0, "Pressure must be positive");
-        assertTrue(liquidVolume >= 0.0, "Liquid volume must be non-negative");
-        assertTrue(valveOpening >= 0.0 && valveOpening <= 100.0,
-            "Valve opening must be between 0 and 100%");
+	// Assertions to verify physical consistency
+	assertTrue(currentLevel >= 0.0 && currentLevel <= 1.0, "Liquid level must be between 0 and 1");
+	assertTrue(currentPressure > 0.0, "Pressure must be positive");
+	assertTrue(liquidVolume >= 0.0, "Liquid volume must be non-negative");
+	assertTrue(valveOpening >= 0.0 && valveOpening <= 100.0, "Valve opening must be between 0 and 100%");
 
-        // Run next time step
-        oilProcess.runTransient(TIME_STEP);
+	// Run next time step
+	oilProcess.runTransient(TIME_STEP);
       } catch (Exception e) {
-        System.err.printf("Error at step %d: %s%n", i, e.getMessage());
-        throw new RuntimeException("Simulation failed at step " + i, e);
+	System.err.printf("Error at step %d: %s%n", i, e.getMessage());
+	throw new RuntimeException("Simulation failed at step " + i, e);
       }
     }
 
@@ -247,16 +244,13 @@ public class TransientSeparatorVUFlashTest {
     // Check for numerical stability - values should be finite and within reasonable bounds
     for (int i = 0; i < levelData.size(); i++) {
       assertTrue(Double.isFinite(levelData.get(i)), "Level at step " + i + " should be finite");
-      assertTrue(Double.isFinite(pressureData.get(i)),
-          "Pressure at step " + i + " should be finite");
-      assertTrue(Double.isFinite(liquidVolumeData.get(i)),
-          "Liquid volume at step " + i + " should be finite");
+      assertTrue(Double.isFinite(pressureData.get(i)), "Pressure at step " + i + " should be finite");
+      assertTrue(Double.isFinite(liquidVolumeData.get(i)), "Liquid volume at step " + i + " should be finite");
     }
 
     // Verify the simulation ran for the expected duration
     double finalTime = timeData.get(timeData.size() - 1);
-    assertTrue(Math.abs(finalTime - TOTAL_TIME) < TIME_STEP,
-        "Simulation should run for approximately the total time");
+    assertTrue(Math.abs(finalTime - TOTAL_TIME) < TIME_STEP, "Simulation should run for approximately the total time");
 
     // Print summary
     double finalLevel = levelData.get(levelData.size() - 1);
@@ -265,17 +259,16 @@ public class TransientSeparatorVUFlashTest {
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "%nSimulation completed successfully:%n");
     logger.printf(org.apache.logging.log4j.Level.INFO,
-        "Final conditions: Level=%.3f, Pressure=%.3f bar, LiqVol=%.3f m³%n", finalLevel,
-        finalPressure, finalVolume);
-    logger.printf(org.apache.logging.log4j.Level.INFO,
-        "Total simulation time: %.1f seconds (%d steps)%n", finalTime, steps);
+	"Final conditions: Level=%.3f, Pressure=%.3f bar, LiqVol=%.3f m³%n", finalLevel, finalPressure, finalVolume);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Total simulation time: %.1f seconds (%d steps)%n", finalTime,
+	steps);
 
     // Test that the enhanced VU flash provided stable results
     double levelVariance = calculateVariance(levelData);
     double pressureVariance = calculateVariance(pressureData);
 
-    logger.printf(org.apache.logging.log4j.Level.INFO,
-        "Level variance: %.6f, Pressure variance: %.6f%n", levelVariance, pressureVariance);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Level variance: %.6f, Pressure variance: %.6f%n", levelVariance,
+	pressureVariance);
 
     // The enhanced VU flash should provide stable results with reasonable variance
     assertTrue(levelVariance < 1.0, "Level variance should be reasonable");
@@ -341,8 +334,7 @@ public class TransientSeparatorVUFlashTest {
     }
 
     double mean = values.stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
-    double variance =
-        values.stream().mapToDouble(val -> Math.pow(val - mean, 2)).average().orElse(0.0);
+    double variance = values.stream().mapToDouble(val -> Math.pow(val - mean, 2)).average().orElse(0.0);
     return variance;
   }
 }

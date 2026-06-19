@@ -10,9 +10,8 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
- * Test class for bio-processing heat exchanger equipment: MultiEffectEvaporator and Dryer. Uses
- * COMP_EXT database for bio-relevant components such as glucose, d-sorbitol, glycerol, and other
- * bio-processing solutes.
+ * Test class for bio-processing heat exchanger equipment: MultiEffectEvaporator and Dryer. Uses COMP_EXT database for
+ * bio-relevant components such as glucose, d-sorbitol, glycerol, and other bio-processing solutes.
  *
  * @author NeqSim team
  * @version 1.0

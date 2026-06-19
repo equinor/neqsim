@@ -11,8 +11,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * Compares Cv/Kv calculations across different sizing methods to verify they produce reasonable and
- * consistent results.
+ * Compares Cv/Kv calculations across different sizing methods to verify they produce reasonable and consistent results.
  */
 public class ValveSizingMethodComparisonTest {
   private static final Logger logger = LogManager.getLogger(ValveSizingMethodComparisonTest.class);
@@ -28,7 +27,7 @@ public class ValveSizingMethodComparisonTest {
     double outletPressure = 40.0; // bara (20% pressure drop)
     double temperature = 25.0; // C
 
-    String[] methods = {"default", "IEC 60534", "prod choke"};
+    String[] methods = { "default", "IEC 60534", "prod choke" };
     double[] kvResults = new double[methods.length];
     double[] cvResults = new double[methods.length];
 
@@ -38,7 +37,6 @@ public class ValveSizingMethodComparisonTest {
     logger.info("  Outlet P: " + outletPressure + " bara");
     logger.info("  Delta P: " + (inletPressure - outletPressure) + " bar");
     logger.info("  Temperature: " + temperature + " C");
-
 
     for (int i = 0; i < methods.length; i++) {
       SystemInterface gasFluid = new SystemSrkEos(273.15 + temperature, inletPressure);
@@ -77,10 +75,8 @@ public class ValveSizingMethodComparisonTest {
     logger.info("-------------------------------------------------------");
     for (int i = 0; i < methods.length; i++) {
       double ratio = kvResults[i] / kvResults[1]; // ratio to IEC 60534
-      logger.info(String.format("%-15s %12.4f %12.4f %12.2f", methods[i], kvResults[i],
-          cvResults[i], ratio));
+      logger.info(String.format("%-15s %12.4f %12.4f %12.2f", methods[i], kvResults[i], cvResults[i], ratio));
     }
-
 
     // Verify all methods give positive results
     for (int i = 0; i < methods.length; i++) {
@@ -107,7 +103,7 @@ public class ValveSizingMethodComparisonTest {
     double outletPressure = 40.0; // bara
     double temperature = 25.0; // C
 
-    String[] methods = {"default", "IEC 60534", "prod choke"};
+    String[] methods = { "default", "IEC 60534", "prod choke" };
     double[] kvResults = new double[methods.length];
     double[] cvResults = new double[methods.length];
 
@@ -117,7 +113,6 @@ public class ValveSizingMethodComparisonTest {
     logger.info("  Outlet P: " + outletPressure + " bara");
     logger.info("  Delta P: " + (inletPressure - outletPressure) + " bar");
     logger.info("  Temperature: " + temperature + " C");
-
 
     for (int i = 0; i < methods.length; i++) {
       // Use heavy hydrocarbon to ensure liquid phase
@@ -156,10 +151,8 @@ public class ValveSizingMethodComparisonTest {
     logger.info("-------------------------------------------------------");
     for (int i = 0; i < methods.length; i++) {
       double ratio = kvResults[i] / kvResults[1]; // ratio to IEC 60534
-      logger.info(String.format("%-15s %12.4f %12.4f %12.2f", methods[i], kvResults[i],
-          cvResults[i], ratio));
+      logger.info(String.format("%-15s %12.4f %12.4f %12.2f", methods[i], kvResults[i], cvResults[i], ratio));
     }
-
 
     // Verify all methods give positive results
     for (int i = 0; i < methods.length; i++) {
@@ -169,8 +162,8 @@ public class ValveSizingMethodComparisonTest {
   }
 
   /**
-   * Verify Kv formula for liquid against manual calculation. Standard liquid Kv formula: Kv = Q *
-   * sqrt(SG / deltaP) where Q is in m3/hr, SG is specific gravity, deltaP is in bar
+   * Verify Kv formula for liquid against manual calculation. Standard liquid Kv formula: Kv = Q * sqrt(SG / deltaP)
+   * where Q is in m3/hr, SG is specific gravity, deltaP is in bar
    */
   @Test
   void verifyLiquidKvFormula() {
@@ -223,13 +216,12 @@ public class ValveSizingMethodComparisonTest {
 
     // Should be within 10% (different methods may have slight variations)
     double ratio = calculatedKv / expectedKv;
-    assertTrue(ratio > 0.5 && ratio < 2.0,
-        "Calculated Kv should be within reasonable range of expected value");
+    assertTrue(ratio > 0.5 && ratio < 2.0, "Calculated Kv should be within reasonable range of expected value");
   }
 
   /**
-   * Verify Kv formula for gas against manual calculation. IEC 60534 gas formula (simplified,
-   * non-choked): Kv = Q / (N9 * P1 * Y * sqrt(x / (M*T*Z)))
+   * Verify Kv formula for gas against manual calculation. IEC 60534 gas formula (simplified, non-choked): Kv = Q / (N9
+   * * P1 * Y * sqrt(x / (M*T*Z)))
    */
   @Test
   void verifyGasKvFormula() {
@@ -296,8 +288,7 @@ public class ValveSizingMethodComparisonTest {
 
     // Should be close (within 20% due to different property calculations)
     double ratio = calculatedKv / expectedKv;
-    assertTrue(ratio > 0.5 && ratio < 2.0,
-        "Calculated Kv should be within reasonable range of expected value");
+    assertTrue(ratio > 0.5 && ratio < 2.0, "Calculated Kv should be within reasonable range of expected value");
   }
 
   /**
@@ -309,13 +300,12 @@ public class ValveSizingMethodComparisonTest {
 
     double flowRateSm3hr = 10000.0;
     double inletPressure = 50.0;
-    double[] outletPressures = {49.0, 45.0, 40.0, 30.0, 20.0};
+    double[] outletPressures = { 49.0, 45.0, 40.0, 30.0, 20.0 };
 
     logger.info("Flow rate: " + flowRateSm3hr + " Sm3/hr");
     logger.info("Inlet P: " + inletPressure + " bara");
 
-    System.out
-        .println(String.format("%-12s %12s %12s %12s", "Outlet P", "Delta P", "Kv", "Choked?"));
+    System.out.println(String.format("%-12s %12s %12s %12s", "Outlet P", "Delta P", "Kv", "Choked?"));
     logger.info("--------------------------------------------------");
 
     for (double outletP : outletPressures) {
@@ -343,12 +333,10 @@ public class ValveSizingMethodComparisonTest {
       double x = deltaP / inletPressure;
       boolean choked = x > 0.137 * 1.4; // approximate choked flow threshold
 
-      logger.info(
-          String.format("%-12.1f %12.1f %12.4f %12s", outletP, deltaP, kv, choked ? "Yes" : "No"));
+      logger.info(String.format("%-12.1f %12.1f %12.4f %12s", outletP, deltaP, kv, choked ? "Yes" : "No"));
 
       assertTrue(kv > 0, "Kv should be positive");
     }
-
 
     logger.info("Note: As pressure drop increases, Kv decreases because");
     logger.info("more pressure energy is available to drive the same flow.");
@@ -391,38 +379,24 @@ public class ValveSizingMethodComparisonTest {
     logger.info("Valve Cv: " + String.format("%.2f", valve.getCv()));
     logger.info("Valve Kv: " + String.format("%.2f", valve.getKv()));
 
-
     logger.info("=== MECHANICAL DESIGN RESULTS ===");
     logger.info("ANSI Pressure Class: " + mechDesign.getAnsiPressureClass());
-    logger.info(
-        "Nominal Size: " + String.format("%.1f", mechDesign.getNominalSizeInches()) + " inches");
-    logger.info(
-        "Design Pressure: " + String.format("%.1f", mechDesign.getDesignPressure()) + " bara");
-    logger.info(
-        "Design Temperature: " + String.format("%.1f", mechDesign.getDesignTemperature()) + " °C");
-    System.out
-        .println("Face-to-Face: " + String.format("%.0f", mechDesign.getFaceToFace()) + " mm");
-    logger.info(
-        "Body Wall Thickness: " + String.format("%.1f", mechDesign.getBodyWallThickness()) + " mm");
-    logger.info("Required Actuator Thrust: "
-        + String.format("%.0f", mechDesign.getRequiredActuatorThrust()) + " N");
-    logger
-        .info("Actuator Weight: " + String.format("%.1f", mechDesign.getActuatorWeight()) + " kg");
-    logger
-        .info("Total Valve Weight: " + String.format("%.1f", mechDesign.getWeightTotal()) + " kg");
-
+    logger.info("Nominal Size: " + String.format("%.1f", mechDesign.getNominalSizeInches()) + " inches");
+    logger.info("Design Pressure: " + String.format("%.1f", mechDesign.getDesignPressure()) + " bara");
+    logger.info("Design Temperature: " + String.format("%.1f", mechDesign.getDesignTemperature()) + " °C");
+    System.out.println("Face-to-Face: " + String.format("%.0f", mechDesign.getFaceToFace()) + " mm");
+    logger.info("Body Wall Thickness: " + String.format("%.1f", mechDesign.getBodyWallThickness()) + " mm");
+    logger.info("Required Actuator Thrust: " + String.format("%.0f", mechDesign.getRequiredActuatorThrust()) + " N");
+    logger.info("Actuator Weight: " + String.format("%.1f", mechDesign.getActuatorWeight()) + " kg");
+    logger.info("Total Valve Weight: " + String.format("%.1f", mechDesign.getWeightTotal()) + " kg");
 
     logger.info("=== MODULE DIMENSIONS ===");
-    System.out
-        .println("Module Height: " + String.format("%.3f", mechDesign.getModuleHeight()) + " m");
-    System.out
-        .println("Module Width: " + String.format("%.3f", mechDesign.getModuleWidth()) + " m");
-    System.out
-        .println("Module Length: " + String.format("%.3f", mechDesign.getModuleLength()) + " m");
+    System.out.println("Module Height: " + String.format("%.3f", mechDesign.getModuleHeight()) + " m");
+    System.out.println("Module Width: " + String.format("%.3f", mechDesign.getModuleWidth()) + " m");
+    System.out.println("Module Length: " + String.format("%.3f", mechDesign.getModuleLength()) + " m");
 
     // Verify reasonable results
-    assertTrue(mechDesign.getAnsiPressureClass() >= 300,
-        "Pressure class should be at least 300 for 80 bara inlet");
+    assertTrue(mechDesign.getAnsiPressureClass() >= 300, "Pressure class should be at least 300 for 80 bara inlet");
     assertTrue(mechDesign.getNominalSizeInches() > 0, "Nominal size should be positive");
     assertTrue(mechDesign.getFaceToFace() > 0, "Face-to-face should be positive");
     assertTrue(mechDesign.getBodyWallThickness() >= 3.0, "Wall thickness should be >= 3mm minimum");

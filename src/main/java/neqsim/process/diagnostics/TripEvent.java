@@ -8,9 +8,8 @@ import java.util.Date;
  * Represents a detected trip event on a piece of process equipment.
  *
  * <p>
- * A trip event captures the equipment name, the parameter that triggered it, the threshold that was
- * exceeded, and the actual value at the time of the trip. It also records a timestamp and a severity
- * classification.
+ * A trip event captures the equipment name, the parameter that triggered it, the threshold that was exceeded, and the
+ * actual value at the time of the trip. It also records a timestamp and a severity classification.
  * </p>
  *
  * @author NeqSim Development Team
@@ -46,16 +45,16 @@ public class TripEvent implements Serializable {
   /**
    * Creates a trip event.
    *
-   * @param equipmentName name of the equipment that tripped
-   * @param parameterName name of the parameter that triggered the trip
-   * @param threshold the threshold value that was exceeded
-   * @param actualValue the actual measured value at the time of the trip
-   * @param highTrip true if this was a high-limit trip, false for low-limit
+   * @param equipmentName         name of the equipment that tripped
+   * @param parameterName         name of the parameter that triggered the trip
+   * @param threshold             the threshold value that was exceeded
+   * @param actualValue           the actual measured value at the time of the trip
+   * @param highTrip              true if this was a high-limit trip, false for low-limit
    * @param simulationTimeSeconds time in the simulation when the trip occurred
-   * @param severity severity level of the trip
+   * @param severity              severity level of the trip
    */
-  public TripEvent(String equipmentName, String parameterName, double threshold,
-      double actualValue, boolean highTrip, double simulationTimeSeconds, Severity severity) {
+  public TripEvent(String equipmentName, String parameterName, double threshold, double actualValue, boolean highTrip,
+      double simulationTimeSeconds, Severity severity) {
     this.equipmentName = equipmentName;
     this.parameterName = parameterName;
     this.threshold = threshold;
@@ -163,17 +162,15 @@ public class TripEvent implements Serializable {
     sb.append("\"simulationTimeSeconds\": ").append(simulationTimeSeconds).append(", ");
     sb.append("\"severity\": \"").append(severity.name()).append("\", ");
     sb.append("\"timestamp\": \"")
-        .append(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss").format(new Date(timestampMillis)))
-        .append("\"");
+	.append(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss").format(new Date(timestampMillis))).append("\"");
     sb.append("}");
     return sb.toString();
   }
 
   @Override
   public String toString() {
-    return String.format("TripEvent[%s: %s=%s %.2f (threshold %.2f) at t=%.1fs, severity=%s]",
-        equipmentName, parameterName, highTrip ? "HIGH" : "LOW", actualValue, threshold,
-        simulationTimeSeconds, severity.name());
+    return String.format("TripEvent[%s: %s=%s %.2f (threshold %.2f) at t=%.1fs, severity=%s]", equipmentName,
+	parameterName, highTrip ? "HIGH" : "LOW", actualValue, threshold, simulationTimeSeconds, severity.name());
   }
 
   /**
@@ -186,7 +183,6 @@ public class TripEvent implements Serializable {
     if (s == null) {
       return "";
     }
-    return s.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n")
-        .replace("\r", "\\r").replace("\t", "\\t");
+    return s.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t");
   }
 }

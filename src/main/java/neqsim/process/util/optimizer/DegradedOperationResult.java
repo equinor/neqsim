@@ -11,8 +11,8 @@ import neqsim.process.util.optimizer.DegradedOperationOptimizer.OperatingMode;
  * Result of degraded operation optimization.
  *
  * <p>
- * Contains the optimal operating point, recommended setpoints, and metrics for running with
- * equipment failures or reduced capacity.
+ * Contains the optimal operating point, recommended setpoints, and metrics for running with equipment failures or
+ * reduced capacity.
  * </p>
  *
  * @author NeqSim Development Team
@@ -355,8 +355,7 @@ public class DegradedOperationResult implements Serializable {
    * @return JSON representation
    */
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(toMap());
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(toMap());
   }
 
   @Override
@@ -365,16 +364,14 @@ public class DegradedOperationResult implements Serializable {
     sb.append("=== Degraded Operation Optimization ===\n");
     sb.append(String.format("Failed Equipment: %s%n", failedEquipment));
     sb.append(String.format("Operating Mode: %s%n", operatingMode));
-    sb.append(
-        String.format("%nBaseline: %.0f kg/hr, %.0f kW%n", baselineProduction, baselinePower));
+    sb.append(String.format("%nBaseline: %.0f kg/hr, %.0f kW%n", baselineProduction, baselinePower));
     sb.append(String.format("Optimal:  %.0f kg/hr, %.0f kW%n", optimalProduction, optimalPower));
-    sb.append(String.format("Loss: %.1f%%, Power Savings: %.1f%%%n", productionLossPercent,
-        powerSavingsPercent));
+    sb.append(String.format("Loss: %.1f%%, Power Savings: %.1f%%%n", productionLossPercent, powerSavingsPercent));
     sb.append(String.format("Capacity Factor: %.1f%%%n", capacityFactor * 100));
     if (!optimizedSetpoints.isEmpty()) {
       sb.append("\nRecommended Setpoints:\n");
       for (Map.Entry<String, Double> entry : optimizedSetpoints.entrySet()) {
-        sb.append(String.format("  %s: %.2f%n", entry.getKey(), entry.getValue()));
+	sb.append(String.format("  %s: %.2f%n", entry.getKey(), entry.getValue()));
       }
     }
     return sb.toString();

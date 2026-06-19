@@ -12,9 +12,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Electric Submersible Pump (ESP) simulation model for multiphase flow.
  *
  * <p>
- * This class extends the standard Pump model to handle gas-liquid mixtures typical in oil
- * production systems. ESP pumps experience performance degradation when gas is present at the pump
- * intake.
+ * This class extends the standard Pump model to handle gas-liquid mixtures typical in oil production systems. ESP pumps
+ * experience performance degradation when gas is present at the pump intake.
  * </p>
  *
  * <h2>Key Features</h2>
@@ -94,7 +93,7 @@ public class ESPPump extends Pump {
   /**
    * Constructor for ESPPump.
    *
-   * @param name name of ESP pump
+   * @param name        name of ESP pump
    * @param inletStream inlet stream
    */
   public ESPPump(String name, StreamInterface inletStream) {
@@ -124,9 +123,8 @@ public class ESPPump extends Pump {
     double effectiveGVF = gasVoidFraction;
     if (hasGasSeparator && gasSeparatorEfficiency > 0) {
       effectiveGVF = gasVoidFraction * (1.0 - gasSeparatorEfficiency);
-      logger.debug("Gas separator reduces GVF from {} to {}",
-          String.format("%.1f%%", gasVoidFraction * 100),
-          String.format("%.1f%%", effectiveGVF * 100));
+      logger.debug("Gas separator reduces GVF from {} to {}", String.format("%.1f%%", gasVoidFraction * 100),
+	  String.format("%.1f%%", effectiveGVF * 100));
     }
 
     // Check for gas lock condition
@@ -134,7 +132,7 @@ public class ESPPump extends Pump {
       isGasLocked = true;
       headDegradationFactor = 0.0;
       logger.warn("ESP {} is GAS LOCKED: GVF={} exceeds maximum {}", getName(),
-          String.format("%.1f%%", effectiveGVF * 100), String.format("%.1f%%", maxGVF * 100));
+	  String.format("%.1f%%", effectiveGVF * 100), String.format("%.1f%%", maxGVF * 100));
 
       // Set minimal pressure rise (pump effectively stalled)
       outStream.setThermoSystem(thermoSystem);
@@ -147,7 +145,7 @@ public class ESPPump extends Pump {
     isSurging = effectiveGVF > surgingGVF;
     if (isSurging) {
       logger.warn("ESP {} is SURGING: GVF={} exceeds surging threshold {}", getName(),
-          String.format("%.1f%%", effectiveGVF * 100), String.format("%.1f%%", surgingGVF * 100));
+	  String.format("%.1f%%", effectiveGVF * 100), String.format("%.1f%%", surgingGVF * 100));
     }
 
     // Calculate head degradation factor based on GVF
@@ -213,7 +211,7 @@ public class ESPPump extends Pump {
       totalVolume += phaseVolume;
 
       if (sys.getPhase(i).getType().toString().equals("gas")) {
-        gasVolumeFraction = phaseVolume;
+	gasVolumeFraction = phaseVolume;
       }
     }
 
@@ -252,8 +250,8 @@ public class ESPPump extends Pump {
       headDegradationFactor = 1.0;
     }
 
-    logger.debug("ESP head degradation factor: {} at GVF={}%",
-        String.format("%.3f", headDegradationFactor), String.format("%.1f", gvf * 100));
+    logger.debug("ESP head degradation factor: {} at GVF={}%", String.format("%.3f", headDegradationFactor),
+	String.format("%.1f", gvf * 100));
   }
 
   /**

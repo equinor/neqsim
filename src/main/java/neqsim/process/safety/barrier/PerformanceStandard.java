@@ -11,10 +11,9 @@ import com.google.gson.GsonBuilder;
  * Performance standard for a process safety function or safety critical element.
  *
  * <p>
- * A performance standard defines what a barrier must do, how well it must perform, and what
- * evidence demonstrates compliance. It is the natural bridge between extracted technical
- * documentation and quantitative NeqSim calculations such as LOPA, SIL, source terms, and
- * consequence analysis.
+ * A performance standard defines what a barrier must do, how well it must perform, and what evidence demonstrates
+ * compliance. It is the natural bridge between extracted technical documentation and quantitative NeqSim calculations
+ * such as LOPA, SIL, source terms, and consequence analysis.
  * </p>
  *
  * @author ESOL
@@ -267,7 +266,7 @@ public class PerformanceStandard implements Serializable {
   public boolean hasTraceableEvidence() {
     for (DocumentEvidence item : evidence) {
       if (item.isTraceable()) {
-        return true;
+	return true;
       }
     }
     return false;
@@ -289,8 +288,7 @@ public class PerformanceStandard implements Serializable {
     if (!Double.isNaN(targetPfd) && (targetPfd <= 0.0 || targetPfd > 1.0)) {
       findings.add("Target PFD must be in the range 0 to 1.");
     }
-    if (!Double.isNaN(requiredAvailability)
-        && (requiredAvailability < 0.0 || requiredAvailability > 1.0)) {
+    if (!Double.isNaN(requiredAvailability) && (requiredAvailability < 0.0 || requiredAvailability > 1.0)) {
       findings.add("Required availability must be in the range 0 to 1.");
     }
     if (!Double.isNaN(proofTestIntervalHours) && proofTestIntervalHours <= 0.0) {
@@ -337,7 +335,6 @@ public class PerformanceStandard implements Serializable {
    * @return JSON representation
    */
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(toMap());
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(toMap());
   }
 }

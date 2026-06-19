@@ -33,7 +33,8 @@ public class OpenDrainReviewInput implements Serializable {
   /**
    * Creates an empty open-drain review input.
    */
-  public OpenDrainReviewInput() {}
+  public OpenDrainReviewInput() {
+  }
 
   /**
    * Parses input from JSON text.
@@ -56,22 +57,20 @@ public class OpenDrainReviewInput implements Serializable {
     OpenDrainReviewInput input = new OpenDrainReviewInput();
     input.setProjectName(getString(object, "projectName", "open-drain-review"));
     input.setDefaultLiquidLeakRateKgPerS(getDouble(object, "defaultLiquidLeakRateKgPerS", 5.0));
-    JsonArray itemArray =
-        getFirstArray(object, "items", "openDrainAreas", "drainAreas", "areas", "drainSystems");
+    JsonArray itemArray = getFirstArray(object, "items", "openDrainAreas", "drainAreas", "areas", "drainSystems");
     if (itemArray != null) {
       for (int i = 0; i < itemArray.size(); i++) {
-        if (itemArray.get(i).isJsonObject()) {
-          input.addItem(OpenDrainReviewItem.fromMap(toMap(itemArray.get(i).getAsJsonObject())));
-        }
+	if (itemArray.get(i).isJsonObject()) {
+	  input.addItem(OpenDrainReviewItem.fromMap(toMap(itemArray.get(i).getAsJsonObject())));
+	}
       }
     }
     if (object.has("stidData") && object.get("stidData").isJsonObject()) {
-      input.mergeFrom(
-          StidOpenDrainDataSource.fromJsonObject(object.getAsJsonObject("stidData")).read());
+      input.mergeFrom(StidOpenDrainDataSource.fromJsonObject(object.getAsJsonObject("stidData")).read());
     }
     for (Map.Entry<String, JsonElement> entry : object.entrySet()) {
       if (!isCoreKey(entry.getKey())) {
-        input.putMetadata(entry.getKey(), toObject(entry.getValue()));
+	input.putMetadata(entry.getKey(), toObject(entry.getValue()));
       }
     }
     return input;
@@ -84,8 +83,7 @@ public class OpenDrainReviewInput implements Serializable {
    * @return this input for fluent construction
    */
   public OpenDrainReviewInput setProjectName(String projectName) {
-    this.projectName = projectName == null || projectName.trim().isEmpty() ? "open-drain-review"
-        : projectName.trim();
+    this.projectName = projectName == null || projectName.trim().isEmpty() ? "open-drain-review" : projectName.trim();
     return this;
   }
 
@@ -143,7 +141,7 @@ public class OpenDrainReviewInput implements Serializable {
   /**
    * Adds input metadata.
    *
-   * @param key metadata key
+   * @param key   metadata key
    * @param value metadata value
    * @return this input for fluent construction
    */
@@ -170,9 +168,9 @@ public class OpenDrainReviewInput implements Serializable {
     for (OpenDrainReviewItem otherItem : other.getItems()) {
       OpenDrainReviewItem existing = findByAreaId(otherItem.getAreaId());
       if (existing == null || otherItem.getAreaId().isEmpty()) {
-        addItem(otherItem);
+	addItem(otherItem);
       } else {
-        existing.mergeFrom(otherItem);
+	existing.mergeFrom(otherItem);
       }
     }
   }
@@ -207,7 +205,7 @@ public class OpenDrainReviewInput implements Serializable {
     }
     for (OpenDrainReviewItem item : items) {
       if (areaId.equalsIgnoreCase(item.getAreaId())) {
-        return item;
+	return item;
       }
     }
     return null;
@@ -216,40 +214,38 @@ public class OpenDrainReviewInput implements Serializable {
   /**
    * Gets a string value from JSON.
    *
-   * @param object JSON object
-   * @param key key to read
+   * @param object       JSON object
+   * @param key          key to read
    * @param defaultValue default value
    * @return string value or default
    */
   private static String getString(JsonObject object, String key, String defaultValue) {
-    return object.has(key) && !object.get(key).isJsonNull() ? object.get(key).getAsString()
-        : defaultValue;
+    return object.has(key) && !object.get(key).isJsonNull() ? object.get(key).getAsString() : defaultValue;
   }
 
   /**
    * Gets a double value from JSON.
    *
-   * @param object JSON object
-   * @param key key to read
+   * @param object       JSON object
+   * @param key          key to read
    * @param defaultValue default value
    * @return double value or default
    */
   private static double getDouble(JsonObject object, String key, double defaultValue) {
-    return object.has(key) && !object.get(key).isJsonNull() ? object.get(key).getAsDouble()
-        : defaultValue;
+    return object.has(key) && !object.get(key).isJsonNull() ? object.get(key).getAsDouble() : defaultValue;
   }
 
   /**
    * Gets the first available array from a list of keys.
    *
    * @param object JSON object
-   * @param keys keys to test
+   * @param keys   keys to test
    * @return first array found, or null
    */
   private static JsonArray getFirstArray(JsonObject object, String... keys) {
     for (String key : keys) {
       if (object.has(key) && object.get(key).isJsonArray()) {
-        return object.getAsJsonArray(key);
+	return object.getAsJsonArray(key);
       }
     }
     return null;
@@ -285,7 +281,7 @@ public class OpenDrainReviewInput implements Serializable {
     if (element.isJsonArray()) {
       List<Object> list = new ArrayList<Object>();
       for (JsonElement child : element.getAsJsonArray()) {
-        list.add(toObject(child));
+	list.add(toObject(child));
       }
       return list;
     }
@@ -305,8 +301,8 @@ public class OpenDrainReviewInput implements Serializable {
    * @return true when the key is a core input key
    */
   private static boolean isCoreKey(String key) {
-    return "projectName".equals(key) || "defaultLiquidLeakRateKgPerS".equals(key)
-        || "items".equals(key) || "openDrainAreas".equals(key) || "drainAreas".equals(key)
-        || "areas".equals(key) || "drainSystems".equals(key) || "stidData".equals(key);
+    return "projectName".equals(key) || "defaultLiquidLeakRateKgPerS".equals(key) || "items".equals(key)
+	|| "openDrainAreas".equals(key) || "drainAreas".equals(key) || "areas".equals(key) || "drainSystems".equals(key)
+	|| "stidData".equals(key);
   }
 }

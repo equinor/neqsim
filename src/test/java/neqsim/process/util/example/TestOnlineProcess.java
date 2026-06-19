@@ -24,8 +24,7 @@ public class TestOnlineProcess {
    */
   @ExcludeFromJacocoGeneratedReport
   public static void main(String args[]) {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
     testSystem.addComponent("methane", 0.900);
     testSystem.addComponent("ethane", 0.100);
     testSystem.addComponent("n-heptane", 1.00);
@@ -40,8 +39,7 @@ public class TestOnlineProcess {
     ThrottlingValve valve_1 = new ThrottlingValve("valve_1", stream_1);
     valve_1.setOutletPressure(5.0);
 
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
     operations.add(stream_1);
     operations.add(temperatureTransmitter);
     operations.add(valve_1);

@@ -16,8 +16,8 @@ import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Tests for the self-healing automation diagnostics including fuzzy matching, auto-correction,
- * physical bounds validation, and operation tracking.
+ * Tests for the self-healing automation diagnostics including fuzzy matching, auto-correction, physical bounds
+ * validation, and operation tracking.
  */
 class AutomationDiagnosticsTest {
 
@@ -93,8 +93,7 @@ class AutomationDiagnosticsTest {
   void testAutoCorrectLearnedCorrection() {
     List<String> valid = Arrays.asList("HP Sep", "LP Sep");
     // Simulate a previous failure + correction
-    diagnostics.recordFailure("get", "hp separator",
-        AutomationDiagnostics.ErrorCategory.UNIT_NOT_FOUND, "HP Sep");
+    diagnostics.recordFailure("get", "hp separator", AutomationDiagnostics.ErrorCategory.UNIT_NOT_FOUND, "HP Sep");
 
     // Now looking up "hp separator" should return the learned correction
     String corrected = diagnostics.autoCorrectName("hp separator", valid);
@@ -104,8 +103,7 @@ class AutomationDiagnosticsTest {
   @Test
   void testDiagnoseUnitNotFoundWithSuggestions() {
     List<String> valid = Arrays.asList("HP Sep", "LP Sep", "Compressor");
-    AutomationDiagnostics.DiagnosticResult result =
-        diagnostics.diagnoseUnitNotFound("HP Separator", valid);
+    AutomationDiagnostics.DiagnosticResult result = diagnostics.diagnoseUnitNotFound("HP Separator", valid);
 
     assertEquals(AutomationDiagnostics.ErrorCategory.UNIT_NOT_FOUND, result.getCategory());
     assertEquals("HP Separator", result.getOriginalInput());
@@ -117,8 +115,7 @@ class AutomationDiagnosticsTest {
   @Test
   void testDiagnoseUnitNotFoundWithAutoCorrection() {
     List<String> valid = Arrays.asList("HP Sep", "LP Sep", "Compressor");
-    AutomationDiagnostics.DiagnosticResult result =
-        diagnostics.diagnoseUnitNotFound("hp sep", valid);
+    AutomationDiagnostics.DiagnosticResult result = diagnostics.diagnoseUnitNotFound("hp sep", valid);
 
     assertTrue(result.hasAutoCorrection());
     assertEquals("HP Sep", result.getAutoCorrection());
@@ -128,8 +125,7 @@ class AutomationDiagnosticsTest {
   @Test
   void testPhysicalBoundsTemperature() {
     // Reasonable temperature
-    AutomationDiagnostics.DiagnosticResult result =
-        diagnostics.validatePhysicalBounds("temperature", 25.0, "C");
+    AutomationDiagnostics.DiagnosticResult result = diagnostics.validatePhysicalBounds("temperature", 25.0, "C");
     assertNull(result, "25 C should be in bounds");
 
     // Out of bounds temperature
@@ -141,8 +137,7 @@ class AutomationDiagnosticsTest {
   @Test
   void testPhysicalBoundsPressure() {
     // Reasonable pressure
-    AutomationDiagnostics.DiagnosticResult result =
-        diagnostics.validatePhysicalBounds("pressure", 60.0, "bara");
+    AutomationDiagnostics.DiagnosticResult result = diagnostics.validatePhysicalBounds("pressure", 60.0, "bara");
     assertNull(result, "60 bara should be in bounds");
 
     // Negative pressure
@@ -153,8 +148,7 @@ class AutomationDiagnosticsTest {
   @Test
   void testPhysicalBoundsUnusualWarning() {
     // Unusual but not impossible temperature (soft bounds)
-    AutomationDiagnostics.DiagnosticResult result =
-        diagnostics.validatePhysicalBounds("temperature", 2000.0, "C");
+    AutomationDiagnostics.DiagnosticResult result = diagnostics.validatePhysicalBounds("temperature", 2000.0, "C");
     assertNotNull(result, "2000 C should trigger soft warning");
     assertTrue(result.getContext().containsKey("severity"));
     assertEquals("WARNING", result.getContext().get("severity"));
@@ -167,8 +161,8 @@ class AutomationDiagnosticsTest {
 
     diagnostics.recordSuccess("get", "HP Sep.temperature");
     diagnostics.recordSuccess("get", "HP Sep.pressure");
-    diagnostics.recordFailure("get", "HP separator.temp",
-        AutomationDiagnostics.ErrorCategory.UNIT_NOT_FOUND, "HP Sep.temperature");
+    diagnostics.recordFailure("get", "HP separator.temp", AutomationDiagnostics.ErrorCategory.UNIT_NOT_FOUND,
+	"HP Sep.temperature");
 
     assertEquals(3, diagnostics.getOperationCount());
     assertEquals(2.0 / 3.0, diagnostics.getSuccessRate(), 0.01);
@@ -179,10 +173,8 @@ class AutomationDiagnosticsTest {
 
   @Test
   void testLearnedCorrectionsAccumulate() {
-    diagnostics.recordFailure("get", "hp sep",
-        AutomationDiagnostics.ErrorCategory.UNIT_NOT_FOUND, "HP Sep");
-    diagnostics.recordFailure("get", "compresser",
-        AutomationDiagnostics.ErrorCategory.UNIT_NOT_FOUND, "Compressor");
+    diagnostics.recordFailure("get", "hp sep", AutomationDiagnostics.ErrorCategory.UNIT_NOT_FOUND, "HP Sep");
+    diagnostics.recordFailure("get", "compresser", AutomationDiagnostics.ErrorCategory.UNIT_NOT_FOUND, "Compressor");
 
     java.util.Map<String, String> learned = diagnostics.getLearnedCorrections();
     assertEquals(2, learned.size());
@@ -193,8 +185,8 @@ class AutomationDiagnosticsTest {
   @Test
   void testLearningReport() {
     diagnostics.recordSuccess("get", "HP Sep.temperature");
-    diagnostics.recordFailure("get", "hp separator.temp",
-        AutomationDiagnostics.ErrorCategory.UNIT_NOT_FOUND, "HP Sep.temperature");
+    diagnostics.recordFailure("get", "hp separator.temp", AutomationDiagnostics.ErrorCategory.UNIT_NOT_FOUND,
+	"HP Sep.temperature");
 
     String report = diagnostics.getLearningReport();
     assertNotNull(report);
@@ -205,8 +197,8 @@ class AutomationDiagnosticsTest {
 
   @Test
   void testDiagnosticResultToJson() {
-    AutomationDiagnostics.DiagnosticResult result = diagnostics.diagnoseUnitNotFound(
-        "HP Separator", Arrays.asList("HP Sep", "LP Sep"));
+    AutomationDiagnostics.DiagnosticResult result = diagnostics.diagnoseUnitNotFound("HP Separator",
+	Arrays.asList("HP Sep", "LP Sep"));
 
     String json = result.toJson();
     assertNotNull(json);
@@ -226,8 +218,7 @@ class AutomationDiagnosticsTest {
   @Test
   void testReset() {
     diagnostics.recordSuccess("get", "HP Sep.temp");
-    diagnostics.recordFailure("get", "bad", AutomationDiagnostics.ErrorCategory.UNIT_NOT_FOUND,
-        "good");
+    diagnostics.recordFailure("get", "bad", AutomationDiagnostics.ErrorCategory.UNIT_NOT_FOUND, "good");
     assertEquals(2, diagnostics.getOperationCount());
     assertFalse(diagnostics.getLearnedCorrections().isEmpty());
 
@@ -257,8 +248,7 @@ class AutomationDiagnosticsTest {
     String result = auto.getVariableValueSafe("hp sep.temperature", "C");
     assertNotNull(result);
     // Should either auto-correct or return diagnostic
-    assertTrue(result.contains("auto_corrected") || result.contains("UNIT_NOT_FOUND")
-        || result.contains("success"));
+    assertTrue(result.contains("auto_corrected") || result.contains("UNIT_NOT_FOUND") || result.contains("success"));
   }
 
   @Test

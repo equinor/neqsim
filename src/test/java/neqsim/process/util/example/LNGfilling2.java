@@ -24,8 +24,7 @@ public class LNGfilling2 {
    */
   @ExcludeFromJacocoGeneratedReport
   public static void main(String args[]) {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos((273.15 - 150.3), 1.02);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 - 150.3), 1.02);
     testSystem.addComponent("nitrogen", 0.1e-6);
     testSystem.addComponent("methane", 90e-6);
     testSystem.addComponent("ethane", 5e-6);
@@ -36,8 +35,8 @@ public class LNGfilling2 {
     testSystem.createDatabase(true);
     testSystem.setMixingRule(2);
 
-    neqsim.thermodynamicoperations.ThermodynamicOperations ops =
-        new neqsim.thermodynamicoperations.ThermodynamicOperations(testSystem);
+    neqsim.thermodynamicoperations.ThermodynamicOperations ops = new neqsim.thermodynamicoperations.ThermodynamicOperations(
+	testSystem);
     ops.TPflash();
     testSystem.display();
 
@@ -48,8 +47,7 @@ public class LNGfilling2 {
 
     StreamInterface liqstream = tank.getLiquidOutStream();
 
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
     operations.add(stream_1);
     operations.add(tank);
     operations.add(liqstream);

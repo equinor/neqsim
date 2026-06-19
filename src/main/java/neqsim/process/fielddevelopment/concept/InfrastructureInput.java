@@ -110,8 +110,8 @@ public final class InfrastructureInput implements Serializable {
    * @return builder with subsea tieback defaults
    */
   public static Builder subseaTieback() {
-    return new Builder().processingLocation(ProcessingLocation.HOST_PLATFORM)
-        .powerSupply(PowerSupply.POWER_FROM_HOST).exportType(ExportType.WET_GAS);
+    return new Builder().processingLocation(ProcessingLocation.HOST_PLATFORM).powerSupply(PowerSupply.POWER_FROM_HOST)
+	.exportType(ExportType.WET_GAS);
   }
 
   // Getters
@@ -188,8 +188,7 @@ public final class InfrastructureInput implements Serializable {
    * @return true if electrified
    */
   public boolean isElectrified() {
-    return powerSupply == PowerSupply.POWER_FROM_SHORE
-        || powerSupply == PowerSupply.POWER_FROM_HOST;
+    return powerSupply == PowerSupply.POWER_FROM_SHORE || powerSupply == PowerSupply.POWER_FROM_HOST;
   }
 
   /**
@@ -218,18 +217,18 @@ public final class InfrastructureInput implements Serializable {
   public double getExportPressure() {
     // Default export pressures based on type
     switch (exportType) {
-      case DRY_GAS:
-        return 180.0;
-      case WET_GAS:
-        return 120.0;
-      case STABILIZED_OIL:
-        return 10.0;
-      case RICH_GAS_CONDENSATE:
-        return 100.0;
-      case LNG:
-        return 1.0;
-      default:
-        return 150.0;
+    case DRY_GAS:
+      return 180.0;
+    case WET_GAS:
+      return 120.0;
+    case STABILIZED_OIL:
+      return 10.0;
+    case RICH_GAS_CONDENSATE:
+      return 100.0;
+    case LNG:
+      return 1.0;
+    default:
+      return 150.0;
     }
   }
 
@@ -250,9 +249,8 @@ public final class InfrastructureInput implements Serializable {
 
   @Override
   public String toString() {
-    return String.format(
-        "InfrastructureInput[tieback=%.0f km, depth=%.0f m, processing=%s, power=%s]",
-        tiebackLength, waterDepth, processingLocation, powerSupply);
+    return String.format("InfrastructureInput[tieback=%.0f km, depth=%.0f m, processing=%s, power=%s]", tiebackLength,
+	waterDepth, processingLocation, powerSupply);
   }
 
   /**
@@ -272,7 +270,8 @@ public final class InfrastructureInput implements Serializable {
     private boolean insulatedFlowline = false;
     private boolean electricHeating = false;
 
-    private Builder() {}
+    private Builder() {
+    }
 
     public Builder tiebackLength(double km) {
       this.tiebackLength = km;
@@ -313,7 +312,7 @@ public final class InfrastructureInput implements Serializable {
 
     public Builder hostCapacityAvailable(double fraction) {
       if (fraction < 0 || fraction > 1) {
-        throw new IllegalArgumentException("Host capacity fraction must be between 0 and 1");
+	throw new IllegalArgumentException("Host capacity fraction must be between 0 and 1");
       }
       this.hostCapacityAvailable = fraction;
       return this;

@@ -29,11 +29,13 @@ public abstract class FlowSolver implements FlowSolverInterface, java.io.Seriali
    * Constructor for FlowSolver.
    * </p>
    */
-  public FlowSolver() {}
+  public FlowSolver() {
+  }
 
   /** {@inheritDoc} */
   @Override
-  public void solve() {}
+  public void solve() {
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -63,5 +65,6 @@ public abstract class FlowSolver implements FlowSolverInterface, java.io.Seriali
 
   /** {@inheritDoc} */
   @Override
-  public void solveTDMA() {}
+  public void solveTDMA() {
+  }
 }

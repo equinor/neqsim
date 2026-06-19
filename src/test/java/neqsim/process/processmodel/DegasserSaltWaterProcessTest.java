@@ -19,15 +19,14 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * Test class for the degasser salt water process model. This replicates the Python-based grisebinge
- * field degasser emission calculation process using NeqSim's Java API.
+ * Test class for the degasser salt water process model. This replicates the Python-based grisebinge field degasser
+ * emission calculation process using NeqSim's Java API.
  *
  * @author copilot
  * @version 1.0
  */
 public class DegasserSaltWaterProcessTest extends neqsim.NeqSimTest {
   private static final Logger logger = LogManager.getLogger(DegasserSaltWaterProcessTest.class);
-
 
   // Component names (Java uses hyphens)
   private static final String WATER = "water";
@@ -44,20 +43,18 @@ public class DegasserSaltWaterProcessTest extends neqsim.NeqSimTest {
   private static final String N_HEPTANE = "n-heptane";
 
   // Predefined compositions for 1st stage separator
-  private static final double[] COMPOSITION_1ST =
-      {40.0, 0.11028244977990904, 8.920149364154726, 72.38708653421389, 5.19349828118209,
-          5.20273089140577, 0.43623950748656926, 1.3935642019214913, 0.7693625154476608,
-          0.5431375120078548, 3.9058764060115045, 3.9058764060115045};
+  private static final double[] COMPOSITION_1ST = { 40.0, 0.11028244977990904, 8.920149364154726, 72.38708653421389,
+      5.19349828118209, 5.20273089140577, 0.43623950748656926, 1.3935642019214913, 0.7693625154476608,
+      0.5431375120078548, 3.9058764060115045, 3.9058764060115045 };
 
   // Predefined compositions for test separator
-  private static final double[] COMPOSITION_TEST =
-      {40.0, 0.10936961607209343, 14.337190183338668, 70.79824780867902, 5.205358867706758,
-          5.235611598737887, 0.42826080120108456, 1.3732632527531796, 0.7194693822733709,
-          0.5167666722707507, 0.3380756544276416, 0.3380756544276416};
+  private static final double[] COMPOSITION_TEST = { 40.0, 0.10936961607209343, 14.337190183338668, 70.79824780867902,
+      5.205358867706758, 5.235611598737887, 0.42826080120108456, 1.3732632527531796, 0.7194693822733709,
+      0.5167666722707507, 0.3380756544276416, 0.3380756544276416 };
 
   // Component names in the order they are added to the fluid
-  private static final String[] COMPONENT_NAMES = {WATER, NITROGEN, CO2, METHANE, ETHANE, PROPANE,
-      I_BUTANE, N_BUTANE, I_PENTANE, N_PENTANE, N_HEXANE, N_HEPTANE};
+  private static final String[] COMPONENT_NAMES = { WATER, NITROGEN, CO2, METHANE, ETHANE, PROPANE, I_BUTANE, N_BUTANE,
+      I_PENTANE, N_PENTANE, N_HEXANE, N_HEPTANE };
 
   // Process unit names
   private static final String INLET_STREAM_1ST_SEP = "Inlet stream 1st separator";
@@ -65,8 +62,7 @@ public class DegasserSaltWaterProcessTest extends neqsim.NeqSimTest {
   private static final String TEST_SEP_INLET = "Test separator inlet";
   private static final String TEST_SEPARATOR = "Test separator";
   private static final String TP_SETTER_DEGASSER_MAIN = "TP setter for the degasser main stream";
-  private static final String TP_SETTER_DEGASSER_TEST =
-      "TP setter for the degasser test sep stream";
+  private static final String TP_SETTER_DEGASSER_TEST = "TP setter for the degasser test sep stream";
   private static final String MIXING_BEFORE_DEGASSER = "Mixing before the degasser";
   private static final String DEGASSER = "Degasser";
   private static final String TP_SETTER_P43_VD01 = "TP Setter Separator after degasser gas";
@@ -79,41 +75,41 @@ public class DegasserSaltWaterProcessTest extends neqsim.NeqSimTest {
   private static final String SEPARATOR_CAISSON = "Separator caisson";
 
   /**
-   * Updates binary interaction parameters (kij) based on salinity for CPA mixing rules. Applies
-   * polynomial correlations for CO2, C1-C4 components with water.
+   * Updates binary interaction parameters (kij) based on salinity for CPA mixing rules. Applies polynomial correlations
+   * for CO2, C1-C4 components with water.
    *
    * @param salinity the salinity in mol/L
-   * @param fluid the fluid system to update
+   * @param fluid    the fluid system to update
    */
   private void updateKij(double salinity, SystemInterface fluid) {
     // CO2 kij correlations
-    double kijCO2 = -0.0076906 * Math.pow(salinity, 3) + 0.0358275 * Math.pow(salinity, 2)
-        - 0.1136315 * salinity + 0.0066297;
+    double kijCO2 = -0.0076906 * Math.pow(salinity, 3) + 0.0358275 * Math.pow(salinity, 2) - 0.1136315 * salinity
+	+ 0.0066297;
     double kijTCO2 = 0.0002690 * salinity + 0.0003547;
 
     // C1 kij correlations
-    double kijC1 = 0.0007756 * Math.pow(salinity, 3) - 0.0034419 * Math.pow(salinity, 2)
-        - 0.0449323 * salinity + 0.0330385;
+    double kijC1 = 0.0007756 * Math.pow(salinity, 3) - 0.0034419 * Math.pow(salinity, 2) - 0.0449323 * salinity
+	+ 0.0330385;
     double kijTC1 = 0.00030404 * salinity + 0.0002578;
 
     // C2 kij correlations
-    double kijC2 = 0.0001983 * Math.pow(salinity, 3) - 0.0014335 * Math.pow(salinity, 2)
-        - 0.0274096 * salinity + 0.1157305;
+    double kijC2 = 0.0001983 * Math.pow(salinity, 3) - 0.0014335 * Math.pow(salinity, 2) - 0.0274096 * salinity
+	+ 0.1157305;
     double kijTC2 = 0.00019606 * salinity + 0.0000233;
 
     // C3 kij correlations
-    double kijC3 = 0.0001672 * Math.pow(salinity, 3) - 0.0011401 * Math.pow(salinity, 2)
-        - 0.0249282 * salinity + 0.0427534;
+    double kijC3 = 0.0001672 * Math.pow(salinity, 3) - 0.0011401 * Math.pow(salinity, 2) - 0.0249282 * salinity
+	+ 0.0427534;
     double kijTC3 = 0.0001695 * salinity + 0.000246;
 
     // iC4 kij correlations
-    double kijIC4 = 0.0001644 * Math.pow(salinity, 3) - 0.0011083 * Math.pow(salinity, 2)
-        - 0.0250861 * salinity + 0.0516554;
+    double kijIC4 = 0.0001644 * Math.pow(salinity, 3) - 0.0011083 * Math.pow(salinity, 2) - 0.0250861 * salinity
+	+ 0.0516554;
     double kijTIC4 = 0.0001621 * salinity + 0.0000154;
 
     // nC4 kij correlations
-    double kijNC4 = 0.0001613 * Math.pow(salinity, 3) - 0.0011028 * Math.pow(salinity, 2)
-        - 0.0234927 * salinity + 0.0766762;
+    double kijNC4 = 0.0001613 * Math.pow(salinity, 3) - 0.0011028 * Math.pow(salinity, 2) - 0.0234927 * salinity
+	+ 0.0766762;
     double kijTNC4 = 0.0001573 * salinity + 0.0001010;
 
     // TPflash to initialize phases
@@ -145,14 +141,14 @@ public class DegasserSaltWaterProcessTest extends neqsim.NeqSimTest {
     // Set kij on phase[1] (matching the Python code behavior)
     for (Map.Entry<String, Double> entry : intParameter.entrySet()) {
       int compIndex = componentNames.indexOf(entry.getKey());
-      ((PhaseEosInterface) fluid.getPhases()[1]).getEosMixingRule()
-          .setBinaryInteractionParameter(compIndex, waterIndex, entry.getValue());
+      ((PhaseEosInterface) fluid.getPhases()[1]).getEosMixingRule().setBinaryInteractionParameter(compIndex, waterIndex,
+	  entry.getValue());
     }
 
     for (Map.Entry<String, Double> entry : intParameterT.entrySet()) {
       int compIndex = componentNames.indexOf(entry.getKey());
-      ((PhaseEosInterface) fluid.getPhases()[1]).getEosMixingRule()
-          .setBinaryInteractionParameterT1(compIndex, waterIndex, entry.getValue());
+      ((PhaseEosInterface) fluid.getPhases()[1]).getEosMixingRule().setBinaryInteractionParameterT1(compIndex,
+	  waterIndex, entry.getValue());
     }
 
     // Re-flash after updating kij
@@ -161,8 +157,7 @@ public class DegasserSaltWaterProcessTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * Calculates the standard gas density at 15 deg C and 1 atm for a given molar mass using the
-   * ideal gas law.
+   * Calculates the standard gas density at 15 deg C and 1 atm for a given molar mass using the ideal gas law.
    *
    * @param molarMassKgPerMol molar mass in kg/mol
    * @return density in kg/m3 at standard conditions
@@ -174,15 +169,13 @@ public class DegasserSaltWaterProcessTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * Calculates the total mass flow rate needed so that the aqueous phase flow rate equals the
-   * desired water flow rate.
+   * Calculates the total mass flow rate needed so that the aqueous phase flow rate equals the desired water flow rate.
    *
-   * @param fluid the fluid system (already flashed)
+   * @param fluid             the fluid system (already flashed)
    * @param waterFlowRateM3Hr desired water flow rate in m3/hr
    * @return total mass flow rate in kg/hr
    */
-  private double calculateMassFlowRateFromWaterFlowRate(SystemInterface fluid,
-      double waterFlowRateM3Hr) {
+  private double calculateMassFlowRateFromWaterFlowRate(SystemInterface fluid, double waterFlowRateM3Hr) {
     // Run TPflash to get phase fractions
     ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
     ops.TPflash();
@@ -202,7 +195,7 @@ public class DegasserSaltWaterProcessTest extends neqsim.NeqSimTest {
     double totalMoles = fluid.getTotalNumberOfMoles();
     double aqueousMoles = fluid.getPhase("aqueous").getNumberOfMolesInPhase();
     double aqueousMassFraction = (aqueousMoles * fluid.getPhase("aqueous").getMolarMass())
-        / (totalMoles * fluid.getMolarMass());
+	/ (totalMoles * fluid.getMolarMass());
 
     // Total mass flow rate
     return waterMassFlowRate / aqueousMassFraction;
@@ -239,13 +232,11 @@ public class DegasserSaltWaterProcessTest extends neqsim.NeqSimTest {
 
     ThreePhaseSeparator testSeparator = new ThreePhaseSeparator(TEST_SEPARATOR, inletStreamTestSep);
 
-    Heater heaterTPSetterMainStream =
-        new Heater(TP_SETTER_DEGASSER_MAIN, separatorVA01.getWaterOutStream());
+    Heater heaterTPSetterMainStream = new Heater(TP_SETTER_DEGASSER_MAIN, separatorVA01.getWaterOutStream());
     heaterTPSetterMainStream.setOutletPressure(3.9 + 1.01325, "bara");
     heaterTPSetterMainStream.setOutletTemperature(74.42, "C");
 
-    Heater heaterTPSetterTestStream =
-        new Heater(TP_SETTER_DEGASSER_TEST, testSeparator.getWaterOutStream());
+    Heater heaterTPSetterTestStream = new Heater(TP_SETTER_DEGASSER_TEST, testSeparator.getWaterOutStream());
     heaterTPSetterTestStream.setOutletPressure(3.9 + 1.01325, "bara");
     heaterTPSetterTestStream.setOutletTemperature(74.42, "C");
 
@@ -253,15 +244,13 @@ public class DegasserSaltWaterProcessTest extends neqsim.NeqSimTest {
     mixingDegasser.addStream(heaterTPSetterMainStream.getOutletStream());
     mixingDegasser.addStream(heaterTPSetterTestStream.getOutletStream());
 
-    ThreePhaseSeparator degasser =
-        new ThreePhaseSeparator(DEGASSER, mixingDegasser.getOutletStream());
+    ThreePhaseSeparator degasser = new ThreePhaseSeparator(DEGASSER, mixingDegasser.getOutletStream());
 
     Heater heaterTPSetterP43VD01 = new Heater(TP_SETTER_P43_VD01, degasser.getGasOutStream());
     heaterTPSetterP43VD01.setOutletPressure(1.01325, "bara");
     heaterTPSetterP43VD01.setOutletTemperature(50.0, "C");
 
-    ThreePhaseSeparator separatorP43VD01 =
-        new ThreePhaseSeparator(P43_VD01, heaterTPSetterP43VD01.getOutletStream());
+    ThreePhaseSeparator separatorP43VD01 = new ThreePhaseSeparator(P43_VD01, heaterTPSetterP43VD01.getOutletStream());
 
     Heater heaterTPSetterCFO = new Heater(TP_SETTER_CFO, degasser.getWaterOutStream());
     heaterTPSetterCFO.setOutletPressure(3.0 + 1.01325, "bara");
@@ -273,15 +262,13 @@ public class DegasserSaltWaterProcessTest extends neqsim.NeqSimTest {
     heaterTPSetterP43VD02.setOutletPressure(1.01325, "bara");
     heaterTPSetterP43VD02.setOutletTemperature(50.0, "C");
 
-    ThreePhaseSeparator separatorP43VD02 =
-        new ThreePhaseSeparator(P43_VD02, heaterTPSetterP43VD02.getOutletStream());
+    ThreePhaseSeparator separatorP43VD02 = new ThreePhaseSeparator(P43_VD02, heaterTPSetterP43VD02.getOutletStream());
 
     Heater heaterTPSetterCaisson = new Heater(TP_SETTER_CAISSON, separatorCFO.getLiquidOutStream());
     heaterTPSetterCaisson.setOutletTemperature(70, "C");
     heaterTPSetterCaisson.setOutletPressure(1.0 + 1.01325, "bara");
 
-    Separator separatorCaisson =
-        new Separator(SEPARATOR_CAISSON, heaterTPSetterCaisson.getOutletStream());
+    Separator separatorCaisson = new Separator(SEPARATOR_CAISSON, heaterTPSetterCaisson.getOutletStream());
 
     ProcessSystem process = new ProcessSystem();
     process.add(inletStreamVA01);
@@ -305,9 +292,9 @@ public class DegasserSaltWaterProcessTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * Tests the degasser salt water process with specific input parameters matching the grisebinge
-   * field configuration. Validates key output values including gas flow rates, water flow rates,
-   * compositions, and emission quantities from degasser, CFO, and caisson units.
+   * Tests the degasser salt water process with specific input parameters matching the grisebinge field configuration.
+   * Validates key output values including gas flow rates, water flow rates, compositions, and emission quantities from
+   * degasser, CFO, and caisson units.
    */
   @Test
   public void testDegasserSaltWaterProcess() {
@@ -342,8 +329,7 @@ public class DegasserSaltWaterProcessTest extends neqsim.NeqSimTest {
     updateKij(salinityFirstStage, inletStream1st.getFluid());
     inletStream1st.run();
 
-    double totalMassFlowRate1st =
-        calculateMassFlowRateFromWaterFlowRate(inletStream1st.getFluid(), flowRateWater);
+    double totalMassFlowRate1st = calculateMassFlowRateFromWaterFlowRate(inletStream1st.getFluid(), flowRateWater);
     inletStream1st.setFlowRate(totalMassFlowRate1st, "kg/hr");
 
     // Run 1st separator
@@ -357,8 +343,8 @@ public class DegasserSaltWaterProcessTest extends neqsim.NeqSimTest {
     updateKij(salinityTest, testSepInlet.getFluid());
     testSepInlet.run();
 
-    double totalMassFlowRateTest =
-        calculateMassFlowRateFromWaterFlowRate(testSepInlet.getFluid(), waterFlowRateTestSep);
+    double totalMassFlowRateTest = calculateMassFlowRateFromWaterFlowRate(testSepInlet.getFluid(),
+	waterFlowRateTestSep);
     testSepInlet.setFlowRate(totalMassFlowRateTest, "kg/hr");
 
     // Run test separator
@@ -378,8 +364,7 @@ public class DegasserSaltWaterProcessTest extends neqsim.NeqSimTest {
     // Calculate mixed salinity
     double flowMain = tpSetterMain.getOutletStream().getFlowRate("m3/hr") * 1000.0;
     double flowTest = tpSetterTest.getOutletStream().getFlowRate("m3/hr") * 1000.0;
-    double mixedSalinity =
-        (salinityFirstStage * flowMain + salinityTest * flowTest) / (flowMain + flowTest);
+    double mixedSalinity = (salinityFirstStage * flowMain + salinityTest * flowTest) / (flowMain + flowTest);
 
     // Update kij with mixed salinity
     updateKij(mixedSalinity, tpSetterMain.getOutletStream().getFluid());
@@ -447,8 +432,7 @@ public class DegasserSaltWaterProcessTest extends neqsim.NeqSimTest {
     double degasserCH4Frac = degasser.getGasOutStream().getFluid().getComponent(METHANE).getz();
     double degasserH2OFrac = degasser.getGasOutStream().getFluid().getComponent(WATER).getz();
     double degasserN2Frac = degasser.getGasOutStream().getFluid().getComponent(NITROGEN).getz();
-    double degasserNMVOCFrac =
-        1.0 - (degasserCO2Frac + degasserCH4Frac + degasserH2OFrac + degasserN2Frac);
+    double degasserNMVOCFrac = 1.0 - (degasserCO2Frac + degasserCH4Frac + degasserH2OFrac + degasserN2Frac);
 
     // Degasser gas mass fractions
     double degasserCO2MassFrac = 0.0;
@@ -459,13 +443,11 @@ public class DegasserSaltWaterProcessTest extends neqsim.NeqSimTest {
 
     if (degasser.getGasOutStream().getFluid().hasPhaseType("gas")) {
       degasserCO2MassFrac = degasser.getGasOutStream().getFluid().getPhase("gas").getWtFrac(CO2);
-      degasserCH4MassFrac =
-          degasser.getGasOutStream().getFluid().getPhase("gas").getWtFrac(METHANE);
+      degasserCH4MassFrac = degasser.getGasOutStream().getFluid().getPhase("gas").getWtFrac(METHANE);
       degasserH2OMassFrac = degasser.getGasOutStream().getFluid().getPhase("gas").getWtFrac(WATER);
-      degasserN2MassFrac =
-          degasser.getGasOutStream().getFluid().getPhase("gas").getWtFrac(NITROGEN);
+      degasserN2MassFrac = degasser.getGasOutStream().getFluid().getPhase("gas").getWtFrac(NITROGEN);
       degasserNMVOCMassFrac = 1.0
-          - (degasserCO2MassFrac + degasserCH4MassFrac + degasserH2OMassFrac + degasserN2MassFrac);
+	  - (degasserCO2MassFrac + degasserCH4MassFrac + degasserH2OMassFrac + degasserN2MassFrac);
     }
 
     // Degasser component flow rates (kg/hr)
@@ -476,16 +458,16 @@ public class DegasserSaltWaterProcessTest extends neqsim.NeqSimTest {
     double degasserNMVOCKgHr = gasFlowRateDegasserKgHr * degasserNMVOCMassFrac;
 
     // Degasser component flow rates (Sm3/hr) using standard density
-    double degasserCO2Sm3Hr = degasserCO2KgHr / getStandardDensity(
-        degasser.getGasOutStream().getFluid().getComponent(CO2).getMolarMass());
-    double degasserCH4Sm3Hr = degasserCH4KgHr / getStandardDensity(
-        degasser.getGasOutStream().getFluid().getComponent(METHANE).getMolarMass());
-    double degasserH2OSm3Hr = degasserH2OKgHr / getStandardDensity(
-        degasser.getGasOutStream().getFluid().getComponent(WATER).getMolarMass());
-    double degasserN2Sm3Hr = degasserN2KgHr / getStandardDensity(
-        degasser.getGasOutStream().getFluid().getComponent(NITROGEN).getMolarMass());
+    double degasserCO2Sm3Hr = degasserCO2KgHr
+	/ getStandardDensity(degasser.getGasOutStream().getFluid().getComponent(CO2).getMolarMass());
+    double degasserCH4Sm3Hr = degasserCH4KgHr
+	/ getStandardDensity(degasser.getGasOutStream().getFluid().getComponent(METHANE).getMolarMass());
+    double degasserH2OSm3Hr = degasserH2OKgHr
+	/ getStandardDensity(degasser.getGasOutStream().getFluid().getComponent(WATER).getMolarMass());
+    double degasserN2Sm3Hr = degasserN2KgHr
+	/ getStandardDensity(degasser.getGasOutStream().getFluid().getComponent(NITROGEN).getMolarMass());
     double degasserNMVOCSm3Hr = gasFlowRateDegasserSm3Hr
-        - (degasserCO2Sm3Hr + degasserCH4Sm3Hr + degasserH2OSm3Hr + degasserN2Sm3Hr);
+	- (degasserCO2Sm3Hr + degasserCH4Sm3Hr + degasserH2OSm3Hr + degasserN2Sm3Hr);
 
     // CFO gas flow rates
     double cfoGasFlowKgHr = cfSeparator.getGasOutStream().getFlowRate("kg/hr");
@@ -512,85 +494,78 @@ public class DegasserSaltWaterProcessTest extends neqsim.NeqSimTest {
     // ===== Assertions =====
     // Verify degasser gas flow rate is positive and reasonable
     Assertions.assertTrue(gasFlowRateDegasserKgHr > 0.01,
-        "Degasser gas flow rate should be positive, got: " + gasFlowRateDegasserKgHr);
+	"Degasser gas flow rate should be positive, got: " + gasFlowRateDegasserKgHr);
     Assertions.assertTrue(gasFlowRateDegasserKgHr < 1000.0,
-        "Degasser gas flow rate should be < 1000 kg/hr, got: " + gasFlowRateDegasserKgHr);
+	"Degasser gas flow rate should be < 1000 kg/hr, got: " + gasFlowRateDegasserKgHr);
 
     // Verify water flow rate from degasser
     Assertions.assertTrue(waterFlowRateDegasserM3Hr > 0.01,
-        "Degasser water flow rate should be positive, got: " + waterFlowRateDegasserM3Hr);
+	"Degasser water flow rate should be positive, got: " + waterFlowRateDegasserM3Hr);
     Assertions.assertTrue(waterFlowRateDegasserM3Hr < 1000.0,
-        "Degasser water flow rate should be < 1000 m3/hr, got: " + waterFlowRateDegasserM3Hr);
+	"Degasser water flow rate should be < 1000 m3/hr, got: " + waterFlowRateDegasserM3Hr);
 
     // Verify gas-to-water ratio
-    Assertions.assertTrue(ratioGasWater > 0.01,
-        "Gas-to-water ratio should be > 0.01, got: " + ratioGasWater);
-    Assertions.assertTrue(ratioGasWater < 10.0,
-        "Gas-to-water ratio should be < 10, got: " + ratioGasWater);
+    Assertions.assertTrue(ratioGasWater > 0.01, "Gas-to-water ratio should be > 0.01, got: " + ratioGasWater);
+    Assertions.assertTrue(ratioGasWater < 10.0, "Gas-to-water ratio should be < 10, got: " + ratioGasWater);
 
     // Verify degasser gas composition fractions sum approximately to 1
-    double totalMolarFrac =
-        degasserCO2Frac + degasserCH4Frac + degasserH2OFrac + degasserN2Frac + degasserNMVOCFrac;
-    Assertions.assertEquals(1.0, totalMolarFrac, 1e-6,
-        "Degasser gas molar fractions should sum to 1.0");
+    double totalMolarFrac = degasserCO2Frac + degasserCH4Frac + degasserH2OFrac + degasserN2Frac + degasserNMVOCFrac;
+    Assertions.assertEquals(1.0, totalMolarFrac, 1e-6, "Degasser gas molar fractions should sum to 1.0");
 
     // Verify mass fractions sum approximately to 1
-    double totalMassFrac = degasserCO2MassFrac + degasserCH4MassFrac + degasserH2OMassFrac
-        + degasserN2MassFrac + degasserNMVOCMassFrac;
-    Assertions.assertEquals(1.0, totalMassFrac, 1e-6,
-        "Degasser gas mass fractions should sum to 1.0");
+    double totalMassFrac = degasserCO2MassFrac + degasserCH4MassFrac + degasserH2OMassFrac + degasserN2MassFrac
+	+ degasserNMVOCMassFrac;
+    Assertions.assertEquals(1.0, totalMassFrac, 1e-6, "Degasser gas mass fractions should sum to 1.0");
 
     // Verify CO2 is a significant component in degasser gas
     Assertions.assertTrue(degasserCO2Frac > 0.01,
-        "CO2 mole fraction in degasser gas should be > 1%, got: " + degasserCO2Frac);
+	"CO2 mole fraction in degasser gas should be > 1%, got: " + degasserCO2Frac);
 
     // Verify methane is present in degasser gas
     Assertions.assertTrue(degasserCH4Frac > 0.01,
-        "Methane mole fraction in degasser gas should be > 1%, got: " + degasserCH4Frac);
+	"Methane mole fraction in degasser gas should be > 1%, got: " + degasserCH4Frac);
 
     // Verify CFO gas flow rate is positive
-    Assertions.assertTrue(cfoGasFlowKgHr > 0.0,
-        "CFO gas flow rate should be positive, got: " + cfoGasFlowKgHr);
-    Assertions.assertTrue(cfoGasFlowKgHr < 1000.0,
-        "CFO gas flow rate should be < 1000 kg/hr, got: " + cfoGasFlowKgHr);
+    Assertions.assertTrue(cfoGasFlowKgHr > 0.0, "CFO gas flow rate should be positive, got: " + cfoGasFlowKgHr);
+    Assertions.assertTrue(cfoGasFlowKgHr < 1000.0, "CFO gas flow rate should be < 1000 kg/hr, got: " + cfoGasFlowKgHr);
 
     // Verify caisson gas flow rate is positive
     Assertions.assertTrue(caissonGasFlowKgHr > 0.01,
-        "Caisson gas flow rate should be positive, got: " + caissonGasFlowKgHr);
+	"Caisson gas flow rate should be positive, got: " + caissonGasFlowKgHr);
     Assertions.assertTrue(caissonGasFlowKgHr < 1000.0,
-        "Caisson gas flow rate should be < 1000 kg/hr, got: " + caissonGasFlowKgHr);
+	"Caisson gas flow rate should be < 1000 kg/hr, got: " + caissonGasFlowKgHr);
 
     // Verify P-43-VD01 results
     Assertions.assertTrue(sepVD01GasFlowKgHr > 0.0,
-        "P-43-VD01 gas flow should be positive, got: " + sepVD01GasFlowKgHr);
+	"P-43-VD01 gas flow should be positive, got: " + sepVD01GasFlowKgHr);
     Assertions.assertTrue(sepVD01GasFlowSm3Hr > 0.0,
-        "P-43-VD01 gas Sm3 flow should be positive, got: " + sepVD01GasFlowSm3Hr);
+	"P-43-VD01 gas Sm3 flow should be positive, got: " + sepVD01GasFlowSm3Hr);
 
     // Verify P-43-VD02 results
     Assertions.assertTrue(sepVD02GasFlowKgHr > 0.0,
-        "P-43-VD02 gas flow should be positive, got: " + sepVD02GasFlowKgHr);
+	"P-43-VD02 gas flow should be positive, got: " + sepVD02GasFlowKgHr);
     Assertions.assertTrue(sepVD02GasFlowSm3Hr > 0.0,
-        "P-43-VD02 gas Sm3 flow should be positive, got: " + sepVD02GasFlowSm3Hr);
+	"P-43-VD02 gas Sm3 flow should be positive, got: " + sepVD02GasFlowSm3Hr);
 
     // Verify aqueous densities are reasonable for salt water
     Assertions.assertTrue(aqueousDensityFirstStage > 950.0,
-        "Aqueous density should be > 950 kg/m3, got: " + aqueousDensityFirstStage);
+	"Aqueous density should be > 950 kg/m3, got: " + aqueousDensityFirstStage);
     Assertions.assertTrue(aqueousDensityFirstStage < 1200.0,
-        "Aqueous density should be < 1200 kg/m3, got: " + aqueousDensityFirstStage);
+	"Aqueous density should be < 1200 kg/m3, got: " + aqueousDensityFirstStage);
     Assertions.assertTrue(aqueousDensityTest > 950.0,
-        "Test aqueous density should be > 950 kg/m3, got: " + aqueousDensityTest);
+	"Test aqueous density should be > 950 kg/m3, got: " + aqueousDensityTest);
     Assertions.assertTrue(aqueousDensityTest < 1200.0,
-        "Test aqueous density should be < 1200 kg/m3, got: " + aqueousDensityTest);
+	"Test aqueous density should be < 1200 kg/m3, got: " + aqueousDensityTest);
 
     // Verify first separator gas is reasonable
     Assertions.assertTrue(gasFlowRate1stSm3Hr > 0.0,
-        "1st separator gas flow should be positive, got: " + gasFlowRate1stSm3Hr);
+	"1st separator gas flow should be positive, got: " + gasFlowRate1stSm3Hr);
 
     // Verify component Sm3/hr calculations are consistent
-    double totalDegasserSm3Hr = degasserCO2Sm3Hr + degasserCH4Sm3Hr + degasserH2OSm3Hr
-        + degasserN2Sm3Hr + degasserNMVOCSm3Hr;
+    double totalDegasserSm3Hr = degasserCO2Sm3Hr + degasserCH4Sm3Hr + degasserH2OSm3Hr + degasserN2Sm3Hr
+	+ degasserNMVOCSm3Hr;
     Assertions.assertEquals(gasFlowRateDegasserSm3Hr, totalDegasserSm3Hr, 0.5,
-        "Sum of component Sm3/hr should equal total Sm3/hr");
+	"Sum of component Sm3/hr should equal total Sm3/hr");
 
     // Print key results for debugging/verification
     logger.info("===== Degasser Salt Water Process Results =====");
@@ -625,7 +600,6 @@ public class DegasserSaltWaterProcessTest extends neqsim.NeqSimTest {
     logger.info("Degasser CH4 kg/hr: " + degasserCH4KgHr + ", Sm3/hr: " + degasserCH4Sm3Hr);
     logger.info("Degasser H2O kg/hr: " + degasserH2OKgHr + ", Sm3/hr: " + degasserH2OSm3Hr);
     logger.info("Degasser N2 kg/hr: " + degasserN2KgHr + ", Sm3/hr: " + degasserN2Sm3Hr);
-    System.out
-        .println("Degasser NMVOC kg/hr: " + degasserNMVOCKgHr + ", Sm3/hr: " + degasserNMVOCSm3Hr);
+    System.out.println("Degasser NMVOC kg/hr: " + degasserNMVOCKgHr + ", Sm3/hr: " + degasserNMVOCSm3Hr);
   }
 }

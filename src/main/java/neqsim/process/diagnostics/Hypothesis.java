@@ -25,8 +25,8 @@ import java.util.List;
  *
  * <pre>
  * {@code
- * Hypothesis h = Hypothesis.builder().name("Seal degradation").category(Category.MECHANICAL)
- *     .priorProbability(0.25).build();
+ * Hypothesis h = Hypothesis.builder().name("Seal degradation").category(Category.MECHANICAL).priorProbability(0.25)
+ *     .build();
  * }
  * </pre>
  *
@@ -101,14 +101,12 @@ public class Hypothesis implements Serializable, Comparable<Hypothesis> {
      *
      * @param parameterPattern parameter alias or pipe-separated aliases to match
      * @param expectedBehavior expected signal behavior
-     * @param weight relative importance, normally 0.1 to 5.0
-     * @param rationale engineering reason for expecting this signal
+     * @param weight           relative importance, normally 0.1 to 5.0
+     * @param rationale        engineering reason for expecting this signal
      */
-    public ExpectedSignal(String parameterPattern, ExpectedBehavior expectedBehavior, double weight,
-        String rationale) {
+    public ExpectedSignal(String parameterPattern, ExpectedBehavior expectedBehavior, double weight, String rationale) {
       this.parameterPattern = parameterPattern == null ? "" : parameterPattern;
-      this.expectedBehavior =
-          expectedBehavior == null ? ExpectedBehavior.ANY_CHANGE : expectedBehavior;
+      this.expectedBehavior = expectedBehavior == null ? ExpectedBehavior.ANY_CHANGE : expectedBehavior;
       this.weight = Math.max(0.1, weight);
       this.rationale = rationale == null ? "" : rationale;
     }
@@ -167,30 +165,28 @@ public class Hypothesis implements Serializable, Comparable<Hypothesis> {
     /**
      * Creates an evidence item.
      *
-     * @param parameter parameter name (e.g., "discharge_temperature")
+     * @param parameter   parameter name (e.g., "discharge_temperature")
      * @param observation what was observed (e.g., "increasing trend, +5 C over 30 days")
-     * @param strength how strongly this supports the hypothesis
-     * @param source data source (e.g., "historian", "STID", "simulation")
+     * @param strength    how strongly this supports the hypothesis
+     * @param source      data source (e.g., "historian", "STID", "simulation")
      */
-    public Evidence(String parameter, String observation, EvidenceStrength strength,
-        String source) {
-      this(parameter, observation, strength, source, strength != EvidenceStrength.CONTRADICTORY,
-          1.0, "");
+    public Evidence(String parameter, String observation, EvidenceStrength strength, String source) {
+      this(parameter, observation, strength, source, strength != EvidenceStrength.CONTRADICTORY, 1.0, "");
     }
 
     /**
      * Creates an evidence item with explicit support direction and weight.
      *
-     * @param parameter parameter name, tag alias, or design key
-     * @param observation what was observed
-     * @param strength strength of the evidence
-     * @param source data source or analysis method
-     * @param supporting true if the evidence supports the hypothesis, false if contradictory
-     * @param weight relative weight, normally 0.1 to 5.0
+     * @param parameter       parameter name, tag alias, or design key
+     * @param observation     what was observed
+     * @param strength        strength of the evidence
+     * @param source          data source or analysis method
+     * @param supporting      true if the evidence supports the hypothesis, false if contradictory
+     * @param weight          relative weight, normally 0.1 to 5.0
      * @param sourceReference optional document, tag, or data-window reference
      */
-    public Evidence(String parameter, String observation, EvidenceStrength strength, String source,
-        boolean supporting, double weight, String sourceReference) {
+    public Evidence(String parameter, String observation, EvidenceStrength strength, String source, boolean supporting,
+	double weight, String sourceReference) {
       this.parameter = parameter;
       this.observation = observation;
       this.strength = strength;
@@ -468,9 +464,8 @@ public class Hypothesis implements Serializable, Comparable<Hypothesis> {
   }
 
   /**
-   * Updates the combined confidence score using Bayesian-inspired formula: confidence = prior x
-   * likelihood x verification. If likelihood or verification are 0 (not yet evaluated), they are
-   * treated as 1.0 (neutral).
+   * Updates the combined confidence score using Bayesian-inspired formula: confidence = prior x likelihood x
+   * verification. If likelihood or verification are 0 (not yet evaluated), they are treated as 1.0 (neutral).
    */
   void updateConfidence() {
     double lik = likelihoodScore > 0 ? likelihoodScore : 1.0;
@@ -479,8 +474,7 @@ public class Hypothesis implements Serializable, Comparable<Hypothesis> {
   }
 
   /**
-   * Sets the final confidence score directly. Used during Bayesian normalization across all
-   * hypotheses.
+   * Sets the final confidence score directly. Used during Bayesian normalization across all hypotheses.
    *
    * @param score normalized confidence score in range 0 to 1
    */
@@ -501,8 +495,7 @@ public class Hypothesis implements Serializable, Comparable<Hypothesis> {
 
   @Override
   public String toString() {
-    return String.format("%.1f%% - %s [%s]: %s", confidenceScore * 100, name, category,
-        description);
+    return String.format("%.1f%% - %s [%s]: %s", confidenceScore * 100, name, category, description);
   }
 
   /**
@@ -530,7 +523,8 @@ public class Hypothesis implements Serializable, Comparable<Hypothesis> {
     /**
      * Creates a builder.
      */
-    public Builder() {}
+    public Builder() {
+    }
 
     /**
      * Sets the hypothesis name.
@@ -602,13 +596,13 @@ public class Hypothesis implements Serializable, Comparable<Hypothesis> {
      * Adds an expected diagnostic signal.
      *
      * @param parameterPattern parameter alias or pipe-separated aliases to match
-     * @param behavior expected behavior for the matched parameter
-     * @param weight relative importance, normally 0.1 to 5.0
-     * @param rationale engineering rationale for the signal
+     * @param behavior         expected behavior for the matched parameter
+     * @param weight           relative importance, normally 0.1 to 5.0
+     * @param rationale        engineering rationale for the signal
      * @return this builder
      */
-    public Builder addExpectedSignal(String parameterPattern, ExpectedBehavior behavior,
-        double weight, String rationale) {
+    public Builder addExpectedSignal(String parameterPattern, ExpectedBehavior behavior, double weight,
+	String rationale) {
       this.expectedSignals.add(new ExpectedSignal(parameterPattern, behavior, weight, rationale));
       return this;
     }

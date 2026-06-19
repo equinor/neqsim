@@ -14,8 +14,8 @@ import neqsim.process.safety.risk.RiskEvent.ConsequenceCategory;
  * Container for probabilistic risk analysis results.
  *
  * <p>
- * Stores Monte Carlo simulation results, frequency distributions, and risk metrics for reporting
- * and export to external tools.
+ * Stores Monte Carlo simulation results, frequency distributions, and risk metrics for reporting and export to external
+ * tools.
  * </p>
  *
  * @author NeqSim team
@@ -52,8 +52,7 @@ public class RiskResult {
     private final double riskContribution;
     private final ConsequenceCategory category;
 
-    public EventResult(String name, double freq, double prob, double risk,
-        ConsequenceCategory cat) {
+    public EventResult(String name, double freq, double prob, double risk, ConsequenceCategory cat) {
       this.eventName = name;
       this.frequency = freq;
       this.probability = prob;
@@ -86,8 +85,8 @@ public class RiskResult {
    * Creates a new risk result container.
    *
    * @param analysisName name of the analysis
-   * @param iterations number of Monte Carlo iterations
-   * @param seed random seed used
+   * @param iterations   number of Monte Carlo iterations
+   * @param seed         random seed used
    */
   public RiskResult(String analysisName, int iterations, long seed) {
     this.analysisName = analysisName;
@@ -195,8 +194,7 @@ public class RiskResult {
    * Gets the F-N curve data points (Frequency vs Number affected).
    *
    * <p>
-   * Returns pairs of (N, F) where F is the cumulative frequency of events with N or more
-   * consequences.
+   * Returns pairs of (N, F) where F is the cumulative frequency of events with N or more consequences.
    * </p>
    *
    * @return array of [N, cumulative_frequency] pairs
@@ -240,15 +238,15 @@ public class RiskResult {
       // Frequency by category
       writer.println("Category,Severity,Frequency (per year)");
       for (ConsequenceCategory cat : ConsequenceCategory.values()) {
-        writer.printf("%s,%d,%.6e%n", cat.name(), cat.getSeverity(), frequencyByCategory.get(cat));
+	writer.printf("%s,%d,%.6e%n", cat.name(), cat.getSeverity(), frequencyByCategory.get(cat));
       }
       writer.println();
 
       // Event results
       writer.println("Event,Frequency,Probability,Risk Contribution,Category");
       for (EventResult er : eventResults) {
-        writer.printf("%s,%.6e,%.6f,%.6e,%s%n", er.eventName, er.frequency, er.probability,
-            er.riskContribution, er.category.name());
+	writer.printf("%s,%.6e,%.6f,%.6e,%s%n", er.eventName, er.frequency, er.probability, er.riskContribution,
+	    er.category.name());
       }
     } catch (IOException e) {
       throw new RuntimeException("Failed to export risk results: " + e.getMessage(), e);
@@ -278,23 +276,22 @@ public class RiskResult {
       writer.println("  \"frequencyByCategory\": {");
       ConsequenceCategory[] cats = ConsequenceCategory.values();
       for (int i = 0; i < cats.length; i++) {
-        String comma = (i < cats.length - 1) ? "," : "";
-        writer.printf("    \"%s\": %.6e%s%n", cats[i].name(), frequencyByCategory.get(cats[i]),
-            comma);
+	String comma = (i < cats.length - 1) ? "," : "";
+	writer.printf("    \"%s\": %.6e%s%n", cats[i].name(), frequencyByCategory.get(cats[i]), comma);
       }
       writer.println("  },");
 
       writer.println("  \"events\": [");
       for (int i = 0; i < eventResults.size(); i++) {
-        EventResult er = eventResults.get(i);
-        String comma = (i < eventResults.size() - 1) ? "," : "";
-        writer.println("    {");
-        writer.println("      \"name\": \"" + er.eventName + "\",");
-        writer.printf("      \"frequency\": %.6e,%n", er.frequency);
-        writer.printf("      \"probability\": %.6f,%n", er.probability);
-        writer.printf("      \"riskContribution\": %.6e,%n", er.riskContribution);
-        writer.println("      \"category\": \"" + er.category.name() + "\"");
-        writer.println("    }" + comma);
+	EventResult er = eventResults.get(i);
+	String comma = (i < eventResults.size() - 1) ? "," : "";
+	writer.println("    {");
+	writer.println("      \"name\": \"" + er.eventName + "\",");
+	writer.printf("      \"frequency\": %.6e,%n", er.frequency);
+	writer.printf("      \"probability\": %.6f,%n", er.probability);
+	writer.printf("      \"riskContribution\": %.6e,%n", er.riskContribution);
+	writer.println("      \"category\": \"" + er.category.name() + "\"");
+	writer.println("    }" + comma);
       }
       writer.println("  ]");
 
@@ -328,7 +325,7 @@ public class RiskResult {
 
   @Override
   public String toString() {
-    return String.format("RiskResult[%s, %d iterations, risk=%.4f, freq=%.4e/yr]", analysisName,
-        iterations, totalRiskIndex, getTotalFrequency());
+    return String.format("RiskResult[%s, %d iterations, risk=%.4f, freq=%.4e/yr]", analysisName, iterations,
+	totalRiskIndex, getTotalFrequency());
   }
 }

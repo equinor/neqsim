@@ -20,7 +20,7 @@ public class Problem280809LNGphaseEnvelope {
   private static final Logger logger = LogManager.getLogger(Problem280809LNGphaseEnvelope.class);
 
   /** Logger object for class. */
-  
+
   /**
    * <p>
    * main.

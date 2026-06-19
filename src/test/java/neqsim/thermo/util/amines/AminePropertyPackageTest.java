@@ -11,9 +11,8 @@ import neqsim.thermo.system.SystemInterface;
  * Tests for the improved amine property package.
  *
  * <p>
- * Validates heat of absorption calculations and the AmineSystem convenience wrapper for MEA, DEA,
- * MDEA, and aMDEA systems. Heat values are negative (exothermic convention), so tests compare
- * absolute values.
+ * Validates heat of absorption calculations and the AmineSystem convenience wrapper for MEA, DEA, MDEA, and aMDEA
+ * systems. Heat values are negative (exothermic convention), so tests compare absolute values.
  * </p>
  */
 class AminePropertyPackageTest {
@@ -26,8 +25,7 @@ class AminePropertyPackageTest {
     calc.setAmineConcentration(0.30);
     calc.setCO2Loading(0.3);
     double absHeat = Math.abs(calc.calcHeatOfAbsorptionCO2());
-    assertTrue(absHeat > 60.0 && absHeat < 100.0,
-        "MEA |heat| should be 60-100 kJ/mol, got " + absHeat);
+    assertTrue(absHeat > 60.0 && absHeat < 100.0, "MEA |heat| should be 60-100 kJ/mol, got " + absHeat);
   }
 
   @Test
@@ -38,8 +36,7 @@ class AminePropertyPackageTest {
     calc.setAmineConcentration(0.30);
     calc.setCO2Loading(0.3);
     double absHeat = Math.abs(calc.calcHeatOfAbsorptionCO2());
-    assertTrue(absHeat > 50.0 && absHeat < 90.0,
-        "DEA |heat| should be 50-90 kJ/mol, got " + absHeat);
+    assertTrue(absHeat > 50.0 && absHeat < 90.0, "DEA |heat| should be 50-90 kJ/mol, got " + absHeat);
   }
 
   @Test
@@ -50,8 +47,7 @@ class AminePropertyPackageTest {
     calc.setAmineConcentration(0.50);
     calc.setCO2Loading(0.3);
     double absHeat = Math.abs(calc.calcHeatOfAbsorptionCO2());
-    assertTrue(absHeat > 30.0 && absHeat < 70.0,
-        "MDEA |heat| should be 30-70 kJ/mol, got " + absHeat);
+    assertTrue(absHeat > 30.0 && absHeat < 70.0, "MDEA |heat| should be 30-70 kJ/mol, got " + absHeat);
   }
 
   @Test
@@ -60,8 +56,7 @@ class AminePropertyPackageTest {
     calc.setAmineType(AmineHeatOfAbsorption.AmineType.MEA);
     calc.setTemperature(273.15 + 40.0);
     double absHeat = Math.abs(calc.calcHeatOfAbsorptionH2S());
-    assertTrue(absHeat > 20.0 && absHeat < 40.0,
-        "H2S |heat| should be 20-40 kJ/mol, got " + absHeat);
+    assertTrue(absHeat > 20.0 && absHeat < 40.0, "H2S |heat| should be 20-40 kJ/mol, got " + absHeat);
   }
 
   @Test
@@ -130,8 +125,7 @@ class AminePropertyPackageTest {
     double absLow = Math.abs(calc.calcHeatOfAbsorptionCO2());
     calc.setCO2Loading(0.45);
     double absHigh = Math.abs(calc.calcHeatOfAbsorptionCO2());
-    assertTrue(absLow > absHigh,
-        "|Heat| at 0.1 (" + absLow + ") should exceed |heat| at 0.45 (" + absHigh + ")");
+    assertTrue(absLow > absHigh, "|Heat| at 0.1 (" + absLow + ") should exceed |heat| at 0.45 (" + absHigh + ")");
   }
 
   @Test
@@ -144,8 +138,7 @@ class AminePropertyPackageTest {
     double absMea = Math.abs(calc.calcHeatOfAbsorptionCO2());
     calc.setAmineType(AmineHeatOfAbsorption.AmineType.MDEA);
     double absMdea = Math.abs(calc.calcHeatOfAbsorptionCO2());
-    assertTrue(absMdea < absMea,
-        "MDEA |heat| (" + absMdea + ") should be < MEA |heat| (" + absMea + ")");
+    assertTrue(absMdea < absMea, "MDEA |heat| (" + absMdea + ") should be < MEA |heat| (" + absMea + ")");
   }
 
   @Test

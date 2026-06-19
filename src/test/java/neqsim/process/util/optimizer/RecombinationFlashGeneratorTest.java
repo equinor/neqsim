@@ -59,8 +59,7 @@ public class RecombinationFlashGeneratorTest {
     double temperature = 353.15; // 80°C
     double pressure = 100.0; // bara
 
-    SystemInterface fluid =
-        generator.generateFluid(targetGOR, waterCut, liquidRate, temperature, pressure);
+    SystemInterface fluid = generator.generateFluid(targetGOR, waterCut, liquidRate, temperature, pressure);
 
     assertNotNull(fluid);
     assertTrue(fluid.getNumberOfComponents() > 0);
@@ -103,8 +102,7 @@ public class RecombinationFlashGeneratorTest {
     double temperature = 353.15;
     double pressure = 100.0;
 
-    SystemInterface fluid =
-        generator.generateFluid(targetGOR, waterCut, liquidRate, temperature, pressure);
+    SystemInterface fluid = generator.generateFluid(targetGOR, waterCut, liquidRate, temperature, pressure);
 
     assertNotNull(fluid);
 
@@ -112,8 +110,8 @@ public class RecombinationFlashGeneratorTest {
     boolean hasWater = false;
     for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
       if (fluid.getComponent(i).getName().equalsIgnoreCase("water")) {
-        hasWater = true;
-        break;
+	hasWater = true;
+	break;
       }
     }
     assertTrue(hasWater, "Fluid should contain water when WC > 0");
@@ -131,12 +129,10 @@ public class RecombinationFlashGeneratorTest {
     double pressure = 100.0;
 
     // First call - should miss cache
-    SystemInterface fluid1 =
-        generator.generateFluid(targetGOR, waterCut, liquidRate, temperature, pressure);
+    SystemInterface fluid1 = generator.generateFluid(targetGOR, waterCut, liquidRate, temperature, pressure);
 
     // Second call with same GOR/WC - should hit cache
-    SystemInterface fluid2 =
-        generator.generateFluid(targetGOR, waterCut, liquidRate, temperature, pressure);
+    SystemInterface fluid2 = generator.generateFluid(targetGOR, waterCut, liquidRate, temperature, pressure);
 
     String stats = generator.getCacheStatistics();
     assertNotNull(stats);
@@ -177,11 +173,10 @@ public class RecombinationFlashGeneratorTest {
     double temperature = 353.15;
     double pressure = 100.0;
 
-    double[] gorValues = {200, 500, 1000, 2000, 5000};
+    double[] gorValues = { 200, 500, 1000, 2000, 5000 };
 
     for (double gor : gorValues) {
-      SystemInterface fluid =
-          generator.generateFluid(gor, waterCut, liquidRate, temperature, pressure);
+      SystemInterface fluid = generator.generateFluid(gor, waterCut, liquidRate, temperature, pressure);
       assertNotNull(fluid, "Should generate fluid for GOR=" + gor);
     }
   }
@@ -196,11 +191,10 @@ public class RecombinationFlashGeneratorTest {
     double temperature = 353.15;
     double pressure = 100.0;
 
-    double[] wcValues = {0.0, 0.10, 0.30, 0.50, 0.70};
+    double[] wcValues = { 0.0, 0.10, 0.30, 0.50, 0.70 };
 
     for (double wc : wcValues) {
-      SystemInterface fluid =
-          generator.generateFluid(targetGOR, wc, liquidRate, temperature, pressure);
+      SystemInterface fluid = generator.generateFluid(targetGOR, wc, liquidRate, temperature, pressure);
       assertNotNull(fluid, "Should generate fluid for WC=" + wc);
     }
   }
@@ -213,27 +207,26 @@ public class RecombinationFlashGeneratorTest {
     int numThreads = 4;
     int numIterations = 5;
 
-    java.util.concurrent.ExecutorService executor =
-        java.util.concurrent.Executors.newFixedThreadPool(numThreads);
+    java.util.concurrent.ExecutorService executor = java.util.concurrent.Executors.newFixedThreadPool(numThreads);
 
     java.util.List<java.util.concurrent.Future<Boolean>> futures = new java.util.ArrayList<>();
 
     for (int t = 0; t < numThreads; t++) {
       final int threadId = t;
       futures.add(executor.submit(() -> {
-        try {
-          for (int i = 0; i < numIterations; i++) {
-            double gor = 200 + threadId * 200 + i * 50;
-            double wc = 0.1 * threadId;
-            SystemInterface fluid = generator.generateFluid(gor, wc, 1000.0, 353.15, 100.0);
-            if (fluid == null || fluid.getNumberOfComponents() == 0) {
-              return false;
-            }
-          }
-          return true;
-        } catch (Exception e) {
-          return false;
-        }
+	try {
+	  for (int i = 0; i < numIterations; i++) {
+	    double gor = 200 + threadId * 200 + i * 50;
+	    double wc = 0.1 * threadId;
+	    SystemInterface fluid = generator.generateFluid(gor, wc, 1000.0, 353.15, 100.0);
+	    if (fluid == null || fluid.getNumberOfComponents() == 0) {
+	      return false;
+	    }
+	  }
+	  return true;
+	} catch (Exception e) {
+	  return false;
+	}
       }));
     }
 
@@ -246,8 +239,8 @@ public class RecombinationFlashGeneratorTest {
   }
 
   /**
-   * Test invalid parameters - verify fluid is still generated for edge cases. The generator handles
-   * extreme values gracefully rather than throwing.
+   * Test invalid parameters - verify fluid is still generated for edge cases. The generator handles extreme values
+   * gracefully rather than throwing.
    */
   @Test
   void testInvalidParameters() {
@@ -273,8 +266,8 @@ public class RecombinationFlashGeneratorTest {
     double waterMoles = 0;
     for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
       if (fluid.getComponent(i).getName().equalsIgnoreCase("water")) {
-        waterMoles = fluid.getComponent(i).getNumberOfmoles();
-        break;
+	waterMoles = fluid.getComponent(i).getNumberOfmoles();
+	break;
       }
     }
 

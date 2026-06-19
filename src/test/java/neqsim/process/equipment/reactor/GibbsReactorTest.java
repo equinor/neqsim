@@ -14,8 +14,7 @@ import neqsim.thermo.system.SystemSrkEos;
  */
 public class GibbsReactorTest {
   /**
-   * Test that a component not found in the Gibbs database (e.g., TBPfraction) does not change
-   * moles.
+   * Test that a component not found in the Gibbs database (e.g., TBPfraction) does not change moles.
    */
   @Test
   public void testComponentNotInDatabaseMolesUnchanged() {
@@ -67,8 +66,7 @@ public class GibbsReactorTest {
     Assertions.assertEquals(exp_water, z_water, 1e-4, "water mole fraction");
 
     // Assert that mass balance is converged
-    Assertions.assertTrue(reactor.getMassBalanceConverged(),
-        "Mass balance should be converged for TBPfraction test");
+    Assertions.assertTrue(reactor.getMassBalanceConverged(), "Mass balance should be converged for TBPfraction test");
   }
 
   /**
@@ -77,8 +75,7 @@ public class GibbsReactorTest {
   @Test
   public void testSulfurFormation() {
     // Example: Claus process-like mixture
-    neqsim.thermo.system.SystemInterface system =
-        new neqsim.thermo.system.SystemSrkCPAstatoil(298.15, 1.0);
+    neqsim.thermo.system.SystemInterface system = new neqsim.thermo.system.SystemSrkCPAstatoil(298.15, 1.0);
     system.addComponent("methane", 1e6);
     system.addComponent("H2S", 10);
     system.addComponent("oxygen", 2);
@@ -302,9 +299,9 @@ public class GibbsReactorTest {
 
     // Calculate and assert equilibrium constant K = (fug_NO2)^2 / (fug_N2O4)
     double fugNO2 = outlet.getPhase(0).getComponent("NO2").fugcoef(outlet.getPhase(0))
-        * outlet.getPhase(0).getComponent("NO2").getz() * outlet.getPressure();
+	* outlet.getPhase(0).getComponent("NO2").getz() * outlet.getPressure();
     double fugN2O4 = outlet.getPhase(0).getComponent("N2O4").fugcoef(outlet.getPhase(0))
-        * outlet.getPhase(0).getComponent("N2O4").getz() * outlet.getPressure();
+	* outlet.getPhase(0).getComponent("N2O4").getz() * outlet.getPressure();
 
     double K_equilibrium = (fugNO2 * fugNO2) / fugN2O4;
 
@@ -320,9 +317,9 @@ public class GibbsReactorTest {
   }
 
   /**
-   * Test adaptive step sizing and minIterations configuration. Verifies that: 1) adaptive step
-   * sizing produces physically correct results, 2) minIterations can reduce iteration count, 3)
-   * combined optimizations match standard solver within tolerance.
+   * Test adaptive step sizing and minIterations configuration. Verifies that: 1) adaptive step sizing produces
+   * physically correct results, 2) minIterations can reduce iteration count, 3) combined optimizations match standard
+   * solver within tolerance.
    */
   @Test
   public void testAdaptiveStepSizeAndMinIterations() {
@@ -364,8 +361,8 @@ public class GibbsReactorTest {
     Assertions.assertTrue(adaptive.hasConverged(), "Adaptive should converge");
 
     // Adaptive should use fewer iterations (NASA CEA-style step limiting allows larger steps)
-    Assertions.assertTrue(adaptiveIters < baselineIters, "Adaptive (" + adaptiveIters
-        + ") should use fewer iterations than baseline (" + baselineIters + ")");
+    Assertions.assertTrue(adaptiveIters < baselineIters,
+	"Adaptive (" + adaptiveIters + ") should use fewer iterations than baseline (" + baselineIters + ")");
 
     // Results should match within engineering tolerance (1% relative for major species)
     SystemInterface out1 = baseline.getOutletStream().getThermoSystem();
@@ -376,10 +373,8 @@ public class GibbsReactorTest {
     double h2o_base = out1.getComponent("water").getz();
     double h2o_adapt = out2.getComponent("water").getz();
 
-    Assertions.assertEquals(co2_base, co2_adapt, co2_base * 0.01,
-        "CO2 mole fractions should match within 1%");
-    Assertions.assertEquals(h2o_base, h2o_adapt, h2o_base * 0.01,
-        "Water mole fractions should match within 1%");
+    Assertions.assertEquals(co2_base, co2_adapt, co2_base * 0.01, "CO2 mole fractions should match within 1%");
+    Assertions.assertEquals(h2o_base, h2o_adapt, h2o_base * 0.01, "Water mole fractions should match within 1%");
 
     // Test minIterations setter/getter
     GibbsReactor reactor = new GibbsReactor("test", inlet1);

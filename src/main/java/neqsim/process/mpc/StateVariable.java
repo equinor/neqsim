@@ -6,9 +6,8 @@ import neqsim.process.equipment.ProcessEquipmentInterface;
  * Represents a state variable (SVR) in a nonlinear MPC system.
  *
  * <p>
- * State variables are internal model states that evolve according to dynamic equations. Unlike CVs
- * (controlled variables), SVRs are not directly controlled but are essential for model accuracy.
- * Examples include:
+ * State variables are internal model states that evolve according to dynamic equations. Unlike CVs (controlled
+ * variables), SVRs are not directly controlled but are essential for model accuracy. Examples include:
  * </p>
  * <ul>
  * <li>Flow rates (qin, qout)</li>
@@ -18,8 +17,8 @@ import neqsim.process.equipment.ProcessEquipmentInterface;
  * </ul>
  *
  * <p>
- * In nonlinear MPC, state variables track the difference between model predictions and
- * measurements, enabling bias correction and model updates.
+ * In nonlinear MPC, state variables track the difference between model predictions and measurements, enabling bias
+ * correction and model updates.
  * </p>
  *
  * <p>
@@ -65,8 +64,8 @@ public class StateVariable extends MPCVariable {
   /**
    * Construct a state variable linked to process equipment.
    *
-   * @param name variable name
-   * @param equipment linked process equipment
+   * @param name         variable name
+   * @param equipment    linked process equipment
    * @param propertyName property to read from equipment
    */
   public StateVariable(String name, ProcessEquipmentInterface equipment, String propertyName) {
@@ -148,13 +147,13 @@ public class StateVariable extends MPCVariable {
   private void updateBias() {
     if (hasMeasurement) {
       if (biasTfilt > 0) {
-        // Low-pass filtered bias
-        double alpha = 1.0 / (1.0 + biasTfilt);
-        double newBias = measuredValue - modelValue;
-        bias = alpha * newBias + (1.0 - alpha) * bias;
+	// Low-pass filtered bias
+	double alpha = 1.0 / (1.0 + biasTfilt);
+	double newBias = measuredValue - modelValue;
+	bias = alpha * newBias + (1.0 - alpha) * bias;
       } else {
-        // Unfiltered bias
-        bias = measuredValue - modelValue;
+	// Unfiltered bias
+	bias = measuredValue - modelValue;
       }
     }
   }
@@ -244,8 +243,8 @@ public class StateVariable extends MPCVariable {
    * Predict bias at a future time.
    *
    * @param predictionTime time into the future (seconds)
-   * @param previousBias bias at previous time step
-   * @param sampleTime sample time (seconds)
+   * @param previousBias   bias at previous time step
+   * @param sampleTime     sample time (seconds)
    * @return predicted bias
    */
   public double predictBias(double predictionTime, double previousBias, double sampleTime) {
@@ -299,7 +298,7 @@ public class StateVariable extends MPCVariable {
 
   @Override
   public String toString() {
-    return String.format("StateVariable[name=%s, model=%.4f, meas=%.4f, bias=%.4f, dtaIx=%s]",
-        getName(), modelValue, getMeasuredValue(), bias, dtaIx);
+    return String.format("StateVariable[name=%s, model=%.4f, meas=%.4f, bias=%.4f, dtaIx=%s]", getName(), modelValue,
+	getMeasuredValue(), bias, dtaIx);
   }
 }

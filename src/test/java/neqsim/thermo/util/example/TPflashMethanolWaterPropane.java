@@ -20,7 +20,7 @@ public class TPflashMethanolWaterPropane {
   private static final Logger logger = LogManager.getLogger(TPflashMethanolWaterPropane.class);
 
   /** Logger object for class. */
-  
+
   /**
    * <p>
    * main.
@@ -37,8 +37,7 @@ public class TPflashMethanolWaterPropane {
      * testSystem.addComponent("methane", 150.0e-2); testSystem.addComponent("propane", 150.0e-3);
      * testSystem.addComponent("methanol", 0.5); testSystem.addComponent("water", 0.5);
      *
-     * testSystem.createDatabase(true); testSystem.setMixingRule(10);
-     * testSystem.setMultiPhaseCheck(true);
+     * testSystem.createDatabase(true); testSystem.setMixingRule(10); testSystem.setMultiPhaseCheck(true);
      */
     testSystem = testSystem.readObject(100);
     testOps = new ThermodynamicOperations(testSystem);

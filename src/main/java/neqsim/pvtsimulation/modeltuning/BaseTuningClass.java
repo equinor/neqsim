@@ -87,5 +87,6 @@ public class BaseTuningClass implements TuningInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void run() {}
+  public void run() {
+  }
 }

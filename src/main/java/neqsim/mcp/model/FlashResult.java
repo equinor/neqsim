@@ -8,9 +8,8 @@ import neqsim.process.util.monitor.FluidResponse;
  * Typed result model for flash calculations.
  *
  * <p>
- * Contains the flash metadata (model, flash type, number of phases, phase names) and the full fluid
- * response. This object is the typed counterpart to the JSON returned by
- * {@code FlashRunner.run(String)}.
+ * Contains the flash metadata (model, flash type, number of phases, phase names) and the full fluid response. This
+ * object is the typed counterpart to the JSON returned by {@code FlashRunner.run(String)}.
  * </p>
  *
  * @author Even Solbraa
@@ -27,11 +26,11 @@ public class FlashResult {
   /**
    * Creates a flash result.
    *
-   * @param model the thermodynamic model name
-   * @param flashType the flash type performed
+   * @param model          the thermodynamic model name
+   * @param flashType      the flash type performed
    * @param numberOfPhases the number of phases found
-   * @param phases the list of phase names
-   * @param fluidResponse the full fluid response
+   * @param phases         the list of phase names
+   * @param fluidResponse  the full fluid response
    */
   public FlashResult(String model, String flashType, int numberOfPhases, List<String> phases,
       FluidResponse fluidResponse) {

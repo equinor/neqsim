@@ -37,26 +37,26 @@ public class IntegrityLifeAssessment implements Serializable {
   /**
    * Creates a not-assessed life result.
    */
-  public IntegrityLifeAssessment() {}
+  public IntegrityLifeAssessment() {
+  }
 
   /**
    * Creates a life assessment from wall-thickness and corrosion-rate data.
    *
-   * @param nominalThicknessMm nominal or original wall thickness in millimetres
-   * @param currentThicknessMm current measured wall thickness in millimetres
+   * @param nominalThicknessMm         nominal or original wall thickness in millimetres
+   * @param currentThicknessMm         current measured wall thickness in millimetres
    * @param minimumRequiredThicknessMm minimum required wall thickness in millimetres
-   * @param corrosionRateMmPerYear predicted corrosion rate in millimetres per year
+   * @param corrosionRateMmPerYear     predicted corrosion rate in millimetres per year
    * @return populated life assessment
    */
-  public static IntegrityLifeAssessment fromWallThickness(double nominalThicknessMm,
-      double currentThicknessMm, double minimumRequiredThicknessMm, double corrosionRateMmPerYear) {
+  public static IntegrityLifeAssessment fromWallThickness(double nominalThicknessMm, double currentThicknessMm,
+      double minimumRequiredThicknessMm, double corrosionRateMmPerYear) {
     IntegrityLifeAssessment assessment = new IntegrityLifeAssessment();
     assessment.consumedWallLossMm = Math.max(0.0, nominalThicknessMm - currentThicknessMm);
     assessment.corrosionRateMmPerYear = Math.max(0.0, corrosionRateMmPerYear);
     double availableWallMm = currentThicknessMm - minimumRequiredThicknessMm;
     if (assessment.corrosionRateMmPerYear > 1.0e-9) {
-      assessment.remainingLifeYears =
-          Math.max(0.0, availableWallMm / assessment.corrosionRateMmPerYear);
+      assessment.remainingLifeYears = Math.max(0.0, availableWallMm / assessment.corrosionRateMmPerYear);
     } else if (availableWallMm > 0.0) {
       assessment.remainingLifeYears = 1000.0;
     } else {

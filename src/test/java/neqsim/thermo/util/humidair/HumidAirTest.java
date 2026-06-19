@@ -15,8 +15,8 @@ class HumidAirTest {
    * Validate humidity ratio calculation.
    *
    * <p>
-   * Inputs: temperature in Kelvin, pressure in Pascal and relative humidity as a fraction. The
-   * expected humidity ratio is expressed in kg water per kg dry air.
+   * Inputs: temperature in Kelvin, pressure in Pascal and relative humidity as a fraction. The expected humidity ratio
+   * is expressed in kg water per kg dry air.
    * </p>
    */
   @Test
@@ -34,8 +34,8 @@ class HumidAirTest {
    * Validate dew point temperature calculation.
    *
    * <p>
-   * Inputs: humidity ratio in kg/kg dry air and pressure in Pascal. The expected output is the dew
-   * point temperature in Kelvin.
+   * Inputs: humidity ratio in kg/kg dry air and pressure in Pascal. The expected output is the dew point temperature in
+   * Kelvin.
    * </p>
    */
   @Test

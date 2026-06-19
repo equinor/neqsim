@@ -18,8 +18,7 @@ import neqsim.process.processmodel.ProcessSystem;
  * Integrates process mechanical design and cost estimation into field development workflows.
  *
  * <p>
- * This class provides a bridge between process equipment design and field development economics,
- * enabling:
+ * This class provides a bridge between process equipment design and field development economics, enabling:
  * </p>
  * <ul>
  * <li>CAPEX estimation at different fidelity levels (screening, conceptual, FEED)</li>
@@ -295,7 +294,7 @@ public class FieldDevelopmentCostEstimator implements Serializable {
    * Set subsea parameters.
    *
    * @param tiebackLength tieback length in km
-   * @param waterDepthM water depth in meters
+   * @param waterDepthM   water depth in meters
    */
   public void setSubseaParameters(double tiebackLength, double waterDepthM) {
     this.includeSubseaCosts = true;
@@ -358,18 +357,18 @@ public class FieldDevelopmentCostEstimator implements Serializable {
     // Equipment breakdown
     for (ProcessEquipmentInterface equipment : facility.getUnitOperations()) {
       if (equipment.getMechanicalDesign() != null) {
-        MechanicalDesign mecDesign = equipment.getMechanicalDesign();
-        UnitCostEstimateBaseClass costEst = mecDesign.getCostEstimate();
+	MechanicalDesign mecDesign = equipment.getMechanicalDesign();
+	UnitCostEstimateBaseClass costEst = mecDesign.getCostEstimate();
 
-        EquipmentCostItem item = new EquipmentCostItem();
-        item.setName(equipment.getName());
-        item.setType(equipment.getClass().getSimpleName());
-        item.setWeight(mecDesign.getWeightTotal());
-        item.setPurchasedCost(costEst.getPurchasedEquipmentCost());
-        item.setInstalledCost(costEst.getTotalModuleCost() * conceptType.getCostFactor());
-        item.setManHours(costEst.getInstallationManHours());
+	EquipmentCostItem item = new EquipmentCostItem();
+	item.setName(equipment.getName());
+	item.setType(equipment.getClass().getSimpleName());
+	item.setWeight(mecDesign.getWeightTotal());
+	item.setPurchasedCost(costEst.getPurchasedEquipmentCost());
+	item.setInstalledCost(costEst.getTotalModuleCost() * conceptType.getCostFactor());
+	item.setManHours(costEst.getInstallationManHours());
 
-        report.addEquipmentItem(item);
+	report.addEquipmentItem(item);
       }
     }
 
@@ -429,8 +428,8 @@ public class FieldDevelopmentCostEstimator implements Serializable {
    * Estimate drilling and completion costs for all wells.
    *
    * <p>
-   * Uses {@link WellCostEstimator} for detailed well cost estimation with regional cost factors and
-   * well-type-specific parameters.
+   * Uses {@link WellCostEstimator} for detailed well cost estimation with regional cost factors and well-type-specific
+   * parameters.
    * </p>
    *
    * @return total well CAPEX in USD
@@ -444,16 +443,16 @@ public class FieldDevelopmentCostEstimator implements Serializable {
     // Estimate producer costs
     if (producers > 0) {
       WellCostEstimator prodEstimator = new WellCostEstimator();
-      prodEstimator.calculateWellCost("OIL_PRODUCER", "SEMI_SUBMERSIBLE", "CASED_PERFORATED",
-          averageWellDepth, waterDepth, 45.0, 25.0, 0.0, true, 4);
+      prodEstimator.calculateWellCost("OIL_PRODUCER", "SEMI_SUBMERSIBLE", "CASED_PERFORATED", averageWellDepth,
+	  waterDepth, 45.0, 25.0, 0.0, true, 4);
       totalWellCosts += prodEstimator.getTotalCost() * producers;
     }
 
     // Estimate injector costs
     if (injectors > 0) {
       WellCostEstimator injEstimator = new WellCostEstimator();
-      injEstimator.calculateWellCost("WATER_INJECTOR", "SEMI_SUBMERSIBLE", "CASED_PERFORATED",
-          averageWellDepth, waterDepth, 35.0, 15.0, 0.0, true, 4);
+      injEstimator.calculateWellCost("WATER_INJECTOR", "SEMI_SUBMERSIBLE", "CASED_PERFORATED", averageWellDepth,
+	  waterDepth, 35.0, 15.0, 0.0, true, 4);
       totalWellCosts += injEstimator.getTotalCost() * injectors;
     }
 
@@ -477,7 +476,7 @@ public class FieldDevelopmentCostEstimator implements Serializable {
       estimator.setComplexityFactor(this.complexityFactor);
 
       if (this.includeSubseaCosts) {
-        estimator.setSubseaParameters(this.subseaTiebackLength, this.waterDepth);
+	estimator.setSubseaParameters(this.subseaTiebackLength, this.waterDepth);
       }
 
       reports.add(estimator.estimateDevelopmentCosts());
@@ -493,10 +492,10 @@ public class FieldDevelopmentCostEstimator implements Serializable {
    * Uses the six-tenths rule: Cost2/Cost1 = (Capacity2/Capacity1)^0.6
    * </p>
    *
-   * @param baseCapex base CAPEX in USD
-   * @param baseCapacity base capacity
+   * @param baseCapex      base CAPEX in USD
+   * @param baseCapacity   base capacity
    * @param targetCapacity target capacity
-   * @param capacityUnit capacity unit
+   * @param capacityUnit   capacity unit
    * @return scaled CAPEX in USD
    */
   public double scaleCapexByCapacity(double baseCapex, double baseCapacity, double targetCapacity,
@@ -719,11 +718,11 @@ public class FieldDevelopmentCostEstimator implements Serializable {
       costByCategory.clear();
 
       for (EquipmentCostItem item : equipmentItems) {
-        totalWeight += item.getWeight();
-        totalManHours += item.getManHours();
+	totalWeight += item.getWeight();
+	totalManHours += item.getManHours();
 
-        String category = item.getType();
-        costByCategory.merge(category, item.getInstalledCost(), Double::sum);
+	String category = item.getType();
+	costByCategory.merge(category, item.getInstalledCost(), Double::sum);
       }
 
       totalCapex = facilitiesCapex + subseaCapex;
@@ -768,12 +767,11 @@ public class FieldDevelopmentCostEstimator implements Serializable {
 
       List<Map<String, Object>> items = new ArrayList<Map<String, Object>>();
       for (EquipmentCostItem item : equipmentItems) {
-        items.add(item.toMap());
+	items.add(item.toMap());
       }
       data.put("equipmentBreakdown", items);
 
-      return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-          .toJson(data);
+      return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(data);
     }
 
     /**
@@ -786,8 +784,7 @@ public class FieldDevelopmentCostEstimator implements Serializable {
 
       sb.append("# Field Development Cost Report\n\n");
       sb.append("**Concept:** ").append(conceptName).append("\n");
-      sb.append("**Fidelity:** ")
-          .append(fidelityLevel != null ? fidelityLevel.getDisplayName() : "N/A");
+      sb.append("**Fidelity:** ").append(fidelityLevel != null ? fidelityLevel.getDisplayName() : "N/A");
       sb.append(" (±").append(String.format("%.0f", accuracyBand * 100)).append("%)\n");
       sb.append("**Concept Type:** ").append(conceptType != null ? conceptType.name() : "N/A");
       sb.append("\n\n");
@@ -795,17 +792,13 @@ public class FieldDevelopmentCostEstimator implements Serializable {
       sb.append("## CAPEX Summary\n\n");
       sb.append("| Category | Cost (USD) | Cost (MUSD) |\n");
       sb.append("|----------|------------|-------------|\n");
-      sb.append(String.format("| Facilities | $%,.0f | $%.1f M |\n", facilitiesCapex,
-          facilitiesCapex / 1e6));
+      sb.append(String.format("| Facilities | $%,.0f | $%.1f M |\n", facilitiesCapex, facilitiesCapex / 1e6));
       if (subseaCapex > 0) {
-        sb.append(String.format("| Subsea | $%,.0f | $%.1f M |\n", subseaCapex, subseaCapex / 1e6));
+	sb.append(String.format("| Subsea | $%,.0f | $%.1f M |\n", subseaCapex, subseaCapex / 1e6));
       }
-      sb.append(String.format("| **Total** | **$%,.0f** | **$%.1f M** |\n", totalCapex,
-          totalCapex / 1e6));
-      sb.append(String.format("| Low Estimate | $%,.0f | $%.1f M |\n", getLowEstimate(),
-          getLowEstimate() / 1e6));
-      sb.append(String.format("| High Estimate | $%,.0f | $%.1f M |\n", getHighEstimate(),
-          getHighEstimate() / 1e6));
+      sb.append(String.format("| **Total** | **$%,.0f** | **$%.1f M** |\n", totalCapex, totalCapex / 1e6));
+      sb.append(String.format("| Low Estimate | $%,.0f | $%.1f M |\n", getLowEstimate(), getLowEstimate() / 1e6));
+      sb.append(String.format("| High Estimate | $%,.0f | $%.1f M |\n", getHighEstimate(), getHighEstimate() / 1e6));
       sb.append("\n");
 
       sb.append("## Physical Properties\n\n");
@@ -814,13 +807,13 @@ public class FieldDevelopmentCostEstimator implements Serializable {
       sb.append("\n");
 
       if (!equipmentItems.isEmpty()) {
-        sb.append("## Equipment Breakdown\n\n");
-        sb.append("| Equipment | Type | Weight (kg) | Cost (USD) |\n");
-        sb.append("|-----------|------|-------------|------------|\n");
-        for (EquipmentCostItem item : equipmentItems) {
-          sb.append(String.format("| %s | %s | %.0f | $%,.0f |\n", item.getName(), item.getType(),
-              item.getWeight(), item.getInstalledCost()));
-        }
+	sb.append("## Equipment Breakdown\n\n");
+	sb.append("| Equipment | Type | Weight (kg) | Cost (USD) |\n");
+	sb.append("|-----------|------|-------------|------------|\n");
+	for (EquipmentCostItem item : equipmentItems) {
+	  sb.append(String.format("| %s | %s | %.0f | $%,.0f |\n", item.getName(), item.getType(), item.getWeight(),
+	      item.getInstalledCost()));
+	}
       }
 
       return sb.toString();

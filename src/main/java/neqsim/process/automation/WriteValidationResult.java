@@ -5,15 +5,14 @@ import com.google.gson.JsonObject;
 
 /**
  * Outcome of a
- * {@link WriteValidator#validate(neqsim.process.equipment.ProcessEquipmentInterface, String, double, String)
- * write validation}. Carries a pass/fail flag together with a structured reason that can be
- * returned to the calling agent as JSON.
+ * {@link WriteValidator#validate(neqsim.process.equipment.ProcessEquipmentInterface, String, double, String) write
+ * validation}. Carries a pass/fail flag together with a structured reason that can be returned to the calling agent as
+ * JSON.
  *
  * <p>
- * Use the static factory methods {@link #ok()} for a passing check and
- * {@link #fail(String, String)} or {@link #warn(String, String)} for a failure or warning. The
- * {@code severity} field distinguishes hard rejections ({@code ERROR}) from soft hints
- * ({@code WARNING}) — only {@code ERROR}-level results abort a transactional batch.
+ * Use the static factory methods {@link #ok()} for a passing check and {@link #fail(String, String)} or
+ * {@link #warn(String, String)} for a failure or warning. The {@code severity} field distinguishes hard rejections
+ * ({@code ERROR}) from soft hints ({@code WARNING}) — only {@code ERROR}-level results abort a transactional batch.
  * </p>
  *
  * @author Even Solbraa
@@ -32,8 +31,7 @@ public final class WriteValidationResult implements Serializable {
     ERROR
   }
 
-  private static final WriteValidationResult OK_INSTANCE =
-      new WriteValidationResult(Severity.OK, null, null);
+  private static final WriteValidationResult OK_INSTANCE = new WriteValidationResult(Severity.OK, null, null);
 
   private final Severity severity;
   private final String code;
@@ -43,9 +41,9 @@ public final class WriteValidationResult implements Serializable {
    * Creates a validation result.
    *
    * @param severity the severity classification; never null
-   * @param code a short machine-readable code such as {@code "OUTLET_PRESSURE_BELOW_INLET"}, or
-   *        {@code null} for {@link Severity#OK}
-   * @param message a human-readable explanation, or {@code null} for {@link Severity#OK}
+   * @param code     a short machine-readable code such as {@code "OUTLET_PRESSURE_BELOW_INLET"}, or {@code null} for
+   *                 {@link Severity#OK}
+   * @param message  a human-readable explanation, or {@code null} for {@link Severity#OK}
    */
   public WriteValidationResult(Severity severity, String code, String message) {
     if (severity == null) {
@@ -68,7 +66,7 @@ public final class WriteValidationResult implements Serializable {
   /**
    * Creates a hard-failure validation result.
    *
-   * @param code the machine-readable code
+   * @param code    the machine-readable code
    * @param message the human-readable explanation
    * @return a failing validation result with severity {@link Severity#ERROR}
    */
@@ -79,7 +77,7 @@ public final class WriteValidationResult implements Serializable {
   /**
    * Creates a soft-warning validation result.
    *
-   * @param code the machine-readable code
+   * @param code    the machine-readable code
    * @param message the human-readable explanation
    * @return a validation result with severity {@link Severity#WARNING}
    */
@@ -97,8 +95,8 @@ public final class WriteValidationResult implements Serializable {
   }
 
   /**
-   * Returns whether the write should be allowed. Both {@link Severity#OK OK} and
-   * {@link Severity#WARNING WARNING} are considered passing.
+   * Returns whether the write should be allowed. Both {@link Severity#OK OK} and {@link Severity#WARNING WARNING} are
+   * considered passing.
    *
    * @return true if the write is allowed
    */
@@ -125,8 +123,7 @@ public final class WriteValidationResult implements Serializable {
   }
 
   /**
-   * Renders this result as a JSON object suitable for inclusion in {@link TransactionalBatchResult}
-   * payloads.
+   * Renders this result as a JSON object suitable for inclusion in {@link TransactionalBatchResult} payloads.
    *
    * @return a JSON object with {@code severity}, {@code code} and {@code message} fields
    */

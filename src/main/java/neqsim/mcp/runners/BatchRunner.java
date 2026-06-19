@@ -15,9 +15,9 @@ import neqsim.mcp.model.ResultProvenance;
  * Stateless batch calculation runner for MCP integration.
  *
  * <p>
- * Runs multiple flash calculations in a single call, sharing a common fluid definition. This is
- * designed for sensitivity studies and property sweeps where an agent needs to explore a parameter
- * space efficiently. Each case in the batch can vary temperature, pressure, or composition.
+ * Runs multiple flash calculations in a single call, sharing a common fluid definition. This is designed for
+ * sensitivity studies and property sweeps where an agent needs to explore a parameter space efficiently. Each case in
+ * the batch can vary temperature, pressure, or composition.
  * </p>
  *
  * <h2>Input JSON Format:</h2>
@@ -29,16 +29,15 @@ import neqsim.mcp.model.ResultProvenance;
  * "pressure": {"value": 50.0, "unit": "bara"}} ] } }</pre>
  *
  * <p>
- * Each case can also override components or flash type to explore composition sensitivity or
- * different calculation modes within a single call.
+ * Each case can also override components or flash type to explore composition sensitivity or different calculation
+ * modes within a single call.
  * </p>
  *
  * @author Even Solbraa @version 1.0
  */
 public class BatchRunner {
 
-  private static final Gson GSON =
-      new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+  private static final Gson GSON = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
 
   /** Maximum number of cases per batch to prevent resource exhaustion. */
   private static final int MAX_CASES = 500;
@@ -46,15 +45,16 @@ public class BatchRunner {
   /**
    * Private constructor — all methods are static.
    */
-  private BatchRunner() {}
+  private BatchRunner() {
+  }
 
   /**
    * Runs a batch of flash calculations from a JSON specification.
    *
    * <p>
-   * Each case inherits the base fluid definition (model, components, mixingRule, flashType) and can
-   * override temperature, pressure, components, or flashType per case. Results are returned as an
-   * array with per-case status so partial failures don't block the entire batch.
+   * Each case inherits the base fluid definition (model, components, mixingRule, flashType) and can override
+   * temperature, pressure, components, or flashType per case. Results are returned as an array with per-case status so
+   * partial failures don't block the entire batch.
    * </p>
    *
    * @param json the JSON batch specification
@@ -63,15 +63,14 @@ public class BatchRunner {
   public static String run(String json) {
     if (json == null || json.trim().isEmpty()) {
       return errorJson("INPUT_ERROR", "JSON input is null or empty",
-          "Provide a JSON batch specification with 'components' and 'cases' array");
+	  "Provide a JSON batch specification with 'components' and 'cases' array");
     }
 
     JsonObject input;
     try {
       input = JsonParser.parseString(json).getAsJsonObject();
     } catch (Exception e) {
-      return errorJson("JSON_PARSE_ERROR", "Failed to parse JSON: " + e.getMessage(),
-          "Ensure the JSON is well-formed");
+      return errorJson("JSON_PARSE_ERROR", "Failed to parse JSON: " + e.getMessage(), "Ensure the JSON is well-formed");
     }
 
     long startTime = System.currentTimeMillis();
@@ -79,7 +78,7 @@ public class BatchRunner {
     // --- Parse cases array ---
     if (!input.has("cases") || !input.get("cases").isJsonArray()) {
       return errorJson("MISSING_CASES", "'cases' array is required",
-          "Provide an array of case objects, each with temperature and/or pressure overrides");
+	  "Provide an array of case objects, each with temperature and/or pressure overrides");
     }
 
     JsonArray casesArray = input.getAsJsonArray("cases");
@@ -87,9 +86,8 @@ public class BatchRunner {
       return errorJson("EMPTY_CASES", "'cases' array is empty", "Provide at least one case");
     }
     if (casesArray.size() > MAX_CASES) {
-      return errorJson("TOO_MANY_CASES",
-          "Batch has " + casesArray.size() + " cases, maximum is " + MAX_CASES,
-          "Split into multiple batch calls with <= " + MAX_CASES + " cases each");
+      return errorJson("TOO_MANY_CASES", "Batch has " + casesArray.size() + " cases, maximum is " + MAX_CASES,
+	  "Split into multiple batch calls with <= " + MAX_CASES + " cases each");
     }
 
     // --- Build base flash JSON template ---
@@ -116,14 +114,14 @@ public class BatchRunner {
     for (int i = 0; i < casesArray.size(); i++) {
       JsonElement caseEl = casesArray.get(i);
       if (!caseEl.isJsonObject()) {
-        JsonObject caseResult = new JsonObject();
-        caseResult.addProperty("caseIndex", i);
-        caseResult.addProperty("status", "error");
-        caseResult.addProperty("message", "Case " + i + " is not a JSON object");
-        results.add(caseResult);
-        errorCount++;
-        failedIndices.add(String.valueOf(i));
-        continue;
+	JsonObject caseResult = new JsonObject();
+	caseResult.addProperty("caseIndex", i);
+	caseResult.addProperty("status", "error");
+	caseResult.addProperty("message", "Case " + i + " is not a JSON object");
+	results.add(caseResult);
+	errorCount++;
+	failedIndices.add(String.valueOf(i));
+	continue;
       }
 
       // Merge base flash spec with case overrides
@@ -131,33 +129,32 @@ public class BatchRunner {
       JsonObject flashInput = mergeJsonObjects(baseFlash, caseObj);
 
       try {
-        String flashResult = FlashRunner.run(flashInput.toString());
-        JsonObject flashObj = JsonParser.parseString(flashResult).getAsJsonObject();
-        flashObj.addProperty("caseIndex", i);
-        results.add(flashObj);
+	String flashResult = FlashRunner.run(flashInput.toString());
+	JsonObject flashObj = JsonParser.parseString(flashResult).getAsJsonObject();
+	flashObj.addProperty("caseIndex", i);
+	results.add(flashObj);
 
-        String status = flashObj.has("status") ? flashObj.get("status").getAsString() : "ok";
-        if ("error".equals(status)) {
-          errorCount++;
-          failedIndices.add(String.valueOf(i));
-        } else {
-          successCount++;
-        }
+	String status = flashObj.has("status") ? flashObj.get("status").getAsString() : "ok";
+	if ("error".equals(status)) {
+	  errorCount++;
+	  failedIndices.add(String.valueOf(i));
+	} else {
+	  successCount++;
+	}
       } catch (Exception e) {
-        JsonObject caseResult = new JsonObject();
-        caseResult.addProperty("caseIndex", i);
-        caseResult.addProperty("status", "error");
-        caseResult.addProperty("message", "Case " + i + " failed: " + e.getMessage());
-        results.add(caseResult);
-        errorCount++;
-        failedIndices.add(String.valueOf(i));
+	JsonObject caseResult = new JsonObject();
+	caseResult.addProperty("caseIndex", i);
+	caseResult.addProperty("status", "error");
+	caseResult.addProperty("message", "Case " + i + " failed: " + e.getMessage());
+	results.add(caseResult);
+	errorCount++;
+	failedIndices.add(String.valueOf(i));
       }
     }
 
     // --- Build response ---
     JsonObject response = new JsonObject();
-    response.addProperty("status",
-        errorCount == 0 ? "success" : (successCount == 0 ? "error" : "partial"));
+    response.addProperty("status", errorCount == 0 ? "success" : (successCount == 0 ? "error" : "partial"));
 
     JsonObject summary = new JsonObject();
     summary.addProperty("totalCases", casesArray.size());
@@ -166,7 +163,7 @@ public class BatchRunner {
     if (!failedIndices.isEmpty()) {
       JsonArray failedArr = new JsonArray();
       for (String idx : failedIndices) {
-        failedArr.add(Integer.parseInt(idx));
+	failedArr.add(Integer.parseInt(idx));
       }
       summary.add("failedCaseIndices", failedArr);
     }
@@ -188,10 +185,10 @@ public class BatchRunner {
 
     String gateVerdict = errorCount == 0 ? "passed" : (successCount == 0 ? "failed" : "warning");
     String gateSummary = errorCount == 0 ? "All batch cases completed"
-        : (successCount == 0 ? "All batch cases failed" : "Batch completed with failed cases");
+	: (successCount == 0 ? "All batch cases failed" : "Batch completed with failed cases");
     ApiEnvelope.applyStandardFields(response, "runBatch", provenance,
-        ApiEnvelope.validationStatus(errorCount == 0, "calculation", gateSummary),
-        ApiEnvelope.qualityGate(gateVerdict, gateSummary, true));
+	ApiEnvelope.validationStatus(errorCount == 0, "calculation", gateSummary),
+	ApiEnvelope.qualityGate(gateVerdict, gateSummary, true));
 
     return GSON.toJson(response);
   }
@@ -199,7 +196,7 @@ public class BatchRunner {
   /**
    * Merges two JSON objects, with the override taking precedence.
    *
-   * @param base the base object
+   * @param base      the base object
    * @param overrides the overriding values
    * @return a new merged JSON object
    */
@@ -219,8 +216,8 @@ public class BatchRunner {
   /**
    * Creates a standard error JSON response.
    *
-   * @param code the error code
-   * @param message the error message
+   * @param code        the error code
+   * @param message     the error message
    * @param remediation the fix suggestion
    * @return JSON error string
    */
@@ -238,9 +235,8 @@ public class BatchRunner {
     errors.add(err);
     result.add("errors", errors);
 
-    ApiEnvelope.applyStandardFields(result, "runBatch", null,
-        ApiEnvelope.validationStatus(false, "input", message),
-        ApiEnvelope.qualityGate("failed", message, true));
+    ApiEnvelope.applyStandardFields(result, "runBatch", null, ApiEnvelope.validationStatus(false, "input", message),
+	ApiEnvelope.qualityGate("failed", message, true));
 
     return GSON.toJson(result);
   }

@@ -7,12 +7,10 @@ package neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc;
  * Different mass transfer models are suitable for different physical situations:
  * </p>
  * <ul>
- * <li>{@link #KRISHNA_STANDART_FILM} - Multi-component diffusion with thermodynamic correction,
- * general purpose</li>
- * <li>{@link #PENETRATION_THEORY} - Time-dependent diffusion into semi-infinite medium, best for
- * short contact times</li>
- * <li>{@link #SURFACE_RENEWAL} - Statistical distribution of surface ages, best for turbulent
- * interfaces</li>
+ * <li>{@link #KRISHNA_STANDART_FILM} - Multi-component diffusion with thermodynamic correction, general purpose</li>
+ * <li>{@link #PENETRATION_THEORY} - Time-dependent diffusion into semi-infinite medium, best for short contact
+ * times</li>
+ * <li>{@link #SURFACE_RENEWAL} - Statistical distribution of surface ages, best for turbulent interfaces</li>
  * </ul>
  *
  * @author NeqSim development team
@@ -20,23 +18,21 @@ package neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc;
  */
 public enum MassTransferModel {
   /**
-   * Krishna-Standart film model for multi-component diffusion. This model incorporates a general
-   * matrix method of solution to the Maxwell-Stefan equations with thermodynamic correction
-   * factors. It is the default and most general-purpose model.
+   * Krishna-Standart film model for multi-component diffusion. This model incorporates a general matrix method of
+   * solution to the Maxwell-Stefan equations with thermodynamic correction factors. It is the default and most
+   * general-purpose model.
    */
-  KRISHNA_STANDART_FILM("Krishna-Standart Film Model",
-      "Multi-component diffusion with thermodynamic correction"),
+  KRISHNA_STANDART_FILM("Krishna-Standart Film Model", "Multi-component diffusion with thermodynamic correction"),
 
   /**
-   * Higbie's penetration theory model. Assumes time-dependent diffusion into a semi-infinite
-   * medium. Best suited for situations with short contact times between phases.
+   * Higbie's penetration theory model. Assumes time-dependent diffusion into a semi-infinite medium. Best suited for
+   * situations with short contact times between phases.
    */
   PENETRATION_THEORY("Penetration Theory", "Time-dependent diffusion into semi-infinite medium"),
 
   /**
-   * Danckwerts' surface renewal theory model. Assumes a statistical distribution of surface ages
-   * due to turbulent eddies bringing fresh fluid to the interface. Best suited for turbulent
-   * interfaces.
+   * Danckwerts' surface renewal theory model. Assumes a statistical distribution of surface ages due to turbulent
+   * eddies bringing fresh fluid to the interface. Best suited for turbulent interfaces.
    */
   SURFACE_RENEWAL("Surface Renewal Theory", "Statistical distribution of surface ages");
 

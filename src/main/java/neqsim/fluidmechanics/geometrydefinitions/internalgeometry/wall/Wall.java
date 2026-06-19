@@ -7,8 +7,7 @@ import java.util.List;
  * Represents a wall with multiple material layers for heat transfer calculations.
  *
  * <p>
- * This base class implements a planar (flat wall) heat transfer model using series thermal
- * resistance:
+ * This base class implements a planar (flat wall) heat transfer model using series thermal resistance:
  * </p>
  *
  * <pre>
@@ -17,8 +16,8 @@ import java.util.List;
  * </pre>
  *
  * <p>
- * For cylindrical geometries (pipes), use {@link PipeWall} which accounts for the logarithmic
- * temperature profile through curved walls.
+ * For cylindrical geometries (pipes), use {@link PipeWall} which accounts for the logarithmic temperature profile
+ * through curved walls.
  * </p>
  *
  * @author ESOL
@@ -36,7 +35,8 @@ public class Wall implements WallInterface {
   /**
    * Default constructor.
    */
-  public Wall() {}
+  public Wall() {
+  }
 
   /**
    * Gets the heat transfer coefficient.
@@ -166,8 +166,8 @@ public class Wall implements WallInterface {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append(String.format("Wall[layers=%d, thickness=%.4f m, U=%.3f W/(m²·K)]%n",
-        getNumberOfLayers(), getTotalThickness(), getHeatTransferCoefficient()));
+    sb.append(String.format("Wall[layers=%d, thickness=%.4f m, U=%.3f W/(m²·K)]%n", getNumberOfLayers(),
+	getTotalThickness(), getHeatTransferCoefficient()));
 
     for (int i = 0; i < wallMaterialLayers.size(); i++) {
       sb.append(String.format("  Layer %d: %s%n", i, wallMaterialLayers.get(i)));

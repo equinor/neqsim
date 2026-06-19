@@ -11,9 +11,8 @@ import neqsim.process.processmodel.ProcessSystem;
  * Generated process candidate with simulation and ranking metadata.
  *
  * <p>
- * A candidate keeps the generated NeqSim JSON definition, product stream references, generation
- * provenance, simulation warnings/errors, objective values, and the optional built process system
- * for downstream inspection.
+ * A candidate keeps the generated NeqSim JSON definition, product stream references, generation provenance, simulation
+ * warnings/errors, objective values, and the optional built process system for downstream inspection.
  * </p>
  *
  * @author NeqSim Development Team
@@ -42,8 +41,8 @@ public class ProcessCandidate {
   /**
    * Creates a process candidate.
    *
-   * @param id stable candidate identifier
-   * @param name human-readable candidate name
+   * @param id               stable candidate identifier
+   * @param name             human-readable candidate name
    * @param generationMethod method that generated the candidate
    */
   public ProcessCandidate(String id, String name, String generationMethod) {
@@ -140,7 +139,7 @@ public class ProcessCandidate {
   /**
    * Adds a product stream reference.
    *
-   * @param role product role, e.g. gas, liquid, or product
+   * @param role            product role, e.g. gas, liquid, or product
    * @param streamReference dot-notation stream reference
    * @return this candidate
    */
@@ -152,7 +151,7 @@ public class ProcessCandidate {
   /**
    * Adds an objective value.
    *
-   * @param name objective name
+   * @param name  objective name
    * @param value objective value
    */
   public void addObjectiveValue(String name, double value) {

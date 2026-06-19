@@ -13,8 +13,8 @@ import java.util.concurrent.Executors;
  * Event bus for publishing and subscribing to process events.
  *
  * <p>
- * Provides a publish-subscribe mechanism for process simulation events, enabling loose coupling
- * between simulation components and external systems (like AI optimization platforms).
+ * Provides a publish-subscribe mechanism for process simulation events, enabling loose coupling between simulation
+ * components and external systems (like AI optimization platforms).
  * </p>
  *
  * <p>
@@ -80,14 +80,14 @@ public class ProcessEventBus implements Serializable {
   /**
    * Subscribes to events of a specific type.
    *
-   * @param type event type
+   * @param type     event type
    * @param listener event listener
    */
   public void subscribe(ProcessEvent.EventType type, ProcessEventListener listener) {
     if (listener != null) {
       List<ProcessEventListener> listeners = typeListeners.get(type);
       if (!listeners.contains(listener)) {
-        listeners.add(listener);
+	listeners.add(listener);
       }
     }
   }
@@ -107,7 +107,7 @@ public class ProcessEventBus implements Serializable {
   /**
    * Unsubscribes from a specific event type.
    *
-   * @param type event type
+   * @param type     event type
    * @param listener listener to remove
    */
   public void unsubscribe(ProcessEvent.EventType type, ProcessEventListener listener) {
@@ -128,7 +128,7 @@ public class ProcessEventBus implements Serializable {
     synchronized (eventHistory) {
       eventHistory.add(event);
       while (eventHistory.size() > maxHistorySize) {
-        eventHistory.remove(0);
+	eventHistory.remove(0);
       }
     }
 
@@ -143,7 +143,7 @@ public class ProcessEventBus implements Serializable {
   /**
    * Publishes an info event.
    *
-   * @param source event source
+   * @param source      event source
    * @param description description
    */
   public void publishInfo(String source, String description) {
@@ -153,7 +153,7 @@ public class ProcessEventBus implements Serializable {
   /**
    * Publishes a warning event.
    *
-   * @param source event source
+   * @param source      event source
    * @param description description
    */
   public void publishWarning(String source, String description) {
@@ -163,7 +163,7 @@ public class ProcessEventBus implements Serializable {
   /**
    * Publishes an alarm event.
    *
-   * @param source event source
+   * @param source      event source
    * @param description description
    */
   public void publishAlarm(String source, String description) {
@@ -174,9 +174,9 @@ public class ProcessEventBus implements Serializable {
     // Global listeners
     for (ProcessEventListener listener : globalListeners) {
       try {
-        listener.onEvent(event);
+	listener.onEvent(event);
       } catch (Exception e) {
-        // Log but don't propagate
+	// Log but don't propagate
       }
     }
 
@@ -184,9 +184,9 @@ public class ProcessEventBus implements Serializable {
     List<ProcessEventListener> specific = typeListeners.get(event.getType());
     for (ProcessEventListener listener : specific) {
       try {
-        listener.onEvent(event);
+	listener.onEvent(event);
       } catch (Exception e) {
-        // Log but don't propagate
+	// Log but don't propagate
       }
     }
   }
@@ -233,7 +233,7 @@ public class ProcessEventBus implements Serializable {
   /**
    * Gets events by type from history.
    *
-   * @param type event type
+   * @param type  event type
    * @param count maximum events to retrieve
    * @return list of events
    */
@@ -241,10 +241,10 @@ public class ProcessEventBus implements Serializable {
     List<ProcessEvent> result = new ArrayList<>();
     synchronized (eventHistory) {
       for (int i = eventHistory.size() - 1; i >= 0 && result.size() < count; i--) {
-        ProcessEvent event = eventHistory.get(i);
-        if (event.getType() == type) {
-          result.add(0, event);
-        }
+	ProcessEvent event = eventHistory.get(i);
+	if (event.getType() == type) {
+	  result.add(0, event);
+	}
       }
     }
     return result;
@@ -254,17 +254,17 @@ public class ProcessEventBus implements Serializable {
    * Gets events by severity from history.
    *
    * @param minSeverity minimum severity level
-   * @param count maximum events to retrieve
+   * @param count       maximum events to retrieve
    * @return list of events
    */
   public List<ProcessEvent> getEventsBySeverity(ProcessEvent.Severity minSeverity, int count) {
     List<ProcessEvent> result = new ArrayList<>();
     synchronized (eventHistory) {
       for (int i = eventHistory.size() - 1; i >= 0 && result.size() < count; i--) {
-        ProcessEvent event = eventHistory.get(i);
-        if (event.getSeverity().ordinal() >= minSeverity.ordinal()) {
-          result.add(0, event);
-        }
+	ProcessEvent event = eventHistory.get(i);
+	if (event.getSeverity().ordinal() >= minSeverity.ordinal()) {
+	  result.add(0, event);
+	}
       }
     }
     return result;

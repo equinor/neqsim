@@ -26,9 +26,9 @@ import neqsim.process.equipment.stream.StreamInterface;
  * Loader for YAML/JSON optimization specification files.
  *
  * <p>
- * This class parses YAML or JSON specification files that define optimization scenarios for
- * production optimization. It enables configuration-driven optimization where scenarios, variables,
- * objectives, and constraints are defined in external files rather than code.
+ * This class parses YAML or JSON specification files that define optimization scenarios for production optimization. It
+ * enables configuration-driven optimization where scenarios, variables, objectives, and constraints are defined in
+ * external files rather than code.
  * </p>
  *
  * <p>
@@ -109,8 +109,7 @@ import neqsim.process.equipment.stream.StreamInterface;
  *
  * // 3. Load and run scenarios
  * Path specFile = Paths.get("optimization_scenarios.yaml");
- * List<ScenarioRequest> scenarios =
- *     ProductionOptimizationSpecLoader.load(specFile, processes, feeds, metrics);
+ * List<ScenarioRequest> scenarios = ProductionOptimizationSpecLoader.load(specFile, processes, feeds, metrics);
  *
  * ProductionOptimizer optimizer = new ProductionOptimizer();
  * for (ScenarioRequest scenario : scenarios) {
@@ -167,97 +166,86 @@ import neqsim.process.equipment.stream.StreamInterface;
  * @see ProductionOptimizer.OptimizationConfig
  */
 public final class ProductionOptimizationSpecLoader {
-  private ProductionOptimizationSpecLoader() {}
+  private ProductionOptimizationSpecLoader() {
+  }
 
   /**
    * Parse a YAML/JSON specification file into scenario requests.
    *
    * <p>
-   * This method reads a specification file and converts it into a list of {@link ScenarioRequest}
-   * objects that can be executed by {@link ProductionOptimizer}. The file format (YAML or JSON) is
-   * auto-detected based on the file extension.
+   * This method reads a specification file and converts it into a list of {@link ScenarioRequest} objects that can be
+   * executed by {@link ProductionOptimizer}. The file format (YAML or JSON) is auto-detected based on the file
+   * extension.
    * </p>
    *
-   * @param specPath path to the YAML (.yaml, .yml) or JSON (.json) specification file
+   * @param specPath  path to the YAML (.yaml, .yml) or JSON (.json) specification file
    * @param processes map of process name (as used in spec) to ProcessSystem instances
-   * @param feeds map of feed stream name (as used in spec) to StreamInterface instances
-   * @param metrics map of metric name (as used in spec) to evaluation functions
+   * @param feeds     map of feed stream name (as used in spec) to StreamInterface instances
+   * @param metrics   map of metric name (as used in spec) to evaluation functions
    * @return list of ScenarioRequest objects ready for optimization
-   * @throws IOException if the file cannot be read or parsed
-   * @throws IllegalArgumentException if a referenced process, feed, or metric is not found in the
-   *         provided maps
+   * @throws IOException              if the file cannot be read or parsed
+   * @throws IllegalArgumentException if a referenced process, feed, or metric is not found in the provided maps
    */
   public static List<ScenarioRequest> load(Path specPath, Map<String, ProcessSystem> processes,
-      Map<String, StreamInterface> feeds,
-      Map<String, java.util.function.ToDoubleFunction<ProcessSystem>> metrics) throws IOException {
-    ObjectMapper mapper =
-        specPath.toString().endsWith(".yaml") || specPath.toString().endsWith(".yml")
-            ? new ObjectMapper(new YAMLFactory())
-            : new ObjectMapper();
+      Map<String, StreamInterface> feeds, Map<String, java.util.function.ToDoubleFunction<ProcessSystem>> metrics)
+      throws IOException {
+    ObjectMapper mapper = specPath.toString().endsWith(".yaml") || specPath.toString().endsWith(".yml")
+	? new ObjectMapper(new YAMLFactory())
+	: new ObjectMapper();
     String raw = new String(Files.readAllBytes(specPath), StandardCharsets.UTF_8);
     Spec spec = mapper.readValue(raw, Spec.class);
 
     List<ScenarioRequest> scenarios = new ArrayList<>();
     for (ScenarioSpec scenarioSpec : spec.scenarios) {
       ProcessSystem process = processes.get(scenarioSpec.process);
-      StreamInterface feed =
-          scenarioSpec.feedStream != null ? feeds.get(scenarioSpec.feedStream) : null;
+      StreamInterface feed = scenarioSpec.feedStream != null ? feeds.get(scenarioSpec.feedStream) : null;
       if (process == null) {
-        throw new IllegalArgumentException(
-            "Missing process mapping for scenario " + scenarioSpec.name);
+	throw new IllegalArgumentException("Missing process mapping for scenario " + scenarioSpec.name);
       }
-      OptimizationConfig config =
-          new OptimizationConfig(scenarioSpec.lowerBound, scenarioSpec.upperBound)
-              .rateUnit(scenarioSpec.rateUnit).tolerance(scenarioSpec.tolerance)
-              .maxIterations(scenarioSpec.maxIterations)
-              .searchMode(SearchMode.valueOf(scenarioSpec.searchMode))
-              .utilizationMarginFraction(scenarioSpec.utilizationMarginFraction)
-              .capacityUncertaintyFraction(scenarioSpec.capacityUncertaintyFraction)
-              .capacityPercentile(scenarioSpec.capacityPercentile)
-              .enableCaching(scenarioSpec.enableCaching).swarmSize(scenarioSpec.swarmSize)
-              .inertiaWeight(scenarioSpec.inertiaWeight)
-              .cognitiveWeight(scenarioSpec.cognitiveWeight).socialWeight(scenarioSpec.socialWeight)
-              .columnFsFactorLimit(scenarioSpec.columnFsFactorLimit);
+      OptimizationConfig config = new OptimizationConfig(scenarioSpec.lowerBound, scenarioSpec.upperBound)
+	  .rateUnit(scenarioSpec.rateUnit).tolerance(scenarioSpec.tolerance).maxIterations(scenarioSpec.maxIterations)
+	  .searchMode(SearchMode.valueOf(scenarioSpec.searchMode))
+	  .utilizationMarginFraction(scenarioSpec.utilizationMarginFraction)
+	  .capacityUncertaintyFraction(scenarioSpec.capacityUncertaintyFraction)
+	  .capacityPercentile(scenarioSpec.capacityPercentile).enableCaching(scenarioSpec.enableCaching)
+	  .swarmSize(scenarioSpec.swarmSize).inertiaWeight(scenarioSpec.inertiaWeight)
+	  .cognitiveWeight(scenarioSpec.cognitiveWeight).socialWeight(scenarioSpec.socialWeight)
+	  .columnFsFactorLimit(scenarioSpec.columnFsFactorLimit);
       List<OptimizationObjective> objectives = new ArrayList<>();
       if (scenarioSpec.objectives != null) {
-        for (ObjectiveSpec objectiveSpec : scenarioSpec.objectives) {
-          ObjectiveType type = ObjectiveType.valueOf(objectiveSpec.type.toUpperCase());
-          objectives.add(new OptimizationObjective(objectiveSpec.name,
-              requireMetric(metrics, objectiveSpec.metric), objectiveSpec.weight, type));
-        }
+	for (ObjectiveSpec objectiveSpec : scenarioSpec.objectives) {
+	  ObjectiveType type = ObjectiveType.valueOf(objectiveSpec.type.toUpperCase());
+	  objectives.add(new OptimizationObjective(objectiveSpec.name, requireMetric(metrics, objectiveSpec.metric),
+	      objectiveSpec.weight, type));
+	}
       }
 
       List<OptimizationConstraint> constraints = new ArrayList<>();
       if (scenarioSpec.constraints != null) {
-        for (ConstraintSpec constraintSpec : scenarioSpec.constraints) {
-          ConstraintDirection direction = ConstraintDirection.valueOf(constraintSpec.direction);
-          ConstraintSeverity severity = ConstraintSeverity.valueOf(constraintSpec.severity);
-          constraints.add(new OptimizationConstraint(constraintSpec.name,
-              requireMetric(metrics, constraintSpec.metric), constraintSpec.limit, direction,
-              severity, constraintSpec.penaltyWeight, constraintSpec.description));
-        }
+	for (ConstraintSpec constraintSpec : scenarioSpec.constraints) {
+	  ConstraintDirection direction = ConstraintDirection.valueOf(constraintSpec.direction);
+	  ConstraintSeverity severity = ConstraintSeverity.valueOf(constraintSpec.severity);
+	  constraints.add(new OptimizationConstraint(constraintSpec.name, requireMetric(metrics, constraintSpec.metric),
+	      constraintSpec.limit, direction, severity, constraintSpec.penaltyWeight, constraintSpec.description));
+	}
       }
       if (scenarioSpec.variables != null && !scenarioSpec.variables.isEmpty()) {
-        List<ManipulatedVariable> vars = new ArrayList<>();
-        for (VariableSpec variableSpec : scenarioSpec.variables) {
-          StreamInterface stream = feeds.get(variableSpec.stream);
-          if (stream == null) {
-            throw new IllegalArgumentException(
-                "Missing stream mapping for variable: " + variableSpec.name);
-          }
-          vars.add(new ManipulatedVariable(variableSpec.name, variableSpec.lowerBound,
-              variableSpec.upperBound, variableSpec.unit, (proc, value) -> stream.setFlowRate(value,
-                  variableSpec.unit != null ? variableSpec.unit : scenarioSpec.rateUnit)));
-        }
-        scenarios.add(
-            new ScenarioRequest(scenarioSpec.name, process, vars, config, objectives, constraints));
+	List<ManipulatedVariable> vars = new ArrayList<>();
+	for (VariableSpec variableSpec : scenarioSpec.variables) {
+	  StreamInterface stream = feeds.get(variableSpec.stream);
+	  if (stream == null) {
+	    throw new IllegalArgumentException("Missing stream mapping for variable: " + variableSpec.name);
+	  }
+	  vars.add(new ManipulatedVariable(variableSpec.name, variableSpec.lowerBound, variableSpec.upperBound,
+	      variableSpec.unit, (proc, value) -> stream.setFlowRate(value,
+		  variableSpec.unit != null ? variableSpec.unit : scenarioSpec.rateUnit)));
+	}
+	scenarios.add(new ScenarioRequest(scenarioSpec.name, process, vars, config, objectives, constraints));
       } else {
-        if (feed == null) {
-          throw new IllegalArgumentException(
-              "Missing feed mapping for scenario " + scenarioSpec.name);
-        }
-        scenarios.add(
-            new ScenarioRequest(scenarioSpec.name, process, feed, config, objectives, constraints));
+	if (feed == null) {
+	  throw new IllegalArgumentException("Missing feed mapping for scenario " + scenarioSpec.name);
+	}
+	scenarios.add(new ScenarioRequest(scenarioSpec.name, process, feed, config, objectives, constraints));
       }
     }
     return scenarios;
@@ -267,7 +255,7 @@ public final class ProductionOptimizationSpecLoader {
    * Looks up a metric function by key, throwing if not found.
    *
    * @param metrics the metrics map to search
-   * @param key the metric key to look up
+   * @param key     the metric key to look up
    * @return the metric evaluation function
    * @throws IllegalArgumentException if the key is not found
    */
@@ -296,8 +284,8 @@ public final class ProductionOptimizationSpecLoader {
    * Individual scenario configuration from YAML/JSON.
    *
    * <p>
-   * Defines all parameters for a single optimization scenario including bounds, objectives,
-   * constraints, and algorithm settings.
+   * Defines all parameters for a single optimization scenario including bounds, objectives, constraints, and algorithm
+   * settings.
    * </p>
    */
   private static final class ScenarioSpec {

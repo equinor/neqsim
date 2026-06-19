@@ -10,15 +10,15 @@ import org.junit.jupiter.api.Test;
  * Unit tests for {@link TrayHydraulicsCalculator}.
  *
  * <p>
- * Tests sieve/valve/bubble-cap tray hydraulics including flooding, weeping, entrainment, downcomer
- * backup, pressure drop, tray efficiency, and column sizing.
+ * Tests sieve/valve/bubble-cap tray hydraulics including flooding, weeping, entrainment, downcomer backup, pressure
+ * drop, tray efficiency, and column sizing.
  * </p>
  */
 public class TrayHydraulicsCalculatorTest {
 
   /**
-   * Tests sieve tray hydraulics with typical light hydrocarbon conditions. Vapor: ~5 kg/m3, Liquid:
-   * ~500 kg/m3 — typical mid-column conditions for a depropanizer.
+   * Tests sieve tray hydraulics with typical light hydrocarbon conditions. Vapor: ~5 kg/m3, Liquid: ~500 kg/m3 —
+   * typical mid-column conditions for a depropanizer.
    */
   @Test
   public void testSieveTrayTypicalConditions() {
@@ -136,10 +136,9 @@ public class TrayHydraulicsCalculatorTest {
 
     // Valve trays have higher flooding velocity (~1.1x sieve)
     assertTrue(valveCalc.getFloodingVelocity() > sieveCalc.getFloodingVelocity(),
-        "Valve trays should have higher capacity");
+	"Valve trays should have higher capacity");
     // So percent flood should be lower for valve trays
-    assertTrue(valveCalc.getPercentFlood() < sieveCalc.getPercentFlood(),
-        "Valve tray should show lower % flood");
+    assertTrue(valveCalc.getPercentFlood() < sieveCalc.getPercentFlood(), "Valve tray should show lower % flood");
   }
 
   /**
@@ -164,8 +163,7 @@ public class TrayHydraulicsCalculatorTest {
     calc.calculate();
 
     // Downcomer backup fraction should be high with this much liquid
-    assertTrue(calc.getDowncommerBackupFraction() > 0,
-        "Backup fraction should be significant with high liquid rate");
+    assertTrue(calc.getDowncommerBackupFraction() > 0, "Backup fraction should be significant with high liquid rate");
   }
 
   /**
@@ -190,8 +188,7 @@ public class TrayHydraulicsCalculatorTest {
     calc.calculate();
 
     // At very low vapor rates in an oversized column, weeping should fail
-    assertFalse(calc.isWeepingOk(),
-        "Weeping should not be OK at very low vapor rates in oversized column");
+    assertFalse(calc.isWeepingOk(), "Weeping should not be OK at very low vapor rates in oversized column");
   }
 
   /**
@@ -214,19 +211,17 @@ public class TrayHydraulicsCalculatorTest {
 
     // Total DP = dry + liquid + residual
     double totalDP = calc.getDryTrayPressureDrop() + calc.getLiquidHeadPressureDrop()
-        + calc.getResidualHeadPressureDrop();
-    assertEquals(totalDP, calc.getTotalTrayPressureDrop(), 0.01,
-        "Total should equal sum of components");
+	+ calc.getResidualHeadPressureDrop();
+    assertEquals(totalDP, calc.getTotalTrayPressureDrop(), 0.01, "Total should equal sum of components");
 
     // mbar conversion
-    assertEquals(calc.getTotalTrayPressureDrop() / 100.0, calc.getTotalTrayPressureDropMbar(),
-        0.001);
+    assertEquals(calc.getTotalTrayPressureDrop() / 100.0, calc.getTotalTrayPressureDropMbar(), 0.001);
 
     // Typical sieve tray DP is 3-15 mbar
     assertTrue(calc.getTotalTrayPressureDropMbar() > 0.1,
-        "Pressure drop too low: " + calc.getTotalTrayPressureDropMbar());
+	"Pressure drop too low: " + calc.getTotalTrayPressureDropMbar());
     assertTrue(calc.getTotalTrayPressureDropMbar() < 100,
-        "Pressure drop too high: " + calc.getTotalTrayPressureDropMbar());
+	"Pressure drop too high: " + calc.getTotalTrayPressureDropMbar());
   }
 
   /**
@@ -258,6 +253,6 @@ public class TrayHydraulicsCalculatorTest {
 
     // O'Connell: higher alpha*mu → lower efficiency
     assertTrue(calcLowAlpha.getTrayEfficiency() > calcHighAlpha.getTrayEfficiency(),
-        "Higher alpha should give lower O'Connell efficiency");
+	"Higher alpha should give lower O'Connell efficiency");
   }
 }

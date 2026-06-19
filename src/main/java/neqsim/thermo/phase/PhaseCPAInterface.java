@@ -9,10 +9,9 @@ import neqsim.thermo.mixingrule.CPAMixingRulesInterface;
  * </p>
  *
  * <p>
- * This interface defines the contract for CPA (Cubic Plus Association) phase implementations. It
- * provides default implementations for the radial distribution function and its derivatives, which
- * are the same for all cubic equations of state (SRK, PR, UMR) based on the simplified
- * Carnahan-Starling hard-sphere model.
+ * This interface defines the contract for CPA (Cubic Plus Association) phase implementations. It provides default
+ * implementations for the radial distribution function and its derivatives, which are the same for all cubic equations
+ * of state (SRK, PR, UMR) based on the simplified Carnahan-Starling hard-sphere model.
  * </p>
  *
  * @author Even Solbraa
@@ -91,8 +90,8 @@ public interface PhaseCPAInterface extends PhaseEosInterface {
   // based on the simplified Carnahan-Starling hard-sphere model.
 
   /**
-   * Calculate the sum of (1 - X_i) over all association sites, weighted by moles. This is used in
-   * the CPA contribution to Helmholtz energy.
+   * Calculate the sum of (1 - X_i) over all association sites, weighted by moles. This is used in the CPA contribution
+   * to Helmholtz energy.
    *
    * @return hCPA value
    */
@@ -102,7 +101,7 @@ public interface PhaseCPAInterface extends PhaseEosInterface {
     for (int i = 0; i < getNumberOfComponents(); i++) {
       htot = 0.0;
       for (int j = 0; j < getComponent(i).getNumberOfAssociationSites(); j++) {
-        htot += (1.0 - ((ComponentCPAInterface) getComponent(i)).getXsite()[j]);
+	htot += (1.0 - ((ComponentCPAInterface) getComponent(i)).getXsite()[j]);
       }
       tot += getComponent(i).getNumberOfMolesInPhase() * htot;
     }
@@ -117,8 +116,8 @@ public interface PhaseCPAInterface extends PhaseEosInterface {
    * </p>
    *
    * <p>
-   * This formula is the same for all cubic EOS (SRK, PR, UMR) since it depends only on the
-   * co-volume parameter b, not on the attraction parameter a.
+   * This formula is the same for all cubic EOS (SRK, PR, UMR) since it depends only on the co-volume parameter b, not
+   * on the attraction parameter a.
    * </p>
    *
    * @return g value
@@ -197,8 +196,7 @@ public interface PhaseCPAInterface extends PhaseEosInterface {
     double b3 = b2 * B;
     double b4 = b3 * B;
     double b5 = b4 * B;
-    double term =
-        b5 + 17664.0 * t4 * B - 4192.0 * t3 * b2 + 528.0 * b3 * t2 - 36.0 * t * b4 - 30720.0 * t5;
+    double term = b5 + 17664.0 * t4 * B - 4192.0 * t3 * b2 + 528.0 * b3 * t2 - 36.0 * t * b4 - 30720.0 * t5;
     double denom1 = B - 8.0 * t;
     double denom1Cubed = denom1 * denom1 * denom1;
     double denom2 = B - 4.0 * t;

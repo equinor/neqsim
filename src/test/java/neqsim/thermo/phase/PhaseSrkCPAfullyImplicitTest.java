@@ -11,15 +11,14 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * Tests comparing the fully implicit CPA algorithm against the standard nested approach. Verifies
- * that both produce identical thermodynamic results.
+ * Tests comparing the fully implicit CPA algorithm against the standard nested approach. Verifies that both produce
+ * identical thermodynamic results.
  *
  * @author Even Solbraa
  * @version 1.0
  */
 class PhaseSrkCPAfullyImplicitTest extends neqsim.NeqSimTest {
   private static final Logger logger = LogManager.getLogger(PhaseSrkCPAfullyImplicitTest.class);
-
 
   /**
    * Test pure water TP flash at liquid conditions.
@@ -78,8 +77,7 @@ class PhaseSrkCPAfullyImplicitTest extends neqsim.NeqSimTest {
     double densStd = standard.getDensity("kg/m3");
     double densImpl = implicit.getDensity("kg/m3");
 
-    assertEquals(densStd, densImpl, densStd * 0.001,
-        "Water density at 100 bar should match within 0.1%");
+    assertEquals(densStd, densImpl, densStd * 0.001, "Water density at 100 bar should match within 0.1%");
   }
 
   /**
@@ -110,14 +108,12 @@ class PhaseSrkCPAfullyImplicitTest extends neqsim.NeqSimTest {
     opsImpl.TPflash();
     implicit.initProperties();
 
-    assertEquals(standard.getNumberOfPhases(), implicit.getNumberOfPhases(),
-        "Number of phases should match");
+    assertEquals(standard.getNumberOfPhases(), implicit.getNumberOfPhases(), "Number of phases should match");
 
     double zStd = standard.getPhase(0).getZ();
     double zImpl = implicit.getPhase(0).getZ();
 
-    assertEquals(zStd, zImpl, Math.max(Math.abs(zStd) * 0.01, 1e-6),
-        "Compressibility factor should match within 1%");
+    assertEquals(zStd, zImpl, Math.max(Math.abs(zStd) * 0.01, 1e-6), "Compressibility factor should match within 1%");
   }
 
   /**
@@ -149,8 +145,7 @@ class PhaseSrkCPAfullyImplicitTest extends neqsim.NeqSimTest {
     double densStd = standard.getDensity("kg/m3");
     double densImpl = implicit.getDensity("kg/m3");
 
-    assertEquals(densStd, densImpl, densStd * 0.01,
-        "Water-methanol density should match within 1%");
+    assertEquals(densStd, densImpl, densStd * 0.01, "Water-methanol density should match within 1%");
   }
 
   /**

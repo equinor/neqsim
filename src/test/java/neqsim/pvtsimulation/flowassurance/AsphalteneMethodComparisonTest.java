@@ -33,8 +33,7 @@ public class AsphalteneMethodComparisonTest {
 
   @Test
   void testConstructor() {
-    AsphalteneMethodComparison comparison =
-        new AsphalteneMethodComparison(testFluid, 400.0, 373.15);
+    AsphalteneMethodComparison comparison = new AsphalteneMethodComparison(testFluid, 400.0, 373.15);
 
     assertNotNull(comparison);
     assertNotNull(comparison.getDeBoerScreening());
@@ -43,8 +42,7 @@ public class AsphalteneMethodComparisonTest {
 
   @Test
   void testRunComparison() {
-    AsphalteneMethodComparison comparison =
-        new AsphalteneMethodComparison(testFluid, 400.0, 373.15);
+    AsphalteneMethodComparison comparison = new AsphalteneMethodComparison(testFluid, 400.0, 373.15);
 
     // Set SARA fractions
     comparison.setSARAFractions(0.50, 0.30, 0.15, 0.05);
@@ -61,8 +59,7 @@ public class AsphalteneMethodComparisonTest {
 
   @Test
   void testQuickSummary() {
-    AsphalteneMethodComparison comparison =
-        new AsphalteneMethodComparison(testFluid, 400.0, 373.15);
+    AsphalteneMethodComparison comparison = new AsphalteneMethodComparison(testFluid, 400.0, 373.15);
     comparison.setSARAFractions(0.50, 0.30, 0.15, 0.05);
 
     // Run comparison first to populate values
@@ -77,8 +74,7 @@ public class AsphalteneMethodComparisonTest {
 
   @Test
   void testCalculatedProperties() {
-    AsphalteneMethodComparison comparison =
-        new AsphalteneMethodComparison(testFluid, 400.0, 373.15);
+    AsphalteneMethodComparison comparison = new AsphalteneMethodComparison(testFluid, 400.0, 373.15);
 
     comparison.runComparison();
 
@@ -93,8 +89,7 @@ public class AsphalteneMethodComparisonTest {
 
   @Test
   void testComparisonWithStableSARA() {
-    AsphalteneMethodComparison comparison =
-        new AsphalteneMethodComparison(testFluid, 300.0, 373.15);
+    AsphalteneMethodComparison comparison = new AsphalteneMethodComparison(testFluid, 300.0, 373.15);
 
     // Set stable SARA fractions (low CII)
     comparison.setSARAFractions(0.30, 0.40, 0.25, 0.05);
@@ -102,14 +97,12 @@ public class AsphalteneMethodComparisonTest {
     String report = comparison.runComparison();
 
     // With low CII, should indicate stable
-    assertTrue(
-        report.contains("STABLE") || report.contains("NO_PROBLEM") || report.contains("LOW"));
+    assertTrue(report.contains("STABLE") || report.contains("NO_PROBLEM") || report.contains("LOW"));
   }
 
   @Test
   void testComparisonWithUnstableSARA() {
-    AsphalteneMethodComparison comparison =
-        new AsphalteneMethodComparison(testFluid, 500.0, 373.15);
+    AsphalteneMethodComparison comparison = new AsphalteneMethodComparison(testFluid, 500.0, 373.15);
 
     // Set unstable SARA fractions (high CII)
     comparison.setSARAFractions(0.55, 0.15, 0.15, 0.15);
@@ -123,8 +116,7 @@ public class AsphalteneMethodComparisonTest {
 
   @Test
   void testDeBoerScreeningAccess() {
-    AsphalteneMethodComparison comparison =
-        new AsphalteneMethodComparison(testFluid, 400.0, 373.15);
+    AsphalteneMethodComparison comparison = new AsphalteneMethodComparison(testFluid, 400.0, 373.15);
     comparison.setSARAFractions(0.50, 0.30, 0.15, 0.05);
     comparison.runComparison();
 
@@ -136,8 +128,7 @@ public class AsphalteneMethodComparisonTest {
 
   @Test
   void testCpaAnalyzerAccess() {
-    AsphalteneMethodComparison comparison =
-        new AsphalteneMethodComparison(testFluid, 400.0, 373.15);
+    AsphalteneMethodComparison comparison = new AsphalteneMethodComparison(testFluid, 400.0, 373.15);
     comparison.setSARAFractions(0.50, 0.30, 0.15, 0.05);
 
     AsphalteneStabilityAnalyzer cpa = comparison.getCpaAnalyzer();
@@ -150,8 +141,7 @@ public class AsphalteneMethodComparisonTest {
 
   @Test
   void testMethodAgreementReport() {
-    AsphalteneMethodComparison comparison =
-        new AsphalteneMethodComparison(testFluid, 400.0, 373.15);
+    AsphalteneMethodComparison comparison = new AsphalteneMethodComparison(testFluid, 400.0, 373.15);
     comparison.setSARAFractions(0.50, 0.30, 0.15, 0.05);
 
     String report = comparison.runComparison();
@@ -175,8 +165,7 @@ public class AsphalteneMethodComparisonTest {
 
   @Test
   void testReportContainsAllSections() {
-    AsphalteneMethodComparison comparison =
-        new AsphalteneMethodComparison(testFluid, 400.0, 373.15);
+    AsphalteneMethodComparison comparison = new AsphalteneMethodComparison(testFluid, 400.0, 373.15);
     comparison.setSARAFractions(0.50, 0.30, 0.15, 0.05);
 
     String report = comparison.runComparison();

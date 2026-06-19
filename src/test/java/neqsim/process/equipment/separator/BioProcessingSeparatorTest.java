@@ -10,10 +10,9 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
- * Test class for bio-processing separator equipment: SolidsSeparator, SolidsCentrifuge,
- * RotaryVacuumFilter, PressureFilter, ScrewPress, LiquidLiquidExtractor, and Crystallizer. Uses
- * COMP_EXT database for bio-relevant components such as glucose, lactic acid, citric acid, succinic
- * acid, and glycerol.
+ * Test class for bio-processing separator equipment: SolidsSeparator, SolidsCentrifuge, RotaryVacuumFilter,
+ * PressureFilter, ScrewPress, LiquidLiquidExtractor, and Crystallizer. Uses COMP_EXT database for bio-relevant
+ * components such as glucose, lactic acid, citric acid, succinic acid, and glycerol.
  *
  * @author NeqSim team
  * @version 1.0
@@ -70,10 +69,8 @@ public class BioProcessingSeparatorTest {
   @Test
   public void testSolidsSeparatorSplitValidation() {
     SolidsSeparator separator = new SolidsSeparator("TestSep");
-    Assertions.assertThrows(IllegalArgumentException.class,
-        () -> separator.setSolidsSplitFraction("test", 1.5));
-    Assertions.assertThrows(IllegalArgumentException.class,
-        () -> separator.setSolidsSplitFraction("test", -0.1));
+    Assertions.assertThrows(IllegalArgumentException.class, () -> separator.setSolidsSplitFraction("test", 1.5));
+    Assertions.assertThrows(IllegalArgumentException.class, () -> separator.setSolidsSplitFraction("test", -0.1));
   }
 
   /**

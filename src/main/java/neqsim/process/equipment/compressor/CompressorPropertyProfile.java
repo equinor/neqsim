@@ -24,7 +24,8 @@ public class CompressorPropertyProfile implements Serializable {
    * Constructor for CompressorPropertyProfile.
    * </p>
    */
-  public CompressorPropertyProfile() {}
+  public CompressorPropertyProfile() {
+  }
 
   /**
    * <p>

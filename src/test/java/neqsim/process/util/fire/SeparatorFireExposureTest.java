@@ -31,8 +31,8 @@ public class SeparatorFireExposureTest {
     separator.setLiquidLevel(0.5); // 50% liquid height
     separator.run();
 
-    FireScenarioConfig config = new FireScenarioConfig().setEnvironmentalFactor(0.82)
-        .setWallThicknessM(0.018).setAllowableTensileStrengthPa(2.1e8);
+    FireScenarioConfig config = new FireScenarioConfig().setEnvironmentalFactor(0.82).setWallThicknessM(0.018)
+	.setAllowableTensileStrengthPa(2.1e8);
 
     FireExposureResult result = separator.evaluateFireExposure(config);
 

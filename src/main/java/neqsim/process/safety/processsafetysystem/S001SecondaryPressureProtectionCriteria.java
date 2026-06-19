@@ -6,9 +6,9 @@ import java.io.Serializable;
  * NORSOK S-001 Clause 10.4.7 screening criteria for instrumented secondary pressure protection.
  *
  * <p>
- * The helper checks the documented pressure basis, annual event frequency target, leakage basis,
- * and proof-test evidence for instrumented secondary pressure protection. It is intentionally a
- * screening class; detailed SIL verification remains in the SIS classes.
+ * The helper checks the documented pressure basis, annual event frequency target, leakage basis, and proof-test
+ * evidence for instrumented secondary pressure protection. It is intentionally a screening class; detailed SIL
+ * verification remains in the SIS classes.
  * </p>
  *
  * @author NeqSim contributors
@@ -32,29 +32,27 @@ public class S001SecondaryPressureProtectionCriteria implements Serializable {
    * @param item normalized review item
    * @return populated criteria
    */
-  public static S001SecondaryPressureProtectionCriteria fromItem(
-      ProcessSafetySystemReviewItem item) {
-    S001SecondaryPressureProtectionCriteria criteria =
-        new S001SecondaryPressureProtectionCriteria();
+  public static S001SecondaryPressureProtectionCriteria fromItem(ProcessSafetySystemReviewItem item) {
+    S001SecondaryPressureProtectionCriteria criteria = new S001SecondaryPressureProtectionCriteria();
     if (item == null) {
       return criteria;
     }
-    criteria.setMaximumEventPressureBara(item.getDouble(Double.NaN, "maximumEventPressureBara",
-        "eventPressureBara", "protectedSystemMaximumPressureBara"));
-    criteria.setDesignPressureBara(item.getDouble(Double.NaN, "designPressureBara",
-        "protectedEquipmentDesignPressureBara"));
-    criteria.setTestPressureBara(item.getDouble(Double.NaN, "testPressureBara",
-        "hydrotestPressureBara", "pressureTestBara"));
-    criteria.setDemandFrequencyPerYear(item.getDouble(Double.NaN, "demandFrequencyPerYear",
-        "annualDemandFrequency", "eventFrequencyPerYear"));
-    criteria.setTargetFrequencyPerYear(item.getDouble(Double.NaN, "targetFrequencyPerYear",
-        "maximumAllowedFrequencyPerYear"));
-    criteria.setReliefLeakageAssessed(item.getBooleanObject("reliefLeakageAssessed",
-        "psvLeakageAssessed", "reliefValveLeakageDocumented"));
-    criteria.setReliefLeakageToSafeLocation(item.getBooleanObject("reliefLeakageToSafeLocation",
-        "psvLeakageToSafeLocation", "leakageRoutedSafe"));
-    criteria.setProofTestIntervalMonths(item.getDouble(Double.NaN, "proofTestIntervalMonths",
-        "testIntervalMonths", "proofTestMonths"));
+    criteria.setMaximumEventPressureBara(item.getDouble(Double.NaN, "maximumEventPressureBara", "eventPressureBara",
+	"protectedSystemMaximumPressureBara"));
+    criteria.setDesignPressureBara(
+	item.getDouble(Double.NaN, "designPressureBara", "protectedEquipmentDesignPressureBara"));
+    criteria.setTestPressureBara(
+	item.getDouble(Double.NaN, "testPressureBara", "hydrotestPressureBara", "pressureTestBara"));
+    criteria.setDemandFrequencyPerYear(
+	item.getDouble(Double.NaN, "demandFrequencyPerYear", "annualDemandFrequency", "eventFrequencyPerYear"));
+    criteria.setTargetFrequencyPerYear(
+	item.getDouble(Double.NaN, "targetFrequencyPerYear", "maximumAllowedFrequencyPerYear"));
+    criteria.setReliefLeakageAssessed(
+	item.getBooleanObject("reliefLeakageAssessed", "psvLeakageAssessed", "reliefValveLeakageDocumented"));
+    criteria.setReliefLeakageToSafeLocation(
+	item.getBooleanObject("reliefLeakageToSafeLocation", "psvLeakageToSafeLocation", "leakageRoutedSafe"));
+    criteria.setProofTestIntervalMonths(
+	item.getDouble(Double.NaN, "proofTestIntervalMonths", "testIntervalMonths", "proofTestMonths"));
     return criteria;
   }
 
@@ -64,8 +62,7 @@ public class S001SecondaryPressureProtectionCriteria implements Serializable {
    * @param pressureBara maximum event pressure in bara
    * @return this criteria for chaining
    */
-  public S001SecondaryPressureProtectionCriteria setMaximumEventPressureBara(
-      double pressureBara) {
+  public S001SecondaryPressureProtectionCriteria setMaximumEventPressureBara(double pressureBara) {
     this.maximumEventPressureBara = pressureBara;
     return this;
   }
@@ -98,8 +95,7 @@ public class S001SecondaryPressureProtectionCriteria implements Serializable {
    * @param frequencyPerYear demand frequency per year
    * @return this criteria for chaining
    */
-  public S001SecondaryPressureProtectionCriteria setDemandFrequencyPerYear(
-      double frequencyPerYear) {
+  public S001SecondaryPressureProtectionCriteria setDemandFrequencyPerYear(double frequencyPerYear) {
     this.demandFrequencyPerYear = frequencyPerYear;
     return this;
   }
@@ -110,8 +106,7 @@ public class S001SecondaryPressureProtectionCriteria implements Serializable {
    * @param frequencyPerYear target frequency per year
    * @return this criteria for chaining
    */
-  public S001SecondaryPressureProtectionCriteria setTargetFrequencyPerYear(
-      double frequencyPerYear) {
+  public S001SecondaryPressureProtectionCriteria setTargetFrequencyPerYear(double frequencyPerYear) {
     this.targetFrequencyPerYear = frequencyPerYear;
     return this;
   }
@@ -133,8 +128,7 @@ public class S001SecondaryPressureProtectionCriteria implements Serializable {
    * @param safeLocation true when leakage is routed to a safe location, null when not supplied
    * @return this criteria for chaining
    */
-  public S001SecondaryPressureProtectionCriteria setReliefLeakageToSafeLocation(
-      Boolean safeLocation) {
+  public S001SecondaryPressureProtectionCriteria setReliefLeakageToSafeLocation(Boolean safeLocation) {
     this.reliefLeakageToSafeLocation = safeLocation;
     return this;
   }
@@ -156,8 +150,7 @@ public class S001SecondaryPressureProtectionCriteria implements Serializable {
    * @return true when event, design, and test pressure are finite and positive
    */
   public boolean hasPressureBasis() {
-    return isPositive(maximumEventPressureBara) && isPositive(designPressureBara)
-        && isPositive(testPressureBara);
+    return isPositive(maximumEventPressureBara) && isPositive(designPressureBara) && isPositive(testPressureBara);
   }
 
   /**
@@ -167,9 +160,9 @@ public class S001SecondaryPressureProtectionCriteria implements Serializable {
    */
   public boolean isEmpty() {
     return !Double.isFinite(maximumEventPressureBara) && !Double.isFinite(designPressureBara)
-        && !Double.isFinite(testPressureBara) && !Double.isFinite(demandFrequencyPerYear)
-        && reliefLeakageAssessed == null && reliefLeakageToSafeLocation == null
-        && !Double.isFinite(proofTestIntervalMonths);
+	&& !Double.isFinite(testPressureBara) && !Double.isFinite(demandFrequencyPerYear)
+	&& reliefLeakageAssessed == null && reliefLeakageToSafeLocation == null
+	&& !Double.isFinite(proofTestIntervalMonths);
   }
 
   /**
@@ -179,38 +172,35 @@ public class S001SecondaryPressureProtectionCriteria implements Serializable {
    */
   public S001SecondaryPressureProtectionResult evaluate() {
     double resolvedTarget = Double.isFinite(targetFrequencyPerYear) ? targetFrequencyPerYear
-        : getDefaultTargetFrequencyPerYear(maximumEventPressureBara, designPressureBara,
-            testPressureBara);
+	: getDefaultTargetFrequencyPerYear(maximumEventPressureBara, designPressureBara, testPressureBara);
     boolean pressureBasisComplete = hasPressureBasis();
     boolean testPressureValid = !pressureBasisComplete || testPressureBara >= designPressureBara;
     boolean pressureWithinTest = !pressureBasisComplete || maximumEventPressureBara <= testPressureBara;
-    boolean frequencyConfigured = Double.isFinite(demandFrequencyPerYear)
-        && demandFrequencyPerYear >= 0.0 && Double.isFinite(resolvedTarget);
+    boolean frequencyConfigured = Double.isFinite(demandFrequencyPerYear) && demandFrequencyPerYear >= 0.0
+	&& Double.isFinite(resolvedTarget);
     boolean frequencyMet = !frequencyConfigured || demandFrequencyPerYear <= resolvedTarget;
     boolean leakageAssessed = Boolean.TRUE.equals(reliefLeakageAssessed);
     boolean leakageSafe = Boolean.TRUE.equals(reliefLeakageToSafeLocation);
     boolean proofTestConfigured = Double.isFinite(proofTestIntervalMonths);
     boolean proofTestMet = !proofTestConfigured || proofTestIntervalMonths <= 12.0;
-    boolean acceptable = pressureBasisComplete && testPressureValid && pressureWithinTest
-        && frequencyConfigured && frequencyMet && leakageAssessed && leakageSafe && proofTestMet;
-    return new S001SecondaryPressureProtectionResult(maximumEventPressureBara, designPressureBara,
-        testPressureBara, demandFrequencyPerYear, resolvedTarget, pressureBasisComplete,
-        testPressureValid, pressureWithinTest, frequencyConfigured, frequencyMet, leakageAssessed,
-        leakageSafe, proofTestConfigured, proofTestMet, acceptable);
+    boolean acceptable = pressureBasisComplete && testPressureValid && pressureWithinTest && frequencyConfigured
+	&& frequencyMet && leakageAssessed && leakageSafe && proofTestMet;
+    return new S001SecondaryPressureProtectionResult(maximumEventPressureBara, designPressureBara, testPressureBara,
+	demandFrequencyPerYear, resolvedTarget, pressureBasisComplete, testPressureValid, pressureWithinTest,
+	frequencyConfigured, frequencyMet, leakageAssessed, leakageSafe, proofTestConfigured, proofTestMet, acceptable);
   }
 
   /**
    * Gets a default target frequency from pressure severity bands.
    *
-   * @param eventPressureBara event pressure in bara
+   * @param eventPressureBara  event pressure in bara
    * @param designPressureBara design pressure in bara
-   * @param testPressureBara test pressure in bara
+   * @param testPressureBara   test pressure in bara
    * @return target annual frequency, or NaN when inputs are incomplete
    */
-  public static double getDefaultTargetFrequencyPerYear(double eventPressureBara,
-      double designPressureBara, double testPressureBara) {
-    if (!isPositive(eventPressureBara) || !isPositive(designPressureBara)
-        || !isPositive(testPressureBara)) {
+  public static double getDefaultTargetFrequencyPerYear(double eventPressureBara, double designPressureBara,
+      double testPressureBara) {
+    if (!isPositive(eventPressureBara) || !isPositive(designPressureBara) || !isPositive(testPressureBara)) {
       return Double.NaN;
     }
     if (eventPressureBara > 2.0 * designPressureBara) {

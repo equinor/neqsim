@@ -86,8 +86,7 @@ class ElectrolyzerTest extends neqsim.NeqSimTest {
     el.run();
     double sec = el.getSpecificEnergyConsumption_kWh_per_kg_H2();
     // PEM commercial stacks: ~45-75 kWh/kg (IRENA 2022, IEA Global H2 Review 2023).
-    assertTrue(sec > 40.0 && sec < 100.0,
-        "PEM specific energy should be 40-100 kWh/kg, got " + sec);
+    assertTrue(sec > 40.0 && sec < 100.0, "PEM specific energy should be 40-100 kWh/kg, got " + sec);
   }
 
   @Test

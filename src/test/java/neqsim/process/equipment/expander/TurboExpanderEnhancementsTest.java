@@ -8,9 +8,8 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Tests for the state-of-the-art turbo-expander enhancements: P1 (ExpanderChartKhader), P2 (IGV
- * controllable degree of freedom), P4 (OEM map ingestion), P5 (mechanical/seal-gas envelope) and P6
- * (operating-envelope sweep).
+ * Tests for the state-of-the-art turbo-expander enhancements: P1 (ExpanderChartKhader), P2 (IGV controllable degree of
+ * freedom), P4 (OEM map ingestion), P5 (mechanical/seal-gas envelope) and P6 (operating-envelope sweep).
  */
 public class TurboExpanderEnhancementsTest {
 
@@ -56,14 +55,13 @@ public class TurboExpanderEnhancementsTest {
     TurboExpanderCompressor m = new TurboExpanderCompressor("TurboExpander", feedStream);
     m.setCompressorFeedStream(feedStream2);
     m.setUCcurve(
-        new double[] {0.9964751359624449, 0.7590835113213541, 0.984295619176559, 0.8827799803397821,
-            0.9552460269880922, 1.0},
-        new double[] {0.984090909090909, 0.796590909090909, 0.9931818181818183, 0.9363636363636364,
-            0.9943181818181818, 1.0});
-    m.setQNEfficiencycurve(new double[] {0.5, 0.7, 0.85, 1.0, 1.2, 1.4, 1.6},
-        new double[] {0.88, 0.91, 0.95, 1.0, 0.97, 0.85, 0.6});
-    m.setQNHeadcurve(new double[] {0.5, 0.8, 1.0, 1.2, 1.4, 1.6},
-        new double[] {1.1, 1.05, 1.0, 0.9, 0.7, 0.4});
+	new double[] { 0.9964751359624449, 0.7590835113213541, 0.984295619176559, 0.8827799803397821,
+	    0.9552460269880922, 1.0 },
+	new double[] { 0.984090909090909, 0.796590909090909, 0.9931818181818183, 0.9363636363636364, 0.9943181818181818,
+	    1.0 });
+    m.setQNEfficiencycurve(new double[] { 0.5, 0.7, 0.85, 1.0, 1.2, 1.4, 1.6 },
+	new double[] { 0.88, 0.91, 0.95, 1.0, 0.97, 0.85, 0.6 });
+    m.setQNHeadcurve(new double[] { 0.5, 0.8, 1.0, 1.2, 1.4, 1.6 }, new double[] { 1.1, 1.05, 1.0, 0.9, 0.7, 0.4 });
     m.setImpellerDiameter(0.424);
     m.setDesignSpeed(6850.0);
     m.setExpanderDesignIsentropicEfficiency(0.88);
@@ -84,12 +82,10 @@ public class TurboExpanderEnhancementsTest {
    */
   private ExpanderChartKhader buildChart(SystemInterface referenceFluid) {
     ExpanderChartKhader chart = new ExpanderChartKhader(referenceFluid, 0.424);
-    double[] igv = new double[] {0.6, 1.0};
-    double[][] uc = new double[][] {{0.5, 0.6, 0.7, 0.8, 0.9}, {0.5, 0.6, 0.7, 0.8, 0.9}};
-    double[][] eta =
-        new double[][] {{0.72, 0.80, 0.84, 0.82, 0.76}, {0.78, 0.85, 0.88, 0.86, 0.80}};
-    double[][] head =
-        new double[][] {{30.0, 32.0, 33.0, 32.5, 31.0}, {34.0, 36.0, 37.0, 36.5, 35.0}};
+    double[] igv = new double[] { 0.6, 1.0 };
+    double[][] uc = new double[][] { { 0.5, 0.6, 0.7, 0.8, 0.9 }, { 0.5, 0.6, 0.7, 0.8, 0.9 } };
+    double[][] eta = new double[][] { { 0.72, 0.80, 0.84, 0.82, 0.76 }, { 0.78, 0.85, 0.88, 0.86, 0.80 } };
+    double[][] head = new double[][] { { 30.0, 32.0, 33.0, 32.5, 31.0 }, { 34.0, 36.0, 37.0, 36.5, 35.0 } };
     chart.setCurves(igv, uc, eta, head);
     return chart;
   }
@@ -148,7 +144,7 @@ public class TurboExpanderEnhancementsTest {
     m2.setExpanderChart(buildChart(m2.getInletStream().getFluid()));
     m2.setIgvControlMode(true);
     m2.setIGVopening(1.0);
-    m2.setIgvEfficiencyPenaltyCurve(new double[] {0.4, 1.0}, new double[] {0.85, 0.90});
+    m2.setIgvEfficiencyPenaltyCurve(new double[] { 0.4, 1.0 }, new double[] { 0.85, 0.90 });
     Assertions.assertEquals(0.90, m2.getIgvEfficiencyPenalty(1.0), 1e-9);
     m2.run();
     double effPenalty = m2.getExpanderIsentropicEfficiency();
@@ -159,10 +155,10 @@ public class TurboExpanderEnhancementsTest {
   void testMapIngestionAndAnchorValidation() {
     SystemInterface ref = feedGas();
     TurboExpanderMapIngestion loader = new TurboExpanderMapIngestion(ref, 0.3, 0.424);
-    ExpanderChartKhader chart = loader.buildExpanderChart(new double[] {0.6, 1.0},
-        new double[][] {{0.5, 0.6, 0.7, 0.8, 0.9}, {0.5, 0.6, 0.7, 0.8, 0.9}},
-        new double[][] {{0.72, 0.80, 0.84, 0.82, 0.76}, {0.78, 0.85, 0.88, 0.86, 0.80}},
-        new double[][] {{30.0, 32.0, 33.0, 32.5, 31.0}, {34.0, 36.0, 37.0, 36.5, 35.0}});
+    ExpanderChartKhader chart = loader.buildExpanderChart(new double[] { 0.6, 1.0 },
+	new double[][] { { 0.5, 0.6, 0.7, 0.8, 0.9 }, { 0.5, 0.6, 0.7, 0.8, 0.9 } },
+	new double[][] { { 0.72, 0.80, 0.84, 0.82, 0.76 }, { 0.78, 0.85, 0.88, 0.86, 0.80 } },
+	new double[][] { { 30.0, 32.0, 33.0, 32.5, 31.0 }, { 34.0, 36.0, 37.0, 36.5, 35.0 } });
     Assertions.assertTrue(chart.isMapDefined());
     loader.addAnchorPoint("Design 1998", 0.7, 1.0, 0.88);
     loader.addAnchorPoint("Case B", 0.7, 0.6, 0.84);
@@ -196,7 +192,7 @@ public class TurboExpanderEnhancementsTest {
   void testOperatingEnvelopeSweep() {
     TurboExpanderCompressor m = buildMachine();
     TurboExpanderOperatingEnvelope env = new TurboExpanderOperatingEnvelope(m);
-    env.setGrid(new double[] {55.0, 60.95}, new double[] {300000.0, 456000.0});
+    env.setGrid(new double[] { 55.0, 60.95 }, new double[] { 300000.0, 456000.0 });
     env.run();
     Assertions.assertNotNull(env.getFeasibility());
     Assertions.assertNotNull(env.getColdEndTemperature());
@@ -207,12 +203,12 @@ public class TurboExpanderEnhancementsTest {
     boolean anyFiniteColdEnd = false;
     for (int i = 0; i < 2; i++) {
       for (int j = 0; j < 2; j++) {
-        if (env.getFeasibility()[i][j]) {
-          anyFeasible = true;
-        }
-        if (Double.isFinite(env.getColdEndTemperature()[i][j])) {
-          anyFiniteColdEnd = true;
-        }
+	if (env.getFeasibility()[i][j]) {
+	  anyFeasible = true;
+	}
+	if (Double.isFinite(env.getColdEndTemperature()[i][j])) {
+	  anyFiniteColdEnd = true;
+	}
       }
     }
     Assertions.assertTrue(anyFeasible);

@@ -23,20 +23,19 @@ public interface ComponentGEInterface extends ComponentInterface {
    * getGamma.
    * </p>
    *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase              a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
-   * @param temperature a double
-   * @param pressure a double
-   * @param pt the PhaseType of the phase
-   * @param HValpha an array of type double
-   * @param HVgij an array of type double
-   * @param intparam an array of type double
-   * @param mixRule an array of {@link java.lang.String} objects
+   * @param temperature        a double
+   * @param pressure           a double
+   * @param pt                 the PhaseType of the phase
+   * @param HValpha            an array of type double
+   * @param HVgij              an array of type double
+   * @param intparam           an array of type double
+   * @param mixRule            an array of {@link java.lang.String} objects
    * @return a double
    */
-  public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure, PhaseType pt, double[][] HValpha, double[][] HVgij, double[][] intparam,
-      String[][] mixRule);
+  public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
+      PhaseType pt, double[][] HValpha, double[][] HVgij, double[][] intparam, String[][] mixRule);
 
   /**
    * <p>
@@ -98,7 +97,7 @@ public interface ComponentGEInterface extends ComponentInterface {
    * setLnGammadn.
    * </p>
    *
-   * @param k a int
+   * @param k   a int
    * @param val a double
    */
   public void setLnGammadn(int k, double val);

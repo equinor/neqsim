@@ -43,8 +43,7 @@ class DriftFluxModelTest {
     DriftFluxParameters params = model.calculateDriftFlux(section);
 
     // C0 should be around 1.2 for bubble flow
-    assertTrue(params.C0 >= 1.1 && params.C0 <= 1.3,
-        "C0 for bubble flow should be ~1.2, got " + params.C0);
+    assertTrue(params.C0 >= 1.1 && params.C0 <= 1.3, "C0 for bubble flow should be ~1.2, got " + params.C0);
 
     // Drift velocity should be positive for upward flow
     assertTrue(params.driftVelocity > 0, "Drift velocity should be positive for upward flow");
@@ -66,8 +65,7 @@ class DriftFluxModelTest {
     DriftFluxParameters params = model.calculateDriftFlux(section);
 
     // C0 for horizontal slug flow
-    assertTrue(params.C0 >= 1.0 && params.C0 <= 1.3,
-        "C0 for slug flow should be 1.0-1.3, got " + params.C0);
+    assertTrue(params.C0 >= 1.0 && params.C0 <= 1.3, "C0 for slug flow should be 1.0-1.3, got " + params.C0);
 
     // Drift velocity present even in horizontal
     assertTrue(params.driftVelocity >= 0, "Drift velocity should be >= 0");
@@ -172,10 +170,9 @@ class DriftFluxModelTest {
     // For bubble flow with upward inclination, gas rises faster
     // so void fraction < input GVF
     double gvf = section.getSuperficialGasVelocity()
-        / (section.getSuperficialGasVelocity() + section.getSuperficialLiquidVelocity());
+	/ (section.getSuperficialGasVelocity() + section.getSuperficialLiquidVelocity());
     // Void fraction typically less than no-slip GVF due to slip
-    assertTrue(params.voidFraction <= gvf + 0.1,
-        "Void fraction should be close to or less than no-slip GVF");
+    assertTrue(params.voidFraction <= gvf + 0.1, "Void fraction should be close to or less than no-slip GVF");
   }
 
   @Test
@@ -215,7 +212,7 @@ class DriftFluxModelTest {
   @Test
   void testInclinationEffect() {
     // Same conditions, different inclinations
-    double[] inclinations = {-45, 0, 45, 90};
+    double[] inclinations = { -45, 0, 45, 90 };
     double[] driftVelocities = new double[4];
 
     for (int i = 0; i < inclinations.length; i++) {
@@ -235,7 +232,7 @@ class DriftFluxModelTest {
     // For slug flow, horizontal drift velocity (Zukoski) is typically higher than vertical
     // The important thing is that inclination DOES affect drift velocity
     assertTrue(Math.abs(driftVelocities[1] - driftVelocities[3]) > 0.001,
-        "Drift velocity should be different for vertical vs horizontal");
+	"Drift velocity should be different for vertical vs horizontal");
     // Verify all values are non-negative for upward and horizontal flow
     assertTrue(driftVelocities[1] >= 0, "Horizontal drift velocity should be non-negative");
     assertTrue(driftVelocities[2] >= 0, "45 degree drift velocity should be non-negative");
@@ -265,8 +262,8 @@ class DriftFluxModelTest {
     double heatTransferCoeff = 10.0; // W/(m²·K)
     double jouleThomsonCoeff = 3e-6; // K/Pa
 
-    DriftFluxModel.EnergyEquationResult result = model.calculateEnergyEquation(section, params, dt,
-        dx, ambientTemp, heatTransferCoeff, jouleThomsonCoeff);
+    DriftFluxModel.EnergyEquationResult result = model.calculateEnergyEquation(section, params, dt, dx, ambientTemp,
+	heatTransferCoeff, jouleThomsonCoeff);
 
     // Fluid should cool toward ambient temperature
     assertTrue(result.heatTransferDeltaT < 0, "Fluid should lose heat when warmer than ambient");
@@ -295,8 +292,8 @@ class DriftFluxModelTest {
     double heatTransferCoeff = 50.0; // W/(m²·K) - higher for faster heating
     double jouleThomsonCoeff = 3e-6;
 
-    DriftFluxModel.EnergyEquationResult result = model.calculateEnergyEquation(section, params, dt,
-        dx, ambientTemp, heatTransferCoeff, jouleThomsonCoeff);
+    DriftFluxModel.EnergyEquationResult result = model.calculateEnergyEquation(section, params, dt, dx, ambientTemp,
+	heatTransferCoeff, jouleThomsonCoeff);
 
     // Fluid should heat up toward ambient temperature
     assertTrue(result.heatTransferDeltaT > 0, "Fluid should gain heat when cooler than ambient");
@@ -326,15 +323,14 @@ class DriftFluxModelTest {
     double heatTransferCoeff = 0.0; // No heat transfer to isolate JT effect
     double jouleThomsonCoeff = 5e-6; // Typical for natural gas
 
-    DriftFluxModel.EnergyEquationResult result = model.calculateEnergyEquation(section, params, dt,
-        dx, ambientTemp, heatTransferCoeff, jouleThomsonCoeff);
+    DriftFluxModel.EnergyEquationResult result = model.calculateEnergyEquation(section, params, dt, dx, ambientTemp,
+	heatTransferCoeff, jouleThomsonCoeff);
 
     // For gas expansion (negative dP/dx), JT effect should cause cooling
     // dP/dx is negative in flow direction due to friction
     // Result depends on sign of pressure gradient
     assertNotNull(result.jouleThomsonDeltaT);
-    assertTrue(Math.abs(result.jouleThomsonDeltaT) < 10,
-        "JT temperature change should be reasonable");
+    assertTrue(Math.abs(result.jouleThomsonDeltaT) < 10, "JT temperature change should be reasonable");
   }
 
   @Test
@@ -360,12 +356,11 @@ class DriftFluxModelTest {
     double heatTransferCoeff = 0.0; // No heat transfer
     double jouleThomsonCoeff = 0.0; // No JT effect
 
-    DriftFluxModel.EnergyEquationResult result = model.calculateEnergyEquation(section, params, dt,
-        dx, ambientTemp, heatTransferCoeff, jouleThomsonCoeff);
+    DriftFluxModel.EnergyEquationResult result = model.calculateEnergyEquation(section, params, dt, dx, ambientTemp,
+	heatTransferCoeff, jouleThomsonCoeff);
 
     // Friction heating should always be positive (heat generation)
-    assertTrue(result.frictionHeatingDeltaT >= 0,
-        "Friction heating should cause temperature increase");
+    assertTrue(result.frictionHeatingDeltaT >= 0, "Friction heating should cause temperature increase");
     assertTrue(result.frictionHeatingPower >= 0, "Friction heating power should be non-negative");
   }
 
@@ -391,8 +386,8 @@ class DriftFluxModelTest {
     double heatTransferCoeff = 1000.0; // Very high heat transfer
     double jouleThomsonCoeff = 1e-5;
 
-    DriftFluxModel.EnergyEquationResult result = model.calculateEnergyEquation(section, params, dt,
-        dx, ambientTemp, heatTransferCoeff, jouleThomsonCoeff);
+    DriftFluxModel.EnergyEquationResult result = model.calculateEnergyEquation(section, params, dt, dx, ambientTemp,
+	heatTransferCoeff, jouleThomsonCoeff);
 
     // Temperature should be bounded
     assertTrue(result.newTemperature >= 100, "Temperature should not go below 100K");
@@ -419,8 +414,8 @@ class DriftFluxModelTest {
     double massFlowRate = 10.0; // kg/s
     double jouleThomsonCoeff = 3e-6;
 
-    double newTemp = model.calculateSteadyStateTemperature(section, upstreamTemp, dx, ambientTemp,
-        heatTransferCoeff, massFlowRate, jouleThomsonCoeff);
+    double newTemp = model.calculateSteadyStateTemperature(section, upstreamTemp, dx, ambientTemp, heatTransferCoeff,
+	massFlowRate, jouleThomsonCoeff);
 
     // Temperature should decrease toward ambient
     assertTrue(newTemp < upstreamTemp, "Temperature should decrease toward ambient");
@@ -457,10 +452,8 @@ class DriftFluxModelTest {
     double Cp_mix = model.calculateMixtureHeatCapacity(section, params, Cp_gas, Cp_liquid);
 
     // Mixture Cp should be between gas and liquid values
-    assertTrue(Cp_mix >= Math.min(Cp_gas, Cp_liquid),
-        "Mixture Cp should be at least the minimum of components");
-    assertTrue(Cp_mix <= Math.max(Cp_gas, Cp_liquid),
-        "Mixture Cp should not exceed the maximum of components");
+    assertTrue(Cp_mix >= Math.min(Cp_gas, Cp_liquid), "Mixture Cp should be at least the minimum of components");
+    assertTrue(Cp_mix <= Math.max(Cp_gas, Cp_liquid), "Mixture Cp should not exceed the maximum of components");
   }
 
   @Test
@@ -478,8 +471,8 @@ class DriftFluxModelTest {
 
     DriftFluxParameters params = model.calculateDriftFlux(section);
 
-    DriftFluxModel.EnergyEquationResult result =
-        model.calculateEnergyEquation(section, params, 1.0, 10.0, 288.15, 10.0, 3e-6);
+    DriftFluxModel.EnergyEquationResult result = model.calculateEnergyEquation(section, params, 1.0, 10.0, 288.15, 10.0,
+	3e-6);
 
     // Should not crash and temperature should remain unchanged
     assertNotNull(result);

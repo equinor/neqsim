@@ -29,9 +29,9 @@ public class GlycolPhysicalProperties extends LiquidPhysicalProperties {
    * Constructor for GlycolPhysicalProperties.
    * </p>
    *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase                            a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param binaryDiffusionCoefficientMethod a int
-   * @param multicomponentDiffusionMethod a int
+   * @param multicomponentDiffusionMethod    a int
    */
   public GlycolPhysicalProperties(PhaseInterface phase, int binaryDiffusionCoefficientMethod,
       int multicomponentDiffusionMethod) {

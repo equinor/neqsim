@@ -9,8 +9,7 @@ import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Tests for the AirCooler unit operation including thermal design, fan model, and ambient
- * correction.
+ * Tests for the AirCooler unit operation including thermal design, fan model, and ambient correction.
  */
 public class AirCoolerTest {
   static neqsim.thermo.system.SystemInterface testSystem = null;

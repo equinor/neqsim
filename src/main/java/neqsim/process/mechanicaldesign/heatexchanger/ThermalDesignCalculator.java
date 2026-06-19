@@ -9,18 +9,17 @@ import neqsim.fluidmechanics.flownode.HeatTransferCoefficientCalculator;
  * Thermal-hydraulic design calculator for shell and tube heat exchangers.
  *
  * <p>
- * Calculates tube-side and shell-side heat transfer coefficients, overall heat transfer coefficient
- * U, pressure drops, and performs zone-by-zone analysis for two-phase services. Integrates
- * correlations from {@link HeatTransferCoefficientCalculator} with shell-and-tube geometry from
- * {@link ShellAndTubeDesignCalculator}.
+ * Calculates tube-side and shell-side heat transfer coefficients, overall heat transfer coefficient U, pressure drops,
+ * and performs zone-by-zone analysis for two-phase services. Integrates correlations from
+ * {@link HeatTransferCoefficientCalculator} with shell-and-tube geometry from {@link ShellAndTubeDesignCalculator}.
  * </p>
  *
  * <p>
  * Supported methods:
  * </p>
  * <ul>
- * <li><b>Tube side:</b> Gnielinski (turbulent), Dittus-Boelter (fallback), plus condensation and
- * evaporation correlations</li>
+ * <li><b>Tube side:</b> Gnielinski (turbulent), Dittus-Boelter (fallback), plus condensation and evaporation
+ * correlations</li>
  * <li><b>Shell side:</b> Kern method (simple), Bell-Delaware method (detailed)</li>
  * <li><b>Overall U:</b> Resistance-in-series model including fouling and tube wall</li>
  * <li><b>Pressure drops:</b> Fanning/Kern correlations</li>
@@ -125,7 +124,8 @@ public class ThermalDesignCalculator {
   /**
    * Creates a new ThermalDesignCalculator with default parameters.
    */
-  public ThermalDesignCalculator() {}
+  public ThermalDesignCalculator() {
+  }
 
   /**
    * Performs the full thermal-hydraulic calculation.
@@ -214,8 +214,7 @@ public class ThermalDesignCalculator {
     }
 
     // Crossflow area
-    double crossflowArea =
-        BellDelawareMethod.calcCrossflowArea(shellIDm, baffleSpacingm, tubeOD, tubePitch);
+    double crossflowArea = BellDelawareMethod.calcCrossflowArea(shellIDm, baffleSpacingm, tubeOD, tubePitch);
     if (crossflowArea <= 0) {
       return;
     }
@@ -233,8 +232,8 @@ public class ThermalDesignCalculator {
     double muW = (shellViscosityWall > 0) ? shellViscosityWall : shellViscosity;
 
     // Kern correlation
-    shellSideHTC = BellDelawareMethod.calcKernShellSideHTC(massFlux, De, shellViscosity, shellCp,
-        shellConductivity, muW);
+    shellSideHTC = BellDelawareMethod.calcKernShellSideHTC(massFlux, De, shellViscosity, shellCp, shellConductivity,
+	muW);
   }
 
   /**
@@ -245,8 +244,7 @@ public class ThermalDesignCalculator {
     double tubePitch = tubePitchm;
 
     // Crossflow area
-    double crossflowArea =
-        BellDelawareMethod.calcCrossflowArea(shellIDm, baffleSpacingm, tubeOD, tubePitch);
+    double crossflowArea = BellDelawareMethod.calcCrossflowArea(shellIDm, baffleSpacingm, tubeOD, tubePitch);
     if (crossflowArea <= 0) {
       return;
     }
@@ -262,24 +260,23 @@ public class ThermalDesignCalculator {
     double muW = (shellViscosityWall > 0) ? shellViscosityWall : shellViscosity;
 
     // Ideal crossflow HTC
-    double hIdeal = BellDelawareMethod.calcIdealCrossflowHTC(massFlux, tubeOD, shellViscosity,
-        shellCp, shellConductivity, muW, triangularPitch ? 1.0 : 0.0);
+    double hIdeal = BellDelawareMethod.calcIdealCrossflowHTC(massFlux, tubeOD, shellViscosity, shellCp,
+	shellConductivity, muW, triangularPitch ? 1.0 : 0.0);
 
     // Bell-Delaware correction factors
     Jc = BellDelawareMethod.calcJc(baffleCut);
 
-    Jl = BellDelawareMethod.calcJl(tubeToBaffleClearance, shellToBaffleClearance, crossflowArea,
-        tubeCount, tubeOD, baffleSpacingm);
+    Jl = BellDelawareMethod.calcJl(tubeToBaffleClearance, shellToBaffleClearance, crossflowArea, tubeCount, tubeOD,
+	baffleSpacingm);
 
     if (bypassArea <= 0) {
       // Estimate bypass area
       double bundleDiam = shellIDm * 0.9; // approximate
       bypassArea = BellDelawareMethod.calcBypassArea(shellIDm, bundleDiam, baffleSpacingm);
     }
-    int tubeRowsCrossflow = BellDelawareMethod.estimateTubeRowsCrossflow(shellIDm, baffleCut,
-        tubePitch, triangularPitch);
-    Jb = BellDelawareMethod.calcJb(bypassArea, crossflowArea, hasSealing, sealingPairs,
-        tubeRowsCrossflow);
+    int tubeRowsCrossflow = BellDelawareMethod.estimateTubeRowsCrossflow(shellIDm, baffleCut, tubePitch,
+	triangularPitch);
+    Jb = BellDelawareMethod.calcJb(bypassArea, crossflowArea, hasSealing, sealingPairs, tubeRowsCrossflow);
 
     Js = BellDelawareMethod.calcJs(baffleSpacingm, baffleSpacingm, baffleSpacingm, baffleCount);
 
@@ -342,8 +339,7 @@ public class ThermalDesignCalculator {
     double f = calcDarcyFriction(tubeSideRe);
 
     // Straight-tube friction
-    double dpFriction =
-        f * tubeLengthm / tubeIDm * tubeDensity * tubeSideVelocity * tubeSideVelocity / 2.0;
+    double dpFriction = f * tubeLengthm / tubeIDm * tubeDensity * tubeSideVelocity * tubeSideVelocity / 2.0;
 
     // Return losses (2.5 velocity heads per pass)
     double dpReturn = 2.5 * tubeDensity * tubeSideVelocity * tubeSideVelocity / 2.0;
@@ -377,8 +373,7 @@ public class ThermalDesignCalculator {
       return;
     }
 
-    double crossflowArea =
-        BellDelawareMethod.calcCrossflowArea(shellIDm, baffleSpacingm, tubeODm, tubePitchm);
+    double crossflowArea = BellDelawareMethod.calcCrossflowArea(shellIDm, baffleSpacingm, tubeODm, tubePitchm);
     if (crossflowArea <= 0) {
       return;
     }
@@ -386,44 +381,41 @@ public class ThermalDesignCalculator {
     double massFlux = shellMassFlowRate / crossflowArea;
     double muW = (shellViscosityWall > 0) ? shellViscosityWall : shellViscosity;
 
-    shellSidePressureDrop = BellDelawareMethod.calcKernShellSidePressureDrop(massFlux, De, shellIDm,
-        baffleCount, shellDensity, shellViscosity, muW);
+    shellSidePressureDrop = BellDelawareMethod.calcKernShellSidePressureDrop(massFlux, De, shellIDm, baffleCount,
+	shellDensity, shellViscosity, muW);
   }
 
   /**
    * Bell-Delaware shell-side pressure drop with correction factors.
    */
   private void calculateShellSidePressureDropBellDelaware() {
-    double crossflowArea =
-        BellDelawareMethod.calcCrossflowArea(shellIDm, baffleSpacingm, tubeODm, tubePitchm);
+    double crossflowArea = BellDelawareMethod.calcCrossflowArea(shellIDm, baffleSpacingm, tubeODm, tubePitchm);
     if (crossflowArea <= 0) {
       return;
     }
 
     double massFlux = shellMassFlowRate / crossflowArea;
-    int tubeRowsCrossflow = BellDelawareMethod.estimateTubeRowsCrossflow(shellIDm, baffleCut,
-        tubePitchm, triangularPitch);
+    int tubeRowsCrossflow = BellDelawareMethod.estimateTubeRowsCrossflow(shellIDm, baffleCut, tubePitchm,
+	triangularPitch);
 
     // Ideal crossflow DP per compartment
-    double dpIdeal = BellDelawareMethod.calcIdealCrossflowDP(tubeRowsCrossflow, massFlux,
-        shellDensity, shellSideRe, triangularPitch);
+    double dpIdeal = BellDelawareMethod.calcIdealCrossflowDP(tubeRowsCrossflow, massFlux, shellDensity, shellSideRe,
+	triangularPitch);
 
     // Leakage and bypass correction
-    double Rl = BellDelawareMethod.calcRl(tubeToBaffleClearance, shellToBaffleClearance,
-        crossflowArea, tubeCount, tubeODm, baffleSpacingm);
+    double Rl = BellDelawareMethod.calcRl(tubeToBaffleClearance, shellToBaffleClearance, crossflowArea, tubeCount,
+	tubeODm, baffleSpacingm);
 
     if (bypassArea <= 0) {
       double bundleDiam = shellIDm * 0.9;
       bypassArea = BellDelawareMethod.calcBypassArea(shellIDm, bundleDiam, baffleSpacingm);
     }
-    double Rb = BellDelawareMethod.calcRb(bypassArea, crossflowArea, hasSealing, sealingPairs,
-        tubeRowsCrossflow);
+    double Rb = BellDelawareMethod.calcRb(bypassArea, crossflowArea, hasSealing, sealingPairs, tubeRowsCrossflow);
 
     // Window DP
     double windowArea = Math.PI / 4.0 * shellIDm * shellIDm * baffleCut * 0.5;
     int tubeRowsWindow = Math.max(1, tubeRowsCrossflow / 3);
-    double dpWindow = BellDelawareMethod.calcWindowDP(windowArea, shellMassFlowRate, shellDensity,
-        tubeRowsWindow);
+    double dpWindow = BellDelawareMethod.calcWindowDP(windowArea, shellMassFlowRate, shellDensity, tubeRowsWindow);
 
     // Total shell-side DP
     double dpCrossflow = dpIdeal * (baffleCount - 1) * Rl * Rb;
@@ -437,8 +429,8 @@ public class ThermalDesignCalculator {
    * Performs zone-by-zone analysis for a phase-changing service.
    *
    * <p>
-   * Divides the exchanger into zones based on fluid phase: desuperheating, condensing, subcooling
-   * (or preheating, boiling, superheating). Computes effective U and required area for each zone.
+   * Divides the exchanger into zones based on fluid phase: desuperheating, condensing, subcooling (or preheating,
+   * boiling, superheating). Computes effective U and required area for each zone.
    * </p>
    *
    * @param zones array of zone definitions with fluid properties per zone
@@ -486,8 +478,8 @@ public class ThermalDesignCalculator {
       result.overallU = overallU;
       result.lmtd = zone.lmtd;
       result.requiredArea = (overallU > 0 && zone.lmtd > 0)
-          ? zone.dutyFraction * zone.totalDuty / (overallU * zone.lmtd)
-          : 0.0;
+	  ? zone.dutyFraction * zone.totalDuty / (overallU * zone.lmtd)
+	  : 0.0;
       results[i] = result;
 
       // Restore properties
@@ -573,8 +565,7 @@ public class ThermalDesignCalculator {
    * @return JSON string with pretty printing
    */
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(toMap());
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(toMap());
   }
 
   // ============================================================================
@@ -616,7 +607,8 @@ public class ThermalDesignCalculator {
     /**
      * Default constructor for ZoneDefinition.
      */
-    public ZoneDefinition() {}
+    public ZoneDefinition() {
+    }
   }
 
   /**
@@ -644,7 +636,8 @@ public class ThermalDesignCalculator {
     /**
      * Default constructor for ZoneResult.
      */
-    public ZoneResult() {}
+    public ZoneResult() {
+    }
   }
 
   // ============================================================================
@@ -869,15 +862,15 @@ public class ThermalDesignCalculator {
   /**
    * Sets all tube-side fluid properties.
    *
-   * @param density density (kg/m3)
-   * @param viscosity dynamic viscosity (Pa*s)
-   * @param cp heat capacity (J/(kg*K))
+   * @param density      density (kg/m3)
+   * @param viscosity    dynamic viscosity (Pa*s)
+   * @param cp           heat capacity (J/(kg*K))
    * @param conductivity thermal conductivity (W/(m*K))
    * @param massFlowRate mass flow rate (kg/s)
-   * @param heating true if tube fluid is being heated
+   * @param heating      true if tube fluid is being heated
    */
-  public void setTubeSideFluid(double density, double viscosity, double cp, double conductivity,
-      double massFlowRate, boolean heating) {
+  public void setTubeSideFluid(double density, double viscosity, double cp, double conductivity, double massFlowRate,
+      boolean heating) {
     this.tubeDensity = density;
     this.tubeViscosity = viscosity;
     this.tubeCp = cp;
@@ -889,14 +882,13 @@ public class ThermalDesignCalculator {
   /**
    * Sets all shell-side fluid properties.
    *
-   * @param density density (kg/m3)
-   * @param viscosity dynamic viscosity (Pa*s)
-   * @param cp heat capacity (J/(kg*K))
+   * @param density      density (kg/m3)
+   * @param viscosity    dynamic viscosity (Pa*s)
+   * @param cp           heat capacity (J/(kg*K))
    * @param conductivity thermal conductivity (W/(m*K))
    * @param massFlowRate mass flow rate (kg/s)
    */
-  public void setShellSideFluid(double density, double viscosity, double cp, double conductivity,
-      double massFlowRate) {
+  public void setShellSideFluid(double density, double viscosity, double cp, double conductivity, double massFlowRate) {
     this.shellDensity = density;
     this.shellViscosity = viscosity;
     this.shellCp = cp;

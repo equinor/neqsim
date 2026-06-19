@@ -3,8 +3,8 @@ package neqsim.process.controllerdevice;
 import java.io.Serializable;
 
 /**
- * Event log entry capturing controller state at a particular simulation time. Each entry stores the
- * measurement, set-point, error and controller response enabling post-run performance analysis.
+ * Event log entry capturing controller state at a particular simulation time. Each entry stores the measurement,
+ * set-point, error and controller response enabling post-run performance analysis.
  *
  * @author esol
  */
@@ -20,14 +20,13 @@ public class ControllerEvent implements Serializable {
   /**
    * Create a new event log entry.
    *
-   * @param time simulation time of the event
+   * @param time          simulation time of the event
    * @param measuredValue current transmitter measurement
-   * @param setPoint active controller set-point
-   * @param error controller error at this time
-   * @param response controller output signal
+   * @param setPoint      active controller set-point
+   * @param error         controller error at this time
+   * @param response      controller output signal
    */
-  public ControllerEvent(double time, double measuredValue, double setPoint, double error,
-      double response) {
+  public ControllerEvent(double time, double measuredValue, double setPoint, double error, double response) {
     this.time = time;
     this.measuredValue = measuredValue;
     this.setPoint = setPoint;

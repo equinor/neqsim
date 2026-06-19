@@ -34,10 +34,10 @@ public class PhaseGEWilson extends PhaseGE {
    * Constructor for PhaseGEWilson.
    * </p>
    *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param alpha an array of type double
-   * @param Dij an array of type double
-   * @param mixRule an array of {@link java.lang.String} objects
+   * @param phase    a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param alpha    an array of type double
+   * @param Dij      an array of type double
+   * @param mixRule  an array of {@link java.lang.String} objects
    * @param intparam an array of type double
    */
   public PhaseGEWilson(PhaseInterface phase, double[][] alpha, double[][] Dij, String[][] mixRule,
@@ -46,8 +46,8 @@ public class PhaseGEWilson extends PhaseGE {
     for (int i = 0; i < alpha[0].length; i++) {
       numberOfComponents++;
       componentArray[i] = new ComponentGEWilson(phase.getComponent(i).getName(),
-          phase.getComponent(i).getNumberOfmoles(), phase.getComponent(i).getNumberOfMolesInPhase(),
-          phase.getComponent(i).getComponentNumber());
+	  phase.getComponent(i).getNumberOfmoles(), phase.getComponent(i).getNumberOfMolesInPhase(),
+	  phase.getComponent(i).getComponentNumber());
     }
   }
 
@@ -98,12 +98,12 @@ public class PhaseGEWilson extends PhaseGE {
 
   /** {@inheritDoc} */
   @Override
-  public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
-      double temperature, double pressure, PhaseType pt) {
+  public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
+      PhaseType pt) {
     GE = 0;
     for (int i = 0; i < numberOfComponents; i++) {
       GE += phase.getComponent(i).getx()
-          * Math.log(((ComponentGEWilson) componentArray[i]).getWilsonActivityCoefficient(phase));
+	  * Math.log(((ComponentGEWilson) componentArray[i]).getWilsonActivityCoefficient(phase));
     }
 
     return R * temperature * numberOfMolesInPhase * GE;

@@ -21,7 +21,7 @@ public class TestCharacterizationCondensate1 {
   private static final Logger logger = LogManager.getLogger(TestCharacterizationCondensate1.class);
 
   /** Logger object for class. */
-  
+
   /**
    * <p>
    * main.
@@ -34,7 +34,7 @@ public class TestCharacterizationCondensate1 {
     SystemInterface testSystem = new SystemSrkEos(273.15 + 30, 50);
     // SystemInterface testSystem = new SystemSrkCPAs(293.65, 79.3);
     testSystem.getCharacterization().setTBPModel("PedersenSRK"); // (RiaziDaubert PedersenPR
-                                                                 // PedersenSRK
+								 // PedersenSRK
     testSystem.getCharacterization().setPlusFractionModel("heavyOil");
     // testSystem.getCharacterization().setTBPModel("PedersenSRK"); //(RiaziDaubert
     // PedersenPR PedersenSRK

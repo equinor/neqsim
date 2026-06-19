@@ -6,14 +6,14 @@ import org.junit.jupiter.api.Test;
 import neqsim.process.measurementdevice.MeasurementDeviceBaseClass;
 
 /**
- * Example showcasing the {@link ModelPredictiveController} with moving horizon estimation. The
- * scenario mimics an electric heater whose true dynamics drift over time. The controller identifies
- * the process gain, time constant and bias online to maintain accurate tracking.
+ * Example showcasing the {@link ModelPredictiveController} with moving horizon estimation. The scenario mimics an
+ * electric heater whose true dynamics drift over time. The controller identifies the process gain, time constant and
+ * bias online to maintain accurate tracking.
  */
 public class MovingHorizonEstimationExampleTest extends neqsim.NeqSimTest {
   /**
-   * Simple first-order process model acting as the transmitter for the MPC. The model permits
-   * adjustments to the underlying gain, time constant and ambient bias to emulate plant drift.
+   * Simple first-order process model acting as the transmitter for the MPC. The model permits adjustments to the
+   * underlying gain, time constant and ambient bias to emulate plant drift.
    */
   private static final class AdaptiveHeaterMeasurement extends MeasurementDeviceBaseClass {
     private static final long serialVersionUID = 1L;
@@ -56,10 +56,9 @@ public class MovingHorizonEstimationExampleTest extends neqsim.NeqSimTest {
     @Override
     public double getMeasuredValue(String unit) {
       if (unit == null || unit.isEmpty() || unit.equals(getUnit())) {
-        return temperature;
+	return temperature;
       }
-      throw new IllegalArgumentException(
-          "Unsupported unit for adaptive heater measurement: " + unit);
+      throw new IllegalArgumentException("Unsupported unit for adaptive heater measurement: " + unit);
     }
   }
 
@@ -71,8 +70,8 @@ public class MovingHorizonEstimationExampleTest extends neqsim.NeqSimTest {
     double initialTimeConstant = 45.0;
     double dt = 1.0;
 
-    AdaptiveHeaterMeasurement measurement =
-        new AdaptiveHeaterMeasurement("adaptive heater", ambient, initialTimeConstant, initialGain);
+    AdaptiveHeaterMeasurement measurement = new AdaptiveHeaterMeasurement("adaptive heater", ambient,
+	initialTimeConstant, initialGain);
 
     ModelPredictiveController controller = new ModelPredictiveController("movingHorizonExample");
     controller.setTransmitter(measurement);
@@ -86,7 +85,7 @@ public class MovingHorizonEstimationExampleTest extends neqsim.NeqSimTest {
     controller.enableMovingHorizonEstimation(60);
 
     Assertions.assertTrue(controller.isMovingHorizonEstimationEnabled(),
-        "Moving horizon estimation should be enabled for the example");
+	"Moving horizon estimation should be enabled for the example");
     Assertions.assertEquals(60, controller.getMovingHorizonEstimationWindow());
 
     for (int step = 0; step < 240; step++) {
@@ -95,22 +94,20 @@ public class MovingHorizonEstimationExampleTest extends neqsim.NeqSimTest {
       measurement.advance(control, dt);
     }
 
-    ModelPredictiveController.MovingHorizonEstimate initialEstimate =
-        controller.getLastMovingHorizonEstimate();
-    Assertions.assertNotNull(initialEstimate,
-        "Estimator should return an identification after accumulating samples");
+    ModelPredictiveController.MovingHorizonEstimate initialEstimate = controller.getLastMovingHorizonEstimate();
+    Assertions.assertNotNull(initialEstimate, "Estimator should return an identification after accumulating samples");
     Assertions.assertTrue(initialEstimate.getSampleCount() >= 50,
-        "Identification should utilise most of the horizon window");
+	"Identification should utilise most of the horizon window");
     Assertions.assertEquals(initialGain, initialEstimate.getProcessGain(), 0.12,
-        "Estimated gain should approach the true process gain");
+	"Estimated gain should approach the true process gain");
     Assertions.assertEquals(initialTimeConstant, initialEstimate.getTimeConstant(), 8.0,
-        "Estimated time constant should approach the real dynamics");
+	"Estimated time constant should approach the real dynamics");
     Assertions.assertEquals(ambient, initialEstimate.getProcessBias(), 4.0,
-        "Estimated bias should align with the ambient temperature");
+	"Estimated bias should align with the ambient temperature");
     Assertions.assertTrue(initialEstimate.getMeanSquaredError() < 6.0,
-        "Prediction error should be modest once the model converges");
+	"Prediction error should be modest once the model converges");
     Assertions.assertEquals(controller.getControllerSetPoint(), measurement.getMeasuredValue(), 1.5,
-        "Closed loop should settle near the target after identification");
+	"Closed loop should settle near the target after identification");
 
     double fouledGain = 0.35;
     double fouledTimeConstant = 70.0;
@@ -126,24 +123,21 @@ public class MovingHorizonEstimationExampleTest extends neqsim.NeqSimTest {
       measurement.advance(control, dt);
     }
 
-    ModelPredictiveController.MovingHorizonEstimate adaptedEstimate =
-        controller.getLastMovingHorizonEstimate();
-    Assertions.assertNotNull(adaptedEstimate,
-        "Estimator should continue providing updated models after a drift event");
+    ModelPredictiveController.MovingHorizonEstimate adaptedEstimate = controller.getLastMovingHorizonEstimate();
+    Assertions.assertNotNull(adaptedEstimate, "Estimator should continue providing updated models after a drift event");
     Assertions.assertTrue(adaptedEstimate.getSampleCount() >= 50,
-        "Updated identification should also leverage the full window");
+	"Updated identification should also leverage the full window");
     Assertions.assertEquals(fouledGain, adaptedEstimate.getProcessGain(), 0.12,
-        "Estimated gain should adapt to the fouled heater");
+	"Estimated gain should adapt to the fouled heater");
     Assertions.assertEquals(fouledTimeConstant, adaptedEstimate.getTimeConstant(), 10.0,
-        "Estimated time constant should reflect the slower dynamics");
+	"Estimated time constant should reflect the slower dynamics");
     Assertions.assertEquals(newAmbient, adaptedEstimate.getProcessBias(), 4.0,
-        "Estimated bias should shift with the new ambient condition");
+	"Estimated bias should shift with the new ambient condition");
     Assertions.assertTrue(adaptedEstimate.getMeanSquaredError() < 8.0,
-        "Prediction error should remain bounded after the disturbance");
-    Assertions.assertNotEquals(initialEstimate.getProcessGain(), adaptedEstimate.getProcessGain(),
-        1.0e-3, "Moving horizon estimation should adjust the process gain when conditions change");
+	"Prediction error should remain bounded after the disturbance");
+    Assertions.assertNotEquals(initialEstimate.getProcessGain(), adaptedEstimate.getProcessGain(), 1.0e-3,
+	"Moving horizon estimation should adjust the process gain when conditions change");
     Assertions.assertEquals(controller.getControllerSetPoint(), measurement.getMeasuredValue(), 3.0,
-        "Controller should re-steady close to the new temperature target");
+	"Controller should re-steady close to the new temperature target");
   }
 }
-

@@ -26,9 +26,8 @@ class TrappedInventoryCalculatorTest {
   @Test
   void calculatesPipeAndEquipmentGasInventory() {
     TrappedInventoryCalculator calculator = new TrappedInventoryCalculator().setFluid(createGas())
-        .setOperatingConditions(10.0, "bara", 27.0, "C")
-        .addPipeSegment("P-001", 0.10, 10.0, 0.0, createEvidence())
-        .addEquipmentVolume("V-001", 1.0, 0.0, createEvidence());
+	.setOperatingConditions(10.0, "bara", 27.0, "C").addPipeSegment("P-001", 0.10, 10.0, 0.0, createEvidence())
+	.addEquipmentVolume("V-001", 1.0, 0.0, createEvidence());
 
     InventoryResult result = calculator.calculate();
 
@@ -46,9 +45,9 @@ class TrappedInventoryCalculatorTest {
   @Test
   void convertsEngineeringUnits() {
     TrappedInventoryCalculator calculator = new TrappedInventoryCalculator().setFluid(createGas())
-        .setOperatingConditions(145.0377, "psia", 80.6, "F")
-        .addPipeSegment("P-UNIT", 4.0, "in", 32.80839895, "ft", 0.0, createEvidence())
-        .addVolumeSegment("V-UNIT", 1000.0, "L", 0.0, createEvidence());
+	.setOperatingConditions(145.0377, "psia", 80.6, "F")
+	.addPipeSegment("P-UNIT", 4.0, "in", 32.80839895, "ft", 0.0, createEvidence())
+	.addVolumeSegment("V-UNIT", 1000.0, "L", 0.0, createEvidence());
 
     InventoryResult result = calculator.calculate();
 
@@ -64,8 +63,8 @@ class TrappedInventoryCalculatorTest {
   @Test
   void calculatesLiquidHoldupWithFallbackDensity() {
     TrappedInventoryCalculator calculator = new TrappedInventoryCalculator().setFluid(createGas())
-        .setOperatingConditions(10.0, 300.15).setFallbackLiquidDensity(900.0)
-        .addEquipmentVolume("KO-001", 2.0, 0.25, createEvidence());
+	.setOperatingConditions(10.0, 300.15).setFallbackLiquidDensity(900.0)
+	.addEquipmentVolume("KO-001", 2.0, 0.25, createEvidence());
 
     InventoryResult result = calculator.calculate();
 
@@ -81,12 +80,10 @@ class TrappedInventoryCalculatorTest {
   @Test
   void rejectsInvalidInputs() {
     TrappedInventoryCalculator calculator = new TrappedInventoryCalculator().setFluid(createGas())
-        .setOperatingConditions(10.0, 300.15);
+	.setOperatingConditions(10.0, 300.15);
 
-    assertThrows(IllegalArgumentException.class,
-        () -> calculator.addPipeSegment("bad", -0.1, 10.0, 0.0, null));
-    assertThrows(IllegalArgumentException.class,
-        () -> calculator.addEquipmentVolume("bad-fill", 1.0, 1.2, null));
+    assertThrows(IllegalArgumentException.class, () -> calculator.addPipeSegment("bad", -0.1, 10.0, 0.0, null));
+    assertThrows(IllegalArgumentException.class, () -> calculator.addEquipmentVolume("bad-fill", 1.0, 1.2, null));
   }
 
   /**
@@ -94,9 +91,8 @@ class TrappedInventoryCalculatorTest {
    */
   @Test
   void preservesEvidenceInJson() {
-    InventoryResult result = new TrappedInventoryCalculator().setFluid(createGas())
-        .setOperatingConditions(10.0, 300.15)
-        .addEquipmentVolume("V-TRACE", 1.0, 0.0, createEvidence()).calculate();
+    InventoryResult result = new TrappedInventoryCalculator().setFluid(createGas()).setOperatingConditions(10.0, 300.15)
+	.addEquipmentVolume("V-TRACE", 1.0, 0.0, createEvidence()).calculate();
 
     assertTrue(result.toJson().contains("S1-AA-PBP-2340"));
     assertTrue(result.toJson().contains("traceable"));
@@ -107,10 +103,8 @@ class TrappedInventoryCalculatorTest {
    */
   @Test
   void warnsWhenEvidenceIsMissing() {
-    InventoryResult result = new TrappedInventoryCalculator().setFluid(createGas())
-        .setOperatingConditions(10.0, 300.15).addEquipmentVolume("V-NO-EVIDENCE", 1.0, 0.0,
-            null)
-        .calculate();
+    InventoryResult result = new TrappedInventoryCalculator().setFluid(createGas()).setOperatingConditions(10.0, 300.15)
+	.addEquipmentVolume("V-NO-EVIDENCE", 1.0, 0.0, null).calculate();
 
     assertEquals(1, result.getWarnings().size());
     assertTrue(result.getWarnings().get(0).contains("V-NO-EVIDENCE"));
@@ -122,12 +116,11 @@ class TrappedInventoryCalculatorTest {
   @Test
   void createsFluidForDepressurizationSimulator() {
     TrappedInventoryCalculator calculator = new TrappedInventoryCalculator().setFluid(createGas())
-        .setOperatingConditions(20.0, 313.15).addEquipmentVolume("V-BD", 1.0, 0.0,
-            createEvidence());
+	.setOperatingConditions(20.0, 313.15).addEquipmentVolume("V-BD", 1.0, 0.0, createEvidence());
 
     SystemInterface lumpedFluid = calculator.createDepressurizationFluid();
-    DepressurizationSimulator simulator = new DepressurizationSimulator(lumpedFluid, 1.0, 0.015,
-        0.72, 1.5e5).setMaxTime(30.0).setTimeStep(1.0);
+    DepressurizationSimulator simulator = new DepressurizationSimulator(lumpedFluid, 1.0, 0.015, 0.72, 1.5e5)
+	.setMaxTime(30.0).setTimeStep(1.0);
     DepressurizationResult result = simulator.run();
 
     assertNotNull(result);
@@ -146,15 +139,13 @@ class TrappedInventoryCalculatorTest {
     gas.addComponent("propane", 0.03);
     gas.setMixingRule("classic");
 
-    DocumentEvidence evidence = new DocumentEvidence("E-INV-001", "P-ID-001",
-        "Gas recompression P&ID", "A", "isolation boundary", 1,
-        "references/P-ID-001.pdf",
-        "Pipe P-100 and compressor casing inside the isolated boundary.", 0.90);
+    DocumentEvidence evidence = new DocumentEvidence("E-INV-001", "P-ID-001", "Gas recompression P&ID", "A",
+	"isolation boundary", 1, "references/P-ID-001.pdf",
+	"Pipe P-100 and compressor casing inside the isolated boundary.", 0.90);
 
     TrappedInventoryCalculator calculator = new TrappedInventoryCalculator().setFluid(gas)
-        .setOperatingConditions(20.0, "bara", 27.0, "C")
-        .addPipeSegment("P-100", 0.1524, 18.0, 0.0, evidence)
-        .addEquipmentVolume("K-100 casing", 0.75, 0.0, evidence);
+	.setOperatingConditions(20.0, "bara", 27.0, "C").addPipeSegment("P-100", 0.1524, 18.0, 0.0, evidence)
+	.addEquipmentVolume("K-100 casing", 0.75, 0.0, evidence);
 
     InventoryResult inventory = calculator.calculate();
     double gasMassKg = inventory.getTotalGasMassKg();
@@ -162,8 +153,8 @@ class TrappedInventoryCalculatorTest {
     String inventoryJson = calculator.toJson();
 
     SystemInterface blowdownFluid = calculator.createDepressurizationFluid();
-    DepressurizationSimulator simulator = new DepressurizationSimulator(blowdownFluid,
-        inventory.getTotalGasVolumeM3(), 0.010, 0.72, 1.5e5);
+    DepressurizationSimulator simulator = new DepressurizationSimulator(blowdownFluid, inventory.getTotalGasVolumeM3(),
+	0.010, 0.72, 1.5e5);
     simulator.setMaxTime(300.0);
     simulator.setTimeStep(1.0);
     DepressurizationResult blowdown = simulator.run();
@@ -196,8 +187,7 @@ class TrappedInventoryCalculatorTest {
    * @return traceable document evidence
    */
   private DocumentEvidence createEvidence() {
-    return new DocumentEvidence("E-INV-001", "S1-AA-PBP-2340",
-        "P&ID gas recompression systems recompressor", "M5", "zone C4", 1,
-        "references/S1-AA-PBP-2340.pdf", "23A-KA01 isolated volume boundary.", 0.90);
+    return new DocumentEvidence("E-INV-001", "S1-AA-PBP-2340", "P&ID gas recompression systems recompressor", "M5",
+	"zone C4", 1, "references/S1-AA-PBP-2340.pdf", "23A-KA01 isolated volume boundary.", 0.90);
   }
 }

@@ -8,9 +8,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Thermodynamic coupling for the two-fluid transient pipe model.
  *
  * <p>
- * Provides interface between the two-fluid hydrodynamic solver and NeqSim's thermodynamic
- * calculations. Handles flash calculations to update phase properties and compositions along the
- * pipeline.
+ * Provides interface between the two-fluid hydrodynamic solver and NeqSim's thermodynamic calculations. Handles flash
+ * calculations to update phase properties and compositions along the pipeline.
  * </p>
  *
  * <h2>Key Functions</h2>
@@ -23,8 +22,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  *
  * <h2>Performance Considerations</h2>
  * <p>
- * Flash calculations are computationally expensive. For transient simulations with many time steps
- * and grid cells, consider using {@link FlashTable} for pre-computed property interpolation.
+ * Flash calculations are computationally expensive. For transient simulations with many time steps and grid cells,
+ * consider using {@link FlashTable} for pre-computed property interpolation.
  * </p>
  *
  * @author Even Solbraa
@@ -147,7 +146,8 @@ public class ThermodynamicCoupling implements Serializable {
   /**
    * Default constructor.
    */
-  public ThermodynamicCoupling() {}
+  public ThermodynamicCoupling() {
+  }
 
   /**
    * Constructor with reference fluid.
@@ -180,7 +180,7 @@ public class ThermodynamicCoupling implements Serializable {
   /**
    * Perform PT flash and extract all thermodynamic properties.
    *
-   * @param pressure Pressure (Pa)
+   * @param pressure    Pressure (Pa)
    * @param temperature Temperature (K)
    * @return ThermoProperties with all phase properties
    */
@@ -225,75 +225,75 @@ public class ThermodynamicCoupling implements Serializable {
 
       // Extract phase fractions
       if (fluid.getNumberOfPhases() >= 2) {
-        props.gasVaporFraction = fluid.getPhase(0).getBeta();
-        props.liquidFraction = fluid.getPhase(1).getBeta();
+	props.gasVaporFraction = fluid.getPhase(0).getBeta();
+	props.liquidFraction = fluid.getPhase(1).getBeta();
       } else if (fluid.getNumberOfPhases() == 1) {
-        // Single phase - determine if gas or liquid
-        double density = fluid.getPhase(0).getDensity("kg/m3");
-        if (density < 100.0) {
-          props.gasVaporFraction = 1.0;
-          props.liquidFraction = 0.0;
-        } else {
-          props.gasVaporFraction = 0.0;
-          props.liquidFraction = 1.0;
-        }
+	// Single phase - determine if gas or liquid
+	double density = fluid.getPhase(0).getDensity("kg/m3");
+	if (density < 100.0) {
+	  props.gasVaporFraction = 1.0;
+	  props.liquidFraction = 0.0;
+	} else {
+	  props.gasVaporFraction = 0.0;
+	  props.liquidFraction = 1.0;
+	}
       }
 
       // Extract gas properties (phase 0 = vapor)
       if (fluid.hasPhaseType("gas")) {
-        int gasIndex = fluid.getPhaseIndex("gas");
-        props.gasDensity = fluid.getPhase(gasIndex).getDensity("kg/m3");
-        props.gasViscosity = fluid.getPhase(gasIndex).getViscosity("kg/msec");
-        props.gasEnthalpy = fluid.getPhase(gasIndex).getEnthalpy("J/kg");
-        props.gasSoundSpeed = fluid.getPhase(gasIndex).getSoundSpeed("m/s");
-        props.gasMolarMass = fluid.getPhase(gasIndex).getMolarMass() * 1000; // kg/kmol
-        props.gasCompressibility = fluid.getPhase(gasIndex).getZ();
-        props.gasCp = fluid.getPhase(gasIndex).getCp("J/kgK");
-        props.gasThermalConductivity = fluid.getPhase(gasIndex).getThermalConductivity("W/mK");
+	int gasIndex = fluid.getPhaseIndex("gas");
+	props.gasDensity = fluid.getPhase(gasIndex).getDensity("kg/m3");
+	props.gasViscosity = fluid.getPhase(gasIndex).getViscosity("kg/msec");
+	props.gasEnthalpy = fluid.getPhase(gasIndex).getEnthalpy("J/kg");
+	props.gasSoundSpeed = fluid.getPhase(gasIndex).getSoundSpeed("m/s");
+	props.gasMolarMass = fluid.getPhase(gasIndex).getMolarMass() * 1000; // kg/kmol
+	props.gasCompressibility = fluid.getPhase(gasIndex).getZ();
+	props.gasCp = fluid.getPhase(gasIndex).getCp("J/kgK");
+	props.gasThermalConductivity = fluid.getPhase(gasIndex).getThermalConductivity("W/mK");
       } else {
-        // Default gas properties for single-phase liquid
-        props.gasDensity = 1.0;
-        props.gasViscosity = 1e-5;
-        props.gasSoundSpeed = 340.0;
+	// Default gas properties for single-phase liquid
+	props.gasDensity = 1.0;
+	props.gasViscosity = 1e-5;
+	props.gasSoundSpeed = 340.0;
       }
 
       // Extract liquid properties (phase 1 = oil, or phase 2 = aqueous)
       if (fluid.hasPhaseType("oil")) {
-        int liqIndex = fluid.getPhaseIndex("oil");
-        props.liquidDensity = fluid.getPhase(liqIndex).getDensity("kg/m3");
-        props.liquidViscosity = fluid.getPhase(liqIndex).getViscosity("kg/msec");
-        props.liquidEnthalpy = fluid.getPhase(liqIndex).getEnthalpy("J/kg");
-        props.liquidSoundSpeed = fluid.getPhase(liqIndex).getSoundSpeed("m/s");
-        props.liquidMolarMass = fluid.getPhase(liqIndex).getMolarMass() * 1000;
-        props.liquidCompressibility = fluid.getPhase(liqIndex).getZ();
-        props.liquidCp = fluid.getPhase(liqIndex).getCp("J/kgK");
-        props.liquidThermalConductivity = fluid.getPhase(liqIndex).getThermalConductivity("W/mK");
+	int liqIndex = fluid.getPhaseIndex("oil");
+	props.liquidDensity = fluid.getPhase(liqIndex).getDensity("kg/m3");
+	props.liquidViscosity = fluid.getPhase(liqIndex).getViscosity("kg/msec");
+	props.liquidEnthalpy = fluid.getPhase(liqIndex).getEnthalpy("J/kg");
+	props.liquidSoundSpeed = fluid.getPhase(liqIndex).getSoundSpeed("m/s");
+	props.liquidMolarMass = fluid.getPhase(liqIndex).getMolarMass() * 1000;
+	props.liquidCompressibility = fluid.getPhase(liqIndex).getZ();
+	props.liquidCp = fluid.getPhase(liqIndex).getCp("J/kgK");
+	props.liquidThermalConductivity = fluid.getPhase(liqIndex).getThermalConductivity("W/mK");
       } else if (fluid.hasPhaseType("aqueous")) {
-        int liqIndex = fluid.getPhaseIndex("aqueous");
-        props.liquidDensity = fluid.getPhase(liqIndex).getDensity("kg/m3");
-        props.liquidViscosity = fluid.getPhase(liqIndex).getViscosity("kg/msec");
-        props.liquidEnthalpy = fluid.getPhase(liqIndex).getEnthalpy("J/kg");
-        props.liquidSoundSpeed = fluid.getPhase(liqIndex).getSoundSpeed("m/s");
-        props.liquidMolarMass = fluid.getPhase(liqIndex).getMolarMass() * 1000;
-        props.liquidCompressibility = fluid.getPhase(liqIndex).getZ();
-        props.liquidCp = fluid.getPhase(liqIndex).getCp("J/kgK");
-        props.liquidThermalConductivity = fluid.getPhase(liqIndex).getThermalConductivity("W/mK");
+	int liqIndex = fluid.getPhaseIndex("aqueous");
+	props.liquidDensity = fluid.getPhase(liqIndex).getDensity("kg/m3");
+	props.liquidViscosity = fluid.getPhase(liqIndex).getViscosity("kg/msec");
+	props.liquidEnthalpy = fluid.getPhase(liqIndex).getEnthalpy("J/kg");
+	props.liquidSoundSpeed = fluid.getPhase(liqIndex).getSoundSpeed("m/s");
+	props.liquidMolarMass = fluid.getPhase(liqIndex).getMolarMass() * 1000;
+	props.liquidCompressibility = fluid.getPhase(liqIndex).getZ();
+	props.liquidCp = fluid.getPhase(liqIndex).getCp("J/kgK");
+	props.liquidThermalConductivity = fluid.getPhase(liqIndex).getThermalConductivity("W/mK");
       } else {
-        // Default liquid properties for single-phase gas
-        props.liquidDensity = 800.0;
-        props.liquidViscosity = 1e-3;
-        props.liquidSoundSpeed = 1200.0;
+	// Default liquid properties for single-phase gas
+	props.liquidDensity = 800.0;
+	props.liquidViscosity = 1e-3;
+	props.liquidSoundSpeed = 1200.0;
       }
 
       // Surface tension
       if (fluid.getNumberOfPhases() >= 2) {
-        try {
-          props.surfaceTension = fluid.getInterphaseProperties().getSurfaceTension(0, 1);
-        } catch (Exception e) {
-          props.surfaceTension = 0.02; // Default 20 mN/m
-        }
+	try {
+	  props.surfaceTension = fluid.getInterphaseProperties().getSurfaceTension(0, 1);
+	} catch (Exception e) {
+	  props.surfaceTension = 0.02; // Default 20 mN/m
+	}
       } else {
-        props.surfaceTension = 0.02;
+	props.surfaceTension = 0.02;
       }
 
       props.converged = true;
@@ -391,7 +391,7 @@ public class ThermodynamicCoupling implements Serializable {
    * Based on departure from equilibrium. Positive = liquid to gas.
    * </p>
    *
-   * @param section Current section state
+   * @param section        Current section state
    * @param relaxationTime Mass transfer relaxation time (s)
    * @return Mass transfer rate (kg/(m³·s))
    */
@@ -405,18 +405,17 @@ public class ThermodynamicCoupling implements Serializable {
       ThermoProperties eqProps = flashPT(section.getPressure(), section.getTemperature());
 
       if (!eqProps.converged) {
-        return 0.0;
+	return 0.0;
       }
 
       // Calculate equilibrium liquid holdup from vapor fraction
       // Vapor fraction is mole-based, convert to volume-based
       double eqGasVolFrac = eqProps.gasVaporFraction * eqProps.gasMolarMass / eqProps.gasDensity;
-      double eqLiqVolFrac =
-          eqProps.liquidFraction * eqProps.liquidMolarMass / eqProps.liquidDensity;
+      double eqLiqVolFrac = eqProps.liquidFraction * eqProps.liquidMolarMass / eqProps.liquidDensity;
       double totalVolFrac = eqGasVolFrac + eqLiqVolFrac;
 
       if (totalVolFrac < 1e-10) {
-        return 0.0;
+	return 0.0;
       }
 
       double eqLiquidHoldup = eqLiqVolFrac / totalVolFrac;
@@ -437,13 +436,12 @@ public class ThermodynamicCoupling implements Serializable {
    * Calculate a conservative flash-driven gas/liquid mass transfer source per pipe length.
    *
    * <p>
-   * Positive values mean evaporation from liquid to gas. The target is the equilibrium liquid
-   * inventory from the local PT flash, expressed on the section area. The method returns kg/(m*s),
-   * which can be split conservatively into gas, oil, and water equations by the hydrodynamic
-   * solver.
+   * Positive values mean evaporation from liquid to gas. The target is the equilibrium liquid inventory from the local
+   * PT flash, expressed on the section area. The method returns kg/(m*s), which can be split conservatively into gas,
+   * oil, and water equations by the hydrodynamic solver.
    * </p>
    *
-   * @param section current pipe section
+   * @param section        current pipe section
    * @param relaxationTime relaxation time toward flash equilibrium (s)
    * @return gas mass source per length, kg/(m*s)
    */
@@ -474,11 +472,9 @@ public class ThermodynamicCoupling implements Serializable {
 
     double currentLiquidMassPerLength = Math.max(0.0, section.getLiquidMassPerLength());
     if (currentLiquidMassPerLength <= 0.0) {
-      currentLiquidMassPerLength = Math.max(0.0,
-          section.getOilMassPerLength() + section.getWaterMassPerLength());
+      currentLiquidMassPerLength = Math.max(0.0, section.getOilMassPerLength() + section.getWaterMassPerLength());
     }
-    double equilibriumLiquidMassPerLength =
-        equilibriumLiquidHoldup * liquidDensity * section.getArea();
+    double equilibriumLiquidMassPerLength = equilibriumLiquidHoldup * liquidDensity * section.getArea();
 
     double source = (currentLiquidMassPerLength - equilibriumLiquidMassPerLength) / relaxationTime;
     source = Math.min(source, currentLiquidMassPerLength / relaxationTime);

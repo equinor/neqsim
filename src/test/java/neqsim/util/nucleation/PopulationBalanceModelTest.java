@@ -205,8 +205,7 @@ class PopulationBalanceModelTest {
 
     // Longer time should produce particles that have grown larger
     if (pbmShort.getTotalNumberDensity() > 0 && pbmLong.getTotalNumberDensity() > 0) {
-      assertTrue(d50Long >= d50Short,
-          "Longer simulation should produce equal or larger median diameter");
+      assertTrue(d50Long >= d50Short, "Longer simulation should produce equal or larger median diameter");
     }
   }
 
@@ -255,8 +254,7 @@ class PopulationBalanceModelTest {
     pbm.setTimeSteps(100);
     pbm.solve();
 
-    assertEquals(0.0, pbm.getTotalNumberDensity(), 1e-10,
-        "No supersaturation should give zero particles");
+    assertEquals(0.0, pbm.getTotalNumberDensity(), 1e-10, "No supersaturation should give zero particles");
   }
 
   @Test
@@ -275,7 +273,7 @@ class PopulationBalanceModelTest {
       // M = rho * V, so effective density should be reasonable
       double effectiveRho = totalM / totalV;
       assertTrue(effectiveRho > 100.0 && effectiveRho < 5000.0,
-          "Effective density should be physically reasonable: " + effectiveRho);
+	  "Effective density should be physically reasonable: " + effectiveRho);
     }
   }
 }

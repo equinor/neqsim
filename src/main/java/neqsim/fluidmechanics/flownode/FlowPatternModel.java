@@ -17,26 +17,25 @@ public enum FlowPatternModel {
   MANUAL,
 
   /**
-   * Baker chart - empirical flow pattern map based on superficial mass fluxes. Applicable to
-   * horizontal pipes. Reference: Baker, O. (1954).
+   * Baker chart - empirical flow pattern map based on superficial mass fluxes. Applicable to horizontal pipes.
+   * Reference: Baker, O. (1954).
    */
   BAKER_CHART,
 
   /**
-   * Taitel-Dukler model - mechanistic model based on physical transition mechanisms. Applicable to
-   * horizontal and slightly inclined pipes. Reference: Taitel, Y., &amp; Dukler, A.E. (1976).
+   * Taitel-Dukler model - mechanistic model based on physical transition mechanisms. Applicable to horizontal and
+   * slightly inclined pipes. Reference: Taitel, Y., &amp; Dukler, A.E. (1976).
    */
   TAITEL_DUKLER,
 
   /**
-   * Barnea model - extended Taitel-Dukler model for all pipe inclinations. Reference: Barnea, D.
-   * (1987).
+   * Barnea model - extended Taitel-Dukler model for all pipe inclinations. Reference: Barnea, D. (1987).
    */
   BARNEA,
 
   /**
-   * Beggs-Brill model - empirical correlation for all pipe inclinations. Reference: Beggs, H.D.,
-   * &amp; Brill, J.P. (1973).
+   * Beggs-Brill model - empirical correlation for all pipe inclinations. Reference: Beggs, H.D., &amp; Brill, J.P.
+   * (1973).
    */
   BEGGS_BRILL
 }

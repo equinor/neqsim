@@ -45,7 +45,7 @@ public class NeqSimContractDataBase extends NeqSimDataBase {
     // Fill tables from csv-files if not initialized and not currently being initialized.
     synchronized (NeqSimContractDataBase.class) {
       if ("H2fromCSV".equals(dataBaseType) && !h2IsInitialized && !h2IsInitalizing) {
-        initH2DatabaseFromCSVfiles();
+	initH2DatabaseFromCSVfiles();
       }
     }
     setDataBaseType(dataBaseType);
@@ -70,8 +70,7 @@ public class NeqSimContractDataBase extends NeqSimDataBase {
    */
   public static void initH2DatabaseFromCSVfiles() {
     h2IsInitalizing = true;
-    neqsim.util.database.NeqSimContractDataBase.connectionString =
-        "jdbc:h2:mem:neqsimcontractdatabase;DB_CLOSE_DELAY=-1";
+    neqsim.util.database.NeqSimContractDataBase.connectionString = "jdbc:h2:mem:neqsimcontractdatabase;DB_CLOSE_DELAY=-1";
     neqsim.util.database.NeqSimContractDataBase.dataBaseType = "H2";
 
     try {

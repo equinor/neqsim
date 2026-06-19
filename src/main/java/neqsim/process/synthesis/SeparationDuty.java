@@ -15,15 +15,15 @@ import neqsim.process.equipment.stream.StreamInterface;
  * </p>
  * <ul>
  * <li>a fully-specified feed {@link StreamInterface} (composition, flow, T, P),</li>
- * <li>a set of <em>top-product</em> purity requirements (component name → minimum mole fraction
- * required in the lightest product stream), and</li>
- * <li>a set of <em>bottom-product</em> purity requirements (component name → minimum mole fraction
- * required in the heaviest product stream).</li>
+ * <li>a set of <em>top-product</em> purity requirements (component name → minimum mole fraction required in the
+ * lightest product stream), and</li>
+ * <li>a set of <em>bottom-product</em> purity requirements (component name → minimum mole fraction required in the
+ * heaviest product stream).</li>
  * </ul>
  *
  * <p>
- * Either map may be empty. When both are empty the synthesis engine returns the trivial
- * single-stage flash as a sanity check.
+ * Either map may be empty. When both are empty the synthesis engine returns the trivial single-stage flash as a sanity
+ * check.
  * </p>
  *
  * @author Even Solbraa
@@ -41,15 +41,14 @@ public final class SeparationDuty implements Serializable {
   /**
    * Creates a separation duty.
    *
-   * @param name short identifier used in the generated flowsheet
-   * @param feed the feed stream; must have been {@code run()} so that flow and composition are
-   *        valid
-   * @param topProductSpecs map from component name to required mole fraction in the top product
-   *        (gas/overhead); may be null or empty
-   * @param bottomProductSpecs map from component name to required mole fraction in the bottom
-   *        product (liquid/bottoms); may be null or empty
-   * @param operatingPressureBara operating pressure for the separation stage in bara; pass
-   *        {@code Double.NaN} to use the feed pressure
+   * @param name                  short identifier used in the generated flowsheet
+   * @param feed                  the feed stream; must have been {@code run()} so that flow and composition are valid
+   * @param topProductSpecs       map from component name to required mole fraction in the top product (gas/overhead);
+   *                              may be null or empty
+   * @param bottomProductSpecs    map from component name to required mole fraction in the bottom product
+   *                              (liquid/bottoms); may be null or empty
+   * @param operatingPressureBara operating pressure for the separation stage in bara; pass {@code Double.NaN} to use
+   *                              the feed pressure
    */
   public SeparationDuty(String name, StreamInterface feed, Map<String, Double> topProductSpecs,
       Map<String, Double> bottomProductSpecs, double operatingPressureBara) {
@@ -62,9 +61,9 @@ public final class SeparationDuty implements Serializable {
     this.name = name;
     this.feed = feed;
     this.topProductSpecs = topProductSpecs == null ? Collections.<String, Double>emptyMap()
-        : Collections.unmodifiableMap(new LinkedHashMap<String, Double>(topProductSpecs));
+	: Collections.unmodifiableMap(new LinkedHashMap<String, Double>(topProductSpecs));
     this.bottomProductSpecs = bottomProductSpecs == null ? Collections.<String, Double>emptyMap()
-        : Collections.unmodifiableMap(new LinkedHashMap<String, Double>(bottomProductSpecs));
+	: Collections.unmodifiableMap(new LinkedHashMap<String, Double>(bottomProductSpecs));
     this.operatingPressureBara = operatingPressureBara;
   }
 
@@ -105,8 +104,8 @@ public final class SeparationDuty implements Serializable {
   }
 
   /**
-   * Returns the operating pressure (bara), or {@link Double#NaN} when the synthesis engine should
-   * use the feed pressure.
+   * Returns the operating pressure (bara), or {@link Double#NaN} when the synthesis engine should use the feed
+   * pressure.
    *
    * @return pressure in bara or NaN
    */

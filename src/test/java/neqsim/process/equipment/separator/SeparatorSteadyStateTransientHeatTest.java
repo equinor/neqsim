@@ -15,8 +15,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * Test to verify heat input works for both steady-state run() and transient runTransient() methods.
  */
 public class SeparatorSteadyStateTransientHeatTest {
-  private static final Logger logger =
-      LogManager.getLogger(SeparatorSteadyStateTransientHeatTest.class);
+  private static final Logger logger = LogManager.getLogger(SeparatorSteadyStateTransientHeatTest.class);
   ProcessSystem processOps;
   Separator separator;
   ThreePhaseSeparator threePhaseSeparator;
@@ -70,8 +69,8 @@ public class SeparatorSteadyStateTransientHeatTest {
     // significantly)
     double finalTemp = separator.getThermoSystem().getTemperature("C");
     logger.printf(org.apache.logging.log4j.Level.INFO,
-        "Separator steady-state: Initial temp: %.2f°C, Final temp: %.2f°C, Heat input: %.0f kW%n",
-        initialTemp, finalTemp, heatInput);
+	"Separator steady-state: Initial temp: %.2f°C, Final temp: %.2f°C, Heat input: %.0f kW%n", initialTemp,
+	finalTemp, heatInput);
 
     // The system should handle the heat input without errors
     assertTrue(separator.getGasOutStream().getFlowRate("kg/hr") > 0);
@@ -99,8 +98,8 @@ public class SeparatorSteadyStateTransientHeatTest {
     // significantly)
     double finalTemp = threePhaseSeparator.getThermoSystem().getTemperature("C");
     logger.printf(org.apache.logging.log4j.Level.INFO,
-        "3-Phase separator steady-state: Initial temp: %.2f°C, Final temp: %.2f°C, Heat input: %.0f kW%n",
-        initialTemp, finalTemp, heatInput);
+	"3-Phase separator steady-state: Initial temp: %.2f°C, Final temp: %.2f°C, Heat input: %.0f kW%n", initialTemp,
+	finalTemp, heatInput);
 
     // The system should handle the heat input without errors
     assertTrue(threePhaseSeparator.getGasOutStream().getFlowRate("kg/hr") > 0);
@@ -132,10 +131,10 @@ public class SeparatorSteadyStateTransientHeatTest {
     double finalInternalEnergy = separator.getThermoSystem().getInternalEnergy();
 
     logger.printf(org.apache.logging.log4j.Level.INFO,
-        "Separator transient: Initial temp: %.2f°C, Final temp: %.2f°C, Heat input: %.0f kW%n",
-        initialTemp, finalTemp, heatInput);
+	"Separator transient: Initial temp: %.2f°C, Final temp: %.2f°C, Heat input: %.0f kW%n", initialTemp, finalTemp,
+	heatInput);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Internal energy change: %.2f J%n",
-        finalInternalEnergy - initialInternalEnergy);
+	finalInternalEnergy - initialInternalEnergy);
 
     // The transient method should incorporate heat input in energy balance
     assertTrue(separator.getGasOutStream().getFlowRate("kg/hr") > 0);
@@ -167,10 +166,10 @@ public class SeparatorSteadyStateTransientHeatTest {
     double finalInternalEnergy = threePhaseSeparator.getThermoSystem().getInternalEnergy();
 
     logger.printf(org.apache.logging.log4j.Level.INFO,
-        "3-Phase separator transient: Initial temp: %.2f°C, Final temp: %.2f°C, Heat input: %.0f kW%n",
-        initialTemp, finalTemp, heatInput);
+	"3-Phase separator transient: Initial temp: %.2f°C, Final temp: %.2f°C, Heat input: %.0f kW%n", initialTemp,
+	finalTemp, heatInput);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Internal energy change: %.2f J%n",
-        finalInternalEnergy - initialInternalEnergy);
+	finalInternalEnergy - initialInternalEnergy);
 
     // The transient method should incorporate heat input in energy balance
     assertTrue(threePhaseSeparator.getGasOutStream().getFlowRate("kg/hr") > 0);
@@ -200,8 +199,7 @@ public class SeparatorSteadyStateTransientHeatTest {
     double transientTemp = transientSeparator.getThermoSystem().getTemperature("C");
 
     logger.printf(org.apache.logging.log4j.Level.INFO,
-        "Heat input comparison - Steady-state temp: %.2f°C, Transient temp: %.2f°C%n",
-        steadyStateTemp, transientTemp);
+	"Heat input comparison - Steady-state temp: %.2f°C, Transient temp: %.2f°C%n", steadyStateTemp, transientTemp);
 
     // Both methods should handle heat input
     assertTrue(steadyStateSeparator.isSetHeatInput());
@@ -225,8 +223,7 @@ public class SeparatorSteadyStateTransientHeatTest {
     double zeroHeatTemp = zeroHeatSeparator.getThermoSystem().getTemperature("C");
 
     logger.printf(org.apache.logging.log4j.Level.INFO,
-        "No heat input comparison - No heat: %.2f°C, Zero heat: %.2f°C%n", noHeatTemp,
-        zeroHeatTemp);
+	"No heat input comparison - No heat: %.2f°C, Zero heat: %.2f°C%n", noHeatTemp, zeroHeatTemp);
 
     // Temperatures should be very similar (within numerical precision)
     assertEquals(noHeatTemp, zeroHeatTemp, 0.1);
@@ -260,11 +257,11 @@ public class SeparatorSteadyStateTransientHeatTest {
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "Large heat input effects:%n");
     logger.printf(org.apache.logging.log4j.Level.INFO,
-        "  Baseline - Temp: %.2f°C, Gas: %.0f kg/hr, Liquid: %.0f kg/hr%n", baselineTemp,
-        baselineGasFlow, baselineLiquidFlow);
+	"  Baseline - Temp: %.2f°C, Gas: %.0f kg/hr, Liquid: %.0f kg/hr%n", baselineTemp, baselineGasFlow,
+	baselineLiquidFlow);
     logger.printf(org.apache.logging.log4j.Level.INFO,
-        "  Heated   - Temp: %.2f°C, Gas: %.0f kg/hr, Liquid: %.0f kg/hr%n", heatedTemp,
-        heatedGasFlow, heatedLiquidFlow);
+	"  Heated   - Temp: %.2f°C, Gas: %.0f kg/hr, Liquid: %.0f kg/hr%n", heatedTemp, heatedGasFlow,
+	heatedLiquidFlow);
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Heat input: %.0f kW%n", largeHeatInput);
 
     // With significant heat input, we should see some effect

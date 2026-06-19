@@ -4,9 +4,8 @@ package neqsim.process.mechanicaldesign.valve;
  * Represents a valve with a quick opening flow characteristic.
  *
  * <p>
- * Quick opening valves provide a large change in flow for a small initial valve opening, with the
- * flow rate approaching maximum at relatively low travel. This provides a high gain at low openings
- * and low gain at high openings.
+ * Quick opening valves provide a large change in flow for a small initial valve opening, with the flow rate approaching
+ * maximum at relatively low travel. This provides a high gain at low openings and low gain at high openings.
  * </p>
  *
  * <p>
@@ -43,7 +42,8 @@ public class QuickOpeningCharacteristic implements ValveCharacteristic {
   /**
    * Default constructor.
    */
-  public QuickOpeningCharacteristic() {}
+  public QuickOpeningCharacteristic() {
+  }
 
   /**
    * {@inheritDoc}

@@ -231,7 +231,7 @@ public class SubseaJumper extends TwoPortEquipment {
   /**
    * Constructor with name and inlet stream.
    *
-   * @param name equipment name
+   * @param name     equipment name
    * @param inStream inlet stream
    */
   public SubseaJumper(String name, StreamInterface inStream) {
@@ -241,13 +241,12 @@ public class SubseaJumper extends TwoPortEquipment {
   /**
    * Create rigid M-shaped jumper.
    *
-   * @param name jumper name
+   * @param name     jumper name
    * @param inStream inlet stream
-   * @param length jumper length in meters
+   * @param length   jumper length in meters
    * @return configured jumper
    */
-  public static SubseaJumper createRigidMShape(String name, StreamInterface inStream,
-      double length) {
+  public static SubseaJumper createRigidMShape(String name, StreamInterface inStream, double length) {
     SubseaJumper jumper = new SubseaJumper(name, inStream);
     jumper.setJumperType(JumperType.RIGID_M_SHAPE);
     jumper.setLength(length);
@@ -258,13 +257,12 @@ public class SubseaJumper extends TwoPortEquipment {
   /**
    * Create flexible static jumper.
    *
-   * @param name jumper name
+   * @param name     jumper name
    * @param inStream inlet stream
-   * @param length jumper length in meters
+   * @param length   jumper length in meters
    * @return configured jumper
    */
-  public static SubseaJumper createFlexibleStatic(String name, StreamInterface inStream,
-      double length) {
+  public static SubseaJumper createFlexibleStatic(String name, StreamInterface inStream, double length) {
     SubseaJumper jumper = new SubseaJumper(name, inStream);
     jumper.setJumperType(JumperType.FLEXIBLE_STATIC);
     jumper.setLength(length);
@@ -320,22 +318,20 @@ public class SubseaJumper extends TwoPortEquipment {
       // Friction factor (Blasius for turbulent flow)
       double frictionFactor;
       if (reynolds < 2300) {
-        frictionFactor = 64 / reynolds;
+	frictionFactor = 64 / reynolds;
       } else {
-        frictionFactor = 0.316 / Math.pow(reynolds, 0.25);
+	frictionFactor = 0.316 / Math.pow(reynolds, 0.25);
       }
 
       // Darcy-Weisbach pressure drop
-      frictionDrop =
-          frictionFactor * (length / innerDiameter) * (density * velocity * velocity / 2) / 100000; // Convert
-                                                                                                    // Pa
-                                                                                                    // to
-                                                                                                    // bar
+      frictionDrop = frictionFactor * (length / innerDiameter) * (density * velocity * velocity / 2) / 100000; // Convert
+													       // Pa
+													       // to
+													       // bar
 
       // Add losses for bends
       double bendLossCoeff = 0.3; // Per bend
-      double bendDrop =
-          numberOfBends * bendLossCoeff * (density * velocity * velocity / 2) / 100000;
+      double bendDrop = numberOfBends * bendLossCoeff * (density * velocity * velocity / 2) / 100000;
       frictionDrop += bendDrop;
 
       // Add connection losses
@@ -353,7 +349,7 @@ public class SubseaJumper extends TwoPortEquipment {
    */
   public boolean isRigid() {
     return jumperType == JumperType.RIGID_M_SHAPE || jumperType == JumperType.RIGID_INVERTED_U
-        || jumperType == JumperType.RIGID_Z_SHAPE || jumperType == JumperType.RIGID_STRAIGHT;
+	|| jumperType == JumperType.RIGID_Z_SHAPE || jumperType == JumperType.RIGID_STRAIGHT;
   }
 
   /**
@@ -854,12 +850,12 @@ public class SubseaJumper extends TwoPortEquipment {
       process.addProperty("inletPressure_bar", inStream.getPressure("bara"));
       process.addProperty("inletTemperature_C", inStream.getTemperature("C"));
       if (outStream != null) {
-        process.addProperty("outletPressure_bar", outStream.getPressure("bara"));
+	process.addProperty("outletPressure_bar", outStream.getPressure("bara"));
       }
       jsonObj.add("processConditions", process);
     }
 
-    return new com.google.gson.GsonBuilder().setPrettyPrinting()
-        .serializeSpecialFloatingPointValues().create().toJson(jsonObj);
+    return new com.google.gson.GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
+	.toJson(jsonObj);
   }
 }

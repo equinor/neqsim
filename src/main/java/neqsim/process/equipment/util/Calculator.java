@@ -109,10 +109,10 @@ public class Calculator extends ProcessEquipmentBaseClass {
     // Guard against non-finite state coming from a failed compressor run or an
     // inactive surge curve. Without this the proportional update below can
     // propagate NaN into the splitter setpoint and deadlock the recycle loop.
-    if (!Double.isFinite(inletFlow) || !Double.isFinite(surgeFlow)
-        || !Double.isFinite(currentRecycle) || surgeFlow <= 0.0) {
-      logger.warn("Anti-surge calc skipped: non-finite input (inlet=" + inletFlow + " m3/hr"
-          + ", surge=" + surgeFlow + " m3/hr, current=" + currentRecycle + " m3/hr)");
+    if (!Double.isFinite(inletFlow) || !Double.isFinite(surgeFlow) || !Double.isFinite(currentRecycle)
+	|| surgeFlow <= 0.0) {
+      logger.warn("Anti-surge calc skipped: non-finite input (inlet=" + inletFlow + " m3/hr" + ", surge=" + surgeFlow
+	  + " m3/hr, current=" + currentRecycle + " m3/hr)");
       setCalculationIdentifier(id);
       return;
     }
@@ -122,7 +122,7 @@ public class Calculator extends ProcessEquipmentBaseClass {
     // overshooting when the compressor is operating far from surge.
     if (inletFlow > 1.2 * surgeFlow) {
       double minRecycle = Math.max(inletFlow / 1.0e6, 1.0e-6);
-      antiSurgeSplitter.setFlowRates(new double[] {-1, minRecycle}, "m3/hr");
+      antiSurgeSplitter.setFlowRates(new double[] { -1, minRecycle }, "m3/hr");
       antiSurgeSplitter.getSplitStream(1).setFlowRate(minRecycle, "m3/hr");
       antiSurgeSplitter.getSplitStream(1).run();
       antiSurgeSplitter.setCalculationIdentifier(id);
@@ -139,7 +139,7 @@ public class Calculator extends ProcessEquipmentBaseClass {
     double cappedStep = Math.max(-maxStep, Math.min(maxStep, rawStep));
     double flowAntiSurge = Math.max(currentRecycle + cappedStep, inletFlow / 1.0e6);
 
-    antiSurgeSplitter.setFlowRates(new double[] {-1, flowAntiSurge}, "m3/hr");
+    antiSurgeSplitter.setFlowRates(new double[] { -1, flowAntiSurge }, "m3/hr");
     antiSurgeSplitter.getSplitStream(1).setFlowRate(flowAntiSurge, "m3/hr");
     antiSurgeSplitter.getSplitStream(1).run();
     antiSurgeSplitter.setCalculationIdentifier(id);
@@ -150,10 +150,9 @@ public class Calculator extends ProcessEquipmentBaseClass {
     // low). Surfacing this is much friendlier than a silent in-surge result.
     double projected = inletFlow + flowAntiSurge;
     if (projected < ANTI_SURGE_STUCK_THRESHOLD * surgeFlow) {
-      logger.warn("Anti-surge: compressor still below surge after recycle update "
-          + "(projected total=" + projected + " m3/hr, surge=" + surgeFlow
-          + " m3/hr). Check that the recycle stream feeds back into the compressor "
-          + "inlet and that the outer recycle iteration cap is sufficient.");
+      logger.warn("Anti-surge: compressor still below surge after recycle update " + "(projected total=" + projected
+	  + " m3/hr, surge=" + surgeFlow + " m3/hr). Check that the recycle stream feeds back into the compressor "
+	  + "inlet and that the outer recycle iteration cap is sufficient.");
     }
   }
 
@@ -168,9 +167,9 @@ public class Calculator extends ProcessEquipmentBaseClass {
 
     if (calculationMethod != null) {
       try {
-        calculationMethod.accept(inputVariable, outputVariable);
+	calculationMethod.accept(inputVariable, outputVariable);
       } catch (Exception ex) {
-        logger.error("Error in custom calculation", ex);
+	logger.error("Error in custom calculation", ex);
       }
       setCalculationIdentifier(id);
       return;
@@ -183,11 +182,11 @@ public class Calculator extends ProcessEquipmentBaseClass {
 
     if (name.startsWith("MEG makeup calculator")) {
       for (int i = 0; i < inputVariable.size(); i++) {
-        sum += inputVariable.get(i).getFluid().getPhase(0).getComponent("MEG").getFlowRate("kg/hr");
+	sum += inputVariable.get(i).getFluid().getPhase(0).getComponent("MEG").getFlowRate("kg/hr");
       }
     } else {
       for (int i = 0; i < inputVariable.size(); i++) {
-        sum += inputVariable.get(i).getFluid().getComponent("TEG").getFlowRate("kg/hr");
+	sum += inputVariable.get(i).getFluid().getComponent("TEG").getFlowRate("kg/hr");
       }
     }
 
@@ -195,7 +194,7 @@ public class Calculator extends ProcessEquipmentBaseClass {
     // ((Stream) outputVariable).setFlowRate(sum, "kg/hr");
     try {
       if (sum < 0.0) {
-        sum = 0.0;
+	sum = 0.0;
       }
       ((neqsim.process.equipment.stream.Stream) outputVariable).setFlowRate(sum, "kg/hr");
       outputVariable.run();

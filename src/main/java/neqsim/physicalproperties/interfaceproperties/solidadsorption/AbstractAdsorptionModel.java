@@ -59,7 +59,8 @@ public abstract class AbstractAdsorptionModel implements AdsorptionInterface, Se
   /**
    * Default constructor.
    */
-  public AbstractAdsorptionModel() {}
+  public AbstractAdsorptionModel() {
+  }
 
   /**
    * Constructor with thermodynamic system.
@@ -121,7 +122,7 @@ public abstract class AbstractAdsorptionModel implements AdsorptionInterface, Se
     }
     if (component < 0 || component >= surfaceExcess.length) {
       throw new IndexOutOfBoundsException(
-          "Component index " + component + " out of range [0, " + (surfaceExcess.length - 1) + "]");
+	  "Component index " + component + " out of range [0, " + (surfaceExcess.length - 1) + "]");
     }
     return surfaceExcess[component];
   }
@@ -170,7 +171,7 @@ public abstract class AbstractAdsorptionModel implements AdsorptionInterface, Se
    *
    * @param component1 index of first component
    * @param component2 index of second component (reference)
-   * @param phaseNum the bulk phase number
+   * @param phaseNum   the bulk phase number
    * @return selectivity (dimensionless)
    */
   public double getSelectivity(int component1, int component2, int phaseNum) {
@@ -185,8 +186,7 @@ public abstract class AbstractAdsorptionModel implements AdsorptionInterface, Se
       return Double.NaN;
     }
 
-    return (surfaceExcessMolFraction[component1] / y1)
-        / (surfaceExcessMolFraction[component2] / y2);
+    return (surfaceExcessMolFraction[component1] / y1) / (surfaceExcessMolFraction[component2] / y2);
   }
 
   /**
@@ -200,11 +200,11 @@ public abstract class AbstractAdsorptionModel implements AdsorptionInterface, Se
 
     if (totalSurfaceExcess > 1e-20) {
       for (int comp = 0; comp < surfaceExcess.length; comp++) {
-        surfaceExcessMolFraction[comp] = surfaceExcess[comp] / totalSurfaceExcess;
+	surfaceExcessMolFraction[comp] = surfaceExcess[comp] / totalSurfaceExcess;
       }
     } else {
       for (int comp = 0; comp < surfaceExcess.length; comp++) {
-        surfaceExcessMolFraction[comp] = 0.0;
+	surfaceExcessMolFraction[comp] = 0.0;
       }
     }
   }
@@ -297,24 +297,23 @@ public abstract class AbstractAdsorptionModel implements AdsorptionInterface, Se
    * Get component partial pressure.
    *
    * @param phaseNum the phase number
-   * @param compNum the component number
+   * @param compNum  the component number
    * @return partial pressure in bar
    */
   protected double getPartialPressure(int phaseNum, int compNum) {
-    return system.getPhase(phaseNum).getComponent(compNum).getx()
-        * system.getPhase(phaseNum).getPressure();
+    return system.getPhase(phaseNum).getComponent(compNum).getx() * system.getPhase(phaseNum).getPressure();
   }
 
   /**
    * Get component fugacity.
    *
    * @param phaseNum the phase number
-   * @param compNum the component number
+   * @param compNum  the component number
    * @return fugacity in bar
    */
   protected double getFugacity(int phaseNum, int compNum) {
     return system.getPhase(phaseNum).getComponent(compNum).getx()
-        * system.getPhase(phaseNum).getComponent(compNum).getFugacityCoefficient()
-        * system.getPhase(phaseNum).getPressure();
+	* system.getPhase(phaseNum).getComponent(compNum).getFugacityCoefficient()
+	* system.getPhase(phaseNum).getPressure();
   }
 }

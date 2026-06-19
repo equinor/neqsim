@@ -19,7 +19,8 @@ public class PhaseSrkPenelouxEos extends PhaseSrkEos {
    * Constructor for PhaseSrkPenelouxEos.
    * </p>
    */
-  public PhaseSrkPenelouxEos() {}
+  public PhaseSrkPenelouxEos() {
+  }
 
   /** {@inheritDoc} */
   @Override

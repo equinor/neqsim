@@ -49,8 +49,7 @@ class FaultTreeAnalyzerTest {
     FaultTreeNode b = FaultTreeNode.basic("B", 0.01);
     FaultTreeAnalyzer fa = new FaultTreeAnalyzer();
     double pInd = fa.topEventProbability(FaultTreeNode.or("any", a, b));
-    double pCcf = fa.topEventProbability(
-        FaultTreeNode.or("any", a, b).withCCF(0.10));
+    double pCcf = fa.topEventProbability(FaultTreeNode.or("any", a, b).withCCF(0.10));
     assertTrue(Math.abs(pCcf - pInd) > 1.0e-6);
   }
 
@@ -60,8 +59,7 @@ class FaultTreeAnalyzerTest {
     FaultTreeNode b = FaultTreeNode.basic("B", 0.1);
     FaultTreeNode c = FaultTreeNode.basic("C", 0.1);
     // top = (A AND B) OR C → cut sets {C}, {A, B}
-    FaultTreeNode top = FaultTreeNode.or("top",
-        FaultTreeNode.and("ab", a, b), c);
+    FaultTreeNode top = FaultTreeNode.or("top", FaultTreeNode.and("ab", a, b), c);
     FaultTreeAnalyzer fa = new FaultTreeAnalyzer();
     Set<List<String>> cs = fa.minimalCutSets(top, 3);
     assertEquals(2, cs.size());

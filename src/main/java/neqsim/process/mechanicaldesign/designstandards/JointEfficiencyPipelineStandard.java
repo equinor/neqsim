@@ -19,7 +19,7 @@ public class JointEfficiencyPipelineStandard extends DesignStandard {
    * Constructor for JointEfficiencyPipelineStandard.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
+   * @param name         a {@link java.lang.String} object
    * @param equipmentInn a {@link neqsim.process.mechanicaldesign.MechanicalDesign} object
    */
   public JointEfficiencyPipelineStandard(String name, MechanicalDesign equipmentInn) {
@@ -57,7 +57,7 @@ public class JointEfficiencyPipelineStandard extends DesignStandard {
    * readJointEfficiencyStandard.
    * </p>
    *
-   * @param typeName a {@link java.lang.String} object
+   * @param typeName       a {@link java.lang.String} object
    * @param radiagraphType a {@link java.lang.String} object
    */
   public void readJointEfficiencyStandard(String typeName, String radiagraphType) {

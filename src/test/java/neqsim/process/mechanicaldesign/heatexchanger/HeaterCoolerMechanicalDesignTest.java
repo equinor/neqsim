@@ -65,8 +65,7 @@ public class HeaterCoolerMechanicalDesignTest {
     assertEquals(expectedLmtd, design.getLogMeanTemperatureDifference(), expectedLmtd * 0.05);
     assertEquals(expectedApproach, design.getApproachTemperature(), expectedApproach * 0.05);
     assertEquals(expectedUa, design.getCalculatedUA(), expectedUa * 0.05);
-    assertEquals(spec.getOverallHeatTransferCoefficient(),
-        design.getUsedOverallHeatTransferCoefficient(), 1e-9);
+    assertEquals(spec.getOverallHeatTransferCoefficient(), design.getUsedOverallHeatTransferCoefficient(), 1e-9);
   }
 
   @Test
@@ -96,8 +95,7 @@ public class HeaterCoolerMechanicalDesignTest {
 
     double duty = Math.abs(cooler.getDuty());
     double utilitySupply = cooler.getUtilitySpecification().getSupplyTemperature();
-    double utilityReturn =
-        utilitySupply + duty / cooler.getUtilitySpecification().getHeatCapacityRate();
+    double utilityReturn = utilitySupply + duty / cooler.getUtilitySpecification().getHeatCapacityRate();
     double deltaT1 = Math.abs(cooler.getInletStream().getTemperature() - utilityReturn);
     double deltaT2 = Math.abs(cooler.getOutletStream().getTemperature() - utilitySupply);
     double expectedApproach = Math.min(deltaT1, deltaT2);

@@ -15,9 +15,8 @@ import neqsim.thermo.system.SystemInterface;
  * Multi-compartment reservoir model for tracking pressure evolution across connected zones.
  *
  * <p>
- * Models multiple reservoir compartments connected by inter-zone transmissibilities. Each
- * compartment has its own fluid (SystemInterface), pore volume, and pressure. Injectors and
- * producers can be placed in specific compartments.
+ * Models multiple reservoir compartments connected by inter-zone transmissibilities. Each compartment has its own fluid
+ * (SystemInterface), pore volume, and pressure. Injectors and producers can be placed in specific compartments.
  * </p>
  *
  * <p>
@@ -89,10 +88,10 @@ public class MultiCompartmentReservoir extends ProcessEquipmentBaseClass {
     /**
      * Creates a reservoir compartment.
      *
-     * @param name compartment name
-     * @param fluid fluid system
+     * @param name       compartment name
+     * @param fluid      fluid system
      * @param poreVolume pore volume (m³)
-     * @param pressure initial pressure (bara)
+     * @param pressure   initial pressure (bara)
      */
     public Compartment(String name, SystemInterface fluid, double poreVolume, double pressure) {
       this.name = name;
@@ -122,8 +121,8 @@ public class MultiCompartmentReservoir extends ProcessEquipmentBaseClass {
     /**
      * Creates a transmissibility connection.
      *
-     * @param comp1 first compartment name
-     * @param comp2 second compartment name
+     * @param comp1            first compartment name
+     * @param comp2            second compartment name
      * @param transmissibility transmissibility value (Sm3/day/bar)
      */
     public TransmissibilityConnection(String comp1, String comp2, double transmissibility) {
@@ -150,13 +149,12 @@ public class MultiCompartmentReservoir extends ProcessEquipmentBaseClass {
   /**
    * Add a reservoir compartment.
    *
-   * @param name compartment identifier
-   * @param fluid NeqSim fluid system for this compartment
+   * @param name       compartment identifier
+   * @param fluid      NeqSim fluid system for this compartment
    * @param poreVolume pore volume (m³)
-   * @param pressure initial pressure (bara)
+   * @param pressure   initial pressure (bara)
    */
-  public void addCompartment(String name, SystemInterface fluid, double poreVolume,
-      double pressure) {
+  public void addCompartment(String name, SystemInterface fluid, double poreVolume, double pressure) {
     compartmentIndex.put(name, compartments.size());
     compartments.add(new Compartment(name, fluid, poreVolume, pressure));
   }
@@ -177,17 +175,17 @@ public class MultiCompartmentReservoir extends ProcessEquipmentBaseClass {
   /**
    * Set transmissibility between two compartments.
    *
-   * @param name1 first compartment name
-   * @param name2 second compartment name
+   * @param name1            first compartment name
+   * @param name2            second compartment name
    * @param transmissibility inter-zone transmissibility (Sm3/day/bar)
    */
   public void setTransmissibility(String name1, String name2, double transmissibility) {
     // Check if connection already exists and update
     for (TransmissibilityConnection conn : connections) {
       if ((conn.compartment1.equals(name1) && conn.compartment2.equals(name2))
-          || (conn.compartment1.equals(name2) && conn.compartment2.equals(name1))) {
-        conn.transmissibility = transmissibility;
-        return;
+	  || (conn.compartment1.equals(name2) && conn.compartment2.equals(name1))) {
+	conn.transmissibility = transmissibility;
+	return;
       }
     }
     connections.add(new TransmissibilityConnection(name1, name2, transmissibility));
@@ -196,9 +194,9 @@ public class MultiCompartmentReservoir extends ProcessEquipmentBaseClass {
   /**
    * Add injection rate to a compartment.
    *
-   * @param wellName injector well name (for tracking)
+   * @param wellName        injector well name (for tracking)
    * @param compartmentName compartment receiving injection
-   * @param rateSm3day injection rate (Sm3/day)
+   * @param rateSm3day      injection rate (Sm3/day)
    */
   public void addInjectionRate(String wellName, String compartmentName, double rateSm3day) {
     Compartment comp = getCompartment(compartmentName);
@@ -210,9 +208,9 @@ public class MultiCompartmentReservoir extends ProcessEquipmentBaseClass {
   /**
    * Add production rate from a compartment.
    *
-   * @param wellName producer well name (for tracking)
+   * @param wellName        producer well name (for tracking)
    * @param compartmentName compartment being produced
-   * @param rateSm3day production rate (Sm3/day)
+   * @param rateSm3day      production rate (Sm3/day)
    */
   public void addProductionRate(String wellName, String compartmentName, double rateSm3day) {
     Compartment comp = getCompartment(compartmentName);
@@ -225,7 +223,7 @@ public class MultiCompartmentReservoir extends ProcessEquipmentBaseClass {
    * Set injection rate for a compartment (replaces any previous rate).
    *
    * @param compartmentName compartment name
-   * @param rateSm3day injection rate (Sm3/day)
+   * @param rateSm3day      injection rate (Sm3/day)
    */
   public void setInjectionRate(String compartmentName, double rateSm3day) {
     Compartment comp = getCompartment(compartmentName);
@@ -238,7 +236,7 @@ public class MultiCompartmentReservoir extends ProcessEquipmentBaseClass {
    * Set production rate for a compartment (replaces any previous rate).
    *
    * @param compartmentName compartment name
-   * @param rateSm3day production rate (Sm3/day)
+   * @param rateSm3day      production rate (Sm3/day)
    */
   public void setProductionRate(String compartmentName, double rateSm3day) {
     Compartment comp = getCompartment(compartmentName);
@@ -251,8 +249,8 @@ public class MultiCompartmentReservoir extends ProcessEquipmentBaseClass {
    * Advance the reservoir state by one timestep using explicit Euler integration.
    *
    * <p>
-   * For each compartment the pressure update is: dP_i = dt / (V_i * ct_i) * (q_inj,i - q_prod,i +
-   * SUM(T_ij * (P_j - P_i)))
+   * For each compartment the pressure update is: dP_i = dt / (V_i * ct_i) * (q_inj,i - q_prod,i + SUM(T_ij * (P_j -
+   * P_i)))
    * </p>
    *
    * @param dtSeconds timestep size (seconds)
@@ -266,9 +264,9 @@ public class MultiCompartmentReservoir extends ProcessEquipmentBaseClass {
       Integer idx1 = compartmentIndex.get(conn.compartment1);
       Integer idx2 = compartmentIndex.get(conn.compartment2);
       if (idx1 != null && idx2 != null) {
-        double p1 = compartments.get(idx1).pressure;
-        double p2 = compartments.get(idx2).pressure;
-        conn.currentFlowRate = conn.transmissibility * (p1 - p2); // Sm3/day
+	double p1 = compartments.get(idx1).pressure;
+	double p2 = compartments.get(idx2).pressure;
+	conn.currentFlowRate = conn.transmissibility * (p1 - p2); // Sm3/day
       }
     }
 
@@ -280,22 +278,22 @@ public class MultiCompartmentReservoir extends ProcessEquipmentBaseClass {
 
       // Add inter-zone flows
       for (TransmissibilityConnection conn : connections) {
-        Integer idx1 = compartmentIndex.get(conn.compartment1);
-        Integer idx2 = compartmentIndex.get(conn.compartment2);
-        if (idx1 != null && idx2 != null) {
-          if (idx1 == i) {
-            // Flow leaving compartment1 into compartment2 (positive reduces pressure)
-            netFlow -= conn.currentFlowRate;
-          } else if (idx2 == i) {
-            // Flow entering compartment2 from compartment1 (positive increases pressure)
-            netFlow += conn.currentFlowRate;
-          }
-        }
+	Integer idx1 = compartmentIndex.get(conn.compartment1);
+	Integer idx2 = compartmentIndex.get(conn.compartment2);
+	if (idx1 != null && idx2 != null) {
+	  if (idx1 == i) {
+	    // Flow leaving compartment1 into compartment2 (positive reduces pressure)
+	    netFlow -= conn.currentFlowRate;
+	  } else if (idx2 == i) {
+	    // Flow entering compartment2 from compartment1 (positive increases pressure)
+	    netFlow += conn.currentFlowRate;
+	  }
+	}
       }
 
       // dP/dt = netFlow / (V * ct) [bar/day]
       if (comp.poreVolume > 0 && comp.totalCompressibility > 0) {
-        dpdt[i] = netFlow / (comp.poreVolume * comp.totalCompressibility);
+	dpdt[i] = netFlow / (comp.poreVolume * comp.totalCompressibility);
       }
     }
 
@@ -330,15 +328,15 @@ public class MultiCompartmentReservoir extends ProcessEquipmentBaseClass {
    *
    * @param name1 first compartment name
    * @param name2 second compartment name
-   * @param unit flow rate unit ("Sm3/day")
+   * @param unit  flow rate unit ("Sm3/day")
    * @return flow rate (positive = from name1 to name2)
    */
   public double getInterZoneFlowRate(String name1, String name2, String unit) {
     for (TransmissibilityConnection conn : connections) {
       if (conn.compartment1.equals(name1) && conn.compartment2.equals(name2)) {
-        return conn.currentFlowRate;
+	return conn.currentFlowRate;
       } else if (conn.compartment1.equals(name2) && conn.compartment2.equals(name1)) {
-        return -conn.currentFlowRate;
+	return -conn.currentFlowRate;
       }
     }
     return 0.0;
@@ -415,9 +413,9 @@ public class MultiCompartmentReservoir extends ProcessEquipmentBaseClass {
       Integer idx1 = compartmentIndex.get(conn.compartment1);
       Integer idx2 = compartmentIndex.get(conn.compartment2);
       if (idx1 != null && idx2 != null) {
-        double p1 = compartments.get(idx1).pressure;
-        double p2 = compartments.get(idx2).pressure;
-        conn.currentFlowRate = conn.transmissibility * (p1 - p2);
+	double p1 = compartments.get(idx1).pressure;
+	double p2 = compartments.get(idx2).pressure;
+	conn.currentFlowRate = conn.transmissibility * (p1 - p2);
       }
     }
   }

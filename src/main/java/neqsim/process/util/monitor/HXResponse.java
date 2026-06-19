@@ -27,7 +27,8 @@ public class HXResponse extends BaseResponse {
    * Constructor for HXResponse.
    * </p>
    */
-  public HXResponse() {}
+  public HXResponse() {
+  }
 
   /**
    * <p>

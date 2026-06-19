@@ -9,9 +9,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * Test reproducing MATLAB scrubber carry-over calculation with UMR-PRU EOS. Based on
- * scr_test23VG01.m which uses plotCarryOver_hc('umr', ...) with gas composition from cylinder
- * TS3249905 and oil composition from AVE249_246.
+ * Test reproducing MATLAB scrubber carry-over calculation with UMR-PRU EOS. Based on scr_test23VG01.m which uses
+ * plotCarryOver_hc('umr', ...) with gas composition from cylinder TS3249905 and oil composition from AVE249_246.
  *
  * @author copilot
  * @version 1.0
@@ -19,10 +18,9 @@ import org.apache.logging.log4j.Logger;
 public class SystemUMRPRUMCEosMatlabTest {
   private static final Logger logger = LogManager.getLogger(SystemUMRPRUMCEosMatlabTest.class);
 
-
   /**
-   * Test the gas-only fluid creation and TPflash with UMR-PRU. This reproduces what
-   * readFluidFromExcel + plotCarryOver_hc does for the gas phase.
+   * Test the gas-only fluid creation and TPflash with UMR-PRU. This reproduces what readFluidFromExcel +
+   * plotCarryOver_hc does for the gas phase.
    */
   @Test
   void testGasFluidWithUMRPRU() {
@@ -146,8 +144,8 @@ public class SystemUMRPRUMCEosMatlabTest {
   }
 
   /**
-   * Test the combined scrubber fluid (gas + oil carry-over) and subcooling loop. This is the main
-   * calculation in plotCarryOver_hc that was failing.
+   * Test the combined scrubber fluid (gas + oil carry-over) and subcooling loop. This is the main calculation in
+   * plotCarryOver_hc that was failing.
    */
   @Test
   void testScrubberFluidSubcoolingWithUMRPRU() {
@@ -237,7 +235,7 @@ public class SystemUMRPRUMCEosMatlabTest {
     // phase.
     SystemInterface scrubberFluid = gasFluid.clone();
     assertDoesNotThrow(() -> scrubberFluid.addFluid(oilFluid),
-        "addFluid should not throw when combining UMR-PRU fluids with different TBP components");
+	"addFluid should not throw when combining UMR-PRU fluids with different TBP components");
 
     ThermodynamicOperations scrubOps = new ThermodynamicOperations(scrubberFluid);
     scrubberFluid.setMultiPhaseCheck(true);
@@ -250,26 +248,25 @@ public class SystemUMRPRUMCEosMatlabTest {
     assertTrue(scrubberFluid.getNumberOfPhases() >= 1, "Should have at least 1 phase");
 
     // --- Subcooling sweep (this is the core operation) ---
-    double[] temperatures = {21.0, 22.0, 23.0, 24.0, 25.0, 26.0, 27.0, 28.0, 29.0, 30.0};
+    double[] temperatures = { 21.0, 22.0, 23.0, 24.0, 25.0, 26.0, 27.0, 28.0, 29.0, 30.0 };
     for (double subcoolT : temperatures) {
       SystemInterface subcooledFluid = scrubberFluid.clone();
       subcooledFluid.setTemperature(subcoolT, "C");
       subcooledFluid.setPressure(P, "bara");
 
       ThermodynamicOperations subOps = new ThermodynamicOperations(subcooledFluid);
-      assertDoesNotThrow(() -> subOps.TPflash(),
-          "TPflash should not throw at T=" + subcoolT + " C");
+      assertDoesNotThrow(() -> subOps.TPflash(), "TPflash should not throw at T=" + subcoolT + " C");
 
       if (subcooledFluid.hasPhaseType("oil")) {
-        double oilVolFrac = subcooledFluid.getPhase("oil").getVolume("litre");
-        assertTrue(oilVolFrac >= 0, "Oil volume should be non-negative at T=" + subcoolT);
+	double oilVolFrac = subcooledFluid.getPhase("oil").getVolume("litre");
+	assertTrue(oilVolFrac >= 0, "Oil volume should be non-negative at T=" + subcoolT);
       }
     }
   }
 
   /**
-   * Test dew point temperature calculation with UMR-PRU. The dewt() function in MATLAB calls
-   * SaturationTemperature which internally resets the mixing rule.
+   * Test dew point temperature calculation with UMR-PRU. The dewt() function in MATLAB calls SaturationTemperature
+   * which internally resets the mixing rule.
    */
   @Test
   void testDewPointTempWithUMRPRU() {
@@ -323,10 +320,9 @@ public class SystemUMRPRUMCEosMatlabTest {
   }
 
   /**
-   * Reproduces GitHub issue #1980: UMR-PRU with TBP pseudo-components produces three oil phases
-   * with unphysical densities (530, 1142, 3481 kg/m3) instead of the expected gas + oil split. SRK
-   * handles this composition correctly. The fix detects composition-based trivial solutions and
-   * removes phases with unphysical densities.
+   * Reproduces GitHub issue #1980: UMR-PRU with TBP pseudo-components produces three oil phases with unphysical
+   * densities (530, 1142, 3481 kg/m3) instead of the expected gas + oil split. SRK handles this composition correctly.
+   * The fix detects composition-based trivial solutions and removes phases with unphysical densities.
    *
    * @see <a href="https://github.com/equinor/neqsim/issues/1980">Issue #1980</a>
    */
@@ -362,8 +358,7 @@ public class SystemUMRPRUMCEosMatlabTest {
     fluid.initProperties();
 
     // Should have exactly 2 phases (gas + oil), not 3 spurious oil phases
-    assertEquals(2, fluid.getNumberOfPhases(),
-        "Should have 2 phases (gas + oil), got " + fluid.getNumberOfPhases());
+    assertEquals(2, fluid.getNumberOfPhases(), "Should have 2 phases (gas + oil), got " + fluid.getNumberOfPhases());
 
     // Must find a gas phase — SRK does, UMR-PRU previously did not
     assertTrue(fluid.hasPhaseType("gas"), "UMR-PRU should identify a gas phase");
@@ -371,15 +366,14 @@ public class SystemUMRPRUMCEosMatlabTest {
     // No phase should exceed 1000 kg/m3 for this hydrocarbon mixture
     for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
       double rho = fluid.getPhase(i).getDensity("kg/m3");
-      assertTrue(rho < 1000.0, "Phase " + i + " (" + fluid.getPhase(i).getType() + ") density "
-          + rho + " kg/m3 is unphysical");
+      assertTrue(rho < 1000.0,
+	  "Phase " + i + " (" + fluid.getPhase(i).getType() + ") density " + rho + " kg/m3 is unphysical");
     }
   }
 
   /**
-   * Test that addTBPfraction auto-converts density from kg/m3 to g/cm3 when values above 10 are
-   * passed. This reproduces the exact user mistake from issue #1980, where density was given in
-   * kg/m3 (e.g. 738.0) instead of g/cm3 (0.738).
+   * Test that addTBPfraction auto-converts density from kg/m3 to g/cm3 when values above 10 are passed. This reproduces
+   * the exact user mistake from issue #1980, where density was given in kg/m3 (e.g. 738.0) instead of g/cm3 (0.738).
    *
    * @see <a href="https://github.com/equinor/neqsim/issues/1980">Issue #1980</a>
    */
@@ -415,14 +409,14 @@ public class SystemUMRPRUMCEosMatlabTest {
 
     // Same number of phases
     assertEquals(fluidCorrect.getNumberOfPhases(), fluidKgm3.getNumberOfPhases(),
-        "Auto-converted fluid should have same number of phases");
+	"Auto-converted fluid should have same number of phases");
 
     // Phase densities should match closely (within 1%)
     for (int i = 0; i < fluidCorrect.getNumberOfPhases(); i++) {
       double rhoCorrect = fluidCorrect.getPhase(i).getDensity("kg/m3");
       double rhoKgm3 = fluidKgm3.getPhase(i).getDensity("kg/m3");
       assertEquals(rhoCorrect, rhoKgm3, rhoCorrect * 0.01,
-          "Phase " + i + " density should match after auto-conversion");
+	  "Phase " + i + " density should match after auto-conversion");
     }
   }
 }

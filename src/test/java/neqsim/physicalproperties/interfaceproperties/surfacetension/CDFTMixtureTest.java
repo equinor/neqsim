@@ -12,10 +12,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Tests for the cDFT mixture surface tension solver.
  *
  * <p>
- * Tests binary mixture IFT predictions for methane-propane, nitrogen-methane, and methane-n-decane
- * systems. The key advantage of the cDFT approach over gradient theory for mixtures is that
- * cross-interaction kernels are derived directly from the EOS mixing rules (a_ij = sqrt(a_i*a_j)),
- * requiring no additional parameters.
+ * Tests binary mixture IFT predictions for methane-propane, nitrogen-methane, and methane-n-decane systems. The key
+ * advantage of the cDFT approach over gradient theory for mixtures is that cross-interaction kernels are derived
+ * directly from the EOS mixing rules (a_ij = sqrt(a_i*a_j)), requiring no additional parameters.
  * </p>
  *
  * @author Agent
@@ -28,9 +27,8 @@ class CDFTMixtureTest {
    * Test methane-propane binary IFT at 258 K.
    *
    * <p>
-   * Reference data from Weinaug and Katz (1943) and Stegemeier (1959). At 258 K, pure propane IFT
-   * is approximately 10.4 mN/m (from NIST). Adding methane reduces the IFT due to reduced density
-   * difference between phases.
+   * Reference data from Weinaug and Katz (1943) and Stegemeier (1959). At 258 K, pure propane IFT is approximately 10.4
+   * mN/m (from NIST). Adding methane reduces the IFT due to reduced density difference between phases.
    * </p>
    */
   @Test
@@ -50,8 +48,8 @@ class CDFTMixtureTest {
       sys.initProperties();
 
       if (sys.getNumberOfPhases() < 2) {
-        logger.info("CH4/C3 at 258K, 20bar: single phase (supercritical or subcooled)");
-        return;
+	logger.info("CH4/C3 at 258K, 20bar: single phase (supercritical or subcooled)");
+	return;
       }
 
       CDFTSurfaceTension cdft = new CDFTSurfaceTension(sys);
@@ -59,8 +57,8 @@ class CDFTMixtureTest {
       double sigma = cdft.calcSurfaceTension(0, 1);
       double sigmaMNm = sigma * 1000.0;
 
-      logger.printf(org.apache.logging.log4j.Level.INFO,
-          "CH4/C3 at %.0fK, %.0f bar: IFT = %.3f mN/m%n", temperature, pressure, sigmaMNm);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "CH4/C3 at %.0fK, %.0f bar: IFT = %.3f mN/m%n", temperature,
+	  pressure, sigmaMNm);
 
       // Physical sanity: IFT should be positive and between 0 and pure-component propane value
       Assertions.assertTrue(sigmaMNm > 0.0, "IFT must be positive");
@@ -75,8 +73,8 @@ class CDFTMixtureTest {
    * Test nitrogen-methane binary IFT at 95 K.
    *
    * <p>
-   * N2/CH4 mixtures at low temperature have moderate IFT. Experimental data from Stegemeier et al.
-   * shows IFT of approximately 5-8 mN/m at 95 K depending on composition.
+   * N2/CH4 mixtures at low temperature have moderate IFT. Experimental data from Stegemeier et al. shows IFT of
+   * approximately 5-8 mN/m at 95 K depending on composition.
    * </p>
    */
   @Test
@@ -96,8 +94,8 @@ class CDFTMixtureTest {
       sys.initProperties();
 
       if (sys.getNumberOfPhases() < 2) {
-        logger.info("N2/CH4 at 95K, 2bar: single phase");
-        return;
+	logger.info("N2/CH4 at 95K, 2bar: single phase");
+	return;
       }
 
       CDFTSurfaceTension cdft = new CDFTSurfaceTension(sys);
@@ -105,8 +103,8 @@ class CDFTMixtureTest {
       double sigma = cdft.calcSurfaceTension(0, 1);
       double sigmaMNm = sigma * 1000.0;
 
-      logger.printf(org.apache.logging.log4j.Level.INFO,
-          "N2/CH4 at %.0fK, %.0f bar: IFT = %.3f mN/m%n", temperature, pressure, sigmaMNm);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "N2/CH4 at %.0fK, %.0f bar: IFT = %.3f mN/m%n", temperature,
+	  pressure, sigmaMNm);
 
       // Physical sanity: expect positive IFT between 0 and pure CH4 value
       Assertions.assertTrue(sigmaMNm > 0.0, "IFT must be positive");
@@ -121,8 +119,8 @@ class CDFTMixtureTest {
    * Sweep pressure for methane-propane system and show IFT vs pressure.
    *
    * <p>
-   * As pressure increases, more methane dissolves in the liquid and the density difference between
-   * phases decreases, reducing IFT. Near the mixture critical point, IFT approaches zero.
+   * As pressure increases, more methane dissolves in the liquid and the density difference between phases decreases,
+   * reducing IFT. Near the mixture critical point, IFT approaches zero.
    * </p>
    */
   @Test
@@ -131,44 +129,42 @@ class CDFTMixtureTest {
     double lambda = 0.70;
 
     logger.info("\n=== CH4/C3 IFT vs Pressure (T=277.6K) ===");
-    logger.printf(org.apache.logging.log4j.Level.INFO, "%-10s | %-10s | %-10s | %-10s%n", "P (bar)",
-        "IFT(mN/m)", "rhoL", "rhoV");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-10s | %-10s | %-10s | %-10s%n", "P (bar)", "IFT(mN/m)",
+	"rhoL", "rhoV");
     logger.info("-----------|------------|------------|----------");
 
     // Experimental: Weinaug & Katz (1943): at 277.6K (40F):
     // ~14 bar: sigma ~ 7.0 mN/m, ~34 bar: sigma ~ 4.0 mN/m, ~55 bar: sigma ~ 1.5 mN/m
-    double[] pressures = {10.0, 15.0, 20.0, 25.0, 30.0, 40.0, 50.0, 60.0};
+    double[] pressures = { 10.0, 15.0, 20.0, 25.0, 30.0, 40.0, 50.0, 60.0 };
 
     for (double p : pressures) {
       try {
-        SystemInterface sys = new SystemPrEos(temperature, p);
-        sys.addComponent("methane", 0.50);
-        sys.addComponent("propane", 0.50);
-        sys.setMixingRule("classic");
-        sys.setMultiPhaseCheck(true);
+	SystemInterface sys = new SystemPrEos(temperature, p);
+	sys.addComponent("methane", 0.50);
+	sys.addComponent("propane", 0.50);
+	sys.setMixingRule("classic");
+	sys.setMultiPhaseCheck(true);
 
-        ThermodynamicOperations ops = new ThermodynamicOperations(sys);
-        ops.TPflash();
-        sys.initProperties();
+	ThermodynamicOperations ops = new ThermodynamicOperations(sys);
+	ops.TPflash();
+	sys.initProperties();
 
-        if (sys.getNumberOfPhases() < 2) {
-          logger.printf(org.apache.logging.log4j.Level.INFO, "%-10.1f | %10s | %10s | %10s%n", p,
-              "1-phase", "-", "-");
-          continue;
-        }
+	if (sys.getNumberOfPhases() < 2) {
+	  logger.printf(org.apache.logging.log4j.Level.INFO, "%-10.1f | %10s | %10s | %10s%n", p, "1-phase", "-", "-");
+	  continue;
+	}
 
-        double rhoL = 1.0 / (sys.getPhase(1).getMolarVolume() * 1.0e-5);
-        double rhoV = 1.0 / (sys.getPhase(0).getMolarVolume() * 1.0e-5);
+	double rhoL = 1.0 / (sys.getPhase(1).getMolarVolume() * 1.0e-5);
+	double rhoV = 1.0 / (sys.getPhase(0).getMolarVolume() * 1.0e-5);
 
-        CDFTSurfaceTension cdft = new CDFTSurfaceTension(sys);
-        cdft.setAttractiveRangeFactor(lambda);
-        double sigma = cdft.calcSurfaceTension(0, 1) * 1000.0;
+	CDFTSurfaceTension cdft = new CDFTSurfaceTension(sys);
+	cdft.setAttractiveRangeFactor(lambda);
+	double sigma = cdft.calcSurfaceTension(0, 1) * 1000.0;
 
-        logger.printf(org.apache.logging.log4j.Level.INFO, "%-10.1f | %10.3f | %10.1f | %10.1f%n",
-            p, sigma, rhoL, rhoV);
+	logger.printf(org.apache.logging.log4j.Level.INFO, "%-10.1f | %10.3f | %10.1f | %10.1f%n", p, sigma, rhoL,
+	    rhoV);
       } catch (Exception ex) {
-        logger.printf(org.apache.logging.log4j.Level.INFO, "%-10.1f | %10s | %10s | %10s%n", p,
-            "ERROR", "-", "-");
+	logger.printf(org.apache.logging.log4j.Level.INFO, "%-10.1f | %10s | %10s | %10s%n", p, "ERROR", "-", "-");
       }
     }
   }
@@ -177,8 +173,8 @@ class CDFTMixtureTest {
    * Compare pure component and mixture cDFT for consistency.
    *
    * <p>
-   * At the dilute limit (x_CH4 approaches 0), the mixture IFT should approach the pure propane IFT.
-   * This verifies internal consistency of the mixture solver.
+   * At the dilute limit (x_CH4 approaches 0), the mixture IFT should approach the pure propane IFT. This verifies
+   * internal consistency of the mixture solver.
    * </p>
    */
   @Test
@@ -202,8 +198,8 @@ class CDFTMixtureTest {
       CDFTSurfaceTension cdftPure = new CDFTSurfaceTension(pureC3);
       cdftPure.setAttractiveRangeFactor(lambda);
       double sigmaPure = cdftPure.calcSurfaceTension(0, 1) * 1000.0;
-      logger.printf(org.apache.logging.log4j.Level.INFO, "Pure propane at %.0fK: IFT = %.3f mN/m%n",
-          temperature, sigmaPure);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "Pure propane at %.0fK: IFT = %.3f mN/m%n", temperature,
+	  sigmaPure);
 
       // Mixture with small methane fraction
       SystemInterface mix = new SystemPrEos(temperature, pressure);
@@ -216,16 +212,16 @@ class CDFTMixtureTest {
       mix.initProperties();
 
       if (mix.getNumberOfPhases() >= 2) {
-        CDFTSurfaceTension cdftMix = new CDFTSurfaceTension(mix);
-        cdftMix.setAttractiveRangeFactor(lambda);
-        double sigmaMix = cdftMix.calcSurfaceTension(0, 1) * 1000.0;
-        logger.printf(org.apache.logging.log4j.Level.INFO,
-            "C3 + 1%% CH4 at %.0fK, %.0f bar: IFT = %.3f mN/m%n", temperature, pressure, sigmaMix);
-        // Mixture IFT should be within reasonable range of pure IFT
-        logger.printf(org.apache.logging.log4j.Level.INFO,
-            "Ratio mix/pure = %.3f (should be close to 1.0)%n", sigmaMix / sigmaPure);
+	CDFTSurfaceTension cdftMix = new CDFTSurfaceTension(mix);
+	cdftMix.setAttractiveRangeFactor(lambda);
+	double sigmaMix = cdftMix.calcSurfaceTension(0, 1) * 1000.0;
+	logger.printf(org.apache.logging.log4j.Level.INFO, "C3 + 1%% CH4 at %.0fK, %.0f bar: IFT = %.3f mN/m%n",
+	    temperature, pressure, sigmaMix);
+	// Mixture IFT should be within reasonable range of pure IFT
+	logger.printf(org.apache.logging.log4j.Level.INFO, "Ratio mix/pure = %.3f (should be close to 1.0)%n",
+	    sigmaMix / sigmaPure);
       } else {
-        logger.info("Binary: single phase at these conditions");
+	logger.info("Binary: single phase at these conditions");
       }
     } catch (Exception ex) {
       logger.info("Consistency check failed: " + ex.getMessage());
@@ -237,15 +233,14 @@ class CDFTMixtureTest {
    * Compare cDFT mixture IFT with Weinaug and Katz (1943) experimental data.
    *
    * <p>
-   * Weinaug and Katz measured IFT for the methane-propane binary at several temperatures. At 277.6
-   * K (40 degF), they report IFT vs pressure. We compare the cDFT predictions using a
-   * composition-weighted average lambda = 0.65 and calculate AAD. We also compare against the
-   * Parachor method and gradient theory predictions from NeqSim.
+   * Weinaug and Katz measured IFT for the methane-propane binary at several temperatures. At 277.6 K (40 degF), they
+   * report IFT vs pressure. We compare the cDFT predictions using a composition-weighted average lambda = 0.65 and
+   * calculate AAD. We also compare against the Parachor method and gradient theory predictions from NeqSim.
    * </p>
    *
    * <p>
-   * Note: The flash calculation determines the equilibrium compositions. The overall feed
-   * composition is adjusted to ensure two-phase conditions at each pressure.
+   * Note: The flash calculation determines the equilibrium compositions. The overall feed composition is adjusted to
+   * ensure two-phase conditions at each pressure.
    * </p>
    *
    * @see C.F. Weinaug, D.L. Katz, Ind. Eng. Chem. 35 (1943) 239-246
@@ -254,20 +249,20 @@ class CDFTMixtureTest {
   void testMixtureExperimentalComparison() {
     // Weinaug & Katz (1943) Table II: CH4/C3 at 277.6 K (40 degF)
     // Pressure (bar), Experimental IFT (mN/m) - approximate from their Table
-    double[][] expData = {{13.8, 7.0}, // ~200 psia
-        {20.7, 5.5}, // ~300 psia
-        {27.6, 4.2}, // ~400 psia
-        {34.5, 3.2}, // ~500 psia
-        {41.4, 2.3}, // ~600 psia
-        {48.3, 1.6}, // ~700 psia
-        {55.2, 0.9}, // ~800 psia
+    double[][] expData = { { 13.8, 7.0 }, // ~200 psia
+	{ 20.7, 5.5 }, // ~300 psia
+	{ 27.6, 4.2 }, // ~400 psia
+	{ 34.5, 3.2 }, // ~500 psia
+	{ 41.4, 2.3 }, // ~600 psia
+	{ 48.3, 1.6 }, // ~700 psia
+	{ 55.2, 0.9 }, // ~800 psia
     };
     double temperature = 277.6; // K (40 degF)
     double lambda = 0.65; // ~average of CH4 (0.80) and C3 (0.55)
 
     logger.info("\n=== Mixture IFT vs Experimental: CH4/C3 at 277.6K ===");
-    logger.printf(org.apache.logging.log4j.Level.INFO, "%-8s | %8s | %8s | %8s | %8s | %8s%n",
-        "P(bar)", "Exp", "cDFT", "Dev(%)", "Parachor", "GT");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-8s | %8s | %8s | %8s | %8s | %8s%n", "P(bar)", "Exp", "cDFT",
+	"Dev(%)", "Parachor", "GT");
     logger.info("---------|----------|----------|----------|----------|----------");
 
     double sumAbsDev = 0;
@@ -282,97 +277,90 @@ class CDFTMixtureTest {
       double sigmaExp = point[1];
 
       try {
-        SystemInterface sys = new SystemPrEos(temperature, pressure);
-        sys.addComponent("methane", 0.50);
-        sys.addComponent("propane", 0.50);
-        sys.setMixingRule("classic");
-        sys.setMultiPhaseCheck(true);
+	SystemInterface sys = new SystemPrEos(temperature, pressure);
+	sys.addComponent("methane", 0.50);
+	sys.addComponent("propane", 0.50);
+	sys.setMixingRule("classic");
+	sys.setMultiPhaseCheck(true);
 
-        ThermodynamicOperations ops = new ThermodynamicOperations(sys);
-        ops.TPflash();
-        sys.initProperties();
+	ThermodynamicOperations ops = new ThermodynamicOperations(sys);
+	ops.TPflash();
+	sys.initProperties();
 
-        if (sys.getNumberOfPhases() < 2) {
-          logger.printf(org.apache.logging.log4j.Level.INFO,
-              "%-8.1f | %8.2f | %8s | %8s | %8s | %8s%n", pressure, sigmaExp, "1-ph", "-", "-",
-              "-");
-          continue;
-        }
+	if (sys.getNumberOfPhases() < 2) {
+	  logger.printf(org.apache.logging.log4j.Level.INFO, "%-8.1f | %8.2f | %8s | %8s | %8s | %8s%n", pressure,
+	      sigmaExp, "1-ph", "-", "-", "-");
+	  continue;
+	}
 
-        // cDFT prediction
-        String cdftStr = "FAIL";
-        String cdftDevStr = "-";
-        try {
-          CDFTSurfaceTension cdft = new CDFTSurfaceTension(sys);
-          cdft.setAttractiveRangeFactor(lambda);
-          double sigmaCDFT = cdft.calcSurfaceTension(0, 1) * 1000.0;
-          double devCDFT = (sigmaCDFT - sigmaExp) / sigmaExp * 100.0;
-          cdftStr = String.format("%.3f", sigmaCDFT);
-          cdftDevStr = String.format("%+.1f", devCDFT);
-          sumAbsDev += Math.abs(devCDFT);
-          countCDFT++;
-        } catch (Exception ex) {
-          // keep FAIL
-        }
+	// cDFT prediction
+	String cdftStr = "FAIL";
+	String cdftDevStr = "-";
+	try {
+	  CDFTSurfaceTension cdft = new CDFTSurfaceTension(sys);
+	  cdft.setAttractiveRangeFactor(lambda);
+	  double sigmaCDFT = cdft.calcSurfaceTension(0, 1) * 1000.0;
+	  double devCDFT = (sigmaCDFT - sigmaExp) / sigmaExp * 100.0;
+	  cdftStr = String.format("%.3f", sigmaCDFT);
+	  cdftDevStr = String.format("%+.1f", devCDFT);
+	  sumAbsDev += Math.abs(devCDFT);
+	  countCDFT++;
+	} catch (Exception ex) {
+	  // keep FAIL
+	}
 
-        // Parachor prediction (from NeqSim built-in)
-        String parachorStr = "-";
-        try {
-          double parachorIFT = sys.getInterphaseProperties().getSurfaceTension(0, 1) * 1000.0;
-          parachorStr = String.format("%.3f", parachorIFT);
-          double devP = (parachorIFT - sigmaExp) / sigmaExp * 100.0;
-          sumAbsDevParachor += Math.abs(devP);
-          countParachor++;
-        } catch (Exception ex) {
-          // keep dash
-        }
+	// Parachor prediction (from NeqSim built-in)
+	String parachorStr = "-";
+	try {
+	  double parachorIFT = sys.getInterphaseProperties().getSurfaceTension(0, 1) * 1000.0;
+	  parachorStr = String.format("%.3f", parachorIFT);
+	  double devP = (parachorIFT - sigmaExp) / sigmaExp * 100.0;
+	  sumAbsDevParachor += Math.abs(devP);
+	  countParachor++;
+	} catch (Exception ex) {
+	  // keep dash
+	}
 
-        // GT prediction
-        String gtStr = "-";
-        try {
-          double gtIFT =
-              sys.getInterphaseProperties().getSurfaceTensionModel(1).calcSurfaceTension(0, 1)
-                  * 1000.0;
-          gtStr = String.format("%.3f", gtIFT);
-          double devGT = (gtIFT - sigmaExp) / sigmaExp * 100.0;
-          sumAbsDevGT += Math.abs(devGT);
-          countGT++;
-        } catch (Exception ex) {
-          // keep dash
-        }
+	// GT prediction
+	String gtStr = "-";
+	try {
+	  double gtIFT = sys.getInterphaseProperties().getSurfaceTensionModel(1).calcSurfaceTension(0, 1) * 1000.0;
+	  gtStr = String.format("%.3f", gtIFT);
+	  double devGT = (gtIFT - sigmaExp) / sigmaExp * 100.0;
+	  sumAbsDevGT += Math.abs(devGT);
+	  countGT++;
+	} catch (Exception ex) {
+	  // keep dash
+	}
 
-        logger.printf(org.apache.logging.log4j.Level.INFO,
-            "%-8.1f | %8.2f | %8s | %8s | %8s | %8s%n", pressure, sigmaExp, cdftStr, cdftDevStr,
-            parachorStr, gtStr);
+	logger.printf(org.apache.logging.log4j.Level.INFO, "%-8.1f | %8.2f | %8s | %8s | %8s | %8s%n", pressure,
+	    sigmaExp, cdftStr, cdftDevStr, parachorStr, gtStr);
 
       } catch (Exception ex) {
-        logger.printf(org.apache.logging.log4j.Level.INFO,
-            "%-8.1f | %8.2f | %8s | %8s | %8s | %8s%n", pressure, sigmaExp, "ERR", "-", "-", "-");
+	logger.printf(org.apache.logging.log4j.Level.INFO, "%-8.1f | %8.2f | %8s | %8s | %8s | %8s%n", pressure,
+	    sigmaExp, "ERR", "-", "-", "-");
       }
     }
 
     // Summary
     logger.info("---------|----------|----------|----------|----------|----------");
     if (countCDFT > 0) {
-      logger.printf(org.apache.logging.log4j.Level.INFO, "cDFT AAD = %.1f%% (n=%d)%n",
-          sumAbsDev / countCDFT, countCDFT);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "cDFT AAD = %.1f%% (n=%d)%n", sumAbsDev / countCDFT,
+	  countCDFT);
     }
     if (countParachor > 0) {
       logger.printf(org.apache.logging.log4j.Level.INFO, "Parachor AAD = %.1f%% (n=%d)%n",
-          sumAbsDevParachor / countParachor, countParachor);
+	  sumAbsDevParachor / countParachor, countParachor);
     }
     if (countGT > 0) {
-      logger.printf(org.apache.logging.log4j.Level.INFO, "GT AAD = %.1f%% (n=%d)%n",
-          sumAbsDevGT / countGT, countGT);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "GT AAD = %.1f%% (n=%d)%n", sumAbsDevGT / countGT, countGT);
     }
 
     // Soft assertion: cDFT mixture IFT should be in the right ballpark
     if (countCDFT > 0) {
       double aad = sumAbsDev / countCDFT;
-      logger.printf(org.apache.logging.log4j.Level.INFO, "%nOverall cDFT mixture AAD = %.1f%%%n",
-          aad);
-      Assertions.assertTrue(aad < 50.0,
-          "Mixture cDFT AAD should be below 50% (qualitative agreement)");
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%nOverall cDFT mixture AAD = %.1f%%%n", aad);
+      Assertions.assertTrue(aad < 50.0, "Mixture cDFT AAD should be below 50% (qualitative agreement)");
     }
   }
 }

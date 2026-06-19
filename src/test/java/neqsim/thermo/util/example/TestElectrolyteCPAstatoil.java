@@ -20,7 +20,7 @@ public class TestElectrolyteCPAstatoil {
   private static final Logger logger = LogManager.getLogger(TestElectrolyteCPAstatoil.class);
 
   /** Logger object for class. */
-  
+
   /**
    * <p>
    * main.
@@ -70,7 +70,6 @@ public class TestElectrolyteCPAstatoil {
     // logger.info("Osmotic coefficient " +
     // testSystem.getPhase(1).getOsmoticCoefficientOfWater());
     logger.info("water activity coefficient " + testSystem.getPhase(1).getActivityCoefficient(1));
-    logger
-        .info("water activity coefficient " + testSystem.getPhase(1).getActivityCoefficient(1, 2));
+    logger.info("water activity coefficient " + testSystem.getPhase(1).getActivityCoefficient(1, 2));
   }
 }

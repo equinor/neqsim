@@ -17,8 +17,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * Mechanical design calculations for centrifugal compressors.
  *
  * <p>
- * This class provides sizing and design calculations for centrifugal compressors based on API 617
- * and industry practice. Calculations include:
+ * This class provides sizing and design calculations for centrifugal compressors based on API 617 and industry
+ * practice. Calculations include:
  * <ul>
  * <li>Number of stages based on pressure ratio and head per stage limits</li>
  * <li>Impeller diameter sizing based on flow coefficient</li>
@@ -257,8 +257,8 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
     super.readDesignSpecifications();
 
     if (getDesignStandard().containsKey("compressor design codes")) {
-      CompressorDesignStandard compStandard =
-          (CompressorDesignStandard) getDesignStandard().get("compressor design codes");
+      CompressorDesignStandard compStandard = (CompressorDesignStandard) getDesignStandard()
+	  .get("compressor design codes");
       compressorFactor = compStandard.getCompressorFactor();
     }
   }
@@ -327,11 +327,11 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
    * Run detailed casing mechanical design using the CompressorCasingDesignCalculator.
    *
    * <p>
-   * Transfers operating conditions from the compressor to the calculator and runs all
-   * casing design checks per API 617, ASME VIII, ASME B16.5, and NACE MR0175.
+   * Transfers operating conditions from the compressor to the calculator and runs all casing design checks per API 617,
+   * ASME VIII, ASME B16.5, and NACE MR0175.
    * </p>
    *
-   * @param compressor the compressor equipment
+   * @param compressor   the compressor equipment
    * @param shaftPowerKW shaft power in kW
    */
   private void calculateCasingDesign(Compressor compressor, double shaftPowerKW) {
@@ -340,12 +340,9 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
     // Transfer operating conditions
     casingDesignCalculator.setDesignPressureBara(designPressure);
     casingDesignCalculator.setDesignTemperatureC(designTemperature);
-    casingDesignCalculator.setMaxOperatingPressureMPa(
-        compressor.getOutletStream().getPressure("bara") / 10.0);
-    casingDesignCalculator.setMaxOperatingTemperatureC(
-        compressor.getOutletStream().getTemperature("C"));
-    casingDesignCalculator.setMinOperatingTemperatureC(
-        compressor.getInletStream().getTemperature("C"));
+    casingDesignCalculator.setMaxOperatingPressureMPa(compressor.getOutletStream().getPressure("bara") / 10.0);
+    casingDesignCalculator.setMaxOperatingTemperatureC(compressor.getOutletStream().getTemperature("C"));
+    casingDesignCalculator.setMinOperatingTemperatureC(compressor.getInletStream().getTemperature("C"));
 
     // Transfer geometry from process design
     double casingID = impellerDiameter * 1.3; // Casing ID ~1.3x impeller OD
@@ -366,10 +363,8 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
     casingDesignCalculator.setH2sPartialPressureKPa(h2sPartialPressureKPa);
 
     // Nozzle sizes - estimate from volume flow
-    double volumeFlowM3s =
-        compressor.getInletStream().getFlowRate("m3/hr") / 3600.0;
-    double suctionNozzleMm = Math.max(100.0,
-        Math.sqrt(volumeFlowM3s / (Math.PI * 15.0)) * 2000.0); // ~15 m/s velocity
+    double volumeFlowM3s = compressor.getInletStream().getFlowRate("m3/hr") / 3600.0;
+    double suctionNozzleMm = Math.max(100.0, Math.sqrt(volumeFlowM3s / (Math.PI * 15.0)) * 2000.0); // ~15 m/s velocity
     double dischargeNozzleMm = suctionNozzleMm * 0.8; // Typically smaller
     casingDesignCalculator.setSuctionNozzleSizeMm(suctionNozzleMm);
     casingDesignCalculator.setDischargeNozzleSizeMm(dischargeNozzleMm);
@@ -418,10 +413,9 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
    *
    * @param volumeFlowM3hr inlet volume flow rate in m3/hr
    * @param polytropicHead total polytropic head in kJ/kg
-   * @param speedRPM shaft speed in rpm
+   * @param speedRPM       shaft speed in rpm
    */
-  private void calculateImpellerSizing(double volumeFlowM3hr, double polytropicHead,
-      double speedRPM) {
+  private void calculateImpellerSizing(double volumeFlowM3hr, double polytropicHead, double speedRPM) {
     if (speedRPM <= 0 || volumeFlowM3hr <= 0) {
       impellerDiameter = 300.0; // Default
       tipSpeed = 0.0;
@@ -459,7 +453,7 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
   /**
    * Calculate shaft diameter based on torque requirements.
    *
-   * @param powerKW shaft power in kW
+   * @param powerKW  shaft power in kW
    * @param speedRPM shaft speed in rpm
    */
   private void calculateShaftDiameter(double powerKW, double speedRPM) {
@@ -534,14 +528,14 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
     double massPerLength = 7850.0 * Math.PI * Math.pow(shaftDiameter / 2000.0, 2);
     if (bearingSpan > 0) {
       firstCriticalSpeed = (946.0 / (2.0 * Math.PI))
-          * Math.sqrt(stiffnessFactor / (massPerLength * Math.pow(bearingSpan / 1000.0, 3))) * 60.0;
+	  * Math.sqrt(stiffnessFactor / (massPerLength * Math.pow(bearingSpan / 1000.0, 3))) * 60.0;
     }
   }
 
   /**
    * Calculate compressor weights.
    *
-   * @param massFlowKghr mass flow rate in kg/hr
+   * @param massFlowKghr       mass flow rate in kg/hr
    * @param designPressureBara design pressure in bara
    */
   private void calculateWeights(double massFlowKghr, double designPressureBara) {
@@ -549,8 +543,7 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
 
     // Rotor weight (impellers + shaft)
     double impellerWeight = numberOfStages * 0.5 * Math.pow(impellerDiameter / 100.0, 2.5);
-    double shaftWeight =
-        bearingSpan / 1000.0 * 7850.0 * Math.PI * Math.pow(shaftDiameter / 2000.0, 2);
+    double shaftWeight = bearingSpan / 1000.0 * 7850.0 * Math.PI * Math.pow(shaftDiameter / 2000.0, 2);
     rotorWeight = impellerWeight + shaftWeight;
 
     // Casing weight based on pressure and size
@@ -560,8 +553,8 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
     double casingOuterDiameter = impellerDiameter * 1.5;
 
     // Casing weight = pi * D * L * t * rho
-    casingWeight = Math.PI * (casingOuterDiameter / 1000.0) * (casingLength / 1000.0)
-        * (casingThickness / 1000.0) * 7850.0;
+    casingWeight = Math.PI * (casingOuterDiameter / 1000.0) * (casingLength / 1000.0) * (casingThickness / 1000.0)
+	* 7850.0;
 
     // Add end caps (approximately 20% of shell)
     casingWeight = casingWeight * 1.2;
@@ -585,8 +578,8 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
     double electricalWeight = driverPower * 0.5; // Cables, junction boxes
     double structuralWeight = emptyVesselWeight * 0.15;
 
-    double totalSkidWeight = emptyVesselWeight + bundleWeight + sealSystemWeight + lubeSystemWeight
-        + pipingWeight + electricalWeight + structuralWeight;
+    double totalSkidWeight = emptyVesselWeight + bundleWeight + sealSystemWeight + lubeSystemWeight + pipingWeight
+	+ electricalWeight + structuralWeight;
 
     // Store results
     setWeigthVesselShell(casingWeight);
@@ -658,7 +651,7 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
     Container dialogContentPane = dialog.getContentPane();
     dialogContentPane.setLayout(new BorderLayout());
 
-    String[] names = {"Parameter", "Value", "Unit"};
+    String[] names = { "Parameter", "Value", "Unit" };
     String[][] table = new String[22][3];
 
     int row = 0;
@@ -989,8 +982,7 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
    * {@inheritDoc}
    *
    * <p>
-   * Returns a compressor-specific response with additional fields for staging, driver sizing, and
-   * rotordynamic data.
+   * Returns a compressor-specific response with additional fields for staging, driver sizing, and rotordynamic data.
    * </p>
    */
   @Override
@@ -1317,13 +1309,12 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
   /**
    * Validates that design operating point is within acceptable margins.
    *
-   * @param actualFlowM3hr actual operating flow in m3/hr
-   * @param surgeFlowM3hr calculated surge flow in m3/hr
+   * @param actualFlowM3hr    actual operating flow in m3/hr
+   * @param surgeFlowM3hr     calculated surge flow in m3/hr
    * @param stonewallFlowM3hr calculated stonewall flow in m3/hr
    * @return true if operating point is acceptable
    */
-  public boolean validateOperatingPoint(double actualFlowM3hr, double surgeFlowM3hr,
-      double stonewallFlowM3hr) {
+  public boolean validateOperatingPoint(double actualFlowM3hr, double surgeFlowM3hr, double stonewallFlowM3hr) {
     return actualFlowM3hr > surgeFlowM3hr && actualFlowM3hr < stonewallFlowM3hr;
   }
 
@@ -1332,48 +1323,45 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
    */
   public void loadProcessDesignParameters() {
     try (
-        neqsim.util.database.NeqSimProcessDesignDataBase database =
-            new neqsim.util.database.NeqSimProcessDesignDataBase();
-        java.sql.ResultSet dataSet =
-            database.getResultSet("SELECT * FROM technicalrequirements_process WHERE "
-                + "EQUIPMENTTYPE='Compressor' AND Company='" + getCompanySpecificDesignStandards()
-                + "'")) {
+	neqsim.util.database.NeqSimProcessDesignDataBase database = new neqsim.util.database.NeqSimProcessDesignDataBase();
+	java.sql.ResultSet dataSet = database.getResultSet("SELECT * FROM technicalrequirements_process WHERE "
+	    + "EQUIPMENTTYPE='Compressor' AND Company='" + getCompanySpecificDesignStandards() + "'")) {
 
       while (dataSet.next()) {
-        String spec = dataSet.getString("SPECIFICATION");
-        double minVal = dataSet.getDouble("MINVALUE");
-        double maxVal = dataSet.getDouble("MAXVALUE");
-        double value = (minVal + maxVal) / 2.0;
+	String spec = dataSet.getString("SPECIFICATION");
+	double minVal = dataSet.getDouble("MINVALUE");
+	double maxVal = dataSet.getDouble("MAXVALUE");
+	double value = (minVal + maxVal) / 2.0;
 
-        switch (spec) {
-          case "SurgeMargin":
-            this.surgeMarginPercent = value;
-            break;
-          case "StonewallMargin":
-            this.stonewallMarginPercent = value;
-            break;
-          case "MinTurndown":
-            this.minTurndownPercent = value;
-            break;
-          case "PolytropicEfficiencyTarget":
-            this.targetPolytropicEfficiency = value / 100.0;
-            break;
-          case "PolytropicEfficiencyMin":
-            this.minPolytropicEfficiency = value / 100.0;
-            break;
-          case "MaxPressureRatioPerStage":
-            this.maxPressureRatioPerStage = value;
-            break;
-          case "MaxVibration":
-            this.maxVibrationMmPerSec = value;
-            break;
-          case "MaxDischargeTemperature":
-            this.maxDischargeTemperatureC = value;
-            break;
-          default:
-            // Ignore unknown parameters
-            break;
-        }
+	switch (spec) {
+	case "SurgeMargin":
+	  this.surgeMarginPercent = value;
+	  break;
+	case "StonewallMargin":
+	  this.stonewallMarginPercent = value;
+	  break;
+	case "MinTurndown":
+	  this.minTurndownPercent = value;
+	  break;
+	case "PolytropicEfficiencyTarget":
+	  this.targetPolytropicEfficiency = value / 100.0;
+	  break;
+	case "PolytropicEfficiencyMin":
+	  this.minPolytropicEfficiency = value / 100.0;
+	  break;
+	case "MaxPressureRatioPerStage":
+	  this.maxPressureRatioPerStage = value;
+	  break;
+	case "MaxVibration":
+	  this.maxVibrationMmPerSec = value;
+	  break;
+	case "MaxDischargeTemperature":
+	  this.maxDischargeTemperatureC = value;
+	  break;
+	default:
+	  // Ignore unknown parameters
+	  break;
+	}
       }
     } catch (Exception ex) {
       // Use default values if database lookup fails
@@ -1442,15 +1430,15 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
     // Validate discharge temperature
     double dischargeTemp = compressor.getOutletStream().getTemperature("C");
     if (!validateDischargeTemperature(dischargeTemp)) {
-      result.addIssue("Discharge temperature " + String.format("%.1f", dischargeTemp)
-          + " °C exceeds maximum " + String.format("%.1f", maxDischargeTemperatureC) + " °C");
+      result.addIssue("Discharge temperature " + String.format("%.1f", dischargeTemp) + " °C exceeds maximum "
+	  + String.format("%.1f", maxDischargeTemperatureC) + " °C");
     }
 
     // Validate polytropic efficiency
     double actualEfficiency = compressor.getPolytropicEfficiency();
     if (actualEfficiency > 0 && !validateEfficiency(actualEfficiency)) {
-      result.addIssue("Polytropic efficiency " + String.format("%.1f", actualEfficiency * 100)
-          + "% below minimum " + String.format("%.1f", minPolytropicEfficiency * 100) + "%");
+      result.addIssue("Polytropic efficiency " + String.format("%.1f", actualEfficiency * 100) + "% below minimum "
+	  + String.format("%.1f", minPolytropicEfficiency * 100) + "%");
     }
 
     // Validate pressure ratio per stage
@@ -1459,14 +1447,13 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
     double totalPressureRatio = dischargePressure / suctionPressure;
     double pressureRatioPerStage = Math.pow(totalPressureRatio, 1.0 / numberOfStages);
     if (!validatePressureRatioPerStage(pressureRatioPerStage)) {
-      result.addIssue("Pressure ratio per stage " + String.format("%.2f", pressureRatioPerStage)
-          + " exceeds maximum " + String.format("%.2f", maxPressureRatioPerStage));
+      result.addIssue("Pressure ratio per stage " + String.format("%.2f", pressureRatioPerStage) + " exceeds maximum "
+	  + String.format("%.2f", maxPressureRatioPerStage));
     }
 
     // Validate surge margin
     if (surgeMarginPercent < 10.0) {
-      result.addIssue("Surge margin " + String.format("%.1f", surgeMarginPercent)
-          + "% below recommended minimum 10%");
+      result.addIssue("Surge margin " + String.format("%.1f", surgeMarginPercent) + "% below recommended minimum 10%");
     }
 
     result.setValid(result.getIssues().isEmpty());

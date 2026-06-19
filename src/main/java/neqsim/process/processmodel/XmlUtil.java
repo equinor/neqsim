@@ -11,7 +11,8 @@ import javax.xml.parsers.ParserConfigurationException;
  */
 public final class XmlUtil {
 
-  private XmlUtil() {}
+  private XmlUtil() {
+  }
 
   /**
    * Creates a new DocumentBuilder with secure processing features enabled.

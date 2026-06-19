@@ -20,9 +20,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * Stateless bioprocessing runner for MCP integration.
  *
  * <p>
- * Supports four reactor types: anaerobic digestion, fermentation, biomass gasification, and
- * pyrolysis. Each takes feedstock parameters and returns process outputs (biogas, syngas, bio-oil,
- * char yields, energy recovery, etc.).
+ * Supports four reactor types: anaerobic digestion, fermentation, biomass gasification, and pyrolysis. Each takes
+ * feedstock parameters and returns process outputs (biogas, syngas, bio-oil, char yields, energy recovery, etc.).
  * </p>
  *
  * @author Even Solbraa
@@ -30,13 +29,13 @@ import neqsim.thermo.system.SystemSrkEos;
  */
 public class BioprocessRunner {
 
-  private static final Gson GSON =
-      new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+  private static final Gson GSON = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
 
   /**
    * Private constructor — all methods are static.
    */
-  private BioprocessRunner() {}
+  private BioprocessRunner() {
+  }
 
   /**
    * Runs a bioprocess simulation from a JSON input.
@@ -56,32 +55,29 @@ public class BioprocessRunner {
    */
   public static String run(String json) {
     if (json == null || json.trim().isEmpty()) {
-      return errorJson("INPUT_ERROR", "JSON input is null or empty",
-          "Provide a valid JSON bioprocess specification");
+      return errorJson("INPUT_ERROR", "JSON input is null or empty", "Provide a valid JSON bioprocess specification");
     }
 
     JsonObject input;
     try {
       input = JsonParser.parseString(json).getAsJsonObject();
     } catch (Exception e) {
-      return errorJson("JSON_PARSE_ERROR", "Failed to parse JSON: " + e.getMessage(),
-          "Ensure the JSON is well-formed");
+      return errorJson("JSON_PARSE_ERROR", "Failed to parse JSON: " + e.getMessage(), "Ensure the JSON is well-formed");
     }
 
-    String reactorType =
-        input.has("reactorType") ? input.get("reactorType").getAsString().toLowerCase()
-            : "anaerobicdigester";
+    String reactorType = input.has("reactorType") ? input.get("reactorType").getAsString().toLowerCase()
+	: "anaerobicdigester";
 
     switch (reactorType) {
-      case "fermentation":
-        return runFermentation(input);
-      case "gasifier":
-        return runGasification(input);
-      case "pyrolysis":
-        return runPyrolysis(input);
-      case "anaerobicdigester":
-      default:
-        return runAnaerobicDigestion(input);
+    case "fermentation":
+      return runFermentation(input);
+    case "gasifier":
+      return runGasification(input);
+    case "pyrolysis":
+      return runPyrolysis(input);
+    case "anaerobicdigester":
+    default:
+      return runAnaerobicDigestion(input);
     }
   }
 
@@ -110,28 +106,27 @@ public class BioprocessRunner {
 
       // Configure from input
       if (input.has("substrateType")) {
-        String st = input.get("substrateType").getAsString().toUpperCase();
-        digester.setSubstrateType(AnaerobicDigester.SubstrateType.valueOf(st));
+	String st = input.get("substrateType").getAsString().toUpperCase();
+	digester.setSubstrateType(AnaerobicDigester.SubstrateType.valueOf(st));
       }
       if (input.has("feedRate_kgPerHr") && input.has("totalSolidsFraction")) {
-        digester.setFeedRate(input.get("feedRate_kgPerHr").getAsDouble(),
-            input.get("totalSolidsFraction").getAsDouble());
+	digester.setFeedRate(input.get("feedRate_kgPerHr").getAsDouble(),
+	    input.get("totalSolidsFraction").getAsDouble());
       }
       if (input.has("temperature_C")) {
-        digester.setDigesterTemperature(input.get("temperature_C").getAsDouble(), "C");
+	digester.setDigesterTemperature(input.get("temperature_C").getAsDouble(), "C");
       }
       if (input.has("specificMethaneYield_Nm3PerKgVS")) {
-        digester
-            .setSpecificMethaneYield(input.get("specificMethaneYield_Nm3PerKgVS").getAsDouble());
+	digester.setSpecificMethaneYield(input.get("specificMethaneYield_Nm3PerKgVS").getAsDouble());
       }
       if (input.has("vsDestruction")) {
-        digester.setVSDestruction(input.get("vsDestruction").getAsDouble());
+	digester.setVSDestruction(input.get("vsDestruction").getAsDouble());
       }
       if (input.has("methaneFraction")) {
-        digester.setMethaneFraction(input.get("methaneFraction").getAsDouble());
+	digester.setMethaneFraction(input.get("methaneFraction").getAsDouble());
       }
       if (input.has("volume_m3")) {
-        digester.setVesselVolume(input.get("volume_m3").getAsDouble());
+	digester.setVesselVolume(input.get("volume_m3").getAsDouble());
       }
 
       // Run
@@ -157,7 +152,7 @@ public class BioprocessRunner {
       return GSON.toJson(response);
     } catch (Exception e) {
       return errorJson("AD_ERROR", "Anaerobic digestion simulation failed: " + e.getMessage(),
-          "Check substrate type and feed parameters");
+	  "Check substrate type and feed parameters");
     }
   }
 
@@ -184,39 +179,39 @@ public class BioprocessRunner {
 
       // Configure from input
       if (input.has("kineticModel")) {
-        String km = input.get("kineticModel").getAsString().toUpperCase();
-        reactor.setKineticModel(FermentationReactor.KineticModel.valueOf(km));
+	String km = input.get("kineticModel").getAsString().toUpperCase();
+	reactor.setKineticModel(FermentationReactor.KineticModel.valueOf(km));
       }
       if (input.has("operationMode")) {
-        String om = input.get("operationMode").getAsString().toUpperCase();
-        reactor.setOperationMode(FermentationReactor.OperationMode.valueOf(om));
+	String om = input.get("operationMode").getAsString().toUpperCase();
+	reactor.setOperationMode(FermentationReactor.OperationMode.valueOf(om));
       }
       if (input.has("maxSpecificGrowthRate")) {
-        reactor.setMaxSpecificGrowthRate(input.get("maxSpecificGrowthRate").getAsDouble());
+	reactor.setMaxSpecificGrowthRate(input.get("maxSpecificGrowthRate").getAsDouble());
       }
       if (input.has("monodConstant")) {
-        reactor.setMonodConstant(input.get("monodConstant").getAsDouble());
+	reactor.setMonodConstant(input.get("monodConstant").getAsDouble());
       }
       if (input.has("yieldBiomass")) {
-        reactor.setYieldBiomass(input.get("yieldBiomass").getAsDouble());
+	reactor.setYieldBiomass(input.get("yieldBiomass").getAsDouble());
       }
       if (input.has("yieldProduct")) {
-        reactor.setYieldProduct(input.get("yieldProduct").getAsDouble());
+	reactor.setYieldProduct(input.get("yieldProduct").getAsDouble());
       }
       if (input.has("substrateConcentration_gPerL")) {
-        reactor.setSubstrateConcentration(input.get("substrateConcentration_gPerL").getAsDouble());
+	reactor.setSubstrateConcentration(input.get("substrateConcentration_gPerL").getAsDouble());
       }
       if (input.has("biomassConcentration_gPerL")) {
-        reactor.setBiomassConcentration(input.get("biomassConcentration_gPerL").getAsDouble());
+	reactor.setBiomassConcentration(input.get("biomassConcentration_gPerL").getAsDouble());
       }
       if (input.has("volume_m3")) {
-        reactor.setVesselVolume(input.get("volume_m3").getAsDouble());
+	reactor.setVesselVolume(input.get("volume_m3").getAsDouble());
       }
       if (input.has("residenceTime_hr")) {
-        reactor.setResidenceTime(input.get("residenceTime_hr").getAsDouble(), "hr");
+	reactor.setResidenceTime(input.get("residenceTime_hr").getAsDouble(), "hr");
       }
       if (input.has("temperature_C")) {
-        reactor.setReactorTemperature(input.get("temperature_C").getAsDouble(), "C");
+	reactor.setReactorTemperature(input.get("temperature_C").getAsDouble(), "C");
       }
 
       ProcessSystem process = new ProcessSystem();
@@ -241,7 +236,7 @@ public class BioprocessRunner {
       return GSON.toJson(response);
     } catch (Exception e) {
       return errorJson("FERMENTATION_ERROR", "Fermentation simulation failed: " + e.getMessage(),
-          "Check kinetic model parameters");
+	  "Check kinetic model parameters");
     }
   }
 
@@ -260,46 +255,43 @@ public class BioprocessRunner {
       BiomassCharacterization biomass = new BiomassCharacterization("Biomass");
       double moisturePct = 15.0;
       if (input.has("biomass")) {
-        JsonObject bm = input.getAsJsonObject("biomass");
-        if (bm.has("carbon")) {
-          biomass.setUltimateAnalysis(bm.get("carbon").getAsDouble(),
-              bm.has("hydrogen") ? bm.get("hydrogen").getAsDouble() : 6.0,
-              bm.has("oxygen") ? bm.get("oxygen").getAsDouble() : 42.0,
-              bm.has("nitrogen") ? bm.get("nitrogen").getAsDouble() : 0.5,
-              bm.has("sulfur") ? bm.get("sulfur").getAsDouble() : 0.1,
-              bm.has("ash") ? bm.get("ash").getAsDouble() : 1.0);
-        }
-        if (bm.has("moisture")) {
-          moisturePct = bm.get("moisture").getAsDouble() * 100.0;
-        }
-        double ashPct = bm.has("ash") ? bm.get("ash").getAsDouble() : 1.0;
-        biomass.setProximateAnalysis(moisturePct, 80.0, 20.0 - ashPct, ashPct);
+	JsonObject bm = input.getAsJsonObject("biomass");
+	if (bm.has("carbon")) {
+	  biomass.setUltimateAnalysis(bm.get("carbon").getAsDouble(),
+	      bm.has("hydrogen") ? bm.get("hydrogen").getAsDouble() : 6.0,
+	      bm.has("oxygen") ? bm.get("oxygen").getAsDouble() : 42.0,
+	      bm.has("nitrogen") ? bm.get("nitrogen").getAsDouble() : 0.5,
+	      bm.has("sulfur") ? bm.get("sulfur").getAsDouble() : 0.1,
+	      bm.has("ash") ? bm.get("ash").getAsDouble() : 1.0);
+	}
+	if (bm.has("moisture")) {
+	  moisturePct = bm.get("moisture").getAsDouble() * 100.0;
+	}
+	double ashPct = bm.has("ash") ? bm.get("ash").getAsDouble() : 1.0;
+	biomass.setProximateAnalysis(moisturePct, 80.0, 20.0 - ashPct, ashPct);
       }
-      double feedRate =
-          input.has("feedRate_kgPerHr") ? input.get("feedRate_kgPerHr").getAsDouble() : 1000.0;
+      double feedRate = input.has("feedRate_kgPerHr") ? input.get("feedRate_kgPerHr").getAsDouble() : 1000.0;
       gasifier.setBiomass(biomass, feedRate);
 
       // Gasifier configuration
       if (input.has("gasifierType")) {
-        gasifier.setGasifierType(BiomassGasifier.GasifierType
-            .valueOf(input.get("gasifierType").getAsString().toUpperCase()));
+	gasifier.setGasifierType(
+	    BiomassGasifier.GasifierType.valueOf(input.get("gasifierType").getAsString().toUpperCase()));
       }
       if (input.has("agentType")) {
-        gasifier.setAgentType(
-            BiomassGasifier.AgentType.valueOf(input.get("agentType").getAsString().toUpperCase()));
+	gasifier.setAgentType(BiomassGasifier.AgentType.valueOf(input.get("agentType").getAsString().toUpperCase()));
       }
       if (input.has("equivalenceRatio")) {
-        gasifier.setEquivalenceRatio(input.get("equivalenceRatio").getAsDouble());
+	gasifier.setEquivalenceRatio(input.get("equivalenceRatio").getAsDouble());
       }
       if (input.has("temperature_C")) {
-        gasifier.setGasificationTemperature(input.get("temperature_C").getAsDouble(), "C");
+	gasifier.setGasificationTemperature(input.get("temperature_C").getAsDouble(), "C");
       }
       if (input.has("pressure_bara")) {
-        gasifier.setGasificationPressure(input.get("pressure_bara").getAsDouble());
+	gasifier.setGasificationPressure(input.get("pressure_bara").getAsDouble());
       }
       if (input.has("carbonConversionEfficiency")) {
-        gasifier
-            .setCarbonConversionEfficiency(input.get("carbonConversionEfficiency").getAsDouble());
+	gasifier.setCarbonConversionEfficiency(input.get("carbonConversionEfficiency").getAsDouble());
       }
 
       gasifier.run();
@@ -323,7 +315,7 @@ public class BioprocessRunner {
       return GSON.toJson(response);
     } catch (Exception e) {
       return errorJson("GASIFICATION_ERROR", "Gasification simulation failed: " + e.getMessage(),
-          "Check biomass characterization and gasifier parameters");
+	  "Check biomass characterization and gasifier parameters");
     }
   }
 
@@ -342,41 +334,39 @@ public class BioprocessRunner {
       BiomassCharacterization biomass = new BiomassCharacterization("Biomass");
       double moisturePct = 15.0;
       if (input.has("biomass")) {
-        JsonObject bm = input.getAsJsonObject("biomass");
-        if (bm.has("carbon")) {
-          biomass.setUltimateAnalysis(bm.get("carbon").getAsDouble(),
-              bm.has("hydrogen") ? bm.get("hydrogen").getAsDouble() : 6.0,
-              bm.has("oxygen") ? bm.get("oxygen").getAsDouble() : 42.0,
-              bm.has("nitrogen") ? bm.get("nitrogen").getAsDouble() : 0.5,
-              bm.has("sulfur") ? bm.get("sulfur").getAsDouble() : 0.1,
-              bm.has("ash") ? bm.get("ash").getAsDouble() : 1.0);
-        }
-        if (bm.has("moisture")) {
-          moisturePct = bm.get("moisture").getAsDouble() * 100.0;
-        }
-        double ashPct = bm.has("ash") ? bm.get("ash").getAsDouble() : 1.0;
-        biomass.setProximateAnalysis(moisturePct, 80.0, 20.0 - ashPct, ashPct);
+	JsonObject bm = input.getAsJsonObject("biomass");
+	if (bm.has("carbon")) {
+	  biomass.setUltimateAnalysis(bm.get("carbon").getAsDouble(),
+	      bm.has("hydrogen") ? bm.get("hydrogen").getAsDouble() : 6.0,
+	      bm.has("oxygen") ? bm.get("oxygen").getAsDouble() : 42.0,
+	      bm.has("nitrogen") ? bm.get("nitrogen").getAsDouble() : 0.5,
+	      bm.has("sulfur") ? bm.get("sulfur").getAsDouble() : 0.1,
+	      bm.has("ash") ? bm.get("ash").getAsDouble() : 1.0);
+	}
+	if (bm.has("moisture")) {
+	  moisturePct = bm.get("moisture").getAsDouble() * 100.0;
+	}
+	double ashPct = bm.has("ash") ? bm.get("ash").getAsDouble() : 1.0;
+	biomass.setProximateAnalysis(moisturePct, 80.0, 20.0 - ashPct, ashPct);
       }
-      double feedRate =
-          input.has("feedRate_kgPerHr") ? input.get("feedRate_kgPerHr").getAsDouble() : 1000.0;
+      double feedRate = input.has("feedRate_kgPerHr") ? input.get("feedRate_kgPerHr").getAsDouble() : 1000.0;
       reactor.setBiomass(biomass, feedRate);
 
       // Pyrolysis configuration
       if (input.has("mode")) {
-        reactor.setPyrolysisMode(
-            PyrolysisReactor.PyrolysisMode.valueOf(input.get("mode").getAsString().toUpperCase()));
+	reactor.setPyrolysisMode(PyrolysisReactor.PyrolysisMode.valueOf(input.get("mode").getAsString().toUpperCase()));
       }
       if (input.has("temperature_C")) {
-        reactor.setPyrolysisTemperature(input.get("temperature_C").getAsDouble(), "C");
+	reactor.setPyrolysisTemperature(input.get("temperature_C").getAsDouble(), "C");
       }
       if (input.has("pressure_bara")) {
-        reactor.setReactorPressure(input.get("pressure_bara").getAsDouble());
+	reactor.setReactorPressure(input.get("pressure_bara").getAsDouble());
       }
       if (input.has("heatingRate_KPerS")) {
-        reactor.setHeatingRate(input.get("heatingRate_KPerS").getAsDouble());
+	reactor.setHeatingRate(input.get("heatingRate_KPerS").getAsDouble());
       }
       if (input.has("vapourResidenceTime_s")) {
-        reactor.setVapourResidenceTime(input.get("vapourResidenceTime_s").getAsDouble());
+	reactor.setVapourResidenceTime(input.get("vapourResidenceTime_s").getAsDouble());
       }
 
       reactor.run();
@@ -403,15 +393,15 @@ public class BioprocessRunner {
       return GSON.toJson(response);
     } catch (Exception e) {
       return errorJson("PYROLYSIS_ERROR", "Pyrolysis simulation failed: " + e.getMessage(),
-          "Check biomass characterization and pyrolysis mode");
+	  "Check biomass characterization and pyrolysis mode");
     }
   }
 
   /**
    * Creates a standard error JSON string.
    *
-   * @param code the error code
-   * @param message the error message
+   * @param code        the error code
+   * @param message     the error message
    * @param remediation the fix suggestion
    * @return the error JSON string
    */

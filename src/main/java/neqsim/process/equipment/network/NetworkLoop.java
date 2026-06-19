@@ -9,14 +9,13 @@ import java.util.List;
  * Represents an independent loop in a pipeline network.
  *
  * <p>
- * A loop consists of a set of pipelines that form a closed path in the network. Each pipeline in
- * the loop has a direction (+1 or -1) indicating whether its positive flow direction aligns with
- * the loop traversal direction.
+ * A loop consists of a set of pipelines that form a closed path in the network. Each pipeline in the loop has a
+ * direction (+1 or -1) indicating whether its positive flow direction aligns with the loop traversal direction.
  * </p>
  *
  * <p>
- * This class is used by the Hardy Cross method to balance head losses around each independent loop
- * in a looped network topology.
+ * This class is used by the Hardy Cross method to balance head losses around each independent loop in a looped network
+ * topology.
  * </p>
  *
  * <h2>Hardy Cross Method</h2>
@@ -32,8 +31,7 @@ import java.util.List;
  * <h2>References</h2>
  * <ul>
  * <li>Cross, H. (1936). "Analysis of Flow in Networks of Conduits or Conductors."</li>
- * <li>Todini, E. and Pilati, S. (1988). "A gradient algorithm for the analysis of pipe
- * networks."</li>
+ * <li>Todini, E. and Pilati, S. (1988). "A gradient algorithm for the analysis of pipe networks."</li>
  * </ul>
  *
  * @author Even Solbraa
@@ -60,7 +58,7 @@ public class NetworkLoop implements Serializable {
     /**
      * Create a loop member.
      *
-     * @param pipeName the pipeline name
+     * @param pipeName  the pipeline name
      * @param direction the direction (+1 or -1)
      */
     public LoopMember(String pipeName, int direction) {
@@ -115,7 +113,7 @@ public class NetworkLoop implements Serializable {
   /**
    * Add a pipeline to this loop.
    *
-   * @param pipeName the pipeline name
+   * @param pipeName  the pipeline name
    * @param direction +1 if flow direction aligns with loop traversal, -1 otherwise
    */
   public void addMember(String pipeName, int direction) {
@@ -224,7 +222,7 @@ public class NetworkLoop implements Serializable {
     sb.append("Loop-").append(loopId).append(" [");
     for (int i = 0; i < members.size(); i++) {
       if (i > 0) {
-        sb.append(" -> ");
+	sb.append(" -> ");
       }
       LoopMember m = members.get(i);
       sb.append(m.getPipeName());

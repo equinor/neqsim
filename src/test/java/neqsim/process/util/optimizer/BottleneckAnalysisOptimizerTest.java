@@ -58,7 +58,6 @@ import org.apache.logging.log4j.Logger;
 public class BottleneckAnalysisOptimizerTest {
   private static final Logger logger = LogManager.getLogger(BottleneckAnalysisOptimizerTest.class);
 
-
   private ProcessSystem processSystem;
   private Stream inletStream;
   private Compressor ups1Comp;
@@ -86,12 +85,11 @@ public class BottleneckAnalysisOptimizerTest {
    * Creates a processing train with inlet pipe, separator, and outlet pipe.
    *
    * @param trainName name prefix for the train equipment
-   * @param inlet inlet stream
-   * @param process process system to add equipment to
+   * @param inlet     inlet stream
+   * @param process   process system to add equipment to
    * @return outlet pipe of the train
    */
-  private PipeBeggsAndBrills createProcessingTrain(String trainName, StreamInterface inlet,
-      ProcessSystem process) {
+  private PipeBeggsAndBrills createProcessingTrain(String trainName, StreamInterface inlet, ProcessSystem process) {
     PipeBeggsAndBrills inletPipe = new PipeBeggsAndBrills(trainName + " Inlet Pipe", inlet);
     inletPipe.setLength(100.0);
     inletPipe.setDiameter(0.7);
@@ -100,13 +98,11 @@ public class BottleneckAnalysisOptimizerTest {
     inletPipe.run();
     process.add(inletPipe);
 
-    ThreePhaseSeparator separator =
-        new ThreePhaseSeparator(trainName + " Separator", inletPipe.getOutletStream());
+    ThreePhaseSeparator separator = new ThreePhaseSeparator(trainName + " Separator", inletPipe.getOutletStream());
     separator.run();
     process.add(separator);
 
-    PipeBeggsAndBrills outletPipe =
-        new PipeBeggsAndBrills(trainName + " Outlet Pipe", separator.getGasOutStream());
+    PipeBeggsAndBrills outletPipe = new PipeBeggsAndBrills(trainName + " Outlet Pipe", separator.getGasOutStream());
     outletPipe.setLength(100.0);
     outletPipe.setDiameter(0.7);
     outletPipe.setPipeWallRoughness(15e-6);
@@ -122,12 +118,11 @@ public class BottleneckAnalysisOptimizerTest {
    * Creates an upstream compressor train with pipes, separator, and compressor.
    *
    * @param trainName name prefix for the train equipment
-   * @param inlet inlet stream
-   * @param process process system to add equipment to
+   * @param inlet     inlet stream
+   * @param process   process system to add equipment to
    * @return outlet stream from the compressor discharge pipe
    */
-  private StreamInterface createUpstreamCompressors(String trainName, StreamInterface inlet,
-      ProcessSystem process) {
+  private StreamInterface createUpstreamCompressors(String trainName, StreamInterface inlet, ProcessSystem process) {
     PipeBeggsAndBrills inletPipe = new PipeBeggsAndBrills(trainName + " ups Pipe", inlet);
     inletPipe.setLength(100);
     inletPipe.setDiameter(0.75);
@@ -140,8 +135,7 @@ public class BottleneckAnalysisOptimizerTest {
     separator.run();
     process.add(separator);
 
-    PipeBeggsAndBrills outletPipe =
-        new PipeBeggsAndBrills(trainName + " ups Outlet Pipe", separator.getGasOutStream());
+    PipeBeggsAndBrills outletPipe = new PipeBeggsAndBrills(trainName + " ups Outlet Pipe", separator.getGasOutStream());
     outletPipe.setLength(50.0);
     outletPipe.setDiameter(0.75);
     outletPipe.setPipeWallRoughness(15e-6);
@@ -157,8 +151,8 @@ public class BottleneckAnalysisOptimizerTest {
     compressor.run();
     process.add(compressor);
 
-    PipeBeggsAndBrills outletPipe2 =
-        new PipeBeggsAndBrills(trainName + " ups Outlet Pipe2", compressor.getOutletStream());
+    PipeBeggsAndBrills outletPipe2 = new PipeBeggsAndBrills(trainName + " ups Outlet Pipe2",
+	compressor.getOutletStream());
     outletPipe2.setLength(50.0);
     outletPipe2.setDiameter(0.75);
     outletPipe2.setPipeWallRoughness(15e-6);
@@ -197,19 +191,15 @@ public class BottleneckAnalysisOptimizerTest {
 
     // First splitter - 4 processing trains
     Splitter splitter = new Splitter("Test Splitter", saturatedStream);
-    splitter.setSplitFactors(new double[] {0.25, 0.25, 0.25, 0.25});
+    splitter.setSplitFactors(new double[] { 0.25, 0.25, 0.25, 0.25 });
     splitter.run();
     processSystem.add(splitter);
 
     // Create 4 processing trains
-    PipeBeggsAndBrills train1Outlet =
-        createProcessingTrain("Train1", splitter.getSplitStream(0), processSystem);
-    PipeBeggsAndBrills train2Outlet =
-        createProcessingTrain("Train2", splitter.getSplitStream(1), processSystem);
-    PipeBeggsAndBrills train3Outlet =
-        createProcessingTrain("Train3", splitter.getSplitStream(2), processSystem);
-    PipeBeggsAndBrills train4Outlet =
-        createProcessingTrain("Train4", splitter.getSplitStream(3), processSystem);
+    PipeBeggsAndBrills train1Outlet = createProcessingTrain("Train1", splitter.getSplitStream(0), processSystem);
+    PipeBeggsAndBrills train2Outlet = createProcessingTrain("Train2", splitter.getSplitStream(1), processSystem);
+    PipeBeggsAndBrills train3Outlet = createProcessingTrain("Train3", splitter.getSplitStream(2), processSystem);
+    PipeBeggsAndBrills train4Outlet = createProcessingTrain("Train4", splitter.getSplitStream(3), processSystem);
 
     // Final separator combining all trains
     ThreePhaseSeparator finalSeparator = new ThreePhaseSeparator("Final Separator");
@@ -246,24 +236,21 @@ public class BottleneckAnalysisOptimizerTest {
 
     // Second splitter - 3 compressor trains (slightly unequal)
     Splitter splitter2 = new Splitter("Test Splitter2", feedToSplitter2);
-    splitter2.setSplitFactors(new double[] {0.95 / 3.0, 1.0 / 3.0, 1.05 / 3.0});
+    splitter2.setSplitFactors(new double[] { 0.95 / 3.0, 1.0 / 3.0, 1.05 / 3.0 });
     splitter2.run();
     processSystem.add(splitter2);
 
     // Create 3 compressor trains
-    StreamInterface ups1Outlet =
-        createUpstreamCompressors("ups1", splitter2.getSplitStream(0), processSystem);
-    StreamInterface ups2Outlet =
-        createUpstreamCompressors("ups2", splitter2.getSplitStream(1), processSystem);
-    StreamInterface ups3Outlet =
-        createUpstreamCompressors("ups3", splitter2.getSplitStream(2), processSystem);
+    StreamInterface ups1Outlet = createUpstreamCompressors("ups1", splitter2.getSplitStream(0), processSystem);
+    StreamInterface ups2Outlet = createUpstreamCompressors("ups2", splitter2.getSplitStream(1), processSystem);
+    StreamInterface ups3Outlet = createUpstreamCompressors("ups3", splitter2.getSplitStream(2), processSystem);
 
     // Manifold
     Manifold manifold = new Manifold("Compressor Outlet Manifold");
     manifold.addStream(ups1Outlet);
     manifold.addStream(ups2Outlet);
     manifold.addStream(ups3Outlet);
-    manifold.setSplitFactors(new double[] {1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0});
+    manifold.setSplitFactors(new double[] { 1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0 });
     // Disable capacity analysis for manifold - test focuses on compressor
     // validation
     // The manifold velocity constraints are not properly sized for this test
@@ -276,14 +263,13 @@ public class BottleneckAnalysisOptimizerTest {
     processSystem.run();
 
     // Auto-size equipment
-    for (neqsim.process.equipment.ProcessEquipmentInterface equipment : processSystem
-        .getUnitOperations()) {
+    for (neqsim.process.equipment.ProcessEquipmentInterface equipment : processSystem.getUnitOperations()) {
       if (equipment instanceof Separator) {
-        ((Separator) equipment).autoSize();
+	((Separator) equipment).autoSize();
       } else if (equipment instanceof Compressor) {
-        ((Compressor) equipment).autoSize();
+	((Compressor) equipment).autoSize();
       } else if (equipment instanceof Manifold) {
-        ((Manifold) equipment).autoSize();
+	((Manifold) equipment).autoSize();
       }
     }
 
@@ -299,12 +285,11 @@ public class BottleneckAnalysisOptimizerTest {
     configureCompressor3WithElectricDriver(ups3Comp, 6726.0);
 
     // Initialize pipe mechanical designs for velocity-based capacity checks
-    for (neqsim.process.equipment.ProcessEquipmentInterface equipment : processSystem
-        .getUnitOperations()) {
+    for (neqsim.process.equipment.ProcessEquipmentInterface equipment : processSystem.getUnitOperations()) {
       if (equipment instanceof PipeBeggsAndBrills) {
-        PipeBeggsAndBrills pipe = (PipeBeggsAndBrills) equipment;
-        pipe.initMechanicalDesign();
-        pipe.getMechanicalDesign().setMaxDesignVelocity(20.0);
+	PipeBeggsAndBrills pipe = (PipeBeggsAndBrills) equipment;
+	pipe.initMechanicalDesign();
+	pipe.getMechanicalDesign().setMaxDesignVelocity(20.0);
       }
     }
 
@@ -312,14 +297,13 @@ public class BottleneckAnalysisOptimizerTest {
   }
 
   /**
-   * Configures compressor 1 or 2 with a performance chart and VFD electric motor driver. Uses
-   * tabular driver curve (max MW vs speed) for accurate power limit modeling.
+   * Configures compressor 1 or 2 with a performance chart and VFD electric motor driver. Uses tabular driver curve (max
+   * MW vs speed) for accurate power limit modeling.
    *
    * @param compressor the compressor to configure
    * @param ratedSpeed driver rated speed in RPM
    */
-  private void configureCompressor1And2WithElectricDriver(Compressor compressor,
-      double ratedSpeed) {
+  private void configureCompressor1And2WithElectricDriver(Compressor compressor, double ratedSpeed) {
     // Generate compressor chart programmatically instead of loading from JSON
     CompressorChartGenerator generator = new CompressorChartGenerator(compressor);
     generator.setChartType("interpolate and extrapolate");
@@ -335,11 +319,10 @@ public class BottleneckAnalysisOptimizerTest {
 
     // Set driver curve: max MW vs speed (from actual driver data for compressors 1
     // & 2)
-    double[] speeds = {4922.0, 5041.5, 5154.0, 5273.6, 5393.1, 5505.6, 5625.1, 5744.7, 5857.2,
-        5976.7, 6096.2, 6152.5, 6208.8, 6328.3, 6447.8, 6560.3, 6679.9, 6799.4, 6911.9, 7031.4,
-        7151.0, 7263.5, 7383.0};
-    double[] powers = {21.8, 23.6, 25.3, 27.1, 28.8, 30.5, 32.3, 33.3, 34.3, 35.3, 36.3, 36.8, 37.3,
-        38.4, 39.4, 40.4, 41.4, 42.4, 43.4, 44.4, 44.4, 44.4, 44.4};
+    double[] speeds = { 4922.0, 5041.5, 5154.0, 5273.6, 5393.1, 5505.6, 5625.1, 5744.7, 5857.2, 5976.7, 6096.2, 6152.5,
+	6208.8, 6328.3, 6447.8, 6560.3, 6679.9, 6799.4, 6911.9, 7031.4, 7151.0, 7263.5, 7383.0 };
+    double[] powers = { 21.8, 23.6, 25.3, 27.1, 28.8, 30.5, 32.3, 33.3, 34.3, 35.3, 36.3, 36.8, 37.3, 38.4, 39.4, 40.4,
+	41.4, 42.4, 43.4, 44.4, 44.4, 44.4, 44.4 };
     driver.setMaxPowerSpeedCurve(speeds, powers, "MW");
 
     compressor.setDriver(driver);
@@ -349,8 +332,8 @@ public class BottleneckAnalysisOptimizerTest {
   }
 
   /**
-   * Configures compressor 3 with a performance chart and VFD electric motor driver. Uses tabular
-   * driver curve (max MW vs speed) for accurate power limit modeling.
+   * Configures compressor 3 with a performance chart and VFD electric motor driver. Uses tabular driver curve (max MW
+   * vs speed) for accurate power limit modeling.
    *
    * @param compressor the compressor to configure
    * @param ratedSpeed driver rated speed in RPM
@@ -370,13 +353,12 @@ public class BottleneckAnalysisOptimizerTest {
     driver.setRatedSpeed(ratedSpeed);
 
     // Set driver curve: max MW vs speed (from actual driver data for compressor 3)
-    double[] speeds = {4484.0, 4590.761905, 4697.52381, 4804.285714, 4911.047619, 5017.809524,
-        5124.571429, 5231.333333, 5338.095238, 5444.857143, 5551.619048, 5658.380952, 5765.142857,
-        5871.904762, 5978.666667, 6085.428571, 6192.190476, 6298.952381, 6405.714286, 6512.47619,
-        6619.238095, 6726.0};
-    double[] powers = {26.8, 29.0, 31.2, 33.4, 35.6, 37.8, 40.0, 40.83333333, 41.66666667, 42.5,
-        43.33333333, 44.16666667, 45.0, 45.83333333, 46.66666667, 47.5, 48.33333333, 49.16666667,
-        50.0, 48.96666667, 47.93333333, 46.9};
+    double[] speeds = { 4484.0, 4590.761905, 4697.52381, 4804.285714, 4911.047619, 5017.809524, 5124.571429,
+	5231.333333, 5338.095238, 5444.857143, 5551.619048, 5658.380952, 5765.142857, 5871.904762, 5978.666667,
+	6085.428571, 6192.190476, 6298.952381, 6405.714286, 6512.47619, 6619.238095, 6726.0 };
+    double[] powers = { 26.8, 29.0, 31.2, 33.4, 35.6, 37.8, 40.0, 40.83333333, 41.66666667, 42.5, 43.33333333,
+	44.16666667, 45.0, 45.83333333, 46.66666667, 47.5, 48.33333333, 49.16666667, 50.0, 48.96666667, 47.93333333,
+	46.9 };
     driver.setMaxPowerSpeedCurve(speeds, powers, "MW");
 
     compressor.setDriver(driver);
@@ -393,28 +375,20 @@ public class BottleneckAnalysisOptimizerTest {
     processSystem.run();
 
     // All compressors should have valid simulations at nominal flow
-    Assertions.assertTrue(ups1Comp.isSimulationValid(),
-        "ups1 Compressor should have valid simulation at nominal flow");
-    Assertions.assertTrue(ups2Comp.isSimulationValid(),
-        "ups2 Compressor should have valid simulation at nominal flow");
-    Assertions.assertTrue(ups3Comp.isSimulationValid(),
-        "ups3 Compressor should have valid simulation at nominal flow");
+    Assertions.assertTrue(ups1Comp.isSimulationValid(), "ups1 Compressor should have valid simulation at nominal flow");
+    Assertions.assertTrue(ups2Comp.isSimulationValid(), "ups2 Compressor should have valid simulation at nominal flow");
+    Assertions.assertTrue(ups3Comp.isSimulationValid(), "ups3 Compressor should have valid simulation at nominal flow");
 
     // Speed should be within chart limits
     double ups1MinSpeed = ups1Comp.getCompressorChart().getMinSpeedCurve();
     double ups1MaxSpeed = ups1Comp.getCompressorChart().getMaxSpeedCurve();
-    Assertions.assertTrue(ups1Comp.getSpeed() >= ups1MinSpeed * 0.95,
-        "ups1 speed should be above chart minimum");
-    Assertions.assertTrue(ups1Comp.getSpeed() <= ups1MaxSpeed * 1.05,
-        "ups1 speed should be below chart maximum");
+    Assertions.assertTrue(ups1Comp.getSpeed() >= ups1MinSpeed * 0.95, "ups1 speed should be above chart minimum");
+    Assertions.assertTrue(ups1Comp.getSpeed() <= ups1MaxSpeed * 1.05, "ups1 speed should be below chart maximum");
 
     // Polytropic head should be positive
-    Assertions.assertTrue(ups1Comp.getPolytropicFluidHead() > 0,
-        "Polytropic head should be positive");
-    Assertions.assertTrue(ups2Comp.getPolytropicFluidHead() > 0,
-        "Polytropic head should be positive");
-    Assertions.assertTrue(ups3Comp.getPolytropicFluidHead() > 0,
-        "Polytropic head should be positive");
+    Assertions.assertTrue(ups1Comp.getPolytropicFluidHead() > 0, "Polytropic head should be positive");
+    Assertions.assertTrue(ups2Comp.getPolytropicFluidHead() > 0, "Polytropic head should be positive");
+    Assertions.assertTrue(ups3Comp.getPolytropicFluidHead() > 0, "Polytropic head should be positive");
   }
 
   /**
@@ -431,17 +405,16 @@ public class BottleneckAnalysisOptimizerTest {
       processRunFailure = exception;
     }
 
-    boolean processRejectedExtremeFlow =
-        processRunFailure != null && processRunFailure.getMessage() != null
-            && processRunFailure.getMessage().contains("Failed to run unit operation")
-            && processRunFailure.getMessage().contains("Compressor Outlet Manifold");
+    boolean processRejectedExtremeFlow = processRunFailure != null && processRunFailure.getMessage() != null
+	&& processRunFailure.getMessage().contains("Failed to run unit operation")
+	&& processRunFailure.getMessage().contains("Compressor Outlet Manifold");
     if (processRunFailure != null && !processRejectedExtremeFlow) {
       throw processRunFailure;
     }
 
     // At least one compressor should have invalid simulation
     boolean anyInvalid = !ups1Comp.isSimulationValid() || !ups2Comp.isSimulationValid()
-        || !ups3Comp.isSimulationValid();
+	|| !ups3Comp.isSimulationValid();
 
     // Check validation errors
     List<String> ups3Errors = ups3Comp.getSimulationValidationErrors();
@@ -456,18 +429,16 @@ public class BottleneckAnalysisOptimizerTest {
     // - Have speed outside chart range
     // - Cause the downstream manifold run to reject the infeasible operating point
     Assertions.assertTrue(anyInvalid || !ups3Errors.isEmpty() || processRejectedExtremeFlow,
-        "At extreme flow rates, compressors should show invalid simulation or validation errors");
+	"At extreme flow rates, compressors should show invalid simulation or validation errors");
   }
 
   /**
-   * Tests production optimizer with BINARY_FEASIBILITY search mode. This test validates that the
-   * optimizer properly detects and handles compressor operating envelope violations through
-   * isSimulationValid().
+   * Tests production optimizer with BINARY_FEASIBILITY search mode. This test validates that the optimizer properly
+   * detects and handles compressor operating envelope violations through isSimulationValid().
    *
-   * Note: Finding a "feasible" solution depends on the specific capacity rules and utilization
-   * limits configured. The key validation is that: 1. Optimizer runs without throwing exceptions 2.
-   * Optimizer returns a valid result with bounded utilization (not infinity or NaN) 3. At extreme
-   * flows, invalid compressor states are properly detected
+   * Note: Finding a "feasible" solution depends on the specific capacity rules and utilization limits configured. The
+   * key validation is that: 1. Optimizer runs without throwing exceptions 2. Optimizer returns a valid result with
+   * bounded utilization (not infinity or NaN) 3. At extreme flows, invalid compressor states are properly detected
    */
   @Test
   public void testOptimizerBinaryFeasibilityFindsFeasibleSolution() {
@@ -480,18 +451,17 @@ public class BottleneckAnalysisOptimizerTest {
     double highFlow = originalFlow * 1.5;
 
     OptimizationConfig config = new OptimizationConfig(lowFlow, highFlow).rateUnit("kg/hr")
-        .tolerance(originalFlow * 0.02).maxIterations(20).defaultUtilizationLimit(1.0)
-        .searchMode(SearchMode.BINARY_FEASIBILITY).rejectInvalidSimulations(true); // Key: reject
-                                                                                   // invalid
-                                                                                   // compressor
-                                                                                   // states
+	.tolerance(originalFlow * 0.02).maxIterations(20).defaultUtilizationLimit(1.0)
+	.searchMode(SearchMode.BINARY_FEASIBILITY).rejectInvalidSimulations(true); // Key: reject
+										   // invalid
+										   // compressor
+										   // states
 
     OptimizationObjective throughputObjective = new OptimizationObjective("throughput",
-        proc -> ((Stream) proc.getUnit("Inlet Stream")).getFlowRate("kg/hr"), 1.0,
-        ObjectiveType.MAXIMIZE);
+	proc -> ((Stream) proc.getUnit("Inlet Stream")).getFlowRate("kg/hr"), 1.0, ObjectiveType.MAXIMIZE);
 
     OptimizationResult result = optimizer.optimize(processSystem, inletStream, config,
-        Collections.singletonList(throughputObjective), Collections.emptyList());
+	Collections.singletonList(throughputObjective), Collections.emptyList());
 
     logger.info("\n=== BINARY_FEASIBILITY OPTIMIZATION RESULT ===");
     logger.info("Optimal flow rate: " + result.getOptimalRate() + " kg/hr");
@@ -499,8 +469,7 @@ public class BottleneckAnalysisOptimizerTest {
     logger.info("Iterations: " + result.getIterations());
     if (result.getBottleneck() != null) {
       logger.info("Bottleneck: " + result.getBottleneck().getName());
-      System.out
-          .println("Bottleneck utilization: " + result.getBottleneckUtilization() * 100 + "%");
+      System.out.println("Bottleneck utilization: " + result.getBottleneckUtilization() * 100 + "%");
     }
 
     // Print iteration history to understand optimizer behavior
@@ -508,7 +477,7 @@ public class BottleneckAnalysisOptimizerTest {
     for (int i = 0; i < result.getIterationHistory().size(); i++) {
       IterationRecord rec = result.getIterationHistory().get(i);
       logger.info(String.format("  %d: rate=%.0f, util=%.1f%%, feasible=%s", i + 1, rec.getRate(),
-          rec.getBottleneckUtilization() * 100, rec.isFeasible()));
+	  rec.getBottleneckUtilization() * 100, rec.isFeasible()));
     }
 
     // Key assertions for this test:
@@ -516,19 +485,16 @@ public class BottleneckAnalysisOptimizerTest {
     // reaching here
     // 2. Bottleneck utilization is a valid number (not NaN/Infinity/extreme values)
     double bottleneckUtil = result.getBottleneckUtilization();
-    Assertions.assertFalse(Double.isNaN(bottleneckUtil),
-        "Bottleneck utilization should not be NaN");
-    Assertions.assertFalse(Double.isInfinite(bottleneckUtil),
-        "Bottleneck utilization should not be infinite");
+    Assertions.assertFalse(Double.isNaN(bottleneckUtil), "Bottleneck utilization should not be NaN");
+    Assertions.assertFalse(Double.isInfinite(bottleneckUtil), "Bottleneck utilization should not be infinite");
     // The fix ensures utilization doesn't become astronomical (e.g., 55775%)
     // Even infeasible points should have reasonable utilization calculations
     Assertions.assertTrue(bottleneckUtil < 10.0, // Less than 1000%
-        "Bottleneck utilization should be bounded, got: " + bottleneckUtil * 100 + "%");
+	"Bottleneck utilization should be bounded, got: " + bottleneckUtil * 100 + "%");
 
     // 3. Optimal rate is within the search bounds
-    Assertions.assertTrue(
-        result.getOptimalRate() >= lowFlow * 0.99 && result.getOptimalRate() <= highFlow * 1.01,
-        "Optimal rate should be within search bounds");
+    Assertions.assertTrue(result.getOptimalRate() >= lowFlow * 0.99 && result.getOptimalRate() <= highFlow * 1.01,
+	"Optimal rate should be within search bounds");
   }
 
   /**
@@ -540,49 +506,44 @@ public class BottleneckAnalysisOptimizerTest {
 
     ProductionOptimizer optimizer = new ProductionOptimizer();
 
-    OptimizationConfig config = new OptimizationConfig(originalFlow * 0.8, originalFlow * 1.2)
-        .rateUnit("kg/hr").tolerance(originalFlow * 0.01).maxIterations(15)
-        .defaultUtilizationLimit(1.0).searchMode(SearchMode.BINARY_FEASIBILITY);
+    OptimizationConfig config = new OptimizationConfig(originalFlow * 0.8, originalFlow * 1.2).rateUnit("kg/hr")
+	.tolerance(originalFlow * 0.01).maxIterations(15).defaultUtilizationLimit(1.0)
+	.searchMode(SearchMode.BINARY_FEASIBILITY);
 
     OptimizationObjective objective = new OptimizationObjective("throughput",
-        proc -> ((Stream) proc.getUnit("Inlet Stream")).getFlowRate("kg/hr"), 1.0,
-        ObjectiveType.MAXIMIZE);
+	proc -> ((Stream) proc.getUnit("Inlet Stream")).getFlowRate("kg/hr"), 1.0, ObjectiveType.MAXIMIZE);
 
     OptimizationResult result = optimizer.optimize(processSystem, inletStream, config,
-        Collections.singletonList(objective), Collections.emptyList());
+	Collections.singletonList(objective), Collections.emptyList());
 
     logger.info("\n=== ITERATION HISTORY ===");
     for (int i = 0; i < result.getIterationHistory().size(); i++) {
       IterationRecord rec = result.getIterationHistory().get(i);
       String status = rec.isFeasible() ? "FEASIBLE" : "INFEASIBLE";
       logger.info(String.format("Iter %d: rate=%.0f kg/hr, util=%.1f%%, %s", i + 1, rec.getRate(),
-          rec.getBottleneckUtilization() * 100, status));
+	  rec.getBottleneckUtilization() * 100, status));
     }
 
     // For feasible iterations, utilization should be reasonable
-    long feasibleCount =
-        result.getIterationHistory().stream().filter(rec -> rec.isFeasible()).count();
+    long feasibleCount = result.getIterationHistory().stream().filter(rec -> rec.isFeasible()).count();
 
     logger.info("Feasible iterations: " + feasibleCount);
 
     // Check that at least some iterations were feasible
     if (result.isFeasible()) {
-      Assertions.assertTrue(feasibleCount > 0,
-          "Should have at least one feasible iteration in history");
+      Assertions.assertTrue(feasibleCount > 0, "Should have at least one feasible iteration in history");
 
       // Feasible points should have reasonable utilization (not 55775%!)
       result.getIterationHistory().stream().filter(rec -> rec.isFeasible()).forEach(rec -> {
-        Assertions.assertTrue(rec.getBottleneckUtilization() <= 2.0, // Allow some margin
-            "Feasible iteration should have utilization <= 200%, got: "
-                + rec.getBottleneckUtilization() * 100 + "%");
+	Assertions.assertTrue(rec.getBottleneckUtilization() <= 2.0, // Allow some margin
+	    "Feasible iteration should have utilization <= 200%, got: " + rec.getBottleneckUtilization() * 100 + "%");
       });
     }
   }
 
   /**
-   * Tests capacity utilization summary shows reasonable values for compressors. Note: Some
-   * equipment types (Manifold) may have high utilization due to design settings in test environment
-   * - we focus on compressor validation here.
+   * Tests capacity utilization summary shows reasonable values for compressors. Note: Some equipment types (Manifold)
+   * may have high utilization due to design settings in test environment - we focus on compressor validation here.
    */
   @Test
   public void testCapacityUtilizationSummaryIsBounded() {
@@ -603,16 +564,16 @@ public class BottleneckAnalysisOptimizerTest {
       // Focus on compressors - these are the equipment type being validated in this
       // test
       if (name.contains("Compressor") && !name.contains("Manifold") && !name.contains("Driver")) {
-        Assertions.assertTrue(entry.getValue() < 500.0,
-            "Compressor utilization for " + name + " should be < 500%, got: " + entry.getValue());
+	Assertions.assertTrue(entry.getValue() < 500.0,
+	    "Compressor utilization for " + name + " should be < 500%, got: " + entry.getValue());
       }
     }
   }
 
   /**
-   * Tests bottleneck detection at nominal operating conditions. Note: The bottleneck may be
-   * equipment other than compressors (e.g., Manifold) depending on test configuration. This test
-   * validates that bottleneck detection works and returns meaningful values.
+   * Tests bottleneck detection at nominal operating conditions. Note: The bottleneck may be equipment other than
+   * compressors (e.g., Manifold) depending on test configuration. This test validates that bottleneck detection works
+   * and returns meaningful values.
    */
   @Test
   public void testBottleneckDetectionAtNominalFlow() {
@@ -633,16 +594,14 @@ public class BottleneckAnalysisOptimizerTest {
     Assertions.assertTrue(bottleneck.hasBottleneck(), "Should detect a bottleneck");
 
     // Check that the bottleneck has a name (not null/empty)
-    Assertions.assertNotNull(bottleneck.getEquipmentName(),
-        "Bottleneck equipment name should not be null");
-    Assertions.assertFalse(bottleneck.getEquipmentName().isEmpty(),
-        "Bottleneck equipment name should not be empty");
+    Assertions.assertNotNull(bottleneck.getEquipmentName(), "Bottleneck equipment name should not be null");
+    Assertions.assertFalse(bottleneck.getEquipmentName().isEmpty(), "Bottleneck equipment name should not be empty");
 
     // The utilization value should not be NaN or Infinite
     Assertions.assertFalse(Double.isNaN(bottleneck.getUtilizationPercent()),
-        "Bottleneck utilization should not be NaN");
+	"Bottleneck utilization should not be NaN");
     Assertions.assertFalse(Double.isInfinite(bottleneck.getUtilizationPercent()),
-        "Bottleneck utilization should not be Infinite");
+	"Bottleneck utilization should not be Infinite");
   }
 
   /**
@@ -658,18 +617,16 @@ public class BottleneckAnalysisOptimizerTest {
     for (Map.Entry<String, CapacityConstraint> entry : constraints.entrySet()) {
       CapacityConstraint constraint = entry.getValue();
       logger.info(String.format("%-20s: util=%.1f%%, current=%.2f, design=%.2f", entry.getKey(),
-          constraint.getUtilizationPercent(), constraint.getCurrentValue(),
-          constraint.getDisplayDesignValue()));
+	  constraint.getUtilizationPercent(), constraint.getCurrentValue(), constraint.getDisplayDesignValue()));
     }
 
     // Should have surge margin constraint
-    Assertions.assertTrue(constraints.containsKey("surgeMargin"),
-        "Compressor should have surge margin constraint");
+    Assertions.assertTrue(constraints.containsKey("surgeMargin"), "Compressor should have surge margin constraint");
 
     // Surge margin utilization should be bounded
     double surgeUtil = constraints.get("surgeMargin").getUtilizationPercent();
-    Assertions.assertTrue(surgeUtil <= 200.0, "Surge utilization should be reasonable, got: "
-        + surgeUtil + "% (if > 100%, compressor is past surge)");
+    Assertions.assertTrue(surgeUtil <= 200.0,
+	"Surge utilization should be reasonable, got: " + surgeUtil + "% (if > 100%, compressor is past surge)");
   }
 
   /**
@@ -677,15 +634,13 @@ public class BottleneckAnalysisOptimizerTest {
    */
   @Test
   public void testFlowPropagationThroughSystem() {
-    double initialFlow = ((Compressor) processSystem.getUnit("ups1 Compressor")).getInletStream()
-        .getFlowRate("kg/hr");
+    double initialFlow = ((Compressor) processSystem.getUnit("ups1 Compressor")).getInletStream().getFlowRate("kg/hr");
 
     // Increase inlet flow
     inletStream.setFlowRate(2157870.58288790, "kg/hr");
     processSystem.run();
 
-    double newFlow = ((Compressor) processSystem.getUnit("ups1 Compressor")).getInletStream()
-        .getFlowRate("kg/hr");
+    double newFlow = ((Compressor) processSystem.getUnit("ups1 Compressor")).getInletStream().getFlowRate("kg/hr");
 
     logger.info("\n=== FLOW PROPAGATION TEST ===");
     logger.info("Initial ups1 flow: " + initialFlow + " kg/hr");
@@ -727,8 +682,8 @@ public class BottleneckAnalysisOptimizerTest {
     logger.info("\n=== BASELINE (BEFORE OPTIMIZATION) ===");
     logger.info(String.format("Total flow: %.0f kg/hr", originalFlow));
     double[] originalSplits = compressorSplitter.getSplitFactors();
-    logger.info(String.format("Split factors: [%.4f, %.4f, %.4f]", originalSplits[0],
-        originalSplits[1], originalSplits[2]));
+    logger.info(
+	String.format("Split factors: [%.4f, %.4f, %.4f]", originalSplits[0], originalSplits[1], originalSplits[2]));
     printCompressorStatus();
 
     // Find the maximum utilization at baseline to understand headroom
@@ -739,79 +694,75 @@ public class BottleneckAnalysisOptimizerTest {
 
     // Define manipulated variables
     // 1. Total inlet flow rate - small range since we're already near capacity
-    ManipulatedVariable flowVar = new ManipulatedVariable("totalFlow", originalFlow * 0.95,
-        originalFlow * 1.05, "kg/hr", (proc, value) -> {
-          Stream inlet = (Stream) proc.getUnit("Inlet Stream");
-          inlet.setFlowRate(value, "kg/hr");
-        });
+    ManipulatedVariable flowVar = new ManipulatedVariable("totalFlow", originalFlow * 0.95, originalFlow * 1.05,
+	"kg/hr", (proc, value) -> {
+	  Stream inlet = (Stream) proc.getUnit("Inlet Stream");
+	  inlet.setFlowRate(value, "kg/hr");
+	});
 
     // 2. Split factor for compressor train 1 (ups1)
     // Bounds: 0.28 to 0.38 (narrow range around baseline ~0.317)
-    ManipulatedVariable split1Var =
-        new ManipulatedVariable("split1", 0.28, 0.38, "fraction", (proc, value) -> {
-          Splitter splitter = (Splitter) proc.getUnit("Test Splitter2");
-          double[] currentSplits = splitter.getSplitFactors();
-          double split2 = currentSplits[1];
-          double split3 = 1.0 - value - split2;
-          // Ensure split3 stays in valid range
-          if (split3 < 0.28) {
-            split3 = 0.28;
-            split2 = 1.0 - value - split3;
-          } else if (split3 > 0.40) {
-            split3 = 0.40;
-            split2 = 1.0 - value - split3;
-          }
-          splitter.setSplitFactors(new double[] {value, split2, split3});
-        });
+    ManipulatedVariable split1Var = new ManipulatedVariable("split1", 0.28, 0.38, "fraction", (proc, value) -> {
+      Splitter splitter = (Splitter) proc.getUnit("Test Splitter2");
+      double[] currentSplits = splitter.getSplitFactors();
+      double split2 = currentSplits[1];
+      double split3 = 1.0 - value - split2;
+      // Ensure split3 stays in valid range
+      if (split3 < 0.28) {
+	split3 = 0.28;
+	split2 = 1.0 - value - split3;
+      } else if (split3 > 0.40) {
+	split3 = 0.40;
+	split2 = 1.0 - value - split3;
+      }
+      splitter.setSplitFactors(new double[] { value, split2, split3 });
+    });
 
     // 3. Split factor for compressor train 2 (ups2) - this is currently the
     // bottleneck
-    ManipulatedVariable split2Var =
-        new ManipulatedVariable("split2", 0.28, 0.38, "fraction", (proc, value) -> {
-          Splitter splitter = (Splitter) proc.getUnit("Test Splitter2");
-          double[] currentSplits = splitter.getSplitFactors();
-          double split1 = currentSplits[0];
-          double split3 = 1.0 - split1 - value;
-          // Ensure split3 stays in valid range
-          if (split3 < 0.28) {
-            split3 = 0.28;
-            split1 = 1.0 - value - split3;
-          } else if (split3 > 0.40) {
-            split3 = 0.40;
-            split1 = 1.0 - value - split3;
-          }
-          splitter.setSplitFactors(new double[] {split1, value, split3});
-        });
+    ManipulatedVariable split2Var = new ManipulatedVariable("split2", 0.28, 0.38, "fraction", (proc, value) -> {
+      Splitter splitter = (Splitter) proc.getUnit("Test Splitter2");
+      double[] currentSplits = splitter.getSplitFactors();
+      double split1 = currentSplits[0];
+      double split3 = 1.0 - split1 - value;
+      // Ensure split3 stays in valid range
+      if (split3 < 0.28) {
+	split3 = 0.28;
+	split1 = 1.0 - value - split3;
+      } else if (split3 > 0.40) {
+	split3 = 0.40;
+	split1 = 1.0 - value - split3;
+      }
+      splitter.setSplitFactors(new double[] { split1, value, split3 });
+    });
 
     List<ManipulatedVariable> variables = Arrays.asList(flowVar, split1Var, split2Var);
 
     // Configuration: Use NELDER_MEAD with strict utilization limit
     // The key is defaultUtilizationLimit(1.0) which means feasible only if all <=
     // 100%
-    OptimizationConfig config = new OptimizationConfig(originalFlow * 0.95, originalFlow * 1.05)
-        .rateUnit("kg/hr").tolerance(originalFlow * 0.002).maxIterations(60)
-        .defaultUtilizationLimit(1.0) // Strict:
-                                      // must
-                                      // be <=
-                                      // 100%
-        .searchMode(SearchMode.PARTICLE_SWARM_SCORE).rejectInvalidSimulations(true).randomSeed(42L); // Fixed
-                                                                                                     // seed
-                                                                                                     // for
-                                                                                                     // deterministic
-                                                                                                     // PSO
-                                                                                                     // (prevents
-                                                                                                     // flaky
-                                                                                                     // utilization
-                                                                                                     // checks)
+    OptimizationConfig config = new OptimizationConfig(originalFlow * 0.95, originalFlow * 1.05).rateUnit("kg/hr")
+	.tolerance(originalFlow * 0.002).maxIterations(60).defaultUtilizationLimit(1.0) // Strict:
+											// must
+											// be <=
+											// 100%
+	.searchMode(SearchMode.PARTICLE_SWARM_SCORE).rejectInvalidSimulations(true).randomSeed(42L); // Fixed
+												     // seed
+												     // for
+												     // deterministic
+												     // PSO
+												     // (prevents
+												     // flaky
+												     // utilization
+												     // checks)
 
     // Objective: maximize throughput (score = flow rate)
     OptimizationObjective throughputObjective = new OptimizationObjective("throughput",
-        proc -> ((Stream) proc.getUnit("Inlet Stream")).getFlowRate("kg/hr"), 1.0,
-        ObjectiveType.MAXIMIZE);
+	proc -> ((Stream) proc.getUnit("Inlet Stream")).getFlowRate("kg/hr"), 1.0, ObjectiveType.MAXIMIZE);
 
     // Run optimization
     OptimizationResult result = optimizer.optimize(processSystem, variables, config,
-        Collections.singletonList(throughputObjective), Collections.emptyList());
+	Collections.singletonList(throughputObjective), Collections.emptyList());
 
     // Print results
     logger.info("\n=== MULTI-VARIABLE OPTIMIZATION RESULT ===");
@@ -824,8 +775,7 @@ public class BottleneckAnalysisOptimizerTest {
 
     if (result.getBottleneck() != null) {
       logger.info("\nBottleneck: " + result.getBottleneck().getName());
-      logger.info(
-          String.format("Bottleneck utilization: %.2f%%", result.getBottleneckUtilization() * 100));
+      logger.info(String.format("Bottleneck utilization: %.2f%%", result.getBottleneckUtilization() * 100));
     }
 
     // Apply optimal values and print final state.
@@ -839,7 +789,7 @@ public class BottleneckAnalysisOptimizerTest {
     for (ManipulatedVariable variable : variables) {
       Double value = result.getDecisionVariables().get(variable.getName());
       if (value != null) {
-        variable.apply(processSystem, value);
+	variable.apply(processSystem, value);
       }
     }
     processSystem.run();
@@ -850,10 +800,10 @@ public class BottleneckAnalysisOptimizerTest {
 
     logger.info("\n=== OPTIMIZED STATE ===");
     logger.info(String.format("Optimal total flow: %.0f kg/hr", optimalFlow));
-    logger.info(String.format("Optimal split factors: [%.4f, %.4f, %.4f]", optimalSplit1,
-        optimalSplit2, optimalSplit3));
+    logger
+	.info(String.format("Optimal split factors: [%.4f, %.4f, %.4f]", optimalSplit1, optimalSplit2, optimalSplit3));
     logger.info(String.format("Production change: %.0f kg/hr (%+.2f%%)", optimalFlow - originalFlow,
-        (optimalFlow - originalFlow) / originalFlow * 100));
+	(optimalFlow - originalFlow) / originalFlow * 100));
     printCompressorStatus();
 
     // Check all compressor utilizations
@@ -867,8 +817,7 @@ public class BottleneckAnalysisOptimizerTest {
     // Key assertion: solution should be feasible (all equipment <= 100%)
     if (result.isFeasible()) {
       Assertions.assertTrue(result.getBottleneckUtilization() <= 1.0,
-          "Feasible solution should have bottleneck <= 100%, got: "
-              + result.getBottleneckUtilization() * 100 + "%");
+	  "Feasible solution should have bottleneck <= 100%, got: " + result.getBottleneckUtilization() * 100 + "%");
 
       // Verify all compressors are under 100% (with tolerance for numerical
       // optimizer variability across JVMs and flash-solver paths). The replay
@@ -876,20 +825,17 @@ public class BottleneckAnalysisOptimizerTest {
       // is state-dependent, so the replayed utilization can differ from what
       // the PSO search evaluated. Tolerance widened accordingly.
       Assertions.assertTrue(maxUtil <= 1.10,
-          "All compressors should be <= 100% (with small tolerance), got: " + maxUtil * 100 + "%");
+	  "All compressors should be <= 100% (with small tolerance), got: " + maxUtil * 100 + "%");
     }
 
     // Split factors should sum to 1.0
     double splitSum = optimalSplit1 + optimalSplit2 + optimalSplit3;
-    Assertions.assertTrue(Math.abs(splitSum - 1.0) < 0.01,
-        "Split factors should sum to 1.0, got: " + splitSum);
+    Assertions.assertTrue(Math.abs(splitSum - 1.0) < 0.01, "Split factors should sum to 1.0, got: " + splitSum);
 
     // Utilization should be bounded (not NaN/Infinity)
     double bottleneckUtil = result.getBottleneckUtilization();
-    Assertions.assertFalse(Double.isNaN(bottleneckUtil),
-        "Bottleneck utilization should not be NaN");
-    Assertions.assertFalse(Double.isInfinite(bottleneckUtil),
-        "Bottleneck utilization should not be infinite");
+    Assertions.assertFalse(Double.isNaN(bottleneckUtil), "Bottleneck utilization should not be NaN");
+    Assertions.assertFalse(Double.isInfinite(bottleneckUtil), "Bottleneck utilization should not be infinite");
 
     Map<String, Double> utilizationSummary = processSystem.getCapacityUtilizationSummary();
 
@@ -906,8 +852,7 @@ public class BottleneckAnalysisOptimizerTest {
    * <b>Why Two Stages?</b>
    * </p>
    * <p>
-   * Single-pass multi-variable optimizers (Nelder-Mead, Particle Swarm) can find different
-   * solutions due to:
+   * Single-pass multi-variable optimizers (Nelder-Mead, Particle Swarm) can find different solutions due to:
    * <ul>
    * <li>Stochastic initialization (PSO)</li>
    * <li>Local optima trapping (Nelder-Mead)</li>
@@ -919,10 +864,9 @@ public class BottleneckAnalysisOptimizerTest {
    * <b>Two-Stage Approach:</b>
    * </p>
    * <ol>
-   * <li><b>Stage 1 - Balance Load:</b> At current flow, optimize split factors to minimize max
-   * utilization (balance load across compressors)</li>
-   * <li><b>Stage 2 - Maximize Flow:</b> With balanced splits, use binary search to find maximum
-   * feasible flow</li>
+   * <li><b>Stage 1 - Balance Load:</b> At current flow, optimize split factors to minimize max utilization (balance
+   * load across compressors)</li>
+   * <li><b>Stage 2 - Maximize Flow:</b> With balanced splits, use binary search to find maximum feasible flow</li>
    * </ol>
    *
    * <p>
@@ -942,8 +886,8 @@ public class BottleneckAnalysisOptimizerTest {
     logger.info("\n--- BASELINE ---");
     logger.info(String.format("Total flow: %.0f kg/hr", originalFlow));
     double[] originalSplits = compressorSplitter.getSplitFactors();
-    logger.info(String.format("Split factors: [%.4f, %.4f, %.4f]", originalSplits[0],
-        originalSplits[1], originalSplits[2]));
+    logger.info(
+	String.format("Split factors: [%.4f, %.4f, %.4f]", originalSplits[0], originalSplits[1], originalSplits[2]));
     printCompressorStatus();
     double baselineMaxUtil = getMaxCompressorUtilization();
     logger.info(String.format("Max utilization: %.2f%%", baselineMaxUtil * 100));
@@ -956,61 +900,58 @@ public class BottleneckAnalysisOptimizerTest {
     ProductionOptimizer optimizer = new ProductionOptimizer();
 
     // Only split factors as variables (keep flow constant)
-    ManipulatedVariable split1Var =
-        new ManipulatedVariable("split1", 0.28, 0.40, "fraction", (proc, value) -> {
-          Splitter splitter = (Splitter) proc.getUnit("Test Splitter2");
-          double[] currentSplits = splitter.getSplitFactors();
-          double split2 = currentSplits[1];
-          double split3 = 1.0 - value - split2;
-          if (split3 < 0.25)
-            split3 = 0.25;
-          if (split3 > 0.42)
-            split3 = 0.42;
-          split2 = 1.0 - value - split3;
-          splitter.setSplitFactors(new double[] {value, split2, split3});
-        });
+    ManipulatedVariable split1Var = new ManipulatedVariable("split1", 0.28, 0.40, "fraction", (proc, value) -> {
+      Splitter splitter = (Splitter) proc.getUnit("Test Splitter2");
+      double[] currentSplits = splitter.getSplitFactors();
+      double split2 = currentSplits[1];
+      double split3 = 1.0 - value - split2;
+      if (split3 < 0.25)
+	split3 = 0.25;
+      if (split3 > 0.42)
+	split3 = 0.42;
+      split2 = 1.0 - value - split3;
+      splitter.setSplitFactors(new double[] { value, split2, split3 });
+    });
 
-    ManipulatedVariable split2Var =
-        new ManipulatedVariable("split2", 0.28, 0.40, "fraction", (proc, value) -> {
-          Splitter splitter = (Splitter) proc.getUnit("Test Splitter2");
-          double[] currentSplits = splitter.getSplitFactors();
-          double split1 = currentSplits[0];
-          double split3 = 1.0 - split1 - value;
-          if (split3 < 0.25)
-            split3 = 0.25;
-          if (split3 > 0.42)
-            split3 = 0.42;
-          split1 = 1.0 - value - split3;
-          splitter.setSplitFactors(new double[] {split1, value, split3});
-        });
+    ManipulatedVariable split2Var = new ManipulatedVariable("split2", 0.28, 0.40, "fraction", (proc, value) -> {
+      Splitter splitter = (Splitter) proc.getUnit("Test Splitter2");
+      double[] currentSplits = splitter.getSplitFactors();
+      double split1 = currentSplits[0];
+      double split3 = 1.0 - split1 - value;
+      if (split3 < 0.25)
+	split3 = 0.25;
+      if (split3 > 0.42)
+	split3 = 0.42;
+      split1 = 1.0 - value - split3;
+      splitter.setSplitFactors(new double[] { split1, value, split3 });
+    });
 
     List<ManipulatedVariable> splitVariables = Arrays.asList(split1Var, split2Var);
 
     // Stage 1 config: Minimize max utilization (balance the load)
     // Using NELDER_MEAD because it's deterministic given same starting point
-    OptimizationConfig stage1Config = new OptimizationConfig(0.28, 0.40).rateUnit("fraction")
-        .tolerance(0.001).maxIterations(50).defaultUtilizationLimit(2.0) // Allow infeasible during
-                                                                         // search
-        .searchMode(SearchMode.NELDER_MEAD_SCORE).rejectInvalidSimulations(true);
+    OptimizationConfig stage1Config = new OptimizationConfig(0.28, 0.40).rateUnit("fraction").tolerance(0.001)
+	.maxIterations(50).defaultUtilizationLimit(2.0) // Allow infeasible during
+							// search
+	.searchMode(SearchMode.NELDER_MEAD_SCORE).rejectInvalidSimulations(true);
 
     // Objective: MINIMIZE max utilization (negative because optimizer maximizes
     // score)
     OptimizationObjective balanceObjective = new OptimizationObjective("balanceLoad",
-        proc -> -getMaxCompressorUtilization(), 1.0, ObjectiveType.MAXIMIZE); // Max of negative =
-                                                                              // Min of positive
+	proc -> -getMaxCompressorUtilization(), 1.0, ObjectiveType.MAXIMIZE); // Max of negative =
+									      // Min of positive
 
-    OptimizationResult stage1Result = optimizer.optimize(processSystem, splitVariables,
-        stage1Config, Collections.singletonList(balanceObjective), Collections.emptyList());
+    OptimizationResult stage1Result = optimizer.optimize(processSystem, splitVariables, stage1Config,
+	Collections.singletonList(balanceObjective), Collections.emptyList());
 
     // Apply stage 1 results
     double optSplit1 = stage1Result.getDecisionVariables().getOrDefault("split1", 0.333);
     double optSplit2 = stage1Result.getDecisionVariables().getOrDefault("split2", 0.333);
     double optSplit3 = 1.0 - optSplit1 - optSplit2;
-    compressorSplitter.setSplitFactors(new double[] {optSplit1, optSplit2, optSplit3});
+    compressorSplitter.setSplitFactors(new double[] { optSplit1, optSplit2, optSplit3 });
     processSystem.run();
 
-    logger.info(
-        String.format("Optimized splits: [%.4f, %.4f, %.4f]", optSplit1, optSplit2, optSplit3));
+    logger.info(String.format("Optimized splits: [%.4f, %.4f, %.4f]", optSplit1, optSplit2, optSplit3));
     printCompressorStatus();
     double balancedMaxUtil = getMaxCompressorUtilization();
     logger.info(String.format("Balanced max utilization: %.2f%%", balancedMaxUtil * 100));
@@ -1021,26 +962,23 @@ public class BottleneckAnalysisOptimizerTest {
     logger.info("\n--- STAGE 2: MAXIMIZE FLOW (Binary Search) ---");
 
     // Now with balanced splits, use BINARY_FEASIBILITY to find max flow
-    OptimizationConfig stage2Config =
-        new OptimizationConfig(originalFlow * 0.9, originalFlow * 1.15).rateUnit("kg/hr")
-            .tolerance(originalFlow * 0.001).maxIterations(20).defaultUtilizationLimit(1.0) // Strict
-                                                                                            // 100%
-                                                                                            // limit
-            .searchMode(SearchMode.BINARY_FEASIBILITY).rejectInvalidSimulations(true);
+    OptimizationConfig stage2Config = new OptimizationConfig(originalFlow * 0.9, originalFlow * 1.15).rateUnit("kg/hr")
+	.tolerance(originalFlow * 0.001).maxIterations(20).defaultUtilizationLimit(1.0) // Strict
+											// 100%
+											// limit
+	.searchMode(SearchMode.BINARY_FEASIBILITY).rejectInvalidSimulations(true);
 
     OptimizationObjective throughputObjective = new OptimizationObjective("throughput",
-        proc -> ((Stream) proc.getUnit("Inlet Stream")).getFlowRate("kg/hr"), 1.0,
-        ObjectiveType.MAXIMIZE);
+	proc -> ((Stream) proc.getUnit("Inlet Stream")).getFlowRate("kg/hr"), 1.0, ObjectiveType.MAXIMIZE);
 
     OptimizationResult stage2Result = optimizer.optimize(processSystem, inletStream, stage2Config,
-        Collections.singletonList(throughputObjective), Collections.emptyList());
+	Collections.singletonList(throughputObjective), Collections.emptyList());
 
     logger.info(String.format("Optimal flow: %.0f kg/hr", stage2Result.getOptimalRate()));
     logger.info("Feasible: " + stage2Result.isFeasible());
     if (stage2Result.getBottleneck() != null) {
       logger.info("Bottleneck: " + stage2Result.getBottleneck().getName());
-      logger.info(String.format("Bottleneck utilization: %.2f%%",
-          stage2Result.getBottleneckUtilization() * 100));
+      logger.info(String.format("Bottleneck utilization: %.2f%%", stage2Result.getBottleneckUtilization() * 100));
     }
 
     // Apply final result
@@ -1049,14 +987,13 @@ public class BottleneckAnalysisOptimizerTest {
 
     logger.info("\n--- FINAL OPTIMIZED STATE ---");
     logger.info(String.format("Total flow: %.0f kg/hr", stage2Result.getOptimalRate()));
-    logger
-        .info(String.format("Split factors: [%.4f, %.4f, %.4f]", optSplit1, optSplit2, optSplit3));
+    logger.info(String.format("Split factors: [%.4f, %.4f, %.4f]", optSplit1, optSplit2, optSplit3));
     printCompressorStatus();
 
     double finalMaxUtil = getMaxCompressorUtilization();
-    logger.info(String.format("\nProduction increase: %.0f kg/hr (+%.2f%%)",
-        stage2Result.getOptimalRate() - originalFlow,
-        (stage2Result.getOptimalRate() - originalFlow) / originalFlow * 100));
+    logger
+	.info(String.format("\nProduction increase: %.0f kg/hr (+%.2f%%)", stage2Result.getOptimalRate() - originalFlow,
+	    (stage2Result.getOptimalRate() - originalFlow) / originalFlow * 100));
     logger.info(String.format("Final max utilization: %.2f%%", finalMaxUtil * 100));
 
     // Print equipment utilization
@@ -1068,8 +1005,7 @@ public class BottleneckAnalysisOptimizerTest {
 
     // Assertions
     Assertions.assertTrue(stage2Result.isFeasible(), "Two-stage result should be feasible");
-    Assertions.assertTrue(stage2Result.getBottleneckUtilization() <= 1.02,
-        "Bottleneck should be at or below 100%");
+    Assertions.assertTrue(stage2Result.getBottleneckUtilization() <= 1.02, "Bottleneck should be at or below 100%");
     // Note: After split factor optimization, the original flow may no longer be
     // achievable
     // if the new split allocation causes a different compressor to become the
@@ -1082,7 +1018,7 @@ public class BottleneckAnalysisOptimizerTest {
     // solution.
     Assertions.assertTrue(stage2Result.getOptimalRate() > 0, "Optimized flow should be positive");
     Assertions.assertTrue(stage2Result.getOptimalRate() >= originalFlow * 0.9,
-        "Optimized flow should be within 10% of baseline (search lower bound)");
+	"Optimized flow should be within 10% of baseline (search lower bound)");
 
     // The two-stage approach should find a solution utilizing equipment reasonably.
     //
@@ -1102,13 +1038,13 @@ public class BottleneckAnalysisOptimizerTest {
     // and the metric discrepancy could push finalMaxUtil below 85% on CI even
     // though the optimizer correctly converged to a bottleneck-limited flow.
     Assertions.assertTrue(stage2Result.getBottleneckUtilization() >= 0.85,
-        "Optimizer should drive bottleneck capacity constraint to at least 85%, got: "
-            + stage2Result.getBottleneckUtilization() * 100 + "%");
+	"Optimizer should drive bottleneck capacity constraint to at least 85%, got: "
+	    + stage2Result.getBottleneckUtilization() * 100 + "%");
     // Loose sanity bounds on the power-based metric — drift in split balancing
     // plus the metric discrepancy (rated vs. actual speed denominator) make a
     // tighter lower bound unreliable across environments.
     Assertions.assertTrue(finalMaxUtil >= 0.70,
-        "Final power-based utilization should be at least 70%, got: " + finalMaxUtil * 100 + "%");
+	"Final power-based utilization should be at least 70%, got: " + finalMaxUtil * 100 + "%");
     Assertions.assertTrue(finalMaxUtil <= 1.05, "Should not exceed 105% utilization");
   }
 
@@ -1123,8 +1059,8 @@ public class BottleneckAnalysisOptimizerTest {
       double power = comp.getPower("kW");
       double maxPower = comp.getCapacityMax() / 1000.0; // W to kW
       if (maxPower > 0 && !Double.isNaN(power)) {
-        double util = power / maxPower;
-        maxUtil = Math.max(maxUtil, util);
+	double util = power / maxPower;
+	maxUtil = Math.max(maxUtil, util);
       }
     }
     return maxUtil;
@@ -1141,9 +1077,8 @@ public class BottleneckAnalysisOptimizerTest {
       double speed = comp.getSpeed();
       double maxPower = comp.getCapacityMax() / 1e6; // Convert W to MW
       double utilization = (power / maxPower) * 100;
-      logger
-          .info(String.format("  %s: flow=%.0f kg/hr, power=%.2f/%.2f MW (%.1f%%), speed=%.0f RPM",
-              comp.getName(), flow, power, maxPower, utilization, speed));
+      logger.info(String.format("  %s: flow=%.0f kg/hr, power=%.2f/%.2f MW (%.1f%%), speed=%.0f RPM", comp.getName(),
+	  flow, power, maxPower, utilization, speed));
     }
   }
 }

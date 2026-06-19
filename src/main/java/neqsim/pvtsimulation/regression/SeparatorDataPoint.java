@@ -19,10 +19,10 @@ public class SeparatorDataPoint {
   /**
    * Create a separator test data point.
    *
-   * @param gor gas-oil ratio (Sm³/Sm³)
-   * @param bo oil formation volume factor
-   * @param apiGravity API gravity
-   * @param separatorPressure separator pressure in bar
+   * @param gor                  gas-oil ratio (Sm³/Sm³)
+   * @param bo                   oil formation volume factor
+   * @param apiGravity           API gravity
+   * @param separatorPressure    separator pressure in bar
    * @param separatorTemperature separator temperature in K
    * @param reservoirTemperature reservoir temperature in K
    */

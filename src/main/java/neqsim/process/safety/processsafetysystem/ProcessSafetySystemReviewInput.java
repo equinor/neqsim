@@ -21,14 +21,14 @@ public class ProcessSafetySystemReviewInput implements Serializable {
   private static final long serialVersionUID = 1000L;
 
   private String projectName = "process-safety-system-review";
-  private final List<ProcessSafetySystemReviewItem> items =
-      new ArrayList<ProcessSafetySystemReviewItem>();
+  private final List<ProcessSafetySystemReviewItem> items = new ArrayList<ProcessSafetySystemReviewItem>();
   private final Map<String, Object> metadata = new LinkedHashMap<String, Object>();
 
   /**
    * Creates an empty review input.
    */
-  public ProcessSafetySystemReviewInput() {}
+  public ProcessSafetySystemReviewInput() {
+  }
 
   /**
    * Parses input from JSON text.
@@ -51,21 +51,18 @@ public class ProcessSafetySystemReviewInput implements Serializable {
     input.setProjectName(getString(object, "projectName", "process-safety-system-review"));
     addTopLevelArrays(input, object);
     if (object.has("stidData") && object.get("stidData").isJsonObject()) {
-      input.mergeFrom(new StidProcessSafetySystemDataSource(object.getAsJsonObject("stidData"))
-          .read());
+      input.mergeFrom(new StidProcessSafetySystemDataSource(object.getAsJsonObject("stidData")).read());
     }
     if (object.has("tagreaderData") && object.get("tagreaderData").isJsonObject()) {
-      input.mergeFrom(new StidProcessSafetySystemDataSource(object.getAsJsonObject("tagreaderData"))
-          .read());
+      input.mergeFrom(new StidProcessSafetySystemDataSource(object.getAsJsonObject("tagreaderData")).read());
       mergeSharedEvidence(input, object.getAsJsonObject("tagreaderData"), "tagreaderData");
     }
     if (object.has("lifecycleEvidence") && object.get("lifecycleEvidence").isJsonObject()) {
-      mergeSharedEvidence(input, object.getAsJsonObject("lifecycleEvidence"),
-          "lifecycleEvidence");
+      mergeSharedEvidence(input, object.getAsJsonObject("lifecycleEvidence"), "lifecycleEvidence");
     }
     for (Map.Entry<String, JsonElement> entry : object.entrySet()) {
       if (!isCoreKey(entry.getKey())) {
-        input.putMetadata(entry.getKey(), toObject(entry.getValue()));
+	input.putMetadata(entry.getKey(), toObject(entry.getValue()));
       }
     }
     return input;
@@ -78,8 +75,8 @@ public class ProcessSafetySystemReviewInput implements Serializable {
    * @return this input for fluent construction
    */
   public ProcessSafetySystemReviewInput setProjectName(String projectName) {
-    this.projectName = projectName == null || projectName.trim().isEmpty()
-        ? "process-safety-system-review" : projectName.trim();
+    this.projectName = projectName == null || projectName.trim().isEmpty() ? "process-safety-system-review"
+	: projectName.trim();
     return this;
   }
 
@@ -117,7 +114,7 @@ public class ProcessSafetySystemReviewInput implements Serializable {
   /**
    * Adds input metadata.
    *
-   * @param key metadata key
+   * @param key   metadata key
    * @param value metadata value
    * @return this input for fluent construction
    */
@@ -143,9 +140,9 @@ public class ProcessSafetySystemReviewInput implements Serializable {
     for (ProcessSafetySystemReviewItem otherItem : other.getItems()) {
       ProcessSafetySystemReviewItem existing = findByFunctionId(otherItem.getFunctionId());
       if (existing == null || otherItem.getFunctionId().isEmpty()) {
-        addItem(otherItem);
+	addItem(otherItem);
       } else {
-        existing.mergeFrom(otherItem);
+	existing.mergeFrom(otherItem);
       }
     }
   }
@@ -170,13 +167,13 @@ public class ProcessSafetySystemReviewInput implements Serializable {
   /**
    * Adds all known top-level item arrays to the input.
    *
-   * @param input input receiving parsed items
+   * @param input  input receiving parsed items
    * @param object source JSON object
    */
   private static void addTopLevelArrays(ProcessSafetySystemReviewInput input, JsonObject object) {
     for (String key : StidProcessSafetySystemDataSource.REVIEW_ARRAY_KEYS) {
       if (object.has(key) && object.get(key).isJsonArray()) {
-        addArray(input, object.getAsJsonArray(key), key);
+	addArray(input, object.getAsJsonArray(key), key);
       }
     }
   }
@@ -184,22 +181,20 @@ public class ProcessSafetySystemReviewInput implements Serializable {
   /**
    * Adds all records from one JSON array.
    *
-   * @param input input receiving parsed items
-   * @param array source array
+   * @param input     input receiving parsed items
+   * @param array     source array
    * @param sourceKey source array key
    */
-  private static void addArray(ProcessSafetySystemReviewInput input, JsonArray array,
-      String sourceKey) {
+  private static void addArray(ProcessSafetySystemReviewInput input, JsonArray array, String sourceKey) {
     for (int index = 0; index < array.size(); index++) {
       JsonElement element = array.get(index);
       if (element.isJsonObject()) {
-        ProcessSafetySystemReviewItem item = ProcessSafetySystemReviewItem.fromMap(
-            toMap(element.getAsJsonObject()));
-        item.put("sourceArray", sourceKey);
-        if (item.getFunctionType().isEmpty()) {
-          item.setFunctionType(StidProcessSafetySystemDataSource.inferFunctionType(sourceKey));
-        }
-        input.addItem(item);
+	ProcessSafetySystemReviewItem item = ProcessSafetySystemReviewItem.fromMap(toMap(element.getAsJsonObject()));
+	item.put("sourceArray", sourceKey);
+	if (item.getFunctionType().isEmpty()) {
+	  item.setFunctionType(StidProcessSafetySystemDataSource.inferFunctionType(sourceKey));
+	}
+	input.addItem(item);
       }
     }
   }
@@ -207,12 +202,11 @@ public class ProcessSafetySystemReviewInput implements Serializable {
   /**
    * Merges a shared object into all review items or creates one global item when no items exist.
    *
-   * @param input input receiving shared evidence
-   * @param object source JSON object
+   * @param input     input receiving shared evidence
+   * @param object    source JSON object
    * @param sourceKey source object key
    */
-  private static void mergeSharedEvidence(ProcessSafetySystemReviewInput input, JsonObject object,
-      String sourceKey) {
+  private static void mergeSharedEvidence(ProcessSafetySystemReviewInput input, JsonObject object, String sourceKey) {
     if (!hasScalarEvidence(object)) {
       return;
     }
@@ -244,7 +238,7 @@ public class ProcessSafetySystemReviewInput implements Serializable {
     for (Map.Entry<String, JsonElement> entry : object.entrySet()) {
       JsonElement value = entry.getValue();
       if (value != null && !value.isJsonNull() && !value.isJsonArray() && !value.isJsonObject()) {
-        return true;
+	return true;
       }
     }
     return false;
@@ -262,7 +256,7 @@ public class ProcessSafetySystemReviewInput implements Serializable {
     }
     for (ProcessSafetySystemReviewItem item : items) {
       if (functionId.equalsIgnoreCase(item.getFunctionId())) {
-        return item;
+	return item;
       }
     }
     return null;
@@ -271,14 +265,13 @@ public class ProcessSafetySystemReviewInput implements Serializable {
   /**
    * Gets a string value from JSON.
    *
-   * @param object JSON object
-   * @param key key to read
+   * @param object       JSON object
+   * @param key          key to read
    * @param defaultValue default value
    * @return string value or default
    */
   private static String getString(JsonObject object, String key, String defaultValue) {
-    return object.has(key) && !object.get(key).isJsonNull() ? object.get(key).getAsString()
-        : defaultValue;
+    return object.has(key) && !object.get(key).isJsonNull() ? object.get(key).getAsString() : defaultValue;
   }
 
   /**
@@ -311,7 +304,7 @@ public class ProcessSafetySystemReviewInput implements Serializable {
     if (element.isJsonArray()) {
       List<Object> list = new ArrayList<Object>();
       for (JsonElement child : element.getAsJsonArray()) {
-        list.add(toObject(child));
+	list.add(toObject(child));
       }
       return list;
     }
@@ -332,12 +325,12 @@ public class ProcessSafetySystemReviewInput implements Serializable {
    */
   private static boolean isCoreKey(String key) {
     if ("projectName".equals(key) || "stidData".equals(key) || "tagreaderData".equals(key)
-        || "lifecycleEvidence".equals(key)) {
+	|| "lifecycleEvidence".equals(key)) {
       return true;
     }
     for (String arrayKey : StidProcessSafetySystemDataSource.REVIEW_ARRAY_KEYS) {
       if (arrayKey.equals(key)) {
-        return true;
+	return true;
       }
     }
     return false;

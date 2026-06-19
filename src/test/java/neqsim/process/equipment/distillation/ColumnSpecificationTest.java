@@ -30,43 +30,41 @@ public class ColumnSpecificationTest {
   @Test
   public void testSpecificationValidation() {
     // Valid product purity spec
-    ColumnSpecification spec =
-        new ColumnSpecification(ColumnSpecification.SpecificationType.PRODUCT_PURITY,
-            ColumnSpecification.ProductLocation.TOP, 0.95, "methane");
+    ColumnSpecification spec = new ColumnSpecification(ColumnSpecification.SpecificationType.PRODUCT_PURITY,
+	ColumnSpecification.ProductLocation.TOP, 0.95, "methane");
     assertEquals(ColumnSpecification.SpecificationType.PRODUCT_PURITY, spec.getType());
     assertEquals(ColumnSpecification.ProductLocation.TOP, spec.getLocation());
     assertEquals(0.95, spec.getTargetValue(), 1e-10);
     assertEquals("methane", spec.getComponentName());
 
     // Valid reflux ratio (no component needed)
-    ColumnSpecification refluxSpec =
-        new ColumnSpecification(ColumnSpecification.SpecificationType.REFLUX_RATIO,
-            ColumnSpecification.ProductLocation.TOP, 3.0);
+    ColumnSpecification refluxSpec = new ColumnSpecification(ColumnSpecification.SpecificationType.REFLUX_RATIO,
+	ColumnSpecification.ProductLocation.TOP, 3.0);
     assertEquals(3.0, refluxSpec.getTargetValue(), 1e-10);
 
     // Purity spec without component name should throw
     assertThrows(IllegalArgumentException.class,
-        () -> new ColumnSpecification(ColumnSpecification.SpecificationType.PRODUCT_PURITY,
-            ColumnSpecification.ProductLocation.TOP, 0.95));
+	() -> new ColumnSpecification(ColumnSpecification.SpecificationType.PRODUCT_PURITY,
+	    ColumnSpecification.ProductLocation.TOP, 0.95));
 
     // Component recovery without component name should throw
     assertThrows(IllegalArgumentException.class,
-        () -> new ColumnSpecification(ColumnSpecification.SpecificationType.COMPONENT_RECOVERY,
-            ColumnSpecification.ProductLocation.BOTTOM, 0.8));
+	() -> new ColumnSpecification(ColumnSpecification.SpecificationType.COMPONENT_RECOVERY,
+	    ColumnSpecification.ProductLocation.BOTTOM, 0.8));
 
     // Purity out of range should throw
     assertThrows(IllegalArgumentException.class,
-        () -> new ColumnSpecification(ColumnSpecification.SpecificationType.PRODUCT_PURITY,
-            ColumnSpecification.ProductLocation.TOP, 1.5, "methane"));
+	() -> new ColumnSpecification(ColumnSpecification.SpecificationType.PRODUCT_PURITY,
+	    ColumnSpecification.ProductLocation.TOP, 1.5, "methane"));
 
     // Negative reflux ratio should throw
     assertThrows(IllegalArgumentException.class,
-        () -> new ColumnSpecification(ColumnSpecification.SpecificationType.REFLUX_RATIO,
-            ColumnSpecification.ProductLocation.TOP, -1.0));
+	() -> new ColumnSpecification(ColumnSpecification.SpecificationType.REFLUX_RATIO,
+	    ColumnSpecification.ProductLocation.TOP, -1.0));
 
     assertThrows(IllegalArgumentException.class,
-        () -> new ColumnSpecification(ColumnSpecification.SpecificationType.DUTY,
-            ColumnSpecification.ProductLocation.TOP, Double.NaN));
+	() -> new ColumnSpecification(ColumnSpecification.SpecificationType.DUTY,
+	    ColumnSpecification.ProductLocation.TOP, Double.NaN));
   }
 
   /**
@@ -74,9 +72,8 @@ public class ColumnSpecificationTest {
    */
   @Test
   public void testSpecificationSettings() {
-    ColumnSpecification spec =
-        new ColumnSpecification(ColumnSpecification.SpecificationType.REFLUX_RATIO,
-            ColumnSpecification.ProductLocation.TOP, 2.0);
+    ColumnSpecification spec = new ColumnSpecification(ColumnSpecification.SpecificationType.REFLUX_RATIO,
+	ColumnSpecification.ProductLocation.TOP, 2.0);
     assertEquals(1.0e-4, spec.getTolerance(), 1e-10);
     assertEquals(20, spec.getMaxIterations());
 
@@ -110,9 +107,8 @@ public class ColumnSpecificationTest {
    */
   @Test
   public void testToString() {
-    ColumnSpecification spec =
-        new ColumnSpecification(ColumnSpecification.SpecificationType.PRODUCT_PURITY,
-            ColumnSpecification.ProductLocation.TOP, 0.9, "propane");
+    ColumnSpecification spec = new ColumnSpecification(ColumnSpecification.SpecificationType.PRODUCT_PURITY,
+	ColumnSpecification.ProductLocation.TOP, 0.9, "propane");
     String str = spec.toString();
     assertTrue(str.contains("PRODUCT_PURITY"));
     assertTrue(str.contains("TOP"));
@@ -139,36 +135,30 @@ public class ColumnSpecificationTest {
     // Test top product purity
     column.setTopProductPurity("methane", 0.95);
     assertNotNull(column.getTopSpecification());
-    assertEquals(ColumnSpecification.SpecificationType.PRODUCT_PURITY,
-        column.getTopSpecification().getType());
+    assertEquals(ColumnSpecification.SpecificationType.PRODUCT_PURITY, column.getTopSpecification().getType());
     assertEquals(0.95, column.getTopSpecification().getTargetValue(), 1e-10);
 
     // Test bottom product purity
     column.setBottomProductPurity("propane", 0.50);
     assertNotNull(column.getBottomSpecification());
-    assertEquals(ColumnSpecification.SpecificationType.PRODUCT_PURITY,
-        column.getBottomSpecification().getType());
+    assertEquals(ColumnSpecification.SpecificationType.PRODUCT_PURITY, column.getBottomSpecification().getType());
     assertEquals(0.50, column.getBottomSpecification().getTargetValue(), 1e-10);
 
     // Test reflux ratio convenience
     column.setCondenserRefluxRatio(3.5);
-    assertEquals(ColumnSpecification.SpecificationType.REFLUX_RATIO,
-        column.getTopSpecification().getType());
+    assertEquals(ColumnSpecification.SpecificationType.REFLUX_RATIO, column.getTopSpecification().getType());
 
     // Test boilup ratio convenience
     column.setReboilerBoilupRatio(1.5);
-    assertEquals(ColumnSpecification.SpecificationType.REFLUX_RATIO,
-        column.getBottomSpecification().getType());
+    assertEquals(ColumnSpecification.SpecificationType.REFLUX_RATIO, column.getBottomSpecification().getType());
 
     // Test component recovery convenience
     column.setTopComponentRecovery("methane", 0.99);
-    assertEquals(ColumnSpecification.SpecificationType.COMPONENT_RECOVERY,
-        column.getTopSpecification().getType());
+    assertEquals(ColumnSpecification.SpecificationType.COMPONENT_RECOVERY, column.getTopSpecification().getType());
 
     // Test product flow rate convenience
     column.setBottomProductFlowRate(50.0, "mol/hr");
-    assertEquals(ColumnSpecification.SpecificationType.PRODUCT_FLOW_RATE,
-        column.getBottomSpecification().getType());
+    assertEquals(ColumnSpecification.SpecificationType.PRODUCT_FLOW_RATE, column.getBottomSpecification().getType());
   }
 
   /**
@@ -179,15 +169,13 @@ public class ColumnSpecificationTest {
     DistillationColumn column = new DistillationColumn("TestCol", 3, true, true);
 
     // Setting a BOTTOM spec as top should throw
-    ColumnSpecification bottomSpec =
-        new ColumnSpecification(ColumnSpecification.SpecificationType.REFLUX_RATIO,
-            ColumnSpecification.ProductLocation.BOTTOM, 2.0);
+    ColumnSpecification bottomSpec = new ColumnSpecification(ColumnSpecification.SpecificationType.REFLUX_RATIO,
+	ColumnSpecification.ProductLocation.BOTTOM, 2.0);
     assertThrows(IllegalArgumentException.class, () -> column.setTopSpecification(bottomSpec));
 
     // Setting a TOP spec as bottom should throw
-    ColumnSpecification topSpec =
-        new ColumnSpecification(ColumnSpecification.SpecificationType.REFLUX_RATIO,
-            ColumnSpecification.ProductLocation.TOP, 2.0);
+    ColumnSpecification topSpec = new ColumnSpecification(ColumnSpecification.SpecificationType.REFLUX_RATIO,
+	ColumnSpecification.ProductLocation.TOP, 2.0);
     assertThrows(IllegalArgumentException.class, () -> column.setBottomSpecification(topSpec));
   }
 
@@ -229,8 +217,7 @@ public class ColumnSpecificationTest {
     Stream feed = new Stream("validation feed 2", testSystem);
     feed.setFlowRate(100.0, "kg/hr");
 
-    DistillationColumn column =
-        new DistillationColumn("ValidationColumnNoCondenser", 5, true, false);
+    DistillationColumn column = new DistillationColumn("ValidationColumnNoCondenser", 5, true, false);
     column.addFeedStream(feed, 2);
     column.setTopPressure(15.0);
     column.setBottomPressure(15.5);
@@ -319,11 +306,9 @@ public class ColumnSpecificationTest {
     assertNotNull(column.getLastShortcutInitializationResult());
     assertTrue(column.getLastShortcutInitializationResult().isInitialized());
     assertTrue(summary.toString().contains("SHORTCUT_INITIALIZATION"));
-    assertEquals(ColumnSpecification.SpecificationType.COMPONENT_RECOVERY,
-        column.getTopSpecification().getType());
+    assertEquals(ColumnSpecification.SpecificationType.COMPONENT_RECOVERY, column.getTopSpecification().getType());
     assertEquals(0.90, column.getTopSpecification().getTargetValue(), 1.0e-12);
-    assertEquals(ColumnSpecification.SpecificationType.COMPONENT_RECOVERY,
-        column.getBottomSpecification().getType());
+    assertEquals(ColumnSpecification.SpecificationType.COMPONENT_RECOVERY, column.getBottomSpecification().getType());
     assertEquals(0.90, column.getBottomSpecification().getTargetValue(), 1.0e-12);
   }
 
@@ -359,8 +344,7 @@ public class ColumnSpecificationTest {
   }
 
   /**
-   * Test reflux ratio specification — this should be directly set on the condenser/reboiler without
-   * an outer loop.
+   * Test reflux ratio specification — this should be directly set on the condenser/reboiler without an outer loop.
    */
   @Test
   public void testRefluxRatioSpec() {
@@ -437,8 +421,8 @@ public class ColumnSpecificationTest {
   }
 
   /**
-   * Test that an AUTO column caches the selected concrete solver and reuses it on warm re-solves
-   * instead of re-running the expensive multi-candidate selection on every call.
+   * Test that an AUTO column caches the selected concrete solver and reuses it on warm re-solves instead of re-running
+   * the expensive multi-candidate selection on every call.
    */
   @Test
   public void testAutoSolverCachesWarmStartSolver() {
@@ -473,12 +457,10 @@ public class ColumnSpecificationTest {
 
     // Second (warm) solve must reuse the cached solver, not AUTO selection again.
     column.run();
-    assertEquals(DistillationColumn.SolverType.AUTO, column.getSolverType(),
-        "Configured solver type stays AUTO");
+    assertEquals(DistillationColumn.SolverType.AUTO, column.getSolverType(), "Configured solver type stays AUTO");
     assertEquals(cachedSolver, column.getAutoWarmStartSolver(),
-        "Cached warm-start solver is preserved across warm re-solves");
-    assertEquals(cachedSolver, column.getLastSolverTypeUsed(),
-        "Warm re-solve reuses the cached concrete solver");
+	"Cached warm-start solver is preserved across warm re-solves");
+    assertEquals(cachedSolver, column.getLastSolverTypeUsed(), "Warm re-solve reuses the cached concrete solver");
   }
 
   /**
@@ -486,8 +468,8 @@ public class ColumnSpecificationTest {
    */
   @Test
   public void insideOutTelemetryRecordsModelWork() {
-    DistillationColumn column = createBinaryFractionator("InsideOutTelemetry", "propane",
-        "n-butane", "n-pentane", 10.0, 273.15 + 45.0, 273.15 + 30.0, 273.15 + 90.0);
+    DistillationColumn column = createBinaryFractionator("InsideOutTelemetry", "propane", "n-butane", "n-pentane", 10.0,
+	273.15 + 45.0, 273.15 + 30.0, 273.15 + 90.0);
     column.setSolverType(DistillationColumn.SolverType.INSIDE_OUT);
     column.setInnerLoopSteps(2);
     column.run();
@@ -496,9 +478,9 @@ public class ColumnSpecificationTest {
     assertTrue(column.getLastInsideOutOuterFlashSweeps() > 0);
     assertTrue(column.getLastInsideOutInnerLoopIterations() >= 0);
     assertTrue(Double.isFinite(column.getLastInsideOutKValueResidual())
-        || Double.isInfinite(column.getLastInsideOutKValueResidual()));
+	|| Double.isInfinite(column.getLastInsideOutKValueResidual()));
     assertTrue(Double.isNaN(column.getLastInsideOutSurrogateResidual())
-        || Double.isFinite(column.getLastInsideOutSurrogateResidual()));
+	|| Double.isFinite(column.getLastInsideOutSurrogateResidual()));
     assertTrue(column.getLastInsideOutSurrogateResetCount() >= 0);
     assertTrue(column.getConvergenceDiagnostics().contains("Inside-out model"));
   }
@@ -508,8 +490,8 @@ public class ColumnSpecificationTest {
    */
   @Test
   public void naphtaliSandholmTelemetryRecordsJacobianWork() {
-    DistillationColumn column = createBinaryFractionator("NaphtaliTelemetry", "propane", "n-butane",
-        "n-pentane", 10.0, 273.15 + 45.0, 273.15 + 30.0, 273.15 + 90.0);
+    DistillationColumn column = createBinaryFractionator("NaphtaliTelemetry", "propane", "n-butane", "n-pentane", 10.0,
+	273.15 + 45.0, 273.15 + 30.0, 273.15 + 90.0);
     column.setSolverType(DistillationColumn.SolverType.NAPHTALI_SANDHOLM);
     column.setMaxNumberOfIterations(20);
 
@@ -534,12 +516,11 @@ public class ColumnSpecificationTest {
    */
   @Test
   public void feasibilityScreenReportsCommercialActiveBoundDiagnostics() {
-    DistillationColumn column = createBinaryFractionator("ActiveBoundDiagnostics", "propane",
-        "n-butane", "n-pentane", 10.0, 273.15 + 45.0, 273.15 + 30.0, 273.15 + 90.0);
+    DistillationColumn column = createBinaryFractionator("ActiveBoundDiagnostics", "propane", "n-butane", "n-pentane",
+	10.0, 273.15 + 45.0, 273.15 + 30.0, 273.15 + 90.0);
     column.setTopProductPurity("propane", 0.99999);
     column.setReboilerDutySpecification(0.0);
-    column.addSideDrawFlowSpecification(2, DistillationColumn.SideDrawPhase.LIQUID, 1.0e9,
-        "mol/hr");
+    column.addSideDrawFlowSpecification(2, DistillationColumn.SideDrawPhase.LIQUID, 1.0e9, "mol/hr");
     column.addLiquidPumparound("PA-1", 2, 4, 0.95, 10.0);
 
     ValidationResult result = column.screenSpecificationFeasibility();
@@ -556,16 +537,16 @@ public class ColumnSpecificationTest {
   @Test
   @Disabled("This test currently fails")
   public void autoSolverHandlesCommercialHydrocarbonRegressionBank() {
-    assertCommercialAutoCase(createBinaryFractionator("BankDepropanizer", "propane", "n-butane",
-        "n-pentane", 10.0, 273.15 + 45.0, 273.15 + 30.0, 273.15 + 90.0));
-    assertCommercialAutoCase(createBinaryFractionator("BankDebutanizer", "n-butane", "n-pentane",
-        "n-hexane", 6.0, 273.15 + 80.0, 273.15 + 45.0, 273.15 + 130.0));
+    assertCommercialAutoCase(createBinaryFractionator("BankDepropanizer", "propane", "n-butane", "n-pentane", 10.0,
+	273.15 + 45.0, 273.15 + 30.0, 273.15 + 90.0));
+    assertCommercialAutoCase(createBinaryFractionator("BankDebutanizer", "n-butane", "n-pentane", "n-hexane", 6.0,
+	273.15 + 80.0, 273.15 + 45.0, 273.15 + 130.0));
     assertCommercialAutoCase(createLeanGasFractionator());
   }
 
   /**
-   * Test that AUTO reports deferred candidate fallbacks instead of rerunning damped substitution
-   * inside every rejected probe.
+   * Test that AUTO reports deferred candidate fallbacks instead of rerunning damped substitution inside every rejected
+   * probe.
    */
   @Test
   public void autoSolverDefersCandidateFallbackWork() {
@@ -576,7 +557,7 @@ public class ColumnSpecificationTest {
     assertTrue(column.solved(), column.getConvergenceDiagnostics());
     assertTrue(column.getLastAutoSolverSummary().contains("duplicate damped probe skipped"));
     assertTrue(column.getLastAutoSolverSummary().contains("damped fallback deferred")
-        || column.getLastSolverTypeUsed() != DistillationColumn.SolverType.DAMPED_SUBSTITUTION);
+	|| column.getLastSolverTypeUsed() != DistillationColumn.SolverType.DAMPED_SUBSTITUTION);
   }
 
   /**
@@ -595,14 +576,13 @@ public class ColumnSpecificationTest {
 
       StringBuilder summary = new StringBuilder();
       boolean seeded = column.tryThermodynamicProfileInitialization(summary);
-      assertTrue(seeded || column.getLastInitializationReport().contains("skipped"),
-          regressionCase.name);
+      assertTrue(seeded || column.getLastInitializationReport().contains("skipped"), regressionCase.name);
     }
   }
 
   /**
-   * Test product purity specification using a deethanizer case. The top spec is methane + ethane
-   * purity in the overhead, and the bottom spec is reboiler temperature (traditional).
+   * Test product purity specification using a deethanizer case. The top spec is methane + ethane purity in the
+   * overhead, and the bottom spec is reboiler temperature (traditional).
    */
   @Test
   public void testProductPuritySpecDeethanizer() {
@@ -642,8 +622,7 @@ public class ColumnSpecificationTest {
     // The ethane mole fraction in top product should be approximately at the target
     double ethaneInTop = column.getGasOutStream().getFluid().getComponent("ethane").getz();
     // Allow tolerance since we're solving iteratively
-    assertTrue(ethaneInTop > 0.1,
-        "Ethane mole fraction in top product should be significant, got: " + ethaneInTop);
+    assertTrue(ethaneInTop > 0.1, "Ethane mole fraction in top product should be significant, got: " + ethaneInTop);
   }
 
   /**
@@ -677,11 +656,10 @@ public class ColumnSpecificationTest {
     column.run();
 
     assertTrue(column.getCondenser().isSetOutTemperature(),
-        "Product specifications should activate the outer solve and set a condenser temperature");
+	"Product specifications should activate the outer solve and set a condenser temperature");
     assertTrue(column.getLastIterationCount() > 0);
     assertTrue(Double.isFinite(column.getLastTopSpecificationResidual()));
-    assertTrue(Math.abs(column.getLastTopSpecificationResidual()) <= column.getTopSpecification()
-        .getTolerance());
+    assertTrue(Math.abs(column.getLastTopSpecificationResidual()) <= column.getTopSpecification().getTolerance());
   }
 
   /**
@@ -717,8 +695,7 @@ public class ColumnSpecificationTest {
     assertEquals(0.8, column.getTopSpecification().getTargetValue(), 1.0e-12);
     assertTrue(column.getCondenser().isSetOutTemperature());
     assertTrue(Double.isFinite(column.getLastTopSpecificationResidual()));
-    assertTrue(Math.abs(column.getLastTopSpecificationResidual()) <= column.getTopSpecification()
-        .getTolerance());
+    assertTrue(Math.abs(column.getLastTopSpecificationResidual()) <= column.getTopSpecification().getTolerance());
     assertTrue(column.getConvergenceDiagnostics().contains("Specification homotopy"));
   }
 
@@ -808,21 +785,20 @@ public class ColumnSpecificationTest {
     /**
      * Create a regression case descriptor.
      *
-     * @param name case name
-     * @param components component names
-     * @param amounts component molar amounts
+     * @param name            case name
+     * @param components      component names
+     * @param amounts         component molar amounts
      * @param feedTemperature feed temperature in Kelvin
-     * @param pressure pressure in bara
-     * @param trays tray count
-     * @param condenser whether the column has a condenser
-     * @param reboiler whether the column has a reboiler
-     * @param sideDraw whether to add a side-draw spec
-     * @param pumparound whether to add a pumparound circuit
-     * @param badSeeds whether to add deliberately poor temperature seeds
+     * @param pressure        pressure in bara
+     * @param trays           tray count
+     * @param condenser       whether the column has a condenser
+     * @param reboiler        whether the column has a reboiler
+     * @param sideDraw        whether to add a side-draw spec
+     * @param pumparound      whether to add a pumparound circuit
+     * @param badSeeds        whether to add deliberately poor temperature seeds
      */
-    private CommercialCase(String name, String[] components, double[] amounts,
-        double feedTemperature, double pressure, int trays, boolean condenser, boolean reboiler,
-        boolean sideDraw, boolean pumparound, boolean badSeeds) {
+    private CommercialCase(String name, String[] components, double[] amounts, double feedTemperature, double pressure,
+	int trays, boolean condenser, boolean reboiler, boolean sideDraw, boolean pumparound, boolean badSeeds) {
       this.name = name;
       this.components = components;
       this.amounts = amounts;
@@ -844,95 +820,87 @@ public class ColumnSpecificationTest {
    */
   private CommercialCase[] commercialCaseBank() {
     return new CommercialCase[] {
-        commercialCase("total condenser C3-C5", new String[] {"propane", "n-butane", "n-pentane"},
-            new double[] {0.35, 0.45, 0.20}, 318.15, 10.0, 6, true, true, false, false, false),
-        commercialCase("partial condenser C1-C4",
-            new String[] {"methane", "ethane", "propane", "n-butane"},
-            new double[] {0.30, 0.25, 0.25, 0.20}, 250.0, 28.0, 8, true, true, false, false, false),
-        commercialCase("absorber no condenser reboiler",
-            new String[] {"methane", "ethane", "propane"}, new double[] {0.70, 0.20, 0.10}, 298.15,
-            50.0, 5, false, false, false, false, false),
-        commercialCase("stripper no condenser", new String[] {"propane", "n-butane", "n-pentane"},
-            new double[] {0.20, 0.50, 0.30}, 350.0, 8.0, 6, false, true, false, false, false),
-        commercialCase("narrow butane pentane", new String[] {"i-butane", "n-butane", "n-pentane"},
-            new double[] {0.25, 0.45, 0.30}, 330.0, 6.0, 8, true, true, false, false, false),
-        commercialCase("wide boiling C1-C7",
-            new String[] {"methane", "propane", "n-hexane", "n-heptane"},
-            new double[] {0.40, 0.30, 0.20, 0.10}, 310.0, 35.0, 10, true, true, false, false,
-            false),
-        commercialCase("sour gas trace H2S",
-            new String[] {"methane", "CO2", "H2S", "ethane", "propane"},
-            new double[] {0.70, 0.08, 0.02, 0.15, 0.05}, 285.0, 45.0, 8, true, true, false, false,
-            false),
-        commercialCase("CO2 rich demethanizer", new String[] {"methane", "CO2", "ethane"},
-            new double[] {0.45, 0.35, 0.20}, 240.0, 55.0, 8, true, true, false, false, false),
-        commercialCase("water rich hydrocarbon", new String[] {"methane", "CO2", "water"},
-            new double[] {0.60, 0.10, 0.30}, 310.0, 20.0, 6, true, true, false, false, false),
-        commercialCase("bad initial guesses", new String[] {"propane", "n-butane", "n-pentane"},
-            new double[] {0.40, 0.40, 0.20}, 318.15, 9.0, 6, true, true, false, false, true),
-        commercialCase("side draw fractionator", new String[] {"propane", "n-butane", "n-pentane"},
-            new double[] {0.25, 0.50, 0.25}, 320.0, 9.0, 7, true, true, true, false, false),
-        commercialCase("pumparound fractionator",
-            new String[] {"n-butane", "n-pentane", "n-hexane"}, new double[] {0.30, 0.45, 0.25},
-            360.0, 5.0, 8, true, true, false, true, false),
-        commercialCase("low reflux startup", new String[] {"ethane", "propane", "n-butane"},
-            new double[] {0.30, 0.45, 0.25}, 300.0, 18.0, 6, true, true, false, false, false),
-        commercialCase("high pressure demethanizer", new String[] {"methane", "ethane", "propane"},
-            new double[] {0.65, 0.25, 0.10}, 220.0, 70.0, 8, true, true, false, false, false),
-        commercialCase("vacuum debutanizer", new String[] {"n-butane", "n-pentane", "n-hexane"},
-            new double[] {0.35, 0.45, 0.20}, 340.0, 1.5, 8, true, true, false, false, false),
-        commercialCase("near critical rich gas", new String[] {"methane", "ethane", "propane"},
-            new double[] {0.40, 0.35, 0.25}, 305.0, 45.0, 8, true, true, false, false, false),
-        commercialCase("nitrogen rich gas", new String[] {"nitrogen", "methane", "ethane"},
-            new double[] {0.20, 0.65, 0.15}, 230.0, 40.0, 6, true, true, false, false, false),
-        commercialCase("heavy NGL splitter", new String[] {"n-pentane", "n-hexane", "n-heptane"},
-            new double[] {0.35, 0.40, 0.25}, 380.0, 4.0, 8, true, true, false, false, false),
-        commercialCase("wet gas stabilizer",
-            new String[] {"methane", "ethane", "water", "n-butane"},
-            new double[] {0.55, 0.25, 0.05, 0.15}, 300.0, 30.0, 7, true, true, false, false, false),
-        commercialCase("lean methane absorber", new String[] {"methane", "ethane", "n-butane"},
-            new double[] {0.82, 0.12, 0.06}, 295.0, 60.0, 5, false, false, false, false, false)};
+	commercialCase("total condenser C3-C5", new String[] { "propane", "n-butane", "n-pentane" },
+	    new double[] { 0.35, 0.45, 0.20 }, 318.15, 10.0, 6, true, true, false, false, false),
+	commercialCase("partial condenser C1-C4", new String[] { "methane", "ethane", "propane", "n-butane" },
+	    new double[] { 0.30, 0.25, 0.25, 0.20 }, 250.0, 28.0, 8, true, true, false, false, false),
+	commercialCase("absorber no condenser reboiler", new String[] { "methane", "ethane", "propane" },
+	    new double[] { 0.70, 0.20, 0.10 }, 298.15, 50.0, 5, false, false, false, false, false),
+	commercialCase("stripper no condenser", new String[] { "propane", "n-butane", "n-pentane" },
+	    new double[] { 0.20, 0.50, 0.30 }, 350.0, 8.0, 6, false, true, false, false, false),
+	commercialCase("narrow butane pentane", new String[] { "i-butane", "n-butane", "n-pentane" },
+	    new double[] { 0.25, 0.45, 0.30 }, 330.0, 6.0, 8, true, true, false, false, false),
+	commercialCase("wide boiling C1-C7", new String[] { "methane", "propane", "n-hexane", "n-heptane" },
+	    new double[] { 0.40, 0.30, 0.20, 0.10 }, 310.0, 35.0, 10, true, true, false, false, false),
+	commercialCase("sour gas trace H2S", new String[] { "methane", "CO2", "H2S", "ethane", "propane" },
+	    new double[] { 0.70, 0.08, 0.02, 0.15, 0.05 }, 285.0, 45.0, 8, true, true, false, false, false),
+	commercialCase("CO2 rich demethanizer", new String[] { "methane", "CO2", "ethane" },
+	    new double[] { 0.45, 0.35, 0.20 }, 240.0, 55.0, 8, true, true, false, false, false),
+	commercialCase("water rich hydrocarbon", new String[] { "methane", "CO2", "water" },
+	    new double[] { 0.60, 0.10, 0.30 }, 310.0, 20.0, 6, true, true, false, false, false),
+	commercialCase("bad initial guesses", new String[] { "propane", "n-butane", "n-pentane" },
+	    new double[] { 0.40, 0.40, 0.20 }, 318.15, 9.0, 6, true, true, false, false, true),
+	commercialCase("side draw fractionator", new String[] { "propane", "n-butane", "n-pentane" },
+	    new double[] { 0.25, 0.50, 0.25 }, 320.0, 9.0, 7, true, true, true, false, false),
+	commercialCase("pumparound fractionator", new String[] { "n-butane", "n-pentane", "n-hexane" },
+	    new double[] { 0.30, 0.45, 0.25 }, 360.0, 5.0, 8, true, true, false, true, false),
+	commercialCase("low reflux startup", new String[] { "ethane", "propane", "n-butane" },
+	    new double[] { 0.30, 0.45, 0.25 }, 300.0, 18.0, 6, true, true, false, false, false),
+	commercialCase("high pressure demethanizer", new String[] { "methane", "ethane", "propane" },
+	    new double[] { 0.65, 0.25, 0.10 }, 220.0, 70.0, 8, true, true, false, false, false),
+	commercialCase("vacuum debutanizer", new String[] { "n-butane", "n-pentane", "n-hexane" },
+	    new double[] { 0.35, 0.45, 0.20 }, 340.0, 1.5, 8, true, true, false, false, false),
+	commercialCase("near critical rich gas", new String[] { "methane", "ethane", "propane" },
+	    new double[] { 0.40, 0.35, 0.25 }, 305.0, 45.0, 8, true, true, false, false, false),
+	commercialCase("nitrogen rich gas", new String[] { "nitrogen", "methane", "ethane" },
+	    new double[] { 0.20, 0.65, 0.15 }, 230.0, 40.0, 6, true, true, false, false, false),
+	commercialCase("heavy NGL splitter", new String[] { "n-pentane", "n-hexane", "n-heptane" },
+	    new double[] { 0.35, 0.40, 0.25 }, 380.0, 4.0, 8, true, true, false, false, false),
+	commercialCase("wet gas stabilizer", new String[] { "methane", "ethane", "water", "n-butane" },
+	    new double[] { 0.55, 0.25, 0.05, 0.15 }, 300.0, 30.0, 7, true, true, false, false, false),
+	commercialCase("lean methane absorber", new String[] { "methane", "ethane", "n-butane" },
+	    new double[] { 0.82, 0.12, 0.06 }, 295.0, 60.0, 5, false, false, false, false, false) };
   }
 
   /**
    * Create a commercial case descriptor.
    *
-   * @param name case name
-   * @param components component names
-   * @param amounts component molar amounts
+   * @param name            case name
+   * @param components      component names
+   * @param amounts         component molar amounts
    * @param feedTemperature feed temperature in Kelvin
-   * @param pressure pressure in bara
-   * @param trays tray count
-   * @param condenser whether the column has a condenser
-   * @param reboiler whether the column has a reboiler
-   * @param sideDraw whether to add a side-draw spec
-   * @param pumparound whether to add a pumparound circuit
-   * @param badSeeds whether to add deliberately poor temperature seeds
+   * @param pressure        pressure in bara
+   * @param trays           tray count
+   * @param condenser       whether the column has a condenser
+   * @param reboiler        whether the column has a reboiler
+   * @param sideDraw        whether to add a side-draw spec
+   * @param pumparound      whether to add a pumparound circuit
+   * @param badSeeds        whether to add deliberately poor temperature seeds
    * @return configured case descriptor
    */
-  private CommercialCase commercialCase(String name, String[] components, double[] amounts,
-      double feedTemperature, double pressure, int trays, boolean condenser, boolean reboiler,
-      boolean sideDraw, boolean pumparound, boolean badSeeds) {
-    return new CommercialCase(name, components, amounts, feedTemperature, pressure, trays,
-        condenser, reboiler, sideDraw, pumparound, badSeeds);
+  private CommercialCase commercialCase(String name, String[] components, double[] amounts, double feedTemperature,
+      double pressure, int trays, boolean condenser, boolean reboiler, boolean sideDraw, boolean pumparound,
+      boolean badSeeds) {
+    return new CommercialCase(name, components, amounts, feedTemperature, pressure, trays, condenser, reboiler,
+	sideDraw, pumparound, badSeeds);
   }
 
   /**
    * Create a small three-component fractionator case for regression testing.
    *
-   * @param columnName column name
-   * @param lightComponent light component name
-   * @param middleComponent middle component name
-   * @param heavyComponent heavy component name
-   * @param pressure pressure in bara
-   * @param feedTemperature feed temperature in Kelvin
+   * @param columnName           column name
+   * @param lightComponent       light component name
+   * @param middleComponent      middle component name
+   * @param heavyComponent       heavy component name
+   * @param pressure             pressure in bara
+   * @param feedTemperature      feed temperature in Kelvin
    * @param condenserTemperature condenser temperature in Kelvin
-   * @param reboilerTemperature reboiler temperature in Kelvin
+   * @param reboilerTemperature  reboiler temperature in Kelvin
    * @return configured AUTO column
    */
-  private DistillationColumn createBinaryFractionator(String columnName, String lightComponent,
-      String middleComponent, String heavyComponent, double pressure, double feedTemperature,
-      double condenserTemperature, double reboilerTemperature) {
+  private DistillationColumn createBinaryFractionator(String columnName, String lightComponent, String middleComponent,
+      String heavyComponent, double pressure, double feedTemperature, double condenserTemperature,
+      double reboilerTemperature) {
     SystemSrkEos system = new SystemSrkEos(feedTemperature, pressure);
     system.addComponent(lightComponent, 0.35);
     system.addComponent(middleComponent, 0.45);
@@ -997,10 +965,8 @@ public class ColumnSpecificationTest {
    */
   private DistillationColumn createCommercialRegressionCase(CommercialCase regressionCase) {
     SystemSrkEos system = new SystemSrkEos(regressionCase.feedTemperature, regressionCase.pressure);
-    for (int componentIndex =
-        0; componentIndex < regressionCase.components.length; componentIndex++) {
-      system.addComponent(regressionCase.components[componentIndex],
-          regressionCase.amounts[componentIndex]);
+    for (int componentIndex = 0; componentIndex < regressionCase.components.length; componentIndex++) {
+      system.addComponent(regressionCase.components[componentIndex], regressionCase.amounts[componentIndex]);
     }
     system.setMixingRule("classic");
 
@@ -1009,14 +975,12 @@ public class ColumnSpecificationTest {
     feed.run();
 
     DistillationColumn column = new DistillationColumn(regressionCase.name, regressionCase.trays,
-        regressionCase.reboiler, regressionCase.condenser);
+	regressionCase.reboiler, regressionCase.condenser);
     column.addFeedStream(feed, Math.max(0, regressionCase.trays / 2));
     column.setTopPressure(regressionCase.pressure);
-    column
-        .setBottomPressure(regressionCase.pressure + Math.max(0.1, 0.02 * regressionCase.pressure));
+    column.setBottomPressure(regressionCase.pressure + Math.max(0.1, 0.02 * regressionCase.pressure));
     if (regressionCase.condenser) {
-      column.getCondenser()
-          .setOutTemperature(Math.max(80.0, regressionCase.feedTemperature - 25.0));
+      column.getCondenser().setOutTemperature(Math.max(80.0, regressionCase.feedTemperature - 25.0));
       column.setCondenserRefluxRatio(regressionCase.name.contains("low reflux") ? 0.05 : 1.5);
     }
     if (regressionCase.reboiler) {
@@ -1024,11 +988,11 @@ public class ColumnSpecificationTest {
     }
     if (regressionCase.sideDraw) {
       column.addSideDrawFlowSpecification(Math.max(1, regressionCase.trays / 2),
-          DistillationColumn.SideDrawPhase.LIQUID, 25.0, "mol/hr");
+	  DistillationColumn.SideDrawPhase.LIQUID, 25.0, "mol/hr");
     }
     if (regressionCase.pumparound) {
       column.addLiquidPumparound(regressionCase.name + " PA", Math.max(1, regressionCase.trays / 3),
-          Math.min(regressionCase.trays - 1, regressionCase.trays * 2 / 3), 0.15, 10.0);
+	  Math.min(regressionCase.trays - 1, regressionCase.trays * 2 / 3), 0.15, 10.0);
     }
     if (regressionCase.badSeeds) {
       column.setSeedTemperature(0, regressionCase.feedTemperature + 100.0);
@@ -1072,19 +1036,15 @@ public class ColumnSpecificationTest {
     feed.setFlowRate(100.0, "kg/hr");
     feed.run();
 
-    DistillationColumn column = DistillationColumn.builder("TestCol").numberOfTrays(5)
-        .withCondenserAndReboiler().topPressure(15.0, "bara").bottomPressure(15.0, "bara")
-        .topProductPurity("methane", 0.80)
-        .bottomSpecification(
-            new ColumnSpecification(ColumnSpecification.SpecificationType.REFLUX_RATIO,
-                ColumnSpecification.ProductLocation.BOTTOM, 0.5))
-        .addFeedStream(feed, 3).build();
+    DistillationColumn column = DistillationColumn.builder("TestCol").numberOfTrays(5).withCondenserAndReboiler()
+	.topPressure(15.0, "bara").bottomPressure(15.0, "bara").topProductPurity("methane", 0.80)
+	.bottomSpecification(new ColumnSpecification(ColumnSpecification.SpecificationType.REFLUX_RATIO,
+	    ColumnSpecification.ProductLocation.BOTTOM, 0.5))
+	.addFeedStream(feed, 3).build();
 
     assertNotNull(column.getTopSpecification());
-    assertEquals(ColumnSpecification.SpecificationType.PRODUCT_PURITY,
-        column.getTopSpecification().getType());
+    assertEquals(ColumnSpecification.SpecificationType.PRODUCT_PURITY, column.getTopSpecification().getType());
     assertNotNull(column.getBottomSpecification());
-    assertEquals(ColumnSpecification.SpecificationType.REFLUX_RATIO,
-        column.getBottomSpecification().getType());
+    assertEquals(ColumnSpecification.SpecificationType.REFLUX_RATIO, column.getBottomSpecification().getType());
   }
 }

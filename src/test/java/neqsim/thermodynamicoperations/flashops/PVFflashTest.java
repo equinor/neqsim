@@ -82,7 +82,6 @@ class PVFflashTest {
     ops2.TPflash();
     fluid2.init(2);
 
-    assertEquals(0.3, fluid2.getBeta(), 0.02,
-        "TP flash at PVF temperature should give same vapor fraction");
+    assertEquals(0.3, fluid2.getBeta(), 0.02, "TP flash at PVF temperature should give same vapor fraction");
   }
 }

@@ -78,8 +78,7 @@ public class ProcessDerivativeCalculatorTest {
     calculator.addInputVariable("Feed.flowRate", "kg/hr");
     calculator.addOutputVariable("Separator.gasOutStream.flowRate", "kg/hr");
 
-    double derivative =
-        calculator.getDerivative("Separator.gasOutStream.flowRate", "Feed.flowRate");
+    double derivative = calculator.getDerivative("Separator.gasOutStream.flowRate", "Feed.flowRate");
 
     // Derivative should be positive (more feed = more gas)
     // and reasonably bounded (not infinite or extremely large)
@@ -210,10 +209,8 @@ public class ProcessDerivativeCalculatorTest {
   @Test
   public void testFluidMethodChaining() {
     ProcessDerivativeCalculator result = calculator.addInputVariable("Feed.flowRate", "kg/hr")
-        .addInputVariable("Feed.pressure", "bara")
-        .addOutputVariable("Separator.gasOutStream.flowRate", "kg/hr")
-        .setMethod(ProcessDerivativeCalculator.DerivativeMethod.CENTRAL_DIFFERENCE)
-        .setRelativeStepSize(1e-4);
+	.addInputVariable("Feed.pressure", "bara").addOutputVariable("Separator.gasOutStream.flowRate", "kg/hr")
+	.setMethod(ProcessDerivativeCalculator.DerivativeMethod.CENTRAL_DIFFERENCE).setRelativeStepSize(1e-4);
 
     assertSame(calculator, result);
   }

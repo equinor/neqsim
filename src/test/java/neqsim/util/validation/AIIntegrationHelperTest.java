@@ -194,8 +194,7 @@ class AIIntegrationHelperTest {
     @DisplayName("Success result should be success")
     void testSuccessResult() {
       ValidationResult validation = new ValidationResult();
-      AIIntegrationHelper.ExecutionResult result =
-          AIIntegrationHelper.ExecutionResult.success(validation);
+      AIIntegrationHelper.ExecutionResult result = AIIntegrationHelper.ExecutionResult.success(validation);
 
       assertTrue(result.isSuccess());
       assertEquals(AIIntegrationHelper.ExecutionResult.Status.SUCCESS, result.getStatus());
@@ -208,8 +207,8 @@ class AIIntegrationHelperTest {
     void testWarningResult() {
       ValidationResult validation = new ValidationResult();
       validation.addWarning("minor issue");
-      AIIntegrationHelper.ExecutionResult result =
-          AIIntegrationHelper.ExecutionResult.warning("Some warning", validation);
+      AIIntegrationHelper.ExecutionResult result = AIIntegrationHelper.ExecutionResult.warning("Some warning",
+	  validation);
 
       assertFalse(result.isSuccess());
       assertEquals(AIIntegrationHelper.ExecutionResult.Status.WARNING, result.getStatus());
@@ -219,8 +218,7 @@ class AIIntegrationHelperTest {
     @DisplayName("Error result should contain exception")
     void testErrorResult() {
       RuntimeException ex = new RuntimeException("Test error");
-      AIIntegrationHelper.ExecutionResult result =
-          AIIntegrationHelper.ExecutionResult.error("Error occurred", ex);
+      AIIntegrationHelper.ExecutionResult result = AIIntegrationHelper.ExecutionResult.error("Error occurred", ex);
 
       assertFalse(result.isSuccess());
       assertEquals(AIIntegrationHelper.ExecutionResult.Status.ERROR, result.getStatus());

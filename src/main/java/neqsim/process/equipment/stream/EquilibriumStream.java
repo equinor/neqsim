@@ -35,7 +35,7 @@ public class EquilibriumStream extends Stream {
    * Constructor for EquilibriumStream.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
+   * @param name         a {@link java.lang.String} object
    * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
    */
   public EquilibriumStream(String name, SystemInterface thermoSystem) {
@@ -63,8 +63,7 @@ public class EquilibriumStream extends Stream {
   @Override
   public EquilibriumStream clone(String name) {
     if (this.getName().equals(name)) {
-      throw new RuntimeException(
-          new InvalidInputException(this, "clone", "name", "- Same name as in original object"));
+      throw new RuntimeException(new InvalidInputException(this, "clone", "name", "- Same name as in original object"));
     }
     EquilibriumStream s = this.clone();
     s.setName(name);

@@ -14,9 +14,9 @@ import com.google.gson.JsonObject;
  * Registry for MCP runner plugins.
  *
  * <p>
- * Provides a central place to register, discover, and invoke custom runner plugins. Plugins are
- * stored in a thread-safe map keyed by name. The registry can list all available plugins (with
- * descriptions and schemas) for AI agent discovery.
+ * Provides a central place to register, discover, and invoke custom runner plugins. Plugins are stored in a thread-safe
+ * map keyed by name. The registry can list all available plugins (with descriptions and schemas) for AI agent
+ * discovery.
  * </p>
  *
  * @author Even Solbraa
@@ -24,17 +24,16 @@ import com.google.gson.JsonObject;
  */
 public final class PluginRegistry {
 
-  private static final Gson GSON =
-      new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+  private static final Gson GSON = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
 
   /** Registered plugins keyed by name. */
-  private static final ConcurrentHashMap<String, McpRunnerPlugin> PLUGINS =
-      new ConcurrentHashMap<String, McpRunnerPlugin>();
+  private static final ConcurrentHashMap<String, McpRunnerPlugin> PLUGINS = new ConcurrentHashMap<String, McpRunnerPlugin>();
 
   /**
    * Private constructor — all methods are static.
    */
-  private PluginRegistry() {}
+  private PluginRegistry() {
+  }
 
   /**
    * Registers a plugin. Overwrites any existing plugin with the same name.
@@ -118,14 +117,14 @@ public final class PluginRegistry {
       StringBuilder suggestion = new StringBuilder("Available plugins: ");
       List<String> names = listNames();
       if (names.isEmpty()) {
-        suggestion.append("(none registered)");
+	suggestion.append("(none registered)");
       } else {
-        for (int i = 0; i < names.size(); i++) {
-          if (i > 0) {
-            suggestion.append(", ");
-          }
-          suggestion.append(names.get(i));
-        }
+	for (int i = 0; i < names.size(); i++) {
+	  if (i > 0) {
+	    suggestion.append(", ");
+	  }
+	  suggestion.append(names.get(i));
+	}
       }
       err.addProperty("remediation", suggestion.toString());
       errors.add(err);

@@ -29,8 +29,7 @@ class NorsokP002LineSizingValidatorTest {
     pipe.setLength(1000.0);
     pipe.setDiameter(0.25);
 
-    NorsokP002LineSizingValidator.LineSizingResult result =
-        new NorsokP002LineSizingValidator().validate(pipe);
+    NorsokP002LineSizingValidator.LineSizingResult result = new NorsokP002LineSizingValidator().validate(pipe);
 
     assertEquals(NorsokP002LineSizingValidator.ServiceType.GAS, result.getServiceType());
     assertTrue(result.getVelocityMPerS() > 0.0);

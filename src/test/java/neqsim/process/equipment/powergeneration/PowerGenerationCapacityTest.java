@@ -12,8 +12,7 @@ import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Tests for power generation capacity constraint integration with the production optimization
- * framework.
+ * Tests for power generation capacity constraint integration with the production optimization framework.
  */
 class PowerGenerationCapacityTest {
 
@@ -66,8 +65,7 @@ class PowerGenerationCapacityTest {
     gt.setRatedPower(30.0, "MW");
 
     Map<String, CapacityConstraint> constraints = gt.getCapacityConstraints();
-    assertTrue(constraints.containsKey("power"),
-        "GasTurbine should have 'power' capacity constraint");
+    assertTrue(constraints.containsKey("power"), "GasTurbine should have 'power' capacity constraint");
   }
 
   @Test
@@ -118,8 +116,7 @@ class PowerGenerationCapacityTest {
     st.setRatedPower(15.0, "MW");
 
     Map<String, CapacityConstraint> constraints = st.getCapacityConstraints();
-    assertTrue(constraints.containsKey("power"),
-        "SteamTurbine should have 'power' capacity constraint");
+    assertTrue(constraints.containsKey("power"), "SteamTurbine should have 'power' capacity constraint");
   }
 
   @Test
@@ -195,8 +192,7 @@ class PowerGenerationCapacityTest {
     hrsg.setDesignHeatDuty(50.0, "MW");
 
     Map<String, CapacityConstraint> constraints = hrsg.getCapacityConstraints();
-    assertTrue(constraints.containsKey("heatDuty"),
-        "HRSG should have 'heatDuty' capacity constraint");
+    assertTrue(constraints.containsKey("heatDuty"), "HRSG should have 'heatDuty' capacity constraint");
   }
 
   @Test
@@ -225,7 +221,7 @@ class PowerGenerationCapacityTest {
 
     Map<String, CapacityConstraint> constraints = cc.getCapacityConstraints();
     assertTrue(constraints.containsKey("totalPower"),
-        "CombinedCycleSystem should have 'totalPower' capacity constraint");
+	"CombinedCycleSystem should have 'totalPower' capacity constraint");
   }
 
   @Test

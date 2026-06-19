@@ -15,8 +15,7 @@ public class NeqSimFluidDataBaseTest {
   void testMain() {
     boolean failed = true;
     NeqSimFluidDataBase database = new NeqSimFluidDataBase();
-    try (ResultSet dataSet =
-        database.getResultSet("FluidDatabase", "SELECT * FROM comp where name='water'")) {
+    try (ResultSet dataSet = database.getResultSet("FluidDatabase", "SELECT * FROM comp where name='water'")) {
       dataSet.next();
       // logger.info("dataset " + dataSet.getString("molarmass"));
       failed = false;

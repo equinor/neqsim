@@ -14,14 +14,13 @@ import org.apache.logging.log4j.Logger;
  * Example demonstrating transient heat transfer in PipeBeggsAndBrills.
  *
  * <p>
- * This example shows how the outlet temperature responds to varying inlet temperature over time.
- * The inlet temperature first increases (simulating a well heating up), then decreases (simulating
- * cooling). This tests the NTU-effectiveness heat transfer calculation in runTransient().
+ * This example shows how the outlet temperature responds to varying inlet temperature over time. The inlet temperature
+ * first increases (simulating a well heating up), then decreases (simulating cooling). This tests the NTU-effectiveness
+ * heat transfer calculation in runTransient().
  * </p>
  */
 public class TransientPipeHeatTransferExample {
   private static final Logger logger = LogManager.getLogger(TransientPipeHeatTransferExample.class);
-
 
   /**
    * Main method to run the transient heat transfer example.
@@ -33,7 +32,6 @@ public class TransientPipeHeatTransferExample {
     logger.info("║  TRANSIENT PIPE HEAT TRANSFER EXAMPLE                                ║");
     logger.info("║  Inlet temperature varies: UP then DOWN                              ║");
     logger.info("╚══════════════════════════════════════════════════════════════════════╝");
-
 
     // ========================================
     // CONFIGURATION
@@ -90,15 +88,12 @@ public class TransientPipeHeatTransferExample {
 
     // Initial steady-state run
     process.run();
-    logger.printf(org.apache.logging.log4j.Level.INFO, "Pipe: %.0f m long, %.3f m diameter%n",
-        pipeLength, pipeDiameter);
-    logger.printf(org.apache.logging.log4j.Level.INFO, "Sea temperature: %.1f °C%n",
-        seaTemperature);
-    logger.printf(org.apache.logging.log4j.Level.INFO, "Heat transfer coefficient: %.1f W/(m²·K)%n",
-        heatTransferCoeff);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Pipe: %.0f m long, %.3f m diameter%n", pipeLength,
+	pipeDiameter);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Sea temperature: %.1f °C%n", seaTemperature);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Heat transfer coefficient: %.1f W/(m²·K)%n", heatTransferCoeff);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Flow rate: %.0f kg/hr%n", flowRate);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Time step: %.1f seconds%n", dt);
-
 
     // ========================================
     // RUN TRANSIENT SIMULATION
@@ -117,23 +112,23 @@ public class TransientPipeHeatTransferExample {
       // Determine current phase and inlet temperature
       String phase;
       if (step < rampUpSteps) {
-        // Ramp UP
-        double progress = (double) step / rampUpSteps;
-        currentInletTemp = initialInletTemp + progress * (maxInletTemp - initialInletTemp);
-        phase = "RAMP UP  ";
+	// Ramp UP
+	double progress = (double) step / rampUpSteps;
+	currentInletTemp = initialInletTemp + progress * (maxInletTemp - initialInletTemp);
+	phase = "RAMP UP  ";
       } else if (step < rampUpSteps + holdHighSteps) {
-        // Hold HIGH
-        currentInletTemp = maxInletTemp;
-        phase = "HOLD HIGH";
+	// Hold HIGH
+	currentInletTemp = maxInletTemp;
+	phase = "HOLD HIGH";
       } else if (step < rampUpSteps + holdHighSteps + rampDownSteps) {
-        // Ramp DOWN
-        double progress = (double) (step - rampUpSteps - holdHighSteps) / rampDownSteps;
-        currentInletTemp = maxInletTemp - progress * (maxInletTemp - minInletTemp);
-        phase = "RAMP DOWN";
+	// Ramp DOWN
+	double progress = (double) (step - rampUpSteps - holdHighSteps) / rampDownSteps;
+	currentInletTemp = maxInletTemp - progress * (maxInletTemp - minInletTemp);
+	phase = "RAMP DOWN";
       } else {
-        // Hold LOW
-        currentInletTemp = minInletTemp;
-        phase = "HOLD LOW ";
+	// Hold LOW
+	currentInletTemp = minInletTemp;
+	phase = "HOLD LOW ";
       }
 
       // Update inlet temperature
@@ -148,17 +143,15 @@ public class TransientPipeHeatTransferExample {
 
       // Print every 10 steps or at key transitions
       if (step % 10 == 0 || step == rampUpSteps || step == rampUpSteps + holdHighSteps
-          || step == rampUpSteps + holdHighSteps + rampDownSteps) {
-        logger.printf(org.apache.logging.log4j.Level.INFO,
-            "%7.0f    %8.2f     %8.2f      %6.2f    %s%n", currentTime, currentInletTemp,
-            outletTemp, deltaT, phase);
+	  || step == rampUpSteps + holdHighSteps + rampDownSteps) {
+	logger.printf(org.apache.logging.log4j.Level.INFO, "%7.0f    %8.2f     %8.2f      %6.2f    %s%n", currentTime,
+	    currentInletTemp, outletTemp, deltaT, phase);
       }
 
       currentTime += dt;
     }
 
     logger.info(StringUtils.repeat("─", 70));
-
 
     // ========================================
     // ANALYSIS
@@ -173,23 +166,19 @@ public class TransientPipeHeatTransferExample {
     double effectiveness = 1 - Math.exp(-NTU);
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "Heat transfer area: %.1f m²%n", area);
-    logger.printf(org.apache.logging.log4j.Level.INFO, "NTU (Number of Transfer Units): %.3f%n",
-        NTU);
-    logger.printf(org.apache.logging.log4j.Level.INFO, "Effectiveness (1-e^-NTU): %.3f%n",
-        effectiveness);
-
+    logger.printf(org.apache.logging.log4j.Level.INFO, "NTU (Number of Transfer Units): %.3f%n", NTU);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Effectiveness (1-e^-NTU): %.3f%n", effectiveness);
 
     // Expected outlet temperatures at different inlet temps
-    double[] testInletTemps = {40.0, 60.0, 90.0};
+    double[] testInletTemps = { 40.0, 60.0, 90.0 };
     logger.info("Expected steady-state outlet temperatures:");
     logger.info("Inlet T    Expected Outlet T    Cooling (ΔT)");
     for (double Tin : testInletTemps) {
       double expectedTout = seaTemperature + (Tin - seaTemperature) * Math.exp(-NTU);
       double cooling = Tin - expectedTout;
-      logger.printf(org.apache.logging.log4j.Level.INFO, "%.1f°C     %.2f°C              %.2f°C%n",
-          Tin, expectedTout, cooling);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%.1f°C     %.2f°C              %.2f°C%n", Tin, expectedTout,
+	  cooling);
     }
-
 
     logger.info("╔══════════════════════════════════════════════════════════════════════╗");
     logger.info("║  Example completed successfully!                                     ║");

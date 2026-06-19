@@ -11,20 +11,19 @@ import java.util.Locale;
  * Orchestrates a closed-loop real-time optimization (RTO) cycle.
  *
  * <p>
- * Real-time optimization closes the loop between the plant and its model: read current
- * measurements, reconcile/calibrate the model against them, optimize the setpoints on the
- * calibrated model, then push the new setpoints back to the plant. This class wires those steps
- * together as pluggable functional stages and runs them for a configured number of cycles, keeping
- * an auditable record of each cycle (measurements, chosen setpoints, achieved objective).
+ * Real-time optimization closes the loop between the plant and its model: read current measurements,
+ * reconcile/calibrate the model against them, optimize the setpoints on the calibrated model, then push the new
+ * setpoints back to the plant. This class wires those steps together as pluggable functional stages and runs them for a
+ * configured number of cycles, keeping an auditable record of each cycle (measurements, chosen setpoints, achieved
+ * objective).
  * </p>
  *
  * <p>
- * Each stage is supplied by the caller so the loop is agnostic to the data source and the
- * optimizer: the reader typically wraps {@code tagreader} historian access, the calibrator wraps a
- * data-reconciliation step, the optimizer wraps {@code AgenticProcessOptimizer} or
- * {@link NetworkAllocationOptimizer}, and the writer pushes setpoints through
- * {@code ProcessAutomation} (or a control-system bridge). The reader, calibrator and objective
- * probe are optional; the optimizer and writer are required.
+ * Each stage is supplied by the caller so the loop is agnostic to the data source and the optimizer: the reader
+ * typically wraps {@code tagreader} historian access, the calibrator wraps a data-reconciliation step, the optimizer
+ * wraps {@code AgenticProcessOptimizer} or {@link NetworkAllocationOptimizer}, and the writer pushes setpoints through
+ * {@code ProcessAutomation} (or a control-system bridge). The reader, calibrator and objective probe are optional; the
+ * optimizer and writer are required.
  * </p>
  *
  * @author NeqSim Development Team
@@ -136,10 +135,10 @@ public class RealTimeOptimizationLoop implements Serializable {
     /**
      * Creates a cycle record.
      *
-     * @param cycle the 1-based cycle index
+     * @param cycle        the 1-based cycle index
      * @param measurements the measurements read at the start of the cycle
-     * @param setpoints the setpoints applied during the cycle
-     * @param objective the achieved objective (NaN if not probed)
+     * @param setpoints    the setpoints applied during the cycle
+     * @param objective    the achieved objective (NaN if not probed)
      */
     public CycleRecord(int cycle, double[] measurements, double[] setpoints, double objective) {
       this.cycle = cycle;
@@ -244,9 +243,9 @@ public class RealTimeOptimizationLoop implements Serializable {
    * Runs the closed-loop optimization for the requested number of cycles.
    *
    * <p>
-   * Each cycle reads measurements (if a reader is set), calibrates the model (if a calibrator is
-   * set), computes new setpoints, applies them, probes the achieved objective (if a probe is set),
-   * and records the cycle. The full cycle history is retained and also returned.
+   * Each cycle reads measurements (if a reader is set), calibrates the model (if a calibrator is set), computes new
+   * setpoints, applies them, probes the achieved objective (if a probe is set), and records the cycle. The full cycle
+   * history is retained and also returned.
    * </p>
    *
    * @param cycles the number of cycles to run (must be positive)
@@ -265,7 +264,7 @@ public class RealTimeOptimizationLoop implements Serializable {
     for (int c = 1; c <= cycles; c++) {
       double[] measurements = reader != null ? reader.read() : new double[0];
       if (calibrator != null) {
-        calibrator.calibrate(measurements);
+	calibrator.calibrate(measurements);
       }
       double[] setpoints = optimizer.optimize();
       writer.apply(setpoints);
@@ -295,7 +294,7 @@ public class RealTimeOptimizationLoop implements Serializable {
     for (int i = 0; i < history.size(); i++) {
       CycleRecord r = history.get(i);
       if (i > 0) {
-        sb.append(",");
+	sb.append(",");
       }
       sb.append("{");
       sb.append("\"cycle\":").append(r.getCycle()).append(",");

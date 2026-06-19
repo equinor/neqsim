@@ -19,12 +19,13 @@ public final class ExperimentalDataDownloader {
   /**
    * Utility class constructor.
    */
-  private ExperimentalDataDownloader() {}
+  private ExperimentalDataDownloader() {
+  }
 
   /**
    * Downloads a URL to a deterministic file inside a cache directory if it is not already present.
    *
-   * @param source URL to download
+   * @param source         URL to download
    * @param cacheDirectory cache directory
    * @return cached file path
    * @throws IOException if the source cannot be downloaded or cached
@@ -36,14 +37,13 @@ public final class ExperimentalDataDownloader {
   /**
    * Downloads a URL to a named cache file if it is not already present.
    *
-   * @param source URL to download
+   * @param source         URL to download
    * @param cacheDirectory cache directory
-   * @param fileName target cache file name
+   * @param fileName       target cache file name
    * @return cached file path
    * @throws IOException if the source cannot be downloaded or cached
    */
-  public static File downloadIfNeeded(URL source, File cacheDirectory, String fileName)
-      throws IOException {
+  public static File downloadIfNeeded(URL source, File cacheDirectory, String fileName) throws IOException {
     validate(source, cacheDirectory, fileName);
     if (!cacheDirectory.exists() && !cacheDirectory.mkdirs()) {
       throw new IOException("Could not create cache directory: " + cacheDirectory);
@@ -59,7 +59,7 @@ public final class ExperimentalDataDownloader {
   /**
    * Downloads a URL to a target file, replacing any existing file.
    *
-   * @param source URL to download
+   * @param source     URL to download
    * @param targetFile target file
    * @throws IOException if download or writing fails
    */
@@ -80,7 +80,7 @@ public final class ExperimentalDataDownloader {
       byte[] buffer = new byte[BUFFER_SIZE];
       int read;
       while ((read = input.read(buffer)) >= 0) {
-        output.write(buffer, 0, read);
+	output.write(buffer, 0, read);
       }
     } finally {
       output.close();
@@ -110,9 +110,9 @@ public final class ExperimentalDataDownloader {
   /**
    * Validates download request inputs.
    *
-   * @param source source URL
+   * @param source         source URL
    * @param cacheDirectory cache directory
-   * @param fileName target file name
+   * @param fileName       target file name
    */
   private static void validate(URL source, File cacheDirectory, String fileName) {
     if (source == null) {

@@ -27,7 +27,7 @@ public class Filter extends TwoPortEquipment {
    * Constructor for Filter.
    * </p>
    *
-   * @param name name of filter
+   * @param name     name of filter
    * @param inStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public Filter(String name, StreamInterface inStream) {
@@ -78,7 +78,7 @@ public class Filter extends TwoPortEquipment {
    * </p>
    *
    * @param deltaP a double
-   * @param unit a {@link java.lang.String} object
+   * @param unit   a {@link java.lang.String} object
    */
   public void setDeltaP(double deltaP, String unit) {
     this.deltaP = deltaP;
@@ -118,20 +118,17 @@ public class Filter extends TwoPortEquipment {
   @Override
   public String toJson() {
     return new com.google.gson.GsonBuilder().serializeSpecialFloatingPointValues().create()
-        .toJson(new neqsim.process.util.monitor.FilterResponse(this));
+	.toJson(new neqsim.process.util.monitor.FilterResponse(this));
   }
 
   /** {@inheritDoc} */
   @Override
   public String toJson(neqsim.process.util.report.ReportConfig cfg) {
-    if (cfg != null && cfg
-        .getDetailLevel(getName()) == neqsim.process.util.report.ReportConfig.DetailLevel.HIDE) {
+    if (cfg != null && cfg.getDetailLevel(getName()) == neqsim.process.util.report.ReportConfig.DetailLevel.HIDE) {
       return null;
     }
-    neqsim.process.util.monitor.FilterResponse res =
-        new neqsim.process.util.monitor.FilterResponse(this);
+    neqsim.process.util.monitor.FilterResponse res = new neqsim.process.util.monitor.FilterResponse(this);
     res.applyConfig(cfg);
-    return new com.google.gson.GsonBuilder().serializeSpecialFloatingPointValues().create()
-        .toJson(res);
+    return new com.google.gson.GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(res);
   }
 }

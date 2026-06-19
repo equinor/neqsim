@@ -11,19 +11,18 @@ import neqsim.process.fielddevelopment.concept.ReservoirInput;
  * Generates production decline profiles using Arps decline curve analysis.
  *
  * <p>
- * This class implements the classic Arps decline curve equations (exponential, hyperbolic, and
- * harmonic) for forecasting oil and gas production over the field life. These empirical models are
- * widely used in reservoir engineering for production forecasting and reserves estimation.
+ * This class implements the classic Arps decline curve equations (exponential, hyperbolic, and harmonic) for
+ * forecasting oil and gas production over the field life. These empirical models are widely used in reservoir
+ * engineering for production forecasting and reserves estimation.
  * </p>
  *
  * <h2>Decline Curve Types</h2>
  * <ul>
- * <li><b>Exponential (b=0)</b>: Constant percentage decline per period. Common for solution-gas
- * drive reservoirs and boundary-dominated flow.</li>
- * <li><b>Hyperbolic (0&lt;b&lt;1)</b>: Declining percentage decline over time. Most common for
- * multiphase flow and heterogeneous reservoirs.</li>
- * <li><b>Harmonic (b=1)</b>: Linear decline rate. Represents gravity drainage or some water drive
- * reservoirs.</li>
+ * <li><b>Exponential (b=0)</b>: Constant percentage decline per period. Common for solution-gas drive reservoirs and
+ * boundary-dominated flow.</li>
+ * <li><b>Hyperbolic (0&lt;b&lt;1)</b>: Declining percentage decline over time. Most common for multiphase flow and
+ * heterogeneous reservoirs.</li>
+ * <li><b>Harmonic (b=1)</b>: Linear decline rate. Represents gravity drainage or some water drive reservoirs.</li>
  * </ul>
  *
  * <h2>Arps Equations</h2>
@@ -54,7 +53,7 @@ import neqsim.process.fielddevelopment.concept.ReservoirInput;
  *
  * // Generate exponential decline (typical for gas wells)
  * Map<Integer, Double> gasProfile = generator.generateExponentialDecline(10.0e6, // Initial rate:
- *                                                                                // 10 MSm3/d
+ * 									       // 10 MSm3/d
  *     0.15, // 15% annual decline
  *     2026, // Start year
  *     20, // 20 years
@@ -63,7 +62,7 @@ import neqsim.process.fielddevelopment.concept.ReservoirInput;
  *
  * // Generate hyperbolic decline (typical for oil wells)
  * Map<Integer, Double> oilProfile = generator.generateHyperbolicDecline(15000, // Initial rate:
- *                                                                              // 15,000 bbl/d
+ * 									     // 15,000 bbl/d
  *     0.20, // 20% initial decline
  *     0.5, // b-factor = 0.5
  *     2026, // Start year
@@ -78,8 +77,8 @@ import neqsim.process.fielddevelopment.concept.ReservoirInput;
  *
  * <h2>Plateau Period</h2>
  * <p>
- * Many fields have a plateau period before decline begins. Use the methods with plateau parameters
- * to model this behavior:
+ * Many fields have a plateau period before decline begins. Use the methods with plateau parameters to model this
+ * behavior:
  * </p>
  *
  * <pre>{@code
@@ -158,13 +157,13 @@ public class ProductionProfileGenerator implements Serializable {
    *
    * @param initialRatePerDay initial production rate (volume per day)
    * @param annualDeclineRate annual decline rate as fraction (e.g., 0.15 for 15%)
-   * @param startYear first year of production
-   * @param maxYears maximum years to generate
-   * @param economicLimit minimum economic rate (stops when rate falls below)
+   * @param startYear         first year of production
+   * @param maxYears          maximum years to generate
+   * @param economicLimit     minimum economic rate (stops when rate falls below)
    * @return map of year to annual production volume
    */
-  public Map<Integer, Double> generateExponentialDecline(double initialRatePerDay,
-      double annualDeclineRate, int startYear, int maxYears, double economicLimit) {
+  public Map<Integer, Double> generateExponentialDecline(double initialRatePerDay, double annualDeclineRate,
+      int startYear, int maxYears, double economicLimit) {
     Map<Integer, Double> profile = new LinkedHashMap<Integer, Double>();
 
     for (int i = 0; i < maxYears; i++) {
@@ -175,7 +174,7 @@ public class ProductionProfileGenerator implements Serializable {
       double ratePerDay = initialRatePerDay * Math.exp(-annualDeclineRate * t);
 
       if (ratePerDay < economicLimit) {
-        break;
+	break;
       }
 
       double annualVolume = ratePerDay * DAYS_PER_YEAR;
@@ -190,12 +189,12 @@ public class ProductionProfileGenerator implements Serializable {
    *
    * @param initialRatePerDay initial production rate (volume per day)
    * @param annualDeclineRate annual decline rate as fraction
-   * @param startYear first year of production
-   * @param years number of years to generate
+   * @param startYear         first year of production
+   * @param years             number of years to generate
    * @return map of year to annual production volume
    */
-  public Map<Integer, Double> generateExponentialDecline(double initialRatePerDay,
-      double annualDeclineRate, int startYear, int years) {
+  public Map<Integer, Double> generateExponentialDecline(double initialRatePerDay, double annualDeclineRate,
+      int startYear, int years) {
     return generateExponentialDecline(initialRatePerDay, annualDeclineRate, startYear, years, 0.0);
   }
 
@@ -214,17 +213,16 @@ public class ProductionProfileGenerator implements Serializable {
    * q(t) = qi / (1 + b * Di * t) ^ (1 / b)
    * </pre>
    *
-   * @param initialRatePerDay initial production rate (volume per day)
+   * @param initialRatePerDay  initial production rate (volume per day)
    * @param initialDeclineRate initial decline rate as fraction (e.g., 0.20 for 20%)
-   * @param bFactor Arps b-factor (0 &lt; b &lt; 1, typically 0.3-0.7)
-   * @param startYear first year of production
-   * @param maxYears maximum years to generate
-   * @param economicLimit minimum economic rate
+   * @param bFactor            Arps b-factor (0 &lt; b &lt; 1, typically 0.3-0.7)
+   * @param startYear          first year of production
+   * @param maxYears           maximum years to generate
+   * @param economicLimit      minimum economic rate
    * @return map of year to annual production volume
    */
-  public Map<Integer, Double> generateHyperbolicDecline(double initialRatePerDay,
-      double initialDeclineRate, double bFactor, int startYear, int maxYears,
-      double economicLimit) {
+  public Map<Integer, Double> generateHyperbolicDecline(double initialRatePerDay, double initialDeclineRate,
+      double bFactor, int startYear, int maxYears, double economicLimit) {
     // Validate b-factor
     if (bFactor <= 0 || bFactor >= 1) {
       throw new IllegalArgumentException("b-factor must be between 0 and 1 (exclusive)");
@@ -241,7 +239,7 @@ public class ProductionProfileGenerator implements Serializable {
       double ratePerDay = initialRatePerDay / denominator;
 
       if (ratePerDay < economicLimit) {
-        break;
+	break;
       }
 
       double annualVolume = ratePerDay * DAYS_PER_YEAR;
@@ -254,17 +252,16 @@ public class ProductionProfileGenerator implements Serializable {
   /**
    * Generates hyperbolic decline with default economic limit.
    *
-   * @param initialRatePerDay initial production rate (volume per day)
+   * @param initialRatePerDay  initial production rate (volume per day)
    * @param initialDeclineRate initial decline rate as fraction
-   * @param bFactor Arps b-factor (0 &lt; b &lt; 1)
-   * @param startYear first year of production
-   * @param years number of years to generate
+   * @param bFactor            Arps b-factor (0 &lt; b &lt; 1)
+   * @param startYear          first year of production
+   * @param years              number of years to generate
    * @return map of year to annual production volume
    */
-  public Map<Integer, Double> generateHyperbolicDecline(double initialRatePerDay,
-      double initialDeclineRate, double bFactor, int startYear, int years) {
-    return generateHyperbolicDecline(initialRatePerDay, initialDeclineRate, bFactor, startYear,
-        years, 0.0);
+  public Map<Integer, Double> generateHyperbolicDecline(double initialRatePerDay, double initialDeclineRate,
+      double bFactor, int startYear, int years) {
+    return generateHyperbolicDecline(initialRatePerDay, initialDeclineRate, bFactor, startYear, years, 0.0);
   }
 
   // ============================================================================
@@ -282,15 +279,15 @@ public class ProductionProfileGenerator implements Serializable {
    * q(t) = qi / (1 + Di * t)
    * </pre>
    *
-   * @param initialRatePerDay initial production rate (volume per day)
+   * @param initialRatePerDay  initial production rate (volume per day)
    * @param initialDeclineRate initial decline rate as fraction
-   * @param startYear first year of production
-   * @param maxYears maximum years to generate
-   * @param economicLimit minimum economic rate
+   * @param startYear          first year of production
+   * @param maxYears           maximum years to generate
+   * @param economicLimit      minimum economic rate
    * @return map of year to annual production volume
    */
-  public Map<Integer, Double> generateHarmonicDecline(double initialRatePerDay,
-      double initialDeclineRate, int startYear, int maxYears, double economicLimit) {
+  public Map<Integer, Double> generateHarmonicDecline(double initialRatePerDay, double initialDeclineRate,
+      int startYear, int maxYears, double economicLimit) {
     Map<Integer, Double> profile = new LinkedHashMap<Integer, Double>();
 
     for (int i = 0; i < maxYears; i++) {
@@ -301,7 +298,7 @@ public class ProductionProfileGenerator implements Serializable {
       double ratePerDay = initialRatePerDay / (1 + initialDeclineRate * t);
 
       if (ratePerDay < economicLimit) {
-        break;
+	break;
       }
 
       double annualVolume = ratePerDay * DAYS_PER_YEAR;
@@ -314,14 +311,14 @@ public class ProductionProfileGenerator implements Serializable {
   /**
    * Generates harmonic decline with default economic limit.
    *
-   * @param initialRatePerDay initial production rate (volume per day)
+   * @param initialRatePerDay  initial production rate (volume per day)
    * @param initialDeclineRate initial decline rate as fraction
-   * @param startYear first year of production
-   * @param years number of years to generate
+   * @param startYear          first year of production
+   * @param years              number of years to generate
    * @return map of year to annual production volume
    */
-  public Map<Integer, Double> generateHarmonicDecline(double initialRatePerDay,
-      double initialDeclineRate, int startYear, int years) {
+  public Map<Integer, Double> generateHarmonicDecline(double initialRatePerDay, double initialDeclineRate,
+      int startYear, int years) {
     return generateHarmonicDecline(initialRatePerDay, initialDeclineRate, startYear, years, 0.0);
   }
 
@@ -333,35 +330,34 @@ public class ProductionProfileGenerator implements Serializable {
    * Generates a production profile with an initial plateau period followed by decline.
    *
    * @param plateauRatePerDay plateau production rate (volume per day)
-   * @param plateauYears number of years at plateau before decline begins
-   * @param declineRate decline rate after plateau
-   * @param declineType type of decline (exponential, hyperbolic, harmonic)
-   * @param startYear first year of production
-   * @param totalYears total years including plateau
+   * @param plateauYears      number of years at plateau before decline begins
+   * @param declineRate       decline rate after plateau
+   * @param declineType       type of decline (exponential, hyperbolic, harmonic)
+   * @param startYear         first year of production
+   * @param totalYears        total years including plateau
    * @return map of year to annual production volume
    */
-  public Map<Integer, Double> generateWithPlateau(double plateauRatePerDay, int plateauYears,
-      double declineRate, DeclineType declineType, int startYear, int totalYears) {
-    return generateWithPlateau(plateauRatePerDay, plateauYears, declineRate, 0.5, declineType,
-        startYear, totalYears, 0.0);
+  public Map<Integer, Double> generateWithPlateau(double plateauRatePerDay, int plateauYears, double declineRate,
+      DeclineType declineType, int startYear, int totalYears) {
+    return generateWithPlateau(plateauRatePerDay, plateauYears, declineRate, 0.5, declineType, startYear, totalYears,
+	0.0);
   }
 
   /**
    * Generates a production profile with plateau and configurable decline parameters.
    *
    * @param plateauRatePerDay plateau production rate (volume per day)
-   * @param plateauYears number of years at plateau
-   * @param declineRate decline rate after plateau
-   * @param bFactor b-factor for hyperbolic decline (ignored for other types)
-   * @param declineType type of decline
-   * @param startYear first year of production
-   * @param totalYears total years including plateau
-   * @param economicLimit minimum economic rate
+   * @param plateauYears      number of years at plateau
+   * @param declineRate       decline rate after plateau
+   * @param bFactor           b-factor for hyperbolic decline (ignored for other types)
+   * @param declineType       type of decline
+   * @param startYear         first year of production
+   * @param totalYears        total years including plateau
+   * @param economicLimit     minimum economic rate
    * @return map of year to annual production volume
    */
-  public Map<Integer, Double> generateWithPlateau(double plateauRatePerDay, int plateauYears,
-      double declineRate, double bFactor, DeclineType declineType, int startYear, int totalYears,
-      double economicLimit) {
+  public Map<Integer, Double> generateWithPlateau(double plateauRatePerDay, int plateauYears, double declineRate,
+      double bFactor, DeclineType declineType, int startYear, int totalYears, double economicLimit) {
     Map<Integer, Double> profile = new LinkedHashMap<Integer, Double>();
 
     // Plateau period
@@ -377,21 +373,21 @@ public class ProductionProfileGenerator implements Serializable {
     if (declineYears > 0) {
       Map<Integer, Double> declineProfile;
       switch (declineType) {
-        case EXPONENTIAL:
-          declineProfile = generateExponentialDecline(plateauRatePerDay, declineRate,
-              declineStartYear, declineYears, economicLimit);
-          break;
-        case HYPERBOLIC:
-          declineProfile = generateHyperbolicDecline(plateauRatePerDay, declineRate, bFactor,
-              declineStartYear, declineYears, economicLimit);
-          break;
-        case HARMONIC:
-          declineProfile = generateHarmonicDecline(plateauRatePerDay, declineRate, declineStartYear,
-              declineYears, economicLimit);
-          break;
-        default:
-          declineProfile = generateExponentialDecline(plateauRatePerDay, declineRate,
-              declineStartYear, declineYears, economicLimit);
+      case EXPONENTIAL:
+	declineProfile = generateExponentialDecline(plateauRatePerDay, declineRate, declineStartYear, declineYears,
+	    economicLimit);
+	break;
+      case HYPERBOLIC:
+	declineProfile = generateHyperbolicDecline(plateauRatePerDay, declineRate, bFactor, declineStartYear,
+	    declineYears, economicLimit);
+	break;
+      case HARMONIC:
+	declineProfile = generateHarmonicDecline(plateauRatePerDay, declineRate, declineStartYear, declineYears,
+	    economicLimit);
+	break;
+      default:
+	declineProfile = generateExponentialDecline(plateauRatePerDay, declineRate, declineStartYear, declineYears,
+	    economicLimit);
       }
       profile.putAll(declineProfile);
     }
@@ -416,38 +412,37 @@ public class ProductionProfileGenerator implements Serializable {
    * </ul>
    *
    * @param peakRatePerDay peak/plateau production rate (volume per day)
-   * @param rampUpYears years to ramp from 0 to plateau
-   * @param plateauYears years at plateau rate
-   * @param declineRate decline rate after plateau
-   * @param declineType type of decline curve
-   * @param startYear first year of production
-   * @param totalYears total project years
+   * @param rampUpYears    years to ramp from 0 to plateau
+   * @param plateauYears   years at plateau rate
+   * @param declineRate    decline rate after plateau
+   * @param declineType    type of decline curve
+   * @param startYear      first year of production
+   * @param totalYears     total project years
    * @return map of year to annual production volume
    */
-  public Map<Integer, Double> generateFullProfile(double peakRatePerDay, int rampUpYears,
-      int plateauYears, double declineRate, DeclineType declineType, int startYear,
-      int totalYears) {
-    return generateFullProfile(peakRatePerDay, rampUpYears, plateauYears, declineRate, 0.5,
-        declineType, startYear, totalYears, 0.0);
+  public Map<Integer, Double> generateFullProfile(double peakRatePerDay, int rampUpYears, int plateauYears,
+      double declineRate, DeclineType declineType, int startYear, int totalYears) {
+    return generateFullProfile(peakRatePerDay, rampUpYears, plateauYears, declineRate, 0.5, declineType, startYear,
+	totalYears, 0.0);
   }
 
   /**
    * Generates a full production profile with all configurable parameters.
    *
    * @param peakRatePerDay peak/plateau production rate (volume per day)
-   * @param rampUpYears years to ramp from 0 to plateau
-   * @param plateauYears years at plateau rate
-   * @param declineRate decline rate after plateau
-   * @param bFactor b-factor for hyperbolic decline
-   * @param declineType type of decline curve
-   * @param startYear first year of production
-   * @param totalYears total project years
-   * @param economicLimit minimum economic rate
+   * @param rampUpYears    years to ramp from 0 to plateau
+   * @param plateauYears   years at plateau rate
+   * @param declineRate    decline rate after plateau
+   * @param bFactor        b-factor for hyperbolic decline
+   * @param declineType    type of decline curve
+   * @param startYear      first year of production
+   * @param totalYears     total project years
+   * @param economicLimit  minimum economic rate
    * @return map of year to annual production volume
    */
-  public Map<Integer, Double> generateFullProfile(double peakRatePerDay, int rampUpYears,
-      int plateauYears, double declineRate, double bFactor, DeclineType declineType, int startYear,
-      int totalYears, double economicLimit) {
+  public Map<Integer, Double> generateFullProfile(double peakRatePerDay, int rampUpYears, int plateauYears,
+      double declineRate, double bFactor, DeclineType declineType, int startYear, int totalYears,
+      double economicLimit) {
     Map<Integer, Double> profile = new LinkedHashMap<Integer, Double>();
     int yearIndex = 0;
 
@@ -474,21 +469,21 @@ public class ProductionProfileGenerator implements Serializable {
     if (remainingYears > 0) {
       Map<Integer, Double> declineProfile;
       switch (declineType) {
-        case EXPONENTIAL:
-          declineProfile = generateExponentialDecline(peakRatePerDay, declineRate, declineStartYear,
-              remainingYears, economicLimit);
-          break;
-        case HYPERBOLIC:
-          declineProfile = generateHyperbolicDecline(peakRatePerDay, declineRate, bFactor,
-              declineStartYear, remainingYears, economicLimit);
-          break;
-        case HARMONIC:
-          declineProfile = generateHarmonicDecline(peakRatePerDay, declineRate, declineStartYear,
-              remainingYears, economicLimit);
-          break;
-        default:
-          declineProfile = generateExponentialDecline(peakRatePerDay, declineRate, declineStartYear,
-              remainingYears, economicLimit);
+      case EXPONENTIAL:
+	declineProfile = generateExponentialDecline(peakRatePerDay, declineRate, declineStartYear, remainingYears,
+	    economicLimit);
+	break;
+      case HYPERBOLIC:
+	declineProfile = generateHyperbolicDecline(peakRatePerDay, declineRate, bFactor, declineStartYear,
+	    remainingYears, economicLimit);
+	break;
+      case HARMONIC:
+	declineProfile = generateHarmonicDecline(peakRatePerDay, declineRate, declineStartYear, remainingYears,
+	    economicLimit);
+	break;
+      default:
+	declineProfile = generateExponentialDecline(peakRatePerDay, declineRate, declineStartYear, remainingYears,
+	    economicLimit);
       }
       profile.putAll(declineProfile);
     }
@@ -503,19 +498,17 @@ public class ProductionProfileGenerator implements Serializable {
   /**
    * Generates a resource-capped profile from reservoir screening input.
    *
-   * @param reservoir reservoir input with resource estimate and recovery factor
+   * @param reservoir      reservoir input with resource estimate and recovery factor
    * @param peakRatePerDay peak rate in Sm3/d for gas profiles or bbl/d for oil profiles
-   * @param gasProfile true for gas profiles, false for oil profiles
-   * @param startYear first production year
-   * @param totalYears total forecast years
+   * @param gasProfile     true for gas profiles, false for oil profiles
+   * @param startYear      first production year
+   * @param totalYears     total forecast years
    * @return annual production profile capped at recoverable resource
    */
-  public Map<Integer, Double> generateFromReservoirInput(ReservoirInput reservoir,
-      double peakRatePerDay, boolean gasProfile, int startYear, int totalYears) {
-    Map<Integer, Double> unconstrained =
-        generateFullProfile(peakRatePerDay, 2, 5, gasProfile ? 0.12 : 0.15, 0.5,
-            gasProfile ? DeclineType.EXPONENTIAL : DeclineType.HYPERBOLIC, startYear, totalYears,
-            peakRatePerDay * 0.05);
+  public Map<Integer, Double> generateFromReservoirInput(ReservoirInput reservoir, double peakRatePerDay,
+      boolean gasProfile, int startYear, int totalYears) {
+    Map<Integer, Double> unconstrained = generateFullProfile(peakRatePerDay, 2, 5, gasProfile ? 0.12 : 0.15, 0.5,
+	gasProfile ? DeclineType.EXPONENTIAL : DeclineType.HYPERBOLIC, startYear, totalYears, peakRatePerDay * 0.05);
     double recoverableVolume = getRecoverableVolumeInProfileUnit(reservoir, gasProfile);
     return capProfileToCumulativeLimit(unconstrained, recoverableVolume);
   }
@@ -523,35 +516,30 @@ public class ProductionProfileGenerator implements Serializable {
   /**
    * Generates a resource-capped profile from a SimpleReservoir in-place volume.
    *
-   * @param reservoir SimpleReservoir instance with initialized in-place fluids
-   * @param gasProfile true to use gas in place, false to use oil in place
+   * @param reservoir      SimpleReservoir instance with initialized in-place fluids
+   * @param gasProfile     true to use gas in place, false to use oil in place
    * @param recoveryFactor recovery factor from zero to one
    * @param peakRatePerDay peak rate in Sm3/d for gas profiles or bbl/d for oil profiles
-   * @param startYear first production year
-   * @param totalYears total forecast years
+   * @param startYear      first production year
+   * @param totalYears     total forecast years
    * @return annual production profile capped at recoverable resource
    */
-  public Map<Integer, Double> generateFromSimpleReservoir(SimpleReservoir reservoir,
-      boolean gasProfile, double recoveryFactor, double peakRatePerDay, int startYear,
-      int totalYears) {
-    Map<Integer, Double> profile =
-        generateFullProfile(peakRatePerDay, 2, 5, gasProfile ? 0.12 : 0.15, 0.5,
-            gasProfile ? DeclineType.EXPONENTIAL : DeclineType.HYPERBOLIC, startYear, totalYears,
-            peakRatePerDay * 0.05);
-    double inPlace =
-        gasProfile ? reservoir.getGasInPlace("Sm3") : reservoir.getOilInPlace("Sm3") * 6.28981;
+  public Map<Integer, Double> generateFromSimpleReservoir(SimpleReservoir reservoir, boolean gasProfile,
+      double recoveryFactor, double peakRatePerDay, int startYear, int totalYears) {
+    Map<Integer, Double> profile = generateFullProfile(peakRatePerDay, 2, 5, gasProfile ? 0.12 : 0.15, 0.5,
+	gasProfile ? DeclineType.EXPONENTIAL : DeclineType.HYPERBOLIC, startYear, totalYears, peakRatePerDay * 0.05);
+    double inPlace = gasProfile ? reservoir.getGasInPlace("Sm3") : reservoir.getOilInPlace("Sm3") * 6.28981;
     return capProfileToCumulativeLimit(profile, Math.max(0.0, inPlace * recoveryFactor));
   }
 
   /**
    * Caps a profile at a cumulative production limit.
    *
-   * @param profile original annual production profile
+   * @param profile         original annual production profile
    * @param cumulativeLimit cumulative limit in the same annual production unit
    * @return capped production profile
    */
-  public static Map<Integer, Double> capProfileToCumulativeLimit(Map<Integer, Double> profile,
-      double cumulativeLimit) {
+  public static Map<Integer, Double> capProfileToCumulativeLimit(Map<Integer, Double> profile, double cumulativeLimit) {
     Map<Integer, Double> capped = new LinkedHashMap<Integer, Double>();
     if (profile == null || profile.isEmpty() || cumulativeLimit <= 0.0) {
       return capped;
@@ -560,7 +548,7 @@ public class ProductionProfileGenerator implements Serializable {
     for (Map.Entry<Integer, Double> entry : profile.entrySet()) {
       double remaining = cumulativeLimit - cumulative;
       if (remaining <= 0.0) {
-        break;
+	break;
       }
       double annual = Math.min(entry.getValue(), remaining);
       capped.put(entry.getKey(), annual);
@@ -586,13 +574,13 @@ public class ProductionProfileGenerator implements Serializable {
     int lastYear = sortedHistory.isEmpty() ? 0 : sortedHistory.lastKey();
     for (Map.Entry<Integer, Double> entry : sortedHistory.entrySet()) {
       if (entry.getValue() != null && entry.getValue() > 0.0) {
-        double x = entry.getKey() - firstYear;
-        double y = Math.log(entry.getValue() / DAYS_PER_YEAR);
-        sumX += x;
-        sumY += y;
-        sumXX += x * x;
-        sumXY += x * y;
-        count++;
+	double x = entry.getKey() - firstYear;
+	double y = Math.log(entry.getValue() / DAYS_PER_YEAR);
+	sumX += x;
+	sumY += y;
+	sumXX += x * x;
+	sumXY += x * y;
+	count++;
       }
     }
     if (count < 2) {
@@ -605,37 +593,36 @@ public class ProductionProfileGenerator implements Serializable {
     double initialRatePerDay = Math.exp(intercept);
     double declineRate = Math.max(0.0, -slope);
     return new HistoryMatchedDeclineCase(firstYear, lastYear, initialRatePerDay, declineRate,
-        calculateFitQuality(sortedHistory, firstYear, intercept, slope));
+	calculateFitQuality(sortedHistory, firstYear, intercept, slope));
   }
 
   /**
    * Generates a forecast profile from a fitted history-matched decline case.
    *
-   * @param declineCase fitted decline case
+   * @param declineCase       fitted decline case
    * @param forecastStartYear first forecast year
-   * @param forecastYears number of forecast years
-   * @param economicLimit minimum economic rate
+   * @param forecastYears     number of forecast years
+   * @param economicLimit     minimum economic rate
    * @return forecast production profile
    */
   public Map<Integer, Double> generateHistoryMatchedProfile(HistoryMatchedDeclineCase declineCase,
       int forecastStartYear, int forecastYears, double economicLimit) {
     int yearOffset = Math.max(0, forecastStartYear - declineCase.getFirstHistoryYear());
     double forecastRate = declineCase.getInitialRatePerDay()
-        * Math.exp(-declineCase.getAnnualDeclineRate() * yearOffset);
-    return generateExponentialDecline(forecastRate, declineCase.getAnnualDeclineRate(),
-        forecastStartYear, forecastYears, economicLimit);
+	* Math.exp(-declineCase.getAnnualDeclineRate() * yearOffset);
+    return generateExponentialDecline(forecastRate, declineCase.getAnnualDeclineRate(), forecastStartYear,
+	forecastYears, economicLimit);
   }
 
   /**
    * Exports a production profile as a rate table for VFP/export workflows.
    *
-   * @param profile annual production profile
-   * @param rateUnit average-rate unit label such as Sm3/d or bbl/d
+   * @param profile            annual production profile
+   * @param rateUnit           average-rate unit label such as Sm3/d or bbl/d
    * @param exportPressureBara export or tubing-head pressure in bara
    * @return CSV text with year, annual volume, average rate, unit, and pressure
    */
-  public static String toVfpRateTableCsv(Map<Integer, Double> profile, String rateUnit,
-      double exportPressureBara) {
+  public static String toVfpRateTableCsv(Map<Integer, Double> profile, String rateUnit, double exportPressureBara) {
     StringBuilder csv = new StringBuilder();
     csv.append("year,annual_production,average_rate_per_day,rate_unit,export_pressure_bara\n");
     if (profile == null) {
@@ -644,7 +631,7 @@ public class ProductionProfileGenerator implements Serializable {
     for (Map.Entry<Integer, Double> entry : new TreeMap<Integer, Double>(profile).entrySet()) {
       double annualProduction = entry.getValue() == null ? 0.0 : entry.getValue();
       csv.append(String.format("%d,%.6g,%.6g,%s,%.3f%n", entry.getKey(), annualProduction,
-          annualProduction / DAYS_PER_YEAR, rateUnit, exportPressureBara));
+	  annualProduction / DAYS_PER_YEAR, rateUnit, exportPressureBara));
     }
     return csv.toString();
   }
@@ -652,7 +639,7 @@ public class ProductionProfileGenerator implements Serializable {
   /**
    * Gets recoverable resource in the profile unit.
    *
-   * @param reservoir reservoir input
+   * @param reservoir  reservoir input
    * @param gasProfile true for gas profile unit Sm3, false for oil profile unit bbl
    * @return recoverable resource in Sm3 for gas or bbl for oil
    */
@@ -664,13 +651,13 @@ public class ProductionProfileGenerator implements Serializable {
     String unit = reservoir.getResourceUnit() == null ? "" : reservoir.getResourceUnit();
     if (gasProfile) {
       if (unit.equalsIgnoreCase("GSm3")) {
-        return recoverable * 1.0e9;
+	return recoverable * 1.0e9;
       }
       if (unit.equalsIgnoreCase("MSm3")) {
-        return recoverable * 1.0e6;
+	return recoverable * 1.0e6;
       }
       if (unit.equalsIgnoreCase("MMboe")) {
-        return recoverable * 1.0e6 * 6000.0;
+	return recoverable * 1.0e6 * 6000.0;
       }
       return recoverable;
     }
@@ -689,20 +676,19 @@ public class ProductionProfileGenerator implements Serializable {
   /**
    * Calculates linear-regression fit quality for a log-production history.
    *
-   * @param history sorted production history
+   * @param history   sorted production history
    * @param firstYear first history year
    * @param intercept fitted intercept
-   * @param slope fitted slope
+   * @param slope     fitted slope
    * @return coefficient of determination
    */
-  private double calculateFitQuality(TreeMap<Integer, Double> history, int firstYear,
-      double intercept, double slope) {
+  private double calculateFitQuality(TreeMap<Integer, Double> history, int firstYear, double intercept, double slope) {
     double mean = 0.0;
     int count = 0;
     for (Double value : history.values()) {
       if (value != null && value > 0.0) {
-        mean += Math.log(value / DAYS_PER_YEAR);
-        count++;
+	mean += Math.log(value / DAYS_PER_YEAR);
+	count++;
       }
     }
     if (count == 0) {
@@ -713,11 +699,11 @@ public class ProductionProfileGenerator implements Serializable {
     double ssErr = 0.0;
     for (Map.Entry<Integer, Double> entry : history.entrySet()) {
       if (entry.getValue() != null && entry.getValue() > 0.0) {
-        double x = entry.getKey() - firstYear;
-        double y = Math.log(entry.getValue() / DAYS_PER_YEAR);
-        double predicted = intercept + slope * x;
-        ssTot += (y - mean) * (y - mean);
-        ssErr += (y - predicted) * (y - predicted);
+	double x = entry.getKey() - firstYear;
+	double y = Math.log(entry.getValue() / DAYS_PER_YEAR);
+	double predicted = intercept + slope * x;
+	ssTot += (y - mean) * (y - mean);
+	ssErr += (y - predicted) * (y - predicted);
       }
     }
     return ssTot > 0.0 ? 1.0 - ssErr / ssTot : 1.0;
@@ -738,14 +724,14 @@ public class ProductionProfileGenerator implements Serializable {
     /**
      * Creates a fitted decline case.
      *
-     * @param firstHistoryYear first history year
-     * @param lastHistoryYear last history year
+     * @param firstHistoryYear  first history year
+     * @param lastHistoryYear   last history year
      * @param initialRatePerDay initial fitted rate per day
      * @param annualDeclineRate annual exponential decline rate
-     * @param fitQuality coefficient of determination from zero to one
+     * @param fitQuality        coefficient of determination from zero to one
      */
-    public HistoryMatchedDeclineCase(int firstHistoryYear, int lastHistoryYear,
-        double initialRatePerDay, double annualDeclineRate, double fitQuality) {
+    public HistoryMatchedDeclineCase(int firstHistoryYear, int lastHistoryYear, double initialRatePerDay,
+	double annualDeclineRate, double fitQuality) {
       this.firstHistoryYear = firstHistoryYear;
       this.lastHistoryYear = lastHistoryYear;
       this.initialRatePerDay = initialRatePerDay;
@@ -821,52 +807,51 @@ public class ProductionProfileGenerator implements Serializable {
    * Calculates the estimated ultimate recovery (EUR) using Arps equations.
    *
    * <p>
-   * For exponential decline, EUR = qi / Di. For hyperbolic/harmonic, the calculation is more
-   * complex and depends on economic limit.
+   * For exponential decline, EUR = qi / Di. For hyperbolic/harmonic, the calculation is more complex and depends on
+   * economic limit.
    * </p>
    *
    * @param initialRatePerDay initial production rate
-   * @param declineRate initial decline rate
-   * @param declineType type of decline
-   * @param bFactor b-factor (for hyperbolic)
+   * @param declineRate       initial decline rate
+   * @param declineType       type of decline
+   * @param bFactor           b-factor (for hyperbolic)
    * @return estimated ultimate recovery
    */
-  public static double calculateEUR(double initialRatePerDay, double declineRate,
-      DeclineType declineType, double bFactor) {
+  public static double calculateEUR(double initialRatePerDay, double declineRate, DeclineType declineType,
+      double bFactor) {
     double qi = initialRatePerDay * DAYS_PER_YEAR; // Annual rate
 
     switch (declineType) {
-      case EXPONENTIAL:
-        // EUR = qi / Di (infinite time)
-        return qi / declineRate;
+    case EXPONENTIAL:
+      // EUR = qi / Di (infinite time)
+      return qi / declineRate;
 
-      case HARMONIC:
-        // Harmonic decline has infinite EUR (asymptotic)
-        // Return a practical estimate (10x initial annual)
-        return qi * 10;
+    case HARMONIC:
+      // Harmonic decline has infinite EUR (asymptotic)
+      // Return a practical estimate (10x initial annual)
+      return qi * 10;
 
-      case HYPERBOLIC:
-        // Hyperbolic EUR depends on abandonment, use practical estimate
-        // EUR ≈ qi / ((1-b) * Di) for 0 < b < 1
-        if (bFactor < 1) {
-          return qi / ((1 - bFactor) * declineRate);
-        }
-        return qi * 10;
+    case HYPERBOLIC:
+      // Hyperbolic EUR depends on abandonment, use practical estimate
+      // EUR ≈ qi / ((1-b) * Di) for 0 < b < 1
+      if (bFactor < 1) {
+	return qi / ((1 - bFactor) * declineRate);
+      }
+      return qi * 10;
 
-      default:
-        return qi / declineRate;
+    default:
+      return qi / declineRate;
     }
   }
 
   /**
    * Scales a production profile by a factor.
    *
-   * @param profile original profile
+   * @param profile     original profile
    * @param scaleFactor multiplier for all values
    * @return scaled profile
    */
-  public static Map<Integer, Double> scaleProfile(Map<Integer, Double> profile,
-      double scaleFactor) {
+  public static Map<Integer, Double> scaleProfile(Map<Integer, Double> profile, double scaleFactor) {
     Map<Integer, Double> scaled = new LinkedHashMap<Integer, Double>();
     for (Map.Entry<Integer, Double> entry : profile.entrySet()) {
       scaled.put(entry.getKey(), entry.getValue() * scaleFactor);
@@ -877,7 +862,7 @@ public class ProductionProfileGenerator implements Serializable {
   /**
    * Shifts a production profile by a number of years.
    *
-   * @param profile original profile
+   * @param profile   original profile
    * @param yearShift number of years to shift (positive = later)
    * @return shifted profile
    */
@@ -900,10 +885,10 @@ public class ProductionProfileGenerator implements Serializable {
 
     for (Map<Integer, Double> profile : profiles) {
       for (Map.Entry<Integer, Double> entry : profile.entrySet()) {
-        int year = entry.getKey();
-        double value = entry.getValue();
-        Double existing = combined.get(year);
-        combined.put(year, existing != null ? existing + value : value);
+	int year = entry.getKey();
+	double value = entry.getValue();
+	Double existing = combined.get(year);
+	combined.put(year, existing != null ? existing + value : value);
       }
     }
 
@@ -935,8 +920,7 @@ public class ProductionProfileGenerator implements Serializable {
 
     StringBuilder sb = new StringBuilder();
     sb.append(String.format("Production Profile Summary:%n"));
-    sb.append(String.format("  Period: %d - %d (%d years)%n", firstYear, lastYear,
-        lastYear - firstYear + 1));
+    sb.append(String.format("  Period: %d - %d (%d years)%n", firstYear, lastYear, lastYear - firstYear + 1));
     sb.append(String.format("  Peak Annual: %.2e%n", peak));
     sb.append(String.format("  Cumulative: %.2e%n", total));
     return sb.toString();

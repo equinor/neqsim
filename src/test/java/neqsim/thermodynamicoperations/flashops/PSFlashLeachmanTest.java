@@ -39,4 +39,3 @@ public class PSFlashLeachmanTest {
     assertEquals(LeachmanEntropy, LeachmanEntropy2, Math.abs(LeachmanEntropy2) / 1000.0);
   }
 }
-

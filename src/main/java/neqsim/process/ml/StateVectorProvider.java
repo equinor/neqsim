@@ -21,8 +21,8 @@ public interface StateVectorProvider {
    * Get the current state as a standardized vector.
    *
    * <p>
-   * The state vector should include all observable variables relevant for control and monitoring.
-   * Values should be in physical units with appropriate bounds.
+   * The state vector should include all observable variables relevant for control and monitoring. Values should be in
+   * physical units with appropriate bounds.
    *
    * @return current state vector
    */

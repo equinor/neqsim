@@ -23,11 +23,9 @@ public class DexpiXmlReaderTest extends NeqSimTest {
   public void testRead() throws IOException, DexpiXmlReaderException {
     // Create a simple DEXPI XML file for testing
     String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<PlantModel>" + "  <Equipment>"
-        + "    <PlateHeatExchanger ComponentClass=\"PlateHeatExchanger\" ID=\"P-101\">"
-        + "      <GenericAttributes>"
-        + "        <GenericAttribute Name=\"TagNameAssignmentClass\" Value=\"P-101\" />"
-        + "      </GenericAttributes>" + "    </PlateHeatExchanger>" + "  </Equipment>"
-        + "</PlantModel>";
+	+ "    <PlateHeatExchanger ComponentClass=\"PlateHeatExchanger\" ID=\"P-101\">" + "      <GenericAttributes>"
+	+ "        <GenericAttribute Name=\"TagNameAssignmentClass\" Value=\"P-101\" />" + "      </GenericAttributes>"
+	+ "    </PlateHeatExchanger>" + "  </Equipment>" + "</PlantModel>";
 
     // Create a temporary file to write the XML to
     File tempFile = File.createTempFile("test", ".xml");
@@ -55,11 +53,9 @@ public class DexpiXmlReaderTest extends NeqSimTest {
   public void testReadInvalidXml() throws IOException {
     // Create an invalid DEXPI XML file for testing
     String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<PlantModel>" + "  <Equipment>"
-        + "    <PlateHeatExchanger ComponentClass=\"PlateHeatExchanger\" ID=\"P-101\">"
-        + "      <GenericAttributes>"
-        + "        <GenericAttribute Name=\"TagNameAssignmentClass\" Value=\"P-101\" />"
-        + "      </GenericAttributes>" + "    </PlateHeatExchanger>" + "  </Equipment>"
-        + "</PlantModel2>";
+	+ "    <PlateHeatExchanger ComponentClass=\"PlateHeatExchanger\" ID=\"P-101\">" + "      <GenericAttributes>"
+	+ "        <GenericAttribute Name=\"TagNameAssignmentClass\" Value=\"P-101\" />" + "      </GenericAttributes>"
+	+ "    </PlateHeatExchanger>" + "  </Equipment>" + "</PlantModel2>";
 
     // Create a temporary file to write the XML to
     File tempFile = File.createTempFile("test", ".xml");
@@ -74,11 +70,9 @@ public class DexpiXmlReaderTest extends NeqSimTest {
   @Test
   public void testReadInvalidXmlDoesNotLogToStderr() throws IOException {
     String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<PlantModel>" + "  <Equipment>"
-        + "    <PlateHeatExchanger ComponentClass=\"PlateHeatExchanger\" ID=\"P-101\">"
-        + "      <GenericAttributes>"
-        + "        <GenericAttribute Name=\"TagNameAssignmentClass\" Value=\"P-101\" />"
-        + "      </GenericAttributes>" + "    </PlateHeatExchanger>" + "  </Equipment>"
-        + "</PlantModel2>";
+	+ "    <PlateHeatExchanger ComponentClass=\"PlateHeatExchanger\" ID=\"P-101\">" + "      <GenericAttributes>"
+	+ "        <GenericAttribute Name=\"TagNameAssignmentClass\" Value=\"P-101\" />" + "      </GenericAttributes>"
+	+ "    </PlateHeatExchanger>" + "  </Equipment>" + "</PlantModel2>";
 
     File tempFile = File.createTempFile("test", ".xml");
     try (FileWriter writer = new FileWriter(tempFile)) {

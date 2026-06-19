@@ -16,8 +16,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Unit tests for SlugFlowNode class.
  *
  * <p>
- * Tests verify that slug flow correctly calculates transport coefficients, contact areas, and slug
- * characteristics.
+ * Tests verify that slug flow correctly calculates transport coefficients, contact areas, and slug characteristics.
  * </p>
  *
  * @author esol
@@ -53,7 +52,7 @@ public class SlugFlowNodeTest {
     // Verify slug flow uses correct transport coefficient class
     String transportClassName = node.getInterphaseTransportCoefficient().getClass().getSimpleName();
     assertEquals("InterphaseSlugFlow", transportClassName,
-        "SlugFlowNode should use InterphaseSlugFlow transport coefficients");
+	"SlugFlowNode should use InterphaseSlugFlow transport coefficients");
   }
 
   @Test
@@ -91,8 +90,7 @@ public class SlugFlowNodeTest {
 
     // Slug translational velocity calculation depends on velocities
     // It may be zero if velocities are not properly set, but should be finite
-    assertTrue(Double.isFinite(node.getSlugTranslationalVelocity()),
-        "Slug translational velocity should be finite");
+    assertTrue(Double.isFinite(node.getSlugTranslationalVelocity()), "Slug translational velocity should be finite");
 
     // Slug length ratio should be reasonable
     assertTrue(node.getSlugLengthRatio() > 0, "Slug length ratio should be positive");

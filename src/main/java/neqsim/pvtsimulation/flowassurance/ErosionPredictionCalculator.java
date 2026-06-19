@@ -28,8 +28,8 @@ import com.google.gson.GsonBuilder;
  * </pre>
  *
  * <p>
- * where Ve is erosional velocity (m/s), C is an empirical constant (typically 100-150 for
- * continuous/intermittent service in imperial units), and rho_m is mixture density (kg/m3).
+ * where Ve is erosional velocity (m/s), C is an empirical constant (typically 100-150 for continuous/intermittent
+ * service in imperial units), and rho_m is mixture density (kg/m3).
  * </p>
  *
  * <p>
@@ -43,9 +43,8 @@ import com.google.gson.GsonBuilder;
  * </pre>
  *
  * <p>
- * where E is erosion rate (mm/yr or kg removed per kg sand), K is a material constant, F(alpha) is
- * an impact angle function, Vp is particle velocity, dp is particle diameter, and n is a velocity
- * exponent (typically 2.6).
+ * where E is erosion rate (mm/yr or kg removed per kg sand), K is a material constant, F(alpha) is an impact angle
+ * function, Vp is particle velocity, dp is particle diameter, and n is a velocity exponent (typically 2.6).
  * </p>
  *
  * <p>
@@ -183,25 +182,25 @@ public class ErosionPredictionCalculator implements Serializable {
    */
   private double getMaterialConstant(String material) {
     switch (material.toLowerCase()) {
-      case "carbon_steel":
-        return 2.0e-9;
-      case "duplex_steel":
-      case "22cr":
-        return 2.0e-9;
-      case "super_duplex":
-      case "25cr":
-        return 2.0e-9;
-      case "13cr":
-        return 2.0e-9;
-      case "inconel":
-      case "inconel_625":
-        return 1.0e-9;
-      case "titanium":
-        return 1.0e-9;
-      case "tungsten_carbide":
-        return 5.0e-10;
-      default:
-        return 2.0e-9; // Default to carbon steel
+    case "carbon_steel":
+      return 2.0e-9;
+    case "duplex_steel":
+    case "22cr":
+      return 2.0e-9;
+    case "super_duplex":
+    case "25cr":
+      return 2.0e-9;
+    case "13cr":
+      return 2.0e-9;
+    case "inconel":
+    case "inconel_625":
+      return 1.0e-9;
+    case "titanium":
+      return 1.0e-9;
+    case "tungsten_carbide":
+      return 5.0e-10;
+    default:
+      return 2.0e-9; // Default to carbon steel
     }
   }
 
@@ -213,10 +212,10 @@ public class ErosionPredictionCalculator implements Serializable {
    */
   private double getVelocityExponent(String material) {
     switch (material.toLowerCase()) {
-      case "tungsten_carbide":
-        return 2.3;
-      default:
-        return 2.6; // Ductile materials
+    case "tungsten_carbide":
+      return 2.3;
+    default:
+      return 2.6; // Ductile materials
     }
   }
 
@@ -227,34 +226,34 @@ public class ErosionPredictionCalculator implements Serializable {
    */
   private double getGeometryFactor() {
     switch (geometry.toLowerCase()) {
-      case "straight":
-        return 0.0; // No direct sand impaction in straight pipe (use different model)
-      case "elbow":
-      case "bend":
-        // GF depends on R/D ratio; lower R/D = higher erosion
-        if (bendRadiusRatio <= 1.0) {
-          return 1.0;
-        } else if (bendRadiusRatio <= 1.5) {
-          return 0.8;
-        } else if (bendRadiusRatio <= 3.0) {
-          return 0.5;
-        } else {
-          return 0.3;
-        }
-      case "tee":
-        return 0.6;
-      case "blind_tee":
-        return 0.3;
-      case "reducer":
-      case "contraction":
-        return 0.4;
-      case "choke":
-      case "valve":
-        return 2.0;
-      case "weld":
-        return 1.2;
-      default:
-        return 1.0;
+    case "straight":
+      return 0.0; // No direct sand impaction in straight pipe (use different model)
+    case "elbow":
+    case "bend":
+      // GF depends on R/D ratio; lower R/D = higher erosion
+      if (bendRadiusRatio <= 1.0) {
+	return 1.0;
+      } else if (bendRadiusRatio <= 1.5) {
+	return 0.8;
+      } else if (bendRadiusRatio <= 3.0) {
+	return 0.5;
+      } else {
+	return 0.3;
+      }
+    case "tee":
+      return 0.6;
+    case "blind_tee":
+      return 0.3;
+    case "reducer":
+    case "contraction":
+      return 0.4;
+    case "choke":
+    case "valve":
+      return 2.0;
+    case "weld":
+      return 1.2;
+    default:
+      return 1.0;
     }
   }
 
@@ -262,8 +261,8 @@ public class ErosionPredictionCalculator implements Serializable {
    * Impact angle function F(alpha) for DNV RP O501.
    *
    * <p>
-   * For ductile materials, maximum erosion occurs at 20-30 degree impact angle. For brittle
-   * materials, maximum is at 90 degrees.
+   * For ductile materials, maximum erosion occurs at 20-30 degree impact angle. For brittle materials, maximum is at 90
+   * degrees.
    * </p>
    *
    * @param impactAngleDeg impact angle in degrees
@@ -289,8 +288,8 @@ public class ErosionPredictionCalculator implements Serializable {
    * Estimates the particle impact velocity from the flow velocity.
    *
    * <p>
-   * In multiphase flow, sand particles are accelerated by the fluid. The particle velocity is
-   * typically 60-80% of the fluid velocity depending on particle size and fluid properties.
+   * In multiphase flow, sand particles are accelerated by the fluid. The particle velocity is typically 60-80% of the
+   * fluid velocity depending on particle size and fluid properties.
    * </p>
    *
    * @return estimated particle velocity in m/s
@@ -300,7 +299,7 @@ public class ErosionPredictionCalculator implements Serializable {
     // Based on particle Stokes number
     double dpMetres = sandParticleDiameter / 1000.0;
     double stokesNumber = sandParticleDensity * dpMetres * dpMetres * mixtureVelocity
-        / (18.0 * mixtureViscosity * pipeDiameter);
+	/ (18.0 * mixtureViscosity * pipeDiameter);
 
     // Velocity ratio based on Stokes number
     double velocityRatioParticle;
@@ -361,7 +360,7 @@ public class ErosionPredictionCalculator implements Serializable {
       double fAlpha = impactAngleFunction(impactAngle);
 
       double erosionKgPerKg = k * fAlpha * Math.pow(vp, n) * Math.pow(dpActual / dpRef, 0.2) * gf
-          * (sandParticleDensity / rhoRef);
+	  * (sandParticleDensity / rhoRef);
 
       // Convert to mm/year:
       // E [mm/yr] = erosionKgPerKg * sandRate [kg/day] * 365.25 / (rho_wall * A_erode)
@@ -371,13 +370,13 @@ public class ErosionPredictionCalculator implements Serializable {
       double erodedArea = getErodedArea();
 
       if (erodedArea > 0 && materialDensity > 0) {
-        double sandRateKgPerYear = sandRate * 365.25;
-        // Mass loss per year in kg:
-        double massLossKgPerYear = erosionKgPerKg * sandRateKgPerYear;
-        // Volume loss per year in m3:
-        double volumeLossM3PerYear = massLossKgPerYear / materialDensity;
-        // Depth of erosion = volume / area, convert to mm:
-        erosionRateMmPerYear = (volumeLossM3PerYear / erodedArea) * 1000.0;
+	double sandRateKgPerYear = sandRate * 365.25;
+	// Mass loss per year in kg:
+	double massLossKgPerYear = erosionKgPerKg * sandRateKgPerYear;
+	// Volume loss per year in m3:
+	double volumeLossM3PerYear = massLossKgPerYear / materialDensity;
+	// Depth of erosion = volume / area, convert to mm:
+	erosionRateMmPerYear = (volumeLossM3PerYear / erodedArea) * 1000.0;
       }
     } else if (sandRate > 0) {
       // Straight pipe: much lower erosion, use empirical reduction
@@ -405,26 +404,26 @@ public class ErosionPredictionCalculator implements Serializable {
    */
   private double estimateImpactAngle() {
     switch (geometry.toLowerCase()) {
-      case "straight":
-        return 1.0;
-      case "elbow":
-      case "bend":
-        // Impact angle depends on R/D and particle properties
-        return Math.max(5.0, 45.0 / bendRadiusRatio);
-      case "tee":
-        return 45.0;
-      case "blind_tee":
-        return 90.0;
-      case "reducer":
-      case "contraction":
-        return 15.0;
-      case "choke":
-      case "valve":
-        return 30.0;
-      case "weld":
-        return 20.0;
-      default:
-        return 30.0;
+    case "straight":
+      return 1.0;
+    case "elbow":
+    case "bend":
+      // Impact angle depends on R/D and particle properties
+      return Math.max(5.0, 45.0 / bendRadiusRatio);
+    case "tee":
+      return 45.0;
+    case "blind_tee":
+      return 90.0;
+    case "reducer":
+    case "contraction":
+      return 15.0;
+    case "choke":
+    case "valve":
+      return 30.0;
+    case "weld":
+      return 20.0;
+    default:
+      return 30.0;
     }
   }
 
@@ -436,13 +435,13 @@ public class ErosionPredictionCalculator implements Serializable {
    */
   private double getMaterialDensity(String material) {
     switch (material.toLowerCase()) {
-      case "titanium":
-        return 4500.0;
-      case "inconel":
-      case "inconel_625":
-        return 8440.0;
-      default:
-        return 7850.0; // Carbon and alloy steels
+    case "titanium":
+      return 4500.0;
+    case "inconel":
+    case "inconel_625":
+      return 8440.0;
+    default:
+      return 7850.0; // Carbon and alloy steels
     }
   }
 
@@ -454,25 +453,25 @@ public class ErosionPredictionCalculator implements Serializable {
   private double getErodedArea() {
     double r = pipeDiameter / 2.0;
     switch (geometry.toLowerCase()) {
-      case "elbow":
-      case "bend":
-        // Erosion scar is approximately 5-10% of the bend outer wall area
-        return Math.PI * pipeDiameter * pipeDiameter * 0.1;
-      case "tee":
-      case "blind_tee":
-        return Math.PI * r * r * 0.5;
-      case "reducer":
-      case "contraction":
-        return Math.PI * r * r * 0.3;
-      case "choke":
-      case "valve":
-        return Math.PI * r * r * 0.2;
-      case "weld":
-        return Math.PI * pipeDiameter * 0.005; // Thin ring
-      case "straight":
-        return Math.PI * pipeDiameter * 1.0; // per metre
-      default:
-        return Math.PI * r * r;
+    case "elbow":
+    case "bend":
+      // Erosion scar is approximately 5-10% of the bend outer wall area
+      return Math.PI * pipeDiameter * pipeDiameter * 0.1;
+    case "tee":
+    case "blind_tee":
+      return Math.PI * r * r * 0.5;
+    case "reducer":
+    case "contraction":
+      return Math.PI * r * r * 0.3;
+    case "choke":
+    case "valve":
+      return Math.PI * r * r * 0.2;
+    case "weld":
+      return Math.PI * pipeDiameter * 0.005; // Thin ring
+    case "straight":
+      return Math.PI * pipeDiameter * 1.0; // per metre
+    default:
+      return Math.PI * r * r;
     }
   }
 
@@ -678,8 +677,7 @@ public class ErosionPredictionCalculator implements Serializable {
   /**
    * Sets the pipe geometry type.
    *
-   * @param geometry geometry type: "straight", "elbow", "tee", "blind_tee", "reducer", "choke",
-   *        "weld"
+   * @param geometry geometry type: "straight", "elbow", "tee", "blind_tee", "reducer", "choke", "weld"
    */
   public void setGeometry(String geometry) {
     this.geometry = geometry;
@@ -697,8 +695,8 @@ public class ErosionPredictionCalculator implements Serializable {
   /**
    * Sets the pipe material.
    *
-   * @param pipeMaterial material identifier: "carbon_steel", "duplex_steel", "super_duplex",
-   *        "13cr", "inconel", "titanium"
+   * @param pipeMaterial material identifier: "carbon_steel", "duplex_steel", "super_duplex", "13cr", "inconel",
+   *                     "titanium"
    */
   public void setPipeMaterial(String pipeMaterial) {
     this.pipeMaterial = pipeMaterial;
@@ -835,8 +833,7 @@ public class ErosionPredictionCalculator implements Serializable {
    * @return a JSON string
    */
   public String toJson() {
-    Gson gson =
-        new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+    Gson gson = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
     return gson.toJson(toMap());
   }
 
@@ -846,9 +843,8 @@ public class ErosionPredictionCalculator implements Serializable {
    * Default sand production assumptions by well completion type and flow phase.
    *
    * <p>
-   * When no field-specific sand production estimates are available, these default values shall be
-   * applied for dimensioning facilities and piping. These are conservative design defaults based on
-   * industry experience.
+   * When no field-specific sand production estimates are available, these default values shall be applied for
+   * dimensioning facilities and piping. These are conservative design defaults based on industry experience.
    * </p>
    *
    * <table>
@@ -900,13 +896,12 @@ public class ErosionPredictionCalculator implements Serializable {
     /**
      * Creates a sand load default entry.
      *
-     * @param completionType completion type description
-     * @param liquidPpmWt sand load in liquid flow (ppm wt)
-     * @param gasPpmWt sand load in dry gas flow (ppm wt)
+     * @param completionType      completion type description
+     * @param liquidPpmWt         sand load in liquid flow (ppm wt)
+     * @param gasPpmWt            sand load in dry gas flow (ppm wt)
      * @param particleSizeMicrons particle diameter (microns)
      */
-    public SandLoadDefaults(String completionType, double liquidPpmWt, double gasPpmWt,
-        double particleSizeMicrons) {
+    public SandLoadDefaults(String completionType, double liquidPpmWt, double gasPpmWt, double particleSizeMicrons) {
       this.completionType = completionType;
       this.liquidPpmWt = liquidPpmWt;
       this.gasPpmWt = gasPpmWt;
@@ -954,12 +949,11 @@ public class ErosionPredictionCalculator implements Serializable {
    * Gets the default sand load assumptions for a given well completion type.
    *
    * <p>
-   * For wells producing both gas and liquid, sand load estimates for both phases should be
-   * computed, and the maximum value chosen for the design basis.
+   * For wells producing both gas and liquid, sand load estimates for both phases should be computed, and the maximum
+   * value chosen for the design basis.
    * </p>
    *
-   * @param completionType one of: "natural", "natural_failure", "sas", "ohgp_incomplete",
-   *        "ohgp_complete"
+   * @param completionType one of: "natural", "natural_failure", "sas", "ohgp_incomplete", "ohgp_complete"
    * @return sand load defaults, or null if completion type is not recognized
    */
   public static SandLoadDefaults getSandLoadDefaults(String completionType) {
@@ -967,22 +961,20 @@ public class ErosionPredictionCalculator implements Serializable {
       return null;
     }
     switch (completionType.toLowerCase().trim()) {
-      case "natural":
-      case "natural_no_failure":
-        return new SandLoadDefaults("Natural completion (no mechanical failure predicted)", 1.0,
-            0.05, 250.0);
-      case "natural_failure":
-      case "natural_with_failure":
-        return new SandLoadDefaults("Natural completion (mechanical failure predicted)", 10.0, 0.5,
-            250.0);
-      case "sas":
-      case "ohgp_incomplete":
-        return new SandLoadDefaults("SAS or OHGP with incomplete packs", 3.0, 0.3, 100.0);
-      case "ohgp_complete":
-      case "ohgp_100":
-        return new SandLoadDefaults("OHGP with 100% packing efficiency", 1.0, 0.05, 50.0);
-      default:
-        return null;
+    case "natural":
+    case "natural_no_failure":
+      return new SandLoadDefaults("Natural completion (no mechanical failure predicted)", 1.0, 0.05, 250.0);
+    case "natural_failure":
+    case "natural_with_failure":
+      return new SandLoadDefaults("Natural completion (mechanical failure predicted)", 10.0, 0.5, 250.0);
+    case "sas":
+    case "ohgp_incomplete":
+      return new SandLoadDefaults("SAS or OHGP with incomplete packs", 3.0, 0.3, 100.0);
+    case "ohgp_complete":
+    case "ohgp_100":
+      return new SandLoadDefaults("OHGP with 100% packing efficiency", 1.0, 0.05, 50.0);
+    default:
+      return null;
     }
   }
 
@@ -990,19 +982,17 @@ public class ErosionPredictionCalculator implements Serializable {
    * Applies default sand load parameters based on well completion type and production rates.
    *
    * <p>
-   * Calculates the sand production rate in kg/day from the default ppm-wt values and the production
-   * flow rates. For multiphase wells, both liquid and gas phase sand loads are computed, and the
-   * higher rate is used.
+   * Calculates the sand production rate in kg/day from the default ppm-wt values and the production flow rates. For
+   * multiphase wells, both liquid and gas phase sand loads are computed, and the higher rate is used.
    * </p>
    *
-   * @param completionType one of: "natural", "natural_failure", "sas", "ohgp_incomplete",
-   *        "ohgp_complete"
+   * @param completionType     one of: "natural", "natural_failure", "sas", "ohgp_incomplete", "ohgp_complete"
    * @param liquidRateM3PerDay liquid production rate in m3/day (0 for dry gas wells)
-   * @param gasRateKgPerDay gas production rate in kg/day (0 for oil-only wells)
-   * @param liquidDensityKgM3 liquid density in kg/m3 (used for ppm conversion)
+   * @param gasRateKgPerDay    gas production rate in kg/day (0 for oil-only wells)
+   * @param liquidDensityKgM3  liquid density in kg/m3 (used for ppm conversion)
    */
-  public void applySandLoadDefaults(String completionType, double liquidRateM3PerDay,
-      double gasRateKgPerDay, double liquidDensityKgM3) {
+  public void applySandLoadDefaults(String completionType, double liquidRateM3PerDay, double gasRateKgPerDay,
+      double liquidDensityKgM3) {
     SandLoadDefaults defaults = getSandLoadDefaults(completionType);
     if (defaults == null) {
       return;
@@ -1032,18 +1022,16 @@ public class ErosionPredictionCalculator implements Serializable {
    * Calculates the erosional velocity limit considering the corrosion inhibitor film stability.
    *
    * <p>
-   * The flow velocity shall be restricted with regards to corrosion allowance over the service life
-   * to limit erosion of the protective layer of corrosion products and reduce the risk for
-   * corrosion inhibitor film breakdown. When sand or proppants are present, additional risk for
-   * erosion of the protective layer should be considered.
+   * The flow velocity shall be restricted with regards to corrosion allowance over the service life to limit erosion of
+   * the protective layer of corrosion products and reduce the risk for corrosion inhibitor film breakdown. When sand or
+   * proppants are present, additional risk for erosion of the protective layer should be considered.
    * </p>
    *
    * @param corrosionInhibited whether corrosion inhibitor is used
-   * @param sandPresent whether sand production is expected
+   * @param sandPresent        whether sand production is expected
    * @return adjusted maximum velocity in m/s
    */
-  public double calcMaxVelocityForCorrosionProtection(boolean corrosionInhibited,
-      boolean sandPresent) {
+  public double calcMaxVelocityForCorrosionProtection(boolean corrosionInhibited, boolean sandPresent) {
     // Base erosional velocity from API RP 14E
     if (mixtureDensity <= 0) {
       return 0.0;
@@ -1066,6 +1054,6 @@ public class ErosionPredictionCalculator implements Serializable {
    * @return array of valid completion type strings
    */
   public static String[] getAvailableCompletionTypes() {
-    return new String[] {"natural", "natural_failure", "sas", "ohgp_incomplete", "ohgp_complete"};
+    return new String[] { "natural", "natural_failure", "sas", "ohgp_incomplete", "ohgp_complete" };
   }
 }

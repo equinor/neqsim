@@ -49,8 +49,7 @@ class DatabaseCsvDuplicateTest extends NeqSimTest {
   void componentTableIdsShouldNotReferToDifferentComponentNames() throws IOException {
     List<String> duplicateMessages = new ArrayList<String>();
     duplicateMessages.addAll(findDuplicateKeysWithDifferentValues("data/COMP.csv", "ID", "NAME"));
-    duplicateMessages
-        .addAll(findDuplicateKeysWithDifferentValues("data/COMP_EXT.csv", "ID", "NAME"));
+    duplicateMessages.addAll(findDuplicateKeysWithDifferentValues("data/COMP_EXT.csv", "ID", "NAME"));
 
     assertTrue(duplicateMessages.isEmpty(), formatDuplicateSummary(duplicateMessages));
   }
@@ -85,29 +84,29 @@ class DatabaseCsvDuplicateTest extends NeqSimTest {
    * Finds duplicate key values in a CSV resource.
    *
    * @param resourcePath classpath resource path to the CSV file
-   * @param unordered whether multi-column keys should be sorted before grouping
-   * @param keyColumns column names that define the unique key
+   * @param unordered    whether multi-column keys should be sorted before grouping
+   * @param keyColumns   column names that define the unique key
    * @return formatted duplicate key descriptions
    * @throws IOException if the CSV resource cannot be read
    */
-  private static List<String> findDuplicateKeys(String resourcePath, boolean unordered,
-      String... keyColumns) throws IOException {
+  private static List<String> findDuplicateKeys(String resourcePath, boolean unordered, String... keyColumns)
+      throws IOException {
     CsvTable table = readCsvResource(resourcePath);
     for (String keyColumn : keyColumns) {
       if (!table.header.contains(keyColumn)) {
-        throw new IOException("Missing key column " + keyColumn + " in " + resourcePath);
+	throw new IOException("Missing key column " + keyColumn + " in " + resourcePath);
       }
     }
     Map<String, List<CsvRow>> rowsByKey = new LinkedHashMap<String, List<CsvRow>>();
     for (CsvRow row : table.rows) {
       String key = buildKey(row, keyColumns, unordered);
       if (key.trim().isEmpty()) {
-        continue;
+	continue;
       }
       List<CsvRow> rows = rowsByKey.get(key);
       if (rows == null) {
-        rows = new ArrayList<CsvRow>();
-        rowsByKey.put(key, rows);
+	rows = new ArrayList<CsvRow>();
+	rowsByKey.put(key, rows);
       }
       rows.add(row);
     }
@@ -115,8 +114,7 @@ class DatabaseCsvDuplicateTest extends NeqSimTest {
     List<String> duplicateMessages = new ArrayList<String>();
     for (Map.Entry<String, List<CsvRow>> entry : rowsByKey.entrySet()) {
       if (entry.getValue().size() > 1) {
-        duplicateMessages
-            .add(formatDuplicate(resourcePath, keyColumns, entry.getKey(), entry.getValue()));
+	duplicateMessages.add(formatDuplicate(resourcePath, keyColumns, entry.getKey(), entry.getValue()));
       }
     }
 
@@ -127,13 +125,13 @@ class DatabaseCsvDuplicateTest extends NeqSimTest {
    * Finds duplicate key values that are attached to different values in another column.
    *
    * @param resourcePath classpath resource path to the CSV file
-   * @param keyColumn column name that defines the lookup key
-   * @param valueColumn column name that must stay consistent for a duplicate key
+   * @param keyColumn    column name that defines the lookup key
+   * @param valueColumn  column name that must stay consistent for a duplicate key
    * @return formatted duplicate key descriptions
    * @throws IOException if the CSV resource cannot be read
    */
-  private static List<String> findDuplicateKeysWithDifferentValues(String resourcePath,
-      String keyColumn, String valueColumn) throws IOException {
+  private static List<String> findDuplicateKeysWithDifferentValues(String resourcePath, String keyColumn,
+      String valueColumn) throws IOException {
     CsvTable table = readCsvResource(resourcePath);
     if (!table.header.contains(keyColumn)) {
       throw new IOException("Missing key column " + keyColumn + " in " + resourcePath);
@@ -147,12 +145,12 @@ class DatabaseCsvDuplicateTest extends NeqSimTest {
       String key = row.values.get(keyColumn);
       key = key == null ? "" : key.trim();
       if (key.isEmpty()) {
-        continue;
+	continue;
       }
       List<CsvRow> rows = rowsByKey.get(key);
       if (rows == null) {
-        rows = new ArrayList<CsvRow>();
-        rowsByKey.put(key, rows);
+	rows = new ArrayList<CsvRow>();
+	rowsByKey.put(key, rows);
       }
       rows.add(row);
     }
@@ -160,8 +158,8 @@ class DatabaseCsvDuplicateTest extends NeqSimTest {
     List<String> duplicateMessages = new ArrayList<String>();
     for (Map.Entry<String, List<CsvRow>> entry : rowsByKey.entrySet()) {
       if (hasDifferentValues(entry.getValue(), valueColumn)) {
-        duplicateMessages.add(formatDuplicate(resourcePath, new String[] {keyColumn},
-            entry.getKey(), entry.getValue()));
+	duplicateMessages
+	    .add(formatDuplicate(resourcePath, new String[] { keyColumn }, entry.getKey(), entry.getValue()));
       }
     }
     return duplicateMessages;
@@ -170,7 +168,7 @@ class DatabaseCsvDuplicateTest extends NeqSimTest {
   /**
    * Checks whether rows have more than one distinct value in a column.
    *
-   * @param rows rows to inspect
+   * @param rows        rows to inspect
    * @param valueColumn column name to compare
    * @return true if rows contain different non-empty values
    */
@@ -180,12 +178,12 @@ class DatabaseCsvDuplicateTest extends NeqSimTest {
       String value = row.values.get(valueColumn);
       value = value == null ? "" : value.trim();
       if (value.isEmpty()) {
-        continue;
+	continue;
       }
       if (firstValue == null) {
-        firstValue = value;
+	firstValue = value;
       } else if (!firstValue.equals(value)) {
-        return true;
+	return true;
       }
     }
     return false;
@@ -198,39 +196,35 @@ class DatabaseCsvDuplicateTest extends NeqSimTest {
    * @return formatted duplicate name descriptions
    * @throws IOException if the component name index cannot be read
    */
-  private static List<String> findDuplicateNameIndexEntries(String resourcePath)
-      throws IOException {
-    InputStream inputStream =
-        DatabaseCsvDuplicateTest.class.getClassLoader().getResourceAsStream(resourcePath);
+  private static List<String> findDuplicateNameIndexEntries(String resourcePath) throws IOException {
+    InputStream inputStream = DatabaseCsvDuplicateTest.class.getClassLoader().getResourceAsStream(resourcePath);
     if (inputStream == null) {
       throw new IOException("Missing component name index resource: " + resourcePath);
     }
 
     Map<String, List<Integer>> linesByName = new LinkedHashMap<String, List<Integer>>();
-    try (BufferedReader reader =
-        new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
+    try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
       String line;
       int lineNumber = 0;
       while ((line = reader.readLine()) != null) {
-        lineNumber++;
-        String name = normalizeNameIndexLine(line, lineNumber);
-        if (name.isEmpty() || (lineNumber == 1 && "NAME".equals(name))) {
-          continue;
-        }
-        List<Integer> lines = linesByName.get(name);
-        if (lines == null) {
-          lines = new ArrayList<Integer>();
-          linesByName.put(name, lines);
-        }
-        lines.add(Integer.valueOf(lineNumber));
+	lineNumber++;
+	String name = normalizeNameIndexLine(line, lineNumber);
+	if (name.isEmpty() || (lineNumber == 1 && "NAME".equals(name))) {
+	  continue;
+	}
+	List<Integer> lines = linesByName.get(name);
+	if (lines == null) {
+	  lines = new ArrayList<Integer>();
+	  linesByName.put(name, lines);
+	}
+	lines.add(Integer.valueOf(lineNumber));
       }
     }
 
     List<String> duplicateMessages = new ArrayList<String>();
     for (Map.Entry<String, List<Integer>> entry : linesByName.entrySet()) {
       if (entry.getValue().size() > 1) {
-        duplicateMessages
-            .add(formatDuplicateNameIndexEntry(resourcePath, entry.getKey(), entry.getValue()));
+	duplicateMessages.add(formatDuplicateNameIndexEntry(resourcePath, entry.getKey(), entry.getValue()));
       }
     }
     return duplicateMessages;
@@ -239,7 +233,7 @@ class DatabaseCsvDuplicateTest extends NeqSimTest {
   /**
    * Normalizes one component name index line.
    *
-   * @param line raw line text
+   * @param line       raw line text
    * @param lineNumber one-based resource line number
    * @return normalized component name
    */
@@ -255,17 +249,16 @@ class DatabaseCsvDuplicateTest extends NeqSimTest {
    * Formats one duplicate component name index entry.
    *
    * @param resourcePath classpath resource path to the component name index
-   * @param name duplicate component name
-   * @param lines line numbers where the name appears
+   * @param name         duplicate component name
+   * @param lines        line numbers where the name appears
    * @return formatted duplicate name description
    */
-  private static String formatDuplicateNameIndexEntry(String resourcePath, String name,
-      List<Integer> lines) {
+  private static String formatDuplicateNameIndexEntry(String resourcePath, String name, List<Integer> lines) {
     StringBuilder message = new StringBuilder();
     message.append(resourcePath).append(" NAME=").append(name).append(" at lines ");
     for (int i = 0; i < lines.size(); i++) {
       if (i > 0) {
-        message.append(", ");
+	message.append(", ");
       }
       message.append(lines.get(i));
     }
@@ -280,15 +273,14 @@ class DatabaseCsvDuplicateTest extends NeqSimTest {
    */
   private static String formatDuplicateSummary(List<String> duplicateMessages) {
     StringBuilder message = new StringBuilder();
-    message.append("Database resources contain ").append(duplicateMessages.size())
-        .append(" duplicate group(s)");
+    message.append("Database resources contain ").append(duplicateMessages.size()).append(" duplicate group(s)");
     int duplicatesToReport = Math.min(MAX_DUPLICATES_TO_REPORT, duplicateMessages.size());
     for (int i = 0; i < duplicatesToReport; i++) {
       message.append(System.lineSeparator()).append("  - ").append(duplicateMessages.get(i));
     }
     if (duplicateMessages.size() > duplicatesToReport) {
       message.append(System.lineSeparator()).append("  - ... and ")
-          .append(duplicateMessages.size() - duplicatesToReport).append(" more");
+	  .append(duplicateMessages.size() - duplicatesToReport).append(" more");
     }
     return message.toString();
   }
@@ -296,9 +288,9 @@ class DatabaseCsvDuplicateTest extends NeqSimTest {
   /**
    * Builds a normalized key from one CSV row.
    *
-   * @param row row to read
+   * @param row        row to read
    * @param keyColumns column names that define the key
-   * @param unordered whether key values should be sorted before joining
+   * @param unordered  whether key values should be sorted before joining
    * @return normalized key
    */
   private static String buildKey(CsvRow row, String[] keyColumns, boolean unordered) {
@@ -313,7 +305,7 @@ class DatabaseCsvDuplicateTest extends NeqSimTest {
     StringBuilder key = new StringBuilder();
     for (int i = 0; i < values.size(); i++) {
       if (i > 0) {
-        key.append("||");
+	key.append("||");
       }
       key.append(values.get(i));
     }
@@ -324,31 +316,28 @@ class DatabaseCsvDuplicateTest extends NeqSimTest {
    * Formats one duplicate group.
    *
    * @param resourcePath classpath resource path to the CSV file
-   * @param keyColumns column names that define the duplicate key
-   * @param key duplicate key value
-   * @param rows rows sharing the duplicate key
+   * @param keyColumns   column names that define the duplicate key
+   * @param key          duplicate key value
+   * @param rows         rows sharing the duplicate key
    * @return formatted duplicate group description
    */
-  private static String formatDuplicate(String resourcePath, String[] keyColumns, String key,
-      List<CsvRow> rows) {
+  private static String formatDuplicate(String resourcePath, String[] keyColumns, String key, List<CsvRow> rows) {
     StringBuilder message = new StringBuilder();
-    message.append(resourcePath).append(" ").append(Arrays.toString(keyColumns)).append("=")
-        .append(key).append(" at ");
+    message.append(resourcePath).append(" ").append(Arrays.toString(keyColumns)).append("=").append(key).append(" at ");
     for (int i = 0; i < rows.size(); i++) {
       if (i > 0) {
-        message.append("; ");
+	message.append("; ");
       }
       CsvRow row = rows.get(i);
       message.append("line ").append(row.startLine);
       if (row.values.containsKey("ID")) {
-        message.append(" ID=").append(row.values.get("ID"));
+	message.append(" ID=").append(row.values.get("ID"));
       }
       if (row.values.containsKey("NAME")) {
-        message.append(" NAME=").append(row.values.get("NAME"));
+	message.append(" NAME=").append(row.values.get("NAME"));
       }
       if (row.values.containsKey("COMP1") && row.values.containsKey("COMP2")) {
-        message.append(" COMP1=").append(row.values.get("COMP1")).append(" COMP2=")
-            .append(row.values.get("COMP2"));
+	message.append(" COMP1=").append(row.values.get("COMP1")).append(" COMP2=").append(row.values.get("COMP2"));
       }
     }
     return message.toString();
@@ -362,13 +351,11 @@ class DatabaseCsvDuplicateTest extends NeqSimTest {
    * @throws IOException if the CSV resource cannot be read
    */
   private static CsvTable readCsvResource(String resourcePath) throws IOException {
-    InputStream inputStream =
-        DatabaseCsvDuplicateTest.class.getClassLoader().getResourceAsStream(resourcePath);
+    InputStream inputStream = DatabaseCsvDuplicateTest.class.getClassLoader().getResourceAsStream(resourcePath);
     if (inputStream == null) {
       throw new IOException("Missing CSV resource: " + resourcePath);
     }
-    try (BufferedReader reader =
-        new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
+    try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
       String line;
       int lineNumber = 0;
       int recordStartLine = 0;
@@ -376,30 +363,29 @@ class DatabaseCsvDuplicateTest extends NeqSimTest {
       List<CsvRow> rows = new ArrayList<CsvRow>();
       StringBuilder record = new StringBuilder();
       while ((line = reader.readLine()) != null) {
-        lineNumber++;
-        if (record.length() == 0) {
-          recordStartLine = lineNumber;
-        } else {
-          record.append('\n');
-        }
-        record.append(line);
-        if (!isCompleteCsvRecord(record.toString())) {
-          continue;
-        }
-        List<String> fields = parseCsvRecord(record.toString());
-        if (header == null) {
-          header = normalizeHeader(fields);
-        } else {
-          rows.add(new CsvRow(recordStartLine, mapFields(header, fields)));
-        }
-        record.setLength(0);
+	lineNumber++;
+	if (record.length() == 0) {
+	  recordStartLine = lineNumber;
+	} else {
+	  record.append('\n');
+	}
+	record.append(line);
+	if (!isCompleteCsvRecord(record.toString())) {
+	  continue;
+	}
+	List<String> fields = parseCsvRecord(record.toString());
+	if (header == null) {
+	  header = normalizeHeader(fields);
+	} else {
+	  rows.add(new CsvRow(recordStartLine, mapFields(header, fields)));
+	}
+	record.setLength(0);
       }
       if (record.length() > 0) {
-        throw new IOException(
-            "Unterminated quoted CSV record in " + resourcePath + " at line " + recordStartLine);
+	throw new IOException("Unterminated quoted CSV record in " + resourcePath + " at line " + recordStartLine);
       }
       if (header == null) {
-        throw new IOException("CSV resource has no header: " + resourcePath);
+	throw new IOException("CSV resource has no header: " + resourcePath);
       }
       return new CsvTable(header, rows);
     }
@@ -416,7 +402,7 @@ class DatabaseCsvDuplicateTest extends NeqSimTest {
     for (int i = 0; i < fields.size(); i++) {
       String field = fields.get(i).trim();
       if (i == 0 && field.length() > 0 && field.charAt(0) == '\ufeff') {
-        field = field.substring(1);
+	field = field.substring(1);
       }
       normalized.add(field);
     }
@@ -450,11 +436,11 @@ class DatabaseCsvDuplicateTest extends NeqSimTest {
     for (int i = 0; i < record.length(); i++) {
       char character = record.charAt(i);
       if (character == '"') {
-        if (inQuotes && i + 1 < record.length() && record.charAt(i + 1) == '"') {
-          i++;
-        } else {
-          inQuotes = !inQuotes;
-        }
+	if (inQuotes && i + 1 < record.length() && record.charAt(i + 1) == '"') {
+	  i++;
+	} else {
+	  inQuotes = !inQuotes;
+	}
       }
     }
     return !inQuotes;
@@ -473,17 +459,17 @@ class DatabaseCsvDuplicateTest extends NeqSimTest {
     for (int i = 0; i < record.length(); i++) {
       char character = record.charAt(i);
       if (character == '"') {
-        if (inQuotes && i + 1 < record.length() && record.charAt(i + 1) == '"') {
-          field.append('"');
-          i++;
-        } else {
-          inQuotes = !inQuotes;
-        }
+	if (inQuotes && i + 1 < record.length() && record.charAt(i + 1) == '"') {
+	  field.append('"');
+	  i++;
+	} else {
+	  inQuotes = !inQuotes;
+	}
       } else if (character == ',' && !inQuotes) {
-        fields.add(field.toString());
-        field.setLength(0);
+	fields.add(field.toString());
+	field.setLength(0);
       } else {
-        field.append(character);
+	field.append(character);
       }
     }
     fields.add(field.toString());
@@ -501,7 +487,7 @@ class DatabaseCsvDuplicateTest extends NeqSimTest {
      * Creates a parsed CSV table.
      *
      * @param header header fields
-     * @param rows data rows
+     * @param rows   data rows
      */
     private CsvTable(List<String> header, List<CsvRow> rows) {
       this.header = header;
@@ -520,7 +506,7 @@ class DatabaseCsvDuplicateTest extends NeqSimTest {
      * Creates a parsed CSV row.
      *
      * @param startLine starting line number for the record
-     * @param values parsed row values by header name
+     * @param values    parsed row values by header name
      */
     private CsvRow(int startLine, Map<String, String> values) {
       this.startLine = startLine;

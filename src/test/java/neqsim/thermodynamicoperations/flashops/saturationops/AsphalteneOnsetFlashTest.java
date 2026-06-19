@@ -77,7 +77,7 @@ public class AsphalteneOnsetFlashTest {
     // For this simplified system without true asphaltene phase,
     // we expect no onset to be found (returns NaN or positive)
     assertTrue(Double.isNaN(onsetPressure) || onsetPressure > 0,
-        "Onset pressure should be NaN (not found) or positive");
+	"Onset pressure should be NaN (not found) or positive");
   }
 
   @Test
@@ -90,7 +90,7 @@ public class AsphalteneOnsetFlashTest {
     // For this simplified system without true asphaltene phase,
     // we expect no onset to be found (returns NaN)
     assertTrue(Double.isNaN(onsetTemperature) || onsetTemperature > 0,
-        "Onset temperature should be NaN (not found) or positive");
+	"Onset temperature should be NaN (not found) or positive");
   }
 
   @Test
@@ -101,8 +101,7 @@ public class AsphalteneOnsetFlashTest {
     double onsetPressure = ops.asphalteneOnsetPressure(150.0, 5.0);
 
     // Just verify it runs without error
-    assertTrue(Double.isNaN(onsetPressure) || onsetPressure >= 5.0,
-        "If onset found, should be above minimum pressure");
+    assertTrue(Double.isNaN(onsetPressure) || onsetPressure >= 5.0, "If onset found, should be above minimum pressure");
   }
 
   @Test
@@ -113,9 +112,8 @@ public class AsphalteneOnsetFlashTest {
     double onsetTemperature = ops.asphalteneOnsetTemperature(400.0, 250.0, 450.0);
 
     // Just verify it runs without error
-    assertTrue(
-        Double.isNaN(onsetTemperature) || (onsetTemperature >= 250.0 && onsetTemperature <= 450.0),
-        "If onset found, should be within specified range");
+    assertTrue(Double.isNaN(onsetTemperature) || (onsetTemperature >= 250.0 && onsetTemperature <= 450.0),
+	"If onset found, should be within specified range");
   }
 
   @Test
@@ -128,8 +126,8 @@ public class AsphalteneOnsetFlashTest {
 
   @Test
   void testTemperatureFlashGetThermoSystem() {
-    AsphalteneOnsetTemperatureFlash flash =
-        new AsphalteneOnsetTemperatureFlash(testSystem, testSystem.getTemperature(), 200.0, 500.0);
+    AsphalteneOnsetTemperatureFlash flash = new AsphalteneOnsetTemperatureFlash(testSystem, testSystem.getTemperature(),
+	200.0, 500.0);
 
     // getThermoSystem should return the system
     assertNotNull(flash.getThermoSystem());
@@ -202,8 +200,7 @@ public class AsphalteneOnsetFlashTest {
 
     // Test the AOP calculation - should run without errors
     double onsetP = ops.asphalteneOnsetPressure(200.0, 1.0);
-    assertTrue(Double.isNaN(onsetP) || onsetP > 0,
-        "Onset pressure should be NaN (not found) or positive");
+    assertTrue(Double.isNaN(onsetP) || onsetP > 0, "Onset pressure should be NaN (not found) or positive");
   }
 
   @Test
@@ -220,15 +217,14 @@ public class AsphalteneOnsetFlashTest {
     ThermodynamicOperations ops = new ThermodynamicOperations(system);
 
     // Test temperature search in both directions
-    AsphalteneOnsetTemperatureFlash flashDown =
-        new AsphalteneOnsetTemperatureFlash(system, 400.0, 250.0, 450.0);
+    AsphalteneOnsetTemperatureFlash flashDown = new AsphalteneOnsetTemperatureFlash(system, 400.0, 250.0, 450.0);
     flashDown.setTemperatureStep(20.0);
     flashDown.setSearchDecreasing(true);
     flashDown.run();
 
     // Should complete without error
     assertFalse(flashDown.isOnsetFound() && Double.isNaN(flashDown.getOnsetTemperature()),
-        "If onset is found, temperature should not be NaN");
+	"If onset is found, temperature should not be NaN");
 
     // Test temperature in Celsius
     if (flashDown.isOnsetFound()) {

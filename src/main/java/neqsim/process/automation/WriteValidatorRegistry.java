@@ -10,22 +10,20 @@ import java.util.concurrent.ConcurrentHashMap;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 
 /**
- * Registry of {@link WriteValidator} instances keyed by equipment class. The registry is consulted
- * by {@link ProcessAutomation#setVariableValueValidated(String, double, String)} and
- * {@link ProcessAutomation#setValuesTransactional(java.util.Map, String)} before any write is
- * applied.
+ * Registry of {@link WriteValidator} instances keyed by equipment class. The registry is consulted by
+ * {@link ProcessAutomation#setVariableValueValidated(String, double, String)} and
+ * {@link ProcessAutomation#setValuesTransactional(java.util.Map, String)} before any write is applied.
  *
  * <p>
  * The registry supports multiple validators per equipment class (all are evaluated; the first
- * {@link WriteValidationResult.Severity#ERROR ERROR} result stops the check). Subclass dispatch
- * walks the equipment class hierarchy, so a validator registered for a base equipment class is also
- * invoked for any subclass that does not register its own validator.
+ * {@link WriteValidationResult.Severity#ERROR ERROR} result stops the check). Subclass dispatch walks the equipment
+ * class hierarchy, so a validator registered for a base equipment class is also invoked for any subclass that does not
+ * register its own validator.
  * </p>
  *
  * <p>
- * Construct a registry with the default validator set via {@link #createDefault()}; this populates
- * validators for {@code Compressor}, {@code Pump}, {@code Separator}, {@code ThrottlingValve},
- * {@code Heater}, and {@code Cooler}.
+ * Construct a registry with the default validator set via {@link #createDefault()}; this populates validators for
+ * {@code Compressor}, {@code Pump}, {@code Separator}, {@code ThrottlingValve}, {@code Heater}, and {@code Cooler}.
  * </p>
  *
  * @author Even Solbraa
@@ -34,8 +32,7 @@ import neqsim.process.equipment.ProcessEquipmentInterface;
 public class WriteValidatorRegistry implements Serializable {
   private static final long serialVersionUID = 1000L;
 
-  private final Map<Class<? extends ProcessEquipmentInterface>, List<WriteValidator>> validators =
-      new ConcurrentHashMap<Class<? extends ProcessEquipmentInterface>, List<WriteValidator>>();
+  private final Map<Class<? extends ProcessEquipmentInterface>, List<WriteValidator>> validators = new ConcurrentHashMap<Class<? extends ProcessEquipmentInterface>, List<WriteValidator>>();
 
   /**
    * Creates an empty registry. Use {@link #createDefault()} for the standard NeqSim set.
@@ -45,8 +42,8 @@ public class WriteValidatorRegistry implements Serializable {
   }
 
   /**
-   * Creates a registry pre-populated with the default validators for compressors, pumps,
-   * separators, throttling valves and heaters/coolers.
+   * Creates a registry pre-populated with the default validators for compressors, pumps, separators, throttling valves
+   * and heaters/coolers.
    *
    * @return a registry ready for production use
    */
@@ -62,8 +59,8 @@ public class WriteValidatorRegistry implements Serializable {
   }
 
   /**
-   * Registers a validator. Multiple validators may be registered for the same equipment class; all
-   * are evaluated in registration order.
+   * Registers a validator. Multiple validators may be registered for the same equipment class; all are evaluated in
+   * registration order.
    *
    * @param validator the validator to register; must not be null
    */
@@ -90,8 +87,8 @@ public class WriteValidatorRegistry implements Serializable {
   }
 
   /**
-   * Returns the validators applicable to the given equipment, walking the class hierarchy. The
-   * most-specific class's validators come first; base-class validators come last.
+   * Returns the validators applicable to the given equipment, walking the class hierarchy. The most-specific class's
+   * validators come first; base-class validators come last.
    *
    * @param equipment the target equipment
    * @return an unmodifiable list of applicable validators (possibly empty)
@@ -105,9 +102,9 @@ public class WriteValidatorRegistry implements Serializable {
     while (cls != null && ProcessEquipmentInterface.class.isAssignableFrom(cls)) {
       List<WriteValidator> list = validators.get(cls);
       if (list != null) {
-        synchronized (list) {
-          out.addAll(list);
-        }
+	synchronized (list) {
+	  out.addAll(list);
+	}
       }
       cls = cls.getSuperclass();
     }
@@ -115,19 +112,18 @@ public class WriteValidatorRegistry implements Serializable {
   }
 
   /**
-   * Runs every applicable validator against the proposed write. The first
-   * {@link WriteValidationResult.Severity#ERROR ERROR} result is returned immediately; otherwise
-   * the most severe non-error result is returned (or {@link WriteValidationResult#ok()} when all
-   * validators pass).
+   * Runs every applicable validator against the proposed write. The first {@link WriteValidationResult.Severity#ERROR
+   * ERROR} result is returned immediately; otherwise the most severe non-error result is returned (or
+   * {@link WriteValidationResult#ok()} when all validators pass).
    *
-   * @param equipment the target equipment; never null
+   * @param equipment    the target equipment; never null
    * @param propertyPath the local property path on the equipment
-   * @param value the proposed value
-   * @param unit the unit of measure of {@code value}, or null for the property's default unit
+   * @param value        the proposed value
+   * @param unit         the unit of measure of {@code value}, or null for the property's default unit
    * @return the aggregated validation result; never null
    */
-  public WriteValidationResult validate(ProcessEquipmentInterface equipment, String propertyPath,
-      double value, String unit) {
+  public WriteValidationResult validate(ProcessEquipmentInterface equipment, String propertyPath, double value,
+      String unit) {
     if (equipment == null) {
       throw new IllegalArgumentException("equipment must not be null");
     }
@@ -136,29 +132,26 @@ public class WriteValidatorRegistry implements Serializable {
     for (WriteValidator v : applicable) {
       WriteValidationResult r = v.validate(equipment, propertyPath, value, unit);
       if (r == null) {
-        continue;
+	continue;
       }
       if (r.getSeverity() == WriteValidationResult.Severity.ERROR) {
-        return r;
+	return r;
       }
       if (r.getSeverity() == WriteValidationResult.Severity.WARNING) {
-        highest = r;
+	highest = r;
       }
     }
     return highest;
   }
 
   /**
-   * Returns the equipment classes for which at least one validator is registered. Used by tests and
-   * diagnostics.
+   * Returns the equipment classes for which at least one validator is registered. Used by tests and diagnostics.
    *
    * @return an unmodifiable snapshot of the keys
    */
   public Map<Class<? extends ProcessEquipmentInterface>, Integer> getRegisteredClasses() {
-    Map<Class<? extends ProcessEquipmentInterface>, Integer> out =
-        new LinkedHashMap<Class<? extends ProcessEquipmentInterface>, Integer>();
-    for (Map.Entry<Class<? extends ProcessEquipmentInterface>, List<WriteValidator>> e : validators
-        .entrySet()) {
+    Map<Class<? extends ProcessEquipmentInterface>, Integer> out = new LinkedHashMap<Class<? extends ProcessEquipmentInterface>, Integer>();
+    for (Map.Entry<Class<? extends ProcessEquipmentInterface>, List<WriteValidator>> e : validators.entrySet()) {
       out.put(e.getKey(), e.getValue().size());
     }
     return Collections.unmodifiableMap(out);

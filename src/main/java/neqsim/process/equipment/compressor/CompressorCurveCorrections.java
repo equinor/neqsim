@@ -6,15 +6,12 @@ import java.io.Serializable;
  * Utility class providing correction factors for centrifugal compressor performance curves.
  *
  * <p>
- * This class implements industry-standard correction methods for more accurate compressor
- * performance prediction:
+ * This class implements industry-standard correction methods for more accurate compressor performance prediction:
  * </p>
  * <ul>
- * <li><b>Reynolds Number Correction:</b> Adjusts efficiency for viscous effects at off-design
- * conditions</li>
+ * <li><b>Reynolds Number Correction:</b> Adjusts efficiency for viscous effects at off-design conditions</li>
  * <li><b>Mach Number Limitation:</b> Calculates stonewall (choke) flow based on sonic velocity</li>
- * <li><b>Multistage Surge Correction:</b> Adjusts surge line for multistage compressors at reduced
- * speeds</li>
+ * <li><b>Multistage Surge Correction:</b> Adjusts surge line for multistage compressors at reduced speeds</li>
  * </ul>
  *
  * <p>
@@ -56,8 +53,8 @@ public class CompressorCurveCorrections implements Serializable {
    * Calculate Reynolds number correction factor for polytropic efficiency.
    *
    * <p>
-   * The efficiency of centrifugal compressors varies with Reynolds number due to viscous losses in
-   * the boundary layers. This correction is based on the correlation:
+   * The efficiency of centrifugal compressors varies with Reynolds number due to viscous losses in the boundary layers.
+   * This correction is based on the correlation:
    * </p>
    *
    * <pre>
@@ -65,16 +62,15 @@ public class CompressorCurveCorrections implements Serializable {
    * </pre>
    *
    * <p>
-   * Where n is typically 0.1-0.2 for centrifugal compressors (API 617 suggests using surface
-   * roughness correlations for more accuracy).
+   * Where n is typically 0.1-0.2 for centrifugal compressors (API 617 suggests using surface roughness correlations for
+   * more accuracy).
    * </p>
    *
-   * @param actualReynolds Actual Reynolds number at operating conditions
+   * @param actualReynolds    Actual Reynolds number at operating conditions
    * @param referenceReynolds Reference Reynolds number for the performance map (default 1e7)
    * @return Efficiency correction factor (multiply by reference efficiency)
    */
-  public static double calculateReynoldsEfficiencyCorrection(double actualReynolds,
-      double referenceReynolds) {
+  public static double calculateReynoldsEfficiencyCorrection(double actualReynolds, double referenceReynolds) {
     if (actualReynolds <= 0 || referenceReynolds <= 0) {
       return 1.0; // No correction if invalid input
     }
@@ -109,13 +105,12 @@ public class CompressorCurveCorrections implements Serializable {
    * Where u is tip speed, D is impeller diameter, and ν is kinematic viscosity.
    * </p>
    *
-   * @param tipSpeed Impeller tip speed in m/s
-   * @param impellerDiameter Impeller diameter in m
+   * @param tipSpeed           Impeller tip speed in m/s
+   * @param impellerDiameter   Impeller diameter in m
    * @param kinematicViscosity Kinematic viscosity in m²/s
    * @return Reynolds number (dimensionless)
    */
-  public static double calculateReynoldsNumber(double tipSpeed, double impellerDiameter,
-      double kinematicViscosity) {
+  public static double calculateReynoldsNumber(double tipSpeed, double impellerDiameter, double kinematicViscosity) {
     if (kinematicViscosity <= 0) {
       return REFERENCE_REYNOLDS; // Return reference value if viscosity is invalid
     }
@@ -125,7 +120,7 @@ public class CompressorCurveCorrections implements Serializable {
   /**
    * Calculate impeller tip speed from rotational speed and diameter.
    *
-   * @param rpm Rotational speed in revolutions per minute
+   * @param rpm      Rotational speed in revolutions per minute
    * @param diameter Impeller diameter in m
    * @return Tip speed in m/s
    */
@@ -144,7 +139,7 @@ public class CompressorCurveCorrections implements Serializable {
    * Ma = V / c
    * </pre>
    *
-   * @param gasVelocity Gas velocity in m/s
+   * @param gasVelocity   Gas velocity in m/s
    * @param sonicVelocity Speed of sound in the gas in m/s
    * @return Mach number (dimensionless)
    */
@@ -167,13 +162,12 @@ public class CompressorCurveCorrections implements Serializable {
    * </pre>
    *
    * <p>
-   * Where k is the heat capacity ratio, R is the gas constant, T is temperature, and M is molar
-   * mass.
+   * Where k is the heat capacity ratio, R is the gas constant, T is temperature, and M is molar mass.
    * </p>
    *
-   * @param kappa Heat capacity ratio (Cp/Cv)
-   * @param temperature Temperature in K
-   * @param molarMass Molar mass in kg/kmol
+   * @param kappa                 Heat capacity ratio (Cp/Cv)
+   * @param temperature           Temperature in K
+   * @param molarMass             Molar mass in kg/kmol
    * @param compressibilityFactor Z-factor (use 1.0 for ideal gas)
    * @return Speed of sound in m/s
    */
@@ -189,9 +183,8 @@ public class CompressorCurveCorrections implements Serializable {
    * Calculate maximum flow (stonewall/choke) based on Mach number limitation.
    *
    * <p>
-   * The stonewall flow is limited by the sonic velocity at the impeller inlet. When the flow
-   * velocity approaches the speed of sound (Ma ≈ 1), no further increase in flow is possible
-   * regardless of downstream pressure reduction.
+   * The stonewall flow is limited by the sonic velocity at the impeller inlet. When the flow velocity approaches the
+   * speed of sound (Ma ≈ 1), no further increase in flow is possible regardless of downstream pressure reduction.
    * </p>
    *
    * <p>
@@ -206,13 +199,12 @@ public class CompressorCurveCorrections implements Serializable {
    * Where A is the flow area, c is sonic velocity, and Ma_critical ≈ 0.9-1.0.
    * </p>
    *
-   * @param designFlow Design flow rate in m³/hr
-   * @param sonicVelocity Speed of sound at inlet conditions in m/s
+   * @param designFlow       Design flow rate in m³/hr
+   * @param sonicVelocity    Speed of sound at inlet conditions in m/s
    * @param designMachNumber Mach number at design flow (typically 0.6-0.8)
    * @return Maximum (stonewall) flow in m³/hr
    */
-  public static double calculateStonewallFlow(double designFlow, double sonicVelocity,
-      double designMachNumber) {
+  public static double calculateStonewallFlow(double designFlow, double sonicVelocity, double designMachNumber) {
     if (designMachNumber <= 0 || designMachNumber >= MAX_MACH) {
       return designFlow * 1.3; // Default 30% above design
     }
@@ -229,18 +221,16 @@ public class CompressorCurveCorrections implements Serializable {
    * </p>
    *
    * @param referenceStonewallFlow Stonewall flow at reference conditions in m³/hr
-   * @param referenceMolarMass Reference gas molar mass in kg/kmol
-   * @param actualMolarMass Actual gas molar mass in kg/kmol
-   * @param referenceKappa Reference heat capacity ratio
-   * @param actualKappa Actual heat capacity ratio
+   * @param referenceMolarMass     Reference gas molar mass in kg/kmol
+   * @param actualMolarMass        Actual gas molar mass in kg/kmol
+   * @param referenceKappa         Reference heat capacity ratio
+   * @param actualKappa            Actual heat capacity ratio
    * @return Corrected stonewall flow in m³/hr
    */
-  public static double correctStonewallFlowForGas(double referenceStonewallFlow,
-      double referenceMolarMass, double actualMolarMass, double referenceKappa,
-      double actualKappa) {
+  public static double correctStonewallFlowForGas(double referenceStonewallFlow, double referenceMolarMass,
+      double actualMolarMass, double referenceKappa, double actualKappa) {
     // Sonic velocity ratio
-    double sonicRatio =
-        Math.sqrt((actualKappa * referenceMolarMass) / (referenceKappa * actualMolarMass));
+    double sonicRatio = Math.sqrt((actualKappa * referenceMolarMass) / (referenceKappa * actualMolarMass));
     return referenceStonewallFlow * sonicRatio;
   }
 
@@ -248,8 +238,8 @@ public class CompressorCurveCorrections implements Serializable {
    * Calculate surge flow correction for multistage compressors at reduced speeds.
    *
    * <p>
-   * For multistage compressors, the simple fan law prediction for surge (Q_surge ∝ N) becomes
-   * inaccurate at reduced speeds. This is because:
+   * For multistage compressors, the simple fan law prediction for surge (Q_surge ∝ N) becomes inaccurate at reduced
+   * speeds. This is because:
    * </p>
    * <ul>
    * <li>Volume reduction per stage is less at lower speeds</li>
@@ -258,13 +248,13 @@ public class CompressorCurveCorrections implements Serializable {
    * </ul>
    *
    * <p>
-   * This correction shifts the surge line to higher flows at reduced speeds, which better matches
-   * observed behavior in multistage machines.
+   * This correction shifts the surge line to higher flows at reduced speeds, which better matches observed behavior in
+   * multistage machines.
    * </p>
    *
    * @param surgeFanLawFlow Surge flow predicted by simple fan law in m³/hr
-   * @param speedRatio Actual speed / Design speed (0 to 1)
-   * @param numberOfStages Number of compression stages
+   * @param speedRatio      Actual speed / Design speed (0 to 1)
+   * @param numberOfStages  Number of compression stages
    * @return Corrected surge flow in m³/hr
    */
   public static double calculateMultistageSurgeCorrection(double surgeFanLawFlow, double speedRatio,
@@ -289,17 +279,17 @@ public class CompressorCurveCorrections implements Serializable {
    * Calculate corrected surge head for multistage compressors at reduced speeds.
    *
    * <p>
-   * Similar to flow, the surge head may not follow simple fan law (H ∝ N²) exactly for multistage
-   * machines at reduced speeds.
+   * Similar to flow, the surge head may not follow simple fan law (H ∝ N²) exactly for multistage machines at reduced
+   * speeds.
    * </p>
    *
    * @param surgeFanLawHead Surge head predicted by simple fan law in kJ/kg
-   * @param speedRatio Actual speed / Design speed
-   * @param numberOfStages Number of compression stages
+   * @param speedRatio      Actual speed / Design speed
+   * @param numberOfStages  Number of compression stages
    * @return Corrected surge head in kJ/kg
    */
-  public static double calculateMultistageSurgeHeadCorrection(double surgeFanLawHead,
-      double speedRatio, int numberOfStages) {
+  public static double calculateMultistageSurgeHeadCorrection(double surgeFanLawHead, double speedRatio,
+      int numberOfStages) {
     if (numberOfStages <= 1 || speedRatio >= 1.0) {
       return surgeFanLawHead;
     }
@@ -317,8 +307,8 @@ public class CompressorCurveCorrections implements Serializable {
    * Apply efficiency correction for operating away from best efficiency point (BEP).
    *
    * <p>
-   * Compressor efficiency decreases as operating point moves away from BEP. This method calculates
-   * a parabolic efficiency profile:
+   * Compressor efficiency decreases as operating point moves away from BEP. This method calculates a parabolic
+   * efficiency profile:
    * </p>
    *
    * <pre>
@@ -326,12 +316,11 @@ public class CompressorCurveCorrections implements Serializable {
    * </pre>
    *
    * @param maxEfficiency Maximum (BEP) efficiency as fraction (0-1)
-   * @param flowRatio Actual flow / Design flow
-   * @param curveFactor Shape factor k (typically 0.3-0.5 for centrifugal compressors)
+   * @param flowRatio     Actual flow / Design flow
+   * @param curveFactor   Shape factor k (typically 0.3-0.5 for centrifugal compressors)
    * @return Efficiency at the specified flow ratio
    */
-  public static double calculateEfficiencyAtFlow(double maxEfficiency, double flowRatio,
-      double curveFactor) {
+  public static double calculateEfficiencyAtFlow(double maxEfficiency, double flowRatio, double curveFactor) {
     double deviation = flowRatio - 1.0;
     double reduction = curveFactor * deviation * deviation;
     return maxEfficiency * Math.max(0.5, 1.0 - reduction); // Floor at 50% of max
@@ -346,11 +335,10 @@ public class CompressorCurveCorrections implements Serializable {
    *
    * @param baseEfficiency Base polytropic efficiency at design point (fraction 0-1)
    * @param actualReynolds Actual Reynolds number
-   * @param flowRatio Actual flow / Design flow
+   * @param flowRatio      Actual flow / Design flow
    * @return Corrected efficiency (fraction 0-1)
    */
-  public static double calculateCorrectedEfficiency(double baseEfficiency, double actualReynolds,
-      double flowRatio) {
+  public static double calculateCorrectedEfficiency(double baseEfficiency, double actualReynolds, double flowRatio) {
     double reynoldsCorrection = calculateReynoldsEfficiencyCorrection(actualReynolds);
     double flowCorrection = calculateEfficiencyAtFlow(1.0, flowRatio, 0.4) / 1.0;
     return baseEfficiency * reynoldsCorrection * flowCorrection;

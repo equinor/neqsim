@@ -9,9 +9,9 @@ import neqsim.thermo.system.SystemInterface;
  * Utility methods shared by hydrogen-production reactor screening models.
  *
  * <p>
- * The methods in this class keep component handling and simple syngas metrics consistent across
- * SMR, ATR, and POX unit models. They intentionally avoid route-specific assumptions except for
- * common syngas component names and lower-heating-value constants.
+ * The methods in this class keep component handling and simple syngas metrics consistent across SMR, ATR, and POX unit
+ * models. They intentionally avoid route-specific assumptions except for common syngas component names and
+ * lower-heating-value constants.
  * </p>
  *
  * @author NeqSim contributors
@@ -31,13 +31,14 @@ final class HydrogenProductionUtils {
   private static final double TRACE_MOLES = 1.0e-20;
 
   /** Common syngas species required by the equilibrium and reporting models. */
-  private static final String[] SYNGAS_COMPONENTS =
-      {"methane", "water", "oxygen", "hydrogen", "CO", "CO2", "nitrogen"};
+  private static final String[] SYNGAS_COMPONENTS = { "methane", "water", "oxygen", "hydrogen", "CO", "CO2",
+      "nitrogen" };
 
   /**
    * Private constructor for utility class.
    */
-  private HydrogenProductionUtils() {}
+  private HydrogenProductionUtils() {
+  }
 
   /**
    * Ensures common syngas components exist in a thermodynamic system.
@@ -56,7 +57,7 @@ final class HydrogenProductionUtils {
   /**
    * Ensures a component exists in a thermodynamic system.
    *
-   * @param system thermodynamic system to update
+   * @param system        thermodynamic system to update
    * @param componentName NeqSim component name
    */
   static void ensureComponent(SystemInterface system, String componentName) {
@@ -68,9 +69,9 @@ final class HydrogenProductionUtils {
   /**
    * Creates a configured Gibbs reactor for syngas equilibrium work.
    *
-   * @param name reactor name
+   * @param name        reactor name
    * @param inletStream reactor inlet stream
-   * @param energyMode Gibbs reactor energy mode
+   * @param energyMode  Gibbs reactor energy mode
    * @return configured reactor
    */
   static GibbsReactor createSyngasGibbsReactor(String name, StreamInterface inletStream,
@@ -90,14 +91,14 @@ final class HydrogenProductionUtils {
   /**
    * Gets the amount of a component in a system.
    *
-   * @param system thermodynamic system
+   * @param system        thermodynamic system
    * @param componentName component name
    * @return component amount in the stream basis, or zero if absent
    */
   static double getComponentMoles(SystemInterface system, String componentName) {
     try {
       if (system.hasComponent(componentName)) {
-        return Math.max(0.0, system.getComponent(componentName).getNumberOfmoles());
+	return Math.max(0.0, system.getComponent(componentName).getNumberOfmoles());
       }
     } catch (Exception ex) {
       return 0.0;
@@ -108,14 +109,14 @@ final class HydrogenProductionUtils {
   /**
    * Gets the mole fraction of a component.
    *
-   * @param system thermodynamic system
+   * @param system        thermodynamic system
    * @param componentName component name
    * @return component mole fraction, or zero if absent
    */
   static double getMoleFraction(SystemInterface system, String componentName) {
     try {
       if (system.hasComponent(componentName)) {
-        return Math.max(0.0, system.getPhase(0).getComponent(componentName).getz());
+	return Math.max(0.0, system.getPhase(0).getComponent(componentName).getz());
       }
     } catch (Exception ex) {
       return 0.0;
@@ -126,12 +127,11 @@ final class HydrogenProductionUtils {
   /**
    * Calculates methane conversion between two systems.
    *
-   * @param inletSystem inlet thermodynamic system
+   * @param inletSystem  inlet thermodynamic system
    * @param outletSystem outlet thermodynamic system
    * @return methane conversion fraction between zero and one
    */
-  static double calculateMethaneConversion(SystemInterface inletSystem,
-      SystemInterface outletSystem) {
+  static double calculateMethaneConversion(SystemInterface inletSystem, SystemInterface outletSystem) {
     double methaneIn = getComponentMoles(inletSystem, "methane");
     if (methaneIn <= 0.0) {
       return 0.0;
@@ -194,7 +194,7 @@ final class HydrogenProductionUtils {
     for (String componentName : SYNGAS_COMPONENTS) {
       double fraction = getMoleFraction(system, componentName);
       if (fraction > 1.0e-10) {
-        composition.put(componentName, fraction);
+	composition.put(componentName, fraction);
       }
     }
     return composition;
@@ -203,7 +203,7 @@ final class HydrogenProductionUtils {
   /**
    * Bounds a value to a closed interval.
    *
-   * @param value value to bound
+   * @param value   value to bound
    * @param minimum lower bound
    * @param maximum upper bound
    * @return bounded value

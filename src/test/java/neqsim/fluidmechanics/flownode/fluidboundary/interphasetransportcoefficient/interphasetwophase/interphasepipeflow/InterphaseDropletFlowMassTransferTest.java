@@ -14,9 +14,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * Tests for the corrected InterphaseDropletFlow mass transfer coefficients.
  *
  * <p>
- * Verifies that droplet flow uses Ranz-Marshall Sh with droplet diameter as the characteristic
- * length, not the Yih-Chen stratified flow correlations that were erroneously copy-pasted in the
- * original implementation.
+ * Verifies that droplet flow uses Ranz-Marshall Sh with droplet diameter as the characteristic length, not the Yih-Chen
+ * stratified flow correlations that were erroneously copy-pasted in the original implementation.
  * </p>
  *
  * @author esol
@@ -71,8 +70,8 @@ public class InterphaseDropletFlowMassTransferTest {
   }
 
   /**
-   * Tests that the gas-side mass transfer coefficient scales correctly with droplet diameter.
-   * Smaller droplets should give larger kc (k_c = Sh * D_ij / d).
+   * Tests that the gas-side mass transfer coefficient scales correctly with droplet diameter. Smaller droplets should
+   * give larger kc (k_c = Sh * D_ij / d).
    */
   @Test
   void testKcIncreasesWithSmallerDroplets() {
@@ -88,8 +87,7 @@ public class InterphaseDropletFlowMassTransferTest {
     node.initFlowCalc();
     double kc50 = interphase.calcInterphaseMassTransferCoefficient(0, sc, node);
 
-    assertTrue(kc50 > kc100,
-        "Smaller droplets should give larger kc. kc50=" + kc50 + " kc100=" + kc100);
+    assertTrue(kc50 > kc100, "Smaller droplets should give larger kc. kc50=" + kc50 + " kc100=" + kc100);
   }
 
   /**
@@ -109,8 +107,7 @@ public class InterphaseDropletFlowMassTransferTest {
 
     double kc = interphase.calcInterphaseMassTransferCoefficient(0, sc, node);
     // kc should be >= stagnant limit (convection always helps)
-    assertTrue(kc >= kcMin * 0.5,
-        "kc should be at least near the stagnant limit. kc=" + kc + " kcMin=" + kcMin);
+    assertTrue(kc >= kcMin * 0.5, "kc should be at least near the stagnant limit. kc=" + kc + " kcMin=" + kcMin);
   }
 
   /**
@@ -147,8 +144,8 @@ public class InterphaseDropletFlowMassTransferTest {
 
     // Abramzon-Sirignano with B_M > 0 should give lower Sh* (thicker film)
     // which means lower kc
-    assertTrue(kcAS < kcStandard, "Abramzon-Sirignano should reduce kc due to blowing. kcAS=" + kcAS
-        + " kcStandard=" + kcStandard);
+    assertTrue(kcAS < kcStandard,
+	"Abramzon-Sirignano should reduce kc due to blowing. kcAS=" + kcAS + " kcStandard=" + kcStandard);
     assertTrue(kcAS > 0, "Abramzon-Sirignano kc should still be positive");
   }
 
@@ -175,23 +172,20 @@ public class InterphaseDropletFlowMassTransferTest {
   @Test
   void testDropletMassTransferDiffersFromStratified() {
     // Create a stratified flow node with same system
-    neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.StratifiedFlowNode stratNode =
-        new neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.StratifiedFlowNode(
-            testSystem, pipe);
+    neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.StratifiedFlowNode stratNode = new neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.StratifiedFlowNode(
+	testSystem, pipe);
     stratNode.initFlowCalc();
 
     InterphaseStratifiedFlow stratInterphase = new InterphaseStratifiedFlow(stratNode);
 
     double sc = 0.7;
     double kcDropletGas = interphase.calcInterphaseMassTransferCoefficient(0, sc, node);
-    double kcStratifiedGas =
-        stratInterphase.calcInterphaseMassTransferCoefficient(0, sc, stratNode);
+    double kcStratifiedGas = stratInterphase.calcInterphaseMassTransferCoefficient(0, sc, stratNode);
 
     // The two should NOT be equal (the old bug made them identical)
     // This test ensures the fix is working
-    assertTrue(Math.abs(kcDropletGas - kcStratifiedGas) > 1e-10,
-        "Droplet and stratified gas-side kc should differ. " + "kcDroplet=" + kcDropletGas
-            + " kcStrat=" + kcStratifiedGas);
+    assertTrue(Math.abs(kcDropletGas - kcStratifiedGas) > 1e-10, "Droplet and stratified gas-side kc should differ. "
+	+ "kcDroplet=" + kcDropletGas + " kcStrat=" + kcStratifiedGas);
   }
 
   /**
@@ -208,9 +202,8 @@ public class InterphaseDropletFlowMassTransferTest {
   }
 
   /**
-   * Tests the Abramzon-Sirignano F function with a known reference value. For B_M = 1.0, the
-   * formula F = (1+B_M)^0.7 * ln(1+B_M) / B_M gives: F(1) = 2^0.7 * ln(2) / 1 = 1.6245 * 0.6931 =
-   * 1.1254
+   * Tests the Abramzon-Sirignano F function with a known reference value. For B_M = 1.0, the formula F = (1+B_M)^0.7 *
+   * ln(1+B_M) / B_M gives: F(1) = 2^0.7 * ln(2) / 1 = 1.6245 * 0.6931 = 1.1254
    */
   @Test
   void testAbramzonSirignanoFReferenceValue() {

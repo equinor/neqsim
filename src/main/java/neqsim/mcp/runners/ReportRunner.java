@@ -12,9 +12,9 @@ import com.google.gson.JsonParser;
  * Report generator that transforms simulation results into structured engineering reports.
  *
  * <p>
- * Produces rich Markdown reports with tables, SVG-compatible data (for chart rendering by AI
- * agents), and structured JSON data arrays suitable for plotting. Reports cover process summaries,
- * PVT studies, parametric sweeps, flow assurance analyses, and field development evaluations.
+ * Produces rich Markdown reports with tables, SVG-compatible data (for chart rendering by AI agents), and structured
+ * JSON data arrays suitable for plotting. Reports cover process summaries, PVT studies, parametric sweeps, flow
+ * assurance analyses, and field development evaluations.
  * </p>
  *
  * @author Even Solbraa
@@ -22,13 +22,13 @@ import com.google.gson.JsonParser;
  */
 public final class ReportRunner {
 
-  private static final Gson GSON =
-      new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+  private static final Gson GSON = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
 
   /**
    * Private constructor — all methods are static.
    */
-  private ReportRunner() {}
+  private ReportRunner() {
+  }
 
   /**
    * Generates a structured engineering report from simulation results.
@@ -59,18 +59,14 @@ public final class ReportRunner {
 
     try {
       JsonObject input = JsonParser.parseString(json).getAsJsonObject();
-      String reportType =
-          input.has("reportType") ? input.get("reportType").getAsString() : "process_summary";
-      String title =
-          input.has("title") ? input.get("title").getAsString() : "NeqSim Simulation Report";
+      String reportType = input.has("reportType") ? input.get("reportType").getAsString() : "process_summary";
+      String title = input.has("title") ? input.get("title").getAsString() : "NeqSim Simulation Report";
       String author = input.has("author") ? input.get("author").getAsString() : "NeqSim MCP Server";
 
       JsonObject data = input.has("data") ? input.getAsJsonObject("data") : new JsonObject();
 
-      boolean includeValidation =
-          !input.has("includeValidation") || input.get("includeValidation").getAsBoolean();
-      boolean includeChartData =
-          !input.has("includeChartData") || input.get("includeChartData").getAsBoolean();
+      boolean includeValidation = !input.has("includeValidation") || input.get("includeValidation").getAsBoolean();
+      boolean includeChartData = !input.has("includeChartData") || input.get("includeChartData").getAsBoolean();
 
       // Build the report
       JsonObject report = new JsonObject();
@@ -78,7 +74,7 @@ public final class ReportRunner {
       report.addProperty("author", author);
       report.addProperty("reportType", reportType);
       report.addProperty("generatedAt",
-          new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new java.util.Date()));
+	  new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new java.util.Date()));
 
       // Generate markdown
       String markdown = generateMarkdown(reportType, title, author, data);
@@ -90,18 +86,18 @@ public final class ReportRunner {
 
       // Generate chart data arrays (for AI to render)
       if (includeChartData) {
-        JsonArray chartData = extractChartData(data, reportType);
-        report.add("chartData", chartData);
+	JsonArray chartData = extractChartData(data, reportType);
+	report.add("chartData", chartData);
       }
 
       // Include validation if requested
       if (includeValidation) {
-        String validation = EngineeringValidator.validate(GSON.toJson(data), reportType);
-        try {
-          report.add("validation", JsonParser.parseString(validation));
-        } catch (Exception e) {
-          report.addProperty("validationError", e.getMessage());
-        }
+	String validation = EngineeringValidator.validate(GSON.toJson(data), reportType);
+	try {
+	  report.add("validation", JsonParser.parseString(validation));
+	} catch (Exception e) {
+	  report.addProperty("validationError", e.getMessage());
+	}
       }
 
       // Summary statistics
@@ -123,20 +119,18 @@ public final class ReportRunner {
    * Generates a Markdown report.
    *
    * @param reportType the report type
-   * @param title the report title
-   * @param author the author
-   * @param data the simulation data
+   * @param title      the report title
+   * @param author     the author
+   * @param data       the simulation data
    * @return Markdown string
    */
-  private static String generateMarkdown(String reportType, String title, String author,
-      JsonObject data) {
+  private static String generateMarkdown(String reportType, String title, String author, JsonObject data) {
     StringBuilder md = new StringBuilder();
 
     md.append("# ").append(title).append("\n\n");
     md.append("**Author:** ").append(author).append("  \n");
-    md.append("**Date:** ")
-        .append(new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date()))
-        .append("  \n");
+    md.append("**Date:** ").append(new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date()))
+	.append("  \n");
     md.append("**Engine:** NeqSim (Java-based thermodynamic simulator)  \n");
     md.append("**Report Type:** ").append(reportType).append("\n\n");
     md.append("---\n\n");
@@ -191,24 +185,23 @@ public final class ReportRunner {
   /**
    * Appends a flat JSON object as a Markdown table.
    *
-   * @param md the StringBuilder
-   * @param obj the JSON object
-   * @param keyHeader the key column header
+   * @param md          the StringBuilder
+   * @param obj         the JSON object
+   * @param keyHeader   the key column header
    * @param valueHeader the value column header
    */
-  private static void appendJsonAsTable(StringBuilder md, JsonObject obj, String keyHeader,
-      String valueHeader) {
+  private static void appendJsonAsTable(StringBuilder md, JsonObject obj, String keyHeader, String valueHeader) {
     md.append("| ").append(keyHeader).append(" | ").append(valueHeader).append(" |\n");
     md.append("|---|---|\n");
     for (Map.Entry<String, JsonElement> entry : obj.entrySet()) {
       JsonElement val = entry.getValue();
       String displayVal;
       if (val.isJsonPrimitive()) {
-        displayVal = val.getAsString();
+	displayVal = val.getAsString();
       } else if (val.isJsonNull()) {
-        displayVal = "-";
+	displayVal = "-";
       } else {
-        displayVal = val.toString();
+	displayVal = val.toString();
       }
       md.append("| ").append(entry.getKey()).append(" | ").append(displayVal).append(" |\n");
     }
@@ -222,7 +215,7 @@ public final class ReportRunner {
   /**
    * Extracts structured tables from simulation data.
    *
-   * @param data the simulation data
+   * @param data       the simulation data
    * @param reportType the report type
    * @return JSON array of table objects
    */
@@ -251,9 +244,9 @@ public final class ReportRunner {
   /**
    * Recursively extracts flat numeric values from JSON into table rows.
    *
-   * @param obj the JSON object
+   * @param obj    the JSON object
    * @param prefix the key prefix
-   * @param rows the rows array to populate
+   * @param rows   the rows array to populate
    */
   private static void extractFlatValues(JsonObject obj, String prefix, JsonArray rows) {
     for (Map.Entry<String, JsonElement> entry : obj.entrySet()) {
@@ -261,17 +254,17 @@ public final class ReportRunner {
       JsonElement val = entry.getValue();
 
       if (val.isJsonPrimitive() && val.getAsJsonPrimitive().isNumber()) {
-        JsonArray row = new JsonArray();
-        row.add(key);
-        row.add(val.getAsNumber());
+	JsonArray row = new JsonArray();
+	row.add(key);
+	row.add(val.getAsNumber());
 
-        // Try to infer unit from key name
-        String unit = inferUnit(entry.getKey());
-        row.add(unit);
-        rows.add(row);
+	// Try to infer unit from key name
+	String unit = inferUnit(entry.getKey());
+	row.add(unit);
+	rows.add(row);
       } else if (val.isJsonObject() && rows.size() < 100) {
-        // Limit depth to avoid huge tables
-        extractFlatValues(val.getAsJsonObject(), key, rows);
+	// Limit depth to avoid huge tables
+	extractFlatValues(val.getAsJsonObject(), key, rows);
       }
     }
   }
@@ -321,7 +314,7 @@ public final class ReportRunner {
   /**
    * Extracts chart-ready data arrays from simulation results.
    *
-   * @param data the simulation data
+   * @param data       the simulation data
    * @param reportType the report type
    * @return JSON array of chart data objects
    */
@@ -337,7 +330,7 @@ public final class ReportRunner {
   /**
    * Recursively finds arrays of numbers that could be plotted.
    *
-   * @param obj the JSON object
+   * @param obj    the JSON object
    * @param prefix the key prefix
    * @param charts the charts array to populate
    */
@@ -347,20 +340,19 @@ public final class ReportRunner {
       JsonElement val = entry.getValue();
 
       if (val.isJsonArray()) {
-        JsonArray arr = val.getAsJsonArray();
-        if (arr.size() > 1 && arr.get(0).isJsonPrimitive()
-            && arr.get(0).getAsJsonPrimitive().isNumber()) {
-          // Found a numeric array — wrap as chart data
-          JsonObject chart = new JsonObject();
-          chart.addProperty("name", key);
-          chart.addProperty("type", "line");
-          chart.addProperty("xLabel", "Index");
-          chart.addProperty("yLabel", entry.getKey());
-          chart.add("data", arr);
-          charts.add(chart);
-        }
+	JsonArray arr = val.getAsJsonArray();
+	if (arr.size() > 1 && arr.get(0).isJsonPrimitive() && arr.get(0).getAsJsonPrimitive().isNumber()) {
+	  // Found a numeric array — wrap as chart data
+	  JsonObject chart = new JsonObject();
+	  chart.addProperty("name", key);
+	  chart.addProperty("type", "line");
+	  chart.addProperty("xLabel", "Index");
+	  chart.addProperty("yLabel", entry.getKey());
+	  chart.add("data", arr);
+	  charts.add(chart);
+	}
       } else if (val.isJsonObject() && charts.size() < 20) {
-        findPlottableArrays(val.getAsJsonObject(), key, charts);
+	findPlottableArrays(val.getAsJsonObject(), key, charts);
       }
     }
   }
@@ -384,11 +376,11 @@ public final class ReportRunner {
 
     for (Map.Entry<String, JsonElement> entry : data.entrySet()) {
       if (entry.getValue().isJsonPrimitive() && entry.getValue().getAsJsonPrimitive().isNumber()) {
-        numericFieldCount++;
+	numericFieldCount++;
       } else if (entry.getValue().isJsonObject()) {
-        objectFieldCount++;
+	objectFieldCount++;
       } else if (entry.getValue().isJsonArray()) {
-        arrayFieldCount++;
+	arrayFieldCount++;
       }
     }
 
@@ -403,7 +395,7 @@ public final class ReportRunner {
   /**
    * Creates an error JSON string.
    *
-   * @param code the error code
+   * @param code    the error code
    * @param message the error message
    * @return error JSON
    */

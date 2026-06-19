@@ -6,9 +6,9 @@ import neqsim.process.equipment.stream.StreamInterface;
  * Pressure filter for bio-processing solid-liquid separation.
  *
  * <p>
- * A batch or semi-continuous pressure filtration unit. Uses applied pressure to force liquid
- * through a filter medium, retaining solids. Used for fine particle separations, clarification, and
- * product recovery in pharmaceutical and food processing.
+ * A batch or semi-continuous pressure filtration unit. Uses applied pressure to force liquid through a filter medium,
+ * retaining solids. Used for fine particle separations, clarification, and product recovery in pharmaceutical and food
+ * processing.
  * </p>
  *
  * <p>
@@ -49,7 +49,7 @@ public class PressureFilter extends SolidsSeparator {
   /**
    * Constructor for PressureFilter with inlet stream.
    *
-   * @param name name of the filter
+   * @param name        name of the filter
    * @param inletStream the feed stream
    */
   public PressureFilter(String name, StreamInterface inletStream) {

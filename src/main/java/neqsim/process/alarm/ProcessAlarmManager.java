@@ -11,8 +11,7 @@ import neqsim.process.measurementdevice.MeasurementDeviceInterface;
  * Coordinates alarm evaluation across all measurement devices in a process system.
  *
  * <p>
- * Supports automatic alarm-triggered actions through registered {@link AlarmActionHandler}
- * instances.
+ * Supports automatic alarm-triggered actions through registered {@link AlarmActionHandler} instances.
  */
 public class ProcessAlarmManager implements Serializable {
   private static final long serialVersionUID = 1000L;
@@ -49,14 +48,14 @@ public class ProcessAlarmManager implements Serializable {
   /**
    * Evaluates alarms for a single measurement value.
    *
-   * @param device measurement device producing the value
+   * @param device        measurement device producing the value
    * @param measuredValue current measured value
-   * @param dt time step
-   * @param time current simulation time
+   * @param dt            time step
+   * @param time          current simulation time
    * @return events generated during evaluation
    */
-  public List<AlarmEvent> evaluateMeasurement(MeasurementDeviceInterface device,
-      double measuredValue, double dt, double time) {
+  public List<AlarmEvent> evaluateMeasurement(MeasurementDeviceInterface device, double measuredValue, double dt,
+      double time) {
     if (device == null) {
       return Collections.emptyList();
     }
@@ -108,12 +107,12 @@ public class ProcessAlarmManager implements Serializable {
   private void executeActionHandlers(List<AlarmEvent> events) {
     for (AlarmEvent event : events) {
       for (AlarmActionHandler handler : actionHandlers) {
-        try {
-          handler.handle(event);
-        } catch (Exception e) {
-          // Log but don't propagate exceptions from handlers
-          System.err.println("Error executing alarm action handler: " + e.getMessage());
-        }
+	try {
+	  handler.handle(event);
+	} catch (Exception e) {
+	  // Log but don't propagate exceptions from handlers
+	  System.err.println("Error executing alarm action handler: " + e.getMessage());
+	}
       }
     }
   }
@@ -129,8 +128,8 @@ public class ProcessAlarmManager implements Serializable {
     for (MeasurementDeviceInterface device : devices) {
       AlarmEvent event = device.acknowledgeAlarm(time);
       if (event != null) {
-        history.add(event);
-        events.add(event);
+	history.add(event);
+	events.add(event);
       }
     }
     return events;
@@ -155,10 +154,10 @@ public class ProcessAlarmManager implements Serializable {
     for (MeasurementDeviceInterface device : devices) {
       AlarmState state = device.getAlarmState();
       if (state != null && state.isActive()) {
-        AlarmStatusSnapshot snapshot = state.snapshot(device.getName());
-        if (snapshot != null) {
-          active.add(snapshot);
-        }
+	AlarmStatusSnapshot snapshot = state.snapshot(device.getName());
+	if (snapshot != null) {
+	  active.add(snapshot);
+	}
       }
     }
     return active;
@@ -174,11 +173,10 @@ public class ProcessAlarmManager implements Serializable {
   /**
    * Copies the content of another manager instance.
    *
-   * @param source source manager to copy from
+   * @param source             source manager to copy from
    * @param measurementDevices devices that should be supervised by this manager
    */
-  public void applyFrom(ProcessAlarmManager source,
-      List<MeasurementDeviceInterface> measurementDevices) {
+  public void applyFrom(ProcessAlarmManager source, List<MeasurementDeviceInterface> measurementDevices) {
     history.clear();
     if (source != null) {
       history.addAll(source.history);

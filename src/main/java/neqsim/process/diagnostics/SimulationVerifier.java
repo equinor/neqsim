@@ -21,8 +21,8 @@ import org.apache.logging.log4j.Logger;
  * Verifies root-cause hypotheses by perturbing a cloned process model.
  *
  * <p>
- * The verifier is conservative: unsupported hypotheses receive a neutral score with an explicit
- * limitation rather than a false positive verification.
+ * The verifier is conservative: unsupported hypotheses receive a neutral score with an explicit limitation rather than
+ * a false positive verification.
  * </p>
  *
  * @author NeqSim Development Team
@@ -45,7 +45,7 @@ public class SimulationVerifier implements Serializable {
   /**
    * Creates a simulation verifier.
    *
-   * @param baseProcess the base process system, cloned before perturbation
+   * @param baseProcess   the base process system, cloned before perturbation
    * @param equipmentName name of the equipment being diagnosed
    */
   public SimulationVerifier(ProcessSystem baseProcess, String equipmentName) {
@@ -78,10 +78,9 @@ public class SimulationVerifier implements Serializable {
 
       PerturbationResult perturbation = applyPerturbation(modifiedProcess, hypothesis);
       if (!perturbation.isApplied()) {
-        hypothesis.setVerificationScore(0.5);
-        hypothesis.setSimulationSummary("Simulation verification neutral: "
-            + perturbation.getDescription());
-        return;
+	hypothesis.setVerificationScore(0.5);
+	hypothesis.setSimulationSummary("Simulation verification neutral: " + perturbation.getDescription());
+	return;
       }
 
       modifiedProcess.run();
@@ -93,8 +92,7 @@ public class SimulationVerifier implements Serializable {
       hypothesis.setSimulationSummary(buildSummary(perturbation, baselineKpis, modifiedKpis, score));
       logger.info("Hypothesis '{}' verification score: {}", hypothesis.getName(), score);
     } catch (Exception e) {
-      logger.warn("Simulation verification failed for '{}': {}", hypothesis.getName(),
-          e.getMessage());
+      logger.warn("Simulation verification failed for '{}': {}", hypothesis.getName(), e.getMessage());
       hypothesis.setVerificationScore(0.3);
       hypothesis.setSimulationSummary("Simulation failed: " + e.getMessage());
     }
@@ -103,19 +101,17 @@ public class SimulationVerifier implements Serializable {
   /**
    * Applies a perturbation to the cloned process matching the hypothesis.
    *
-   * @param process cloned process to modify
+   * @param process    cloned process to modify
    * @param hypothesis hypothesis dictating which perturbation to apply
    * @return perturbation result with status and explanation
    */
   private PerturbationResult applyPerturbation(ProcessSystem process, Hypothesis hypothesis) {
     ProcessEquipmentInterface equipment = findEquipment(process);
     if (equipment == null) {
-      return PerturbationResult.notApplied("equipment '" + equipmentName
-          + "' was not found in the cloned process");
+      return PerturbationResult.notApplied("equipment '" + equipmentName + "' was not found in the cloned process");
     }
 
-    String failureMode = hypothesis.getFailureMode() != null
-        ? hypothesis.getFailureMode().toLowerCase() : "";
+    String failureMode = hypothesis.getFailureMode() != null ? hypothesis.getFailureMode().toLowerCase() : "";
     Hypothesis.Category category = hypothesis.getCategory();
 
     if (equipment instanceof Compressor) {
@@ -133,8 +129,8 @@ public class SimulationVerifier implements Serializable {
     } else if (equipment instanceof ThrottlingValve) {
       return perturbValve((ThrottlingValve) equipment, failureMode, category);
     }
-    return PerturbationResult.notApplied("no supported perturbation strategy for equipment type "
-        + equipment.getClass().getSimpleName());
+    return PerturbationResult
+	.notApplied("no supported perturbation strategy for equipment type " + equipment.getClass().getSimpleName());
   }
 
   /**
@@ -146,7 +142,7 @@ public class SimulationVerifier implements Serializable {
   private ProcessEquipmentInterface findEquipment(ProcessSystem process) {
     for (ProcessEquipmentInterface equipment : process.getUnitOperations()) {
       if (equipment.getName().equals(equipmentName)) {
-        return equipment;
+	return equipment;
       }
     }
     return null;
@@ -155,9 +151,9 @@ public class SimulationVerifier implements Serializable {
   /**
    * Applies a compressor perturbation with graduated severity based on failure mode.
    *
-   * @param compressor compressor to perturb
+   * @param compressor  compressor to perturb
    * @param failureMode lower-case failure mode text
-   * @param category hypothesis category
+   * @param category    hypothesis category
    * @return perturbation result
    */
   private PerturbationResult perturbCompressor(Compressor compressor, String failureMode,
@@ -168,8 +164,8 @@ public class SimulationVerifier implements Serializable {
       factor = 0.70;
     } else if (failureMode.contains("seal") || failureMode.contains("leakage")) {
       factor = 0.80;
-    } else if (failureMode.contains("foul") || failureMode.contains("deposit")
-        || failureMode.contains("erosion") || failureMode.contains("erode")) {
+    } else if (failureMode.contains("foul") || failureMode.contains("deposit") || failureMode.contains("erosion")
+	|| failureMode.contains("erode")) {
       factor = 0.85;
     } else if (category == Hypothesis.Category.MECHANICAL) {
       factor = 0.85;
@@ -181,30 +177,26 @@ public class SimulationVerifier implements Serializable {
       return PerturbationResult.notApplied("compressor efficiency perturbation produced no change");
     }
     compressor.setPolytropicEfficiency(newEfficiency);
-    return PerturbationResult.applied("polytropicEfficiency",
-        String.format(Locale.US, "reduced compressor polytropic efficiency from %.3f to %.3f", oldEfficiency,
-            newEfficiency));
+    return PerturbationResult.applied("polytropicEfficiency", String.format(Locale.US,
+	"reduced compressor polytropic efficiency from %.3f to %.3f", oldEfficiency, newEfficiency));
   }
 
   /**
    * Applies a pump perturbation.
    *
-   * @param pump pump to perturb
+   * @param pump        pump to perturb
    * @param failureMode lower-case failure mode text
-   * @param category hypothesis category
+   * @param category    hypothesis category
    * @return perturbation result
    */
-  private PerturbationResult perturbPump(Pump pump, String failureMode,
-      Hypothesis.Category category) {
-    if (failureMode.contains("wear") || failureMode.contains("cavitation")
-        || failureMode.contains("impeller") || failureMode.contains("recirculation")
-        || category == Hypothesis.Category.MECHANICAL) {
+  private PerturbationResult perturbPump(Pump pump, String failureMode, Hypothesis.Category category) {
+    if (failureMode.contains("wear") || failureMode.contains("cavitation") || failureMode.contains("impeller")
+	|| failureMode.contains("recirculation") || category == Hypothesis.Category.MECHANICAL) {
       double oldEfficiency = pump.getIsentropicEfficiency();
       double newEfficiency = Math.max(0.05, Math.min(0.95, oldEfficiency * 0.75));
       pump.setIsentropicEfficiency(newEfficiency);
-      return PerturbationResult.applied("isentropicEfficiency",
-          String.format(Locale.US, "reduced pump isentropic efficiency from %.3f to %.3f", oldEfficiency,
-              newEfficiency));
+      return PerturbationResult.applied("isentropicEfficiency", String.format(Locale.US,
+	  "reduced pump isentropic efficiency from %.3f to %.3f", oldEfficiency, newEfficiency));
     }
     return PerturbationResult.notApplied("pump hypothesis has no supported efficiency/head change");
   }
@@ -212,27 +204,23 @@ public class SimulationVerifier implements Serializable {
   /**
    * Applies a cooler perturbation.
    *
-   * @param cooler cooler to perturb
+   * @param cooler      cooler to perturb
    * @param failureMode lower-case failure mode text
-   * @param category hypothesis category
+   * @param category    hypothesis category
    * @return perturbation result
    */
-  private PerturbationResult perturbCooler(Cooler cooler, String failureMode,
-      Hypothesis.Category category) {
+  private PerturbationResult perturbCooler(Cooler cooler, String failureMode, Hypothesis.Category category) {
     double oldTemperature = cooler.getOutletTemperature();
-    if (failureMode.contains("utility") || failureMode.contains("loss")
-        || category == Hypothesis.Category.EXTERNAL) {
+    if (failureMode.contains("utility") || failureMode.contains("loss") || category == Hypothesis.Category.EXTERNAL) {
       cooler.setOutTemperature(cooler.getInletTemperature());
       return PerturbationResult.applied("outletTemperature",
-          String.format(Locale.US, "set cooler outlet temperature from %.2f K to inlet temperature %.2f K",
-              oldTemperature, cooler.getInletTemperature()));
+	  String.format(Locale.US, "set cooler outlet temperature from %.2f K to inlet temperature %.2f K",
+	      oldTemperature, cooler.getInletTemperature()));
     }
-    if (failureMode.contains("foul") || failureMode.contains("fouling")
-        || failureMode.contains("plugging")) {
+    if (failureMode.contains("foul") || failureMode.contains("fouling") || failureMode.contains("plugging")) {
       cooler.setOutTemperature(oldTemperature + 10.0);
-      return PerturbationResult.applied("outletTemperature",
-          String.format(Locale.US, "increased cooler outlet temperature from %.2f K to %.2f K", oldTemperature,
-              oldTemperature + 10.0));
+      return PerturbationResult.applied("outletTemperature", String.format(Locale.US,
+	  "increased cooler outlet temperature from %.2f K to %.2f K", oldTemperature, oldTemperature + 10.0));
     }
     return PerturbationResult.notApplied("cooler hypothesis has no supported thermal perturbation");
   }
@@ -240,21 +228,18 @@ public class SimulationVerifier implements Serializable {
   /**
    * Applies a heater perturbation.
    *
-   * @param heater heater to perturb
+   * @param heater      heater to perturb
    * @param failureMode lower-case failure mode text
-   * @param category hypothesis category
+   * @param category    hypothesis category
    * @return perturbation result
    */
-  private PerturbationResult perturbHeater(Heater heater, String failureMode,
-      Hypothesis.Category category) {
-    if (failureMode.contains("foul") || failureMode.contains("fouling")
-        || failureMode.contains("plugging")) {
+  private PerturbationResult perturbHeater(Heater heater, String failureMode, Hypothesis.Category category) {
+    if (failureMode.contains("foul") || failureMode.contains("fouling") || failureMode.contains("plugging")) {
       double oldTemperature = heater.getOutletTemperature();
       double newTemperature = oldTemperature - 10.0;
       heater.setOutTemperature(newTemperature);
-      return PerturbationResult.applied("outletTemperature",
-          String.format(Locale.US, "reduced heater outlet temperature from %.2f K to %.2f K", oldTemperature,
-              newTemperature));
+      return PerturbationResult.applied("outletTemperature", String.format(Locale.US,
+	  "reduced heater outlet temperature from %.2f K to %.2f K", oldTemperature, newTemperature));
     }
     return PerturbationResult.notApplied("heater hypothesis has no supported thermal perturbation");
   }
@@ -263,63 +248,58 @@ public class SimulationVerifier implements Serializable {
    * Applies a heat exchanger perturbation.
    *
    * <p>
-   * When the equipment is a generic HeatExchanger (not Cooler or Heater), applies fouling or
-   * tube-leak perturbations by adjusting UA values or flow parameters.
+   * When the equipment is a generic HeatExchanger (not Cooler or Heater), applies fouling or tube-leak perturbations by
+   * adjusting UA values or flow parameters.
    * </p>
    *
    * @param heatExchanger heat exchanger to perturb
-   * @param failureMode lower-case failure mode text
-   * @param category hypothesis category
+   * @param failureMode   lower-case failure mode text
+   * @param category      hypothesis category
    * @return perturbation result
    */
   private PerturbationResult perturbHeatExchanger(HeatExchanger heatExchanger, String failureMode,
       Hypothesis.Category category) {
-    if (failureMode.contains("foul") || failureMode.contains("plugging")
-        || failureMode.contains("baffle")) {
+    if (failureMode.contains("foul") || failureMode.contains("plugging") || failureMode.contains("baffle")) {
       double oldUA = heatExchanger.getUAvalue();
       if (oldUA > 0.0) {
-        double newUA = oldUA * 0.60;
-        heatExchanger.setUAvalue(newUA);
-        return PerturbationResult.applied("UAvalue",
-            String.format(Locale.US, "reduced HX UA from %.2f to %.2f (fouling simulation)", oldUA, newUA));
+	double newUA = oldUA * 0.60;
+	heatExchanger.setUAvalue(newUA);
+	return PerturbationResult.applied("UAvalue",
+	    String.format(Locale.US, "reduced HX UA from %.2f to %.2f (fouling simulation)", oldUA, newUA));
       }
     }
     if (failureMode.contains("tube leak") || failureMode.contains("tube rupture")
-        || category == Hypothesis.Category.MECHANICAL) {
+	|| category == Hypothesis.Category.MECHANICAL) {
       double oldUA = heatExchanger.getUAvalue();
       if (oldUA > 0.0) {
-        double newUA = oldUA * 0.50;
-        heatExchanger.setUAvalue(newUA);
-        return PerturbationResult.applied("UAvalue",
-            String.format(Locale.US, "reduced HX UA from %.2f to %.2f (tube failure simulation)",
-                oldUA, newUA));
+	double newUA = oldUA * 0.50;
+	heatExchanger.setUAvalue(newUA);
+	return PerturbationResult.applied("UAvalue",
+	    String.format(Locale.US, "reduced HX UA from %.2f to %.2f (tube failure simulation)", oldUA, newUA));
       }
     }
-    return PerturbationResult.notApplied(
-        "heat exchanger hypothesis has no supported UA/thermal perturbation");
+    return PerturbationResult.notApplied("heat exchanger hypothesis has no supported UA/thermal perturbation");
   }
 
   /**
    * Applies a separator perturbation.
    *
-   * @param separator separator to perturb
+   * @param separator   separator to perturb
    * @param failureMode lower-case failure mode text
-   * @param category hypothesis category
+   * @param category    hypothesis category
    * @return perturbation result
    */
-  private PerturbationResult perturbSeparator(Separator separator, String failureMode,
-      Hypothesis.Category category) {
-    if (failureMode.contains("foul") || failureMode.contains("damage")
-        || failureMode.contains("internal") || category == Hypothesis.Category.PROCESS) {
+  private PerturbationResult perturbSeparator(Separator separator, String failureMode, Hypothesis.Category category) {
+    if (failureMode.contains("foul") || failureMode.contains("damage") || failureMode.contains("internal")
+	|| category == Hypothesis.Category.PROCESS) {
       separator.setEfficiency(0.70);
       return PerturbationResult.applied("efficiency",
-          "reduced separator efficiency to 0.70 to represent carryover/internal degradation");
+	  "reduced separator efficiency to 0.70 to represent carryover/internal degradation");
     }
-    if (failureMode.contains("control") || failureMode.contains("level")
-        || category == Hypothesis.Category.CONTROL) {
+    if (failureMode.contains("control") || failureMode.contains("level") || category == Hypothesis.Category.CONTROL) {
       separator.setLiquidLevel(0.9);
       return PerturbationResult.applied("liquidLevel",
-          "set separator liquid level high to represent level-control excursion");
+	  "set separator liquid level high to represent level-control excursion");
     }
     return PerturbationResult.notApplied("separator hypothesis has no supported separation change");
   }
@@ -327,34 +307,32 @@ public class SimulationVerifier implements Serializable {
   /**
    * Applies a valve perturbation.
    *
-   * @param valve valve to perturb
+   * @param valve       valve to perturb
    * @param failureMode lower-case failure mode text
-   * @param category hypothesis category
+   * @param category    hypothesis category
    * @return perturbation result
    */
-  private PerturbationResult perturbValve(ThrottlingValve valve, String failureMode,
-      Hypothesis.Category category) {
+  private PerturbationResult perturbValve(ThrottlingValve valve, String failureMode, Hypothesis.Category category) {
     if (failureMode.contains("erosion") || failureMode.contains("trim")) {
       double oldCv = valve.getCv();
       if (oldCv > 0.0) {
-        valve.setCv(oldCv * 1.30);
-        return PerturbationResult.applied("Cv",
-            String.format(Locale.US, "increased valve Cv from %.3f to %.3f", oldCv, oldCv * 1.30));
+	valve.setCv(oldCv * 1.30);
+	return PerturbationResult.applied("Cv",
+	    String.format(Locale.US, "increased valve Cv from %.3f to %.3f", oldCv, oldCv * 1.30));
       }
       double oldOpening = valve.getPercentValveOpening();
       double newOpening = Math.min(100.0, oldOpening + 20.0);
       valve.setPercentValveOpening(newOpening);
       return PerturbationResult.applied("percentValveOpening",
-          String.format(Locale.US, "increased valve opening from %.1f%% to %.1f%%", oldOpening,
-              newOpening));
+	  String.format(Locale.US, "increased valve opening from %.1f%% to %.1f%%", oldOpening, newOpening));
     }
-    if (failureMode.contains("actuator") || failureMode.contains("positioner")
-        || failureMode.contains("sticking") || failureMode.contains("instrument")) {
+    if (failureMode.contains("actuator") || failureMode.contains("positioner") || failureMode.contains("sticking")
+	|| failureMode.contains("instrument")) {
       double oldOpening = valve.getPercentValveOpening();
       double newOpening = Math.max(0.0, oldOpening * 0.5);
       valve.setPercentValveOpening(newOpening);
       return PerturbationResult.applied("percentValveOpening",
-          String.format(Locale.US, "reduced valve opening from %.1f%% to %.1f%%", oldOpening, newOpening));
+	  String.format(Locale.US, "reduced valve opening from %.1f%% to %.1f%%", oldOpening, newOpening));
     }
     return PerturbationResult.notApplied("valve hypothesis has no supported Cv/opening change");
   }
@@ -367,22 +345,22 @@ public class SimulationVerifier implements Serializable {
    */
   private Map<String, Double> readKpis(ProcessAutomation auto) {
     Map<String, Double> kpis = new HashMap<>();
-    String[] properties = {"temperature", "pressure", "flowRate", "power",
-        "polytropicEfficiency", "isentropicEfficiency", "efficiency"};
-    String[] units = {"C", "bara", "kg/hr", "kW", "", "", ""};
+    String[] properties = { "temperature", "pressure", "flowRate", "power", "polytropicEfficiency",
+	"isentropicEfficiency", "efficiency" };
+    String[] units = { "C", "bara", "kg/hr", "kW", "", "", "" };
     for (int i = 0; i < properties.length; i++) {
       readKpi(auto, equipmentName + "." + properties[i], properties[i], units[i], kpis);
     }
 
-    String[] streamProps = {"temperature", "pressure", "flowRate"};
-    String[] streamUnits = {"C", "bara", "kg/hr"};
+    String[] streamProps = { "temperature", "pressure", "flowRate" };
+    String[] streamUnits = { "C", "bara", "kg/hr" };
     for (int i = 0; i < streamProps.length; i++) {
-      readKpi(auto, equipmentName + ".outletStream." + streamProps[i],
-          "outlet_" + streamProps[i], streamUnits[i], kpis);
-      readKpi(auto, equipmentName + ".gasOutStream." + streamProps[i],
-          "gasOut_" + streamProps[i], streamUnits[i], kpis);
-      readKpi(auto, equipmentName + ".liquidOutStream." + streamProps[i],
-          "liquidOut_" + streamProps[i], streamUnits[i], kpis);
+      readKpi(auto, equipmentName + ".outletStream." + streamProps[i], "outlet_" + streamProps[i], streamUnits[i],
+	  kpis);
+      readKpi(auto, equipmentName + ".gasOutStream." + streamProps[i], "gasOut_" + streamProps[i], streamUnits[i],
+	  kpis);
+      readKpi(auto, equipmentName + ".liquidOutStream." + streamProps[i], "liquidOut_" + streamProps[i], streamUnits[i],
+	  kpis);
     }
     return kpis;
   }
@@ -390,18 +368,17 @@ public class SimulationVerifier implements Serializable {
   /**
    * Reads one KPI and stores it if available.
    *
-   * @param auto process automation facade
+   * @param auto    process automation facade
    * @param address automation address
-   * @param key output key
-   * @param unit requested unit, or empty for native unit
-   * @param kpis target KPI map
+   * @param key     output key
+   * @param unit    requested unit, or empty for native unit
+   * @param kpis    target KPI map
    */
-  private void readKpi(ProcessAutomation auto, String address, String key, String unit,
-      Map<String, Double> kpis) {
+  private void readKpi(ProcessAutomation auto, String address, String key, String unit, Map<String, Double> kpis) {
     try {
       double value = auto.getVariableValue(address, unit);
       if (!Double.isNaN(value) && Math.abs(value) > 1e-12) {
-        kpis.put(key, value);
+	kpis.put(key, value);
       }
     } catch (Exception e) {
       logger.debug("Skipping unavailable KPI {}: {}", address, e.getMessage());
@@ -426,20 +403,20 @@ public class SimulationVerifier implements Serializable {
       String kpi = entry.getKey();
       Double baseVal = baseline.get(kpi);
       if (baseVal == null || Math.abs(baseVal) < 1e-10) {
-        continue;
+	continue;
       }
       double[] historianValues = findHistorianValuesForKpi(kpi);
       if (historianValues == null || historianValues.length < 2) {
-        continue;
+	continue;
       }
 
       double simulationChange = entry.getValue() - baseVal;
       double observedChange = historianValues[historianValues.length - 1] - historianValues[0];
       if (Math.abs(simulationChange) < 1e-12 || Math.abs(observedChange) < 1e-12) {
-        continue;
+	continue;
       }
       if (Math.signum(simulationChange) == Math.signum(observedChange)) {
-        matchCount++;
+	matchCount++;
       }
       totalComparisons++;
     }
@@ -461,8 +438,8 @@ public class SimulationVerifier implements Serializable {
     for (Map.Entry<String, double[]> entry : historianData.entrySet()) {
       String normalizedTag = normalize(entry.getKey());
       if (normalizedTag.contains(normalizedKpi) || normalizedKpi.contains(normalizedTag)
-          || areKnownAliases(normalizedKpi, normalizedTag)) {
-        return entry.getValue();
+	  || areKnownAliases(normalizedKpi, normalizedTag)) {
+	return entry.getValue();
       }
     }
     return null;
@@ -491,29 +468,28 @@ public class SimulationVerifier implements Serializable {
     if (normalizedKpi.contains("isentropicefficiency") && normalizedTag.contains("eff")) {
       return true;
     }
-    return normalizedKpi.contains("power") && (normalizedTag.contains("power")
-        || normalizedTag.contains("current"));
+    return normalizedKpi.contains("power") && (normalizedTag.contains("power") || normalizedTag.contains("current"));
   }
 
   /**
    * Builds the simulation verification summary.
    *
    * @param perturbation perturbation that was applied
-   * @param baseline baseline KPI values
-   * @param modified modified KPI values
-   * @param score verification score
+   * @param baseline     baseline KPI values
+   * @param modified     modified KPI values
+   * @param score        verification score
    * @return summary text
    */
   private String buildSummary(PerturbationResult perturbation, Map<String, Double> baseline,
       Map<String, Double> modified, double score) {
     StringBuilder summary = new StringBuilder();
     summary.append("Applied ").append(perturbation.getChangedVariable()).append(": ")
-        .append(perturbation.getDescription()).append(". KPI changes: ");
+	.append(perturbation.getDescription()).append(". KPI changes: ");
     for (Map.Entry<String, Double> entry : modified.entrySet()) {
       Double baseValue = baseline.get(entry.getKey());
       if (baseValue != null && Math.abs(baseValue) > 1e-10) {
-        double changePct = (entry.getValue() - baseValue) / Math.abs(baseValue) * 100.0;
-        summary.append(String.format(Locale.US, "%s %.1f%%; ", entry.getKey(), changePct));
+	double changePct = (entry.getValue() - baseValue) / Math.abs(baseValue) * 100.0;
+	summary.append(String.format(Locale.US, "%s %.1f%%; ", entry.getKey(), changePct));
       }
     }
     summary.append(String.format(Locale.US, "direction match score %.2f", score));
@@ -541,9 +517,9 @@ public class SimulationVerifier implements Serializable {
     /**
      * Creates a perturbation result.
      *
-     * @param applied true if the process was changed
+     * @param applied         true if the process was changed
      * @param changedVariable changed variable name
-     * @param description human-readable description
+     * @param description     human-readable description
      */
     private PerturbationResult(boolean applied, String changedVariable, String description) {
       this.applied = applied;
@@ -555,7 +531,7 @@ public class SimulationVerifier implements Serializable {
      * Creates an applied result.
      *
      * @param changedVariable changed variable name
-     * @param description human-readable description
+     * @param description     human-readable description
      * @return applied perturbation result
      */
     private static PerturbationResult applied(String changedVariable, String description) {

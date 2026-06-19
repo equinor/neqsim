@@ -35,8 +35,7 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
    * </p>
    */
   public PhaseGEUnifacUMRPRU() {
-    componentArray =
-        new ComponentGEUnifacUMRPRU[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
+    componentArray = new ComponentGEUnifacUMRPRU[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
   }
 
   /**
@@ -44,24 +43,24 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
    * Constructor for PhaseGEUnifacUMRPRU.
    * </p>
    *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param alpha an array of type double
-   * @param Dij an array of type double
-   * @param mixRule an array of {@link java.lang.String} objects
+   * @param phase    a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param alpha    an array of type double
+   * @param Dij      an array of type double
+   * @param mixRule  an array of {@link java.lang.String} objects
    * @param intparam an array of type double
    */
-  public PhaseGEUnifacUMRPRU(PhaseInterface phase, double[][] alpha, double[][] Dij,
-      String[][] mixRule, double[][] intparam) {
+  public PhaseGEUnifacUMRPRU(PhaseInterface phase, double[][] alpha, double[][] Dij, String[][] mixRule,
+      double[][] intparam) {
     super(phase, alpha, Dij, mixRule, intparam);
     componentArray = new ComponentGEUnifac[alpha[0].length];
     for (int i = 0; i < alpha[0].length; i++) {
       componentArray[i] = new ComponentGEUnifacUMRPRU(phase.getComponent(i).getName(),
-          phase.getComponent(i).getNumberOfmoles(), phase.getComponent(i).getNumberOfMolesInPhase(),
-          phase.getComponent(i).getComponentNumber());
+	  phase.getComponent(i).getNumberOfmoles(), phase.getComponent(i).getNumberOfMolesInPhase(),
+	  phase.getComponent(i).getComponentNumber());
       // For pseudo-components (_PC), copy correct molar mass and reinitialize UNIFAC groups
       if (phase.getComponent(i).getName().contains("_PC")) {
-        componentArray[i].setMolarMass(phase.getComponent(i).getMolarMass());
-        ((ComponentGEUnifacUMRPRU) componentArray[i]).initPCUNIFACGroups();
+	componentArray[i].setMolarMass(phase.getComponent(i).getMolarMass());
+	((ComponentGEUnifacUMRPRU) componentArray[i]).initPCUNIFACGroups();
       }
       componentArray[i].setAttractiveTerm(phase.getComponent(i).getAttractiveTermNumber());
     }
@@ -71,14 +70,14 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
   /**
    * Calculate common temp.
    *
-   * @param phase a PhaseInterface
+   * @param phase              a PhaseInterface
    * @param numberOfComponents a int
-   * @param temperature a double
-   * @param pressure a double
-   * @param pt the PhaseType of the phase
+   * @param temperature        a double
+   * @param pressure           a double
+   * @param pt                 the PhaseType of the phase
    */
-  public void calcCommontemp(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure, PhaseType pt) {
+  public void calcCommontemp(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
+      PhaseType pt) {
     FCommontemp = 0;
     VCommontemp = 0;
     ComponentGEUnifac[] compArray = (ComponentGEUnifac[]) phase.getcomponentArray();
@@ -131,8 +130,8 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
 
   /** {@inheritDoc} */
   @Override
-  public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
-      double temperature, double pressure, PhaseType pt) {
+  public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
+      PhaseType pt) {
     calcCommontemp(phase, numberOfComponents, temperature, pressure, pt);
     // ((ComponentGEUnifacUMRPRU) phase.getComponent(0)).commonInit(phase, numberOfComponents,
     // temperature, pressure, pt);
@@ -143,8 +142,8 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
     }
     double GE = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
-      GE += phase.getComponent(i).getx() * Math.log(((ComponentGEUniquac) componentArray[i])
-          .getGamma(phase, numberOfComponents, temperature, pressure, pt));
+      GE += phase.getComponent(i).getx() * Math
+	  .log(((ComponentGEUniquac) componentArray[i]).getGamma(phase, numberOfComponents, temperature, pressure, pt));
     }
     return R * phase.getTemperature() * phase.getNumberOfMolesInPhase() * GE;
   }
@@ -191,7 +190,7 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
     // int test = ((ComponentGEUnifac) componentArray[0]).getUnifacGroups().length;
     for (int i = 0; i < gropuNames.length; i++) {
       if (name.equals(gropuNames[i])) {
-        return Qmix[i];
+	return Qmix[i];
       }
     }
     return 0.0;
@@ -209,7 +208,7 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
     // int test = ((ComponentGEUnifac) componentArray[0]).getUnifacGroups().length;
     for (int i = 0; i < gropuNames.length; i++) {
       if (name.equals(gropuNames[i])) {
-        return QmixdN[i];
+	return QmixdN[i];
       }
     }
     return QmixdN[0];
@@ -217,22 +216,21 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
 
   /**
    * <p>
-   * Returns whether this phase should use the Mathias-Copeman UMR group-interaction parameter
-   * tables (suffix {@code _umrmc}) instead of the original UMR-PRU tables (suffix {@code _umr}).
+   * Returns whether this phase should use the Mathias-Copeman UMR group-interaction parameter tables (suffix
+   * {@code _umrmc}) instead of the original UMR-PRU tables (suffix {@code _umr}).
    * </p>
    *
    * <p>
-   * The temperature-dependent group-interaction parameters <i>A<sub>nm</sub>(T) = a<sub>nm</sub> +
-   * b<sub>nm</sub>T + c<sub>nm</sub>T<sup>2</sup></i> stored in the {@code _umrmc} tables are
-   * shared by the Mathias-Copeman UMR-PRU variants. Both {@code SystemUMRPRUMCEos} (attractive term
-   * number 13, 3-parameter Mathias-Copeman alpha) and {@code SystemUMRPRUMCEosNew} (attractive term
-   * number 19, 5-parameter Mathias-Copeman alpha) map to the {@code _umrmc} tables here. Any future
-   * variant that should consume the {@code _umrmc} tables must be added to this single decision
-   * point.
+   * The temperature-dependent group-interaction parameters <i>A<sub>nm</sub>(T) = a<sub>nm</sub> + b<sub>nm</sub>T +
+   * c<sub>nm</sub>T<sup>2</sup></i> stored in the {@code _umrmc} tables are shared by the Mathias-Copeman UMR-PRU
+   * variants. Both {@code SystemUMRPRUMCEos} (attractive term number 13, 3-parameter Mathias-Copeman alpha) and
+   * {@code SystemUMRPRUMCEosNew} (attractive term number 19, 5-parameter Mathias-Copeman alpha) map to the
+   * {@code _umrmc} tables here. Any future variant that should consume the {@code _umrmc} tables must be added to this
+   * single decision point.
    * </p>
    *
-   * @return {@code true} when the {@code _umrmc} tables should be queried, {@code false} for the
-   *         original {@code _umr} tables
+   * @return {@code true} when the {@code _umrmc} tables should be queried, {@code false} for the original {@code _umr}
+   *         tables
    */
   protected boolean useMcInteractionParameters() {
     int term = getPhase().getComponent(0).getAttractiveTermNumber();
@@ -245,36 +243,34 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
     java.sql.ResultSet dataSet = null;
 
     aij = new double[((ComponentGEUnifac) getComponent(0))
-        .getNumberOfUNIFACgroups()][((ComponentGEUnifac) getComponent(0))
-            .getNumberOfUNIFACgroups()];
+	.getNumberOfUNIFACgroups()][((ComponentGEUnifac) getComponent(0)).getNumberOfUNIFACgroups()];
 
     for (int i = 0; i < ((ComponentGEUnifac) getComponent(0)).getNumberOfUNIFACgroups(); i++) {
-      try (neqsim.util.database.NeqSimDataBase database =
-          new neqsim.util.database.NeqSimDataBase()) {
-        if (useMcInteractionParameters()) {
-          dataSet = database.getResultSet(("SELECT * FROM unifacinterparama_umrmc WHERE MainGroup="
-              + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
-        } else {
-          dataSet = database.getResultSet(("SELECT * FROM unifacinterparama_umr WHERE MainGroup="
-              + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
-        }
-        dataSet.next();
-        // dataSet.getClob("MainGroup");
-        for (int j = 0; j < ((ComponentGEUnifac) getComponent(0)).getNumberOfUNIFACgroups(); j++) {
-          aij[i][j] = Double.parseDouble(dataSet.getString(
-              "n" + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(j).getMainGroup() + ""));
-          // System.out.println("aij " + aij[i][j]);
-        }
+      try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
+	if (useMcInteractionParameters()) {
+	  dataSet = database.getResultSet(("SELECT * FROM unifacinterparama_umrmc WHERE MainGroup="
+	      + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
+	} else {
+	  dataSet = database.getResultSet(("SELECT * FROM unifacinterparama_umr WHERE MainGroup="
+	      + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
+	}
+	dataSet.next();
+	// dataSet.getClob("MainGroup");
+	for (int j = 0; j < ((ComponentGEUnifac) getComponent(0)).getNumberOfUNIFACgroups(); j++) {
+	  aij[i][j] = Double.parseDouble(
+	      dataSet.getString("n" + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(j).getMainGroup() + ""));
+	  // System.out.println("aij " + aij[i][j]);
+	}
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+	logger.error(ex.getMessage(), ex);
       } finally {
-        try {
-          if (dataSet != null) {
-            dataSet.close();
-          }
-        } catch (Exception ex) {
-          logger.error("err closing dataSet...", ex);
-        }
+	try {
+	  if (dataSet != null) {
+	    dataSet.close();
+	  }
+	} catch (Exception ex) {
+	  logger.error("err closing dataSet...", ex);
+	}
       }
     }
     // System.out.println("finished finding interaction coefficient...C_UMR");
@@ -289,28 +285,26 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
     java.sql.ResultSet dataSet = null;
 
     bij = new double[((ComponentGEUnifac) getComponent(0))
-        .getNumberOfUNIFACgroups()][((ComponentGEUnifac) getComponent(0))
-            .getNumberOfUNIFACgroups()];
+	.getNumberOfUNIFACgroups()][((ComponentGEUnifac) getComponent(0)).getNumberOfUNIFACgroups()];
 
     for (int i = 0; i < ((ComponentGEUnifac) getComponent(0)).getNumberOfUNIFACgroups(); i++) {
-      try (neqsim.util.database.NeqSimDataBase database =
-          new neqsim.util.database.NeqSimDataBase()) {
-        if (useMcInteractionParameters()) {
-          dataSet = database.getResultSet(("SELECT * FROM unifacinterparamb_umrmc WHERE MainGroup="
-              + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
-        } else {
-          dataSet = database.getResultSet(("SELECT * FROM unifacinterparamb_umr WHERE MainGroup="
-              + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
-        }
-        dataSet.next();
-        // dataSet.getClob("MainGroup");
-        for (int j = 0; j < ((ComponentGEUnifac) getComponent(0)).getNumberOfUNIFACgroups(); j++) {
-          bij[i][j] = Double.parseDouble(dataSet.getString(
-              "n" + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(j).getMainGroup() + ""));
-          // System.out.println("aij " + aij[i][j]);
-        }
+      try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
+	if (useMcInteractionParameters()) {
+	  dataSet = database.getResultSet(("SELECT * FROM unifacinterparamb_umrmc WHERE MainGroup="
+	      + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
+	} else {
+	  dataSet = database.getResultSet(("SELECT * FROM unifacinterparamb_umr WHERE MainGroup="
+	      + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
+	}
+	dataSet.next();
+	// dataSet.getClob("MainGroup");
+	for (int j = 0; j < ((ComponentGEUnifac) getComponent(0)).getNumberOfUNIFACgroups(); j++) {
+	  bij[i][j] = Double.parseDouble(
+	      dataSet.getString("n" + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(j).getMainGroup() + ""));
+	  // System.out.println("aij " + aij[i][j]);
+	}
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+	logger.error(ex.getMessage(), ex);
       }
     }
     // System.out.println("finished finding interaction coefficient...C_UMR");
@@ -325,28 +319,26 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
     java.sql.ResultSet dataSet = null;
 
     cij = new double[((ComponentGEUnifac) getComponent(0))
-        .getNumberOfUNIFACgroups()][((ComponentGEUnifac) getComponent(0))
-            .getNumberOfUNIFACgroups()];
+	.getNumberOfUNIFACgroups()][((ComponentGEUnifac) getComponent(0)).getNumberOfUNIFACgroups()];
 
     for (int i = 0; i < ((ComponentGEUnifac) getComponent(0)).getNumberOfUNIFACgroups(); i++) {
-      try (neqsim.util.database.NeqSimDataBase database =
-          new neqsim.util.database.NeqSimDataBase()) {
-        if (useMcInteractionParameters()) {
-          dataSet = database.getResultSet(("SELECT * FROM unifacinterparamc_umrmc WHERE MainGroup="
-              + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
-        } else {
-          dataSet = database.getResultSet(("SELECT * FROM unifacinterparamc_umr WHERE MainGroup="
-              + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
-        }
-        dataSet.next();
-        // dataSet.getClob("MainGroup");
-        for (int j = 0; j < ((ComponentGEUnifac) getComponent(0)).getNumberOfUNIFACgroups(); j++) {
-          cij[i][j] = Double.parseDouble(dataSet.getString(
-              "n" + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(j).getMainGroup() + ""));
-          // System.out.println("aij " + aij[i][j]);
-        }
+      try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
+	if (useMcInteractionParameters()) {
+	  dataSet = database.getResultSet(("SELECT * FROM unifacinterparamc_umrmc WHERE MainGroup="
+	      + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
+	} else {
+	  dataSet = database.getResultSet(("SELECT * FROM unifacinterparamc_umr WHERE MainGroup="
+	      + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
+	}
+	dataSet.next();
+	// dataSet.getClob("MainGroup");
+	for (int j = 0; j < ((ComponentGEUnifac) getComponent(0)).getNumberOfUNIFACgroups(); j++) {
+	  cij[i][j] = Double.parseDouble(
+	      dataSet.getString("n" + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(j).getMainGroup() + ""));
+	  // System.out.println("aij " + aij[i][j]);
+	}
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+	logger.error(ex.getMessage(), ex);
       }
     }
     // System.out.println("finished finding interaction coefficient...C_UMR");

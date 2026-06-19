@@ -15,9 +15,9 @@ public class SiddiqiLucasMethod extends Diffusivity {
   private static final long serialVersionUID = 1000;
 
   /**
-   * Flag to enable automatic selection between aqueous and non-aqueous correlations. When false
-   * (default), always uses the aqueous correlation for backward compatibility. When true,
-   * auto-detects the solvent type and selects the appropriate correlation.
+   * Flag to enable automatic selection between aqueous and non-aqueous correlations. When false (default), always uses
+   * the aqueous correlation for backward compatibility. When true, auto-detects the solvent type and selects the
+   * appropriate correlation.
    */
   private boolean autoSelectCorrelation = false;
 
@@ -44,8 +44,8 @@ public class SiddiqiLucasMethod extends Diffusivity {
   }
 
   /**
-   * Get the molar volume for a component in cm^3/mol. Falls back to critical volume estimate if
-   * normal liquid density is unavailable.
+   * Get the molar volume for a component in cm^3/mol. Falls back to critical volume estimate if normal liquid density
+   * is unavailable.
    *
    * @param k component index
    * @return molar volume in cm^3/mol
@@ -54,8 +54,7 @@ public class SiddiqiLucasMethod extends Diffusivity {
     double normalLiquidDensity = liquidPhase.getPhase().getComponent(k).getNormalLiquidDensity();
     double molarMassGperMol = liquidPhase.getPhase().getComponent(k).getMolarMass() * 1000.0;
 
-    if (normalLiquidDensity > 0.01 && !Double.isNaN(normalLiquidDensity)
-        && !Double.isInfinite(normalLiquidDensity)) {
+    if (normalLiquidDensity > 0.01 && !Double.isNaN(normalLiquidDensity) && !Double.isInfinite(normalLiquidDensity)) {
       return molarMassGperMol / normalLiquidDensity;
     }
     // Fallback: use critical volume directly
@@ -80,21 +79,21 @@ public class SiddiqiLucasMethod extends Diffusivity {
 
     if (!autoSelectCorrelation || isAqueousSolvent(j)) {
       // Siddiqi-Lucas aqueous correlation (default for backward compatibility)
-      binaryDiffusionCoefficients[i][j] = 1.0e-4 * 2.98e-7 * Math.pow(etaCp, -1.026)
-          * Math.pow(VA, -0.5473) * liquidPhase.getPhase().getTemperature();
+      binaryDiffusionCoefficients[i][j] = 1.0e-4 * 2.98e-7 * Math.pow(etaCp, -1.026) * Math.pow(VA, -0.5473)
+	  * liquidPhase.getPhase().getTemperature();
     } else {
       // Siddiqi-Lucas non-aqueous (organic solvent) correlation
       double VB = getMolarVolume(j);
-      binaryDiffusionCoefficients[i][j] = 1.0e-4 * 9.89e-8 * Math.pow(etaCp, -0.907)
-          * Math.pow(VA, -0.45) * Math.pow(VB, 0.265) * liquidPhase.getPhase().getTemperature();
+      binaryDiffusionCoefficients[i][j] = 1.0e-4 * 9.89e-8 * Math.pow(etaCp, -0.907) * Math.pow(VA, -0.45)
+	  * Math.pow(VB, 0.265) * liquidPhase.getPhase().getTemperature();
     }
     return binaryDiffusionCoefficients[i][j];
   }
 
   /**
-   * Enable or disable automatic correlation selection based on solvent type. When enabled,
-   * non-aqueous solvents use the Siddiqi-Lucas organic solvent correlation. When disabled
-   * (default), the aqueous correlation is used for all systems for backward compatibility.
+   * Enable or disable automatic correlation selection based on solvent type. When enabled, non-aqueous solvents use the
+   * Siddiqi-Lucas organic solvent correlation. When disabled (default), the aqueous correlation is used for all systems
+   * for backward compatibility.
    *
    * @param enable true to auto-select correlation based on solvent type
    */

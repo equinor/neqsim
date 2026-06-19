@@ -10,26 +10,25 @@ import org.apache.logging.log4j.Logger;
  * Methane Number calculator based on EN 16726 and MWM methods.
  *
  * <p>
- * The Methane Number (MN) is a measure of the knock resistance of gaseous fuels, analogous to the
- * octane number for liquid fuels. MN = 100 for pure methane and MN = 0 for pure hydrogen on the
- * reference scale.
+ * The Methane Number (MN) is a measure of the knock resistance of gaseous fuels, analogous to the octane number for
+ * liquid fuels. MN = 100 for pure methane and MN = 0 for pure hydrogen on the reference scale.
  * </p>
  *
  * <p>
  * This class implements three calculation methods:
  * </p>
  * <ul>
- * <li><b>EN 16726 (GRI/GERG):</b> The European standard method using empirical correlations from
- * the Gas Research Institute, as standardized in EN 16726:2015. This is the method required by most
- * LNG sales contracts and terminal specifications.</li>
- * <li><b>MWM:</b> The Caterpillar/MWM method widely used by engine manufacturers (Waertsilae, MAN).
- * Uses a different coefficient set.</li>
+ * <li><b>EN 16726 (GRI/GERG):</b> The European standard method using empirical correlations from the Gas Research
+ * Institute, as standardized in EN 16726:2015. This is the method required by most LNG sales contracts and terminal
+ * specifications.</li>
+ * <li><b>MWM:</b> The Caterpillar/MWM method widely used by engine manufacturers (Waertsilae, MAN). Uses a different
+ * coefficient set.</li>
  * <li><b>Simplified linear:</b> Quick approximation for screening purposes.</li>
  * </ul>
  *
  * <p>
- * The EN 16726 method computes knocking propensity from composition, taking into account that
- * heavier hydrocarbons reduce MN while inerts (N2, CO2) increase it:
+ * The EN 16726 method computes knocking propensity from composition, taking into account that heavier hydrocarbons
+ * reduce MN while inerts (N2, CO2) increase it:
  * </p>
  *
  * <pre>
@@ -65,7 +64,8 @@ public class MethaneNumberCalculator implements Serializable {
   /**
    * Default constructor.
    */
-  public MethaneNumberCalculator() {}
+  public MethaneNumberCalculator() {
+  }
 
   /**
    * Constructor with method selection.
@@ -84,14 +84,14 @@ public class MethaneNumberCalculator implements Serializable {
    */
   public double calculate(Map<String, Double> composition) {
     switch (method) {
-      case EN16726:
-        return calculateEN16726(composition);
-      case MWM:
-        return calculateMWM(composition);
-      case SIMPLIFIED:
-        return calculateSimplified(composition);
-      default:
-        return calculateEN16726(composition);
+    case EN16726:
+      return calculateEN16726(composition);
+    case MWM:
+      return calculateMWM(composition);
+    case SIMPLIFIED:
+      return calculateSimplified(composition);
+    default:
+      return calculateEN16726(composition);
     }
   }
 
@@ -99,14 +99,13 @@ public class MethaneNumberCalculator implements Serializable {
    * Calculate methane number using EN 16726 method.
    *
    * <p>
-   * The EN 16726 (GRI/GERG) method uses a multivariate polynomial regression fitted to engine test
-   * data. The correlation includes linear, quadratic, and cross terms for the main combustible and
-   * inert components.
+   * The EN 16726 (GRI/GERG) method uses a multivariate polynomial regression fitted to engine test data. The
+   * correlation includes linear, quadratic, and cross terms for the main combustible and inert components.
    * </p>
    *
    * <p>
-   * Reference: EN 16726:2015 "Gas infrastructure - Quality of gas - Group H", Annex E
-   * (informative): "Calculation of methane number".
+   * Reference: EN 16726:2015 "Gas infrastructure - Quality of gas - Group H", Annex E (informative): "Calculation of
+   * methane number".
    * </p>
    *
    * @param composition mole fractions keyed by component name
@@ -161,9 +160,9 @@ public class MethaneNumberCalculator implements Serializable {
    * Calculate methane number using MWM method.
    *
    * <p>
-   * The MWM method (Motorenwerke Mannheim, now Caterpillar Energy Solutions) is widely used by gas
-   * engine manufacturers. It uses a different set of coefficients and typically gives slightly
-   * lower MN values than EN 16726 for rich LNG compositions.
+   * The MWM method (Motorenwerke Mannheim, now Caterpillar Energy Solutions) is widely used by gas engine
+   * manufacturers. It uses a different set of coefficients and typically gives slightly lower MN values than EN 16726
+   * for rich LNG compositions.
    * </p>
    *
    * @param composition mole fractions keyed by component name
@@ -204,8 +203,8 @@ public class MethaneNumberCalculator implements Serializable {
    * Calculate methane number using simplified linear correlation.
    *
    * <p>
-   * Quick screening method: MN = 137.78 * xC1 - 29.948 * xC2 - 18.193 * xC3 - 167.06 * xN2.
-   * Applicable only for lean LNG (C3 &lt; 5%, no C4+).
+   * Quick screening method: MN = 137.78 * xC1 - 29.948 * xC2 - 18.193 * xC3 - 167.06 * xN2. Applicable only for lean
+   * LNG (C3 &lt; 5%, no C4+).
    * </p>
    *
    * @param composition mole fractions keyed by component name
@@ -240,7 +239,7 @@ public class MethaneNumberCalculator implements Serializable {
    * Check if MN meets a minimum specification.
    *
    * @param composition mole fractions
-   * @param minMN minimum required methane number
+   * @param minMN       minimum required methane number
    * @return true if MN meets specification
    */
   public boolean meetsSpecification(Map<String, Double> composition, double minMN) {
@@ -255,7 +254,7 @@ public class MethaneNumberCalculator implements Serializable {
   /**
    * Get the mole fraction of a component (0.0 if not present).
    *
-   * @param composition composition map
+   * @param composition   composition map
    * @param componentName component name
    * @return mole fraction (0.0-1.0)
    */
@@ -267,7 +266,7 @@ public class MethaneNumberCalculator implements Serializable {
   /**
    * Get the mole percent of a component (0.0 if not present).
    *
-   * @param composition composition map (mole fractions)
+   * @param composition   composition map (mole fractions)
    * @param componentName component name
    * @return mole percent (0.0-100.0)
    */

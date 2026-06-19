@@ -14,7 +14,7 @@ public class NotImplementedException extends neqsim.util.exception.ThermoExcepti
   /**
    * Constructs a <code>NotImplementedException</code> with a standard error message.
    *
-   * @param className Class that exception is raised from
+   * @param className  Class that exception is raised from
    * @param methodName Method that exception is raised from
    */
   public NotImplementedException(String className, String methodName) {
@@ -24,7 +24,7 @@ public class NotImplementedException extends neqsim.util.exception.ThermoExcepti
   /**
    * Constructs a <code>NotImplementedException</code> with a standard error message.
    *
-   * @param obj object that exception is raised from
+   * @param obj        object that exception is raised from
    * @param methodName method that exception is raised from
    */
   public NotImplementedException(Object obj, String methodName) {

@@ -21,9 +21,8 @@ public class FlarePerformanceDTO implements Serializable {
   private final Map<String, Double> emissions;
   private final FlareCapacityDTO capacity;
 
-  public FlarePerformanceDTO(String label, double heatDutyW, double massRateKgS,
-      double molarRateMoleS, double co2EmissionKgS, double heatFluxAt30mWm2,
-      double distanceTo4kWm2, FlareDispersionSurrogateDTO dispersion,
+  public FlarePerformanceDTO(String label, double heatDutyW, double massRateKgS, double molarRateMoleS,
+      double co2EmissionKgS, double heatFluxAt30mWm2, double distanceTo4kWm2, FlareDispersionSurrogateDTO dispersion,
       Map<String, Double> emissions, FlareCapacityDTO capacity) {
     this.label = label;
     this.heatDutyW = heatDutyW;

@@ -31,7 +31,7 @@ public class PressureTransmitter extends StreamMeasurementDeviceBaseClass {
    * Constructor for PressureTransmitter.
    * </p>
    *
-   * @param name Name of PressureTransmitter
+   * @param name   Name of PressureTransmitter
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public PressureTransmitter(String name, StreamInterface stream) {

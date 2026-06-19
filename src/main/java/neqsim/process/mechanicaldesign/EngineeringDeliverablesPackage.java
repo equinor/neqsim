@@ -21,13 +21,12 @@ import neqsim.process.processmodel.ProcessSystem;
  * Generates the full engineering deliverables package for a field development study.
  *
  * <p>
- * Given a {@link ProcessSystem} and a {@link StudyClass}, this class generates all required
- * deliverables and bundles them into a single structured output. The deliverable set is controlled
- * by the study class:
+ * Given a {@link ProcessSystem} and a {@link StudyClass}, this class generates all required deliverables and bundles
+ * them into a single structured output. The deliverable set is controlled by the study class:
  * </p>
  * <ul>
- * <li><b>Class A (FEED/Detail):</b> PFD, thermal utilities, alarm/trip schedule, spare parts, fire
- * scenarios, noise assessment</li>
+ * <li><b>Class A (FEED/Detail):</b> PFD, thermal utilities, alarm/trip schedule, spare parts, fire scenarios, noise
+ * assessment</li>
  * <li><b>Class B (Concept/Pre-FEED):</b> PFD, thermal utilities, fire scenarios</li>
  * <li><b>Class C (Screening):</b> PFD only</li>
  * </ul>
@@ -38,8 +37,7 @@ import neqsim.process.processmodel.ProcessSystem;
  *
  * <pre>
  * {@code
- * EngineeringDeliverablesPackage pkg =
- *     new EngineeringDeliverablesPackage(process, StudyClass.CLASS_A);
+ * EngineeringDeliverablesPackage pkg = new EngineeringDeliverablesPackage(process, StudyClass.CLASS_A);
  * pkg.generate();
  * String json = pkg.toJson();
  * String pfd = pkg.getPfdDot();
@@ -91,8 +89,7 @@ public class EngineeringDeliverablesPackage implements Serializable {
   private neqsim.process.equipment.iec81346.ReferenceDesignationGenerator referenceDesignationGenerator;
 
   /** Generation status for each deliverable. */
-  private final Map<DeliverableType, DeliverableStatus> statusMap =
-      new LinkedHashMap<DeliverableType, DeliverableStatus>();
+  private final Map<DeliverableType, DeliverableStatus> statusMap = new LinkedHashMap<DeliverableType, DeliverableStatus>();
 
   /** Whether generation has been run. */
   private boolean generated;
@@ -157,7 +154,7 @@ public class EngineeringDeliverablesPackage implements Serializable {
    * Create a deliverables package for the given process system and study class.
    *
    * @param processSystem the process system (must have been run)
-   * @param studyClass the study class determining required deliverables
+   * @param studyClass    the study class determining required deliverables
    * @throws IllegalArgumentException if processSystem is null
    */
   public EngineeringDeliverablesPackage(ProcessSystem processSystem, StudyClass studyClass) {
@@ -172,53 +169,53 @@ public class EngineeringDeliverablesPackage implements Serializable {
    * Generate all required deliverables for the configured study class.
    *
    * <p>
-   * Each deliverable is generated independently; a failure in one does not prevent others from
-   * being generated. Check individual status via {@link #getStatusMap()}.
+   * Each deliverable is generated independently; a failure in one does not prevent others from being generated. Check
+   * individual status via {@link #getStatusMap()}.
    * </p>
    */
   public void generate() {
-    logger.info("Generating engineering deliverables for {} with {}",
-        processSystem.getClass().getSimpleName(), studyClass);
+    logger.info("Generating engineering deliverables for {} with {}", processSystem.getClass().getSimpleName(),
+	studyClass);
 
     for (DeliverableType type : studyClass.getRequiredDeliverables()) {
       DeliverableStatus status = new DeliverableStatus(type);
       long start = System.currentTimeMillis();
 
       try {
-        switch (type) {
-          case PFD:
-            generatePfd();
-            break;
-          case THERMAL_UTILITIES:
-            generateThermalUtilities();
-            break;
-          case ALARM_TRIP_SCHEDULE:
-            generateAlarmTripSchedule();
-            break;
-          case SPARE_PARTS:
-            generateSparePartsInventory();
-            break;
-          case FIRE_SCENARIOS:
-            generateFireScenarios();
-            break;
-          case NOISE_ASSESSMENT:
-            generateNoiseAssessment();
-            break;
-          case INSTRUMENT_SCHEDULE:
-            generateInstrumentSchedule();
-            break;
-          case REFERENCE_DESIGNATION_SCHEDULE:
-            generateReferenceDesignationSchedule();
-            break;
-          default:
-            break;
-        }
-        status.success = true;
-        status.message = "Generated successfully";
+	switch (type) {
+	case PFD:
+	  generatePfd();
+	  break;
+	case THERMAL_UTILITIES:
+	  generateThermalUtilities();
+	  break;
+	case ALARM_TRIP_SCHEDULE:
+	  generateAlarmTripSchedule();
+	  break;
+	case SPARE_PARTS:
+	  generateSparePartsInventory();
+	  break;
+	case FIRE_SCENARIOS:
+	  generateFireScenarios();
+	  break;
+	case NOISE_ASSESSMENT:
+	  generateNoiseAssessment();
+	  break;
+	case INSTRUMENT_SCHEDULE:
+	  generateInstrumentSchedule();
+	  break;
+	case REFERENCE_DESIGNATION_SCHEDULE:
+	  generateReferenceDesignationSchedule();
+	  break;
+	default:
+	  break;
+	}
+	status.success = true;
+	status.message = "Generated successfully";
       } catch (Exception e) {
-        status.success = false;
-        status.message = "Generation failed: " + e.getMessage();
-        logger.warn("Failed to generate {}: {}", type.getDisplayName(), e.getMessage());
+	status.success = false;
+	status.message = "Generation failed: " + e.getMessage();
+	logger.warn("Failed to generate {}: {}", type.getDisplayName(), e.getMessage());
       }
 
       status.durationMs = System.currentTimeMillis() - start;
@@ -226,8 +223,7 @@ public class EngineeringDeliverablesPackage implements Serializable {
     }
 
     generated = true;
-    logger.info("Deliverable generation complete: {}/{} successful", getSuccessCount(),
-        statusMap.size());
+    logger.info("Deliverable generation complete: {}/{} successful", getSuccessCount(), statusMap.size());
   }
 
   /**
@@ -277,16 +273,15 @@ public class EngineeringDeliverablesPackage implements Serializable {
     double heatingValueKJKg = 50000.0;
     double massBurningRateKgM2s = 0.055;
 
-    FireProtectionDesign.FireScenarioResult scenario =
-        FireProtectionDesign.assessFireScenarios(equipmentName, inventoryKg, operatingPressureBara,
-            vesselVolumeM3, poolDiameterM, releaseRateKgS, heatingValueKJKg, massBurningRateKgM2s);
+    FireProtectionDesign.FireScenarioResult scenario = FireProtectionDesign.assessFireScenarios(equipmentName,
+	inventoryKg, operatingPressureBara, vesselVolumeM3, poolDiameterM, releaseRateKgS, heatingValueKJKg,
+	massBurningRateKgM2s);
     JsonObject obj = new JsonObject();
     obj.add("fireScenario", JsonParser.parseString(scenario.toJson()));
     obj.addProperty("inventoryKg", inventoryKg);
     obj.addProperty("releaseRateKgS", releaseRateKgS);
     obj.addProperty("poolDiameterM", poolDiameterM);
-    fireScenarioJson = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues()
-        .create().toJson(obj);
+    fireScenarioJson = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(obj);
   }
 
   /**
@@ -305,15 +300,14 @@ public class EngineeringDeliverablesPackage implements Serializable {
     double spl25m = NoiseAssessment.splAtDistance(splAt1m, 25.0);
     obj.addProperty("compressorSplAt25mDbA", spl25m);
 
-    double splWithAttenuation =
-        NoiseAssessment.splAtDistanceWithAttenuation(compNoise, 100.0, 20.0, 60.0);
+    double splWithAttenuation = NoiseAssessment.splAtDistanceWithAttenuation(compNoise, 100.0, 20.0, 60.0);
     obj.addProperty("compressorSplAt100mWithAttenDbA", splWithAttenuation);
 
     obj.addProperty("norsokLimitContinuousDbA", NoiseAssessment.NORSOK_MAX_CONTINUOUS_DBA);
     obj.addProperty("norsokLimitEquipmentAreaDbA", NoiseAssessment.NORSOK_MAX_EQUIPMENT_AREA_DBA);
 
-    noiseAssessmentJson = new GsonBuilder().setPrettyPrinting()
-        .serializeSpecialFloatingPointValues().create().toJson(obj);
+    noiseAssessmentJson = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
+	.toJson(obj);
   }
 
   /**
@@ -326,12 +320,11 @@ public class EngineeringDeliverablesPackage implements Serializable {
   }
 
   /**
-   * Generate IEC 81346 reference designation schedule for all equipment. Auto-assigns functional,
-   * product and location designations.
+   * Generate IEC 81346 reference designation schedule for all equipment. Auto-assigns functional, product and location
+   * designations.
    */
   private void generateReferenceDesignationSchedule() {
-    referenceDesignationGenerator =
-        new neqsim.process.equipment.iec81346.ReferenceDesignationGenerator();
+    referenceDesignationGenerator = new neqsim.process.equipment.iec81346.ReferenceDesignationGenerator();
     referenceDesignationGenerator.generate(processSystem);
   }
 
@@ -344,7 +337,7 @@ public class EngineeringDeliverablesPackage implements Serializable {
     int count = 0;
     for (DeliverableStatus status : statusMap.values()) {
       if (status.isSuccess()) {
-        count++;
+	count++;
       }
     }
     return count;
@@ -361,7 +354,7 @@ public class EngineeringDeliverablesPackage implements Serializable {
     }
     for (DeliverableStatus status : statusMap.values()) {
       if (!status.isSuccess()) {
-        return false;
+	return false;
       }
     }
     return true;
@@ -475,7 +468,7 @@ public class EngineeringDeliverablesPackage implements Serializable {
     List<DeliverableType> failed = new ArrayList<DeliverableType>();
     for (Map.Entry<DeliverableType, DeliverableStatus> entry : statusMap.entrySet()) {
       if (!entry.getValue().isSuccess()) {
-        failed.add(entry.getKey());
+	failed.add(entry.getKey());
       }
     }
     return failed;
@@ -530,17 +523,15 @@ public class EngineeringDeliverablesPackage implements Serializable {
       root.add("instrumentSchedule", JsonParser.parseString(instrumentSchedule.toJson()));
     }
     if (referenceDesignationGenerator != null) {
-      root.add("referenceDesignationSchedule",
-          JsonParser.parseString(referenceDesignationGenerator.toJson()));
+      root.add("referenceDesignationSchedule", JsonParser.parseString(referenceDesignationGenerator.toJson()));
     }
 
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(root);
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(root);
   }
 
   @Override
   public String toString() {
     return String.format("EngineeringDeliverablesPackage[%s, %s, %d/%d deliverables]", studyClass,
-        generated ? "generated" : "not generated", getSuccessCount(), statusMap.size());
+	generated ? "generated" : "not generated", getSuccessCount(), statusMap.size());
   }
 }

@@ -8,9 +8,8 @@ import java.util.Map;
  * Model of switchgear / motor control center (MCC) bucket for process electrical systems.
  *
  * <p>
- * Handles rated current, short-circuit withstand, protection coordination, and starter type
- * selection. Supports direct-on-line (DOL), star-delta, soft starter, and VFD starters per IEC
- * 61439.
+ * Handles rated current, short-circuit withstand, protection coordination, and starter type selection. Supports
+ * direct-on-line (DOL), star-delta, soft starter, and VFD starters per IEC 61439.
  * </p>
  *
  * @author Even Solbraa
@@ -21,8 +20,8 @@ public class Switchgear implements java.io.Serializable {
   private static final long serialVersionUID = 1000L;
 
   /** Standard switchgear current ratings (A). */
-  private static final double[] STANDARD_RATINGS_A =
-      {100, 160, 250, 400, 630, 800, 1000, 1250, 1600, 2000, 2500, 3150, 4000};
+  private static final double[] STANDARD_RATINGS_A = { 100, 160, 250, 400, 630, 800, 1000, 1250, 1600, 2000, 2500, 3150,
+      4000 };
 
   // === Configuration ===
   private double ratedCurrentA;
@@ -47,12 +46,11 @@ public class Switchgear implements java.io.Serializable {
    * Size the switchgear based on motor parameters.
    *
    * @param motorRatedCurrentA motor full-load current in A
-   * @param motorRatedPowerKW motor rated power in kW
-   * @param voltageV system voltage in V
-   * @param useVFD whether VFD is used
+   * @param motorRatedPowerKW  motor rated power in kW
+   * @param voltageV           system voltage in V
+   * @param useVFD             whether VFD is used
    */
-  public void sizeSwitchgear(double motorRatedCurrentA, double motorRatedPowerKW, double voltageV,
-      boolean useVFD) {
+  public void sizeSwitchgear(double motorRatedCurrentA, double motorRatedPowerKW, double voltageV, boolean useVFD) {
     this.ratedVoltageV = voltageV;
 
     // Select starter type
@@ -103,7 +101,7 @@ public class Switchgear implements java.io.Serializable {
   private double selectStandardRating(double requiredA) {
     for (double std : STANDARD_RATINGS_A) {
       if (std >= requiredA) {
-        return std;
+	return std;
       }
     }
     return Math.ceil(requiredA / 100.0) * 100.0;
@@ -116,12 +114,12 @@ public class Switchgear implements java.io.Serializable {
    * @return fuse current rating in A
    */
   private double selectStandardFuseRating(double motorFLC) {
-    double[] fuseRatings = {16, 20, 25, 32, 40, 50, 63, 80, 100, 125, 160, 200, 250, 315, 400,
-        500, 630, 800, 1000, 1250};
+    double[] fuseRatings = { 16, 20, 25, 32, 40, 50, 63, 80, 100, 125, 160, 200, 250, 315, 400, 500, 630, 800, 1000,
+	1250 };
     double target = motorFLC * 1.6;
     for (double fuse : fuseRatings) {
       if (fuse >= target) {
-        return fuse;
+	return fuse;
       }
     }
     return fuseRatings[fuseRatings.length - 1];
@@ -146,7 +144,7 @@ public class Switchgear implements java.io.Serializable {
    *
    * @param voltageV system voltage in V
    * @param currentA rated current in A
-   * @param starter starter type
+   * @param starter  starter type
    * @return cost in USD
    */
   private double estimateCost(double voltageV, double currentA, String starter) {
@@ -173,8 +171,7 @@ public class Switchgear implements java.io.Serializable {
    */
   public String toJson() {
     Map<String, Object> map = toMap();
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(map);
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(map);
   }
 
   /**

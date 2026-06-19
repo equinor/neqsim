@@ -17,9 +17,9 @@ public class IsNaNException extends neqsim.util.exception.ThermoException {
   /**
    * Constructs an <code>IsNaNException</code> with a detailed message.
    *
-   * @param className Class that exception is raised from
+   * @param className  Class that exception is raised from
    * @param methodName Method that exception is raised from
-   * @param msg detailed message
+   * @param msg        detailed message
    */
   public IsNaNException(String className, String methodName, String msg) {
     super(className, methodName, msg);
@@ -29,9 +29,9 @@ public class IsNaNException extends neqsim.util.exception.ThermoException {
   /**
    * Constructs an <code>IsNaNException</code> with a default detail message.
    *
-   * @param obj object that exception is raised from
+   * @param obj        object that exception is raised from
    * @param methodName Method that exception is raised from
-   * @param param the parameter that is NaN
+   * @param param      the parameter that is NaN
    */
   public IsNaNException(Object obj, String methodName, String param) {
     this(obj.getClass().getSimpleName(), methodName, "Variable " + param + " is NaN");
@@ -48,9 +48,8 @@ public class IsNaNException extends neqsim.util.exception.ThermoException {
    */
   public String getRemediation() {
     return "Calculation produced NaN for: " + paramName + ". Try:\n"
-        + "1. Check for division by zero (ensure non-zero denominators)\n"
-        + "2. Verify input values are physically reasonable\n"
-        + "3. Check temperature > 0 K and pressure > 0\n" + "4. Ensure mole fractions sum to 1.0\n"
-        + "5. Use a more stable equation of state for extreme conditions";
+	+ "1. Check for division by zero (ensure non-zero denominators)\n"
+	+ "2. Verify input values are physically reasonable\n" + "3. Check temperature > 0 K and pressure > 0\n"
+	+ "4. Ensure mole fractions sum to 1.0\n" + "5. Use a more stable equation of state for extreme conditions";
   }
 }

@@ -23,8 +23,7 @@ class TemperatureUnitTest extends neqsim.NeqSimTest {
     testOps.TPflash();
     fluid.initProperties();
 
-    assertEquals(ThermodynamicConstantsInterface.referencePressure, fluid.getPressure("bara"),
-        1e-4);
+    assertEquals(ThermodynamicConstantsInterface.referencePressure, fluid.getPressure("bara"), 1e-4);
     assertEquals(24.850000000000, fluid.getTemperature("C"), 1e-4);
     assertEquals(76.7300000, fluid.getTemperature("F"), 1e-4);
     assertEquals(536.4, fluid.getTemperature("R"), 1e-4);
@@ -89,4 +88,3 @@ class TemperatureUnitTest extends neqsim.NeqSimTest {
     assertThrows(IllegalArgumentException.class, () -> new TemperatureUnit(0.0, "X"));
   }
 }
-

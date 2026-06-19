@@ -11,8 +11,8 @@ import neqsim.thermo.Fluid;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * Validation tests for {@link ElectrolyzerCostEstimate}. Cross-checks the technology-dependent
- * specific CAPEX and scaling behaviour against IRENA 2022 and IEA 2023 benchmark ranges.
+ * Validation tests for {@link ElectrolyzerCostEstimate}. Cross-checks the technology-dependent specific CAPEX and
+ * scaling behaviour against IRENA 2022 and IEA 2023 benchmark ranges.
  */
 class ElectrolyzerCostEstimateTest extends neqsim.NeqSimTest {
 
@@ -79,8 +79,7 @@ class ElectrolyzerCostEstimateTest extends neqsim.NeqSimTest {
     double usdPerKwBig = cBig.getPurchasedEquipmentCost() / big.getTotalPowerKW();
 
     assertTrue(usdPerKwBig < usdPerKwSmall,
-        "Larger plant should have lower USD/kW (scale economies), got " + usdPerKwBig + " vs "
-            + usdPerKwSmall);
+	"Larger plant should have lower USD/kW (scale economies), got " + usdPerKwBig + " vs " + usdPerKwSmall);
   }
 
   @Test
@@ -90,9 +89,8 @@ class ElectrolyzerCostEstimateTest extends neqsim.NeqSimTest {
     ElectrolyzerCostEstimate noBop = new ElectrolyzerCostEstimate(mech);
     noBop.setIncludeBalanceOfPlant(false);
     assertTrue(noBop.getPurchasedEquipmentCost() < withBop.getPurchasedEquipmentCost(),
-        "Cost without BOP should be lower than with BOP");
-    assertEquals(0.65, noBop.getPurchasedEquipmentCost() / withBop.getPurchasedEquipmentCost(),
-        1e-6);
+	"Cost without BOP should be lower than with BOP");
+    assertEquals(0.65, noBop.getPurchasedEquipmentCost() / withBop.getPurchasedEquipmentCost(), 1e-6);
   }
 
   @Test

@@ -23,8 +23,7 @@ public class ParameterFittingSpec implements Serializable {
   private String name = "parameter fitting study";
   private ExperimentType experimentType = ExperimentType.GENERIC;
   private ArrayList<FittingParameter> parameters = new ArrayList<FittingParameter>();
-  private ObjectiveFunctionType objectiveFunctionType =
-      ObjectiveFunctionType.WEIGHTED_LEAST_SQUARES;
+  private ObjectiveFunctionType objectiveFunctionType = ObjectiveFunctionType.WEIGHTED_LEAST_SQUARES;
   private double robustTuningConstant = 1.345;
   private int maxRobustIterations = 5;
   private int maxNumberOfIterations = 50;
@@ -35,7 +34,8 @@ public class ParameterFittingSpec implements Serializable {
   /**
    * Creates an empty specification.
    */
-  public ParameterFittingSpec() {}
+  public ParameterFittingSpec() {
+  }
 
   /**
    * Creates a named specification.
@@ -73,12 +73,11 @@ public class ParameterFittingSpec implements Serializable {
     }
     for (int i = 0; i < parameters.size(); i++) {
       if (parameters.get(i) == null) {
-        throw new IllegalArgumentException("parameter " + i + " cannot be null");
+	throw new IllegalArgumentException("parameter " + i + " cannot be null");
       }
       parameters.get(i).validate();
     }
-    if (robustTuningConstant <= 0.0 || Double.isNaN(robustTuningConstant)
-        || Double.isInfinite(robustTuningConstant)) {
+    if (robustTuningConstant <= 0.0 || Double.isNaN(robustTuningConstant) || Double.isInfinite(robustTuningConstant)) {
       throw new IllegalArgumentException("robustTuningConstant must be positive and finite");
     }
     if (maxRobustIterations <= 0) {
@@ -168,7 +167,7 @@ public class ParameterFittingSpec implements Serializable {
     for (int i = 0; i < parameters.size(); i++) {
       double[] parameterBounds = parameters.get(i).getInternalBounds();
       if (parameterBounds == null) {
-        return null;
+	return null;
       }
       bounds[i][0] = parameterBounds[0];
       bounds[i][1] = parameterBounds[1];
@@ -205,7 +204,7 @@ public class ParameterFittingSpec implements Serializable {
     validate();
     for (int i = 0; i < parameters.size(); i++) {
       if (parameters.get(i).getTransform().isTransformed()) {
-        return true;
+	return true;
       }
     }
     return false;
@@ -375,9 +374,8 @@ public class ParameterFittingSpec implements Serializable {
    * @param objectiveFunctionType objective function type
    */
   public void setObjectiveFunctionType(ObjectiveFunctionType objectiveFunctionType) {
-    this.objectiveFunctionType =
-        objectiveFunctionType == null ? ObjectiveFunctionType.WEIGHTED_LEAST_SQUARES
-            : objectiveFunctionType;
+    this.objectiveFunctionType = objectiveFunctionType == null ? ObjectiveFunctionType.WEIGHTED_LEAST_SQUARES
+	: objectiveFunctionType;
   }
 
   /**
@@ -509,7 +507,7 @@ public class ParameterFittingSpec implements Serializable {
   /**
    * Returns a default string when the value is null.
    *
-   * @param value user-supplied value
+   * @param value        user-supplied value
    * @param defaultValue fallback value
    * @return value or defaultValue
    */

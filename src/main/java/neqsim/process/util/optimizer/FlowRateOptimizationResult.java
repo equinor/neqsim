@@ -8,8 +8,8 @@ import java.util.List;
  * Result of a flow rate optimization for pressure-constrained process simulation.
  *
  * <p>
- * This class encapsulates the results of finding the flow rate required to achieve a specified
- * pressure drop across process equipment. It includes:
+ * This class encapsulates the results of finding the flow rate required to achieve a specified pressure drop across
+ * process equipment. It includes:
  * </p>
  * <ul>
  * <li>The optimal flow rate found (or NaN if infeasible)</li>
@@ -51,8 +51,8 @@ public class FlowRateOptimizationResult implements Serializable {
     OPTIMAL,
 
     /**
-     * Target pressure drop cannot be achieved at any flow rate. Pressure at minimum flow is already
-     * below target, or pressure at maximum flow is above target.
+     * Target pressure drop cannot be achieved at any flow rate. Pressure at minimum flow is already below target, or
+     * pressure at maximum flow is above target.
      */
     INFEASIBLE_PRESSURE,
 
@@ -88,15 +88,15 @@ public class FlowRateOptimizationResult implements Serializable {
     /**
      * Creates a new constraint violation record.
      *
-     * @param constraintName name of the violated constraint
-     * @param equipmentName name of the equipment with the violation
-     * @param currentValue current value of the constrained variable
-     * @param limitValue limit value that was exceeded
-     * @param unit unit of measurement
+     * @param constraintName  name of the violated constraint
+     * @param equipmentName   name of the equipment with the violation
+     * @param currentValue    current value of the constrained variable
+     * @param limitValue      limit value that was exceeded
+     * @param unit            unit of measurement
      * @param isHardViolation true if this is a hard constraint violation
      */
-    public ConstraintViolation(String constraintName, String equipmentName, double currentValue,
-        double limitValue, String unit, boolean isHardViolation) {
+    public ConstraintViolation(String constraintName, String equipmentName, double currentValue, double limitValue,
+	String unit, boolean isHardViolation) {
       this.constraintName = constraintName;
       this.equipmentName = equipmentName;
       this.currentValue = currentValue;
@@ -161,8 +161,8 @@ public class FlowRateOptimizationResult implements Serializable {
 
     @Override
     public String toString() {
-      return String.format("%s.%s: %.4f %s (limit: %.4f %s)%s", equipmentName, constraintName,
-          currentValue, unit, limitValue, unit, isHardViolation ? " [HARD]" : "");
+      return String.format("%s.%s: %.4f %s (limit: %.4f %s)%s", equipmentName, constraintName, currentValue, unit,
+	  limitValue, unit, isHardViolation ? " [HARD]" : "");
     }
   }
 
@@ -183,20 +183,21 @@ public class FlowRateOptimizationResult implements Serializable {
   /**
    * Creates an empty optimization result.
    */
-  public FlowRateOptimizationResult() {}
+  public FlowRateOptimizationResult() {
+  }
 
   /**
    * Creates a successful optimization result.
    *
-   * @param flowRate optimal flow rate
-   * @param flowRateUnit unit of flow rate
-   * @param inletPressure achieved inlet pressure
+   * @param flowRate       optimal flow rate
+   * @param flowRateUnit   unit of flow rate
+   * @param inletPressure  achieved inlet pressure
    * @param outletPressure achieved outlet pressure
-   * @param pressureUnit unit of pressure
+   * @param pressureUnit   unit of pressure
    * @return the result
    */
-  public static FlowRateOptimizationResult success(double flowRate, String flowRateUnit,
-      double inletPressure, double outletPressure, String pressureUnit) {
+  public static FlowRateOptimizationResult success(double flowRate, String flowRateUnit, double inletPressure,
+      double outletPressure, String pressureUnit) {
     FlowRateOptimizationResult result = new FlowRateOptimizationResult();
     result.status = Status.OPTIMAL;
     result.flowRate = flowRate;
@@ -223,12 +224,11 @@ public class FlowRateOptimizationResult implements Serializable {
   /**
    * Creates an infeasible result due to constraint violations.
    *
-   * @param reason description of constraint violation
+   * @param reason     description of constraint violation
    * @param violations list of constraint violations
    * @return the result
    */
-  public static FlowRateOptimizationResult infeasibleConstraint(String reason,
-      List<ConstraintViolation> violations) {
+  public static FlowRateOptimizationResult infeasibleConstraint(String reason, List<ConstraintViolation> violations) {
     FlowRateOptimizationResult result = new FlowRateOptimizationResult();
     result.status = Status.INFEASIBLE_CONSTRAINT;
     result.infeasibilityReason = reason;
@@ -240,7 +240,7 @@ public class FlowRateOptimizationResult implements Serializable {
    * Creates a not-converged result.
    *
    * @param iterations number of iterations performed
-   * @param lastError last convergence error
+   * @param lastError  last convergence error
    * @return the result
    */
   public static FlowRateOptimizationResult notConverged(int iterations, double lastError) {
@@ -248,8 +248,8 @@ public class FlowRateOptimizationResult implements Serializable {
     result.status = Status.NOT_CONVERGED;
     result.iterationCount = iterations;
     result.convergenceError = lastError;
-    result.infeasibilityReason =
-        String.format("Did not converge after %d iterations (error: %.6f)", iterations, lastError);
+    result.infeasibilityReason = String.format("Did not converge after %d iterations (error: %.6f)", iterations,
+	lastError);
     return result;
   }
 
@@ -463,7 +463,7 @@ public class FlowRateOptimizationResult implements Serializable {
   public boolean hasHardViolations() {
     for (ConstraintViolation v : constraintViolations) {
       if (v.isHardViolation()) {
-        return true;
+	return true;
       }
     }
     return false;
@@ -540,7 +540,7 @@ public class FlowRateOptimizationResult implements Serializable {
     if (!constraintViolations.isEmpty()) {
       sb.append("  constraintViolations:\n");
       for (ConstraintViolation v : constraintViolations) {
-        sb.append(String.format("    - %s%n", v));
+	sb.append(String.format("    - %s%n", v));
       }
     }
 

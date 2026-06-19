@@ -25,14 +25,14 @@ public class PhaseElectrolyteCPAstatoil extends PhaseElectrolyteCPA {
    * Constructor for PhaseElectrolyteCPAstatoil.
    * </p>
    */
-  public PhaseElectrolyteCPAstatoil() {}
+  public PhaseElectrolyteCPAstatoil() {
+  }
 
   /** {@inheritDoc} */
   @Override
   public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
     super.addComponent(name, moles, molesInPhase, compNumber);
-    componentArray[compNumber] =
-        new ComponentElectrolyteCPAstatoil(name, moles, molesInPhase, compNumber);
+    componentArray[compNumber] = new ComponentElectrolyteCPAstatoil(name, moles, molesInPhase, compNumber);
   }
 
   /** {@inheritDoc} */
@@ -72,7 +72,7 @@ public class PhaseElectrolyteCPAstatoil extends PhaseElectrolyteCPA {
     double u = 1.0 - x;
 
     double val = -x / (Math.pow(getTotalVolume(), 2.0) * u) + xV / (getTotalVolume() * u)
-        - x / (getTotalVolume() * u * u) * (-1.0) * xV;
+	- x / (getTotalVolume() * u * u) * (-1.0) * xV;
     return -val;
 
     // double gvv
@@ -84,12 +84,11 @@ public class PhaseElectrolyteCPAstatoil extends PhaseElectrolyteCPA {
   /** {@inheritDoc} */
   @Override
   public double calc_lngVVV() {
-    double gvv = -0.21434375 / Math.pow(1.0 - 0.475 * getB() / getTotalVolume(), 3.0)
-        * Math.pow(getB(), 3.0) / (Math.pow(getTotalVolume(), 6.0))
-        - 0.135375E1 / Math.pow(1.0 - 0.475 * getB() / getTotalVolume(), 2.0)
-            * Math.pow(getB(), 2.0) / (Math.pow(getTotalVolume(), 5.0))
-        - 0.285E1 / (1.0 - 0.475 * getB() / getTotalVolume()) * getB()
-            / (Math.pow(getTotalVolume(), 4.0));
+    double gvv = -0.21434375 / Math.pow(1.0 - 0.475 * getB() / getTotalVolume(), 3.0) * Math.pow(getB(), 3.0)
+	/ (Math.pow(getTotalVolume(), 6.0))
+	- 0.135375E1 / Math.pow(1.0 - 0.475 * getB() / getTotalVolume(), 2.0) * Math.pow(getB(), 2.0)
+	    / (Math.pow(getTotalVolume(), 5.0))
+	- 0.285E1 / (1.0 - 0.475 * getB() / getTotalVolume()) * getB() / (Math.pow(getTotalVolume(), 4.0));
     return gvv;
   }
 }

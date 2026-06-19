@@ -12,9 +12,8 @@ import com.google.gson.GsonBuilder;
  * CRA (Corrosion Resistant Alloy) material selection for CO2-containing service.
  *
  * <p>
- * Determines when carbon steel with inhibition or corrosion allowance is insufficient, and
- * recommends the appropriate CRA grade. Uses empirical temperature and chloride limits from NORSOK
- * M-001, EFC 17, and vendor qualification data.
+ * Determines when carbon steel with inhibition or corrosion allowance is insufficient, and recommends the appropriate
+ * CRA grade. Uses empirical temperature and chloride limits from NORSOK M-001, EFC 17, and vendor qualification data.
  * </p>
  *
  * <h2>Material Hierarchy</h2>
@@ -123,7 +122,8 @@ public class CO2CorrosionMaterialSelection implements Serializable {
   /**
    * Default constructor.
    */
-  public CO2CorrosionMaterialSelection() {}
+  public CO2CorrosionMaterialSelection() {
+  }
 
   // ─── Setters ────────────────────────────────────────────
 
@@ -234,12 +234,12 @@ public class CO2CorrosionMaterialSelection implements Serializable {
 
     csCorrosionAllowanceMm = inhibitedRate * designLifeYears;
 
-    carbonSteelViable = (csCorrosionAllowanceMm <= maxCorrosionAllowanceMm)
-        && (h2sPartialPressureBar < 0.003) && (co2CorrosionRateMmyr < 10.0);
+    carbonSteelViable = (csCorrosionAllowanceMm <= maxCorrosionAllowanceMm) && (h2sPartialPressureBar < 0.003)
+	&& (co2CorrosionRateMmyr < 10.0);
 
     if (carbonSteelViable) {
       notes.add("Carbon steel viable with " + String.format("%.1f", csCorrosionAllowanceMm)
-          + " mm corrosion allowance (" + designLifeYears + " yr).");
+	  + " mm corrosion allowance (" + designLifeYears + " yr).");
     }
   }
 
@@ -252,8 +252,8 @@ public class CO2CorrosionMaterialSelection implements Serializable {
     boolean veryHighCl = chlorideConcentrationMgL > 120000;
 
     // 13Cr limits: T < 150°C, pH2S < 0.01 bar, Cl⁻ < 80000 mg/L
-    boolean suit13Cr = temperatureC <= 150 && h2sPartialPressureBar <= 0.01
-        && chlorideConcentrationMgL <= 80000 && inSituPH >= 3.5;
+    boolean suit13Cr = temperatureC <= 150 && h2sPartialPressureBar <= 0.01 && chlorideConcentrationMgL <= 80000
+	&& inSituPH >= 3.5;
 
     // 22Cr duplex limits: T < 232°C, pH2S < 1.0 bar (EFC 17)
     boolean suit22Cr = temperatureC <= 232 && h2sPartialPressureBar <= 1.0 && !veryHighCl;
@@ -265,7 +265,7 @@ public class CO2CorrosionMaterialSelection implements Serializable {
       selectedMaterial = "Carbon steel + corrosion inhibition";
       relativeCostFactor = 1.0;
       selectionRationale = "CO2 corrosion rate manageable with inhibition and "
-          + String.format("%.1f", csCorrosionAllowanceMm) + " mm CA.";
+	  + String.format("%.1f", csCorrosionAllowanceMm) + " mm CA.";
       alternatives.add("13Cr (if inhibition reliability is a concern)");
     } else if (suit13Cr && !isSour) {
       selectedMaterial = "13Cr martensitic stainless steel";
@@ -384,8 +384,7 @@ public class CO2CorrosionMaterialSelection implements Serializable {
    * @return JSON representation
    */
   public String toJson() {
-    Gson gson =
-        new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+    Gson gson = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
     return gson.toJson(toMap());
   }
 }

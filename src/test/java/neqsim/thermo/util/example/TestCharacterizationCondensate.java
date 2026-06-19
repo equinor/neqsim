@@ -20,7 +20,7 @@ public class TestCharacterizationCondensate {
   private static final Logger logger = LogManager.getLogger(TestCharacterizationCondensate.class);
 
   /** Logger object for class. */
-  
+
   /**
    * <p>
    * main.
@@ -116,10 +116,9 @@ public class TestCharacterizationCondensate {
     /*
      * logger.info("molar mass " +testSystem.getPhase(0).getComponent("PC4_PC").getMolarMass() );
      *
-     * testSystem.setMolarCompositionOfPlusFluid(new double[]{0.02, 0.005, 0.4, 0.01, 0.01, 0.02,
-     * 0.02, 0.01 ,0.01, 0.01, 0.01 ,0.01, 0.01, 0.2 }); try { testOps.TPflash(); //
-     * testOps.hydrateFormationTemperature(); // testOps.dewPointTemperatureFlash(); } catch
-     * (Exception ex) { logger.error(ex.toString()); } testSystem.display();
+     * testSystem.setMolarCompositionOfPlusFluid(new double[]{0.02, 0.005, 0.4, 0.01, 0.01, 0.02, 0.02, 0.01 ,0.01,
+     * 0.01, 0.01 ,0.01, 0.01, 0.2 }); try { testOps.TPflash(); // testOps.hydrateFormationTemperature(); //
+     * testOps.dewPointTemperatureFlash(); } catch (Exception ex) { logger.error(ex.toString()); } testSystem.display();
      */
   }
 }

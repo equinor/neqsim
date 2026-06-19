@@ -102,21 +102,19 @@ public class FreezingPointTemperatureFlashTR extends ConstantDutyTemperatureFlas
       // kjorer scriptet.
       FCompNames[k] = system.getPhase(0).getComponent(k).getComponentName();
       if (system.getPhase(0).getComponent(k).getHsub() < 1000) {
-        CCequation = false;
+	CCequation = false;
       }
 
       if (noFreezeFlash) {
-        system.setTemperature(system.getPhases()[0].getComponent(k).getTriplePointTemperature());
-        logger.info("Starting at Triple point temperature "
-            + system.getPhase(0).getComponent(k).getComponentName());
+	system.setTemperature(system.getPhases()[0].getComponent(k).getTriplePointTemperature());
+	logger.info("Starting at Triple point temperature " + system.getPhase(0).getComponent(k).getComponentName());
       } else {
-        system.setTemperature(system.getTemperature());
-        logger.info("starting at Temperature  " + system.getTemperature());
+	system.setTemperature(system.getTemperature());
+	logger.info("starting at Temperature  " + system.getTemperature());
       }
 
       // init reference system for vapor fugacity
-      SystemInterface testSystem2 =
-          new SystemSrkSchwartzentruberEos(system.getTemperature(), system.getPressure());
+      SystemInterface testSystem2 = new SystemSrkSchwartzentruberEos(system.getTemperature(), system.getPressure());
       ThermodynamicOperations testOps2 = new ThermodynamicOperations(testSystem2);
       testSystem2.addComponent(system.getPhase(0).getComponent(k).getComponentName(), 1);
 
@@ -129,91 +127,89 @@ public class FreezingPointTemperatureFlashTR extends ConstantDutyTemperatureFlas
       trpTemp = system.getPhase(0).getComponent(k).getTriplePointTemperature();
 
       do {
-        funk = 0.0;
-        deriv = 0.0;
-        iterations++;
-        newTemp = 0.0;
-        temp = system.getTemperature();
-        pres = system.getPressure();
+	funk = 0.0;
+	deriv = 0.0;
+	iterations++;
+	newTemp = 0.0;
+	temp = system.getTemperature();
+	pres = system.getPressure();
 
-        if (temp > trpTemp + 1) {
-          temp = trpTemp;
-        }
-        if (CCequation) {
-          Pvapsolid = system.getPhase(0).getComponent(k).getCCsolidVaporPressure(temp);
-          dfugdt = Math.log((system.getPhase(0).getComponent(k).getCCsolidVaporPressuredT(temp)
-              * Math.exp(solvol / (R * temp) * (pres - Pvapsolid))) / pres);
-        } else {
-          Pvapsolid = system.getPhase(0).getComponent(k).getSolidVaporPressure(temp);
-          dfugdt = Math.log((system.getPhase(0).getComponent(k).getSolidVaporPressuredT(temp)
-              * Math.exp(solvol / (R * temp) * (pres - Pvapsolid))) / pres);
-        }
-        // Pvapsolid = system.getPhase(0).getComponent(k).getCCsolidVaporPressure(temp);
-        // legge in sjekk paa om soldens eksisterer i databasen.
+	if (temp > trpTemp + 1) {
+	  temp = trpTemp;
+	}
+	if (CCequation) {
+	  Pvapsolid = system.getPhase(0).getComponent(k).getCCsolidVaporPressure(temp);
+	  dfugdt = Math.log((system.getPhase(0).getComponent(k).getCCsolidVaporPressuredT(temp)
+	      * Math.exp(solvol / (R * temp) * (pres - Pvapsolid))) / pres);
+	} else {
+	  Pvapsolid = system.getPhase(0).getComponent(k).getSolidVaporPressure(temp);
+	  dfugdt = Math.log((system.getPhase(0).getComponent(k).getSolidVaporPressuredT(temp)
+	      * Math.exp(solvol / (R * temp) * (pres - Pvapsolid))) / pres);
+	}
+	// Pvapsolid = system.getPhase(0).getComponent(k).getCCsolidVaporPressure(temp);
+	// legge in sjekk paa om soldens eksisterer i databasen.
 
-        soldens = system.getPhase(0).getComponent(k).getPureComponentSolidDensity(temp) * 1000;
+	soldens = system.getPhase(0).getComponent(k).getPureComponentSolidDensity(temp) * 1000;
 
-        logger.info("Solid density" + soldens);
+	logger.info("Solid density" + soldens);
 
-        if (soldens > 2000) {
-          soldens = 1000;
-        }
-        solvol = 1.0 / soldens * system.getPhase(0).getComponent(k).getMolarMass();
+	if (soldens > 2000) {
+	  soldens = 1000;
+	}
+	solvol = 1.0 / soldens * system.getPhase(0).getComponent(k).getMolarMass();
 
-        testSystem2.setTemperature(temp);
-        testSystem2.setPressure(Pvapsolid);
-        ops.TPflash();
-        testOps2.TPflash();
-        SolidFug = Pvapsolid / pres * Math.exp(solvol / (R * temp) * (pres - Pvapsolid));
-        SolVapFugCoeff = testSystem2.getPhase(0).getComponent(0).getFugacityCoefficient();
+	testSystem2.setTemperature(temp);
+	testSystem2.setPressure(Pvapsolid);
+	ops.TPflash();
+	testOps2.TPflash();
+	SolidFug = Pvapsolid / pres * Math.exp(solvol / (R * temp) * (pres - Pvapsolid));
+	SolVapFugCoeff = testSystem2.getPhase(0).getComponent(0).getFugacityCoefficient();
 
-        funk = system.getPhases()[0].getComponent(k).getz();
+	funk = system.getPhases()[0].getComponent(k).getz();
 
-        for (int i = 0; i < system.getNumberOfPhases(); i++) {
-          funk -= system.getPhases()[i].getBeta() * SolidFug * SolVapFugCoeff
-              / system.getPhases()[i].getComponent(k).getFugacityCoefficient();
-          deriv -= 0.01 * system.getPhases()[i].getBeta() * (SolidFug * SolVapFugCoeff
-              * Math.exp(system.getPhases()[i].getComponent(k).getdfugdt()) * -1.0
-              / Math.pow(system.getPhases()[i].getComponent(k).getFugacityCoefficient(), 2.0)
-              + Math.exp(dfugdt) / system.getPhases()[i].getComponent(k).getFugacityCoefficient());
-        }
-        if (iterations >= 2) {
-          deriv = -(funk - funkOld) / (system.getTemperature() - oldTemperature);
-        } else {
-          deriv = -funk;
-        }
-        oldTemperature = system.getTemperature();
-        funkOld = funk;
+	for (int i = 0; i < system.getNumberOfPhases(); i++) {
+	  funk -= system.getPhases()[i].getBeta() * SolidFug * SolVapFugCoeff
+	      / system.getPhases()[i].getComponent(k).getFugacityCoefficient();
+	  deriv -= 0.01 * system.getPhases()[i].getBeta()
+	      * (SolidFug * SolVapFugCoeff * Math.exp(system.getPhases()[i].getComponent(k).getdfugdt()) * -1.0
+		  / Math.pow(system.getPhases()[i].getComponent(k).getFugacityCoefficient(), 2.0)
+		  + Math.exp(dfugdt) / system.getPhases()[i].getComponent(k).getFugacityCoefficient());
+	}
+	if (iterations >= 2) {
+	  deriv = -(funk - funkOld) / (system.getTemperature() - oldTemperature);
+	} else {
+	  deriv = -funk;
+	}
+	oldTemperature = system.getTemperature();
+	funkOld = funk;
 
-        if (oldTemperature < trpTemp + 1) {
-          newTemp =
-              system.getTemperature() + 0.5 * (iterations / (10.0 + iterations)) * funk / deriv;
-        } else {
-          newTemp = system.getTemperature() + 0.5 * (iterations / (10.0 + iterations)) * funk;
-        }
-        logger.info("newTEmp  " + newTemp);
-        if (newTemp > (trpTemp + 5)) {
-          system.setTemperature(
-              system.getPhases()[0].getComponent(k).getTriplePointTemperature() + 0.4);
-        } else if (newTemp < 1) {
-          system.setTemperature(oldTemperature + 2);
-          // } else if(newTemp=="NaN") { system.setTemperature(oldTemperature*0.9374);
-        } else {
-          system.setTemperature(newTemp);
-        }
-        logger.info("funk " + funk);
-        logger.info("temperature " + system.getTemperature());
+	if (oldTemperature < trpTemp + 1) {
+	  newTemp = system.getTemperature() + 0.5 * (iterations / (10.0 + iterations)) * funk / deriv;
+	} else {
+	  newTemp = system.getTemperature() + 0.5 * (iterations / (10.0 + iterations)) * funk;
+	}
+	logger.info("newTEmp  " + newTemp);
+	if (newTemp > (trpTemp + 5)) {
+	  system.setTemperature(system.getPhases()[0].getComponent(k).getTriplePointTemperature() + 0.4);
+	} else if (newTemp < 1) {
+	  system.setTemperature(oldTemperature + 2);
+	  // } else if(newTemp=="NaN") { system.setTemperature(oldTemperature*0.9374);
+	} else {
+	  system.setTemperature(newTemp);
+	}
+	logger.info("funk " + funk);
+	logger.info("temperature " + system.getTemperature());
       } while ((Math.abs(funk) >= 0.001 && iterations < 100));
       FCompTemp[k] = system.getTemperature();
       logger.info("iterations " + iterations);
       Niterations = iterations;
       // logger.info("funk " + funk + k + " " + system.getTemperature());
       if (system.getTemperature() < minTemperature) {
-        minTemperature = system.getTemperature();
+	minTemperature = system.getTemperature();
       }
       if (system.getTemperature() > maxTemperature) {
-        maxTemperature = system.getTemperature();
-        // Testfunk = funk;
+	maxTemperature = system.getTemperature();
+	// Testfunk = funk;
       }
     }
     // }
@@ -241,12 +237,10 @@ public class FreezingPointTemperatureFlashTR extends ConstantDutyTemperatureFlas
       pr_writer.flush();
 
       for (int k = 0; k < system.getPhases()[0].getNumberOfComponents(); k++) {
-        // print line to output file
-        pr_writer.println(FCompNames[k] + "," + java.lang.Double.toString(FCompTemp[k]) + ","
-            + system.getPressure() + ","
-            + java.lang.Double.toString(system.getPhases()[0].getComponent(k).getz()) + ","
-            + Niterations);
-        pr_writer.flush();
+	// print line to output file
+	pr_writer.println(FCompNames[k] + "," + java.lang.Double.toString(FCompTemp[k]) + "," + system.getPressure()
+	    + "," + java.lang.Double.toString(system.getPhases()[0].getComponent(k).getz()) + "," + Niterations);
+	pr_writer.flush();
       }
     } catch (SecurityException ex) {
       logger.info("writeFile: caught security exception");

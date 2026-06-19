@@ -62,15 +62,13 @@ class FieldDevelopmentDesignOrchestratorTest {
     @Test
     @DisplayName("Should throw exception for null process system")
     void shouldThrowForNullProcessSystem() {
-      assertThrows(IllegalArgumentException.class,
-          () -> new FieldDevelopmentDesignOrchestrator(null, "PROJECT"));
+      assertThrows(IllegalArgumentException.class, () -> new FieldDevelopmentDesignOrchestrator(null, "PROJECT"));
     }
 
     @Test
     @DisplayName("Should use DEFAULT for null project ID")
     void shouldUseDefaultForNullProjectId() {
-      FieldDevelopmentDesignOrchestrator orch =
-          new FieldDevelopmentDesignOrchestrator(processSystem, null);
+      FieldDevelopmentDesignOrchestrator orch = new FieldDevelopmentDesignOrchestrator(processSystem, null);
       assertEquals("DEFAULT", orch.getProjectId());
     }
 
@@ -103,8 +101,7 @@ class FieldDevelopmentDesignOrchestratorTest {
     @Test
     @DisplayName("Should support method chaining")
     void shouldSupportChaining() {
-      FieldDevelopmentDesignOrchestrator result =
-          orchestrator.setDesignPhase(DesignPhase.DETAIL_DESIGN);
+      FieldDevelopmentDesignOrchestrator result = orchestrator.setDesignPhase(DesignPhase.DETAIL_DESIGN);
       assertEquals(orchestrator, result);
     }
   }
@@ -187,8 +184,7 @@ class FieldDevelopmentDesignOrchestratorTest {
     void shouldPopulateWorkflowHistory() {
       orchestrator.runCompleteDesignWorkflow();
 
-      List<FieldDevelopmentDesignOrchestrator.WorkflowStep> history =
-          orchestrator.getWorkflowHistory();
+      List<FieldDevelopmentDesignOrchestrator.WorkflowStep> history = orchestrator.getWorkflowHistory();
       assertFalse(history.isEmpty());
 
       // Check key steps are recorded
@@ -197,15 +193,15 @@ class FieldDevelopmentDesignOrchestratorTest {
       boolean hasDesignStep = false;
 
       for (FieldDevelopmentDesignOrchestrator.WorkflowStep step : history) {
-        if (step.getStepName().contains("Initialize")) {
-          hasInitStep = true;
-        }
-        if (step.getStepName().contains("Simulation")) {
-          hasSimStep = true;
-        }
-        if (step.getStepName().contains("Mechanical")) {
-          hasDesignStep = true;
-        }
+	if (step.getStepName().contains("Initialize")) {
+	  hasInitStep = true;
+	}
+	if (step.getStepName().contains("Simulation")) {
+	  hasSimStep = true;
+	}
+	if (step.getStepName().contains("Mechanical")) {
+	  hasDesignStep = true;
+	}
       }
 
       assertTrue(hasInitStep);

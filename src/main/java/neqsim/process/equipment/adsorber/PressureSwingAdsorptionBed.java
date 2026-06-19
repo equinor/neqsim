@@ -11,18 +11,17 @@ import neqsim.thermo.system.SystemInterface;
  * Pressure-Swing-Adsorption (PSA) bed pre-configured for hydrogen purification.
  *
  * <p>
- * Thin specialisation of {@link AdsorptionBed} that picks defaults appropriate for industrial H2
- * purification trains downstream of steam-methane-reforming + water-gas-shift, e.g. the Skarstrom /
- * 4-bed / 6-bed configurations described in Yang (Adsorbents: Fundamentals and Applications, 2003)
- * and Ruthven (Principles of Adsorption and Adsorption Processes, 1984).
+ * Thin specialisation of {@link AdsorptionBed} that picks defaults appropriate for industrial H2 purification trains
+ * downstream of steam-methane-reforming + water-gas-shift, e.g. the Skarstrom / 4-bed / 6-bed configurations described
+ * in Yang (Adsorbents: Fundamentals and Applications, 2003) and Ruthven (Principles of Adsorption and Adsorption
+ * Processes, 1984).
  * </p>
  *
  * <p>
- * Hydrogen has a much lower Langmuir affinity than CO, CO2, CH4, N2 on activated carbon and zeolite
- * 13X, so H2 passes through the bed largely unadsorbed while the heavier components are captured.
- * The bed therefore behaves as an inverted separator: the {@link #getOutletStream() outlet stream}
- * is the H2 product, and the adsorbed components are reported as the
- * {@link #getTailGasComposition() tail-gas composition}.
+ * Hydrogen has a much lower Langmuir affinity than CO, CO2, CH4, N2 on activated carbon and zeolite 13X, so H2 passes
+ * through the bed largely unadsorbed while the heavier components are captured. The bed therefore behaves as an
+ * inverted separator: the {@link #getOutletStream() outlet stream} is the H2 product, and the adsorbed components are
+ * reported as the {@link #getTailGasComposition() tail-gas composition}.
  * </p>
  *
  * <p>
@@ -36,9 +35,9 @@ import neqsim.thermo.system.SystemInterface;
  * </ul>
  *
  * <p>
- * Only the steady-state, cyclic-steady-state representation is implemented here; cycle-resolved
- * transient simulation is provided by the inherited {@link AdsorptionBed#runTransient runTransient}
- * method together with {@link AdsorptionCycleController}.
+ * Only the steady-state, cyclic-steady-state representation is implemented here; cycle-resolved transient simulation is
+ * provided by the inherited {@link AdsorptionBed#runTransient runTransient} method together with
+ * {@link AdsorptionCycleController}.
  * </p>
  *
  * @author NeqSim contributors
@@ -58,8 +57,8 @@ public class PressureSwingAdsorptionBed extends AdsorptionBed {
     /** Activated carbon — strong CO2/CH4/HC affinity, used as the bulk-removal layer. */
     ACTIVATED_CARBON("AC", 500.0),
     /**
-     * Zeolite 13X — used as a polishing layer for N2 and residual CO/CO2 in industrial H2-PSA
-     * skids. Higher bulk density than activated carbon.
+     * Zeolite 13X — used as a polishing layer for N2 and residual CO/CO2 in industrial H2-PSA skids. Higher bulk
+     * density than activated carbon.
      */
     ZEOLITE_13X("Zeolite 13X", 700.0);
 
@@ -106,8 +105,8 @@ public class PressureSwingAdsorptionBed extends AdsorptionBed {
   private double h2Recovery = 0.0;
 
   /**
-   * Tail-gas mole flow per component (mol/s), in feed-stream component order. The tail gas is the
-   * difference between feed and product.
+   * Tail-gas mole flow per component (mol/s), in feed-stream component order. The tail gas is the difference between
+   * feed and product.
    */
   private double[] tailGasMoleFlow;
 
@@ -131,7 +130,7 @@ public class PressureSwingAdsorptionBed extends AdsorptionBed {
   /**
    * Construct a PSA bed with the given name, inlet stream, and Skarstrom-cycle defaults.
    *
-   * @param name name of the unit operation
+   * @param name        name of the unit operation
    * @param inletStream feed stream (typically shifted syngas at 20-30 bara)
    */
   public PressureSwingAdsorptionBed(String name, StreamInterface inletStream) {
@@ -140,8 +139,8 @@ public class PressureSwingAdsorptionBed extends AdsorptionBed {
   }
 
   /**
-   * Apply typical industrial H2-PSA defaults: Langmuir isotherm, activated carbon, 2 m diameter by
-   * 4 m bed height, 35% void fraction, Ergun pressure drop on.
+   * Apply typical industrial H2-PSA defaults: Langmuir isotherm, activated carbon, 2 m diameter by 4 m bed height, 35%
+   * void fraction, Ergun pressure drop on.
    */
   private void applyPsaDefaults() {
     setIsothermType(IsothermType.LANGMUIR);
@@ -180,8 +179,8 @@ public class PressureSwingAdsorptionBed extends AdsorptionBed {
   }
 
   /**
-   * Set the cycle-averaged H2 recovery factor. Industrial H2-PSA skids typically achieve 0.75-0.90
-   * depending on the number of pressure-equalisation steps.
+   * Set the cycle-averaged H2 recovery factor. Industrial H2-PSA skids typically achieve 0.75-0.90 depending on the
+   * number of pressure-equalisation steps.
    *
    * @param recoveryTarget recovery fraction, 0..1
    */
@@ -213,10 +212,10 @@ public class PressureSwingAdsorptionBed extends AdsorptionBed {
    * </p>
    * <ol>
    * <li>Captures feed H2 mole flow.</li>
-   * <li>Delegates to {@link AdsorptionBed#run(UUID)} to perform the equilibrium-NTU calculation,
-   * which adsorbs heavier components and lets H2 pass through.</li>
-   * <li>Applies the cycle-averaged recovery factor by venting a fraction of the H2 in the product
-   * back into the tail gas (purge / pressure-equalisation losses).</li>
+   * <li>Delegates to {@link AdsorptionBed#run(UUID)} to perform the equilibrium-NTU calculation, which adsorbs heavier
+   * components and lets H2 pass through.</li>
+   * <li>Applies the cycle-averaged recovery factor by venting a fraction of the H2 in the product back into the tail
+   * gas (purge / pressure-equalisation losses).</li>
    * <li>Computes H2 purity, H2 recovery, and the tail-gas mole-flow vector.</li>
    * </ol>
    *
@@ -252,8 +251,8 @@ public class PressureSwingAdsorptionBed extends AdsorptionBed {
       double targetProductH2 = Math.min(recoveredH2, currentProductH2);
       double h2ToVent = currentProductH2 - targetProductH2;
       if (h2ToVent > 1e-15) {
-        product.addComponent(hydrogenComponentIndex, -h2ToVent);
-        productMoles[hydrogenComponentIndex] = targetProductH2;
+	product.addComponent(hydrogenComponentIndex, -h2ToVent);
+	productMoles[hydrogenComponentIndex] = targetProductH2;
       }
     }
 
@@ -263,8 +262,8 @@ public class PressureSwingAdsorptionBed extends AdsorptionBed {
     for (int i = 0; i < numComp; i++) {
       double tail = feedMoles[i] - productMoles[i];
       if (tail < 0.0) {
-        // Numerical noise; clip to zero.
-        tail = 0.0;
+	// Numerical noise; clip to zero.
+	tail = 0.0;
       }
       tailGasMoleFlow[i] = tail;
       tailGasTotal += tail;
@@ -276,12 +275,11 @@ public class PressureSwingAdsorptionBed extends AdsorptionBed {
       productTotal += productMoles[i];
     }
 
-    h2Purity = productTotal > 0.0 && hydrogenComponentIndex >= 0
-        ? productMoles[hydrogenComponentIndex] / productTotal
-        : 0.0;
+    h2Purity = productTotal > 0.0 && hydrogenComponentIndex >= 0 ? productMoles[hydrogenComponentIndex] / productTotal
+	: 0.0;
     h2Recovery = feedH2MoleFlow > 0.0 && hydrogenComponentIndex >= 0
-        ? productMoles[hydrogenComponentIndex] / feedH2MoleFlow
-        : 0.0;
+	? productMoles[hydrogenComponentIndex] / feedH2MoleFlow
+	: 0.0;
 
     if (tailGasTotal <= 0.0) {
       logger.debug("PSA tail-gas total flow is zero — feed may contain only H2.");
@@ -311,8 +309,8 @@ public class PressureSwingAdsorptionBed extends AdsorptionBed {
   }
 
   /**
-   * Get the tail-gas mole flow per component (mol/s), in feed-stream component order. Returns
-   * {@code null} if {@link #run(UUID)} has not been called.
+   * Get the tail-gas mole flow per component (mol/s), in feed-stream component order. Returns {@code null} if
+   * {@link #run(UUID)} has not been called.
    *
    * @return per-component tail-gas mole flow (mol/s), or null
    */
@@ -321,8 +319,8 @@ public class PressureSwingAdsorptionBed extends AdsorptionBed {
   }
 
   /**
-   * Get the tail-gas composition (mole fractions), in feed-stream component order. Returns
-   * {@code null} if {@link #run(UUID)} has not been called or the tail gas is empty.
+   * Get the tail-gas composition (mole fractions), in feed-stream component order. Returns {@code null} if
+   * {@link #run(UUID)} has not been called or the tail gas is empty.
    *
    * @return per-component tail-gas mole fractions (sum to 1), or null
    */
@@ -355,11 +353,11 @@ public class PressureSwingAdsorptionBed extends AdsorptionBed {
     for (int i = 0; i < n; i++) {
       String name = system.getPhase(0).getComponent(i).getComponentName();
       if (name == null) {
-        continue;
+	continue;
       }
       String lower = name.toLowerCase();
       if (lower.equals("hydrogen") || lower.equals("h2")) {
-        return i;
+	return i;
       }
     }
     return -1;

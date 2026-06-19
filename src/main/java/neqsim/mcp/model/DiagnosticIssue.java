@@ -6,9 +6,9 @@ import com.google.gson.JsonObject;
  * A diagnostic issue found during validation or simulation.
  *
  * <p>
- * Unifies the issue format used by {@code Validator.Issue} and {@code SimulationResult.ErrorDetail}
- * into a single model for MCP responses. Each issue has a severity, machine-readable code,
- * human-readable message, and an optional remediation hint.
+ * Unifies the issue format used by {@code Validator.Issue} and {@code SimulationResult.ErrorDetail} into a single model
+ * for MCP responses. Each issue has a severity, machine-readable code, human-readable message, and an optional
+ * remediation hint.
  * </p>
  *
  * @author Even Solbraa
@@ -24,9 +24,9 @@ public class DiagnosticIssue {
   /**
    * Creates a diagnostic issue.
    *
-   * @param severity "error" or "warning"
-   * @param code machine-readable issue code (e.g., "UNKNOWN_COMPONENT")
-   * @param message human-readable description
+   * @param severity    "error" or "warning"
+   * @param code        machine-readable issue code (e.g., "UNKNOWN_COMPONENT")
+   * @param message     human-readable description
    * @param remediation how to fix the issue, or null
    */
   public DiagnosticIssue(String severity, String code, String message, String remediation) {
@@ -39,8 +39,8 @@ public class DiagnosticIssue {
   /**
    * Creates an error-level issue.
    *
-   * @param code the issue code
-   * @param message the description
+   * @param code        the issue code
+   * @param message     the description
    * @param remediation how to fix
    * @return the issue
    */
@@ -51,8 +51,8 @@ public class DiagnosticIssue {
   /**
    * Creates a warning-level issue.
    *
-   * @param code the issue code
-   * @param message the description
+   * @param code        the issue code
+   * @param message     the description
    * @param remediation how to fix
    * @return the issue
    */
@@ -123,7 +123,6 @@ public class DiagnosticIssue {
 
   @Override
   public String toString() {
-    return "[" + severity + "] " + code + ": " + message
-        + (remediation != null ? " | Fix: " + remediation : "");
+    return "[" + severity + "] " + code + ": " + message + (remediation != null ? " | Fix: " + remediation : "");
   }
 }

@@ -16,9 +16,8 @@ import neqsim.process.mechanicaldesign.MechanicalDesign;
  * Mechanical design class for mercury removal guard beds.
  *
  * <p>
- * Sizes the pressure vessel (shell, heads, nozzles, internals) for a fixed-bed mercury
- * chemisorption unit based on ASME Section VIII Division 1 or equivalent codes. Includes weight
- * breakdown, footprint estimation, and cost estimation.
+ * Sizes the pressure vessel (shell, heads, nozzles, internals) for a fixed-bed mercury chemisorption unit based on ASME
+ * Section VIII Division 1 or equivalent codes. Includes weight breakdown, footprint estimation, and cost estimation.
  * </p>
  *
  * @author Even Solbraa
@@ -87,7 +86,7 @@ public class MercuryRemovalMechanicalDesign extends MechanicalDesign {
       double allowableStress = 137.9; // MPa for SA-516-70 at moderate temperature
       double jointEfficiency = 0.85;
       wallThickness = (designPressureMPa * bedDiameter * 1000.0)
-          / (2.0 * allowableStress * jointEfficiency - designPressureMPa);
+	  / (2.0 * allowableStress * jointEfficiency - designPressureMPa);
       wallThickness = Math.max(wallThickness, 6.0); // minimum 6 mm
     }
 
@@ -109,7 +108,6 @@ public class MercuryRemovalMechanicalDesign extends MechanicalDesign {
 
     double dryWeight = emptyVesselWeight + internalsWeight + externalNozzlesWeight;
     double totalSkidWeight = dryWeight + pipingWeight + structuralWeight + electricalWeight;
-
 
     // Set results on base class
     setOuterDiameter(innerDiameter + 2.0 * wallThickness / 1000.0);
@@ -152,8 +150,7 @@ public class MercuryRemovalMechanicalDesign extends MechanicalDesign {
 
     // Sorbent charge
     Map<String, Object> sorbent = new LinkedHashMap<String, Object>();
-    sorbent.put("item",
-        "Sorbent Charge (" + ((MercuryRemovalBed) getProcessEquipment()).getSorbentType() + ")");
+    sorbent.put("item", "Sorbent Charge (" + ((MercuryRemovalBed) getProcessEquipment()).getSorbentType() + ")");
     sorbent.put("material", ((MercuryRemovalBed) getProcessEquipment()).getSorbentType());
     sorbent.put("weight_kg", sorbentChargeWeight);
     bom.add(sorbent);
@@ -226,18 +223,17 @@ public class MercuryRemovalMechanicalDesign extends MechanicalDesign {
     for (Map<String, Object> item : generateBillOfMaterials()) {
       JsonObject bomItem = new JsonObject();
       for (Map.Entry<String, Object> entry : item.entrySet()) {
-        if (entry.getValue() instanceof Number) {
-          bomItem.addProperty(entry.getKey(), (Number) entry.getValue());
-        } else {
-          bomItem.addProperty(entry.getKey(), String.valueOf(entry.getValue()));
-        }
+	if (entry.getValue() instanceof Number) {
+	  bomItem.addProperty(entry.getKey(), (Number) entry.getValue());
+	} else {
+	  bomItem.addProperty(entry.getKey(), String.valueOf(entry.getValue()));
+	}
       }
       bomArr.add(bomItem);
     }
     json.add("billOfMaterials", bomArr);
 
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(json);
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(json);
   }
 
   // ======================================================================

@@ -18,8 +18,7 @@ class BiorefineryCostEstimatorTest {
     est.calculate();
 
     // At base capacity, PEC should equal base cost (2500 kUSD) * location(1.0) * escalation(1.0)
-    assertEquals(2500e3, est.getTotalPurchasedEquipmentCostUSD(), 1.0,
-        "PEC at base capacity should be base cost");
+    assertEquals(2500e3, est.getTotalPurchasedEquipmentCostUSD(), 1.0, "PEC at base capacity should be base cost");
     // Installed = PEC * 2.5 (installation factor for digester)
     assertEquals(2500e3 * 2.5, est.getTotalInstalledCostUSD(), 1.0);
     // CAPEX = installed * (1 + 15% contingency)
@@ -36,12 +35,10 @@ class BiorefineryCostEstimatorTest {
     large.addEquipment(BiorefineryCostEstimator.BiorefineryEquipment.BIOMASS_GASIFIER, 2000.0);
     large.calculate();
 
-    assertTrue(large.getTotalCapexUSD() > small.getTotalCapexUSD(),
-        "Larger capacity should cost more");
+    assertTrue(large.getTotalCapexUSD() > small.getTotalCapexUSD(), "Larger capacity should cost more");
     // Economy of scale: doubling capacity shouldn't double cost
     double ratio = large.getTotalCapexUSD() / small.getTotalCapexUSD();
-    assertTrue(ratio < 4.0,
-        "Economy of scale: 4x capacity should be less than 4x cost, got " + ratio);
+    assertTrue(ratio < 4.0, "Economy of scale: 4x capacity should be less than 4x cost, got " + ratio);
   }
 
   @Test
@@ -54,7 +51,7 @@ class BiorefineryCostEstimatorTest {
 
     assertTrue(est.getTotalCapexUSD() > 0.0, "CAPEX should be positive");
     assertTrue(est.getTotalInstalledCostUSD() > est.getTotalPurchasedEquipmentCostUSD(),
-        "Installed cost should exceed purchased cost");
+	"Installed cost should exceed purchased cost");
   }
 
   @Test
@@ -65,10 +62,9 @@ class BiorefineryCostEstimatorTest {
     est.setBiomassConsumptionTonnesPerYear(50000.0);
     est.calculate();
 
-    assertEquals(40.0 * 50000.0, est.getAnnualFeedstockCostUSD(), 1.0,
-        "Feedstock cost = price * consumption");
+    assertEquals(40.0 * 50000.0, est.getAnnualFeedstockCostUSD(), 1.0, "Feedstock cost = price * consumption");
     assertTrue(est.getAnnualOpexUSD() > est.getAnnualFeedstockCostUSD(),
-        "Total OPEX should exceed feedstock cost alone");
+	"Total OPEX should exceed feedstock cost alone");
   }
 
   @Test
@@ -110,8 +106,7 @@ class BiorefineryCostEstimatorTest {
     nordic.setLocationFactor(1.5); // Scandinavian cost premium
     nordic.calculate();
 
-    assertTrue(nordic.getTotalCapexUSD() > usgc.getTotalCapexUSD(),
-        "Higher location factor should give higher CAPEX");
+    assertTrue(nordic.getTotalCapexUSD() > usgc.getTotalCapexUSD(), "Higher location factor should give higher CAPEX");
     double ratio = nordic.getTotalCapexUSD() / usgc.getTotalCapexUSD();
     assertEquals(1.5, ratio, 0.01, "CAPEX ratio should equal location factor ratio");
   }
@@ -185,15 +180,14 @@ class BiorefineryCostEstimatorTest {
   @Test
   void testAllEquipmentTypes() {
     // Verify all equipment types produce reasonable costs
-    for (BiorefineryCostEstimator.BiorefineryEquipment eq : BiorefineryCostEstimator.BiorefineryEquipment
-        .values()) {
+    for (BiorefineryCostEstimator.BiorefineryEquipment eq : BiorefineryCostEstimator.BiorefineryEquipment.values()) {
       BiorefineryCostEstimator est = new BiorefineryCostEstimator();
       est.addEquipment(eq, eq.getBaseCapacity());
       est.calculate();
 
       assertTrue(est.getTotalCapexUSD() > 0.0, eq.getDisplayName() + " should have positive CAPEX");
       assertTrue(est.getTotalInstalledCostUSD() > est.getTotalPurchasedEquipmentCostUSD(),
-          eq.getDisplayName() + ": installed > purchased");
+	  eq.getDisplayName() + ": installed > purchased");
     }
   }
 

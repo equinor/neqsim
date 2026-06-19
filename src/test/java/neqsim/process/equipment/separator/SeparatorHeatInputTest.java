@@ -196,9 +196,8 @@ public class SeparatorHeatInputTest {
 
     // Print results for verification
     logger.printf(org.apache.logging.log4j.Level.INFO, "Flare heat duty: %.2f kW%n", flareHeatDuty);
-    logger.printf(org.apache.logging.log4j.Level.INFO, "Radiation flux at %sm: %.2f W/m²%n",
-        distance, radiationFlux);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Radiation flux at %sm: %.2f W/m²%n", distance, radiationFlux);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Heat input to separator: %.2f kW%n",
-        radiationHeatInput / 1000.0);
+	radiationHeatInput / 1000.0);
   }
 }

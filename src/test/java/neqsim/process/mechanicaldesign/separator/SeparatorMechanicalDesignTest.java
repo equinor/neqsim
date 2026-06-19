@@ -158,8 +158,7 @@ public class SeparatorMechanicalDesignTest {
     assertTrue(mechDesign.validateLiquidVelocity(maxVel * 0.5), "Velocity 50% of max should pass");
 
     // Test with velocity above limit
-    assertFalse(mechDesign.validateLiquidVelocity(maxVel * 1.5),
-        "Velocity 150% of max should fail");
+    assertFalse(mechDesign.validateLiquidVelocity(maxVel * 1.5), "Velocity 150% of max should fail");
   }
 
   @Test
@@ -167,12 +166,11 @@ public class SeparatorMechanicalDesignTest {
     double minOilTime = mechDesign.getMinOilRetentionTime();
 
     // Test with adequate retention time
-    assertTrue(mechDesign.validateRetentionTime(minOilTime * 2, true),
-        "Retention time 2x minimum should pass for oil");
+    assertTrue(mechDesign.validateRetentionTime(minOilTime * 2, true), "Retention time 2x minimum should pass for oil");
 
     // Test with inadequate retention time
     assertFalse(mechDesign.validateRetentionTime(minOilTime * 0.5, true),
-        "Retention time 0.5x minimum should fail for oil");
+	"Retention time 0.5x minimum should fail for oil");
   }
 
   @Test
@@ -180,18 +178,15 @@ public class SeparatorMechanicalDesignTest {
     double designDiam = mechDesign.getDropletDiameterGasLiquid();
 
     // Test with larger droplets (easier to separate)
-    assertTrue(mechDesign.validateDropletDiameter(designDiam * 2, true),
-        "Droplets 2x design should pass");
+    assertTrue(mechDesign.validateDropletDiameter(designDiam * 2, true), "Droplets 2x design should pass");
 
     // Test with smaller droplets (harder to separate)
-    assertFalse(mechDesign.validateDropletDiameter(designDiam * 0.5, true),
-        "Droplets 0.5x design should fail");
+    assertFalse(mechDesign.validateDropletDiameter(designDiam * 0.5, true), "Droplets 0.5x design should fail");
   }
 
   @Test
   public void testComprehensiveValidation() {
-    SeparatorMechanicalDesign.SeparatorValidationResult result =
-        mechDesign.validateDesignComprehensive();
+    SeparatorMechanicalDesign.SeparatorValidationResult result = mechDesign.validateDesignComprehensive();
 
     assertNotNull(result, "Validation result should not be null");
     assertNotNull(result.getIssues(), "Issues list should not be null");
@@ -199,7 +194,7 @@ public class SeparatorMechanicalDesignTest {
     logger.info("Separator validation valid: " + result.isValid());
     if (!result.isValid()) {
       for (String issue : result.getIssues()) {
-        logger.info("  Issue: " + issue);
+	logger.info("  Issue: " + issue);
       }
     }
   }
@@ -214,11 +209,11 @@ public class SeparatorMechanicalDesignTest {
 
     // Check process design parameters are populated
     assertEquals(mechDesign.getFoamAllowanceFactor(), response.getFoamAllowanceFactor(), 0.001,
-        "Foam allowance factor should match");
-    assertEquals(mechDesign.getDropletDiameterGasLiquid(), response.getDropletDiameterGasLiquid(),
-        0.001, "Gas-liquid droplet diameter should match");
+	"Foam allowance factor should match");
+    assertEquals(mechDesign.getDropletDiameterGasLiquid(), response.getDropletDiameterGasLiquid(), 0.001,
+	"Gas-liquid droplet diameter should match");
     assertEquals(mechDesign.getDemisterPressureDrop(), response.getDemisterPressureDrop(), 0.001,
-        "Demister pressure drop should match");
+	"Demister pressure drop should match");
 
     logger.info("Response class populated successfully");
   }
@@ -230,20 +225,16 @@ public class SeparatorMechanicalDesignTest {
   @Test
   public void testEntrainmentFieldsDefaultWhenNotEnabled() {
     // Without enabling detailed entrainment, fields should be at defaults
-    assertFalse(mechDesign.isDetailedEntrainmentUsed(),
-        "Detailed entrainment should be false by default");
-    assertEquals(0.0, mechDesign.getOilInGasFraction(), 1e-10,
-        "Oil-in-gas fraction should be 0 when not enabled");
-    assertEquals(0.0, mechDesign.getWaterInGasFraction(), 1e-10,
-        "Water-in-gas fraction should be 0 when not enabled");
+    assertFalse(mechDesign.isDetailedEntrainmentUsed(), "Detailed entrainment should be false by default");
+    assertEquals(0.0, mechDesign.getOilInGasFraction(), 1e-10, "Oil-in-gas fraction should be 0 when not enabled");
+    assertEquals(0.0, mechDesign.getWaterInGasFraction(), 1e-10, "Water-in-gas fraction should be 0 when not enabled");
     assertEquals(1.0, mechDesign.getLiquidInGasCalibrationFactor(), 1e-10,
-        "LIG calibration factor should be 1.0 when not enabled");
+	"LIG calibration factor should be 1.0 when not enabled");
     assertEquals(1.0, mechDesign.getGasCarryUnderCalibrationFactor(), 1e-10,
-        "GCU calibration factor should be 1.0 when not enabled");
+	"GCU calibration factor should be 1.0 when not enabled");
     assertEquals(1.0, mechDesign.getLiquidLiquidCalibrationFactor(), 1e-10,
-        "LL calibration factor should be 1.0 when not enabled");
-    assertFalse(mechDesign.isMistEliminatorFlooded(),
-        "Mist eliminator should not be flooded by default");
+	"LL calibration factor should be 1.0 when not enabled");
+    assertFalse(mechDesign.isMistEliminatorFlooded(), "Mist eliminator should not be flooded by default");
   }
 
   @Test
@@ -270,10 +261,8 @@ public class SeparatorMechanicalDesignTest {
     SeparatorMechanicalDesign design = (SeparatorMechanicalDesign) sep.getMechanicalDesign();
     design.calcDesign();
 
-    assertTrue(design.isDetailedEntrainmentUsed(),
-        "Detailed entrainment should be enabled after calcDesign");
-    System.out
-        .println("Entrainment enabled — efficiency: " + design.getOverallGasLiquidEfficiency());
+    assertTrue(design.isDetailedEntrainmentUsed(), "Detailed entrainment should be enabled after calcDesign");
+    System.out.println("Entrainment enabled — efficiency: " + design.getOverallGasLiquidEfficiency());
     logger.info("Oil-in-gas: " + design.getOilInGasFraction());
     logger.info("K-factor utilization: " + design.getKFactorUtilization());
     logger.info("Mist eliminator flooded: " + design.isMistEliminatorFlooded());
@@ -284,11 +273,10 @@ public class SeparatorMechanicalDesignTest {
     // The performance calculator is populated after run() — entrainment fractions
     // and efficiency should be populated (may be 0 if no gas-liquid separation
     // is computed, but the fields should be available).
-    assertTrue(design.getOverallGasLiquidEfficiency() >= 0,
-        "Overall gas-liquid efficiency should be >= 0");
+    assertTrue(design.getOverallGasLiquidEfficiency() >= 0, "Overall gas-liquid efficiency should be >= 0");
     assertNotNull(design.getEntrainmentDetailJson(), "Entrainment detail JSON should not be null");
     assertTrue(design.getEntrainmentDetailJson().contains("overallGasLiquidEfficiency"),
-        "Entrainment JSON should contain efficiency field");
+	"Entrainment JSON should contain efficiency field");
   }
 
   @Test
@@ -318,13 +306,10 @@ public class SeparatorMechanicalDesignTest {
     // Get JSON output
     String json = design.toJson();
     assertNotNull(json, "JSON output should not be null");
-    assertTrue(json.contains("detailedEntrainmentUsed"),
-        "JSON should contain detailedEntrainmentUsed");
-    assertTrue(json.contains("overallGasLiquidEfficiency"),
-        "JSON should contain overallGasLiquidEfficiency");
+    assertTrue(json.contains("detailedEntrainmentUsed"), "JSON should contain detailedEntrainmentUsed");
+    assertTrue(json.contains("overallGasLiquidEfficiency"), "JSON should contain overallGasLiquidEfficiency");
     assertTrue(json.contains("oilInGasFraction"), "JSON should contain oilInGasFraction");
-    assertTrue(json.contains("liquidInGasCalibrationFactor"),
-        "JSON should contain calibration factor");
+    assertTrue(json.contains("liquidInGasCalibrationFactor"), "JSON should contain calibration factor");
 
     logger.info("Entrainment data present in mechanical design JSON: OK");
   }
@@ -357,14 +342,12 @@ public class SeparatorMechanicalDesignTest {
 
     // Verify response fields match design fields
     assertEquals(design.isDetailedEntrainmentUsed(), response.isDetailedEntrainmentUsed(),
-        "detailedEntrainmentUsed should match");
-    assertEquals(design.getOverallGasLiquidEfficiency(), response.getOverallGasLiquidEfficiency(),
-        1e-10, "overallGasLiquidEfficiency should match");
-    assertEquals(design.getOilInGasFraction(), response.getOilInGasFraction(), 1e-10,
-        "oilInGasFraction should match");
-    assertEquals(design.getLiquidInGasCalibrationFactor(),
-        response.getLiquidInGasCalibrationFactor(), 1e-10,
-        "liquidInGasCalibrationFactor should match");
+	"detailedEntrainmentUsed should match");
+    assertEquals(design.getOverallGasLiquidEfficiency(), response.getOverallGasLiquidEfficiency(), 1e-10,
+	"overallGasLiquidEfficiency should match");
+    assertEquals(design.getOilInGasFraction(), response.getOilInGasFraction(), 1e-10, "oilInGasFraction should match");
+    assertEquals(design.getLiquidInGasCalibrationFactor(), response.getLiquidInGasCalibrationFactor(), 1e-10,
+	"liquidInGasCalibrationFactor should match");
   }
 
   // ============================================================================
@@ -378,8 +361,7 @@ public class SeparatorMechanicalDesignTest {
 
     // Verify that the separator's performance calculator received the value
     double actual = mechDesign.getInletPipeDiameter();
-    assertEquals(diameter, actual, 1e-6,
-        "Inlet pipe diameter should be set via MechanicalDesign bridge");
+    assertEquals(diameter, actual, 1e-6, "Inlet pipe diameter should be set via MechanicalDesign bridge");
   }
 
   @Test
@@ -394,15 +376,13 @@ public class SeparatorMechanicalDesignTest {
     int initialCount = mechDesign.getSeparatorSections().size();
     mechDesign.addSeparatorSection("DemisterMesh", "meshpad");
     int afterCount = mechDesign.getSeparatorSections().size();
-    assertTrue(afterCount > initialCount,
-        "Adding a section via MechanicalDesign should increase section count");
+    assertTrue(afterCount > initialCount, "Adding a section via MechanicalDesign should increase section count");
   }
 
   @Test
   public void testGetSeparatorSectionByName() {
     mechDesign.addSeparatorSection("TestVane", "vane");
-    assertNotNull(mechDesign.getSeparatorSection("TestVane"),
-        "Should retrieve section by name via MechanicalDesign");
+    assertNotNull(mechDesign.getSeparatorSection("TestVane"), "Should retrieve section by name via MechanicalDesign");
   }
 
   @Test
@@ -421,12 +401,11 @@ public class SeparatorMechanicalDesignTest {
     mechDesign.setWeirHeightAbsolute(height);
 
     // Verify value propagated to Separator
-    assertEquals(height, separator.getWeirHeight(), 1e-6,
-        "Weir height should be set on Separator via bridge");
+    assertEquals(height, separator.getWeirHeight(), 1e-6, "Weir height should be set on Separator via bridge");
 
     // Verify MechanicalDesign getter returns same value
     assertEquals(height, mechDesign.getWeirHeightAbsolute(), 1e-6,
-        "getWeirHeightAbsolute should return value from Separator");
+	"getWeirHeightAbsolute should return value from Separator");
   }
 
   @Test
@@ -434,10 +413,8 @@ public class SeparatorMechanicalDesignTest {
     double length = 1.5; // 1.5 m weir crest length
     mechDesign.setWeirLength(length);
 
-    assertEquals(length, separator.getWeirLength(), 1e-6,
-        "Weir length should be set on Separator via bridge");
-    assertEquals(length, mechDesign.getWeirLength(), 1e-6,
-        "getWeirLength should return value from Separator");
+    assertEquals(length, separator.getWeirLength(), 1e-6, "Weir length should be set on Separator via bridge");
+    assertEquals(length, mechDesign.getWeirLength(), 1e-6, "getWeirLength should return value from Separator");
   }
 
   @Test
@@ -445,10 +422,8 @@ public class SeparatorMechanicalDesignTest {
     double volume = 2.0; // 2.0 m3 boot volume
     mechDesign.setBootVolume(volume);
 
-    assertEquals(volume, separator.getBootVolume(), 1e-6,
-        "Boot volume should be set on Separator via bridge");
-    assertEquals(volume, mechDesign.getBootVolume(), 1e-6,
-        "getBootVolume should return value from Separator");
+    assertEquals(volume, separator.getBootVolume(), 1e-6, "Boot volume should be set on Separator via bridge");
+    assertEquals(volume, mechDesign.getBootVolume(), 1e-6, "getBootVolume should return value from Separator");
   }
 
   @Test
@@ -457,9 +432,9 @@ public class SeparatorMechanicalDesignTest {
     mechDesign.setMistEliminatorDpCoeff(coeff);
 
     assertEquals(coeff, separator.getMistEliminatorDpCoeff(), 1e-6,
-        "Mist eliminator dP coeff should be set on Separator via bridge");
+	"Mist eliminator dP coeff should be set on Separator via bridge");
     assertEquals(coeff, mechDesign.getMistEliminatorDpCoeff(), 1e-6,
-        "getMistEliminatorDpCoeff should return value from Separator");
+	"getMistEliminatorDpCoeff should return value from Separator");
   }
 
   @Test
@@ -468,13 +443,12 @@ public class SeparatorMechanicalDesignTest {
     mechDesign.setMistEliminatorThickness(thicknessM);
 
     assertEquals(thicknessM, separator.getMistEliminatorThickness(), 1e-6,
-        "Mist eliminator thickness should be set on Separator via bridge");
+	"Mist eliminator thickness should be set on Separator via bridge");
     assertEquals(thicknessM, mechDesign.getMistEliminatorThickness(), 1e-6,
-        "getMistEliminatorThickness should return value in meters");
+	"getMistEliminatorThickness should return value in meters");
 
     // Verify local demisterThickness is stored in mm
-    assertEquals(150.0, mechDesign.getDemisterThickness(), 1e-6,
-        "Local demisterThickness should be stored in mm");
+    assertEquals(150.0, mechDesign.getDemisterThickness(), 1e-6, "Local demisterThickness should be stored in mm");
   }
 
   @Test
@@ -485,11 +459,11 @@ public class SeparatorMechanicalDesignTest {
 
     // Euler number should be pushed as dpCoeff
     assertEquals(demister.getEuNumber(), separator.getMistEliminatorDpCoeff(), 1e-6,
-        "Euler number should map to mist eliminator dP coefficient");
+	"Euler number should map to mist eliminator dP coefficient");
 
     // Thickness should be pushed (in meters)
     assertEquals(demister.getThickness(), separator.getMistEliminatorThickness(), 1e-6,
-        "Demister thickness should be pushed to Separator in meters");
+	"Demister thickness should be pushed to Separator in meters");
   }
 
   @Test
@@ -499,10 +473,8 @@ public class SeparatorMechanicalDesignTest {
     mechDesign.applyDemistingInternal(vanePack);
 
     // Vane pack Eu=40
-    assertEquals(40.0, separator.getMistEliminatorDpCoeff(), 1e-6,
-        "Vane pack Eu number should be pushed");
-    assertEquals(0.30, separator.getMistEliminatorThickness(), 1e-6,
-        "Vane pack thickness should be pushed");
+    assertEquals(40.0, separator.getMistEliminatorDpCoeff(), 1e-6, "Vane pack Eu number should be pushed");
+    assertEquals(0.30, separator.getMistEliminatorThickness(), 1e-6, "Vane pack thickness should be pushed");
   }
 
   // ============================================================================
@@ -542,8 +514,7 @@ public class SeparatorMechanicalDesignTest {
     DemistingInternal demister = new DemistingInternal("TestDemister", "wire_mesh");
 
     // Below 80% of max: zero carry-over
-    assertEquals(0.0, demister.calcLiquidCarryOver(0.5, 1.0), 1e-6,
-        "Below 80% max should have zero carry-over");
+    assertEquals(0.0, demister.calcLiquidCarryOver(0.5, 1.0), 1e-6, "Below 80% max should have zero carry-over");
 
     // At 100% of max: some carry-over
     double co = demister.calcLiquidCarryOver(1.0, 1.0);
@@ -568,18 +539,16 @@ public class SeparatorMechanicalDesignTest {
 
   @Test
   public void testDemistingInternalWithDrainage() {
-    DemistingInternalWithDrainage demister =
-        new DemistingInternalWithDrainage("MeshWithDrainage", "wire_mesh");
+    DemistingInternalWithDrainage demister = new DemistingInternalWithDrainage("MeshWithDrainage", "wire_mesh");
     demister.setDrainageEfficiency(0.6);
 
     // Carry-over should be reduced by drainage
     double baseCarryOver = new DemistingInternal("Base", "wire_mesh").calcLiquidCarryOver(1.0, 1.0);
     double drainedCarryOver = demister.calcLiquidCarryOver(1.0, 1.0);
 
-    assertTrue(drainedCarryOver < baseCarryOver, "Drainage should reduce carry-over: base="
-        + baseCarryOver + " drained=" + drainedCarryOver);
-    assertEquals(baseCarryOver * 0.4, drainedCarryOver, 1e-6,
-        "Drainage efficiency 0.6 should give carry-over * 0.4");
+    assertTrue(drainedCarryOver < baseCarryOver,
+	"Drainage should reduce carry-over: base=" + baseCarryOver + " drained=" + drainedCarryOver);
+    assertEquals(baseCarryOver * 0.4, drainedCarryOver, 1e-6, "Drainage efficiency 0.6 should give carry-over * 0.4");
   }
 
   // ============================================================================
@@ -611,28 +580,22 @@ public class SeparatorMechanicalDesignTest {
   @Test
   public void testInletVaneDefaults() {
     InletVane vane = new InletVane("TestVane");
-    assertEquals(6000.0, vane.getMaxInletMomentum(), 1e-6,
-        "Inlet vane max momentum should be 6000 Pa");
-    assertEquals(0.85, vane.getBulkSeparationEfficiency(), 1e-6,
-        "Inlet vane efficiency should be 85%");
+    assertEquals(6000.0, vane.getMaxInletMomentum(), 1e-6, "Inlet vane max momentum should be 6000 Pa");
+    assertEquals(0.85, vane.getBulkSeparationEfficiency(), 1e-6, "Inlet vane efficiency should be 85%");
   }
 
   @Test
   public void testInletVaneWithMeshpadDefaults() {
     InletVaneWithMeshpad vaneWithMesh = new InletVaneWithMeshpad("TestVaneMesh");
-    assertEquals(6000.0, vaneWithMesh.getMaxInletMomentum(), 1e-6,
-        "Inlet vane+mesh max momentum should be 6000 Pa");
-    assertEquals(0.92, vaneWithMesh.getBulkSeparationEfficiency(), 1e-6,
-        "Inlet vane+mesh efficiency should be 92%");
+    assertEquals(6000.0, vaneWithMesh.getMaxInletMomentum(), 1e-6, "Inlet vane+mesh max momentum should be 6000 Pa");
+    assertEquals(0.92, vaneWithMesh.getBulkSeparationEfficiency(), 1e-6, "Inlet vane+mesh efficiency should be 92%");
   }
 
   @Test
   public void testInletCyclonesDefaults() {
     InletCyclones cyclones = new InletCyclones("TestCyclone");
-    assertEquals(8000.0, cyclones.getMaxInletMomentum(), 1e-6,
-        "Inlet cyclone max momentum should be 8000 Pa");
-    assertEquals(0.95, cyclones.getBulkSeparationEfficiency(), 1e-6,
-        "Inlet cyclone efficiency should be 95%");
+    assertEquals(8000.0, cyclones.getMaxInletMomentum(), 1e-6, "Inlet cyclone max momentum should be 8000 Pa");
+    assertEquals(0.95, cyclones.getBulkSeparationEfficiency(), 1e-6, "Inlet cyclone efficiency should be 95%");
     assertEquals(4, cyclones.getNumberOfCyclones(), "Default number of cyclones");
   }
 
@@ -649,7 +612,6 @@ public class SeparatorMechanicalDesignTest {
     double vaneCO = vane.calcLiquidCarryOver(rhoMix, qv);
     double vaneMeshCO = vaneWithMesh.calcLiquidCarryOver(rhoMix, qv);
 
-    assertTrue(vaneMeshCO <= vaneCO,
-        "Vane+mesh should have less or equal carry-over than plain vane");
+    assertTrue(vaneMeshCO <= vaneCO, "Vane+mesh should have less or equal carry-over than plain vane");
   }
 }

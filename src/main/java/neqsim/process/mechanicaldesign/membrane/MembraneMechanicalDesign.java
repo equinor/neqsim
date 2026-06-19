@@ -8,9 +8,9 @@ import neqsim.process.mechanicaldesign.MechanicalDesign;
  * Mechanical design for membrane separation modules.
  *
  * <p>
- * Covers hollow-fiber and spiral-wound module sizing, pressure vessel housing design per ASME VIII,
- * membrane area calculation from permeability data, stage-cut optimization, and weight/cost
- * estimation. Applicable to gas separation (CO2/CH4, N2/O2, H2 recovery) and vapor permeation.
+ * Covers hollow-fiber and spiral-wound module sizing, pressure vessel housing design per ASME VIII, membrane area
+ * calculation from permeability data, stage-cut optimization, and weight/cost estimation. Applicable to gas separation
+ * (CO2/CH4, N2/O2, H2 recovery) and vapor permeation.
  * </p>
  *
  * @author esol
@@ -130,11 +130,10 @@ public class MembraneMechanicalDesign extends MechanicalDesign {
     numberOfModules = Math.max(1, (int) Math.ceil(totalMembraneArea / areaPerModule));
 
     // === Stage Cut ===
-    if (membrane.getPermeateStream() != null
-        && membrane.getPermeateStream().getThermoSystem() != null) {
+    if (membrane.getPermeateStream() != null && membrane.getPermeateStream().getThermoSystem() != null) {
       double permeateFlow = membrane.getPermeateStream().getFlowRate("mole/sec");
       if (feedFlowMoleSec > 0) {
-        stageCut = permeateFlow / feedFlowMoleSec;
+	stageCut = permeateFlow / feedFlowMoleSec;
       }
     }
 
@@ -147,14 +146,12 @@ public class MembraneMechanicalDesign extends MechanicalDesign {
     double pMPa = designPressure * 0.1; // bara to MPa
     double rM = housingDiameter / 2.0;
     double ca = getCorrosionAllowance() / 1000.0; // mm to m
-    housingWallThickness =
-        (pMPa * rM * 1000.0) / (allowableStressMPa * getJointEfficiency() - 0.6 * pMPa) + ca;
+    housingWallThickness = (pMPa * rM * 1000.0) / (allowableStressMPa * getJointEfficiency() - 0.6 * pMPa) + ca;
     housingWallThickness = Math.max(housingWallThickness, 4.0); // minimum 4mm
 
     // === Weight Estimation ===
     double steelDensity = 7850.0;
-    double shellVolume =
-        Math.PI * housingDiameter * housingLength * (housingWallThickness / 1000.0);
+    double shellVolume = Math.PI * housingDiameter * housingLength * (housingWallThickness / 1000.0);
     double singleHousingWeight = shellVolume * steelDensity;
 
     // Module internals weight

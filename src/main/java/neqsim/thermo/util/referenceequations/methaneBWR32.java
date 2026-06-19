@@ -12,10 +12,10 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  */
 public class methaneBWR32 {
   double gamma = 0.0096;
-  double[] N = new double[] {-1.84E-02, 1.051016206, 1.61E+01, 8.48E+02, -4.27E+04, 7.66E-04,
-      -4.84E-01, 8.52E+01, -1.66E+04, -3.75E-05, 2.86E-02, -2.868528597, 1.19E-04, -8.53E-03,
-      3.836506384, 2.50E-05, 5.80E-06, -7.16E-03, 1.26E-04, 2.22E+04, -1.48E+06, 5.05E+01, 1.64E+06,
-      2.13E-01, 3.78E+01, -1.19E-05, -3.16E+01, -4.10E-06, 1.49E-03, 3.15E-09, -2.17E-06, 2.40E-05};
+  double[] N = new double[] { -1.84E-02, 1.051016206, 1.61E+01, 8.48E+02, -4.27E+04, 7.66E-04, -4.84E-01, 8.52E+01,
+      -1.66E+04, -3.75E-05, 2.86E-02, -2.868528597, 1.19E-04, -8.53E-03, 3.836506384, 2.50E-05, 5.80E-06, -7.16E-03,
+      1.26E-04, 2.22E+04, -1.48E+06, 5.05E+01, 1.64E+06, 2.13E-01, 3.78E+01, -1.19E-05, -3.16E+01, -4.10E-06, 1.49E-03,
+      3.15E-09, -2.17E-06, 2.40E-05 };
 
   /**
    * <p>
@@ -23,35 +23,30 @@ public class methaneBWR32 {
    * </p>
    *
    * @param molDens a double
-   * @param temp a double
+   * @param temp    a double
    * @return a double
    */
   public double calcPressure(double molDens, double temp) {
     double pres = 0.0;
     double R = 0.08205616;
     pres = molDens * R * temp
-        + molDens * molDens
-            * (N[0] * temp + N[1] * Math.sqrt(temp) + N[2] + N[3] / temp + N[4] / temp / temp)
-        + Math.pow(molDens, 3.0) * (N[5] * temp + N[6] + N[7] / temp + N[8] / temp / temp)
-        + Math.pow(molDens, 4.0) * (N[9] * temp + N[10] + N[11] / temp)
-        + Math.pow(molDens, 5.0) * N[12]
-        + Math.pow(molDens, 6.0) * (N[13] / temp + N[14] / temp / temp)
-        + Math.pow(molDens, 7.0) * N[15] / temp
-        + Math.pow(molDens, 8.0) * (N[16] / temp + N[17] / temp / temp)
-        + Math.pow(molDens, 9.0) * N[18] / temp / temp
-        + Math.pow(molDens, 3.0) * (N[19] / temp / temp + N[20] / Math.pow(temp, 3.0))
-            * Math.exp(-gamma * Math.pow(molDens, 2.0))
-        + Math.pow(molDens, 5.0) * (N[21] / temp / temp + N[22] / Math.pow(temp, 4.0))
-            * Math.exp(-gamma * Math.pow(molDens, 2.0))
-        + Math.pow(molDens, 7.0) * (N[23] / temp / temp + N[24] / Math.pow(temp, 3.0))
-            * Math.exp(-gamma * Math.pow(molDens, 2.0))
-        + Math.pow(molDens, 9.0) * (N[25] / temp / temp + N[26] / Math.pow(temp, 4.0))
-            * Math.exp(-gamma * Math.pow(molDens, 2.0))
-        + Math.pow(molDens, 11.0) * (N[27] / temp / temp + N[28] / Math.pow(temp, 3.0))
-            * Math.exp(-gamma * Math.pow(molDens, 2.0))
-        + Math.pow(molDens, 13.0)
-            * (N[29] / temp / temp + N[30] / Math.pow(temp, 3.0) + N[31] / Math.pow(temp, 4.0))
-            * Math.exp(-gamma * Math.pow(molDens, 2.0));
+	+ molDens * molDens * (N[0] * temp + N[1] * Math.sqrt(temp) + N[2] + N[3] / temp + N[4] / temp / temp)
+	+ Math.pow(molDens, 3.0) * (N[5] * temp + N[6] + N[7] / temp + N[8] / temp / temp)
+	+ Math.pow(molDens, 4.0) * (N[9] * temp + N[10] + N[11] / temp) + Math.pow(molDens, 5.0) * N[12]
+	+ Math.pow(molDens, 6.0) * (N[13] / temp + N[14] / temp / temp) + Math.pow(molDens, 7.0) * N[15] / temp
+	+ Math.pow(molDens, 8.0) * (N[16] / temp + N[17] / temp / temp) + Math.pow(molDens, 9.0) * N[18] / temp / temp
+	+ Math.pow(molDens, 3.0) * (N[19] / temp / temp + N[20] / Math.pow(temp, 3.0))
+	    * Math.exp(-gamma * Math.pow(molDens, 2.0))
+	+ Math.pow(molDens, 5.0) * (N[21] / temp / temp + N[22] / Math.pow(temp, 4.0))
+	    * Math.exp(-gamma * Math.pow(molDens, 2.0))
+	+ Math.pow(molDens, 7.0) * (N[23] / temp / temp + N[24] / Math.pow(temp, 3.0))
+	    * Math.exp(-gamma * Math.pow(molDens, 2.0))
+	+ Math.pow(molDens, 9.0) * (N[25] / temp / temp + N[26] / Math.pow(temp, 4.0))
+	    * Math.exp(-gamma * Math.pow(molDens, 2.0))
+	+ Math.pow(molDens, 11.0) * (N[27] / temp / temp + N[28] / Math.pow(temp, 3.0))
+	    * Math.exp(-gamma * Math.pow(molDens, 2.0))
+	+ Math.pow(molDens, 13.0) * (N[29] / temp / temp + N[30] / Math.pow(temp, 3.0) + N[31] / Math.pow(temp, 4.0))
+	    * Math.exp(-gamma * Math.pow(molDens, 2.0));
 
     return pres + 0.01325;
   }
@@ -63,7 +58,7 @@ public class methaneBWR32 {
    *
    * @param temp a double
    * @param pres a double
-   * @param gas a boolean
+   * @param gas  a boolean
    * @return a double
    */
   public double molDens(double temp, double pres, boolean gas) {
@@ -80,9 +75,9 @@ public class methaneBWR32 {
     do {
       iter++;
       if (iter < 4) {
-        guessMolDens -= error / 1000.0;
+	guessMolDens -= error / 1000.0;
       } else {
-        guessMolDens -= error / derrordmolvol;
+	guessMolDens -= error / derrordmolvol;
       }
 
       molVol = guessMolDens;

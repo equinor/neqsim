@@ -11,9 +11,8 @@ import org.apache.logging.log4j.Logger;
  * Computes gradients of flash calculation results using the implicit function theorem.
  *
  * <p>
- * This class provides exact derivatives of phase equilibrium results without differentiating
- * through the iterative flash solver. At equilibrium, the residual equations F(y; θ) = 0 are
- * satisfied. The implicit function theorem gives:
+ * This class provides exact derivatives of phase equilibrium results without differentiating through the iterative
+ * flash solver. At equilibrium, the residual equations F(y; θ) = 0 are satisfied. The implicit function theorem gives:
  * </p>
  *
  * <pre>
@@ -119,13 +118,12 @@ public class DifferentiableFlash implements Serializable {
 
       // Composition derivatives
       for (int j = 0; j < nc; j++) {
-        dlnPhidn[i][j] = phase.getComponent(i).getdfugdn(j);
+	dlnPhidn[i][j] = phase.getComponent(i).getdfugdn(j);
       }
     }
 
     String phaseType = phase.getType().toString();
-    return new FugacityJacobian(phaseIndex, phaseType, lnPhi, dlnPhidT, dlnPhidP, dlnPhidn,
-        componentNames);
+    return new FugacityJacobian(phaseIndex, phaseType, lnPhi, dlnPhidT, dlnPhidP, dlnPhidn, componentNames);
   }
 
   /**
@@ -150,8 +148,7 @@ public class DifferentiableFlash implements Serializable {
 
     // Check if we have two phases
     if (system.getNumberOfPhases() < 2) {
-      cachedFlashGradients =
-          new FlashGradients(nc, "Single phase - no meaningful K-value gradients");
+      cachedFlashGradients = new FlashGradients(nc, "Single phase - no meaningful K-value gradients");
       return cachedFlashGradients;
     }
 
@@ -161,24 +158,24 @@ public class DifferentiableFlash implements Serializable {
       int liquidPhaseIndex = -1;
       int vaporPhaseIndex = -1;
       for (int p = 0; p < system.getNumberOfPhases(); p++) {
-        if (system.getPhase(p).getType() == neqsim.thermo.phase.PhaseType.GAS) {
-          vaporPhaseIndex = p;
-        } else {
-          // Treat any non-gas phase as liquid (could be liquid, oil, or aqueous)
-          liquidPhaseIndex = p;
-        }
+	if (system.getPhase(p).getType() == neqsim.thermo.phase.PhaseType.GAS) {
+	  vaporPhaseIndex = p;
+	} else {
+	  // Treat any non-gas phase as liquid (could be liquid, oil, or aqueous)
+	  liquidPhaseIndex = p;
+	}
       }
 
       // Fallback if phase types not set correctly
       if (liquidPhaseIndex < 0 || vaporPhaseIndex < 0) {
-        // Assume standard ordering: lower density phase is vapor
-        if (system.getPhase(0).getDensity() < system.getPhase(1).getDensity()) {
-          vaporPhaseIndex = 0;
-          liquidPhaseIndex = 1;
-        } else {
-          vaporPhaseIndex = 1;
-          liquidPhaseIndex = 0;
-        }
+	// Assume standard ordering: lower density phase is vapor
+	if (system.getPhase(0).getDensity() < system.getPhase(1).getDensity()) {
+	  vaporPhaseIndex = 0;
+	  liquidPhaseIndex = 1;
+	} else {
+	  vaporPhaseIndex = 1;
+	  liquidPhaseIndex = 0;
+	}
       }
 
       // CRITICAL: Call init(3) to compute fugacity derivatives including composition derivatives
@@ -190,7 +187,7 @@ public class DifferentiableFlash implements Serializable {
       FugacityJacobian jacL = extractFugacityJacobian(liquidPhaseIndex);
       FugacityJacobian jacV = extractFugacityJacobian(vaporPhaseIndex);
 
-      cachedFugacityJacobians = new FugacityJacobian[] {jacL, jacV};
+      cachedFugacityJacobians = new FugacityJacobian[] { jacL, jacV };
 
       // Get current state
       double[] kValues = new double[nc];
@@ -200,11 +197,11 @@ public class DifferentiableFlash implements Serializable {
       String[] componentNames = new String[nc];
 
       for (int i = 0; i < nc; i++) {
-        componentNames[i] = system.getPhase(liquidPhaseIndex).getComponent(i).getComponentName();
-        x[i] = system.getPhase(liquidPhaseIndex).getComponent(i).getx();
-        y[i] = system.getPhase(vaporPhaseIndex).getComponent(i).getx();
-        kValues[i] = y[i] / Math.max(x[i], 1e-20);
-        z[i] = system.getComponent(i).getz();
+	componentNames[i] = system.getPhase(liquidPhaseIndex).getComponent(i).getComponentName();
+	x[i] = system.getPhase(liquidPhaseIndex).getComponent(i).getx();
+	y[i] = system.getPhase(vaporPhaseIndex).getComponent(i).getx();
+	kValues[i] = y[i] / Math.max(x[i], 1e-20);
+	z[i] = system.getComponent(i).getz();
       }
 
       // getBeta() returns vapor mole fraction = moles_vapor / total_moles
@@ -237,74 +234,74 @@ public class DifferentiableFlash implements Serializable {
       double nVapor = system.getPhase(vaporPhaseIndex).getNumberOfMolesInPhase();
 
       for (int i = 0; i < nc; i++) {
-        // ∂F_i/∂K_j - using chain rule through composition
-        for (int j = 0; j < nc; j++) {
-          // Derivative of ln(K_i) term
-          double dlnK_dK = (i == j) ? 1.0 / kValues[i] : 0.0;
+	// ∂F_i/∂K_j - using chain rule through composition
+	for (int j = 0; j < nc; j++) {
+	  // Derivative of ln(K_i) term
+	  double dlnK_dK = (i == j) ? 1.0 / kValues[i] : 0.0;
 
-          // Derivative through fugacity coefficients via composition change
-          // ∂n_k/∂K_j for liquid and vapor phases
-          double dxj_dKj = computeDxDK(j, z, kValues, beta);
-          double dyj_dKj = computeDyDK(j, z, kValues, beta);
+	  // Derivative through fugacity coefficients via composition change
+	  // ∂n_k/∂K_j for liquid and vapor phases
+	  double dxj_dKj = computeDxDK(j, z, kValues, beta);
+	  double dyj_dKj = computeDyDK(j, z, kValues, beta);
 
-          // Convert to molar derivatives: ∂n_j/∂K_j = n_phase * ∂x_j/∂K_j (at constant total moles)
-          double dnLj_dKj = nLiquid * dxj_dKj;
-          double dnVj_dKj = nVapor * dyj_dKj;
+	  // Convert to molar derivatives: ∂n_j/∂K_j = n_phase * ∂x_j/∂K_j (at constant total moles)
+	  double dnLj_dKj = nLiquid * dxj_dKj;
+	  double dnVj_dKj = nVapor * dyj_dKj;
 
-          // Chain rule: ∂ln(φ_i)/∂K_j = (∂ln(φ_i)/∂n_j) * (∂n_j/∂K_j)
-          // Note: dfugdn[i][j] = ∂ln(φ_i)/∂n_j
-          double dlnPhiL_dKj = jacL.getDlnPhidn(i, j) * dnLj_dKj;
-          double dlnPhiV_dKj = jacV.getDlnPhidn(i, j) * dnVj_dKj;
+	  // Chain rule: ∂ln(φ_i)/∂K_j = (∂ln(φ_i)/∂n_j) * (∂n_j/∂K_j)
+	  // Note: dfugdn[i][j] = ∂ln(φ_i)/∂n_j
+	  double dlnPhiL_dKj = jacL.getDlnPhidn(i, j) * dnLj_dKj;
+	  double dlnPhiV_dKj = jacV.getDlnPhidn(i, j) * dnVj_dKj;
 
-          // F_i = ln(K_i) - ln(φ_i^L) + ln(φ_i^V)
-          // ∂F_i/∂K_j = δ_ij/K_i - dlnPhiL_dKj + dlnPhiV_dKj
-          dFdy[i][j] = dlnK_dK - dlnPhiL_dKj + dlnPhiV_dKj;
-        }
+	  // F_i = ln(K_i) - ln(φ_i^L) + ln(φ_i^V)
+	  // ∂F_i/∂K_j = δ_ij/K_i - dlnPhiL_dKj + dlnPhiV_dKj
+	  dFdy[i][j] = dlnK_dK - dlnPhiL_dKj + dlnPhiV_dKj;
+	}
 
-        // ∂F_i/∂β - composition changes with vapor fraction
-        double dlnPhiL_dBeta = 0.0;
-        double dlnPhiV_dBeta = 0.0;
-        for (int k = 0; k < nc; k++) {
-          double dxk_dBeta = computeDxDBeta(k, z, kValues, beta);
-          double dyk_dBeta = computeDyDBeta(k, z, kValues, beta);
+	// ∂F_i/∂β - composition changes with vapor fraction
+	double dlnPhiL_dBeta = 0.0;
+	double dlnPhiV_dBeta = 0.0;
+	for (int k = 0; k < nc; k++) {
+	  double dxk_dBeta = computeDxDBeta(k, z, kValues, beta);
+	  double dyk_dBeta = computeDyDBeta(k, z, kValues, beta);
 
-          // Convert to molar derivatives
-          double dnLk_dBeta = nLiquid * dxk_dBeta;
-          double dnVk_dBeta = nVapor * dyk_dBeta;
+	  // Convert to molar derivatives
+	  double dnLk_dBeta = nLiquid * dxk_dBeta;
+	  double dnVk_dBeta = nVapor * dyk_dBeta;
 
-          dlnPhiL_dBeta += jacL.getDlnPhidn(i, k) * dnLk_dBeta;
-          dlnPhiV_dBeta += jacV.getDlnPhidn(i, k) * dnVk_dBeta;
-        }
-        // F_i = ln(K_i) - ln(φ_i^L) + ln(φ_i^V)
-        // ∂F_i/∂β = 0 - dlnPhiL_dBeta + dlnPhiV_dBeta
-        dFdy[i][nc] = -dlnPhiL_dBeta + dlnPhiV_dBeta;
+	  dlnPhiL_dBeta += jacL.getDlnPhidn(i, k) * dnLk_dBeta;
+	  dlnPhiV_dBeta += jacV.getDlnPhidn(i, k) * dnVk_dBeta;
+	}
+	// F_i = ln(K_i) - ln(φ_i^L) + ln(φ_i^V)
+	// ∂F_i/∂β = 0 - dlnPhiL_dBeta + dlnPhiV_dBeta
+	dFdy[i][nc] = -dlnPhiL_dBeta + dlnPhiV_dBeta;
 
-        // ∂F_i/∂T: F_i = ln(K_i) - ln(φ_i^L) + ln(φ_i^V)
-        // At fixed composition, ∂F_i/∂T = -∂ln(φ_i^L)/∂T + ∂ln(φ_i^V)/∂T
-        dFdT[i][0] = -jacL.getDlnPhidT(i) + jacV.getDlnPhidT(i);
+	// ∂F_i/∂T: F_i = ln(K_i) - ln(φ_i^L) + ln(φ_i^V)
+	// At fixed composition, ∂F_i/∂T = -∂ln(φ_i^L)/∂T + ∂ln(φ_i^V)/∂T
+	dFdT[i][0] = -jacL.getDlnPhidT(i) + jacV.getDlnPhidT(i);
 
-        // ∂F_i/∂P: similarly
-        dFdP[i][0] = -jacL.getDlnPhidP(i) + jacV.getDlnPhidP(i);
+	// ∂F_i/∂P: similarly
+	dFdP[i][0] = -jacL.getDlnPhidP(i) + jacV.getDlnPhidP(i);
 
-        // ∂F_i/∂z_j = 0 (feed composition doesn't directly affect fugacity at fixed x, y)
-        for (int j = 0; j < nc; j++) {
-          dFdz[i][j] = 0.0;
-        }
+	// ∂F_i/∂z_j = 0 (feed composition doesn't directly affect fugacity at fixed x, y)
+	for (int j = 0; j < nc; j++) {
+	  dFdz[i][j] = 0.0;
+	}
       }
 
       // Rachford-Rice equation: Σ z_i*(K_i - 1)/(1 + β*(K_i - 1)) = 0
       // ∂RR/∂K_j
       for (int j = 0; j < nc; j++) {
-        double denom = 1.0 + beta * (kValues[j] - 1.0);
-        dFdy[nc][j] = z[j] / denom - z[j] * (kValues[j] - 1.0) * beta / (denom * denom);
+	double denom = 1.0 + beta * (kValues[j] - 1.0);
+	dFdy[nc][j] = z[j] / denom - z[j] * (kValues[j] - 1.0) * beta / (denom * denom);
       }
 
       // ∂RR/∂β
       double dRRdBeta = 0.0;
       for (int i = 0; i < nc; i++) {
-        double Ki_m1 = kValues[i] - 1.0;
-        double denom = 1.0 + beta * Ki_m1;
-        dRRdBeta -= z[i] * Ki_m1 * Ki_m1 / (denom * denom);
+	double Ki_m1 = kValues[i] - 1.0;
+	double denom = 1.0 + beta * Ki_m1;
+	dRRdBeta -= z[i] * Ki_m1 * Ki_m1 / (denom * denom);
       }
       dFdy[nc][nc] = dRRdBeta;
 
@@ -314,15 +311,15 @@ public class DifferentiableFlash implements Serializable {
 
       // ∂RR/∂z_j
       for (int j = 0; j < nc; j++) {
-        double denom = 1.0 + beta * (kValues[j] - 1.0);
-        dFdz[nc][j] = (kValues[j] - 1.0) / denom;
+	double denom = 1.0 + beta * (kValues[j] - 1.0);
+	dFdz[nc][j] = (kValues[j] - 1.0) / denom;
       }
 
       // Solve linear system: dy/dθ = -(∂F/∂y)^(-1) * (∂F/∂θ)
       double[][] invJac = invertMatrix(dFdy);
       if (invJac == null) {
-        cachedFlashGradients = new FlashGradients(nc, "Jacobian is singular");
-        return cachedFlashGradients;
+	cachedFlashGradients = new FlashGradients(nc, "Jacobian is singular");
+	return cachedFlashGradients;
       }
 
       // Compute dy/dT = -invJac * dF/dT
@@ -346,16 +343,16 @@ public class DifferentiableFlash implements Serializable {
       double[] dBetadz = new double[nc];
 
       for (int i = 0; i < nc; i++) {
-        dKdT[i] = dydT[i];
-        dKdP[i] = dydP[i];
-        dBetadz[i] = dydz[nc][i];
-        for (int j = 0; j < nc; j++) {
-          dKdz[i][j] = dydz[i][j];
-        }
+	dKdT[i] = dydT[i];
+	dKdP[i] = dydP[i];
+	dBetadz[i] = dydz[nc][i];
+	for (int j = 0; j < nc; j++) {
+	  dKdz[i][j] = dydz[i][j];
+	}
       }
 
-      cachedFlashGradients = new FlashGradients(kValues, beta, dKdT, dKdP, dKdz, dBetadT, dBetadP,
-          dBetadz, componentNames);
+      cachedFlashGradients = new FlashGradients(kValues, beta, dKdT, dKdP, dKdz, dBetadT, dBetadP, dBetadz,
+	  componentNames);
       gradientsComputed = true;
 
       return cachedFlashGradients;
@@ -440,86 +437,86 @@ public class DifferentiableFlash implements Serializable {
 
   private double getPropertyValue(String propertyName) {
     switch (propertyName.toLowerCase()) {
-      case "density":
-        return system.getDensity("kg/m3");
-      case "enthalpy":
-        return system.getEnthalpy("J/mol");
-      case "entropy":
-        return system.getEntropy("J/molK");
-      case "cp":
-        return system.getCp("J/molK");
-      case "cv":
-        return system.getCv("J/molK");
-      case "compressibility":
-      case "z":
-        return system.getZ();
-      case "molarvolume":
-        return system.getMolarVolume();
-      case "molarmass":
-        return system.getMolarMass("kg/mol");
-      case "viscosity":
-        return system.getViscosity("kg/msec");
-      case "thermalconductivity":
-        return system.getThermalConductivity("W/mK");
-      case "soundspeed":
-        return system.getSoundSpeed("m/s");
-      case "joulethomson":
-        return system.getJouleThomsonCoefficient("K/bar");
-      case "kappa":
-      case "cpcvratio":
-        return system.getKappa();
-      case "gamma":
-        return system.getGamma();
-      case "gibbsenergy":
-        return system.getGibbsEnergy();
-      case "internalenergy":
-        return system.getInternalEnergy("J/mol");
-      case "beta":
-      case "vaporfraction":
-        return system.getBeta();
-      default:
-        throw new IllegalArgumentException("Unknown property: " + propertyName
-            + ". Supported: density, enthalpy, entropy, cp, cv, compressibility, molarvolume, "
-            + "molarmass, viscosity, thermalconductivity, soundspeed, joulethomson, kappa, "
-            + "gamma, gibbsenergy, internalenergy, beta");
+    case "density":
+      return system.getDensity("kg/m3");
+    case "enthalpy":
+      return system.getEnthalpy("J/mol");
+    case "entropy":
+      return system.getEntropy("J/molK");
+    case "cp":
+      return system.getCp("J/molK");
+    case "cv":
+      return system.getCv("J/molK");
+    case "compressibility":
+    case "z":
+      return system.getZ();
+    case "molarvolume":
+      return system.getMolarVolume();
+    case "molarmass":
+      return system.getMolarMass("kg/mol");
+    case "viscosity":
+      return system.getViscosity("kg/msec");
+    case "thermalconductivity":
+      return system.getThermalConductivity("W/mK");
+    case "soundspeed":
+      return system.getSoundSpeed("m/s");
+    case "joulethomson":
+      return system.getJouleThomsonCoefficient("K/bar");
+    case "kappa":
+    case "cpcvratio":
+      return system.getKappa();
+    case "gamma":
+      return system.getGamma();
+    case "gibbsenergy":
+      return system.getGibbsEnergy();
+    case "internalenergy":
+      return system.getInternalEnergy("J/mol");
+    case "beta":
+    case "vaporfraction":
+      return system.getBeta();
+    default:
+      throw new IllegalArgumentException("Unknown property: " + propertyName
+	  + ". Supported: density, enthalpy, entropy, cp, cv, compressibility, molarvolume, "
+	  + "molarmass, viscosity, thermalconductivity, soundspeed, joulethomson, kappa, "
+	  + "gamma, gibbsenergy, internalenergy, beta");
     }
   }
 
   private String getPropertyUnit(String propertyName) {
     switch (propertyName.toLowerCase()) {
-      case "density":
-        return "kg/m3";
-      case "enthalpy":
-        return "J/mol";
-      case "entropy":
-      case "cp":
-      case "cv":
-        return "J/mol/K";
-      case "compressibility":
-      case "z":
-      case "kappa":
-      case "cpcvratio":
-      case "gamma":
-      case "beta":
-      case "vaporfraction":
-        return "-";
-      case "molarvolume":
-        return "m3/mol";
-      case "molarmass":
-        return "kg/mol";
-      case "viscosity":
-        return "kg/m/s";
-      case "thermalconductivity":
-        return "W/m/K";
-      case "soundspeed":
-        return "m/s";
-      case "joulethomson":
-        return "K/bar";
-      case "gibbsenergy":
-      case "internalenergy":
-        return "J/mol";
-      default:
-        return "";
+    case "density":
+      return "kg/m3";
+    case "enthalpy":
+      return "J/mol";
+    case "entropy":
+    case "cp":
+    case "cv":
+      return "J/mol/K";
+    case "compressibility":
+    case "z":
+    case "kappa":
+    case "cpcvratio":
+    case "gamma":
+    case "beta":
+    case "vaporfraction":
+      return "-";
+    case "molarvolume":
+      return "m3/mol";
+    case "molarmass":
+      return "kg/mol";
+    case "viscosity":
+      return "kg/m/s";
+    case "thermalconductivity":
+      return "W/m/K";
+    case "soundspeed":
+      return "m/s";
+    case "joulethomson":
+      return "K/bar";
+    case "gibbsenergy":
+    case "internalenergy":
+      return "J/mol";
+    default:
+      return "";
     }
   }
 
@@ -591,7 +588,7 @@ public class DifferentiableFlash implements Serializable {
     // Create augmented matrix [A | I]
     for (int i = 0; i < n; i++) {
       for (int j = 0; j < n; j++) {
-        augmented[i][j] = matrix[i][j];
+	augmented[i][j] = matrix[i][j];
       }
       augmented[i][n + i] = 1.0;
     }
@@ -602,15 +599,15 @@ public class DifferentiableFlash implements Serializable {
       int maxRow = col;
       double maxVal = Math.abs(augmented[col][col]);
       for (int row = col + 1; row < n; row++) {
-        if (Math.abs(augmented[row][col]) > maxVal) {
-          maxVal = Math.abs(augmented[row][col]);
-          maxRow = row;
-        }
+	if (Math.abs(augmented[row][col]) > maxVal) {
+	  maxVal = Math.abs(augmented[row][col]);
+	  maxRow = row;
+	}
       }
 
       // Check for singularity
       if (maxVal < 1e-15) {
-        return null;
+	return null;
       }
 
       // Swap rows
@@ -621,17 +618,17 @@ public class DifferentiableFlash implements Serializable {
       // Scale pivot row
       double pivot = augmented[col][col];
       for (int j = 0; j < 2 * n; j++) {
-        augmented[col][j] /= pivot;
+	augmented[col][j] /= pivot;
       }
 
       // Eliminate column
       for (int row = 0; row < n; row++) {
-        if (row != col) {
-          double factor = augmented[row][col];
-          for (int j = 0; j < 2 * n; j++) {
-            augmented[row][j] -= factor * augmented[col][j];
-          }
-        }
+	if (row != col) {
+	  double factor = augmented[row][col];
+	  for (int j = 0; j < 2 * n; j++) {
+	    augmented[row][j] -= factor * augmented[col][j];
+	  }
+	}
       }
     }
 
@@ -639,7 +636,7 @@ public class DifferentiableFlash implements Serializable {
     double[][] inverse = new double[n][n];
     for (int i = 0; i < n; i++) {
       for (int j = 0; j < n; j++) {
-        inverse[i][j] = augmented[i][n + j];
+	inverse[i][j] = augmented[i][n + j];
       }
     }
     return inverse;
@@ -650,7 +647,7 @@ public class DifferentiableFlash implements Serializable {
     double[] result = new double[n];
     for (int i = 0; i < n; i++) {
       for (int j = 0; j < vector.length; j++) {
-        result[i] += matrix[i][j] * vector[j];
+	result[i] += matrix[i][j] * vector[j];
       }
     }
     return result;
@@ -663,9 +660,9 @@ public class DifferentiableFlash implements Serializable {
     double[][] result = new double[m][n];
     for (int i = 0; i < m; i++) {
       for (int j = 0; j < n; j++) {
-        for (int l = 0; l < k; l++) {
-          result[i][j] += a[i][l] * b[l][j];
-        }
+	for (int l = 0; l < k; l++) {
+	  result[i][j] += a[i][l] * b[l][j];
+	}
       }
     }
     return result;
@@ -688,7 +685,7 @@ public class DifferentiableFlash implements Serializable {
   private void negateMatrix(double[][] matrix) {
     for (int i = 0; i < matrix.length; i++) {
       for (int j = 0; j < matrix[i].length; j++) {
-        matrix[i][j] = -matrix[i][j];
+	matrix[i][j] = -matrix[i][j];
       }
     }
   }

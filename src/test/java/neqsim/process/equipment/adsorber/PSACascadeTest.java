@@ -10,9 +10,8 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Unit tests for {@link PSACascade}. Validates the cascade-level recovery uplift, bed-count
- * monotonicity, tail-gas mass balance, and configuration handling against textbook industrial
- * H2-PSA behaviour.
+ * Unit tests for {@link PSACascade}. Validates the cascade-level recovery uplift, bed-count monotonicity, tail-gas mass
+ * balance, and configuration handling against textbook industrial H2-PSA behaviour.
  */
 class PSACascadeTest extends neqsim.NeqSimTest {
 
@@ -45,8 +44,7 @@ class PSACascadeTest extends neqsim.NeqSimTest {
     // BEDS_4 uplift = +0.05 → cascade target = 0.85.
     cascade.setConfiguration(PSACascade.CascadeConfiguration.BEDS_4);
 
-    assertEquals(0.85, cascade.getCascadeRecoveryTarget(), 1e-9,
-        "Cascade target should equal per-bed + uplift");
+    assertEquals(0.85, cascade.getCascadeRecoveryTarget(), 1e-9, "Cascade target should equal per-bed + uplift");
     assertEquals(4, cascade.getNumberOfBeds());
 
     cascade.run();
@@ -55,8 +53,7 @@ class PSACascadeTest extends neqsim.NeqSimTest {
     double recovery = cascade.getH2Recovery();
     assertTrue(purity > 0.85, "H2 purity should exceed 0.85, got " + purity);
     // The cascade caps recovery at the cascade target; allow small numerical slack.
-    assertTrue(recovery <= 0.85 + 1e-6,
-        "Cascade recovery should not exceed cascade target, got " + recovery);
+    assertTrue(recovery <= 0.85 + 1e-6, "Cascade recovery should not exceed cascade target, got " + recovery);
     assertTrue(recovery > 0.80, "Cascade recovery should be near cascade target, got " + recovery);
   }
 
@@ -74,9 +71,8 @@ class PSACascadeTest extends neqsim.NeqSimTest {
     sixBeds.setPerBedRecoveryTarget(0.75);
     sixBeds.run();
 
-    assertTrue(sixBeds.getH2Recovery() > twoBeds.getH2Recovery(),
-        "6-bed cascade should out-recover 2-bed cascade: 6=" + sixBeds.getH2Recovery() + ", 2="
-            + twoBeds.getH2Recovery());
+    assertTrue(sixBeds.getH2Recovery() > twoBeds.getH2Recovery(), "6-bed cascade should out-recover 2-bed cascade: 6="
+	+ sixBeds.getH2Recovery() + ", 2=" + twoBeds.getH2Recovery());
   }
 
   @Test
@@ -86,7 +82,7 @@ class PSACascadeTest extends neqsim.NeqSimTest {
     cascade.setConfiguration(PSACascade.CascadeConfiguration.BEDS_12); // +0.12
     // 0.90 + 0.12 = 1.02 → capped at 0.93.
     assertEquals(0.93, cascade.getCascadeRecoveryTarget(), 1e-9,
-        "Cascade target must be capped at the industry-benchmark maximum 0.93");
+	"Cascade target must be capped at the industry-benchmark maximum 0.93");
   }
 
   @Test
@@ -105,16 +101,14 @@ class PSACascadeTest extends neqsim.NeqSimTest {
     double feedTotal = feed.getFlowRate("mole/sec");
 
     double imbalance = Math.abs(feedTotal - (productTotal + tailTotal)) / feedTotal;
-    assertTrue(imbalance < 0.01,
-        "Feed must equal product + tail within 1% (got imbalance " + imbalance + ")");
+    assertTrue(imbalance < 0.01, "Feed must equal product + tail within 1% (got imbalance " + imbalance + ")");
   }
 
   @Test
   void testSorbentPropagatesToTemplateBed() {
     PSACascade cascade = new PSACascade("PSA");
     cascade.setSorbent(PressureSwingAdsorptionBed.SorbentType.ZEOLITE_13X);
-    assertEquals(PressureSwingAdsorptionBed.SorbentType.ZEOLITE_13X,
-        cascade.getTemplateBed().getSorbent());
+    assertEquals(PressureSwingAdsorptionBed.SorbentType.ZEOLITE_13X, cascade.getTemplateBed().getSorbent());
   }
 
   @Test

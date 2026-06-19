@@ -13,23 +13,20 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Validates that the low-flow bypass feature works end-to-end on a {@link ProcessModel} composed of
- * multiple {@link ProcessSystem} areas — mirroring the platform process-model pattern where a
- * manifold {@link Splitter} feeds parallel compressor trains (active export branch + an "ht
- * injection compressors" branch that is frequently turned off by setting an injection rate close to
- * zero).
+ * Validates that the low-flow bypass feature works end-to-end on a {@link ProcessModel} composed of multiple
+ * {@link ProcessSystem} areas — mirroring the platform process-model pattern where a manifold {@link Splitter} feeds
+ * parallel compressor trains (active export branch + an "ht injection compressors" branch that is frequently turned off
+ * by setting an injection rate close to zero).
  *
  * <p>
  * Demonstrates three configuration approaches:
  * </p>
  * <ol>
- * <li><b>Auto-bypass</b> via {@code htTrain.setSectionLowFlowThreshold(threshold_kg_hr)} — every
- * unit in the area whose inlet mass flow falls below the threshold deactivates itself for the
- * current run.</li>
- * <li><b>Manual lock</b> via {@code unit.setLockedInactive(true)} — direct per-unit hard
- * bypass.</li>
- * <li><b>Manual section</b> via {@code plant.deactivateSection(area, startUnit)} — traverses
- * registered {@link ProcessConnection} MATERIAL edges and locks every downstream unit.</li>
+ * <li><b>Auto-bypass</b> via {@code htTrain.setSectionLowFlowThreshold(threshold_kg_hr)} — every unit in the area whose
+ * inlet mass flow falls below the threshold deactivates itself for the current run.</li>
+ * <li><b>Manual lock</b> via {@code unit.setLockedInactive(true)} — direct per-unit hard bypass.</li>
+ * <li><b>Manual section</b> via {@code plant.deactivateSection(area, startUnit)} — traverses registered
+ * {@link ProcessConnection} MATERIAL edges and locks every downstream unit.</li>
  * </ol>
  */
 public class ProcessModelLowFlowBypassParallelTrainsTest extends neqsim.NeqSimTest {
@@ -45,11 +42,10 @@ public class ProcessModelLowFlowBypassParallelTrainsTest extends neqsim.NeqSimTe
   }
 
   /**
-   * Builds a 2-stage compressor area directly off a splitter outlet (no Stream wrapper — wrapping
-   * would snapshot the splitter's initial state and decouple it from subsequent runs).
+   * Builds a 2-stage compressor area directly off a splitter outlet (no Stream wrapper — wrapping would snapshot the
+   * splitter's initial state and decouple it from subsequent runs).
    */
-  private static ProcessSystem buildCompressorTrain(String areaName, StreamInterface feed,
-      double outletPressureBara) {
+  private static ProcessSystem buildCompressorTrain(String areaName, StreamInterface feed, double outletPressureBara) {
     ProcessSystem area = new ProcessSystem();
     area.setName(areaName);
 
@@ -78,7 +74,7 @@ public class ProcessModelLowFlowBypassParallelTrainsTest extends neqsim.NeqSimTe
 
     Stream feed = new Stream("feed", makeGas(totalFlow));
     Splitter manifold = new Splitter("manifold", feed, 2);
-    manifold.setSplitFactors(new double[] {exportFraction, htFraction});
+    manifold.setSplitFactors(new double[] { exportFraction, htFraction });
 
     ProcessSystem manifoldArea = new ProcessSystem();
     manifoldArea.setName("manifold");
@@ -86,8 +82,7 @@ public class ProcessModelLowFlowBypassParallelTrainsTest extends neqsim.NeqSimTe
     manifoldArea.add(manifold);
 
     ProcessSystem exportTrain = buildCompressorTrain("export", manifold.getSplitStream(0), 150.0);
-    ProcessSystem htTrain =
-        buildCompressorTrain("ht_injection_compressors", manifold.getSplitStream(1), 350.0);
+    ProcessSystem htTrain = buildCompressorTrain("ht_injection_compressors", manifold.getSplitStream(1), 350.0);
 
     htTrain.setSectionLowFlowThreshold(1.0);
 
@@ -99,7 +94,7 @@ public class ProcessModelLowFlowBypassParallelTrainsTest extends neqsim.NeqSimTe
 
     StreamInterface htSplit = manifold.getSplitStream(1);
     assertTrue(htSplit.getFlowRate("kg/hr") < 1.0,
-        "HT split flow should be near zero, got " + htSplit.getFlowRate("kg/hr"));
+	"HT split flow should be near zero, got " + htSplit.getFlowRate("kg/hr"));
 
     Compressor htK1 = (Compressor) htTrain.getUnit("ht_injection_compressors_K1");
     Heater htIC = (Heater) htTrain.getUnit("ht_injection_compressors_IC");
@@ -120,7 +115,7 @@ public class ProcessModelLowFlowBypassParallelTrainsTest extends neqsim.NeqSimTe
     double totalFlow = 100000.0;
     Stream feed = new Stream("feed", makeGas(totalFlow));
     Splitter manifold = new Splitter("manifold", feed, 2);
-    manifold.setSplitFactors(new double[] {0.5, 0.5});
+    manifold.setSplitFactors(new double[] { 0.5, 0.5 });
 
     ProcessSystem manifoldArea = new ProcessSystem();
     manifoldArea.add(feed);
@@ -160,7 +155,7 @@ public class ProcessModelLowFlowBypassParallelTrainsTest extends neqsim.NeqSimTe
     double totalFlow = 80000.0;
     Stream feed = new Stream("feed", makeGas(totalFlow));
     Splitter manifold = new Splitter("manifold", feed, 2);
-    manifold.setSplitFactors(new double[] {0.5, 0.5});
+    manifold.setSplitFactors(new double[] { 0.5, 0.5 });
 
     ProcessSystem manifoldArea = new ProcessSystem();
     manifoldArea.add(feed);
@@ -176,8 +171,7 @@ public class ProcessModelLowFlowBypassParallelTrainsTest extends neqsim.NeqSimTe
     // deactivateSection() traverses MATERIAL ProcessConnection edges AND stream wiring
     // (outlet of one unit == inlet of another). No explicit connect() needed for the latter.
     int locked = plant.deactivateSection("ht_injection_compressors", "ht_K1");
-    assertTrue(locked >= 3,
-        "expected K1 + IC + K2 to be locked via stream-wiring traversal, got " + locked);
+    assertTrue(locked >= 3, "expected K1 + IC + K2 to be locked via stream-wiring traversal, got " + locked);
     assertTrue(htTrain.getUnit("ht_K1").isLockedInactive());
     assertTrue(htTrain.getUnit("ht_IC").isLockedInactive());
     assertTrue(htTrain.getUnit("ht_K2").isLockedInactive());
@@ -193,7 +187,7 @@ public class ProcessModelLowFlowBypassParallelTrainsTest extends neqsim.NeqSimTe
     double totalFlow = 50000.0;
     Stream feed = new Stream("feed", makeGas(totalFlow));
     Splitter manifold = new Splitter("manifold", feed, 2);
-    manifold.setFlowRates(new double[] {-1.0, 0.5}, "kg/hr"); // 0.5 kg/hr to HT branch
+    manifold.setFlowRates(new double[] { -1.0, 0.5 }, "kg/hr"); // 0.5 kg/hr to HT branch
 
     ProcessSystem manifoldArea = new ProcessSystem();
     manifoldArea.add(feed);
@@ -213,12 +207,11 @@ public class ProcessModelLowFlowBypassParallelTrainsTest extends neqsim.NeqSimTe
   }
 
   /**
-   * Mirrors the canonical platform-model structure: an upstream gas splitter routes a tiny fraction
-   * (≈ 0.001 MSm3/day) of the main feed to a second manifold which then splits that tiny stream
-   * across two parallel HT injection trains (A: 99.99%, B: 0.01%). With
-   * {@link ProcessSystem#setSectionLowFlowThreshold(double)} applied to both HT trains, train B
-   * (which receives a near-zero stream) must auto-bypass while train A and the export branch run
-   * normally and the full {@link ProcessModel} converges.
+   * Mirrors the canonical platform-model structure: an upstream gas splitter routes a tiny fraction (≈ 0.001 MSm3/day)
+   * of the main feed to a second manifold which then splits that tiny stream across two parallel HT injection trains
+   * (A: 99.99%, B: 0.01%). With {@link ProcessSystem#setSectionLowFlowThreshold(double)} applied to both HT trains,
+   * train B (which receives a near-zero stream) must auto-bypass while train A and the export branch run normally and
+   * the full {@link ProcessModel} converges.
    */
   @Test
   public void dualHtTrainsMirrorsPlatformProcessModelStructure() {
@@ -231,7 +224,7 @@ public class ProcessModelLowFlowBypassParallelTrainsTest extends neqsim.NeqSimTe
 
     // Upstream gas splitter: export vs HT injection (Pattern A)
     Splitter texSplitter = new Splitter("gas_splitter", feed, 2);
-    texSplitter.setSplitFactors(new double[] {1.0 - htFractionOfTotal, htFractionOfTotal});
+    texSplitter.setSplitFactors(new double[] { 1.0 - htFractionOfTotal, htFractionOfTotal });
     ProcessSystem texArea = new ProcessSystem();
     texArea.setName("upstream process");
     texArea.add(feed);
@@ -239,7 +232,7 @@ public class ProcessModelLowFlowBypassParallelTrainsTest extends neqsim.NeqSimTe
 
     // HT manifold: split HT stream A/B
     Splitter htManifold = new Splitter("manifold", texSplitter.getSplitStream(1), 2);
-    htManifold.setSplitFactors(new double[] {aSplit, bSplit});
+    htManifold.setSplitFactors(new double[] { aSplit, bSplit });
     ProcessSystem htManifoldArea = new ProcessSystem();
     htManifoldArea.setName("ht injection compressor manifold");
     htManifoldArea.add(htManifold);
@@ -253,8 +246,7 @@ public class ProcessModelLowFlowBypassParallelTrainsTest extends neqsim.NeqSimTe
     htB.setSectionLowFlowThreshold(1.0);
 
     // Export train consumes the bulk
-    ProcessSystem exportTrain =
-        buildCompressorTrain("export", texSplitter.getSplitStream(0), 150.0);
+    ProcessSystem exportTrain = buildCompressorTrain("export", texSplitter.getSplitStream(0), 150.0);
 
     ProcessModel plant = new ProcessModel();
     plant.add("upstream process", texArea);
@@ -266,38 +258,36 @@ public class ProcessModelLowFlowBypassParallelTrainsTest extends neqsim.NeqSimTe
 
     // Train B should be auto-bypassed (received ~totalFlow * 5e-6 * 1e-4 << 1 kg/hr)
     assertFalse(((Compressor) htB.getUnit("HT_B_K1")).isActive(),
-        "HT train B K1 should be auto-bypassed (feed << 1 kg/hr)");
-    assertFalse(((Compressor) htB.getUnit("HT_B_K2")).isActive(),
-        "HT train B K2 should be auto-bypassed");
+	"HT train B K1 should be auto-bypassed (feed << 1 kg/hr)");
+    assertFalse(((Compressor) htB.getUnit("HT_B_K2")).isActive(), "HT train B K2 should be auto-bypassed");
 
     // Train A may or may not bypass depending on htFractionOfTotal*aSplit*totalFlow; here it
     // receives ~2.5 kg/hr which is above the 1 kg/hr threshold, so it runs.
     double htAFeed = htManifold.getSplitStream(0).getFlowRate("kg/hr");
     if (htAFeed >= 1.0) {
       assertTrue(((Compressor) htA.getUnit("HT_A_K1")).isActive(),
-          "HT train A should run (feed " + htAFeed + " kg/hr above threshold)");
+	  "HT train A should run (feed " + htAFeed + " kg/hr above threshold)");
     }
 
     // Export branch must still run accurately — total mass balance preserved.
     Compressor expK2 = (Compressor) exportTrain.getUnit("export_K2");
     assertTrue(expK2.isActive(), "Export K2 must be active");
     assertEquals(150.0, expK2.getOutletStream().getPressure("bara"), 0.5);
-    assertEquals(totalFlow * (1.0 - htFractionOfTotal),
-        expK2.getOutletStream().getFlowRate("kg/hr"), totalFlow * 1e-3);
+    assertEquals(totalFlow * (1.0 - htFractionOfTotal), expK2.getOutletStream().getFlowRate("kg/hr"), totalFlow * 1e-3);
   }
 
   /**
-   * Verifies the low-flow bypass also works during dynamic ({@code runTransient}) simulation —
-   * units that are auto-deactivated or manually locked must be skipped by the per-timestep stepping
-   * loop in {@link ProcessSystem#runTransient(double, java.util.UUID)} (both the sequential and
-   * parallel paths), and the active branch must still produce correct output every timestep.
+   * Verifies the low-flow bypass also works during dynamic ({@code runTransient}) simulation — units that are
+   * auto-deactivated or manually locked must be skipped by the per-timestep stepping loop in
+   * {@link ProcessSystem#runTransient(double, java.util.UUID)} (both the sequential and parallel paths), and the active
+   * branch must still produce correct output every timestep.
    */
   @Test
   public void lowFlowBypassIsHonoredInDynamicTransientStepping() {
     double totalFlow = 100000.0;
     Stream feed = new Stream("feed", makeGas(totalFlow));
     Splitter manifold = new Splitter("manifold", feed, 2);
-    manifold.setSplitFactors(new double[] {1.0 - 1e-6, 1e-6});
+    manifold.setSplitFactors(new double[] { 1.0 - 1e-6, 1e-6 });
 
     ProcessSystem manifoldArea = new ProcessSystem();
     manifoldArea.setName("manifold");
@@ -329,13 +319,12 @@ public class ProcessModelLowFlowBypassParallelTrainsTest extends neqsim.NeqSimTe
       htTrain.runTransient(dt, java.util.UUID.randomUUID());
 
       assertFalse(htK1.isActive(), "HT K1 must remain inactive during transient step " + step);
-      assertFalse(htIC.isActive(),
-          "HT intercooler must remain inactive during transient step " + step);
+      assertFalse(htIC.isActive(), "HT intercooler must remain inactive during transient step " + step);
       assertFalse(htK2.isActive(), "HT K2 must remain inactive during transient step " + step);
 
       assertTrue(expK2.isActive(), "Export K2 must remain active during transient step " + step);
       assertEquals(150.0, expK2.getOutletStream().getPressure("bara"), 0.5,
-          "Export discharge pressure must stay on spec during transient step " + step);
+	  "Export discharge pressure must stay on spec during transient step " + step);
     }
 
     // Manual lock must also be honored during runTransient (not just auto-bypass).
@@ -343,17 +332,15 @@ public class ProcessModelLowFlowBypassParallelTrainsTest extends neqsim.NeqSimTe
     manifoldArea.run();
     htTrain.run();
     assertTrue(htK1.isActive() || htK1.isLockedInactive() == false,
-        "after activateAll() + low feed, K1 is either active or low-flow-bypassed");
+	"after activateAll() + low feed, K1 is either active or low-flow-bypassed");
 
     htK1.setLockedInactive(true);
     htIC.setLockedInactive(true);
     htK2.setLockedInactive(true);
     for (int step = 0; step < 3; step++) {
       htTrain.runTransient(dt, java.util.UUID.randomUUID());
-      assertFalse(htK1.isActive(),
-          "Manually locked K1 must stay inactive in transient step " + step);
-      assertFalse(htK2.isActive(),
-          "Manually locked K2 must stay inactive in transient step " + step);
+      assertFalse(htK1.isActive(), "Manually locked K1 must stay inactive in transient step " + step);
+      assertFalse(htK2.isActive(), "Manually locked K2 must stay inactive in transient step " + step);
     }
   }
 }

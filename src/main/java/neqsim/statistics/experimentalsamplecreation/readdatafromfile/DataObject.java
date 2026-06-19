@@ -14,5 +14,6 @@ public class DataObject implements DataObjectInterface {
    * Constructor for DataObject.
    * </p>
    */
-  public DataObject() {}
+  public DataObject() {
+  }
 }

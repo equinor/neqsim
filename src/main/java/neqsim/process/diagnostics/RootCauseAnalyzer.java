@@ -14,16 +14,14 @@ import org.apache.logging.log4j.Logger;
  * Main orchestrator for root cause analysis of equipment issues.
  *
  * <p>
- * Integrates process simulation, multi-source reliability data, historian time-series, and STID
- * design conditions to produce a ranked list of failure hypotheses. The analysis follows a
- * Bayesian- inspired methodology:
+ * Integrates process simulation, multi-source reliability data, historian time-series, and STID design conditions to
+ * produce a ranked list of failure hypotheses. The analysis follows a Bayesian- inspired methodology:
  * </p>
  *
  * <ol>
  * <li><b>Prior</b> — OREDA failure mode frequencies set initial hypothesis probabilities</li>
  * <li><b>Likelihood</b> — historian data evidence updates hypothesis scores</li>
- * <li><b>Verification</b> — process simulation confirms if a hypothesized failure reproduces
- * observed symptoms</li>
+ * <li><b>Verification</b> — process simulation confirms if a hypothesized failure reproduces observed symptoms</li>
  * </ol>
  *
  * <p>
@@ -113,7 +111,7 @@ public class RootCauseAnalyzer implements Serializable {
   /**
    * Sets historian time-series data for evidence analysis.
    *
-   * @param data map of parameter name to time-series values
+   * @param data       map of parameter name to time-series values
    * @param timestamps array of timestamps parallel to data arrays
    */
   public void setHistorianData(Map<String, double[]> data, double[] timestamps) {
@@ -134,11 +132,11 @@ public class RootCauseAnalyzer implements Serializable {
    * Sets a design limit for threshold analysis.
    *
    * @param parameter parameter name
-   * @param lowLimit low limit (use Double.NaN for no low limit)
+   * @param lowLimit  low limit (use Double.NaN for no low limit)
    * @param highLimit high limit (use Double.NaN for no high limit)
    */
   public void setDesignLimit(String parameter, double lowLimit, double highLimit) {
-    designLimits.put(parameter, new double[] {lowLimit, highLimit});
+    designLimits.put(parameter, new double[] { lowLimit, highLimit });
   }
 
   /**
@@ -188,8 +186,7 @@ public class RootCauseAnalyzer implements Serializable {
       throw new IllegalStateException("Symptom must be set before calling analyze()");
     }
 
-    logger.info("Starting root cause analysis for '{}', symptom: {}", equipmentName,
-        symptom.name());
+    logger.info("Starting root cause analysis for '{}', symptom: {}", equipmentName, symptom.name());
 
     // Step 1: Find equipment
     ProcessEquipmentInterface equipment = findEquipment();
@@ -217,7 +214,7 @@ public class RootCauseAnalyzer implements Serializable {
     for (Hypothesis h : hypotheses) {
       List<Hypothesis.Evidence> evidence = collector.collectEvidence(h);
       for (Hypothesis.Evidence e : evidence) {
-        h.addEvidence(e);
+	h.addEvidence(e);
       }
       double likelihood = collector.calculateLikelihoodScore(evidence);
       h.setLikelihoodScore(likelihood);
@@ -233,7 +230,7 @@ public class RootCauseAnalyzer implements Serializable {
       java.util.Collections.sort(sorted);
       int verifyCount = Math.min(5, sorted.size());
       for (int i = 0; i < verifyCount; i++) {
-        verifier.verify(sorted.get(i));
+	verifier.verify(sorted.get(i));
       }
     }
 
@@ -251,17 +248,17 @@ public class RootCauseAnalyzer implements Serializable {
     Hypothesis top = report.getTopHypothesis();
     String summary;
     if (top != null) {
-      summary = String.format("Most likely root cause: %s (%.1f%% confidence, category: %s). "
-          + "Analyzed %d parameters with %d data points. " + "%d hypotheses above 50%% confidence.",
-          top.getName(), top.getConfidenceScore() * 100, top.getCategory().name(),
-          historianData.size(), totalDataPoints, report.getHypothesesAboveThreshold(0.5).size());
+      summary = String.format(
+	  "Most likely root cause: %s (%.1f%% confidence, category: %s). "
+	      + "Analyzed %d parameters with %d data points. " + "%d hypotheses above 50%% confidence.",
+	  top.getName(), top.getConfidenceScore() * 100, top.getCategory().name(), historianData.size(),
+	  totalDataPoints, report.getHypothesesAboveThreshold(0.5).size());
     } else {
       summary = "No hypotheses could be generated for the given symptom and equipment.";
     }
     report.setAnalysisSummary(summary);
 
-    logger.info("Root cause analysis complete. Top hypothesis: {}",
-        top != null ? top.getName() : "none");
+    logger.info("Root cause analysis complete. Top hypothesis: {}", top != null ? top.getName() : "none");
 
     return report;
   }
@@ -270,9 +267,9 @@ public class RootCauseAnalyzer implements Serializable {
    * Normalizes confidence scores across all hypotheses using Bayesian posterior normalization.
    *
    * <p>
-   * Each hypothesis's raw score (prior x likelihood x verification) is divided by the sum of all
-   * raw scores, producing posterior probabilities that sum to 1.0. This prevents hypotheses from
-   * having inflated or deflated absolute confidence scores.
+   * Each hypothesis's raw score (prior x likelihood x verification) is divided by the sum of all raw scores, producing
+   * posterior probabilities that sum to 1.0. This prevents hypotheses from having inflated or deflated absolute
+   * confidence scores.
    * </p>
    *
    * @param hypotheses list of hypotheses to normalize
@@ -294,7 +291,7 @@ public class RootCauseAnalyzer implements Serializable {
 
     if (totalScore > 1e-12) {
       for (Hypothesis h : hypotheses) {
-        h.setConfidenceScore(h.getConfidenceScore() / totalScore);
+	h.setConfidenceScore(h.getConfidenceScore() / totalScore);
       }
     }
   }
@@ -307,7 +304,7 @@ public class RootCauseAnalyzer implements Serializable {
   private ProcessEquipmentInterface findEquipment() {
     for (ProcessEquipmentInterface eq : processSystem.getUnitOperations()) {
       if (eq.getName().equals(equipmentName)) {
-        return eq;
+	return eq;
       }
     }
     return null;

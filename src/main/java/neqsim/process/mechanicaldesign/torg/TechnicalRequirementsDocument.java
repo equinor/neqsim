@@ -9,8 +9,8 @@ import java.util.Map;
 import neqsim.process.mechanicaldesign.designstandards.StandardType;
 
 /**
- * Represents a Technical Requirements Document (TORG) that specifies design standards and methods
- * to be used in process design for a project.
+ * Represents a Technical Requirements Document (TORG) that specifies design standards and methods to be used in process
+ * design for a project.
  *
  * <p>
  * A TORG typically contains:
@@ -29,8 +29,8 @@ import neqsim.process.mechanicaldesign.designstandards.StandardType;
  * </p>
  *
  * <pre>
- * TechnicalRequirementsDocument torg = TechnicalRequirementsDocument.builder()
- *     .projectId("PROJECT-001").projectName("Offshore Gas Platform").companyIdentifier("Equinor")
+ * TechnicalRequirementsDocument torg = TechnicalRequirementsDocument.builder().projectId("PROJECT-001")
+ *     .projectName("Offshore Gas Platform").companyIdentifier("Equinor")
  *     .addStandard("pressure vessel design code", StandardType.ASME_VIII_DIV1)
  *     .addStandard("separator process design", StandardType.API_12J)
  *     .addStandard("pipeline design codes", StandardType.NORSOK_L_001).minAmbientTemperature(-40.0)
@@ -91,8 +91,7 @@ public class TechnicalRequirementsDocument implements Serializable {
     this.revision = builder.revision;
     this.issueDate = builder.issueDate;
     this.designStandards = Collections.unmodifiableMap(new HashMap<>(builder.designStandards));
-    this.equipmentStandards =
-        Collections.unmodifiableMap(new HashMap<>(builder.equipmentStandards));
+    this.equipmentStandards = Collections.unmodifiableMap(new HashMap<>(builder.equipmentStandards));
     this.environmentalConditions = builder.environmentalConditions;
     this.safetyFactors = builder.safetyFactors;
     this.materialSpecs = builder.materialSpecs;
@@ -176,8 +175,8 @@ public class TechnicalRequirementsDocument implements Serializable {
   }
 
   /**
-   * Get all applicable standards for a given equipment type. This combines equipment-specific
-   * standards with category-based standards.
+   * Get all applicable standards for a given equipment type. This combines equipment-specific standards with
+   * category-based standards.
    *
    * @param equipmentType the equipment type
    * @return combined list of applicable standards
@@ -191,13 +190,13 @@ public class TechnicalRequirementsDocument implements Serializable {
     // Add category-based standards for applicable categories
     for (StandardType type : StandardType.values()) {
       if (type.appliesTo(equipmentType)) {
-        String category = type.getDesignStandardCategory();
-        List<StandardType> categoryStandards = getStandardsForCategory(category);
-        for (StandardType std : categoryStandards) {
-          if (!result.contains(std) && std.appliesTo(equipmentType)) {
-            result.add(std);
-          }
-        }
+	String category = type.getDesignStandardCategory();
+	List<StandardType> categoryStandards = getStandardsForCategory(category);
+	for (StandardType std : categoryStandards) {
+	  if (!result.contains(std) && std.appliesTo(equipmentType)) {
+	    result.add(std);
+	  }
+	}
       }
     }
 
@@ -253,8 +252,8 @@ public class TechnicalRequirementsDocument implements Serializable {
   /**
    * Get a custom parameter as a specific type.
    *
-   * @param <T> the expected type
-   * @param key parameter key
+   * @param <T>  the expected type
+   * @param key  parameter key
    * @param type the class of the expected type
    * @return parameter value cast to the type, or null if not found or wrong type
    */
@@ -291,7 +290,7 @@ public class TechnicalRequirementsDocument implements Serializable {
       sb.append("    ").append(entry.getKey()).append(": ");
       List<String> codes = new ArrayList<>();
       for (StandardType st : entry.getValue()) {
-        codes.add(st.getCode());
+	codes.add(st.getCode());
       }
       sb.append(codes).append("\n");
     }
@@ -321,15 +320,14 @@ public class TechnicalRequirementsDocument implements Serializable {
      *
      * @param minAmbientTemp minimum ambient temperature [C]
      * @param maxAmbientTemp maximum ambient temperature [C]
-     * @param seawaterTemp design seawater temperature [C]
-     * @param seismicZone seismic zone classification
-     * @param windSpeed design wind speed [m/s]
-     * @param waveHeight design wave height [m]
-     * @param location installation location
+     * @param seawaterTemp   design seawater temperature [C]
+     * @param seismicZone    seismic zone classification
+     * @param windSpeed      design wind speed [m/s]
+     * @param waveHeight     design wave height [m]
+     * @param location       installation location
      */
-    public EnvironmentalConditions(double minAmbientTemp, double maxAmbientTemp,
-        double seawaterTemp, String seismicZone, double windSpeed, double waveHeight,
-        String location) {
+    public EnvironmentalConditions(double minAmbientTemp, double maxAmbientTemp, double seawaterTemp,
+	String seismicZone, double windSpeed, double waveHeight, String location) {
       this.minAmbientTemperature = minAmbientTemp;
       this.maxAmbientTemperature = maxAmbientTemp;
       this.designSeawaterTemperature = seawaterTemp;
@@ -418,14 +416,14 @@ public class TechnicalRequirementsDocument implements Serializable {
     /**
      * Constructor.
      *
-     * @param pressureSF pressure safety factor (multiplier)
-     * @param tempMargin temperature safety margin [C]
-     * @param corrosion corrosion allowance [mm]
+     * @param pressureSF    pressure safety factor (multiplier)
+     * @param tempMargin    temperature safety margin [C]
+     * @param corrosion     corrosion allowance [mm]
      * @param wallTolerance wall thickness tolerance (fraction)
-     * @param loadFactor load factor (multiplier)
+     * @param loadFactor    load factor (multiplier)
      */
-    public SafetyFactors(double pressureSF, double tempMargin, double corrosion,
-        double wallTolerance, double loadFactor) {
+    public SafetyFactors(double pressureSF, double tempMargin, double corrosion, double wallTolerance,
+	double loadFactor) {
       this.pressureSafetyFactor = pressureSF;
       this.temperatureSafetyMargin = tempMargin;
       this.corrosionAllowance = corrosion;
@@ -496,14 +494,14 @@ public class TechnicalRequirementsDocument implements Serializable {
      * Constructor.
      *
      * @param plateMaterial default plate material code
-     * @param pipeMaterial default pipe material code
-     * @param minTemp minimum design temperature [C]
-     * @param maxTemp maximum design temperature [C]
+     * @param pipeMaterial  default pipe material code
+     * @param minTemp       minimum design temperature [C]
+     * @param maxTemp       maximum design temperature [C]
      * @param impactTesting whether impact testing is required
-     * @param materialStd material standard (e.g., "ASTM", "EN")
+     * @param materialStd   material standard (e.g., "ASTM", "EN")
      */
-    public MaterialSpecifications(String plateMaterial, String pipeMaterial, double minTemp,
-        double maxTemp, boolean impactTesting, String materialStd) {
+    public MaterialSpecifications(String plateMaterial, String pipeMaterial, double minTemp, double maxTemp,
+	boolean impactTesting, String materialStd) {
       this.defaultPlateMaterial = plateMaterial;
       this.defaultPipeMaterial = pipeMaterial;
       this.minDesignTemperature = minTemp;
@@ -650,11 +648,11 @@ public class TechnicalRequirementsDocument implements Serializable {
     public Builder addStandard(String category, StandardType standard) {
       List<StandardType> list = designStandards.get(category);
       if (list == null) {
-        list = new ArrayList<>();
-        designStandards.put(category, list);
+	list = new ArrayList<>();
+	designStandards.put(category, list);
       }
       if (!list.contains(standard)) {
-        list.add(standard);
+	list.add(standard);
       }
       return this;
     }
@@ -662,7 +660,7 @@ public class TechnicalRequirementsDocument implements Serializable {
     /**
      * Set all standards for a category (replaces existing).
      *
-     * @param category the design category
+     * @param category  the design category
      * @param standards the standards to set
      * @return this builder
      */
@@ -675,17 +673,17 @@ public class TechnicalRequirementsDocument implements Serializable {
      * Add a standard for a specific equipment type.
      *
      * @param equipmentType the equipment type
-     * @param standard the standard to add
+     * @param standard      the standard to add
      * @return this builder
      */
     public Builder addEquipmentStandard(String equipmentType, StandardType standard) {
       List<StandardType> list = equipmentStandards.get(equipmentType);
       if (list == null) {
-        list = new ArrayList<>();
-        equipmentStandards.put(equipmentType, list);
+	list = new ArrayList<>();
+	equipmentStandards.put(equipmentType, list);
       }
       if (!list.contains(standard)) {
-        list.add(standard);
+	list.add(standard);
       }
       return this;
     }
@@ -709,8 +707,7 @@ public class TechnicalRequirementsDocument implements Serializable {
      * @return this builder
      */
     public Builder environmentalConditions(double minAmbientTemp, double maxAmbientTemp) {
-      this.environmentalConditions =
-          new EnvironmentalConditions(minAmbientTemp, maxAmbientTemp, 4.0, "0", 0, 0, "");
+      this.environmentalConditions = new EnvironmentalConditions(minAmbientTemp, maxAmbientTemp, 4.0, "0", 0, 0, "");
       return this;
     }
 
@@ -739,7 +736,7 @@ public class TechnicalRequirementsDocument implements Serializable {
     /**
      * Add a custom parameter.
      *
-     * @param key parameter key
+     * @param key   parameter key
      * @param value parameter value
      * @return this builder
      */

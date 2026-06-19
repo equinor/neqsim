@@ -90,8 +90,8 @@ class DegradedOperationOptimizerTest {
     optimizer.setFeedStreamName("Feed");
     optimizer.setProductStreamName("Export Gas");
 
-    java.util.Map<DegradedOperationOptimizer.OperatingMode, Double> results =
-        optimizer.evaluateOperatingModes("Export Compressor");
+    java.util.Map<DegradedOperationOptimizer.OperatingMode, Double> results = optimizer
+	.evaluateOperatingModes("Export Compressor");
 
     assertNotNull(results);
     // Should have at least one operating mode
@@ -102,8 +102,7 @@ class DegradedOperationOptimizerTest {
   void testRecoveryPlan() {
     DegradedOperationOptimizer optimizer = new DegradedOperationOptimizer(processSystem);
 
-    DegradedOperationOptimizer.RecoveryPlan plan =
-        optimizer.createRecoveryPlan("Export Compressor");
+    DegradedOperationOptimizer.RecoveryPlan plan = optimizer.createRecoveryPlan("Export Compressor");
 
     assertNotNull(plan);
     assertNotNull(plan.getFailedEquipment());

@@ -17,9 +17,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Stateless phase envelope runner for MCP integration.
  *
  * <p>
- * Calculates the PT phase envelope (bubble point and dew point curves) for a fluid mixture and
- * returns the data as a JSON array of points. This is one of the most commonly requested
- * single-purpose engineering calculations for agents.
+ * Calculates the PT phase envelope (bubble point and dew point curves) for a fluid mixture and returns the data as a
+ * JSON array of points. This is one of the most commonly requested single-purpose engineering calculations for agents.
  * </p>
  *
  * <h2>Input JSON Format:</h2>
@@ -31,13 +30,13 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  */
 public class PhaseEnvelopeRunner {
 
-  private static final Gson GSON =
-      new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+  private static final Gson GSON = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
 
   /**
    * Private constructor — all methods are static.
    */
-  private PhaseEnvelopeRunner() {}
+  private PhaseEnvelopeRunner() {
+  }
 
   /**
    * Calculates the phase envelope for a fluid from a JSON specification.
@@ -48,7 +47,7 @@ public class PhaseEnvelopeRunner {
   public static String run(String json) {
     if (json == null || json.trim().isEmpty()) {
       return errorJson("INPUT_ERROR", "JSON input is null or empty",
-          "Provide a JSON specification with 'components' and optionally 'model'");
+	  "Provide a JSON specification with 'components' and optionally 'model'");
     }
 
     long startTime = System.currentTimeMillis();
@@ -57,8 +56,7 @@ public class PhaseEnvelopeRunner {
     try {
       input = JsonParser.parseString(json).getAsJsonObject();
     } catch (Exception e) {
-      return errorJson("JSON_PARSE_ERROR", "Failed to parse JSON: " + e.getMessage(),
-          "Ensure the JSON is well-formed");
+      return errorJson("JSON_PARSE_ERROR", "Failed to parse JSON: " + e.getMessage(), "Ensure the JSON is well-formed");
     }
 
     // --- Parse model ---
@@ -67,7 +65,7 @@ public class PhaseEnvelopeRunner {
     // --- Parse components ---
     if (!input.has("components")) {
       return errorJson("MISSING_COMPONENTS", "No 'components' specified",
-          "Provide a components map, e.g. {\"methane\": 0.85, \"ethane\": 0.15}");
+	  "Provide a components map, e.g. {\"methane\": 0.85, \"ethane\": 0.15}");
     }
     JsonObject componentsJson = input.getAsJsonObject("components");
     Map<String, Double> components = new HashMap<String, Double>();
@@ -82,7 +80,7 @@ public class PhaseEnvelopeRunner {
       // Create fluid at a reference condition
       SystemInterface fluid = FlashRunner.createFluid(model, 288.15, 1.01325);
       for (Map.Entry<String, Double> comp : components.entrySet()) {
-        fluid.addComponent(comp.getKey(), comp.getValue());
+	fluid.addComponent(comp.getKey(), comp.getValue());
       }
       fluid.setMixingRule(mixingRule);
 
@@ -99,39 +97,39 @@ public class PhaseEnvelopeRunner {
 
       JsonArray envelopePoints = new JsonArray();
       if (ptData != null && ptData.length >= 2) {
-        for (int i = 0; i < ptData[0].length; i++) {
-          JsonObject point = new JsonObject();
-          point.addProperty("pressure_bara", ptData[0][i]);
-          point.addProperty("temperature_K", ptData[1][i]);
-          point.addProperty("temperature_C", ptData[1][i] - 273.15);
-          envelopePoints.add(point);
-        }
+	for (int i = 0; i < ptData[0].length; i++) {
+	  JsonObject point = new JsonObject();
+	  point.addProperty("pressure_bara", ptData[0][i]);
+	  point.addProperty("temperature_K", ptData[1][i]);
+	  point.addProperty("temperature_C", ptData[1][i] - 273.15);
+	  envelopePoints.add(point);
+	}
       }
 
       // Try to extract cricondenbar and cricondentherm
       JsonObject criticalPoints = new JsonObject();
       try {
-        double cricondenbarP = ops.get("cricondenbar")[0];
-        double cricondenbarT = ops.get("cricondenbar")[1];
-        JsonObject cb = new JsonObject();
-        cb.addProperty("pressure_bara", cricondenbarP);
-        cb.addProperty("temperature_K", cricondenbarT);
-        cb.addProperty("temperature_C", cricondenbarT - 273.15);
-        criticalPoints.add("cricondenbar", cb);
+	double cricondenbarP = ops.get("cricondenbar")[0];
+	double cricondenbarT = ops.get("cricondenbar")[1];
+	JsonObject cb = new JsonObject();
+	cb.addProperty("pressure_bara", cricondenbarP);
+	cb.addProperty("temperature_K", cricondenbarT);
+	cb.addProperty("temperature_C", cricondenbarT - 273.15);
+	criticalPoints.add("cricondenbar", cb);
       } catch (Exception e) {
-        // cricondenbar data not available
+	// cricondenbar data not available
       }
 
       try {
-        double cricondenthermT = ops.get("cricondentherm")[1];
-        double cricondenthermP = ops.get("cricondentherm")[0];
-        JsonObject ct = new JsonObject();
-        ct.addProperty("pressure_bara", cricondenthermP);
-        ct.addProperty("temperature_K", cricondenthermT);
-        ct.addProperty("temperature_C", cricondenthermT - 273.15);
-        criticalPoints.add("cricondentherm", ct);
+	double cricondenthermT = ops.get("cricondentherm")[1];
+	double cricondenthermP = ops.get("cricondentherm")[0];
+	JsonObject ct = new JsonObject();
+	ct.addProperty("pressure_bara", cricondenthermP);
+	ct.addProperty("temperature_K", cricondenthermT);
+	ct.addProperty("temperature_C", cricondenthermT - 273.15);
+	criticalPoints.add("cricondentherm", ct);
       } catch (Exception e) {
-        // cricondentherm data not available
+	// cricondentherm data not available
       }
 
       // Build provenance
@@ -149,7 +147,7 @@ public class PhaseEnvelopeRunner {
       result.addProperty("numberOfPoints", envelopePoints.size());
       result.add("envelope", envelopePoints);
       if (criticalPoints.size() > 0) {
-        result.add("criticalPoints", criticalPoints);
+	result.add("criticalPoints", criticalPoints);
       }
       result.add("provenance", GSON.toJsonTree(provenance));
 
@@ -158,30 +156,30 @@ public class PhaseEnvelopeRunner {
       data.addProperty("numberOfPoints", envelopePoints.size());
       data.add("envelope", envelopePoints.deepCopy());
       if (criticalPoints.size() > 0) {
-        data.add("criticalPoints", criticalPoints.deepCopy());
+	data.add("criticalPoints", criticalPoints.deepCopy());
       }
       result.add("data", data);
 
       String gateVerdict = envelopePoints.size() > 0 ? "passed" : "warning";
       String gateSummary = envelopePoints.size() > 0 ? "Phase envelope calculation completed"
-          : "Phase envelope calculation returned no data points";
+	  : "Phase envelope calculation returned no data points";
       ApiEnvelope.applyStandardFields(result, "getPhaseEnvelope", provenance,
-          ApiEnvelope.validationStatus(true, "calculation", gateSummary),
-          ApiEnvelope.qualityGate(gateVerdict, gateSummary, true));
+	  ApiEnvelope.validationStatus(true, "calculation", gateSummary),
+	  ApiEnvelope.qualityGate(gateVerdict, gateSummary, true));
 
       return GSON.toJson(result);
     } catch (Exception e) {
       return errorJson("CALCULATION_ERROR", "Phase envelope calculation failed: " + e.getMessage(),
-          "Check component names. Ensure the mixture has at least 2 components "
-              + "or a single component with vapor-liquid equilibrium.");
+	  "Check component names. Ensure the mixture has at least 2 components "
+	      + "or a single component with vapor-liquid equilibrium.");
     }
   }
 
   /**
    * Creates a standard error JSON response.
    *
-   * @param code the error code
-   * @param message the error message
+   * @param code        the error code
+   * @param message     the error message
    * @param remediation the fix suggestion
    * @return JSON error string
    */
@@ -199,8 +197,7 @@ public class PhaseEnvelopeRunner {
     errors.add(issue);
     error.add("errors", errors);
     ApiEnvelope.applyStandardFields(error, "getPhaseEnvelope", null,
-        ApiEnvelope.validationStatus(false, "input", message),
-        ApiEnvelope.qualityGate("failed", message, true));
+	ApiEnvelope.validationStatus(false, "input", message), ApiEnvelope.qualityGate("failed", message, true));
     return GSON.toJson(error);
   }
 }

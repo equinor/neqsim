@@ -37,8 +37,7 @@ class SustainabilityMetricsTest {
     metrics.setFossilHeatEmissionFactor(0.250);
     metrics.calculate();
 
-    assertTrue(metrics.getFossilFuelDisplacementTCO2PerYear() > 0,
-        "Fossil displacement should be positive");
+    assertTrue(metrics.getFossilFuelDisplacementTCO2PerYear() > 0, "Fossil displacement should be positive");
     // Net electricity = 9000, net heat = 12000
     // Displaced: 9000 * 0.450 + 12000 * 0.250 = 4050 + 3000 = 7050 tCO2
     assertEquals(7050.0, metrics.getFossilFuelDisplacementTCO2PerYear(), 0.1);
@@ -63,8 +62,7 @@ class SustainabilityMetricsTest {
     metrics.setImportedElectricityMWhPerYear(0.0); // 100% renewable
     metrics.calculate();
 
-    assertEquals(1.0, metrics.getRenewableEnergyFraction(), 1e-6,
-        "Should be 100% renewable when no grid import");
+    assertEquals(1.0, metrics.getRenewableEnergyFraction(), 1e-6, "Should be 100% renewable when no grid import");
   }
 
   @Test
@@ -76,8 +74,7 @@ class SustainabilityMetricsTest {
     metrics.setImportedElectricityMWhPerYear(5982.0); // equal to bio energy
     metrics.calculate();
 
-    assertEquals(0.5, metrics.getRenewableEnergyFraction(), 0.01,
-        "Should be ~50% renewable with equal grid import");
+    assertEquals(0.5, metrics.getRenewableEnergyFraction(), 0.01, "Should be ~50% renewable with equal grid import");
   }
 
   @Test
@@ -102,8 +99,7 @@ class SustainabilityMetricsTest {
     metrics.addEmission(SustainabilityMetrics.EmissionSource.FLARING, "Emergency flare", 5.0);
     metrics.calculate();
 
-    assertTrue(metrics.getTotalEmissionsTCO2eqPerYear() >= 15.0,
-        "Custom emissions should be included in total");
+    assertTrue(metrics.getTotalEmissionsTCO2eqPerYear() >= 15.0, "Custom emissions should be included in total");
   }
 
   @Test
@@ -160,8 +156,7 @@ class SustainabilityMetricsTest {
     metrics.calculate();
 
     // Transport = 50 * 10000 * 0.062 * 2 / 1000 = 62 tCO2
-    assertTrue(metrics.getTotalEmissionsTCO2eqPerYear() >= 60.0,
-        "Transport emissions should contribute to total");
+    assertTrue(metrics.getTotalEmissionsTCO2eqPerYear() >= 60.0, "Transport emissions should contribute to total");
   }
 
   @Test
@@ -174,7 +169,6 @@ class SustainabilityMetricsTest {
     metrics.calculate();
 
     // N2O = 5000 * 0.01 * (44/28) * 273 / 1000 = 21.45 tCO2eq
-    assertTrue(metrics.getTotalEmissionsTCO2eqPerYear() > 20.0,
-        "N2O emissions should be significant");
+    assertTrue(metrics.getTotalEmissionsTCO2eqPerYear() > 20.0, "N2O emissions should be significant");
   }
 }

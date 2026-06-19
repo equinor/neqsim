@@ -24,15 +24,10 @@ public class SolidPhysicalProperties extends PhysicalProperties {
    */
   public SolidPhysicalProperties(PhaseInterface phase) {
     super(phase);
-    conductivityCalc =
-        new neqsim.physicalproperties.methods.solidphysicalproperties.conductivity.Conductivity(
-            this);
-    viscosityCalc =
-        new neqsim.physicalproperties.methods.solidphysicalproperties.viscosity.Viscosity(this);
-    diffusivityCalc =
-        new neqsim.physicalproperties.methods.solidphysicalproperties.diffusivity.Diffusivity(this);
-    densityCalc =
-        new neqsim.physicalproperties.methods.solidphysicalproperties.density.Density(this);
+    conductivityCalc = new neqsim.physicalproperties.methods.solidphysicalproperties.conductivity.Conductivity(this);
+    viscosityCalc = new neqsim.physicalproperties.methods.solidphysicalproperties.viscosity.Viscosity(this);
+    diffusivityCalc = new neqsim.physicalproperties.methods.solidphysicalproperties.diffusivity.Diffusivity(this);
+    densityCalc = new neqsim.physicalproperties.methods.solidphysicalproperties.density.Density(this);
     this.init(phase);
   }
 }

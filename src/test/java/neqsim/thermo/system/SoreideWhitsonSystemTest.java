@@ -10,9 +10,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class SoreideWhitsonSystemTest {
   /**
-   * Test Soreide-Whitson system with zero salinity. Checks that the phase mole fractions for
-   * nitrogen, CO2, methane, ethane, and water in both gas and aqueous phases match the expected
-   * values for a system with no added salt.
+   * Test Soreide-Whitson system with zero salinity. Checks that the phase mole fractions for nitrogen, CO2, methane,
+   * ethane, and water in both gas and aqueous phases match the expected values for a system with no added salt.
    */
   @Test
   public void testSoreideWhitsonSetup() {
@@ -35,19 +34,17 @@ public class SoreideWhitsonSystemTest {
     testOps.TPflash();
 
     // Check phase mole fractions for both gas and aqueous phases
-    double[] expectedGasFractions = {1.10818E-1, 2.21422E-1, 3.32456E-1, 3.32456E-1, 2.84796E-3};
-    double[] expectedAqueousFractions =
-        {4.43467E-5, 2.07206E-3, 1.26653E-4, 1.29507E-4, 9.97627E-1};
-    String[] componentNames = {"nitrogen", "CO2", "methane", "ethane", "water"};
+    double[] expectedGasFractions = { 1.10818E-1, 2.21422E-1, 3.32456E-1, 3.32456E-1, 2.84796E-3 };
+    double[] expectedAqueousFractions = { 4.43467E-5, 2.07206E-3, 1.26653E-4, 1.29507E-4, 9.97627E-1 };
+    String[] componentNames = { "nitrogen", "CO2", "methane", "ethane", "water" };
     double tolerance = 1e-6;
 
     for (int phaseIdx = 0; phaseIdx < 2; phaseIdx++) {
       for (int compIdx = 0; compIdx < componentNames.length; compIdx++) {
-        double moleFrac = testSystem.getPhase(phaseIdx).getComponent(compIdx).getx();
-        double expected =
-            (phaseIdx == 0) ? expectedGasFractions[compIdx] : expectedAqueousFractions[compIdx];
-        org.junit.jupiter.api.Assertions.assertEquals(expected, moleFrac, tolerance,
-            "Phase " + phaseIdx + " component " + componentNames[compIdx] + " mole fraction");
+	double moleFrac = testSystem.getPhase(phaseIdx).getComponent(compIdx).getx();
+	double expected = (phaseIdx == 0) ? expectedGasFractions[compIdx] : expectedAqueousFractions[compIdx];
+	org.junit.jupiter.api.Assertions.assertEquals(expected, moleFrac, tolerance,
+	    "Phase " + phaseIdx + " component " + componentNames[compIdx] + " mole fraction");
       }
     }
   }
@@ -78,10 +75,9 @@ public class SoreideWhitsonSystemTest {
   }
 
   /**
-   * Test Soreide-Whitson system with nonzero salinity (0.05 mole/sec). Checks that the phase mole
-   * fractions for nitrogen, CO2, methane, ethane, and water in both gas and aqueous phases match
-   * the expected values for a system with added salt. This validates the effect of salinity on
-   * phase equilibrium and partitioning.
+   * Test Soreide-Whitson system with nonzero salinity (0.05 mole/sec). Checks that the phase mole fractions for
+   * nitrogen, CO2, methane, ethane, and water in both gas and aqueous phases match the expected values for a system
+   * with added salt. This validates the effect of salinity on phase equilibrium and partitioning.
    */
   @Test
   public void testSoreideWhitsonSetup2() {
@@ -102,27 +98,25 @@ public class SoreideWhitsonSystemTest {
     testOps.TPflash();
 
     // Check phase mole fractions for both gas and aqueous phases (with salinity)
-    double[] expectedGasFractions = {1.10836E-1, 2.2151E-1, 3.32509E-1, 3.3251E-1, 2.63456E-3};
-    double[] expectedAqueousFractions = {2.53209E-5, 1.55814E-3, 7.67909E-5, 7.0922E-5, 9.98269E-1};
-    String[] componentNames = {"nitrogen", "CO2", "methane", "ethane", "water"};
+    double[] expectedGasFractions = { 1.10836E-1, 2.2151E-1, 3.32509E-1, 3.3251E-1, 2.63456E-3 };
+    double[] expectedAqueousFractions = { 2.53209E-5, 1.55814E-3, 7.67909E-5, 7.0922E-5, 9.98269E-1 };
+    String[] componentNames = { "nitrogen", "CO2", "methane", "ethane", "water" };
     double tolerance = 0.001;
 
     for (int phaseIdx = 0; phaseIdx < 2; phaseIdx++) {
       for (int compIdx = 0; compIdx < componentNames.length; compIdx++) {
-        double moleFrac = testSystem.getPhase(phaseIdx).getComponent(compIdx).getx();
-        double expected =
-            (phaseIdx == 0) ? expectedGasFractions[compIdx] : expectedAqueousFractions[compIdx];
-        org.junit.jupiter.api.Assertions.assertEquals(expected, moleFrac, tolerance,
-            "Phase " + phaseIdx + " component " + componentNames[compIdx] + " mole fraction");
+	double moleFrac = testSystem.getPhase(phaseIdx).getComponent(compIdx).getx();
+	double expected = (phaseIdx == 0) ? expectedGasFractions[compIdx] : expectedAqueousFractions[compIdx];
+	org.junit.jupiter.api.Assertions.assertEquals(expected, moleFrac, tolerance,
+	    "Phase " + phaseIdx + " component " + componentNames[compIdx] + " mole fraction");
       }
     }
 
     // Check salinity concentration in aqueous phase
     double expectedSalinity = 1.8877351154938637;
-    double actualSalinity =
-        ((PhaseSoreideWhitson) testSystem.getPhase(1)).getSalinityConcentration();
+    double actualSalinity = ((PhaseSoreideWhitson) testSystem.getPhase(1)).getSalinityConcentration();
     org.junit.jupiter.api.Assertions.assertEquals(expectedSalinity, actualSalinity, 0.01,
-        "Aqueous phase salinity concentration");
+	"Aqueous phase salinity concentration");
   }
 
   @Test
@@ -138,7 +132,7 @@ public class SoreideWhitsonSystemTest {
     testSystem.setMixingRule(11);
 
     SystemSoreideWhitson testSystem2 = testSystem.clone();
-    double[] molarComposition = {0.2, 0.4, 0.1, 0.2, 0.1};
+    double[] molarComposition = { 0.2, 0.4, 0.1, 0.2, 0.1 };
     testSystem2.setMolarComposition(molarComposition);
     testSystem2.setSalinity(0.00, "mole/sec");
 
@@ -161,11 +155,10 @@ public class SoreideWhitsonSystemTest {
 
     // 4. Check the salinity concentration in the mixed stream's aqueous phase
     SystemSoreideWhitson mixedSystem = (SystemSoreideWhitson) mixer.getOutletStream().getFluid();
-    double mixedSalinity =
-        ((PhaseSoreideWhitson) mixedSystem.getPhase(1)).getSalinityConcentration();
+    double mixedSalinity = ((PhaseSoreideWhitson) mixedSystem.getPhase(1)).getSalinityConcentration();
 
     org.junit.jupiter.api.Assertions.assertTrue(mixedSalinity > 0.96 && mixedSalinity < 0.97,
-        "Mixed salinity should be around 0.96 , but was: " + mixedSalinity);
+	"Mixed salinity should be around 0.96 , but was: " + mixedSalinity);
 
     Separator separator = new Separator("Stream Separator");
     separator.addStream(mixer.getOutletStream());
@@ -176,10 +169,7 @@ public class SoreideWhitsonSystemTest {
     StreamInterface streamAqueous = separator.getLiquidOutStream();
     double waterSalinity = ((SystemSoreideWhitson) streamAqueous.getFluid()).getSalinity();
 
-    org.junit.jupiter.api.Assertions.assertEquals(0.0, gasSalinity, 1e-8,
-        "Gas salinity should be 0.0");
-    org.junit.jupiter.api.Assertions.assertEquals(0.05, waterSalinity, 1e-8,
-        "Water salinity should be 0.05");
+    org.junit.jupiter.api.Assertions.assertEquals(0.0, gasSalinity, 1e-8, "Gas salinity should be 0.0");
+    org.junit.jupiter.api.Assertions.assertEquals(0.05, waterSalinity, 1e-8, "Water salinity should be 0.05");
   }
 }
-

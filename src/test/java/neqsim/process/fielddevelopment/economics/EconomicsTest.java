@@ -320,11 +320,10 @@ class EconomicsTest {
   @Test
   void testReservoirCoupledProfileIsResourceCappedAndExportable() {
     ReservoirInput reservoir = ReservoirInput.leanGas().resourceUncertainty(8.0, 10.0, 12.0, "GSm3")
-        .recoveryFactor(0.50).build();
+	.recoveryFactor(0.50).build();
     ProductionProfileGenerator generator = new ProductionProfileGenerator();
 
-    Map<Integer, Double> profile =
-        generator.generateFromReservoirInput(reservoir, 3.0e6, true, 2026, 30);
+    Map<Integer, Double> profile = generator.generateFromReservoirInput(reservoir, 3.0e6, true, 2026, 30);
 
     assertTrue(ProductionProfileGenerator.calculateCumulativeProduction(profile) <= 5.0e9 + 1.0);
     String csv = ProductionProfileGenerator.toVfpRateTableCsv(profile, "Sm3/d", 120.0);
@@ -341,10 +340,8 @@ class EconomicsTest {
     history.put(2023, 2.7e9);
     ProductionProfileGenerator generator = new ProductionProfileGenerator();
 
-    ProductionProfileGenerator.HistoryMatchedDeclineCase declineCase =
-        generator.fitHistoryMatchedDecline(history);
-    Map<Integer, Double> forecast =
-        generator.generateHistoryMatchedProfile(declineCase, 2024, 5, 0.1e9 / 365.25);
+    ProductionProfileGenerator.HistoryMatchedDeclineCase declineCase = generator.fitHistoryMatchedDecline(history);
+    Map<Integer, Double> forecast = generator.generateHistoryMatchedProfile(declineCase, 2024, 5, 0.1e9 / 365.25);
 
     assertTrue(declineCase.getAnnualDeclineRate() > 0.0);
     assertTrue(declineCase.getFitQuality() > 0.90);

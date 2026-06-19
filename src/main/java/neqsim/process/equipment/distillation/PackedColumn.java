@@ -13,15 +13,15 @@ import neqsim.process.equipment.stream.StreamInterface;
  * Packed column (contactor/absorber/stripper) using packing internals with HETP-based staging.
  *
  * <p>
- * Models a packed column for gas absorption (amine, TEG, water wash) or stripping applications.
- * Internally wraps a {@link DistillationColumn} and adds packing-specific functionality: HETP
- * calculation, packing hydraulics (flooding, pressure drop, mass transfer), and packing selection.
+ * Models a packed column for gas absorption (amine, TEG, water wash) or stripping applications. Internally wraps a
+ * {@link DistillationColumn} and adds packing-specific functionality: HETP calculation, packing hydraulics (flooding,
+ * pressure drop, mass transfer), and packing selection.
  * </p>
  *
  * <p>
  * The number of theoretical stages is determined from packed bed height and HETP. The underlying
- * {@link DistillationColumn} provides the rigorous VLE calculations, while the
- * {@link PackingHydraulicsCalculator} provides the hydraulic design evaluation.
+ * {@link DistillationColumn} provides the rigorous VLE calculations, while the {@link PackingHydraulicsCalculator}
+ * provides the hydraulic design evaluation.
  * </p>
  *
  * <p>
@@ -97,13 +97,13 @@ public class PackedColumn extends DistillationColumn {
    * Create a packed column with a given number of stages (from HETP).
    *
    * <p>
-   * The default HETP of ~0.5 m is used initially. After running, HETP is recalculated from packing
-   * correlations and the internal stage count is updated.
+   * The default HETP of ~0.5 m is used initially. After running, HETP is recalculated from packing correlations and the
+   * internal stage count is updated.
    * </p>
    *
-   * @param name equipment name
+   * @param name         equipment name
    * @param hasCondenser true to include a condenser
-   * @param hasReboiler true to include a reboiler
+   * @param hasReboiler  true to include a reboiler
    */
   public PackedColumn(String name, boolean hasCondenser, boolean hasReboiler) {
     super(name, estimateStages(5.0, 0.5), hasReboiler, hasCondenser);
@@ -112,7 +112,7 @@ public class PackedColumn extends DistillationColumn {
   /**
    * Create a packed column for absorber/contactor use (no condenser, no reboiler).
    *
-   * @param name equipment name
+   * @param name        equipment name
    * @param gasInStream the gas inlet stream (bottom)
    */
   public PackedColumn(String name, StreamInterface gasInStream) {
@@ -123,14 +123,13 @@ public class PackedColumn extends DistillationColumn {
   /**
    * Create a packed column with specified packed height and packing type.
    *
-   * @param name equipment name
+   * @param name         equipment name
    * @param packedHeight packed bed height [m]
-   * @param packingType packing name (e.g., "Pall-Ring-50", "Mellapak-250Y")
+   * @param packingType  packing name (e.g., "Pall-Ring-50", "Mellapak-250Y")
    * @param hasCondenser true for condenser
-   * @param hasReboiler true for reboiler
+   * @param hasReboiler  true for reboiler
    */
-  public PackedColumn(String name, double packedHeight, String packingType, boolean hasCondenser,
-      boolean hasReboiler) {
+  public PackedColumn(String name, double packedHeight, String packingType, boolean hasCondenser, boolean hasReboiler) {
     super(name, estimateStages(packedHeight, 0.5), hasReboiler, hasCondenser);
     this.packedHeight = packedHeight;
     this.packingType = packingType;
@@ -139,7 +138,7 @@ public class PackedColumn extends DistillationColumn {
   /**
    * Estimate the number of theoretical stages from packed height and an initial HETP guess.
    *
-   * @param height packed bed height [m]
+   * @param height    packed bed height [m]
    * @param hetpGuess initial HETP guess [m]
    * @return estimated stage count (at least 2)
    */
@@ -367,9 +366,9 @@ public class PackedColumn extends DistillationColumn {
 
       // Update internal diameter from sizing
       if (columnDiameter <= 0) {
-        setInternalDiameter(designer.getRequiredDiameter());
+	setInternalDiameter(designer.getRequiredDiameter());
       } else {
-        setInternalDiameter(columnDiameter);
+	setInternalDiameter(columnDiameter);
       }
     }
   }
@@ -427,7 +426,6 @@ public class PackedColumn extends DistillationColumn {
     perf.addProperty("converged", solved());
     root.add("columnPerformance", perf);
 
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(root);
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(root);
   }
 }

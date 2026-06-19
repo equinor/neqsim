@@ -27,8 +27,8 @@ import com.google.gson.GsonBuilder;
  * </ol>
  *
  * <p>
- * The overall thermal efficiency is typically 50-62% for modern combined-cycle plants, compared to
- * 30-40% for simple-cycle gas turbines.
+ * The overall thermal efficiency is typically 50-62% for modern combined-cycle plants, compared to 30-40% for
+ * simple-cycle gas turbines.
  * </p>
  *
  * <pre>
@@ -47,8 +47,7 @@ import com.google.gson.GsonBuilder;
  * @author Even Solbraa
  * @version 1.0
  */
-public class CombinedCycleSystem extends TwoPortEquipment
-    implements CapacityConstrainedEquipment, AutoSizeable {
+public class CombinedCycleSystem extends TwoPortEquipment implements CapacityConstrainedEquipment, AutoSizeable {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000L;
   /** Logger object for class. */
@@ -85,8 +84,7 @@ public class CombinedCycleSystem extends TwoPortEquipment
   private boolean autoSized = false;
 
   /** Storage for capacity constraints. */
-  private final Map<String, CapacityConstraint> capacityConstraints =
-      new LinkedHashMap<String, CapacityConstraint>();
+  private final Map<String, CapacityConstraint> capacityConstraints = new LinkedHashMap<String, CapacityConstraint>();
 
   /**
    * Constructor for CombinedCycleSystem.
@@ -100,7 +98,7 @@ public class CombinedCycleSystem extends TwoPortEquipment
   /**
    * Constructor for CombinedCycleSystem with fuel gas inlet.
    *
-   * @param name equipment name
+   * @param name         equipment name
    * @param fuelGasInlet fuel gas stream to the gas turbine
    */
   public CombinedCycleSystem(String name, StreamInterface fuelGasInlet) {
@@ -178,14 +176,14 @@ public class CombinedCycleSystem extends TwoPortEquipment
    */
   public double getTotalPower(String unit) {
     switch (unit) {
-      case "kW":
-        return totalPower / 1000.0;
-      case "MW":
-        return totalPower / 1.0e6;
-      case "hp":
-        return totalPower / 745.7;
-      default:
-        return totalPower;
+    case "kW":
+      return totalPower / 1000.0;
+    case "MW":
+      return totalPower / 1.0e6;
+    case "hp":
+      return totalPower / 745.7;
+    default:
+      return totalPower;
     }
   }
 
@@ -242,8 +240,7 @@ public class CombinedCycleSystem extends TwoPortEquipment
     results.put("steamPressure_bara", steamPressure);
     results.put("steamTemperature_C", steamTemperature - 273.15);
     results.put("steamTurbineEfficiency", steamTurbineEfficiency);
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(results);
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(results);
   }
 
   /**
@@ -277,7 +274,7 @@ public class CombinedCycleSystem extends TwoPortEquipment
    * Set steam temperature with unit.
    *
    * @param temperature steam temperature
-   * @param unit temperature unit ("C", "K")
+   * @param unit        temperature unit ("C", "K")
    */
   public void setSteamTemperature(double temperature, String unit) {
     if ("C".equals(unit)) {
@@ -297,15 +294,14 @@ public class CombinedCycleSystem extends TwoPortEquipment
   }
 
   /**
-   * Set gas turbine isentropic efficiency. Not used directly; the GasTurbine model uses its own
-   * internal component efficiencies.
+   * Set gas turbine isentropic efficiency. Not used directly; the GasTurbine model uses its own internal component
+   * efficiencies.
    *
    * @param efficiency gas turbine overall efficiency (informational)
    */
   public void setGasTurbineEfficiency(double efficiency) {
     // GasTurbine uses internal component models; this is informational only
-    logger.info("Gas turbine efficiency set to " + efficiency
-        + " (informational; GT uses internal component models)");
+    logger.info("Gas turbine efficiency set to " + efficiency + " (informational; GT uses internal component models)");
   }
 
   /**
@@ -352,14 +348,14 @@ public class CombinedCycleSystem extends TwoPortEquipment
    */
   public double getRatedTotalPower(String unit) {
     switch (unit) {
-      case "kW":
-        return ratedTotalPowerW / 1000.0;
-      case "MW":
-        return ratedTotalPowerW / 1.0e6;
-      case "hp":
-        return ratedTotalPowerW / 745.7;
-      default:
-        return ratedTotalPowerW;
+    case "kW":
+      return ratedTotalPowerW / 1000.0;
+    case "MW":
+      return ratedTotalPowerW / 1.0e6;
+    case "hp":
+      return ratedTotalPowerW / 745.7;
+    default:
+      return ratedTotalPowerW;
     }
   }
 
@@ -377,21 +373,21 @@ public class CombinedCycleSystem extends TwoPortEquipment
    * Set the rated (maximum) total power output with unit.
    *
    * @param ratedPower rated total power value
-   * @param unit power unit ("W", "kW", "MW", "hp")
+   * @param unit       power unit ("W", "kW", "MW", "hp")
    */
   public void setRatedTotalPower(double ratedPower, String unit) {
     switch (unit) {
-      case "kW":
-        this.ratedTotalPowerW = ratedPower * 1000.0;
-        break;
-      case "MW":
-        this.ratedTotalPowerW = ratedPower * 1.0e6;
-        break;
-      case "hp":
-        this.ratedTotalPowerW = ratedPower * 745.7;
-        break;
-      default:
-        this.ratedTotalPowerW = ratedPower;
+    case "kW":
+      this.ratedTotalPowerW = ratedPower * 1000.0;
+      break;
+    case "MW":
+      this.ratedTotalPowerW = ratedPower * 1.0e6;
+      break;
+    case "hp":
+      this.ratedTotalPowerW = ratedPower * 745.7;
+      break;
+    default:
+      this.ratedTotalPowerW = ratedPower;
     }
     initializeCapacityConstraints();
   }
@@ -414,12 +410,10 @@ public class CombinedCycleSystem extends TwoPortEquipment
   private void initializeCapacityConstraints() {
     capacityConstraints.clear();
     if (ratedTotalPowerW > 0) {
-      addCapacityConstraint(
-          new CapacityConstraint("totalPower", "kW", CapacityConstraint.ConstraintType.HARD)
-              .setDesignValue(ratedTotalPowerW / 1000.0)
-              .setMaxValue(ratedTotalPowerW / 1000.0 * 1.1).setWarningThreshold(0.9)
-              .setDescription("Combined-cycle total power output vs rated capacity")
-              .setValueSupplier(() -> Math.abs(this.totalPower) / 1000.0));
+      addCapacityConstraint(new CapacityConstraint("totalPower", "kW", CapacityConstraint.ConstraintType.HARD)
+	  .setDesignValue(ratedTotalPowerW / 1000.0).setMaxValue(ratedTotalPowerW / 1000.0 * 1.1)
+	  .setWarningThreshold(0.9).setDescription("Combined-cycle total power output vs rated capacity")
+	  .setValueSupplier(() -> Math.abs(this.totalPower) / 1000.0));
     }
   }
 
@@ -437,8 +431,8 @@ public class CombinedCycleSystem extends TwoPortEquipment
     for (CapacityConstraint c : capacityConstraints.values()) {
       double util = c.getUtilization();
       if (!Double.isNaN(util) && util > maxUtil) {
-        maxUtil = util;
-        bottleneck = c;
+	maxUtil = util;
+	bottleneck = c;
       }
     }
     return bottleneck;
@@ -449,7 +443,7 @@ public class CombinedCycleSystem extends TwoPortEquipment
   public boolean isCapacityExceeded() {
     for (CapacityConstraint c : capacityConstraints.values()) {
       if (c.isViolated()) {
-        return true;
+	return true;
       }
     }
     return false;
@@ -460,7 +454,7 @@ public class CombinedCycleSystem extends TwoPortEquipment
   public boolean isHardLimitExceeded() {
     for (CapacityConstraint c : capacityConstraints.values()) {
       if (c.isHardLimitExceeded()) {
-        return true;
+	return true;
       }
     }
     return false;
@@ -473,7 +467,7 @@ public class CombinedCycleSystem extends TwoPortEquipment
     for (CapacityConstraint c : capacityConstraints.values()) {
       double util = c.getUtilization();
       if (!Double.isNaN(util)) {
-        maxUtil = Math.max(maxUtil, util);
+	maxUtil = Math.max(maxUtil, util);
       }
     }
     return maxUtil;
@@ -517,14 +511,11 @@ public class CombinedCycleSystem extends TwoPortEquipment
     sb.append("Equipment: ").append(getName()).append("\n");
     sb.append("Auto-sized: ").append(autoSized).append("\n");
     sb.append("\n--- Operating Conditions ---\n");
-    sb.append("Total Power: ").append(String.format("%.2f kW", Math.abs(totalPower) / 1000.0))
-        .append("\n");
+    sb.append("Total Power: ").append(String.format("%.2f kW", Math.abs(totalPower) / 1000.0)).append("\n");
     if (ratedTotalPowerW > 0) {
-      sb.append("Rated Total Power: ").append(String.format("%.2f kW", ratedTotalPowerW / 1000.0))
-          .append("\n");
-      sb.append("Utilization: ")
-          .append(String.format("%.1f%%", Math.abs(totalPower) / ratedTotalPowerW * 100))
-          .append("\n");
+      sb.append("Rated Total Power: ").append(String.format("%.2f kW", ratedTotalPowerW / 1000.0)).append("\n");
+      sb.append("Utilization: ").append(String.format("%.1f%%", Math.abs(totalPower) / ratedTotalPowerW * 100))
+	  .append("\n");
     }
     return sb.toString();
   }

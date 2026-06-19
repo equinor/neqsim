@@ -18,8 +18,8 @@ import neqsim.process.processmodel.ProcessSystem;
  * Bottleneck identification and debottlenecking analysis for process facilities.
  *
  * <p>
- * Identifies production-limiting constraints in process systems and evaluates debottlenecking
- * options. This is a key tool for production optimization and field development planning.
+ * Identifies production-limiting constraints in process systems and evaluates debottlenecking options. This is a key
+ * tool for production optimization and field development planning.
  * </p>
  *
  * <h2>Constraint Types Analyzed</h2>
@@ -96,8 +96,7 @@ public class BottleneckAnalyzer implements Serializable {
    * Identifies all bottlenecks in the facility.
    *
    * <p>
-   * Returns a list sorted by utilization (highest first), showing the most limiting equipment at
-   * the top.
+   * Returns a list sorted by utilization (highest first), showing the most limiting equipment at the top.
    * </p>
    *
    * @return list of bottleneck results
@@ -108,7 +107,7 @@ public class BottleneckAnalyzer implements Serializable {
     for (ProcessEquipmentInterface equip : facility.getUnitOperations()) {
       BottleneckResult result = analyzeEquipment(equip);
       if (result != null) {
-        results.add(result);
+	results.add(result);
       }
     }
 
@@ -137,7 +136,7 @@ public class BottleneckAnalyzer implements Serializable {
     List<BottleneckResult> active = new ArrayList<>();
     for (BottleneckResult result : identifyBottlenecks()) {
       if (result.getUtilization() >= utilizationThreshold) {
-        active.add(result);
+	active.add(result);
       }
     }
     return active;
@@ -313,20 +312,19 @@ public class BottleneckAnalyzer implements Serializable {
   /**
    * Evaluates debottlenecking options for a specific equipment.
    *
-   * @param equipmentName name of bottleneck equipment
+   * @param equipmentName          name of bottleneck equipment
    * @param targetCapacityIncrease target capacity increase (0.0-1.0, e.g., 0.20 for 20%)
    * @return list of debottlenecking options
    */
-  public List<DebottleneckOption> evaluateDebottleneckOptions(String equipmentName,
-      double targetCapacityIncrease) {
+  public List<DebottleneckOption> evaluateDebottleneckOptions(String equipmentName, double targetCapacityIncrease) {
     List<DebottleneckOption> options = new ArrayList<>();
 
     // Find the equipment
     BottleneckResult bottleneck = null;
     for (BottleneckResult result : identifyBottlenecks()) {
       if (result.getEquipmentName().equals(equipmentName)) {
-        bottleneck = result;
-        break;
+	bottleneck = result;
+	break;
       }
     }
 
@@ -336,47 +334,39 @@ public class BottleneckAnalyzer implements Serializable {
 
     // Generate options based on equipment type
     switch (bottleneck.getEquipmentType()) {
-      case SEPARATOR:
-        options.add(new DebottleneckOption("Add parallel separator",
-            "Install additional separator train", 0.50, 15.0, 24));
-        options.add(new DebottleneckOption("Upgrade internals",
-            "Install high-efficiency internals (vane pack)", 0.25, 2.0, 6));
-        options.add(new DebottleneckOption("Increase operating pressure",
-            "Reduce gas volume by increasing pressure", 0.15, 0.5, 3));
-        break;
+    case SEPARATOR:
+      options
+	  .add(new DebottleneckOption("Add parallel separator", "Install additional separator train", 0.50, 15.0, 24));
+      options.add(
+	  new DebottleneckOption("Upgrade internals", "Install high-efficiency internals (vane pack)", 0.25, 2.0, 6));
+      options.add(new DebottleneckOption("Increase operating pressure", "Reduce gas volume by increasing pressure",
+	  0.15, 0.5, 3));
+      break;
 
-      case COMPRESSOR:
-        options.add(new DebottleneckOption("Add parallel compressor",
-            "Install additional compression stage", 0.50, 25.0, 24));
-        options.add(new DebottleneckOption("Upgrade impeller",
-            "Replace with higher capacity impeller", 0.20, 3.0, 12));
-        options.add(new DebottleneckOption("Motor rerating", "Rerate motor for higher power", 0.15,
-            1.5, 6));
-        break;
+    case COMPRESSOR:
+      options.add(
+	  new DebottleneckOption("Add parallel compressor", "Install additional compression stage", 0.50, 25.0, 24));
+      options.add(new DebottleneckOption("Upgrade impeller", "Replace with higher capacity impeller", 0.20, 3.0, 12));
+      options.add(new DebottleneckOption("Motor rerating", "Rerate motor for higher power", 0.15, 1.5, 6));
+      break;
 
-      case PUMP:
-        options.add(new DebottleneckOption("Add parallel pump", "Install backup/booster pump", 0.30,
-            3.0, 12));
-        options.add(
-            new DebottleneckOption("Impeller upgrade", "Install larger impeller", 0.15, 0.5, 6));
-        break;
+    case PUMP:
+      options.add(new DebottleneckOption("Add parallel pump", "Install backup/booster pump", 0.30, 3.0, 12));
+      options.add(new DebottleneckOption("Impeller upgrade", "Install larger impeller", 0.15, 0.5, 6));
+      break;
 
-      case HEAT_EXCHANGER:
-        options.add(new DebottleneckOption("Add surface area", "Install additional heat exchanger",
-            0.30, 5.0, 12));
-        options.add(new DebottleneckOption("Enhance tubes", "Install enhanced heat transfer tubes",
-            0.20, 2.0, 6));
-        break;
+    case HEAT_EXCHANGER:
+      options.add(new DebottleneckOption("Add surface area", "Install additional heat exchanger", 0.30, 5.0, 12));
+      options.add(new DebottleneckOption("Enhance tubes", "Install enhanced heat transfer tubes", 0.20, 2.0, 6));
+      break;
 
-      case VALVE:
-        options
-            .add(new DebottleneckOption("Increase Cv", "Replace with larger trim", 0.50, 0.2, 3));
-        options.add(new DebottleneckOption("Add parallel valve", "Install bypass with larger valve",
-            0.50, 0.5, 6));
-        break;
+    case VALVE:
+      options.add(new DebottleneckOption("Increase Cv", "Replace with larger trim", 0.50, 0.2, 3));
+      options.add(new DebottleneckOption("Add parallel valve", "Install bypass with larger valve", 0.50, 0.5, 6));
+      break;
 
-      default:
-        break;
+    default:
+      break;
     }
 
     return options;
@@ -396,15 +386,14 @@ public class BottleneckAnalyzer implements Serializable {
     // Summary
     List<BottleneckResult> active = getActiveBottlenecks();
     sb.append(String.format("**Total Equipment Analyzed:** %d\n", bottlenecks.size()));
-    sb.append(String.format("**Active Bottlenecks (>%.0f%% utilization):** %d\n\n",
-        utilizationThreshold * 100, active.size()));
+    sb.append(String.format("**Active Bottlenecks (>%.0f%% utilization):** %d\n\n", utilizationThreshold * 100,
+	active.size()));
 
     // Primary bottleneck
     if (!active.isEmpty()) {
       BottleneckResult primary = active.get(0);
       sb.append("## Primary Bottleneck\n\n");
-      sb.append(
-          String.format("**%s** (%s)\n", primary.getEquipmentName(), primary.getEquipmentType()));
+      sb.append(String.format("**%s** (%s)\n", primary.getEquipmentName(), primary.getEquipmentType()));
       sb.append(String.format("- Utilization: %.1f%%\n", primary.getUtilization() * 100));
       sb.append(String.format("- Constraint: %s\n", primary.getConstraintType()));
       sb.append(String.format("- %s\n\n", primary.getConstraintDescription()));
@@ -416,9 +405,8 @@ public class BottleneckAnalyzer implements Serializable {
     sb.append("|-----------|------|-------------|------------|--------|\n");
     for (BottleneckResult result : bottlenecks) {
       String status = result.getUtilization() >= utilizationThreshold ? "⚠️ BOTTLENECK" : "✓ OK";
-      sb.append(String.format("| %s | %s | %.0f%% | %s | %s |\n", result.getEquipmentName(),
-          result.getEquipmentType(), result.getUtilization() * 100, result.getConstraintType(),
-          status));
+      sb.append(String.format("| %s | %s | %.0f%% | %s | %s |\n", result.getEquipmentName(), result.getEquipmentType(),
+	  result.getUtilization() * 100, result.getConstraintType(), status));
     }
 
     return sb.toString();
@@ -500,8 +488,7 @@ public class BottleneckAnalyzer implements Serializable {
 
     @Override
     public String toString() {
-      return String.format("Bottleneck[%s, %.0f%% utilized, %s]", equipmentName, utilization * 100,
-          constraintType);
+      return String.format("Bottleneck[%s, %.0f%% utilized, %s]", equipmentName, utilization * 100, constraintType);
     }
   }
 
@@ -520,14 +507,13 @@ public class BottleneckAnalyzer implements Serializable {
     /**
      * Creates a debottlenecking option.
      *
-     * @param name option name
-     * @param description detailed description
+     * @param name             option name
+     * @param description      detailed description
      * @param capacityIncrease capacity increase (0.0-1.0)
-     * @param costMUSD estimated cost in MUSD
-     * @param months implementation time in months
+     * @param costMUSD         estimated cost in MUSD
+     * @param months           implementation time in months
      */
-    public DebottleneckOption(String name, String description, double capacityIncrease,
-        double costMUSD, int months) {
+    public DebottleneckOption(String name, String description, double capacityIncrease, double costMUSD, int months) {
       this.name = name;
       this.description = description;
       this.capacityIncrease = capacityIncrease;
@@ -557,8 +543,8 @@ public class BottleneckAnalyzer implements Serializable {
 
     @Override
     public String toString() {
-      return String.format("Option[%s, +%.0f%%, $%.1fM, %d mo]", name, capacityIncrease * 100,
-          estimatedCostMUSD, implementationMonths);
+      return String.format("Option[%s, +%.0f%%, $%.1fM, %d mo]", name, capacityIncrease * 100, estimatedCostMUSD,
+	  implementationMonths);
     }
   }
 }

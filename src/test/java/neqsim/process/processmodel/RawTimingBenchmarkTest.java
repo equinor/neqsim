@@ -15,12 +15,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * Lock-free timing harness: uses a ConcurrentHashMap with atomic accumulation so profiling overhead
- * is not confused with parallel scaling overhead.
+ * Lock-free timing harness: uses a ConcurrentHashMap with atomic accumulation so profiling overhead is not confused
+ * with parallel scaling overhead.
  */
 public class RawTimingBenchmarkTest {
   private static final Logger logger = LogManager.getLogger(RawTimingBenchmarkTest.class);
-
 
   private SystemInterface makeHeavyFluid() {
     SystemInterface f = new SystemSrkEos(298.0, 80.0);
@@ -76,7 +75,7 @@ public class RawTimingBenchmarkTest {
     java.util.List<Compressor> compressors = new java.util.ArrayList<>();
     for (ProcessEquipmentInterface u : sys.getUnitOperations()) {
       if (u instanceof Compressor) {
-        compressors.add((Compressor) u);
+	compressors.add((Compressor) u);
       }
     }
     // Warm-up all fluids
@@ -90,7 +89,7 @@ public class RawTimingBenchmarkTest {
     long t0 = System.nanoTime();
     for (int i = 0; i < ITERS; i++) {
       for (Compressor c : compressors) {
-        c.run();
+	c.run();
       }
     }
     long serialNs = System.nanoTime() - t0;
@@ -102,10 +101,10 @@ public class RawTimingBenchmarkTest {
     for (int i = 0; i < ITERS; i++) {
       java.util.List<java.util.concurrent.Future<?>> futures = new java.util.ArrayList<>();
       for (final Compressor c : compressors) {
-        futures.add(neqsim.util.NeqSimThreadPool.submit(() -> c.run()));
+	futures.add(neqsim.util.NeqSimThreadPool.submit(() -> c.run()));
       }
       for (java.util.concurrent.Future<?> f : futures) {
-        f.get();
+	f.get();
       }
     }
     long parallelNs = System.nanoTime() - t0;
@@ -113,13 +112,16 @@ public class RawTimingBenchmarkTest {
     double parallelPerCall = parallelPerRun / compressors.size();
 
     logger.info("\n===== RAW Compressor timing (8 independent compressors) =====");
-    logger.printf(org.apache.logging.log4j.Level.INFO, "cores available:      %d%n", Runtime.getRuntime().availableProcessors());
-    logger.printf(org.apache.logging.log4j.Level.INFO, "SERIAL:   wall=%.2f ms   per-call=%.3f ms%n", serialPerRun, serialPerCall);
-    logger.printf(org.apache.logging.log4j.Level.INFO, "PARALLEL: wall=%.2f ms   per-call=%.3f ms (effective)%n", parallelPerRun,
-        parallelPerCall);
-    logger.printf(org.apache.logging.log4j.Level.INFO, "Parallel speedup: %.2fx (ideal = %d)%n", serialPerRun / parallelPerRun,
-        compressors.size());
-    logger.printf(org.apache.logging.log4j.Level.INFO, "Parallel slowdown per call: %.2fx%n", parallelPerCall / serialPerCall);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "cores available:      %d%n",
+	Runtime.getRuntime().availableProcessors());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "SERIAL:   wall=%.2f ms   per-call=%.3f ms%n", serialPerRun,
+	serialPerCall);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "PARALLEL: wall=%.2f ms   per-call=%.3f ms (effective)%n",
+	parallelPerRun, parallelPerCall);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Parallel speedup: %.2fx (ideal = %d)%n",
+	serialPerRun / parallelPerRun, compressors.size());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Parallel slowdown per call: %.2fx%n",
+	parallelPerCall / serialPerCall);
   }
 
   @Test

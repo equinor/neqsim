@@ -14,9 +14,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Water hammer transient pipe model using Method of Characteristics (MOC).
  *
  * <p>
- * This class simulates fast transient pressure waves (water hammer / hydraulic shock) in pipelines.
- * Unlike the advection-based transient model in {@link PipeBeggsAndBrills}, this model propagates
- * pressure waves at the speed of sound, enabling accurate simulation of:
+ * This class simulates fast transient pressure waves (water hammer / hydraulic shock) in pipelines. Unlike the
+ * advection-based transient model in {@link PipeBeggsAndBrills}, this model propagates pressure waves at the speed of
+ * sound, enabling accurate simulation of:
  * </p>
  * <ul>
  * <li>Rapid valve closures (emergency shutdown)</li>
@@ -26,9 +26,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </ul>
  *
  * <p>
- * The Method of Characteristics transforms the hyperbolic partial differential equations for
- * one-dimensional transient pipe flow into ordinary differential equations along characteristic
- * lines dx/dt = ±c (speed of sound).
+ * The Method of Characteristics transforms the hyperbolic partial differential equations for one-dimensional transient
+ * pipe flow into ordinary differential equations along characteristic lines dx/dt = ±c (speed of sound).
  * </p>
  *
  * <p>
@@ -172,7 +171,7 @@ public class WaterHammerPipe extends Pipeline {
   /**
    * Constructor for WaterHammerPipe with inlet stream.
    *
-   * @param name Equipment name
+   * @param name     Equipment name
    * @param inStream Inlet stream
    */
   public WaterHammerPipe(String name, StreamInterface inStream) {
@@ -194,25 +193,25 @@ public class WaterHammerPipe extends Pipeline {
    * Set the pipe length with unit.
    *
    * @param length Length value
-   * @param unit Unit ("m", "km", "ft")
+   * @param unit   Unit ("m", "km", "ft")
    */
   public void setLength(double length, String unit) {
     switch (unit.toLowerCase()) {
-      case "m":
-        super.setLength(length);
-        this.length = length;
-        break;
-      case "km":
-        super.setLength(length * 1000);
-        this.length = length * 1000;
-        break;
-      case "ft":
-        super.setLength(length * 0.3048);
-        this.length = length * 0.3048;
-        break;
-      default:
-        super.setLength(length);
-        this.length = length;
+    case "m":
+      super.setLength(length);
+      this.length = length;
+      break;
+    case "km":
+      super.setLength(length * 1000);
+      this.length = length * 1000;
+      break;
+    case "ft":
+      super.setLength(length * 0.3048);
+      this.length = length * 0.3048;
+      break;
+    default:
+      super.setLength(length);
+      this.length = length;
     }
   }
 
@@ -231,26 +230,26 @@ public class WaterHammerPipe extends Pipeline {
    * Set the pipe inner diameter with unit.
    *
    * @param diameter Diameter value
-   * @param unit Unit ("m", "mm", "in")
+   * @param unit     Unit ("m", "mm", "in")
    */
   public void setDiameter(double diameter, String unit) {
     switch (unit.toLowerCase()) {
-      case "m":
-        super.setDiameter(diameter);
-        this.diameter = diameter;
-        break;
-      case "mm":
-        super.setDiameter(diameter / 1000);
-        this.diameter = diameter / 1000;
-        break;
-      case "in":
-      case "inch":
-        super.setDiameter(diameter * 0.0254);
-        this.diameter = diameter * 0.0254;
-        break;
-      default:
-        super.setDiameter(diameter);
-        this.diameter = diameter;
+    case "m":
+      super.setDiameter(diameter);
+      this.diameter = diameter;
+      break;
+    case "mm":
+      super.setDiameter(diameter / 1000);
+      this.diameter = diameter / 1000;
+      break;
+    case "in":
+    case "inch":
+      super.setDiameter(diameter * 0.0254);
+      this.diameter = diameter * 0.0254;
+      break;
+    default:
+      super.setDiameter(diameter);
+      this.diameter = diameter;
     }
   }
 
@@ -468,8 +467,7 @@ public class WaterHammerPipe extends Pipeline {
     if (type == null || type.trim().isEmpty()) {
       throw new IllegalArgumentException("Boundary type cannot be null or empty");
     }
-    String normalized = type.trim().replace('-', '_').replace(' ', '_')
-        .toUpperCase(Locale.ROOT);
+    String normalized = type.trim().replace('-', '_').replace(' ', '_').toUpperCase(Locale.ROOT);
     return BoundaryType.valueOf(normalized);
   }
 
@@ -572,18 +570,18 @@ public class WaterHammerPipe extends Pipeline {
    * Calculate Joukowsky pressure surge for instantaneous velocity change.
    *
    * @param velocityChange Change in velocity (m/s)
-   * @param unit Output unit ("Pa", "bar", "psi")
+   * @param unit           Output unit ("Pa", "bar", "psi")
    * @return Pressure surge in specified unit
    */
   public double calcJoukowskyPressureSurge(double velocityChange, String unit) {
     double surgePa = calcJoukowskyPressureSurge(velocityChange);
     switch (unit.toLowerCase()) {
-      case "bar":
-        return surgePa / 1e5;
-      case "psi":
-        return surgePa / 6894.76;
-      default:
-        return surgePa;
+    case "bar":
+      return surgePa / 1e5;
+    case "psi":
+      return surgePa / 6894.76;
+    default:
+      return surgePa;
     }
   }
 
@@ -677,8 +675,7 @@ public class WaterHammerPipe extends Pipeline {
     upstreamHead = inletPressure / (fluidDensity * GRAVITY);
 
     // Friction head loss per unit length
-    double headLossPerMeter =
-        frictionFactor * velocity * Math.abs(velocity) / (2 * GRAVITY * diameter);
+    double headLossPerMeter = frictionFactor * velocity * Math.abs(velocity) / (2 * GRAVITY * diameter);
 
     // Elevation head change per unit length
     double elevationPerMeter = elevationChange / length;
@@ -707,17 +704,17 @@ public class WaterHammerPipe extends Pipeline {
       // Cv = Q / (tau * sqrt(delta_H))
       double deltaH = head[numberOfNodes - 2] - downstreamHead;
       if (deltaH > 0) {
-        valveCv = volumeFlow / (valveOpening * Math.sqrt(deltaH));
+	valveCv = volumeFlow / (valveOpening * Math.sqrt(deltaH));
       } else {
-        valveCv = volumeFlow; // Simple coefficient
+	valveCv = volumeFlow; // Simple coefficient
       }
     }
 
     currentTime = 0.0;
     initialized = true;
 
-    logger.info("WaterHammerPipe initialized: wave speed = " + waveSpeed + " m/s, "
-        + "max time step = " + getMaxStableTimeStep() + " s");
+    logger.info("WaterHammerPipe initialized: wave speed = " + waveSpeed + " m/s, " + "max time step = "
+	+ getMaxStableTimeStep() + " s");
   }
 
   /** {@inheritDoc} */
@@ -742,8 +739,7 @@ public class WaterHammerPipe extends Pipeline {
     // Check Courant condition
     double maxDt = getMaxStableTimeStep();
     if (dt > maxDt) {
-      logger.warn(
-          "Time step " + dt + " exceeds Courant limit " + maxDt + ". Results may be unstable.");
+      logger.warn("Time step " + dt + " exceeds Courant limit " + maxDt + ". Results may be unstable.");
     }
 
     // Store old values
@@ -813,43 +809,43 @@ public class WaterHammerPipe extends Pipeline {
     int i = 0;
 
     switch (upstreamBoundary) {
-      case RESERVOIR:
-        // Constant head reservoir
-        head[i] = upstreamHead;
-        // Use C- from interior point
-        double HB = headOld[i + 1];
-        double QB = flowOld[i + 1];
-        double R = frictionFactor * segmentLength / (2 * GRAVITY * diameter * area * area);
-        double frictionB = R * QB * Math.abs(QB);
-        double Cm = HB - characteristicImpedance * QB + frictionB;
-        flow[i] = (head[i] - Cm) / characteristicImpedance;
-        break;
+    case RESERVOIR:
+      // Constant head reservoir
+      head[i] = upstreamHead;
+      // Use C- from interior point
+      double HB = headOld[i + 1];
+      double QB = flowOld[i + 1];
+      double R = frictionFactor * segmentLength / (2 * GRAVITY * diameter * area * area);
+      double frictionB = R * QB * Math.abs(QB);
+      double Cm = HB - characteristicImpedance * QB + frictionB;
+      flow[i] = (head[i] - Cm) / characteristicImpedance;
+      break;
 
-      case CONSTANT_FLOW:
-        // Constant flow rate
-        flow[i] = flowOld[i];
-        HB = headOld[i + 1];
-        QB = flowOld[i + 1];
-        R = frictionFactor * segmentLength / (2 * GRAVITY * diameter * area * area);
-        frictionB = R * QB * Math.abs(QB);
-        Cm = HB - characteristicImpedance * QB + frictionB;
-        head[i] = Cm + characteristicImpedance * flow[i];
-        break;
+    case CONSTANT_FLOW:
+      // Constant flow rate
+      flow[i] = flowOld[i];
+      HB = headOld[i + 1];
+      QB = flowOld[i + 1];
+      R = frictionFactor * segmentLength / (2 * GRAVITY * diameter * area * area);
+      frictionB = R * QB * Math.abs(QB);
+      Cm = HB - characteristicImpedance * QB + frictionB;
+      head[i] = Cm + characteristicImpedance * flow[i];
+      break;
 
-      case CLOSED_END:
-        // No flow
-        flow[i] = 0;
-        HB = headOld[i + 1];
-        QB = flowOld[i + 1];
-        R = frictionFactor * segmentLength / (2 * GRAVITY * diameter * area * area);
-        frictionB = R * QB * Math.abs(QB);
-        Cm = HB - characteristicImpedance * QB + frictionB;
-        head[i] = Cm;
-        break;
+    case CLOSED_END:
+      // No flow
+      flow[i] = 0;
+      HB = headOld[i + 1];
+      QB = flowOld[i + 1];
+      R = frictionFactor * segmentLength / (2 * GRAVITY * diameter * area * area);
+      frictionB = R * QB * Math.abs(QB);
+      Cm = HB - characteristicImpedance * QB + frictionB;
+      head[i] = Cm;
+      break;
 
-      default:
-        head[i] = upstreamHead;
-        flow[i] = flowOld[i];
+    default:
+      head[i] = upstreamHead;
+      flow[i] = flowOld[i];
     }
   }
 
@@ -860,81 +856,81 @@ public class WaterHammerPipe extends Pipeline {
     int i = numberOfNodes - 1;
 
     switch (downstreamBoundary) {
-      case RESERVOIR:
-        // Constant head reservoir
-        head[i] = downstreamHead;
-        // Use C+ from interior point
-        double HA = headOld[i - 1];
-        double QA = flowOld[i - 1];
-        double R = frictionFactor * segmentLength / (2 * GRAVITY * diameter * area * area);
-        double frictionA = R * QA * Math.abs(QA);
-        double Cp = HA + characteristicImpedance * QA - frictionA;
-        flow[i] = (Cp - head[i]) / characteristicImpedance;
-        break;
+    case RESERVOIR:
+      // Constant head reservoir
+      head[i] = downstreamHead;
+      // Use C+ from interior point
+      double HA = headOld[i - 1];
+      double QA = flowOld[i - 1];
+      double R = frictionFactor * segmentLength / (2 * GRAVITY * diameter * area * area);
+      double frictionA = R * QA * Math.abs(QA);
+      double Cp = HA + characteristicImpedance * QA - frictionA;
+      flow[i] = (Cp - head[i]) / characteristicImpedance;
+      break;
 
-      case VALVE:
-        // Valve with variable opening
-        // Q = Cv * tau * sqrt(H_upstream - H_downstream)
-        HA = headOld[i - 1];
-        QA = flowOld[i - 1];
-        R = frictionFactor * segmentLength / (2 * GRAVITY * diameter * area * area);
-        frictionA = R * QA * Math.abs(QA);
-        Cp = HA + characteristicImpedance * QA - frictionA;
+    case VALVE:
+      // Valve with variable opening
+      // Q = Cv * tau * sqrt(H_upstream - H_downstream)
+      HA = headOld[i - 1];
+      QA = flowOld[i - 1];
+      R = frictionFactor * segmentLength / (2 * GRAVITY * diameter * area * area);
+      frictionA = R * QA * Math.abs(QA);
+      Cp = HA + characteristicImpedance * QA - frictionA;
 
-        if (valveOpening < 0.001) {
-          // Valve closed - no flow
-          flow[i] = 0;
-          head[i] = Cp;
-        } else {
-          // Solve valve equation with C+ characteristic
-          // Q = Cv * tau * sqrt(H - Hd) and H = Cp - B*Q
-          // Quadratic: B*Q^2 + 2*Cv^2*tau^2*Q + Cv^2*tau^2*(Hd-Cp) = 0
-          double tau = valveOpening;
-          double CvTau2 = valveCv * valveCv * tau * tau;
-          double a = characteristicImpedance;
-          double b = CvTau2;
-          double c = CvTau2 * (downstreamHead - Cp);
+      if (valveOpening < 0.001) {
+	// Valve closed - no flow
+	flow[i] = 0;
+	head[i] = Cp;
+      } else {
+	// Solve valve equation with C+ characteristic
+	// Q = Cv * tau * sqrt(H - Hd) and H = Cp - B*Q
+	// Quadratic: B*Q^2 + 2*Cv^2*tau^2*Q + Cv^2*tau^2*(Hd-Cp) = 0
+	double tau = valveOpening;
+	double CvTau2 = valveCv * valveCv * tau * tau;
+	double a = characteristicImpedance;
+	double b = CvTau2;
+	double c = CvTau2 * (downstreamHead - Cp);
 
-          // Solve quadratic: a*Q^2 + b*Q + c = 0
-          double discriminant = b * b - 4 * a * c;
-          if (discriminant < 0) {
-            // No real solution - use previous flow
-            flow[i] = flowOld[i] * valveOpening;
-          } else {
-            flow[i] = (-b + Math.sqrt(discriminant)) / (2 * a);
-            if (flow[i] < 0) {
-              flow[i] = (-b - Math.sqrt(discriminant)) / (2 * a);
-            }
-          }
-          head[i] = Cp - characteristicImpedance * flow[i];
-        }
-        break;
+	// Solve quadratic: a*Q^2 + b*Q + c = 0
+	double discriminant = b * b - 4 * a * c;
+	if (discriminant < 0) {
+	  // No real solution - use previous flow
+	  flow[i] = flowOld[i] * valveOpening;
+	} else {
+	  flow[i] = (-b + Math.sqrt(discriminant)) / (2 * a);
+	  if (flow[i] < 0) {
+	    flow[i] = (-b - Math.sqrt(discriminant)) / (2 * a);
+	  }
+	}
+	head[i] = Cp - characteristicImpedance * flow[i];
+      }
+      break;
 
-      case CLOSED_END:
-        // No flow
-        flow[i] = 0;
-        HA = headOld[i - 1];
-        QA = flowOld[i - 1];
-        R = frictionFactor * segmentLength / (2 * GRAVITY * diameter * area * area);
-        frictionA = R * QA * Math.abs(QA);
-        Cp = HA + characteristicImpedance * QA - frictionA;
-        head[i] = Cp;
-        break;
+    case CLOSED_END:
+      // No flow
+      flow[i] = 0;
+      HA = headOld[i - 1];
+      QA = flowOld[i - 1];
+      R = frictionFactor * segmentLength / (2 * GRAVITY * diameter * area * area);
+      frictionA = R * QA * Math.abs(QA);
+      Cp = HA + characteristicImpedance * QA - frictionA;
+      head[i] = Cp;
+      break;
 
-      case CONSTANT_FLOW:
-        // Constant flow rate
-        flow[i] = flowOld[i];
-        HA = headOld[i - 1];
-        QA = flowOld[i - 1];
-        R = frictionFactor * segmentLength / (2 * GRAVITY * diameter * area * area);
-        frictionA = R * QA * Math.abs(QA);
-        Cp = HA + characteristicImpedance * QA - frictionA;
-        head[i] = Cp - characteristicImpedance * flow[i];
-        break;
+    case CONSTANT_FLOW:
+      // Constant flow rate
+      flow[i] = flowOld[i];
+      HA = headOld[i - 1];
+      QA = flowOld[i - 1];
+      R = frictionFactor * segmentLength / (2 * GRAVITY * diameter * area * area);
+      frictionA = R * QA * Math.abs(QA);
+      Cp = HA + characteristicImpedance * QA - frictionA;
+      head[i] = Cp - characteristicImpedance * flow[i];
+      break;
 
-      default:
-        head[i] = downstreamHead;
-        flow[i] = flowOld[i];
+    default:
+      head[i] = downstreamHead;
+      flow[i] = flowOld[i];
     }
   }
 
@@ -978,12 +974,12 @@ public class WaterHammerPipe extends Pipeline {
     double[] profile = new double[numberOfNodes];
     double factor = 1.0;
     switch (unit.toLowerCase()) {
-      case "bar":
-        factor = 1e-5;
-        break;
-      case "psi":
-        factor = 1.0 / 6894.76;
-        break;
+    case "bar":
+      factor = 1e-5;
+      break;
+    case "psi":
+      factor = 1.0 / 6894.76;
+      break;
     }
     for (int i = 0; i < numberOfNodes; i++) {
       profile[i] = pressureProfile[i] * factor;
@@ -1060,7 +1056,7 @@ public class WaterHammerPipe extends Pipeline {
    * Converts a pressure array to the requested unit.
    *
    * @param pressures pressure values in Pa
-   * @param unit requested unit, for example Pa, bar, or psi
+   * @param unit      requested unit, for example Pa, bar, or psi
    * @return converted pressure values
    */
   private double[] convertPressureArray(double[] pressures, String unit) {
@@ -1083,13 +1079,13 @@ public class WaterHammerPipe extends Pipeline {
       return 1.0;
     }
     switch (unit.toLowerCase(Locale.ROOT)) {
-      case "bar":
-      case "bara":
-        return 1.0e-5;
-      case "psi":
-        return 1.0 / 6894.76;
-      default:
-        return 1.0;
+    case "bar":
+    case "bara":
+      return 1.0e-5;
+    case "psi":
+      return 1.0 / 6894.76;
+    default:
+      return 1.0;
     }
   }
 
@@ -1115,12 +1111,12 @@ public class WaterHammerPipe extends Pipeline {
   public double getMaxPressure(String unit) {
     double maxPa = getMaxPressure();
     switch (unit.toLowerCase()) {
-      case "bar":
-        return maxPa / 1e5;
-      case "psi":
-        return maxPa / 6894.76;
-      default:
-        return maxPa;
+    case "bar":
+      return maxPa / 1e5;
+    case "psi":
+      return maxPa / 6894.76;
+    default:
+      return maxPa;
     }
   }
 
@@ -1146,12 +1142,12 @@ public class WaterHammerPipe extends Pipeline {
   public double getMinPressure(String unit) {
     double minPa = getMinPressure();
     switch (unit.toLowerCase()) {
-      case "bar":
-        return minPa / 1e5;
-      case "psi":
-        return minPa / 6894.76;
-      default:
-        return minPa;
+    case "bar":
+      return minPa / 1e5;
+    case "psi":
+      return minPa / 6894.76;
+    default:
+      return minPa;
     }
   }
 
@@ -1263,8 +1259,8 @@ public class WaterHammerPipe extends Pipeline {
   public void resetEnvelopes() {
     if (maxPressureEnvelope != null && minPressureEnvelope != null) {
       for (int i = 0; i < numberOfNodes; i++) {
-        maxPressureEnvelope[i] = pressureProfile[i];
-        minPressureEnvelope[i] = pressureProfile[i];
+	maxPressureEnvelope[i] = pressureProfile[i];
+	minPressureEnvelope[i] = pressureProfile[i];
       }
     }
   }

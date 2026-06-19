@@ -13,16 +13,15 @@ import neqsim.thermo.system.SystemInterface;
  * This class calculates leakage flow through two mechanisms:
  * </p>
  * <ul>
- * <li><b>Channel flow (cubic law):</b> Flow through a narrow gap between casing and formation,
- * applicable when debonding creates a micro-annulus. The volumetric flow rate follows: q = w *
- * delta^3 / (12 * mu) * dP/L</li>
- * <li><b>Porous cement (Darcy flow):</b> Flow through degraded or poorly-placed cement with
- * non-zero permeability: q = k * A / (mu * L) * dP</li>
+ * <li><b>Channel flow (cubic law):</b> Flow through a narrow gap between casing and formation, applicable when
+ * debonding creates a micro-annulus. The volumetric flow rate follows: q = w * delta^3 / (12 * mu) * dP/L</li>
+ * <li><b>Porous cement (Darcy flow):</b> Flow through degraded or poorly-placed cement with non-zero permeability: q =
+ * k * A / (mu * L) * dP</li>
  * </ul>
  *
  * <p>
- * The class can be wired into a ProcessSystem as a parallel flow path alongside the main wellbore
- * to quantify the behind-casing contribution to out-of-zone injection.
+ * The class can be wired into a ProcessSystem as a parallel flow path alongside the main wellbore to quantify the
+ * behind-casing contribution to out-of-zone injection.
  * </p>
  *
  * <h2>Usage Example</h2>
@@ -97,10 +96,10 @@ public class AnnularLeakagePath extends ProcessEquipmentBaseClass {
   /**
    * Set the leakage path geometry.
    *
-   * @param depthTop top depth of leakage path (m TVD)
+   * @param depthTop    top depth of leakage path (m TVD)
    * @param depthBottom bottom depth of leakage path (m TVD)
-   * @param width circumferential width of channel (m), typically 0.01 - 0.3
-   * @param gap radial aperture of micro-annulus (m), typically 0.0001 - 0.005
+   * @param width       circumferential width of channel (m), typically 0.01 - 0.3
+   * @param gap         radial aperture of micro-annulus (m), typically 0.0001 - 0.005
    */
   public void setPathGeometry(double depthTop, double depthBottom, double width, double gap) {
     this.depthTop = depthTop;
@@ -116,7 +115,7 @@ public class AnnularLeakagePath extends ProcessEquipmentBaseClass {
    * Set cement permeability for the porous flow model.
    *
    * @param permeability cement permeability value
-   * @param unit permeability unit ("mD", "D", "m2")
+   * @param unit         permeability unit ("mD", "D", "m2")
    */
   public void setCementPermeability(double permeability, String unit) {
     if ("D".equalsIgnoreCase(unit)) {
@@ -177,7 +176,7 @@ public class AnnularLeakagePath extends ProcessEquipmentBaseClass {
    * Calculate leakage flow rates between source and sink pressures.
    *
    * @param sourcePressureBara source zone pressure (bara)
-   * @param sinkPressureBara sink zone pressure (bara)
+   * @param sinkPressureBara   sink zone pressure (bara)
    */
   public void calculate(double sourcePressureBara, double sinkPressureBara) {
     this.sourcePressure = sourcePressureBara;
@@ -197,11 +196,11 @@ public class AnnularLeakagePath extends ProcessEquipmentBaseClass {
     // Channel flow: cubic law
     if (mechanism == LeakageMechanism.CHANNEL_FLOW || mechanism == LeakageMechanism.COMBINED) {
       if (channelWidth > 0 && channelGap > 0) {
-        // q = w * delta^3 / (12 * mu) * (dP / L)
-        channelLeakageRate = channelWidth * Math.pow(channelGap, 3.0) / (12.0 * viscosityPas)
-            * (deltaPpascal / pathLength);
+	// q = w * delta^3 / (12 * mu) * (dP / L)
+	channelLeakageRate = channelWidth * Math.pow(channelGap, 3.0) / (12.0 * viscosityPas)
+	    * (deltaPpascal / pathLength);
       } else {
-        channelLeakageRate = 0.0;
+	channelLeakageRate = 0.0;
       }
     } else {
       channelLeakageRate = 0.0;
@@ -210,12 +209,11 @@ public class AnnularLeakagePath extends ProcessEquipmentBaseClass {
     // Porous cement: Darcy flow
     if (mechanism == LeakageMechanism.POROUS_CEMENT || mechanism == LeakageMechanism.COMBINED) {
       if (cementPermeability > 0 && cementCrossSectionArea > 0) {
-        double kSI = cementPermeability * 9.869e-16; // mD to m²
-        // q = k * A / (mu * L) * dP
-        cementLeakageRate =
-            kSI * cementCrossSectionArea / (viscosityPas * pathLength) * deltaPpascal;
+	double kSI = cementPermeability * 9.869e-16; // mD to m²
+	// q = k * A / (mu * L) * dP
+	cementLeakageRate = kSI * cementCrossSectionArea / (viscosityPas * pathLength) * deltaPpascal;
       } else {
-        cementLeakageRate = 0.0;
+	cementLeakageRate = 0.0;
       }
     } else {
       cementLeakageRate = 0.0;
@@ -232,16 +230,16 @@ public class AnnularLeakagePath extends ProcessEquipmentBaseClass {
   private double getEffectiveViscosity() {
     if (fluid != null) {
       try {
-        fluid.initProperties();
-        if (fluid.hasPhaseType("aqueous")) {
-          return fluid.getPhase("aqueous").getViscosity("cP");
-        } else if (fluid.hasPhaseType("oil")) {
-          return fluid.getPhase("oil").getViscosity("cP");
-        } else if (fluid.getNumberOfPhases() > 0) {
-          return fluid.getPhase(0).getViscosity("cP");
-        }
+	fluid.initProperties();
+	if (fluid.hasPhaseType("aqueous")) {
+	  return fluid.getPhase("aqueous").getViscosity("cP");
+	} else if (fluid.hasPhaseType("oil")) {
+	  return fluid.getPhase("oil").getViscosity("cP");
+	} else if (fluid.getNumberOfPhases() > 0) {
+	  return fluid.getPhase(0).getViscosity("cP");
+	}
       } catch (Exception e) {
-        logger.debug("Could not get viscosity from fluid, using fallback: " + e.getMessage());
+	logger.debug("Could not get viscosity from fluid, using fallback: " + e.getMessage());
       }
     }
     return fluidViscosity;
@@ -305,7 +303,7 @@ public class AnnularLeakagePath extends ProcessEquipmentBaseClass {
    * Convert flow rate from m³/s to the requested unit.
    *
    * @param rateM3s rate in m³/s
-   * @param unit target unit
+   * @param unit    target unit
    * @return converted rate
    */
   private double convertFlowRate(double rateM3s, String unit) {
@@ -361,14 +359,14 @@ public class AnnularLeakagePath extends ProcessEquipmentBaseClass {
    * <li>Fracture pressure at shoe minus hydrostatic head of annular fluid</li>
    * </ul>
    *
-   * @param casingBurstRating casing burst rating at surface (bara)
+   * @param casingBurstRating    casing burst rating at surface (bara)
    * @param tubingCollapseRating tubing collapse rating (bara)
-   * @param shoeDepth shoe depth (m TVD)
-   * @param fracPressureAtShoe fracture pressure at shoe (bara)
+   * @param shoeDepth            shoe depth (m TVD)
+   * @param fracPressureAtShoe   fracture pressure at shoe (bara)
    * @param annularFluidGradient annular fluid pressure gradient (bar/m), default ~0.098 for water
    */
-  public void setMAASPParameters(double casingBurstRating, double tubingCollapseRating,
-      double shoeDepth, double fracPressureAtShoe, double annularFluidGradient) {
+  public void setMAASPParameters(double casingBurstRating, double tubingCollapseRating, double shoeDepth,
+      double fracPressureAtShoe, double annularFluidGradient) {
     this.casingBurstRating = casingBurstRating;
     this.tubingCollapseRating = tubingCollapseRating;
     this.shoeDepth = shoeDepth;
@@ -379,7 +377,7 @@ public class AnnularLeakagePath extends ProcessEquipmentBaseClass {
   /**
    * Set MAASP safety factors from standards (typically loaded from API RP 90 CSV data).
    *
-   * @param burstSF burst safety factor (default 1.10 per API RP 90)
+   * @param burstSF    burst safety factor (default 1.10 per API RP 90)
    * @param collapseSF collapse safety factor (default 1.00 per API RP 90)
    */
   public void setMAASPSafetyFactors(double burstSF, double collapseSF) {
@@ -404,8 +402,8 @@ public class AnnularLeakagePath extends ProcessEquipmentBaseClass {
     if (casingBurstRating > 0) {
       double burstLimit = casingBurstRating / maaspBurstSafetyFactor;
       if (burstLimit < maasp) {
-        maasp = burstLimit;
-        maaspLimitingCriterion = "Casing burst (API RP 90)";
+	maasp = burstLimit;
+	maaspLimitingCriterion = "Casing burst (API RP 90)";
       }
     }
 
@@ -413,8 +411,8 @@ public class AnnularLeakagePath extends ProcessEquipmentBaseClass {
     if (tubingCollapseRating > 0) {
       double collapseLimit = tubingCollapseRating / maaspCollapseSafetyFactor;
       if (collapseLimit < maasp) {
-        maasp = collapseLimit;
-        maaspLimitingCriterion = "Tubing collapse (API RP 90)";
+	maasp = collapseLimit;
+	maaspLimitingCriterion = "Tubing collapse (API RP 90)";
       }
     }
 
@@ -423,8 +421,8 @@ public class AnnularLeakagePath extends ProcessEquipmentBaseClass {
       double hydrostaticAtShoe = annularFluidGradient * shoeDepth;
       double fracLimit = fracPressureAtShoe - hydrostaticAtShoe;
       if (fracLimit < maasp) {
-        maasp = fracLimit;
-        maaspLimitingCriterion = "Fracture at shoe (NORSOK D-010)";
+	maasp = fracLimit;
+	maaspLimitingCriterion = "Fracture at shoe (NORSOK D-010)";
       }
     }
 

@@ -15,8 +15,7 @@ import org.apache.logging.log4j.Logger;
  * Database-based data source for loading Technical Requirements Documents (TORG).
  *
  * <p>
- * This implementation loads TORG data from the NeqSim process design database. It expects the
- * following tables:
+ * This implementation loads TORG data from the NeqSim process design database. It expects the following tables:
  * </p>
  *
  * <h2>TORG_Projects table</h2>
@@ -53,8 +52,8 @@ import org.apache.logging.log4j.Logger;
  * </pre>
  *
  * <p>
- * Alternatively, this data source can also read from the existing TechnicalRequirements_Process
- * table for backward compatibility.
+ * Alternatively, this data source can also read from the existing TechnicalRequirements_Process table for backward
+ * compatibility.
  * </p>
  *
  * @author esol
@@ -65,19 +64,16 @@ public class DatabaseTorgDataSource implements TorgDataSource {
 
   private static final String QUERY_PROJECT = "SELECT * FROM TORG_Projects WHERE PROJECT_ID = '%s'";
 
-  private static final String QUERY_PROJECT_BY_COMPANY =
-      "SELECT * FROM TORG_Projects WHERE COMPANY = '%s' AND PROJECT_NAME = '%s'";
+  private static final String QUERY_PROJECT_BY_COMPANY = "SELECT * FROM TORG_Projects WHERE COMPANY = '%s' AND PROJECT_NAME = '%s'";
 
-  private static final String QUERY_STANDARDS =
-      "SELECT * FROM TORG_Standards WHERE PROJECT_ID = '%s' ORDER BY PRIORITY";
+  private static final String QUERY_STANDARDS = "SELECT * FROM TORG_Standards WHERE PROJECT_ID = '%s' ORDER BY PRIORITY";
 
   private static final String QUERY_ALL_PROJECTS = "SELECT PROJECT_ID FROM TORG_Projects";
 
   private static final String QUERY_ALL_COMPANIES = "SELECT DISTINCT COMPANY FROM TORG_Projects";
 
   // Fallback queries for legacy TechnicalRequirements_Process table
-  private static final String LEGACY_QUERY =
-      "SELECT * FROM TechnicalRequirements_Process WHERE Company = '%s'";
+  private static final String LEGACY_QUERY = "SELECT * FROM TechnicalRequirements_Process WHERE Company = '%s'";
 
   private boolean useLegacyTable = false;
 
@@ -113,7 +109,7 @@ public class DatabaseTorgDataSource implements TorgDataSource {
       ResultSet projectRS = database.getResultSet(projectQuery);
 
       if (!projectRS.next()) {
-        return Optional.empty();
+	return Optional.empty();
       }
 
       TechnicalRequirementsDocument.Builder builder = buildFromProjectResultSet(projectRS);
@@ -121,17 +117,17 @@ public class DatabaseTorgDataSource implements TorgDataSource {
       // Load associated standards
       String standardsQuery = String.format(QUERY_STANDARDS, projectId);
       try (ResultSet standardsRS = database.getResultSet(standardsQuery)) {
-        while (standardsRS.next()) {
-          String category = standardsRS.getString("DESIGN_CATEGORY");
-          String standardCode = standardsRS.getString("STANDARD_CODE");
+	while (standardsRS.next()) {
+	  String category = standardsRS.getString("DESIGN_CATEGORY");
+	  String standardCode = standardsRS.getString("STANDARD_CODE");
 
-          if (category != null && standardCode != null) {
-            StandardType type = StandardType.fromCode(standardCode);
-            if (type != null) {
-              builder.addStandard(category, type);
-            }
-          }
-        }
+	  if (category != null && standardCode != null) {
+	    StandardType type = StandardType.fromCode(standardCode);
+	    if (type != null) {
+	      builder.addStandard(category, type);
+	    }
+	  }
+	}
       }
 
       return Optional.of(builder.build());
@@ -142,8 +138,7 @@ public class DatabaseTorgDataSource implements TorgDataSource {
   }
 
   @Override
-  public Optional<TechnicalRequirementsDocument> loadByCompanyAndProject(String companyIdentifier,
-      String projectName) {
+  public Optional<TechnicalRequirementsDocument> loadByCompanyAndProject(String companyIdentifier, String projectName) {
     if (companyIdentifier == null || projectName == null) {
       return Optional.empty();
     }
@@ -157,7 +152,7 @@ public class DatabaseTorgDataSource implements TorgDataSource {
       ResultSet projectRS = database.getResultSet(query);
 
       if (!projectRS.next()) {
-        return Optional.empty();
+	return Optional.empty();
       }
 
       String projectId = projectRS.getString("PROJECT_ID");
@@ -166,17 +161,17 @@ public class DatabaseTorgDataSource implements TorgDataSource {
       // Load standards
       String standardsQuery = String.format(QUERY_STANDARDS, projectId);
       try (ResultSet standardsRS = database.getResultSet(standardsQuery)) {
-        while (standardsRS.next()) {
-          String category = standardsRS.getString("DESIGN_CATEGORY");
-          String standardCode = standardsRS.getString("STANDARD_CODE");
+	while (standardsRS.next()) {
+	  String category = standardsRS.getString("DESIGN_CATEGORY");
+	  String standardCode = standardsRS.getString("STANDARD_CODE");
 
-          if (category != null && standardCode != null) {
-            StandardType type = StandardType.fromCode(standardCode);
-            if (type != null) {
-              builder.addStandard(category, type);
-            }
-          }
-        }
+	  if (category != null && standardCode != null) {
+	    StandardType type = StandardType.fromCode(standardCode);
+	    if (type != null) {
+	      builder.addStandard(category, type);
+	    }
+	  }
+	}
       }
 
       return Optional.of(builder.build());
@@ -196,9 +191,9 @@ public class DatabaseTorgDataSource implements TorgDataSource {
     }
 
     try (NeqSimProcessDesignDataBase database = new NeqSimProcessDesignDataBase();
-        ResultSet rs = database.getResultSet(QUERY_ALL_PROJECTS)) {
+	ResultSet rs = database.getResultSet(QUERY_ALL_PROJECTS)) {
       while (rs.next()) {
-        projectIds.add(rs.getString("PROJECT_ID"));
+	projectIds.add(rs.getString("PROJECT_ID"));
       }
     } catch (Exception e) {
       logger.error("Failed to get project IDs: " + e.getMessage(), e);
@@ -211,16 +206,15 @@ public class DatabaseTorgDataSource implements TorgDataSource {
   public List<String> getAvailableCompanies() {
     List<String> companies = new ArrayList<>();
 
-    String query = useLegacyTable ? "SELECT DISTINCT Company FROM TechnicalRequirements_Process"
-        : QUERY_ALL_COMPANIES;
+    String query = useLegacyTable ? "SELECT DISTINCT Company FROM TechnicalRequirements_Process" : QUERY_ALL_COMPANIES;
 
     try (NeqSimProcessDesignDataBase database = new NeqSimProcessDesignDataBase();
-        ResultSet rs = database.getResultSet(query)) {
+	ResultSet rs = database.getResultSet(query)) {
       while (rs.next()) {
-        String company = rs.getString(1);
-        if (company != null && !company.isEmpty()) {
-          companies.add(company);
-        }
+	String company = rs.getString(1);
+	if (company != null && !company.isEmpty()) {
+	  companies.add(company);
+	}
       }
     } catch (Exception e) {
       logger.error("Failed to get companies: " + e.getMessage(), e);
@@ -240,54 +234,54 @@ public class DatabaseTorgDataSource implements TorgDataSource {
       String query = String.format(LEGACY_QUERY, companyIdentifier);
       ResultSet rs = database.getResultSet(query);
 
-      TechnicalRequirementsDocument.Builder builder =
-          TechnicalRequirementsDocument.builder().projectId(companyIdentifier)
-              .projectName("Legacy TR").companyIdentifier(companyIdentifier).revision("Legacy");
+      TechnicalRequirementsDocument.Builder builder = TechnicalRequirementsDocument.builder()
+	  .projectId(companyIdentifier).projectName("Legacy TR").companyIdentifier(companyIdentifier)
+	  .revision("Legacy");
 
       // Parse legacy data into design limits
       Map<String, DesignLimits> equipmentLimits = new HashMap<>();
 
       while (rs.next()) {
-        String equipmentType = rs.getString("EQUIPMENTTYPE");
-        String specification = rs.getString("SPECIFICATION");
-        String maxValueStr = rs.getString("MAXVALUE");
-        String minValueStr = rs.getString("MINVALUE");
+	String equipmentType = rs.getString("EQUIPMENTTYPE");
+	String specification = rs.getString("SPECIFICATION");
+	String maxValueStr = rs.getString("MAXVALUE");
+	String minValueStr = rs.getString("MINVALUE");
 
-        double maxValue = parseDouble(maxValueStr);
-        double minValue = parseDouble(minValueStr);
+	double maxValue = parseDouble(maxValueStr);
+	double minValue = parseDouble(minValueStr);
 
-        DesignLimits limits = equipmentLimits.get(equipmentType);
-        if (limits == null) {
-          limits = new DesignLimits();
-          equipmentLimits.put(equipmentType, limits);
-        }
+	DesignLimits limits = equipmentLimits.get(equipmentType);
+	if (limits == null) {
+	  limits = new DesignLimits();
+	  equipmentLimits.put(equipmentType, limits);
+	}
 
-        if ("MaxPressure".equals(specification)) {
-          limits.maxPressure = Double.isNaN(maxValue) ? minValue : maxValue;
-        } else if ("MinTemperature".equals(specification)) {
-          limits.minTemperature = Double.isNaN(minValue) ? maxValue : minValue;
-        } else if ("CorrosionAllowance".equals(specification)) {
-          limits.corrosionAllowance = Double.isNaN(maxValue) ? minValue : maxValue;
-        }
+	if ("MaxPressure".equals(specification)) {
+	  limits.maxPressure = Double.isNaN(maxValue) ? minValue : maxValue;
+	} else if ("MinTemperature".equals(specification)) {
+	  limits.minTemperature = Double.isNaN(minValue) ? maxValue : minValue;
+	} else if ("CorrosionAllowance".equals(specification)) {
+	  limits.corrosionAllowance = Double.isNaN(maxValue) ? minValue : maxValue;
+	}
       }
 
       // Determine applicable standards based on equipment types present
       for (String equipmentType : equipmentLimits.keySet()) {
-        List<StandardType> applicable = StandardType.getApplicableStandards(equipmentType);
-        if (!applicable.isEmpty()) {
-          // Add first applicable standard for each category
-          for (StandardType type : applicable) {
-            builder.addStandard(type.getDesignStandardCategory(), type);
-          }
-        }
+	List<StandardType> applicable = StandardType.getApplicableStandards(equipmentType);
+	if (!applicable.isEmpty()) {
+	  // Add first applicable standard for each category
+	  for (StandardType type : applicable) {
+	    builder.addStandard(type.getDesignStandardCategory(), type);
+	  }
+	}
       }
 
       // Find minimum temperature across all equipment for material spec
       double minTemp = -40.0;
       for (DesignLimits limits : equipmentLimits.values()) {
-        if (!Double.isNaN(limits.minTemperature) && limits.minTemperature < minTemp) {
-          minTemp = limits.minTemperature;
-        }
+	if (!Double.isNaN(limits.minTemperature) && limits.minTemperature < minTemp) {
+	  minTemp = limits.minTemperature;
+	}
       }
 
       builder.environmentalConditions(minTemp, 45.0);
@@ -299,11 +293,10 @@ public class DatabaseTorgDataSource implements TorgDataSource {
     }
   }
 
-  private TechnicalRequirementsDocument.Builder buildFromProjectResultSet(ResultSet rs)
-      throws java.sql.SQLException {
+  private TechnicalRequirementsDocument.Builder buildFromProjectResultSet(ResultSet rs) throws java.sql.SQLException {
     TechnicalRequirementsDocument.Builder builder = TechnicalRequirementsDocument.builder()
-        .projectId(rs.getString("PROJECT_ID")).projectName(rs.getString("PROJECT_NAME"))
-        .companyIdentifier(rs.getString("COMPANY")).revision(rs.getString("REVISION"));
+	.projectId(rs.getString("PROJECT_ID")).projectName(rs.getString("PROJECT_NAME"))
+	.companyIdentifier(rs.getString("COMPANY")).revision(rs.getString("REVISION"));
 
     String issueDate = rs.getString("ISSUE_DATE");
     if (issueDate != null) {
@@ -317,27 +310,25 @@ public class DatabaseTorgDataSource implements TorgDataSource {
     String seismicZone = rs.getString("SEISMIC_ZONE");
 
     if (!rs.wasNull()) {
-      builder.environmentalConditions(new TechnicalRequirementsDocument.EnvironmentalConditions(
-          minAmbient, maxAmbient, seawaterTemp, seismicZone != null ? seismicZone : "0", 0, 0, ""));
+      builder.environmentalConditions(new TechnicalRequirementsDocument.EnvironmentalConditions(minAmbient, maxAmbient,
+	  seawaterTemp, seismicZone != null ? seismicZone : "0", 0, 0, ""));
     }
 
     // Safety factors
     double corrosionAllowance = rs.getDouble("CORROSION_ALLOWANCE");
     double pressureSF = rs.getDouble("PRESSURE_SAFETY_FACTOR");
     if (!rs.wasNull()) {
-      builder.safetyFactors(new TechnicalRequirementsDocument.SafetyFactors(
-          Double.isNaN(pressureSF) ? 1.1 : pressureSF, 10.0,
-          Double.isNaN(corrosionAllowance) ? 3.0 : corrosionAllowance, 0.125, 1.0));
+      builder.safetyFactors(new TechnicalRequirementsDocument.SafetyFactors(Double.isNaN(pressureSF) ? 1.1 : pressureSF,
+	  10.0, Double.isNaN(corrosionAllowance) ? 3.0 : corrosionAllowance, 0.125, 1.0));
     }
 
     // Material specs
     String plateMaterial = rs.getString("DEFAULT_PLATE_MATERIAL");
     String pipeMaterial = rs.getString("DEFAULT_PIPE_MATERIAL");
     if (plateMaterial != null || pipeMaterial != null) {
-      builder.materialSpecifications(new TechnicalRequirementsDocument.MaterialSpecifications(
-          plateMaterial != null ? plateMaterial : "A516-70",
-          pipeMaterial != null ? pipeMaterial : "A106-B", minAmbient, 300.0, minAmbient < -29,
-          "ASTM"));
+      builder.materialSpecifications(
+	  new TechnicalRequirementsDocument.MaterialSpecifications(plateMaterial != null ? plateMaterial : "A516-70",
+	      pipeMaterial != null ? pipeMaterial : "A106-B", minAmbient, 300.0, minAmbient < -29, "ASTM"));
     }
 
     return builder;

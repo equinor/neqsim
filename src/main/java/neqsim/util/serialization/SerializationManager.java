@@ -21,16 +21,19 @@ import java.io.ObjectOutputStream;
  */
 public class SerializationManager {
   /**
-   * <p>Constructor for SerializationManager.</p>
+   * <p>
+   * Constructor for SerializationManager.
+   * </p>
    */
-  public SerializationManager() {}
+  public SerializationManager() {
+  }
 
   /**
    * <p>
    * save.
    * </p>
    *
-   * @param obj a {@link java.lang.Object} object
+   * @param obj  a {@link java.lang.Object} object
    * @param name a {@link java.lang.String} object
    */
   public static void save(Object obj, String name) {

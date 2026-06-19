@@ -3,20 +3,18 @@ package neqsim.process.equipment.separator.entrainment;
 import java.io.Serializable;
 
 /**
- * Grade efficiency curves for separator internals (mist eliminators, inlet devices, gravity
- * sections).
+ * Grade efficiency curves for separator internals (mist eliminators, inlet devices, gravity sections).
  *
  * <p>
- * A grade efficiency curve defines the fractional removal efficiency as a function of droplet
- * diameter. The overall separation efficiency is obtained by integrating the grade efficiency over
- * the droplet size distribution:
+ * A grade efficiency curve defines the fractional removal efficiency as a function of droplet diameter. The overall
+ * separation efficiency is obtained by integrating the grade efficiency over the droplet size distribution:
  * </p>
  *
  * $$ \eta_{overall} = \int_0^\infty \eta(d) \cdot f(d) \, dd = \sum_i \eta(d_i) \cdot \Delta F_i $$
  *
  * <p>
- * This class provides published correlations for common separator internals. All correlations are
- * from the open literature.
+ * This class provides published correlations for common separator internals. All correlations are from the open
+ * literature.
  * </p>
  *
  * @author NeqSim team
@@ -72,8 +70,8 @@ public class GradeEfficiencyCurve implements Serializable {
    * $$ \eta(d) = \min\left(1, \left(\frac{d}{d_{cut}}\right)^2\right) $$
    *
    * <p>
-   * where $d_{cut}$ is the critical diameter from the geometry and residence time. See Arnold and
-   * Stewart (2008), <i>Surface Production Operations</i>, Vol. 1, Gulf Professional Publishing.
+   * where $d_{cut}$ is the critical diameter from the geometry and residence time. See Arnold and Stewart (2008),
+   * <i>Surface Production Operations</i>, Vol. 1, Gulf Professional Publishing.
    * </p>
    *
    * @param cutDiameter critical diameter for 100% removal [m]
@@ -94,26 +92,24 @@ public class GradeEfficiencyCurve implements Serializable {
    * Modelled as a sigmoid (logistic) capture efficiency:
    * </p>
    *
-   * $$ \eta(d) = \eta_{max} \cdot \left[1 - \exp\left(-0.693 \cdot
-   * \left(\frac{d}{d_{50}}\right)^n\right)\right] $$
+   * $$ \eta(d) = \eta_{max} \cdot \left[1 - \exp\left(-0.693 \cdot \left(\frac{d}{d_{50}}\right)^n\right)\right] $$
    *
    * <p>
-   * Typical wire mesh parameters from Brunazzi and Paglianti (1998), <i>Chemical Engineering
-   * Science</i>, 53(19), 3373-3380:
+   * Typical wire mesh parameters from Brunazzi and Paglianti (1998), <i>Chemical Engineering Science</i>, 53(19),
+   * 3373-3380:
    * </p>
    *
    * <p>
-   * d_50 = 3-10 um for standard pads at typical gas velocities, n = 2-3 (sharpness), eta_max =
-   * 0.99-0.999 (below flooding).
+   * d_50 = 3-10 um for standard pads at typical gas velocities, n = 2-3 (sharpness), eta_max = 0.99-0.999 (below
+   * flooding).
    * </p>
    *
    * @param cutDiameter50 d_50 diameter at 50% efficiency [m]
-   * @param sharpness n steepness parameter (typically 2.0-3.0)
+   * @param sharpness     n steepness parameter (typically 2.0-3.0)
    * @param maxEfficiency maximum efficiency below flooding (typically 0.99-0.999)
    * @return a new GradeEfficiencyCurve
    */
-  public static GradeEfficiencyCurve wireMesh(double cutDiameter50, double sharpness,
-      double maxEfficiency) {
+  public static GradeEfficiencyCurve wireMesh(double cutDiameter50, double sharpness, double maxEfficiency) {
     GradeEfficiencyCurve curve = new GradeEfficiencyCurve();
     curve.type = InternalsType.WIRE_MESH;
     curve.cutDiameter = cutDiameter50;
@@ -139,26 +135,23 @@ public class GradeEfficiencyCurve implements Serializable {
    * Creates a grade efficiency curve for a vane pack (chevron) mist eliminator.
    *
    * <p>
-   * Vane pack efficiency is modelled using inertial impaction. The capture probability depends on
-   * the Stokes number $Stk = \rho_d d^2 V / (18 \mu_c W)$ where $W$ is the channel width. The
-   * efficiency is approximated as:
+   * Vane pack efficiency is modelled using inertial impaction. The capture probability depends on the Stokes number
+   * $Stk = \rho_d d^2 V / (18 \mu_c W)$ where $W$ is the channel width. The efficiency is approximated as:
    * </p>
    *
-   * $$ \eta(d) = \eta_{max} \cdot \left[1 - \exp\left(-0.693 \cdot
-   * \left(\frac{d}{d_{50}}\right)^n\right)\right] $$
+   * $$ \eta(d) = \eta_{max} \cdot \left[1 - \exp\left(-0.693 \cdot \left(\frac{d}{d_{50}}\right)^n\right)\right] $$
    *
    * <p>
-   * Typical values from Phillips and Listak (1996) and Verlaan (2001): d_50 = 8-20 um, n = 1.5-2.5,
-   * eta_max = 0.99-0.995.
+   * Typical values from Phillips and Listak (1996) and Verlaan (2001): d_50 = 8-20 um, n = 1.5-2.5, eta_max =
+   * 0.99-0.995.
    * </p>
    *
    * @param cutDiameter50 d_50 diameter at 50% efficiency [m]
-   * @param sharpness steepness parameter (typically 1.5-2.5)
+   * @param sharpness     steepness parameter (typically 1.5-2.5)
    * @param maxEfficiency maximum efficiency (typically 0.99-0.995)
    * @return a new GradeEfficiencyCurve
    */
-  public static GradeEfficiencyCurve vanePack(double cutDiameter50, double sharpness,
-      double maxEfficiency) {
+  public static GradeEfficiencyCurve vanePack(double cutDiameter50, double sharpness, double maxEfficiency) {
     GradeEfficiencyCurve curve = new GradeEfficiencyCurve();
     curve.type = InternalsType.VANE_PACK;
     curve.cutDiameter = cutDiameter50;
@@ -184,23 +177,22 @@ public class GradeEfficiencyCurve implements Serializable {
    * Creates a grade efficiency curve for an axial-flow cyclone separator.
    *
    * <p>
-   * Cyclone efficiency follows the Barth collection efficiency model, approximated as a steep
-   * sigmoid. Cyclone tubes have very sharp cut-off characteristics. From Hoffmann and Stein (2008),
-   * <i>Gas Cyclones and Swirl Tubes: Principles, Design and Operation</i>, Springer:
+   * Cyclone efficiency follows the Barth collection efficiency model, approximated as a steep sigmoid. Cyclone tubes
+   * have very sharp cut-off characteristics. From Hoffmann and Stein (2008), <i>Gas Cyclones and Swirl Tubes:
+   * Principles, Design and Operation</i>, Springer:
    * </p>
    *
    * <p>
-   * d_50 = 2-5 um for typical axial cyclone tubes at high gas velocity, n = 3-5 (very steep
-   * cut-off), eta_max = 0.995-0.999.
+   * d_50 = 2-5 um for typical axial cyclone tubes at high gas velocity, n = 3-5 (very steep cut-off), eta_max =
+   * 0.995-0.999.
    * </p>
    *
    * @param cutDiameter50 d_50 diameter at 50% efficiency [m]
-   * @param sharpness steepness (typically 3.0-5.0)
+   * @param sharpness     steepness (typically 3.0-5.0)
    * @param maxEfficiency maximum efficiency (typically 0.995-0.999)
    * @return a new GradeEfficiencyCurve
    */
-  public static GradeEfficiencyCurve axialCyclone(double cutDiameter50, double sharpness,
-      double maxEfficiency) {
+  public static GradeEfficiencyCurve axialCyclone(double cutDiameter50, double sharpness, double maxEfficiency) {
     GradeEfficiencyCurve curve = new GradeEfficiencyCurve();
     curve.type = InternalsType.AXIAL_CYCLONE;
     curve.cutDiameter = cutDiameter50;
@@ -226,14 +218,13 @@ public class GradeEfficiencyCurve implements Serializable {
    * Creates a grade efficiency curve for a plate pack (parallel plate) coalescer.
    *
    * <p>
-   * Plate packs reduce the effective settling height, improving gravity separation. The effective
-   * cut diameter is reduced by the ratio of plate spacing to vessel height. Modelled as gravity
-   * separation with reduced cut diameter.
+   * Plate packs reduce the effective settling height, improving gravity separation. The effective cut diameter is
+   * reduced by the ratio of plate spacing to vessel height. Modelled as gravity separation with reduced cut diameter.
    * </p>
    *
    * <p>
-   * See Polderman et al. (1997), "Design rules for plate pack/liquid-liquid coalescers", conference
-   * paper. Typical: d_50 = 20-100 um for oil-water, sharpness = 2.0.
+   * See Polderman et al. (1997), "Design rules for plate pack/liquid-liquid coalescers", conference paper. Typical:
+   * d_50 = 20-100 um for oil-water, sharpness = 2.0.
    * </p>
    *
    * @param cutDiameter50 effective d_50 for plate pack [m]
@@ -252,14 +243,14 @@ public class GradeEfficiencyCurve implements Serializable {
   /**
    * Creates a custom grade efficiency curve from a lookup table.
    *
-   * @param diametersM diameter values [m], ascending order
+   * @param diametersM   diameter values [m], ascending order
    * @param efficiencies corresponding efficiency values [0-1]
    * @return a new GradeEfficiencyCurve
    */
   public static GradeEfficiencyCurve custom(double[] diametersM, double[] efficiencies) {
     if (diametersM.length != efficiencies.length || diametersM.length < 2) {
       throw new IllegalArgumentException(
-          "Custom grade efficiency requires at least 2 matching diameter-efficiency pairs");
+	  "Custom grade efficiency requires at least 2 matching diameter-efficiency pairs");
     }
     GradeEfficiencyCurve curve = new GradeEfficiencyCurve();
     curve.type = InternalsType.CUSTOM;
@@ -300,8 +291,7 @@ public class GradeEfficiencyCurve implements Serializable {
   }
 
   /**
-   * Computes the overall separation efficiency by integrating the grade efficiency over a droplet
-   * size distribution.
+   * Computes the overall separation efficiency by integrating the grade efficiency over a droplet size distribution.
    *
    * @param dsd droplet size distribution
    * @return overall mass/volume separation efficiency [0-1]
@@ -335,8 +325,8 @@ public class GradeEfficiencyCurve implements Serializable {
     }
     for (int i = 0; i < customCurve.length - 1; i++) {
       if (diameter >= customCurve[i][0] && diameter < customCurve[i + 1][0]) {
-        double frac = (diameter - customCurve[i][0]) / (customCurve[i + 1][0] - customCurve[i][0]);
-        return customCurve[i][1] + frac * (customCurve[i + 1][1] - customCurve[i][1]);
+	double frac = (diameter - customCurve[i][0]) / (customCurve[i + 1][0] - customCurve[i][0]);
+	return customCurve[i][1] + frac * (customCurve[i + 1][1] - customCurve[i][1]);
       }
     }
     return customCurve[customCurve.length - 1][1];

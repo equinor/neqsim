@@ -8,15 +8,14 @@ import neqsim.process.equipment.stream.StreamInterface;
  * Gas flotation unit for produced water treatment.
  *
  * <p>
- * Models Induced Gas Flotation (IGF) or Dissolved Gas Flotation (DGF) for removal of dispersed oil
- * droplets from produced water. Fine gas bubbles are injected into the water; oil droplets attach
- * to the bubbles and rise to the surface where they are skimmed off.
+ * Models Induced Gas Flotation (IGF) or Dissolved Gas Flotation (DGF) for removal of dispersed oil droplets from
+ * produced water. Fine gas bubbles are injected into the water; oil droplets attach to the bubbles and rise to the
+ * surface where they are skimmed off.
  * </p>
  *
  * <h2>Design Parameters</h2>
  * <ul>
- * <li><b>Flotation gas supply:</b> Minimum 4 bar above water pressure, minimum 10 Avol% gas
- * flow</li>
+ * <li><b>Flotation gas supply:</b> Minimum 4 bar above water pressure, minimum 10 Avol% gas flow</li>
  * <li><b>Reject flow:</b> Minimum 2% of inlet water flow per unit/stage</li>
  * <li><b>Reject valves:</b> Actuated, sized for min to max flow per production profile</li>
  * <li><b>Gas mixing dP:</b> At least 0.5 bar across mixing valve for proper dispersion</li>
@@ -95,7 +94,7 @@ public class GasFlotationUnit extends Separator {
   /**
    * Creates a gas flotation unit with inlet stream.
    *
-   * @param name equipment name
+   * @param name        equipment name
    * @param inletStream water stream from upstream treatment
    */
   public GasFlotationUnit(String name, StreamInterface inletStream) {
@@ -205,8 +204,7 @@ public class GasFlotationUnit extends Separator {
    * Calculates the per-stage efficiency from the overall efficiency and number of stages.
    *
    * <p>
-   * Assumes each stage removes the same fraction of the remaining oil: (1 - eta_overall) = (1 -
-   * eta_stage)^n
+   * Assumes each stage removes the same fraction of the remaining oil: (1 - eta_overall) = (1 - eta_stage)^n
    * </p>
    *
    * @return per-stage efficiency (0.0-1.0)
@@ -329,12 +327,12 @@ public class GasFlotationUnit extends Separator {
     sb.append(String.format("Overall efficiency: %.1f%%\n", oilRemovalEfficiency * 100.0));
     sb.append(String.format("Per-stage efficiency: %.1f%%\n", perStageEfficiency * 100.0));
     sb.append(String.format("Water flow: %.1f m3/h\n", waterFlowRateM3h));
-    sb.append(String.format("Min gas flow: %.1f Am3/h (%.0f Avol%%)\n", flotationGasFlowRateM3h,
-        minGasVolumeFractionPct));
+    sb.append(
+	String.format("Min gas flow: %.1f Am3/h (%.0f Avol%%)\n", flotationGasFlowRateM3h, minGasVolumeFractionPct));
     sb.append(String.format("Min gas overpressure: %.1f bar above water\n", minGasOverpressureBar));
     sb.append(String.format("Min gas mixing valve dP: %.1f bar\n", minGasMixingDPBar));
-    sb.append(String.format("Reject flow per stage: %.1f m3/h (%.1f%% of inlet)\n",
-        rejectFlowPerStageM3h, minRejectFractionPerStage * 100.0));
+    sb.append(String.format("Reject flow per stage: %.1f m3/h (%.1f%% of inlet)\n", rejectFlowPerStageM3h,
+	minRejectFractionPerStage * 100.0));
     sb.append(String.format("Total reject flow: %.1f m3/h\n", getTotalRejectFlow()));
     sb.append(String.format("Inlet OIW: %.0f mg/L\n", inletOilMgL));
     sb.append(String.format("Outlet OIW: %.0f mg/L\n", outletOilMgL));

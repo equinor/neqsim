@@ -13,10 +13,10 @@ import neqsim.thermo.system.SystemInterface;
  * Catalytic tube-side steam methane reformer model for hydrogen production.
  *
  * <p>
- * The model uses a constrained Gibbs equilibrium reactor at a specified tube outlet temperature and
- * overlays engineering checks for pressure drop, tube-wall temperature, heat flux, steam-to-carbon
- * ratio, and nickel-catalyst deactivation. It is intended as a design-envelope model for SMR
- * flowsheets before detailed furnace CFD, burner layout, and vendor tube-rating calculations.
+ * The model uses a constrained Gibbs equilibrium reactor at a specified tube outlet temperature and overlays
+ * engineering checks for pressure drop, tube-wall temperature, heat flux, steam-to-carbon ratio, and nickel-catalyst
+ * deactivation. It is intended as a design-envelope model for SMR flowsheets before detailed furnace CFD, burner
+ * layout, and vendor tube-rating calculations.
  * </p>
  *
  * @author NeqSim contributors
@@ -87,7 +87,7 @@ public class CatalyticTubeReformer extends TwoPortEquipment {
   /**
    * Creates a catalytic tube reformer with an inlet stream.
    *
-   * @param name equipment name
+   * @param name        equipment name
    * @param inletStream reformer feed stream containing methane and steam
    */
   public CatalyticTubeReformer(String name, StreamInterface inletStream) {
@@ -108,7 +108,7 @@ public class CatalyticTubeReformer extends TwoPortEquipment {
    * Sets the target tube outlet temperature with unit conversion.
    *
    * @param temperature temperature value
-   * @param unit temperature unit, either K or C
+   * @param unit        temperature unit, either K or C
    */
   public void setReformingTemperature(double temperature, String unit) {
     if ("C".equalsIgnoreCase(unit)) {
@@ -130,9 +130,9 @@ public class CatalyticTubeReformer extends TwoPortEquipment {
   /**
    * Sets tube geometry.
    *
-   * @param lengthM heated tube length in metres
+   * @param lengthM        heated tube length in metres
    * @param innerDiameterM tube inside diameter in metres
-   * @param tubes number of parallel tubes
+   * @param tubes          number of parallel tubes
    */
   public void setTubeGeometry(double lengthM, double innerDiameterM, int tubes) {
     validatePositive(lengthM, "lengthM");
@@ -314,23 +314,22 @@ public class CatalyticTubeReformer extends TwoPortEquipment {
     steamToCarbonRatio = HydrogenProductionUtils.calculateSteamToCarbonRatio(reactorFeedSystem);
     if (deactivationKinetics != null) {
       deactivationKinetics.setTemperature(reformingTemperatureK)
-          .setSteamToCarbonRatio(Double.isNaN(steamToCarbonRatio) ? 0.0 : steamToCarbonRatio);
+	  .setSteamToCarbonRatio(Double.isNaN(steamToCarbonRatio) ? 0.0 : steamToCarbonRatio);
       deactivationKinetics.applyTo(catalystBed);
     }
 
     Stream reactorFeed = new Stream(getName() + " equilibrium feed", reactorFeedSystem);
     reactorFeed.run(id);
 
-    equilibriumReactor = HydrogenProductionUtils.createSyngasGibbsReactor(
-        getName() + " Gibbs equilibrium", reactorFeed, GibbsReactor.EnergyMode.ISOTHERMAL);
+    equilibriumReactor = HydrogenProductionUtils.createSyngasGibbsReactor(getName() + " Gibbs equilibrium", reactorFeed,
+	GibbsReactor.EnergyMode.ISOTHERMAL);
     equilibriumReactor.run(id);
 
     SystemInterface outletSystem = equilibriumReactor.getOutletStream().getThermoSystem().clone();
     outletSystem.init(3);
     double outletEnthalpyJ = outletSystem.getEnthalpy("J");
     heatDutyW = Math.max(0.0, outletEnthalpyJ - inletEnthalpyJ);
-    methaneConversion =
-        HydrogenProductionUtils.calculateMethaneConversion(inletBasis, outletSystem);
+    methaneConversion = HydrogenProductionUtils.calculateMethaneConversion(inletBasis, outletSystem);
     drySyngasLhvMjPerNm3 = HydrogenProductionUtils.estimateDrySyngasLhvMjPerNm3(outletSystem);
     estimateTubeThermalState();
 
@@ -358,7 +357,7 @@ public class CatalyticTubeReformer extends TwoPortEquipment {
     results.put("drySyngasLhvMjPerNm3", drySyngasLhvMjPerNm3);
     if (outStream != null && outStream.getThermoSystem() != null) {
       results.put("syngasComposition_molFrac",
-          HydrogenProductionUtils.extractSyngasComposition(outStream.getThermoSystem()));
+	  HydrogenProductionUtils.extractSyngasComposition(outStream.getThermoSystem()));
     }
     return results;
   }
@@ -366,8 +365,7 @@ public class CatalyticTubeReformer extends TwoPortEquipment {
   /** {@inheritDoc} */
   @Override
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(getResults());
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(getResults());
   }
 
   /**
@@ -389,7 +387,7 @@ public class CatalyticTubeReformer extends TwoPortEquipment {
    * Validates that a numeric value is positive and finite.
    *
    * @param value value to check
-   * @param name parameter name used in the exception
+   * @param name  parameter name used in the exception
    */
   private void validatePositive(double value, String name) {
     if (!Double.isFinite(value) || value <= 0.0) {

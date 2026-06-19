@@ -30,9 +30,9 @@ public class AddIonToScaleSaturation extends ConstantDutyTemperatureFlash {
    * Constructor for addIonToScaleSaturation.
    * </p>
    *
-   * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param phaseNumber a int
-   * @param scaleSaltName a {@link java.lang.String} object
+   * @param system             a {@link neqsim.thermo.system.SystemInterface} object
+   * @param phaseNumber        a int
+   * @param scaleSaltName      a {@link java.lang.String} object
    * @param nameOfIonToBeAdded a {@link java.lang.String} object
    */
   public AddIonToScaleSaturation(SystemInterface system, int phaseNumber, String scaleSaltName,
@@ -60,7 +60,7 @@ public class AddIonToScaleSaturation extends ConstantDutyTemperatureFlash {
 
     for (int i = 0; i < 10; i++) {
       for (int j = 0; j < 3; j++) {
-        resultTable[i][j] = "";
+	resultTable[i][j] = "";
       }
     }
 
@@ -78,83 +78,77 @@ public class AddIonToScaleSaturation extends ConstantDutyTemperatureFlash {
     }
 
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-        java.sql.ResultSet dataSet = database.getResultSet("SELECT * FROM compsalt")) {
+	java.sql.ResultSet dataSet = database.getResultSet("SELECT * FROM compsalt")) {
       while (dataSet.next()) {
-        saltName = dataSet.getString("SaltName").trim();
-        name1 = dataSet.getString("ion1").trim();
-        name2 = dataSet.getString("ion2").trim();
-        iterations++;
-        stoc1 = Double.parseDouble(dataSet.getString("stoc1"));
-        stoc2 = Double.parseDouble(dataSet.getString("stoc2"));
-        // Temperature in Kelvin from system (getTemperature() returns Kelvin)
-        double temperatureK = system.getPhase(phaseNumber).getTemperature();
-        double temperatureC = temperatureK - 273.15;
-        // Ksp correlation: lnKsp = A/T + B + C*ln(T) + D*T + E/T² (T in Kelvin)
-        ksp = Math.exp(Double.parseDouble(dataSet.getString("Ksp-water")) / temperatureK
-            + Double.parseDouble(dataSet.getString("Ksp-water2"))
-            + Math.log(temperatureK) * Double.parseDouble(dataSet.getString("Ksp-water3"))
-            + temperatureK * Double.parseDouble(dataSet.getString("Ksp-water4"))
-            + Double.parseDouble(dataSet.getString("Ksp-water5")) / (temperatureK * temperatureK));
-        if (saltName.equals("NaCl")) {
-          // NaCl Ksp correlation using temperature in Kelvin
-          // Fitted to CRC Handbook solubility data: Ksp = m² ≈ 37-45 over 0-100°C
-          ksp = 92.78 - 0.407 * temperatureK + 0.000747 * temperatureK * temperatureK;
-        }
+	saltName = dataSet.getString("SaltName").trim();
+	name1 = dataSet.getString("ion1").trim();
+	name2 = dataSet.getString("ion2").trim();
+	iterations++;
+	stoc1 = Double.parseDouble(dataSet.getString("stoc1"));
+	stoc2 = Double.parseDouble(dataSet.getString("stoc2"));
+	// Temperature in Kelvin from system (getTemperature() returns Kelvin)
+	double temperatureK = system.getPhase(phaseNumber).getTemperature();
+	double temperatureC = temperatureK - 273.15;
+	// Ksp correlation: lnKsp = A/T + B + C*ln(T) + D*T + E/T² (T in Kelvin)
+	ksp = Math.exp(Double.parseDouble(dataSet.getString("Ksp-water")) / temperatureK
+	    + Double.parseDouble(dataSet.getString("Ksp-water2"))
+	    + Math.log(temperatureK) * Double.parseDouble(dataSet.getString("Ksp-water3"))
+	    + temperatureK * Double.parseDouble(dataSet.getString("Ksp-water4"))
+	    + Double.parseDouble(dataSet.getString("Ksp-water5")) / (temperatureK * temperatureK));
+	if (saltName.equals("NaCl")) {
+	  // NaCl Ksp correlation using temperature in Kelvin
+	  // Fitted to CRC Handbook solubility data: Ksp = m² ≈ 37-45 over 0-100°C
+	  ksp = 92.78 - 0.407 * temperatureK + 0.000747 * temperatureK * temperatureK;
+	}
 
-        if (system.getPhase(phaseNumber).hasComponent(name1)
-            && system.getPhase(phaseNumber).hasComponent(name2)) {
-          numb++;
-          logger.info("reaction added: " + name1 + " " + name2);
-          logger.info("theoretic Ksp = " + ksp);
-          double oldScalePotentialFactor = 1.0;
-          double error = 1.0;
-          int iterations = 0;
-          do {
-            iterations++;
-            logger.info("theoretic lnKsp = " + Math.log(ksp));
-            int compNumb1 = system.getPhase(phaseNumber).getComponent(name1).getComponentNumber();
-            int compNumb2 = system.getPhase(phaseNumber).getComponent(name2).getComponentNumber();
-            int waterompNumb =
-                system.getPhase(phaseNumber).getComponent("water").getComponentNumber();
+	if (system.getPhase(phaseNumber).hasComponent(name1) && system.getPhase(phaseNumber).hasComponent(name2)) {
+	  numb++;
+	  logger.info("reaction added: " + name1 + " " + name2);
+	  logger.info("theoretic Ksp = " + ksp);
+	  double oldScalePotentialFactor = 1.0;
+	  double error = 1.0;
+	  int iterations = 0;
+	  do {
+	    iterations++;
+	    logger.info("theoretic lnKsp = " + Math.log(ksp));
+	    int compNumb1 = system.getPhase(phaseNumber).getComponent(name1).getComponentNumber();
+	    int compNumb2 = system.getPhase(phaseNumber).getComponent(name2).getComponentNumber();
+	    int waterompNumb = system.getPhase(phaseNumber).getComponent("water").getComponentNumber();
 
-            double x1 = system.getPhase(phaseNumber).getComponent(name1).getx()
-                / (system.getPhase(phaseNumber).getComponent(waterompNumb).getx()
-                    * system.getPhase(phaseNumber).getComponent(waterompNumb).getMolarMass());
-            double x2 = system.getPhase(phaseNumber).getComponent(name2).getx()
-                / (system.getPhase(phaseNumber).getComponent(waterompNumb).getx()
-                    * system.getPhase(phaseNumber).getComponent(waterompNumb).getMolarMass());
-            double kspReac = Math
-                .pow(system.getPhase(phaseNumber).getActivityCoefficient(compNumb1, waterompNumb)
-                    * x1, stoc1)
-                * Math.pow(x2
-                    * system.getPhase(phaseNumber).getActivityCoefficient(compNumb2, waterompNumb),
-                    stoc2);
-            double stocKsp = Math.pow(x1, stoc1) * Math.pow(x2, stoc2);
-            logger.info("calc Ksp " + kspReac);
-            logger.info("stoc Ksp " + stocKsp);
-            logger.info("activity " + kspReac / stocKsp);
-            logger.info("mol/kg " + x1);
+	    double x1 = system.getPhase(phaseNumber).getComponent(name1).getx()
+		/ (system.getPhase(phaseNumber).getComponent(waterompNumb).getx()
+		    * system.getPhase(phaseNumber).getComponent(waterompNumb).getMolarMass());
+	    double x2 = system.getPhase(phaseNumber).getComponent(name2).getx()
+		/ (system.getPhase(phaseNumber).getComponent(waterompNumb).getx()
+		    * system.getPhase(phaseNumber).getComponent(waterompNumb).getMolarMass());
+	    double kspReac = Math.pow(system.getPhase(phaseNumber).getActivityCoefficient(compNumb1, waterompNumb) * x1,
+		stoc1)
+		* Math.pow(x2 * system.getPhase(phaseNumber).getActivityCoefficient(compNumb2, waterompNumb), stoc2);
+	    double stocKsp = Math.pow(x1, stoc1) * Math.pow(x2, stoc2);
+	    logger.info("calc Ksp " + kspReac);
+	    logger.info("stoc Ksp " + stocKsp);
+	    logger.info("activity " + kspReac / stocKsp);
+	    logger.info("mol/kg " + x1);
 
-            double scalePotentialFactor = kspReac / ksp;
+	    double scalePotentialFactor = kspReac / ksp;
 
-            error = (scalePotentialFactor - oldScalePotentialFactor) / scalePotentialFactor * 100;
-            oldScalePotentialFactor = scalePotentialFactor;
-            logger.info("Scale potential factor " + scalePotentialFactor);
-            resultTable[numb][0] = name1 + " " + name2;
-            resultTable[numb][1] = Double.toString(scalePotentialFactor);
-            resultTable[numb][2] = "";
+	    error = (scalePotentialFactor - oldScalePotentialFactor) / scalePotentialFactor * 100;
+	    oldScalePotentialFactor = scalePotentialFactor;
+	    logger.info("Scale potential factor " + scalePotentialFactor);
+	    resultTable[numb][0] = name1 + " " + name2;
+	    resultTable[numb][1] = Double.toString(scalePotentialFactor);
+	    resultTable[numb][2] = "";
 
-            if (saltName.equals(scaleSaltName)) {
-              logger.info("error " + error);
-              logger.info("pH : " + system.getPhase(phaseNumber).getpH());
-              system.addComponent(nameOfIonToBeAdded, (1.0 - scalePotentialFactor) / 100000.0,
-                  phaseNumber);
-              ops.TPflash();
-              logger.info("x1 " + system.getPhase(phaseNumber).getComponent(name1).getx());
-              logger.info("x2 " + system.getPhase(phaseNumber).getComponent(name2).getx());
-            }
-          } while (saltName.equals(scaleSaltName) && Math.abs(error) > 1e-6 && iterations < 200);
-        }
+	    if (saltName.equals(scaleSaltName)) {
+	      logger.info("error " + error);
+	      logger.info("pH : " + system.getPhase(phaseNumber).getpH());
+	      system.addComponent(nameOfIonToBeAdded, (1.0 - scalePotentialFactor) / 100000.0, phaseNumber);
+	      ops.TPflash();
+	      logger.info("x1 " + system.getPhase(phaseNumber).getComponent(name1).getx());
+	      logger.info("x2 " + system.getPhase(phaseNumber).getComponent(name2).getx());
+	    }
+	  } while (saltName.equals(scaleSaltName) && Math.abs(error) > 1e-6 && iterations < 200);
+	}
       }
     } catch (Exception ex) {
       logger.info("failed ", ex);
@@ -170,7 +164,8 @@ public class AddIonToScaleSaturation extends ConstantDutyTemperatureFlash {
 
   /** {@inheritDoc} */
   @Override
-  public void printToFile(String name) {}
+  public void printToFile(String name) {
+  }
 
   /** {@inheritDoc} */
   @Override

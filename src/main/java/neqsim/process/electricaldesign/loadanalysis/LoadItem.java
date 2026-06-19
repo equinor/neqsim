@@ -7,8 +7,8 @@ import java.util.Map;
  * Represents a single electrical load item in a load list.
  *
  * <p>
- * Each load item captures the power consumption for one piece of process equipment, including rated,
- * absorbed, and design powers, plus demand and diversity factors used for plant-wide aggregation.
+ * Each load item captures the power consumption for one piece of process equipment, including rated, absorbed, and
+ * design powers, plus demand and diversity factors used for plant-wide aggregation.
  * </p>
  *
  * @author Even Solbraa
@@ -42,8 +42,8 @@ public class LoadItem implements java.io.Serializable {
   /**
    * Construct a LoadItem.
    *
-   * @param tagNumber equipment tag number
-   * @param description load description
+   * @param tagNumber    equipment tag number
+   * @param description  load description
    * @param ratedPowerKW rated power in kW
    */
   public LoadItem(String tagNumber, String description, double ratedPowerKW) {

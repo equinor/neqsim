@@ -21,8 +21,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * Recycle class for handling tear streams in process simulations.
  *
  * <p>
- * This class implements convergence acceleration methods for recycle calculations, including direct
- * substitution, Wegstein acceleration, and Broyden's method.
+ * This class implements convergence acceleration methods for recycle calculations, including direct substitution,
+ * Wegstein acceleration, and Broyden's method.
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -279,33 +279,28 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     // String compName = new String();
 
     for (int k = 1; k < streams.size(); k++) {
-      for (int i = 0; i < streams.get(k).getThermoSystem().getPhase(0)
-          .getNumberOfComponents(); i++) {
-        boolean gotComponent = false;
-        String componentName =
-            streams.get(k).getThermoSystem().getPhase(0).getComponent(i).getName();
-        // logger.info("adding: " + componentName);
-        // int numberOfPhases = streams.get(k).getThermoSystem().getNumberOfPhases();
+      for (int i = 0; i < streams.get(k).getThermoSystem().getPhase(0).getNumberOfComponents(); i++) {
+	boolean gotComponent = false;
+	String componentName = streams.get(k).getThermoSystem().getPhase(0).getComponent(i).getName();
+	// logger.info("adding: " + componentName);
+	// int numberOfPhases = streams.get(k).getThermoSystem().getNumberOfPhases();
 
-        double moles =
-            streams.get(k).getThermoSystem().getPhase(0).getComponent(i).getNumberOfmoles();
-        // logger.info("moles: " + moles + " " +
-        // mixedStream.getThermoSystem().getPhase(0).getNumberOfComponents());
-        for (int p = 0; p < mixedStream.getThermoSystem().getPhase(0)
-            .getNumberOfComponents(); p++) {
-          if (mixedStream.getThermoSystem().getPhase(0).getComponent(p).getName()
-              .equals(componentName)) {
-            gotComponent = true;
-            index = mixedStream.getThermoSystem().getPhase(0).getComponent(p).getComponentNumber();
-            break;
-          }
-        }
+	double moles = streams.get(k).getThermoSystem().getPhase(0).getComponent(i).getNumberOfmoles();
+	// logger.info("moles: " + moles + " " +
+	// mixedStream.getThermoSystem().getPhase(0).getNumberOfComponents());
+	for (int p = 0; p < mixedStream.getThermoSystem().getPhase(0).getNumberOfComponents(); p++) {
+	  if (mixedStream.getThermoSystem().getPhase(0).getComponent(p).getName().equals(componentName)) {
+	    gotComponent = true;
+	    index = mixedStream.getThermoSystem().getPhase(0).getComponent(p).getComponentNumber();
+	    break;
+	  }
+	}
 
-        if (gotComponent) {
-          mixedStream.getThermoSystem().addComponent(index, moles);
-        } else {
-          mixedStream.getThermoSystem().addComponent(componentName, moles);
-        }
+	if (gotComponent) {
+	  mixedStream.getThermoSystem().addComponent(index, moles);
+	} else {
+	  mixedStream.getThermoSystem().addComponent(componentName, moles);
+	}
       }
     }
     // mixedStream.getThermoSystem().init_x_y();
@@ -323,9 +318,8 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   public double guessTemperature() {
     double gtemp = 0;
     for (int k = 0; k < streams.size(); k++) {
-      gtemp += streams.get(k).getThermoSystem().getTemperature()
-          * streams.get(k).getThermoSystem().getNumberOfMoles()
-          / mixedStream.getThermoSystem().getNumberOfMoles();
+      gtemp += streams.get(k).getThermoSystem().getTemperature() * streams.get(k).getThermoSystem().getNumberOfMoles()
+	  / mixedStream.getThermoSystem().getNumberOfMoles();
     }
     return gtemp;
   }
@@ -375,9 +369,9 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   public void setDownstreamProperties() {
     if (downstreamProperty.size() > 0) {
       for (int i = 0; i < downstreamProperty.size(); i++) {
-        if (downstreamProperty.get(i).equals("flow rate")) {
-          mixedStream.setFlowRate(outletStream.getFlowRate("kg/hr"), "kg/hr");
-        }
+	if (downstreamProperty.get(i).equals("flow rate")) {
+	  mixedStream.setFlowRate(outletStream.getFlowRate("kg/hr"), "kg/hr");
+	}
       }
     }
   }
@@ -413,23 +407,23 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
       mixStream();
 
       if (mixedStream.getFlowRate("kg/hr") < minimumFlow) {
-        isActive(false);
-        mixedStream.setThermoSystem(thermoSystem2);
-        setErrorCompositon(0.0);
-        setErrorFlow(flowBalanceCheck());
-        setErrorTemperature(temperatureBalanceCheck());
-        setErrorPressure(pressureBalanceCheck());
-        outletStream.setThermoSystem(mixedStream.getThermoSystem());
-        outletStream.setCalculationIdentifier(id);
-        return;
+	isActive(false);
+	mixedStream.setThermoSystem(thermoSystem2);
+	setErrorCompositon(0.0);
+	setErrorFlow(flowBalanceCheck());
+	setErrorTemperature(temperatureBalanceCheck());
+	setErrorPressure(pressureBalanceCheck());
+	outletStream.setThermoSystem(mixedStream.getThermoSystem());
+	outletStream.setCalculationIdentifier(id);
+	return;
       }
 
       setDownstreamProperties();
       try {
-        enthalpy = calcMixStreamEnthalpy();
+	enthalpy = calcMixStreamEnthalpy();
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
-        return;
+	logger.error(ex.getMessage(), ex);
+	return;
       }
       // logger.info("temp guess " + guessTemperature());
       mixedStream.getThermoSystem().setTemperature(guessTemperature());
@@ -443,7 +437,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
 
     // Apply convergence acceleration if enabled and past delay period
     if (accelerationMethod == AccelerationMethod.WEGSTEIN && iterations > wegsteinDelayIterations
-        && lastIterationStream != null) {
+	&& lastIterationStream != null) {
       applyWegsteinToStream();
     } else if (accelerationMethod == AccelerationMethod.BROYDEN && lastIterationStream != null) {
       applyBroydenToStream();
@@ -478,12 +472,10 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   public double flowBalanceCheck() {
     double abs_sum_errorFlow = 0.0;
     if (mixedStream.getFlowRate("kg/sec") < 1.0) {
-      abs_sum_errorFlow +=
-          Math.abs(mixedStream.getFlowRate("kg/sec") - lastIterationStream.getFlowRate("kg/sec"));
+      abs_sum_errorFlow += Math.abs(mixedStream.getFlowRate("kg/sec") - lastIterationStream.getFlowRate("kg/sec"));
     } else {
-      abs_sum_errorFlow +=
-          Math.abs(mixedStream.getFlowRate("kg/sec") - lastIterationStream.getFlowRate("kg/sec"))
-              / mixedStream.getFlowRate("kg/sec") * 100.0;
+      abs_sum_errorFlow += Math.abs(mixedStream.getFlowRate("kg/sec") - lastIterationStream.getFlowRate("kg/sec"))
+	  / mixedStream.getFlowRate("kg/sec") * 100.0;
     }
     return abs_sum_errorFlow;
   }
@@ -496,15 +488,14 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
    * @return a double
    */
   public double compositionBalanceCheck() {
-    if (lastIterationStream.getFluid().getNumberOfComponents() != mixedStream.getFluid()
-        .getNumberOfComponents()) {
+    if (lastIterationStream.getFluid().getNumberOfComponents() != mixedStream.getFluid().getNumberOfComponents()) {
       return 10.0;
     }
 
     double abs_sum_error = 0.0;
     for (int i = 0; i < mixedStream.getThermoSystem().getPhase(0).getNumberOfComponents(); i++) {
       abs_sum_error += Math.abs(mixedStream.getThermoSystem().getPhase(0).getComponent(i).getx()
-          - lastIterationStream.getThermoSystem().getPhase(0).getComponent(i).getx());
+	  - lastIterationStream.getThermoSystem().getPhase(0).getComponent(i).getx());
     }
 
     return abs_sum_error;
@@ -521,8 +512,8 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     double error = 0.0;
     for (int i = 0; i < mixedStream.getThermoSystem().getNumberOfPhases(); i++) {
       error += Math.abs((mixedStream.getThermoSystem().getPhase(i).getTemperature()
-          - lastIterationStream.getThermoSystem().getPhase(i).getTemperature())
-          / lastIterationStream.getThermoSystem().getPhase(i).getTemperature()) * 100.0;
+	  - lastIterationStream.getThermoSystem().getPhase(i).getTemperature())
+	  / lastIterationStream.getThermoSystem().getPhase(i).getTemperature()) * 100.0;
     }
     return error;
   }
@@ -538,8 +529,8 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     double error = 0.0;
     for (int i = 0; i < mixedStream.getThermoSystem().getNumberOfPhases(); i++) {
       error += Math.abs((mixedStream.getThermoSystem().getPhase(i).getPressure()
-          - lastIterationStream.getThermoSystem().getPhase(i).getPressure())
-          / lastIterationStream.getThermoSystem().getPhase(i).getPressure()) * 100.0;
+	  - lastIterationStream.getThermoSystem().getPhase(i).getPressure())
+	  / lastIterationStream.getThermoSystem().getPhase(i).getPressure()) * 100.0;
     }
     return error;
   }
@@ -547,7 +538,8 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   /** {@inheritDoc} */
   @Override
   @ExcludeFromJacocoGeneratedReport
-  public void displayResult() {}
+  public void displayResult() {
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -612,8 +604,8 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   }
 
   /**
-   * Sets the minimum bound for Wegstein q-factor. Default is -5.0. More negative values allow
-   * stronger acceleration but risk instability.
+   * Sets the minimum bound for Wegstein q-factor. Default is -5.0. More negative values allow stronger acceleration but
+   * risk instability.
    *
    * @param qMin the minimum q-factor
    */
@@ -631,8 +623,8 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   }
 
   /**
-   * Sets the maximum bound for Wegstein q-factor. Default is 0.0 (no acceleration beyond direct
-   * substitution). Positive values can help with oscillating systems.
+   * Sets the maximum bound for Wegstein q-factor. Default is 0.0 (no acceleration beyond direct substitution). Positive
+   * values can help with oscillating systems.
    *
    * @param qMax the maximum q-factor
    */
@@ -650,8 +642,8 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   }
 
   /**
-   * Sets the number of delay iterations before Wegstein acceleration is applied. This allows the
-   * system to stabilize before acceleration. Default is 2.
+   * Sets the number of delay iterations before Wegstein acceleration is applied. This allows the system to stabilize
+   * before acceleration. Default is 2.
    *
    * @param delayIterations number of iterations to delay
    */
@@ -693,8 +685,8 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   }
 
   /**
-   * Extracts the current tear stream values as an array. The array contains: [temperature,
-   * pressure, total_flow, mole_fractions...]
+   * Extracts the current tear stream values as an array. The array contains: [temperature, pressure, total_flow,
+   * mole_fractions...]
    *
    * @param stream the stream to extract values from
    * @return array of stream property values
@@ -718,15 +710,14 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
    * Applies Wegstein acceleration to calculate accelerated values.
    *
    * <p>
-   * The Wegstein method uses the formula: x_{n+1} = q * g(x_n) + (1-q) * x_n where q = s / (s - 1)
-   * and s is the slope estimate.
+   * The Wegstein method uses the formula: x_{n+1} = q * g(x_n) + (1-q) * x_n where q = s / (s - 1) and s is the slope
+   * estimate.
    *
    * <p>
-   * The q-factor is bounded to prevent divergence: - q between qMin and qMax (typically -5 to 0) -
-   * q = 0 corresponds to direct substitution - Negative q provides acceleration for monotonic
-   * convergence
+   * The q-factor is bounded to prevent divergence: - q between qMin and qMax (typically -5 to 0) - q = 0 corresponds to
+   * direct substitution - Negative q provides acceleration for monotonic convergence
    *
-   * @param currentInput the input values for current iteration (x_n)
+   * @param currentInput  the input values for current iteration (x_n)
    * @param currentOutput the output values from current iteration (g(x_n))
    * @return accelerated values for next iteration input
    */
@@ -740,8 +731,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     }
 
     // Check if we have previous values for slope calculation
-    if (previousInputValues == null || previousOutputValues == null
-        || previousInputValues.length != n) {
+    if (previousInputValues == null || previousOutputValues == null || previousInputValues.length != n) {
       // First iteration with Wegstein - use direct substitution
       wegsteinQFactors = new double[n]; // all zeros = direct substitution
       return currentOutput.clone();
@@ -755,18 +745,18 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
       // Calculate slope s = (g(x_n) - g(x_{n-1})) / (x_n - x_{n-1})
       double slope;
       if (Math.abs(deltaInput) > 1e-15) {
-        slope = deltaOutput / deltaInput;
+	slope = deltaOutput / deltaInput;
       } else {
-        slope = 0.0; // No change, use direct substitution
+	slope = 0.0; // No change, use direct substitution
       }
 
       // Calculate q-factor: q = s / (s - 1)
       double q;
       if (Math.abs(slope - 1.0) > 1e-10) {
-        q = slope / (slope - 1.0);
+	q = slope / (slope - 1.0);
       } else {
-        // slope ≈ 1 means diverging, use minimum q for maximum damping
-        q = wegsteinQMin;
+	// slope ≈ 1 means diverging, use minimum q for maximum damping
+	q = wegsteinQMin;
       }
 
       // Bound the q-factor to prevent divergence
@@ -795,23 +785,23 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
       double[] newFractions = new double[numComponents];
       double sum = 0.0;
       for (int i = 0; i < numComponents; i++) {
-        newFractions[i] = Math.max(0.0, values[3 + i]); // Ensure non-negative
-        sum += newFractions[i];
+	newFractions[i] = Math.max(0.0, values[3 + i]); // Ensure non-negative
+	sum += newFractions[i];
       }
 
       // Normalize to ensure sum = 1
       if (sum > 1e-15) {
-        for (int i = 0; i < numComponents; i++) {
-          fluid.getPhase(0).getComponent(i).setx(newFractions[i] / sum);
-          fluid.getPhase(1).getComponent(i).setx(newFractions[i] / sum);
-        }
+	for (int i = 0; i < numComponents; i++) {
+	  fluid.getPhase(0).getComponent(i).setx(newFractions[i] / sum);
+	  fluid.getPhase(1).getComponent(i).setx(newFractions[i] / sum);
+	}
       }
     }
   }
 
   /**
-   * Applies Wegstein acceleration to the mixed stream using previous iteration data. This method is
-   * called during run() when Wegstein acceleration is enabled.
+   * Applies Wegstein acceleration to the mixed stream using previous iteration data. This method is called during run()
+   * when Wegstein acceleration is enabled.
    */
   private void applyWegsteinToStream() {
     // Extract current input (from lastIterationStream) and output (from mixedStream)
@@ -830,8 +820,8 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   }
 
   /**
-   * Applies Broyden's quasi-Newton acceleration to the mixed stream. This method is called during
-   * run() when Broyden acceleration is enabled.
+   * Applies Broyden's quasi-Newton acceleration to the mixed stream. This method is called during run() when Broyden
+   * acceleration is enabled.
    */
   private void applyBroydenToStream() {
     // Extract current input (from lastIterationStream) and output (from mixedStream)
@@ -961,15 +951,14 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   /** {@inheritDoc} */
   @Override
   public boolean solved() {
-    if (getOutletStream().getFlowRate("kg/hr") < 1e-20
-        && lastIterationStream.getFlowRate("kg/hr") < 1e-20 && iterations > 1) {
+    if (getOutletStream().getFlowRate("kg/hr") < 1e-20 && lastIterationStream.getFlowRate("kg/hr") < 1e-20
+	&& iterations > 1) {
       return true;
     }
 
-    if (Math.abs(this.errorComposition) < compositionTolerance
-        && Math.abs(this.errorFlow) < flowTolerance
-        && Math.abs(this.errorTemperature) < temperatureTolerance
-        && Math.abs(this.errorPressure) < pressureTolerance && iterations > 1) {
+    if (Math.abs(this.errorComposition) < compositionTolerance && Math.abs(this.errorFlow) < flowTolerance
+	&& Math.abs(this.errorTemperature) < temperatureTolerance && Math.abs(this.errorPressure) < pressureTolerance
+	&& iterations > 1) {
       return true;
     } else {
       return false;
@@ -997,10 +986,9 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
    * {@inheritDoc}
    *
    * <p>
-   * Returns the tear (recycle) streams fed into this recycle unit via
-   * {@link #addStream(StreamInterface)}. Exposing them through the standard inlet accessor lets
-   * topology walkers (DOT/Graphviz export, JSON DTO export, DEXPI, auto-instrumentation) trace the
-   * recycle loop instead of rendering the recycle unit as an isolated node.
+   * Returns the tear (recycle) streams fed into this recycle unit via {@link #addStream(StreamInterface)}. Exposing
+   * them through the standard inlet accessor lets topology walkers (DOT/Graphviz export, JSON DTO export, DEXPI,
+   * auto-instrumentation) trace the recycle loop instead of rendering the recycle unit as an isolated node.
    * </p>
    */
   @Override
@@ -1012,9 +1000,9 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
    * {@inheritDoc}
    *
    * <p>
-   * Returns the converged recycle outlet stream so the recycle loop closes back to its downstream
-   * consumer in topology graphs. Falls back to the internal mixed stream when no explicit outlet
-   * stream has been assigned via {@link #setOutletStream(StreamInterface)}.
+   * Returns the converged recycle outlet stream so the recycle loop closes back to its downstream consumer in topology
+   * graphs. Falls back to the internal mixed stream when no explicit outlet stream has been assigned via
+   * {@link #setOutletStream(StreamInterface)}.
    * </p>
    */
   @Override
@@ -1071,8 +1059,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   /** {@inheritDoc} */
   @Override
   public String toJson() {
-    return new GsonBuilder().serializeSpecialFloatingPointValues().create()
-        .toJson(new RecycleResponse(this));
+    return new GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(new RecycleResponse(this));
   }
 
   /** {@inheritDoc} */
@@ -1102,60 +1089,54 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
    */
   @Override
   public neqsim.util.validation.ValidationResult validateSetup() {
-    neqsim.util.validation.ValidationResult result =
-        new neqsim.util.validation.ValidationResult(getName());
+    neqsim.util.validation.ValidationResult result = new neqsim.util.validation.ValidationResult(getName());
 
     // Check: Equipment has a valid name
     if (getName() == null || getName().trim().isEmpty()) {
       result.addError("equipment", "Recycle has no name",
-          "Set recycle name in constructor: new Recycle(\"MyRecycle\")");
+	  "Set recycle name in constructor: new Recycle(\"MyRecycle\")");
     }
 
     // Check: At least one input stream is connected
     if (numberOfInputStreams == 0 || streams.isEmpty()) {
-      result.addError("stream", "No input streams connected",
-          "Add input stream: recycle.addStream(stream)");
+      result.addError("stream", "No input streams connected", "Add input stream: recycle.addStream(stream)");
     }
 
     // Check: Outlet stream is set
     if (outletStream == null) {
-      result.addWarning("stream", "Outlet stream not set",
-          "Set outlet stream: recycle.setOutletStream(stream)");
+      result.addWarning("stream", "Outlet stream not set", "Set outlet stream: recycle.setOutletStream(stream)");
     }
 
     // Check: Mixed stream is initialized
     if (mixedStream == null) {
-      result.addWarning("stream", "Mixed stream not initialized",
-          "Ensure streams are added before running");
+      result.addWarning("stream", "Mixed stream not initialized", "Ensure streams are added before running");
     }
 
     // Check: Tolerance values are positive
     if (flowTolerance <= 0) {
       result.addError("tolerance", "Flow tolerance must be positive: " + flowTolerance,
-          "Set positive tolerance: recycle.setFlowTolerance(1e-2)");
+	  "Set positive tolerance: recycle.setFlowTolerance(1e-2)");
     }
 
     if (compositionTolerance <= 0) {
-      result.addError("tolerance",
-          "Composition tolerance must be positive: " + compositionTolerance,
-          "Set positive tolerance: recycle.setCompositionTolerance(1e-2)");
+      result.addError("tolerance", "Composition tolerance must be positive: " + compositionTolerance,
+	  "Set positive tolerance: recycle.setCompositionTolerance(1e-2)");
     }
 
     if (temperatureTolerance <= 0) {
-      result.addError("tolerance",
-          "Temperature tolerance must be positive: " + temperatureTolerance,
-          "Set positive tolerance: recycle.setTemperatureTolerance(1e-2)");
+      result.addError("tolerance", "Temperature tolerance must be positive: " + temperatureTolerance,
+	  "Set positive tolerance: recycle.setTemperatureTolerance(1e-2)");
     }
 
     if (pressureTolerance <= 0) {
       result.addError("tolerance", "Pressure tolerance must be positive: " + pressureTolerance,
-          "Set positive tolerance: recycle.setPressureTolerance(1e-2)");
+	  "Set positive tolerance: recycle.setPressureTolerance(1e-2)");
     }
 
     // Check: Max iterations is reasonable
     if (maxIterations <= 0) {
       result.addError("iterations", "Max iterations must be positive: " + maxIterations,
-          "Set positive max iterations: recycle.setMaxIterations(10)");
+	  "Set positive max iterations: recycle.setMaxIterations(10)");
     }
 
     return result;

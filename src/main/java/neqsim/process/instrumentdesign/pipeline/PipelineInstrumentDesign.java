@@ -46,33 +46,27 @@ public class PipelineInstrumentDesign extends InstrumentDesign {
     super.calcDesign();
 
     // === Pressure instrumentation ===
-    getInstrumentList()
-        .add(new InstrumentSpecification("PT", "Inlet Pressure", 0.0, 200.0, "bara", "AI"));
-    getInstrumentList()
-        .add(new InstrumentSpecification("PT", "Outlet Pressure", 0.0, 200.0, "bara", "AI"));
+    getInstrumentList().add(new InstrumentSpecification("PT", "Inlet Pressure", 0.0, 200.0, "bara", "AI"));
+    getInstrumentList().add(new InstrumentSpecification("PT", "Outlet Pressure", 0.0, 200.0, "bara", "AI"));
 
     // PSHH: Overpressure protection
     if (isIncludeSafetyInstruments()) {
-      getInstrumentList().add(
-          new InstrumentSpecification("PSHH", "Overpressure Trip", "DI", getDefaultSilLevel()));
+      getInstrumentList().add(new InstrumentSpecification("PSHH", "Overpressure Trip", "DI", getDefaultSilLevel()));
     }
 
     // === Temperature instrumentation ===
-    getInstrumentList()
-        .add(new InstrumentSpecification("TT", "Inlet Temperature", -50.0, 200.0, "degC", "AI"));
-    getInstrumentList()
-        .add(new InstrumentSpecification("TT", "Outlet Temperature", -50.0, 200.0, "degC", "AI"));
+    getInstrumentList().add(new InstrumentSpecification("TT", "Inlet Temperature", -50.0, 200.0, "degC", "AI"));
+    getInstrumentList().add(new InstrumentSpecification("TT", "Outlet Temperature", -50.0, 200.0, "degC", "AI"));
 
     // === Flow instrumentation ===
-    getInstrumentList()
-        .add(new InstrumentSpecification("FT", "Pipeline Flow", 0.0, 100.0, "%", "AI"));
+    getInstrumentList().add(new InstrumentSpecification("FT", "Pipeline Flow", 0.0, 100.0, "%", "AI"));
 
     // === Leak detection ===
     if (includeLeakDetection) {
       // PSLL: Low pressure alarm for leak detection
       if (isIncludeSafetyInstruments()) {
-        getInstrumentList().add(new InstrumentSpecification("PSLL", "Low Pressure (Leak Detection)",
-            "DI", getDefaultSilLevel()));
+	getInstrumentList()
+	    .add(new InstrumentSpecification("PSLL", "Low Pressure (Leak Detection)", "DI", getDefaultSilLevel()));
       }
     }
 

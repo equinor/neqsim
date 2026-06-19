@@ -15,7 +15,7 @@ public class SaturateWithWaterTest {
   private static final Logger logger = LogManager.getLogger(SaturateWithWaterTest.class);
 
   /** Logger object for class. */
-  
+
   @Test
   void testRun() {
     SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 70.0, 150.0);

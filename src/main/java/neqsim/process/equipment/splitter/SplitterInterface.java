@@ -26,8 +26,7 @@ public interface SplitterInterface extends ProcessEquipmentInterface {
    * setInletStream.
    * </p>
    *
-   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface}
-   *        object
+   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public void setInletStream(StreamInterface inletStream);
 

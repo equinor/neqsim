@@ -25,7 +25,7 @@ public class PHflashVega extends Flash {
    * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param Hspec a double
+   * @param Hspec  a double
    */
   public PHflashVega(SystemInterface system, double Hspec) {
     this.system = system;
@@ -79,9 +79,9 @@ public class PHflashVega extends Flash {
     double minTemperature = 0.0;
     do {
       if (Math.abs(error) > Math.abs(errorOld) && factor > 0.1 && correctFactor) {
-        factor *= 0.5;
+	factor *= 0.5;
       } else if (Math.abs(error) < Math.abs(errorOld) && correctFactor) {
-        factor = iterations / (iterations + 1.0) * 1.0;
+	factor = iterations / (iterations + 1.0) * 1.0;
       }
       iterations++;
       oldTemp = nyTemp;
@@ -91,41 +91,39 @@ public class PHflashVega extends Flash {
       newCorr = factor * calcdQdT() / calcdQdTT();
       nyTemp = oldTemp - newCorr;
       if (Math.abs(system.getTemperature() - 1.0 / nyTemp) > 10.0) {
-        nyTemp = 1.0 / (system.getTemperature()
-            - Math.signum(system.getTemperature() - 1.0 / nyTemp) * 10.0);
-        correctFactor = false;
+	nyTemp = 1.0 / (system.getTemperature() - Math.signum(system.getTemperature() - 1.0 / nyTemp) * 10.0);
+	correctFactor = false;
       } else if (nyTemp < 0) {
-        nyTemp = Math.abs(1.0 / (system.getTemperature() + 10.0));
-        correctFactor = false;
+	nyTemp = Math.abs(1.0 / (system.getTemperature() + 10.0));
+	correctFactor = false;
       } else if (Double.isNaN(nyTemp)) {
-        nyTemp = oldTemp + 0.1;
-        correctFactor = false;
+	nyTemp = oldTemp + 0.1;
+	correctFactor = false;
       } else {
-        correctFactor = true;
+	correctFactor = true;
       }
       system.setTemperature(1.0 / nyTemp);
       if (system.getTemperature() > maxTemperature) {
-        system.setTemperature(maxTemperature - 0.1);
+	system.setTemperature(maxTemperature - 0.1);
       } else if (system.getTemperature() < minTemperature) {
-        system.setTemperature(minTemperature + 0.1);
+	system.setTemperature(minTemperature + 0.1);
       }
       errorOld = error;
       error = calcdQdT();
 
       if (error > 0 && system.getTemperature() > maxTemperature) {
-        maxTemperature = system.getTemperature();
+	maxTemperature = system.getTemperature();
       } else if (error < 0 && system.getTemperature() < minTemperature) {
-        minTemperature = system.getTemperature();
+	minTemperature = system.getTemperature();
       }
 
       /*
-       * if (false && error * errorOld < 0) { system.setTemperature( (Math.abs(errorOld) * 1.0 /
-       * oldTemp + Math.abs(error) * 1.0 / nyTemp) / (Math.abs(errorOld) + Math.abs(error)));
-       * errorOld = error; error = calcdQdT(); System.out.println("reset temperature -- new temp " +
-       * system.getTemperature() + " error " + error + " iter " + iterations); } // error =
-       * Math.abs((1.0 / nyTemp - 1.0 / oldTemp) / (1.0 / oldTemp)); // System.out.println("temp " +
-       * system.getTemperature() + " iter "+ iterations + // " error "+ error + " correction " +
-       * newCorr + " factor "+ factor);
+       * if (false && error * errorOld < 0) { system.setTemperature( (Math.abs(errorOld) * 1.0 / oldTemp +
+       * Math.abs(error) * 1.0 / nyTemp) / (Math.abs(errorOld) + Math.abs(error))); errorOld = error; error =
+       * calcdQdT(); System.out.println("reset temperature -- new temp " + system.getTemperature() + " error " + error +
+       * " iter " + iterations); } // error = Math.abs((1.0 / nyTemp - 1.0 / oldTemp) / (1.0 / oldTemp)); //
+       * System.out.println("temp " + system.getTemperature() + " iter "+ iterations + // " error "+ error +
+       * " correction " + newCorr + " factor "+ factor);
        */
     } while (((Math.abs(error) + Math.abs(errorOld)) > 1e-8 || iterations < 3) && iterations < 200);
     // System.out.println("temp " + system.getTemperature() + " iter " + iterations

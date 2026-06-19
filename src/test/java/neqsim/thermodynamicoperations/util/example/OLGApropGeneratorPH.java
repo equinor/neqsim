@@ -20,7 +20,7 @@ public class OLGApropGeneratorPH {
   private static final Logger logger = LogManager.getLogger(OLGApropGeneratorPH.class);
 
   /** Logger object for class. */
-  
+
   /**
    * <p>
    * main.
@@ -52,8 +52,7 @@ public class OLGApropGeneratorPH {
 
       // testOps.PHflash(maxEnthalpy + 49560, 0);
       String fileName = "c:/Appl/OLGAneqsim.tab";
-      testOps.OLGApropTablePH(minEnthalpy, maxEnthalpy, 41, testSystem.getPressure(), 2, 41,
-          fileName, 0);
+      testOps.OLGApropTablePH(minEnthalpy, maxEnthalpy, 41, testSystem.getPressure(), 2, 41, fileName, 0);
       testOps.displayResult();
     } catch (Exception ex) {
       testSystem.display();

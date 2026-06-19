@@ -8,9 +8,8 @@ import neqsim.process.equipment.pipeline.twophasepipe.closure.GeometryCalculator
  * Interfacial friction correlations for two-fluid multiphase pipe flow.
  *
  * <p>
- * Calculates the shear stress at the gas-liquid interface. This is a critical closure relation for
- * the two-fluid model momentum equations. The interfacial friction affects the slip between phases
- * and pressure drop distribution.
+ * Calculates the shear stress at the gas-liquid interface. This is a critical closure relation for the two-fluid model
+ * momentum equations. The interfacial friction affects the slip between phases and pressure drop distribution.
  * </p>
  *
  * <h2>Correlations by Flow Regime</h2>
@@ -23,8 +22,8 @@ import neqsim.process.equipment.pipeline.twophasepipe.closure.GeometryCalculator
  *
  * <h2>Sign Convention</h2>
  * <p>
- * Positive interfacial shear acts to accelerate the liquid and decelerate the gas (gas faster than
- * liquid). The shear stress is defined as: τ_i = 0.5 * f_i * ρ_G * (v_G - v_L) * |v_G - v_L|
+ * Positive interfacial shear acts to accelerate the liquid and decelerate the gas (gas faster than liquid). The shear
+ * stress is defined as: τ_i = 0.5 * f_i * ρ_G * (v_G - v_L) * |v_G - v_L|
  * </p>
  *
  * @author Even Solbraa
@@ -67,56 +66,56 @@ public class InterfacialFriction implements Serializable {
   /**
    * Calculate interfacial friction for the current flow conditions.
    *
-   * @param flowRegime Current flow regime
-   * @param gasVelocity Gas velocity (m/s)
-   * @param liquidVelocity Liquid velocity (m/s)
-   * @param gasDensity Gas density (kg/m³)
-   * @param liquidDensity Liquid density (kg/m³)
-   * @param gasViscosity Gas dynamic viscosity (Pa·s)
+   * @param flowRegime      Current flow regime
+   * @param gasVelocity     Gas velocity (m/s)
+   * @param liquidVelocity  Liquid velocity (m/s)
+   * @param gasDensity      Gas density (kg/m³)
+   * @param liquidDensity   Liquid density (kg/m³)
+   * @param gasViscosity    Gas dynamic viscosity (Pa·s)
    * @param liquidViscosity Liquid dynamic viscosity (Pa·s)
-   * @param liquidHoldup Liquid holdup (0-1)
-   * @param diameter Pipe diameter (m)
-   * @param surfaceTension Surface tension (N/m)
+   * @param liquidHoldup    Liquid holdup (0-1)
+   * @param diameter        Pipe diameter (m)
+   * @param surfaceTension  Surface tension (N/m)
    * @return Interfacial friction result
    */
-  public InterfacialFrictionResult calculate(FlowRegime flowRegime, double gasVelocity,
-      double liquidVelocity, double gasDensity, double liquidDensity, double gasViscosity,
-      double liquidViscosity, double liquidHoldup, double diameter, double surfaceTension) {
+  public InterfacialFrictionResult calculate(FlowRegime flowRegime, double gasVelocity, double liquidVelocity,
+      double gasDensity, double liquidDensity, double gasViscosity, double liquidViscosity, double liquidHoldup,
+      double diameter, double surfaceTension) {
     switch (flowRegime) {
-      case STRATIFIED_SMOOTH:
-        return calcStratifiedSmooth(gasVelocity, liquidVelocity, gasDensity, liquidDensity,
-            gasViscosity, liquidViscosity, liquidHoldup, diameter);
+    case STRATIFIED_SMOOTH:
+      return calcStratifiedSmooth(gasVelocity, liquidVelocity, gasDensity, liquidDensity, gasViscosity, liquidViscosity,
+	  liquidHoldup, diameter);
 
-      case STRATIFIED_WAVY:
-        return calcStratifiedWavy(gasVelocity, liquidVelocity, gasDensity, liquidDensity,
-            gasViscosity, liquidViscosity, liquidHoldup, diameter, surfaceTension);
+    case STRATIFIED_WAVY:
+      return calcStratifiedWavy(gasVelocity, liquidVelocity, gasDensity, liquidDensity, gasViscosity, liquidViscosity,
+	  liquidHoldup, diameter, surfaceTension);
 
-      case ANNULAR:
-      case MIST:
-        return calcAnnular(gasVelocity, liquidVelocity, gasDensity, liquidDensity, gasViscosity,
-            liquidViscosity, liquidHoldup, diameter, surfaceTension);
+    case ANNULAR:
+    case MIST:
+      return calcAnnular(gasVelocity, liquidVelocity, gasDensity, liquidDensity, gasViscosity, liquidViscosity,
+	  liquidHoldup, diameter, surfaceTension);
 
-      case SLUG:
-        return calcSlug(gasVelocity, liquidVelocity, gasDensity, liquidDensity, gasViscosity,
-            liquidViscosity, liquidHoldup, diameter);
+    case SLUG:
+      return calcSlug(gasVelocity, liquidVelocity, gasDensity, liquidDensity, gasViscosity, liquidViscosity,
+	  liquidHoldup, diameter);
 
-      case CHURN:
-        return calcChurn(gasVelocity, liquidVelocity, gasDensity, liquidDensity, gasViscosity,
-            liquidViscosity, liquidHoldup, diameter, surfaceTension);
+    case CHURN:
+      return calcChurn(gasVelocity, liquidVelocity, gasDensity, liquidDensity, gasViscosity, liquidViscosity,
+	  liquidHoldup, diameter, surfaceTension);
 
-      case BUBBLE:
-      case DISPERSED_BUBBLE:
-        return calcBubble(gasVelocity, liquidVelocity, gasDensity, liquidDensity, gasViscosity,
-            liquidViscosity, liquidHoldup, diameter);
+    case BUBBLE:
+    case DISPERSED_BUBBLE:
+      return calcBubble(gasVelocity, liquidVelocity, gasDensity, liquidDensity, gasViscosity, liquidViscosity,
+	  liquidHoldup, diameter);
 
-      case SINGLE_PHASE_GAS:
-      case SINGLE_PHASE_LIQUID:
-        // No interface in single-phase flow
-        return new InterfacialFrictionResult();
+    case SINGLE_PHASE_GAS:
+    case SINGLE_PHASE_LIQUID:
+      // No interface in single-phase flow
+      return new InterfacialFrictionResult();
 
-      default:
-        return calcStratifiedSmooth(gasVelocity, liquidVelocity, gasDensity, liquidDensity,
-            gasViscosity, liquidViscosity, liquidHoldup, diameter);
+    default:
+      return calcStratifiedSmooth(gasVelocity, liquidVelocity, gasDensity, liquidDensity, gasViscosity, liquidViscosity,
+	  liquidHoldup, diameter);
     }
   }
 
@@ -127,18 +126,18 @@ public class InterfacialFriction implements Serializable {
    * Uses Taitel-Dukler (1976) approach: treats interface as smooth wall with gas-side friction.
    * </p>
    *
-   * @param vG gas velocity in m/s
-   * @param vL liquid velocity in m/s
-   * @param rhoG gas density in kg/m3
-   * @param rhoL liquid density in kg/m3
-   * @param muG gas viscosity in Pa.s
-   * @param muL liquid viscosity in Pa.s
+   * @param vG     gas velocity in m/s
+   * @param vL     liquid velocity in m/s
+   * @param rhoG   gas density in kg/m3
+   * @param rhoL   liquid density in kg/m3
+   * @param muG    gas viscosity in Pa.s
+   * @param muL    liquid viscosity in Pa.s
    * @param alphaL liquid holdup fraction
-   * @param D pipe diameter in m
+   * @param D      pipe diameter in m
    * @return interfacial friction result
    */
-  private InterfacialFrictionResult calcStratifiedSmooth(double vG, double vL, double rhoG,
-      double rhoL, double muG, double muL, double alphaL, double D) {
+  private InterfacialFrictionResult calcStratifiedSmooth(double vG, double vL, double rhoG, double rhoL, double muG,
+      double muL, double alphaL, double D) {
     InterfacialFrictionResult result = new InterfacialFrictionResult();
 
     // Get geometry
@@ -173,8 +172,7 @@ public class InterfacialFriction implements Serializable {
 
     // Interfacial shear stress
     // τ_i = 0.5 * f_i * ρ_G * (v_G - v_L) * |v_G - v_L|
-    result.interfacialShear =
-        0.5 * result.frictionFactor * rhoG * result.slipVelocity * Math.abs(result.slipVelocity);
+    result.interfacialShear = 0.5 * result.frictionFactor * rhoG * result.slipVelocity * Math.abs(result.slipVelocity);
 
     return result;
   }
@@ -186,19 +184,19 @@ public class InterfacialFriction implements Serializable {
    * Uses Andritsos-Hanratty (1987) correlation which accounts for wave-induced roughness.
    * </p>
    *
-   * @param vG gas velocity in m/s
-   * @param vL liquid velocity in m/s
-   * @param rhoG gas density in kg/m³
-   * @param rhoL liquid density in kg/m³
-   * @param muG gas viscosity in Pa·s
-   * @param muL liquid viscosity in Pa·s
+   * @param vG     gas velocity in m/s
+   * @param vL     liquid velocity in m/s
+   * @param rhoG   gas density in kg/m³
+   * @param rhoL   liquid density in kg/m³
+   * @param muG    gas viscosity in Pa·s
+   * @param muL    liquid viscosity in Pa·s
    * @param alphaL liquid holdup (volume fraction)
-   * @param D pipe diameter in m
-   * @param sigma surface tension in N/m
+   * @param D      pipe diameter in m
+   * @param sigma  surface tension in N/m
    * @return interfacial friction calculation result
    */
-  private InterfacialFrictionResult calcStratifiedWavy(double vG, double vL, double rhoG,
-      double rhoL, double muG, double muL, double alphaL, double D, double sigma) {
+  private InterfacialFrictionResult calcStratifiedWavy(double vG, double vL, double rhoG, double rhoL, double muG,
+      double muL, double alphaL, double D, double sigma) {
     InterfacialFrictionResult result = new InterfacialFrictionResult();
 
     // Get geometry
@@ -242,8 +240,7 @@ public class InterfacialFriction implements Serializable {
     result.frictionFactor = f_smooth * enhancementFactor;
 
     // Interfacial shear stress
-    result.interfacialShear =
-        0.5 * result.frictionFactor * rhoG * result.slipVelocity * Math.abs(result.slipVelocity);
+    result.interfacialShear = 0.5 * result.frictionFactor * rhoG * result.slipVelocity * Math.abs(result.slipVelocity);
 
     return result;
   }
@@ -255,19 +252,19 @@ public class InterfacialFriction implements Serializable {
    * Uses Wallis (1969) correlation for gas-core / liquid-film interaction.
    * </p>
    *
-   * @param vG gas velocity in m/s
-   * @param vL liquid velocity in m/s
-   * @param rhoG gas density in kg/m³
-   * @param rhoL liquid density in kg/m³
-   * @param muG gas viscosity in Pa·s
-   * @param muL liquid viscosity in Pa·s
+   * @param vG     gas velocity in m/s
+   * @param vL     liquid velocity in m/s
+   * @param rhoG   gas density in kg/m³
+   * @param rhoL   liquid density in kg/m³
+   * @param muG    gas viscosity in Pa·s
+   * @param muL    liquid viscosity in Pa·s
    * @param alphaL liquid holdup (volume fraction)
-   * @param D pipe diameter in m
-   * @param sigma surface tension in N/m
+   * @param D      pipe diameter in m
+   * @param sigma  surface tension in N/m
    * @return interfacial friction calculation result
    */
-  private InterfacialFrictionResult calcAnnular(double vG, double vL, double rhoG, double rhoL,
-      double muG, double muL, double alphaL, double D, double sigma) {
+  private InterfacialFrictionResult calcAnnular(double vG, double vL, double rhoG, double rhoL, double muG, double muL,
+      double alphaL, double D, double sigma) {
     InterfacialFrictionResult result = new InterfacialFrictionResult();
 
     // Film thickness
@@ -305,8 +302,7 @@ public class InterfacialFriction implements Serializable {
     result.frictionFactor = f_G * wallisEnhancement;
 
     // Interfacial shear
-    result.interfacialShear =
-        0.5 * result.frictionFactor * rhoG * result.slipVelocity * Math.abs(result.slipVelocity);
+    result.interfacialShear = 0.5 * result.frictionFactor * rhoG * result.slipVelocity * Math.abs(result.slipVelocity);
 
     return result;
   }
@@ -318,18 +314,18 @@ public class InterfacialFriction implements Serializable {
    * Uses Oliemans (1986) approach for Taylor bubble zone.
    * </p>
    *
-   * @param vG gas velocity (m/s)
-   * @param vL liquid velocity (m/s)
-   * @param rhoG gas density (kg/m3)
-   * @param rhoL liquid density (kg/m3)
-   * @param muG gas viscosity (Pa.s)
-   * @param muL liquid viscosity (Pa.s)
+   * @param vG     gas velocity (m/s)
+   * @param vL     liquid velocity (m/s)
+   * @param rhoG   gas density (kg/m3)
+   * @param rhoL   liquid density (kg/m3)
+   * @param muG    gas viscosity (Pa.s)
+   * @param muL    liquid viscosity (Pa.s)
    * @param alphaL liquid holdup fraction
-   * @param D pipe diameter (m)
+   * @param D      pipe diameter (m)
    * @return interfacial friction result
    */
-  private InterfacialFrictionResult calcSlug(double vG, double vL, double rhoG, double rhoL,
-      double muG, double muL, double alphaL, double D) {
+  private InterfacialFrictionResult calcSlug(double vG, double vL, double rhoG, double rhoL, double muG, double muL,
+      double alphaL, double D) {
     InterfacialFrictionResult result = new InterfacialFrictionResult();
 
     result.slipVelocity = vG - vL;
@@ -361,8 +357,7 @@ public class InterfacialFriction implements Serializable {
     result.frictionFactor = C_D * d_b / (4.0 * D);
 
     // Interfacial shear
-    result.interfacialShear =
-        0.5 * result.frictionFactor * rhoG * result.slipVelocity * Math.abs(result.slipVelocity);
+    result.interfacialShear = 0.5 * result.frictionFactor * rhoG * result.slipVelocity * Math.abs(result.slipVelocity);
 
     return result;
   }
@@ -374,19 +369,19 @@ public class InterfacialFriction implements Serializable {
    * Uses enhanced annular-type correlation.
    * </p>
    *
-   * @param vG gas velocity (m/s)
-   * @param vL liquid velocity (m/s)
-   * @param rhoG gas density (kg/m3)
-   * @param rhoL liquid density (kg/m3)
-   * @param muG gas viscosity (Pa.s)
-   * @param muL liquid viscosity (Pa.s)
+   * @param vG     gas velocity (m/s)
+   * @param vL     liquid velocity (m/s)
+   * @param rhoG   gas density (kg/m3)
+   * @param rhoL   liquid density (kg/m3)
+   * @param muG    gas viscosity (Pa.s)
+   * @param muL    liquid viscosity (Pa.s)
    * @param alphaL liquid holdup fraction
-   * @param D pipe diameter (m)
-   * @param sigma surface tension (N/m)
+   * @param D      pipe diameter (m)
+   * @param sigma  surface tension (N/m)
    * @return interfacial friction result
    */
-  private InterfacialFrictionResult calcChurn(double vG, double vL, double rhoG, double rhoL,
-      double muG, double muL, double alphaL, double D, double sigma) {
+  private InterfacialFrictionResult calcChurn(double vG, double vL, double rhoG, double rhoL, double muG, double muL,
+      double alphaL, double D, double sigma) {
     // Use annular correlation with higher enhancement
     InterfacialFrictionResult result = calcAnnular(vG, vL, rhoG, rhoL, muG, muL, alphaL, D, sigma);
 
@@ -404,18 +399,18 @@ public class InterfacialFriction implements Serializable {
    * Uses drag on individual bubbles in liquid continuum.
    * </p>
    *
-   * @param vG gas velocity in m/s
-   * @param vL liquid velocity in m/s
-   * @param rhoG gas density in kg/m³
-   * @param rhoL liquid density in kg/m³
-   * @param muG gas viscosity in Pa·s
-   * @param muL liquid viscosity in Pa·s
+   * @param vG     gas velocity in m/s
+   * @param vL     liquid velocity in m/s
+   * @param rhoG   gas density in kg/m³
+   * @param rhoL   liquid density in kg/m³
+   * @param muG    gas viscosity in Pa·s
+   * @param muL    liquid viscosity in Pa·s
    * @param alphaL liquid holdup (volume fraction)
-   * @param D pipe diameter in m
+   * @param D      pipe diameter in m
    * @return interfacial friction calculation result
    */
-  private InterfacialFrictionResult calcBubble(double vG, double vL, double rhoG, double rhoL,
-      double muG, double muL, double alphaL, double D) {
+  private InterfacialFrictionResult calcBubble(double vG, double vL, double rhoG, double rhoL, double muG, double muL,
+      double alphaL, double D) {
     InterfacialFrictionResult result = new InterfacialFrictionResult();
 
     result.slipVelocity = vG - vL;
@@ -455,8 +450,7 @@ public class InterfacialFriction implements Serializable {
     result.frictionFactor = C_D * d_b / (4.0 * D);
 
     // Interfacial shear (drag force per unit volume * characteristic length)
-    result.interfacialShear =
-        0.5 * result.frictionFactor * rhoL * result.slipVelocity * Math.abs(result.slipVelocity);
+    result.interfacialShear = 0.5 * result.frictionFactor * rhoL * result.slipVelocity * Math.abs(result.slipVelocity);
 
     return result;
   }
@@ -465,28 +459,27 @@ public class InterfacialFriction implements Serializable {
    * Calculate the interfacial friction force per unit pipe length.
    *
    * <p>
-   * This is the force that appears in the momentum equations: F_i = τ_i * S_i where S_i is the
-   * interfacial width/perimeter per unit length.
+   * This is the force that appears in the momentum equations: F_i = τ_i * S_i where S_i is the interfacial
+   * width/perimeter per unit length.
    * </p>
    *
-   * @param flowRegime Current flow regime
-   * @param gasVelocity Gas velocity (m/s)
-   * @param liquidVelocity Liquid velocity (m/s)
-   * @param gasDensity Gas density (kg/m³)
-   * @param liquidDensity Liquid density (kg/m³)
-   * @param gasViscosity Gas viscosity (Pa·s)
+   * @param flowRegime      Current flow regime
+   * @param gasVelocity     Gas velocity (m/s)
+   * @param liquidVelocity  Liquid velocity (m/s)
+   * @param gasDensity      Gas density (kg/m³)
+   * @param liquidDensity   Liquid density (kg/m³)
+   * @param gasViscosity    Gas viscosity (Pa·s)
    * @param liquidViscosity Liquid viscosity (Pa·s)
-   * @param liquidHoldup Liquid holdup (0-1)
-   * @param diameter Pipe diameter (m)
-   * @param surfaceTension Surface tension (N/m)
+   * @param liquidHoldup    Liquid holdup (0-1)
+   * @param diameter        Pipe diameter (m)
+   * @param surfaceTension  Surface tension (N/m)
    * @return Interfacial friction force per unit length (N/m)
    */
-  public double calcInterfacialForce(FlowRegime flowRegime, double gasVelocity,
-      double liquidVelocity, double gasDensity, double liquidDensity, double gasViscosity,
-      double liquidViscosity, double liquidHoldup, double diameter, double surfaceTension) {
-    InterfacialFrictionResult result =
-        calculate(flowRegime, gasVelocity, liquidVelocity, gasDensity, liquidDensity, gasViscosity,
-            liquidViscosity, liquidHoldup, diameter, surfaceTension);
+  public double calcInterfacialForce(FlowRegime flowRegime, double gasVelocity, double liquidVelocity,
+      double gasDensity, double liquidDensity, double gasViscosity, double liquidViscosity, double liquidHoldup,
+      double diameter, double surfaceTension) {
+    InterfacialFrictionResult result = calculate(flowRegime, gasVelocity, liquidVelocity, gasDensity, liquidDensity,
+	gasViscosity, liquidViscosity, liquidHoldup, diameter, surfaceTension);
 
     return result.interfacialShear * result.interfacialAreaPerLength;
   }
@@ -497,31 +490,30 @@ public class InterfacialFriction implements Serializable {
    * Calculate interfacial friction using the Hart et al. (1989) correlation.
    *
    * <p>
-   * The Hart correlation provides an alternative to Andritsos-Hanratty for stratified wavy flow,
-   * particularly suited for oil-gas systems. Reference: Hart, J., Hamersma, P.J., and Fortuin,
-   * J.M.H. (1989), "Correlations predicting frictional pressure drop and liquid holdup during
-   * horizontal gas-liquid pipe flow with a small liquid holdup", Int. J. Multiphase Flow.
+   * The Hart correlation provides an alternative to Andritsos-Hanratty for stratified wavy flow, particularly suited
+   * for oil-gas systems. Reference: Hart, J., Hamersma, P.J., and Fortuin, J.M.H. (1989), "Correlations predicting
+   * frictional pressure drop and liquid holdup during horizontal gas-liquid pipe flow with a small liquid holdup", Int.
+   * J. Multiphase Flow.
    * </p>
    *
    * <p>
    * The correlation is:
    * </p>
    *
-   * $$f_i = 0.0142 + 22.0 \cdot \left(\frac{h_L}{D}\right)^{1.5} \cdot \left(\frac{v_G -
-   * v_L}{v_G}\right)^{0.9}$$
+   * $$f_i = 0.0142 + 22.0 \cdot \left(\frac{h_L}{D}\right)^{1.5} \cdot \left(\frac{v_G - v_L}{v_G}\right)^{0.9}$$
    *
-   * @param vG Gas velocity (m/s)
-   * @param vL Liquid velocity (m/s)
-   * @param rhoG Gas density (kg/m³)
-   * @param rhoL Liquid density (kg/m³)
-   * @param muG Gas viscosity (Pa·s)
-   * @param muL Liquid viscosity (Pa·s)
+   * @param vG     Gas velocity (m/s)
+   * @param vL     Liquid velocity (m/s)
+   * @param rhoG   Gas density (kg/m³)
+   * @param rhoL   Liquid density (kg/m³)
+   * @param muG    Gas viscosity (Pa·s)
+   * @param muL    Liquid viscosity (Pa·s)
    * @param alphaL Liquid holdup (0-1)
-   * @param D Pipe diameter (m)
+   * @param D      Pipe diameter (m)
    * @return Interfacial friction result with Hart correlation
    */
-  public InterfacialFrictionResult calcHartCorrelation(double vG, double vL, double rhoG,
-      double rhoL, double muG, double muL, double alphaL, double D) {
+  public InterfacialFrictionResult calcHartCorrelation(double vG, double vL, double rhoG, double rhoL, double muG,
+      double muL, double alphaL, double D) {
     InterfacialFrictionResult result = new InterfacialFrictionResult();
 
     // Get geometry
@@ -552,8 +544,7 @@ public class InterfacialFriction implements Serializable {
     result.frictionFactor = Math.min(result.frictionFactor, 0.5);
 
     // Interfacial shear stress
-    result.interfacialShear =
-        0.5 * result.frictionFactor * rhoG * result.slipVelocity * Math.abs(result.slipVelocity);
+    result.interfacialShear = 0.5 * result.frictionFactor * rhoG * result.slipVelocity * Math.abs(result.slipVelocity);
 
     return result;
   }
@@ -562,23 +553,22 @@ public class InterfacialFriction implements Serializable {
    * Calculate interfacial friction using enhanced Andreussi-Persen (1987) correlation.
    *
    * <p>
-   * The Andreussi-Persen correlation is commonly used in commercial codes like OLGA. Reference:
-   * Andreussi, P. and Persen, L.N. (1987), "Stratified gas-liquid flow in downwardly inclined
-   * pipes", Int. J. Multiphase Flow.
+   * The Andreussi-Persen correlation is commonly used in commercial codes like OLGA. Reference: Andreussi, P. and
+   * Persen, L.N. (1987), "Stratified gas-liquid flow in downwardly inclined pipes", Int. J. Multiphase Flow.
    * </p>
    *
-   * @param vG Gas velocity (m/s)
-   * @param vL Liquid velocity (m/s)
-   * @param rhoG Gas density (kg/m³)
-   * @param rhoL Liquid density (kg/m³)
-   * @param muG Gas viscosity (Pa·s)
+   * @param vG           Gas velocity (m/s)
+   * @param vL           Liquid velocity (m/s)
+   * @param rhoG         Gas density (kg/m³)
+   * @param rhoL         Liquid density (kg/m³)
+   * @param muG          Gas viscosity (Pa·s)
    * @param liquidHoldup Liquid holdup (0-1)
-   * @param D Pipe diameter (m)
-   * @param inclination Pipe inclination angle (radians, positive = uphill)
+   * @param D            Pipe diameter (m)
+   * @param inclination  Pipe inclination angle (radians, positive = uphill)
    * @return Interfacial friction result
    */
-  public InterfacialFrictionResult calcAndreussiPersenCorrelation(double vG, double vL, double rhoG,
-      double rhoL, double muG, double liquidHoldup, double D, double inclination) {
+  public InterfacialFrictionResult calcAndreussiPersenCorrelation(double vG, double vL, double rhoG, double rhoL,
+      double muG, double liquidHoldup, double D, double inclination) {
     InterfacialFrictionResult result = new InterfacialFrictionResult();
 
     // Get geometry
@@ -630,8 +620,7 @@ public class InterfacialFriction implements Serializable {
     result.frictionFactor = f_base * enhancement;
 
     // Interfacial shear stress
-    result.interfacialShear =
-        0.5 * result.frictionFactor * rhoG * result.slipVelocity * Math.abs(result.slipVelocity);
+    result.interfacialShear = 0.5 * result.frictionFactor * rhoG * result.slipVelocity * Math.abs(result.slipVelocity);
 
     return result;
   }

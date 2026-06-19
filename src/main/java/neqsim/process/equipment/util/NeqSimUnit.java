@@ -38,7 +38,7 @@ public class NeqSimUnit extends TwoPortEquipment {
    * </p>
    *
    * @param inletStream a {@link neqsim.process.equipment.stream.Stream} object
-   * @param equipment a {@link java.lang.String} object
+   * @param equipment   a {@link java.lang.String} object
    * @param flowPattern a {@link java.lang.String} object
    */
   public NeqSimUnit(StreamInterface inletStream, String equipment, String flowPattern) {
@@ -106,15 +106,15 @@ public class NeqSimUnit extends TwoPortEquipment {
       test.initFlowCalc();
       test.calcFluxes();
       if (i > 1 && (i % 1) == 0) {
-        k++;
-        // test.display("length " + length);
-        // test.getBulkSystem().display("length " + length);
-        // test.getInterphaseSystem().display("length " + length);
-        // test.getFluidBounsdary().display("length " + length);
-        // test.setLengthOfNode(0.000005 + test.getLengthOfNode() / 2.0);
-        temperatures2[0][k] = length;
-        temperatures2[1][k] = test.getGeometry().getInnerWallTemperature();
-        // test.getFluidBoundary().display("test");
+	k++;
+	// test.display("length " + length);
+	// test.getBulkSystem().display("length " + length);
+	// test.getInterphaseSystem().display("length " + length);
+	// test.getFluidBounsdary().display("length " + length);
+	// test.setLengthOfNode(0.000005 + test.getLengthOfNode() / 2.0);
+	temperatures2[0][k] = length;
+	temperatures2[1][k] = test.getGeometry().getInnerWallTemperature();
+	// test.getFluidBoundary().display("test");
       }
 
       // test.getBulkSystem().display();
@@ -126,8 +126,8 @@ public class NeqSimUnit extends TwoPortEquipment {
     }
 
     /*
-     * for (int i = 0; i < k; i++) { System.out.println("len temp " + temperatures2[0][i] + " " +
-     * temperatures2[1][i]); }
+     * for (int i = 0; i < k; i++) { System.out.println("len temp " + temperatures2[0][i] + " " + temperatures2[1][i]);
+     * }
      */
     // test.display("length " + length);
     outStream.setThermoSystem(test.getBulkSystem());
@@ -158,15 +158,15 @@ public class NeqSimUnit extends TwoPortEquipment {
       test.initFlowCalc();
       test.calcFluxes();
       if (i > 1 && (i % 1) == 0) {
-        k++;
-        // test.display("length " + length);
-        // test.getBulkSystem().display("length " + length);
-        // test.getInterphaseSystem().display("length " + length);
-        // test.getFluidBounsdary().display("length " + length);
-        // test.setLengthOfNode(0.000005 + test.getLengthOfNode() / 2.0);
-        temperatures2[0][k] = length;
-        temperatures2[1][k] = test.getGeometry().getInnerWallTemperature();
-        // test.getFluidBoundary().display("test");
+	k++;
+	// test.display("length " + length);
+	// test.getBulkSystem().display("length " + length);
+	// test.getInterphaseSystem().display("length " + length);
+	// test.getFluidBounsdary().display("length " + length);
+	// test.setLengthOfNode(0.000005 + test.getLengthOfNode() / 2.0);
+	temperatures2[0][k] = length;
+	temperatures2[1][k] = test.getGeometry().getInnerWallTemperature();
+	// test.getFluidBoundary().display("test");
       }
 
       // test.getBulkSystem().display();
@@ -178,8 +178,8 @@ public class NeqSimUnit extends TwoPortEquipment {
     }
 
     /*
-     * for (int i = 0; i < k; i++) { System.out.println("len temp " + temperatures2[0][i] + " " +
-     * temperatures2[1][i]); }
+     * for (int i = 0; i < k; i++) { System.out.println("len temp " + temperatures2[0][i] + " " + temperatures2[1][i]);
+     * }
      */
     // test.display("length " + length);
     outStream.setThermoSystem(test.getBulkSystem());
@@ -210,15 +210,15 @@ public class NeqSimUnit extends TwoPortEquipment {
       test.initFlowCalc();
       test.calcFluxes();
       if (i > 1 && (i % 1) == 0) {
-        k++;
-        // test.display("length " + length);
-        // test.getBulkSystem().display("length " + length);
-        // test.getInterphaseSystem().display("length " + length);
-        // test.getFluidBounsdary().display("length " + length);
-        // test.setLengthOfNode(0.000005 + test.getLengthOfNode() / 2.0);
-        temperatures2[0][k] = length;
-        temperatures2[1][k] = test.getGeometry().getInnerWallTemperature();
-        // test.getFluidBoundary().display("test");
+	k++;
+	// test.display("length " + length);
+	// test.getBulkSystem().display("length " + length);
+	// test.getInterphaseSystem().display("length " + length);
+	// test.getFluidBounsdary().display("length " + length);
+	// test.setLengthOfNode(0.000005 + test.getLengthOfNode() / 2.0);
+	temperatures2[0][k] = length;
+	temperatures2[1][k] = test.getGeometry().getInnerWallTemperature();
+	// test.getFluidBoundary().display("test");
       }
 
       // test.getBulkSystem().display();
@@ -230,8 +230,8 @@ public class NeqSimUnit extends TwoPortEquipment {
     }
 
     /*
-     * for (int i = 0; i < k; i++) { System.out.println("len temp " + temperatures2[0][i] + " " +
-     * temperatures2[1][i]); }
+     * for (int i = 0; i < k; i++) { System.out.println("len temp " + temperatures2[0][i] + " " + temperatures2[1][i]);
+     * }
      */
     // test.display("length " + length);
     outStream.setThermoSystem(test.getBulkSystem());

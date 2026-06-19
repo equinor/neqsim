@@ -7,10 +7,9 @@ import neqsim.process.mechanicaldesign.electrolyzer.ElectrolyzerMechanicalDesign
  * CAPEX estimation for water electrolyzers.
  *
  * <p>
- * Uses a stack-power-based correlation calibrated to public benchmarks (IRENA Hydrogen
- * Decarbonisation Pathways 2022; IEA Global Hydrogen Review 2023; Buttler &amp; Spliethoff,
- * Renewable and Sustainable Energy Reviews 82 (2018) 2440-2454). Specific installed CAPEX values
- * used as the 2024-2025 base:
+ * Uses a stack-power-based correlation calibrated to public benchmarks (IRENA Hydrogen Decarbonisation Pathways 2022;
+ * IEA Global Hydrogen Review 2023; Buttler &amp; Spliethoff, Renewable and Sustainable Energy Reviews 82 (2018)
+ * 2440-2454). Specific installed CAPEX values used as the 2024-2025 base:
  * </p>
  *
  * <table>
@@ -38,8 +37,7 @@ import neqsim.process.mechanicaldesign.electrolyzer.ElectrolyzerMechanicalDesign
  * </table>
  *
  * <p>
- * A scale exponent of 0.85 is applied to capture the economies of scale typical of modular
- * electrochemical equipment.
+ * A scale exponent of 0.85 is applied to capture the economies of scale typical of modular electrochemical equipment.
  * </p>
  *
  * @author NeqSim contributors
@@ -105,8 +103,8 @@ public class ElectrolyzerCostEstimate extends UnitCostEstimateBaseClass {
   }
 
   /**
-   * Set whether to include balance-of-plant (BOP) costs (rectifier, water treatment, gas drying,
-   * controls). When {@code false} the correlation is reduced by 35%.
+   * Set whether to include balance-of-plant (BOP) costs (rectifier, water treatment, gas drying, controls). When
+   * {@code false} the correlation is reduced by 35%.
    *
    * @param include true to include balance of plant
    */
@@ -134,13 +132,13 @@ public class ElectrolyzerCostEstimate extends UnitCostEstimateBaseClass {
    * {@inheritDoc}
    *
    * <p>
-   * Cost = stackPowerKW &middot; specificCapex(technology) &middot; (stackPowerKW /
-   * P_REFERENCE)^(SCALE_EXPONENT - 1) &middot; (currentCepci / referenceCepci)
+   * Cost = stackPowerKW &middot; specificCapex(technology) &middot; (stackPowerKW / P_REFERENCE)^(SCALE_EXPONENT - 1)
+   * &middot; (currentCepci / referenceCepci)
    * </p>
    *
    * <p>
-   * The scale-exponent term shifts the cost from "linear in size" toward six-tenths-rule behaviour.
-   * If the stack power is zero (mechanical design not yet calculated) the method returns 0.
+   * The scale-exponent term shifts the cost from "linear in size" toward six-tenths-rule behaviour. If the stack power
+   * is zero (mechanical design not yet calculated) the method returns 0.
    * </p>
    */
   @Override

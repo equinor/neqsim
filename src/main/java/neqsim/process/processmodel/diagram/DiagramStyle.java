@@ -4,8 +4,8 @@ package neqsim.process.processmodel.diagram;
  * Defines the visual style for process flow diagrams.
  *
  * <p>
- * Different process simulators have distinct visual conventions for PFDs. This enum allows
- * selecting the desired style when generating diagrams.
+ * Different process simulators have distinct visual conventions for PFDs. This enum allows selecting the desired style
+ * when generating diagrams.
  * </p>
  *
  * <p>
@@ -22,10 +22,8 @@ package neqsim.process.processmodel.diagram;
  * </p>
  * <ul>
  * <li><b>HYSYS:</b> Cyan/teal icons, dark blue streams, white background, icon-based symbols</li>
- * <li><b>Aspen Plus:</b> Function-specific colors (red=heat, blue=cool, green=columns), curved
- * streams</li>
- * <li><b>PRO/II:</b> Black &amp; white technical style, numbered streams, simple geometric
- * shapes</li>
+ * <li><b>Aspen Plus:</b> Function-specific colors (red=heat, blue=cool, green=columns), curved streams</li>
+ * <li><b>PRO/II:</b> Black &amp; white technical style, numbered streams, simple geometric shapes</li>
  * </ul>
  *
  * @author NeqSim
@@ -51,8 +49,8 @@ public enum DiagramStyle {
    * HYSYS-style clean process flow diagram.
    *
    * <p>
-   * AspenTech HYSYS uses a distinctive cyan/teal color scheme with clean professional appearance.
-   * Equipment is rendered as compact icons with names displayed below.
+   * AspenTech HYSYS uses a distinctive cyan/teal color scheme with clean professional appearance. Equipment is rendered
+   * as compact icons with names displayed below.
    * </p>
    *
    * <p>
@@ -73,8 +71,7 @@ public enum DiagramStyle {
    * PRO/II style diagram (AVEVA/Schneider Electric).
    *
    * <p>
-   * PRO/II uses a traditional engineering drawing style with minimal color, emphasizing clarity and
-   * printability.
+   * PRO/II uses a traditional engineering drawing style with minimal color, emphasizing clarity and printability.
    * </p>
    *
    * <p>
@@ -95,8 +92,8 @@ public enum DiagramStyle {
    * Aspen Plus style diagram (AspenTech).
    *
    * <p>
-   * Aspen Plus uses function-specific colors for different equipment categories, with curved stream
-   * routing for a modern appearance.
+   * Aspen Plus uses function-specific colors for different equipment categories, with curved stream routing for a
+   * modern appearance.
    * </p>
    *
    * <p>
@@ -123,11 +120,11 @@ public enum DiagramStyle {
   /**
    * Creates a diagram style.
    *
-   * @param displayName the display name
+   * @param displayName     the display name
    * @param backgroundColor the background color (hex or name)
-   * @param streamColor the default stream color
-   * @param showClusters whether to show phase zone clusters
-   * @param useHtmlLabels whether to use HTML table labels for equipment
+   * @param streamColor     the default stream color
+   * @param showClusters    whether to show phase zone clusters
+   * @param useHtmlLabels   whether to use HTML table labels for equipment
    */
   DiagramStyle(String displayName, String backgroundColor, String streamColor, boolean showClusters,
       boolean useHtmlLabels) {
@@ -200,105 +197,102 @@ public enum DiagramStyle {
    */
   public String getEquipmentFillColor(String equipmentType) {
     switch (this) {
-      case HYSYS:
-        // HYSYS uses a unified cyan/teal color palette
-        // All equipment uses similar shades for visual consistency
-        if (equipmentType.contains("Stream")) {
-          return "#FFFFFF"; // White for stream nodes
-        }
-        if (equipmentType.contains("Separator") || equipmentType.contains("Flash")
-            || equipmentType.contains("Vessel") || equipmentType.contains("Drum")) {
-          return "#00B8B8"; // Cyan for vessels
-        }
-        if (equipmentType.contains("Heater") || equipmentType.contains("Reboiler")
-            || equipmentType.contains("Furnace")) {
-          return "#00A0A0"; // Slightly darker cyan for heaters
-        }
-        if (equipmentType.contains("Cooler") || equipmentType.contains("Condenser")) {
-          return "#00C8C8"; // Lighter cyan for coolers
-        }
-        if (equipmentType.contains("Compressor") || equipmentType.contains("Expander")) {
-          return "#009090"; // Darker teal for compressors
-        }
-        if (equipmentType.contains("Pump")) {
-          return "#00A8A8"; // Medium teal for pumps
-        }
-        if (equipmentType.contains("Valve")) {
-          return "#80D0D0"; // Light cyan for valves
-        }
-        if (equipmentType.contains("Column") || equipmentType.contains("Distillation")
-            || equipmentType.contains("Absorber") || equipmentType.contains("Stripper")) {
-          return "#00B0B0"; // Standard cyan for columns
-        }
-        if (equipmentType.contains("Mixer") || equipmentType.contains("Splitter")) {
-          return "#60C8C8"; // Pale cyan for mixers
-        }
-        if (equipmentType.contains("HeatExchanger") || equipmentType.contains("Exchanger")) {
-          return "#00B8B8"; // Standard cyan for exchangers
-        }
-        if (equipmentType.contains("Recycle")) {
-          return "#40B8B8"; // Recycle blocks
-        }
-        return "#00B8B8"; // Default cyan
+    case HYSYS:
+      // HYSYS uses a unified cyan/teal color palette
+      // All equipment uses similar shades for visual consistency
+      if (equipmentType.contains("Stream")) {
+	return "#FFFFFF"; // White for stream nodes
+      }
+      if (equipmentType.contains("Separator") || equipmentType.contains("Flash") || equipmentType.contains("Vessel")
+	  || equipmentType.contains("Drum")) {
+	return "#00B8B8"; // Cyan for vessels
+      }
+      if (equipmentType.contains("Heater") || equipmentType.contains("Reboiler") || equipmentType.contains("Furnace")) {
+	return "#00A0A0"; // Slightly darker cyan for heaters
+      }
+      if (equipmentType.contains("Cooler") || equipmentType.contains("Condenser")) {
+	return "#00C8C8"; // Lighter cyan for coolers
+      }
+      if (equipmentType.contains("Compressor") || equipmentType.contains("Expander")) {
+	return "#009090"; // Darker teal for compressors
+      }
+      if (equipmentType.contains("Pump")) {
+	return "#00A8A8"; // Medium teal for pumps
+      }
+      if (equipmentType.contains("Valve")) {
+	return "#80D0D0"; // Light cyan for valves
+      }
+      if (equipmentType.contains("Column") || equipmentType.contains("Distillation")
+	  || equipmentType.contains("Absorber") || equipmentType.contains("Stripper")) {
+	return "#00B0B0"; // Standard cyan for columns
+      }
+      if (equipmentType.contains("Mixer") || equipmentType.contains("Splitter")) {
+	return "#60C8C8"; // Pale cyan for mixers
+      }
+      if (equipmentType.contains("HeatExchanger") || equipmentType.contains("Exchanger")) {
+	return "#00B8B8"; // Standard cyan for exchangers
+      }
+      if (equipmentType.contains("Recycle")) {
+	return "#40B8B8"; // Recycle blocks
+      }
+      return "#00B8B8"; // Default cyan
 
-      case PROII:
-        // PRO/II uses pure white fill with black outlines
-        // Technical drawing style - no color coding
-        return "#FFFFFF";
+    case PROII:
+      // PRO/II uses pure white fill with black outlines
+      // Technical drawing style - no color coding
+      return "#FFFFFF";
 
-      case ASPEN_PLUS:
-        // Aspen Plus uses distinct colors for each equipment function
-        // Colors match the actual Aspen Plus V12+ interface
-        if (equipmentType.contains("Stream")) {
-          return "#FFFFFF";
-        }
-        if (equipmentType.contains("Heater") || equipmentType.contains("Reboiler")
-            || equipmentType.contains("Furnace") || equipmentType.contains("Fired")) {
-          return "#E74C3C"; // Aspen red for heating
-        }
-        if (equipmentType.contains("Cooler") || equipmentType.contains("Condenser")
-            || equipmentType.contains("Chiller")) {
-          return "#3498DB"; // Aspen blue for cooling
-        }
-        if (equipmentType.contains("Column") || equipmentType.contains("Distillation")
-            || equipmentType.contains("RadFrac") || equipmentType.contains("Absorber")
-            || equipmentType.contains("Stripper")) {
-          return "#27AE60"; // Aspen green for columns
-        }
-        if (equipmentType.contains("Reactor") || equipmentType.contains("RCSTR")
-            || equipmentType.contains("RPlug")) {
-          return "#27AE60"; // Green for reactors too
-        }
-        if (equipmentType.contains("Separator") || equipmentType.contains("Flash")
-            || equipmentType.contains("Vessel") || equipmentType.contains("Drum")) {
-          return "#95A5A6"; // Gray for vessels
-        }
-        if (equipmentType.contains("Compressor") || equipmentType.contains("Expander")
-            || equipmentType.contains("MCompr")) {
-          return "#9B59B6"; // Purple for rotating equipment
-        }
-        if (equipmentType.contains("Pump")) {
-          return "#5DADE2"; // Light blue for pumps
-        }
-        if (equipmentType.contains("Valve")) {
-          return "#F39C12"; // Orange/yellow for valves
-        }
-        if (equipmentType.contains("HeatExchanger") || equipmentType.contains("Exchanger")
-            || equipmentType.contains("HeatX") || equipmentType.contains("MHeatX")) {
-          return "#E67E22"; // Orange for heat exchangers
-        }
-        if (equipmentType.contains("Mixer") || equipmentType.contains("Splitter")
-            || equipmentType.contains("FSplit")) {
-          return "#BDC3C7"; // Light gray for mixers/splitters
-        }
-        if (equipmentType.contains("Recycle")) {
-          return "#1ABC9C"; // Teal for recycle blocks
-        }
-        return "#95A5A6"; // Default gray
+    case ASPEN_PLUS:
+      // Aspen Plus uses distinct colors for each equipment function
+      // Colors match the actual Aspen Plus V12+ interface
+      if (equipmentType.contains("Stream")) {
+	return "#FFFFFF";
+      }
+      if (equipmentType.contains("Heater") || equipmentType.contains("Reboiler") || equipmentType.contains("Furnace")
+	  || equipmentType.contains("Fired")) {
+	return "#E74C3C"; // Aspen red for heating
+      }
+      if (equipmentType.contains("Cooler") || equipmentType.contains("Condenser")
+	  || equipmentType.contains("Chiller")) {
+	return "#3498DB"; // Aspen blue for cooling
+      }
+      if (equipmentType.contains("Column") || equipmentType.contains("Distillation")
+	  || equipmentType.contains("RadFrac") || equipmentType.contains("Absorber")
+	  || equipmentType.contains("Stripper")) {
+	return "#27AE60"; // Aspen green for columns
+      }
+      if (equipmentType.contains("Reactor") || equipmentType.contains("RCSTR") || equipmentType.contains("RPlug")) {
+	return "#27AE60"; // Green for reactors too
+      }
+      if (equipmentType.contains("Separator") || equipmentType.contains("Flash") || equipmentType.contains("Vessel")
+	  || equipmentType.contains("Drum")) {
+	return "#95A5A6"; // Gray for vessels
+      }
+      if (equipmentType.contains("Compressor") || equipmentType.contains("Expander")
+	  || equipmentType.contains("MCompr")) {
+	return "#9B59B6"; // Purple for rotating equipment
+      }
+      if (equipmentType.contains("Pump")) {
+	return "#5DADE2"; // Light blue for pumps
+      }
+      if (equipmentType.contains("Valve")) {
+	return "#F39C12"; // Orange/yellow for valves
+      }
+      if (equipmentType.contains("HeatExchanger") || equipmentType.contains("Exchanger")
+	  || equipmentType.contains("HeatX") || equipmentType.contains("MHeatX")) {
+	return "#E67E22"; // Orange for heat exchangers
+      }
+      if (equipmentType.contains("Mixer") || equipmentType.contains("Splitter") || equipmentType.contains("FSplit")) {
+	return "#BDC3C7"; // Light gray for mixers/splitters
+      }
+      if (equipmentType.contains("Recycle")) {
+	return "#1ABC9C"; // Teal for recycle blocks
+      }
+      return "#95A5A6"; // Default gray
 
-      case NEQSIM:
-      default:
-        return null; // Use default EquipmentVisualStyle colors
+    case NEQSIM:
+    default:
+      return null; // Use default EquipmentVisualStyle colors
     }
   }
 
@@ -309,15 +303,15 @@ public enum DiagramStyle {
    */
   public String getEquipmentOutlineColor() {
     switch (this) {
-      case HYSYS:
-        return "#008080"; // Teal outline
-      case PROII:
-        return "#000000"; // Black outline (technical drawing style)
-      case ASPEN_PLUS:
-        return "#2C3E50"; // Dark slate (Aspen style)
-      case NEQSIM:
-      default:
-        return "#000000"; // Black
+    case HYSYS:
+      return "#008080"; // Teal outline
+    case PROII:
+      return "#000000"; // Black outline (technical drawing style)
+    case ASPEN_PLUS:
+      return "#2C3E50"; // Dark slate (Aspen style)
+    case NEQSIM:
+    default:
+      return "#000000"; // Black
     }
   }
 
@@ -328,15 +322,15 @@ public enum DiagramStyle {
    */
   public String getFontColor() {
     switch (this) {
-      case HYSYS:
-        return "#000000"; // Black text
-      case PROII:
-        return "#000000"; // Black text
-      case ASPEN_PLUS:
-        return "#2C3E50"; // Dark slate
-      case NEQSIM:
-      default:
-        return "#000000"; // Black
+    case HYSYS:
+      return "#000000"; // Black text
+    case PROII:
+      return "#000000"; // Black text
+    case ASPEN_PLUS:
+      return "#2C3E50"; // Dark slate
+    case NEQSIM:
+    default:
+      return "#000000"; // Black
     }
   }
 
@@ -347,15 +341,15 @@ public enum DiagramStyle {
    */
   public String getArrowStyle() {
     switch (this) {
-      case HYSYS:
-        return "normal"; // Filled triangular arrow
-      case PROII:
-        return "vee"; // Simple V-shaped arrow (technical style)
-      case ASPEN_PLUS:
-        return "normal"; // Filled arrow
-      case NEQSIM:
-      default:
-        return "normal";
+    case HYSYS:
+      return "normal"; // Filled triangular arrow
+    case PROII:
+      return "vee"; // Simple V-shaped arrow (technical style)
+    case ASPEN_PLUS:
+      return "normal"; // Filled arrow
+    case NEQSIM:
+    default:
+      return "normal";
     }
   }
 
@@ -366,15 +360,15 @@ public enum DiagramStyle {
    */
   public String getEdgeStyle() {
     switch (this) {
-      case HYSYS:
-        return "bold"; // Thick visible streams
-      case PROII:
-        return "solid"; // Standard lines
-      case ASPEN_PLUS:
-        return "bold"; // Prominent streams
-      case NEQSIM:
-      default:
-        return "solid";
+    case HYSYS:
+      return "bold"; // Thick visible streams
+    case PROII:
+      return "solid"; // Standard lines
+    case ASPEN_PLUS:
+      return "bold"; // Prominent streams
+    case NEQSIM:
+    default:
+      return "solid";
     }
   }
 
@@ -385,15 +379,15 @@ public enum DiagramStyle {
    */
   public String getSplineType() {
     switch (this) {
-      case HYSYS:
-        return "ortho"; // Right-angle routing (HYSYS default)
-      case PROII:
-        return "ortho"; // Right-angle routing (engineering drawing)
-      case ASPEN_PLUS:
-        return "spline"; // Curved smooth routing (Aspen style)
-      case NEQSIM:
-      default:
-        return "ortho";
+    case HYSYS:
+      return "ortho"; // Right-angle routing (HYSYS default)
+    case PROII:
+      return "ortho"; // Right-angle routing (engineering drawing)
+    case ASPEN_PLUS:
+      return "spline"; // Curved smooth routing (Aspen style)
+    case NEQSIM:
+    default:
+      return "ortho";
     }
   }
 
@@ -404,15 +398,15 @@ public enum DiagramStyle {
    */
   public double getPenWidth() {
     switch (this) {
-      case HYSYS:
-        return 2.0; // Bold equipment outlines
-      case PROII:
-        return 1.0; // Thin technical lines
-      case ASPEN_PLUS:
-        return 1.5; // Medium weight
-      case NEQSIM:
-      default:
-        return 1.0;
+    case HYSYS:
+      return 2.0; // Bold equipment outlines
+    case PROII:
+      return 1.0; // Thin technical lines
+    case ASPEN_PLUS:
+      return 1.5; // Medium weight
+    case NEQSIM:
+    default:
+      return 1.0;
     }
   }
 
@@ -423,15 +417,15 @@ public enum DiagramStyle {
    */
   public double getStreamWidth() {
     switch (this) {
-      case HYSYS:
-        return 2.5; // Bold streams
-      case PROII:
-        return 1.5; // Standard streams
-      case ASPEN_PLUS:
-        return 2.0; // Medium streams
-      case NEQSIM:
-      default:
-        return 1.5;
+    case HYSYS:
+      return 2.5; // Bold streams
+    case PROII:
+      return 1.5; // Standard streams
+    case ASPEN_PLUS:
+      return 2.0; // Medium streams
+    case NEQSIM:
+    default:
+      return 1.5;
     }
   }
 
@@ -442,15 +436,15 @@ public enum DiagramStyle {
    */
   public String getFontName() {
     switch (this) {
-      case HYSYS:
-        return "Arial"; // HYSYS uses Arial
-      case PROII:
-        return "Courier"; // Monospace for technical look
-      case ASPEN_PLUS:
-        return "Arial"; // Aspen uses Arial
-      case NEQSIM:
-      default:
-        return "Arial";
+    case HYSYS:
+      return "Arial"; // HYSYS uses Arial
+    case PROII:
+      return "Courier"; // Monospace for technical look
+    case ASPEN_PLUS:
+      return "Arial"; // Aspen uses Arial
+    case NEQSIM:
+    default:
+      return "Arial";
     }
   }
 
@@ -461,15 +455,15 @@ public enum DiagramStyle {
    */
   public int getFontSize() {
     switch (this) {
-      case HYSYS:
-        return 9; // Compact labels
-      case PROII:
-        return 8; // Small technical labels
-      case ASPEN_PLUS:
-        return 10; // Standard size
-      case NEQSIM:
-      default:
-        return 10;
+    case HYSYS:
+      return 9; // Compact labels
+    case PROII:
+      return 8; // Small technical labels
+    case ASPEN_PLUS:
+      return 10; // Standard size
+    case NEQSIM:
+    default:
+      return 10;
     }
   }
 
@@ -480,15 +474,15 @@ public enum DiagramStyle {
    */
   public boolean useStreamNumbers() {
     switch (this) {
-      case HYSYS:
-        return false; // Shows stream names
-      case PROII:
-        return true; // Uses numbered streams (S1, S2, etc.)
-      case ASPEN_PLUS:
-        return false; // Shows stream names
-      case NEQSIM:
-      default:
-        return false;
+    case HYSYS:
+      return false; // Shows stream names
+    case PROII:
+      return true; // Uses numbered streams (S1, S2, etc.)
+    case ASPEN_PLUS:
+      return false; // Shows stream names
+    case NEQSIM:
+    default:
+      return false;
     }
   }
 
@@ -499,15 +493,15 @@ public enum DiagramStyle {
    */
   public String getRecycleColor() {
     switch (this) {
-      case HYSYS:
-        return "#CC6600"; // Orange for recycles
-      case PROII:
-        return "#000000"; // Black (same as other streams)
-      case ASPEN_PLUS:
-        return "#8E44AD"; // Purple for recycles
-      case NEQSIM:
-      default:
-        return "#9932CC"; // Dark orchid
+    case HYSYS:
+      return "#CC6600"; // Orange for recycles
+    case PROII:
+      return "#000000"; // Black (same as other streams)
+    case ASPEN_PLUS:
+      return "#8E44AD"; // Purple for recycles
+    case NEQSIM:
+    default:
+      return "#9932CC"; // Dark orchid
     }
   }
 
@@ -518,15 +512,15 @@ public enum DiagramStyle {
    */
   public String getEnergyStreamColor() {
     switch (this) {
-      case HYSYS:
-        return "#FF0000"; // Red for energy streams
-      case PROII:
-        return "#FF0000"; // Red
-      case ASPEN_PLUS:
-        return "#E74C3C"; // Aspen red
-      case NEQSIM:
-      default:
-        return "#FF4500"; // Orange red
+    case HYSYS:
+      return "#FF0000"; // Red for energy streams
+    case PROII:
+      return "#FF0000"; // Red
+    case ASPEN_PLUS:
+      return "#E74C3C"; // Aspen red
+    case NEQSIM:
+    default:
+      return "#FF4500"; // Orange red
     }
   }
 }

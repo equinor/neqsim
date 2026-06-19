@@ -9,9 +9,8 @@ import neqsim.process.mechanicaldesign.MechanicalDesign;
  * Cost estimation class for distillation and absorption columns.
  *
  * <p>
- * This class provides column-specific cost estimation methods using chemical engineering cost
- * correlations for trayed and packed columns. Includes costs for internals, reboiler, and
- * condenser.
+ * This class provides column-specific cost estimation methods using chemical engineering cost correlations for trayed
+ * and packed columns. Includes costs for internals, reboiler, and condenser.
  * </p>
  *
  * @author AGAS
@@ -376,8 +375,7 @@ public class ColumnCostEstimate extends UnitCostEstimateBaseClass {
     double shellWeight = shellArea * wallThickness * 7850.0;
 
     // Add heads (approximately 2x shell weight per head)
-    double headsWeight =
-        2 * Math.PI / 4.0 * columnDiameter * columnDiameter * wallThickness * 7850 * 2;
+    double headsWeight = 2 * Math.PI / 4.0 * columnDiameter * columnDiameter * wallThickness * 7850 * 2;
 
     return shellWeight + headsWeight;
   }
@@ -403,13 +401,12 @@ public class ColumnCostEstimate extends UnitCostEstimateBaseClass {
   /**
    * Calculate annual utility cost for reboiler and condenser.
    *
-   * @param hoursPerYear operating hours per year
-   * @param steamCostPerTonne steam cost in $/tonne
+   * @param hoursPerYear          operating hours per year
+   * @param steamCostPerTonne     steam cost in $/tonne
    * @param coolingWaterCostPerM3 cooling water cost in $/m3
    * @return annual utility cost in USD
    */
-  public double calcAnnualUtilityCost(double hoursPerYear, double steamCostPerTonne,
-      double coolingWaterCostPerM3) {
+  public double calcAnnualUtilityCost(double hoursPerYear, double steamCostPerTonne, double coolingWaterCostPerM3) {
     double totalCost = 0.0;
 
     // Reboiler steam cost

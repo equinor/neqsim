@@ -20,9 +20,9 @@ public class ComponentBWRS extends ComponentSrk {
   static Logger logger = LogManager.getLogger(ComponentBWRS.class);
 
   /**
-   * Unit conversion factor for MBWR-32 parameters. The database coefficients are calibrated in
-   * MPa-based units (density in mol/L), while the framework uses R_SI = 8.3144621 J/(mol·K). Since
-   * R_SI / R_MPa = 1000, this factor compensates for the unit mismatch in Helmholtz functions.
+   * Unit conversion factor for MBWR-32 parameters. The database coefficients are calibrated in MPa-based units (density
+   * in mol/L), while the framework uses R_SI = 8.3144621 J/(mol·K). Since R_SI / R_MPa = 1000, this factor compensates
+   * for the unit mismatch in Helmholtz functions.
    */
   private static final double MBWR_UNIT_FACTOR = 1e3;
 
@@ -48,10 +48,10 @@ public class ComponentBWRS extends ComponentSrk {
    * Constructor for ComponentBWRS.
    * </p>
    *
-   * @param name Name of component.
-   * @param moles Total number of moles of component.
+   * @param name         Name of component.
+   * @param moles        Total number of moles of component.
    * @param molesInPhase Number of moles in phase.
-   * @param compIndex Index number of component in phase object component array.
+   * @param compIndex    Index number of component in phase object component array.
    */
   public ComponentBWRS(String name, double moles, double molesInPhase, int compIndex) {
     super(name, moles, molesInPhase, compIndex);
@@ -60,18 +60,18 @@ public class ComponentBWRS extends ComponentSrk {
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
       java.sql.ResultSet dataSet = null;
       try {
-        dataSet = database.getResultSet(("SELECT * FROM mbwr32param WHERE name='" + name + "'"));
-        if (dataSet.next()) {
-          dataSet.getClob("name");
-          for (int i = 0; i < 32; i++) {
-            aBWRS[i] = Double.parseDouble(dataSet.getString("a" + i));
-          }
-          rhoc = Double.parseDouble(dataSet.getString("rhoc"));
-          gammaBWRS = 1.0 / (rhoc * rhoc);
-          paramsFound = true;
-        }
+	dataSet = database.getResultSet(("SELECT * FROM mbwr32param WHERE name='" + name + "'"));
+	if (dataSet.next()) {
+	  dataSet.getClob("name");
+	  for (int i = 0; i < 32; i++) {
+	    aBWRS[i] = Double.parseDouble(dataSet.getString("a" + i));
+	  }
+	  rhoc = Double.parseDouble(dataSet.getString("rhoc"));
+	  gammaBWRS = 1.0 / (rhoc * rhoc);
+	  paramsFound = true;
+	}
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+	logger.error(ex.getMessage(), ex);
       }
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
@@ -83,27 +83,26 @@ public class ComponentBWRS extends ComponentSrk {
       // rhoc in mol/L = 1000 / Vc(cm3/mol).
       double Vc = getCriticalVolume();
       if (Vc > 0) {
-        rhoc = 1000.0 / Vc;
+	rhoc = 1000.0 / Vc;
       } else {
-        // Last resort: use critical properties via Zc = Pc*Vc/(R*Tc)
-        // Approximate rhoc using Pc/(Zc*R_MPa*Tc) with Zc~0.27
-        double Tc = getTC();
-        double Pc = getPC() / 10.0; // bara to MPa
-        if (Tc > 0 && Pc > 0) {
-          rhoc = Pc / (0.27 * 0.008314 * Tc);
-        } else {
-          rhoc = 10.0; // safe default ~methane-like
-        }
+	// Last resort: use critical properties via Zc = Pc*Vc/(R*Tc)
+	// Approximate rhoc using Pc/(Zc*R_MPa*Tc) with Zc~0.27
+	double Tc = getTC();
+	double Pc = getPC() / 10.0; // bara to MPa
+	if (Tc > 0 && Pc > 0) {
+	  rhoc = Pc / (0.27 * 0.008314 * Tc);
+	} else {
+	  rhoc = 10.0; // safe default ~methane-like
+	}
       }
       gammaBWRS = 1.0 / (rhoc * rhoc);
 
       logger.warn(
-          "MBWR-32 parameters not found for component '{}'. "
-              + "Only methane and ethane have MBWR-32 parameters. "
-              + "This component will behave as ideal gas in BWRS calculations "
-              + "(estimated rhoc={} mol/L from critical volume). "
-              + "Consider using GERG-2008 (SystemGERG2008Eos) for multi-component gas mixtures.",
-          name, String.format("%.2f", rhoc));
+	  "MBWR-32 parameters not found for component '{}'. " + "Only methane and ethane have MBWR-32 parameters. "
+	      + "This component will behave as ideal gas in BWRS calculations "
+	      + "(estimated rhoc={} mol/L from critical volume). "
+	      + "Consider using GERG-2008 (SystemGERG2008Eos) for multi-component gas mixtures.",
+	  name, String.format("%.2f", rhoc));
     }
   }
 
@@ -113,11 +112,11 @@ public class ComponentBWRS extends ComponentSrk {
    * </p>
    *
    * @param number a int. Not used.
-   * @param TC Critical temperature [K]
-   * @param PC Critical pressure [bara]
-   * @param M Molar mass
-   * @param a Acentric factor
-   * @param moles Total number of moles of component.
+   * @param TC     Critical temperature [K]
+   * @param PC     Critical pressure [bara]
+   * @param M      Molar mass
+   * @param a      Acentric factor
+   * @param moles  Total number of moles of component.
    */
   public ComponentBWRS(int number, double TC, double PC, double M, double a, double moles) {
     super(number, TC, PC, M, a, moles);
@@ -138,15 +137,13 @@ public class ComponentBWRS extends ComponentSrk {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
-      int initType) {
+  public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int initType) {
     super.init(temperature, pressure, totalNumberOfMoles, beta, initType);
 
     BP[0] = R * temperature;
-    BP[1] = aBWRS[0] * temperature + aBWRS[1] * Math.sqrt(temperature) + aBWRS[2]
-        + aBWRS[3] / temperature + aBWRS[4] / Math.pow(temperature, 2.0);
-    BP[2] = aBWRS[5] * temperature + aBWRS[6] + aBWRS[7] / temperature
-        + aBWRS[8] / Math.pow(temperature, 2.0);
+    BP[1] = aBWRS[0] * temperature + aBWRS[1] * Math.sqrt(temperature) + aBWRS[2] + aBWRS[3] / temperature
+	+ aBWRS[4] / Math.pow(temperature, 2.0);
+    BP[2] = aBWRS[5] * temperature + aBWRS[6] + aBWRS[7] / temperature + aBWRS[8] / Math.pow(temperature, 2.0);
     BP[3] = aBWRS[9] * temperature + aBWRS[10] + aBWRS[11] / temperature;
     BP[4] = aBWRS[12];
     BP[5] = aBWRS[13] / temperature + aBWRS[14] / Math.pow(temperature, 2.0);
@@ -165,70 +162,51 @@ public class ComponentBWRS extends ComponentSrk {
     BE[4] = (aBWRS[27] / Math.pow(temperature, 2.0) + aBWRS[28] / Math.pow(temperature, 3.0));
     // *Math.exp(-gammaBWRS*Math.pow(getMolarDensity(),2.0));
     BE[5] = (aBWRS[29] / Math.pow(temperature, 2.0) + aBWRS[30] / Math.pow(temperature, 3.0)
-        + aBWRS[31] / Math.pow(temperature, 4.0)); // *Math.exp(-gammaBWRS*Math.pow(getMolarDensity(),2.0));
+	+ aBWRS[31] / Math.pow(temperature, 4.0)); // *Math.exp(-gammaBWRS*Math.pow(getMolarDensity(),2.0));
 
     BPdT[0] = R;
-    BPdT[1] = aBWRS[0] + aBWRS[1] / (2.0 * Math.sqrt(temperature))
-        - aBWRS[3] / Math.pow(temperature, 2.0) - 2.0 * aBWRS[4] / Math.pow(temperature, 3.0);
-    BPdT[2] = aBWRS[5] - aBWRS[7] / Math.pow(temperature, 2.0)
-        - 2.0 * aBWRS[8] / Math.pow(temperature, 3.0);
+    BPdT[1] = aBWRS[0] + aBWRS[1] / (2.0 * Math.sqrt(temperature)) - aBWRS[3] / Math.pow(temperature, 2.0)
+	- 2.0 * aBWRS[4] / Math.pow(temperature, 3.0);
+    BPdT[2] = aBWRS[5] - aBWRS[7] / Math.pow(temperature, 2.0) - 2.0 * aBWRS[8] / Math.pow(temperature, 3.0);
     BPdT[3] = aBWRS[9] - aBWRS[11] / Math.pow(temperature, 2.0);
     BPdT[4] = 0.0;
-    BPdT[5] =
-        -aBWRS[13] / Math.pow(temperature, 2.0) - 2.0 * aBWRS[14] / Math.pow(temperature, 3.0);
+    BPdT[5] = -aBWRS[13] / Math.pow(temperature, 2.0) - 2.0 * aBWRS[14] / Math.pow(temperature, 3.0);
     BPdT[6] = -aBWRS[15] / Math.pow(temperature, 2.0);
-    BPdT[7] =
-        -aBWRS[16] / Math.pow(temperature, 2.0) - 2.0 * aBWRS[17] / Math.pow(temperature, 3.0);
+    BPdT[7] = -aBWRS[16] / Math.pow(temperature, 2.0) - 2.0 * aBWRS[17] / Math.pow(temperature, 3.0);
     BPdT[8] = -2.0 * aBWRS[18] / Math.pow(temperature, 3.0);
 
-    BEdT[0] = (-2.0 * aBWRS[19] / Math.pow(temperature, 3.0)
-        - 3.0 * aBWRS[20] / Math.pow(temperature, 4.0)); // *Math.exp(-gammaBWRS*Math.pow(getMolarDensity(),2.0));
-    BEdT[1] = (-2.0 * aBWRS[21] / Math.pow(temperature, 3.0)
-        - 4.0 * aBWRS[22] / Math.pow(temperature, 5.0)); // *Math.exp(-gammaBWRS*Math.pow(getMolarDensity(),2.0));
-    BEdT[2] = (-2.0 * aBWRS[23] / Math.pow(temperature, 3.0)
-        - 3.0 * aBWRS[24] / Math.pow(temperature, 4.0)); // *Math.exp(-gammaBWRS*Math.pow(getMolarDensity(),2.0));
-    BEdT[3] = (-2.0 * aBWRS[25] / Math.pow(temperature, 3.0)
-        - 4.0 * aBWRS[26] / Math.pow(temperature, 5.0)); // *Math.exp(-gammaBWRS*Math.pow(getMolarDensity(),2.0));
-    BEdT[4] = (-2.0 * aBWRS[27] / Math.pow(temperature, 3.0)
-        - 3.0 * aBWRS[28] / Math.pow(temperature, 4.0)); // *Math.exp(-gammaBWRS*Math.pow(getMolarDensity(),2.0));
-    BEdT[5] = (-2.0 * aBWRS[29] / Math.pow(temperature, 3.0)
-        - 3.0 * aBWRS[30] / Math.pow(temperature, 4.0)
-        - 4.0 * aBWRS[31] / Math.pow(temperature, 5.0)); // *Math.exp(-gammaBWRS*Math.pow(getMolarDensity(),2.0));
+    BEdT[0] = (-2.0 * aBWRS[19] / Math.pow(temperature, 3.0) - 3.0 * aBWRS[20] / Math.pow(temperature, 4.0)); // *Math.exp(-gammaBWRS*Math.pow(getMolarDensity(),2.0));
+    BEdT[1] = (-2.0 * aBWRS[21] / Math.pow(temperature, 3.0) - 4.0 * aBWRS[22] / Math.pow(temperature, 5.0)); // *Math.exp(-gammaBWRS*Math.pow(getMolarDensity(),2.0));
+    BEdT[2] = (-2.0 * aBWRS[23] / Math.pow(temperature, 3.0) - 3.0 * aBWRS[24] / Math.pow(temperature, 4.0)); // *Math.exp(-gammaBWRS*Math.pow(getMolarDensity(),2.0));
+    BEdT[3] = (-2.0 * aBWRS[25] / Math.pow(temperature, 3.0) - 4.0 * aBWRS[26] / Math.pow(temperature, 5.0)); // *Math.exp(-gammaBWRS*Math.pow(getMolarDensity(),2.0));
+    BEdT[4] = (-2.0 * aBWRS[27] / Math.pow(temperature, 3.0) - 3.0 * aBWRS[28] / Math.pow(temperature, 4.0)); // *Math.exp(-gammaBWRS*Math.pow(getMolarDensity(),2.0));
+    BEdT[5] = (-2.0 * aBWRS[29] / Math.pow(temperature, 3.0) - 3.0 * aBWRS[30] / Math.pow(temperature, 4.0)
+	- 4.0 * aBWRS[31] / Math.pow(temperature, 5.0)); // *Math.exp(-gammaBWRS*Math.pow(getMolarDensity(),2.0));
 
     // Second temperature derivatives of BP and BE arrays
     BPdTdT[0] = 0;
-    BPdTdT[1] = -aBWRS[1] / (4.0 * Math.pow(temperature, 1.5))
-        + 2.0 * aBWRS[3] / Math.pow(temperature, 3.0) + 6.0 * aBWRS[4] / Math.pow(temperature, 4.0);
-    BPdTdT[2] =
-        2.0 * aBWRS[7] / Math.pow(temperature, 3.0) + 6.0 * aBWRS[8] / Math.pow(temperature, 4.0);
+    BPdTdT[1] = -aBWRS[1] / (4.0 * Math.pow(temperature, 1.5)) + 2.0 * aBWRS[3] / Math.pow(temperature, 3.0)
+	+ 6.0 * aBWRS[4] / Math.pow(temperature, 4.0);
+    BPdTdT[2] = 2.0 * aBWRS[7] / Math.pow(temperature, 3.0) + 6.0 * aBWRS[8] / Math.pow(temperature, 4.0);
     BPdTdT[3] = 2.0 * aBWRS[11] / Math.pow(temperature, 3.0);
     BPdTdT[4] = 0;
-    BPdTdT[5] =
-        2.0 * aBWRS[13] / Math.pow(temperature, 3.0) + 6.0 * aBWRS[14] / Math.pow(temperature, 4.0);
+    BPdTdT[5] = 2.0 * aBWRS[13] / Math.pow(temperature, 3.0) + 6.0 * aBWRS[14] / Math.pow(temperature, 4.0);
     BPdTdT[6] = 2.0 * aBWRS[15] / Math.pow(temperature, 3.0);
-    BPdTdT[7] =
-        2.0 * aBWRS[16] / Math.pow(temperature, 3.0) + 6.0 * aBWRS[17] / Math.pow(temperature, 4.0);
+    BPdTdT[7] = 2.0 * aBWRS[16] / Math.pow(temperature, 3.0) + 6.0 * aBWRS[17] / Math.pow(temperature, 4.0);
     BPdTdT[8] = 6.0 * aBWRS[18] / Math.pow(temperature, 4.0);
 
-    BEdTdT[0] = 6.0 * aBWRS[19] / Math.pow(temperature, 4.0)
-        + 12.0 * aBWRS[20] / Math.pow(temperature, 5.0);
-    BEdTdT[1] = 6.0 * aBWRS[21] / Math.pow(temperature, 4.0)
-        + 20.0 * aBWRS[22] / Math.pow(temperature, 6.0);
-    BEdTdT[2] = 6.0 * aBWRS[23] / Math.pow(temperature, 4.0)
-        + 12.0 * aBWRS[24] / Math.pow(temperature, 5.0);
-    BEdTdT[3] = 6.0 * aBWRS[25] / Math.pow(temperature, 4.0)
-        + 20.0 * aBWRS[26] / Math.pow(temperature, 6.0);
-    BEdTdT[4] = 6.0 * aBWRS[27] / Math.pow(temperature, 4.0)
-        + 12.0 * aBWRS[28] / Math.pow(temperature, 5.0);
-    BEdTdT[5] =
-        6.0 * aBWRS[29] / Math.pow(temperature, 4.0) + 12.0 * aBWRS[30] / Math.pow(temperature, 5.0)
-            + 20.0 * aBWRS[31] / Math.pow(temperature, 6.0);
+    BEdTdT[0] = 6.0 * aBWRS[19] / Math.pow(temperature, 4.0) + 12.0 * aBWRS[20] / Math.pow(temperature, 5.0);
+    BEdTdT[1] = 6.0 * aBWRS[21] / Math.pow(temperature, 4.0) + 20.0 * aBWRS[22] / Math.pow(temperature, 6.0);
+    BEdTdT[2] = 6.0 * aBWRS[23] / Math.pow(temperature, 4.0) + 12.0 * aBWRS[24] / Math.pow(temperature, 5.0);
+    BEdTdT[3] = 6.0 * aBWRS[25] / Math.pow(temperature, 4.0) + 20.0 * aBWRS[26] / Math.pow(temperature, 6.0);
+    BEdTdT[4] = 6.0 * aBWRS[27] / Math.pow(temperature, 4.0) + 12.0 * aBWRS[28] / Math.pow(temperature, 5.0);
+    BEdTdT[5] = 6.0 * aBWRS[29] / Math.pow(temperature, 4.0) + 12.0 * aBWRS[30] / Math.pow(temperature, 5.0)
+	+ 20.0 * aBWRS[31] / Math.pow(temperature, 6.0);
   }
 
   /** {@inheritDoc} */
   @Override
-  public double dFdN(PhaseInterface phase, int numberOfComponentphases, double temperature,
-      double pressure) {
+  public double dFdN(PhaseInterface phase, int numberOfComponentphases, double temperature, double pressure) {
     return ((PhaseBWRSEos) phase).getdFdN(componentNumber);
   }
 
@@ -237,21 +215,20 @@ public class ComponentBWRS extends ComponentSrk {
    * getFpoldn.
    * </p>
    *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase                   a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponentphases a int
-   * @param temperature a double
-   * @param pressure a double
+   * @param temperature             a double
+   * @param pressure                a double
    * @return a double
    */
-  public double getFpoldn(PhaseInterface phase, int numberOfComponentphases, double temperature,
-      double pressure) {
+  public double getFpoldn(PhaseInterface phase, int numberOfComponentphases, double temperature, double pressure) {
     double temp = 0.0;
     for (int i = 1; i < OP; i++) {
       temp += i * getBP(i) / (i - 0.0) * Math.pow(((PhaseBWRSEos) phase).getMolarDensity(), i - 1.0)
-          * getdRhodn(phase, numberOfComponentphases, temperature, pressure);
+	  * getdRhodn(phase, numberOfComponentphases, temperature, pressure);
     }
     return phase.getNumberOfMolesInPhase() / (R * temperature) * temp
-        + ((PhaseBWRSEos) phase).getFpol() / phase.getNumberOfMolesInPhase();
+	+ ((PhaseBWRSEos) phase).getFpol() / phase.getNumberOfMolesInPhase();
   }
 
   /**
@@ -259,14 +236,13 @@ public class ComponentBWRS extends ComponentSrk {
    * getdRhodn.
    * </p>
    *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase                   a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponentphases a int
-   * @param temperature a double
-   * @param pressure a double
+   * @param temperature             a double
+   * @param pressure                a double
    * @return a double
    */
-  public double getdRhodn(PhaseInterface phase, int numberOfComponentphases, double temperature,
-      double pressure) {
+  public double getdRhodn(PhaseInterface phase, int numberOfComponentphases, double temperature, double pressure) {
     return ((PhaseBWRSEos) phase).getMolarDensity() / phase.getNumberOfMolesInPhase();
   }
 
@@ -275,17 +251,16 @@ public class ComponentBWRS extends ComponentSrk {
    * getELdn.
    * </p>
    *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase                   a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponentphases a int
-   * @param temperature a double
-   * @param pressure a double
+   * @param temperature             a double
+   * @param pressure                a double
    * @return a double
    */
-  public double getELdn(PhaseInterface phase, int numberOfComponentphases, double temperature,
-      double pressure) {
+  public double getELdn(PhaseInterface phase, int numberOfComponentphases, double temperature, double pressure) {
     return -2.0 * ((PhaseBWRSEos) phase).getMolarDensity() * getGammaBWRS()
-        * Math.exp(-getGammaBWRS() * Math.pow(((PhaseBWRSEos) phase).getMolarDensity(), 2.0))
-        * getdRhodn(phase, numberOfComponentphases, temperature, pressure);
+	* Math.exp(-getGammaBWRS() * Math.pow(((PhaseBWRSEos) phase).getMolarDensity(), 2.0))
+	* getdRhodn(phase, numberOfComponentphases, temperature, pressure);
   }
 
   /**
@@ -293,35 +268,32 @@ public class ComponentBWRS extends ComponentSrk {
    * getFexpdn.
    * </p>
    *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase                   a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponentphases a int
-   * @param temperature a double
-   * @param pressure a double
+   * @param temperature             a double
+   * @param pressure                a double
    * @return a double
    */
-  public double getFexpdn(PhaseInterface phase, int numberOfComponentphases, double temperature,
-      double pressure) {
+  public double getFexpdn(PhaseInterface phase, int numberOfComponentphases, double temperature, double pressure) {
     double oldTemp = 0.0;
     double temp = 0.0;
-    oldTemp = -getBE(0) / (2.0 * getGammaBWRS())
-        * getELdn(phase, numberOfComponentphases, temperature, pressure);
+    oldTemp = -getBE(0) / (2.0 * getGammaBWRS()) * getELdn(phase, numberOfComponentphases, temperature, pressure);
 
     temp += oldTemp;
     for (int i = 1; i < OE; i++) {
-      oldTemp = -getBE(i) / (2.0 * getGammaBWRS())
-          * Math.pow(((PhaseBWRSEos) phase).getMolarDensity(), 2 * i)
-          * getELdn(phase, numberOfComponentphases, temperature, pressure)
+      oldTemp = -getBE(i) / (2.0 * getGammaBWRS()) * Math.pow(((PhaseBWRSEos) phase).getMolarDensity(), 2 * i)
+	  * getELdn(phase, numberOfComponentphases, temperature, pressure)
 
-          - (2.0 * i) * getBE(i) / (2.0 * getGammaBWRS()) * ((PhaseBWRSEos) phase).getEL()
-              * Math.pow(((PhaseBWRSEos) phase).getMolarDensity(), 2.0 * i - 1.0)
+	  - (2.0 * i) * getBE(i) / (2.0 * getGammaBWRS()) * ((PhaseBWRSEos) phase).getEL()
+	      * Math.pow(((PhaseBWRSEos) phase).getMolarDensity(), 2.0 * i - 1.0)
 
-          + getBE(i) / (2.0 * getGammaBWRS()) * (2.0 * i) / getBE(i - 1) * oldTemp;
+	  + getBE(i) / (2.0 * getGammaBWRS()) * (2.0 * i) / getBE(i - 1) * oldTemp;
 
       temp += oldTemp;
     }
 
     return phase.getNumberOfMolesInPhase() / (R * temperature) * temp
-        + ((PhaseBWRSEos) phase).getFexp() / phase.getNumberOfMolesInPhase();
+	+ ((PhaseBWRSEos) phase).getFexp() / phase.getNumberOfMolesInPhase();
   }
 
   /**

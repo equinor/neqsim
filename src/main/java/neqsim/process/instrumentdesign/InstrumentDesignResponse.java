@@ -11,8 +11,8 @@ import java.util.Map;
  * Response class for instrument design JSON export.
  *
  * <p>
- * Provides a structured representation of instrument design data for JSON serialization. Includes
- * equipment identification, instrument index, I/O summary, and cost summary.
+ * Provides a structured representation of instrument design data for JSON serialization. Includes equipment
+ * identification, instrument index, I/O summary, and cost summary.
  * </p>
  *
  * @author Even Solbraa
@@ -33,7 +33,8 @@ public class InstrumentDesignResponse implements java.io.Serializable {
   /**
    * Default constructor.
    */
-  public InstrumentDesignResponse() {}
+  public InstrumentDesignResponse() {
+  }
 
   /**
    * Constructor from InstrumentDesign.
@@ -74,29 +75,29 @@ public class InstrumentDesignResponse implements java.io.Serializable {
 
       this.instrumentIndex = new ArrayList<Map<String, Object>>();
       for (InstrumentSpecification spec : list.getAll()) {
-        Map<String, Object> entry = new LinkedHashMap<String, Object>();
-        entry.put("tagNumber", spec.getTagNumber());
-        entry.put("isaSymbol", spec.getIsaSymbol());
-        entry.put("service", spec.getService());
-        entry.put("instrumentType", spec.getInstrumentType());
-        entry.put("ioType", spec.getIoType());
-        if (spec.isAnalog()) {
-          entry.put("rangeMin", spec.getRangeMin());
-          entry.put("rangeMax", spec.getRangeMax());
-          entry.put("rangeUnit", spec.getRangeUnit());
-        }
-        entry.put("outputSignal", spec.getOutputSignal());
-        entry.put("material", spec.getMaterial());
-        entry.put("hazardousAreaZone", spec.getHazardousAreaZone());
-        entry.put("exProtection", spec.getExProtection());
-        if (spec.getSilRating() > 0) {
-          entry.put("silRating", spec.getSilRating());
-        }
-        if (spec.isSafetyRelated()) {
-          entry.put("safetyRelated", true);
-        }
-        entry.put("estimatedCostUSD", spec.getEstimatedCostUSD());
-        this.instrumentIndex.add(entry);
+	Map<String, Object> entry = new LinkedHashMap<String, Object>();
+	entry.put("tagNumber", spec.getTagNumber());
+	entry.put("isaSymbol", spec.getIsaSymbol());
+	entry.put("service", spec.getService());
+	entry.put("instrumentType", spec.getInstrumentType());
+	entry.put("ioType", spec.getIoType());
+	if (spec.isAnalog()) {
+	  entry.put("rangeMin", spec.getRangeMin());
+	  entry.put("rangeMax", spec.getRangeMax());
+	  entry.put("rangeUnit", spec.getRangeUnit());
+	}
+	entry.put("outputSignal", spec.getOutputSignal());
+	entry.put("material", spec.getMaterial());
+	entry.put("hazardousAreaZone", spec.getHazardousAreaZone());
+	entry.put("exProtection", spec.getExProtection());
+	if (spec.getSilRating() > 0) {
+	  entry.put("silRating", spec.getSilRating());
+	}
+	if (spec.isSafetyRelated()) {
+	  entry.put("safetyRelated", true);
+	}
+	entry.put("estimatedCostUSD", spec.getEstimatedCostUSD());
+	this.instrumentIndex.add(entry);
       }
     }
   }
@@ -107,8 +108,7 @@ public class InstrumentDesignResponse implements java.io.Serializable {
    * @return JSON string
    */
   public String toJson() {
-    Gson gson =
-        new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+    Gson gson = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
     return gson.toJson(this);
   }
 }

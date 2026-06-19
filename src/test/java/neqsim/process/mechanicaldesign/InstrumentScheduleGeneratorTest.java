@@ -23,8 +23,8 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Tests for {@link InstrumentScheduleGenerator} and its integration with
- * {@link EngineeringDeliverablesPackage} and the process simulation instrument framework.
+ * Tests for {@link InstrumentScheduleGenerator} and its integration with {@link EngineeringDeliverablesPackage} and the
+ * process simulation instrument framework.
  */
 class InstrumentScheduleGeneratorTest extends neqsim.NeqSimTest {
 
@@ -101,19 +101,19 @@ class InstrumentScheduleGeneratorTest extends neqsim.NeqSimTest {
       boolean hasFT = false;
 
       for (InstrumentEntry entry : gen.getEntries()) {
-        String tag = entry.getTagNumber();
-        if (tag.startsWith("PT-1")) {
-          hasPT = true;
-        }
-        if (tag.startsWith("TT-2")) {
-          hasTT = true;
-        }
-        if (tag.startsWith("LT-3")) {
-          hasLT = true;
-        }
-        if (tag.startsWith("FT-4")) {
-          hasFT = true;
-        }
+	String tag = entry.getTagNumber();
+	if (tag.startsWith("PT-1")) {
+	  hasPT = true;
+	}
+	if (tag.startsWith("TT-2")) {
+	  hasTT = true;
+	}
+	if (tag.startsWith("LT-3")) {
+	  hasLT = true;
+	}
+	if (tag.startsWith("FT-4")) {
+	  hasFT = true;
+	}
       }
 
       assertTrue(hasPT, "Should have PT-1xx pressure tag");
@@ -134,26 +134,25 @@ class InstrumentScheduleGeneratorTest extends neqsim.NeqSimTest {
 
       List<InstrumentEntry> sepEntries = gen.getEntriesForEquipment("HP Separator");
       // Expect PT, TT, LT, FT = 4 instruments
-      assertTrue(sepEntries.size() >= 4,
-          "Separator should have at least 4 instruments, got: " + sepEntries.size());
+      assertTrue(sepEntries.size() >= 4, "Separator should have at least 4 instruments, got: " + sepEntries.size());
 
       boolean hasPT = false;
       boolean hasTT = false;
       boolean hasLT = false;
       boolean hasFT = false;
       for (InstrumentEntry e : sepEntries) {
-        if (e.getMeasuredVariable() == MeasuredVariable.PRESSURE) {
-          hasPT = true;
-        }
-        if (e.getMeasuredVariable() == MeasuredVariable.TEMPERATURE) {
-          hasTT = true;
-        }
-        if (e.getMeasuredVariable() == MeasuredVariable.LEVEL) {
-          hasLT = true;
-        }
-        if (e.getMeasuredVariable() == MeasuredVariable.FLOW) {
-          hasFT = true;
-        }
+	if (e.getMeasuredVariable() == MeasuredVariable.PRESSURE) {
+	  hasPT = true;
+	}
+	if (e.getMeasuredVariable() == MeasuredVariable.TEMPERATURE) {
+	  hasTT = true;
+	}
+	if (e.getMeasuredVariable() == MeasuredVariable.LEVEL) {
+	  hasLT = true;
+	}
+	if (e.getMeasuredVariable() == MeasuredVariable.FLOW) {
+	  hasFT = true;
+	}
       }
       assertTrue(hasPT, "Separator should have pressure transmitter");
       assertTrue(hasTT, "Separator should have temperature transmitter");
@@ -170,10 +169,10 @@ class InstrumentScheduleGeneratorTest extends neqsim.NeqSimTest {
       List<InstrumentEntry> sepEntries = gen.getEntriesForEquipment("HP Separator");
       InstrumentEntry pt = null;
       for (InstrumentEntry e : sepEntries) {
-        if (e.getMeasuredVariable() == MeasuredVariable.PRESSURE) {
-          pt = e;
-          break;
-        }
+	if (e.getMeasuredVariable() == MeasuredVariable.PRESSURE) {
+	  pt = e;
+	  break;
+	}
       }
       assertNotNull(pt, "Should have pressure entry");
       assertTrue(pt.getAlarmLow() < pt.getNormalValue(), "Low alarm should be below normal");
@@ -191,10 +190,10 @@ class InstrumentScheduleGeneratorTest extends neqsim.NeqSimTest {
       List<InstrumentEntry> sepEntries = gen.getEntriesForEquipment("HP Separator");
       InstrumentEntry lt = null;
       for (InstrumentEntry e : sepEntries) {
-        if (e.getMeasuredVariable() == MeasuredVariable.LEVEL) {
-          lt = e;
-          break;
-        }
+	if (e.getMeasuredVariable() == MeasuredVariable.LEVEL) {
+	  lt = e;
+	  break;
+	}
       }
       assertNotNull(lt, "Should have level entry");
       assertEquals(SilRating.SIL_2, lt.getSilRating(), "Separator level should be SIL 2");
@@ -212,17 +211,17 @@ class InstrumentScheduleGeneratorTest extends neqsim.NeqSimTest {
 
       List<InstrumentEntry> compEntries = gen.getEntriesForEquipment("Export Compressor");
       assertTrue(compEntries.size() >= 3,
-          "Compressor should have at least 3 instruments (suction PT, discharge PT, discharge TT)");
+	  "Compressor should have at least 3 instruments (suction PT, discharge PT, discharge TT)");
 
       int ptCount = 0;
       int ttCount = 0;
       for (InstrumentEntry e : compEntries) {
-        if (e.getMeasuredVariable() == MeasuredVariable.PRESSURE) {
-          ptCount++;
-        }
-        if (e.getMeasuredVariable() == MeasuredVariable.TEMPERATURE) {
-          ttCount++;
-        }
+	if (e.getMeasuredVariable() == MeasuredVariable.PRESSURE) {
+	  ptCount++;
+	}
+	if (e.getMeasuredVariable() == MeasuredVariable.TEMPERATURE) {
+	  ttCount++;
+	}
       }
       assertEquals(2, ptCount, "Compressor should have 2 pressure transmitters");
       assertEquals(1, ttCount, "Compressor should have 1 temperature transmitter");
@@ -239,10 +238,9 @@ class InstrumentScheduleGeneratorTest extends neqsim.NeqSimTest {
       gen.generate();
 
       for (InstrumentEntry entry : gen.getEntries()) {
-        MeasurementDeviceInterface device = entry.getDevice();
-        assertNotNull(device, "Entry " + entry.getTagNumber() + " should have a live device");
-        assertEquals(entry.getTagNumber(), device.getTag(),
-            "Device tag should match entry tag number");
+	MeasurementDeviceInterface device = entry.getDevice();
+	assertNotNull(device, "Entry " + entry.getTagNumber() + " should have a live device");
+	assertEquals(entry.getTagNumber(), device.getTag(), "Device tag should match entry tag number");
       }
     }
 
@@ -255,10 +253,10 @@ class InstrumentScheduleGeneratorTest extends neqsim.NeqSimTest {
       // Get the first PT tag
       String firstPTTag = null;
       for (InstrumentEntry e : gen.getEntries()) {
-        if (e.getMeasuredVariable() == MeasuredVariable.PRESSURE) {
-          firstPTTag = e.getTagNumber();
-          break;
-        }
+	if (e.getMeasuredVariable() == MeasuredVariable.PRESSURE) {
+	  firstPTTag = e.getTagNumber();
+	  break;
+	}
       }
       assertNotNull(firstPTTag, "Should have at least one PT");
       MeasurementDeviceInterface device = gen.getDevice(firstPTTag);
@@ -274,15 +272,14 @@ class InstrumentScheduleGeneratorTest extends neqsim.NeqSimTest {
       // Check separator pressure device has alarm config
       List<InstrumentEntry> sepEntries = gen.getEntriesForEquipment("HP Separator");
       for (InstrumentEntry e : sepEntries) {
-        if (e.getMeasuredVariable() == MeasuredVariable.PRESSURE) {
-          MeasurementDeviceInterface device = e.getDevice();
-          assertNotNull(device.getAlarmConfig(), "Pressure device should have alarm config");
-          assertNotNull(device.getAlarmConfig().getHighLimit(), "Should have high limit set");
-          assertNotNull(device.getAlarmConfig().getHighHighLimit(),
-              "Should have high-high limit set");
-          assertNotNull(device.getAlarmConfig().getLowLimit(), "Should have low limit set");
-          break;
-        }
+	if (e.getMeasuredVariable() == MeasuredVariable.PRESSURE) {
+	  MeasurementDeviceInterface device = e.getDevice();
+	  assertNotNull(device.getAlarmConfig(), "Pressure device should have alarm config");
+	  assertNotNull(device.getAlarmConfig().getHighLimit(), "Should have high limit set");
+	  assertNotNull(device.getAlarmConfig().getHighHighLimit(), "Should have high-high limit set");
+	  assertNotNull(device.getAlarmConfig().getLowLimit(), "Should have low limit set");
+	  break;
+	}
       }
     }
 
@@ -297,8 +294,8 @@ class InstrumentScheduleGeneratorTest extends neqsim.NeqSimTest {
       gen.generate();
 
       int afterCount = process.getMeasurementDevices().size();
-      assertTrue(afterCount > beforeCount, "Registering on process should add devices: before="
-          + beforeCount + " after=" + afterCount);
+      assertTrue(afterCount > beforeCount,
+	  "Registering on process should add devices: before=" + beforeCount + " after=" + afterCount);
 
       // Devices should be findable by tag on the process
       String firstTag = gen.getEntries().get(0).getTagNumber();
@@ -332,7 +329,7 @@ class InstrumentScheduleGeneratorTest extends neqsim.NeqSimTest {
       List<InstrumentEntry> pressureEntries = gen.getEntriesByType(MeasuredVariable.PRESSURE);
       assertTrue(pressureEntries.size() > 0, "Should have pressure entries");
       for (InstrumentEntry e : pressureEntries) {
-        assertEquals(MeasuredVariable.PRESSURE, e.getMeasuredVariable());
+	assertEquals(MeasuredVariable.PRESSURE, e.getMeasuredVariable());
       }
 
       int ptCount = gen.getCountByType(MeasuredVariable.PRESSURE);
@@ -356,8 +353,7 @@ class InstrumentScheduleGeneratorTest extends neqsim.NeqSimTest {
       gen.generate();
 
       List<MeasurementDeviceInterface> devices = gen.getCreatedDevices();
-      assertEquals(gen.getInstrumentCount(), devices.size(),
-          "Created devices should match instrument count");
+      assertEquals(gen.getInstrumentCount(), devices.size(), "Created devices should match instrument count");
     }
   }
 
@@ -422,30 +418,28 @@ class InstrumentScheduleGeneratorTest extends neqsim.NeqSimTest {
     @Test
     void testInstrumentScheduleInStudyClassA() {
       assertTrue(StudyClass.CLASS_A.requires(StudyClass.DeliverableType.INSTRUMENT_SCHEDULE),
-          "Class A should require instrument schedule");
+	  "Class A should require instrument schedule");
     }
 
     @Test
     void testInstrumentScheduleInStudyClassB() {
       assertTrue(StudyClass.CLASS_B.requires(StudyClass.DeliverableType.INSTRUMENT_SCHEDULE),
-          "Class B should require instrument schedule");
+	  "Class B should require instrument schedule");
     }
 
     @Test
     void testInstrumentScheduleNotInStudyClassC() {
       assertFalse(StudyClass.CLASS_C.requires(StudyClass.DeliverableType.INSTRUMENT_SCHEDULE),
-          "Class C should not require instrument schedule");
+	  "Class C should not require instrument schedule");
     }
 
     @Test
     void testPackageGeneratesInstrumentSchedule() {
       ProcessSystem process = buildSeparatorProcess();
-      EngineeringDeliverablesPackage pkg =
-          new EngineeringDeliverablesPackage(process, StudyClass.CLASS_A);
+      EngineeringDeliverablesPackage pkg = new EngineeringDeliverablesPackage(process, StudyClass.CLASS_A);
       pkg.generate();
 
-      assertNotNull(pkg.getInstrumentSchedule(),
-          "Class A package should generate instrument schedule");
+      assertNotNull(pkg.getInstrumentSchedule(), "Class A package should generate instrument schedule");
       assertTrue(pkg.getInstrumentSchedule().isGenerated());
       assertTrue(pkg.getInstrumentSchedule().getInstrumentCount() > 0);
     }
@@ -453,37 +447,30 @@ class InstrumentScheduleGeneratorTest extends neqsim.NeqSimTest {
     @Test
     void testPackageJsonIncludesInstrumentSchedule() {
       ProcessSystem process = buildSeparatorProcess();
-      EngineeringDeliverablesPackage pkg =
-          new EngineeringDeliverablesPackage(process, StudyClass.CLASS_A);
+      EngineeringDeliverablesPackage pkg = new EngineeringDeliverablesPackage(process, StudyClass.CLASS_A);
       pkg.generate();
 
       String json = pkg.toJson();
-      assertTrue(json.contains("instrumentSchedule"),
-          "Package JSON should include instrument schedule section");
-      assertTrue(json.contains("PT-"),
-          "Package JSON should contain PT tags from instrument schedule");
+      assertTrue(json.contains("instrumentSchedule"), "Package JSON should include instrument schedule section");
+      assertTrue(json.contains("PT-"), "Package JSON should contain PT tags from instrument schedule");
     }
 
     @Test
     void testPackageClassBIncludesInstrumentSchedule() {
       ProcessSystem process = buildSeparatorProcess();
-      EngineeringDeliverablesPackage pkg =
-          new EngineeringDeliverablesPackage(process, StudyClass.CLASS_B);
+      EngineeringDeliverablesPackage pkg = new EngineeringDeliverablesPackage(process, StudyClass.CLASS_B);
       pkg.generate();
 
-      assertNotNull(pkg.getInstrumentSchedule(),
-          "Class B should also generate instrument schedule");
+      assertNotNull(pkg.getInstrumentSchedule(), "Class B should also generate instrument schedule");
     }
 
     @Test
     void testPackageClassCNoInstrumentSchedule() {
       ProcessSystem process = buildSeparatorProcess();
-      EngineeringDeliverablesPackage pkg =
-          new EngineeringDeliverablesPackage(process, StudyClass.CLASS_C);
+      EngineeringDeliverablesPackage pkg = new EngineeringDeliverablesPackage(process, StudyClass.CLASS_C);
       pkg.generate();
 
-      assertTrue(pkg.getInstrumentSchedule() == null,
-          "Class C should not generate instrument schedule");
+      assertTrue(pkg.getInstrumentSchedule() == null, "Class C should not generate instrument schedule");
     }
 
     @Test
@@ -491,13 +478,11 @@ class InstrumentScheduleGeneratorTest extends neqsim.NeqSimTest {
       ProcessSystem process = buildSeparatorProcess();
       int beforeCount = process.getMeasurementDevices().size();
 
-      EngineeringDeliverablesPackage pkg =
-          new EngineeringDeliverablesPackage(process, StudyClass.CLASS_A);
+      EngineeringDeliverablesPackage pkg = new EngineeringDeliverablesPackage(process, StudyClass.CLASS_A);
       pkg.generate();
 
       int afterCount = process.getMeasurementDevices().size();
-      assertTrue(afterCount > beforeCount,
-          "Package generation should register instruments on process");
+      assertTrue(afterCount > beforeCount, "Package generation should register instruments on process");
     }
   }
 
@@ -529,12 +514,11 @@ class InstrumentScheduleGeneratorTest extends neqsim.NeqSimTest {
       List<InstrumentEntry> sepEntries = gen.getEntriesForEquipment("3-Phase Sep");
       int levelCount = 0;
       for (InstrumentEntry e : sepEntries) {
-        if (e.getMeasuredVariable() == MeasuredVariable.LEVEL) {
-          levelCount++;
-        }
+	if (e.getMeasuredVariable() == MeasuredVariable.LEVEL) {
+	  levelCount++;
+	}
       }
-      assertTrue(levelCount >= 2,
-          "Three-phase separator should have at least 2 level transmitters (oil + water)");
+      assertTrue(levelCount >= 2, "Three-phase separator should have at least 2 level transmitters (oil + water)");
     }
   }
 
@@ -550,7 +534,7 @@ class InstrumentScheduleGeneratorTest extends neqsim.NeqSimTest {
       List<InstrumentEntry> coolerEntries = gen.getEntriesForEquipment("After Cooler");
       assertTrue(coolerEntries.size() >= 1, "Cooler should have at least 1 instrument");
       assertEquals(MeasuredVariable.TEMPERATURE, coolerEntries.get(0).getMeasuredVariable(),
-          "Cooler instrument should be temperature");
+	  "Cooler instrument should be temperature");
     }
   }
 
@@ -566,7 +550,7 @@ class InstrumentScheduleGeneratorTest extends neqsim.NeqSimTest {
       List<InstrumentEntry> valveEntries = gen.getEntriesForEquipment("Gas CV");
       assertTrue(valveEntries.size() >= 1, "Valve should have at least 1 instrument");
       assertEquals(MeasuredVariable.PRESSURE, valveEntries.get(0).getMeasuredVariable(),
-          "Valve instrument should be pressure");
+	  "Valve instrument should be pressure");
     }
   }
 }

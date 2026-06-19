@@ -40,8 +40,8 @@ import neqsim.process.util.monitor.KPIDashboard;
  * <pre>
  * testRunner.printHeader();
  * testRunner.batch().add("Normal Startup", normalScenario, "System Startup", 30.0, 1.0)
- *     .add("Manual ESD", esdScenario, "ESD Level 1", 25.0, 0.5).addDelayed("High Pressure",
- *         highPressureScenario, "ESD Level 1", 8000, "HIGH PRESSURE DETECTED", 30.0, 1.0)
+ *     .add("Manual ESD", esdScenario, "ESD Level 1", 25.0, 0.5)
+ *     .addDelayed("High Pressure", highPressureScenario, "ESD Level 1", 8000, "HIGH PRESSURE DETECTED", 30.0, 1.0)
  *     .execute();
  * testRunner.displayDashboard();
  * </pre>
@@ -77,20 +77,19 @@ public class ScenarioTestRunner {
   /**
    * Executes a scenario with automatic logic activation, KPI collection, and reset.
    *
-   * @param scenarioName the display name for the scenario
-   * @param scenario the safety scenario to execute
+   * @param scenarioName    the display name for the scenario
+   * @param scenario        the safety scenario to execute
    * @param logicToActivate the name of the logic sequence to activate (can be null)
-   * @param duration the simulation duration in seconds
-   * @param timeStep the time step in seconds
+   * @param duration        the simulation duration in seconds
+   * @param timeStep        the time step in seconds
    * @return the scenario execution summary
    */
-  public ScenarioExecutionSummary executeScenario(String scenarioName,
-      ProcessSafetyScenario scenario, String logicToActivate, double duration, double timeStep) {
+  public ScenarioExecutionSummary executeScenario(String scenarioName, ProcessSafetyScenario scenario,
+      String logicToActivate, double duration, double timeStep) {
     scenarioCounter++;
 
     // Print scenario header
-    System.out
-        .println("\n### SCENARIO " + scenarioCounter + ": " + scenarioName.toUpperCase() + " ###");
+    System.out.println("\n### SCENARIO " + scenarioCounter + ": " + scenarioName.toUpperCase() + " ###");
 
     // Activate logic if specified
     if (logicToActivate != null && !logicToActivate.isEmpty()) {
@@ -98,8 +97,7 @@ public class ScenarioTestRunner {
     }
 
     // Run scenario
-    ScenarioExecutionSummary summary =
-        runner.runScenario(scenarioName, scenario, duration, timeStep);
+    ScenarioExecutionSummary summary = runner.runScenario(scenarioName, scenario, duration, timeStep);
 
     // Print results
     summary.printResults();
@@ -107,8 +105,7 @@ public class ScenarioTestRunner {
     // Collect KPIs if available
     if (summary.getKPI() != null) {
       // Shorten dashboard key if needed (max 15 chars for formatting)
-      String dashboardKey =
-          scenarioName.length() > 15 ? scenarioName.substring(0, 15) : scenarioName;
+      String dashboardKey = scenarioName.length() > 15 ? scenarioName.substring(0, 15) : scenarioName;
       dashboard.addScenario(dashboardKey, summary.getKPI());
     }
 
@@ -122,13 +119,13 @@ public class ScenarioTestRunner {
    * Executes a scenario without activating any logic.
    *
    * @param scenarioName the display name for the scenario
-   * @param scenario the safety scenario to execute
-   * @param duration the simulation duration in seconds
-   * @param timeStep the time step in seconds
+   * @param scenario     the safety scenario to execute
+   * @param duration     the simulation duration in seconds
+   * @param timeStep     the time step in seconds
    * @return the scenario execution summary
    */
-  public ScenarioExecutionSummary executeScenario(String scenarioName,
-      ProcessSafetyScenario scenario, double duration, double timeStep) {
+  public ScenarioExecutionSummary executeScenario(String scenarioName, ProcessSafetyScenario scenario, double duration,
+      double timeStep) {
     return executeScenario(scenarioName, scenario, null, duration, timeStep);
   }
 
@@ -136,49 +133,46 @@ public class ScenarioTestRunner {
    * Executes a scenario with delayed logic activation using a background thread.
    *
    * <p>
-   * This is useful for simulating manual interventions or automatic triggers that occur after some
-   * time during the scenario.
+   * This is useful for simulating manual interventions or automatic triggers that occur after some time during the
+   * scenario.
    *
-   * @param scenarioName the display name for the scenario
-   * @param scenario the safety scenario to execute
-   * @param logicToActivate the name of the logic sequence to activate
-   * @param activationDelay the delay in milliseconds before activating logic
+   * @param scenarioName      the display name for the scenario
+   * @param scenario          the safety scenario to execute
+   * @param logicToActivate   the name of the logic sequence to activate
+   * @param activationDelay   the delay in milliseconds before activating logic
    * @param activationMessage the message to print when activating logic
-   * @param duration the simulation duration in seconds
-   * @param timeStep the time step in seconds
+   * @param duration          the simulation duration in seconds
+   * @param timeStep          the time step in seconds
    * @return the scenario execution summary
    */
   public ScenarioExecutionSummary executeScenarioWithDelayedActivation(String scenarioName,
-      ProcessSafetyScenario scenario, String logicToActivate, long activationDelay,
-      String activationMessage, double duration, double timeStep) {
+      ProcessSafetyScenario scenario, String logicToActivate, long activationDelay, String activationMessage,
+      double duration, double timeStep) {
     scenarioCounter++;
 
     // Print scenario header
-    System.out
-        .println("\n### SCENARIO " + scenarioCounter + ": " + scenarioName.toUpperCase() + " ###");
+    System.out.println("\n### SCENARIO " + scenarioCounter + ": " + scenarioName.toUpperCase() + " ###");
 
     // Start background thread for delayed activation
     new Thread(() -> {
       try {
-        Thread.sleep(activationDelay);
-        System.out.println(">>> " + activationMessage + " <<<");
-        runner.activateLogic(logicToActivate);
+	Thread.sleep(activationDelay);
+	System.out.println(">>> " + activationMessage + " <<<");
+	runner.activateLogic(logicToActivate);
       } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
+	Thread.currentThread().interrupt();
       }
     }).start();
 
     // Run scenario
-    ScenarioExecutionSummary summary =
-        runner.runScenario(scenarioName, scenario, duration, timeStep);
+    ScenarioExecutionSummary summary = runner.runScenario(scenarioName, scenario, duration, timeStep);
 
     // Print results
     summary.printResults();
 
     // Collect KPIs if available
     if (summary.getKPI() != null) {
-      String dashboardKey =
-          scenarioName.length() > 15 ? scenarioName.substring(0, 15) : scenarioName;
+      String dashboardKey = scenarioName.length() > 15 ? scenarioName.substring(0, 15) : scenarioName;
       dashboard.addScenario(dashboardKey, summary.getKPI());
     }
 
@@ -237,10 +231,8 @@ public class ScenarioTestRunner {
    * This provides a fluent API for defining and executing multiple scenarios:
    *
    * <pre>
-   * testRunner.batch().add("Scenario 1", scenario1, "Logic 1", 30.0, 1.0)
-   *     .add("Scenario 2", scenario2, null, 25.0, 0.5)
-   *     .addDelayed("Scenario 3", scenario3, "ESD Logic", 5000, "ESD TRIGGERED", 30.0, 1.0)
-   *     .execute();
+   * testRunner.batch().add("Scenario 1", scenario1, "Logic 1", 30.0, 1.0).add("Scenario 2", scenario2, null, 25.0, 0.5)
+   *     .addDelayed("Scenario 3", scenario3, "ESD Logic", 5000, "ESD TRIGGERED", 30.0, 1.0).execute();
    * </pre>
    *
    * @return a new batch executor
@@ -253,8 +245,8 @@ public class ScenarioTestRunner {
    * Fluent builder for batch execution of multiple scenarios.
    *
    * <p>
-   * This inner class provides a convenient way to define and execute multiple scenarios in sequence
-   * with automatic header printing and dashboard display at the end.
+   * This inner class provides a convenient way to define and execute multiple scenarios in sequence with automatic
+   * header printing and dashboard display at the end.
    */
   public class BatchExecutor {
     private final List<ScenarioConfig> scenarios = new ArrayList<>();
@@ -262,15 +254,15 @@ public class ScenarioTestRunner {
     /**
      * Adds a standard scenario to the batch.
      *
-     * @param name the display name for the scenario
-     * @param scenario the safety scenario to execute
+     * @param name            the display name for the scenario
+     * @param scenario        the safety scenario to execute
      * @param logicToActivate the name of the logic to activate (can be null)
-     * @param duration the simulation duration in seconds
-     * @param timeStep the time step in seconds
+     * @param duration        the simulation duration in seconds
+     * @param timeStep        the time step in seconds
      * @return this batch executor for method chaining
      */
-    public BatchExecutor add(String name, ProcessSafetyScenario scenario, String logicToActivate,
-        double duration, double timeStep) {
+    public BatchExecutor add(String name, ProcessSafetyScenario scenario, String logicToActivate, double duration,
+	double timeStep) {
       scenarios.add(new ScenarioConfig(name, scenario, logicToActivate, duration, timeStep));
       return this;
     }
@@ -278,20 +270,19 @@ public class ScenarioTestRunner {
     /**
      * Adds a scenario with delayed logic activation to the batch.
      *
-     * @param name the display name for the scenario
-     * @param scenario the safety scenario to execute
-     * @param logicToActivate the name of the logic to activate
-     * @param activationDelay the delay in milliseconds before activating logic
+     * @param name              the display name for the scenario
+     * @param scenario          the safety scenario to execute
+     * @param logicToActivate   the name of the logic to activate
+     * @param activationDelay   the delay in milliseconds before activating logic
      * @param activationMessage the message to print when activating logic
-     * @param duration the simulation duration in seconds
-     * @param timeStep the time step in seconds
+     * @param duration          the simulation duration in seconds
+     * @param timeStep          the time step in seconds
      * @return this batch executor for method chaining
      */
-    public BatchExecutor addDelayed(String name, ProcessSafetyScenario scenario,
-        String logicToActivate, long activationDelay, String activationMessage, double duration,
-        double timeStep) {
-      scenarios.add(new ScenarioConfig(name, scenario, logicToActivate, duration, timeStep,
-          activationDelay, activationMessage));
+    public BatchExecutor addDelayed(String name, ProcessSafetyScenario scenario, String logicToActivate,
+	long activationDelay, String activationMessage, double duration, double timeStep) {
+      scenarios.add(
+	  new ScenarioConfig(name, scenario, logicToActivate, duration, timeStep, activationDelay, activationMessage));
       return this;
     }
 
@@ -302,13 +293,12 @@ public class ScenarioTestRunner {
       printHeader();
 
       for (ScenarioConfig config : scenarios) {
-        if (config.isDelayed()) {
-          executeScenarioWithDelayedActivation(config.name, config.scenario, config.logicToActivate,
-              config.activationDelay, config.activationMessage, config.duration, config.timeStep);
-        } else {
-          executeScenario(config.name, config.scenario, config.logicToActivate, config.duration,
-              config.timeStep);
-        }
+	if (config.isDelayed()) {
+	  executeScenarioWithDelayedActivation(config.name, config.scenario, config.logicToActivate,
+	      config.activationDelay, config.activationMessage, config.duration, config.timeStep);
+	} else {
+	  executeScenario(config.name, config.scenario, config.logicToActivate, config.duration, config.timeStep);
+	}
       }
 
       displayDashboard();
@@ -319,13 +309,12 @@ public class ScenarioTestRunner {
      */
     public void executeWithoutWrapper() {
       for (ScenarioConfig config : scenarios) {
-        if (config.isDelayed()) {
-          executeScenarioWithDelayedActivation(config.name, config.scenario, config.logicToActivate,
-              config.activationDelay, config.activationMessage, config.duration, config.timeStep);
-        } else {
-          executeScenario(config.name, config.scenario, config.logicToActivate, config.duration,
-              config.timeStep);
-        }
+	if (config.isDelayed()) {
+	  executeScenarioWithDelayedActivation(config.name, config.scenario, config.logicToActivate,
+	      config.activationDelay, config.activationMessage, config.duration, config.timeStep);
+	} else {
+	  executeScenario(config.name, config.scenario, config.logicToActivate, config.duration, config.timeStep);
+	}
       }
     }
   }
@@ -343,8 +332,8 @@ public class ScenarioTestRunner {
     final String activationMessage;
 
     // Standard scenario constructor
-    ScenarioConfig(String name, ProcessSafetyScenario scenario, String logicToActivate,
-        double duration, double timeStep) {
+    ScenarioConfig(String name, ProcessSafetyScenario scenario, String logicToActivate, double duration,
+	double timeStep) {
       this.name = name;
       this.scenario = scenario;
       this.logicToActivate = logicToActivate;
@@ -355,8 +344,8 @@ public class ScenarioTestRunner {
     }
 
     // Delayed activation constructor
-    ScenarioConfig(String name, ProcessSafetyScenario scenario, String logicToActivate,
-        double duration, double timeStep, long activationDelay, String activationMessage) {
+    ScenarioConfig(String name, ProcessSafetyScenario scenario, String logicToActivate, double duration,
+	double timeStep, long activationDelay, String activationMessage) {
       this.name = name;
       this.scenario = scenario;
       this.logicToActivate = logicToActivate;

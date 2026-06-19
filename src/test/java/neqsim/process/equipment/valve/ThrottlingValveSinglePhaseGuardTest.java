@@ -11,9 +11,8 @@ import neqsim.thermo.system.SystemPrEos;
  * Regression tests for the throttling valve's single-phase multi-phase-check guard.
  *
  * <p>
- * Without the guard, large pressure drops on a single-phase gas inlet near the cricondenbar can
- * trip the PR #2099 supplementary stability trials inside the PHflash Newton loop, producing NaN
- * Z-factors and NaN downstream properties.
+ * Without the guard, large pressure drops on a single-phase gas inlet near the cricondenbar can trip the PR #2099
+ * supplementary stability trials inside the PHflash Newton loop, producing NaN Z-factors and NaN downstream properties.
  */
 public class ThrottlingValveSinglePhaseGuardTest {
 
@@ -48,9 +47,8 @@ public class ThrottlingValveSinglePhaseGuardTest {
     outFluid.initProperties();
     double outRho = outFluid.getPhase(0).getDensity();
     assertTrue(Double.isFinite(outT), "valve outlet temperature must be finite (was " + outT + ")");
-    assertTrue(Math.abs(outP - 20.0) < 1.0e-3,
-        "valve outlet pressure must equal setpoint (was " + outP + ")");
+    assertTrue(Math.abs(outP - 20.0) < 1.0e-3, "valve outlet pressure must equal setpoint (was " + outP + ")");
     assertTrue(Double.isFinite(outRho) && outRho > 0.0,
-        "valve outlet density must be finite and positive (was " + outRho + ")");
+	"valve outlet density must be finite and positive (was " + outRho + ")");
   }
 }

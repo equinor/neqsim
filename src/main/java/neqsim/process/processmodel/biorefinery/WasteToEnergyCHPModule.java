@@ -18,9 +18,9 @@ import neqsim.thermo.system.SystemSrkEos;
  * Pre-built biorefinery module for waste-to-energy combined heat and power (CHP).
  *
  * <p>
- * Composes an {@link AnaerobicDigester}, biogas cleanup, and a CHP engine model into a complete
- * waste-to-energy process. The module takes a substrate feed and produces electricity and useful
- * heat outputs, with associated efficiencies and emissions.
+ * Composes an {@link AnaerobicDigester}, biogas cleanup, and a CHP engine model into a complete waste-to-energy
+ * process. The module takes a substrate feed and produces electricity and useful heat outputs, with associated
+ * efficiencies and emissions.
  * </p>
  *
  * <p>
@@ -78,8 +78,7 @@ public class WasteToEnergyCHPModule extends ProcessModule {
   /** Hydraulic retention time in days. */
   private double hydraulicRetentionTimeDays = 25.0;
   /** Substrate type for digester. */
-  private AnaerobicDigester.SubstrateType substrateType =
-      AnaerobicDigester.SubstrateType.FOOD_WASTE;
+  private AnaerobicDigester.SubstrateType substrateType = AnaerobicDigester.SubstrateType.FOOD_WASTE;
 
   // ── Engine exhaust temperature ──
   /** Exhaust gas temperature after heat recovery in Celsius. */
@@ -279,8 +278,7 @@ public class WasteToEnergyCHPModule extends ProcessModule {
     logger.info("Running WasteToEnergyCHPModule: " + getName());
 
     if (feedStream == null) {
-      throw new RuntimeException(
-          "WasteToEnergyCHPModule: feed stream not set. Call setFeedStream() first.");
+      throw new RuntimeException("WasteToEnergyCHPModule: feed stream not set. Call setFeedStream() first.");
     }
 
     // ── Step 1: Anaerobic Digestion ──
@@ -391,7 +389,6 @@ public class WasteToEnergyCHPModule extends ProcessModule {
    * @return JSON string
    */
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(getResults());
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(getResults());
   }
 }

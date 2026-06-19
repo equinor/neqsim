@@ -63,7 +63,7 @@ public class H2SScavengerTest extends neqsim.NeqSimTest {
 
     // Verify H2S was removed
     assertTrue(scavenger.getOutletH2SConcentration() < scavenger.getInletH2SConcentration(),
-        "Outlet H2S should be less than inlet");
+	"Outlet H2S should be less than inlet");
     assertTrue(scavenger.getH2SRemovalEfficiency() > 0, "Removal efficiency should be positive");
     assertTrue(scavenger.getH2SRemoved("kg/hr") > 0, "H2S removed should be positive");
   }
@@ -82,10 +82,8 @@ public class H2SScavengerTest extends neqsim.NeqSimTest {
       logger.info("\n=== " + type.getDisplayName() + " ===");
       logger.info("Base Stoichiometry: " + type.getBaseStoichiometry() + " lb/lb H2S");
       logger.info("Base Efficiency: " + (type.getBaseEfficiency() * 100) + "%");
-      System.out
-          .println("Achieved Efficiency: " + scavenger.getH2SRemovalEfficiencyPercent() + "%");
-      logger.info(
-          "Outlet H2S: " + String.format("%.1f", scavenger.getOutletH2SConcentration()) + " ppm");
+      System.out.println("Achieved Efficiency: " + scavenger.getH2SRemovalEfficiencyPercent() + "%");
+      logger.info("Outlet H2S: " + String.format("%.1f", scavenger.getOutletH2SConcentration()) + " ppm");
 
       assertTrue(scavenger.getH2SRemovalEfficiency() >= 0, "Efficiency should be non-negative");
       assertTrue(scavenger.getH2SRemovalEfficiency() <= 1, "Efficiency should not exceed 100%");
@@ -117,7 +115,7 @@ public class H2SScavengerTest extends neqsim.NeqSimTest {
 
     // Should achieve some removal (correlation is approximate)
     assertTrue(scavenger.getOutletH2SConcentration() < scavenger.getInletH2SConcentration(),
-        "Should achieve some removal");
+	"Should achieve some removal");
   }
 
   @Test
@@ -141,8 +139,7 @@ public class H2SScavengerTest extends neqsim.NeqSimTest {
 
     scavenger.run();
 
-    assertEquals(0.0, scavenger.getInletH2SConcentration(), 1e-6,
-        "Inlet H2S should be zero for sweet gas");
+    assertEquals(0.0, scavenger.getInletH2SConcentration(), 1e-6, "Inlet H2S should be zero for sweet gas");
     assertEquals(0.0, scavenger.getH2SRemoved("kg/hr"), 1e-6, "No H2S should be removed");
   }
 
@@ -151,7 +148,7 @@ public class H2SScavengerTest extends neqsim.NeqSimTest {
   void testContactTimeEffect() {
     logger.info("\n=== Contact Time Effect Test ===");
 
-    double[] contactTimes = {5.0, 15.0, 30.0, 60.0, 120.0};
+    double[] contactTimes = { 5.0, 15.0, 30.0, 60.0, 120.0 };
 
     for (double ct : contactTimes) {
       H2SScavenger scavenger = new H2SScavenger("Scavenger", feedStream);
@@ -162,8 +159,8 @@ public class H2SScavengerTest extends neqsim.NeqSimTest {
 
       scavenger.run();
 
-      logger.info(String.format("Contact Time: %.0f s -> Efficiency: %.1f%%", ct,
-          scavenger.getH2SRemovalEfficiencyPercent()));
+      logger.info(
+	  String.format("Contact Time: %.0f s -> Efficiency: %.1f%%", ct, scavenger.getH2SRemovalEfficiencyPercent()));
     }
   }
 
@@ -172,7 +169,7 @@ public class H2SScavengerTest extends neqsim.NeqSimTest {
   void testMixingEfficiencyEffect() {
     logger.info("\n=== Mixing Efficiency Effect Test ===");
 
-    double[] mixingEfficiencies = {0.3, 0.5, 0.7, 0.85, 1.0};
+    double[] mixingEfficiencies = { 0.3, 0.5, 0.7, 0.85, 1.0 };
 
     for (double me : mixingEfficiencies) {
       H2SScavenger scavenger = new H2SScavenger("Scavenger", feedStream);
@@ -184,7 +181,7 @@ public class H2SScavengerTest extends neqsim.NeqSimTest {
       scavenger.run();
 
       logger.info(String.format("Mixing Efficiency: %.0f%% -> Removal: %.1f%%", me * 100,
-          scavenger.getH2SRemovalEfficiencyPercent()));
+	  scavenger.getH2SRemovalEfficiencyPercent()));
     }
   }
 
@@ -208,8 +205,7 @@ public class H2SScavengerTest extends neqsim.NeqSimTest {
     logger.info("Treated Gas H2S: " + scavenger.getOutletH2SConcentration() + " ppm");
 
     // Verify outlet stream has reduced H2S
-    double outletH2S =
-        scavenger.getOutletStream().getFluid().getPhase(0).getComponent("H2S").getx() * 1e6;
+    double outletH2S = scavenger.getOutletStream().getFluid().getPhase(0).getComponent("H2S").getx() * 1e6;
     logger.info("Outlet Stream H2S (from fluid): " + outletH2S + " ppm");
 
     assertTrue(outletH2S < 5000, "Outlet H2S should be reduced from inlet 5000 ppm");

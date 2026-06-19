@@ -20,8 +20,7 @@ class BioprocessRunnerTest {
     String result = BioprocessRunner.run(ExampleCatalog.bioprocessAnaerobicDigestion());
     assertNotNull(result);
     JsonObject obj = JsonParser.parseString(result).getAsJsonObject();
-    assertEquals("success", obj.get("status").getAsString(),
-        "Anaerobic digestion failed: " + result);
+    assertEquals("success", obj.get("status").getAsString(), "Anaerobic digestion failed: " + result);
   }
 
   @Test

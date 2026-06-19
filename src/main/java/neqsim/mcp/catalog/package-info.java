@@ -2,9 +2,8 @@
  * Catalog classes for NeqSim MCP (Model Context Protocol) integration.
  *
  * <p>
- * Provides example JSON inputs and JSON schemas for all MCP tools. These are designed to be served
- * as MCP Resources (read-only, URI-addressable content) that language models can read to learn the
- * input/output format of each tool.
+ * Provides example JSON inputs and JSON schemas for all MCP tools. These are designed to be served as MCP Resources
+ * (read-only, URI-addressable content) that language models can read to learn the input/output format of each tool.
  * </p>
  *
  * <h2>MCP Resource URIs:</h2>

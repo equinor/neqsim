@@ -91,15 +91,14 @@ public class ChemEq implements java.io.Serializable {
    * Constructor for ChemEq.
    * </p>
    *
-   * @param T a double
-   * @param P a double
-   * @param A_matrix an array of type double
-   * @param n_mol an array of type double
-   * @param chem_ref an array of type double
+   * @param T         a double
+   * @param P         a double
+   * @param A_matrix  an array of type double
+   * @param n_mol     an array of type double
+   * @param chem_ref  an array of type double
    * @param b_element an array of type double
    */
-  public ChemEq(double T, double P, double[][] A_matrix, double[] n_mol, double[] chem_ref,
-      double[] b_element) {
+  public ChemEq(double T, double P, double[][] A_matrix, double[] n_mol, double[] chem_ref, double[] b_element) {
     this.T = T;
     this.P = P;
     this.A_matrix = A_matrix;
@@ -155,8 +154,8 @@ public class ChemEq implements java.io.Serializable {
    * Constructor for ChemEq.
    * </p>
    *
-   * @param T a double
-   * @param P a double
+   * @param T        a double
+   * @param P        a double
    * @param A_matrix an array of type double
    */
   public ChemEq(double T, double P, double[][] A_matrix) {
@@ -195,20 +194,20 @@ public class ChemEq implements java.io.Serializable {
 
     for (int j = 0; j < NELE; j++) {
       for (int i = 0; i < NELE; i++) {
-        for (int k = 0; k < NSPEC; k++) {
-          sum += A_matrix[i][k] * A_matrix[j][k] * n_mol[k];
-        }
+	for (int k = 0; k < NSPEC; k++) {
+	  sum += A_matrix[i][k] * A_matrix[j][k] * n_mol[k];
+	}
 
-        matrix[j][i] = sum;
-        sum = 0;
+	matrix[j][i] = sum;
+	sum = 0;
       }
 
       for (int k = 0; k < NSPEC; k++) {
-        second_term[j] += A_matrix[j][k] * n_mol[k] * chem_pot[k];
+	second_term[j] += A_matrix[j][k] * n_mol[k] * chem_pot[k];
       }
 
       for (int i = 0; i < NSPEC; i++) {
-        b_cal[j] += A_matrix[j][i] * n_mol[i];
+	b_cal[j] += A_matrix[j][i] * n_mol[i];
       }
       matrix[j][NELE] = b_cal[j];
       b_vector[j] = second_term[j] + b_element[j] - b_cal[j];
@@ -231,7 +230,7 @@ public class ChemEq implements java.io.Serializable {
       btest[i][0] = b_vector[i];
 
       for (int j = 0; j < NNOT; j++) {
-        logger.trace("matrix: " + i + " " + j + " " + matrix[i][j]);
+	logger.trace("matrix: " + i + " " + j + " " + matrix[i][j]);
       }
     }
 
@@ -250,7 +249,7 @@ public class ChemEq implements java.io.Serializable {
 
     for (int j = 0; j < NSPEC; j++) {
       for (int k = 0; k < NELE; k++) {
-        sum += A_matrix[k][j] * phi[k];
+	sum += A_matrix[k][j] * phi[k];
       }
       d_n[j] = n_mol[j] * (sum + u_u - chem_pot[j]);
       logger.debug("dn[" + j + "] = " + d_n[j]);
@@ -280,17 +279,17 @@ public class ChemEq implements java.io.Serializable {
     for (i = 0; i < NSPEC; i++) {
       n_omega[i] = n_mol[i] + d_n[i];
       if (n_omega[i] < 0) {
-        check = i;
-        step = innerStep(i, n_omega, check, step);
-        logger.debug("step2 ... " + step);
-        return step;
+	check = i;
+	step = innerStep(i, n_omega, check, step);
+	logger.debug("step2 ... " + step);
+	return step;
       } else {
-        // Protect against log(0)
-        double safeOmega = Math.max(MIN_MOLES, n_omega[i]);
-        double safeMoles = Math.max(MIN_MOLES, n_mol[i]);
-        double safeNt = Math.max(MIN_MOLES, n_t);
-        chem_pot_omega[i] = R * T * (chem_ref[i] + Math.log(safeOmega / safeNt));
-        chem_pot[i] = R * T * (chem_ref[i] + Math.log(safeMoles / safeNt));
+	// Protect against log(0)
+	double safeOmega = Math.max(MIN_MOLES, n_omega[i]);
+	double safeMoles = Math.max(MIN_MOLES, n_mol[i]);
+	double safeNt = Math.max(MIN_MOLES, n_t);
+	chem_pot_omega[i] = R * T * (chem_ref[i] + Math.log(safeOmega / safeNt));
+	chem_pot[i] = R * T * (chem_ref[i] + Math.log(safeMoles / safeNt));
       }
     }
 
@@ -303,12 +302,12 @@ public class ChemEq implements java.io.Serializable {
     if (G_1 > 0) {
       G_0 = 0;
       for (i = 0; i < NSPEC; i++) {
-        G_0 += chem_pot[i] * d_n[i];
+	G_0 += chem_pot[i] * d_n[i];
       }
       // Protect against division by zero when G_0 ≈ G_1
       double denominator = G_0 - G_1;
       if (Math.abs(denominator) > 1e-30) {
-        step = G_0 / denominator;
+	step = G_0 / denominator;
       }
       // System.out.println("step4 ... " + step);
     }
@@ -325,9 +324,9 @@ public class ChemEq implements java.io.Serializable {
    * </p>
    *
    * @param startIndex starting index for loop (fixes bug where instance field was used)
-   * @param n_omega an array of type double
-   * @param check a int
-   * @param step a double
+   * @param n_omega    an array of type double
+   * @param check      a int
+   * @param step       a double
    * @return a double
    */
   public double innerStep(int startIndex, double[] n_omega, int check, double step) {
@@ -335,20 +334,20 @@ public class ChemEq implements java.io.Serializable {
       // Use startIndex parameter instead of undefined instance field 'i'
       agemo = (-n_mol[startIndex] / d_n[startIndex]) * (1 - 0.01);
       for (int i = check; i < NSPEC; i++) {
-        n_omega[i] = n_mol[i] + d_n[i];
+	n_omega[i] = n_mol[i] + d_n[i];
 
-        if (n_omega[i] < 0) {
-          double tempStep = (-n_mol[i] / d_n[i]) * (1 - 0.01);
-          if (tempStep < agemo) {
-            agemo = tempStep;
-          }
-        }
+	if (n_omega[i] < 0) {
+	  double tempStep = (-n_mol[i] / d_n[i]) * (1 - 0.01);
+	  if (tempStep < agemo) {
+	    agemo = tempStep;
+	  }
+	}
       }
 
       step = agemo;
 
       if (step > 1) {
-        step = 1;
+	step = 1;
       }
     }
     return step;
@@ -359,9 +358,9 @@ public class ChemEq implements java.io.Serializable {
    * solve.
    * </p>
    *
-   * @param T a double
-   * @param P a double
-   * @param n_mol an array of type double
+   * @param T        a double
+   * @param P        a double
+   * @param n_mol    an array of type double
    * @param chem_ref an array of type double
    */
   public void solve(double T, double P, double[] n_mol, double[] chem_ref) {
@@ -401,7 +400,7 @@ public class ChemEq implements java.io.Serializable {
     phi = new double[NELE];
 
     // Initialize phi with default Lagrange multiplier estimates (bounds-checked)
-    double[] defaultPhi = {-9.7851, -12.969, -15.222, -10.0, -10.0};
+    double[] defaultPhi = { -9.7851, -12.969, -15.222, -10.0, -10.0 };
     for (int i = 0; i < NELE && i < defaultPhi.length; i++) {
       phi[i] = defaultPhi[i];
     }
@@ -428,8 +427,8 @@ public class ChemEq implements java.io.Serializable {
    * </p>
    *
    * <p>
-   * Iteratively solves the chemical equilibrium using Newton-Raphson method. Continues until
-   * relative change in moles is below tolerance or max iterations reached.
+   * Iteratively solves the chemical equilibrium using Newton-Raphson method. Continues until relative change in moles
+   * is below tolerance or max iterations reached.
    * </p>
    */
   public void solve() {
@@ -449,30 +448,29 @@ public class ChemEq implements java.io.Serializable {
       // Check if any component needs updating
       boolean needsUpdate = false;
       for (int i = 0; i < NSPEC; i++) {
-        double safeMoles = Math.max(MIN_MOLES, Math.abs(n_mol[i]));
-        double relChange = Math.abs(d_n[i]) / safeMoles;
-        error += relChange;
-        if (relChange > tolerance) {
-          needsUpdate = true;
-        }
-        logger.trace(n_mol[i] + "  prove korreksjon  " + d_n[i]);
+	double safeMoles = Math.max(MIN_MOLES, Math.abs(n_mol[i]));
+	double relChange = Math.abs(d_n[i]) / safeMoles;
+	error += relChange;
+	if (relChange > tolerance) {
+	  needsUpdate = true;
+	}
+	logger.trace(n_mol[i] + "  prove korreksjon  " + d_n[i]);
       }
 
       if (needsUpdate) {
-        step = step();
-        Gibbs = 0;
-        for (int j = 0; j < NSPEC; j++) {
-          n_mol[j] += step * d_n[j];
-          // Ensure positive moles
-          n_mol[j] = Math.max(MIN_MOLES, n_mol[j]);
-          Gibbs += n_mol[j] * chem_pot[j];
-        }
-        logger.debug("Iteration " + iteration + ", Gibbs: " + Gibbs + ", error: " + error);
+	step = step();
+	Gibbs = 0;
+	for (int j = 0; j < NSPEC; j++) {
+	  n_mol[j] += step * d_n[j];
+	  // Ensure positive moles
+	  n_mol[j] = Math.max(MIN_MOLES, n_mol[j]);
+	  Gibbs += n_mol[j] * chem_pot[j];
+	}
+	logger.debug("Iteration " + iteration + ", Gibbs: " + Gibbs + ", error: " + error);
       }
     } while (error > overallTolerance && iteration < maxIterations);
     if (iteration >= maxIterations) {
-      logger
-          .debug("ChemEq.solve(): max iterations (" + maxIterations + ") reached, error: " + error);
+      logger.debug("ChemEq.solve(): max iterations (" + maxIterations + ") reached, error: " + error);
     }
 
     for (int j = 0; j < NSPEC; j++) {

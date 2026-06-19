@@ -6,9 +6,9 @@ import neqsim.thermo.system.SystemInterface;
  * Computes the capillary dew point temperature for multicomponent gas mixtures.
  *
  * <p>
- * The capillary dew point accounts for the Young-Laplace pressure difference across the curved
- * gas-liquid interface in a capillary or pore. The liquid phase pressure {@code P_L} differs from
- * the vapor phase pressure {@code P_V} by the capillary pressure:
+ * The capillary dew point accounts for the Young-Laplace pressure difference across the curved gas-liquid interface in
+ * a capillary or pore. The liquid phase pressure {@code P_L} differs from the vapor phase pressure {@code P_V} by the
+ * capillary pressure:
  * </p>
  *
  * <p>
@@ -16,14 +16,13 @@ import neqsim.thermo.system.SystemInterface;
  * </p>
  *
  * <p>
- * where {@code sigma} is the interfacial tension, {@code theta} is the contact angle, and {@code r}
- * is the pore radius. This shifts the dew point to higher temperatures compared to the bulk
- * (flat-interface) dew point.
+ * where {@code sigma} is the interfacial tension, {@code theta} is the contact angle, and {@code r} is the pore radius.
+ * This shifts the dew point to higher temperatures compared to the bulk (flat-interface) dew point.
  * </p>
  *
  * <p>
- * The algorithm uses the standard K-factor dew point iteration with a Poynting correction to
- * account for the pressure difference between phases:
+ * The algorithm uses the standard K-factor dew point iteration with a Poynting correction to account for the pressure
+ * difference between phases:
  * </p>
  *
  * <p>
@@ -58,7 +57,7 @@ public class CapillaryDewPointFlash extends ConstantDutyTemperatureFlash {
   /**
    * Constructor with default contact angle of 0 (perfect wetting).
    *
-   * @param system the thermodynamic system
+   * @param system      the thermodynamic system
    * @param poreRadiusM the effective pore radius in meters, must be positive
    */
   public CapillaryDewPointFlash(SystemInterface system, double poreRadiusM) {
@@ -73,12 +72,11 @@ public class CapillaryDewPointFlash extends ConstantDutyTemperatureFlash {
   /**
    * Constructor with specified contact angle.
    *
-   * @param system the thermodynamic system
-   * @param poreRadiusM the effective pore radius in meters, must be positive
+   * @param system          the thermodynamic system
+   * @param poreRadiusM     the effective pore radius in meters, must be positive
    * @param contactAngleRad the contact angle in radians (0 = perfect wetting)
    */
-  public CapillaryDewPointFlash(SystemInterface system, double poreRadiusM,
-      double contactAngleRad) {
+  public CapillaryDewPointFlash(SystemInterface system, double poreRadiusM, double contactAngleRad) {
     super(system);
     if (poreRadiusM <= 0) {
       throw new IllegalArgumentException("Pore radius must be positive, got: " + poreRadiusM);
@@ -101,8 +99,8 @@ public class CapillaryDewPointFlash extends ConstantDutyTemperatureFlash {
    * Runs the capillary dew point calculation for single-component systems.
    *
    * <p>
-   * Uses the bulk saturation point from {@link BubblePointTemperatureNoDer} and applies the
-   * linearized Kelvin temperature correction.
+   * Uses the bulk saturation point from {@link BubblePointTemperatureNoDer} and applies the linearized Kelvin
+   * temperature correction.
    * </p>
    */
   private void runSingleComponent() {
@@ -140,9 +138,9 @@ public class CapillaryDewPointFlash extends ConstantDutyTemperatureFlash {
    * Runs the capillary dew point calculation for multicomponent systems.
    *
    * <p>
-   * Based on the standard dew point K-factor iteration (same algorithm as
-   * {@link DewPointTemperatureFlash}) with an additional Poynting correction term applied to all
-   * K-factors to account for the capillary pressure difference between phases.
+   * Based on the standard dew point K-factor iteration (same algorithm as {@link DewPointTemperatureFlash}) with an
+   * additional Poynting correction term applied to all K-factors to account for the capillary pressure difference
+   * between phases.
    * </p>
    */
   private void runMultiComponent() {
@@ -167,17 +165,16 @@ public class CapillaryDewPointFlash extends ConstantDutyTemperatureFlash {
     for (int i = 0; i < system.getPhases()[1].getNumberOfComponents(); i++) {
       system.getPhases()[0].getComponent(i).setx(system.getPhases()[0].getComponent(i).getz());
       if (system.getPhases()[0].getComponent(i).getIonicCharge() != 0) {
-        system.getPhases()[0].getComponent(i).setx(1e-40);
+	system.getPhases()[0].getComponent(i).setx(1e-40);
       } else {
-        if (system.getPhases()[1].getComponent(i).getName().equals("water")) {
-          system.getPhases()[1].getComponent(i).setx(1.0);
-        } else if (system.getPhases()[1].hasComponent("water")) {
-          system.getPhases()[1].getComponent(i).setx(1.0e-10);
-        } else {
-          system.getPhases()[1].getComponent(i)
-              .setx(1.0 / system.getPhases()[0].getComponent(i).getK()
-                  * system.getPhases()[1].getComponent(i).getz());
-        }
+	if (system.getPhases()[1].getComponent(i).getName().equals("water")) {
+	  system.getPhases()[1].getComponent(i).setx(1.0);
+	} else if (system.getPhases()[1].hasComponent("water")) {
+	  system.getPhases()[1].getComponent(i).setx(1.0e-10);
+	} else {
+	  system.getPhases()[1].getComponent(i)
+	      .setx(1.0 / system.getPhases()[0].getComponent(i).getK() * system.getPhases()[1].getComponent(i).getz());
+	}
       }
     }
 
@@ -192,8 +189,7 @@ public class CapillaryDewPointFlash extends ConstantDutyTemperatureFlash {
 
     do {
       for (int i = 0; i < system.getPhases()[1].getNumberOfComponents(); i++) {
-        system.getPhases()[1].getComponent(i)
-            .setx(system.getPhases()[1].getComponent(i).getx() / xtotal);
+	system.getPhases()[1].getComponent(i).setx(system.getPhases()[1].getComponent(i).getx() / xtotal);
       }
       system.init(1);
       oldTemp = system.getTemperature();
@@ -204,31 +200,30 @@ public class CapillaryDewPointFlash extends ConstantDutyTemperatureFlash {
 
       ktot = 0.0;
       for (int i = 0; i < system.getPhases()[1].getNumberOfComponents(); i++) {
-        do {
-          xold = system.getPhases()[1].getComponent(i).getx();
-          if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
-              || system.getPhase(0).getComponent(i).isIsIon()) {
-            system.getPhases()[0].getComponent(i).setK(1e-40);
-          } else {
-            // Standard K-factor from fugacity coefficients
-            double lnK = system.getPhases()[1].getComponent(i).getLogFugacityCoefficient()
-                - system.getPhases()[0].getComponent(i).getLogFugacityCoefficient();
-            // Apply capillary correction (Poynting factor):
-            // ln(K_cap) = ln(K_bulk) - Vm_L * deltaP_cap / (R*T)
-            double lnKcap = lnK - kelvinShift;
-            system.getPhases()[0].getComponent(i).setK(Math.exp(lnKcap));
-          }
-          system.getPhases()[1].getComponent(i).setK(system.getPhases()[0].getComponent(i).getK());
-          system.getPhases()[1].getComponent(i)
-              .setx(1.0 / system.getPhases()[0].getComponent(i).getK()
-                  * system.getPhases()[1].getComponent(i).getz());
-        } while (Math.abs(system.getPhases()[1].getComponent(i).getx() - xold) > 1e-6);
-        ktot += Math.abs(system.getPhases()[0].getComponent(i).getK() - 1.0);
+	do {
+	  xold = system.getPhases()[1].getComponent(i).getx();
+	  if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
+	      || system.getPhase(0).getComponent(i).isIsIon()) {
+	    system.getPhases()[0].getComponent(i).setK(1e-40);
+	  } else {
+	    // Standard K-factor from fugacity coefficients
+	    double lnK = system.getPhases()[1].getComponent(i).getLogFugacityCoefficient()
+		- system.getPhases()[0].getComponent(i).getLogFugacityCoefficient();
+	    // Apply capillary correction (Poynting factor):
+	    // ln(K_cap) = ln(K_bulk) - Vm_L * deltaP_cap / (R*T)
+	    double lnKcap = lnK - kelvinShift;
+	    system.getPhases()[0].getComponent(i).setK(Math.exp(lnKcap));
+	  }
+	  system.getPhases()[1].getComponent(i).setK(system.getPhases()[0].getComponent(i).getK());
+	  system.getPhases()[1].getComponent(i)
+	      .setx(1.0 / system.getPhases()[0].getComponent(i).getK() * system.getPhases()[1].getComponent(i).getz());
+	} while (Math.abs(system.getPhases()[1].getComponent(i).getx() - xold) > 1e-6);
+	ktot += Math.abs(system.getPhases()[0].getComponent(i).getK() - 1.0);
       }
 
       xtotal = 0.0;
       for (int i = 0; i < system.getPhases()[1].getNumberOfComponents(); i++) {
-        xtotal += system.getPhases()[1].getComponent(i).getx();
+	xtotal += system.getPhases()[1].getComponent(i).getx();
       }
 
       double f = xtotal - 1.0;
@@ -237,18 +232,15 @@ public class CapillaryDewPointFlash extends ConstantDutyTemperatureFlash {
 
       oldTemperature = system.getTemperature();
       if (iterations < 3) {
-        system.setTemperature(system.getTemperature() + iterations / (iterations + 100.0)
-            * (xtotal * system.getTemperature() - system.getTemperature()));
+	system.setTemperature(system.getTemperature()
+	    + iterations / (iterations + 100.0) * (xtotal * system.getTemperature() - system.getTemperature()));
       } else {
-        system
-            .setTemperature(system.getTemperature() - iterations / (iterations + 10.0) * f / dfdT);
+	system.setTemperature(system.getTemperature() - iterations / (iterations + 10.0) * f / dfdT);
       }
-    } while (((Math.abs(xtotal - 1.0) > 1e-10)
-        || Math.abs(oldTemp - system.getTemperature()) / oldTemp > 1e-8)
-        && (iterations < maxNumberOfIterations));
+    } while (((Math.abs(xtotal - 1.0) > 1e-10) || Math.abs(oldTemp - system.getTemperature()) / oldTemp > 1e-8)
+	&& (iterations < maxNumberOfIterations));
 
-    if (Math.abs(xtotal - 1.0) > 1e-5
-        || (ktot < 1.0e-3 && system.getPhase(0).getNumberOfComponents() > 1)) {
+    if (Math.abs(xtotal - 1.0) > 1e-5 || (ktot < 1.0e-3 && system.getPhase(0).getNumberOfComponents() > 1)) {
       setSuperCritical(true);
     }
   }
@@ -291,7 +283,7 @@ public class CapillaryDewPointFlash extends ConstantDutyTemperatureFlash {
       system.initPhysicalProperties();
       sigma = system.getInterphaseProperties().getSurfaceTension(0, 1);
       if (sigma <= 0 || Double.isNaN(sigma)) {
-        sigma = 0.005;
+	sigma = 0.005;
       }
     } catch (Exception e) {
       logger.debug("Surface tension calculation failed, using fallback: " + e.getMessage());
@@ -309,7 +301,7 @@ public class CapillaryDewPointFlash extends ConstantDutyTemperatureFlash {
     try {
       vmL = system.getPhase(1).getMolarVolume("m3/mol");
       if (vmL <= 0 || vmL > 0.01 || Double.isNaN(vmL)) {
-        vmL = 1e-4;
+	vmL = 1e-4;
       }
     } catch (Exception e) {
       logger.debug("Liquid molar volume failed, using fallback: " + e.getMessage());
@@ -385,5 +377,6 @@ public class CapillaryDewPointFlash extends ConstantDutyTemperatureFlash {
 
   /** {@inheritDoc} */
   @Override
-  public void printToFile(String name) {}
+  public void printToFile(String name) {
+  }
 }

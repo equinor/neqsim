@@ -40,16 +40,16 @@ import neqsim.process.equipment.ProcessEquipmentBaseClass;
  * <pre>{@code
  * SubseaPowerCable cable = new SubseaPowerCable("Export Cable");
  * cable.setCableType(SubseaPowerCable.CableType.XLPE_AC);
- * cable.setVoltage(66.0);            // kV
- * cable.setLength(50.0);             // km
- * cable.setPowerRating(500.0);       // MW
- * cable.setConductorArea(1000.0);    // mm^2
+ * cable.setVoltage(66.0); // kV
+ * cable.setLength(50.0); // km
+ * cable.setPowerRating(500.0); // MW
+ * cable.setConductorArea(1000.0); // mm^2
  * cable.setSeawaterTemperature(10.0); // C
- * cable.setBurialDepth(1.0);         // m
+ * cable.setBurialDepth(1.0); // m
  * cable.run();
  *
  * double totalLoss = cable.getTotalPowerLoss(); // MW
- * double voltDrop = cable.getVoltageDrop();     // %
+ * double voltDrop = cable.getVoltageDrop(); // %
  * }</pre>
  *
  * @author esol
@@ -190,8 +190,7 @@ public class SubseaPowerCable extends ProcessEquipmentBaseClass {
     // Calculate current
     if (cableType == CableType.XLPE_AC) {
       // AC: P = sqrt(3) * V * I * cos(phi)
-      operatingCurrent = (powerRating * 1.0e6)
-          / (Math.sqrt(3.0) * voltage * 1000.0 * powerFactor * numberOfCables);
+      operatingCurrent = (powerRating * 1.0e6) / (Math.sqrt(3.0) * voltage * 1000.0 * powerFactor * numberOfCables);
     } else {
       // DC: P = V * I (bipole)
       operatingCurrent = (powerRating * 1.0e6) / (voltage * 1000.0 * numberOfCables * 2.0);
@@ -212,13 +211,12 @@ public class SubseaPowerCable extends ProcessEquipmentBaseClass {
       // Capacitance ~ 0.2 uF/km for XLPE
       double capPerKm = 0.2e-6;
       double tanDelta = 0.001;
-      double dielectricPerCable = 2.0 * Math.PI * frequency * capPerKm * length
-          * (voltage * 1000.0) * (voltage * 1000.0) * tanDelta * numberOfCores;
+      double dielectricPerCable = 2.0 * Math.PI * frequency * capPerKm * length * (voltage * 1000.0)
+	  * (voltage * 1000.0) * tanDelta * numberOfCores;
       dielectricLoss = dielectricPerCable * numberOfCables / 1.0e6;
 
       // Reactive power from cable capacitance
-      double qcPerKm = 2.0 * Math.PI * frequency * capPerKm
-          * (voltage * 1000.0) * (voltage * 1000.0) / 1.0e6;
+      double qcPerKm = 2.0 * Math.PI * frequency * capPerKm * (voltage * 1000.0) * (voltage * 1000.0) / 1.0e6;
       reactivepower = qcPerKm * length * numberOfCables * numberOfCores;
     } else {
       dielectricLoss = 0.0;

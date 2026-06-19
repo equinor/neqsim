@@ -28,11 +28,9 @@ public class DexpiXmlReaderTest extends NeqSimTest {
   public void testRead() throws IOException, DexpiXmlReaderException {
     // Create a simple DEXPI XML file for testing
     String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<PlantModel>" + "  <Equipment>"
-        + "    <PlateHeatExchanger ComponentClass=\"PlateHeatExchanger\" ID=\"P-101\">"
-        + "      <GenericAttributes>"
-        + "        <GenericAttribute Name=\"TagNameAssignmentClass\" Value=\"P-101\" />"
-        + "      </GenericAttributes>" + "    </PlateHeatExchanger>" + "  </Equipment>"
-        + "</PlantModel>";
+	+ "    <PlateHeatExchanger ComponentClass=\"PlateHeatExchanger\" ID=\"P-101\">" + "      <GenericAttributes>"
+	+ "        <GenericAttribute Name=\"TagNameAssignmentClass\" Value=\"P-101\" />" + "      </GenericAttributes>"
+	+ "    </PlateHeatExchanger>" + "  </Equipment>" + "</PlantModel>";
 
     // Create a temporary file to write the XML to
     File tempFile = File.createTempFile("test", ".xml");
@@ -60,11 +58,9 @@ public class DexpiXmlReaderTest extends NeqSimTest {
   public void testReadInvalidXml() throws IOException {
     // Create an invalid DEXPI XML file for testing
     String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<PlantModel>" + "  <Equipment>"
-        + "    <PlateHeatExchanger ComponentClass=\"PlateHeatExchanger\" ID=\"P-101\">"
-        + "      <GenericAttributes>"
-        + "        <GenericAttribute Name=\"TagNameAssignmentClass\" Value=\"P-101\" />"
-        + "      </GenericAttributes>" + "    </PlateHeatExchanger>" + "  </Equipment>"
-        + "</PlantModel2>";
+	+ "    <PlateHeatExchanger ComponentClass=\"PlateHeatExchanger\" ID=\"P-101\">" + "      <GenericAttributes>"
+	+ "        <GenericAttribute Name=\"TagNameAssignmentClass\" Value=\"P-101\" />" + "      </GenericAttributes>"
+	+ "    </PlateHeatExchanger>" + "  </Equipment>" + "</PlantModel2>";
 
     // Create a temporary file to write the XML to
     File tempFile = File.createTempFile("test", ".xml");
@@ -79,11 +75,9 @@ public class DexpiXmlReaderTest extends NeqSimTest {
   @Test
   public void testReadInvalidXmlDoesNotLogToStderr() throws IOException {
     String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<PlantModel>" + "  <Equipment>"
-        + "    <PlateHeatExchanger ComponentClass=\"PlateHeatExchanger\" ID=\"P-101\">"
-        + "      <GenericAttributes>"
-        + "        <GenericAttribute Name=\"TagNameAssignmentClass\" Value=\"P-101\" />"
-        + "      </GenericAttributes>" + "    </PlateHeatExchanger>" + "  </Equipment>"
-        + "</PlantModel2>";
+	+ "    <PlateHeatExchanger ComponentClass=\"PlateHeatExchanger\" ID=\"P-101\">" + "      <GenericAttributes>"
+	+ "        <GenericAttribute Name=\"TagNameAssignmentClass\" Value=\"P-101\" />" + "      </GenericAttributes>"
+	+ "    </PlateHeatExchanger>" + "  </Equipment>" + "</PlantModel2>";
 
     File tempFile = File.createTempFile("test", ".xml");
     try (FileWriter writer = new FileWriter(tempFile)) {
@@ -112,15 +106,13 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     DexpiStream stream = new DexpiStream("Line-001", fluid, "PipingSegment", "L-001", "NG");
     stream.setFlowRate(1.0, "MSm3/day");
 
-    DexpiProcessUnit unit =
-        new DexpiProcessUnit("V-100", "HorizontalVessel", EquipmentEnum.Separator, "L-001", null);
+    DexpiProcessUnit unit = new DexpiProcessUnit("V-100", "HorizontalVessel", EquipmentEnum.Separator, "L-001", null);
 
     ProcessSystem process = new ProcessSystem();
     process.add(stream);
     process.add(unit);
 
-    DexpiRoundTripProfile.ValidationResult result =
-        DexpiRoundTripProfile.minimalRunnableProfile().validate(process);
+    DexpiRoundTripProfile.ValidationResult result = DexpiRoundTripProfile.minimalRunnableProfile().validate(process);
     assertTrue(result.isSuccessful(), "Violations: " + result.getViolations());
   }
 
@@ -128,10 +120,8 @@ public class DexpiXmlReaderTest extends NeqSimTest {
   public void testRoundTripProfileReportsViolationsForEmptyProcess() {
     ProcessSystem process = new ProcessSystem();
 
-    DexpiRoundTripProfile.ValidationResult result =
-        DexpiRoundTripProfile.minimalRunnableProfile().validate(process);
+    DexpiRoundTripProfile.ValidationResult result = DexpiRoundTripProfile.minimalRunnableProfile().validate(process);
     assertFalse(result.isSuccessful());
-    assertTrue(result.getViolations().size() >= 2,
-        "Expected at least 2 violations (no stream, no equipment)");
+    assertTrue(result.getViolations().size() >= 2, "Expected at least 2 violations (no stream, no equipment)");
   }
 }

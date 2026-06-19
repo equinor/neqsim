@@ -30,7 +30,7 @@ public class NMVOCAnalyser extends StreamMeasurementDeviceBaseClass {
    * Constructor for NMVOCAnalyser.
    * </p>
    *
-   * @param name Name of NMVOCAnalyser
+   * @param name   Name of NMVOCAnalyser
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public NMVOCAnalyser(String name, StreamInterface stream) {
@@ -49,20 +49,18 @@ public class NMVOCAnalyser extends StreamMeasurementDeviceBaseClass {
    * </p>
    *
    * @param unit Unit to get measurement in
-   * @return the flow rate of nmVOCs in the flow unit set setUnit method (e.g. "kg/hr",
-   *         "tonnes/year")
+   * @return the flow rate of nmVOCs in the flow unit set setUnit method (e.g. "kg/hr", "tonnes/year")
    */
   public double getnmVOCFlowRate(String unit) {
     // Define list of components to include in mass flow calculation
-    java.util.List<String> nmVOCcomponents =
-        java.util.Arrays.asList("ethane", "propane", "i-butane", "n-butane", "i-pentane",
-            "n-pentane", "n-hexane", "n-heptane", "benzene", "nC8", "nC9", "nC10", "nC11");
+    java.util.List<String> nmVOCcomponents = java.util.Arrays.asList("ethane", "propane", "i-butane", "n-butane",
+	"i-pentane", "n-pentane", "n-hexane", "n-heptane", "benzene", "nC8", "nC9", "nC10", "nC11");
 
     double flow = 0.0;
     for (int i = 0; i < this.stream.getFluid().getNumberOfComponents(); i++) {
       String name = this.stream.getFluid().getComponent(i).getName();
       if (nmVOCcomponents.contains(name)) {
-        flow += this.stream.getFluid().getComponent(i).getFlowRate(unit);
+	flow += this.stream.getFluid().getComponent(i).getFlowRate(unit);
       }
     }
 

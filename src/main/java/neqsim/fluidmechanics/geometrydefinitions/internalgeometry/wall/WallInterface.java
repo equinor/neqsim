@@ -14,9 +14,7 @@ public interface WallInterface {
    * addMaterialLayer.
    * </p>
    *
-   * @param layer a
-   *        {@link neqsim.fluidmechanics.geometrydefinitions.internalgeometry.wall.MaterialLayer}
-   *        object
+   * @param layer a {@link neqsim.fluidmechanics.geometrydefinitions.internalgeometry.wall.MaterialLayer} object
    */
   public void addMaterialLayer(MaterialLayer layer);
 
@@ -26,8 +24,7 @@ public interface WallInterface {
    * </p>
    *
    * @param i a int
-   * @return a {@link neqsim.fluidmechanics.geometrydefinitions.internalgeometry.wall.MaterialLayer}
-   *         object
+   * @return a {@link neqsim.fluidmechanics.geometrydefinitions.internalgeometry.wall.MaterialLayer} object
    */
   public MaterialLayer getWallMaterialLayer(int i);
 }

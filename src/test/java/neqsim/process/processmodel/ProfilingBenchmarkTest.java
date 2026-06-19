@@ -19,13 +19,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * Measures where time is being spent inside ProcessSystem.run() — wall-clock vs sum of unit
- * execution times vs framework overhead — to locate optimization opportunities beyond the simple
- * seq-vs-optimized speedup numbers.
+ * Measures where time is being spent inside ProcessSystem.run() — wall-clock vs sum of unit execution times vs
+ * framework overhead — to locate optimization opportunities beyond the simple seq-vs-optimized speedup numbers.
  */
 public class ProfilingBenchmarkTest {
   private static final Logger logger = LogManager.getLogger(ProfilingBenchmarkTest.class);
-
 
   private SystemInterface makeHeavyFluid() {
     SystemInterface f = new SystemSrkEos(298.0, 80.0);
@@ -83,11 +81,11 @@ public class ProfilingBenchmarkTest {
       sys.run();
       totalWall += sys.getLastRunElapsedMs();
       for (double[] v : sys.getExecutionProfile().values()) {
-        totalUnit += v[0];
-        totalCalls += (long) v[1];
+	totalUnit += v[0];
+	totalCalls += (long) v[1];
       }
     }
-    return new double[] {totalWall / runs, totalUnit / runs, totalCalls / (double) runs};
+    return new double[] { totalWall / runs, totalUnit / runs, totalCalls / (double) runs };
   }
 
   /** Aggregated per-equipment-class timing across all runs. */
@@ -103,14 +101,14 @@ public class ProfilingBenchmarkTest {
     for (int i = 0; i < runs; i++) {
       sys.run();
       for (Map.Entry<String, double[]> e : sys.getExecutionProfile().entrySet()) {
-        String cls = nameToClass.getOrDefault(e.getKey(), "?");
-        double[] cur = classTotals.get(cls);
-        if (cur == null) {
-          cur = new double[] {0, 0};
-          classTotals.put(cls, cur);
-        }
-        cur[0] += e.getValue()[0];
-        cur[1] += e.getValue()[1];
+	String cls = nameToClass.getOrDefault(e.getKey(), "?");
+	double[] cur = classTotals.get(cls);
+	if (cur == null) {
+	  cur = new double[] { 0, 0 };
+	  classTotals.put(cls, cur);
+	}
+	cur[0] += e.getValue()[0];
+	cur[1] += e.getValue()[1];
       }
     }
     for (double[] v : classTotals.values()) {
@@ -123,11 +121,11 @@ public class ProfilingBenchmarkTest {
   @Test
   void profileIndependentTrains() throws Exception {
     final int RUNS = 20;
-    int[] trainsCases = {1, 4, 8};
+    int[] trainsCases = { 1, 4, 8 };
 
     logger.info("\n===== PROFILING: Independent trains (where is time spent?) =====");
-    logger.printf(org.apache.logging.log4j.Level.INFO, "%-8s %-12s %10s %10s %10s %10s %10s%n",
-        "trains", "mode", "wall_ms", "sumUnit_ms", "framework", "calls/run", "speedup_vs_seq");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-8s %-12s %10s %10s %10s %10s %10s%n", "trains", "mode",
+	"wall_ms", "sumUnit_ms", "framework", "calls/run", "speedup_vs_seq");
     logger.info("--------------------------------------------------------------------------------");
 
     for (int nTrains : trainsCases) {
@@ -140,12 +138,10 @@ public class ProfilingBenchmarkTest {
       double seqOverhead = seqT[0] - seqT[1];
       double optOverhead = optT[0] - optT[1];
 
-      logger.printf(org.apache.logging.log4j.Level.INFO,
-          "%-8d %-12s %10.2f %10.2f %10.2f %10.1f %10s%n", nTrains, "sequential", seqT[0], seqT[1],
-          seqOverhead, seqT[2], "1.00x");
-      logger.printf(org.apache.logging.log4j.Level.INFO,
-          "%-8d %-12s %10.2f %10.2f %10.2f %10.1f %10s%n", nTrains, "optimized", optT[0], optT[1],
-          optOverhead, optT[2], String.format("%.2fx", seqT[0] / optT[0]));
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-8d %-12s %10.2f %10.2f %10.2f %10.1f %10s%n", nTrains,
+	  "sequential", seqT[0], seqT[1], seqOverhead, seqT[2], "1.00x");
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-8d %-12s %10.2f %10.2f %10.2f %10.1f %10s%n", nTrains,
+	  "optimized", optT[0], optT[1], optOverhead, optT[2], String.format("%.2fx", seqT[0] / optT[0]));
     }
 
     // Equipment-class breakdown for a single representative case
@@ -154,16 +150,15 @@ public class ProfilingBenchmarkTest {
     Map<String, double[]> cls = classProfile(probe, RUNS);
     List<Map.Entry<String, double[]>> sorted = new ArrayList<>(cls.entrySet());
     Collections.sort(sorted, (a, b) -> Double.compare(b.getValue()[0], a.getValue()[0]));
-    logger.printf(org.apache.logging.log4j.Level.INFO, "%-30s %12s %12s%n", "equipment_class",
-        "total_ms", "calls");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-30s %12s %12s%n", "equipment_class", "total_ms", "calls");
     logger.info("------------------------------------------------------------");
     double total = 0.0;
     for (double[] v : cls.values()) {
       total += v[0];
     }
     for (Map.Entry<String, double[]> e : sorted) {
-      logger.printf(org.apache.logging.log4j.Level.INFO, "%-30s %12.2f %12.1f  (%.1f%%)%n",
-          e.getKey(), e.getValue()[0], e.getValue()[1], 100.0 * e.getValue()[0] / total);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-30s %12.2f %12.1f  (%.1f%%)%n", e.getKey(), e.getValue()[0],
+	  e.getValue()[1], 100.0 * e.getValue()[0] / total);
     }
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-30s %12.2f%n", "TOTAL_UNIT_TIME", total);
   }

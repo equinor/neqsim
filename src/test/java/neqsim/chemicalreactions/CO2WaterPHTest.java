@@ -12,8 +12,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Test pH calculation for CO2-water system.
  *
  * <p>
- * CO2 dissolved in water should form carbonic acid and its dissociation products, resulting in an
- * acidic solution with pH around 4-5 at ambient conditions.
+ * CO2 dissolved in water should form carbonic acid and its dissociation products, resulting in an acidic solution with
+ * pH around 4-5 at ambient conditions.
  * </p>
  */
 public class CO2WaterPHTest {
@@ -61,22 +61,19 @@ public class CO2WaterPHTest {
     system.init(0);
 
     // Check what reactions are loaded
-    logger.info(
-        "\nChemical reactions available: " + system.getChemicalReactionOperations().hasReactions());
+    logger.info("\nChemical reactions available: " + system.getChemicalReactionOperations().hasReactions());
 
     // Print reaction list
     logger.info("\nLoaded reactions:");
-    neqsim.chemicalreactions.chemicalreaction.ChemicalReactionList reactionList =
-        system.getChemicalReactionOperations().getReactionList();
+    neqsim.chemicalreactions.chemicalreaction.ChemicalReactionList reactionList = system.getChemicalReactionOperations()
+	.getReactionList();
     for (int r = 0; r < reactionList.getChemicalReactionList().size(); r++) {
-      neqsim.chemicalreactions.chemicalreaction.ChemicalReaction reaction =
-          reactionList.getReaction(r);
-      logger.info("  Reaction " + r + ": " + reaction.getName() + ", K = "
-          + reaction.getK(system.getPhase(0)));
+      neqsim.chemicalreactions.chemicalreaction.ChemicalReaction reaction = reactionList.getReaction(r);
+      logger.info("  Reaction " + r + ": " + reaction.getName() + ", K = " + reaction.getK(system.getPhase(0)));
       String[] names = reaction.getNames();
       double[] coefs = reaction.getStocCoefs();
       for (int i = 0; i < names.length; i++) {
-        logger.info("    " + names[i] + ": " + coefs[i]);
+	logger.info("    " + names[i] + ": " + coefs[i]);
       }
     }
 
@@ -139,7 +136,7 @@ public class CO2WaterPHTest {
       String phaseType = system.getPhase(p).getPhaseTypeName();
       logger.info("Phase " + p + " type: " + phaseType);
       if (phaseType.equalsIgnoreCase("aqueous") || phaseType.equalsIgnoreCase("liquid")) {
-        aqueousPhaseIndex = p;
+	aqueousPhaseIndex = p;
       }
     }
 
@@ -150,7 +147,7 @@ public class CO2WaterPHTest {
       double moles = system.getPhase(aqueousPhaseIndex).getComponent(i).getNumberOfMolesInPhase();
       double moleFrac = system.getPhase(aqueousPhaseIndex).getComponent(i).getx();
       if (moles > 1e-20) {
-        logger.info("  " + name + ": " + moles + " mol (x=" + moleFrac + ")");
+	logger.info("  " + name + ": " + moles + " mol (x=" + moleFrac + ")");
       }
     }
 
@@ -163,12 +160,12 @@ public class CO2WaterPHTest {
     for (int i = 0; i < system.getPhase(aqueousPhaseIndex).getNumberOfComponents(); i++) {
       String name = system.getPhase(aqueousPhaseIndex).getComponent(i).getComponentName();
       if (name.equals("H3O+")) {
-        h3oMoles = system.getPhase(aqueousPhaseIndex).getComponent(i).getNumberOfMolesInPhase();
-        h3oMoleFrac = system.getPhase(aqueousPhaseIndex).getComponent(i).getx();
+	h3oMoles = system.getPhase(aqueousPhaseIndex).getComponent(i).getNumberOfMolesInPhase();
+	h3oMoleFrac = system.getPhase(aqueousPhaseIndex).getComponent(i).getx();
       }
       if (name.equals("OH-")) {
-        ohMoles = system.getPhase(aqueousPhaseIndex).getComponent(i).getNumberOfMolesInPhase();
-        ohMoleFrac = system.getPhase(aqueousPhaseIndex).getComponent(i).getx();
+	ohMoles = system.getPhase(aqueousPhaseIndex).getComponent(i).getNumberOfMolesInPhase();
+	ohMoleFrac = system.getPhase(aqueousPhaseIndex).getComponent(i).getx();
       }
     }
 

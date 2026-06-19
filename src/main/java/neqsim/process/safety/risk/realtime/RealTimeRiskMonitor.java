@@ -22,8 +22,8 @@ import neqsim.process.safety.risk.RiskMatrix;
  * Real-time Risk Monitor for Digital Twin Integration.
  *
  * <p>
- * Provides continuous risk monitoring for process systems, enabling integration with digital twin
- * platforms, SCADA systems, and control room displays. Features include:
+ * Provides continuous risk monitoring for process systems, enabling integration with digital twin platforms, SCADA
+ * systems, and control room displays. Features include:
  * </p>
  * <ul>
  * <li>Continuous risk assessment with configurable update intervals</li>
@@ -339,7 +339,7 @@ public class RealTimeRiskMonitor implements Serializable, Runnable {
   /**
    * Creates a real-time risk monitor for a process system.
    *
-   * @param name monitor name
+   * @param name          monitor name
    * @param processSystem process system to monitor
    */
   public RealTimeRiskMonitor(String name, ProcessSystem processSystem) {
@@ -439,8 +439,7 @@ public class RealTimeRiskMonitor implements Serializable, Runnable {
     RealTimeRiskAssessment assessment = new RealTimeRiskAssessment();
     assessment.setTimestamp(Instant.now());
     assessment.setOverallRiskScore(calculateOverallRiskScore(result));
-    assessment
-        .setExpectedProductionLoss(result.getMaxPossibleProduction() - result.getMeanProduction());
+    assessment.setExpectedProductionLoss(result.getMaxPossibleProduction() - result.getMeanProduction());
     assessment.setAvailability(result.getMeanAvailability());
 
     // Update equipment status from simulation
@@ -450,7 +449,7 @@ public class RealTimeRiskMonitor implements Serializable, Runnable {
     synchronized (assessmentHistory) {
       assessmentHistory.add(assessment);
       while (assessmentHistory.size() > historySize) {
-        assessmentHistory.poll();
+	assessmentHistory.poll();
       }
     }
 
@@ -464,8 +463,7 @@ public class RealTimeRiskMonitor implements Serializable, Runnable {
     return assessment;
   }
 
-  private double calculateOverallRiskScore(
-      neqsim.process.safety.risk.OperationalRiskResult result) {
+  private double calculateOverallRiskScore(neqsim.process.safety.risk.OperationalRiskResult result) {
     // Simple scoring based on availability - lower availability means higher risk
     double availability = result.getMeanAvailability();
     // Convert to 0-10 scale: 100% availability = 0 risk, 0% availability = 10 risk
@@ -488,32 +486,29 @@ public class RealTimeRiskMonitor implements Serializable, Runnable {
 
     // Check threshold breaches
     if (riskScore >= alertThresholds.getCriticalRiskLevel()) {
-      generateAlert(RiskAlert.AlertSeverity.CRITICAL, RiskAlert.AlertType.RISK_THRESHOLD_EXCEEDED,
-          "System", "Critical risk level exceeded", riskScore,
-          alertThresholds.getCriticalRiskLevel());
+      generateAlert(RiskAlert.AlertSeverity.CRITICAL, RiskAlert.AlertType.RISK_THRESHOLD_EXCEEDED, "System",
+	  "Critical risk level exceeded", riskScore, alertThresholds.getCriticalRiskLevel());
     } else if (riskScore >= alertThresholds.getHighRiskLevel()) {
-      generateAlert(RiskAlert.AlertSeverity.HIGH, RiskAlert.AlertType.RISK_THRESHOLD_EXCEEDED,
-          "System", "High risk level exceeded", riskScore, alertThresholds.getHighRiskLevel());
+      generateAlert(RiskAlert.AlertSeverity.HIGH, RiskAlert.AlertType.RISK_THRESHOLD_EXCEEDED, "System",
+	  "High risk level exceeded", riskScore, alertThresholds.getHighRiskLevel());
     } else if (riskScore >= alertThresholds.getWarningRiskLevel()) {
-      generateAlert(RiskAlert.AlertSeverity.WARNING, RiskAlert.AlertType.RISK_THRESHOLD_EXCEEDED,
-          "System", "Warning risk level exceeded", riskScore,
-          alertThresholds.getWarningRiskLevel());
+      generateAlert(RiskAlert.AlertSeverity.WARNING, RiskAlert.AlertType.RISK_THRESHOLD_EXCEEDED, "System",
+	  "Warning risk level exceeded", riskScore, alertThresholds.getWarningRiskLevel());
     }
 
     // Check for anomalies
     if (baselineRiskLevel > 0 && baselineStdDev > 0) {
       double deviation = Math.abs(riskScore - baselineRiskLevel) / baselineStdDev;
       if (deviation > alertThresholds.getAnomalyStdDevs()) {
-        generateAlert(RiskAlert.AlertSeverity.WARNING, RiskAlert.AlertType.ANOMALY_DETECTED,
-            "System",
-            String.format("Risk level anomaly detected (%.1f std devs from baseline)", deviation),
-            riskScore, baselineRiskLevel);
+	generateAlert(RiskAlert.AlertSeverity.WARNING, RiskAlert.AlertType.ANOMALY_DETECTED, "System",
+	    String.format("Risk level anomaly detected (%.1f std devs from baseline)", deviation), riskScore,
+	    baselineRiskLevel);
       }
     }
   }
 
-  private void generateAlert(RiskAlert.AlertSeverity severity, RiskAlert.AlertType type,
-      String source, String message, double current, double threshold) {
+  private void generateAlert(RiskAlert.AlertSeverity severity, RiskAlert.AlertType type, String source, String message,
+      double current, double threshold) {
     RiskAlert alert = new RiskAlert(severity, type, source, message);
     alert.setCurrentValue(current);
     alert.setThresholdValue(threshold);
@@ -522,7 +517,7 @@ public class RealTimeRiskMonitor implements Serializable, Runnable {
     // Notify listeners
     if (alertListeners != null) {
       for (AlertListener listener : alertListeners) {
-        listener.onAlert(alert);
+	listener.onAlert(alert);
       }
     }
   }
@@ -530,30 +525,29 @@ public class RealTimeRiskMonitor implements Serializable, Runnable {
   private void calculateTrends(RealTimeRiskAssessment assessment) {
     synchronized (assessmentHistory) {
       if (assessmentHistory.size() < 10) {
-        return;
+	return;
       }
 
       // Calculate trend over last 10 assessments
       List<RealTimeRiskAssessment> recent = new ArrayList<>();
       int count = 0;
       for (RealTimeRiskAssessment a : assessmentHistory) {
-        if (count++ >= assessmentHistory.size() - 10) {
-          recent.add(a);
-        }
+	if (count++ >= assessmentHistory.size() - 10) {
+	  recent.add(a);
+	}
       }
 
       // Simple linear regression for trend
       double sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
       int n = recent.size();
       for (int i = 0; i < n; i++) {
-        sumX += i;
-        sumY += recent.get(i).getOverallRiskScore();
-        sumXY += i * recent.get(i).getOverallRiskScore();
-        sumX2 += i * i;
+	sumX += i;
+	sumY += recent.get(i).getOverallRiskScore();
+	sumXY += i * recent.get(i).getOverallRiskScore();
+	sumX2 += i * i;
       }
       double slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
-      assessment
-          .setRiskTrend(slope > 0.01 ? "INCREASING" : slope < -0.01 ? "DECREASING" : "STABLE");
+      assessment.setRiskTrend(slope > 0.01 ? "INCREASING" : slope < -0.01 ? "DECREASING" : "STABLE");
       assessment.setTrendSlope(slope);
     }
   }
@@ -562,7 +556,7 @@ public class RealTimeRiskMonitor implements Serializable, Runnable {
    * Sets baseline for anomaly detection.
    *
    * @param baseline baseline risk level
-   * @param stdDev standard deviation
+   * @param stdDev   standard deviation
    */
   public void setBaseline(double baseline, double stdDev) {
     this.baselineRiskLevel = baseline;
@@ -575,14 +569,14 @@ public class RealTimeRiskMonitor implements Serializable, Runnable {
   public void calculateBaseline() {
     synchronized (assessmentHistory) {
       if (assessmentHistory.isEmpty()) {
-        return;
+	return;
       }
 
       double sum = 0, sumSq = 0;
       int n = assessmentHistory.size();
       for (RealTimeRiskAssessment a : assessmentHistory) {
-        sum += a.getOverallRiskScore();
-        sumSq += a.getOverallRiskScore() * a.getOverallRiskScore();
+	sum += a.getOverallRiskScore();
+	sumSq += a.getOverallRiskScore() * a.getOverallRiskScore();
       }
       baselineRiskLevel = sum / n;
       baselineStdDev = Math.sqrt((sumSq - sum * sum / n) / (n - 1));
@@ -623,7 +617,7 @@ public class RealTimeRiskMonitor implements Serializable, Runnable {
     List<RiskAlert> unacked = new ArrayList<>();
     for (RiskAlert alert : activeAlerts) {
       if (!alert.isAcknowledged()) {
-        unacked.add(alert);
+	unacked.add(alert);
       }
     }
     return unacked;
@@ -632,8 +626,8 @@ public class RealTimeRiskMonitor implements Serializable, Runnable {
   public void acknowledgeAlert(String alertId) {
     for (RiskAlert alert : activeAlerts) {
       if (alert.getAlertId().equals(alertId)) {
-        alert.acknowledge();
-        break;
+	alert.acknowledge();
+	break;
       }
     }
   }
@@ -686,13 +680,12 @@ public class RealTimeRiskMonitor implements Serializable, Runnable {
     thresholds.put("critical", alertThresholds.getCriticalRiskLevel());
     map.put("thresholds", thresholds);
 
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(map);
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(map);
   }
 
   @Override
   public String toString() {
     return String.format("RealTimeRiskMonitor[%s, active=%s, score=%.2f]", name, monitoringActive,
-        currentAssessment != null ? currentAssessment.getOverallRiskScore() : 0);
+	currentAssessment != null ? currentAssessment.getOverallRiskScore() : 0);
   }
 }

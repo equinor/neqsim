@@ -10,30 +10,27 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
 /**
- * Outcome of a call to {@link ProcessAutomation#setValuesTransactional(java.util.Map, String)}.
- * Carries per-write validation results, a global commit/rollback flag, the rollback reason when
- * applicable, and the JSON schema version.
+ * Outcome of a call to {@link ProcessAutomation#setValuesTransactional(java.util.Map, String)}. Carries per-write
+ * validation results, a global commit/rollback flag, the rollback reason when applicable, and the JSON schema version.
  *
  * <p>
  * A transactional batch follows three phases:
  * </p>
  * <ol>
- * <li><strong>Validate</strong> — every requested write is sent through the
- * {@link WriteValidatorRegistry}. If any validator returns an
- * {@link WriteValidationResult.Severity#ERROR ERROR} result, the batch is rejected without touching
- * the simulation.</li>
+ * <li><strong>Validate</strong> — every requested write is sent through the {@link WriteValidatorRegistry}. If any
+ * validator returns an {@link WriteValidationResult.Severity#ERROR ERROR} result, the batch is rejected without
+ * touching the simulation.</li>
  * <li><strong>Apply</strong> — every write is applied via
  * {@link ProcessAutomation#setVariableValue(String, double, String)}.</li>
- * <li><strong>Run and verify</strong> — the underlying {@code ProcessSystem} or
- * {@code ProcessModel} is run. If {@code run()} throws, the previous values (snapshotted in phase
- * 0) are restored and a final {@code run()} is attempted to leave the simulation in a coherent
- * state.</li>
+ * <li><strong>Run and verify</strong> — the underlying {@code ProcessSystem} or {@code ProcessModel} is run. If
+ * {@code run()} throws, the previous values (snapshotted in phase 0) are restored and a final {@code run()} is
+ * attempted to leave the simulation in a coherent state.</li>
  * </ol>
  *
  * <p>
- * The {@link #toJson()} method renders this result with stable field names ({@code schemaVersion},
- * {@code committed}, {@code rolledBack}, {@code rollbackReason}, {@code rollbackCategory},
- * {@code writes}) so agents and MCP clients can branch on the outcome without parsing free text.
+ * The {@link #toJson()} method renders this result with stable field names ({@code schemaVersion}, {@code committed},
+ * {@code rolledBack}, {@code rollbackReason}, {@code rollbackCategory}, {@code writes}) so agents and MCP clients can
+ * branch on the outcome without parsing free text.
  * </p>
  *
  * @author Even Solbraa
@@ -67,16 +64,16 @@ public final class TransactionalBatchResult implements Serializable {
     /**
      * Creates a write outcome.
      *
-     * @param address the address that was requested
+     * @param address        the address that was requested
      * @param requestedValue the value that was requested
-     * @param unit the unit of measure of {@code requestedValue}, or null for the default
-     * @param previousValue the value read before the batch began, or null when unreadable
-     * @param validation the validation result for this write; never null
-     * @param applied true if the write was actually pushed into the simulation
-     * @param error the error message if the apply phase threw, otherwise null
+     * @param unit           the unit of measure of {@code requestedValue}, or null for the default
+     * @param previousValue  the value read before the batch began, or null when unreadable
+     * @param validation     the validation result for this write; never null
+     * @param applied        true if the write was actually pushed into the simulation
+     * @param error          the error message if the apply phase threw, otherwise null
      */
     public WriteOutcome(String address, double requestedValue, String unit, Double previousValue,
-        WriteValidationResult validation, boolean applied, String error) {
+	WriteValidationResult validation, boolean applied, String error) {
       this.address = address;
       this.requestedValue = requestedValue;
       this.unit = unit;
@@ -114,8 +111,8 @@ public final class TransactionalBatchResult implements Serializable {
     }
 
     /**
-     * Returns the value read from the simulation before the batch began, or {@code null} when the
-     * value was unreadable (for example a new INPUT variable that had not yet been set).
+     * Returns the value read from the simulation before the batch began, or {@code null} when the value was unreadable
+     * (for example a new INPUT variable that had not yet been set).
      *
      * @return the previous value or null
      */
@@ -133,8 +130,8 @@ public final class TransactionalBatchResult implements Serializable {
     }
 
     /**
-     * Returns whether the write was actually pushed into the simulation. A write may pass
-     * validation and still be {@code false} when an earlier write in the same batch failed.
+     * Returns whether the write was actually pushed into the simulation. A write may pass validation and still be
+     * {@code false} when an earlier write in the same batch failed.
      *
      * @return true if the write was applied
      */
@@ -143,8 +140,7 @@ public final class TransactionalBatchResult implements Serializable {
     }
 
     /**
-     * Returns the error message if the apply phase threw an exception for this write, otherwise
-     * {@code null}.
+     * Returns the error message if the apply phase threw an exception for this write, otherwise {@code null}.
      *
      * @return the error or null
      */
@@ -162,15 +158,15 @@ public final class TransactionalBatchResult implements Serializable {
       obj.addProperty("address", address);
       obj.addProperty("requestedValue", requestedValue);
       if (unit != null) {
-        obj.addProperty("unit", unit);
+	obj.addProperty("unit", unit);
       }
       if (previousValue != null) {
-        obj.addProperty("previousValue", previousValue);
+	obj.addProperty("previousValue", previousValue);
       }
       obj.add("validation", validation.toJson());
       obj.addProperty("applied", applied);
       if (error != null) {
-        obj.addProperty("error", error);
+	obj.addProperty("error", error);
       }
       return obj;
     }
@@ -184,19 +180,18 @@ public final class TransactionalBatchResult implements Serializable {
   /**
    * Creates a transactional batch result.
    *
-   * @param committed true when all phases succeeded and the writes are persisted
+   * @param committed        true when all phases succeeded and the writes are persisted
    * @param rollbackCategory the rollback category when {@code committed} is false, otherwise null
-   * @param rollbackReason a human-readable explanation when {@code committed} is false, otherwise
-   *        null
-   * @param writes the per-write outcomes in the order they were requested; never null
+   * @param rollbackReason   a human-readable explanation when {@code committed} is false, otherwise null
+   * @param writes           the per-write outcomes in the order they were requested; never null
    */
-  public TransactionalBatchResult(boolean committed, RollbackCategory rollbackCategory,
-      String rollbackReason, List<WriteOutcome> writes) {
+  public TransactionalBatchResult(boolean committed, RollbackCategory rollbackCategory, String rollbackReason,
+      List<WriteOutcome> writes) {
     this.committed = committed;
     this.rollbackCategory = rollbackCategory;
     this.rollbackReason = rollbackReason;
     this.writes = writes != null ? Collections.unmodifiableList(new ArrayList<WriteOutcome>(writes))
-        : Collections.<WriteOutcome>emptyList();
+	: Collections.<WriteOutcome>emptyList();
   }
 
   /**
@@ -282,8 +277,8 @@ public final class TransactionalBatchResult implements Serializable {
    * Convenience constructor for a rollback.
    *
    * @param category the rollback category; never null
-   * @param reason the rollback reason; never null
-   * @param writes per-write outcomes
+   * @param reason   the rollback reason; never null
+   * @param writes   per-write outcomes
    * @return a rolled-back batch result
    */
   public static TransactionalBatchResult rolledBack(RollbackCategory category, String reason,
@@ -292,8 +287,8 @@ public final class TransactionalBatchResult implements Serializable {
   }
 
   /**
-   * Returns an empty mutable map intended for callers that want to build their own outcome list
-   * without depending on internal LinkedHashMap usage.
+   * Returns an empty mutable map intended for callers that want to build their own outcome list without depending on
+   * internal LinkedHashMap usage.
    *
    * @return a new empty map
    */

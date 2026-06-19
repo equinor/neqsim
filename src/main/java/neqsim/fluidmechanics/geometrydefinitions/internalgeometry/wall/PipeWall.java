@@ -7,8 +7,8 @@ import java.util.List;
  * Represents a cylindrical pipe wall with multiple material layers.
  *
  * <p>
- * This class extends {@link Wall} to provide proper cylindrical coordinate heat transfer
- * calculations. For a pipe, the thermal resistance through a cylindrical layer is:
+ * This class extends {@link Wall} to provide proper cylindrical coordinate heat transfer calculations. For a pipe, the
+ * thermal resistance through a cylindrical layer is:
  * </p>
  *
  * <pre>
@@ -61,8 +61,7 @@ public class PipeWall extends Wall {
    * Sets the inner radius of the pipe.
    *
    * <p>
-   * This should be set before adding material layers. If layers already exist, their radii will be
-   * recalculated.
+   * This should be set before adding material layers. If layers already exist, their radii will be recalculated.
    * </p>
    *
    * @param innerRadius Inner pipe radius in meters
@@ -135,8 +134,8 @@ public class PipeWall extends Wall {
     super.addMaterialLayer(layer);
 
     // Calculate and store the outer radius for this layer
-    double previousOuterRadius =
-        layerOuterRadii.isEmpty() ? innerRadius : layerOuterRadii.get(layerOuterRadii.size() - 1);
+    double previousOuterRadius = layerOuterRadii.isEmpty() ? innerRadius
+	: layerOuterRadii.get(layerOuterRadii.size() - 1);
     double newOuterRadius = previousOuterRadius + layer.getThickness();
     layerOuterRadii.add(newOuterRadius);
 
@@ -188,8 +187,8 @@ public class PipeWall extends Wall {
    */
   public double calcCylindricalHeatTransferCoefficient() {
     if (innerRadius <= 0) {
-      throw new IllegalStateException("Inner radius must be set before calculating cylindrical "
-          + "heat transfer. Use setInnerRadius() first.");
+      throw new IllegalStateException(
+	  "Inner radius must be set before calculating cylindrical " + "heat transfer. Use setInnerRadius() first.");
     }
 
     int layerCount = getNumberOfLayers();
@@ -262,7 +261,7 @@ public class PipeWall extends Wall {
   /**
    * Calculates the temperature at a given radial position within the wall.
    *
-   * @param radius Radial position in meters (must be between innerRadius and outerRadius)
+   * @param radius    Radial position in meters (must be between innerRadius and outerRadius)
    * @param innerTemp Temperature at inner surface in K
    * @param outerTemp Temperature at outer surface in K
    * @return Temperature at the specified radius in K
@@ -270,8 +269,7 @@ public class PipeWall extends Wall {
   public double calcTemperatureAtRadius(double radius, double innerTemp, double outerTemp) {
     if (radius < innerRadius || radius > getOuterRadius()) {
       throw new IllegalArgumentException(
-          String.format("Radius %.4f m is outside wall bounds [%.4f, %.4f] m", radius, innerRadius,
-              getOuterRadius()));
+	  String.format("Radius %.4f m is outside wall bounds [%.4f, %.4f] m", radius, innerRadius, getOuterRadius()));
     }
 
     if (radius == innerRadius) {
@@ -293,13 +291,13 @@ public class PipeWall extends Wall {
       double k = layer.getConductivity();
 
       if (radius <= rOuter) {
-        // This layer contains the target radius
-        resistanceToPoint += Math.log(radius / currentInnerRadius) / (2.0 * Math.PI * k);
-        break;
+	// This layer contains the target radius
+	resistanceToPoint += Math.log(radius / currentInnerRadius) / (2.0 * Math.PI * k);
+	break;
       } else {
-        // Add full resistance of this layer
-        resistanceToPoint += Math.log(rOuter / currentInnerRadius) / (2.0 * Math.PI * k);
-        currentInnerRadius = rOuter;
+	// Add full resistance of this layer
+	resistanceToPoint += Math.log(rOuter / currentInnerRadius) / (2.0 * Math.PI * k);
+	currentInnerRadius = rOuter;
       }
     }
 
@@ -321,20 +319,18 @@ public class PipeWall extends Wall {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append(String.format("PipeWall[innerRadius=%.4f m, outerRadius=%.4f m, layers=%d]%n",
-        innerRadius, getOuterRadius(), getNumberOfLayers()));
+    sb.append(String.format("PipeWall[innerRadius=%.4f m, outerRadius=%.4f m, layers=%d]%n", innerRadius,
+	getOuterRadius(), getNumberOfLayers()));
 
     for (int i = 0; i < getNumberOfLayers(); i++) {
       MaterialLayer layer = getWallMaterialLayer(i);
-      sb.append(String.format("  Layer %d: %s (r=%.4f to %.4f m)%n", i, layer.getMaterialName(),
-          getLayerInnerRadius(i), getLayerOuterRadius(i)));
+      sb.append(String.format("  Layer %d: %s (r=%.4f to %.4f m)%n", i, layer.getMaterialName(), getLayerInnerRadius(i),
+	  getLayerOuterRadius(i)));
     }
 
     if (innerRadius > 0 && getNumberOfLayers() > 0) {
-      sb.append(String.format("  U-value (inner): %.3f W/(m²·K)%n",
-          calcCylindricalHeatTransferCoefficient()));
-      sb.append(String.format("  R-value (per m): %.4f K·m/W%n",
-          calcCylindricalThermalResistancePerLength()));
+      sb.append(String.format("  U-value (inner): %.3f W/(m²·K)%n", calcCylindricalHeatTransferCoefficient()));
+      sb.append(String.format("  R-value (per m): %.4f K·m/W%n", calcCylindricalThermalResistancePerLength()));
     }
 
     return sb.toString();

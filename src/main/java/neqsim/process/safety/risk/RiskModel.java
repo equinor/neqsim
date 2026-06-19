@@ -12,9 +12,8 @@ import neqsim.process.safety.risk.RiskResult.EventResult;
  * Probabilistic risk model for process safety analysis.
  *
  * <p>
- * Provides Monte Carlo simulation, event tree analysis, and sensitivity analysis capabilities for
- * quantitative risk assessment (QRA). Integrates with NeqSim's process simulation and safety
- * scenario framework.
+ * Provides Monte Carlo simulation, event tree analysis, and sensitivity analysis capabilities for quantitative risk
+ * assessment (QRA). Integrates with NeqSim's process simulation and safety scenario framework.
  *
  * <p>
  * <b>Typical Usage:</b>
@@ -25,8 +24,8 @@ import neqsim.process.safety.risk.RiskResult.EventResult;
  * model.setProcessSystem(processSystem);
  *
  * // Add initiating events with frequencies (per year)
- * model.addEvent(RiskEvent.builder().name("Small Leak").initiatingEvent(InitiatingEvent.LEAK_SMALL)
- *     .frequency(1e-3).consequenceCategory(ConsequenceCategory.MINOR).build());
+ * model.addEvent(RiskEvent.builder().name("Small Leak").initiatingEvent(InitiatingEvent.LEAK_SMALL).frequency(1e-3)
+ *     .consequenceCategory(ConsequenceCategory.MINOR).build());
  *
  * // Run Monte Carlo analysis
  * RiskResult result = model.runMonteCarloAnalysis(10000);
@@ -151,14 +150,13 @@ public class RiskModel {
   /**
    * Creates and adds a simple initiating event.
    *
-   * @param name event name
+   * @param name      event name
    * @param frequency annual frequency
-   * @param category consequence category
+   * @param category  consequence category
    * @return the created event
    */
   public RiskEvent addInitiatingEvent(String name, double frequency, ConsequenceCategory category) {
-    RiskEvent event =
-        RiskEvent.builder().name(name).frequency(frequency).consequenceCategory(category).build();
+    RiskEvent event = RiskEvent.builder().name(name).frequency(frequency).consequenceCategory(category).build();
     events.add(event);
     return event;
   }
@@ -166,16 +164,16 @@ public class RiskModel {
   /**
    * Adds a conditional event (branch in event tree).
    *
-   * @param name event name
+   * @param name        event name
    * @param parentEvent the parent event
    * @param probability conditional probability
-   * @param category consequence category if this branch occurs
+   * @param category    consequence category if this branch occurs
    * @return the created event
    */
   public RiskEvent addConditionalEvent(String name, RiskEvent parentEvent, double probability,
       ConsequenceCategory category) {
-    RiskEvent event = RiskEvent.builder().name(name).parentEvent(parentEvent)
-        .conditionalProbability(probability).consequenceCategory(category).build();
+    RiskEvent event = RiskEvent.builder().name(name).parentEvent(parentEvent).conditionalProbability(probability)
+	.consequenceCategory(category).build();
     events.add(event);
     return event;
   }
@@ -198,7 +196,7 @@ public class RiskModel {
     List<RiskEvent> initiating = new ArrayList<>();
     for (RiskEvent event : events) {
       if (event.isInitiatingEvent()) {
-        initiating.add(event);
+	initiating.add(event);
       }
     }
     return initiating;
@@ -234,8 +232,8 @@ public class RiskModel {
       result.setCategoryFrequency(event.getConsequenceCategory(), catFreq + freq);
 
       // Add event result
-      result.addEventResult(new EventResult(event.getName(), freq,
-          event.getConditionalProbability(), risk, event.getConsequenceCategory()));
+      result.addEventResult(new EventResult(event.getName(), freq, event.getConditionalProbability(), risk,
+	  event.getConsequenceCategory()));
     }
 
     result.setTotalRiskIndex(totalRisk);
@@ -251,8 +249,8 @@ public class RiskModel {
    * Runs Monte Carlo simulation with uncertainty propagation.
    *
    * <p>
-   * Frequencies are sampled from log-normal distributions. Probabilities are sampled from truncated
-   * normal distributions.
+   * Frequencies are sampled from log-normal distributions. Probabilities are sampled from truncated normal
+   * distributions.
    * </p>
    *
    * @param iterations number of Monte Carlo iterations
@@ -273,28 +271,27 @@ public class RiskModel {
       double iterFreq = 0.0;
 
       for (RiskEvent event : events) {
-        // Sample frequency from log-normal
-        double sampledFreq =
-            sampleLogNormal(random, event.getFrequency(), frequencyUncertaintyFactor);
+	// Sample frequency from log-normal
+	double sampledFreq = sampleLogNormal(random, event.getFrequency(), frequencyUncertaintyFactor);
 
-        // Sample probability from truncated normal
-        double sampledProb = sampleTruncatedNormal(random, event.getConditionalProbability(),
-            probabilityUncertaintyStdDev);
+	// Sample probability from truncated normal
+	double sampledProb = sampleTruncatedNormal(random, event.getConditionalProbability(),
+	    probabilityUncertaintyStdDev);
 
-        // Calculate absolute frequency for this sample
-        double absFreq = sampledFreq;
-        if (event.getParentEvent() != null) {
-          // For conditional events, we need the parent's sampled frequency
-          // Simplified: use point estimate for parent
-          absFreq = event.getParentEvent().getAbsoluteFrequency() * sampledProb;
-        }
+	// Calculate absolute frequency for this sample
+	double absFreq = sampledFreq;
+	if (event.getParentEvent() != null) {
+	  // For conditional events, we need the parent's sampled frequency
+	  // Simplified: use point estimate for parent
+	  absFreq = event.getParentEvent().getAbsoluteFrequency() * sampledProb;
+	}
 
-        double severity = event.getConsequenceCategory().getSeverity();
-        iterRisk += absFreq * severity;
-        iterFreq += absFreq;
+	double severity = event.getConsequenceCategory().getSeverity();
+	iterRisk += absFreq * severity;
+	iterFreq += absFreq;
 
-        // Accumulate category frequencies
-        catFreqs[event.getConsequenceCategory().ordinal()] += absFreq / iterations;
+	// Accumulate category frequencies
+	catFreqs[event.getConsequenceCategory().ordinal()] += absFreq / iterations;
       }
 
       riskSamples[iter] = iterRisk;
@@ -325,8 +322,8 @@ public class RiskModel {
     for (RiskEvent event : events) {
       double freq = event.getAbsoluteFrequency();
       double risk = freq * event.getConsequenceCategory().getSeverity();
-      result.addEventResult(new EventResult(event.getName(), freq,
-          event.getConditionalProbability(), risk, event.getConsequenceCategory()));
+      result.addEventResult(new EventResult(event.getName(), freq, event.getConditionalProbability(), risk,
+	  event.getConsequenceCategory()));
     }
 
     if (storeMonteCarloSamples) {
@@ -343,7 +340,7 @@ public class RiskModel {
    * Varies each event frequency by the specified factors and observes the effect on total risk.
    * </p>
    *
-   * @param lowFactor multiplier for low case (e.g., 0.1)
+   * @param lowFactor  multiplier for low case (e.g., 0.1)
    * @param highFactor multiplier for high case (e.g., 10.0)
    * @return sensitivity analysis result
    */
@@ -354,13 +351,12 @@ public class RiskModel {
   /**
    * Runs sensitivity analysis with specified number of points.
    *
-   * @param lowFactor multiplier for low case
+   * @param lowFactor  multiplier for low case
    * @param highFactor multiplier for high case
-   * @param numPoints number of points between low and high (including endpoints)
+   * @param numPoints  number of points between low and high (including endpoints)
    * @return sensitivity analysis result
    */
-  public SensitivityResult runSensitivityAnalysis(double lowFactor, double highFactor,
-      int numPoints) {
+  public SensitivityResult runSensitivityAnalysis(double lowFactor, double highFactor, int numPoints) {
     SensitivityResult result = new SensitivityResult(name + " Sensitivity", "Base Case");
 
     // Calculate base case risk
@@ -380,7 +376,7 @@ public class RiskModel {
     // Vary each event's frequency
     for (RiskEvent event : events) {
       if (!event.isInitiatingEvent()) {
-        continue; // Only vary initiating events
+	continue; // Only vary initiating events
       }
 
       double baseFreq = event.getFrequency();
@@ -388,9 +384,9 @@ public class RiskModel {
       double[] risks = new double[numPoints];
 
       for (int i = 0; i < numPoints; i++) {
-        event.setFrequency(baseFreq * multipliers[i]);
-        values[i] = baseFreq * multipliers[i];
-        risks[i] = calculateTotalRisk();
+	event.setFrequency(baseFreq * multipliers[i]);
+	values[i] = baseFreq * multipliers[i];
+	risks[i] = calculateTotalRisk();
       }
 
       // Restore base frequency
@@ -406,8 +402,8 @@ public class RiskModel {
    * Runs simulation-based analysis for events with attached scenarios.
    *
    * <p>
-   * For events that have ProcessSafetyScenario attached, uses the scenario consequence category.
-   * Future implementation could integrate with ProcessScenarioRunner for dynamic simulation.
+   * For events that have ProcessSafetyScenario attached, uses the scenario consequence category. Future implementation
+   * could integrate with ProcessScenarioRunner for dynamic simulation.
    * </p>
    *
    * @return risk result with scenario-based consequences
@@ -435,8 +431,8 @@ public class RiskModel {
       double catFreq = result.getCategoryFrequency(event.getConsequenceCategory());
       result.setCategoryFrequency(event.getConsequenceCategory(), catFreq + freq);
 
-      result.addEventResult(new EventResult(event.getName(), freq,
-          event.getConditionalProbability(), risk, event.getConsequenceCategory()));
+      result.addEventResult(new EventResult(event.getName(), freq, event.getConditionalProbability(), risk,
+	  event.getConsequenceCategory()));
     }
 
     result.setTotalRiskIndex(totalRisk);
@@ -484,7 +480,6 @@ public class RiskModel {
 
   @Override
   public String toString() {
-    return String.format("RiskModel[%s, %d events, total risk=%.4e]", name, events.size(),
-        calculateTotalRisk());
+    return String.format("RiskModel[%s, %d events, total risk=%.4e]", name, events.size(), calculateTotalRisk());
   }
 }

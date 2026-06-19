@@ -32,7 +32,6 @@ import org.apache.logging.log4j.Logger;
 public class ProductionImpactAnalyzerTest {
   private static final Logger logger = LogManager.getLogger(ProductionImpactAnalyzerTest.class);
 
-
   private ProcessSystem process;
   private Stream feed;
   private Separator hpSeparator;
@@ -129,8 +128,7 @@ public class ProductionImpactAnalyzerTest {
     assertEquals(0.0, result.getFullShutdownProduction(), 0.001);
 
     // Degraded operation should produce more than shutdown
-    assertTrue(result.getLossVsFullShutdown() >= 0,
-        "Degraded operation should produce >= shutdown");
+    assertTrue(result.getLossVsFullShutdown() >= 0, "Degraded operation should produce >= shutdown");
 
     logger.info("=== Compare to Plant Stop ===");
     logger.info(result);
@@ -166,10 +164,9 @@ public class ProductionImpactAnalyzerTest {
   @DisplayName("Equipment failure mode builder")
   void testEquipmentFailureModeBuilder() {
     EquipmentFailureMode customMode = EquipmentFailureMode.builder().name("Partial Failure")
-        .description("Bearing damage causing reduced speed")
-        .type(EquipmentFailureMode.FailureType.PARTIAL_FAILURE).capacityFactor(0.7)
-        .efficiencyFactor(0.85).mttr(48.0).failureFrequency(0.5).requiresImmediateAction(false)
-        .build();
+	.description("Bearing damage causing reduced speed").type(EquipmentFailureMode.FailureType.PARTIAL_FAILURE)
+	.capacityFactor(0.7).efficiencyFactor(0.85).mttr(48.0).failureFrequency(0.5).requiresImmediateAction(false)
+	.build();
 
     assertEquals("Partial Failure", customMode.getName());
     assertEquals(0.7, customMode.getCapacityFactor(), 0.001);
@@ -222,7 +219,7 @@ public class ProductionImpactAnalyzerTest {
     for (int i = 0; i < ranking.size(); i++) {
       ProductionImpactResult result = ranking.get(i);
       logger.printf(org.apache.logging.log4j.Level.INFO, "%d. %s: %.1f%% loss%n", i + 1, result.getEquipmentName(),
-          result.getPercentLoss());
+	  result.getPercentLoss());
     }
 
     // First item should have highest loss
@@ -234,8 +231,7 @@ public class ProductionImpactAnalyzerTest {
   @Test
   @DisplayName("Production impact result calculations")
   void testProductionImpactResultCalculations() {
-    ProductionImpactResult result =
-        new ProductionImpactResult("Test Equipment", EquipmentFailureMode.trip("test"));
+    ProductionImpactResult result = new ProductionImpactResult("Test Equipment", EquipmentFailureMode.trip("test"));
 
     result.setBaselineProductionRate(10000.0);
     result.setProductionWithFailure(7000.0);
@@ -260,8 +256,7 @@ public class ProductionImpactAnalyzerTest {
   @Test
   @DisplayName("Production impact result to JSON")
   void testProductionImpactResultToJson() {
-    ProductionImpactResult result =
-        new ProductionImpactResult("Compressor 1", EquipmentFailureMode.trip("Compressor"));
+    ProductionImpactResult result = new ProductionImpactResult("Compressor 1", EquipmentFailureMode.trip("Compressor"));
 
     result.setBaselineProductionRate(50000.0);
     result.setProductionWithFailure(30000.0);

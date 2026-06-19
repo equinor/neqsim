@@ -9,16 +9,15 @@ import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
  * Electrical design for pipelines.
  *
  * <p>
- * Extends {@link ElectricalDesign} with pipeline-specific electrical requirements. Pipelines have
- * no rotating equipment but may have significant electrical loads:
+ * Extends {@link ElectricalDesign} with pipeline-specific electrical requirements. Pipelines have no rotating equipment
+ * but may have significant electrical loads:
  * </p>
  * <ul>
- * <li><b>Electrical heat tracing (EHT):</b> 10-40 W/m depending on pipe diameter and temperature
- * differential, used for hydrate prevention, wax control, or maintaining process temperature</li>
- * <li><b>Cathodic protection (CP):</b> Impressed current cathodic protection systems for corrosion
- * prevention, typically 0.5-5 kW per transformer-rectifier unit</li>
- * <li><b>Instrumentation:</b> Pressure/temperature transmitters along pipeline route, typically
- * 0.5-2 kW total</li>
+ * <li><b>Electrical heat tracing (EHT):</b> 10-40 W/m depending on pipe diameter and temperature differential, used for
+ * hydrate prevention, wax control, or maintaining process temperature</li>
+ * <li><b>Cathodic protection (CP):</b> Impressed current cathodic protection systems for corrosion prevention,
+ * typically 0.5-5 kW per transformer-rectifier unit</li>
+ * <li><b>Instrumentation:</b> Pressure/temperature transmitters along pipeline route, typically 0.5-2 kW total</li>
  * </ul>
  *
  * @author Even Solbraa
@@ -83,8 +82,7 @@ public class PipelineElectricalDesign extends ElectricalDesign {
 
     double current = getFullLoadCurrentA();
     if (current > 0) {
-      getPowerCable().sizeCable(current, getRatedVoltageV(), getPowerCable().getLengthM(), "Tray",
-          40.0);
+      getPowerCable().sizeCable(current, getRatedVoltageV(), getPowerCable().getLengthM(), "Tray", 40.0);
       getSwitchgear().sizeSwitchgear(current, totalAuxiliaryKW, getRatedVoltageV(), false);
     }
   }

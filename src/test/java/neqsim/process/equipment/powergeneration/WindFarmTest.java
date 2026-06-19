@@ -91,14 +91,14 @@ public class WindFarmTest extends neqsim.NeqSimTest {
   public void testTimeSeries() {
     WindFarm farm = new WindFarm("TS Farm", 10);
     farm.setRatedPowerPerTurbine(10.0e6);
-    double[] speeds = {0.0, 3.0, 7.0, 12.0, 15.0, 25.0, 30.0};
+    double[] speeds = { 0.0, 3.0, 7.0, 12.0, 15.0, 25.0, 30.0 };
     farm.setWindSpeedTimeSeries(speeds);
     farm.runTimeSeries();
 
     double[] powers = farm.getPowerTimeSeries();
     assertEquals(speeds.length, powers.length);
     assertEquals(0.0, powers[0], 1e-6); // Below cut-in
-    assertTrue(powers[3] > powers[2]);   // More wind = more power
+    assertTrue(powers[3] > powers[2]); // More wind = more power
     assertEquals(0.0, powers[6], 1e-6); // Above cut-out
   }
 
@@ -114,8 +114,7 @@ public class WindFarmTest extends neqsim.NeqSimTest {
 
   @Test
   public void testEquipmentFactory() {
-    WindFarm farm = (WindFarm) neqsim.process.equipment.EquipmentFactory
-        .createEquipment("farm", "windfarm");
+    WindFarm farm = (WindFarm) neqsim.process.equipment.EquipmentFactory.createEquipment("farm", "windfarm");
     assertTrue(farm instanceof WindFarm);
   }
 }

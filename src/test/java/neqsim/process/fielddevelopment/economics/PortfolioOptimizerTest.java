@@ -126,8 +126,7 @@ class PortfolioOptimizerTest {
   @Test
   @DisplayName("Test project creation through addProject method")
   void testProjectCreation() {
-    Project project =
-        optimizer.addProject("Test Field", 200.0, 400.0, ProjectType.DEVELOPMENT, 0.8);
+    Project project = optimizer.addProject("Test Field", 200.0, 400.0, ProjectType.DEVELOPMENT, 0.8);
 
     assertNotNull(project);
     assertEquals("Test Field", project.getName());

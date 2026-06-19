@@ -102,44 +102,38 @@ public class SeparationTrainModule extends ProcessModuleBaseClass {
     Heater liquidOutHeater = new Heater("oil/water heater", inletSeparator.getLiquidOutStream());
     liquidOutHeater.setOutTemperature(heatedOilTemperature);
 
-    ThreePhaseSeparator firstStageSeparator =
-        new ThreePhaseSeparator("1st stage separator", liquidOutHeater.getOutletStream());
+    ThreePhaseSeparator firstStageSeparator = new ThreePhaseSeparator("1st stage separator",
+	liquidOutHeater.getOutletStream());
 
-    ThrottlingValve valve1 =
-        new ThrottlingValve("1stTo2ndStageOilValve", firstStageSeparator.getOilOutStream());
+    ThrottlingValve valve1 = new ThrottlingValve("1stTo2ndStageOilValve", firstStageSeparator.getOilOutStream());
     valve1.setOutletPressure(secondstagePressure);
 
-    ThreePhaseSeparator secondStageSeparator =
-        new ThreePhaseSeparator("2nd stage Separator", valve1.getOutletStream());
+    ThreePhaseSeparator secondStageSeparator = new ThreePhaseSeparator("2nd stage Separator", valve1.getOutletStream());
 
-    ThrottlingValve thirdStageValve =
-        new ThrottlingValve("2-3stageOilValve", secondStageSeparator.getLiquidOutStream());
+    ThrottlingValve thirdStageValve = new ThrottlingValve("2-3stageOilValve",
+	secondStageSeparator.getLiquidOutStream());
     thirdStageValve.setOutletPressure(thirdstagePressure);
 
-    ThreePhaseSeparator thirdStageSeparator =
-        new ThreePhaseSeparator("3rd stage Separator", thirdStageValve.getOutletStream());
+    ThreePhaseSeparator thirdStageSeparator = new ThreePhaseSeparator("3rd stage Separator",
+	thirdStageValve.getOutletStream());
 
     oilCooler = new Cooler("export oil cooler", thirdStageSeparator.getLiquidOutStream());
     oilCooler.setOutTemperature(exportOilTemperature);
 
-    Compressor thirdStageCompressor =
-        new Compressor("3rd stage recompressor", thirdStageSeparator.getGasOutStream());
+    Compressor thirdStageCompressor = new Compressor("3rd stage recompressor", thirdStageSeparator.getGasOutStream());
     thirdStageCompressor.setOutletPressure(secondstagePressure);
 
-    Cooler thirdSstageCoooler =
-        new Cooler("3rd stage cooler", thirdStageCompressor.getOutletStream());
+    Cooler thirdSstageCoooler = new Cooler("3rd stage cooler", thirdStageCompressor.getOutletStream());
     thirdSstageCoooler.setOutTemperature(firstStageCompressorAfterCoolerTemperature);
 
     Mixer thirdStageMixer = new Mixer("1st and 2nd stage gas mixer");
     thirdStageMixer.addStream(thirdSstageCoooler.getOutletStream());
     thirdStageMixer.addStream(secondStageSeparator.getGasOutStream());
 
-    Separator thirdStageScrubber =
-        new Separator("recompression scrubber", thirdStageMixer.getOutletStream());
+    Separator thirdStageScrubber = new Separator("recompression scrubber", thirdStageMixer.getOutletStream());
     secondStageSeparator.addStream(thirdStageScrubber.getLiquidOutStream());
 
-    Compressor secondStageCompressor =
-        new Compressor("2nd stage recompressor", thirdStageScrubber.getGasOutStream());
+    Compressor secondStageCompressor = new Compressor("2nd stage recompressor", thirdStageScrubber.getGasOutStream());
     secondStageCompressor.setOutletPressure(inletPressure);
 
     Mixer HPgasMixer = new Mixer("HPgas mixer");
@@ -231,8 +225,7 @@ public class SeparationTrainModule extends ProcessModuleBaseClass {
   @SuppressWarnings("unused")
   @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos(273.15 + 50, 65);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos(273.15 + 50, 65);
 
     // testSystem.addComponent("CO2", 1);
     // testSystem.addComponent("nitrogen", 1);
@@ -263,12 +256,10 @@ public class SeparationTrainModule extends ProcessModuleBaseClass {
     separationModule.setSpecification("heated oil temperature", 273.15 + 55.0);
     separationModule.setSpecification("Third stage pressure", 1.0);
     separationModule.setSpecification("Gas exit temperature", 273.15 + 25.0);
-    separationModule.setSpecification("First stage compressor after cooler temperature",
-        273.15 + 25.0);
+    separationModule.setSpecification("First stage compressor after cooler temperature", 273.15 + 25.0);
     separationModule.setSpecification("Export oil temperature", 273.15 + 25.0);
 
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
 
     operations.add(wellStream);
     operations.add(separationModule);
@@ -283,28 +274,19 @@ public class SeparationTrainModule extends ProcessModuleBaseClass {
     // tempStr.displayResult();
     // wellStream.displayResult();
     separationModule.getOperations().getUnit("Inlet separator").getMechanicalDesign().calcDesign();
-    separationModule.getOperations().getUnit("Inlet separator").getMechanicalDesign()
-        .displayResults();
+    separationModule.getOperations().getUnit("Inlet separator").getMechanicalDesign().displayResults();
 
-    separationModule.getOperations().getUnit("1st stage separator").getMechanicalDesign()
-        .calcDesign();
-    separationModule.getOperations().getUnit("1st stage separator").getMechanicalDesign()
-        .displayResults();
+    separationModule.getOperations().getUnit("1st stage separator").getMechanicalDesign().calcDesign();
+    separationModule.getOperations().getUnit("1st stage separator").getMechanicalDesign().displayResults();
 
-    separationModule.getOperations().getUnit("2nd stage Separator").getMechanicalDesign()
-        .calcDesign();
-    separationModule.getOperations().getUnit("2nd stage Separator").getMechanicalDesign()
-        .displayResults();
+    separationModule.getOperations().getUnit("2nd stage Separator").getMechanicalDesign().calcDesign();
+    separationModule.getOperations().getUnit("2nd stage Separator").getMechanicalDesign().displayResults();
 
-    separationModule.getOperations().getUnit("3rd stage Separator").getMechanicalDesign()
-        .calcDesign();
-    separationModule.getOperations().getUnit("3rd stage Separator").getMechanicalDesign()
-        .displayResults();
+    separationModule.getOperations().getUnit("3rd stage Separator").getMechanicalDesign().calcDesign();
+    separationModule.getOperations().getUnit("3rd stage Separator").getMechanicalDesign().displayResults();
 
-    separationModule.getOperations().getUnit("2nd stage recompressor").getMechanicalDesign()
-        .calcDesign();
-    separationModule.getOperations().getUnit("2nd stage recompressor").getMechanicalDesign()
-        .displayResults();
+    separationModule.getOperations().getUnit("2nd stage recompressor").getMechanicalDesign().calcDesign();
+    separationModule.getOperations().getUnit("2nd stage recompressor").getMechanicalDesign().displayResults();
 
     // operations.getSystemMechanicalDesign().runDesignCalculation();
     // operations.getSystemMechanicalDesign().getTotalPlotSpace();
@@ -329,23 +311,17 @@ public class SeparationTrainModule extends ProcessModuleBaseClass {
      * separationModule.getOperations().getUnit("3rd stage cooler")).getEnergyInput( ) + " W");
      * System.out.println("HP gas cooler duty " + ((Cooler)
      * separationModule.getOperations().getUnit("HP gas cooler")).getEnergyInput() + " W");
-     * System.out.println("Export oil flow " +
+     * System.out.println("Export oil flow " + separationModule.getOutputStream("oil exit stream").getThermoSystem().
+     * getTotalNumberOfMoles() * separationModule.getOutputStream("oil exit stream").getThermoSystem(). getMolarMass() /
      * separationModule.getOutputStream("oil exit stream").getThermoSystem().
-     * getTotalNumberOfMoles() *
-     * separationModule.getOutputStream("oil exit stream").getThermoSystem(). getMolarMass() /
-     * separationModule.getOutputStream("oil exit stream").getThermoSystem().
-     * getPhase(0).getPhysicalProperties().getDensity() * 3600.0 + " m^3/hr");
-     * System.out.println("Export gas flow " +
-     * separationModule.getOutputStream("gas exit stream").getThermoSystem().
-     * getTotalNumberOfMoles() *
+     * getPhase(0).getPhysicalProperties().getDensity() * 3600.0 + " m^3/hr"); System.out.println("Export gas flow " +
+     * separationModule.getOutputStream("gas exit stream").getThermoSystem(). getTotalNumberOfMoles() *
      * separationModule.getOutputStream("gas exit stream").getThermoSystem(). getMolarMass() /
      * separationModule.getOutputStream("gas exit stream").getThermoSystem().
-     * getPhase(0).getPhysicalProperties().getDensity() * 3600.0 + " m^3/hr");
-     * System.out.println("Export gas flow " +
-     * separationModule.getOutputStream("gas exit stream").getThermoSystem().
-     * getTotalNumberOfMoles() * ThermodynamicConstantsInterface.R * (273.15 + 15.0)
-     * /ThermodynamicConstantsInterface.atm * 3600.0 * 24 / 1.0e6 + " MSm^3/day");
-     * System.out.println("oil/water heater duty " + ((Heater)
+     * getPhase(0).getPhysicalProperties().getDensity() * 3600.0 + " m^3/hr"); System.out.println("Export gas flow " +
+     * separationModule.getOutputStream("gas exit stream").getThermoSystem(). getTotalNumberOfMoles() *
+     * ThermodynamicConstantsInterface.R * (273.15 + 15.0) /ThermodynamicConstantsInterface.atm * 3600.0 * 24 / 1.0e6 +
+     * " MSm^3/day"); System.out.println("oil/water heater duty " + ((Heater)
      * separationModule.getOperations().getUnit("oil/water heater")).getEnergyInput( ) + " W");
      * System.out.println("Export oil cooler duty " + ((Cooler)
      * separationModule.getOperations().getUnit("export oil cooler")).getEnergyInput () + " W");

@@ -34,7 +34,8 @@ public class WettedWallColumnDataObject extends DataObject {
    * Constructor for WettedWallColumnDataObject.
    * </p>
    */
-  public WettedWallColumnDataObject() {}
+  public WettedWallColumnDataObject() {
+  }
 
   /**
    * <p>

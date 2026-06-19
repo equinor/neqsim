@@ -20,7 +20,7 @@ public class TestmercuryTPflash {
   private static final Logger logger = LogManager.getLogger(TestmercuryTPflash.class);
 
   /** Logger object for class. */
-  
+
   /**
    * <p>
    * main.
@@ -53,9 +53,7 @@ public class TestmercuryTPflash {
       logger.error(ex.getMessage(), ex);
     }
     // ((PhaseEosInterface)testSystem.getPhase(0)).displayInteractionCoefficients("");
-    logger.info("vapour pressure "
-        + testSystem.getPhase(0).getComponent("mercury").getx() * testSystem.getPressure());
-    logger.info(
-        "Ttrip " + testSystem.getPhase(0).getComponent("mercury").getTriplePointTemperature());
+    logger.info("vapour pressure " + testSystem.getPhase(0).getComponent("mercury").getx() * testSystem.getPressure());
+    logger.info("Ttrip " + testSystem.getPhase(0).getComponent("mercury").getTriplePointTemperature());
   }
 }

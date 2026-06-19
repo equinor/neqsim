@@ -75,10 +75,8 @@ public class TestSurfaceTenison {
       testOps.TPflash();
       testSystem.display();
       // testSystem = testSystem.clone();
-      testSystem.getInterphaseProperties().setInterfacialTensionModel("gas", "oil",
-          "Linear Gradient Theory");
-      logger
-          .info("tension gas-oil " + testSystem.getInterphaseProperties().getSurfaceTension(0, 1));
+      testSystem.getInterphaseProperties().setInterfacialTensionModel("gas", "oil", "Linear Gradient Theory");
+      logger.info("tension gas-oil " + testSystem.getInterphaseProperties().getSurfaceTension(0, 1));
 
       // testOps.TPflash();
       // testSystem.display();

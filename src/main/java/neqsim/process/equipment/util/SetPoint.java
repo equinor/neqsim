@@ -68,9 +68,9 @@ public class SetPoint extends ProcessEquipmentBaseClass {
    * Constructor for SetPoint.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
+   * @param name            a {@link java.lang.String} object
    * @param targetEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
-   * @param targetVariable a {@link java.lang.String} object
+   * @param targetVariable  a {@link java.lang.String} object
    * @param sourceEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    */
   public SetPoint(String name, ProcessEquipmentInterface targetEquipment, String targetVariable,
@@ -88,10 +88,9 @@ public class SetPoint extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @param adjustedEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
-   * @param adjstedVariable a {@link java.lang.String} object
+   * @param adjstedVariable   a {@link java.lang.String} object
    */
-  public void setSourceVariable(ProcessEquipmentInterface adjustedEquipment,
-      String adjstedVariable) {
+  public void setSourceVariable(ProcessEquipmentInterface adjustedEquipment, String adjstedVariable) {
     this.sourceEquipment = adjustedEquipment;
     this.sourceVariable = adjstedVariable;
     this.targetVariable = adjstedVariable;
@@ -114,12 +113,12 @@ public class SetPoint extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @param targetEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
-   * @param targetVariable a {@link java.lang.String} object
-   * @param targetValue a double
-   * @param targetUnit a {@link java.lang.String} object
+   * @param targetVariable  a {@link java.lang.String} object
+   * @param targetValue     a double
+   * @param targetUnit      a {@link java.lang.String} object
    */
-  public void setTargetVariable(ProcessEquipmentInterface targetEquipment, String targetVariable,
-      double targetValue, String targetUnit) {
+  public void setTargetVariable(ProcessEquipmentInterface targetEquipment, String targetVariable, double targetValue,
+      String targetUnit) {
     this.targetEquipment = targetEquipment;
     this.targetVariable = targetVariable;
     this.targetValue = targetValue;
@@ -132,7 +131,7 @@ public class SetPoint extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @param targetEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
-   * @param targetVariable a {@link java.lang.String} object
+   * @param targetVariable  a {@link java.lang.String} object
    */
   public void setTargetVariable(ProcessEquipmentInterface targetEquipment, String targetVariable) {
     this.targetEquipment = targetEquipment;
@@ -156,13 +155,13 @@ public class SetPoint extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @param targetEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
-   * @param targetVariable a {@link java.lang.String} object
-   * @param targetValue a double
-   * @param targetUnit a {@link java.lang.String} object
-   * @param targetPhase a {@link java.lang.String} object
+   * @param targetVariable  a {@link java.lang.String} object
+   * @param targetValue     a double
+   * @param targetUnit      a {@link java.lang.String} object
+   * @param targetPhase     a {@link java.lang.String} object
    */
-  public void setTargetVariable(ProcessEquipmentInterface targetEquipment, String targetVariable,
-      double targetValue, String targetUnit, String targetPhase) {
+  public void setTargetVariable(ProcessEquipmentInterface targetEquipment, String targetVariable, double targetValue,
+      String targetUnit, String targetPhase) {
     this.targetEquipment = targetEquipment;
     this.targetVariable = targetVariable;
     this.targetValue = targetValue;
@@ -176,14 +175,14 @@ public class SetPoint extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @param targetEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
-   * @param targetVariable a {@link java.lang.String} object
-   * @param targetValue a double
-   * @param targetUnit a {@link java.lang.String} object
-   * @param targetPhase a {@link java.lang.String} object
+   * @param targetVariable  a {@link java.lang.String} object
+   * @param targetValue     a double
+   * @param targetUnit      a {@link java.lang.String} object
+   * @param targetPhase     a {@link java.lang.String} object
    * @param targetComponent a {@link java.lang.String} object
    */
-  public void setTargetVariable(ProcessEquipmentInterface targetEquipment, String targetVariable,
-      double targetValue, String targetUnit, String targetPhase, String targetComponent) {
+  public void setTargetVariable(ProcessEquipmentInterface targetEquipment, String targetVariable, double targetValue,
+      String targetUnit, String targetPhase, String targetComponent) {
     this.targetEquipment = targetEquipment;
     this.targetVariable = targetVariable;
     this.targetValue = targetValue;
@@ -202,65 +201,64 @@ public class SetPoint extends ProcessEquipmentBaseClass {
 
     if (targetEquipment instanceof Stream) {
       if (targetVariable.equals("pressure")) {
-        if (sourceValueCalculator == null) {
-          val = sourceEquipment.getPressure();
-        }
-        targetEquipment.setPressure(val);
+	if (sourceValueCalculator == null) {
+	  val = sourceEquipment.getPressure();
+	}
+	targetEquipment.setPressure(val);
       } else if (targetVariable.equals("temperature")) {
-        if (sourceValueCalculator == null) {
-          val = sourceEquipment.getTemperature();
-        }
-        targetEquipment.setTemperature(val);
+	if (sourceValueCalculator == null) {
+	  val = sourceEquipment.getTemperature();
+	}
+	targetEquipment.setTemperature(val);
       } else {
-        // Legacy logic for other variables?
-        // The original code had some specific logic here involving inputValue and deviation
-        // which looked like copy-paste from Adjuster?
-        // "inputValue = ((Stream) sourceEquipment).getThermoSystem().getNumberOfMoles();"
-        // "double deviation = targetValue - targetValueCurrent;"
-        // This looks suspicious in SetPoint. SetPoint should just set value.
-        // But I will preserve it if possible, or just ignore for now as I am fixing the structure.
+	// Legacy logic for other variables?
+	// The original code had some specific logic here involving inputValue and deviation
+	// which looked like copy-paste from Adjuster?
+	// "inputValue = ((Stream) sourceEquipment).getThermoSystem().getNumberOfMoles();"
+	// "double deviation = targetValue - targetValueCurrent;"
+	// This looks suspicious in SetPoint. SetPoint should just set value.
+	// But I will preserve it if possible, or just ignore for now as I am fixing the structure.
       }
     } else if (targetEquipment instanceof ThrottlingValve) {
       if (targetVariable.equals("pressure")) {
-        if (sourceValueCalculator == null) {
-          val = sourceEquipment.getPressure();
-        }
-        ((ThrottlingValve) targetEquipment).setOutletPressure(val);
+	if (sourceValueCalculator == null) {
+	  val = sourceEquipment.getPressure();
+	}
+	((ThrottlingValve) targetEquipment).setOutletPressure(val);
       } else {
-        throw new RuntimeException(
-            targetVariable + " adjustment is not supported for ThrottlingValve.");
+	throw new RuntimeException(targetVariable + " adjustment is not supported for ThrottlingValve.");
       }
     } else if (targetEquipment instanceof Compressor) {
       if (targetVariable.equals("pressure")) {
-        if (sourceValueCalculator == null) {
-          val = sourceEquipment.getPressure();
-        }
-        ((Compressor) targetEquipment).setOutletPressure(val);
+	if (sourceValueCalculator == null) {
+	  val = sourceEquipment.getPressure();
+	}
+	((Compressor) targetEquipment).setOutletPressure(val);
       } else {
-        throw new RuntimeException(targetVariable + " adjustment is not supported for Compressor.");
+	throw new RuntimeException(targetVariable + " adjustment is not supported for Compressor.");
       }
     } else if (targetEquipment instanceof Pump) {
       if (targetVariable.equals("pressure")) {
-        if (sourceValueCalculator == null) {
-          val = sourceEquipment.getPressure();
-        }
-        ((Pump) targetEquipment).setOutletPressure(val);
+	if (sourceValueCalculator == null) {
+	  val = sourceEquipment.getPressure();
+	}
+	((Pump) targetEquipment).setOutletPressure(val);
       } else {
-        throw new RuntimeException(targetVariable + " adjustment is not supported for Pump.");
+	throw new RuntimeException(targetVariable + " adjustment is not supported for Pump.");
       }
     } else if (targetEquipment instanceof Heater || targetEquipment instanceof Cooler) {
       if (targetVariable.equals("pressure")) {
-        if (sourceValueCalculator == null) {
-          val = sourceEquipment.getPressure();
-        }
-        ((Heater) targetEquipment).setOutletPressure(val);
+	if (sourceValueCalculator == null) {
+	  val = sourceEquipment.getPressure();
+	}
+	((Heater) targetEquipment).setOutletPressure(val);
       } else if (targetVariable.equals("temperature") || targetVariable.equals("outTemperature")) {
-        if (sourceValueCalculator == null) {
-          val = sourceEquipment.getTemperature();
-        }
-        ((Heater) targetEquipment).setOutTemperature(val);
+	if (sourceValueCalculator == null) {
+	  val = sourceEquipment.getTemperature();
+	}
+	((Heater) targetEquipment).setOutTemperature(val);
       } else {
-        throw new RuntimeException(targetVariable + " adjustment is not supported for Heater.");
+	throw new RuntimeException(targetVariable + " adjustment is not supported for Heater.");
       }
     }
 
@@ -270,7 +268,8 @@ public class SetPoint extends ProcessEquipmentBaseClass {
   /** {@inheritDoc} */
   @Override
   @ExcludeFromJacocoGeneratedReport
-  public void displayResult() {}
+  public void displayResult() {
+  }
 
   /**
    * <p>
@@ -282,8 +281,7 @@ public class SetPoint extends ProcessEquipmentBaseClass {
   @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     // test code for adjuster...
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 20.00);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 20.00);
     testSystem.addComponent("methane", 1000.00);
     testSystem.createDatabase(true);
     testSystem.setMixingRule(2);
@@ -293,8 +291,7 @@ public class SetPoint extends ProcessEquipmentBaseClass {
     adjuster1.setSourceVariable(stream_1, "molarFlow");
     adjuster1.setTargetVariable(stream_1, "gasVolumeFlow", 10.0, "", "MSm3/day");
 
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
     operations.add(stream_1);
     operations.add(adjuster1);
 
@@ -308,8 +305,7 @@ public class SetPoint extends ProcessEquipmentBaseClass {
    *
    * @param sourceValueCalculator a {@link java.util.function.Function} object
    */
-  public void setSourceValueCalculator(
-      Function<ProcessEquipmentInterface, Double> sourceValueCalculator) {
+  public void setSourceValueCalculator(Function<ProcessEquipmentInterface, Double> sourceValueCalculator) {
     this.sourceValueCalculator = sourceValueCalculator;
   }
 }

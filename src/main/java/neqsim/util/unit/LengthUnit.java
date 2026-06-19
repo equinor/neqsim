@@ -26,7 +26,7 @@ public class LengthUnit extends neqsim.util.unit.BaseUnit {
    * </p>
    *
    * @param value Numeric value
-   * @param name Name of unit
+   * @param name  Name of unit
    */
   public LengthUnit(double value, String name) {
     super(value, name);
@@ -53,8 +53,7 @@ public class LengthUnit extends neqsim.util.unit.BaseUnit {
       return 0.3048;
     }
 
-    throw new RuntimeException(
-        new InvalidInputException(this, "getConversionFactor", name, "unit not supported"));
+    throw new RuntimeException(new InvalidInputException(this, "getConversionFactor", name, "unit not supported"));
   }
 
   /** {@inheritDoc} */

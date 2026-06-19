@@ -27,8 +27,7 @@ class SimulationResultTest {
 
   @Test
   void testErrorResult() {
-    SimulationResult result =
-        SimulationResult.error("TEST_ERROR", "Something went wrong", "Fix it by doing X");
+    SimulationResult result = SimulationResult.error("TEST_ERROR", "Something went wrong", "Fix it by doing X");
     assertTrue(result.isError());
     assertFalse(result.isSuccess());
     assertEquals(1, result.getErrors().size());
@@ -50,7 +49,7 @@ class SimulationResultTest {
   @Test
   void testToJsonError() {
     SimulationResult result = SimulationResult.error("MISSING_INLET", "Inlet reference not found",
-        "Define the unit before referencing it");
+	"Define the unit before referencing it");
     String json = result.toJson();
     assertNotNull(json);
     assertTrue(json.contains("\"status\": \"error\""));
@@ -84,8 +83,8 @@ class SimulationResultTest {
 
   @Test
   void testErrorDetailToJsonObject() {
-    SimulationResult.ErrorDetail detail = new SimulationResult.ErrorDetail("MISSING_INLET",
-        "No inlet stream", "Compressor-1", "Connect a stream");
+    SimulationResult.ErrorDetail detail = new SimulationResult.ErrorDetail("MISSING_INLET", "No inlet stream",
+	"Compressor-1", "Connect a stream");
     com.google.gson.JsonObject jsonObj = detail.toJsonObject();
     assertEquals("MISSING_INLET", jsonObj.get("code").getAsString());
     assertEquals("No inlet stream", jsonObj.get("message").getAsString());
@@ -95,8 +94,7 @@ class SimulationResultTest {
 
   @Test
   void testErrorDetailToString() {
-    SimulationResult.ErrorDetail detail =
-        new SimulationResult.ErrorDetail("ERR", "message", "unit1", "fix it");
+    SimulationResult.ErrorDetail detail = new SimulationResult.ErrorDetail("ERR", "message", "unit1", "fix it");
     String str = detail.toString();
     assertTrue(str.contains("ERR"));
     assertTrue(str.contains("message"));

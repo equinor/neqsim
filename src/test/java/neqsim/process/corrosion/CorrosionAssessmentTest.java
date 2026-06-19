@@ -7,8 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
 /**
- * Tests for SourServiceAssessment, CO2CorrosionMaterialSelection, ChlorideSCCAssessment,
- * OxygenCorrosionAssessment, DensePhaseCO2Corrosion, and AmmoniaCompatibility.
+ * Tests for SourServiceAssessment, CO2CorrosionMaterialSelection, ChlorideSCCAssessment, OxygenCorrosionAssessment,
+ * DensePhaseCO2Corrosion, and AmmoniaCompatibility.
  */
 class CorrosionAssessmentTest {
 

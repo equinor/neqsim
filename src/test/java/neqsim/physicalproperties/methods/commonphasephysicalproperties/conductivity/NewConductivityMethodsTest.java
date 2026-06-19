@@ -9,8 +9,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * Tests for newly implemented thermal conductivity methods: WaterConductivityMethod (IAPWS-2011),
- * HydrogenConductivityMethod (Assael 2011), PFCT high-T correction, Filippov aqueous mixing, and
- * model wiring via setConductivityModel.
+ * HydrogenConductivityMethod (Assael 2011), PFCT high-T correction, Filippov aqueous mixing, and model wiring via
+ * setConductivityModel.
  *
  * <p>
  * NIST reference values from NIST WebBook / REFPROP.
@@ -82,8 +82,8 @@ public class NewConductivityMethodsTest {
     for (int i = 0; i < system.getNumberOfPhases(); i++) {
       String phType = system.getPhase(i).getType().toString();
       if (phType.contains("LIQUID") || phType.contains("AQUEOUS")) {
-        liqIdx = i;
-        break;
+	liqIdx = i;
+	break;
       }
     }
     if (liqIdx < 0) {
@@ -136,8 +136,7 @@ public class NewConductivityMethodsTest {
     // NIST: ~0.182 W/(m*K) for H2 at 300 K, 1 bar
     double nist = 0.182;
     double error = Math.abs(cond - nist) / nist * 100.0;
-    assertTrue(error < 15.0,
-        "H2 gas 300K error too large: " + error + "% (calc=" + cond + ", NIST=" + nist + ")");
+    assertTrue(error < 15.0, "H2 gas 300K error too large: " + error + "% (calc=" + cond + ", NIST=" + nist + ")");
   }
 
   /**
@@ -218,8 +217,8 @@ public class NewConductivityMethodsTest {
   // ========================= PFCT HIGH-T CORRECTION =========================
 
   /**
-   * Methane gas at 600 K, 1 bar. Before correction: PFCT overpredicted by ~26%. After correction
-   * (threshold=400K, slope=-9e-4): should be within 15%.
+   * Methane gas at 600 K, 1 bar. Before correction: PFCT overpredicted by ~26%. After correction (threshold=400K,
+   * slope=-9e-4): should be within 15%.
    */
   @Test
   void testPFCTMethane600KHighTCorrection() {
@@ -234,13 +233,12 @@ public class NewConductivityMethodsTest {
     double nist = 0.0681; // NIST methane 600 K 1 bar
     double error = Math.abs(cond - nist) / nist * 100.0;
     // After high-T correction, error should be reduced from 26% to <15%
-    assertTrue(error < 15.0,
-        "PFCT CH4 600K error too large after correction: " + error + "% (calc=" + cond + ")");
+    assertTrue(error < 15.0, "PFCT CH4 600K error too large after correction: " + error + "% (calc=" + cond + ")");
   }
 
   /**
-   * Methane gas at 350 K, 1 bar (below correction threshold of 400K, should be unchanged). NIST
-   * reference: ~0.04042 W/(m*K).
+   * Methane gas at 350 K, 1 bar (below correction threshold of 400K, should be unchanged). NIST reference: ~0.04042
+   * W/(m*K).
    */
   @Test
   void testPFCTMethane350KUnchanged() {
@@ -255,15 +253,13 @@ public class NewConductivityMethodsTest {
     double nist = 0.04042;
     double error = Math.abs(cond - nist) / nist * 100.0;
     // Below 400 K threshold, should still be within original PFCT accuracy (<10%)
-    assertTrue(error < 10.0,
-        "PFCT CH4 350K error unexpected: " + error + "% (calc=" + cond + ", NIST=" + nist + ")");
+    assertTrue(error < 10.0, "PFCT CH4 350K error unexpected: " + error + "% (calc=" + cond + ", NIST=" + nist + ")");
   }
 
   // ========================= FILIPPOV AQUEOUS MIXING =========================
 
   /**
-   * Water + MEG mixture. Filippov mixing should give reasonable conductivity for glycol/water
-   * system.
+   * Water + MEG mixture. Filippov mixing should give reasonable conductivity for glycol/water system.
    */
   @Test
   void testFilippovWaterMEGMixture() {
@@ -280,8 +276,8 @@ public class NewConductivityMethodsTest {
     for (int i = 0; i < system.getNumberOfPhases(); i++) {
       String phType = system.getPhase(i).getType().toString();
       if (phType.contains("LIQUID") || phType.contains("AQUEOUS")) {
-        liqIdx = i;
-        break;
+	liqIdx = i;
+	break;
       }
     }
 
@@ -328,8 +324,7 @@ public class NewConductivityMethodsTest {
     // Should use HydrogenConductivityMethod and give ~0.182 W/(m*K)
     double nist = 0.182;
     double error = Math.abs(cond - nist) / nist * 100.0;
-    assertTrue(error < 15.0,
-        "Auto-detected H2 300K error: " + error + "% (calc=" + cond + ", NIST=" + nist + ")");
+    assertTrue(error < 15.0, "Auto-detected H2 300K error: " + error + "% (calc=" + cond + ", NIST=" + nist + ")");
   }
 
   /**

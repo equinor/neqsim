@@ -27,9 +27,9 @@ public class NaturalGasPhysicalProperties extends GasPhysicalProperties {
    * Constructor for NaturalGasPhysicalProperties.
    * </p>
    *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase                            a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param binaryDiffusionCoefficientMethod a int
-   * @param multicomponentDiffusionMethod a int
+   * @param multicomponentDiffusionMethod    a int
    */
   public NaturalGasPhysicalProperties(PhaseInterface phase, int binaryDiffusionCoefficientMethod,
       int multicomponentDiffusionMethod) {
@@ -37,8 +37,7 @@ public class NaturalGasPhysicalProperties extends GasPhysicalProperties {
     conductivityCalc = new ChungConductivityMethod(this);
     viscosityCalc = new ChungViscosityMethod(this);
     // viscosityCalc = new PFCTViscosityMethodMod86(this);
-    diffusivityCalc =
-        new neqsim.physicalproperties.methods.gasphysicalproperties.diffusivity.Diffusivity(this);
+    diffusivityCalc = new neqsim.physicalproperties.methods.gasphysicalproperties.diffusivity.Diffusivity(this);
     // diffusivityCalc = new WilkeLeeDiffusivity(this);
 
     densityCalc = new neqsim.physicalproperties.methods.gasphysicalproperties.density.Density(this);

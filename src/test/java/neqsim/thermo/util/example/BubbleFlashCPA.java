@@ -20,7 +20,7 @@ public class BubbleFlashCPA {
   private static final Logger logger = LogManager.getLogger(BubbleFlashCPA.class);
 
   /** Logger object for class. */
-  
+
   /**
    * <p>
    * main.
@@ -58,11 +58,10 @@ public class BubbleFlashCPA {
      *
      * testSystem.addComponent("benzene", 1.27);
      *
-     * testSystem.addTBPfraction("C6", 1.49985, 86.178 / 1000.0, 0.664);
-     * testSystem.addTBPfraction("C7", 1.359864, 96.0 / 1000.0, 0.738);
-     * testSystem.addTBPfraction("C8", 0.939906, 107.0 / 1000.0, 0.765);
-     * testSystem.addTBPfraction("C9", 0.879912, 121.0 / 1000.0, 0.781);
-     * testSystem.addTBPfraction("C10", 0.45, 134.0 / 1000.0, 0.792);
+     * testSystem.addTBPfraction("C6", 1.49985, 86.178 / 1000.0, 0.664); testSystem.addTBPfraction("C7", 1.359864, 96.0
+     * / 1000.0, 0.738); testSystem.addTBPfraction("C8", 0.939906, 107.0 / 1000.0, 0.765);
+     * testSystem.addTBPfraction("C9", 0.879912, 121.0 / 1000.0, 0.781); testSystem.addTBPfraction("C10", 0.45, 134.0 /
+     * 1000.0, 0.792);
      */
     // testSystem.addPlusFraction("C11+", 3.44, 231.0/1000, 0.87);
     // testSystem.getCharacterization().characterisePlusFraction();

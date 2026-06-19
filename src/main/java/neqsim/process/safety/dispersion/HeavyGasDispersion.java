@@ -6,9 +6,9 @@ import java.io.Serializable;
  * Britter–McQuaid empirical correlation for continuous dense-gas (heavy) releases.
  *
  * <p>
- * Provides the maximum downwind distance at which the centerline concentration drops to a target
- * dilution ratio C/Co for steady, ground-level continuous releases of denser-than-air gases.
- * Derived from the workbook charts in CCPS Yellow Book / Britter &amp; McQuaid (1988).
+ * Provides the maximum downwind distance at which the centerline concentration drops to a target dilution ratio C/Co
+ * for steady, ground-level continuous releases of denser-than-air gases. Derived from the workbook charts in CCPS
+ * Yellow Book / Britter &amp; McQuaid (1988).
  *
  * <p>
  * Use for neutrally buoyant or dense releases (e.g. LPG, propane, CO₂, chlorine) in flat terrain.
@@ -36,13 +36,13 @@ public class HeavyGasDispersion implements Serializable {
    *
    * @param volumetricRateM3PerS continuous release volumetric flow at source conditions, m³/s
    * @param sourceDensityKgPerM3 source gas density at release conditions, kg/m³
-   * @param airDensityKgPerM3 ambient air density, kg/m³ (≈1.20 at 20°C, sea level)
-   * @param windSpeedMperS reference wind speed at 10 m, m/s
+   * @param airDensityKgPerM3    ambient air density, kg/m³ (≈1.20 at 20°C, sea level)
+   * @param windSpeedMperS       reference wind speed at 10 m, m/s
    */
-  public HeavyGasDispersion(double volumetricRateM3PerS, double sourceDensityKgPerM3,
-      double airDensityKgPerM3, double windSpeedMperS) {
-    if (volumetricRateM3PerS <= 0.0 || sourceDensityKgPerM3 <= 0.0
-        || airDensityKgPerM3 <= 0.0 || windSpeedMperS <= 0.0) {
+  public HeavyGasDispersion(double volumetricRateM3PerS, double sourceDensityKgPerM3, double airDensityKgPerM3,
+      double windSpeedMperS) {
+    if (volumetricRateM3PerS <= 0.0 || sourceDensityKgPerM3 <= 0.0 || airDensityKgPerM3 <= 0.0
+	|| windSpeedMperS <= 0.0) {
       throw new IllegalArgumentException("All inputs to HeavyGasDispersion must be positive");
     }
     this.volumetricRateM3PerS = volumetricRateM3PerS;
@@ -61,8 +61,7 @@ public class HeavyGasDispersion implements Serializable {
   }
 
   /**
-   * Britter–McQuaid characteristic dimensionless parameter
-   * α = (g0² · q / U⁵)^(1/5).
+   * Britter–McQuaid characteristic dimensionless parameter α = (g0² · q / U⁵)^(1/5).
    *
    * @return characteristic parameter (dimensionless)
    */
@@ -74,12 +73,12 @@ public class HeavyGasDispersion implements Serializable {
   }
 
   /**
-   * Estimate the downwind centerline distance to a target concentration ratio C/Co,
-   * where Co is the source volumetric concentration (= 1.0 for pure gas).
+   * Estimate the downwind centerline distance to a target concentration ratio C/Co, where Co is the source volumetric
+   * concentration (= 1.0 for pure gas).
    *
    * <p>
-   * Implements piece-wise log-log fit of the Britter–McQuaid workbook nomograms
-   * (continuous, ground-level, no jet/buoyancy correction).
+   * Implements piece-wise log-log fit of the Britter–McQuaid workbook nomograms (continuous, ground-level, no
+   * jet/buoyancy correction).
    *
    * @param concRatio target concentration ratio C/Co in (0, 1)
    * @return downwind distance in m

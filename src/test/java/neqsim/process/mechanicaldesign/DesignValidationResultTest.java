@@ -112,8 +112,8 @@ class DesignValidationResultTest {
     @Test
     @DisplayName("Should support method chaining")
     void shouldSupportChaining() {
-      DesignValidationResult chainedResult = result.addInfo("E1", "Info1")
-          .addWarning("Cat", "E2", "Warn", "Fix").addError("Cat", "E3", "Err", "Fix");
+      DesignValidationResult chainedResult = result.addInfo("E1", "Info1").addWarning("Cat", "E2", "Warn", "Fix")
+	  .addError("Cat", "E3", "Err", "Fix");
 
       assertEquals(result, chainedResult);
       assertEquals(3, result.getMessages().size());
@@ -158,8 +158,7 @@ class DesignValidationResultTest {
     @Test
     @DisplayName("Should filter by severity")
     void shouldFilterBySeverity() {
-      result.addInfo("E1", "Info").addWarning("Cat", "E2", "Warn", "Fix").addError("Cat", "E3",
-          "Err", "Fix");
+      result.addInfo("E1", "Info").addWarning("Cat", "E2", "Warn", "Fix").addError("Cat", "E3", "Err", "Fix");
 
       List<ValidationMessage> warnings = result.getMessages(Severity.WARNING);
       assertEquals(1, warnings.size());
@@ -220,8 +219,7 @@ class DesignValidationResultTest {
     @Test
     @DisplayName("Should support metric chaining")
     void shouldSupportMetricChaining() {
-      DesignValidationResult chainedResult =
-          result.addMetric("M1", 1).addMetric("M2", 2).addMetric("M3", 3);
+      DesignValidationResult chainedResult = result.addMetric("M1", 1).addMetric("M2", 2).addMetric("M3", 3);
 
       assertEquals(result, chainedResult);
       assertEquals(3, result.getMetrics().size());
@@ -303,8 +301,8 @@ class DesignValidationResultTest {
     @Test
     @DisplayName("Should store all properties")
     void shouldStoreAllProperties() {
-      ValidationMessage msg = new ValidationMessage(Severity.WARNING, "Pressure", "Separator",
-          "High pressure", "Reduce");
+      ValidationMessage msg = new ValidationMessage(Severity.WARNING, "Pressure", "Separator", "High pressure",
+	  "Reduce");
 
       assertEquals(Severity.WARNING, msg.getSeverity());
       assertEquals("Pressure", msg.getCategory());

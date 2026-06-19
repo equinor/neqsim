@@ -6,13 +6,11 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * ASTM D4052 / ISO 12185 - Standard Test Method for Density, Relative Density, and API Gravity of
- * Liquids.
+ * ASTM D4052 / ISO 12185 - Standard Test Method for Density, Relative Density, and API Gravity of Liquids.
  *
  * <p>
- * Calculates oil density at reference temperature (15 C or 60 F) and derives API gravity. This is
- * the fundamental crude oil classification parameter used for trading, custody transfer, and
- * refinery planning.
+ * Calculates oil density at reference temperature (15 C or 60 F) and derives API gravity. This is the fundamental crude
+ * oil classification parameter used for trading, custody transfer, and refinery planning.
  * </p>
  *
  * <p>
@@ -88,8 +86,7 @@ public class Standard_ASTM_D4052 extends neqsim.standards.Standard {
    * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object representing the oil
    */
   public Standard_ASTM_D4052(SystemInterface thermoSystem) {
-    super("Standard_ASTM_D4052", "ASTM D4052 - Density, Relative Density, and API Gravity",
-        thermoSystem);
+    super("Standard_ASTM_D4052", "ASTM D4052 - Density, Relative Density, and API Gravity", thermoSystem);
   }
 
   /** {@inheritDoc} */
@@ -107,21 +104,21 @@ public class Standard_ASTM_D4052 extends neqsim.standards.Standard {
       // Find oil/liquid phase
       int liquidPhaseIndex = -1;
       for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
-        String phaseType = fluid.getPhase(i).getType().toString();
-        if ("oil".equals(phaseType) || "liquid".equals(phaseType)) {
-          liquidPhaseIndex = i;
-          break;
-        }
+	String phaseType = fluid.getPhase(i).getType().toString();
+	if ("oil".equals(phaseType) || "liquid".equals(phaseType)) {
+	  liquidPhaseIndex = i;
+	  break;
+	}
       }
 
       if (liquidPhaseIndex < 0 && fluid.getNumberOfPhases() > 0) {
-        liquidPhaseIndex = 0;
+	liquidPhaseIndex = 0;
       }
 
       if (liquidPhaseIndex >= 0) {
-        density15C = fluid.getPhase(liquidPhaseIndex).getDensity("kg/m3");
-        specificGravity60F = density15C / WATER_DENSITY_60F;
-        apiGravity = (141.5 / specificGravity60F) - 131.5;
+	density15C = fluid.getPhase(liquidPhaseIndex).getDensity("kg/m3");
+	specificGravity60F = density15C / WATER_DENSITY_60F;
+	apiGravity = (141.5 / specificGravity60F) - 131.5;
       }
     } catch (Exception ex) {
       logger.error("Density calculation at 15 C failed: {}", ex.getMessage());
@@ -132,18 +129,18 @@ public class Standard_ASTM_D4052 extends neqsim.standards.Standard {
   @Override
   public double getValue(String returnParameter) {
     switch (returnParameter) {
-      case "density":
-      case "density15C":
-        return density15C;
-      case "SG":
-      case "specificGravity":
-        return specificGravity60F;
-      case "API":
-      case "apiGravity":
-        return apiGravity;
-      default:
-        logger.error("Unsupported parameter: {}", returnParameter);
-        return Double.NaN;
+    case "density":
+    case "density15C":
+      return density15C;
+    case "SG":
+    case "specificGravity":
+      return specificGravity60F;
+    case "API":
+    case "apiGravity":
+      return apiGravity;
+    default:
+      logger.error("Unsupported parameter: {}", returnParameter);
+      return Double.NaN;
     }
   }
 
@@ -153,12 +150,12 @@ public class Standard_ASTM_D4052 extends neqsim.standards.Standard {
     if ("density".equals(returnParameter) || "density15C".equals(returnParameter)) {
       double densityKgM3 = getValue(returnParameter);
       if (Double.isNaN(densityKgM3)) {
-        return Double.NaN;
+	return Double.NaN;
       }
       if ("lb/ft3".equalsIgnoreCase(returnUnit)) {
-        return densityKgM3 * 0.062428;
+	return densityKgM3 * 0.062428;
       } else if ("g/cm3".equalsIgnoreCase(returnUnit) || "g/cc".equalsIgnoreCase(returnUnit)) {
-        return densityKgM3 / 1000.0;
+	return densityKgM3 / 1000.0;
       }
       return densityKgM3;
     }
@@ -169,17 +166,17 @@ public class Standard_ASTM_D4052 extends neqsim.standards.Standard {
   @Override
   public String getUnit(String returnParameter) {
     switch (returnParameter) {
-      case "density":
-      case "density15C":
-        return "kg/m3";
-      case "SG":
-      case "specificGravity":
-        return "-";
-      case "API":
-      case "apiGravity":
-        return "deg API";
-      default:
-        return "";
+    case "density":
+    case "density15C":
+      return "kg/m3";
+    case "SG":
+    case "specificGravity":
+      return "-";
+    case "API":
+    case "apiGravity":
+      return "deg API";
+    default:
+      return "";
     }
   }
 

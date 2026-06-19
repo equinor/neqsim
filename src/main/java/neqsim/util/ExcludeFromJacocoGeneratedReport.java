@@ -6,7 +6,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * <p>ExcludeFromJacocoGeneratedReport class.</p>
+ * <p>
+ * ExcludeFromJacocoGeneratedReport class.
+ * </p>
  *
  * @author ASMF
  */

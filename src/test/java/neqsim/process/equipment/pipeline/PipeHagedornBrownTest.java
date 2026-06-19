@@ -74,8 +74,7 @@ public class PipeHagedornBrownTest {
     Assertions.assertTrue(dp > 0, "Two-phase dp should be positive");
 
     double holdup = pipe.getLiquidHoldup();
-    Assertions.assertTrue(holdup >= 0.0 && holdup <= 1.0,
-        "Liquid holdup should be between 0 and 1, got: " + holdup);
+    Assertions.assertTrue(holdup >= 0.0 && holdup <= 1.0, "Liquid holdup should be between 0 and 1, got: " + holdup);
 
     double mixDens = pipe.getMixtureDensity();
     Assertions.assertTrue(mixDens > 0, "Mixture density should be positive");

@@ -189,8 +189,7 @@ public class EmulsionViscosityCalculatorTest {
     calc.calculate();
     double withDemulsifier = calc.getEffectiveViscosity();
 
-    assertTrue(withDemulsifier < withoutDemulsifier,
-        "Demulsifier should reduce emulsion viscosity");
+    assertTrue(withDemulsifier < withoutDemulsifier, "Demulsifier should reduce emulsion viscosity");
   }
 
   @Test

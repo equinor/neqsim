@@ -4,9 +4,9 @@ package neqsim.process.research;
  * Material node used by process-network candidate generation.
  *
  * <p>
- * A material node names an intermediate or product state in a process synthesis graph. It can refer
- * to a physical stream class, a dominant component, or a higher-level material state such as
- * syngas, dry gas, liquid hydrocarbon, or purified product.
+ * A material node names an intermediate or product state in a process synthesis graph. It can refer to a physical
+ * stream class, a dominant component, or a higher-level material state such as syngas, dry gas, liquid hydrocarbon, or
+ * purified product.
  * </p>
  *
  * @author NeqSim Development Team
@@ -20,8 +20,8 @@ public class MaterialNode {
   /**
    * Creates a material node.
    *
-   * @param name node name; must be non-empty
-   * @param description short engineering description; may be empty
+   * @param name          node name; must be non-empty
+   * @param description   short engineering description; may be empty
    * @param componentName dominant component name; may be null
    */
   public MaterialNode(String name, String description, String componentName) {

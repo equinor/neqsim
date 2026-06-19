@@ -3,8 +3,7 @@ package neqsim.thermo.mixingrule;
 import neqsim.util.exception.InvalidInputException;
 
 /**
- * Types of CPAMixingRule, relating to different kind of mixing rules relevant for CPA type phases.
- * Available types are:
+ * Types of CPAMixingRule, relating to different kind of mixing rules relevant for CPA type phases. Available types are:
  * <ul>
  * <li>CPA_RADOCH - 1 -</li>
  * <li>PCSAFTA_RADOCH - 3 -</li>
@@ -48,11 +47,10 @@ public enum CPAMixingRuleType implements MixingRuleTypeInterface {
   public static CPAMixingRuleType byName(String name) {
     for (CPAMixingRuleType mr : copyOfValues) {
       if (mr.name().equals(name.toUpperCase())) {
-        return mr;
+	return mr;
       }
     }
-    throw new RuntimeException(
-        new InvalidInputException("CPAMixingRuleType", "byName", "name", "is not valid."));
+    throw new RuntimeException(new InvalidInputException("CPAMixingRuleType", "byName", "name", "is not valid."));
   }
 
   /**
@@ -64,10 +62,9 @@ public enum CPAMixingRuleType implements MixingRuleTypeInterface {
   public static CPAMixingRuleType byValue(int value) {
     for (CPAMixingRuleType mr : copyOfValues) {
       if (mr.getValue() == (value)) {
-        return mr;
+	return mr;
       }
     }
-    throw new RuntimeException(
-        new InvalidInputException("CPAMixingRuleType", "byValue", "value", "is not valid."));
+    throw new RuntimeException(new InvalidInputException("CPAMixingRuleType", "byValue", "value", "is not valid."));
   }
 }

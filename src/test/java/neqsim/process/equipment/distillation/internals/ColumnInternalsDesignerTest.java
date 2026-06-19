@@ -10,15 +10,14 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Integration tests for {@link ColumnInternalsDesigner} with a real converged
- * {@link DistillationColumn}.
+ * Integration tests for {@link ColumnInternalsDesigner} with a real converged {@link DistillationColumn}.
  */
 @Tag("slow")
 public class ColumnInternalsDesignerTest {
 
   /**
-   * Tests tray internals sizing for a depropanizer column. Creates a column, converges it, then
-   * runs the internals designer.
+   * Tests tray internals sizing for a depropanizer column. Creates a column, converges it, then runs the internals
+   * designer.
    */
   @Test
   public void testSieveTrayDesignForDepropanizer() {
@@ -193,7 +192,6 @@ public class ColumnInternalsDesignerTest {
     assertTrue(designer.getRequiredDiameter() > 0.1);
     assertNotNull(designer.getPackingResult());
     assertTrue(designer.getPackingResult().getHETP() > 0, "HETP should be positive");
-    assertTrue(designer.getPackingResult().getNumberOfTheoreticalStages() > 0,
-        "Stages should be positive");
+    assertTrue(designer.getPackingResult().getNumberOfTheoreticalStages() > 0, "Stages should be positive");
   }
 }

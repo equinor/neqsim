@@ -8,8 +8,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Unit tests for the artificial-lift pumps {@link JetPump} (hydraulic jet pump) and
- * {@link SuckerRodPump} (beam pump).
+ * Unit tests for the artificial-lift pumps {@link JetPump} (hydraulic jet pump) and {@link SuckerRodPump} (beam pump).
  *
  * @author NeqSim
  * @version 1.0
@@ -35,8 +34,8 @@ class ArtificialLiftPumpTest {
   }
 
   /**
-   * A jet pump must boost the suction pressure to a discharge pressure that lies between the
-   * suction and power-fluid pressures, and report a non-negative head ratio and efficiency.
+   * A jet pump must boost the suction pressure to a discharge pressure that lies between the suction and power-fluid
+   * pressures, and report a non-negative head ratio and efficiency.
    */
   @Test
   void testJetPumpDischargeBetweenSuctionAndPower() {
@@ -55,8 +54,8 @@ class ArtificialLiftPumpTest {
   }
 
   /**
-   * The jet-pump head ratio must fall as the operating flow ratio rises (more entrained flow per
-   * unit power flow yields a smaller pressure lift).
+   * The jet-pump head ratio must fall as the operating flow ratio rises (more entrained flow per unit power flow yields
+   * a smaller pressure lift).
    */
   @Test
   void testJetPumpHeadRatioDecreasesWithFlowRatio() {
@@ -68,8 +67,8 @@ class ArtificialLiftPumpTest {
   }
 
   /**
-   * A sucker-rod pump's actual displacement must equal theoretical displacement scaled by the
-   * volumetric efficiency, and scale linearly with strokes per minute.
+   * A sucker-rod pump's actual displacement must equal theoretical displacement scaled by the volumetric efficiency,
+   * and scale linearly with strokes per minute.
    */
   @Test
   void testSuckerRodPumpDisplacement() {
@@ -88,8 +87,8 @@ class ArtificialLiftPumpTest {
   }
 
   /**
-   * Running a sucker-rod pump must compute a positive polished-rod load and boost the stream to the
-   * configured discharge pressure.
+   * Running a sucker-rod pump must compute a positive polished-rod load and boost the stream to the configured
+   * discharge pressure.
    */
   @Test
   void testSuckerRodPumpRun() {

@@ -9,8 +9,8 @@ import java.util.Set;
  * Represents the difference between two process snapshots.
  *
  * <p>
- * Process deltas enable efficient synchronization of state changes between NeqSim and external
- * systems, transmitting only changed values rather than full state.
+ * Process deltas enable efficient synchronization of state changes between NeqSim and external systems, transmitting
+ * only changed values rather than full state.
  * </p>
  *
  * @author ESOL
@@ -29,7 +29,7 @@ public class ProcessDelta implements Serializable {
    * Creates a delta between two snapshots.
    *
    * @param from the baseline snapshot
-   * @param to the current snapshot
+   * @param to   the current snapshot
    */
   public ProcessDelta(ProcessSnapshot from, ProcessSnapshot to) {
     this.fromSnapshotId = from.getSnapshotId();
@@ -48,9 +48,9 @@ public class ProcessDelta implements Serializable {
       double fromValue = from.getMeasurement(name);
 
       if (Double.isNaN(fromValue) || Math.abs(toValue - fromValue) > 1e-10) {
-        changedValues.put(name, toValue);
-        previousValues.put(name, fromValue);
-        units.put(name, to.getMeasurementUnit(name));
+	changedValues.put(name, toValue);
+	previousValues.put(name, fromValue);
+	units.put(name, to.getMeasurementUnit(name));
       }
     }
   }
@@ -173,7 +173,7 @@ public class ProcessDelta implements Serializable {
   /**
    * Applies this delta to a snapshot to produce a new snapshot.
    *
-   * @param base the base snapshot
+   * @param base  the base snapshot
    * @param newId ID for the new snapshot
    * @return updated snapshot
    */
@@ -195,7 +195,6 @@ public class ProcessDelta implements Serializable {
 
   @Override
   public String toString() {
-    return String.format("ProcessDelta[%s -> %s, %d changes]", fromSnapshotId, toSnapshotId,
-        changedValues.size());
+    return String.format("ProcessDelta[%s -> %s, %d changes]", fromSnapshotId, toSnapshotId, changedValues.size());
   }
 }

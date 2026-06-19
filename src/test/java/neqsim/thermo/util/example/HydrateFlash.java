@@ -20,7 +20,7 @@ public class HydrateFlash {
   private static final Logger logger = LogManager.getLogger(HydrateFlash.class);
 
   /** Logger object for class. */
-  
+
   /**
    * <p>
    * main.
@@ -114,7 +114,7 @@ public class HydrateFlash {
       // testSystem.setHydrateCheck(false);
       // testSystem.init(0);
       for (int i = 0; i < 1; i++) {
-        // testOps.hydrateFormationTemperature();
+	// testOps.hydrateFormationTemperature();
       }
       // testOps.TPflash();
       // logger.info("temperature2 " + (testSystem.getTemperature() - 273.15));
@@ -164,14 +164,12 @@ public class HydrateFlash {
     // testSystem.getPhase(n).getComponent("MEG").getMolarMass()*testSystem.getPhase(n).getComponent("MEG").getx()/testSystem.getPhase(n).getMolarMass();
     // logger.info("wt % MEG " + megwtfrac*100);
     /*
-     * SystemInterface testSystem2 = new SystemSrkCPAstatoil(273.0 - 12, 60.0);
-     * testSystem2.addComponent("methane", 1.0 -
-     * testSystem.getPhase(0).getComponent("water").getx()); testSystem2.addComponent("water",
+     * SystemInterface testSystem2 = new SystemSrkCPAstatoil(273.0 - 12, 60.0); testSystem2.addComponent("methane", 1.0
+     * - testSystem.getPhase(0).getComponent("water").getx()); testSystem2.addComponent("water",
      * testSystem.getPhase(0).getComponent("water").getx()); testSystem2.createDatabase(true);
      *
-     * testSystem2.setMixingRule(7); testSystem2.init(0); testSystem2.init(1);
-     * ThermodynamicOperations testOps2 = new ThermodynamicOperations(testSystem2); try {
-     * testOps2.waterDewPointTemperatureFlash(); } catch (Exception ex) {
+     * testSystem2.setMixingRule(7); testSystem2.init(0); testSystem2.init(1); ThermodynamicOperations testOps2 = new
+     * ThermodynamicOperations(testSystem2); try { testOps2.waterDewPointTemperatureFlash(); } catch (Exception ex) {
      * logger.error(ex.getMessage()) } testSystem2.display();
      */
   }

@@ -8,8 +8,8 @@ import java.util.List;
  * Decommissioning cost estimation for offshore oil and gas facilities.
  *
  * <p>
- * Provides order-of-magnitude cost estimates for late-life planning and abandonment liability
- * calculations. Based on Norwegian Continental Shelf (NCS) experience and industry benchmarks.
+ * Provides order-of-magnitude cost estimates for late-life planning and abandonment liability calculations. Based on
+ * Norwegian Continental Shelf (NCS) experience and industry benchmarks.
  * </p>
  *
  * <h2>Cost Categories</h2>
@@ -32,9 +32,8 @@ import java.util.List;
  *
  * <pre>
  * {@code
- * DecommissioningEstimator estimator =
- *     new DecommissioningEstimator().setFacilityType(FacilityType.FIXED_JACKET).setWaterDepth(120)
- *         .setTopsideWeight(15000).setNumberOfWells(12).setPipelineLength(45);
+ * DecommissioningEstimator estimator = new DecommissioningEstimator().setFacilityType(FacilityType.FIXED_JACKET)
+ *     .setWaterDepth(120).setTopsideWeight(15000).setNumberOfWells(12).setPipelineLength(45);
  *
  * double totalCost = estimator.getTotalCostMUSD();
  * System.out.println("Decom cost: $" + totalCost + "M");
@@ -466,7 +465,7 @@ public class DecommissioningEstimator implements Serializable {
    */
   public double getTotalCostMUSD() {
     return getWellPACostMUSD() + getTopsideRemovalCostMUSD() + getSubstructureRemovalCostMUSD()
-        + getPipelineDecomCostMUSD() + getSiteRemediationCostMUSD();
+	+ getPipelineDecomCostMUSD() + getSiteRemediationCostMUSD();
   }
 
   /**
@@ -477,7 +476,7 @@ public class DecommissioningEstimator implements Serializable {
    */
   public double getTotalCostMUSD(PipelineStrategy pipelineStrategy) {
     return getWellPACostMUSD() + getTopsideRemovalCostMUSD() + getSubstructureRemovalCostMUSD()
-        + getPipelineDecomCostMUSD(pipelineStrategy) + getSiteRemediationCostMUSD();
+	+ getPipelineDecomCostMUSD(pipelineStrategy) + getSiteRemediationCostMUSD();
   }
 
   // ============================================================================
@@ -493,16 +492,16 @@ public class DecommissioningEstimator implements Serializable {
     List<CostItem> items = new ArrayList<>();
 
     items.add(new CostItem("Well P&A", getWellPACostMUSD(),
-        String.format("%d wells @ avg %.0fm depth", numberOfWells, averageWellDepthM)));
+	String.format("%d wells @ avg %.0fm depth", numberOfWells, averageWellDepthM)));
 
     items.add(new CostItem("Topside Removal", getTopsideRemovalCostMUSD(),
-        String.format("%.0f tonnes", topsideWeightTonnes)));
+	String.format("%.0f tonnes", topsideWeightTonnes)));
 
     items.add(new CostItem("Substructure Removal", getSubstructureRemovalCostMUSD(),
-        String.format("%s in %.0fm water", facilityType.getDisplayName(), waterDepthM)));
+	String.format("%s in %.0fm water", facilityType.getDisplayName(), waterDepthM)));
 
     items.add(new CostItem("Pipeline Decom", getPipelineDecomCostMUSD(),
-        String.format("%.0f km, %.0f\" dia", pipelineLengthKm, pipelineDiameterInch)));
+	String.format("%.0f km, %.0f\" dia", pipelineLengthKm, pipelineDiameterInch)));
 
     items.add(new CostItem("Site Remediation", getSiteRemediationCostMUSD(), "Seabed clearing"));
 
@@ -610,7 +609,7 @@ public class DecommissioningEstimator implements Serializable {
      *
      * @param category cost category
      * @param costMUSD cost in MUSD
-     * @param notes additional notes
+     * @param notes    additional notes
      */
     public CostItem(String category, double costMUSD, String notes) {
       this.category = category;

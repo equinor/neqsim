@@ -21,8 +21,8 @@ import org.apache.logging.log4j.Logger;
  */
 public class CompressorChart implements CompressorChartInterface, java.io.Serializable {
   /**
-   * Generates the surge curve by taking the head value at the lowest flow for each speed from the
-   * compressor chart values.
+   * Generates the surge curve by taking the head value at the lowest flow for each speed from the compressor chart
+   * values.
    */
   @Override
   public void generateSurgeCurve() {
@@ -33,15 +33,15 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
       // Find index of lowest flow (usually index 0, but robust for unsorted)
       int minIdx = 0;
       for (int j = 1; j < curve.flow.length; j++) {
-        if (curve.flow[j] < curve.flow[minIdx]) {
-          minIdx = j;
-        }
+	if (curve.flow[j] < curve.flow[minIdx]) {
+	  minIdx = j;
+	}
       }
       double flowVal = curve.flow[minIdx];
       double headVal = curve.head[minIdx];
       // Only add if not already present (ensures one point per speed, no duplicate flows)
       if (!uniqueSurgePoints.containsKey(flowVal)) {
-        uniqueSurgePoints.put(flowVal, headVal);
+	uniqueSurgePoints.put(flowVal, headVal);
       }
     }
     double[] surgeFlow = new double[uniqueSurgePoints.size()];
@@ -59,8 +59,8 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
    * {@inheritDoc}
    *
    * <p>
-   * Generates the stone wall curve by taking the head value at the highest flow for each speed from
-   * the compressor chart values.
+   * Generates the stone wall curve by taking the head value at the highest flow for each speed from the compressor
+   * chart values.
    * </p>
    */
   @Override
@@ -71,14 +71,14 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
       CompressorCurve curve = chartValues.get(i);
       int maxIdx = 0;
       for (int j = 1; j < curve.flow.length; j++) {
-        if (curve.flow[j] > curve.flow[maxIdx]) {
-          maxIdx = j;
-        }
+	if (curve.flow[j] > curve.flow[maxIdx]) {
+	  maxIdx = j;
+	}
       }
       double flowVal = curve.flow[maxIdx];
       double headVal = curve.head[maxIdx];
       if (!uniqueStoneWallPoints.containsKey(flowVal)) {
-        uniqueStoneWallPoints.put(flowVal, headVal);
+	uniqueStoneWallPoints.put(flowVal, headVal);
       }
     }
     double[] stoneFlow = new double[uniqueStoneWallPoints.size()];
@@ -162,7 +162,8 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
    * Constructor for CompressorChart.
    * </p>
    */
-  public CompressorChart() {}
+  public CompressorChart() {
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -173,10 +174,9 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
 
   /** {@inheritDoc} */
   @Override
-  public void addCurve(double speed, double[] flow, double[] head,
-      double[] flowPolytropicEfficiency, double[] polytropicEfficiency) {
-    CompressorCurve curve =
-        new CompressorCurve(speed, flow, head, flowPolytropicEfficiency, polytropicEfficiency);
+  public void addCurve(double speed, double[] flow, double[] head, double[] flowPolytropicEfficiency,
+      double[] polytropicEfficiency) {
+    CompressorCurve curve = new CompressorCurve(speed, flow, head, flowPolytropicEfficiency, polytropicEfficiency);
     chartValues.add(curve);
   }
 
@@ -184,14 +184,13 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
    * {@inheritDoc}
    *
    * <p>
-   * This method initializes the compressor performance curves, including speed, flow, head, and
-   * polytropic efficiency.
+   * This method initializes the compressor performance curves, including speed, flow, head, and polytropic efficiency.
    * </p>
    *
    * <p>
-   * The method takes chart conditions and initializes internal variables for different performance
-   * parameters based on input arrays for speed, flow, head, and polytropic efficiency. It also
-   * normalizes these parameters by calculating reduced values based on speed.
+   * The method takes chart conditions and initializes internal variables for different performance parameters based on
+   * input arrays for speed, flow, head, and polytropic efficiency. It also normalizes these parameters by calculating
+   * reduced values based on speed.
    * </p>
    */
   @Override
@@ -204,14 +203,13 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
    * {@inheritDoc}
    *
    * <p>
-   * This method initializes the compressor performance curves, including speed, flow, head, and
-   * polytropic efficiency.
+   * This method initializes the compressor performance curves, including speed, flow, head, and polytropic efficiency.
    * </p>
    *
    * <p>
-   * The method takes chart conditions and initializes internal variables for different performance
-   * parameters based on input arrays for speed, flow, head, and polytropic efficiency. It also
-   * normalizes these parameters by calculating reduced values based on speed.
+   * The method takes chart conditions and initializes internal variables for different performance parameters based on
+   * input arrays for speed, flow, head, and polytropic efficiency. It also normalizes these parameters by calculating
+   * reduced values based on speed.
    * </p>
    */
   @Override
@@ -235,14 +233,14 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
     int maxLength = 0;
     for (double[] f : flow) {
       if (f.length > maxLength) {
-        maxLength = f.length;
+	maxLength = f.length;
       }
     }
 
     int maxLengthPolyEff = 0;
     for (double[] f : flowPolytropicEfficiency) {
       if (f.length > maxLengthPolyEff) {
-        maxLengthPolyEff = f.length;
+	maxLengthPolyEff = f.length;
       }
     }
 
@@ -253,36 +251,34 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
 
     for (int i = 0; i < speed.length; i++) {
       if (speed[i] > maxSpeedCurve) {
-        maxSpeedCurve = speed[i];
+	maxSpeedCurve = speed[i];
       }
       if (speed[i] < minSpeedCurve) {
-        minSpeedCurve = speed[i];
+	minSpeedCurve = speed[i];
       }
-      CompressorCurve curve =
-          new CompressorCurve(speed[i], flow[i], head[i], flowPolyEff[i], polyEff[i]);
+      CompressorCurve curve = new CompressorCurve(speed[i], flow[i], head[i], flowPolyEff[i], polyEff[i]);
       chartValues.add(curve);
 
       for (int j = 0; j < flow[i].length; j++) { // Handle differing lengths for each speed
-        redflow[i][j] = flow[i][j] / speed[i];
-        redhead[i][j] = head[i][j] / speed[i] / speed[i];
-        reducedHeadFitter.add(redflow[i][j], redhead[i][j]);
-        double flowFanLaw = flow[i][j] * speed[i] / speed[0];
-        // TODO: MLLU: not correct. speed[0] should be the requested speed
-        fanLawCorrectionFitter.add(speed[i] / speed[0], flow[i][j] / flowFanLaw);
+	redflow[i][j] = flow[i][j] / speed[i];
+	redhead[i][j] = head[i][j] / speed[i] / speed[i];
+	reducedHeadFitter.add(redflow[i][j], redhead[i][j]);
+	double flowFanLaw = flow[i][j] * speed[i] / speed[0];
+	// TODO: MLLU: not correct. speed[0] should be the requested speed
+	fanLawCorrectionFitter.add(speed[i] / speed[0], flow[i][j] / flowFanLaw);
       }
 
       for (int j = 0; j < flowPolytropicEfficiency[i].length; j++) { // Handle differing lengths for
-                                                                     // each speed
-        redflowPolytropicEfficiency[i][j] = flowPolyEff[i][j] / speed[i];
-        redpolytropicEfficiency[i][j] = polyEff[i][j];
-        reducedPolytropicEfficiencyFitter.add(redflowPolytropicEfficiency[i][j],
-            redpolytropicEfficiency[i][j]);
+								     // each speed
+	redflowPolytropicEfficiency[i][j] = flowPolyEff[i][j] / speed[i];
+	redpolytropicEfficiency[i][j] = polyEff[i][j];
+	reducedPolytropicEfficiencyFitter.add(redflowPolytropicEfficiency[i][j], redpolytropicEfficiency[i][j]);
       }
 
       // Fill remaining slots with default values (e.g., 0) if arrays are shorter
       for (int j = flowPolytropicEfficiency[i].length; j < maxLengthPolyEff; j++) {
-        redflowPolytropicEfficiency[i][j] = 0;
-        redpolytropicEfficiency[i][j] = 0;
+	redflowPolytropicEfficiency[i][j] = 0;
+	redpolytropicEfficiency[i][j] = 0;
       }
     }
 
@@ -291,8 +287,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
     PolynomialCurveFitter fitter = PolynomialCurveFitter.create(2);
 
     reducedHeadFitterFunc = new PolynomialFunction(fitter.fit(reducedHeadFitter.toList()));
-    reducedPolytropicEfficiencyFunc =
-        new PolynomialFunction(fitter.fit(reducedPolytropicEfficiencyFitter.toList()));
+    reducedPolytropicEfficiencyFunc = new PolynomialFunction(fitter.fit(reducedPolytropicEfficiencyFitter.toList()));
     fanLawCorrectionFunc = new PolynomialFunction(fitter.fit(fanLawCorrectionFitter.toList()));
     setUseCompressorChart(true);
   }
@@ -302,7 +297,8 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
    * fitReducedCurve.
    * </p>
    */
-  public void fitReducedCurve() {}
+  public void fitReducedCurve() {
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -333,8 +329,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
    * Calculate the speed required to achieve a given head at a given flow rate.
    *
    * <p>
-   * This method uses fan law relationships: Head ∝ Speed². The algorithm uses a robust
-   * Newton-Raphson method with:
+   * This method uses fan law relationships: Head ∝ Speed². The algorithm uses a robust Newton-Raphson method with:
    * <ul>
    * <li>Fan-law based initial guess for fast convergence</li>
    * <li>Bounds protection to prevent divergence</li>
@@ -343,8 +338,8 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
    * </ul>
    *
    * <p>
-   * The method works both within and outside the defined speed curve range by using the underlying
-   * fan law extrapolation of the compressor map.
+   * The method works both within and outside the defined speed curve range by using the underlying fan law
+   * extrapolation of the compressor map.
    * </p>
    *
    * @param flow the volumetric flow rate in m³/hr
@@ -390,7 +385,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
 
       // Check convergence
       if (Math.abs(error) < tolerance) {
-        return newspeed;
+	return newspeed;
       }
 
       // Calculate gradient (dError/dSpeed)
@@ -398,11 +393,11 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
 
       // Protect against zero or very small gradient
       if (Math.abs(derrordspeed) < 1e-10) {
-        // Use fan law derivative: dH/dN = 2*H/N
-        derrordspeed = 2.0 * newhead / newspeed;
-        if (Math.abs(derrordspeed) < 1e-10) {
-          break; // Cannot compute gradient, exit to fallback
-        }
+	// Use fan law derivative: dH/dN = 2*H/N
+	derrordspeed = 2.0 * newhead / newspeed;
+	if (Math.abs(derrordspeed) < 1e-10) {
+	  break; // Cannot compute gradient, exit to fallback
+	}
       }
 
       // Calculate Newton-Raphson update with damping
@@ -422,7 +417,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
 
       // Check for stagnation
       if (Math.abs(newspeed - oldspeed) < 1e-10) {
-        break;
+	break;
       }
     }
 
@@ -446,20 +441,20 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
       double midhead = getPolytropicHead(flow, midspeed);
 
       if (Math.abs(midhead - head) < tolerance) {
-        return midspeed;
+	return midspeed;
       }
 
       // Determine which half contains the solution
       // Head increases with speed (fan law), so:
       if (midhead < head) {
-        speedLowerBound = midspeed; // Need higher speed
+	speedLowerBound = midspeed; // Need higher speed
       } else {
-        speedUpperBound = midspeed; // Need lower speed
+	speedUpperBound = midspeed; // Need lower speed
       }
 
       // Check convergence
       if (speedUpperBound - speedLowerBound < 1.0) {
-        return midspeed;
+	return midspeed;
       }
     }
 
@@ -480,19 +475,18 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
     double olderror = oldhead - head;
     do {
       iter++;
-      newhead =
-          getPolytropicHead(newflow, speed) / (getPolytropicEfficiency(newflow, speed) / 100.0);
+      newhead = getPolytropicHead(newflow, speed) / (getPolytropicEfficiency(newflow, speed) / 100.0);
       error = newhead - head;
       derrordflow = (error - olderror) / (newflow - oldflow);
       if (Math.abs(derrordflow) < 1e-10) {
-        break; // Avoid division by zero
+	break; // Avoid division by zero
       }
       oldflow = newflow;
       olderror = error;
       newflow -= error / derrordflow;
       // Prevent negative flow during iteration
       if (newflow < 0.0) {
-        newflow = guessFlow * 0.1;
+	newflow = guessFlow * 0.1;
       }
     } while (Math.abs(error) > 1e-6 && iter < 100);
 
@@ -517,7 +511,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
    * polytropicEfficiency.
    * </p>
    *
-   * @param flow a double
+   * @param flow  a double
    * @param speed a double
    * @return a double
    */
@@ -543,7 +537,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
    * checkSurge2.
    * </p>
    *
-   * @param flow a double
+   * @param flow  a double
    * @param speed a double
    * @return a boolean
    */
@@ -556,7 +550,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
    * checkStoneWall.
    * </p>
    *
-   * @param flow a double
+   * @param flow  a double
    * @param speed a double
    * @return a boolean
    */
@@ -566,8 +560,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
 
   /** {@inheritDoc} */
   @Override
-  public void setReferenceConditions(double refMW, double refTemperature, double refPressure,
-      double refZ) {
+  public void setReferenceConditions(double refMW, double refTemperature, double refPressure, double refZ) {
     this.refMW = refMW;
     this.refTemperature = refTemperature;
     this.refPressure = refPressure;
@@ -622,8 +615,8 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
     if (headUnit.equals("meter") || headUnit.equals("kJ/kg")) {
       this.headUnit = headUnit;
     } else {
-      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
-          "setHeadUnit", "headUnit", "does not support value " + headUnit));
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "setHeadUnit", "headUnit",
+	  "does not support value " + headUnit));
     }
     this.headUnit = headUnit;
   }
@@ -643,25 +636,20 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
   /** {@inheritDoc} */
   @Override
   public void plot() {
-    neqsim.datapresentation.jfreechart.Graph2b graph =
-        new neqsim.datapresentation.jfreechart.Graph2b(flow, head,
-            Arrays.stream(speed).mapToObj(String::valueOf).toArray(String[]::new), "head vs flow",
-            "flow", "head");
+    neqsim.datapresentation.jfreechart.Graph2b graph = new neqsim.datapresentation.jfreechart.Graph2b(flow, head,
+	Arrays.stream(speed).mapToObj(String::valueOf).toArray(String[]::new), "head vs flow", "flow", "head");
     graph.setVisible(true);
-    neqsim.datapresentation.jfreechart.Graph2b graph2 =
-        new neqsim.datapresentation.jfreechart.Graph2b(flow, polytropicEfficiency,
-            Arrays.stream(speed).mapToObj(String::valueOf).toArray(String[]::new), "eff vs flow",
-            "flow", "eff");
+    neqsim.datapresentation.jfreechart.Graph2b graph2 = new neqsim.datapresentation.jfreechart.Graph2b(flow,
+	polytropicEfficiency, Arrays.stream(speed).mapToObj(String::valueOf).toArray(String[]::new), "eff vs flow",
+	"flow", "eff");
     graph2.setVisible(true);
-    neqsim.datapresentation.jfreechart.Graph2b graph3 =
-        new neqsim.datapresentation.jfreechart.Graph2b(redflow, redhead,
-            Arrays.stream(speed).mapToObj(String::valueOf).toArray(String[]::new),
-            "red head vs red flow", "red flow", "red head");
+    neqsim.datapresentation.jfreechart.Graph2b graph3 = new neqsim.datapresentation.jfreechart.Graph2b(redflow, redhead,
+	Arrays.stream(speed).mapToObj(String::valueOf).toArray(String[]::new), "red head vs red flow", "red flow",
+	"red head");
     graph3.setVisible(true);
-    neqsim.datapresentation.jfreechart.Graph2b graph4 =
-        new neqsim.datapresentation.jfreechart.Graph2b(redflow, polytropicEfficiency,
-            Arrays.stream(speed).mapToObj(String::valueOf).toArray(String[]::new),
-            "red eff vs red dflow", "red flow", "red eff");
+    neqsim.datapresentation.jfreechart.Graph2b graph4 = new neqsim.datapresentation.jfreechart.Graph2b(redflow,
+	polytropicEfficiency, Arrays.stream(speed).mapToObj(String::valueOf).toArray(String[]::new),
+	"red eff vs red dflow", "red flow", "red eff");
     graph4.setVisible(true);
   }
 
@@ -678,10 +666,9 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
     result = prime * result + Arrays.deepHashCode(redhead);
     result = prime * result + Arrays.deepHashCode(redpolytropicEfficiency);
     result = prime * result + Arrays.hashCode(speed);
-    result = prime * result + Objects.hash(chartValues, fanLawCorrectionFunc, headUnit, isStoneWall,
-        isSurge, maxSpeedCurve, minSpeedCurve, reducedHeadFitterFunc,
-        reducedPolytropicEfficiencyFunc, refMW, refPressure, refTemperature, refZ, referenceSpeed,
-        stoneWallCurve, surgeCurve, useCompressorChart, useRealKappa);
+    result = prime * result + Objects.hash(chartValues, fanLawCorrectionFunc, headUnit, isStoneWall, isSurge,
+	maxSpeedCurve, minSpeedCurve, reducedHeadFitterFunc, reducedPolytropicEfficiencyFunc, refMW, refPressure,
+	refTemperature, refZ, referenceSpeed, stoneWallCurve, surgeCurve, useCompressorChart, useRealKappa);
     // result = prime * result + Objects.hash(fanLawCorrectionFitter,
     // reducedFlowFitter,reducedHeadFitter,reducedPolytropicEfficiencyFitter )
     return result;
@@ -700,27 +687,25 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
       return false;
     }
     CompressorChart other = (CompressorChart) obj;
-    return Arrays.equals(chartConditions, other.chartConditions)
-        && Objects.equals(chartValues, other.chartValues)
-        && Objects.equals(fanLawCorrectionFunc, other.fanLawCorrectionFunc)
-        && Arrays.deepEquals(flow, other.flow) && Arrays.deepEquals(head, other.head)
-        && Objects.equals(headUnit, other.headUnit) && isStoneWall == other.isStoneWall
-        && isSurge == other.isSurge
-        && Double.doubleToLongBits(maxSpeedCurve) == Double.doubleToLongBits(other.maxSpeedCurve)
-        && Double.doubleToLongBits(minSpeedCurve) == Double.doubleToLongBits(other.minSpeedCurve)
-        && Arrays.deepEquals(polytropicEfficiency, other.polytropicEfficiency)
-        && Arrays.deepEquals(redflow, other.redflow) && Arrays.deepEquals(redhead, other.redhead)
-        && Arrays.deepEquals(redpolytropicEfficiency, other.redpolytropicEfficiency)
-        && Objects.equals(reducedHeadFitterFunc, other.reducedHeadFitterFunc)
-        && Objects.equals(reducedPolytropicEfficiencyFunc, other.reducedPolytropicEfficiencyFunc)
-        && Double.doubleToLongBits(refMW) == Double.doubleToLongBits(other.refMW)
-        && Double.doubleToLongBits(refPressure) == Double.doubleToLongBits(other.refPressure)
-        && Double.doubleToLongBits(refTemperature) == Double.doubleToLongBits(other.refTemperature)
-        && Double.doubleToLongBits(refZ) == Double.doubleToLongBits(other.refZ)
-        && Double.doubleToLongBits(referenceSpeed) == Double.doubleToLongBits(other.referenceSpeed)
-        && Arrays.equals(speed, other.speed) && Objects.equals(stoneWallCurve, other.stoneWallCurve)
-        && Objects.equals(surgeCurve, other.surgeCurve)
-        && useCompressorChart == other.useCompressorChart && useRealKappa == other.useRealKappa;
+    return Arrays.equals(chartConditions, other.chartConditions) && Objects.equals(chartValues, other.chartValues)
+	&& Objects.equals(fanLawCorrectionFunc, other.fanLawCorrectionFunc) && Arrays.deepEquals(flow, other.flow)
+	&& Arrays.deepEquals(head, other.head) && Objects.equals(headUnit, other.headUnit)
+	&& isStoneWall == other.isStoneWall && isSurge == other.isSurge
+	&& Double.doubleToLongBits(maxSpeedCurve) == Double.doubleToLongBits(other.maxSpeedCurve)
+	&& Double.doubleToLongBits(minSpeedCurve) == Double.doubleToLongBits(other.minSpeedCurve)
+	&& Arrays.deepEquals(polytropicEfficiency, other.polytropicEfficiency)
+	&& Arrays.deepEquals(redflow, other.redflow) && Arrays.deepEquals(redhead, other.redhead)
+	&& Arrays.deepEquals(redpolytropicEfficiency, other.redpolytropicEfficiency)
+	&& Objects.equals(reducedHeadFitterFunc, other.reducedHeadFitterFunc)
+	&& Objects.equals(reducedPolytropicEfficiencyFunc, other.reducedPolytropicEfficiencyFunc)
+	&& Double.doubleToLongBits(refMW) == Double.doubleToLongBits(other.refMW)
+	&& Double.doubleToLongBits(refPressure) == Double.doubleToLongBits(other.refPressure)
+	&& Double.doubleToLongBits(refTemperature) == Double.doubleToLongBits(other.refTemperature)
+	&& Double.doubleToLongBits(refZ) == Double.doubleToLongBits(other.refZ)
+	&& Double.doubleToLongBits(referenceSpeed) == Double.doubleToLongBits(other.referenceSpeed)
+	&& Arrays.equals(speed, other.speed) && Objects.equals(stoneWallCurve, other.stoneWallCurve)
+	&& Objects.equals(surgeCurve, other.surgeCurve) && useCompressorChart == other.useCompressorChart
+	&& useRealKappa == other.useRealKappa;
     // && Objects.equals(fanLawCorrectionFitter, other.fanLawCorrectionFitter)
     // && Objects.equals(reducedFlowFitter, other.reducedFlowFitter)
     // && Objects.equals(reducedHeadFitter, other.reducedHeadFitter)
@@ -773,14 +758,13 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
    * Get the surge flow (minimum flow) at a specific speed.
    * </p>
    * <p>
-   * This method finds the compressor curve closest to the specified speed and returns the minimum
-   * flow on that curve. This is useful for single speed compressors where the surge curve is not
-   * active, as well as for multi-speed compressors to get the surge point at a specific speed.
+   * This method finds the compressor curve closest to the specified speed and returns the minimum flow on that curve.
+   * This is useful for single speed compressors where the surge curve is not active, as well as for multi-speed
+   * compressors to get the surge point at a specific speed.
    * </p>
    *
    * @param speed The compressor speed in RPM
-   * @return The surge flow (minimum flow) at the specified speed in m3/hr, or Double.NaN if no
-   *         curves exist
+   * @return The surge flow (minimum flow) at the specified speed in m3/hr, or Double.NaN if no curves exist
    */
   @Override
   public double getSurgeFlowAtSpeed(double speed) {
@@ -795,8 +779,8 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
     for (CompressorCurve curve : chartValues) {
       double speedDiff = Math.abs(curve.speed - speed);
       if (speedDiff < minSpeedDiff) {
-        minSpeedDiff = speedDiff;
-        closestCurve = curve;
+	minSpeedDiff = speedDiff;
+	closestCurve = curve;
       }
     }
 
@@ -804,7 +788,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
     double minFlow = closestCurve.flow[0];
     for (double flow : closestCurve.flow) {
       if (flow < minFlow) {
-        minFlow = flow;
+	minFlow = flow;
       }
     }
     return minFlow;
@@ -815,13 +799,13 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
    * Get the surge head (polytropic head at minimum flow) at a specific speed.
    * </p>
    * <p>
-   * This method finds the compressor curve closest to the specified speed and returns the
-   * polytropic head at the minimum flow point (surge point) on that curve.
+   * This method finds the compressor curve closest to the specified speed and returns the polytropic head at the
+   * minimum flow point (surge point) on that curve.
    * </p>
    *
    * @param speed The compressor speed in RPM
-   * @return The surge head at the specified speed in kJ/kg or meter (depending on headUnit), or
-   *         Double.NaN if no curves exist
+   * @return The surge head at the specified speed in kJ/kg or meter (depending on headUnit), or Double.NaN if no curves
+   *         exist
    */
   @Override
   public double getSurgeHeadAtSpeed(double speed) {
@@ -836,8 +820,8 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
     for (CompressorCurve curve : chartValues) {
       double speedDiff = Math.abs(curve.speed - speed);
       if (speedDiff < minSpeedDiff) {
-        minSpeedDiff = speedDiff;
-        closestCurve = curve;
+	minSpeedDiff = speedDiff;
+	closestCurve = curve;
       }
     }
 
@@ -846,8 +830,8 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
     double minFlow = closestCurve.flow[0];
     for (int i = 1; i < closestCurve.flow.length; i++) {
       if (closestCurve.flow[i] < minFlow) {
-        minFlow = closestCurve.flow[i];
-        minFlowIdx = i;
+	minFlow = closestCurve.flow[i];
+	minFlowIdx = i;
       }
     }
     return closestCurve.head[minFlowIdx];
@@ -858,14 +842,12 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
    * Get the stone wall flow (maximum flow) at a specific speed.
    * </p>
    * <p>
-   * This method finds the compressor curve closest to the specified speed and returns the maximum
-   * flow on that curve (choke limit). This is useful for single speed compressors where the stone
-   * wall curve is not active.
+   * This method finds the compressor curve closest to the specified speed and returns the maximum flow on that curve
+   * (choke limit). This is useful for single speed compressors where the stone wall curve is not active.
    * </p>
    *
    * @param speed The compressor speed in RPM
-   * @return The stone wall flow (maximum flow) at the specified speed in m3/hr, or Double.NaN if no
-   *         curves exist
+   * @return The stone wall flow (maximum flow) at the specified speed in m3/hr, or Double.NaN if no curves exist
    */
   @Override
   public double getStoneWallFlowAtSpeed(double speed) {
@@ -880,8 +862,8 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
     for (CompressorCurve curve : chartValues) {
       double speedDiff = Math.abs(curve.speed - speed);
       if (speedDiff < minSpeedDiff) {
-        minSpeedDiff = speedDiff;
-        closestCurve = curve;
+	minSpeedDiff = speedDiff;
+	closestCurve = curve;
       }
     }
 
@@ -889,7 +871,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
     double maxFlow = closestCurve.flow[0];
     for (double flow : closestCurve.flow) {
       if (flow > maxFlow) {
-        maxFlow = flow;
+	maxFlow = flow;
       }
     }
     return maxFlow;
@@ -900,13 +882,13 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
    * Get the stone wall head (polytropic head at maximum flow) at a specific speed.
    * </p>
    * <p>
-   * This method finds the compressor curve closest to the specified speed and returns the
-   * polytropic head at the maximum flow point (choke limit) on that curve.
+   * This method finds the compressor curve closest to the specified speed and returns the polytropic head at the
+   * maximum flow point (choke limit) on that curve.
    * </p>
    *
    * @param speed The compressor speed in RPM
-   * @return The stone wall head at the specified speed in kJ/kg or meter (depending on headUnit),
-   *         or Double.NaN if no curves exist
+   * @return The stone wall head at the specified speed in kJ/kg or meter (depending on headUnit), or Double.NaN if no
+   *         curves exist
    */
   @Override
   public double getStoneWallHeadAtSpeed(double speed) {
@@ -921,8 +903,8 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
     for (CompressorCurve curve : chartValues) {
       double speedDiff = Math.abs(curve.speed - speed);
       if (speedDiff < minSpeedDiff) {
-        minSpeedDiff = speedDiff;
-        closestCurve = curve;
+	minSpeedDiff = speedDiff;
+	closestCurve = curve;
       }
     }
 
@@ -931,8 +913,8 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
     double maxFlow = closestCurve.flow[0];
     for (int i = 1; i < closestCurve.flow.length; i++) {
       if (closestCurve.flow[i] > maxFlow) {
-        maxFlow = closestCurve.flow[i];
-        maxFlowIdx = i;
+	maxFlow = closestCurve.flow[i];
+	maxFlowIdx = i;
       }
     }
     return closestCurve.head[maxFlowIdx];
@@ -1038,8 +1020,8 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
    * Calculate power curves from flow, head, and efficiency.
    *
    * <p>
-   * Power is calculated as: P = (density * volumeFlow * head) / efficiency where volumeFlow is in
-   * m3/hr, head is in kJ/kg (or converted from meters), and efficiency is in fraction (0-1).
+   * Power is calculated as: P = (density * volumeFlow * head) / efficiency where volumeFlow is in m3/hr, head is in
+   * kJ/kg (or converted from meters), and efficiency is in fraction (0-1).
    * </p>
    */
   private void calculatePowerCurves() {
@@ -1049,33 +1031,33 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
 
     // Use reference density if set, otherwise use a default or estimate
     double density = Double.isNaN(referenceDensity) ? 50.0 : referenceDensity; // Default ~50 kg/m3
-                                                                               // for natural gas
+									       // for natural gas
 
     powerCurves = new double[flow.length][];
 
     for (int i = 0; i < flow.length; i++) {
       powerCurves[i] = new double[flow[i].length];
       for (int j = 0; j < flow[i].length; j++) {
-        double volumeFlow = flow[i][j]; // m3/hr
-        double headValue = head[i][j]; // kJ/kg or meter
+	double volumeFlow = flow[i][j]; // m3/hr
+	double headValue = head[i][j]; // kJ/kg or meter
 
-        // Convert head from meters to kJ/kg if needed
-        double headKJperKg = headValue;
-        if ("meter".equalsIgnoreCase(headUnit) || "m".equalsIgnoreCase(headUnit)) {
-          headKJperKg = headValue * 9.81 / 1000.0; // m * g / 1000 = kJ/kg
-        }
+	// Convert head from meters to kJ/kg if needed
+	double headKJperKg = headValue;
+	if ("meter".equalsIgnoreCase(headUnit) || "m".equalsIgnoreCase(headUnit)) {
+	  headKJperKg = headValue * 9.81 / 1000.0; // m * g / 1000 = kJ/kg
+	}
 
-        // Efficiency as fraction (input is in %)
-        double effFraction = polytropicEfficiency[i][j] / 100.0;
-        if (effFraction <= 0) {
-          effFraction = 0.75; // Default if invalid
-        }
+	// Efficiency as fraction (input is in %)
+	double effFraction = polytropicEfficiency[i][j] / 100.0;
+	if (effFraction <= 0) {
+	  effFraction = 0.75; // Default if invalid
+	}
 
-        // Power = density * volumeFlow * head / efficiency
-        // Units: kg/m3 * m3/hr * kJ/kg / 1 = kJ/hr
-        // Convert to kW: kJ/hr / 3600 = kW
-        double massFlow = density * volumeFlow / 3600.0; // kg/s
-        powerCurves[i][j] = massFlow * headKJperKg / effFraction; // kW
+	// Power = density * volumeFlow * head / efficiency
+	// Units: kg/m3 * m3/hr * kJ/kg / 1 = kJ/hr
+	// Convert to kW: kJ/hr / 3600 = kW
+	double massFlow = density * volumeFlow / 3600.0; // kg/s
+	powerCurves[i][j] = massFlow * headKJperKg / effFraction; // kW
       }
     }
   }
@@ -1084,8 +1066,8 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
    * Calculate pressure ratio curves from head and gas properties.
    *
    * <p>
-   * Pressure ratio is calculated from polytropic head using: PR = [1 + (n-1)/n * H /
-   * (Z*R*T/MW)]^(n/(n-1)) Simplified: PR = exp(n/(n-1) * ln(1 + (n-1)/n * H * MW / (Z*R*T)))
+   * Pressure ratio is calculated from polytropic head using: PR = [1 + (n-1)/n * H / (Z*R*T/MW)]^(n/(n-1)) Simplified:
+   * PR = exp(n/(n-1) * ln(1 + (n-1)/n * H * MW / (Z*R*T)))
    * </p>
    */
   private void calculatePressureRatioCurves() {
@@ -1095,34 +1077,34 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
 
     // Use reference values if available
     double n = Double.isNaN(polytropicExponent) ? 1.3 : polytropicExponent;
-    double zRT_MW = 8314.0 * (refTemperature > 0 ? refTemperature : 300.0)
-        / (refMW > 0 ? refMW : 20.0) * (refZ > 0 ? refZ : 0.9); // J/kg = m2/s2
+    double zRT_MW = 8314.0 * (refTemperature > 0 ? refTemperature : 300.0) / (refMW > 0 ? refMW : 20.0)
+	* (refZ > 0 ? refZ : 0.9); // J/kg = m2/s2
 
     pressureRatioCurves = new double[flow.length][];
 
     for (int i = 0; i < flow.length; i++) {
       pressureRatioCurves[i] = new double[flow[i].length];
       for (int j = 0; j < flow[i].length; j++) {
-        double headValue = head[i][j]; // kJ/kg or meter
+	double headValue = head[i][j]; // kJ/kg or meter
 
-        // Convert head to J/kg
-        double headJperKg;
-        if ("meter".equalsIgnoreCase(headUnit) || "m".equalsIgnoreCase(headUnit)) {
-          headJperKg = headValue * 9.81; // m * g = J/kg
-        } else {
-          headJperKg = headValue * 1000.0; // kJ/kg * 1000 = J/kg
-        }
+	// Convert head to J/kg
+	double headJperKg;
+	if ("meter".equalsIgnoreCase(headUnit) || "m".equalsIgnoreCase(headUnit)) {
+	  headJperKg = headValue * 9.81; // m * g = J/kg
+	} else {
+	  headJperKg = headValue * 1000.0; // kJ/kg * 1000 = J/kg
+	}
 
-        // Polytropic head relation: H = n/(n-1) * Z*R*T/MW * [(P2/P1)^((n-1)/n) - 1]
-        // Solving for pressure ratio: PR = [1 + (n-1)/n * H / (Z*R*T/MW)]^(n/(n-1))
-        double exponentRatio = (n - 1.0) / n;
-        double term = 1.0 + exponentRatio * headJperKg / zRT_MW;
+	// Polytropic head relation: H = n/(n-1) * Z*R*T/MW * [(P2/P1)^((n-1)/n) - 1]
+	// Solving for pressure ratio: PR = [1 + (n-1)/n * H / (Z*R*T/MW)]^(n/(n-1))
+	double exponentRatio = (n - 1.0) / n;
+	double term = 1.0 + exponentRatio * headJperKg / zRT_MW;
 
-        if (term > 0) {
-          pressureRatioCurves[i][j] = Math.pow(term, 1.0 / exponentRatio);
-        } else {
-          pressureRatioCurves[i][j] = 1.0; // Invalid, return unity
-        }
+	if (term > 0) {
+	  pressureRatioCurves[i][j] = Math.pow(term, 1.0 / exponentRatio);
+	} else {
+	  pressureRatioCurves[i][j] = 1.0; // Invalid, return unity
+	}
       }
     }
   }
@@ -1165,7 +1147,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
     if (dischargeTemperatureCurves == null && flow != null) {
       // Ensure pressure ratio curves are calculated first
       if (pressureRatioCurves == null) {
-        calculatePressureRatioCurves();
+	calculatePressureRatioCurves();
       }
       calculateDischargeTemperatureCurves();
     }
@@ -1176,9 +1158,8 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
    * Calculate discharge temperature curves from pressure ratio and gas properties.
    *
    * <p>
-   * Discharge temperature is calculated using the polytropic process relation: T2 = T1 *
-   * PR^((n-1)/n) where PR is pressure ratio and n is polytropic exponent related to efficiency:
-   * (n-1)/n = (gamma-1)/gamma / eta_polytropic
+   * Discharge temperature is calculated using the polytropic process relation: T2 = T1 * PR^((n-1)/n) where PR is
+   * pressure ratio and n is polytropic exponent related to efficiency: (n-1)/n = (gamma-1)/gamma / eta_polytropic
    * </p>
    *
    * <p>
@@ -1196,8 +1177,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
     }
 
     // Use inlet temperature if set, otherwise use reference or default
-    double t1 = Double.isNaN(inletTemperature) ? (refTemperature > 0 ? refTemperature : 300.0)
-        : inletTemperature;
+    double t1 = Double.isNaN(inletTemperature) ? (refTemperature > 0 ? refTemperature : 300.0) : inletTemperature;
 
     // Use gamma if set, otherwise estimate from polytropic exponent or default
     double k = Double.isNaN(gamma) ? 1.3 : gamma;
@@ -1207,29 +1187,28 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
     for (int i = 0; i < flow.length; i++) {
       dischargeTemperatureCurves[i] = new double[flow[i].length];
       for (int j = 0; j < flow[i].length; j++) {
-        double pr = pressureRatioCurves[i][j];
+	double pr = pressureRatioCurves[i][j];
 
-        // Get efficiency at this point
-        double effFraction = 0.75; // Default
-        if (polytropicEfficiency != null && polytropicEfficiency[i] != null
-            && j < polytropicEfficiency[i].length) {
-          effFraction = polytropicEfficiency[i][j] / 100.0;
-          if (effFraction <= 0 || effFraction > 1.0) {
-            effFraction = 0.75;
-          }
-        }
+	// Get efficiency at this point
+	double effFraction = 0.75; // Default
+	if (polytropicEfficiency != null && polytropicEfficiency[i] != null && j < polytropicEfficiency[i].length) {
+	  effFraction = polytropicEfficiency[i][j] / 100.0;
+	  if (effFraction <= 0 || effFraction > 1.0) {
+	    effFraction = 0.75;
+	  }
+	}
 
-        // Calculate polytropic exponent from efficiency and gamma
-        // (n-1)/n = (k-1)/k / eta_p
-        double isentropicExponent = (k - 1.0) / k;
-        double polytropicExp = isentropicExponent / effFraction;
+	// Calculate polytropic exponent from efficiency and gamma
+	// (n-1)/n = (k-1)/k / eta_p
+	double isentropicExponent = (k - 1.0) / k;
+	double polytropicExp = isentropicExponent / effFraction;
 
-        // T2 = T1 * PR^((n-1)/n)
-        if (pr > 0) {
-          dischargeTemperatureCurves[i][j] = t1 * Math.pow(pr, polytropicExp);
-        } else {
-          dischargeTemperatureCurves[i][j] = t1; // No compression
-        }
+	// T2 = T1 * PR^((n-1)/n)
+	if (pr > 0) {
+	  dischargeTemperatureCurves[i][j] = t1 * Math.pow(pr, polytropicExp);
+	} else {
+	  dischargeTemperatureCurves[i][j] = t1; // No compression
+	}
       }
     }
   }

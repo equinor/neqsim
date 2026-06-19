@@ -38,13 +38,10 @@ class ShortcutDistillationColumnTest {
 
     assertTrue(column.isSolved(), "Column should converge");
     assertTrue(column.getMinimumNumberOfStages() > 1.0,
-        "Nmin should be > 1, got: " + column.getMinimumNumberOfStages());
-    assertTrue(column.getMinimumRefluxRatio() > 0.0,
-        "Rmin should be positive, got: " + column.getMinimumRefluxRatio());
-    assertTrue(column.getActualNumberOfStages() > column.getMinimumNumberOfStages(),
-        "N_actual should exceed N_min");
-    assertTrue(column.getActualRefluxRatio() > column.getMinimumRefluxRatio(),
-        "R_actual should exceed R_min");
+	"Nmin should be > 1, got: " + column.getMinimumNumberOfStages());
+    assertTrue(column.getMinimumRefluxRatio() > 0.0, "Rmin should be positive, got: " + column.getMinimumRefluxRatio());
+    assertTrue(column.getActualNumberOfStages() > column.getMinimumNumberOfStages(), "N_actual should exceed N_min");
+    assertTrue(column.getActualRefluxRatio() > column.getMinimumRefluxRatio(), "R_actual should exceed R_min");
     assertTrue(column.getFeedTrayNumber() > 0, "Feed tray should be positive");
     assertTrue(column.getRelativeVolatility() > 1.0, "Alpha LK/HK should be > 1");
 
@@ -53,20 +50,16 @@ class ShortcutDistillationColumnTest {
 
     double feedMolarFlow = feed.getFlowRate("mole/hr");
     double productMolarFlow = column.getDistillateStream().getFlowRate("mole/hr")
-        + column.getBottomsStream().getFlowRate("mole/hr");
+	+ column.getBottomsStream().getFlowRate("mole/hr");
     assertEquals(feedMolarFlow, productMolarFlow, feedMolarFlow * 1.0e-10,
-        "Shortcut products should conserve molar feed flow");
+	"Shortcut products should conserve molar feed flow");
 
     double feedEthane = feed.getFluid().getComponent("ethane").getTotalFlowRate("mole/hr");
-    double distEthane =
-        column.getDistillateStream().getFluid().getComponent("ethane").getTotalFlowRate("mole/hr");
+    double distEthane = column.getDistillateStream().getFluid().getComponent("ethane").getTotalFlowRate("mole/hr");
     double feedPropane = feed.getFluid().getComponent("propane").getTotalFlowRate("mole/hr");
-    double bottomPropane =
-        column.getBottomsStream().getFluid().getComponent("propane").getTotalFlowRate("mole/hr");
-    assertEquals(0.99, distEthane / feedEthane, 1.0e-8,
-        "Light key recovery should be reflected in distillate flow");
-    assertEquals(0.99, bottomPropane / feedPropane, 1.0e-8,
-        "Heavy key recovery should be reflected in bottoms flow");
+    double bottomPropane = column.getBottomsStream().getFluid().getComponent("propane").getTotalFlowRate("mole/hr");
+    assertEquals(0.99, distEthane / feedEthane, 1.0e-8, "Light key recovery should be reflected in distillate flow");
+    assertEquals(0.99, bottomPropane / feedPropane, 1.0e-8, "Heavy key recovery should be reflected in bottoms flow");
   }
 
   @Test
@@ -144,8 +137,8 @@ class ShortcutDistillationColumnTest {
     feed.run();
 
     DistillationColumn column = new DistillationColumn("RigorousFromShortcut", 3, true, true);
-    DistillationColumn.ShortcutInitializationResult result =
-        column.initializeFromShortcut(feed, "ethane", "propane", 0.95, 0.95, 1.3);
+    DistillationColumn.ShortcutInitializationResult result = column.initializeFromShortcut(feed, "ethane", "propane",
+	0.95, 0.95, 1.3);
 
     assertTrue(result.isInitialized(), result.getMessage());
     assertEquals(result, column.getLastShortcutInitializationResult());
@@ -153,8 +146,7 @@ class ShortcutDistillationColumnTest {
     assertEquals(result.getFeedTrayNumber(), column.getFeedTrayNumber(feed));
     assertEquals(result.getActualRefluxRatio(), column.getCondenser().getRefluxRatio(), 1.0e-12);
     assertNotNull(column.getTopSpecification(), "Top recovery specification should be configured");
-    assertNotNull(column.getBottomSpecification(),
-        "Bottom recovery specification should be configured");
+    assertNotNull(column.getBottomSpecification(), "Bottom recovery specification should be configured");
     assertTrue(column.validateSetup().isValid(), "Shortcut-initialized column should validate");
   }
 }

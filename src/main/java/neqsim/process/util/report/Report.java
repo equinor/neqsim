@@ -71,8 +71,7 @@ public class Report {
    * Constructor for Report.
    * </p>
    *
-   * @param processEquipmentBaseClass a {@link neqsim.process.equipment.ProcessEquipmentBaseClass}
-   *        object
+   * @param processEquipmentBaseClass a {@link neqsim.process.equipment.ProcessEquipmentBaseClass} object
    */
   public Report(ProcessEquipmentBaseClass processEquipmentBaseClass) {
     processEquipment = processEquipmentBaseClass;
@@ -94,8 +93,7 @@ public class Report {
    * Constructor for Report.
    * </p>
    *
-   * @param processModuleBaseClass a {@link neqsim.process.processmodel.ProcessModuleBaseClass}
-   *        object
+   * @param processModuleBaseClass a {@link neqsim.process.processmodel.ProcessModuleBaseClass} object
    */
   public Report(ProcessModuleBaseClass processModuleBaseClass) {
     // TODO Auto-generated constructor stub
@@ -123,16 +121,16 @@ public class Report {
 
     if (process != null) {
       for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
-        String unitJson = unit.toJson(cfg);
-        if (unitJson != null) {
-          json_reports.put(unit.getName(), unitJson);
-        }
+	String unitJson = unit.toJson(cfg);
+	if (unitJson != null) {
+	  json_reports.put(unit.getName(), unitJson);
+	}
       }
     }
     if (processEquipment != null) {
       String eqJson = processEquipment.toJson(cfg);
       if (eqJson != null) {
-        json_reports.put(processEquipment.getName(), eqJson);
+	json_reports.put(processEquipment.getName(), eqJson);
       }
     }
     if (fluid != null) {
@@ -141,43 +139,41 @@ public class Report {
 
     if (processmodel != null) {
       for (ProcessSystem process : processmodel.getAllProcesses()) {
-        JsonObject processJson = new JsonObject();
+	JsonObject processJson = new JsonObject();
 
-        for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
-          try {
-            String unitJson = unit.toJson(cfg);
-            String unitName = unit.getName() != null ? unit.getName() : "UnnamedUnit";
+	for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
+	  try {
+	    String unitJson = unit.toJson(cfg);
+	    String unitName = unit.getName() != null ? unit.getName() : "UnnamedUnit";
 
-            if (unitJson != null && !unitJson.isEmpty()) {
-              try {
-                JsonElement parsedJson = JsonParser.parseString(unitJson);
-                processJson.add(unitName, parsedJson);
-              } catch (Exception parseEx) {
-                logger.error("Failed to parse JSON for unit: " + unitName, parseEx);
-              }
-            } else {
-              logger.warn("unit.toJson() returned null or empty for unit: " + unitName);
-            }
-          } catch (Exception unitEx) {
-            logger.error("Error handling unit: " + unit.getName(), unitEx);
-          }
-        }
+	    if (unitJson != null && !unitJson.isEmpty()) {
+	      try {
+		JsonElement parsedJson = JsonParser.parseString(unitJson);
+		processJson.add(unitName, parsedJson);
+	      } catch (Exception parseEx) {
+		logger.error("Failed to parse JSON for unit: " + unitName, parseEx);
+	      }
+	    } else {
+	      logger.warn("unit.toJson() returned null or empty for unit: " + unitName);
+	    }
+	  } catch (Exception unitEx) {
+	    logger.error("Error handling unit: " + unit.getName(), unitEx);
+	  }
+	}
 
-        if (processJson.size() == 0) {
-          logger.warn("processJson is empty for process: " + process.getName());
-        }
+	if (processJson.size() == 0) {
+	  logger.warn("processJson is empty for process: " + process.getName());
+	}
 
-        // Safely serialize the JSON using Gson with support for NaN and Infinity
-        try {
-          Gson prettyGson =
-              new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().create();
+	// Safely serialize the JSON using Gson with support for NaN and Infinity
+	try {
+	  Gson prettyGson = new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().create();
 
-          String jsonString = prettyGson.toJson(processJson);
-          json_reports.put(process.getName(), jsonString);
-        } catch (Exception ex) {
-          logger.error(
-              "Error converting final JSON object to string for process: " + process.getName(), ex);
-        }
+	  String jsonString = prettyGson.toJson(processJson);
+	  json_reports.put(process.getName(), jsonString);
+	} catch (Exception ex) {
+	  logger.error("Error converting final JSON object to string for process: " + process.getName(), ex);
+	}
       }
     }
     // System.out.println(json_reports.toString());
@@ -188,23 +184,22 @@ public class Report {
     for (Map.Entry<String, String> entry : json_reports.entrySet()) {
       // Parse each value as a separate JSON object using the static parseString method
       try {
-        String s = entry.getValue() instanceof String ? (String) entry.getValue() : null;
-        if (s == null) {
-          // Not necessary to log that an entry is null
-          continue;
-        }
-        JsonObject nestedJsonObject = JsonParser.parseString(s).getAsJsonObject();
+	String s = entry.getValue() instanceof String ? (String) entry.getValue() : null;
+	if (s == null) {
+	  // Not necessary to log that an entry is null
+	  continue;
+	}
+	JsonObject nestedJsonObject = JsonParser.parseString(s).getAsJsonObject();
 
-        // Update the final JsonObject with the parsed JSON object
-        finalJsonObject.add(entry.getKey(), nestedJsonObject);
+	// Update the final JsonObject with the parsed JSON object
+	finalJsonObject.add(entry.getKey(), nestedJsonObject);
       } catch (Exception ex) {
-        logger.error(ex.getMessage());
+	logger.error(ex.getMessage());
       }
     }
 
     // Convert the final JsonObject to a JSON string with pretty printing
-    Gson prettyGson =
-        new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().create();
+    Gson prettyGson = new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().create();
     return prettyGson.toJson(finalJsonObject);
   }
 }

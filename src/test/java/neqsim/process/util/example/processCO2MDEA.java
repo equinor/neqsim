@@ -42,11 +42,11 @@ public class processCO2MDEA {
     pipe.setOutputFileName("c:/tempNew3.nc");
     pipe.setInitialFlowPattern("annular");
     int numberOfLegs = 1, numberOfNodesInLeg = 10;
-    double[] legHeights = {0, 0};
-    double[] legPositions = {0.0, 0.5};
-    double[] pipeDiameters = {0.02507588, 0.02507588};
-    double[] outerTemperature = {295.0, 295.0};
-    double[] pipeWallRoughness = {1e-5, 1e-5};
+    double[] legHeights = { 0, 0 };
+    double[] legPositions = { 0.0, 0.5 };
+    double[] pipeDiameters = { 0.02507588, 0.02507588 };
+    double[] outerTemperature = { 295.0, 295.0 };
+    double[] pipeWallRoughness = { 1e-5, 1e-5 };
     pipe.setNumberOfLegs(numberOfLegs);
     pipe.setNumberOfNodesInLeg(numberOfNodesInLeg);
     pipe.setLegPositions(legPositions);

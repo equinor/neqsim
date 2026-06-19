@@ -89,10 +89,9 @@ class ApiEnvelopeTest {
   @Test
   void testToJson_successWithContractMetadata() {
     ResultProvenance provenance = ResultProvenance.forFlash("SRK", "TP", "classic");
-    ApiEnvelope<String> env =
-        ApiEnvelope.success("test-data").withTool("runFlash").withProvenance(provenance)
-            .withValidation(ApiEnvelope.validationStatus(true, "test", "passed"))
-            .withQualityGate(ApiEnvelope.qualityGate("passed", "ok", true));
+    ApiEnvelope<String> env = ApiEnvelope.success("test-data").withTool("runFlash").withProvenance(provenance)
+	.withValidation(ApiEnvelope.validationStatus(true, "test", "passed"))
+	.withQualityGate(ApiEnvelope.qualityGate("passed", "ok", true));
 
     String json = env.toJson();
     JsonObject root = JsonParser.parseString(json).getAsJsonObject();

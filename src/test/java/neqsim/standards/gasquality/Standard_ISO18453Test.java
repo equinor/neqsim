@@ -34,8 +34,7 @@ class Standard_ISO18453Test extends neqsim.NeqSimTest {
 
     double dewPoint = standard.getValue("dewPointTemperature");
     // Water dew point for trace water should be well below 0 C
-    assertTrue(dewPoint < 20.0,
-        "Water dew point should be < 20 C for trace water but was " + dewPoint);
+    assertTrue(dewPoint < 20.0, "Water dew point should be < 20 C for trace water but was " + dewPoint);
   }
 
   /**

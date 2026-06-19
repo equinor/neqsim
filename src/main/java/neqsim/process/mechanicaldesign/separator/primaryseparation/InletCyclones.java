@@ -7,15 +7,14 @@ import org.apache.logging.log4j.Logger;
  * Inlet cyclone device for primary separation in a separator vessel.
  *
  * <p>
- * Inlet cyclones use centrifugal force to separate bulk liquid from the gas stream at the inlet.
- * They handle the highest inlet momentum of all inlet device types (up to 8000 Pa rho*v^2) and
- * produce a more uniform gas distribution downstream. Multiple cyclone tubes are typically arranged
- * in a cluster.
+ * Inlet cyclones use centrifugal force to separate bulk liquid from the gas stream at the inlet. They handle the
+ * highest inlet momentum of all inlet device types (up to 8000 Pa rho*v^2) and produce a more uniform gas distribution
+ * downstream. Multiple cyclone tubes are typically arranged in a cluster.
  * </p>
  *
  * <p>
- * Inlet cyclones are preferred for high gas-to-liquid ratio applications (gas scrubbers, gas
- * production separators) where the liquid load is moderate.
+ * Inlet cyclones are preferred for high gas-to-liquid ratio applications (gas scrubbers, gas production separators)
+ * where the liquid load is moderate.
  * </p>
  *
  * @author NeqSim

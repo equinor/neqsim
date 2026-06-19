@@ -17,9 +17,8 @@ import java.util.Map;
  * Ion parameters from the Maribo-Mogensen PhD thesis (Tables 6.6, 6.11).
  *
  * <p>
- * Contains temperature-dependent ion-solvent interaction parameters and Born radii for common ions
- * in multiple solvents. This class supports the Maribo-Mogensen e-CPA model for mixed solvent
- * electrolyte systems.
+ * Contains temperature-dependent ion-solvent interaction parameters and Born radii for common ions in multiple
+ * solvents. This class supports the Maribo-Mogensen e-CPA model for mixed solvent electrolyte systems.
  * </p>
  *
  * <h2>Ion-Solvent Interaction Energy</h2>
@@ -78,15 +77,13 @@ public final class IonParametersMM {
   public static final String MDEA = "MDEA";
 
   /** List of supported solvents. */
-  public static final List<String> SUPPORTED_SOLVENTS =
-      Arrays.asList(WATER, METHANOL, ETHANOL, MEG, DEG, TEG, MDEA);
+  public static final List<String> SUPPORTED_SOLVENTS = Arrays.asList(WATER, METHANOL, ETHANOL, MEG, DEG, TEG, MDEA);
 
   /** Map of ion name to parameters (water as default solvent). */
   private static final Map<String, IonData> ION_DATA = new HashMap<String, IonData>();
 
   /** Map of (ion + solvent) key to solvent-specific interaction parameters. */
-  private static final Map<String, SolventInteractionData> SOLVENT_SPECIFIC_DATA =
-      new HashMap<String, SolventInteractionData>();
+  private static final Map<String, SolventInteractionData> SOLVENT_SPECIFIC_DATA = new HashMap<String, SolventInteractionData>();
 
   static {
     // ===========================================================================
@@ -200,7 +197,8 @@ public final class IonParametersMM {
   /**
    * Private constructor to prevent instantiation.
    */
-  private IonParametersMM() {}
+  private IonParametersMM() {
+  }
 
   /**
    * Get ion data for a given ion name.
@@ -240,7 +238,7 @@ public final class IonParametersMM {
    * ΔU_iw(T) = u⁰_iw + uᵀ_iw × (T - 298.15)
    * </pre>
    *
-   * @param ionName the name of the ion
+   * @param ionName     the name of the ion
    * @param temperature temperature in Kelvin
    * @return interaction energy in Kelvin, or 0 if not found
    */
@@ -259,13 +257,12 @@ public final class IonParametersMM {
    * If solvent-specific parameters are not available, falls back to water parameters.
    * </p>
    *
-   * @param ionName the name of the ion
+   * @param ionName     the name of the ion
    * @param solventName the name of the solvent (use constants: WATER, METHANOL, MEG, etc.)
    * @param temperature temperature in Kelvin
    * @return interaction energy in Kelvin, or 0 if not found
    */
-  public static double getInteractionEnergy(String ionName, String solventName,
-      double temperature) {
+  public static double getInteractionEnergy(String ionName, String solventName, double temperature) {
     // Check for solvent-specific parameters first
     String key = ionName + "-" + solventName;
     SolventInteractionData solventData = SOLVENT_SPECIFIC_DATA.get(key);
@@ -290,7 +287,7 @@ public final class IonParametersMM {
   /**
    * Get the temperature derivative of the ion-solvent interaction energy for a specific solvent.
    *
-   * @param ionName the name of the ion
+   * @param ionName     the name of the ion
    * @param solventName the name of the solvent
    * @return dΔU_is/dT in K/K, or 0 if not found
    */
@@ -310,7 +307,7 @@ public final class IonParametersMM {
    * This is the NRTL τ parameter at T_ref = 298.15 K.
    * </p>
    *
-   * @param ionName the name of the ion
+   * @param ionName     the name of the ion
    * @param solventName the name of the solvent
    * @return u0 in Kelvin, or 0 if not found
    */
@@ -333,7 +330,7 @@ public final class IonParametersMM {
    * τ(T) = u0 + uT × (T - 298.15)
    * </p>
    *
-   * @param ionName the name of the ion
+   * @param ionName     the name of the ion
    * @param solventName the name of the solvent
    * @return uT in K/K, or 0 if not found
    */
@@ -351,7 +348,7 @@ public final class IonParametersMM {
   /**
    * Check if solvent-specific parameters exist for an ion-solvent pair.
    *
-   * @param ionName the name of the ion
+   * @param ionName     the name of the ion
    * @param solventName the name of the solvent
    * @return true if solvent-specific parameters exist
    */
@@ -432,9 +429,9 @@ public final class IonParametersMM {
     /**
      * Constructor for IonData.
      *
-     * @param sigma Lennard-Jones diameter in Ångströms
-     * @param u0_iw ion-solvent interaction at 298.15 K in Kelvin
-     * @param uT_iw temperature coefficient of interaction in K/K
+     * @param sigma  Lennard-Jones diameter in Ångströms
+     * @param u0_iw  ion-solvent interaction at 298.15 K in Kelvin
+     * @param uT_iw  temperature coefficient of interaction in K/K
      * @param charge ionic charge
      */
     public IonData(double sigma, double u0_iw, double uT_iw, int charge) {
@@ -461,9 +458,9 @@ public final class IonParametersMM {
      */
     public double getBornRadius() {
       if (charge > 0) {
-        return 0.5 * sigma + 0.1;
+	return 0.5 * sigma + 0.1;
       } else {
-        return 0.5 * sigma + 0.85;
+	return 0.5 * sigma + 0.85;
       }
     }
   }

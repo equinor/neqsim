@@ -12,13 +12,13 @@ import neqsim.thermo.system.SystemInterface;
  * Utility class for calculating greenhouse gas emissions from process streams.
  *
  * <p>
- * Calculates CO2, methane, and non-methane VOC (nmVOC) emissions from gas streams, typically from
- * produced water degassing, cold flares, or other venting points.
+ * Calculates CO2, methane, and non-methane VOC (nmVOC) emissions from gas streams, typically from produced water
+ * degassing, cold flares, or other venting points.
  * </p>
  *
  * <p>
- * Based on methodology from "Virtual Measurement of Emissions from Produced Water Using an Online
- * Process Simulator" (GFMW 2023).
+ * Based on methodology from "Virtual Measurement of Emissions from Produced Water Using an Online Process Simulator"
+ * (GFMW 2023).
  * </p>
  *
  * <h2>Norwegian Regulatory Framework</h2>
@@ -92,14 +92,14 @@ public class EmissionsCalculator implements Serializable {
   private static final double HOURS_PER_YEAR = 8760.0;
 
   /**
-   * Default methane solubility factor per Norwegian offshore emission handbook. Unit: g/(m³ water ·
-   * bar). This is used in the conventional calculation method.
+   * Default methane solubility factor per Norwegian offshore emission handbook. Unit: g/(m³ water · bar). This is used
+   * in the conventional calculation method.
    */
   public static final double HANDBOOK_F_CH4 = 14.0;
 
   /**
-   * Default nmVOC solubility factor per Norwegian offshore emission handbook. Unit: g/(m³ water ·
-   * bar). This is used in the conventional calculation method.
+   * Default nmVOC solubility factor per Norwegian offshore emission handbook. Unit: g/(m³ water · bar). This is used in
+   * the conventional calculation method.
    */
   public static final double HANDBOOK_F_NMVOC = 3.5;
 
@@ -170,10 +170,8 @@ public class EmissionsCalculator implements Serializable {
     methaneEmissionRate = getComponentRate(gasPhase, "methane");
     ethaneEmissionRate = getComponentRate(gasPhase, "ethane");
     propaneEmissionRate = getComponentRate(gasPhase, "propane");
-    butanesEmissionRate =
-        getComponentRate(gasPhase, "i-butane") + getComponentRate(gasPhase, "n-butane");
-    pentanesEmissionRate =
-        getComponentRate(gasPhase, "i-pentane") + getComponentRate(gasPhase, "n-pentane");
+    butanesEmissionRate = getComponentRate(gasPhase, "i-butane") + getComponentRate(gasPhase, "n-butane");
+    pentanesEmissionRate = getComponentRate(gasPhase, "i-pentane") + getComponentRate(gasPhase, "n-pentane");
     nitrogenEmissionRate = getComponentRate(gasPhase, "nitrogen");
     waterVaporRate = getComponentRate(gasPhase, "water");
 
@@ -182,7 +180,7 @@ public class EmissionsCalculator implements Serializable {
     for (int i = 0; i < gasPhase.getNumberOfComponents(); i++) {
       String name = gasPhase.getComponent(i).getComponentName().toLowerCase();
       if (isHeavierHydrocarbon(name)) {
-        heavierEmissionRate += gasPhase.getComponent(i).getFlowRate("kg/sec");
+	heavierEmissionRate += gasPhase.getComponent(i).getFlowRate("kg/sec");
       }
     }
   }
@@ -246,8 +244,8 @@ public class EmissionsCalculator implements Serializable {
    * @return emission rate in specified unit
    */
   public double getNMVOCEmissionRate(String unit) {
-    double nmvoc = ethaneEmissionRate + propaneEmissionRate + butanesEmissionRate
-        + pentanesEmissionRate + heavierEmissionRate;
+    double nmvoc = ethaneEmissionRate + propaneEmissionRate + butanesEmissionRate + pentanesEmissionRate
+	+ heavierEmissionRate;
     return convertRate(nmvoc, unit);
   }
 
@@ -283,7 +281,7 @@ public class EmissionsCalculator implements Serializable {
    */
   public double getCO2Equivalents(String unit) {
     double co2eq = co2EmissionRate * GWP_CO2 + methaneEmissionRate * GWP_METHANE
-        + getNMVOCEmissionRate("kg/sec") * GWP_NMVOC;
+	+ getNMVOCEmissionRate("kg/sec") * GWP_NMVOC;
     return convertRate(co2eq, unit);
   }
 
@@ -294,8 +292,7 @@ public class EmissionsCalculator implements Serializable {
    * @return cumulative CO2 equivalents
    */
   public double getCumulativeCO2Equivalents(String unit) {
-    double co2eq = cumulativeCO2_kg * GWP_CO2 + cumulativeMethane_kg * GWP_METHANE
-        + cumulativeNMVOC_kg * GWP_NMVOC;
+    double co2eq = cumulativeCO2_kg * GWP_CO2 + cumulativeMethane_kg * GWP_METHANE + cumulativeNMVOC_kg * GWP_NMVOC;
 
     if (unit.equalsIgnoreCase("tonnes")) {
       return co2eq / 1000.0;
@@ -404,7 +401,7 @@ public class EmissionsCalculator implements Serializable {
    * Calculate gas-to-water mass factor (GWMF).
    *
    * @param waterFlowRate_m3hr water flow rate in m³/hr
-   * @param pressureDrop_bar pressure drop in bar
+   * @param pressureDrop_bar   pressure drop in bar
    * @return GWMF in g/m³/bar
    */
   public double calculateGWMF(double waterFlowRate_m3hr, double pressureDrop_bar) {
@@ -419,7 +416,7 @@ public class EmissionsCalculator implements Serializable {
    * Calculate methane solubility factor.
    *
    * @param waterFlowRate_m3hr water flow rate in m³/hr
-   * @param pressureDrop_bar pressure drop in bar
+   * @param pressureDrop_bar   pressure drop in bar
    * @return methane factor in g/m³/bar
    */
   public double calculateMethaneFactor(double waterFlowRate_m3hr, double pressureDrop_bar) {
@@ -434,7 +431,7 @@ public class EmissionsCalculator implements Serializable {
    * Calculate nmVOC solubility factor.
    *
    * @param waterFlowRate_m3hr water flow rate in m³/hr
-   * @param pressureDrop_bar pressure drop in bar
+   * @param pressureDrop_bar   pressure drop in bar
    * @return nmVOC factor in g/m³/bar
    */
   public double calculateNMVOCFactor(double waterFlowRate_m3hr, double pressureDrop_bar) {
@@ -467,16 +464,15 @@ public class EmissionsCalculator implements Serializable {
    * </ul>
    *
    * <p>
-   * <b>Note:</b> This conventional method typically overestimates CH4 by ~60% and misses CO2
-   * entirely. Use thermodynamic method (CPA-EoS) for accurate reporting.
+   * <b>Note:</b> This conventional method typically overestimates CH4 by ~60% and misses CO2 entirely. Use
+   * thermodynamic method (CPA-EoS) for accurate reporting.
    * </p>
    *
    * @param producedWaterVolume_m3 produced water volume in m³
-   * @param pressureDrop_bar pressure drop in bar
+   * @param pressureDrop_bar       pressure drop in bar
    * @return methane emission in tonnes
    */
-  public static double calculateConventionalCH4(double producedWaterVolume_m3,
-      double pressureDrop_bar) {
+  public static double calculateConventionalCH4(double producedWaterVolume_m3, double pressureDrop_bar) {
     return HANDBOOK_F_CH4 * producedWaterVolume_m3 * pressureDrop_bar * 1e-6;
   }
 
@@ -488,16 +484,15 @@ public class EmissionsCalculator implements Serializable {
    * </p>
    *
    * <p>
-   * <b>Note:</b> This conventional method does not distinguish individual VOC components. Use
-   * thermodynamic method for detailed component breakdown.
+   * <b>Note:</b> This conventional method does not distinguish individual VOC components. Use thermodynamic method for
+   * detailed component breakdown.
    * </p>
    *
    * @param producedWaterVolume_m3 produced water volume in m³
-   * @param pressureDrop_bar pressure drop in bar
+   * @param pressureDrop_bar       pressure drop in bar
    * @return nmVOC emission in tonnes
    */
-  public static double calculateConventionalNMVOC(double producedWaterVolume_m3,
-      double pressureDrop_bar) {
+  public static double calculateConventionalNMVOC(double producedWaterVolume_m3, double pressureDrop_bar) {
     return HANDBOOK_F_NMVOC * producedWaterVolume_m3 * pressureDrop_bar * 1e-6;
   }
 
@@ -505,16 +500,16 @@ public class EmissionsCalculator implements Serializable {
    * Calculate total emissions using conventional Norwegian handbook method.
    *
    * <p>
-   * This is the traditional method used before thermodynamic modeling. It assumes all dissolved gas
-   * is hydrocarbon (methane + nmVOC) and ignores CO2 completely.
+   * This is the traditional method used before thermodynamic modeling. It assumes all dissolved gas is hydrocarbon
+   * (methane + nmVOC) and ignores CO2 completely.
    * </p>
    *
    * @param producedWaterVolume_m3 produced water volume in m³
-   * @param pressureDrop_bar pressure drop in bar
+   * @param pressureDrop_bar       pressure drop in bar
    * @return map with CH4, nmVOC, and CO2eq values in tonnes
    */
-  public static java.util.Map<String, Double> calculateConventionalEmissions(
-      double producedWaterVolume_m3, double pressureDrop_bar) {
+  public static java.util.Map<String, Double> calculateConventionalEmissions(double producedWaterVolume_m3,
+      double pressureDrop_bar) {
     java.util.Map<String, Double> results = new HashMap<>();
 
     double ch4 = calculateConventionalCH4(producedWaterVolume_m3, pressureDrop_bar);
@@ -533,12 +528,12 @@ public class EmissionsCalculator implements Serializable {
    * Compare thermodynamic vs conventional method results.
    *
    * <p>
-   * Generates a comparison showing how much the conventional method differs from the thermodynamic
-   * calculation. Useful for demonstrating the improvement from virtual measurement.
+   * Generates a comparison showing how much the conventional method differs from the thermodynamic calculation. Useful
+   * for demonstrating the improvement from virtual measurement.
    * </p>
    *
    * @param producedWaterVolume_m3 produced water volume in m³
-   * @param pressureDrop_bar pressure drop in bar
+   * @param pressureDrop_bar       pressure drop in bar
    * @return map with comparison metrics
    */
   public java.util.Map<String, Object> compareWithConventionalMethod(double producedWaterVolume_m3,
@@ -576,8 +571,7 @@ public class EmissionsCalculator implements Serializable {
     // Differences
     java.util.Map<String, Double> diff = new HashMap<>();
     diff.put("CH4_difference_percent", convCH4 > 0 ? (convCH4 - thermoCH4) / convCH4 * 100 : 0);
-    diff.put("CO2eq_difference_percent",
-        convCO2eq > 0 ? (convCO2eq - thermoCO2eq) / convCO2eq * 100 : 0);
+    diff.put("CO2eq_difference_percent", convCO2eq > 0 ? (convCO2eq - thermoCO2eq) / convCO2eq * 100 : 0);
     diff.put("CO2_missed_tonnes", thermoCO2); // CO2 completely missed by conventional
     comparison.put("differences", diff);
 
@@ -592,8 +586,8 @@ public class EmissionsCalculator implements Serializable {
    * Calculate Gas-Water Ratio (GWR) at standard conditions.
    *
    * <p>
-   * GWR is defined as Sm³ gas evolved per Sm³ water at standard conditions. This is a key metric
-   * for validating the thermodynamic model against lab analysis.
+   * GWR is defined as Sm³ gas evolved per Sm³ water at standard conditions. This is a key metric for validating the
+   * thermodynamic model against lab analysis.
    * </p>
    *
    * @param waterFlowRate_m3hr water flow rate in m³/hr at process conditions
@@ -613,7 +607,7 @@ public class EmissionsCalculator implements Serializable {
     // Gas flow at standard conditions (Sm³/hr)
     // Using ideal gas approximation: n*R*T_std/P_std
     double totalGasMoles = fluid.getPhase("gas").getNumberOfMolesInPhase()
-        * fluid.getPhase("gas").getFlowRate("mole/sec") * 3600.0;
+	* fluid.getPhase("gas").getFlowRate("mole/sec") * 3600.0;
     double gasStdVolume = totalGasMoles * 22.414 / 1000.0; // Sm³/hr at 0°C, 1 atm
 
     return gasStdVolume / waterFlowRate_m3hr;
@@ -626,7 +620,7 @@ public class EmissionsCalculator implements Serializable {
    * Alternative GWR calculation when you know the total gas moles released.
    * </p>
    *
-   * @param gasMoles_kmol total gas moles released (kmol)
+   * @param gasMoles_kmol  total gas moles released (kmol)
    * @param waterVolume_m3 water volume at standard conditions (m³)
    * @return GWR in Sm³ gas / Sm³ water
    */
@@ -662,25 +656,20 @@ public class EmissionsCalculator implements Serializable {
     sb.append("Annual Equivalent (8760 hrs):\n");
     sb.append(String.format("  Total Gas:  %.2f tonnes/year%n", getTotalGasRate("tonnes/year")));
     sb.append(String.format("  CO2:        %.2f tonnes/year%n", getCO2EmissionRate("tonnes/year")));
-    sb.append(
-        String.format("  Methane:    %.2f tonnes/year%n", getMethaneEmissionRate("tonnes/year")));
-    sb.append(
-        String.format("  nmVOC:      %.2f tonnes/year%n", getNMVOCEmissionRate("tonnes/year")));
+    sb.append(String.format("  Methane:    %.2f tonnes/year%n", getMethaneEmissionRate("tonnes/year")));
+    sb.append(String.format("  nmVOC:      %.2f tonnes/year%n", getNMVOCEmissionRate("tonnes/year")));
     sb.append("\n");
 
     sb.append("CO2 Equivalents (GWP-100):\n");
     sb.append(String.format("  Instantaneous: %.2f kg CO2eq/hr%n", getCO2Equivalents("kg/hr")));
-    sb.append(String.format("  Annual:        %.2f tonnes CO2eq/year%n",
-        getCO2Equivalents("tonnes/year")));
+    sb.append(String.format("  Annual:        %.2f tonnes CO2eq/year%n", getCO2Equivalents("tonnes/year")));
 
     if (totalRunTime_hours > 0) {
-      sb.append("\nCumulative (").append(String.format("%.1f", totalRunTime_hours))
-          .append(" hours):\n");
+      sb.append("\nCumulative (").append(String.format("%.1f", totalRunTime_hours)).append(" hours):\n");
       sb.append(String.format("  CO2:        %.2f tonnes%n", getCumulativeCO2("tonnes")));
       sb.append(String.format("  Methane:    %.2f tonnes%n", getCumulativeMethane("tonnes")));
       sb.append(String.format("  nmVOC:      %.2f tonnes%n", getCumulativeNMVOC("tonnes")));
-      sb.append(
-          String.format("  CO2eq:      %.2f tonnes%n", getCumulativeCO2Equivalents("tonnes")));
+      sb.append(String.format("  CO2eq:      %.2f tonnes%n", getCumulativeCO2Equivalents("tonnes")));
     }
 
     return sb.toString();
@@ -757,19 +746,17 @@ public class EmissionsCalculator implements Serializable {
 
   private boolean isHeavierHydrocarbon(String name) {
     // Check for C6+ components (heavier hydrocarbons in nmVOC)
-    if (name.startsWith("c6") || name.startsWith("nc6") || name.startsWith("n-hexane")
-        || name.startsWith("hexane")) {
+    if (name.startsWith("c6") || name.startsWith("nc6") || name.startsWith("n-hexane") || name.startsWith("hexane")) {
       return true;
     }
-    if (name.startsWith("c7") || name.startsWith("c8") || name.startsWith("c9")
-        || name.startsWith("c10")) {
+    if (name.startsWith("c7") || name.startsWith("c8") || name.startsWith("c9") || name.startsWith("c10")) {
       return true;
     }
     // TBP fractions
     if (name.matches("c\\d+.*") && !name.equals("co2")) {
       try {
-        int carbonNum = Integer.parseInt(name.replaceAll("[^0-9]", "").substring(0, 1));
-        return carbonNum >= 6;
+	int carbonNum = Integer.parseInt(name.replaceAll("[^0-9]", "").substring(0, 1));
+	return carbonNum >= 6;
       } catch (Exception e) {
       }
     }
@@ -782,26 +769,26 @@ public class EmissionsCalculator implements Serializable {
     }
 
     switch (unit.toLowerCase()) {
-      case "kg/sec":
-      case "kg/s":
-        return rateKgSec;
-      case "kg/hr":
-      case "kg/h":
-        return rateKgSec * 3600.0;
-      case "kg/day":
-      case "kg/d":
-        return rateKgSec * 3600.0 * 24.0;
-      case "tonnes/hr":
-      case "t/hr":
-        return rateKgSec * 3600.0 / 1000.0;
-      case "tonnes/day":
-      case "t/day":
-        return rateKgSec * 3600.0 * 24.0 / 1000.0;
-      case "tonnes/year":
-      case "t/year":
-        return rateKgSec * 3600.0 * HOURS_PER_YEAR / 1000.0;
-      default:
-        return rateKgSec;
+    case "kg/sec":
+    case "kg/s":
+      return rateKgSec;
+    case "kg/hr":
+    case "kg/h":
+      return rateKgSec * 3600.0;
+    case "kg/day":
+    case "kg/d":
+      return rateKgSec * 3600.0 * 24.0;
+    case "tonnes/hr":
+    case "t/hr":
+      return rateKgSec * 3600.0 / 1000.0;
+    case "tonnes/day":
+    case "t/day":
+      return rateKgSec * 3600.0 * 24.0 / 1000.0;
+    case "tonnes/year":
+    case "t/year":
+      return rateKgSec * 3600.0 * HOURS_PER_YEAR / 1000.0;
+    default:
+      return rateKgSec;
     }
   }
 }

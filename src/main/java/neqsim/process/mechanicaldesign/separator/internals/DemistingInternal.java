@@ -8,9 +8,8 @@ import org.apache.logging.log4j.Logger;
  * Base class for demisting internals used in separators and gas scrubbers.
  *
  * <p>
- * Models wire mesh, vane pack, and cyclone demisting devices. Provides methods to calculate
- * allowable gas velocity (Souders-Brown), pressure drop (Euler number), and liquid carry-over
- * fraction.
+ * Models wire mesh, vane pack, and cyclone demisting devices. Provides methods to calculate allowable gas velocity
+ * (Souders-Brown), pressure drop (Euler number), and liquid carry-over fraction.
  * </p>
  *
  * <p>
@@ -59,8 +58,8 @@ public class DemistingInternal implements Serializable {
   private double euNumber = 150.0;
 
   /**
-   * Souders-Brown K-factor for maximum allowable gas velocity [m/s]. Typical values: wire mesh
-   * 0.05-0.12, vane pack 0.10-0.20, cyclone 0.15-0.30.
+   * Souders-Brown K-factor for maximum allowable gas velocity [m/s]. Typical values: wire mesh 0.05-0.12, vane pack
+   * 0.10-0.20, cyclone 0.15-0.30.
    */
   private double kFactor = 0.107;
 
@@ -79,7 +78,8 @@ public class DemistingInternal implements Serializable {
   /**
    * Constructs a DemistingInternal with default parameters.
    */
-  public DemistingInternal() {}
+  public DemistingInternal() {
+  }
 
   /**
    * Constructs a DemistingInternal with a name.
@@ -130,24 +130,21 @@ public class DemistingInternal implements Serializable {
   }
 
   /**
-   * Calculates the maximum allowable gas velocity through the demister using the Souders-Brown
-   * equation.
+   * Calculates the maximum allowable gas velocity through the demister using the Souders-Brown equation.
    *
    * <p>
    * $$ v_{gas,max} = K \sqrt{\frac{\rho_L - \rho_G}{\rho_G}} $$
    * </p>
    *
-   * @param gasVelocitySuperficial superficial gas velocity [m/s] (not used in max calc, but
-   *        retained for signature compatibility)
-   * @param gasDensity gas phase density [kg/m3]
-   * @param liquidDensity liquid phase density [kg/m3]
+   * @param gasVelocitySuperficial superficial gas velocity [m/s] (not used in max calc, but retained for signature
+   *                               compatibility)
+   * @param gasDensity             gas phase density [kg/m3]
+   * @param liquidDensity          liquid phase density [kg/m3]
    * @return maximum allowable gas velocity [m/s]
    */
-  public double calcGasVelocity(double gasVelocitySuperficial, double gasDensity,
-      double liquidDensity) {
+  public double calcGasVelocity(double gasVelocitySuperficial, double gasDensity, double liquidDensity) {
     if (gasDensity <= 0 || liquidDensity <= gasDensity) {
-      logger.warn("Invalid densities for gas velocity calculation: gasRho={}, liqRho={}",
-          gasDensity, liquidDensity);
+      logger.warn("Invalid densities for gas velocity calculation: gasRho={}, liqRho={}", gasDensity, liquidDensity);
       return 0.0;
     }
     return kFactor * Math.sqrt((liquidDensity - gasDensity) / gasDensity);
@@ -161,7 +158,7 @@ public class DemistingInternal implements Serializable {
    * </p>
    *
    * @param gasVelocity gas velocity through the demister [m/s]
-   * @param gasDensity gas phase density [kg/m3]
+   * @param gasDensity  gas phase density [kg/m3]
    * @return pressure drop [Pa]
    */
   public double calcPressureDrop(double gasVelocity, double gasDensity) {
@@ -169,15 +166,14 @@ public class DemistingInternal implements Serializable {
   }
 
   /**
-   * Calculates the liquid carry-over fraction past the demister. Uses a simple exponential decay
-   * model based on the ratio of actual velocity to maximum velocity.
+   * Calculates the liquid carry-over fraction past the demister. Uses a simple exponential decay model based on the
+   * ratio of actual velocity to maximum velocity.
    *
    * <p>
-   * For velocity ratios below 1.0, carry-over is near zero. Above 1.0, carry-over rises rapidly
-   * towards 1.0 (flooding).
+   * For velocity ratios below 1.0, carry-over is near zero. Above 1.0, carry-over rises rapidly towards 1.0 (flooding).
    * </p>
    *
-   * @param gasVelocity actual gas velocity [m/s]
+   * @param gasVelocity    actual gas velocity [m/s]
    * @param maxGasVelocity maximum allowable gas velocity [m/s]
    * @return liquid carry-over fraction [0..1], where 0 = no carry-over, 1 = total flooding
    */

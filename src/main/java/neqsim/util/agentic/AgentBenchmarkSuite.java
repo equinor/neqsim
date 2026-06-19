@@ -10,15 +10,13 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 /**
- * Defines and evaluates standardized engineering benchmark problems for agent performance
- * measurement.
+ * Defines and evaluates standardized engineering benchmark problems for agent performance measurement.
  *
  * <p>
- * Inspired by the Simona dataset used by Tian et al. (2026) for evaluating multi-agent chemical
- * process design workflows, this class provides a curated set of engineering problems with known
- * reference solutions. Each benchmark problem specifies inputs, expected outputs with tolerances,
- * and pass/fail criteria. Agent systems can run the full suite to measure convergence rate,
- * accuracy, and completeness across diverse engineering tasks.
+ * Inspired by the Simona dataset used by Tian et al. (2026) for evaluating multi-agent chemical process design
+ * workflows, this class provides a curated set of engineering problems with known reference solutions. Each benchmark
+ * problem specifies inputs, expected outputs with tolerances, and pass/fail criteria. Agent systems can run the full
+ * suite to measure convergence rate, accuracy, and completeness across diverse engineering tasks.
  * </p>
  *
  * <h2>Problem Categories:</h2>
@@ -111,7 +109,7 @@ public class AgentBenchmarkSuite implements Serializable {
    * Submits an agent result for a specific problem.
    *
    * @param problemId the unique identifier of the benchmark problem
-   * @param value the computed result value
+   * @param value     the computed result value
    */
   public void addResult(String problemId, double value) {
     submittedResults.put(problemId, value);
@@ -141,43 +139,40 @@ public class AgentBenchmarkSuite implements Serializable {
     for (BenchmarkProblem problem : problems) {
       String id = problem.getId();
       if (!submittedResults.containsKey(id) && !submittedConvergence.containsKey(id)) {
-        results.add(
-            new ProblemResult(problem, Double.NaN, false, "NOT_ATTEMPTED", "No result submitted"));
-        notAttempted++;
-        continue;
+	results.add(new ProblemResult(problem, Double.NaN, false, "NOT_ATTEMPTED", "No result submitted"));
+	notAttempted++;
+	continue;
       }
 
       Boolean converged = submittedConvergence.get(id);
       if (converged != null && !converged) {
-        results.add(
-            new ProblemResult(problem, Double.NaN, false, "FAILED", "Simulation did not converge"));
-        failed++;
-        continue;
+	results.add(new ProblemResult(problem, Double.NaN, false, "FAILED", "Simulation did not converge"));
+	failed++;
+	continue;
       }
 
       if (submittedResults.containsKey(id)) {
-        double actual = submittedResults.get(id);
-        double expected = problem.getExpectedValue();
-        double tolerance = problem.getTolerancePct();
-        double deviationPct = expected != 0.0 ? Math.abs((actual - expected) / expected) * 100.0
-            : (actual == 0.0 ? 0.0 : 100.0);
+	double actual = submittedResults.get(id);
+	double expected = problem.getExpectedValue();
+	double tolerance = problem.getTolerancePct();
+	double deviationPct = expected != 0.0 ? Math.abs((actual - expected) / expected) * 100.0
+	    : (actual == 0.0 ? 0.0 : 100.0);
 
-        boolean pass = deviationPct <= tolerance;
-        String verdict = pass ? "PASS" : "FAIL";
-        String detail = String.format("Expected=%.6g, Actual=%.6g, Deviation=%.2f%%, Tol=%.1f%%",
-            expected, actual, deviationPct, tolerance);
+	boolean pass = deviationPct <= tolerance;
+	String verdict = pass ? "PASS" : "FAIL";
+	String detail = String.format("Expected=%.6g, Actual=%.6g, Deviation=%.2f%%, Tol=%.1f%%", expected, actual,
+	    deviationPct, tolerance);
 
-        results.add(new ProblemResult(problem, actual, pass, verdict, detail));
-        if (pass) {
-          passed++;
-        } else {
-          failed++;
-        }
+	results.add(new ProblemResult(problem, actual, pass, verdict, detail));
+	if (pass) {
+	  passed++;
+	} else {
+	  failed++;
+	}
       } else {
-        // Had convergence=true but no numerical result submitted
-        results.add(new ProblemResult(problem, Double.NaN, true, "PASS_CONVERGENCE",
-            "Converged, no value checked"));
-        passed++;
+	// Had convergence=true but no numerical result submitted
+	results.add(new ProblemResult(problem, Double.NaN, true, "PASS_CONVERGENCE", "Converged, no value checked"));
+	passed++;
       }
     }
 
@@ -206,8 +201,7 @@ public class AgentBenchmarkSuite implements Serializable {
    * Creates a standard benchmark suite with representative problems across all categories.
    *
    * <p>
-   * Reference data sources: NIST Chemistry WebBook, published experimental data, validated
-   * simulation results.
+   * Reference data sources: NIST Chemistry WebBook, published experimental data, validated simulation results.
    * </p>
    *
    * @return a pre-populated benchmark suite
@@ -216,55 +210,47 @@ public class AgentBenchmarkSuite implements Serializable {
     AgentBenchmarkSuite suite = new AgentBenchmarkSuite("NeqSim Standard Benchmark v1.0");
 
     // THERMO category — pure component properties
-    suite.addProblem(new BenchmarkProblem("methane_density_300K_50bar", ProblemCategory.THERMO,
-        Difficulty.BASIC, "Methane density at 300 K and 50 bar (SRK EOS)", "kg/m3", 33.5, 2.0,
-        "NIST Chemistry WebBook"));
+    suite.addProblem(new BenchmarkProblem("methane_density_300K_50bar", ProblemCategory.THERMO, Difficulty.BASIC,
+	"Methane density at 300 K and 50 bar (SRK EOS)", "kg/m3", 33.5, 2.0, "NIST Chemistry WebBook"));
 
-    suite.addProblem(new BenchmarkProblem("water_boiling_1atm", ProblemCategory.THERMO,
-        Difficulty.BASIC, "Water normal boiling point at 1.01325 bar", "K", 373.15, 0.5,
-        "NIST Chemistry WebBook"));
+    suite.addProblem(new BenchmarkProblem("water_boiling_1atm", ProblemCategory.THERMO, Difficulty.BASIC,
+	"Water normal boiling point at 1.01325 bar", "K", 373.15, 0.5, "NIST Chemistry WebBook"));
 
-    suite.addProblem(new BenchmarkProblem("co2_density_310K_100bar", ProblemCategory.THERMO,
-        Difficulty.BASIC, "CO2 density at 310 K and 100 bar (SRK EOS)", "kg/m3", 628.6, 5.0,
-        "NIST Chemistry WebBook"));
+    suite.addProblem(new BenchmarkProblem("co2_density_310K_100bar", ProblemCategory.THERMO, Difficulty.BASIC,
+	"CO2 density at 310 K and 100 bar (SRK EOS)", "kg/m3", 628.6, 5.0, "NIST Chemistry WebBook"));
 
     // FLASH category — phase equilibrium
-    suite.addProblem(new BenchmarkProblem("methane_ethane_flash_phase_count", ProblemCategory.FLASH,
-        Difficulty.BASIC, "Number of phases for 90/10 methane/ethane at 200 K, 30 bar", "phases",
-        1.0, 0.1, "Expected single vapor phase"));
+    suite.addProblem(new BenchmarkProblem("methane_ethane_flash_phase_count", ProblemCategory.FLASH, Difficulty.BASIC,
+	"Number of phases for 90/10 methane/ethane at 200 K, 30 bar", "phases", 1.0, 0.1,
+	"Expected single vapor phase"));
 
-    suite.addProblem(new BenchmarkProblem("natural_gas_dewpoint", ProblemCategory.FLASH,
-        Difficulty.INTERMEDIATE, "Cricondentherm for 85/10/5 methane/ethane/propane mixture (SRK)",
-        "K", 270.0, 3.0, "SRK EOS phase envelope calculation"));
+    suite.addProblem(new BenchmarkProblem("natural_gas_dewpoint", ProblemCategory.FLASH, Difficulty.INTERMEDIATE,
+	"Cricondentherm for 85/10/5 methane/ethane/propane mixture (SRK)", "K", 270.0, 3.0,
+	"SRK EOS phase envelope calculation"));
 
     // PROCESS category — equipment simulation
-    suite.addProblem(
-        new BenchmarkProblem("separator_mass_balance", ProblemCategory.PROCESS, Difficulty.BASIC,
-            "Mass balance closure for two-phase separator (feed = gas_out + liquid_out)", "%", 0.0,
-            0.1, "Conservation of mass"));
+    suite.addProblem(new BenchmarkProblem("separator_mass_balance", ProblemCategory.PROCESS, Difficulty.BASIC,
+	"Mass balance closure for two-phase separator (feed = gas_out + liquid_out)", "%", 0.0, 0.1,
+	"Conservation of mass"));
 
     suite.addProblem(new BenchmarkProblem("compressor_polytropic_power", ProblemCategory.PROCESS,
-        Difficulty.INTERMEDIATE,
-        "Polytropic compressor power for methane from 30 to 100 bar at 100 kg/hr", "kW", 22.0, 10.0,
-        "Textbook polytropic compression"));
+	Difficulty.INTERMEDIATE, "Polytropic compressor power for methane from 30 to 100 bar at 100 kg/hr", "kW", 22.0,
+	10.0, "Textbook polytropic compression"));
 
     // PIPELINE category — pipe flow
     suite.addProblem(new BenchmarkProblem("gas_pipeline_pressure_drop", ProblemCategory.PIPELINE,
-        Difficulty.INTERMEDIATE,
-        "Pressure drop for 50 km, 20-inch gas pipeline at 100 bar inlet (Beggs-Brill)", "bar", 8.0,
-        15.0, "Beggs and Brill correlation"));
+	Difficulty.INTERMEDIATE, "Pressure drop for 50 km, 20-inch gas pipeline at 100 bar inlet (Beggs-Brill)", "bar",
+	8.0, 15.0, "Beggs and Brill correlation"));
 
     // ECONOMICS category
-    suite.addProblem(
-        new BenchmarkProblem("simple_npv_10yr", ProblemCategory.ECONOMICS, Difficulty.BASIC,
-            "NPV of constant 100 MNOK/yr cash flow over 10 years at 10% discount rate", "MNOK",
-            614.5, 1.0, "Textbook DCF calculation"));
+    suite.addProblem(new BenchmarkProblem("simple_npv_10yr", ProblemCategory.ECONOMICS, Difficulty.BASIC,
+	"NPV of constant 100 MNOK/yr cash flow over 10 years at 10% discount rate", "MNOK", 614.5, 1.0,
+	"Textbook DCF calculation"));
 
     // SAFETY category
-    suite.addProblem(new BenchmarkProblem("vessel_blowdown_50pct_time", ProblemCategory.SAFETY,
-        Difficulty.INTERMEDIATE,
-        "Time to reach 50% of initial pressure during vessel blowdown (100 bar, methane)",
-        "seconds", 30.0, 25.0, "Approximate depressurization model"));
+    suite.addProblem(new BenchmarkProblem("vessel_blowdown_50pct_time", ProblemCategory.SAFETY, Difficulty.INTERMEDIATE,
+	"Time to reach 50% of initial pressure during vessel blowdown (100 bar, methane)", "seconds", 30.0, 25.0,
+	"Approximate depressurization model"));
 
     return suite;
   }
@@ -275,8 +261,7 @@ public class AgentBenchmarkSuite implements Serializable {
    * @return JSON string representation of the suite
    */
   public String toJson() {
-    Gson gson =
-        new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+    Gson gson = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
     Map<String, Object> map = new LinkedHashMap<>();
     map.put("suiteName", suiteName);
     map.put("problemCount", problems.size());
@@ -306,18 +291,17 @@ public class AgentBenchmarkSuite implements Serializable {
     /**
      * Creates a new benchmark problem.
      *
-     * @param id unique identifier for the problem
-     * @param category engineering discipline category
-     * @param difficulty difficulty level
-     * @param description human-readable description of what to compute
-     * @param unit unit of the expected result
-     * @param expectedValue reference value from literature or validated simulation
-     * @param tolerancePct acceptable deviation in percent
+     * @param id              unique identifier for the problem
+     * @param category        engineering discipline category
+     * @param difficulty      difficulty level
+     * @param description     human-readable description of what to compute
+     * @param unit            unit of the expected result
+     * @param expectedValue   reference value from literature or validated simulation
+     * @param tolerancePct    acceptable deviation in percent
      * @param referenceSource source of the reference value
      */
-    public BenchmarkProblem(String id, ProblemCategory category, Difficulty difficulty,
-        String description, String unit, double expectedValue, double tolerancePct,
-        String referenceSource) {
+    public BenchmarkProblem(String id, ProblemCategory category, Difficulty difficulty, String description, String unit,
+	double expectedValue, double tolerancePct, String referenceSource) {
       this.id = id;
       this.category = category;
       this.difficulty = difficulty;
@@ -434,14 +418,13 @@ public class AgentBenchmarkSuite implements Serializable {
     /**
      * Creates a new problem result.
      *
-     * @param problem the benchmark problem
+     * @param problem     the benchmark problem
      * @param actualValue the agent-submitted value
-     * @param passed whether the result passed the tolerance check
-     * @param verdict short verdict string (PASS, FAIL, NOT_ATTEMPTED, etc.)
-     * @param detail detailed explanation of the comparison
+     * @param passed      whether the result passed the tolerance check
+     * @param verdict     short verdict string (PASS, FAIL, NOT_ATTEMPTED, etc.)
+     * @param detail      detailed explanation of the comparison
      */
-    public ProblemResult(BenchmarkProblem problem, double actualValue, boolean passed,
-        String verdict, String detail) {
+    public ProblemResult(BenchmarkProblem problem, double actualValue, boolean passed, String verdict, String detail) {
       this.problem = problem;
       this.actualValue = actualValue;
       this.passed = passed;
@@ -510,14 +493,13 @@ public class AgentBenchmarkSuite implements Serializable {
     /**
      * Creates a new benchmark report.
      *
-     * @param suiteName the name of the benchmark suite
-     * @param results individual problem results
-     * @param passed number of passed problems
-     * @param failed number of failed problems
+     * @param suiteName    the name of the benchmark suite
+     * @param results      individual problem results
+     * @param passed       number of passed problems
+     * @param failed       number of failed problems
      * @param notAttempted number of problems not attempted
      */
-    public BenchmarkReport(String suiteName, List<ProblemResult> results, int passed, int failed,
-        int notAttempted) {
+    public BenchmarkReport(String suiteName, List<ProblemResult> results, int passed, int failed, int notAttempted) {
       this.suiteName = suiteName;
       this.results = new ArrayList<>(results);
       this.passed = passed;
@@ -536,8 +518,7 @@ public class AgentBenchmarkSuite implements Serializable {
     }
 
     /**
-     * Returns the convergence rate as a fraction of total problems that either passed or were
-     * attempted.
+     * Returns the convergence rate as a fraction of total problems that either passed or were attempted.
      *
      * @return the convergence rate
      */
@@ -581,9 +562,9 @@ public class AgentBenchmarkSuite implements Serializable {
     public List<ProblemResult> getFailedProblems() {
       List<ProblemResult> failedList = new ArrayList<>();
       for (ProblemResult r : results) {
-        if (!r.isPassed() && !"NOT_ATTEMPTED".equals(r.getVerdict())) {
-          failedList.add(r);
-        }
+	if (!r.isPassed() && !"NOT_ATTEMPTED".equals(r.getVerdict())) {
+	  failedList.add(r);
+	}
       }
       return Collections.unmodifiableList(failedList);
     }
@@ -606,9 +587,9 @@ public class AgentBenchmarkSuite implements Serializable {
     public List<ProblemResult> getResultsByCategory(ProblemCategory category) {
       List<ProblemResult> filtered = new ArrayList<>();
       for (ProblemResult r : results) {
-        if (r.getProblem().getCategory() == category) {
-          filtered.add(r);
-        }
+	if (r.getProblem().getCategory() == category) {
+	  filtered.add(r);
+	}
       }
       return Collections.unmodifiableList(filtered);
     }
@@ -619,8 +600,7 @@ public class AgentBenchmarkSuite implements Serializable {
      * @return JSON string representation
      */
     public String toJson() {
-      Gson gson =
-          new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+      Gson gson = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
       Map<String, Object> map = new LinkedHashMap<>();
       map.put("suiteName", suiteName);
       map.put("passed", passed);
@@ -631,18 +611,18 @@ public class AgentBenchmarkSuite implements Serializable {
 
       List<Map<String, Object>> resultList = new ArrayList<>();
       for (ProblemResult r : results) {
-        Map<String, Object> rm = new LinkedHashMap<>();
-        rm.put("id", r.getProblem().getId());
-        rm.put("category", r.getProblem().getCategory().name());
-        rm.put("difficulty", r.getProblem().getDifficulty().name());
-        rm.put("verdict", r.getVerdict());
-        rm.put("detail", r.getDetail());
-        if (!Double.isNaN(r.getActualValue())) {
-          rm.put("actualValue", r.getActualValue());
-        }
-        rm.put("expectedValue", r.getProblem().getExpectedValue());
-        rm.put("unit", r.getProblem().getUnit());
-        resultList.add(rm);
+	Map<String, Object> rm = new LinkedHashMap<>();
+	rm.put("id", r.getProblem().getId());
+	rm.put("category", r.getProblem().getCategory().name());
+	rm.put("difficulty", r.getProblem().getDifficulty().name());
+	rm.put("verdict", r.getVerdict());
+	rm.put("detail", r.getDetail());
+	if (!Double.isNaN(r.getActualValue())) {
+	  rm.put("actualValue", r.getActualValue());
+	}
+	rm.put("expectedValue", r.getProblem().getExpectedValue());
+	rm.put("unit", r.getProblem().getUnit());
+	resultList.add(rm);
       }
       map.put("results", resultList);
       return gson.toJson(map);

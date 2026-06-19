@@ -9,14 +9,14 @@ import neqsim.process.equipment.ProcessEquipmentInterface;
  *
  * <p>
  * Mirrors the {@link neqsim.process.electricaldesign.ElectricalDesign} and
- * {@link neqsim.process.mechanicaldesign.MechanicalDesign} patterns. Each piece of process
- * equipment can have an associated instrument design that determines which instruments are
- * required, their specifications, I/O requirements, and estimated costs.
+ * {@link neqsim.process.mechanicaldesign.MechanicalDesign} patterns. Each piece of process equipment can have an
+ * associated instrument design that determines which instruments are required, their specifications, I/O requirements,
+ * and estimated costs.
  * </p>
  *
  * <p>
- * The instrument design follows ISA-5.1 for instrument identification and tagging, IEC 61508 / IEC
- * 61511 for safety instrumented systems (SIS), and ISA-18.2 for alarm management.
+ * The instrument design follows ISA-5.1 for instrument identification and tagging, IEC 61508 / IEC 61511 for safety
+ * instrumented systems (SIS), and ISA-18.2 for alarm management.
  * </p>
  *
  * @author Even Solbraa
@@ -61,8 +61,8 @@ public class InstrumentDesign implements java.io.Serializable {
    * Run the instrument design calculation.
    *
    * <p>
-   * Determines the required instruments based on the equipment type and process conditions.
-   * Subclasses override this to add equipment-specific instruments.
+   * Determines the required instruments based on the equipment type and process conditions. Subclasses override this to
+   * add equipment-specific instruments.
    * </p>
    */
   public void calcDesign() {
@@ -76,7 +76,8 @@ public class InstrumentDesign implements java.io.Serializable {
    * Subclasses can override to load equipment-specific instrument specifications.
    * </p>
    */
-  public void readDesignSpecifications() {}
+  public void readDesignSpecifications() {
+  }
 
   /**
    * Get the instrument list.
@@ -113,7 +114,7 @@ public class InstrumentDesign implements java.io.Serializable {
   public String toJson() {
     InstrumentDesignResponse response = new InstrumentDesignResponse(this);
     return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(JsonParser.parseString(response.toJson()));
+	.toJson(JsonParser.parseString(response.toJson()));
   }
 
   // === Getters and Setters ===

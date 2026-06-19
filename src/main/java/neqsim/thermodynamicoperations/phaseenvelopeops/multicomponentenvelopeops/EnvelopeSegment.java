@@ -10,16 +10,15 @@ import java.io.Serializable;
  * One contiguous branch of a PT phase envelope.
  *
  * <p>
- * Modern envelope tracers emit the envelope as a list of segments instead of flat arrays. Each
- * segment represents a polyline with a known phase type (dew or bubble) so downstream code
- * (plotting, flash initialization, critical-point analysis) does not have to guess where one
- * branch ends and another begins.
+ * Modern envelope tracers emit the envelope as a list of segments instead of flat arrays. Each segment represents a
+ * polyline with a known phase type (dew or bubble) so downstream code (plotting, flash initialization, critical-point
+ * analysis) does not have to guess where one branch ends and another begins.
  * </p>
  *
  * <p>
- * Segments are produced by splitting the internal per-point lists on NaN sentinel values that the
- * tracer inserts at every branch transition (primary-to-restart pass and critical-point
- * crossings). A segment always contains &ge; 1 point and never contains NaN.
+ * Segments are produced by splitting the internal per-point lists on NaN sentinel values that the tracer inserts at
+ * every branch transition (primary-to-restart pass and critical-point crossings). A segment always contains &ge; 1
+ * point and never contains NaN.
  * </p>
  *
  * @author asmund
@@ -49,15 +48,15 @@ public final class EnvelopeSegment implements Serializable {
   /**
    * Construct an immutable segment.
    *
-   * @param phaseType dew or bubble
+   * @param phaseType    dew or bubble
    * @param temperatures temperatures in Kelvin (length &ge; 1, no NaN)
-   * @param pressures pressures in bara (same length as temperatures)
-   * @param enthalpies enthalpies in kJ/kg (same length, may be all-zero if not tracked)
-   * @param densities densities in kg/m3 (same length, may be all-zero if not tracked)
-   * @param entropies entropies in kJ/kg/K (same length, may be all-zero if not tracked)
+   * @param pressures    pressures in bara (same length as temperatures)
+   * @param enthalpies   enthalpies in kJ/kg (same length, may be all-zero if not tracked)
+   * @param densities    densities in kg/m3 (same length, may be all-zero if not tracked)
+   * @param entropies    entropies in kJ/kg/K (same length, may be all-zero if not tracked)
    */
-  public EnvelopeSegment(PhaseType phaseType, double[] temperatures, double[] pressures,
-      double[] enthalpies, double[] densities, double[] entropies) {
+  public EnvelopeSegment(PhaseType phaseType, double[] temperatures, double[] pressures, double[] enthalpies,
+      double[] densities, double[] entropies) {
     if (phaseType == null) {
       throw new IllegalArgumentException("phaseType must not be null");
     }
@@ -66,8 +65,7 @@ public final class EnvelopeSegment implements Serializable {
     }
     if (temperatures.length != pressures.length) {
       throw new IllegalArgumentException(
-          "temperatures and pressures must have equal length: " + temperatures.length + " vs "
-              + pressures.length);
+	  "temperatures and pressures must have equal length: " + temperatures.length + " vs " + pressures.length);
     }
     this.phaseType = phaseType;
     this.temperatures = temperatures.clone();

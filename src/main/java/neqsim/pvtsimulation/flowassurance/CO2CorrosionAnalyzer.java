@@ -13,24 +13,24 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * Coupled CO2 corrosion analyzer using electrolyte CPA EOS for rigorous pH prediction and de
- * Waard-Milliams model for corrosion rate estimation.
+ * Coupled CO2 corrosion analyzer using electrolyte CPA EOS for rigorous pH prediction and de Waard-Milliams model for
+ * corrosion rate estimation.
  *
  * <p>
  * This class bridges NeqSim's thermodynamic engine with corrosion engineering by:
  * </p>
  * <ol>
- * <li>Running an electrolyte CPA flash to determine CO2 dissolution in the aqueous phase and the
- * resulting pH from carbonic acid speciation (H2CO3, HCO3-, CO3-2, H3O+).</li>
+ * <li>Running an electrolyte CPA flash to determine CO2 dissolution in the aqueous phase and the resulting pH from
+ * carbonic acid speciation (H2CO3, HCO3-, CO3-2, H3O+).</li>
  * <li>Extracting the CO2 partial pressure from the gas/dense phase.</li>
  * <li>Feeding the rigorous pH and pCO2 into the de Waard-Milliams (1991) corrosion model.</li>
  * <li>Computing scale prediction (FeCO3, CaCO3) via the ScalePredictionCalculator.</li>
  * </ol>
  *
  * <p>
- * The electrolyte CPA EOS accounts for ion-specific interactions (Na+, Cl-, HCO3-, etc.) and yields
- * thermodynamically consistent pH values, which are more accurate than empirical pH correlations —
- * particularly for CO2-rich CCS streams where pH can be as low as 3.0.
+ * The electrolyte CPA EOS accounts for ion-specific interactions (Na+, Cl-, HCO3-, etc.) and yields thermodynamically
+ * consistent pH values, which are more accurate than empirical pH correlations — particularly for CO2-rich CCS streams
+ * where pH can be as low as 3.0.
  * </p>
  *
  * <p>
@@ -383,9 +383,9 @@ public class CO2CorrosionAnalyzer implements Serializable {
 
       // CO2 dissolved in aqueous phase
       if (thermoSystem.getPhase(PhaseType.AQUEOUS).hasComponent("CO2")) {
-        co2InAqueous = thermoSystem.getPhase(PhaseType.AQUEOUS).getComponent("CO2").getx();
+	co2InAqueous = thermoSystem.getPhase(PhaseType.AQUEOUS).getComponent("CO2").getx();
       } else {
-        co2InAqueous = 0.0;
+	co2InAqueous = 0.0;
       }
     } else {
       aqueousPH = Double.NaN;
@@ -447,10 +447,10 @@ public class CO2CorrosionAnalyzer implements Serializable {
     for (int i = 0; i < thermoSystem.getNumberOfPhases(); i++) {
       String phaseType = thermoSystem.getPhase(i).getPhaseTypeName();
       if (!phaseType.equals("aqueous")) {
-        double co2Frac = thermoSystem.getPhase(i).getComponent("CO2").getx();
-        // For dense CO2, the fugacity-based partial pressure is more appropriate
-        // but for the empirical de Waard model, we use pCO2 = xCO2 * P
-        return co2Frac * pressureBara;
+	double co2Frac = thermoSystem.getPhase(i).getComponent("CO2").getx();
+	// For dense CO2, the fugacity-based partial pressure is more appropriate
+	// but for the empirical de Waard model, we use pCO2 = xCO2 * P
+	return co2Frac * pressureBara;
       }
     }
     return co2MoleFraction * pressureBara;
@@ -467,8 +467,8 @@ public class CO2CorrosionAnalyzer implements Serializable {
     }
     if (thermoSystem.hasPhaseType(PhaseType.GAS)) {
       if (thermoSystem.getPhase(PhaseType.GAS).hasComponent("H2S")) {
-        double h2sInGas = thermoSystem.getPhase(PhaseType.GAS).getComponent("H2S").getx();
-        return h2sInGas * pressureBara;
+	double h2sInGas = thermoSystem.getPhase(PhaseType.GAS).getComponent("H2S").getx();
+	return h2sInGas * pressureBara;
       }
     }
     return h2sMoleFraction * pressureBara;
@@ -499,11 +499,10 @@ public class CO2CorrosionAnalyzer implements Serializable {
    *
    * @param minTempC minimum temperature in Celsius
    * @param maxTempC maximum temperature in Celsius
-   * @param steps number of temperature steps
+   * @param steps    number of temperature steps
    * @return list of result maps for each temperature point
    */
-  public List<Map<String, Object>> runTemperatureSweep(double minTempC, double maxTempC,
-      int steps) {
+  public List<Map<String, Object>> runTemperatureSweep(double minTempC, double maxTempC, int steps) {
     List<Map<String, Object>> results = new ArrayList<Map<String, Object>>();
     double savedTemp = this.temperatureC;
     double dT = (maxTempC - minTempC) / Math.max(steps, 1);
@@ -535,11 +534,10 @@ public class CO2CorrosionAnalyzer implements Serializable {
    *
    * @param minPressBar minimum pressure in bara
    * @param maxPressBar maximum pressure in bara
-   * @param steps number of pressure steps
+   * @param steps       number of pressure steps
    * @return list of result maps for each pressure point
    */
-  public List<Map<String, Object>> runPressureSweep(double minPressBar, double maxPressBar,
-      int steps) {
+  public List<Map<String, Object>> runPressureSweep(double minPressBar, double maxPressBar, int steps) {
     List<Map<String, Object>> results = new ArrayList<Map<String, Object>>();
     double savedPres = this.pressureBara;
     double dP = (maxPressBar - minPressBar) / Math.max(steps, 1);
@@ -742,12 +740,10 @@ public class CO2CorrosionAnalyzer implements Serializable {
     model.put("thermodynamicModel", "Electrolyte CPA (SystemElectrolyteCPAstatoil)");
     model.put("corrosionModel", "de Waard-Milliams (1991)");
     model.put("applicableStandards", "NORSOK M-506, NACE SP0775");
-    model.put("pHCalculation",
-        "Rigorous from H3O+ activity in aqueous phase (electrolyte CPA EOS)");
+    model.put("pHCalculation", "Rigorous from H3O+ activity in aqueous phase (electrolyte CPA EOS)");
     result.put("modelInfo", model);
 
-    Gson gson =
-        new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().create();
+    Gson gson = new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().create();
     return gson.toJson(result);
   }
 }

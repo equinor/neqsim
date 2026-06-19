@@ -11,10 +11,9 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 /**
- * Provides self-diagnosis, fuzzy matching, and error-recovery capabilities for the
- * {@link ProcessAutomation} API. When an agent uses an incorrect address, unit name, or property,
- * this class supplies structured remediation hints including closest-match suggestions and
- * auto-correction.
+ * Provides self-diagnosis, fuzzy matching, and error-recovery capabilities for the {@link ProcessAutomation} API. When
+ * an agent uses an incorrect address, unit name, or property, this class supplies structured remediation hints
+ * including closest-match suggestions and auto-correction.
  *
  * <p>
  * Also tracks operation history to learn from failures and provide accumulated insights.
@@ -22,16 +21,12 @@ import com.google.gson.GsonBuilder;
  *
  * <h2>Key Capabilities:</h2>
  * <ul>
- * <li><strong>Fuzzy name resolution</strong> &mdash; finds closest unit/property when exact match
- * fails</li>
- * <li><strong>Auto-correction</strong> &mdash; fixes common mistakes (casing, whitespace, partial
- * names)</li>
- * <li><strong>Structured diagnostics</strong> &mdash; returns JSON with error category,
- * suggestions, and fix actions</li>
- * <li><strong>Operation history</strong> &mdash; tracks successes/failures to improve over
- * time</li>
- * <li><strong>Physical validation</strong> &mdash; warns when values are outside reasonable
- * bounds</li>
+ * <li><strong>Fuzzy name resolution</strong> &mdash; finds closest unit/property when exact match fails</li>
+ * <li><strong>Auto-correction</strong> &mdash; fixes common mistakes (casing, whitespace, partial names)</li>
+ * <li><strong>Structured diagnostics</strong> &mdash; returns JSON with error category, suggestions, and fix
+ * actions</li>
+ * <li><strong>Operation history</strong> &mdash; tracks successes/failures to improve over time</li>
+ * <li><strong>Physical validation</strong> &mdash; warns when values are outside reasonable bounds</li>
  * </ul>
  *
  * @author Even Solbraa
@@ -40,8 +35,7 @@ import com.google.gson.GsonBuilder;
 public class AutomationDiagnostics implements Serializable {
   private static final long serialVersionUID = 1000L;
 
-  private static final Gson GSON =
-      new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+  private static final Gson GSON = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
 
   /**
    * Classification of automation errors for structured remediation.
@@ -66,8 +60,8 @@ public class AutomationDiagnostics implements Serializable {
   }
 
   /**
-   * A diagnostic result returned when an operation fails, containing the error analysis, closest
-   * suggestions, and auto-correction attempt.
+   * A diagnostic result returned when an operation fails, containing the error analysis, closest suggestions, and
+   * auto-correction attempt.
    */
   public static class DiagnosticResult implements Serializable {
     private static final long serialVersionUID = 1000L;
@@ -83,17 +77,16 @@ public class AutomationDiagnostics implements Serializable {
     /**
      * Creates a diagnostic result.
      *
-     * @param category the error category
-     * @param originalInput what the agent provided
-     * @param errorMessage human-readable error description
-     * @param suggestions ranked list of closest valid alternatives
+     * @param category       the error category
+     * @param originalInput  what the agent provided
+     * @param errorMessage   human-readable error description
+     * @param suggestions    ranked list of closest valid alternatives
      * @param autoCorrection the auto-corrected value (null if not possible)
-     * @param remediation actionable fix instruction for the agent
-     * @param context additional context information
+     * @param remediation    actionable fix instruction for the agent
+     * @param context        additional context information
      */
-    public DiagnosticResult(ErrorCategory category, String originalInput, String errorMessage,
-        List<String> suggestions, String autoCorrection, String remediation,
-        Map<String, Object> context) {
+    public DiagnosticResult(ErrorCategory category, String originalInput, String errorMessage, List<String> suggestions,
+	String autoCorrection, String remediation, Map<String, Object> context) {
       this.category = category;
       this.originalInput = originalInput;
       this.errorMessage = errorMessage;
@@ -210,13 +203,12 @@ public class AutomationDiagnostics implements Serializable {
      * Creates an operation record.
      *
      * @param operationType the type of operation (get, set, list)
-     * @param address the address used
-     * @param success whether the operation succeeded
+     * @param address       the address used
+     * @param success       whether the operation succeeded
      * @param errorCategory the error category if failed, null if succeeded
-     * @param correction the correction applied, null if none
+     * @param correction    the correction applied, null if none
      */
-    OperationRecord(String operationType, String address, boolean success, String errorCategory,
-        String correction) {
+    OperationRecord(String operationType, String address, boolean success, String errorCategory, String correction) {
       this.operationType = operationType;
       this.address = address;
       this.success = success;
@@ -227,13 +219,13 @@ public class AutomationDiagnostics implements Serializable {
   }
 
   /**
-   * Operation history. Wrapped in a synchronized list to allow concurrent reads/writes from
-   * multi-agent setups. All iteration must be guarded by {@code synchronized(history)}.
+   * Operation history. Wrapped in a synchronized list to allow concurrent reads/writes from multi-agent setups. All
+   * iteration must be guarded by {@code synchronized(history)}.
    */
   private final List<OperationRecord> history;
   /**
-   * Learned corrections cache. ConcurrentHashMap so multiple agents can safely share one
-   * {@link AutomationDiagnostics} instance via the cached {@link ProcessAutomation} facade.
+   * Learned corrections cache. ConcurrentHashMap so multiple agents can safely share one {@link AutomationDiagnostics}
+   * instance via the cached {@link ProcessAutomation} facade.
    */
   private final Map<String, String> learnedCorrections;
   private int maxHistorySize;
@@ -261,7 +253,7 @@ public class AutomationDiagnostics implements Serializable {
   /**
    * Finds the closest matching unit name from a list of valid names using edit distance.
    *
-   * @param input the input name that was not found
+   * @param input      the input name that was not found
    * @param validNames the list of valid names to search
    * @param maxResults maximum number of suggestions to return
    * @return ranked list of closest matches
@@ -285,7 +277,7 @@ public class AutomationDiagnostics implements Serializable {
     int count = Math.min(maxResults, scored.size());
     for (int i = 0; i < count; i++) {
       if (scored.get(i).score > 0.0) {
-        results.add(scored.get(i).name);
+	results.add(scored.get(i).name);
       }
     }
     return results;
@@ -295,11 +287,10 @@ public class AutomationDiagnostics implements Serializable {
    * Attempts auto-correction of a unit name by trying common transformations.
    *
    * <p>
-   * Tries: case-insensitive match, trimmed whitespace, partial substring match, and previously
-   * learned corrections.
+   * Tries: case-insensitive match, trimmed whitespace, partial substring match, and previously learned corrections.
    * </p>
    *
-   * @param input the unit name to correct
+   * @param input      the unit name to correct
    * @param validNames the list of valid names
    * @return the corrected name, or null if no confident correction found
    */
@@ -318,14 +309,14 @@ public class AutomationDiagnostics implements Serializable {
     // Exact match after trim
     for (String valid : validNames) {
       if (valid.equals(trimmed)) {
-        return valid;
+	return valid;
       }
     }
 
     // Case-insensitive match
     for (String valid : validNames) {
       if (valid.equalsIgnoreCase(trimmed)) {
-        return valid;
+	return valid;
       }
     }
 
@@ -333,16 +324,15 @@ public class AutomationDiagnostics implements Serializable {
     String normalized = trimmed.replaceAll("\\s+", " ");
     for (String valid : validNames) {
       if (valid.replaceAll("\\s+", " ").equalsIgnoreCase(normalized)) {
-        return valid;
+	return valid;
       }
     }
 
     // Substring containment (input is a substring of a valid name or vice versa)
     List<String> substringMatches = new ArrayList<String>();
     for (String valid : validNames) {
-      if (valid.toLowerCase().contains(trimmed.toLowerCase())
-          || trimmed.toLowerCase().contains(valid.toLowerCase())) {
-        substringMatches.add(valid);
+      if (valid.toLowerCase().contains(trimmed.toLowerCase()) || trimmed.toLowerCase().contains(valid.toLowerCase())) {
+	substringMatches.add(valid);
       }
     }
     if (substringMatches.size() == 1) {
@@ -356,8 +346,8 @@ public class AutomationDiagnostics implements Serializable {
     for (String valid : validNames) {
       int dist = editDistance(trimmed.toLowerCase(), valid.toLowerCase());
       if (dist <= maxDist && dist < bestDist) {
-        bestDist = dist;
-        bestMatch = valid;
+	bestDist = dist;
+	bestMatch = valid;
       }
     }
     return bestMatch;
@@ -368,7 +358,7 @@ public class AutomationDiagnostics implements Serializable {
   /**
    * Diagnoses a unit-not-found error and returns structured remediation.
    *
-   * @param unitName the name that was not found
+   * @param unitName   the name that was not found
    * @param validUnits list of valid unit names in the process
    * @return diagnostic result with suggestions and auto-correction
    */
@@ -378,14 +368,14 @@ public class AutomationDiagnostics implements Serializable {
 
     String remediation;
     if (corrected != null) {
-      remediation = "Auto-corrected to '" + corrected
-          + "'. Use this name in future calls. Available units: " + validUnits;
+      remediation = "Auto-corrected to '" + corrected + "'. Use this name in future calls. Available units: "
+	  + validUnits;
     } else if (!suggestions.isEmpty()) {
       remediation = "Unit '" + unitName + "' not found. Did you mean: " + suggestions
-          + "? Use listSimulationUnits to discover valid names.";
+	  + "? Use listSimulationUnits to discover valid names.";
     } else {
       remediation = "Unit '" + unitName + "' not found. Available units: " + validUnits
-          + ". Use listSimulationUnits to discover names.";
+	  + ". Use listSimulationUnits to discover names.";
     }
 
     Map<String, Object> context = new LinkedHashMap<String, Object>();
@@ -393,21 +383,20 @@ public class AutomationDiagnostics implements Serializable {
     context.put("unitCount", validUnits.size());
 
     return new DiagnosticResult(ErrorCategory.UNIT_NOT_FOUND, unitName,
-        "Unit '" + unitName + "' not found in the process", suggestions, corrected, remediation,
-        context);
+	"Unit '" + unitName + "' not found in the process", suggestions, corrected, remediation, context);
   }
 
   /**
    * Diagnoses a property-not-found error and returns structured remediation.
    *
-   * @param address the full address that was not resolved
-   * @param unitName the unit name
-   * @param propertyName the property that was not found
+   * @param address        the full address that was not resolved
+   * @param unitName       the unit name
+   * @param propertyName   the property that was not found
    * @param validVariables the valid variables for that unit
    * @return diagnostic result with suggestions and auto-correction
    */
-  public DiagnosticResult diagnosePropertyNotFound(String address, String unitName,
-      String propertyName, List<SimulationVariable> validVariables) {
+  public DiagnosticResult diagnosePropertyNotFound(String address, String unitName, String propertyName,
+      List<SimulationVariable> validVariables) {
     List<String> propertyNames = new ArrayList<String>();
     for (SimulationVariable v : validVariables) {
       propertyNames.add(v.getName());
@@ -427,24 +416,23 @@ public class AutomationDiagnostics implements Serializable {
     if (corrected != null) {
       // Find the full address that uses this property name
       for (SimulationVariable v : validVariables) {
-        if (v.getName().equals(corrected)) {
-          correctedAddress = v.getAddress();
-          break;
-        }
+	if (v.getName().equals(corrected)) {
+	  correctedAddress = v.getAddress();
+	  break;
+	}
       }
     }
 
     String remediation;
     if (correctedAddress != null) {
-      remediation = "Auto-corrected property to '" + correctedAddress + "'. Use listUnitVariables('"
-          + unitName + "') to see all variables.";
+      remediation = "Auto-corrected property to '" + correctedAddress + "'. Use listUnitVariables('" + unitName
+	  + "') to see all variables.";
     } else if (!suggestions.isEmpty()) {
-      remediation =
-          "Property '" + propertyName + "' not found on unit '" + unitName + "'. Did you mean: "
-              + suggestions + "? Use listUnitVariables('" + unitName + "') for valid addresses.";
+      remediation = "Property '" + propertyName + "' not found on unit '" + unitName + "'. Did you mean: " + suggestions
+	  + "? Use listUnitVariables('" + unitName + "') for valid addresses.";
     } else {
-      remediation = "Property '" + propertyName + "' not found on unit '" + unitName
-          + "'. Valid addresses: " + addressNames;
+      remediation = "Property '" + propertyName + "' not found on unit '" + unitName + "'. Valid addresses: "
+	  + addressNames;
     }
 
     Map<String, Object> context = new LinkedHashMap<String, Object>();
@@ -455,16 +443,16 @@ public class AutomationDiagnostics implements Serializable {
     }
 
     return new DiagnosticResult(ErrorCategory.PROPERTY_NOT_FOUND, address,
-        "Property '" + propertyName + "' not found on unit '" + unitName + "'", suggestions,
-        correctedAddress, remediation, context);
+	"Property '" + propertyName + "' not found on unit '" + unitName + "'", suggestions, correctedAddress,
+	remediation, context);
   }
 
   /**
    * Diagnoses a port-not-found error.
    *
-   * @param address the full address
-   * @param unitName the unit name
-   * @param portName the port that was not found
+   * @param address    the full address
+   * @param unitName   the unit name
+   * @param portName   the port that was not found
    * @param validPorts known valid port names for the equipment type
    * @return diagnostic result with suggestions
    */
@@ -475,11 +463,10 @@ public class AutomationDiagnostics implements Serializable {
 
     String remediation;
     if (corrected != null) {
-      remediation =
-          "Auto-corrected port to '" + corrected + "'. Valid ports for this unit: " + validPorts;
+      remediation = "Auto-corrected port to '" + corrected + "'. Valid ports for this unit: " + validPorts;
     } else {
-      remediation = "Port '" + portName + "' not found on unit '" + unitName + "'. Valid ports: "
-          + validPorts + ". Use listUnitVariables('" + unitName + "') to see all addresses.";
+      remediation = "Port '" + portName + "' not found on unit '" + unitName + "'. Valid ports: " + validPorts
+	  + ". Use listUnitVariables('" + unitName + "') to see all addresses.";
     }
 
     Map<String, Object> context = new LinkedHashMap<String, Object>();
@@ -487,16 +474,16 @@ public class AutomationDiagnostics implements Serializable {
     context.put("validPorts", validPorts);
 
     return new DiagnosticResult(ErrorCategory.PORT_NOT_FOUND, address,
-        "Stream port '" + portName + "' not found on unit '" + unitName + "'", suggestions,
-        corrected, remediation, context);
+	"Stream port '" + portName + "' not found on unit '" + unitName + "'", suggestions, corrected, remediation,
+	context);
   }
 
   /**
    * Validates a value against known physical bounds for a property.
    *
    * @param propertyName the property being set
-   * @param value the value to validate
-   * @param unit the unit of the value
+   * @param value        the value to validate
+   * @param unit         the unit of the value
    * @return diagnostic result if out of bounds, null if valid
    */
   public DiagnosticResult validatePhysicalBounds(String propertyName, double value, String unit) {
@@ -506,9 +493,8 @@ public class AutomationDiagnostics implements Serializable {
     }
 
     if (value < bound.hardMin || value > bound.hardMax) {
-      String remediation =
-          "Value " + value + " " + unit + " for '" + propertyName + "' is outside physical limits ["
-              + bound.hardMin + ", " + bound.hardMax + "] " + unit + ". Check the value and unit.";
+      String remediation = "Value " + value + " " + unit + " for '" + propertyName + "' is outside physical limits ["
+	  + bound.hardMin + ", " + bound.hardMax + "] " + unit + ". Check the value and unit.";
       Map<String, Object> context = new LinkedHashMap<String, Object>();
       context.put("hardMin", bound.hardMin);
       context.put("hardMax", bound.hardMax);
@@ -516,14 +502,13 @@ public class AutomationDiagnostics implements Serializable {
       context.put("softMax", bound.softMax);
       context.put("unit", unit);
       return new DiagnosticResult(ErrorCategory.VALUE_OUT_OF_BOUNDS, String.valueOf(value),
-          "Value " + value + " " + unit + " is outside physical limits for " + propertyName,
-          new ArrayList<String>(), null, remediation, context);
+	  "Value " + value + " " + unit + " is outside physical limits for " + propertyName, new ArrayList<String>(),
+	  null, remediation, context);
     }
 
     if (value < bound.softMin || value > bound.softMax) {
-      String remediation = "Value " + value + " " + unit + " for '" + propertyName
-          + "' is unusual (typical range: [" + bound.softMin + ", " + bound.softMax + "] " + unit
-          + "). This may be intentional for special cases.";
+      String remediation = "Value " + value + " " + unit + " for '" + propertyName + "' is unusual (typical range: ["
+	  + bound.softMin + ", " + bound.softMax + "] " + unit + "). This may be intentional for special cases.";
       Map<String, Object> context = new LinkedHashMap<String, Object>();
       context.put("hardMin", bound.hardMin);
       context.put("hardMax", bound.hardMax);
@@ -532,8 +517,8 @@ public class AutomationDiagnostics implements Serializable {
       context.put("unit", unit);
       context.put("severity", "WARNING");
       return new DiagnosticResult(ErrorCategory.VALUE_OUT_OF_BOUNDS, String.valueOf(value),
-          "Value " + value + " " + unit + " is unusual for " + propertyName,
-          new ArrayList<String>(), null, remediation, context);
+	  "Value " + value + " " + unit + " is unusual for " + propertyName, new ArrayList<String>(), null, remediation,
+	  context);
     }
 
     return null;
@@ -545,7 +530,7 @@ public class AutomationDiagnostics implements Serializable {
    * Records a successful operation.
    *
    * @param operationType the type of operation (get, set, list)
-   * @param address the address used
+   * @param address       the address used
    */
   public void recordSuccess(String operationType, String address) {
     addRecord(new OperationRecord(operationType, address, true, null, null));
@@ -555,12 +540,11 @@ public class AutomationDiagnostics implements Serializable {
    * Records a failed operation with its correction.
    *
    * @param operationType the type of operation (get, set, list)
-   * @param address the address that failed
-   * @param category the error category
-   * @param correction the correction that was applied, or null
+   * @param address       the address that failed
+   * @param category      the error category
+   * @param correction    the correction that was applied, or null
    */
-  public void recordFailure(String operationType, String address, ErrorCategory category,
-      String correction) {
+  public void recordFailure(String operationType, String address, ErrorCategory category, String correction) {
     addRecord(new OperationRecord(operationType, address, false, category.name(), correction));
     if (correction != null) {
       learnedCorrections.put(address.toLowerCase().trim(), correction);
@@ -575,13 +559,13 @@ public class AutomationDiagnostics implements Serializable {
   public double getSuccessRate() {
     synchronized (history) {
       if (history.isEmpty()) {
-        return 1.0;
+	return 1.0;
       }
       int successes = 0;
       for (OperationRecord r : history) {
-        if (r.success) {
-          successes++;
-        }
+	if (r.success) {
+	  successes++;
+	}
       }
       return (double) successes / history.size();
     }
@@ -596,10 +580,10 @@ public class AutomationDiagnostics implements Serializable {
     Map<String, Integer> counts = new LinkedHashMap<String, Integer>();
     synchronized (history) {
       for (OperationRecord r : history) {
-        if (!r.success && r.errorCategory != null) {
-          Integer prev = counts.get(r.errorCategory);
-          counts.put(r.errorCategory, prev != null ? prev + 1 : 1);
-        }
+	if (!r.success && r.errorCategory != null) {
+	  Integer prev = counts.get(r.errorCategory);
+	  counts.put(r.errorCategory, prev != null ? prev + 1 : 1);
+	}
       }
     }
     return counts;
@@ -683,15 +667,15 @@ public class AutomationDiagnostics implements Serializable {
     int commonTokens = 0;
     for (String it : inputTokens) {
       for (String vt : validTokens) {
-        if (it.equals(vt)) {
-          commonTokens++;
-          break;
-        }
+	if (it.equals(vt)) {
+	  commonTokens++;
+	  break;
+	}
       }
     }
     double tokenScore = inputTokens.length > 0
-        ? (double) commonTokens / Math.max(inputTokens.length, validTokens.length)
-        : 0.0;
+	? (double) commonTokens / Math.max(inputTokens.length, validTokens.length)
+	: 0.0;
 
     return Math.max(editScore, Math.max(substringBonus, tokenScore));
   }
@@ -715,8 +699,8 @@ public class AutomationDiagnostics implements Serializable {
     }
     for (int i = 1; i <= lenA; i++) {
       for (int j = 1; j <= lenB; j++) {
-        int cost = a.charAt(i - 1) == b.charAt(j - 1) ? 0 : 1;
-        dp[i][j] = Math.min(dp[i - 1][j] + 1, Math.min(dp[i][j - 1] + 1, dp[i - 1][j - 1] + cost));
+	int cost = a.charAt(i - 1) == b.charAt(j - 1) ? 0 : 1;
+	dp[i][j] = Math.min(dp[i - 1][j] + 1, Math.min(dp[i][j - 1] + 1, dp[i - 1][j - 1] + cost));
       }
     }
     return dp[lenA][lenB];
@@ -731,7 +715,7 @@ public class AutomationDiagnostics implements Serializable {
     synchronized (history) {
       history.add(record);
       while (history.size() > maxHistorySize) {
-        history.remove(0);
+	history.remove(0);
       }
     }
   }
@@ -747,18 +731,18 @@ public class AutomationDiagnostics implements Serializable {
     synchronized (history) {
       int added = 0;
       for (int i = history.size() - 1; i >= 0 && added < count; i--) {
-        OperationRecord r = history.get(i);
-        if (!r.success) {
-          Map<String, String> entry = new LinkedHashMap<String, String>();
-          entry.put("operation", r.operationType);
-          entry.put("address", r.address);
-          entry.put("errorCategory", r.errorCategory);
-          if (r.correction != null) {
-            entry.put("correction", r.correction);
-          }
-          failures.add(entry);
-          added++;
-        }
+	OperationRecord r = history.get(i);
+	if (!r.success) {
+	  Map<String, String> entry = new LinkedHashMap<String, String>();
+	  entry.put("operation", r.operationType);
+	  entry.put("address", r.address);
+	  entry.put("errorCategory", r.errorCategory);
+	  if (r.correction != null) {
+	    entry.put("correction", r.correction);
+	  }
+	  failures.add(entry);
+	  added++;
+	}
       }
     }
     return failures;
@@ -776,31 +760,30 @@ public class AutomationDiagnostics implements Serializable {
     Integer unitNotFound = errors.get(ErrorCategory.UNIT_NOT_FOUND.name());
     if (unitNotFound != null && unitNotFound > 2) {
       recommendations.add("Frequent unit-not-found errors (" + unitNotFound + "x). "
-          + "Always call listSimulationUnits first to discover valid names.");
+	  + "Always call listSimulationUnits first to discover valid names.");
     }
 
     Integer propNotFound = errors.get(ErrorCategory.PROPERTY_NOT_FOUND.name());
     if (propNotFound != null && propNotFound > 2) {
       recommendations.add("Frequent property-not-found errors (" + propNotFound + "x). "
-          + "Call listUnitVariables(unitName) before accessing variables.");
+	  + "Call listUnitVariables(unitName) before accessing variables.");
     }
 
     Integer outOfBounds = errors.get(ErrorCategory.VALUE_OUT_OF_BOUNDS.name());
     if (outOfBounds != null && outOfBounds > 1) {
       recommendations.add("Values out of bounds detected (" + outOfBounds + "x). "
-          + "Check units match the expected unit (e.g., Kelvin vs Celsius).");
+	  + "Check units match the expected unit (e.g., Kelvin vs Celsius).");
     }
 
     if (!learnedCorrections.isEmpty()) {
       recommendations.add("Learned " + learnedCorrections.size() + " corrections automatically. "
-          + "These will be applied in future calls.");
+	  + "These will be applied in future calls.");
     }
 
     if (recommendations.isEmpty() && !history.isEmpty()) {
       double rate = getSuccessRate();
       if (rate > 0.9) {
-        recommendations.add(
-            "Operations running well (success rate: " + String.format("%.0f%%", rate * 100) + ").");
+	recommendations.add("Operations running well (success rate: " + String.format("%.0f%%", rate * 100) + ").");
       }
     }
 
@@ -836,7 +819,7 @@ public class AutomationDiagnostics implements Serializable {
    * Returns physical bounds for common properties.
    *
    * @param propertyName the property name
-   * @param unit the unit of measurement
+   * @param unit         the unit of measurement
    * @return physical bounds, or null if unknown
    */
   private PhysicalBound getPhysicalBound(String propertyName, String unit) {
@@ -849,26 +832,26 @@ public class AutomationDiagnostics implements Serializable {
     // Temperature
     if (prop.contains("temperature")) {
       if ("c".equals(u)) {
-        return new PhysicalBound(-273.15, -100.0, 600.0, 3000.0);
+	return new PhysicalBound(-273.15, -100.0, 600.0, 3000.0);
       }
       if ("k".equals(u)) {
-        return new PhysicalBound(0.0, 173.15, 873.15, 3273.15);
+	return new PhysicalBound(0.0, 173.15, 873.15, 3273.15);
       }
       if ("f".equals(u)) {
-        return new PhysicalBound(-459.67, -148.0, 1112.0, 5432.0);
+	return new PhysicalBound(-459.67, -148.0, 1112.0, 5432.0);
       }
     }
 
     // Pressure
     if (prop.contains("pressure")) {
       if ("bara".equals(u) || "bar".equals(u)) {
-        return new PhysicalBound(0.0, 0.5, 700.0, 10000.0);
+	return new PhysicalBound(0.0, 0.5, 700.0, 10000.0);
       }
       if ("pa".equals(u)) {
-        return new PhysicalBound(0.0, 50000.0, 70000000.0, 1000000000.0);
+	return new PhysicalBound(0.0, 50000.0, 70000000.0, 1000000000.0);
       }
       if ("psi".equals(u)) {
-        return new PhysicalBound(0.0, 7.0, 10000.0, 145000.0);
+	return new PhysicalBound(0.0, 7.0, 10000.0, 145000.0);
       }
     }
 
@@ -900,7 +883,7 @@ public class AutomationDiagnostics implements Serializable {
     /**
      * Creates a scored name entry.
      *
-     * @param name the name
+     * @param name  the name
      * @param score the match score
      */
     ScoredName(String name, double score) {

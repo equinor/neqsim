@@ -7,21 +7,19 @@ import java.util.Locale;
  * Converts a converged process operating point into a single economic objective value.
  *
  * <p>
- * This is the foundational value-chain objective: it rolls produced sales streams into revenue,
- * consumed energy into operating cost, and the carbon associated with that energy into a carbon
- * cost, then returns the net daily value (and, for life-of-field work, the present value of an
- * annual cash flow). It is an open analogue of the "activated economics" layer found in commercial
- * flowsheet optimizers, but it lives <em>inside</em> the optimization loop so it can be used
- * directly as the objective of {@code AgenticProcessOptimizer} or any of the value-chain
- * optimizers in this package.
+ * This is the foundational value-chain objective: it rolls produced sales streams into revenue, consumed energy into
+ * operating cost, and the carbon associated with that energy into a carbon cost, then returns the net daily value (and,
+ * for life-of-field work, the present value of an annual cash flow). It is an open analogue of the "activated
+ * economics" layer found in commercial flowsheet optimizers, but it lives <em>inside</em> the optimization loop so it
+ * can be used directly as the objective of {@code AgenticProcessOptimizer} or any of the value-chain optimizers in this
+ * package.
  * </p>
  *
  * <p>
- * The class is deliberately decoupled from the flowsheet: callers pass already-computed physical
- * quantities (export gas rate, oil rate, total shaft/electrical power) so the objective is pure,
- * fast, and trivially testable. The carbon price can be overridden per call to sweep a CO
- * <sub>2</sub>-price axis and build a revenue-versus-emissions Pareto front without re-running the
- * simulation.
+ * The class is deliberately decoupled from the flowsheet: callers pass already-computed physical quantities (export gas
+ * rate, oil rate, total shaft/electrical power) so the objective is pure, fast, and trivially testable. The carbon
+ * price can be overridden per call to sweep a CO <sub>2</sub>-price axis and build a revenue-versus-emissions Pareto
+ * front without re-running the simulation.
  * </p>
  *
  * <pre>
@@ -70,14 +68,14 @@ public class ValueChainObjective implements Serializable {
     /**
      * Creates an immutable value result.
      *
-     * @param revenueNokPerDay sales revenue in currency per day
+     * @param revenueNokPerDay    sales revenue in currency per day
      * @param energyCostNokPerDay energy operating cost in currency per day
      * @param carbonCostNokPerDay carbon cost in currency per day
-     * @param co2TonnePerDay emitted CO2 in tonnes per day
-     * @param netValueNokPerDay net value in currency per day
+     * @param co2TonnePerDay      emitted CO2 in tonnes per day
+     * @param netValueNokPerDay   net value in currency per day
      */
-    public ValueResult(double revenueNokPerDay, double energyCostNokPerDay,
-        double carbonCostNokPerDay, double co2TonnePerDay, double netValueNokPerDay) {
+    public ValueResult(double revenueNokPerDay, double energyCostNokPerDay, double carbonCostNokPerDay,
+	double co2TonnePerDay, double netValueNokPerDay) {
       this.revenueNokPerDay = revenueNokPerDay;
       this.energyCostNokPerDay = energyCostNokPerDay;
       this.carbonCostNokPerDay = carbonCostNokPerDay;
@@ -184,11 +182,10 @@ public class ValueChainObjective implements Serializable {
    *
    * @param exportGasSm3PerDay export sales-gas rate in Sm3/day (non-negative)
    * @param exportOilSm3PerDay export oil/condensate rate in Sm3/day (non-negative; 0 for dry gas)
-   * @param totalPowerKw total consumed shaft/electrical power in kW (non-negative)
+   * @param totalPowerKw       total consumed shaft/electrical power in kW (non-negative)
    * @return the value breakdown for this operating point
    */
-  public ValueResult evaluate(double exportGasSm3PerDay, double exportOilSm3PerDay,
-      double totalPowerKw) {
+  public ValueResult evaluate(double exportGasSm3PerDay, double exportOilSm3PerDay, double totalPowerKw) {
     return evaluate(exportGasSm3PerDay, exportOilSm3PerDay, totalPowerKw, econ.getCo2Tax());
   }
 
@@ -197,20 +194,18 @@ public class ValueChainObjective implements Serializable {
    *
    * <p>
    * Energy is converted to CO<sub>2</sub> via the configured carbon intensity (tonnes/MWh). Sweep
-   * {@code carbonPriceNokPerTonne} to trace a revenue-versus-emissions Pareto front for a fixed
-   * operating point.
+   * {@code carbonPriceNokPerTonne} to trace a revenue-versus-emissions Pareto front for a fixed operating point.
    * </p>
    *
-   * @param exportGasSm3PerDay export sales-gas rate in Sm3/day (non-negative)
-   * @param exportOilSm3PerDay export oil/condensate rate in Sm3/day (non-negative)
-   * @param totalPowerKw total consumed shaft/electrical power in kW (non-negative)
+   * @param exportGasSm3PerDay     export sales-gas rate in Sm3/day (non-negative)
+   * @param exportOilSm3PerDay     export oil/condensate rate in Sm3/day (non-negative)
+   * @param totalPowerKw           total consumed shaft/electrical power in kW (non-negative)
    * @param carbonPriceNokPerTonne carbon price in currency per tonne CO2 (non-negative)
    * @return the value breakdown for this operating point
    */
-  public ValueResult evaluate(double exportGasSm3PerDay, double exportOilSm3PerDay,
-      double totalPowerKw, double carbonPriceNokPerTonne) {
-    double revenue = exportGasSm3PerDay * econ.getGasPrice()
-        + exportOilSm3PerDay * econ.getOilPrice();
+  public ValueResult evaluate(double exportGasSm3PerDay, double exportOilSm3PerDay, double totalPowerKw,
+      double carbonPriceNokPerTonne) {
+    double revenue = exportGasSm3PerDay * econ.getGasPrice() + exportOilSm3PerDay * econ.getOilPrice();
     double energyMwhPerDay = totalPowerKw * 24.0 / 1000.0;
     double energyCost = energyMwhPerDay * 1000.0 * econ.getPowerCost();
     double co2TonnePerDay = energyMwhPerDay * econ.getCo2IntensityTonnePerMWh();
@@ -223,12 +218,12 @@ public class ValueChainObjective implements Serializable {
    * Computes the present value of an annual cash flow received in a given year.
    *
    * <p>
-   * The daily net value is annualised over {@link #PRODUCTION_DAYS_PER_YEAR} and discounted to the
-   * present using the configured discount rate.
+   * The daily net value is annualised over {@link #PRODUCTION_DAYS_PER_YEAR} and discounted to the present using the
+   * configured discount rate.
    * </p>
    *
    * @param netValueNokPerDay the net daily value in currency per day
-   * @param year the year in which the cash flow is received (0 = present)
+   * @param year              the year in which the cash flow is received (0 = present)
    * @return the present value of one year of cash flow in the configured currency
    */
   public double presentValueOfAnnualCashFlow(double netValueNokPerDay, double year) {

@@ -10,15 +10,14 @@ import com.google.gson.GsonBuilder;
  * Solid solution model for the (Ba,Sr)SO4 system.
  *
  * <p>
- * In oilfield systems, barium and strontium sulphate co-precipitate as a solid solution rather than
- * as separate pure phases. This class implements the regular solution model of Hanor (2000) and
- * Prieto et al. (1993) to compute the composition of the co-precipitated solid and the effective
- * saturation index.
+ * In oilfield systems, barium and strontium sulphate co-precipitate as a solid solution rather than as separate pure
+ * phases. This class implements the regular solution model of Hanor (2000) and Prieto et al. (1993) to compute the
+ * composition of the co-precipitated solid and the effective saturation index.
  * </p>
  *
  * <p>
- * The solid is modeled as a two-component regular solution: BaSO4 (barite) and SrSO4 (celestite)
- * with a Margules interaction parameter. The equilibrium condition is:
+ * The solid is modeled as a two-component regular solution: BaSO4 (barite) and SrSO4 (celestite) with a Margules
+ * interaction parameter. The equilibrium condition is:
  * </p>
  *
  * <pre>
@@ -29,8 +28,7 @@ import com.google.gson.GsonBuilder;
  * </pre>
  *
  * <p>
- * where x_Ba + x_Sr = 1 in the solid phase, and gamma values are from the Margules one-parameter
- * model.
+ * where x_Ba + x_Sr = 1 in the solid phase, and gamma values are from the Margules one-parameter model.
  * </p>
  *
  * @author ESOL
@@ -42,8 +40,8 @@ public class BariteCelestiteSolidSolution implements Serializable {
   private static final long serialVersionUID = 1000L;
 
   /**
-   * Margules parameter W/(RT) for (Ba,Sr)SO4 solid solution. Typical value 2.1-2.5 from Prieto et
-   * al. (1993). Dimensionless (W/RT at 25°C).
+   * Margules parameter W/(RT) for (Ba,Sr)SO4 solid solution. Typical value 2.1-2.5 from Prieto et al. (1993).
+   * Dimensionless (W/RT at 25°C).
    */
   private double margules = 2.3;
 
@@ -77,7 +75,8 @@ public class BariteCelestiteSolidSolution implements Serializable {
   /**
    * Creates a new BariteCelestiteSolidSolution model.
    */
-  public BariteCelestiteSolidSolution() {}
+  public BariteCelestiteSolidSolution() {
+  }
 
   /**
    * Sets the Margules interaction parameter W/(RT).
@@ -102,8 +101,8 @@ public class BariteCelestiteSolidSolution implements Serializable {
   /**
    * Sets the aqueous ion activities.
    *
-   * @param actBa Ba2+ activity (molality * gamma)
-   * @param actSr Sr2+ activity (molality * gamma)
+   * @param actBa  Ba2+ activity (molality * gamma)
+   * @param actSr  Sr2+ activity (molality * gamma)
    * @param actSO4 SO4 2- activity (molality * gamma)
    */
   public void setAqueousActivities(double actBa, double actSr, double actSO4) {
@@ -172,14 +171,14 @@ public class BariteCelestiteSolidSolution implements Serializable {
       double fMid = objectiveFunction(xMid);
 
       if (Math.abs(fMid) < 1e-12 || (xHi - xLo) < 1e-10) {
-        xBa = xMid;
-        break;
+	xBa = xMid;
+	break;
       }
 
       if (fMid * objectiveFunction(xLo) < 0) {
-        xHi = xMid;
+	xHi = xMid;
       } else {
-        xLo = xMid;
+	xLo = xMid;
       }
       xBa = xMid;
     }
@@ -279,8 +278,7 @@ public class BariteCelestiteSolidSolution implements Serializable {
     report.put("Ksp_BaSO4", kspBaSO4);
     report.put("Ksp_SrSO4", kspSrSO4);
 
-    Gson gson =
-        new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().create();
+    Gson gson = new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().create();
     return gson.toJson(report);
   }
 }

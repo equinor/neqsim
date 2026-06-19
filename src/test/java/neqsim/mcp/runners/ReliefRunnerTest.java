@@ -13,15 +13,9 @@ class ReliefRunnerTest {
 
   @Test
   void testGasPSV() {
-    String json = "{"
-        + "\"case\":\"gas\","
-        + "\"massFlowRate_kg_s\":10.0,"
-        + "\"setPressure_bara\":20.0,"
-        + "\"temperature_K\":350.0,"
-        + "\"molecularWeight_kg_mol\":0.020,"
-        + "\"compressibility\":0.95,"
-        + "\"specificHeatRatio\":1.3"
-        + "}";
+    String json = "{" + "\"case\":\"gas\"," + "\"massFlowRate_kg_s\":10.0," + "\"setPressure_bara\":20.0,"
+	+ "\"temperature_K\":350.0," + "\"molecularWeight_kg_mol\":0.020," + "\"compressibility\":0.95,"
+	+ "\"specificHeatRatio\":1.3" + "}";
     String result = ReliefRunner.run(json);
     JsonObject obj = JsonParser.parseString(result).getAsJsonObject();
     assertEquals("success", obj.get("status").getAsString());
@@ -34,12 +28,8 @@ class ReliefRunnerTest {
 
   @Test
   void testLiquidPSV() {
-    String json = "{"
-        + "\"case\":\"liquid\","
-        + "\"volumeFlowRate_m3_s\":0.01,"
-        + "\"liquidDensity_kg_m3\":850.0,"
-        + "\"setPressure_bara\":15.0"
-        + "}";
+    String json = "{" + "\"case\":\"liquid\"," + "\"volumeFlowRate_m3_s\":0.01," + "\"liquidDensity_kg_m3\":850.0,"
+	+ "\"setPressure_bara\":15.0" + "}";
     String result = ReliefRunner.run(json);
     JsonObject obj = JsonParser.parseString(result).getAsJsonObject();
     assertEquals("success", obj.get("status").getAsString());
@@ -49,12 +39,8 @@ class ReliefRunnerTest {
 
   @Test
   void testFireHeatInput() {
-    String json = "{"
-        + "\"case\":\"fireHeatInput\","
-        + "\"wettedArea_m2\":50.0,"
-        + "\"hasDrainage\":true,"
-        + "\"hasFireFighting\":false"
-        + "}";
+    String json = "{" + "\"case\":\"fireHeatInput\"," + "\"wettedArea_m2\":50.0," + "\"hasDrainage\":true,"
+	+ "\"hasFireFighting\":false" + "}";
     String result = ReliefRunner.run(json);
     JsonObject obj = JsonParser.parseString(result).getAsJsonObject();
     assertEquals("success", obj.get("status").getAsString());

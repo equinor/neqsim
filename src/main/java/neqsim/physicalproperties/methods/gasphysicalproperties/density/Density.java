@@ -57,14 +57,13 @@ public class Density extends GasPhysicalPropertyMethod implements DensityInterfa
     double tempVar = 0.0;
     if (gasPhase.getPhase().useVolumeCorrection()) {
       for (int i = 0; i < gasPhase.getPhase().getNumberOfComponents(); i++) {
-        tempVar += gasPhase.getPhase().getComponent(i).getx()
-            * (gasPhase.getPhase().getComponent(i).getVolumeCorrection()
-                + gasPhase.getPhase().getComponent(i).getVolumeCorrectionT()
-                    * (gasPhase.getPhase().getTemperature() - 288.15));
+	tempVar += gasPhase.getPhase().getComponent(i).getx()
+	    * (gasPhase.getPhase().getComponent(i).getVolumeCorrection()
+		+ gasPhase.getPhase().getComponent(i).getVolumeCorrectionT()
+		    * (gasPhase.getPhase().getTemperature() - 288.15));
       }
     }
     // System.out.println("density correction tempvar " + tempVar);
-    return 1.0 / (gasPhase.getPhase().getMolarVolume() - tempVar)
-        * gasPhase.getPhase().getMolarMass() * 1.0e5;
+    return 1.0 / (gasPhase.getPhase().getMolarVolume() - tempVar) * gasPhase.getPhase().getMolarMass() * 1.0e5;
   }
 }

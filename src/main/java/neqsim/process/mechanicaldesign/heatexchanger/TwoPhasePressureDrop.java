@@ -4,14 +4,13 @@ package neqsim.process.mechanicaldesign.heatexchanger;
  * Two-phase pressure drop correlations for heat exchanger design.
  *
  * <p>
- * Implements the Friedel (1979) correlation, the most widely-used general two-phase pressure drop
- * method for horizontal and vertical tubes. Also includes the Muller-Steinhagen and Heck (1986)
- * correlation as a simpler alternative.
+ * Implements the Friedel (1979) correlation, the most widely-used general two-phase pressure drop method for horizontal
+ * and vertical tubes. Also includes the Muller-Steinhagen and Heck (1986) correlation as a simpler alternative.
  * </p>
  *
  * <p>
- * The Friedel correlation uses a two-phase friction multiplier phi_lo^2 applied to the all-liquid
- * frictional pressure drop:
+ * The Friedel correlation uses a two-phase friction multiplier phi_lo^2 applied to the all-liquid frictional pressure
+ * drop:
  * </p>
  *
  * <pre>
@@ -21,18 +20,18 @@ package neqsim.process.mechanicaldesign.heatexchanger;
  * </pre>
  *
  * <p>
- * The correlation is validated for wide ranges of flow conditions (all flow patterns except
- * stratified flow) and is recommended by HTRI as a primary method.
+ * The correlation is validated for wide ranges of flow conditions (all flow patterns except stratified flow) and is
+ * recommended by HTRI as a primary method.
  * </p>
  *
  * <p>
  * References:
  * </p>
  * <ul>
- * <li>Friedel, L. (1979). "Improved friction pressure drop correlations for horizontal and vertical
- * two-phase pipe flow." European Two-Phase Flow Group Meeting, Ispra, Italy, Paper E2.</li>
- * <li>Muller-Steinhagen, H. and Heck, K. (1986). "A simple friction pressure drop correlation for
- * two-phase flow in pipes." Chemical Engineering and Processing, 20, 297-308.</li>
+ * <li>Friedel, L. (1979). "Improved friction pressure drop correlations for horizontal and vertical two-phase pipe
+ * flow." European Two-Phase Flow Group Meeting, Ispra, Italy, Paper E2.</li>
+ * <li>Muller-Steinhagen, H. and Heck, K. (1986). "A simple friction pressure drop correlation for two-phase flow in
+ * pipes." Chemical Engineering and Processing, 20, 297-308.</li>
  * </ul>
  *
  * @author NeqSim Development Team
@@ -44,33 +43,32 @@ public final class TwoPhasePressureDrop {
   /**
    * Private constructor to prevent instantiation.
    */
-  private TwoPhasePressureDrop() {}
+  private TwoPhasePressureDrop() {
+  }
 
   /**
-   * Calculates the two-phase frictional pressure drop gradient using the Friedel (1979)
-   * correlation.
+   * Calculates the two-phase frictional pressure drop gradient using the Friedel (1979) correlation.
    *
    * <p>
-   * This is the recommended method for most conditions. Valid for all flow patterns except
-   * stratified flow. Accuracy is typically within 30% for the recommended range.
+   * This is the recommended method for most conditions. Valid for all flow patterns except stratified flow. Accuracy is
+   * typically within 30% for the recommended range.
    * </p>
    *
-   * @param massFlux total mass flux G (kg/(m2*s))
-   * @param vaporQuality local vapor quality x (0 to 1)
-   * @param tubeID tube inner diameter (m)
-   * @param liquidDensity liquid density (kg/m3)
-   * @param vaporDensity vapor density (kg/m3)
+   * @param massFlux        total mass flux G (kg/(m2*s))
+   * @param vaporQuality    local vapor quality x (0 to 1)
+   * @param tubeID          tube inner diameter (m)
+   * @param liquidDensity   liquid density (kg/m3)
+   * @param vaporDensity    vapor density (kg/m3)
    * @param liquidViscosity liquid dynamic viscosity (Pa*s)
-   * @param vaporViscosity vapor dynamic viscosity (Pa*s)
-   * @param surfaceTension surface tension (N/m)
+   * @param vaporViscosity  vapor dynamic viscosity (Pa*s)
+   * @param surfaceTension  surface tension (N/m)
    * @return frictional pressure drop gradient (Pa/m)
    */
-  public static double calcFriedelGradient(double massFlux, double vaporQuality, double tubeID,
-      double liquidDensity, double vaporDensity, double liquidViscosity, double vaporViscosity,
-      double surfaceTension) {
+  public static double calcFriedelGradient(double massFlux, double vaporQuality, double tubeID, double liquidDensity,
+      double vaporDensity, double liquidViscosity, double vaporViscosity, double surfaceTension) {
 
-    if (massFlux <= 0 || tubeID <= 0 || liquidDensity <= 0 || vaporDensity <= 0
-        || liquidViscosity <= 0 || vaporViscosity <= 0) {
+    if (massFlux <= 0 || tubeID <= 0 || liquidDensity <= 0 || vaporDensity <= 0 || liquidViscosity <= 0
+	|| vaporViscosity <= 0) {
       return 0.0;
     }
 
@@ -96,9 +94,8 @@ public final class TwoPhasePressureDrop {
     double F = Math.pow(x, 0.78) * Math.pow(1.0 - x, 0.224);
 
     // Friedel parameter H
-    double H = Math.pow(liquidDensity / vaporDensity, 0.91)
-        * Math.pow(vaporViscosity / liquidViscosity, 0.19)
-        * Math.pow(1.0 - vaporViscosity / liquidViscosity, 0.7);
+    double H = Math.pow(liquidDensity / vaporDensity, 0.91) * Math.pow(vaporViscosity / liquidViscosity, 0.19)
+	* Math.pow(1.0 - vaporViscosity / liquidViscosity, 0.7);
 
     // Homogeneous density
     double rho_h = 1.0 / (x / vaporDensity + (1.0 - x) / liquidDensity);
@@ -108,13 +105,12 @@ public final class TwoPhasePressureDrop {
     double Fr = massFlux * massFlux / (rho_h * rho_h * g * tubeID);
 
     // Weber number
-    double We =
-        (surfaceTension > 0) ? massFlux * massFlux * tubeID / (rho_h * surfaceTension) : 1e6; // Large
-                                                                                              // number
-                                                                                              // if
-                                                                                              // surface
-                                                                                              // tension
-                                                                                              // unknown
+    double We = (surfaceTension > 0) ? massFlux * massFlux * tubeID / (rho_h * surfaceTension) : 1e6; // Large
+												      // number
+												      // if
+												      // surface
+												      // tension
+												      // unknown
 
     // Two-phase multiplier
     double FrWeFactor = Math.pow(Math.max(Fr, 1e-10), 0.045) * Math.pow(Math.max(We, 1e-10), 0.035);
@@ -126,50 +122,47 @@ public final class TwoPhasePressureDrop {
   /**
    * Calculates the total two-phase frictional pressure drop over a tube length.
    *
-   * @param massFlux total mass flux (kg/(m2*s))
-   * @param vaporQuality vapor quality (assumed constant along length) (0 to 1)
-   * @param tubeID tube inner diameter (m)
-   * @param tubeLength tube length (m)
-   * @param liquidDensity liquid density (kg/m3)
-   * @param vaporDensity vapor density (kg/m3)
+   * @param massFlux        total mass flux (kg/(m2*s))
+   * @param vaporQuality    vapor quality (assumed constant along length) (0 to 1)
+   * @param tubeID          tube inner diameter (m)
+   * @param tubeLength      tube length (m)
+   * @param liquidDensity   liquid density (kg/m3)
+   * @param vaporDensity    vapor density (kg/m3)
    * @param liquidViscosity liquid viscosity (Pa*s)
-   * @param vaporViscosity vapor viscosity (Pa*s)
-   * @param surfaceTension surface tension (N/m)
+   * @param vaporViscosity  vapor viscosity (Pa*s)
+   * @param surfaceTension  surface tension (N/m)
    * @return total frictional pressure drop (Pa)
    */
-  public static double calcFriedelPressureDrop(double massFlux, double vaporQuality, double tubeID,
-      double tubeLength, double liquidDensity, double vaporDensity, double liquidViscosity,
-      double vaporViscosity, double surfaceTension) {
+  public static double calcFriedelPressureDrop(double massFlux, double vaporQuality, double tubeID, double tubeLength,
+      double liquidDensity, double vaporDensity, double liquidViscosity, double vaporViscosity, double surfaceTension) {
 
-    return calcFriedelGradient(massFlux, vaporQuality, tubeID, liquidDensity, vaporDensity,
-        liquidViscosity, vaporViscosity, surfaceTension) * tubeLength;
+    return calcFriedelGradient(massFlux, vaporQuality, tubeID, liquidDensity, vaporDensity, liquidViscosity,
+	vaporViscosity, surfaceTension) * tubeLength;
   }
 
   /**
-   * Calculates the average two-phase pressure drop over a quality change using numerical
-   * integration.
+   * Calculates the average two-phase pressure drop over a quality change using numerical integration.
    *
    * <p>
    * Integrates the Friedel gradient over the quality range using Simpson's rule.
    * </p>
    *
-   * @param massFlux total mass flux (kg/(m2*s))
-   * @param qualityIn inlet vapor quality (0 to 1)
-   * @param qualityOut outlet vapor quality (0 to 1)
-   * @param tubeID tube inner diameter (m)
-   * @param tubeLength tube length (m)
-   * @param liquidDensity liquid density (kg/m3)
-   * @param vaporDensity vapor density (kg/m3)
+   * @param massFlux        total mass flux (kg/(m2*s))
+   * @param qualityIn       inlet vapor quality (0 to 1)
+   * @param qualityOut      outlet vapor quality (0 to 1)
+   * @param tubeID          tube inner diameter (m)
+   * @param tubeLength      tube length (m)
+   * @param liquidDensity   liquid density (kg/m3)
+   * @param vaporDensity    vapor density (kg/m3)
    * @param liquidViscosity liquid viscosity (Pa*s)
-   * @param vaporViscosity vapor viscosity (Pa*s)
-   * @param surfaceTension surface tension (N/m)
-   * @param intervals number of integration intervals (minimum 4, must be even)
+   * @param vaporViscosity  vapor viscosity (Pa*s)
+   * @param surfaceTension  surface tension (N/m)
+   * @param intervals       number of integration intervals (minimum 4, must be even)
    * @return average frictional pressure drop over the tube (Pa)
    */
-  public static double calcFriedelAveragePressureDrop(double massFlux, double qualityIn,
-      double qualityOut, double tubeID, double tubeLength, double liquidDensity,
-      double vaporDensity, double liquidViscosity, double vaporViscosity, double surfaceTension,
-      int intervals) {
+  public static double calcFriedelAveragePressureDrop(double massFlux, double qualityIn, double qualityOut,
+      double tubeID, double tubeLength, double liquidDensity, double vaporDensity, double liquidViscosity,
+      double vaporViscosity, double surfaceTension, int intervals) {
 
     if (tubeLength <= 0) {
       return 0.0;
@@ -179,8 +172,8 @@ public final class TwoPhasePressureDrop {
     double xOut = Math.max(0.0, Math.min(1.0, qualityOut));
 
     if (Math.abs(xIn - xOut) < 1e-10) {
-      return calcFriedelPressureDrop(massFlux, xIn, tubeID, tubeLength, liquidDensity, vaporDensity,
-          liquidViscosity, vaporViscosity, surfaceTension);
+      return calcFriedelPressureDrop(massFlux, xIn, tubeID, tubeLength, liquidDensity, vaporDensity, liquidViscosity,
+	  vaporViscosity, surfaceTension);
     }
 
     int n = Math.max(4, intervals);
@@ -191,15 +184,15 @@ public final class TwoPhasePressureDrop {
     double dx = (xOut - xIn) / n;
 
     // Simpson's rule on the gradient, then multiply by length
-    double sum = calcFriedelGradient(massFlux, xIn, tubeID, liquidDensity, vaporDensity,
-        liquidViscosity, vaporViscosity, surfaceTension)
-        + calcFriedelGradient(massFlux, xOut, tubeID, liquidDensity, vaporDensity, liquidViscosity,
-            vaporViscosity, surfaceTension);
+    double sum = calcFriedelGradient(massFlux, xIn, tubeID, liquidDensity, vaporDensity, liquidViscosity,
+	vaporViscosity, surfaceTension)
+	+ calcFriedelGradient(massFlux, xOut, tubeID, liquidDensity, vaporDensity, liquidViscosity, vaporViscosity,
+	    surfaceTension);
 
     for (int i = 1; i < n; i++) {
       double x = xIn + i * dx;
-      double grad = calcFriedelGradient(massFlux, x, tubeID, liquidDensity, vaporDensity,
-          liquidViscosity, vaporViscosity, surfaceTension);
+      double grad = calcFriedelGradient(massFlux, x, tubeID, liquidDensity, vaporDensity, liquidViscosity,
+	  vaporViscosity, surfaceTension);
       sum += (i % 2 == 0) ? 2.0 * grad : 4.0 * grad;
     }
 
@@ -208,8 +201,7 @@ public final class TwoPhasePressureDrop {
   }
 
   /**
-   * Calculates the two-phase frictional pressure drop gradient using the Muller-Steinhagen and Heck
-   * (1986) correlation.
+   * Calculates the two-phase frictional pressure drop gradient using the Muller-Steinhagen and Heck (1986) correlation.
    *
    * <p>
    * A simpler alternative to Friedel that does not require surface tension:
@@ -227,21 +219,20 @@ public final class TwoPhasePressureDrop {
    * Accuracy is typically within 30-50%, but the method is very robust and easy to implement.
    * </p>
    *
-   * @param massFlux total mass flux G (kg/(m2*s))
-   * @param vaporQuality local vapor quality (0 to 1)
-   * @param tubeID tube inner diameter (m)
-   * @param liquidDensity liquid density (kg/m3)
-   * @param vaporDensity vapor density (kg/m3)
+   * @param massFlux        total mass flux G (kg/(m2*s))
+   * @param vaporQuality    local vapor quality (0 to 1)
+   * @param tubeID          tube inner diameter (m)
+   * @param liquidDensity   liquid density (kg/m3)
+   * @param vaporDensity    vapor density (kg/m3)
    * @param liquidViscosity liquid viscosity (Pa*s)
-   * @param vaporViscosity vapor viscosity (Pa*s)
+   * @param vaporViscosity  vapor viscosity (Pa*s)
    * @return frictional pressure drop gradient (Pa/m)
    */
-  public static double calcMullerSteinhagenHeckGradient(double massFlux, double vaporQuality,
-      double tubeID, double liquidDensity, double vaporDensity, double liquidViscosity,
-      double vaporViscosity) {
+  public static double calcMullerSteinhagenHeckGradient(double massFlux, double vaporQuality, double tubeID,
+      double liquidDensity, double vaporDensity, double liquidViscosity, double vaporViscosity) {
 
-    if (massFlux <= 0 || tubeID <= 0 || liquidDensity <= 0 || vaporDensity <= 0
-        || liquidViscosity <= 0 || vaporViscosity <= 0) {
+    if (massFlux <= 0 || tubeID <= 0 || liquidDensity <= 0 || vaporDensity <= 0 || liquidViscosity <= 0
+	|| vaporViscosity <= 0) {
       return 0.0;
     }
 
@@ -275,13 +266,12 @@ public final class TwoPhasePressureDrop {
    * (dP/dz)_grav = rho_tp * g
    * </pre>
    *
-   * @param vaporQuality vapor quality (0 to 1)
+   * @param vaporQuality  vapor quality (0 to 1)
    * @param liquidDensity liquid density (kg/m3)
-   * @param vaporDensity vapor density (kg/m3)
+   * @param vaporDensity  vapor density (kg/m3)
    * @return gravitational pressure drop gradient (Pa/m), positive for upflow
    */
-  public static double calcGravitationalGradient(double vaporQuality, double liquidDensity,
-      double vaporDensity) {
+  public static double calcGravitationalGradient(double vaporQuality, double liquidDensity, double vaporDensity) {
     if (liquidDensity <= 0 || vaporDensity <= 0) {
       return 0.0;
     }
@@ -311,15 +301,15 @@ public final class TwoPhasePressureDrop {
    *          - x_in^2/(alpha_in*rho_v) - (1-x_in)^2/((1-alpha_in)*rho_l)]
    * </pre>
    *
-   * @param massFlux total mass flux (kg/(m2*s))
-   * @param qualityIn inlet vapor quality (0 to 1)
-   * @param qualityOut outlet vapor quality (0 to 1)
+   * @param massFlux      total mass flux (kg/(m2*s))
+   * @param qualityIn     inlet vapor quality (0 to 1)
+   * @param qualityOut    outlet vapor quality (0 to 1)
    * @param liquidDensity liquid density (kg/m3)
-   * @param vaporDensity vapor density (kg/m3)
+   * @param vaporDensity  vapor density (kg/m3)
    * @return acceleration pressure drop (Pa)
    */
-  public static double calcAccelerationPressureDrop(double massFlux, double qualityIn,
-      double qualityOut, double liquidDensity, double vaporDensity) {
+  public static double calcAccelerationPressureDrop(double massFlux, double qualityIn, double qualityOut,
+      double liquidDensity, double vaporDensity) {
 
     if (massFlux <= 0 || liquidDensity <= 0 || vaporDensity <= 0) {
       return 0.0;
@@ -334,13 +324,12 @@ public final class TwoPhasePressureDrop {
   /**
    * Calculates the momentum flux term for a given quality.
    *
-   * @param quality vapor quality (0 to 1)
+   * @param quality       vapor quality (0 to 1)
    * @param liquidDensity liquid density (kg/m3)
-   * @param vaporDensity vapor density (kg/m3)
+   * @param vaporDensity  vapor density (kg/m3)
    * @return momentum flux term (m3/kg)
    */
-  private static double calcMomentumFlux(double quality, double liquidDensity,
-      double vaporDensity) {
+  private static double calcMomentumFlux(double quality, double liquidDensity, double vaporDensity) {
     double x = Math.max(0.0, Math.min(1.0, quality));
 
     if (x < 1e-10) {

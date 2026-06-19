@@ -3,17 +3,15 @@ package neqsim.physicalproperties.methods.commonphasephysicalproperties.conducti
 import neqsim.physicalproperties.system.PhysicalProperties;
 
 /**
- * Thermal conductivity of pure water and steam using polynomial correlations fitted to NIST WebBook
- * reference data.
+ * Thermal conductivity of pure water and steam using polynomial correlations fitted to NIST WebBook reference data.
  *
  * <p>
- * Uses separate correlations for the dilute gas (steam) and liquid regions, with a density-based
- * crossover for the transition/supercritical region.
+ * Uses separate correlations for the dilute gas (steam) and liquid regions, with a density-based crossover for the
+ * transition/supercritical region.
  * </p>
  *
  * <p>
- * Dilute gas (steam): quadratic polynomial in T fitted to NIST data 373-1200 K, accuracy better
- * than 2%.
+ * Dilute gas (steam): quadratic polynomial in T fitted to NIST data 373-1200 K, accuracy better than 2%.
  * </p>
  *
  * <p>
@@ -25,8 +23,8 @@ import neqsim.physicalproperties.system.PhysicalProperties;
  * </p>
  * <ul>
  * <li>NIST WebBook - Thermophysical Properties of Fluid Systems</li>
- * <li>Huber, M.L., Perkins, R.A., et al. (2012). New International Formulation for the Thermal
- * Conductivity of H2O. J. Phys. Chem. Ref. Data 41(3), 033102.</li>
+ * <li>Huber, M.L., Perkins, R.A., et al. (2012). New International Formulation for the Thermal Conductivity of H2O. J.
+ * Phys. Chem. Ref. Data 41(3), 033102.</li>
  * </ul>
  *
  * @author Even Solbraa
@@ -37,28 +35,26 @@ public class WaterConductivityMethod extends Conductivity {
   private static final long serialVersionUID = 1000;
 
   /**
-   * Density threshold for gas-like behavior [kg/m3]. Below this density, the steam polynomial is
-   * used.
+   * Density threshold for gas-like behavior [kg/m3]. Below this density, the steam polynomial is used.
    */
   private static final double RHO_GAS_LIMIT = 25.0;
 
   /**
-   * Density threshold for liquid-like behavior [kg/m3]. Above this density, the liquid polynomial
-   * is used.
+   * Density threshold for liquid-like behavior [kg/m3]. Above this density, the liquid polynomial is used.
    */
   private static final double RHO_LIQ_LIMIT = 100.0;
 
   /**
-   * Steam (dilute gas) thermal conductivity coefficients. lambda_steam = A0 + A1*T + A2*T^2
-   * [W/(m*K)]. Fitted to NIST data for steam at 1 bar, 373-1200 K. Accuracy: better than 2%.
+   * Steam (dilute gas) thermal conductivity coefficients. lambda_steam = A0 + A1*T + A2*T^2 [W/(m*K)]. Fitted to NIST
+   * data for steam at 1 bar, 373-1200 K. Accuracy: better than 2%.
    */
   private static final double STEAM_A0 = 0.00153;
   private static final double STEAM_A1 = 5.20e-5;
   private static final double STEAM_A2 = 2.80e-8;
 
   /**
-   * Liquid water thermal conductivity coefficients. lambda_liq = B0 + B1*T + B2*T^2 [W/(m*K)].
-   * Fitted to NIST data for liquid water at 1 atm, 273-450 K. Accuracy: better than 2%.
+   * Liquid water thermal conductivity coefficients. lambda_liq = B0 + B1*T + B2*T^2 [W/(m*K)]. Fitted to NIST data for
+   * liquid water at 1 atm, 273-450 K. Accuracy: better than 2%.
    */
   private static final double LIQ_B0 = -0.2758;
   private static final double LIQ_B1 = 4.612e-3;

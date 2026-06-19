@@ -12,8 +12,7 @@ import com.google.gson.GsonBuilder;
  * Scale tendency prediction for common oilfield mineral scales.
  *
  * <p>
- * Predicts the saturation index (SI) for common mineral scales encountered in oil and gas
- * production systems:
+ * Predicts the saturation index (SI) for common mineral scales encountered in oil and gas production systems:
  * </p>
  * <ul>
  * <li>Calcium carbonate (CaCO3 - calcite)</li>
@@ -34,9 +33,8 @@ import com.google.gson.GsonBuilder;
  * </pre>
  *
  * <p>
- * where IAP is the Ion Activity Product and Ksp is the temperature/pressure-dependent solubility
- * product. SI greater than 0 indicates supersaturation (scaling tendency), SI less than 0 indicates
- * undersaturation (no scaling tendency).
+ * where IAP is the Ion Activity Product and Ksp is the temperature/pressure-dependent solubility product. SI greater
+ * than 0 indicates supersaturation (scaling tendency), SI less than 0 indicates undersaturation (no scaling tendency).
  * </p>
  *
  * <p>
@@ -136,7 +134,8 @@ public class ScalePredictionCalculator implements Serializable {
   /**
    * Creates a new ScalePredictionCalculator with default parameters.
    */
-  public ScalePredictionCalculator() {}
+  public ScalePredictionCalculator() {
+  }
 
   /**
    * Sets the temperature.
@@ -309,8 +308,8 @@ public class ScalePredictionCalculator implements Serializable {
 
     // Apply ion pairing corrections to get free ion concentrations
     // Ion pairs: CaSO4⁰, MgSO4⁰, NaSO4⁻, CaHCO3⁺, MgHCO3⁺, CaCO3⁰
-    double[] freeConc = correctForIonPairing(cCa, cMg, cNa, cBa, cSr, cFe, cSO4, cCO3, cHCO3, TK,
-        gammaDivalent, gammaMonovalent);
+    double[] freeConc = correctForIonPairing(cCa, cMg, cNa, cBa, cSr, cFe, cSO4, cCO3, cHCO3, TK, gammaDivalent,
+	gammaMonovalent);
     cCa = freeConc[0];
     cSO4 = freeConc[1];
     cCO3 = freeConc[2];
@@ -377,27 +376,26 @@ public class ScalePredictionCalculator implements Serializable {
    * Corrects total analytical concentrations for ion pairing.
    *
    * <p>
-   * Accounts for aqueous complexes: CaSO4(aq), MgSO4(aq), NaSO4(-), CaHCO3(+), MgHCO3(+),
-   * CaCO3(aq). Uses association constants from Garrels &amp; Thompson (1962) with T-corrections.
+   * Accounts for aqueous complexes: CaSO4(aq), MgSO4(aq), NaSO4(-), CaHCO3(+), MgHCO3(+), CaCO3(aq). Uses association
+   * constants from Garrels &amp; Thompson (1962) with T-corrections.
    * </p>
    *
-   * @param cCa total calcium mol/L
-   * @param cMg total magnesium mol/L
-   * @param cNa total sodium mol/L
-   * @param cBa total barium mol/L
-   * @param cSr total strontium mol/L
-   * @param cFe total iron mol/L
-   * @param cSO4 total sulphate mol/L
-   * @param cCO3 total carbonate mol/L
-   * @param cHCO3 total bicarbonate mol/L
-   * @param TK temperature in Kelvin
+   * @param cCa        total calcium mol/L
+   * @param cMg        total magnesium mol/L
+   * @param cNa        total sodium mol/L
+   * @param cBa        total barium mol/L
+   * @param cSr        total strontium mol/L
+   * @param cFe        total iron mol/L
+   * @param cSO4       total sulphate mol/L
+   * @param cCO3       total carbonate mol/L
+   * @param cHCO3      total bicarbonate mol/L
+   * @param TK         temperature in Kelvin
    * @param gammaDival activity coefficient for divalent ions
-   * @param gammaMono activity coefficient for monovalent ions
+   * @param gammaMono  activity coefficient for monovalent ions
    * @return array [freeCa, freeSO4, freeCO3, freeHCO3]
    */
-  private double[] correctForIonPairing(double cCa, double cMg, double cNa, double cBa, double cSr,
-      double cFe, double cSO4, double cCO3, double cHCO3, double TK, double gammaDival,
-      double gammaMono) {
+  private double[] correctForIonPairing(double cCa, double cMg, double cNa, double cBa, double cSr, double cFe,
+      double cSO4, double cCO3, double cHCO3, double TK, double gammaDival, double gammaMono) {
     // Association constants at 25°C (Garrels & Thompson, 1962; Plummer et al., 1988)
     // K_assoc = [MX] / ([M²+]*[X²-]) for neutral pairs
     // log10(K) values at 25°C with simple T-correction: log10K(T) = log10K(25) +
@@ -449,41 +447,40 @@ public class ScalePredictionCalculator implements Serializable {
       double cCaCO3aq = KCaCO3 * freeCa * g2 * freeCO3 * g2;
 
       // Free concentrations
-      freeCa = cCa / (1.0 + KCaSO4 * g2 * freeSO4 * g2
-          + KCaHCO3 * g2 * freeHCO3 * gammaMono / gammaMono + KCaCO3 * g2 * freeCO3 * g2);
+      freeCa = cCa / (1.0 + KCaSO4 * g2 * freeSO4 * g2 + KCaHCO3 * g2 * freeHCO3 * gammaMono / gammaMono
+	  + KCaCO3 * g2 * freeCO3 * g2);
       if (freeCa < 0) {
-        freeCa = cCa * 0.01;
+	freeCa = cCa * 0.01;
       }
 
       freeMg = cMg / (1.0 + KMgSO4 * g2 * freeSO4 * g2 + KMgHCO3 * g2 * freeHCO3 * gm2 / gm2);
       if (freeMg < 0) {
-        freeMg = cMg * 0.01;
+	freeMg = cMg * 0.01;
       }
 
       freeNa = cNa / (1.0 + KNaSO4 * gammaMono * freeSO4 * g2 / gammaMono);
       if (freeNa < 0) {
-        freeNa = cNa * 0.01;
+	freeNa = cNa * 0.01;
       }
 
       freeSO4 = cSO4 / (1.0 + KCaSO4 * freeCa * g2 * g2 + KMgSO4 * freeMg * g2 * g2
-          + KNaSO4 * freeNa * gammaMono * g2 / gammaMono);
+	  + KNaSO4 * freeNa * gammaMono * g2 / gammaMono);
       if (freeSO4 < 0) {
-        freeSO4 = cSO4 * 0.01;
+	freeSO4 = cSO4 * 0.01;
       }
 
       freeCO3 = cCO3 / (1.0 + KCaCO3 * freeCa * g2 * g2);
       if (freeCO3 < 0) {
-        freeCO3 = cCO3 * 0.01;
+	freeCO3 = cCO3 * 0.01;
       }
 
-      freeHCO3 =
-          cHCO3 / (1.0 + KCaHCO3 * freeCa * g2 * gammaMono / gammaMono + KMgHCO3 * freeMg * g2);
+      freeHCO3 = cHCO3 / (1.0 + KCaHCO3 * freeCa * g2 * gammaMono / gammaMono + KMgHCO3 * freeMg * g2);
       if (freeHCO3 < 0) {
-        freeHCO3 = cHCO3 * 0.01;
+	freeHCO3 = cHCO3 * 0.01;
       }
     }
 
-    return new double[] {freeCa, freeSO4, freeCO3, freeHCO3};
+    return new double[] { freeCa, freeSO4, freeCO3, freeHCO3 };
   }
 
   /**
@@ -495,7 +492,7 @@ public class ScalePredictionCalculator implements Serializable {
    * }
    * </pre>
    *
-   * @param charge ion charge
+   * @param charge        ion charge
    * @param ionicStrength ionic strength mol/L
    * @return activity coefficient
    */
@@ -511,9 +508,8 @@ public class ScalePredictionCalculator implements Serializable {
    * Calculates the Debye-Hückel A parameter as a function of temperature.
    *
    * <p>
-   * Uses the correlation from Robinson &amp; Stokes based on water density and dielectric constant:
-   * A = 1.8246e6 * sqrt(ρ) / (ε*T)^(3/2) where ρ is water density in g/cm³ and ε is the static
-   * dielectric constant.
+   * Uses the correlation from Robinson &amp; Stokes based on water density and dielectric constant: A = 1.8246e6 *
+   * sqrt(ρ) / (ε*T)^(3/2) where ρ is water density in g/cm³ and ε is the static dielectric constant.
    * </p>
    *
    * @param TK temperature in Kelvin
@@ -523,7 +519,7 @@ public class ScalePredictionCalculator implements Serializable {
     // Water density (g/cm³) from Kell (1975) simplified correlation
     double TC = TK - 273.15;
     double rho = 0.99983 + 5.0948e-5 * TC - 7.5722e-6 * TC * TC + 3.8907e-8 * TC * TC * TC
-        - 1.2e-10 * TC * TC * TC * TC;
+	- 1.2e-10 * TC * TC * TC * TC;
     if (rho < 0.85) {
       rho = 0.85; // lower bound for high T
     }
@@ -549,8 +545,8 @@ public class ScalePredictionCalculator implements Serializable {
    * }
    * </pre>
    *
-   * @param cHCO3 bicarbonate concentration in mol/L
-   * @param TK temperature in Kelvin
+   * @param cHCO3           bicarbonate concentration in mol/L
+   * @param TK              temperature in Kelvin
    * @param gammaMonovalent activity coefficient for monovalent ions
    * @return carbonate concentration in mol/L
    */
@@ -566,9 +562,9 @@ public class ScalePredictionCalculator implements Serializable {
   /**
    * Estimates pH from CO2 partial pressure and bicarbonate concentration.
    *
-   * @param TK temperature in Kelvin
+   * @param TK            temperature in Kelvin
    * @param ionicStrength ionic strength mol/L
-   * @param gamma activity coefficient for monovalent ions
+   * @param gamma         activity coefficient for monovalent ions
    * @return estimated pH
    */
   private double estimatePH(double TK, double ionicStrength, double gamma) {
@@ -591,12 +587,12 @@ public class ScalePredictionCalculator implements Serializable {
    * Applies pressure correction to a solubility product.
    *
    * <p>
-   * Uses the partial molar volume change formula: ln(Ksp(P)/Ksp(P0)) = -ΔV°(P-P0)/(R*T) where ΔV°
-   * is in cm³/mol, P in bara, R = 83.1446 cm³·bar/(mol·K).
+   * Uses the partial molar volume change formula: ln(Ksp(P)/Ksp(P0)) = -ΔV°(P-P0)/(R*T) where ΔV° is in cm³/mol, P in
+   * bara, R = 83.1446 cm³·bar/(mol·K).
    * </p>
    *
-   * @param ksp0 solubility product at 1 atm
-   * @param TK temperature in Kelvin
+   * @param ksp0   solubility product at 1 atm
+   * @param TK     temperature in Kelvin
    * @param vDelta molar volume change in cm³/mol
    * @return pressure-corrected Ksp
    */
@@ -614,8 +610,7 @@ public class ScalePredictionCalculator implements Serializable {
    * Calculates calcite (CaCO3) solubility product.
    *
    * <p>
-   * Based on Plummer and Busenberg (1982): log10(Ksp) = -171.9065 - 0.077993*T + 2839.319/T +
-   * 71.595*log10(T)
+   * Based on Plummer and Busenberg (1982): log10(Ksp) = -171.9065 - 0.077993*T + 2839.319/T + 71.595*log10(T)
    * </p>
    *
    * @param TK temperature in Kelvin
@@ -675,8 +670,7 @@ public class ScalePredictionCalculator implements Serializable {
   private double sideriteKsp(double TK) {
     // Greenberg & Tomson (1992):
     // log10(Ksp) = -59.3498 - 0.041377*T + 2.1963/T + 24.5724*log10(T) + 2.518e-5*T^2
-    double logKsp =
-        -59.3498 - 0.041377 * TK + 2.1963 / TK + 24.5724 * Math.log10(TK) + 2.518e-5 * TK * TK;
+    double logKsp = -59.3498 - 0.041377 * TK + 2.1963 / TK + 24.5724 * Math.log10(TK) + 2.518e-5 * TK * TK;
     return applyPressureCorrection(Math.pow(10, logKsp), TK, -52.9);
   }
 
@@ -690,8 +684,7 @@ public class ScalePredictionCalculator implements Serializable {
    */
   private double calcK1Carbonate(double TK) {
     // Plummer & Busenberg (1982) simplified
-    double logK1 = -356.3094 - 0.06091964 * TK + 21834.37 / TK + 126.8339 * Math.log10(TK)
-        - 1684915.0 / (TK * TK);
+    double logK1 = -356.3094 - 0.06091964 * TK + 21834.37 / TK + 126.8339 * Math.log10(TK) - 1684915.0 / (TK * TK);
     return Math.pow(10, logK1);
   }
 
@@ -702,8 +695,7 @@ public class ScalePredictionCalculator implements Serializable {
    * @return K2 in mol/L
    */
   private double calcK2Carbonate(double TK) {
-    double logK2 = -107.8871 - 0.03252849 * TK + 5151.79 / TK + 38.92561 * Math.log10(TK)
-        - 563713.9 / (TK * TK);
+    double logK2 = -107.8871 - 0.03252849 * TK + 5151.79 / TK + 38.92561 * Math.log10(TK) - 563713.9 / (TK * TK);
     return Math.pow(10, logK2);
   }
 
@@ -863,23 +855,21 @@ public class ScalePredictionCalculator implements Serializable {
     result.put("scaleRisks", getScaleRisks());
     result.put("hasScalingRisk", hasScalingRisk());
 
-    Gson gson =
-        new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().create();
+    Gson gson = new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().create();
     return gson.toJson(result);
   }
 
   /**
    * Adds a saturation index entry to a map.
    *
-   * @param map target map
+   * @param map  target map
    * @param name scale type name
-   * @param si saturation index value
+   * @param si   saturation index value
    */
   private void addSI(Map<String, Object> map, String name, double si) {
     Map<String, Object> entry = new LinkedHashMap<String, Object>();
     entry.put("SI", Double.isNaN(si) ? "N/A" : si);
-    entry.put("tendency",
-        Double.isNaN(si) ? "N/A" : (si > 0.5 ? "High" : (si > 0 ? "Moderate" : "None")));
+    entry.put("tendency", Double.isNaN(si) ? "N/A" : (si > 0.5 ? "High" : (si > 0 ? "Moderate" : "None")));
     map.put(name, entry);
   }
 }

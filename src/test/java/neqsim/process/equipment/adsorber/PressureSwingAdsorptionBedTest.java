@@ -10,9 +10,9 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Unit tests for {@link PressureSwingAdsorptionBed}. Validates against textbook H2-purification
- * behaviour: heavy components (CO, CO2, CH4) are preferentially captured, H2 passes through, the
- * cycle-averaged recovery target is enforced, and mass balance closes on the tail-gas side.
+ * Unit tests for {@link PressureSwingAdsorptionBed}. Validates against textbook H2-purification behaviour: heavy
+ * components (CO, CO2, CH4) are preferentially captured, H2 passes through, the cycle-averaged recovery target is
+ * enforced, and mass balance closes on the tail-gas side.
  */
 class PressureSwingAdsorptionBedTest extends neqsim.NeqSimTest {
 
@@ -51,8 +51,7 @@ class PressureSwingAdsorptionBedTest extends neqsim.NeqSimTest {
     assertTrue(purity > 0.85, "H2 purity should be > 85% with default sorbent, got " + purity);
 
     // Recovery should not exceed the target (we vent any excess H2 into the tail gas).
-    assertTrue(recovery <= 0.85 + 1e-6,
-        "H2 recovery should be capped at the target 0.85, got " + recovery);
+    assertTrue(recovery <= 0.85 + 1e-6, "H2 recovery should be capped at the target 0.85, got " + recovery);
 
     // And it should be reasonably close to the target (within 1%) because the syngas
     // is H2-rich and the base equilibrium leaves most of the H2 in the product.

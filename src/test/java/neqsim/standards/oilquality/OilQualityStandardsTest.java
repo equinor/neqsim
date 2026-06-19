@@ -134,9 +134,8 @@ public class OilQualityStandardsTest {
     double prevTemp = -300;
     for (int i = 0; i < curve.length; i++) {
       if (!Double.isNaN(curve[i][1])) {
-        assertTrue(curve[i][1] >= prevTemp - 1.0,
-            "Temperature should generally increase along curve");
-        prevTemp = curve[i][1];
+	assertTrue(curve[i][1] >= prevTemp - 1.0, "Temperature should generally increase along curve");
+	prevTemp = curve[i][1];
       }
     }
   }
@@ -158,9 +157,9 @@ public class OilQualityStandardsTest {
   }
 
   /**
-   * Regression test for the distillation-curve "flat curve" bug. The original implementation used a
-   * fixed-temperature TVfractionFlash, so every recovered cut collapsed onto the IBP. A correct D86
-   * curve must rise: heavier cuts boil at higher temperatures than lighter ones.
+   * Regression test for the distillation-curve "flat curve" bug. The original implementation used a fixed-temperature
+   * TVfractionFlash, so every recovered cut collapsed onto the IBP. A correct D86 curve must rise: heavier cuts boil at
+   * higher temperatures than lighter ones.
    */
   @Test
   void testASTM_D86_curveRisesNotFlat() {
@@ -174,19 +173,18 @@ public class OilQualityStandardsTest {
     double t90 = standard.getValue("T90");
 
     assertTrue(!Double.isNaN(t10) && !Double.isNaN(t50) && !Double.isNaN(t90),
-        "T10/T50/T90 should be computable for a light oil");
+	"T10/T50/T90 should be computable for a light oil");
 
     // The cuts must be ordered and span a meaningful range (not collapsed onto the IBP).
     assertTrue(t10 >= ibp - 1.0, "T10 should be at or above the IBP");
     assertTrue(t50 > t10, "T50 should be hotter than T10");
     assertTrue(t90 > t50, "T90 should be hotter than T50");
-    assertTrue(t90 - t10 > 20.0,
-        "Distillation curve should span > 20 C between T10 and T90 (not flat)");
+    assertTrue(t90 - t10 > 20.0, "Distillation curve should span > 20 C between T10 and T90 (not flat)");
   }
 
   /**
-   * Verifies T95 reports a genuine 95 % recovered point rather than aliasing onto the last table
-   * entry (previously T90).
+   * Verifies T95 reports a genuine 95 % recovered point rather than aliasing onto the last table entry (previously
+   * T90).
    */
   @Test
   void testASTM_D86_t95IsRealPoint() {
@@ -202,9 +200,8 @@ public class OilQualityStandardsTest {
   }
 
   /**
-   * Verifies the component-based average boiling points are ordered correctly (MABP &le; MeABP &le;
-   * CABP &le; WABP) and the Watson (UOP) characterization factor falls in the physically expected
-   * band for a light paraffinic oil.
+   * Verifies the component-based average boiling points are ordered correctly (MABP &le; MeABP &le; CABP &le; WABP) and
+   * the Watson (UOP) characterization factor falls in the physically expected band for a light paraffinic oil.
    */
   @Test
   void testASTM_D86_averageBoilingPointsAndWatsonK() {
@@ -219,21 +216,21 @@ public class OilQualityStandardsTest {
     double vabp = standard.getVABP();
 
     assertTrue(!Double.isNaN(mabp) && !Double.isNaN(wabp) && !Double.isNaN(cabp),
-        "Average boiling points should be computable");
+	"Average boiling points should be computable");
     // Molal is the lowest, weight the highest; mean and cubic sit in between.
     assertTrue(mabp <= cabp, "MABP should be at or below CABP");
     assertTrue(cabp <= wabp, "CABP should be at or below WABP");
     assertEquals((mabp + cabp) / 2.0, meabp, 0.01, "MeABP should be the mean of MABP and CABP");
     // VABP comes from the curve and should sit inside the T10..T90 window.
     assertTrue(vabp > standard.getValue("T10") && vabp < standard.getValue("T90"),
-        "VABP should fall between T10 and T90");
+	"VABP should fall between T10 and T90");
 
     double sg = standard.getSpecificGravity();
     assertTrue(sg > 0.6 && sg < 1.0, "Specific gravity should be in a plausible petroleum range");
 
     double watsonK = standard.getWatsonK();
     assertTrue(watsonK > 10.0 && watsonK < 14.0,
-        "Watson K should be in the typical petroleum range (10-14), was " + watsonK);
+	"Watson K should be in the typical petroleum range (10-14), was " + watsonK);
   }
 
   /**
@@ -247,16 +244,15 @@ public class OilQualityStandardsTest {
 
     assertTrue(standard.getSlope() > 0.0, "D86 slope (T90-T10)/80 should be positive");
 
-    double total =
-        standard.getPercentRecovered() + standard.getPercentLoss() + standard.getPercentResidue();
+    double total = standard.getPercentRecovered() + standard.getPercentLoss() + standard.getPercentResidue();
     assertEquals(100.0, total, 0.01, "Recovery + loss + residue should conserve to 100%");
     assertTrue(standard.getPercentLoss() >= 0.0, "Loss should be non-negative");
     assertTrue(standard.getPercentResidue() >= 0.0, "Residue should be non-negative");
   }
 
   /**
-   * Verifies the Riazi-Daubert TBP&rarr;D86 conversion produces a distinct curve from the simulated
-   * (TBP-like) curve and that selecting the TBP_CONVERTED basis changes the reported temperatures.
+   * Verifies the Riazi-Daubert TBP&rarr;D86 conversion produces a distinct curve from the simulated (TBP-like) curve
+   * and that selecting the TBP_CONVERTED basis changes the reported temperatures.
    */
   @Test
   void testASTM_D86_tbpToD86Conversion() {
@@ -270,10 +266,9 @@ public class OilQualityStandardsTest {
 
     boolean anyDifferent = false;
     for (int i = 0; i < tbp.length; i++) {
-      if (!Double.isNaN(tbp[i][1]) && !Double.isNaN(d86[i][1])
-          && Math.abs(tbp[i][1] - d86[i][1]) > 1.0) {
-        anyDifferent = true;
-        break;
+      if (!Double.isNaN(tbp[i][1]) && !Double.isNaN(d86[i][1]) && Math.abs(tbp[i][1] - d86[i][1]) > 1.0) {
+	anyDifferent = true;
+	break;
       }
     }
     assertTrue(anyDifferent, "TBP and D86 curves should differ (conversion applied)");
@@ -281,8 +276,7 @@ public class OilQualityStandardsTest {
     double molarT50 = standard.getValue("T50");
     standard.setBasis(Standard_ASTM_D86.D86Basis.TBP_CONVERTED);
     double convertedT50 = standard.getValue("T50");
-    assertTrue(Math.abs(convertedT50 - molarT50) > 0.1,
-        "TBP_CONVERTED basis should change the reported T50");
+    assertTrue(Math.abs(convertedT50 - molarT50) > 0.1, "TBP_CONVERTED basis should change the reported T50");
     standard.setBasis(Standard_ASTM_D86.D86Basis.MOLAR);
   }
 
@@ -301,13 +295,12 @@ public class OilQualityStandardsTest {
     standard.setBasis(Standard_ASTM_D86.D86Basis.MOLAR);
 
     assertTrue(!Double.isNaN(liquidVolT50), "Liquid-volume T50 should be computable");
-    assertTrue(Math.abs(liquidVolT50 - molarT50) > 0.1,
-        "Liquid-volume basis should differ from molar basis");
+    assertTrue(Math.abs(liquidVolT50 - molarT50) > 0.1, "Liquid-volume basis should differ from molar basis");
   }
 
   /**
-   * Verifies the Sydney Young barometric-pressure correction shifts reported temperatures: a
-   * sub-760 mmHg pressure raises the equivalent 760 mmHg temperature.
+   * Verifies the Sydney Young barometric-pressure correction shifts reported temperatures: a sub-760 mmHg pressure
+   * raises the equivalent 760 mmHg temperature.
    */
   @Test
   void testASTM_D86_barometricCorrection() {
@@ -321,11 +314,10 @@ public class OilQualityStandardsTest {
     standard.setBarometricPressure(760.0, "mmHg");
 
     assertTrue(t50at700 > t50at760,
-        "Lower barometric pressure should raise the corrected (760 mmHg-equivalent) temperature");
+	"Lower barometric pressure should raise the corrected (760 mmHg-equivalent) temperature");
     // Unit handling: 1 atm == 760 mmHg, so the correction should vanish.
     standard.setBarometricPressure(1.0, "atm");
-    assertEquals(t50at760, standard.getValue("T50"), 0.01,
-        "1 atm should be equivalent to 760 mmHg (no correction)");
+    assertEquals(t50at760, standard.getValue("T50"), 0.01, "1 atm should be equivalent to 760 mmHg (no correction)");
     standard.setBarometricPressure(760.0, "mmHg");
   }
 
@@ -432,10 +424,8 @@ public class OilQualityStandardsTest {
 
     String classification = standard.getOilClassification();
     assertNotNull(classification, "Classification should not be null");
-    assertTrue(
-        "Light".equals(classification) || "Medium".equals(classification)
-            || "Heavy".equals(classification) || "Extra-Heavy / Bitumen".equals(classification),
-        "Classification should be a valid category");
+    assertTrue("Light".equals(classification) || "Medium".equals(classification) || "Heavy".equals(classification)
+	|| "Extra-Heavy / Bitumen".equals(classification), "Classification should be a valid category");
   }
 
   @Test
@@ -581,8 +571,7 @@ public class OilQualityStandardsTest {
     double tvp = standard.getValue("TVP");
     assertTrue(tvp > 0.0, "TVP should be positive for a live oil");
     assertEquals("bara", standard.getUnit("TVP"));
-    assertEquals(37.8, standard.getReferenceTemperature(), 1.0e-6,
-        "Default reference temperature should be 37.8 C");
+    assertEquals(37.8, standard.getReferenceTemperature(), 1.0e-6, "Default reference temperature should be 37.8 C");
   }
 
   @Test
@@ -599,8 +588,7 @@ public class OilQualityStandardsTest {
     hot.calculate();
     double tvpHot = hot.getValue("TVP");
 
-    assertTrue(tvpHot > tvpCold,
-        "TVP should increase with reference temperature (" + tvpHot + " > " + tvpCold + ")");
+    assertTrue(tvpHot > tvpCold, "TVP should increase with reference temperature (" + tvpHot + " > " + tvpCold + ")");
   }
 
   @Test
@@ -611,8 +599,7 @@ public class OilQualityStandardsTest {
 
     double tvpBara = standard.getValue("TVP", "bara");
     double tvpPsia = standard.getValue("TVP", "psia");
-    assertEquals(tvpBara / 0.0689475729317831, tvpPsia, 1.0e-6,
-        "psia conversion should match the bara value");
+    assertEquals(tvpBara / 0.0689475729317831, tvpPsia, 1.0e-6, "psia conversion should match the bara value");
   }
 
   @Test
@@ -654,8 +641,7 @@ public class OilQualityStandardsTest {
 
     double cci = standard.getValue("cetaneIndex");
     assertEquals(cci, standard.getValue("CCI"), 1.0e-9, "CCI alias should match cetaneIndex");
-    assertEquals(cci, standard.getValue("cetaneIndexD4737"), 1.0e-9,
-        "cetaneIndexD4737 alias should match cetaneIndex");
+    assertEquals(cci, standard.getValue("cetaneIndexD4737"), 1.0e-9, "cetaneIndexD4737 alias should match cetaneIndex");
   }
 
   @Test
@@ -666,8 +652,7 @@ public class OilQualityStandardsTest {
 
     double cciD976 = standard.getValue("cetaneIndexD976");
     assertTrue(!Double.isNaN(cciD976), "D976 cetane index should be a finite number");
-    assertTrue(cciD976 > 0.0 && cciD976 < 120.0,
-        "D976 cetane index should be physically plausible: " + cciD976);
+    assertTrue(cciD976 > 0.0 && cciD976 < 120.0, "D976 cetane index should be physically plausible: " + cciD976);
   }
 
   @Test
@@ -681,11 +666,11 @@ public class OilQualityStandardsTest {
     standard.calculate();
 
     assertEquals(d86.getValue("T10", "C"), standard.getValue("T10"), 1.0e-6,
-        "T10 should pass through from the internal D86 calculation");
+	"T10 should pass through from the internal D86 calculation");
     assertEquals(d86.getValue("T50", "C"), standard.getValue("T50"), 1.0e-6,
-        "T50 should pass through from the internal D86 calculation");
+	"T50 should pass through from the internal D86 calculation");
     assertEquals(d86.getValue("T90", "C"), standard.getValue("T90"), 1.0e-6,
-        "T90 should pass through from the internal D86 calculation");
+	"T90 should pass through from the internal D86 calculation");
     assertEquals("C", standard.getUnit("T50"));
     assertEquals("kg/m3", standard.getUnit("density"));
   }
@@ -718,7 +703,7 @@ public class OilQualityStandardsTest {
     double anilineC = standard.getValue("anilinePoint", "C");
     assertTrue(!Double.isNaN(anilineC), "Aniline point should be a finite number");
     assertTrue(anilineC > 0.0 && anilineC < 120.0,
-        "Aniline point should be physically plausible for a diesel: " + anilineC);
+	"Aniline point should be physically plausible for a diesel: " + anilineC);
   }
 
   @Test
@@ -750,7 +735,7 @@ public class OilQualityStandardsTest {
     double shiftedAniline = shifted.getValue("anilinePoint");
 
     assertEquals(baseAniline + 10.0, shiftedAniline, 1.0e-6,
-        "Raising the intercept by 10 should raise the aniline point by 10");
+	"Raising the intercept by 10 should raise the aniline point by 10");
   }
 
   @Test
@@ -780,8 +765,7 @@ public class OilQualityStandardsTest {
 
     double smokeMm = standard.getValue("smokePoint", "mm");
     assertTrue(!Double.isNaN(smokeMm), "Smoke point should be a finite number");
-    assertTrue(smokeMm > 0.0 && smokeMm < 60.0,
-        "Smoke point should be physically plausible: " + smokeMm);
+    assertTrue(smokeMm > 0.0 && smokeMm < 60.0, "Smoke point should be physically plausible: " + smokeMm);
     assertEquals("mm", standard.getUnit("smokePoint"));
   }
 
@@ -797,9 +781,9 @@ public class OilQualityStandardsTest {
     standard.calculate();
 
     assertEquals(anilineC, standard.getValue("anilinePoint"), 1.0e-6,
-        "Aniline point should pass through from the internal D611 calculation");
+	"Aniline point should pass through from the internal D611 calculation");
     assertEquals(8.5 + 0.325 * anilineC, standard.getValue("smokePoint"), 1.0e-6,
-        "Smoke point should match the default correlation");
+	"Smoke point should match the default correlation");
   }
 
   @Test
@@ -875,8 +859,7 @@ public class OilQualityStandardsTest {
     Standard_ASTM_D3230 standard = new Standard_ASTM_D3230(oil);
     standard.calculate();
 
-    assertTrue(Double.isNaN(standard.getValue("saltContentPTB")),
-        "Salt content should be NaN without a brine assay");
+    assertTrue(Double.isNaN(standard.getValue("saltContentPTB")), "Salt content should be NaN without a brine assay");
     assertTrue(!standard.isOnSpec(), "Should be off-spec when no result is available");
   }
 
@@ -891,12 +874,11 @@ public class OilQualityStandardsTest {
     double saltMassPerCrudeVolume = 0.005 * 35.0; // kg salt per m3 crude
     double expectedPtb = saltMassPerCrudeVolume * 158.987 * 2.20462;
     assertEquals(expectedPtb, standard.getValue("saltContentPTB"), 1.0e-6,
-        "PTB should match the documented conversion");
+	"PTB should match the documented conversion");
     assertEquals("PTB", standard.getUnit("saltContent"));
 
     double ppmw = standard.getValue("saltContent", "mg/kg");
-    assertTrue(!Double.isNaN(ppmw) && ppmw > 0.0,
-        "mg/kg salt content should be a finite positive number: " + ppmw);
+    assertTrue(!Double.isNaN(ppmw) && ppmw > 0.0, "mg/kg salt content should be a finite positive number: " + ppmw);
   }
 
   @Test
@@ -914,7 +896,7 @@ public class OilQualityStandardsTest {
     fraction.calculate();
 
     assertEquals(fraction.getValue("saltContentPTB"), percent.getValue("saltContentPTB"), 1.0e-6,
-        "0.5 vol% should equal a 0.005 volume fraction");
+	"0.5 vol% should equal a 0.005 volume fraction");
 
     double ptb = fraction.getValue("saltContentPTB");
     fraction.setMaxSaltSpec(ptb + 1.0);

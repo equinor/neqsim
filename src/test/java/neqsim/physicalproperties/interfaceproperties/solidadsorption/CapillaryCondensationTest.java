@@ -81,7 +81,7 @@ public class CapillaryCondensationTest {
     highPModel.calcCapillaryCondensation(0);
 
     assertTrue(highPModel.getKelvinRadius(0) > lowPModel.getKelvinRadius(0),
-        "Kelvin radius should increase with relative pressure");
+	"Kelvin radius should increase with relative pressure");
   }
 
   /**
@@ -112,8 +112,7 @@ public class CapillaryCondensationTest {
     capModel.calcCapillaryCondensation(0);
     double largePoreCondensate = capModel.getCondensateAmount(0);
 
-    assertTrue(smallPoreCondensate >= largePoreCondensate,
-        "Smaller pores should show more condensation at same P/P0");
+    assertTrue(smallPoreCondensate >= largePoreCondensate, "Smaller pores should show more condensation at same P/P0");
   }
 
   /**
@@ -160,7 +159,7 @@ public class CapillaryCondensationTest {
     // Calculation runs without error
     capModel.calcCapillaryCondensation(0);
     assertTrue(capModel.getKelvinRadius(0) > 0 || capModel.getKelvinRadius(0) == Double.MAX_VALUE,
-        "Kelvin radius should be positive or MAX_VALUE for supersaturated");
+	"Kelvin radius should be positive or MAX_VALUE for supersaturated");
   }
 
   /**
@@ -285,7 +284,6 @@ public class CapillaryCondensationTest {
     double pentaneKelvin = multiModel.getKelvinRadius(1);
 
     // Different components should have different Kelvin radii
-    assertTrue(propaneKelvin > 0 && pentaneKelvin > 0,
-        "Kelvin radii should be positive for all components");
+    assertTrue(propaneKelvin > 0 && pentaneKelvin > 0, "Kelvin radii should be positive for all components");
   }
 }

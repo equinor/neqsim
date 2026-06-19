@@ -13,10 +13,10 @@ import neqsim.thermo.system.SystemInterface;
  * Autothermal reformer model for oxygen-blown hydrogen and syngas production.
  *
  * <p>
- * The model combines a rapid oxygen-blown burner zone with a downstream catalytic reforming
- * equilibrium zone. It adds oxygen-to-carbon and steam-to-carbon control targets, methane
- * conversion reporting, soot-risk screening, and burner-zone flame-temperature warnings. It is a
- * flowsheet-ready ATR template, not a replacement for detailed burner CFD or vendor reactor design.
+ * The model combines a rapid oxygen-blown burner zone with a downstream catalytic reforming equilibrium zone. It adds
+ * oxygen-to-carbon and steam-to-carbon control targets, methane conversion reporting, soot-risk screening, and
+ * burner-zone flame-temperature warnings. It is a flowsheet-ready ATR template, not a replacement for detailed burner
+ * CFD or vendor reactor design.
  * </p>
  *
  * @author NeqSim contributors
@@ -74,7 +74,7 @@ public class AutothermalReformer extends TwoPortEquipment {
   /**
    * Creates an autothermal reformer with an inlet stream.
    *
-   * @param name equipment name
+   * @param name        equipment name
    * @param inletStream feed stream containing methane, steam, and oxygen or ratio-controlled basis
    */
   public AutothermalReformer(String name, StreamInterface inletStream) {
@@ -214,17 +214,15 @@ public class AutothermalReformer extends TwoPortEquipment {
       reformingFeed.run(id);
     }
 
-    GibbsReactor.EnergyMode energyMode =
-        isothermalReformingZone ? GibbsReactor.EnergyMode.ISOTHERMAL
-            : GibbsReactor.EnergyMode.ADIABATIC;
-    reformingReactor = HydrogenProductionUtils
-        .createSyngasGibbsReactor(getName() + " catalytic equilibrium", reformingFeed, energyMode);
+    GibbsReactor.EnergyMode energyMode = isothermalReformingZone ? GibbsReactor.EnergyMode.ISOTHERMAL
+	: GibbsReactor.EnergyMode.ADIABATIC;
+    reformingReactor = HydrogenProductionUtils.createSyngasGibbsReactor(getName() + " catalytic equilibrium",
+	reformingFeed, energyMode);
     reformingReactor.run(id);
 
     SystemInterface outletSystem = reformingReactor.getOutletStream().getThermoSystem().clone();
     outletSystem.init(3);
-    methaneConversion =
-        HydrogenProductionUtils.calculateMethaneConversion(controlledFeed, outletSystem);
+    methaneConversion = HydrogenProductionUtils.calculateMethaneConversion(controlledFeed, outletSystem);
     drySyngasLhvMjPerNm3 = HydrogenProductionUtils.estimateDrySyngasLhvMjPerNm3(outletSystem);
     sootRiskIndex = calculateSootRiskIndex();
 
@@ -251,7 +249,7 @@ public class AutothermalReformer extends TwoPortEquipment {
     }
     if (outStream != null && outStream.getThermoSystem() != null) {
       results.put("syngasComposition_molFrac",
-          HydrogenProductionUtils.extractSyngasComposition(outStream.getThermoSystem()));
+	  HydrogenProductionUtils.extractSyngasComposition(outStream.getThermoSystem()));
     }
     return results;
   }
@@ -259,8 +257,7 @@ public class AutothermalReformer extends TwoPortEquipment {
   /** {@inheritDoc} */
   @Override
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(getResults());
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(getResults());
   }
 
   /**
@@ -293,17 +290,16 @@ public class AutothermalReformer extends TwoPortEquipment {
     double oxygenPenalty = oxygenToCarbonRatio < 0.50 ? (0.50 - oxygenToCarbonRatio) / 0.50 : 0.0;
     double steamPenalty = steamToCarbonRatio < 1.0 ? (1.0 - steamToCarbonRatio) : 0.0;
     double temperaturePenalty = burnerZone != null && burnerZone.getFlameTemperature() > 1800.0
-        ? (burnerZone.getFlameTemperature() - 1800.0) / 600.0
-        : 0.0;
-    return HydrogenProductionUtils.clamp(oxygenPenalty + 0.5 * steamPenalty + temperaturePenalty,
-        0.0, 1.0);
+	? (burnerZone.getFlameTemperature() - 1800.0) / 600.0
+	: 0.0;
+    return HydrogenProductionUtils.clamp(oxygenPenalty + 0.5 * steamPenalty + temperaturePenalty, 0.0, 1.0);
   }
 
   /**
    * Validates a non-negative finite input.
    *
    * @param value value to validate
-   * @param name parameter name used in exception text
+   * @param name  parameter name used in exception text
    */
   private void validateNonNegative(double value, String name) {
     if (!Double.isFinite(value) || value < 0.0) {

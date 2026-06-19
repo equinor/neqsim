@@ -21,8 +21,8 @@ import neqsim.process.fielddevelopment.facility.FacilityConfig;
  * </ul>
  *
  * <p>
- * These are screening-level estimates to identify concepts that may require detailed safety
- * analysis or have inherent safety challenges.
+ * These are screening-level estimates to identify concepts that may require detailed safety analysis or have inherent
+ * safety challenges.
  *
  * @author ESOL
  * @version 1.0
@@ -51,7 +51,7 @@ public class SafetyScreener {
   /**
    * Performs safety screening for a field concept with facility configuration.
    *
-   * @param concept field concept
+   * @param concept        field concept
    * @param facilityConfig facility configuration
    * @return safety report
    */
@@ -90,13 +90,12 @@ public class SafetyScreener {
     builder.psvCapacity(psvCapacity);
 
     // Manned vs unmanned
-    boolean manned = infra != null
-        && infra.getProcessingLocation() != InfrastructureInput.ProcessingLocation.SUBSEA;
+    boolean manned = infra != null && infra.getProcessingLocation() != InfrastructureInput.ProcessingLocation.SUBSEA;
     builder.mannedFacility(manned);
 
     // Determine overall safety level
-    SafetyReport.SafetyLevel level =
-        determineSafetyLevel(builder, blowdownMinutes, minMetalTemp, h2sPpm, maxPressure, manned);
+    SafetyReport.SafetyLevel level = determineSafetyLevel(builder, blowdownMinutes, minMetalTemp, h2sPpm, maxPressure,
+	manned);
     builder.overallLevel(level);
 
     // Add requirements based on findings
@@ -133,7 +132,7 @@ public class SafetyScreener {
     if (facilityConfig != null) {
       // Add inventory for compression
       if (facilityConfig.hasCompression()) {
-        baseInventory += facilityConfig.getTotalCompressionStages() * 15.0;
+	baseInventory += facilityConfig.getTotalCompressionStages() * 15.0;
       }
       // Add for separation stages
       baseInventory += facilityConfig.getBlockCount() * 5.0;
@@ -183,9 +182,8 @@ public class SafetyScreener {
     return baseCapacity;
   }
 
-  private SafetyReport.SafetyLevel determineSafetyLevel(SafetyReport.Builder builder,
-      double blowdownMinutes, double minMetalTemp, double h2sPpm, double maxPressure,
-      boolean manned) {
+  private SafetyReport.SafetyLevel determineSafetyLevel(SafetyReport.Builder builder, double blowdownMinutes,
+      double minMetalTemp, double h2sPpm, double maxPressure, boolean manned) {
     boolean hasIssues = false;
     boolean hasMajorIssues = false;
 
@@ -193,7 +191,7 @@ public class SafetyScreener {
     if (blowdownMinutes > BLOWDOWN_TARGET_MINUTES) {
       hasIssues = true;
       if (blowdownMinutes > BLOWDOWN_TARGET_MINUTES * 1.5) {
-        hasMajorIssues = true;
+	hasMajorIssues = true;
       }
     }
 
@@ -206,7 +204,7 @@ public class SafetyScreener {
     if (h2sPpm > H2S_TOXIC_THRESHOLD_PPM) {
       hasIssues = true;
       if (h2sPpm > 100) {
-        hasMajorIssues = true;
+	hasMajorIssues = true;
       }
     }
 
@@ -229,29 +227,27 @@ public class SafetyScreener {
     }
   }
 
-  private void addRequirements(SafetyReport.Builder builder, SafetyReport.SafetyLevel level,
-      double h2sPpm, double maxPressure, double minMetalTemp, double blowdownMinutes) {
+  private void addRequirements(SafetyReport.Builder builder, SafetyReport.SafetyLevel level, double h2sPpm,
+      double maxPressure, double minMetalTemp, double blowdownMinutes) {
     if (h2sPpm > H2S_TOXIC_THRESHOLD_PPM) {
       builder.addRequirement("h2s_detection", "H2S detection and alarm system required");
       builder.addRequirement("h2s_ppe", "H2S personal protective equipment");
       if (h2sPpm > 100) {
-        builder.addRequirement("h2s_escape", "Escape and rescue planning for H2S");
+	builder.addRequirement("h2s_escape", "Escape and rescue planning for H2S");
       }
     }
 
     if (maxPressure > HIGH_PRESSURE_BARA) {
-      builder.addRequirement("high_pressure",
-          "High pressure design - enhanced inspection and testing");
+      builder.addRequirement("high_pressure", "High pressure design - enhanced inspection and testing");
     }
 
     if (minMetalTemp < LOW_TEMP_THRESHOLD_C) {
-      builder.addRequirement("low_temp_materials",
-          "Low temperature materials required (impact tested)");
+      builder.addRequirement("low_temp_materials", "Low temperature materials required (impact tested)");
     }
 
     if (blowdownMinutes > BLOWDOWN_TARGET_MINUTES) {
       builder.addRequirement("blowdown_study",
-          "Detailed blowdown study required - consider segmentation or larger BDV");
+	  "Detailed blowdown study required - consider segmentation or larger BDV");
     }
 
     if (level == SafetyReport.SafetyLevel.HIGH) {

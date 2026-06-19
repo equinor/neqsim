@@ -129,13 +129,11 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
 
     if (getDesignStandard().containsKey("gas scrubber process design")) {
       logger.info("gas scrubber process design: {}",
-          getDesignStandard().get("gas scrubber process design").getStandardName());
-      gasLoadFactor =
-          ((GasScrubberDesignStandard) getDesignStandard().get("gas scrubber process design"))
-              .getGasLoadFactor();
-      volumeSafetyFactor =
-          ((GasScrubberDesignStandard) getDesignStandard().get("gas scrubber process design"))
-              .getVolumetricDesignFactor();
+	  getDesignStandard().get("gas scrubber process design").getStandardName());
+      gasLoadFactor = ((GasScrubberDesignStandard) getDesignStandard().get("gas scrubber process design"))
+	  .getGasLoadFactor();
+      volumeSafetyFactor = ((GasScrubberDesignStandard) getDesignStandard().get("gas scrubber process design"))
+	  .getVolumetricDesignFactor();
     } else {
       logger.info("no gas scrubber process design specified");
     }
@@ -162,9 +160,9 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
     // double moduleWidth = 0.0, moduleHeight = 0.0, moduleLength = 0.0;
     double materialsCost = 0.0;
     double gasDensity = ((SeparatorInterface) getProcessEquipment()).getThermoSystem().getPhase(0)
-        .getPhysicalProperties().getDensity();
+	.getPhysicalProperties().getDensity();
     double liqDensity = ((SeparatorInterface) getProcessEquipment()).getThermoSystem().getPhase(1)
-        .getPhysicalProperties().getDensity();
+	.getPhysicalProperties().getDensity();
     if (((SeparatorInterface) getProcessEquipment()).getThermoSystem().getNumberOfPhases() == 1) {
       liqDensity = getDefaultLiquidDensity();
     }
@@ -173,12 +171,11 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
     // getOperatingVolumeFlow() (also m3/hr). The diameter calculation below converts back
     // to m3/s so the sized diameter is unchanged.
     maxDesignVolumeFlow = volumeSafetyFactor
-        * ((SeparatorInterface) getProcessEquipment()).getThermoSystem().getPhase(0).getVolume()
-        / 1e5 * 3600.0;
+	* ((SeparatorInterface) getProcessEquipment()).getThermoSystem().getPhase(0).getVolume() / 1e5 * 3600.0;
 
     double maxGasVelocity = gasLoadFactor * Math.sqrt((liqDensity - gasDensity) / gasDensity);
     innerDiameter = Math.sqrt(4.0 * (getMaxDesignVolumeFlow() / 3600.0)
-        / (neqsim.thermo.ThermodynamicConstantsInterface.pi * maxGasVelocity * Fg));
+	/ (neqsim.thermo.ThermodynamicConstantsInterface.pi * maxGasVelocity * Fg));
     tantanLength = innerDiameter * 5.0;
     // System.out.println("inner Diameter " + innerDiameter);
 
@@ -208,12 +205,11 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
     moduleLength = tantanLength * 1.5;
     moduleHeight = innerDiameter * 2;
     /*
-     * System.out.println("wall thickness: " + separator.getName() + " " + getWallThickness() +
-     * " m"); System.out.println("separator dry weigth: " + emptyVesselWeight + " kg");
-     * System.out.println("total skid weigth: " + totalSkidWeight + " kg");
-     * System.out.println("foot print: width:" + moduleWidth + " length " + moduleLength +
-     * " height " + moduleHeight + " meter."); System.out.println("mechanical price: " +
-     * materialsCost + " kNOK");
+     * System.out.println("wall thickness: " + separator.getName() + " " + getWallThickness() + " m");
+     * System.out.println("separator dry weigth: " + emptyVesselWeight + " kg");
+     * System.out.println("total skid weigth: " + totalSkidWeight + " kg"); System.out.println("foot print: width:" +
+     * moduleWidth + " length " + moduleLength + " height " + moduleHeight + " meter.");
+     * System.out.println("mechanical price: " + materialsCost + " kNOK");
      */
     setWeigthVesselShell(emptyVesselWeight);
 
@@ -256,8 +252,8 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
    * Sets the conformity standard to use for checking.
    *
    * <p>
-   * This also enables the corresponding capacity constraints on the scrubber, so that the optimizer
-   * and capacity reporting use the same criteria.
+   * This also enables the corresponding capacity constraints on the scrubber, so that the optimizer and capacity
+   * reporting use the same criteria.
    * </p>
    *
    * @param standardName the standard identifier: "TR3500", "API-12J", "Shell-DEP", "NORSOK-P002"
@@ -274,8 +270,8 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
    * Runs all applicable conformity checks using the current operating state.
    *
    * <p>
-   * The scrubber must have been run (process simulation) before calling this method, so that the
-   * fluid state reflects current operating conditions.
+   * The scrubber must have been run (process simulation) before calling this method, so that the fluid state reflects
+   * current operating conditions.
    * </p>
    *
    * @return a conformity report with all check results
@@ -283,8 +279,7 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
    */
   public ConformityReport checkConformity() {
     if (conformityRuleSet == null) {
-      throw new IllegalStateException(
-          "No conformity rules set. Call setConformityRules(\"TR3500\") first.");
+      throw new IllegalStateException("No conformity rules set. Call setConformityRules(\"TR3500\") first.");
     }
     return conformityRuleSet.evaluate(this);
   }
@@ -302,8 +297,8 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
    * Sets the inlet device type by name string.
    *
    * <p>
-   * Accepted names (case-insensitive): "schoepentoeter", "inlet_vane", "inlet_cyclone",
-   * "deflector_plate", "half_pipe", "impingement_plate", "none".
+   * Accepted names (case-insensitive): "schoepentoeter", "inlet_vane", "inlet_cyclone", "deflector_plate", "half_pipe",
+   * "impingement_plate", "none".
    * </p>
    *
    * @param deviceTypeName the inlet device type name
@@ -312,16 +307,15 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
   public void setInletDevice(String deviceTypeName) {
     InletDeviceModel.InletDeviceType matched = null;
     for (InletDeviceModel.InletDeviceType t : InletDeviceModel.InletDeviceType.values()) {
-      if (t.name().equalsIgnoreCase(deviceTypeName)
-          || t.getDisplayName().equalsIgnoreCase(deviceTypeName)) {
-        matched = t;
-        break;
+      if (t.name().equalsIgnoreCase(deviceTypeName) || t.getDisplayName().equalsIgnoreCase(deviceTypeName)) {
+	matched = t;
+	break;
       }
     }
     if (matched == null) {
-      throw new IllegalArgumentException("Unknown inlet device type: " + deviceTypeName
-          + ". Use one of: schoepentoeter, inlet_vane, inlet_cyclone, "
-          + "deflector_plate, half_pipe, impingement_plate, none");
+      throw new IllegalArgumentException(
+	  "Unknown inlet device type: " + deviceTypeName + ". Use one of: schoepentoeter, inlet_vane, inlet_cyclone, "
+	      + "deflector_plate, half_pipe, impingement_plate, none");
     }
     setInletDeviceType(matched);
   }
@@ -378,10 +372,9 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
    *
    * @param numberOfCyclones number of demisting cyclones
    * @param cycloneDiameterM demisting cyclone inner diameter [m]
-   * @param deckElevationM cyclone deck elevation from bottom of vessel [m]
+   * @param deckElevationM   cyclone deck elevation from bottom of vessel [m]
    */
-  public void setDemistingCyclones(int numberOfCyclones, double cycloneDiameterM,
-      double deckElevationM) {
+  public void setDemistingCyclones(int numberOfCyclones, double cycloneDiameterM, double deckElevationM) {
     this.hasDemistingCyclones = true;
     this.numberOfDemistingCyclones = numberOfCyclones;
     this.demistingCycloneDiameterM = cycloneDiameterM;
@@ -393,11 +386,11 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
    *
    * @param numberOfCyclones number of demisting cyclones
    * @param cycloneDiameterM demisting cyclone inner diameter [m]
-   * @param deckElevationM cyclone deck elevation from bottom of vessel [m]
-   * @param cycloneLengthM cyclone tube length [m]
+   * @param deckElevationM   cyclone deck elevation from bottom of vessel [m]
+   * @param cycloneLengthM   cyclone tube length [m]
    */
-  public void setDemistingCyclones(int numberOfCyclones, double cycloneDiameterM,
-      double deckElevationM, double cycloneLengthM) {
+  public void setDemistingCyclones(int numberOfCyclones, double cycloneDiameterM, double deckElevationM,
+      double cycloneLengthM) {
     setDemistingCyclones(numberOfCyclones, cycloneDiameterM, deckElevationM);
     this.cycloneLengthM = cycloneLengthM;
   }
@@ -508,7 +501,7 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
   /**
    * Configures the mesh pad.
    *
-   * @param areaM2 mesh pad area [m2]
+   * @param areaM2      mesh pad area [m2]
    * @param thicknessMm mesh pad thickness [mm]
    */
   public void setMeshPad(double areaM2, double thicknessMm) {
@@ -547,8 +540,8 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
   /**
    * Sets the mesh pad centerline elevation from the bottom tangent line.
    *
-   * @param elevationM mesh pad elevation in m; values less than zero are allowed only for explicit
-   *        project data corrections and will be checked by conformity rules
+   * @param elevationM mesh pad elevation in m; values less than zero are allowed only for explicit project data
+   *                   corrections and will be checked by conformity rules
    */
   public void setMeshPadElevationM(double elevationM) {
     this.meshPadElevationM = elevationM;
@@ -620,8 +613,8 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
   /**
    * Sets the inlet device centerline elevation from the bottom tangent line.
    *
-   * @param elevationM inlet device elevation in m; values less than zero are allowed only for
-   *        explicit project data corrections and will be checked by conformity rules
+   * @param elevationM inlet device elevation in m; values less than zero are allowed only for explicit project data
+   *                   corrections and will be checked by conformity rules
    */
   public void setInletDeviceElevationM(double elevationM) {
     this.inletDeviceElevationM = elevationM;
@@ -639,8 +632,8 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
   /**
    * Sets the documented liquid entrainment to the gas outlet for conformity checking.
    *
-   * @param entrainmentLitresPerMSm3 liquid entrainment in litre/MSm3; use {@link Double#NaN} when
-   *        project data are unavailable
+   * @param entrainmentLitresPerMSm3 liquid entrainment in litre/MSm3; use {@link Double#NaN} when project data are
+   *                                 unavailable
    */
   public void setLiquidEntrainmentLitresPerMSm3(double entrainmentLitresPerMSm3) {
     this.liquidEntrainmentLitresPerMSm3 = entrainmentLitresPerMSm3;
@@ -714,8 +707,8 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
   }
 
   /**
-   * Sets the LA(H) — High level alarm elevation from BTL. Required when demisting cyclones are
-   * present for drainage height conformity check.
+   * Sets the LA(H) — High level alarm elevation from BTL. Required when demisting cyclones are present for drainage
+   * height conformity check.
    *
    * @param elevationM LA(H) elevation [m]
    */
@@ -778,8 +771,7 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
   // ============================================================================
 
   /**
-   * {@inheritDoc} Overrides to populate scrubber-specific parameters (internals, elevations) into
-   * the JSON response.
+   * {@inheritDoc} Overrides to populate scrubber-specific parameters (internals, elevations) into the JSON response.
    */
   @Override
   public SeparatorMechanicalDesignResponse getResponse() {
@@ -808,7 +800,7 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
       mesh.put("area_m2", meshPadAreaM2);
       mesh.put("thickness_mm", meshPadThicknessMm);
       if (meshPadElevationM > 0) {
-        mesh.put("elevation_mm", meshPadElevationM * 1000.0);
+	mesh.put("elevation_mm", meshPadElevationM * 1000.0);
       }
       resp.addSpecificParameter("meshPad", mesh);
     }
@@ -873,8 +865,8 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
   }
 
   /**
-   * Generates a formatted text report of the scrubber mechanical design configuration. Shows vessel
-   * geometry, internals, elevations, and liquid levels in a readable table format.
+   * Generates a formatted text report of the scrubber mechanical design configuration. Shows vessel geometry,
+   * internals, elevations, and liquid levels in a readable table format.
    *
    * @return formatted text report string
    */
@@ -901,8 +893,7 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
     appendRow(sb, "Orientation", sep.getOrientation());
     appendRow(sb, "Inlet Nozzle ID", String.format("%.1f mm", getInletNozzleID() * 1000.0));
     if (getGasOutletNozzleID() > 0) {
-      appendRow(sb, "Gas Outlet Nozzle ID",
-          String.format("%.1f mm", getGasOutletNozzleID() * 1000.0));
+      appendRow(sb, "Gas Outlet Nozzle ID", String.format("%.1f mm", getGasOutletNozzleID() * 1000.0));
     }
 
     // Internals
@@ -928,10 +919,8 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
     if (hasDemistingCyclones) {
       appendRow(sb, "Demisting Cyclones", "Installed");
       appendRow(sb, "  Count", String.valueOf(numberOfDemistingCyclones));
-      appendRow(sb, "  Cyclone Diameter",
-          String.format("%.0f mm", demistingCycloneDiameterM * 1000.0));
-      appendRow(sb, "  Deck Elevation (BTL)",
-          String.format("%.0f mm", cycloneDeckElevationM * 1000.0));
+      appendRow(sb, "  Cyclone Diameter", String.format("%.0f mm", demistingCycloneDiameterM * 1000.0));
+      appendRow(sb, "  Deck Elevation (BTL)", String.format("%.0f mm", cycloneDeckElevationM * 1000.0));
       appendRow(sb, "  Euler Number", String.format("%.1f", cycloneEulerNumber));
       appendRow(sb, "  DP to Drain", String.format("%.0f %%", cycloneDpToDrainPct));
     }
@@ -966,8 +955,7 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
       sb.append(sep2).append('\n');
       double drainageHeight = (cycloneDeckElevationM - laHHElevationM) * 1000.0;
       appendRow(sb, "Reference Level", "LA(HH) (most conservative)");
-      appendRow(sb, "Cyclone Deck Bottom",
-          String.format("%.0f mm", cycloneDeckElevationM * 1000.0));
+      appendRow(sb, "Cyclone Deck Bottom", String.format("%.0f mm", cycloneDeckElevationM * 1000.0));
       appendRow(sb, "LA(HH)", String.format("%.0f mm", laHHElevationM * 1000.0));
       appendRow(sb, "Height Available", String.format("%.0f mm", drainageHeight));
     }
@@ -980,7 +968,7 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
   /**
    * Appends a formatted row to the text report.
    *
-   * @param sb the StringBuilder to append to
+   * @param sb    the StringBuilder to append to
    * @param label the row label
    * @param value the row value
    */

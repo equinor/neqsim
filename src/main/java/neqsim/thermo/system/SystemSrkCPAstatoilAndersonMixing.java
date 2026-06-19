@@ -8,9 +8,9 @@ import neqsim.thermo.phase.PhaseSrkCPAandersonMixing;
  * Thermodynamic system using the Anderson-accelerated nested CPA-EOS algorithm.
  *
  * <p>
- * Retains the Halley outer loop for molar volume but replaces the inner successive substitution
- * loop for site fractions with Anderson acceleration (mixing depth m=3), achieving superlinear
- * convergence in 3-5 inner iterations instead of 5-15 for plain SS.
+ * Retains the Halley outer loop for molar volume but replaces the inner successive substitution loop for site fractions
+ * with Anderson acceleration (mixing depth m=3), achieving superlinear convergence in 3-5 inner iterations instead of
+ * 5-15 for plain SS.
  * </p>
  *
  * @author Even Solbraa
@@ -40,8 +40,8 @@ public class SystemSrkCPAstatoilAndersonMixing extends SystemSrkCPAstatoil {
   /**
    * Constructor of a fluid object using the Anderson-accelerated CPA-EoS.
    *
-   * @param T The temperature in unit Kelvin
-   * @param P The pressure in unit bara (absolute pressure)
+   * @param T              The temperature in unit Kelvin
+   * @param P              The pressure in unit bara (absolute pressure)
    * @param checkForSolids Set true to do solid phase check and calculations
    */
   public SystemSrkCPAstatoilAndersonMixing(double T, double P, boolean checkForSolids) {

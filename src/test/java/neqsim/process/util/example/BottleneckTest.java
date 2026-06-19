@@ -38,10 +38,8 @@ public class BottleneckTest {
     processSystem.run();
 
     // Check utilization
-    logger.info(
-        "Compressor utilization: " + compressor.getCapacityDuty() / compressor.getCapacityMax());
-    logger
-        .info("Separator utilization: " + separator.getCapacityDuty() / separator.getCapacityMax());
+    logger.info("Compressor utilization: " + compressor.getCapacityDuty() / compressor.getCapacityMax());
+    logger.info("Separator utilization: " + separator.getCapacityDuty() / separator.getCapacityMax());
 
     // The compressor should be the bottleneck because we set a very low max power
     neqsim.process.equipment.ProcessEquipmentInterface bottleneck = processSystem.getBottleneck();

@@ -31,8 +31,7 @@ public class CachadinaInfluenceParameterTest {
     system.init(0);
     system.init(3);
 
-    double infParam =
-        system.getPhase(0).getComponent(0).getSurfaceTenisionInfluenceParameter(150.0);
+    double infParam = system.getPhase(0).getComponent(0).getSurfaceTenisionInfluenceParameter(150.0);
     assertTrue(infParam > 0, "Default influence parameter should be positive");
   }
 
@@ -51,8 +50,7 @@ public class CachadinaInfluenceParameterTest {
     comp.setInfluenceParameterModel(1);
 
     double infParam = comp.getSurfaceTenisionInfluenceParameter(120.0);
-    assertTrue(infParam > 0,
-        "Cachadina influence parameter should be positive at T=120K for methane");
+    assertTrue(infParam > 0, "Cachadina influence parameter should be positive at T=120K for methane");
 
     // Verify order of magnitude is similar to default model
     comp.setInfluenceParameterModel(0);
@@ -60,7 +58,7 @@ public class CachadinaInfluenceParameterTest {
 
     double ratio = infParam / defaultInfParam;
     assertTrue(ratio > 0.3 && ratio < 3.0,
-        "Cachadina model should give same order of magnitude as default. Ratio=" + ratio);
+	"Cachadina model should give same order of magnitude as default. Ratio=" + ratio);
   }
 
   /**
@@ -103,9 +101,9 @@ public class CachadinaInfluenceParameterTest {
     system.init(0);
     for (int p = 0; p < system.getNumberOfPhases(); p++) {
       for (int i = 0; i < system.getPhase(p).getNumberOfComponents(); i++) {
-        if (system.getPhase(p).getComponent(i) instanceof ComponentPR) {
-          ((ComponentPR) system.getPhase(p).getComponent(i)).setInfluenceParameterModel(1);
-        }
+	if (system.getPhase(p).getComponent(i) instanceof ComponentPR) {
+	  ((ComponentPR) system.getPhase(p).getComponent(i)).setInfluenceParameterModel(1);
+	}
       }
     }
 
@@ -119,8 +117,7 @@ public class CachadinaInfluenceParameterTest {
       double ift = system.getInterphaseProperties().getSurfaceTension(0, 1);
       // n-pentane at 20 C: experimental IFT ~ 0.0157 N/m (NIST)
       assertTrue(ift > 0.005 && ift < 0.030,
-          "GT IFT for n-pentane at 20C should be in physical range (5-30 mN/m). Got: "
-              + ift * 1000.0 + " mN/m");
+	  "GT IFT for n-pentane at 20C should be in physical range (5-30 mN/m). Got: " + ift * 1000.0 + " mN/m");
     }
   }
 
@@ -148,8 +145,8 @@ public class CachadinaInfluenceParameterTest {
   }
 
   /**
-   * Test that temperature dependence has correct trend: influence parameter should generally
-   * decrease as temperature approaches critical point.
+   * Test that temperature dependence has correct trend: influence parameter should generally decrease as temperature
+   * approaches critical point.
    */
   @Test
   void testTemperatureTrend() {

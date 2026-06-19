@@ -52,8 +52,8 @@ public class CompressorOperatingPointTest {
   }
 
   /**
-   * Without a compressor chart the operating point should still be complete, report
-   * {@code chartActive=false}, {@code withinChart=true} and {@code limitingConstraint="no_chart"}.
+   * Without a compressor chart the operating point should still be complete, report {@code chartActive=false},
+   * {@code withinChart=true} and {@code limitingConstraint="no_chart"}.
    */
   @Test
   public void testOperatingPointWithoutChart() {
@@ -63,8 +63,7 @@ public class CompressorOperatingPointTest {
     assertEquals("1.0", point.get("schemaVersion"));
     assertEquals("test compressor", point.get("name"));
     assertEquals(Boolean.FALSE, point.get("chartActive"), "No chart was set");
-    assertEquals(Boolean.TRUE, point.get("withinChart"),
-        "Without a chart there is no map limit to violate");
+    assertEquals(Boolean.TRUE, point.get("withinChart"), "Without a chart there is no map limit to violate");
     assertEquals("no_chart", point.get("limitingConstraint"));
 
     double flow = ((Number) point.get("flow_m3hr")).doubleValue();
@@ -98,8 +97,8 @@ public class CompressorOperatingPointTest {
   }
 
   /**
-   * With a generated compressor chart the chart-related fields should be active, the surge distance
-   * should be finite, and {@code withinChart} should be consistent with {@code limitingConstraint}.
+   * With a generated compressor chart the chart-related fields should be active, the surge distance should be finite,
+   * and {@code withinChart} should be consistent with {@code limitingConstraint}.
    */
   @Test
   public void testOperatingPointWithChart() {
@@ -121,7 +120,7 @@ public class CompressorOperatingPointTest {
       assertEquals("none", constraint, "withinChart should imply no limiting constraint");
     } else {
       assertTrue("surge".equals(constraint) || "stonewall".equals(constraint),
-          "A constrained point must be surge or stonewall, was " + constraint);
+	  "A constrained point must be surge or stonewall, was " + constraint);
     }
   }
 }

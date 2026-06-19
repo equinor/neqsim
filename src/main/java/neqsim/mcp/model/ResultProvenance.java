@@ -8,8 +8,8 @@ import java.util.List;
  * Provenance metadata for every MCP calculation result.
  *
  * <p>
- * Provides trust-relevant context that agents and humans need to assess the credibility of a
- * calculation result. Every MCP response envelope should include a provenance block answering:
+ * Provides trust-relevant context that agents and humans need to assess the credibility of a calculation result. Every
+ * MCP response envelope should include a provenance block answering:
  * </p>
  * <ul>
  * <li>Which thermodynamic model (EOS) was used?</li>
@@ -21,9 +21,9 @@ import java.util.List;
  * </ul>
  *
  * <p>
- * This addresses the need for a formal trust model in agentic engineering workflows. An agent
- * consuming NeqSim results can inspect provenance to decide whether to present results as-is, add
- * caveats, or request a more rigorous calculation.
+ * This addresses the need for a formal trust model in agentic engineering workflows. An agent consuming NeqSim results
+ * can inspect provenance to decide whether to present results as-is, add caveats, or request a more rigorous
+ * calculation.
  * </p>
  *
  * @author Even Solbraa
@@ -102,7 +102,7 @@ public class ResultProvenance {
      * Creates convergence metadata.
      *
      * @param converged true if the calculation converged
-     * @param message human-readable convergence summary
+     * @param message   human-readable convergence summary
      */
     public Convergence(boolean converged, String message) {
       this.converged = converged;
@@ -131,8 +131,8 @@ public class ResultProvenance {
   /**
    * Creates a provenance for a flash calculation.
    *
-   * @param model the EOS model name (e.g., "SRK", "PR", "CPA")
-   * @param flashType the flash type (e.g., "TP", "PH", "dewPointT")
+   * @param model      the EOS model name (e.g., "SRK", "PR", "CPA")
+   * @param flashType  the flash type (e.g., "TP", "PH", "dewPointT")
    * @param mixingRule the mixing rule used
    * @return the configured provenance
    */
@@ -165,8 +165,8 @@ public class ResultProvenance {
   /**
    * Creates a provenance for a process simulation.
    *
-   * @param model the EOS model name
-   * @param mixingRule the mixing rule used
+   * @param model          the EOS model name
+   * @param mixingRule     the mixing rule used
    * @param equipmentCount the number of equipment units
    * @return the configured provenance
    */
@@ -185,13 +185,12 @@ public class ResultProvenance {
   /**
    * Creates a provenance for a property table calculation.
    *
-   * @param model the EOS model name
+   * @param model         the EOS model name
    * @param sweepVariable the variable being swept (e.g., "temperature", "pressure")
-   * @param pointCount the number of data points
+   * @param pointCount    the number of data points
    * @return the configured provenance
    */
-  public static ResultProvenance forPropertyTable(String model, String sweepVariable,
-      int pointCount) {
+  public static ResultProvenance forPropertyTable(String model, String sweepVariable, int pointCount) {
     ResultProvenance p = new ResultProvenance();
     p.setThermodynamicModel(model);
     p.calculationType = "property table (" + sweepVariable + " sweep, " + pointCount + " points)";
@@ -222,22 +221,21 @@ public class ResultProvenance {
   /**
    * Creates a provenance for a batch calculation.
    *
-   * @param model the EOS model name
-   * @param totalCases the total number of cases in the batch
+   * @param model          the EOS model name
+   * @param totalCases     the total number of cases in the batch
    * @param succeededCases the number of cases that succeeded
    * @return the configured provenance
    */
   public static ResultProvenance forBatch(String model, int totalCases, int succeededCases) {
     ResultProvenance p = new ResultProvenance();
     p.setThermodynamicModel(model);
-    p.calculationType =
-        "batch flash calculation (" + totalCases + " cases, " + succeededCases + " succeeded)";
+    p.calculationType = "batch flash calculation (" + totalCases + " cases, " + succeededCases + " succeeded)";
     p.mixingRule = "classic";
     p.addAssumption("Each case is an independent flash calculation");
     p.addAssumption("Cases share the base fluid definition unless overridden");
     if (succeededCases < totalCases) {
-      p.addLimitation((totalCases - succeededCases) + " of " + totalCases
-          + " cases failed — check individual" + " case results");
+      p.addLimitation(
+	  (totalCases - succeededCases) + " of " + totalCases + " cases failed — check individual" + " case results");
     }
     return p;
   }
@@ -286,7 +284,7 @@ public class ResultProvenance {
   public void setConverged(boolean converged) {
     this.converged = converged;
     this.convergence = new Convergence(converged,
-        converged ? "Calculation converged" : "Calculation did not converge or returned an error");
+	converged ? "Calculation converged" : "Calculation did not converge or returned an error");
   }
 
   /**

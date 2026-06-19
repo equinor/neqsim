@@ -21,8 +21,8 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Tests for CompressorTrain, CompressorDriver CSV loading, anti-surge in speed-solve mode, and
- * capacity constraint evaluation.
+ * Tests for CompressorTrain, CompressorDriver CSV loading, anti-surge in speed-solve mode, and capacity constraint
+ * evaluation.
  *
  * @author NeqSim Development Team
  * @version 1.0
@@ -41,8 +41,7 @@ public class CompressorTrainTest {
   }
 
   /**
-   * Test that CompressorTrain creates and runs correctly with default settings (scrubber +
-   * compressor + aftercooler).
+   * Test that CompressorTrain creates and runs correctly with default settings (scrubber + compressor + aftercooler).
    */
   @Test
   public void testCompressorTrainBasicRun() {
@@ -93,10 +92,8 @@ public class CompressorTrainTest {
     train.run();
 
     assertTrue(train.getPower("kW") > 0, "Should produce positive power");
-    assertTrue(
-        train.getInletScrubber() == null
-            || !train.getInternalEquipment().contains(train.getInletScrubber()),
-        "Scrubber should not be in internal equipment when disabled");
+    assertTrue(train.getInletScrubber() == null || !train.getInternalEquipment().contains(train.getInletScrubber()),
+	"Scrubber should not be in internal equipment when disabled");
   }
 
   /**
@@ -238,7 +235,7 @@ public class CompressorTrainTest {
 
     double powerAt6250 = driver.getMaxAvailablePowerAtSpeed(6250.0);
     assertTrue(powerAt6250 > 32000 && powerAt6250 < 37000,
-        "Power at 6250 RPM should be between 32000 and 37000 kW: " + powerAt6250);
+	"Power at 6250 RPM should be between 32000 and 37000 kW: " + powerAt6250);
   }
 
   /**
@@ -279,17 +276,16 @@ public class CompressorTrainTest {
     writer.close();
 
     CompressorDriver driver = new CompressorDriver(DriverType.ELECTRIC_MOTOR, 25000.0);
-    assertThrows(IllegalArgumentException.class,
-        () -> driver.loadMaxPowerCurveFromCsv(csvFile.getAbsolutePath(), "kW"),
-        "Should throw for insufficient data points");
+    assertThrows(IllegalArgumentException.class, () -> driver.loadMaxPowerCurveFromCsv(csvFile.getAbsolutePath(), "kW"),
+	"Should throw for insufficient data points");
   }
 
   // --- Anti-Surge in Speed Solve Mode Test ---
 
   /**
-   * Test that anti-surge is properly checked in speed-solve mode. This verifies that when the
-   * compressor is solving for speed (to meet a target outlet pressure) and the operating point
-   * falls below the surge line, the anti-surge logic activates and increases the flow.
+   * Test that anti-surge is properly checked in speed-solve mode. This verifies that when the compressor is solving for
+   * speed (to meet a target outlet pressure) and the operating point falls below the surge line, the anti-surge logic
+   * activates and increases the flow.
    */
   @Test
   public void testAntiSurgeInSpeedSolveMode() {
@@ -367,8 +363,8 @@ public class CompressorTrainTest {
     boolean hasSurgeMargin = false;
     for (String key : constraints.keySet()) {
       if (key.contains("surge") || key.contains("SURGE")) {
-        hasSurgeMargin = true;
-        break;
+	hasSurgeMargin = true;
+	break;
       }
     }
     assertTrue(hasSurgeMargin, "Should have a surge margin constraint");
@@ -376,6 +372,6 @@ public class CompressorTrainTest {
     // Max utilization should be >= 0
     double maxUtil = comp.getMaxUtilization();
     assertTrue(maxUtil >= 0.0 && !Double.isNaN(maxUtil),
-        "Max utilization should be a valid non-negative number: " + maxUtil);
+	"Max utilization should be a valid non-negative number: " + maxUtil);
   }
 }

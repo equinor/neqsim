@@ -29,9 +29,7 @@ public interface FlowNodeInterface extends Cloneable {
    * getFluidBoundary.
    * </p>
    *
-   * @return a
-   *         {@link neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.FluidBoundaryInterface}
-   *         object
+   * @return a {@link neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.FluidBoundaryInterface} object
    */
   public FluidBoundaryInterface getFluidBoundary();
 
@@ -157,7 +155,7 @@ public interface FlowNodeInterface extends Cloneable {
    * </p>
    *
    * @param schmidtNumber a double
-   * @param phase a int
+   * @param phase         a int
    * @return a double
    */
   public double calcStantonNumber(double schmidtNumber, int phase);
@@ -177,9 +175,9 @@ public interface FlowNodeInterface extends Cloneable {
    * write.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
+   * @param name     a {@link java.lang.String} object
    * @param filename a {@link java.lang.String} object
-   * @param newfile a boolean
+   * @param newfile  a boolean
    */
   public void write(String name, String filename, boolean newfile);
 
@@ -200,7 +198,7 @@ public interface FlowNodeInterface extends Cloneable {
    * </p>
    *
    * @param phase a int
-   * @param vel a double
+   * @param vel   a double
    */
   public void setVelocity(int phase, double vel);
 
@@ -218,7 +216,7 @@ public interface FlowNodeInterface extends Cloneable {
    * getSchmidtNumber.
    * </p>
    *
-   * @param phase a int
+   * @param phase      a int
    * @param component1 a int
    * @param component2 a int
    * @return a double
@@ -230,7 +228,7 @@ public interface FlowNodeInterface extends Cloneable {
    * getEffectiveSchmidtNumber.
    * </p>
    *
-   * @param phase a int
+   * @param phase     a int
    * @param component a int
    * @return a double
    */
@@ -327,7 +325,7 @@ public interface FlowNodeInterface extends Cloneable {
    * </p>
    *
    * @param phase a int
-   * @param vel a double
+   * @param vel   a double
    */
   public void setVelocityOut(int phase, double vel);
 
@@ -348,7 +346,7 @@ public interface FlowNodeInterface extends Cloneable {
    * </p>
    *
    * @param phase a int
-   * @param vel a {@link neqsim.util.util.DoubleCloneable} object
+   * @param vel   a {@link neqsim.util.util.DoubleCloneable} object
    */
   public void setVelocityOut(int phase, DoubleCloneable vel);
 
@@ -397,7 +395,7 @@ public interface FlowNodeInterface extends Cloneable {
    * </p>
    *
    * @param phase a int
-   * @param frac a double
+   * @param frac  a double
    */
   public void setPhaseFraction(int phase, double frac);
 
@@ -520,7 +518,7 @@ public interface FlowNodeInterface extends Cloneable {
    * </p>
    *
    * @param phase a int
-   * @param vel a double
+   * @param vel   a double
    */
   public void setVelocityIn(int phase, double vel);
 
@@ -541,7 +539,7 @@ public interface FlowNodeInterface extends Cloneable {
    * </p>
    *
    * @param phase a int
-   * @param vel a {@link neqsim.util.util.DoubleCloneable} object
+   * @param vel   a {@link neqsim.util.util.DoubleCloneable} object
    */
   public void setVelocityIn(int phase, DoubleCloneable vel);
 
@@ -558,7 +556,7 @@ public interface FlowNodeInterface extends Cloneable {
    * </p>
    *
    * @param schmidtNumber a double
-   * @param phase a int
+   * @param phase         a int
    * @return a double
    */
   public double calcSherwoodNumber(double schmidtNumber, int phase);
@@ -569,7 +567,7 @@ public interface FlowNodeInterface extends Cloneable {
    * </p>
    *
    * @param prandtlNumber a double
-   * @param phase a int
+   * @param phase         a int
    * @return a double
    */
   public double calcNusseltNumber(double prandtlNumber, int phase);
@@ -605,8 +603,7 @@ public interface FlowNodeInterface extends Cloneable {
    * setGeometryDefinitionInterface.
    * </p>
    *
-   * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface}
-   *        object
+   * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
    */
   public void setGeometryDefinitionInterface(GeometryDefinitionInterface pipe);
 
@@ -662,7 +659,7 @@ public interface FlowNodeInterface extends Cloneable {
    * </p>
    *
    * @param flowDirection a int
-   * @param i a int
+   * @param i             a int
    */
   public void setFlowDirection(int flowDirection, int i);
 
@@ -737,7 +734,7 @@ public interface FlowNodeInterface extends Cloneable {
   /**
    * Specify wall friction factor for a given phase. Set to null to reset.
    *
-   * @param phase Index to phase to set wall friction factor for.
+   * @param phase          Index to phase to set wall friction factor for.
    * @param frictionFactor Friction factor to use for a given phase or null to reset.
    */
   public void setWallFrictionFactor(int phase, double frictionFactor);

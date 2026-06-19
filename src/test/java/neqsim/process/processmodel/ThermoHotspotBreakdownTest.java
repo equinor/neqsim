@@ -8,8 +8,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * Break down the Compressor hot-path into discrete phases and measure serial vs parallel scaling
- * for each. This isolates whether the slowdown is due to:
+ * Break down the Compressor hot-path into discrete phases and measure serial vs parallel scaling for each. This
+ * isolates whether the slowdown is due to:
  *
  * <ul>
  * <li>A) Allocation pressure (clone / new ThermodynamicOperations)</li>
@@ -20,7 +20,6 @@ import org.apache.logging.log4j.Logger;
  */
 public class ThermoHotspotBreakdownTest {
   private static final Logger logger = LogManager.getLogger(ThermoHotspotBreakdownTest.class);
-
 
   private SystemInterface makeHeavyFluid() {
     SystemInterface f = new SystemSrkEos(298.0, 80.0);
@@ -55,7 +54,7 @@ public class ThermoHotspotBreakdownTest {
     long t0 = System.nanoTime();
     for (int i = 0; i < iters; i++) {
       for (SystemInterface s : fluids) {
-        task.run(s);
+	task.run(s);
       }
     }
     return (System.nanoTime() - t0) / (double) iters / 1e6;
@@ -69,16 +68,16 @@ public class ThermoHotspotBreakdownTest {
     for (int i = 0; i < iters; i++) {
       java.util.List<java.util.concurrent.Future<?>> futs = new java.util.ArrayList<>();
       for (final SystemInterface s : fluids) {
-        futs.add(neqsim.util.NeqSimThreadPool.submit(() -> {
-          try {
-            task.run(s);
-          } catch (Exception ex) {
-            throw new RuntimeException(ex);
-          }
-        }));
+	futs.add(neqsim.util.NeqSimThreadPool.submit(() -> {
+	  try {
+	    task.run(s);
+	  } catch (Exception ex) {
+	    throw new RuntimeException(ex);
+	  }
+	}));
       }
       for (java.util.concurrent.Future<?> f : futs) {
-        f.get();
+	f.get();
       }
     }
     return (System.nanoTime() - t0) / (double) iters / 1e6;
@@ -99,57 +98,56 @@ public class ThermoHotspotBreakdownTest {
     }
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "%nCores: %d   N=%d fluids   iters=%d%n",
-        Runtime.getRuntime().availableProcessors(), N, ITERS);
-    logger.printf(org.apache.logging.log4j.Level.INFO, "%-35s %10s %10s %8s%n", "phase",
-        "serial_ms", "par_ms", "speedup");
+	Runtime.getRuntime().availableProcessors(), N, ITERS);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-35s %10s %10s %8s%n", "phase", "serial_ms", "par_ms",
+	"speedup");
     logger.info("---------------------------------------------------------------------");
 
     Task[] tasks = new Task[] {
-        // A: clone only — pure allocation
-        s -> {
-          SystemInterface c = s.clone();
-          if (c.getPressure() < 0) {
-            logger.info("nope");
-          }
-        },
-        // B: clone + init(3) — full EOS init
-        s -> {
-          SystemInterface c = s.clone();
-          c.init(3);
-        },
-        // C: clone + TPflash (no stability)
-        s -> {
-          SystemInterface c = s.clone();
-          c.setMultiPhaseCheck(false);
-          ThermodynamicOperations ops = new ThermodynamicOperations(c);
-          ops.TPflash();
-        },
-        // D: clone + TPflash WITH stability check
-        s -> {
-          SystemInterface c = s.clone();
-          c.setMultiPhaseCheck(true);
-          ThermodynamicOperations ops = new ThermodynamicOperations(c);
-          ops.TPflash();
-        },
-        // E: clone + PSflash (compressor-like, no multiphase)
-        s -> {
-          SystemInterface c = s.clone();
-          c.setMultiPhaseCheck(false);
-          ThermodynamicOperations ops = new ThermodynamicOperations(c);
-          ops.TPflash();
-          double entropy = c.getEntropy();
-          c.setPressure(150.0);
-          ops.PSflash(entropy);
-        }};
-    String[] names =
-        new String[] {"A: clone only", "B: clone + init(3)", "C: clone + TPflash (no stab)",
-            "D: clone + TPflash (with stab)", "E: clone + TPflash + PSflash"};
+	// A: clone only — pure allocation
+	s -> {
+	  SystemInterface c = s.clone();
+	  if (c.getPressure() < 0) {
+	    logger.info("nope");
+	  }
+	},
+	// B: clone + init(3) — full EOS init
+	s -> {
+	  SystemInterface c = s.clone();
+	  c.init(3);
+	},
+	// C: clone + TPflash (no stability)
+	s -> {
+	  SystemInterface c = s.clone();
+	  c.setMultiPhaseCheck(false);
+	  ThermodynamicOperations ops = new ThermodynamicOperations(c);
+	  ops.TPflash();
+	},
+	// D: clone + TPflash WITH stability check
+	s -> {
+	  SystemInterface c = s.clone();
+	  c.setMultiPhaseCheck(true);
+	  ThermodynamicOperations ops = new ThermodynamicOperations(c);
+	  ops.TPflash();
+	},
+	// E: clone + PSflash (compressor-like, no multiphase)
+	s -> {
+	  SystemInterface c = s.clone();
+	  c.setMultiPhaseCheck(false);
+	  ThermodynamicOperations ops = new ThermodynamicOperations(c);
+	  ops.TPflash();
+	  double entropy = c.getEntropy();
+	  c.setPressure(150.0);
+	  ops.PSflash(entropy);
+	} };
+    String[] names = new String[] { "A: clone only", "B: clone + init(3)", "C: clone + TPflash (no stab)",
+	"D: clone + TPflash (with stab)", "E: clone + TPflash + PSflash" };
 
     for (int k = 0; k < tasks.length; k++) {
       double serial = timeSerial(fluids, tasks[k], ITERS);
       double parallel = timeParallel(fluids, tasks[k], ITERS);
-      logger.printf(org.apache.logging.log4j.Level.INFO, "%-35s %10.3f %10.3f %7.2fx%n", names[k],
-          serial, parallel, serial / parallel);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-35s %10.3f %10.3f %7.2fx%n", names[k], serial, parallel,
+	  serial / parallel);
     }
   }
 }

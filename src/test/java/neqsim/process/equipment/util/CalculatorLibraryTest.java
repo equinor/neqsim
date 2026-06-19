@@ -62,8 +62,7 @@ class CalculatorLibraryTest {
 
     calculator.run();
 
-    double dewPoint =
-        source.getHydrocarbonDewPoint("K", target.getThermoSystem().getPressure("bara"), "bara");
+    double dewPoint = source.getHydrocarbonDewPoint("K", target.getThermoSystem().getPressure("bara"), "bara");
     assertEquals(dewPoint, target.getTemperature("K"), 1e-6);
     assertTrue(target.getThermoSystem().getPressure() > 0.0);
   }

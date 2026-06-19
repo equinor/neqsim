@@ -124,9 +124,9 @@ public class UmbilicalMechanicalDesign extends MechanicalDesign {
 
     for (Umbilical.UmbilicalElement element : umbilical.getElements()) {
       if ("hydraulic".equals(element.getElementType())) {
-        maxHydraulicPressure = Math.max(maxHydraulicPressure, element.getDesignPressureBar());
+	maxHydraulicPressure = Math.max(maxHydraulicPressure, element.getDesignPressureBar());
       } else if ("chemical".equals(element.getElementType())) {
-        maxChemicalPressure = Math.max(maxChemicalPressure, element.getDesignPressureBar());
+	maxChemicalPressure = Math.max(maxChemicalPressure, element.getDesignPressureBar());
       }
     }
 
@@ -182,8 +182,7 @@ public class UmbilicalMechanicalDesign extends MechanicalDesign {
     double od = umbilical.getOverallDiameterMm();
 
     // MBR typically 6-8 times OD for steel tube umbilicals
-    double mbrFactor =
-        umbilical.getUmbilicalType() == Umbilical.UmbilicalType.STEEL_TUBE ? 8.0 : 6.0;
+    double mbrFactor = umbilical.getUmbilicalType() == Umbilical.UmbilicalType.STEEL_TUBE ? 8.0 : 6.0;
 
     calculatedMinBendRadius = od * mbrFactor / 1000; // meters
 
@@ -241,7 +240,7 @@ public class UmbilicalMechanicalDesign extends MechanicalDesign {
     boolean isDynamic = false; // Default to static for cost calculation
 
     costEstimator.calculateUmbilicalCost(lengthKm, hydraulicLines, chemicalLines, electricalCables,
-        umbilical.getWaterDepth(), isDynamic);
+	umbilical.getWaterDepth(), isDynamic);
 
     totalCostUSD = costEstimator.getTotalCost();
     equipmentCostUSD = costEstimator.getEquipmentCost();
@@ -278,8 +277,8 @@ public class UmbilicalMechanicalDesign extends MechanicalDesign {
     if (costEstimator == null) {
       costEstimator = new SubseaCostEstimator();
     }
-    return costEstimator.generateBOM("Umbilical",
-        umbilical.getDryWeightPerMeter() * umbilical.getLength() / 1000, umbilical.getWaterDepth());
+    return costEstimator.generateBOM("Umbilical", umbilical.getDryWeightPerMeter() * umbilical.getLength() / 1000,
+	umbilical.getWaterDepth());
   }
 
   /**
@@ -376,8 +375,7 @@ public class UmbilicalMechanicalDesign extends MechanicalDesign {
     JsonObject weight = new JsonObject();
     weight.addProperty("dryWeightPerMeterKgM", umbilical.getDryWeightPerMeter());
     weight.addProperty("submergedWeightPerMeterKgM", umbilical.getSubmergedWeightPerMeter());
-    weight.addProperty("totalDryWeightTonnes",
-        umbilical.getDryWeightPerMeter() * umbilical.getLength() / 1000);
+    weight.addProperty("totalDryWeightTonnes", umbilical.getDryWeightPerMeter() * umbilical.getLength() / 1000);
     jsonObj.add("weight", weight);
 
     // Cost estimation
@@ -393,8 +391,7 @@ public class UmbilicalMechanicalDesign extends MechanicalDesign {
     }
     jsonObj.add("costEstimation", cost);
 
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(jsonObj);
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(jsonObj);
   }
 
   /**

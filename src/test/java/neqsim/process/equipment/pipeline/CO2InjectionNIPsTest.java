@@ -160,8 +160,7 @@ public class CO2InjectionNIPsTest {
     if (nPhases > 1) {
       // If two-phase, enrichment factor should be > 1 for hydrogen
       double enrichment = monitor.getEnrichmentFactor("hydrogen");
-      assertTrue(enrichment > 1.0,
-          "H2 enrichment in gas phase should be > 1 in two-phase: " + enrichment);
+      assertTrue(enrichment > 1.0, "H2 enrichment in gas phase should be > 1 in two-phase: " + enrichment);
 
       // getMeasuredValue should return gas phase H2 in mol%
       double measuredMol = monitor.getMeasuredValue("mol%");
@@ -302,13 +301,12 @@ public class CO2InjectionNIPsTest {
     SystemInterface fluid = co2Fluid.clone();
     fluid.setTemperature(273.15 + 10.0); // 10C, Tr ~ 0.93
     fluid.setPressure(50.0);
-    neqsim.thermodynamicoperations.ThermodynamicOperations ops =
-        new neqsim.thermodynamicoperations.ThermodynamicOperations(fluid);
+    neqsim.thermodynamicoperations.ThermodynamicOperations ops = new neqsim.thermodynamicoperations.ThermodynamicOperations(
+	fluid);
     ops.TPflash();
 
     double factor = CO2FlowCorrections.getLiquidHoldupCorrectionFactor(fluid);
-    assertTrue(factor >= 0.7 && factor <= 1.0,
-        "Holdup correction should be between 0.7 and 1.0: " + factor);
+    assertTrue(factor >= 0.7 && factor <= 1.0, "Holdup correction should be between 0.7 and 1.0: " + factor);
   }
 
   @Test
@@ -318,8 +316,7 @@ public class CO2InjectionNIPsTest {
     fluid.setPressure(90.0);
 
     double factor = CO2FlowCorrections.getFrictionCorrectionFactor(fluid);
-    assertTrue(factor > 0 && factor <= 1.0,
-        "Friction correction should be between 0 and 1: " + factor);
+    assertTrue(factor > 0 && factor <= 1.0, "Friction correction should be between 0 and 1: " + factor);
   }
 
   @Test
@@ -474,8 +471,7 @@ public class CO2InjectionNIPsTest {
 
     analyzer.runFullAnalysis();
 
-    Map<String, Object> phaseScan =
-        (Map<String, Object>) analyzer.getResults().get("phase_boundary_scan");
+    Map<String, Object> phaseScan = (Map<String, Object>) analyzer.getResults().get("phase_boundary_scan");
 
     int twoPhasePoints = (int) phaseScan.get("two_phase_points_found");
     // CO2 with impurities should have a two-phase region

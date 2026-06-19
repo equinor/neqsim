@@ -6,10 +6,9 @@ import java.io.Serializable;
  * Equipment noise prediction per NORSOK S-002 and IEC 61672.
  *
  * <p>
- * Estimates sound power level (SWL) and sound pressure level (SPL) for common process equipment
- * types including valves, compressors, pumps, flares, and piping. Supports aggregate noise
- * assessment at a receiver location. Based on correlations from API 521 (flares), IEC 60534-8-3
- * (valves), and NORSOK S-002 (general equipment).
+ * Estimates sound power level (SWL) and sound pressure level (SPL) for common process equipment types including valves,
+ * compressors, pumps, flares, and piping. Supports aggregate noise assessment at a receiver location. Based on
+ * correlations from API 521 (flares), IEC 60534-8-3 (valves), and NORSOK S-002 (general equipment).
  * </p>
  *
  * @author esol
@@ -34,17 +33,16 @@ public class NoiseAssessment implements Serializable {
   /**
    * Estimate valve noise per IEC 60534-8-3.
    *
-   * @param massFlowKgS mass flow through valve in kg/s
-   * @param upstreamPressureBar upstream pressure in bara
+   * @param massFlowKgS           mass flow through valve in kg/s
+   * @param upstreamPressureBar   upstream pressure in bara
    * @param downstreamPressureBar downstream pressure in bara
-   * @param molecularWeight molecular weight in kg/kmol
-   * @param temperatureK temperature in K
-   * @param pipeDiameterM downstream pipe diameter in meters
+   * @param molecularWeight       molecular weight in kg/kmol
+   * @param temperatureK          temperature in K
+   * @param pipeDiameterM         downstream pipe diameter in meters
    * @return sound pressure level at 1m downstream in dB(A)
    */
-  public static double valveNoise(double massFlowKgS, double upstreamPressureBar,
-      double downstreamPressureBar, double molecularWeight, double temperatureK,
-      double pipeDiameterM) {
+  public static double valveNoise(double massFlowKgS, double upstreamPressureBar, double downstreamPressureBar,
+      double molecularWeight, double temperatureK, double pipeDiameterM) {
     double pressureRatio = upstreamPressureBar / Math.max(downstreamPressureBar, 0.01);
 
     // Simplified IEC 60534-8-3 correlation
@@ -76,7 +74,7 @@ public class NoiseAssessment implements Serializable {
   /**
    * Estimate compressor noise per NORSOK S-002 / API 617 guidelines.
    *
-   * @param powerKW shaft power in kW
+   * @param powerKW        shaft power in kW
    * @param compressorType "CENTRIFUGAL", "RECIPROCATING", or "SCREW"
    * @return sound pressure level at 1m in dB(A)
    */
@@ -98,7 +96,7 @@ public class NoiseAssessment implements Serializable {
   /**
    * Estimate pump noise.
    *
-   * @param powerKW pump power in kW
+   * @param powerKW  pump power in kW
    * @param pumpType "CENTRIFUGAL" or "POSITIVE_DISPLACEMENT"
    * @return sound pressure level at 1m in dB(A)
    */
@@ -115,13 +113,12 @@ public class NoiseAssessment implements Serializable {
   /**
    * Estimate flare noise per API 521.
    *
-   * @param heatReleaseMW total heat release in MW
-   * @param tipDiameterM flare tip diameter in meters
+   * @param heatReleaseMW  total heat release in MW
+   * @param tipDiameterM   flare tip diameter in meters
    * @param exitVelocityMS exit gas velocity in m/s
    * @return sound pressure level at 100m in dB(A)
    */
-  public static double flareNoise(double heatReleaseMW, double tipDiameterM,
-      double exitVelocityMS) {
+  public static double flareNoise(double heatReleaseMW, double tipDiameterM, double exitVelocityMS) {
     // API 521 correlation: Lw = 119.054 + 23.8 * log10(Uj * D) (combustion noise)
     // where Uj = exit velocity in ft/s, D = diameter in feet
     double uj_ft = exitVelocityMS * 3.2808;
@@ -131,10 +128,9 @@ public class NoiseAssessment implements Serializable {
     // Jet noise: Lw = 126.154 + 10 * log10(D^2 * Uj^4 * rho / c^4)
     // Simplified: dominates at high velocities
     double lwJet = 86.0 + 40.0 * Math.log10(Math.max(exitVelocityMS, 1.0))
-        + 20.0 * Math.log10(Math.max(tipDiameterM, 0.01));
+	+ 20.0 * Math.log10(Math.max(tipDiameterM, 0.01));
 
-    double totalLw =
-        10.0 * Math.log10(Math.pow(10.0, lwCombustion / 10.0) + Math.pow(10.0, lwJet / 10.0));
+    double totalLw = 10.0 * Math.log10(Math.pow(10.0, lwCombustion / 10.0) + Math.pow(10.0, lwJet / 10.0));
 
     // SPL at 100m (spherical radiation + atmospheric absorption)
     double spl100m = totalLw - 20.0 * Math.log10(100.0) - 10.0 * Math.log10(4.0 * Math.PI);
@@ -162,7 +158,7 @@ public class NoiseAssessment implements Serializable {
   /**
    * Estimate SPL at a given distance from a known SPL at 1m.
    *
-   * @param spl1m SPL at 1 meter in dB(A)
+   * @param spl1m     SPL at 1 meter in dB(A)
    * @param distanceM distance to receiver in meters
    * @return SPL at the distance in dB(A)
    */
@@ -187,30 +183,27 @@ public class NoiseAssessment implements Serializable {
   /**
    * ISO 9613-2 standard octave-band centre frequencies in Hz.
    */
-  private static final double[] OCTAVE_BANDS =
-      {63.0, 125.0, 250.0, 500.0, 1000.0, 2000.0, 4000.0, 8000.0};
+  private static final double[] OCTAVE_BANDS = { 63.0, 125.0, 250.0, 500.0, 1000.0, 2000.0, 4000.0, 8000.0 };
 
   /**
    * A-weighting corrections for the standard octave bands in dB.
    */
-  private static final double[] A_WEIGHT = {-26.2, -16.1, -8.6, -3.2, 0.0, 1.2, 1.0, -1.1};
+  private static final double[] A_WEIGHT = { -26.2, -16.1, -8.6, -3.2, 0.0, 1.2, 1.0, -1.1 };
 
   /**
    * Calculate atmospheric absorption coefficient per ISO 9613-1.
    *
    * <p>
-   * The method implements the simplified broadband formula from ISO 9613-1 Annex B for standard
-   * conditions (20 deg C, 70% RH, 101.325 kPa). For more precise work, use the full
-   * temperature-humidity-dependent model.
+   * The method implements the simplified broadband formula from ISO 9613-1 Annex B for standard conditions (20 deg C,
+   * 70% RH, 101.325 kPa). For more precise work, use the full temperature-humidity-dependent model.
    * </p>
    *
-   * @param frequencyHz octave band centre frequency in Hz
-   * @param temperatureC ambient temperature in Celsius
+   * @param frequencyHz         octave band centre frequency in Hz
+   * @param temperatureC        ambient temperature in Celsius
    * @param relativeHumidityPct relative humidity in percent
    * @return atmospheric absorption coefficient in dB/m
    */
-  public static double atmosphericAbsorption(double frequencyHz, double temperatureC,
-      double relativeHumidityPct) {
+  public static double atmosphericAbsorption(double frequencyHz, double temperatureC, double relativeHumidityPct) {
     // Simplified ISO 9613-1: alpha = 8.686 * f^2 * (1.84e-11 * (P_ref/P) * (T/T_ref)^0.5
     // + (T/T_ref)^(-5/2) * relaxation terms)
     // Using reference lookup values for standard atmosphere
@@ -219,16 +212,15 @@ public class NoiseAssessment implements Serializable {
     double humidityFraction = relativeHumidityPct / 100.0;
 
     // Oxygen and nitrogen relaxation frequencies (simplified)
-    double frO =
-        24.0 + 4.04e4 * humidityFraction * (0.02 + humidityFraction) / (0.391 + humidityFraction);
-    double frN = Math.pow(tempRatio, -0.5) * (9.0
-        + 280.0 * humidityFraction * Math.exp(-4.170 * (Math.pow(tempRatio, -1.0 / 3.0) - 1.0)));
+    double frO = 24.0 + 4.04e4 * humidityFraction * (0.02 + humidityFraction) / (0.391 + humidityFraction);
+    double frN = Math.pow(tempRatio, -0.5)
+	* (9.0 + 280.0 * humidityFraction * Math.exp(-4.170 * (Math.pow(tempRatio, -1.0 / 3.0) - 1.0)));
 
     double f2 = frequencyHz * frequencyHz;
     double alpha = 8.686 * f2
-        * (1.84e-11 / Math.sqrt(tempRatio)
-            + Math.pow(tempRatio, -2.5) * (0.01275 * Math.exp(-2239.1 / tempK) / (frO + f2 / frO)
-                + 0.1068 * Math.exp(-3352.0 / tempK) / (frN + f2 / frN)));
+	* (1.84e-11 / Math.sqrt(tempRatio)
+	    + Math.pow(tempRatio, -2.5) * (0.01275 * Math.exp(-2239.1 / tempK) / (frO + f2 / frO)
+		+ 0.1068 * Math.exp(-3352.0 / tempK) / (frN + f2 / frN)));
     return alpha; // dB/m
   }
 
@@ -236,18 +228,18 @@ public class NoiseAssessment implements Serializable {
    * Calculate far-field SPL with atmospheric absorption per ISO 9613-2.
    *
    * <p>
-   * Extends the basic geometric divergence model with frequency-dependent atmospheric absorption
-   * and ground effect. The method uses the standard octave-band approach with A-weighting.
+   * Extends the basic geometric divergence model with frequency-dependent atmospheric absorption and ground effect. The
+   * method uses the standard octave-band approach with A-weighting.
    * </p>
    *
-   * @param soundPowerLevelDbA overall A-weighted sound power level in dB(A)
-   * @param distanceM distance from source in meters
-   * @param temperatureC ambient temperature in Celsius
+   * @param soundPowerLevelDbA  overall A-weighted sound power level in dB(A)
+   * @param distanceM           distance from source in meters
+   * @param temperatureC        ambient temperature in Celsius
    * @param relativeHumidityPct relative humidity in percent
    * @return A-weighted SPL at distance including atmospheric absorption, in dB(A)
    */
-  public static double splAtDistanceWithAttenuation(double soundPowerLevelDbA, double distanceM,
-      double temperatureC, double relativeHumidityPct) {
+  public static double splAtDistanceWithAttenuation(double soundPowerLevelDbA, double distanceM, double temperatureC,
+      double relativeHumidityPct) {
     if (distanceM <= 0) {
       return soundPowerLevelDbA;
     }
@@ -266,18 +258,18 @@ public class NoiseAssessment implements Serializable {
    * Calculate octave-band SPL at distance with frequency-dependent atmospheric absorption.
    *
    * <p>
-   * Distributes the total sound power across octave bands (assuming flat spectrum), applies
-   * frequency-dependent absorption and A-weighting, then sums to get the overall result.
+   * Distributes the total sound power across octave bands (assuming flat spectrum), applies frequency-dependent
+   * absorption and A-weighting, then sums to get the overall result.
    * </p>
    *
-   * @param soundPowerLevelDb overall unweighted sound power level in dB
-   * @param distanceM distance from source in meters
-   * @param temperatureC ambient temperature in Celsius
+   * @param soundPowerLevelDb   overall unweighted sound power level in dB
+   * @param distanceM           distance from source in meters
+   * @param temperatureC        ambient temperature in Celsius
    * @param relativeHumidityPct relative humidity in percent
    * @return A-weighted SPL at distance in dB(A)
    */
-  public static double splAtDistanceOctaveBand(double soundPowerLevelDb, double distanceM,
-      double temperatureC, double relativeHumidityPct) {
+  public static double splAtDistanceOctaveBand(double soundPowerLevelDb, double distanceM, double temperatureC,
+      double relativeHumidityPct) {
     if (distanceM <= 0) {
       return soundPowerLevelDb;
     }

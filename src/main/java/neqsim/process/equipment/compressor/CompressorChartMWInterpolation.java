@@ -11,20 +11,18 @@ import neqsim.process.equipment.stream.StreamInterface;
  * Compressor chart with multiple performance maps at different molecular weights.
  *
  * <p>
- * This class allows storing multiple compressor maps, each measured at a different molecular weight
- * (or gas composition), and interpolates between them based on the actual operating molecular
- * weight.
+ * This class allows storing multiple compressor maps, each measured at a different molecular weight (or gas
+ * composition), and interpolates between them based on the actual operating molecular weight.
  * </p>
  *
  * <p>
- * Use case: When compressor maps are measured at several discrete MW values (e.g., 18, 20, 22
- * g/mol), this class interpolates the performance parameters (head, efficiency) for an actual MW
- * that falls between the measured values.
+ * Use case: When compressor maps are measured at several discrete MW values (e.g., 18, 20, 22 g/mol), this class
+ * interpolates the performance parameters (head, efficiency) for an actual MW that falls between the measured values.
  * </p>
  *
  * <p>
- * Interpolation method: Linear interpolation between the two nearest MW maps. Extrapolation uses
- * the nearest boundary map.
+ * Interpolation method: Linear interpolation between the two nearest MW maps. Extrapolation uses the nearest boundary
+ * map.
  * </p>
  *
  * @author NeqSim Development Team
@@ -80,13 +78,13 @@ public class CompressorChartMWInterpolation extends CompressorChart {
    *
    * @param molecularWeight the molecular weight (g/mol) at which this map was measured
    * @param chartConditions reference conditions [temp °C, pres bara, density kg/m³, MW g/mol]
-   * @param speed array of speed values (RPM)
-   * @param flow 2D array of flow values for each speed curve (m³/hr)
-   * @param head 2D array of head values for each speed curve (kJ/kg or meter)
-   * @param polyEff 2D array of polytropic efficiency values for each speed curve (%)
+   * @param speed           array of speed values (RPM)
+   * @param flow            2D array of flow values for each speed curve (m³/hr)
+   * @param head            2D array of head values for each speed curve (kJ/kg or meter)
+   * @param polyEff         2D array of polytropic efficiency values for each speed curve (%)
    */
-  public void addMapAtMW(double molecularWeight, double[] chartConditions, double[] speed,
-      double[][] flow, double[][] head, double[][] polyEff) {
+  public void addMapAtMW(double molecularWeight, double[] chartConditions, double[] speed, double[][] flow,
+      double[][] head, double[][] polyEff) {
     addMapAtMW(molecularWeight, chartConditions, speed, flow, head, flow, polyEff);
   }
 
@@ -98,13 +96,12 @@ public class CompressorChartMWInterpolation extends CompressorChart {
    * </p>
    *
    * @param molecularWeight the molecular weight (g/mol) at which this map was measured
-   * @param speed array of speed values (RPM)
-   * @param flow 2D array of flow values for each speed curve (m³/hr)
-   * @param head 2D array of head values for each speed curve (kJ/kg or meter)
-   * @param polyEff 2D array of polytropic efficiency values for each speed curve (%)
+   * @param speed           array of speed values (RPM)
+   * @param flow            2D array of flow values for each speed curve (m³/hr)
+   * @param head            2D array of head values for each speed curve (kJ/kg or meter)
+   * @param polyEff         2D array of polytropic efficiency values for each speed curve (%)
    */
-  public void addMapAtMW(double molecularWeight, double[] speed, double[][] flow, double[][] head,
-      double[][] polyEff) {
+  public void addMapAtMW(double molecularWeight, double[] speed, double[][] flow, double[][] head, double[][] polyEff) {
     addMapAtMW(molecularWeight, speed, flow, head, flow, polyEff);
   }
 
@@ -116,16 +113,16 @@ public class CompressorChartMWInterpolation extends CompressorChart {
    * </p>
    *
    * @param molecularWeight the molecular weight (g/mol) at which this map was measured
-   * @param speed array of speed values (RPM)
-   * @param flow 2D array of flow values for head curves (m³/hr)
-   * @param head 2D array of head values for each speed curve (kJ/kg or meter)
-   * @param flowPolyEff 2D array of flow values for efficiency curves (m³/hr)
-   * @param polyEff 2D array of polytropic efficiency values for each speed curve (%)
+   * @param speed           array of speed values (RPM)
+   * @param flow            2D array of flow values for head curves (m³/hr)
+   * @param head            2D array of head values for each speed curve (kJ/kg or meter)
+   * @param flowPolyEff     2D array of flow values for efficiency curves (m³/hr)
+   * @param polyEff         2D array of polytropic efficiency values for each speed curve (%)
    */
   public void addMapAtMW(double molecularWeight, double[] speed, double[][] flow, double[][] head,
       double[][] flowPolyEff, double[][] polyEff) {
     // Default chart conditions if not specified
-    double[] defaultConditions = new double[] {25.0, 50.0, 50.0, molecularWeight};
+    double[] defaultConditions = new double[] { 25.0, 50.0, 50.0, molecularWeight };
     addMapAtMW(molecularWeight, defaultConditions, speed, flow, head, flowPolyEff, polyEff);
   }
 
@@ -133,18 +130,17 @@ public class CompressorChartMWInterpolation extends CompressorChart {
    * Add a single-speed compressor map at a specific molecular weight.
    *
    * <p>
-   * This is a convenience method for single-speed compressors where flow, head, and efficiency are
-   * 1D arrays for a single speed curve.
+   * This is a convenience method for single-speed compressors where flow, head, and efficiency are 1D arrays for a
+   * single speed curve.
    * </p>
    *
    * @param molecularWeight the molecular weight (g/mol) at which this map was measured
-   * @param speed the compressor speed (RPM)
-   * @param flow array of flow values (m³/hr)
-   * @param head array of head values (kJ/kg or meter)
-   * @param polyEff array of polytropic efficiency values (%)
+   * @param speed           the compressor speed (RPM)
+   * @param flow            array of flow values (m³/hr)
+   * @param head            array of head values (kJ/kg or meter)
+   * @param polyEff         array of polytropic efficiency values (%)
    */
-  public void addMapAtMW(double molecularWeight, double speed, double[] flow, double[] head,
-      double[] polyEff) {
+  public void addMapAtMW(double molecularWeight, double speed, double[] flow, double[] head, double[] polyEff) {
     addMapAtMW(molecularWeight, speed, flow, head, flow, polyEff);
   }
 
@@ -152,23 +148,23 @@ public class CompressorChartMWInterpolation extends CompressorChart {
    * Add a single-speed compressor map at a specific molecular weight with separate flow arrays.
    *
    * <p>
-   * This is a convenience method for single-speed compressors where efficiency is measured at
-   * different flow points than head.
+   * This is a convenience method for single-speed compressors where efficiency is measured at different flow points
+   * than head.
    * </p>
    *
    * @param molecularWeight the molecular weight (g/mol) at which this map was measured
-   * @param speed the compressor speed (RPM)
-   * @param flow array of flow values for head curve (m³/hr)
-   * @param head array of head values (kJ/kg or meter)
-   * @param flowPolyEff array of flow values for efficiency curve (m³/hr)
-   * @param polyEff array of polytropic efficiency values (%)
+   * @param speed           the compressor speed (RPM)
+   * @param flow            array of flow values for head curve (m³/hr)
+   * @param head            array of head values (kJ/kg or meter)
+   * @param flowPolyEff     array of flow values for efficiency curve (m³/hr)
+   * @param polyEff         array of polytropic efficiency values (%)
    */
-  public void addMapAtMW(double molecularWeight, double speed, double[] flow, double[] head,
-      double[] flowPolyEff, double[] polyEff) {
+  public void addMapAtMW(double molecularWeight, double speed, double[] flow, double[] head, double[] flowPolyEff,
+      double[] polyEff) {
     // Default chart conditions if not specified
-    double[] defaultConditions = new double[] {25.0, 50.0, 50.0, molecularWeight};
-    addMapAtMW(molecularWeight, defaultConditions, new double[] {speed}, new double[][] {flow},
-        new double[][] {head}, new double[][] {flowPolyEff}, new double[][] {polyEff});
+    double[] defaultConditions = new double[] { 25.0, 50.0, 50.0, molecularWeight };
+    addMapAtMW(molecularWeight, defaultConditions, new double[] { speed }, new double[][] { flow },
+	new double[][] { head }, new double[][] { flowPolyEff }, new double[][] { polyEff });
   }
 
   /**
@@ -180,14 +176,14 @@ public class CompressorChartMWInterpolation extends CompressorChart {
    *
    * @param molecularWeight the molecular weight (g/mol) at which this map was measured
    * @param chartConditions reference conditions [temp °C, pres bara, density kg/m³, MW g/mol]
-   * @param speed array of speed values (RPM)
-   * @param flow 2D array of flow values for each speed curve (m³/hr)
-   * @param head 2D array of head values for each speed curve (kJ/kg or meter)
-   * @param flowPolyEff 2D array of flow values for efficiency curves (m³/hr)
-   * @param polyEff 2D array of polytropic efficiency values for each speed curve (%)
+   * @param speed           array of speed values (RPM)
+   * @param flow            2D array of flow values for each speed curve (m³/hr)
+   * @param head            2D array of head values for each speed curve (kJ/kg or meter)
+   * @param flowPolyEff     2D array of flow values for efficiency curves (m³/hr)
+   * @param polyEff         2D array of polytropic efficiency values for each speed curve (%)
    */
-  public void addMapAtMW(double molecularWeight, double[] chartConditions, double[] speed,
-      double[][] flow, double[][] head, double[][] flowPolyEff, double[][] polyEff) {
+  public void addMapAtMW(double molecularWeight, double[] chartConditions, double[] speed, double[][] flow,
+      double[][] head, double[][] flowPolyEff, double[][] polyEff) {
     // Create a new chart for this MW
     CompressorChart chart = new CompressorChart();
     chart.setCurves(chartConditions, speed, flow, head, flowPolyEff, polyEff);
@@ -197,7 +193,7 @@ public class CompressorChartMWInterpolation extends CompressorChart {
     int insertIndex = 0;
     for (int i = 0; i < mapMolecularWeights.size(); i++) {
       if (molecularWeight > mapMolecularWeights.get(i).doubleValue()) {
-        insertIndex = i + 1;
+	insertIndex = i + 1;
       }
     }
 
@@ -216,15 +212,14 @@ public class CompressorChartMWInterpolation extends CompressorChart {
     if (mapCharts.size() == 1) {
       super.setCurves(chartConditions, speed, flow, head, flowPolyEff, polyEff);
       if (autoGenerateSurgeCurves) {
-        super.generateSurgeCurve();
+	super.generateSurgeCurve();
       }
       if (autoGenerateStoneWallCurves) {
-        super.generateStoneWallCurve();
+	super.generateStoneWallCurve();
       }
     }
 
-    logger.debug("Added compressor map at MW = {} g/mol. Total maps: {}", molecularWeight,
-        mapCharts.size());
+    logger.debug("Added compressor map at MW = {} g/mol. Total maps: {}", molecularWeight, mapCharts.size());
   }
 
   /**
@@ -331,8 +326,8 @@ public class CompressorChartMWInterpolation extends CompressorChart {
    * Enable or disable extrapolation outside the MW range.
    *
    * <p>
-   * When enabled, linear extrapolation is used for MW values outside the range of defined maps.
-   * When disabled (default), the nearest boundary map is used.
+   * When enabled, linear extrapolation is used for MW values outside the range of defined maps. When disabled
+   * (default), the nearest boundary map is used.
    * </p>
    *
    * @param allow true to enable extrapolation, false to use boundary maps
@@ -354,9 +349,8 @@ public class CompressorChartMWInterpolation extends CompressorChart {
    * Set whether to automatically use the inlet stream's molecular weight.
    *
    * <p>
-   * When enabled (default), the operating MW is automatically updated from the inlet stream's fluid
-   * molecular weight before each calculation. This ensures the compressor chart uses the actual gas
-   * composition.
+   * When enabled (default), the operating MW is automatically updated from the inlet stream's fluid molecular weight
+   * before each calculation. This ensures the compressor chart uses the actual gas composition.
    * </p>
    *
    * @param useActual true to use inlet stream's MW automatically
@@ -431,10 +425,10 @@ public class CompressorChartMWInterpolation extends CompressorChart {
     for (int i = 0; i < mapMolecularWeights.size(); i++) {
       double mapMW = mapMolecularWeights.get(i).doubleValue();
       if (mapMW <= mw) {
-        lowerIdx = i;
+	lowerIdx = i;
       }
       if (mapMW >= mw && upperIdx == -1) {
-        upperIdx = i;
+	upperIdx = i;
       }
     }
 
@@ -442,11 +436,11 @@ public class CompressorChartMWInterpolation extends CompressorChart {
     if (lowerIdx == -1) {
       // MW is below all maps
       if (allowExtrapolation && mapMolecularWeights.size() >= 2) {
-        // Extrapolate using first two maps
-        double mw0 = mapMolecularWeights.get(0).doubleValue();
-        double mw1 = mapMolecularWeights.get(1).doubleValue();
-        double fraction = (mw - mw0) / (mw1 - mw0); // Will be negative for extrapolation below
-        return new InterpolationIndices(0, 1, fraction);
+	// Extrapolate using first two maps
+	double mw0 = mapMolecularWeights.get(0).doubleValue();
+	double mw1 = mapMolecularWeights.get(1).doubleValue();
+	double fraction = (mw - mw0) / (mw1 - mw0); // Will be negative for extrapolation below
+	return new InterpolationIndices(0, 1, fraction);
       }
       // Use lowest map (no extrapolation)
       return new InterpolationIndices(0, 0, 0.0);
@@ -455,12 +449,12 @@ public class CompressorChartMWInterpolation extends CompressorChart {
       // MW is above all maps
       int lastIdx = mapMolecularWeights.size() - 1;
       if (allowExtrapolation && mapMolecularWeights.size() >= 2) {
-        // Extrapolate using last two maps
-        double mwLast = mapMolecularWeights.get(lastIdx).doubleValue();
-        double mwSecondLast = mapMolecularWeights.get(lastIdx - 1).doubleValue();
-        double fraction = (mw - mwSecondLast) / (mwLast - mwSecondLast); // Will be > 1 for
-                                                                         // extrapolation above
-        return new InterpolationIndices(lastIdx - 1, lastIdx, fraction);
+	// Extrapolate using last two maps
+	double mwLast = mapMolecularWeights.get(lastIdx).doubleValue();
+	double mwSecondLast = mapMolecularWeights.get(lastIdx - 1).doubleValue();
+	double fraction = (mw - mwSecondLast) / (mwLast - mwSecondLast); // Will be > 1 for
+									 // extrapolation above
+	return new InterpolationIndices(lastIdx - 1, lastIdx, fraction);
       }
       // Use highest map (no extrapolation)
       return new InterpolationIndices(lastIdx, lastIdx, 0.0);
@@ -652,8 +646,7 @@ public class CompressorChartMWInterpolation extends CompressorChart {
     // Get surge flow at the given head from both maps
     double surgeFlowLower = mapCharts.get(indices.lowerIndex).getSurgeCurve().getFlow(head);
     double surgeFlowUpper = mapCharts.get(indices.upperIndex).getSurgeCurve().getFlow(head);
-    double interpolatedSurgeFlow =
-        linearInterpolate(surgeFlowLower, surgeFlowUpper, indices.fraction);
+    double interpolatedSurgeFlow = linearInterpolate(surgeFlowLower, surgeFlowUpper, indices.fraction);
 
     return flow < interpolatedSurgeFlow;
   }
@@ -669,7 +662,7 @@ public class CompressorChartMWInterpolation extends CompressorChart {
     updateOperatingMWFromStream();
     if (!interpolationEnabled || mapCharts.size() < 2 || Double.isNaN(operatingMW)) {
       if (getStoneWallCurve() instanceof SafeSplineStoneWallCurve) {
-        return ((SafeSplineStoneWallCurve) getStoneWallCurve()).isStoneWall(head, flow);
+	return ((SafeSplineStoneWallCurve) getStoneWallCurve()).isStoneWall(head, flow);
       }
       return false;
     }
@@ -679,7 +672,7 @@ public class CompressorChartMWInterpolation extends CompressorChart {
     if (indices.lowerIndex == indices.upperIndex) {
       StoneWallCurve curve = mapCharts.get(indices.lowerIndex).getStoneWallCurve();
       if (curve instanceof SafeSplineStoneWallCurve) {
-        return ((SafeSplineStoneWallCurve) curve).isStoneWall(head, flow);
+	return ((SafeSplineStoneWallCurve) curve).isStoneWall(head, flow);
       }
       return false;
     }
@@ -688,12 +681,10 @@ public class CompressorChartMWInterpolation extends CompressorChart {
     StoneWallCurve curveLower = mapCharts.get(indices.lowerIndex).getStoneWallCurve();
     StoneWallCurve curveUpper = mapCharts.get(indices.upperIndex).getStoneWallCurve();
 
-    if (curveLower instanceof SafeSplineStoneWallCurve
-        && curveUpper instanceof SafeSplineStoneWallCurve) {
+    if (curveLower instanceof SafeSplineStoneWallCurve && curveUpper instanceof SafeSplineStoneWallCurve) {
       double stoneFlowLower = ((SafeSplineStoneWallCurve) curveLower).getFlow(head);
       double stoneFlowUpper = ((SafeSplineStoneWallCurve) curveUpper).getFlow(head);
-      double interpolatedStoneFlow =
-          linearInterpolate(stoneFlowLower, stoneFlowUpper, indices.fraction);
+      double interpolatedStoneFlow = linearInterpolate(stoneFlowLower, stoneFlowUpper, indices.fraction);
       return flow > interpolatedStoneFlow;
     }
 
@@ -734,7 +725,7 @@ public class CompressorChartMWInterpolation extends CompressorChart {
     updateOperatingMWFromStream();
     if (!interpolationEnabled || mapCharts.size() < 2 || Double.isNaN(operatingMW)) {
       if (getStoneWallCurve() instanceof SafeSplineStoneWallCurve) {
-        return ((SafeSplineStoneWallCurve) getStoneWallCurve()).getFlow(head);
+	return ((SafeSplineStoneWallCurve) getStoneWallCurve()).getFlow(head);
       }
       return Double.NaN;
     }
@@ -744,7 +735,7 @@ public class CompressorChartMWInterpolation extends CompressorChart {
     if (indices.lowerIndex == indices.upperIndex) {
       StoneWallCurve curve = mapCharts.get(indices.lowerIndex).getStoneWallCurve();
       if (curve instanceof SafeSplineStoneWallCurve) {
-        return ((SafeSplineStoneWallCurve) curve).getFlow(head);
+	return ((SafeSplineStoneWallCurve) curve).getFlow(head);
       }
       return Double.NaN;
     }
@@ -752,8 +743,7 @@ public class CompressorChartMWInterpolation extends CompressorChart {
     StoneWallCurve curveLower = mapCharts.get(indices.lowerIndex).getStoneWallCurve();
     StoneWallCurve curveUpper = mapCharts.get(indices.upperIndex).getStoneWallCurve();
 
-    if (curveLower instanceof SafeSplineStoneWallCurve
-        && curveUpper instanceof SafeSplineStoneWallCurve) {
+    if (curveLower instanceof SafeSplineStoneWallCurve && curveUpper instanceof SafeSplineStoneWallCurve) {
       double stoneFlowLower = ((SafeSplineStoneWallCurve) curveLower).getFlow(head);
       double stoneFlowUpper = ((SafeSplineStoneWallCurve) curveUpper).getFlow(head);
       return linearInterpolate(stoneFlowLower, stoneFlowUpper, indices.fraction);
@@ -797,7 +787,7 @@ public class CompressorChartMWInterpolation extends CompressorChart {
    *
    * @param valueLower the value at the lower bound
    * @param valueUpper the value at the upper bound
-   * @param fraction the interpolation fraction (0.0 = lower, 1.0 = upper)
+   * @param fraction   the interpolation fraction (0.0 = lower, 1.0 = upper)
    * @return the interpolated value
    */
   private double linearInterpolate(double valueLower, double valueUpper, double fraction) {
@@ -809,11 +799,11 @@ public class CompressorChartMWInterpolation extends CompressorChart {
    *
    * @param molecularWeight the MW of the map to update
    * @param chartConditions reference conditions
-   * @param surgeFlow array of surge flow values
-   * @param surgeHead array of surge head values
+   * @param surgeFlow       array of surge flow values
+   * @param surgeHead       array of surge head values
    */
-  public void setSurgeCurveAtMW(double molecularWeight, double[] chartConditions,
-      double[] surgeFlow, double[] surgeHead) {
+  public void setSurgeCurveAtMW(double molecularWeight, double[] chartConditions, double[] surgeFlow,
+      double[] surgeHead) {
     int idx = findMapIndex(molecularWeight);
     if (idx >= 0) {
       mapCharts.get(idx).getSurgeCurve().setCurve(chartConditions, surgeFlow, surgeHead);
@@ -827,16 +817,16 @@ public class CompressorChartMWInterpolation extends CompressorChart {
    *
    * @param molecularWeight the MW of the map to update
    * @param chartConditions reference conditions
-   * @param stoneWallFlow array of stone wall flow values
-   * @param stoneWallHead array of stone wall head values
+   * @param stoneWallFlow   array of stone wall flow values
+   * @param stoneWallHead   array of stone wall head values
    */
-  public void setStoneWallCurveAtMW(double molecularWeight, double[] chartConditions,
-      double[] stoneWallFlow, double[] stoneWallHead) {
+  public void setStoneWallCurveAtMW(double molecularWeight, double[] chartConditions, double[] stoneWallFlow,
+      double[] stoneWallHead) {
     int idx = findMapIndex(molecularWeight);
     if (idx >= 0) {
       if (mapCharts.get(idx).getStoneWallCurve() instanceof SafeSplineStoneWallCurve) {
-        ((SafeSplineStoneWallCurve) mapCharts.get(idx).getStoneWallCurve())
-            .setCurve(chartConditions, stoneWallFlow, stoneWallHead);
+	((SafeSplineStoneWallCurve) mapCharts.get(idx).getStoneWallCurve()).setCurve(chartConditions, stoneWallFlow,
+	    stoneWallHead);
       }
     } else {
       logger.warn("No map found at MW = {} g/mol. Stone wall curve not set.", molecularWeight);
@@ -872,7 +862,7 @@ public class CompressorChartMWInterpolation extends CompressorChart {
   private int findMapIndex(double molecularWeight) {
     for (int i = 0; i < mapMolecularWeights.size(); i++) {
       if (Math.abs(mapMolecularWeights.get(i).doubleValue() - molecularWeight) < 0.001) {
-        return i;
+	return i;
       }
     }
     return -1;

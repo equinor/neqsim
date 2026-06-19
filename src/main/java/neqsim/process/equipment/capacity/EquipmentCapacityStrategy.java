@@ -8,17 +8,19 @@ import neqsim.process.equipment.ProcessEquipmentInterface;
  * Strategy interface for equipment-specific capacity evaluation.
  *
  * <p>
- * This interface enables a plugin-based architecture for evaluating capacity constraints across
- * different equipment types. Each equipment type can have its own strategy implementation that
- * understands the specific physics and constraints of that equipment.
+ * This interface enables a plugin-based architecture for evaluating capacity constraints across different equipment
+ * types. Each equipment type can have its own strategy implementation that understands the specific physics and
+ * constraints of that equipment.
  * </p>
  *
  * <p>
- * Strategy implementations should be registered with {@link EquipmentCapacityStrategyRegistry} for
- * automatic discovery during optimization.
+ * Strategy implementations should be registered with {@link EquipmentCapacityStrategyRegistry} for automatic discovery
+ * during optimization.
  * </p>
  *
- * <p><strong>Example Implementation</strong></p>
+ * <p>
+ * <strong>Example Implementation</strong>
+ * </p>
  *
  * <pre>
  * public class CompressorCapacityStrategy implements EquipmentCapacityStrategy {
@@ -54,8 +56,8 @@ public interface EquipmentCapacityStrategy {
    * Gets the priority of this strategy.
    *
    * <p>
-   * When multiple strategies support the same equipment, the one with higher priority is used.
-   * Default priority is 0. Use positive values for more specific strategies.
+   * When multiple strategies support the same equipment, the one with higher priority is used. Default priority is 0.
+   * Use positive values for more specific strategies.
    * </p>
    *
    * @return the priority value (higher = more preferred)
@@ -96,8 +98,8 @@ public interface EquipmentCapacityStrategy {
    * Gets all capacity constraints for this equipment.
    *
    * <p>
-   * Returns a map of constraint name to constraint object. The constraints include both the current
-   * value and the design/limit values.
+   * Returns a map of constraint name to constraint object. The constraints include both the current value and the
+   * design/limit values.
    * </p>
    *
    * @param equipment the equipment to get constraints for
@@ -109,8 +111,7 @@ public interface EquipmentCapacityStrategy {
    * Gets the list of constraint violations for this equipment.
    *
    * <p>
-   * Returns only the constraints that are currently violated (utilization &gt; 1.0 or outside
-   * limits).
+   * Returns only the constraints that are currently violated (utilization &gt; 1.0 or outside limits).
    * </p>
    *
    * @param equipment the equipment to check

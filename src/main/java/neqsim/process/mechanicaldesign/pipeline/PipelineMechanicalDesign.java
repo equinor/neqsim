@@ -18,8 +18,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * Mechanical design class for pipelines.
  *
  * <p>
- * This class integrates pipeline mechanical design calculations with the NeqSim mechanical design
- * framework, providing:
+ * This class integrates pipeline mechanical design calculations with the NeqSim mechanical design framework, providing:
  * </p>
  * <ul>
  * <li>Wall thickness calculation per ASME B31.3/B31.4/B31.8 and DNV-OS-F101</li>
@@ -119,7 +118,7 @@ public class PipelineMechanicalDesign extends MechanicalDesign {
       this.pipelineLength = pipe.getLength();
       this.outerDiameter = pipe.getDiameter() + 2 * pipe.getWallThickness();
       if (pipe.getWallThickness() > 0) {
-        this.wallThickness = pipe.getWallThickness() * 1000; // Convert to mm
+	this.wallThickness = pipe.getWallThickness() * 1000; // Convert to mm
       }
     }
   }
@@ -158,8 +157,8 @@ public class PipelineMechanicalDesign extends MechanicalDesign {
    * Load all design parameters from database tables.
    *
    * <p>
-   * This method loads material properties and design factors from the NeqSim process design
-   * database based on the configured material grade and company identifier.
+   * This method loads material properties and design factors from the NeqSim process design database based on the
+   * configured material grade and company identifier.
    * </p>
    */
   public void loadFromDatabase() {
@@ -182,8 +181,8 @@ public class PipelineMechanicalDesign extends MechanicalDesign {
    */
   public void loadMaterialFromDatabase(String grade) {
     this.materialGrade = grade;
-    java.util.Optional<PipelineMechanicalDesignDataSource.PipeMaterialData> materialOpt =
-        getDataSource().loadMaterialProperties(grade);
+    java.util.Optional<PipelineMechanicalDesignDataSource.PipeMaterialData> materialOpt = getDataSource()
+	.loadMaterialProperties(grade);
 
     if (materialOpt.isPresent()) {
       PipelineMechanicalDesignDataSource.PipeMaterialData material = materialOpt.get();
@@ -204,8 +203,7 @@ public class PipelineMechanicalDesign extends MechanicalDesign {
       return;
     }
 
-    PipelineMechanicalDesignDataSource.PipeDesignFactors factors =
-        getDataSource().loadDesignFactors(company);
+    PipelineMechanicalDesignDataSource.PipeDesignFactors factors = getDataSource().loadDesignFactors(company);
 
     // Apply to calculator
     getCalculator().setDesignFactor(factors.designFactor);
@@ -222,14 +220,13 @@ public class PipelineMechanicalDesign extends MechanicalDesign {
     super.readDesignSpecifications();
 
     // Load from database based on company standards
-    if (getCompanySpecificDesignStandards() != null
-        && !getCompanySpecificDesignStandards().isEmpty()) {
+    if (getCompanySpecificDesignStandards() != null && !getCompanySpecificDesignStandards().isEmpty()) {
       loadFromDatabase();
     }
 
     if (getDesignStandard().containsKey("material pipe design codes")) {
-      MaterialPipeDesignStandard matStd =
-          (MaterialPipeDesignStandard) getDesignStandard().get("material pipe design codes");
+      MaterialPipeDesignStandard matStd = (MaterialPipeDesignStandard) getDesignStandard()
+	  .get("material pipe design codes");
       matStd.getDesignFactor();
       // Sync with calculator
       getCalculator().setDesignFactor(matStd.getDesignFactor());
@@ -237,8 +234,7 @@ public class PipelineMechanicalDesign extends MechanicalDesign {
     }
 
     if (getDesignStandard().containsKey("pipeline design codes")) {
-      PipelineDesignStandard pipeStd =
-          (PipelineDesignStandard) getDesignStandard().get("pipeline design codes");
+      PipelineDesignStandard pipeStd = (PipelineDesignStandard) getDesignStandard().get("pipeline design codes");
       wallThickness = pipeStd.calcPipelineWallThickness();
     }
   }
@@ -393,9 +389,8 @@ public class PipelineMechanicalDesign extends MechanicalDesign {
    * Returns the NORSOK M-506 corrosion rate model for this pipeline.
    *
    * <p>
-   * The model is lazily initialized with default parameters. Use the setter methods on the returned
-   * model to configure conditions, or call {@link #runCorrosionAnalysis()} to auto-populate from
-   * the pipeline's operating stream.
+   * The model is lazily initialized with default parameters. Use the setter methods on the returned model to configure
+   * conditions, or call {@link #runCorrosionAnalysis()} to auto-populate from the pipeline's operating stream.
    * </p>
    *
    * @return the corrosion rate model
@@ -459,14 +454,14 @@ public class PipelineMechanicalDesign extends MechanicalDesign {
    * Runs a complete corrosion analysis using the pipeline's operating conditions.
    *
    * <p>
-   * This method extracts temperature, pressure, fluid composition, and flow velocity from the
-   * pipeline equipment and its inlet/outlet streams. It then runs the NORSOK M-506 corrosion rate
-   * calculation followed by the NORSOK M-001 material selection evaluation.
+   * This method extracts temperature, pressure, fluid composition, and flow velocity from the pipeline equipment and
+   * its inlet/outlet streams. It then runs the NORSOK M-506 corrosion rate calculation followed by the NORSOK M-001
+   * material selection evaluation.
    * </p>
    *
    * <p>
-   * The corrosion allowance result is automatically applied to the mechanical design calculator
-   * so that subsequent wall thickness calculations include the correct corrosion allowance.
+   * The corrosion allowance result is automatically applied to the mechanical design calculator so that subsequent wall
+   * thickness calculations include the correct corrosion allowance.
    * </p>
    */
   public void runCorrosionAnalysis() {
@@ -481,8 +476,8 @@ public class PipelineMechanicalDesign extends MechanicalDesign {
       // Try to get conditions from the outlet stream (post-simulation)
       StreamInterface outStream = pipe.getOutletStream();
       if (outStream != null && outStream.getFluid() != null) {
-        populateFromStream(model, outStream);
-        streamTempC = outStream.getFluid().getTemperature() - 273.15;
+	populateFromStream(model, outStream);
+	streamTempC = outStream.getFluid().getTemperature() - 273.15;
       }
     }
 
@@ -509,7 +504,7 @@ public class PipelineMechanicalDesign extends MechanicalDesign {
   /**
    * Populates the corrosion model with conditions extracted from a process stream.
    *
-   * @param model the corrosion rate model to populate
+   * @param model  the corrosion rate model to populate
    * @param stream the process stream to extract conditions from
    */
   private void populateFromStream(NorsokM506CorrosionRate model, StreamInterface stream) {
@@ -542,17 +537,17 @@ public class PipelineMechanicalDesign extends MechanicalDesign {
     if (fluid.hasPhaseType("aqueous") || fluid.hasPhaseType("oil")) {
       String liquidType = fluid.hasPhaseType("aqueous") ? "aqueous" : "oil";
       try {
-        fluid.initPhysicalProperties();
-        double density = fluid.getPhase(liquidType).getDensity("kg/m3");
-        if (density > 0) {
-          model.setLiquidDensityKgM3(density);
-        }
-        double viscosity = fluid.getPhase(liquidType).getViscosity("kg/msec");
-        if (viscosity > 0) {
-          model.setLiquidViscosityPas(viscosity);
-        }
+	fluid.initPhysicalProperties();
+	double density = fluid.getPhase(liquidType).getDensity("kg/m3");
+	if (density > 0) {
+	  model.setLiquidDensityKgM3(density);
+	}
+	double viscosity = fluid.getPhase(liquidType).getViscosity("kg/msec");
+	if (viscosity > 0) {
+	  model.setLiquidViscosityPas(viscosity);
+	}
       } catch (Exception ex) {
-        // Use defaults if property extraction fails
+	// Use defaults if property extraction fails
       }
     }
   }
@@ -560,15 +555,15 @@ public class PipelineMechanicalDesign extends MechanicalDesign {
   /**
    * Safely gets a component mole fraction from a fluid phase.
    *
-   * @param fluid the fluid system
-   * @param phaseNum the phase number
+   * @param fluid         the fluid system
+   * @param phaseNum      the phase number
    * @param componentName the component name
    * @return mole fraction, or 0 if component not present
    */
   private double getMoleFractionSafe(SystemInterface fluid, int phaseNum, String componentName) {
     try {
       if (fluid.getPhase(phaseNum).hasComponent(componentName)) {
-        return fluid.getPhase(phaseNum).getComponent(componentName).getx();
+	return fluid.getPhase(phaseNum).getComponent(componentName).getx();
       }
     } catch (Exception ex) {
       // Component not present
@@ -622,10 +617,9 @@ public class PipelineMechanicalDesign extends MechanicalDesign {
     java.util.Map<String, Object> calcData = getCalculator().toMap();
 
     // Merge calculator data into response
-    com.google.gson.JsonObject jsonObj =
-        com.google.gson.JsonParser.parseString(response.toJson()).getAsJsonObject();
-    com.google.gson.JsonObject calcObj =
-        com.google.gson.JsonParser.parseString(getCalculator().toJson()).getAsJsonObject();
+    com.google.gson.JsonObject jsonObj = com.google.gson.JsonParser.parseString(response.toJson()).getAsJsonObject();
+    com.google.gson.JsonObject calcObj = com.google.gson.JsonParser.parseString(getCalculator().toJson())
+	.getAsJsonObject();
 
     // Add pipeline-specific fields
     jsonObj.addProperty("pipelineLength_m", pipelineLength);
@@ -636,18 +630,18 @@ public class PipelineMechanicalDesign extends MechanicalDesign {
 
     // Add corrosion analysis results if available
     if (corrosionModel != null) {
-      com.google.gson.JsonObject corrosionObj =
-          com.google.gson.JsonParser.parseString(corrosionModel.toJson()).getAsJsonObject();
+      com.google.gson.JsonObject corrosionObj = com.google.gson.JsonParser.parseString(corrosionModel.toJson())
+	  .getAsJsonObject();
       jsonObj.add("corrosionAnalysis_NORSOK_M506", corrosionObj);
     }
     if (materialSelector != null) {
-      com.google.gson.JsonObject materialObj =
-          com.google.gson.JsonParser.parseString(materialSelector.toJson()).getAsJsonObject();
+      com.google.gson.JsonObject materialObj = com.google.gson.JsonParser.parseString(materialSelector.toJson())
+	  .getAsJsonObject();
       jsonObj.add("materialSelection_NORSOK_M001", materialObj);
     }
 
-    return new com.google.gson.GsonBuilder().setPrettyPrinting()
-        .serializeSpecialFloatingPointValues().create().toJson(jsonObj);
+    return new com.google.gson.GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
+	.toJson(jsonObj);
   }
 
   /**
@@ -659,8 +653,7 @@ public class PipelineMechanicalDesign extends MechanicalDesign {
    */
   @ExcludeFromJacocoGeneratedReport
   public static void main(String args[]) {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos((273.15 + 20.0), 90.00);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 20.0), 90.00);
     testSystem.addComponent("methane", 600e3, "kg/hr");
     testSystem.addComponent("ethane", 7.00e3, "kg/hr");
     testSystem.addComponent("propane", 12.0e3, "kg/hr");
@@ -679,8 +672,7 @@ public class PipelineMechanicalDesign extends MechanicalDesign {
     pipe.getMechanicalDesign().setMinOperationPressure(50.0);
     pipe.getMechanicalDesign().setMaxDesignGassVolumeFlow(100.0);
 
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
     operations.add(stream_1);
     operations.add(pipe);
 

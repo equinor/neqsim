@@ -20,12 +20,12 @@ import neqsim.process.equipment.separator.Separator;
 public class BottleneckTrackerTest {
 
   /** Separator capacity constraint used to build topside-bottleneck results. */
-  private static final CapacityConstraint SEP_CONSTRAINT =
-      new CapacityConstraint("gasLoadFactor", "m/s", ConstraintType.SOFT);
+  private static final CapacityConstraint SEP_CONSTRAINT = new CapacityConstraint("gasLoadFactor", "m/s",
+      ConstraintType.SOFT);
 
   /** Well capacity constraint used to build subsurface-bottleneck results. */
-  private static final CapacityConstraint WELL_CONSTRAINT =
-      new CapacityConstraint("well drawdown", "bar", ConstraintType.SOFT);
+  private static final CapacityConstraint WELL_CONSTRAINT = new CapacityConstraint("well drawdown", "bar",
+      ConstraintType.SOFT);
 
   /** Separator equipment used as a topside bottleneck. */
   private static final Separator SEPARATOR = new Separator("Inlet separator");

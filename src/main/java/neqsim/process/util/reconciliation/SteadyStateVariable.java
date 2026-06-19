@@ -8,9 +8,8 @@ import java.util.List;
  * A monitored process variable for steady-state detection.
  *
  * <p>
- * Maintains a sliding window of recent measurements and computes statistics used by
- * {@link SteadyStateDetector} to determine whether the variable is at steady state. The key
- * statistics are:
+ * Maintains a sliding window of recent measurements and computes statistics used by {@link SteadyStateDetector} to
+ * determine whether the variable is at steady state. The key statistics are:
  * </p>
  * <ul>
  * <li>Mean and standard deviation of the window</li>
@@ -20,8 +19,8 @@ import java.util.List;
  * </ul>
  *
  * <p>
- * Values are added one at a time via {@link #addValue(double)}. The window size and all thresholds
- * are set on the parent {@link SteadyStateDetector}.
+ * Values are added one at a time via {@link #addValue(double)}. The window size and all thresholds are set on the
+ * parent {@link SteadyStateDetector}.
  * </p>
  *
  * @author Process Optimization Team
@@ -50,14 +49,14 @@ public class SteadyStateVariable implements java.io.Serializable {
   private double standardDeviation;
 
   /**
-   * R-statistic: ratio of filtered variance to unfiltered variance. A value near 1.0 indicates
-   * steady state; lower values indicate transient behaviour.
+   * R-statistic: ratio of filtered variance to unfiltered variance. A value near 1.0 indicates steady state; lower
+   * values indicate transient behaviour.
    */
   private double rStatistic;
 
   /**
-   * Slope of linear regression through the window values. Near zero indicates steady state;
-   * positive or negative values indicate a trend.
+   * Slope of linear regression through the window values. Near zero indicates steady state; positive or negative values
+   * indicate a trend.
    */
   private double slope;
 
@@ -70,7 +69,7 @@ public class SteadyStateVariable implements java.io.Serializable {
   /**
    * Creates a steady-state monitoring variable.
    *
-   * @param name variable identifier (e.g., DCS tag name)
+   * @param name       variable identifier (e.g., DCS tag name)
    * @param windowSize maximum number of recent values to retain
    */
   public SteadyStateVariable(String name, int windowSize) {
@@ -87,8 +86,8 @@ public class SteadyStateVariable implements java.io.Serializable {
    * Adds a new measurement value to the sliding window.
    *
    * <p>
-   * If the window exceeds its maximum size, the oldest value is removed. After adding, the mean,
-   * standard deviation, R-statistic, and slope are recalculated.
+   * If the window exceeds its maximum size, the oldest value is removed. After adding, the mean, standard deviation,
+   * R-statistic, and slope are recalculated.
    * </p>
    *
    * @param value the new measurement reading
@@ -105,8 +104,8 @@ public class SteadyStateVariable implements java.io.Serializable {
    * Computes all statistics from the current window contents.
    *
    * <p>
-   * Calculates: mean, standard deviation, R-statistic (filtered/unfiltered variance ratio), and
-   * slope from linear regression.
+   * Calculates: mean, standard deviation, R-statistic (filtered/unfiltered variance ratio), and slope from linear
+   * regression.
    * </p>
    */
   private void computeStatistics() {
@@ -271,10 +270,9 @@ public class SteadyStateVariable implements java.io.Serializable {
    * Returns the R-statistic (filtered/unfiltered variance ratio).
    *
    * <p>
-   * The R-statistic compares the variance of successive differences (filtered variance) to the
-   * overall sample variance (unfiltered variance). At steady state, both variances are similar and
-   * R approaches 1.0. During ramps or trends, the unfiltered variance is much larger, so R drops
-   * well below 1.0.
+   * The R-statistic compares the variance of successive differences (filtered variance) to the overall sample variance
+   * (unfiltered variance). At steady state, both variances are similar and R approaches 1.0. During ramps or trends,
+   * the unfiltered variance is much larger, so R drops well below 1.0.
    * </p>
    *
    * @return R-statistic in the range [0, 1+] where ~1 = steady state
@@ -287,8 +285,8 @@ public class SteadyStateVariable implements java.io.Serializable {
    * Returns the slope from linear regression through the window.
    *
    * <p>
-   * Expressed in engineering-units per sample. Divide by the sampling interval to get units per
-   * second, per minute, etc.
+   * Expressed in engineering-units per sample. Divide by the sampling interval to get units per second, per minute,
+   * etc.
    * </p>
    *
    * @return regression slope (units per sample)
@@ -381,7 +379,7 @@ public class SteadyStateVariable implements java.io.Serializable {
   public String toString() {
     String unitStr = unit.isEmpty() ? "" : " " + unit;
     String ssFlag = atSteadyState ? "SS" : "TRANSIENT";
-    return String.format("%s: mean=%.4f%s, std=%.4f, R=%.4f, slope=%.4e [%s] (%d/%d samples)", name,
-        mean, unitStr, standardDeviation, rStatistic, slope, ssFlag, window.size(), windowSize);
+    return String.format("%s: mean=%.4f%s, std=%.4f, R=%.4f, slope=%.4e [%s] (%d/%d samples)", name, mean, unitStr,
+	standardDeviation, rStatistic, slope, ssFlag, window.size(), windowSize);
   }
 }

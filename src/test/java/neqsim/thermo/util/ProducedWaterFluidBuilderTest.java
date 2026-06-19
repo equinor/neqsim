@@ -21,15 +21,14 @@ class ProducedWaterFluidBuilderTest extends neqsim.NeqSimTest {
    */
   @Test
   void testCreateFromTDS() {
-    SystemInterface system =
-        ProducedWaterFluidBuilder.createFromTDS(273.15 + 25.0, 1.0, 35000.0, 1.0);
+    SystemInterface system = ProducedWaterFluidBuilder.createFromTDS(273.15 + 25.0, 1.0, 35000.0, 1.0);
     assertNotNull(system);
     assertTrue(system.getPhase(0).hasComponent("Na+"), "Should have Na+ component");
     assertTrue(system.getPhase(0).hasComponent("Cl-"), "Should have Cl- component");
     assertTrue(system.getPhase(0).hasComponent("water"), "Should have water component");
     // chemicalReactionInit adds H3O+, OH- etc., so component count > 3
     assertTrue(system.getPhase(0).getNumberOfComponents() >= 3,
-        "Should have at least 3 components but had " + system.getPhase(0).getNumberOfComponents());
+	"Should have at least 3 components but had " + system.getPhase(0).getNumberOfComponents());
   }
 
   /**
@@ -37,8 +36,7 @@ class ProducedWaterFluidBuilderTest extends neqsim.NeqSimTest {
    */
   @Test
   void testCreateFromTypeSeawater() {
-    SystemInterface system =
-        ProducedWaterFluidBuilder.createFromType(273.15 + 25.0, 1.0, "seawater");
+    SystemInterface system = ProducedWaterFluidBuilder.createFromType(273.15 + 25.0, 1.0, "seawater");
     assertNotNull(system);
     assertTrue(system.getPhase(0).hasComponent("Na+"), "Should have Na+");
     assertTrue(system.getPhase(0).hasComponent("Cl-"), "Should have Cl-");
@@ -51,13 +49,11 @@ class ProducedWaterFluidBuilderTest extends neqsim.NeqSimTest {
    */
   @Test
   void testCreateFromTypeCondensedWater() {
-    SystemInterface system =
-        ProducedWaterFluidBuilder.createFromType(273.15 + 25.0, 1.0, "condensed_water");
+    SystemInterface system = ProducedWaterFluidBuilder.createFromType(273.15 + 25.0, 1.0, "condensed_water");
     assertNotNull(system);
     assertTrue(system.getPhase(0).hasComponent("water"), "Should have water");
     // Even pure water gets H3O+ and OH- from chemicalReactionInit
-    assertTrue(system.getPhase(0).getNumberOfComponents() >= 1,
-        "Condensed water should have at least 1 component");
+    assertTrue(system.getPhase(0).getNumberOfComponents() >= 1, "Condensed water should have at least 1 component");
   }
 
   /**
@@ -65,8 +61,7 @@ class ProducedWaterFluidBuilderTest extends neqsim.NeqSimTest {
    */
   @Test
   void testCreateFromTypeFormationHigh() {
-    SystemInterface system =
-        ProducedWaterFluidBuilder.createFromType(273.15 + 80.0, 150.0, "formation_high");
+    SystemInterface system = ProducedWaterFluidBuilder.createFromType(273.15 + 80.0, 150.0, "formation_high");
     assertNotNull(system);
     assertTrue(system.getPhase(0).hasComponent("Na+"));
     assertTrue(system.getPhase(0).hasComponent("Cl-"));
@@ -92,8 +87,7 @@ class ProducedWaterFluidBuilderTest extends neqsim.NeqSimTest {
     ions.put("Cl-", 19350.0);
     ions.put("Mg++", 1290.0);
 
-    SystemInterface system =
-        ProducedWaterFluidBuilder.createFromIons(273.15 + 25.0, 1.0, ions);
+    SystemInterface system = ProducedWaterFluidBuilder.createFromIons(273.15 + 25.0, 1.0, ions);
     assertNotNull(system);
     assertTrue(system.getPhase(0).hasComponent("Na+"));
     assertTrue(system.getPhase(0).hasComponent("Cl-"));
@@ -106,8 +100,7 @@ class ProducedWaterFluidBuilderTest extends neqsim.NeqSimTest {
    */
   @Test
   void testAddGasToWater() {
-    SystemInterface system =
-        ProducedWaterFluidBuilder.createFromTDS(273.15 + 25.0, 50.0, 35000.0, 0.9);
+    SystemInterface system = ProducedWaterFluidBuilder.createFromTDS(273.15 + 25.0, 50.0, 35000.0, 0.9);
 
     Map<String, Double> gas = new LinkedHashMap<String, Double>();
     gas.put("methane", 0.85);
@@ -125,8 +118,7 @@ class ProducedWaterFluidBuilderTest extends neqsim.NeqSimTest {
    */
   @Test
   void testFlashCreatedSystem() {
-    SystemInterface system =
-        ProducedWaterFluidBuilder.createFromTDS(273.15 + 25.0, 1.0, 35000.0, 1.0);
+    SystemInterface system = ProducedWaterFluidBuilder.createFromTDS(273.15 + 25.0, 1.0, 35000.0, 1.0);
     ThermodynamicOperations ops = new ThermodynamicOperations(system);
     ops.TPflash();
     system.initProperties();

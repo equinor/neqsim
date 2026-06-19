@@ -12,9 +12,9 @@ public interface CompressorChartInterface extends Cloneable {
   /**
    * This method is used add a curve to the CompressorChart object.
    *
-   * @param speed a double
-   * @param flow an array of type double
-   * @param head an array of type double
+   * @param speed                a double
+   * @param flow                 an array of type double
+   * @param head                 an array of type double
    * @param polytropicEfficiency an array of type double
    */
   public void addCurve(double speed, double[] flow, double[] head, double[] polytropicEfficiency);
@@ -22,36 +22,35 @@ public interface CompressorChartInterface extends Cloneable {
   /**
    * This method is used add a curve to the CompressorChart object.
    *
-   * @param speed a double
-   * @param flowHead an array of type double
-   * @param head an array of type double
+   * @param speed                    a double
+   * @param flowHead                 an array of type double
+   * @param head                     an array of type double
    * @param flowPolytropicEfficiency an array of type double
-   * @param polytropicEfficiency an array of type double
+   * @param polytropicEfficiency     an array of type double
    */
-  public void addCurve(double speed, double[] flowHead, double[] head,
-      double[] flowPolytropicEfficiency, double[] polytropicEfficiency);
+  public void addCurve(double speed, double[] flowHead, double[] head, double[] flowPolytropicEfficiency,
+      double[] polytropicEfficiency);
 
   /**
    * This method is used add a set of curves to the CompressorChart object.
    *
    * @param chartConditions an array of type double
-   * @param speed an array of type double
-   * @param flow an array of type double
-   * @param head an array of type double
-   * @param polyEff an array of type double
+   * @param speed           an array of type double
+   * @param flow            an array of type double
+   * @param head            an array of type double
+   * @param polyEff         an array of type double
    */
-  public void setCurves(double[] chartConditions, double[] speed, double[][] flow, double[][] head,
-      double[][] polyEff);
+  public void setCurves(double[] chartConditions, double[] speed, double[][] flow, double[][] head, double[][] polyEff);
 
   /**
    * This method is used add a set of curves to the CompressorChart object.
    *
    * @param chartConditions an array of type double
-   * @param speed an array of type double
-   * @param flow an array of type double
-   * @param head an array of type double
-   * @param flowPolyEff an array of type double
-   * @param polyEff an array of type double
+   * @param speed           an array of type double
+   * @param flow            an array of type double
+   * @param head            an array of type double
+   * @param flowPolyEff     an array of type double
+   * @param polyEff         an array of type double
    */
   public void setCurves(double[] chartConditions, double[] speed, double[][] flow, double[][] head,
       double[][] flowPolyEff, double[][] polyEff);
@@ -59,7 +58,7 @@ public interface CompressorChartInterface extends Cloneable {
   /**
    * Get method for polytropic head from reference curves.
    *
-   * @param flow [m3/h], speed in [rpm].
+   * @param flow  [m3/h], speed in [rpm].
    * @param speed a double
    * @return polytropic head in unit [getHeadUnit]
    */
@@ -68,7 +67,7 @@ public interface CompressorChartInterface extends Cloneable {
   /**
    * Get method for polytropic efficiency from reference curves.
    *
-   * @param flow [m3/h], speed in [rpm].
+   * @param flow  [m3/h], speed in [rpm].
    * @param speed a double
    * @return polytropic efficiency [%].
    */
@@ -77,17 +76,15 @@ public interface CompressorChartInterface extends Cloneable {
   /**
    * Set method for the reference conditions of the compressor chart.
    *
-   * @param refMW a double
+   * @param refMW          a double
    * @param refTemperature a double
-   * @param refPressure a double
-   * @param refZ a double
+   * @param refPressure    a double
+   * @param refZ           a double
    */
-  public void setReferenceConditions(double refMW, double refTemperature, double refPressure,
-      double refZ);
+  public void setReferenceConditions(double refMW, double refTemperature, double refPressure, double refZ);
 
   /**
-   * Checks if set to use compressor chart for compressor calculations (chart is set for
-   * compressor).
+   * Checks if set to use compressor chart for compressor calculations (chart is set for compressor).
    *
    * @return a boolean
    */
@@ -179,8 +176,8 @@ public interface CompressorChartInterface extends Cloneable {
    * Calculate the speed required to achieve a given head at a given flow rate.
    *
    * <p>
-   * This method returns the speed as a double for full precision. It uses a robust algorithm that
-   * works both within and outside the defined speed curve range by using fan law extrapolation.
+   * This method returns the speed as a double for full precision. It uses a robust algorithm that works both within and
+   * outside the defined speed curve range by using fan law extrapolation.
    * </p>
    *
    * <p>
@@ -220,8 +217,8 @@ public interface CompressorChartInterface extends Cloneable {
    * getFlow.
    * </p>
    *
-   * @param head a double
-   * @param speed a double
+   * @param head      a double
+   * @param speed     a double
    * @param guessFlow a double
    * @return a double
    */
@@ -249,9 +246,8 @@ public interface CompressorChartInterface extends Cloneable {
    * Check if the calculated speed is higher than the maximum speed in the compressor curves.
    *
    * <p>
-   * This method is useful for detecting when the compressor operation requires extrapolation beyond
-   * the defined performance curves, which may indicate that the compressor is undersized or
-   * operating outside its design envelope.
+   * This method is useful for detecting when the compressor operation requires extrapolation beyond the defined
+   * performance curves, which may indicate that the compressor is undersized or operating outside its design envelope.
    * </p>
    *
    * @param calculatedSpeed the speed to check in RPM
@@ -265,8 +261,8 @@ public interface CompressorChartInterface extends Cloneable {
    * Get the ratio of the calculated speed to the maximum speed in the compressor curves.
    *
    * <p>
-   * A ratio greater than 1.0 indicates the speed exceeds the maximum curve speed. This is useful
-   * for quantifying how far outside the design envelope the compressor is operating.
+   * A ratio greater than 1.0 indicates the speed exceeds the maximum curve speed. This is useful for quantifying how
+   * far outside the design envelope the compressor is operating.
    * </p>
    *
    * @param calculatedSpeed the speed to compare in RPM
@@ -284,9 +280,9 @@ public interface CompressorChartInterface extends Cloneable {
    * Check if the calculated speed is lower than the minimum speed in the compressor curves.
    *
    * <p>
-   * This method is useful for detecting when the compressor operation requires extrapolation below
-   * the defined performance curves, which may indicate turndown issues or that the compressor is
-   * oversized for the current operating conditions.
+   * This method is useful for detecting when the compressor operation requires extrapolation below the defined
+   * performance curves, which may indicate turndown issues or that the compressor is oversized for the current
+   * operating conditions.
    * </p>
    *
    * @param calculatedSpeed the speed to check in RPM
@@ -300,8 +296,8 @@ public interface CompressorChartInterface extends Cloneable {
    * Get the ratio of the calculated speed to the minimum speed in the compressor curves.
    *
    * <p>
-   * A ratio less than 1.0 indicates the speed is below the minimum curve speed. This is useful for
-   * quantifying how far below the design envelope the compressor is operating.
+   * A ratio less than 1.0 indicates the speed is below the minimum curve speed. This is useful for quantifying how far
+   * below the design envelope the compressor is operating.
    * </p>
    *
    * @param calculatedSpeed the speed to compare in RPM
@@ -349,8 +345,7 @@ public interface CompressorChartInterface extends Cloneable {
    * </p>
    *
    * @param speed The compressor speed in RPM
-   * @return The surge flow (minimum flow) at the specified speed in m3/hr, or Double.NaN if no
-   *         curves exist
+   * @return The surge flow (minimum flow) at the specified speed in m3/hr, or Double.NaN if no curves exist
    */
   public double getSurgeFlowAtSpeed(double speed);
 
@@ -360,8 +355,8 @@ public interface CompressorChartInterface extends Cloneable {
    * </p>
    *
    * @param speed The compressor speed in RPM
-   * @return The surge head at the specified speed in kJ/kg or meter (depending on headUnit), or
-   *         Double.NaN if no curves exist
+   * @return The surge head at the specified speed in kJ/kg or meter (depending on headUnit), or Double.NaN if no curves
+   *         exist
    */
   public double getSurgeHeadAtSpeed(double speed);
 
@@ -371,8 +366,7 @@ public interface CompressorChartInterface extends Cloneable {
    * </p>
    *
    * @param speed The compressor speed in RPM
-   * @return The stone wall flow (maximum flow) at the specified speed in m3/hr, or Double.NaN if no
-   *         curves exist
+   * @return The stone wall flow (maximum flow) at the specified speed in m3/hr, or Double.NaN if no curves exist
    */
   public double getStoneWallFlowAtSpeed(double speed);
 
@@ -382,8 +376,8 @@ public interface CompressorChartInterface extends Cloneable {
    * </p>
    *
    * @param speed The compressor speed in RPM
-   * @return The stone wall head at the specified speed in kJ/kg or meter (depending on headUnit),
-   *         or Double.NaN if no curves exist
+   * @return The stone wall head at the specified speed in kJ/kg or meter (depending on headUnit), or Double.NaN if no
+   *         curves exist
    */
   public double getStoneWallHeadAtSpeed(double speed);
 
@@ -391,9 +385,8 @@ public interface CompressorChartInterface extends Cloneable {
    * Set the inlet stream reference for automatic MW detection.
    *
    * <p>
-   * For charts that support MW interpolation (e.g., CompressorChartMWInterpolation), this allows
-   * the chart to automatically update the operating molecular weight from the inlet stream's fluid
-   * during calculations.
+   * For charts that support MW interpolation (e.g., CompressorChartMWInterpolation), this allows the chart to
+   * automatically update the operating molecular weight from the inlet stream's fluid during calculations.
    * </p>
    *
    * @param stream the inlet stream
@@ -439,24 +432,23 @@ public interface CompressorChartInterface extends Cloneable {
   /**
    * Get the flow values for all compressor curves.
    *
-   * @return a 2D array where each row corresponds to a speed and contains flow values in m3/hr, or
-   *         null if not set
+   * @return a 2D array where each row corresponds to a speed and contains flow values in m3/hr, or null if not set
    */
   public double[][] getFlows();
 
   /**
    * Get the head values for all compressor curves.
    *
-   * @return a 2D array where each row corresponds to a speed and contains head values in the unit
-   *         specified by getHeadUnit(), or null if not set
+   * @return a 2D array where each row corresponds to a speed and contains head values in the unit specified by
+   *         getHeadUnit(), or null if not set
    */
   public double[][] getHeads();
 
   /**
    * Get the polytropic efficiency values for all compressor curves.
    *
-   * @return a 2D array where each row corresponds to a speed and contains polytropic efficiency
-   *         values in %, or null if not set
+   * @return a 2D array where each row corresponds to a speed and contains polytropic efficiency values in %, or null if
+   *         not set
    */
   public double[][] getPolytropicEfficiencies();
 
@@ -471,12 +463,11 @@ public interface CompressorChartInterface extends Cloneable {
    * Get the power values for all compressor curves.
    *
    * <p>
-   * Power is calculated from: P = mass_flow * head / efficiency. This curve is critical for driver
-   * selection and energy analysis.
+   * Power is calculated from: P = mass_flow * head / efficiency. This curve is critical for driver selection and energy
+   * analysis.
    * </p>
    *
-   * @return a 2D array where each row corresponds to a speed and contains power values in kW, or
-   *         null if not available
+   * @return a 2D array where each row corresponds to a speed and contains power values in kW, or null if not available
    */
   public default double[][] getPowers() {
     return null;
@@ -486,12 +477,12 @@ public interface CompressorChartInterface extends Cloneable {
    * Get the pressure ratio values for all compressor curves.
    *
    * <p>
-   * Pressure ratio is calculated from polytropic head and gas properties. Useful for process design
-   * and control system configuration.
+   * Pressure ratio is calculated from polytropic head and gas properties. Useful for process design and control system
+   * configuration.
    * </p>
    *
-   * @return a 2D array where each row corresponds to a speed and contains pressure ratio values
-   *         (dimensionless), or null if not available
+   * @return a 2D array where each row corresponds to a speed and contains pressure ratio values (dimensionless), or
+   *         null if not available
    */
   public default double[][] getPressureRatios() {
     return null;
@@ -555,13 +546,13 @@ public interface CompressorChartInterface extends Cloneable {
    * Get the discharge temperature values for all compressor curves.
    *
    * <p>
-   * Discharge temperature is calculated from inlet temperature, pressure ratio, and polytropic
-   * efficiency using: T2 = T1 * PR^((n-1)/n) where n is related to efficiency and heat capacity
-   * ratio. This is important for downstream equipment design and material temperature limits.
+   * Discharge temperature is calculated from inlet temperature, pressure ratio, and polytropic efficiency using: T2 =
+   * T1 * PR^((n-1)/n) where n is related to efficiency and heat capacity ratio. This is important for downstream
+   * equipment design and material temperature limits.
    * </p>
    *
-   * @return a 2D array where each row corresponds to a speed and contains discharge temperature
-   *         values in Kelvin, or null if not available
+   * @return a 2D array where each row corresponds to a speed and contains discharge temperature values in Kelvin, or
+   *         null if not available
    */
   public default double[][] getDischargeTemperatures() {
     return null;

@@ -7,14 +7,12 @@ import java.util.Map;
  * Standalone Z-factor (gas compressibility factor) correlations.
  *
  * <p>
- * Provides multiple correlations for calculating the gas compressibility factor (Z) from
- * pseudoreduced temperature and pressure. Also includes convenience methods that accept Kelvin,
- * bara, and gas specific gravity directly.
+ * Provides multiple correlations for calculating the gas compressibility factor (Z) from pseudoreduced temperature and
+ * pressure. Also includes convenience methods that accept Kelvin, bara, and gas specific gravity directly.
  *
  * <p>
- * <b>Default units:</b> All convenience methods use Kelvin and bara. Core correlations
- * ({@link #hallYarborough}, {@link #dranchukAbouKassem}, {@link #papay}) are dimensionless and take
- * pseudoreduced properties directly.
+ * <b>Default units:</b> All convenience methods use Kelvin and bara. Core correlations ({@link #hallYarborough},
+ * {@link #dranchukAbouKassem}, {@link #papay}) are dimensionless and take pseudoreduced properties directly.
  *
  * <p>
  * <b>Correlations:</b>
@@ -50,8 +48,8 @@ public final class ZFactorCorrelations {
    * Hall-Yarborough (1973) Z-factor correlation.
    *
    * <p>
-   * Iterative Newton-Raphson solution of the Starling-Carnahan equation of state. Uses reduced
-   * density y as the primary unknown.
+   * Iterative Newton-Raphson solution of the Starling-Carnahan equation of state. Uses reduced density y as the primary
+   * unknown.
    *
    * @param tpr Pseudoreduced temperature (dimensionless). Valid: 1.0 - 3.0
    * @param ppr Pseudoreduced pressure (dimensionless). Valid: 0 - 25
@@ -69,21 +67,19 @@ public final class ZFactorCorrelations {
 
     double y = 0.001;
     for (int i = 0; i < 200; i++) {
-      double fy = a + (y + y * y + y * y * y - y * y * y * y) / Math.pow(1.0 - y, 3) - b * y * y
-          + c * Math.pow(y, d);
-      double dfy =
-          (1.0 + 4.0 * y + 4.0 * y * y - 4.0 * y * y * y + y * y * y * y) / Math.pow(1.0 - y, 4)
-              - 2.0 * b * y + c * d * Math.pow(y, d - 1.0);
+      double fy = a + (y + y * y + y * y * y - y * y * y * y) / Math.pow(1.0 - y, 3) - b * y * y + c * Math.pow(y, d);
+      double dfy = (1.0 + 4.0 * y + 4.0 * y * y - 4.0 * y * y * y + y * y * y * y) / Math.pow(1.0 - y, 4) - 2.0 * b * y
+	  + c * d * Math.pow(y, d - 1.0);
       double yNew = y - fy / dfy;
       if (yNew < 1.0e-12) {
-        yNew = 1.0e-12;
+	yNew = 1.0e-12;
       }
       if (yNew > 0.9999) {
-        yNew = 0.9999;
+	yNew = 0.9999;
       }
       if (Math.abs(yNew - y) < 1.0e-13) {
-        y = yNew;
-        break;
+	y = yNew;
+	break;
       }
       y = yNew;
     }
@@ -100,8 +96,8 @@ public final class ZFactorCorrelations {
    * Dranchuk-Abou-Kassem (1975) Z-factor correlation.
    *
    * <p>
-   * Eleven-constant modified Benedict-Webb-Rubin equation of state. Uses iterative Newton-Raphson
-   * solution for reduced density.
+   * Eleven-constant modified Benedict-Webb-Rubin equation of state. Uses iterative Newton-Raphson solution for reduced
+   * density.
    *
    * @param tpr Pseudoreduced temperature (dimensionless). Valid: 1.0 - 3.0
    * @param ppr Pseudoreduced pressure (dimensionless). Valid: 0.2 - 30
@@ -119,24 +115,22 @@ public final class ZFactorCorrelations {
     for (int i = 0; i < 200; i++) {
       double rr = rhoR;
       double rr2 = rr * rr;
-      double c1 =
-          a1 + a2 / tpr + a3 / (tpr * tpr * tpr) + a4 / Math.pow(tpr, 4) + a5 / Math.pow(tpr, 5);
+      double c1 = a1 + a2 / tpr + a3 / (tpr * tpr * tpr) + a4 / Math.pow(tpr, 4) + a5 / Math.pow(tpr, 5);
       double c2 = a6 + a7 / tpr + a8 / (tpr * tpr);
       double c3 = a9 * (a7 / tpr + a8 / (tpr * tpr));
       double fz = 1.0 + c1 * rr + c2 * rr2 - c3 * rr2 * rr2 * rr
-          + a10 * (1.0 + a11 * rr2) * (rr2 / (tpr * tpr * tpr)) * Math.exp(-a11 * rr2)
-          - 0.27 * ppr / (rhoR * tpr);
+	  + a10 * (1.0 + a11 * rr2) * (rr2 / (tpr * tpr * tpr)) * Math.exp(-a11 * rr2) - 0.27 * ppr / (rhoR * tpr);
       double dfz = c1 + 2.0 * c2 * rr - 5.0 * c3 * rr2 * rr2
-          + a10 * (rr / (tpr * tpr * tpr))
-              * ((2.0 + 4.0 * a11 * rr2 - 2.0 * a11 * a11 * rr2 * rr2) * Math.exp(-a11 * rr2))
-          + 0.27 * ppr / (rhoR * rhoR * tpr);
+	  + a10 * (rr / (tpr * tpr * tpr))
+	      * ((2.0 + 4.0 * a11 * rr2 - 2.0 * a11 * a11 * rr2 * rr2) * Math.exp(-a11 * rr2))
+	  + 0.27 * ppr / (rhoR * rhoR * tpr);
       double rhoNew = rhoR - fz / dfz;
       if (rhoNew < 1.0e-15) {
-        rhoNew = 1.0e-15;
+	rhoNew = 1.0e-15;
       }
       if (Math.abs(rhoNew - rhoR) < 1.0e-12) {
-        rhoR = rhoNew;
-        break;
+	rhoR = rhoNew;
+	break;
       }
       rhoR = rhoNew;
     }
@@ -152,19 +146,17 @@ public final class ZFactorCorrelations {
    * Papay (1968) explicit Z-factor correlation.
    *
    * <p>
-   * Simple explicit formula. Less accurate than iterative methods but useful for quick estimates or
-   * as an initial guess.
+   * Simple explicit formula. Less accurate than iterative methods but useful for quick estimates or as an initial
+   * guess.
    *
-   * $$ Z = 1 - \frac{3.52 P_{pr}}{10^{0.9813 T_{pr}}} + \frac{0.274 P_{pr}^2}{10^{0.8157 T_{pr}}}
-   * $$
+   * $$ Z = 1 - \frac{3.52 P_{pr}}{10^{0.9813 T_{pr}}} + \frac{0.274 P_{pr}^2}{10^{0.8157 T_{pr}}} $$
    *
    * @param tpr Pseudoreduced temperature (dimensionless). Valid: 1.0 - 3.0
    * @param ppr Pseudoreduced pressure (dimensionless). Valid: 0.2 - 15
    * @return Z-factor (dimensionless)
    */
   public static double papay(double tpr, double ppr) {
-    double z = 1.0 - 3.52 * ppr / Math.pow(10.0, 0.9813 * tpr)
-        + 0.274 * ppr * ppr / Math.pow(10.0, 0.8157 * tpr);
+    double z = 1.0 - 3.52 * ppr / Math.pow(10.0, 0.9813 * tpr) + 0.274 * ppr * ppr / Math.pow(10.0, 0.8157 * tpr);
     if (z < 0.05) {
       z = 0.05;
     }
@@ -180,7 +172,7 @@ public final class ZFactorCorrelations {
    *
    * @param pressureBara Pressure (bara)
    * @param temperatureK Temperature (Kelvin)
-   * @param gammaG Gas specific gravity (air = 1.0)
+   * @param gammaG       Gas specific gravity (air = 1.0)
    * @return Z-factor (dimensionless)
    */
   public static double zFactorSutton(double pressureBara, double temperatureK, double gammaG) {
@@ -196,13 +188,13 @@ public final class ZFactorCorrelations {
    *
    * @param pressureBara Pressure (bara)
    * @param temperatureK Temperature (Kelvin)
-   * @param gammaG Gas specific gravity (air = 1.0)
-   * @param yH2S Mole fraction of H2S [0, 1]
-   * @param yCO2 Mole fraction of CO2 [0, 1]
+   * @param gammaG       Gas specific gravity (air = 1.0)
+   * @param yH2S         Mole fraction of H2S [0, 1]
+   * @param yCO2         Mole fraction of CO2 [0, 1]
    * @return Z-factor (dimensionless)
    */
-  public static double zFactorSourGas(double pressureBara, double temperatureK, double gammaG,
-      double yH2S, double yCO2) {
+  public static double zFactorSourGas(double pressureBara, double temperatureK, double gammaG, double yH2S,
+      double yCO2) {
     double tpc = GasPseudoCriticalProperties.pseudoCriticalTemperatureSutton(gammaG);
     double ppc = GasPseudoCriticalProperties.pseudoCriticalPressureSutton(gammaG);
     double[] corrected = GasPseudoCriticalProperties.wichertAzizCorrection(tpc, ppc, yH2S, yCO2);
@@ -216,12 +208,11 @@ public final class ZFactorCorrelations {
    *
    * @param pressureBara Pressure (bara)
    * @param temperatureK Temperature (Kelvin)
-   * @param gammaG Gas specific gravity (air = 1.0)
-   * @param molWeight Gas molecular weight (g/mol)
+   * @param gammaG       Gas specific gravity (air = 1.0)
+   * @param molWeight    Gas molecular weight (g/mol)
    * @return Gas density (kg/m3)
    */
-  public static double gasDensity(double pressureBara, double temperatureK, double gammaG,
-      double molWeight) {
+  public static double gasDensity(double pressureBara, double temperatureK, double gammaG, double molWeight) {
     double z = zFactorSutton(pressureBara, temperatureK, gammaG);
     // rho = P * MW / (Z * R * T) in consistent units
     // P in bara, T in K, R = 0.0831447 (bara*m3)/(kmol*K), MW in g/mol = kg/kmol
@@ -234,12 +225,11 @@ public final class ZFactorCorrelations {
    * <p>
    * $$ B_g = \frac{Z \, T}{P} \times \frac{P_{sc}}{T_{sc}} $$
    *
-   * Standard conditions: 1.01325 bara, 288.71 K (15.56 C / 60 F). Returns Bg in reservoir m3 /
-   * standard m3.
+   * Standard conditions: 1.01325 bara, 288.71 K (15.56 C / 60 F). Returns Bg in reservoir m3 / standard m3.
    *
    * @param pressureBara Pressure (bara)
    * @param temperatureK Temperature (Kelvin)
-   * @param gammaG Gas specific gravity (air = 1.0)
+   * @param gammaG       Gas specific gravity (air = 1.0)
    * @return Gas FVF (res m3 / std m3)
    */
   public static double gasFVFFromZ(double pressureBara, double temperatureK, double gammaG) {

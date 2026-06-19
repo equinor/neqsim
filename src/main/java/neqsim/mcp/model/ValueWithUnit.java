@@ -7,9 +7,9 @@ import com.google.gson.JsonObject;
  * A numeric value with its associated unit.
  *
  * <p>
- * Used in MCP request/response models to represent physical quantities that can be specified with
- * different units. Supports JSON deserialization from either a bare number (uses default unit) or
- * an object with {@code value} and {@code unit} fields.
+ * Used in MCP request/response models to represent physical quantities that can be specified with different units.
+ * Supports JSON deserialization from either a bare number (uses default unit) or an object with {@code value} and
+ * {@code unit} fields.
  * </p>
  *
  * <pre>{@code
@@ -32,7 +32,7 @@ public class ValueWithUnit {
    * Creates a value with unit.
    *
    * @param value the numeric value
-   * @param unit the unit string
+   * @param unit  the unit string
    */
   public ValueWithUnit(double value, String unit) {
     this.value = value;
@@ -58,10 +58,10 @@ public class ValueWithUnit {
   }
 
   /**
-   * Parses a ValueWithUnit from a JSON element. Accepts either a bare number (using defaultUnit) or
-   * an object with "value" and optional "unit" fields.
+   * Parses a ValueWithUnit from a JSON element. Accepts either a bare number (using defaultUnit) or an object with
+   * "value" and optional "unit" fields.
    *
-   * @param element the JSON element to parse
+   * @param element     the JSON element to parse
    * @param defaultUnit the unit to use if not specified
    * @return the parsed ValueWithUnit, or null if parsing fails
    */
@@ -71,13 +71,13 @@ public class ValueWithUnit {
     }
     try {
       if (element.isJsonPrimitive()) {
-        return new ValueWithUnit(element.getAsDouble(), defaultUnit);
+	return new ValueWithUnit(element.getAsDouble(), defaultUnit);
       }
       if (element.isJsonObject()) {
-        JsonObject obj = element.getAsJsonObject();
-        double val = obj.get("value").getAsDouble();
-        String unit = obj.has("unit") ? obj.get("unit").getAsString() : defaultUnit;
-        return new ValueWithUnit(val, unit);
+	JsonObject obj = element.getAsJsonObject();
+	double val = obj.get("value").getAsDouble();
+	String unit = obj.has("unit") ? obj.get("unit").getAsString() : defaultUnit;
+	return new ValueWithUnit(val, unit);
       }
     } catch (Exception e) {
       // fall through to null

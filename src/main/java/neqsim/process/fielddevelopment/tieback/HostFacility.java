@@ -10,9 +10,8 @@ import neqsim.process.processmodel.ProcessSystem;
  * Represents an existing host facility with available capacity for tie-backs.
  *
  * <p>
- * A host facility is an existing offshore installation (platform, FPSO, or onshore terminal) that
- * can receive production from satellite fields. This class captures the key parameters needed for
- * tie-back screening:
+ * A host facility is an existing offshore installation (platform, FPSO, or onshore terminal) that can receive
+ * production from satellite fields. This class captures the key parameters needed for tie-back screening:
  * </p>
  * <ul>
  * <li><b>Location</b>: Geographic coordinates for distance calculations</li>
@@ -26,8 +25,7 @@ import neqsim.process.processmodel.ProcessSystem;
  * <pre>{@code
  * // Create a platform with spare gas capacity
  * HostFacility platform = HostFacility.builder("Troll A").location(60.6, 3.7).waterDepth(330)
- *     .gasCapacity(40.0, "MSm3/d").gasUtilization(0.85).minTieInPressure(80).maxTieInPressure(150)
- *     .build();
+ *     .gasCapacity(40.0, "MSm3/d").gasUtilization(0.85).minTieInPressure(80).maxTieInPressure(150).build();
  *
  * // Check spare capacity
  * double spareGas = platform.getSpareGasCapacity(); // ~6 MSm3/d
@@ -249,14 +247,14 @@ public class HostFacility implements Serializable {
    * Assesses whether the host can accept additional production.
    *
    * <p>
-   * The method first checks the explicit nameplate spare capacities. If a detailed
-   * {@link ProcessSystem} is attached, it also runs {@link BottleneckAnalyzer} and flags active
-   * process bottlenecks that could make the nameplate spare capacity misleading.
+   * The method first checks the explicit nameplate spare capacities. If a detailed {@link ProcessSystem} is attached,
+   * it also runs {@link BottleneckAnalyzer} and flags active process bottlenecks that could make the nameplate spare
+   * capacity misleading.
    * </p>
    *
-   * @param additionalGasMSm3d additional gas rate in MSm3/d
-   * @param additionalOilBopd additional oil rate in bbl/d
-   * @param additionalWaterM3d additional produced water rate in m3/d
+   * @param additionalGasMSm3d  additional gas rate in MSm3/d
+   * @param additionalOilBopd   additional oil rate in bbl/d
+   * @param additionalWaterM3d  additional produced water rate in m3/d
    * @param additionalLiquidM3d additional total liquid rate in m3/d
    * @return host capacity report with pass/fail status and bottleneck summary
    */
@@ -277,67 +275,66 @@ public class HostFacility implements Serializable {
     if (processSystem != null) {
       processModelUsed = true;
       try {
-        processSystem.run();
-        BottleneckAnalyzer analyzer = new BottleneckAnalyzer(processSystem);
-        List<BottleneckResult> active = analyzer.getActiveBottlenecks();
-        activeBottleneckCount = active.size();
-        BottleneckResult primary = analyzer.getPrimaryBottleneck();
-        if (primary != null) {
-          primaryBottleneckName = primary.getEquipmentName();
-          primaryBottleneckUtilization = primary.getUtilization();
-          processOk = primary.getUtilization() < 0.95;
-          processMessage = String.format("Primary process bottleneck %s at %.0f%% utilization",
-              primary.getEquipmentName(), primary.getUtilization() * 100.0);
-        } else {
-          processMessage = "Process model has no recognized bottlenecking equipment";
-        }
+	processSystem.run();
+	BottleneckAnalyzer analyzer = new BottleneckAnalyzer(processSystem);
+	List<BottleneckResult> active = analyzer.getActiveBottlenecks();
+	activeBottleneckCount = active.size();
+	BottleneckResult primary = analyzer.getPrimaryBottleneck();
+	if (primary != null) {
+	  primaryBottleneckName = primary.getEquipmentName();
+	  primaryBottleneckUtilization = primary.getUtilization();
+	  processOk = primary.getUtilization() < 0.95;
+	  processMessage = String.format("Primary process bottleneck %s at %.0f%% utilization",
+	      primary.getEquipmentName(), primary.getUtilization() * 100.0);
+	} else {
+	  processMessage = "Process model has no recognized bottlenecking equipment";
+	}
       } catch (Exception e) {
-        processOk = false;
-        processMessage = "Process model capacity check failed: " + e.getMessage();
+	processOk = false;
+	processMessage = "Process model capacity check failed: " + e.getMessage();
       }
     }
 
     boolean capacityAvailable = gasOk && oilOk && waterOk && liquidOk && processOk;
     String summary = buildCapacitySummary(additionalGasMSm3d, additionalOilBopd, additionalWaterM3d,
-        additionalLiquidM3d, gasOk, oilOk, waterOk, liquidOk, processMessage);
+	additionalLiquidM3d, gasOk, oilOk, waterOk, liquidOk, processMessage);
 
-    return new HostCapacityReport(name, capacityAvailable, gasOk, oilOk, waterOk, liquidOk,
-        processOk, processModelUsed, additionalGasMSm3d, getSpareGasCapacity(), additionalOilBopd,
-        getSpareOilCapacity(), additionalWaterM3d, getSpareWaterCapacity(), additionalLiquidM3d,
-        getSpareLiquidCapacity(), primaryBottleneckName, primaryBottleneckUtilization,
-        activeBottleneckCount, summary);
+    return new HostCapacityReport(name, capacityAvailable, gasOk, oilOk, waterOk, liquidOk, processOk, processModelUsed,
+	additionalGasMSm3d, getSpareGasCapacity(), additionalOilBopd, getSpareOilCapacity(), additionalWaterM3d,
+	getSpareWaterCapacity(), additionalLiquidM3d, getSpareLiquidCapacity(), primaryBottleneckName,
+	primaryBottleneckUtilization, activeBottleneckCount, summary);
   }
 
   /**
    * Builds a concise capacity summary string.
    *
-   * @param additionalGasMSm3d additional gas rate in MSm3/d
-   * @param additionalOilBopd additional oil rate in bbl/d
-   * @param additionalWaterM3d additional produced water rate in m3/d
+   * @param additionalGasMSm3d  additional gas rate in MSm3/d
+   * @param additionalOilBopd   additional oil rate in bbl/d
+   * @param additionalWaterM3d  additional produced water rate in m3/d
    * @param additionalLiquidM3d additional total liquid rate in m3/d
-   * @param gasOk true if gas capacity passes
-   * @param oilOk true if oil capacity passes
-   * @param waterOk true if water capacity passes
-   * @param liquidOk true if liquid capacity passes
-   * @param processMessage process-model bottleneck message
+   * @param gasOk               true if gas capacity passes
+   * @param oilOk               true if oil capacity passes
+   * @param waterOk             true if water capacity passes
+   * @param liquidOk            true if liquid capacity passes
+   * @param processMessage      process-model bottleneck message
    * @return formatted capacity summary
    */
-  private String buildCapacitySummary(double additionalGasMSm3d, double additionalOilBopd,
-      double additionalWaterM3d, double additionalLiquidM3d, boolean gasOk, boolean oilOk,
-      boolean waterOk, boolean liquidOk, String processMessage) {
+  private String buildCapacitySummary(double additionalGasMSm3d, double additionalOilBopd, double additionalWaterM3d,
+      double additionalLiquidM3d, boolean gasOk, boolean oilOk, boolean waterOk, boolean liquidOk,
+      String processMessage) {
     StringBuilder summary = new StringBuilder();
     summary.append("Capacity: ");
-    summary.append(String.format("Gas %.2f/%.2f MSm3/d %s; ", additionalGasMSm3d,
-        getSpareGasCapacity(), gasOk ? "OK" : "LIMIT"));
-    summary.append(String.format("Oil %.0f/%.0f bbl/d %s; ", additionalOilBopd,
-        getSpareOilCapacity(), oilOk ? "OK" : "LIMIT"));
+    summary.append(
+	String.format("Gas %.2f/%.2f MSm3/d %s; ", additionalGasMSm3d, getSpareGasCapacity(), gasOk ? "OK" : "LIMIT"));
+    summary.append(
+	String.format("Oil %.0f/%.0f bbl/d %s; ", additionalOilBopd, getSpareOilCapacity(), oilOk ? "OK" : "LIMIT"));
     if (waterCapacityM3d > 0.0) {
-      summary.append(String.format("Water %.0f/%.0f m3/d %s; ", additionalWaterM3d,
-          getSpareWaterCapacity(), waterOk ? "OK" : "LIMIT"));
+      summary.append(String.format("Water %.0f/%.0f m3/d %s; ", additionalWaterM3d, getSpareWaterCapacity(),
+	  waterOk ? "OK" : "LIMIT"));
     }
     if (liquidCapacityM3d > 0.0) {
-      summary.append(String.format("Liquid %.0f/%.0f m3/d %s; ", additionalLiquidM3d,
-          getSpareLiquidCapacity(), liquidOk ? "OK" : "LIMIT"));
+      summary.append(String.format("Liquid %.0f/%.0f m3/d %s; ", additionalLiquidM3d, getSpareLiquidCapacity(),
+	  liquidOk ? "OK" : "LIMIT"));
     }
     summary.append(processMessage);
     return summary.toString();
@@ -350,7 +347,7 @@ public class HostFacility implements Serializable {
   /**
    * Calculates the great-circle distance to another location.
    *
-   * @param targetLatitude target latitude in degrees
+   * @param targetLatitude  target latitude in degrees
    * @param targetLongitude target longitude in degrees
    * @return distance in kilometers
    */
@@ -362,7 +359,7 @@ public class HostFacility implements Serializable {
     double dLon = Math.toRadians(targetLongitude - longitude);
 
     double a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(Math.toRadians(latitude))
-        * Math.cos(Math.toRadians(targetLatitude)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+	* Math.cos(Math.toRadians(targetLatitude)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
 
     double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
@@ -376,8 +373,7 @@ public class HostFacility implements Serializable {
    * @return true if pressure is acceptable
    */
   public boolean isPressureAcceptable(double arrivalPressureBara) {
-    return arrivalPressureBara >= minTieInPressureBara
-        && arrivalPressureBara <= maxTieInPressureBara;
+    return arrivalPressureBara >= minTieInPressureBara && arrivalPressureBara <= maxTieInPressureBara;
   }
 
   // ============================================================================
@@ -720,34 +716,33 @@ public class HostFacility implements Serializable {
     /**
      * Creates a host capacity report.
      *
-     * @param hostName host name
-     * @param capacityAvailable true if all capacity checks pass
-     * @param gasCapacityAvailable true if gas capacity passes
-     * @param oilCapacityAvailable true if oil capacity passes
-     * @param waterCapacityAvailable true if water capacity passes
-     * @param liquidCapacityAvailable true if liquid capacity passes
-     * @param processCapacityAvailable true if process model has acceptable bottleneck utilization
-     * @param processModelUsed true if an attached process model was checked
-     * @param requiredGasMSm3d required gas rate in MSm3/d
-     * @param spareGasMSm3d spare gas capacity in MSm3/d
-     * @param requiredOilBopd required oil rate in bbl/d
-     * @param spareOilBopd spare oil capacity in bbl/d
-     * @param requiredWaterM3d required water rate in m3/d
-     * @param spareWaterM3d spare water capacity in m3/d
-     * @param requiredLiquidM3d required liquid rate in m3/d
-     * @param spareLiquidM3d spare liquid capacity in m3/d
-     * @param primaryBottleneckName primary bottleneck equipment name
+     * @param hostName                     host name
+     * @param capacityAvailable            true if all capacity checks pass
+     * @param gasCapacityAvailable         true if gas capacity passes
+     * @param oilCapacityAvailable         true if oil capacity passes
+     * @param waterCapacityAvailable       true if water capacity passes
+     * @param liquidCapacityAvailable      true if liquid capacity passes
+     * @param processCapacityAvailable     true if process model has acceptable bottleneck utilization
+     * @param processModelUsed             true if an attached process model was checked
+     * @param requiredGasMSm3d             required gas rate in MSm3/d
+     * @param spareGasMSm3d                spare gas capacity in MSm3/d
+     * @param requiredOilBopd              required oil rate in bbl/d
+     * @param spareOilBopd                 spare oil capacity in bbl/d
+     * @param requiredWaterM3d             required water rate in m3/d
+     * @param spareWaterM3d                spare water capacity in m3/d
+     * @param requiredLiquidM3d            required liquid rate in m3/d
+     * @param spareLiquidM3d               spare liquid capacity in m3/d
+     * @param primaryBottleneckName        primary bottleneck equipment name
      * @param primaryBottleneckUtilization primary bottleneck utilization fraction
-     * @param activeBottleneckCount number of active bottlenecks above threshold
-     * @param summary concise text summary
+     * @param activeBottleneckCount        number of active bottlenecks above threshold
+     * @param summary                      concise text summary
      */
-    private HostCapacityReport(String hostName, boolean capacityAvailable,
-        boolean gasCapacityAvailable, boolean oilCapacityAvailable, boolean waterCapacityAvailable,
-        boolean liquidCapacityAvailable, boolean processCapacityAvailable, boolean processModelUsed,
-        double requiredGasMSm3d, double spareGasMSm3d, double requiredOilBopd, double spareOilBopd,
-        double requiredWaterM3d, double spareWaterM3d, double requiredLiquidM3d,
-        double spareLiquidM3d, String primaryBottleneckName, double primaryBottleneckUtilization,
-        int activeBottleneckCount, String summary) {
+    private HostCapacityReport(String hostName, boolean capacityAvailable, boolean gasCapacityAvailable,
+	boolean oilCapacityAvailable, boolean waterCapacityAvailable, boolean liquidCapacityAvailable,
+	boolean processCapacityAvailable, boolean processModelUsed, double requiredGasMSm3d, double spareGasMSm3d,
+	double requiredOilBopd, double spareOilBopd, double requiredWaterM3d, double spareWaterM3d,
+	double requiredLiquidM3d, double spareLiquidM3d, String primaryBottleneckName,
+	double primaryBottleneckUtilization, int activeBottleneckCount, String summary) {
       this.hostName = hostName;
       this.capacityAvailable = capacityAvailable;
       this.gasCapacityAvailable = gasCapacityAvailable;
@@ -954,9 +949,8 @@ public class HostFacility implements Serializable {
   @Override
   public String toString() {
     return String.format(
-        "HostFacility[%s, type=%s, pos=(%.2f, %.2f), depth=%.0fm, "
-            + "spareGas=%.1f MSm3/d, spareOil=%.0f bopd]",
-        name, type, latitude, longitude, waterDepthM, getSpareGasCapacity(), getSpareOilCapacity());
+	"HostFacility[%s, type=%s, pos=(%.2f, %.2f), depth=%.0fm, " + "spareGas=%.1f MSm3/d, spareOil=%.0f bopd]", name,
+	type, latitude, longitude, waterDepthM, getSpareGasCapacity(), getSpareOilCapacity());
   }
 
   // ============================================================================
@@ -998,7 +992,7 @@ public class HostFacility implements Serializable {
     /**
      * Sets the location.
      *
-     * @param latitude latitude in degrees
+     * @param latitude  latitude in degrees
      * @param longitude longitude in degrees
      * @return this builder
      */

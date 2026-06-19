@@ -12,8 +12,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @author asmund
  * @version $Id: $Id
  */
-public class StirredCellSystem
-    extends neqsim.fluidmechanics.flowsystem.twophaseflowsystem.TwoPhaseFlowSystem {
+public class StirredCellSystem extends neqsim.fluidmechanics.flowsystem.twophaseflowsystem.TwoPhaseFlowSystem {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
@@ -22,7 +21,8 @@ public class StirredCellSystem
    * Constructor for StirredCellSystem.
    * </p>
    */
-  public StirredCellSystem() {}
+  public StirredCellSystem() {
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -34,9 +34,8 @@ public class StirredCellSystem
     }
 
     flowNode = new neqsim.fluidmechanics.flownode.FlowNodeInterface[totalNumberOfNodes];
-    flowNode[0] =
-        new neqsim.fluidmechanics.flownode.twophasenode.twophasestirredcellnode.StirredCellNode(
-            thermoSystem, equipmentGeometry[0]);
+    flowNode[0] = new neqsim.fluidmechanics.flownode.twophasenode.twophasestirredcellnode.StirredCellNode(thermoSystem,
+	equipmentGeometry[0]);
 
     flowNode[totalNumberOfNodes - 1] = flowNode[0].getNextNode();
 
@@ -53,13 +52,13 @@ public class StirredCellSystem
 
     for (int j = 0; j < getTotalNumberOfNodes(); j++) {
       for (int phaseNum = 0; phaseNum < 2; phaseNum++) {
-        flowNode[j].setVelocityOut(phaseNum, this.flowNode[j].getVelocity(phaseNum));
+	flowNode[j].setVelocityOut(phaseNum, this.flowNode[j].getVelocity(phaseNum));
       }
     }
 
     for (int k = 1; k < getTotalNumberOfNodes(); k++) {
       for (int phaseNum = 0; phaseNum < 2; phaseNum++) {
-        this.flowNode[k].setVelocityIn(phaseNum, this.flowNode[k - 1].getVelocityOut(phaseNum));
+	this.flowNode[k].setVelocityIn(phaseNum, this.flowNode[k - 1].getVelocityOut(phaseNum));
       }
     }
   }
@@ -68,9 +67,8 @@ public class StirredCellSystem
   @Override
   public void solveSteadyState(int type, UUID id) {
     // TODO: double[] times = {0.0}; ?
-    flowSolver =
-        new neqsim.fluidmechanics.flowsolver.twophaseflowsolver.stirredcellsolver.StirredCellSolver(
-            this, getSystemLength(), getTotalNumberOfNodes(), false);
+    flowSolver = new neqsim.fluidmechanics.flowsolver.twophaseflowsolver.stirredcellsolver.StirredCellSolver(this,
+	getSystemLength(), getTotalNumberOfNodes(), false);
     calcIdentifier = id;
     // TODO: getTimeSeries().init(this);
   }
@@ -79,16 +77,14 @@ public class StirredCellSystem
   @Override
   public void solveTransient(int solverType, UUID id) {
     getTimeSeries().init(this);
-    display =
-        new neqsim.fluidmechanics.util.fluidmechanicsvisualization.flowsystemvisualization.twophaseflowvisualization.twophasepipeflowvisualization.TwoPhasePipeFlowVisualization(
-            this.getTotalNumberOfNodes(), getTimeSeries().getTime().length);
+    display = new neqsim.fluidmechanics.util.fluidmechanicsvisualization.flowsystemvisualization.twophaseflowvisualization.twophasepipeflowvisualization.TwoPhasePipeFlowVisualization(
+	this.getTotalNumberOfNodes(), getTimeSeries().getTime().length);
     for (int i = 0; i < this.getTimeSeries().getTime().length; i++) {
       getNode(0).setBulkSystem(this.getTimeSeries().getThermoSystem()[i]);
       flowNode[0].initFlowCalc();
       flowNode[0].init();
       flowNode[0].setVelocityIn(this.flowNode[0].getVelocity());
-      flowNode[getTotalNumberOfNodes() - 1]
-          .setVelocity(this.getTimeSeries().getOutletMolarFlowRates()[i]);
+      flowNode[getTotalNumberOfNodes() - 1].setVelocity(this.getTimeSeries().getOutletMolarFlowRates()[i]);
       // System.out.println("vel: " + this.flowNode[0].getVelocity());
       // getSolver().setTimeStep(this.getTimeSeries().getTimeStep()[i]);
       // System.out.println("time step: " + i + " " +
@@ -113,8 +109,7 @@ public class StirredCellSystem
     neqsim.fluidmechanics.flowsystem.FlowSystemInterface pipe = new StirredCellSystem();
 
     // Definerer termodyanmikken5
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos(295.3, 5.0);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos(295.3, 5.0);
     testSystem.addComponent("methane", 0.11152181, 0);
     // testSystem.addComponent("ethane", 0.0011152181, 0);
     testSystem.addComponent("water", 0.04962204876, 1);
@@ -129,11 +124,11 @@ public class StirredCellSystem
     // setter antall nodepunkter (beregningspunkter/grid) pr. // leg
     pipe.setNumberOfNodesInLeg(10);
 
-    double[] height = {0, 0};
-    double[] length = {0.0, 10.0};
-    double[] outerTemperature = {278.0, 278.0};
-    double[] outerHeatTransferCoef = {2.0, 2.0};
-    double[] wallHeatTransferCoef = {2.0, 2.0};
+    double[] height = { 0, 0 };
+    double[] length = { 0.0, 10.0 };
+    double[] outerTemperature = { 278.0, 278.0 };
+    double[] outerHeatTransferCoef = { 2.0, 2.0 };
+    double[] wallHeatTransferCoef = { 2.0, 2.0 };
 
     pipe.setLegHeights(height); // setter inn hoyde for hver leg-ende
     pipe.setLegPositions(length); // setter avstand til hver leg-ende
@@ -142,21 +137,19 @@ public class StirredCellSystem
     pipe.setLegWallHeatTransferCoefficients(wallHeatTransferCoef);
 
     // Deffinerer geometrien for roret
-    neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface[] pipeGemometry =
-        new neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData[6];
-    double[] pipeDiameter = {0.02588, 0.02588};
+    neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface[] pipeGemometry = new neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData[6];
+    double[] pipeDiameter = { 0.02588, 0.02588 };
     for (int i = 0; i < pipeDiameter.length; i++) {
-      pipeGemometry[i] =
-          new neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData(pipeDiameter[i]);
+      pipeGemometry[i] = new neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData(pipeDiameter[i]);
     }
     pipe.setEquipmentGeometry(pipeGemometry); // setter inn rorgeometrien for hver leg
     // utforer beregninger
     pipe.createSystem();
     pipe.init();
 
-    double[] times = {0, 10};
+    double[] times = { 0, 10 };
     pipe.getTimeSeries().setTimes(times);
-    SystemInterface[] systems = {testSystem, testSystem, testSystem};
+    SystemInterface[] systems = { testSystem, testSystem, testSystem };
     pipe.getTimeSeries().setInletThermoSystems(systems);
     pipe.getTimeSeries().setNumberOfTimeStepsInInterval(5);
     pipe.solveSteadyState(2);

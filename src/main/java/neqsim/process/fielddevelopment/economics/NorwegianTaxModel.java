@@ -9,11 +9,10 @@ import java.io.Serializable;
  * This class implements the Norwegian petroleum tax regime as of 2024, including:
  * </p>
  * <ul>
- * <li><b>Corporate tax (22%)</b>: Standard Norwegian corporate income tax applied to all net
- * income</li>
+ * <li><b>Corporate tax (22%)</b>: Standard Norwegian corporate income tax applied to all net income</li>
  * <li><b>Special petroleum tax (56%)</b>: Additional tax on petroleum extraction income</li>
- * <li><b>Uplift deduction</b>: Special deduction against the petroleum tax base (5.5% per year for
- * 4 years = 22% total)</li>
+ * <li><b>Uplift deduction</b>: Special deduction against the petroleum tax base (5.5% per year for 4 years = 22%
+ * total)</li>
  * <li><b>Loss carry-forward</b>: Ability to carry forward losses with interest</li>
  * </ul>
  *
@@ -70,14 +69,13 @@ public class NorwegianTaxModel implements TaxModel {
   // ============================================================================
 
   /**
-   * Corporate income tax rate (2024). This is the standard Norwegian corporate tax rate applied to
-   * all companies.
+   * Corporate income tax rate (2024). This is the standard Norwegian corporate tax rate applied to all companies.
    */
   public static final double DEFAULT_CORPORATE_TAX_RATE = 0.22;
 
   /**
-   * Special petroleum tax rate (2024). This additional tax applies only to petroleum extraction
-   * activities on the Norwegian Continental Shelf.
+   * Special petroleum tax rate (2024). This additional tax applies only to petroleum extraction activities on the
+   * Norwegian Continental Shelf.
    */
   public static final double DEFAULT_PETROLEUM_TAX_RATE = 0.56;
 
@@ -91,14 +89,13 @@ public class NorwegianTaxModel implements TaxModel {
   // ============================================================================
 
   /**
-   * Annual uplift rate. The uplift is a special deduction against the petroleum tax base to
-   * compensate for the high marginal tax rate and encourage investment.
+   * Annual uplift rate. The uplift is a special deduction against the petroleum tax base to compensate for the high
+   * marginal tax rate and encourage investment.
    */
   public static final double DEFAULT_UPLIFT_RATE = 0.055;
 
   /**
-   * Number of years for uplift deduction. Uplift can be claimed for 4 years from the year of
-   * investment.
+   * Number of years for uplift deduction. Uplift can be claimed for 4 years from the year of investment.
    */
   public static final int DEFAULT_UPLIFT_YEARS = 4;
 
@@ -112,8 +109,7 @@ public class NorwegianTaxModel implements TaxModel {
   // ============================================================================
 
   /**
-   * Standard depreciation period for offshore installations (years). Straight-line depreciation
-   * over 6 years.
+   * Standard depreciation period for offshore installations (years). Straight-line depreciation over 6 years.
    */
   public static final int DEFAULT_DEPRECIATION_YEARS = 6;
 
@@ -191,14 +187,13 @@ public class NorwegianTaxModel implements TaxModel {
    * </ol>
    *
    * @param grossRevenue total revenue for the year (any currency unit)
-   * @param opex operating expenditure for the year (same unit as revenue)
+   * @param opex         operating expenditure for the year (same unit as revenue)
    * @param depreciation depreciation deduction for the year (same unit as revenue)
-   * @param uplift uplift deduction for the year (same unit as revenue)
+   * @param uplift       uplift deduction for the year (same unit as revenue)
    * @return tax calculation result
    */
   @Override
-  public TaxModel.TaxResult calculateTax(double grossRevenue, double opex, double depreciation,
-      double uplift) {
+  public TaxModel.TaxResult calculateTax(double grossRevenue, double opex, double depreciation, double uplift) {
     // Corporate tax calculation
     double corporateTaxBase = grossRevenue - opex - depreciation;
 
@@ -232,15 +227,15 @@ public class NorwegianTaxModel implements TaxModel {
     double totalTax = corporateTax + petroleumTax;
     double afterTaxIncome = grossRevenue - opex - totalTax;
 
-    return new TaxModel.TaxResult(grossRevenue, opex, depreciation, uplift, corporateTaxBase,
-        corporateTax, petroleumTaxBase, petroleumTax, totalTax, afterTaxIncome);
+    return new TaxModel.TaxResult(grossRevenue, opex, depreciation, uplift, corporateTaxBase, corporateTax,
+	petroleumTaxBase, petroleumTax, totalTax, afterTaxIncome);
   }
 
   /**
    * Calculates annual depreciation using straight-line method.
    *
    * @param capex total capital expenditure
-   * @param year year number (1 = first year of depreciation)
+   * @param year  year number (1 = first year of depreciation)
    * @return depreciation amount for the specified year
    */
   @Override
@@ -255,7 +250,7 @@ public class NorwegianTaxModel implements TaxModel {
    * Calculates uplift deduction for a specific year.
    *
    * @param capex total capital expenditure
-   * @param year year number (1 = first year of uplift eligibility)
+   * @param year  year number (1 = first year of uplift eligibility)
    * @return uplift amount for the specified year
    */
   @Override
@@ -279,14 +274,13 @@ public class NorwegianTaxModel implements TaxModel {
    * </ul>
    *
    * @param grossRevenue total revenue
-   * @param opex operating expenditure
+   * @param opex         operating expenditure
    * @param depreciation depreciation deduction
-   * @param uplift uplift deduction
+   * @param uplift       uplift deduction
    * @return effective tax rate (0-1)
    */
   @Override
-  public double calculateEffectiveTaxRate(double grossRevenue, double opex, double depreciation,
-      double uplift) {
+  public double calculateEffectiveTaxRate(double grossRevenue, double opex, double depreciation, double uplift) {
     if (grossRevenue <= 0) {
       return 0.0;
     }
@@ -307,13 +301,12 @@ public class NorwegianTaxModel implements TaxModel {
    * </ul>
    *
    * @param grossRevenue total revenue
-   * @param opex operating expenditure
+   * @param opex         operating expenditure
    * @param depreciation depreciation deduction
-   * @param uplift uplift deduction
+   * @param uplift       uplift deduction
    * @return government take percentage (0-1)
    */
-  public double calculateGovernmentTake(double grossRevenue, double opex, double depreciation,
-      double uplift) {
+  public double calculateGovernmentTake(double grossRevenue, double opex, double depreciation, double uplift) {
     double netIncome = grossRevenue - opex;
     if (netIncome <= 0) {
       return 0.0;
@@ -330,8 +323,8 @@ public class NorwegianTaxModel implements TaxModel {
    * Resets loss carry-forward balances.
    *
    * <p>
-   * Call this method when starting a new project evaluation to ensure losses from previous
-   * calculations don't affect the new project.
+   * Call this method when starting a new project evaluation to ensure losses from previous calculations don't affect
+   * the new project.
    * </p>
    */
   public void resetLossCarryForward() {
@@ -498,10 +491,10 @@ public class NorwegianTaxModel implements TaxModel {
   @Override
   public FiscalParameters getParameters() {
     return FiscalParameters.builder("NO").countryName("Norway")
-        .fiscalSystemType(FiscalParameters.FiscalSystemType.CONCESSIONARY)
-        .corporateTaxRate(corporateTaxRate).resourceTaxRate(petroleumTaxRate).royaltyRate(0.0)
-        .depreciation(FiscalParameters.DepreciationMethod.STRAIGHT_LINE, depreciationYears)
-        .uplift(upliftRate, upliftYears).build();
+	.fiscalSystemType(FiscalParameters.FiscalSystemType.CONCESSIONARY).corporateTaxRate(corporateTaxRate)
+	.resourceTaxRate(petroleumTaxRate).royaltyRate(0.0)
+	.depreciation(FiscalParameters.DepreciationMethod.STRAIGHT_LINE, depreciationYears)
+	.uplift(upliftRate, upliftYears).build();
   }
 
   /**
@@ -601,20 +594,19 @@ public class NorwegianTaxModel implements TaxModel {
     /**
      * Creates a new tax result.
      *
-     * @param grossRevenue gross revenue
-     * @param opex operating expenditure
-     * @param depreciation depreciation deduction
-     * @param uplift uplift deduction
+     * @param grossRevenue     gross revenue
+     * @param opex             operating expenditure
+     * @param depreciation     depreciation deduction
+     * @param uplift           uplift deduction
      * @param corporateTaxBase corporate tax base after deductions
-     * @param corporateTax corporate tax amount
+     * @param corporateTax     corporate tax amount
      * @param petroleumTaxBase petroleum tax base after deductions
-     * @param petroleumTax petroleum tax amount
-     * @param totalTax total tax (corporate + petroleum)
-     * @param afterTaxIncome after-tax income
+     * @param petroleumTax     petroleum tax amount
+     * @param totalTax         total tax (corporate + petroleum)
+     * @param afterTaxIncome   after-tax income
      */
-    public TaxResult(double grossRevenue, double opex, double depreciation, double uplift,
-        double corporateTaxBase, double corporateTax, double petroleumTaxBase, double petroleumTax,
-        double totalTax, double afterTaxIncome) {
+    public TaxResult(double grossRevenue, double opex, double depreciation, double uplift, double corporateTaxBase,
+	double corporateTax, double petroleumTaxBase, double petroleumTax, double totalTax, double afterTaxIncome) {
       this.grossRevenue = grossRevenue;
       this.opex = opex;
       this.depreciation = depreciation;
@@ -724,7 +716,7 @@ public class NorwegianTaxModel implements TaxModel {
      */
     public double getEffectiveTaxRate() {
       if (grossRevenue <= 0) {
-        return 0.0;
+	return 0.0;
       }
       return totalTax / grossRevenue;
     }
@@ -732,10 +724,9 @@ public class NorwegianTaxModel implements TaxModel {
     @Override
     public String toString() {
       return String.format(
-          "TaxResult[revenue=%.2f, opex=%.2f, depreciation=%.2f, uplift=%.2f, "
-              + "corporateTax=%.2f, petroleumTax=%.2f, totalTax=%.2f, afterTax=%.2f]",
-          grossRevenue, opex, depreciation, uplift, corporateTax, petroleumTax, totalTax,
-          afterTaxIncome);
+	  "TaxResult[revenue=%.2f, opex=%.2f, depreciation=%.2f, uplift=%.2f, "
+	      + "corporateTax=%.2f, petroleumTax=%.2f, totalTax=%.2f, afterTax=%.2f]",
+	  grossRevenue, opex, depreciation, uplift, corporateTax, petroleumTax, totalTax, afterTaxIncome);
     }
   }
 }

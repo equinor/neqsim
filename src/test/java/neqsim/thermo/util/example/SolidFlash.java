@@ -20,7 +20,7 @@ public class SolidFlash {
   private static final Logger logger = LogManager.getLogger(SolidFlash.class);
 
   /** Logger object for class. */
-  
+
   /**
    * <p>
    * main.

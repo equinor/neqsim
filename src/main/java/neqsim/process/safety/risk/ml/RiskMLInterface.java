@@ -12,8 +12,8 @@ import com.google.gson.GsonBuilder;
  * Machine Learning Integration Interface for Risk Assessment.
  *
  * <p>
- * Provides a standardized interface for integrating external machine learning models with the
- * NeqSim risk framework. Supports various ML use cases including:
+ * Provides a standardized interface for integrating external machine learning models with the NeqSim risk framework.
+ * Supports various ML use cases including:
  * </p>
  * <ul>
  * <li>Failure prediction models</li>
@@ -174,7 +174,7 @@ public class RiskMLInterface implements Serializable {
     default List<MLPrediction> predictBatch(List<Map<String, Double>> featuresBatch) {
       List<MLPrediction> results = new ArrayList<>();
       for (Map<String, Double> features : featuresBatch) {
-        results.add(predict(features));
+	results.add(predict(features));
       }
       return results;
     }
@@ -300,8 +300,8 @@ public class RiskMLInterface implements Serializable {
     /**
      * Creates a prediction record with auto-generated timestamp.
      *
-     * @param modelId model ID
-     * @param features input features
+     * @param modelId    model ID
+     * @param features   input features
      * @param prediction predicted value
      */
     public PredictionRecord(String modelId, Map<String, Double> features, double prediction) {
@@ -311,13 +311,12 @@ public class RiskMLInterface implements Serializable {
     /**
      * Creates a prediction record with specified timestamp.
      *
-     * @param modelId model ID
-     * @param features input features
+     * @param modelId    model ID
+     * @param features   input features
      * @param prediction predicted value
-     * @param timestamp timestamp of prediction
+     * @param timestamp  timestamp of prediction
      */
-    public PredictionRecord(String modelId, Map<String, Double> features, double prediction,
-        Instant timestamp) {
+    public PredictionRecord(String modelId, Map<String, Double> features, double prediction, Instant timestamp) {
       this.modelId = modelId;
       this.timestamp = timestamp;
       this.features = new HashMap<>(features);
@@ -379,7 +378,7 @@ public class RiskMLInterface implements Serializable {
   /**
    * Creates and registers a failure prediction model.
    *
-   * @param modelId model ID
+   * @param modelId   model ID
    * @param modelName model name
    * @return created model
    */
@@ -392,7 +391,7 @@ public class RiskMLInterface implements Serializable {
   /**
    * Creates and registers an anomaly detection model.
    *
-   * @param modelId model ID
+   * @param modelId   model ID
    * @param modelName model name
    * @return created model
    */
@@ -405,7 +404,7 @@ public class RiskMLInterface implements Serializable {
   /**
    * Creates and registers an RUL prediction model.
    *
-   * @param modelId model ID
+   * @param modelId   model ID
    * @param modelName model name
    * @return created model
    */
@@ -418,7 +417,7 @@ public class RiskMLInterface implements Serializable {
   /**
    * Registers a feature extractor.
    *
-   * @param name extractor name
+   * @param name      extractor name
    * @param extractor feature extractor
    */
   public void registerFeatureExtractor(String name, FeatureExtractor extractor) {
@@ -428,7 +427,7 @@ public class RiskMLInterface implements Serializable {
   /**
    * Makes a prediction using a registered model.
    *
-   * @param modelId model ID
+   * @param modelId  model ID
    * @param features input features
    * @return prediction result
    */
@@ -448,11 +447,11 @@ public class RiskMLInterface implements Serializable {
 
     // Record prediction using the prediction's timestamp for later feedback lookup
     PredictionRecord record = new PredictionRecord(modelId, features, prediction.getPrediction(),
-        prediction.getTimestamp());
+	prediction.getTimestamp());
     synchronized (predictionHistory) {
       predictionHistory.add(record);
       while (predictionHistory.size() > maxHistorySize) {
-        predictionHistory.remove(0);
+	predictionHistory.remove(0);
       }
     }
 
@@ -462,13 +461,12 @@ public class RiskMLInterface implements Serializable {
   /**
    * Makes a prediction with feature extraction.
    *
-   * @param modelId model ID
+   * @param modelId       model ID
    * @param extractorName feature extractor name
-   * @param processData raw process data
+   * @param processData   raw process data
    * @return prediction result
    */
-  public MLPrediction predictWithExtraction(String modelId, String extractorName,
-      Map<String, Object> processData) {
+  public MLPrediction predictWithExtraction(String modelId, String extractorName, Map<String, Object> processData) {
     FeatureExtractor extractor = featureExtractors.get(extractorName);
     if (extractor == null) {
       throw new IllegalArgumentException("Feature extractor not found: " + extractorName);
@@ -482,15 +480,15 @@ public class RiskMLInterface implements Serializable {
    * Provides feedback on a prediction (for model improvement).
    *
    * @param predictionTimestamp timestamp of prediction
-   * @param actualValue actual observed value
+   * @param actualValue         actual observed value
    */
   public void provideFeedback(Instant predictionTimestamp, double actualValue) {
     synchronized (predictionHistory) {
       for (PredictionRecord record : predictionHistory) {
-        if (record.getTimestamp().equals(predictionTimestamp)) {
-          record.setActualValue(actualValue);
-          break;
-        }
+	if (record.getTimestamp().equals(predictionTimestamp)) {
+	  record.setActualValue(actualValue);
+	  break;
+	}
       }
     }
   }
@@ -505,9 +503,9 @@ public class RiskMLInterface implements Serializable {
     List<PredictionRecord> validated = new ArrayList<>();
     synchronized (predictionHistory) {
       for (PredictionRecord record : predictionHistory) {
-        if (record.getModelId().equals(modelId) && record.isValidated()) {
-          validated.add(record);
-        }
+	if (record.getModelId().equals(modelId) && record.isValidated()) {
+	  validated.add(record);
+	}
       }
     }
 
@@ -532,22 +530,22 @@ public class RiskMLInterface implements Serializable {
       this.validatedPredictions = validated.size();
 
       if (!validated.isEmpty()) {
-        double sumAE = 0;
-        double sumSE = 0;
-        double sumAPE = 0;
+	double sumAE = 0;
+	double sumSE = 0;
+	double sumAPE = 0;
 
-        for (PredictionRecord record : validated) {
-          double error = record.getPredictionError();
-          sumAE += error;
-          sumSE += error * error;
-          if (record.getActualValue() != 0) {
-            sumAPE += Math.abs(error / record.getActualValue());
-          }
-        }
+	for (PredictionRecord record : validated) {
+	  double error = record.getPredictionError();
+	  sumAE += error;
+	  sumSE += error * error;
+	  if (record.getActualValue() != 0) {
+	    sumAPE += Math.abs(error / record.getActualValue());
+	  }
+	}
 
-        meanAbsoluteError = sumAE / validated.size();
-        rootMeanSquareError = Math.sqrt(sumSE / validated.size());
-        meanAbsolutePercentageError = sumAPE / validated.size() * 100;
+	meanAbsoluteError = sumAE / validated.size();
+	rootMeanSquareError = Math.sqrt(sumSE / validated.size());
+	meanAbsolutePercentageError = sumAPE / validated.size() * 100;
       }
     }
 
@@ -600,7 +598,7 @@ public class RiskMLInterface implements Serializable {
     List<MLModel> active = new ArrayList<>();
     for (MLModel model : models.values()) {
       if (model.isActive()) {
-        active.add(model);
+	active.add(model);
       }
     }
     return active;
@@ -633,13 +631,11 @@ public class RiskMLInterface implements Serializable {
    * @return JSON representation
    */
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(toMap());
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(toMap());
   }
 
   @Override
   public String toString() {
-    return String.format("RiskMLInterface[%s, models=%d, active=%d]", name, models.size(),
-        getActiveModels().size());
+    return String.format("RiskMLInterface[%s, models=%d, active=%d]", name, models.size(), getActiveModels().size());
   }
 }

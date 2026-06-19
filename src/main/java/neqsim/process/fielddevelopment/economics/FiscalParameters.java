@@ -18,10 +18,9 @@ import java.io.Serializable;
  *
  * <h2>Supported Fiscal System Types</h2>
  * <ul>
- * <li><b>Concessionary</b>: Company owns resources, pays taxes/royalties (e.g., Norway, UK, US)
- * </li>
- * <li><b>Production Sharing Contract (PSC)</b>: State owns resources, company recovers costs and
- * shares profit (e.g., Indonesia, Angola)</li>
+ * <li><b>Concessionary</b>: Company owns resources, pays taxes/royalties (e.g., Norway, UK, US)</li>
+ * <li><b>Production Sharing Contract (PSC)</b>: State owns resources, company recovers costs and shares profit (e.g.,
+ * Indonesia, Angola)</li>
  * <li><b>Service Contract</b>: Company provides services for fee (e.g., Iraq, Iran)</li>
  * </ul>
  *
@@ -29,8 +28,8 @@ import java.io.Serializable;
  *
  * <pre>{@code
  * // Create custom parameters
- * FiscalParameters params = FiscalParameters.builder("CustomCountry").corporateTaxRate(0.25)
- *     .resourceTaxRate(0.40).royaltyRate(0.10).depreciationYears(5).build();
+ * FiscalParameters params = FiscalParameters.builder("CustomCountry").corporateTaxRate(0.25).resourceTaxRate(0.40)
+ *     .royaltyRate(0.10).depreciationYears(5).build();
  *
  * // Or use predefined country
  * FiscalParameters norway = FiscalRegimeRegistry.getParameters("Norway");
@@ -284,8 +283,7 @@ public final class FiscalParameters implements Serializable {
    * @return true if PSC or similar
    */
   public boolean isPscSystem() {
-    return fiscalSystemType == FiscalSystemType.PSC
-        || fiscalSystemType == FiscalSystemType.RISK_SERVICE_CONTRACT;
+    return fiscalSystemType == FiscalSystemType.PSC || fiscalSystemType == FiscalSystemType.RISK_SERVICE_CONTRACT;
   }
 
   /**
@@ -427,9 +425,8 @@ public final class FiscalParameters implements Serializable {
 
   @Override
   public String toString() {
-    return String.format("%s (%s) - Corporate: %.0f%%, Resource: %.0f%%, Total: %.0f%%",
-        countryName, countryCode, corporateTaxRate * 100, resourceTaxRate * 100,
-        getTotalMarginalTaxRate() * 100);
+    return String.format("%s (%s) - Corporate: %.0f%%, Resource: %.0f%%, Total: %.0f%%", countryName, countryCode,
+	corporateTaxRate * 100, resourceTaxRate * 100, getTotalMarginalTaxRate() * 100);
   }
 
   // ============================================================================

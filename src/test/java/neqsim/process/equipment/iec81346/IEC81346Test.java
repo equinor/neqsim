@@ -74,42 +74,31 @@ class IEC81346Test {
 
   @Test
   void testLetterCodeFromEquipmentEnum() {
-    assertEquals(IEC81346LetterCode.B,
-        IEC81346LetterCode.fromEquipmentEnum(EquipmentEnum.Separator));
-    assertEquals(IEC81346LetterCode.B,
-        IEC81346LetterCode.fromEquipmentEnum(EquipmentEnum.HeatExchanger));
+    assertEquals(IEC81346LetterCode.B, IEC81346LetterCode.fromEquipmentEnum(EquipmentEnum.Separator));
+    assertEquals(IEC81346LetterCode.B, IEC81346LetterCode.fromEquipmentEnum(EquipmentEnum.HeatExchanger));
     assertEquals(IEC81346LetterCode.B, IEC81346LetterCode.fromEquipmentEnum(EquipmentEnum.Cooler));
     assertEquals(IEC81346LetterCode.B, IEC81346LetterCode.fromEquipmentEnum(EquipmentEnum.Heater));
     assertEquals(IEC81346LetterCode.B, IEC81346LetterCode.fromEquipmentEnum(EquipmentEnum.Reactor));
-    assertEquals(IEC81346LetterCode.B,
-        IEC81346LetterCode.fromEquipmentEnum(EquipmentEnum.DistillationColumn));
+    assertEquals(IEC81346LetterCode.B, IEC81346LetterCode.fromEquipmentEnum(EquipmentEnum.DistillationColumn));
 
-    assertEquals(IEC81346LetterCode.K,
-        IEC81346LetterCode.fromEquipmentEnum(EquipmentEnum.Compressor));
+    assertEquals(IEC81346LetterCode.K, IEC81346LetterCode.fromEquipmentEnum(EquipmentEnum.Compressor));
     assertEquals(IEC81346LetterCode.K, IEC81346LetterCode.fromEquipmentEnum(EquipmentEnum.Pump));
-    assertEquals(IEC81346LetterCode.K,
-        IEC81346LetterCode.fromEquipmentEnum(EquipmentEnum.Expander));
+    assertEquals(IEC81346LetterCode.K, IEC81346LetterCode.fromEquipmentEnum(EquipmentEnum.Expander));
 
-    assertEquals(IEC81346LetterCode.Q,
-        IEC81346LetterCode.fromEquipmentEnum(EquipmentEnum.ThrottlingValve));
+    assertEquals(IEC81346LetterCode.Q, IEC81346LetterCode.fromEquipmentEnum(EquipmentEnum.ThrottlingValve));
 
     assertEquals(IEC81346LetterCode.T, IEC81346LetterCode.fromEquipmentEnum(EquipmentEnum.Stream));
-    assertEquals(IEC81346LetterCode.T,
-        IEC81346LetterCode.fromEquipmentEnum(EquipmentEnum.AdiabaticPipe));
+    assertEquals(IEC81346LetterCode.T, IEC81346LetterCode.fromEquipmentEnum(EquipmentEnum.AdiabaticPipe));
 
     assertEquals(IEC81346LetterCode.X, IEC81346LetterCode.fromEquipmentEnum(EquipmentEnum.Mixer));
-    assertEquals(IEC81346LetterCode.X,
-        IEC81346LetterCode.fromEquipmentEnum(EquipmentEnum.Splitter));
+    assertEquals(IEC81346LetterCode.X, IEC81346LetterCode.fromEquipmentEnum(EquipmentEnum.Splitter));
 
     assertEquals(IEC81346LetterCode.C, IEC81346LetterCode.fromEquipmentEnum(EquipmentEnum.Tank));
 
-    assertEquals(IEC81346LetterCode.G,
-        IEC81346LetterCode.fromEquipmentEnum(EquipmentEnum.FuelCell));
-    assertEquals(IEC81346LetterCode.G,
-        IEC81346LetterCode.fromEquipmentEnum(EquipmentEnum.WindTurbine));
+    assertEquals(IEC81346LetterCode.G, IEC81346LetterCode.fromEquipmentEnum(EquipmentEnum.FuelCell));
+    assertEquals(IEC81346LetterCode.G, IEC81346LetterCode.fromEquipmentEnum(EquipmentEnum.WindTurbine));
 
-    assertEquals(IEC81346LetterCode.N,
-        IEC81346LetterCode.fromEquipmentEnum(EquipmentEnum.Adjuster));
+    assertEquals(IEC81346LetterCode.N, IEC81346LetterCode.fromEquipmentEnum(EquipmentEnum.Adjuster));
     assertEquals(IEC81346LetterCode.N, IEC81346LetterCode.fromEquipmentEnum(EquipmentEnum.Recycle));
   }
 
@@ -121,17 +110,12 @@ class IEC81346Test {
   @Test
   void testLetterCodeFromEquipmentInstance() {
     Stream stream = new Stream("feed", gasFluid);
-    assertEquals(IEC81346LetterCode.B,
-        IEC81346LetterCode.fromEquipment(new Separator("sep", stream)));
-    assertEquals(IEC81346LetterCode.K,
-        IEC81346LetterCode.fromEquipment(new Compressor("comp", stream)));
-    assertEquals(IEC81346LetterCode.Q,
-        IEC81346LetterCode.fromEquipment(new ThrottlingValve("valve", stream)));
+    assertEquals(IEC81346LetterCode.B, IEC81346LetterCode.fromEquipment(new Separator("sep", stream)));
+    assertEquals(IEC81346LetterCode.K, IEC81346LetterCode.fromEquipment(new Compressor("comp", stream)));
+    assertEquals(IEC81346LetterCode.Q, IEC81346LetterCode.fromEquipment(new ThrottlingValve("valve", stream)));
     assertEquals(IEC81346LetterCode.X, IEC81346LetterCode.fromEquipment(new Mixer("mixer")));
-    assertEquals(IEC81346LetterCode.B,
-        IEC81346LetterCode.fromEquipment(new Heater("heater", stream)));
-    assertEquals(IEC81346LetterCode.B,
-        IEC81346LetterCode.fromEquipment(new Cooler("cooler", stream)));
+    assertEquals(IEC81346LetterCode.B, IEC81346LetterCode.fromEquipment(new Heater("heater", stream)));
+    assertEquals(IEC81346LetterCode.B, IEC81346LetterCode.fromEquipment(new Cooler("cooler", stream)));
     assertEquals(IEC81346LetterCode.A, IEC81346LetterCode.fromEquipment(null));
   }
 
@@ -148,8 +132,7 @@ class IEC81346Test {
 
   @Test
   void testReferenceDesignationConstruction() {
-    ReferenceDesignation refDes =
-        new ReferenceDesignation("A1.K1", "B1", "P1.M1", IEC81346LetterCode.B, 1);
+    ReferenceDesignation refDes = new ReferenceDesignation("A1.K1", "B1", "P1.M1", IEC81346LetterCode.B, 1);
     assertEquals("A1.K1", refDes.getFunctionDesignation());
     assertEquals("B1", refDes.getProductDesignation());
     assertEquals("P1.M1", refDes.getLocationDesignation());
@@ -159,8 +142,7 @@ class IEC81346Test {
 
   @Test
   void testReferenceDesignationFormatting() {
-    ReferenceDesignation refDes =
-        new ReferenceDesignation("A1.K1", "B1", "P1.M1", IEC81346LetterCode.B, 1);
+    ReferenceDesignation refDes = new ReferenceDesignation("A1.K1", "B1", "P1.M1", IEC81346LetterCode.B, 1);
     assertEquals("=A1.K1", refDes.getFormattedFunctionDesignation());
     assertEquals("-B1", refDes.getFormattedProductDesignation());
     assertEquals("+P1.M1", refDes.getFormattedLocationDesignation());
@@ -190,8 +172,7 @@ class IEC81346Test {
 
   @Test
   void testReferenceDesignationProductCode() {
-    ReferenceDesignation refDes =
-        new ReferenceDesignation("A1", "B3", "P1", IEC81346LetterCode.B, 3);
+    ReferenceDesignation refDes = new ReferenceDesignation("A1", "B3", "P1", IEC81346LetterCode.B, 3);
     assertEquals("B3", refDes.getProductCode());
   }
 
@@ -343,8 +324,7 @@ class IEC81346Test {
     assertEquals("Comp-1", compEntry.getEquipmentName());
 
     // Find by letter code
-    List<ReferenceDesignationGenerator.DesignationEntry> bEntries =
-        gen.findByLetterCode(IEC81346LetterCode.B);
+    List<ReferenceDesignationGenerator.DesignationEntry> bEntries = gen.findByLetterCode(IEC81346LetterCode.B);
     assertEquals(1, bEntries.size());
 
     // Name-to-designation map
@@ -430,8 +410,7 @@ class IEC81346Test {
   @Test
   void testEquipmentSetReferenceDesignation() {
     Separator sep = new Separator("HP Sep");
-    ReferenceDesignation refDes =
-        new ReferenceDesignation("A1", "B1", "P1", IEC81346LetterCode.B, 1);
+    ReferenceDesignation refDes = new ReferenceDesignation("A1", "B1", "P1", IEC81346LetterCode.B, 1);
     sep.setReferenceDesignation(refDes);
 
     assertEquals(refDes, sep.getReferenceDesignation());
@@ -559,11 +538,9 @@ class IEC81346Test {
 
     // Verify IEC 81346 attributes are present in the XML
     assertTrue(xml.contains("IEC81346ReferenceDesignation"),
-        "DEXPI XML should contain IEC81346ReferenceDesignation attribute");
-    assertTrue(xml.contains("=A1-B1+P1"),
-        "DEXPI XML should contain the actual reference designation value");
-    assertTrue(xml.contains("IEC81346LetterCode"),
-        "DEXPI XML should contain IEC81346LetterCode attribute");
+	"DEXPI XML should contain IEC81346ReferenceDesignation attribute");
+    assertTrue(xml.contains("=A1-B1+P1"), "DEXPI XML should contain the actual reference designation value");
+    assertTrue(xml.contains("IEC81346LetterCode"), "DEXPI XML should contain IEC81346LetterCode attribute");
   }
 
   // ============================================================
@@ -633,8 +610,7 @@ class IEC81346Test {
 
   @Test
   void testReferenceDesignationToString() {
-    ReferenceDesignation refDes =
-        new ReferenceDesignation("A1", "B1", "P1", IEC81346LetterCode.B, 1);
+    ReferenceDesignation refDes = new ReferenceDesignation("A1", "B1", "P1", IEC81346LetterCode.B, 1);
     assertEquals("=A1-B1+P1", refDes.toString());
 
     ReferenceDesignation empty = new ReferenceDesignation();
@@ -643,9 +619,8 @@ class IEC81346Test {
 
   @Test
   void testDesignationEntryToString() {
-    ReferenceDesignationGenerator.DesignationEntry entry =
-        new ReferenceDesignationGenerator.DesignationEntry("HP Sep", "Separator", "=A1-B1+P1",
-            IEC81346LetterCode.B, 1, "A1");
+    ReferenceDesignationGenerator.DesignationEntry entry = new ReferenceDesignationGenerator.DesignationEntry("HP Sep",
+	"Separator", "=A1-B1+P1", IEC81346LetterCode.B, 1, "A1");
     String str = entry.toString();
     assertTrue(str.contains("HP Sep"));
     assertTrue(str.contains("=A1-B1+P1"));
@@ -747,21 +722,18 @@ class IEC81346Test {
 
     // Verify the designation was set on the separator
     assertNotNull(sep.getReferenceDesignation());
-    assertTrue(sep.getReferenceDesignation().isSet(),
-        "Separator should have IEC 81346 designation after generate");
+    assertTrue(sep.getReferenceDesignation().isSet(), "Separator should have IEC 81346 designation after generate");
     assertEquals("=A1-B1+P1", sep.getReferenceDesignation().toReferenceDesignationString());
 
     // Capture state
-    neqsim.process.processmodel.lifecycle.ProcessSystemState state =
-        neqsim.process.processmodel.lifecycle.ProcessSystemState.fromProcessSystem(process);
+    neqsim.process.processmodel.lifecycle.ProcessSystemState state = neqsim.process.processmodel.lifecycle.ProcessSystemState
+	.fromProcessSystem(process);
     assertNotNull(state);
 
     String json = state.toJson();
-    assertTrue(json.contains("iec81346_referenceDesignation"),
-        "JSON should contain iec81346_referenceDesignation key");
+    assertTrue(json.contains("iec81346_referenceDesignation"), "JSON should contain iec81346_referenceDesignation key");
     // With disableHtmlEscaping, '=' and '+' are not escaped
-    assertTrue(json.contains("=A1-B1+P1"),
-        "JSON should contain the separator designation =A1-B1+P1");
+    assertTrue(json.contains("=A1-B1+P1"), "JSON should contain the separator designation =A1-B1+P1");
   }
 
   // ============================================================
@@ -848,8 +820,8 @@ class IEC81346Test {
 
   @Test
   void testProcessConnectionRefDesFields() {
-    neqsim.process.processmodel.ProcessConnection conn =
-        new neqsim.process.processmodel.ProcessConnection("Source", "Target");
+    neqsim.process.processmodel.ProcessConnection conn = new neqsim.process.processmodel.ProcessConnection("Source",
+	"Target");
 
     assertNull(conn.getSourceReferenceDesignation());
     assertNull(conn.getTargetReferenceDesignation());
@@ -867,15 +839,14 @@ class IEC81346Test {
 
   @Test
   void testControllerDeviceRefDes() {
-    neqsim.process.controllerdevice.ControllerDeviceBaseClass controller =
-        new neqsim.process.controllerdevice.ControllerDeviceBaseClass("PIC-100");
+    neqsim.process.controllerdevice.ControllerDeviceBaseClass controller = new neqsim.process.controllerdevice.ControllerDeviceBaseClass(
+	"PIC-100");
 
     assertNotNull(controller.getReferenceDesignation());
     assertFalse(controller.getReferenceDesignation().isSet());
     assertEquals("", controller.getReferenceDesignationString());
 
-    ReferenceDesignation refDes =
-        new ReferenceDesignation("A1", "S1", "P1", IEC81346LetterCode.S, 1);
+    ReferenceDesignation refDes = new ReferenceDesignation("A1", "S1", "P1", IEC81346LetterCode.S, 1);
     controller.setReferenceDesignation(refDes);
 
     assertEquals("=A1-S1+P1", controller.getReferenceDesignationString());
@@ -986,22 +957,19 @@ class IEC81346Test {
     process.add(sep);
 
     // Class A should include REFERENCE_DESIGNATION_SCHEDULE
-    neqsim.process.mechanicaldesign.StudyClass classA =
-        neqsim.process.mechanicaldesign.StudyClass.CLASS_A;
-    assertTrue(classA.requires(
-        neqsim.process.mechanicaldesign.StudyClass.DeliverableType.REFERENCE_DESIGNATION_SCHEDULE));
+    neqsim.process.mechanicaldesign.StudyClass classA = neqsim.process.mechanicaldesign.StudyClass.CLASS_A;
+    assertTrue(
+	classA.requires(neqsim.process.mechanicaldesign.StudyClass.DeliverableType.REFERENCE_DESIGNATION_SCHEDULE));
 
     // Class B should include it too
-    neqsim.process.mechanicaldesign.StudyClass classB =
-        neqsim.process.mechanicaldesign.StudyClass.CLASS_B;
-    assertTrue(classB.requires(
-        neqsim.process.mechanicaldesign.StudyClass.DeliverableType.REFERENCE_DESIGNATION_SCHEDULE));
+    neqsim.process.mechanicaldesign.StudyClass classB = neqsim.process.mechanicaldesign.StudyClass.CLASS_B;
+    assertTrue(
+	classB.requires(neqsim.process.mechanicaldesign.StudyClass.DeliverableType.REFERENCE_DESIGNATION_SCHEDULE));
 
     // Class C should NOT include it
-    neqsim.process.mechanicaldesign.StudyClass classC =
-        neqsim.process.mechanicaldesign.StudyClass.CLASS_C;
-    assertFalse(classC.requires(
-        neqsim.process.mechanicaldesign.StudyClass.DeliverableType.REFERENCE_DESIGNATION_SCHEDULE));
+    neqsim.process.mechanicaldesign.StudyClass classC = neqsim.process.mechanicaldesign.StudyClass.CLASS_C;
+    assertFalse(
+	classC.requires(neqsim.process.mechanicaldesign.StudyClass.DeliverableType.REFERENCE_DESIGNATION_SCHEDULE));
   }
 
   // ============================================================
@@ -1021,8 +989,8 @@ class IEC81346Test {
 
     process.run();
 
-    neqsim.process.mechanicaldesign.InstrumentScheduleGenerator instrGen =
-        new neqsim.process.mechanicaldesign.InstrumentScheduleGenerator(process);
+    neqsim.process.mechanicaldesign.InstrumentScheduleGenerator instrGen = new neqsim.process.mechanicaldesign.InstrumentScheduleGenerator(
+	process);
     instrGen.generate();
 
     Map<String, String> map = instrGen.getISAToIEC81346Map();
@@ -1046,8 +1014,8 @@ class IEC81346Test {
     process.generateReferenceDesignations("A1", "");
 
     // Generate instruments
-    neqsim.process.mechanicaldesign.InstrumentScheduleGenerator instrGen =
-        new neqsim.process.mechanicaldesign.InstrumentScheduleGenerator(process);
+    neqsim.process.mechanicaldesign.InstrumentScheduleGenerator instrGen = new neqsim.process.mechanicaldesign.InstrumentScheduleGenerator(
+	process);
     instrGen.generate();
 
     Map<String, String> map = instrGen.getISAToIEC81346Map();
@@ -1056,8 +1024,8 @@ class IEC81346Test {
     boolean hasSepMapping = false;
     for (String refDes : map.values()) {
       if (refDes.contains("B1")) {
-        hasSepMapping = true;
-        break;
+	hasSepMapping = true;
+	break;
       }
     }
     assertTrue(hasSepMapping, "Expected to find separator ref des in ISA-IEC mapping");

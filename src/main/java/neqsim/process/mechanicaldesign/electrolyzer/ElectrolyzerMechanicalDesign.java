@@ -8,9 +8,8 @@ import neqsim.process.mechanicaldesign.MechanicalDesign;
  * Mechanical design for water electrolyzers (PEM and alkaline).
  *
  * <p>
- * Covers stack configuration, membrane/electrode area sizing, power consumption estimation,
- * balance-of-plant equipment sizing, and weight/cost estimation. Applicable to both PEM
- * (proton-exchange-membrane) and alkaline electrolyzers.
+ * Covers stack configuration, membrane/electrode area sizing, power consumption estimation, balance-of-plant equipment
+ * sizing, and weight/cost estimation. Applicable to both PEM (proton-exchange-membrane) and alkaline electrolyzers.
  * </p>
  *
  * @author esol
@@ -104,8 +103,7 @@ public class ElectrolyzerMechanicalDesign extends MechanicalDesign {
     Electrolyzer electrolyzer = (Electrolyzer) getProcessEquipment();
 
     // Get hydrogen production target from outlet stream if available
-    if (electrolyzer.getHydrogenOutStream() != null
-        && electrolyzer.getHydrogenOutStream().getThermoSystem() != null) {
+    if (electrolyzer.getHydrogenOutStream() != null && electrolyzer.getHydrogenOutStream().getThermoSystem() != null) {
       h2ProductionRateKgHr = electrolyzer.getHydrogenOutStream().getFlowRate("kg/hr");
     }
 

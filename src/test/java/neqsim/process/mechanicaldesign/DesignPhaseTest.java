@@ -47,8 +47,8 @@ class DesignPhaseTest {
     @DisplayName("Should have descriptions")
     void shouldHaveDescriptions() {
       for (DesignPhase phase : DesignPhase.values()) {
-        assertNotNull(phase.getDescription());
-        assertFalse(phase.getDescription().isEmpty());
+	assertNotNull(phase.getDescription());
+	assertFalse(phase.getDescription().isEmpty());
       }
     }
   }
@@ -93,8 +93,7 @@ class DesignPhaseTest {
     @Test
     @DisplayName("Later phases should have tighter accuracy")
     void laterPhasesShouldHaveTighterAccuracy() {
-      assertTrue(
-          DesignPhase.DETAIL_DESIGN.getMaxAccuracy() < DesignPhase.SCREENING.getMaxAccuracy());
+      assertTrue(DesignPhase.DETAIL_DESIGN.getMaxAccuracy() < DesignPhase.SCREENING.getMaxAccuracy());
       assertTrue(DesignPhase.FEED.getMaxAccuracy() < DesignPhase.CONCEPT_SELECT.getMaxAccuracy());
     }
 

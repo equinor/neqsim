@@ -6,8 +6,8 @@ import neqsim.process.mechanicaldesign.MechanicalDesignResponse;
  * Response class for valve mechanical design JSON export.
  *
  * <p>
- * Extends {@link MechanicalDesignResponse} with valve-specific parameters including sizing data,
- * actuator requirements, and flow characteristics per IEC 60534 and ANSI/ISA-75.
+ * Extends {@link MechanicalDesignResponse} with valve-specific parameters including sizing data, actuator requirements,
+ * and flow characteristics per IEC 60534 and ANSI/ISA-75.
  * </p>
  *
  * @author esol

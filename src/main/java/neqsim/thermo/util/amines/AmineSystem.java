@@ -16,10 +16,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Convenience wrapper for creating and configuring amine thermodynamic systems.
  *
  * <p>
- * Provides a simplified API for setting up MEA, DEA, MDEA, and aMDEA (activated MDEA with
- * piperazine) systems with proper components, reactions, mixing rules, and physical property
- * models. This replaces the simplistic Kent-Eisenberg approach with a rigorous electrolyte-CPA
- * model that supports:
+ * Provides a simplified API for setting up MEA, DEA, MDEA, and aMDEA (activated MDEA with piperazine) systems with
+ * proper components, reactions, mixing rules, and physical property models. This replaces the simplistic Kent-Eisenberg
+ * approach with a rigorous electrolyte-CPA model that supports:
  * </p>
  * <ul>
  * <li>VLE with speciation (molecular and ionic species)</li>
@@ -95,8 +94,8 @@ public class AmineSystem implements java.io.Serializable {
   }
 
   /** Common ionic species required for all amine systems. */
-  private static final List<String> COMMON_IONS =
-      Collections.unmodifiableList(Arrays.asList("H3O+", "OH-", "HCO3-", "CO3--"));
+  private static final List<String> COMMON_IONS = Collections
+      .unmodifiableList(Arrays.asList("H3O+", "OH-", "HCO3-", "CO3--"));
 
   /**
    * Map of amine type to their required species (neutral amine, ions, carbamate).
@@ -137,7 +136,7 @@ public class AmineSystem implements java.io.Serializable {
   /**
    * Creates an amine system at specified conditions.
    *
-   * @param amineType the type of amine to use
+   * @param amineType    the type of amine to use
    * @param temperatureK temperature in Kelvin
    * @param pressureBara pressure in bara
    */
@@ -154,20 +153,20 @@ public class AmineSystem implements java.io.Serializable {
    */
   private void configureHeatCalcType() {
     switch (amineType) {
-      case MEA:
-        heatCalc.setAmineType(AmineHeatOfAbsorption.AmineType.MEA);
-        break;
-      case DEA:
-        heatCalc.setAmineType(AmineHeatOfAbsorption.AmineType.DEA);
-        break;
-      case MDEA:
-        heatCalc.setAmineType(AmineHeatOfAbsorption.AmineType.MDEA);
-        break;
-      case AMDEA:
-        heatCalc.setAmineType(AmineHeatOfAbsorption.AmineType.AMDEA);
-        break;
-      default:
-        heatCalc.setAmineType(AmineHeatOfAbsorption.AmineType.MEA);
+    case MEA:
+      heatCalc.setAmineType(AmineHeatOfAbsorption.AmineType.MEA);
+      break;
+    case DEA:
+      heatCalc.setAmineType(AmineHeatOfAbsorption.AmineType.DEA);
+      break;
+    case MDEA:
+      heatCalc.setAmineType(AmineHeatOfAbsorption.AmineType.MDEA);
+      break;
+    case AMDEA:
+      heatCalc.setAmineType(AmineHeatOfAbsorption.AmineType.AMDEA);
+      break;
+    default:
+      heatCalc.setAmineType(AmineHeatOfAbsorption.AmineType.MEA);
     }
   }
 
@@ -175,8 +174,8 @@ public class AmineSystem implements java.io.Serializable {
    * Sets the amine concentration as mass fraction of the aqueous solution.
    *
    * <p>
-   * Calculates required mole fractions of amine and water from the mass fraction. Common values:
-   * MEA 30 wt%, DEA 30-50 wt%, MDEA 50 wt%, aMDEA 45/5 wt%.
+   * Calculates required mole fractions of amine and water from the mass fraction. Common values: MEA 30 wt%, DEA 30-50
+   * wt%, MDEA 50 wt%, aMDEA 45/5 wt%.
    * </p>
    *
    * @param massFraction mass fraction (0 to 1, e.g. 0.30 for 30 wt%)
@@ -186,8 +185,7 @@ public class AmineSystem implements java.io.Serializable {
     double waterMW = 18.015;
 
     // For aMDEA, massFraction is the total amine mass fraction (MDEA + PZ)
-    amineMolFraction =
-        (massFraction / amineMW) / (massFraction / amineMW + (1.0 - massFraction) / waterMW);
+    amineMolFraction = (massFraction / amineMW) / (massFraction / amineMW + (1.0 - massFraction) / waterMW);
     waterMolFraction = 1.0 - amineMolFraction;
 
     heatCalc.setAmineConcentration(massFraction);
@@ -217,8 +215,7 @@ public class AmineSystem implements java.io.Serializable {
    * Sets the piperazine concentration for aMDEA systems.
    *
    * <p>
-   * Only applicable when amineType is AMDEA. Specifies the piperazine mass fraction of the total
-   * solution.
+   * Only applicable when amineType is AMDEA. Specifies the piperazine mass fraction of the total solution.
    * </p>
    *
    * @param massFraction piperazine mass fraction (e.g. 0.05 for 5 wt%)
@@ -226,16 +223,14 @@ public class AmineSystem implements java.io.Serializable {
   public void setPiperazineConcentration(double massFraction) {
     double pzMW = 86.14;
     double waterMW = 18.015;
-    piperazineMolFraction =
-        (massFraction / pzMW) / (massFraction / pzMW + (1.0 - massFraction) / waterMW);
+    piperazineMolFraction = (massFraction / pzMW) / (massFraction / pzMW + (1.0 - massFraction) / waterMW);
   }
 
   /**
    * Creates and returns the configured thermodynamic system.
    *
    * <p>
-   * Uses the electrolyte-CPA EOS (SystemElectrolyteCPAstatoil) which provides rigorous VLE with
-   * speciation, including:
+   * Uses the electrolyte-CPA EOS (SystemElectrolyteCPAstatoil) which provides rigorous VLE with speciation, including:
    * </p>
    * <ul>
    * <li>SRK cubic equation of state for non-ideal gas behavior</li>
@@ -268,10 +263,10 @@ public class AmineSystem implements java.io.Serializable {
     List<String> species = AMINE_SPECIES.get(amineType);
     if (species != null) {
       for (String comp : species) {
-        double molFrac = getInitialMolFraction(comp);
-        if (molFrac > 0) {
-          system.addComponent(comp, molFrac);
-        }
+	double molFrac = getInitialMolFraction(comp);
+	if (molFrac > 0) {
+	  system.addComponent(comp, molFrac);
+	}
       }
     }
 
@@ -307,31 +302,31 @@ public class AmineSystem implements java.io.Serializable {
    */
   private double getInitialMolFraction(String componentName) {
     switch (amineType) {
-      case MEA:
-        if ("MEA".equals(componentName)) {
-          return amineMolFraction;
-        }
-        break;
-      case DEA:
-        if ("DEA".equals(componentName)) {
-          return amineMolFraction;
-        }
-        break;
-      case MDEA:
-        if ("MDEA".equals(componentName)) {
-          return amineMolFraction;
-        }
-        break;
-      case AMDEA:
-        if ("MDEA".equals(componentName)) {
-          return amineMolFraction;
-        }
-        if ("Piperazine".equals(componentName)) {
-          return piperazineMolFraction;
-        }
-        break;
-      default:
-        break;
+    case MEA:
+      if ("MEA".equals(componentName)) {
+	return amineMolFraction;
+      }
+      break;
+    case DEA:
+      if ("DEA".equals(componentName)) {
+	return amineMolFraction;
+      }
+      break;
+    case MDEA:
+      if ("MDEA".equals(componentName)) {
+	return amineMolFraction;
+      }
+      break;
+    case AMDEA:
+      if ("MDEA".equals(componentName)) {
+	return amineMolFraction;
+      }
+      if ("Piperazine".equals(componentName)) {
+	return piperazineMolFraction;
+      }
+      break;
+    default:
+      break;
     }
     // Ions start at trace amounts
     return 1.0e-20;
@@ -374,8 +369,8 @@ public class AmineSystem implements java.io.Serializable {
    * Gets the CO2 equilibrium partial pressure over the loaded solution.
    *
    * <p>
-   * Runs a bubble point pressure flash and extracts the CO2 partial pressure from the vapor phase.
-   * This is the key quantity for amine absorber/stripper design.
+   * Runs a bubble point pressure flash and extracts the CO2 partial pressure from the vapor phase. This is the key
+   * quantity for amine absorber/stripper design.
    * </p>
    *
    * @return CO2 partial pressure in bara
@@ -479,16 +474,16 @@ public class AmineSystem implements java.io.Serializable {
    */
   private double getAmineMolarMass() {
     switch (amineType) {
-      case MEA:
-        return 61.08;
-      case DEA:
-        return 105.14;
-      case MDEA:
-        return 119.16;
-      case AMDEA:
-        return 119.16; // MDEA is the primary amine
-      default:
-        return 119.16;
+    case MEA:
+      return 61.08;
+    case DEA:
+      return 105.14;
+    case MDEA:
+      return 119.16;
+    case AMDEA:
+      return 119.16; // MDEA is the primary amine
+    default:
+      return 119.16;
     }
   }
 
@@ -510,8 +505,7 @@ public class AmineSystem implements java.io.Serializable {
     if (h2sMolFraction > 0) {
       sb.append("H2S mol fraction: ").append(String.format("%.4f", h2sMolFraction)).append("\n");
     }
-    sb.append("Heat of absorption CO2: ").append(String.format("%.1f", getHeatOfAbsorptionCO2()))
-        .append(" kJ/mol\n");
+    sb.append("Heat of absorption CO2: ").append(String.format("%.1f", getHeatOfAbsorptionCO2())).append(" kJ/mol\n");
     return sb.toString();
   }
 }

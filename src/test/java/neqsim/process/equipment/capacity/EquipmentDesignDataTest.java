@@ -38,8 +38,7 @@ class EquipmentDesignDataTest {
     sepDesign.addProperty("designGasLoadFactor", 0.08);
     designCapacities.add("HP Sep", sepDesign);
 
-    Map<String, EquipmentDesignData.ApplyResult> results =
-        EquipmentDesignData.apply(process, designCapacities);
+    Map<String, EquipmentDesignData.ApplyResult> results = EquipmentDesignData.apply(process, designCapacities);
 
     // Verify result is present and successful
     assertTrue(results.containsKey("HP Sep"));
@@ -63,8 +62,7 @@ class EquipmentDesignDataTest {
     props.addProperty("internalDiameter", 2.0);
     designCapacities.add("NonExistentEquipment", props);
 
-    Map<String, EquipmentDesignData.ApplyResult> results =
-        EquipmentDesignData.apply(process, designCapacities);
+    Map<String, EquipmentDesignData.ApplyResult> results = EquipmentDesignData.apply(process, designCapacities);
 
     assertTrue(results.containsKey("NonExistentEquipment"));
     assertEquals("not_found", results.get("NonExistentEquipment").status);
@@ -75,13 +73,11 @@ class EquipmentDesignDataTest {
    */
   @Test
   void applyHandlesNullInputs() {
-    Map<String, EquipmentDesignData.ApplyResult> results1 =
-        EquipmentDesignData.apply(null, new JsonObject());
+    Map<String, EquipmentDesignData.ApplyResult> results1 = EquipmentDesignData.apply(null, new JsonObject());
     assertTrue(results1.isEmpty());
 
     ProcessSystem process = buildSimpleProcess();
-    Map<String, EquipmentDesignData.ApplyResult> results2 =
-        EquipmentDesignData.apply(process, null);
+    Map<String, EquipmentDesignData.ApplyResult> results2 = EquipmentDesignData.apply(process, null);
     assertTrue(results2.isEmpty());
   }
 
@@ -105,10 +101,9 @@ class EquipmentDesignDataTest {
     Map<String, CapacityConstraint> constraints = sep.getCapacityConstraints();
     if (!constraints.isEmpty()) {
       for (CapacityConstraint constraint : constraints.values()) {
-        // Constraints for equipment with design data should be tagged
-        assertEquals(EquipmentDesignData.DATA_SOURCE_DESIGN_CAPACITIES,
-            constraint.getDataSource(),
-            "Constraint '" + constraint.getName() + "' should have designCapacities data source");
+	// Constraints for equipment with design data should be tagged
+	assertEquals(EquipmentDesignData.DATA_SOURCE_DESIGN_CAPACITIES, constraint.getDataSource(),
+	    "Constraint '" + constraint.getName() + "' should have designCapacities data source");
       }
     }
   }
@@ -118,8 +113,7 @@ class EquipmentDesignDataTest {
    */
   @Test
   void applyResultToJsonIncludesAllFields() {
-    EquipmentDesignData.ApplyResult result =
-        new EquipmentDesignData.ApplyResult("TestEquip", "applied", "");
+    EquipmentDesignData.ApplyResult result = new EquipmentDesignData.ApplyResult("TestEquip", "applied", "");
     result.addApplied("diameter", 2.0, "m");
     result.addApplied("length", 6.0, "m");
 

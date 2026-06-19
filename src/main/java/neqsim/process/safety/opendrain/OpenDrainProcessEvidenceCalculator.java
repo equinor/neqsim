@@ -14,11 +14,10 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Builds open-drain review evidence directly from NeqSim process and thermodynamic objects.
  *
  * <p>
- * The calculator keeps NeqSim central in open-drain reviews by deriving credible process liquid leak
- * rates, liquid density, operating pressure, fire-water load, and gravity-drain hydraulic capacity
- * from {@link StreamInterface}, {@link ProcessEquipmentInterface}, or {@link ProcessSystem}
- * objects. The calculated values are written to {@link OpenDrainReviewItem} fields consumed by
- * {@link OpenDrainReviewEngine}.
+ * The calculator keeps NeqSim central in open-drain reviews by deriving credible process liquid leak rates, liquid
+ * density, operating pressure, fire-water load, and gravity-drain hydraulic capacity from {@link StreamInterface},
+ * {@link ProcessEquipmentInterface}, or {@link ProcessSystem} objects. The calculated values are written to
+ * {@link OpenDrainReviewItem} fields consumed by {@link OpenDrainReviewEngine}.
  * </p>
  *
  * @author NeqSim contributors
@@ -35,19 +34,20 @@ public final class OpenDrainProcessEvidenceCalculator {
   /**
    * Utility class constructor.
    */
-  private OpenDrainProcessEvidenceCalculator() {}
+  private OpenDrainProcessEvidenceCalculator() {
+  }
 
   /**
    * Creates a review input containing one item calculated from a NeqSim stream.
    *
    * @param projectName project, asset, or review name
-   * @param stream stream providing fluid state and flow rate
+   * @param stream      stream providing fluid state and flow rate
    * @param designBasis open-drain design and safeguard basis
    * @return review input populated with NeqSim-calculated evidence
    * @throws IllegalArgumentException if {@code stream} is null
    */
-  public static OpenDrainReviewInput createInputFromStream(String projectName,
-      StreamInterface stream, DesignBasis designBasis) {
+  public static OpenDrainReviewInput createInputFromStream(String projectName, StreamInterface stream,
+      DesignBasis designBasis) {
     OpenDrainReviewInput input = new OpenDrainReviewInput().setProjectName(projectName);
     input.addItem(createItemFromStream(stream, designBasis));
     return input;
@@ -56,13 +56,12 @@ public final class OpenDrainProcessEvidenceCalculator {
   /**
    * Creates one review item from a NeqSim stream.
    *
-   * @param stream stream providing fluid state and flow rate
+   * @param stream      stream providing fluid state and flow rate
    * @param designBasis open-drain design and safeguard basis
    * @return review item populated with calculated evidence
    * @throws IllegalArgumentException if {@code stream} is null
    */
-  public static OpenDrainReviewItem createItemFromStream(StreamInterface stream,
-      DesignBasis designBasis) {
+  public static OpenDrainReviewItem createItemFromStream(StreamInterface stream, DesignBasis designBasis) {
     if (stream == null) {
       throw new IllegalArgumentException("stream must not be null");
     }
@@ -77,13 +76,12 @@ public final class OpenDrainProcessEvidenceCalculator {
     double pressureBara = getStreamPressureBara(stream, fluid);
     double temperatureC = getStreamTemperatureC(stream, fluid);
     double credibleLeakRateKgPerS = calculateCredibleLiquidLeakRateKgPerS(liquidMassFlowKgPerS,
-        safeBasis.getCredibleLeakFractionOfLiquidFlow(),
-        safeBasis.getMaximumCredibleLiquidLeakRateKgPerS());
+	safeBasis.getCredibleLeakFractionOfLiquidFlow(), safeBasis.getMaximumCredibleLiquidLeakRateKgPerS());
     double fireWaterLoadKgPerS = calculateFireWaterLoadKgPerS(safeBasis.getFireWaterAreaM2(),
-        safeBasis.getFireWaterApplicationRateLPerMinM2(), safeBasis.getFireWaterDensityKgPerM3());
+	safeBasis.getFireWaterApplicationRateLPerMinM2(), safeBasis.getFireWaterDensityKgPerM3());
     double drainCapacityKgPerS = calculateGravityDrainCapacityKgPerS(liquidDensityKgPerM3,
-        safeBasis.getDrainPipeDiameterM(), safeBasis.getAvailableDrainHeadM(),
-        safeBasis.getDrainDischargeCoefficient(), safeBasis.getDrainBackpressureBarg());
+	safeBasis.getDrainPipeDiameterM(), safeBasis.getAvailableDrainHeadM(), safeBasis.getDrainDischargeCoefficient(),
+	safeBasis.getDrainBackpressureBarg());
 
     putIfFinite(item, "neqsimLiquidMassFlowKgPerS", liquidMassFlowKgPerS);
     putIfFinite(item, "liquidDensityKgPerM3", liquidDensityKgPerM3);
@@ -93,8 +91,7 @@ public final class OpenDrainProcessEvidenceCalculator {
     putIfFinite(item, "fireWaterCapacityKgPerS", fireWaterLoadKgPerS);
     putIfFinite(item, "drainageCapacityKgPerS", drainCapacityKgPerS);
     item.put("calculationBasis", "NeqSim process and thermodynamic evidence");
-    item.put("sourceHasFlammableOrHazardousLiquid",
-        Boolean.valueOf(credibleLeakRateKgPerS > 0.0));
+    item.put("sourceHasFlammableOrHazardousLiquid", Boolean.valueOf(credibleLeakRateKgPerS > 0.0));
     applySafeguardEvidence(item, safeBasis);
     return item;
   }
@@ -102,7 +99,7 @@ public final class OpenDrainProcessEvidenceCalculator {
   /**
    * Creates one review item from a NeqSim process equipment object.
    *
-   * @param equipment process equipment providing inlet or outlet streams
+   * @param equipment   process equipment providing inlet or outlet streams
    * @param designBasis open-drain design and safeguard basis
    * @return review item populated with calculated evidence
    * @throws IllegalArgumentException if {@code equipment} is null or has no streams
@@ -125,13 +122,12 @@ public final class OpenDrainProcessEvidenceCalculator {
   /**
    * Creates review input from every process-system unit that exposes an inlet or outlet stream.
    *
-   * @param process process system to inspect
+   * @param process     process system to inspect
    * @param designBasis default open-drain design and safeguard basis
    * @return review input populated with one item per stream-bearing unit
    * @throws IllegalArgumentException if {@code process} is null
    */
-  public static OpenDrainReviewInput createInputFromProcessSystem(ProcessSystem process,
-      DesignBasis designBasis) {
+  public static OpenDrainReviewInput createInputFromProcessSystem(ProcessSystem process, DesignBasis designBasis) {
     if (process == null) {
       throw new IllegalArgumentException("process must not be null");
     }
@@ -139,9 +135,9 @@ public final class OpenDrainProcessEvidenceCalculator {
     List<ProcessEquipmentInterface> units = process.getUnitOperations();
     for (ProcessEquipmentInterface unit : units) {
       try {
-        input.addItem(createItemFromEquipment(unit, designBasis));
+	input.addItem(createItemFromEquipment(unit, designBasis));
       } catch (IllegalArgumentException ex) {
-        // Equipment without process streams cannot provide thermodynamic drain evidence.
+	// Equipment without process streams cannot provide thermodynamic drain evidence.
       }
     }
     return input;
@@ -150,8 +146,8 @@ public final class OpenDrainProcessEvidenceCalculator {
   /**
    * Calculates credible liquid leak rate from the NeqSim liquid mass flow.
    *
-   * @param liquidMassFlowKgPerS liquid mass flow rate in kg/s
-   * @param leakFractionOfLiquidFlow credible leak fraction of liquid flow
+   * @param liquidMassFlowKgPerS      liquid mass flow rate in kg/s
+   * @param leakFractionOfLiquidFlow  credible leak fraction of liquid flow
    * @param maximumCredibleLeakKgPerS maximum credible leak cap in kg/s, or NaN for no cap
    * @return credible liquid leak rate in kg/s
    */
@@ -160,8 +156,7 @@ public final class OpenDrainProcessEvidenceCalculator {
     if (!Double.isFinite(liquidMassFlowKgPerS) || liquidMassFlowKgPerS <= 0.0) {
       return 0.0;
     }
-    double leakFraction = Double.isFinite(leakFractionOfLiquidFlow)
-        ? Math.max(0.0, leakFractionOfLiquidFlow) : 1.0;
+    double leakFraction = Double.isFinite(leakFractionOfLiquidFlow) ? Math.max(0.0, leakFractionOfLiquidFlow) : 1.0;
     double leakRateKgPerS = liquidMassFlowKgPerS * leakFraction;
     if (Double.isFinite(maximumCredibleLeakKgPerS) && maximumCredibleLeakKgPerS >= 0.0) {
       leakRateKgPerS = Math.min(leakRateKgPerS, maximumCredibleLeakKgPerS);
@@ -172,64 +167,61 @@ public final class OpenDrainProcessEvidenceCalculator {
   /**
    * Calculates fire-water mass load from application rate and area.
    *
-   * @param fireWaterAreaM2 protected or deluged area in m2
+   * @param fireWaterAreaM2          protected or deluged area in m2
    * @param applicationRateLPerMinM2 fire-water application rate in L/min/m2
-   * @param fireWaterDensityKgPerM3 fire-water density in kg/m3
+   * @param fireWaterDensityKgPerM3  fire-water density in kg/m3
    * @return fire-water mass load in kg/s, or zero if area or rate is not configured
    */
-  public static double calculateFireWaterLoadKgPerS(double fireWaterAreaM2,
-      double applicationRateLPerMinM2, double fireWaterDensityKgPerM3) {
+  public static double calculateFireWaterLoadKgPerS(double fireWaterAreaM2, double applicationRateLPerMinM2,
+      double fireWaterDensityKgPerM3) {
     if (!Double.isFinite(fireWaterAreaM2) || !Double.isFinite(applicationRateLPerMinM2)
-        || !Double.isFinite(fireWaterDensityKgPerM3) || fireWaterAreaM2 <= 0.0
-        || applicationRateLPerMinM2 <= 0.0 || fireWaterDensityKgPerM3 <= 0.0) {
+	|| !Double.isFinite(fireWaterDensityKgPerM3) || fireWaterAreaM2 <= 0.0 || applicationRateLPerMinM2 <= 0.0
+	|| fireWaterDensityKgPerM3 <= 0.0) {
       return 0.0;
     }
-    return fireWaterAreaM2 * applicationRateLPerMinM2 * LITRE_PER_MINUTE_TO_M3_PER_S
-        * fireWaterDensityKgPerM3;
+    return fireWaterAreaM2 * applicationRateLPerMinM2 * LITRE_PER_MINUTE_TO_M3_PER_S * fireWaterDensityKgPerM3;
   }
 
   /**
    * Calculates gravity drain hydraulic capacity for a liquid-filled open-drain pipe.
    *
    * @param liquidDensityKgPerM3 liquid density in kg/m3
-   * @param drainPipeDiameterM drain internal diameter in m
-   * @param availableHeadM available hydraulic head in m liquid
+   * @param drainPipeDiameterM   drain internal diameter in m
+   * @param availableHeadM       available hydraulic head in m liquid
    * @param dischargeCoefficient discharge coefficient for the drain inlet or pipe entrance
-   * @param backpressureBarg downstream backpressure in barg opposing the available head
+   * @param backpressureBarg     downstream backpressure in barg opposing the available head
    * @return drain mass-flow capacity in kg/s, or zero when effective head is not available
    */
-  public static double calculateGravityDrainCapacityKgPerS(double liquidDensityKgPerM3,
-      double drainPipeDiameterM, double availableHeadM, double dischargeCoefficient,
-      double backpressureBarg) {
+  public static double calculateGravityDrainCapacityKgPerS(double liquidDensityKgPerM3, double drainPipeDiameterM,
+      double availableHeadM, double dischargeCoefficient, double backpressureBarg) {
     if (!Double.isFinite(liquidDensityKgPerM3) || !Double.isFinite(drainPipeDiameterM)
-        || !Double.isFinite(availableHeadM) || !Double.isFinite(dischargeCoefficient)
-        || liquidDensityKgPerM3 <= 0.0 || drainPipeDiameterM <= 0.0 || availableHeadM <= 0.0
-        || dischargeCoefficient <= 0.0) {
+	|| !Double.isFinite(availableHeadM) || !Double.isFinite(dischargeCoefficient) || liquidDensityKgPerM3 <= 0.0
+	|| drainPipeDiameterM <= 0.0 || availableHeadM <= 0.0 || dischargeCoefficient <= 0.0) {
       return 0.0;
     }
     double backpressureHeadM = Double.isFinite(backpressureBarg) && backpressureBarg > 0.0
-        ? backpressureBarg * BAR_TO_PA / (liquidDensityKgPerM3 * GRAVITY_M_PER_S2) : 0.0;
+	? backpressureBarg * BAR_TO_PA / (liquidDensityKgPerM3 * GRAVITY_M_PER_S2)
+	: 0.0;
     double effectiveHeadM = availableHeadM - backpressureHeadM;
     if (effectiveHeadM <= 0.0) {
       return 0.0;
     }
     double flowAreaM2 = Math.PI * Math.pow(drainPipeDiameterM / 2.0, 2.0);
     double volumetricCapacityM3PerS = dischargeCoefficient * flowAreaM2
-        * Math.sqrt(2.0 * GRAVITY_M_PER_S2 * effectiveHeadM);
+	* Math.sqrt(2.0 * GRAVITY_M_PER_S2 * effectiveHeadM);
     return liquidDensityKgPerM3 * volumetricCapacityM3PerS;
   }
 
   /**
    * Creates a base review item from design-basis metadata.
    *
-   * @param areaId calculated area identifier
+   * @param areaId      calculated area identifier
    * @param designBasis design and safeguard basis
    * @return base review item
    */
   private static OpenDrainReviewItem createBaseItem(String areaId, DesignBasis designBasis) {
-    OpenDrainReviewItem item = new OpenDrainReviewItem().setAreaId(areaId)
-        .setAreaType(designBasis.getAreaType()).setDrainSystemType(designBasis.getDrainSystemType())
-        .put("standards", designBasis.getStandards());
+    OpenDrainReviewItem item = new OpenDrainReviewItem().setAreaId(areaId).setAreaType(designBasis.getAreaType())
+	.setDrainSystemType(designBasis.getDrainSystemType()).put("standards", designBasis.getStandards());
     if (!designBasis.getSourceReference().isEmpty()) {
       item.addSourceReference(designBasis.getSourceReference());
     }
@@ -239,18 +231,17 @@ public final class OpenDrainProcessEvidenceCalculator {
   /**
    * Applies document or design-basis safeguards that the numerical calculation cannot infer.
    *
-   * @param item item receiving safeguard evidence
+   * @param item        item receiving safeguard evidence
    * @param designBasis safeguard basis
    */
   private static void applySafeguardEvidence(OpenDrainReviewItem item, DesignBasis designBasis) {
     item.put("hasOpenDrainMeasures", Boolean.valueOf(designBasis.hasOpenDrainMeasures()));
     item.put("backflowPrevented", Boolean.valueOf(designBasis.isBackflowPrevented()));
     item.put("closedOpenDrainInteractionPrevented",
-        Boolean.valueOf(designBasis.isClosedOpenDrainInteractionPrevented()));
+	Boolean.valueOf(designBasis.isClosedOpenDrainInteractionPrevented()));
     item.put("hazardousNonHazardousPhysicallySeparated",
-        Boolean.valueOf(designBasis.isHazardousNonHazardousPhysicallySeparated()));
-    item.put("sealDesignedForMaxBackpressure",
-        Boolean.valueOf(designBasis.isSealDesignedForMaxBackpressure()));
+	Boolean.valueOf(designBasis.isHazardousNonHazardousPhysicallySeparated()));
+    item.put("sealDesignedForMaxBackpressure", Boolean.valueOf(designBasis.isSealDesignedForMaxBackpressure()));
     item.put("ventTerminatedSafe", Boolean.valueOf(designBasis.isVentTerminatedSafe()));
     item.put("openDrainDependsOnUtility", Boolean.valueOf(designBasis.isOpenDrainDependsOnUtility()));
   }
@@ -310,7 +301,7 @@ public final class OpenDrainProcessEvidenceCalculator {
     for (int phaseIndex = 0; phaseIndex < fluid.getNumberOfPhases(); phaseIndex++) {
       PhaseInterface phase = fluid.getPhase(phaseIndex);
       if (isLiquidPhase(phase.getType())) {
-        liquidMassFlowKgPerS += Math.max(0.0, phase.getFlowRate("kg/sec"));
+	liquidMassFlowKgPerS += Math.max(0.0, phase.getFlowRate("kg/sec"));
       }
     }
     return liquidMassFlowKgPerS;
@@ -328,12 +319,12 @@ public final class OpenDrainProcessEvidenceCalculator {
     for (int phaseIndex = 0; phaseIndex < fluid.getNumberOfPhases(); phaseIndex++) {
       PhaseInterface phase = fluid.getPhase(phaseIndex);
       if (isLiquidPhase(phase.getType())) {
-        double phaseMassFlowKgPerS = Math.max(0.0, phase.getFlowRate("kg/sec"));
-        double phaseDensityKgPerM3 = phase.getPhysicalProperties().getDensity();
-        if (Double.isFinite(phaseDensityKgPerM3) && phaseDensityKgPerM3 > 0.0) {
-          weightedDensity += phaseDensityKgPerM3 * Math.max(phaseMassFlowKgPerS, 1.0e-12);
-          liquidMassFlowKgPerS += Math.max(phaseMassFlowKgPerS, 1.0e-12);
-        }
+	double phaseMassFlowKgPerS = Math.max(0.0, phase.getFlowRate("kg/sec"));
+	double phaseDensityKgPerM3 = phase.getPhysicalProperties().getDensity();
+	if (Double.isFinite(phaseDensityKgPerM3) && phaseDensityKgPerM3 > 0.0) {
+	  weightedDensity += phaseDensityKgPerM3 * Math.max(phaseMassFlowKgPerS, 1.0e-12);
+	  liquidMassFlowKgPerS += Math.max(phaseMassFlowKgPerS, 1.0e-12);
+	}
       }
     }
     if (liquidMassFlowKgPerS > 0.0) {
@@ -349,15 +340,15 @@ public final class OpenDrainProcessEvidenceCalculator {
    * @return true for liquid-like phases
    */
   private static boolean isLiquidPhase(PhaseType phaseType) {
-    return phaseType == PhaseType.LIQUID || phaseType == PhaseType.OIL
-        || phaseType == PhaseType.AQUEOUS || phaseType == PhaseType.LIQUID_ASPHALTENE;
+    return phaseType == PhaseType.LIQUID || phaseType == PhaseType.OIL || phaseType == PhaseType.AQUEOUS
+	|| phaseType == PhaseType.LIQUID_ASPHALTENE;
   }
 
   /**
    * Gets stream pressure from the stream or cloned fluid.
    *
    * @param stream source stream
-   * @param fluid prepared fluid fallback
+   * @param fluid  prepared fluid fallback
    * @return pressure in bara
    */
   private static double getStreamPressureBara(StreamInterface stream, SystemInterface fluid) {
@@ -372,7 +363,7 @@ public final class OpenDrainProcessEvidenceCalculator {
    * Gets stream temperature from the stream or cloned fluid.
    *
    * @param stream source stream
-   * @param fluid prepared fluid fallback
+   * @param fluid  prepared fluid fallback
    * @return temperature in deg C
    */
   private static double getStreamTemperatureC(StreamInterface stream, SystemInterface fluid) {
@@ -386,8 +377,8 @@ public final class OpenDrainProcessEvidenceCalculator {
   /**
    * Adds a finite numeric value to a review item.
    *
-   * @param item item receiving the value
-   * @param key evidence key
+   * @param item  item receiving the value
+   * @param key   evidence key
    * @param value numeric value
    */
   private static void putIfFinite(OpenDrainReviewItem item, String key, double value) {

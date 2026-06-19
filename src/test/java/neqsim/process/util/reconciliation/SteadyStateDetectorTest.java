@@ -49,7 +49,7 @@ public class SteadyStateDetectorTest {
     detector.addVariable(v);
 
     // Fill with readings that fluctuate randomly around 100
-    double[] values = {100.2, 99.8, 100.1, 99.9, 100.0, 100.3, 99.7, 100.1, 99.9, 100.0};
+    double[] values = { 100.2, 99.8, 100.1, 99.9, 100.0, 100.3, 99.7, 100.1, 99.9, 100.0 };
     for (double val : values) {
       detector.updateVariable("flow", val);
     }
@@ -120,9 +120,9 @@ public class SteadyStateDetectorTest {
     detector.addVariable(new SteadyStateVariable("pressure", 10));
 
     // Use deterministic alternating noise (white-noise-like, R stays near 1)
-    double[] flowNoise = {0.2, -0.1, 0.3, -0.2, 0.1, -0.3, 0.2, -0.1, 0.3, -0.2};
-    double[] tempNoise = {0.05, -0.03, 0.04, -0.05, 0.02, -0.04, 0.05, -0.03, 0.04, -0.02};
-    double[] presNoise = {0.01, -0.01, 0.01, -0.01, 0.01, -0.01, 0.01, -0.01, 0.01, -0.01};
+    double[] flowNoise = { 0.2, -0.1, 0.3, -0.2, 0.1, -0.3, 0.2, -0.1, 0.3, -0.2 };
+    double[] tempNoise = { 0.05, -0.03, 0.04, -0.05, 0.02, -0.04, 0.05, -0.03, 0.04, -0.02 };
+    double[] presNoise = { 0.01, -0.01, 0.01, -0.01, 0.01, -0.01, 0.01, -0.01, 0.01, -0.01 };
     for (int i = 0; i < 10; i++) {
       detector.updateVariable("flow", 1000.0 + flowNoise[i]);
       detector.updateVariable("temp", 80.0 + tempNoise[i]);
@@ -163,8 +163,7 @@ public class SteadyStateDetectorTest {
     }
 
     SteadyStateResult result = detector.evaluate();
-    assertTrue(result.isAtSteadyState(),
-        "With 50% required fraction, 1 of 2 steady should pass overall");
+    assertTrue(result.isAtSteadyState(), "With 50% required fraction, 1 of 2 steady should pass overall");
   }
 
   // ==================== Window and threshold configuration ====================
@@ -193,8 +192,7 @@ public class SteadyStateDetectorTest {
     }
 
     SteadyStateResult result = detector.evaluate();
-    assertTrue(result.isAtSteadyState(),
-        "With requireFullWindow=false, constant partial window should be steady");
+    assertTrue(result.isAtSteadyState(), "With requireFullWindow=false, constant partial window should be steady");
   }
 
   @Test
@@ -219,7 +217,7 @@ public class SteadyStateDetectorTest {
     detector.addVariable(new SteadyStateVariable("noisy", 10));
 
     // Very noisy signal with std.dev >> 1
-    double[] vals = {100, 110, 90, 115, 85, 120, 80, 105, 95, 112};
+    double[] vals = { 100, 110, 90, 115, 85, 120, 80, 105, 95, 112 };
     for (double val : vals) {
       detector.updateVariable("noisy", val);
     }
@@ -262,8 +260,7 @@ public class SteadyStateDetectorTest {
       v.addValue(100.0 + rng.nextGaussian() * 5.0);
     }
     // R should be near 1.0 for white noise (typically 0.8-1.2)
-    assertTrue(v.getRStatistic() > 0.5,
-        "White noise should have R near 1.0, got " + v.getRStatistic());
+    assertTrue(v.getRStatistic() > 0.5, "White noise should have R near 1.0, got " + v.getRStatistic());
   }
 
   // ==================== Update and evaluate convenience ====================
@@ -280,7 +277,7 @@ public class SteadyStateDetectorTest {
       vals.put("temp", 80.0);
       SteadyStateResult result = detector.updateAndEvaluate(vals);
       if (i == 9) {
-        assertTrue(result.isAtSteadyState());
+	assertTrue(result.isAtSteadyState());
       }
     }
   }
@@ -319,12 +316,9 @@ public class SteadyStateDetectorTest {
   void testCreateReconciliationEngine() {
     detector.setRequireFullWindow(false);
 
-    SteadyStateVariable v1 =
-        new SteadyStateVariable("feed", 5).setUncertainty(20.0).setUnit("kg/hr");
-    SteadyStateVariable v2 =
-        new SteadyStateVariable("gas", 5).setUncertainty(15.0).setUnit("kg/hr");
-    SteadyStateVariable v3 =
-        new SteadyStateVariable("liquid", 5).setUncertainty(10.0).setUnit("kg/hr");
+    SteadyStateVariable v1 = new SteadyStateVariable("feed", 5).setUncertainty(20.0).setUnit("kg/hr");
+    SteadyStateVariable v2 = new SteadyStateVariable("gas", 5).setUncertainty(15.0).setUnit("kg/hr");
+    SteadyStateVariable v3 = new SteadyStateVariable("liquid", 5).setUncertainty(10.0).setUnit("kg/hr");
     detector.addVariable(v1);
     detector.addVariable(v2);
     detector.addVariable(v3);
@@ -343,7 +337,7 @@ public class SteadyStateDetectorTest {
     assertEquals(3, engine.getVariableCount());
 
     // Add constraint and reconcile
-    engine.addMassBalanceConstraint("sep", new String[] {"feed"}, new String[] {"gas", "liquid"});
+    engine.addMassBalanceConstraint("sep", new String[] { "feed" }, new String[] { "gas", "liquid" });
     ReconciliationResult recResult = engine.reconcile();
     assertTrue(recResult.isConverged());
   }
@@ -367,8 +361,7 @@ public class SteadyStateDetectorTest {
 
     DataReconciliationEngine engine = detector.createReconciliationEngine();
     // Only steady variables should be included
-    assertEquals(1, engine.getVariableCount(),
-        "Only steady-state variables should be in the engine");
+    assertEquals(1, engine.getVariableCount(), "Only steady-state variables should be in the engine");
     assertNotNull(engine.getVariable("steady_var"));
   }
 

@@ -8,8 +8,8 @@ import neqsim.process.equipment.ProcessEquipmentInterface;
  * Base interface for all process logic implementations.
  *
  * <p>
- * Process logic represents automated control sequences that coordinate multiple pieces of equipment
- * to achieve specific operational objectives such as:
+ * Process logic represents automated control sequences that coordinate multiple pieces of equipment to achieve specific
+ * operational objectives such as:
  * <ul>
  * <li>Emergency Shutdown (ESD) sequences</li>
  * <li>Startup procedures</li>
@@ -19,8 +19,8 @@ import neqsim.process.equipment.ProcessEquipmentInterface;
  * </ul>
  *
  * <p>
- * Logic execution is typically driven by triggers (manual or automatic) and proceeds through a
- * series of steps with timing, conditions, and actions on equipment.
+ * Logic execution is typically driven by triggers (manual or automatic) and proceeds through a series of steps with
+ * timing, conditions, and actions on equipment.
  *
  * @author ESOL
  * @version 1.0
@@ -45,8 +45,7 @@ public interface ProcessLogic extends Serializable {
    * Activates the logic sequence, starting execution.
    *
    * <p>
-   * If the logic is already active, this may restart it or have no effect depending on
-   * implementation.
+   * If the logic is already active, this may restart it or have no effect depending on implementation.
    * </p>
    */
   void activate();
@@ -64,8 +63,7 @@ public interface ProcessLogic extends Serializable {
    * Resets the logic sequence to its initial state.
    *
    * <p>
-   * This prepares the logic for a fresh execution. Reset may require certain permissive conditions
-   * to be met.
+   * This prepares the logic for a fresh execution. Reset may require certain permissive conditions to be met.
    * </p>
    *
    * @return true if reset was successful, false if permissives not met
@@ -76,8 +74,7 @@ public interface ProcessLogic extends Serializable {
    * Executes one time step of the logic sequence.
    *
    * <p>
-   * This method should be called repeatedly in transient simulations to advance the logic through
-   * its steps.
+   * This method should be called repeatedly in transient simulations to advance the logic through its steps.
    * </p>
    *
    * @param timeStep time increment in seconds

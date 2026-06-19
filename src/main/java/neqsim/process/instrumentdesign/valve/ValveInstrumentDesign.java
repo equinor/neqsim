@@ -44,8 +44,7 @@ public class ValveInstrumentDesign extends InstrumentDesign {
    */
   private void autoDetectSafetyValve(ProcessEquipmentInterface equipment) {
     String className = equipment.getClass().getSimpleName();
-    if ("ESDValve".equals(className) || "HIPPSValve".equals(className)
-        || "BlowdownValve".equals(className)) {
+    if ("ESDValve".equals(className) || "HIPPSValve".equals(className) || "BlowdownValve".equals(className)) {
       this.safetyValve = true;
     }
   }
@@ -56,17 +55,14 @@ public class ValveInstrumentDesign extends InstrumentDesign {
     super.calcDesign();
 
     // === Position feedback ===
-    getInstrumentList()
-        .add(new InstrumentSpecification("ZT", "Valve Position", 0.0, 100.0, "%", "AI"));
+    getInstrumentList().add(new InstrumentSpecification("ZT", "Valve Position", 0.0, 100.0, "%", "AI"));
 
     // === Positioner output (control signal to valve) ===
-    getInstrumentList()
-        .add(new InstrumentSpecification("ZC", "Valve Positioner Output", 0.0, 100.0, "%", "AO"));
+    getInstrumentList().add(new InstrumentSpecification("ZC", "Valve Positioner Output", 0.0, 100.0, "%", "AO"));
 
     if (safetyValve) {
       // === Solenoid valve (trip) ===
-      getInstrumentList()
-          .add(new InstrumentSpecification("XV", "Trip Solenoid", "DO", getDefaultSilLevel()));
+      getInstrumentList().add(new InstrumentSpecification("XV", "Trip Solenoid", "DO", getDefaultSilLevel()));
 
       // === Limit switches ===
       getInstrumentList().add(new InstrumentSpecification("ZSO", "Open Limit Switch", "DI", 0));

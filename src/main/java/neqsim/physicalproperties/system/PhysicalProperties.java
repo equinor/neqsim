@@ -72,7 +72,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
   public double density = 0;
   public double viscosity = 0;
   public double conductivity = 0;
-  private double[] waxViscosityParameter = {37.82, 83.96, 8.559e6};
+  private double[] waxViscosityParameter = { 37.82, 83.96, 8.559e6 };
 
   /**
    * <p>
@@ -90,9 +90,9 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
    * Constructor for PhysicalProperties.
    * </p>
    *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase                            a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param binaryDiffusionCoefficientMethod a int
-   * @param multicomponentDiffusionMethod a int
+   * @param multicomponentDiffusionMethod    a int
    */
   public PhysicalProperties(PhaseInterface phase, int binaryDiffusionCoefficientMethod,
       int multicomponentDiffusionMethod) {
@@ -137,8 +137,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
    * getMixingRule.
    * </p>
    *
-   * @return a {@link neqsim.physicalproperties.mixingrule.PhysicalPropertyMixingRuleInterface}
-   *         object
+   * @return a {@link neqsim.physicalproperties.mixingrule.PhysicalPropertyMixingRuleInterface} object
    */
   public PhysicalPropertyMixingRuleInterface getMixingRule() {
     return mixingRule;
@@ -149,8 +148,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
    * setMixingRule.
    * </p>
    *
-   * @param mixingRule a
-   *        {@link neqsim.physicalproperties.mixingrule.PhysicalPropertyMixingRuleInterface} object
+   * @param mixingRule a {@link neqsim.physicalproperties.mixingrule.PhysicalPropertyMixingRuleInterface} object
    */
   public void setMixingRule(PhysicalPropertyMixingRuleInterface mixingRule) {
     this.mixingRule = mixingRule;
@@ -185,8 +183,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
    */
   public void setDensityModel(String model) {
     if ("Peneloux volume shift".equals(model)) {
-      densityCalc =
-          new neqsim.physicalproperties.methods.liquidphysicalproperties.density.Density(this);
+      densityCalc = new neqsim.physicalproperties.methods.liquidphysicalproperties.density.Density(this);
     } else if ("Costald".equals(model)) {
       densityCalc = new Costald(this);
     } else if ("Costald polar".equals(model)) {
@@ -194,8 +191,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
       costald.setUsePolarCorrection(true);
       densityCalc = costald;
     } else if ("Rackett".equals(model)) {
-      densityCalc =
-          new neqsim.physicalproperties.methods.liquidphysicalproperties.density.Rackett(this);
+      densityCalc = new neqsim.physicalproperties.methods.liquidphysicalproperties.density.Rackett(this);
     }
   }
 
@@ -210,9 +206,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
     if ("PFCT".equals(model)) {
       conductivityCalc = new PFCTConductivityMethodMod86(this);
     } else if ("polynom".equals(model)) {
-      conductivityCalc =
-          new neqsim.physicalproperties.methods.liquidphysicalproperties.conductivity.Conductivity(
-              this);
+      conductivityCalc = new neqsim.physicalproperties.methods.liquidphysicalproperties.conductivity.Conductivity(this);
     } else if ("Chung".equals(model)) {
       conductivityCalc = new ChungConductivityMethod(this);
     } else if ("Chung-dense".equals(model)) {
@@ -241,8 +235,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
    */
   public void setViscosityModel(String model) {
     if ("polynom".equals(model)) {
-      viscosityCalc =
-          new neqsim.physicalproperties.methods.liquidphysicalproperties.viscosity.Viscosity(this);
+      viscosityCalc = new neqsim.physicalproperties.methods.liquidphysicalproperties.viscosity.Viscosity(this);
     } else if ("friction theory".equals(model)) {
       viscosityCalc = new FrictionTheoryViscosityMethod(this);
     } else if ("LBC".equals(model)) {
@@ -264,8 +257,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
     } else if ("CO2Model".equals(model)) {
       viscosityCalc = new CO2ViscosityMethod(this);
     } else if ("Salt Water".equals(model)) {
-      viscosityCalc =
-          new neqsim.physicalproperties.methods.liquidphysicalproperties.viscosity.Water(this);
+      viscosityCalc = new neqsim.physicalproperties.methods.liquidphysicalproperties.viscosity.Water(this);
     }
   }
 
@@ -323,28 +315,24 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
    * @return true if using PFCT viscosity model
    */
   public boolean isPFCTViscosityModel() {
-    return viscosityCalc instanceof PFCTViscosityMethod
-        || viscosityCalc instanceof PFCTViscosityMethodMod86
-        || viscosityCalc instanceof PFCTViscosityMethodHeavyOil;
+    return viscosityCalc instanceof PFCTViscosityMethod || viscosityCalc instanceof PFCTViscosityMethodMod86
+	|| viscosityCalc instanceof PFCTViscosityMethodHeavyOil;
   }
 
   /**
    * Set CSP viscosity correction factors for the active PFCT/Pedersen viscosity model.
    *
-   * @param correctionFactors array of four correction factors for temperature, pressure, molar mass
-   *        and alpha terms
-   * @throws IllegalStateException if the current viscosity model is not PFCT/CSP
+   * @param correctionFactors array of four correction factors for temperature, pressure, molar mass and alpha terms
+   * @throws IllegalStateException    if the current viscosity model is not PFCT/CSP
    * @throws IllegalArgumentException if the array does not contain four finite values
    */
   public void setCspViscosityCorrectionFactors(double[] correctionFactors) {
     if (viscosityCalc instanceof PFCTViscosityMethod) {
       ((PFCTViscosityMethod) viscosityCalc).setCspViscosityCorrectionFactors(correctionFactors);
     } else if (viscosityCalc instanceof PFCTViscosityMethodMod86) {
-      ((PFCTViscosityMethodMod86) viscosityCalc)
-          .setCspViscosityCorrectionFactors(correctionFactors);
+      ((PFCTViscosityMethodMod86) viscosityCalc).setCspViscosityCorrectionFactors(correctionFactors);
     } else if (viscosityCalc instanceof PFCTViscosityMethodHeavyOil) {
-      ((PFCTViscosityMethodHeavyOil) viscosityCalc)
-          .setCspViscosityCorrectionFactors(correctionFactors);
+      ((PFCTViscosityMethodHeavyOil) viscosityCalc).setCspViscosityCorrectionFactors(correctionFactors);
     } else {
       throw new IllegalStateException("Current viscosity model is not PFCT/CSP");
     }
@@ -354,7 +342,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
    * Set CSP viscosity parameters for the active PFCT/Pedersen viscosity model.
    *
    * @param parameters array of four CSP viscosity parameters
-   * @throws IllegalStateException if the current viscosity model is not PFCT/CSP
+   * @throws IllegalStateException    if the current viscosity model is not PFCT/CSP
    * @throws IllegalArgumentException if the array does not contain four finite values
    */
   public void setCspViscosityParameters(double[] parameters) {
@@ -366,7 +354,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
    *
    * @param index correction factor index, from 0 to 3
    * @param value finite correction factor value
-   * @throws IllegalStateException if the current viscosity model is not PFCT/CSP
+   * @throws IllegalStateException    if the current viscosity model is not PFCT/CSP
    * @throws IllegalArgumentException if the index is outside 0 to 3 or the value is not finite
    */
   public void setCspViscosityCorrectionFactor(int index, double value) {
@@ -386,7 +374,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
    *
    * @param index parameter index, from 0 to 3
    * @param value finite parameter value
-   * @throws IllegalStateException if the current viscosity model is not PFCT/CSP
+   * @throws IllegalStateException    if the current viscosity model is not PFCT/CSP
    * @throws IllegalArgumentException if the index is outside 0 to 3 or the value is not finite
    */
   public void setCspViscosityParameter(int index, double value) {
@@ -429,8 +417,8 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
     if ("CSP".equals(model)) {
       diffusivityCalc = new CorrespondingStatesDiffusivity(this);
     } else if ("Chapman-Enskog".equals(model)) {
-      neqsim.physicalproperties.methods.gasphysicalproperties.diffusivity.Diffusivity ceModel =
-          new neqsim.physicalproperties.methods.gasphysicalproperties.diffusivity.Diffusivity(this);
+      neqsim.physicalproperties.methods.gasphysicalproperties.diffusivity.Diffusivity ceModel = new neqsim.physicalproperties.methods.gasphysicalproperties.diffusivity.Diffusivity(
+	  this);
       ceModel.setUseDiffusionLJOverride(true);
       diffusivityCalc = ceModel;
     } else if ("Wilke Lee".equals(model)) {
@@ -461,8 +449,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
    * getConductivityModel.
    * </p>
    *
-   * @return a {@link neqsim.physicalproperties.methods.methodinterface.ConductivityInterface}
-   *         object
+   * @return a {@link neqsim.physicalproperties.methods.methodinterface.ConductivityInterface} object
    */
   public ConductivityInterface getConductivityModel() {
     return conductivityCalc;
@@ -504,9 +491,8 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
 
   /**
    * <p>
-   * Set phase information for all physical property calc methods, i.e., subclasses of
-   * physicalpropertymethods using setPhase(this). NB! Safe even if calc methods are null, e.g.,
-   * from constructors.
+   * Set phase information for all physical property calc methods, i.e., subclasses of physicalpropertymethods using
+   * setPhase(this). NB! Safe even if calc methods are null, e.g., from constructors.
    * </p>
    */
   public void setPhases() {
@@ -527,8 +513,8 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
 
   /**
    * <p>
-   * Setter for property <code>phase</code>. Will also set the phase for all physicalpropertymethods
-   * using setPhases. Safe to call from constructor.
+   * Setter for property <code>phase</code>. Will also set the phase for all physicalpropertymethods using setPhases.
+   * Safe to call from constructor.
    * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -551,8 +537,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
       density = densityCalc.calcDensity();
       viscosity = viscosityCalc.calcViscosity();
       kinematicViscosity = this.calcKinematicViscosity();
-      diffusivityCalc.calcDiffusionCoefficients(binaryDiffusionCoefficientMethod,
-          multicomponentDiffusionMethod);
+      diffusivityCalc.calcDiffusionCoefficients(binaryDiffusionCoefficientMethod, multicomponentDiffusionMethod);
       // diffusivityCalc.calcEffectiveDiffusionCoefficients();
       conductivity = conductivityCalc.calcConductivity();
     } catch (Exception ex) {
@@ -569,28 +554,28 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
    * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param ppt PhysicalPropertyType enum object.
+   * @param ppt   PhysicalPropertyType enum object.
    */
   public void init(PhaseInterface phase, PhysicalPropertyType ppt) {
     switch (ppt) {
-      case MASS_DENSITY:
-        densityCalc.setPhase(this);
-        density = densityCalc.calcDensity();
-        break;
-      case DYNAMIC_VISCOSITY:
-        viscosityCalc.setPhase(this);
-        viscosity = viscosityCalc.calcViscosity();
-        break;
-      case THERMAL_CONDUCTIVITY:
-        conductivityCalc.setPhase(this);
-        conductivity = conductivityCalc.calcConductivity();
-        break;
-      // case DIFFUSIVITY:
-      // diffusivityCalc.setPhase(this);
-      // diffusivity = diffusivityCalc.calcDiffusionCoefficients();
-      default:
-        init(phase);
-        break;
+    case MASS_DENSITY:
+      densityCalc.setPhase(this);
+      density = densityCalc.calcDensity();
+      break;
+    case DYNAMIC_VISCOSITY:
+      viscosityCalc.setPhase(this);
+      viscosity = viscosityCalc.calcViscosity();
+      break;
+    case THERMAL_CONDUCTIVITY:
+      conductivityCalc.setPhase(this);
+      conductivity = conductivityCalc.calcConductivity();
+      break;
+    // case DIFFUSIVITY:
+    // diffusivityCalc.setPhase(this);
+    // diffusivity = diffusivityCalc.calcDiffusionCoefficients();
+    default:
+      init(phase);
+      break;
     }
   }
 
@@ -600,7 +585,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
    * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param name Name of physical property.
+   * @param name  Name of physical property.
    */
   public void init(PhaseInterface phase, String name) {
     init(phase, PhysicalPropertyType.byName(name));
@@ -612,13 +597,13 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
    * </p>
    *
    * @param waxVolumeFraction a double
-   * @param shareRate a double
+   * @param shareRate         a double
    * @return a double
    */
   public double getViscosityOfWaxyOil(double waxVolumeFraction, double shareRate) {
     return viscosity * (Math.exp(waxViscosityParameter[0] * waxVolumeFraction)
-        + waxViscosityParameter[1] * waxVolumeFraction / Math.sqrt(shareRate)
-        + waxViscosityParameter[2] * Math.pow(waxVolumeFraction, 4.0) / shareRate);
+	+ waxViscosityParameter[1] * waxVolumeFraction / Math.sqrt(shareRate)
+	+ waxViscosityParameter[2] * Math.pow(waxVolumeFraction, 4.0) / shareRate);
   }
 
   /**
@@ -720,9 +705,8 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
    * @return a double
    */
   public double getDiffusionCoefficient(String comp1, String comp2) {
-    return diffusivityCalc.getMaxwellStefanBinaryDiffusionCoefficient(
-        phase.getComponent(comp1).getComponentNumber(),
-        phase.getComponent(comp2).getComponentNumber());
+    return diffusivityCalc.getMaxwellStefanBinaryDiffusionCoefficient(phase.getComponent(comp1).getComponentNumber(),
+	phase.getComponent(comp2).getComponentNumber());
   }
 
   /**
@@ -769,8 +753,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
    * @return a double
    */
   public double getEffectiveDiffusionCoefficient(String compName) {
-    return diffusivityCalc
-        .getEffectiveDiffusionCoefficient(phase.getComponent(compName).getComponentNumber());
+    return diffusivityCalc.getEffectiveDiffusionCoefficient(phase.getComponent(compName).getComponentNumber());
   }
 
   /**
@@ -812,7 +795,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
    * Setter for the field <code>waxViscosityParameter</code>.
    * </p>
    *
-   * @param paramNumber a int
+   * @param paramNumber           a int
    * @param waxViscosityParameter a double
    */
   public void setWaxViscosityParameter(int paramNumber, double waxViscosityParameter) {

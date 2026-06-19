@@ -63,7 +63,7 @@ public class SystemPCSAFTTest {
     fluid2.initProperties();
 
     assertEquals(fluid.getTemperature(), fluid2.getTemperature(), 0.5,
-        "PHflash should recover the original temperature");
+	"PHflash should recover the original temperature");
   }
 
   @Test
@@ -72,12 +72,9 @@ public class SystemPCSAFTTest {
     fluid.addComponent("methane", 1.0);
     fluid.setMixingRule(1);
 
-    assertTrue(fluid.isImplementedCompositionDeriativesofFugacity(),
-        "Composition derivatives should be enabled");
-    assertTrue(fluid.isImplementedPressureDeriativesofFugacity(),
-        "Pressure derivatives should be enabled");
-    assertTrue(fluid.isImplementedTemperatureDeriativesofFugacity(),
-        "Temperature derivatives should be enabled");
+    assertTrue(fluid.isImplementedCompositionDeriativesofFugacity(), "Composition derivatives should be enabled");
+    assertTrue(fluid.isImplementedPressureDeriativesofFugacity(), "Pressure derivatives should be enabled");
+    assertTrue(fluid.isImplementedTemperatureDeriativesofFugacity(), "Temperature derivatives should be enabled");
   }
 
   @Test
@@ -87,11 +84,11 @@ public class SystemPCSAFTTest {
     fluid.setMixingRule(1);
 
     assertTrue(fluid.isImplementedCompositionDeriativesofFugacity(),
-        "Composition derivatives should be enabled for PC-SAFTa");
+	"Composition derivatives should be enabled for PC-SAFTa");
     assertTrue(fluid.isImplementedPressureDeriativesofFugacity(),
-        "Pressure derivatives should be enabled for PC-SAFTa");
+	"Pressure derivatives should be enabled for PC-SAFTa");
     assertTrue(fluid.isImplementedTemperatureDeriativesofFugacity(),
-        "Temperature derivatives should be enabled for PC-SAFTa");
+	"Temperature derivatives should be enabled for PC-SAFTa");
   }
 
   @Test
@@ -215,8 +212,7 @@ public class SystemPCSAFTTest {
     process.run();
 
     double sepTemp = sep.getGasOutStream().getTemperature("C");
-    assertTrue(sepTemp < 30.0,
-        "JT cooling should reduce temperature below cooler outlet, got " + sepTemp + " C");
+    assertTrue(sepTemp < 30.0, "JT cooling should reduce temperature below cooler outlet, got " + sepTemp + " C");
     double duty = cooler.getDuty();
     assertTrue(Double.isFinite(duty), "Cooler duty should be finite, got " + duty);
   }
@@ -248,8 +244,7 @@ public class SystemPCSAFTTest {
     process.run();
 
     double compOutTemp = comp.getOutletStream().getTemperature("C");
-    assertTrue(compOutTemp > 100.0,
-        "Compression ratio ~5 should give high outlet temp, got " + compOutTemp + " C");
+    assertTrue(compOutTemp > 100.0, "Compression ratio ~5 should give high outlet temp, got " + compOutTemp + " C");
     double coolerOutTemp = aftercooler.getOutletStream().getTemperature("C");
     assertEquals(35.0, coolerOutTemp, 1.0, "Aftercooler should cool to 35 C, got " + coolerOutTemp);
   }
@@ -301,7 +296,7 @@ public class SystemPCSAFTTest {
     assertTrue(srkDensity > 0, "SRK density should be positive");
     double ratio = saftDensity / srkDensity;
     assertTrue(ratio > 0.5 && ratio < 2.0,
-        "SAFT and SRK gas densities should be same order of magnitude. Ratio=" + ratio);
+	"SAFT and SRK gas densities should be same order of magnitude. Ratio=" + ratio);
   }
 
   @Test

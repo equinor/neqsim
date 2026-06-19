@@ -9,10 +9,10 @@ import neqsim.thermo.phase.PhaseType;
  * Wax component model based on the Coutinho predictive UNIQUAC approach.
  *
  * <p>
- * Implements the solid-liquid equilibrium model of Coutinho (1998, 2001) for wax precipitation in
- * petroleum fluids. The model uses the UNIQUAC local composition framework for the solid-phase
- * activity coefficient, with predictive interaction parameters derived from the
- * Hildebrand-Scatchard regular solution theory and the Wilson equation for the liquid phase.
+ * Implements the solid-liquid equilibrium model of Coutinho (1998, 2001) for wax precipitation in petroleum fluids. The
+ * model uses the UNIQUAC local composition framework for the solid-phase activity coefficient, with predictive
+ * interaction parameters derived from the Hildebrand-Scatchard regular solution theory and the Wilson equation for the
+ * liquid phase.
  * </p>
  *
  * <p>
@@ -25,22 +25,21 @@ import neqsim.thermo.phase.PhaseType;
  * </pre>
  *
  * <p>
- * The solid-phase activity coefficient is calculated using the predictive UNIQUAC equation with
- * combinatorial and residual contributions. The UNIQUAC interaction parameters lambda_ij for the
- * solid phase are estimated from the sublimation enthalpies of pure components.
+ * The solid-phase activity coefficient is calculated using the predictive UNIQUAC equation with combinatorial and
+ * residual contributions. The UNIQUAC interaction parameters lambda_ij for the solid phase are estimated from the
+ * sublimation enthalpies of pure components.
  * </p>
  *
  * <p>
  * References:
  * </p>
  * <ul>
- * <li>Coutinho, J.A.P., "Predictive UNIQUAC: A New Model for the Description of Multiphase
- * Solid-Liquid Equilibria in Complex Hydrocarbon Mixtures," Ind. Eng. Chem. Res., 37, 4870-4875,
- * 1998.</li>
- * <li>Coutinho, J.A.P. and Daridon, J.-L., "Low-Pressure Modeling of Wax Formation in Crude Oils,"
- * Energy &amp; Fuels, 15, 1454-1460, 2001.</li>
- * <li>Coutinho, J.A.P. and Stenby, E.H., "Predictive Local Composition Models for Solid/Liquid
- * Equilibrium in n-Alkane Systems," Ind. Eng. Chem. Res., 35, 918-925, 1996.</li>
+ * <li>Coutinho, J.A.P., "Predictive UNIQUAC: A New Model for the Description of Multiphase Solid-Liquid Equilibria in
+ * Complex Hydrocarbon Mixtures," Ind. Eng. Chem. Res., 37, 4870-4875, 1998.</li>
+ * <li>Coutinho, J.A.P. and Daridon, J.-L., "Low-Pressure Modeling of Wax Formation in Crude Oils," Energy &amp; Fuels,
+ * 15, 1454-1460, 2001.</li>
+ * <li>Coutinho, J.A.P. and Stenby, E.H., "Predictive Local Composition Models for Solid/Liquid Equilibrium in n-Alkane
+ * Systems," Ind. Eng. Chem. Res., 35, 918-925, 1996.</li>
  * </ul>
  *
  * @author NeqSim
@@ -53,18 +52,17 @@ public class ComponentCoutinhoWax extends ComponentSolid {
   static Logger logger = LogManager.getLogger(ComponentCoutinhoWax.class);
 
   /**
-   * Coordination number for UNIQUAC model. Standard value is 10 as recommended by Abrams and
-   * Prausnitz (1975).
+   * Coordination number for UNIQUAC model. Standard value is 10 as recommended by Abrams and Prausnitz (1975).
    */
   private static final double Z_COORD = 10.0;
 
   /**
    * Constructor for ComponentCoutinhoWax.
    *
-   * @param name Name of component.
-   * @param moles Total number of moles of component.
+   * @param name         Name of component.
+   * @param moles        Total number of moles of component.
    * @param molesInPhase Number of moles in phase.
-   * @param compIndex Index number of component in phase object component array.
+   * @param compIndex    Index number of component in phase object component array.
    */
   public ComponentCoutinhoWax(String name, double moles, double molesInPhase, int compIndex) {
     super(name, moles, molesInPhase, compIndex);
@@ -84,9 +82,9 @@ public class ComponentCoutinhoWax extends ComponentSolid {
    * {@inheritDoc}
    *
    * <p>
-   * Calculates the solid fugacity coefficient using the Coutinho predictive UNIQUAC model. The
-   * solid-phase fugacity is computed from the liquid reference fugacity, heat of fusion, heat
-   * capacity difference, and the UNIQUAC solid-phase activity coefficient.
+   * Calculates the solid fugacity coefficient using the Coutinho predictive UNIQUAC model. The solid-phase fugacity is
+   * computed from the liquid reference fugacity, heat of fusion, heat capacity difference, and the UNIQUAC solid-phase
+   * activity coefficient.
    * </p>
    */
   @Override
@@ -100,8 +98,7 @@ public class ComponentCoutinhoWax extends ComponentSolid {
     refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 1, PhaseType.LIQUID, 1.0);
     refPhase.getComponent(0).fugcoef(refPhase);
 
-    double liquidPhaseFugacity =
-        refPhase.getComponent(0).getFugacityCoefficient() * refPhase.getPressure();
+    double liquidPhaseFugacity = refPhase.getComponent(0).getFugacityCoefficient() * refPhase.getPressure();
 
     double tempK = phase1.getTemperature();
     double tfus = getTriplePointTemperature();
@@ -130,20 +127,18 @@ public class ComponentCoutinhoWax extends ComponentSolid {
     double cpTerm = deltaCpSL / R * (tfus / tempK - 1.0 - Math.log(tfus / tempK));
     double pvTerm = -deltaVSL * (phase1.getPressure() - refPressure) * 1e5 / (R * tempK);
 
-    SolidFug = getx() * liquidPhaseFugacity * Math.exp(thermTerm + cpTerm + pvTerm)
-        * Math.exp(lnGammaSolid);
+    SolidFug = getx() * liquidPhaseFugacity * Math.exp(thermTerm + cpTerm + pvTerm) * Math.exp(lnGammaSolid);
 
     fugacityCoefficient = SolidFug / (phase1.getPressure() * getx());
     return fugacityCoefficient;
   }
 
   /**
-   * Calculates the natural logarithm of the UNIQUAC activity coefficient for this component in the
-   * solid (wax) phase.
+   * Calculates the natural logarithm of the UNIQUAC activity coefficient for this component in the solid (wax) phase.
    *
    * <p>
-   * The UNIQUAC model splits the activity coefficient into a combinatorial (entropic) term and a
-   * residual (enthalpic) term:
+   * The UNIQUAC model splits the activity coefficient into a combinatorial (entropic) term and a residual (enthalpic)
+   * term:
    * </p>
    *
    * <pre>
@@ -151,8 +146,8 @@ public class ComponentCoutinhoWax extends ComponentSolid {
    * </pre>
    *
    * <p>
-   * The combinatorial term accounts for differences in molecular size and shape, while the residual
-   * term accounts for energetic interactions between unlike molecules in the solid solution.
+   * The combinatorial term accounts for differences in molecular size and shape, while the residual term accounts for
+   * energetic interactions between unlike molecules in the solid solution.
    * </p>
    *
    * @param phase1 The phase for which to calculate the activity coefficient.
@@ -202,10 +197,10 @@ public class ComponentCoutinhoWax extends ComponentSolid {
     if (xI > 1e-100 && phiI > 0 && thetaI > 0) {
       double sumXL = 0.0;
       for (int j = 0; j < ncomp; j++) {
-        sumXL += phase1.getComponent(j).getx() * li[j];
+	sumXL += phase1.getComponent(j).getx() * li[j];
       }
-      lnGammaComb = Math.log(phiI / xI) + Z_COORD / 2.0 * qi[iThis] * Math.log(thetaI / phiI)
-          + li[iThis] - phiI / xI * sumXL;
+      lnGammaComb = Math.log(phiI / xI) + Z_COORD / 2.0 * qi[iThis] * Math.log(thetaI / phiI) + li[iThis]
+	  - phiI / xI * sumXL;
     }
 
     // Residual contribution
@@ -218,8 +213,8 @@ public class ComponentCoutinhoWax extends ComponentSolid {
     double[][] tau = new double[ncomp][ncomp];
     for (int i = 0; i < ncomp; i++) {
       for (int j = 0; j < ncomp; j++) {
-        double lambdaIJ = calcLambdaIJ(phase1, i, j);
-        tau[i][j] = Math.exp(-lambdaIJ / (R * tempK));
+	double lambdaIJ = calcLambdaIJ(phase1, i, j);
+	tau[i][j] = Math.exp(-lambdaIJ / (R * tempK));
       }
     }
 
@@ -239,10 +234,10 @@ public class ComponentCoutinhoWax extends ComponentSolid {
     for (int j = 0; j < ncomp; j++) {
       double denomJ = 0.0;
       for (int k = 0; k < ncomp; k++) {
-        denomJ += theta[k] * tau[k][j];
+	denomJ += theta[k] * tau[k][j];
       }
       if (denomJ > 0) {
-        sum2 += theta[j] * tau[iThis][j] / denomJ;
+	sum2 += theta[j] * tau[iThis][j] / denomJ;
       }
     }
 
@@ -258,9 +253,9 @@ public class ComponentCoutinhoWax extends ComponentSolid {
    * Calculates the UNIQUAC binary interaction parameter lambda_ij for the solid phase.
    *
    * <p>
-   * Following Coutinho (1998), the interaction parameters are estimated from the sublimation
-   * enthalpies using the geometric mean combining rule. For the solid phase, the interaction energy
-   * between molecules i and j is related to the geometric mean of their sublimation enthalpies:
+   * Following Coutinho (1998), the interaction parameters are estimated from the sublimation enthalpies using the
+   * geometric mean combining rule. For the solid phase, the interaction energy between molecules i and j is related to
+   * the geometric mean of their sublimation enthalpies:
    * </p>
    *
    * <pre>
@@ -269,14 +264,14 @@ public class ComponentCoutinhoWax extends ComponentSolid {
    * </pre>
    *
    * <p>
-   * where alpha_ij is a non-randomness correction parameter. For equal chain molecules, lambda_ii =
-   * -(2/Z) * (DH_sub_i - RT). The deviation from the geometric mean rule is captured by the excess
-   * parameter alpha_ij which is zero for same-size molecules and increases with size difference.
+   * where alpha_ij is a non-randomness correction parameter. For equal chain molecules, lambda_ii = -(2/Z) * (DH_sub_i
+   * - RT). The deviation from the geometric mean rule is captured by the excess parameter alpha_ij which is zero for
+   * same-size molecules and increases with size difference.
    * </p>
    *
    * @param phase1 Current phase
-   * @param comp1 Index of component 1
-   * @param comp2 Index of component 2
+   * @param comp1  Index of component 1
+   * @param comp2  Index of component 2
    * @return The UNIQUAC interaction parameter lambda_ij [J/mol]
    */
   public double calcLambdaIJ(PhaseInterface phase1, int comp1, int comp2) {
@@ -316,11 +311,11 @@ public class ComponentCoutinhoWax extends ComponentSolid {
    * </p>
    *
    * <p>
-   * where DH_vap is the enthalpy of vaporization, DH_fus is the enthalpy of fusion, and DH_trans is
-   * the solid-solid transition enthalpy (relevant for odd-numbered n-alkanes).
+   * where DH_vap is the enthalpy of vaporization, DH_fus is the enthalpy of fusion, and DH_trans is the solid-solid
+   * transition enthalpy (relevant for odd-numbered n-alkanes).
    * </p>
    *
-   * @param phase1 Current phase
+   * @param phase1    Current phase
    * @param compIndex Component index
    * @return Sublimation enthalpy [J/mol]
    */
@@ -359,13 +354,13 @@ public class ComponentCoutinhoWax extends ComponentSolid {
       tc = tempK + 100;
     }
     double x = 1.0 - tempK / tc;
-    double deltaHvap0 = 5.2804 * Math.pow(x, 0.3333) + 12.865 * Math.pow(x, 0.8333)
-        + 1.171 * Math.pow(x, 1.2083) - 13.166 * x + 0.4858 * x * x - 1.088 * x * x * x;
+    double deltaHvap0 = 5.2804 * Math.pow(x, 0.3333) + 12.865 * Math.pow(x, 0.8333) + 1.171 * Math.pow(x, 1.2083)
+	- 13.166 * x + 0.4858 * x * x - 1.088 * x * x * x;
     double omega = 0.0520750 + 0.0448946 * cn - 0.000185397 * cn * cn;
-    double deltaHvap1 = 0.80022 * Math.pow(x, 0.3333) + 273.23 * Math.pow(x, 0.8333)
-        + 465.08 * Math.pow(x, 1.2083) - 638.51 * x - 145.12 * x * x - 74.049 * x * x * x;
-    double deltaHvap2 = 7.2543 * Math.pow(x, 0.3333) - 346.45 * Math.pow(x, 0.8333)
-        - 610.48 * Math.pow(x, 1.2083) + 839.89 * x + 160.05 * x * x - 50.711 * x * x * x;
+    double deltaHvap1 = 0.80022 * Math.pow(x, 0.3333) + 273.23 * Math.pow(x, 0.8333) + 465.08 * Math.pow(x, 1.2083)
+	- 638.51 * x - 145.12 * x * x - 74.049 * x * x * x;
+    double deltaHvap2 = 7.2543 * Math.pow(x, 0.3333) - 346.45 * Math.pow(x, 0.8333) - 610.48 * Math.pow(x, 1.2083)
+	+ 839.89 * x + 160.05 * x * x - 50.711 * x * x * x;
 
     double deltaHvap = R * tc * (deltaHvap0 + omega * deltaHvap1 + omega * omega * deltaHvap2);
 
@@ -377,8 +372,8 @@ public class ComponentCoutinhoWax extends ComponentSolid {
    * Estimates the effective carbon number for a component.
    *
    * <p>
-   * Uses the molecular weight to estimate carbon number, assuming the component is approximately an
-   * n-alkane (CnH2n+2): MW = 14.027 * n + 2.016.
+   * Uses the molecular weight to estimate carbon number, assuming the component is approximately an n-alkane (CnH2n+2):
+   * MW = 14.027 * n + 2.016.
    * </p>
    *
    * @param comp Component interface

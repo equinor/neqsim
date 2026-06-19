@@ -13,8 +13,8 @@ import neqsim.physicalproperties.methods.methodinterface.ConductivityInterface;
 import neqsim.physicalproperties.system.PhysicalProperties;
 
 /**
- * Liquid thermal conductivity using temperature-dependent pure component correlations with the
- * Filippov (1955) mixing rule and an optional Missenard (1965) pressure correction.
+ * Liquid thermal conductivity using temperature-dependent pure component correlations with the Filippov (1955) mixing
+ * rule and an optional Missenard (1965) pressure correction.
  *
  * <p>
  * The Filippov mixing rule accounts for non-linear mixing of liquid thermal conductivities:
@@ -38,15 +38,14 @@ import neqsim.physicalproperties.system.PhysicalProperties;
  * <ul>
  * <li>Filippov, L.P. (1955). Vest. Mosk. Univ. Ser. Fiz.-Mat. Est. Nauk, 8, 67-69.</li>
  * <li>Missenard, F.A. (1965). Comptes Rendus, 260, 5521.</li>
- * <li>Poling, B.E., Prausnitz, J.M., O'Connell, J.P. (2001). The Properties of Gases and Liquids,
- * 5th edition, Chapter 10.</li>
+ * <li>Poling, B.E., Prausnitz, J.M., O'Connell, J.P. (2001). The Properties of Gases and Liquids, 5th edition, Chapter
+ * 10.</li>
  * </ul>
  *
  * @author Even Solbraa
  * @version 1.0
  */
-public class FilippovConductivityMethod extends LiquidPhysicalPropertyMethod
-    implements ConductivityInterface {
+public class FilippovConductivityMethod extends LiquidPhysicalPropertyMethod implements ConductivityInterface {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
@@ -106,9 +105,8 @@ public class FilippovConductivityMethod extends LiquidPhysicalPropertyMethod
     for (int i = 0; i < ncomp; i++) {
       double wi = liquidPhase.getPhase().getWtFrac(i);
       for (int j = i + 1; j < ncomp; j++) {
-        double wj = liquidPhase.getPhase().getWtFrac(j);
-        correctionSum +=
-            wi * wj * Math.abs(pureComponentConductivity[i] - pureComponentConductivity[j]);
+	double wj = liquidPhase.getPhase().getWtFrac(j);
+	correctionSum += wi * wj * Math.abs(pureComponentConductivity[i] - pureComponentConductivity[j]);
       }
     }
 
@@ -127,19 +125,16 @@ public class FilippovConductivityMethod extends LiquidPhysicalPropertyMethod
   }
 
   /**
-   * Calculates pure component liquid thermal conductivities using polynomial correlation from
-   * database parameters.
+   * Calculates pure component liquid thermal conductivities using polynomial correlation from database parameters.
    */
   public void calcPureComponentConductivity() {
     double temp = liquidPhase.getPhase().getTemperature();
     for (int i = 0; i < liquidPhase.getPhase().getNumberOfComponents(); i++) {
-      pureComponentConductivity[i] =
-          liquidPhase.getPhase().getComponent(i).getLiquidConductivityParameter(0)
-              + liquidPhase.getPhase().getComponent(i).getLiquidConductivityParameter(1) * temp
-              + liquidPhase.getPhase().getComponent(i).getLiquidConductivityParameter(2) * temp
-                  * temp;
+      pureComponentConductivity[i] = liquidPhase.getPhase().getComponent(i).getLiquidConductivityParameter(0)
+	  + liquidPhase.getPhase().getComponent(i).getLiquidConductivityParameter(1) * temp
+	  + liquidPhase.getPhase().getComponent(i).getLiquidConductivityParameter(2) * temp * temp;
       if (pureComponentConductivity[i] < 1e-10) {
-        pureComponentConductivity[i] = 1e-10;
+	pureComponentConductivity[i] = 1e-10;
       }
     }
   }
@@ -148,8 +143,8 @@ public class FilippovConductivityMethod extends LiquidPhysicalPropertyMethod
    * Calculates the Missenard pressure correction factor for compressed liquids.
    *
    * <p>
-   * The correction is based on the reduced pressure and temperature of the mixture. At typical
-   * process conditions (P &lt; 50 bar), this is a small (1-3%) correction.
+   * The correction is based on the reduced pressure and temperature of the mixture. At typical process conditions (P
+   * &lt; 50 bar), this is a small (1-3%) correction.
    * </p>
    *
    * @return pressure correction factor (dimensionless, &gt;= 1.0)
@@ -188,8 +183,8 @@ public class FilippovConductivityMethod extends LiquidPhysicalPropertyMethod
   }
 
   /**
-   * Sets the Filippov binary interaction coefficient. Default is 0.72 per the original paper. A
-   * value of 0.0 gives a simple weight-fraction linear mixing rule.
+   * Sets the Filippov binary interaction coefficient. Default is 0.72 per the original paper. A value of 0.0 gives a
+   * simple weight-fraction linear mixing rule.
    *
    * @param coefficient the Filippov coefficient (typically 0.5-1.0)
    */

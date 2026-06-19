@@ -7,9 +7,8 @@ import java.util.Map;
  * Relative permeability table generator supporting Corey and LET models.
  *
  * <p>
- * Generates relative permeability tables for oil-water (SWOF) and gas-oil (SGOF) systems using
- * industry-standard Corey power-law and LET three-parameter models. Output can be formatted as
- * Eclipse-compatible keywords.
+ * Generates relative permeability tables for oil-water (SWOF) and gas-oil (SGOF) systems using industry-standard Corey
+ * power-law and LET three-parameter models. Output can be formatted as Eclipse-compatible keywords.
  * </p>
  *
  * <p>
@@ -142,7 +141,8 @@ public class RelativePermeabilityGenerator {
   /**
    * Construct a new RelativePermeabilityGenerator with default parameters.
    */
-  public RelativePermeabilityGenerator() {}
+  public RelativePermeabilityGenerator() {
+  }
 
   /**
    * Generate the relative permeability table.
@@ -160,16 +160,16 @@ public class RelativePermeabilityGenerator {
    */
   public Map<String, double[]> generate() {
     switch (tableType) {
-      case SWOF:
-        return generateSWOF();
-      case SGOF:
-        return generateSGOF();
-      case SOF3:
-        return generateSOF3();
-      case SLGOF:
-        return generateSLGOF();
-      default:
-        throw new IllegalStateException("Unknown table type: " + tableType);
+    case SWOF:
+      return generateSWOF();
+    case SGOF:
+      return generateSGOF();
+    case SOF3:
+      return generateSOF3();
+    case SLGOF:
+      return generateSLGOF();
+    default:
+      throw new IllegalStateException("Unknown table type: " + tableType);
     }
   }
 
@@ -188,7 +188,7 @@ public class RelativePermeabilityGenerator {
     sb.append("-- ");
     for (int c = 0; c < columns.length; c++) {
       if (c > 0) {
-        sb.append("       ");
+	sb.append("       ");
       }
       sb.append(columns[c]);
     }
@@ -198,10 +198,10 @@ public class RelativePermeabilityGenerator {
     for (int i = 0; i < nRows; i++) {
       sb.append("   ");
       for (int c = 0; c < columns.length; c++) {
-        if (c > 0) {
-          sb.append("  ");
-        }
-        sb.append(String.format("%.8f", table.get(columns[c])[i]));
+	if (c > 0) {
+	  sb.append("  ");
+	}
+	sb.append(String.format("%.8f", table.get(columns[c])[i]));
       }
       sb.append('\n');
     }
@@ -231,11 +231,11 @@ public class RelativePermeabilityGenerator {
       double swnKro = normalizeWaterForKrow(sw[i], swc, sorw);
 
       if (modelFamily == RelPermModelFamily.LET) {
-        krw[i] = krwMax * letCurve(swnKrw, Lw, Ew, Tw);
-        krow[i] = kroMax * letCurve(1.0 - swnKro, Lo, Eo, To);
+	krw[i] = krwMax * letCurve(swnKrw, Lw, Ew, Tw);
+	krow[i] = kroMax * letCurve(1.0 - swnKro, Lo, Eo, To);
       } else {
-        krw[i] = krwMax * coreyCurve(swnKrw, nw);
-        krow[i] = kroMax * coreyCurve(1.0 - swnKro, no);
+	krw[i] = krwMax * coreyCurve(swnKrw, nw);
+	krow[i] = kroMax * coreyCurve(1.0 - swnKro, no);
       }
       pcow[i] = 0.0;
     }
@@ -272,11 +272,11 @@ public class RelativePermeabilityGenerator {
       double sgnKro = normalizeGasForKrog(sg[i], sgcr, swc, sorg);
 
       if (modelFamily == RelPermModelFamily.LET) {
-        krg[i] = krgMax * letCurve(sgnKrg, Lg, Eg, Tg);
-        krog[i] = kroMax * letCurve(1.0 - sgnKro, Log, Eog, Tog);
+	krg[i] = krgMax * letCurve(sgnKrg, Lg, Eg, Tg);
+	krog[i] = kroMax * letCurve(1.0 - sgnKro, Log, Eog, Tog);
       } else {
-        krg[i] = krgMax * coreyCurve(sgnKrg, ng);
-        krog[i] = kroMax * coreyCurve(1.0 - sgnKro, nog);
+	krg[i] = krgMax * coreyCurve(sgnKrg, ng);
+	krog[i] = kroMax * coreyCurve(1.0 - sgnKro, nog);
       }
       pcog[i] = 0.0;
     }
@@ -317,11 +317,11 @@ public class RelativePermeabilityGenerator {
       sonG = clamp(sonG);
 
       if (modelFamily == RelPermModelFamily.LET) {
-        krow[i] = kroMax * letCurve(sonW, Lo, Eo, To);
-        krog[i] = kroMax * letCurve(sonG, Log, Eog, Tog);
+	krow[i] = kroMax * letCurve(sonW, Lo, Eo, To);
+	krog[i] = kroMax * letCurve(sonG, Log, Eog, Tog);
       } else {
-        krow[i] = kroMax * coreyCurve(sonW, no);
-        krog[i] = kroMax * coreyCurve(sonG, nog);
+	krow[i] = kroMax * coreyCurve(sonW, no);
+	krog[i] = kroMax * coreyCurve(sonG, nog);
       }
     }
 
@@ -357,11 +357,11 @@ public class RelativePermeabilityGenerator {
       double sgnKro = normalizeGasForKrog(sg, sgcr, swc, sorg);
 
       if (modelFamily == RelPermModelFamily.LET) {
-        krg[i] = krgMax * letCurve(sgnKrg, Lg, Eg, Tg);
-        krog[i] = kroMax * letCurve(1.0 - sgnKro, Log, Eog, Tog);
+	krg[i] = krgMax * letCurve(sgnKrg, Lg, Eg, Tg);
+	krog[i] = kroMax * letCurve(1.0 - sgnKro, Log, Eog, Tog);
       } else {
-        krg[i] = krgMax * coreyCurve(sgnKrg, ng);
-        krog[i] = kroMax * coreyCurve(1.0 - sgnKro, nog);
+	krg[i] = krgMax * coreyCurve(sgnKrg, ng);
+	krog[i] = kroMax * coreyCurve(1.0 - sgnKro, nog);
       }
       pcog[i] = 0.0;
     }
@@ -391,7 +391,7 @@ public class RelativePermeabilityGenerator {
    * $$ K_{r,norm} = S_n^n $$
    *
    * @param sn Normalized saturation in range [0, 1]
-   * @param n Corey exponent (must be positive)
+   * @param n  Corey exponent (must be positive)
    * @return Normalized relative permeability [0, 1]
    */
   static double coreyCurve(double sn, double n) {
@@ -408,9 +408,9 @@ public class RelativePermeabilityGenerator {
    * $$ K_{r,norm} = \frac{S_n^L}{S_n^L + E \cdot (1 - S_n)^T} $$
    *
    * @param sn Normalized saturation in range [0, 1]
-   * @param l L parameter (controls low-saturation curvature, must be positive)
-   * @param e E parameter (controls mid-range position, must be positive)
-   * @param t T parameter (controls high-saturation curvature, must be positive)
+   * @param l  L parameter (controls low-saturation curvature, must be positive)
+   * @param e  E parameter (controls mid-range position, must be positive)
+   * @param t  T parameter (controls high-saturation curvature, must be positive)
    * @return Normalized relative permeability [0, 1]
    */
   static double letCurve(double sn, double l, double e, double t) {
@@ -434,7 +434,7 @@ public class RelativePermeabilityGenerator {
   /**
    * Normalize water saturation for water relative permeability.
    *
-   * @param sw Water saturation
+   * @param sw   Water saturation
    * @param swcr Critical water saturation
    * @param sorw Residual oil saturation to water
    * @return Normalized water saturation [0, 1]
@@ -450,8 +450,8 @@ public class RelativePermeabilityGenerator {
   /**
    * Normalize water saturation for oil relative permeability in water-oil system.
    *
-   * @param sw Water saturation
-   * @param swc Connate water saturation
+   * @param sw   Water saturation
+   * @param swc  Connate water saturation
    * @param sorw Residual oil saturation to water
    * @return Normalized water saturation [0, 1]
    */
@@ -466,9 +466,9 @@ public class RelativePermeabilityGenerator {
   /**
    * Normalize gas saturation for gas relative permeability.
    *
-   * @param sg Gas saturation
+   * @param sg   Gas saturation
    * @param sgcr Critical gas saturation
-   * @param swc Connate water saturation
+   * @param swc  Connate water saturation
    * @param sorg Residual oil saturation to gas
    * @return Normalized gas saturation [0, 1]
    */
@@ -483,9 +483,9 @@ public class RelativePermeabilityGenerator {
   /**
    * Normalize gas saturation for oil relative permeability in gas-oil system.
    *
-   * @param sg Gas saturation
+   * @param sg   Gas saturation
    * @param sgcr Critical gas saturation
-   * @param swc Connate water saturation
+   * @param swc  Connate water saturation
    * @param sorg Residual oil saturation to gas
    * @return Normalized gas saturation [0, 1]
    */
@@ -519,13 +519,13 @@ public class RelativePermeabilityGenerator {
    * Generate an array of evenly spaced values from start to end (inclusive).
    *
    * @param start First value
-   * @param end Last value
-   * @param n Number of points
+   * @param end   Last value
+   * @param n     Number of points
    * @return Array of evenly spaced values
    */
   private static double[] linspace(double start, double end, int n) {
     if (n < 2) {
-      return new double[] {start};
+      return new double[] { start };
     }
     double[] result = new double[n];
     double step = (end - start) / (n - 1);

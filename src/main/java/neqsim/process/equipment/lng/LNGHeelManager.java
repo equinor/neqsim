@@ -11,21 +11,20 @@ import neqsim.thermo.system.SystemInterface;
  * Manages LNG heel retention, cooldown, and mixing operations.
  *
  * <p>
- * The "heel" is the small quantity of LNG retained in cargo tanks at the end of unloading. It
- * serves critical functions:
+ * The "heel" is the small quantity of LNG retained in cargo tanks at the end of unloading. It serves critical
+ * functions:
  * </p>
  * <ul>
- * <li><b>Tank cooldown:</b> Maintains cryogenic temperature during ballast voyage, preventing
- * thermal cycling damage to the containment system</li>
- * <li><b>Mixing with new cargo:</b> When fresh cargo is loaded on top of heel, the resulting
- * mixture may have different composition and density, potentially creating stratification</li>
- * <li><b>Spray cooling:</b> Heel can be sprayed to maintain tank temperature during long ballast
- * voyages</li>
+ * <li><b>Tank cooldown:</b> Maintains cryogenic temperature during ballast voyage, preventing thermal cycling damage to
+ * the containment system</li>
+ * <li><b>Mixing with new cargo:</b> When fresh cargo is loaded on top of heel, the resulting mixture may have different
+ * composition and density, potentially creating stratification</li>
+ * <li><b>Spray cooling:</b> Heel can be sprayed to maintain tank temperature during long ballast voyages</li>
  * </ul>
  *
  * <p>
- * Heel quantity is a trade-off: too little means the tank warms up and requires expensive cooldown;
- * too much means cargo revenue loss. Typical heel is 2-5% of tank volume.
+ * Heel quantity is a trade-off: too little means the tank warms up and requires expensive cooldown; too much means
+ * cargo revenue loss. Typical heel is 2-5% of tank volume.
  * </p>
  *
  * @author NeqSim
@@ -77,7 +76,7 @@ public class LNGHeelManager implements Serializable {
    * Constructor with heel fraction.
    *
    * @param heelFraction heel as fraction of tank volume (0-1)
-   * @param tankVolume total tank volume (m3)
+   * @param tankVolume   total tank volume (m3)
    */
   public LNGHeelManager(double heelFraction, double tankVolume) {
     this();
@@ -90,7 +89,7 @@ public class LNGHeelManager implements Serializable {
    *
    * @param composition mole fractions keyed by component name
    * @param temperature heel temperature (K)
-   * @param density heel density (kg/m3)
+   * @param density     heel density (kg/m3)
    */
   public void setHeelState(Map<String, Double> composition, double temperature, double density) {
     this.heelComposition = new LinkedHashMap<String, Double>(composition);
@@ -102,17 +101,17 @@ public class LNGHeelManager implements Serializable {
    * Calculate the resulting mixture when new cargo is loaded on top of heel.
    *
    * <p>
-   * Returns the mixed composition assuming instantaneous ideal mixing. In reality, incomplete
-   * mixing creates stratification which must be handled by the layered tank model.
+   * Returns the mixed composition assuming instantaneous ideal mixing. In reality, incomplete mixing creates
+   * stratification which must be handled by the layered tank model.
    * </p>
    *
    * @param newCargoComposition new cargo mole fractions
-   * @param newCargoMoles moles of new cargo
+   * @param newCargoMoles       moles of new cargo
    * @param newCargoTemperature new cargo temperature (K)
    * @return mixed composition (mole fractions)
    */
-  public Map<String, Double> calculateMixedComposition(Map<String, Double> newCargoComposition,
-      double newCargoMoles, double newCargoTemperature) {
+  public Map<String, Double> calculateMixedComposition(Map<String, Double> newCargoComposition, double newCargoMoles,
+      double newCargoTemperature) {
     double heelVolume = getHeelVolume();
     double heelMoles = 0;
     if (heelDensity > 0) {
@@ -132,16 +131,14 @@ public class LNGHeelManager implements Serializable {
     for (Map.Entry<String, Double> entry : newCargoComposition.entrySet()) {
       String comp = entry.getKey();
       double xNew = entry.getValue() * newCargoMoles / totalMoles;
-      double xHeel =
-          heelComposition.containsKey(comp) ? heelComposition.get(comp) * heelMoles / totalMoles
-              : 0.0;
+      double xHeel = heelComposition.containsKey(comp) ? heelComposition.get(comp) * heelMoles / totalMoles : 0.0;
       mixed.put(comp, xNew + xHeel);
     }
 
     // Add heel-only components
     for (Map.Entry<String, Double> entry : heelComposition.entrySet()) {
       if (!mixed.containsKey(entry.getKey())) {
-        mixed.put(entry.getKey(), entry.getValue() * heelMoles / totalMoles);
+	mixed.put(entry.getKey(), entry.getValue() * heelMoles / totalMoles);
       }
     }
 
@@ -152,16 +149,16 @@ public class LNGHeelManager implements Serializable {
    * Create a two-layer initial condition for the layered tank model.
    *
    * <p>
-   * The heel becomes the bottom layer and the new cargo the top layer. This is the starting point
-   * for a stratification/rollover analysis.
+   * The heel becomes the bottom layer and the new cargo the top layer. This is the starting point for a
+   * stratification/rollover analysis.
    * </p>
    *
-   * @param tankModel the layered tank model to configure
+   * @param tankModel      the layered tank model to configure
    * @param newCargoSystem thermo system representing the new cargo
    * @param newCargoVolume volume of new cargo (m3)
    */
-  public void createStratifiedInitialCondition(LNGTankLayeredModel tankModel,
-      SystemInterface newCargoSystem, double newCargoVolume) {
+  public void createStratifiedInitialCondition(LNGTankLayeredModel tankModel, SystemInterface newCargoSystem,
+      double newCargoVolume) {
     double heelVolume = getHeelVolume();
 
     // Bottom layer = heel
@@ -185,35 +182,33 @@ public class LNGHeelManager implements Serializable {
     tankModel.getLayers().add(heelLayer);
     tankModel.addLayerOnTop(cargoLayer);
 
-    logger.info(String.format(
-        "Created stratified initial condition: heel=%.0f m3 (rho=%.1f), cargo=%.0f m3", heelVolume,
-        heelDensity, newCargoVolume));
+    logger.info(String.format("Created stratified initial condition: heel=%.0f m3 (rho=%.1f), cargo=%.0f m3",
+	heelVolume, heelDensity, newCargoVolume));
   }
 
   /**
    * Simulate spray cooling during ballast voyage.
    *
    * <p>
-   * Spray cooling recirculates heel LNG through nozzles at the top of the tank. The spray contacts
-   * the warm tank walls and re-evaporates, absorbing heat and maintaining low wall temperature. The
-   * resulting BOG is handled by the BOG network.
+   * Spray cooling recirculates heel LNG through nozzles at the top of the tank. The spray contacts the warm tank walls
+   * and re-evaporates, absorbing heat and maintaining low wall temperature. The resulting BOG is handled by the BOG
+   * network.
    * </p>
    *
-   * @param timeStepHours time step (hours)
-   * @param ambientTemperature ambient temperature (K)
+   * @param timeStepHours         time step (hours)
+   * @param ambientTemperature    ambient temperature (K)
    * @param wallHeatTransferCoeff wall heat transfer coefficient (W/m2/K)
-   * @param wallArea tank wall area (m2)
+   * @param wallArea              tank wall area (m2)
    * @return BOG generated from spray cooling (kg) during this time step
    */
-  public double simulateSprayCooling(double timeStepHours, double ambientTemperature,
-      double wallHeatTransferCoeff, double wallArea) {
+  public double simulateSprayCooling(double timeStepHours, double ambientTemperature, double wallHeatTransferCoeff,
+      double wallArea) {
     if (!sprayCoolingActive) {
       return 0;
     }
 
     // Heat ingress to tank walls during ballast
-    double wallHeatIngress =
-        wallHeatTransferCoeff * wallArea * (ambientTemperature - tankWallTemperature);
+    double wallHeatIngress = wallHeatTransferCoeff * wallArea * (ambientTemperature - tankWallTemperature);
     if (wallHeatIngress < 0) {
       wallHeatIngress = 0;
     }

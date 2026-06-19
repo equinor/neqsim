@@ -7,25 +7,22 @@ import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.valve.ThrottlingValve;
 
 /**
- * AntiSurgeController is a transient anti-surge regulator (P3) that reads the distance to surge
- * from a {@link neqsim.process.equipment.compressor.Compressor} and drives a recycle
- * {@link neqsim.process.equipment.valve.ThrottlingValve} to keep the machine away from its surge
- * line during trip, blow-down, start-up and load-rejection transients.
+ * AntiSurgeController is a transient anti-surge regulator (P3) that reads the distance to surge from a
+ * {@link neqsim.process.equipment.compressor.Compressor} and drives a recycle
+ * {@link neqsim.process.equipment.valve.ThrottlingValve} to keep the machine away from its surge line during trip,
+ * blow-down, start-up and load-rejection transients.
  *
  * <p>
- * The controlled variable is the dimensionless surge margin returned by
- * {@link Compressor#getDistanceToSurge()} (operating flow / surge flow - 1). When the margin falls
- * below the configured set point the controller opens the recycle valve using a
- * proportional-integral law; when the margin recovers the valve is closed again. The controller
+ * The controlled variable is the dimensionless surge margin returned by {@link Compressor#getDistanceToSurge()}
+ * (operating flow / surge flow - 1). When the margin falls below the configured set point the controller opens the
+ * recycle valve using a proportional-integral law; when the margin recovers the valve is closed again. The controller
  * integrates the existing NeqSim transient controller framework
- * ({@link neqsim.process.processmodel.ProcessSystem#runTransient}) and adds no new compressor
- * physics.
+ * ({@link neqsim.process.processmodel.ProcessSystem#runTransient}) and adds no new compressor physics.
  * </p>
  *
  * <p>
- * Output is the recycle valve opening in percent (0..100). The controller applies the opening
- * directly to the recycle valve each transient step, so attaching it through
- * {@code valve.addController("anti-surge", controller)} or
+ * Output is the recycle valve opening in percent (0..100). The controller applies the opening directly to the recycle
+ * valve each transient step, so attaching it through {@code valve.addController("anti-surge", controller)} or
  * {@code compressor.addController("anti-surge", controller)} is sufficient.
  * </p>
  *
@@ -88,8 +85,8 @@ public class AntiSurgeController extends ControllerDeviceBaseClass {
   /**
    * Constructs an AntiSurgeController wired to a compressor and recycle valve.
    *
-   * @param name the controller name
-   * @param compressor the compressor whose surge margin is protected
+   * @param name         the controller name
+   * @param compressor   the compressor whose surge margin is protected
    * @param recycleValve the recycle valve actuator
    */
   public AntiSurgeController(String name, Compressor compressor, ThrottlingValve recycleValve) {
@@ -102,9 +99,8 @@ public class AntiSurgeController extends ControllerDeviceBaseClass {
    * {@inheritDoc}
    *
    * <p>
-   * Reads the compressor distance to surge, computes the recycle valve opening with a
-   * proportional-integral anti-surge law (reverse acting: low margin opens the valve), clamps the
-   * output and applies it to the recycle valve.
+   * Reads the compressor distance to surge, computes the recycle valve opening with a proportional-integral anti-surge
+   * law (reverse acting: low margin opens the valve), clamps the output and applies it to the recycle valve.
    * </p>
    */
   @Override
@@ -142,12 +138,12 @@ public class AntiSurgeController extends ControllerDeviceBaseClass {
     if (output > maxOpening) {
       output = maxOpening;
       if (integralTime > 0.0) {
-        integralState -= proportionalGain / integralTime * error * dt;
+	integralState -= proportionalGain / integralTime * error * dt;
       }
     } else if (output < minOpening) {
       output = minOpening;
       if (integralTime > 0.0) {
-        integralState -= proportionalGain / integralTime * error * dt;
+	integralState -= proportionalGain / integralTime * error * dt;
       }
     }
 
@@ -190,8 +186,7 @@ public class AntiSurgeController extends ControllerDeviceBaseClass {
   /** {@inheritDoc} */
   @Override
   public double getMeasuredValue() {
-    return Double.isNaN(lastMargin) && compressor != null ? compressor.getDistanceToSurge()
-        : lastMargin;
+    return Double.isNaN(lastMargin) && compressor != null ? compressor.getDistanceToSurge() : lastMargin;
   }
 
   /**
@@ -249,8 +244,8 @@ public class AntiSurgeController extends ControllerDeviceBaseClass {
   }
 
   /**
-   * Set the surge-margin set point. The recycle valve starts to open when the compressor distance
-   * to surge falls below this value.
+   * Set the surge-margin set point. The recycle valve starts to open when the compressor distance to surge falls below
+   * this value.
    *
    * @param surgeMarginSetPoint the surge-margin set point (dimensionless, e.g. 0.10 for 10%)
    */

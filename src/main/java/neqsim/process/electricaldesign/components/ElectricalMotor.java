@@ -8,8 +8,8 @@ import java.util.Map;
  * Model of an electric motor for process equipment.
  *
  * <p>
- * Supports IEC and NEMA sizing standards, efficiency classes IE1-IE4 per IEC 60034-30-1, hazardous
- * area Ex ratings, and part-load performance estimation.
+ * Supports IEC and NEMA sizing standards, efficiency classes IE1-IE4 per IEC 60034-30-1, hazardous area Ex ratings, and
+ * part-load performance estimation.
  * </p>
  *
  * @author Even Solbraa
@@ -20,14 +20,12 @@ public class ElectricalMotor implements java.io.Serializable {
   private static final long serialVersionUID = 1000L;
 
   /**
-   * Standard IEC motor rated power steps in kW. Motors are selected as the next size up from the
-   * required power.
+   * Standard IEC motor rated power steps in kW. Motors are selected as the next size up from the required power.
    */
-  private static final double[] IEC_STANDARD_POWERS_KW = {0.37, 0.55, 0.75, 1.1, 1.5, 2.2, 3.0, 4.0,
-      5.5, 7.5, 11.0, 15.0, 18.5, 22.0, 30.0, 37.0, 45.0, 55.0, 75.0, 90.0, 110.0, 132.0, 160.0,
-      200.0, 250.0, 315.0, 355.0, 400.0, 450.0, 500.0, 560.0, 630.0, 710.0, 800.0, 900.0, 1000.0,
-      1120.0, 1250.0, 1400.0, 1600.0, 1800.0, 2000.0, 2240.0, 2500.0, 2800.0, 3150.0, 3550.0,
-      4000.0, 4500.0, 5000.0, 5600.0, 6300.0, 7100.0, 8000.0, 9000.0, 10000.0};
+  private static final double[] IEC_STANDARD_POWERS_KW = { 0.37, 0.55, 0.75, 1.1, 1.5, 2.2, 3.0, 4.0, 5.5, 7.5, 11.0,
+      15.0, 18.5, 22.0, 30.0, 37.0, 45.0, 55.0, 75.0, 90.0, 110.0, 132.0, 160.0, 200.0, 250.0, 315.0, 355.0, 400.0,
+      450.0, 500.0, 560.0, 630.0, 710.0, 800.0, 900.0, 1000.0, 1120.0, 1250.0, 1400.0, 1600.0, 1800.0, 2000.0, 2240.0,
+      2500.0, 2800.0, 3150.0, 3550.0, 4000.0, 4500.0, 5000.0, 5600.0, 6300.0, 7100.0, 8000.0, 9000.0, 10000.0 };
 
   // === Nameplate data ===
   private double ratedPowerKW;
@@ -65,13 +63,13 @@ public class ElectricalMotor implements java.io.Serializable {
    * Size the motor based on required shaft power.
    *
    * <p>
-   * Selects the next standard IEC motor size above the required power multiplied by the sizing
-   * margin, and estimates efficiency, power factor, weight, and cost.
+   * Selects the next standard IEC motor size above the required power multiplied by the sizing margin, and estimates
+   * efficiency, power factor, weight, and cost.
    * </p>
    *
    * @param shaftPowerKW required shaft power in kW
-   * @param margin sizing margin (e.g. 1.10 for 10% margin)
-   * @param standard motor standard ("IEC" or "NEMA")
+   * @param margin       sizing margin (e.g. 1.10 for 10% margin)
+   * @param standard     motor standard ("IEC" or "NEMA")
    */
   public void sizeMotor(double shaftPowerKW, double margin, String standard) {
     double requiredPower = shaftPowerKW * margin;
@@ -92,7 +90,7 @@ public class ElectricalMotor implements java.io.Serializable {
     // Calculate rated current
     if (ratedVoltageV > 0 && efficiencyPercent > 0 && powerFactorFL > 0) {
       ratedCurrentA = (ratedPowerKW * 1000.0)
-          / (Math.sqrt(3) * ratedVoltageV * (efficiencyPercent / 100.0) * powerFactorFL);
+	  / (Math.sqrt(3) * ratedVoltageV * (efficiencyPercent / 100.0) * powerFactorFL);
     }
 
     // Estimate frame size
@@ -127,7 +125,7 @@ public class ElectricalMotor implements java.io.Serializable {
   private double selectStandardPower(double requiredPowerKW) {
     for (double stdPower : IEC_STANDARD_POWERS_KW) {
       if (stdPower >= requiredPowerKW) {
-        return stdPower;
+	return stdPower;
       }
     }
     // Above largest standard size - round up
@@ -159,9 +157,9 @@ public class ElectricalMotor implements java.io.Serializable {
    * Based on IEC 60034-30-1 minimum efficiency values for 4-pole machines at 50 Hz.
    * </p>
    *
-   * @param powerKW motor power in kW
+   * @param powerKW    motor power in kW
    * @param motorPoles number of poles
-   * @param iecClass efficiency class (IE1-IE4)
+   * @param iecClass   efficiency class (IE1-IE4)
    * @return estimated efficiency in percent
    */
   private double estimateEfficiency(double powerKW, int motorPoles, String iecClass) {
@@ -233,27 +231,27 @@ public class ElectricalMotor implements java.io.Serializable {
   /**
    * Estimate IEC frame size designation.
    *
-   * @param powerKW motor power in kW
+   * @param powerKW    motor power in kW
    * @param motorPoles number of poles
-   * @param standard "IEC" or "NEMA"
+   * @param standard   "IEC" or "NEMA"
    * @return frame size string
    */
   private String estimateFrameSize(double powerKW, int motorPoles, String standard) {
     if ("NEMA".equals(standard)) {
       if (powerKW <= 1.1) {
-        return "143T";
+	return "143T";
       } else if (powerKW <= 3.7) {
-        return "182T";
+	return "182T";
       } else if (powerKW <= 7.5) {
-        return "213T";
+	return "213T";
       } else if (powerKW <= 22.0) {
-        return "256T";
+	return "256T";
       } else if (powerKW <= 55.0) {
-        return "326T";
+	return "326T";
       } else if (powerKW <= 150.0) {
-        return "405T";
+	return "405T";
       } else {
-        return "449T";
+	return "449T";
       }
     }
     // IEC frame sizes
@@ -374,8 +372,7 @@ public class ElectricalMotor implements java.io.Serializable {
    */
   public String toJson() {
     Map<String, Object> map = toMap();
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(map);
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(map);
   }
 
   /**

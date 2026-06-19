@@ -37,7 +37,7 @@ public class CricondenbarAnalyser extends StreamMeasurementDeviceBaseClass {
    * Constructor for CricondenbarAnalyser.
    * </p>
    *
-   * @param name Name of CricondenbarAnalyser
+   * @param name   Name of CricondenbarAnalyser
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public CricondenbarAnalyser(String name, StreamInterface stream) {
@@ -90,8 +90,8 @@ public class CricondenbarAnalyser extends StreamMeasurementDeviceBaseClass {
     if (tempFluid.getPhase(0).hasComponent("water")) {
       tempFluid.removeComponent("water");
     }
-    neqsim.pvtsimulation.simulation.SaturationPressure thermoOps =
-        new neqsim.pvtsimulation.simulation.SaturationPressure(tempFluid);
+    neqsim.pvtsimulation.simulation.SaturationPressure thermoOps = new neqsim.pvtsimulation.simulation.SaturationPressure(
+	tempFluid);
     try {
       thermoOps.run();
     } catch (Exception ex) {

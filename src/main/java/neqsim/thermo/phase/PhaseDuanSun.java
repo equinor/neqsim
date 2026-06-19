@@ -28,7 +28,8 @@ public class PhaseDuanSun extends PhaseGE {
    * Constructor for PhaseDuanSun.
    * </p>
    */
-  public PhaseDuanSun() {}
+  public PhaseDuanSun() {
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -77,8 +78,8 @@ public class PhaseDuanSun extends PhaseGE {
 
   /** {@inheritDoc} */
   @Override
-  public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
-      double temperature, double pressure, PhaseType pt) {
+  public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
+      PhaseType pt) {
     GE = 0;
     double salinity = 0.0;
     // double k=0.0;
@@ -89,9 +90,8 @@ public class PhaseDuanSun extends PhaseGE {
     // }
     for (int i = 0; i < numberOfComponents; i++) {
       if (phase.getComponent(i).isIsIon()) {
-        salinity = salinity + phase.getComponent(i).getNumberOfMolesInPhase()
-            / (phase.getComponent("water").getNumberOfMolesInPhase()
-                * phase.getComponent("water").getMolarMass());
+	salinity = salinity + phase.getComponent(i).getNumberOfMolesInPhase()
+	    / (phase.getComponent("water").getNumberOfMolesInPhase() * phase.getComponent("water").getMolarMass());
       }
     }
     // for (int i=0; i < numberOfComponents; i++) {
@@ -107,8 +107,8 @@ public class PhaseDuanSun extends PhaseGE {
       // GE += phase.getComponent(i).getx()*Math.log(((ComponentGeDuanSun)
       // componentArray[i]).getGammaNRTL(phase, numberOfComponents, temperature, pressure,
       // pt, alpha, Dij));
-      GE += phase.getComponent(i).getx() * Math.log(((ComponentGeDuanSun) componentArray[i])
-          .getGammaPitzer(phase, numberOfComponents, temperature, pressure, pt, salinity));
+      GE += phase.getComponent(i).getx() * Math.log(((ComponentGeDuanSun) componentArray[i]).getGammaPitzer(phase,
+	  numberOfComponents, temperature, pressure, pt, salinity));
     }
 
     return R * temperature * numberOfMolesInPhase * GE;

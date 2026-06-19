@@ -60,8 +60,8 @@ public class TestNeqSimBug {
     fluidOps.propertyFlash(Arrays.asList(spec1), Arrays.asList(spec2), 3, null, null);
 
     /*
-     * for (int t = 0; t < 1; t++) { fluid.setPressure(spec1[t]); fluidOps.PHflash(spec2[t],
-     * "J/mol"); // fluidOps.TPflash(); fluid.init(2); fluid.initPhysicalProperties();
+     * for (int t = 0; t < 1; t++) { fluid.setPressure(spec1[t]); fluidOps.PHflash(spec2[t], "J/mol"); //
+     * fluidOps.TPflash(); fluid.init(2); fluid.initPhysicalProperties();
      */
     fluid.display();
   }

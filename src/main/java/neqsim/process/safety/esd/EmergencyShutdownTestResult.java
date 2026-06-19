@@ -13,9 +13,9 @@ import java.util.Map;
  * Structured report from an emergency shutdown dynamic test.
  *
  * <p>
- * The report is JSON-friendly and intended for notebooks, MCP runners, and standards evidence
- * packages. It records signal statistics, time-series samples, tagreader comparisons, logic states,
- * acceptance criteria, document references, and quality gates.
+ * The report is JSON-friendly and intended for notebooks, MCP runners, and standards evidence packages. It records
+ * signal statistics, time-series samples, tagreader comparisons, logic states, acceptance criteria, document
+ * references, and quality gates.
  * </p>
  *
  * @author NeqSim contributors
@@ -23,8 +23,7 @@ import java.util.Map;
  */
 public final class EmergencyShutdownTestResult implements Serializable {
   private static final long serialVersionUID = 1000L;
-  private static final Gson GSON =
-      new GsonBuilder().setPrettyPrinting().create();
+  private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
   /** Overall verdict for the ESD dynamic test. */
   public enum Verdict {
@@ -47,10 +46,8 @@ public final class EmergencyShutdownTestResult implements Serializable {
   private final List<SignalSample> timeSeries = new ArrayList<SignalSample>();
   private final Map<String, SignalStats> signalStats = new LinkedHashMap<String, SignalStats>();
   private final Map<String, String> logicStates = new LinkedHashMap<String, String>();
-  private final Map<String, FieldComparison> fieldComparisons =
-      new LinkedHashMap<String, FieldComparison>();
-  private final List<EmergencyShutdownTestCriterion.Result> criterionResults =
-      new ArrayList<EmergencyShutdownTestCriterion.Result>();
+  private final Map<String, FieldComparison> fieldComparisons = new LinkedHashMap<String, FieldComparison>();
+  private final List<EmergencyShutdownTestCriterion.Result> criterionResults = new ArrayList<EmergencyShutdownTestCriterion.Result>();
   private Verdict verdict = Verdict.PASS_WITH_WARNINGS;
 
   /**
@@ -174,7 +171,7 @@ public final class EmergencyShutdownTestResult implements Serializable {
    * Adds a sampled point and updates signal statistics.
    *
    * @param sample sampled signal values
-   * @param units units keyed by logical tag
+   * @param units  units keyed by logical tag
    */
   void addSample(SignalSample sample, Map<String, String> units) {
     if (sample == null) {
@@ -185,12 +182,12 @@ public final class EmergencyShutdownTestResult implements Serializable {
       String tag = entry.getKey();
       Double value = entry.getValue();
       if (value == null) {
-        continue;
+	continue;
       }
       SignalStats stats = signalStats.get(tag);
       if (stats == null) {
-        stats = new SignalStats(tag, units == null ? "" : units.get(tag));
-        signalStats.put(tag, stats);
+	stats = new SignalStats(tag, units == null ? "" : units.get(tag));
+	signalStats.put(tag, stats);
       }
       stats.record(value.doubleValue());
     }
@@ -200,7 +197,7 @@ public final class EmergencyShutdownTestResult implements Serializable {
    * Records the final state of one process logic sequence.
    *
    * @param logicName logic name
-   * @param state state name
+   * @param state     state name
    */
   void putLogicState(String logicName, String state) {
     if (logicName != null && !logicName.trim().isEmpty()) {
@@ -317,7 +314,7 @@ public final class EmergencyShutdownTestResult implements Serializable {
      * Creates empty signal statistics.
      *
      * @param logicalTag logical tag
-     * @param unit engineering unit
+     * @param unit       engineering unit
      */
     private SignalStats(String logicalTag, String unit) {
       this.logicalTag = logicalTag;
@@ -331,12 +328,12 @@ public final class EmergencyShutdownTestResult implements Serializable {
      */
     private void record(double value) {
       if (Double.isNaN(value) || Double.isInfinite(value)) {
-        return;
+	return;
       }
       if (sampleCount == 0) {
-        initialValue = value;
-        minValue = value;
-        maxValue = value;
+	initialValue = value;
+	minValue = value;
+	maxValue = value;
       }
       finalValue = value;
       minValue = Math.min(minValue, value);
@@ -418,7 +415,7 @@ public final class EmergencyShutdownTestResult implements Serializable {
      * Creates a signal sample.
      *
      * @param timeSeconds elapsed time in seconds
-     * @param values signal values keyed by logical tag
+     * @param values      signal values keyed by logical tag
      */
     SignalSample(double timeSeconds, Map<String, Double> values) {
       this.timeSeconds = timeSeconds;
@@ -473,15 +470,15 @@ public final class EmergencyShutdownTestResult implements Serializable {
     /**
      * Creates a field comparison.
      *
-     * @param logicalTag logical tag
-     * @param historianTag historian tag or empty string
-     * @param unit engineering unit
-     * @param fieldValue field value, or null
-     * @param modelValue model value, or null
+     * @param logicalTag        logical tag
+     * @param historianTag      historian tag or empty string
+     * @param unit              engineering unit
+     * @param fieldValue        field value, or null
+     * @param modelValue        model value, or null
      * @param toleranceFraction relative tolerance fraction
      */
-    FieldComparison(String logicalTag, String historianTag, String unit, Double fieldValue,
-        Double modelValue, double toleranceFraction) {
+    FieldComparison(String logicalTag, String historianTag, String unit, Double fieldValue, Double modelValue,
+	double toleranceFraction) {
       this.logicalTag = logicalTag == null ? "" : logicalTag;
       this.historianTag = historianTag == null ? "" : historianTag;
       this.unit = unit == null ? "" : unit;
