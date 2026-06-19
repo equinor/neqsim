@@ -9,6 +9,41 @@
 
 ---
 
+## 2026-06-19 — Optional equal-mass (shared-imaginary) reference boundaries for `characterizeToReference`
+
+### Summary
+`PseudoComponentCombiner.characterizeToReference(source, reference, options)` can now
+place the reference cut boundaries as **carbon-number-based equal-mass cut points on the
+reference's imaginary (delumped) composition** instead of arithmetic boiling-point
+midpoints. This is the reference-only (NFLUID = 1) form of the Pedersen et al.
+(Chapter 5.6, Eqs. 5.58-5.59) common-slate cut-point rule: the reference is rebuilt into
+a fine single-carbon-number distribution and the cut points are placed so each cut carries
+an equal mass fraction (Section 5.3 lumping criterion), rather than ignoring how much mass
+each lump represents.
+
+### What's new (additive — default off, no breaking change)
+- `CharacterizationOptions.sharedImaginaryBoundaries(boolean)` (default `false`), getter
+  `isSharedImaginaryBoundaries()`. Reuses the existing `delumpResolution` as the fine grid
+  for the imaginary composition (so no second knob).
+- Each equal-mass cut is **clamped into the gap between the two adjacent reference
+  pseudo-components**, guaranteeing every reference PC stays inside its own cut. This
+  preserves the strict one-to-one ordering that the positional property inheritance in
+  `characterizeToReferenceCore` relies on, even when the reference lumps carry unequal mass
+  (an unclamped equal-mass cut could otherwise fall across a lump and silently mis-bin the
+  source). When clamping cannot recover an in-gap value the boiling-point midpoint is used.
+- `delumpResolution <= 1` falls back to the legacy midpoint boundaries.
+
+### Why reference-only (not a pooled multi-fluid imaginary composition)
+`characterizeToReference` inherits the trusted reference PC properties one-to-one, so the
+reference fluid is the correct authority for the grid. The pooled/shared multi-fluid
+imaginary composition of Eqs. 5.58-5.59 remains used by `characterizeToCommonSlate`
+(§5.6, free new slate); applying it naively here would break the inherit alignment.
+
+### Migration
+None. Existing two-argument and options-based calls are unchanged when the flag is off.
+
+---
+
 ## 2026-06-18 — Optional delumping stage for `characterizeToReference` (Pedersen Ch. 5 lumping/delumping)
 
 ### Summary
