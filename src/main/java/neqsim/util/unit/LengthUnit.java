@@ -14,59 +14,102 @@ import neqsim.util.exception.InvalidInputException;
  * @author esol
  * @version $Id: $Id
  */
-public class LengthUnit extends neqsim.util.unit.BaseUnit {
+public class LengthUnit extends neqsim.util.unit.BaseUnit implements LinearScaleUnit {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+
+  private static final String[] ALLOWED_UNITS = { "m", "meter", "metre", "cm", "mm", "km", "in", "inch", "ft", "feet" };
 
   /**
    * Constructor for LengthUnit.
    *
    * @param value Numeric value
-   * @param name Name of unit
+   * @param unit Name of unit
    */
-  public LengthUnit(double value, String name) {
-    super(value, name);
+  public LengthUnit(double value, String unit) {
+    super(value, unit);
   }
 
-  /**
-   * Get conversion factor to meters (SI unit).
-   *
-   * @param name unit name
-   * @return conversion factor to meters
-   */
-  public double getConversionFactor(String name) {
-    if ("m".equals(name) || "meter".equals(name) || "metre".equals(name)) {
+  /** {@inheritDoc} */
+  @Override
+  public String getSIUnit() {
+    return "m";
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getConversionFactor(String unit) {
+    if ("m".equals(unit) || "meter".equals(unit) || "metre".equals(unit)) {
       return 1.0;
-    } else if ("cm".equals(name)) {
+    } else if ("cm".equals(unit)) {
       return 1.0e-2;
-    } else if ("mm".equals(name)) {
+    } else if ("mm".equals(unit)) {
       return 1.0e-3;
-    } else if ("km".equals(name)) {
+    } else if ("km".equals(unit)) {
       return 1.0e3;
-    } else if ("in".equals(name) || "inch".equals(name)) {
+    } else if ("in".equals(unit) || "inch".equals(unit)) {
       return 0.0254;
-    } else if ("ft".equals(name) || "feet".equals(name)) {
+    } else if ("ft".equals(unit) || "feet".equals(unit)) {
       return 0.3048;
     }
 
-    throw new RuntimeException(new InvalidInputException(this, "getConversionFactor", name, "unit not supported"));
+    throw new RuntimeException(new InvalidInputException(this, "getConversionFactor", unit, "unit not supported"));
   }
 
-  /** {@inheritDoc} */
+  /**
+   * Get the SI value (meters) of the current length.
+   *
+   * <p>
+   * Converts the stored value and unit to SI (meters). Supported input units: m, meter, metre, cm, mm, km, in, inch,
+   * ft, feet.
+   * </p>
+   */
   @Override
   public double getSIvalue() {
-    return getValue("m");
+    return invalue * getConversionFactor(inunit);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * Convert the current length to the specified unit.
+   *
+   * <p>
+   * Converts the stored value from its original unit to the target unit. Supported units: m, meter, metre, cm, mm, km,
+   * in, inch, ft, feet. Examples:
+   * <ul>
+   * <li>LengthUnit(100, "cm").getValue("m") = 1.0</li>
+   * <li>LengthUnit(5, "ft").getValue("m") = 1.524</li>
+   * <li>LengthUnit(1, "km").getValue("ft") = 3280.84</li>
+   * </ul>
+   * </p>
+   *
+   * @param toUnit target unit name (one of the supported units)
+   * @return converted value in the target unit
+   * @throws RuntimeException if the target unit is not supported
+   */
   @Override
-  public double getValue(double val, String fromunit, String tounit) {
-    return getConversionFactor(fromunit) / getConversionFactor(tounit) * val;
+  public double getValue(String toUnit) {
+    return getSIvalue() / getConversionFactor(toUnit);
   }
 
-  /** {@inheritDoc} */
-  @Override
-  public double getValue(String tounit) {
-    return getValue(invalue, inunit, tounit);
+  /**
+   * Convert a length value between supported units.
+   *
+   * <p>
+   * Static convenience method for converting between any two supported units. Supported units: m, meter, metre, cm, mm,
+   * km, in, inch, ft, feet. Examples:
+   * <ul>
+   * <li>LengthUnit.convert(100, "cm", "m") = 1.0</li>
+   * <li>LengthUnit.convert(5280, "ft", "km") = 1.60934</li>
+   * </ul>
+   * </p>
+   *
+   * @param value value to convert
+   * @param unit source unit name
+   * @param toUnit target unit name
+   * @return converted value
+   * @throws RuntimeException if either unit is not supported
+   */
+  public static double convert(double value, String unit, String toUnit) {
+    return new LengthUnit(value, unit).getValue(toUnit);
   }
 }
