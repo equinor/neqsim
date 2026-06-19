@@ -8,8 +8,10 @@ import neqsim.util.exception.InvalidInputException;
  * @author esol
  * @version $Id: $Id
  */
-public class PowerUnit extends neqsim.util.unit.BaseUnit {
+public class PowerUnit extends neqsim.util.unit.BaseUnit implements LinearScaleUnit {
   private static final long serialVersionUID = 1000L;
+
+  private static final String[] ALLOWED_UNITS = { "W", "kW", "MW", "hp", "BTU/hr" };
 
   /**
    * Constructor for PowerUnit.
@@ -21,14 +23,10 @@ public class PowerUnit extends neqsim.util.unit.BaseUnit {
     super(value, unit);
   }
 
-  /**
-   * Get conversion factor to Watts (SI unit).
-   *
-   * @param name unit name
-   * @return conversion factor to Watts
-   */
-  public double getConversionFactor(String name) {
-    switch (name) {
+  /** {@inheritDoc} */
+  @Override
+  public double getConversionFactor(String unit) {
+    switch (unit) {
     case "W":
       return 1.0;
     case "kW":
@@ -40,26 +38,70 @@ public class PowerUnit extends neqsim.util.unit.BaseUnit {
     case "BTU/hr":
       return 0.29307107;
     default:
-      throw new RuntimeException(new InvalidInputException(this, "getConversionFactor", name, "unit not supported"));
+      throw new RuntimeException(new InvalidInputException(this, "getConversionFactor", unit, "unit not supported"));
     }
   }
 
   /** {@inheritDoc} */
   @Override
+  public String getSIUnit() {
+    return "W";
+  }
+
+  /**
+   * Get the SI value (Watts) of the current power.
+   *
+   * <p>
+   * Converts the stored value and unit to SI (Watts). Supported input units: W, kW, MW, hp, BTU/hr.
+   * </p>
+   */
+  @Override
   public double getSIvalue() {
-    return getValue("W");
+    return invalue * getConversionFactor(inunit);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * Convert the current power to the specified unit.
+   *
+   * <p>
+   * Converts the stored value from its original unit to the target unit. Supported units: W, kW, MW, hp, BTU/hr.
+   * Examples:
+   * <ul>
+   * <li>PowerUnit(1000, "kW").getValue("W") = 1000000</li>
+   * <li>PowerUnit(1, "MW").getValue("kW") = 1000</li>
+   * <li>PowerUnit(745.7, "hp").getValue("W") ≈ 556000</li>
+   * </ul>
+   * </p>
+   *
+   * @param toUnit target unit name (one of the supported units)
+   * @return converted value in the target unit
+   * @throws RuntimeException if the target unit is not supported
+   */
   @Override
-  public double getValue(double val, String fromunit, String tounit) {
-    invalue = val;
-    return getConversionFactor(fromunit) / getConversionFactor(tounit) * invalue;
+  public double getValue(String toUnit) {
+    return getSIvalue() / getConversionFactor(toUnit);
   }
 
-  /** {@inheritDoc} */
-  @Override
-  public double getValue(String tounit) {
-    return getConversionFactor(inunit) / getConversionFactor(tounit) * invalue;
+  /**
+   * Convert a power value between supported units.
+   *
+   * <p>
+   * Static convenience method for converting between any two supported units. Supported units: W, kW, MW, hp, BTU/hr.
+   * Examples:
+   * <ul>
+   * <li>PowerUnit.convert(1, "MW", "kW") = 1000</li>
+   * <li>PowerUnit.convert(1000, "W", "kW") = 1</li>
+   * <li>PowerUnit.convert(746, "hp", "W") ≈ 557000</li>
+   * </ul>
+   * </p>
+   *
+   * @param value value to convert
+   * @param unit source unit name
+   * @param toUnit target unit name
+   * @return converted value
+   * @throws RuntimeException if either unit is not supported
+   */
+  public static double convert(double value, String unit, String toUnit) {
+    return new PowerUnit(value, unit).getValue(toUnit);
   }
 }
