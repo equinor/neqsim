@@ -2,6 +2,7 @@ package neqsim.mcp.runners;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -166,7 +167,7 @@ public final class VisualizationRunner {
       for (double[] pt : validPoints) {
         double x = margin + (pt[0] - minT) / (maxT - minT) * plotW;
         double y = (height - margin) - (pt[1] - minP) / (maxP - minP) * plotH;
-        svg.append(String.format("%.1f,%.1f ", x, y));
+        svg.append(String.format(Locale.US, "%.1f,%.1f ", x, y));
       }
       svg.append("' fill='none' stroke='#2196F3' stroke-width='2'/>\n");
 
@@ -174,17 +175,17 @@ public final class VisualizationRunner {
       for (int i = 0; i <= 4; i++) {
         double tVal = minT + (maxT - minT) * i / 4.0;
         double x = margin + plotW * i / 4.0;
-        svg.append("<text x='").append(String.format("%.0f", x));
+        svg.append("<text x='").append(String.format(Locale.US, "%.0f", x));
         svg.append("' y='").append(height - margin + 15);
         svg.append("' text-anchor='middle' font-size='10'>");
-        svg.append(String.format("%.0f", tVal)).append("</text>\n");
+        svg.append(String.format(Locale.US, "%.0f", tVal)).append("</text>\n");
 
         double pVal = minP + (maxP - minP) * i / 4.0;
         double y = (height - margin) - plotH * i / 4.0;
         svg.append("<text x='").append(margin - 5);
-        svg.append("' y='").append(String.format("%.0f", y + 4));
+        svg.append("' y='").append(String.format(Locale.US, "%.0f", y + 4));
         svg.append("' text-anchor='end' font-size='10'>");
-        svg.append(String.format("%.1f", pVal)).append("</text>\n");
+        svg.append(String.format(Locale.US, "%.1f", pVal)).append("</text>\n");
       }
 
       svg.append("</svg>");
@@ -360,7 +361,7 @@ public final class VisualizationRunner {
       // Value label on bar
       svg.append("<text x='").append(x + barWidth / 2).append("' y='").append(y - 5);
       svg.append("' text-anchor='middle' font-size='10'>");
-      svg.append(String.format("%.1f", v)).append("</text>\n");
+      svg.append(String.format(Locale.US, "%.1f", v)).append("</text>\n");
 
       // X axis label
       String label = labels.get(i).getAsString();
@@ -444,48 +445,49 @@ public final class VisualizationRunner {
 
     // Surge line (vertical dashed)
     double surgeX = margin + (surgeFlow - flowMin) / (flowMax - flowMin) * plotW;
-    svg.append("<line x1='").append(String.format("%.0f", surgeX));
+    svg.append("<line x1='").append(String.format(Locale.US, "%.0f", surgeX));
     svg.append("' y1='").append(margin).append("' x2='");
-    svg.append(String.format("%.0f", surgeX)).append("' y2='").append(height - margin);
+    svg.append(String.format(Locale.US, "%.0f", surgeX)).append("' y2='").append(height - margin);
     svg.append("' stroke='red' stroke-dasharray='5,5'/>\n");
-    svg.append("<text x='").append(String.format("%.0f", surgeX));
+    svg.append("<text x='").append(String.format(Locale.US, "%.0f", surgeX));
     svg.append("' y='").append(margin - 5);
     svg.append("' text-anchor='middle' font-size='10' fill='red'>Surge</text>\n");
 
     // Stonewall line
     double swX = margin + (stonewall - flowMin) / (flowMax - flowMin) * plotW;
-    svg.append("<line x1='").append(String.format("%.0f", swX));
+    svg.append("<line x1='").append(String.format(Locale.US, "%.0f", swX));
     svg.append("' y1='").append(margin).append("' x2='");
-    svg.append(String.format("%.0f", swX)).append("' y2='").append(height - margin);
+    svg.append(String.format(Locale.US, "%.0f", swX)).append("' y2='").append(height - margin);
     svg.append("' stroke='orange' stroke-dasharray='5,5'/>\n");
-    svg.append("<text x='").append(String.format("%.0f", swX));
+    svg.append("<text x='").append(String.format(Locale.US, "%.0f", swX));
     svg.append("' y='").append(margin - 5);
     svg.append("' text-anchor='middle' font-size='10' fill='orange'>Stonewall</text>\n");
 
     // Operating point
     double opX = margin + (inletFlow - flowMin) / (flowMax - flowMin) * plotW;
     double opY = (height - margin) - (pressureRatio - prMin) / (prMax - prMin) * plotH;
-    svg.append("<circle cx='").append(String.format("%.0f", opX));
-    svg.append("' cy='").append(String.format("%.0f", opY));
+    svg.append("<circle cx='").append(String.format(Locale.US, "%.0f", opX));
+    svg.append("' cy='").append(String.format(Locale.US, "%.0f", opY));
     svg.append("' r='8' fill='#4CAF50' stroke='#2E7D32' stroke-width='2'/>\n");
-    svg.append("<text x='").append(String.format("%.0f", opX + 12));
-    svg.append("' y='").append(String.format("%.0f", opY - 5));
+    svg.append("<text x='").append(String.format(Locale.US, "%.0f", opX + 12));
+    svg.append("' y='").append(String.format(Locale.US, "%.0f", opY - 5));
     svg.append("' font-size='11' font-weight='bold'>Operating Point</text>\n");
 
     // Legend box
     svg.append("<rect x='").append(width - margin - 140).append("' y='").append(margin + 5);
     svg.append("' width='135' height='70' fill='#f5f5f5' stroke='#ccc'/>\n");
     svg.append("<text x='").append(width - margin - 130).append("' y='").append(margin + 22);
-    svg.append("' font-size='10'>Flow: ").append(String.format("%.0f", inletFlow));
+    svg.append("' font-size='10'>Flow: ").append(String.format(Locale.US, "%.0f", inletFlow));
     svg.append(" Am3/hr</text>\n");
     svg.append("<text x='").append(width - margin - 130).append("' y='").append(margin + 36);
-    svg.append("' font-size='10'>PR: ").append(String.format("%.2f", pressureRatio));
+    svg.append("' font-size='10'>PR: ").append(String.format(Locale.US, "%.2f", pressureRatio));
     svg.append("</text>\n");
     svg.append("<text x='").append(width - margin - 130).append("' y='").append(margin + 50);
-    svg.append("' font-size='10'>Eff: ").append(String.format("%.1f%%", efficiency * 100));
+    svg.append("' font-size='10'>Eff: ")
+        .append(String.format(Locale.US, "%.1f%%", efficiency * 100));
     svg.append("</text>\n");
     svg.append("<text x='").append(width - margin - 130).append("' y='").append(margin + 64);
-    svg.append("' font-size='10'>Power: ").append(String.format("%.0f", power));
+    svg.append("' font-size='10'>Power: ").append(String.format(Locale.US, "%.0f", power));
     svg.append(" kW</text>\n");
 
     svg.append("</svg>");
@@ -685,12 +687,12 @@ public final class VisualizationRunner {
       int largeArc = angle > Math.PI ? 1 : 0;
 
       svg.append("<path d='M ").append(cx).append(",").append(cy);
-      svg.append(" L ").append(String.format("%.1f", x1)).append(",");
-      svg.append(String.format("%.1f", y1));
+      svg.append(" L ").append(String.format(Locale.US, "%.1f", x1)).append(",");
+      svg.append(String.format(Locale.US, "%.1f", y1));
       svg.append(" A ").append(r).append(",").append(r).append(" 0 ");
       svg.append(largeArc).append(",1 ");
-      svg.append(String.format("%.1f", x2)).append(",");
-      svg.append(String.format("%.1f", y2)).append(" Z'");
+      svg.append(String.format(Locale.US, "%.1f", x2)).append(",");
+      svg.append(String.format(Locale.US, "%.1f", y2)).append(" Z'");
       svg.append(" fill='").append(colors[i % colors.length]).append("'/>\n");
 
       startAngle = endAngle;
@@ -706,7 +708,8 @@ public final class VisualizationRunner {
       svg.append("<text x='").append(legendX + 18).append("' y='").append(legendY + i * 22 + 11);
       svg.append("' font-size='10'>");
       svg.append(escapeXml(categories.get(i).getAsString()));
-      svg.append(" (").append(String.format("%.1f%%", vals.get(i) / total * 100)).append(")");
+      svg.append(" (").append(String.format(Locale.US, "%.1f%%", vals.get(i) / total * 100))
+          .append(")");
       svg.append("</text>\n");
     }
 
@@ -807,7 +810,7 @@ public final class VisualizationRunner {
       svg.append("' stroke='#e0e0e0'/>\n");
       svg.append("<text x='").append(margin - 5).append("' y='").append(py + 4);
       svg.append("' text-anchor='end' font-size='9'>");
-      svg.append(String.format("%.1f", yVal)).append("</text>\n");
+      svg.append(String.format(Locale.US, "%.1f", yVal)).append("</text>\n");
     }
 
     // X-axis tick labels
@@ -816,7 +819,7 @@ public final class VisualizationRunner {
       int px = margin + (int) ((xVal - xMin) / (xMax - xMin) * plotW);
       svg.append("<text x='").append(px).append("' y='").append(height - margin + 15);
       svg.append("' text-anchor='middle' font-size='9'>");
-      svg.append(String.format("%.1f", xVal)).append("</text>\n");
+      svg.append(String.format(Locale.US, "%.1f", xVal)).append("</text>\n");
     }
 
     // Line

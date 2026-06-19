@@ -8,6 +8,7 @@ package neqsim.process.equipment.heatexchanger;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 import com.google.gson.GsonBuilder;
 import neqsim.process.ml.StateVector;
@@ -1156,24 +1157,33 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
     if (inStream[0] != null && inStream[1] != null) {
       sb.append("\n--- Hot Side (Stream 0) ---\n");
       sb.append("Inlet Temperature: ")
-          .append(String.format("%.2f C", inStream[0].getTemperature("C"))).append("\n");
+          .append(String.format(Locale.US, "%.2f C", inStream[0].getTemperature("C")))
+          .append("\n");
       sb.append("Outlet Temperature: ")
-          .append(String.format("%.2f C", outStream[0].getTemperature("C"))).append("\n");
-      sb.append("Flow Rate: ").append(String.format("%.3f kg/s", inStream[0].getFlowRate("kg/sec")))
+          .append(String.format(Locale.US, "%.2f C", outStream[0].getTemperature("C")))
+          .append("\n");
+        sb.append("Flow Rate: ")
+          .append(String.format(Locale.US, "%.3f kg/s", inStream[0].getFlowRate("kg/sec")))
           .append("\n");
 
       sb.append("\n--- Cold Side (Stream 1) ---\n");
       sb.append("Inlet Temperature: ")
-          .append(String.format("%.2f C", inStream[1].getTemperature("C"))).append("\n");
+          .append(String.format(Locale.US, "%.2f C", inStream[1].getTemperature("C")))
+          .append("\n");
       sb.append("Outlet Temperature: ")
-          .append(String.format("%.2f C", outStream[1].getTemperature("C"))).append("\n");
-      sb.append("Flow Rate: ").append(String.format("%.3f kg/s", inStream[1].getFlowRate("kg/sec")))
+          .append(String.format(Locale.US, "%.2f C", outStream[1].getTemperature("C")))
+          .append("\n");
+        sb.append("Flow Rate: ")
+          .append(String.format(Locale.US, "%.3f kg/s", inStream[1].getFlowRate("kg/sec")))
           .append("\n");
 
       sb.append("\n--- Heat Transfer ---\n");
-      sb.append("Duty: ").append(String.format("%.2f kW", duty / 1000.0)).append("\n");
-      sb.append("UA Value: ").append(String.format("%.2f W/K", UAvalue)).append("\n");
-      sb.append("Thermal Effectiveness: ").append(String.format("%.3f", thermalEffectiveness))
+        sb.append("Duty: ").append(String.format(Locale.US, "%.2f kW", duty / 1000.0))
+          .append("\n");
+        sb.append("UA Value: ").append(String.format(Locale.US, "%.2f W/K", UAvalue))
+          .append("\n");
+        sb.append("Thermal Effectiveness: ")
+          .append(String.format(Locale.US, "%.3f", thermalEffectiveness))
           .append("\n");
 
       // Calculate LMTD
@@ -1185,15 +1195,16 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
       double deltaT2 = hotOut - coldIn;
       double lmtd = (Math.abs(deltaT1 - deltaT2) < 1e-6) ? (deltaT1 + deltaT2) / 2.0
           : (deltaT1 - deltaT2) / Math.log(deltaT1 / deltaT2);
-      sb.append("LMTD: ").append(String.format("%.2f K", lmtd)).append("\n");
+      sb.append("LMTD: ").append(String.format(Locale.US, "%.2f K", lmtd)).append("\n");
 
       HeatExchangerMechanicalDesign mechDesign = getMechanicalDesign();
       if (mechDesign != null) {
         sb.append("\n--- Mechanical Design ---\n");
         sb.append("Max Design Duty: ")
-            .append(String.format("%.2f kW", mechDesign.maxDesignDuty / 1000.0)).append("\n");
+          .append(String.format(Locale.US, "%.2f kW", mechDesign.maxDesignDuty / 1000.0))
+          .append("\n");
         sb.append("Duty Utilization: ")
-            .append(String.format("%.1f%%", Math.abs(duty) / mechDesign.maxDesignDuty * 100))
+          .append(String.format(Locale.US, "%.1f%%", Math.abs(duty) / mechDesign.maxDesignDuty * 100))
             .append("\n");
       }
     }

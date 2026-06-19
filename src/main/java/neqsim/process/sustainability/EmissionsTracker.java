@@ -6,6 +6,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.compressor.Compressor;
@@ -367,13 +368,13 @@ public class EmissionsTracker implements Serializable {
           "Equipment,Type,Category,DirectCO2e_kg_hr,IndirectCO2e_kg_hr,TotalCO2e_kg_hr,Power_kW,HeatDuty_kW\n");
 
       for (EquipmentEmissions eq : equipmentEmissions.values()) {
-        sb.append(String.format("%s,%s,%s,%.4f,%.4f,%.4f,%.4f,%.4f\n", eq.equipmentName,
+        sb.append(String.format(Locale.US, "%s,%s,%s,%.4f,%.4f,%.4f,%.4f,%.4f\n", eq.equipmentName,
             eq.equipmentType, eq.category, eq.directCO2eKgPerHr, eq.indirectCO2eKgPerHr,
             eq.getTotalCO2e(), eq.powerConsumptionKW, eq.heatDutyKW));
       }
 
-      sb.append(String.format("\nTOTAL,,,%s,%s,%.4f,%.4f,%.4f\n", "", "", totalCO2eKgPerHr,
-          totalPowerKW, totalHeatDutyKW));
+      sb.append(String.format(Locale.US, "\nTOTAL,,,%s,%s,%.4f,%.4f,%.4f\n", "", "",
+          totalCO2eKgPerHr, totalPowerKW, totalHeatDutyKW));
 
       try (java.io.FileWriter writer = new java.io.FileWriter(filePath)) {
         writer.write(sb.toString());
@@ -414,14 +415,14 @@ public class EmissionsTracker implements Serializable {
       StringBuilder sb = new StringBuilder();
       sb.append("=== Emissions Report: ").append(processName).append(" ===\n");
       sb.append("Timestamp: ").append(timestamp).append("\n\n");
-      sb.append(String.format("Total CO2e: %.2f kg/hr (%.2f tonne/yr)\n", totalCO2eKgPerHr,
-          getTotalCO2e("ton/yr")));
-      sb.append(
-          String.format("Total Power: %.2f kW (%.2f MW)\n", totalPowerKW, getTotalPower("MW")));
-      sb.append(String.format("Total Heat Duty: %.2f kW\n", totalHeatDutyKW));
+      sb.append(String.format(Locale.US, "Total CO2e: %.2f kg/hr (%.2f tonne/yr)\n",
+          totalCO2eKgPerHr, getTotalCO2e("ton/yr")));
+      sb.append(String.format(Locale.US, "Total Power: %.2f kW (%.2f MW)\n", totalPowerKW,
+          getTotalPower("MW")));
+      sb.append(String.format(Locale.US, "Total Heat Duty: %.2f kW\n", totalHeatDutyKW));
       sb.append("\nBreakdown by Category:\n");
       for (Map.Entry<EmissionCategory, Double> entry : getEmissionsByCategory().entrySet()) {
-        sb.append(String.format("  %s: %.2f kg/hr\n", entry.getKey(), entry.getValue()));
+        sb.append(String.format(Locale.US, "  %s: %.2f kg/hr\n", entry.getKey(), entry.getValue()));
       }
       return sb.toString();
     }
