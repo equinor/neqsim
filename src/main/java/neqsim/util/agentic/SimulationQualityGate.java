@@ -433,9 +433,9 @@ public class SimulationQualityGate implements Serializable {
   /**
    * Add a quality issue.
    *
-   * @param severity    issue severity
-   * @param category    check category
-   * @param message     description of the issue
+   * @param severity issue severity
+   * @param category check category
+   * @param message description of the issue
    * @param remediation suggested fix
    */
   private void addIssue(Severity severity, String category, String message, String remediation) {
@@ -569,9 +569,9 @@ public class SimulationQualityGate implements Serializable {
     /**
      * Constructor for QualityIssue.
      *
-     * @param severity    issue severity
-     * @param category    check category
-     * @param message     description
+     * @param severity issue severity
+     * @param category check category
+     * @param message description
      * @param remediation suggested fix
      */
     public QualityIssue(Severity severity, String category, String message, String remediation) {

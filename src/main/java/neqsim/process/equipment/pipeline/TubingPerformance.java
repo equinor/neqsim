@@ -121,7 +121,7 @@ public class TubingPerformance extends Pipeline {
   /**
    * Constructor with inlet stream.
    *
-   * @param name        equipment name
+   * @param name equipment name
    * @param inletStream inlet stream
    */
   public TubingPerformance(String name, StreamInterface inletStream) {
@@ -163,7 +163,7 @@ public class TubingPerformance extends Pipeline {
    * Calculate pressure drop using selected correlation.
    *
    * @param system thermodynamic system
-   * @param ops    thermodynamic operations
+   * @param ops thermodynamic operations
    * @return pressure drop in bar
    */
   private double calculatePressureDrop(SystemInterface system, ThermodynamicOperations ops) {
@@ -186,7 +186,7 @@ public class TubingPerformance extends Pipeline {
    * Calculate pressure drop using Beggs-Brill correlation.
    *
    * @param system thermodynamic system
-   * @param ops    thermodynamic operations
+   * @param ops thermodynamic operations
    * @return pressure drop in bar
    */
   private double calculateBeggsBrill(SystemInterface system, ThermodynamicOperations ops) {
@@ -268,8 +268,8 @@ public class TubingPerformance extends Pipeline {
    * Calculate Beggs-Brill liquid holdup.
    *
    * @param lambdaL input liquid fraction
-   * @param nFr     Froude number
-   * @param angle   inclination angle (degrees from horizontal)
+   * @param nFr Froude number
+   * @param angle inclination angle (degrees from horizontal)
    * @return liquid holdup
    */
   private double calculateBeggsBrillHoldup(double lambdaL, double nFr, double angle) {
@@ -328,7 +328,7 @@ public class TubingPerformance extends Pipeline {
    * Calculate pressure drop using Hagedorn-Brown correlation.
    *
    * @param system thermodynamic system
-   * @param ops    thermodynamic operations
+   * @param ops thermodynamic operations
    * @return pressure drop in bar
    */
   private double calculateHagedornBrown(SystemInterface system, ThermodynamicOperations ops) {
@@ -401,12 +401,12 @@ public class TubingPerformance extends Pipeline {
   /**
    * Calculate Hagedorn-Brown holdup.
    *
-   * @param vsL  superficial liquid velocity (m/s)
-   * @param vsG  superficial gas velocity (m/s)
+   * @param vsL superficial liquid velocity (m/s)
+   * @param vsG superficial gas velocity (m/s)
    * @param rhoL liquid density (kg/m³)
    * @param rhoG gas density (kg/m³)
-   * @param muL  liquid viscosity (Pa·s)
-   * @param d    pipe diameter (m)
+   * @param muL liquid viscosity (Pa·s)
+   * @param d pipe diameter (m)
    * @return liquid holdup fraction (dimensionless)
    */
   private double calculateHBHoldup(double vsL, double vsG, double rhoL, double rhoG, double muL, double d) {
@@ -437,7 +437,7 @@ public class TubingPerformance extends Pipeline {
    * Calculate pressure drop using Gray correlation (gas wells).
    *
    * @param system thermodynamic system
-   * @param ops    thermodynamic operations
+   * @param ops thermodynamic operations
    * @return pressure drop in bar
    */
   private double calculateGray(SystemInterface system, ThermodynamicOperations ops) {
@@ -498,7 +498,7 @@ public class TubingPerformance extends Pipeline {
    * Calculate pressure drop using Hasan-Kabir mechanistic model.
    *
    * @param system thermodynamic system
-   * @param ops    thermodynamic operations
+   * @param ops thermodynamic operations
    * @return pressure drop in bar
    */
   private double calculateHasanKabir(SystemInterface system, ThermodynamicOperations ops) {
@@ -571,7 +571,7 @@ public class TubingPerformance extends Pipeline {
    * Calculate pressure drop using Duns-Ros correlation.
    *
    * @param system thermodynamic system
-   * @param ops    thermodynamic operations
+   * @param ops thermodynamic operations
    * @return pressure drop in bar
    */
   private double calculateDunsRos(SystemInterface system, ThermodynamicOperations ops) {
@@ -640,9 +640,9 @@ public class TubingPerformance extends Pipeline {
   /**
    * Calculate Darcy friction factor using Colebrook-White equation.
    *
-   * @param Re  Reynolds number
+   * @param Re Reynolds number
    * @param eps absolute roughness (m)
-   * @param d   diameter (m)
+   * @param d diameter (m)
    * @return Darcy friction factor
    */
   private double calculateFrictionFactor(double Re, double eps, double d) {

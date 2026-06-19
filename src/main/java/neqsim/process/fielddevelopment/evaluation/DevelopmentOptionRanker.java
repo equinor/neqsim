@@ -216,7 +216,7 @@ public class DevelopmentOptionRanker implements Serializable {
      * Set score for a criterion.
      *
      * @param criterion the criterion
-     * @param value     the raw score value
+     * @param value the raw score value
      */
     public void setScore(Criterion criterion, double value) {
       scores.put(criterion, Double.valueOf(value));
@@ -248,7 +248,7 @@ public class DevelopmentOptionRanker implements Serializable {
      * Set normalized score.
      *
      * @param criterion the criterion
-     * @param value     the normalized score value (0-1)
+     * @param value the normalized score value (0-1)
      */
     void setNormalizedScore(Criterion criterion, double value) {
       normalizedScores.put(criterion, Double.valueOf(value));
@@ -489,7 +489,7 @@ public class DevelopmentOptionRanker implements Serializable {
    * Set weight for a criterion.
    *
    * @param criterion the criterion
-   * @param weight    weight (0-1)
+   * @param weight weight (0-1)
    */
   public void setWeight(Criterion criterion, double weight) {
     weights.put(criterion, Double.valueOf(weight));

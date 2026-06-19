@@ -56,9 +56,9 @@ public abstract class Packing extends NamedBaseClass implements PackingInterface
    * Constructor for Packing.
    * </p>
    *
-   * @param name     Name of packing
+   * @param name Name of packing
    * @param material Name of material
-   * @param size     a int
+   * @param size a int
    */
   public Packing(String name, String material, int size) {
     super(name);

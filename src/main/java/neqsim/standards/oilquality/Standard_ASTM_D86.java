@@ -340,8 +340,8 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
    * Linear interpolation helper for a monotonically increasing fraction axis.
    *
    * @param fractionAxis the recovered-fraction values (x-axis)
-   * @param temps        the temperatures in Kelvin (y-axis)
-   * @param fraction     the recovered fraction to interpolate at (0.0 to 1.0)
+   * @param temps the temperatures in Kelvin (y-axis)
+   * @param fraction the recovered fraction to interpolate at (0.0 to 1.0)
    * @return interpolated temperature in Kelvin
    */
   private double interpolateK(double[] fractionAxis, double[] temps, double fraction) {
@@ -479,7 +479,7 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
    * Converts a TBP temperature to the equivalent ASTM D86 temperature using the Riazi-Daubert relation T_TBP = a
    * (T_D86)^b (temperatures in Kelvin).
    *
-   * @param tbpK    TBP temperature in Kelvin
+   * @param tbpK TBP temperature in Kelvin
    * @param percent the volume percent distilled (0 to 100)
    * @return ASTM D86 temperature in Kelvin
    */
@@ -495,7 +495,7 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
    * Converts an ASTM D86 temperature to the equivalent TBP temperature using the Riazi-Daubert relation T_TBP = a
    * (T_D86)^b (temperatures in Kelvin).
    *
-   * @param d86K    ASTM D86 temperature in Kelvin
+   * @param d86K ASTM D86 temperature in Kelvin
    * @param percent the volume percent distilled (0 to 100)
    * @return TBP temperature in Kelvin
    */
@@ -510,11 +510,11 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
   /**
    * Computes the cumulative recovered liquid-volume fraction for the vapour formed at a flash point.
    *
-   * @param fluid    the flashed fluid holding gas and liquid phases
-   * @param beta     the molar vapor fraction at this point
-   * @param vmFeed   per-component liquid molar volume proxy (molar mass / liquid density)
+   * @param fluid the flashed fluid holding gas and liquid phases
+   * @param beta the molar vapor fraction at this point
+   * @param vmFeed per-component liquid molar volume proxy (molar mass / liquid density)
    * @param sumVfeed the feed total liquid-volume proxy
-   * @param nComp    the number of components
+   * @param nComp the number of components
    * @return recovered liquid-volume fraction (0.0 to 1.0)
    */
   private double computeRecoveredLiquidVolume(SystemInterface fluid, double beta, double[] vmFeed, double sumVfeed,
@@ -545,10 +545,10 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
    * Splits the unrecovered fraction into a light-ends loss (components boiling below the IBP) and a heavy residue, on a
    * liquid-volume basis, so that recovery + loss + residue = 100%.
    *
-   * @param zFeed    per-component overall mole fractions
-   * @param vmFeed   per-component liquid molar volume proxy
+   * @param zFeed per-component overall mole fractions
+   * @param vmFeed per-component liquid molar volume proxy
    * @param sumVfeed the feed total liquid-volume proxy
-   * @param nComp    the number of components
+   * @param nComp the number of components
    */
   private void computeRecoveryLossResidue(double[] zFeed, double[] vmFeed, double sumVfeed, int nComp) {
     double lossVol = 0.0;
@@ -617,7 +617,7 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
    * Converts a temperature in Celsius to the requested unit.
    *
    * @param valueC the temperature in Celsius
-   * @param unit   the target unit ("C", "K", "F" or "R")
+   * @param unit the target unit ("C", "K", "F" or "R")
    * @return the converted temperature
    */
   private double convertTempFromC(double valueC, String unit) {
@@ -748,7 +748,7 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
    * Sets the barometric (ambient) pressure used for the Sydney Young correction.
    *
    * @param pressure the barometric pressure
-   * @param unit     the unit ("mmHg", "bar", "bara", "kPa", "Pa", "atm" or "psia")
+   * @param unit the unit ("mmHg", "bar", "bara", "kPa", "Pa", "atm" or "psia")
    */
   public void setBarometricPressure(double pressure, String unit) {
     double mmHg;
@@ -782,7 +782,7 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
   /**
    * Adds or updates a product specification limit checked by {@link #isOnSpec()}.
    *
-   * @param pointKey        the report point (e.g. "T90", "FBP", "IBP")
+   * @param pointKey the report point (e.g. "T90", "FBP", "IBP")
    * @param maxTemperatureC the maximum allowed temperature in Celsius
    */
   public void setSpecLimit(String pointKey, double maxTemperatureC) {

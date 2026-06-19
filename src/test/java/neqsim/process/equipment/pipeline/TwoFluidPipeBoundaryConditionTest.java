@@ -529,10 +529,10 @@ class TwoFluidPipeBoundaryConditionTest {
   /**
    * Create a compact pipe for boundary-condition regression tests.
    *
-   * @param name               pipe name
-   * @param fluid              inlet fluid
-   * @param flowRateKgSec      flow rate in kg/s
-   * @param inletPressureBara  inlet pressure in bara
+   * @param name pipe name
+   * @param fluid inlet fluid
+   * @param flowRateKgSec flow rate in kg/s
+   * @param inletPressureBara inlet pressure in bara
    * @param outletPressureBara outlet pressure in bara
    * @return configured pipe
    */
@@ -560,9 +560,9 @@ class TwoFluidPipeBoundaryConditionTest {
   /**
    * Create a TwoFluidPipe that calculates outlet pressure from inlet flow.
    *
-   * @param name              pipe name
-   * @param fluid             inlet fluid
-   * @param flowRateKgSec     flow rate in kg/s
+   * @param name pipe name
+   * @param fluid inlet fluid
+   * @param flowRateKgSec flow rate in kg/s
    * @param inletPressureBara inlet pressure in bara
    * @return configured pipe
    */
@@ -585,9 +585,9 @@ class TwoFluidPipeBoundaryConditionTest {
   /**
    * Create a Beggs-Brill pipe with the same hydraulic setup.
    *
-   * @param name              pipe name
-   * @param fluid             inlet fluid
-   * @param flowRateKgSec     flow rate in kg/s
+   * @param name pipe name
+   * @param fluid inlet fluid
+   * @param flowRateKgSec flow rate in kg/s
    * @param inletPressureBara inlet pressure in bara
    * @return configured pipe
    */
@@ -607,9 +607,9 @@ class TwoFluidPipeBoundaryConditionTest {
   /**
    * Create a regression inlet stream.
    *
-   * @param name              stream name
-   * @param fluid             fluid
-   * @param flowRateKgSec     flow rate in kg/s
+   * @param name stream name
+   * @param fluid fluid
+   * @param flowRateKgSec flow rate in kg/s
    * @param inletPressureBara inlet pressure in bara
    * @return initialized stream
    */
@@ -626,9 +626,9 @@ class TwoFluidPipeBoundaryConditionTest {
   /**
    * Verify that a transient pressure-boundary change moves toward the matching stationary target.
    *
-   * @param name              test name
-   * @param fluid             inlet fluid
-   * @param flowRateKgSec     flow rate in kg/s
+   * @param name test name
+   * @param fluid inlet fluid
+   * @param flowRateKgSec flow rate in kg/s
    * @param inletPressureBara inlet pressure in bara
    * @param initialOutletBara initial outlet pressure in bara
    * @param changedOutletBara changed outlet pressure in bara
@@ -662,9 +662,9 @@ class TwoFluidPipeBoundaryConditionTest {
   /**
    * Assert that a pressure boundary change settles to the new stationary pressure profile quickly.
    *
-   * @param name              case name
-   * @param fluid             inlet fluid
-   * @param flowRateKgSec     flow rate in kg/s
+   * @param name case name
+   * @param fluid inlet fluid
+   * @param flowRateKgSec flow rate in kg/s
    * @param inletPressureBara inlet pressure in bara
    * @param initialOutletBara initial outlet pressure in bara
    * @param changedOutletBara changed outlet pressure in bara
@@ -691,9 +691,9 @@ class TwoFluidPipeBoundaryConditionTest {
   /**
    * Assert that TwoFluidPipe and Beggs-Brill calculate comparable steady pressure drops.
    *
-   * @param name              case name
-   * @param fluid             inlet fluid
-   * @param flowRateKgSec     flow rate in kg/s
+   * @param name case name
+   * @param fluid inlet fluid
+   * @param flowRateKgSec flow rate in kg/s
    * @param inletPressureBara inlet pressure in bara
    */
   private void assertSteadyPressureDropSimilarToBeggsAndBrill(String name, SystemInterface fluid, double flowRateKgSec,
@@ -723,10 +723,10 @@ class TwoFluidPipeBoundaryConditionTest {
   /**
    * Create the stationary target for a changed outlet pressure.
    *
-   * @param name               case name
-   * @param fluid              inlet fluid
-   * @param flowRateKgSec      flow rate in kg/s
-   * @param inletPressureBara  inlet pressure in bara
+   * @param name case name
+   * @param fluid inlet fluid
+   * @param flowRateKgSec flow rate in kg/s
+   * @param inletPressureBara inlet pressure in bara
    * @param outletPressureBara target outlet pressure in bara
    * @return stationary target pipe
    */
@@ -741,8 +741,8 @@ class TwoFluidPipeBoundaryConditionTest {
   /**
    * Run a transient pressure-boundary change until the new stationary solution is reached.
    *
-   * @param transientPipe     transient pipe initialized at the old boundary
-   * @param stationaryPipe    stationary target pipe at the new boundary
+   * @param transientPipe transient pipe initialized at the old boundary
+   * @param stationaryPipe stationary target pipe at the new boundary
    * @param changedOutletBara changed outlet pressure in bara
    * @param maxReasonableTime maximum acceptable settling time in seconds
    * @return settling result
@@ -780,7 +780,7 @@ class TwoFluidPipeBoundaryConditionTest {
   /**
    * Check pressure and phase holdup profile convergence against a stationary target.
    *
-   * @param result         current settling result
+   * @param result current settling result
    * @param stationaryPipe stationary target pipe
    * @return true if settled
    */
@@ -809,7 +809,7 @@ class TwoFluidPipeBoundaryConditionTest {
   /**
    * Assert that outlet pressure equals the explicit pressure boundary.
    *
-   * @param checkedPipe        pipe to inspect
+   * @param checkedPipe pipe to inspect
    * @param expectedOutletBara expected outlet pressure in bara
    */
   private void assertOutletPressure(TwoFluidPipe checkedPipe, double expectedOutletBara) {
@@ -852,7 +852,7 @@ class TwoFluidPipeBoundaryConditionTest {
   /**
    * Calculate root-mean-square profile difference.
    *
-   * @param left  first profile
+   * @param left first profile
    * @param right second profile
    * @return RMS difference
    */
@@ -870,7 +870,7 @@ class TwoFluidPipeBoundaryConditionTest {
    * Calculate pressure drop from a pressure profile.
    *
    * @param pressureProfile pressure profile
-   * @param valuesInPascal  true if profile values are Pa, false if bara
+   * @param valuesInPascal true if profile values are Pa, false if bara
    * @return pressure drop in bar
    */
   private double pressureDropBar(double[] pressureProfile, boolean valuesInPascal) {

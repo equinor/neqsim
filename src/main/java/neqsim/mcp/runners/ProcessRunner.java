@@ -172,8 +172,8 @@ public class ProcessRunner {
   /**
    * Creates a typed process error envelope with tool metadata.
    *
-   * @param code        the diagnostic code
-   * @param message     the diagnostic message
+   * @param code the diagnostic code
+   * @param message the diagnostic message
    * @param remediation the remediation hint
    * @return typed process error envelope
    */
@@ -184,10 +184,10 @@ public class ProcessRunner {
   /**
    * Runs a normalized single-area process-system JSON definition.
    *
-   * @param normalizedJson      the normalized JSON process definition
-   * @param startTime           the wall-clock start time in milliseconds
+   * @param normalizedJson the normalized JSON process definition
+   * @param startTime the wall-clock start time in milliseconds
    * @param preValidationPassed true if {@link Validator} was already run successfully
-   * @param validationIssues    optional validation issues to include in the response
+   * @param validationIssues optional validation issues to include in the response
    * @return JSON response containing simulation status, report, warnings, and provenance
    */
   private static String runProcessSystem(String normalizedJson, long startTime, boolean preValidationPassed,
@@ -228,10 +228,10 @@ public class ProcessRunner {
   /**
    * Runs a normalized multi-area process-model JSON definition.
    *
-   * @param normalizedJson      the normalized JSON containing a top-level {@code areas} object
-   * @param startTime           the wall-clock start time in milliseconds
+   * @param normalizedJson the normalized JSON containing a top-level {@code areas} object
+   * @param startTime the wall-clock start time in milliseconds
    * @param preValidationPassed true if {@link Validator} was already run successfully
-   * @param validationIssues    optional validation issues to include in the response
+   * @param validationIssues optional validation issues to include in the response
    * @return JSON response containing model status, area metadata, report, warnings, and provenance
    */
   private static String runProcessModel(String normalizedJson, long startTime, boolean preValidationPassed,
@@ -406,7 +406,7 @@ public class ProcessRunner {
   /**
    * Applies top-level execution controls from ProcessModel JSON.
    *
-   * @param root  root JSON object containing optional execution settings
+   * @param root root JSON object containing optional execution settings
    * @param model process model to configure before running
    */
   private static void applyProcessModelExecutionSettings(JsonObject root, ProcessModel model) {
@@ -590,8 +590,8 @@ public class ProcessRunner {
   /**
    * Extracts a comma-separated summary of a fluid field across all process-model areas.
    *
-   * @param areas        the areas object from a ProcessModel JSON document
-   * @param fluidField   the field to extract from each area's fluid block
+   * @param areas the areas object from a ProcessModel JSON document
+   * @param fluidField the field to extract from each area's fluid block
    * @param defaultValue fallback value when an area omits the field
    * @return one value, or comma-separated values when areas differ
    */
@@ -619,7 +619,7 @@ public class ProcessRunner {
   /**
    * Adds validation warnings to a response object.
    *
-   * @param response         the response object to mutate
+   * @param response the response object to mutate
    * @param validationIssues validation issues returned by {@link Validator}
    */
   private static void addValidationIssues(JsonObject response, JsonArray validationIssues) {
@@ -632,7 +632,7 @@ public class ProcessRunner {
    * Builds a validation block for process runner responses.
    *
    * @param preValidationPassed true when pre-flight validation was executed and passed
-   * @param validationIssues    validation issues from {@link Validator}
+   * @param validationIssues validation issues from {@link Validator}
    * @return validation JSON block
    */
   private static JsonObject buildProcessValidationBlock(boolean preValidationPassed, JsonArray validationIssues) {
@@ -667,7 +667,7 @@ public class ProcessRunner {
   /**
    * Adds validation warnings to provenance limitations.
    *
-   * @param provenance       the provenance object to mutate
+   * @param provenance the provenance object to mutate
    * @param validationIssues validation issues returned by {@link Validator}
    */
   private static void addValidationIssueLimitations(ResultProvenance provenance, JsonArray validationIssues) {
@@ -699,7 +699,7 @@ public class ProcessRunner {
   /**
    * Joins string values with a delimiter.
    *
-   * @param values    values to join
+   * @param values values to join
    * @param delimiter delimiter between values
    * @return joined string
    */
@@ -738,8 +738,8 @@ public class ProcessRunner {
   /**
    * Creates a standard error JSON response.
    *
-   * @param code        the error code
-   * @param message     the error message
+   * @param code the error code
+   * @param message the error message
    * @param remediation the fix suggestion
    * @return JSON error string
    */
@@ -767,7 +767,7 @@ public class ProcessRunner {
   /**
    * Creates a standard error JSON response from detailed simulation errors.
    *
-   * @param errors   simulation errors to expose
+   * @param errors simulation errors to expose
    * @param warnings non-fatal warnings to expose
    * @return JSON error string
    */

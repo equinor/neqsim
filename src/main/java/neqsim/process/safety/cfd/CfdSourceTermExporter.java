@@ -40,7 +40,7 @@ public class CfdSourceTermExporter implements Serializable {
    * Writes a neutral JSON case file.
    *
    * @param sourceTermCase CFD source-term case
-   * @param filename       output filename
+   * @param filename output filename
    */
   public void exportJson(CfdSourceTermCase sourceTermCase, String filename) {
     requireCase(sourceTermCase);
@@ -51,7 +51,7 @@ public class CfdSourceTermExporter implements Serializable {
    * Writes a manifest containing multiple CFD source-term cases.
    *
    * @param sourceTermCases cases to include
-   * @param filename        output filename
+   * @param filename output filename
    */
   public void exportManifest(List<CfdSourceTermCase> sourceTermCases, String filename) {
     if (sourceTermCases == null) {
@@ -73,7 +73,7 @@ public class CfdSourceTermExporter implements Serializable {
    * Writes an OpenFOAM-oriented source-term skeleton directory.
    *
    * @param sourceTermCase CFD source-term case
-   * @param directory      output directory
+   * @param directory output directory
    */
   public void exportOpenFoamSkeleton(CfdSourceTermCase sourceTermCase, String directory) {
     requireCase(sourceTermCase);
@@ -113,7 +113,7 @@ public class CfdSourceTermExporter implements Serializable {
    * Creates a tabulated OpenFOAM time-series file from a field.
    *
    * @param sourceTermCase CFD source-term case
-   * @param field          field name in sourceTerm.timeSeries rows
+   * @param field field name in sourceTerm.timeSeries rows
    * @return OpenFOAM tuple list text
    */
   @SuppressWarnings("unchecked")
@@ -188,7 +188,7 @@ public class CfdSourceTermExporter implements Serializable {
   /**
    * Writes text to a file.
    *
-   * @param file    target file
+   * @param file target file
    * @param content text content
    */
   private static void writeToFile(File file, String content) {

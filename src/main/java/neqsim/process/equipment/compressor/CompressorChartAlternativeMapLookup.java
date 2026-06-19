@@ -746,8 +746,8 @@ public class CompressorChartAlternativeMapLookup extends CompressorChart {
    * bisect_left.
    * </p>
    *
-   * @param A  an array of {@link java.lang.Double} objects
-   * @param x  a double
+   * @param A an array of {@link java.lang.Double} objects
+   * @param x a double
    * @param lo a int
    * @param hi a int
    * @return a int

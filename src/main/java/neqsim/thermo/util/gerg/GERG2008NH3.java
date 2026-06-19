@@ -438,12 +438,12 @@ public class GERG2008NH3 extends GERG2008 {
    * term that cannot be represented in the standard GERG departure function arrays.
    * </p>
    *
-   * @param itau   set to 1 to calculate tau derivatives, 0 otherwise
+   * @param itau set to 1 to calculate tau derivatives, 0 otherwise
    * @param idelta reserved for future use
-   * @param T      temperature in K
-   * @param D      density in mol/L
-   * @param x      composition array (mole fractions, 1-indexed)
-   * @param ar     dimensionless Helmholtz energy derivatives array
+   * @param T temperature in K
+   * @param D density in mol/L
+   * @param x composition array (mole fractions, 1-indexed)
+   * @param ar dimensionless Helmholtz energy derivatives array
    */
   @Override
   void AlpharGERG(int itau, int idelta, double T, double D, double[] x, doubleW[][] ar) {
@@ -477,10 +477,10 @@ public class GERG2008NH3 extends GERG2008 {
    * </ul>
    *
    * @param itau set to 1 to calculate tau derivatives
-   * @param T    temperature in K
-   * @param D    density in mol/L
-   * @param x    composition array
-   * @param ar   Helmholtz derivatives array (accumulated)
+   * @param T temperature in K
+   * @param D density in mol/L
+   * @param x composition array
+   * @param ar Helmholtz derivatives array (accumulated)
    */
   private void evaluateGaoPureNH3(int itau, double T, double D, double[] x, doubleW[][] ar) {
     if (x[NH3_IDX] <= epsilon) {
@@ -642,10 +642,10 @@ public class GERG2008NH3 extends GERG2008 {
    * </ul>
    *
    * @param itau set to 1 to calculate tau derivatives
-   * @param T    temperature in K
-   * @param D    density in mol/L
-   * @param x    composition array
-   * @param ar   Helmholtz derivatives array (accumulated)
+   * @param T temperature in K
+   * @param D density in mol/L
+   * @param x composition array
+   * @param ar Helmholtz derivatives array (accumulated)
    */
   private void evaluateNH3Departure(int itau, double T, double D, double[] x, doubleW[][] ar) {
     // Compute reducing parameters (uses cache from super call)

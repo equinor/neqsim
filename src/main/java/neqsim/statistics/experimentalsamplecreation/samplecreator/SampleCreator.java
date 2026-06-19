@@ -36,7 +36,7 @@ public class SampleCreator {
    * Constructor for SampleCreator.
    * </p>
    *
-   * @param system    a {@link neqsim.thermo.system.SystemInterface} object
+   * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param thermoOps a {@link neqsim.thermodynamicoperations.ThermodynamicOperations} object
    */
   public SampleCreator(SystemInterface system, ThermodynamicOperations thermoOps) {

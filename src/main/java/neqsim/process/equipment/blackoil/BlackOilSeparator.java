@@ -41,9 +41,9 @@ public class BlackOilSeparator extends ProcessEquipmentBaseClass {
   /**
    * Constructs a BlackOilSeparator.
    *
-   * @param name              equipment name used in the process system
-   * @param inlet             the inlet Black-Oil fluid
-   * @param outletPressure    separator outlet pressure in bar(a)
+   * @param name equipment name used in the process system
+   * @param inlet the inlet Black-Oil fluid
+   * @param outletPressure separator outlet pressure in bar(a)
    * @param outletTemperature separator outlet temperature in Kelvin
    */
   public BlackOilSeparator(String name, SystemBlackOil inlet, double outletPressure, double outletTemperature) {

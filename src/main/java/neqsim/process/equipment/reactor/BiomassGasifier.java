@@ -152,7 +152,7 @@ public class BiomassGasifier extends ProcessEquipmentBaseClass {
   /**
    * Sets the biomass feedstock and feed rate.
    *
-   * @param biomass         the biomass characterization
+   * @param biomass the biomass characterization
    * @param feedRateKgPerHr dry biomass feed rate in kg/hr
    */
   public void setBiomass(BiomassCharacterization biomass, double feedRateKgPerHr) {
@@ -245,7 +245,7 @@ public class BiomassGasifier extends ProcessEquipmentBaseClass {
    * Sets the gasification temperature with unit specification.
    *
    * @param temperature temperature value
-   * @param unit        unit string ("K", "C", "F")
+   * @param unit unit string ("K", "C", "F")
    */
   public void setGasificationTemperature(double temperature, String unit) {
     if ("C".equalsIgnoreCase(unit)) {
@@ -571,7 +571,7 @@ public class BiomassGasifier extends ProcessEquipmentBaseClass {
   /**
    * Ensures a component exists in the fluid (adds trace amount if missing).
    *
-   * @param fluid         the SystemInterface
+   * @param fluid the SystemInterface
    * @param componentName the component name
    */
   private void ensureComponent(SystemInterface fluid, String componentName) {
@@ -616,7 +616,7 @@ public class BiomassGasifier extends ProcessEquipmentBaseClass {
   /**
    * Returns the mole fraction of a component in a system, or 0 if not present.
    *
-   * @param system        the thermo system
+   * @param system the thermo system
    * @param componentName component name
    * @return mole fraction
    */

@@ -44,7 +44,7 @@ public class TVfractionFlash extends Flash {
    * Constructor for TVflash.
    * </p>
    *
-   * @param system        a {@link neqsim.thermo.system.SystemInterface} object
+   * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param Vfractionspec a double
    */
   public TVfractionFlash(SystemInterface system, double Vfractionspec) {

@@ -50,7 +50,7 @@ public class ReportConfig {
    * Set detail level for a specific unit.
    *
    * @param unitName name of equipment
-   * @param level    desired detail level
+   * @param level desired detail level
    */
   public void setDetailLevel(String unitName, DetailLevel level) {
     unitDetailLevel.put(unitName, level);

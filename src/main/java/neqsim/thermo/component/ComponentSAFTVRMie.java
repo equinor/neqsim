@@ -69,10 +69,10 @@ public class ComponentSAFTVRMie extends ComponentSrk {
   /**
    * Constructor for ComponentSAFTVRMie.
    *
-   * @param name         component name
-   * @param moles        number of moles
+   * @param name component name
+   * @param moles number of moles
    * @param molesInPhase number of moles in phase
-   * @param compNumber   component number
+   * @param compNumber component number
    */
   public ComponentSAFTVRMie(String name, double moles, double molesInPhase, int compNumber) {
     super(name, moles, molesInPhase, compNumber);
@@ -160,7 +160,7 @@ public class ComponentSAFTVRMie extends ComponentSrk {
    * Sets a site fraction value.
    *
    * @param siteIndex site index
-   * @param value     new XA value
+   * @param value new XA value
    */
   public void setXsiteAssoc(int siteIndex, double value) {
     if (xsiteAssoc != null && siteIndex < xsiteAssoc.length) {
@@ -181,10 +181,10 @@ public class ComponentSAFTVRMie extends ComponentSrk {
    * Calculates the association contribution to dF/dNi. dFCPAdN = sum_A [ln(X_A^i)] - hcpatot/2 * d(ln I)/d(ni), where I
    * is the Dufal 2015 association integral used for the SAFT-VR Mie association strength.
    *
-   * @param phase              the phase
+   * @param phase the phase
    * @param numberOfComponents number of components
-   * @param temperature        temperature in K
-   * @param pressure           pressure in Pa
+   * @param temperature temperature in K
+   * @param pressure pressure in Pa
    * @return dF_ASSOC/dNi
    */
   public double dFCPAdN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
@@ -255,11 +255,11 @@ public class ComponentSAFTVRMie extends ComponentSrk {
    * Initializes component temperature-dependent diameter using the Barker-Henderson integral for the Mie potential
    * (evaluated analytically following Lafitte et al. 2013).
    *
-   * @param temperature        temperature in K
-   * @param pressure           pressure in Pa
+   * @param temperature temperature in K
+   * @param pressure pressure in Pa
    * @param totalNumberOfMoles total moles
-   * @param beta               phase fraction
-   * @param initType           initialization type
+   * @param beta phase fraction
+   * @param initType initialization type
    */
   @Override
   public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int initType) {
@@ -293,11 +293,11 @@ public class ComponentSAFTVRMie extends ComponentSrk {
   /**
    * Calculates effective BH diameter by numerical Gauss-Legendre quadrature of the Mie potential.
    *
-   * @param sigma       segment diameter in m
-   * @param epsk        energy parameter eps/k in K
+   * @param sigma segment diameter in m
+   * @param epsk energy parameter eps/k in K
    * @param temperature temperature in K
-   * @param lr          repulsive exponent
-   * @param la          attractive exponent
+   * @param lr repulsive exponent
+   * @param la attractive exponent
    * @return effective diameter in m
    */
   public static double calcEffectiveDiameter(double sigma, double epsk, double temperature, double lr, double la) {
@@ -359,13 +359,13 @@ public class ComponentSAFTVRMie extends ComponentSrk {
   /**
    * Initializes SAFT-VR Mie component derivatives within the phase context.
    *
-   * @param phase              the phase
-   * @param temperature        temperature in K
-   * @param pressure           pressure in Pa
+   * @param phase the phase
+   * @param temperature temperature in K
+   * @param pressure pressure in Pa
    * @param totalNumberOfMoles total moles
-   * @param beta               phase fraction
+   * @param beta phase fraction
    * @param numberOfComponents number of components
-   * @param initType           initialization type
+   * @param initType initialization type
    */
   @Override
   public void Finit(PhaseInterface phase, double temperature, double pressure, double totalNumberOfMoles, double beta,
@@ -395,10 +395,10 @@ public class ComponentSAFTVRMie extends ComponentSrk {
    * differentiation issues where perturbing moles at constant total volume causes the packing fraction eta to cancel.
    * </p>
    *
-   * @param phase              the phase
+   * @param phase the phase
    * @param numberOfComponents number of components
-   * @param temperature        temperature in K
-   * @param pressure           pressure in Pa
+   * @param temperature temperature in K
+   * @param pressure pressure in Pa
    * @return dF/dNi
    */
   @Override
@@ -549,10 +549,10 @@ public class ComponentSAFTVRMie extends ComponentSrk {
    * based on the perturbed numberOfMolesInPhase values and recalculates SAFT variables via volInit. Does NOT call
    * Component.init to avoid corrupting system-level moles.
    *
-   * @param phase              the phase to reinitialize
+   * @param phase the phase to reinitialize
    * @param numberOfComponents number of components
-   * @param temperature        temperature in K
-   * @param pressure           pressure in Pa
+   * @param temperature temperature in K
+   * @param pressure pressure in Pa
    */
   private void reinitSAFTOnPhase(PhaseSAFTVRMie phase, int numberOfComponents, double temperature, double pressure) {
     double totalMolesInPhase = phase.getNumberOfMolesInPhase();
@@ -573,9 +573,9 @@ public class ComponentSAFTVRMie extends ComponentSrk {
    * Derivative of packing fraction with respect to moles of component i.
    *
    * @param phase the phase
-   * @param nc    number of components
-   * @param temp  temperature
-   * @param pres  pressure
+   * @param nc number of components
+   * @param temp temperature
+   * @param pres pressure
    * @return dnSAFT/dNi
    */
   public double calcdnSAFTdi(PhaseInterface phase, int nc, double temp, double pres) {
@@ -592,9 +592,9 @@ public class ComponentSAFTVRMie extends ComponentSrk {
    * Derivative of hard-sphere RDF with respect to moles of component i.
    *
    * @param phase the phase
-   * @param nc    number of components
-   * @param temp  temperature
-   * @param pres  pressure
+   * @param nc number of components
+   * @param temp temperature
+   * @param pres pressure
    * @return dghs/dNi
    */
   public double calcdghsSAFTdi(PhaseInterface phase, int nc, double temp, double pres) {
@@ -606,9 +606,9 @@ public class ComponentSAFTVRMie extends ComponentSrk {
    * Derivative of hard-sphere Helmholtz energy with respect to moles of component i.
    *
    * @param phase the phase
-   * @param nc    number of components
-   * @param temp  temperature
-   * @param pres  pressure
+   * @param nc number of components
+   * @param temp temperature
+   * @param pres pressure
    * @return dahs/dNi
    */
   public double calcdahsSAFTdi(PhaseInterface phase, int nc, double temp, double pres) {
@@ -622,9 +622,9 @@ public class ComponentSAFTVRMie extends ComponentSrk {
    * Derivative of segment number with respect to moles of component i.
    *
    * @param phase the phase
-   * @param nc    number of components
-   * @param temp  temperature
-   * @param pres  pressure
+   * @param nc number of components
+   * @param temp temperature
+   * @param pres pressure
    * @return dm/dNi
    */
   public double calcdmSAFTdi(PhaseInterface phase, int nc, double temp, double pres) {
@@ -636,9 +636,9 @@ public class ComponentSAFTVRMie extends ComponentSrk {
    * Derivative of dispersion volume term with respect to moles of component i.
    *
    * @param phase the phase
-   * @param nc    number of components
-   * @param temp  temperature
-   * @param pres  pressure
+   * @param nc number of components
+   * @param temp temperature
+   * @param pres pressure
    * @return dVolTerm/dNi
    */
   public double calcdF1dispVolTermdn(PhaseInterface phase, int nc, double temp, double pres) {
@@ -652,9 +652,9 @@ public class ComponentSAFTVRMie extends ComponentSrk {
    * Calculates derivative of first-order dispersion sum term w.r.t. moles.
    *
    * @param phase the phase
-   * @param nc    number of components
-   * @param temp  temperature
-   * @param pres  pressure
+   * @param nc number of components
+   * @param temp temperature
+   * @param pres pressure
    * @return d(F1dispSumTerm)/dNi
    */
   public double calcF1dispSumTermdn(PhaseInterface phase, int nc, double temp, double pres) {
@@ -677,9 +677,9 @@ public class ComponentSAFTVRMie extends ComponentSrk {
    * Calculates derivative of first-order dispersion integral (I1) w.r.t. moles.
    *
    * @param phase the phase
-   * @param nc    number of components
-   * @param temp  temperature
-   * @param pres  pressure
+   * @param nc number of components
+   * @param temp temperature
+   * @param pres pressure
    * @return dI1/dNi
    */
   public double calcF1dispI1dn(PhaseInterface phase, int nc, double temp, double pres) {
@@ -691,9 +691,9 @@ public class ComponentSAFTVRMie extends ComponentSrk {
    * Calculates derivative of second-order dispersion sum term w.r.t. moles.
    *
    * @param phase the phase
-   * @param nc    number of components
-   * @param temp  temperature
-   * @param pres  pressure
+   * @param nc number of components
+   * @param temp temperature
+   * @param pres pressure
    * @return d(F2dispSumTerm)/dNi
    */
   public double calcF2dispSumTermdn(PhaseInterface phase, int nc, double temp, double pres) {
@@ -716,9 +716,9 @@ public class ComponentSAFTVRMie extends ComponentSrk {
    * Calculates derivative of second-order compression factor correction w.r.t. moles.
    *
    * @param phase the phase
-   * @param nc    number of components
-   * @param temp  temperature
-   * @param pres  pressure
+   * @param nc number of components
+   * @param temp temperature
+   * @param pres pressure
    * @return d(F2dispZHC)/dNi
    */
   public double calcF2dispZHCdn(PhaseInterface phase, int nc, double temp, double pres) {
@@ -751,9 +751,9 @@ public class ComponentSAFTVRMie extends ComponentSrk {
    * phases (no reliance on cached component fields).
    *
    * @param phase the phase
-   * @param nc    number of components
-   * @param temp  temperature
-   * @param pres  pressure
+   * @param nc number of components
+   * @param temp temperature
+   * @param pres pressure
    * @return dF_HC/dNi
    */
   public double dF_HC_SAFTdN(PhaseInterface phase, int nc, double temp, double pres) {
@@ -784,9 +784,9 @@ public class ComponentSAFTVRMie extends ComponentSrk {
    * on cloned phases.
    *
    * @param phase the phase
-   * @param nc    number of components
-   * @param temp  temperature
-   * @param pres  pressure
+   * @param nc number of components
+   * @param temp temperature
+   * @param pres pressure
    * @return dF_DISP/dNi
    */
   public double dF_DISP_SAFTdN(PhaseInterface phase, int nc, double temp, double pres) {

@@ -11,10 +11,10 @@ public class PipelineTest {
   /**
    * Creates and initializes a feed stream for the pipeline regression cases.
    *
-   * @param name        stream name
-   * @param flow        flow rate in MSm3/day
+   * @param name stream name
+   * @param flow flow rate in MSm3/day
    * @param temperature temperature in degrees Celsius
-   * @param pressure    pressure in bara
+   * @param pressure pressure in bara
    * @return initialized feed stream
    */
   private Stream createFeedStream(String name, double flow, double temperature, double pressure) {

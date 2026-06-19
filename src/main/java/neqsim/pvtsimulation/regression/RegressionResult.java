@@ -25,12 +25,12 @@ public class RegressionResult {
   /**
    * Create a regression result.
    *
-   * @param tunedFluid          the tuned fluid
-   * @param objectiveValues     objective function values by experiment type
-   * @param parameterConfigs    parameter configurations
-   * @param uncertainty         uncertainty analysis
+   * @param tunedFluid the tuned fluid
+   * @param objectiveValues objective function values by experiment type
+   * @param parameterConfigs parameter configurations
+   * @param uncertainty uncertainty analysis
    * @param optimizedParameters optimized parameter values
-   * @param finalChiSquare      final chi-square value
+   * @param finalChiSquare final chi-square value
    */
   public RegressionResult(SystemInterface tunedFluid, Map<ExperimentType, Double> objectiveValues,
       List<RegressionParameterConfig> parameterConfigs, UncertaintyAnalysis uncertainty, double[] optimizedParameters,

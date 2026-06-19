@@ -344,7 +344,7 @@ public class SISIntegratedRiskModel extends RiskModel implements Serializable {
   /**
    * Determines required SIL for an event to meet risk criteria.
    *
-   * @param eventName       event name
+   * @param eventName event name
    * @param consequenceType consequence type for criteria
    * @return required SIL (0 if no SIF needed, -1 if SIL4 insufficient)
    */

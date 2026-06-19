@@ -144,7 +144,7 @@ public class NetworkSolver implements Serializable {
   /**
    * Adds a well to the network.
    *
-   * @param well             integrated well system
+   * @param well integrated well system
    * @param flowlineLengthKm flowline length in km
    * @return this for chaining
    */
@@ -156,8 +156,8 @@ public class NetworkSolver implements Serializable {
   /**
    * Adds a well with flowline specifications.
    *
-   * @param well              integrated well system
-   * @param flowlineLengthKm  flowline length in km
+   * @param well integrated well system
+   * @param flowlineLengthKm flowline length in km
    * @param flowlineDiameterM flowline inner diameter in meters
    * @return this for chaining
    */
@@ -183,7 +183,7 @@ public class NetworkSolver implements Serializable {
    * Sets the manifold pressure constraint.
    *
    * @param pressure manifold pressure
-   * @param unit     pressure unit
+   * @param unit pressure unit
    * @return this for chaining
    */
   public NetworkSolver setManifoldPressure(double pressure, String unit) {
@@ -237,7 +237,7 @@ public class NetworkSolver implements Serializable {
    * Enables or disables a well.
    *
    * @param wellName well name
-   * @param enabled  true to enable, false to shut in
+   * @param enabled true to enable, false to shut in
    * @return this for chaining
    */
   public NetworkSolver setWellEnabled(String wellName, boolean enabled) {
@@ -254,7 +254,7 @@ public class NetworkSolver implements Serializable {
    * Sets the choke opening for a well.
    *
    * @param wellName well name
-   * @param opening  choke opening (0-1)
+   * @param opening choke opening (0-1)
    * @return this for chaining
    */
   public NetworkSolver setChokeOpening(String wellName, double opening) {
@@ -270,8 +270,8 @@ public class NetworkSolver implements Serializable {
   /**
    * Sets solver parameters.
    *
-   * @param tolerance  convergence tolerance (fraction)
-   * @param maxIter    maximum iterations
+   * @param tolerance convergence tolerance (fraction)
+   * @param maxIter maximum iterations
    * @param relaxation under-relaxation factor
    * @return this for chaining
    */
@@ -475,7 +475,7 @@ public class NetworkSolver implements Serializable {
   /**
    * Finds wellhead pressure required to achieve target rate.
    *
-   * @param node       the well node
+   * @param node the well node
    * @param targetRate target production rate in Sm3/day
    * @return wellhead pressure in bara required to achieve target rate
    */

@@ -272,9 +272,9 @@ public class WaterStripperColumn extends SimpleAbsorber {
    * calcNTU.
    * </p>
    *
-   * @param y0   a double
-   * @param y1   a double
-   * @param yb   a double
+   * @param y0 a double
+   * @param y1 a double
+   * @param yb a double
    * @param ymix a double
    * @return a double
    */
@@ -482,7 +482,7 @@ public class WaterStripperColumn extends SimpleAbsorber {
    * </p>
    *
    * @param waterDewPointTemperature a double
-   * @param dewPressure              a double
+   * @param dewPressure a double
    */
   public void setWaterDewPointTemperature(double waterDewPointTemperature, double dewPressure) {
     this.waterDewPointTemperature = waterDewPointTemperature;

@@ -64,7 +64,7 @@ public class VotingEvaluator<T> {
   /**
    * Adds an input to the voting group.
    *
-   * @param value  current value (Boolean or Double)
+   * @param value current value (Boolean or Double)
    * @param faulty true if this input is faulty
    */
   public void addInput(T value, boolean faulty) {

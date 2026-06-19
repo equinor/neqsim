@@ -66,7 +66,7 @@ public final class PackingSpecificationLibrary {
   /**
    * Register an extra alias for an existing packing specification.
    *
-   * @param alias         alias to register
+   * @param alias alias to register
    * @param specification specification to associate with the alias
    * @throws IllegalArgumentException if alias or specification is invalid
    */
@@ -184,15 +184,15 @@ public final class PackingSpecificationLibrary {
   /**
    * Register a random packing.
    *
-   * @param name                 packing name
-   * @param material             packing material
-   * @param nominalSizeMm        nominal size in millimetres
-   * @param specificArea         specific surface area in m2/m3
-   * @param voidFraction         void fraction
-   * @param packingFactor        packing factor in 1/m
+   * @param name packing name
+   * @param material packing material
+   * @param nominalSizeMm nominal size in millimetres
+   * @param specificArea specific surface area in m2/m3
+   * @param voidFraction void fraction
+   * @param packingFactor packing factor in 1/m
    * @param billetLiquidConstant Billet-Schultes liquid constant
-   * @param billetGasConstant    Billet-Schultes gas constant
-   * @param source               data source description
+   * @param billetGasConstant Billet-Schultes gas constant
+   * @param source data source description
    */
   private static void registerRandom(String name, String material, double nominalSizeMm, double specificArea,
       double voidFraction, double packingFactor, double billetLiquidConstant, double billetGasConstant, String source) {
@@ -203,14 +203,14 @@ public final class PackingSpecificationLibrary {
   /**
    * Register a structured packing.
    *
-   * @param name                 packing name
-   * @param material             packing material
-   * @param specificArea         specific surface area in m2/m3
-   * @param voidFraction         void fraction
-   * @param packingFactor        packing factor in 1/m
+   * @param name packing name
+   * @param material packing material
+   * @param specificArea specific surface area in m2/m3
+   * @param voidFraction void fraction
+   * @param packingFactor packing factor in 1/m
    * @param billetLiquidConstant Billet-Schultes liquid constant
-   * @param billetGasConstant    Billet-Schultes gas constant
-   * @param source               data source description
+   * @param billetGasConstant Billet-Schultes gas constant
+   * @param source data source description
    */
   private static void registerStructured(String name, String material, double specificArea, double voidFraction,
       double packingFactor, double billetLiquidConstant, double billetGasConstant, String source) {
@@ -313,7 +313,7 @@ public final class PackingSpecificationLibrary {
   /**
    * Parse a double with fallback.
    *
-   * @param text     value text to parse
+   * @param text value text to parse
    * @param fallback fallback value when text is empty or invalid
    * @return parsed double or fallback
    */
@@ -331,9 +331,9 @@ public final class PackingSpecificationLibrary {
   /**
    * Build a display name from CSV fields.
    *
-   * @param rawName  raw packing name from CSV
+   * @param rawName raw packing name from CSV
    * @param category packing category
-   * @param size     nominal size in millimetres
+   * @param size nominal size in millimetres
    * @return display name used by the registry
    */
   private static String displayName(String rawName, String category, double size) {

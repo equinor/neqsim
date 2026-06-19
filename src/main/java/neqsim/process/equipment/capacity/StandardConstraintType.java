@@ -203,9 +203,9 @@ public enum StandardConstraintType {
   /**
    * Creates a standard constraint type.
    *
-   * @param name        the constraint name
-   * @param unit        the unit of measurement
-   * @param type        the constraint type
+   * @param name the constraint name
+   * @param unit the unit of measurement
+   * @param type the constraint type
    * @param description the description
    */
   StandardConstraintType(String name, String unit, CapacityConstraint.ConstraintType type, String description) {

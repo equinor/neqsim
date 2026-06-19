@@ -164,7 +164,7 @@ public class GasCompressionTemplate implements ProcessTemplate {
   /**
    * Calculates the optimal number of compression stages.
    *
-   * @param inletPressure     inlet pressure in bara
+   * @param inletPressure inlet pressure in bara
    * @param dischargePressure discharge pressure in bara
    * @return optimal number of stages
    */

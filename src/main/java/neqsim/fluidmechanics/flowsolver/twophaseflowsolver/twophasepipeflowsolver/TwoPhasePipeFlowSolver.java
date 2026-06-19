@@ -48,9 +48,9 @@ public class TwoPhasePipeFlowSolver extends neqsim.fluidmechanics.flowsolver.one
    * Constructor for TwoPhasePipeFlowSolver.
    * </p>
    *
-   * @param pipe   a {@link neqsim.fluidmechanics.flowsystem.FlowSystemInterface} object
+   * @param pipe a {@link neqsim.fluidmechanics.flowsystem.FlowSystemInterface} object
    * @param length a double
-   * @param nodes  a int
+   * @param nodes a int
    */
   public TwoPhasePipeFlowSolver(FlowSystemInterface pipe, double length, int nodes) {
     this.pipe = pipe;

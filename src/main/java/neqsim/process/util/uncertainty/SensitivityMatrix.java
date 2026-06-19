@@ -27,7 +27,7 @@ public class SensitivityMatrix implements Serializable {
   /**
    * Creates a new sensitivity matrix.
    *
-   * @param inputVariables  names of input variables
+   * @param inputVariables names of input variables
    * @param outputVariables names of output variables
    */
   public SensitivityMatrix(String[] inputVariables, String[] outputVariables) {
@@ -50,8 +50,8 @@ public class SensitivityMatrix implements Serializable {
    * Sets a sensitivity value (partial derivative).
    *
    * @param outputVariable the output variable name
-   * @param inputVariable  the input variable name
-   * @param sensitivity    the partial derivative d(output)/d(input)
+   * @param inputVariable the input variable name
+   * @param sensitivity the partial derivative d(output)/d(input)
    */
   public void setSensitivity(String outputVariable, String inputVariable, double sensitivity) {
     Integer outIdx = outputIndex.get(outputVariable);
@@ -65,7 +65,7 @@ public class SensitivityMatrix implements Serializable {
    * Gets a sensitivity value.
    *
    * @param outputVariable the output variable name
-   * @param inputVariable  the input variable name
+   * @param inputVariable the input variable name
    * @return the partial derivative, or 0 if not found
    */
   public double getSensitivity(String outputVariable, String inputVariable) {
@@ -210,7 +210,7 @@ public class SensitivityMatrix implements Serializable {
   /**
    * Calculates normalized sensitivities (elasticities).
    *
-   * @param inputValues  current values of input variables
+   * @param inputValues current values of input variables
    * @param outputValues current values of output variables
    * @return normalized sensitivity matrix (% change in output / % change in input)
    */

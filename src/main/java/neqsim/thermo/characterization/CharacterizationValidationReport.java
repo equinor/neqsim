@@ -66,9 +66,9 @@ public class CharacterizationValidationReport {
   /**
    * Generate a validation report comparing source and characterized fluids.
    *
-   * @param source    the original source fluid
+   * @param source the original source fluid
    * @param reference the reference fluid used for characterization
-   * @param result    the characterized result fluid
+   * @param result the characterized result fluid
    * @return validation report
    */
   public static CharacterizationValidationReport generate(SystemInterface source, SystemInterface reference,

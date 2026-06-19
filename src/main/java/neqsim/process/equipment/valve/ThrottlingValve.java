@@ -117,7 +117,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
    * Constructor for ThrottlingValve.
    * </p>
    *
-   * @param name        a {@link java.lang.String} object
+   * @param name a {@link java.lang.String} object
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public ThrottlingValve(String name, StreamInterface inletStream) {
@@ -183,8 +183,8 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
    * {@link InadvertentValveOperationAnalyzer}. The valve must have been run at least once. Defaults: role = BLOCK, mode
    * = SPURIOUS_CLOSE.
    *
-   * @param role               functional role of the valve
-   * @param mode               inadvertent operation mode to evaluate
+   * @param role functional role of the valve
+   * @param mode inadvertent operation mode to evaluate
    * @param designPressureBara MAWP (bara) of the segment that becomes exposed by the IVO
    * @return analysis result with severity, frequency, overpressure factor and recommendations
    */
@@ -206,7 +206,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
    * </p>
    *
    * @param pressure a double
-   * @param unit     a {@link java.lang.String} object
+   * @param unit a {@link java.lang.String} object
    */
   public void setPressure(double pressure, String unit) {
     setOutletPressure(pressure, unit);
@@ -225,7 +225,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
    * </p>
    *
    * @param pressure a double
-   * @param unit     a {@link java.lang.String} object
+   * @param unit a {@link java.lang.String} object
    */
   @Override
   public void setOutletPressure(double pressure, String unit) {
@@ -335,7 +335,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
   /**
    * Adjusts the flow coefficient (Kv) based on the percentage valve opening.
    *
-   * @param Kv                  Flow coefficient SI (for 100% opening)
+   * @param Kv Flow coefficient SI (for 100% opening)
    * @param percentValveOpening Percentage valve opening (0 to 100).
    * @return Adjusted flow coefficient (Kv)
    */
@@ -435,7 +435,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
    * final fallback.
    *
    * @param thermoOps thermodynamic operations bound to the valve thermo system
-   * @param enthalpy  target total enthalpy in J
+   * @param enthalpy target total enthalpy in J
    */
   private void runPHflashWithNaNRetry(ThermodynamicOperations thermoOps, double enthalpy) {
     double preFlashTemperature = thermoSystem.getTemperature();
@@ -1155,7 +1155,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
    * </p>
    *
    * @param deltaPressure a double
-   * @param unit          a {@link java.lang.String} object
+   * @param unit a {@link java.lang.String} object
    */
   public void setDeltaPressure(double deltaPressure, String unit) {
     this.deltaPressure = deltaPressure;
@@ -1272,7 +1272,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
    * <li>&gt; 0.7: Very high risk - design changes needed</li>
    * </ul>
    *
-   * @param downstreamDiameter  downstream pipe diameter in meters
+   * @param downstreamDiameter downstream pipe diameter in meters
    * @param downstreamThickness downstream pipe wall thickness in meters
    * @return AIV likelihood of failure (0.0-1.0)
    */
@@ -1490,7 +1490,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
   /**
    * Auto-sizes the valve based on current flow conditions with specified design opening.
    *
-   * @param safetyFactor         safety factor to apply (e.g., 1.2 for 20% margin)
+   * @param safetyFactor safety factor to apply (e.g., 1.2 for 20% margin)
    * @param designOpeningPercent the target valve opening percentage at design flow (typically 50%)
    */
   public void autoSize(double safetyFactor, double designOpeningPercent) {

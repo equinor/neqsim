@@ -27,7 +27,7 @@ public class Filter extends TwoPortEquipment {
    * Constructor for Filter.
    * </p>
    *
-   * @param name     name of filter
+   * @param name name of filter
    * @param inStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public Filter(String name, StreamInterface inStream) {
@@ -78,7 +78,7 @@ public class Filter extends TwoPortEquipment {
    * </p>
    *
    * @param deltaP a double
-   * @param unit   a {@link java.lang.String} object
+   * @param unit a {@link java.lang.String} object
    */
   public void setDeltaP(double deltaP, String unit) {
     this.deltaP = deltaP;

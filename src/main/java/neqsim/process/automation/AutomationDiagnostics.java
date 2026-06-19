@@ -77,13 +77,13 @@ public class AutomationDiagnostics implements Serializable {
     /**
      * Creates a diagnostic result.
      *
-     * @param category       the error category
-     * @param originalInput  what the agent provided
-     * @param errorMessage   human-readable error description
-     * @param suggestions    ranked list of closest valid alternatives
+     * @param category the error category
+     * @param originalInput what the agent provided
+     * @param errorMessage human-readable error description
+     * @param suggestions ranked list of closest valid alternatives
      * @param autoCorrection the auto-corrected value (null if not possible)
-     * @param remediation    actionable fix instruction for the agent
-     * @param context        additional context information
+     * @param remediation actionable fix instruction for the agent
+     * @param context additional context information
      */
     public DiagnosticResult(ErrorCategory category, String originalInput, String errorMessage, List<String> suggestions,
 	String autoCorrection, String remediation, Map<String, Object> context) {
@@ -203,10 +203,10 @@ public class AutomationDiagnostics implements Serializable {
      * Creates an operation record.
      *
      * @param operationType the type of operation (get, set, list)
-     * @param address       the address used
-     * @param success       whether the operation succeeded
+     * @param address the address used
+     * @param success whether the operation succeeded
      * @param errorCategory the error category if failed, null if succeeded
-     * @param correction    the correction applied, null if none
+     * @param correction the correction applied, null if none
      */
     OperationRecord(String operationType, String address, boolean success, String errorCategory, String correction) {
       this.operationType = operationType;
@@ -253,7 +253,7 @@ public class AutomationDiagnostics implements Serializable {
   /**
    * Finds the closest matching unit name from a list of valid names using edit distance.
    *
-   * @param input      the input name that was not found
+   * @param input the input name that was not found
    * @param validNames the list of valid names to search
    * @param maxResults maximum number of suggestions to return
    * @return ranked list of closest matches
@@ -290,7 +290,7 @@ public class AutomationDiagnostics implements Serializable {
    * Tries: case-insensitive match, trimmed whitespace, partial substring match, and previously learned corrections.
    * </p>
    *
-   * @param input      the unit name to correct
+   * @param input the unit name to correct
    * @param validNames the list of valid names
    * @return the corrected name, or null if no confident correction found
    */
@@ -358,7 +358,7 @@ public class AutomationDiagnostics implements Serializable {
   /**
    * Diagnoses a unit-not-found error and returns structured remediation.
    *
-   * @param unitName   the name that was not found
+   * @param unitName the name that was not found
    * @param validUnits list of valid unit names in the process
    * @return diagnostic result with suggestions and auto-correction
    */
@@ -389,9 +389,9 @@ public class AutomationDiagnostics implements Serializable {
   /**
    * Diagnoses a property-not-found error and returns structured remediation.
    *
-   * @param address        the full address that was not resolved
-   * @param unitName       the unit name
-   * @param propertyName   the property that was not found
+   * @param address the full address that was not resolved
+   * @param unitName the unit name
+   * @param propertyName the property that was not found
    * @param validVariables the valid variables for that unit
    * @return diagnostic result with suggestions and auto-correction
    */
@@ -450,9 +450,9 @@ public class AutomationDiagnostics implements Serializable {
   /**
    * Diagnoses a port-not-found error.
    *
-   * @param address    the full address
-   * @param unitName   the unit name
-   * @param portName   the port that was not found
+   * @param address the full address
+   * @param unitName the unit name
+   * @param portName the port that was not found
    * @param validPorts known valid port names for the equipment type
    * @return diagnostic result with suggestions
    */
@@ -482,8 +482,8 @@ public class AutomationDiagnostics implements Serializable {
    * Validates a value against known physical bounds for a property.
    *
    * @param propertyName the property being set
-   * @param value        the value to validate
-   * @param unit         the unit of the value
+   * @param value the value to validate
+   * @param unit the unit of the value
    * @return diagnostic result if out of bounds, null if valid
    */
   public DiagnosticResult validatePhysicalBounds(String propertyName, double value, String unit) {
@@ -530,7 +530,7 @@ public class AutomationDiagnostics implements Serializable {
    * Records a successful operation.
    *
    * @param operationType the type of operation (get, set, list)
-   * @param address       the address used
+   * @param address the address used
    */
   public void recordSuccess(String operationType, String address) {
     addRecord(new OperationRecord(operationType, address, true, null, null));
@@ -540,9 +540,9 @@ public class AutomationDiagnostics implements Serializable {
    * Records a failed operation with its correction.
    *
    * @param operationType the type of operation (get, set, list)
-   * @param address       the address that failed
-   * @param category      the error category
-   * @param correction    the correction that was applied, or null
+   * @param address the address that failed
+   * @param category the error category
+   * @param correction the correction that was applied, or null
    */
   public void recordFailure(String operationType, String address, ErrorCategory category, String correction) {
     addRecord(new OperationRecord(operationType, address, false, category.name(), correction));
@@ -819,7 +819,7 @@ public class AutomationDiagnostics implements Serializable {
    * Returns physical bounds for common properties.
    *
    * @param propertyName the property name
-   * @param unit         the unit of measurement
+   * @param unit the unit of measurement
    * @return physical bounds, or null if unknown
    */
   private PhysicalBound getPhysicalBound(String propertyName, String unit) {
@@ -883,7 +883,7 @@ public class AutomationDiagnostics implements Serializable {
     /**
      * Creates a scored name entry.
      *
-     * @param name  the name
+     * @param name the name
      * @param score the match score
      */
     ScoredName(String name, double score) {

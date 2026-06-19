@@ -28,10 +28,10 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
    * Constructor for ComponentHydratePVTsim.
    * </p>
    *
-   * @param name         Name of component.
-   * @param moles        Total number of moles of component.
+   * @param name Name of component.
+   * @param moles Total number of moles of component.
    * @param molesInPhase Number of moles in phase.
-   * @param compIndex    Index number of component in phase object component array.
+   * @param compIndex Index number of component in phase object component array.
    */
   public ComponentHydratePVTsim(String name, double moles, double molesInPhase, int compIndex) {
     super(name, moles, molesInPhase, compIndex);
@@ -201,10 +201,10 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
    * calcDeltaChemPot.
    * </p>
    *
-   * @param phase         a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComps a int
-   * @param temp          a double
-   * @param pres          a double
+   * @param temp a double
+   * @param pres a double
    * @param hydrateStruct a int
    * @return a double
    */

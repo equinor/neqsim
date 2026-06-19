@@ -52,12 +52,12 @@ public final class BellDelawareMethod {
    * <li>Inline (square): Nu = 0.27 * Re^0.63 * Pr^0.36 * (Pr/Pr_w)^0.25</li>
    * </ul>
    *
-   * @param massFlux        shell-side mass flux through crossflow area (kg/(m2*s))
-   * @param tubeOD          tube outer diameter (m)
-   * @param mu              shell-side fluid viscosity (Pa*s)
-   * @param cp              shell-side fluid heat capacity (J/(kg*K))
-   * @param k               shell-side fluid thermal conductivity (W/(m*K))
-   * @param muWall          viscosity at tube wall temperature (Pa*s), use mu if unknown
+   * @param massFlux shell-side mass flux through crossflow area (kg/(m2*s))
+   * @param tubeOD tube outer diameter (m)
+   * @param mu shell-side fluid viscosity (Pa*s)
+   * @param cp shell-side fluid heat capacity (J/(kg*K))
+   * @param k shell-side fluid thermal conductivity (W/(m*K))
+   * @param muWall viscosity at tube wall temperature (Pa*s), use mu if unknown
    * @param triangularPitch true for triangular (staggered), false for square (inline)
    * @return ideal crossflow heat transfer coefficient (W/(m2*K))
    */
@@ -109,12 +109,12 @@ public final class BellDelawareMethod {
    * Kern correlation: h = 0.36 * (k/D_e) * Re^0.55 * Pr^(1/3) * (mu/mu_w)^0.14
    * </p>
    *
-   * @param massFlux           mass flux based on shell-side crossflow area (kg/(m2*s))
+   * @param massFlux mass flux based on shell-side crossflow area (kg/(m2*s))
    * @param shellEquivDiameter shell-side equivalent diameter (m)
-   * @param mu                 shell-side fluid viscosity (Pa*s)
-   * @param cp                 shell-side fluid heat capacity (J/(kg*K))
-   * @param k                  shell-side fluid thermal conductivity (W/(m*K))
-   * @param muWall             viscosity at wall temperature (Pa*s), use mu if unknown
+   * @param mu shell-side fluid viscosity (Pa*s)
+   * @param cp shell-side fluid heat capacity (J/(kg*K))
+   * @param k shell-side fluid thermal conductivity (W/(m*K))
+   * @param muWall viscosity at wall temperature (Pa*s), use mu if unknown
    * @return shell-side heat transfer coefficient (W/(m2*K))
    */
   public static double calcKernShellSideHTC(double massFlux, double shellEquivDiameter, double mu, double cp, double k,
@@ -138,13 +138,13 @@ public final class BellDelawareMethod {
    * dP = f * D_s * (N_b + 1) * rho * v^2 / (2 * D_e * (mu/mu_w)^0.14)
    * </p>
    *
-   * @param massFlux           mass flux based on crossflow area (kg/(m2*s))
+   * @param massFlux mass flux based on crossflow area (kg/(m2*s))
    * @param shellEquivDiameter shell-side equivalent diameter (m)
-   * @param shellDiameter      shell inside diameter (m)
-   * @param baffleCount        number of baffles
-   * @param rho                shell-side fluid density (kg/m3)
-   * @param mu                 shell-side fluid viscosity (Pa*s)
-   * @param muWall             viscosity at wall temperature (Pa*s), use mu if unknown
+   * @param shellDiameter shell inside diameter (m)
+   * @param baffleCount number of baffles
+   * @param rho shell-side fluid density (kg/m3)
+   * @param mu shell-side fluid viscosity (Pa*s)
+   * @param muWall viscosity at wall temperature (Pa*s), use mu if unknown
    * @return shell-side pressure drop (Pa)
    */
   public static double calcKernShellSidePressureDrop(double massFlux, double shellEquivDiameter, double shellDiameter,
@@ -173,8 +173,8 @@ public final class BellDelawareMethod {
   /**
    * Calculates the shell-side equivalent diameter for use in the Kern method.
    *
-   * @param tubeOD          tube outer diameter (m)
-   * @param tubePitch       tube pitch (m)
+   * @param tubeOD tube outer diameter (m)
+   * @param tubePitch tube pitch (m)
    * @param triangularPitch true for triangular layout, false for square layout
    * @return equivalent diameter (m)
    */
@@ -199,10 +199,10 @@ public final class BellDelawareMethod {
   /**
    * Calculates the shell-side crossflow area at the bundle centerline.
    *
-   * @param shellID       shell inside diameter (m)
+   * @param shellID shell inside diameter (m)
    * @param baffleSpacing central baffle spacing (m)
-   * @param tubeOD        tube outer diameter (m)
-   * @param tubePitch     tube pitch (m)
+   * @param tubeOD tube outer diameter (m)
+   * @param tubePitch tube pitch (m)
    * @return crossflow area (m2)
    */
   public static double calcCrossflowArea(double shellID, double baffleSpacing, double tubeOD, double tubePitch) {
@@ -242,12 +242,12 @@ public final class BellDelawareMethod {
    * 0.9.
    * </p>
    *
-   * @param tubeToBaffleClearance  tube-to-baffle hole clearance (m)
+   * @param tubeToBaffleClearance tube-to-baffle hole clearance (m)
    * @param shellToBaffleClearance shell-to-baffle clearance (m)
-   * @param crossflowArea          crossflow area at bundle centerline (m2)
-   * @param tubeCount              number of tubes
-   * @param tubeOD                 tube outer diameter (m)
-   * @param baffleSpacing          baffle spacing (m)
+   * @param crossflowArea crossflow area at bundle centerline (m2)
+   * @param tubeCount number of tubes
+   * @param tubeOD tube outer diameter (m)
+   * @param baffleSpacing baffle spacing (m)
    * @return J_l correction factor
    */
   public static double calcJl(double tubeToBaffleClearance, double shellToBaffleClearance, double crossflowArea,
@@ -277,10 +277,10 @@ public final class BellDelawareMethod {
    * J_b accounts for the bypass flow between the outermost tubes and the shell wall. Typical range: 0.7 to 1.0.
    * </p>
    *
-   * @param bypassArea        bypass flow area between bundle and shell (m2)
-   * @param crossflowArea     crossflow area at bundle centerline (m2)
-   * @param hasSealing        true if sealing strips are installed
-   * @param sealingPairs      number of sealing strip pairs
+   * @param bypassArea bypass flow area between bundle and shell (m2)
+   * @param crossflowArea crossflow area at bundle centerline (m2)
+   * @param hasSealing true if sealing strips are installed
+   * @param sealingPairs number of sealing strip pairs
    * @param tubeRowsCrossflow number of tube rows in crossflow
    * @return J_b correction factor
    */
@@ -314,9 +314,9 @@ public final class BellDelawareMethod {
    * </p>
    *
    * @param centralSpacing central baffle spacing (m)
-   * @param inletSpacing   inlet baffle spacing (m)
-   * @param outletSpacing  outlet baffle spacing (m)
-   * @param baffleCount    number of baffles
+   * @param inletSpacing inlet baffle spacing (m)
+   * @param outletSpacing outlet baffle spacing (m)
+   * @param baffleCount number of baffles
    * @return J_s correction factor
    */
   public static double calcJs(double centralSpacing, double inletSpacing, double outletSpacing, int baffleCount) {
@@ -347,7 +347,7 @@ public final class BellDelawareMethod {
    * tube bank. For turbulent flow (Re &gt; 100), J_r = 1.0.
    * </p>
    *
-   * @param Re                shell-side Reynolds number based on tube OD
+   * @param Re shell-side Reynolds number based on tube OD
    * @param tubeRowsCrossflow number of effective tube rows in crossflow
    * @return J_r correction factor
    */
@@ -373,11 +373,11 @@ public final class BellDelawareMethod {
    * Calculates the fully corrected Bell-Delaware shell-side heat transfer coefficient.
    *
    * @param hIdeal ideal crossflow HTC from calcIdealCrossflowHTC (W/(m2*K))
-   * @param Jc     baffle cut correction factor
-   * @param Jl     leakage correction factor
-   * @param Jb     bypass correction factor
-   * @param Js     spacing correction factor
-   * @param Jr     laminar temperature gradient correction factor
+   * @param Jc baffle cut correction factor
+   * @param Jl leakage correction factor
+   * @param Jb bypass correction factor
+   * @param Js spacing correction factor
+   * @param Jr laminar temperature gradient correction factor
    * @return corrected shell-side HTC (W/(m2*K))
    */
   public static double calcCorrectedHTC(double hIdeal, double Jc, double Jl, double Jb, double Js, double Jr) {
@@ -395,12 +395,12 @@ public final class BellDelawareMethod {
    * R_l is typically more significant for pressure drop than for heat transfer. Typical range: 0.4 to 0.8.
    * </p>
    *
-   * @param tubeToBaffleClearance  tube-to-baffle hole clearance (m)
+   * @param tubeToBaffleClearance tube-to-baffle hole clearance (m)
    * @param shellToBaffleClearance shell-to-baffle clearance (m)
-   * @param crossflowArea          crossflow area at bundle centerline (m2)
-   * @param tubeCount              number of tubes
-   * @param tubeOD                 tube outer diameter (m)
-   * @param baffleSpacing          baffle spacing (m)
+   * @param crossflowArea crossflow area at bundle centerline (m2)
+   * @param tubeCount number of tubes
+   * @param tubeOD tube outer diameter (m)
+   * @param baffleSpacing baffle spacing (m)
    * @return R_l pressure drop leakage correction factor
    */
   public static double calcRl(double tubeToBaffleClearance, double shellToBaffleClearance, double crossflowArea,
@@ -422,10 +422,10 @@ public final class BellDelawareMethod {
   /**
    * Calculates R_b, the bypass correction factor for pressure drop.
    *
-   * @param bypassArea        bypass flow area (m2)
-   * @param crossflowArea     crossflow area (m2)
-   * @param hasSealing        true if sealing strips are installed
-   * @param sealingPairs      number of sealing strip pairs
+   * @param bypassArea bypass flow area (m2)
+   * @param crossflowArea crossflow area (m2)
+   * @param hasSealing true if sealing strips are installed
+   * @param sealingPairs number of sealing strip pairs
    * @param tubeRowsCrossflow number of tube rows in crossflow
    * @return R_b pressure drop bypass correction factor
    */
@@ -453,10 +453,10 @@ public final class BellDelawareMethod {
    * Calculates the ideal crossflow pressure drop for one baffle compartment.
    *
    * @param tubeRowsCrossflow number of tube rows crossed
-   * @param massFlux          mass flux through crossflow area (kg/(m2*s))
-   * @param rho               fluid density (kg/m3)
-   * @param Re                Reynolds number based on tube OD
-   * @param triangularPitch   true for triangular layout
+   * @param massFlux mass flux through crossflow area (kg/(m2*s))
+   * @param rho fluid density (kg/m3)
+   * @param Re Reynolds number based on tube OD
+   * @param triangularPitch true for triangular layout
    * @return ideal crossflow pressure drop for one compartment (Pa)
    */
   public static double calcIdealCrossflowDP(int tubeRowsCrossflow, double massFlux, double rho, double Re,
@@ -487,9 +487,9 @@ public final class BellDelawareMethod {
   /**
    * Calculates the window-zone pressure drop per baffle.
    *
-   * @param windowArea     net baffle window flow area (m2)
-   * @param massFlowRate   total shell-side mass flow rate (kg/s)
-   * @param rho            fluid density (kg/m3)
+   * @param windowArea net baffle window flow area (m2)
+   * @param massFlowRate total shell-side mass flow rate (kg/s)
+   * @param rho fluid density (kg/m3)
    * @param tubeRowsWindow number of effective tube rows in window
    * @return window pressure drop per baffle (Pa)
    */
@@ -523,9 +523,9 @@ public final class BellDelawareMethod {
   /**
    * Estimates the number of tube rows in the crossflow zone.
    *
-   * @param shellID         shell inside diameter (m)
-   * @param baffleCut       fractional baffle cut
-   * @param tubePitch       tube pitch (m)
+   * @param shellID shell inside diameter (m)
+   * @param baffleCut fractional baffle cut
+   * @param tubePitch tube pitch (m)
    * @param triangularPitch true for triangular layout
    * @return estimated number of tube rows in crossflow
    */
@@ -545,9 +545,9 @@ public final class BellDelawareMethod {
   /**
    * Calculates the bypass flow area between the outermost tubes and the shell wall.
    *
-   * @param shellID        shell inside diameter (m)
+   * @param shellID shell inside diameter (m)
    * @param bundleDiameter outer tube limit diameter (m)
-   * @param baffleSpacing  baffle spacing (m)
+   * @param baffleSpacing baffle spacing (m)
    * @return bypass area (m2)
    */
   public static double calcBypassArea(double shellID, double bundleDiameter, double baffleSpacing) {

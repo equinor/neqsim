@@ -121,7 +121,7 @@ public class WindFarm extends ProcessEquipmentBaseClass {
   /**
    * Construct with name and number of turbines.
    *
-   * @param name             equipment name
+   * @param name equipment name
    * @param numberOfTurbines number of wind turbines
    */
   public WindFarm(String name, int numberOfTurbines) {

@@ -623,7 +623,7 @@ public class CompressorDesignFeasibilityReport {
   /**
    * Safely parse a double value.
    *
-   * @param value        string value
+   * @param value string value
    * @param defaultValue default if parsing fails
    * @return parsed value
    */
@@ -638,7 +638,7 @@ public class CompressorDesignFeasibilityReport {
   /**
    * Safely parse an int value.
    *
-   * @param value        string value
+   * @param value string value
    * @param defaultValue default if parsing fails
    * @return parsed value
    */
@@ -887,7 +887,7 @@ public class CompressorDesignFeasibilityReport {
   /**
    * Round a double value to the specified number of decimal places.
    *
-   * @param value    the value to round
+   * @param value the value to round
    * @param decimals number of decimal places
    * @return rounded value
    */
@@ -945,7 +945,7 @@ public class CompressorDesignFeasibilityReport {
      *
      * @param severity issue severity
      * @param category category code (e.g. "TEMPERATURE", "TIP_SPEED")
-     * @param message  descriptive message
+     * @param message descriptive message
      */
     public FeasibilityIssue(IssueSeverity severity, String category, String message) {
       this.severity = severity;

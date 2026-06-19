@@ -93,7 +93,7 @@ public class ESPPump extends Pump {
   /**
    * Constructor for ESPPump.
    *
-   * @param name        name of ESP pump
+   * @param name name of ESP pump
    * @param inletStream inlet stream
    */
   public ESPPump(String name, StreamInterface inletStream) {

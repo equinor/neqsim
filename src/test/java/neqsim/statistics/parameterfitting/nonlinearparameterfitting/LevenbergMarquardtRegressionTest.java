@@ -121,10 +121,10 @@ class LevenbergMarquardtRegressionTest {
   /**
    * Creates a sample value with the supplied function.
    *
-   * @param value             measured sample value
+   * @param value measured sample value
    * @param standardDeviation measured sample standard deviation
-   * @param dependentValues   independent variable values
-   * @param function          fitting function to evaluate
+   * @param dependentValues independent variable values
+   * @param function fitting function to evaluate
    * @return sample value configured with the function
    */
   private static SampleValue createSample(double value, double standardDeviation, double[] dependentValues,
@@ -185,7 +185,7 @@ class LevenbergMarquardtRegressionTest {
     /**
      * Creates a linear function.
      *
-     * @param initialSlope     initial slope value
+     * @param initialSlope initial slope value
      * @param initialIntercept initial intercept value
      */
     LinearParameterFunction(double initialSlope, double initialIntercept) {

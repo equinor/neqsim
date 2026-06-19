@@ -34,11 +34,11 @@ public class RateUnit extends neqsim.util.unit.BaseUnit {
    * Constructor for RateUnit.
    * </p>
    *
-   * @param value     a double
-   * @param name      a {@link java.lang.String} object
+   * @param value a double
+   * @param name a {@link java.lang.String} object
    * @param molarmass a double
-   * @param stddens   a double
-   * @param boilp     a double
+   * @param stddens a double
+   * @param boilp a double
    */
   public RateUnit(double value, String name, double molarmass, double stddens, double boilp) {
     super(value, name);

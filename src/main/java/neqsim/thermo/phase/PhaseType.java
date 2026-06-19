@@ -43,7 +43,7 @@ public enum PhaseType {
   /**
    * Constructor for PhaseType enum.
    *
-   * @param desc  Single word descriptor of phase type
+   * @param desc Single word descriptor of phase type
    * @param value Numeric value index for phase type
    */
   private PhaseType(String desc, int value) {

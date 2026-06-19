@@ -132,12 +132,12 @@ public class ProcessSimulationEvaluator implements Serializable {
     /**
      * Constructor with all fields.
      *
-     * @param name          parameter name
+     * @param name parameter name
      * @param equipmentName equipment name
-     * @param propertyName  property name
-     * @param lowerBound    lower bound
-     * @param upperBound    upper bound
-     * @param unit          unit of measurement
+     * @param propertyName property name
+     * @param lowerBound lower bound
+     * @param upperBound upper bound
+     * @param unit unit of measurement
      */
     public ParameterDefinition(String name, String equipmentName, String propertyName, double lowerBound,
 	double upperBound, String unit) {
@@ -262,7 +262,7 @@ public class ProcessSimulationEvaluator implements Serializable {
     /**
      * Constructor with evaluator.
      *
-     * @param name      objective name
+     * @param name objective name
      * @param evaluator evaluation function
      * @param direction optimization direction
      */
@@ -377,8 +377,8 @@ public class ProcessSimulationEvaluator implements Serializable {
     /**
      * Constructor for lower bound constraint (g(x) &gt;= bound).
      *
-     * @param name       constraint name
-     * @param evaluator  evaluation function
+     * @param name constraint name
+     * @param evaluator evaluation function
      * @param lowerBound lower bound value
      */
     public ConstraintDefinition(String name, ToDoubleFunction<ProcessSystem> evaluator, double lowerBound) {
@@ -391,8 +391,8 @@ public class ProcessSimulationEvaluator implements Serializable {
     /**
      * Constructor for range constraint.
      *
-     * @param name       constraint name
-     * @param evaluator  evaluation function
+     * @param name constraint name
+     * @param evaluator evaluation function
      * @param lowerBound lower bound
      * @param upperBound upper bound
      */
@@ -784,10 +784,10 @@ public class ProcessSimulationEvaluator implements Serializable {
    * Adds a parameter (decision variable) for optimization.
    *
    * @param equipmentName name of the equipment
-   * @param propertyName  property to vary (flowRate, pressure, temperature, etc.)
-   * @param lowerBound    lower bound
-   * @param upperBound    upper bound
-   * @param unit          unit of measurement
+   * @param propertyName property to vary (flowRate, pressure, temperature, etc.)
+   * @param lowerBound lower bound
+   * @param upperBound upper bound
+   * @param unit unit of measurement
    * @return this evaluator for chaining
    */
   public ProcessSimulationEvaluator addParameter(String equipmentName, String propertyName, double lowerBound,
@@ -802,11 +802,11 @@ public class ProcessSimulationEvaluator implements Serializable {
   /**
    * Adds a parameter with a custom setter function.
    *
-   * @param name       parameter name
-   * @param setter     function to set the parameter value
+   * @param name parameter name
+   * @param setter function to set the parameter value
    * @param lowerBound lower bound
    * @param upperBound upper bound
-   * @param unit       unit of measurement
+   * @param unit unit of measurement
    * @return this evaluator for chaining
    */
   public ProcessSimulationEvaluator addParameterWithSetter(String name,
@@ -900,7 +900,7 @@ public class ProcessSimulationEvaluator implements Serializable {
   /**
    * Adds an objective function to minimize.
    *
-   * @param name      objective name
+   * @param name objective name
    * @param evaluator function that evaluates the objective
    * @return this evaluator for chaining
    */
@@ -912,7 +912,7 @@ public class ProcessSimulationEvaluator implements Serializable {
   /**
    * Adds an objective function with direction.
    *
-   * @param name      objective name
+   * @param name objective name
    * @param evaluator function that evaluates the objective
    * @param direction MINIMIZE or MAXIMIZE
    * @return this evaluator for chaining
@@ -926,10 +926,10 @@ public class ProcessSimulationEvaluator implements Serializable {
   /**
    * Adds a weighted objective function.
    *
-   * @param name      objective name
+   * @param name objective name
    * @param evaluator function that evaluates the objective
    * @param direction MINIMIZE or MAXIMIZE
-   * @param weight    weight for multi-objective optimization
+   * @param weight weight for multi-objective optimization
    * @return this evaluator for chaining
    */
   public ProcessSimulationEvaluator addObjective(String name, ToDoubleFunction<ProcessSystem> evaluator,
@@ -965,8 +965,8 @@ public class ProcessSimulationEvaluator implements Serializable {
   /**
    * Adds a constraint: g(x) &gt;= lowerBound.
    *
-   * @param name       constraint name
-   * @param evaluator  function that evaluates g(x)
+   * @param name constraint name
+   * @param evaluator function that evaluates g(x)
    * @param lowerBound minimum allowed value
    * @return this evaluator for chaining
    */
@@ -981,8 +981,8 @@ public class ProcessSimulationEvaluator implements Serializable {
   /**
    * Adds a constraint: g(x) &lt;= upperBound.
    *
-   * @param name       constraint name
-   * @param evaluator  function that evaluates g(x)
+   * @param name constraint name
+   * @param evaluator function that evaluates g(x)
    * @param upperBound maximum allowed value
    * @return this evaluator for chaining
    */
@@ -1000,8 +1000,8 @@ public class ProcessSimulationEvaluator implements Serializable {
   /**
    * Adds a range constraint: lowerBound &lt;= g(x) &lt;= upperBound.
    *
-   * @param name       constraint name
-   * @param evaluator  function that evaluates g(x)
+   * @param name constraint name
+   * @param evaluator function that evaluates g(x)
    * @param lowerBound minimum value
    * @param upperBound maximum value
    * @return this evaluator for chaining
@@ -1016,9 +1016,9 @@ public class ProcessSimulationEvaluator implements Serializable {
   /**
    * Adds an equality constraint: g(x) == target (within tolerance).
    *
-   * @param name      constraint name
+   * @param name constraint name
    * @param evaluator function that evaluates g(x)
-   * @param target    target value
+   * @param target target value
    * @param tolerance allowed deviation
    * @return this evaluator for chaining
    */
@@ -1235,7 +1235,7 @@ public class ProcessSimulationEvaluator implements Serializable {
    * Sets parameter values on the process.
    *
    * @param process the process system
-   * @param x       parameter values
+   * @param x parameter values
    */
   private void setParameterValues(ProcessSystem process, double[] x) {
     for (int i = 0; i < parameters.size(); i++) {
@@ -1255,11 +1255,11 @@ public class ProcessSimulationEvaluator implements Serializable {
   /**
    * Sets a property on equipment by name.
    *
-   * @param process       the process system
+   * @param process the process system
    * @param equipmentName equipment name
-   * @param propertyName  property name
-   * @param value         value to set
-   * @param unit          unit of measurement
+   * @param propertyName property name
+   * @param value value to set
+   * @param unit unit of measurement
    */
   private void setEquipmentProperty(ProcessSystem process, String equipmentName, String propertyName, double value,
       String unit) {
@@ -1320,7 +1320,7 @@ public class ProcessSimulationEvaluator implements Serializable {
   /**
    * Estimates the gradient of a specific objective using finite differences.
    *
-   * @param x              parameter values
+   * @param x parameter values
    * @param objectiveIndex which objective (0-based)
    * @return gradient array
    */

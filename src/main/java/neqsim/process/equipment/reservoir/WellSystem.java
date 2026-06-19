@@ -232,11 +232,11 @@ public class WellSystem extends ProcessEquipmentBaseClass {
     /**
      * Create a reservoir layer.
      *
-     * @param name              layer name
-     * @param stream            fluid stream from layer
-     * @param khFraction        fraction of total kh (permeability × thickness)
+     * @param name layer name
+     * @param stream fluid stream from layer
+     * @param khFraction fraction of total kh (permeability × thickness)
      * @param reservoirPressure initial reservoir pressure (bara)
-     * @param pi                productivity index
+     * @param pi productivity index
      */
     public ReservoirLayer(String name, StreamInterface stream, double khFraction, double reservoirPressure, double pi) {
       this.name = name;
@@ -307,7 +307,7 @@ public class WellSystem extends ProcessEquipmentBaseClass {
    * ProcessSystem sequential building.
    * </p>
    *
-   * @param name        well name
+   * @param name well name
    * @param inletStream reservoir/inlet stream
    */
   public WellSystem(String name, StreamInterface inletStream) {
@@ -373,7 +373,7 @@ public class WellSystem extends ProcessEquipmentBaseClass {
   /**
    * Set productivity index for PI model.
    *
-   * @param pi   productivity index
+   * @param pi productivity index
    * @param unit PI unit ("Sm3/day/bar2", "bbl/day/psi2", "Sm3/day/bar")
    */
   public void setProductionIndex(double pi, String unit) {
@@ -393,9 +393,9 @@ public class WellSystem extends ProcessEquipmentBaseClass {
   /**
    * Set Vogel IPR parameters.
    *
-   * @param qTest   test flow rate (same unit as stream)
+   * @param qTest test flow rate (same unit as stream)
    * @param pwfTest test BHP (bara)
-   * @param pRes    reservoir pressure (bara)
+   * @param pRes reservoir pressure (bara)
    */
   public void setVogelParameters(double qTest, double pwfTest, double pRes) {
     this.iprModel = IPRModel.VOGEL;
@@ -408,8 +408,8 @@ public class WellSystem extends ProcessEquipmentBaseClass {
   /**
    * Set Fetkovich IPR parameters.
    *
-   * @param c    Fetkovich C coefficient
-   * @param n    Fetkovich exponent (typically 0.5-1.0)
+   * @param c Fetkovich C coefficient
+   * @param n Fetkovich exponent (typically 0.5-1.0)
    * @param pRes reservoir pressure (bara)
    */
   public void setFetkovichParameters(double c, double n, double pRes) {
@@ -426,8 +426,8 @@ public class WellSystem extends ProcessEquipmentBaseClass {
    * Equation: Pr² - Pwf² = a·q + b·q² where b captures turbulence.
    * </p>
    *
-   * @param a    Darcy coefficient
-   * @param b    non-Darcy coefficient
+   * @param a Darcy coefficient
+   * @param b non-Darcy coefficient
    * @param pRes reservoir pressure (bara)
    */
   public void setBackpressureParameters(double a, double b, double pRes) {
@@ -441,7 +441,7 @@ public class WellSystem extends ProcessEquipmentBaseClass {
    * Set tubing length (measured depth).
    *
    * @param length tubing length
-   * @param unit   length unit ("m", "ft")
+   * @param unit length unit ("m", "ft")
    */
   public void setTubingLength(double length, String unit) {
     if (unit.equalsIgnoreCase("ft")) {
@@ -455,7 +455,7 @@ public class WellSystem extends ProcessEquipmentBaseClass {
    * Set tubing inner diameter.
    *
    * @param diameter inner diameter
-   * @param unit     diameter unit ("m", "in", "mm")
+   * @param unit diameter unit ("m", "in", "mm")
    */
   public void setTubingDiameter(double diameter, String unit) {
     switch (unit.toLowerCase()) {
@@ -560,7 +560,7 @@ public class WellSystem extends ProcessEquipmentBaseClass {
    * Set bottom-hole temperature.
    *
    * @param temperature temperature
-   * @param unit        temperature unit ("K", "C", "F")
+   * @param unit temperature unit ("K", "C", "F")
    */
   public void setBottomHoleTemperature(double temperature, String unit) {
     switch (unit.toUpperCase()) {
@@ -579,7 +579,7 @@ public class WellSystem extends ProcessEquipmentBaseClass {
    * Set wellhead temperature.
    *
    * @param temperature temperature
-   * @param unit        temperature unit ("K", "C", "F")
+   * @param unit temperature unit ("K", "C", "F")
    */
   public void setWellheadTemperature(double temperature, String unit) {
     switch (unit.toUpperCase()) {
@@ -598,7 +598,7 @@ public class WellSystem extends ProcessEquipmentBaseClass {
    * Set target wellhead pressure (back-pressure constraint).
    *
    * @param pressure wellhead pressure
-   * @param unit     pressure unit ("bara", "barg", "psia")
+   * @param unit pressure unit ("bara", "barg", "psia")
    */
   public void setWellheadPressure(double pressure, String unit) {
     switch (unit.toLowerCase()) {
@@ -625,11 +625,11 @@ public class WellSystem extends ProcessEquipmentBaseClass {
   /**
    * Add a reservoir layer for commingled production.
    *
-   * @param name              layer name
-   * @param stream            stream from this layer
-   * @param khFraction        fraction of total kh
+   * @param name layer name
+   * @param stream stream from this layer
+   * @param khFraction fraction of total kh
    * @param reservoirPressure initial reservoir pressure (bara)
-   * @param pi                productivity index
+   * @param pi productivity index
    */
   public void addLayer(String name, StreamInterface stream, double khFraction, double reservoirPressure, double pi) {
     layers.add(new ReservoirLayer(name, stream, khFraction, reservoirPressure, pi));

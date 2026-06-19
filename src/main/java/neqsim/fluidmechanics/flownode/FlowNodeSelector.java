@@ -50,7 +50,7 @@ public class FlowNodeSelector {
    * setFlowPattern.
    * </p>
    *
-   * @param flowNode    an array of {@link neqsim.fluidmechanics.flownode.FlowNodeInterface} objects
+   * @param flowNode an array of {@link neqsim.fluidmechanics.flownode.FlowNodeInterface} objects
    * @param flowPattern a {@link java.lang.String} object
    */
   public void setFlowPattern(FlowNodeInterface[] flowNode, String flowPattern) {

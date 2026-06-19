@@ -101,9 +101,9 @@ public class PackedColumn extends DistillationColumn {
    * internal stage count is updated.
    * </p>
    *
-   * @param name         equipment name
+   * @param name equipment name
    * @param hasCondenser true to include a condenser
-   * @param hasReboiler  true to include a reboiler
+   * @param hasReboiler true to include a reboiler
    */
   public PackedColumn(String name, boolean hasCondenser, boolean hasReboiler) {
     super(name, estimateStages(5.0, 0.5), hasReboiler, hasCondenser);
@@ -112,7 +112,7 @@ public class PackedColumn extends DistillationColumn {
   /**
    * Create a packed column for absorber/contactor use (no condenser, no reboiler).
    *
-   * @param name        equipment name
+   * @param name equipment name
    * @param gasInStream the gas inlet stream (bottom)
    */
   public PackedColumn(String name, StreamInterface gasInStream) {
@@ -123,11 +123,11 @@ public class PackedColumn extends DistillationColumn {
   /**
    * Create a packed column with specified packed height and packing type.
    *
-   * @param name         equipment name
+   * @param name equipment name
    * @param packedHeight packed bed height [m]
-   * @param packingType  packing name (e.g., "Pall-Ring-50", "Mellapak-250Y")
+   * @param packingType packing name (e.g., "Pall-Ring-50", "Mellapak-250Y")
    * @param hasCondenser true for condenser
-   * @param hasReboiler  true for reboiler
+   * @param hasReboiler true for reboiler
    */
   public PackedColumn(String name, double packedHeight, String packingType, boolean hasCondenser, boolean hasReboiler) {
     super(name, estimateStages(packedHeight, 0.5), hasReboiler, hasCondenser);
@@ -138,7 +138,7 @@ public class PackedColumn extends DistillationColumn {
   /**
    * Estimate the number of theoretical stages from packed height and an initial HETP guess.
    *
-   * @param height    packed bed height [m]
+   * @param height packed bed height [m]
    * @param hetpGuess initial HETP guess [m]
    * @return estimated stage count (at least 2)
    */

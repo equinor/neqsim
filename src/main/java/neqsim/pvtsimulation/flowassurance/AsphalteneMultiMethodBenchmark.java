@@ -157,7 +157,7 @@ public class AsphalteneMultiMethodBenchmark {
   /**
    * Constructor with basic parameters.
    *
-   * @param reservoirPressure    reservoir pressure (bara)
+   * @param reservoirPressure reservoir pressure (bara)
    * @param reservoirTemperature reservoir temperature (K)
    */
   public AsphalteneMultiMethodBenchmark(double reservoirPressure, double reservoirTemperature) {
@@ -488,8 +488,8 @@ public class AsphalteneMultiMethodBenchmark {
   /**
    * Generates precipitation curve using CPA EOS with solid phase check.
    *
-   * @param result      the result object to populate
-   * @param sys         the CPA system
+   * @param result the result object to populate
+   * @param sys the CPA system
    * @param temperature temperature (K)
    */
   private void generateCPAPrecipitationCurve(MethodResult result, SystemInterface sys, double temperature) {
@@ -544,7 +544,7 @@ public class AsphalteneMultiMethodBenchmark {
    * model approach, as CPA models asphaltene as an associating liquid component.
    * </p>
    *
-   * @param sys         the CPA system
+   * @param sys the CPA system
    * @param temperature temperature (K)
    * @return onset pressure in bar, or NaN if no L-L split found
    */
@@ -691,8 +691,8 @@ public class AsphalteneMultiMethodBenchmark {
    * detection of L-L splits that would otherwise be missed.
    * </p>
    *
-   * @param sys         the cubic EOS system
-   * @param pedersen    the characterization object
+   * @param sys the cubic EOS system
+   * @param pedersen the characterization object
    * @param temperature temperature (K)
    * @return onset pressure or NaN
    */
@@ -991,9 +991,9 @@ public class AsphalteneMultiMethodBenchmark {
   /**
    * Sets the SARA fractions.
    *
-   * @param saturates   weight fraction of saturates
-   * @param aromatics   weight fraction of aromatics
-   * @param resins      weight fraction of resins
+   * @param saturates weight fraction of saturates
+   * @param aromatics weight fraction of aromatics
+   * @param resins weight fraction of resins
    * @param asphaltenes weight fraction of asphaltenes
    */
   public void setSARAFractions(double saturates, double aromatics, double resins, double asphaltenes) {

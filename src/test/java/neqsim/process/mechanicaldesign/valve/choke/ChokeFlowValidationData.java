@@ -400,8 +400,8 @@ public final class ChokeFlowValidationData {
   /**
    * Calculate expected flow rate using Gilbert correlation.
    *
-   * @param P1_psia    upstream pressure in psia
-   * @param d_64ths    choke diameter in 64ths of an inch
+   * @param P1_psia upstream pressure in psia
+   * @param d_64ths choke diameter in 64ths of an inch
    * @param GLR_scfstb gas-liquid ratio in scf/stb
    * @return liquid flow rate in bbl/d
    */

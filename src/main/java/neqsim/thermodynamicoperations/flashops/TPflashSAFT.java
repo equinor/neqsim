@@ -42,7 +42,7 @@ public class TPflashSAFT extends TPflash {
   /**
    * Constructor for TPflashSAFT.
    *
-   * @param system         the thermodynamic system to flash
+   * @param system the thermodynamic system to flash
    * @param checkForSolids Set true to do solid phase check
    */
   public TPflashSAFT(SystemInterface system, boolean checkForSolids) {
@@ -179,13 +179,13 @@ public class TPflashSAFT extends TPflash {
    * successive substitution on a 3-phase Rachford-Rice formulation.
    * </p>
    *
-   * @param T       temperature in K
-   * @param P       pressure in bar
-   * @param z       feed mole fractions
-   * @param Kvle    VLE K-values from 2-phase flash
+   * @param T temperature in K
+   * @param P pressure in bar
+   * @param z feed mole fractions
+   * @param Kvle VLE K-values from 2-phase flash
    * @param betaVLE vapor fraction from 2-phase flash
-   * @param xLiq    liquid composition from 2-phase flash
-   * @param yGas    gas composition from 2-phase flash
+   * @param xLiq liquid composition from 2-phase flash
+   * @param yGas gas composition from 2-phase flash
    */
   private void tryLiquidLiquidSplit(double T, double P, double[] z, double[] Kvle, double betaVLE, double[] xLiq,
       double[] yGas) {
@@ -405,8 +405,8 @@ public class TPflashSAFT extends TPflash {
   /**
    * Solve Rachford-Rice equation for vapor fraction using bisection.
    *
-   * @param z         feed mole fractions
-   * @param K         K-values
+   * @param z feed mole fractions
+   * @param K K-values
    * @param betaGuess initial guess for vapor fraction
    * @return vapor fraction beta
    */
@@ -441,10 +441,10 @@ public class TPflashSAFT extends TPflash {
    * z_i*(K_LL_i-1) / [1 + betaV*(K_V_i-1) + betaL1*(K_LL_i-1)] = 0
    * </p>
    *
-   * @param z       feed mole fractions
-   * @param KV      vapor K-values (relative to L2 reference phase)
-   * @param KLL     liquid-liquid K-values (L2/L1)
-   * @param betaV0  initial guess for vapor fraction
+   * @param z feed mole fractions
+   * @param KV vapor K-values (relative to L2 reference phase)
+   * @param KLL liquid-liquid K-values (L2/L1)
+   * @param betaV0 initial guess for vapor fraction
    * @param betaL10 initial guess for liquid1 fraction
    * @return array {betaV, betaL1}
    */
@@ -527,10 +527,10 @@ public class TPflashSAFT extends TPflash {
   /**
    * Compute fugacity coefficients for a given composition using a fresh SAFT system.
    *
-   * @param T    temperature in K
-   * @param P    pressure in bar
+   * @param T temperature in K
+   * @param P pressure in bar
    * @param comp mole fractions
-   * @param pt   phase type (determines which volume root to find)
+   * @param pt phase type (determines which volume root to find)
    * @return array of fugacity coefficients, or null if computation fails
    */
   private double[] computeFugacityCoefficients(double T, double P, double[] comp, PhaseType pt) {
@@ -566,10 +566,10 @@ public class TPflashSAFT extends TPflash {
   /**
    * Compute Gibbs energy for a composition and phase type.
    *
-   * @param T    temperature in K
-   * @param P    pressure in bar
+   * @param T temperature in K
+   * @param P pressure in bar
    * @param comp mole fractions
-   * @param pt   phase type
+   * @param pt phase type
    * @return Gibbs energy, or NaN if computation fails
    */
   private double computeGibbsEnergy(double T, double P, double[] comp, PhaseType pt) {

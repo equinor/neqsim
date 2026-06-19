@@ -33,9 +33,9 @@ public class TopsidePipingMechanicalDesignDataSource {
   /**
    * Load design parameters into calculator from database.
    *
-   * @param calc        the calculator to populate
-   * @param company     company name for company-specific standards
-   * @param designCode  design code (e.g., "ASME-B31.3")
+   * @param calc the calculator to populate
+   * @param company company name for company-specific standards
+   * @param designCode design code (e.g., "ASME-B31.3")
    * @param serviceType service type (e.g., "PROCESS_GAS")
    */
   public void loadIntoCalculator(TopsidePipingMechanicalDesignCalculator calc, String company, String designCode,
@@ -51,8 +51,8 @@ public class TopsidePipingMechanicalDesignDataSource {
   /**
    * Load design parameters from TechnicalRequirements_Process table.
    *
-   * @param calc        the calculator to populate
-   * @param company     company name
+   * @param calc the calculator to populate
+   * @param company company name
    * @param serviceType service type
    */
   public void loadDesignParameters(TopsidePipingMechanicalDesignCalculator calc, String company, String serviceType) {
@@ -77,8 +77,8 @@ public class TopsidePipingMechanicalDesignDataSource {
   /**
    * Load parameters from standards tables.
    *
-   * @param calc          the calculator to populate
-   * @param standardCode  standard code (e.g., "ASME-B31.3")
+   * @param calc the calculator to populate
+   * @param standardCode standard code (e.g., "ASME-B31.3")
    * @param equipmentType equipment type
    */
   public void loadFromStandard(TopsidePipingMechanicalDesignCalculator calc, String standardCode,
@@ -104,8 +104,8 @@ public class TopsidePipingMechanicalDesignDataSource {
   /**
    * Load velocity limits from database.
    *
-   * @param calc        the calculator to populate
-   * @param company     company name
+   * @param calc the calculator to populate
+   * @param company company name
    * @param serviceType service type
    */
   public void loadVelocityLimits(TopsidePipingMechanicalDesignCalculator calc, String company, String serviceType) {
@@ -134,7 +134,7 @@ public class TopsidePipingMechanicalDesignDataSource {
   /**
    * Load vibration parameters from database.
    *
-   * @param calc    the calculator to populate
+   * @param calc the calculator to populate
    * @param company company name
    */
   public void loadVibrationParameters(TopsidePipingMechanicalDesignCalculator calc, String company) {
@@ -156,10 +156,10 @@ public class TopsidePipingMechanicalDesignDataSource {
   /**
    * Apply a parameter value to the calculator.
    *
-   * @param calc     the calculator
-   * @param param    parameter name
-   * @param minVal   minimum value
-   * @param maxVal   maximum value
+   * @param calc the calculator
+   * @param param parameter name
+   * @param minVal minimum value
+   * @param maxVal maximum value
    * @param standard standard reference
    */
   private void applyParameter(TopsidePipingMechanicalDesignCalculator calc, String param, double minVal, double maxVal,
@@ -206,7 +206,7 @@ public class TopsidePipingMechanicalDesignDataSource {
    * Load pipe schedule wall thickness from database.
    *
    * @param nominalSize nominal pipe size (e.g., "8")
-   * @param schedule    schedule (e.g., "40")
+   * @param schedule schedule (e.g., "40")
    * @return wall thickness in meters
    */
   public double loadPipeScheduleThickness(String nominalSize, String schedule) {
@@ -229,7 +229,7 @@ public class TopsidePipingMechanicalDesignDataSource {
    * Load material allowable stress from database.
    *
    * @param materialGrade material grade (e.g., "A106-B")
-   * @param temperature   temperature in Celsius
+   * @param temperature temperature in Celsius
    * @return allowable stress in MPa
    */
   public double loadAllowableStress(String materialGrade, double temperature) {

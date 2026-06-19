@@ -34,8 +34,8 @@ public class MaterialBalanceGasDrive implements ReservoirDrive {
    * Creates a volumetric gas-drive model.
    *
    * @param initialPressureBara initial reservoir pressure in bara
-   * @param giipSm3             initial gas in place in surface Sm3
-   * @param averageZ            average gas deviation factor (dimensionless, &gt; 0)
+   * @param giipSm3 initial gas in place in surface Sm3
+   * @param averageZ average gas deviation factor (dimensionless, &gt; 0)
    */
   public MaterialBalanceGasDrive(double initialPressureBara, double giipSm3, double averageZ) {
     if (initialPressureBara <= 0.0 || giipSm3 <= 0.0 || averageZ <= 0.0) {

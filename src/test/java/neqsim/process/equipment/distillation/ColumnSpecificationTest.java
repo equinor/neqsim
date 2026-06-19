@@ -785,17 +785,17 @@ public class ColumnSpecificationTest {
     /**
      * Create a regression case descriptor.
      *
-     * @param name            case name
-     * @param components      component names
-     * @param amounts         component molar amounts
+     * @param name case name
+     * @param components component names
+     * @param amounts component molar amounts
      * @param feedTemperature feed temperature in Kelvin
-     * @param pressure        pressure in bara
-     * @param trays           tray count
-     * @param condenser       whether the column has a condenser
-     * @param reboiler        whether the column has a reboiler
-     * @param sideDraw        whether to add a side-draw spec
-     * @param pumparound      whether to add a pumparound circuit
-     * @param badSeeds        whether to add deliberately poor temperature seeds
+     * @param pressure pressure in bara
+     * @param trays tray count
+     * @param condenser whether the column has a condenser
+     * @param reboiler whether the column has a reboiler
+     * @param sideDraw whether to add a side-draw spec
+     * @param pumparound whether to add a pumparound circuit
+     * @param badSeeds whether to add deliberately poor temperature seeds
      */
     private CommercialCase(String name, String[] components, double[] amounts, double feedTemperature, double pressure,
 	int trays, boolean condenser, boolean reboiler, boolean sideDraw, boolean pumparound, boolean badSeeds) {
@@ -865,17 +865,17 @@ public class ColumnSpecificationTest {
   /**
    * Create a commercial case descriptor.
    *
-   * @param name            case name
-   * @param components      component names
-   * @param amounts         component molar amounts
+   * @param name case name
+   * @param components component names
+   * @param amounts component molar amounts
    * @param feedTemperature feed temperature in Kelvin
-   * @param pressure        pressure in bara
-   * @param trays           tray count
-   * @param condenser       whether the column has a condenser
-   * @param reboiler        whether the column has a reboiler
-   * @param sideDraw        whether to add a side-draw spec
-   * @param pumparound      whether to add a pumparound circuit
-   * @param badSeeds        whether to add deliberately poor temperature seeds
+   * @param pressure pressure in bara
+   * @param trays tray count
+   * @param condenser whether the column has a condenser
+   * @param reboiler whether the column has a reboiler
+   * @param sideDraw whether to add a side-draw spec
+   * @param pumparound whether to add a pumparound circuit
+   * @param badSeeds whether to add deliberately poor temperature seeds
    * @return configured case descriptor
    */
   private CommercialCase commercialCase(String name, String[] components, double[] amounts, double feedTemperature,
@@ -888,14 +888,14 @@ public class ColumnSpecificationTest {
   /**
    * Create a small three-component fractionator case for regression testing.
    *
-   * @param columnName           column name
-   * @param lightComponent       light component name
-   * @param middleComponent      middle component name
-   * @param heavyComponent       heavy component name
-   * @param pressure             pressure in bara
-   * @param feedTemperature      feed temperature in Kelvin
+   * @param columnName column name
+   * @param lightComponent light component name
+   * @param middleComponent middle component name
+   * @param heavyComponent heavy component name
+   * @param pressure pressure in bara
+   * @param feedTemperature feed temperature in Kelvin
    * @param condenserTemperature condenser temperature in Kelvin
-   * @param reboilerTemperature  reboiler temperature in Kelvin
+   * @param reboilerTemperature reboiler temperature in Kelvin
    * @return configured AUTO column
    */
   private DistillationColumn createBinaryFractionator(String columnName, String lightComponent, String middleComponent,

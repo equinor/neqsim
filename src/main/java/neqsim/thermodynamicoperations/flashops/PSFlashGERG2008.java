@@ -30,7 +30,7 @@ public class PSFlashGERG2008 extends QfuncFlash {
    * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param Sspec  a double
+   * @param Sspec a double
    */
   public PSFlashGERG2008(SystemInterface system, double Sspec) {
     this.system = system;

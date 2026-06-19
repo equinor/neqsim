@@ -173,10 +173,10 @@ public class ParametricStudyRunner {
    * Runs a single parametric case.
    *
    * @param baseProcess the base process JSON definition
-   * @param sweeps      the sweep parameter definitions
+   * @param sweeps the sweep parameter definitions
    * @param inputValues the input values for this case
-   * @param outputs     the output definitions to collect
-   * @param caseIndex   the index of this case
+   * @param outputs the output definitions to collect
+   * @param caseIndex the index of this case
    * @return a JsonObject containing the case results
    */
   private static JsonObject runCase(JsonObject baseProcess, List<SweepDef> sweeps, Map<String, Double> inputValues,
@@ -293,7 +293,7 @@ public class ParametricStudyRunner {
   /**
    * Builds summary statistics for each output variable across all converged cases.
    *
-   * @param outputs     the output variable definitions
+   * @param outputs the output variable definitions
    * @param caseResults the JSON array of individual case results
    * @return JSON object containing min, max, mean, and std for each output
    */

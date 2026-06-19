@@ -27,9 +27,9 @@ public class UncertaintyBounds implements Serializable {
   /**
    * Creates uncertainty bounds from mean and standard deviation assuming normal distribution.
    *
-   * @param mean              the mean value
+   * @param mean the mean value
    * @param standardDeviation the standard deviation
-   * @param unit              the engineering unit
+   * @param unit the engineering unit
    */
   public UncertaintyBounds(double mean, double standardDeviation, String unit) {
     this.mean = mean;
@@ -46,13 +46,13 @@ public class UncertaintyBounds implements Serializable {
   /**
    * Creates uncertainty bounds with explicit confidence intervals.
    *
-   * @param mean              the mean value
+   * @param mean the mean value
    * @param standardDeviation the standard deviation
-   * @param lower95           lower bound of 95% CI
-   * @param upper95           upper bound of 95% CI
-   * @param lower99           lower bound of 99% CI
-   * @param upper99           upper bound of 99% CI
-   * @param unit              the engineering unit
+   * @param lower95 lower bound of 95% CI
+   * @param upper95 upper bound of 95% CI
+   * @param lower99 lower bound of 99% CI
+   * @param upper99 upper bound of 99% CI
+   * @param unit the engineering unit
    */
   public UncertaintyBounds(double mean, double standardDeviation, double lower95, double upper95, double lower99,
       double upper99, String unit) {

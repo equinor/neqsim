@@ -29,7 +29,7 @@ public class ProcessDelta implements Serializable {
    * Creates a delta between two snapshots.
    *
    * @param from the baseline snapshot
-   * @param to   the current snapshot
+   * @param to the current snapshot
    */
   public ProcessDelta(ProcessSnapshot from, ProcessSnapshot to) {
     this.fromSnapshotId = from.getSnapshotId();
@@ -173,7 +173,7 @@ public class ProcessDelta implements Serializable {
   /**
    * Applies this delta to a snapshot to produce a new snapshot.
    *
-   * @param base  the base snapshot
+   * @param base the base snapshot
    * @param newId ID for the new snapshot
    * @return updated snapshot
    */

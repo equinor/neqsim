@@ -129,7 +129,7 @@ class FieldDevelopmentIntegrationUtilitiesTest extends neqsim.NeqSimTest {
   /**
    * Creates a configured gas well for network solver tests.
    *
-   * @param name              well name
+   * @param name well name
    * @param productivityIndex productivity index in Sm3/day/bar2
    * @return configured well system
    */

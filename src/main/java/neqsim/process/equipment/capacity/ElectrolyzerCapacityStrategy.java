@@ -43,7 +43,7 @@ public class ElectrolyzerCapacityStrategy implements EquipmentCapacityStrategy {
   /**
    * Constructor with custom constraints.
    *
-   * @param maxVoltageV  maximum cell voltage in volts
+   * @param maxVoltageV maximum cell voltage in volts
    * @param ratedPowerKW rated power consumption in kW
    */
   public ElectrolyzerCapacityStrategy(double maxVoltageV, double ratedPowerKW) {
@@ -114,7 +114,7 @@ public class ElectrolyzerCapacityStrategy implements EquipmentCapacityStrategy {
   /**
    * Adds constraints for water electrolyzer.
    *
-   * @param constraints  map to add constraints to
+   * @param constraints map to add constraints to
    * @param electrolyzer the electrolyzer
    */
   private void addElectrolyzerConstraints(Map<String, CapacityConstraint> constraints, Electrolyzer electrolyzer) {
@@ -129,7 +129,7 @@ public class ElectrolyzerCapacityStrategy implements EquipmentCapacityStrategy {
   /**
    * Adds constraints for CO2 electrolyzer.
    *
-   * @param constraints     map to add constraints to
+   * @param constraints map to add constraints to
    * @param co2Electrolyzer the CO2 electrolyzer
    */
   private void addCO2ElectrolyzerConstraints(Map<String, CapacityConstraint> constraints,

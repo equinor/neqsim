@@ -300,7 +300,7 @@ public class AntiSurge implements java.io.Serializable {
    * Update the anti-surge controller.
    *
    * @param surgeMargin current distance to surge
-   * @param timeStep    time step in seconds
+   * @param timeStep time step in seconds
    * @return the calculated valve position
    */
   public double updateController(double surgeMargin, double timeStep) {
@@ -377,7 +377,7 @@ public class AntiSurge implements java.io.Serializable {
    * Calculate PID control output.
    *
    * @param surgeMargin current surge margin
-   * @param timeStep    time step in seconds
+   * @param timeStep time step in seconds
    * @return valve position (0-1)
    */
   private double calculatePIDControl(double surgeMargin, double timeStep) {
@@ -405,7 +405,7 @@ public class AntiSurge implements java.io.Serializable {
    * Calculate predictive control output.
    *
    * @param surgeMargin current surge margin
-   * @param timeStep    time step in seconds
+   * @param timeStep time step in seconds
    * @return valve position (0-1)
    */
   private double calculatePredictiveControl(double surgeMargin, double timeStep) {
@@ -425,7 +425,7 @@ public class AntiSurge implements java.io.Serializable {
    * Calculate dual-loop control output.
    *
    * @param surgeMargin current surge margin
-   * @param timeStep    time step in seconds
+   * @param timeStep time step in seconds
    * @return valve position (0-1)
    */
   private double calculateDualLoopControl(double surgeMargin, double timeStep) {

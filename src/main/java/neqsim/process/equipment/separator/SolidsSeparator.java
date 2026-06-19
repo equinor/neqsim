@@ -94,7 +94,7 @@ public class SolidsSeparator extends ProcessEquipmentBaseClass {
   /**
    * Constructor for SolidsSeparator with inlet stream.
    *
-   * @param name        name of the separator
+   * @param name name of the separator
    * @param inletStream the feed stream to separate
    */
   public SolidsSeparator(String name, StreamInterface inletStream) {
@@ -149,7 +149,7 @@ public class SolidsSeparator extends ProcessEquipmentBaseClass {
    * Set the fraction of a specific component going to the solids outlet.
    *
    * @param componentName name of the component
-   * @param fraction      fraction going to solids (0.0 to 1.0)
+   * @param fraction fraction going to solids (0.0 to 1.0)
    */
   public void setSolidsSplitFraction(String componentName, double fraction) {
     if (fraction < 0.0 || fraction > 1.0) {

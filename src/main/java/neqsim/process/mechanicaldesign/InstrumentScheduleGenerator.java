@@ -116,9 +116,9 @@ public class InstrumentScheduleGenerator implements Serializable {
     /**
      * Constructor.
      *
-     * @param tagPrefix      ISA-5.1 prefix (PT, TT, LT, FT)
+     * @param tagPrefix ISA-5.1 prefix (PT, TT, LT, FT)
      * @param instrumentType human-readable instrument type
-     * @param ioType         I/O type (AI, AO, DI, DO)
+     * @param ioType I/O type (AI, AO, DI, DO)
      */
     MeasuredVariable(String tagPrefix, String instrumentType, String ioType) {
       this.tagPrefix = tagPrefix;
@@ -521,11 +521,11 @@ public class InstrumentScheduleGenerator implements Serializable {
    * Configures alarm thresholds on a measurement device.
    *
    * @param device the measurement device
-   * @param lo     low alarm limit
-   * @param lolo   low-low alarm limit
-   * @param hi     high alarm limit
-   * @param hihi   high-high alarm limit
-   * @param unit   engineering unit
+   * @param lo low alarm limit
+   * @param lolo low-low alarm limit
+   * @param hi high alarm limit
+   * @param hihi high-high alarm limit
+   * @param unit engineering unit
    */
   private void configureAlarm(MeasurementDeviceInterface device, double lo, double lolo, double hi, double hihi,
       String unit) {
@@ -537,7 +537,7 @@ public class InstrumentScheduleGenerator implements Serializable {
   /**
    * Registers a device in the internal map and optionally on the ProcessSystem.
    *
-   * @param tag    instrument tag
+   * @param tag instrument tag
    * @param device the measurement device
    */
   private void registerDevice(String tag, MeasurementDeviceInterface device) {
@@ -725,7 +725,7 @@ public class InstrumentScheduleGenerator implements Serializable {
    * </p>
    *
    * @return a map from ISA-5.1 tag (e.g. "PT-101") to IEC 81346 designation string (e.g. "=A1.B1"); only entries where
-   *         the parent equipment has a designation are included
+   * the parent equipment has a designation are included
    */
   public Map<String, String> getISAToIEC81346Map() {
     Map<String, String> map = new LinkedHashMap<String, String>();
@@ -768,20 +768,20 @@ public class InstrumentScheduleGenerator implements Serializable {
     /**
      * Creates an instrument entry.
      *
-     * @param tagNumber          ISA-5.1 tag number
-     * @param equipmentTag       associated equipment tag
+     * @param tagNumber ISA-5.1 tag number
+     * @param equipmentTag associated equipment tag
      * @param serviceDescription service description
-     * @param measuredVariable   measured variable type
-     * @param unit               engineering unit
-     * @param rangeMin           instrument range minimum
-     * @param rangeMax           instrument range maximum
-     * @param normalValue        normal operating value
-     * @param alarmLow           low alarm setpoint
-     * @param alarmHigh          high alarm setpoint
-     * @param tripLow            low-low trip setpoint
-     * @param tripHigh           high-high trip setpoint
-     * @param silRating          SIL rating
-     * @param device             the live measurement device (may be null)
+     * @param measuredVariable measured variable type
+     * @param unit engineering unit
+     * @param rangeMin instrument range minimum
+     * @param rangeMax instrument range maximum
+     * @param normalValue normal operating value
+     * @param alarmLow low alarm setpoint
+     * @param alarmHigh high alarm setpoint
+     * @param tripLow low-low trip setpoint
+     * @param tripHigh high-high trip setpoint
+     * @param silRating SIL rating
+     * @param device the live measurement device (may be null)
      */
     public InstrumentEntry(String tagNumber, String equipmentTag, String serviceDescription,
 	MeasuredVariable measuredVariable, String unit, double rangeMin, double rangeMax, double normalValue,

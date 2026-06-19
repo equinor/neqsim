@@ -190,7 +190,7 @@ public class FreundlichAdsorption extends AbstractAdsorptionModel {
    * Set the Freundlich capacity constant for a component.
    *
    * @param component the component index
-   * @param value     KF in mol/kg/bar^(1/n)
+   * @param value KF in mol/kg/bar^(1/n)
    */
   public void setKFreundlich(int component, double value) {
     kFreundlich[component] = value;
@@ -211,7 +211,7 @@ public class FreundlichAdsorption extends AbstractAdsorptionModel {
    * Set the Freundlich intensity parameter for a component.
    *
    * @param component the component index
-   * @param value     n (dimensionless, should be &gt; 1 for favorable adsorption)
+   * @param value n (dimensionless, should be &gt; 1 for favorable adsorption)
    */
   public void setNFreundlich(int component, double value) {
     nFreundlich[component] = value;
@@ -232,7 +232,7 @@ public class FreundlichAdsorption extends AbstractAdsorptionModel {
    * Set the heat of adsorption for a component.
    *
    * @param component the component index
-   * @param value     heat of adsorption in J/mol
+   * @param value heat of adsorption in J/mol
    */
   public void setHeatOfAdsorption(int component, double value) {
     heatOfAdsorption[component] = value;
@@ -253,7 +253,7 @@ public class FreundlichAdsorption extends AbstractAdsorptionModel {
    * Set the reference temperature for parameters.
    *
    * @param component the component index
-   * @param value     reference temperature in K
+   * @param value reference temperature in K
    */
   public void setTempRef(int component, double value) {
     tempRef[component] = value;

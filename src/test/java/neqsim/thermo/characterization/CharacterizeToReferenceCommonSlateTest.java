@@ -11,15 +11,13 @@ import neqsim.thermo.system.SystemPrEos;
 
 /**
  * Tests the Pedersen et al. (Chapter 5.6) "Common EoS" slate produced by
- * {@link PseudoComponentCombiner#characterizeToReference(SystemInterface, SystemInterface,
- * CharacterizationOptions)} when {@link CharacterizationOptions#isInheritReferenceProperties()} is
- * enabled (the default).
+ * {@link PseudoComponentCombiner#characterizeToReference(SystemInterface, SystemInterface, CharacterizationOptions)}
+ * when {@link CharacterizationOptions#isInheritReferenceProperties()} is enabled (the default).
  *
  * <p>
- * Two different source fluids characterized to the same reference must end up with an identical set
- * of pseudo-component properties (molar mass, critical constants, acentric factor) and may differ
- * only in their mole fractions. The bare two-argument overload must remain grid-only for backward
- * compatibility.
+ * Two different source fluids characterized to the same reference must end up with an identical set of pseudo-component
+ * properties (molar mass, critical constants, acentric factor) and may differ only in their mole fractions. The bare
+ * two-argument overload must remain grid-only for backward compatibility.
  */
 class CharacterizeToReferenceCommonSlateTest {
   private static final double TOLERANCE = 1e-6;
@@ -69,16 +67,16 @@ class CharacterizeToReferenceCommonSlateTest {
     SystemInterface reference = referenceFluid();
     CharacterizationOptions options = CharacterizationOptions.builder().build();
 
-    SystemInterface a =
-        PseudoComponentCombiner.characterizeToReference(source(0.05, 0.06, 0.07, 0.150), reference, options);
-    SystemInterface b =
-        PseudoComponentCombiner.characterizeToReference(source(0.10, 0.12, 0.15, 0.200), reference, options);
+    SystemInterface a = PseudoComponentCombiner.characterizeToReference(source(0.05, 0.06, 0.07, 0.150), reference,
+	options);
+    SystemInterface b = PseudoComponentCombiner.characterizeToReference(source(0.10, 0.12, 0.15, 0.200), reference,
+	options);
 
-    String[] lumps = {"C7_PC", "C8_PC", "C9_PC"};
-    double[] refTc = {530.0, 550.0, 570.0};
-    double[] refPc = {29.0, 27.0, 25.0};
-    double[] refOmega = {0.31, 0.33, 0.35};
-    double[] refMw = {0.090, 0.110, 0.150};
+    String[] lumps = { "C7_PC", "C8_PC", "C9_PC" };
+    double[] refTc = { 530.0, 550.0, 570.0 };
+    double[] refPc = { 29.0, 27.0, 25.0 };
+    double[] refOmega = { 0.31, 0.33, 0.35 };
+    double[] refMw = { 0.090, 0.110, 0.150 };
 
     boolean someMoleFractionDiffers = false;
     for (int i = 0; i < lumps.length; i++) {
@@ -96,7 +94,7 @@ class CharacterizeToReferenceCommonSlateTest {
       assertEquals(ca.getAcentricFactor(), cb.getAcentricFactor(), TOLERANCE, lumps[i] + " omega A vs B");
 
       if (Math.abs(ca.getz() - cb.getz()) > 1e-4) {
-        someMoleFractionDiffers = true;
+	someMoleFractionDiffers = true;
       }
     }
     assertTrue(someMoleFractionDiffers, "mole fractions must differ between the two sources");
@@ -107,10 +105,8 @@ class CharacterizeToReferenceCommonSlateTest {
   void testTwoArgRemainsGridOnly() {
     SystemInterface reference = referenceFluid();
 
-    SystemInterface a =
-        PseudoComponentCombiner.characterizeToReference(source(0.05, 0.06, 0.07, 0.150), reference);
-    SystemInterface b =
-        PseudoComponentCombiner.characterizeToReference(source(0.10, 0.12, 0.15, 0.200), reference);
+    SystemInterface a = PseudoComponentCombiner.characterizeToReference(source(0.05, 0.06, 0.07, 0.150), reference);
+    SystemInterface b = PseudoComponentCombiner.characterizeToReference(source(0.10, 0.12, 0.15, 0.200), reference);
 
     // Grid-only: lump molar mass is recomputed from each source's mass, so the heaviest lump
     // (which carries the differing tail) differs between the two sources and does not match the

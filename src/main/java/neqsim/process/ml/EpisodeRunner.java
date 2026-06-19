@@ -61,12 +61,12 @@ public class EpisodeRunner implements Serializable {
     /**
      * Constructor.
      *
-     * @param totalReward      total reward
-     * @param steps            steps taken
-     * @param terminated       episode terminated
-     * @param observations     observation history
-     * @param actions          action history
-     * @param rewards          reward history
+     * @param totalReward total reward
+     * @param steps steps taken
+     * @param terminated episode terminated
+     * @param observations observation history
+     * @param actions action history
+     * @param rewards reward history
      * @param finalObservation final observation
      */
     public EpisodeResult(double totalReward, int steps, boolean terminated, List<double[]> observations,
@@ -92,7 +92,7 @@ public class EpisodeRunner implements Serializable {
     /**
      * Get observation at specific index.
      *
-     * @param index        observation index
+     * @param index observation index
      * @param featureIndex feature index within observation
      * @return feature value
      */
@@ -145,13 +145,13 @@ public class EpisodeRunner implements Serializable {
      * Constructor.
      *
      * @param controllerName controller name
-     * @param numEpisodes    number of episodes
-     * @param meanReward     mean reward
-     * @param stdReward      std reward
-     * @param meanLength     mean length
-     * @param successRate    success rate
-     * @param minReward      min reward
-     * @param maxReward      max reward
+     * @param numEpisodes number of episodes
+     * @param meanReward mean reward
+     * @param stdReward std reward
+     * @param meanLength mean length
+     * @param successRate success rate
+     * @param minReward min reward
+     * @param maxReward max reward
      */
     public BenchmarkResult(String controllerName, int numEpisodes, double meanReward, double stdReward,
 	double meanLength, double successRate, double minReward, double maxReward) {
@@ -207,7 +207,7 @@ public class EpisodeRunner implements Serializable {
    * Run a single episode with given controller.
    *
    * @param controller the controller to use
-   * @param maxSteps   maximum steps (overrides env setting if smaller)
+   * @param maxSteps maximum steps (overrides env setting if smaller)
    * @return episode result
    */
   public EpisodeResult runEpisode(Controller controller, int maxSteps) {
@@ -258,8 +258,8 @@ public class EpisodeRunner implements Serializable {
   /**
    * Run multiple episodes and compute statistics.
    *
-   * @param controller         the controller to use
-   * @param numEpisodes        number of episodes
+   * @param controller the controller to use
+   * @param numEpisodes number of episodes
    * @param maxStepsPerEpisode max steps per episode
    * @return benchmark result
    */
@@ -297,8 +297,8 @@ public class EpisodeRunner implements Serializable {
   /**
    * Compare multiple controllers.
    *
-   * @param controllers        list of controllers
-   * @param numEpisodes        episodes per controller
+   * @param controllers list of controllers
+   * @param numEpisodes episodes per controller
    * @param maxStepsPerEpisode max steps
    * @return list of benchmark results
    */
@@ -339,7 +339,7 @@ public class EpisodeRunner implements Serializable {
   /**
    * Repeat a string n times (Java 8 compatible replacement for String.repeat()).
    *
-   * @param str   string to repeat
+   * @param str string to repeat
    * @param count number of times to repeat
    * @return repeated string
    */

@@ -38,8 +38,8 @@ public final class ProductionProfileSeries implements Serializable {
   /**
    * Creates a gas-only profile from an array of rates.
    *
-   * @param name          profile name
-   * @param startYear     first calendar year
+   * @param name profile name
+   * @param startYear first calendar year
    * @param gasRatesMSm3d gas rates in MSm3/d
    * @return profile containing one load per gas-rate entry
    */
@@ -56,8 +56,8 @@ public final class ProductionProfileSeries implements Serializable {
   /**
    * Creates an oil-only profile from an array of rates.
    *
-   * @param name         profile name
-   * @param startYear    first calendar year
+   * @param name profile name
+   * @param startYear first calendar year
    * @param oilRatesBopd oil rates in bbl/d
    * @return profile containing one load per oil-rate entry
    */
@@ -96,10 +96,10 @@ public final class ProductionProfileSeries implements Serializable {
   /**
    * Adds a production period with a default period name.
    *
-   * @param year          calendar year
-   * @param gasRateMSm3d  gas rate in MSm3/d
-   * @param oilRateBopd   oil rate in bbl/d
-   * @param waterRateM3d  water rate in m3/d
+   * @param year calendar year
+   * @param gasRateMSm3d gas rate in MSm3/d
+   * @param oilRateBopd oil rate in bbl/d
+   * @param waterRateM3d water rate in m3/d
    * @param liquidRateM3d explicit total-liquid rate in m3/d, or zero to infer
    * @return this profile for method chaining
    */
@@ -111,11 +111,11 @@ public final class ProductionProfileSeries implements Serializable {
   /**
    * Adds a named production period.
    *
-   * @param periodName    display name for the period
-   * @param year          calendar year
-   * @param gasRateMSm3d  gas rate in MSm3/d
-   * @param oilRateBopd   oil rate in bbl/d
-   * @param waterRateM3d  water rate in m3/d
+   * @param periodName display name for the period
+   * @param year calendar year
+   * @param gasRateMSm3d gas rate in MSm3/d
+   * @param oilRateBopd oil rate in bbl/d
+   * @param waterRateM3d water rate in m3/d
    * @param liquidRateM3d explicit total-liquid rate in m3/d, or zero to infer
    * @return this profile for method chaining
    */
@@ -170,8 +170,8 @@ public final class ProductionProfileSeries implements Serializable {
   /**
    * Gets a load by year and falls back to list index.
    *
-   * @param year               calendar year to look up first
-   * @param index              zero-based fallback index
+   * @param year calendar year to look up first
+   * @param index zero-based fallback index
    * @param fallbackPeriodName period name used for a zero fallback load
    * @return matching load or a zero load
    */

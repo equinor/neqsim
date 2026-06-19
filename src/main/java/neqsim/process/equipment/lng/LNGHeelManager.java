@@ -76,7 +76,7 @@ public class LNGHeelManager implements Serializable {
    * Constructor with heel fraction.
    *
    * @param heelFraction heel as fraction of tank volume (0-1)
-   * @param tankVolume   total tank volume (m3)
+   * @param tankVolume total tank volume (m3)
    */
   public LNGHeelManager(double heelFraction, double tankVolume) {
     this();
@@ -89,7 +89,7 @@ public class LNGHeelManager implements Serializable {
    *
    * @param composition mole fractions keyed by component name
    * @param temperature heel temperature (K)
-   * @param density     heel density (kg/m3)
+   * @param density heel density (kg/m3)
    */
   public void setHeelState(Map<String, Double> composition, double temperature, double density) {
     this.heelComposition = new LinkedHashMap<String, Double>(composition);
@@ -106,7 +106,7 @@ public class LNGHeelManager implements Serializable {
    * </p>
    *
    * @param newCargoComposition new cargo mole fractions
-   * @param newCargoMoles       moles of new cargo
+   * @param newCargoMoles moles of new cargo
    * @param newCargoTemperature new cargo temperature (K)
    * @return mixed composition (mole fractions)
    */
@@ -153,7 +153,7 @@ public class LNGHeelManager implements Serializable {
    * stratification/rollover analysis.
    * </p>
    *
-   * @param tankModel      the layered tank model to configure
+   * @param tankModel the layered tank model to configure
    * @param newCargoSystem thermo system representing the new cargo
    * @param newCargoVolume volume of new cargo (m3)
    */
@@ -195,10 +195,10 @@ public class LNGHeelManager implements Serializable {
    * network.
    * </p>
    *
-   * @param timeStepHours         time step (hours)
-   * @param ambientTemperature    ambient temperature (K)
+   * @param timeStepHours time step (hours)
+   * @param ambientTemperature ambient temperature (K)
    * @param wallHeatTransferCoeff wall heat transfer coefficient (W/m2/K)
-   * @param wallArea              tank wall area (m2)
+   * @param wallArea tank wall area (m2)
    * @return BOG generated from spray cooling (kg) during this time step
    */
   public double simulateSprayCooling(double timeStepHours, double ambientTemperature, double wallHeatTransferCoeff,

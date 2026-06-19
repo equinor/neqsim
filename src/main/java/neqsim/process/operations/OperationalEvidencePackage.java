@@ -48,13 +48,13 @@ public final class OperationalEvidencePackage {
   /**
    * Builds a complete operational evidence package report.
    *
-   * @param studyName                  name of the study or operating case
-   * @param process                    process system already built from NeqSim JSON
-   * @param tagMap                     logical operational tag map, may be empty
-   * @param fieldData                  field data keyed by logical tag or historian tag, may be empty
-   * @param scenarios                  scenario list to run on copied base cases, may be empty
+   * @param studyName name of the study or operating case
+   * @param process process system already built from NeqSim JSON
+   * @param tagMap logical operational tag map, may be empty
+   * @param fieldData field data keyed by logical tag or historian tag, may be empty
+   * @param scenarios scenario list to run on copied base cases, may be empty
    * @param benchmarkToleranceFraction allowed relative deviation for benchmark tags; use a value from 0.0 to 1.0 where
-   *                                   0.05 means five percent
+   * 0.05 means five percent
    * @return JSON object containing base evidence, benchmark comparison, bottlenecks, scenarios, and quality gates
    */
   public static JsonObject buildReport(String studyName, ProcessSystem process, OperationalTagMap tagMap,
@@ -127,9 +127,9 @@ public final class OperationalEvidencePackage {
   /**
    * Builds benchmark comparisons for tags marked as BENCHMARK.
    *
-   * @param tagMap            operational tag map
-   * @param fieldData         field data keyed by logical or historian tag
-   * @param modelValues       current model values keyed by logical tag
+   * @param tagMap operational tag map
+   * @param fieldData field data keyed by logical or historian tag
+   * @param modelValues current model values keyed by logical tag
    * @param toleranceFraction allowed relative deviation
    * @return JSON benchmark comparison block
    */
@@ -164,9 +164,9 @@ public final class OperationalEvidencePackage {
   /**
    * Builds one benchmark comparison entry.
    *
-   * @param binding           operational tag binding
-   * @param fieldValue        field value, or null when missing
-   * @param modelValue        model value, or null when missing
+   * @param binding operational tag binding
+   * @param fieldValue field value, or null when missing
+   * @param modelValue model value, or null when missing
    * @param toleranceFraction allowed relative deviation
    * @return JSON benchmark entry
    */
@@ -197,7 +197,7 @@ public final class OperationalEvidencePackage {
   /**
    * Finds a field value for a binding from logical or historian keys.
    *
-   * @param binding   operational tag binding
+   * @param binding operational tag binding
    * @param fieldData source field data
    * @return matched field value, or null when no value is present
    */
@@ -215,7 +215,7 @@ public final class OperationalEvidencePackage {
    * Runs all configured scenarios on copied base cases.
    *
    * @param baseProcess base process after field data application
-   * @param scenarios   scenarios to run
+   * @param scenarios scenarios to run
    * @return JSON array of scenario evidence blocks
    */
   private static JsonArray buildScenarioReports(ProcessSystem baseProcess, List<OperationalScenario> scenarios) {
@@ -236,10 +236,10 @@ public final class OperationalEvidencePackage {
   /**
    * Builds quality gates for the operational evidence package.
    *
-   * @param baseCapacity        base capacity report
+   * @param baseCapacity base capacity report
    * @param benchmarkComparison benchmark comparison block
-   * @param scenarioReports     scenario reports
-   * @param hasTagBindings      true when tag bindings were supplied
+   * @param scenarioReports scenario reports
+   * @param hasTagBindings true when tag bindings were supplied
    * @return JSON object with gate status values
    */
   private static JsonObject buildQualityGates(JsonObject baseCapacity, JsonObject benchmarkComparison,
@@ -314,7 +314,7 @@ public final class OperationalEvidencePackage {
    * Converts a bottleneck result to JSON.
    *
    * @param bottleneck bottleneck result
-   * @param source     source used to detect the bottleneck
+   * @param source source used to detect the bottleneck
    * @return JSON object
    */
   private static JsonObject bottleneckToJson(BottleneckResult bottleneck, String source) {
@@ -456,7 +456,7 @@ public final class OperationalEvidencePackage {
   /**
    * Builds the near-capacity equipment array from direct and strategy-derived sources.
    *
-   * @param process          process system
+   * @param process process system
    * @param equipmentDetails equipment details array
    * @return JSON array of equipment names
    */
@@ -493,8 +493,8 @@ public final class OperationalEvidencePackage {
    * Adds a nullable number to a JSON object.
    *
    * @param object target object
-   * @param name   property name
-   * @param value  number value, or null
+   * @param name property name
+   * @param value number value, or null
    */
   private static void addNullableNumber(JsonObject object, String name, Double value) {
     if (value == null) {

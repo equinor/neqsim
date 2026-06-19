@@ -536,7 +536,7 @@ public class PFDLayoutPolicy implements Serializable {
    * be determined.
    * </p>
    *
-   * @param fluid  the fluid to check
+   * @param fluid the fluid to check
    * @param stream the stream (for name hints)
    * @return OIL, AQUEOUS, or generic LIQUID
    */
@@ -617,7 +617,7 @@ public class PFDLayoutPolicy implements Serializable {
    * <li>Aqueous/water outlet: bottom (south) - heaviest phase</li>
    * </ul>
    *
-   * @param separator    the separator equipment
+   * @param separator the separator equipment
    * @param outletStream the outlet stream
    * @return the outlet type for positioning
    */
@@ -661,7 +661,7 @@ public class PFDLayoutPolicy implements Serializable {
    * <li>Aqueous/Water - heaviest, exits bottom</li>
    * </ol>
    *
-   * @param separator    the three-phase separator
+   * @param separator the three-phase separator
    * @param outletStream the outlet stream to classify
    * @return the separator outlet type
    */
@@ -783,7 +783,7 @@ public class PFDLayoutPolicy implements Serializable {
    * <li>All other nodes → CENTER</li>
    * </ul>
    *
-   * @param node  the process node
+   * @param node the process node
    * @param graph the process graph (for topology analysis)
    * @return the horizontal position
    */
@@ -1052,7 +1052,7 @@ public class PFDLayoutPolicy implements Serializable {
    * <li>Y (vertical): 0=gas/top, 1=oil/middle, 2=water/bottom</li>
    * </ul>
    *
-   * @param node  the process node
+   * @param node the process node
    * @param graph the process graph
    * @return int array [x, y] representing layout position
    */

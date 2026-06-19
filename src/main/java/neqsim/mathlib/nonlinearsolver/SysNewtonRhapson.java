@@ -60,8 +60,8 @@ public class SysNewtonRhapson implements java.io.Serializable {
    * Constructor for sysNewtonRhapson.
    * </p>
    *
-   * @param system             a {@link neqsim.thermo.system.SystemInterface} object
-   * @param numberOfPhases     a int
+   * @param system a {@link neqsim.thermo.system.SystemInterface} object
+   * @param numberOfPhases a int
    * @param numberOfComponents a int
    */
   public SysNewtonRhapson(SystemInterface system, int numberOfPhases, int numberOfComponents) {

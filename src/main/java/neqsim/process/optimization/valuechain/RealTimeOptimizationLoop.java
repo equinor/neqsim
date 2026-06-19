@@ -135,10 +135,10 @@ public class RealTimeOptimizationLoop implements Serializable {
     /**
      * Creates a cycle record.
      *
-     * @param cycle        the 1-based cycle index
+     * @param cycle the 1-based cycle index
      * @param measurements the measurements read at the start of the cycle
-     * @param setpoints    the setpoints applied during the cycle
-     * @param objective    the achieved objective (NaN if not probed)
+     * @param setpoints the setpoints applied during the cycle
+     * @param objective the achieved objective (NaN if not probed)
      */
     public CycleRecord(int cycle, double[] measurements, double[] setpoints, double objective) {
       this.cycle = cycle;

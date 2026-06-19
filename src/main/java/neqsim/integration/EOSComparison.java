@@ -109,7 +109,7 @@ public class EOSComparison implements Serializable {
   /**
    * Adds a component with its mole fraction.
    *
-   * @param name         component name (e.g., "methane")
+   * @param name component name (e.g., "methane")
    * @param moleFraction mole fraction (0-1)
    * @return this for chaining
    */
@@ -306,7 +306,7 @@ public class EOSComparison implements Serializable {
      * Creates a failed result.
      *
      * @param eosType the EOS type
-     * @param error   the error message
+     * @param error the error message
      */
     EOSResult(EOSType eosType, String error) {
       this.eosType = eosType;
@@ -338,9 +338,9 @@ public class EOSComparison implements Serializable {
      * Creates a comparison result.
      *
      * @param temperature temperature in Kelvin
-     * @param pressure    pressure in bara
-     * @param components  component map
-     * @param results     list of per-EOS results
+     * @param pressure pressure in bara
+     * @param components component map
+     * @param results list of per-EOS results
      */
     ComparisonResult(double temperature, double pressure, Map<String, Double> components, List<EOSResult> results) {
       this.temperature = temperature;
@@ -413,7 +413,7 @@ public class EOSComparison implements Serializable {
     /**
      * Gets a named property value from an EOS result.
      *
-     * @param r    the EOS result
+     * @param r the EOS result
      * @param name property name
      * @return property value, or NaN
      */

@@ -79,7 +79,7 @@ public class UtilityStreamSpecification implements Serializable {
    * Set the utility supply temperature using the specified unit.
    *
    * @param temperature supply temperature value
-   * @param unit        unit of the supplied temperature
+   * @param unit unit of the supplied temperature
    */
   public void setSupplyTemperature(double temperature, String unit) {
     this.supplyTemperature = new TemperatureUnit(temperature, unit).getValue("K");
@@ -98,7 +98,7 @@ public class UtilityStreamSpecification implements Serializable {
    * Set the utility return temperature using the specified unit.
    *
    * @param temperature return temperature value
-   * @param unit        unit of the supplied temperature
+   * @param unit unit of the supplied temperature
    */
   public void setReturnTemperature(double temperature, String unit) {
     this.returnTemperature = new TemperatureUnit(temperature, unit).getValue("K");
@@ -117,7 +117,7 @@ public class UtilityStreamSpecification implements Serializable {
    * Set the minimum approach temperature (absolute difference) using the specified unit.
    *
    * @param approach approach temperature value
-   * @param unit     unit of the supplied temperature difference
+   * @param unit unit of the supplied temperature difference
    */
   public void setApproachTemperature(double approach, String unit) {
     switch (unit) {

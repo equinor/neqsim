@@ -40,9 +40,9 @@ public final class FluidPropertyEstimator {
    * $$\ln(P_r^{sat}) = f^{(0)}(T_r) + \omega \cdot f^{(1)}(T_r)$$
    *
    * @param temperature the temperature in K
-   * @param tc          critical temperature in K
-   * @param pc          critical pressure in bara
-   * @param omega       acentric factor (dimensionless)
+   * @param tc critical temperature in K
+   * @param pc critical pressure in bara
+   * @param omega acentric factor (dimensionless)
    * @return saturation pressure in bara
    */
   public static double estimateSaturationPressure(double temperature, double tc, double pc, double omega) {
@@ -58,9 +58,9 @@ public final class FluidPropertyEstimator {
   /**
    * Estimate saturation pressure for a component in a system.
    *
-   * @param system   the thermodynamic system
+   * @param system the thermodynamic system
    * @param phaseNum the phase number
-   * @param compNum  the component index
+   * @param compNum the component index
    * @return saturation pressure in bara
    */
   public static double estimateSaturationPressure(SystemInterface system, int phaseNum, int compNum) {
@@ -84,9 +84,9 @@ public final class FluidPropertyEstimator {
    * </p>
    *
    * @param temperature the temperature in K
-   * @param tc          critical temperature in K
-   * @param vc          critical volume in cm3/mol
-   * @param omega       acentric factor (dimensionless)
+   * @param tc critical temperature in K
+   * @param vc critical volume in cm3/mol
+   * @param omega acentric factor (dimensionless)
    * @return liquid molar volume in m3/mol
    */
   public static double estimateLiquidMolarVolume(double temperature, double tc, double vc, double omega) {
@@ -102,9 +102,9 @@ public final class FluidPropertyEstimator {
   /**
    * Estimate liquid molar volume for a component in a system.
    *
-   * @param system   the thermodynamic system
+   * @param system the thermodynamic system
    * @param phaseNum the phase number
-   * @param compNum  the component index
+   * @param compNum the component index
    * @return liquid molar volume in m3/mol
    */
   public static double estimateLiquidMolarVolume(SystemInterface system, int phaseNum, int compNum) {
@@ -128,9 +128,9 @@ public final class FluidPropertyEstimator {
    * </p>
    * $$\sigma = 0.02 \cdot (1 - T_r)^{1.26}$$
    *
-   * @param temperature       the temperature in K
-   * @param tc                critical temperature in K
-   * @param parachor          the parachor parameter
+   * @param temperature the temperature in K
+   * @param tc critical temperature in K
+   * @param parachor the parachor parameter
    * @param liquidMolarVolume liquid molar volume in m3/mol
    * @return surface tension in N/m
    */
@@ -148,9 +148,9 @@ public final class FluidPropertyEstimator {
   /**
    * Estimate surface tension for a component in a system.
    *
-   * @param system            the thermodynamic system
-   * @param phaseNum          the phase number
-   * @param compNum           the component index
+   * @param system the thermodynamic system
+   * @param phaseNum the phase number
+   * @param compNum the component index
    * @param liquidMolarVolume the liquid molar volume in m3/mol
    * @return surface tension in N/m
    */
@@ -169,9 +169,9 @@ public final class FluidPropertyEstimator {
    * Returns an array of [saturationPressure (bar), liquidMolarVolume (m3/mol), surfaceTension (N/m)].
    * </p>
    *
-   * @param system   the thermodynamic system
+   * @param system the thermodynamic system
    * @param phaseNum the phase number
-   * @param compNum  the component index
+   * @param compNum the component index
    * @return double array with [pSat, Vm_liquid, sigma]
    */
   public static double[] estimateAllProperties(SystemInterface system, int phaseNum, int compNum) {
@@ -184,7 +184,7 @@ public final class FluidPropertyEstimator {
   /**
    * Estimate saturation pressures for all components in a phase.
    *
-   * @param system   the thermodynamic system
+   * @param system the thermodynamic system
    * @param phaseNum the phase number
    * @return array of saturation pressures in bara
    */

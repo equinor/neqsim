@@ -90,7 +90,7 @@ public class GasificationSynthesisModule extends ProcessModule {
   /**
    * Sets the biomass feedstock and feed rate.
    *
-   * @param biomassChar     the biomass characterization
+   * @param biomassChar the biomass characterization
    * @param feedRateKgPerHr dry biomass feed rate in kg/hr
    */
   public void setBiomass(BiomassCharacterization biomassChar, double feedRateKgPerHr) {

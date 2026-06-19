@@ -171,7 +171,7 @@ public abstract class AbstractAdsorptionModel implements AdsorptionInterface, Se
    *
    * @param component1 index of first component
    * @param component2 index of second component (reference)
-   * @param phaseNum   the bulk phase number
+   * @param phaseNum the bulk phase number
    * @return selectivity (dimensionless)
    */
   public double getSelectivity(int component1, int component2, int phaseNum) {
@@ -297,7 +297,7 @@ public abstract class AbstractAdsorptionModel implements AdsorptionInterface, Se
    * Get component partial pressure.
    *
    * @param phaseNum the phase number
-   * @param compNum  the component number
+   * @param compNum the component number
    * @return partial pressure in bar
    */
   protected double getPartialPressure(int phaseNum, int compNum) {
@@ -308,7 +308,7 @@ public abstract class AbstractAdsorptionModel implements AdsorptionInterface, Se
    * Get component fugacity.
    *
    * @param phaseNum the phase number
-   * @param compNum  the component number
+   * @param compNum the component number
    * @return fugacity in bar
    */
   protected double getFugacity(int phaseNum, int compNum) {

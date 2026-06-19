@@ -307,7 +307,7 @@ public class BatchStudy implements Serializable {
      * Adds a parameter to vary with explicit values.
      *
      * @param parameterPath path to parameter (e.g., "heater.duty")
-     * @param values        explicit values to test
+     * @param values explicit values to test
      * @return this builder
      */
     public Builder vary(String parameterPath, double... values) {
@@ -319,9 +319,9 @@ public class BatchStudy implements Serializable {
      * Adds a parameter to vary over a range.
      *
      * @param parameterPath path to parameter
-     * @param min           minimum value
-     * @param max           maximum value
-     * @param steps         number of steps
+     * @param min minimum value
+     * @param max maximum value
+     * @param steps number of steps
      * @return this builder
      */
     public Builder vary(String parameterPath, double min, double max, int steps) {
@@ -336,7 +336,7 @@ public class BatchStudy implements Serializable {
     /**
      * Adds an objective to optimize.
      *
-     * @param name      objective name
+     * @param name objective name
      * @param direction minimize or maximize
      * @param extractor function to extract objective value from process
      * @return this builder

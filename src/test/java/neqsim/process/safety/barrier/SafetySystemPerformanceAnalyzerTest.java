@@ -147,8 +147,8 @@ class SafetySystemPerformanceAnalyzerTest {
   /**
    * Creates a reusable barrier with a matching performance standard and evidence.
    *
-   * @param id       barrier identifier
-   * @param name     barrier name
+   * @param id barrier identifier
+   * @param name barrier name
    * @param function safety function text
    * @param category safety-system category
    * @return configured safety barrier

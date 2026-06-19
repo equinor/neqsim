@@ -75,11 +75,11 @@ public class FlowRegimeDetector {
    * Detects the flow regime for horizontal two-phase flow using Taitel-Dukler criteria.
    * </p>
    *
-   * @param system         the thermodynamic system with gas (phase 0) and liquid (phase 1)
-   * @param gasVelocity    superficial gas velocity in m/s
+   * @param system the thermodynamic system with gas (phase 0) and liquid (phase 1)
+   * @param gasVelocity superficial gas velocity in m/s
    * @param liquidVelocity superficial liquid velocity in m/s
-   * @param pipeDiameter   pipe inner diameter in m
-   * @param inclination    pipe inclination from horizontal in degrees (positive = uphill)
+   * @param pipeDiameter pipe inner diameter in m
+   * @param inclination pipe inclination from horizontal in degrees (positive = uphill)
    * @return the detected flow regime
    */
   public static FlowRegime detectFlowRegime(SystemInterface system, double gasVelocity, double liquidVelocity,
@@ -104,14 +104,14 @@ public class FlowRegimeDetector {
    * Detects the flow regime for horizontal two-phase flow using Taitel-Dukler criteria.
    * </p>
    *
-   * @param gasVelocity    superficial gas velocity in m/s
+   * @param gasVelocity superficial gas velocity in m/s
    * @param liquidVelocity superficial liquid velocity in m/s
-   * @param pipeDiameter   pipe inner diameter in m
-   * @param inclination    pipe inclination from horizontal in degrees (positive = uphill)
-   * @param rhoG           gas density in kg/m3
-   * @param rhoL           liquid density in kg/m3
-   * @param muG            gas viscosity in Pa·s
-   * @param muL            liquid viscosity in Pa·s
+   * @param pipeDiameter pipe inner diameter in m
+   * @param inclination pipe inclination from horizontal in degrees (positive = uphill)
+   * @param rhoG gas density in kg/m3
+   * @param rhoL liquid density in kg/m3
+   * @param muG gas viscosity in Pa·s
+   * @param muL liquid viscosity in Pa·s
    * @param surfaceTension surface tension in N/m
    * @return the detected flow regime
    */
@@ -203,13 +203,13 @@ public class FlowRegimeDetector {
   /**
    * Calculates the Lockhart-Martinelli parameter.
    *
-   * @param uSG  superficial gas velocity [m/s]
-   * @param uSL  superficial liquid velocity [m/s]
-   * @param d    pipe diameter [m]
+   * @param uSG superficial gas velocity [m/s]
+   * @param uSL superficial liquid velocity [m/s]
+   * @param d pipe diameter [m]
    * @param rhoG gas density [kg/m³]
    * @param rhoL liquid density [kg/m³]
-   * @param muG  gas viscosity [Pa·s]
-   * @param muL  liquid viscosity [Pa·s]
+   * @param muG gas viscosity [Pa·s]
+   * @param muL liquid viscosity [Pa·s]
    * @return Lockhart-Martinelli parameter [-]
    */
   private static double calculateLockhartMartinelli(double uSG, double uSL, double d, double rhoG, double rhoL,
@@ -232,12 +232,12 @@ public class FlowRegimeDetector {
   /**
    * Checks if flow is dispersed bubble regime.
    *
-   * @param frL   liquid Froude number
+   * @param frL liquid Froude number
    * @param frMix mixture Froude number
-   * @param rhoL  liquid density [kg/m³]
-   * @param rhoG  gas density [kg/m³]
+   * @param rhoL liquid density [kg/m³]
+   * @param rhoG gas density [kg/m³]
    * @param sigma surface tension [N/m]
-   * @param d     pipe diameter [m]
+   * @param d pipe diameter [m]
    * @return true if dispersed bubble flow
    */
   private static boolean isDispersedBubble(double frL, double frMix, double rhoL, double rhoG, double sigma, double d) {
@@ -249,8 +249,8 @@ public class FlowRegimeDetector {
   /**
    * Checks if flow is annular/mist regime.
    *
-   * @param kuG    gas Kutateladze number
-   * @param frG    gas Froude number
+   * @param kuG gas Kutateladze number
+   * @param frG gas Froude number
    * @param lambda gas void fraction (no-slip)
    * @return true if annular or mist flow
    */
@@ -262,13 +262,13 @@ public class FlowRegimeDetector {
   /**
    * Checks if flow is stratified (vs intermittent).
    *
-   * @param frG  gas Froude number
-   * @param x    Lockhart-Martinelli parameter
-   * @param d    pipe diameter [m]
+   * @param frG gas Froude number
+   * @param x Lockhart-Martinelli parameter
+   * @param d pipe diameter [m]
    * @param rhoG gas density [kg/m³]
    * @param rhoL liquid density [kg/m³]
-   * @param muG  gas viscosity [Pa·s]
-   * @param muL  liquid viscosity [Pa·s]
+   * @param muG gas viscosity [Pa·s]
+   * @param muL liquid viscosity [Pa·s]
    * @return true if stratified flow
    */
   private static boolean isStratified(double frG, double x, double d, double rhoG, double rhoL, double muG,
@@ -286,7 +286,7 @@ public class FlowRegimeDetector {
   /**
    * Checks if stratified flow has waves.
    *
-   * @param frG  gas Froude number
+   * @param frG gas Froude number
    * @param rhoG gas density [kg/m³]
    * @param rhoL liquid density [kg/m³]
    * @return true if stratified wavy flow
@@ -303,11 +303,11 @@ public class FlowRegimeDetector {
    * Gets the flow node type name for the detected regime.
    * </p>
    *
-   * @param system         the thermodynamic system
-   * @param gasVelocity    superficial gas velocity in m/s
+   * @param system the thermodynamic system
+   * @param gasVelocity superficial gas velocity in m/s
    * @param liquidVelocity superficial liquid velocity in m/s
-   * @param pipeDiameter   pipe inner diameter in m
-   * @param inclination    pipe inclination from horizontal in degrees
+   * @param pipeDiameter pipe inner diameter in m
+   * @param inclination pipe inclination from horizontal in degrees
    * @return flow pattern name for use with setInitialFlowPattern()
    */
   public static String detectFlowPatternName(SystemInterface system, double gasVelocity, double liquidVelocity,

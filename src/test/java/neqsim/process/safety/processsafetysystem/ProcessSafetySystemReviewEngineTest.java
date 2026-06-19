@@ -109,7 +109,7 @@ class ProcessSafetySystemReviewEngineTest {
   /**
    * Creates a common passing review item with general Clause 10 evidence.
    *
-   * @param functionId   function identifier
+   * @param functionId function identifier
    * @param functionType function type
    * @return configured review item
    */

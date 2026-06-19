@@ -124,7 +124,7 @@ public class GasDetector extends MeasurementDeviceBaseClass {
   /**
    * Constructor for GasDetector with specified gas type.
    *
-   * @param name    name of gas detector
+   * @param name name of gas detector
    * @param gasType type of gas being detected (COMBUSTIBLE, TOXIC, or OXYGEN)
    */
   public GasDetector(String name, GasType gasType) {
@@ -136,8 +136,8 @@ public class GasDetector extends MeasurementDeviceBaseClass {
   /**
    * Constructor for GasDetector with location.
    *
-   * @param name     name of gas detector
-   * @param gasType  type of gas being detected
+   * @param name name of gas detector
+   * @param gasType type of gas being detected
    * @param location location or zone where detector is installed
    */
   public GasDetector(String name, GasType gasType, String location) {

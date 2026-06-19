@@ -742,8 +742,8 @@ public class PhasePCSAFT extends PhaseSrkEos {
    * getaSAFT.
    * </p>
    *
-   * @param i  a int
-   * @param m  a double
+   * @param i a int
+   * @param m a double
    * @param ab an array of type double
    * @return a double
    */
@@ -756,8 +756,8 @@ public class PhasePCSAFT extends PhaseSrkEos {
    * getaSAFTdm.
    * </p>
    *
-   * @param i  a int
-   * @param m  a double
+   * @param i a int
+   * @param m a double
    * @param ab an array of type double
    * @return a double
    */
@@ -1539,13 +1539,13 @@ public class PhasePCSAFT extends PhaseSrkEos {
    * molarVolume22.
    * </p>
    *
-   * @param pressure    a double
+   * @param pressure a double
    * @param temperature a double
-   * @param A           a double
-   * @param B           a double
-   * @param phaseNum    a int
+   * @param A a double
+   * @param B a double
+   * @param phaseNum a int
    * @return a double
-   * @throws neqsim.util.exception.IsNaNException             if any.
+   * @throws neqsim.util.exception.IsNaNException if any.
    * @throws neqsim.util.exception.TooManyIterationsException if any.
    */
   public double molarVolume22(double pressure, double temperature, double A, double B, int phaseNum)

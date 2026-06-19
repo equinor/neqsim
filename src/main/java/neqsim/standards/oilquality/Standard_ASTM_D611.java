@@ -172,7 +172,7 @@ public class Standard_ASTM_D611 extends neqsim.standards.Standard {
   /**
    * Sets an optional minimum aniline-point specification limit used by {@link #isOnSpec()}.
    *
-   * @param minAniline     minimum allowed aniline point
+   * @param minAniline minimum allowed aniline point
    * @param minAnilineUnit temperature unit, one of {@code "C"}, {@code "K"}, {@code "F"}, {@code "R"}
    */
   public void setMinAnilineSpec(double minAniline, String minAnilineUnit) {
@@ -190,7 +190,7 @@ public class Standard_ASTM_D611 extends neqsim.standards.Standard {
    * Converts a temperature from Celsius to the requested unit.
    *
    * @param valueC temperature value in Celsius (may be NaN)
-   * @param unit   target unit, one of {@code "C"}, {@code "K"}, {@code "F"}, {@code "R"}
+   * @param unit target unit, one of {@code "C"}, {@code "K"}, {@code "F"}, {@code "R"}
    * @return the converted temperature, or the Celsius value if the unit is unrecognised
    */
   private double convertTempFromC(double valueC, String unit) {
@@ -211,7 +211,7 @@ public class Standard_ASTM_D611 extends neqsim.standards.Standard {
    * Converts a temperature in the supplied unit to Celsius.
    *
    * @param value temperature value
-   * @param unit  source unit, one of {@code "C"}, {@code "K"}, {@code "F"}, {@code "R"}
+   * @param unit source unit, one of {@code "C"}, {@code "K"}, {@code "F"}, {@code "R"}
    * @return the temperature in Celsius
    */
   private double convertTempToC(double value, String unit) {

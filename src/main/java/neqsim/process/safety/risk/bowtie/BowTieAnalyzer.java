@@ -176,7 +176,7 @@ public class BowTieAnalyzer implements Serializable {
   /**
    * Creates a bow-tie analyzer for a process system.
    *
-   * @param name          analyzer name
+   * @param name analyzer name
    * @param processSystem process system
    */
   public BowTieAnalyzer(String name, ProcessSystem processSystem) {
@@ -276,9 +276,9 @@ public class BowTieAnalyzer implements Serializable {
   /**
    * Creates a bow-tie model for a specific hazard.
    *
-   * @param hazardId          hazard identifier
+   * @param hazardId hazard identifier
    * @param hazardDescription hazard description
-   * @param hazardType        type of hazard (e.g., OVERPRESSURE, LOSS_OF_CONTAINMENT)
+   * @param hazardType type of hazard (e.g., OVERPRESSURE, LOSS_OF_CONTAINMENT)
    * @return created bow-tie model
    */
   public BowTieModel createBowTie(String hazardId, String hazardDescription, String hazardType) {

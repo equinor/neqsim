@@ -60,7 +60,7 @@ public class RachfordRice implements Serializable {
    * @param K an array of type double
    * @param z an array of type double
    * @return Beta Mole fraction of gas phase
-   * @throws neqsim.util.exception.IsNaNException             if any.
+   * @throws neqsim.util.exception.IsNaNException if any.
    * @throws neqsim.util.exception.TooManyIterationsException if any.
    */
   public double calcBeta(double[] K, double[] z)
@@ -82,7 +82,7 @@ public class RachfordRice implements Serializable {
    * @param K an array of type double
    * @param z an array of type double
    * @return Beta Mole fraction of gas phase
-   * @throws neqsim.util.exception.IsNaNException             if any.
+   * @throws neqsim.util.exception.IsNaNException if any.
    * @throws neqsim.util.exception.TooManyIterationsException if any.
    */
   public double calcBetaMichelsen2001(double[] K, double[] z)
@@ -239,7 +239,7 @@ public class RachfordRice implements Serializable {
    * @param K an array of type double
    * @param z an array of type double
    * @return Beta Mole fraction of gas phase
-   * @throws neqsim.util.exception.IsNaNException             if any.
+   * @throws neqsim.util.exception.IsNaNException if any.
    * @throws neqsim.util.exception.TooManyIterationsException if any.
    */
   public double calcBetaNielsen2023(double[] K, double[] z)
@@ -436,7 +436,7 @@ public class RachfordRice implements Serializable {
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @return a double
-   * @throws neqsim.util.exception.IsNaNException             if any.
+   * @throws neqsim.util.exception.IsNaNException if any.
    * @throws neqsim.util.exception.TooManyIterationsException if any.
    */
   public final double calcBetaS(SystemInterface system)

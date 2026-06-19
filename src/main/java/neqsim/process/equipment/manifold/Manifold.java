@@ -106,7 +106,7 @@ public class Manifold extends ProcessEquipmentBaseClass
   /**
    * Replaces one inlet stream in the manifold mixer and refreshes the local splitter.
    *
-   * @param index     zero-based inlet stream index
+   * @param index zero-based inlet stream index
    * @param newStream replacement inlet stream
    */
   public void replaceStream(int index, StreamInterface newStream) {
@@ -239,7 +239,7 @@ public class Manifold extends ProcessEquipmentBaseClass
    * Set header inner diameter with unit.
    *
    * @param diameter inner diameter value
-   * @param unit     unit (m, mm, inch)
+   * @param unit unit (m, mm, inch)
    */
   public void setHeaderInnerDiameter(double diameter, String unit) {
     if (unit.equalsIgnoreCase("mm")) {
@@ -282,7 +282,7 @@ public class Manifold extends ProcessEquipmentBaseClass
    * Set header wall thickness with unit.
    *
    * @param thickness wall thickness value
-   * @param unit      unit (m, mm, inch)
+   * @param unit unit (m, mm, inch)
    */
   public void setHeaderWallThickness(double thickness, String unit) {
     if (unit.equalsIgnoreCase("mm")) {
@@ -316,7 +316,7 @@ public class Manifold extends ProcessEquipmentBaseClass
    * Set branch inner diameter with unit.
    *
    * @param diameter inner diameter value
-   * @param unit     unit (m, mm, inch)
+   * @param unit unit (m, mm, inch)
    */
   public void setBranchInnerDiameter(double diameter, String unit) {
     if (unit.equalsIgnoreCase("mm")) {
@@ -359,7 +359,7 @@ public class Manifold extends ProcessEquipmentBaseClass
    * Set branch wall thickness with unit.
    *
    * @param thickness wall thickness value
-   * @param unit      unit (m, mm, inch)
+   * @param unit unit (m, mm, inch)
    */
   public void setBranchWallThickness(double thickness, String unit) {
     if (unit.equalsIgnoreCase("mm")) {

@@ -26,10 +26,10 @@ public final class DevelopmentCaseUncertainty implements Serializable {
   /**
    * Creates an uncertainty bundle.
    *
-   * @param resource         resource range
-   * @param capex            CAPEX range
-   * @param scheduleMonths   schedule range in months
-   * @param price            price range
+   * @param resource resource range
+   * @param capex CAPEX range
+   * @param scheduleMonths schedule range in months
+   * @param price price range
    * @param productionFactor production-factor range
    */
   private DevelopmentCaseUncertainty(UncertaintyRange resource, UncertaintyRange capex, UncertaintyRange scheduleMonths,

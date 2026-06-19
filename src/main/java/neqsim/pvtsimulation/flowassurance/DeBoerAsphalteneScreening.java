@@ -136,9 +136,9 @@ public class DeBoerAsphalteneScreening {
   /**
    * Constructor with key parameters.
    *
-   * @param reservoirPressure  reservoir pressure (bara)
+   * @param reservoirPressure reservoir pressure (bara)
    * @param saturationPressure bubble point pressure (bara)
-   * @param inSituDensity      in-situ oil density (kg/m3)
+   * @param inSituDensity in-situ oil density (kg/m3)
    */
   public DeBoerAsphalteneScreening(double reservoirPressure, double saturationPressure, double inSituDensity) {
     this.reservoirPressure = reservoirPressure;
@@ -149,8 +149,8 @@ public class DeBoerAsphalteneScreening {
   /**
    * Constructor with thermodynamic system.
    *
-   * @param system               thermodynamic system for property calculations
-   * @param reservoirPressure    reservoir pressure (bara)
+   * @param system thermodynamic system for property calculations
+   * @param reservoirPressure reservoir pressure (bara)
    * @param reservoirTemperature reservoir temperature (K)
    */
   public DeBoerAsphalteneScreening(SystemInterface system, double reservoirPressure, double reservoirTemperature) {
@@ -252,9 +252,9 @@ public class DeBoerAsphalteneScreening {
    * Evaluates a quadratic boundary curve at the given density.
    *
    * @param density in-situ density (kg/m3)
-   * @param a       quadratic coefficient
-   * @param b       linear coefficient
-   * @param c       constant term
+   * @param a quadratic coefficient
+   * @param b linear coefficient
+   * @param c constant term
    * @return boundary undersaturation pressure (bar)
    */
   private double calculateBoundary(double density, double a, double b, double c) {
@@ -380,7 +380,7 @@ public class DeBoerAsphalteneScreening {
    *
    * @param minDensity minimum density for plot (kg/m3)
    * @param maxDensity maximum density for plot (kg/m3)
-   * @param numPoints  number of points per curve
+   * @param numPoints number of points per curve
    * @return 2D array: [0]=densities, [1]=no problem line, [2]=slight line, [3]=severe line
    */
   public double[][] generatePlotData(double minDensity, double maxDensity, int numPoints) {

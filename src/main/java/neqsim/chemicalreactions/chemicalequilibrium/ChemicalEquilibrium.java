@@ -125,11 +125,11 @@ public class ChemicalEquilibrium implements java.io.Serializable {
    * Constructor for ChemicalEquilibrium.
    * </p>
    *
-   * @param A_matrix   an array of type double
-   * @param b_element  an array of type double
-   * @param system     a {@link neqsim.thermo.system.SystemInterface} object
+   * @param A_matrix an array of type double
+   * @param b_element an array of type double
+   * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param components an array of {@link neqsim.thermo.component.ComponentInterface} objects
-   * @param phaseNum   a int
+   * @param phaseNum a int
    */
   public ChemicalEquilibrium(double[][] A_matrix, double[] b_element, SystemInterface system,
       ComponentInterface[] components, int phaseNum) {
@@ -1021,11 +1021,11 @@ public class ChemicalEquilibrium implements java.io.Serializable {
    * innerStep.
    * </p>
    *
-   * @param i       a int
+   * @param i a int
    * @param n_omega an array of type double
-   * @param check   a int
-   * @param step    a double
-   * @param test    a boolean
+   * @param check a int
+   * @param step a double
+   * @param test a boolean
    * @return a double
    */
   public double innerStep(int i, double[] n_omega, int check, double step, boolean test) {

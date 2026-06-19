@@ -176,10 +176,10 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 {
    * Constructor for Standard_ISO6976_2016.
    * </p>
    *
-   * @param thermoSystem                       a {@link neqsim.thermo.system.SystemInterface} object
+   * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
    * @param volumetricReferenceTemperaturedegC a double (valid are 0, 15, 15.55 and 20)
-   * @param energyReferenceTemperaturedegC     a double (valid are 0, 15, 15.55 and 20)
-   * @param calculationType                    a {@link java.lang.String} object
+   * @param energyReferenceTemperaturedegC a double (valid are 0, 15, 15.55 and 20)
+   * @param calculationType a {@link java.lang.String} object
    */
   public Standard_ISO6976_2016(SystemInterface thermoSystem, double volumetricReferenceTemperaturedegC,
       double energyReferenceTemperaturedegC, String calculationType) {

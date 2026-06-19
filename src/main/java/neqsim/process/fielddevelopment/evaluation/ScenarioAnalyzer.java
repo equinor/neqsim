@@ -69,7 +69,7 @@ public class ScenarioAnalyzer implements Serializable {
   /**
    * Adds a scenario to analyze.
    *
-   * @param name       scenario name
+   * @param name scenario name
    * @param parameters scenario parameters
    * @return this for chaining
    */
@@ -108,7 +108,7 @@ public class ScenarioAnalyzer implements Serializable {
   /**
    * Runs a single scenario.
    *
-   * @param name   scenario name
+   * @param name scenario name
    * @param params scenario parameters
    * @return scenario result
    */

@@ -151,8 +151,8 @@ public class TwoFluidConservationEquations implements Serializable {
    * </p>
    *
    * @param sections Array of pipe sections with current state
-   * @param dx       Cell size (m) — used as uniform dx; for non-uniform mesh each section's own length is used via
-   *                 {@code sections[i].getLength()}
+   * @param dx Cell size (m) — used as uniform dx; for non-uniform mesh each section's own length is used via
+   * {@code sections[i].getLength()}
    * @return Time derivatives [nCells][NUM_EQUATIONS]
    */
   public double[][] calcRHS(TwoFluidSection[] sections, double dx) {
@@ -387,7 +387,7 @@ public class TwoFluidConservationEquations implements Serializable {
    * </p>
    *
    * @param sections Pipe sections
-   * @param dx       Cell size
+   * @param dx Cell size
    * @return Fluxes at interfaces [nInterfaces][NUM_EQUATIONS]
    */
   private double[][] calcInterfaceFluxes(TwoFluidSection[] sections, double dx) {
@@ -942,8 +942,8 @@ public class TwoFluidConservationEquations implements Serializable {
    * Apply pressure gradient term (handled separately for numerical stability).
    *
    * @param sections Pipe sections
-   * @param dUdt     Current RHS values to modify
-   * @param dx       Cell size (used for uniform mesh; per-section length used when available)
+   * @param dUdt Current RHS values to modify
+   * @param dx Cell size (used for uniform mesh; per-section length used when available)
    */
   public void applyPressureGradient(TwoFluidSection[] sections, double[][] dUdt, double dx) {
     int nCells = sections.length;
@@ -1018,7 +1018,7 @@ public class TwoFluidConservationEquations implements Serializable {
    * </p>
    *
    * @param sections Pipe sections
-   * @param U        State array [nCells][NUM_EQUATIONS]
+   * @param U State array [nCells][NUM_EQUATIONS]
    */
   public void applyState(TwoFluidSection[] sections, double[][] U) {
     int nCells = sections.length;

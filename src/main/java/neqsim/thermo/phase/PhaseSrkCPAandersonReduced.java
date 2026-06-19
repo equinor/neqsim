@@ -493,9 +493,9 @@ public class PhaseSrkCPAandersonReduced extends PhaseSrkCPAs {
    * are expanded back to all n_s individual site fractions.
    * </p>
    *
-   * @param p      number of unique site types
+   * @param p number of unique site types
    * @param tMoles moles per site type
-   * @param ns     total number of individual association sites
+   * @param ns total number of individual association sites
    * @return number of inner iterations used
    */
   private int solveXAndersonReduced(int p, double[] tMoles, int ns) {
@@ -621,8 +621,8 @@ public class PhaseSrkCPAandersonReduced extends PhaseSrkCPAs {
    * </p>
    *
    * @param gMatrix history of residual differences (m x p, using rows 0..histLen-1)
-   * @param gVec    current residual vector (length p)
-   * @param p       dimension of the vectors (number of site types)
+   * @param gVec current residual vector (length p)
+   * @param p dimension of the vectors (number of site types)
    * @param histLen number of stored history vectors
    * @return mixing coefficients gamma (length histLen)
    */
@@ -755,7 +755,7 @@ public class PhaseSrkCPAandersonReduced extends PhaseSrkCPAs {
    * Expand reduced site fraction values to all individual sites on components.
    *
    * @param xType reduced site fraction array (length p)
-   * @param ns    total number of individual sites
+   * @param ns total number of individual sites
    */
   private void expandAndSetSiteFractions(double[] xType, int ns) {
     int idx = 0;
@@ -772,7 +772,7 @@ public class PhaseSrkCPAandersonReduced extends PhaseSrkCPAs {
    * Read individual site fractions from component objects into a flat array.
    *
    * @param xSite array to fill (length ns)
-   * @param ns    total number of individual sites
+   * @param ns total number of individual sites
    */
   private void readXsiteFromComponents(double[] xSite, int ns) {
     int idx = 0;

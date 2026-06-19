@@ -53,7 +53,7 @@ public final class ProgressTracker {
    * Starts tracking a new long-running operation.
    *
    * @param operationType the type of operation (e.g., "dynamic_simulation", "parametric_sweep")
-   * @param totalSteps    the total number of steps expected
+   * @param totalSteps the total number of steps expected
    * @return the operation ID for polling
    */
   public static synchronized String start(String operationType, int totalSteps) {
@@ -74,7 +74,7 @@ public final class ProgressTracker {
    *
    * @param operationId the operation ID
    * @param currentStep the current step number (1-based)
-   * @param message     a status message
+   * @param message a status message
    */
   public static void update(String operationId, int currentStep, String message) {
     OperationProgress progress = OPERATIONS.get(operationId);
@@ -94,7 +94,7 @@ public final class ProgressTracker {
   /**
    * Marks an operation as complete.
    *
-   * @param operationId  the operation ID
+   * @param operationId the operation ID
    * @param finalMessage the completion message
    */
   public static void complete(String operationId, String finalMessage) {
@@ -111,7 +111,7 @@ public final class ProgressTracker {
   /**
    * Marks an operation as failed.
    *
-   * @param operationId  the operation ID
+   * @param operationId the operation ID
    * @param errorMessage the error message
    */
   public static void fail(String operationId, String errorMessage) {
@@ -213,9 +213,9 @@ public final class ProgressTracker {
     /**
      * Creates operation progress.
      *
-     * @param operationId   the operation ID
+     * @param operationId the operation ID
      * @param operationType the type
-     * @param totalSteps    the total steps
+     * @param totalSteps the total steps
      */
     OperationProgress(String operationId, String operationType, int totalSteps) {
       this.operationId = operationId;
@@ -268,7 +268,7 @@ public final class ProgressTracker {
     /**
      * Creates a milestone.
      *
-     * @param step    the step number
+     * @param step the step number
      * @param message the message
      */
     Milestone(int step, String message) {

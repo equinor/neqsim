@@ -46,7 +46,7 @@ public class HIPPSWithESDExample {
   /**
    * Java 8 compatible string repeat utility method.
    *
-   * @param str   the string to repeat
+   * @param str the string to repeat
    * @param count the number of times to repeat
    * @return the repeated string
    */

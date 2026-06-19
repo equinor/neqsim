@@ -44,7 +44,7 @@ public class TwoPhasePipeFlowVisualization extends
    * Constructor for TwoPhasePipeFlowVisualization.
    * </p>
    *
-   * @param nodes     a int
+   * @param nodes a int
    * @param timeSteps a int
    */
   public TwoPhasePipeFlowVisualization(int nodes, int timeSteps) {

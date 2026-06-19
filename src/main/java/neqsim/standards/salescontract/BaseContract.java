@@ -70,9 +70,9 @@ public class BaseContract implements ContractInterface {
    * Constructor for BaseContract.
    * </p>
    *
-   * @param system   a {@link neqsim.thermo.system.SystemInterface} object
+   * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param terminal a {@link java.lang.String} object
-   * @param country  a {@link java.lang.String} object
+   * @param country a {@link java.lang.String} object
    */
   public BaseContract(SystemInterface system, String terminal, String country) {
     // int numb = 0;
@@ -105,7 +105,7 @@ public class BaseContract implements ContractInterface {
    * getMethod.
    * </p>
    *
-   * @param system     a {@link neqsim.thermo.system.SystemInterface} object
+   * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param methodName a {@link java.lang.String} object
    * @return a {@link neqsim.standards.StandardInterface} object
    */
@@ -144,18 +144,18 @@ public class BaseContract implements ContractInterface {
    * getSpecification.
    * </p>
    *
-   * @param method                   a {@link neqsim.standards.StandardInterface} object
-   * @param specificationName        a {@link java.lang.String} object
-   * @param specificationName2       a {@link java.lang.String} object
-   * @param country                  a {@link java.lang.String} object
-   * @param terminal                 a {@link java.lang.String} object
-   * @param minValue                 a double
-   * @param maxValue                 a double
-   * @param unit                     a {@link java.lang.String} object
-   * @param referenceTemperature     a double
+   * @param method a {@link neqsim.standards.StandardInterface} object
+   * @param specificationName a {@link java.lang.String} object
+   * @param specificationName2 a {@link java.lang.String} object
+   * @param country a {@link java.lang.String} object
+   * @param terminal a {@link java.lang.String} object
+   * @param minValue a double
+   * @param maxValue a double
+   * @param unit a {@link java.lang.String} object
+   * @param referenceTemperature a double
    * @param referenceTemperatureComb a double
-   * @param referencePressure        a double
-   * @param comments                 a {@link java.lang.String} object
+   * @param referencePressure a double
+   * @param comments a {@link java.lang.String} object
    * @return a {@link neqsim.standards.salescontract.ContractSpecification} object
    */
   public ContractSpecification getSpecification(StandardInterface method, String specificationName,

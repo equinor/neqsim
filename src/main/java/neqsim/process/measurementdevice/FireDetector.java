@@ -83,7 +83,7 @@ public class FireDetector extends MeasurementDeviceBaseClass {
   /**
    * Constructor for FireDetector with location.
    *
-   * @param name     name of fire detector
+   * @param name name of fire detector
    * @param location location or zone where detector is installed
    */
   public FireDetector(String name, String location) {

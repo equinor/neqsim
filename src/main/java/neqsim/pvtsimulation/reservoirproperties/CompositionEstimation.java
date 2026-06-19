@@ -18,7 +18,7 @@ public class CompositionEstimation {
    * </p>
    *
    * @param reservoirTemperature a double
-   * @param reservoirPressure    a double
+   * @param reservoirPressure a double
    */
   public CompositionEstimation(double reservoirTemperature, double reservoirPressure) {
     this.reservoirTemperature = reservoirTemperature;

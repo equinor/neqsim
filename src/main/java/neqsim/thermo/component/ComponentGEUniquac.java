@@ -33,10 +33,10 @@ public class ComponentGEUniquac extends ComponentGE {
    * Constructor for ComponentGEUniquac.
    * </p>
    *
-   * @param name         Name of component.
-   * @param moles        Total number of moles of component.
+   * @param name Name of component.
+   * @param moles Total number of moles of component.
    * @param molesInPhase Number of moles in phase.
-   * @param compIndex    Index number of component in phase object component array.
+   * @param compIndex Index number of component in phase object component array.
    */
   public ComponentGEUniquac(String name, double moles, double molesInPhase, int compIndex) {
     super(name, moles, molesInPhase, compIndex);
@@ -73,11 +73,11 @@ public class ComponentGEUniquac extends ComponentGE {
    * Calculate, set and return fugacity coefficient.
    * </p>
    *
-   * @param phase              a {@link neqsim.thermo.phase.PhaseInterface} object to get fugacity coefficient of.
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object to get fugacity coefficient of.
    * @param numberOfComponents a int
-   * @param temperature        a double
-   * @param pressure           a double
-   * @param pt                 the PhaseType of the phase
+   * @param temperature a double
+   * @param pressure a double
+   * @param pt the PhaseType of the phase
    * @return Fugacity coefficient
    */
   public double fugcoef(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
@@ -99,11 +99,11 @@ public class ComponentGEUniquac extends ComponentGE {
    * getGamma.
    * </p>
    *
-   * @param phase              a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
-   * @param temperature        a double
-   * @param pressure           a double
-   * @param pt                 the PhaseType of the phase
+   * @param temperature a double
+   * @param pressure a double
+   * @param pt the PhaseType of the phase
    * @return a double
    */
   public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
@@ -157,11 +157,11 @@ public class ComponentGEUniquac extends ComponentGE {
    * fugcoefDiffPres.
    * </p>
    *
-   * @param phase              a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
-   * @param temperature        a double
-   * @param pressure           a double
-   * @param pt                 the PhaseType of the phase
+   * @param temperature a double
+   * @param pressure a double
+   * @param pt the PhaseType of the phase
    * @return a double
    */
   public double fugcoefDiffPres(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
@@ -176,11 +176,11 @@ public class ComponentGEUniquac extends ComponentGE {
    * fugcoefDiffTemp.
    * </p>
    *
-   * @param phase              a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
-   * @param temperature        a double
-   * @param pressure           a double
-   * @param pt                 the PhaseType of the phase
+   * @param temperature a double
+   * @param pressure a double
+   * @param pt the PhaseType of the phase
    * @return a double
    */
   public double fugcoefDiffTemp(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,

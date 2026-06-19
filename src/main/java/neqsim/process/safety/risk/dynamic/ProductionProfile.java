@@ -102,9 +102,9 @@ public class ProductionProfile implements Serializable {
     /**
      * Creates a time point.
      *
-     * @param time           time in hours
+     * @param time time in hours
      * @param productionRate production rate in kg/hr
-     * @param phase          current phase
+     * @param phase current phase
      */
     public TimePoint(double time, double productionRate, String phase) {
       this.time = time;
@@ -140,7 +140,7 @@ public class ProductionProfile implements Serializable {
    * Creates a production profile with failure mode.
    *
    * @param equipmentName name of failed equipment
-   * @param failureMode   failure mode description
+   * @param failureMode failure mode description
    */
   public ProductionProfile(String equipmentName, String failureMode) {
     this.equipmentName = equipmentName;

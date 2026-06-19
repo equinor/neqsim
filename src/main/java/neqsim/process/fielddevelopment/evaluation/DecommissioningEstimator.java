@@ -609,7 +609,7 @@ public class DecommissioningEstimator implements Serializable {
      *
      * @param category cost category
      * @param costMUSD cost in MUSD
-     * @param notes    additional notes
+     * @param notes additional notes
      */
     public CostItem(String category, double costMUSD, String notes) {
       this.category = category;

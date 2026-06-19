@@ -43,10 +43,10 @@ public class IntegrityLifeAssessment implements Serializable {
   /**
    * Creates a life assessment from wall-thickness and corrosion-rate data.
    *
-   * @param nominalThicknessMm         nominal or original wall thickness in millimetres
-   * @param currentThicknessMm         current measured wall thickness in millimetres
+   * @param nominalThicknessMm nominal or original wall thickness in millimetres
+   * @param currentThicknessMm current measured wall thickness in millimetres
    * @param minimumRequiredThicknessMm minimum required wall thickness in millimetres
-   * @param corrosionRateMmPerYear     predicted corrosion rate in millimetres per year
+   * @param corrosionRateMmPerYear predicted corrosion rate in millimetres per year
    * @return populated life assessment
    */
   public static IntegrityLifeAssessment fromWallThickness(double nominalThicknessMm, double currentThicknessMm,

@@ -92,9 +92,9 @@ public class GasTurbineUnit extends TwoPortEquipment {
   /**
    * Construct a unit with an inlet fuel stream and a catalog spec.
    *
-   * @param name       unit name
+   * @param name unit name
    * @param fuelStream fuel gas inlet stream
-   * @param spec       catalog spec (use {@link GasTurbineCatalog#get(String)})
+   * @param spec catalog spec (use {@link GasTurbineCatalog#get(String)})
    */
   public GasTurbineUnit(String name, StreamInterface fuelStream, GasTurbineSpec spec) {
     super(name, fuelStream);

@@ -29,7 +29,7 @@ public abstract class BaseUnit implements Unit, neqsim.thermo.ThermodynamicConst
    * </p>
    *
    * @param value a double
-   * @param name  a {@link java.lang.String} object
+   * @param name a {@link java.lang.String} object
    */
   public BaseUnit(double value, String name) {
     this.invalue = value;

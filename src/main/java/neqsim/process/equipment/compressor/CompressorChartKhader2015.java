@@ -28,7 +28,7 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
   /**
    * Constructs a CompressorChartKhader2015 object with the specified fluid and impeller diameter.
    *
-   * @param fluid        the working fluid for the compressor
+   * @param fluid the working fluid for the compressor
    * @param impellerdiam the outer diameter of the impeller
    */
   public CompressorChartKhader2015(SystemInterface fluid, double impellerdiam) {
@@ -39,9 +39,9 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
   /**
    * Constructs a CompressorChartKhader2015 object with the specified fluid and impeller diameter.
    *
-   * @param fluid          the working fluid for the compressor
+   * @param fluid the working fluid for the compressor
    * @param referenceFluid the referenceFluid for the compressorcurve
-   * @param impellerdiam   the outer diameter of the impeller
+   * @param impellerdiam the outer diameter of the impeller
    */
   public CompressorChartKhader2015(SystemInterface fluid, SystemInterface referenceFluid, double impellerdiam) {
     this.fluid = fluid;
@@ -52,7 +52,7 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
   /**
    * Constructs a CompressorChartKhader2015 object with the specified stream and impeller diameter.
    *
-   * @param stream       the stream for the compressor
+   * @param stream the stream for the compressor
    * @param impellerdiam the outer diameter of the impeller
    */
   public CompressorChartKhader2015(StreamInterface stream, double impellerdiam) {
@@ -87,11 +87,11 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
    * conditions, as described in Kader (2015) and the referenced NeqSim discussion.
    *
    * @param chartConditions array with temperature, pressure, (optionally density, molecular weight)
-   * @param speed           array of speeds
-   * @param flow            2D array of flows
-   * @param head            2D array of heads
-   * @param flowPolyEff     2D array of flows for efficiency
-   * @param polyEff         2D array of polytropic efficiencies
+   * @param speed array of speeds
+   * @param flow 2D array of flows
+   * @param head 2D array of heads
+   * @param flowPolyEff 2D array of flows for efficiency
+   * @param polyEff 2D array of polytropic efficiencies
    */
   @Override
   public void setCurves(double[] chartConditions, double[] speed, double[][] flow, double[][] head,
@@ -142,11 +142,11 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
    * factor for efficiency, and polytropic efficiency arrays for each speed.
    *
    * @param chartConditions array with temperature, pressure, (optionally density, molecular weight)
-   * @param speed           array of speeds
-   * @param flow            2D array of flows
-   * @param head            2D array of heads
-   * @param flowPolyEff     2D array of flows for efficiency
-   * @param polyEff         2D array of polytropic efficiencies
+   * @param speed array of speeds
+   * @param flow 2D array of flows
+   * @param head 2D array of heads
+   * @param flowPolyEff 2D array of flows for efficiency
+   * @param polyEff 2D array of polytropic efficiencies
    * @return List of CorrectedCurve objects containing dimensionless map data
    */
   public java.util.List<CorrectedCurve> getCorrectedCurves(double[] chartConditions, double[] speed, double[][] flow,
@@ -400,11 +400,11 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
     /**
      * Constructs a CorrectedCurve object with the specified dimensionless compressor map data.
      *
-     * @param machineMachNumber             the machine Mach number
-     * @param correctedFlowFactor           array of corrected flow factors
-     * @param correctedHeadFactor           array of corrected head factors
+     * @param machineMachNumber the machine Mach number
+     * @param correctedFlowFactor array of corrected flow factors
+     * @param correctedHeadFactor array of corrected head factors
      * @param correctedFlowFactorEfficiency array of corrected flow factors for efficiency
-     * @param polytropicEfficiency          array of polytropic efficiencies
+     * @param polytropicEfficiency array of polytropic efficiencies
      */
     public CorrectedCurve(double machineMachNumber, double[] correctedFlowFactor, double[] correctedHeadFactor,
 	double[] correctedFlowFactorEfficiency, double[] polytropicEfficiency) {
@@ -429,10 +429,10 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
     /**
      * Constructs a RealCurve object with the specified physical units compressor map data.
      *
-     * @param speed                the rotational speed
-     * @param flow                 array of flow values
-     * @param head                 array of head values
-     * @param flowPolyEff          array of flow values for efficiency
+     * @param speed the rotational speed
+     * @param flow array of flow values
+     * @param head array of head values
+     * @param flowPolyEff array of flow values for efficiency
      * @param polytropicEfficiency array of polytropic efficiencies
      */
     public RealCurve(double speed, double[] flow, double[] head, double[] flowPolyEff, double[] polytropicEfficiency) {

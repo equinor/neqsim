@@ -172,7 +172,7 @@ public final class ZFactorCorrelations {
    *
    * @param pressureBara Pressure (bara)
    * @param temperatureK Temperature (Kelvin)
-   * @param gammaG       Gas specific gravity (air = 1.0)
+   * @param gammaG Gas specific gravity (air = 1.0)
    * @return Z-factor (dimensionless)
    */
   public static double zFactorSutton(double pressureBara, double temperatureK, double gammaG) {
@@ -188,9 +188,9 @@ public final class ZFactorCorrelations {
    *
    * @param pressureBara Pressure (bara)
    * @param temperatureK Temperature (Kelvin)
-   * @param gammaG       Gas specific gravity (air = 1.0)
-   * @param yH2S         Mole fraction of H2S [0, 1]
-   * @param yCO2         Mole fraction of CO2 [0, 1]
+   * @param gammaG Gas specific gravity (air = 1.0)
+   * @param yH2S Mole fraction of H2S [0, 1]
+   * @param yCO2 Mole fraction of CO2 [0, 1]
    * @return Z-factor (dimensionless)
    */
   public static double zFactorSourGas(double pressureBara, double temperatureK, double gammaG, double yH2S,
@@ -208,8 +208,8 @@ public final class ZFactorCorrelations {
    *
    * @param pressureBara Pressure (bara)
    * @param temperatureK Temperature (Kelvin)
-   * @param gammaG       Gas specific gravity (air = 1.0)
-   * @param molWeight    Gas molecular weight (g/mol)
+   * @param gammaG Gas specific gravity (air = 1.0)
+   * @param molWeight Gas molecular weight (g/mol)
    * @return Gas density (kg/m3)
    */
   public static double gasDensity(double pressureBara, double temperatureK, double gammaG, double molWeight) {
@@ -229,7 +229,7 @@ public final class ZFactorCorrelations {
    *
    * @param pressureBara Pressure (bara)
    * @param temperatureK Temperature (Kelvin)
-   * @param gammaG       Gas specific gravity (air = 1.0)
+   * @param gammaG Gas specific gravity (air = 1.0)
    * @return Gas FVF (res m3 / std m3)
    */
   public static double gasFVFFromZ(double pressureBara, double temperatureK, double gammaG) {

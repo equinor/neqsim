@@ -48,7 +48,7 @@ public class NeqSimXtream {
    *
    * @param filename the path to the .neqsim file
    * @return the deserialized object
-   * @throws IOException           if the file cannot be read or is not a valid .neqsim file
+   * @throws IOException if the file cannot be read or is not a valid .neqsim file
    * @throws FileNotFoundException if the file does not exist or process.xml is not found in ZIP
    */
   public static Object openNeqsim(String filename) throws IOException {
@@ -92,7 +92,7 @@ public class NeqSimXtream {
    * </p>
    *
    * @param javaobject the object to serialize (typically ProcessSystem or ProcessModel)
-   * @param filename   the path to save to (recommended extension: .neqsim)
+   * @param filename the path to save to (recommended extension: .neqsim)
    * @return true if save was successful, false otherwise
    */
   public static boolean saveNeqsim(Object javaobject, String filename) {

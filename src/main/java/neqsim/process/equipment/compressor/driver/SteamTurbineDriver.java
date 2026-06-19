@@ -85,7 +85,7 @@ public class SteamTurbineDriver extends DriverCurveBase {
   /**
    * Constructor with rated power and efficiency.
    *
-   * @param ratedPowerKW     rated power in kW
+   * @param ratedPowerKW rated power in kW
    * @param designEfficiency design efficiency at rated conditions (0-1)
    */
   public SteamTurbineDriver(double ratedPowerKW, double designEfficiency) {
@@ -96,8 +96,8 @@ public class SteamTurbineDriver extends DriverCurveBase {
   /**
    * Constructor with full parameters.
    *
-   * @param ratedPowerKW     rated power in kW
-   * @param ratedSpeedRPM    rated speed in RPM
+   * @param ratedPowerKW rated power in kW
+   * @param ratedSpeedRPM rated speed in RPM
    * @param designEfficiency design efficiency at rated conditions (0-1)
    */
   public SteamTurbineDriver(double ratedPowerKW, double ratedSpeedRPM, double designEfficiency) {
@@ -184,7 +184,7 @@ public class SteamTurbineDriver extends DriverCurveBase {
    * </p>
    *
    * @param powerOutput power output in kW
-   * @param speed       operating speed in RPM
+   * @param speed operating speed in RPM
    * @return steam consumption in kg/hr
    */
   public double getSteamConsumption(double powerOutput, double speed) {
@@ -341,7 +341,7 @@ public class SteamTurbineDriver extends DriverCurveBase {
   /**
    * Sets the Willans line parameters.
    *
-   * @param noLoadRate      no-load steam rate in kg/kWh
+   * @param noLoadRate no-load steam rate in kg/kWh
    * @param incrementalRate incremental steam rate in kg/kWh
    */
   public void setWillansLineParameters(double noLoadRate, double incrementalRate) {

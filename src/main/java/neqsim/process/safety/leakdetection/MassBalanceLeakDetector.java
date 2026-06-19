@@ -47,7 +47,7 @@ public class MassBalanceLeakDetector implements Serializable {
   /**
    * Creates a detector between two stream measurements.
    *
-   * @param inletStream  inlet measurement stream
+   * @param inletStream inlet measurement stream
    * @param outletStream outlet measurement stream
    * @throws IllegalArgumentException if either stream is null
    */
@@ -293,18 +293,18 @@ public class MassBalanceLeakDetector implements Serializable {
     /**
      * Creates a leak detection sensitivity result.
      *
-     * @param inletStreamName                 inlet stream name
-     * @param outletStreamName                outlet stream name
-     * @param inletFlowKgPerS                 inlet mass flow rate in kg/s
-     * @param outletFlowKgPerS                outlet mass flow rate in kg/s
-     * @param measuredImbalanceKgPerS         measured mass imbalance in kg/s
-     * @param flowUncertaintyKgPerS           flow measurement uncertainty in kg/s
-     * @param linepackUncertaintyKgPerS       linepack uncertainty in kg/s
-     * @param combinedUncertaintyKgPerS       combined uncertainty in kg/s
+     * @param inletStreamName inlet stream name
+     * @param outletStreamName outlet stream name
+     * @param inletFlowKgPerS inlet mass flow rate in kg/s
+     * @param outletFlowKgPerS outlet mass flow rate in kg/s
+     * @param measuredImbalanceKgPerS measured mass imbalance in kg/s
+     * @param flowUncertaintyKgPerS flow measurement uncertainty in kg/s
+     * @param linepackUncertaintyKgPerS linepack uncertainty in kg/s
+     * @param combinedUncertaintyKgPerS combined uncertainty in kg/s
      * @param minimumDetectableLeakRateKgPerS minimum detectable leak rate in kg/s
-     * @param minimumDetectableLeakFraction   minimum detectable leak fraction of reference flow
-     * @param detectionWindowS                detection window in s
-     * @param confidenceMultiplier            confidence multiplier
+     * @param minimumDetectableLeakFraction minimum detectable leak fraction of reference flow
+     * @param detectionWindowS detection window in s
+     * @param confidenceMultiplier confidence multiplier
      */
     public LeakDetectionSensitivityResult(String inletStreamName, String outletStreamName, double inletFlowKgPerS,
 	double outletFlowKgPerS, double measuredImbalanceKgPerS, double flowUncertaintyKgPerS,

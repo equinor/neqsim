@@ -42,14 +42,14 @@ public class FMEAWorksheet implements Serializable {
   /**
    * Add a failure-mode entry.
    *
-   * @param component   equipment / item being analysed
+   * @param component equipment / item being analysed
    * @param failureMode failure mode description
-   * @param effect      effect on system
-   * @param cause       root cause
-   * @param severity    1..10
-   * @param occurrence  1..10
-   * @param detection   1..10
-   * @param mitigation  recommended mitigation (may be null)
+   * @param effect effect on system
+   * @param cause root cause
+   * @param severity 1..10
+   * @param occurrence 1..10
+   * @param detection 1..10
+   * @param mitigation recommended mitigation (may be null)
    * @return this worksheet for chaining
    */
   public FMEAWorksheet addEntry(String component, String failureMode, String effect, String cause, int severity,
@@ -133,14 +133,14 @@ public class FMEAWorksheet implements Serializable {
     public final String mitigation;
 
     /**
-     * @param component   component
+     * @param component component
      * @param failureMode failure mode
-     * @param effect      effect description
-     * @param cause       root cause
-     * @param severity    severity score 1-10
-     * @param occurrence  occurrence score 1-10
-     * @param detection   detection score 1-10
-     * @param mitigation  mitigation
+     * @param effect effect description
+     * @param cause root cause
+     * @param severity severity score 1-10
+     * @param occurrence occurrence score 1-10
+     * @param detection detection score 1-10
+     * @param mitigation mitigation
      */
     public FMEAEntry(String component, String failureMode, String effect, String cause, int severity, int occurrence,
 	int detection, String mitigation) {

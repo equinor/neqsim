@@ -24,10 +24,10 @@ public class ComponentGEUnifacPSRK extends ComponentGEUnifac {
    * Constructor for ComponentGEUnifacPSRK.
    * </p>
    *
-   * @param name         Name of component.
-   * @param moles        Total number of moles of component.
+   * @param name Name of component.
+   * @param moles Total number of moles of component.
    * @param molesInPhase Number of moles in phase.
-   * @param compIndex    Index number of component in phase object component array.
+   * @param compIndex Index number of component in phase object component array.
    */
   public ComponentGEUnifacPSRK(String name, double moles, double molesInPhase, int compIndex) {
     super(name, moles, molesInPhase, compIndex);
@@ -39,8 +39,8 @@ public class ComponentGEUnifacPSRK extends ComponentGEUnifac {
    * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param i     a int
-   * @param j     a int
+   * @param i a int
+   * @param j a int
    * @return a double
    */
   public double calcaij(PhaseInterface phase, int i, int j) {
@@ -54,8 +54,8 @@ public class ComponentGEUnifacPSRK extends ComponentGEUnifac {
    * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param i     a int
-   * @param j     a int
+   * @param i a int
+   * @param j a int
    * @return a double
    */
   public double calcaijdT(PhaseInterface phase, int i, int j) {
@@ -99,7 +99,7 @@ public class ComponentGEUnifacPSRK extends ComponentGEUnifac {
    * calclnGammakdT.
    * </p>
    *
-   * @param k     a int
+   * @param k a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    */
   public void calclnGammakdT(int k, PhaseInterface phase) {

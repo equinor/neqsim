@@ -171,7 +171,7 @@ public final class EmergencyShutdownTestResult implements Serializable {
    * Adds a sampled point and updates signal statistics.
    *
    * @param sample sampled signal values
-   * @param units  units keyed by logical tag
+   * @param units units keyed by logical tag
    */
   void addSample(SignalSample sample, Map<String, String> units) {
     if (sample == null) {
@@ -197,7 +197,7 @@ public final class EmergencyShutdownTestResult implements Serializable {
    * Records the final state of one process logic sequence.
    *
    * @param logicName logic name
-   * @param state     state name
+   * @param state state name
    */
   void putLogicState(String logicName, String state) {
     if (logicName != null && !logicName.trim().isEmpty()) {
@@ -314,7 +314,7 @@ public final class EmergencyShutdownTestResult implements Serializable {
      * Creates empty signal statistics.
      *
      * @param logicalTag logical tag
-     * @param unit       engineering unit
+     * @param unit engineering unit
      */
     private SignalStats(String logicalTag, String unit) {
       this.logicalTag = logicalTag;
@@ -415,7 +415,7 @@ public final class EmergencyShutdownTestResult implements Serializable {
      * Creates a signal sample.
      *
      * @param timeSeconds elapsed time in seconds
-     * @param values      signal values keyed by logical tag
+     * @param values signal values keyed by logical tag
      */
     SignalSample(double timeSeconds, Map<String, Double> values) {
       this.timeSeconds = timeSeconds;
@@ -470,11 +470,11 @@ public final class EmergencyShutdownTestResult implements Serializable {
     /**
      * Creates a field comparison.
      *
-     * @param logicalTag        logical tag
-     * @param historianTag      historian tag or empty string
-     * @param unit              engineering unit
-     * @param fieldValue        field value, or null
-     * @param modelValue        model value, or null
+     * @param logicalTag logical tag
+     * @param historianTag historian tag or empty string
+     * @param unit engineering unit
+     * @param fieldValue field value, or null
+     * @param modelValue model value, or null
      * @param toleranceFraction relative tolerance fraction
      */
     FieldComparison(String logicalTag, String historianTag, String unit, Double fieldValue, Double modelValue,

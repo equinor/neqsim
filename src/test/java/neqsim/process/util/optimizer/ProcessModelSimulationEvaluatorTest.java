@@ -45,9 +45,9 @@ class ProcessModelSimulationEvaluatorTest {
     /**
      * Creates a test fixture.
      *
-     * @param feed      feed stream
+     * @param feed feed stream
      * @param separator separator
-     * @param model     process model
+     * @param model process model
      */
     private ModelFixture(Stream feed, Separator separator, ProcessModel model) {
       this.feed = feed;

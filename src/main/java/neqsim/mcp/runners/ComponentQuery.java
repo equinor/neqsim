@@ -250,7 +250,7 @@ public final class ComponentQuery {
   /**
    * Loads component names from the H2 database as a fallback.
    *
-   * @param names      list to populate with component names
+   * @param names list to populate with component names
    * @param namesLower list to populate with lower-case names
    */
   private static void loadFromDatabase(List<String> names, List<String> namesLower) {
@@ -318,8 +318,8 @@ public final class ComponentQuery {
   /**
    * Creates a standard error JSON response.
    *
-   * @param code        error code
-   * @param message     error description
+   * @param code error code
+   * @param message error description
    * @param remediation fix suggestion
    * @return JSON string
    */

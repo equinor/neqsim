@@ -38,8 +38,8 @@ public interface MechanicalDesignDataSource {
    * This method allows looking up design limits by standard code (e.g., "NORSOK-L-001") rather than company identifier.
    * </p>
    *
-   * @param standardCode      the international standard code (e.g., "NORSOK-L-001", "ASME-VIII-Div1")
-   * @param version           the standard version (e.g., "Rev 6", "2021"), null for default
+   * @param standardCode the international standard code (e.g., "NORSOK-L-001", "ASME-VIII-Div1")
+   * @param version the standard version (e.g., "Rev 6", "2021"), null for default
    * @param equipmentTypeName canonical equipment type identifier
    * @return optional design limit data if available
    */

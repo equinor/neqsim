@@ -32,11 +32,11 @@ public class Detector {
   /**
    * Creates a detector.
    *
-   * @param name       detector tag/name
-   * @param type       detector type (FIRE, GAS, PRESSURE, etc.)
+   * @param name detector tag/name
+   * @param type detector type (FIRE, GAS, PRESSURE, etc.)
    * @param alarmLevel alarm level (L, H, HH)
-   * @param setpoint   trip setpoint
-   * @param unit       engineering unit
+   * @param setpoint trip setpoint
+   * @param unit engineering unit
    */
   public Detector(String name, DetectorType type, AlarmLevel alarmLevel, double setpoint, String unit) {
     this.name = name;

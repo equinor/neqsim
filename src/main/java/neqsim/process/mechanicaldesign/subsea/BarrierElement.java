@@ -115,8 +115,8 @@ public class BarrierElement implements Serializable {
   /**
    * Create a barrier element with depth.
    *
-   * @param type    element type
-   * @param name    element identifier
+   * @param type element type
+   * @param name element identifier
    * @param depthMD depth in meters MD
    */
   public BarrierElement(ElementType type, String name, double depthMD) {

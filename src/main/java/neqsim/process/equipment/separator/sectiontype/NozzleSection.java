@@ -22,7 +22,7 @@ public class NozzleSection extends SeparatorSection {
    *
    * @param name a {@link java.lang.String} object
    * @param type a {@link java.lang.String} object
-   * @param sep  a {@link neqsim.process.equipment.separator.Separator} object
+   * @param sep a {@link neqsim.process.equipment.separator.Separator} object
    */
   public NozzleSection(String name, String type, Separator sep) {
     super(name, type, sep);

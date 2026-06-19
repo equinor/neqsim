@@ -109,11 +109,11 @@ public class PhasePitzer extends PhaseGE {
   /**
    * Set binary Pitzer parameters.
    *
-   * @param i  component i
-   * @param j  component j
+   * @param i component i
+   * @param j component j
    * @param b0 beta0 parameter
    * @param b1 beta1 parameter
-   * @param c  cPhi parameter
+   * @param c cPhi parameter
    */
   public void setBinaryParameters(int i, int j, double b0, double b1, double c) {
     beta0[i][j] = b0;
@@ -127,8 +127,8 @@ public class PhasePitzer extends PhaseGE {
   /**
    * Set T-dependent coefficients for beta0 (Silvester-Pitzer form).
    *
-   * @param i  component index i
-   * @param j  component index j
+   * @param i component index i
+   * @param j component index j
    * @param t1 coefficient for (1/T - 1/Tr) term
    * @param t2 coefficient for ln(T/Tr) term
    */
@@ -142,8 +142,8 @@ public class PhasePitzer extends PhaseGE {
   /**
    * Set T-dependent coefficients for beta1 (Silvester-Pitzer form).
    *
-   * @param i  component index i
-   * @param j  component index j
+   * @param i component index i
+   * @param j component index j
    * @param t1 coefficient for (1/T - 1/Tr) term
    * @param t2 coefficient for ln(T/Tr) term
    */
@@ -157,8 +157,8 @@ public class PhasePitzer extends PhaseGE {
   /**
    * Set T-dependent coefficients for Cphi (Silvester-Pitzer form).
    *
-   * @param i  component index i
-   * @param j  component index j
+   * @param i component index i
+   * @param j component index j
    * @param t1 coefficient for (1/T - 1/Tr) term
    * @param t2 coefficient for ln(T/Tr) term
    */
@@ -245,8 +245,8 @@ public class PhasePitzer extends PhaseGE {
   /**
    * Get T-dependent beta0 parameter.
    *
-   * @param i  component index i
-   * @param j  component index j
+   * @param i component index i
+   * @param j component index j
    * @param TK temperature in Kelvin
    * @return beta0 at temperature T
    */
@@ -264,8 +264,8 @@ public class PhasePitzer extends PhaseGE {
   /**
    * Get T-dependent beta1 parameter.
    *
-   * @param i  component index i
-   * @param j  component index j
+   * @param i component index i
+   * @param j component index j
    * @param TK temperature in Kelvin
    * @return beta1 at temperature T
    */
@@ -282,8 +282,8 @@ public class PhasePitzer extends PhaseGE {
   /**
    * Get T-dependent Cphi parameter.
    *
-   * @param i  component index i
-   * @param j  component index j
+   * @param i component index i
+   * @param j component index j
    * @param TK temperature in Kelvin
    * @return Cphi at temperature T
    */
@@ -320,8 +320,8 @@ public class PhasePitzer extends PhaseGE {
   /**
    * Set beta2 parameter for 2-2 electrolytes.
    *
-   * @param i     component index i
-   * @param j     component index j
+   * @param i component index i
+   * @param j component index j
    * @param value beta2 value
    */
   public void setBeta2(int i, int j, double value) {
@@ -343,8 +343,8 @@ public class PhasePitzer extends PhaseGE {
   /**
    * Set theta mixing parameter for same-sign ion pair.
    *
-   * @param i     component index i
-   * @param j     component index j
+   * @param i component index i
+   * @param j component index j
    * @param value theta value
    */
   public void setTheta(int i, int j, double value) {
@@ -367,9 +367,9 @@ public class PhasePitzer extends PhaseGE {
   /**
    * Set psi ternary mixing parameter.
    *
-   * @param i     component index i
-   * @param j     component index j
-   * @param k     component index k
+   * @param i component index i
+   * @param j component index j
+   * @param k component index k
    * @param value psi value
    */
   public void setPsi(int i, int j, int k, double value) {

@@ -267,7 +267,7 @@ public class FlareStack extends ProcessEquipmentBaseClass {
    * setAmbient.
    * </p>
    *
-   * @param tempK    a double
+   * @param tempK a double
    * @param pressBar a double
    */
   public void setAmbient(double tempK, double pressBar) {
@@ -315,7 +315,7 @@ public class FlareStack extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @param epC_kWm2 a double
-   * @param epA      a double
+   * @param epA a double
    */
   public void setChamberlainEmissivePower(double epC_kWm2, double epA) {
     this.ch_epC_kWm2 = epC_kWm2;

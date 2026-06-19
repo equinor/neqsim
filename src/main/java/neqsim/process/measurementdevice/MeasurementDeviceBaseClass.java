@@ -101,7 +101,7 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass implemen
    * </p>
    *
    * @param isOnlineSignal the isOnlineSignal to set
-   * @param plantName      a {@link java.lang.String} object
+   * @param plantName a {@link java.lang.String} object
    * @param transmitterame a {@link java.lang.String} object
    */
   public void setIsOnlineSignal(boolean isOnlineSignal, String plantName, String transmitterame) {
@@ -216,7 +216,7 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass implemen
   /**
    * Shelves (suppresses) the alarm on this measurement point until the given simulation time.
    *
-   * @param reason     operator-provided reason for shelving
+   * @param reason operator-provided reason for shelving
    * @param expiryTime simulation time when shelving expires
    */
   public void shelveAlarm(String reason, double expiryTime) {
@@ -396,7 +396,7 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass implemen
    * </p>
    *
    * @param value a double
-   * @param unit  a {@link java.lang.String} object
+   * @param unit a {@link java.lang.String} object
    */
   public void setOnlineMeasurementValue(double value, String unit) {
     onlineMeasurementValue = value;
@@ -464,7 +464,7 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass implemen
    * Inject a sensor fault into this measurement device. While a fault is active, the measured value will be transformed
    * according to the specified fault type and parameter.
    *
-   * @param type      the type of sensor fault to inject
+   * @param type the type of sensor fault to inject
    * @param parameter fault-specific parameter (e.g. stuck value, drift rate, bias)
    */
   public void setFault(SensorFaultType type, double parameter) {

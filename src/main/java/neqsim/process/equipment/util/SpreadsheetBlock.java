@@ -64,8 +64,8 @@ public class SpreadsheetBlock extends ProcessEquipmentBaseClass {
    * Add an import cell that reads a value from a stream each time the block runs.
    *
    * @param cellName unique name for this cell (e.g. "T_inlet")
-   * @param stream   the source stream to read from
-   * @param reader   function that extracts a double value from the stream
+   * @param stream the source stream to read from
+   * @param reader function that extracts a double value from the stream
    */
   public void addStreamImportCell(String cellName, StreamInterface stream, Function<StreamInterface, Double> reader) {
     if (cellName == null || cellName.trim().isEmpty()) {
@@ -77,9 +77,9 @@ public class SpreadsheetBlock extends ProcessEquipmentBaseClass {
   /**
    * Add an import cell that reads a value from any process equipment each time the block runs.
    *
-   * @param cellName  unique name for this cell
+   * @param cellName unique name for this cell
    * @param equipment the source equipment to read from
-   * @param reader    function that extracts a double value from the equipment
+   * @param reader function that extracts a double value from the equipment
    */
   public void addImportCell(String cellName, ProcessEquipmentInterface equipment,
       Function<ProcessEquipmentInterface, Double> reader) {
@@ -93,7 +93,7 @@ public class SpreadsheetBlock extends ProcessEquipmentBaseClass {
    * Add a constant cell with a fixed value.
    *
    * @param cellName unique name for this cell
-   * @param value    the constant value
+   * @param value the constant value
    */
   public void addConstantCell(String cellName, double value) {
     if (cellName == null || cellName.trim().isEmpty()) {
@@ -107,7 +107,7 @@ public class SpreadsheetBlock extends ProcessEquipmentBaseClass {
    * defined cell (import, constant, or earlier formula cells).
    *
    * @param cellName unique name for this cell
-   * @param formula  function that takes the map of current cell values and returns the computed value
+   * @param formula function that takes the map of current cell values and returns the computed value
    */
   public void addFormulaCell(String cellName, Function<Map<String, Double>, Double> formula) {
     if (cellName == null || cellName.trim().isEmpty()) {
@@ -120,8 +120,8 @@ public class SpreadsheetBlock extends ProcessEquipmentBaseClass {
    * Add an export target that pushes a computed cell value back into process equipment after calculation.
    *
    * @param cellName the cell whose value to export
-   * @param target   the equipment to receive the value
-   * @param writer   biconsumer that applies the value to the equipment
+   * @param target the equipment to receive the value
+   * @param writer biconsumer that applies the value to the equipment
    */
   public void addExportCell(String cellName, ProcessEquipmentInterface target, ExportWriter writer) {
     exportTargets.add(new ExportTarget(cellName, target, writer));
@@ -198,7 +198,7 @@ public class SpreadsheetBlock extends ProcessEquipmentBaseClass {
      * Apply the computed value to the target equipment.
      *
      * @param equipment the target equipment
-     * @param value     the computed cell value
+     * @param value the computed cell value
      */
     void apply(ProcessEquipmentInterface equipment, double value);
   }

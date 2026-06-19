@@ -77,8 +77,8 @@ public class LNGship extends neqsim.fluidmechanics.flowsystem.twophaseflowsystem
    * Constructor for LNGship.
    * </p>
    *
-   * @param thermoSystem      a {@link neqsim.thermo.system.SystemInterface} object
-   * @param totalTankVolume   a double
+   * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
+   * @param totalTankVolume a double
    * @param dailyBoilOffRatio a double
    */
   public LNGship(neqsim.thermo.system.SystemInterface thermoSystem, double totalTankVolume, double dailyBoilOffRatio) {

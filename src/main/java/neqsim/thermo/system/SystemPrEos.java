@@ -50,8 +50,8 @@ public class SystemPrEos extends SystemEos {
   /**
    * Constructs a PR-EoS system with optional solid phase calculations.
    *
-   * @param T              the temperature in Kelvin
-   * @param P              the pressure in bara (absolute pressure)
+   * @param T the temperature in Kelvin
+   * @param P the pressure in bara (absolute pressure)
    * @param checkForSolids set {@code true} to enable solid phase calculations
    */
   public SystemPrEos(final double T, final double P, final boolean checkForSolids) {

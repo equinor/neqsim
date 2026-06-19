@@ -136,7 +136,7 @@ public class ReferenceDesignation implements Serializable {
    * Finds the index of the next aspect prefix character ({@code =}, {@code -}, or {@code +}) after the given start
    * position.
    *
-   * @param s    the string to search
+   * @param s the string to search
    * @param from the starting index (exclusive of the current prefix)
    * @return the index of the next prefix, or the end of string if none found
    */
@@ -154,10 +154,10 @@ public class ReferenceDesignation implements Serializable {
    * Creates a reference designation with the specified aspects and letter code.
    *
    * @param functionDesignation the function aspect (without {@code =} prefix), e.g. "A1.K1"
-   * @param productDesignation  the product aspect (without {@code -} prefix), e.g. "B1"
+   * @param productDesignation the product aspect (without {@code -} prefix), e.g. "B1"
    * @param locationDesignation the location aspect (without {@code +} prefix), e.g. "P1.M1"
-   * @param letterCode          the IEC 81346-2 letter code classifying this equipment
-   * @param sequenceNumber      the sequence number within the letter code category (1-based)
+   * @param letterCode the IEC 81346-2 letter code classifying this equipment
+   * @param sequenceNumber the sequence number within the letter code category (1-based)
    */
   public ReferenceDesignation(String functionDesignation, String productDesignation, String locationDesignation,
       IEC81346LetterCode letterCode, int sequenceNumber) {

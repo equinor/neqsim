@@ -702,7 +702,7 @@ public class HeatExchangerMechanicalDesign extends MechanicalDesign {
    * Calculates the overall fouling resistance for given service types.
    *
    * @param shellServiceWater true if shell side is water service
-   * @param tubeServiceWater  true if tube side is water service
+   * @param tubeServiceWater true if tube side is water service
    * @return total fouling resistance in m²K/W
    */
   public double calculateTotalFoulingResistance(boolean shellServiceWater, boolean tubeServiceWater) {
@@ -1340,9 +1340,9 @@ public class HeatExchangerMechanicalDesign extends MechanicalDesign {
   /**
    * Calculates the clean overall heat transfer coefficient (without fouling).
    *
-   * @param shellHTC         shell side heat transfer coefficient in W/(m²K)
-   * @param tubeHTC          tube side heat transfer coefficient in W/(m²K)
-   * @param wallThicknessMm  tube wall thickness in mm
+   * @param shellHTC shell side heat transfer coefficient in W/(m²K)
+   * @param tubeHTC tube side heat transfer coefficient in W/(m²K)
+   * @param wallThicknessMm tube wall thickness in mm
    * @param wallConductivity tube wall thermal conductivity in W/(mK), typically 45 for CS
    * @return clean U-value in W/(m²K)
    */
@@ -1354,9 +1354,9 @@ public class HeatExchangerMechanicalDesign extends MechanicalDesign {
   /**
    * Calculates the fouled overall heat transfer coefficient.
    *
-   * @param cleanU            clean U-value in W/(m²K)
+   * @param cleanU clean U-value in W/(m²K)
    * @param shellServiceWater true if shell side is water service
-   * @param tubeServiceWater  true if tube side is water service
+   * @param tubeServiceWater true if tube side is water service
    * @return fouled U-value in W/(m²K)
    */
   public double calculateFouledU(double cleanU, boolean shellServiceWater, boolean tubeServiceWater) {

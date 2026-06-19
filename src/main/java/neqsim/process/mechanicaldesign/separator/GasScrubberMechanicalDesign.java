@@ -372,7 +372,7 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
    *
    * @param numberOfCyclones number of demisting cyclones
    * @param cycloneDiameterM demisting cyclone inner diameter [m]
-   * @param deckElevationM   cyclone deck elevation from bottom of vessel [m]
+   * @param deckElevationM cyclone deck elevation from bottom of vessel [m]
    */
   public void setDemistingCyclones(int numberOfCyclones, double cycloneDiameterM, double deckElevationM) {
     this.hasDemistingCyclones = true;
@@ -386,8 +386,8 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
    *
    * @param numberOfCyclones number of demisting cyclones
    * @param cycloneDiameterM demisting cyclone inner diameter [m]
-   * @param deckElevationM   cyclone deck elevation from bottom of vessel [m]
-   * @param cycloneLengthM   cyclone tube length [m]
+   * @param deckElevationM cyclone deck elevation from bottom of vessel [m]
+   * @param cycloneLengthM cyclone tube length [m]
    */
   public void setDemistingCyclones(int numberOfCyclones, double cycloneDiameterM, double deckElevationM,
       double cycloneLengthM) {
@@ -501,7 +501,7 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
   /**
    * Configures the mesh pad.
    *
-   * @param areaM2      mesh pad area [m2]
+   * @param areaM2 mesh pad area [m2]
    * @param thicknessMm mesh pad thickness [mm]
    */
   public void setMeshPad(double areaM2, double thicknessMm) {
@@ -541,7 +541,7 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
    * Sets the mesh pad centerline elevation from the bottom tangent line.
    *
    * @param elevationM mesh pad elevation in m; values less than zero are allowed only for explicit project data
-   *                   corrections and will be checked by conformity rules
+   * corrections and will be checked by conformity rules
    */
   public void setMeshPadElevationM(double elevationM) {
     this.meshPadElevationM = elevationM;
@@ -614,7 +614,7 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
    * Sets the inlet device centerline elevation from the bottom tangent line.
    *
    * @param elevationM inlet device elevation in m; values less than zero are allowed only for explicit project data
-   *                   corrections and will be checked by conformity rules
+   * corrections and will be checked by conformity rules
    */
   public void setInletDeviceElevationM(double elevationM) {
     this.inletDeviceElevationM = elevationM;
@@ -633,7 +633,7 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
    * Sets the documented liquid entrainment to the gas outlet for conformity checking.
    *
    * @param entrainmentLitresPerMSm3 liquid entrainment in litre/MSm3; use {@link Double#NaN} when project data are
-   *                                 unavailable
+   * unavailable
    */
   public void setLiquidEntrainmentLitresPerMSm3(double entrainmentLitresPerMSm3) {
     this.liquidEntrainmentLitresPerMSm3 = entrainmentLitresPerMSm3;
@@ -968,7 +968,7 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
   /**
    * Appends a formatted row to the text report.
    *
-   * @param sb    the StringBuilder to append to
+   * @param sb the StringBuilder to append to
    * @param label the row label
    * @param value the row value
    */

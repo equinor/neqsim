@@ -110,7 +110,7 @@ final class IsaTagValidator {
     /**
      * Creates a validation result.
      *
-     * @param valid   whether the tag is valid
+     * @param valid whether the tag is valid
      * @param message description or error message
      */
     ValidationResult(boolean valid, String message) {

@@ -24,11 +24,11 @@ public class BangBangController implements Controller {
   /**
    * Create bang-bang controller.
    *
-   * @param name       controller name
+   * @param name controller name
    * @param valueIndex index of controlled variable in observation
-   * @param setpoint   target setpoint
-   * @param deadband   hysteresis band (±deadband around setpoint)
-   * @param lowAction  action when below setpoint
+   * @param setpoint target setpoint
+   * @param deadband hysteresis band (±deadband around setpoint)
+   * @param lowAction action when below setpoint
    * @param highAction action when above setpoint
    */
   public BangBangController(String name, int valueIndex, double setpoint, double deadband, double lowAction,

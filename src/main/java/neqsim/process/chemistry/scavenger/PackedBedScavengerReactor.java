@@ -83,8 +83,8 @@ public class PackedBedScavengerReactor implements Serializable {
    * Sets bed geometry.
    *
    * @param diameterM bed inner diameter [m]
-   * @param heightM   bed packed height [m]
-   * @param voidage   bed voidage (0..1)
+   * @param heightM bed packed height [m]
+   * @param voidage bed voidage (0..1)
    * @return this for chaining
    */
   public PackedBedScavengerReactor setGeometry(double diameterM, double heightM, double voidage) {
@@ -97,8 +97,8 @@ public class PackedBedScavengerReactor implements Serializable {
   /**
    * Sets scavenger media properties.
    *
-   * @param loadingMolPerKg     active site loading [mol/kg media]
-   * @param bulkDensityKgM3     packed bulk density [kg/m3]
+   * @param loadingMolPerKg active site loading [mol/kg media]
+   * @param bulkDensityKgM3 packed bulk density [kg/m3]
    * @param stoichiometricRatio mol H2S consumed per mol active site (~1.0 triazine, ~0.6 Fe2O3)
    * @return this for chaining
    */
@@ -125,7 +125,7 @@ public class PackedBedScavengerReactor implements Serializable {
    * Sets feed conditions.
    *
    * @param cInletMolM3 inlet H2S molar concentration [mol/m3]
-   * @param qM3PerS     volumetric flow rate [m3/s]
+   * @param qM3PerS volumetric flow rate [m3/s]
    * @return this for chaining
    */
   public PackedBedScavengerReactor setFeed(double cInletMolM3, double qM3PerS) {
@@ -137,7 +137,7 @@ public class PackedBedScavengerReactor implements Serializable {
   /**
    * Sets discretisation (axial cells, time steps).
    *
-   * @param nCells     number of axial cells (10..1000)
+   * @param nCells number of axial cells (10..1000)
    * @param nTimeSteps number of time steps for breakthrough curve
    * @return this for chaining
    */
@@ -150,7 +150,7 @@ public class PackedBedScavengerReactor implements Serializable {
   /**
    * Sets simulation horizon and breakthrough threshold.
    *
-   * @param simTimeS  total simulated service time [s]
+   * @param simTimeS total simulated service time [s]
    * @param breakFrac outlet concentration fraction defining breakthrough (0..1)
    * @return this for chaining
    */

@@ -132,7 +132,7 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
    * Constructor for Electrolyzer.
    * </p>
    *
-   * @param name        name of unit
+   * @param name name of unit
    * @param inletStream water inlet stream
    */
   public Electrolyzer(String name, StreamInterface inletStream) {
@@ -289,12 +289,12 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
   /**
    * Set the hydrogen and oxygen product stream flow rates, pressures and temperature, and run them.
    *
-   * @param hydrogenFlow     hydrogen molar flow (mole/sec)
-   * @param oxygenFlow       oxygen molar flow (mole/sec)
+   * @param hydrogenFlow hydrogen molar flow (mole/sec)
+   * @param oxygenFlow oxygen molar flow (mole/sec)
    * @param hydrogenPressure hydrogen delivery pressure (bara)
-   * @param oxygenPressure   oxygen delivery pressure (bara)
-   * @param temperatureK     product temperature (K)
-   * @param id               calculation identifier
+   * @param oxygenPressure oxygen delivery pressure (bara)
+   * @param temperatureK product temperature (K)
+   * @param id calculation identifier
    */
   private void setProductStreams(double hydrogenFlow, double oxygenFlow, double hydrogenPressure, double oxygenPressure,
       double temperatureK, UUID id) {
@@ -534,7 +534,7 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
    * Compute the cell voltage at a given current density and temperature, using the attached I-V characteristic when
    * present and the fixed cell voltage otherwise.
    *
-   * @param j            current density (A/cm2)
+   * @param j current density (A/cm2)
    * @param temperatureK temperature (K)
    * @return cell voltage (V)
    */
@@ -551,7 +551,7 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
    * monotonically increasing in current density).
    *
    * @param targetStackPower target stack power (W)
-   * @param temperatureK     temperature (K)
+   * @param temperatureK temperature (K)
    * @return current density (A/cm2)
    */
   private double solveCurrentDensityForStackPower(double targetStackPower, double temperatureK) {
@@ -738,8 +738,8 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
    * Size the stack active area for a rated power at a nominal current density and temperature so that
    * {@code ratedPower = nominalJ * area * V_cell(nominalJ, T)}.
    *
-   * @param ratedPowerW  rated power (W), must be positive
-   * @param nominalJ     nominal current density (A/cm2), must be positive
+   * @param ratedPowerW rated power (W), must be positive
+   * @param nominalJ nominal current density (A/cm2), must be positive
    * @param temperatureK temperature (K), must be positive
    */
   public void sizeStack(double ratedPowerW, double nominalJ, double temperatureK) {

@@ -42,7 +42,7 @@ public class MixerCapacityStrategy implements EquipmentCapacityStrategy {
   /**
    * Constructor with custom constraints.
    *
-   * @param maxVelocity     maximum header velocity (m/s)
+   * @param maxVelocity maximum header velocity (m/s)
    * @param maxPressureDrop maximum pressure drop (bar)
    */
   public MixerCapacityStrategy(double maxVelocity, double maxPressureDrop) {

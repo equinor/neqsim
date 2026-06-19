@@ -183,10 +183,10 @@ public class ChungDenseConductivityMethod extends Conductivity implements Thermo
   /**
    * Calculates the alpha correction factor for thermal conductivity.
    *
-   * @param cv0   ideal gas Cv in J/(mol*K)
+   * @param cv0 ideal gas Cv in J/(mol*K)
    * @param omega acentric factor
-   * @param temp  temperature in K
-   * @param tc    critical temperature in K
+   * @param temp temperature in K
+   * @param tc critical temperature in K
    * @return alpha correction factor
    */
   private double calcAlpha(double cv0, double omega, double temp, double tc) {

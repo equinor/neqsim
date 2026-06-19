@@ -52,8 +52,8 @@ public class PipeCapacityStrategy implements EquipmentCapacityStrategy {
   /**
    * Constructor with custom velocity limits.
    *
-   * @param maxGasVelocity        maximum gas velocity in m/s
-   * @param maxLiquidVelocity     maximum liquid velocity in m/s
+   * @param maxGasVelocity maximum gas velocity in m/s
+   * @param maxLiquidVelocity maximum liquid velocity in m/s
    * @param maxMultiphaseVelocity maximum multiphase velocity in m/s
    */
   public PipeCapacityStrategy(double maxGasVelocity, double maxLiquidVelocity, double maxMultiphaseVelocity) {

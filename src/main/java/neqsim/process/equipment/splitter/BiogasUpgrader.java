@@ -110,10 +110,10 @@ public class BiogasUpgrader extends ProcessEquipmentBaseClass {
     /**
      * Creates a technology enum constant.
      *
-     * @param co2Removal  CO2 removal efficiency (0-1)
+     * @param co2Removal CO2 removal efficiency (0-1)
      * @param ch4Recovery methane recovery (0-1)
-     * @param h2sRemoval  H2S removal efficiency (0-1)
-     * @param energy      specific energy in kWh/Nm3 raw biogas
+     * @param h2sRemoval H2S removal efficiency (0-1)
+     * @param energy specific energy in kWh/Nm3 raw biogas
      */
     UpgradingTechnology(double co2Removal, double ch4Recovery, double h2sRemoval, double energy) {
       this.co2RemovalEfficiency = co2Removal;
@@ -211,7 +211,7 @@ public class BiogasUpgrader extends ProcessEquipmentBaseClass {
   /**
    * Creates a biogas upgrader with the given name and inlet stream.
    *
-   * @param name        equipment name
+   * @param name equipment name
    * @param inletStream the raw biogas inlet stream
    */
   public BiogasUpgrader(String name, StreamInterface inletStream) {
@@ -522,8 +522,8 @@ public class BiogasUpgrader extends ProcessEquipmentBaseClass {
    * Calculates biomethane quality metrics after the split.
    *
    * @param biomethaneFluid the biomethane fluid system
-   * @param ch4Recovery     the methane recovery used
-   * @param energyPerNm3    specific energy consumption in kWh/Nm3
+   * @param ch4Recovery the methane recovery used
+   * @param energyPerNm3 specific energy consumption in kWh/Nm3
    */
   private void calculateQualityMetrics(SystemInterface biomethaneFluid, double ch4Recovery, double energyPerNm3) {
     // Methane and CO2 content in biomethane
@@ -559,7 +559,7 @@ public class BiogasUpgrader extends ProcessEquipmentBaseClass {
   /**
    * Returns the mole fraction of a component as a percentage.
    *
-   * @param fluid         the fluid system
+   * @param fluid the fluid system
    * @param componentName component name
    * @return mole fraction in percent (0-100)
    */

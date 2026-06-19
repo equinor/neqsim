@@ -120,7 +120,7 @@ public class TimeSeriesExporter {
   /**
    * Exports data for specific tags in AI platform format.
    *
-   * @param tags      list of tag names to export
+   * @param tags list of tag names to export
    * @param startTime start of time range
    * @return JSON string
    */

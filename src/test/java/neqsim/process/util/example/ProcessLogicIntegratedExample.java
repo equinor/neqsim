@@ -250,7 +250,7 @@ public class ProcessLogicIntegratedExample {
   /**
    * Sets up process logic sequences.
    *
-   * @param system      the process system containing equipment
+   * @param system the process system containing equipment
    * @param instruments the instrumentation setup with sensors and actuators
    * @return the configured process logic setup
    */
@@ -417,10 +417,10 @@ public class ProcessLogicIntegratedExample {
     /**
      * Creates gradual pressure reduction logic.
      *
-     * @param name          logic name
-     * @param valve         control valve to adjust
+     * @param name logic name
+     * @param valve control valve to adjust
      * @param targetOpening target valve opening (%)
-     * @param step          opening change per time step (%)
+     * @param step opening change per time step (%)
      */
     public GradualPressureReductionLogic(String name, ControlValve valve, double targetOpening, double step) {
       this.name = name;

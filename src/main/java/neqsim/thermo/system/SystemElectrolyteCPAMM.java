@@ -90,8 +90,8 @@ public class SystemElectrolyteCPAMM extends SystemSrkCPA {
   /**
    * Constructor for SystemElectrolyteCPAMM with specified number of phases.
    *
-   * @param T              temperature in Kelvin
-   * @param P              pressure in bar (absolute)
+   * @param T temperature in Kelvin
+   * @param P pressure in bar (absolute)
    * @param checkForSolids whether to include solid phase check
    */
   public SystemElectrolyteCPAMM(double T, double P, boolean checkForSolids) {
@@ -207,7 +207,7 @@ public class SystemElectrolyteCPAMM extends SystemSrkCPA {
    * Set the dielectric constant mixing rule by name for all phases.
    *
    * @param ruleName the name of the mixing rule: "MOLAR_AVERAGE", "VOLUME_AVERAGE", "LOOYENGA", "OSTER", or
-   *                 "LICHTENECKER"
+   * "LICHTENECKER"
    */
   public void setDielectricMixingRule(String ruleName) {
     PhaseElectrolyteCPAMM.DielectricMixingRule rule = PhaseElectrolyteCPAMM.DielectricMixingRule

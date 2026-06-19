@@ -279,9 +279,9 @@ public class InterphaseDropletFlow extends InterphaseTwoPhasePipeFlow
    * The mass transfer coefficient is: k_c = Sh * D_ij / d_particle, where D_ij = nu / Sc.
    * </p>
    *
-   * @param phaseNum      0 for gas phase, 1 for liquid phase
+   * @param phaseNum 0 for gas phase, 1 for liquid phase
    * @param schmidtNumber the binary Schmidt number (nu / D_ij) for the component pair
-   * @param node          the flow node (DropletFlowNode or BubbleFlowNode)
+   * @param node the flow node (DropletFlowNode or BubbleFlowNode)
    * @return the binary mass transfer coefficient in m/s
    */
   @Override

@@ -204,7 +204,7 @@ public class FlowRateOptimizer implements Serializable {
      * Called to report progress.
      *
      * @param current current step number
-     * @param total   total number of steps
+     * @param total total number of steps
      * @param message description of current operation
      */
     void onProgress(int current, int total, String message);
@@ -213,8 +213,8 @@ public class FlowRateOptimizer implements Serializable {
   /**
    * Creates a flow rate optimizer for a ProcessSystem.
    *
-   * @param processSystem    the process system to optimize
-   * @param inletStreamName  name of the inlet stream
+   * @param processSystem the process system to optimize
+   * @param inletStreamName name of the inlet stream
    * @param outletStreamName name of the outlet stream
    */
   public FlowRateOptimizer(ProcessSystem processSystem, String inletStreamName, String outletStreamName) {
@@ -251,8 +251,8 @@ public class FlowRateOptimizer implements Serializable {
   /**
    * Creates a flow rate optimizer for a ProcessModel with multiple ProcessSystems.
    *
-   * @param processModel     the process model to optimize
-   * @param inletStreamName  name of the inlet stream (in first ProcessSystem)
+   * @param processModel the process model to optimize
+   * @param inletStreamName name of the inlet stream (in first ProcessSystem)
    * @param outletStreamName name of the outlet stream (in last ProcessSystem)
    */
   public FlowRateOptimizer(ProcessModel processModel, String inletStreamName, String outletStreamName) {
@@ -374,9 +374,9 @@ public class FlowRateOptimizer implements Serializable {
    * that produces the target outlet pressure.
    * </p>
    *
-   * @param inletPressure  inlet pressure
+   * @param inletPressure inlet pressure
    * @param outletPressure target outlet pressure
-   * @param pressureUnit   unit of pressure (e.g., "bara", "barg", "psia")
+   * @param pressureUnit unit of pressure (e.g., "bara", "barg", "psia")
    * @return optimization result
    */
   public FlowRateOptimizationResult findFlowRate(double inletPressure, double outletPressure, String pressureUnit) {
@@ -585,10 +585,10 @@ public class FlowRateOptimizer implements Serializable {
    * required.
    * </p>
    *
-   * @param flowRate       flow rate
-   * @param flowRateUnit   unit of flow rate
+   * @param flowRate flow rate
+   * @param flowRateUnit unit of flow rate
    * @param outletPressure target outlet pressure
-   * @param pressureUnit   unit of pressure
+   * @param pressureUnit unit of pressure
    * @return optimization result with inlet pressure
    */
   public FlowRateOptimizationResult findInletPressure(double flowRate, String flowRateUnit, double outletPressure,
@@ -677,9 +677,9 @@ public class FlowRateOptimizer implements Serializable {
   /**
    * Evaluates the outlet pressure for a given flow rate and inlet pressure.
    *
-   * @param flowRate      flow rate in kg/hr
+   * @param flowRate flow rate in kg/hr
    * @param inletPressure inlet pressure
-   * @param pressureUnit  pressure unit
+   * @param pressureUnit pressure unit
    * @return outlet pressure in the same unit
    */
   private double evaluateOutletPressure(double flowRate, double inletPressure, String pressureUnit) {
@@ -689,10 +689,10 @@ public class FlowRateOptimizer implements Serializable {
   /**
    * Evaluates outlet pressure for given flow rate and inlet pressure.
    *
-   * @param flowRate      flow rate
-   * @param flowRateUnit  flow rate unit
+   * @param flowRate flow rate
+   * @param flowRateUnit flow rate unit
    * @param inletPressure inlet pressure
-   * @param pressureUnit  pressure unit
+   * @param pressureUnit pressure unit
    * @return outlet pressure
    */
   private double evaluateOutletPressureAtFlow(double flowRate, String flowRateUnit, double inletPressure,
@@ -921,10 +921,10 @@ public class FlowRateOptimizer implements Serializable {
    * <li>Constraint status</li>
    * </ul>
    *
-   * @param flowRate      the flow rate
-   * @param flowRateUnit  the flow rate unit
+   * @param flowRate the flow rate
+   * @param flowRateUnit the flow rate unit
    * @param inletPressure the inlet pressure
-   * @param pressureUnit  the pressure unit
+   * @param pressureUnit the pressure unit
    * @return the process operating point
    */
   public ProcessOperatingPoint findProcessOperatingPoint(double flowRate, String flowRateUnit, double inletPressure,
@@ -993,11 +993,11 @@ public class FlowRateOptimizer implements Serializable {
   /**
    * Evaluates process and captures power data for each compressor.
    *
-   * @param flowRate      the inlet flow rate
-   * @param flowRateUnit  the unit for flow rate
+   * @param flowRate the inlet flow rate
+   * @param flowRateUnit the unit for flow rate
    * @param inletPressure the inlet pressure
-   * @param pressureUnit  the unit for pressure
-   * @param point         the operating point to store compressor data in
+   * @param pressureUnit the unit for pressure
+   * @param point the operating point to store compressor data in
    * @return the outlet pressure in the specified pressure unit
    */
   private double evaluateProcessWithPower(double flowRate, String flowRateUnit, double inletPressure,
@@ -1087,10 +1087,10 @@ public class FlowRateOptimizer implements Serializable {
    * System.out.println("Total power at 50000 kg/hr: " + table.getTotalPower(1) + " kW");
    * </pre>
    *
-   * @param flowRates     array of flow rates to evaluate
-   * @param flowRateUnit  the flow rate unit
+   * @param flowRates array of flow rates to evaluate
+   * @param flowRateUnit the flow rate unit
    * @param inletPressure the inlet pressure
-   * @param pressureUnit  the pressure unit
+   * @param pressureUnit the pressure unit
    * @return a ProcessPerformanceTable with comprehensive process data
    */
   public ProcessPerformanceTable generateProcessPerformanceTable(double[] flowRates, String flowRateUnit,
@@ -1153,10 +1153,10 @@ public class FlowRateOptimizer implements Serializable {
    * System.out.println("Minimum power operating point: " + table.findMinimumPowerPoint());
    * </pre>
    *
-   * @param flowRates      array of flow rates to evaluate
-   * @param flowRateUnit   the flow rate unit
+   * @param flowRates array of flow rates to evaluate
+   * @param flowRateUnit the flow rate unit
    * @param inletPressures array of inlet pressures to evaluate
-   * @param pressureUnit   the pressure unit
+   * @param pressureUnit the pressure unit
    * @return a ProcessLiftCurveTable with lift curve data and power information
    */
   public ProcessLiftCurveTable generateProcessLiftCurve(double[] flowRates, String flowRateUnit,
@@ -1218,12 +1218,12 @@ public class FlowRateOptimizer implements Serializable {
    * System.out.println("At flow rate: " + minPowerPoint.getFlowRate() + " kg/hr");
    * </pre>
    *
-   * @param inletPressure        the inlet pressure
+   * @param inletPressure the inlet pressure
    * @param targetOutletPressure the target outlet pressure
-   * @param pressureUnit         the pressure unit
-   * @param minFlow              minimum flow rate to search
-   * @param maxFlow              maximum flow rate to search
-   * @param flowRateUnit         the flow rate unit
+   * @param pressureUnit the pressure unit
+   * @param minFlow minimum flow rate to search
+   * @param maxFlow maximum flow rate to search
+   * @param flowRateUnit the flow rate unit
    * @return the process operating point with minimum total power, or null if no feasible point
    */
   public ProcessOperatingPoint findMinimumTotalPowerOperatingPoint(double inletPressure, double targetOutletPressure,
@@ -1304,8 +1304,8 @@ public class FlowRateOptimizer implements Serializable {
    * within their capacity constraints.
    * </p>
    *
-   * @param inletPressure     the inlet pressure
-   * @param pressureUnit      the pressure unit
+   * @param inletPressure the inlet pressure
+   * @param pressureUnit the pressure unit
    * @param targetUtilization the target maximum utilization (e.g., 0.95 for 95%)
    * @return the process operating point at maximum feasible flow
    */
@@ -1383,10 +1383,10 @@ public class FlowRateOptimizer implements Serializable {
    * }
    * </pre>
    *
-   * @param inletPressure        the inlet pressure boundary condition
+   * @param inletPressure the inlet pressure boundary condition
    * @param targetOutletPressure the target outlet pressure boundary condition
-   * @param pressureUnit         the pressure unit (e.g., "bara", "barg")
-   * @param maxUtilization       the maximum allowed equipment utilization (e.g., 0.95 for 95%)
+   * @param pressureUnit the pressure unit (e.g., "bara", "barg")
+   * @param maxUtilization the maximum allowed equipment utilization (e.g., 0.95 for 95%)
    * @return the process operating point at maximum flow, or null if no feasible point exists
    */
   public ProcessOperatingPoint findMaxFlowRateAtPressureBoundaries(double inletPressure, double targetOutletPressure,
@@ -1537,10 +1537,10 @@ public class FlowRateOptimizer implements Serializable {
    * System.out.println(table.toEclipseFormat());
    * </pre>
    *
-   * @param inletPressures  array of inlet pressures
+   * @param inletPressures array of inlet pressures
    * @param outletPressures array of outlet pressures
-   * @param pressureUnit    the pressure unit
-   * @param maxUtilization  the maximum allowed equipment utilization
+   * @param pressureUnit the pressure unit
+   * @param maxUtilization the maximum allowed equipment utilization
    * @return a ProcessCapacityTable with maximum flow rates and power data
    */
   public ProcessCapacityTable generateProcessCapacityTable(double[] inletPressures, double[] outletPressures,
@@ -1584,12 +1584,12 @@ public class FlowRateOptimizer implements Serializable {
   /**
    * Generates capacity table using sequential evaluation.
    *
-   * @param table           the table to populate
-   * @param inletPressures  array of inlet pressures
+   * @param table the table to populate
+   * @param inletPressures array of inlet pressures
    * @param outletPressures array of outlet pressures
-   * @param pressureUnit    the pressure unit
-   * @param maxUtilization  maximum allowed equipment utilization
-   * @param totalEvals      total number of evaluations for progress
+   * @param pressureUnit the pressure unit
+   * @param maxUtilization maximum allowed equipment utilization
+   * @param totalEvals total number of evaluations for progress
    */
   private void generateCapacityTableSequential(ProcessCapacityTable table, double[] inletPressures,
       double[] outletPressures, String pressureUnit, double maxUtilization, int totalEvals) {
@@ -1619,12 +1619,12 @@ public class FlowRateOptimizer implements Serializable {
    * submitted to a thread pool, and results are collected into the table.
    * </p>
    *
-   * @param table           the table to populate
-   * @param inletPressures  array of inlet pressures
+   * @param table the table to populate
+   * @param inletPressures array of inlet pressures
    * @param outletPressures array of outlet pressures
-   * @param pressureUnit    the pressure unit
-   * @param maxUtilization  maximum allowed equipment utilization
-   * @param totalEvals      total number of evaluations for progress
+   * @param pressureUnit the pressure unit
+   * @param maxUtilization maximum allowed equipment utilization
+   * @param totalEvals total number of evaluations for progress
    */
   private void generateCapacityTableParallel(ProcessCapacityTable table, double[] inletPressures,
       double[] outletPressures, String pressureUnit, double maxUtilization, int totalEvals) {
@@ -1760,11 +1760,11 @@ public class FlowRateOptimizer implements Serializable {
    * bottleneck information. This is useful for understanding process capacity versus delivery pressure.
    * </p>
    *
-   * @param inletPressure   the inlet pressure (fixed)
+   * @param inletPressure the inlet pressure (fixed)
    * @param outletPressures array of target outlet pressures
-   * @param pressureUnit    the pressure unit
-   * @param maxUtilization  maximum allowed equipment utilization
-   * @param flowRateUnit    unit for reporting flow rates
+   * @param pressureUnit the pressure unit
+   * @param maxUtilization maximum allowed equipment utilization
+   * @param flowRateUnit unit for reporting flow rates
    * @return array of ProcessOperatingPoints for each outlet pressure
    */
   public ProcessOperatingPoint[] generateCapacityCurve(double inletPressure, double[] outletPressures,
@@ -1795,10 +1795,10 @@ public class FlowRateOptimizer implements Serializable {
   /**
    * Evaluates ProcessSystem outlet pressure.
    *
-   * @param flowRate      the flow rate value
-   * @param flowRateUnit  the unit of the flow rate
+   * @param flowRate the flow rate value
+   * @param flowRateUnit the unit of the flow rate
    * @param inletPressure the inlet pressure value
-   * @param pressureUnit  the unit of the pressure
+   * @param pressureUnit the unit of the pressure
    * @return the outlet pressure in the specified pressure unit
    */
   private double evaluateProcessSystem(double flowRate, String flowRateUnit, double inletPressure,
@@ -1824,10 +1824,10 @@ public class FlowRateOptimizer implements Serializable {
   /**
    * Evaluates ProcessModel outlet pressure.
    *
-   * @param flowRate      the flow rate value
-   * @param flowRateUnit  the unit of the flow rate
+   * @param flowRate the flow rate value
+   * @param flowRateUnit the unit of the flow rate
    * @param inletPressure the inlet pressure value
-   * @param pressureUnit  the unit of the pressure
+   * @param pressureUnit the unit of the pressure
    * @return the outlet pressure in the specified pressure unit
    */
   private double evaluateProcessModel(double flowRate, String flowRateUnit, double inletPressure, String pressureUnit) {
@@ -2386,7 +2386,7 @@ public class FlowRateOptimizer implements Serializable {
    * Reports progress to callback and/or logger.
    *
    * @param current current step
-   * @param total   total steps
+   * @param total total steps
    * @param message progress message
    */
   private void reportProgress(int current, int total, String message) {
@@ -2476,7 +2476,7 @@ public class FlowRateOptimizer implements Serializable {
      *
      * @param minPressure minimum inlet pressure
      * @param maxPressure maximum inlet pressure
-     * @param numPoints   number of pressure points
+     * @param numPoints number of pressure points
      * @return this configuration for chaining
      */
     public LiftCurveConfiguration withInletPressureRange(double minPressure, double maxPressure, int numPoints) {
@@ -2491,7 +2491,7 @@ public class FlowRateOptimizer implements Serializable {
      *
      * @param minPressure minimum outlet pressure
      * @param maxPressure maximum outlet pressure
-     * @param numPoints   number of pressure points
+     * @param numPoints number of pressure points
      * @return this configuration for chaining
      */
     public LiftCurveConfiguration withOutletPressureRange(double minPressure, double maxPressure, int numPoints) {
@@ -2504,8 +2504,8 @@ public class FlowRateOptimizer implements Serializable {
     /**
      * Sets the flow rate range.
      *
-     * @param minFlow   minimum flow rate
-     * @param maxFlow   maximum flow rate
+     * @param minFlow minimum flow rate
+     * @param maxFlow maximum flow rate
      * @param numPoints number of flow rate points
      * @return this configuration for chaining
      */
@@ -2620,8 +2620,8 @@ public class FlowRateOptimizer implements Serializable {
     /**
      * Configures which tables to generate.
      *
-     * @param capacity    generate capacity table
-     * @param liftCurve   generate lift curve table
+     * @param capacity generate capacity table
+     * @param liftCurve generate lift curve table
      * @param performance generate performance table
      * @return this configuration for chaining
      */
@@ -3009,11 +3009,11 @@ public class FlowRateOptimizer implements Serializable {
    * customization, use {@link #generateProfessionalLiftCurves(LiftCurveConfiguration)} with a custom configuration.
    * </p>
    *
-   * @param minInletPressure  minimum inlet pressure
-   * @param maxInletPressure  maximum inlet pressure
+   * @param minInletPressure minimum inlet pressure
+   * @param maxInletPressure maximum inlet pressure
    * @param minOutletPressure minimum outlet pressure
    * @param maxOutletPressure maximum outlet pressure
-   * @param pressureUnit      pressure unit
+   * @param pressureUnit pressure unit
    * @return the lift curve result
    */
   public LiftCurveResult generateProfessionalLiftCurves(double minInletPressure, double maxInletPressure,
@@ -3396,7 +3396,7 @@ public class FlowRateOptimizer implements Serializable {
      * Adds a compressor operating point.
      *
      * @param compressorName the compressor name
-     * @param point          the operating point
+     * @param point the operating point
      */
     public void addCompressorOperatingPoint(String compressorName, CompressorOperatingPoint point) {
       compressorPoints.put(compressorName, point);
@@ -3623,8 +3623,8 @@ public class FlowRateOptimizer implements Serializable {
     /**
      * Creates a new process performance table.
      *
-     * @param tableName       name of the table
-     * @param flowRates       array of flow rates
+     * @param tableName name of the table
+     * @param flowRates array of flow rates
      * @param compressorNames list of compressor names in the process
      */
     public ProcessPerformanceTable(String tableName, double[] flowRates, List<String> compressorNames) {
@@ -3822,9 +3822,9 @@ public class FlowRateOptimizer implements Serializable {
     /**
      * Creates a new process lift curve table.
      *
-     * @param tableName       name of the table
-     * @param flowRates       array of flow rates
-     * @param inletPressures  array of inlet pressures
+     * @param tableName name of the table
+     * @param flowRates array of flow rates
+     * @param inletPressures array of inlet pressures
      * @param compressorNames list of compressor names
      */
     public ProcessLiftCurveTable(String tableName, double[] flowRates, double[] inletPressures,
@@ -3839,9 +3839,9 @@ public class FlowRateOptimizer implements Serializable {
     /**
      * Sets an operating point at the specified indices.
      *
-     * @param flowIndex     flow rate index
+     * @param flowIndex flow rate index
      * @param pressureIndex inlet pressure index
-     * @param point         the operating point
+     * @param point the operating point
      */
     public void setOperatingPoint(int flowIndex, int pressureIndex, ProcessOperatingPoint point) {
       operatingPoints[flowIndex][pressureIndex] = point;
@@ -3850,7 +3850,7 @@ public class FlowRateOptimizer implements Serializable {
     /**
      * Gets an operating point at the specified indices.
      *
-     * @param flowIndex     flow rate index
+     * @param flowIndex flow rate index
      * @param pressureIndex inlet pressure index
      * @return the operating point, or null if not set
      */
@@ -4244,8 +4244,8 @@ public class FlowRateOptimizer implements Serializable {
     /**
      * Constructs a capacity table.
      *
-     * @param tableName       the table name
-     * @param inletPressures  array of inlet pressures (rows)
+     * @param tableName the table name
+     * @param inletPressures array of inlet pressures (rows)
      * @param outletPressures array of outlet pressures (columns)
      * @param compressorNames list of compressor names in the process
      */
@@ -4261,9 +4261,9 @@ public class FlowRateOptimizer implements Serializable {
     /**
      * Sets the operating point for a specific inlet/outlet pressure combination.
      *
-     * @param inletIndex  index into inlet pressures array
+     * @param inletIndex index into inlet pressures array
      * @param outletIndex index into outlet pressures array
-     * @param point       the operating point (or null if infeasible)
+     * @param point the operating point (or null if infeasible)
      */
     public void setOperatingPoint(int inletIndex, int outletIndex, ProcessOperatingPoint point) {
       operatingPoints[inletIndex][outletIndex] = point;
@@ -4272,7 +4272,7 @@ public class FlowRateOptimizer implements Serializable {
     /**
      * Gets the operating point for a specific inlet/outlet pressure combination.
      *
-     * @param inletIndex  index into inlet pressures array
+     * @param inletIndex index into inlet pressures array
      * @param outletIndex index into outlet pressures array
      * @return the operating point, or null if infeasible
      */

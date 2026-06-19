@@ -73,7 +73,7 @@ public class FlowRateAdjuster extends TwoPortEquipment {
    * Constructor for FlowRateAdjuster.
    * </p>
    *
-   * @param name     a {@link java.lang.String} object
+   * @param name a {@link java.lang.String} object
    * @param inStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public FlowRateAdjuster(String name, StreamInterface inStream) {
@@ -85,10 +85,10 @@ public class FlowRateAdjuster extends TwoPortEquipment {
    * setAdjustedVariable.
    * </p>
    *
-   * @param desiredGasFlow   a {@link java.lang.Double} object
-   * @param desiredOilFlow   a {@link java.lang.Double} object
+   * @param desiredGasFlow a {@link java.lang.Double} object
+   * @param desiredOilFlow a {@link java.lang.Double} object
    * @param desiredWaterFlow a {@link java.lang.Double} object
-   * @param unit             a {@link java.lang.String} object
+   * @param unit a {@link java.lang.String} object
    */
   public void setAdjustedFlowRates(Double desiredGasFlow, Double desiredOilFlow, Double desiredWaterFlow, String unit) {
     this.desiredGasFlow = desiredGasFlow;
@@ -104,7 +104,7 @@ public class FlowRateAdjuster extends TwoPortEquipment {
    *
    * @param desiredGasFlow a {@link java.lang.Double} object
    * @param desiredOilFlow a {@link java.lang.Double} object
-   * @param unit           a {@link java.lang.String} object
+   * @param unit a {@link java.lang.String} object
    */
   public void setAdjustedFlowRates(Double desiredGasFlow, Double desiredOilFlow, String unit) {
     this.setAdjustedFlowRates(desiredGasFlow, desiredOilFlow, 0.0, unit);

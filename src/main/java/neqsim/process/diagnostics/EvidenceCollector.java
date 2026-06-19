@@ -56,7 +56,7 @@ public class EvidenceCollector implements Serializable {
   /**
    * Sets the historian time-series data.
    *
-   * @param data       map of parameter name to time-series values
+   * @param data map of parameter name to time-series values
    * @param timestamps array of timestamps (Unix epoch seconds) parallel to data arrays
    */
   public void setHistorianData(Map<String, double[]> data, double[] timestamps) {
@@ -77,7 +77,7 @@ public class EvidenceCollector implements Serializable {
    * Sets a design limit for a parameter.
    *
    * @param parameter parameter name
-   * @param lowLimit  low limit, or Double.NaN if no low limit applies
+   * @param lowLimit low limit, or Double.NaN if no low limit applies
    * @param highLimit high limit, or Double.NaN if no high limit applies
    */
   public void setDesignLimit(String parameter, double lowLimit, double highLimit) {
@@ -200,7 +200,7 @@ public class EvidenceCollector implements Serializable {
    * Adds an evidence item when it is not null.
    *
    * @param evidenceList target evidence list
-   * @param evidence     evidence item, possibly null
+   * @param evidence evidence item, possibly null
    */
   private void addIfNotNull(List<Hypothesis.Evidence> evidenceList, Hypothesis.Evidence evidence) {
     if (evidence != null) {
@@ -254,8 +254,8 @@ public class EvidenceCollector implements Serializable {
   /**
    * Analyzes trend in a time-series.
    *
-   * @param param      parameter name
-   * @param values     data values
+   * @param param parameter name
+   * @param values data values
    * @param hypothesis hypothesis being evaluated
    * @return evidence item or null if no significant trend matches the hypothesis
    */
@@ -322,7 +322,7 @@ public class EvidenceCollector implements Serializable {
   /**
    * Determines trend evidence strength from fit quality and magnitude.
    *
-   * @param rSquared      regression coefficient of determination
+   * @param rSquared regression coefficient of determination
    * @param changePercent approximate percent change over the window
    * @return evidence strength
    */
@@ -351,8 +351,8 @@ public class EvidenceCollector implements Serializable {
   /**
    * Analyzes design-limit exceedance.
    *
-   * @param param      parameter name
-   * @param values     data values
+   * @param param parameter name
+   * @param values data values
    * @param hypothesis hypothesis being evaluated
    * @return evidence item or null if limits are not exceeded or not relevant
    */
@@ -421,8 +421,8 @@ public class EvidenceCollector implements Serializable {
   /**
    * Analyzes rate of change to detect step changes.
    *
-   * @param param      parameter name
-   * @param values     data values
+   * @param param parameter name
+   * @param values data values
    * @param hypothesis hypothesis being evaluated
    * @return evidence item or null if no significant step change matches the hypothesis
    */
@@ -473,8 +473,8 @@ public class EvidenceCollector implements Serializable {
    * indicating a statistically significant shift in operating regime.
    * </p>
    *
-   * @param param      parameter name
-   * @param values     data values
+   * @param param parameter name
+   * @param values data values
    * @param hypothesis hypothesis being evaluated
    * @return evidence item or null if no significant change point found
    */
@@ -546,8 +546,8 @@ public class EvidenceCollector implements Serializable {
    * is a strong indicator of imminent failure.
    * </p>
    *
-   * @param param      parameter name
-   * @param values     data values
+   * @param param parameter name
+   * @param values data values
    * @param hypothesis hypothesis being evaluated
    * @return evidence item or null if no significant acceleration found
    */
@@ -586,8 +586,8 @@ public class EvidenceCollector implements Serializable {
    * Computes the linear regression slope over a sub-range of the data.
    *
    * @param values data values
-   * @param from   start index (inclusive)
-   * @param to     end index (exclusive)
+   * @param from start index (inclusive)
+   * @param to end index (exclusive)
    * @return slope, or 0 if insufficient data
    */
   private double computeSlope(double[] values, int from, int to) {
@@ -818,12 +818,12 @@ public class EvidenceCollector implements Serializable {
   /**
    * Converts an observed behavior into evidence for the supplied hypothesis.
    *
-   * @param param            parameter name
-   * @param observation      observed behavior text
-   * @param strength         base evidence strength
-   * @param source           source identifier
+   * @param param parameter name
+   * @param observation observed behavior text
+   * @param strength base evidence strength
+   * @param source source identifier
    * @param observedBehavior observed behavior classification
-   * @param hypothesis       hypothesis being evaluated
+   * @param hypothesis hypothesis being evaluated
    * @return evidence item, or null if the observation is irrelevant to the hypothesis
    */
   private Hypothesis.Evidence createEvidenceForObservedBehavior(String param, String observation,
@@ -853,8 +853,8 @@ public class EvidenceCollector implements Serializable {
   /**
    * Finds the best expected signal for a parameter and observed behavior.
    *
-   * @param hypothesis       hypothesis containing expected signals
-   * @param param            observed parameter name
+   * @param hypothesis hypothesis containing expected signals
+   * @param param observed parameter name
    * @param observedBehavior observed behavior
    * @return matching signal, or null if none matches the parameter
    */
@@ -918,7 +918,7 @@ public class EvidenceCollector implements Serializable {
    * Checks if a parameter name matches a pipe-separated alias pattern.
    *
    * @param parameter parameter name
-   * @param pattern   alias pattern
+   * @param pattern alias pattern
    * @return true when any alias matches
    */
   private boolean matchesPattern(String parameter, String pattern) {

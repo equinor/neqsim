@@ -401,7 +401,7 @@ public class EmissionsCalculator implements Serializable {
    * Calculate gas-to-water mass factor (GWMF).
    *
    * @param waterFlowRate_m3hr water flow rate in m³/hr
-   * @param pressureDrop_bar   pressure drop in bar
+   * @param pressureDrop_bar pressure drop in bar
    * @return GWMF in g/m³/bar
    */
   public double calculateGWMF(double waterFlowRate_m3hr, double pressureDrop_bar) {
@@ -416,7 +416,7 @@ public class EmissionsCalculator implements Serializable {
    * Calculate methane solubility factor.
    *
    * @param waterFlowRate_m3hr water flow rate in m³/hr
-   * @param pressureDrop_bar   pressure drop in bar
+   * @param pressureDrop_bar pressure drop in bar
    * @return methane factor in g/m³/bar
    */
   public double calculateMethaneFactor(double waterFlowRate_m3hr, double pressureDrop_bar) {
@@ -431,7 +431,7 @@ public class EmissionsCalculator implements Serializable {
    * Calculate nmVOC solubility factor.
    *
    * @param waterFlowRate_m3hr water flow rate in m³/hr
-   * @param pressureDrop_bar   pressure drop in bar
+   * @param pressureDrop_bar pressure drop in bar
    * @return nmVOC factor in g/m³/bar
    */
   public double calculateNMVOCFactor(double waterFlowRate_m3hr, double pressureDrop_bar) {
@@ -469,7 +469,7 @@ public class EmissionsCalculator implements Serializable {
    * </p>
    *
    * @param producedWaterVolume_m3 produced water volume in m³
-   * @param pressureDrop_bar       pressure drop in bar
+   * @param pressureDrop_bar pressure drop in bar
    * @return methane emission in tonnes
    */
   public static double calculateConventionalCH4(double producedWaterVolume_m3, double pressureDrop_bar) {
@@ -489,7 +489,7 @@ public class EmissionsCalculator implements Serializable {
    * </p>
    *
    * @param producedWaterVolume_m3 produced water volume in m³
-   * @param pressureDrop_bar       pressure drop in bar
+   * @param pressureDrop_bar pressure drop in bar
    * @return nmVOC emission in tonnes
    */
   public static double calculateConventionalNMVOC(double producedWaterVolume_m3, double pressureDrop_bar) {
@@ -505,7 +505,7 @@ public class EmissionsCalculator implements Serializable {
    * </p>
    *
    * @param producedWaterVolume_m3 produced water volume in m³
-   * @param pressureDrop_bar       pressure drop in bar
+   * @param pressureDrop_bar pressure drop in bar
    * @return map with CH4, nmVOC, and CO2eq values in tonnes
    */
   public static java.util.Map<String, Double> calculateConventionalEmissions(double producedWaterVolume_m3,
@@ -533,7 +533,7 @@ public class EmissionsCalculator implements Serializable {
    * </p>
    *
    * @param producedWaterVolume_m3 produced water volume in m³
-   * @param pressureDrop_bar       pressure drop in bar
+   * @param pressureDrop_bar pressure drop in bar
    * @return map with comparison metrics
    */
   public java.util.Map<String, Object> compareWithConventionalMethod(double producedWaterVolume_m3,
@@ -620,7 +620,7 @@ public class EmissionsCalculator implements Serializable {
    * Alternative GWR calculation when you know the total gas moles released.
    * </p>
    *
-   * @param gasMoles_kmol  total gas moles released (kmol)
+   * @param gasMoles_kmol total gas moles released (kmol)
    * @param waterVolume_m3 water volume at standard conditions (m³)
    * @return GWR in Sm³ gas / Sm³ water
    */

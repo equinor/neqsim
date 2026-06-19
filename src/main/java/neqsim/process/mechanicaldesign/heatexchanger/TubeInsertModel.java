@@ -175,10 +175,10 @@ public class TubeInsertModel implements Serializable {
   /**
    * Applies the insert enhancement to a plain-tube HTC and pressure drop.
    *
-   * @param plainHTC          plain-tube heat transfer coefficient (W/(m2*K))
+   * @param plainHTC plain-tube heat transfer coefficient (W/(m2*K))
    * @param plainPressureDrop plain-tube pressure drop (Pa)
-   * @param Re                Reynolds number
-   * @param Pr                Prandtl number
+   * @param Re Reynolds number
+   * @param Pr Prandtl number
    * @return array of [enhanced HTC (W/(m2*K)), enhanced pressure drop (Pa)]
    */
   public double[] applyEnhancement(double plainHTC, double plainPressureDrop, double Re, double Pr) {
@@ -465,7 +465,7 @@ public class TubeInsertModel implements Serializable {
    * Creates a coiled wire insert model.
    *
    * @param roughnessRatio wire roughness e/D (0.01-0.05)
-   * @param helixAngle     helix angle in degrees (30-70)
+   * @param helixAngle helix angle in degrees (30-70)
    * @return configured TubeInsertModel
    */
   public static TubeInsertModel createCoiledWire(double roughnessRatio, double helixAngle) {

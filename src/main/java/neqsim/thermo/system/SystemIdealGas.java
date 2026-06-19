@@ -36,8 +36,8 @@ public class SystemIdealGas extends SystemThermo {
    * Constructor for SystemIdealGas.
    * </p>
    *
-   * @param T              a double
-   * @param P              a double
+   * @param T a double
+   * @param P a double
    * @param checkForSolids a boolean
    */
   public SystemIdealGas(double T, double P, boolean checkForSolids) {

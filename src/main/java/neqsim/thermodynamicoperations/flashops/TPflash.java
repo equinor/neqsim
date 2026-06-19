@@ -101,7 +101,7 @@ public class TPflash extends Flash {
    * Constructor for TPflash.
    * </p>
    *
-   * @param system         a {@link neqsim.thermo.system.SystemInterface} object
+   * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param checkForSolids Set true to do solid phase check and calculations
    */
   public TPflash(SystemInterface system, boolean checkForSolids) {
@@ -877,7 +877,7 @@ public class TPflash extends Flash {
   /**
    * Checks if a candidate should replace the current single-phase endpoint.
    *
-   * @param candidate            candidate system produced by the local seed retry
+   * @param candidate candidate system produced by the local seed retry
    * @param referenceGibbsEnergy Gibbs energy of the original one-phase endpoint
    * @return true when the candidate is multiphase and has a lower Gibbs energy
    */

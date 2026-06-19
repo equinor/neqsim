@@ -53,9 +53,9 @@ public class FourWellManifoldWithHeatTransferAdjustmentExample {
   /**
    * Creates a hydrocarbon gas system for a well.
    *
-   * @param wellName    the name of the well
+   * @param wellName the name of the well
    * @param temperature the well temperature in Celsius
-   * @param pressure    the well pressure in bara
+   * @param pressure the well pressure in bara
    * @return configured fluid system
    */
   private static SystemInterface createWellFluid(String wellName, double temperature, double pressure) {

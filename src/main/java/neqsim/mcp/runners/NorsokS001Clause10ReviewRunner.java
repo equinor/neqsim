@@ -86,11 +86,11 @@ public final class NorsokS001Clause10ReviewRunner {
   /**
    * Adds an embedded analysis result when an input object is present.
    *
-   * @param input     top-level runner input
-   * @param root      output root receiving embedded analyses
-   * @param inputKey  key containing the embedded runner input
+   * @param input top-level runner input
+   * @param root output root receiving embedded analyses
+   * @param inputKey key containing the embedded runner input
    * @param outputKey key used in the embeddedAnalyses object
-   * @param runner    runner selector
+   * @param runner runner selector
    */
   private static void addEmbeddedAnalysis(JsonObject input, JsonObject root, String inputKey, String outputKey,
       EmbeddedRunner runner) {
@@ -124,8 +124,8 @@ public final class NorsokS001Clause10ReviewRunner {
   /**
    * Adds result provenance to the output root.
    *
-   * @param root      output root
-   * @param report    generated report
+   * @param root output root
+   * @param report generated report
    * @param startTime start time in milliseconds
    */
   private static void addProvenance(JsonObject root, ProcessSafetySystemReviewReport report, long startTime) {
@@ -143,8 +143,8 @@ public final class NorsokS001Clause10ReviewRunner {
   /**
    * Creates a standard error JSON string.
    *
-   * @param code        error code
-   * @param message     error message
+   * @param code error code
+   * @param message error message
    * @param remediation recommended remediation
    * @return JSON error string
    */

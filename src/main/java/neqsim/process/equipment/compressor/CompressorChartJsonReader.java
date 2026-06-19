@@ -73,7 +73,7 @@ public class CompressorChartJsonReader {
   /**
    * Constructor for CompressorChartJsonReader from JSON string.
    *
-   * @param jsonString   JSON string containing chart data
+   * @param jsonString JSON string containing chart data
    * @param isJsonString flag to indicate this is a JSON string (not file path)
    * @throws Exception if JSON cannot be parsed
    */

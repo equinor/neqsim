@@ -74,7 +74,7 @@ public final class EquipmentFactory {
   /**
    * Creates a piece of equipment based on the provided type.
    *
-   * @param name          name to assign to the equipment
+   * @param name name to assign to the equipment
    * @param equipmentType equipment type identifier
    * @return the created equipment instance
    */
@@ -193,7 +193,7 @@ public final class EquipmentFactory {
   /**
    * Creates a piece of equipment based on {@link EquipmentEnum}.
    *
-   * @param name          name to assign
+   * @param name name to assign
    * @param equipmentType {@link EquipmentEnum}
    * @return the created equipment
    */
@@ -380,13 +380,13 @@ public final class EquipmentFactory {
   /**
    * Creates a configured Stream with flow, pressure, and temperature.
    *
-   * @param name            stream name
-   * @param fluid           thermodynamic system
-   * @param flowRate        mass flow rate
-   * @param flowUnit        flow unit, e.g. "kg/hr"
-   * @param pressure        stream pressure
-   * @param pressureUnit    pressure unit, e.g. "bara"
-   * @param temperature     stream temperature
+   * @param name stream name
+   * @param fluid thermodynamic system
+   * @param flowRate mass flow rate
+   * @param flowUnit flow unit, e.g. "kg/hr"
+   * @param pressure stream pressure
+   * @param pressureUnit pressure unit, e.g. "bara"
+   * @param temperature stream temperature
    * @param temperatureUnit temperature unit, e.g. "C"
    * @return configured Stream
    */
@@ -402,9 +402,9 @@ public final class EquipmentFactory {
   /**
    * Creates a Compressor with outlet pressure and isentropic efficiency.
    *
-   * @param name                 compressor name
-   * @param inletStream          inlet stream
-   * @param outletPressure       discharge pressure in bara
+   * @param name compressor name
+   * @param inletStream inlet stream
+   * @param outletPressure discharge pressure in bara
    * @param isentropicEfficiency isentropic efficiency (0.0 to 1.0)
    * @return configured Compressor
    */
@@ -419,10 +419,10 @@ public final class EquipmentFactory {
   /**
    * Creates a Cooler with specified outlet temperature.
    *
-   * @param name              cooler name
-   * @param inletStream       inlet stream
+   * @param name cooler name
+   * @param inletStream inlet stream
    * @param outletTemperature desired outlet temperature
-   * @param temperatureUnit   temperature unit, e.g. "C"
+   * @param temperatureUnit temperature unit, e.g. "C"
    * @return configured Cooler
    */
   public static Cooler createCooler(String name, StreamInterface inletStream, double outletTemperature,
@@ -435,10 +435,10 @@ public final class EquipmentFactory {
   /**
    * Creates a Heater with specified outlet temperature.
    *
-   * @param name              heater name
-   * @param inletStream       inlet stream
+   * @param name heater name
+   * @param inletStream inlet stream
    * @param outletTemperature desired outlet temperature
-   * @param temperatureUnit   temperature unit, e.g. "C"
+   * @param temperatureUnit temperature unit, e.g. "C"
    * @return configured Heater
    */
   public static Heater createHeater(String name, StreamInterface inletStream, double outletTemperature,
@@ -451,9 +451,9 @@ public final class EquipmentFactory {
   /**
    * Creates a ThrottlingValve with outlet pressure and valve opening.
    *
-   * @param name                valve name
-   * @param inletStream         inlet stream
-   * @param outletPressure      downstream pressure in bara
+   * @param name valve name
+   * @param inletStream inlet stream
+   * @param outletPressure downstream pressure in bara
    * @param percentValveOpening valve opening percentage (0-100)
    * @return configured ThrottlingValve
    */
@@ -468,8 +468,8 @@ public final class EquipmentFactory {
   /**
    * Creates a Pump with specified outlet pressure.
    *
-   * @param name           pump name
-   * @param inletStream    inlet stream
+   * @param name pump name
+   * @param inletStream inlet stream
    * @param outletPressure discharge pressure in bara
    * @return configured Pump
    */
@@ -482,7 +482,7 @@ public final class EquipmentFactory {
   /**
    * Creates a Separator from an inlet stream.
    *
-   * @param name        separator name
+   * @param name separator name
    * @param inletStream inlet stream
    * @return configured Separator
    */
@@ -493,7 +493,7 @@ public final class EquipmentFactory {
   /**
    * Creates a ThreePhaseSeparator from an inlet stream.
    *
-   * @param name        separator name
+   * @param name separator name
    * @param inletStream inlet stream
    * @return configured ThreePhaseSeparator
    */
@@ -504,7 +504,7 @@ public final class EquipmentFactory {
   /**
    * Creates a Mixer with multiple inlet streams.
    *
-   * @param name         mixer name
+   * @param name mixer name
    * @param inletStreams inlet streams to combine
    * @return configured Mixer
    */
@@ -519,8 +519,8 @@ public final class EquipmentFactory {
   /**
    * Creates an Expander with specified outlet pressure.
    *
-   * @param name           expander name
-   * @param inletStream    inlet stream
+   * @param name expander name
+   * @param inletStream inlet stream
    * @param outletPressure discharge pressure in bara
    * @return configured Expander
    */

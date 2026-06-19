@@ -116,7 +116,7 @@ public class DataReconciliationEngine implements java.io.Serializable {
    * Adds a named linear constraint row: sum(coefficients[i] * variable[i]) = 0.
    *
    * @param coefficients array of coefficients, one per variable
-   * @param name         descriptive name for this constraint (e.g., "Separator mass balance")
+   * @param name descriptive name for this constraint (e.g., "Separator mass balance")
    * @return this engine for chaining
    * @throws IllegalArgumentException if coefficients length does not match variable count
    */
@@ -261,8 +261,8 @@ public class DataReconciliationEngine implements java.io.Serializable {
    * and per-variable gross error detection.
    * </p>
    *
-   * @param n         number of variables
-   * @param m         number of constraints
+   * @param n number of variables
+   * @param m number of constraints
    * @param startTime system time when reconciliation started, for timing measurement
    * @return the reconciliation result
    */
@@ -381,7 +381,7 @@ public class DataReconciliationEngine implements java.io.Serializable {
    * If |r_i| exceeds the gross error threshold (z-value), the variable is flagged.
    * </p>
    *
-   * @param n    number of variables
+   * @param n number of variables
    * @param vAdj covariance matrix of reconciled adjustments (V - V*A^T*(AVA^T)^-1*A*V)
    */
   private void detectGrossErrors(int n, SimpleMatrix vAdj) {
@@ -505,8 +505,8 @@ public class DataReconciliationEngine implements java.io.Serializable {
    * coefficient 0.
    * </p>
    *
-   * @param name        constraint name (e.g., "Separator mass balance")
-   * @param inletNames  names of inlet variables
+   * @param name constraint name (e.g., "Separator mass balance")
+   * @param inletNames names of inlet variables
    * @param outletNames names of outlet variables
    * @return this engine for chaining
    * @throws IllegalArgumentException if a variable name is not found
@@ -538,8 +538,8 @@ public class DataReconciliationEngine implements java.io.Serializable {
   /**
    * Convenience method to add a mass balance constraint using arrays of names.
    *
-   * @param name        constraint name
-   * @param inletNames  inlet variable names
+   * @param name constraint name
+   * @param inletNames inlet variable names
    * @param outletNames outlet variable names
    * @return this engine for chaining
    * @throws IllegalArgumentException if a variable name is not found

@@ -21,12 +21,12 @@ public class UncertaintyAnalysis {
   /**
    * Create an uncertainty analysis result.
    *
-   * @param parameterValues       optimized parameter values
-   * @param standardErrors        standard errors for each parameter
-   * @param correlationMatrix     parameter correlation matrix
+   * @param parameterValues optimized parameter values
+   * @param standardErrors standard errors for each parameter
+   * @param correlationMatrix parameter correlation matrix
    * @param confidenceIntervals95 95% confidence interval half-widths
-   * @param degreesOfFreedom      degrees of freedom (N - p)
-   * @param residualVariance      residual variance (chi-square / DOF)
+   * @param degreesOfFreedom degrees of freedom (N - p)
+   * @param residualVariance residual variance (chi-square / DOF)
    */
   public UncertaintyAnalysis(double[] parameterValues, double[] standardErrors, double[][] correlationMatrix,
       double[] confidenceIntervals95, int degreesOfFreedom, double residualVariance) {

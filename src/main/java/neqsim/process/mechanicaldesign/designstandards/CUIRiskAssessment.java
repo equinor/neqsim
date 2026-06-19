@@ -96,10 +96,10 @@ public class CUIRiskAssessment implements Serializable {
    * C where aqueous corrosion and wet-dry cycling are most aggressive.
    * </p>
    *
-   * @param operatingTempC      operating temperature in Celsius
-   * @param isStainlessSteel    true if material is austenitic stainless steel (300-series)
-   * @param insulationType      insulation type
-   * @param coatingAge          years since last coating application
+   * @param operatingTempC operating temperature in Celsius
+   * @param isStainlessSteel true if material is austenitic stainless steel (300-series)
+   * @param insulationType insulation type
+   * @param coatingAge years since last coating application
    * @param isMarineEnvironment true if offshore or coastal
    * @return CUI risk level
    */
@@ -138,7 +138,7 @@ public class CUIRiskAssessment implements Serializable {
   /**
    * Calculate temperature-based risk score per API 581 / API 583 guidance.
    *
-   * @param operatingTempC   operating temperature in Celsius
+   * @param operatingTempC operating temperature in Celsius
    * @param isStainlessSteel true if austenitic stainless steel
    * @return risk score (0 = negligible, 1 = low, 3 = high, 5 = very high)
    */
@@ -241,8 +241,8 @@ public class CUIRiskAssessment implements Serializable {
    * Estimate remaining corrosion allowance based on CUI conditions.
    *
    * @param originalThicknessMm original wall thickness in mm
-   * @param currentThicknessMm  measured current wall thickness in mm
-   * @param yearsInService      years in service
+   * @param currentThicknessMm measured current wall thickness in mm
+   * @param yearsInService years in service
    * @return estimated remaining life in years at current corrosion rate, or Double.MAX_VALUE if no measurable thinning
    */
   public static double estimateRemainingLife(double originalThicknessMm, double currentThicknessMm,

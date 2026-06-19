@@ -32,7 +32,7 @@ public interface StreamingDataInterface {
   /**
    * Subscribe to real-time updates for a specific tag.
    *
-   * @param tagId    the tag identifier (e.g., "PT-101", "FT-200")
+   * @param tagId the tag identifier (e.g., "PT-101", "FT-200")
    * @param callback function to call when new values arrive
    */
   void subscribeToUpdates(String tagId, Consumer<TimestampedValue> callback);
@@ -89,7 +89,7 @@ public interface StreamingDataInterface {
   /**
    * Get historical values for a tag.
    *
-   * @param tagId    the tag identifier
+   * @param tagId the tag identifier
    * @param lookback how far back to retrieve data
    * @return list of timestamped values, ordered oldest to newest
    */
@@ -98,7 +98,7 @@ public interface StreamingDataInterface {
   /**
    * Get historical values for multiple tags aligned by timestamp.
    *
-   * @param tagIds   list of tag identifiers
+   * @param tagIds list of tag identifiers
    * @param lookback how far back to retrieve data
    * @return map of tag IDs to their historical values
    */

@@ -23,11 +23,11 @@ public class DexpiStream extends Stream {
   /**
    * Creates a new DEXPI stream.
    *
-   * @param name       the stream name
-   * @param fluid      the thermodynamic system
+   * @param name the stream name
+   * @param fluid the thermodynamic system
    * @param dexpiClass the original DEXPI component class
    * @param lineNumber the line number reference (may be null)
-   * @param fluidCode  the fluid code reference (may be null)
+   * @param fluidCode the fluid code reference (may be null)
    */
   public DexpiStream(String name, SystemInterface fluid, String dexpiClass, String lineNumber, String fluidCode) {
     super(name, fluid);

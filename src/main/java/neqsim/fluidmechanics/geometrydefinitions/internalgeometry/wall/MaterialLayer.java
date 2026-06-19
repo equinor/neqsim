@@ -57,7 +57,7 @@ public class MaterialLayer {
   /**
    * Constructor for MaterialLayer with material name and thickness.
    *
-   * @param material  Material name/identifier
+   * @param material Material name/identifier
    * @param thickness Layer thickness in meters
    */
   public MaterialLayer(String material, double thickness) {
@@ -68,7 +68,7 @@ public class MaterialLayer {
   /**
    * Constructor for MaterialLayer from a PipeMaterial enum.
    *
-   * @param material  The PipeMaterial enum value
+   * @param material The PipeMaterial enum value
    * @param thickness Layer thickness in meters
    */
   public MaterialLayer(PipeMaterial material, double thickness) {
@@ -83,10 +83,10 @@ public class MaterialLayer {
   /**
    * Constructor with all thermal properties.
    *
-   * @param materialName         Material name/identifier
-   * @param thickness            Layer thickness in meters
-   * @param conductivity         Thermal conductivity in W/(m·K)
-   * @param density              Density in kg/m³
+   * @param materialName Material name/identifier
+   * @param thickness Layer thickness in meters
+   * @param conductivity Thermal conductivity in W/(m·K)
+   * @param density Density in kg/m³
    * @param specificHeatCapacity Specific heat capacity in J/(kg·K)
    */
   public MaterialLayer(String materialName, double thickness, double conductivity, double density,

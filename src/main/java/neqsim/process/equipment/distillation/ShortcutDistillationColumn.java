@@ -111,7 +111,7 @@ public class ShortcutDistillationColumn extends ProcessEquipmentBaseClass implem
   /**
    * Constructor for ShortcutDistillationColumn.
    *
-   * @param name       column name
+   * @param name column name
    * @param feedStream the feed stream
    */
   public ShortcutDistillationColumn(String name, StreamInterface feedStream) {
@@ -189,7 +189,7 @@ public class ShortcutDistillationColumn extends ProcessEquipmentBaseClass implem
    * Set the condenser pressure with units.
    *
    * @param pressure condenser pressure
-   * @param unit     pressure unit (e.g., "bara", "barg")
+   * @param unit pressure unit (e.g., "bara", "barg")
    */
   public void setCondenserPressure(double pressure, String unit) {
     if ("barg".equals(unit)) {
@@ -399,7 +399,7 @@ public class ShortcutDistillationColumn extends ProcessEquipmentBaseClass implem
   /**
    * Find a phase by phase type name.
    *
-   * @param system        thermodynamic system to inspect
+   * @param system thermodynamic system to inspect
    * @param phaseTypeName phase type name to find
    * @return phase index, or {@code -1} if absent
    */
@@ -438,8 +438,8 @@ public class ShortcutDistillationColumn extends ProcessEquipmentBaseClass implem
    *
    * @param alpha relative volatilities
    * @param zFeed feed composition
-   * @param q     feed quality
-   * @param n     number of components
+   * @param q feed quality
+   * @param n number of components
    * @return theta value
    */
   private double solveUnderwood(double[] alpha, double[] zFeed, double q, int n) {
@@ -471,8 +471,8 @@ public class ShortcutDistillationColumn extends ProcessEquipmentBaseClass implem
    * @param alpha relative volatilities
    * @param zFeed feed composition
    * @param theta current theta estimate
-   * @param q     feed quality
-   * @param n     number of components
+   * @param q feed quality
+   * @param n number of components
    * @return function value
    */
   private double underwoodFunction(double[] alpha, double[] zFeed, double theta, double q, int n) {
@@ -490,7 +490,7 @@ public class ShortcutDistillationColumn extends ProcessEquipmentBaseClass implem
    *
    * @param zFeed feed composition
    * @param alpha relative volatilities
-   * @param n     number of components
+   * @param n number of components
    * @param lkIdx light key index
    * @param hkIdx heavy key index
    * @return estimated distillate mole fractions (normalized)
@@ -519,7 +519,7 @@ public class ShortcutDistillationColumn extends ProcessEquipmentBaseClass implem
    *
    * @param zFeed feed composition
    * @param alpha relative volatilities
-   * @param n     number of components
+   * @param n number of components
    * @param lkIdx light key index
    * @param hkIdx heavy key index
    * @return B/D ratio
@@ -540,7 +540,7 @@ public class ShortcutDistillationColumn extends ProcessEquipmentBaseClass implem
    * Estimate component split fractions to the distillate product.
    *
    * @param alpha relative volatilities
-   * @param n     number of components
+   * @param n number of components
    * @param lkIdx light key index
    * @param hkIdx heavy key index
    * @return fraction of each feed component recovered in the distillate
@@ -583,12 +583,12 @@ public class ShortcutDistillationColumn extends ProcessEquipmentBaseClass implem
    * Compute condenser and reboiler duties.
    *
    * @param feedFluid the feed fluid
-   * @param reflux    actual reflux ratio
-   * @param zFeed     feed composition
-   * @param alpha     relative volatility array
-   * @param n         number of components
-   * @param lkIdx     light key index
-   * @param hkIdx     heavy key index
+   * @param reflux actual reflux ratio
+   * @param zFeed feed composition
+   * @param alpha relative volatility array
+   * @param n number of components
+   * @param lkIdx light key index
+   * @param hkIdx heavy key index
    */
   private void computeDuties(SystemInterface feedFluid, double reflux, double[] zFeed, double[] alpha, int n, int lkIdx,
       int hkIdx) {
@@ -616,11 +616,11 @@ public class ShortcutDistillationColumn extends ProcessEquipmentBaseClass implem
    * Create output streams for distillate and bottoms.
    *
    * @param feedFluid feed fluid
-   * @param zFeed     feed composition
-   * @param alpha     relative volatility array
-   * @param n         number of components
-   * @param lkIdx     light key index
-   * @param hkIdx     heavy key index
+   * @param zFeed feed composition
+   * @param alpha relative volatility array
+   * @param n number of components
+   * @param lkIdx light key index
+   * @param hkIdx heavy key index
    */
   private void createOutputStreams(SystemInterface feedFluid, double[] zFeed, double[] alpha, int n, int lkIdx,
       int hkIdx) {

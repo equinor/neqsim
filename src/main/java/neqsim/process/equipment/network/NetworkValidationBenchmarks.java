@@ -467,7 +467,7 @@ public class NetworkValidationBenchmarks {
   /**
    * Build a standard two-loop network for benchmarking.
    *
-   * @param gas    fluid template
+   * @param gas fluid template
    * @param prefix name prefix
    * @return configured network
    */
@@ -521,9 +521,9 @@ public class NetworkValidationBenchmarks {
      * Add a metric comparison.
      *
      * @param metricName name of the metric
-     * @param computed   computed value from the solver
-     * @param expected   expected (analytical or reference) value
-     * @param tolerance  acceptable absolute difference
+     * @param computed computed value from the solver
+     * @param expected expected (analytical or reference) value
+     * @param tolerance acceptable absolute difference
      */
     public void addMetric(String metricName, double computed, double expected, double tolerance) {
       metrics.add(new MetricResult(metricName, computed, expected, tolerance));
@@ -584,9 +584,9 @@ public class NetworkValidationBenchmarks {
     /**
      * Create a metric result.
      *
-     * @param name      metric name
-     * @param computed  computed value
-     * @param expected  expected value
+     * @param name metric name
+     * @param computed computed value
+     * @param expected expected value
      * @param tolerance tolerance
      */
     public MetricResult(String name, double computed, double expected, double tolerance) {

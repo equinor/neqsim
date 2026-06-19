@@ -46,10 +46,10 @@ public class PressureControlLogic implements ProcessLogic {
   /**
    * Creates pressure control logic with system run.
    *
-   * @param name          the logic name
-   * @param controlValve  the valve to throttle
+   * @param name the logic name
+   * @param controlValve the valve to throttle
    * @param targetOpening the target valve opening percentage (0-100)
-   * @param system        the process system to run after valve change
+   * @param system the process system to run after valve change
    */
   public PressureControlLogic(String name, ControlValve controlValve, double targetOpening, ProcessSystem system) {
     this.name = name;
@@ -65,8 +65,8 @@ public class PressureControlLogic implements ProcessLogic {
   /**
    * Creates pressure control logic without automatic system run.
    *
-   * @param name          the logic name
-   * @param controlValve  the valve to throttle
+   * @param name the logic name
+   * @param controlValve the valve to throttle
    * @param targetOpening the target valve opening percentage (0-100)
    */
   public PressureControlLogic(String name, ControlValve controlValve, double targetOpening) {

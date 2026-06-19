@@ -27,8 +27,8 @@ public class VSflash extends Flash {
    * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param Vspec  a double
-   * @param Sspec  a double
+   * @param Vspec a double
+   * @param Sspec a double
    */
   public VSflash(SystemInterface system, double Vspec, double Sspec) {
     this.system = system;

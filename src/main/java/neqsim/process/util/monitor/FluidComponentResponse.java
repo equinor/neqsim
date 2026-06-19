@@ -45,7 +45,7 @@ public class FluidComponentResponse {
    * Constructor for FluidComponentResponse.
    *
    * @param fluidname name of fluid
-   * @param fluid     input fluid
+   * @param fluid input fluid
    */
   public FluidComponentResponse(String fluidname, SystemInterface fluid) {
     this(fluidname);

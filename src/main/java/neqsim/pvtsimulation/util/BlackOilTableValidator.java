@@ -53,10 +53,10 @@ public final class BlackOilTableValidator {
   /**
    * Comprehensive validation of black-oil tables.
    *
-   * @param pressures    pressure values (bar), assumed decreasing
-   * @param Bo           oil formation volume factor (rm3/sm3)
-   * @param Rs           solution gas-oil ratio (sm3/sm3)
-   * @param Bg           gas formation volume factor (rm3/sm3), may be null
+   * @param pressures pressure values (bar), assumed decreasing
+   * @param Bo oil formation volume factor (rm3/sm3)
+   * @param Rs solution gas-oil ratio (sm3/sm3)
+   * @param Bg gas formation volume factor (rm3/sm3), may be null
    * @param oilViscosity oil viscosity (cP), may be null
    * @param gasViscosity gas viscosity (cP), may be null
    * @return validation result with status and detailed report
@@ -213,8 +213,8 @@ public final class BlackOilTableValidator {
    * Validate gas viscosity array.
    *
    * @param pressures the pressure array in bar
-   * @param gasVisc   the gas viscosity array
-   * @param result    the validation result to update
+   * @param gasVisc the gas viscosity array
+   * @param result the validation result to update
    */
   private static void validateGasViscosityArray(double[] pressures, double[] gasVisc, ValidationResult result) {
     // Check for positive values
@@ -238,9 +238,9 @@ public final class BlackOilTableValidator {
    * </p>
    *
    * @param pressures the pressure array in bar
-   * @param Bo        the oil formation volume factor array
-   * @param Rs        the solution gas-oil ratio array
-   * @param result    the validation result to update
+   * @param Bo the oil formation volume factor array
+   * @param Rs the solution gas-oil ratio array
+   * @param result the validation result to update
    */
   private static void validateBoRsConsistency(double[] pressures, double[] Bo, double[] Rs, ValidationResult result) {
     // Calculate dBo/dRs (should be positive - more gas means higher Bo)
@@ -277,8 +277,8 @@ public final class BlackOilTableValidator {
   /**
    * Count monotonicity violations.
    *
-   * @param pressures      pressure array (assumed decreasing)
-   * @param values         property values
+   * @param pressures pressure array (assumed decreasing)
+   * @param values property values
    * @param shouldDecrease true if property should decrease with decreasing pressure
    * @return number of monotonicity violations
    */
@@ -308,8 +308,8 @@ public final class BlackOilTableValidator {
    * Uses linear interpolation between table values. Extrapolation is not recommended.
    * </p>
    *
-   * @param pressures      pressure table (bar)
-   * @param values         property values
+   * @param pressures pressure table (bar)
+   * @param values property values
    * @param targetPressure pressure to interpolate at (bar)
    * @return interpolated value, or NaN if out of range
    */

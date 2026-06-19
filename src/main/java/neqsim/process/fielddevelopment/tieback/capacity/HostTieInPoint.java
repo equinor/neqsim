@@ -43,7 +43,7 @@ public final class HostTieInPoint implements Serializable {
    * Creates a tie-in point for a process stream.
    *
    * @param processStreamReference stream reference resolved by {@code ProcessSystem}
-   * @param processRateUnit        flow unit used by the target stream
+   * @param processRateUnit flow unit used by the target stream
    */
   public HostTieInPoint(String processStreamReference, String processRateUnit) {
     this.processStreamReference = processStreamReference;

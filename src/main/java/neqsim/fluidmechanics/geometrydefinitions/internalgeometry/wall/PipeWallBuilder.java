@@ -50,8 +50,8 @@ public class PipeWallBuilder {
   /**
    * Creates a builder for a bare (uninsulated) pipe.
    *
-   * @param innerRadius   Inner pipe radius in meters
-   * @param pipeMaterial  Pipe material
+   * @param innerRadius Inner pipe radius in meters
+   * @param pipeMaterial Pipe material
    * @param wallThickness Pipe wall thickness in meters
    * @return PipeWallBuilder for method chaining
    */
@@ -86,9 +86,9 @@ public class PipeWallBuilder {
   /**
    * Creates a builder for a pre-configured insulated pipe.
    *
-   * @param innerDiameter       Inner pipe diameter in meters
-   * @param pipeThickness       Pipe wall thickness in meters
-   * @param insulation          Insulation material
+   * @param innerDiameter Inner pipe diameter in meters
+   * @param pipeThickness Pipe wall thickness in meters
+   * @param insulation Insulation material
    * @param insulationThickness Insulation thickness in meters
    * @return PipeWallBuilder for method chaining
    */
@@ -110,10 +110,10 @@ public class PipeWallBuilder {
    * <li>Concrete weight coating</li>
    * </ol>
    *
-   * @param innerDiameter       Inner pipe diameter in meters
-   * @param pipeThickness       Pipe wall thickness in meters
+   * @param innerDiameter Inner pipe diameter in meters
+   * @param pipeThickness Pipe wall thickness in meters
    * @param insulationThickness Insulation thickness in meters
-   * @param concreteThickness   Concrete coating thickness in meters
+   * @param concreteThickness Concrete coating thickness in meters
    * @return PipeWallBuilder for method chaining
    */
   public static PipeWallBuilder subseaPipe(double innerDiameter, double pipeThickness, double insulationThickness,
@@ -170,7 +170,7 @@ public class PipeWallBuilder {
   /**
    * Adds the primary pipe wall layer.
    *
-   * @param material  Pipe material
+   * @param material Pipe material
    * @param thickness Wall thickness in meters
    * @return this builder for method chaining
    */
@@ -182,7 +182,7 @@ public class PipeWallBuilder {
   /**
    * Adds an insulation layer.
    *
-   * @param material  Insulation material
+   * @param material Insulation material
    * @param thickness Insulation thickness in meters
    * @return this builder for method chaining
    */
@@ -197,7 +197,7 @@ public class PipeWallBuilder {
   /**
    * Adds a coating layer.
    *
-   * @param material  Coating material
+   * @param material Coating material
    * @param thickness Coating thickness in meters
    * @return this builder for method chaining
    */
@@ -209,10 +209,10 @@ public class PipeWallBuilder {
   /**
    * Adds a custom material layer.
    *
-   * @param name         Material name
-   * @param thickness    Layer thickness in meters
+   * @param name Material name
+   * @param thickness Layer thickness in meters
    * @param conductivity Thermal conductivity in W/(m·K)
-   * @param density      Density in kg/m³
+   * @param density Density in kg/m³
    * @param specificHeat Specific heat capacity in J/(kg·K)
    * @return this builder for method chaining
    */
@@ -287,7 +287,7 @@ public class PipeWallBuilder {
   /**
    * Sets the surrounding environment for air exposure.
    *
-   * @param temperatureK   Air temperature in Kelvin
+   * @param temperatureK Air temperature in Kelvin
    * @param windVelocityMs Wind velocity in m/s
    * @return this builder for method chaining
    */
@@ -300,7 +300,7 @@ public class PipeWallBuilder {
    * Sets the surrounding environment for subsea operation.
    *
    * @param seawaterTemperatureK Seawater temperature in Kelvin
-   * @param currentVelocityMs    Current velocity in m/s
+   * @param currentVelocityMs Current velocity in m/s
    * @return this builder for method chaining
    */
   public PipeWallBuilder subseaEnvironment(double seawaterTemperatureK, double currentVelocityMs) {
@@ -312,8 +312,8 @@ public class PipeWallBuilder {
    * Sets the surrounding environment for buried pipe.
    *
    * @param groundTemperatureK Ground temperature in Kelvin
-   * @param burialDepthM       Burial depth to pipe centerline in meters
-   * @param soilType           Soil material type
+   * @param burialDepthM Burial depth to pipe centerline in meters
+   * @param soilType Soil material type
    * @return this builder for method chaining
    */
   public PipeWallBuilder buriedInSoil(double groundTemperatureK, double burialDepthM, PipeMaterial soilType) {
@@ -326,7 +326,7 @@ public class PipeWallBuilder {
    * Sets the surrounding environment for a buried pipe with typical soil.
    *
    * @param groundTemperatureK Ground temperature in Kelvin
-   * @param burialDepthM       Burial depth to pipe centerline in meters
+   * @param burialDepthM Burial depth to pipe centerline in meters
    * @return this builder for method chaining
    */
   public PipeWallBuilder buriedInTypicalSoil(double groundTemperatureK, double burialDepthM) {

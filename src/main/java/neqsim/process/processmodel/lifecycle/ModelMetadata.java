@@ -118,7 +118,7 @@ public class ModelMetadata implements Serializable {
    * Records a model modification with author.
    *
    * @param description what was changed
-   * @param author      who made the change
+   * @param author who made the change
    */
   public void recordModification(String description, String author) {
     ModificationRecord record = new ModificationRecord(description, author);
@@ -128,7 +128,7 @@ public class ModelMetadata implements Serializable {
   /**
    * Updates calibration status.
    *
-   * @param status   new calibration status
+   * @param status new calibration status
    * @param accuracy relative accuracy achieved (e.g., 0.02 for 2%)
    */
   public void updateCalibration(CalibrationStatus status, double accuracy) {

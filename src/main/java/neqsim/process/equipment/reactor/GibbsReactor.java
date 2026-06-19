@@ -157,9 +157,9 @@ public class GibbsReactor extends TwoPortEquipment {
    * Calculate the total enthalpy of a mixture: sum_i n_i * enthalpy_i(T).
    *
    * @param componentNames List of component names (order matches n_i)
-   * @param n              List of moles for each component
-   * @param T              Temperature in K
-   * @param componentMap   Map from component name (lowercase) to GibbsComponent
+   * @param n List of moles for each component
+   * @param T Temperature in K
+   * @param componentMap Map from component name (lowercase) to GibbsComponent
    * @return Total enthalpy (kJ)
    */
   public double calculateMixtureEnthalpy(List<String> componentNames, List<Double> n, double T,
@@ -183,9 +183,9 @@ public class GibbsReactor extends TwoPortEquipment {
    * Calculate the total Gibbs energy of a mixture: sum_i n_i * gibbs_i(T).
    *
    * @param componentNames List of component names (order matches n_i)
-   * @param n              List of moles for each component
-   * @param T              Temperature in K
-   * @param componentMap   Map from component name (lowercase) to GibbsComponent
+   * @param n List of moles for each component
+   * @param T Temperature in K
+   * @param componentMap Map from component name (lowercase) to GibbsComponent
    * @return Total Gibbs energy (kJ)
    */
   public double calculateMixtureGibbsEnergy(List<String> componentNames, List<Double> n,
@@ -229,8 +229,8 @@ public class GibbsReactor extends TwoPortEquipment {
    * Calculate the total standard enthalpy of a mixture: sum_i n_i * enthalpy_i(T).
    *
    * @param componentNames List of component names (order matches n_i)
-   * @param n              List of moles for each component
-   * @param componentMap   Map from component name (lowercase) to GibbsComponent
+   * @param n List of moles for each component
+   * @param componentMap Map from component name (lowercase) to GibbsComponent
    * @return Total enthalpy (kJ)
    */
   public double calculateMixtureEnthalpyStandard(List<String> componentNames, List<Double> n,
@@ -255,8 +255,8 @@ public class GibbsReactor extends TwoPortEquipment {
    * Calculate the total standard enthalpy of a mixture: sum_i n_i * enthalpy_i(T).
    *
    * @param componentNames List of component names (order matches n_i)
-   * @param n              List of moles for each component
-   * @param componentMap   Map from component name (lowercase) to GibbsComponent
+   * @param n List of moles for each component
+   * @param componentMap Map from component name (lowercase) to GibbsComponent
    * @return Total enthalpy (kJ)
    * @param T a double
    */
@@ -640,7 +640,7 @@ public class GibbsReactor extends TwoPortEquipment {
   /**
    * Constructor for GibbsReactor.
    *
-   * @param name   Name of GibbsReactor
+   * @param name Name of GibbsReactor
    * @param stream Stream to set as inlet Stream. A clone of stream is set as outlet stream.
    */
   public GibbsReactor(String name, StreamInterface stream) {
@@ -685,24 +685,24 @@ public class GibbsReactor extends TwoPortEquipment {
     /**
      * Constructs a GibbsComponent.
      *
-     * @param molecule           the molecule name
-     * @param elements           array of element counts
+     * @param molecule the molecule name
+     * @param elements array of element counts
      * @param heatCapacityCoeffs array of heat capacity coefficients
-     * @param deltaHf298         standard enthalpy of formation at 298 K
-     * @param deltaGf298         standard Gibbs energy of formation at 298 K
-     * @param deltaSf298         standard entropy at 298 K
-     * @param coeffAg            coefficient Ag for Gibbs calculations
-     * @param coeffBg            coefficient Bg for Gibbs calculations
-     * @param coeffCg            coefficient Cg for Gibbs calculations
-     * @param coeffDg            coefficient Dg for Gibbs calculations
-     * @param coeffEg            coefficient Eg for Gibbs calculations
-     * @param coeffFg            coefficient Fg for Gibbs calculations
-     * @param coeffAh            coefficient Ah for Gibbs calculations
-     * @param coeffBh            coefficient Bh for Gibbs calculations
-     * @param coeffCh            coefficient Ch for Gibbs calculations
-     * @param coeffDh            coefficient Dh for Gibbs calculations
-     * @param coeffEh            coefficient Eh for Gibbs calculations
-     * @param coeffGh            coefficient Gh for Gibbs calculations
+     * @param deltaHf298 standard enthalpy of formation at 298 K
+     * @param deltaGf298 standard Gibbs energy of formation at 298 K
+     * @param deltaSf298 standard entropy at 298 K
+     * @param coeffAg coefficient Ag for Gibbs calculations
+     * @param coeffBg coefficient Bg for Gibbs calculations
+     * @param coeffCg coefficient Cg for Gibbs calculations
+     * @param coeffDg coefficient Dg for Gibbs calculations
+     * @param coeffEg coefficient Eg for Gibbs calculations
+     * @param coeffFg coefficient Fg for Gibbs calculations
+     * @param coeffAh coefficient Ah for Gibbs calculations
+     * @param coeffBh coefficient Bh for Gibbs calculations
+     * @param coeffCh coefficient Ch for Gibbs calculations
+     * @param coeffDh coefficient Dh for Gibbs calculations
+     * @param coeffEh coefficient Eh for Gibbs calculations
+     * @param coeffGh coefficient Gh for Gibbs calculations
      */
     public GibbsComponent(String molecule, double[] elements, double[] heatCapacityCoeffs, double deltaHf298,
 	double deltaGf298, double deltaSf298, double coeffAg, double coeffBg, double coeffCg, double coeffDg,
@@ -762,7 +762,7 @@ public class GibbsReactor extends TwoPortEquipment {
      * Calculates Gibbs energy for a component.
      *
      * @param temperature temperature in K
-     * @param compNumber  component index
+     * @param compNumber component index
      * @return Gibbs energy
      */
     public double calculateGibbsEnergy(double temperature, int compNumber) {
@@ -896,7 +896,7 @@ public class GibbsReactor extends TwoPortEquipment {
      * Calculates enthalpy for a component.
      *
      * @param temperature temperature in K
-     * @param compNumber  component index
+     * @param compNumber component index
      * @return enthalpy
      */
     public double calculateEnthalpy(double temperature, int compNumber) {
@@ -933,7 +933,7 @@ public class GibbsReactor extends TwoPortEquipment {
      * Calculates entropy for a component.
      *
      * @param temperature temperature in K
-     * @param compNumber  component index
+     * @param compNumber component index
      * @return entropy in J/(mol·K)
      */
     public double calculateEntropy(double temperature, int compNumber) {
@@ -951,7 +951,7 @@ public class GibbsReactor extends TwoPortEquipment {
      * Calculates heat capacity for a component.
      *
      * @param temperature temperature in K
-     * @param compNumber  component index
+     * @param compNumber component index
      * @return heat capacity in J/(mol·K)
      */
     public double calculateHeatCapacity(double temperature, int compNumber) {
@@ -1274,9 +1274,9 @@ public class GibbsReactor extends TwoPortEquipment {
   /**
    * Calculate element mole balance for a system.
    *
-   * @param system         The thermodynamic system
+   * @param system The thermodynamic system
    * @param elementBalance Array to store the element balance
-   * @param isInput        true if this is input balance, false if output balance
+   * @param isInput true if this is input balance, false if output balance
    */
   private void calculateElementMoleBalance(SystemInterface system, double[] elementBalance, boolean isInput) {
     // Reset balance
@@ -2162,7 +2162,7 @@ public class GibbsReactor extends TwoPortEquipment {
    * Perform a Newton-Raphson iteration update. Updates outlet compositions with damping factor and Lagrange multipliers
    * directly.
    *
-   * @param deltaX           The delta vector from Newton-Raphson iteration
+   * @param deltaX The delta vector from Newton-Raphson iteration
    * @param alphaComposition Damping factor for composition updates (e.g., 0.0001)
    * @return True if update was successful, false otherwise
    */
@@ -2679,7 +2679,7 @@ public class GibbsReactor extends TwoPortEquipment {
    * Reference: Nocedal &amp; Wright, Numerical Optimization (2006), Algorithm 3.1.
    * </p>
    *
-   * @param deltaX   the full Newton step vector (composition components only, not Lagrange portion)
+   * @param deltaX the full Newton step vector (composition components only, not Lagrange portion)
    * @param alphaMax the maximum step size (from adaptive step or fixed damping)
    * @param currentG current total Gibbs energy
    * @return the accepted step size satisfying the Armijo condition
@@ -2804,7 +2804,7 @@ public class GibbsReactor extends TwoPortEquipment {
    * (~5x) in a single step. Components with moles below a significance threshold are excluded from the limiting (they
    * are growing from near-zero and need large relative steps).
    *
-   * @param deltaX         The raw Newton step vector
+   * @param deltaX The raw Newton step vector
    * @param requestedAlpha The starting step size (typically 1.0)
    * @return The step size bounded to prevent overshooting (clamped to [1e-4, requestedAlpha])
    */

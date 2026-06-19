@@ -219,7 +219,7 @@ public class ProcessBasis {
   /**
    * Get a parameter value by name with default.
    *
-   * @param name         parameter name
+   * @param name parameter name
    * @param defaultValue default value if not set
    * @return parameter value or default
    */
@@ -231,7 +231,7 @@ public class ProcessBasis {
   /**
    * Set a parameter value.
    *
-   * @param name  parameter name
+   * @param name parameter name
    * @param value parameter value
    */
   public void setParameter(String name, double value) {
@@ -241,7 +241,7 @@ public class ProcessBasis {
   /**
    * Get a string parameter value by name with default.
    *
-   * @param name         parameter name
+   * @param name parameter name
    * @param defaultValue default value if not set
    * @return parameter value or default
    */
@@ -253,7 +253,7 @@ public class ProcessBasis {
   /**
    * Set a string parameter value.
    *
-   * @param name  parameter name
+   * @param name parameter name
    * @param value parameter value
    */
   public void setParameterString(String name, String value) {
@@ -311,7 +311,7 @@ public class ProcessBasis {
      * Create a product specification.
      *
      * @param productName name of the product stream
-     * @param type        type of product
+     * @param type type of product
      */
     public ProductSpecification(String productName, String type) {
       this.productName = productName;
@@ -405,7 +405,7 @@ public class ProcessBasis {
      * Set the feed flow rate.
      *
      * @param flowRate flow rate value
-     * @param unit     unit ("kg/hr", "Sm3/day", etc.)
+     * @param unit unit ("kg/hr", "Sm3/day", etc.)
      * @return this builder
      */
     public Builder setFeedFlowRate(double flowRate, String unit) {
@@ -425,7 +425,7 @@ public class ProcessBasis {
      * Set the feed pressure.
      *
      * @param pressure pressure value
-     * @param unit     unit ("bara", "barg", "psia")
+     * @param unit unit ("bara", "barg", "psia")
      * @return this builder
      */
     public Builder setFeedPressure(double pressure, String unit) {
@@ -443,7 +443,7 @@ public class ProcessBasis {
      * Set the feed temperature.
      *
      * @param temperature temperature value
-     * @param unit        unit ("K", "C", "F")
+     * @param unit unit ("K", "C", "F")
      * @return this builder
      */
     public Builder setFeedTemperature(double temperature, String unit) {
@@ -460,9 +460,9 @@ public class ProcessBasis {
     /**
      * Add a stage pressure.
      *
-     * @param stage    stage number (1-based)
+     * @param stage stage number (1-based)
      * @param pressure pressure value
-     * @param unit     unit ("bara", "barg")
+     * @param unit unit ("bara", "barg")
      * @return this builder
      */
     public Builder addStagePressure(int stage, double pressure, String unit) {
@@ -478,7 +478,7 @@ public class ProcessBasis {
      * Set the company standard and TR document.
      *
      * @param company company name
-     * @param trDoc   TR document reference
+     * @param trDoc TR document reference
      * @return this builder
      */
     public Builder setCompanyStandard(String company, String trDoc) {
@@ -502,7 +502,7 @@ public class ProcessBasis {
      * Set the ambient temperature.
      *
      * @param temperature temperature value
-     * @param unit        unit ("K", "C")
+     * @param unit unit ("K", "C")
      * @return this builder
      */
     public Builder setAmbientTemperature(double temperature, String unit) {
@@ -518,7 +518,7 @@ public class ProcessBasis {
      * Add a product specification.
      *
      * @param productName name of the product
-     * @param type        product type ("gas", "oil", etc.)
+     * @param type product type ("gas", "oil", etc.)
      * @return this builder
      */
     public Builder addProductSpec(String productName, String type) {
@@ -529,7 +529,7 @@ public class ProcessBasis {
     /**
      * Add a constraint.
      *
-     * @param name  constraint name
+     * @param name constraint name
      * @param value constraint value
      * @return this builder
      */

@@ -17,10 +17,10 @@ public class CVDDataPoint {
   /**
    * Create a CVD data point.
    *
-   * @param pressure      pressure in bar
+   * @param pressure pressure in bar
    * @param liquidDropout liquid dropout volume %
-   * @param zFactor       gas compressibility factor
-   * @param temperature   temperature in K
+   * @param zFactor gas compressibility factor
+   * @param temperature temperature in K
    */
   public CVDDataPoint(double pressure, double liquidDropout, double zFactor, double temperature) {
     this.pressure = pressure;

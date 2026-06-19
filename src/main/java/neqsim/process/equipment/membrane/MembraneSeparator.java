@@ -44,7 +44,7 @@ public class MembraneSeparator extends ProcessEquipmentBaseClass {
    * Constructor for MembraneSeparator.
    * </p>
    *
-   * @param name        a {@link java.lang.String} object
+   * @param name a {@link java.lang.String} object
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public MembraneSeparator(String name, StreamInterface inletStream) {
@@ -139,7 +139,7 @@ public class MembraneSeparator extends ProcessEquipmentBaseClass {
   /**
    * Specify permeability coefficient for a component.
    *
-   * @param component    component name
+   * @param component component name
    * @param permeability permeability in mol/(m2*s*Pa)
    */
   public void setPermeability(String component, double permeability) {
@@ -167,7 +167,7 @@ public class MembraneSeparator extends ProcessEquipmentBaseClass {
    * Specify permeate fraction for a component.
    *
    * @param component component name
-   * @param fraction  permeate fraction (0-1)
+   * @param fraction permeate fraction (0-1)
    */
   public void setPermeateFraction(String component, double fraction) {
     permeateFractions.put(component, Math.max(0.0, Math.min(1.0, fraction)));

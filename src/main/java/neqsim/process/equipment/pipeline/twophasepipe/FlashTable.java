@@ -91,12 +91,12 @@ public class FlashTable implements Serializable {
   /**
    * Build the flash table from a reference fluid.
    *
-   * @param referenceFluid       Fluid system to use for flash calculations
-   * @param pressureMin          Minimum pressure (Pa)
-   * @param pressureMax          Maximum pressure (Pa)
-   * @param numPressurePoints    Number of pressure grid points
-   * @param temperatureMin       Minimum temperature (K)
-   * @param temperatureMax       Maximum temperature (K)
+   * @param referenceFluid Fluid system to use for flash calculations
+   * @param pressureMin Minimum pressure (Pa)
+   * @param pressureMax Maximum pressure (Pa)
+   * @param numPressurePoints Number of pressure grid points
+   * @param temperatureMin Minimum temperature (K)
+   * @param temperatureMax Maximum temperature (K)
    * @param numTemperaturePoints Number of temperature grid points
    */
   public void build(SystemInterface referenceFluid, double pressureMin, double pressureMax, int numPressurePoints,
@@ -170,7 +170,7 @@ public class FlashTable implements Serializable {
   /**
    * Interpolate properties at given P-T conditions.
    *
-   * @param pressure    Pressure (Pa)
+   * @param pressure Pressure (Pa)
    * @param temperature Temperature (K)
    * @return Interpolated thermodynamic properties
    */
@@ -229,10 +229,10 @@ public class FlashTable implements Serializable {
    * Bilinear interpolation helper.
    *
    * @param table 2D interpolation table
-   * @param iP    pressure index
-   * @param iT    temperature index
-   * @param wP    pressure weight
-   * @param wT    temperature weight
+   * @param iP pressure index
+   * @param iT temperature index
+   * @param wP pressure weight
+   * @param wT temperature weight
    * @return interpolated value
    */
   private double bilinearInterp(double[][] table, int iP, int iT, double wP, double wT) {
@@ -250,8 +250,8 @@ public class FlashTable implements Serializable {
   /**
    * Get a specific property value using bilinear interpolation.
    *
-   * @param property    Property name
-   * @param pressure    Pressure (Pa)
+   * @param property Property name
+   * @param pressure Pressure (Pa)
    * @param temperature Temperature (K)
    * @return Interpolated property value
    */

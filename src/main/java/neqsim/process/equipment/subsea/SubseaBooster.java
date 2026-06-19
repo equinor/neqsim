@@ -315,7 +315,7 @@ public class SubseaBooster extends TwoPortEquipment {
   /**
    * Constructor with name and inlet stream.
    *
-   * @param name     equipment name
+   * @param name equipment name
    * @param inStream inlet stream
    */
   public SubseaBooster(String name, StreamInterface inStream) {
@@ -342,8 +342,8 @@ public class SubseaBooster extends TwoPortEquipment {
   /**
    * Create multiphase pump booster.
    *
-   * @param name           booster name
-   * @param inStream       inlet stream
+   * @param name booster name
+   * @param inStream inlet stream
    * @param outletPressure target outlet pressure in bara
    * @return configured booster
    */
@@ -358,8 +358,8 @@ public class SubseaBooster extends TwoPortEquipment {
   /**
    * Create wet gas compressor booster.
    *
-   * @param name          booster name
-   * @param inStream      inlet stream
+   * @param name booster name
+   * @param inStream inlet stream
    * @param pressureRatio pressure ratio
    * @return configured booster
    */

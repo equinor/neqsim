@@ -1178,13 +1178,13 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
    * molarVolumeChangePhase.
    * </p>
    *
-   * @param pressure    a double
+   * @param pressure a double
    * @param temperature a double
-   * @param A           a double
-   * @param B           a double
-   * @param pt          the PhaseType of the phase
+   * @param A a double
+   * @param B a double
+   * @param pt the PhaseType of the phase
    * @return a double
-   * @throws neqsim.util.exception.IsNaNException             if any.
+   * @throws neqsim.util.exception.IsNaNException if any.
    * @throws neqsim.util.exception.TooManyIterationsException if any.
    */
   public double molarVolumeChangePhase(double pressure, double temperature, double A, double B, PhaseType pt)
@@ -1460,9 +1460,9 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
    *
    * @param totalNumberOfMoles a double
    * @param numberOfComponents a int
-   * @param type               a int
-   * @param pt                 the PhaseType of the phase
-   * @param beta               a double
+   * @param type a int
+   * @param pt the PhaseType of the phase
+   * @param beta a double
    */
   public void initOld2(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType pt, double beta) {
     // type = 0 start init, type = 1 gi nye betingelser
@@ -1945,13 +1945,13 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
    * molarVolumeOld.
    * </p>
    *
-   * @param pressure    a double
+   * @param pressure a double
    * @param temperature a double
-   * @param A           a double
-   * @param B           a double
-   * @param pt          the PhaseType of the phase
+   * @param A a double
+   * @param B a double
+   * @param pt the PhaseType of the phase
    * @return a double
-   * @throws neqsim.util.exception.IsNaNException             if any.
+   * @throws neqsim.util.exception.IsNaNException if any.
    * @throws neqsim.util.exception.TooManyIterationsException if any.
    */
   public double molarVolumeOld(double pressure, double temperature, double A, double B, PhaseType pt)

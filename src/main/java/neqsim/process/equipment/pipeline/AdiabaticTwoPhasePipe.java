@@ -53,7 +53,7 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
   /**
    * Constructor for AdiabaticTwoPhasePipe.
    *
-   * @param name     name of pipe
+   * @param name name of pipe
    * @param inStream input stream
    */
   public AdiabaticTwoPhasePipe(String name, StreamInterface inStream) {
@@ -66,7 +66,7 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
    * </p>
    *
    * @param nominalDiameter a double
-   * @param pipeSec         a {@link java.lang.String} object
+   * @param pipeSec a {@link java.lang.String} object
    */
   @Override
   public void setPipeSpecification(double nominalDiameter, String pipeSec) {
@@ -485,7 +485,7 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
    * </p>
    *
    * @param flowLimit a double
-   * @param unit      a {@link java.lang.String} object
+   * @param unit a {@link java.lang.String} object
    */
   public void setFlowLimit(double flowLimit, String unit) {
     this.flowLimit = flowLimit;

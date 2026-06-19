@@ -182,13 +182,13 @@ public class AgenticProcessOptimizer implements Serializable {
   /**
    * Adds a bounded decision variable (degree of freedom).
    *
-   * @param address    dot-notation address of a writable input variable
+   * @param address dot-notation address of a writable input variable
    * @param lowerBound inclusive lower bound, in {@code unit}
    * @param upperBound inclusive upper bound, in {@code unit}; must be strictly greater than {@code lowerBound}
-   * @param unit       unit applied when writing this variable, or null for the variable's default unit
+   * @param unit unit applied when writing this variable, or null for the variable's default unit
    * @return this optimizer, for chaining
    * @throws IllegalArgumentException if {@code address} is null/empty or {@code upperBound <= lowerBound} or either
-   *                                  bound is non-finite
+   * bound is non-finite
    */
   public AgenticProcessOptimizer addVariable(String address, double lowerBound, double upperBound, String unit) {
     if (address == null || address.trim().isEmpty()) {
@@ -231,7 +231,7 @@ public class AgenticProcessOptimizer implements Serializable {
    * Sets an address-based objective to minimize.
    *
    * @param address dot-notation address of the objective read-back
-   * @param unit    unit for the objective read-back, or null for the default unit
+   * @param unit unit for the objective read-back, or null for the default unit
    * @return this optimizer, for chaining
    * @throws IllegalArgumentException if {@code address} is null or empty
    */
@@ -243,7 +243,7 @@ public class AgenticProcessOptimizer implements Serializable {
    * Sets an address-based objective to maximize.
    *
    * @param address dot-notation address of the objective read-back
-   * @param unit    unit for the objective read-back, or null for the default unit
+   * @param unit unit for the objective read-back, or null for the default unit
    * @return this optimizer, for chaining
    * @throws IllegalArgumentException if {@code address} is null or empty
    */
@@ -255,8 +255,8 @@ public class AgenticProcessOptimizer implements Serializable {
    * Sets an address-based objective with an explicit sense.
    *
    * @param address dot-notation address of the objective read-back
-   * @param sense   whether to minimize or maximize; must not be null
-   * @param unit    unit for the objective read-back, or null for the default unit
+   * @param sense whether to minimize or maximize; must not be null
+   * @param unit unit for the objective read-back, or null for the default unit
    * @return this optimizer, for chaining
    * @throws IllegalArgumentException if {@code address} is null/empty or {@code sense} is null
    */
@@ -296,13 +296,13 @@ public class AgenticProcessOptimizer implements Serializable {
   /**
    * Adds a {@code value <= limit} hard constraint folded into the score as a quadratic penalty.
    *
-   * @param address       dot-notation address of the constrained read-back
-   * @param limit         upper limit, in {@code unit}
-   * @param unit          unit for the read-back, or null for the default unit
+   * @param address dot-notation address of the constrained read-back
+   * @param limit upper limit, in {@code unit}
+   * @param unit unit for the read-back, or null for the default unit
    * @param penaltyWeight non-negative weight multiplying the squared violation
    * @return this optimizer, for chaining
    * @throws IllegalArgumentException if {@code address} is null/empty, {@code limit} is non-finite, or
-   *                                  {@code penaltyWeight} is negative
+   * {@code penaltyWeight} is negative
    */
   public AgenticProcessOptimizer addConstraintLessOrEqual(String address, double limit, String unit,
       double penaltyWeight) {
@@ -312,13 +312,13 @@ public class AgenticProcessOptimizer implements Serializable {
   /**
    * Adds a {@code value >= limit} hard constraint folded into the score as a quadratic penalty.
    *
-   * @param address       dot-notation address of the constrained read-back
-   * @param limit         lower limit, in {@code unit}
-   * @param unit          unit for the read-back, or null for the default unit
+   * @param address dot-notation address of the constrained read-back
+   * @param limit lower limit, in {@code unit}
+   * @param unit unit for the read-back, or null for the default unit
    * @param penaltyWeight non-negative weight multiplying the squared violation
    * @return this optimizer, for chaining
    * @throws IllegalArgumentException if {@code address} is null/empty, {@code limit} is non-finite, or
-   *                                  {@code penaltyWeight} is negative
+   * {@code penaltyWeight} is negative
    */
   public AgenticProcessOptimizer addConstraintGreaterOrEqual(String address, double limit, String unit,
       double penaltyWeight) {
@@ -328,14 +328,14 @@ public class AgenticProcessOptimizer implements Serializable {
   /**
    * Adds a hard inequality constraint folded into the score as a quadratic penalty.
    *
-   * @param address       dot-notation address of the constrained read-back
-   * @param type          comparison direction; must not be null
-   * @param limit         the limit value, in {@code unit}
-   * @param unit          unit for the read-back, or null for the default unit
+   * @param address dot-notation address of the constrained read-back
+   * @param type comparison direction; must not be null
+   * @param limit the limit value, in {@code unit}
+   * @param unit unit for the read-back, or null for the default unit
    * @param penaltyWeight non-negative weight multiplying the squared violation
    * @return this optimizer, for chaining
    * @throws IllegalArgumentException if {@code address} is null/empty, {@code type} is null, {@code limit} is
-   *                                  non-finite, or {@code penaltyWeight} is negative
+   * non-finite, or {@code penaltyWeight} is negative
    */
   public AgenticProcessOptimizer addConstraint(String address, ConstraintType type, double limit, String unit,
       double penaltyWeight) {
@@ -361,7 +361,7 @@ public class AgenticProcessOptimizer implements Serializable {
    * shaping.
    *
    * @param address dot-notation address to read each trial
-   * @param unit    unit for the read-back, or null for the default unit
+   * @param unit unit for the read-back, or null for the default unit
    * @return this optimizer, for chaining
    * @throws IllegalArgumentException if {@code address} is null or empty
    */
@@ -393,10 +393,10 @@ public class AgenticProcessOptimizer implements Serializable {
    * Sets the inner convergence settings passed to every {@code evaluate()} call.
    *
    * @param innerMaxIterations maximum outer iterations for the convergence run; must be at least 1
-   * @param innerTolerance     relative convergence tolerance; must be finite and positive
+   * @param innerTolerance relative convergence tolerance; must be finite and positive
    * @return this optimizer, for chaining
    * @throws IllegalArgumentException if {@code innerMaxIterations < 1} or {@code innerTolerance} is not finite and
-   *                                  positive
+   * positive
    */
   public AgenticProcessOptimizer setInnerConvergence(int innerMaxIterations, double innerTolerance) {
     if (innerMaxIterations < 1) {
@@ -758,7 +758,7 @@ public class AgenticProcessOptimizer implements Serializable {
    * Reads a variable, returning {@code null} instead of throwing on any failure.
    *
    * @param address the address to read
-   * @param unit    the unit, or null for the default
+   * @param unit the unit, or null for the default
    * @return the value, or null if the read failed or was non-finite
    */
   private Double readSafe(String address, String unit) {
@@ -783,7 +783,7 @@ public class AgenticProcessOptimizer implements Serializable {
   /**
    * Clamps each component of {@code x} to its bounds in place.
    *
-   * @param x  the vector to clamp
+   * @param x the vector to clamp
    * @param lo lower bounds
    * @param hi upper bounds
    */
@@ -800,7 +800,7 @@ public class AgenticProcessOptimizer implements Serializable {
   /**
    * Returns {@code base + coeff * (base - other)} component-wise (reflection/contraction helper).
    *
-   * @param base  the base vector (typically the centroid)
+   * @param base the base vector (typically the centroid)
    * @param other the vector reflected/contracted relative to {@code base}
    * @param coeff the coefficient
    * @return a new combined vector
@@ -818,7 +818,7 @@ public class AgenticProcessOptimizer implements Serializable {
    * for the small {@code n + 1} vertex count.
    *
    * @param simplex the simplex vertices, mutated in place
-   * @param fvals   the matching scores, mutated in place
+   * @param fvals the matching scores, mutated in place
    */
   private static void sortSimplex(double[][] simplex, double[] fvals) {
     for (int i = 1; i < fvals.length; i++) {
@@ -860,8 +860,8 @@ public class AgenticProcessOptimizer implements Serializable {
    * bound range, maximized over dimensions.
    *
    * @param simplex the simplex vertices
-   * @param lo      lower bounds
-   * @param hi      upper bounds
+   * @param lo lower bounds
+   * @param hi upper bounds
    * @return the relative simplex size
    */
   private static double simplexSize(double[][] simplex, double[] lo, double[] hi) {
@@ -932,9 +932,9 @@ public class AgenticProcessOptimizer implements Serializable {
   /**
    * Builds a single capability rating JSON object.
    *
-   * @param name  the capability name
+   * @param name the capability name
    * @param level the rating level ("full", "partial" or "none")
-   * @param note  a short rationale
+   * @param note a short rationale
    * @return the rating JSON object
    */
   private static JsonObject rating(String name, String level, String note) {
@@ -963,10 +963,10 @@ public class AgenticProcessOptimizer implements Serializable {
     /**
      * Creates a decision variable.
      *
-     * @param address    dot-notation address
+     * @param address dot-notation address
      * @param lowerBound inclusive lower bound
      * @param upperBound inclusive upper bound
-     * @param unit       unit or null
+     * @param unit unit or null
      */
     DecisionVariable(String address, double lowerBound, double upperBound, String unit) {
       this.address = address;
@@ -1032,10 +1032,10 @@ public class AgenticProcessOptimizer implements Serializable {
     /**
      * Creates a constraint.
      *
-     * @param address       dot-notation address
-     * @param type          comparison direction
-     * @param limit         the limit value
-     * @param unit          unit or null
+     * @param address dot-notation address
+     * @param type comparison direction
+     * @param limit the limit value
+     * @param unit unit or null
      * @param penaltyWeight non-negative penalty weight
      */
     Constraint(String address, ConstraintType type, double limit, String unit, double penaltyWeight) {
@@ -1350,8 +1350,8 @@ public class AgenticProcessOptimizer implements Serializable {
   /**
    * Adds a numeric property, writing JSON null for non-finite values.
    *
-   * @param o     the target object
-   * @param key   the property name
+   * @param o the target object
+   * @param key the property name
    * @param value the value
    */
   private static void addNumber(JsonObject o, String key, double value) {

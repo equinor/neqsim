@@ -39,10 +39,10 @@ public class ExergyAnalysisReport implements Serializable {
     /**
      * Create a new entry.
      *
-     * @param name               unit name
-     * @param type               simple class name of the unit
-     * @param area               process area name (may be {@code null} for flat ProcessSystem)
-     * @param exergyChangeJ      net change in stream exergy across the unit (outlet − inlet) in Joules
+     * @param name unit name
+     * @param type simple class name of the unit
+     * @param area process area name (may be {@code null} for flat ProcessSystem)
+     * @param exergyChangeJ net change in stream exergy across the unit (outlet − inlet) in Joules
      * @param exergyDestructionJ exergy destruction rate in Joules (always non-negative)
      */
     public Entry(String name, String type, String area, double exergyChangeJ, double exergyDestructionJ) {
@@ -295,7 +295,7 @@ public class ExergyAnalysisReport implements Serializable {
    * Convert Joules to the requested unit.
    *
    * @param valueJ value in Joules
-   * @param unit   target unit ("J", "kJ", "MJ", "W", "kW", "MW")
+   * @param unit target unit ("J", "kJ", "MJ", "W", "kW", "MW")
    * @return converted value
    */
   private static double convert(double valueJ, String unit) {
@@ -332,7 +332,7 @@ public class ExergyAnalysisReport implements Serializable {
   /**
    * Truncate {@code s} to at most {@code max} characters.
    *
-   * @param s   input string (may be {@code null})
+   * @param s input string (may be {@code null})
    * @param max maximum length
    * @return truncated string, never {@code null}
    */

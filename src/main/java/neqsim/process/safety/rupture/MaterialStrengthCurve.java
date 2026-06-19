@@ -41,12 +41,12 @@ public class MaterialStrengthCurve implements Serializable {
   /**
    * Creates a material strength curve.
    *
-   * @param materialName             material or grade name; must not be empty
-   * @param ambientYieldStrengthPa   yield strength at ambient temperature in Pa; must be positive
+   * @param materialName material or grade name; must not be empty
+   * @param ambientYieldStrengthPa yield strength at ambient temperature in Pa; must be positive
    * @param ambientTensileStrengthPa tensile strength at ambient temperature in Pa; must be positive
-   * @param temperatureK             temperature grid in K; must be strictly increasing
-   * @param retainedStrengthFactor   retained strength factors on the temperature grid; each value must be positive
-   * @param dataSource               short description of the data source or assumption basis
+   * @param temperatureK temperature grid in K; must be strictly increasing
+   * @param retainedStrengthFactor retained strength factors on the temperature grid; each value must be positive
+   * @param dataSource short description of the data source or assumption basis
    * @throws IllegalArgumentException if the curve input is invalid
    */
   public MaterialStrengthCurve(String materialName, double ambientYieldStrengthPa, double ambientTensileStrengthPa,
@@ -68,8 +68,8 @@ public class MaterialStrengthCurve implements Serializable {
   /**
    * Creates a generic carbon-steel curve from ambient strengths.
    *
-   * @param materialName      material name
-   * @param yieldStrengthPa   ambient yield strength in Pa
+   * @param materialName material name
+   * @param yieldStrengthPa ambient yield strength in Pa
    * @param tensileStrengthPa ambient tensile strength in Pa
    * @return generic carbon-steel temperature-strength curve
    */
@@ -176,7 +176,7 @@ public class MaterialStrengthCurve implements Serializable {
   /**
    * Calculates allowable rupture stress at metal temperature.
    *
-   * @param metalTemperatureK     metal temperature in K; must be positive
+   * @param metalTemperatureK metal temperature in K; must be positive
    * @param tensileStrengthFactor fraction of retained tensile strength accepted for rupture screening; must be positive
    * @return allowable stress in Pa
    */
@@ -271,7 +271,7 @@ public class MaterialStrengthCurve implements Serializable {
   /**
    * Converts psi strengths to Pa.
    *
-   * @param yieldPsi   yield strength in psi
+   * @param yieldPsi yield strength in psi
    * @param tensilePsi tensile strength in psi
    * @return two-element array with yield and tensile strength in Pa
    */
@@ -301,7 +301,7 @@ public class MaterialStrengthCurve implements Serializable {
    * Validates a strength curve grid.
    *
    * @param temperatures temperature grid in K
-   * @param factors      retained-strength factors
+   * @param factors retained-strength factors
    * @throws IllegalArgumentException if the curve is invalid
    */
   private static void validateCurve(double[] temperatures, double[] factors) {
@@ -323,7 +323,7 @@ public class MaterialStrengthCurve implements Serializable {
    * Validates that a numeric value is positive and finite.
    *
    * @param value value to validate
-   * @param name  parameter name used in exception messages
+   * @param name parameter name used in exception messages
    * @throws IllegalArgumentException if the value is invalid
    */
   private static void validatePositive(double value, String name) {
@@ -335,7 +335,7 @@ public class MaterialStrengthCurve implements Serializable {
   /**
    * Interpolates a value on a piecewise-linear curve.
    *
-   * @param x  interpolation coordinate
+   * @param x interpolation coordinate
    * @param xs x-grid
    * @param ys y-grid
    * @return interpolated or endpoint-clamped value

@@ -112,7 +112,7 @@ public class DeWaardMilliamsCorrosion implements Serializable {
   /**
    * Creates a new DeWaardMilliamsCorrosion with specified conditions.
    *
-   * @param temperatureC          temperature in Celsius
+   * @param temperatureC temperature in Celsius
    * @param co2PartialPressureBar CO2 partial pressure in bar
    */
   public DeWaardMilliamsCorrosion(double temperatureC, double co2PartialPressureBar) {
@@ -493,7 +493,7 @@ public class DeWaardMilliamsCorrosion implements Serializable {
    *
    * @param minTempC minimum temperature in Celsius
    * @param maxTempC maximum temperature in Celsius
-   * @param steps    number of temperature steps
+   * @param steps number of temperature steps
    * @return list of maps containing temperature and corrosion rate
    */
   public List<Map<String, Object>> calculateOverTemperatureRange(double minTempC, double maxTempC, int steps) {

@@ -211,12 +211,12 @@ public class InletDeviceModel implements Serializable {
    * <li>Calculates pressure drop across the device.</li>
    * </ol>
    *
-   * @param incomingDSD      droplet size distribution from inlet pipe flow
-   * @param gasDensity       gas density [kg/m3]
-   * @param liquidDensity    liquid density [kg/m3]
-   * @param gasVolumeFlow    gas volume flow rate [m3/s] at actual conditions
+   * @param incomingDSD droplet size distribution from inlet pipe flow
+   * @param gasDensity gas density [kg/m3]
+   * @param liquidDensity liquid density [kg/m3]
+   * @param gasVolumeFlow gas volume flow rate [m3/s] at actual conditions
    * @param liquidVolumeFlow liquid volume flow rate [m3/s] at actual conditions
-   * @param surfaceTension   gas-liquid surface tension [N/m]
+   * @param surfaceTension gas-liquid surface tension [N/m]
    */
   public void calculate(DropletSizeDistribution incomingDSD, double gasDensity, double liquidDensity,
       double gasVolumeFlow, double liquidVolumeFlow, double surfaceTension) {
@@ -335,7 +335,7 @@ public class InletDeviceModel implements Serializable {
    * surface.</li>
    * </ul>
    *
-   * @param incomingDSD    upstream DSD from pipe flow
+   * @param incomingDSD upstream DSD from pipe flow
    * @param surfaceTension used for re-atomization estimate [N/m]
    * @return transformed downstream DSD
    */

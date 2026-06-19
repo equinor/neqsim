@@ -324,8 +324,8 @@ public class FluidMagicInput implements Serializable {
    * Combines {@link #setGORRange(double, double)} and {@link #setNumberOfGORPoints(int)}.
    * </p>
    *
-   * @param min   minimum GOR in Sm3/Sm3
-   * @param max   maximum GOR in Sm3/Sm3
+   * @param min minimum GOR in Sm3/Sm3
+   * @param max maximum GOR in Sm3/Sm3
    * @param count number of GOR points to generate (minimum 2)
    */
   public void setGORRange(double min, double max, int count) {
@@ -357,8 +357,8 @@ public class FluidMagicInput implements Serializable {
    * Combines {@link #setWaterCutRange(double, double)} and {@link #setNumberOfWaterCutPoints(int)}.
    * </p>
    *
-   * @param min   minimum water cut as fraction (0-1)
-   * @param max   maximum water cut as fraction (0-1)
+   * @param min minimum water cut as fraction (0-1)
+   * @param max maximum water cut as fraction (0-1)
    * @param count number of water cut points to generate (minimum 2)
    */
   public void setWaterCutRange(double min, double max, int count) {

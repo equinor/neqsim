@@ -58,8 +58,8 @@ public class StandardsComplianceReport implements Serializable {
   /**
    * Add a requirement.
    *
-   * @param standard    standard ID (e.g. "API RP 14C")
-   * @param clause      clause / section reference
+   * @param standard standard ID (e.g. "API RP 14C")
+   * @param clause clause / section reference
    * @param description requirement description
    * @return this report for chaining
    */
@@ -72,8 +72,8 @@ public class StandardsComplianceReport implements Serializable {
    * Set status of an existing requirement (matched by standard + clause).
    *
    * @param standard standard ID
-   * @param clause   clause reference
-   * @param status   status
+   * @param clause clause reference
+   * @param status status
    * @param evidence supporting evidence text (document ref, calc ID)
    * @return this report for chaining
    */
@@ -336,11 +336,11 @@ public class StandardsComplianceReport implements Serializable {
     public String evidence;
 
     /**
-     * @param standard    standard ID
-     * @param clause      clause reference
+     * @param standard standard ID
+     * @param clause clause reference
      * @param description description
-     * @param status      status
-     * @param evidence    evidence text or null
+     * @param status status
+     * @param evidence evidence text or null
      */
     public Requirement(String standard, String clause, String description, Status status, String evidence) {
       this.standard = standard;

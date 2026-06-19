@@ -308,7 +308,7 @@ public final class IndustrialProfile {
    * Checks whether a tool is accessible in a specific deployment mode.
    *
    * @param toolName the MCP tool name
-   * @param mode     the deployment mode to evaluate
+   * @param mode the deployment mode to evaluate
    * @return true if the tool is allowed in the supplied mode
    */
   private static boolean isToolAllowedInMode(String toolName, DeploymentMode mode) {
@@ -366,7 +366,7 @@ public final class IndustrialProfile {
   /**
    * Approves the next invocation of a governed tool.
    *
-   * @param toolName   the MCP tool name to approve
+   * @param toolName the MCP tool name to approve
    * @param adminToken the administrator token
    * @return null if approval was recorded, or an error JSON string if denied
    */
@@ -439,10 +439,10 @@ public final class IndustrialProfile {
   /**
    * Builds a standardized policy error response.
    *
-   * @param status      policy status string
-   * @param toolName    the MCP tool name
-   * @param code        policy reason code or tier name
-   * @param reason      human-readable reason
+   * @param status policy status string
+   * @param toolName the MCP tool name
+   * @param code policy reason code or tier name
+   * @param reason human-readable reason
    * @param remediation recommended remediation
    * @return JSON policy response
    */

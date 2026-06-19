@@ -77,7 +77,7 @@ public class GasScrubberSimple extends Separator {
    * Constructor for GasScrubberSimple.
    * </p>
    *
-   * @param name        a {@link java.lang.String} object
+   * @param name a {@link java.lang.String} object
    * @param inletStream a {@link neqsim.process.equipment.stream.Stream} object
    */
   public GasScrubberSimple(String name, StreamInterface inletStream) {

@@ -135,8 +135,8 @@ public final class BIPEstimator {
   /**
    * Estimate binary interaction parameter using the Chueh-Prausnitz correlation with custom exponent.
    *
-   * @param comp1    first component
-   * @param comp2    second component
+   * @param comp1 first component
+   * @param comp2 second component
    * @param exponent the exponent n in the correlation (typically 3)
    * @return estimated BIP value
    */
@@ -178,7 +178,7 @@ public final class BIPEstimator {
    * </p>
    *
    * @param methaneComp methane component
-   * @param heavyComp   heavy hydrocarbon component (C7+)
+   * @param heavyComp heavy hydrocarbon component (C7+)
    * @return estimated BIP value for methane-heavy HC pair
    */
   public static double estimateKatzFiroozabadi(ComponentInterface methaneComp, ComponentInterface heavyComp) {
@@ -324,8 +324,8 @@ public final class BIPEstimator {
   /**
    * Estimate BIP using the specified method.
    *
-   * @param comp1  first component
-   * @param comp2  second component
+   * @param comp1 first component
+   * @param comp2 second component
    * @param method estimation method to use
    * @return estimated BIP value
    */
@@ -349,7 +349,7 @@ public final class BIPEstimator {
    * fluid's mixing rule.
    * </p>
    *
-   * @param fluid  the fluid system to modify
+   * @param fluid the fluid system to modify
    * @param method estimation method to use
    */
   public static void applyEstimatedBIPs(SystemInterface fluid, BIPEstimationMethod method) {
@@ -359,8 +359,8 @@ public final class BIPEstimator {
   /**
    * Apply estimated BIPs to all component pairs in a fluid system.
    *
-   * @param fluid             the fluid system to modify
-   * @param method            estimation method to use
+   * @param fluid the fluid system to modify
+   * @param method estimation method to use
    * @param overwriteExisting if true, overwrite existing non-zero BIPs; if false, only set BIPs that are currently zero
    */
   public static void applyEstimatedBIPs(SystemInterface fluid, BIPEstimationMethod method, boolean overwriteExisting) {
@@ -438,7 +438,7 @@ public final class BIPEstimator {
    * This is useful for reviewing estimated values before applying them.
    * </p>
    *
-   * @param fluid  the fluid system
+   * @param fluid the fluid system
    * @param method estimation method to use
    * @return 2D array of estimated BIP values [i][j]
    */
@@ -464,7 +464,7 @@ public final class BIPEstimator {
   /**
    * Print BIP matrix to console for debugging/review.
    *
-   * @param fluid     the fluid system
+   * @param fluid the fluid system
    * @param bipMatrix the BIP matrix to print
    */
   public static void printBIPMatrix(SystemInterface fluid, double[][] bipMatrix) {

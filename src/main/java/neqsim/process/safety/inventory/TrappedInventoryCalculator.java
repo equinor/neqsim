@@ -52,9 +52,9 @@ public class TrappedInventoryCalculator implements Serializable {
   /**
    * Sets operating pressure and temperature for the trapped inventory.
    *
-   * @param pressure        pressure value in the supplied pressure unit; must be positive
-   * @param pressureUnit    pressure unit supported by {@link PressureUnit}, for example bara or barg
-   * @param temperature     temperature value in the supplied temperature unit
+   * @param pressure pressure value in the supplied pressure unit; must be positive
+   * @param pressureUnit pressure unit supported by {@link PressureUnit}, for example bara or barg
+   * @param temperature temperature value in the supplied temperature unit
    * @param temperatureUnit temperature unit supported by {@link TemperatureUnit}, for example K or C
    * @return this calculator for chained setup
    * @throws IllegalArgumentException if pressure or temperature is non-physical
@@ -99,10 +99,10 @@ public class TrappedInventoryCalculator implements Serializable {
   /**
    * Adds a documented equipment or vessel volume.
    *
-   * @param equipmentTag       equipment tag or segment identifier
-   * @param volumeM3           internal volume in m3; must be positive
+   * @param equipmentTag equipment tag or segment identifier
+   * @param volumeM3 internal volume in m3; must be positive
    * @param liquidFillFraction liquid fill fraction from 0 to 1
-   * @param evidence           optional traceable document evidence; may be null
+   * @param evidence optional traceable document evidence; may be null
    * @return this calculator for chained setup
    * @throws IllegalArgumentException if segment values are invalid
    */
@@ -119,11 +119,11 @@ public class TrappedInventoryCalculator implements Serializable {
   /**
    * Adds a documented volume segment using an engineering volume unit.
    *
-   * @param segmentId          segment identifier
-   * @param volume             volume value in the supplied unit; must be positive
-   * @param volumeUnit         volume unit, for example m3, L, litre, ft3, or bbl
+   * @param segmentId segment identifier
+   * @param volume volume value in the supplied unit; must be positive
+   * @param volumeUnit volume unit, for example m3, L, litre, ft3, or bbl
    * @param liquidFillFraction liquid fill fraction from 0 to 1
-   * @param evidence           optional traceable document evidence; may be null
+   * @param evidence optional traceable document evidence; may be null
    * @return this calculator for chained setup
    * @throws IllegalArgumentException if segment values are invalid
    */
@@ -135,11 +135,11 @@ public class TrappedInventoryCalculator implements Serializable {
   /**
    * Adds a documented pipe segment from diameter and length.
    *
-   * @param segmentId          pipe segment identifier
-   * @param internalDiameterM  pipe internal diameter in m; must be positive
-   * @param lengthM            pipe length in m; must be positive
+   * @param segmentId pipe segment identifier
+   * @param internalDiameterM pipe internal diameter in m; must be positive
+   * @param lengthM pipe length in m; must be positive
    * @param liquidFillFraction liquid fill fraction from 0 to 1
-   * @param evidence           optional traceable document evidence; may be null
+   * @param evidence optional traceable document evidence; may be null
    * @return this calculator for chained setup
    * @throws IllegalArgumentException if segment values are invalid
    */
@@ -161,13 +161,13 @@ public class TrappedInventoryCalculator implements Serializable {
   /**
    * Adds a documented pipe segment from diameter and length in engineering units.
    *
-   * @param segmentId          pipe segment identifier
-   * @param internalDiameter   pipe internal diameter in the supplied diameter unit
-   * @param diameterUnit       diameter unit, for example m, mm, in, or ft
-   * @param length             pipe length in the supplied length unit
-   * @param lengthUnit         length unit, for example m, mm, in, or ft
+   * @param segmentId pipe segment identifier
+   * @param internalDiameter pipe internal diameter in the supplied diameter unit
+   * @param diameterUnit diameter unit, for example m, mm, in, or ft
+   * @param length pipe length in the supplied length unit
+   * @param lengthUnit length unit, for example m, mm, in, or ft
    * @param liquidFillFraction liquid fill fraction from 0 to 1
-   * @param evidence           optional traceable document evidence; may be null
+   * @param evidence optional traceable document evidence; may be null
    * @return this calculator for chained setup
    * @throws IllegalArgumentException if segment values are invalid
    */
@@ -324,7 +324,7 @@ public class TrappedInventoryCalculator implements Serializable {
    * Validates that a positive value was provided.
    *
    * @param value value to validate
-   * @param name  parameter name used in exception messages
+   * @param name parameter name used in exception messages
    * @throws IllegalArgumentException if value is not positive and finite
    */
   private static void validatePositive(double value, String name) {
@@ -337,7 +337,7 @@ public class TrappedInventoryCalculator implements Serializable {
    * Converts a length value to meters.
    *
    * @param value length value in the supplied unit
-   * @param unit  length unit
+   * @param unit length unit
    * @return length in m
    * @throws IllegalArgumentException if the unit is unsupported
    */
@@ -366,7 +366,7 @@ public class TrappedInventoryCalculator implements Serializable {
    * Converts a volume value to cubic meters.
    *
    * @param value volume value in the supplied unit
-   * @param unit  volume unit
+   * @param unit volume unit
    * @return volume in m3
    * @throws IllegalArgumentException if the unit is unsupported
    */
@@ -419,9 +419,9 @@ public class TrappedInventoryCalculator implements Serializable {
     /**
      * Creates an inventory segment.
      *
-     * @param id                 segment identifier
-     * @param type               segment type, for example pipe or equipment
-     * @param volumeM3           segment internal volume in m3
+     * @param id segment identifier
+     * @param type segment type, for example pipe or equipment
+     * @param volumeM3 segment internal volume in m3
      * @param liquidFillFraction liquid fill fraction from 0 to 1
      * @throws IllegalArgumentException if values are invalid
      */
@@ -553,12 +553,12 @@ public class TrappedInventoryCalculator implements Serializable {
     /**
      * Creates a segment result.
      *
-     * @param segment              source segment
-     * @param gasVolumeM3          gas-filled volume in m3
-     * @param liquidVolumeM3       liquid-filled volume in m3
-     * @param gasMassKg            gas mass in kg
-     * @param liquidMassKg         liquid mass in kg
-     * @param gasDensityKgPerM3    gas density in kg/m3
+     * @param segment source segment
+     * @param gasVolumeM3 gas-filled volume in m3
+     * @param liquidVolumeM3 liquid-filled volume in m3
+     * @param gasMassKg gas mass in kg
+     * @param liquidMassKg liquid mass in kg
+     * @param gasDensityKgPerM3 gas density in kg/m3
      * @param liquidDensityKgPerM3 liquid density in kg/m3
      */
     private InventorySegmentResult(InventorySegment segment, double gasVolumeM3, double liquidVolumeM3,
@@ -707,17 +707,17 @@ public class TrappedInventoryCalculator implements Serializable {
     /**
      * Creates an aggregate result.
      *
-     * @param pressureBara         absolute pressure in bara
-     * @param temperatureK         absolute temperature in K
-     * @param gasDensityKgPerM3    gas density in kg/m3
+     * @param pressureBara absolute pressure in bara
+     * @param temperatureK absolute temperature in K
+     * @param gasDensityKgPerM3 gas density in kg/m3
      * @param liquidDensityKgPerM3 liquid density in kg/m3
-     * @param totalVolumeM3        total internal volume in m3
-     * @param totalGasVolumeM3     gas-filled volume in m3
-     * @param totalLiquidVolumeM3  liquid-filled volume in m3
-     * @param totalGasMassKg       gas mass in kg
-     * @param totalLiquidMassKg    liquid mass in kg
-     * @param segmentResults       per-segment results
-     * @param warnings             calculation warnings
+     * @param totalVolumeM3 total internal volume in m3
+     * @param totalGasVolumeM3 gas-filled volume in m3
+     * @param totalLiquidVolumeM3 liquid-filled volume in m3
+     * @param totalGasMassKg gas mass in kg
+     * @param totalLiquidMassKg liquid mass in kg
+     * @param segmentResults per-segment results
+     * @param warnings calculation warnings
      */
     private InventoryResult(double pressureBara, double temperatureK, double gasDensityKgPerM3,
 	double liquidDensityKgPerM3, double totalVolumeM3, double totalGasVolumeM3, double totalLiquidVolumeM3,

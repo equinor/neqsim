@@ -27,7 +27,7 @@ public class BatteryStorage extends ProcessEquipmentBaseClass {
   /**
    * Construct a battery with the given name and capacity.
    *
-   * @param name     name of the unit
+   * @param name name of the unit
    * @param capacity maximum energy capacity [J]
    */
   public BatteryStorage(String name, double capacity) {

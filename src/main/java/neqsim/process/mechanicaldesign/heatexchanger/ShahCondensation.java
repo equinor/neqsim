@@ -58,9 +58,9 @@ public final class ShahCondensation {
    * Valid for: horizontal tubes, Re_lo &gt; 350, 0.002 &lt; P_r &lt; 0.44, vapor quality 0 to 1.
    * </p>
    *
-   * @param hLiquidOnly     liquid-only heat transfer coefficient (W/(m2*K)), i.e., the coefficient if the total mass
-   *                        flow were all liquid, calculated using Dittus-Boelter or Gnielinski
-   * @param vaporQuality    local vapor quality (mass fraction of vapor), range 0 to 1
+   * @param hLiquidOnly liquid-only heat transfer coefficient (W/(m2*K)), i.e., the coefficient if the total mass flow
+   * were all liquid, calculated using Dittus-Boelter or Gnielinski
+   * @param vaporQuality local vapor quality (mass fraction of vapor), range 0 to 1
    * @param reducedPressure reduced pressure P/P_crit, dimensionless
    * @return local condensation heat transfer coefficient (W/(m2*K))
    */
@@ -91,11 +91,11 @@ public final class ShahCondensation {
    * h_lo = 0.023 * (k_l / D) * Re_lo ^ 0.8 * Pr_l ^ 0.4
    * </pre>
    *
-   * @param massFluxTotal      total mass flux G = m_dot / A_cross (kg/(m2*s))
-   * @param tubeID             tube inner diameter (m)
-   * @param liquidDensity      liquid density (kg/m3)
-   * @param liquidViscosity    liquid dynamic viscosity (Pa*s)
-   * @param liquidCp           liquid heat capacity (J/(kg*K))
+   * @param massFluxTotal total mass flux G = m_dot / A_cross (kg/(m2*s))
+   * @param tubeID tube inner diameter (m)
+   * @param liquidDensity liquid density (kg/m3)
+   * @param liquidViscosity liquid dynamic viscosity (Pa*s)
+   * @param liquidCp liquid heat capacity (J/(kg*K))
    * @param liquidConductivity liquid thermal conductivity (W/(m*K))
    * @return liquid-only heat transfer coefficient (W/(m2*K))
    */
@@ -121,11 +121,11 @@ public final class ShahCondensation {
    * intervals.
    * </p>
    *
-   * @param hLiquidOnly     liquid-only heat transfer coefficient (W/(m2*K))
+   * @param hLiquidOnly liquid-only heat transfer coefficient (W/(m2*K))
    * @param reducedPressure reduced pressure P/P_crit
-   * @param qualityIn       vapor quality at inlet of zone (0 to 1)
-   * @param qualityOut      vapor quality at outlet of zone (0 to 1)
-   * @param intervals       number of integration intervals (must be even, minimum 4)
+   * @param qualityIn vapor quality at inlet of zone (0 to 1)
+   * @param qualityOut vapor quality at outlet of zone (0 to 1)
+   * @param intervals number of integration intervals (must be even, minimum 4)
    * @return average condensation HTC over the quality range (W/(m2*K))
    */
   public static double calcAverageHTC(double hLiquidOnly, double reducedPressure, double qualityIn, double qualityOut,
@@ -175,13 +175,13 @@ public final class ShahCondensation {
    * When J_g &lt; 0.98, gravity-dominated regime applies with Nusselt theory enhancement.
    * </p>
    *
-   * @param hLiquidOnly     liquid-only HTC (W/(m2*K))
-   * @param vaporQuality    local vapor quality (0 to 1)
+   * @param hLiquidOnly liquid-only HTC (W/(m2*K))
+   * @param vaporQuality local vapor quality (0 to 1)
    * @param reducedPressure reduced pressure P/P_crit
-   * @param massFlux        total mass flux (kg/(m2*s))
-   * @param tubeID          tube inner diameter (m)
-   * @param vaporDensity    vapor density (kg/m3)
-   * @param liquidDensity   liquid density (kg/m3)
+   * @param massFlux total mass flux (kg/(m2*s))
+   * @param tubeID tube inner diameter (m)
+   * @param vaporDensity vapor density (kg/m3)
+   * @param liquidDensity liquid density (kg/m3)
    * @return condensation HTC for vertical tube (W/(m2*K))
    */
   public static double calcVerticalTubeHTC(double hLiquidOnly, double vaporQuality, double reducedPressure,
@@ -218,8 +218,8 @@ public final class ShahCondensation {
    * Checks if operating conditions are within the validated range of the Shah correlation.
    *
    * @param reducedPressure reduced pressure P/P_crit
-   * @param reLiquidOnly    liquid-only Reynolds number
-   * @param massFlux        mass flux (kg/(m2*s))
+   * @param reLiquidOnly liquid-only Reynolds number
+   * @param massFlux mass flux (kg/(m2*s))
    * @return true if within validated range, false otherwise
    */
   public static boolean isInValidRange(double reducedPressure, double reLiquidOnly, double massFlux) {

@@ -43,16 +43,16 @@ public class AdjustableParameter implements Serializable {
   /**
    * Creates a new adjustable parameter descriptor.
    *
-   * @param name           the short, human-readable parameter name
-   * @param address        the stable dot-notation address used with
-   *                       {@link ProcessAutomation#setVariableValue(String, double, String)}
-   * @param unit           the unit of measure for the parameter, e.g. "bara", "C", "kg/hr"
-   * @param lowerBound     the lower bound of the parameter, or null if unbounded
-   * @param upperBound     the upper bound of the parameter, or null if unbounded
+   * @param name the short, human-readable parameter name
+   * @param address the stable dot-notation address used with
+   * {@link ProcessAutomation#setVariableValue(String, double, String)}
+   * @param unit the unit of measure for the parameter, e.g. "bara", "C", "kg/hr"
+   * @param lowerBound the lower bound of the parameter, or null if unbounded
+   * @param upperBound the upper bound of the parameter, or null if unbounded
    * @param targetUnitName the name of the unit operation that the parameter actually affects, or null if the parameter
-   *                       affects its own owning unit
+   * affects its own owning unit
    * @param targetProperty the property the parameter actually drives toward, or null if not applicable
-   * @param source         where the parameter originates ({@link Source#INPUT_VARIABLE} or {@link Source#ADJUSTER})
+   * @param source where the parameter originates ({@link Source#INPUT_VARIABLE} or {@link Source#ADJUSTER})
    */
   public AdjustableParameter(String name, String address, String unit, Double lowerBound, Double upperBound,
       String targetUnitName, String targetProperty, Source source) {

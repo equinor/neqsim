@@ -100,7 +100,7 @@ public class LNGTank extends Tank {
   /**
    * Constructor for LNGTank with an inlet LNG stream.
    *
-   * @param name        name of the LNG tank
+   * @param name name of the LNG tank
    * @param inletStream inlet LNG stream
    */
   public LNGTank(String name, StreamInterface inletStream) {
@@ -162,7 +162,7 @@ public class LNGTank extends Tank {
    * Set the ambient temperature surrounding the tank.
    *
    * @param temperature ambient temperature value
-   * @param unit        temperature unit ("K", "C")
+   * @param unit temperature unit ("K", "C")
    */
   public void setAmbientTemperature(double temperature, String unit) {
     if ("C".equalsIgnoreCase(unit)) {

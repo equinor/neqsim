@@ -230,9 +230,9 @@ public class ProductionOptimizer {
     /**
      * Constructs an objective with MAXIMIZE direction.
      *
-     * @param name      unique name for the objective
+     * @param name unique name for the objective
      * @param evaluator function to compute objective value from process state
-     * @param weight    relative weight for composite scoring (typically 0.0-1.0)
+     * @param weight relative weight for composite scoring (typically 0.0-1.0)
      */
     public OptimizationObjective(String name, ToDoubleFunction<ProcessSystem> evaluator, double weight) {
       this(name, evaluator, weight, ObjectiveType.MAXIMIZE);
@@ -241,10 +241,10 @@ public class ProductionOptimizer {
     /**
      * Constructs an objective with explicit direction.
      *
-     * @param name      unique name for the objective
+     * @param name unique name for the objective
      * @param evaluator function to compute objective value from process state
-     * @param weight    relative weight for composite scoring (typically 0.0-1.0)
-     * @param type      MAXIMIZE or MINIMIZE direction
+     * @param weight relative weight for composite scoring (typically 0.0-1.0)
+     * @param type MAXIMIZE or MINIMIZE direction
      */
     public OptimizationObjective(String name, ToDoubleFunction<ProcessSystem> evaluator, double weight,
 	ObjectiveType type) {
@@ -1560,11 +1560,11 @@ public class ProductionOptimizer {
      * constraints resolve {@code getUnit(...)} across all areas and support area-qualified {@code "Area::Unit"}
      * addresses.
      *
-     * @param name        unique scenario name (must not be null)
-     * @param model       the multi-area plant to optimize (must not be null)
-     * @param feedStream  the feed stream whose flow rate will be adjusted (must not be null)
-     * @param config      optimizer configuration (must not be null)
-     * @param objectives  list of objectives (may be null or empty)
+     * @param name unique scenario name (must not be null)
+     * @param model the multi-area plant to optimize (must not be null)
+     * @param feedStream the feed stream whose flow rate will be adjusted (must not be null)
+     * @param config optimizer configuration (must not be null)
+     * @param objectives list of objectives (may be null or empty)
      * @param constraints list of constraints (may be null or empty)
      */
     public ScenarioRequest(String name, ProcessModel model, StreamInterface feedStream, OptimizationConfig config,
@@ -1585,11 +1585,11 @@ public class ProductionOptimizer {
      * setters, objectives, and constraints resolve {@code getUnit(...)} across all areas and support area-qualified
      * {@code "Area::Unit"} addresses.
      *
-     * @param name        unique scenario name (must not be null)
-     * @param model       the multi-area plant to optimize (must not be null)
-     * @param variables   list of manipulated variables with bounds and setters (may be null or empty)
-     * @param config      optimizer configuration (must not be null)
-     * @param objectives  list of objectives (may be null or empty)
+     * @param name unique scenario name (must not be null)
+     * @param model the multi-area plant to optimize (must not be null)
+     * @param variables list of manipulated variables with bounds and setters (may be null or empty)
+     * @param config optimizer configuration (must not be null)
+     * @param objectives list of objectives (may be null or empty)
      * @param constraints list of constraints (may be null or empty)
      */
     public ScenarioRequest(String name, ProcessModel model, List<ManipulatedVariable> variables,
@@ -1677,11 +1677,11 @@ public class ProductionOptimizer {
     /**
      * Constructs a manipulated variable.
      *
-     * @param name       unique name identifying this variable
+     * @param name unique name identifying this variable
      * @param lowerBound minimum allowed value for the variable
      * @param upperBound maximum allowed value for the variable
-     * @param unit       engineering unit string (e.g., "kg/hr", "bara", "C")
-     * @param setter     BiConsumer that applies the variable value to the process model
+     * @param unit engineering unit string (e.g., "kg/hr", "bara", "C")
+     * @param setter BiConsumer that applies the variable value to the process model
      * @throws NullPointerException if name or setter is null
      */
     public ManipulatedVariable(String name, double lowerBound, double upperBound, String unit,
@@ -1733,7 +1733,7 @@ public class ProductionOptimizer {
      * Applies the variable value to the process model.
      *
      * @param process the process system to modify
-     * @param value   the value to set
+     * @param value the value to set
      */
     public void apply(ProcessSystem process, double value) {
       setter.accept(process, value);
@@ -1862,10 +1862,10 @@ public class ProductionOptimizer {
      * Constructs a Pareto point.
      *
      * @param decisionVariables the decision variable values at this point
-     * @param objectiveValues   the objective function values at this point
-     * @param weights           the weight combination used to find this point
-     * @param feasible          whether this point satisfies all constraints
-     * @param fullResult        the full optimization result for this point
+     * @param objectiveValues the objective function values at this point
+     * @param weights the weight combination used to find this point
+     * @param feasible whether this point satisfies all constraints
+     * @param fullResult the full optimization result for this point
      */
     public ParetoPoint(Map<String, Double> decisionVariables, Map<String, Double> objectiveValues, double[] weights,
 	boolean feasible, OptimizationResult fullResult) {
@@ -1899,7 +1899,7 @@ public class ProductionOptimizer {
     /**
      * Checks if this point dominates another point (all objectives at least as good, one strictly better).
      *
-     * @param other          the other point to compare
+     * @param other the other point to compare
      * @param objectiveTypes map of objective names to their types (MAXIMIZE/MINIMIZE)
      * @return true if this point dominates the other
      */
@@ -1935,10 +1935,10 @@ public class ProductionOptimizer {
     /**
      * Constructs a Pareto result.
      *
-     * @param paretoFront     the non-dominated solutions forming the Pareto front
-     * @param allPoints       all evaluated points (including dominated ones)
-     * @param objectiveNames  names of the objectives in order
-     * @param objectiveTypes  types (MAXIMIZE/MINIMIZE) for each objective
+     * @param paretoFront the non-dominated solutions forming the Pareto front
+     * @param allPoints all evaluated points (including dominated ones)
+     * @param objectiveNames names of the objectives in order
+     * @param objectiveTypes types (MAXIMIZE/MINIMIZE) for each objective
      * @param totalIterations total number of optimization iterations across all weights
      */
     public ParetoResult(List<ParetoPoint> paretoFront, List<ParetoPoint> allPoints, List<String> objectiveNames,
@@ -2202,13 +2202,13 @@ public class ProductionOptimizer {
    * print(f"Optimal: {result.getOptimalRate():.0f} {result.getRateUnit()}")
    * }</pre>
    *
-   * @param process     the process model to evaluate (must not be null)
-   * @param feedStream  the feed stream whose flow rate will be adjusted (must not be null)
-   * @param config      optimizer configuration including bounds and algorithm (must not be null)
-   * @param objectives  list of objectives to compute weighted scores (may be null or empty)
+   * @param process the process model to evaluate (must not be null)
+   * @param feedStream the feed stream whose flow rate will be adjusted (must not be null)
+   * @param config optimizer configuration including bounds and algorithm (must not be null)
+   * @param objectives list of objectives to compute weighted scores (may be null or empty)
    * @param constraints list of constraints with optional penalties (may be null or empty)
    * @return optimization result containing optimal rate, bottleneck, and diagnostics
-   * @throws NullPointerException     if process, feedStream, or config is null
+   * @throws NullPointerException if process, feedStream, or config is null
    * @throws IllegalArgumentException if config is invalid
    */
   public OptimizationResult optimize(ProcessSystem process, StreamInterface feedStream, OptimizationConfig config,
@@ -2282,13 +2282,13 @@ public class ProductionOptimizer {
    * result = optimizer.optimize(process, variables, config, None, None)
    * </pre>
    *
-   * @param process     the process model to evaluate (must not be null)
-   * @param variables   list of manipulated variables with bounds and setters (must not be empty)
-   * @param config      optimizer configuration (must not be null)
-   * @param objectives  list of objectives (may be null or empty)
+   * @param process the process model to evaluate (must not be null)
+   * @param variables list of manipulated variables with bounds and setters (must not be empty)
+   * @param config optimizer configuration (must not be null)
+   * @param objectives list of objectives (may be null or empty)
    * @param constraints list of constraints (may be null or empty)
    * @return optimization result with optimal variable values in {@code getDecisionVariables()}
-   * @throws NullPointerException     if process, variables, or config is null
+   * @throws NullPointerException if process, variables, or config is null
    * @throws IllegalArgumentException if variables is empty or algorithm doesn't support multi-variable
    */
   public OptimizationResult optimize(ProcessSystem process, List<ManipulatedVariable> variables,
@@ -2342,13 +2342,13 @@ public class ProductionOptimizer {
    * resolves {@code getUnit(...)} across all areas and supports area-qualified {@code "Area::Unit"} addresses.
    * </p>
    *
-   * @param model       the multi-area plant to evaluate (must not be null)
-   * @param feedStream  the feed stream whose flow rate will be adjusted (must not be null)
-   * @param config      optimizer configuration including bounds and algorithm (must not be null)
-   * @param objectives  list of objectives to compute weighted scores (may be null or empty)
+   * @param model the multi-area plant to evaluate (must not be null)
+   * @param feedStream the feed stream whose flow rate will be adjusted (must not be null)
+   * @param config optimizer configuration including bounds and algorithm (must not be null)
+   * @param objectives list of objectives to compute weighted scores (may be null or empty)
    * @param constraints list of constraints with optional penalties (may be null or empty)
    * @return optimization result containing optimal rate, bottleneck, and diagnostics
-   * @throws NullPointerException     if model, feedStream, or config is null
+   * @throws NullPointerException if model, feedStream, or config is null
    * @throws IllegalArgumentException if config is invalid
    */
   public OptimizationResult optimize(ProcessModel model, StreamInterface feedStream, OptimizationConfig config,
@@ -2369,13 +2369,13 @@ public class ProductionOptimizer {
    * area-qualified {@code "Area::Unit"} addresses are also supported.
    * </p>
    *
-   * @param model       the multi-area plant to evaluate (must not be null)
-   * @param variables   list of manipulated variables with bounds and setters (must not be empty)
-   * @param config      optimizer configuration (must not be null)
-   * @param objectives  list of objectives (may be null or empty)
+   * @param model the multi-area plant to evaluate (must not be null)
+   * @param variables list of manipulated variables with bounds and setters (must not be empty)
+   * @param config optimizer configuration (must not be null)
+   * @param objectives list of objectives (may be null or empty)
    * @param constraints list of constraints (may be null or empty)
    * @return optimization result with optimal variable values in {@code getDecisionVariables()}
-   * @throws NullPointerException     if model, variables, or config is null
+   * @throws NullPointerException if model, variables, or config is null
    * @throws IllegalArgumentException if variables is empty or algorithm doesn't support multi-variable
    */
   public OptimizationResult optimize(ProcessModel model, List<ManipulatedVariable> variables, OptimizationConfig config,
@@ -2531,13 +2531,13 @@ public class ProductionOptimizer {
    * print(pareto.toMarkdownTable())
    * }</pre>
    *
-   * @param process     the process model to evaluate (must not be null)
-   * @param feedStream  the feed stream whose flow rate will be adjusted (must not be null)
-   * @param config      optimizer configuration; {@code paretoGridSize} controls weight granularity
-   * @param objectives  list of objectives (must have at least 2 for Pareto optimization)
+   * @param process the process model to evaluate (must not be null)
+   * @param feedStream the feed stream whose flow rate will be adjusted (must not be null)
+   * @param config optimizer configuration; {@code paretoGridSize} controls weight granularity
+   * @param objectives list of objectives (must have at least 2 for Pareto optimization)
    * @param constraints list of constraints (may be null or empty)
    * @return Pareto result containing the Pareto front, utopia/nadir points, and all evaluated points
-   * @throws NullPointerException     if process, feedStream, config, or objectives is null
+   * @throws NullPointerException if process, feedStream, config, or objectives is null
    * @throws IllegalArgumentException if fewer than 2 objectives are provided
    */
   public ParetoResult optimizePareto(ProcessSystem process, StreamInterface feedStream, OptimizationConfig config,
@@ -2610,13 +2610,13 @@ public class ProductionOptimizer {
    * ParetoResult pareto = optimizer.optimizePareto(process, variables, config, objectives, null);
    * }</pre>
    *
-   * @param process     the process model to evaluate (must not be null)
-   * @param variables   list of manipulated decision variables (must not be empty)
-   * @param config      optimizer configuration (must not be null)
-   * @param objectives  list of objectives (must have at least 2)
+   * @param process the process model to evaluate (must not be null)
+   * @param variables list of manipulated decision variables (must not be empty)
+   * @param config optimizer configuration (must not be null)
+   * @param objectives list of objectives (must have at least 2)
    * @param constraints list of constraints (may be null or empty)
    * @return Pareto result containing the Pareto front and all evaluated points
-   * @throws NullPointerException     if process, variables, config, or objectives is null
+   * @throws NullPointerException if process, variables, config, or objectives is null
    * @throws IllegalArgumentException if fewer than 2 objectives or no variables provided
    */
   public ParetoResult optimizePareto(ProcessSystem process, List<ManipulatedVariable> variables,
@@ -2671,13 +2671,13 @@ public class ProductionOptimizer {
    * area-qualified {@code "Area::Unit"} addresses.
    * </p>
    *
-   * @param model       the multi-area plant to evaluate (must not be null)
-   * @param feedStream  the feed stream whose flow rate will be adjusted (must not be null)
-   * @param config      optimizer configuration; {@code paretoGridSize} controls weight granularity
-   * @param objectives  list of objectives (must have at least 2 for Pareto optimization)
+   * @param model the multi-area plant to evaluate (must not be null)
+   * @param feedStream the feed stream whose flow rate will be adjusted (must not be null)
+   * @param config optimizer configuration; {@code paretoGridSize} controls weight granularity
+   * @param objectives list of objectives (must have at least 2 for Pareto optimization)
    * @param constraints list of constraints (may be null or empty)
    * @return Pareto result containing the Pareto front, utopia/nadir points, and all evaluated points
-   * @throws NullPointerException     if model, feedStream, config, or objectives is null
+   * @throws NullPointerException if model, feedStream, config, or objectives is null
    * @throws IllegalArgumentException if fewer than 2 objectives are provided
    */
   public ParetoResult optimizePareto(ProcessModel model, StreamInterface feedStream, OptimizationConfig config,
@@ -2700,13 +2700,13 @@ public class ProductionOptimizer {
    * {@code "Area::Unit"} addresses are also supported.
    * </p>
    *
-   * @param model       the multi-area plant to evaluate (must not be null)
-   * @param variables   list of manipulated variables with bounds and setters (must not be empty)
-   * @param config      optimizer configuration; {@code paretoGridSize} controls weight granularity
-   * @param objectives  list of objectives (must have at least 2 for Pareto optimization)
+   * @param model the multi-area plant to evaluate (must not be null)
+   * @param variables list of manipulated variables with bounds and setters (must not be empty)
+   * @param config optimizer configuration; {@code paretoGridSize} controls weight granularity
+   * @param objectives list of objectives (must have at least 2 for Pareto optimization)
    * @param constraints list of constraints (may be null or empty)
    * @return Pareto result containing the Pareto front, utopia/nadir points, and all evaluated points
-   * @throws NullPointerException     if model, variables, config, or objectives is null
+   * @throws NullPointerException if model, variables, config, or objectives is null
    * @throws IllegalArgumentException if fewer than 2 objectives or no variables are provided
    */
   public ParetoResult optimizePareto(ProcessModel model, List<ManipulatedVariable> variables, OptimizationConfig config,
@@ -2719,13 +2719,13 @@ public class ProductionOptimizer {
   /**
    * Runs Pareto weight combinations in parallel using a fixed thread pool.
    *
-   * @param process            the process system template (copied per thread)
-   * @param feedStream         the feed stream to vary
-   * @param config             optimization configuration
-   * @param objectives         the optimization objectives
-   * @param constraints        the optimization constraints
+   * @param process the process system template (copied per thread)
+   * @param feedStream the feed stream to vary
+   * @param config optimization configuration
+   * @param objectives the optimization objectives
+   * @param constraints the optimization constraints
    * @param weightCombinations the weight vectors to evaluate
-   * @param objectiveNames     names for each objective
+   * @param objectiveNames names for each objective
    * @return list of Pareto points, one per weight combination
    */
   private List<ParetoPoint> optimizeParetoParallel(ProcessSystem process, StreamInterface feedStream,
@@ -2783,7 +2783,7 @@ public class ProductionOptimizer {
    * </p>
    *
    * @param numObjectives the number of objectives
-   * @param gridSize      the number of grid points (must be at least 2)
+   * @param gridSize the number of grid points (must be at least 2)
    * @return list of weight arrays, each summing to 1.0
    */
   private List<double[]> generateWeightCombinations(int numObjectives, int gridSize) {
@@ -2805,11 +2805,11 @@ public class ProductionOptimizer {
    * Recursively generates weight combinations that sum to 1.0 on a simplex lattice.
    *
    * @param numObjectives total number of objectives
-   * @param divisions     number of divisions along each axis
-   * @param current       working array for partial weight assignment
-   * @param index         current objective dimension being filled
-   * @param remaining     remaining weight budget
-   * @param combinations  accumulator list for completed weight arrays
+   * @param divisions number of divisions along each axis
+   * @param current working array for partial weight assignment
+   * @param index current objective dimension being filled
+   * @param remaining remaining weight budget
+   * @param combinations accumulator list for completed weight arrays
    */
   private void generateWeightCombinationsRecursive(int numObjectives, int divisions, double[] current, int index,
       double remaining, List<double[]> combinations) {
@@ -2832,7 +2832,7 @@ public class ProductionOptimizer {
    * Create weighted objectives from original objectives and weights.
    *
    * @param originals the original optimization objectives
-   * @param weights   the weight multipliers for each objective
+   * @param weights the weight multipliers for each objective
    * @return the weighted objectives
    */
   private List<OptimizationObjective> createWeightedObjectives(List<OptimizationObjective> originals,
@@ -2849,7 +2849,7 @@ public class ProductionOptimizer {
   /**
    * Filter points to keep only Pareto-optimal (non-dominated) solutions.
    *
-   * @param allPoints      all candidate Pareto points
+   * @param allPoints all candidate Pareto points
    * @param objectiveTypes map of objective names to their types
    * @return the non-dominated Pareto front
    */
@@ -2874,7 +2874,7 @@ public class ProductionOptimizer {
    * Optimize multiple scenarios and compute KPI deltas versus the baseline (first) scenario.
    *
    * @param scenarios list of scenarios to optimize; first entry is treated as baseline
-   * @param kpis      KPIs to compute per scenario (optional)
+   * @param kpis KPIs to compute per scenario (optional)
    * @return comparison result with KPI deltas and raw results
    */
   public ScenarioComparisonResult compareScenarios(List<ScenarioRequest> scenarios, List<ScenarioKpi> kpis) {
@@ -2912,11 +2912,11 @@ public class ProductionOptimizer {
   /**
    * Convenience wrapper to maximize throughput with optional constraints and custom search config.
    *
-   * @param process               process system to run
-   * @param feedStream            feed stream that will be adjusted
-   * @param lowerBound            lower bound on the manipulated feed rate
-   * @param upperBound            upper bound on the manipulated feed rate
-   * @param rateUnit              engineering unit for rate
+   * @param process process system to run
+   * @param feedStream feed stream that will be adjusted
+   * @param lowerBound lower bound on the manipulated feed rate
+   * @param upperBound upper bound on the manipulated feed rate
+   * @param rateUnit engineering unit for rate
    * @param additionalConstraints optional hard/soft constraints
    * @return optimization result with utilization and constraint history
    */
@@ -2952,7 +2952,7 @@ public class ProductionOptimizer {
    * Render scenario KPIs and bottleneck information side-by-side.
    *
    * @param comparison the scenario comparison result
-   * @param kpis       the KPI definitions to include
+   * @param kpis the KPI definitions to include
    * @return a Markdown-formatted comparison table string
    */
   public static String formatScenarioComparisonTable(ScenarioComparisonResult comparison, List<ScenarioKpi> kpis) {
@@ -3099,7 +3099,7 @@ public class ProductionOptimizer {
    * Convenience wrapper that derives reasonable bounds from the current feed rate and returns a concise summary (max
    * rate, limiting equipment, utilization margin).
    *
-   * @param process    the process system to optimize
+   * @param process the process system to optimize
    * @param feedStream the feed stream to vary
    * @return optimization summary with max rate, limiting equipment, and utilization margin
    */
@@ -3111,9 +3111,9 @@ public class ProductionOptimizer {
    * Convenience wrapper that derives reasonable bounds from the current feed rate and returns a concise summary (max
    * rate, limiting equipment, utilization margin).
    *
-   * @param process     the process system to optimize
-   * @param feedStream  the feed stream to vary
-   * @param rateUnit    the unit for flow rate (e.g., "kg/hr")
+   * @param process the process system to optimize
+   * @param feedStream the feed stream to vary
+   * @param rateUnit the unit for flow rate (e.g., "kg/hr")
    * @param constraints the optimization constraints to enforce
    * @return optimization summary with max rate, limiting equipment, and utilization margin
    */
@@ -3578,11 +3578,11 @@ public class ProductionOptimizer {
    * feasibility score).
    * </p>
    *
-   * @param process          the process system to optimize
-   * @param variables        the manipulated variables with bounds
-   * @param config           the optimization configuration
-   * @param objectives       the optimization objectives
-   * @param constraints      the optimization constraints
+   * @param process the process system to optimize
+   * @param variables the manipulated variables with bounds
+   * @param config the optimization configuration
+   * @param objectives the optimization objectives
+   * @param constraints the optimization constraints
    * @param iterationHistory list to record iteration progress
    * @return the optimization result with best found point
    */
@@ -3958,7 +3958,7 @@ public class ProductionOptimizer {
    * <li>Default getCapacityDuty / getCapacityMax</li>
    * </ol>
    *
-   * @param unit   the equipment to evaluate
+   * @param unit the equipment to evaluate
    * @param config optimizer configuration
    * @return a capacity rule for computing utilization and limit
    */
@@ -4030,7 +4030,7 @@ public class ProductionOptimizer {
    * {@link neqsim.process.equipment.capacity.EquipmentCapacityStrategyRegistry} or a generic fallback.
    * </p>
    *
-   * @param unit   the equipment to evaluate
+   * @param unit the equipment to evaluate
    * @param config optimizer configuration
    * @return a capacity rule for the equipment, or null if the type is not recognized
    */

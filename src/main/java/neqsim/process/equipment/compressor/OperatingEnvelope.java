@@ -118,8 +118,8 @@ public class OperatingEnvelope implements Serializable {
   /**
    * Sets the surge line from discrete points.
    *
-   * @param flows  flow values in m3/h
-   * @param heads  head values in kJ/kg
+   * @param flows flow values in m3/h
+   * @param heads head values in kJ/kg
    * @param speeds speed values in RPM
    */
   public void setSurgeLine(double[] flows, double[] heads, double[] speeds) {
@@ -145,8 +145,8 @@ public class OperatingEnvelope implements Serializable {
   /**
    * Sets the stonewall line from discrete points.
    *
-   * @param flows  flow values in m3/h
-   * @param heads  head values in kJ/kg
+   * @param flows flow values in m3/h
+   * @param heads head values in kJ/kg
    * @param speeds speed values in RPM
    */
   public void setStonewallLine(double[] flows, double[] heads, double[] speeds) {
@@ -167,8 +167,8 @@ public class OperatingEnvelope implements Serializable {
   /**
    * Checks if an operating point is within the envelope.
    *
-   * @param flow  actual flow in m3/h
-   * @param head  actual head in kJ/kg
+   * @param flow actual flow in m3/h
+   * @param head actual head in kJ/kg
    * @param speed actual speed in RPM
    * @return true if within envelope
    */
@@ -205,8 +205,8 @@ public class OperatingEnvelope implements Serializable {
    * Surge margin = (Q_actual - Q_surge) / Q_surge
    * </p>
    *
-   * @param flow  actual flow in m3/h
-   * @param head  actual head in kJ/kg
+   * @param flow actual flow in m3/h
+   * @param head actual head in kJ/kg
    * @param speed actual speed in RPM
    * @return surge margin as fraction (positive = safe, negative = in surge)
    */
@@ -225,8 +225,8 @@ public class OperatingEnvelope implements Serializable {
    * Stonewall margin = (Q_stonewall - Q_actual) / Q_stonewall
    * </p>
    *
-   * @param flow  actual flow in m3/h
-   * @param head  actual head in kJ/kg
+   * @param flow actual flow in m3/h
+   * @param head actual head in kJ/kg
    * @param speed actual speed in RPM
    * @return stonewall margin as fraction (positive = safe, negative = choked)
    */
@@ -241,7 +241,7 @@ public class OperatingEnvelope implements Serializable {
   /**
    * Gets the surge flow at a given head and speed.
    *
-   * @param head  polytropic head in kJ/kg
+   * @param head polytropic head in kJ/kg
    * @param speed shaft speed in RPM
    * @return surge flow in m3/h
    */
@@ -265,7 +265,7 @@ public class OperatingEnvelope implements Serializable {
   /**
    * Gets the stonewall flow at a given head and speed.
    *
-   * @param head  polytropic head in kJ/kg
+   * @param head polytropic head in kJ/kg
    * @param speed shaft speed in RPM
    * @return stonewall flow in m3/h
    */
@@ -288,8 +288,8 @@ public class OperatingEnvelope implements Serializable {
   /**
    * Gets the distance to the nearest envelope boundary.
    *
-   * @param flow  actual flow in m3/h
-   * @param head  actual head in kJ/kg
+   * @param flow actual flow in m3/h
+   * @param head actual head in kJ/kg
    * @param speed actual speed in RPM
    * @return distance as fraction (positive = inside, negative = outside)
    */
@@ -329,8 +329,8 @@ public class OperatingEnvelope implements Serializable {
   /**
    * Gets the limiting constraint at an operating point.
    *
-   * @param flow  actual flow in m3/h
-   * @param head  actual head in kJ/kg
+   * @param flow actual flow in m3/h
+   * @param head actual head in kJ/kg
    * @param speed actual speed in RPM
    * @return string describing the limiting constraint, or null if within envelope
    */

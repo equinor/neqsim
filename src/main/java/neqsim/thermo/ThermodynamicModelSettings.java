@@ -55,8 +55,8 @@ public interface ThermodynamicModelSettings extends java.io.Serializable {
    * Enable or disable warm-start K-value preservation for the current thread.
    *
    * @param enabled true to preserve K-values across flash calls (faster, but may yield numerically slightly different
-   *                converged solutions), false to always reset to the Wilson guess in {@code Component.init(0)} (exact
-   *                baseline-compatible behavior).
+   * converged solutions), false to always reset to the Wilson guess in {@code Component.init(0)} (exact
+   * baseline-compatible behavior).
    */
   static void setUseWarmStartKValues(boolean enabled) {
     Flags.useWarmStartKValues.set(enabled);

@@ -32,7 +32,7 @@ public class FlowSystemVisualization implements FlowSystemVisualizationInterface
    * Constructor for FlowSystemVisualization.
    * </p>
    *
-   * @param nodes     a int
+   * @param nodes a int
    * @param timeSteps a int
    */
   public FlowSystemVisualization(int nodes, int timeSteps) {

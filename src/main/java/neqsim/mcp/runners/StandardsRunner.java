@@ -147,9 +147,9 @@ public class StandardsRunner {
   /**
    * Routes to the appropriate standard calculation.
    *
-   * @param fluid    the initialized fluid system
+   * @param fluid the initialized fluid system
    * @param standard the standard name
-   * @param input    the full JSON input for standard-specific parameters
+   * @param input the full JSON input for standard-specific parameters
    * @return JSON object with standard results
    */
   private static JsonObject runStandard(SystemInterface fluid, String standard, JsonObject input) {
@@ -208,8 +208,8 @@ public class StandardsRunner {
   /**
    * Runs ISO 6976 gas quality calculation.
    *
-   * @param fluid   the initialized fluid
-   * @param input   the JSON input with optional reference conditions
+   * @param fluid the initialized fluid
+   * @param input the JSON input with optional reference conditions
    * @param use2016 whether to use the 2016 edition
    * @return JSON with calorific values, Wobbe index, density
    */
@@ -308,7 +308,7 @@ public class StandardsRunner {
   /**
    * Runs a generic gas quality standard calculation.
    *
-   * @param fluid        the initialized fluid
+   * @param fluid the initialized fluid
    * @param standardName the standard name for factory lookup
    * @return JSON with standard results
    */
@@ -340,7 +340,7 @@ public class StandardsRunner {
   /**
    * Runs a generic oil quality standard calculation.
    *
-   * @param fluid        the initialized fluid
+   * @param fluid the initialized fluid
    * @param standardName the standard name suffix (e.g. D445, D2500, BSW)
    * @return JSON with standard results
    */
@@ -455,8 +455,8 @@ public class StandardsRunner {
   /**
    * Creates a standard error JSON string.
    *
-   * @param code        the error code
-   * @param message     the error message
+   * @param code the error code
+   * @param message the error message
    * @param remediation the fix suggestion
    * @return the error JSON string
    */
@@ -476,7 +476,7 @@ public class StandardsRunner {
   /**
    * Creates a gas quality standard instance by name.
    *
-   * @param name  the standard name (e.g. "ISO6976", "AGA3")
+   * @param name the standard name (e.g. "ISO6976", "AGA3")
    * @param fluid the fluid system
    * @return the standard instance, or null if not found
    */
@@ -518,7 +518,7 @@ public class StandardsRunner {
   /**
    * Creates an oil quality standard instance by name.
    *
-   * @param name  the standard name (e.g. "ASTM_D86", "BSW")
+   * @param name the standard name (e.g. "ASTM_D86", "BSW")
    * @param fluid the fluid system
    * @return the standard instance, or null if not found
    */

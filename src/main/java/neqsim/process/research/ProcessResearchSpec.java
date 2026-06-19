@@ -553,10 +553,10 @@ public class ProcessResearchSpec {
      * Creates a decision variable.
      *
      * @param equipmentName equipment name in the generated candidate
-     * @param propertyName  property setter name without the set prefix
-     * @param lowerBound    lower bound
-     * @param upperBound    upper bound
-     * @param unit          unit string accepted by the equipment setter
+     * @param propertyName property setter name without the set prefix
+     * @param lowerBound lower bound
+     * @param upperBound upper bound
+     * @param unit unit string accepted by the equipment setter
      */
     public DecisionVariable(String equipmentName, String propertyName, double lowerBound, double upperBound,
 	String unit) {
@@ -1103,7 +1103,7 @@ public class ProcessResearchSpec {
      * Sets an equipment type cost proxy.
      *
      * @param equipmentType equipment type name
-     * @param costUsd       cost proxy in USD
+     * @param costUsd cost proxy in USD
      * @return this assumptions object
      */
     public EconomicAssumptions setEquipmentCostProxyUsd(String equipmentType, double costUsd) {
@@ -1341,7 +1341,7 @@ public class ProcessResearchSpec {
      * Sets feed flow rate.
      *
      * @param flowRate flow rate value
-     * @param unit     flow rate unit
+     * @param unit flow rate unit
      * @return this builder
      */
     public Builder setFeedFlowRate(double flowRate, String unit) {
@@ -1354,7 +1354,7 @@ public class ProcessResearchSpec {
      * Adds a feed component.
      *
      * @param componentName component name
-     * @param moleFraction  mole fraction or relative amount
+     * @param moleFraction mole fraction or relative amount
      * @return this builder
      */
     public Builder addFeedComponent(String componentName, double moleFraction) {

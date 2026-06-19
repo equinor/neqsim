@@ -145,8 +145,8 @@ public class PedersenAsphalteneCharacterization {
   /**
    * Constructor with asphaltene properties.
    *
-   * @param asphalteneMW             molecular weight of asphaltene (g/mol)
-   * @param asphalteneDensity        density at standard conditions (g/cm³)
+   * @param asphalteneMW molecular weight of asphaltene (g/mol)
+   * @param asphalteneDensity density at standard conditions (g/cm³)
    * @param asphalteneWeightFraction weight fraction in the oil (0-1)
    */
   public PedersenAsphalteneCharacterization(double asphalteneMW, double asphalteneDensity,
@@ -336,7 +336,7 @@ public class PedersenAsphalteneCharacterization {
    * </p>
    *
    * @param system the thermodynamic system to add asphaltene to
-   * @param moles  number of moles of asphaltene to add
+   * @param moles number of moles of asphaltene to add
    * @return the component name that was added (for reference)
    */
   public String addAsphalteneToSystem(SystemInterface system, double moles) {
@@ -374,7 +374,7 @@ public class PedersenAsphalteneCharacterization {
    * and are critical for correctly predicting the liquid-liquid phase split.
    * </p>
    *
-   * @param system     the thermodynamic system with asphaltene already added and mixing rule set
+   * @param system the thermodynamic system with asphaltene already added and mixing rule set
    * @param defaultKij default kij value for asphaltene-light component pairs (typical: 0.05-0.12)
    */
   public void applyAsphalteneKij(SystemInterface system, double defaultKij) {
@@ -435,8 +435,8 @@ public class PedersenAsphalteneCharacterization {
    * mixing rule.
    * </p>
    *
-   * @param system             the thermodynamic system
-   * @param totalMoles         total moles of asphaltene
+   * @param system the thermodynamic system
+   * @param totalMoles total moles of asphaltene
    * @param numberOfComponents number of pseudo-components (typically 2-5)
    */
   public void addDistributedAsphaltene(SystemInterface system, double totalMoles, int numberOfComponents) {
@@ -502,9 +502,9 @@ public class PedersenAsphalteneCharacterization {
    * second liquid phase (asphaltene-rich) becomes stable.
    * </p>
    *
-   * @param system        the thermodynamic system with asphaltene component
+   * @param system the thermodynamic system with asphaltene component
    * @param startPressure starting pressure for search (bar)
-   * @param endPressure   ending pressure for search (bar)
+   * @param endPressure ending pressure for search (bar)
    * @return onset pressure in bar, or NaN if not found
    */
   public double calculateOnsetPressure(SystemInterface system, double startPressure, double endPressure) {
@@ -606,9 +606,9 @@ public class PedersenAsphalteneCharacterization {
    * asphaltene-rich liquid phases.
    * </p>
    *
-   * @param system      the thermodynamic system to flash
+   * @param system the thermodynamic system to flash
    * @param temperature temperature in Kelvin
-   * @param pressure    pressure in bar
+   * @param pressure pressure in bar
    * @return true if an asphaltene-rich liquid phase was detected
    */
   public static boolean TPflash(SystemInterface system, double temperature, double pressure) {
@@ -651,7 +651,7 @@ public class PedersenAsphalteneCharacterization {
    * Refines the onset pressure using bisection.
    *
    * @param system the thermodynamic system
-   * @param ops    thermodynamic operations object
+   * @param ops thermodynamic operations object
    * @param upperP upper pressure bound (one phase)
    * @param lowerP lower pressure bound (two phases)
    * @return refined onset pressure
@@ -1009,8 +1009,8 @@ public class PedersenAsphalteneCharacterization {
    * Convenience method for applying multiple tuning parameters from experimental data fitting.
    * </p>
    *
-   * @param tcMultiplier    critical temperature multiplier
-   * @param pcMultiplier    critical pressure multiplier
+   * @param tcMultiplier critical temperature multiplier
+   * @param pcMultiplier critical pressure multiplier
    * @param omegaMultiplier acentric factor multiplier
    */
   public void setTuningParameters(double tcMultiplier, double pcMultiplier, double omegaMultiplier) {

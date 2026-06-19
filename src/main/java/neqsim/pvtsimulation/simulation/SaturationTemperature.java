@@ -103,7 +103,7 @@ public class SaturationTemperature extends BasePVTsimulation {
   /**
    * Refines the upper saturation temperature between a two-phase and a single-phase point.
    *
-   * @param twoPhaseTemperature    lower temperature known to be inside a two-phase region, in kelvin
+   * @param twoPhaseTemperature lower temperature known to be inside a two-phase region, in kelvin
    * @param singlePhaseTemperature higher temperature known to be outside the two-phase region, in kelvin
    * @return refined upper saturation temperature in kelvin
    */

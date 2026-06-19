@@ -17,7 +17,7 @@ public class SetSeparatorModeAction implements LogicAction {
   /**
    * Creates a set separator mode action.
    *
-   * @param separator   separator to configure
+   * @param separator separator to configure
    * @param steadyState true for steady-state, false for transient
    */
   public SetSeparatorModeAction(Separator separator, boolean steadyState) {

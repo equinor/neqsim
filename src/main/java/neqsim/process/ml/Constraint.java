@@ -61,14 +61,14 @@ public class Constraint implements Serializable {
   /**
    * Create a constraint.
    *
-   * @param name         short identifier
-   * @param description  human-readable description
-   * @param type         constraint type (HARD, SOFT, INFO)
-   * @param category     constraint category
+   * @param name short identifier
+   * @param description human-readable description
+   * @param type constraint type (HARD, SOFT, INFO)
+   * @param category constraint category
    * @param variableName state variable this constrains
-   * @param lowerBound   lower limit
-   * @param upperBound   upper limit
-   * @param unit         physical unit
+   * @param lowerBound lower limit
+   * @param upperBound upper limit
+   * @param unit physical unit
    */
   public Constraint(String name, String description, Type type, Category category, String variableName,
       double lowerBound, double upperBound, String unit) {
@@ -87,11 +87,11 @@ public class Constraint implements Serializable {
   /**
    * Create a simple upper-bound constraint.
    *
-   * @param name         constraint name
+   * @param name constraint name
    * @param variableName variable to constrain
-   * @param maxValue     maximum allowed value
-   * @param unit         physical unit
-   * @param type         constraint type
+   * @param maxValue maximum allowed value
+   * @param unit physical unit
+   * @param type constraint type
    * @return new Constraint
    */
   public static Constraint upperBound(String name, String variableName, double maxValue, String unit, Type type) {
@@ -102,11 +102,11 @@ public class Constraint implements Serializable {
   /**
    * Create a simple lower-bound constraint.
    *
-   * @param name         constraint name
+   * @param name constraint name
    * @param variableName variable to constrain
-   * @param minValue     minimum allowed value
-   * @param unit         physical unit
-   * @param type         constraint type
+   * @param minValue minimum allowed value
+   * @param unit physical unit
+   * @param type constraint type
    * @return new Constraint
    */
   public static Constraint lowerBound(String name, String variableName, double minValue, String unit, Type type) {
@@ -117,12 +117,12 @@ public class Constraint implements Serializable {
   /**
    * Create a range constraint.
    *
-   * @param name         constraint name
+   * @param name constraint name
    * @param variableName variable to constrain
-   * @param minValue     minimum allowed value
-   * @param maxValue     maximum allowed value
-   * @param unit         physical unit
-   * @param type         constraint type
+   * @param minValue minimum allowed value
+   * @param maxValue maximum allowed value
+   * @param unit physical unit
+   * @param type constraint type
    * @return new Constraint
    */
   public static Constraint range(String name, String variableName, double minValue, double maxValue, String unit,

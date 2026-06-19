@@ -62,7 +62,7 @@ public class SyngasBurnerZone extends TwoPortEquipment {
   /**
    * Creates a syngas burner zone with an inlet stream.
    *
-   * @param name        equipment name
+   * @param name equipment name
    * @param inletStream premixed methane, oxygen, and optional steam feed
    */
   public SyngasBurnerZone(String name, StreamInterface inletStream) {

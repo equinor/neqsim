@@ -47,7 +47,7 @@ public class ScrewPress extends SolidsSeparator {
   /**
    * Constructor for ScrewPress with inlet stream.
    *
-   * @param name        name of the screw press
+   * @param name name of the screw press
    * @param inletStream the feed stream
    */
   public ScrewPress(String name, StreamInterface inletStream) {

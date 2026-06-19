@@ -50,8 +50,8 @@ public class Condenser extends SimpleTray {
    * Sets the separation with liquid reflux parameters.
    *
    * @param separation_with_liquid_reflux a boolean indicating if separation with liquid reflux is set
-   * @param value                         the value of the reflux
-   * @param unit                          the unit of the reflux value
+   * @param value the value of the reflux
+   * @param unit the unit of the reflux value
    */
   public void setSeparation_with_liquid_reflux(boolean separation_with_liquid_reflux, double value, String unit) {
     this.refluxIsSet = separation_with_liquid_reflux;

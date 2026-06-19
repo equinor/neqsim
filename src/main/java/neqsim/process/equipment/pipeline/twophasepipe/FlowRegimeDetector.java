@@ -223,13 +223,13 @@ public class FlowRegimeDetector implements Serializable {
    * Uses Taitel-Dukler (1976) flow regime map.
    * </p>
    *
-   * @param U_SL  Superficial liquid velocity (m/s)
-   * @param U_SG  Superficial gas velocity (m/s)
-   * @param D     Diameter (m)
+   * @param U_SL Superficial liquid velocity (m/s)
+   * @param U_SG Superficial gas velocity (m/s)
+   * @param D Diameter (m)
    * @param theta Inclination (radians)
    * @param rho_L Liquid density (kg/m³)
    * @param rho_G Gas density (kg/m³)
-   * @param mu_L  Liquid viscosity (Pa·s)
+   * @param mu_L Liquid viscosity (Pa·s)
    * @param sigma Surface tension (N/m)
    * @return Flow regime
    */
@@ -282,13 +282,13 @@ public class FlowRegimeDetector implements Serializable {
    * Uses Barnea (1987) unified model.
    * </p>
    *
-   * @param U_SL  Superficial liquid velocity (m/s)
-   * @param U_SG  Superficial gas velocity (m/s)
-   * @param D     Diameter (m)
+   * @param U_SL Superficial liquid velocity (m/s)
+   * @param U_SG Superficial gas velocity (m/s)
+   * @param D Diameter (m)
    * @param theta Inclination (radians, positive = upward)
    * @param rho_L Liquid density (kg/m³)
    * @param rho_G Gas density (kg/m³)
-   * @param mu_L  Liquid viscosity (Pa·s)
+   * @param mu_L Liquid viscosity (Pa·s)
    * @param sigma Surface tension (N/m)
    * @return Flow regime
    */
@@ -342,12 +342,12 @@ public class FlowRegimeDetector implements Serializable {
   /**
    * Calculate Martinelli parameter X.
    *
-   * @param U_SL  superficial liquid velocity [m/s]
-   * @param U_SG  superficial gas velocity [m/s]
-   * @param D     pipe diameter [m]
+   * @param U_SL superficial liquid velocity [m/s]
+   * @param U_SG superficial gas velocity [m/s]
+   * @param D pipe diameter [m]
    * @param rho_L liquid density [kg/m³]
    * @param rho_G gas density [kg/m³]
-   * @param mu_L  liquid viscosity [Pa·s]
+   * @param mu_L liquid viscosity [Pa·s]
    * @param sigma surface tension [N/m]
    * @return Martinelli parameter X
    */
@@ -376,8 +376,8 @@ public class FlowRegimeDetector implements Serializable {
   /**
    * Calculate modified Froude number.
    *
-   * @param U_SG  superficial gas velocity [m/s]
-   * @param D     pipe diameter [m]
+   * @param U_SG superficial gas velocity [m/s]
+   * @param D pipe diameter [m]
    * @param rho_L liquid density [kg/m3]
    * @param rho_G gas density [kg/m3]
    * @return modified Froude number [-]
@@ -393,8 +393,8 @@ public class FlowRegimeDetector implements Serializable {
   /**
    * Calculate Kelvin-Helmholtz stability parameter.
    *
-   * @param U_SG  superficial gas velocity [m/s]
-   * @param D     pipe diameter [m]
+   * @param U_SG superficial gas velocity [m/s]
+   * @param D pipe diameter [m]
    * @param rho_L liquid density [kg/m3]
    * @param rho_G gas density [kg/m3]
    * @param sigma interfacial tension [N/m]
@@ -411,11 +411,11 @@ public class FlowRegimeDetector implements Serializable {
   /**
    * Calculate turbulence parameter T.
    *
-   * @param U_SL  superficial liquid velocity [m/s]
-   * @param D     pipe diameter [m]
+   * @param U_SL superficial liquid velocity [m/s]
+   * @param D pipe diameter [m]
    * @param rho_L liquid density [kg/m3]
    * @param rho_G gas density [kg/m3]
-   * @param mu_L  liquid viscosity [Pa.s]
+   * @param mu_L liquid viscosity [Pa.s]
    * @return turbulence parameter T [-]
    */
   private double calcTurbulenceParameter(double U_SL, double D, double rho_L, double rho_G, double mu_L) {
@@ -447,9 +447,9 @@ public class FlowRegimeDetector implements Serializable {
   /**
    * Check if flow is in dispersed bubble regime.
    *
-   * @param U_SL  superficial liquid velocity [m/s]
-   * @param U_SG  superficial gas velocity [m/s]
-   * @param D     pipe diameter [m]
+   * @param U_SL superficial liquid velocity [m/s]
+   * @param U_SG superficial gas velocity [m/s]
+   * @param D pipe diameter [m]
    * @param rho_L liquid density [kg/m³]
    * @param rho_G gas density [kg/m³]
    * @param sigma surface tension [N/m]
@@ -479,9 +479,9 @@ public class FlowRegimeDetector implements Serializable {
    * between aerodynamic lift and gravity forces on the liquid film.
    * </p>
    *
-   * @param U_SL  superficial liquid velocity [m/s]
-   * @param U_SG  superficial gas velocity [m/s]
-   * @param D     pipe diameter [m]
+   * @param U_SL superficial liquid velocity [m/s]
+   * @param U_SG superficial gas velocity [m/s]
+   * @param D pipe diameter [m]
    * @param rho_L liquid density [kg/m³]
    * @param rho_G gas density [kg/m³]
    * @param sigma surface tension [N/m]
@@ -510,12 +510,12 @@ public class FlowRegimeDetector implements Serializable {
   /**
    * Estimate liquid level in stratified flow.
    *
-   * @param U_SL  superficial liquid velocity [m/s]
-   * @param U_SG  superficial gas velocity [m/s]
-   * @param D     pipe diameter [m]
+   * @param U_SL superficial liquid velocity [m/s]
+   * @param U_SG superficial gas velocity [m/s]
+   * @param D pipe diameter [m]
    * @param rho_L liquid density [kg/m3]
    * @param rho_G gas density [kg/m3]
-   * @param mu_L  liquid viscosity [Pa.s]
+   * @param mu_L liquid viscosity [Pa.s]
    * @param theta pipe inclination angle [rad]
    * @return estimated liquid level [m]
    */
@@ -582,9 +582,9 @@ public class FlowRegimeDetector implements Serializable {
   /**
    * Check Kelvin-Helmholtz instability for slug transition.
    *
-   * @param U_SG  superficial gas velocity
-   * @param h_L   liquid height
-   * @param D     pipe diameter
+   * @param U_SG superficial gas velocity
+   * @param h_L liquid height
+   * @param D pipe diameter
    * @param rho_L liquid density
    * @param rho_G gas density
    * @return true if Kelvin-Helmholtz unstable condition exists
@@ -615,12 +615,12 @@ public class FlowRegimeDetector implements Serializable {
   /**
    * Check transition from smooth to wavy stratified.
    *
-   * @param U_SG  superficial gas velocity
-   * @param h_L   liquid height
-   * @param D     pipe diameter
+   * @param U_SG superficial gas velocity
+   * @param h_L liquid height
+   * @param D pipe diameter
    * @param rho_L liquid density
    * @param rho_G gas density
-   * @param mu_L  liquid viscosity
+   * @param mu_L liquid viscosity
    * @return true if transition from smooth to wavy stratified occurs
    */
   private boolean isWavyTransition(double U_SG, double h_L, double D, double rho_L, double rho_G, double mu_L) {
@@ -647,7 +647,7 @@ public class FlowRegimeDetector implements Serializable {
   /**
    * Calculate bubble rise velocity using Harmathy correlation.
    *
-   * @param D     pipe diameter (m)
+   * @param D pipe diameter (m)
    * @param rho_L liquid density (kg/m³)
    * @param rho_G gas density (kg/m³)
    * @param sigma surface tension (N/m)
@@ -664,9 +664,9 @@ public class FlowRegimeDetector implements Serializable {
   /**
    * Get flow regime transition map for visualization/debugging.
    *
-   * @param section    Pipe section with fluid properties
-   * @param U_SL_max   Maximum superficial liquid velocity (m/s)
-   * @param U_SG_max   Maximum superficial gas velocity (m/s)
+   * @param section Pipe section with fluid properties
+   * @param U_SL_max Maximum superficial liquid velocity (m/s)
+   * @param U_SG_max Maximum superficial gas velocity (m/s)
    * @param resolution Grid resolution
    * @return 2D array of flow regimes
    */

@@ -78,8 +78,8 @@ public class AdaptiveRK45Integrator implements IntegratorStrategy {
   /**
    * Constructor with custom tolerances.
    *
-   * @param absTol      absolute tolerance on local error (must be {@code > 0})
-   * @param relTol      relative tolerance on local error (must be {@code > 0})
+   * @param absTol absolute tolerance on local error (must be {@code > 0})
+   * @param relTol relative tolerance on local error (must be {@code > 0})
    * @param maxSubSteps maximum number of internal sub-steps per outer step (must be {@code >= 1})
    */
   public AdaptiveRK45Integrator(double absTol, double relTol, int maxSubSteps) {

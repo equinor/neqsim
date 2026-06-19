@@ -284,9 +284,9 @@ public class TransientWellModel implements Serializable {
     /**
      * Constructor.
      *
-     * @param time     time in hours
+     * @param time time in hours
      * @param pressure pressure in bara
-     * @param rate     rate in Sm³/day
+     * @param rate rate in Sm³/day
      */
     public PressurePoint(double time, double pressure, double rate) {
       this.time = time;
@@ -329,7 +329,7 @@ public class TransientWellModel implements Serializable {
   /**
    * Calculates drawdown pressure at a given time.
    *
-   * @param rate      production rate (Sm³/day)
+   * @param rate production rate (Sm³/day)
    * @param timeHours time since start of production (hours)
    * @return drawdown result
    */
@@ -507,8 +507,8 @@ public class TransientWellModel implements Serializable {
    * Generates logarithmically spaced time points for analysis.
    *
    * @param startHours start time (hours)
-   * @param endHours   end time (hours)
-   * @param numPoints  number of points
+   * @param endHours end time (hours)
+   * @param numPoints number of points
    * @return array of time points
    */
   public double[] generateLogTimePoints(double startHours, double endHours, int numPoints) {
@@ -552,7 +552,7 @@ public class TransientWellModel implements Serializable {
    * where T = kh/μ is the transmissibility.
    * </p>
    *
-   * @param rate    rate (Sm³/day)
+   * @param rate rate (Sm³/day)
    * @param timeSec time (seconds)
    * @return pressure drop (bar)
    */
@@ -708,7 +708,7 @@ public class TransientWellModel implements Serializable {
    * Adds a rate change to the history.
    *
    * @param timeHours time of change (hours)
-   * @param rate      rate after change (Sm³/day)
+   * @param rate rate after change (Sm³/day)
    * @return this for chaining
    */
   public TransientWellModel addRateChange(double timeHours, double rate) {
@@ -732,7 +732,7 @@ public class TransientWellModel implements Serializable {
    * Sets reservoir initial pressure.
    *
    * @param pressure pressure
-   * @param unit     unit (bara, psia)
+   * @param unit unit (bara, psia)
    * @return this for chaining
    */
   public TransientWellModel setReservoirPressure(double pressure, String unit) {
@@ -749,7 +749,7 @@ public class TransientWellModel implements Serializable {
    * Sets formation permeability.
    *
    * @param permeability permeability
-   * @param unit         unit (mD, D)
+   * @param unit unit (mD, D)
    * @return this for chaining
    */
   public TransientWellModel setPermeability(double permeability, String unit) {
@@ -766,7 +766,7 @@ public class TransientWellModel implements Serializable {
    * Sets formation thickness.
    *
    * @param thickness thickness
-   * @param unit      unit (m, ft)
+   * @param unit unit (m, ft)
    * @return this for chaining
    */
   public TransientWellModel setFormationThickness(double thickness, String unit) {
@@ -795,7 +795,7 @@ public class TransientWellModel implements Serializable {
    * Sets total compressibility.
    *
    * @param compressibility compressibility
-   * @param unit            unit (1/bar, 1/psi)
+   * @param unit unit (1/bar, 1/psi)
    * @return this for chaining
    */
   public TransientWellModel setTotalCompressibility(double compressibility, String unit) {
@@ -812,7 +812,7 @@ public class TransientWellModel implements Serializable {
    * Sets fluid viscosity.
    *
    * @param viscosity viscosity
-   * @param unit      unit (cP, mPa.s)
+   * @param unit unit (cP, mPa.s)
    * @return this for chaining
    */
   public TransientWellModel setFluidViscosity(double viscosity, String unit) {
@@ -825,7 +825,7 @@ public class TransientWellModel implements Serializable {
    * Sets wellbore radius.
    *
    * @param radius radius
-   * @param unit   unit (m, ft, in)
+   * @param unit unit (m, ft, in)
    * @return this for chaining
    */
   public TransientWellModel setWellboreRadius(double radius, String unit) {
@@ -866,7 +866,7 @@ public class TransientWellModel implements Serializable {
    * Sets drainage radius.
    *
    * @param radius radius
-   * @param unit   unit (m, ft)
+   * @param unit unit (m, ft)
    * @return this for chaining
    */
   public TransientWellModel setDrainageRadius(double radius, String unit) {

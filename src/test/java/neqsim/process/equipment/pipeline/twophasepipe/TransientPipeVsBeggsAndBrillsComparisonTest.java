@@ -123,7 +123,7 @@ public class TransientPipeVsBeggsAndBrillsComparisonTest {
   /**
    * Create a uniform inclination profile for TransientPipe.
    *
-   * @param nSections    number of sections
+   * @param nSections number of sections
    * @param angleDegrees inclination angle in degrees
    * @return array of inclinations in radians
    */

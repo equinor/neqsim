@@ -91,7 +91,7 @@ public class OperationalTagMap implements Serializable {
    * through {@link ProcessSystem#applyFieldInputs()}.
    * </p>
    *
-   * @param process   process system to update
+   * @param process process system to update
    * @param fieldData values keyed by logical tag or historian tag
    * @return map of logical tags that were applied or stored
    */
@@ -185,7 +185,7 @@ public class OperationalTagMap implements Serializable {
   /**
    * Finds a value using logical tag first and historian tag second.
    *
-   * @param binding   binding that defines accepted keys
+   * @param binding binding that defines accepted keys
    * @param fieldData source data map
    * @return matched value, or null when no value is present
    */
@@ -202,11 +202,11 @@ public class OperationalTagMap implements Serializable {
   /**
    * Validates one binding against measurement-device and automation registries.
    *
-   * @param process       process system containing measurement devices
-   * @param automation    process automation facade
-   * @param binding       binding to validate
+   * @param process process system containing measurement devices
+   * @param automation process automation facade
+   * @param binding binding to validate
    * @param historianTags set of previously seen historian tags
-   * @param result        validation result to update
+   * @param result validation result to update
    */
   private void validateBinding(ProcessSystem process, ProcessAutomation automation, OperationalTagBinding binding,
       Set<String> historianTags, ValidationResult result) {
@@ -250,7 +250,7 @@ public class OperationalTagMap implements Serializable {
    * Finds an automation variable descriptor by address.
    *
    * @param automation automation facade
-   * @param address    dot-notation automation address
+   * @param address dot-notation automation address
    * @return variable descriptor, or null when not found
    */
   private SimulationVariable findAutomationVariable(ProcessAutomation automation, String address) {

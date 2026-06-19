@@ -105,7 +105,7 @@ public class FailurePropagationTracer implements Serializable {
    *
    * @param sourceEquipment source equipment name
    * @param targetEquipment target equipment name
-   * @param delaySeconds    propagation delay in seconds
+   * @param delaySeconds propagation delay in seconds
    */
   public void setCustomDelay(String sourceEquipment, String targetEquipment, double delaySeconds) {
     customDelays.put(sourceEquipment + "->" + targetEquipment, delaySeconds);
@@ -321,11 +321,11 @@ public class FailurePropagationTracer implements Serializable {
     /**
      * Creates a propagation step.
      *
-     * @param equipmentName         name of the affected equipment
+     * @param equipmentName name of the affected equipment
      * @param estimatedDelaySeconds estimated delay from the initial failure
-     * @param cascadeDepth          depth in the cascade chain (0 = initial failure)
-     * @param effect                description of the effect on this equipment
-     * @param impactLevel           impact level
+     * @param cascadeDepth depth in the cascade chain (0 = initial failure)
+     * @param effect description of the effect on this equipment
+     * @param impactLevel impact level
      */
     public PropagationStep(String equipmentName, double estimatedDelaySeconds, int cascadeDepth, String effect,
 	ImpactLevel impactLevel) {

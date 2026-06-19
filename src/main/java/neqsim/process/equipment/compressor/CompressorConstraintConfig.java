@@ -126,7 +126,7 @@ public class CompressorConstraintConfig implements Serializable {
   /**
    * Constructor with surge and stonewall margins.
    *
-   * @param surgeMargin     minimum surge margin (0-1)
+   * @param surgeMargin minimum surge margin (0-1)
    * @param stonewallMargin minimum stonewall margin (0-1)
    */
   public CompressorConstraintConfig(double surgeMargin, double stonewallMargin) {

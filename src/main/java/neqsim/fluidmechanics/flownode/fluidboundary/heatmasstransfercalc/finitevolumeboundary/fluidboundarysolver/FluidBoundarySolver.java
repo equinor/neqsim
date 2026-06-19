@@ -43,8 +43,8 @@ public class FluidBoundarySolver implements FluidBoundarySolverInterface {
    * </p>
    *
    * @param boundary a
-   *                 {@link neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.finitevolumeboundary.fluidboundarysystem.FluidBoundarySystemInterface}
-   *                 object
+   * {@link neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.finitevolumeboundary.fluidboundarysystem.FluidBoundarySystemInterface}
+   * object
    */
   public FluidBoundarySolver(FluidBoundarySystemInterface boundary) {
     this.boundary = boundary;
@@ -68,8 +68,8 @@ public class FluidBoundarySolver implements FluidBoundarySolverInterface {
    * </p>
    *
    * @param boundary a
-   *                 {@link neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.finitevolumeboundary.fluidboundarysystem.FluidBoundarySystemInterface}
-   *                 * object
+   * {@link neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.finitevolumeboundary.fluidboundarysystem.FluidBoundarySystemInterface}
+   * * object
    * @param reactive a boolean
    */
   public FluidBoundarySolver(FluidBoundarySystemInterface boundary, boolean reactive) {

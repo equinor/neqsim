@@ -72,7 +72,7 @@ public class TPHydrateFlash extends TPflash {
   /**
    * Constructor for TPHydrateFlash.
    *
-   * @param system         a {@link neqsim.thermo.system.SystemInterface} object
+   * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param checkForSolids Set true to do solid phase check and calculations
    */
   public TPHydrateFlash(SystemInterface system, boolean checkForSolids) {
@@ -413,7 +413,7 @@ public class TPHydrateFlash extends TPflash {
    * Calculate the hydrate fraction using iterative fugacity matching.
    *
    * @param waterPhaseIndex the index of the water-bearing phase
-   * @param waterIndex      the component index of water
+   * @param waterIndex the component index of water
    */
   private void calculateHydrateFraction(int waterPhaseIndex, int waterIndex) {
     // Get total water mole fraction in the system
@@ -488,9 +488,9 @@ public class TPHydrateFlash extends TPflash {
    * The objective is to match the water fugacity between fluid and hydrate phases.
    * </p>
    *
-   * @param beta            the current hydrate fraction guess
+   * @param beta the current hydrate fraction guess
    * @param waterPhaseIndex the index of the water phase
-   * @param waterIndex      the component index of water
+   * @param waterIndex the component index of water
    * @return the fugacity difference (should be zero at equilibrium)
    */
   private double calculateHydrateObjective(double beta, int waterPhaseIndex, int waterIndex) {
@@ -509,7 +509,7 @@ public class TPHydrateFlash extends TPflash {
    * Update the system to include the hydrate phase with calculated fraction.
    *
    * @param waterPhaseIndex the index of the water-bearing phase
-   * @param waterIndex      the component index of water
+   * @param waterIndex the component index of water
    */
   private void updateSystemWithHydrate(int waterPhaseIndex, int waterIndex) {
     // Get water content in the system
@@ -646,8 +646,8 @@ public class TPHydrateFlash extends TPflash {
    * Get the cavity occupancy for a specific component.
    *
    * @param componentName the name of the component
-   * @param structure     the hydrate structure (1 or 2)
-   * @param cavityType    the cavity type (0=small, 1=large)
+   * @param structure the hydrate structure (1 or 2)
+   * @param cavityType the cavity type (0=small, 1=large)
    * @return the cavity occupancy fraction
    */
   public double getCavityOccupancy(String componentName, int structure, int cavityType) {

@@ -148,7 +148,7 @@ public class ElectrolyteScaleCalculator implements Serializable {
    * @param sr strontium [mg/L]
    * @param mg magnesium [mg/L]
    * @param na sodium [mg/L]
-   * @param k  potassium [mg/L]
+   * @param k potassium [mg/L]
    * @param fe iron(II) [mg/L]
    * @return this for chaining
    */
@@ -167,10 +167,10 @@ public class ElectrolyteScaleCalculator implements Serializable {
   /**
    * Sets anion concentrations in mg/L.
    *
-   * @param cl   chloride [mg/L]
-   * @param so4  sulphate [mg/L]
+   * @param cl chloride [mg/L]
+   * @param so4 sulphate [mg/L]
    * @param hco3 bicarbonate [mg/L]
-   * @param co3  carbonate [mg/L]
+   * @param co3 carbonate [mg/L]
    * @return this for chaining
    */
   public ElectrolyteScaleCalculator setAnions(double cl, double so4, double hco3, double co3) {

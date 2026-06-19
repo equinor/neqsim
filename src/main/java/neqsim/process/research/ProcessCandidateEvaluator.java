@@ -47,7 +47,7 @@ public class ProcessCandidateEvaluator {
    * Evaluates a candidate and updates it in place.
    *
    * @param candidate candidate to evaluate
-   * @param spec      process research specification
+   * @param spec process research specification
    */
   public void evaluate(ProcessCandidate candidate, ProcessResearchSpec spec) {
     if (candidate.getJsonDefinition() == null || !candidate.getErrors().isEmpty()) {
@@ -85,8 +85,8 @@ public class ProcessCandidateEvaluator {
    * Runs a bounded grid search for the candidate decision variables.
    *
    * @param candidate candidate being optimized
-   * @param process   built process system
-   * @param spec      process research specification
+   * @param process built process system
+   * @param spec process research specification
    */
   private void optimizeWithGrid(ProcessCandidate candidate, ProcessSystem process, ProcessResearchSpec spec) {
     ProcessSimulationEvaluator evaluator = new ProcessSimulationEvaluator(process);
@@ -130,7 +130,7 @@ public class ProcessCandidateEvaluator {
    * Adds best-point decision variable values to candidate objectives.
    *
    * @param candidate candidate to update
-   * @param spec      process research specification
+   * @param spec process research specification
    * @param bestPoint best decision variable vector
    */
   private void addBestPointObjectives(ProcessCandidate candidate, ProcessResearchSpec spec, double[] bestPoint) {
@@ -144,7 +144,7 @@ public class ProcessCandidateEvaluator {
    * Builds a Cartesian grid for decision-variable screening.
    *
    * @param variables decision variables
-   * @param maxCases  maximum number of cases
+   * @param maxCases maximum number of cases
    * @return list of grid points
    */
   private List<double[]> buildGrid(List<ProcessResearchSpec.DecisionVariable> variables, int maxCases) {
@@ -157,10 +157,10 @@ public class ProcessCandidateEvaluator {
    * Recursively builds grid points.
    *
    * @param variables decision variables
-   * @param index     current variable index
-   * @param current   current point under construction
-   * @param points    accumulated points
-   * @param maxCases  maximum number of points
+   * @param index current variable index
+   * @param current current point under construction
+   * @param points accumulated points
+   * @param maxCases maximum number of points
    */
   private void buildGridRecursive(List<ProcessResearchSpec.DecisionVariable> variables, int index, double[] current,
       List<double[]> points, int maxCases) {
@@ -183,9 +183,9 @@ public class ProcessCandidateEvaluator {
   /**
    * Scores a process against the product targets.
    *
-   * @param process       process system to score
-   * @param candidate     candidate metadata with product stream references
-   * @param spec          process research specification
+   * @param process process system to score
+   * @param candidate candidate metadata with product stream references
+   * @param spec process research specification
    * @param recordMetrics whether to record detailed metrics and warnings on the candidate
    * @return ranking score; higher is better
    */
@@ -255,7 +255,7 @@ public class ProcessCandidateEvaluator {
    * Records structured metrics on a candidate.
    *
    * @param candidate candidate to update
-   * @param metrics   metrics to record
+   * @param metrics metrics to record
    */
   private void recordMetrics(ProcessCandidate candidate, ProcessResearchMetrics metrics) {
     candidate.setMetrics(metrics);
@@ -267,9 +267,9 @@ public class ProcessCandidateEvaluator {
   /**
    * Collects process-wide energy, heat-integration, cost, emissions, and complexity metrics.
    *
-   * @param process        process system to inspect
-   * @param candidate      candidate receiving warnings when requested
-   * @param spec           process research specification
+   * @param process process system to inspect
+   * @param candidate candidate receiving warnings when requested
+   * @param spec process research specification
    * @param recordWarnings true to record warning messages on the candidate
    * @return process metrics
    */
@@ -324,10 +324,10 @@ public class ProcessCandidateEvaluator {
   /**
    * Adds pinch-analysis metrics when requested.
    *
-   * @param process        process system to analyze
-   * @param candidate      candidate receiving warnings when requested
-   * @param spec           process research specification
-   * @param metrics        metrics to update
+   * @param process process system to analyze
+   * @param candidate candidate receiving warnings when requested
+   * @param spec process research specification
+   * @param metrics metrics to update
    * @param recordWarnings true to record warning messages on the candidate
    */
   private void addHeatIntegrationMetrics(ProcessSystem process, ProcessCandidate candidate, ProcessResearchSpec spec,
@@ -354,7 +354,7 @@ public class ProcessCandidateEvaluator {
   /**
    * Adds annual operating cost metrics from energy and utility terms.
    *
-   * @param spec    process research specification
+   * @param spec process research specification
    * @param metrics metrics to update
    */
   private void addOperatingCostMetrics(ProcessResearchSpec spec, ProcessResearchMetrics metrics) {
@@ -377,9 +377,9 @@ public class ProcessCandidateEvaluator {
   /**
    * Applies process-level penalties to the product score.
    *
-   * @param score   current product score
+   * @param score current product score
    * @param metrics process metrics
-   * @param spec    process research specification
+   * @param spec process research specification
    * @return adjusted score
    */
   private double applyProcessPenalties(double score, ProcessResearchMetrics metrics, ProcessResearchSpec spec) {
@@ -398,7 +398,7 @@ public class ProcessCandidateEvaluator {
    * Finds hard synthesis constraint violations.
    *
    * @param metrics process metrics
-   * @param spec    process research specification
+   * @param spec process research specification
    * @return violation descriptions
    */
   private List<String> findConstraintViolations(ProcessResearchMetrics metrics, ProcessResearchSpec spec) {
@@ -424,8 +424,8 @@ public class ProcessCandidateEvaluator {
    *
    * @param violations violation list to update
    * @param metricName metric name
-   * @param value      metric value
-   * @param limit      finite maximum limit or infinity
+   * @param value metric value
+   * @param limit finite maximum limit or infinity
    */
   private void addViolation(List<String> violations, String metricName, double value, double limit) {
     if (isFinite(limit) && value > limit) {
@@ -447,7 +447,7 @@ public class ProcessCandidateEvaluator {
    * Evaluates optional feed-condition robustness scenarios.
    *
    * @param candidate candidate to perturb
-   * @param spec      process research specification
+   * @param spec process research specification
    * @param baseScore base-case score
    * @return worst-case score delta relative to the base case
    */
@@ -478,7 +478,7 @@ public class ProcessCandidateEvaluator {
    * Creates a perturbed candidate JSON for a robustness scenario.
    *
    * @param jsonDefinition base candidate JSON
-   * @param scenario       robustness scenario
+   * @param scenario robustness scenario
    * @return perturbed JSON
    */
   private String createScenarioJson(String jsonDefinition, ProcessResearchSpec.RobustnessScenario scenario) {
@@ -512,7 +512,7 @@ public class ProcessCandidateEvaluator {
    * Resolves the stream reference used for a product target.
    *
    * @param candidate process candidate
-   * @param target    product target
+   * @param target product target
    * @return stream reference string
    */
   private String resolveTargetReference(ProcessCandidate candidate, ProcessResearchSpec.ProductTarget target) {
@@ -543,7 +543,7 @@ public class ProcessCandidateEvaluator {
   /**
    * Safely reads product purity as overall mole fraction.
    *
-   * @param stream        stream to inspect
+   * @param stream stream to inspect
    * @param componentName component name, or null to skip purity
    * @return purity mole fraction, or NaN when unavailable
    */

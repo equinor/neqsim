@@ -218,7 +218,7 @@ public class SteadyStateDetector implements java.io.Serializable {
   /**
    * Updates a single variable with a new measurement value.
    *
-   * @param name  variable name (tag)
+   * @param name variable name (tag)
    * @param value new measurement reading
    * @throws IllegalArgumentException if the variable name is not found
    */

@@ -54,10 +54,10 @@ public final class SaturationPressureCorrelation {
    * Equation: Pb = 18.2 * ((Rs/γg)^0.83 * 10^(0.00091*T - 0.0125*API) - 1.4)
    * </p>
    *
-   * @param Rs     solution gas-oil ratio at Pb (scf/STB)
+   * @param Rs solution gas-oil ratio at Pb (scf/STB)
    * @param gammaG gas specific gravity (air = 1.0)
-   * @param API    API gravity of stock-tank oil
-   * @param T      temperature (°F)
+   * @param API API gravity of stock-tank oil
+   * @param T temperature (°F)
    * @return bubble point pressure (psia)
    */
   public static double standing(double Rs, double gammaG, double API, double T) {
@@ -79,10 +79,10 @@ public final class SaturationPressureCorrelation {
    * Improved correlation that accounts for separator conditions. Uses temperature-corrected gas gravity.
    * </p>
    *
-   * @param Rs     solution gas-oil ratio at Pb (scf/STB)
+   * @param Rs solution gas-oil ratio at Pb (scf/STB)
    * @param gammaG gas specific gravity (air = 1.0)
-   * @param API    API gravity of stock-tank oil
-   * @param T      temperature (°F)
+   * @param API API gravity of stock-tank oil
+   * @param T temperature (°F)
    * @return bubble point pressure (psia)
    */
   public static double vasquezBeggs(double Rs, double gammaG, double API, double T) {
@@ -116,10 +116,10 @@ public final class SaturationPressureCorrelation {
    * Developed for North Sea crude oils. Includes a two-step correlation with a characteristic function.
    * </p>
    *
-   * @param Rs     solution gas-oil ratio at Pb (scf/STB)
+   * @param Rs solution gas-oil ratio at Pb (scf/STB)
    * @param gammaG gas specific gravity (air = 1.0)
-   * @param API    API gravity of stock-tank oil
-   * @param T      temperature (°F)
+   * @param API API gravity of stock-tank oil
+   * @param T temperature (°F)
    * @return bubble point pressure (psia)
    */
   public static double glaso(double Rs, double gammaG, double API, double T) {
@@ -150,10 +150,10 @@ public final class SaturationPressureCorrelation {
    * Developed for Gulf of Mexico oils. Provides improved accuracy for offshore Gulf Coast crude oils.
    * </p>
    *
-   * @param Rs     solution gas-oil ratio at Pb (scf/STB)
+   * @param Rs solution gas-oil ratio at Pb (scf/STB)
    * @param gammaG gas specific gravity (air = 1.0)
-   * @param API    API gravity of stock-tank oil
-   * @param T      temperature (°F)
+   * @param API API gravity of stock-tank oil
+   * @param T temperature (°F)
    * @return bubble point pressure (psia)
    */
   public static double petroskyFarshad(double Rs, double gammaG, double API, double T) {
@@ -175,10 +175,10 @@ public final class SaturationPressureCorrelation {
    * Developed for Middle Eastern crude oils.
    * </p>
    *
-   * @param Rs     solution gas-oil ratio at Pb (scf/STB)
+   * @param Rs solution gas-oil ratio at Pb (scf/STB)
    * @param gammaG gas specific gravity (air = 1.0)
    * @param gammaO oil specific gravity (water = 1.0)
-   * @param T      temperature (°F)
+   * @param T temperature (°F)
    * @return bubble point pressure (psia)
    */
   public static double alMarhoun(double Rs, double gammaG, double gammaO, double T) {
@@ -286,10 +286,10 @@ public final class SaturationPressureCorrelation {
    * This method calculates bubble point using multiple correlations and returns statistics to help assess uncertainty.
    * </p>
    *
-   * @param Rs     solution gas-oil ratio at Pb (scf/STB)
+   * @param Rs solution gas-oil ratio at Pb (scf/STB)
    * @param gammaG gas specific gravity (air = 1.0)
-   * @param API    API gravity of stock-tank oil
-   * @param T      temperature (°F)
+   * @param API API gravity of stock-tank oil
+   * @param T temperature (°F)
    * @return array of [average, min, max, stdDev]
    */
   public static double[] estimateWithStatistics(double Rs, double gammaG, double API, double T) {
@@ -336,10 +336,10 @@ public final class SaturationPressureCorrelation {
   /**
    * Generate a comparison report of all correlations.
    *
-   * @param Rs     solution gas-oil ratio at Pb (scf/STB)
+   * @param Rs solution gas-oil ratio at Pb (scf/STB)
    * @param gammaG gas specific gravity (air = 1.0)
-   * @param API    API gravity of stock-tank oil
-   * @param T      temperature (°F)
+   * @param API API gravity of stock-tank oil
+   * @param T temperature (°F)
    * @return formatted comparison report
    */
   public static String generateComparisonReport(double Rs, double gammaG, double API, double T) {

@@ -427,7 +427,7 @@ public class ProcessSystemState implements Serializable {
   /**
    * Migrates a loaded state to the current schema version if needed.
    *
-   * @param state    the loaded state
+   * @param state the loaded state
    * @param filePath the source file path (for logging)
    * @return the migrated state
    */
@@ -529,8 +529,8 @@ public class ProcessSystemState implements Serializable {
     /**
      * Creates a validation result.
      *
-     * @param valid    whether the state is valid
-     * @param errors   list of validation errors
+     * @param valid whether the state is valid
+     * @param errors list of validation errors
      * @param warnings list of validation warnings
      */
     public ValidationResult(boolean valid, java.util.List<String> errors, java.util.List<String> warnings) {
@@ -761,7 +761,7 @@ public class ProcessSystemState implements Serializable {
      * Captures equipment-specific numeric and string properties.
      *
      * @param equipment the equipment to capture properties from
-     * @param state     the state to populate
+     * @param state the state to populate
      */
     private static void captureEquipmentProperties(ProcessEquipmentInterface equipment, EquipmentState state) {
       // Compressors (and Expanders which extend Compressor)
@@ -1087,9 +1087,9 @@ public class ProcessSystemState implements Serializable {
      * Creates a connection state.
      *
      * @param sourceEquipmentName name of the source equipment
-     * @param sourcePortName      name of the output port (e.g., "gasOutStream")
+     * @param sourcePortName name of the output port (e.g., "gasOutStream")
      * @param targetEquipmentName name of the target equipment
-     * @param targetPortName      name of the input port (e.g., "inlet")
+     * @param targetPortName name of the input port (e.g., "inlet")
      */
     public ConnectionState(String sourceEquipmentName, String sourcePortName, String targetEquipmentName,
 	String targetPortName) {

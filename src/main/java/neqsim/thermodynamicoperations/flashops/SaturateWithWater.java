@@ -136,9 +136,9 @@ public class SaturateWithWater extends QfuncFlash {
   /**
    * Restores a system to a previously captured set of absolute component mole numbers.
    *
-   * @param sys   the thermodynamic system to restore
+   * @param sys the thermodynamic system to restore
    * @param moles array of component mole numbers in component order, as produced by
-   *              {@link #captureMoles(SystemInterface)}
+   * {@link #captureMoles(SystemInterface)}
    */
   private static void restoreMoles(SystemInterface sys, double[] moles) {
     sys.setMolarFlowRates(moles);

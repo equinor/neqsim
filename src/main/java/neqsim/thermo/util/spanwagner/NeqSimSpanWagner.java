@@ -66,8 +66,8 @@ public final class NeqSimSpanWagner {
    * Evaluate ideal-gas contribution and derivatives.
    *
    * @param delta reduced density (rho / rhoc)
-   * @param tau   inverse reduced temperature (Tc / T)
-   * @param d     holder for derivative terms that will be populated
+   * @param tau inverse reduced temperature (Tc / T)
+   * @param d holder for derivative terms that will be populated
    */
   private static void alpha0(double delta, double tau, Derivs d) {
     d.a0 = Math.log(delta) + LEAD_A1 + LEAD_A2 * tau + OFFSET_A1 + OFFSET_A2 * tau + LOGTAU_A * Math.log(tau);
@@ -86,8 +86,8 @@ public final class NeqSimSpanWagner {
    * Evaluate residual contribution and derivatives (power + gaussian terms).
    *
    * @param delta reduced density (rho / rhoc)
-   * @param tau   inverse reduced temperature (Tc / T)
-   * @param d     holder for derivative terms that will be populated
+   * @param tau inverse reduced temperature (Tc / T)
+   * @param d holder for derivative terms that will be populated
    */
   private static void alphar(double delta, double tau, Derivs d) {
     for (int i = 0; i < N.length; i++) {
@@ -126,9 +126,9 @@ public final class NeqSimSpanWagner {
   /**
    * Solve for reduced density delta given temperature and pressure.
    *
-   * @param tau      inverse reduced temperature (Tc / T)
+   * @param tau inverse reduced temperature (Tc / T)
    * @param pressure system pressure in Pascal
-   * @param type     phase type used for the initial guess
+   * @param type phase type used for the initial guess
    * @return reduced density
    */
   private static double density(double tau, double pressure, PhaseType type) {
@@ -156,8 +156,8 @@ public final class NeqSimSpanWagner {
    * Compute thermodynamic properties for given temperature and pressure.
    *
    * @param temperature Kelvin
-   * @param pressure    Pascal
-   * @param type        phase type for which properties are calculated
+   * @param pressure Pascal
+   * @param type phase type for which properties are calculated
    * @return array [rho, Z, h, s, cp, cv, u, g, w]
    */
   public static double[] getProperties(double temperature, double pressure, PhaseType type) {

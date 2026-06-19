@@ -122,8 +122,8 @@ public class DegradedOperationOptimizer implements Serializable {
   /**
    * Creates optimizer with specified streams.
    *
-   * @param processSystem     the process system
-   * @param feedStreamName    name of the feed stream
+   * @param processSystem the process system
+   * @param feedStreamName name of the feed stream
    * @param productStreamName name of the product stream
    */
   public DegradedOperationOptimizer(ProcessSystem processSystem, String feedStreamName, String productStreamName) {
@@ -203,7 +203,7 @@ public class DegradedOperationOptimizer implements Serializable {
    * Optimizes operation with a specific failure mode.
    *
    * @param equipmentName name of the failed equipment
-   * @param failureMode   the failure mode
+   * @param failureMode the failure mode
    * @return optimization result
    */
   public DegradedOperationResult optimizeWithEquipmentDown(String equipmentName, EquipmentFailureMode failureMode) {
@@ -524,8 +524,8 @@ public class DegradedOperationOptimizer implements Serializable {
     /**
      * Creates a recovery action.
      *
-     * @param phase             the recovery phase
-     * @param description       action description
+     * @param phase the recovery phase
+     * @param description action description
      * @param estimatedDuration duration in hours
      */
     public RecoveryAction(Phase phase, String description, double estimatedDuration) {

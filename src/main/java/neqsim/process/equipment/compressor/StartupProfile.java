@@ -43,9 +43,9 @@ public class StartupProfile implements Serializable {
     /**
      * Constructor for ProfilePoint.
      *
-     * @param time             elapsed time from start in seconds
-     * @param targetSpeed      target speed at this point in RPM
-     * @param holdDuration     time to hold at this speed in seconds
+     * @param time elapsed time from start in seconds
+     * @param targetSpeed target speed at this point in RPM
+     * @param holdDuration time to hold at this speed in seconds
      * @param checkDescription description of checks to perform
      */
     public ProfilePoint(double time, double targetSpeed, double holdDuration, String checkDescription) {
@@ -126,9 +126,9 @@ public class StartupProfile implements Serializable {
   /**
    * Add a custom profile point.
    *
-   * @param time             elapsed time in seconds
-   * @param targetSpeed      target speed in RPM (-1 means ramp to final)
-   * @param holdDuration     time to hold at this speed in seconds
+   * @param time elapsed time in seconds
+   * @param targetSpeed target speed in RPM (-1 means ramp to final)
+   * @param holdDuration time to hold at this speed in seconds
    * @param checkDescription description of checks
    */
   public void addProfilePoint(double time, double targetSpeed, double holdDuration, String checkDescription) {
@@ -145,7 +145,7 @@ public class StartupProfile implements Serializable {
   /**
    * Get the target speed at a given elapsed time during startup.
    *
-   * @param elapsedTime      time since startup began in seconds
+   * @param elapsedTime time since startup began in seconds
    * @param finalTargetSpeed the final target operating speed in RPM
    * @return target speed in RPM
    */
@@ -235,10 +235,10 @@ public class StartupProfile implements Serializable {
   /**
    * Check if startup is complete at the given time.
    *
-   * @param elapsedTime  time since startup began in seconds
+   * @param elapsedTime time since startup began in seconds
    * @param currentSpeed current actual speed in RPM
-   * @param targetSpeed  final target speed in RPM
-   * @param tolerance    speed tolerance in RPM
+   * @param targetSpeed final target speed in RPM
+   * @param tolerance speed tolerance in RPM
    * @return true if startup is complete
    */
   public boolean isStartupComplete(double elapsedTime, double currentSpeed, double targetSpeed, double tolerance) {
@@ -456,7 +456,7 @@ public class StartupProfile implements Serializable {
   /**
    * Create a slow startup profile (for cold starts).
    *
-   * @param finalSpeed  target operating speed in RPM
+   * @param finalSpeed target operating speed in RPM
    * @param minimumIdle minimum idle speed in RPM
    * @return a slow startup profile
    */

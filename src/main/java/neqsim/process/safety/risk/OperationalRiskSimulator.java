@@ -93,9 +93,9 @@ public class OperationalRiskSimulator implements Serializable {
     /**
      * Creates equipment reliability data.
      *
-     * @param name        equipment name
+     * @param name equipment name
      * @param failureRate failures per year
-     * @param mttr        mean time to repair in hours
+     * @param mttr mean time to repair in hours
      */
     public EquipmentReliability(String name, double failureRate, double mttr) {
       this.equipmentName = name;
@@ -202,8 +202,8 @@ public class OperationalRiskSimulator implements Serializable {
    * Adds equipment reliability data.
    *
    * @param equipmentName name of the equipment
-   * @param failureRate   failures per year
-   * @param mttr          mean time to repair in hours
+   * @param failureRate failures per year
+   * @param mttr mean time to repair in hours
    * @return this simulator for chaining
    */
   public OperationalRiskSimulator addEquipmentReliability(String equipmentName, double failureRate, double mttr) {
@@ -215,8 +215,8 @@ public class OperationalRiskSimulator implements Serializable {
    * Adds equipment reliability using OREDA-style data.
    *
    * @param equipmentName equipment name
-   * @param mtbf          mean time between failures in hours
-   * @param mttr          mean time to repair in hours
+   * @param mtbf mean time between failures in hours
+   * @param mttr mean time to repair in hours
    * @return this simulator for chaining
    */
   public OperationalRiskSimulator addEquipmentMtbf(String equipmentName, double mtbf, double mttr) {
@@ -238,7 +238,7 @@ public class OperationalRiskSimulator implements Serializable {
   /**
    * Runs the Monte Carlo simulation.
    *
-   * @param iterations      number of Monte Carlo iterations
+   * @param iterations number of Monte Carlo iterations
    * @param timeHorizonDays simulation time horizon in days
    * @return simulation result
    */
@@ -388,7 +388,7 @@ public class OperationalRiskSimulator implements Serializable {
   /**
    * Generates a production forecast with confidence intervals.
    *
-   * @param days       number of days to forecast
+   * @param days number of days to forecast
    * @param iterations Monte Carlo iterations
    * @return production forecast
    */

@@ -72,11 +72,11 @@ public class InstrumentSpecification implements java.io.Serializable {
    * Constructor for InstrumentSpecification.
    *
    * @param isaSymbol ISA-5.1 functional identification (e.g. "PT", "TT")
-   * @param service   service description
-   * @param rangeMin  measurement range minimum
-   * @param rangeMax  measurement range maximum
+   * @param service service description
+   * @param rangeMin measurement range minimum
+   * @param rangeMax measurement range maximum
    * @param rangeUnit engineering unit for range
-   * @param ioType    I/O type ("AI", "AO", "DI", "DO")
+   * @param ioType I/O type ("AI", "AO", "DI", "DO")
    */
   public InstrumentSpecification(String isaSymbol, String service, double rangeMin, double rangeMax, String rangeUnit,
       String ioType) {
@@ -94,8 +94,8 @@ public class InstrumentSpecification implements java.io.Serializable {
    * Constructor for discrete/switch instruments (no range).
    *
    * @param isaSymbol ISA-5.1 functional identification (e.g. "PSH", "LSLL")
-   * @param service   service description
-   * @param ioType    I/O type ("DI" or "DO")
+   * @param service service description
+   * @param ioType I/O type ("DI" or "DO")
    * @param silRating SIL level (0-3)
    */
   public InstrumentSpecification(String isaSymbol, String service, String ioType, int silRating) {

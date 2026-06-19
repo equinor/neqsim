@@ -80,7 +80,7 @@ public class StirredTankReactor extends TwoPortEquipment {
   /**
    * Constructor for StirredTankReactor with inlet stream.
    *
-   * @param name        name of the reactor
+   * @param name name of the reactor
    * @param inletStream inlet feed stream
    */
   public StirredTankReactor(String name, StreamInterface inletStream) {
@@ -126,7 +126,7 @@ public class StirredTankReactor extends TwoPortEquipment {
    * Set the reactor operating temperature with unit.
    *
    * @param temperature temperature value
-   * @param unit        temperature unit ("K", "C", "F")
+   * @param unit temperature unit ("K", "C", "F")
    */
   public void setReactorTemperature(double temperature, String unit) {
     if ("C".equalsIgnoreCase(unit)) {

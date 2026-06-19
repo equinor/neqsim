@@ -105,7 +105,7 @@ public class SulfurFilter extends Filter {
   /**
    * Creates a new SulfurFilter.
    *
-   * @param name     name of the sulfur filter
+   * @param name name of the sulfur filter
    * @param inStream inlet gas stream (may contain solid S8)
    */
   public SulfurFilter(String name, StreamInterface inStream) {

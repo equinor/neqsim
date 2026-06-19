@@ -45,7 +45,7 @@ public class HybridModelAdapter implements MLCorrectionInterface, Serializable {
    * Creates a new hybrid model adapter.
    *
    * @param featureNames names of input features
-   * @param strategy     combination strategy
+   * @param strategy combination strategy
    */
   public HybridModelAdapter(String[] featureNames, CombinationStrategy strategy) {
     this.featureNames = featureNames.clone();
@@ -196,7 +196,7 @@ public class HybridModelAdapter implements MLCorrectionInterface, Serializable {
    * Sets the model weights directly (for testing or simple models).
    *
    * @param weights array of weights
-   * @param bias    bias term
+   * @param bias bias term
    */
   public void setLinearModel(double[] weights, double bias) {
     if (weights.length == this.weights.length) {
@@ -242,7 +242,7 @@ public class HybridModelAdapter implements MLCorrectionInterface, Serializable {
    * </p>
    *
    * @param featureMatrix training features (samples x features)
-   * @param targets       target correction values
+   * @param targets target correction values
    */
   public void trainLinear(double[][] featureMatrix, double[] targets) {
     int n = featureMatrix.length;

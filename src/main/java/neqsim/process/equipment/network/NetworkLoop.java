@@ -58,7 +58,7 @@ public class NetworkLoop implements Serializable {
     /**
      * Create a loop member.
      *
-     * @param pipeName  the pipeline name
+     * @param pipeName the pipeline name
      * @param direction the direction (+1 or -1)
      */
     public LoopMember(String pipeName, int direction) {
@@ -113,7 +113,7 @@ public class NetworkLoop implements Serializable {
   /**
    * Add a pipeline to this loop.
    *
-   * @param pipeName  the pipeline name
+   * @param pipeName the pipeline name
    * @param direction +1 if flow direction aligns with loop traversal, -1 otherwise
    */
   public void addMember(String pipeName, int direction) {

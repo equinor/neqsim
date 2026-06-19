@@ -109,10 +109,10 @@ public class PinchAnalysis implements Serializable {
   /**
    * Add a hot stream (needs cooling).
    *
-   * @param name         stream name
+   * @param name stream name
    * @param supplyTemp_C supply temperature in Celsius
    * @param targetTemp_C target temperature in Celsius
-   * @param mCp          heat capacity flow rate in kW/K
+   * @param mCp heat capacity flow rate in kW/K
    */
   public void addHotStream(String name, double supplyTemp_C, double targetTemp_C, double mCp) {
     hotStreams.add(new HeatStream(name, supplyTemp_C, targetTemp_C, mCp));
@@ -121,10 +121,10 @@ public class PinchAnalysis implements Serializable {
   /**
    * Add a cold stream (needs heating).
    *
-   * @param name         stream name
+   * @param name stream name
    * @param supplyTemp_C supply temperature in Celsius
    * @param targetTemp_C target temperature in Celsius
-   * @param mCp          heat capacity flow rate in kW/K
+   * @param mCp heat capacity flow rate in kW/K
    */
   public void addColdStream(String name, double supplyTemp_C, double targetTemp_C, double mCp) {
     coldStreams.add(new HeatStream(name, supplyTemp_C, targetTemp_C, mCp));
@@ -152,8 +152,8 @@ public class PinchAnalysis implements Serializable {
    * higher or lower than the specified target temperature.
    * </p>
    *
-   * @param name                display name for this stream in the pinch analysis
-   * @param stream              the NeqSim process stream (must have been run)
+   * @param name display name for this stream in the pinch analysis
+   * @param stream the NeqSim process stream (must have been run)
    * @param outletTemperature_C the outlet/target temperature in Celsius
    */
   public void addProcessStream(String name, StreamInterface stream, double outletTemperature_C) {
@@ -318,7 +318,7 @@ public class PinchAnalysis implements Serializable {
    * available.
    * </p>
    *
-   * @param process     the ProcessSystem to scan (must have been run)
+   * @param process the ProcessSystem to scan (must have been run)
    * @param deltaTmin_C minimum approach temperature in Celsius
    * @return a new PinchAnalysis populated with streams from the process
    */
@@ -521,7 +521,7 @@ public class PinchAnalysis implements Serializable {
    * Build sorted temperature array for composite curve.
    *
    * @param streams list of streams
-   * @param isCold  true if cold streams
+   * @param isCold true if cold streams
    * @return sorted temperature array in Kelvin (descending)
    */
   private double[] buildCompositeTemperatures(List<HeatStream> streams, boolean isCold) {
@@ -541,9 +541,9 @@ public class PinchAnalysis implements Serializable {
   /**
    * Build cumulative enthalpy array for composite curve.
    *
-   * @param streams   list of streams
+   * @param streams list of streams
    * @param tempArray sorted temperature array (descending)
-   * @param isCold    true if cold streams
+   * @param isCold true if cold streams
    * @return cumulative enthalpy array in kW
    */
   private double[] buildCompositeEnthalpy(List<HeatStream> streams, double[] tempArray, boolean isCold) {

@@ -391,7 +391,7 @@ public class RelativePermeabilityGenerator {
    * $$ K_{r,norm} = S_n^n $$
    *
    * @param sn Normalized saturation in range [0, 1]
-   * @param n  Corey exponent (must be positive)
+   * @param n Corey exponent (must be positive)
    * @return Normalized relative permeability [0, 1]
    */
   static double coreyCurve(double sn, double n) {
@@ -408,9 +408,9 @@ public class RelativePermeabilityGenerator {
    * $$ K_{r,norm} = \frac{S_n^L}{S_n^L + E \cdot (1 - S_n)^T} $$
    *
    * @param sn Normalized saturation in range [0, 1]
-   * @param l  L parameter (controls low-saturation curvature, must be positive)
-   * @param e  E parameter (controls mid-range position, must be positive)
-   * @param t  T parameter (controls high-saturation curvature, must be positive)
+   * @param l L parameter (controls low-saturation curvature, must be positive)
+   * @param e E parameter (controls mid-range position, must be positive)
+   * @param t T parameter (controls high-saturation curvature, must be positive)
    * @return Normalized relative permeability [0, 1]
    */
   static double letCurve(double sn, double l, double e, double t) {
@@ -434,7 +434,7 @@ public class RelativePermeabilityGenerator {
   /**
    * Normalize water saturation for water relative permeability.
    *
-   * @param sw   Water saturation
+   * @param sw Water saturation
    * @param swcr Critical water saturation
    * @param sorw Residual oil saturation to water
    * @return Normalized water saturation [0, 1]
@@ -450,8 +450,8 @@ public class RelativePermeabilityGenerator {
   /**
    * Normalize water saturation for oil relative permeability in water-oil system.
    *
-   * @param sw   Water saturation
-   * @param swc  Connate water saturation
+   * @param sw Water saturation
+   * @param swc Connate water saturation
    * @param sorw Residual oil saturation to water
    * @return Normalized water saturation [0, 1]
    */
@@ -466,9 +466,9 @@ public class RelativePermeabilityGenerator {
   /**
    * Normalize gas saturation for gas relative permeability.
    *
-   * @param sg   Gas saturation
+   * @param sg Gas saturation
    * @param sgcr Critical gas saturation
-   * @param swc  Connate water saturation
+   * @param swc Connate water saturation
    * @param sorg Residual oil saturation to gas
    * @return Normalized gas saturation [0, 1]
    */
@@ -483,9 +483,9 @@ public class RelativePermeabilityGenerator {
   /**
    * Normalize gas saturation for oil relative permeability in gas-oil system.
    *
-   * @param sg   Gas saturation
+   * @param sg Gas saturation
    * @param sgcr Critical gas saturation
-   * @param swc  Connate water saturation
+   * @param swc Connate water saturation
    * @param sorg Residual oil saturation to gas
    * @return Normalized gas saturation [0, 1]
    */
@@ -519,8 +519,8 @@ public class RelativePermeabilityGenerator {
    * Generate an array of evenly spaced values from start to end (inclusive).
    *
    * @param start First value
-   * @param end   Last value
-   * @param n     Number of points
+   * @param end Last value
+   * @param n Number of points
    * @return Array of evenly spaced values
    */
   private static double[] linspace(double start, double end, int n) {

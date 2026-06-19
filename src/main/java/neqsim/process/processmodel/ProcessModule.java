@@ -298,7 +298,7 @@ public class ProcessModule extends SimulationBaseClass {
    *
    * @return a {@link java.lang.Thread} object
    * @deprecated Use {@link #runAsTask()} instead for better resource management. This method creates a new unmanaged
-   *             thread directly.
+   * thread directly.
    */
   @Deprecated
   public Thread runAsThread() {
@@ -421,7 +421,7 @@ public class ProcessModule extends SimulationBaseClass {
   /**
    * Get unit operations that failed mass balance check based on percentage error threshold.
    *
-   * @param unit             unit for mass flow rate (e.g., "kg/sec", "kg/hr", "mole/sec")
+   * @param unit unit for mass flow rate (e.g., "kg/sec", "kg/hr", "mole/sec")
    * @param percentThreshold percentage error threshold (default: 0.1%)
    * @return a map with failed unit operation names and their mass balance results
    */
@@ -599,7 +599,7 @@ public class ProcessModule extends SimulationBaseClass {
    * </p>
    *
    * @return BottleneckResult containing the bottleneck equipment, limiting constraint, and utilization; returns empty
-   *         result if no constrained equipment found
+   * result if no constrained equipment found
    */
   public neqsim.process.equipment.capacity.BottleneckResult findBottleneck() {
     neqsim.process.equipment.capacity.CapacityConstrainedEquipment bottleneckEquipment = null;

@@ -19,9 +19,9 @@ public class ProcessLoader {
   /**
    * Loads a process from a YAML file or YAML string and initializes the process system.
    *
-   * @param yamlFile   the YAML file containing the process configuration (nullable if yamlString is used)
+   * @param yamlFile the YAML file containing the process configuration (nullable if yamlString is used)
    * @param yamlString the YAML string containing the process configuration (nullable if yamlFile is used)
-   * @param process    the process system to initialize
+   * @param process the process system to initialize
    * @throws java.lang.Exception if loading or parsing fails
    */
   public static void loadProcessFromYaml(File yamlFile, String yamlString, ProcessSystem process) throws Exception {
@@ -51,7 +51,7 @@ public class ProcessLoader {
    * Loads a process from a YAML file and initializes the process system.
    *
    * @param yamlFile the YAML file containing the process configuration
-   * @param process  the process system to initialize
+   * @param process the process system to initialize
    * @throws java.lang.Exception if loading or parsing fails
    */
   public static void loadProcessFromYaml(File yamlFile, ProcessSystem process) throws Exception {
@@ -62,7 +62,7 @@ public class ProcessLoader {
    * Loads a process from a YAML string and initializes the process system.
    *
    * @param yamlString the YAML string containing the process configuration
-   * @param process    the process system to initialize
+   * @param process the process system to initialize
    * @throws java.lang.Exception if loading or parsing fails
    */
   public static void loadProcessFromYaml(String yamlString, ProcessSystem process) throws Exception {

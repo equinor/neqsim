@@ -179,7 +179,7 @@ public final class TaskResultValidator implements Serializable {
    * Validate the key_results section.
    *
    * @param keyResults the key_results object
-   * @param report     validation report to append to
+   * @param report validation report to append to
    */
   private static void validateKeyResults(JsonObject keyResults, ValidationReport report) {
     if (keyResults == null || keyResults.size() == 0) {
@@ -198,7 +198,7 @@ public final class TaskResultValidator implements Serializable {
    * Validate the validation section.
    *
    * @param validation the validation object
-   * @param report     validation report to append to
+   * @param report validation report to append to
    */
   private static void validateValidationSection(JsonObject validation, ValidationReport report) {
     if (validation == null || validation.size() == 0) {
@@ -214,7 +214,7 @@ public final class TaskResultValidator implements Serializable {
    * Validate the uncertainty section.
    *
    * @param uncertainty the uncertainty element
-   * @param report      validation report to append to
+   * @param report validation report to append to
    */
   private static void validateUncertaintySection(JsonElement uncertainty, ValidationReport report) {
     if (!uncertainty.isJsonObject()) {
@@ -241,7 +241,7 @@ public final class TaskResultValidator implements Serializable {
    * Validate the risk_evaluation section.
    *
    * @param riskEval the risk_evaluation element
-   * @param report   validation report to append to
+   * @param report validation report to append to
    */
   private static void validateRiskEvaluation(JsonElement riskEval, ValidationReport report) {
     if (!riskEval.isJsonObject()) {
@@ -280,7 +280,7 @@ public final class TaskResultValidator implements Serializable {
    * Validate the figure_discussion section.
    *
    * @param figDisc the figure_discussion element
-   * @param report  validation report to append to
+   * @param report validation report to append to
    */
   private static void validateFigureDiscussion(JsonElement figDisc, ValidationReport report) {
     if (!figDisc.isJsonArray()) {
@@ -311,7 +311,7 @@ public final class TaskResultValidator implements Serializable {
    * </p>
    *
    * @param standardsElem the standards_applied element
-   * @param report        validation report to append to
+   * @param report validation report to append to
    */
   private static void validateStandardsApplied(JsonElement standardsElem, ValidationReport report) {
     if (!standardsElem.isJsonArray()) {
@@ -362,7 +362,7 @@ public final class TaskResultValidator implements Serializable {
     /**
      * Add an error.
      *
-     * @param field   the JSON field with the issue
+     * @param field the JSON field with the issue
      * @param message error description
      */
     public void addError(String field, String message) {
@@ -372,7 +372,7 @@ public final class TaskResultValidator implements Serializable {
     /**
      * Add a warning.
      *
-     * @param field   the JSON field with the issue
+     * @param field the JSON field with the issue
      * @param message warning description
      */
     public void addWarning(String field, String message) {
@@ -471,7 +471,7 @@ public final class TaskResultValidator implements Serializable {
       /**
        * Constructor.
        *
-       * @param field   field path
+       * @param field field path
        * @param message issue message
        */
       Issue(String field, String message) {

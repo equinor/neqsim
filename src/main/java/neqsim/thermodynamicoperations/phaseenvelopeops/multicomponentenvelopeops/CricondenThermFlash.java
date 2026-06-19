@@ -50,10 +50,10 @@ public class CricondenThermFlash extends PTphaseEnvelope {
   /**
    * Constructor for CricondenThermFlash.
    *
-   * @param system          the thermodynamic system
-   * @param name            name identifier
-   * @param phaseFraction   vapor phase fraction (typically 1 - 1e-10 for dew point)
-   * @param cricondenTherm  array of length 3: [T_K, P_bar, ...] initial estimate and output
+   * @param system the thermodynamic system
+   * @param name name identifier
+   * @param phaseFraction vapor phase fraction (typically 1 - 1e-10 for dew point)
+   * @param cricondenTherm array of length 3: [T_K, P_bar, ...] initial estimate and output
    * @param cricondenThermX liquid phase mole fractions at the cricondentherm estimate
    * @param cricondenThermY vapor phase mole fractions at the cricondentherm estimate
    */
@@ -171,8 +171,8 @@ public class CricondenThermFlash extends PTphaseEnvelope {
    * Update phase compositions from ln(K) values using the Rachford-Rice formulation.
    *
    * @param lnK array of ln(K_i) values
-   * @param T   temperature in K
-   * @param P   pressure in bar
+   * @param T temperature in K
+   * @param P pressure in bar
    */
   private void updateCompositions(double[] lnK, double T, double P) {
     double sumx = 0.0;
@@ -207,8 +207,8 @@ public class CricondenThermFlash extends PTphaseEnvelope {
    * </p>
    *
    * @param lnK array of ln(K_i) values
-   * @param T   temperature in K
-   * @param P   pressure in bar
+   * @param T temperature in K
+   * @param P pressure in bar
    * @return (n+2) residual vector
    */
   private double[] buildResidual(double[] lnK, double T, double P) {
@@ -259,8 +259,8 @@ public class CricondenThermFlash extends PTphaseEnvelope {
    * Build the (n+2)x(n+2) Jacobian matrix for the simultaneous Newton system.
    *
    * @param lnK array of ln(K_i) values
-   * @param T   temperature in K
-   * @param P   pressure in bar
+   * @param T temperature in K
+   * @param P pressure in bar
    * @return (n+2)x(n+2) Jacobian matrix
    */
   private double[][] buildJacobian(double[] lnK, double T, double P) {
@@ -406,7 +406,7 @@ public class CricondenThermFlash extends PTphaseEnvelope {
    * Solve a linear system J*delta = -g using Gaussian elimination with partial pivoting.
    *
    * @param jac the Jacobian matrix (n x n), will be modified in-place
-   * @param g   the residual vector (n), used to form the RHS = -g
+   * @param g the residual vector (n), used to form the RHS = -g
    * @return the solution vector delta, or null if the system is singular
    */
   private double[] solveLinearSystem(double[][] jac, double[] g) {

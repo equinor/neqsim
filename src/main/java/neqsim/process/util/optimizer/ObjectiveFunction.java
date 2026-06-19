@@ -69,10 +69,10 @@ public interface ObjectiveFunction {
   /**
    * Create a custom objective function.
    *
-   * @param name      objective name
+   * @param name objective name
    * @param evaluator function to evaluate the objective
    * @param direction optimization direction
-   * @param unit      unit string
+   * @param unit unit string
    * @return new ObjectiveFunction instance
    */
   static ObjectiveFunction create(String name, ToDoubleFunction<ProcessSystem> evaluator, Direction direction,

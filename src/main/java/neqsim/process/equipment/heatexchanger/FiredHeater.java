@@ -83,7 +83,7 @@ public class FiredHeater extends Heater {
   /**
    * Creates a fired heater with an inlet stream.
    *
-   * @param name        equipment name
+   * @param name equipment name
    * @param inletStream inlet process stream
    */
   public FiredHeater(String name, StreamInterface inletStream) {
@@ -271,7 +271,7 @@ public class FiredHeater extends Heater {
    * Converts power from Watts to the specified unit.
    *
    * @param valueW power in Watts
-   * @param unit   target unit
+   * @param unit target unit
    * @return converted value
    */
   private double convertPower(double valueW, String unit) {

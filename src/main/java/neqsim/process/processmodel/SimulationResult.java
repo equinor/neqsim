@@ -55,9 +55,9 @@ public class SimulationResult {
     /**
      * Creates an error detail.
      *
-     * @param code        error code (e.g., "MISSING_INLET", "FLUID_ERROR")
-     * @param message     human-readable error description
-     * @param unit        name of the equipment that caused the error (nullable)
+     * @param code error code (e.g., "MISSING_INLET", "FLUID_ERROR")
+     * @param message human-readable error description
+     * @param unit name of the equipment that caused the error (nullable)
      * @param remediation actionable fix description
      */
     public ErrorDetail(String code, String message, String unit, String remediation) {
@@ -138,11 +138,11 @@ public class SimulationResult {
   /**
    * Private constructor — use static factory methods.
    *
-   * @param status        the result status
+   * @param status the result status
    * @param processSystem the built process system (nullable on error)
-   * @param reportJson    the simulation report JSON (nullable if not run)
-   * @param errors        list of errors
-   * @param warnings      list of warnings
+   * @param reportJson the simulation report JSON (nullable if not run)
+   * @param errors list of errors
+   * @param warnings list of warnings
    */
   private SimulationResult(Status status, ProcessSystem processSystem, String reportJson, List<ErrorDetail> errors,
       List<String> warnings) {
@@ -152,12 +152,12 @@ public class SimulationResult {
   /**
    * Private constructor — use static factory methods.
    *
-   * @param status        the result status
+   * @param status the result status
    * @param processSystem the built process system (nullable on error)
-   * @param reportJson    the simulation report JSON (nullable if not run)
-   * @param errors        list of errors
-   * @param warnings      list of warnings
-   * @param metadata      optional build metadata from advanced JSON sections
+   * @param reportJson the simulation report JSON (nullable if not run)
+   * @param errors list of errors
+   * @param warnings list of warnings
+   * @param metadata optional build metadata from advanced JSON sections
    */
   private SimulationResult(Status status, ProcessSystem processSystem, String reportJson, List<ErrorDetail> errors,
       List<String> warnings, JsonObject metadata) {
@@ -172,9 +172,9 @@ public class SimulationResult {
   /**
    * Creates a success result.
    *
-   * @param process    the built and optionally run process system
+   * @param process the built and optionally run process system
    * @param reportJson the simulation report JSON (nullable if not run)
-   * @param warnings   list of non-fatal warnings
+   * @param warnings list of non-fatal warnings
    * @return the success result
    */
   public static SimulationResult success(ProcessSystem process, String reportJson, List<String> warnings) {
@@ -184,10 +184,10 @@ public class SimulationResult {
   /**
    * Creates a success result with build metadata.
    *
-   * @param process    the built and optionally run process system
+   * @param process the built and optionally run process system
    * @param reportJson the simulation report JSON (nullable if not run)
-   * @param warnings   list of non-fatal warnings
-   * @param metadata   optional build metadata from advanced JSON sections
+   * @param warnings list of non-fatal warnings
+   * @param metadata optional build metadata from advanced JSON sections
    * @return the success result
    */
   public static SimulationResult success(ProcessSystem process, String reportJson, List<String> warnings,
@@ -199,7 +199,7 @@ public class SimulationResult {
   /**
    * Creates a failure result with no process system.
    *
-   * @param errors   the list of errors
+   * @param errors the list of errors
    * @param warnings the list of warnings
    * @return the failure result
    */
@@ -210,8 +210,8 @@ public class SimulationResult {
   /**
    * Creates a failure result with a partially built process system.
    *
-   * @param process  the partially built process system
-   * @param errors   the list of errors
+   * @param process the partially built process system
+   * @param errors the list of errors
    * @param warnings the list of warnings
    * @return the failure result
    */
@@ -222,8 +222,8 @@ public class SimulationResult {
   /**
    * Creates a single-error failure result.
    *
-   * @param code        error code
-   * @param message     error message
+   * @param code error code
+   * @param message error message
    * @param remediation how to fix
    * @return the failure result
    */

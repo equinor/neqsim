@@ -37,9 +37,9 @@ public class GasPhysicalProperties extends PhysicalProperties {
    * Constructor for GasPhysicalProperties.
    * </p>
    *
-   * @param phase                            a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param binaryDiffusionCoefficientMethod a int
-   * @param multicomponentDiffusionMethod    a int
+   * @param multicomponentDiffusionMethod a int
    */
   public GasPhysicalProperties(PhaseInterface phase, int binaryDiffusionCoefficientMethod,
       int multicomponentDiffusionMethod) {

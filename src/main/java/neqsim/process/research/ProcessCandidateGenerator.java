@@ -68,7 +68,7 @@ public class ProcessCandidateGenerator {
   /**
    * Adds the default phase-separation candidate when applicable.
    *
-   * @param spec       process research specification
+   * @param spec process research specification
    * @param candidates candidate list to append to
    */
   private void addPhaseSeparationCandidate(ProcessResearchSpec spec, List<ProcessCandidate> candidates) {
@@ -93,7 +93,7 @@ public class ProcessCandidateGenerator {
   /**
    * Adds a gas-compression candidate when applicable.
    *
-   * @param spec       process research specification
+   * @param spec process research specification
    * @param candidates candidate list to append to
    */
   private void addCompressionCandidate(ProcessResearchSpec spec, List<ProcessCandidate> candidates) {
@@ -123,9 +123,9 @@ public class ProcessCandidateGenerator {
   /**
    * Adds candidates from explicit process-network operation options.
    *
-   * @param spec             process research specification
+   * @param spec process research specification
    * @param operationOptions process-network operation options to convert to candidates
-   * @param candidates       candidate list to append to
+   * @param candidates candidate list to append to
    */
   private void addOperationOptionCandidates(ProcessResearchSpec spec, List<OperationOption> operationOptions,
       List<ProcessCandidate> candidates) {
@@ -155,9 +155,9 @@ public class ProcessCandidateGenerator {
   /**
    * Adds graph-enumerated process-network path candidates.
    *
-   * @param spec             process research specification
+   * @param spec process research specification
    * @param operationOptions process-network operation options used to build the synthesis graph
-   * @param candidates       candidate list to append to
+   * @param candidates candidate list to append to
    */
   private void addProcessNetworkPathCandidates(ProcessResearchSpec spec, List<OperationOption> operationOptions,
       List<ProcessCandidate> candidates) {
@@ -215,7 +215,7 @@ public class ProcessCandidateGenerator {
   /**
    * Creates a synthesis graph from explicit and template-library operations.
    *
-   * @param spec             process research specification
+   * @param spec process research specification
    * @param operationOptions operation options to include
    * @return populated synthesis graph
    */
@@ -235,8 +235,8 @@ public class ProcessCandidateGenerator {
    * Adds product stream references based on the final equipment type in a generated path.
    *
    * @param candidate candidate to update
-   * @param unitName  terminal unit name
-   * @param option    terminal operation option
+   * @param unitName terminal unit name
+   * @param option terminal operation option
    */
   private void addTerminalProductReferences(ProcessCandidate candidate, String unitName, OperationOption option) {
     if ("Separator".equalsIgnoreCase(option.getEquipmentType())
@@ -275,7 +275,7 @@ public class ProcessCandidateGenerator {
   /**
    * Adds reactor-containing candidates from reaction options.
    *
-   * @param spec       process research specification
+   * @param spec process research specification
    * @param candidates candidate list to append to
    */
   private void addReactionCandidates(ProcessResearchSpec spec, List<ProcessCandidate> candidates) {
@@ -373,9 +373,9 @@ public class ProcessCandidateGenerator {
   /**
    * Creates a unit JSON object.
    *
-   * @param type       equipment type
-   * @param name       equipment name
-   * @param inlet      inlet reference, or null for feed stream
+   * @param type equipment type
+   * @param name equipment name
+   * @param inlet inlet reference, or null for feed stream
    * @param properties properties JSON object, or null
    * @return unit JSON object
    */
@@ -396,7 +396,7 @@ public class ProcessCandidateGenerator {
    * Creates a JSON array in the common [value, unit] format.
    *
    * @param value numeric value
-   * @param unit  unit string
+   * @param unit unit string
    * @return JSON array
    */
   private JsonArray createUnitArray(double value, String unit) {

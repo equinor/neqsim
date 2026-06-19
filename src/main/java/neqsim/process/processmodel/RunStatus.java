@@ -73,8 +73,8 @@ public class RunStatus implements Serializable {
   /**
    * Records that a unit failed to run. The first recorded failure is reported as the run's failed unit.
    *
-   * @param unitName     the unit operation name
-   * @param unitType     the unit operation type (simple class name), or null if unknown
+   * @param unitName the unit operation name
+   * @param unitType the unit operation type (simple class name), or null if unknown
    * @param errorMessage the error message describing the failure
    */
   public void recordFailure(String unitName, String unitType, String errorMessage) {
@@ -85,10 +85,10 @@ public class RunStatus implements Serializable {
    * Records that a unit failed to run within a named area. The first recorded failure is reported as the run's failed
    * unit.
    *
-   * @param unitName     the unit operation name
-   * @param unitType     the unit operation type (simple class name), or null if unknown
+   * @param unitName the unit operation name
+   * @param unitType the unit operation type (simple class name), or null if unknown
    * @param errorMessage the error message describing the failure
-   * @param areaName     the owning process area name, or null for a single-area process
+   * @param areaName the owning process area name, or null for a single-area process
    */
   public void recordFailure(String unitName, String unitType, String errorMessage, String areaName) {
     units.add(new UnitRunStatus(unitName, unitType, false, errorMessage, areaName));

@@ -40,8 +40,8 @@ public class SystemPrEosDelft1998 extends SystemPrEos {
    * Constructor for SystemPrEosDelft1998.
    * </p>
    *
-   * @param T              The temperature in unit Kelvin
-   * @param P              The pressure in unit bara (absolute pressure)
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
    * @param checkForSolids Set true to do solid phase check and calculations
    */
   public SystemPrEosDelft1998(double T, double P, boolean checkForSolids) {

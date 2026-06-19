@@ -574,7 +574,7 @@ public final class ProcessGraphBuilder {
   /**
    * Collects split streams from a Splitter via reflection. Uses the splitStream field or getSplitStream(int) method.
    *
-   * @param unit             the splitter unit to collect streams from
+   * @param unit the splitter unit to collect streams from
    * @param streamToProducer map to store stream to producer associations
    */
   private static void collectSplitStreams(ProcessEquipmentInterface unit,
@@ -617,8 +617,8 @@ public final class ProcessGraphBuilder {
    * Collects input streams from a Mixer and creates edges. Uses reflection since getStream(int) is not in
    * MixerInterface.
    *
-   * @param unit             the mixer unit to collect streams from
-   * @param graph            the process graph to add edges to
+   * @param unit the mixer unit to collect streams from
+   * @param graph the process graph to add edges to
    * @param streamToProducer map of stream to producer associations
    */
   private static void collectMixerInputStreamsAndCreateEdges(ProcessEquipmentInterface unit, ProcessGraph graph,
@@ -663,7 +663,7 @@ public final class ProcessGraphBuilder {
   /**
    * Finds a field in the class hierarchy.
    *
-   * @param clazz     the class to search in (including superclasses)
+   * @param clazz the class to search in (including superclasses)
    * @param fieldName the name of the field to find
    * @return the Field object, or null if not found
    */
@@ -683,8 +683,8 @@ public final class ProcessGraphBuilder {
    * Creates edges from producers to a unit for any streams listed in the unit's {@code pendingStreams} field. Used by
    * multi-stream heat exchangers (e.g., LNGHeatExchanger) that defer registering input streams until {@code run()}.
    *
-   * @param unit             the process equipment unit holding the pendingStreams list
-   * @param graph            the process graph to add edges to
+   * @param unit the process equipment unit holding the pendingStreams list
+   * @param graph the process graph to add edges to
    * @param streamToProducer map of stream-to-producer relationships
    */
   private static void collectPendingStreamsAndCreateEdges(ProcessEquipmentInterface unit, ProcessGraph graph,
@@ -714,8 +714,8 @@ public final class ProcessGraphBuilder {
    * {@code streams} ArrayList; we walk the column's {@code trays} list and read each tray's {@code streams} field via
    * reflection.
    *
-   * @param unit             the DistillationColumn unit
-   * @param graph            the process graph to add edges to
+   * @param unit the DistillationColumn unit
+   * @param graph the process graph to add edges to
    * @param streamToProducer map of stream-to-producer relationships
    */
   private static void collectDistillationFeedsAndCreateEdges(ProcessEquipmentInterface unit, ProcessGraph graph,
@@ -756,7 +756,7 @@ public final class ProcessGraphBuilder {
   /**
    * Collects streams produced by a unit via common getter methods.
    *
-   * @param unit             the process equipment unit to analyze
+   * @param unit the process equipment unit to analyze
    * @param streamToProducer map to store stream-to-producer relationships
    */
   private static void collectProducedStreams(ProcessEquipmentInterface unit,
@@ -825,8 +825,8 @@ public final class ProcessGraphBuilder {
   /**
    * Collects streams consumed by a unit and creates edges.
    *
-   * @param unit             the process equipment unit to analyze
-   * @param graph            the process graph to add edges to
+   * @param unit the process equipment unit to analyze
+   * @param graph the process graph to add edges to
    * @param streamToProducer map of stream-to-producer relationships
    */
   private static void collectConsumedStreamsAndCreateEdges(ProcessEquipmentInterface unit, ProcessGraph graph,
@@ -883,10 +883,10 @@ public final class ProcessGraphBuilder {
   /**
    * Scans fields for inlet streams.
    *
-   * @param unit             the process equipment unit to scan
-   * @param graph            the process graph to add edges to
+   * @param unit the process equipment unit to scan
+   * @param graph the process graph to add edges to
    * @param streamToProducer map of stream-to-producer relationships
-   * @param visited          set of already visited streams to avoid duplicates
+   * @param visited set of already visited streams to avoid duplicates
    */
   private static void scanFieldsForInletStreams(ProcessEquipmentInterface unit, ProcessGraph graph,
       Map<Object, ProcessEquipmentInterface> streamToProducer, Set<Object> visited) {
@@ -976,10 +976,10 @@ public final class ProcessGraphBuilder {
   /**
    * Creates an edge from the producer of a stream to the consumer.
    *
-   * @param graph            the process graph to add the edge to
+   * @param graph the process graph to add the edge to
    * @param streamToProducer map of stream-to-producer relationships
-   * @param stream           the stream object connecting producer to consumer
-   * @param consumer         the consuming process equipment unit
+   * @param stream the stream object connecting producer to consumer
+   * @param consumer the consuming process equipment unit
    */
   private static void createEdgeFromProducer(ProcessGraph graph,
       Map<Object, ProcessEquipmentInterface> streamToProducer, Object stream, ProcessEquipmentInterface consumer) {
@@ -1007,7 +1007,7 @@ public final class ProcessGraphBuilder {
   /**
    * Safely invokes a method on a process equipment unit.
    *
-   * @param unit   the process equipment instance to invoke the method on
+   * @param unit the process equipment instance to invoke the method on
    * @param method the method to invoke
    * @return the result of the method invocation, or null if an exception occurs
    */

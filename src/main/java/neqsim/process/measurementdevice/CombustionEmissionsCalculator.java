@@ -55,7 +55,7 @@ public class CombustionEmissionsCalculator extends StreamMeasurementDeviceBaseCl
    * Constructor for CombustionEmissionsCalculator.
    * </p>
    *
-   * @param name   Name of WaterDewPointAnalyser
+   * @param name Name of WaterDewPointAnalyser
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public CombustionEmissionsCalculator(String name, StreamInterface stream) {
@@ -125,7 +125,7 @@ public class CombustionEmissionsCalculator extends StreamMeasurementDeviceBaseCl
    * calculateCO2Emissions.
    * </p>
    *
-   * @param composition      a {@link java.util.Map} object with mole fractions
+   * @param composition a {@link java.util.Map} object with mole fractions
    * @param emissionsFactors a {@link java.util.Map} object in kg CO2 per kg of component
    * @return a double
    */

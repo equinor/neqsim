@@ -56,11 +56,11 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
    * Constructor for GTSurfaceTensionODE.
    * </p>
    *
-   * @param flashedSystem      a {@link neqsim.thermo.system.SystemInterface} object
-   * @param phase1             a int
-   * @param phase2             a int
+   * @param flashedSystem a {@link neqsim.thermo.system.SystemInterface} object
+   * @param phase1 a int
+   * @param phase2 a int
    * @param referenceComponent a int
-   * @param yscale             a double
+   * @param yscale a double
    */
   public GTSurfaceTensionODE(SystemInterface flashedSystem, int phase1, int phase2, int referenceComponent,
       double yscale) {
@@ -236,12 +236,12 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
    * SolveRho. Solve for the equilibrium density in the interface. Solves the equilibrium relations with the
    * Newton-Raphson method.
    *
-   * @param rho      Number density [mol/m3]
-   * @param mu       Chemical potential [J/mol]
+   * @param rho Number density [mol/m3]
+   * @param mu Chemical potential [J/mol]
    * @param dmu_drho Chemical potential derivative with respect to mole numbers [J/mol^2]
-   * @param p        Pressure [Pa]
-   * @param f        Residual of equilibrium relations.
-   * @param jac      Jacobian of the equilibrium relations.
+   * @param p Pressure [Pa]
+   * @param f Residual of equilibrium relations.
+   * @param jac Jacobian of the equilibrium relations.
    */
   private void solveRho(double[] rho, double[] mu, double[][] dmu_drho, double[] p, double[] f, double[][] jac) {
     double normf;
@@ -343,10 +343,10 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
   /**
    * Residual function for the algebraic equilibrium equations.
    *
-   * @param mu       an array of type double
+   * @param mu an array of type double
    * @param dmu_drho an array of type double
-   * @param f        an array of type double
-   * @param jac      an array of type double
+   * @param f an array of type double
+   * @param jac an array of type double
    */
   public void fjacfun(double[] mu, double[][] dmu_drho, double[] f, double[][] jac) {
     int i;

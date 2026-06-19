@@ -442,7 +442,7 @@ public final class ReservoirInput implements Serializable {
      * Sets the in-place resource estimate.
      *
      * @param estimate resource estimate value
-     * @param unit     resource unit such as GSm3, MMbbl, or MMboe
+     * @param unit resource unit such as GSm3, MMbbl, or MMboe
      * @return this builder
      */
     public Builder resourceEstimate(double estimate, String unit) {
@@ -457,9 +457,9 @@ public final class ReservoirInput implements Serializable {
     /**
      * Sets the probabilistic in-place resource estimate.
      *
-     * @param p10  P10 resource estimate
-     * @param p50  P50 resource estimate
-     * @param p90  P90 resource estimate
+     * @param p10 P10 resource estimate
+     * @param p50 P50 resource estimate
+     * @param p90 P90 resource estimate
      * @param unit resource unit such as GSm3, MMbbl, or MMboe
      * @return this builder
      */

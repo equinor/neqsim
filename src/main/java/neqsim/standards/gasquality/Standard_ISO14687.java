@@ -131,7 +131,7 @@ public class Standard_ISO14687 extends neqsim.standards.Standard {
    * Constructor for Standard_ISO14687 with grade.
    *
    * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
-   * @param grade        hydrogen grade: "A", "B", "C", "D", or "E"
+   * @param grade hydrogen grade: "A", "B", "C", "D", or "E"
    */
   public Standard_ISO14687(SystemInterface thermoSystem, String grade) {
     this(thermoSystem);

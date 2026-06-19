@@ -33,7 +33,7 @@ public class CalcIonicComposition extends Flash {
    * Constructor for CalcIonicComposition.
    * </p>
    *
-   * @param system   a {@link neqsim.thermo.system.SystemInterface} object
+   * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param phaseNum a int
    */
   public CalcIonicComposition(SystemInterface system, int phaseNum) {

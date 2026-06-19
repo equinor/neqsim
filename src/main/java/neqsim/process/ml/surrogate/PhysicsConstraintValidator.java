@@ -96,9 +96,9 @@ public class PhysicsConstraintValidator implements Serializable {
    * Adds a pressure limit constraint for specific equipment.
    *
    * @param equipmentName name of the equipment
-   * @param minPressure   minimum pressure
-   * @param maxPressure   maximum pressure
-   * @param unit          pressure unit
+   * @param minPressure minimum pressure
+   * @param maxPressure maximum pressure
+   * @param unit pressure unit
    */
   public void addPressureLimit(String equipmentName, double minPressure, double maxPressure, String unit) {
     constraints.add(new EquipmentConstraint(equipmentName, "pressure", minPressure, maxPressure, unit));
@@ -108,9 +108,9 @@ public class PhysicsConstraintValidator implements Serializable {
    * Adds a temperature limit constraint for specific equipment.
    *
    * @param equipmentName name of the equipment
-   * @param minTemp       minimum temperature
-   * @param maxTemp       maximum temperature
-   * @param unit          temperature unit
+   * @param minTemp minimum temperature
+   * @param maxTemp maximum temperature
+   * @param unit temperature unit
    */
   public void addTemperatureLimit(String equipmentName, double minTemp, double maxTemp, String unit) {
     constraints.add(new EquipmentConstraint(equipmentName, "temperature", minTemp, maxTemp, unit));
@@ -120,9 +120,9 @@ public class PhysicsConstraintValidator implements Serializable {
    * Adds a flow rate limit constraint for specific equipment.
    *
    * @param equipmentName name of the equipment
-   * @param minFlow       minimum flow rate
-   * @param maxFlow       maximum flow rate
-   * @param unit          flow unit
+   * @param minFlow minimum flow rate
+   * @param maxFlow maximum flow rate
+   * @param unit flow unit
    */
   public void addFlowLimit(String equipmentName, double minFlow, double maxFlow, String unit) {
     constraints.add(new EquipmentConstraint(equipmentName, "flow", minFlow, maxFlow, unit));
@@ -356,9 +356,9 @@ public class PhysicsConstraintValidator implements Serializable {
      * Constructor for a constraint violation.
      *
      * @param constraintName name of the violated constraint
-     * @param variable       the variable that violated the constraint
-     * @param value          the value of the variable
-     * @param message        explanation of the violation
+     * @param variable the variable that violated the constraint
+     * @param value the value of the variable
+     * @param message explanation of the violation
      */
     public ConstraintViolation(String constraintName, String variable, double value, String message) {
       this.constraintName = constraintName;

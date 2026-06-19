@@ -72,7 +72,7 @@ public class SafetyReliefValve extends ThrottlingValve {
    * Constructor for SafetyReliefValve.
    * </p>
    *
-   * @param name        a {@link java.lang.String} object
+   * @param name a {@link java.lang.String} object
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public SafetyReliefValve(String name, StreamInterface inletStream) {
@@ -553,10 +553,10 @@ public class SafetyReliefValve extends ThrottlingValve {
    * configureConventionalSnap.
    * </p>
    *
-   * @param psetBar  a double
+   * @param psetBar a double
    * @param overFrac a double
    * @param blowFrac a double
-   * @param cvRated  a double
+   * @param cvRated a double
    * @return a {@link neqsim.process.equipment.valve.SafetyReliefValve} object
    */
   public SafetyReliefValve configureConventionalSnap(double psetBar, double overFrac, double blowFrac, double cvRated) {
@@ -576,10 +576,10 @@ public class SafetyReliefValve extends ThrottlingValve {
    * configureBalancedModulating.
    * </p>
    *
-   * @param psetBar  a double
+   * @param psetBar a double
    * @param overFrac a double
    * @param blowFrac a double
-   * @param cvRated  a double
+   * @param cvRated a double
    * @return a {@link neqsim.process.equipment.valve.SafetyReliefValve} object
    */
   public SafetyReliefValve configureBalancedModulating(double psetBar, double overFrac, double blowFrac,

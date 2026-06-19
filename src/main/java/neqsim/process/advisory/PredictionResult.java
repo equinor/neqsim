@@ -74,7 +74,7 @@ public class PredictionResult implements Serializable {
   /**
    * Creates a new prediction result.
    *
-   * @param horizon      the prediction time horizon
+   * @param horizon the prediction time horizon
    * @param scenarioName name of the scenario being predicted
    */
   public PredictionResult(Duration horizon, String scenarioName) {
@@ -99,7 +99,7 @@ public class PredictionResult implements Serializable {
    * Adds a predicted value to the result.
    *
    * @param variableName the variable name (e.g., "separator.pressure")
-   * @param value        the predicted value with uncertainty
+   * @param value the predicted value with uncertainty
    */
   public void addPredictedValue(String variableName, PredictedValue value) {
     predictedValues.put(variableName, value);
@@ -268,9 +268,9 @@ public class PredictionResult implements Serializable {
     /**
      * Creates a predicted value with uncertainty.
      *
-     * @param mean              expected value
+     * @param mean expected value
      * @param standardDeviation uncertainty (standard deviation)
-     * @param unit              engineering unit
+     * @param unit engineering unit
      */
     public PredictedValue(double mean, double standardDeviation, String unit) {
       this.mean = mean;
@@ -284,10 +284,10 @@ public class PredictionResult implements Serializable {
     /**
      * Creates a predicted value with explicit bounds.
      *
-     * @param mean       expected value
-     * @param lower95    lower 95% confidence bound
-     * @param upper95    upper 95% confidence bound
-     * @param unit       engineering unit
+     * @param mean expected value
+     * @param lower95 lower 95% confidence bound
+     * @param upper95 upper 95% confidence bound
+     * @param unit engineering unit
      * @param confidence overall confidence (0-1)
      */
     public PredictedValue(double mean, double lower95, double upper95, String unit, double confidence) {
@@ -303,7 +303,7 @@ public class PredictionResult implements Serializable {
      * Creates a deterministic predicted value (no uncertainty).
      *
      * @param value the predicted value
-     * @param unit  engineering unit
+     * @param unit engineering unit
      * @return a PredictedValue with zero uncertainty
      */
     public static PredictedValue deterministic(double value, String unit) {
@@ -375,13 +375,13 @@ public class PredictionResult implements Serializable {
     /**
      * Creates a constraint violation prediction.
      *
-     * @param constraintName  name of the constraint
-     * @param variableName    affected variable
-     * @param predictedValue  predicted value at violation
-     * @param limitValue      the limit being violated
-     * @param unit            engineering unit
+     * @param constraintName name of the constraint
+     * @param variableName affected variable
+     * @param predictedValue predicted value at violation
+     * @param limitValue the limit being violated
+     * @param unit engineering unit
      * @param timeToViolation time until violation expected
-     * @param severity        severity level
+     * @param severity severity level
      */
     public ConstraintViolation(String constraintName, String variableName, double predictedValue, double limitValue,
 	String unit, Duration timeToViolation, Severity severity) {

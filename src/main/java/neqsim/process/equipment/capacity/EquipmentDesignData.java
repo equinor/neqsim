@@ -102,7 +102,7 @@ public final class EquipmentDesignData {
    * values). After applying, tags the capacity constraints with the data source for utilization report traceability.
    * </p>
    *
-   * @param process          the process system containing the equipment
+   * @param process the process system containing the equipment
    * @param designCapacities JSON object keyed by equipment name, with property objects as values
    * @return a report of applied changes, keyed by equipment name
    */
@@ -159,7 +159,7 @@ public final class EquipmentDesignData {
    * had values set gets tagged as "equipment". Equipment with no design data gets "not_set".
    * </p>
    *
-   * @param process          the process system
+   * @param process the process system
    * @param designCapacities the design capacities JSON (used to determine which equipment was configured)
    */
   public static void tagConstraintDataSources(ProcessSystem process, JsonObject designCapacities) {
@@ -190,8 +190,8 @@ public final class EquipmentDesignData {
   /**
    * Applies separator design capacity properties.
    *
-   * @param sep    the separator
-   * @param props  JSON properties
+   * @param sep the separator
+   * @param props JSON properties
    * @param result the apply result to populate
    */
   private static void applySeparatorDesign(Separator sep, JsonObject props, ApplyResult result) {
@@ -223,8 +223,8 @@ public final class EquipmentDesignData {
   /**
    * Applies compressor design capacity properties.
    *
-   * @param comp   the compressor
-   * @param props  JSON properties
+   * @param comp the compressor
+   * @param props JSON properties
    * @param result the apply result to populate
    */
   private static void applyCompressorDesign(Compressor comp, JsonObject props, ApplyResult result) {
@@ -254,7 +254,7 @@ public final class EquipmentDesignData {
    * Applies heater/cooler design capacity properties.
    *
    * @param heater the heater
-   * @param props  JSON properties
+   * @param props JSON properties
    * @param result the apply result to populate
    */
   private static void applyHeaterDesign(Heater heater, JsonObject props, ApplyResult result) {
@@ -282,8 +282,8 @@ public final class EquipmentDesignData {
   /**
    * Applies pump design capacity properties.
    *
-   * @param pump   the pump
-   * @param props  JSON properties
+   * @param pump the pump
+   * @param props JSON properties
    * @param result the apply result to populate
    */
   private static void applyPumpDesign(Pump pump, JsonObject props, ApplyResult result) {
@@ -308,7 +308,7 @@ public final class EquipmentDesignData {
    * Finds equipment by name in a process system.
    *
    * @param process the process system
-   * @param name    the equipment name
+   * @param name the equipment name
    * @return the equipment or null if not found
    */
   private static ProcessEquipmentInterface findEquipment(ProcessSystem process, String name) {
@@ -344,8 +344,8 @@ public final class EquipmentDesignData {
      * Creates a new apply result.
      *
      * @param equipmentName the equipment name
-     * @param status        the status
-     * @param message       the message
+     * @param status the status
+     * @param message the message
      */
     public ApplyResult(String equipmentName, String status, String message) {
       this.equipmentName = equipmentName;
@@ -358,8 +358,8 @@ public final class EquipmentDesignData {
      * Records a property that was applied.
      *
      * @param property the property name
-     * @param value    the value
-     * @param unit     the unit
+     * @param value the value
+     * @param unit the unit
      */
     public void addApplied(String property, double value, String unit) {
       appliedProperties.add(new AppliedProperty(property, value, unit));
@@ -411,8 +411,8 @@ public final class EquipmentDesignData {
      * Creates a new applied property record.
      *
      * @param property the property name
-     * @param value    the value
-     * @param unit     the unit
+     * @param value the value
+     * @param unit the unit
      */
     public AppliedProperty(String property, double value, String unit) {
       this.property = property;

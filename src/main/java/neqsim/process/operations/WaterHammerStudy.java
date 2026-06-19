@@ -194,9 +194,9 @@ public final class WaterHammerStudy {
   /**
    * Creates and configures the water-hammer pipe from normalized geometry and input options.
    *
-   * @param input    parsed JSON input
+   * @param input parsed JSON input
    * @param geometry normalized pipe geometry
-   * @param feed     feed stream
+   * @param feed feed stream
    * @return configured water-hammer pipe
    */
   private static WaterHammerPipe createPipe(JsonObject input, PipeGeometry geometry, Stream feed) {
@@ -226,7 +226,7 @@ public final class WaterHammerStudy {
   /**
    * Reads pipe geometry from pipe fields or a STID-style route segment list.
    *
-   * @param input    parsed JSON input
+   * @param input parsed JSON input
    * @param warnings mutable warning list
    * @return normalized equivalent pipe geometry
    */
@@ -299,7 +299,7 @@ public final class WaterHammerStudy {
   /**
    * Estimates equivalent length for segment minor losses using a screening friction factor.
    *
-   * @param segment  route segment JSON object
+   * @param segment route segment JSON object
    * @param diameter segment diameter in meters
    * @return equivalent length added by minor losses in meters
    */
@@ -319,7 +319,7 @@ public final class WaterHammerStudy {
   /**
    * Returns the event schedule or creates a default valve closure event.
    *
-   * @param input          parsed JSON input
+   * @param input parsed JSON input
    * @param initialOpening initial valve opening fraction
    * @return event schedule array
    */
@@ -351,9 +351,9 @@ public final class WaterHammerStudy {
   /**
    * Applies all active valve events at the current transient time.
    *
-   * @param pipe   transient pipe
+   * @param pipe transient pipe
    * @param events event schedule array
-   * @param time   current simulation time in seconds
+   * @param time current simulation time in seconds
    */
   private static void applyValveEvents(WaterHammerPipe pipe, JsonArray events, double time) {
     Double opening = null;
@@ -382,12 +382,12 @@ public final class WaterHammerStudy {
   /**
    * Adds a sampled transient point to the output arrays.
    *
-   * @param timeArray     time output array
+   * @param timeArray time output array
    * @param pressureArray pressure output array
-   * @param openingArray  valve opening output array
-   * @param time          time in seconds
-   * @param pressureBar   outlet pressure in bar
-   * @param valveOpening  valve opening fraction
+   * @param openingArray valve opening output array
+   * @param time time in seconds
+   * @param pressureBar outlet pressure in bar
+   * @param valveOpening valve opening fraction
    */
   private static void addSample(JsonArray timeArray, JsonArray pressureArray, JsonArray openingArray, double time,
       double pressureBar, double valveOpening) {
@@ -399,10 +399,10 @@ public final class WaterHammerStudy {
   /**
    * Builds the input summary for the JSON result.
    *
-   * @param input    parsed JSON input
+   * @param input parsed JSON input
    * @param geometry normalized geometry
-   * @param pipe     configured pipe
-   * @param feed     inlet stream
+   * @param pipe configured pipe
+   * @param feed inlet stream
    * @return input summary JSON object
    */
   private static JsonObject buildInputSummary(JsonObject input, PipeGeometry geometry, WaterHammerPipe pipe,
@@ -427,12 +427,12 @@ public final class WaterHammerStudy {
   /**
    * Builds key study results.
    *
-   * @param input                    parsed JSON input
-   * @param pipe                     simulated pipe
+   * @param input parsed JSON input
+   * @param pipe simulated pipe
    * @param initialOutletPressureBar initial outlet pressure in bar
-   * @param initialVelocity          initial pipe velocity in meters per second
-   * @param timeStep                 time step used in seconds
-   * @param simulationTime           simulated duration in seconds
+   * @param initialVelocity initial pipe velocity in meters per second
+   * @param timeStep time step used in seconds
+   * @param simulationTime simulated duration in seconds
    * @return key results JSON object
    */
   private static JsonObject buildKeyResults(JsonObject input, WaterHammerPipe pipe, double initialOutletPressureBar,
@@ -460,9 +460,9 @@ public final class WaterHammerStudy {
   /**
    * Builds sampled transient time-series output.
    *
-   * @param sampledTime           sampled time array
+   * @param sampledTime sampled time array
    * @param sampledOutletPressure sampled outlet pressure array
-   * @param sampledValveOpening   sampled valve opening array
+   * @param sampledValveOpening sampled valve opening array
    * @return time-series JSON object
    */
   private static JsonObject buildTimeSeries(JsonArray sampledTime, JsonArray sampledOutletPressure,
@@ -492,8 +492,8 @@ public final class WaterHammerStudy {
   /**
    * Builds validation and design-margin output.
    *
-   * @param input    parsed JSON input
-   * @param pipe     simulated pipe
+   * @param input parsed JSON input
+   * @param pipe simulated pipe
    * @param warnings warning list
    * @return validation JSON object
    */
@@ -520,7 +520,7 @@ public final class WaterHammerStudy {
   /**
    * Gets source references from top-level input and route geometry.
    *
-   * @param input    parsed JSON input
+   * @param input parsed JSON input
    * @param geometry normalized geometry
    * @return source reference JSON array
    */
@@ -572,8 +572,8 @@ public final class WaterHammerStudy {
   /**
    * Gets a string field with a default value.
    *
-   * @param input        source JSON object
-   * @param name         field name
+   * @param input source JSON object
+   * @param name field name
    * @param defaultValue default value if missing
    * @return string value or default
    */
@@ -587,9 +587,9 @@ public final class WaterHammerStudy {
   /**
    * Gets the first matching finite double from a JSON object.
    *
-   * @param input        source JSON object
+   * @param input source JSON object
    * @param defaultValue default value if fields are missing
-   * @param names        accepted field names
+   * @param names accepted field names
    * @return field value or default
    */
   private static double getDoubleAny(JsonObject input, double defaultValue, String... names) {

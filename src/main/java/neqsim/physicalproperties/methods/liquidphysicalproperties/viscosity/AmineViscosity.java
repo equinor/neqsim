@@ -127,7 +127,7 @@ public class AmineViscosity extends Viscosity {
    * Gets the effective weight fraction of an amine, including its protonated form.
    *
    * @param amineName the neutral amine name (e.g., "MEA")
-   * @param ionName   the protonated ion name (e.g., "MEA+")
+   * @param ionName the protonated ion name (e.g., "MEA+")
    * @return the combined weight fraction of amine + ion
    */
   private double getAmineWtFrac(String amineName, String ionName) {
@@ -315,7 +315,7 @@ public class AmineViscosity extends Viscosity {
    * </p>
    *
    * @param amineName the neutral amine component name
-   * @param ionName   the protonated ion component name
+   * @param ionName the protonated ion component name
    * @return estimated CO2 loading (dimensionless)
    */
   private double estimateCO2Loading(String amineName, String ionName) {

@@ -89,8 +89,8 @@ public class SystemUMRPRUEos extends SystemPrEos {
    * Constructor for SystemUMRPRUEos.
    * </p>
    *
-   * @param T              The temperature in unit Kelvin
-   * @param P              The pressure in unit bara (absolute pressure)
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
    * @param checkForSolids Set true to do solid phase check and calculations
    */
   public SystemUMRPRUEos(double T, double P, boolean checkForSolids) {

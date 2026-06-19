@@ -342,10 +342,10 @@ public class FoulingModel implements Serializable {
   /**
    * Updates the operating conditions from fluid properties.
    *
-   * @param velocity      fluid velocity (m/s)
-   * @param density       fluid density (kg/m3)
-   * @param viscosity     fluid dynamic viscosity (Pa*s)
-   * @param wallTemp      wall temperature (K)
+   * @param velocity fluid velocity (m/s)
+   * @param density fluid density (kg/m3)
+   * @param viscosity fluid dynamic viscosity (Pa*s)
+   * @param wallTemp wall temperature (K)
    * @param innerDiameter tube inner diameter (m)
    */
   public void updateConditions(double velocity, double density, double viscosity, double wallTemp,
@@ -534,7 +534,7 @@ public class FoulingModel implements Serializable {
    * Creates a Kern-Seaton model for cooling water service.
    *
    * @param rfMaxValue maximum fouling resistance (m2*K/W), typical 0.0002-0.0005
-   * @param tauHours   time constant (hours), typical 1000-4000
+   * @param tauHours time constant (hours), typical 1000-4000
    * @return configured FoulingModel for cooling water
    */
   public static FoulingModel createCoolingWaterModel(double rfMaxValue, double tauHours) {

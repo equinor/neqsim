@@ -381,7 +381,7 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
    * </p>
    *
    * @param startNode a int
-   * @param endNode   a int
+   * @param endNode a int
    */
   public void setEquilibriumMassTransferModel(int startNode, int endNode) {
     for (int i = startNode; i < endNode; i++) {
@@ -400,7 +400,7 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
    * </p>
    *
    * @param startNode a int
-   * @param endNode   a int
+   * @param endNode a int
    */
   public void setNonEquilibriumMassTransferModel(int startNode, int endNode) {
     for (int i = startNode; i < endNode; i++) {
@@ -419,7 +419,7 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
    * </p>
    *
    * @param startNode a int
-   * @param endNode   a int
+   * @param endNode a int
    */
   public void setNonEquilibriumHeatTransferModel(int startNode, int endNode) {
     for (int i = startNode; i < endNode; i++) {
@@ -433,7 +433,7 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
    * </p>
    *
    * @param startNode a int
-   * @param endNode   a int
+   * @param endNode a int
    */
   public void setEquilibriumHeatTransferModel(int startNode, int endNode) {
     for (int i = startNode; i < endNode; i++) {

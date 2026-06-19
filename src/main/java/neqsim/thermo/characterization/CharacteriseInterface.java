@@ -28,7 +28,7 @@ public interface CharacteriseInterface {
    * </p>
    *
    * @param start a int
-   * @param end   a int
+   * @param end a int
    * @param zplus a double
    * @param Mplus a double
    */
@@ -248,7 +248,7 @@ public interface CharacteriseInterface {
    * </p>
    *
    * @param coef a double
-   * @param i    a int
+   * @param i a int
    */
   public void setCoefs(double coef, int i);
 

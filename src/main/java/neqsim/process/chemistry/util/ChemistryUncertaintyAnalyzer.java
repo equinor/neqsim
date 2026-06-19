@@ -66,11 +66,11 @@ public class ChemistryUncertaintyAnalyzer implements Serializable {
     /**
      * Builds an uncertain parameter.
      *
-     * @param name    display name
+     * @param name display name
      * @param sampler random sampler
-     * @param low     low value (tornado)
-     * @param base    base value (tornado)
-     * @param high    high value (tornado)
+     * @param low low value (tornado)
+     * @param base base value (tornado)
+     * @param high high value (tornado)
      */
     public UncertainParameter(String name, DoubleSupplier sampler, double low, double base, double high) {
       this.name = name;
@@ -83,10 +83,10 @@ public class ChemistryUncertaintyAnalyzer implements Serializable {
     /**
      * Builds an uncertain parameter from a triangular distribution defined by low/base/high.
      *
-     * @param name   display name
-     * @param low    low value
-     * @param base   base value
-     * @param high   high value
+     * @param name display name
+     * @param low low value
+     * @param base base value
+     * @param high high value
      * @param random random source
      * @return parameter
      */
@@ -282,7 +282,7 @@ public class ChemistryUncertaintyAnalyzer implements Serializable {
    * Convenience: scalar map output that picks one key from the model's result map.
    *
    * @param outputKey key to extract
-   * @param mapModel  function returning a Map per sample
+   * @param mapModel function returning a Map per sample
    * @return tornado-ready scalar function
    */
   public static java.util.function.ToDoubleFunction<double[]> mapOutput(final String outputKey,
@@ -304,7 +304,7 @@ public class ChemistryUncertaintyAnalyzer implements Serializable {
    * Linear-interpolation percentile of a sorted array.
    *
    * @param sorted sorted array
-   * @param frac   percentile fraction (0-1)
+   * @param frac percentile fraction (0-1)
    * @return value
    */
   private static double percentile(double[] sorted, double frac) {
@@ -415,7 +415,7 @@ public class ChemistryUncertaintyAnalyzer implements Serializable {
    * Helper to build a triangular sampler with this analyser's seeded random.
    *
    * @param name parameter name
-   * @param low  low
+   * @param low low
    * @param base base
    * @param high high
    * @return uncertain parameter

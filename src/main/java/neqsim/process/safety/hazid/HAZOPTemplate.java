@@ -67,7 +67,7 @@ public class HAZOPTemplate implements Serializable {
   /**
    * Construct a HAZOP node template.
    *
-   * @param nodeId       HAZOP node identifier (e.g. "Node-12: Inlet line to V-100")
+   * @param nodeId HAZOP node identifier (e.g. "Node-12: Inlet line to V-100")
    * @param designIntent narrative of the design intent for the node
    */
   public HAZOPTemplate(String nodeId, String designIntent) {
@@ -78,11 +78,11 @@ public class HAZOPTemplate implements Serializable {
   /**
    * Add a deviation row to the worksheet.
    *
-   * @param guideWord      guide-word
-   * @param parameter      parameter
-   * @param cause          hypothesised cause
-   * @param consequence    consequence if no protection acts
-   * @param safeguard      existing safeguard (instrumentation, procedural, mechanical)
+   * @param guideWord guide-word
+   * @param parameter parameter
+   * @param cause hypothesised cause
+   * @param consequence consequence if no protection acts
+   * @param safeguard existing safeguard (instrumentation, procedural, mechanical)
    * @param recommendation new recommendation (or null)
    * @return this template for chaining
    */
@@ -172,11 +172,11 @@ public class HAZOPTemplate implements Serializable {
     public final String recommendation;
 
     /**
-     * @param guideWord      guide-word
-     * @param parameter      process parameter
-     * @param cause          cause description
-     * @param consequence    consequence description
-     * @param safeguard      existing safeguard
+     * @param guideWord guide-word
+     * @param parameter process parameter
+     * @param cause cause description
+     * @param consequence consequence description
+     * @param safeguard existing safeguard
      * @param recommendation new recommendation (or null)
      */
     public HAZOPDeviation(GuideWord guideWord, Parameter parameter, String cause, String consequence, String safeguard,

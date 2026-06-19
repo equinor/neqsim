@@ -271,9 +271,9 @@ public class CO2CaptureTemplate implements ProcessTemplate {
   /**
    * Creates an amine solvent fluid.
    *
-   * @param type          amine type
+   * @param type amine type
    * @param concentration amine mass fraction
-   * @param pressure      system pressure in bara
+   * @param pressure system pressure in bara
    * @return amine fluid system
    */
   private SystemInterface createAmineFluid(AmineType type, double concentration, double pressure) {
@@ -289,8 +289,8 @@ public class CO2CaptureTemplate implements ProcessTemplate {
   /**
    * Adds amine components to fluid.
    *
-   * @param fluid         fluid system
-   * @param type          amine type
+   * @param fluid fluid system
+   * @param type amine type
    * @param concentration amine mass fraction
    */
   private void addAmineComponents(SystemInterface fluid, AmineType type, double concentration) {
@@ -338,10 +338,10 @@ public class CO2CaptureTemplate implements ProcessTemplate {
   /**
    * Estimates amine circulation rate for given CO2 removal.
    *
-   * @param feedFluid          feed fluid system
-   * @param gasFlowRate        gas flow rate in kg/hr
+   * @param feedFluid feed fluid system
+   * @param gasFlowRate gas flow rate in kg/hr
    * @param amineConcentration amine mass fraction
-   * @param removalTarget      CO2 removal fraction (0-1)
+   * @param removalTarget CO2 removal fraction (0-1)
    * @return estimated amine circulation rate in kg/hr
    */
   private double estimateAmineCirculationRate(SystemInterface feedFluid, double gasFlowRate, double amineConcentration,
@@ -437,7 +437,7 @@ public class CO2CaptureTemplate implements ProcessTemplate {
   /**
    * Calculates specific reboiler duty for amine regeneration.
    *
-   * @param amineType   type of amine
+   * @param amineType type of amine
    * @param richLoading rich amine loading (mol CO2/mol amine)
    * @param leanLoading lean amine loading (mol CO2/mol amine)
    * @return specific reboiler duty in GJ/ton CO2
@@ -474,7 +474,7 @@ public class CO2CaptureTemplate implements ProcessTemplate {
   /**
    * Estimates amine loss rate.
    *
-   * @param amineType   type of amine
+   * @param amineType type of amine
    * @param gasFlowRate gas flow rate in MMscfd
    * @return amine loss rate in kg/MMscf
    */

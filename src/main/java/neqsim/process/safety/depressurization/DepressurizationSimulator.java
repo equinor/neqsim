@@ -49,11 +49,11 @@ public class DepressurizationSimulator implements Serializable {
   /**
    * Construct a depressurization simulator.
    *
-   * @param fluid                initial fluid in the vessel; must already have mixing rule set
-   * @param vesselVolume         internal vessel volume in m³
-   * @param orificeDiameter      blowdown orifice diameter in m
+   * @param fluid initial fluid in the vessel; must already have mixing rule set
+   * @param vesselVolume internal vessel volume in m³
+   * @param orificeDiameter blowdown orifice diameter in m
    * @param dischargeCoefficient orifice Cd (typical 0.61–0.85)
-   * @param backPressure         downstream absolute pressure in Pa (typically flare header)
+   * @param backPressure downstream absolute pressure in Pa (typically flare header)
    */
   public DepressurizationSimulator(SystemInterface fluid, double vesselVolume, double orificeDiameter,
       double dischargeCoefficient, double backPressure) {
@@ -84,10 +84,10 @@ public class DepressurizationSimulator implements Serializable {
   /**
    * Enable lumped-wall thermal modelling for metal temperature tracking (cold blowdown / MDMT).
    *
-   * @param wallMass         total wall metal mass in kg
-   * @param wallArea         internal heat transfer area in m²
+   * @param wallMass total wall metal mass in kg
+   * @param wallArea internal heat transfer area in m²
    * @param wallSpecificHeat metal specific heat in J/(kg·K) (470 for carbon steel)
-   * @param insideHTC        inside film heat transfer coefficient in W/(m²·K)
+   * @param insideHTC inside film heat transfer coefficient in W/(m²·K)
    * @return this simulator for chaining
    */
   public DepressurizationSimulator setWall(double wallMass, double wallArea, double wallSpecificHeat,

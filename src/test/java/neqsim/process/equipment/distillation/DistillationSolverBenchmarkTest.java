@@ -76,7 +76,7 @@ public class DistillationSolverBenchmarkTest {
   /**
    * Apply a bounded deethanizer temperature profile to avoid expensive PH flashes.
    *
-   * @param column    column receiving the tray temperature profile
+   * @param column column receiving the tray temperature profile
    * @param trayCount number of equilibrium trays above the reboiler
    */
   private void applyDeethanizerTemperatureProfile(DistillationColumn column, int trayCount) {
@@ -112,7 +112,7 @@ public class DistillationSolverBenchmarkTest {
   /**
    * Run a compact binary column configured for Murphree-efficiency regression checks.
    *
-   * @param name       column name
+   * @param name column name
    * @param efficiency Murphree efficiency to apply to all stages
    * @param solverType solver to use for the column
    * @return configured and executed binary column
@@ -150,7 +150,7 @@ public class DistillationSolverBenchmarkTest {
   /**
    * Run a compact binary column for MESH residual diagnostics.
    *
-   * @param name       column name
+   * @param name column name
    * @param solverType solver to use for the column
    * @return configured and executed binary column
    */
@@ -161,7 +161,7 @@ public class DistillationSolverBenchmarkTest {
   /**
    * Run a compact binary inside-out column with configurable inner-loop steps.
    *
-   * @param name           column name
+   * @param name column name
    * @param innerLoopSteps number of simplified inner-loop steps to run
    * @return configured and executed binary column
    */
@@ -197,7 +197,7 @@ public class DistillationSolverBenchmarkTest {
   /**
    * Assert that a converged deethanizer solve reports an accepted non-fallback status.
    *
-   * @param column     column to inspect after running
+   * @param column column to inspect after running
    * @param solverType configured solver used to build assertion messages
    */
   private void assertAcceptedSolveStatus(DistillationColumn column, DistillationColumn.SolverType solverType) {
@@ -918,12 +918,12 @@ public class DistillationSolverBenchmarkTest {
   /**
    * Create a feed stream for the column4.py case.
    *
-   * @param baseFluid           base thermodynamic fluid to clone
-   * @param name                stream name
-   * @param moleFractions       component mole fractions in {@link #COLUMN4_COMPONENTS} order
+   * @param baseFluid base thermodynamic fluid to clone
+   * @param name stream name
+   * @param moleFractions component mole fractions in {@link #COLUMN4_COMPONENTS} order
    * @param flowRateKmolPerHour stream flow rate in kmol/hr
-   * @param temperatureC        stream temperature in degrees Celsius
-   * @param pressureBarg        stream pressure in barg
+   * @param temperatureC stream temperature in degrees Celsius
+   * @param pressureBarg stream pressure in barg
    * @return initialized stream
    */
   private Stream createColumn4Stream(SystemInterface baseFluid, String name, double[] moleFractions,
@@ -945,7 +945,7 @@ public class DistillationSolverBenchmarkTest {
   /**
    * Calculate the maximum absolute composition deviation.
    *
-   * @param actual   actual composition vector
+   * @param actual actual composition vector
    * @param expected reference composition vector
    * @return maximum absolute deviation
    */
@@ -960,7 +960,7 @@ public class DistillationSolverBenchmarkTest {
   /**
    * Calculate the root-mean-square composition deviation.
    *
-   * @param actual   actual composition vector
+   * @param actual actual composition vector
    * @param expected reference composition vector
    * @return root-mean-square deviation
    */
@@ -1245,10 +1245,10 @@ public class DistillationSolverBenchmarkTest {
   /**
    * Assert that column product streams are finite and close external mass balance.
    *
-   * @param column             column to inspect
-   * @param feedFlowKgPerHour  external feed flow in kg/hr
+   * @param column column to inspect
+   * @param feedFlowKgPerHour external feed flow in kg/hr
    * @param toleranceKgPerHour accepted absolute mass-balance error in kg/hr
-   * @param message            assertion message prefix
+   * @param message assertion message prefix
    */
   private void assertFiniteMassBalanced(DistillationColumn column, double feedFlowKgPerHour, double toleranceKgPerHour,
       String message) {

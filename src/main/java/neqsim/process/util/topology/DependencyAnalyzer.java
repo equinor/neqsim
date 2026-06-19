@@ -65,7 +65,7 @@ public class DependencyAnalyzer implements Serializable {
      *
      * @param sourceEquipment source equipment name
      * @param targetEquipment target equipment name
-     * @param dependencyType  type of dependency
+     * @param dependencyType type of dependency
      */
     public CrossInstallationDependency(String sourceEquipment, String targetEquipment, String dependencyType) {
       this.sourceEquipment = sourceEquipment;
@@ -290,7 +290,7 @@ public class DependencyAnalyzer implements Serializable {
   /**
    * Creates a dependency analyzer with an existing topology analyzer.
    *
-   * @param processSystem    the process system
+   * @param processSystem the process system
    * @param topologyAnalyzer existing topology analyzer
    */
   public DependencyAnalyzer(ProcessSystem processSystem, ProcessTopologyAnalyzer topologyAnalyzer) {
@@ -424,10 +424,10 @@ public class DependencyAnalyzer implements Serializable {
    * Example: Gas export from Gullfaks C to Åsgard processing
    * </p>
    *
-   * @param sourceEquipment    source equipment on this installation
-   * @param targetEquipment    target equipment on other installation
+   * @param sourceEquipment source equipment on this installation
+   * @param targetEquipment target equipment on other installation
    * @param targetInstallation name of target installation
-   * @param dependencyType     type (gas_export, oil_export, utility, etc.)
+   * @param dependencyType type (gas_export, oil_export, utility, etc.)
    */
   public void addCrossInstallationDependency(String sourceEquipment, String targetEquipment, String targetInstallation,
       String dependencyType) {
@@ -446,7 +446,7 @@ public class DependencyAnalyzer implements Serializable {
    * @param sourceLocation source STID
    * @param targetLocation target STID
    * @param dependencyType type of dependency
-   * @param impactFactor   impact factor (0-1)
+   * @param impactFactor impact factor (0-1)
    */
   public void addCrossInstallationDependency(FunctionalLocation sourceLocation, FunctionalLocation targetLocation,
       String dependencyType, double impactFactor) {

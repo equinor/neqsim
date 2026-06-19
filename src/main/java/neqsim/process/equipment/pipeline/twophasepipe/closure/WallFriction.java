@@ -68,16 +68,16 @@ public class WallFriction implements Serializable {
   /**
    * Calculate wall friction for both phases.
    *
-   * @param flowRegime      Current flow regime
-   * @param gasVelocity     Gas velocity (m/s)
-   * @param liquidVelocity  Liquid velocity (m/s)
-   * @param gasDensity      Gas density (kg/m³)
-   * @param liquidDensity   Liquid density (kg/m³)
-   * @param gasViscosity    Gas dynamic viscosity (Pa·s)
+   * @param flowRegime Current flow regime
+   * @param gasVelocity Gas velocity (m/s)
+   * @param liquidVelocity Liquid velocity (m/s)
+   * @param gasDensity Gas density (kg/m³)
+   * @param liquidDensity Liquid density (kg/m³)
+   * @param gasViscosity Gas dynamic viscosity (Pa·s)
    * @param liquidViscosity Liquid dynamic viscosity (Pa·s)
-   * @param liquidHoldup    Liquid holdup (0-1)
-   * @param diameter        Pipe diameter (m)
-   * @param roughness       Pipe wall roughness (m)
+   * @param liquidHoldup Liquid holdup (0-1)
+   * @param diameter Pipe diameter (m)
+   * @param roughness Pipe wall roughness (m)
    * @return Wall friction results for both phases
    */
   public WallFrictionResult calculate(FlowRegime flowRegime, double gasVelocity, double liquidVelocity,
@@ -127,15 +127,15 @@ public class WallFriction implements Serializable {
    * Each phase uses its hydraulic diameter for friction calculation.
    * </p>
    *
-   * @param vG     gas velocity [m/s]
-   * @param vL     liquid velocity [m/s]
-   * @param rhoG   gas density [kg/m³]
-   * @param rhoL   liquid density [kg/m³]
-   * @param muG    gas dynamic viscosity [Pa·s]
-   * @param muL    liquid dynamic viscosity [Pa·s]
+   * @param vG gas velocity [m/s]
+   * @param vL liquid velocity [m/s]
+   * @param rhoG gas density [kg/m³]
+   * @param rhoL liquid density [kg/m³]
+   * @param muG gas dynamic viscosity [Pa·s]
+   * @param muL liquid dynamic viscosity [Pa·s]
    * @param alphaL liquid holdup fraction [-]
-   * @param D      pipe diameter [m]
-   * @param eps    pipe wall roughness [m]
+   * @param D pipe diameter [m]
+   * @param eps pipe wall roughness [m]
    * @return wall friction result containing shear stresses and friction factors
    */
   private WallFrictionResult calcStratifiedFriction(double vG, double vL, double rhoG, double rhoL, double muG,
@@ -171,15 +171,15 @@ public class WallFriction implements Serializable {
    * Uses mixture properties in slug body, stratified approach in film region.
    * </p>
    *
-   * @param vG     gas velocity [m/s]
-   * @param vL     liquid velocity [m/s]
-   * @param rhoG   gas density [kg/m³]
-   * @param rhoL   liquid density [kg/m³]
-   * @param muG    gas dynamic viscosity [Pa·s]
-   * @param muL    liquid dynamic viscosity [Pa·s]
+   * @param vG gas velocity [m/s]
+   * @param vL liquid velocity [m/s]
+   * @param rhoG gas density [kg/m³]
+   * @param rhoL liquid density [kg/m³]
+   * @param muG gas dynamic viscosity [Pa·s]
+   * @param muL liquid dynamic viscosity [Pa·s]
    * @param alphaL liquid holdup fraction [-]
-   * @param D      pipe diameter [m]
-   * @param eps    pipe wall roughness [m]
+   * @param D pipe diameter [m]
+   * @param eps pipe wall roughness [m]
    * @return wall friction result containing shear stresses and friction factors
    */
   private WallFrictionResult calcSlugFriction(double vG, double vL, double rhoG, double rhoL, double muG, double muL,
@@ -217,15 +217,15 @@ public class WallFriction implements Serializable {
    * Liquid film on wall, gas in core. Film friction dominates.
    * </p>
    *
-   * @param vG     gas velocity [m/s]
-   * @param vL     liquid velocity [m/s]
-   * @param rhoG   gas density [kg/m3]
-   * @param rhoL   liquid density [kg/m3]
-   * @param muG    gas viscosity [Pa.s]
-   * @param muL    liquid viscosity [Pa.s]
+   * @param vG gas velocity [m/s]
+   * @param vL liquid velocity [m/s]
+   * @param rhoG gas density [kg/m3]
+   * @param rhoL liquid density [kg/m3]
+   * @param muG gas viscosity [Pa.s]
+   * @param muL liquid viscosity [Pa.s]
    * @param alphaL liquid volume fraction [-]
-   * @param D      pipe diameter [m]
-   * @param eps    pipe roughness [m]
+   * @param D pipe diameter [m]
+   * @param eps pipe roughness [m]
    * @return wall friction result containing friction factors and shear stresses
    */
   private WallFrictionResult calcAnnularFriction(double vG, double vL, double rhoG, double rhoL, double muG, double muL,
@@ -269,15 +269,15 @@ public class WallFriction implements Serializable {
    * Liquid-continuous flow with dispersed gas bubbles. Use liquid properties.
    * </p>
    *
-   * @param vG     gas velocity (m/s)
-   * @param vL     liquid velocity (m/s)
-   * @param rhoG   gas density (kg/m³)
-   * @param rhoL   liquid density (kg/m³)
-   * @param muG    gas viscosity (Pa·s)
-   * @param muL    liquid viscosity (Pa·s)
+   * @param vG gas velocity (m/s)
+   * @param vL liquid velocity (m/s)
+   * @param rhoG gas density (kg/m³)
+   * @param rhoL liquid density (kg/m³)
+   * @param muG gas viscosity (Pa·s)
+   * @param muL liquid viscosity (Pa·s)
    * @param alphaL liquid holdup fraction
-   * @param D      pipe diameter (m)
-   * @param eps    pipe roughness (m)
+   * @param D pipe diameter (m)
+   * @param eps pipe roughness (m)
    * @return wall friction result
    */
   private WallFrictionResult calcBubbleFriction(double vG, double vL, double rhoG, double rhoL, double muG, double muL,
@@ -311,15 +311,15 @@ public class WallFriction implements Serializable {
    * Similar to slug but more chaotic. Use mixture approach.
    * </p>
    *
-   * @param vG     gas velocity (m/s)
-   * @param vL     liquid velocity (m/s)
-   * @param rhoG   gas density (kg/m³)
-   * @param rhoL   liquid density (kg/m³)
-   * @param muG    gas viscosity (Pa·s)
-   * @param muL    liquid viscosity (Pa·s)
+   * @param vG gas velocity (m/s)
+   * @param vL liquid velocity (m/s)
+   * @param rhoG gas density (kg/m³)
+   * @param rhoL liquid density (kg/m³)
+   * @param muG gas viscosity (Pa·s)
+   * @param muL liquid viscosity (Pa·s)
    * @param alphaL liquid holdup fraction
-   * @param D      pipe diameter (m)
-   * @param eps    pipe roughness (m)
+   * @param D pipe diameter (m)
+   * @param eps pipe roughness (m)
    * @return wall friction result
    */
   private WallFrictionResult calcChurnFriction(double vG, double vL, double rhoG, double rhoL, double muG, double muL,
@@ -331,11 +331,11 @@ public class WallFriction implements Serializable {
   /**
    * Calculate wall friction for single-phase gas flow.
    *
-   * @param vG   gas velocity (m/s)
+   * @param vG gas velocity (m/s)
    * @param rhoG gas density (kg/m3)
-   * @param muG  gas viscosity (Pa.s)
-   * @param D    pipe diameter (m)
-   * @param eps  pipe roughness (m)
+   * @param muG gas viscosity (Pa.s)
+   * @param D pipe diameter (m)
+   * @param eps pipe roughness (m)
    * @return wall friction result
    */
   private WallFrictionResult calcSinglePhaseGasFriction(double vG, double rhoG, double muG, double D, double eps) {
@@ -353,11 +353,11 @@ public class WallFriction implements Serializable {
   /**
    * Calculate wall friction for single-phase liquid flow.
    *
-   * @param vL   liquid velocity (m/s)
+   * @param vL liquid velocity (m/s)
    * @param rhoL liquid density (kg/m3)
-   * @param muL  liquid viscosity (Pa.s)
-   * @param D    pipe diameter (m)
-   * @param eps  pipe roughness (m)
+   * @param muL liquid viscosity (Pa.s)
+   * @param D pipe diameter (m)
+   * @param eps pipe roughness (m)
    * @return wall friction result
    */
   private WallFrictionResult calcSinglePhaseLiquidFriction(double vL, double rhoL, double muL, double D, double eps) {
@@ -380,9 +380,9 @@ public class WallFriction implements Serializable {
    * f = 16/Re.
    * </p>
    *
-   * @param reynolds  Reynolds number
+   * @param reynolds Reynolds number
    * @param roughness Pipe roughness (m)
-   * @param diameter  Pipe diameter (m)
+   * @param diameter Pipe diameter (m)
    * @return Fanning friction factor
    */
   public double calcFanningFrictionFactor(double reynolds, double roughness, double diameter) {
@@ -411,7 +411,7 @@ public class WallFriction implements Serializable {
   /**
    * Haaland equation for turbulent Fanning friction factor.
    *
-   * @param Re   Reynolds number
+   * @param Re Reynolds number
    * @param epsD relative roughness (roughness/diameter)
    * @return Fanning friction factor
    */
@@ -444,9 +444,9 @@ public class WallFriction implements Serializable {
    * More accurate than Haaland for edge cases.
    * </p>
    *
-   * @param reynolds  Reynolds number
+   * @param reynolds Reynolds number
    * @param roughness Pipe roughness (m)
-   * @param diameter  Pipe diameter (m)
+   * @param diameter Pipe diameter (m)
    * @return Fanning friction factor
    */
   public double calcColebrookFanning(double reynolds, double roughness, double diameter) {

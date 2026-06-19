@@ -38,7 +38,7 @@ public class NeqSimUnit extends TwoPortEquipment {
    * </p>
    *
    * @param inletStream a {@link neqsim.process.equipment.stream.Stream} object
-   * @param equipment   a {@link java.lang.String} object
+   * @param equipment a {@link java.lang.String} object
    * @param flowPattern a {@link java.lang.String} object
    */
   public NeqSimUnit(StreamInterface inletStream, String equipment, String flowPattern) {

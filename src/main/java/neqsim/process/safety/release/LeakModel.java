@@ -415,7 +415,7 @@ public class LeakModel implements Serializable {
      * Sets the hole diameter with unit.
      *
      * @param diameter hole diameter value
-     * @param unit     diameter unit ("m", "mm", "in")
+     * @param unit diameter unit ("m", "mm", "in")
      * @return this builder
      */
     public Builder holeDiameter(double diameter, String unit) {
@@ -485,7 +485,7 @@ public class LeakModel implements Serializable {
      * Sets the back pressure with unit.
      *
      * @param pressure back pressure value
-     * @param unit     pressure unit ("Pa", "bar", "psi")
+     * @param unit pressure unit ("Pa", "bar", "psi")
      * @return this builder
      */
     public Builder backPressure(double pressure, String unit) {

@@ -154,7 +154,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
   /**
    * Constructor for HeatExchanger.
    *
-   * @param name      name of heat exchanger
+   * @param name name of heat exchanger
    * @param inStream1 input stream
    */
   public HeatExchanger(String name, StreamInterface inStream1) {
@@ -164,7 +164,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
   /**
    * Constructor for HeatExchanger.
    *
-   * @param name      name of heat exchanger
+   * @param name name of heat exchanger
    * @param inStream1 input stream 1
    * @param inStream2 input stream 2
    */
@@ -196,7 +196,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
    * setFeedStream. Will also set name of outstreams.
    * </p>
    *
-   * @param number   a int
+   * @param number a int
    * @param inStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public void setFeedStream(int number, StreamInterface inStream) {
@@ -337,7 +337,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
    * Setter for the field <code>outStream</code>.
    * </p>
    *
-   * @param outStream    the outStream to set
+   * @param outStream the outStream to set
    * @param streamNumber a int
    */
   public void setOutStream(int streamNumber, StreamInterface outStream) {
@@ -732,7 +732,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
    * </p>
    *
    * @param guessOutTemperature a double
-   * @param unit                a String
+   * @param unit a String
    */
   public void setGuessOutTemperature(double guessOutTemperature, String unit) {
     this.guessOutTemperature = guessOutTemperature;
@@ -1002,7 +1002,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
    * </p>
    *
    * @param NTU a double
-   * @param Cr  a double
+   * @param Cr a double
    * @return a double
    */
   public double calcThermalEffectivenes(double NTU, double Cr) {
@@ -1876,8 +1876,8 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
     /**
      * Sets the outlet temperature for a specified stream.
      *
-     * @param temperature  outlet temperature value
-     * @param unit         temperature unit ("K", "C", or "F")
+     * @param temperature outlet temperature value
+     * @param unit temperature unit ("K", "C", or "F")
      * @param streamNumber 0 for hot stream, 1 for cold stream
      * @return this builder for chaining
      */
@@ -1892,7 +1892,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
      * Sets the flow arrangement type.
      *
      * @param arrangement flow arrangement (e.g., "counterflow", "parallel flow", "concentric tube counterflow", "cross
-     *                    flow")
+     * flow")
      * @return this builder for chaining
      */
     public Builder flowArrangement(String arrangement) {
@@ -1904,7 +1904,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
      * Sets an initial guess for outlet temperature to help convergence.
      *
      * @param temperature guess temperature value
-     * @param unit        temperature unit ("K", "C", or "F")
+     * @param unit temperature unit ("K", "C", or "F")
      * @return this builder for chaining
      */
     public Builder guessOutTemperature(double temperature, String unit) {

@@ -123,8 +123,8 @@ public class TrainingDataCollector implements Serializable {
   /**
    * Define an input feature.
    *
-   * @param name     feature name
-   * @param unit     physical unit
+   * @param name feature name
+   * @param unit physical unit
    * @param minBound expected minimum value
    * @param maxBound expected maximum value
    * @return this collector for chaining
@@ -138,8 +138,8 @@ public class TrainingDataCollector implements Serializable {
   /**
    * Define an output feature.
    *
-   * @param name     feature name
-   * @param unit     physical unit
+   * @param name feature name
+   * @param unit physical unit
    * @param minBound expected minimum value
    * @param maxBound expected maximum value
    * @return this collector for chaining
@@ -160,7 +160,7 @@ public class TrainingDataCollector implements Serializable {
   /**
    * Record an input value for current sample.
    *
-   * @param name  input feature name
+   * @param name input feature name
    * @param value value to record
    */
   public void recordInput(String name, double value) {
@@ -174,7 +174,7 @@ public class TrainingDataCollector implements Serializable {
   /**
    * Record an output value for current sample.
    *
-   * @param name  output feature name
+   * @param name output feature name
    * @param value value to record
    */
   public void recordOutput(String name, double value) {

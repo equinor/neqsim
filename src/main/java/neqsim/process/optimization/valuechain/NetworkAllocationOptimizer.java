@@ -88,8 +88,8 @@ public class NetworkAllocationOptimizer implements Serializable {
      * Creates an allocation result.
      *
      * @param allocation the per-leg allocation
-     * @param objective  the objective value (higher is better)
-     * @param feasible   true if the allocation is feasible
+     * @param objective the objective value (higher is better)
+     * @param feasible true if the allocation is feasible
      */
     public AllocationResult(double[] allocation, double objective, boolean feasible) {
       this.allocation = allocation.clone();
@@ -149,7 +149,7 @@ public class NetworkAllocationOptimizer implements Serializable {
   /**
    * Sets the lower and upper bound for one leg.
    *
-   * @param leg   the leg index (0-based)
+   * @param leg the leg index (0-based)
    * @param lower the lower bound (non-negative)
    * @param upper the upper bound (greater than or equal to the lower bound)
    * @return this optimizer for method chaining

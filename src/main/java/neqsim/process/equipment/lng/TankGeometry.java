@@ -75,7 +75,7 @@ public class TankGeometry implements Serializable {
   /**
    * Constructor with containment type.
    *
-   * @param type        containment type
+   * @param type containment type
    * @param totalVolume total tank volume (m3)
    */
   public TankGeometry(ContainmentType type, double totalVolume) {
@@ -87,7 +87,7 @@ public class TankGeometry implements Serializable {
   /**
    * Set default dimensions based on containment type and total volume.
    *
-   * @param type   containment type
+   * @param type containment type
    * @param volume total volume (m3)
    */
   private void setDefaultDimensionsForType(ContainmentType type, double volume) {

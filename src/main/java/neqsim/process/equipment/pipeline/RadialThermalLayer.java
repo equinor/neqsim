@@ -153,10 +153,10 @@ public class RadialThermalLayer implements Serializable {
   /**
    * Construct a thermal layer with specified dimensions and material type.
    *
-   * @param name        Layer identifier
+   * @param name Layer identifier
    * @param innerRadius Inner radius [m]
-   * @param thickness   Layer thickness [m]
-   * @param material    Material type preset
+   * @param thickness Layer thickness [m]
+   * @param material Material type preset
    */
   public RadialThermalLayer(String name, double innerRadius, double thickness, MaterialType material) {
     this.name = name;
@@ -171,12 +171,12 @@ public class RadialThermalLayer implements Serializable {
   /**
    * Construct a custom thermal layer with user-specified properties.
    *
-   * @param name        Layer identifier
+   * @param name Layer identifier
    * @param innerRadius Inner radius [m]
-   * @param thickness   Layer thickness [m]
-   * @param k           Thermal conductivity [W/(m·K)]
-   * @param rho         Density [kg/m³]
-   * @param cp          Specific heat [J/(kg·K)]
+   * @param thickness Layer thickness [m]
+   * @param k Thermal conductivity [W/(m·K)]
+   * @param rho Density [kg/m³]
+   * @param cp Specific heat [J/(kg·K)]
    */
   public RadialThermalLayer(String name, double innerRadius, double thickness, double k, double rho, double cp) {
     this.name = name;

@@ -172,7 +172,7 @@ public class ProcessAutomation {
    * against known unit names and variable addresses. Returns a JSON string with the value on success, or a diagnostic
    * result with suggestions on failure.
    *
-   * @param address       the dot-notation address, e.g. "separator-1.gasOutStream.temperature"
+   * @param address the dot-notation address, e.g. "separator-1.gasOutStream.temperature"
    * @param unitOfMeasure the desired unit
    * @return JSON result string with either value or diagnostic information
    */
@@ -201,8 +201,8 @@ public class ProcessAutomation {
    * Sets a variable value with self-healing: if the exact address fails, attempts auto-correction via fuzzy matching.
    * Also validates the value against physical bounds before setting.
    *
-   * @param address       the dot-notation address
-   * @param value         the value to set
+   * @param address the dot-notation address
+   * @param value the value to set
    * @param unitOfMeasure the unit of the value
    * @return JSON result string with either success or diagnostic information
    */
@@ -284,7 +284,7 @@ public class ProcessAutomation {
    *
    * @param areaName the name of the process area
    * @return unmodifiable list of unit operation names (without area prefix)
-   * @throws IllegalStateException    if backed by a single ProcessSystem
+   * @throws IllegalStateException if backed by a single ProcessSystem
    * @throws IllegalArgumentException if the area is not found
    */
   public List<String> getUnitList(String areaName) {
@@ -322,7 +322,7 @@ public class ProcessAutomation {
    * </p>
    *
    * @param unitName the name of the unit operation, optionally area-qualified
-   * @param type     the variable type filter, or null for all variables
+   * @param type the variable type filter, or null for all variables
    * @return list of variable descriptors matching the filter
    * @throws IllegalArgumentException if the unit is not found
    */
@@ -416,7 +416,7 @@ public class ProcessAutomation {
    * Returns the registry of adjustable parameters as a JSON string.
    *
    * @return JSON string {@code {schemaVersion, count, parameters:[{name, address, unit, lowerBound, upperBound,
-   *         targetUnitName, targetProperty, source}]}}
+   * targetUnitName, targetProperty, source}]}}
    */
   public String getAdjustableParametersJson() {
     List<AdjustableParameter> params = getAdjustableParameters();
@@ -490,8 +490,8 @@ public class ProcessAutomation {
    * {@code "AreaName::unitName.streamPort.property"}.
    * </p>
    *
-   * @param address       the dot-notation address, e.g. "separator-1.gasOutStream.temperature" or
-   *                      "Separation::separator-1.gasOutStream.temperature"
+   * @param address the dot-notation address, e.g. "separator-1.gasOutStream.temperature" or
+   * "Separation::separator-1.gasOutStream.temperature"
    * @param unitOfMeasure the desired unit, e.g. "C", "bara", "kg/hr". Pass null or empty for default units
    * @return the variable value in the requested unit
    * @throws IllegalArgumentException if the address cannot be resolved
@@ -538,9 +538,9 @@ public class ProcessAutomation {
    * {@code "AreaName::Compressor.outletPressure"}.
    * </p>
    *
-   * @param address       the dot-notation address, e.g. "Compressor.outletPressure" or
-   *                      "Compression::Compressor.outletPressure"
-   * @param value         the value to set
+   * @param address the dot-notation address, e.g. "Compressor.outletPressure" or
+   * "Compression::Compressor.outletPressure"
+   * @param value the value to set
    * @param unitOfMeasure the unit of the provided value, e.g. "bara", "C". Pass null or empty for default units
    * @throws IllegalArgumentException if the address cannot be resolved or the variable is read-only
    */
@@ -730,7 +730,7 @@ public class ProcessAutomation {
    * addressing equipment by their IEC 81346 codes, e.g. "=A1-B1" or "-K2".
    * </p>
    *
-   * @param areaName     the area name to search within (null to search all)
+   * @param areaName the area name to search within (null to search all)
    * @param refDesString the reference designation string to match
    * @return the matching equipment, or null if not found
    */
@@ -756,7 +756,7 @@ public class ProcessAutomation {
   /**
    * Searches a process system for equipment matching a reference designation string.
    *
-   * @param ps           the process system to search
+   * @param ps the process system to search
    * @param refDesString the reference designation to match
    * @return the matching equipment, or null if not found
    */
@@ -774,7 +774,7 @@ public class ProcessAutomation {
    * Builds the list of variables exposed by a unit operation.
    *
    * @param unitName the unit name (used as address prefix)
-   * @param unit     the unit operation
+   * @param unit the unit operation
    * @return list of variables
    */
   private List<SimulationVariable> buildVariableList(String unitName, ProcessEquipmentInterface unit) {
@@ -1113,9 +1113,9 @@ public class ProcessAutomation {
   /**
    * Adds stream variables (temperature, pressure, flowRate) with appropriate INPUT/OUTPUT type.
    *
-   * @param vars    the list to add to
-   * @param prefix  the address prefix
-   * @param stream  the stream
+   * @param vars the list to add to
+   * @param prefix the address prefix
+   * @param stream the stream
    * @param isInput whether the stream properties are settable
    */
   private void addStreamVariables(List<SimulationVariable> vars, String prefix, StreamInterface stream,
@@ -1132,7 +1132,7 @@ public class ProcessAutomation {
   /**
    * Adds read-only stream variables for an output stream.
    *
-   * @param vars   the list to add to
+   * @param vars the list to add to
    * @param prefix the address prefix including port name
    * @param stream the stream
    */
@@ -1146,9 +1146,9 @@ public class ProcessAutomation {
   /**
    * Adds outlet stream variables for single-outlet equipment.
    *
-   * @param vars     the list to add to
+   * @param vars the list to add to
    * @param unitName the unit name
-   * @param unit     the equipment
+   * @param unit the equipment
    */
   private void addOutletStreamVariables(List<SimulationVariable> vars, String unitName,
       ProcessEquipmentInterface unit) {
@@ -1161,9 +1161,9 @@ public class ProcessAutomation {
   /**
    * Gets a property value directly from an equipment object.
    *
-   * @param unit     the equipment
+   * @param unit the equipment
    * @param property the property name
-   * @param uom      the desired unit of measure
+   * @param uom the desired unit of measure
    * @return the property value
    */
   private double getEquipmentProperty(ProcessEquipmentInterface unit, String property, String uom) {
@@ -1415,10 +1415,10 @@ public class ProcessAutomation {
   /**
    * Sets a property value directly on an equipment object.
    *
-   * @param unit     the equipment
+   * @param unit the equipment
    * @param property the property name
-   * @param value    the value to set
-   * @param uom      the unit of measure for the value
+   * @param value the value to set
+   * @param uom the unit of measure for the value
    */
   private void setEquipmentProperty(ProcessEquipmentInterface unit, String property, double value, String uom) {
     boolean hasUnit = uom != null && !uom.trim().isEmpty();
@@ -1633,7 +1633,7 @@ public class ProcessAutomation {
   /**
    * Resolves a stream port name to the actual stream object.
    *
-   * @param unit     the equipment
+   * @param unit the equipment
    * @param portName the port name, e.g. "gasOutStream", "liquidOutStream", "outletStream"
    * @return the resolved stream, or null if not found
    */
@@ -1698,9 +1698,9 @@ public class ProcessAutomation {
   /**
    * Gets a property value from a stream.
    *
-   * @param stream   the stream
+   * @param stream the stream
    * @param property the property name
-   * @param uom      the desired unit of measure
+   * @param uom the desired unit of measure
    * @return the property value
    */
   private double getStreamProperty(StreamInterface stream, String property, String uom) {
@@ -1726,10 +1726,10 @@ public class ProcessAutomation {
   /**
    * Sets a property value on a stream.
    *
-   * @param stream   the stream
+   * @param stream the stream
    * @param property the property name
-   * @param value    the value to set
-   * @param uom      the unit of measure
+   * @param value the value to set
+   * @param uom the unit of measure
    */
   private void setStreamProperty(StreamInterface stream, String property, double value, String uom) {
     boolean hasUnit = uom != null && !uom.trim().isEmpty();
@@ -1770,7 +1770,7 @@ public class ProcessAutomation {
    * Diagnoses an address resolution failure and attempts recovery via fuzzy matching.
    *
    * @param address the failed address
-   * @param error   the caught exception
+   * @param error the caught exception
    * @return a diagnostic result with suggestions and possible auto-correction
    */
   private AutomationDiagnostics.DiagnosticResult diagnoseAndAttemptRecovery(String address,
@@ -1886,8 +1886,8 @@ public class ProcessAutomation {
    * Builds a success JSON response for a get operation.
    *
    * @param address the address
-   * @param value   the value
-   * @param unit    the unit of measure
+   * @param value the value
+   * @param unit the unit of measure
    * @return JSON string
    */
   private String buildSuccessJson(String address, double value, String unit) {
@@ -1904,11 +1904,11 @@ public class ProcessAutomation {
   /**
    * Builds a JSON response for a successful auto-corrected get operation.
    *
-   * @param originalAddress  the original address that failed
+   * @param originalAddress the original address that failed
    * @param correctedAddress the corrected address that succeeded
-   * @param value            the value read
-   * @param unit             the unit of measure
-   * @param diag             the diagnostic result
+   * @param value the value read
+   * @param unit the unit of measure
+   * @param diag the diagnostic result
    * @return JSON string
    */
   private String buildAutoCorrectedJson(String originalAddress, String correctedAddress, double value, String unit,
@@ -1929,9 +1929,9 @@ public class ProcessAutomation {
   /**
    * Builds a success JSON response for a set operation.
    *
-   * @param address     the address
-   * @param value       the value set
-   * @param unit        the unit of measure
+   * @param address the address
+   * @param value the value set
+   * @param unit the unit of measure
    * @param warningJson JSON warning from bounds validation, or null
    * @return JSON string
    */
@@ -1952,11 +1952,11 @@ public class ProcessAutomation {
   /**
    * Builds a JSON response for a successful auto-corrected set operation.
    *
-   * @param originalAddress  the original address that failed
+   * @param originalAddress the original address that failed
    * @param correctedAddress the corrected address that succeeded
-   * @param value            the value set
-   * @param unit             the unit of measure
-   * @param diag             the diagnostic result
+   * @param value the value set
+   * @param unit the unit of measure
+   * @param diag the diagnostic result
    * @return JSON string
    */
   private String buildAutoCorrectedSetJson(String originalAddress, String correctedAddress, double value, String unit,
@@ -2041,11 +2041,11 @@ public class ProcessAutomation {
    * {@link #setVariableValue(String, double, String)} followed by {@link #run()} but provided as a single atomic call
    * for agents that want the result of one specific change.
    *
-   * @param address       the dot-notation address
-   * @param value         the value to set
+   * @param address the dot-notation address
+   * @param value the value to set
    * @param unitOfMeasure the unit of the provided value, or null for default units
    * @throws IllegalArgumentException if the address cannot be resolved
-   * @throws RuntimeException         if the subsequent run fails
+   * @throws RuntimeException if the subsequent run fails
    */
   public void setVariableValueAndRun(String address, double value, String unitOfMeasure) {
     setVariableValue(address, value, unitOfMeasure);
@@ -2059,7 +2059,7 @@ public class ProcessAutomation {
    * succeeded and, if not, which unit failed, without catching and parsing a {@link RuntimeException}.
    *
    * @return schema-versioned JSON describing the last run outcome (see
-   *         {@link neqsim.process.processmodel.RunStatus#toJson()})
+   * {@link neqsim.process.processmodel.RunStatus#toJson()})
    */
   public String getRunStatusJson() {
     if (processModel != null) {
@@ -2080,7 +2080,7 @@ public class ProcessAutomation {
    * </p>
    *
    * @return schema-versioned run-status JSON, with {@code success}, {@code failedUnitName} and {@code failedUnitError}
-   *         fields
+   * fields
    */
   public String runJson() {
     try {
@@ -2112,7 +2112,7 @@ public class ProcessAutomation {
    * </p>
    *
    * @param maxIterations maximum outer iterations (multi-area only); must be at least 1
-   * @param tolerance     relative convergence tolerance (multi-area only); must be finite and positive
+   * @param tolerance relative convergence tolerance (multi-area only); must be finite and positive
    * @return schema-versioned convergence/run JSON
    * @throws IllegalArgumentException if {@code maxIterations < 1} or {@code tolerance} is not a finite positive number
    */
@@ -2196,13 +2196,13 @@ public class ProcessAutomation {
    * <li>{@code readbackErrors} &mdash; map of address &rarr; reason for unreadable outputs</li>
    * </ul>
    *
-   * @param setpoints     ordered map of decision-variable address &rarr; value to apply; may be null or empty to
-   *                      evaluate the current configuration
-   * @param setpointUnit  unit applied to every setpoint, or null for default units
-   * @param readbacks     objective / constraint addresses to read after the run; may be null or empty
-   * @param readbackUnit  unit applied to every read-back, or null for default units
+   * @param setpoints ordered map of decision-variable address &rarr; value to apply; may be null or empty to evaluate
+   * the current configuration
+   * @param setpointUnit unit applied to every setpoint, or null for default units
+   * @param readbacks objective / constraint addresses to read after the run; may be null or empty
+   * @param readbackUnit unit applied to every read-back, or null for default units
    * @param maxIterations maximum outer iterations for the convergence run; must be at least 1
-   * @param tolerance     relative convergence tolerance; must be finite and positive
+   * @param tolerance relative convergence tolerance; must be finite and positive
    * @return schema-versioned JSON describing the trial outcome
    * @throws IllegalArgumentException if {@code maxIterations < 1} or {@code tolerance} is not a finite positive number
    */
@@ -2288,9 +2288,9 @@ public class ProcessAutomation {
    * setpoints and read-backs and sensible default convergence settings (30 iterations, relative tolerance 5e-3, which
    * is robust for plants with near-zero-flow anti-surge recycles).
    *
-   * @param setpoints     decision-variable address &rarr; value map; may be null or empty
+   * @param setpoints decision-variable address &rarr; value map; may be null or empty
    * @param unitOfMeasure unit applied to setpoints and read-backs, or null for default units
-   * @param readbacks     objective / constraint addresses to read after the run; may be null or empty
+   * @param readbacks objective / constraint addresses to read after the run; may be null or empty
    * @return schema-versioned JSON describing the trial outcome
    */
   public String evaluate(Map<String, Double> setpoints, String unitOfMeasure, List<String> readbacks) {
@@ -2335,7 +2335,7 @@ public class ProcessAutomation {
    * consult {@link #getDiagnostics()}.
    * </p>
    *
-   * @param addresses     dot-notation addresses to read
+   * @param addresses dot-notation addresses to read
    * @param unitOfMeasure unit applied to every address, or null for defaults
    * @return ordered map from address to value (Linked) with only successfully read entries
    * @throws IllegalArgumentException if {@code addresses} is null
@@ -2358,10 +2358,10 @@ public class ProcessAutomation {
   /**
    * Sets many input variables in a single call.
    *
-   * @param updates       ordered map from address to value
+   * @param updates ordered map from address to value
    * @param unitOfMeasure unit applied to every update, or null for defaults
-   * @param runAfter      when {@code true}, calls {@link #run()} once after all writes succeed; when {@code false},
-   *                      leaves the facade dirty
+   * @param runAfter when {@code true}, calls {@link #run()} once after all writes succeed; when {@code false}, leaves
+   * the facade dirty
    * @return number of variables that were successfully set
    * @throws IllegalArgumentException if {@code updates} is null
    */
@@ -2466,7 +2466,7 @@ public class ProcessAutomation {
    * reason (typically because the variable is INPUT-only and has not yet been set, or because the equipment has not
    * been run).
    *
-   * @param address       the dot-notation address
+   * @param address the dot-notation address
    * @param unitOfMeasure the unit of measure, or null for the default
    * @return the current value, or null when unreadable
    */
@@ -2483,11 +2483,11 @@ public class ProcessAutomation {
    * the proposed write. When validation returns {@link WriteValidationResult.Severity#ERROR ERROR} the write is
    * rejected with an {@link IllegalArgumentException} and the simulation is left unchanged.
    *
-   * @param address       the dot-notation address
-   * @param value         the value to set
+   * @param address the dot-notation address
+   * @param value the value to set
    * @param unitOfMeasure the unit of measure, or null for the default
    * @return the validation result (always non-null; {@link WriteValidationResult.Severity#OK OK} or
-   *         {@link WriteValidationResult.Severity#WARNING WARNING})
+   * {@link WriteValidationResult.Severity#WARNING WARNING})
    * @throws IllegalArgumentException if validation fails or the address cannot be resolved
    */
   public WriteValidationResult setVariableValueValidated(String address, double value, String unitOfMeasure) {
@@ -2528,7 +2528,7 @@ public class ProcessAutomation {
    * been set at least once before relying on transactional rollback.
    * </p>
    *
-   * @param updates       ordered map from address to value
+   * @param updates ordered map from address to value
    * @param unitOfMeasure unit applied to every update, or null for defaults
    * @return the {@link TransactionalBatchResult}; never null
    * @throws IllegalArgumentException if {@code updates} is null
@@ -2614,7 +2614,7 @@ public class ProcessAutomation {
    * simulation to leave it in a coherent state. Values whose snapshot is {@code null} are skipped. Restore-time errors
    * are logged through the diagnostics but never thrown.
    *
-   * @param snapshot      the snapshot entries from the failed batch
+   * @param snapshot the snapshot entries from the failed batch
    * @param unitOfMeasure the unit of measure used for the original writes
    */
   private void rollbackSnapshot(List<TransactionalBatchResult.WriteOutcome> snapshot, String unitOfMeasure) {
@@ -2647,7 +2647,7 @@ public class ProcessAutomation {
    * and for building model-vs-plant comparisons.
    *
    * @param scope unit name (e.g. {@code "HP Sep"}), area-qualified unit name (e.g. {@code "Separation::HP Sep"}), area
-   *              name (e.g. {@code "Separation"}), or {@code "*"} / {@code null} for the whole process
+   * name (e.g. {@code "Separation"}), or {@code "*"} / {@code null} for the whole process
    * @return JSON string {@code {schemaVersion, scope, units:[{name, area, type, variables:{...}}]}}
    */
   public String snapshot(String scope) {
@@ -2748,7 +2748,7 @@ public class ProcessAutomation {
   /**
    * Removes a unit-name prefix from a variable address, leaving the property path.
    *
-   * @param address  full variable address
+   * @param address full variable address
    * @param unitAddr unit prefix (possibly area-qualified)
    * @return the property portion of the address
    */
@@ -2829,7 +2829,7 @@ public class ProcessAutomation {
    * explicit {@link neqsim.process.processmodel.ProcessConnection ProcessConnection} edges when available.
    *
    * @return JSON string {@code {schemaVersion, equipment:[{name, type, inlets, outlets}], connections:[{source, target,
-   *         type, label}]}}
+   * type, label}]}}
    */
   public String getTopology() {
     com.google.gson.JsonObject root = new com.google.gson.JsonObject();
@@ -3082,7 +3082,7 @@ public class ProcessAutomation {
    * Builds a {component → fraction} JSON object for a fluid.
    *
    * @param fluid the thermo system
-   * @param mass  if {@code true} returns mass fractions, otherwise mole fractions (overall)
+   * @param mass if {@code true} returns mass fractions, otherwise mole fractions (overall)
    * @return JSON object
    */
   private com.google.gson.JsonObject compositionJson(neqsim.thermo.system.SystemInterface fluid, boolean mass) {

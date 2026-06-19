@@ -79,7 +79,7 @@ public class DegasserSaltWaterProcessTest extends neqsim.NeqSimTest {
    * for CO2, C1-C4 components with water.
    *
    * @param salinity the salinity in mol/L
-   * @param fluid    the fluid system to update
+   * @param fluid the fluid system to update
    */
   private void updateKij(double salinity, SystemInterface fluid) {
     // CO2 kij correlations
@@ -171,7 +171,7 @@ public class DegasserSaltWaterProcessTest extends neqsim.NeqSimTest {
   /**
    * Calculates the total mass flow rate needed so that the aqueous phase flow rate equals the desired water flow rate.
    *
-   * @param fluid             the fluid system (already flashed)
+   * @param fluid the fluid system (already flashed)
    * @param waterFlowRateM3Hr desired water flow rate in m3/hr
    * @return total mass flow rate in kg/hr
    */

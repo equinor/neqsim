@@ -116,8 +116,8 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
    * Constructor for class SevereSlugAnalyser.
    *
    * @param name Name of object
-   * @param usl  Superficial liquid velocity
-   * @param usg  Superficial gas velocity
+   * @param usl Superficial liquid velocity
+   * @param usg Superficial gas velocity
    */
   public SevereSlugAnalyser(String name, double usl, double usg) {
     this(name);
@@ -128,10 +128,10 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
   /**
    * Constructor for class SevereSlugAnalyser.
    *
-   * @param name              Name of object
-   * @param outletPressure    Pipe Outlet Pressure
-   * @param temperature       Slug temperature.
-   * @param simulationTime    Simulation time
+   * @param name Name of object
+   * @param outletPressure Pipe Outlet Pressure
+   * @param temperature Slug temperature.
+   * @param simulationTime Simulation time
    * @param numberOfTimeSteps Number of simulation time steps to calculate
    */
   public SevereSlugAnalyser(String name, double outletPressure, double temperature, double simulationTime,
@@ -146,12 +146,12 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
   /**
    * Constructor for class SevereSlugAnalyser.
    *
-   * @param name              Name of object
-   * @param usl               Superficial liquid velocity
-   * @param usg               Superficial gas velocity
-   * @param outletPressure    Pipe Outlet Pressure in Pa
-   * @param temperature       Slug temperature.
-   * @param simulationTime    Simulation time
+   * @param name Name of object
+   * @param usl Superficial liquid velocity
+   * @param usg Superficial gas velocity
+   * @param outletPressure Pipe Outlet Pressure in Pa
+   * @param temperature Slug temperature.
+   * @param simulationTime Simulation time
    * @param numberOfTimeSteps Number of simulation time steps to calculate
    */
   SevereSlugAnalyser(String name, double usl, double usg, double outletPressure, double temperature,
@@ -166,12 +166,12 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
   /**
    * Constructor for class SevereSlugAnalyser.
    *
-   * @param name              Name of object
-   * @param fluid             Fluid object. Used to calculate usl and usg
-   * @param pipe              Pipe object
-   * @param outletPressure    Pipe Outlet Pressure
-   * @param temperature       Slug temperature.
-   * @param simulationTime    Simulation time
+   * @param name Name of object
+   * @param fluid Fluid object. Used to calculate usl and usg
+   * @param pipe Pipe object
+   * @param outletPressure Pipe Outlet Pressure
+   * @param temperature Slug temperature.
+   * @param simulationTime Simulation time
    * @param numberOfTimeSteps Number of simulation time steps to calculate
    */
   public SevereSlugAnalyser(String name, SystemInterface fluid, Pipe pipe, double outletPressure, double temperature,
@@ -193,12 +193,12 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
   /**
    * Constructor for class SevereSlugAnalyser.
    *
-   * @param name             Name of object
-   * @param stream           Stream object
+   * @param name Name of object
+   * @param stream Stream object
    * @param internalDiameter pipe internal diameter
-   * @param leftLength       pipe left length
-   * @param rightLength      pipe right length
-   * @param angle            pipe angle
+   * @param leftLength pipe left length
+   * @param rightLength pipe right length
+   * @param angle pipe angle
    */
   public SevereSlugAnalyser(String name, Stream stream, double internalDiameter, double leftLength, double rightLength,
       double angle) {
@@ -209,13 +209,13 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
   /**
    * Constructor for class SevereSlugAnalyser.
    *
-   * @param name              Name of object
-   * @param stream            Stream object
-   * @param internalDiameter  pipe internal diameter
-   * @param leftLength        pipe left length
-   * @param rightLength       pipe right length
-   * @param angle             pipe angle
-   * @param simulationTime    Simulation time
+   * @param name Name of object
+   * @param stream Stream object
+   * @param internalDiameter pipe internal diameter
+   * @param leftLength pipe left length
+   * @param rightLength pipe right length
+   * @param angle pipe angle
+   * @param simulationTime Simulation time
    * @param numberOfTimeSteps Number of simulation time steps to calculate
    */
   public SevereSlugAnalyser(String name, Stream stream, double internalDiameter, double leftLength, double rightLength,
@@ -227,15 +227,15 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
   /**
    * Constructor for class SevereSlugAnalyser.
    *
-   * @param name              Name of object
-   * @param stream            Stream object
-   * @param internalDiameter  Pipe internal diameter
-   * @param leftLength        Pipe left length
-   * @param rightLength       Pipe right length
-   * @param angle             Pipe angle
-   * @param outletPressure    Pipe Outlet Pressure in Pa
-   * @param temperature       Slug temperature.
-   * @param simulationTime    Simulation time
+   * @param name Name of object
+   * @param stream Stream object
+   * @param internalDiameter Pipe internal diameter
+   * @param leftLength Pipe left length
+   * @param rightLength Pipe right length
+   * @param angle Pipe angle
+   * @param outletPressure Pipe Outlet Pressure in Pa
+   * @param temperature Slug temperature.
+   * @param simulationTime Simulation time
    * @param numberOfTimeSteps Number of simulation time steps to calculate
    */
   public SevereSlugAnalyser(String name, Stream stream, double internalDiameter, double leftLength, double rightLength,
@@ -434,7 +434,7 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
    * slugHoldUp.
    * </p>
    *
-   * @param pipe       a {@link neqsim.process.measurementdevice.simpleflowregime.Pipe} object
+   * @param pipe a {@link neqsim.process.measurementdevice.simpleflowregime.Pipe} object
    * @param severeSlug a {@link neqsim.process.measurementdevice.simpleflowregime.SevereSlugAnalyser} object
    * @return a double
    */
@@ -454,8 +454,8 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
    * stratifiedHoldUp.
    * </p>
    *
-   * @param fluid      a {@link neqsim.process.measurementdevice.simpleflowregime.FluidSevereSlug} object
-   * @param pipe       a {@link neqsim.process.measurementdevice.simpleflowregime.Pipe} object
+   * @param fluid a {@link neqsim.process.measurementdevice.simpleflowregime.FluidSevereSlug} object
+   * @param pipe a {@link neqsim.process.measurementdevice.simpleflowregime.Pipe} object
    * @param severeSlug a {@link neqsim.process.measurementdevice.simpleflowregime.SevereSlugAnalyser} object
    * @return a double
    */
@@ -516,8 +516,8 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
    * runSevereSlug.
    * </p>
    *
-   * @param fluid      a {@link neqsim.process.measurementdevice.simpleflowregime.FluidSevereSlug} object
-   * @param pipe       a {@link neqsim.process.measurementdevice.simpleflowregime.Pipe} object
+   * @param fluid a {@link neqsim.process.measurementdevice.simpleflowregime.FluidSevereSlug} object
+   * @param pipe a {@link neqsim.process.measurementdevice.simpleflowregime.Pipe} object
    * @param severeSlug a {@link neqsim.process.measurementdevice.simpleflowregime.SevereSlugAnalyser} object
    */
   public void runSevereSlug(FluidSevereSlug fluid, Pipe pipe, SevereSlugAnalyser severeSlug) {
@@ -618,8 +618,8 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
    * checkFlowRegime.
    * </p>
    *
-   * @param fluid      a {@link neqsim.process.measurementdevice.simpleflowregime.FluidSevereSlug} object
-   * @param pipe       a {@link neqsim.process.measurementdevice.simpleflowregime.Pipe} object
+   * @param fluid a {@link neqsim.process.measurementdevice.simpleflowregime.FluidSevereSlug} object
+   * @param pipe a {@link neqsim.process.measurementdevice.simpleflowregime.Pipe} object
    * @param severeSlug a {@link neqsim.process.measurementdevice.simpleflowregime.SevereSlugAnalyser} object
    * @return a {@link java.lang.String} object
    */
@@ -694,8 +694,8 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
    * getMeasuredValue.
    * </p>
    *
-   * @param fluid      a {@link neqsim.process.measurementdevice.simpleflowregime.FluidSevereSlug} object
-   * @param pipe       a {@link neqsim.process.measurementdevice.simpleflowregime.Pipe} object
+   * @param fluid a {@link neqsim.process.measurementdevice.simpleflowregime.FluidSevereSlug} object
+   * @param pipe a {@link neqsim.process.measurementdevice.simpleflowregime.Pipe} object
    * @param severeSlug a {@link neqsim.process.measurementdevice.simpleflowregime.SevereSlugAnalyser} object
    * @return a double
    */
@@ -741,8 +741,8 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
    * getPredictedFlowRegime.
    * </p>
    *
-   * @param fluid      a {@link neqsim.process.measurementdevice.simpleflowregime.FluidSevereSlug} object
-   * @param pipe       a {@link neqsim.process.measurementdevice.simpleflowregime.Pipe} object
+   * @param fluid a {@link neqsim.process.measurementdevice.simpleflowregime.FluidSevereSlug} object
+   * @param pipe a {@link neqsim.process.measurementdevice.simpleflowregime.Pipe} object
    * @param severeSlug a {@link neqsim.process.measurementdevice.simpleflowregime.SevereSlugAnalyser} object
    * @return a {@link java.lang.String} object
    */

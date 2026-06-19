@@ -48,7 +48,7 @@ public class ControlValve extends ThrottlingValve {
   /**
    * Constructor for ControlValve.
    *
-   * @param name     name of the control valve
+   * @param name name of the control valve
    * @param inStream inlet stream
    */
   public ControlValve(String name, StreamInterface inStream) {

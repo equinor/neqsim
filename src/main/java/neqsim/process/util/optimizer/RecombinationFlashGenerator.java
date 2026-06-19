@@ -141,11 +141,11 @@ public class RecombinationFlashGenerator implements Serializable {
    * Uses recombination flash: mix gas and oil at ratio to achieve target GOR, then add water based on water cut.
    * </p>
    *
-   * @param targetGOR       target GOR in Sm3/Sm3
-   * @param waterCut        water cut as fraction (0-1)
+   * @param targetGOR target GOR in Sm3/Sm3
+   * @param waterCut water cut as fraction (0-1)
    * @param totalLiquidRate total liquid rate (oil + water) in Sm3/hr
-   * @param temperature     temperature in K
-   * @param pressure        pressure in bara
+   * @param temperature temperature in K
+   * @param pressure pressure in bara
    * @return recombined fluid at specified conditions
    */
   public SystemInterface generateFluid(double targetGOR, double waterCut, double totalLiquidRate, double temperature,
@@ -218,10 +218,10 @@ public class RecombinationFlashGenerator implements Serializable {
   /**
    * Generate fluid at specified GOR and water cut with default rates.
    *
-   * @param targetGOR   target GOR in Sm3/Sm3
-   * @param waterCut    water cut as fraction (0-1)
+   * @param targetGOR target GOR in Sm3/Sm3
+   * @param waterCut water cut as fraction (0-1)
    * @param temperature temperature in K
-   * @param pressure    pressure in bara
+   * @param pressure pressure in bara
    * @return recombined fluid
    */
   public SystemInterface generateFluid(double targetGOR, double waterCut, double temperature, double pressure) {
@@ -278,9 +278,9 @@ public class RecombinationFlashGenerator implements Serializable {
   /**
    * Scale fluid to desired total liquid rate.
    *
-   * @param fluid           the fluid to scale
+   * @param fluid the fluid to scale
    * @param totalLiquidRate desired total liquid rate in Sm3/hr
-   * @param waterCut        water cut fraction
+   * @param waterCut water cut fraction
    */
   private void scaleFluidToRate(SystemInterface fluid, double totalLiquidRate, double waterCut) {
     // Calculate current liquid volume at std conditions
@@ -309,7 +309,7 @@ public class RecombinationFlashGenerator implements Serializable {
    * Get cache key for GOR/WC combination.
    *
    * @param gor GOR value
-   * @param wc  water cut value
+   * @param wc water cut value
    * @return cache key string
    */
   private String getCacheKey(double gor, double wc) {
@@ -364,7 +364,7 @@ public class RecombinationFlashGenerator implements Serializable {
    * </p>
    *
    * @param targetGOR target GOR in Sm3/Sm3
-   * @param waterCut  water cut fraction
+   * @param waterCut water cut fraction
    * @param tolerance acceptable relative error (e.g., 0.05 for 5%)
    * @return true if actual GOR is within tolerance of target
    */

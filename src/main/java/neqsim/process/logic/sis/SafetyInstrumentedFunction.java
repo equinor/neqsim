@@ -69,7 +69,7 @@ public class SafetyInstrumentedFunction implements ProcessLogic {
   /**
    * Creates a Safety Instrumented Function.
    *
-   * @param name        SIF name/tag
+   * @param name SIF name/tag
    * @param votingLogic voting pattern for detectors
    */
   public SafetyInstrumentedFunction(String name, VotingLogic votingLogic) {

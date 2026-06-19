@@ -229,7 +229,7 @@ public class ClassicalNucleationTheory {
    *
    * @param molecularWeight_kg_mol molecular weight of the condensing species in kg/mol
    * @param condensedDensity_kg_m3 density of the condensed (solid or liquid) phase in kg/m3
-   * @param surfaceTension_N_m     surface tension of the condensed phase in N/m
+   * @param surfaceTension_N_m surface tension of the condensed phase in N/m
    */
   public ClassicalNucleationTheory(double molecularWeight_kg_mol, double condensedDensity_kg_m3,
       double surfaceTension_N_m) {
@@ -326,7 +326,7 @@ public class ClassicalNucleationTheory {
    * The system should have been flashed (TPflash + initProperties) before calling this method.
    * </p>
    *
-   * @param system        the NeqSim thermodynamic system (should be flashed and initialized)
+   * @param system the NeqSim thermodynamic system (should be flashed and initialized)
    * @param componentName the name of the condensable component (e.g., "n-heptane", "water")
    * @return ClassicalNucleationTheory model populated from the EOS, or null if the component is not found
    */
@@ -432,9 +432,9 @@ public class ClassicalNucleationTheory {
   /**
    * Estimates condensed phase density from critical properties using a simplified Rackett equation.
    *
-   * @param mw          molecular weight in kg/mol
-   * @param tc          critical temperature in K
-   * @param pc          critical pressure in Pa
+   * @param mw molecular weight in kg/mol
+   * @param tc critical temperature in K
+   * @param pc critical pressure in Pa
    * @param temperature actual temperature in K
    * @return estimated liquid density in kg/m3
    */
@@ -448,8 +448,8 @@ public class ClassicalNucleationTheory {
   /**
    * Estimates surface tension from critical properties using the Eotvos correlation.
    *
-   * @param tc          critical temperature in K
-   * @param pc          critical pressure in Pa
+   * @param tc critical temperature in K
+   * @param pc critical pressure in Pa
    * @param temperature actual temperature in K
    * @return estimated surface tension in N/m
    */
@@ -627,7 +627,7 @@ public class ClassicalNucleationTheory {
    * </p>
    *
    * @param angleDegrees contact angle in degrees (0 to 180). 0 = complete wetting (no barrier), 90 = partial wetting
-   *                     (half barrier), 180 = non-wetting (same as homogeneous).
+   * (half barrier), 180 = non-wetting (same as homogeneous).
    */
   public void setContactAngle(double angleDegrees) {
     this.contactAngleDegrees = Math.max(0.0, Math.min(180.0, angleDegrees));
@@ -991,7 +991,7 @@ public class ClassicalNucleationTheory {
    * Calculates the mean particle diameter for a given supersaturation and residence time. This is a convenience method
    * that sets both parameters and runs the calculation.
    *
-   * @param supersaturation  supersaturation ratio (S &gt; 1)
+   * @param supersaturation supersaturation ratio (S &gt; 1)
    * @param residenceTimeSec residence time in seconds
    * @return mean particle diameter in m
    */

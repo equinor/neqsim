@@ -96,8 +96,8 @@ public class BWRSComprehensiveTest {
   /**
    * Compare BWRS and GERG-2008 at a single condition.
    *
-   * @param T    temperature [K]
-   * @param P    pressure [bar]
+   * @param T temperature [K]
+   * @param P pressure [bar]
    * @param xCH4 methane mole fraction
    * @return PropertyResult with all computed values
    */

@@ -93,7 +93,7 @@ public final class SafetyAnalysisFunctionEvaluation implements Serializable {
    * Creates an evaluator with a custom coverage watch threshold.
    *
    * @param watchThreshold the coverage ratio below which a {@code "watch"} flag is raised even with no missing
-   *                       functions; must be in the interval (0, 1]
+   * functions; must be in the interval (0, 1]
    * @throws IllegalArgumentException if {@code watchThreshold} is not in (0, 1]
    */
   public SafetyAnalysisFunctionEvaluation(double watchThreshold) {
@@ -122,12 +122,12 @@ public final class SafetyAnalysisFunctionEvaluation implements Serializable {
     /**
      * Creates a coverage result.
      *
-     * @param componentType     the normalised component type
+     * @param componentType the normalised component type
      * @param requiredFunctions the required protective function codes
      * @param providedFunctions the normalised provided function codes
-     * @param missingFunctions  the required codes not provided
-     * @param coverageRatio     the fraction of required functions provided (0-1)
-     * @param coverageWarning   screening flag: {@code "ok"}, {@code "watch"}, or {@code "gap"}
+     * @param missingFunctions the required codes not provided
+     * @param coverageRatio the fraction of required functions provided (0-1)
+     * @param coverageWarning screening flag: {@code "ok"}, {@code "watch"}, or {@code "gap"}
      */
     public Result(String componentType, List<String> requiredFunctions, List<String> providedFunctions,
 	List<String> missingFunctions, double coverageRatio, String coverageWarning) {
@@ -197,13 +197,13 @@ public final class SafetyAnalysisFunctionEvaluation implements Serializable {
   /**
    * Evaluates the protective-function coverage of a component.
    *
-   * @param componentType     the component type; case-insensitive, spaces/hyphens are normalised to underscores. Must
-   *                          be one of the supported types (see {@link #getSupportedComponentTypes()}).
+   * @param componentType the component type; case-insensitive, spaces/hyphens are normalised to underscores. Must be
+   * one of the supported types (see {@link #getSupportedComponentTypes()}).
    * @param providedFunctions the protective function codes provided on the component; case-insensitive, duplicates
-   *                          ignored. Must not be null.
+   * ignored. Must not be null.
    * @return the {@link Result} of the coverage evaluation
    * @throws IllegalArgumentException if {@code componentType} is null or unsupported, or if {@code providedFunctions}
-   *                                  is null or contains a blank code
+   * is null or contains a blank code
    */
   public Result evaluate(String componentType, Iterable<String> providedFunctions) {
     String normalizedType = normalizeType(componentType);
@@ -237,10 +237,10 @@ public final class SafetyAnalysisFunctionEvaluation implements Serializable {
   /**
    * Determines the screening warning flag from the missing functions and coverage ratio.
    *
-   * @param missing       the missing function codes
+   * @param missing the missing function codes
    * @param coverageRatio the coverage ratio (0-1)
    * @return {@code "gap"} when any function is missing, {@code "watch"} when coverage is below the watch threshold,
-   *         otherwise {@code "ok"}
+   * otherwise {@code "ok"}
    */
   private String warning(List<String> missing, double coverageRatio) {
     if (!missing.isEmpty()) {

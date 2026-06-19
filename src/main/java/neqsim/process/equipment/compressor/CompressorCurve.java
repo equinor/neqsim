@@ -37,9 +37,9 @@ public class CompressorCurve implements java.io.Serializable {
    * Constructor for CompressorCurve.
    * </p>
    *
-   * @param speed                a double
-   * @param flow                 an array of type double
-   * @param head                 an array of type double
+   * @param speed a double
+   * @param flow an array of type double
+   * @param head an array of type double
    * @param polytropicEfficiency an array of type double
    */
   public CompressorCurve(double speed, double[] flow, double[] head, double[] polytropicEfficiency) {
@@ -55,11 +55,11 @@ public class CompressorCurve implements java.io.Serializable {
    * Constructor for CompressorCurve.
    * </p>
    *
-   * @param speed                    a double
-   * @param flow                     an array of type double
-   * @param head                     an array of type double
+   * @param speed a double
+   * @param flow an array of type double
+   * @param head an array of type double
    * @param flowPolytropicEfficiency an array of type double
-   * @param polytropicEfficiency     an array of type double
+   * @param polytropicEfficiency an array of type double
    */
   public CompressorCurve(double speed, double[] flow, double[] head, double[] flowPolytropicEfficiency,
       double[] polytropicEfficiency) {

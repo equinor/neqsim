@@ -47,9 +47,9 @@ public class ApiEnvelope<T> {
   /**
    * Private constructor — use factory methods.
    *
-   * @param status   "success" or "error"
-   * @param data     the data payload, or null on error
-   * @param errors   the error list
+   * @param status "success" or "error"
+   * @param data the data payload, or null on error
+   * @param errors the error list
    * @param warnings the warning list
    */
   private ApiEnvelope(String status, T data, List<DiagnosticIssue> errors, List<String> warnings) {
@@ -62,10 +62,10 @@ public class ApiEnvelope<T> {
   /**
    * Adds standard contract fields to a JSON response object.
    *
-   * @param response    the response object to mutate
-   * @param toolName    the MCP tool name that produced the response
-   * @param provenance  optional calculation provenance
-   * @param validation  optional validation block
+   * @param response the response object to mutate
+   * @param toolName the MCP tool name that produced the response
+   * @param provenance optional calculation provenance
+   * @param validation optional validation block
    * @param qualityGate optional quality-gate block
    */
   public static void applyStandardFields(JsonObject response, String toolName, ResultProvenance provenance,
@@ -101,8 +101,8 @@ public class ApiEnvelope<T> {
   /**
    * Builds a standard validation block.
    *
-   * @param valid   true when validation passed
-   * @param phase   validation phase name
+   * @param valid true when validation passed
+   * @param phase validation phase name
    * @param message validation summary
    * @return validation JSON object
    */
@@ -117,8 +117,8 @@ public class ApiEnvelope<T> {
   /**
    * Builds a standard quality-gate block.
    *
-   * @param verdict                   gate verdict such as {@code passed}, {@code warning}, or {@code failed}
-   * @param summary                   short gate summary
+   * @param verdict gate verdict such as {@code passed}, {@code warning}, or {@code failed}
+   * @param summary short gate summary
    * @param engineeringReviewRequired true if qualified engineering review is still required
    * @return quality-gate JSON object
    */
@@ -144,7 +144,7 @@ public class ApiEnvelope<T> {
    * Creates a success envelope with the given data.
    *
    * @param data the result payload
-   * @param <T>  the payload type
+   * @param <T> the payload type
    * @return the success envelope
    */
   public static <T> ApiEnvelope<T> success(T data) {
@@ -154,9 +154,9 @@ public class ApiEnvelope<T> {
   /**
    * Creates a success envelope with data and warnings.
    *
-   * @param data     the result payload
+   * @param data the result payload
    * @param warnings the warning messages
-   * @param <T>      the payload type
+   * @param <T> the payload type
    * @return the success envelope
    */
   public static <T> ApiEnvelope<T> success(T data, List<String> warnings) {
@@ -166,10 +166,10 @@ public class ApiEnvelope<T> {
   /**
    * Creates an error envelope with a single issue.
    *
-   * @param code        the error code
-   * @param message     the error message
+   * @param code the error code
+   * @param message the error message
    * @param remediation the fix suggestion
-   * @param <T>         the payload type
+   * @param <T> the payload type
    * @return the error envelope
    */
   public static <T> ApiEnvelope<T> error(String code, String message, String remediation) {
@@ -182,7 +182,7 @@ public class ApiEnvelope<T> {
    * Creates an error envelope with multiple issues.
    *
    * @param issues the diagnostic issues
-   * @param <T>    the payload type
+   * @param <T> the payload type
    * @return the error envelope
    */
   public static <T> ApiEnvelope<T> errors(List<DiagnosticIssue> issues) {

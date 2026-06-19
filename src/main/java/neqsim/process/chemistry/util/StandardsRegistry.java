@@ -46,9 +46,9 @@ public final class StandardsRegistry implements Serializable {
     /**
      * Constructs a reference.
      *
-     * @param code         standard code
+     * @param code standard code
      * @param organisation issuing organisation
-     * @param topic        short description of scope
+     * @param topic short description of scope
      */
     public StandardReference(String code, String organisation, String topic) {
       this.code = code;

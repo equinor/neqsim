@@ -59,11 +59,11 @@ public class WellTestMatcher implements Serializable {
     /**
      * Creates a match result.
      *
-     * @param curve                   fitted deliverability curve
-     * @param reservoirPressure       fitted reservoir (shut-in) pressure in bara
+     * @param curve fitted deliverability curve
+     * @param reservoirPressure fitted reservoir (shut-in) pressure in bara
      * @param deliverabilityParameter fitted PI (Sm3/day/bar) or AOFP (Sm3/day)
-     * @param rmsError                root-mean-square rate residual in Sm3/day
-     * @param model                   model name ("PI" or "Vogel")
+     * @param rmsError root-mean-square rate residual in Sm3/day
+     * @param model model name ("PI" or "Vogel")
      */
     public MatchResult(WellDeliverabilityCurve curve, double reservoirPressure, double deliverabilityParameter,
 	double rmsError, String model) {
@@ -125,7 +125,7 @@ public class WellTestMatcher implements Serializable {
   /**
    * Adds a well-test observation.
    *
-   * @param rateSm3PerDay       measured rate in Sm3/day
+   * @param rateSm3PerDay measured rate in Sm3/day
    * @param flowingPressureBara measured flowing pressure (Pwf or back pressure) in bara
    * @return this matcher for chaining
    */

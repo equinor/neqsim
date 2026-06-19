@@ -355,7 +355,7 @@ public class ExpanderCostEstimate extends UnitCostEstimateBaseClass {
    * Calculate power generation revenue.
    *
    * @param operatingHoursPerYear operating hours per year
-   * @param electricityPrice      electricity price in $/kWh
+   * @param electricityPrice electricity price in $/kWh
    * @return annual revenue in USD
    */
   public double calcPowerGenerationRevenue(int operatingHoursPerYear, double electricityPrice) {

@@ -42,7 +42,7 @@ public interface FunctionInterface extends Cloneable {
    * setFittingParams.
    * </p>
    *
-   * @param i     a int
+   * @param i a int
    * @param value a double
    */
   public void setFittingParams(int i, double value);

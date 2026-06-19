@@ -426,8 +426,8 @@ public class WellDesignCalculator implements Serializable {
    * Calculate pipe weight in kg.
    *
    * @param outerDiameterInches OD in inches
-   * @param wallThicknessMm     wall thickness in mm
-   * @param lengthM             length in meters
+   * @param wallThicknessMm wall thickness in mm
+   * @param lengthM length in meters
    * @return weight in kg
    */
   private double calculatePipeWeight(double outerDiameterInches, double wallThicknessMm, double lengthM) {
@@ -496,9 +496,9 @@ public class WellDesignCalculator implements Serializable {
    * Uses the API 5C3 yield-strength collapse formula for an initial estimate.
    * </p>
    *
-   * @param odMm                outer diameter in mm
+   * @param odMm outer diameter in mm
    * @param collapsePressureMPa collapse pressure in MPa
-   * @param smysMPa             SMYS in MPa
+   * @param smysMPa SMYS in MPa
    * @return required wall thickness in mm
    */
   private double estimateCollapseThickness(double odMm, double collapsePressureMPa, double smysMPa) {
@@ -522,7 +522,7 @@ public class WellDesignCalculator implements Serializable {
    * 5C3 Table D.1 (typical carbon/low-alloy).
    * </p>
    *
-   * @param smysMPa      SMYS at ambient temperature in MPa
+   * @param smysMPa SMYS at ambient temperature in MPa
    * @param temperatureC design temperature in Celsius
    * @return derated yield strength in MPa
    */
@@ -710,7 +710,7 @@ public class WellDesignCalculator implements Serializable {
   /**
    * Set conductor casing properties.
    *
-   * @param od    outer diameter in inches
+   * @param od outer diameter in inches
    * @param depth setting depth in meters MD
    */
   public void setConductorCasing(double od, double depth) {
@@ -721,7 +721,7 @@ public class WellDesignCalculator implements Serializable {
   /**
    * Set surface casing properties.
    *
-   * @param od    outer diameter in inches
+   * @param od outer diameter in inches
    * @param depth setting depth in meters MD
    */
   public void setSurfaceCasing(double od, double depth) {
@@ -732,7 +732,7 @@ public class WellDesignCalculator implements Serializable {
   /**
    * Set intermediate casing properties.
    *
-   * @param od    outer diameter in inches
+   * @param od outer diameter in inches
    * @param depth setting depth in meters MD
    */
   public void setIntermediateCasing(double od, double depth) {
@@ -743,7 +743,7 @@ public class WellDesignCalculator implements Serializable {
   /**
    * Set production casing properties.
    *
-   * @param od    outer diameter in inches
+   * @param od outer diameter in inches
    * @param depth setting depth in meters MD
    */
   public void setProductionCasing(double od, double depth) {
@@ -754,7 +754,7 @@ public class WellDesignCalculator implements Serializable {
   /**
    * Set production liner properties.
    *
-   * @param od    outer diameter in inches
+   * @param od outer diameter in inches
    * @param depth total depth in meters MD
    */
   public void setProductionLiner(double od, double depth) {
@@ -765,9 +765,9 @@ public class WellDesignCalculator implements Serializable {
   /**
    * Set tubing properties.
    *
-   * @param od     outer diameter in inches
+   * @param od outer diameter in inches
    * @param weight weight in lb/ft
-   * @param grade  API 5CT grade string
+   * @param grade API 5CT grade string
    */
   public void setTubing(double od, double weight, String grade) {
     this.tubingOD = od;

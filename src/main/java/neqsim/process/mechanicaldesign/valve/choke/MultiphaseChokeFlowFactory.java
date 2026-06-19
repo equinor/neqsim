@@ -70,7 +70,7 @@ public final class MultiphaseChokeFlowFactory {
   /**
    * Creates a choke flow model of the specified type with choke diameter.
    *
-   * @param modelType     the type of model to create
+   * @param modelType the type of model to create
    * @param chokeDiameter choke throat diameter in meters
    * @return a new MultiphaseChokeFlow instance
    */

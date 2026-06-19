@@ -30,8 +30,8 @@ public class PSFlash extends QfuncFlash {
    * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param Sspec  a double
-   * @param type   a int
+   * @param Sspec a double
+   * @param type a int
    */
   public PSFlash(SystemInterface system, double Sspec, int type) {
     this.system = system;

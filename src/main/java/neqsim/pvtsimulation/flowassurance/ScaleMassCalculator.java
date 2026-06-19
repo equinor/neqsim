@@ -72,9 +72,9 @@ public class ScaleMassCalculator implements Serializable {
    * Molar mass of CaCO3 = 100.09 g/mol. Reaction: Ca2+ + CO3 2- = CaCO3(s).
    * </p>
    *
-   * @param cCaMolL  calcium concentration in mol/L
+   * @param cCaMolL calcium concentration in mol/L
    * @param cCO3MolL carbonate concentration in mol/L
-   * @param si       saturation index
+   * @param si saturation index
    * @return mass of CaCO3 precipitated in mg per litre
    */
   public double calcCaCO3Mass(double cCaMolL, double cCO3MolL, double si) {
@@ -101,9 +101,9 @@ public class ScaleMassCalculator implements Serializable {
    * Molar mass of BaSO4 = 233.39 g/mol. Reaction: Ba2+ + SO4 2- = BaSO4(s).
    * </p>
    *
-   * @param cBaMolL  barium concentration in mol/L
+   * @param cBaMolL barium concentration in mol/L
    * @param cSO4MolL sulphate concentration in mol/L
-   * @param si       saturation index
+   * @param si saturation index
    * @return mass of BaSO4 precipitated in mg per litre
    */
   public double calcBaSO4Mass(double cBaMolL, double cSO4MolL, double si) {
@@ -127,9 +127,9 @@ public class ScaleMassCalculator implements Serializable {
    * Molar mass of SrSO4 = 183.68 g/mol. Reaction: Sr2+ + SO4 2- = SrSO4(s).
    * </p>
    *
-   * @param cSrMolL  strontium concentration in mol/L
+   * @param cSrMolL strontium concentration in mol/L
    * @param cSO4MolL sulphate concentration in mol/L
-   * @param si       saturation index
+   * @param si saturation index
    * @return mass of SrSO4 precipitated in mg per litre
    */
   public double calcSrSO4Mass(double cSrMolL, double cSO4MolL, double si) {
@@ -153,9 +153,9 @@ public class ScaleMassCalculator implements Serializable {
    * Molar mass of CaSO4 = 136.14 g/mol. Reaction: Ca2+ + SO4 2- = CaSO4(s).
    * </p>
    *
-   * @param cCaMolL  calcium concentration in mol/L
+   * @param cCaMolL calcium concentration in mol/L
    * @param cSO4MolL sulphate concentration in mol/L
-   * @param si       saturation index
+   * @param si saturation index
    * @return mass of CaSO4 precipitated in mg per litre
    */
   public double calcCaSO4Mass(double cCaMolL, double cSO4MolL, double si) {
@@ -179,9 +179,9 @@ public class ScaleMassCalculator implements Serializable {
    * Molar mass of FeCO3 = 115.85 g/mol. Reaction: Fe2+ + CO3 2- = FeCO3(s).
    * </p>
    *
-   * @param cFeMolL  iron concentration in mol/L
+   * @param cFeMolL iron concentration in mol/L
    * @param cCO3MolL carbonate concentration in mol/L
-   * @param si       saturation index
+   * @param si saturation index
    * @return mass of FeCO3 precipitated in mg per litre
    */
   public double calcFeCO3Mass(double cFeMolL, double cCO3MolL, double si) {
@@ -231,9 +231,9 @@ public class ScaleMassCalculator implements Serializable {
      * Constructs a ScaleMassResult.
      *
      * @param scaleType name of scale mineral
-     * @param si        saturation index
-     * @param mgPerL    mass in mg/L
-     * @param totalMg   total mass in mg
+     * @param si saturation index
+     * @param mgPerL mass in mg/L
+     * @param totalMg total mass in mg
      */
     public ScaleMassResult(String scaleType, double si, double mgPerL, double totalMg) {
       this.scaleType = scaleType;

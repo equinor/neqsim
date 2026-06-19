@@ -178,8 +178,8 @@ public class PhaseEnvelopeRunner {
   /**
    * Creates a standard error JSON response.
    *
-   * @param code        the error code
-   * @param message     the error message
+   * @param code the error code
+   * @param message the error message
    * @param remediation the fix suggestion
    * @return JSON error string
    */

@@ -22,7 +22,7 @@ public class DifferentialPressureTransmitter extends MeasurementDeviceBaseClass 
    * Constructor with default name "DP Transmitter".
    *
    * @param highPressureStream the upstream / high-pressure stream
-   * @param lowPressureStream  the downstream / low-pressure stream
+   * @param lowPressureStream the downstream / low-pressure stream
    */
   public DifferentialPressureTransmitter(StreamInterface highPressureStream, StreamInterface lowPressureStream) {
     this("DP Transmitter", highPressureStream, lowPressureStream);
@@ -31,9 +31,9 @@ public class DifferentialPressureTransmitter extends MeasurementDeviceBaseClass 
   /**
    * Constructor.
    *
-   * @param name               device tag (non-null)
+   * @param name device tag (non-null)
    * @param highPressureStream upstream stream
-   * @param lowPressureStream  downstream stream
+   * @param lowPressureStream downstream stream
    */
   public DifferentialPressureTransmitter(String name, StreamInterface highPressureStream,
       StreamInterface lowPressureStream) {

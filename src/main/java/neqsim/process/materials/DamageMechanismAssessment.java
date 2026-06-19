@@ -43,11 +43,11 @@ public class DamageMechanismAssessment implements Serializable {
   /**
    * Creates a mechanism assessment.
    *
-   * @param mechanism      mechanism name
-   * @param standard       standard or recommended practice
-   * @param status         assessment status
-   * @param severity       severity level
-   * @param message        finding message
+   * @param mechanism mechanism name
+   * @param standard standard or recommended practice
+   * @param status assessment status
+   * @param severity severity level
+   * @param message finding message
    * @param recommendation recommended action
    */
   public DamageMechanismAssessment(String mechanism, String standard, String status, String severity, String message,
@@ -63,9 +63,9 @@ public class DamageMechanismAssessment implements Serializable {
   /**
    * Creates a passing assessment.
    *
-   * @param mechanism      mechanism name
-   * @param standard       standard or recommended practice
-   * @param message        finding message
+   * @param mechanism mechanism name
+   * @param standard standard or recommended practice
+   * @param message finding message
    * @param recommendation recommended action
    * @return passing assessment
    */
@@ -77,9 +77,9 @@ public class DamageMechanismAssessment implements Serializable {
   /**
    * Creates an informational assessment.
    *
-   * @param mechanism      mechanism name
-   * @param standard       standard or recommended practice
-   * @param message        finding message
+   * @param mechanism mechanism name
+   * @param standard standard or recommended practice
+   * @param message finding message
    * @param recommendation recommended action
    * @return informational assessment
    */
@@ -91,10 +91,10 @@ public class DamageMechanismAssessment implements Serializable {
   /**
    * Creates a warning assessment.
    *
-   * @param mechanism      mechanism name
-   * @param standard       standard or recommended practice
-   * @param severity       severity level
-   * @param message        finding message
+   * @param mechanism mechanism name
+   * @param standard standard or recommended practice
+   * @param severity severity level
+   * @param message finding message
    * @param recommendation recommended action
    * @return warning assessment
    */
@@ -106,10 +106,10 @@ public class DamageMechanismAssessment implements Serializable {
   /**
    * Creates a failing assessment.
    *
-   * @param mechanism      mechanism name
-   * @param standard       standard or recommended practice
-   * @param severity       severity level
-   * @param message        finding message
+   * @param mechanism mechanism name
+   * @param standard standard or recommended practice
+   * @param severity severity level
+   * @param message finding message
    * @param recommendation recommended action
    * @return failing assessment
    */
@@ -121,7 +121,7 @@ public class DamageMechanismAssessment implements Serializable {
   /**
    * Adds a trace detail to this assessment.
    *
-   * @param key   detail key
+   * @param key detail key
    * @param value detail value
    * @return this assessment for fluent construction
    */

@@ -61,16 +61,16 @@ public class AISchemaDiscovery implements Serializable {
     /**
      * Constructor.
      *
-     * @param className   class exposing the method
-     * @param methodName  exposed method name
+     * @param className class exposing the method
+     * @param methodName exposed method name
      * @param description method description
-     * @param category    method category
-     * @param example     example invocation text
-     * @param priority    discovery priority, where higher values sort first
-     * @param safe        whether invoking the method is expected to avoid state changes
-     * @param tags        discovery tags
-     * @param parameters  parameter schemas
-     * @param returnType  method return type
+     * @param category method category
+     * @param example example invocation text
+     * @param priority discovery priority, where higher values sort first
+     * @param safe whether invoking the method is expected to avoid state changes
+     * @param tags discovery tags
+     * @param parameters parameter schemas
+     * @param returnType method return type
      */
     public MethodSchema(String className, String methodName, String description, String category, String example,
 	int priority, boolean safe, String[] tags, List<ParameterSchema> parameters, String returnType) {
@@ -176,15 +176,15 @@ public class AISchemaDiscovery implements Serializable {
     /**
      * Constructor.
      *
-     * @param name         the parameter name
-     * @param type         the Java type or schema type name
-     * @param description  human-readable parameter description
-     * @param unit         engineering unit, or an empty string when unitless
-     * @param minValue     minimum allowed value, or {@link Double#NEGATIVE_INFINITY} if unbounded
-     * @param maxValue     maximum allowed value, or {@link Double#POSITIVE_INFINITY} if unbounded
+     * @param name the parameter name
+     * @param type the Java type or schema type name
+     * @param description human-readable parameter description
+     * @param unit engineering unit, or an empty string when unitless
+     * @param minValue minimum allowed value, or {@link Double#NEGATIVE_INFINITY} if unbounded
+     * @param maxValue maximum allowed value, or {@link Double#POSITIVE_INFINITY} if unbounded
      * @param defaultValue default value represented as text, or an empty string when absent
-     * @param required     whether the parameter is required by the exposed method
-     * @param options      allowed option values, or an empty array when unrestricted
+     * @param required whether the parameter is required by the exposed method
+     * @param options allowed option values, or an empty array when unrestricted
      */
     public ParameterSchema(String name, String type, String description, String unit, double minValue, double maxValue,
 	String defaultValue, boolean required, String[] options) {
@@ -297,8 +297,8 @@ public class AISchemaDiscovery implements Serializable {
   /**
    * Create MethodSchema from annotation.
    *
-   * @param clazz      class declaring the method
-   * @param method     reflected method
+   * @param clazz class declaring the method
+   * @param method reflected method
    * @param annotation AI exposure annotation on the method
    * @return generated method schema
    */
@@ -325,7 +325,7 @@ public class AISchemaDiscovery implements Serializable {
   /**
    * Create MethodSchema from method without annotation.
    *
-   * @param clazz  class declaring the method
+   * @param clazz class declaring the method
    * @param method reflected method
    * @return generated method schema
    */

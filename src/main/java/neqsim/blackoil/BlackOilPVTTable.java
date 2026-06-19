@@ -38,14 +38,14 @@ public class BlackOilPVTTable implements Serializable {
     /**
      * Constructor for Record.
      *
-     * @param p    a double
-     * @param Rs   a double
-     * @param Bo   a double
+     * @param p a double
+     * @param Rs a double
+     * @param Bo a double
      * @param mu_o a double
-     * @param Bg   a double
+     * @param Bg a double
      * @param mu_g a double
-     * @param Rv   a double
-     * @param Bw   a double
+     * @param Rv a double
+     * @param Bw a double
      * @param mu_w a double
      */
     public Record(double p, double Rs, double Bo, double mu_o, double Bg, double mu_g, double Rv, double Bw,
@@ -70,7 +70,7 @@ public class BlackOilPVTTable implements Serializable {
    * Constructor for BlackOilPVTTable.
    * </p>
    *
-   * @param records      a {@link java.util.List} object
+   * @param records a {@link java.util.List} object
    * @param bubblePointP a double
    */
   public BlackOilPVTTable(List<Record> records, double bubblePointP) {

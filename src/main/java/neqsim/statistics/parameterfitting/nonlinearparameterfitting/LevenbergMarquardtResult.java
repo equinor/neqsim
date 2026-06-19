@@ -58,12 +58,12 @@ public final class LevenbergMarquardtResult implements Serializable {
   /**
    * Creates a Levenberg-Marquardt result.
    *
-   * @param convergenceReason       reason why the optimizer stopped
-   * @param iterations              number of solver iterations performed
-   * @param finalChiSquare          final weighted chi-square value
-   * @param gradientNorm            final norm of the weighted gradient vector
-   * @param covarianceMatrix        fitted-parameter covariance matrix, or null if unavailable
-   * @param correlationMatrix       fitted-parameter correlation matrix, or null if unavailable
+   * @param convergenceReason reason why the optimizer stopped
+   * @param iterations number of solver iterations performed
+   * @param finalChiSquare final weighted chi-square value
+   * @param gradientNorm final norm of the weighted gradient vector
+   * @param covarianceMatrix fitted-parameter covariance matrix, or null if unavailable
+   * @param correlationMatrix fitted-parameter correlation matrix, or null if unavailable
    * @param parameterStandardErrors fitted-parameter standard errors, or null if unavailable
    */
   public LevenbergMarquardtResult(ConvergenceReason convergenceReason, int iterations, double finalChiSquare,

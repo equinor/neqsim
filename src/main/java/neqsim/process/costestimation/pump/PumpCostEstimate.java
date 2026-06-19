@@ -217,7 +217,7 @@ public class PumpCostEstimate extends UnitCostEstimateBaseClass {
   /**
    * Calculate annual operating cost (electricity).
    *
-   * @param hoursPerYear    operating hours per year
+   * @param hoursPerYear operating hours per year
    * @param electricityRate electricity rate in $/kWh
    * @return annual operating cost in USD
    */

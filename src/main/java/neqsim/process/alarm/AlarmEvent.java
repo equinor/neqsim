@@ -26,10 +26,10 @@ public final class AlarmEvent implements Serializable {
   /**
    * Creates an alarm activation event.
    *
-   * @param source    name of the originating measurement
-   * @param level     alarm level becoming active
+   * @param source name of the originating measurement
+   * @param level alarm level becoming active
    * @param timestamp simulation time of the event
-   * @param value     measured value triggering the event
+   * @param value measured value triggering the event
    * @return activation event
    */
   public static AlarmEvent activated(String source, AlarmLevel level, double timestamp, double value) {
@@ -39,10 +39,10 @@ public final class AlarmEvent implements Serializable {
   /**
    * Creates an alarm clearance event.
    *
-   * @param source    name of the originating measurement
-   * @param level     alarm level being cleared
+   * @param source name of the originating measurement
+   * @param level alarm level being cleared
    * @param timestamp simulation time of the event
-   * @param value     measured value when the alarm cleared
+   * @param value measured value when the alarm cleared
    * @return clearance event
    */
   public static AlarmEvent cleared(String source, AlarmLevel level, double timestamp, double value) {
@@ -52,10 +52,10 @@ public final class AlarmEvent implements Serializable {
   /**
    * Creates an alarm acknowledgement event.
    *
-   * @param source    name of the originating measurement
-   * @param level     alarm level being acknowledged
+   * @param source name of the originating measurement
+   * @param level alarm level being acknowledged
    * @param timestamp simulation time of the acknowledgement
-   * @param value     measured value at acknowledgement time
+   * @param value measured value at acknowledgement time
    * @return acknowledgement event
    */
   public static AlarmEvent acknowledged(String source, AlarmLevel level, double timestamp, double value) {

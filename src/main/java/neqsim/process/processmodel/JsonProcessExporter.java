@@ -79,7 +79,7 @@ public class JsonProcessExporter {
   /**
    * Exports a ProcessSystem to a JSON string.
    *
-   * @param process     the process system to export
+   * @param process the process system to export
    * @param prettyPrint whether to format the JSON with indentation
    * @return JSON string in the JsonProcessBuilder schema
    */
@@ -252,7 +252,7 @@ public class JsonProcessExporter {
   /**
    * Creates a unique synthetic boundary stream name for an external inlet stream.
    *
-   * @param stream    external inlet stream
+   * @param stream external inlet stream
    * @param usedNames names already used in the exported process
    * @return unique boundary stream name safe for dot-notation references
    */
@@ -359,7 +359,7 @@ public class JsonProcessExporter {
   /**
    * Makes a unique fluid-reference key.
    *
-   * @param baseRef  preferred fluid-reference key
+   * @param baseRef preferred fluid-reference key
    * @param usedRefs map of already-used keys
    * @return unique fluid-reference key
    */
@@ -402,7 +402,7 @@ public class JsonProcessExporter {
    *
    * @param stream stream object to look up
    * @return JSON reference such as {@code feed}, {@code HP Sep.gasOut}, or {@code null} when the stream was not part of
-   *         the most recent export
+   * the most recent export
    */
   public String getStreamReference(StreamInterface stream) {
     return streamRefMap.get(stream);
@@ -533,7 +533,7 @@ public class JsonProcessExporter {
    *
    * @param fluid the fluid to export
    * @return JsonObject with model, temperature, pressure, mixingRule, components, and optionally
-   *         characterizedComponents and binaryInteractionParameters
+   * characterizedComponents and binaryInteractionParameters
    */
   private JsonObject exportFluid(SystemInterface fluid) {
     JsonObject fluidJson = new JsonObject();
@@ -661,8 +661,8 @@ public class JsonProcessExporter {
   /**
    * Adds a numeric property when the value can be represented in standard JSON.
    *
-   * @param json  the object to update
-   * @param name  the property name
+   * @param json the object to update
+   * @param name the property name
    * @param value the property value
    */
   private void addFiniteProperty(JsonObject json, String name, double value) {
@@ -676,7 +676,7 @@ public class JsonProcessExporter {
    * JSON compact. The builder uses these to override the default database BICs when reconstructing the fluid.
    *
    * @param fluidJson the fluid JSON object to add BICs to
-   * @param fluid     the fluid system
+   * @param fluid the fluid system
    */
   private void exportBinaryInteractionParameters(JsonObject fluidJson, SystemInterface fluid) {
     PhaseInterface phase = fluid.getPhase(0);
@@ -869,7 +869,7 @@ public class JsonProcessExporter {
   /**
    * Exports Stream-specific properties: flowRate, temperature, pressure.
    *
-   * @param json   the unit JSON object to populate
+   * @param json the unit JSON object to populate
    * @param stream the stream to export
    */
   private void exportStreamProperties(JsonObject json, StreamInterface stream) {
@@ -879,8 +879,8 @@ public class JsonProcessExporter {
   /**
    * Exports Stream-specific properties: flowRate, temperature, pressure.
    *
-   * @param json              the unit JSON object to populate
-   * @param stream            the stream to export
+   * @param json the unit JSON object to populate
+   * @param stream the stream to export
    * @param includeZeroValues true to include zero-valued state fields for boundary streams
    */
   private void exportStreamProperties(JsonObject json, StreamInterface stream, boolean includeZeroValues) {
@@ -918,7 +918,7 @@ public class JsonProcessExporter {
   /**
    * Exports Mixer inlets as an "inlets" array.
    *
-   * @param json  the unit JSON object
+   * @param json the unit JSON object
    * @param mixer the mixer
    */
   private void exportMixerInlets(JsonObject json, Mixer mixer) {
@@ -940,7 +940,7 @@ public class JsonProcessExporter {
   /**
    * Exports Manifold inlets as an "inlets" array.
    *
-   * @param json     the unit JSON object
+   * @param json the unit JSON object
    * @param manifold the manifold
    */
   private void exportManifoldInlets(JsonObject json, Manifold manifold) {
@@ -963,7 +963,7 @@ public class JsonProcessExporter {
    * Exports HeatExchanger inlets as an "inlets" array (shell-side + tube-side).
    *
    * @param json the unit JSON object
-   * @param hx   the heat exchanger
+   * @param hx the heat exchanger
    */
   private void exportHeatExchangerInlets(JsonObject json, HeatExchanger hx) {
     List<StreamInterface> inlets = hx.getInletStreams();

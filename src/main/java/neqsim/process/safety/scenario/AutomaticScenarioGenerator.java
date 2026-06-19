@@ -444,8 +444,8 @@ public class AutomaticScenarioGenerator implements Serializable {
     /**
      * Creates a successful result.
      *
-     * @param scenario        the executed scenario
-     * @param resultValues    key result values captured
+     * @param scenario the executed scenario
+     * @param resultValues key result values captured
      * @param executionTimeMs execution time in milliseconds
      */
     public ScenarioRunResult(ProcessSafetyScenario scenario, Map<String, Double> resultValues, long executionTimeMs) {
@@ -459,8 +459,8 @@ public class AutomaticScenarioGenerator implements Serializable {
     /**
      * Creates a failed result.
      *
-     * @param scenario        the executed scenario
-     * @param errorMessage    the error that occurred
+     * @param scenario the executed scenario
+     * @param errorMessage the error that occurred
      * @param executionTimeMs execution time in milliseconds
      */
     public ScenarioRunResult(ProcessSafetyScenario scenario, String errorMessage, long executionTimeMs) {

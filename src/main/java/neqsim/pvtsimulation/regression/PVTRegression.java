@@ -90,9 +90,9 @@ public class PVTRegression {
   /**
    * Add CCE (Constant Composition Expansion) experimental data.
    *
-   * @param pressures       pressure values in bar
+   * @param pressures pressure values in bar
    * @param relativeVolumes relative volume values (V/Vsat)
-   * @param temperature     experiment temperature in K
+   * @param temperature experiment temperature in K
    */
   public void addCCEData(double[] pressures, double[] relativeVolumes, double temperature) {
     for (int i = 0; i < pressures.length; i++) {
@@ -103,10 +103,10 @@ public class PVTRegression {
   /**
    * Add CCE data with Y-factor (for gas phase above saturation).
    *
-   * @param pressures       pressure values in bar
+   * @param pressures pressure values in bar
    * @param relativeVolumes relative volume values
-   * @param yFactors        Y-factor values (optional, use Double.NaN if not available)
-   * @param temperature     experiment temperature in K
+   * @param yFactors Y-factor values (optional, use Double.NaN if not available)
+   * @param temperature experiment temperature in K
    */
   public void addCCEData(double[] pressures, double[] relativeVolumes, double[] yFactors, double temperature) {
     for (int i = 0; i < pressures.length; i++) {
@@ -119,10 +119,10 @@ public class PVTRegression {
   /**
    * Add CVD (Constant Volume Depletion) experimental data.
    *
-   * @param pressures     pressure values in bar
+   * @param pressures pressure values in bar
    * @param liquidDropout liquid dropout values (volume %)
-   * @param zFactors      gas compressibility factors
-   * @param temperature   experiment temperature in K
+   * @param zFactors gas compressibility factors
+   * @param temperature experiment temperature in K
    */
   public void addCVDData(double[] pressures, double[] liquidDropout, double[] zFactors, double temperature) {
     for (int i = 0; i < pressures.length; i++) {
@@ -133,10 +133,10 @@ public class PVTRegression {
   /**
    * Add DLE (Differential Liberation Expansion) experimental data.
    *
-   * @param pressures   pressure values in bar
-   * @param rs          solution gas-oil ratio (Sm³/Sm³)
-   * @param bo          oil formation volume factor (m³/Sm³)
-   * @param oilDensity  oil density (kg/m³)
+   * @param pressures pressure values in bar
+   * @param rs solution gas-oil ratio (Sm³/Sm³)
+   * @param bo oil formation volume factor (m³/Sm³)
+   * @param oilDensity oil density (kg/m³)
    * @param temperature experiment temperature in K
    */
   public void addDLEData(double[] pressures, double[] rs, double[] bo, double[] oilDensity, double temperature) {
@@ -148,10 +148,10 @@ public class PVTRegression {
   /**
    * Add separator test experimental data.
    *
-   * @param gor                  gas-oil ratio (Sm³/Sm³)
-   * @param bo                   oil formation volume factor
-   * @param apiGravity           API gravity
-   * @param separatorPressure    separator pressure in bar
+   * @param gor gas-oil ratio (Sm³/Sm³)
+   * @param bo oil formation volume factor
+   * @param apiGravity API gravity
+   * @param separatorPressure separator pressure in bar
    * @param separatorTemperature separator temperature in K
    * @param reservoirTemperature reservoir temperature in K
    */
@@ -164,10 +164,10 @@ public class PVTRegression {
   /**
    * Add viscosity experimental data at one temperature.
    *
-   * @param pressures   pressure values in bara
+   * @param pressures pressure values in bara
    * @param viscosities dynamic viscosity values in Pa s
    * @param temperature experiment temperature in K
-   * @param phaseName   phase name: gas, oil, liquid, aqueous, or water
+   * @param phaseName phase name: gas, oil, liquid, aqueous, or water
    */
   public void addViscosityData(double[] pressures, double[] viscosities, double temperature, String phaseName) {
     for (int i = 0; i < pressures.length; i++) {
@@ -178,10 +178,10 @@ public class PVTRegression {
   /**
    * Add viscosity experimental data at individual pressure and temperature points.
    *
-   * @param pressures    pressure values in bara
+   * @param pressures pressure values in bara
    * @param temperatures temperature values in K
-   * @param viscosities  dynamic viscosity values in Pa s
-   * @param phaseName    phase name: gas, oil, liquid, aqueous, or water
+   * @param viscosities dynamic viscosity values in Pa s
+   * @param phaseName phase name: gas, oil, liquid, aqueous, or water
    */
   public void addViscosityData(double[] pressures, double[] temperatures, double[] viscosities, String phaseName) {
     for (int i = 0; i < pressures.length; i++) {
@@ -192,9 +192,9 @@ public class PVTRegression {
   /**
    * Add a regression parameter with bounds.
    *
-   * @param parameter    the parameter type to regress
-   * @param lowerBound   lower bound for the parameter
-   * @param upperBound   upper bound for the parameter
+   * @param parameter the parameter type to regress
+   * @param lowerBound lower bound for the parameter
+   * @param upperBound upper bound for the parameter
    * @param initialGuess initial guess for the parameter
    */
   public void addRegressionParameter(RegressionParameter parameter, double lowerBound, double upperBound,
@@ -225,7 +225,7 @@ public class PVTRegression {
   /**
    * Set the weight for an experiment type in the multi-objective function.
    *
-   * @param type   experiment type
+   * @param type experiment type
    * @param weight weight value (default 1.0)
    */
   public void setExperimentWeight(ExperimentType type, double weight) {
@@ -354,7 +354,7 @@ public class PVTRegression {
    * Add CCE samples to the sample list.
    *
    * @param sampleList the list to add constant composition expansion samples to
-   * @param function   the PVT regression function to clone for each sample
+   * @param function the PVT regression function to clone for each sample
    */
   private void addCCESamples(ArrayList<SampleValue> sampleList, PVTRegressionFunction function) {
     double weight = experimentWeights.getOrDefault(ExperimentType.CCE, 1.0);
@@ -373,7 +373,7 @@ public class PVTRegression {
    * Add CVD samples to the sample list.
    *
    * @param sampleList the list to add constant volume depletion samples to
-   * @param function   the PVT regression function to clone for each sample
+   * @param function the PVT regression function to clone for each sample
    */
   private void addCVDSamples(ArrayList<SampleValue> sampleList, PVTRegressionFunction function) {
     double weight = experimentWeights.getOrDefault(ExperimentType.CVD, 1.0);
@@ -396,7 +396,7 @@ public class PVTRegression {
    * Add DLE samples to the sample list.
    *
    * @param sampleList the list to add DLE samples to
-   * @param function   the PVT regression function to clone for each sample
+   * @param function the PVT regression function to clone for each sample
    */
   private void addDLESamples(ArrayList<SampleValue> sampleList, PVTRegressionFunction function) {
     double weight = experimentWeights.getOrDefault(ExperimentType.DLE, 1.0);
@@ -425,7 +425,7 @@ public class PVTRegression {
    * Add separator samples to the sample list.
    *
    * @param sampleList the list to add separator samples to
-   * @param function   the PVT regression function to clone for each sample
+   * @param function the PVT regression function to clone for each sample
    */
   private void addSeparatorSamples(ArrayList<SampleValue> sampleList, PVTRegressionFunction function) {
     double weight = experimentWeights.getOrDefault(ExperimentType.SEPARATOR, 1.0);
@@ -450,7 +450,7 @@ public class PVTRegression {
    * Add viscosity samples to the sample list.
    *
    * @param sampleList the list to add viscosity samples to
-   * @param function   the PVT regression function to clone for each sample
+   * @param function the PVT regression function to clone for each sample
    */
   private void addViscositySamples(ArrayList<SampleValue> sampleList, PVTRegressionFunction function) {
     double weight = experimentWeights.getOrDefault(ExperimentType.VISCOSITY, 1.0);
@@ -653,8 +653,8 @@ public class PVTRegression {
   /**
    * Calculate uncertainty analysis from the optimization results.
    *
-   * @param optimizer      fitted optimizer containing the final regression state
-   * @param function       regression function used to evaluate fitted parameters
+   * @param optimizer fitted optimizer containing the final regression state
+   * @param function regression function used to evaluate fitted parameters
    * @param finalChiSquare final chi-square objective value from the fit
    * @return uncertainty analysis with standard errors, correlation matrix, and confidence intervals
    */

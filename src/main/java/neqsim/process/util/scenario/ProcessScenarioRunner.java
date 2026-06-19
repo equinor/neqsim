@@ -182,9 +182,9 @@ public class ProcessScenarioRunner {
    * Runs a scenario with the given parameters.
    *
    * @param scenarioName descriptive name for logging
-   * @param scenario     scenario perturbations to apply (can be null)
-   * @param duration     simulation duration in seconds
-   * @param timeStep     time step in seconds
+   * @param scenario scenario perturbations to apply (can be null)
+   * @param duration simulation duration in seconds
+   * @param timeStep time step in seconds
    * @return scenario execution summary
    */
   public ScenarioExecutionSummary runScenario(String scenarioName, ProcessSafetyScenario scenario, double duration,
@@ -212,10 +212,10 @@ public class ProcessScenarioRunner {
    * runner.runScenarioWithLogic("ESD Test", scenario, 30.0, 1.0, Arrays.asList("ESD Level 1"));
    * </pre>
    *
-   * @param scenarioName      descriptive name for logging
-   * @param scenario          scenario perturbations to apply (can be null)
-   * @param duration          simulation duration in seconds
-   * @param timeStep          time step in seconds
+   * @param scenarioName descriptive name for logging
+   * @param scenario scenario perturbations to apply (can be null)
+   * @param duration simulation duration in seconds
+   * @param timeStep time step in seconds
    * @param enabledLogicNames names of logic sequences to enable (null = all logic enabled)
    * @return scenario execution summary
    */
@@ -372,7 +372,7 @@ public class ProcessScenarioRunner {
   /**
    * Prints current status of scenario execution.
    *
-   * @param time      current simulation time
+   * @param time current simulation time
    * @param logicList list of logic sequences to monitor
    */
   private void printStatus(double time, List<ProcessLogic> logicList) {
@@ -460,7 +460,7 @@ public class ProcessScenarioRunner {
   /**
    * Prints final summary of scenario execution.
    *
-   * @param summary   execution summary
+   * @param summary execution summary
    * @param logicList list of logic sequences that were active in this scenario
    */
   private void printFinalSummary(ScenarioExecutionSummary summary, List<ProcessLogic> logicList) {

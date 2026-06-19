@@ -56,8 +56,8 @@ public class SourceTermResult implements Serializable {
    *
    * @param scenarioName name of the release scenario
    * @param holeDiameter hole diameter [m]
-   * @param orientation  release orientation
-   * @param numPoints    number of time points
+   * @param orientation release orientation
+   * @param numPoints number of time points
    */
   public SourceTermResult(String scenarioName, double holeDiameter, ReleaseOrientation orientation, int numPoints) {
     this.scenarioName = scenarioName;

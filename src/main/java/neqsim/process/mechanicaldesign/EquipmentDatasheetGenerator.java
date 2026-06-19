@@ -124,7 +124,7 @@ public class EquipmentDatasheetGenerator implements Serializable {
   /**
    * Generates a datasheet for a single equipment item.
    *
-   * @param equipment      the process equipment
+   * @param equipment the process equipment
    * @param sequenceNumber sequence number for document numbering
    * @return JSON object representing the datasheet, or null if not applicable
    */
@@ -338,7 +338,7 @@ public class EquipmentDatasheetGenerator implements Serializable {
   /**
    * Rounds a double to specified decimal places.
    *
-   * @param value    the value
+   * @param value the value
    * @param decimals number of decimal places
    * @return rounded value
    */

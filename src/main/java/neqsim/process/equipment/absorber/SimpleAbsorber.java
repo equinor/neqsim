@@ -50,7 +50,7 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
    * Constructor for SimpleAbsorber.
    * </p>
    *
-   * @param name      name of absorber
+   * @param name name of absorber
    * @param inStream1 a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public SimpleAbsorber(String name, StreamInterface inStream1) {

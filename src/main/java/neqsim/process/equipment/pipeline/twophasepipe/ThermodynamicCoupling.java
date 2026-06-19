@@ -180,7 +180,7 @@ public class ThermodynamicCoupling implements Serializable {
   /**
    * Perform PT flash and extract all thermodynamic properties.
    *
-   * @param pressure    Pressure (Pa)
+   * @param pressure Pressure (Pa)
    * @param temperature Temperature (K)
    * @return ThermoProperties with all phase properties
    */
@@ -391,7 +391,7 @@ public class ThermodynamicCoupling implements Serializable {
    * Based on departure from equilibrium. Positive = liquid to gas.
    * </p>
    *
-   * @param section        Current section state
+   * @param section Current section state
    * @param relaxationTime Mass transfer relaxation time (s)
    * @return Mass transfer rate (kg/(m³·s))
    */
@@ -441,7 +441,7 @@ public class ThermodynamicCoupling implements Serializable {
    * oil, and water equations by the hydrodynamic solver.
    * </p>
    *
-   * @param section        current pipe section
+   * @param section current pipe section
    * @param relaxationTime relaxation time toward flash equilibrium (s)
    * @return gas mass source per length, kg/(m*s)
    */

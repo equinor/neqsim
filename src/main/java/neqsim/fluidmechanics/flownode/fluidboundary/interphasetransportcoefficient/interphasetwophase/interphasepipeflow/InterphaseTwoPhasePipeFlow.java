@@ -43,10 +43,10 @@ public class InterphaseTwoPhasePipeFlow extends InterphaseTwoPhase {
    * the diffusivity.
    * </p>
    *
-   * @param phaseNum       the phase number (0 for gas, 1 for liquid)
+   * @param phaseNum the phase number (0 for gas, 1 for liquid)
    * @param reynoldsNumber the Reynolds number
-   * @param schmidtNumber  the Schmidt number (μ/ρD)
-   * @param node           the flow node
+   * @param schmidtNumber the Schmidt number (μ/ρD)
+   * @param node the flow node
    * @return the Sherwood number
    */
   public double calcSherwoodNumber(int phaseNum, double reynoldsNumber, double schmidtNumber, FlowNodeInterface node) {
@@ -66,10 +66,10 @@ public class InterphaseTwoPhasePipeFlow extends InterphaseTwoPhase {
    * Calculates the wall Sherwood number for mass transfer to the pipe wall.
    * </p>
    *
-   * @param phaseNum       the phase number (0 for gas, 1 for liquid)
+   * @param phaseNum the phase number (0 for gas, 1 for liquid)
    * @param reynoldsNumber the Reynolds number
-   * @param schmidtNumber  the Schmidt number
-   * @param node           the flow node
+   * @param schmidtNumber the Schmidt number
+   * @param node the flow node
    * @return the wall Sherwood number
    */
   public double calcWallSherwoodNumber(int phaseNum, double reynoldsNumber, double schmidtNumber,
@@ -94,10 +94,10 @@ public class InterphaseTwoPhasePipeFlow extends InterphaseTwoPhase {
    * thermal conductivity.
    * </p>
    *
-   * @param phaseNum       the phase number (0 for gas, 1 for liquid)
+   * @param phaseNum the phase number (0 for gas, 1 for liquid)
    * @param reynoldsNumber the Reynolds number
-   * @param prandtlNumber  the Prandtl number (μ*Cp/k)
-   * @param node           the flow node
+   * @param prandtlNumber the Prandtl number (μ*Cp/k)
+   * @param node the flow node
    * @return the Nusselt number
    */
   public double calcNusseltNumber(int phaseNum, double reynoldsNumber, double prandtlNumber, FlowNodeInterface node) {
@@ -116,9 +116,9 @@ public class InterphaseTwoPhasePipeFlow extends InterphaseTwoPhase {
    * Calculates the mass transfer coefficient from Sherwood number.
    * </p>
    *
-   * @param sherwoodNumber       the Sherwood number
+   * @param sherwoodNumber the Sherwood number
    * @param characteristicLength the characteristic length in meters
-   * @param diffusivity          the diffusivity in m²/s
+   * @param diffusivity the diffusivity in m²/s
    * @return the mass transfer coefficient in m/s
    */
   public double calcMassTransferCoefficientFromSherwood(double sherwoodNumber, double characteristicLength,
@@ -131,9 +131,9 @@ public class InterphaseTwoPhasePipeFlow extends InterphaseTwoPhase {
    * Calculates the heat transfer coefficient from Nusselt number.
    * </p>
    *
-   * @param nusseltNumber        the Nusselt number
+   * @param nusseltNumber the Nusselt number
    * @param characteristicLength the characteristic length in meters
-   * @param thermalConductivity  the thermal conductivity in W/(m·K)
+   * @param thermalConductivity the thermal conductivity in W/(m·K)
    * @return the heat transfer coefficient in W/(m²·K)
    */
   public double calcHeatTransferCoefficientFromNusselt(double nusseltNumber, double characteristicLength,

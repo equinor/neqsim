@@ -69,7 +69,7 @@ public class OperationalScenarioResult implements Serializable {
    * Stores a before-action value.
    *
    * @param address variable address
-   * @param value   variable value
+   * @param value variable value
    */
   public void putBeforeValue(String address, double value) {
     beforeValues.put(address, value);
@@ -79,7 +79,7 @@ public class OperationalScenarioResult implements Serializable {
    * Stores an after-action value.
    *
    * @param address variable address
-   * @param value   variable value
+   * @param value variable value
    */
   public void putAfterValue(String address, double value) {
     afterValues.put(address, value);

@@ -520,7 +520,7 @@ public class FlowAssuranceRunner {
    * Configures a monthly monitor from JSON.
    *
    * @param monitor monthly compliance monitor to configure
-   * @param input   JSON input
+   * @param input JSON input
    */
   private static void configureMonthlyMonitor(OilInWaterMonthlyComplianceMonitor monitor, JsonObject input) {
     if (input.has("monthlyLimit_mgL")) {
@@ -544,8 +544,8 @@ public class FlowAssuranceRunner {
   /**
    * Reads a double JSON field with a default.
    *
-   * @param input        JSON object
-   * @param fieldName    field name
+   * @param input JSON object
+   * @param fieldName field name
    * @param defaultValue default value returned if the field is absent
    * @return field value or default
    */
@@ -684,8 +684,8 @@ public class FlowAssuranceRunner {
   /**
    * Creates a standard error JSON string.
    *
-   * @param code        the error code
-   * @param message     the error message
+   * @param code the error code
+   * @param message the error message
    * @param remediation the fix suggestion
    * @return the error JSON string
    */

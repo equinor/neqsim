@@ -92,7 +92,7 @@ public class SeparatorGeometryCalculator implements Serializable {
   /**
    * Calculates all geometry parameters for a two-phase separator.
    *
-   * @param gasVolumeFlow    actual gas volume flow rate [m3/s]
+   * @param gasVolumeFlow actual gas volume flow rate [m3/s]
    * @param liquidVolumeFlow actual liquid volume flow rate [m3/s]
    */
   public void calculate(double gasVolumeFlow, double liquidVolumeFlow) {
@@ -108,9 +108,9 @@ public class SeparatorGeometryCalculator implements Serializable {
   /**
    * Calculates all geometry parameters for a three-phase separator.
    *
-   * @param gasVolumeFlow    actual gas volume flow rate [m3/s]
-   * @param oilVolumeFlow    actual oil volume flow rate [m3/s]
-   * @param waterVolumeFlow  actual water volume flow rate [m3/s]
+   * @param gasVolumeFlow actual gas volume flow rate [m3/s]
+   * @param oilVolumeFlow actual oil volume flow rate [m3/s]
+   * @param waterVolumeFlow actual water volume flow rate [m3/s]
    * @param oilLevelFraction fraction of liquid height occupied by oil (above weir height)
    */
   public void calculateThreePhase(double gasVolumeFlow, double oilVolumeFlow, double waterVolumeFlow,
@@ -127,7 +127,7 @@ public class SeparatorGeometryCalculator implements Serializable {
   /**
    * Calculates geometry for a horizontal two-phase separator.
    *
-   * @param gasVolumeFlow    gas flow [m3/s]
+   * @param gasVolumeFlow gas flow [m3/s]
    * @param liquidVolumeFlow liquid flow [m3/s]
    */
   private void calculateHorizontal(double gasVolumeFlow, double liquidVolumeFlow) {
@@ -169,9 +169,9 @@ public class SeparatorGeometryCalculator implements Serializable {
   /**
    * Calculates geometry for a horizontal three-phase separator with weir.
    *
-   * @param gasVolumeFlow    gas flow [m3/s]
-   * @param oilVolumeFlow    oil flow [m3/s]
-   * @param waterVolumeFlow  water flow [m3/s]
+   * @param gasVolumeFlow gas flow [m3/s]
+   * @param oilVolumeFlow oil flow [m3/s]
+   * @param waterVolumeFlow water flow [m3/s]
    * @param oilLevelFraction fraction of total liquid height that is oil
    */
   private void calculateHorizontalThreePhase(double gasVolumeFlow, double oilVolumeFlow, double waterVolumeFlow,
@@ -230,7 +230,7 @@ public class SeparatorGeometryCalculator implements Serializable {
   /**
    * Calculates geometry for a vertical two-phase separator.
    *
-   * @param gasVolumeFlow    gas flow [m3/s]
+   * @param gasVolumeFlow gas flow [m3/s]
    * @param liquidVolumeFlow liquid flow [m3/s]
    */
   private void calculateVertical(double gasVolumeFlow, double liquidVolumeFlow) {
@@ -284,7 +284,7 @@ public class SeparatorGeometryCalculator implements Serializable {
    * </p>
    *
    * @param diameter vessel internal diameter [m]
-   * @param height   liquid height from bottom [m]
+   * @param height liquid height from bottom [m]
    * @return segment area [m2]
    */
   public static double calcSegmentArea(double diameter, double height) {
@@ -305,8 +305,8 @@ public class SeparatorGeometryCalculator implements Serializable {
    *
    * $$ K = V_g \sqrt{\frac{\rho_g}{\rho_l - \rho_g}} $$
    *
-   * @param gasVelocity   actual gas velocity in gas section [m/s]
-   * @param gasDensity    gas density [kg/m3]
+   * @param gasVelocity actual gas velocity in gas section [m/s]
+   * @param gasDensity gas density [kg/m3]
    * @param liquidDensity liquid density [kg/m3]
    * @return K-factor [m/s]
    */

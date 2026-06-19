@@ -38,11 +38,11 @@ public class ProductionProfile implements Serializable {
     /**
      * Creates a profile point.
      *
-     * @param timeYears             time in years
-     * @param rateSm3PerDay         field rate in Sm3/day
-     * @param revenuePerDay         revenue in currency per day
-     * @param energyKWhPerDay       energy in kWh per day
-     * @param emissionsKgPerDay     emissions in kg CO2 per day
+     * @param timeYears time in years
+     * @param rateSm3PerDay field rate in Sm3/day
+     * @param revenuePerDay revenue in currency per day
+     * @param energyKWhPerDay energy in kWh per day
+     * @param emissionsKgPerDay emissions in kg CO2 per day
      * @param reservoirPressureBara average reservoir pressure in bara
      */
     public Point(double timeYears, double rateSm3PerDay, double revenuePerDay, double energyKWhPerDay,
@@ -117,11 +117,11 @@ public class ProductionProfile implements Serializable {
   /**
    * Adds a point to the profile.
    *
-   * @param timeYears             time in years
-   * @param rateSm3PerDay         field rate in Sm3/day
-   * @param revenuePerDay         revenue in currency per day
-   * @param energyKWhPerDay       energy in kWh per day
-   * @param emissionsKgPerDay     emissions in kg CO2 per day
+   * @param timeYears time in years
+   * @param rateSm3PerDay field rate in Sm3/day
+   * @param revenuePerDay revenue in currency per day
+   * @param energyKWhPerDay energy in kWh per day
+   * @param emissionsKgPerDay emissions in kg CO2 per day
    * @param reservoirPressureBara average reservoir pressure in bara
    */
   public void add(double timeYears, double rateSm3PerDay, double revenuePerDay, double energyKWhPerDay,

@@ -211,7 +211,7 @@ public class CompressorCostEstimate extends UnitCostEstimateBaseClass {
   /**
    * Calculate intercoolers cost.
    *
-   * @param power                compressor power in kW
+   * @param power compressor power in kW
    * @param numberOfIntercoolers number of intercoolers
    * @return total intercoolers cost in USD
    */
@@ -229,9 +229,9 @@ public class CompressorCostEstimate extends UnitCostEstimateBaseClass {
   /**
    * Calculate annual operating cost (electricity or fuel).
    *
-   * @param hoursPerYear    operating hours per year
+   * @param hoursPerYear operating hours per year
    * @param electricityRate electricity rate in $/kWh (for electric motor)
-   * @param fuelRate        fuel rate in $/GJ (for gas turbine/engine)
+   * @param fuelRate fuel rate in $/GJ (for gas turbine/engine)
    * @return annual operating cost in USD
    */
   public double calcAnnualOperatingCost(double hoursPerYear, double electricityRate, double fuelRate) {

@@ -98,7 +98,7 @@ public final class CO2FlowCorrections {
    *
    * @param system the thermodynamic system
    * @return the holdup correction factor (multiply by Beggs-Brill holdup). Returns 1.0 for non-CO2 systems or
-   *         single-phase conditions
+   * single-phase conditions
    */
   public static double getLiquidHoldupCorrectionFactor(SystemInterface system) {
     if (!isCO2DominatedFluid(system) || system.getNumberOfPhases() <= 1) {

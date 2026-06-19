@@ -39,7 +39,7 @@ public class AdvancedProcessLogicExample {
   /**
    * Java 8 compatible method to repeat a string.
    *
-   * @param str   the string to repeat
+   * @param str the string to repeat
    * @param count the number of times to repeat
    * @return the repeated string
    */

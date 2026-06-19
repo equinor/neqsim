@@ -130,7 +130,7 @@ public class PressureSwingAdsorptionBed extends AdsorptionBed {
   /**
    * Construct a PSA bed with the given name, inlet stream, and Skarstrom-cycle defaults.
    *
-   * @param name        name of the unit operation
+   * @param name name of the unit operation
    * @param inletStream feed stream (typically shifted syngas at 20-30 bara)
    */
   public PressureSwingAdsorptionBed(String name, StreamInterface inletStream) {

@@ -244,7 +244,7 @@ public class TrappedLiquidFireRuptureResult implements Serializable {
   /**
    * Creates a passive fire protection demand case from this result.
    *
-   * @param demandId                 stable demand identifier
+   * @param demandId stable demand identifier
    * @param requiredEnduranceSeconds required PFP endurance in seconds
    * @return safety-system demand record
    */
@@ -262,8 +262,8 @@ public class TrappedLiquidFireRuptureResult implements Serializable {
   /**
    * Creates a full-bore source term using the result state at limiting failure.
    *
-   * @param fluid           representative fluid to clone and set to failure state
-   * @param orientation     release orientation; defaults to horizontal when null
+   * @param fluid representative fluid to clone and set to failure state
+   * @param orientation release orientation; defaults to horizontal when null
    * @param durationSeconds source-term duration in s; must be positive
    * @param timeStepSeconds source-term time step in s; must be positive
    * @return source term result from the existing release model
@@ -374,7 +374,7 @@ public class TrappedLiquidFireRuptureResult implements Serializable {
   /**
    * Gets the minimum finite value from two candidates.
    *
-   * @param first  first value
+   * @param first first value
    * @param second second value
    * @return minimum finite value, or NaN when neither value is finite
    */
@@ -426,7 +426,7 @@ public class TrappedLiquidFireRuptureResult implements Serializable {
      * Sets geometry needed for source-term handoff.
      *
      * @param pipeInternalDiameterM pipe internal diameter in m
-     * @param inventoryVolumeM3     inventory volume in m3
+     * @param inventoryVolumeM3 inventory volume in m3
      * @return this builder
      */
     Builder geometry(double pipeInternalDiameterM, double inventoryVolumeM3) {
@@ -438,14 +438,14 @@ public class TrappedLiquidFireRuptureResult implements Serializable {
     /**
      * Adds one time-series point.
      *
-     * @param timeS                time in s
-     * @param pressureBar          pressure in bara
-     * @param liquidTemperature    temperature in K
+     * @param timeS time in s
+     * @param pressureBar pressure in bara
+     * @param liquidTemperature temperature in K
      * @param innerWallTemperature inner wall temperature in K
      * @param outerWallTemperature outer wall temperature in K
-     * @param stressMpa            von Mises stress in MPa
-     * @param allowableMpa         allowable stress in MPa
-     * @param flangeRatingBar      flange rating in bara
+     * @param stressMpa von Mises stress in MPa
+     * @param allowableMpa allowable stress in MPa
+     * @param flangeRatingBar flange rating in bara
      * @return this builder
      */
     Builder addPoint(double timeS, double pressureBar, double liquidTemperature, double innerWallTemperature,

@@ -28,11 +28,11 @@ public class UnitRunStatus implements Serializable {
   /**
    * Creates a new unit run status record.
    *
-   * @param unitName     the unit operation name
-   * @param unitType     the unit operation type (simple class name), or null if unknown
-   * @param success      true if the unit ran without error
+   * @param unitName the unit operation name
+   * @param unitType the unit operation type (simple class name), or null if unknown
+   * @param success true if the unit ran without error
    * @param errorMessage the error message if the unit failed, or null on success
-   * @param areaName     the owning process area name, or null for a single-area process
+   * @param areaName the owning process area name, or null for a single-area process
    */
   public UnitRunStatus(String unitName, String unitType, boolean success, String errorMessage, String areaName) {
     this.unitName = unitName;

@@ -19,7 +19,7 @@ interface ColumnSolver {
    * Solve the supplied distillation column.
    *
    * @param column the column to solve
-   * @param id     calculation identifier for this solve
+   * @param id calculation identifier for this solve
    * @return summary metrics from the completed solve
    */
   ColumnSolveResult solve(DistillationColumn column, UUID id);

@@ -292,9 +292,9 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
    * calcNTU.
    * </p>
    *
-   * @param y0   a double
-   * @param y1   a double
-   * @param yb   a double
+   * @param y0 a double
+   * @param y1 a double
+   * @param yb a double
    * @param ymix a double
    * @return a double
    */
@@ -705,7 +705,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
    * </p>
    *
    * @param targetDewPointC treated gas water dew point specification in degrees Celsius
-   * @param marginC         required margin in degrees Celsius (typically 10)
+   * @param marginC required margin in degrees Celsius (typically 10)
    * @return true if the lean TEG equilibrium dew point has sufficient margin
    */
   public boolean hasAdequateTEGQualityMargin(double targetDewPointC, double marginC) {

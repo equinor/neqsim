@@ -146,7 +146,7 @@ public class StepResponseGenerator implements Serializable {
    * Set the settling time for step tests.
    *
    * @param value the settling time value
-   * @param unit  the time unit ("s", "min", "hr")
+   * @param unit the time unit ("s", "min", "hr")
    * @return this generator for method chaining
    */
   public StepResponseGenerator setSettlingTime(double value, String unit) {
@@ -158,7 +158,7 @@ public class StepResponseGenerator implements Serializable {
    * Set the sample interval.
    *
    * @param value the sample interval value
-   * @param unit  the time unit ("s", "min", "hr")
+   * @param unit the time unit ("s", "min", "hr")
    * @return this generator for method chaining
    */
   public StepResponseGenerator setSampleInterval(double value, String unit) {
@@ -286,9 +286,9 @@ public class StepResponseGenerator implements Serializable {
   /**
    * Run a single step test.
    *
-   * @param mv        the MV to step
+   * @param mv the MV to step
    * @param baseValue the baseline MV value
-   * @param stepSize  the step magnitude (can be negative)
+   * @param stepSize the step magnitude (can be negative)
    * @return list of step responses for all CVs
    */
   private List<StepResponse> runSingleStep(ManipulatedVariable mv, double baseValue, double stepSize) {
@@ -361,7 +361,7 @@ public class StepResponseGenerator implements Serializable {
   /**
    * Calculate the step size for an MV.
    *
-   * @param mv           the manipulated variable
+   * @param mv the manipulated variable
    * @param currentValue current MV value
    * @return the step magnitude
    */
@@ -461,8 +461,8 @@ public class StepResponseGenerator implements Serializable {
      * Construct a step response matrix.
      *
      * @param responses map of CV name to (MV name to StepResponse)
-     * @param mvNames   ordered MV names
-     * @param cvNames   ordered CV names
+     * @param mvNames ordered MV names
+     * @param cvNames ordered CV names
      */
     public StepResponseMatrix(Map<String, Map<String, StepResponse>> responses, String[] mvNames, String[] cvNames) {
       this.responses = responses;

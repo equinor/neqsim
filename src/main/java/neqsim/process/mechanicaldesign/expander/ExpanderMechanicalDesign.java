@@ -254,7 +254,7 @@ public class ExpanderMechanicalDesign extends MechanicalDesign {
   /**
    * Select expander type based on flow and head.
    *
-   * @param volumeFlowM3hr   inlet volume flow in m³/h
+   * @param volumeFlowM3hr inlet volume flow in m³/h
    * @param enthalpyDropKJkg isentropic enthalpy drop in kJ/kg
    */
   private void selectExpanderType(double volumeFlowM3hr, double enthalpyDropKJkg) {
@@ -281,7 +281,7 @@ public class ExpanderMechanicalDesign extends MechanicalDesign {
   /**
    * Calculate wheel diameter and speed.
    *
-   * @param volumeFlowM3hr   inlet volume flow in m³/h
+   * @param volumeFlowM3hr inlet volume flow in m³/h
    * @param enthalpyDropKJkg isentropic enthalpy drop in kJ/kg
    */
   private void calculateWheelSizing(double volumeFlowM3hr, double enthalpyDropKJkg) {

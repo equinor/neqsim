@@ -339,7 +339,7 @@ public class RealTimeRiskMonitor implements Serializable, Runnable {
   /**
    * Creates a real-time risk monitor for a process system.
    *
-   * @param name          monitor name
+   * @param name monitor name
    * @param processSystem process system to monitor
    */
   public RealTimeRiskMonitor(String name, ProcessSystem processSystem) {
@@ -556,7 +556,7 @@ public class RealTimeRiskMonitor implements Serializable, Runnable {
    * Sets baseline for anomaly detection.
    *
    * @param baseline baseline risk level
-   * @param stdDev   standard deviation
+   * @param stdDev standard deviation
    */
   public void setBaseline(double baseline, double stdDev) {
     this.baselineRiskLevel = baseline;

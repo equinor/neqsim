@@ -29,9 +29,9 @@ final class ColumnMeshResidual implements Serializable {
   /**
    * Create a residual vector.
    *
-   * @param values         residual values
-   * @param equationTypes  equation type per residual
-   * @param trayIndices    tray index per residual
+   * @param values residual values
+   * @param equationTypes equation type per residual
+   * @param trayIndices tray index per residual
    * @param componentNames component label per residual
    */
   ColumnMeshResidual(double[] values, ColumnMeshEquationType[] equationTypes, int[] trayIndices,

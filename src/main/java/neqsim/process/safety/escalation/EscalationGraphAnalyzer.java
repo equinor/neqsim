@@ -38,7 +38,7 @@ public class EscalationGraphAnalyzer implements Serializable {
   /**
    * Register a target item and its failure threshold (load to fail).
    *
-   * @param itemId           item identifier
+   * @param itemId item identifier
    * @param failureThreshold threshold load (units must match edge loads)
    * @return this analyzer for chaining
    */
@@ -53,7 +53,7 @@ public class EscalationGraphAnalyzer implements Serializable {
    *
    * @param source upstream failed item
    * @param target downstream item exposed to source's hazard
-   * @param load   hazard load delivered (e.g. heat flux W/m² or overpressure Pa)
+   * @param load hazard load delivered (e.g. heat flux W/m² or overpressure Pa)
    * @return this analyzer for chaining
    */
   public EscalationGraphAnalyzer addExposure(String source, String target, double load) {

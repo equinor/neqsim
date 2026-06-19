@@ -57,9 +57,9 @@ public class DropletSettlingCalculator implements Serializable {
    * upward (buoyant rise), applicable for bubbles in liquid.
    * </p>
    *
-   * @param dropletDiameter     diameter of the droplet or bubble [m]
-   * @param continuousDensity   density of the continuous phase [kg/m3]
-   * @param dispersedDensity    density of the dispersed phase [kg/m3]
+   * @param dropletDiameter diameter of the droplet or bubble [m]
+   * @param continuousDensity density of the continuous phase [kg/m3]
+   * @param dispersedDensity density of the dispersed phase [kg/m3]
    * @param continuousViscosity dynamic viscosity of the continuous phase [Pa.s]
    * @return terminal settling velocity [m/s], positive = downward, negative = upward
    */
@@ -116,9 +116,9 @@ public class DropletSettlingCalculator implements Serializable {
   /**
    * Calculates the particle Reynolds number.
    *
-   * @param diameter            droplet diameter [m]
-   * @param velocity            settling velocity [m/s]
-   * @param continuousDensity   density of continuous phase [kg/m3]
+   * @param diameter droplet diameter [m]
+   * @param velocity settling velocity [m/s]
+   * @param continuousDensity density of continuous phase [kg/m3]
    * @param continuousViscosity dynamic viscosity of continuous phase [Pa.s]
    * @return Reynolds number
    */
@@ -160,13 +160,13 @@ public class DropletSettlingCalculator implements Serializable {
    * </p>
    *
    * @param gravityCutDiameter quiescent gravity cut diameter [m]
-   * @param gasVelocity        superficial gas velocity in the vessel [m/s]
-   * @param settlingHeight     effective droplet settling height [m]
-   * @param kFactor            operating Souders-Brown K-factor [m/s]
-   * @param designKFactor      maximum design K-factor [m/s]; use 0 if unknown
-   * @param gasDensity         gas phase density [kg/m3]
-   * @param liquidDensity      liquid dispersed phase density [kg/m3]
-   * @param gasViscosity       gas dynamic viscosity [Pa.s]
+   * @param gasVelocity superficial gas velocity in the vessel [m/s]
+   * @param settlingHeight effective droplet settling height [m]
+   * @param kFactor operating Souders-Brown K-factor [m/s]
+   * @param designKFactor maximum design K-factor [m/s]; use 0 if unknown
+   * @param gasDensity gas phase density [kg/m3]
+   * @param liquidDensity liquid dispersed phase density [kg/m3]
+   * @param gasViscosity gas dynamic viscosity [Pa.s]
    * @return turbulence-corrected cut diameter [m], always &gt;= gravityCutDiameter
    */
   public static double calcTurbulenceCorrectedCutDiameter(double gravityCutDiameter, double gasVelocity,
@@ -238,12 +238,12 @@ public class DropletSettlingCalculator implements Serializable {
     /**
      * Creates a new compliance result.
      *
-     * @param gasOk            gas section compliant flag
-     * @param liquidOk         liquid section compliant flag
-     * @param gasComment       gas section comment string
+     * @param gasOk gas section compliant flag
+     * @param liquidOk liquid section compliant flag
+     * @param gasComment gas section comment string
      * @param liquidCommentArg liquid section comment string
-     * @param cutDiam_um       gravity cut diameter in microns
-     * @param kUtil            K-factor utilization fraction
+     * @param cutDiam_um gravity cut diameter in microns
+     * @param kUtil K-factor utilization fraction
      */
     public ApiComplianceResult(boolean gasOk, boolean liquidOk, String gasComment, String liquidCommentArg,
 	double cutDiam_um, double kUtil) {
@@ -286,12 +286,12 @@ public class DropletSettlingCalculator implements Serializable {
    * Petroleum Institute, Washington, DC.
    * </p>
    *
-   * @param gravityCutDiameter_m  gravity cut diameter at operating conditions [m]
-   * @param kFactor               operating Souders-Brown K-factor [m/s]
+   * @param gravityCutDiameter_m gravity cut diameter at operating conditions [m]
+   * @param kFactor operating Souders-Brown K-factor [m/s]
    * @param mistEliminatorPresent true when a mist eliminator is installed
    * @param liquidResidenceTime_s liquid residence time in the vessel [s]
-   * @param orientation           vessel orientation: {@code "vertical"} or {@code "horizontal"}
-   * @param isThreePhase          true for three-phase (gas/oil/water) separators
+   * @param orientation vessel orientation: {@code "vertical"} or {@code "horizontal"}
+   * @param isThreePhase true for three-phase (gas/oil/water) separators
    * @return compliance result object encapsulating pass/fail status and comments
    */
   public static ApiComplianceResult checkApi12JCompliance(double gravityCutDiameter_m, double kFactor,
@@ -344,10 +344,10 @@ public class DropletSettlingCalculator implements Serializable {
    * For higher Reynolds numbers, the critical diameter is found iteratively.
    * </p>
    *
-   * @param availableHeight     height available for settling [m]
-   * @param residenceTime       gas or liquid residence time in the section [s]
-   * @param continuousDensity   density of continuous phase [kg/m3]
-   * @param dispersedDensity    density of dispersed phase [kg/m3]
+   * @param availableHeight height available for settling [m]
+   * @param residenceTime gas or liquid residence time in the section [s]
+   * @param continuousDensity density of continuous phase [kg/m3]
+   * @param dispersedDensity density of dispersed phase [kg/m3]
    * @param continuousViscosity dynamic viscosity of continuous phase [Pa.s]
    * @return critical (cut) diameter [m]
    */

@@ -39,7 +39,7 @@ public class TUflash extends QfuncFlash {
    * Constructor for TUflash.
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param Uspec  specified internal energy in J
+   * @param Uspec specified internal energy in J
    */
   public TUflash(SystemInterface system, double Uspec) {
     this.system = system;

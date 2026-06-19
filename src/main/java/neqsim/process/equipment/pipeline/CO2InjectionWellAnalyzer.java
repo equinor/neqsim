@@ -106,8 +106,8 @@ public class CO2InjectionWellAnalyzer {
   /**
    * Sets the well geometry parameters.
    *
-   * @param depthMeters     the well measured depth in meters
-   * @param tubingIDMeters  the tubing inner diameter in meters
+   * @param depthMeters the well measured depth in meters
+   * @param tubingIDMeters the tubing inner diameter in meters
    * @param roughnessMeters the pipe roughness in meters
    */
   public void setWellGeometry(double depthMeters, double tubingIDMeters, double roughnessMeters) {
@@ -119,8 +119,8 @@ public class CO2InjectionWellAnalyzer {
   /**
    * Sets the operating conditions at the wellhead.
    *
-   * @param pressureBara    wellhead pressure in bara
-   * @param temperatureC    wellhead temperature in Celsius
+   * @param pressureBara wellhead pressure in bara
+   * @param temperatureC wellhead temperature in Celsius
    * @param flowRateKgPerHr design mass flow rate in kg/hr
    */
   public void setOperatingConditions(double pressureBara, double temperatureC, double flowRateKgPerHr) {
@@ -132,7 +132,7 @@ public class CO2InjectionWellAnalyzer {
   /**
    * Sets the formation (geothermal) temperature at the wellhead and bottom-hole.
    *
-   * @param topTempC    formation temperature at wellhead in Celsius
+   * @param topTempC formation temperature at wellhead in Celsius
    * @param bottomTempC formation temperature at bottom-hole in Celsius
    */
   public void setFormationTemperature(double topTempC, double bottomTempC) {
@@ -144,7 +144,7 @@ public class CO2InjectionWellAnalyzer {
    * Adds a component to track for impurity enrichment analysis.
    *
    * @param componentName the component name (e.g., "hydrogen")
-   * @param alarmMolFrac  the gas phase mole fraction alarm threshold (e.g., 0.04 for 4%)
+   * @param alarmMolFrac the gas phase mole fraction alarm threshold (e.g., 0.04 for 4%)
    */
   public void addTrackedComponent(String componentName, double alarmMolFrac) {
     trackedComponents.add(componentName);

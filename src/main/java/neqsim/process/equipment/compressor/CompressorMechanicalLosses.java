@@ -524,11 +524,11 @@ public class CompressorMechanicalLosses implements Serializable {
   /**
    * Update operating conditions from compressor.
    *
-   * @param suctionPressure   suction pressure [bara]
+   * @param suctionPressure suction pressure [bara]
    * @param dischargePressure discharge pressure [bara]
-   * @param shaftSpeed        shaft speed [rpm]
-   * @param gasMW             gas molecular weight [kg/kmol]
-   * @param gasZ              gas compressibility factor
+   * @param shaftSpeed shaft speed [rpm]
+   * @param gasMW gas molecular weight [kg/kmol]
+   * @param gasZ gas compressibility factor
    */
   public void setOperatingConditions(double suctionPressure, double dischargePressure, double shaftSpeed, double gasMW,
       double gasZ) {

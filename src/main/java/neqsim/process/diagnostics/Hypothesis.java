@@ -101,8 +101,8 @@ public class Hypothesis implements Serializable, Comparable<Hypothesis> {
      *
      * @param parameterPattern parameter alias or pipe-separated aliases to match
      * @param expectedBehavior expected signal behavior
-     * @param weight           relative importance, normally 0.1 to 5.0
-     * @param rationale        engineering reason for expecting this signal
+     * @param weight relative importance, normally 0.1 to 5.0
+     * @param rationale engineering reason for expecting this signal
      */
     public ExpectedSignal(String parameterPattern, ExpectedBehavior expectedBehavior, double weight, String rationale) {
       this.parameterPattern = parameterPattern == null ? "" : parameterPattern;
@@ -165,10 +165,10 @@ public class Hypothesis implements Serializable, Comparable<Hypothesis> {
     /**
      * Creates an evidence item.
      *
-     * @param parameter   parameter name (e.g., "discharge_temperature")
+     * @param parameter parameter name (e.g., "discharge_temperature")
      * @param observation what was observed (e.g., "increasing trend, +5 C over 30 days")
-     * @param strength    how strongly this supports the hypothesis
-     * @param source      data source (e.g., "historian", "STID", "simulation")
+     * @param strength how strongly this supports the hypothesis
+     * @param source data source (e.g., "historian", "STID", "simulation")
      */
     public Evidence(String parameter, String observation, EvidenceStrength strength, String source) {
       this(parameter, observation, strength, source, strength != EvidenceStrength.CONTRADICTORY, 1.0, "");
@@ -177,12 +177,12 @@ public class Hypothesis implements Serializable, Comparable<Hypothesis> {
     /**
      * Creates an evidence item with explicit support direction and weight.
      *
-     * @param parameter       parameter name, tag alias, or design key
-     * @param observation     what was observed
-     * @param strength        strength of the evidence
-     * @param source          data source or analysis method
-     * @param supporting      true if the evidence supports the hypothesis, false if contradictory
-     * @param weight          relative weight, normally 0.1 to 5.0
+     * @param parameter parameter name, tag alias, or design key
+     * @param observation what was observed
+     * @param strength strength of the evidence
+     * @param source data source or analysis method
+     * @param supporting true if the evidence supports the hypothesis, false if contradictory
+     * @param weight relative weight, normally 0.1 to 5.0
      * @param sourceReference optional document, tag, or data-window reference
      */
     public Evidence(String parameter, String observation, EvidenceStrength strength, String source, boolean supporting,
@@ -596,9 +596,9 @@ public class Hypothesis implements Serializable, Comparable<Hypothesis> {
      * Adds an expected diagnostic signal.
      *
      * @param parameterPattern parameter alias or pipe-separated aliases to match
-     * @param behavior         expected behavior for the matched parameter
-     * @param weight           relative importance, normally 0.1 to 5.0
-     * @param rationale        engineering rationale for the signal
+     * @param behavior expected behavior for the matched parameter
+     * @param weight relative importance, normally 0.1 to 5.0
+     * @param rationale engineering rationale for the signal
      * @return this builder
      */
     public Builder addExpectedSignal(String parameterPattern, ExpectedBehavior behavior, double weight,

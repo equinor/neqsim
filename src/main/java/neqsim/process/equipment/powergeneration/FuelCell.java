@@ -50,8 +50,8 @@ public class FuelCell extends TwoPortEquipment {
    * Constructor for FuelCell.
    * </p>
    *
-   * @param name          name of unit operation
-   * @param fuelStream    inlet fuel stream
+   * @param name name of unit operation
+   * @param fuelStream inlet fuel stream
    * @param oxidantStream inlet oxidant stream
    */
   public FuelCell(String name, StreamInterface fuelStream, StreamInterface oxidantStream) {

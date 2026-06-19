@@ -312,12 +312,12 @@ public class MechanicalDesign implements java.io.Serializable {
   /**
    * Adds a single design-derived capacity constraint when the limit is set and the current value is finite.
    *
-   * @param constraints  the list to add to
-   * @param name         the constraint name (e.g. "design power")
-   * @param unit         the unit of measurement (e.g. "kW")
-   * @param designLimit  the design limit value; only used when greater than zero
+   * @param constraints the list to add to
+   * @param name the constraint name (e.g. "design power")
+   * @param unit the unit of measurement (e.g. "kW")
+   * @param designLimit the design limit value; only used when greater than zero
    * @param currentValue the current operating value evaluated once for the set/finite check
-   * @param supplier     a live supplier used to track the current value during simulation
+   * @param supplier a live supplier used to track the current value during simulation
    */
   private void addDesignConstraint(List<CapacityConstraint> constraints, String name, String unit, double designLimit,
       double currentValue, DoubleSupplier supplier) {
@@ -357,7 +357,7 @@ public class MechanicalDesign implements java.io.Serializable {
    * Returns the highest utilization across all mechanical-design-derived metrics.
    *
    * @return the maximum utilization fraction (1.0 == 100% of design), or 0.0 when no design limit is set or no
-   *         operating value is available
+   * operating value is available
    */
   public double getMaxDesignUtilization() {
     double max = 0.0;
@@ -726,12 +726,12 @@ public class MechanicalDesign implements java.io.Serializable {
   /**
    * Validate a specific operating envelope against design limits.
    *
-   * @param operatingMaxPressure        maximum operating pressure.
-   * @param operatingMinPressure        minimum operating pressure.
-   * @param operatingMaxTemperature     maximum operating temperature.
-   * @param operatingMinTemperature     minimum operating temperature.
+   * @param operatingMaxPressure maximum operating pressure.
+   * @param operatingMinPressure minimum operating pressure.
+   * @param operatingMaxTemperature maximum operating temperature.
+   * @param operatingMinTemperature minimum operating temperature.
    * @param operatingCorrosionAllowance corrosion allowance used in operation.
-   * @param operatingJointEfficiency    joint efficiency achieved in operation.
+   * @param operatingJointEfficiency joint efficiency achieved in operation.
    * @return computed margin result.
    */
   public MechanicalDesignMarginResult validateOperatingEnvelope(double operatingMaxPressure,
@@ -1154,7 +1154,7 @@ public class MechanicalDesign implements java.io.Serializable {
    * Set a design standard using an international standard type with a specific version.
    *
    * @param standardType the international standard type to use
-   * @param version      the specific version of the standard (e.g., "2021", "Rev 6")
+   * @param version the specific version of the standard (e.g., "2021", "Rev 6")
    * @throws IllegalArgumentException if standardType is null
    */
   public void setDesignStandard(StandardType standardType, String version) {

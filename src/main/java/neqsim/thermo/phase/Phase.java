@@ -137,8 +137,8 @@ public abstract class Phase implements PhaseInterface {
    * NB! Does not actually add component to componentarray.
    * </p>
    *
-   * @param name       Name of component to add.
-   * @param moles      Number of moles of component to add to phase.
+   * @param name Name of component to add.
+   * @param moles Number of moles of component to add to phase.
    * @param compNumber component number in fluid
    */
   public void addComponent(String name, double moles, int compNumber) {
@@ -576,11 +576,11 @@ public abstract class Phase implements PhaseInterface {
    * calcA.
    * </p>
    *
-   * @param comp        a int
-   * @param phase       a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param comp a int
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param temperature a double
-   * @param pressure    a double
-   * @param numbcomp    a int
+   * @param pressure a double
+   * @param numbcomp a int
    * @return a double
    */
   public double calcA(int comp, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
@@ -1514,7 +1514,7 @@ public abstract class Phase implements PhaseInterface {
    * </p>
    *
    * @param onlyPure a boolean
-   * @param name     a {@link java.lang.String} object
+   * @param name a {@link java.lang.String} object
    */
   public void initRefPhases(boolean onlyPure, String name) {
     refPhase = new PhaseInterface[numberOfComponents];
@@ -1567,7 +1567,7 @@ public abstract class Phase implements PhaseInterface {
    * getLogPureComponentFugacity.
    * </p>
    *
-   * @param k    a int
+   * @param k a int
    * @param pure a boolean
    * @return a double
    */

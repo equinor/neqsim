@@ -145,7 +145,7 @@ public class ReactiveTray extends SimpleTray {
   /**
    * Run a reactive PH flash on the tray fluid.
    *
-   * @param system       the thermodynamic system
+   * @param system the thermodynamic system
    * @param enthalpySpec the target enthalpy in J
    */
   private void runReactivePHflash(SystemInterface system, double enthalpySpec) {

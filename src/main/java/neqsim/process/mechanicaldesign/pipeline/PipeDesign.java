@@ -367,9 +367,9 @@ public class PipeDesign {
    *
    * If none is found (i.e. the diameter is bigger than the largest in the table), throws exception.
    *
-   * @param Do       a {@link java.lang.Double} object
-   * @param Di       a {@link java.lang.Double} object
-   * @param NPS      a {@link java.lang.Double} object
+   * @param Do a {@link java.lang.Double} object
+   * @param Di a {@link java.lang.Double} object
+   * @param NPS a {@link java.lang.Double} object
    * @param schedule a {@link java.lang.String} object
    * @return an array of double objects
    */
@@ -496,8 +496,8 @@ public class PipeDesign {
    * If SI is true, input thickness t is in meters; otherwise, in inches. This returns the gauge number that best
    * matches. If t is out of range, it will throw an IllegalArgumentException.
    *
-   * @param t        thickness in meters if SI=true, else in inches
-   * @param SI       true if t is in meters
+   * @param t thickness in meters if SI=true, else in inches
+   * @param SI true if t is in meters
    * @param schedule name of the wire gauge schedule, e.g. "BWG"
    * @return the gauge as a double
    */
@@ -558,8 +558,8 @@ public class PipeDesign {
    * <p>
    * If SI is true, returns thickness in meters; otherwise in inches.
    *
-   * @param gauge    the gauge number
-   * @param SI       if true, thickness is returned in meters; else inches
+   * @param gauge the gauge number
+   * @param SI if true, thickness is returned in meters; else inches
    * @param schedule wire gauge schedule name, e.g. "BWG"
    * @return thickness in meters or inches
    */
@@ -596,7 +596,7 @@ public class PipeDesign {
    * </p>
    *
    * @param rho fluid bulk density in kg/m^3
-   * @param C   erosional velocity factor in sqrt(lb/(ft*s^2))
+   * @param C erosional velocity factor in sqrt(lb/(ft*s^2))
    * @return erosional velocity in m/s
    */
   public static double erosionalVelocity(double rho, double C) {

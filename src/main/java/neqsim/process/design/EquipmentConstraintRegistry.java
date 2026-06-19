@@ -159,9 +159,9 @@ public class EquipmentConstraintRegistry {
   /**
    * Create a capacity constraint for a specific equipment and constraint type.
    *
-   * @param equipment      the equipment
+   * @param equipment the equipment
    * @param constraintType the constraint type (e.g., "gasLoadFactor", "maxVelocity")
-   * @param maxValue       the maximum allowed value
+   * @param maxValue the maximum allowed value
    * @return the capacity constraint
    */
   public CapacityConstraint createConstraint(ProcessEquipmentInterface equipment, String constraintType,
@@ -182,7 +182,7 @@ public class EquipmentConstraintRegistry {
    * Register a custom constraint for an equipment type.
    *
    * @param equipmentType the equipment type
-   * @param constraint    the custom constraint
+   * @param constraint the custom constraint
    */
   public void registerCustomConstraint(String equipmentType, CapacityConstraint constraint) {
     customConstraints.computeIfAbsent(equipmentType, k -> new java.util.concurrent.CopyOnWriteArrayList<>())
@@ -202,7 +202,7 @@ public class EquipmentConstraintRegistry {
   /**
    * Check if a constraint type is supported for an equipment type.
    *
-   * @param equipmentType  the equipment type
+   * @param equipmentType the equipment type
    * @param constraintType the constraint type
    * @return true if supported
    */
@@ -234,9 +234,9 @@ public class EquipmentConstraintRegistry {
     /**
      * Create a constraint template.
      *
-     * @param type        constraint type identifier
+     * @param type constraint type identifier
      * @param displayName human-readable name
-     * @param unit        unit of measurement
+     * @param unit unit of measurement
      * @param description description of the constraint
      */
     public ConstraintTemplate(String type, String displayName, String unit, String description) {

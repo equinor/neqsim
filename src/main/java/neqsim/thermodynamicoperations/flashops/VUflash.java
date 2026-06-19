@@ -30,8 +30,8 @@ public class VUflash extends Flash {
    * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param Vspec  a double
-   * @param Uspec  a double
+   * @param Vspec a double
+   * @param Uspec a double
    */
   public VUflash(SystemInterface system, double Vspec, double Uspec) {
     this.system = system;

@@ -781,7 +781,7 @@ public class OilGasProcessSimulationOptimizationTest {
    * RP 14E.
    * </p>
    *
-   * @param label    the display label for the pipeline
+   * @param label the display label for the pipeline
    * @param pipeline the PipeBeggsAndBrills pipeline to report on
    */
   private void printPipelineStatus(String label, PipeBeggsAndBrills pipeline) {
@@ -828,7 +828,7 @@ public class OilGasProcessSimulationOptimizationTest {
    * factors.
    * </p>
    *
-   * @param lofAnalyzer  the LOF method analyzer
+   * @param lofAnalyzer the LOF method analyzer
    * @param frmsAnalyzer the FRMS method analyzer
    */
   private void printFIVStatus(FlowInducedVibrationAnalyser lofAnalyzer, FlowInducedVibrationAnalyser frmsAnalyzer) {

@@ -45,8 +45,8 @@ public class SolidComplexTemperatureCalc extends ConstantDutyTemperatureFlash {
    * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param comp1  a {@link java.lang.String} object
-   * @param comp2  a {@link java.lang.String} object
+   * @param comp1 a {@link java.lang.String} object
+   * @param comp2 a {@link java.lang.String} object
    */
   public SolidComplexTemperatureCalc(SystemInterface system, String comp1, String comp2) {
     this(system);

@@ -373,7 +373,7 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
    * </p>
    *
    * @param interfaceTension a double
-   * @param componentNumber  a int
+   * @param componentNumber a int
    * @return a double
    */
   public double getInfluenceParameter(double interfaceTension, int componentNumber) {

@@ -80,7 +80,7 @@ public enum IsothermType {
   /**
    * Constructor for IsothermType.
    *
-   * @param displayName            the human-readable name for the isotherm
+   * @param displayName the human-readable name for the isotherm
    * @param supportsMultiComponent whether this model handles mixtures directly
    */
   IsothermType(String displayName, boolean supportsMultiComponent) {

@@ -246,7 +246,7 @@ public class GasLiftCalculator implements Serializable {
    * </p>
    *
    * @param liquidRate liquid rate (Sm3/day)
-   * @param totalGLR   total GLR (Sm3/Sm3)
+   * @param totalGLR total GLR (Sm3/Sm3)
    * @return bottom-hole pressure (bara)
    */
   private double calculateBHPfromVLP(double liquidRate, double totalGLR) {
@@ -277,9 +277,9 @@ public class GasLiftCalculator implements Serializable {
   /**
    * Calculates mixture density at given conditions.
    *
-   * @param pressure    pressure (bara)
+   * @param pressure pressure (bara)
    * @param temperature temperature (K)
-   * @param totalGLR    total GLR (Sm3/Sm3)
+   * @param totalGLR total GLR (Sm3/Sm3)
    * @return mixture density (kg/m³)
    */
   private double calculateMixtureDensity(double pressure, double temperature, double totalGLR) {
@@ -307,7 +307,7 @@ public class GasLiftCalculator implements Serializable {
   /**
    * Calculates Z-factor using Standing-Katz correlation (simplified).
    *
-   * @param pressure    pressure (bara)
+   * @param pressure pressure (bara)
    * @param temperature temperature (K)
    * @return Z-factor
    */
@@ -385,9 +385,9 @@ public class GasLiftCalculator implements Serializable {
   /**
    * Calculates friction pressure gradient.
    *
-   * @param liquidRate  liquid rate (Sm3/day)
-   * @param totalGLR    total GLR (Sm3/Sm3)
-   * @param pressure    pressure (bara)
+   * @param liquidRate liquid rate (Sm3/day)
+   * @param totalGLR total GLR (Sm3/Sm3)
+   * @param pressure pressure (bara)
    * @param temperature temperature (K)
    * @return friction gradient (Pa/m)
    */
@@ -584,7 +584,7 @@ public class GasLiftCalculator implements Serializable {
    * Sets reservoir pressure.
    *
    * @param pressure pressure value
-   * @param unit     pressure unit ("bara", "psia", etc.)
+   * @param unit pressure unit ("bara", "psia", etc.)
    * @return this for chaining
    */
   public GasLiftCalculator setReservoirPressure(double pressure, String unit) {
@@ -596,7 +596,7 @@ public class GasLiftCalculator implements Serializable {
    * Sets reservoir temperature.
    *
    * @param temperature temperature value
-   * @param unit        temperature unit ("K", "C", "F")
+   * @param unit temperature unit ("K", "C", "F")
    * @return this for chaining
    */
   public GasLiftCalculator setReservoirTemperature(double temperature, String unit) {
@@ -608,7 +608,7 @@ public class GasLiftCalculator implements Serializable {
    * Sets wellhead pressure.
    *
    * @param pressure pressure value
-   * @param unit     pressure unit
+   * @param unit pressure unit
    * @return this for chaining
    */
   public GasLiftCalculator setWellheadPressure(double pressure, String unit) {
@@ -620,7 +620,7 @@ public class GasLiftCalculator implements Serializable {
    * Sets well depth (true vertical depth).
    *
    * @param depth depth value
-   * @param unit  depth unit ("m", "ft")
+   * @param unit depth unit ("m", "ft")
    * @return this for chaining
    */
   public GasLiftCalculator setWellDepth(double depth, String unit) {
@@ -632,7 +632,7 @@ public class GasLiftCalculator implements Serializable {
    * Sets tubing inner diameter.
    *
    * @param diameter diameter value
-   * @param unit     diameter unit ("m", "in", "mm")
+   * @param unit diameter unit ("m", "in", "mm")
    * @return this for chaining
    */
   public GasLiftCalculator setTubingID(double diameter, String unit) {
@@ -655,7 +655,7 @@ public class GasLiftCalculator implements Serializable {
    * Sets oil gravity.
    *
    * @param gravity gravity value
-   * @param unit    gravity unit ("API", "SG")
+   * @param unit gravity unit ("API", "SG")
    * @return this for chaining
    */
   public GasLiftCalculator setOilGravity(double gravity, String unit) {
@@ -693,7 +693,7 @@ public class GasLiftCalculator implements Serializable {
    * Sets gas lift injection pressure.
    *
    * @param pressure injection pressure value
-   * @param unit     pressure unit
+   * @param unit pressure unit
    * @return this for chaining
    */
   public GasLiftCalculator setInjectionPressure(double pressure, String unit) {
@@ -705,7 +705,7 @@ public class GasLiftCalculator implements Serializable {
    * Sets bubble point pressure.
    *
    * @param pressure bubble point pressure value
-   * @param unit     pressure unit
+   * @param unit pressure unit
    * @return this for chaining
    */
   public GasLiftCalculator setBubblePointPressure(double pressure, String unit) {

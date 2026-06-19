@@ -27,7 +27,7 @@ public class UncertaintyResult implements Serializable {
    * Creates an uncertainty result from analytical propagation.
    *
    * @param outputUncertainties map of output names to uncertainty bounds
-   * @param sensitivityMatrix   the sensitivity matrix used
+   * @param sensitivityMatrix the sensitivity matrix used
    */
   public UncertaintyResult(Map<String, UncertaintyBounds> outputUncertainties, SensitivityMatrix sensitivityMatrix) {
     this.outputUncertainties = new HashMap<>(outputUncertainties);
@@ -40,8 +40,8 @@ public class UncertaintyResult implements Serializable {
    * Creates an uncertainty result from Monte Carlo analysis.
    *
    * @param outputUncertainties map of output names to uncertainty bounds
-   * @param monteCarloSamples   number of Monte Carlo samples used
-   * @param convergenceMetric   convergence metric (e.g., coefficient of variation of the mean)
+   * @param monteCarloSamples number of Monte Carlo samples used
+   * @param convergenceMetric convergence metric (e.g., coefficient of variation of the mean)
    */
   public UncertaintyResult(Map<String, UncertaintyBounds> outputUncertainties, int monteCarloSamples,
       double convergenceMetric) {

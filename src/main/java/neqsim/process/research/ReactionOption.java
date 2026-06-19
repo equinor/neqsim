@@ -96,7 +96,7 @@ public class ReactionOption {
    * Adds a stoichiometric coefficient for traceability.
    *
    * @param componentName component name
-   * @param coefficient   negative for reactants and positive for products
+   * @param coefficient negative for reactants and positive for products
    * @return this reaction option
    */
   public ReactionOption addStoichiometricCoefficient(String componentName, double coefficient) {

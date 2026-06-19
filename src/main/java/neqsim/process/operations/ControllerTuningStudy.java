@@ -22,13 +22,13 @@ public final class ControllerTuningStudy {
   /**
    * Evaluates a controller response using standard time-domain performance metrics.
    *
-   * @param controllerName    controller name
-   * @param setPoint          target value for the controlled variable
-   * @param timeSeconds       monotonically increasing time samples in seconds
-   * @param processValue      controlled variable samples
-   * @param controllerOutput  controller output samples, typically valve opening or speed demand
-   * @param outputMin         lower output limit
-   * @param outputMax         upper output limit
+   * @param controllerName controller name
+   * @param setPoint target value for the controlled variable
+   * @param timeSeconds monotonically increasing time samples in seconds
+   * @param processValue controlled variable samples
+   * @param controllerOutput controller output samples, typically valve opening or speed demand
+   * @param outputMin lower output limit
+   * @param outputMax upper output limit
    * @param settlingTolerance absolute tolerance for settling and final stability
    * @return controller tuning result
    * @throws IllegalArgumentException if arrays are null, too short, mismatched, or non-monotonic
@@ -57,11 +57,11 @@ public final class ControllerTuningStudy {
   /**
    * Validates study inputs.
    *
-   * @param timeSeconds       time samples
-   * @param processValue      process-value samples
-   * @param controllerOutput  controller-output samples
-   * @param outputMin         lower output limit
-   * @param outputMax         upper output limit
+   * @param timeSeconds time samples
+   * @param processValue process-value samples
+   * @param controllerOutput controller-output samples
+   * @param outputMin lower output limit
+   * @param outputMax upper output limit
    * @param settlingTolerance absolute settling tolerance
    * @throws IllegalArgumentException if input data is invalid
    */
@@ -92,7 +92,7 @@ public final class ControllerTuningStudy {
   /**
    * Calculates mean absolute error.
    *
-   * @param setPoint     target value
+   * @param setPoint target value
    * @param processValue process-value samples
    * @return mean absolute error
    */
@@ -107,7 +107,7 @@ public final class ControllerTuningStudy {
   /**
    * Calculates maximum absolute error.
    *
-   * @param setPoint     target value
+   * @param setPoint target value
    * @param processValue process-value samples
    * @return maximum absolute error
    */
@@ -122,10 +122,10 @@ public final class ControllerTuningStudy {
   /**
    * Integrates absolute or squared error using the trapezoidal rule.
    *
-   * @param setPoint     target value
-   * @param timeSeconds  time samples
+   * @param setPoint target value
+   * @param timeSeconds time samples
    * @param processValue process-value samples
-   * @param squared      true to integrate squared error, false for absolute error
+   * @param squared true to integrate squared error, false for absolute error
    * @return integrated error
    */
   private static double integrateError(double setPoint, double[] timeSeconds, double[] processValue, boolean squared) {
@@ -146,7 +146,7 @@ public final class ControllerTuningStudy {
   /**
    * Calculates overshoot relative to the requested step magnitude.
    *
-   * @param setPoint     target value
+   * @param setPoint target value
    * @param processValue process-value samples
    * @return overshoot percent
    */
@@ -170,10 +170,10 @@ public final class ControllerTuningStudy {
   /**
    * Finds the first time after which all samples stay inside tolerance.
    *
-   * @param setPoint     target value
-   * @param timeSeconds  time samples
+   * @param setPoint target value
+   * @param timeSeconds time samples
    * @param processValue process-value samples
-   * @param tolerance    absolute tolerance
+   * @param tolerance absolute tolerance
    * @return settling time, or NaN when not settled
    */
   private static double settlingTime(double setPoint, double[] timeSeconds, double[] processValue, double tolerance) {
@@ -196,8 +196,8 @@ public final class ControllerTuningStudy {
    * Calculates the fraction of output samples at actuator limits.
    *
    * @param controllerOutput controller-output samples
-   * @param outputMin        lower output limit
-   * @param outputMax        upper output limit
+   * @param outputMin lower output limit
+   * @param outputMax upper output limit
    * @return fraction from 0 to 1
    */
   private static double saturationFraction(double[] controllerOutput, double outputMin, double outputMax) {
@@ -214,9 +214,9 @@ public final class ControllerTuningStudy {
   /**
    * Checks whether the final fifth of samples is stable.
    *
-   * @param setPoint     target value
+   * @param setPoint target value
    * @param processValue process-value samples
-   * @param tolerance    absolute tolerance
+   * @param tolerance absolute tolerance
    * @return true when final error and variation are within tolerance
    */
   private static boolean stableAtEnd(double setPoint, double[] processValue, double tolerance) {
@@ -241,9 +241,9 @@ public final class ControllerTuningStudy {
   /**
    * Generates a short recommendation from metrics.
    *
-   * @param stableAtEnd              true if final response is stable
-   * @param overshootPercent         overshoot percent
-   * @param settlingTimeSeconds      settling time or NaN
+   * @param stableAtEnd true if final response is stable
+   * @param overshootPercent overshoot percent
+   * @param settlingTimeSeconds settling time or NaN
    * @param outputSaturationFraction actuator saturation fraction
    * @return recommendation text
    */

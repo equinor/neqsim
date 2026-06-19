@@ -156,7 +156,7 @@ public class CsvTorgDataSource implements TorgDataSource {
   /**
    * Load standards-focused CSV format where each row is a standard assignment.
    *
-   * @param reader      the BufferedReader to read CSV data from
+   * @param reader the BufferedReader to read CSV data from
    * @param headerIndex map of column names to their indices
    * @throws IOException if an I/O error occurs while reading
    */
@@ -234,7 +234,7 @@ public class CsvTorgDataSource implements TorgDataSource {
   /**
    * Load master format where each row is a complete TORG (less common).
    *
-   * @param reader      the BufferedReader to read CSV data from
+   * @param reader the BufferedReader to read CSV data from
    * @param headerIndex map of column names to their indices
    * @throws IOException if an I/O error occurs while reading
    */

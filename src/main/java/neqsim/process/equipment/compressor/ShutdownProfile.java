@@ -58,9 +58,9 @@ public class ShutdownProfile implements Serializable {
     /**
      * Constructor for ProfilePoint.
      *
-     * @param time        elapsed time from shutdown start in seconds
+     * @param time elapsed time from shutdown start in seconds
      * @param targetSpeed target speed at this point in RPM
-     * @param action      action or check description
+     * @param action action or check description
      */
     public ProfilePoint(double time, double targetSpeed, String action) {
       this.time = time;
@@ -106,7 +106,7 @@ public class ShutdownProfile implements Serializable {
   /**
    * Constructor with shutdown type.
    *
-   * @param type         the shutdown type
+   * @param type the shutdown type
    * @param currentSpeed current operating speed in RPM
    */
   public ShutdownProfile(ShutdownType type, double currentSpeed) {
@@ -117,7 +117,7 @@ public class ShutdownProfile implements Serializable {
   /**
    * Create profile based on shutdown type.
    *
-   * @param type         shutdown type
+   * @param type shutdown type
    * @param currentSpeed current speed in RPM
    */
   private void createProfile(ShutdownType type, double currentSpeed) {
@@ -200,7 +200,7 @@ public class ShutdownProfile implements Serializable {
   /**
    * Get the target speed at a given elapsed time during shutdown.
    *
-   * @param elapsedTime  time since shutdown began in seconds
+   * @param elapsedTime time since shutdown began in seconds
    * @param initialSpeed the speed when shutdown started in RPM
    * @return target speed in RPM
    */
@@ -264,7 +264,7 @@ public class ShutdownProfile implements Serializable {
   /**
    * Check if shutdown is complete.
    *
-   * @param elapsedTime  time since shutdown began in seconds
+   * @param elapsedTime time since shutdown began in seconds
    * @param currentSpeed current actual speed in RPM
    * @return true if shutdown is complete
    */
@@ -321,7 +321,7 @@ public class ShutdownProfile implements Serializable {
   /**
    * Set shutdown type and rebuild profile.
    *
-   * @param type         shutdown type
+   * @param type shutdown type
    * @param currentSpeed current operating speed in RPM
    */
   public void setShutdownType(ShutdownType type, double currentSpeed) {

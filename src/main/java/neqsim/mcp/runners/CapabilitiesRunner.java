@@ -476,12 +476,12 @@ public class CapabilitiesRunner {
   /**
    * Adds a generic capability descriptor for a server-level MCP tool.
    *
-   * @param tools            mutable tool capability map
-   * @param mcpToolName      public MCP tool method name
-   * @param schemaToolName   schema catalog tool name
+   * @param tools mutable tool capability map
+   * @param mcpToolName public MCP tool method name
+   * @param schemaToolName schema catalog tool name
    * @param workflowCategory workflow category
-   * @param purpose          short purpose description
-   * @param setupTemplateId  setup template id
+   * @param purpose short purpose description
+   * @param setupTemplateId setup template id
    */
   private static void addGenericToolCapability(JsonObject tools, String mcpToolName, String schemaToolName,
       String workflowCategory, String purpose, String setupTemplateId) {
@@ -495,18 +495,18 @@ public class CapabilitiesRunner {
   /**
    * Adds one capability descriptor to the map.
    *
-   * @param tools            mutable tool capability map
-   * @param mcpToolName      public MCP tool method name
-   * @param schemaToolName   schema catalog tool name
-   * @param runnerClass      runner implementation class
+   * @param tools mutable tool capability map
+   * @param mcpToolName public MCP tool method name
+   * @param schemaToolName schema catalog tool name
+   * @param runnerClass runner implementation class
    * @param workflowCategory workflow category
-   * @param purpose          short tool purpose
-   * @param requiredFields   required input fields
-   * @param optionalFields   optional input fields
-   * @param supportedModels  supported thermodynamic models
-   * @param supportedUnits   supported or commonly used units
-   * @param setupTemplateId  setup template id
-   * @param limitations      known limitations
+   * @param purpose short tool purpose
+   * @param requiredFields required input fields
+   * @param optionalFields optional input fields
+   * @param supportedModels supported thermodynamic models
+   * @param supportedUnits supported or commonly used units
+   * @param setupTemplateId setup template id
+   * @param limitations known limitations
    */
   private static void addToolCapability(JsonObject tools, String mcpToolName, String schemaToolName, String runnerClass,
       String workflowCategory, String purpose, List<String> requiredFields, List<String> optionalFields,
@@ -755,11 +755,11 @@ public class CapabilitiesRunner {
    * Adds a setup template to the template map.
    *
    * @param templates mutable template map
-   * @param id        template id
-   * @param purpose   template purpose
-   * @param tools     applicable MCP tools
-   * @param steps     setup steps
-   * @param skeleton  JSON skeleton or example payload
+   * @param id template id
+   * @param purpose template purpose
+   * @param tools applicable MCP tools
+   * @param steps setup steps
+   * @param skeleton JSON skeleton or example payload
    */
   private static void addSetupTemplate(JsonObject templates, String id, String purpose, List<String> tools,
       List<String> steps, String skeleton) {
@@ -1049,8 +1049,8 @@ public class CapabilitiesRunner {
    * Adds a graph node.
    *
    * @param nodes graph node array
-   * @param id    node id
-   * @param type  node type
+   * @param id node id
+   * @param type node type
    * @param label node label
    * @param group node group
    */
@@ -1066,9 +1066,9 @@ public class CapabilitiesRunner {
   /**
    * Adds a graph edge.
    *
-   * @param edges    graph edge array
-   * @param from     source node id
-   * @param to       target node id
+   * @param edges graph edge array
+   * @param from source node id
+   * @param to target node id
    * @param relation edge relation
    */
   private static void addGraphEdge(JsonArray edges, String from, String to, String relation) {
@@ -1082,12 +1082,12 @@ public class CapabilitiesRunner {
   /**
    * Adds equipment ontology metadata.
    *
-   * @param equipment      equipment object
-   * @param type           equipment type
-   * @param ports          outlet or stream ports
-   * @param properties     common settable properties
+   * @param equipment equipment object
+   * @param type equipment type
+   * @param ports outlet or stream ports
+   * @param properties common settable properties
    * @param dynamicSupport whether dynamic simulation is commonly supported
-   * @param variables      common automation variables
+   * @param variables common automation variables
    */
   private static void addEquipmentOntology(JsonObject equipment, String type, List<String> ports,
       List<String> properties, boolean dynamicSupport, List<String> variables) {

@@ -44,8 +44,8 @@ public class GTSurfaceTensionFullGT {
    * </p>
    *
    * @param flashedSystem a {@link neqsim.thermo.system.SystemInterface} object
-   * @param phase1        a int
-   * @param phase2        a int
+   * @param phase1 a int
+   * @param phase2 a int
    */
   public GTSurfaceTensionFullGT(SystemInterface flashedSystem, int phase1, int phase2) {
     int i = 0;
@@ -265,17 +265,17 @@ public class GTSurfaceTensionFullGT {
    * (N_Newton)
    * </p>
    *
-   * @param cij              an array of type double
-   * @param L                a double
-   * @param N_Newton         a int
+   * @param cij an array of type double
+   * @param L a double
+   * @param N_Newton a int
    * @param allowedRelChange a double
-   * @param highOrder        a boolean
-   * @param directMethod     a boolean
-   * @param rhomat           an array of type double
-   * @param sys              a {@link neqsim.thermo.system.SystemInterface} object
-   * @param ncomp            a int
-   * @param t                a double
-   * @param mueq             an array of type double
+   * @param highOrder a boolean
+   * @param directMethod a boolean
+   * @param rhomat an array of type double
+   * @param sys a {@link neqsim.thermo.system.SystemInterface} object
+   * @param ncomp a int
+   * @param t a double
+   * @param mueq an array of type double
    * @return sigma The surface tension [N/m]
    */
   public static double Newton(double[][] cij, double L, int N_Newton, double allowedRelChange, boolean highOrder,
@@ -427,13 +427,13 @@ public class GTSurfaceTensionFullGT {
    * directsolve. Solve linear system for Full Gradient method
    * </p>
    *
-   * @param rres   an array of type double
-   * @param JJ     an array of type double
-   * @param C      an array of type double
-   * @param H      a double
-   * @param Ngrid  a int
+   * @param rres an array of type double
+   * @param JJ an array of type double
+   * @param C an array of type double
+   * @param H a double
+   * @param Ngrid a int
    * @param rhomat an array of type double
-   * @param ncomp  a int
+   * @param ncomp a int
    */
   public static void directsolve(double[][] rres, double[][][] JJ, double[][] C, double H, int Ngrid, double[][] rhomat,
       int ncomp) {
@@ -521,12 +521,12 @@ public class GTSurfaceTensionFullGT {
    * \boldsymbol{n_z}^T \boldsymbol{C} \boldsymbol{n_z} \, dz \f}
    * </p>
    *
-   * @param h         a double
-   * @param rrho      an array of type double
-   * @param C         an array of type double
+   * @param h a double
+   * @param rrho an array of type double
+   * @param C an array of type double
    * @param highOrder a boolean
-   * @param drhodz    an array of type double
-   * @param ncomp     a int
+   * @param drhodz an array of type double
+   * @param ncomp a int
    * @return sigma The surface tension [N/m]
    */
   public static double sigmaCalc(double h, double[][] rrho, double[][] C, boolean highOrder, double[][] drhodz,
@@ -568,8 +568,8 @@ public class GTSurfaceTensionFullGT {
    * the domain size
    * </p>
    *
-   * @param z      an array of type double
-   * @param C      an array of type double
+   * @param z an array of type double
+   * @param C an array of type double
    * @param drhodz an array of type double
    * @return Interface width (length scale) [nm]
    */
@@ -607,11 +607,11 @@ public class GTSurfaceTensionFullGT {
    * delta_mu. Calculate \f$\Delta\mu=\mu-\mu_0\f$ and its number density derivative.
    * </p>
    *
-   * @param sys      a {@link neqsim.thermo.system.SystemInterface} object
-   * @param ncomp    a int
-   * @param t        a double
-   * @param mueq     an array of type double
-   * @param rho      an array of type double
+   * @param sys a {@link neqsim.thermo.system.SystemInterface} object
+   * @param ncomp a int
+   * @param t a double
+   * @param mueq an array of type double
+   * @param rho an array of type double
    * @param delta_mu an array of type double
    * @param dmu_drho an array of type double
    */
@@ -681,14 +681,14 @@ public class GTSurfaceTensionFullGT {
    * initmu. Initialize equilibrium chemical potential, and derivative and test that the bulk equilibrium is satisfied.
    * </p>
    *
-   * @param sys     a {@link neqsim.thermo.system.SystemInterface} object
-   * @param ncomp   a int
-   * @param t       a double
+   * @param sys a {@link neqsim.thermo.system.SystemInterface} object
+   * @param ncomp a int
+   * @param t a double
    * @param rho_ph1 an array of type double
    * @param rho_ph2 an array of type double
-   * @param mueq    an array of type double
-   * @param p0      an array of type double
-   * @param reltol  a double
+   * @param mueq an array of type double
+   * @param p0 an array of type double
+   * @param reltol a double
    */
   public static void initmu(SystemInterface sys, int ncomp, double t, double[] rho_ph1, double[] rho_ph2, double[] mueq,
       double[] p0, double reltol) {

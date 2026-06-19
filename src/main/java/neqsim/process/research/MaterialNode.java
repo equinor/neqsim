@@ -20,8 +20,8 @@ public class MaterialNode {
   /**
    * Creates a material node.
    *
-   * @param name          node name; must be non-empty
-   * @param description   short engineering description; may be empty
+   * @param name node name; must be non-empty
+   * @param description short engineering description; may be empty
    * @param componentName dominant component name; may be null
    */
   public MaterialNode(String name, String description, String componentName) {

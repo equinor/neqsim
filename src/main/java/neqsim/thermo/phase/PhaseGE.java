@@ -49,13 +49,13 @@ public abstract class PhaseGE extends Phase implements PhaseGEInterface {
    * init.
    * </p>
    *
-   * @param temperature        a double
-   * @param pressure           a double
+   * @param temperature a double
+   * @param pressure a double
    * @param totalNumberOfMoles a double
-   * @param beta               a double
+   * @param beta a double
    * @param numberOfComponents a int
-   * @param pt                 the PhaseType of the phase
-   * @param phaseNum           a int
+   * @param pt the PhaseType of the phase
+   * @param phaseNum a int
    */
   public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int numberOfComponents,
       PhaseType pt, int phaseNum) {

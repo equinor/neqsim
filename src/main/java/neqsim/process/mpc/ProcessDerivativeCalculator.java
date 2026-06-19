@@ -203,7 +203,7 @@ public class ProcessDerivativeCalculator {
     /**
      * Constructor for valid result.
      *
-     * @param value    the calculated derivative value
+     * @param value the calculated derivative value
      * @param stepSize the step size used for calculation
      */
     public DerivativeResult(double value, double stepSize) {
@@ -251,8 +251,8 @@ public class ProcessDerivativeCalculator {
   /**
    * Add an input variable with custom step size.
    *
-   * @param path     variable path
-   * @param unit     unit of measurement
+   * @param path variable path
+   * @param unit unit of measurement
    * @param stepSize custom absolute step size
    * @return this calculator for chaining
    */
@@ -324,7 +324,7 @@ public class ProcessDerivativeCalculator {
   /**
    * Enable parallel computation of derivatives.
    *
-   * @param enabled    whether to enable parallel computation
+   * @param enabled whether to enable parallel computation
    * @param numThreads number of threads to use
    * @return this calculator for chaining
    */
@@ -446,7 +446,7 @@ public class ProcessDerivativeCalculator {
    *
    * @param inputSpec the input variable specification
    * @param baseValue the base value of the input variable
-   * @param step      the perturbation step size
+   * @param step the perturbation step size
    * @return gradient array with derivatives for each output variable
    */
   private double[] calculateForwardDifference(VariableSpec inputSpec, double baseValue, double step) {
@@ -475,7 +475,7 @@ public class ProcessDerivativeCalculator {
    *
    * @param inputSpec the input variable specification
    * @param baseValue the base value of the input variable
-   * @param step      the perturbation step size
+   * @param step the perturbation step size
    * @return gradient array with derivatives for each output variable
    */
   private double[] calculateCentralDifference(VariableSpec inputSpec, double baseValue, double step) {
@@ -509,7 +509,7 @@ public class ProcessDerivativeCalculator {
    *
    * @param inputSpec the input variable specification
    * @param baseValue the base value of the input variable
-   * @param step      the perturbation step size
+   * @param step the perturbation step size
    * @return gradient array with derivatives for each output variable
    */
   private double[] calculateCentralDifferenceSecondOrder(VariableSpec inputSpec, double baseValue, double step) {
@@ -538,7 +538,7 @@ public class ProcessDerivativeCalculator {
    * Helper to perturb input and evaluate outputs.
    *
    * @param inputSpec the input variable specification
-   * @param value     the value to set for the input variable
+   * @param value the value to set for the input variable
    * @return array of output values after perturbation
    */
   private double[] perturbAndEvaluate(VariableSpec inputSpec, double value) {
@@ -551,7 +551,7 @@ public class ProcessDerivativeCalculator {
    * Calculate a single derivative ∂output/∂input.
    *
    * @param outputPath output variable path
-   * @param inputPath  input variable path
+   * @param inputPath input variable path
    * @return derivative value
    */
   public double getDerivative(String outputPath, String inputPath) {
@@ -673,7 +673,7 @@ public class ProcessDerivativeCalculator {
   /**
    * Calculate optimal step size based on variable type and value.
    *
-   * @param spec  the variable specification
+   * @param spec the variable specification
    * @param value the current value of the variable
    * @return the calculated optimal step size
    */

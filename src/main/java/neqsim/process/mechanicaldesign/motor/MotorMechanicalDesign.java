@@ -585,7 +585,7 @@ public class MotorMechanicalDesign implements java.io.Serializable {
   /**
    * Estimate ball bearing designation based on motor power.
    *
-   * @param powerKW    motor power in kW
+   * @param powerKW motor power in kW
    * @param isDriveEnd true for drive end, false for non-drive end
    * @return bearing designation string
    */

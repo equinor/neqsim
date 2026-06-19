@@ -21,7 +21,7 @@ public class ReservoirCVDsim extends ProcessEquipmentBaseClass {
    * Constructor for ReservoirCVDsim.
    * </p>
    *
-   * @param name           a {@link java.lang.String} object
+   * @param name a {@link java.lang.String} object
    * @param reservoirFluid a {@link neqsim.thermo.system.SystemInterface} object
    */
   public ReservoirCVDsim(String name, SystemInterface reservoirFluid) {

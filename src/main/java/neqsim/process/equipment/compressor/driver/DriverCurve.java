@@ -82,7 +82,7 @@ public interface DriverCurve extends Serializable {
   /**
    * Gets the driver efficiency at the specified speed and load.
    *
-   * @param speed        operating speed in RPM
+   * @param speed operating speed in RPM
    * @param loadFraction load as fraction of available power (0-1)
    * @return efficiency as fraction (0-1)
    */
@@ -106,7 +106,7 @@ public interface DriverCurve extends Serializable {
    * Checks if the driver can provide the required power at the specified speed.
    *
    * @param requiredPower required power in kW
-   * @param speed         operating speed in RPM
+   * @param speed operating speed in RPM
    * @return true if driver can provide the power
    */
   boolean canSupplyPower(double requiredPower, double speed);
@@ -120,7 +120,7 @@ public interface DriverCurve extends Serializable {
    * </p>
    *
    * @param powerOutput power output in kW
-   * @param speed       operating speed in RPM
+   * @param speed operating speed in RPM
    * @return fuel or energy consumption
    */
   double getFuelConsumption(double powerOutput, double speed);
@@ -173,7 +173,7 @@ public interface DriverCurve extends Serializable {
    * </p>
    *
    * @param currentLoad current power load in kW
-   * @param speed       operating speed in RPM
+   * @param speed operating speed in RPM
    * @return power margin as fraction (positive = headroom available)
    */
   default double getPowerMargin(double currentLoad, double speed) {

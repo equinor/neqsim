@@ -154,7 +154,7 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
   /**
    * Adds a controller to this equipment with the given tag name.
    *
-   * @param tag        a unique tag identifying the controller (e.g. "PC-101", "LC-101")
+   * @param tag a unique tag identifying the controller (e.g. "PC-101", "LC-101")
    * @param controller a {@link neqsim.process.controllerdevice.ControllerDeviceInterface} object
    */
   public default void addController(String tag, ControllerDeviceInterface controller) {
@@ -310,7 +310,7 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
   /**
    * Get exergy change production of the process equipment.
    *
-   * @param unit                   Supported units are J and kJ
+   * @param unit Supported units are J and kJ
    * @param surroundingTemperature The surrounding temperature in Kelvin
    * @return change in exergy in specified unit
    */
@@ -407,7 +407,7 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
    * Carnot-weighted heat exergy.
    * </p>
    *
-   * @param unit                   target unit, one of J, kJ, MJ, W, kW, MW
+   * @param unit target unit, one of J, kJ, MJ, W, kW, MW
    * @param surroundingTemperature surrounding (dead-state) temperature in K
    * @return non-negative exergy destruction rate in the requested unit
    */
@@ -673,8 +673,8 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
    * </p>
    *
    * @param temperatureUnit temperature unit (e.g. "C")
-   * @param pressureUnit    pressure unit (e.g. "bara")
-   * @param flowUnit        flow unit (e.g. "kg/hr")
+   * @param pressureUnit pressure unit (e.g. "bara")
+   * @param flowUnit flow unit (e.g. "kg/hr")
    * @return map of property name to value/unit maps
    */
   public default Map<String, Map<String, Object>> getEquipmentState(String temperatureUnit, String pressureUnit,
@@ -694,7 +694,7 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
    * Helper to create a state entry map with value and unit.
    *
    * @param value the numeric value
-   * @param unit  the unit string
+   * @param unit the unit string
    * @return map with "value" and "unit" keys
    */
   static Map<String, Object> createStateEntry(double value, String unit) {

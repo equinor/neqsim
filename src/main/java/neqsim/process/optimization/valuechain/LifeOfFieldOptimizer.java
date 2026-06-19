@@ -59,7 +59,7 @@ public class LifeOfFieldOptimizer implements Serializable {
     /**
      * Returns the net annual cash flow for a given year and active-investment set.
      *
-     * @param year   the year index (0 = first year of production)
+     * @param year the year index (0 = first year of production)
      * @param active a flag per registered investment, true when active in this year
      * @return the net annual cash flow for the year in the configured currency
      */
@@ -86,8 +86,8 @@ public class LifeOfFieldOptimizer implements Serializable {
     /**
      * Creates an investment.
      *
-     * @param name         descriptive name
-     * @param capexNok     capital cost in the configured currency (non-negative)
+     * @param name descriptive name
+     * @param capexNok capital cost in the configured currency (non-negative)
      * @param earliestYear earliest year the investment can be installed (>= 0)
      */
     public Investment(String name, double capexNok, int earliestYear) {
@@ -144,8 +144,8 @@ public class LifeOfFieldOptimizer implements Serializable {
     /**
      * Creates a life-of-field result.
      *
-     * @param installYears   installation year per investment (-1 = skipped)
-     * @param npvNok         net present value in the configured currency
+     * @param installYears installation year per investment (-1 = skipped)
+     * @param npvNok net present value in the configured currency
      * @param annualCashFlow net annual cash flow per year
      */
     public LifeOfFieldResult(int[] installYears, double npvNok, double[] annualCashFlow) {
@@ -186,7 +186,7 @@ public class LifeOfFieldOptimizer implements Serializable {
    * Creates a life-of-field optimizer.
    *
    * @param nYears number of production years (year indices 0..nYears-1); must be positive
-   * @param econ   the economic parameters supplying the discount rate (must not be null)
+   * @param econ the economic parameters supplying the discount rate (must not be null)
    */
   public LifeOfFieldOptimizer(int nYears, EconomicParameters econ) {
     if (nYears <= 0) {
@@ -262,12 +262,12 @@ public class LifeOfFieldOptimizer implements Serializable {
   /**
    * Recursively enumerates investment-timing combinations and retains the best by net present value.
    *
-   * @param index        the investment index currently being assigned
-   * @param current      the working install-year assignment
-   * @param best         the best install-year assignment found so far (updated in place)
-   * @param bestNpv      a single-element array holding the best net present value found so far
+   * @param index the investment index currently being assigned
+   * @param current the working install-year assignment
+   * @param best the best install-year assignment found so far (updated in place)
+   * @param bestNpv a single-element array holding the best net present value found so far
    * @param bestCashFlow the cash-flow schedule of the best timeline (updated in place)
-   * @param evaluator    the per-period economic evaluator
+   * @param evaluator the per-period economic evaluator
    */
   private void enumerate(int index, int[] current, int[] best, double[] bestNpv, double[] bestCashFlow,
       LifeOfFieldEvaluator evaluator) {
@@ -296,8 +296,8 @@ public class LifeOfFieldOptimizer implements Serializable {
    * Computes the net present value of a fully assigned investment timeline.
    *
    * @param installYears install year per investment (-1 = skipped)
-   * @param cashFlowOut  output array receiving the net annual cash flow per year
-   * @param evaluator    the per-period economic evaluator
+   * @param cashFlowOut output array receiving the net annual cash flow per year
+   * @param evaluator the per-period economic evaluator
    * @return the discounted net present value of the timeline
    */
   private double computeNpv(int[] installYears, double[] cashFlowOut, LifeOfFieldEvaluator evaluator) {

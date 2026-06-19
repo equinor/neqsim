@@ -798,10 +798,10 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    * calcW.
    * </p>
    *
-   * @param phase       a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param temperature a double
-   * @param pressure    a double
-   * @param numbcomp    a int
+   * @param pressure a double
+   * @param numbcomp a int
    * @return a double
    */
   public double calcW(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
@@ -814,11 +814,11 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    * calcWi.
    * </p>
    *
-   * @param compNumb    a int
-   * @param phase       a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param compNumb a int
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param temperature a double
-   * @param pressure    a double
-   * @param numbcomp    a int
+   * @param pressure a double
+   * @param numbcomp a int
    * @return a double
    */
   public double calcWi(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
@@ -830,11 +830,11 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    * calcWiT.
    * </p>
    *
-   * @param compNumb    a int
-   * @param phase       a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param compNumb a int
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param temperature a double
-   * @param pressure    a double
-   * @param numbcomp    a int
+   * @param pressure a double
+   * @param numbcomp a int
    * @return a double
    */
   public double calcWiT(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
@@ -846,12 +846,12 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    * calcWij.
    * </p>
    *
-   * @param compNumb    a int
-   * @param compNumbj   a int
-   * @param phase       a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param compNumb a int
+   * @param compNumbj a int
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param temperature a double
-   * @param pressure    a double
-   * @param numbcomp    a int
+   * @param pressure a double
+   * @param numbcomp a int
    * @return a double
    */
   public double calcWij(int compNumb, int compNumbj, PhaseInterface phase, double temperature, double pressure,

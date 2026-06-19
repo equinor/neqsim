@@ -127,7 +127,7 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
    * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param pipe   a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
+   * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
    */
   public FlowNode(SystemInterface system, GeometryDefinitionInterface pipe) {
     this(system);
@@ -139,10 +139,9 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
    * Constructor for FlowNode.
    * </p>
    *
-   * @param system                 a {@link neqsim.thermo.system.SystemInterface} object
-   * @param pipe                   a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface}
-   *                               object
-   * @param lengthOfNode           a double
+   * @param system a {@link neqsim.thermo.system.SystemInterface} object
+   * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
+   * @param lengthOfNode a double
    * @param distanceToCenterOfNode a double
    */
   public FlowNode(SystemInterface system, GeometryDefinitionInterface pipe, double lengthOfNode,

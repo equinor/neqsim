@@ -638,7 +638,7 @@ public class ProcessOptimizationExampleTest {
    * Prints detailed compressor operating status.
    *
    * @param compressor the compressor
-   * @param chart      the compressor chart
+   * @param chart the compressor chart
    */
   private void printCompressorStatus(Compressor compressor, CompressorChartInterface chart) {
     logger.printf(org.apache.logging.log4j.Level.INFO, "Inlet flow: %.1f m³/hr%n",

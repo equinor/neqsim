@@ -104,7 +104,7 @@ public interface TwoPortInterface {
    * Set outlet pressure of twoport with unit specification.
    *
    * @param pressure value to set
-   * @param unit     pressure unit (e.g., "bara", "barg", "Pa", "psi")
+   * @param unit pressure unit (e.g., "bara", "barg", "Pa", "psi")
    */
   public void setOutletPressure(double pressure, String unit);
 
@@ -123,7 +123,7 @@ public interface TwoPortInterface {
    * Set outlet pressure of twoport with unit specification.
    *
    * @param pressure value to set
-   * @param unit     pressure unit (e.g., "bara", "barg", "Pa", "psi")
+   * @param unit pressure unit (e.g., "bara", "barg", "Pa", "psi")
    * @deprecated use {@link #setOutletPressure(double, String)} instead
    */
   @Deprecated
@@ -149,7 +149,7 @@ public interface TwoPortInterface {
    * Set outlet temperature of twoport with unit specification.
    *
    * @param temperature value to set
-   * @param unit        temperature unit (e.g., "K", "C", "R", "F")
+   * @param unit temperature unit (e.g., "K", "C", "R", "F")
    */
   public void setOutletTemperature(double temperature, String unit);
 
@@ -168,7 +168,7 @@ public interface TwoPortInterface {
    * Set outlet temperature of twoport with unit specification.
    *
    * @param temperature value to set
-   * @param unit        temperature unit (e.g., "K", "C", "R", "F")
+   * @param unit temperature unit (e.g., "K", "C", "R", "F")
    * @deprecated use {@link #setOutletTemperature(double, String)} instead
    */
   @Deprecated

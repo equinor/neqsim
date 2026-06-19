@@ -386,7 +386,7 @@ public class CostEstimationCalculator implements java.io.Serializable {
   /**
    * Calculate purchased equipment cost for sieve trays.
    *
-   * @param diameter      column diameter in meters
+   * @param diameter column diameter in meters
    * @param numberOfTrays number of trays
    * @return purchased equipment cost in USD (current CEPCI basis)
    */
@@ -406,7 +406,7 @@ public class CostEstimationCalculator implements java.io.Serializable {
   /**
    * Calculate purchased equipment cost for valve trays.
    *
-   * @param diameter      column diameter in meters
+   * @param diameter column diameter in meters
    * @param numberOfTrays number of trays
    * @return purchased equipment cost in USD (current CEPCI basis)
    */
@@ -418,7 +418,7 @@ public class CostEstimationCalculator implements java.io.Serializable {
   /**
    * Calculate purchased equipment cost for bubble cap trays.
    *
-   * @param diameter      column diameter in meters
+   * @param diameter column diameter in meters
    * @param numberOfTrays number of trays
    * @return purchased equipment cost in USD (current CEPCI basis)
    */
@@ -430,7 +430,7 @@ public class CostEstimationCalculator implements java.io.Serializable {
   /**
    * Calculate purchased equipment cost for structured packing.
    *
-   * @param volume      packing volume in m3
+   * @param volume packing volume in m3
    * @param packingType type of packing ("metal", "plastic", "ceramic")
    * @return purchased equipment cost in USD (current CEPCI basis)
    */
@@ -529,7 +529,7 @@ public class CostEstimationCalculator implements java.io.Serializable {
    * Calculate cost for piping.
    *
    * @param diameter pipe diameter in meters
-   * @param length   pipe length in meters
+   * @param length pipe length in meters
    * @param schedule pipe schedule (40, 80, 160)
    * @return cost in USD (current CEPCI basis)
    */
@@ -576,8 +576,8 @@ public class CostEstimationCalculator implements java.io.Serializable {
    * Calculate bare module cost from purchased equipment cost.
    *
    * @param purchasedCost purchased equipment cost
-   * @param fpFactor      pressure factor
-   * @param fmFactor      material factor
+   * @param fpFactor pressure factor
+   * @param fmFactor material factor
    * @return bare module cost
    */
   public double calcBareModuleCost(double purchasedCost, double fpFactor, double fmFactor) {
@@ -592,7 +592,7 @@ public class CostEstimationCalculator implements java.io.Serializable {
   /**
    * Calculate bare module cost with default factors.
    *
-   * @param purchasedCost  purchased equipment cost
+   * @param purchasedCost purchased equipment cost
    * @param designPressure design pressure in barg
    * @return bare module cost
    */
@@ -631,7 +631,7 @@ public class CostEstimationCalculator implements java.io.Serializable {
    * Calculate installation labor man-hours for equipment.
    *
    * @param equipmentWeight equipment weight in kg
-   * @param equipmentType   equipment type ("vessel", "exchanger", "pump", "compressor")
+   * @param equipmentType equipment type ("vessel", "exchanger", "pump", "compressor")
    * @return labor man-hours
    */
   public double calcInstallationManHours(double equipmentWeight, String equipmentType) {
@@ -674,9 +674,9 @@ public class CostEstimationCalculator implements java.io.Serializable {
   /**
    * Generate bill of materials for vessel.
    *
-   * @param shellWeight     shell weight in kg
-   * @param headsWeight     heads weight in kg
-   * @param nozzleCount     number of nozzles
+   * @param shellWeight shell weight in kg
+   * @param headsWeight heads weight in kg
+   * @param nozzleCount number of nozzles
    * @param internalsWeight internals weight in kg
    * @return list of BOM items as maps
    */
@@ -729,10 +729,10 @@ public class CostEstimationCalculator implements java.io.Serializable {
   /**
    * Calculate complete cost estimate for equipment.
    *
-   * @param purchasedCost  purchased equipment cost
+   * @param purchasedCost purchased equipment cost
    * @param designPressure design pressure in barg
-   * @param weightKg       equipment weight in kg
-   * @param equipmentType  equipment type
+   * @param weightKg equipment weight in kg
+   * @param equipmentType equipment type
    */
   public void calculateCostEstimate(double purchasedCost, double designPressure, double weightKg,
       String equipmentType) {

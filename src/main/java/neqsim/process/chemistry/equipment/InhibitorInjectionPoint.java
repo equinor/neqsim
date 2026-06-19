@@ -75,7 +75,7 @@ public class InhibitorInjectionPoint extends TwoPortEquipment {
   /**
    * Constructs an injection point with an inlet stream.
    *
-   * @param name        equipment name
+   * @param name equipment name
    * @param inletStream inlet stream
    */
   public InhibitorInjectionPoint(String name, StreamInterface inletStream) {

@@ -259,7 +259,7 @@ public class LumpingModel implements java.io.Serializable {
      *
      * @param lumpedNumb total number of pseudo-components
      * @deprecated Use {@link #setNumberOfLumpedComponents(int)} for PVTlumpingModel to directly control the number of
-     *             plus fraction groups without side effects.
+     * plus fraction groups without side effects.
      */
     @Deprecated
     @Override

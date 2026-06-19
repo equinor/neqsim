@@ -91,7 +91,7 @@ final class NorsokLineNumber {
    * Sets the insulation code.
    *
    * @param code insulation code such as {@code "H25"} (heat conservation) or {@code "PP"} (personnel protection) (may
-   *             be null)
+   * be null)
    * @return this builder
    */
   NorsokLineNumber insulation(String code) {
@@ -117,7 +117,7 @@ final class NorsokLineNumber {
   /**
    * Appends a field with a leading hyphen when the builder already has content.
    *
-   * @param sb    the target buffer
+   * @param sb the target buffer
    * @param field the field value (skipped when null)
    */
   private static void appendField(StringBuilder sb, String field) {

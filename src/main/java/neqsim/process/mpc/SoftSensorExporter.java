@@ -108,9 +108,9 @@ public class SoftSensorExporter implements Serializable {
   /**
    * Add a density soft-sensor.
    *
-   * @param name          sensor name
+   * @param name sensor name
    * @param equipmentName equipment to monitor
-   * @param unit          output unit (kg/m3, lb/ft3, etc.)
+   * @param unit output unit (kg/m3, lb/ft3, etc.)
    * @return this exporter for method chaining
    */
   public SoftSensorExporter addDensitySensor(String name, String equipmentName, String unit) {
@@ -126,9 +126,9 @@ public class SoftSensorExporter implements Serializable {
   /**
    * Add a viscosity soft-sensor.
    *
-   * @param name          sensor name
+   * @param name sensor name
    * @param equipmentName equipment to monitor
-   * @param unit          output unit (cP, Pa.s, etc.)
+   * @param unit output unit (cP, Pa.s, etc.)
    * @return this exporter for method chaining
    */
   public SoftSensorExporter addViscositySensor(String name, String equipmentName, String unit) {
@@ -144,7 +144,7 @@ public class SoftSensorExporter implements Serializable {
   /**
    * Add a phase fraction soft-sensor.
    *
-   * @param name          sensor name
+   * @param name sensor name
    * @param equipmentName equipment to monitor
    * @return this exporter for method chaining
    */
@@ -162,7 +162,7 @@ public class SoftSensorExporter implements Serializable {
   /**
    * Add a composition estimator soft-sensor.
    *
-   * @param name          sensor name
+   * @param name sensor name
    * @param equipmentName equipment to monitor
    * @param componentName component to estimate
    * @return this exporter for method chaining
@@ -181,7 +181,7 @@ public class SoftSensorExporter implements Serializable {
   /**
    * Add a molecular weight estimator soft-sensor.
    *
-   * @param name          sensor name
+   * @param name sensor name
    * @param equipmentName equipment to monitor
    * @return this exporter for method chaining
    */
@@ -198,7 +198,7 @@ public class SoftSensorExporter implements Serializable {
   /**
    * Add a compressibility factor (Z) soft-sensor.
    *
-   * @param name          sensor name
+   * @param name sensor name
    * @param equipmentName equipment to monitor
    * @return this exporter for method chaining
    */
@@ -215,9 +215,9 @@ public class SoftSensorExporter implements Serializable {
   /**
    * Add a heat capacity soft-sensor.
    *
-   * @param name          sensor name
+   * @param name sensor name
    * @param equipmentName equipment to monitor
-   * @param unit          output unit (J/mol.K, kJ/kg.K, etc.)
+   * @param unit output unit (J/mol.K, kJ/kg.K, etc.)
    * @return this exporter for method chaining
    */
   public SoftSensorExporter addHeatCapacitySensor(String name, String equipmentName, String unit) {
@@ -233,10 +233,10 @@ public class SoftSensorExporter implements Serializable {
   /**
    * Add a custom soft-sensor with specified inputs and calculation type.
    *
-   * @param name          sensor name
+   * @param name sensor name
    * @param equipmentName equipment to monitor
-   * @param sensorType    the type of sensor
-   * @param outputUnit    the output unit
+   * @param sensorType the type of sensor
+   * @param outputUnit the output unit
    * @return the created sensor definition for further configuration
    */
   public SoftSensorDefinition addCustomSensor(String name, String equipmentName, SensorType sensorType,
@@ -386,7 +386,7 @@ public class SoftSensorExporter implements Serializable {
     /**
      * Construct a soft-sensor definition.
      *
-     * @param name       the sensor name
+     * @param name the sensor name
      * @param sensorType the sensor type
      */
     public SoftSensorDefinition(String name, SensorType sensorType) {
@@ -510,7 +510,7 @@ public class SoftSensorExporter implements Serializable {
      * Add an input to this sensor.
      *
      * @param inputName the input name
-     * @param unit      the input unit
+     * @param unit the input unit
      * @return this definition for method chaining
      */
     public SoftSensorDefinition addInput(String inputName, String unit) {
@@ -531,7 +531,7 @@ public class SoftSensorExporter implements Serializable {
      * Add a parameter to this sensor.
      *
      * @param paramName the parameter name
-     * @param value     the parameter value
+     * @param value the parameter value
      * @return this definition for method chaining
      */
     public SoftSensorDefinition addParameter(String paramName, double value) {

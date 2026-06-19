@@ -75,14 +75,14 @@ public class OREDADataImporter implements Serializable {
     /**
      * Creates a reliability record.
      *
-     * @param equipmentType  equipment type (e.g., "Compressor")
+     * @param equipmentType equipment type (e.g., "Compressor")
      * @param equipmentClass equipment class (e.g., "Centrifugal")
-     * @param failureMode    failure mode (e.g., "All modes", "Critical")
-     * @param failureRate    failure rate per hour
-     * @param mtbfHours      mean time between failures in hours
-     * @param mttrHours      mean time to repair in hours
-     * @param dataSource     data source (e.g., "OREDA-2015")
-     * @param confidence     confidence level (e.g., "High", "Medium", "Low")
+     * @param failureMode failure mode (e.g., "All modes", "Critical")
+     * @param failureRate failure rate per hour
+     * @param mtbfHours mean time between failures in hours
+     * @param mttrHours mean time to repair in hours
+     * @param dataSource data source (e.g., "OREDA-2015")
+     * @param confidence confidence level (e.g., "High", "Medium", "Low")
      */
     public ReliabilityRecord(String equipmentType, String equipmentClass, String failureMode, double failureRate,
 	double mtbfHours, double mttrHours, String dataSource, String confidence) {
@@ -385,9 +385,9 @@ public class OREDADataImporter implements Serializable {
   /**
    * Gets a specific record by equipment type, class, and failure mode.
    *
-   * @param equipmentType  equipment type
+   * @param equipmentType equipment type
    * @param equipmentClass equipment class
-   * @param failureMode    failure mode
+   * @param failureMode failure mode
    * @return record or null if not found
    */
   public ReliabilityRecord getRecord(String equipmentType, String equipmentClass, String failureMode) {
@@ -398,7 +398,7 @@ public class OREDADataImporter implements Serializable {
   /**
    * Gets a record by equipment type and class (defaults to "All modes").
    *
-   * @param equipmentType  equipment type
+   * @param equipmentType equipment type
    * @param equipmentClass equipment class
    * @return record or null if not found
    */
@@ -476,9 +476,9 @@ public class OREDADataImporter implements Serializable {
   /**
    * Gets the failure rate for specified equipment.
    *
-   * @param equipmentType  equipment type (e.g., "Pump")
+   * @param equipmentType equipment type (e.g., "Pump")
    * @param equipmentClass equipment class (e.g., "Centrifugal")
-   * @param failureMode    failure mode (e.g., "All modes")
+   * @param failureMode failure mode (e.g., "All modes")
    * @return failure rate per hour, or -1 if not found
    */
   public double getFailureRate(String equipmentType, String equipmentClass, String failureMode) {
@@ -489,9 +489,9 @@ public class OREDADataImporter implements Serializable {
   /**
    * Gets the MTBF for specified equipment.
    *
-   * @param equipmentType  equipment type
+   * @param equipmentType equipment type
    * @param equipmentClass equipment class
-   * @param failureMode    failure mode
+   * @param failureMode failure mode
    * @return MTBF in hours, or -1 if not found
    */
   public double getMTBF(String equipmentType, String equipmentClass, String failureMode) {
@@ -502,9 +502,9 @@ public class OREDADataImporter implements Serializable {
   /**
    * Gets the MTTR for specified equipment.
    *
-   * @param equipmentType  equipment type
+   * @param equipmentType equipment type
    * @param equipmentClass equipment class
-   * @param failureMode    failure mode
+   * @param failureMode failure mode
    * @return MTTR in hours, or -1 if not found
    */
   public double getMTTR(String equipmentType, String equipmentClass, String failureMode) {
@@ -515,9 +515,9 @@ public class OREDADataImporter implements Serializable {
   /**
    * Gets the data source for specified equipment.
    *
-   * @param equipmentType  equipment type
+   * @param equipmentType equipment type
    * @param equipmentClass equipment class
-   * @param failureMode    failure mode
+   * @param failureMode failure mode
    * @return data source identifier, or null if not found
    */
   public String getDataSourceForRecord(String equipmentType, String equipmentClass, String failureMode) {
@@ -547,7 +547,7 @@ public class OREDADataImporter implements Serializable {
   /**
    * Gets all failure modes for a given equipment type and class.
    *
-   * @param equipmentType  equipment type
+   * @param equipmentType equipment type
    * @param equipmentClass equipment class
    * @return list of failure modes
    */

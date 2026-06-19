@@ -56,9 +56,9 @@ class ProcessModelThroughputOptimizerTest {
     /**
      * Creates a fixture.
      *
-     * @param feed      feed stream
+     * @param feed feed stream
      * @param separator separator
-     * @param model     process model
+     * @param model process model
      */
     private ModelFixture(Stream feed, Separator separator, ProcessModel model) {
       this.feed = feed;
@@ -109,7 +109,7 @@ class ProcessModelThroughputOptimizerTest {
   /**
    * Adds an installed capacity constraint to the separator.
    *
-   * @param fixture     model fixture
+   * @param fixture model fixture
    * @param designValue design flow capacity
    */
   private void addSeparatorCapacity(final ModelFixture fixture, double designValue) {

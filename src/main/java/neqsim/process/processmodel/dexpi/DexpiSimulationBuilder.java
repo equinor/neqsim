@@ -109,7 +109,7 @@ public class DexpiSimulationBuilder {
    * Sets the feed stream pressure.
    *
    * @param pressure the pressure value
-   * @param unit     the pressure unit (e.g. "bara", "barg", "psia")
+   * @param unit the pressure unit (e.g. "bara", "barg", "psia")
    * @return this builder for chaining
    */
   public DexpiSimulationBuilder setFeedPressure(double pressure, String unit) {
@@ -122,7 +122,7 @@ public class DexpiSimulationBuilder {
    * Sets the feed stream temperature.
    *
    * @param temperature the temperature value
-   * @param unit        the temperature unit (e.g. "C", "K", "F")
+   * @param unit the temperature unit (e.g. "C", "K", "F")
    * @return this builder for chaining
    */
   public DexpiSimulationBuilder setFeedTemperature(double temperature, String unit) {
@@ -135,7 +135,7 @@ public class DexpiSimulationBuilder {
    * Sets the feed stream flow rate.
    *
    * @param flowRate the flow rate value
-   * @param unit     the flow rate unit (e.g. "MSm3/day", "kg/hr")
+   * @param unit the flow rate unit (e.g. "MSm3/day", "kg/hr")
    * @return this builder for chaining
    */
   public DexpiSimulationBuilder setFeedFlowRate(double flowRate, String unit) {
@@ -173,7 +173,7 @@ public class DexpiSimulationBuilder {
    * Builds the NeqSim {@link ProcessSystem} from the DEXPI XML file.
    *
    * @return a fully wired ProcessSystem ready for {@code process.run()}
-   * @throws IOException             if the file cannot be read
+   * @throws IOException if the file cannot be read
    * @throws DexpiXmlReaderException if the XML cannot be parsed
    */
   public ProcessSystem build() throws IOException, DexpiXmlReaderException {
@@ -331,7 +331,7 @@ public class DexpiSimulationBuilder {
    * Applies auto-instrumentation using the DynamicProcessHelper, then logs associations between DEXPI instrument tags
    * and auto-generated transmitters/controllers.
    *
-   * @param processSystem    the process system to instrument
+   * @param processSystem the process system to instrument
    * @param dexpiInstruments the DEXPI instrument info list (may be empty)
    */
   private void applyAutoInstrumentation(ProcessSystem processSystem, List<DexpiInstrumentInfo> dexpiInstruments) {
@@ -415,7 +415,7 @@ public class DexpiSimulationBuilder {
    * Parses a DEXPI XML document with security hardening.
    *
    * @param inputStream the input stream
-   * @param nsAware     whether to enable namespace-aware parsing
+   * @param nsAware whether to enable namespace-aware parsing
    * @return the parsed Document
    * @throws DexpiXmlReaderException if parsing fails
    */
@@ -459,7 +459,7 @@ public class DexpiSimulationBuilder {
   /**
    * Reads a GenericAttribute value from the given element.
    *
-   * @param element       the XML element
+   * @param element the XML element
    * @param attributeName the attribute name to search for
    * @return the attribute value, or null if not found
    */

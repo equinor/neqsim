@@ -110,7 +110,7 @@ public final class FlareRadiationRunner {
   /**
    * Rounds a value.
    *
-   * @param value    value
+   * @param value value
    * @param decimals decimals
    * @return rounded value
    */

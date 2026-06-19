@@ -193,8 +193,8 @@ public class ProductionProfile implements Serializable {
      *
      * @param initialRate initial production rate (q_i)
      * @param declineRate nominal decline rate (D), typically per year
-     * @param type        decline curve type
-     * @param rateUnit    engineering unit for rate (e.g., "Sm3/day", "kg/hr")
+     * @param type decline curve type
+     * @param rateUnit engineering unit for rate (e.g., "Sm3/day", "kg/hr")
      */
     public DeclineParameters(double initialRate, double declineRate, DeclineType type, String rateUnit) {
       this(initialRate, declineRate, 0.5, type, rateUnit, "year");
@@ -203,11 +203,11 @@ public class ProductionProfile implements Serializable {
     /**
      * Creates decline parameters with specified hyperbolic exponent.
      *
-     * @param initialRate        initial production rate (q_i)
-     * @param declineRate        nominal decline rate (D)
+     * @param initialRate initial production rate (q_i)
+     * @param declineRate nominal decline rate (D)
      * @param hyperbolicExponent Arps b-factor (0 &lt; b &lt; 1 for hyperbolic, ignored for exponential)
-     * @param type               decline curve type
-     * @param rateUnit           engineering unit for rate (e.g., "Sm3/day", "kg/hr")
+     * @param type decline curve type
+     * @param rateUnit engineering unit for rate (e.g., "Sm3/day", "kg/hr")
      */
     public DeclineParameters(double initialRate, double declineRate, double hyperbolicExponent, DeclineType type,
 	String rateUnit) {
@@ -217,12 +217,12 @@ public class ProductionProfile implements Serializable {
     /**
      * Creates decline parameters with full specification.
      *
-     * @param initialRate        initial production rate (q_i)
-     * @param declineRate        nominal decline rate (D)
+     * @param initialRate initial production rate (q_i)
+     * @param declineRate nominal decline rate (D)
      * @param hyperbolicExponent Arps b-factor (0 &lt; b &lt;= 1 for hyperbolic)
-     * @param type               decline curve type
-     * @param rateUnit           engineering unit for rate
-     * @param timeUnit           time unit for decline rate (e.g., "year", "day")
+     * @param type decline curve type
+     * @param rateUnit engineering unit for rate
+     * @param timeUnit time unit for decline rate (e.g., "year", "day")
      * @throws IllegalArgumentException if parameters are invalid
      */
     public DeclineParameters(double initialRate, double declineRate, double hyperbolicExponent, DeclineType type,
@@ -338,14 +338,14 @@ public class ProductionProfile implements Serializable {
     /**
      * Creates a production point.
      *
-     * @param time                 time from start
-     * @param timeUnit             time unit
-     * @param rate                 production rate at this time
+     * @param time time from start
+     * @param timeUnit time unit
+     * @param rate production rate at this time
      * @param cumulativeProduction total production up to this time
-     * @param rateUnit             rate unit
-     * @param bottleneckEquipment  name of limiting equipment (null if unconstrained)
-     * @param facilityUtilization  facility utilization fraction (0-1)
-     * @param isOnPlateau          true if still in plateau phase
+     * @param rateUnit rate unit
+     * @param bottleneckEquipment name of limiting equipment (null if unconstrained)
+     * @param facilityUtilization facility utilization fraction (0-1)
+     * @param isOnPlateau true if still in plateau phase
      * @param isAboveEconomicLimit true if rate exceeds economic limit
      */
     public ProductionPoint(double time, String timeUnit, double rate, double cumulativeProduction, String rateUnit,
@@ -466,15 +466,15 @@ public class ProductionProfile implements Serializable {
     /**
      * Creates a production forecast.
      *
-     * @param profile               list of production points
-     * @param plateauRate           requested plateau rate
-     * @param actualPlateauRate     achieved plateau rate (may be lower due to constraints)
-     * @param plateauDuration       requested plateau duration in years
+     * @param profile list of production points
+     * @param plateauRate requested plateau rate
+     * @param actualPlateauRate achieved plateau rate (may be lower due to constraints)
+     * @param plateauDuration requested plateau duration in years
      * @param actualPlateauDuration achieved plateau duration
-     * @param economicLimit         minimum economic rate
-     * @param totalRecovery         total cumulative production
-     * @param economicLifeYears     years until economic limit reached
-     * @param declineParams         decline parameters used
+     * @param economicLimit minimum economic rate
+     * @param totalRecovery total cumulative production
+     * @param economicLifeYears years until economic limit reached
+     * @param declineParams decline parameters used
      */
     public ProductionForecast(List<ProductionPoint> profile, double plateauRate, double actualPlateauRate,
 	double plateauDuration, double actualPlateauDuration, double economicLimit, double totalRecovery,
@@ -667,13 +667,13 @@ public class ProductionProfile implements Serializable {
    * <li>Forecast continues until economic limit or end of horizon</li>
    * </ol>
    *
-   * @param feedStream           stream to adjust for facility analysis (can be null if no facility)
-   * @param decline              decline curve parameters
-   * @param plateauRate          desired plateau production rate
+   * @param feedStream stream to adjust for facility analysis (can be null if no facility)
+   * @param decline decline curve parameters
+   * @param plateauRate desired plateau production rate
    * @param plateauDurationYears maximum duration of plateau phase
-   * @param economicLimit        minimum economic production rate
-   * @param forecastYears        total forecast horizon in years
-   * @param timeStepDays         time step for forecast points in days
+   * @param economicLimit minimum economic production rate
+   * @param forecastYears total forecast horizon in years
+   * @param timeStepDays time step for forecast points in days
    * @return complete production forecast
    */
   public ProductionForecast forecast(StreamInterface feedStream, DeclineParameters decline, double plateauRate,
@@ -775,7 +775,7 @@ public class ProductionProfile implements Serializable {
    * as the decline rate.
    *
    * @param params decline curve parameters
-   * @param time   time from start of decline
+   * @param time time from start of decline
    * @return production rate at specified time
    */
   public static double calculateRate(DeclineParameters params, double time) {
@@ -823,7 +823,7 @@ public class ProductionProfile implements Serializable {
    * </ul>
    *
    * @param params decline curve parameters
-   * @param time   time from start of decline
+   * @param time time from start of decline
    * @return cumulative production up to specified time
    */
   public static double calculateCumulativeProduction(DeclineParameters params, double time) {
@@ -869,9 +869,9 @@ public class ProductionProfile implements Serializable {
    * Uses least-squares regression to determine the best-fit decline parameters for the specified decline type. For
    * exponential decline, this uses linear regression on ln(q) vs t. For hyperbolic, it uses iterative optimization.
    *
-   * @param times    list of time points
-   * @param rates    list of corresponding production rates
-   * @param type     desired decline curve type
+   * @param times list of time points
+   * @param rates list of corresponding production rates
+   * @param type desired decline curve type
    * @param rateUnit rate unit string
    * @return fitted decline parameters
    * @throws IllegalArgumentException if data is insufficient or invalid
@@ -1007,7 +1007,7 @@ public class ProductionProfile implements Serializable {
    *
    * @param times the time values for the production data
    * @param rates the production rate values
-   * @param b     the fixed hyperbolic exponent
+   * @param b the fixed hyperbolic exponent
    * @return array of [qi, d] where qi is initial rate and d is decline rate
    */
   private double[] fitHyperbolicForB(List<Double> times, List<Double> rates, double b) {

@@ -37,8 +37,8 @@ public class DuanSun {
    * </p>
    *
    * @param temperature a double
-   * @param x_CO2       a double
-   * @param salinity    a double
+   * @param x_CO2 a double
+   * @param salinity a double
    * @return a double
    */
   public double bublePointPressure(double temperature, double x_CO2, double salinity) {
@@ -380,8 +380,8 @@ public class DuanSun {
    * </p>
    *
    * @param temperature a double
-   * @param pressure    a double
-   * @param salinity    a double
+   * @param pressure a double
+   * @param salinity a double
    * @return a double
    */
   public double calcCO2solubility(double temperature, double pressure, double salinity) {

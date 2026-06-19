@@ -36,8 +36,8 @@ public class HeavyGasDispersion implements Serializable {
    *
    * @param volumetricRateM3PerS continuous release volumetric flow at source conditions, m³/s
    * @param sourceDensityKgPerM3 source gas density at release conditions, kg/m³
-   * @param airDensityKgPerM3    ambient air density, kg/m³ (≈1.20 at 20°C, sea level)
-   * @param windSpeedMperS       reference wind speed at 10 m, m/s
+   * @param airDensityKgPerM3 ambient air density, kg/m³ (≈1.20 at 20°C, sea level)
+   * @param windSpeedMperS reference wind speed at 10 m, m/s
    */
   public HeavyGasDispersion(double volumetricRateM3PerS, double sourceDensityKgPerM3, double airDensityKgPerM3,
       double windSpeedMperS) {

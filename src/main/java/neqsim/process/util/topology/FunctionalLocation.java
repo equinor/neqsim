@@ -98,10 +98,10 @@ public class FunctionalLocation implements Serializable, Comparable<FunctionalLo
   /**
    * Creates a functional location with individual components.
    *
-   * @param installationCode  the installation code (e.g., "1775")
+   * @param installationCode the installation code (e.g., "1775")
    * @param equipmentTypeCode the equipment type code (e.g., "KA")
-   * @param sequentialNumber  the sequential number (e.g., "23011")
-   * @param trainSuffix       the train suffix (e.g., "A") or null
+   * @param sequentialNumber the sequential number (e.g., "23011")
+   * @param trainSuffix the train suffix (e.g., "A") or null
    */
   public FunctionalLocation(String installationCode, String equipmentTypeCode, String sequentialNumber,
       String trainSuffix) {

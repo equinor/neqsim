@@ -65,9 +65,9 @@ public class TiebackReport implements Serializable {
   /**
    * Creates a new tieback report.
    *
-   * @param discoveryName      name of the discovery
-   * @param options            list of evaluated options (will be sorted by NPV)
-   * @param discoveryLatitude  discovery latitude
+   * @param discoveryName name of the discovery
+   * @param options list of evaluated options (will be sorted by NPV)
+   * @param discoveryLatitude discovery latitude
    * @param discoveryLongitude discovery longitude
    */
   public TiebackReport(String discoveryName, List<TiebackOption> options, double discoveryLatitude,
@@ -484,7 +484,7 @@ public class TiebackReport implements Serializable {
   /**
    * Truncates a string to the specified length.
    *
-   * @param s      string to truncate
+   * @param s string to truncate
    * @param maxLen maximum length
    * @return truncated string
    */

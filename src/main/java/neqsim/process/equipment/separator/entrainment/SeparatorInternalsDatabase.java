@@ -469,7 +469,7 @@ public class SeparatorInternalsDatabase implements Serializable {
   /**
    * Finds a specific internals record by type and subtype.
    *
-   * @param type    internals type
+   * @param type internals type
    * @param subType subtype description
    * @return matching record or null
    */
@@ -576,7 +576,7 @@ public class SeparatorInternalsDatabase implements Serializable {
    * Finds vendor curve records matching internals type and vendor.
    *
    * @param internalsType type (e.g., "WIRE_MESH")
-   * @param vendorName    vendor name
+   * @param vendorName vendor name
    * @return list of matching records
    */
   public List<VendorCurveRecord> findVendorCurvesByTypeAndVendor(String internalsType, String vendorName) {

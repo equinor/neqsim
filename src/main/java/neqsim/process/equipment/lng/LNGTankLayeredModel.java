@@ -223,7 +223,7 @@ public class LNGTankLayeredModel implements Serializable {
    * <li>Checks for layer merging</li>
    * </ol>
    *
-   * @param timeStepHours      time step size (hours)
+   * @param timeStepHours time step size (hours)
    * @param currentAmbientTemp current ambient temperature (K)
    * @return ageing result snapshot for this time step
    */
@@ -397,7 +397,7 @@ public class LNGTankLayeredModel implements Serializable {
   /**
    * Distribute heat ingress across multiple layers based on wall contact fraction.
    *
-   * @param totalHeatJ  total heat ingress (J)
+   * @param totalHeatJ total heat ingress (J)
    * @param flashSystem thermo system for Cp estimation
    */
   private void distributeHeatToLayers(double totalHeatJ, SystemInterface flashSystem) {
@@ -516,9 +516,9 @@ public class LNGTankLayeredModel implements Serializable {
   /**
    * Build an ageing result snapshot from current state.
    *
-   * @param heatIngressW    heat ingress (W)
+   * @param heatIngressW heat ingress (W)
    * @param bogMassRateKgHr BOG mass flow rate (kg/hr)
-   * @param bogMolesStep    BOG moles removed this step
+   * @param bogMolesStep BOG moles removed this step
    * @return result snapshot
    */
   private LNGAgeingResult buildResult(double heatIngressW, double bogMassRateKgHr, double bogMolesStep) {

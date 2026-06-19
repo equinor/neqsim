@@ -55,7 +55,7 @@ public class WaxFractionSim extends BasePVTsimulation {
    * </p>
    *
    * @param temperature an array of type double
-   * @param pressure    an array of type double
+   * @param pressure an array of type double
    */
   public void setTemperaturesAndPressures(double[] temperature, double[] pressure) {
     this.pressure = pressure;

@@ -152,9 +152,9 @@ public final class GreenfieldConceptFactory {
   /**
    * Builds the full comparable template object.
    *
-   * @param concept                   field concept
-   * @param caseType                  case type label
-   * @param firstProductionYear       first production year
+   * @param concept field concept
+   * @param caseType case type label
+   * @param firstProductionYear first production year
    * @param developmentDurationMonths development duration in months
    * @return development case template
    */
@@ -200,9 +200,9 @@ public final class GreenfieldConceptFactory {
   /**
    * Creates default probabilistic assumptions for a template.
    *
-   * @param concept                   field concept
-   * @param gasConcept                true for gas concepts
-   * @param totalCapexMusd            total CAPEX in MUSD
+   * @param concept field concept
+   * @param gasConcept true for gas concepts
+   * @param totalCapexMusd total CAPEX in MUSD
    * @param developmentDurationMonths development duration in months
    * @return uncertainty bundle
    */
@@ -254,8 +254,8 @@ public final class GreenfieldConceptFactory {
   /**
    * Creates a production profile for template economics.
    *
-   * @param concept             field concept
-   * @param gasConcept          true for gas concepts
+   * @param concept field concept
+   * @param gasConcept true for gas concepts
    * @param firstProductionYear first production year
    * @return annual production profile in Sm3/year for gas or bbl/year for oil
    */

@@ -156,7 +156,7 @@ public class ModifiedRANDSolver implements java.io.Serializable {
   /**
    * Constructor.
    *
-   * @param system        the thermodynamic system
+   * @param system the thermodynamic system
    * @param formulaMatrix the formula matrix
    */
   public ModifiedRANDSolver(SystemInterface system, FormulaMatrix formulaMatrix) {

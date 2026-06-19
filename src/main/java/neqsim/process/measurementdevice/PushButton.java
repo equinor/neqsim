@@ -80,7 +80,7 @@ public class PushButton extends MeasurementDeviceBaseClass {
   /**
    * Constructor for PushButton with linked BlowdownValve.
    *
-   * @param name          name of push button
+   * @param name name of push button
    * @param blowdownValve blowdown valve to control
    */
   public PushButton(String name, BlowdownValve blowdownValve) {

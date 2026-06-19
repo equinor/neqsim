@@ -49,9 +49,9 @@ public final class LMTDcorrectionFactor {
    * This is the most common configuration (e.g., 1 shell pass, 2 or 4 tube passes).
    * </p>
    *
-   * @param tHotIn   hot stream inlet temperature (any consistent unit)
-   * @param tHotOut  hot stream outlet temperature
-   * @param tColdIn  cold stream inlet temperature
+   * @param tHotIn hot stream inlet temperature (any consistent unit)
+   * @param tHotOut hot stream outlet temperature
+   * @param tColdIn cold stream inlet temperature
    * @param tColdOut cold stream outlet temperature
    * @return F_t correction factor (0 to 1.0), or 1.0 for pure counterflow
    */
@@ -65,9 +65,9 @@ public final class LMTDcorrectionFactor {
    * Calculates the LMTD correction factor for a 2-shell-pass, 4-or-more-tube-pass (2-4) TEMA F-shell or two E-shells in
    * series.
    *
-   * @param tHotIn   hot stream inlet temperature (any consistent unit)
-   * @param tHotOut  hot stream outlet temperature
-   * @param tColdIn  cold stream inlet temperature
+   * @param tHotIn hot stream inlet temperature (any consistent unit)
+   * @param tHotOut hot stream outlet temperature
+   * @param tColdIn cold stream inlet temperature
    * @param tColdOut cold stream outlet temperature
    * @return F_t correction factor (0 to 1.0)
    */
@@ -85,10 +85,10 @@ public final class LMTDcorrectionFactor {
    * F_t formula.
    * </p>
    *
-   * @param tHotIn      hot stream inlet temperature (any consistent unit)
-   * @param tHotOut     hot stream outlet temperature
-   * @param tColdIn     cold stream inlet temperature
-   * @param tColdOut    cold stream outlet temperature
+   * @param tHotIn hot stream inlet temperature (any consistent unit)
+   * @param tHotOut hot stream outlet temperature
+   * @param tColdIn cold stream inlet temperature
+   * @param tColdOut cold stream outlet temperature
    * @param shellPasses number of shell passes (1, 2, 3, ...)
    * @return F_t correction factor (0 to 1.0)
    */
@@ -101,8 +101,8 @@ public final class LMTDcorrectionFactor {
   /**
    * Calculates the LMTD correction factor from dimensionless R and P parameters.
    *
-   * @param R           capacity ratio = (T_h_in - T_h_out) / (T_c_out - T_c_in)
-   * @param P           thermal effectiveness = (T_c_out - T_c_in) / (T_h_in - T_c_in)
+   * @param R capacity ratio = (T_h_in - T_h_out) / (T_c_out - T_c_in)
+   * @param P thermal effectiveness = (T_c_out - T_c_in) / (T_h_in - T_c_in)
    * @param shellPasses number of shell passes (1, 2, 3, ...)
    * @return F_t correction factor (0 to 1.0)
    */
@@ -134,9 +134,9 @@ public final class LMTDcorrectionFactor {
   /**
    * Calculates the minimum number of shell passes required to achieve F_t above the minimum acceptable value.
    *
-   * @param tHotIn   hot stream inlet temperature
-   * @param tHotOut  hot stream outlet temperature
-   * @param tColdIn  cold stream inlet temperature
+   * @param tHotIn hot stream inlet temperature
+   * @param tHotOut hot stream outlet temperature
+   * @param tColdIn cold stream inlet temperature
    * @param tColdOut cold stream outlet temperature
    * @return minimum number of shell passes (1 to 6), or -1 if not achievable
    */
@@ -153,9 +153,9 @@ public final class LMTDcorrectionFactor {
   /**
    * Calculates the dimensionless capacity ratio R.
    *
-   * @param tHotIn   hot stream inlet temperature
-   * @param tHotOut  hot stream outlet temperature
-   * @param tColdIn  cold stream inlet temperature
+   * @param tHotIn hot stream inlet temperature
+   * @param tHotOut hot stream outlet temperature
+   * @param tColdIn cold stream inlet temperature
    * @param tColdOut cold stream outlet temperature
    * @return R = (T_h_in - T_h_out) / (T_c_out - T_c_in)
    */
@@ -170,9 +170,9 @@ public final class LMTDcorrectionFactor {
   /**
    * Calculates the dimensionless thermal effectiveness P.
    *
-   * @param tHotIn   hot stream inlet temperature
-   * @param tHotOut  hot stream outlet temperature
-   * @param tColdIn  cold stream inlet temperature
+   * @param tHotIn hot stream inlet temperature
+   * @param tHotOut hot stream outlet temperature
+   * @param tColdIn cold stream inlet temperature
    * @param tColdOut cold stream outlet temperature
    * @return P = (T_c_out - T_c_in) / (T_h_in - T_c_in)
    */

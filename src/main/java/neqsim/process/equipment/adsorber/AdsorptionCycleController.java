@@ -86,7 +86,7 @@ public class AdsorptionCycleController implements Serializable {
     /**
      * Create a phase step with a duration.
      *
-     * @param phase    the cycle phase
+     * @param phase the cycle phase
      * @param duration duration in seconds
      */
     public PhaseStep(CyclePhase phase, double duration) {
@@ -96,9 +96,9 @@ public class AdsorptionCycleController implements Serializable {
     /**
      * Create a phase step with a duration and target pressure.
      *
-     * @param phase             the cycle phase
-     * @param duration          duration in seconds
-     * @param targetPressure    target pressure (bara)
+     * @param phase the cycle phase
+     * @param duration duration in seconds
+     * @param targetPressure target pressure (bara)
      * @param targetTemperature target temperature (K)
      */
     public PhaseStep(CyclePhase phase, double duration, double targetPressure, double targetTemperature) {
@@ -179,10 +179,10 @@ public class AdsorptionCycleController implements Serializable {
    * Create a default PSA cycle schedule.
    *
    * @param adsorptionTime adsorption phase duration (s)
-   * @param blowdownTime   blowdown duration (s)
-   * @param purgeTime      purge duration (s)
-   * @param repressTime    re-pressurisation duration (s)
-   * @param lowPressure    blowdown target pressure (bara)
+   * @param blowdownTime blowdown duration (s)
+   * @param purgeTime purge duration (s)
+   * @param repressTime re-pressurisation duration (s)
+   * @param lowPressure blowdown target pressure (bara)
    * @return this controller for chaining
    */
   public AdsorptionCycleController configurePSA(double adsorptionTime, double blowdownTime, double purgeTime,
@@ -201,9 +201,9 @@ public class AdsorptionCycleController implements Serializable {
   /**
    * Create a default TSA cycle schedule.
    *
-   * @param adsorptionTime        adsorption phase duration (s)
-   * @param heatingTime           heating/desorption duration (s)
-   * @param coolingTime           cooling duration (s)
+   * @param adsorptionTime adsorption phase duration (s)
+   * @param heatingTime heating/desorption duration (s)
+   * @param coolingTime cooling duration (s)
    * @param desorptionTemperature regeneration temperature (K)
    * @return this controller for chaining
    */

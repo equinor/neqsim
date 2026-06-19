@@ -122,10 +122,10 @@ public class BatchParameterEstimator implements Serializable {
     /**
      * Creates a tunable parameter.
      *
-     * @param path         path to the parameter
-     * @param unit         unit of the parameter
-     * @param lowerBound   minimum value
-     * @param upperBound   maximum value
+     * @param path path to the parameter
+     * @param unit unit of the parameter
+     * @param lowerBound minimum value
+     * @param upperBound maximum value
      * @param initialGuess initial guess for optimization
      */
     public TunableParameter(String path, String unit, double lowerBound, double upperBound, double initialGuess) {
@@ -169,8 +169,8 @@ public class BatchParameterEstimator implements Serializable {
     /**
      * Creates a measured variable.
      *
-     * @param path              path to the measurement
-     * @param unit              unit of the measurement
+     * @param path path to the measurement
+     * @param unit unit of the measurement
      * @param standardDeviation measurement uncertainty (noise std dev)
      */
     public MeasuredVariable(String path, String unit, double standardDeviation) {
@@ -203,7 +203,7 @@ public class BatchParameterEstimator implements Serializable {
     /**
      * Creates a data point.
      *
-     * @param conditions   operating conditions (path -&gt; value)
+     * @param conditions operating conditions (path -&gt; value)
      * @param measurements measured values (path -&gt; value)
      */
     public DataPoint(Map<String, Double> conditions, Map<String, Double> measurements) {
@@ -237,10 +237,10 @@ public class BatchParameterEstimator implements Serializable {
   /**
    * Adds a tunable parameter.
    *
-   * @param path         path to the parameter (e.g., "Pipe1.heatTransferCoefficient")
-   * @param unit         unit of the parameter
-   * @param lowerBound   minimum allowed value
-   * @param upperBound   maximum allowed value
+   * @param path path to the parameter (e.g., "Pipe1.heatTransferCoefficient")
+   * @param unit unit of the parameter
+   * @param lowerBound minimum allowed value
+   * @param upperBound maximum allowed value
    * @param initialGuess initial guess for optimization
    * @return this estimator for chaining
    */
@@ -253,8 +253,8 @@ public class BatchParameterEstimator implements Serializable {
   /**
    * Adds a measured variable.
    *
-   * @param path              path to the measurement (e.g., "Manifold.outletStream.temperature")
-   * @param unit              unit of the measurement
+   * @param path path to the measurement (e.g., "Manifold.outletStream.temperature")
+   * @param unit unit of the measurement
    * @param standardDeviation measurement uncertainty (noise standard deviation)
    * @return this estimator for chaining
    */
@@ -266,7 +266,7 @@ public class BatchParameterEstimator implements Serializable {
   /**
    * Adds a data point for calibration.
    *
-   * @param conditions   operating conditions to apply (path -&gt; value)
+   * @param conditions operating conditions to apply (path -&gt; value)
    * @param measurements measured values (path -&gt; value)
    * @return this estimator for chaining
    */

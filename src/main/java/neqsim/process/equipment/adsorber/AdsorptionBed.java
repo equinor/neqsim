@@ -160,7 +160,7 @@ public class AdsorptionBed extends TwoPortEquipment {
   /**
    * Constructor for AdsorptionBed with inlet stream.
    *
-   * @param name        the name of the unit operation
+   * @param name the name of the unit operation
    * @param inletStream the inlet gas stream to the adsorber
    */
   public AdsorptionBed(String name, StreamInterface inletStream) {
@@ -451,7 +451,7 @@ public class AdsorptionBed extends TwoPortEquipment {
    * desorption.
    *
    * @param fractionalSaturation fraction of equilibrium loading (0 = clean, 1 = saturated)
-   * @param phaseNum             the phase number for equilibrium calculation
+   * @param phaseNum the phase number for equilibrium calculation
    */
   public void preloadBed(double fractionalSaturation, int phaseNum) {
     if (!transientInitialised) {
@@ -530,7 +530,7 @@ public class AdsorptionBed extends TwoPortEquipment {
    * (1-\varepsilon)}{\varepsilon^3 d_p}$$
    *
    * @param sys the thermodynamic system for fluid properties
-   * @param us  superficial velocity (m/s)
+   * @param us superficial velocity (m/s)
    * @return total pressure drop (Pa)
    */
   private double calcErgunPressureDrop(SystemInterface sys, double us) {
@@ -565,7 +565,7 @@ public class AdsorptionBed extends TwoPortEquipment {
   /**
    * Check whether any component has broken through the bed.
    *
-   * @param inletConc  inlet gas concentrations (mol/m3)
+   * @param inletConc inlet gas concentrations (mol/m3)
    * @param outletConc outlet gas concentrations (mol/m3)
    */
   private void checkBreakthrough(double[] inletConc, double[] outletConc) {
@@ -1020,7 +1020,7 @@ public class AdsorptionBed extends TwoPortEquipment {
    * Set the LDF mass transfer coefficient for a component.
    *
    * @param component component index
-   * @param value     k_LDF in 1/s
+   * @param value k_LDF in 1/s
    */
   public void setKLDF(int component, double value) {
     if (kLDF == null) {

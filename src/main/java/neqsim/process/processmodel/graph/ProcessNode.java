@@ -53,7 +53,7 @@ public class ProcessNode implements Serializable {
   /**
    * Creates a new process node.
    *
-   * @param index     unique index of this node in the graph
+   * @param index unique index of this node in the graph
    * @param equipment the process equipment this node represents
    */
   public ProcessNode(int index, ProcessEquipmentInterface equipment) {
@@ -211,7 +211,7 @@ public class ProcessNode implements Serializable {
    * </ul>
    *
    * @param typeMapping mapping of equipment types to indices
-   * @param numTypes    total number of equipment types
+   * @param numTypes total number of equipment types
    * @return feature vector
    */
   public double[] getFeatureVector(java.util.Map<String, Integer> typeMapping, int numTypes) {

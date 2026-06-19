@@ -46,15 +46,15 @@ public class SafetyValveMechanicalDesign extends ValveMechanicalDesign {
   /**
    * Calculates the required orifice area for gas/vapor service according to API 520.
    *
-   * @param massFlow             mass flow rate at relieving conditions [kg/s]
-   * @param relievingPressure    absolute relieving pressure [Pa]
+   * @param massFlow mass flow rate at relieving conditions [kg/s]
+   * @param relievingPressure absolute relieving pressure [Pa]
    * @param relievingTemperature relieving temperature [K]
-   * @param z                    gas compressibility factor [-]
-   * @param molecularWeight      molecular weight [kg/mol]
-   * @param k                    heat capacity ratio (Cp/Cv) [-]
-   * @param kd                   discharge coefficient [-]
-   * @param kb                   back pressure correction factor [-]
-   * @param kw                   installation correction factor [-]
+   * @param z gas compressibility factor [-]
+   * @param molecularWeight molecular weight [kg/mol]
+   * @param k heat capacity ratio (Cp/Cv) [-]
+   * @param kd discharge coefficient [-]
+   * @param kb back pressure correction factor [-]
+   * @param kw installation correction factor [-]
    * @return required flow area [m^2]
    */
   public double calcGasOrificeAreaAPI520(double massFlow, double relievingPressure, double relievingTemperature,

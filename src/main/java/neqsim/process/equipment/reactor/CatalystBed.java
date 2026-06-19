@@ -80,8 +80,8 @@ public class CatalystBed implements Serializable {
    * Constructor with particle diameter and void fraction.
    *
    * @param particleDiameterMm particle diameter in mm
-   * @param voidFraction       bed void fraction [-]
-   * @param bulkDensityKgM3    bulk density in kg/m3
+   * @param voidFraction bed void fraction [-]
+   * @param bulkDensityKgM3 bulk density in kg/m3
    */
   public CatalystBed(double particleDiameterMm, double voidFraction, double bulkDensityKgM3) {
     this.particleDiameter = particleDiameterMm / 1000.0;
@@ -97,8 +97,8 @@ public class CatalystBed implements Serializable {
    * </p>
    *
    * @param superficialVelocity gas superficial velocity [m/s]
-   * @param gasDensity          gas density [kg/m3]
-   * @param gasViscosity        gas dynamic viscosity [Pa*s]
+   * @param gasDensity gas density [kg/m3]
+   * @param gasViscosity gas dynamic viscosity [Pa*s]
    * @return pressure drop per unit length [Pa/m] (positive value representing pressure loss)
    */
   public double calculatePressureDrop(double superficialVelocity, double gasDensity, double gasViscosity) {
@@ -122,9 +122,9 @@ public class CatalystBed implements Serializable {
    * Calculate pressure drop across the full catalyst bed.
    *
    * @param superficialVelocity gas superficial velocity [m/s]
-   * @param gasDensity          gas density [kg/m3]
-   * @param gasViscosity        gas dynamic viscosity [Pa*s]
-   * @param bedLength           bed length [m]
+   * @param gasDensity gas density [kg/m3]
+   * @param gasViscosity gas dynamic viscosity [Pa*s]
+   * @param bedLength bed length [m]
    * @return total pressure drop [bar]
    */
   public double calculateTotalPressureDrop(double superficialVelocity, double gasDensity, double gasViscosity,
@@ -142,7 +142,7 @@ public class CatalystBed implements Serializable {
    * </p>
    *
    * @param volumetricRateConstant first-order rate constant [1/s]
-   * @param effectiveDiffusivity   effective diffusivity [m2/s]
+   * @param effectiveDiffusivity effective diffusivity [m2/s]
    * @return generalized Thiele modulus phi [-]
    */
   public double calculateThieleModulus(double volumetricRateConstant, double effectiveDiffusivity) {
@@ -203,8 +203,8 @@ public class CatalystBed implements Serializable {
    * </p>
    *
    * @param superficialVelocity gas superficial velocity [m/s]
-   * @param gasDensity          gas density [kg/m3]
-   * @param gasViscosity        gas dynamic viscosity [Pa*s]
+   * @param gasDensity gas density [kg/m3]
+   * @param gasViscosity gas dynamic viscosity [Pa*s]
    * @return particle Reynolds number [-]
    */
   public double calculateReynoldsNumber(double superficialVelocity, double gasDensity, double gasViscosity) {
@@ -215,7 +215,7 @@ public class CatalystBed implements Serializable {
    * Set particle diameter.
    *
    * @param diameter particle diameter value
-   * @param unit     unit: "m", "mm", "cm", "in"
+   * @param unit unit: "m", "mm", "cm", "in"
    */
   public void setParticleDiameter(double diameter, String unit) {
     if ("mm".equals(unit)) {

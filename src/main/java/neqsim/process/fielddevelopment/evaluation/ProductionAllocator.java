@@ -111,8 +111,8 @@ public class ProductionAllocator implements Serializable {
   /**
    * Adds a production source for allocation.
    *
-   * @param name      source identifier (e.g., well name)
-   * @param stream    production stream
+   * @param name source identifier (e.g., well name)
+   * @param stream production stream
    * @param meterType metering technology
    * @return this for chaining
    */
@@ -124,7 +124,7 @@ public class ProductionAllocator implements Serializable {
   /**
    * Adds a production source with multiphase meter (default).
    *
-   * @param name   source name
+   * @param name source name
    * @param stream production stream
    * @return this for chaining
    */
@@ -135,8 +135,8 @@ public class ProductionAllocator implements Serializable {
   /**
    * Sets the export/sales meter reference.
    *
-   * @param name      meter name
-   * @param stream    export stream
+   * @param name meter name
+   * @param stream export stream
    * @param meterType metering technology
    * @return this for chaining
    */
@@ -356,7 +356,7 @@ public class ProductionAllocator implements Serializable {
   /**
    * Gets allocated volume with uncertainty bounds.
    *
-   * @param sourceName   source name
+   * @param sourceName source name
    * @param exportVolume total export volume
    * @return array [allocated, low, high]
    */

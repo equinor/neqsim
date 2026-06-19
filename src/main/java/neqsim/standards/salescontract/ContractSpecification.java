@@ -37,18 +37,18 @@ public class ContractSpecification extends NamedBaseClass {
    * Constructor for ContractSpecification.
    * </p>
    *
-   * @param name                     a {@link java.lang.String} object
-   * @param specification            a {@link java.lang.String} object
-   * @param country                  a {@link java.lang.String} object
-   * @param terminal                 a {@link java.lang.String} object
-   * @param standard                 a {@link neqsim.standards.StandardInterface} object
-   * @param minValue                 a double
-   * @param maxValue                 a double
-   * @param unit                     a {@link java.lang.String} object
-   * @param referenceTemperature     a double
+   * @param name a {@link java.lang.String} object
+   * @param specification a {@link java.lang.String} object
+   * @param country a {@link java.lang.String} object
+   * @param terminal a {@link java.lang.String} object
+   * @param standard a {@link neqsim.standards.StandardInterface} object
+   * @param minValue a double
+   * @param maxValue a double
+   * @param unit a {@link java.lang.String} object
+   * @param referenceTemperature a double
    * @param referenceTemperatureComb a double
-   * @param referencePressure        a double
-   * @param comments                 a {@link java.lang.String} object
+   * @param referencePressure a double
+   * @param comments a {@link java.lang.String} object
    */
   public ContractSpecification(String name, String specification, String country, String terminal,
       StandardInterface standard, double minValue, double maxValue, String unit, double referenceTemperature,

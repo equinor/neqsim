@@ -52,7 +52,7 @@ public class FugTestConstP extends ConstantDutyTemperatureFlash implements Therm
    * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param pres   a double
+   * @param pres a double
    */
   public FugTestConstP(SystemInterface system, double pres) {
     this.testSystem = system;

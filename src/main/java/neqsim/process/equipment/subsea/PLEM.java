@@ -174,7 +174,7 @@ public class PLEM extends ProcessEquipmentBaseClass {
   /**
    * Constructor with name and number of slots.
    *
-   * @param name          equipment name
+   * @param name equipment name
    * @param numberOfSlots number of connection slots
    */
   public PLEM(String name, int numberOfSlots) {

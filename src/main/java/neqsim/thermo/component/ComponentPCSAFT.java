@@ -39,10 +39,10 @@ public class ComponentPCSAFT extends ComponentSrk {
    * Constructor for ComponentPCSAFT.
    * </p>
    *
-   * @param name         Name of component.
-   * @param moles        Total number of moles of component.
+   * @param name Name of component.
+   * @param moles Total number of moles of component.
    * @param molesInPhase Number of moles in phase.
-   * @param compIndex    Index number of component in phase object component array.
+   * @param compIndex Index number of component in phase object component array.
    */
   public ComponentPCSAFT(String name, double moles, double molesInPhase, int compIndex) {
     super(name, moles, molesInPhase, compIndex);
@@ -54,11 +54,11 @@ public class ComponentPCSAFT extends ComponentSrk {
    * </p>
    *
    * @param number a int. Not used.
-   * @param TC     Critical temperature [K]
-   * @param PC     Critical pressure [bara]
-   * @param M      Molar mass
-   * @param a      Acentric factor
-   * @param moles  Total number of moles of component.
+   * @param TC Critical temperature [K]
+   * @param PC Critical pressure [bara]
+   * @param M Molar mass
+   * @param a Acentric factor
+   * @param moles Total number of moles of component.
    */
   public ComponentPCSAFT(int number, double TC, double PC, double M, double a, double moles) {
     super(number, TC, PC, M, a, moles);
@@ -114,10 +114,10 @@ public class ComponentPCSAFT extends ComponentSrk {
    * {@link #Finit}, this method does not call super.Finit() and therefore avoids triggering dFdNdV/dFdNdN computation,
    * which is essential for preventing infinite recursion when those methods are implemented numerically.
    *
-   * @param phase              the phase to compute quantities for
+   * @param phase the phase to compute quantities for
    * @param numberOfComponents number of components in the phase
-   * @param temp               temperature in K
-   * @param pres               pressure in bara
+   * @param temp temperature in K
+   * @param pres pressure in bara
    */
   void initSAFTDerivatives(PhaseInterface phase, int numberOfComponents, double temp, double pres) {
     setDnSAFTdi(calcdnSAFTdi(phase, numberOfComponents, temp, pres));
@@ -142,10 +142,10 @@ public class ComponentPCSAFT extends ComponentSrk {
    * Reinitializes PC-SAFT quantities on a perturbed phase clone. Calls volInit() on the phase and then
    * initSAFTDerivatives() on each component, without triggering the full Finit chain.
    *
-   * @param perturbedPhase     the cloned and perturbed phase
+   * @param perturbedPhase the cloned and perturbed phase
    * @param numberOfComponents number of components
-   * @param temperature        temperature in K
-   * @param pressure           pressure in bara
+   * @param temperature temperature in K
+   * @param pressure pressure in bara
    */
   private static void reinitSAFTOnPhase(PhasePCSAFT perturbedPhase, int numberOfComponents, double temperature,
       double pressure) {
@@ -179,10 +179,10 @@ public class ComponentPCSAFT extends ComponentSrk {
    * dF_HC_SAFTdN.
    * </p>
    *
-   * @param phase              a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
-   * @param temperature        a double
-   * @param pressure           a double
+   * @param temperature a double
+   * @param pressure a double
    * @return a double
    */
   public double dF_HC_SAFTdN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
@@ -200,10 +200,10 @@ public class ComponentPCSAFT extends ComponentSrk {
    * dF_DISP1_SAFTdN.
    * </p>
    *
-   * @param phase              a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
-   * @param temperature        a double
-   * @param pressure           a double
+   * @param temperature a double
+   * @param pressure a double
    * @return a double
    */
   public double dF_DISP1_SAFTdN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
@@ -222,10 +222,10 @@ public class ComponentPCSAFT extends ComponentSrk {
    * calcdmSAFTdi.
    * </p>
    *
-   * @param phase             a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param nuberOfComponents a int
-   * @param temp              a double
-   * @param pres              a double
+   * @param temp a double
+   * @param pres a double
    * @return a double
    */
   public double calcdmSAFTdi(PhaseInterface phase, int nuberOfComponents, double temp, double pres) {
@@ -238,10 +238,10 @@ public class ComponentPCSAFT extends ComponentSrk {
    * dF_DISP2_SAFTdN.
    * </p>
    *
-   * @param phase              a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
-   * @param temperature        a double
-   * @param pressure           a double
+   * @param temperature a double
+   * @param pressure a double
    * @return a double
    */
   public double dF_DISP2_SAFTdN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
@@ -367,10 +367,10 @@ public class ComponentPCSAFT extends ComponentSrk {
    * calcF1dispSumTermdn.
    * </p>
    *
-   * @param phase              a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
-   * @param temperature        a double
-   * @param pressure           a double
+   * @param temperature a double
+   * @param pressure a double
    * @return a double
    */
   public double calcF1dispSumTermdn(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
@@ -390,10 +390,10 @@ public class ComponentPCSAFT extends ComponentSrk {
    * calcF2dispSumTermdn.
    * </p>
    *
-   * @param phase              a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
-   * @param temperature        a double
-   * @param pressure           a double
+   * @param temperature a double
+   * @param pressure a double
    * @return a double
    */
   public double calcF2dispSumTermdn(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
@@ -418,10 +418,10 @@ public class ComponentPCSAFT extends ComponentSrk {
    * calcdghsSAFTdi.
    * </p>
    *
-   * @param phase             a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param nuberOfComponents a int
-   * @param temp              a double
-   * @param pres              a double
+   * @param temp a double
+   * @param pres a double
    * @return a double
    */
   public double calcdghsSAFTdi(PhaseInterface phase, int nuberOfComponents, double temp, double pres) {
@@ -434,10 +434,10 @@ public class ComponentPCSAFT extends ComponentSrk {
    * calcdahsSAFTdi.
    * </p>
    *
-   * @param phase             a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param nuberOfComponents a int
-   * @param temp              a double
-   * @param pres              a double
+   * @param temp a double
+   * @param pres a double
    * @return a double
    */
   public double calcdahsSAFTdi(PhaseInterface phase, int nuberOfComponents, double temp, double pres) {
@@ -453,10 +453,10 @@ public class ComponentPCSAFT extends ComponentSrk {
    * calcdnSAFTdi.
    * </p>
    *
-   * @param phase             a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param nuberOfComponents a int
-   * @param temp              a double
-   * @param pres              a double
+   * @param temp a double
+   * @param pres a double
    * @return a double
    */
   public double calcdnSAFTdi(PhaseInterface phase, int nuberOfComponents, double temp, double pres) {

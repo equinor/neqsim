@@ -70,7 +70,7 @@ public interface FlowNodeVisualizationInterface {
    * getBulkComposition.
    * </p>
    *
-   * @param i     a int
+   * @param i a int
    * @param phase a int
    * @return a double
    */
@@ -81,7 +81,7 @@ public interface FlowNodeVisualizationInterface {
    * getInterfaceComposition.
    * </p>
    *
-   * @param i     a int
+   * @param i a int
    * @param phase a int
    * @return a double
    */
@@ -111,7 +111,7 @@ public interface FlowNodeVisualizationInterface {
    * getMolarFlux.
    * </p>
    *
-   * @param i     a int
+   * @param i a int
    * @param phase a int
    * @return a double
    */
@@ -161,7 +161,7 @@ public interface FlowNodeVisualizationInterface {
    * getEffectiveMassTransferCoefficient.
    * </p>
    *
-   * @param i     a int
+   * @param i a int
    * @param phase a int
    * @return a double
    */
@@ -172,7 +172,7 @@ public interface FlowNodeVisualizationInterface {
    * getEffectiveSchmidtNumber.
    * </p>
    *
-   * @param i     a int
+   * @param i a int
    * @param phase a int
    * @return a double
    */

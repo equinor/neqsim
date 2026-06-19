@@ -115,8 +115,8 @@ public class WaxCurveCalculator {
    * Sets the temperature range for the wax curve.
    *
    * @param startC lower temperature [C]
-   * @param endC   upper temperature [C]
-   * @param stepC  temperature step [C]
+   * @param endC upper temperature [C]
+   * @param stepC temperature step [C]
    */
   public void setTemperatureRange(double startC, double endC, double stepC) {
     this.tempStartC = startC;
@@ -281,7 +281,7 @@ public class WaxCurveCalculator {
    * Calculates wax fraction at multiple pressures for a pipeline profile.
    *
    * @param pressuresBara array of pressures [bara]
-   * @param temperatureC  temperature [C]
+   * @param temperatureC temperature [C]
    * @return map of pressure to wax weight fraction
    */
   public Map<Double, Double> calculateAtMultiplePressures(double[] pressuresBara, double temperatureC) {
@@ -381,7 +381,7 @@ public class WaxCurveCalculator {
   /**
    * Counts the number of monotonicity violations in an array.
    *
-   * @param values        the array to check
+   * @param values the array to check
    * @param nonDecreasing true to check for non-decreasing, false for non-increasing
    * @return number of violations
    */

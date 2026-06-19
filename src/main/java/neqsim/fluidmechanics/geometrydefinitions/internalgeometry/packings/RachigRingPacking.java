@@ -27,7 +27,7 @@ public class RachigRingPacking extends Packing {
    * </p>
    *
    * @param material a {@link java.lang.String} object
-   * @param size     a int
+   * @param size a int
    */
   public RachigRingPacking(String material, int size) {
     super("RachigRingPacking", material, size);

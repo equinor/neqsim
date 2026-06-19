@@ -99,9 +99,9 @@ public class ProcessSynthesisGraph {
    * Enumerates operation paths from feed to any target material.
    *
    * @param feedMaterialName feed material name
-   * @param targetMaterials  target material names
-   * @param maxDepth         maximum number of operations per path
-   * @param maxPaths         maximum number of paths to return
+   * @param targetMaterials target material names
+   * @param maxDepth maximum number of operations per path
+   * @param maxPaths maximum number of paths to return
    * @return operation paths in discovery order
    */
   public List<List<OperationOption>> enumeratePaths(String feedMaterialName, List<String> targetMaterials, int maxDepth,
@@ -119,13 +119,13 @@ public class ProcessSynthesisGraph {
    * Recursively enumerates operation paths.
    *
    * @param availableMaterials currently available material names
-   * @param targetMaterials    normalized target material names
-   * @param currentPath        current operation path
-   * @param usedOperations     operations already used in this path
-   * @param terminalMaterials  materials produced by the previous path step
-   * @param maxDepth           maximum path depth
-   * @param maxPaths           maximum path count
-   * @param paths              accumulated paths
+   * @param targetMaterials normalized target material names
+   * @param currentPath current operation path
+   * @param usedOperations operations already used in this path
+   * @param terminalMaterials materials produced by the previous path step
+   * @param maxDepth maximum path depth
+   * @param maxPaths maximum path count
+   * @param paths accumulated paths
    */
   private void enumerateRecursive(Set<String> availableMaterials, Set<String> targetMaterials,
       List<OperationOption> currentPath, Set<OperationOption> usedOperations, Set<String> terminalMaterials,
@@ -164,8 +164,8 @@ public class ProcessSynthesisGraph {
   /**
    * Checks whether an operation continues the serial path represented by generated JSON.
    *
-   * @param operation         operation to inspect
-   * @param currentPath       current operation path
+   * @param operation operation to inspect
+   * @param currentPath current operation path
    * @param terminalMaterials materials produced by the previous step
    * @return true if operation consumes the previous terminal material or starts the path
    */
@@ -185,7 +185,7 @@ public class ProcessSynthesisGraph {
   /**
    * Checks whether operation inputs are available.
    *
-   * @param operation          operation to inspect
+   * @param operation operation to inspect
    * @param availableMaterials available material set
    * @return true if all declared inputs are available
    */
@@ -204,7 +204,7 @@ public class ProcessSynthesisGraph {
   /**
    * Checks for set intersection.
    *
-   * @param left  first set
+   * @param left first set
    * @param right second set
    * @return true if the sets share at least one item
    */

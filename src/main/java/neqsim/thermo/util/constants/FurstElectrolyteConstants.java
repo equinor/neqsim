@@ -347,7 +347,7 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
    * setFurstParam.
    * </p>
    *
-   * @param i     a int
+   * @param i a int
    * @param value a double
    */
   public static void setFurstParam(int i, double value) {
@@ -383,7 +383,7 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
    * setFurstParamCPA.
    * </p>
    *
-   * @param i     index into furstParamsCPA array
+   * @param i index into furstParamsCPA array
    * @param value the parameter value to set
    */
   public static void setFurstParamCPA(int i, double value) {
@@ -405,7 +405,7 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
   /**
    * Set electrolyte parameter for MDEA solvent.
    *
-   * @param i     index into furstParamsCPA_MDEA array
+   * @param i index into furstParamsCPA_MDEA array
    * @param value the parameter value to set
    */
   public static void setFurstParamMDEA(int i, double value) {
@@ -425,7 +425,7 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
   /**
    * Set electrolyte parameter for MEG solvent.
    *
-   * @param i     index into furstParamsCPA_MEG array
+   * @param i index into furstParamsCPA_MEG array
    * @param value the parameter value to set
    */
   public static void setFurstParamMEG(int i, double value) {
@@ -445,7 +445,7 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
   /**
    * Set electrolyte parameter for methanol solvent.
    *
-   * @param i     index into furstParamsCPA_MeOH array
+   * @param i index into furstParamsCPA_MeOH array
    * @param value the parameter value to set
    */
   public static void setFurstParamMeOH(int i, double value) {
@@ -465,7 +465,7 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
   /**
    * Set electrolyte parameter for ethanol solvent.
    *
-   * @param i     index into furstParamsCPA_EtOH array
+   * @param i index into furstParamsCPA_EtOH array
    * @param value the parameter value to set
    */
   public static void setFurstParamEtOH(int i, double value) {
@@ -485,7 +485,7 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
   /**
    * Set electrolyte parameter for MEA (monoethanolamine) solvent.
    *
-   * @param i     index into furstParamsCPA_MEA array
+   * @param i index into furstParamsCPA_MEA array
    * @param value the parameter value to set
    */
   public static void setFurstParamMEA(int i, double value) {
@@ -505,7 +505,7 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
   /**
    * Set electrolyte parameter for TEG (triethylene glycol) solvent.
    *
-   * @param i     index into furstParamsCPA_TEG array
+   * @param i index into furstParamsCPA_TEG array
    * @param value the parameter value to set
    */
   public static void setFurstParamTEG(int i, double value) {
@@ -545,7 +545,7 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
   /**
    * Set temperature-dependent Wij parameter for electrolyte interactions.
    *
-   * @param i     index into furstParamsCPA_TDep array
+   * @param i index into furstParamsCPA_TDep array
    * @param value the parameter value to set
    */
   public static void setFurstParamTDep(int i, double value) {
@@ -696,8 +696,8 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
    * Get gas-ion interaction parameter.
    *
    * @param i index: 0=W_CO2-cation, 1=W_CO2-anion, 2=W_CH4-cation, 3=W_CH4-anion, 4=W_C2H6-cation, 5=W_C2H6-anion,
-   *          6=W_C3H8-cation, 7=W_C3H8-anion, 8=W_C4-cation, 9=W_C4-anion, 10=W_C5plus-cation, 11=W_C5plus-anion,
-   *          12=W_N2-cation, 13=W_N2-anion, 14=W_H2S-cation, 15=W_H2S-anion, 16=W_H2-cation, 17=W_H2-anion
+   * 6=W_C3H8-cation, 7=W_C3H8-anion, 8=W_C4-cation, 9=W_C4-anion, 10=W_C5plus-cation, 11=W_C5plus-anion,
+   * 12=W_N2-cation, 13=W_N2-anion, 14=W_H2S-cation, 15=W_H2S-anion, 16=W_H2-cation, 17=W_H2-anion
    * @return the Wij parameter value
    */
   public static double getFurstParamGasIon(int i) {
@@ -707,8 +707,7 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
   /**
    * Set gas-ion interaction parameter.
    *
-   * @param i     index: 0-3=legacy fixed params, 4=CO2-ion slope, 5=CO2-ion intercept, 6=CH4-ion slope, 7=CH4-ion
-   *              intercept
+   * @param i index: 0-3=legacy fixed params, 4=CO2-ion slope, 5=CO2-ion intercept, 6=CH4-ion slope, 7=CH4-ion intercept
    * @param value the Wij parameter value to set
    */
   public static void setFurstParamGasIon(int i, double value) {
@@ -728,7 +727,7 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
   /**
    * Set organic inhibitor-ion interaction parameter.
    *
-   * @param i     index: 0=W_MeOH-cation, 1=W_MeOH-anion, etc.
+   * @param i index: 0=W_MeOH-cation, 1=W_MeOH-anion, etc.
    * @param value the Wij parameter value to set
    */
   public static void setFurstParamOIIon(int i, double value) {
@@ -748,7 +747,7 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
    * The functional form is: slope = a0 + a1 * (1/epsilon - 1/epsilon_water)
    * </p>
    *
-   * @param epsilon    the solvent dielectric constant at the temperature of interest
+   * @param epsilon the solvent dielectric constant at the temperature of interest
    * @param isDivalent true if the cation is divalent (2+), false for monovalent (1+)
    * @return the Wij slope parameter (multiplies ion Stokes diameter)
    */
@@ -780,7 +779,7 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
    * The functional form is: intercept = b0 + b1 * (1/epsilon - 1/epsilon_water)
    * </p>
    *
-   * @param epsilon    the solvent dielectric constant at the temperature of interest
+   * @param epsilon the solvent dielectric constant at the temperature of interest
    * @param isDivalent true if the cation is divalent (2+), false for monovalent (1+)
    * @return the Wij intercept parameter
    */
@@ -816,9 +815,9 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
    * this method.
    * </p>
    *
-   * @param epsilon        the solvent (or mixture) dielectric constant
+   * @param epsilon the solvent (or mixture) dielectric constant
    * @param stokesDiameter the cation's Stokes diameter [m]
-   * @param isDivalent     true if the cation is divalent (2+)
+   * @param isDivalent true if the cation is divalent (2+)
    * @return the Wij short-range interaction parameter
    */
   public static double getPredictiveWij(double epsilon, double stokesDiameter, boolean isDivalent) {
@@ -835,7 +834,7 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
    * polar solvent mixtures at moderate concentrations.
    * </p>
    *
-   * @param moleFractions       array of mole fractions for each solvent component
+   * @param moleFractions array of mole fractions for each solvent component
    * @param dielectricConstants array of dielectric constants for each solvent component
    * @return the mixture dielectric constant
    */
@@ -877,7 +876,7 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
    * Get ion-specific Wij parameters for a cation-anion pair.
    *
    * @param cation the cation name (e.g., "Na+")
-   * @param anion  the anion name (e.g., "NO3-")
+   * @param anion the anion name (e.g., "NO3-")
    * @return array {Wij_cation_water, Wij_cation_anion} or null if not specified
    */
   public static synchronized double[] getIonSpecificWij(String cation, String anion) {
@@ -892,7 +891,7 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
    * Check if ion-specific Wij parameters exist for a cation-anion pair.
    *
    * @param cation the cation name
-   * @param anion  the anion name
+   * @param anion the anion name
    * @return true if ion-specific parameters exist
    */
   public static synchronized boolean hasIonSpecificWij(String cation, String anion) {
@@ -928,8 +927,8 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
   /**
    * Set an ion-specific Wij parameter pair.
    *
-   * @param cation      the cation name (e.g., "Na+")
-   * @param anion       the anion name (e.g., "NO3-")
+   * @param cation the cation name (e.g., "Na+")
+   * @param anion the anion name (e.g., "NO3-")
    * @param wijCatWater Wij for cation-water interaction
    * @param wijCatAnion Wij for cation-anion interaction
    */

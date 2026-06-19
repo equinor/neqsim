@@ -38,11 +38,11 @@ public interface WriteValidator {
   /**
    * Validates a proposed write to the given equipment.
    *
-   * @param equipment    the target equipment instance; never null
+   * @param equipment the target equipment instance; never null
    * @param propertyPath the local property path on the equipment (the portion of the address after the unit name, for
-   *                     example {@code "outletPressure"} or {@code "feedStream.temperature"}); never null
-   * @param value        the proposed numerical value
-   * @param unit         the unit of measure of {@code value}, or {@code null} for the property's default unit
+   * example {@code "outletPressure"} or {@code "feedStream.temperature"}); never null
+   * @param value the proposed numerical value
+   * @param unit the unit of measure of {@code value}, or {@code null} for the property's default unit
    * @return a non-null {@link WriteValidationResult}; use {@link WriteValidationResult#ok()} for a passing check
    */
   WriteValidationResult validate(ProcessEquipmentInterface equipment, String propertyPath, double value, String unit);

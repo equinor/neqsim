@@ -84,7 +84,7 @@ public final class TwoFluidBenchmarkHarness {
   /**
    * Compare one snapshot against benchmark points.
    *
-   * @param snapshot        model snapshot
+   * @param snapshot model snapshot
    * @param referencePoints reference points
    * @return comparison result
    */
@@ -95,7 +95,7 @@ public final class TwoFluidBenchmarkHarness {
   /**
    * Compare transient snapshots against benchmark points using linear interpolation in time and position.
    *
-   * @param snapshots       model snapshots
+   * @param snapshots model snapshots
    * @param referencePoints reference points
    * @return comparison result
    */

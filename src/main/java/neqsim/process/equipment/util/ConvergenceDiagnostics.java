@@ -246,13 +246,13 @@ public class ConvergenceDiagnostics implements Serializable {
     /**
      * Creates a recycle status.
      *
-     * @param name          recycle name
-     * @param converged     whether converged
-     * @param flowError     flow error
-     * @param tempError     temperature error
-     * @param pressError    pressure error
-     * @param compError     composition error
-     * @param iterations    iteration count
+     * @param name recycle name
+     * @param converged whether converged
+     * @param flowError flow error
+     * @param tempError temperature error
+     * @param pressError pressure error
+     * @param compError composition error
+     * @param iterations iteration count
      * @param dominantError dominant error type
      * @param flowTolerance flow tolerance
      * @param tempTolerance temperature tolerance
@@ -292,10 +292,10 @@ public class ConvergenceDiagnostics implements Serializable {
     /**
      * Creates an adjuster status.
      *
-     * @param name       adjuster name
-     * @param converged  whether converged
-     * @param error      current error
-     * @param tolerance  convergence tolerance
+     * @param name adjuster name
+     * @param converged whether converged
+     * @param error current error
+     * @param tolerance convergence tolerance
      * @param iterations iteration count
      */
     AdjusterStatus(String name, boolean converged, double error, double tolerance, int iterations) {
@@ -321,10 +321,10 @@ public class ConvergenceDiagnostics implements Serializable {
     /**
      * Creates a diagnostic report.
      *
-     * @param allConverged     whether all recycles and adjusters converged
-     * @param recycleStatuses  list of recycle statuses
+     * @param allConverged whether all recycles and adjusters converged
+     * @param recycleStatuses list of recycle statuses
      * @param adjusterStatuses list of adjuster statuses
-     * @param suggestions      list of remediation suggestions
+     * @param suggestions list of remediation suggestions
      */
     DiagnosticReport(boolean allConverged, List<RecycleStatus> recycleStatuses, List<AdjusterStatus> adjusterStatuses,
 	List<String> suggestions) {

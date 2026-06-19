@@ -369,8 +369,8 @@ public class DistillationColumnMatrixSolver {
    * Build one component balance tridiagonal system.
    *
    * @param componentIndex component index
-   * @param vaporFlows     vapor traffic by tray
-   * @param liquidFlows    liquid traffic by tray
+   * @param vaporFlows vapor traffic by tray
+   * @param liquidFlows liquid traffic by tray
    */
   private void buildComponentBalance(int componentIndex, double[] vaporFlows, double[] liquidFlows) {
     for (int trayIndex = 0; trayIndex < numberOfTrays; trayIndex++) {
@@ -419,7 +419,7 @@ public class DistillationColumnMatrixSolver {
    * Update tray compositions, cached outlet streams, and temperatures from matrix flows.
    *
    * @param liquidComponentFlows matrix liquid component flows
-   * @param id                   calculation identifier assigned to generated outlet streams
+   * @param id calculation identifier assigned to generated outlet streams
    * @return average tray-temperature residual in Kelvin
    */
   private double updateColumnState(double[][] liquidComponentFlows, UUID id) {
@@ -473,8 +473,8 @@ public class DistillationColumnMatrixSolver {
   /**
    * Estimate a tray temperature update from the cached K-value derivative model.
    *
-   * @param trayIndex            tray index
-   * @param oldTemperature       current tray temperature in Kelvin
+   * @param trayIndex tray index
+   * @param oldTemperature current tray temperature in Kelvin
    * @param liquidComponentFlows liquid component flows on the tray
    * @return updated tray temperature in Kelvin
    */
@@ -505,10 +505,10 @@ public class DistillationColumnMatrixSolver {
   /**
    * Update the tray thermodynamic system composition for diagnostics and later K-cache updates.
    *
-   * @param system               tray thermodynamic system
-   * @param trayIndex            tray index
+   * @param system tray thermodynamic system
+   * @param trayIndex tray index
    * @param liquidComponentFlows liquid component flows
-   * @param vaporComponentFlows  vapor component flows
+   * @param vaporComponentFlows vapor component flows
    */
   private void updateTraySystemComposition(SystemInterface system, int trayIndex, double[] liquidComponentFlows,
       double[] vaporComponentFlows) {
@@ -543,11 +543,11 @@ public class DistillationColumnMatrixSolver {
   /**
    * Set one component amount and mole fraction in a phase.
    *
-   * @param system         thermodynamic system
-   * @param phaseIndex     phase index
+   * @param system thermodynamic system
+   * @param phaseIndex phase index
    * @param componentIndex component index
-   * @param componentFlow  component flow assigned to the phase
-   * @param phaseFlow      total phase flow
+   * @param componentFlow component flow assigned to the phase
+   * @param phaseFlow total phase flow
    */
   private void setPhaseComponent(SystemInterface system, int phaseIndex, int componentIndex, double componentFlow,
       double phaseFlow) {
@@ -560,10 +560,10 @@ public class DistillationColumnMatrixSolver {
   /**
    * Create an outlet stream from a component-flow vector.
    *
-   * @param template       tray system used as a thermodynamic template
-   * @param phaseIndex     preferred phase index in the template
+   * @param template tray system used as a thermodynamic template
+   * @param phaseIndex preferred phase index in the template
    * @param componentFlows component flows assigned to the outlet
-   * @param id             calculation identifier assigned to the stream
+   * @param id calculation identifier assigned to the stream
    * @return outlet stream for the matrix-updated phase
    */
   private StreamInterface createOutletStream(SystemInterface template, int phaseIndex, double[] componentFlows,
@@ -609,7 +609,7 @@ public class DistillationColumnMatrixSolver {
   /**
    * Create a single-phase outlet template from a tray phase when possible.
    *
-   * @param template   tray thermodynamic system
+   * @param template tray thermodynamic system
    * @param phaseIndex preferred phase index
    * @return cloned outlet thermodynamic system
    */
@@ -643,10 +643,10 @@ public class DistillationColumnMatrixSolver {
   /**
    * Read a K-value from the tray state, falling back to previous cached values when necessary.
    *
-   * @param system         tray thermodynamic system
-   * @param trayIndex      tray index
+   * @param system tray thermodynamic system
+   * @param trayIndex tray index
    * @param componentIndex component index
-   * @param fallbackValue  fallback K-value
+   * @param fallbackValue fallback K-value
    * @return bounded K-value
    */
   private double readKValue(SystemInterface system, int trayIndex, int componentIndex, double fallbackValue) {
@@ -680,10 +680,10 @@ public class DistillationColumnMatrixSolver {
   /**
    * Calculate a stripping factor for a component on a tray.
    *
-   * @param trayIndex      tray index
+   * @param trayIndex tray index
    * @param componentIndex component index
-   * @param vaporFlows     vapor traffic by tray
-   * @param liquidFlows    liquid traffic by tray
+   * @param vaporFlows vapor traffic by tray
+   * @param liquidFlows liquid traffic by tray
    * @return stripping factor K V/L
    */
   private double getStrippingFactor(int trayIndex, int componentIndex, double[] vaporFlows, double[] liquidFlows) {
@@ -733,7 +733,7 @@ public class DistillationColumnMatrixSolver {
   /**
    * Get current liquid component flow from a tray phase.
    *
-   * @param trayIndex      tray index
+   * @param trayIndex tray index
    * @param componentIndex component index
    * @return liquid component flow
    */
@@ -749,7 +749,7 @@ public class DistillationColumnMatrixSolver {
   /**
    * Get current vapor component flow from a tray phase.
    *
-   * @param trayIndex      tray index
+   * @param trayIndex tray index
    * @param componentIndex component index
    * @return vapor component flow
    */
@@ -806,7 +806,7 @@ public class DistillationColumnMatrixSolver {
   /**
    * Get one component flow in external feeds to a tray.
    *
-   * @param trayIndex      tray index
+   * @param trayIndex tray index
    * @param componentIndex component index
    * @return component flow in mol/sec
    */
@@ -829,7 +829,7 @@ public class DistillationColumnMatrixSolver {
   /**
    * Find the phase index for a named phase type.
    *
-   * @param system        thermodynamic system
+   * @param system thermodynamic system
    * @param phaseTypeName phase type name to find
    * @return phase index, or {@code -1} if absent
    */
@@ -868,7 +868,7 @@ public class DistillationColumnMatrixSolver {
   /**
    * Adapt the damping factor based on residual progress.
    *
-   * @param residual         current residual
+   * @param residual current residual
    * @param previousResidual previous residual
    */
   private void updateDamping(double residual, double previousResidual) {
@@ -910,7 +910,7 @@ public class DistillationColumnMatrixSolver {
    *
    * @param newValue new value
    * @param oldValue old value
-   * @param weight   weight on the new value
+   * @param weight weight on the new value
    * @return blended value
    */
   private double blend(double newValue, double oldValue, double weight) {

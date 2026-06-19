@@ -66,10 +66,10 @@ public class OperationalRiskResult implements Serializable {
   /**
    * Calculates statistics from Monte Carlo results.
    *
-   * @param productions    array of total production values
+   * @param productions array of total production values
    * @param availabilities array of availability fractions
-   * @param failureCounts  array of failure counts
-   * @param downtimes      array of downtime hours
+   * @param failureCounts array of failure counts
+   * @param downtimes array of downtime hours
    */
   public void calculateStatistics(double[] productions, double[] availabilities, int[] failureCounts,
       double[] downtimes) {

@@ -63,8 +63,8 @@ public class Fluid {
    * </p>
    *
    * @param componentNames an array of {@link java.lang.String} objects
-   * @param flowrate       an array of type double
-   * @param unit           a {@link java.lang.String} object
+   * @param flowrate an array of type double
+   * @param unit a {@link java.lang.String} object
    * @return a {@link neqsim.thermo.system.SystemInterface} object
    */
   public neqsim.thermo.system.SystemInterface create2(String[] componentNames, double[] flowrate, String unit) {
@@ -207,8 +207,8 @@ public class Fluid {
    * </p>
    *
    * @param componentNames an array of {@link java.lang.String} objects
-   * @param flowrate       an array of type double
-   * @param unit           a {@link java.lang.String} object
+   * @param flowrate an array of type double
+   * @param unit a {@link java.lang.String} object
    * @return a {@link neqsim.thermo.system.SystemInterface} object
    */
   public neqsim.thermo.system.SystemInterface createFluid(String[] componentNames, double[] flowrate, String unit) {

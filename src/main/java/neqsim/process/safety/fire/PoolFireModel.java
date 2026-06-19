@@ -34,12 +34,12 @@ public class PoolFireModel implements Serializable {
   /**
    * Construct a pool-fire model.
    *
-   * @param poolDiameterM          equivalent circular pool diameter in m
-   * @param burnRateKgPerM2PerS    mass burning rate per unit area, kg/(m²·s) (typical 0.04 LNG, 0.055 gasoline, 0.078
-   *                               crude oil)
+   * @param poolDiameterM equivalent circular pool diameter in m
+   * @param burnRateKgPerM2PerS mass burning rate per unit area, kg/(m²·s) (typical 0.04 LNG, 0.055 gasoline, 0.078
+   * crude oil)
    * @param heatOfCombustionJPerKg ΔHc lower heating value of fuel, J/kg
-   * @param liquidDensityKgPerM3   liquid density, kg/m³
-   * @param radiativeFraction      fraction of combustion heat radiated (0.20 – 0.40)
+   * @param liquidDensityKgPerM3 liquid density, kg/m³
+   * @param radiativeFraction fraction of combustion heat radiated (0.20 – 0.40)
    */
   public PoolFireModel(double poolDiameterM, double burnRateKgPerM2PerS, double heatOfCombustionJPerKg,
       double liquidDensityKgPerM3, double radiativeFraction) {

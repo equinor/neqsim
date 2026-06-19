@@ -41,17 +41,17 @@ public class STS0131AcceptanceResult implements Serializable {
   /**
    * Creates an STS0131 acceptance result.
    *
-   * @param limitingTimeS                 limiting evaluation time in s
-   * @param pressureAtLimitingTimeBara    pressure at limiting time in bara
+   * @param limitingTimeS limiting evaluation time in s
+   * @param pressureAtLimitingTimeBara pressure at limiting time in bara
    * @param remainingMassAtLimitingTimeKg remaining mass at limiting time in kg
-   * @param peakDischargeRateKgPerS       peak discharge rate up to limiting time in kg/s
-   * @param pressureCriterionConfigured   true if the pressure criterion was configured
-   * @param pressureCriterionMet          true if the pressure criterion was met
-   * @param massCriterionConfigured       true if the mass criterion was configured
-   * @param massCriterionMet              true if the remaining mass criterion was met
-   * @param fireRateCriterionConfigured   true if the fire-rate criterion was configured
-   * @param fireRateCriterionMet          true if the fire-rate criterion was met
-   * @param acceptable                    true if all configured criteria were met
+   * @param peakDischargeRateKgPerS peak discharge rate up to limiting time in kg/s
+   * @param pressureCriterionConfigured true if the pressure criterion was configured
+   * @param pressureCriterionMet true if the pressure criterion was met
+   * @param massCriterionConfigured true if the mass criterion was configured
+   * @param massCriterionMet true if the remaining mass criterion was met
+   * @param fireRateCriterionConfigured true if the fire-rate criterion was configured
+   * @param fireRateCriterionMet true if the fire-rate criterion was met
+   * @param acceptable true if all configured criteria were met
    */
   public STS0131AcceptanceResult(double limitingTimeS, double pressureAtLimitingTimeBara,
       double remainingMassAtLimitingTimeKg, double peakDischargeRateKgPerS, boolean pressureCriterionConfigured,

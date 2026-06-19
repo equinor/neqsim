@@ -114,10 +114,10 @@ public class ProcessModelSimulationEvaluator implements Serializable {
     /**
      * Creates a decision variable whose name is the same as its address.
      *
-     * @param address    the area-qualified automation address
+     * @param address the area-qualified automation address
      * @param lowerBound lower optimization bound
      * @param upperBound upper optimization bound
-     * @param unit       unit of measure used when setting the value
+     * @param unit unit of measure used when setting the value
      */
     public ParameterDefinition(String address, double lowerBound, double upperBound, String unit) {
       this(address, address, lowerBound, upperBound, unit);
@@ -126,11 +126,11 @@ public class ProcessModelSimulationEvaluator implements Serializable {
     /**
      * Creates a decision variable.
      *
-     * @param name       human readable parameter name
-     * @param address    the area-qualified automation address
+     * @param name human readable parameter name
+     * @param address the area-qualified automation address
      * @param lowerBound lower optimization bound
      * @param upperBound upper optimization bound
-     * @param unit       unit of measure used when setting the value
+     * @param unit unit of measure used when setting the value
      */
     public ParameterDefinition(String name, String address, double lowerBound, double upperBound, String unit) {
       this.name = name;
@@ -328,7 +328,7 @@ public class ProcessModelSimulationEvaluator implements Serializable {
     /**
      * Creates an objective definition.
      *
-     * @param name      objective name
+     * @param name objective name
      * @param evaluator model-level evaluator
      * @param direction optimization direction
      */
@@ -524,8 +524,8 @@ public class ProcessModelSimulationEvaluator implements Serializable {
     /**
      * Creates a lower-bound model constraint.
      *
-     * @param name       constraint name
-     * @param evaluator  model-level evaluator
+     * @param name constraint name
+     * @param evaluator model-level evaluator
      * @param lowerBound lower bound
      */
     public ConstraintDefinition(String name, ToDoubleFunction<ProcessModel> evaluator, double lowerBound) {
@@ -538,8 +538,8 @@ public class ProcessModelSimulationEvaluator implements Serializable {
     /**
      * Creates a range model constraint.
      *
-     * @param name       constraint name
-     * @param evaluator  model-level evaluator
+     * @param name constraint name
+     * @param evaluator model-level evaluator
      * @param lowerBound lower bound
      * @param upperBound upper bound
      */
@@ -762,10 +762,10 @@ public class ProcessModelSimulationEvaluator implements Serializable {
     /**
      * Marks this definition as an equipment capacity constraint.
      *
-     * @param areaName                process area name
-     * @param equipmentName           equipment name
+     * @param areaName process area name
+     * @param equipmentName equipment name
      * @param equipmentConstraintName equipment constraint name
-     * @param capacityConstraint      captured capacity constraint
+     * @param capacityConstraint captured capacity constraint
      */
     public void setCapacityMetadata(String areaName, String equipmentName, String equipmentConstraintName,
 	CapacityConstraint capacityConstraint) {
@@ -886,14 +886,14 @@ public class ProcessModelSimulationEvaluator implements Serializable {
     /**
      * Creates a bottleneck status.
      *
-     * @param areaName       process area name
-     * @param equipmentName  equipment name
+     * @param areaName process area name
+     * @param equipmentName equipment name
      * @param constraintName constraint name
-     * @param utilization    utilization fraction
-     * @param currentValue   current constraint value
-     * @param designValue    design constraint value
-     * @param unit           constraint unit
-     * @param feasible       true when utilization is less than or equal to one
+     * @param utilization utilization fraction
+     * @param currentValue current constraint value
+     * @param designValue design constraint value
+     * @param unit constraint unit
+     * @param feasible true when utilization is less than or equal to one
      */
     public BottleneckStatus(String areaName, String equipmentName, String constraintName, double utilization,
 	double currentValue, double designValue, String unit, boolean feasible) {
@@ -1354,10 +1354,10 @@ public class ProcessModelSimulationEvaluator implements Serializable {
   /**
    * Adds an automation-addressed decision variable.
    *
-   * @param address    area-qualified automation address
+   * @param address area-qualified automation address
    * @param lowerBound lower optimization bound
    * @param upperBound upper optimization bound
-   * @param unit       unit used when setting the variable
+   * @param unit unit used when setting the variable
    * @return this evaluator for chaining
    */
   public ProcessModelSimulationEvaluator addParameter(String address, double lowerBound, double upperBound,
@@ -1369,11 +1369,11 @@ public class ProcessModelSimulationEvaluator implements Serializable {
   /**
    * Adds an automation-addressed decision variable with an explicit display name.
    *
-   * @param name       human readable parameter name
-   * @param address    area-qualified automation address
+   * @param name human readable parameter name
+   * @param address area-qualified automation address
    * @param lowerBound lower optimization bound
    * @param upperBound upper optimization bound
-   * @param unit       unit used when setting the variable
+   * @param unit unit used when setting the variable
    * @return this evaluator for chaining
    */
   public ProcessModelSimulationEvaluator addParameter(String name, String address, double lowerBound, double upperBound,
@@ -1385,11 +1385,11 @@ public class ProcessModelSimulationEvaluator implements Serializable {
   /**
    * Adds a decision variable controlled by a custom setter.
    *
-   * @param name       human readable parameter name
-   * @param setter     custom setter receiving the model and the bounded value
+   * @param name human readable parameter name
+   * @param setter custom setter receiving the model and the bounded value
    * @param lowerBound lower optimization bound
    * @param upperBound upper optimization bound
-   * @param unit       unit used for reporting the parameter
+   * @param unit unit used for reporting the parameter
    * @return this evaluator for chaining
    */
   public ProcessModelSimulationEvaluator addParameterWithSetter(String name, BiConsumer<ProcessModel, Double> setter,
@@ -1421,7 +1421,7 @@ public class ProcessModelSimulationEvaluator implements Serializable {
   /**
    * Adds a minimization objective.
    *
-   * @param name      objective name
+   * @param name objective name
    * @param evaluator model-level objective evaluator
    * @return this evaluator for chaining
    */
@@ -1432,7 +1432,7 @@ public class ProcessModelSimulationEvaluator implements Serializable {
   /**
    * Adds an objective with explicit direction.
    *
-   * @param name      objective name
+   * @param name objective name
    * @param evaluator model-level objective evaluator
    * @param direction optimization direction
    * @return this evaluator for chaining
@@ -1464,8 +1464,8 @@ public class ProcessModelSimulationEvaluator implements Serializable {
   /**
    * Adds a lower-bound constraint.
    *
-   * @param name       constraint name
-   * @param evaluator  model-level constraint evaluator
+   * @param name constraint name
+   * @param evaluator model-level constraint evaluator
    * @param lowerBound lower bound
    * @return this evaluator for chaining
    */
@@ -1478,8 +1478,8 @@ public class ProcessModelSimulationEvaluator implements Serializable {
   /**
    * Adds an upper-bound constraint.
    *
-   * @param name       constraint name
-   * @param evaluator  model-level constraint evaluator
+   * @param name constraint name
+   * @param evaluator model-level constraint evaluator
    * @param upperBound upper bound
    * @return this evaluator for chaining
    */
@@ -1497,8 +1497,8 @@ public class ProcessModelSimulationEvaluator implements Serializable {
   /**
    * Adds a range constraint.
    *
-   * @param name       constraint name
-   * @param evaluator  model-level constraint evaluator
+   * @param name constraint name
+   * @param evaluator model-level constraint evaluator
    * @param lowerBound lower bound
    * @param upperBound upper bound
    * @return this evaluator for chaining
@@ -1512,9 +1512,9 @@ public class ProcessModelSimulationEvaluator implements Serializable {
   /**
    * Adds an equality constraint.
    *
-   * @param name      constraint name
+   * @param name constraint name
    * @param evaluator model-level constraint evaluator
-   * @param target    target value
+   * @param target target value
    * @param tolerance allowed absolute deviation from target
    * @return this evaluator for chaining
    */
@@ -1588,7 +1588,7 @@ public class ProcessModelSimulationEvaluator implements Serializable {
   /**
    * Gets explicit and strategy-generated capacity constraints for equipment.
    *
-   * @param registry  capacity strategy registry
+   * @param registry capacity strategy registry
    * @param equipment equipment to inspect
    * @return merged constraint map with explicit equipment constraints taking precedence
    */
@@ -1614,10 +1614,10 @@ public class ProcessModelSimulationEvaluator implements Serializable {
   /**
    * Adds a single capacity constraint definition.
    *
-   * @param areaName                process area name
-   * @param equipmentName           equipment name
+   * @param areaName process area name
+   * @param equipmentName equipment name
    * @param equipmentConstraintName equipment constraint name
-   * @param capacityConstraint      capacity constraint
+   * @param capacityConstraint capacity constraint
    */
   private void addCapacityConstraint(String areaName, String equipmentName, String equipmentConstraintName,
       CapacityConstraint capacityConstraint) {
@@ -1809,7 +1809,7 @@ public class ProcessModelSimulationEvaluator implements Serializable {
   /**
    * Sets bounded parameter values on the model.
    *
-   * @param model           process model
+   * @param model process model
    * @param parameterValues parameter values
    */
   private void setParameterValues(ProcessModel model, double[] parameterValues) {
@@ -1924,7 +1924,7 @@ public class ProcessModelSimulationEvaluator implements Serializable {
    * Estimates an objective gradient by finite differences.
    *
    * @param parameterValues parameter vector
-   * @param objectiveIndex  objective index
+   * @param objectiveIndex objective index
    * @return gradient vector
    */
   public double[] estimateGradient(double[] parameterValues, int objectiveIndex) {
