@@ -2,6 +2,7 @@ package neqsim.process.equipment.ejector;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -1001,37 +1002,47 @@ public class Ejector extends ProcessEquipmentBaseClass
     if (motiveStream != null && suctionStream != null) {
       sb.append("\n--- Operating Conditions ---\n");
       sb.append("Motive Pressure: ")
-          .append(String.format("%.2f bara", motiveStream.getPressure("bara"))).append("\n");
+          .append(String.format(Locale.US, "%.2f bara", motiveStream.getPressure("bara")))
+          .append("\n");
       sb.append("Suction Pressure: ")
-          .append(String.format("%.2f bara", suctionStream.getPressure("bara"))).append("\n");
-      sb.append("Discharge Pressure: ").append(String.format("%.2f bara", dischargePressure))
+          .append(String.format(Locale.US, "%.2f bara", suctionStream.getPressure("bara")))
+          .append("\n");
+        sb.append("Discharge Pressure: ")
+          .append(String.format(Locale.US, "%.2f bara", dischargePressure))
           .append("\n");
       sb.append("Motive Flow: ")
-          .append(String.format("%.3f kg/s", motiveStream.getFlowRate("kg/sec"))).append("\n");
+          .append(String.format(Locale.US, "%.3f kg/s", motiveStream.getFlowRate("kg/sec")))
+          .append("\n");
       sb.append("Suction Flow: ")
-          .append(String.format("%.3f kg/s", suctionStream.getFlowRate("kg/sec"))).append("\n");
+          .append(String.format(Locale.US, "%.3f kg/s", suctionStream.getFlowRate("kg/sec")))
+          .append("\n");
 
       sb.append("\n--- Performance ---\n");
-      sb.append("Entrainment Ratio: ").append(String.format("%.3f", getEntrainmentRatio()))
+        sb.append("Entrainment Ratio: ")
+          .append(String.format(Locale.US, "%.3f", getEntrainmentRatio()))
           .append("\n");
       sb.append("Compression Ratio: ")
-          .append(String.format("%.3f", dischargePressure / suctionStream.getPressure("bara")))
+          .append(String.format(Locale.US, "%.3f", dischargePressure / suctionStream.getPressure("bara")))
           .append("\n");
-      sb.append("Nozzle Efficiency: ").append(String.format("%.1f%%", efficiencyIsentropic * 100))
+        sb.append("Nozzle Efficiency: ")
+          .append(String.format(Locale.US, "%.1f%%", efficiencyIsentropic * 100))
           .append("\n");
-      sb.append("Diffuser Efficiency: ").append(String.format("%.1f%%", diffuserEfficiency * 100))
+        sb.append("Diffuser Efficiency: ")
+          .append(String.format(Locale.US, "%.1f%%", diffuserEfficiency * 100))
           .append("\n");
 
       if (isAutoSized()) {
         sb.append("\n--- Design Values ---\n");
         sb.append("Design Entrainment Ratio: ")
-            .append(String.format("%.3f", designEntrainmentRatio)).append("\n");
+          .append(String.format(Locale.US, "%.3f", designEntrainmentRatio)).append("\n");
         sb.append("Design Compression Ratio: ")
-            .append(String.format("%.3f", designCompressionRatio)).append("\n");
-        sb.append("Design Motive Flow: ").append(String.format("%.3f kg/s", designMotiveFlowRate))
+          .append(String.format(Locale.US, "%.3f", designCompressionRatio)).append("\n");
+        sb.append("Design Motive Flow: ")
+          .append(String.format(Locale.US, "%.3f kg/s", designMotiveFlowRate))
             .append("\n");
         sb.append("Max Critical Back Pressure: ")
-            .append(String.format("%.2f bara", maxCriticalBackPressure)).append("\n");
+          .append(String.format(Locale.US, "%.2f bara", maxCriticalBackPressure))
+          .append("\n");
       }
     }
 

@@ -1,6 +1,7 @@
 package neqsim.process.equipment.reactor;
 
 import java.io.Serializable;
+import java.util.Locale;
 
 /**
  * Container for axial profiles from plug flow reactor simulation.
@@ -207,10 +208,10 @@ public class ReactorAxialProfile implements Serializable {
 
     // Data rows
     for (int i = 0; i < numberOfSteps; i++) {
-      sb.append(String.format("%.6f,%.4f,%.6f,%.8f,%.6e", position[i], temperature[i], pressure[i],
-          conversion[i], reactionRate[i]));
+      sb.append(String.format(Locale.US, "%.6f,%.4f,%.6f,%.8f,%.6e", position[i], temperature[i],
+          pressure[i], conversion[i], reactionRate[i]));
       for (int j = 0; j < componentNames.length; j++) {
-        sb.append(String.format(",%.8e", molarFlows[i][j]));
+        sb.append(String.format(Locale.US, ",%.8e", molarFlows[i][j]));
       }
       sb.append("\n");
     }
@@ -234,7 +235,7 @@ public class ReactorAxialProfile implements Serializable {
       if (Double.isNaN(arr[i]) || Double.isInfinite(arr[i])) {
         sb.append("null");
       } else {
-        sb.append(String.format("%.8g", arr[i]));
+        sb.append(String.format(Locale.US, "%.8g", arr[i]));
       }
     }
     sb.append("]");
