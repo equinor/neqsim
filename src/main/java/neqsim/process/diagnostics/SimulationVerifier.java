@@ -2,6 +2,7 @@ package neqsim.process.diagnostics;
 
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import neqsim.process.automation.ProcessAutomation;
 import neqsim.process.equipment.ProcessEquipmentInterface;
@@ -181,7 +182,7 @@ public class SimulationVerifier implements Serializable {
     }
     compressor.setPolytropicEfficiency(newEfficiency);
     return PerturbationResult.applied("polytropicEfficiency",
-        String.format("reduced compressor polytropic efficiency from %.3f to %.3f", oldEfficiency,
+        String.format(Locale.US, "reduced compressor polytropic efficiency from %.3f to %.3f", oldEfficiency,
             newEfficiency));
   }
 
@@ -202,7 +203,7 @@ public class SimulationVerifier implements Serializable {
       double newEfficiency = Math.max(0.05, Math.min(0.95, oldEfficiency * 0.75));
       pump.setIsentropicEfficiency(newEfficiency);
       return PerturbationResult.applied("isentropicEfficiency",
-          String.format("reduced pump isentropic efficiency from %.3f to %.3f", oldEfficiency,
+          String.format(Locale.US, "reduced pump isentropic efficiency from %.3f to %.3f", oldEfficiency,
               newEfficiency));
     }
     return PerturbationResult.notApplied("pump hypothesis has no supported efficiency/head change");
@@ -223,14 +224,14 @@ public class SimulationVerifier implements Serializable {
         || category == Hypothesis.Category.EXTERNAL) {
       cooler.setOutTemperature(cooler.getInletTemperature());
       return PerturbationResult.applied("outletTemperature",
-          String.format("set cooler outlet temperature from %.2f K to inlet temperature %.2f K",
+          String.format(Locale.US, "set cooler outlet temperature from %.2f K to inlet temperature %.2f K",
               oldTemperature, cooler.getInletTemperature()));
     }
     if (failureMode.contains("foul") || failureMode.contains("fouling")
         || failureMode.contains("plugging")) {
       cooler.setOutTemperature(oldTemperature + 10.0);
       return PerturbationResult.applied("outletTemperature",
-          String.format("increased cooler outlet temperature from %.2f K to %.2f K", oldTemperature,
+          String.format(Locale.US, "increased cooler outlet temperature from %.2f K to %.2f K", oldTemperature,
               oldTemperature + 10.0));
     }
     return PerturbationResult.notApplied("cooler hypothesis has no supported thermal perturbation");
@@ -252,7 +253,7 @@ public class SimulationVerifier implements Serializable {
       double newTemperature = oldTemperature - 10.0;
       heater.setOutTemperature(newTemperature);
       return PerturbationResult.applied("outletTemperature",
-          String.format("reduced heater outlet temperature from %.2f K to %.2f K", oldTemperature,
+          String.format(Locale.US, "reduced heater outlet temperature from %.2f K to %.2f K", oldTemperature,
               newTemperature));
     }
     return PerturbationResult.notApplied("heater hypothesis has no supported thermal perturbation");
@@ -280,7 +281,7 @@ public class SimulationVerifier implements Serializable {
         double newUA = oldUA * 0.60;
         heatExchanger.setUAvalue(newUA);
         return PerturbationResult.applied("UAvalue",
-            String.format("reduced HX UA from %.2f to %.2f (fouling simulation)", oldUA, newUA));
+            String.format(Locale.US, "reduced HX UA from %.2f to %.2f (fouling simulation)", oldUA, newUA));
       }
     }
     if (failureMode.contains("tube leak") || failureMode.contains("tube rupture")
@@ -290,7 +291,7 @@ public class SimulationVerifier implements Serializable {
         double newUA = oldUA * 0.50;
         heatExchanger.setUAvalue(newUA);
         return PerturbationResult.applied("UAvalue",
-            String.format("reduced HX UA from %.2f to %.2f (tube failure simulation)",
+            String.format(Locale.US, "reduced HX UA from %.2f to %.2f (tube failure simulation)",
                 oldUA, newUA));
       }
     }
@@ -338,13 +339,13 @@ public class SimulationVerifier implements Serializable {
       if (oldCv > 0.0) {
         valve.setCv(oldCv * 1.30);
         return PerturbationResult.applied("Cv",
-            String.format("increased valve Cv from %.3f to %.3f", oldCv, oldCv * 1.30));
+            String.format(Locale.US, "increased valve Cv from %.3f to %.3f", oldCv, oldCv * 1.30));
       }
       double oldOpening = valve.getPercentValveOpening();
       double newOpening = Math.min(100.0, oldOpening + 20.0);
       valve.setPercentValveOpening(newOpening);
       return PerturbationResult.applied("percentValveOpening",
-          String.format("increased valve opening from %.1f%% to %.1f%%", oldOpening,
+          String.format(Locale.US, "increased valve opening from %.1f%% to %.1f%%", oldOpening,
               newOpening));
     }
     if (failureMode.contains("actuator") || failureMode.contains("positioner")
@@ -353,7 +354,7 @@ public class SimulationVerifier implements Serializable {
       double newOpening = Math.max(0.0, oldOpening * 0.5);
       valve.setPercentValveOpening(newOpening);
       return PerturbationResult.applied("percentValveOpening",
-          String.format("reduced valve opening from %.1f%% to %.1f%%", oldOpening, newOpening));
+          String.format(Locale.US, "reduced valve opening from %.1f%% to %.1f%%", oldOpening, newOpening));
     }
     return PerturbationResult.notApplied("valve hypothesis has no supported Cv/opening change");
   }
@@ -512,10 +513,10 @@ public class SimulationVerifier implements Serializable {
       Double baseValue = baseline.get(entry.getKey());
       if (baseValue != null && Math.abs(baseValue) > 1e-10) {
         double changePct = (entry.getValue() - baseValue) / Math.abs(baseValue) * 100.0;
-        summary.append(String.format("%s %.1f%%; ", entry.getKey(), changePct));
+        summary.append(String.format(Locale.US, "%s %.1f%%; ", entry.getKey(), changePct));
       }
     }
-    summary.append(String.format("direction match score %.2f", score));
+    summary.append(String.format(Locale.US, "direction match score %.2f", score));
     return summary.toString();
   }
 

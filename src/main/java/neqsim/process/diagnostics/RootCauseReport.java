@@ -1,5 +1,9 @@
 package neqsim.process.diagnostics;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -47,6 +51,10 @@ public class RootCauseReport implements Serializable {
 
   /** Number of parameters analyzed. */
   private int parametersAnalyzed;
+
+  /** Gson serializer for stable pretty-printed JSON output. */
+  private static final transient Gson GSON =
+      new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
 
   /**
    * Creates a root cause report.
@@ -191,100 +199,72 @@ public class RootCauseReport implements Serializable {
   /**
    * Converts the report to a JSON string.
    *
-   * <p>
-   * Uses manual JSON construction to avoid external dependencies. The JSON contains the full
-   * report: metadata, ranked hypotheses with evidence, and recommended actions.
-   * </p>
+   * <p>The JSON contains the full report metadata and all ranked hypotheses with evidence.</p>
    *
    * @return JSON string representation of the report
    */
   public String toJson() {
-    StringBuilder sb = new StringBuilder();
-    sb.append("{\n");
-    sb.append("  \"equipment\": \"").append(escapeJson(equipmentName)).append("\",\n");
-    sb.append("  \"equipmentType\": \"").append(escapeJson(equipmentType)).append("\",\n");
-    sb.append("  \"symptom\": \"").append(symptom.name()).append("\",\n");
-    sb.append("  \"timestamp\": \"")
-        .append(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss").format(new Date(analysisTimestamp)))
-        .append("\",\n");
-    sb.append("  \"dataPointsAnalyzed\": ").append(dataPointsAnalyzed).append(",\n");
-    sb.append("  \"parametersAnalyzed\": ").append(parametersAnalyzed).append(",\n");
+    JsonObject root = new JsonObject();
+    root.addProperty("equipment", equipmentName);
+    root.addProperty("equipmentType", equipmentType);
+    root.addProperty("symptom", symptom.name());
+    root.addProperty("timestamp",
+        new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss").format(new Date(analysisTimestamp)));
+    root.addProperty("dataPointsAnalyzed", dataPointsAnalyzed);
+    root.addProperty("parametersAnalyzed", parametersAnalyzed);
 
     if (analysisSummary != null) {
-      sb.append("  \"summary\": \"").append(escapeJson(analysisSummary)).append("\",\n");
+      root.addProperty("summary", analysisSummary);
     }
 
-    sb.append("  \"hypotheses\": [\n");
+    JsonArray hypothesesArray = new JsonArray();
     for (int i = 0; i < rankedHypotheses.size(); i++) {
-      Hypothesis h = rankedHypotheses.get(i);
-      sb.append("    {\n");
-      sb.append("      \"rank\": ").append(i + 1).append(",\n");
-      sb.append("      \"name\": \"").append(escapeJson(h.getName())).append("\",\n");
-      sb.append("      \"category\": \"").append(h.getCategory().name()).append("\",\n");
-      sb.append("      \"confidence\": ").append(String.format("%.4f", h.getConfidenceScore()))
-          .append(",\n");
-      sb.append("      \"confidenceScore\": ").append(String.format("%.4f", h.getConfidenceScore()))
-          .append(",\n");
-      sb.append("      \"priorProbability\": ")
-          .append(String.format("%.4f", h.getPriorProbability())).append(",\n");
-      sb.append("      \"likelihoodScore\": ").append(String.format("%.4f", h.getLikelihoodScore()))
-          .append(",\n");
-      sb.append("      \"verificationScore\": ")
-          .append(String.format("%.4f", h.getVerificationScore())).append(",\n");
+      Hypothesis hypothesis = rankedHypotheses.get(i);
+      JsonObject hypothesisJson = new JsonObject();
 
-      if (h.getDescription() != null) {
-        sb.append("      \"description\": \"").append(escapeJson(h.getDescription()))
-            .append("\",\n");
+      hypothesisJson.addProperty("rank", i + 1);
+      hypothesisJson.addProperty("name", hypothesis.getName());
+      hypothesisJson.addProperty("category", hypothesis.getCategory().name());
+      hypothesisJson.addProperty("confidenceScore", hypothesis.getConfidenceScore());
+      hypothesisJson.addProperty("priorProbability", hypothesis.getPriorProbability());
+      hypothesisJson.addProperty("likelihoodScore", hypothesis.getLikelihoodScore());
+      hypothesisJson.addProperty("verificationScore", hypothesis.getVerificationScore());
+
+      if (hypothesis.getDescription() != null) {
+        hypothesisJson.addProperty("description", hypothesis.getDescription());
+      }
+      if (hypothesis.getSimulationSummary() != null) {
+        hypothesisJson.addProperty("simulationSummary", hypothesis.getSimulationSummary());
       }
 
-      if (h.getSimulationSummary() != null) {
-        sb.append("      \"simulationSummary\": \"").append(escapeJson(h.getSimulationSummary()))
-            .append("\",\n");
+      JsonArray evidenceArray = new JsonArray();
+      List<Hypothesis.Evidence> evidenceList = hypothesis.getEvidenceList();
+      for (int j = 0; j < evidenceList.size(); j++) {
+        Hypothesis.Evidence evidence = evidenceList.get(j);
+        JsonObject evidenceJson = new JsonObject();
+        evidenceJson.addProperty("parameter", evidence.getParameter());
+        evidenceJson.addProperty("observation", evidence.getObservation());
+        evidenceJson.addProperty("strength", evidence.getStrength().name());
+        evidenceJson.addProperty("source", evidence.getSource());
+        evidenceJson.addProperty("supporting", evidence.isSupporting());
+        evidenceJson.addProperty("weight", evidence.getWeight());
+        evidenceJson.addProperty("sourceReference", evidence.getSourceReference());
+        evidenceArray.add(evidenceJson);
       }
+      hypothesisJson.add("evidence", evidenceArray);
 
-      // Evidence
-      sb.append("      \"evidence\": [\n");
-      List<Hypothesis.Evidence> evList = h.getEvidenceList();
-      for (int j = 0; j < evList.size(); j++) {
-        Hypothesis.Evidence e = evList.get(j);
-        sb.append("        {");
-        sb.append("\"parameter\": \"").append(escapeJson(e.getParameter())).append("\", ");
-        sb.append("\"observation\": \"").append(escapeJson(e.getObservation())).append("\", ");
-        sb.append("\"strength\": \"").append(e.getStrength().name()).append("\", ");
-        sb.append("\"source\": \"").append(escapeJson(e.getSource())).append("\", ");
-        sb.append("\"supporting\": ").append(e.isSupporting()).append(", ");
-        sb.append("\"weight\": ").append(String.format("%.3f", e.getWeight())).append(", ");
-        sb.append("\"sourceReference\": \"").append(escapeJson(e.getSourceReference()))
-            .append("\"");
-        sb.append("}");
-        if (j < evList.size() - 1) {
-          sb.append(",");
-        }
-        sb.append("\n");
-      }
-      sb.append("      ],\n");
-
-      // Recommended actions
-      sb.append("      \"recommendedActions\": [");
-      List<String> actions = h.getRecommendedActions();
+      JsonArray actionsArray = new JsonArray();
+      List<String> actions = hypothesis.getRecommendedActions();
       for (int j = 0; j < actions.size(); j++) {
-        sb.append("\"").append(escapeJson(actions.get(j))).append("\"");
-        if (j < actions.size() - 1) {
-          sb.append(", ");
-        }
+        actionsArray.add(actions.get(j));
       }
-      sb.append("]\n");
+      hypothesisJson.add("recommendedActions", actionsArray);
 
-      sb.append("    }");
-      if (i < rankedHypotheses.size() - 1) {
-        sb.append(",");
-      }
-      sb.append("\n");
+      hypothesesArray.add(hypothesisJson);
     }
-    sb.append("  ]\n");
-    sb.append("}");
 
-    return sb.toString();
+    root.add("hypotheses", hypothesesArray);
+    return GSON.toJson(root);
   }
 
   /**
@@ -408,17 +388,4 @@ public class RootCauseReport implements Serializable {
     return count;
   }
 
-  /**
-   * Escapes special characters for JSON string.
-   *
-   * @param s input string
-   * @return escaped string
-   */
-  private String escapeJson(String s) {
-    if (s == null) {
-      return "";
-    }
-    return s.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "\\r")
-        .replace("\t", "\\t");
-  }
 }
