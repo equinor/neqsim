@@ -9,6 +9,36 @@
 
 ---
 
+## 2026-06-18 — Faithful common-slate characterization (Pedersen Ch. 5.6, Eqs. 5.55-5.60)
+
+### Summary
+Added `PseudoComponentCombiner.characterizeToCommonSlate(...)` — a faithful
+implementation of the Pedersen "Common EoS / common slate" procedure that keeps
+several fluids **separate** while forcing them to share one mole-fraction weighted
+pseudo-component property set. This is distinct from `characterizeToReference`
+(PR #2318), which *snaps* a fluid's lumps to one privileged reference fluid, and
+from `combineReservoirFluids` (Ch. 5.5), which *merges* fluids into one.
+
+### What's new (additive — no breaking change)
+- `static List<SystemInterface> characterizeToCommonSlate(List<SystemInterface> fluids, double[] weights)`
+  — infers the shared lump count as the max pseudo-component count across the inputs.
+- `static List<SystemInterface> characterizeToCommonSlate(List<SystemInterface> fluids, double[] weights, int targetPseudoComponents)`
+  — explicit shared lump count.
+- Per shared cut `i`: molar mass (Eq. 5.59), `Tc`, `Pc`, `ω` (Eqs. 5.55-5.58) are
+  the weighted means `X_i = Σ_j Wgt(j)·z_i^j·X_i^j / Σ_j Wgt(j)·z_i^j`, with
+  `Wgt(j)` the per-fluid weight (pass `null` for equal weights) and `z_i^j` the lump
+  mole fraction. Lump density is reconstructed from weighted MW + weighted molar
+  volume (Peneloux basis, Eq. 5.6). Inputs are not modified; clones are returned in
+  input order keeping each fluid's own lump mole fractions.
+
+### Tests
+- `CharacterizeToCommonSlateTest` (6 tests): weighted-mean per-cut properties,
+  shared slate identical across fluids, genuine average (not snap-to-reference),
+  fluids stay separate with their own mole fractions, `null` == equal weights,
+  inferred slate size, and argument validation.
+
+---
+
 ## 2026-06-17 — Expander capacity constraints fixed + constraint provenance in utilization snapshot
 
 ### Summary

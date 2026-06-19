@@ -340,6 +340,316 @@ public final class PseudoComponentCombiner {
   }
 
   /**
+   * Characterize several fluids to a single shared set of pseudo components (a "common EoS" slate)
+   * following Pedersen et al., "Phase Behavior of Petroleum Reservoir Fluids", Chapter 5.6
+   * (Eqs. 5.55-5.60).
+   *
+   * <p>
+   * Unlike {@link #combineReservoirFluids(int, java.util.Collection)} (Chapter 5.5), which blends all
+   * input fluids into one fluid, this method keeps every fluid <b>separate</b> while forcing them to
+   * share an identical pseudo-component property set. For each shared lump {@code i} the molar mass
+   * (Eq. 5.59), critical temperature, critical pressure and acentric factor (Eqs. 5.55-5.58) are
+   * mole-fraction weighted averages across the input fluids,
+   *
+   * <pre>
+   * X_i = sum_j Wgt(j) z_i^j X_i^j / sum_j Wgt(j) z_i^j ,
+   * </pre>
+   *
+   * where {@code Wgt(j)} is the per-fluid weight and {@code z_i^j} is the mole fraction of lump
+   * {@code i} in fluid {@code j}. The lump density is reconstructed from the weighted molar mass and
+   * the weighted molar volume (Peneloux basis, Eq. 5.6). The returned fluids therefore differ only in
+   * their lump mole fractions, exactly as required when a single equation of state must span several
+   * fields (a common-slate design basis).
+   *
+   * <p>
+   * The number of shared pseudo components defaults to the largest pseudo-component count found among
+   * the input fluids. Use {@link #characterizeToCommonSlate(java.util.List, double[], int)} to set it
+   * explicitly. The input fluids are not modified; re-characterized clones are returned in input
+   * order.
+   *
+   * @param fluids  fluids to characterize to the common slate (at least one, non-null entries)
+   * @param weights per-fluid weight factors {@code Wgt(j)}; pass {@code null} for equal weighting.
+   *                When non-null the length must equal {@code fluids.size()} and at least one weight
+   *                must be positive
+   * @return re-characterized clones sharing the common pseudo-component slate, in input order
+   */
+  public static List<SystemInterface> characterizeToCommonSlate(List<SystemInterface> fluids, double[] weights) {
+    return characterizeToCommonSlate(fluids, weights, inferCommonSlateSize(fluids));
+  }
+
+  /**
+   * Characterize several fluids to a single shared set of pseudo components (a "common EoS" slate)
+   * with an explicit number of shared lumps. See
+   * {@link #characterizeToCommonSlate(java.util.List, double[])} for the full description of the
+   * weighting scheme (Pedersen Chapter 5.6, Eqs. 5.55-5.60).
+   *
+   * @param fluids                 fluids to characterize to the common slate (at least one, non-null
+   *                               entries)
+   * @param weights                per-fluid weight factors {@code Wgt(j)}; pass {@code null} for
+   *                               equal weighting. When non-null the length must equal
+   *                               {@code fluids.size()} and at least one weight must be positive
+   * @param targetPseudoComponents number of shared pseudo components (must be positive)
+   * @return re-characterized clones sharing the common pseudo-component slate, in input order
+   */
+  public static List<SystemInterface> characterizeToCommonSlate(List<SystemInterface> fluids, double[] weights,
+      int targetPseudoComponents) {
+    Objects.requireNonNull(fluids, "fluids");
+    if (fluids.isEmpty()) {
+      throw new IllegalArgumentException("At least one fluid is required");
+    }
+    for (SystemInterface fluid : fluids) {
+      Objects.requireNonNull(fluid, "fluid");
+    }
+    if (targetPseudoComponents <= 0) {
+      throw new IllegalArgumentException("Number of pseudo components must be positive");
+    }
+
+    double[] effectiveWeights = resolveWeights(weights, fluids.size());
+
+    List<FluidExtraction> extractions = new ArrayList<>(fluids.size());
+    List<Double> totalMoles = new ArrayList<>(fluids.size());
+    List<PseudoComponentContribution> pooled = new ArrayList<>();
+    for (SystemInterface fluid : fluids) {
+      FluidExtraction extraction = extractComponents(fluid);
+      extractions.add(extraction);
+
+      double moles = 0.0;
+      for (Double value : extraction.baseComponents.values()) {
+        moles += value;
+      }
+      for (PseudoComponentContribution contribution : extraction.pseudoComponents) {
+        moles += contribution.moles;
+      }
+      totalMoles.add(moles);
+      pooled.addAll(extraction.pseudoComponents);
+    }
+
+    if (pooled.isEmpty()) {
+      List<SystemInterface> clones = new ArrayList<>(fluids.size());
+      for (SystemInterface fluid : fluids) {
+        clones.add(fluid.clone());
+      }
+      return clones;
+    }
+
+    pooled.sort(Comparator.comparingDouble(PseudoComponentContribution::sortingKey));
+    List<Double> boundaries = determineQuantileBoundaries(pooled, targetPseudoComponents);
+
+    List<List<PseudoComponentProfile>> perFluidProfiles = new ArrayList<>(fluids.size());
+    for (FluidExtraction extraction : extractions) {
+      perFluidProfiles
+          .add(distributeToProfiles(extraction.pseudoComponents, boundaries, targetPseudoComponents));
+    }
+
+    List<PseudoComponentProfile> commonSlate =
+        computeCommonSlate(perFluidProfiles, totalMoles, effectiveWeights, targetPseudoComponents);
+
+    List<SystemInterface> result = new ArrayList<>(fluids.size());
+    for (int j = 0; j < fluids.size(); j++) {
+      SystemInterface characterized = fluids.get(j).clone();
+      removeAllComponents(characterized);
+
+      for (Map.Entry<String, Double> entry : extractions.get(j).baseComponents.entrySet()) {
+        characterized.addComponent(entry.getKey(), entry.getValue());
+      }
+
+      List<PseudoComponentProfile> fluidProfiles = perFluidProfiles.get(j);
+      for (int i = 0; i < commonSlate.size(); i++) {
+        PseudoComponentProfile common = commonSlate.get(i);
+        PseudoComponentProfile own = fluidProfiles.get(i);
+        if (!common.isValid() || !own.isValid()) {
+          continue;
+        }
+
+        String baseName = "PC" + (i + 1);
+        characterized.addTBPfraction(baseName, own.getMoles(), common.getMolarMass(), common.getDensity());
+
+        ComponentInterface component = characterized.getComponent(baseName + "_PC");
+        if (component == null) {
+          logger.warn("Failed to locate newly added pseudo component {}", baseName);
+          continue;
+        }
+        common.applyTo(component);
+      }
+
+      finalizeFluid(characterized);
+      result.add(characterized);
+    }
+
+    return result;
+  }
+
+  /**
+   * Compute the shared pseudo-component slate from the per-fluid lumped profiles using mole-fraction
+   * weighted averages (Pedersen Chapter 5.6, Eqs. 5.55-5.60).
+   *
+   * @param perFluidProfiles       per-fluid lumped profiles on the shared cut grid
+   * @param totalMoles             total number of moles per fluid (base + pseudo), used to compute
+   *                               the lump mole fractions {@code z_i^j}
+   * @param weights                per-fluid weight factors {@code Wgt(j)}
+   * @param targetPseudoComponents number of shared pseudo components
+   * @return the common slate as one profile per shared cut (invalid cuts are returned as empty
+   *         profiles)
+   */
+  private static List<PseudoComponentProfile> computeCommonSlate(
+      List<List<PseudoComponentProfile>> perFluidProfiles, List<Double> totalMoles, double[] weights,
+      int targetPseudoComponents) {
+    List<PseudoComponentProfile> slate = new ArrayList<>(targetPseudoComponents);
+
+    for (int i = 0; i < targetPseudoComponents; i++) {
+      WeightedMean molarMass = new WeightedMean();
+      WeightedMean molarVolume = new WeightedMean();
+      WeightedMean normalBoilingPoint = new WeightedMean();
+      WeightedMean criticalTemperature = new WeightedMean();
+      WeightedMean criticalPressure = new WeightedMean();
+      WeightedMean acentricFactor = new WeightedMean();
+      WeightedMean criticalVolume = new WeightedMean();
+      WeightedMean racketZ = new WeightedMean();
+      WeightedMean racketZCpa = new WeightedMean();
+      WeightedMean parachor = new WeightedMean();
+      WeightedMean criticalViscosity = new WeightedMean();
+      WeightedMean triplePoint = new WeightedMean();
+      WeightedMean heatOfFusion = new WeightedMean();
+      WeightedMean idealGasEnthalpy = new WeightedMean();
+      WeightedMean cpA = new WeightedMean();
+      WeightedMean cpB = new WeightedMean();
+      WeightedMean cpC = new WeightedMean();
+      WeightedMean cpD = new WeightedMean();
+      WeightedMean attractiveM = new WeightedMean();
+      double slateMoles = 0.0;
+
+      for (int j = 0; j < perFluidProfiles.size(); j++) {
+        PseudoComponentProfile profile = perFluidProfiles.get(j).get(i);
+        if (!profile.isValid()) {
+          continue;
+        }
+        double total = totalMoles.get(j);
+        double moleFraction = total > MASS_TOLERANCE ? profile.getMoles() / total : 0.0;
+        double weight = weights[j] * moleFraction;
+        if (!(weight > 0.0)) {
+          continue;
+        }
+        slateMoles += profile.getMoles();
+
+        molarMass.add(weight, profile.getMolarMass());
+        if (profile.getDensity() > 0.0) {
+          molarVolume.add(weight, profile.getMolarMass() / profile.getDensity());
+        }
+        normalBoilingPoint.add(weight, profile.getNormalBoilingPoint());
+        criticalTemperature.add(weight, profile.getCriticalTemperature());
+        criticalPressure.add(weight, profile.getCriticalPressure());
+        acentricFactor.add(weight, profile.getAcentricFactor());
+        criticalVolume.add(weight, profile.getCriticalVolume());
+        racketZ.add(weight, profile.getRacketZ());
+        racketZCpa.add(weight, profile.getRacketZCpa());
+        parachor.add(weight, profile.getParachor());
+        criticalViscosity.add(weight, profile.getCriticalViscosity());
+        triplePoint.add(weight, profile.getTriplePointTemperature());
+        heatOfFusion.add(weight, profile.getHeatOfFusion());
+        idealGasEnthalpy.add(weight, profile.getIdealGasEnthalpyOfFormation());
+        cpA.add(weight, profile.getCpA());
+        cpB.add(weight, profile.getCpB());
+        cpC.add(weight, profile.getCpC());
+        cpD.add(weight, profile.getCpD());
+        attractiveM.add(weight, profile.getAttractiveM());
+      }
+
+      double meanMolarMass = molarMass.mean();
+      double meanMolarVolume = molarVolume.mean();
+      double density = Double.isFinite(meanMolarMass) && Double.isFinite(meanMolarVolume)
+          && meanMolarVolume > 0.0 ? meanMolarMass / meanMolarVolume : Double.NaN;
+
+      slate.add(new PseudoComponentProfile(slateMoles, Double.isFinite(meanMolarMass) ? meanMolarMass : 0.0,
+          density, normalBoilingPoint.mean(), criticalTemperature.mean(), criticalPressure.mean(),
+          acentricFactor.mean(), criticalVolume.mean(), racketZ.mean(), racketZCpa.mean(), parachor.mean(),
+          criticalViscosity.mean(), triplePoint.mean(), heatOfFusion.mean(), idealGasEnthalpy.mean(), cpA.mean(),
+          cpB.mean(), cpC.mean(), cpD.mean(), attractiveM.mean()));
+    }
+
+    return slate;
+  }
+
+  /**
+   * Resolve the per-fluid weight vector, validating it against the number of fluids.
+   *
+   * @param weights the requested weights, or {@code null} for equal weighting
+   * @param count   the number of fluids
+   * @return a defensive copy of valid weights (all 1.0 when {@code weights} is {@code null})
+   */
+  private static double[] resolveWeights(double[] weights, int count) {
+    if (weights == null) {
+      double[] equal = new double[count];
+      Arrays.fill(equal, 1.0);
+      return equal;
+    }
+    if (weights.length != count) {
+      throw new IllegalArgumentException(
+          "weights length (" + weights.length + ") must match number of fluids (" + count + ")");
+    }
+    double sum = 0.0;
+    for (double weight : weights) {
+      if (weight < 0.0) {
+        throw new IllegalArgumentException("weights must be non-negative");
+      }
+      sum += weight;
+    }
+    if (!(sum > 0.0)) {
+      throw new IllegalArgumentException("At least one weight must be positive");
+    }
+    return weights.clone();
+  }
+
+  /**
+   * Infer the default number of shared pseudo components as the largest pseudo-component count among
+   * the input fluids (at least one).
+   *
+   * @param fluids fluids to inspect
+   * @return the inferred number of shared pseudo components
+   */
+  private static int inferCommonSlateSize(List<SystemInterface> fluids) {
+    Objects.requireNonNull(fluids, "fluids");
+    if (fluids.isEmpty()) {
+      throw new IllegalArgumentException("At least one fluid is required");
+    }
+    int max = 0;
+    for (SystemInterface fluid : fluids) {
+      Objects.requireNonNull(fluid, "fluid");
+      max = Math.max(max, extractComponents(fluid).pseudoComponents.size());
+    }
+    return Math.max(max, 1);
+  }
+
+  /**
+   * Small accumulator for a weighted arithmetic mean that ignores non-finite samples.
+   */
+  private static final class WeightedMean {
+    private double numerator;
+    private double denominator;
+
+    /**
+     * Add a weighted sample. Samples with non-positive weight or non-finite value are ignored.
+     *
+     * @param weight the sample weight
+     * @param value  the sample value
+     */
+    private void add(double weight, double value) {
+      if (weight > 0.0 && Double.isFinite(value)) {
+        numerator += weight * value;
+        denominator += weight;
+      }
+    }
+
+    /**
+     * Compute the weighted mean.
+     *
+     * @return the weighted mean, or {@link Double#NaN} if no valid samples were added
+     */
+    private double mean() {
+      return denominator > MASS_TOLERANCE ? numerator / denominator : Double.NaN;
+    }
+  }
+
+  /**
    * Transfer binary interaction parameters from a reference fluid to a target fluid.
    *
    * <p>
