@@ -21,6 +21,29 @@ neqsim doctor              # detailed environment health check
 
 See [VISION_AGENTS.md](VISION_AGENTS.md) for what belongs in the core repo vs. community contributions.
 
+## Pre-commit Hooks
+
+This repository uses [pre-commit](https://pre-commit.com/) to enforce formatting checks before
+changes are committed and pushed.
+
+Configured hooks in `.pre-commit-config.yaml`:
+
+- `pre-commit` stage: `spotless:apply` (auto-format Java files)
+- `pre-push` stage: `spotless:check` (verify formatting)
+
+Install and enable hooks after cloning:
+
+```bash
+pip install pre-commit
+pre-commit install --hook-type pre-commit --hook-type pre-push
+```
+
+Run hooks manually across the repository:
+
+```bash
+pre-commit run --all-files
+```
+
 ## Pull Request Process
 
 1. Ensure any install or build dependencies are removed before the end of the layer when doing a

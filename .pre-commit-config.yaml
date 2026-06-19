@@ -1,0 +1,22 @@
+repos:
+  - repo: local
+    hooks:
+      - id: spotless-apply
+        name: Spotless Format (Java)
+        entry: ./mvnw spotless:apply -q
+        language: system
+        files: \.(java)$
+        pass_filenames: false
+        stages: [commit]
+        verbose: false
+
+  - repo: local
+    hooks:
+      - id: spotless-check
+        name: Spotless Check (Java)
+        entry: ./mvnw spotless:check -q
+        language: system
+        files: \.(java)$
+        pass_filenames: false
+        stages: [push]
+        verbose: false

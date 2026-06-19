@@ -16,6 +16,17 @@ commands, code patterns).
   matching `instanceof`, `Optional.isEmpty()`.
 - Use explicit types, `Arrays.asList()`, `StringUtils.repeat()`, `str.trim().isEmpty()`.
 
+## Critical Constraint: Logging
+
+**All Java logging/output MUST use Log4j2 logger.** Never use `System.out.println` or
+`System.err.println` in production code, tests, examples, or generated snippets.
+
+Use class logger fields and parameterized logging calls:
+- `private static final Logger logger = LogManager.getLogger(YourClass.class);`
+- `logger.info("Message {}", value);`
+- `logger.warn("Message {}", value);`
+- `logger.error("Message {}", ex.getMessage(), ex);`
+
 ## Build & Test
 
 ```bash
@@ -886,7 +897,7 @@ if (result.isSuccess()) {
 }
 // Tolerant: wiring failures become warnings, not errors
 for (ErrorDetail w : result.getWarnings()) {
-    System.out.println(w.getCode() + ": " + w.getMessage());
+  logger.warn("{}: {}", w.getCode(), w.getMessage());
 }
 ```
 

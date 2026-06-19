@@ -324,6 +324,26 @@ mvnw.cmd install      # Windows
 ./mvnw checkstyle:check spotbugs:check pmd:check  # static analysis
 ```
 
+### Enable pre-commit hooks
+
+This repository uses pre-commit hooks to enforce Java formatting:
+
+- on commit: `spotless:apply`
+- on push: `spotless:check`
+
+Install and enable hooks:
+
+```bash
+pip install pre-commit
+pre-commit install --hook-type pre-commit --hook-type pre-push
+```
+
+Run all hooks manually:
+
+```bash
+pre-commit run --all-files
+```
+
 ### Open in VS Code
 
 The repository includes a ready-to-use [dev container](.devcontainer/); just open the repo in VS Code with container support:
