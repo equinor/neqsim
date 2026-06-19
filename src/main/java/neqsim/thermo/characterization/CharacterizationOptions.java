@@ -127,17 +127,16 @@ public class CharacterizationOptions {
   }
 
   /**
-   * Whether each source pseudo-component should be delumped into a finer grid of single-carbon-number
-   * (SCN) sub-fractions before it is re-distributed onto the reference cuts.
+   * Whether each source pseudo-component should be delumped into a finer grid of single-carbon-number (SCN)
+   * sub-fractions before it is re-distributed onto the reference cuts.
    *
    * <p>
-   * Disabled by default. When {@code true}, every coarse source lump is split into
-   * {@link #getDelumpResolution()} sub-fractions whose moles and mass exactly reproduce the parent
-   * (Pedersen et al., Chapter 5, lumping/delumping, Eqs. 5.35-5.37). The sub-fractions are then
-   * re-lumped onto the reference boundaries, so the per-cut molar mass and density are recomputed
-   * from a properly conserved mass distribution instead of being frozen by an effectively identity
-   * source-to-reference mapping. This removes the per-field molar-mass and density drift that occurs
-   * when the native source lumps already sit close to the reference grid.
+   * Disabled by default. When {@code true}, every coarse source lump is split into {@link #getDelumpResolution()}
+   * sub-fractions whose moles and mass exactly reproduce the parent (Pedersen et al., Chapter 5, lumping/delumping,
+   * Eqs. 5.35-5.37). The sub-fractions are then re-lumped onto the reference boundaries, so the per-cut molar mass and
+   * density are recomputed from a properly conserved mass distribution instead of being frozen by an effectively
+   * identity source-to-reference mapping. This removes the per-field molar-mass and density drift that occurs when the
+   * native source lumps already sit close to the reference grid.
    *
    * @return true if source lumps should be delumped before re-characterization
    */
@@ -281,15 +280,14 @@ public class CharacterizationOptions {
     }
 
     /**
-     * Set whether each source pseudo-component should be delumped into a finer grid of
-     * single-carbon-number sub-fractions before being re-distributed onto the reference cuts.
+     * Set whether each source pseudo-component should be delumped into a finer grid of single-carbon-number
+     * sub-fractions before being re-distributed onto the reference cuts.
      *
      * <p>
-     * Disabled by default. Enable to conserve per-cut mass and recompute lump molar mass and density
-     * from a properly redistributed source slate (Pedersen et al., Chapter 5, lumping/delumping).
-     * Most effective together with {@link #inheritReferenceProperties(boolean)
-     * inheritReferenceProperties(false)}, because inheriting the reference molar mass and density
-     * would otherwise overwrite the recomputed lump properties.
+     * Disabled by default. Enable to conserve per-cut mass and recompute lump molar mass and density from a properly
+     * redistributed source slate (Pedersen et al., Chapter 5, lumping/delumping). Most effective together with
+     * {@link #inheritReferenceProperties(boolean) inheritReferenceProperties(false)}, because inheriting the reference
+     * molar mass and density would otherwise overwrite the recomputed lump properties.
      *
      * @param delump true to delump source lumps before re-characterization
      * @return this builder
@@ -300,8 +298,7 @@ public class CharacterizationOptions {
     }
 
     /**
-     * Set the number of single-carbon-number sub-fractions each source lump is split into when
-     * delumping is enabled.
+     * Set the number of single-carbon-number sub-fractions each source lump is split into when delumping is enabled.
      *
      * @param resolution the delump resolution; values of 1 or less disable splitting
      * @return this builder
