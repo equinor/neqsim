@@ -13,22 +13,7 @@ on:
       - master
 
 jobs:
-  check:
-    name: Run pre-commit checks (PR)
-    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-python@v6
-        with:
-          python-version: "3.13"
-      - uses: pre-commit/action@v3.0.1
-        with:
-          extra_args: --all-files --hook-stage pre-push
-
-  autoformat_master:
-    name: Auto-format master branch
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+  autoformat:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -54,5 +39,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
-          git commit -m "chore(format): auto-format master"
+          git commit -m "chore(format): auto-format code with pre-commit"
           git push
