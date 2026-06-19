@@ -44,6 +44,7 @@ public class CharacterizationOptions {
   private final NamingScheme namingScheme;
   private final boolean generateValidationReport;
   private final double compositionTolerance;
+  private final boolean inheritReferenceProperties;
 
   private CharacterizationOptions(Builder builder) {
     this.transferBinaryInteractionParameters = builder.transferBinaryInteractionParameters;
@@ -51,6 +52,7 @@ public class CharacterizationOptions {
     this.namingScheme = builder.namingScheme;
     this.generateValidationReport = builder.generateValidationReport;
     this.compositionTolerance = builder.compositionTolerance;
+    this.inheritReferenceProperties = builder.inheritReferenceProperties;
   }
 
   /**
@@ -99,6 +101,28 @@ public class CharacterizationOptions {
   }
 
   /**
+   * Whether the characterized fluid should inherit the reference fluid's pseudo-component
+   * properties (molar mass, density, critical constants, etc.).
+   *
+   * <p>
+   * When {@code true} (the default), the characterized fluid reproduces the Pedersen et al.
+   * (Chapter 5.6) "Common EoS" slate: every fluid characterized to the same reference shares an
+   * identical set of pseudo-component properties and differs only in the mole fractions. This is
+   * required when several fluids must be mixed or compared on a common equation-of-state basis.
+   *
+   * <p>
+   * When {@code false}, the characterized fluid keeps the grid-only behaviour of the bare
+   * {@link PseudoComponentCombiner#characterizeToReference(neqsim.thermo.system.SystemInterface,
+   * neqsim.thermo.system.SystemInterface)} method: only the reference cut boundaries are reused and
+   * the lump properties are recomputed from the source fluid's mass.
+   *
+   * @return true if reference pseudo-component properties should be inherited
+   */
+  public boolean isInheritReferenceProperties() {
+    return inheritReferenceProperties;
+  }
+
+  /**
    * Creates a new builder with default options.
    *
    * @return a new builder instance
@@ -134,6 +158,7 @@ public class CharacterizationOptions {
     private NamingScheme namingScheme = NamingScheme.REFERENCE;
     private boolean generateValidationReport = false;
     private double compositionTolerance = 1e-10;
+    private boolean inheritReferenceProperties = true;
 
     /**
      * Set whether to transfer binary interaction parameters from the reference fluid.
@@ -199,6 +224,24 @@ public class CharacterizationOptions {
      */
     public Builder compositionTolerance(double tolerance) {
       this.compositionTolerance = tolerance;
+      return this;
+    }
+
+    /**
+     * Set whether the characterized fluid should inherit the reference fluid's pseudo-component
+     * properties (molar mass, density, critical constants, etc.).
+     *
+     * <p>
+     * Enabled by default to reproduce the Pedersen et al. (Chapter 5.6) "Common EoS" slate, in
+     * which every fluid characterized to the same reference shares an identical set of
+     * pseudo-component properties and differs only in the mole fractions. Set to {@code false} to
+     * keep the grid-only behaviour where lump properties are recomputed from the source fluid.
+     *
+     * @param inherit true to inherit reference pseudo-component properties
+     * @return this builder
+     */
+    public Builder inheritReferenceProperties(boolean inherit) {
+      this.inheritReferenceProperties = inherit;
       return this;
     }
 

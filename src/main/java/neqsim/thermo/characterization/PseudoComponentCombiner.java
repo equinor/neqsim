@@ -162,6 +162,27 @@ public final class PseudoComponentCombiner {
    * @return characterized fluid containing pseudo components compatible with the reference fluid
    */
   public static SystemInterface characterizeToReference(SystemInterface source, SystemInterface reference) {
+    return characterizeToReferenceCore(source, reference, false);
+  }
+
+  /**
+   * Core implementation of {@link #characterizeToReference(SystemInterface, SystemInterface)}.
+   *
+   * <p>
+   * When {@code inheritReferenceProperties} is {@code true} the characterized pseudo-components
+   * inherit the reference fluid's lump properties (molar mass, density, critical constants, etc.),
+   * reproducing the Pedersen et al. (Chapter 5.6) "Common EoS" slate: every fluid characterized to
+   * the same reference shares an identical pseudo-component property set and differs only in the
+   * mole fractions. When {@code false} the lump properties are recomputed from the source fluid's
+   * mass (grid-only behaviour using the reference cut boundaries).
+   *
+   * @param source                     fluid to characterize
+   * @param reference                  fluid defining the pseudo component characterization
+   * @param inheritReferenceProperties whether to inherit the reference lump properties
+   * @return characterized fluid containing pseudo components compatible with the reference fluid
+   */
+  private static SystemInterface characterizeToReferenceCore(SystemInterface source, SystemInterface reference,
+      boolean inheritReferenceProperties) {
     Objects.requireNonNull(source, "source");
     Objects.requireNonNull(reference, "reference");
 
@@ -191,8 +212,11 @@ public final class PseudoComponentCombiner {
       }
 
       String referenceName = referenceExtraction.pseudoComponents.get(i).name;
+      PseudoComponentContribution referencePc = referenceExtraction.pseudoComponents.get(i);
       String baseName = stripPcSuffix(referenceName);
-      characterized.addTBPfraction(baseName, profile.getMoles(), profile.getMolarMass(), profile.getDensity());
+      double molarMass = inheritReferenceProperties ? referencePc.molarMass : profile.getMolarMass();
+      double density = inheritReferenceProperties ? referencePc.density : profile.getDensity();
+      characterized.addTBPfraction(baseName, profile.getMoles(), molarMass, density);
 
       ComponentInterface component = characterized.getComponent(baseName + "_PC");
       if (component == null) {
@@ -200,7 +224,11 @@ public final class PseudoComponentCombiner {
 	continue;
       }
 
-      profile.applyTo(component);
+      if (inheritReferenceProperties) {
+	applyReferenceProperties(component, referencePc);
+      } else {
+	profile.applyTo(component);
+      }
     }
 
     finalizeFluid(characterized);
@@ -222,7 +250,8 @@ public final class PseudoComponentCombiner {
       CharacterizationOptions options) {
     Objects.requireNonNull(options, "options");
 
-    SystemInterface characterized = characterizeToReference(source, reference);
+    SystemInterface characterized =
+        characterizeToReferenceCore(source, reference, options.isInheritReferenceProperties());
 
     if (options.isTransferBinaryInteractionParameters()) {
       transferBinaryInteractionParameters(reference, characterized);
@@ -239,6 +268,75 @@ public final class PseudoComponentCombiner {
     }
 
     return characterized;
+  }
+
+  /**
+   * Copy the reference pseudo-component's properties onto a newly characterized component.
+   *
+   * <p>
+   * Used by the Pedersen et al. (Chapter 5.6) "Common EoS" slate path so that fluids characterized
+   * to the same reference share an identical pseudo-component property set. Each property is applied
+   * only when the reference value is finite, leaving NeqSim's correlated default in place otherwise.
+   *
+   * @param component the characterized component to update
+   * @param reference the reference pseudo-component contribution to inherit from
+   */
+  private static void applyReferenceProperties(ComponentInterface component,
+      PseudoComponentContribution reference) {
+    Objects.requireNonNull(component, "component");
+    Objects.requireNonNull(reference, "reference");
+
+    if (Double.isFinite(reference.normalBoilingPoint)) {
+      component.setNormalBoilingPoint(reference.normalBoilingPoint);
+    }
+    if (Double.isFinite(reference.criticalTemperature)) {
+      component.setTC(reference.criticalTemperature);
+    }
+    if (Double.isFinite(reference.criticalPressure)) {
+      component.setPC(reference.criticalPressure);
+    }
+    if (Double.isFinite(reference.acentricFactor)) {
+      component.setAcentricFactor(reference.acentricFactor);
+    }
+    if (Double.isFinite(reference.criticalVolume)) {
+      component.setCriticalVolume(reference.criticalVolume);
+    }
+    if (Double.isFinite(reference.racketZ)) {
+      component.setRacketZ(reference.racketZ);
+    }
+    if (Double.isFinite(reference.racketZCpa)) {
+      component.setRacketZCPA(reference.racketZCpa);
+    }
+    if (Double.isFinite(reference.parachor)) {
+      component.setParachorParameter(reference.parachor);
+    }
+    if (Double.isFinite(reference.criticalViscosity)) {
+      component.setCriticalViscosity(reference.criticalViscosity);
+    }
+    if (Double.isFinite(reference.triplePointTemperature)) {
+      component.setTriplePointTemperature(reference.triplePointTemperature);
+    }
+    if (Double.isFinite(reference.heatOfFusion)) {
+      component.setHeatOfFusion(reference.heatOfFusion);
+    }
+    if (Double.isFinite(reference.idealGasEnthalpyOfFormation)) {
+      component.setIdealGasEnthalpyOfFormation(reference.idealGasEnthalpyOfFormation);
+    }
+    if (Double.isFinite(reference.cpA)) {
+      component.setCpA(reference.cpA);
+    }
+    if (Double.isFinite(reference.cpB)) {
+      component.setCpB(reference.cpB);
+    }
+    if (Double.isFinite(reference.cpC)) {
+      component.setCpC(reference.cpC);
+    }
+    if (Double.isFinite(reference.cpD)) {
+      component.setCpD(reference.cpD);
+    }
+    if (Double.isFinite(reference.attractiveM) && component.getAttractiveTerm() != null) {
+      component.getAttractiveTerm().setm(reference.attractiveM);
+    }
   }
 
   /**
