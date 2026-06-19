@@ -100,7 +100,7 @@ jobs:
           java-version: '8'
           cache: 'maven'
       - name: Run tests
-        run: mvn -B test --file pomJava8.xml -ntp "-Daether.connector.basic.retries=5" -Djacoco.skip=true
+        run: mvn -B test --file pomJava8.xml -ntp "-Daether.connector.basic.retries=5" "-Djacoco.skip=true"
 
   test_java_8_windows:
     name: Assert tests with Java 8 on Windows
@@ -118,7 +118,7 @@ jobs:
           java-version: '8'
           cache: 'maven'
       - name: Run tests
-        run: mvn -B test --file pomJava8.xml -ntp "-Daether.connector.basic.retries=5" -Djacoco.skip=true
+        run: mvn -B test --file pomJava8.xml -ntp "-Daether.connector.basic.retries=5" "-Djacoco.skip=true"
 
   verify_agent_skills:
     name: Verify agent-skill cross-references
