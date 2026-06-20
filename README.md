@@ -478,6 +478,7 @@ Browse and install community-contributed agents separately from skills:
 neqsim agent list                    # browse installable agent workflows
 neqsim agent search hydrate          # search by name, tag, description, or required skill
 neqsim agent install <name>          # install an agent definition
+neqsim agent install --all           # install every agent in the catalog
 neqsim agent validate <name-or-path> # validate an installed or local agent package
 neqsim agent schema                  # show the supported agent.yaml fields
 ```

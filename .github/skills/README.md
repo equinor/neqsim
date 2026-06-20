@@ -242,6 +242,7 @@ neqsim skill install <skill-name>
 
 neqsim agent list --private
 neqsim agent install <agent-name>
+neqsim agent install --all
 neqsim agent validate <agent-name>
 ```
 
