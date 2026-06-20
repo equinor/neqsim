@@ -418,7 +418,7 @@ public final class PseudoComponentCombiner {
 
     List<FluidExtraction> extractions = new ArrayList<>(fluids.size());
     List<Double> totalMoles = new ArrayList<>(fluids.size());
-    List<PseudoComponentContribution> pooled = new ArrayList<>();
+    boolean anyPseudoComponents = false;
     for (SystemInterface fluid : fluids) {
       FluidExtraction extraction = extractComponents(fluid);
       extractions.add(extraction);
@@ -431,10 +431,12 @@ public final class PseudoComponentCombiner {
 	moles += contribution.moles;
       }
       totalMoles.add(moles);
-      pooled.addAll(extraction.pseudoComponents);
+      if (!extraction.pseudoComponents.isEmpty()) {
+	anyPseudoComponents = true;
+      }
     }
 
-    if (pooled.isEmpty()) {
+    if (!anyPseudoComponents) {
       List<SystemInterface> clones = new ArrayList<>(fluids.size());
       for (SystemInterface fluid : fluids) {
 	clones.add(fluid.clone());
@@ -442,8 +444,14 @@ public final class PseudoComponentCombiner {
       return clones;
     }
 
-    pooled.sort(Comparator.comparingDouble(PseudoComponentContribution::sortingKey));
-    List<Double> boundaries = determineQuantileBoundaries(pooled, targetPseudoComponents);
+    // Build the shared cut grid from a weighted imaginary composition rather than the raw pooled
+    // pseudo-components. Each fluid is normalised to unit pseudo-mass and then scaled by its slate
+    // weight Wgt(j), so the equal-mass quantile boundaries reflect the requested weighting and
+    // relative fluid importance instead of being dominated by the single largest-mass fluid. This
+    // follows Pedersen, Christensen & Yan, Phase Behavior of Petroleum Reservoir Fluids, Ch. 5.6
+    // (common slate, Eqs. 5.58-5.59).
+    List<PseudoComponentContribution> weightedImaginary = buildWeightedImaginaryPool(extractions, effectiveWeights);
+    List<Double> boundaries = determineQuantileBoundaries(weightedImaginary, targetPseudoComponents);
 
     List<List<PseudoComponentProfile>> perFluidProfiles = new ArrayList<>(fluids.size());
     for (FluidExtraction extraction : extractions) {
@@ -575,6 +583,42 @@ public final class PseudoComponentCombiner {
     }
 
     return slate;
+  }
+
+  /**
+   * Build the imaginary composition used to derive the shared cut grid for a common slate. Each fluid's
+   * pseudo-components are first normalised to unit total pseudo-mass and then scaled by the fluid's slate weight, so
+   * the equal-mass quantile boundaries reflect the requested weighting rather than being dominated by whichever fluid
+   * happens to carry the most pseudo-component mass. Fluids with no pseudo-components, with non-positive pseudo-mass,
+   * or with a non-positive weight are skipped. The returned pool is sorted ascending by
+   * {@link PseudoComponentContribution#sortingKey()}.
+   *
+   * @param extractions the per-fluid extracted compositions, in fluid order
+   * @param weights the resolved per-fluid weights, parallel to {@code extractions}
+   * @return a mass-weighted, sorted imaginary pseudo-component pool for boundary determination
+   */
+  private static List<PseudoComponentContribution> buildWeightedImaginaryPool(List<FluidExtraction> extractions,
+      double[] weights) {
+    List<PseudoComponentContribution> pool = new ArrayList<>();
+    for (int j = 0; j < extractions.size(); j++) {
+      List<PseudoComponentContribution> contributions = extractions.get(j).pseudoComponents;
+      if (contributions.isEmpty() || weights[j] <= 0.0) {
+	continue;
+      }
+      double fluidPseudoMass = 0.0;
+      for (PseudoComponentContribution contribution : contributions) {
+	fluidPseudoMass += contribution.mass;
+      }
+      if (fluidPseudoMass <= MASS_TOLERANCE) {
+	continue;
+      }
+      double scale = weights[j] / fluidPseudoMass;
+      for (PseudoComponentContribution contribution : contributions) {
+	pool.add(contribution.scaledByMass(scale));
+      }
+    }
+    pool.sort(Comparator.comparingDouble(PseudoComponentContribution::sortingKey));
+    return pool;
   }
 
   /**
@@ -1272,6 +1316,22 @@ public final class PseudoComponentCombiner {
 	key = molarMass;
       }
       return key;
+    }
+
+    /**
+     * Returns a copy of this contribution with its mole amount (and hence mass) scaled by the given factor. All
+     * intensive properties and the {@link #sortingKey()} are preserved, so the copy occupies the same position on the
+     * cut grid but carries a re-weighted mass. Used to build the weighted imaginary composition for the common-slate
+     * cut grid (Pedersen Ch. 5.6, Eqs. 5.58-5.59).
+     *
+     * @param factor the multiplicative scaling applied to {@link #moles}; must be finite and &gt;= 0
+     * @return a new {@link PseudoComponentContribution} with {@code moles * factor}
+     */
+    private PseudoComponentContribution scaledByMass(double factor) {
+      return new PseudoComponentContribution(name, moles * factor, molarMass, density, normalBoilingPoint,
+	  criticalTemperature, criticalPressure, acentricFactor, criticalVolume, racketZ, racketZCpa, parachor,
+	  criticalViscosity, triplePointTemperature, heatOfFusion, idealGasEnthalpyOfFormation, cpA, cpB, cpC, cpD,
+	  attractiveM);
     }
   }
 

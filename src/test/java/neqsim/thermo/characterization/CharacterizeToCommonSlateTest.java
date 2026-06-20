@@ -2,6 +2,7 @@ package neqsim.thermo.characterization;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Arrays;
@@ -68,6 +69,59 @@ class CharacterizeToCommonSlateTest {
     }
     fluid.setMixingRule("classic");
     return fluid;
+  }
+
+  /**
+   * Build a three-cut fluid with caller-supplied normal boiling points so light and heavy fields can occupy disjoint
+   * cut ranges.
+   *
+   * @param nbp per-cut normal boiling points (K)
+   * @param moles per-cut mole amounts
+   * @param mw per-cut molar masses (kg/mol)
+   * @param rho per-cut normal liquid densities (g/cm3)
+   * @param tc per-cut critical temperatures (K)
+   * @param pc per-cut critical pressures (bara)
+   * @param omega per-cut acentric factors
+   * @return the constructed fluid
+   */
+  private static SystemInterface customField(double[] nbp, double[] moles, double[] mw, double[] rho, double[] tc,
+      double[] pc, double[] omega) {
+    SystemInterface fluid = new SystemPrEos(298.15, 50.0);
+    fluid.addComponent("methane", METHANE);
+    String[] names = { "PCa", "PCb", "PCc" };
+    for (int i = 0; i < names.length; i++) {
+      fluid.addTBPfraction(names[i], moles[i], mw[i], rho[i]);
+      ComponentInterface c = fluid.getComponent(names[i] + "_PC");
+      c.setNormalBoilingPoint(nbp[i]);
+      c.setTC(tc[i]);
+      c.setPC(pc[i]);
+      c.setAcentricFactor(omega[i]);
+    }
+    fluid.setMixingRule("classic");
+    return fluid;
+  }
+
+  /**
+   * Light field: three low-boiling cuts carrying a small pseudo-component mass (~1/20 of the heavy field).
+   *
+   * @return the constructed light fluid
+   */
+  private static SystemInterface lightField() {
+    return customField(new double[] { 350.0, 400.0, 450.0 }, new double[] { 0.10, 0.10, 0.10 },
+	new double[] { 0.090, 0.110, 0.130 }, new double[] { 0.72, 0.74, 0.76 }, new double[] { 480.0, 520.0, 560.0 },
+	new double[] { 32.0, 30.0, 28.0 }, new double[] { 0.28, 0.34, 0.40 });
+  }
+
+  /**
+   * Heavy field: three high-boiling cuts carrying a much larger pseudo-component mass (~20x the light field). Under raw
+   * pooling this mass would dominate the shared cut grid; per-fluid normalization prevents that.
+   *
+   * @return the constructed heavy fluid
+   */
+  private static SystemInterface heavyField() {
+    return customField(new double[] { 550.0, 600.0, 650.0 }, new double[] { 1.0, 1.0, 1.0 },
+	new double[] { 0.200, 0.240, 0.280 }, new double[] { 0.82, 0.85, 0.88 }, new double[] { 640.0, 700.0, 760.0 },
+	new double[] { 20.0, 17.0, 14.0 }, new double[] { 0.60, 0.75, 0.90 });
   }
 
   /**
@@ -241,5 +295,45 @@ class CharacterizeToCommonSlateTest {
 	() -> PseudoComponentCombiner.characterizeToCommonSlate(Arrays.asList(a, b), new double[] { 0.0, 0.0 }, 3));
     assertThrows(IllegalArgumentException.class,
 	() -> PseudoComponentCombiner.characterizeToCommonSlate(Arrays.asList(a, b), null, 0));
+  }
+
+  @Test
+  @DisplayName("Shared cut grid is per-fluid mass normalized, not dominated by the heaviest fluid")
+  void cutGridIsPerFluidMassNormalized() {
+    SystemInterface light = lightField();
+    SystemInterface heavy = heavyField();
+
+    // Two cuts, equal (null) weighting. With per-fluid mass normalization each fluid contributes the
+    // same total imaginary mass, so the single boundary lands between the light range (NBP 350-450)
+    // and the heavy range (NBP 550-650): the light fluid falls wholly into PC1 and the heavy fluid
+    // wholly into PC2. The buggy raw-pooling code, dominated by the ~20x heavier fluid, would push
+    // the boundary up into the heavy cuts so the heavy fluid would also populate PC1.
+    List<SystemInterface> slate = PseudoComponentCombiner.characterizeToCommonSlate(Arrays.asList(light, heavy), null,
+	2);
+
+    assertEquals(2, slate.size());
+    SystemInterface resultLight = slate.get(0);
+    SystemInterface resultHeavy = slate.get(1);
+
+    assertNotNull(resultLight.getComponent("PC1_PC"), "light fluid populates the light cut PC1");
+    assertNull(resultLight.getComponent("PC2_PC"), "light fluid must not reach the heavy cut PC2");
+    assertNull(resultHeavy.getComponent("PC1_PC"), "heavy fluid must not leak into the light cut PC1");
+    assertNotNull(resultHeavy.getComponent("PC2_PC"), "heavy fluid populates the heavy cut PC2");
+  }
+
+  @Test
+  @DisplayName("Slate weights shift the shared cut grid (weights affect the boundaries, not only the means)")
+  void cutGridShiftsWithWeights() {
+    // Equal weighting: the boundary sits between the two ranges, so the heavy fluid occupies only PC2.
+    List<SystemInterface> equalWeighted = PseudoComponentCombiner
+	.characterizeToCommonSlate(Arrays.asList(lightField(), heavyField()), new double[] { 1.0, 1.0 }, 2);
+    assertNull(equalWeighted.get(1).getComponent("PC1_PC"), "under equal weights the heavy fluid stays in PC2 only");
+
+    // Up-weighting the heavy fluid pulls the equal-mass boundary up into the heavy cuts, so the heavy
+    // fluid now spans PC1 as well. This is only possible if the weights influence the cut grid.
+    List<SystemInterface> heavyWeighted = PseudoComponentCombiner
+	.characterizeToCommonSlate(Arrays.asList(lightField(), heavyField()), new double[] { 1.0, 5.0 }, 2);
+    assertNotNull(heavyWeighted.get(1).getComponent("PC1_PC"),
+	"up-weighting the heavy fluid shifts the boundary so it also populates PC1");
   }
 }
