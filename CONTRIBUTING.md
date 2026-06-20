@@ -66,9 +66,10 @@ Run the hooks manually across the whole repository:
 pre-commit run --all-files
 ```
 
-> These hooks require a local JDK and Maven (they shell out to `./mvnw`). They are **not** run by
-> pre-commit.ci, which has no JVM — formatting is checked by the `Pre-commit checks` GitHub Action
-> instead.
+> These hooks require a local JDK and Maven. They invoke the Maven wrapper through
+> `devtools/run_spotless.py`, which selects `mvnw.cmd` on Windows and `./mvnw` elsewhere, so the
+> hooks work on Windows, macOS, and Linux. They are **not** run by pre-commit.ci, which has no JVM —
+> formatting is checked by the `Pre-commit checks` GitHub Action instead.
 
 ## Pull Request Process
 
