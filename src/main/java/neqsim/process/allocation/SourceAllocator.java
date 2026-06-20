@@ -91,12 +91,14 @@ public class SourceAllocator implements Serializable {
    * @param process the base-case process system; must be non-null and already solved
    * @return this allocator (fluent)
    */
-  public SourceAllocator setBaseCase(ProcessSystem process) {
-    this.process = process;
-    this.extractor = new RecoveryFactorExtractor(process).extract();
-    this.network = new AllocationNetwork(extractor);
-    return this;
-  }
+public SourceAllocator setBaseCase(ProcessSystem process) {
+  this.process = process;
+  sources.clear();
+  custodyOutlets.clear();
+  this.extractor = new RecoveryFactorExtractor(process).extract();
+  this.network = new AllocationNetwork(extractor);
+  return this;
+}
 
   /**
    * Tags a production source by name and feed stream.
