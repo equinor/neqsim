@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -155,6 +156,50 @@ public final class ProcessSafetyScenario implements Serializable {
 
   public static Builder builder(String name) {
     return new Builder(name);
+  }
+
+  /**
+   * Generate a first-pass set of process safety scenarios directly from a flowsheet topology.
+   *
+   * <p>
+   * One screening scenario is created per relevant unit operation: pressure vessels (separators, scrubbers, tanks)
+   * yield a blocked-outlet / overpressure scenario; rotating equipment (compressors, pumps, expanders) and
+   * heat-transfer duty units (coolers, heaters, exchangers, reboilers, condensers) yield a loss-of-drive /
+   * loss-of-utility scenario; valves yield a stuck-closed / blocked-flow scenario. The result is a <b>screening /
+   * preparation</b> artefact for a competent engineer to review and complete; it does not replace a structured HAZOP or
+   * relief study.
+   * </p>
+   *
+   * @param processSystem the flowsheet to walk (must not be null)
+   * @return a list of candidate {@link ProcessSafetyScenario} objects, in flowsheet order
+   * @throws IllegalArgumentException if {@code processSystem} is null
+   */
+  public static List<ProcessSafetyScenario> generateFromTopology(ProcessSystem processSystem) {
+    if (processSystem == null) {
+      throw new IllegalArgumentException("processSystem must not be null");
+    }
+    List<ProcessSafetyScenario> scenarios = new ArrayList<>();
+    for (ProcessEquipmentInterface unit : processSystem.getUnitOperations()) {
+      if (unit == null) {
+	continue;
+      }
+      String name = unit.getName();
+      if (name == null || name.trim().isEmpty()) {
+	continue;
+      }
+      String t = unit.getClass().getSimpleName().toLowerCase(Locale.ROOT);
+      if (t.contains("separator") || t.contains("scrubber") || t.contains("vessel") || t.contains("tank")) {
+	scenarios.add(builder("Blocked outlet / overpressure: " + name).blockOutlet(name).build());
+      } else if (t.contains("compressor") || t.contains("pump") || t.contains("expander")) {
+	scenarios.add(builder("Trip / loss of drive: " + name).utilityLoss(name).build());
+      } else if (t.contains("cooler") || t.contains("heater") || t.contains("heatexchanger") || t.contains("reboiler")
+	  || t.contains("condenser")) {
+	scenarios.add(builder("Loss of utility duty: " + name).utilityLoss(name).build());
+      } else if (t.contains("valve")) {
+	scenarios.add(builder("Stuck closed / blocked flow: " + name).blockOutlet(name).build());
+      }
+    }
+    return scenarios;
   }
 
   /** Builder for {@link ProcessSafetyScenario}. */
