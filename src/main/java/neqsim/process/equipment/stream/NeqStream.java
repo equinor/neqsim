@@ -32,7 +32,7 @@ public class NeqStream extends Stream {
   /**
    * Constructor for NeqStream.
    *
-   * @param name   name of stream
+   * @param name name of stream
    * @param stream input stream
    */
   public NeqStream(String name, StreamInterface stream) {
@@ -44,7 +44,7 @@ public class NeqStream extends Stream {
    * Constructor for NeqStream.
    * </p>
    *
-   * @param name         a {@link java.lang.String} object
+   * @param name a {@link java.lang.String} object
    * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
    */
   public NeqStream(String name, SystemInterface thermoSystem) {

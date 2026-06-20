@@ -696,7 +696,7 @@ public class ErosionPredictionCalculator implements Serializable {
    * Sets the pipe material.
    *
    * @param pipeMaterial material identifier: "carbon_steel", "duplex_steel", "super_duplex", "13cr", "inconel",
-   *                     "titanium"
+   * "titanium"
    */
   public void setPipeMaterial(String pipeMaterial) {
     this.pipeMaterial = pipeMaterial;
@@ -896,9 +896,9 @@ public class ErosionPredictionCalculator implements Serializable {
     /**
      * Creates a sand load default entry.
      *
-     * @param completionType      completion type description
-     * @param liquidPpmWt         sand load in liquid flow (ppm wt)
-     * @param gasPpmWt            sand load in dry gas flow (ppm wt)
+     * @param completionType completion type description
+     * @param liquidPpmWt sand load in liquid flow (ppm wt)
+     * @param gasPpmWt sand load in dry gas flow (ppm wt)
      * @param particleSizeMicrons particle diameter (microns)
      */
     public SandLoadDefaults(String completionType, double liquidPpmWt, double gasPpmWt, double particleSizeMicrons) {
@@ -986,10 +986,10 @@ public class ErosionPredictionCalculator implements Serializable {
    * multiphase wells, both liquid and gas phase sand loads are computed, and the higher rate is used.
    * </p>
    *
-   * @param completionType     one of: "natural", "natural_failure", "sas", "ohgp_incomplete", "ohgp_complete"
+   * @param completionType one of: "natural", "natural_failure", "sas", "ohgp_incomplete", "ohgp_complete"
    * @param liquidRateM3PerDay liquid production rate in m3/day (0 for dry gas wells)
-   * @param gasRateKgPerDay    gas production rate in kg/day (0 for oil-only wells)
-   * @param liquidDensityKgM3  liquid density in kg/m3 (used for ppm conversion)
+   * @param gasRateKgPerDay gas production rate in kg/day (0 for oil-only wells)
+   * @param liquidDensityKgM3 liquid density in kg/m3 (used for ppm conversion)
    */
   public void applySandLoadDefaults(String completionType, double liquidRateM3PerDay, double gasRateKgPerDay,
       double liquidDensityKgM3) {
@@ -1028,7 +1028,7 @@ public class ErosionPredictionCalculator implements Serializable {
    * </p>
    *
    * @param corrosionInhibited whether corrosion inhibitor is used
-   * @param sandPresent        whether sand production is expected
+   * @param sandPresent whether sand production is expected
    * @return adjusted maximum velocity in m/s
    */
   public double calcMaxVelocityForCorrosionProtection(boolean corrosionInhibited, boolean sandPresent) {

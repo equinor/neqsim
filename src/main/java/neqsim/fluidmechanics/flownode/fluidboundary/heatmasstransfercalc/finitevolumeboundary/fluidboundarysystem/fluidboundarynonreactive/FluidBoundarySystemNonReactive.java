@@ -34,7 +34,7 @@ public class FluidBoundarySystemNonReactive extends FluidBoundarySystem {
    * </p>
    *
    * @param boundary a {@link neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.FluidBoundaryInterface}
-   *                 object
+   * object
    */
   public FluidBoundarySystemNonReactive(FluidBoundaryInterface boundary) {
     super(boundary);

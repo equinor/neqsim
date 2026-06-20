@@ -23,8 +23,8 @@ public class PSflashSingleComp extends Flash {
    * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param Sspec  a double
-   * @param type   a int
+   * @param Sspec a double
+   * @param type a int
    */
   public PSflashSingleComp(SystemInterface system, double Sspec, int type) {
     this.system = system;

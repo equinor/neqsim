@@ -168,13 +168,13 @@ public class SensitivityAnalysis implements Serializable {
     /**
      * Creates an uncertain parameter.
      *
-     * @param name         parameter name for reporting
-     * @param p10          10th percentile (low case)
-     * @param p50          50th percentile (base case)
-     * @param p90          90th percentile (high case)
+     * @param name parameter name for reporting
+     * @param p10 10th percentile (low case)
+     * @param p50 50th percentile (base case)
+     * @param p90 90th percentile (high case)
      * @param distribution probability distribution type
-     * @param unit         engineering unit (for reporting)
-     * @param setter       function to apply parameter value to process
+     * @param unit engineering unit (for reporting)
+     * @param setter function to apply parameter value to process
      */
     public UncertainParameter(String name, double p10, double p50, double p90, DistributionType distribution,
 	String unit, BiConsumer<ProcessSystem, Double> setter) {
@@ -194,10 +194,10 @@ public class SensitivityAnalysis implements Serializable {
     /**
      * Creates a triangular distribution parameter.
      *
-     * @param name   parameter name
-     * @param min    minimum value (P10)
-     * @param mode   most likely value (P50)
-     * @param max    maximum value (P90)
+     * @param name parameter name
+     * @param min minimum value (P10)
+     * @param mode most likely value (P50)
+     * @param max maximum value (P90)
      * @param setter function to apply value
      * @return uncertain parameter
      */
@@ -209,11 +209,11 @@ public class SensitivityAnalysis implements Serializable {
     /**
      * Creates a triangular distribution parameter with unit.
      *
-     * @param name   parameter name
-     * @param min    minimum value (P10)
-     * @param mode   most likely value (P50)
-     * @param max    maximum value (P90)
-     * @param unit   engineering unit
+     * @param name parameter name
+     * @param min minimum value (P10)
+     * @param mode most likely value (P50)
+     * @param max maximum value (P90)
+     * @param unit engineering unit
      * @param setter function to apply value
      * @return uncertain parameter
      */
@@ -225,10 +225,10 @@ public class SensitivityAnalysis implements Serializable {
     /**
      * Creates a normal distribution parameter.
      *
-     * @param name   parameter name
-     * @param p10    10th percentile
-     * @param p50    50th percentile (mean)
-     * @param p90    90th percentile
+     * @param name parameter name
+     * @param p10 10th percentile
+     * @param p50 50th percentile (mean)
+     * @param p90 90th percentile
      * @param setter function to apply value
      * @return uncertain parameter
      */
@@ -240,10 +240,10 @@ public class SensitivityAnalysis implements Serializable {
     /**
      * Creates a log-normal distribution parameter.
      *
-     * @param name   parameter name
-     * @param p10    10th percentile
-     * @param p50    50th percentile
-     * @param p90    90th percentile
+     * @param name parameter name
+     * @param p10 10th percentile
+     * @param p50 50th percentile
+     * @param p90 90th percentile
      * @param setter function to apply value
      * @return uncertain parameter
      */
@@ -255,9 +255,9 @@ public class SensitivityAnalysis implements Serializable {
     /**
      * Creates a uniform distribution parameter.
      *
-     * @param name   parameter name
-     * @param min    minimum value
-     * @param max    maximum value
+     * @param name parameter name
+     * @param min minimum value
+     * @param max maximum value
      * @param setter function to apply value
      * @return uncertain parameter
      */
@@ -336,7 +336,7 @@ public class SensitivityAnalysis implements Serializable {
      * Applies a value to the process system.
      *
      * @param process process to modify
-     * @param value   value to apply
+     * @param value value to apply
      */
     public void apply(ProcessSystem process, double value) {
       setter.accept(process, value);
@@ -431,12 +431,12 @@ public class SensitivityAnalysis implements Serializable {
     /**
      * Creates a trial result.
      *
-     * @param trialNumber       trial index
+     * @param trialNumber trial index
      * @param sampledParameters map of parameter name to sampled value
-     * @param outputValue       output metric value
-     * @param bottleneck        bottleneck equipment name (may be null)
-     * @param feasible          true if solution was feasible
-     * @param converged         true if simulation converged
+     * @param outputValue output metric value
+     * @param bottleneck bottleneck equipment name (may be null)
+     * @param feasible true if solution was feasible
+     * @param converged true if simulation converged
      */
     public TrialResult(int trialNumber, Map<String, Double> sampledParameters, double outputValue, String bottleneck,
 	boolean feasible, boolean converged) {
@@ -536,10 +536,10 @@ public class SensitivityAnalysis implements Serializable {
     /**
      * Creates a Monte Carlo result.
      *
-     * @param trials               list of trial results
+     * @param trials list of trial results
      * @param tornadoSensitivities map of parameter name to sensitivity
-     * @param outputName           name of output metric
-     * @param outputUnit           unit of output metric
+     * @param outputName name of output metric
+     * @param outputUnit unit of output metric
      */
     public MonteCarloResult(List<TrialResult> trials, Map<String, Double> tornadoSensitivities, String outputName,
 	String outputUnit) {
@@ -996,9 +996,9 @@ public class SensitivityAnalysis implements Serializable {
     /**
      * Creates a spider point.
      *
-     * @param parameterValue      actual parameter value
+     * @param parameterValue actual parameter value
      * @param normalizedParameter normalized value (-1 to 1)
-     * @param outputValue         resulting output
+     * @param outputValue resulting output
      */
     public SpiderPoint(double parameterValue, double normalizedParameter, double outputValue) {
       this.parameterValue = parameterValue;
@@ -1032,7 +1032,7 @@ public class SensitivityAnalysis implements Serializable {
    * Creates a sensitivity analysis with specified RNG.
    *
    * @param process base process system
-   * @param rng     random number generator
+   * @param rng random number generator
    */
   public SensitivityAnalysis(ProcessSystem process, Random rng) {
     this.baseProcess = Objects.requireNonNull(process, "Process is required");
@@ -1082,12 +1082,12 @@ public class SensitivityAnalysis implements Serializable {
    * <li>Extract the output metric</li>
    * </ol>
    *
-   * @param feedStream   feed stream for optimization
-   * @param lowerBound   lower bound for rate
-   * @param upperBound   upper bound for rate
-   * @param rateUnit     rate unit
+   * @param feedStream feed stream for optimization
+   * @param lowerBound lower bound for rate
+   * @param upperBound upper bound for rate
+   * @param rateUnit rate unit
    * @param outputMetric function to extract output from optimization result
-   * @param config       simulation configuration
+   * @param config simulation configuration
    * @return Monte Carlo result with statistics
    */
   public MonteCarloResult runMonteCarloOptimization(StreamInterface feedStream, double lowerBound, double upperBound,
@@ -1117,13 +1117,13 @@ public class SensitivityAnalysis implements Serializable {
   /**
    * Runs trials sequentially.
    *
-   * @param feedStream   the feed stream for optimization
-   * @param lowerBound   the lower bound of the rate search range
-   * @param upperBound   the upper bound of the rate search range
-   * @param rateUnit     the unit for rate values
+   * @param feedStream the feed stream for optimization
+   * @param lowerBound the lower bound of the rate search range
+   * @param upperBound the upper bound of the rate search range
+   * @param rateUnit the unit for rate values
    * @param outputMetric the function extracting the output metric from optimization results
-   * @param config       the sensitivity analysis configuration
-   * @param localRng     the random number generator for sampling
+   * @param config the sensitivity analysis configuration
+   * @param localRng the random number generator for sampling
    * @return the list of trial results
    */
   private List<TrialResult> runSequentialTrials(StreamInterface feedStream, double lowerBound, double upperBound,
@@ -1164,13 +1164,13 @@ public class SensitivityAnalysis implements Serializable {
   /**
    * Runs trials in parallel.
    *
-   * @param feedStream   the feed stream for optimization
-   * @param lowerBound   lower bound of the rate range
-   * @param upperBound   upper bound of the rate range
-   * @param rateUnit     unit for production rates
+   * @param feedStream the feed stream for optimization
+   * @param lowerBound lower bound of the rate range
+   * @param upperBound upper bound of the rate range
+   * @param rateUnit unit for production rates
    * @param outputMetric function to extract output metric from optimization result
-   * @param config       sensitivity analysis configuration
-   * @param localRng     random number generator for sampling
+   * @param config sensitivity analysis configuration
+   * @param localRng random number generator for sampling
    * @return list of trial results
    */
   private List<TrialResult> runParallelTrials(StreamInterface feedStream, double lowerBound, double upperBound,
@@ -1212,12 +1212,12 @@ public class SensitivityAnalysis implements Serializable {
   /**
    * Runs a single trial (used for parallel execution).
    *
-   * @param trialNum     the trial number
-   * @param sampled      map of sampled parameter values
-   * @param feedStream   the feed stream for optimization
-   * @param lowerBound   lower bound of the rate range
-   * @param upperBound   upper bound of the rate range
-   * @param rateUnit     unit for production rates
+   * @param trialNum the trial number
+   * @param sampled map of sampled parameter values
+   * @param feedStream the feed stream for optimization
+   * @param lowerBound lower bound of the rate range
+   * @param upperBound upper bound of the rate range
+   * @param rateUnit unit for production rates
    * @param outputMetric function to extract output metric from optimization result
    * @return the trial result
    */
@@ -1260,10 +1260,10 @@ public class SensitivityAnalysis implements Serializable {
    * <li>Calculate sensitivity as |output_P90 - output_P10|</li>
    * </ol>
    *
-   * @param feedStream   feed stream for optimization
-   * @param lowerBound   lower bound for rate
-   * @param upperBound   upper bound for rate
-   * @param rateUnit     rate unit
+   * @param feedStream feed stream for optimization
+   * @param lowerBound lower bound for rate
+   * @param upperBound upper bound for rate
+   * @param rateUnit rate unit
    * @param outputMetric function to extract output
    * @return map of parameter name to sensitivity magnitude
    */
@@ -1330,12 +1330,12 @@ public class SensitivityAnalysis implements Serializable {
    * Varies each parameter systematically from P10 to P90 while holding others at P50, recording the output at each
    * step.
    *
-   * @param feedStream        feed stream for optimization
-   * @param lowerBound        lower bound for rate
-   * @param upperBound        upper bound for rate
-   * @param rateUnit          rate unit
+   * @param feedStream feed stream for optimization
+   * @param lowerBound lower bound for rate
+   * @param upperBound upper bound for rate
+   * @param rateUnit rate unit
    * @param stepsPerParameter number of steps from P10 to P90
-   * @param outputMetric      function to extract output
+   * @param outputMetric function to extract output
    * @return map of parameter name to list of spider points
    */
   public Map<String, List<SpiderPoint>> runSpiderAnalysis(StreamInterface feedStream, double lowerBound,

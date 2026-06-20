@@ -115,7 +115,7 @@ public class ESDValve extends ThrottlingValve {
   /**
    * Constructor for ESDValve.
    *
-   * @param name        name of ESD valve
+   * @param name name of ESD valve
    * @param inletStream inlet stream to valve
    */
   public ESDValve(String name, StreamInterface inletStream) {

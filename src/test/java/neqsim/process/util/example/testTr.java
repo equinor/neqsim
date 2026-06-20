@@ -54,8 +54,8 @@ public class testTr {
   /**
    * Creates a processing train with pipe, separator, and outlet pipe.
    *
-   * @param trainName     unique name for this train
-   * @param inletStream   the inlet stream to the train
+   * @param trainName unique name for this train
+   * @param inletStream the inlet stream to the train
    * @param processSystem the process system to add equipment to
    * @return the outlet pipe from the train
    */
@@ -404,10 +404,10 @@ public class testTr {
    * pressure at different operating conditions (outlet pressure, temperature).
    * </p>
    *
-   * @param processSystem   the process system containing the compressor
+   * @param processSystem the process system containing the compressor
    * @param inletStreamName name of the inlet stream to vary flow rate on
    * @param outletPressures array of outlet pressures to evaluate (bara)
-   * @param flowRates       array of flow rates to evaluate (kg/hr)
+   * @param flowRates array of flow rates to evaluate (kg/hr)
    * @return Eclipse VFP formatted string
    */
   private String generateEclipseLiftCurve(ProcessSystem processSystem, String inletStreamName, double[] outletPressures,

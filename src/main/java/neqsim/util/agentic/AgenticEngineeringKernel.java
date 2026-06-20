@@ -125,7 +125,7 @@ public final class AgenticEngineeringKernel implements Serializable {
    * Builds an evidence graph and computes a transparent trust score for a result package.
    *
    * @param json result package with optional result, provenance, validation, qualityGate, benchmarkTrust, assumptions,
-   *             limitations, standards, and evidence arrays
+   * limitations, standards, and evidence arrays
    * @return JSON trust report with evidence graph, claims, score, verdict, and recommendations
    */
   public static String evaluateTrust(String json) {
@@ -307,13 +307,13 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Adds one weighted readiness checklist item.
    *
-   * @param readiness   mutable readiness accumulator
-   * @param id          checklist id
-   * @param category    checklist category
-   * @param maxPoints   item weight
-   * @param present     whether evidence is present
-   * @param critical    whether failure should block design use
-   * @param evidence    description of accepted evidence
+   * @param readiness mutable readiness accumulator
+   * @param id checklist id
+   * @param category checklist category
+   * @param maxPoints item weight
+   * @param present whether evidence is present
+   * @param critical whether failure should block design use
+   * @param evidence description of accepted evidence
    * @param remediation recommended remediation when missing
    */
   private static void addReadinessItem(ReadinessAccumulator readiness, String id, String category, double maxPoints,
@@ -380,7 +380,7 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Returns a readiness level string from score and missing critical count.
    *
-   * @param score           readiness score
+   * @param score readiness score
    * @param missingCritical number of missing critical items
    * @return readiness level
    */
@@ -401,7 +401,7 @@ public final class AgenticEngineeringKernel implements Serializable {
    * Counts checklist entries by status.
    *
    * @param checklist checklist array
-   * @param status    target status
+   * @param status target status
    * @return count of matching entries
    */
   private static int countChecklistStatus(JsonArray checklist, String status) {
@@ -418,7 +418,7 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Checks whether an artifacts list contains a path fragment with completed-like status.
    *
-   * @param artifacts    artifact objects or path strings
+   * @param artifacts artifact objects or path strings
    * @param pathFragment path fragment to find
    * @return true when a matching artifact exists and is not marked missing/failed
    */
@@ -457,8 +457,8 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Builds an error response.
    *
-   * @param code        machine-readable error code
-   * @param message     human-readable error message
+   * @param code machine-readable error code
+   * @param message human-readable error message
    * @param remediation suggested remediation
    * @return JSON error response
    */
@@ -479,7 +479,7 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Detects engineering domains from task text and optional explicit domain input.
    *
-   * @param task  task text
+   * @param task task text
    * @param input full input object
    * @return ordered list of domains
    */
@@ -528,7 +528,7 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Returns true when a text contains any token.
    *
-   * @param text   text to search
+   * @param text text to search
    * @param tokens tokens to match
    * @return true when at least one token is present
    */
@@ -544,9 +544,9 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Builds the engineering intent object.
    *
-   * @param task    task text
+   * @param task task text
    * @param domains detected domains
-   * @param input   full input object
+   * @param input full input object
    * @return engineering intent JSON
    */
   private static JsonObject buildEngineeringIntent(String task, List<String> domains, JsonObject input) {
@@ -613,11 +613,11 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Adds graph nodes and edges for an intent array.
    *
-   * @param nodes    graph node array
-   * @param edges    graph edge array
-   * @param source   source node id
-   * @param intent   intent object
-   * @param field    intent field name
+   * @param nodes graph node array
+   * @param edges graph edge array
+   * @param source source node id
+   * @param intent intent object
+   * @param field intent field name
    * @param nodeType graph node type
    * @param edgeType graph edge type
    */
@@ -636,8 +636,8 @@ public final class AgenticEngineeringKernel implements Serializable {
    * Adds a graph node.
    *
    * @param nodes graph node array
-   * @param id    node id
-   * @param type  node type
+   * @param id node id
+   * @param type node type
    * @param label node label
    */
   private static void addGraphNode(JsonArray nodes, String id, String type, String label) {
@@ -651,10 +651,10 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Adds a graph edge.
    *
-   * @param edges  graph edge array
+   * @param edges graph edge array
    * @param source source id
    * @param target target id
-   * @param type   edge type
+   * @param type edge type
    */
   private static void addGraphEdge(JsonArray edges, String source, String target, String type) {
     JsonObject edge = new JsonObject();
@@ -668,7 +668,7 @@ public final class AgenticEngineeringKernel implements Serializable {
    * Compiles a workflow plan from intent domains.
    *
    * @param intent engineering intent
-   * @param input  source input
+   * @param input source input
    * @return workflow plan JSON
    */
   private static JsonObject compileWorkflowPlan(JsonObject intent, JsonObject input) {
@@ -738,7 +738,7 @@ public final class AgenticEngineeringKernel implements Serializable {
    * Selects the primary analysis step that downstream validation should depend on.
    *
    * @param domains detected engineering domains
-   * @param input   source input object
+   * @param input source input object
    * @return workflow step id for the primary calculation
    */
   private static String primaryAnalysisStep(List<String> domains, JsonObject input) {
@@ -760,13 +760,13 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Adds a workflow step.
    *
-   * @param steps     step array
-   * @param id        step id
-   * @param tool      MCP tool name
-   * @param phase     workflow phase
-   * @param purpose   step purpose
+   * @param steps step array
+   * @param id step id
+   * @param tool MCP tool name
+   * @param phase workflow phase
+   * @param purpose step purpose
    * @param dependsOn dependency ids
-   * @param gate      success gate
+   * @param gate success gate
    */
   private static void addStep(JsonArray steps, String id, String tool, String phase, String purpose, String[] dependsOn,
       String gate) {
@@ -785,8 +785,8 @@ public final class AgenticEngineeringKernel implements Serializable {
    * Builds a composeWorkflow-style payload for compatible linear execution.
    *
    * @param intent engineering intent
-   * @param plan   workflow plan
-   * @param input  source input
+   * @param plan workflow plan
+   * @param input source input
    * @return compiled workflow object
    */
   private static JsonObject buildCompiledWorkflow(JsonObject intent, JsonObject plan, JsonObject input) {
@@ -872,8 +872,8 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Adds a quality gate entry.
    *
-   * @param gates       mutable gate array
-   * @param id          gate id
+   * @param gates mutable gate array
+   * @param id gate id
    * @param description gate description
    */
   private static void addGate(JsonArray gates, String id, String description) {
@@ -887,7 +887,7 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Builds an evidence graph from input and result metadata.
    *
-   * @param input  trust input object
+   * @param input trust input object
    * @param result result object
    * @return evidence graph JSON
    */
@@ -929,7 +929,7 @@ public final class AgenticEngineeringKernel implements Serializable {
    * @param nodes graph node array
    * @param edges graph edge array
    * @param field source field name
-   * @param type  node type
+   * @param type node type
    */
   private static void addEvidenceNodes(JsonObject input, JsonArray nodes, JsonArray edges, String field, String type) {
     if (!input.has(field)) {
@@ -947,7 +947,7 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Builds validation claims from result metadata.
    *
-   * @param input  input object
+   * @param input input object
    * @param result result object
    * @return validation claim array
    */
@@ -968,9 +968,9 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Adds a validation claim.
    *
-   * @param claims    claim array
-   * @param id        claim id
-   * @param passed    whether the claim passed
+   * @param claims claim array
+   * @param id claim id
+   * @param passed whether the claim passed
    * @param statement claim statement
    */
   private static void addClaim(JsonArray claims, String id, boolean passed, String statement) {
@@ -984,9 +984,9 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Checks whether a metadata object exists in input or result.
    *
-   * @param input  input object
+   * @param input input object
    * @param result result object
-   * @param field  field name
+   * @param field field name
    * @return true when present as an object
    */
   private static boolean hasObject(JsonObject input, JsonObject result, String field) {
@@ -997,9 +997,9 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Calculates trust score.
    *
-   * @param input  input object
+   * @param input input object
    * @param result result object
-   * @param graph  evidence graph
+   * @param graph evidence graph
    * @param claims validation claims
    * @return trust score object
    */
@@ -1055,7 +1055,7 @@ public final class AgenticEngineeringKernel implements Serializable {
    * Checks a named claim.
    *
    * @param claims claim array
-   * @param id     claim id
+   * @param id claim id
    * @return true when passed
    */
   private static boolean passedClaim(JsonArray claims, String id) {
@@ -1126,9 +1126,9 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Applies benchmark trust score adjustments.
    *
-   * @param input  input object
+   * @param input input object
    * @param result result object
-   * @param trust  trust score to modify
+   * @param trust trust score to modify
    */
   private static void applyBenchmarkTrust(JsonObject input, JsonObject result, TrustScore trust) {
     JsonObject benchmark = objectValue(input, "benchmarkTrust", objectValue(result, "benchmarkTrust", null));
@@ -1188,10 +1188,10 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Adds a generated study candidate.
    *
-   * @param candidates    candidate array
+   * @param candidates candidate array
    * @param candidateName candidate name
-   * @param variableName  variable name
-   * @param value         variable value
+   * @param variableName variable name
+   * @param value variable value
    */
   private static void addGeneratedCandidate(JsonArray candidates, String candidateName, String variableName,
       double value) {
@@ -1266,10 +1266,10 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Evaluates all candidates.
    *
-   * @param candidates  candidate input
-   * @param objectives  objective definitions
+   * @param candidates candidate input
+   * @param objectives objective definitions
    * @param constraints constraint definitions
-   * @param ranges      metric ranges
+   * @param ranges metric ranges
    * @return evaluated candidate list
    */
   private static List<JsonObject> evaluateCandidates(JsonArray candidates, JsonArray objectives, JsonArray constraints,
@@ -1292,9 +1292,9 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Evaluates objectives for one candidate.
    *
-   * @param metrics      candidate metrics
-   * @param objectives   objective array
-   * @param ranges       metric ranges
+   * @param metrics candidate metrics
+   * @param objectives objective array
+   * @param ranges metric ranges
    * @param candidateOut candidate output to annotate
    * @return weighted score from 0 to 100
    */
@@ -1330,10 +1330,10 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Computes normalized objective score.
    *
-   * @param value     metric value
-   * @param goal      objective goal
+   * @param value metric value
+   * @param goal objective goal
    * @param objective objective object
-   * @param range     metric range
+   * @param range metric range
    * @return normalized score from 0 to 1
    */
   private static double normalizedObjective(double value, String goal, JsonObject objective, MetricRange range) {
@@ -1354,7 +1354,7 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Evaluates constraints.
    *
-   * @param metrics     candidate metrics
+   * @param metrics candidate metrics
    * @param constraints constraints
    * @return constraint result
    */
@@ -1386,9 +1386,9 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Checks one constraint expression.
    *
-   * @param value    metric value
+   * @param value metric value
    * @param operator operator string
-   * @param limit    limit value
+   * @param limit limit value
    * @return true if satisfied
    */
   private static boolean constraintSatisfied(double value, String operator, double limit) {
@@ -1454,7 +1454,7 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Builds Pareto front from evaluated candidates.
    *
-   * @param evaluated  evaluated candidates
+   * @param evaluated evaluated candidates
    * @param objectives objective definitions
    * @return Pareto front array
    */
@@ -1478,8 +1478,8 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Checks whether a candidate is dominated.
    *
-   * @param candidate  candidate under test
-   * @param evaluated  all candidates
+   * @param candidate candidate under test
+   * @param evaluated all candidates
    * @param objectives objective array
    * @return true if dominated by another feasible candidate
    */
@@ -1499,8 +1499,8 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Checks Pareto dominance.
    *
-   * @param left       possible dominating candidate
-   * @param right      possible dominated candidate
+   * @param left possible dominating candidate
+   * @param right possible dominated candidate
    * @param objectives objective definitions
    * @return true when left dominates right
    */
@@ -1531,9 +1531,9 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Compares two objective values.
    *
-   * @param left   left value
-   * @param right  right value
-   * @param goal   objective goal
+   * @param left left value
+   * @param right right value
+   * @param goal objective goal
    * @param target target for target goals
    * @return positive when left is better, negative when worse, zero when equal
    */
@@ -1550,7 +1550,7 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Builds uncertainty summary from the primary objective values.
    *
-   * @param evaluated  evaluated candidates
+   * @param evaluated evaluated candidates
    * @param objectives objectives
    * @return uncertainty summary object
    */
@@ -1584,7 +1584,7 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Computes percentile from sorted values.
    *
-   * @param sorted   sorted values
+   * @param sorted sorted values
    * @param fraction percentile fraction from 0 to 1
    * @return percentile value
    */
@@ -1605,10 +1605,10 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Builds study plan summary.
    *
-   * @param input       input object
-   * @param objectives  objectives
+   * @param input input object
+   * @param objectives objectives
    * @param constraints constraints
-   * @param candidates  candidates
+   * @param candidates candidates
    * @return study plan object
    */
   private static JsonObject buildStudyPlan(JsonObject input, JsonArray objectives, JsonArray constraints,
@@ -1664,8 +1664,8 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Gets string value from an object.
    *
-   * @param object       JSON object
-   * @param field        field name
+   * @param object JSON object
+   * @param field field name
    * @param defaultValue fallback value
    * @return string value
    */
@@ -1683,8 +1683,8 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Gets numeric value from an object.
    *
-   * @param object       JSON object
-   * @param field        field name
+   * @param object JSON object
+   * @param field field name
    * @param defaultValue fallback value
    * @return numeric value
    */
@@ -1699,8 +1699,8 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Gets object value from an object.
    *
-   * @param object       JSON object
-   * @param field        field name
+   * @param object JSON object
+   * @param field field name
    * @param defaultValue fallback object
    * @return object value or fallback
    */
@@ -1715,7 +1715,7 @@ public final class AgenticEngineeringKernel implements Serializable {
    * Gets array value from an object.
    *
    * @param object JSON object
-   * @param field  field name
+   * @param field field name
    * @return array value or empty array
    */
   private static JsonArray arrayValue(JsonObject object, String field) {
@@ -1746,8 +1746,8 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Copies array field or creates a default string array.
    *
-   * @param input    input object
-   * @param field    field name
+   * @param input input object
+   * @param field field name
    * @param defaults default values
    * @return array value
    */
@@ -1821,9 +1821,9 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Counts array fields in input or result.
    *
-   * @param input  input object
+   * @param input input object
    * @param result result object
-   * @param field  field to count
+   * @param field field to count
    * @return item count
    */
   private static int countArrayField(JsonObject input, JsonObject result, String field) {
@@ -1840,7 +1840,7 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Rounds a value to a number of decimals.
    *
-   * @param value    value to round
+   * @param value value to round
    * @param decimals number of decimals
    * @return rounded value
    */

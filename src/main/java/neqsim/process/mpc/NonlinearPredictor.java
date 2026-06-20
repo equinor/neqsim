@@ -290,7 +290,7 @@ public class NonlinearPredictor implements Serializable {
      * Add a move (value) for an MV.
      *
      * @param mvName the MV name
-     * @param value  the value at the next time step
+     * @param value the value at the next time step
      * @return this trajectory for method chaining
      */
     public MVTrajectory addMove(String mvName, double value) {
@@ -330,7 +330,7 @@ public class NonlinearPredictor implements Serializable {
      * Get the MV value at a specific time step.
      *
      * @param mvName the MV name
-     * @param step   the time step index
+     * @param step the time step index
      * @return the value, or NaN if not defined
      */
     public double getValue(String mvName, int step) {
@@ -396,10 +396,10 @@ public class NonlinearPredictor implements Serializable {
      *
      * @param cvTrajectories CV values [numCV][numSteps]
      * @param mvTrajectories MV values [numMV][numSteps]
-     * @param time           time points
-     * @param cvNames        CV names
-     * @param mvNames        MV names
-     * @param sampleTime     sample interval
+     * @param time time points
+     * @param cvNames CV names
+     * @param mvNames MV names
+     * @param sampleTime sample interval
      */
     public PredictionResult(double[][] cvTrajectories, double[][] mvTrajectories, double[] time, String[] cvNames,
 	String[] mvNames, double sampleTime) {
@@ -513,7 +513,7 @@ public class NonlinearPredictor implements Serializable {
     /**
      * Calculate the integrated squared error from a setpoint.
      *
-     * @param cvName   the CV name
+     * @param cvName the CV name
      * @param setpoint the target setpoint
      * @return the ISE
      */

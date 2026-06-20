@@ -264,7 +264,7 @@ public class TrayHydraulicsCalculator implements Serializable {
    * </p>
    *
    * @param spacing tray spacing [m]
-   * @param flv     flow parameter [-]
+   * @param flv flow parameter [-]
    * @return capacity factor K [m/s]
    */
   private double getCapacityFactor(double spacing, double flv) {

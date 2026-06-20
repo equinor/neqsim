@@ -322,7 +322,7 @@ public class Separator extends ProcessEquipmentBaseClass
   /**
    * Constructor for Separator.
    *
-   * @param name        a {@link java.lang.String} object
+   * @param name a {@link java.lang.String} object
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public Separator(String name, StreamInterface inletStream) {
@@ -517,11 +517,11 @@ public class Separator extends ProcessEquipmentBaseClass
    * setEntrainment.
    * </p>
    *
-   * @param val             a double specifying the entrainment amount
-   * @param specType        a {@link java.lang.String} object describing the specification unit
+   * @param val a double specifying the entrainment amount
+   * @param specType a {@link java.lang.String} object describing the specification unit
    * @param specifiedStream a {@link java.lang.String} object describing the reference stream
-   * @param phaseFrom       a {@link java.lang.String} object describing the phase entrained from
-   * @param phaseTo         a {@link java.lang.String} object describing the phase entrained to
+   * @param phaseFrom a {@link java.lang.String} object describing the phase entrained from
+   * @param phaseTo a {@link java.lang.String} object describing the phase entrained to
    */
   public void setEntrainment(double val, String specType, String specifiedStream, String phaseFrom, String phaseTo) {
     this.specifiedStream = specifiedStream;
@@ -730,7 +730,7 @@ public class Separator extends ProcessEquipmentBaseClass
    * Initialize an outlet already created from the flashed separator phases without running another stream flash.
    *
    * @param outletStream phase outlet stream
-   * @param id           calculation identifier
+   * @param id calculation identifier
    */
   protected void finalizePhaseOutlet(StreamInterface outletStream, UUID id) {
     if (outletStream == null || outletStream.getFluid() == null) {
@@ -1633,7 +1633,7 @@ public class Separator extends ProcessEquipmentBaseClass
    * </ul>
    *
    * @return capacity utilization fraction (0.0 to 1.0+ if overloaded), or 0.0 if liquid-only (no gas separation
-   *         needed), or Double.NaN if calculation error
+   * needed), or Double.NaN if calculation error
    * @see #getMaxAllowableGasVelocity()
    * @see #getMaxAllowableGasFlowRate()
    */
@@ -2366,8 +2366,8 @@ public class Separator extends ProcessEquipmentBaseClass
    * Evaluates fire exposure using separator geometry and process conditions while accounting for flare radiation based
    * on the real flaring heat duty.
    *
-   * @param config               fire scenario configuration
-   * @param flare                flare supplying heat duty and radiation parameters
+   * @param config fire scenario configuration
+   * @param flare flare supplying heat duty and radiation parameters
    * @param flareGroundDistanceM horizontal distance from flare base to separator [m]
    * @return aggregated fire exposure result
    */
@@ -2890,7 +2890,7 @@ public class Separator extends ProcessEquipmentBaseClass
    * Set heat input to the separator with specified unit.
    *
    * @param heatInput heat duty value
-   * @param unit      heat duty unit (W, kW, MW, J/s, etc.)
+   * @param unit heat duty unit (W, kW, MW, J/s, etc.)
    */
   @Override
   public void setHeatInput(double heatInput, String unit) {
@@ -2925,7 +2925,7 @@ public class Separator extends ProcessEquipmentBaseClass
    * Set heat duty with unit (alias for setHeatInput).
    *
    * @param heatDuty heat duty value
-   * @param unit     heat duty unit
+   * @param unit heat duty unit
    */
   public void setHeatDuty(double heatDuty, String unit) {
     setHeatInput(heatDuty, unit);
@@ -2944,7 +2944,7 @@ public class Separator extends ProcessEquipmentBaseClass
    * Set heat duty with unit (alias preserved for compatibility with energy-stream style naming).
    *
    * @param heatDuty heat duty value
-   * @param unit     heat duty unit
+   * @param unit heat duty unit
    */
   public void setDuty(double heatDuty, String unit) {
     setHeatInput(heatDuty, unit);
@@ -3751,7 +3751,7 @@ public class Separator extends ProcessEquipmentBaseClass
    * Per Equinor TR3500 SR-50535: Droplet cut size must be less than 150 µm.
    * </p>
    *
-   * @param effectiveGasLength    effective gas separation length in meters
+   * @param effectiveGasLength effective gas separation length in meters
    * @param freeHeightAboveLiquid free height above liquid level in meters
    * @return droplet cut size in meters (multiply by 1e6 for µm)
    */
@@ -3913,7 +3913,7 @@ public class Separator extends ProcessEquipmentBaseClass
   /**
    * Calculate the liquid area (circular segment) at a given level height.
    *
-   * @param diameter    vessel internal diameter in meters
+   * @param diameter vessel internal diameter in meters
    * @param levelHeight liquid level height in meters
    * @return segment area in m²
    */
@@ -4104,7 +4104,7 @@ public class Separator extends ProcessEquipmentBaseClass
    * </p>
    *
    * @param in the ObjectInputStream to read from
-   * @throws java.io.IOException    if an I/O error occurs
+   * @throws java.io.IOException if an I/O error occurs
    * @throws ClassNotFoundException if the class of a serialized object cannot be found
    */
   private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
@@ -4314,7 +4314,7 @@ public class Separator extends ProcessEquipmentBaseClass
      * Sets oil entrainment in gas phase.
      *
      * @param value entrainment value
-     * @param spec  specification type ("mole", "mass", "volume")
+     * @param spec specification type ("mole", "mass", "volume")
      * @return this builder for chaining
      */
     public Builder oilInGas(double value, String spec) {
@@ -4327,7 +4327,7 @@ public class Separator extends ProcessEquipmentBaseClass
      * Sets water entrainment in gas phase.
      *
      * @param value entrainment value
-     * @param spec  specification type ("mole", "mass", "volume")
+     * @param spec specification type ("mole", "mass", "volume")
      * @return this builder for chaining
      */
     public Builder waterInGas(double value, String spec) {
@@ -4340,7 +4340,7 @@ public class Separator extends ProcessEquipmentBaseClass
      * Sets gas entrainment in liquid phase.
      *
      * @param value entrainment value
-     * @param spec  specification type ("mole", "mass", "volume")
+     * @param spec specification type ("mole", "mass", "volume")
      * @return this builder for chaining
      */
     public Builder gasInLiquid(double value, String spec) {

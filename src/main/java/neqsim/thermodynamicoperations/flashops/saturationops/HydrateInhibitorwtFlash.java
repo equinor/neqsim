@@ -28,9 +28,9 @@ public class HydrateInhibitorwtFlash extends ConstantDutyTemperatureFlash {
    * Constructor for HydrateInhibitorwtFlash.
    * </p>
    *
-   * @param system    a {@link neqsim.thermo.system.SystemInterface} object
+   * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param inhibitor a {@link java.lang.String} object
-   * @param wtfr      a double
+   * @param wtfr a double
    */
   public HydrateInhibitorwtFlash(SystemInterface system, String inhibitor, double wtfr) {
     super(system);

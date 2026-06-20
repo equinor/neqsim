@@ -444,15 +444,15 @@ public class PhaseSrkCPABroydenImplicit extends PhaseSrkCPAs {
   /**
    * Build the analytic Jacobian for the coupled (n_s+1)-dimensional system.
    *
-   * @param jac       the Jacobian matrix to populate (dim x dim)
-   * @param xSite     site fraction values
+   * @param jac the Jacobian matrix to populate (dim x dim)
+   * @param xSite site fraction values
    * @param siteMoles moles per site
-   * @param totalVol  total volume V
-   * @param gdv1      g'(V) - 1/V
-   * @param zeta      current B/(nV)
-   * @param btemp     co-volume B
-   * @param dim       system dimension (ns+1)
-   * @param ns        number of association sites
+   * @param totalVol total volume V
+   * @param gdv1 g'(V) - 1/V
+   * @param zeta current B/(nV)
+   * @param btemp co-volume B
+   * @param dim system dimension (ns+1)
+   * @param ns number of association sites
    */
   private void buildJacobian(double[][] jac, double[] xSite, double[] siteMoles, double totalVol, double gdv1,
       double zeta, double btemp, int dim, int ns) {
@@ -496,9 +496,9 @@ public class PhaseSrkCPABroydenImplicit extends PhaseSrkCPAs {
   /**
    * Invert matrix A into Ainv using Gauss-Jordan elimination with partial pivoting.
    *
-   * @param a    input matrix (will be modified)
+   * @param a input matrix (will be modified)
    * @param ainv output inverse matrix
-   * @param n    matrix dimension
+   * @param n matrix dimension
    * @return true if successful, false if singular
    */
   private static boolean invertMatrix(double[][] a, double[][] ainv, int n) {
@@ -567,10 +567,10 @@ public class PhaseSrkCPABroydenImplicit extends PhaseSrkCPAs {
    * This is the Sherman-Morrison formula applied to the secant condition. Cost: O(n^2).
    * </p>
    *
-   * @param invJ  inverse Jacobian matrix H (updated in-place)
+   * @param invJ inverse Jacobian matrix H (updated in-place)
    * @param dxVec step vector: x_{k+1} - x_k
    * @param dfVec residual change vector: R(x_{k+1}) - R(x_k)
-   * @param n     system dimension
+   * @param n system dimension
    */
   private static void broydenUpdate(double[][] invJ, double[] dxVec, double[] dfVec, int n) {
     // Compute H * df

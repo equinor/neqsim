@@ -109,7 +109,7 @@ public final class SecurityRunner {
    * invocation.
    *
    * @param apiKey the API key (optional if security is disabled)
-   * @param tool   the tool being invoked
+   * @param tool the tool being invoked
    * @return null if allowed, or an error JSON string if denied
    */
   public static String checkAccess(String apiKey, String tool) {
@@ -350,7 +350,7 @@ public final class SecurityRunner {
   /**
    * Checks rate limiting for a key.
    *
-   * @param key   the API key
+   * @param key the API key
    * @param limit the max requests per window
    * @return true if within limits
    */
@@ -362,9 +362,9 @@ public final class SecurityRunner {
   /**
    * Logs an audit entry.
    *
-   * @param userId  the user ID
-   * @param tool    the tool invoked
-   * @param result  the result (allowed, denied, rate_limited)
+   * @param userId the user ID
+   * @param tool the tool invoked
+   * @param result the result (allowed, denied, rate_limited)
    * @param details additional details
    */
   private static void logAudit(String userId, String tool, String result, String details) {
@@ -387,8 +387,8 @@ public final class SecurityRunner {
   /**
    * Creates a standard error JSON response.
    *
-   * @param code        the error code
-   * @param message     the error message
+   * @param code the error code
+   * @param message the error message
    * @param remediation the fix
    * @return the JSON string
    */
@@ -440,7 +440,7 @@ public final class SecurityRunner {
      * Attempts to make a request within the rate limit.
      *
      * @param maxRequests max requests in the window
-     * @param windowMs    window duration in milliseconds
+     * @param windowMs window duration in milliseconds
      * @return true if allowed
      */
     boolean tryRequest(int maxRequests, long windowMs) {

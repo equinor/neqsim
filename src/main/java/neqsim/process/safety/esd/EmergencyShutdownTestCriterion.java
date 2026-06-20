@@ -64,15 +64,15 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
   /**
    * Creates an acceptance criterion.
    *
-   * @param id             stable criterion identifier
-   * @param type           criterion type
-   * @param logicalTag     logical tag or automation address used by signal criteria
-   * @param logicName      process logic name used by logic criteria
-   * @param targetValue    target value used by numeric criteria
-   * @param unit           engineering unit for target and monitored values
-   * @param clause         standards clause or company requirement reference
-   * @param severity       finding severity when the criterion fails
-   * @param description    human-readable criterion description
+   * @param id stable criterion identifier
+   * @param type criterion type
+   * @param logicalTag logical tag or automation address used by signal criteria
+   * @param logicName process logic name used by logic criteria
+   * @param targetValue target value used by numeric criteria
+   * @param unit engineering unit for target and monitored values
+   * @param clause standards clause or company requirement reference
+   * @param severity finding severity when the criterion fails
+   * @param description human-readable criterion description
    * @param recommendation recommended action when the criterion fails
    */
   private EmergencyShutdownTestCriterion(String id, CriterionType type, String logicalTag, String logicName,
@@ -95,10 +95,10 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
   /**
    * Creates a criterion requiring the final value to be at most a limit.
    *
-   * @param id         criterion identifier
+   * @param id criterion identifier
    * @param logicalTag monitored logical tag or automation address
-   * @param limit      maximum allowed final value
-   * @param unit       engineering unit
+   * @param limit maximum allowed final value
+   * @param unit engineering unit
    * @return acceptance criterion
    */
   public static EmergencyShutdownTestCriterion finalAtMost(String id, String logicalTag, double limit, String unit) {
@@ -109,10 +109,10 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
   /**
    * Creates a criterion requiring the final value to be at least a limit.
    *
-   * @param id         criterion identifier
+   * @param id criterion identifier
    * @param logicalTag monitored logical tag or automation address
-   * @param limit      minimum allowed final value
-   * @param unit       engineering unit
+   * @param limit minimum allowed final value
+   * @param unit engineering unit
    * @return acceptance criterion
    */
   public static EmergencyShutdownTestCriterion finalAtLeast(String id, String logicalTag, double limit, String unit) {
@@ -123,10 +123,10 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
   /**
    * Creates a criterion requiring the maximum value to stay below a limit.
    *
-   * @param id         criterion identifier
+   * @param id criterion identifier
    * @param logicalTag monitored logical tag or automation address
-   * @param limit      maximum allowed value
-   * @param unit       engineering unit
+   * @param limit maximum allowed value
+   * @param unit engineering unit
    * @return acceptance criterion
    */
   public static EmergencyShutdownTestCriterion maxAtMost(String id, String logicalTag, double limit, String unit) {
@@ -137,10 +137,10 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
   /**
    * Creates a criterion requiring the maximum value to exceed a threshold.
    *
-   * @param id         criterion identifier
+   * @param id criterion identifier
    * @param logicalTag monitored logical tag or automation address
-   * @param threshold  required maximum value
-   * @param unit       engineering unit
+   * @param threshold required maximum value
+   * @param unit engineering unit
    * @return acceptance criterion
    */
   public static EmergencyShutdownTestCriterion maxAtLeast(String id, String logicalTag, double threshold, String unit) {
@@ -151,10 +151,10 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
   /**
    * Creates a criterion requiring the minimum value to be at most a limit.
    *
-   * @param id         criterion identifier
+   * @param id criterion identifier
    * @param logicalTag monitored logical tag or automation address
-   * @param limit      maximum allowed minimum value
-   * @param unit       engineering unit
+   * @param limit maximum allowed minimum value
+   * @param unit engineering unit
    * @return acceptance criterion
    */
   public static EmergencyShutdownTestCriterion minAtMost(String id, String logicalTag, double limit, String unit) {
@@ -165,10 +165,10 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
   /**
    * Creates a criterion requiring the minimum value to be at least a limit.
    *
-   * @param id         criterion identifier
+   * @param id criterion identifier
    * @param logicalTag monitored logical tag or automation address
-   * @param limit      minimum allowed value
-   * @param unit       engineering unit
+   * @param limit minimum allowed value
+   * @param unit engineering unit
    * @return acceptance criterion
    */
   public static EmergencyShutdownTestCriterion minAtLeast(String id, String logicalTag, double limit, String unit) {
@@ -179,10 +179,10 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
   /**
    * Creates a criterion requiring a monitored value to decrease by a minimum amount.
    *
-   * @param id              criterion identifier
-   * @param logicalTag      monitored logical tag or automation address
+   * @param id criterion identifier
+   * @param logicalTag monitored logical tag or automation address
    * @param minimumDecrease required decrease from initial to final value
-   * @param unit            engineering unit
+   * @param unit engineering unit
    * @return acceptance criterion
    */
   public static EmergencyShutdownTestCriterion decreaseAtLeast(String id, String logicalTag, double minimumDecrease,
@@ -194,10 +194,10 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
   /**
    * Creates a criterion requiring a monitored value to increase by a minimum amount.
    *
-   * @param id              criterion identifier
-   * @param logicalTag      monitored logical tag or automation address
+   * @param id criterion identifier
+   * @param logicalTag monitored logical tag or automation address
    * @param minimumIncrease required increase from initial to final value
-   * @param unit            engineering unit
+   * @param unit engineering unit
    * @return acceptance criterion
    */
   public static EmergencyShutdownTestCriterion increaseAtLeast(String id, String logicalTag, double minimumIncrease,
@@ -209,10 +209,10 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
   /**
    * Creates a criterion requiring absolute model-to-field deviation below a limit.
    *
-   * @param id               criterion identifier
-   * @param logicalTag       monitored logical tag with field data
+   * @param id criterion identifier
+   * @param logicalTag monitored logical tag with field data
    * @param maximumDeviation maximum absolute deviation
-   * @param unit             engineering unit
+   * @param unit engineering unit
    * @return acceptance criterion
    */
   public static EmergencyShutdownTestCriterion fieldAbsoluteDeviationAtMost(String id, String logicalTag,
@@ -224,8 +224,8 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
   /**
    * Creates a criterion requiring relative model-to-field deviation below a limit.
    *
-   * @param id                       criterion identifier
-   * @param logicalTag               monitored logical tag with field data
+   * @param id criterion identifier
+   * @param logicalTag monitored logical tag with field data
    * @param maximumDeviationFraction maximum relative deviation fraction
    * @return acceptance criterion
    */
@@ -238,7 +238,7 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
   /**
    * Creates a criterion requiring a named logic sequence to complete.
    *
-   * @param id        criterion identifier
+   * @param id criterion identifier
    * @param logicName process logic name
    * @return acceptance criterion
    */
@@ -285,7 +285,7 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
   /**
    * Returns a copy with custom explanatory text.
    *
-   * @param description    criterion description
+   * @param description criterion description
    * @param recommendation recommended action if the criterion fails
    * @return copied criterion with custom text
    */
@@ -369,9 +369,9 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
   /**
    * Evaluates this criterion against a completed test result.
    *
-   * @param signalStats      monitored signal statistics keyed by logical tag
-   * @param logicStates      final logic states keyed by logic name
-   * @param errors           simulation errors recorded by the runner
+   * @param signalStats monitored signal statistics keyed by logical tag
+   * @param logicStates final logic states keyed by logic name
+   * @param errors simulation errors recorded by the runner
    * @param fieldComparisons model-to-field comparisons keyed by logical tag
    * @return criterion result
    */
@@ -415,11 +415,11 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
   /**
    * Creates a signal criterion.
    *
-   * @param id          criterion identifier
-   * @param type        criterion type
-   * @param logicalTag  monitored tag
+   * @param id criterion identifier
+   * @param type criterion type
+   * @param logicalTag monitored tag
    * @param targetValue target value
-   * @param unit        engineering unit
+   * @param unit engineering unit
    * @param description criterion description
    * @return acceptance criterion
    */
@@ -544,7 +544,7 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
   /**
    * Requires a non-empty text value.
    *
-   * @param text      text value
+   * @param text text value
    * @param fieldName field name for error messages
    * @return trimmed text
    */
@@ -574,11 +574,11 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
     /**
      * Creates a criterion result.
      *
-     * @param criterion     source criterion
-     * @param passed        true if the criterion passed
+     * @param criterion source criterion
+     * @param passed true if the criterion passed
      * @param observedValue observed value used by the criterion
-     * @param targetValue   target value used by the criterion
-     * @param message       result message
+     * @param targetValue target value used by the criterion
+     * @param message result message
      */
     private Result(EmergencyShutdownTestCriterion criterion, boolean passed, double observedValue, double targetValue,
 	String message) {

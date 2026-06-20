@@ -265,10 +265,10 @@ public class ProcessOptimizationEngine implements Serializable {
   /**
    * Finds the maximum throughput for given inlet and outlet pressures.
    *
-   * @param inletPressure  inlet pressure in bara
+   * @param inletPressure inlet pressure in bara
    * @param outletPressure outlet pressure in bara
-   * @param minFlow        minimum flow to search in kg/hr
-   * @param maxFlow        maximum flow to search in kg/hr
+   * @param minFlow minimum flow to search in kg/hr
+   * @param maxFlow maximum flow to search in kg/hr
    * @return optimization result
    */
   public OptimizationResult findMaximumThroughput(double inletPressure, double outletPressure, double minFlow,
@@ -341,10 +341,10 @@ public class ProcessOptimizationEngine implements Serializable {
   /**
    * Finds the required inlet pressure for a target flow rate.
    *
-   * @param targetFlow     target flow in kg/hr
+   * @param targetFlow target flow in kg/hr
    * @param outletPressure outlet pressure in bara
-   * @param minPressure    minimum inlet pressure to search in bara
-   * @param maxPressure    maximum inlet pressure to search in bara
+   * @param minPressure minimum inlet pressure to search in bara
+   * @param maxPressure maximum inlet pressure to search in bara
    * @return optimization result with optimal inlet pressure
    */
   public OptimizationResult findRequiredInletPressure(double targetFlow, double outletPressure, double minPressure,
@@ -446,10 +446,10 @@ public class ProcessOptimizationEngine implements Serializable {
   /**
    * Generates a lift curve for the process.
    *
-   * @param pressures    array of inlet pressures to evaluate in bara
+   * @param pressures array of inlet pressures to evaluate in bara
    * @param temperatures array of inlet temperatures in Kelvin
-   * @param waterCuts    array of water cuts as fraction
-   * @param GORs         array of gas-oil ratios in Sm3/Sm3
+   * @param waterCuts array of water cuts as fraction
+   * @param GORs array of gas-oil ratios in Sm3/Sm3
    * @return lift curve data
    */
   public LiftCurveData generateLiftCurve(double[] pressures, double[] temperatures, double[] waterCuts, double[] GORs) {
@@ -478,10 +478,10 @@ public class ProcessOptimizationEngine implements Serializable {
   /**
    * Evaluates a single lift curve point.
    *
-   * @param pressure    the inlet pressure in bara
+   * @param pressure the inlet pressure in bara
    * @param temperature the temperature in Kelvin
-   * @param waterCut    the water cut fraction (0-1)
-   * @param gor         the gas-oil ratio
+   * @param waterCut the water cut fraction (0-1)
+   * @param gor the gas-oil ratio
    * @return the evaluated lift curve point, or null if evaluation fails
    */
   private LiftCurvePoint evaluateLiftCurvePoint(double pressure, double temperature, double waterCut, double gor) {
@@ -510,10 +510,10 @@ public class ProcessOptimizationEngine implements Serializable {
   /**
    * Golden section search for maximum flow.
    *
-   * @param inletPressure  the inlet pressure in bara
+   * @param inletPressure the inlet pressure in bara
    * @param outletPressure the outlet pressure in bara
-   * @param minFlow        the minimum flow rate to search
-   * @param maxFlow        the maximum flow rate to search
+   * @param minFlow the minimum flow rate to search
+   * @param maxFlow the maximum flow rate to search
    * @return the maximum achievable flow rate found by golden section search
    */
   private double goldenSectionSearch(double inletPressure, double outletPressure, double minFlow, double maxFlow) {
@@ -547,10 +547,10 @@ public class ProcessOptimizationEngine implements Serializable {
   /**
    * Binary search for maximum flow.
    *
-   * @param inletPressure  the inlet pressure in bara
+   * @param inletPressure the inlet pressure in bara
    * @param outletPressure the outlet pressure in bara
-   * @param minFlow        the minimum flow rate to search
-   * @param maxFlow        the maximum flow rate to search
+   * @param minFlow the minimum flow rate to search
+   * @param maxFlow the maximum flow rate to search
    * @return the maximum achievable flow rate
    */
   private double binarySearch(double inletPressure, double outletPressure, double minFlow, double maxFlow) {
@@ -573,10 +573,10 @@ public class ProcessOptimizationEngine implements Serializable {
   /**
    * Binary search for required inlet pressure.
    *
-   * @param targetFlow     the target flow rate to achieve
+   * @param targetFlow the target flow rate to achieve
    * @param outletPressure the outlet pressure in bara
-   * @param minPressure    the minimum pressure to search in bara
-   * @param maxPressure    the maximum pressure to search in bara
+   * @param minPressure the minimum pressure to search in bara
+   * @param maxPressure the maximum pressure to search in bara
    * @return the minimum inlet pressure required to achieve the target flow
    */
   private double pressureBinarySearch(double targetFlow, double outletPressure, double minPressure,
@@ -600,9 +600,9 @@ public class ProcessOptimizationEngine implements Serializable {
   /**
    * Evaluates the flow objective function.
    *
-   * @param inletPressure  the inlet pressure in bara
+   * @param inletPressure the inlet pressure in bara
    * @param outletPressure the outlet pressure in bara
-   * @param flow           the flow rate to evaluate
+   * @param flow the flow rate to evaluate
    * @return the flow value if feasible, or negative max value if infeasible
    */
   private double evaluateFlowObjective(double inletPressure, double outletPressure, double flow) {
@@ -615,9 +615,9 @@ public class ProcessOptimizationEngine implements Serializable {
   /**
    * Checks if a flow rate can be achieved.
    *
-   * @param inletPressure  the inlet pressure in bara
+   * @param inletPressure the inlet pressure in bara
    * @param outletPressure the outlet pressure in bara
-   * @param flow           the flow rate to check
+   * @param flow the flow rate to check
    * @return true if the flow rate can be achieved at the given pressures
    */
   private boolean canAchieveFlow(double inletPressure, double outletPressure, double flow) {
@@ -651,8 +651,8 @@ public class ProcessOptimizationEngine implements Serializable {
   /**
    * Checks if flow can be achieved with given inlet pressure.
    *
-   * @param flow           the target flow rate
-   * @param inletPressure  the inlet pressure to test
+   * @param flow the target flow rate
+   * @param inletPressure the inlet pressure to test
    * @param outletPressure the required outlet pressure
    * @return true if the outlet pressure meets the requirement
    */
@@ -763,9 +763,9 @@ public class ProcessOptimizationEngine implements Serializable {
    * near the optimum.
    * </p>
    *
-   * @param inletPressure  inlet pressure in bara
+   * @param inletPressure inlet pressure in bara
    * @param outletPressure outlet pressure in bara
-   * @param initialFlow    starting flow rate in kg/hr
+   * @param initialFlow starting flow rate in kg/hr
    * @return optimal flow rate in kg/hr
    */
   public double gradientDescentSearch(double inletPressure, double outletPressure, double initialFlow) {
@@ -812,9 +812,9 @@ public class ProcessOptimizationEngine implements Serializable {
   /**
    * Estimates the gradient of the objective function using finite differences.
    *
-   * @param inletPressure  inlet pressure in bara
+   * @param inletPressure inlet pressure in bara
    * @param outletPressure outlet pressure in bara
-   * @param flow           current flow rate in kg/hr
+   * @param flow current flow rate in kg/hr
    * @return estimated gradient
    */
   private double estimateGradient(double inletPressure, double outletPressure, double flow) {
@@ -845,9 +845,9 @@ public class ProcessOptimizationEngine implements Serializable {
    * problem scale.
    * </p>
    *
-   * @param inletPressure  inlet pressure in bara
+   * @param inletPressure inlet pressure in bara
    * @param outletPressure outlet pressure in bara
-   * @param flow           flow rate in kg/hr
+   * @param flow flow rate in kg/hr
    * @return objective value (flow rate with penalty for constraint violations)
    */
   private double evaluateConstrainedObjective(double inletPressure, double outletPressure, double flow) {
@@ -914,9 +914,9 @@ public class ProcessOptimizationEngine implements Serializable {
    * These conditions guarantee convergence and avoid too-small or too-large steps.
    * </p>
    *
-   * @param inletPressure  inlet pressure in bara
+   * @param inletPressure inlet pressure in bara
    * @param outletPressure outlet pressure in bara
-   * @param initialFlow    starting flow rate in kg/hr
+   * @param initialFlow starting flow rate in kg/hr
    * @return optimal flow rate in kg/hr
    */
   public double gradientDescentArmijoWolfeSearch(double inletPressure, double outletPressure, double initialFlow) {
@@ -978,13 +978,13 @@ public class ProcessOptimizationEngine implements Serializable {
   /**
    * Performs Armijo-Wolfe line search to find step size satisfying both conditions.
    *
-   * @param inletPressure         inlet pressure in bara
-   * @param outletPressure        outlet pressure in bara
-   * @param flow                  current flow rate
-   * @param direction             search direction
-   * @param f0                    objective at current point
+   * @param inletPressure inlet pressure in bara
+   * @param outletPressure outlet pressure in bara
+   * @param flow current flow rate
+   * @param direction search direction
+   * @param f0 objective at current point
    * @param directionalDerivative gradient dot direction
-   * @param initialAlpha          initial step size guess
+   * @param initialAlpha initial step size guess
    * @return step size satisfying Armijo-Wolfe conditions, or initial alpha if failed
    */
   private double armijoWolfeLineSearch(double inletPressure, double outletPressure, double flow, double direction,
@@ -1085,11 +1085,11 @@ public class ProcessOptimizationEngine implements Serializable {
    * inverse second derivative.
    * </p>
    *
-   * @param inletPressure  inlet pressure in bara
+   * @param inletPressure inlet pressure in bara
    * @param outletPressure outlet pressure in bara
-   * @param initialFlow    starting flow rate in kg/hr
-   * @param minFlow        minimum allowed flow in kg/hr
-   * @param maxFlow        maximum allowed flow in kg/hr
+   * @param initialFlow starting flow rate in kg/hr
+   * @param minFlow minimum allowed flow in kg/hr
+   * @param maxFlow maximum allowed flow in kg/hr
    * @return optimal flow rate in kg/hr
    */
   public double bfgsSearch(double inletPressure, double outletPressure, double initialFlow, double minFlow,
@@ -1241,8 +1241,8 @@ public class ProcessOptimizationEngine implements Serializable {
   /**
    * Analyzes the sensitivity of the optimal solution to flow rate changes.
    *
-   * @param optimalFlow    the optimal flow rate in kg/hr
-   * @param inletPressure  inlet pressure in bara
+   * @param optimalFlow the optimal flow rate in kg/hr
+   * @param inletPressure inlet pressure in bara
    * @param outletPressure outlet pressure in bara
    * @return sensitivity result with gradient and margin information
    */
@@ -1295,8 +1295,8 @@ public class ProcessOptimizationEngine implements Serializable {
   /**
    * Estimates how much flow can increase before hitting a constraint.
    *
-   * @param currentFlow    current flow rate in kg/hr
-   * @param inletPressure  inlet pressure in bara
+   * @param currentFlow current flow rate in kg/hr
+   * @param inletPressure inlet pressure in bara
    * @param outletPressure outlet pressure in bara
    * @return estimated flow buffer in kg/hr
    */
@@ -1329,8 +1329,8 @@ public class ProcessOptimizationEngine implements Serializable {
    * of zero.
    * </p>
    *
-   * @param optimalFlow    the optimal flow rate in kg/hr
-   * @param inletPressure  inlet pressure in bara
+   * @param optimalFlow the optimal flow rate in kg/hr
+   * @param inletPressure inlet pressure in bara
    * @param outletPressure outlet pressure in bara
    * @return map of equipment name to shadow price (higher means more binding)
    */
@@ -1501,7 +1501,7 @@ public class ProcessOptimizationEngine implements Serializable {
    * Calculates flow sensitivities for all equipment.
    *
    * @param baseFlowRate base flow rate in kg/hr
-   * @param flowUnit     flow rate unit
+   * @param flowUnit flow rate unit
    * @return map of equipment name to sensitivity value
    */
   public Map<String, Double> calculateFlowSensitivities(double baseFlowRate, String flowUnit) {
@@ -1516,7 +1516,7 @@ public class ProcessOptimizationEngine implements Serializable {
    * Estimates maximum feasible flow rate.
    *
    * @param currentFlowRate current flow rate
-   * @param flowUnit        flow rate unit
+   * @param flowUnit flow rate unit
    * @return estimated maximum flow rate
    */
   public double estimateMaximumFlow(double currentFlowRate, String flowUnit) {
@@ -1620,10 +1620,10 @@ public class ProcessOptimizationEngine implements Serializable {
   /**
    * Sets inlet conditions.
    *
-   * @param pressure    the inlet pressure in bara
+   * @param pressure the inlet pressure in bara
    * @param temperature the inlet temperature in Kelvin
-   * @param waterCut    the water cut fraction
-   * @param gor         the gas-oil ratio
+   * @param waterCut the water cut fraction
+   * @param gor the gas-oil ratio
    */
   private void setInletConditions(double pressure, double temperature, double waterCut, double gor) {
     // Simplified - actual implementation would modify fluid composition
@@ -2299,10 +2299,10 @@ public class ProcessOptimizationEngine implements Serializable {
    * prevents the Adjusters from interfering with the optimization search.
    * </p>
    *
-   * @param inletPressure  inlet pressure in bara
+   * @param inletPressure inlet pressure in bara
    * @param outletPressure outlet pressure in bara
-   * @param minFlow        minimum flow rate in kg/hr
-   * @param maxFlow        maximum flow rate in kg/hr
+   * @param minFlow minimum flow rate in kg/hr
+   * @param maxFlow maximum flow rate in kg/hr
    * @return optimization result
    */
   public OptimizationResult optimizeWithAdjustersDisabled(double inletPressure, double outletPressure, double minFlow,
@@ -2323,12 +2323,12 @@ public class ProcessOptimizationEngine implements Serializable {
    * variable (e.g., outlet pressure, temperature).
    * </p>
    *
-   * @param name                name for the new Adjuster
-   * @param feedStreamName      name of the feed stream to adjust
+   * @param name name for the new Adjuster
+   * @param feedStreamName name of the feed stream to adjust
    * @param targetEquipmentName name of the equipment with the target variable
-   * @param targetVariable      name of the target variable (e.g., "pressure", "temperature")
-   * @param targetValue         target value for the variable
-   * @param targetUnit          unit for the target value
+   * @param targetVariable name of the target variable (e.g., "pressure", "temperature")
+   * @param targetValue target value for the variable
+   * @param targetUnit unit for the target value
    * @return the created Adjuster, or null if creation fails
    */
   public neqsim.process.equipment.util.Adjuster createFlowAdjuster(String name, String feedStreamName,
@@ -2360,10 +2360,10 @@ public class ProcessOptimizationEngine implements Serializable {
    * rate that still allows all Adjusters to converge to their targets.
    * </p>
    *
-   * @param inletPressure  inlet pressure in bara
+   * @param inletPressure inlet pressure in bara
    * @param outletPressure outlet pressure in bara
-   * @param minFlow        minimum flow rate in kg/hr
-   * @param maxFlow        maximum flow rate in kg/hr
+   * @param minFlow minimum flow rate in kg/hr
+   * @param maxFlow maximum flow rate in kg/hr
    * @return optimization result with Adjuster-compatible flow rate
    */
   public OptimizationResult optimizeWithAdjusterTargets(double inletPressure, double outletPressure, double minFlow,

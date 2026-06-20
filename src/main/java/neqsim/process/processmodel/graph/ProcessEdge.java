@@ -63,11 +63,11 @@ public class ProcessEdge implements Serializable {
   /**
    * Creates a new process edge.
    *
-   * @param index    unique index of this edge
-   * @param source   source node
-   * @param target   target node
-   * @param stream   the stream this edge represents (may be null)
-   * @param name     edge name
+   * @param index unique index of this edge
+   * @param source source node
+   * @param target target node
+   * @param stream the stream this edge represents (may be null)
+   * @param name edge name
    * @param edgeType type of edge
    */
   public ProcessEdge(int index, ProcessNode source, ProcessNode target, StreamInterface stream, String name,
@@ -83,7 +83,7 @@ public class ProcessEdge implements Serializable {
   /**
    * Creates a material edge with automatic type detection.
    *
-   * @param index  unique index
+   * @param index unique index
    * @param source source node
    * @param target target node
    * @param stream the stream
@@ -96,10 +96,10 @@ public class ProcessEdge implements Serializable {
   /**
    * Creates an edge without a stream (e.g., control signal).
    *
-   * @param index    unique index
-   * @param source   source node
-   * @param target   target node
-   * @param name     edge name
+   * @param index unique index
+   * @param source source node
+   * @param target target node
+   * @param name edge name
    * @param edgeType type of edge
    */
   public ProcessEdge(int index, ProcessNode source, ProcessNode target, String name, EdgeType edgeType) {

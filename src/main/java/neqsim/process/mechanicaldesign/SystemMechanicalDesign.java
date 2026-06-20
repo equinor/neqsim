@@ -489,7 +489,7 @@ public class SystemMechanicalDesign implements java.io.Serializable {
   /**
    * Accumulate weight by equipment type.
    *
-   * @param type   equipment type
+   * @param type equipment type
    * @param weight weight to add
    */
   private void accumulateByType(String type, double weight) {
@@ -938,7 +938,7 @@ public class SystemMechanicalDesign implements java.io.Serializable {
   /**
    * Truncate a string to a maximum length.
    *
-   * @param str    the string
+   * @param str the string
    * @param maxLen maximum length
    * @return truncated string
    */
@@ -952,7 +952,7 @@ public class SystemMechanicalDesign implements java.io.Serializable {
   /**
    * Repeat a string n times (Java 8 compatible).
    *
-   * @param str   string to repeat
+   * @param str string to repeat
    * @param count number of times
    * @return repeated string
    */

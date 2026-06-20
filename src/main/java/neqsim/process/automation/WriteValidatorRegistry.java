@@ -116,10 +116,10 @@ public class WriteValidatorRegistry implements Serializable {
    * ERROR} result is returned immediately; otherwise the most severe non-error result is returned (or
    * {@link WriteValidationResult#ok()} when all validators pass).
    *
-   * @param equipment    the target equipment; never null
+   * @param equipment the target equipment; never null
    * @param propertyPath the local property path on the equipment
-   * @param value        the proposed value
-   * @param unit         the unit of measure of {@code value}, or null for the property's default unit
+   * @param value the proposed value
+   * @param unit the unit of measure of {@code value}, or null for the property's default unit
    * @return the aggregated validation result; never null
    */
   public WriteValidationResult validate(ProcessEquipmentInterface equipment, String propertyPath, double value,

@@ -168,7 +168,7 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
   /**
    * Creates a new SulfurDepositionAnalyser with an inlet stream.
    *
-   * @param name   equipment name
+   * @param name equipment name
    * @param stream inlet stream
    */
   public SulfurDepositionAnalyser(String name, StreamInterface stream) {
@@ -179,8 +179,8 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
    * Sets the temperature range for the deposition sweep analysis.
    *
    * @param startC start temperature in Celsius
-   * @param endC   end temperature in Celsius
-   * @param stepC  step size in Celsius
+   * @param endC end temperature in Celsius
+   * @param stepC step size in Celsius
    */
   public void setTemperatureSweepRange(double startC, double endC, double stepC) {
     this.tempSweepStartC = startC;
@@ -341,7 +341,7 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
    * Performs Gibbs free energy minimisation to determine equilibrium products from H2S and O2 reactions at the inlet
    * conditions.
    *
-   * @param inlet    the inlet stream
+   * @param inlet the inlet stream
    * @param pressure the analysis pressure in bara
    */
   private void performChemicalEquilibrium(StreamInterface inlet, double pressure) {
@@ -402,7 +402,7 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
    * Marks hydrocarbon components as inert in the Gibbs reactor so they do not participate in reactions.
    *
    * @param reactor the Gibbs reactor
-   * @param sys     the thermo system
+   * @param sys the thermo system
    */
   private void setHydrocarbonInert(GibbsReactor reactor, SystemInterface sys) {
     String[] inertNames = { "nitrogen", "CO2", "methane", "ethane", "propane", "i-butane", "n-butane", "i-pentane",
@@ -423,7 +423,7 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
    * Analyses sulfur solubility in the gas phase and checks for solid S8 formation using TP-solid flash at inlet
    * conditions.
    *
-   * @param inlet    the inlet stream
+   * @param inlet the inlet stream
    * @param pressure the analysis pressure in bara
    */
   private void performSulfurSolubilityAnalysis(StreamInterface inlet, double pressure) {
@@ -480,7 +480,7 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
    * Sweeps temperature to find the sulfur deposition onset temperature and build a deposition profile. At each
    * temperature, performs a TP-solid flash and records S8 in gas vs solid.
    *
-   * @param inlet    the inlet stream
+   * @param inlet the inlet stream
    * @param pressure the analysis pressure in bara
    */
   private void performTemperatureSweep(StreamInterface inlet, double pressure) {
@@ -596,7 +596,7 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
    * <li>Combined CO2 + H2S + S8 quantitative corrosion rate</li>
    * </ul>
    *
-   * @param inlet    the inlet stream
+   * @param inlet the inlet stream
    * @param pressure the analysis pressure in bara
    */
   private void performCorrosionAssessment(StreamInterface inlet, double pressure) {
@@ -831,7 +831,7 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
    * <li>Polysulfane formation: H2S + Sx = H2(S)x+1, intermediate step in sulfur precipitation</li>
    * </ul>
    *
-   * @param inlet    the inlet stream
+   * @param inlet the inlet stream
    * @param pressure the analysis pressure in bara
    */
   private void performKineticAnalysis(StreamInterface inlet, double pressure) {
@@ -998,7 +998,7 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
    * 0.025-0.035 J/m2.
    * </p>
    *
-   * @param inlet    the inlet stream
+   * @param inlet the inlet stream
    * @param pressure the analysis pressure in bara
    */
   private void performSupersaturationAnalysis(StreamInterface inlet, double pressure) {
@@ -1139,7 +1139,7 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
    * at lower pressure releases it.</li>
    * </ul>
    *
-   * @param inlet    the inlet stream
+   * @param inlet the inlet stream
    * @param pressure the analysis pressure in bara
    */
   private void performGasVsLiquidSolubilityComparison(StreamInterface inlet, double pressure) {
@@ -1263,7 +1263,7 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
    * References: Pack (2005), Wilkes &amp; McMahon (2007) - Sulfur deposition in gas pipelines.
    * </p>
    *
-   * @param inlet    the inlet stream
+   * @param inlet the inlet stream
    * @param pressure the analysis pressure in bara
    */
   private void performBlockageRiskAssessment(StreamInterface inlet, double pressure) {
@@ -1394,9 +1394,9 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
   /**
    * Adds an equipment risk entry to the equipment risk list.
    *
-   * @param list        the risk list to add to
-   * @param equipment   equipment name
-   * @param riskLevel   risk level string
+   * @param list the risk list to add to
+   * @param equipment equipment name
+   * @param riskLevel risk level string
    * @param description risk description
    */
   private void addEquipmentRisk(List<Map<String, String>> list, String equipment, String riskLevel,
@@ -1468,7 +1468,7 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
    * </tr>
    * </table>
    *
-   * @param inlet    the inlet stream
+   * @param inlet the inlet stream
    * @param pressure the analysis pressure in bara
    */
   @SuppressWarnings("unchecked")
@@ -1875,7 +1875,7 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
   /**
    * Gets the mole fraction of a component from the system, returning 0 if not present.
    *
-   * @param sys  the thermodynamic system
+   * @param sys the thermodynamic system
    * @param name the component name
    * @return mole fraction, or 0 if component not found
    */

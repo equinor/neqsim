@@ -236,7 +236,7 @@ public class ProcessLogicAlarmIntegratedExample {
   /**
    * Sets up instrumentation with comprehensive alarm configuration.
    *
-   * @param system       the process system to instrument
+   * @param system the process system to instrument
    * @param alarmManager the alarm manager to register devices with
    * @return the instrumentation setup containing all configured devices
    */
@@ -337,8 +337,8 @@ public class ProcessLogicAlarmIntegratedExample {
    * Registers automatic alarm-triggered actions with the alarm manager.
    *
    * @param alarmManager the alarm manager to register actions with
-   * @param system       the process system containing equipment
-   * @param logicSetup   the process logic setup containing ESD and HIPPS logic
+   * @param system the process system containing equipment
+   * @param logicSetup the process logic setup containing ESD and HIPPS logic
    */
   private static void registerAlarmActions(ProcessAlarmManager alarmManager, ProcessSystem system,
       ProcessLogicSetup logicSetup) {
@@ -371,7 +371,7 @@ public class ProcessLogicAlarmIntegratedExample {
   /**
    * Sets up process logic sequences.
    *
-   * @param system      the process system containing equipment
+   * @param system the process system containing equipment
    * @param instruments the instrumentation setup containing measurement devices
    * @return the process logic setup containing configured logic sequences
    */
@@ -422,11 +422,11 @@ public class ProcessLogicAlarmIntegratedExample {
   /**
    * Runs comprehensive alarm-triggered scenarios.
    *
-   * @param runner       the scenario runner for executing scenarios
+   * @param runner the scenario runner for executing scenarios
    * @param alarmManager the alarm manager for evaluation and tracking
-   * @param instruments  the instrumentation setup containing devices
-   * @param logicSetup   the process logic setup containing logic sequences
-   * @param system       the process system
+   * @param instruments the instrumentation setup containing devices
+   * @param logicSetup the process logic setup containing logic sequences
+   * @param system the process system
    */
   private static void runAlarmTriggeredScenarios(ProcessScenarioRunner runner, ProcessAlarmManager alarmManager,
       InstrumentationSetup instruments, ProcessLogicSetup logicSetup, ProcessSystem system) {
@@ -533,7 +533,7 @@ public class ProcessLogicAlarmIntegratedExample {
   /**
    * Simulates low level alarm triggering shutdown.
    *
-   * @param esdLogic     the ESD logic to activate
+   * @param esdLogic the ESD logic to activate
    * @param alarmManager the alarm manager for acknowledgement
    */
   private static void simulateLowLevelAlarm(ESDLogic esdLogic, ProcessAlarmManager alarmManager) {
@@ -553,10 +553,10 @@ public class ProcessLogicAlarmIntegratedExample {
   /**
    * Runs transient blowdown simulation after ESD activation.
    *
-   * @param system       the process system
-   * @param instruments  the instrumentation setup
+   * @param system the process system
+   * @param instruments the instrumentation setup
    * @param alarmManager the alarm manager
-   * @param startTime    the simulation start time
+   * @param startTime the simulation start time
    */
   private static void runBlowdownSimulation(ProcessSystem system, InstrumentationSetup instruments,
       ProcessAlarmManager alarmManager, double startTime) {
@@ -614,10 +614,10 @@ public class ProcessLogicAlarmIntegratedExample {
   /**
    * Executes a scenario step and evaluates alarms.
    *
-   * @param system       the process system
+   * @param system the process system
    * @param alarmManager the alarm manager
-   * @param instruments  the instrumentation setup
-   * @param deltaTime    time increment for this step
+   * @param instruments the instrumentation setup
+   * @param deltaTime time increment for this step
    */
   private static void runScenarioStep(ProcessSystem system, ProcessAlarmManager alarmManager,
       InstrumentationSetup instruments, double deltaTime) {

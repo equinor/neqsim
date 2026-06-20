@@ -245,7 +245,7 @@ public class SipsAdsorption extends AbstractAdsorptionModel {
    * Set the maximum adsorption capacity for a component.
    *
    * @param component the component index
-   * @param value     qmax in mol/kg
+   * @param value qmax in mol/kg
    */
   public void setQmax(int component, double value) {
     qmax[component] = value;
@@ -267,7 +267,7 @@ public class SipsAdsorption extends AbstractAdsorptionModel {
    * Set the Sips affinity constant for a component.
    *
    * @param component the component index
-   * @param value     Ks in 1/bar
+   * @param value Ks in 1/bar
    */
   public void setKSips(int component, double value) {
     kSips[component] = value;
@@ -289,7 +289,7 @@ public class SipsAdsorption extends AbstractAdsorptionModel {
    * Set the heterogeneity parameter for a component.
    *
    * @param component the component index
-   * @param value     n (dimensionless)
+   * @param value n (dimensionless)
    */
   public void setNSips(int component, double value) {
     nSips[component] = value;
@@ -311,7 +311,7 @@ public class SipsAdsorption extends AbstractAdsorptionModel {
    * Set the heat of adsorption for a component.
    *
    * @param component the component index
-   * @param value     heat of adsorption in J/mol
+   * @param value heat of adsorption in J/mol
    */
   public void setHeatOfAdsorption(int component, double value) {
     heatOfAdsorption[component] = value;

@@ -340,7 +340,7 @@ public class DexpiRenderingImprovementsTest extends NeqSimTest {
   /**
    * Counts non-overlapping occurrences of a literal token in a string.
    *
-   * @param text  the text to scan
+   * @param text the text to scan
    * @param token the literal token to count
    * @return the number of occurrences
    */
@@ -725,7 +725,7 @@ public class DexpiRenderingImprovementsTest extends NeqSimTest {
   /**
    * Reads the LineType attribute of the first child element of the given tag.
    *
-   * @param parent  the parent element
+   * @param parent the parent element
    * @param tagName the child element tag name (e.g. "CenterLine" or "PolyLine")
    * @return the LineType attribute value
    */

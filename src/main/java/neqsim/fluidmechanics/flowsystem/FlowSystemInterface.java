@@ -54,7 +54,7 @@ public interface FlowSystemInterface {
    * </p>
    *
    * @param type a int
-   * @param id   Calculation identifier
+   * @param id Calculation identifier
    */
   public void solveTransient(int type, UUID id);
 
@@ -73,8 +73,8 @@ public interface FlowSystemInterface {
    * </p>
    *
    * @return a
-   *         {@link neqsim.fluidmechanics.util.fluidmechanicsvisualization.flowsystemvisualization.FlowSystemVisualizationInterface}
-   *         object
+   * {@link neqsim.fluidmechanics.util.fluidmechanicsvisualization.flowsystemvisualization.FlowSystemVisualizationInterface}
+   * object
    */
   public FlowSystemVisualizationInterface getDisplay();
 
@@ -219,7 +219,7 @@ public interface FlowSystemInterface {
    * </p>
    *
    * @param equipmentGeometry an array of {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface}
-   *                          objects
+   * objects
    */
   public void setEquipmentGeometry(GeometryDefinitionInterface[] equipmentGeometry);
 
@@ -274,7 +274,7 @@ public interface FlowSystemInterface {
    * </p>
    *
    * @param type a int 1: just mass, 2: mass and energy, 3: mass, energy and energy impulse and components
-   * @param id   Calculation identifier
+   * @param id Calculation identifier
    */
   public void solveSteadyState(int type, UUID id);
 
@@ -319,7 +319,7 @@ public interface FlowSystemInterface {
    * </p>
    *
    * @param component a int
-   * @param lastNode  a int
+   * @param lastNode a int
    * @return a double
    */
   public double getTotalMolarMassTransferRate(int component, int lastNode);

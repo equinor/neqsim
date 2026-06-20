@@ -65,7 +65,7 @@ public class CryogenicSeparator extends Separator {
   /**
    * Constructor for CryogenicSeparator with inlet stream.
    *
-   * @param name        name of the cryogenic separator
+   * @param name name of the cryogenic separator
    * @param inletStream inlet stream
    */
   public CryogenicSeparator(String name, StreamInterface inletStream) {
@@ -201,7 +201,7 @@ public class CryogenicSeparator extends Separator {
   /**
    * Check CO2 content against freeze-out limits.
    *
-   * @param system         fluid system
+   * @param system fluid system
    * @param operatingTempK operating temperature in Kelvin
    */
   private void checkCO2Content(SystemInterface system, double operatingTempK) {
@@ -225,7 +225,7 @@ public class CryogenicSeparator extends Separator {
   /**
    * Check water content against ice formation limits.
    *
-   * @param system         fluid system
+   * @param system fluid system
    * @param operatingTempK operating temperature in Kelvin
    */
   private void checkWaterContent(SystemInterface system, double operatingTempK) {

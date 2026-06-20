@@ -180,7 +180,7 @@ public class DehydrationTemplate implements ProcessTemplate {
   /**
    * Creates a TEG fluid for the dehydration system.
    *
-   * @param purity   TEG mass fraction (typically 0.98-0.995)
+   * @param purity TEG mass fraction (typically 0.98-0.995)
    * @param pressure system pressure in bara
    * @return TEG fluid system
    */
@@ -261,8 +261,8 @@ public class DehydrationTemplate implements ProcessTemplate {
   /**
    * Calculates required TEG circulation rate for target water content.
    *
-   * @param gasFlowRate        gas flow rate in MMscfd
-   * @param inletWaterContent  inlet water content in lb/MMscf
+   * @param gasFlowRate gas flow rate in MMscfd
+   * @param inletWaterContent inlet water content in lb/MMscf
    * @param outletWaterContent target outlet water content in lb/MMscf
    * @return required TEG circulation rate in gal/hr
    */
@@ -275,9 +275,9 @@ public class DehydrationTemplate implements ProcessTemplate {
   /**
    * Estimates equilibrium water content above TEG at given conditions.
    *
-   * @param tegPurity   TEG mass fraction
+   * @param tegPurity TEG mass fraction
    * @param temperature temperature in Celsius
-   * @param pressure    pressure in bara
+   * @param pressure pressure in bara
    * @return equilibrium water content in lb/MMscf
    */
   public static double estimateEquilibriumWater(double tegPurity, double temperature, double pressure) {

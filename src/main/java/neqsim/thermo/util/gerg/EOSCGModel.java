@@ -77,7 +77,7 @@ public class EOSCGModel {
    * MolarMassGERG.
    * </p>
    *
-   * @param x  an array of type double
+   * @param x an array of type double
    * @param Mm a {@link org.netlib.util.doubleW} object
    */
   public void MolarMassEOSCG(double[] x, doubleW Mm) {
@@ -155,12 +155,12 @@ public class EOSCGModel {
    * </p>
    *
    * @param iFlag a int
-   * @param T     a double
-   * @param P     a double
-   * @param x     an array of type double
-   * @param D     a {@link org.netlib.util.doubleW} object
-   * @param ierr  a {@link org.netlib.util.intW} object
-   * @param herr  a {@link org.netlib.util.StringW} object
+   * @param T a double
+   * @param P a double
+   * @param x an array of type double
+   * @param D a {@link org.netlib.util.doubleW} object
+   * @param ierr a {@link org.netlib.util.intW} object
+   * @param herr a {@link org.netlib.util.StringW} object
    */
   public void DensityEOSCG(int iFlag, double T, double P, double[] x, doubleW D, intW ierr, StringW herr) {
     // Sub DensityEOSCG(iFlag, T, P, x, D, ierr, herr)
@@ -335,25 +335,25 @@ public class EOSCGModel {
    * PropertiesGERG.
    * </p>
    *
-   * @param T      a double
-   * @param D      a double
-   * @param x      an array of type double
-   * @param P      a {@link org.netlib.util.doubleW} object
-   * @param Z      a {@link org.netlib.util.doubleW} object
-   * @param dPdD   a {@link org.netlib.util.doubleW} object
+   * @param T a double
+   * @param D a double
+   * @param x an array of type double
+   * @param P a {@link org.netlib.util.doubleW} object
+   * @param Z a {@link org.netlib.util.doubleW} object
+   * @param dPdD a {@link org.netlib.util.doubleW} object
    * @param d2PdD2 a {@link org.netlib.util.doubleW} object
    * @param d2PdTD a {@link org.netlib.util.doubleW} object
-   * @param dPdT   a {@link org.netlib.util.doubleW} object
-   * @param U      a {@link org.netlib.util.doubleW} object
-   * @param H      a {@link org.netlib.util.doubleW} object
-   * @param S      a {@link org.netlib.util.doubleW} object
-   * @param Cv     a {@link org.netlib.util.doubleW} object
-   * @param Cp     a {@link org.netlib.util.doubleW} object
-   * @param W      a {@link org.netlib.util.doubleW} object
-   * @param G      a {@link org.netlib.util.doubleW} object
-   * @param JT     a {@link org.netlib.util.doubleW} object
-   * @param Kappa  a {@link org.netlib.util.doubleW} object
-   * @param A      a {@link org.netlib.util.doubleW} object
+   * @param dPdT a {@link org.netlib.util.doubleW} object
+   * @param U a {@link org.netlib.util.doubleW} object
+   * @param H a {@link org.netlib.util.doubleW} object
+   * @param S a {@link org.netlib.util.doubleW} object
+   * @param Cv a {@link org.netlib.util.doubleW} object
+   * @param Cp a {@link org.netlib.util.doubleW} object
+   * @param W a {@link org.netlib.util.doubleW} object
+   * @param G a {@link org.netlib.util.doubleW} object
+   * @param JT a {@link org.netlib.util.doubleW} object
+   * @param Kappa a {@link org.netlib.util.doubleW} object
+   * @param A a {@link org.netlib.util.doubleW} object
    */
   public void PropertiesEOSCG(double T, double D, double[] x, doubleW P, doubleW Z, doubleW dPdD, doubleW d2PdD2,
       doubleW d2PdTD, doubleW dPdT, doubleW U, doubleW H, doubleW S, doubleW Cv, doubleW Cp, doubleW W, doubleW G,
@@ -454,7 +454,7 @@ public class EOSCGModel {
   }
 
   /**
-   * @param x  ...
+   * @param x ...
    * @param Tr ...
    * @param Dr ...
    */
@@ -519,9 +519,9 @@ public class EOSCGModel {
   }
 
   /**
-   * @param T  ...
-   * @param D  ...
-   * @param x  ...
+   * @param T ...
+   * @param D ...
+   * @param x ...
    * @param a0 ...
    */
   void Alpha0EOSCG(double T, double D, double[] x, doubleW[] a0) {
@@ -603,12 +603,12 @@ public class EOSCGModel {
   }
 
   /**
-   * @param itau   ...
+   * @param itau ...
    * @param idelta ...
-   * @param T      ...
-   * @param D      ....
-   * @param x      ....
-   * @param ar     ...
+   * @param T ...
+   * @param D ....
+   * @param x ....
+   * @param ar ...
    */
   void AlpharEOSCG(int itau, int idelta, double T, double D, double[] x, doubleW[][] ar) {
     // Private Sub AlpharEOSCG(itau, idelta, T, D, x, ar)
@@ -806,7 +806,7 @@ public class EOSCGModel {
 
   /**
    * @param lntau ...
-   * @param x     ....
+   * @param x ....
    */
   void tTermsGERG(double lntau, double[] x) {
     // Private Sub tTermsGERG(lntau, x)
@@ -852,7 +852,7 @@ public class EOSCGModel {
   }
 
   /**
-   * @param x   composition
+   * @param x composition
    * @param Tcx temperature in Kelvin
    * @param Dcx density
    */

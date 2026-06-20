@@ -41,7 +41,7 @@ public class WaterDewPointAnalyser extends StreamMeasurementDeviceBaseClass {
    * Constructor for WaterDewPointAnalyser.
    * </p>
    *
-   * @param name   Name of WaterDewPointAnalyser
+   * @param name Name of WaterDewPointAnalyser
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public WaterDewPointAnalyser(String name, StreamInterface stream) {

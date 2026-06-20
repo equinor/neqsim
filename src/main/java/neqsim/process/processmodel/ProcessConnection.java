@@ -38,10 +38,10 @@ public class ProcessConnection implements Serializable {
    * Creates a new process connection.
    *
    * @param sourceEquipment name of the upstream equipment
-   * @param sourcePort      port name on the source equipment (e.g. "gasOut", "outlet")
+   * @param sourcePort port name on the source equipment (e.g. "gasOut", "outlet")
    * @param targetEquipment name of the downstream equipment
-   * @param targetPort      port name on the target equipment (e.g. "inlet")
-   * @param type            connection type
+   * @param targetPort port name on the target equipment (e.g. "inlet")
+   * @param type connection type
    */
   public ProcessConnection(String sourceEquipment, String sourcePort, String targetEquipment, String targetPort,
       ConnectionType type) {

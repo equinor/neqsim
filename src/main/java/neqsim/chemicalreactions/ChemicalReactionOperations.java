@@ -459,7 +459,7 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
    * </p>
    *
    * @return the stoichiometry matrix A (elements + 1 x components), where the last row contains ionic charges for
-   *         electroneutrality
+   * electroneutrality
    */
   public double[][] calcAmatrix() {
     if (components == null || elements == null) {
@@ -588,7 +588,7 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
    * </p>
    *
    * @param phaseNum a int
-   * @param type     a int
+   * @param type a int
    * @return a boolean
    */
   public boolean solveChemEq(int phaseNum, int type) {
@@ -659,9 +659,9 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
    * solveKinetics.
    * </p>
    *
-   * @param phaseNum   a int
+   * @param phaseNum a int
    * @param interPhase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param component  a int
+   * @param component a int
    * @return a double
    */
   public double solveKinetics(int phaseNum, PhaseInterface interPhase, int component) {
@@ -723,7 +723,7 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
    * reacHeat.
    * </p>
    *
-   * @param phaseNum  a int
+   * @param phaseNum a int
    * @param component a {@link java.lang.String} object
    * @return a double
    */

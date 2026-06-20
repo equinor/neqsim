@@ -175,7 +175,7 @@ public class HeatExchangerCostEstimate extends UnitCostEstimateBaseClass {
   /**
    * Calculate utility operating cost per year.
    *
-   * @param utilityType  type of utility ("cooling_water", "steam", "electricity")
+   * @param utilityType type of utility ("cooling_water", "steam", "electricity")
    * @param hoursPerYear operating hours per year
    * @return annual utility cost in USD
    */

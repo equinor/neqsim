@@ -115,7 +115,7 @@ public class SubseaEquipmentCapacityStrategy implements EquipmentCapacityStrateg
    * Adds constraints for subsea well.
    *
    * @param constraints map to add constraints to
-   * @param well        the subsea well
+   * @param well the subsea well
    */
   private void addWellConstraints(Map<String, CapacityConstraint> constraints, SubseaWell well) {
     double maxWhp = well.getMaxWellheadPressure();
@@ -131,7 +131,7 @@ public class SubseaEquipmentCapacityStrategy implements EquipmentCapacityStrateg
    * Adds constraints for subsea tree.
    *
    * @param constraints map to add constraints to
-   * @param tree        the subsea tree
+   * @param tree the subsea tree
    */
   private void addTreeConstraints(Map<String, CapacityConstraint> constraints, SubseaTree tree) {
     double designP = tree.getDesignPressure();

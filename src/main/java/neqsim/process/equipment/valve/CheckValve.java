@@ -77,7 +77,7 @@ public class CheckValve extends ThrottlingValve {
   /**
    * Constructor for CheckValve.
    *
-   * @param name     name of the check valve
+   * @param name name of the check valve
    * @param inStream inlet stream
    */
   public CheckValve(String name, StreamInterface inStream) {

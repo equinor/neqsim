@@ -52,7 +52,7 @@ public class TransientPipelineLiquidAccumulationExample {
    * Creates a gas condensate fluid with water (three-phase system).
    *
    * @param temperature Temperature in Celsius
-   * @param pressure    Pressure in bara
+   * @param pressure Pressure in bara
    * @return Configured fluid system
    */
   private static SystemInterface createGasCondensateWithWater(double temperature, double pressure) {
@@ -177,7 +177,7 @@ public class TransientPipelineLiquidAccumulationExample {
    * Creates a subsea terrain profile with valleys and hills.
    *
    * @param numberOfSections Number of pipe sections
-   * @param totalLength      Total pipe length in meters
+   * @param totalLength Total pipe length in meters
    * @return Elevation profile array
    */
   private static double[] createSubseaTerrainProfile(int numberOfSections, double totalLength) {

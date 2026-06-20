@@ -144,7 +144,7 @@ public class LiquidAccumulationTracker implements Serializable {
    * Update liquid accumulation for all zones.
    *
    * @param sections Pipe sections
-   * @param dt       Time step (s)
+   * @param dt Time step (s)
    */
   public void updateAccumulation(PipeSection[] sections, double dt) {
     for (AccumulationZone zone : accumulationZones) {
@@ -163,9 +163,9 @@ public class LiquidAccumulationTracker implements Serializable {
    * <li>Gas-liquid slip causes liquid to settle in stratified regions</li>
    * </ul>
    *
-   * @param zone     the accumulation zone to update
+   * @param zone the accumulation zone to update
    * @param sections array of pipe sections
-   * @param dt       time step [s]
+   * @param dt time step [s]
    */
   private void updateZone(AccumulationZone zone, PipeSection[] sections, double dt) {
     if (!zone.isActive || zone.sectionIndices.isEmpty()) {
@@ -270,7 +270,7 @@ public class LiquidAccumulationTracker implements Serializable {
    * terrain-induced slug formation.
    * </p>
    *
-   * @param zone     the accumulation zone to process
+   * @param zone the accumulation zone to process
    * @param sections the pipe sections array
    */
   private void distributeAccumulatedLiquid(AccumulationZone zone, PipeSection[] sections) {
@@ -340,7 +340,7 @@ public class LiquidAccumulationTracker implements Serializable {
    * <li>Previous slug has cleared the zone exit (prevents immediate merging)</li>
    * </ul>
    *
-   * @param zone     Accumulation zone
+   * @param zone Accumulation zone
    * @param sections Pipe sections
    * @return Slug characteristics if slug released, null otherwise
    */
@@ -433,8 +433,8 @@ public class LiquidAccumulationTracker implements Serializable {
   /**
    * Calculate drainage rate from a zone.
    *
-   * @param zone         Accumulation zone
-   * @param sections     Pipe sections
+   * @param zone Accumulation zone
+   * @param sections Pipe sections
    * @param pressureDrop Pressure drop across zone (Pa)
    * @return Drainage rate (m³/s)
    */

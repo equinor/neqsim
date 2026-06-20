@@ -49,10 +49,10 @@ public enum DriverType {
   /**
    * Constructor for DriverType.
    *
-   * @param displayName         human-readable name
-   * @param typicalEfficiency   typical driver efficiency (0-1)
+   * @param displayName human-readable name
+   * @param typicalEfficiency typical driver efficiency (0-1)
    * @param typicalResponseTime typical response time in seconds
-   * @param isElectric          true if electrically driven
+   * @param isElectric true if electrically driven
    */
   DriverType(String displayName, double typicalEfficiency, double typicalResponseTime, boolean isElectric) {
     this.displayName = displayName;

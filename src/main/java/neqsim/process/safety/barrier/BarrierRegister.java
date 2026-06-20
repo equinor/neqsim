@@ -137,7 +137,7 @@ public class BarrierRegister implements Serializable {
    * Links a barrier to an SCE, registering both relationships when found.
    *
    * @param barrierId barrier identifier
-   * @param sceId     safety critical element identifier
+   * @param sceId safety critical element identifier
    * @return true when both records existed and were linked
    */
   public boolean linkBarrierToSafetyCriticalElement(String barrierId, String sceId) {

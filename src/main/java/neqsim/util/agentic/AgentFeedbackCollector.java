@@ -92,9 +92,9 @@ public class AgentFeedbackCollector implements Serializable {
   /**
    * Record a discovered API gap (missing capability in NeqSim).
    *
-   * @param description      what is missing
+   * @param description what is missing
    * @param suggestedPackage where the implementation should go
-   * @param priority         priority level ("critical", "important", "nice-to-have")
+   * @param priority priority level ("critical", "important", "nice-to-have")
    */
   public void recordAPIGap(String description, String suggestedPackage, String priority) {
     discoveredGaps.add(new APIGap(description, suggestedPackage, priority));
@@ -239,7 +239,7 @@ public class AgentFeedbackCollector implements Serializable {
    * </p>
    *
    * @return list of remediation recommendation maps, each with "priority", "category", "recommendation",
-   *         "affectedAgent", and "frequency"
+   * "affectedAgent", and "frequency"
    */
   public List<Map<String, Object>> generateRemediations() {
     List<Map<String, Object>> remediations = new ArrayList<Map<String, Object>>();
@@ -400,8 +400,8 @@ public class AgentFeedbackCollector implements Serializable {
    * Get remediation text for a failure category.
    *
    * @param category the failure category name
-   * @param agent    the affected agent name
-   * @param count    how many times this failure occurred
+   * @param agent the affected agent name
+   * @param count how many times this failure occurred
    * @return human-readable remediation recommendation
    */
   private String getRemediationText(String category, String agent, int count) {
@@ -528,9 +528,9 @@ public class AgentFeedbackCollector implements Serializable {
     /**
      * Constructor.
      *
-     * @param description      gap description
+     * @param description gap description
      * @param suggestedPackage suggested implementation location
-     * @param priority         priority level
+     * @param priority priority level
      */
     APIGap(String description, String suggestedPackage, String priority) {
       this.description = description;

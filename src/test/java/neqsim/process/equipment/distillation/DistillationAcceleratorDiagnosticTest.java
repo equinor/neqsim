@@ -134,8 +134,8 @@ public class DistillationAcceleratorDiagnosticTest {
    * Dispatch to the inner solve method for the given solver type.
    *
    * @param column column to drive
-   * @param type   solver type
-   * @param id     calculation identifier
+   * @param type solver type
+   * @param id calculation identifier
    */
   private void callInnerSolver(DistillationColumn column, DistillationColumn.SolverType type, UUID id) {
     switch (type) {
@@ -174,7 +174,7 @@ public class DistillationAcceleratorDiagnosticTest {
   /**
    * Reflection helper to invoke a private no-arg method on the column and print the result.
    *
-   * @param column     column instance
+   * @param column column instance
    * @param methodName method to invoke
    */
   private void probePrivate(DistillationColumn column, String methodName) {

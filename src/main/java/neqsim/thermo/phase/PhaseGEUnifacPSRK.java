@@ -37,10 +37,10 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac {
    * Constructor for PhaseGEUnifacPSRK.
    * </p>
    *
-   * @param phase    a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param alpha    an array of type double
-   * @param Dij      an array of type double
-   * @param mixRule  an array of {@link java.lang.String} objects
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param alpha an array of type double
+   * @param Dij an array of type double
+   * @param mixRule an array of {@link java.lang.String} objects
    * @param intparam an array of type double
    */
   public PhaseGEUnifacPSRK(PhaseInterface phase, double[][] alpha, double[][] Dij, String[][] mixRule,

@@ -36,7 +36,7 @@ public class SensitivityResult {
    * Creates a new sensitivity result container.
    *
    * @param analysisName name of the analysis
-   * @param baseCase     description of base case
+   * @param baseCase description of base case
    */
   public SensitivityResult(String analysisName, String baseCase) {
     this.analysisName = analysisName;
@@ -59,8 +59,8 @@ public class SensitivityResult {
    * Adds sensitivity data for a parameter.
    *
    * @param parameterName name of the parameter varied
-   * @param values        array of parameter values tested
-   * @param risks         corresponding risk values at each parameter value
+   * @param values array of parameter values tested
+   * @param risks corresponding risk values at each parameter value
    */
   void addParameterSensitivity(String parameterName, double[] values, double[] risks) {
     if (values.length != risks.length) {

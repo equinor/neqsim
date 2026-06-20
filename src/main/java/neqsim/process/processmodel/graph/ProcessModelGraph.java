@@ -197,9 +197,9 @@ public class ProcessModelGraph implements Serializable {
   /**
    * Private constructor - use {@link ProcessModelGraphBuilder#buildModelGraph} instead.
    *
-   * @param modelName              the name of the process model
-   * @param subSystemGraphs        list of sub-system graphs
-   * @param flattenedGraph         the flattened graph combining all sub-systems
+   * @param modelName the name of the process model
+   * @param subSystemGraphs list of sub-system graphs
+   * @param flattenedGraph the flattened graph combining all sub-systems
    * @param interSystemConnections list of connections between sub-systems
    */
   ProcessModelGraph(String modelName, List<SubSystemGraph> subSystemGraphs, ProcessGraph flattenedGraph,

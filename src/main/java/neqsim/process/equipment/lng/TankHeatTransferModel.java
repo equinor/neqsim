@@ -54,7 +54,7 @@ public class TankHeatTransferModel implements Serializable {
   /**
    * Constructor with tank geometry, auto-creates standard zones.
    *
-   * @param geometry           tank geometry definition
+   * @param geometry tank geometry definition
    * @param ambientTemperature ambient air/sea temperature (K)
    */
   public TankHeatTransferModel(TankGeometry geometry, double ambientTemperature) {
@@ -66,7 +66,7 @@ public class TankHeatTransferModel implements Serializable {
   /**
    * Create standard heat transfer zones from tank geometry.
    *
-   * @param geometry    tank geometry
+   * @param geometry tank geometry
    * @param ambientTemp ambient temperature (K)
    */
   private void createStandardZones(TankGeometry geometry, double ambientTemp) {
@@ -88,9 +88,9 @@ public class TankHeatTransferModel implements Serializable {
   /**
    * Add a custom heat transfer zone.
    *
-   * @param name                zone name
-   * @param uValue              overall heat transfer coefficient (W/(m2*K))
-   * @param area                heat transfer area (m2)
+   * @param name zone name
+   * @param uValue overall heat transfer coefficient (W/(m2*K))
+   * @param area heat transfer area (m2)
    * @param boundaryTemperature boundary temperature (K)
    */
   public void addZone(String name, double uValue, double area, double boundaryTemperature) {
@@ -138,7 +138,7 @@ public class TankHeatTransferModel implements Serializable {
    * </p>
    *
    * @param lngTemperature bulk LNG temperature (K)
-   * @param numLayers      number of liquid layers
+   * @param numLayers number of liquid layers
    * @return array of heat per layer (W), index 0 = bottom
    */
   public double[] calculateLayerHeatDistribution(double lngTemperature, int numLayers) {
@@ -173,8 +173,8 @@ public class TankHeatTransferModel implements Serializable {
   /**
    * Update boundary temperatures for time-varying conditions.
    *
-   * @param ambientTemperature  new ambient temperature (K)
-   * @param solarRadiation      solar radiation on deck (W/m2)
+   * @param ambientTemperature new ambient temperature (K)
+   * @param solarRadiation solar radiation on deck (W/m2)
    * @param seaWaterTemperature sea water temperature (K)
    */
   public void updateBoundaryConditions(double ambientTemperature, double solarRadiation, double seaWaterTemperature) {
@@ -268,9 +268,9 @@ public class TankHeatTransferModel implements Serializable {
     /**
      * Constructor for HeatTransferZone.
      *
-     * @param name                zone name
-     * @param uValue              overall heat transfer coefficient (W/(m2*K))
-     * @param area                heat transfer area (m2)
+     * @param name zone name
+     * @param uValue overall heat transfer coefficient (W/(m2*K))
+     * @param area heat transfer area (m2)
      * @param boundaryTemperature boundary temperature (K)
      */
     public HeatTransferZone(String name, double uValue, double area, double boundaryTemperature) {

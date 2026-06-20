@@ -111,7 +111,7 @@ public class RootCauseAnalyzer implements Serializable {
   /**
    * Sets historian time-series data for evidence analysis.
    *
-   * @param data       map of parameter name to time-series values
+   * @param data map of parameter name to time-series values
    * @param timestamps array of timestamps parallel to data arrays
    */
   public void setHistorianData(Map<String, double[]> data, double[] timestamps) {
@@ -132,7 +132,7 @@ public class RootCauseAnalyzer implements Serializable {
    * Sets a design limit for threshold analysis.
    *
    * @param parameter parameter name
-   * @param lowLimit  low limit (use Double.NaN for no low limit)
+   * @param lowLimit low limit (use Double.NaN for no low limit)
    * @param highLimit high limit (use Double.NaN for no high limit)
    */
   public void setDesignLimit(String parameter, double lowLimit, double highLimit) {

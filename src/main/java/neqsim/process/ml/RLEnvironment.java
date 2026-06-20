@@ -80,10 +80,10 @@ public class RLEnvironment implements Serializable {
      * Constructor.
      *
      * @param observation current state
-     * @param reward      step reward
-     * @param done        episode finished
-     * @param truncated   time limit reached
-     * @param info        additional info
+     * @param reward step reward
+     * @param done episode finished
+     * @param truncated time limit reached
+     * @param info additional info
      */
     public StepResult(StateVector observation, double reward, boolean done, boolean truncated, StepInfo info) {
       this.observation = observation;
@@ -128,10 +128,10 @@ public class RLEnvironment implements Serializable {
   /**
    * Define an action dimension.
    *
-   * @param name       action name
+   * @param name action name
    * @param lowerBound minimum value
    * @param upperBound maximum value
-   * @param unit       physical unit
+   * @param unit physical unit
    * @return this environment for chaining
    */
   public RLEnvironment defineAction(String name, double lowerBound, double upperBound, String unit) {
@@ -142,11 +142,11 @@ public class RLEnvironment implements Serializable {
   /**
    * Add a hard constraint.
    *
-   * @param name         constraint name
+   * @param name constraint name
    * @param variableName state variable to constrain
-   * @param minValue     minimum allowed
-   * @param maxValue     maximum allowed
-   * @param unit         physical unit
+   * @param minValue minimum allowed
+   * @param maxValue maximum allowed
+   * @param unit physical unit
    * @return this environment for chaining
    */
   public RLEnvironment addConstraint(String name, String variableName, double minValue, double maxValue, String unit) {
@@ -157,10 +157,10 @@ public class RLEnvironment implements Serializable {
   /**
    * Set reward weights.
    *
-   * @param energy              weight for energy consumption (negative reward)
-   * @param setpointError       weight for setpoint deviation (negative reward)
+   * @param energy weight for energy consumption (negative reward)
+   * @param setpointError weight for setpoint deviation (negative reward)
    * @param constraintViolation weight for constraint violations (negative reward)
-   * @param throughput          weight for production throughput (positive reward)
+   * @param throughput weight for production throughput (positive reward)
    * @return this environment for chaining
    */
   public RLEnvironment setRewardWeights(double energy, double setpointError, double constraintViolation,
@@ -275,9 +275,9 @@ public class RLEnvironment implements Serializable {
   /**
    * Compute reward for current state and action.
    *
-   * @param state  current state
+   * @param state current state
    * @param action applied action
-   * @param info   info object to fill with details
+   * @param info info object to fill with details
    * @return scalar reward
    */
   protected double computeReward(StateVector state, ActionVector action, StepInfo info) {

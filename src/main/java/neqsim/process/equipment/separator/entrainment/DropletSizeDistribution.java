@@ -72,7 +72,7 @@ public class DropletSizeDistribution implements Serializable {
    * Creates a Rosin-Rammler droplet size distribution.
    *
    * @param characteristicDiameter d_63.2 characteristic diameter [m]
-   * @param spreadParameter        q shape parameter (typically 2.0-4.0)
+   * @param spreadParameter q shape parameter (typically 2.0-4.0)
    * @return a new DropletSizeDistribution
    */
   public static DropletSizeDistribution rosinRammler(double characteristicDiameter, double spreadParameter) {
@@ -86,7 +86,7 @@ public class DropletSizeDistribution implements Serializable {
   /**
    * Creates a log-normal droplet size distribution.
    *
-   * @param medianDiameter  d_50 mass-median diameter [m]
+   * @param medianDiameter d_50 mass-median diameter [m]
    * @param geometricStdDev sigma geometric standard deviation (typically 0.5-1.5)
    * @return a new DropletSizeDistribution
    */
@@ -114,10 +114,10 @@ public class DropletSizeDistribution implements Serializable {
    * </p>
    *
    * @param continuousDensity density of continuous phase [kg/m3]
-   * @param velocity          mixture velocity [m/s]
-   * @param pipeDiameter      pipe internal diameter [m]
-   * @param surfaceTension    interfacial tension [N/m]
-   * @param spreadParameter   q (Rosin-Rammler spread, default 2.6 if &lt;= 0)
+   * @param velocity mixture velocity [m/s]
+   * @param pipeDiameter pipe internal diameter [m]
+   * @param surfaceTension interfacial tension [N/m]
+   * @param spreadParameter q (Rosin-Rammler spread, default 2.6 if &lt;= 0)
    * @return a new DropletSizeDistribution
    */
   public static DropletSizeDistribution fromHinzeCorrelation(double continuousDensity, double velocity,

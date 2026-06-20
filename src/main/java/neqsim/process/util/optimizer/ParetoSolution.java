@@ -47,12 +47,12 @@ public class ParetoSolution implements Serializable, Comparable<ParetoSolution> 
   /**
    * Constructor for ParetoSolution.
    *
-   * @param objectiveValues    normalized objective values (higher is better)
+   * @param objectiveValues normalized objective values (higher is better)
    * @param rawObjectiveValues original objective values before normalization
-   * @param objectiveNames     names of objectives
-   * @param objectiveUnits     units for each objective
-   * @param decisionVariables  decision variable values
-   * @param feasible           whether solution is feasible
+   * @param objectiveNames names of objectives
+   * @param objectiveUnits units for each objective
+   * @param decisionVariables decision variable values
+   * @param feasible whether solution is feasible
    */
   public ParetoSolution(double[] objectiveValues, double[] rawObjectiveValues, String[] objectiveNames,
       String[] objectiveUnits, Map<String, Double> decisionVariables, boolean feasible) {
@@ -153,7 +153,7 @@ public class ParetoSolution implements Serializable, Comparable<ParetoSolution> 
   /**
    * Add metadata to this solution.
    *
-   * @param key   metadata key
+   * @param key metadata key
    * @param value metadata value
    */
   public void addMetadata(String key, Object value) {
@@ -219,8 +219,8 @@ public class ParetoSolution implements Serializable, Comparable<ParetoSolution> 
   /**
    * Calculate crowding distance contribution from neighbors.
    *
-   * @param leftNeighbor   left neighbor in sorted order (can be null)
-   * @param rightNeighbor  right neighbor in sorted order (can be null)
+   * @param leftNeighbor left neighbor in sorted order (can be null)
+   * @param rightNeighbor right neighbor in sorted order (can be null)
    * @param objectiveIndex objective to calculate distance for
    * @param objectiveRange total range of objective values
    * @return crowding distance contribution
@@ -297,7 +297,7 @@ public class ParetoSolution implements Serializable, Comparable<ParetoSolution> 
      * Set objectives and their evaluated values.
      *
      * @param objectives list of objective functions
-     * @param rawValues  evaluated raw values
+     * @param rawValues evaluated raw values
      * @return this builder
      */
     public Builder objectives(List<ObjectiveFunction> objectives, double[] rawValues) {
@@ -320,7 +320,7 @@ public class ParetoSolution implements Serializable, Comparable<ParetoSolution> 
     /**
      * Add a decision variable.
      *
-     * @param name  variable name
+     * @param name variable name
      * @param value variable value
      * @return this builder
      */

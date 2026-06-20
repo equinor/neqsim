@@ -74,7 +74,7 @@ public class GeometryCalculator implements Serializable {
    * </p>
    *
    * @param liquidLevel Height of liquid from pipe bottom (m)
-   * @param diameter    Pipe inner diameter (m)
+   * @param diameter Pipe inner diameter (m)
    * @return StratifiedGeometry with all geometric parameters
    */
   public StratifiedGeometry calculateFromLiquidLevel(double liquidLevel, double diameter) {
@@ -143,7 +143,7 @@ public class GeometryCalculator implements Serializable {
    * </p>
    *
    * @param liquidHoldup Target liquid holdup (0-1)
-   * @param diameter     Pipe inner diameter (m)
+   * @param diameter Pipe inner diameter (m)
    * @return StratifiedGeometry with all geometric parameters
    */
   public StratifiedGeometry calculateFromHoldup(double liquidHoldup, double diameter) {
@@ -196,7 +196,7 @@ public class GeometryCalculator implements Serializable {
    * Uses Hart's approximation for faster computation when high accuracy is not required.
    * </p>
    *
-   * @param holdup   Liquid holdup (0-1)
+   * @param holdup Liquid holdup (0-1)
    * @param diameter Pipe diameter (m)
    * @return Approximate liquid level (m)
    */
@@ -215,7 +215,7 @@ public class GeometryCalculator implements Serializable {
    * </p>
    *
    * @param filmThickness Liquid film thickness (m)
-   * @param diameter      Pipe diameter (m)
+   * @param diameter Pipe diameter (m)
    * @return Gas-interface perimeter (core perimeter)
    */
   public double calcAnnularGasPerimeter(double filmThickness, double diameter) {
@@ -234,7 +234,7 @@ public class GeometryCalculator implements Serializable {
    * </p>
    *
    * @param liquidHoldup Liquid holdup (0-1)
-   * @param diameter     Pipe diameter (m)
+   * @param diameter Pipe diameter (m)
    * @return Film thickness (m)
    */
   public double calcAnnularFilmThickness(double liquidHoldup, double diameter) {
@@ -256,7 +256,7 @@ public class GeometryCalculator implements Serializable {
    * </p>
    *
    * @param liquidLevel Liquid level (m)
-   * @param diameter    Pipe diameter (m)
+   * @param diameter Pipe diameter (m)
    * @return dA_L/dh (m)
    */
   public double calcAreaDerivative(double liquidLevel, double diameter) {
@@ -284,12 +284,12 @@ public class GeometryCalculator implements Serializable {
    * Stratified flow becomes unstable when gas velocity exceeds critical value.
    * </p>
    *
-   * @param gasVelocity   Gas velocity (m/s)
-   * @param liquidLevel   Liquid level (m)
-   * @param diameter      Pipe diameter (m)
-   * @param gasDensity    Gas density (kg/m³)
+   * @param gasVelocity Gas velocity (m/s)
+   * @param liquidLevel Liquid level (m)
+   * @param diameter Pipe diameter (m)
+   * @param gasDensity Gas density (kg/m³)
    * @param liquidDensity Liquid density (kg/m³)
-   * @param inclination   Pipe inclination (radians, positive = uphill)
+   * @param inclination Pipe inclination (radians, positive = uphill)
    * @return true if stratified flow is stable
    */
   public boolean isStratifiedStable(double gasVelocity, double liquidLevel, double diameter, double gasDensity,

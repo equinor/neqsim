@@ -101,7 +101,7 @@ public class OnePhasePipeLine extends Pipeline {
   /**
    * Constructor for OnePhasePipeLine.
    *
-   * @param name     name of pipe
+   * @param name name of pipe
    * @param inStream input stream
    */
   public OnePhasePipeLine(String name, StreamInterface inStream) {

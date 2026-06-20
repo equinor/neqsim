@@ -50,7 +50,7 @@ public class OilInWaterAnalyzerDriftModel implements Serializable {
   /**
    * Calculates the expected analyzer reading for a true OIW concentration.
    *
-   * @param trueOilInWaterMgL    true OIW concentration in mg/L
+   * @param trueOilInWaterMgL true OIW concentration in mg/L
    * @param daysSinceCalibration days since analyzer calibration
    * @return expected analyzer reading in mg/L
    */
@@ -65,7 +65,7 @@ public class OilInWaterAnalyzerDriftModel implements Serializable {
   /**
    * Calculates a conservative analyzer reading including a deterministic uncertainty margin.
    *
-   * @param trueOilInWaterMgL    true OIW concentration in mg/L
+   * @param trueOilInWaterMgL true OIW concentration in mg/L
    * @param daysSinceCalibration days since analyzer calibration
    * @param confidenceMultiplier multiplier on noise standard deviation
    * @return conservative analyzer reading in mg/L
@@ -80,7 +80,7 @@ public class OilInWaterAnalyzerDriftModel implements Serializable {
    * Corrects a measured OIW value back to estimated true OIW.
    *
    * @param measuredOilInWaterMgL measured OIW concentration in mg/L
-   * @param daysSinceCalibration  days since analyzer calibration
+   * @param daysSinceCalibration days since analyzer calibration
    * @return corrected OIW concentration in mg/L
    */
   public double correctMeasuredValue(double measuredOilInWaterMgL, double daysSinceCalibration) {
@@ -96,8 +96,8 @@ public class OilInWaterAnalyzerDriftModel implements Serializable {
   /**
    * Updates zero and span factors from a two-point field calibration.
    *
-   * @param measuredZeroMgL  analyzer reading for a zero reference in mg/L
-   * @param measuredSpanMgL  analyzer reading for a span reference in mg/L
+   * @param measuredZeroMgL analyzer reading for a zero reference in mg/L
+   * @param measuredSpanMgL analyzer reading for a span reference in mg/L
    * @param referenceSpanMgL true span reference concentration in mg/L
    * @throws IllegalArgumentException if referenceSpanMgL is not positive
    */

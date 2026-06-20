@@ -101,8 +101,8 @@ public class BariteCelestiteSolidSolution implements Serializable {
   /**
    * Sets the aqueous ion activities.
    *
-   * @param actBa  Ba2+ activity (molality * gamma)
-   * @param actSr  Sr2+ activity (molality * gamma)
+   * @param actBa Ba2+ activity (molality * gamma)
+   * @param actSr Sr2+ activity (molality * gamma)
    * @param actSO4 SO4 2- activity (molality * gamma)
    */
   public void setAqueousActivities(double actBa, double actSr, double actSO4) {

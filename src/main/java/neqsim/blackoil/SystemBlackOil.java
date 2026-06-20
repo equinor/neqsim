@@ -27,7 +27,7 @@ public class SystemBlackOil implements Serializable {
    * Constructor for SystemBlackOil.
    * </p>
    *
-   * @param pvt      a {@link neqsim.blackoil.BlackOilPVTTable} object
+   * @param pvt a {@link neqsim.blackoil.BlackOilPVTTable} object
    * @param rho_o_sc a double
    * @param rho_g_sc a double
    * @param rho_w_sc a double
@@ -86,7 +86,7 @@ public class SystemBlackOil implements Serializable {
    *
    * @param Otot_std a double
    * @param Gtot_std a double
-   * @param W_std    a double
+   * @param W_std a double
    */
   public void setStdTotals(double Otot_std, double Gtot_std, double W_std) {
     this.Otot_std = Math.max(0.0, Otot_std);

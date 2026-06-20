@@ -26,7 +26,7 @@ class ProcessModelStepModeAreaTest {
    * splitter, where 50% of the splitter outlet is product and 50% is recycled back to the mixer. The high recycle
    * fraction makes convergence take many passes, so a single forced step-mode pass is clearly not yet converged.
    *
-   * @param areaName   name for the process area
+   * @param areaName name for the process area
    * @param solveFully whether the area should fully converge on each model step
    * @return the assembled process area
    */

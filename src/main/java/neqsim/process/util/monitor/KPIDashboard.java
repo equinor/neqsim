@@ -24,7 +24,7 @@ public class KPIDashboard {
    * Adds a scenario with its KPIs to the dashboard.
    *
    * @param scenarioName name of the scenario
-   * @param kpi          KPI metrics for the scenario
+   * @param kpi KPI metrics for the scenario
    */
   public void addScenario(String scenarioName, ScenarioKPI kpi) {
     scenarios.put(scenarioName, kpi);
@@ -424,7 +424,7 @@ public class KPIDashboard {
   /**
    * Truncates a string to specified length.
    *
-   * @param str    the string to truncate
+   * @param str the string to truncate
    * @param length the maximum length
    * @return the truncated string
    */

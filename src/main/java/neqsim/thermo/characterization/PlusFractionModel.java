@@ -383,7 +383,7 @@ public class PlusFractionModel implements java.io.Serializable {
      *
      * Uses Watson K-factor as indicator of fluid character.
      *
-     * @param Mplus   plus fraction molecular weight (kg/mol)
+     * @param Mplus plus fraction molecular weight (kg/mol)
      * @param density plus fraction density (kg/m³)
      * @return estimated alpha value
      */
@@ -619,7 +619,7 @@ public class PlusFractionModel implements java.io.Serializable {
      * Set gamma distribution parameters.
      *
      * @param shape alpha (shape) parameter, typical values: 0.5-1.0 gas condensates, 1.0-2.0 black oils, 2.0-4.0 heavy
-     *              oils
+     * oils
      * @param minMW eta (minimum molecular weight) in g/mol, typically 84-90 for C7+
      */
     public void setGammaParameters(double shape, double minMW) {

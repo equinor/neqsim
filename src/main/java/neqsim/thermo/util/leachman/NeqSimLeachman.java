@@ -30,7 +30,7 @@ public class NeqSimLeachman {
    * Constructor for NeqSimLeachman. If hydrogenType is provided (non-empty), it uses that; otherwise, it auto-detects
    * based on the phase's component name.
    *
-   * @param phase        a PhaseInterface representing the stream.
+   * @param phase a PhaseInterface representing the stream.
    * @param hydrogenType a String representing the desired hydrogen type; can be empty.
    */
   public NeqSimLeachman(PhaseInterface phase, String hydrogenType) {
@@ -119,7 +119,7 @@ public class NeqSimLeachman {
   /**
    * Get specific thermodynamic properties of the specified phase.
    *
-   * @param phase      a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param properties an array of {@link java.lang.String} objects representing the properties to retrieve
    * @return an array of type double representing the requested properties
    */

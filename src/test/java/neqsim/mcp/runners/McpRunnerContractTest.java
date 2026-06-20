@@ -141,8 +141,8 @@ class McpRunnerContractTest {
   /**
    * Verifies that a JSON object contains all required fields.
    *
-   * @param label          assertion label
-   * @param response       JSON object to inspect
+   * @param label assertion label
+   * @param response JSON object to inspect
    * @param requiredFields required field names
    */
   private static void assertRequiredFields(String label, JsonObject response, JsonArray requiredFields) {

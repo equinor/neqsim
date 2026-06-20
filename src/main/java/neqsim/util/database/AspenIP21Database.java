@@ -56,7 +56,7 @@ public class AspenIP21Database implements neqsim.util.util.FileSystemSettings, j
    *
    * @param database a {@link java.lang.String} object
    * @return a Connection object
-   * @throws java.sql.SQLException            if any.
+   * @throws java.sql.SQLException if any.
    * @throws java.lang.ClassNotFoundException if any.
    */
   public Connection openConnection(String database) throws SQLException, ClassNotFoundException {
@@ -107,7 +107,7 @@ public class AspenIP21Database implements neqsim.util.util.FileSystemSettings, j
    * getResultSet.
    * </p>
    *
-   * @param database  a {@link java.lang.String} object
+   * @param database a {@link java.lang.String} object
    * @param sqlString a {@link java.lang.String} object
    * @return a ResultSet object
    */

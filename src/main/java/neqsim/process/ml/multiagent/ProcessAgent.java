@@ -40,7 +40,7 @@ public abstract class ProcessAgent implements Agent {
   /**
    * Create a process agent.
    *
-   * @param agentId   unique identifier
+   * @param agentId unique identifier
    * @param equipment controlled equipment
    */
   public ProcessAgent(String agentId, ProcessEquipmentInterface equipment) {
@@ -70,8 +70,8 @@ public abstract class ProcessAgent implements Agent {
    * Set a control setpoint.
    *
    * @param variableName variable name
-   * @param value        setpoint value
-   * @param weight       reward weight for tracking error
+   * @param value setpoint value
+   * @param weight reward weight for tracking error
    * @return this agent for chaining
    */
   public ProcessAgent setSetpoint(String variableName, double value, double weight) {

@@ -30,7 +30,7 @@ public class NMVOCAnalyser extends StreamMeasurementDeviceBaseClass {
    * Constructor for NMVOCAnalyser.
    * </p>
    *
-   * @param name   Name of NMVOCAnalyser
+   * @param name Name of NMVOCAnalyser
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public NMVOCAnalyser(String name, StreamInterface stream) {

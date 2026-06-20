@@ -56,11 +56,11 @@ public class GaussianPlume implements Serializable {
   /**
    * Construct a Gaussian plume model.
    *
-   * @param emissionRateKgPerS    continuous source strength in kg/s
+   * @param emissionRateKgPerS continuous source strength in kg/s
    * @param effectiveStackHeightM effective release height (stack + buoyancy rise) in m
-   * @param windSpeedAtRefM10m    wind speed at 10 m reference in m/s
-   * @param stability             Pasquill atmospheric stability class
-   * @param terrain               rural or urban terrain
+   * @param windSpeedAtRefM10m wind speed at 10 m reference in m/s
+   * @param stability Pasquill atmospheric stability class
+   * @param terrain rural or urban terrain
    */
   public GaussianPlume(double emissionRateKgPerS, double effectiveStackHeightM, double windSpeedAtRefM10m,
       Stability stability, Terrain terrain) {

@@ -125,7 +125,7 @@ public class FluidBuilder implements Serializable {
   /**
    * Adds a component with a mole fraction.
    *
-   * @param name         component name (e.g., "methane", "CO2")
+   * @param name component name (e.g., "methane", "CO2")
    * @param moleFraction mole fraction (0 to 1)
    * @return this builder for chaining
    */
@@ -137,10 +137,10 @@ public class FluidBuilder implements Serializable {
   /**
    * Adds a TBP (True Boiling Point) fraction for oil characterization.
    *
-   * @param name              fraction name (e.g., "C7", "C8")
-   * @param moleFraction      mole fraction
+   * @param name fraction name (e.g., "C7", "C8")
+   * @param moleFraction mole fraction
    * @param molarMassKgPerMol molar mass in kg/mol
-   * @param density           density in g/cm3
+   * @param density density in g/cm3
    * @return this builder for chaining
    */
   public FluidBuilder addTBPFraction(String name, double moleFraction, double molarMassKgPerMol, double density) {
@@ -151,10 +151,10 @@ public class FluidBuilder implements Serializable {
   /**
    * Adds a plus fraction (e.g., C20+) for oil characterization.
    *
-   * @param name              fraction name (e.g., "C20+")
-   * @param moleFraction      mole fraction
+   * @param name fraction name (e.g., "C20+")
+   * @param moleFraction mole fraction
    * @param molarMassKgPerMol molar mass in kg/mol
-   * @param density           density in g/cm3
+   * @param density density in g/cm3
    * @return this builder for chaining
    */
   public FluidBuilder addPlusFraction(String name, double moleFraction, double molarMassKgPerMol, double density) {
@@ -457,7 +457,7 @@ public class FluidBuilder implements Serializable {
     /**
      * Creates a component entry.
      *
-     * @param name         component name
+     * @param name component name
      * @param moleFraction mole fraction
      */
     ComponentEntry(String name, double moleFraction) {
@@ -479,10 +479,10 @@ public class FluidBuilder implements Serializable {
     /**
      * Creates a TBP entry.
      *
-     * @param name         fraction name
+     * @param name fraction name
      * @param moleFraction mole fraction
-     * @param molarMass    molar mass in kg/mol
-     * @param density      density in g/cm3
+     * @param molarMass molar mass in kg/mol
+     * @param density density in g/cm3
      */
     TBPEntry(String name, double moleFraction, double molarMass, double density) {
       this.name = name;

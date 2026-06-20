@@ -70,7 +70,7 @@ public class SteamTurbine extends TwoPortEquipment implements CapacityConstraine
   /**
    * Constructor for SteamTurbine with inlet stream.
    *
-   * @param name        equipment name
+   * @param name equipment name
    * @param inletStream inlet steam stream
    */
   public SteamTurbine(String name, StreamInterface inletStream) {
@@ -170,7 +170,7 @@ public class SteamTurbine extends TwoPortEquipment implements CapacityConstraine
    * Set outlet pressure with unit.
    *
    * @param pressure outlet pressure
-   * @param unit     pressure unit ("bara", "barg", "psi")
+   * @param unit pressure unit ("bara", "barg", "psi")
    */
   @Override
   public void setOutletPressure(double pressure, String unit) {
@@ -261,7 +261,7 @@ public class SteamTurbine extends TwoPortEquipment implements CapacityConstraine
    * Set the rated (maximum) power output with unit.
    *
    * @param ratedPower rated power value
-   * @param unit       power unit ("W", "kW", "MW", "hp")
+   * @param unit power unit ("W", "kW", "MW", "hp")
    */
   public void setRatedPower(double ratedPower, String unit) {
     switch (unit) {

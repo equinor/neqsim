@@ -17,8 +17,7 @@ public class EnhancementFactorAlg extends EnhancementFactor {
    * </p>
    *
    * @param fluidBoundary a
-   *                      {@link neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.FluidBoundaryInterface}
-   *                      object
+   * {@link neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.FluidBoundaryInterface} object
    */
   public EnhancementFactorAlg(FluidBoundaryInterface fluidBoundary) {
     super(fluidBoundary);

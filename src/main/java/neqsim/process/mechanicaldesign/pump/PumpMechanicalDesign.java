@@ -331,7 +331,7 @@ public class PumpMechanicalDesign extends MechanicalDesign {
    * Estimate optimal pump speed based on flow and head.
    *
    * @param flowM3h volume flow rate in m³/h
-   * @param headM   pump head in meters
+   * @param headM pump head in meters
    * @return estimated optimal speed in rpm
    */
   private double estimateOptimalSpeed(double flowM3h, double headM) {
@@ -362,8 +362,8 @@ public class PumpMechanicalDesign extends MechanicalDesign {
   /**
    * Calculate specific speeds for pump classification.
    *
-   * @param flowM3h  volume flow rate in m³/h
-   * @param headM    pump head in meters
+   * @param flowM3h volume flow rate in m³/h
+   * @param headM pump head in meters
    * @param speedRpm pump speed in rpm
    */
   private void calculateSpecificSpeeds(double flowM3h, double headM, double speedRpm) {
@@ -401,8 +401,8 @@ public class PumpMechanicalDesign extends MechanicalDesign {
   /**
    * Calculate impeller diameter and geometry.
    *
-   * @param flowM3h  volume flow rate in m³/h
-   * @param headM    pump head per stage in meters
+   * @param flowM3h volume flow rate in m³/h
+   * @param headM pump head per stage in meters
    * @param speedRpm pump speed in rpm
    */
   private void calculateImpellerSizing(double flowM3h, double headM, double speedRpm) {
@@ -440,8 +440,8 @@ public class PumpMechanicalDesign extends MechanicalDesign {
   /**
    * Calculate shaft diameter for torque transmission.
    *
-   * @param powerKW    shaft power in kW
-   * @param speedRpm   shaft speed in rpm
+   * @param powerKW shaft power in kW
+   * @param speedRpm shaft speed in rpm
    * @param efficiency pump efficiency
    */
   private void calculateShaftSizing(double powerKW, double speedRpm, double efficiency) {
@@ -509,7 +509,7 @@ public class PumpMechanicalDesign extends MechanicalDesign {
    * Calculate driver sizing with appropriate margins per API 610.
    *
    * @param hydraulicPowerKW hydraulic power in kW
-   * @param efficiency       pump efficiency
+   * @param efficiency pump efficiency
    */
   private void calculateDriverSizing(double hydraulicPowerKW, double efficiency) {
     // Shaft power = hydraulic power / efficiency
@@ -542,7 +542,7 @@ public class PumpMechanicalDesign extends MechanicalDesign {
   /**
    * Estimate NPSH required based on suction specific speed correlation.
    *
-   * @param flowM3h  volume flow rate in m³/h
+   * @param flowM3h volume flow rate in m³/h
    * @param speedRpm pump speed in rpm
    */
   private void estimateNpshRequired(double flowM3h, double speedRpm) {
@@ -612,7 +612,7 @@ public class PumpMechanicalDesign extends MechanicalDesign {
   /**
    * Calculate pump component weights.
    *
-   * @param flowM3h            volume flow rate in m³/h
+   * @param flowM3h volume flow rate in m³/h
    * @param designPressureBara design pressure in bara
    */
   private void calculateWeights(double flowM3h, double designPressureBara) {
@@ -1090,7 +1090,7 @@ public class PumpMechanicalDesign extends MechanicalDesign {
    * Validates that NPSH available meets the required margin.
    *
    * @param npshAvailableM NPSH available in meters
-   * @param npshRequiredM  NPSH required in meters
+   * @param npshRequiredM NPSH required in meters
    * @return true if NPSH margin is adequate
    */
   public boolean validateNpshMargin(double npshAvailableM, double npshRequiredM) {
@@ -1104,7 +1104,7 @@ public class PumpMechanicalDesign extends MechanicalDesign {
    * Validates that operating flow is within the preferred operating region.
    *
    * @param operatingFlowM3h operating flow rate in m³/h
-   * @param bepFlowM3h       BEP flow rate in m³/h
+   * @param bepFlowM3h BEP flow rate in m³/h
    * @return true if operating in POR
    */
   public boolean validateOperatingInPOR(double operatingFlowM3h, double bepFlowM3h) {
@@ -1119,7 +1119,7 @@ public class PumpMechanicalDesign extends MechanicalDesign {
    * Validates that operating flow is within the allowable operating region.
    *
    * @param operatingFlowM3h operating flow rate in m³/h
-   * @param bepFlowM3h       BEP flow rate in m³/h
+   * @param bepFlowM3h BEP flow rate in m³/h
    * @return true if operating in AOR
    */
   public boolean validateOperatingInAOR(double operatingFlowM3h, double bepFlowM3h) {

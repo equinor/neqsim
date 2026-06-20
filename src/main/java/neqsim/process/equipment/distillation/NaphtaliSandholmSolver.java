@@ -372,8 +372,8 @@ public class NaphtaliSandholmSolver {
    * the solver always uses the correct feed T, P, composition, and total moles.
    * </p>
    *
-   * @param column                the distillation column to solve
-   * @param originalFeedSystems   map of tray index to list of original feed SystemInterface clones
+   * @param column the distillation column to solve
+   * @param originalFeedSystems map of tray index to list of original feed SystemInterface clones
    * @param originalFeedFlowRates map of tray index to list of feed molar flow rates in mol/hr
    */
   public NaphtaliSandholmSolver(DistillationColumn column, Map<Integer, List<SystemInterface>> originalFeedSystems,
@@ -2694,8 +2694,8 @@ public class NaphtaliSandholmSolver {
   /**
    * Compute sum(K_i * x_i) using Wilson K-values at given T and P.
    *
-   * @param x     liquid composition
-   * @param temp  temperature in K
+   * @param x liquid composition
+   * @param temp temperature in K
    * @param press pressure in Pa
    * @return sum of K*x
    */
@@ -3087,9 +3087,9 @@ public class NaphtaliSandholmSolver {
    * </p>
    *
    * @param composition molar composition array (must sum to ~1.0)
-   * @param tempK       temperature in Kelvin
-   * @param pressBar    pressure in bar (absolute)
-   * @param isVapor     true for vapor-phase enthalpy (vapor root), false for liquid (liquid root)
+   * @param tempK temperature in Kelvin
+   * @param pressBar pressure in bar (absolute)
+   * @param isVapor true for vapor-phase enthalpy (vapor root), false for liquid (liquid root)
    * @return molar enthalpy in J/mol
    */
   /**
@@ -3607,8 +3607,8 @@ public class NaphtaliSandholmSolver {
    * Wilson-K bubble-point temperature for a composition at a given pressure. Solves sum(z_i * K_i(T,P)) = 1 by Newton
    * iteration. Used only as an initial-guess generator for the BP method T-profile.
    *
-   * @param z      molar composition
-   * @param pBar   pressure in bara
+   * @param z molar composition
+   * @param pBar pressure in bara
    * @param tGuess initial temperature guess in K
    * @return bubble-point temperature in K (Wilson approximation)
    */
@@ -3646,8 +3646,8 @@ public class NaphtaliSandholmSolver {
    * Wilson-K dew-point temperature for a composition at a given pressure. Solves sum(z_i / K_i(T,P)) = 1 by Newton
    * iteration. Used only as an initial-guess generator for the BP method T-profile.
    *
-   * @param z      molar composition
-   * @param pBar   pressure in bara
+   * @param z molar composition
+   * @param pBar pressure in bara
    * @param tGuess initial temperature guess in K
    * @return dew-point temperature in K (Wilson approximation)
    */
@@ -3693,10 +3693,10 @@ public class NaphtaliSandholmSolver {
    * </p>
    *
    * @param composition mole fractions (length C, normalised by caller)
-   * @param tempK       temperature in Kelvin
-   * @param pressBar    pressure in bara
-   * @param isVapor     true to force vapor root, false to force liquid root
-   * @param phiOut      output array of length C to be populated with phi_i
+   * @param tempK temperature in Kelvin
+   * @param pressBar pressure in bara
+   * @param isVapor true to force vapor root, false to force liquid root
+   * @param phiOut output array of length C to be populated with phi_i
    * @return true on success, false if the forced-phase calculation failed
    */
   private boolean computeSinglePhaseFugacityCoefficients(double[] composition, double tempK, double pressBar,
@@ -3730,8 +3730,8 @@ public class NaphtaliSandholmSolver {
   /**
    * Wilson correlation for K-values, used as a fallback / initialisation when an EOS evaluation fails.
    *
-   * @param i        component index in the reference system
-   * @param tempK    temperature in Kelvin
+   * @param i component index in the reference system
+   * @param tempK temperature in Kelvin
    * @param pressBar pressure in bara
    * @return Wilson K_i estimate
    */
@@ -3772,7 +3772,7 @@ public class NaphtaliSandholmSolver {
    * Get the value of a variable by tray and intra-tray index.
    *
    * @param tray tray index
-   * @param k    intra-tray variable index: 0..C-1 are liquid flows, C is temperature, C+1 is vapor flow
+   * @param k intra-tray variable index: 0..C-1 are liquid flows, C is temperature, C+1 is vapor flow
    * @return variable value
    */
   private double getVariable(int tray, int k) {
@@ -3788,8 +3788,8 @@ public class NaphtaliSandholmSolver {
   /**
    * Set the value of a variable by tray and intra-tray index.
    *
-   * @param tray  tray index
-   * @param k     intra-tray variable index
+   * @param tray tray index
+   * @param k intra-tray variable index
    * @param value new value
    */
   private void setVariable(int tray, int k, double value) {
@@ -3920,7 +3920,7 @@ public class NaphtaliSandholmSolver {
    * Includes bounds enforcement: temperatures must remain positive, component flows must remain non-negative.
    * </p>
    *
-   * @param dx    correction vector
+   * @param dx correction vector
    * @param alpha step size
    */
   private void applyUpdate(double[] dx, double alpha) {
@@ -3950,8 +3950,8 @@ public class NaphtaliSandholmSolver {
    * Save current tray state for rollback.
    *
    * @param saveLiq array to save liquid flows
-   * @param saveT   array to save temperatures
-   * @param saveV   array to save vapor flows
+   * @param saveT array to save temperatures
+   * @param saveV array to save vapor flows
    */
   private void saveTrayState(double[][] saveLiq, double[] saveT, double[] saveV) {
     for (int j = 0; j < N; j++) {
@@ -3965,8 +3965,8 @@ public class NaphtaliSandholmSolver {
    * Restore tray state from saved values.
    *
    * @param saveLiq saved liquid flows
-   * @param saveT   saved temperatures
-   * @param saveV   saved vapor flows
+   * @param saveT saved temperatures
+   * @param saveV saved vapor flows
    */
   private void restoreTrayState(double[][] saveLiq, double[] saveT, double[] saveV) {
     for (int j = 0; j < N; j++) {
@@ -3979,7 +3979,7 @@ public class NaphtaliSandholmSolver {
   /**
    * Backtracking line search on ||F||^2.
    *
-   * @param dx          Newton direction
+   * @param dx Newton direction
    * @param currentNorm current residual norm
    * @return step size alpha in (0, 1]
    */
@@ -4356,10 +4356,10 @@ public class NaphtaliSandholmSolver {
    * {@code phaseToSystem(1)}. The phase flow rates are set to V[j] and L[j] from the solver variables.
    * </p>
    *
-   * @param id         calculation identifier
+   * @param id calculation identifier
    * @param iterations number of iterations performed
-   * @param finalNorm  final residual norm
-   * @param startTime  start time in nanoseconds
+   * @param finalNorm final residual norm
+   * @param startTime start time in nanoseconds
    */
   private void applyResultsToColumn(UUID id, int iterations, double finalNorm, long startTime) {
     for (int j = 0; j < N; j++) {

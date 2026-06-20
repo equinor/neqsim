@@ -25,7 +25,7 @@ class ProcessModelHooksTest {
   /**
    * Builds a simple ProcessSystem: feed stream into a separator.
    *
-   * @param name     name for the process
+   * @param name name for the process
    * @param feedName name for the feed stream
    * @return configured ProcessSystem
    */

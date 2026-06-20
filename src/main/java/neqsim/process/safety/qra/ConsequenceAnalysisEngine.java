@@ -48,7 +48,7 @@ public class ConsequenceAnalysisEngine implements Serializable {
   /**
    * Construct a consequence-analysis scenario.
    *
-   * @param scenarioName            scenario identifier (e.g. "10 mm gas leak from V-100")
+   * @param scenarioName scenario identifier (e.g. "10 mm gas leak from V-100")
    * @param releaseFrequencyPerYear initiating release frequency in 1/year
    */
   public ConsequenceAnalysisEngine(String scenarioName, double releaseFrequencyPerYear) {
@@ -59,9 +59,9 @@ public class ConsequenceAnalysisEngine implements Serializable {
   /**
    * Add an outcome branch with its conditional probability and a consequence calculator.
    *
-   * @param outcomeName            e.g. "Jet fire", "VCE", "Toxic dispersion"
+   * @param outcomeName e.g. "Jet fire", "VCE", "Toxic dispersion"
    * @param conditionalProbability probability conditional on the release (e.g. immediate ignition probability)
-   * @param consequence            consequence model implementing {@link Consequence}
+   * @param consequence consequence model implementing {@link Consequence}
    * @return this engine for chaining
    */
   public ConsequenceAnalysisEngine addOutcome(String outcomeName, double conditionalProbability,
@@ -76,9 +76,9 @@ public class ConsequenceAnalysisEngine implements Serializable {
   /**
    * Convenience: add a jet-fire outcome.
    *
-   * @param probability     conditional probability (e.g. immediate ignition)
-   * @param model           jet fire model already configured with mass flow and ΔHc
-   * @param probit          thermal probit (use {@link ProbitModel#thermalFatality()})
+   * @param probability conditional probability (e.g. immediate ignition)
+   * @param model jet fire model already configured with mass flow and ΔHc
+   * @param probit thermal probit (use {@link ProbitModel#thermalFatality()})
    * @param exposureSeconds receiver exposure time in s
    * @return this engine
    */
@@ -97,9 +97,9 @@ public class ConsequenceAnalysisEngine implements Serializable {
   /**
    * Convenience: add a pool-fire outcome.
    *
-   * @param probability     conditional probability
-   * @param model           pool fire model
-   * @param probit          thermal probit
+   * @param probability conditional probability
+   * @param model pool fire model
+   * @param probit thermal probit
    * @param exposureSeconds receiver exposure time in s
    * @return this engine
    */
@@ -119,8 +119,8 @@ public class ConsequenceAnalysisEngine implements Serializable {
    * Convenience: add a VCE outcome with blast-lung probit.
    *
    * @param probability conditional probability (delayed ignition)
-   * @param model       VCE model
-   * @param probit      blast probit (use {@link ProbitModel#blastLungFatality()})
+   * @param model VCE model
+   * @param probit blast probit (use {@link ProbitModel#blastLungFatality()})
    * @return this engine
    */
   public ConsequenceAnalysisEngine addVCE(double probability, final VCEModel model, final ProbitModel probit) {
@@ -135,13 +135,13 @@ public class ConsequenceAnalysisEngine implements Serializable {
   /**
    * Convenience: add a toxic dispersion outcome (Gaussian plume + probit).
    *
-   * @param probability       conditional probability (no ignition)
-   * @param plume             Gaussian plume model
-   * @param probit            toxic probit (e.g. {@link ProbitModel#h2sFatality()})
+   * @param probability conditional probability (no ignition)
+   * @param plume Gaussian plume model
+   * @param probit toxic probit (e.g. {@link ProbitModel#h2sFatality()})
    * @param molarMassKgPerMol toxic component MW
-   * @param tempK             plume temperature in K
-   * @param pressureBara      plume pressure in bara
-   * @param exposureMinutes   exposure duration in min
+   * @param tempK plume temperature in K
+   * @param pressureBara plume pressure in bara
+   * @param exposureMinutes exposure duration in min
    * @return this engine
    */
   public ConsequenceAnalysisEngine addToxicDispersion(double probability, final GaussianPlume plume,

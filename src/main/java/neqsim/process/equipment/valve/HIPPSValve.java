@@ -230,7 +230,7 @@ public class HIPPSValve extends ThrottlingValve {
   /**
    * Constructor for HIPPSValve.
    *
-   * @param name        name of HIPPS valve
+   * @param name name of HIPPS valve
    * @param inletStream inlet stream to valve
    */
   public HIPPSValve(String name, StreamInterface inletStream) {

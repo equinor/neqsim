@@ -408,7 +408,7 @@ public class ProcessConstraintEvaluator implements Serializable {
     /**
      * Adds a normalized utilization.
      *
-     * @param key   utilization key
+     * @param key utilization key
      * @param value utilization value
      */
     public void addNormalizedUtilization(String key, double value) {
@@ -601,7 +601,7 @@ public class ProcessConstraintEvaluator implements Serializable {
     /**
      * Adds a constraint detail.
      *
-     * @param name  constraint name
+     * @param name constraint name
      * @param value constraint value
      */
     public void addConstraintDetail(String name, double value) {
@@ -757,7 +757,7 @@ public class ProcessConstraintEvaluator implements Serializable {
    * Calculates sensitivity of constraints to flow rate changes.
    *
    * @param flowRateKgPerHr current flow rate in kg/hr
-   * @param flowUnit        flow unit (for documentation purposes)
+   * @param flowUnit flow unit (for documentation purposes)
    * @return map of constraint name to sensitivity (d_utilization / d_flow)
    */
   public Map<String, Double> calculateFlowSensitivities(double flowRateKgPerHr, String flowUnit) {
@@ -767,7 +767,7 @@ public class ProcessConstraintEvaluator implements Serializable {
   /**
    * Calculates sensitivity of constraints to flow rate changes.
    *
-   * @param processSystem   the process system
+   * @param processSystem the process system
    * @param flowRateKgPerHr current flow rate in kg/hr
    * @return map of constraint name to sensitivity (d_utilization / d_flow)
    */
@@ -830,7 +830,7 @@ public class ProcessConstraintEvaluator implements Serializable {
    * Estimates the maximum flow rate before hitting the bottleneck constraint.
    *
    * @param currentFlowKgPerHr current flow rate
-   * @param flowUnit           flow unit (for documentation purposes)
+   * @param flowUnit flow unit (for documentation purposes)
    * @return estimated maximum flow rate in kg/hr
    */
   public double estimateMaxFlow(double currentFlowKgPerHr, String flowUnit) {
@@ -840,7 +840,7 @@ public class ProcessConstraintEvaluator implements Serializable {
   /**
    * Estimates the maximum flow rate before hitting the bottleneck constraint.
    *
-   * @param processSystem      the process system
+   * @param processSystem the process system
    * @param currentFlowKgPerHr current flow rate
    * @return estimated maximum flow rate in kg/hr
    */
@@ -863,8 +863,8 @@ public class ProcessConstraintEvaluator implements Serializable {
   /**
    * Gets constraints with caching support.
    *
-   * @param equipment       the process equipment to get constraints for
-   * @param strategy        the capacity strategy to use
+   * @param equipment the process equipment to get constraints for
+   * @param strategy the capacity strategy to use
    * @param processRunCount the current process run count for cache validation
    * @return map of constraint name to capacity constraint
    */
@@ -905,7 +905,7 @@ public class ProcessConstraintEvaluator implements Serializable {
    * Sets the feed flow rate on the process system.
    *
    * @param processSystem the process system to modify
-   * @param flowKgPerHr   the feed flow rate in kg/hr
+   * @param flowKgPerHr the feed flow rate in kg/hr
    */
   private void setFeedFlowRate(ProcessSystem processSystem, double flowKgPerHr) {
     if (processSystem == null || processSystem.getUnitOperations().isEmpty()) {

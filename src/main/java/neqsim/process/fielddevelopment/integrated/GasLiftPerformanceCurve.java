@@ -41,8 +41,8 @@ public class GasLiftPerformanceCurve implements Serializable {
    * Creates a parametric gas-lift performance curve.
    *
    * @param baseOilRateSm3PerDay oil rate at zero lift in Sm3/day
-   * @param coeffA               square-root response coefficient (&gt; 0)
-   * @param coeffB               linear friction-penalty coefficient (&gt; 0)
+   * @param coeffA square-root response coefficient (&gt; 0)
+   * @param coeffB linear friction-penalty coefficient (&gt; 0)
    * @param maxLiftRateSm3PerDay maximum lift-gas rate in Sm3/day
    */
   public GasLiftPerformanceCurve(double baseOilRateSm3PerDay, double coeffA, double coeffB,
@@ -60,7 +60,7 @@ public class GasLiftPerformanceCurve implements Serializable {
    * Creates a tabulated gas-lift performance curve.
    *
    * @param liftRatesSm3PerDay lift-gas rates in Sm3/day, strictly ascending; length &ge; 2
-   * @param oilRatesSm3PerDay  corresponding oil rates in Sm3/day
+   * @param oilRatesSm3PerDay corresponding oil rates in Sm3/day
    */
   public GasLiftPerformanceCurve(double[] liftRatesSm3PerDay, double[] oilRatesSm3PerDay) {
     if (liftRatesSm3PerDay == null || oilRatesSm3PerDay == null || liftRatesSm3PerDay.length != oilRatesSm3PerDay.length

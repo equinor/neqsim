@@ -511,7 +511,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
    * polytropicEfficiency.
    * </p>
    *
-   * @param flow  a double
+   * @param flow a double
    * @param speed a double
    * @return a double
    */
@@ -537,7 +537,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
    * checkSurge2.
    * </p>
    *
-   * @param flow  a double
+   * @param flow a double
    * @param speed a double
    * @return a boolean
    */
@@ -550,7 +550,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
    * checkStoneWall.
    * </p>
    *
-   * @param flow  a double
+   * @param flow a double
    * @param speed a double
    * @return a boolean
    */
@@ -805,7 +805,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
    *
    * @param speed The compressor speed in RPM
    * @return The surge head at the specified speed in kJ/kg or meter (depending on headUnit), or Double.NaN if no curves
-   *         exist
+   * exist
    */
   @Override
   public double getSurgeHeadAtSpeed(double speed) {
@@ -888,7 +888,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
    *
    * @param speed The compressor speed in RPM
    * @return The stone wall head at the specified speed in kJ/kg or meter (depending on headUnit), or Double.NaN if no
-   *         curves exist
+   * curves exist
    */
   @Override
   public double getStoneWallHeadAtSpeed(double speed) {

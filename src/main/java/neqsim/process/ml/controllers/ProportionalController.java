@@ -21,11 +21,11 @@ public class ProportionalController implements Controller {
   /**
    * Create P controller.
    *
-   * @param name       controller name
+   * @param name controller name
    * @param errorIndex index of error in observation array
-   * @param kp         proportional gain
-   * @param actionMin  minimum action value
-   * @param actionMax  maximum action value
+   * @param kp proportional gain
+   * @param actionMin minimum action value
+   * @param actionMax maximum action value
    */
   public ProportionalController(String name, int errorIndex, double kp, double actionMin, double actionMax) {
     this.name = name;

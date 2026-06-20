@@ -55,7 +55,7 @@ public interface Agent extends Serializable {
    * Compute agent's local reward.
    *
    * @param globalState current global state
-   * @param action      action taken
+   * @param action action taken
    * @return local reward
    */
   double computeReward(StateVector globalState, double[] action);

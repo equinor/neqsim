@@ -235,7 +235,7 @@ public class ValveMechanicalDesign extends MechanicalDesign {
    * </ul>
    *
    * @param valveCharacterization the characterization type: "linear", "equal percentage", "quick opening", or "modified
-   *                              parabolic"
+   * parabolic"
    */
   public void setValveCharacterization(String valveCharacterization) {
     this.valveCharacterization = valveCharacterization;
@@ -261,7 +261,7 @@ public class ValveMechanicalDesign extends MechanicalDesign {
    * </p>
    *
    * @param diameter the choke diameter value
-   * @param unit     the unit: "m", "mm", "in", or "64ths"
+   * @param unit the unit: "m", "mm", "in", or "64ths"
    */
   public void setChokeDiameter(double diameter, String unit) {
     if (valveSizingMethod instanceof ControlValveSizing_MultiphaseChoke) {
@@ -327,7 +327,7 @@ public class ValveMechanicalDesign extends MechanicalDesign {
    * Calculates the valve size based on the fluid properties and operating conditions.
    *
    * @return a map containing the calculated valve size and related parameters. If fullOutput is false, the map will be
-   *         null.
+   * null.
    */
   public Map<String, Object> calcValveSize() {
     Map<String, Object> result = fullOutput ? new HashMap<>() : null;

@@ -121,11 +121,11 @@ public class LNGVaporSpaceModel implements Serializable {
    * nBOG_removed) * R * T / V_ullage.
    * </p>
    *
-   * @param bogMolesGenerated    moles of BOG generated from liquid evaporation this step
-   * @param bogMolesRemoved      moles of BOG removed by handling (compressor, reliquefaction, GCU)
-   * @param liquidVolume         current liquid volume (m3)
+   * @param bogMolesGenerated moles of BOG generated from liquid evaporation this step
+   * @param bogMolesRemoved moles of BOG removed by handling (compressor, reliquefaction, GCU)
+   * @param liquidVolume current liquid volume (m3)
    * @param equilibriumVaporComp vapor composition from VLE flash
-   * @param liquidTemperature    liquid temperature (K)
+   * @param liquidTemperature liquid temperature (K)
    */
   public void update(double bogMolesGenerated, double bogMolesRemoved, double liquidVolume,
       Map<String, Double> equilibriumVaporComp, double liquidTemperature) {
@@ -423,11 +423,11 @@ public class LNGVaporSpaceModel implements Serializable {
    * simple ideal gas model, especially when heavier components accumulate in the vapor space.
    * </p>
    *
-   * @param bogMolesGenerated    moles of BOG generated
-   * @param bogMolesRemoved      moles removed by BOG handling
-   * @param liquidVolume         current liquid volume (m3)
+   * @param bogMolesGenerated moles of BOG generated
+   * @param bogMolesRemoved moles removed by BOG handling
+   * @param liquidVolume current liquid volume (m3)
    * @param equilibriumVaporComp vapor composition from liquid VLE flash
-   * @param liquidTemperature    liquid surface temperature (K)
+   * @param liquidTemperature liquid surface temperature (K)
    */
   public void updateWithFlash(double bogMolesGenerated, double bogMolesRemoved, double liquidVolume,
       Map<String, Double> equilibriumVaporComp, double liquidTemperature) {

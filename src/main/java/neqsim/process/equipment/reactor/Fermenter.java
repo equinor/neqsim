@@ -79,7 +79,7 @@ public class Fermenter extends StirredTankReactor {
   /**
    * Constructor for Fermenter with inlet stream.
    *
-   * @param name        name of the fermenter
+   * @param name name of the fermenter
    * @param inletStream inlet feed stream
    */
   public Fermenter(String name, StreamInterface inletStream) {

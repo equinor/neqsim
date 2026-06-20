@@ -543,7 +543,7 @@ public class MechanicalDesignReport implements java.io.Serializable {
   /**
    * Repeat a string n times (Java 8 compatible).
    *
-   * @param str   string to repeat
+   * @param str string to repeat
    * @param count number of times
    * @return repeated string
    */

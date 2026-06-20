@@ -135,7 +135,7 @@ public class VLSolidTray extends SimpleTray {
   /**
    * Find a phase by type name.
    *
-   * @param system        thermodynamic system to inspect
+   * @param system thermodynamic system to inspect
    * @param phaseTypeName phase type name to locate
    * @return phase index, or {@code -1} when absent
    */

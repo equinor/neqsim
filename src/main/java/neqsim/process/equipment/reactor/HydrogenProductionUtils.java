@@ -57,7 +57,7 @@ final class HydrogenProductionUtils {
   /**
    * Ensures a component exists in a thermodynamic system.
    *
-   * @param system        thermodynamic system to update
+   * @param system thermodynamic system to update
    * @param componentName NeqSim component name
    */
   static void ensureComponent(SystemInterface system, String componentName) {
@@ -69,9 +69,9 @@ final class HydrogenProductionUtils {
   /**
    * Creates a configured Gibbs reactor for syngas equilibrium work.
    *
-   * @param name        reactor name
+   * @param name reactor name
    * @param inletStream reactor inlet stream
-   * @param energyMode  Gibbs reactor energy mode
+   * @param energyMode Gibbs reactor energy mode
    * @return configured reactor
    */
   static GibbsReactor createSyngasGibbsReactor(String name, StreamInterface inletStream,
@@ -91,7 +91,7 @@ final class HydrogenProductionUtils {
   /**
    * Gets the amount of a component in a system.
    *
-   * @param system        thermodynamic system
+   * @param system thermodynamic system
    * @param componentName component name
    * @return component amount in the stream basis, or zero if absent
    */
@@ -109,7 +109,7 @@ final class HydrogenProductionUtils {
   /**
    * Gets the mole fraction of a component.
    *
-   * @param system        thermodynamic system
+   * @param system thermodynamic system
    * @param componentName component name
    * @return component mole fraction, or zero if absent
    */
@@ -127,7 +127,7 @@ final class HydrogenProductionUtils {
   /**
    * Calculates methane conversion between two systems.
    *
-   * @param inletSystem  inlet thermodynamic system
+   * @param inletSystem inlet thermodynamic system
    * @param outletSystem outlet thermodynamic system
    * @return methane conversion fraction between zero and one
    */
@@ -203,7 +203,7 @@ final class HydrogenProductionUtils {
   /**
    * Bounds a value to a closed interval.
    *
-   * @param value   value to bound
+   * @param value value to bound
    * @param minimum lower bound
    * @param maximum upper bound
    * @return bounded value

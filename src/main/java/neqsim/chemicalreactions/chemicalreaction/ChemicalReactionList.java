@@ -233,9 +233,9 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
    * initMoleNumbers.
    * </p>
    *
-   * @param phase      a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param components an array of {@link neqsim.thermo.component.ComponentInterface} objects
-   * @param Amatrix    an array of type double
+   * @param Amatrix an array of type double
    * @param chemRefPot an array of type double
    */
   public void initMoleNumbers(PhaseInterface phase, ComponentInterface[] components, double[][] Amatrix,
@@ -277,7 +277,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
    * createReactionMatrix.
    * </p>
    *
-   * @param phase      a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param components an array of {@link neqsim.thermo.component.ComponentInterface} objects
    * @return an array of type double
    */
@@ -321,7 +321,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
    * updateReferencePotentials.
    * </p>
    *
-   * @param phase      a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param components an array of {@link neqsim.thermo.component.ComponentInterface} objects
    * @return an array of type double
    */
@@ -600,7 +600,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
    * calcReacRates.
    * </p>
    *
-   * @param phase      a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param components an array of {@link neqsim.thermo.component.ComponentInterface} objects
    * @return a {@link Jama.Matrix} object
    */
@@ -676,7 +676,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
    * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param comp  a {@link java.lang.String} object
+   * @param comp a {@link java.lang.String} object
    * @return a double
    */
   public double reacHeat(PhaseInterface phase, String comp) {

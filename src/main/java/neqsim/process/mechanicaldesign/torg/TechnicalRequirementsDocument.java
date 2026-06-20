@@ -252,8 +252,8 @@ public class TechnicalRequirementsDocument implements Serializable {
   /**
    * Get a custom parameter as a specific type.
    *
-   * @param <T>  the expected type
-   * @param key  parameter key
+   * @param <T> the expected type
+   * @param key parameter key
    * @param type the class of the expected type
    * @return parameter value cast to the type, or null if not found or wrong type
    */
@@ -320,11 +320,11 @@ public class TechnicalRequirementsDocument implements Serializable {
      *
      * @param minAmbientTemp minimum ambient temperature [C]
      * @param maxAmbientTemp maximum ambient temperature [C]
-     * @param seawaterTemp   design seawater temperature [C]
-     * @param seismicZone    seismic zone classification
-     * @param windSpeed      design wind speed [m/s]
-     * @param waveHeight     design wave height [m]
-     * @param location       installation location
+     * @param seawaterTemp design seawater temperature [C]
+     * @param seismicZone seismic zone classification
+     * @param windSpeed design wind speed [m/s]
+     * @param waveHeight design wave height [m]
+     * @param location installation location
      */
     public EnvironmentalConditions(double minAmbientTemp, double maxAmbientTemp, double seawaterTemp,
 	String seismicZone, double windSpeed, double waveHeight, String location) {
@@ -416,11 +416,11 @@ public class TechnicalRequirementsDocument implements Serializable {
     /**
      * Constructor.
      *
-     * @param pressureSF    pressure safety factor (multiplier)
-     * @param tempMargin    temperature safety margin [C]
-     * @param corrosion     corrosion allowance [mm]
+     * @param pressureSF pressure safety factor (multiplier)
+     * @param tempMargin temperature safety margin [C]
+     * @param corrosion corrosion allowance [mm]
      * @param wallTolerance wall thickness tolerance (fraction)
-     * @param loadFactor    load factor (multiplier)
+     * @param loadFactor load factor (multiplier)
      */
     public SafetyFactors(double pressureSF, double tempMargin, double corrosion, double wallTolerance,
 	double loadFactor) {
@@ -494,11 +494,11 @@ public class TechnicalRequirementsDocument implements Serializable {
      * Constructor.
      *
      * @param plateMaterial default plate material code
-     * @param pipeMaterial  default pipe material code
-     * @param minTemp       minimum design temperature [C]
-     * @param maxTemp       maximum design temperature [C]
+     * @param pipeMaterial default pipe material code
+     * @param minTemp minimum design temperature [C]
+     * @param maxTemp maximum design temperature [C]
      * @param impactTesting whether impact testing is required
-     * @param materialStd   material standard (e.g., "ASTM", "EN")
+     * @param materialStd material standard (e.g., "ASTM", "EN")
      */
     public MaterialSpecifications(String plateMaterial, String pipeMaterial, double minTemp, double maxTemp,
 	boolean impactTesting, String materialStd) {
@@ -660,7 +660,7 @@ public class TechnicalRequirementsDocument implements Serializable {
     /**
      * Set all standards for a category (replaces existing).
      *
-     * @param category  the design category
+     * @param category the design category
      * @param standards the standards to set
      * @return this builder
      */
@@ -673,7 +673,7 @@ public class TechnicalRequirementsDocument implements Serializable {
      * Add a standard for a specific equipment type.
      *
      * @param equipmentType the equipment type
-     * @param standard      the standard to add
+     * @param standard the standard to add
      * @return this builder
      */
     public Builder addEquipmentStandard(String equipmentType, StandardType standard) {
@@ -736,7 +736,7 @@ public class TechnicalRequirementsDocument implements Serializable {
     /**
      * Add a custom parameter.
      *
-     * @param key   parameter key
+     * @param key parameter key
      * @param value parameter value
      * @return this builder
      */

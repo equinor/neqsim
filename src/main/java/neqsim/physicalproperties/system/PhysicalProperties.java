@@ -90,9 +90,9 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
    * Constructor for PhysicalProperties.
    * </p>
    *
-   * @param phase                            a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param binaryDiffusionCoefficientMethod a int
-   * @param multicomponentDiffusionMethod    a int
+   * @param multicomponentDiffusionMethod a int
    */
   public PhysicalProperties(PhaseInterface phase, int binaryDiffusionCoefficientMethod,
       int multicomponentDiffusionMethod) {
@@ -323,7 +323,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
    * Set CSP viscosity correction factors for the active PFCT/Pedersen viscosity model.
    *
    * @param correctionFactors array of four correction factors for temperature, pressure, molar mass and alpha terms
-   * @throws IllegalStateException    if the current viscosity model is not PFCT/CSP
+   * @throws IllegalStateException if the current viscosity model is not PFCT/CSP
    * @throws IllegalArgumentException if the array does not contain four finite values
    */
   public void setCspViscosityCorrectionFactors(double[] correctionFactors) {
@@ -342,7 +342,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
    * Set CSP viscosity parameters for the active PFCT/Pedersen viscosity model.
    *
    * @param parameters array of four CSP viscosity parameters
-   * @throws IllegalStateException    if the current viscosity model is not PFCT/CSP
+   * @throws IllegalStateException if the current viscosity model is not PFCT/CSP
    * @throws IllegalArgumentException if the array does not contain four finite values
    */
   public void setCspViscosityParameters(double[] parameters) {
@@ -354,7 +354,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
    *
    * @param index correction factor index, from 0 to 3
    * @param value finite correction factor value
-   * @throws IllegalStateException    if the current viscosity model is not PFCT/CSP
+   * @throws IllegalStateException if the current viscosity model is not PFCT/CSP
    * @throws IllegalArgumentException if the index is outside 0 to 3 or the value is not finite
    */
   public void setCspViscosityCorrectionFactor(int index, double value) {
@@ -374,7 +374,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
    *
    * @param index parameter index, from 0 to 3
    * @param value finite parameter value
-   * @throws IllegalStateException    if the current viscosity model is not PFCT/CSP
+   * @throws IllegalStateException if the current viscosity model is not PFCT/CSP
    * @throws IllegalArgumentException if the index is outside 0 to 3 or the value is not finite
    */
   public void setCspViscosityParameter(int index, double value) {
@@ -554,7 +554,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
    * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param ppt   PhysicalPropertyType enum object.
+   * @param ppt PhysicalPropertyType enum object.
    */
   public void init(PhaseInterface phase, PhysicalPropertyType ppt) {
     switch (ppt) {
@@ -585,7 +585,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
    * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param name  Name of physical property.
+   * @param name Name of physical property.
    */
   public void init(PhaseInterface phase, String name) {
     init(phase, PhysicalPropertyType.byName(name));
@@ -597,7 +597,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
    * </p>
    *
    * @param waxVolumeFraction a double
-   * @param shareRate         a double
+   * @param shareRate a double
    * @return a double
    */
   public double getViscosityOfWaxyOil(double waxVolumeFraction, double shareRate) {
@@ -795,7 +795,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
    * Setter for the field <code>waxViscosityParameter</code>.
    * </p>
    *
-   * @param paramNumber           a int
+   * @param paramNumber a int
    * @param waxViscosityParameter a double
    */
   public void setWaxViscosityParameter(int paramNumber, double waxViscosityParameter) {

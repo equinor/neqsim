@@ -165,7 +165,7 @@ public class DryGasSealAnalyzer {
    * Sets the seal cavity pressure (upstream of the seal gap).
    *
    * @param pressure the pressure value
-   * @param unit     pressure unit: "bara", "barg", "Pa", "MPa"
+   * @param unit pressure unit: "bara", "barg", "Pa", "MPa"
    */
   public void setSealCavityPressure(double pressure, String unit) {
     this.sealCavityPressureBara = convertPressureToBara(pressure, unit);
@@ -175,7 +175,7 @@ public class DryGasSealAnalyzer {
    * Sets the seal cavity temperature (upstream of the seal gap).
    *
    * @param temperature the temperature value
-   * @param unit        temperature unit: "C", "K", "F"
+   * @param unit temperature unit: "C", "K", "F"
    */
   public void setSealCavityTemperature(double temperature, String unit) {
     this.sealCavityTemperatureK = convertTemperatureToKelvin(temperature, unit);
@@ -185,7 +185,7 @@ public class DryGasSealAnalyzer {
    * Sets the primary vent back-pressure (downstream of seal gap).
    *
    * @param pressure the pressure value
-   * @param unit     pressure unit: "bara", "barg", "Pa", "MPa"
+   * @param unit pressure unit: "bara", "barg", "Pa", "MPa"
    */
   public void setPrimaryVentPressure(double pressure, String unit) {
     this.primaryVentPressureBara = convertPressureToBara(pressure, unit);
@@ -195,7 +195,7 @@ public class DryGasSealAnalyzer {
    * Sets the primary seal radial clearance.
    *
    * @param clearance the clearance in the specified unit
-   * @param unit      length unit: "m", "mm", "um"
+   * @param unit length unit: "m", "mm", "um"
    */
   public void setSealClearance(double clearance, String unit) {
     if ("mm".equals(unit)) {
@@ -227,7 +227,7 @@ public class DryGasSealAnalyzer {
   /**
    * Sets the standpipe (dead-leg) geometry.
    *
-   * @param lengthM        length in metres
+   * @param lengthM length in metres
    * @param innerDiameterM inner diameter in metres
    */
   public void setStandpipeGeometry(double lengthM, double innerDiameterM) {
@@ -256,7 +256,7 @@ public class DryGasSealAnalyzer {
   /**
    * Sets the pipe insulation properties.
    *
-   * @param thicknessM   insulation thickness in metres (0 for bare pipe)
+   * @param thicknessM insulation thickness in metres (0 for bare pipe)
    * @param conductivity insulation thermal conductivity in W/(m K)
    */
   public void setInsulation(double thicknessM, double conductivity) {
@@ -268,7 +268,7 @@ public class DryGasSealAnalyzer {
    * Sets the ambient temperature.
    *
    * @param temperature the temperature value
-   * @param unit        temperature unit: "C", "K", "F"
+   * @param unit temperature unit: "C", "K", "F"
    */
   public void setAmbientTemperature(double temperature, String unit) {
     this.ambientTemperatureK = convertTemperatureToKelvin(temperature, unit);
@@ -287,7 +287,7 @@ public class DryGasSealAnalyzer {
    * Sets the GCU superheat and subcool margins per API 692.
    *
    * @param superheatK margin above dew point for reheating in Kelvin
-   * @param subcoolK   margin below dew point for cooling in Kelvin
+   * @param subcoolK margin below dew point for cooling in Kelvin
    */
   public void setGCUMargins(double superheatK, double subcoolK) {
     this.gcuSuperheatMarginK = superheatK;
@@ -816,7 +816,7 @@ public class DryGasSealAnalyzer {
    *
    * $$h_{rad} = \varepsilon \sigma (T_s^2 + T_{amb}^2)(T_s + T_{amb})$$
    *
-   * @param outerRadius         outer radius of pipe (including insulation) in metres
+   * @param outerRadius outer radius of pipe (including insulation) in metres
    * @param surfaceTemperatureK pipe surface temperature in Kelvin
    * @return combined external heat transfer coefficient in W/(m2 K)
    */
@@ -865,11 +865,11 @@ public class DryGasSealAnalyzer {
    * approximated as h_int = 5 W/(m2 K).
    * </p>
    *
-   * @param ri     inner radius in metres
-   * @param ro     outer radius of steel wall in metres
-   * @param rIns   outer radius including insulation in metres
+   * @param ri inner radius in metres
+   * @param ro outer radius of steel wall in metres
+   * @param rIns outer radius including insulation in metres
    * @param steelK steel thermal conductivity in W/(m K)
-   * @param hExt   external heat transfer coefficient in W/(m2 K)
+   * @param hExt external heat transfer coefficient in W/(m2 K)
    * @return overall heat transfer coefficient in W/(m2 K) based on outer area
    */
   private double calculateOverallU(double ri, double ro, double rIns, double steelK, double hExt) {
@@ -1451,7 +1451,7 @@ public class DryGasSealAnalyzer {
    * Converts a pressure value to bara.
    *
    * @param pressure the pressure value
-   * @param unit     the unit string
+   * @param unit the unit string
    * @return pressure in bara
    */
   private static double convertPressureToBara(double pressure, String unit) {
@@ -1472,7 +1472,7 @@ public class DryGasSealAnalyzer {
    * Converts a temperature value to Kelvin.
    *
    * @param temperature the temperature value
-   * @param unit        the unit string
+   * @param unit the unit string
    * @return temperature in Kelvin
    */
   private static double convertTemperatureToKelvin(double temperature, String unit) {

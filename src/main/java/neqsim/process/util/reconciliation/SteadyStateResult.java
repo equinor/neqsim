@@ -46,8 +46,8 @@ public class SteadyStateResult implements java.io.Serializable {
   /**
    * Creates a steady-state detection result.
    *
-   * @param variables      the list of all monitored variables
-   * @param rThreshold     the R-statistic threshold used
+   * @param variables the list of all monitored variables
+   * @param rThreshold the R-statistic threshold used
    * @param slopeThreshold the slope threshold used
    */
   public SteadyStateResult(List<SteadyStateVariable> variables, double rThreshold, double slopeThreshold) {

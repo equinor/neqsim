@@ -48,8 +48,8 @@ public class DistillationColumnCapacityStrategy implements EquipmentCapacityStra
   /**
    * Constructor with custom constraints.
    *
-   * @param maxFloodingFactor   maximum flooding factor (0-1)
-   * @param maxWeirLoading      maximum weir loading (m3/hr per m)
+   * @param maxFloodingFactor maximum flooding factor (0-1)
+   * @param maxWeirLoading maximum weir loading (m3/hr per m)
    * @param maxTrayPressureDrop maximum tray pressure drop (mbar/tray)
    */
   public DistillationColumnCapacityStrategy(double maxFloodingFactor, double maxWeirLoading,

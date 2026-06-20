@@ -180,9 +180,9 @@ public class NorsokM506CorrosionRate implements Serializable {
   /**
    * Creates a new NorsokM506CorrosionRate with specified conditions.
    *
-   * @param temperatureC      operating temperature in Celsius (5 to 150)
+   * @param temperatureC operating temperature in Celsius (5 to 150)
    * @param totalPressureBara total system pressure in bara
-   * @param co2MoleFraction   CO2 mole fraction in gas phase (0 to 1)
+   * @param co2MoleFraction CO2 mole fraction in gas phase (0 to 1)
    */
   public NorsokM506CorrosionRate(double temperatureC, double totalPressureBara, double co2MoleFraction) {
     this.temperatureC = temperatureC;
@@ -1009,7 +1009,7 @@ public class NorsokM506CorrosionRate implements Serializable {
    *
    * @param minTempC minimum temperature in Celsius
    * @param maxTempC maximum temperature in Celsius
-   * @param steps    number of temperature steps
+   * @param steps number of temperature steps
    * @return list of maps with temperature and corrosion results at each step
    */
   public List<Map<String, Object>> runTemperatureSweep(double minTempC, double maxTempC, int steps) {
@@ -1045,7 +1045,7 @@ public class NorsokM506CorrosionRate implements Serializable {
    *
    * @param minPressure minimum total pressure in bara
    * @param maxPressure maximum total pressure in bara
-   * @param steps       number of pressure steps
+   * @param steps number of pressure steps
    * @return list of maps with pressure and corrosion results at each step
    */
   public List<Map<String, Object>> runPressureSweep(double minPressure, double maxPressure, int steps) {

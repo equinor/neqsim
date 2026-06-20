@@ -25,14 +25,14 @@ public class DexpiInstrumentInfo implements Serializable {
   /**
    * Creates a DEXPI instrument info record.
    *
-   * @param id               the DEXPI XML element ID
-   * @param tagName          the instrument tag name (e.g. "PICSA 4712.02")
-   * @param category         the ISA category letter (e.g. "P" for pressure)
-   * @param functions        the ISA function letters (e.g. "ICSA")
+   * @param id the DEXPI XML element ID
+   * @param tagName the instrument tag name (e.g. "PICSA 4712.02")
+   * @param category the ISA category letter (e.g. "P" for pressure)
+   * @param functions the ISA function letters (e.g. "ICSA")
    * @param instrumentNumber the instrument number
-   * @param loopNumber       the instrumentation loop number (may be null)
-   * @param measurementUnit  the measurement unit (may be null)
-   * @param actuatingTag     the associated actuating function tag (may be null)
+   * @param loopNumber the instrumentation loop number (may be null)
+   * @param measurementUnit the measurement unit (may be null)
+   * @param actuatingTag the associated actuating function tag (may be null)
    */
   public DexpiInstrumentInfo(String id, String tagName, String category, String functions, String instrumentNumber,
       String loopNumber, String measurementUnit, String actuatingTag) {

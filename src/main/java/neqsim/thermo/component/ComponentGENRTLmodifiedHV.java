@@ -26,10 +26,10 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
    * Constructor for ComponentGENRTLmodifiedHV.
    * </p>
    *
-   * @param name         Name of component.
-   * @param moles        Total number of moles of component.
+   * @param name Name of component.
+   * @param moles Total number of moles of component.
    * @param molesInPhase Number of moles in phase.
-   * @param compIndex    Index number of component in phase object component array.
+   * @param compIndex Index number of component in phase object component array.
    */
   public ComponentGENRTLmodifiedHV(String name, double moles, double molesInPhase, int compIndex) {
     super(name, moles, molesInPhase, compIndex);
@@ -48,16 +48,16 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
    * getGamma.
    * </p>
    *
-   * @param phase              a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
-   * @param temperature        a double
-   * @param pressure           a double
-   * @param pt                 the PhaseType of the phase
-   * @param HValpha            an array of type double
-   * @param HVgij              an array of type double
-   * @param HVgijT             an array of type double
-   * @param intparam           an array of type double
-   * @param mixRule            an array of {@link java.lang.String} objects
+   * @param temperature a double
+   * @param pressure a double
+   * @param pt the PhaseType of the phase
+   * @param HValpha an array of type double
+   * @param HVgij an array of type double
+   * @param HVgijT an array of type double
+   * @param intparam an array of type double
+   * @param mixRule an array of {@link java.lang.String} objects
    * @return a double
    */
   public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,

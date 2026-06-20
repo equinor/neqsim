@@ -106,7 +106,7 @@ public interface AttractiveTermInterface extends Cloneable, java.io.Serializable
    * setParameters.
    * </p>
    *
-   * @param i   a int
+   * @param i a int
    * @param val a double
    */
   public void setParameters(int i, double val);

@@ -78,13 +78,13 @@ public class BottleneckTracker implements Serializable {
     /**
      * Creates an immutable bottleneck snapshot.
      *
-     * @param time               the time stamp (caller-defined units)
-     * @param label              optional human-readable label; null is stored as an empty string
-     * @param equipmentName      the bottleneck equipment name
-     * @param constraintName     the binding constraint name
+     * @param time the time stamp (caller-defined units)
+     * @param label optional human-readable label; null is stored as an empty string
+     * @param equipmentName the bottleneck equipment name
+     * @param constraintName the binding constraint name
      * @param utilizationPercent the utilization in percent (100.0 = 100%)
-     * @param exceeded           true if the constraint is exceeded
-     * @param hasBottleneck      true if a bottleneck equipment/constraint was present
+     * @param exceeded true if the constraint is exceeded
+     * @param hasBottleneck true if a bottleneck equipment/constraint was present
      */
     public Snapshot(double time, String label, String equipmentName, String constraintName, double utilizationPercent,
 	boolean exceeded, boolean hasBottleneck) {
@@ -184,7 +184,7 @@ public class BottleneckTracker implements Serializable {
   /**
    * Records the binding bottleneck at a time step.
    *
-   * @param time   the time stamp (caller-defined units)
+   * @param time the time stamp (caller-defined units)
    * @param result the bottleneck result to record; an empty result is recorded as an unconstrained snapshot
    * @return the snapshot that was created and stored
    */
@@ -195,8 +195,8 @@ public class BottleneckTracker implements Serializable {
   /**
    * Records the binding bottleneck at a labelled time step.
    *
-   * @param time   the time stamp (caller-defined units)
-   * @param label  a human-readable label for the step (may be null)
+   * @param time the time stamp (caller-defined units)
+   * @param label a human-readable label for the step (may be null)
    * @param result the bottleneck result to record; if null or empty an unconstrained snapshot is recorded
    * @return the snapshot that was created and stored
    */
@@ -382,7 +382,7 @@ public class BottleneckTracker implements Serializable {
   /**
    * Appends a JSON array of snapshots to the supplied builder.
    *
-   * @param sb    the builder to append to
+   * @param sb the builder to append to
    * @param items the snapshots to serialize
    */
   private void appendSnapshotArray(StringBuilder sb, List<Snapshot> items) {

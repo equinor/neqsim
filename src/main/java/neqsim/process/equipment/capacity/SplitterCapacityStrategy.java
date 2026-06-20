@@ -43,7 +43,7 @@ public class SplitterCapacityStrategy implements EquipmentCapacityStrategy {
   /**
    * Constructor with custom constraints.
    *
-   * @param maxVelocity     maximum header velocity (m/s)
+   * @param maxVelocity maximum header velocity (m/s)
    * @param maxPressureDrop maximum pressure drop (bar)
    */
   public SplitterCapacityStrategy(double maxVelocity, double maxPressureDrop) {

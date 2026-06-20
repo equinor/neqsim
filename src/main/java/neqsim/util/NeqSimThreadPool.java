@@ -155,7 +155,7 @@ public final class NeqSimThreadPool {
    * Python via JPype.
    * </p>
    *
-   * @param <T>  the type of the result
+   * @param <T> the type of the result
    * @param task the task to submit
    * @return a Future representing pending completion of the task with its result
    */
@@ -387,7 +387,7 @@ public final class NeqSimThreadPool {
    * Shuts down the pool and waits for termination.
    *
    * @param timeout the maximum time to wait
-   * @param unit    the time unit of the timeout argument
+   * @param unit the time unit of the timeout argument
    * @return {@code true} if the pool terminated, {@code false} if timeout elapsed
    */
   public static boolean shutdownAndAwait(long timeout, TimeUnit unit) {

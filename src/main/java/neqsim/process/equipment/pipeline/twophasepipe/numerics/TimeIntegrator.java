@@ -106,9 +106,9 @@ public class TimeIntegrator implements Serializable {
   /**
    * Advance solution by one time step using selected method.
    *
-   * @param U   Current state [nCells][nVars]
+   * @param U Current state [nCells][nVars]
    * @param rhs Right-hand side function
-   * @param dt  Time step
+   * @param dt Time step
    * @return Updated state at t + dt
    */
   public double[][] step(double[][] U, RHSFunction rhs, double dt) {
@@ -135,9 +135,9 @@ public class TimeIntegrator implements Serializable {
    * U^{n+1} = U^n + dt * R(U^n)
    * </p>
    *
-   * @param U   Current state
+   * @param U Current state
    * @param rhs Right-hand side function
-   * @param dt  Time step
+   * @param dt Time step
    * @return Updated state
    */
   public double[][] stepEuler(double[][] U, RHSFunction rhs, double dt) {
@@ -148,9 +148,9 @@ public class TimeIntegrator implements Serializable {
   /**
    * Second-order Runge-Kutta (Heun's method).
    *
-   * @param U   Current state
+   * @param U Current state
    * @param rhs Right-hand side function
-   * @param dt  Time step
+   * @param dt Time step
    * @return Updated state
    */
   public double[][] stepRK2(double[][] U, RHSFunction rhs, double dt) {
@@ -171,9 +171,9 @@ public class TimeIntegrator implements Serializable {
   /**
    * Classical 4th-order Runge-Kutta.
    *
-   * @param U   Current state
+   * @param U Current state
    * @param rhs Right-hand side function
-   * @param dt  Time step
+   * @param dt Time step
    * @return Updated state
    */
   public double[][] stepRK4(double[][] U, RHSFunction rhs, double dt) {
@@ -219,9 +219,9 @@ public class TimeIntegrator implements Serializable {
    * Maintains TVD property, good for problems with shocks.
    * </p>
    *
-   * @param U   Current state
+   * @param U Current state
    * @param rhs Right-hand side function
-   * @param dt  Time step
+   * @param dt Time step
    * @return Updated state
    */
   public double[][] stepSSPRK3(double[][] U, RHSFunction rhs, double dt) {
@@ -244,7 +244,7 @@ public class TimeIntegrator implements Serializable {
    * Calculate stable time step based on CFL condition.
    *
    * @param maxWaveSpeed Maximum wave speed in the domain (|v| + c)
-   * @param dx           Minimum cell size
+   * @param dx Minimum cell size
    * @return Stable time step
    */
   public double calcStableTimeStep(double maxWaveSpeed, double dx) {
@@ -264,11 +264,11 @@ public class TimeIntegrator implements Serializable {
   /**
    * Calculate stable time step for two-fluid system.
    *
-   * @param gasVelocities     Gas velocities at each cell (m/s)
-   * @param liquidVelocities  Liquid velocities at each cell (m/s)
-   * @param gasSoundSpeeds    Gas sound speeds at each cell (m/s)
+   * @param gasVelocities Gas velocities at each cell (m/s)
+   * @param liquidVelocities Liquid velocities at each cell (m/s)
+   * @param gasSoundSpeeds Gas sound speeds at each cell (m/s)
    * @param liquidSoundSpeeds Liquid sound speeds at each cell (m/s)
-   * @param dx                Cell size (m)
+   * @param dx Cell size (m)
    * @return Stable time step
    */
   public double calcTwoFluidTimeStep(double[] gasVelocities, double[] liquidVelocities, double[] gasSoundSpeeds,
@@ -461,11 +461,11 @@ public class TimeIntegrator implements Serializable {
    * Set cell properties required for the IMEX pressure correction step. Must be called before stepping with
    * IMEX_PRESSURE_CORRECTION.
    *
-   * @param soundSpeeds    sound speed per cell (m/s)
-   * @param densities      mixture density per cell (kg/m3)
-   * @param dx             cell size (m)
+   * @param soundSpeeds sound speed per cell (m/s)
+   * @param densities mixture density per cell (kg/m3)
+   * @param dx cell size (m)
    * @param outletPressure outlet boundary pressure (Pa)
-   * @param outletFixed    true if outlet pressure is a Dirichlet BC
+   * @param outletFixed true if outlet pressure is a Dirichlet BC
    */
   public void setIMEXProperties(double[] soundSpeeds, double[] densities, double dx, double outletPressure,
       boolean outletFixed) {
@@ -483,15 +483,15 @@ public class TimeIntegrator implements Serializable {
   /**
    * Set cell and phase properties required for a dimensionally consistent IMEX pressure correction.
    *
-   * @param soundSpeeds    mixture sound speed per cell (m/s)
-   * @param densities      mixture density per cell (kg/m3)
-   * @param areas          pipe cross-sectional area per cell (m2)
-   * @param gasDensities   gas density per cell (kg/m3)
-   * @param oilDensities   oil density per cell (kg/m3)
+   * @param soundSpeeds mixture sound speed per cell (m/s)
+   * @param densities mixture density per cell (kg/m3)
+   * @param areas pipe cross-sectional area per cell (m2)
+   * @param gasDensities gas density per cell (kg/m3)
+   * @param oilDensities oil density per cell (kg/m3)
    * @param waterDensities water density per cell (kg/m3)
-   * @param dx             cell size (m)
+   * @param dx cell size (m)
    * @param outletPressure outlet boundary pressure (Pa)
-   * @param outletFixed    true if outlet pressure is a Dirichlet BC
+   * @param outletFixed true if outlet pressure is a Dirichlet BC
    */
   public void setIMEXProperties(double[] soundSpeeds, double[] densities, double[] areas, double[] gasDensities,
       double[] oilDensities, double[] waterDensities, double dx, double outletPressure, boolean outletFixed) {
@@ -522,9 +522,9 @@ public class TimeIntegrator implements Serializable {
    * (based on |v|+c). For typical gas-liquid flows where c=300 m/s and v=5 m/s, this gives a factor of ~60 speedup.
    * </p>
    *
-   * @param U   Current state [nCells][nVars]
+   * @param U Current state [nCells][nVars]
    * @param rhs Right-hand side function (explicit part)
-   * @param dt  Time step
+   * @param dt Time step
    * @return Updated state at t + dt
    */
   public double[][] stepIMEXPressureCorrection(double[][] U, RHSFunction rhs, double dt) {
@@ -701,10 +701,10 @@ public class TimeIntegrator implements Serializable {
   /**
    * Convert phase mass per length to phase area alpha*A using the phase density.
    *
-   * @param cellIndex      cell index
-   * @param massPerLength  phase mass per length (kg/m)
+   * @param cellIndex cell index
+   * @param massPerLength phase mass per length (kg/m)
    * @param phaseDensities phase densities (kg/m3)
-   * @param fallbackArea   fallback phase area (m2)
+   * @param fallbackArea fallback phase area (m2)
    * @return phase area (m2)
    */
   private double getPhaseArea(int cellIndex, double massPerLength, double[] phaseDensities, double fallbackArea) {
@@ -726,10 +726,10 @@ public class TimeIntegrator implements Serializable {
    * 0.
    * </p>
    *
-   * @param a     sub-diagonal (a[0] is not used)
+   * @param a sub-diagonal (a[0] is not used)
    * @param bDiag main diagonal
-   * @param c     super-diagonal (c[n-1] is not used)
-   * @param d     right-hand side
+   * @param c super-diagonal (c[n-1] is not used)
+   * @param d right-hand side
    * @return solution vector x
    */
   private double[] solveTridiagonal(double[] a, double[] bDiag, double[] c, double[] d) {
@@ -771,9 +771,9 @@ public class TimeIntegrator implements Serializable {
    * standard acoustic CFL.
    * </p>
    *
-   * @param gasVelocities    gas velocities at each cell (m/s)
+   * @param gasVelocities gas velocities at each cell (m/s)
    * @param liquidVelocities liquid velocities at each cell (m/s)
-   * @param dx               cell size (m)
+   * @param dx cell size (m)
    * @return stable time step (s), typically 10-100x larger than acoustic CFL
    */
   public double calcIMEXTimeStep(double[] gasVelocities, double[] liquidVelocities, double dx) {

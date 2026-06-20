@@ -89,8 +89,8 @@ public class ParallelSweep implements Serializable {
   /**
    * Evaluates all decision vectors in parallel and returns the results in input order.
    *
-   * @param <R>       the result type produced for each decision vector
-   * @param inputs    the decision vectors to evaluate (must not be null)
+   * @param <R> the result type produced for each decision vector
+   * @param inputs the decision vectors to evaluate (must not be null)
    * @param evaluator the per-trial evaluator (must not be null and must be thread-safe)
    * @return a list of results in the same order as {@code inputs}
    */

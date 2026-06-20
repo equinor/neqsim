@@ -27,12 +27,12 @@ public interface CPAMixingRulesInterface extends MixingRulesInterface {
    *
    * @param siteNumber1 a int
    * @param siteNumber2 a int
-   * @param compnumb1   a int
-   * @param compnumb2   a int
-   * @param phase       a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param compnumb1 a int
+   * @param compnumb2 a int
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param temperature a double
-   * @param pressure    a double
-   * @param numbcomp    a int
+   * @param pressure a double
+   * @param numbcomp a int
    * @return a double
    */
   public double calcDeltadT(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2, PhaseInterface phase,
@@ -45,12 +45,12 @@ public interface CPAMixingRulesInterface extends MixingRulesInterface {
    *
    * @param siteNumber1 a int
    * @param siteNumber2 a int
-   * @param compnumb1   a int
-   * @param compnumb2   a int
-   * @param phase       a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param compnumb1 a int
+   * @param compnumb2 a int
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param temperature a double
-   * @param pressure    a double
-   * @param numbcomp    a int
+   * @param pressure a double
+   * @param numbcomp a int
    * @return a double
    */
   public double calcDeltadTdV(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2, PhaseInterface phase,
@@ -63,12 +63,12 @@ public interface CPAMixingRulesInterface extends MixingRulesInterface {
    *
    * @param siteNumber1 a int
    * @param siteNumber2 a int
-   * @param compnumb1   a int
-   * @param compnumb2   a int
-   * @param phase       a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param compnumb1 a int
+   * @param compnumb2 a int
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param temperature a double
-   * @param pressure    a double
-   * @param numbcomp    a int
+   * @param pressure a double
+   * @param numbcomp a int
    * @return a double
    */
   public double calcDeltadTdT(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2, PhaseInterface phase,
@@ -79,14 +79,14 @@ public interface CPAMixingRulesInterface extends MixingRulesInterface {
    * calcXi.
    * </p>
    *
-   * @param assosScheme  an array of int objects
+   * @param assosScheme an array of int objects
    * @param assosScheme2 an array of int objects
-   * @param siteNumber   a int
-   * @param compnumb     a int
-   * @param phase        a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param temperature  a double
-   * @param pressure     a double
-   * @param numbcomp     a int
+   * @param siteNumber a int
+   * @param compnumb a int
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param temperature a double
+   * @param pressure a double
+   * @param numbcomp a int
    * @return a double
    */
   public double calcXi(int[][][] assosScheme, int[][][][] assosScheme2, int siteNumber, int compnumb,
@@ -99,12 +99,12 @@ public interface CPAMixingRulesInterface extends MixingRulesInterface {
    *
    * @param siteNumber1 a int
    * @param siteNumber2 a int
-   * @param compnumb1   a int
-   * @param compnumb2   a int
-   * @param phase       a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param compnumb1 a int
+   * @param compnumb2 a int
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param temperature a double
-   * @param pressure    a double
-   * @param numbcomp    a int
+   * @param pressure a double
+   * @param numbcomp a int
    * @return a double
    */
   public double calcDelta(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2, PhaseInterface phase,
@@ -116,14 +116,14 @@ public interface CPAMixingRulesInterface extends MixingRulesInterface {
    * </p>
    *
    * @param derivativeComp a int
-   * @param siteNumber1    a int
-   * @param siteNumber2    a int
-   * @param compnumb1      a int
-   * @param compnumb2      a int
-   * @param phase          a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param temperature    a double
-   * @param pressure       a double
-   * @param numbcomp       a int
+   * @param siteNumber1 a int
+   * @param siteNumber2 a int
+   * @param compnumb1 a int
+   * @param compnumb2 a int
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param temperature a double
+   * @param pressure a double
+   * @param numbcomp a int
    * @return a double
    */
   public double calcDeltadN(int derivativeComp, int siteNumber1, int siteNumber2, int compnumb1, int compnumb2,
@@ -136,12 +136,12 @@ public interface CPAMixingRulesInterface extends MixingRulesInterface {
    *
    * @param siteNumber1 a int
    * @param siteNumber2 a int
-   * @param compnumb1   a int
-   * @param compnumb2   a int
-   * @param phase       a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param compnumb1 a int
+   * @param compnumb2 a int
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param temperature a double
-   * @param pressure    a double
-   * @param numbcomp    a int
+   * @param pressure a double
+   * @param numbcomp a int
    * @return a double
    */
   public double calcDeltadV(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2, PhaseInterface phase,
@@ -154,12 +154,12 @@ public interface CPAMixingRulesInterface extends MixingRulesInterface {
    *
    * @param siteNumber1 a int
    * @param siteNumber2 a int
-   * @param compnumb1   a int
-   * @param compnumb2   a int
-   * @param phase       a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param compnumb1 a int
+   * @param compnumb2 a int
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param temperature a double
-   * @param pressure    a double
-   * @param numbcomp    a int
+   * @param pressure a double
+   * @param numbcomp a int
    * @return a double
    */
   public double calcDeltaNog(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2, PhaseInterface phase,

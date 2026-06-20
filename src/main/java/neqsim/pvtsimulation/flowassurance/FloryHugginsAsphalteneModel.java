@@ -119,7 +119,7 @@ public class FloryHugginsAsphalteneModel {
   /**
    * Constructor with thermodynamic system.
    *
-   * @param system               the thermodynamic system
+   * @param system the thermodynamic system
    * @param reservoirTemperature reservoir temperature (K)
    */
   public FloryHugginsAsphalteneModel(SystemInterface system, double reservoirTemperature) {
@@ -272,9 +272,9 @@ public class FloryHugginsAsphalteneModel {
    * dissolved).
    * </p>
    *
-   * @param saturates   weight fraction of saturates
-   * @param aromatics   weight fraction of aromatics
-   * @param resins      weight fraction of resins
+   * @param saturates weight fraction of saturates
+   * @param aromatics weight fraction of aromatics
+   * @param resins weight fraction of resins
    * @param asphaltenes weight fraction of asphaltenes
    */
   public void configureFromSARA(double saturates, double aromatics, double resins, double asphaltenes) {
@@ -369,9 +369,9 @@ public class FloryHugginsAsphalteneModel {
    * Solved iteratively for phi_a (maximum asphaltene that can remain dissolved).
    * </p>
    *
-   * @param deltaLiquid       solubility parameter of liquid phase (MPa^0.5)
+   * @param deltaLiquid solubility parameter of liquid phase (MPa^0.5)
    * @param liquidMolarVolume molar volume of liquid phase (cm3/mol)
-   * @param temperature       temperature (K)
+   * @param temperature temperature (K)
    * @return maximum dissolved asphaltene volume fraction
    */
   public double calculateMaxDissolvedFraction(double deltaLiquid, double liquidMolarVolume, double temperature) {
@@ -404,7 +404,7 @@ public class FloryHugginsAsphalteneModel {
   /**
    * Calculates weight fraction of precipitated asphaltene at given conditions.
    *
-   * @param pressure    pressure (bara)
+   * @param pressure pressure (bara)
    * @param temperature temperature (K)
    * @return weight fraction of precipitated asphaltene (0 = none, 1 = all)
    */
@@ -548,7 +548,7 @@ public class FloryHugginsAsphalteneModel {
    * @param temperature temperature (K)
    * @param maxPressure maximum pressure (bara)
    * @param minPressure minimum pressure (bara)
-   * @param numPoints   number of calculation points
+   * @param numPoints number of calculation points
    * @return 2D array: [0]=pressures (bara), [1]=wt% precipitated
    */
   public double[][] generatePrecipitationCurve(double temperature, double maxPressure, double minPressure,
@@ -572,7 +572,7 @@ public class FloryHugginsAsphalteneModel {
    * @param temperature temperature (K)
    * @param maxPressure maximum pressure (bara)
    * @param minPressure minimum pressure (bara)
-   * @param numPoints   number of calculation points
+   * @param numPoints number of calculation points
    * @return 2D array: [0]=pressures, [1]=delta_L (MPa^0.5), [2]=delta_asphaltene
    */
   public double[][] generateSolubilityParameterProfile(double temperature, double maxPressure, double minPressure,

@@ -143,11 +143,11 @@ public class ColumnStudyRegressionTest {
   /**
    * Create one feed stream from a base fluid clone.
    *
-   * @param name              stream name
-   * @param baseFluid         base fluid to clone
-   * @param molarComposition  molar composition in component order
-   * @param temperatureC      stream temperature in degrees Celsius
-   * @param pressureBara      stream pressure in bara
+   * @param name stream name
+   * @param baseFluid base fluid to clone
+   * @param molarComposition molar composition in component order
+   * @param temperatureC stream temperature in degrees Celsius
+   * @param pressureBara stream pressure in bara
    * @param massFlowKgPerHour stream mass flow in kg/hr
    * @return configured and run stream
    */
@@ -189,7 +189,7 @@ public class ColumnStudyRegressionTest {
   /**
    * Create and configure the column-study distillation column.
    *
-   * @param feedStream    main column feed
+   * @param feedStream main column feed
    * @param topFeedStream external top reflux feed
    * @return configured column ready to run
    */
@@ -257,9 +257,9 @@ public class ColumnStudyRegressionTest {
   /**
    * Assert overall column mass balance closure.
    *
-   * @param feedStream    main column feed
+   * @param feedStream main column feed
    * @param topFeedStream external top reflux feed
-   * @param column        solved column
+   * @param column solved column
    */
   private void assertOverallMassBalance(StreamInterface feedStream, StreamInterface topFeedStream,
       DistillationColumn column) {
@@ -275,9 +275,9 @@ public class ColumnStudyRegressionTest {
   /**
    * Assert per-component mass balance closure over external feeds and terminal products.
    *
-   * @param feedStream    main column feed
+   * @param feedStream main column feed
    * @param topFeedStream external top reflux feed
-   * @param column        solved column
+   * @param column solved column
    */
   private void assertComponentMassBalances(StreamInterface feedStream, StreamInterface topFeedStream,
       DistillationColumn column) {
@@ -299,7 +299,7 @@ public class ColumnStudyRegressionTest {
   /**
    * Calculate component mass flow from total molar flow, mole fraction, and molar mass.
    *
-   * @param fluid          fluid containing the component
+   * @param fluid fluid containing the component
    * @param componentIndex component index in the fluid
    * @return component mass flow in kg/hr
    */

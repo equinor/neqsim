@@ -110,8 +110,8 @@ public final class MaterialsReviewRunner {
   /**
    * Creates a standard error JSON string.
    *
-   * @param code        error code
-   * @param message     error message
+   * @param code error code
+   * @param message error message
    * @param remediation recommended remediation
    * @return JSON error string
    */

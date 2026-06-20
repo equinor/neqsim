@@ -58,7 +58,7 @@ public class AttractiveTermMatCop5PRUMR extends AttractiveTermPr {
    * </p>
    *
    * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
-   * @param params    an array of type double with up to five Mathias-Copeman coefficients
+   * @param params an array of type double with up to five Mathias-Copeman coefficients
    */
   public AttractiveTermMatCop5PRUMR(ComponentEosInterface component, double[] params) {
     this(component);

@@ -23,8 +23,8 @@ public class PVrefluxflash extends Flash {
    * Constructor for PVrefluxflash.
    * </p>
    *
-   * @param system      a {@link neqsim.thermo.system.SystemInterface} object
-   * @param refluxSpec  a double
+   * @param system a {@link neqsim.thermo.system.SystemInterface} object
+   * @param refluxSpec a double
    * @param refluxPhase a int
    */
   public PVrefluxflash(SystemInterface system, double refluxSpec, int refluxPhase) {

@@ -39,32 +39,32 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  *
  * @see <a href="https://doi.org/10.21105/joss.03695">HydDown - JOSS Paper</a>
  *
- *      <p>
- *      Usage example:
+ * <p>
+ * Usage example:
  *
- *      <pre>
- *      SystemInterface gas = new SystemSrkEos(298.0, 100.0);
- *      gas.addComponent("hydrogen", 1.0);
- *      gas.setMixingRule("classic");
+ * <pre>
+ * SystemInterface gas = new SystemSrkEos(298.0, 100.0);
+ * gas.addComponent("hydrogen", 1.0);
+ * gas.setMixingRule("classic");
  *
- *      Stream feed = new Stream("feed", gas);
- *      feed.setFlowRate(0.0, "kg/hr"); // Closed vessel
- *      feed.run();
+ * Stream feed = new Stream("feed", gas);
+ * feed.setFlowRate(0.0, "kg/hr"); // Closed vessel
+ * feed.run();
  *
- *      VesselDepressurization vessel = new VesselDepressurization("HP Vessel", feed);
- *      vessel.setVolume(0.1); // 100 liters
- *      vessel.setCalculationType(CalculationType.ENERGY_BALANCE);
- *      vessel.setVesselProperties(0.01, 7800.0, 500.0, 45.0); // Steel vessel
- *      vessel.setOrificeDiameter(0.005); // 5mm orifice
- *      vessel.setBackPressure(1.0); // 1 bara
- *      vessel.run();
+ * VesselDepressurization vessel = new VesselDepressurization("HP Vessel", feed);
+ * vessel.setVolume(0.1); // 100 liters
+ * vessel.setCalculationType(CalculationType.ENERGY_BALANCE);
+ * vessel.setVesselProperties(0.01, 7800.0, 500.0, 45.0); // Steel vessel
+ * vessel.setOrificeDiameter(0.005); // 5mm orifice
+ * vessel.setBackPressure(1.0); // 1 bara
+ * vessel.run();
  *
- *      // Transient simulation
- *      for (double t = 0; t &lt;= 100; t += 0.5) {
- *        vessel.runTransient(0.5, UUID.randomUUID());
- *        System.out.println(vessel.getPressure() + " " + vessel.getTemperature());
- *      }
- *      </pre>
+ * // Transient simulation
+ * for (double t = 0; t &lt;= 100; t += 0.5) {
+ *   vessel.runTransient(0.5, UUID.randomUUID());
+ *   System.out.println(vessel.getPressure() + " " + vessel.getTemperature());
+ * }
+ * </pre>
  *
  * @author ESOL
  * @see <a href="https://github.com/andr1976/HydDown">HydDown</a>
@@ -418,7 +418,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
   /**
    * Constructor for VesselDepressurization with inlet stream.
    *
-   * @param name        Name of the vessel
+   * @param name Name of the vessel
    * @param inletStream Initial fluid stream
    */
   public VesselDepressurization(String name, StreamInterface inletStream) {
@@ -730,8 +730,8 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
    * Volume is calculated as cylinder + two hemispheres (one full sphere): V = pi/4 * D^2 * L + pi/6 * D^3
    * </p>
    *
-   * @param length      Vessel cylindrical length [m] (excluding hemispheric caps)
-   * @param diameter    Vessel inner diameter [m]
+   * @param length Vessel cylindrical length [m] (excluding hemispheric caps)
+   * @param diameter Vessel inner diameter [m]
    * @param orientation Vessel orientation
    */
   public void setVesselGeometry(double length, double diameter, VesselOrientation orientation) {
@@ -747,9 +747,9 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
   /**
    * Sets the vessel wall properties.
    *
-   * @param thickness           Wall thickness [m]
-   * @param density             Wall material density [kg/m³]
-   * @param heatCapacity        Wall material heat capacity [J/(kg*K)]
+   * @param thickness Wall thickness [m]
+   * @param density Wall material density [kg/m³]
+   * @param heatCapacity Wall material heat capacity [J/(kg*K)]
    * @param thermalConductivity Wall thermal conductivity [W/(m*K)]
    */
   public void setVesselProperties(double thickness, double density, double heatCapacity, double thermalConductivity) {
@@ -771,7 +771,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
    * </pre>
    *
    * @param thickness Wall thickness [m]
-   * @param material  Preset material from {@link VesselMaterial}
+   * @param material Preset material from {@link VesselMaterial}
    */
   public void setVesselMaterial(double thickness, VesselMaterial material) {
     setVesselProperties(thickness, material.getDensity(), material.getHeatCapacity(),
@@ -781,9 +781,9 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
   /**
    * Sets the liner properties for Type III/IV vessels.
    *
-   * @param thickness           Liner thickness [m]
-   * @param density             Liner density [kg/m³]
-   * @param heatCapacity        Liner heat capacity [J/(kg*K)]
+   * @param thickness Liner thickness [m]
+   * @param density Liner density [kg/m³]
+   * @param heatCapacity Liner heat capacity [J/(kg*K)]
    * @param thermalConductivity Liner thermal conductivity [W/(m*K)]
    */
   public void setLinerProperties(double thickness, double density, double heatCapacity, double thermalConductivity) {
@@ -807,7 +807,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
    * </pre>
    *
    * @param thickness Liner thickness [m]
-   * @param material  Preset liner material from {@link LinerMaterial}
+   * @param material Preset liner material from {@link LinerMaterial}
    */
   public void setLinerMaterial(double thickness, LinerMaterial material) {
     setLinerProperties(thickness, material.getDensity(), material.getHeatCapacity(), material.getThermalConductivity());
@@ -894,7 +894,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
    * Sets the fire heat flux with unit.
    *
    * @param heatFlux Heat flux value
-   * @param unit     Unit ("W/m2", "kW/m2", "BTU/hr/ft2")
+   * @param unit Unit ("W/m2", "kW/m2", "BTU/hr/ft2")
    */
   public void setFireHeatFlux(double heatFlux, String unit) {
     double flux = heatFlux;
@@ -1037,10 +1037,10 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
   /**
    * Sets the Stefan-Boltzmann fire model parameters directly.
    *
-   * @param absorptivity      Surface absorptivity [-], typically 0.75-0.90
-   * @param flameEmissivity   Flame emissivity [-], typically 0.3-1.0
+   * @param absorptivity Surface absorptivity [-], typically 0.75-0.90
+   * @param flameEmissivity Flame emissivity [-], typically 0.3-1.0
    * @param surfaceEmissivity Surface emissivity [-], typically 0.75-0.90
-   * @param convCoeff         Fire convection coefficient [W/(m^2*K)], typically 30-100
+   * @param convCoeff Fire convection coefficient [W/(m^2*K)], typically 30-100
    */
   public void setSBFireParameters(double absorptivity, double flameEmissivity, double surfaceEmissivity,
       double convCoeff) {
@@ -1234,7 +1234,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
    * Sets the inlet gas temperature for filling operations.
    *
    * @param temperature Inlet temperature
-   * @param unit        Temperature unit ("K", "C")
+   * @param unit Temperature unit ("K", "C")
    */
   public void setInletTemperature(double temperature, String unit) {
     if (unit.equalsIgnoreCase("C") || unit.equalsIgnoreCase("Celsius")) {
@@ -1724,8 +1724,8 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
    * number used in natural-convection correlations.
    * </p>
    *
-   * @param phase        The thermodynamic phase to evaluate
-   * @param density      Phase density [kg/m^3]
+   * @param phase The thermodynamic phase to evaluate
+   * @param density Phase density [kg/m^3]
    * @param temperatureK Phase temperature [K]
    * @return Thermal expansion coefficient [1/K], falls back to 1/T if EoS derivative is unavailable
    */
@@ -2530,7 +2530,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
    * Records the current state to history arrays.
    *
    * @param massFlowRate Current mass flow rate [kg/s]
-   * @param heatRate     Current heat rate [W]
+   * @param heatRate Current heat rate [W]
    */
   private void recordState(double massFlowRate, double heatRate) {
     timeHistory.add(currentTime);
@@ -2785,7 +2785,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
    * </pre>
    *
    * @param endTime Total simulation time [s]
-   * @param dt      Time step [s]
+   * @param dt Time step [s]
    * @return SimulationResult containing all history data
    */
   public SimulationResult runSimulation(double endTime, double dt) {
@@ -2795,8 +2795,8 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
   /**
    * Runs a complete simulation with configurable output interval.
    *
-   * @param endTime        Total simulation time [s]
-   * @param dt             Time step [s]
+   * @param endTime Total simulation time [s]
+   * @param dt Time step [s]
    * @param recordInterval Record data every N steps (1 = every step)
    * @return SimulationResult containing history data
    */
@@ -2989,7 +2989,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
    * </pre>
    *
    * @param componentName Component name (e.g., "CO2", "propane", "methane")
-   * @param temperature   Temperature [K]
+   * @param temperature Temperature [K]
    * @param vaporFraction Desired vapor mole fraction (0 = all liquid, 1 = all vapor)
    * @return Configured two-phase thermodynamic system
    */
@@ -3035,7 +3035,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @param componentName Component name
-   * @param pressure      Pressure [bar]
+   * @param pressure Pressure [bar]
    * @param vaporFraction Desired vapor mole fraction (0 = all liquid, 1 = all vapor)
    * @return Configured two-phase thermodynamic system
    */
@@ -3167,7 +3167,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
    * for fire case.
    * </p>
    *
-   * @param targetTime        Target blowdown time [s], typically 900s (15 min)
+   * @param targetTime Target blowdown time [s], typically 900s (15 min)
    * @param pressureReduction Fraction of pressure to reduce (0.5 = 50%)
    * @return Required orifice diameter [m]
    */
@@ -3227,7 +3227,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
    * multiple constraints.
    * </p>
    *
-   * @param orificeSizes   Array of orifice diameters to test [m]
+   * @param orificeSizes Array of orifice diameters to test [m]
    * @param targetPressure Target pressure [bar]
    * @return Array of blowdown times [s] for each orifice size
    */
@@ -3337,7 +3337,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
    * </ul>
    *
    * @param headerDiameter Flare header internal diameter [m]
-   * @param unit           Velocity unit ("m/s", "ft/s")
+   * @param unit Velocity unit ("m/s", "ft/s")
    * @return Gas velocity in header at current flow rate
    */
   public double getFlareHeaderVelocity(double headerDiameter, String unit) {

@@ -112,7 +112,7 @@ public interface ValveInterface extends ProcessEquipmentInterface, TwoPortInterf
    * setCv.
    * </p>
    *
-   * @param Cv   a double
+   * @param Cv a double
    * @param unit can be SI or US SI is unit litre/minute US is gallons per minute
    */
   public void setCv(double Cv, String unit);

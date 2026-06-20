@@ -17,7 +17,7 @@ public class PowerUnit extends neqsim.util.unit.BaseUnit {
    * Constructor for PowerUnit.
    *
    * @param value power value
-   * @param unit  engineering unit of value
+   * @param unit engineering unit of value
    */
   public PowerUnit(double value, String unit) {
     super(value, unit);

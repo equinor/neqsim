@@ -78,7 +78,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
    * </p>
    *
    * @param groupNumber a int
-   * @param temp        a int
+   * @param temp a int
    */
   public UNIFACgroup(int groupNumber, int temp) {
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
@@ -530,7 +530,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
    * </p>
    *
    * @param lnGammaMixdn1 a double
-   * @param compNumb      a int
+   * @param compNumb a int
    */
   public void setLnGammaMixdn(double lnGammaMixdn1, int compNumb) {
     lnGammaMixdn[compNumb] = lnGammaMixdn1;

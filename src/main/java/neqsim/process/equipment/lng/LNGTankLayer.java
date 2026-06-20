@@ -70,10 +70,10 @@ public class LNGTankLayer implements Serializable {
   /**
    * Constructor with full initialisation.
    *
-   * @param layerIndex  layer index (0 = bottom)
-   * @param totalMoles  total moles in layer (mol)
+   * @param layerIndex layer index (0 = bottom)
+   * @param totalMoles total moles in layer (mol)
    * @param temperature layer temperature (K)
-   * @param pressure    layer pressure (bara)
+   * @param pressure layer pressure (bara)
    */
   public LNGTankLayer(int layerIndex, double totalMoles, double temperature, double pressure) {
     this(layerIndex);
@@ -157,7 +157,7 @@ public class LNGTankLayer implements Serializable {
    * pressure.
    * </p>
    *
-   * @param molesToRemove    moles of vapor to remove (mol)
+   * @param molesToRemove moles of vapor to remove (mol)
    * @param vaporComposition composition of the vapor being removed (mole fractions by component)
    */
   public void removeVapor(double molesToRemove, Map<String, Double> vaporComposition) {

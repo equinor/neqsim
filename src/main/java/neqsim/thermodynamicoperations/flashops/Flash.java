@@ -548,7 +548,7 @@ public abstract class Flash extends BaseOperation {
    * stabilityAnalysis.
    * </p>
    *
-   * @throws neqsim.util.exception.IsNaNException             if any.
+   * @throws neqsim.util.exception.IsNaNException if any.
    * @throws neqsim.util.exception.TooManyIterationsException if any.
    */
   public void stabilityAnalysis()
@@ -1063,7 +1063,7 @@ public abstract class Flash extends BaseOperation {
    * </p>
    *
    * @return true if enhanced stability checks are enabled and the active mixture contains components that need the
-   *         enhanced path
+   * enhanced path
    */
   protected boolean shouldApplyEnhancedMultiPhaseCheck() {
     if (system == null || !system.doEnhancedMultiPhaseCheck()) {

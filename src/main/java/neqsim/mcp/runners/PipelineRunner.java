@@ -166,7 +166,7 @@ public class PipelineRunner {
   /**
    * Applies pipe geometry and solver settings from either top-level JSON fields or a nested {@code pipe} object.
    *
-   * @param pipe  the pipeline object to configure
+   * @param pipe the pipeline object to configure
    * @param input the runner input JSON containing optional pipe settings
    */
   private static void applyPipeConfiguration(PipeBeggsAndBrills pipe, JsonObject input) {
@@ -226,9 +226,9 @@ public class PipelineRunner {
   /**
    * Reads the first matching double value from a primary or secondary JSON object.
    *
-   * @param primary   the JSON object checked first
+   * @param primary the JSON object checked first
    * @param secondary the JSON object checked when the primary has no matching field
-   * @param names     accepted field names in priority order
+   * @param names accepted field names in priority order
    * @return the parsed double value, or {@code null} when no field is present
    */
   private static Double getOptionalDouble(JsonObject primary, JsonObject secondary, String... names) {
@@ -242,9 +242,9 @@ public class PipelineRunner {
   /**
    * Reads the first matching integer value from a primary or secondary JSON object.
    *
-   * @param primary   the JSON object checked first
+   * @param primary the JSON object checked first
    * @param secondary the JSON object checked when the primary has no matching field
-   * @param names     accepted field names in priority order
+   * @param names accepted field names in priority order
    * @return the parsed integer value, or {@code null} when no field is present
    */
   private static Integer getOptionalInt(JsonObject primary, JsonObject secondary, String... names) {
@@ -259,7 +259,7 @@ public class PipelineRunner {
    * Finds the first non-null JSON field matching one of the supplied names.
    *
    * @param object the JSON object to inspect
-   * @param names  accepted field names in priority order
+   * @param names accepted field names in priority order
    * @return the matching JSON element, or {@code null} when no field is present
    */
   private static JsonElement getOptionalElement(JsonObject object, String... names) {
@@ -356,8 +356,8 @@ public class PipelineRunner {
   /**
    * Gets a string field from a JSON object with a fallback value.
    *
-   * @param input        source JSON object
-   * @param name         field name
+   * @param input source JSON object
+   * @param name field name
    * @param defaultValue fallback value when the field is missing
    * @return string field value or fallback value
    */
@@ -371,8 +371,8 @@ public class PipelineRunner {
   /**
    * Creates a standard error JSON string.
    *
-   * @param code        the error code
-   * @param message     the error message
+   * @param code the error code
+   * @param message the error message
    * @param remediation the fix suggestion
    * @return the error JSON string
    */

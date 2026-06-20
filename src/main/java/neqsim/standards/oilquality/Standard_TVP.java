@@ -141,7 +141,7 @@ public class Standard_TVP extends neqsim.standards.Standard {
   /**
    * Sets the reference temperature at which the TVP is evaluated.
    *
-   * @param refTemp     reference temperature value, must be a finite number
+   * @param refTemp reference temperature value, must be a finite number
    * @param refTempUnit temperature unit, one of {@code "C"}, {@code "K"}, {@code "F"}, {@code "R"}
    */
   public void setReferenceTemperature(double refTemp, String refTempUnit) {
@@ -161,7 +161,7 @@ public class Standard_TVP extends neqsim.standards.Standard {
   /**
    * Sets an optional maximum TVP specification limit used by {@link #isOnSpec()}.
    *
-   * @param maxTvp     maximum allowed TVP value, must be a finite positive number
+   * @param maxTvp maximum allowed TVP value, must be a finite positive number
    * @param maxTvpUnit pressure unit of {@code maxTvp} (e.g. {@code "bara"}, {@code "psia"}, {@code "kPa"})
    */
   public void setMaxTvpSpec(double maxTvp, String maxTvpUnit) {

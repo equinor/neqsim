@@ -68,7 +68,7 @@ public class JetPump extends Pump {
   /**
    * Constructor for JetPump.
    *
-   * @param name        name of jet pump
+   * @param name name of jet pump
    * @param inletStream suction (produced fluid) inlet stream
    */
   public JetPump(String name, StreamInterface inletStream) {

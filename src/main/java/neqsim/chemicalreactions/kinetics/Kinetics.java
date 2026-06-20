@@ -50,9 +50,9 @@ public class Kinetics implements java.io.Serializable {
    * calcReacMatrix.
    * </p>
    *
-   * @param phase      a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param interPhase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param comp       a int
+   * @param comp a int
    * @return a double
    */
   public double calcReacMatrix(PhaseInterface phase, PhaseInterface interPhase, int comp) {
@@ -126,9 +126,9 @@ public class Kinetics implements java.io.Serializable {
    * getPseudoFirstOrderCoef.
    * </p>
    *
-   * @param phase      a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param interPhase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param comp       a int
+   * @param comp a int
    * @return a double
    */
   public double getPseudoFirstOrderCoef(PhaseInterface phase, PhaseInterface interPhase, int comp) {

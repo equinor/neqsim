@@ -86,8 +86,8 @@ public class MoleFractionControllerUtil extends TwoPortEquipment {
    * </p>
    *
    * @param compName a {@link java.lang.String} object
-   * @param rate     a double
-   * @param unit     a {@link java.lang.String} object
+   * @param rate a double
+   * @param unit a {@link java.lang.String} object
    */
   public void setComponentRate(String compName, double rate, String unit) {
     moleFractionReduction = false;
@@ -108,7 +108,7 @@ public class MoleFractionControllerUtil extends TwoPortEquipment {
    * setRelativeMoleFractionReduction.
    * </p>
    *
-   * @param compName      a {@link java.lang.String} object
+   * @param compName a {@link java.lang.String} object
    * @param moleFracRatio a double
    */
   public void setRelativeMoleFractionReduction(String compName, double moleFracRatio) {

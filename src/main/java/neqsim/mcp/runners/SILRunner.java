@@ -120,8 +120,8 @@ public final class SILRunner {
   /**
    * Computes PFD for a given architecture using the simplified IEC 61508 formulae.
    *
-   * @param arch         architecture string (1oo1, 1oo2, 2oo3)
-   * @param lambdaDU     dangerous undetected failure rate per channel [/hr]
+   * @param arch architecture string (1oo1, 1oo2, 2oo3)
+   * @param lambdaDU dangerous undetected failure rate per channel [/hr]
    * @param testInterval proof-test interval [hr]
    * @return PFD<sub>avg</sub>
    */
@@ -138,7 +138,7 @@ public final class SILRunner {
   /**
    * Rounds a value.
    *
-   * @param value    value
+   * @param value value
    * @param decimals decimals
    * @return rounded value
    */

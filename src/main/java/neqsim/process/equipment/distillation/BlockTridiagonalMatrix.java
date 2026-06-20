@@ -26,7 +26,7 @@ final class BlockTridiagonalMatrix {
    * Create block-tridiagonal storage.
    *
    * @param blockCount number of row and column blocks
-   * @param blockSize  number of equations and variables in each block
+   * @param blockSize number of equations and variables in each block
    * @throws IllegalArgumentException if blockCount or blockSize is less than one
    */
   BlockTridiagonalMatrix(int blockCount, int blockSize) {
@@ -45,7 +45,7 @@ final class BlockTridiagonalMatrix {
   /**
    * Select the block matching a row block and column block.
    *
-   * @param rowBlockIndex    row block index
+   * @param rowBlockIndex row block index
    * @param columnBlockIndex column block index
    * @return lower, diagonal, or upper block for the requested coupling
    * @throws IllegalArgumentException if the requested block is outside the tridiagonal band
@@ -86,9 +86,9 @@ final class BlockTridiagonalMatrix {
   /**
    * Copy one dense block into the corresponding dense matrix location.
    *
-   * @param dense            dense matrix to update
-   * @param block            block values to copy
-   * @param rowBlockIndex    row block index
+   * @param dense dense matrix to update
+   * @param block block values to copy
+   * @param rowBlockIndex row block index
    * @param columnBlockIndex column block index
    */
   private void copyBlockToDense(double[][] dense, double[][] block, int rowBlockIndex, int columnBlockIndex) {

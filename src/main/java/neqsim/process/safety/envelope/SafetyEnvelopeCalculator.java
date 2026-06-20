@@ -85,7 +85,7 @@ public class SafetyEnvelopeCalculator {
    *
    * @param minPressure minimum pressure in bara
    * @param maxPressure maximum pressure in bara
-   * @param numPoints   number of points to calculate
+   * @param numPoints number of points to calculate
    * @return hydrate formation envelope
    */
   public SafetyEnvelope calculateHydrateEnvelope(double minPressure, double maxPressure, int numPoints) {
@@ -130,7 +130,7 @@ public class SafetyEnvelopeCalculator {
    *
    * @param minPressure minimum pressure in bara
    * @param maxPressure maximum pressure in bara
-   * @param numPoints   number of points to calculate
+   * @param numPoints number of points to calculate
    * @return WAT envelope
    */
   public SafetyEnvelope calculateWaxEnvelope(double minPressure, double maxPressure, int numPoints) {
@@ -170,7 +170,7 @@ public class SafetyEnvelopeCalculator {
    *
    * @param minPressure minimum pressure in bara
    * @param maxPressure maximum pressure in bara
-   * @param numPoints   number of points to calculate
+   * @param numPoints number of points to calculate
    * @return CO2 freezing envelope
    */
   public SafetyEnvelope calculateCO2FreezingEnvelope(double minPressure, double maxPressure, int numPoints) {
@@ -256,8 +256,8 @@ public class SafetyEnvelopeCalculator {
    *
    * @param minPressure minimum pressure in bara
    * @param maxPressure maximum pressure in bara
-   * @param designTemp  design temperature in K
-   * @param numPoints   number of points to calculate
+   * @param designTemp design temperature in K
+   * @param numPoints number of points to calculate
    * @return MDMT envelope
    */
   public SafetyEnvelope calculateMDMTEnvelope(double minPressure, double maxPressure, double designTemp,
@@ -310,7 +310,7 @@ public class SafetyEnvelopeCalculator {
    *
    * @param minPressure minimum pressure in bara
    * @param maxPressure maximum pressure in bara
-   * @param numPoints   number of points per envelope
+   * @param numPoints number of points per envelope
    * @return array of all calculated envelopes
    */
   public SafetyEnvelope[] calculateAllEnvelopes(double minPressure, double maxPressure, int numPoints) {
@@ -323,7 +323,7 @@ public class SafetyEnvelopeCalculator {
   /**
    * Checks if an operating point is safe with respect to all calculated envelopes.
    *
-   * @param envelopes    array of envelopes to check
+   * @param envelopes array of envelopes to check
    * @param pressureBara operating pressure
    * @param temperatureK operating temperature
    * @return true if safe for all envelopes
@@ -340,7 +340,7 @@ public class SafetyEnvelopeCalculator {
   /**
    * Finds the most limiting envelope at given conditions.
    *
-   * @param envelopes    array of envelopes to check
+   * @param envelopes array of envelopes to check
    * @param pressureBara operating pressure
    * @param temperatureK operating temperature
    * @return the envelope with smallest margin, or null if all have infinite margin

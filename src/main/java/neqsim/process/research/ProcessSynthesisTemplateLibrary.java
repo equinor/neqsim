@@ -46,9 +46,9 @@ public class ProcessSynthesisTemplateLibrary {
   /**
    * Adds a direct phase-split option when separators are allowed.
    *
-   * @param spec           process research specification
+   * @param spec process research specification
    * @param targetMaterial target material name
-   * @param options        operation options to update
+   * @param options operation options to update
    */
   private void addPhaseSplitOption(ProcessResearchSpec spec, String targetMaterial, List<OperationOption> options) {
     if (!spec.allowsUnitType("Separator")) {
@@ -63,9 +63,9 @@ public class ProcessSynthesisTemplateLibrary {
   /**
    * Adds a compression, cooling, and polishing-separator train when the needed units are allowed.
    *
-   * @param spec           process research specification
+   * @param spec process research specification
    * @param targetMaterial target material name
-   * @param options        operation options to update
+   * @param options operation options to update
    */
   private void addCompressionCoolingSeparationTrain(ProcessResearchSpec spec, String targetMaterial,
       List<OperationOption> options) {
@@ -95,9 +95,9 @@ public class ProcessSynthesisTemplateLibrary {
   /**
    * Adds direct heater and cooler conditioning options.
    *
-   * @param spec           process research specification
+   * @param spec process research specification
    * @param targetMaterial target material name
-   * @param options        operation options to update
+   * @param options operation options to update
    */
   private void addThermalConditioningOptions(ProcessResearchSpec spec, String targetMaterial,
       List<OperationOption> options) {
@@ -120,9 +120,9 @@ public class ProcessSynthesisTemplateLibrary {
   /**
    * Adds pressure-letdown options for expansion/JT screening.
    *
-   * @param spec           process research specification
+   * @param spec process research specification
    * @param targetMaterial target material name
-   * @param options        operation options to update
+   * @param options operation options to update
    */
   private void addPressureLetdownOption(ProcessResearchSpec spec, String targetMaterial,
       List<OperationOption> options) {
@@ -155,7 +155,7 @@ public class ProcessSynthesisTemplateLibrary {
   /**
    * Adds an operation only if an equivalent operation is not already present.
    *
-   * @param options   existing options
+   * @param options existing options
    * @param candidate candidate option to add
    */
   private void addUnique(List<OperationOption> options, OperationOption candidate) {

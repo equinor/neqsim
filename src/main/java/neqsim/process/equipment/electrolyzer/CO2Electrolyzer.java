@@ -55,7 +55,7 @@ public class CO2Electrolyzer extends ProcessEquipmentBaseClass {
   /**
    * Create a CO2Electrolyzer tied to an inlet stream.
    *
-   * @param name  unit name
+   * @param name unit name
    * @param inlet inlet stream
    */
   public CO2Electrolyzer(String name, StreamInterface inlet) {
@@ -132,7 +132,7 @@ public class CO2Electrolyzer extends ProcessEquipmentBaseClass {
   /**
    * Selectivity for gas products (moles per mole converted CO₂).
    *
-   * @param component   component name
+   * @param component component name
    * @param selectivity selectivity value
    */
   public void setGasProductSelectivity(String component, double selectivity) {
@@ -142,7 +142,7 @@ public class CO2Electrolyzer extends ProcessEquipmentBaseClass {
   /**
    * Selectivity for liquid products (moles per mole converted CO₂).
    *
-   * @param component   component name
+   * @param component component name
    * @param selectivity selectivity value
    */
   public void setLiquidProductSelectivity(String component, double selectivity) {
@@ -152,7 +152,7 @@ public class CO2Electrolyzer extends ProcessEquipmentBaseClass {
   /**
    * Faradaic efficiency for a product (fraction between 0 and 1).
    *
-   * @param component  component name
+   * @param component component name
    * @param efficiency faradaic efficiency
    */
   public void setProductFaradaicEfficiency(String component, double efficiency) {

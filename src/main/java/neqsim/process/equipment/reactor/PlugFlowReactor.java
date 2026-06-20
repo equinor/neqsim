@@ -210,7 +210,7 @@ public class PlugFlowReactor extends TwoPortEquipment {
   /**
    * Constructor for PlugFlowReactor with inlet stream.
    *
-   * @param name        equipment name
+   * @param name equipment name
    * @param inletStream the inlet feed stream
    */
   public PlugFlowReactor(String name, StreamInterface inletStream) {
@@ -410,9 +410,9 @@ public class PlugFlowReactor extends TwoPortEquipment {
   /**
    * Calculate derivatives dF/dz, dT/dz, dP/dz for the state vector.
    *
-   * @param system    thermodynamic system for property evaluation
-   * @param state     packed state [F1..Fn, T, P]
-   * @param nComp     number of components
+   * @param system thermodynamic system for property evaluation
+   * @param state packed state [F1..Fn, T, P]
+   * @param nComp number of components
    * @param totalArea total cross-sectional area of all tubes [m2]
    * @param perimeter tube perimeter [m] (single tube)
    * @param compNames component names
@@ -503,7 +503,7 @@ public class PlugFlowReactor extends TwoPortEquipment {
    * Convert reaction rate from its native basis to volumetric basis [mol/(m3_reactor * s)].
    *
    * @param rate rate in native units
-   * @param rxn  the kinetic reaction
+   * @param rxn the kinetic reaction
    * @return volumetric rate [mol/(m3_reactor * s)]
    */
   private double convertRateToVolumetric(double rate, KineticReaction rxn) {
@@ -522,8 +522,8 @@ public class PlugFlowReactor extends TwoPortEquipment {
    * Estimate total heat capacity flow sum(Fi * Cp_i) [J/(s*K)].
    *
    * @param system thermodynamic system
-   * @param state  current state vector
-   * @param nComp  number of components
+   * @param state current state vector
+   * @param nComp number of components
    * @return total heat capacity flow [J/(s*K)]
    */
   private double estimateTotalHeatCapacityFlow(SystemInterface system, double[] state, int nComp) {
@@ -579,7 +579,7 @@ public class PlugFlowReactor extends TwoPortEquipment {
   /**
    * Calculate superficial velocity through the reactor tubes.
    *
-   * @param system    thermodynamic system
+   * @param system thermodynamic system
    * @param totalArea total cross-sectional area [m2]
    * @return superficial velocity [m/s]
    */
@@ -595,7 +595,7 @@ public class PlugFlowReactor extends TwoPortEquipment {
   /**
    * Calculate total reaction rate for profile storage.
    *
-   * @param system    thermodynamic system
+   * @param system thermodynamic system
    * @param compNames component names
    * @return total absolute reaction rate [mol/(m3*s)]
    */
@@ -610,8 +610,8 @@ public class PlugFlowReactor extends TwoPortEquipment {
   /**
    * Calculate isothermal heat duty by summing reaction enthalpies over the reactor.
    *
-   * @param system    thermodynamic system
-   * @param molFlows  current molar flows
+   * @param system thermodynamic system
+   * @param molFlows current molar flows
    * @param compNames component names
    * @return heat duty [W]
    */
@@ -648,7 +648,7 @@ public class PlugFlowReactor extends TwoPortEquipment {
   /**
    * Calculate mean residence time.
    *
-   * @param system    thermodynamic system
+   * @param system thermodynamic system
    * @param totalArea total cross-sectional area [m2]
    * @return residence time [s]
    */
@@ -668,9 +668,9 @@ public class PlugFlowReactor extends TwoPortEquipment {
   /**
    * Pack molar flows, temperature, and pressure into a state vector.
    *
-   * @param molFlows    molar flows [mol/s]
+   * @param molFlows molar flows [mol/s]
    * @param temperature temperature [K]
-   * @param pressure    pressure [bara]
+   * @param pressure pressure [bara]
    * @return state vector [F1..Fn, T, P]
    */
   private double[] packState(double[] molFlows, double temperature, double pressure) {
@@ -685,9 +685,9 @@ public class PlugFlowReactor extends TwoPortEquipment {
   /**
    * Unpack molar flows from state vector.
    *
-   * @param state    state vector
+   * @param state state vector
    * @param molFlows output molar flows array
-   * @param nComp    number of components
+   * @param nComp number of components
    */
   private void unpackState(double[] state, double[] molFlows, int nComp) {
     System.arraycopy(state, 0, molFlows, 0, nComp);
@@ -696,7 +696,7 @@ public class PlugFlowReactor extends TwoPortEquipment {
   /**
    * Add scaled vector: result[i] = base[i] + scale * delta[i].
    *
-   * @param base  base vector
+   * @param base base vector
    * @param delta delta vector
    * @param scale scaling factor
    * @return result vector
@@ -712,10 +712,10 @@ public class PlugFlowReactor extends TwoPortEquipment {
   /**
    * Update the thermodynamic system to reflect current molar flows, T, and P.
    *
-   * @param system      thermodynamic system
-   * @param molFlows    current molar flows [mol/s]
+   * @param system thermodynamic system
+   * @param molFlows current molar flows [mol/s]
    * @param temperature current temperature [K]
-   * @param pressure    current pressure [bara]
+   * @param pressure current pressure [bara]
    */
   private void updateSystemState(SystemInterface system, double[] molFlows, double temperature, double pressure) {
     int nComp = system.getNumberOfComponents();
@@ -796,7 +796,7 @@ public class PlugFlowReactor extends TwoPortEquipment {
    * Set reactor tube length.
    *
    * @param length length value
-   * @param unit   "m", "cm", "ft"
+   * @param unit "m", "cm", "ft"
    */
   public void setLength(double length, String unit) {
     if ("cm".equals(unit)) {
@@ -821,7 +821,7 @@ public class PlugFlowReactor extends TwoPortEquipment {
    * Set reactor tube inner diameter.
    *
    * @param diameter diameter value
-   * @param unit     "m", "mm", "cm", "in"
+   * @param unit "m", "mm", "cm", "in"
    */
   public void setDiameter(double diameter, String unit) {
     if ("mm".equals(unit)) {
@@ -884,7 +884,7 @@ public class PlugFlowReactor extends TwoPortEquipment {
    * Set coolant temperature for COOLANT energy mode.
    *
    * @param temperature temperature value
-   * @param unit        "K", "C", "F"
+   * @param unit "K", "C", "F"
    */
   public void setCoolantTemperature(double temperature, String unit) {
     if ("C".equals(unit)) {

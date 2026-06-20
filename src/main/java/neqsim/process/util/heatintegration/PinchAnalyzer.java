@@ -85,11 +85,11 @@ public class PinchAnalyzer implements Serializable {
     /**
      * Creates a heat stream.
      *
-     * @param name    equipment name
+     * @param name equipment name
      * @param supplyT supply temperature in K
      * @param targetT target temperature in K
-     * @param duty    heat duty in W (positive)
-     * @param isHot   true if hot stream
+     * @param duty heat duty in W (positive)
+     * @param isHot true if hot stream
      */
     public HeatStream(String name, double supplyT, double targetT, double duty, boolean isHot) {
       this.name = name;
@@ -120,10 +120,10 @@ public class PinchAnalyzer implements Serializable {
     /**
      * Creates a heat exchanger match.
      *
-     * @param hotName  hot stream name
+     * @param hotName hot stream name
      * @param coldName cold stream name
-     * @param duty     recoverable duty in W
-     * @param lmtd     log-mean temperature difference in K
+     * @param duty recoverable duty in W
+     * @param lmtd log-mean temperature difference in K
      */
     public HeatExchangerMatch(String hotName, String coldName, double duty, double lmtd) {
       this.hotStreamName = hotName;
@@ -164,10 +164,10 @@ public class PinchAnalyzer implements Serializable {
   /**
    * Manually adds a hot stream to the analysis.
    *
-   * @param name        stream name
+   * @param name stream name
    * @param supplyTempK supply temperature in K
    * @param targetTempK target temperature in K
-   * @param dutyW       heat duty in W
+   * @param dutyW heat duty in W
    */
   public void addHotStream(String name, double supplyTempK, double targetTempK, double dutyW) {
     hotStreams.add(new HeatStream(name, supplyTempK, targetTempK, dutyW, true));
@@ -177,10 +177,10 @@ public class PinchAnalyzer implements Serializable {
   /**
    * Manually adds a cold stream to the analysis.
    *
-   * @param name        stream name
+   * @param name stream name
    * @param supplyTempK supply temperature in K
    * @param targetTempK target temperature in K
-   * @param dutyW       heat duty in W
+   * @param dutyW heat duty in W
    */
   public void addColdStream(String name, double supplyTempK, double targetTempK, double dutyW) {
     coldStreams.add(new HeatStream(name, supplyTempK, targetTempK, dutyW, false));
@@ -249,9 +249,9 @@ public class PinchAnalyzer implements Serializable {
   /**
    * Builds a single composite curve from a list of heat streams.
    *
-   * @param streams   list of heat streams
+   * @param streams list of heat streams
    * @param composite output composite curve as list of [Q, T] pairs
-   * @param isHot     true for hot composite, false for cold composite
+   * @param isHot true for hot composite, false for cold composite
    */
   private void buildSingleComposite(List<HeatStream> streams, List<double[]> composite, boolean isHot) {
     if (streams.isEmpty()) {
@@ -473,7 +473,7 @@ public class PinchAnalyzer implements Serializable {
   /**
    * Helper to check if a double list contains a value within tolerance.
    *
-   * @param list  the list to search
+   * @param list the list to search
    * @param value the value to find
    * @return true if found within 0.001
    */

@@ -155,7 +155,7 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass impleme
    * </p>
    *
    * @param specificationName a {@link java.lang.String} object
-   * @param value             a double
+   * @param value a double
    */
   public void setSpecification(String specificationName, double value) {
   }
@@ -183,8 +183,8 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass impleme
    * </p>
    *
    * @param propertyName a {@link java.lang.String} object
-   * @param value        a double
-   * @param unit         a {@link java.lang.String} object
+   * @param value a double
+   * @param unit a {@link java.lang.String} object
    */
   public void setProperty(String propertyName, double value, String unit) {
   }
@@ -227,7 +227,7 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass impleme
   /**
    * Exergy destruction rate aggregated over all unit operations contained in this module.
    *
-   * @param unit                   energy / power unit of the returned value
+   * @param unit energy / power unit of the returned value
    * @param surroundingTemperature dead-state temperature in K
    * @return total exergy destruction in the requested unit
    */

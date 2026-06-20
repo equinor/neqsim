@@ -34,15 +34,15 @@ public class FlowPatternDetector {
   /**
    * Detects the flow pattern using the specified model.
    *
-   * @param model       the flow pattern prediction model to use
-   * @param usg         superficial gas velocity (m/s)
-   * @param usl         superficial liquid velocity (m/s)
-   * @param rhoG        gas density (kg/m³)
-   * @param rhoL        liquid density (kg/m³)
-   * @param muG         gas viscosity (Pa·s)
-   * @param muL         liquid viscosity (Pa·s)
-   * @param sigma       surface tension (N/m)
-   * @param diameter    pipe diameter (m)
+   * @param model the flow pattern prediction model to use
+   * @param usg superficial gas velocity (m/s)
+   * @param usl superficial liquid velocity (m/s)
+   * @param rhoG gas density (kg/m³)
+   * @param rhoL liquid density (kg/m³)
+   * @param muG gas viscosity (Pa·s)
+   * @param muL liquid viscosity (Pa·s)
+   * @param sigma surface tension (N/m)
+   * @param diameter pipe diameter (m)
    * @param inclination pipe inclination from horizontal (radians, positive = upward)
    * @return the predicted flow pattern
    */
@@ -76,14 +76,14 @@ public class FlowPatternDetector {
    * <li>Bubble → Slug: Maximum void fraction (~0.25)</li>
    * </ul>
    *
-   * @param usg         superficial gas velocity
-   * @param usl         superficial liquid velocity
-   * @param rhoG        gas density
-   * @param rhoL        liquid density
-   * @param muG         gas viscosity
-   * @param muL         liquid viscosity
-   * @param sigma       surface tension
-   * @param diameter    pipe diameter
+   * @param usg superficial gas velocity
+   * @param usl superficial liquid velocity
+   * @param rhoG gas density
+   * @param rhoL liquid density
+   * @param muG gas viscosity
+   * @param muL liquid viscosity
+   * @param sigma surface tension
+   * @param diameter pipe diameter
    * @param inclination pipe inclination
    * @return the detected flow pattern
    */
@@ -156,11 +156,11 @@ public class FlowPatternDetector {
    * Uses dimensionless groups based on superficial mass fluxes.
    * </p>
    *
-   * @param usg   superficial gas velocity [m/s]
-   * @param usl   superficial liquid velocity [m/s]
-   * @param rhoG  gas density [kg/m³]
-   * @param rhoL  liquid density [kg/m³]
-   * @param muL   liquid dynamic viscosity [Pa·s]
+   * @param usg superficial gas velocity [m/s]
+   * @param usl superficial liquid velocity [m/s]
+   * @param rhoG gas density [kg/m³]
+   * @param rhoL liquid density [kg/m³]
+   * @param muL liquid dynamic viscosity [Pa·s]
    * @param sigma surface tension [N/m]
    * @return detected flow pattern
    */
@@ -211,14 +211,14 @@ public class FlowPatternDetector {
    * Extension of Taitel-Dukler for all pipe inclinations.
    * </p>
    *
-   * @param usg         superficial gas velocity [m/s]
-   * @param usl         superficial liquid velocity [m/s]
-   * @param rhoG        gas density [kg/m³]
-   * @param rhoL        liquid density [kg/m³]
-   * @param muG         gas viscosity [Pa·s]
-   * @param muL         liquid viscosity [Pa·s]
-   * @param sigma       surface tension [N/m]
-   * @param diameter    pipe diameter [m]
+   * @param usg superficial gas velocity [m/s]
+   * @param usl superficial liquid velocity [m/s]
+   * @param rhoG gas density [kg/m³]
+   * @param rhoL liquid density [kg/m³]
+   * @param muG gas viscosity [Pa·s]
+   * @param muL liquid viscosity [Pa·s]
+   * @param sigma surface tension [N/m]
+   * @param diameter pipe diameter [m]
    * @param inclination pipe inclination angle [rad]
    * @return the detected flow pattern
    */
@@ -274,11 +274,11 @@ public class FlowPatternDetector {
    * Empirical correlation for all pipe inclinations.
    * </p>
    *
-   * @param usg         superficial gas velocity [m/s]
-   * @param usl         superficial liquid velocity [m/s]
-   * @param rhoG        gas density [kg/m³]
-   * @param rhoL        liquid density [kg/m³]
-   * @param diameter    pipe diameter [m]
+   * @param usg superficial gas velocity [m/s]
+   * @param usl superficial liquid velocity [m/s]
+   * @param rhoG gas density [kg/m³]
+   * @param rhoL liquid density [kg/m³]
+   * @param diameter pipe diameter [m]
    * @param inclination pipe inclination angle [rad]
    * @return the detected flow pattern
    */
@@ -312,9 +312,9 @@ public class FlowPatternDetector {
   /**
    * Calculates the liquid holdup using the Beggs-Brill correlation.
    *
-   * @param pattern     the flow pattern
-   * @param lambdaL     no-slip liquid holdup (input liquid fraction)
-   * @param nFr         Froude number
+   * @param pattern the flow pattern
+   * @param lambdaL no-slip liquid holdup (input liquid fraction)
+   * @param nFr Froude number
    * @param inclination pipe inclination (radians)
    * @return the actual liquid holdup
    */

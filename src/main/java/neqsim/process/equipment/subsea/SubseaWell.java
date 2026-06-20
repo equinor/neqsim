@@ -288,7 +288,7 @@ public class SubseaWell extends TwoPortEquipment {
   /**
    * Constructor for SubseaWell.
    *
-   * @param name     Name of well
+   * @param name Name of well
    * @param instream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public SubseaWell(String name, StreamInterface instream) {

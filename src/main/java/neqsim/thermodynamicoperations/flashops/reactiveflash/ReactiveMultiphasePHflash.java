@@ -123,7 +123,7 @@ public class ReactiveMultiphasePHflash extends BaseOperation {
   /**
    * Constructor for ReactiveMultiphasePHflash.
    *
-   * @param system       the thermodynamic system
+   * @param system the thermodynamic system
    * @param enthalpySpec the specified total enthalpy in J
    */
   public ReactiveMultiphasePHflash(SystemInterface system, double enthalpySpec) {
@@ -137,9 +137,9 @@ public class ReactiveMultiphasePHflash extends BaseOperation {
   /**
    * Constructor for ReactiveMultiphasePHflash with type parameter (for API compatibility with PHflash).
    *
-   * @param system       the thermodynamic system
+   * @param system the thermodynamic system
    * @param enthalpySpec the specified total enthalpy in J
-   * @param type         flash type (0 = standard, currently unused)
+   * @param type flash type (0 = standard, currently unused)
    */
   public ReactiveMultiphasePHflash(SystemInterface system, double enthalpySpec, int type) {
     this(system, enthalpySpec);

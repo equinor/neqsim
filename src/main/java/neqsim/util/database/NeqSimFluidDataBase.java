@@ -15,7 +15,7 @@ import org.apache.logging.log4j.Logger;
  *
  * @author esol
  * @version The database is used for storing fluid info and recreating a fluid it uses the database neqsimfluiddatabase
- *          for storing fluid information
+ * for storing fluid information
  */
 public class NeqSimFluidDataBase implements neqsim.util.util.FileSystemSettings, java.io.Serializable {
   /** Serialization version UID. */
@@ -60,7 +60,7 @@ public class NeqSimFluidDataBase implements neqsim.util.util.FileSystemSettings,
    *
    * @param database a {@link java.lang.String} object
    * @return a Connection object
-   * @throws java.sql.SQLException            if any.
+   * @throws java.sql.SQLException if any.
    * @throws java.lang.ClassNotFoundException if any.
    */
   public Connection openConnection(String database) throws SQLException, ClassNotFoundException {
@@ -96,7 +96,7 @@ public class NeqSimFluidDataBase implements neqsim.util.util.FileSystemSettings,
    * getResultSet.
    * </p>
    *
-   * @param database  a {@link java.lang.String} object
+   * @param database a {@link java.lang.String} object
    * @param sqlString a {@link java.lang.String} object
    * @return a ResultSet object
    */

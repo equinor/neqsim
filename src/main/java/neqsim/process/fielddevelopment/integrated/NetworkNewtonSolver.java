@@ -67,12 +67,12 @@ public class NetworkNewtonSolver implements Serializable {
     /**
      * Creates a solution result.
      *
-     * @param converged     whether the solve converged
-     * @param iterations    number of iterations used
-     * @param maxResidual   final maximum absolute node residual in Sm3/day
+     * @param converged whether the solve converged
+     * @param iterations number of iterations used
+     * @param maxResidual final maximum absolute node residual in Sm3/day
      * @param nodePressures solved node pressures in bara keyed by node name
-     * @param branchFlows   branch flows in Sm3/day keyed by branch name
-     * @param method        solver method that produced the result
+     * @param branchFlows branch flows in Sm3/day keyed by branch name
+     * @param method solver method that produced the result
      */
     public NetworkSolutionResult(boolean converged, int iterations, double maxResidual,
 	Map<String, Double> nodePressures, Map<String, Double> branchFlows, String method) {
@@ -280,7 +280,7 @@ public class NetworkNewtonSolver implements Serializable {
   /**
    * Successive-substitution fallback solver.
    *
-   * @param free           free nodes
+   * @param free free nodes
    * @param startPressures starting pressures in bara
    * @return a result if it converges, otherwise null
    */
@@ -321,7 +321,7 @@ public class NetworkNewtonSolver implements Serializable {
    * Applies a pressure vector to the free nodes.
    *
    * @param free free nodes
-   * @param p    pressures in bara
+   * @param p pressures in bara
    */
   private void applyPressures(List<NetworkNode> free, double[] p) {
     for (int i = 0; i < free.size(); i++) {
@@ -370,8 +370,8 @@ public class NetworkNewtonSolver implements Serializable {
    * Builds the finite-difference Jacobian of the residuals with respect to free-node pressures.
    *
    * @param free free nodes
-   * @param p    current pressures in bara
-   * @param r    residuals at the current pressures
+   * @param p current pressures in bara
+   * @param r residuals at the current pressures
    * @return the Jacobian matrix
    */
   private double[][] jacobian(List<NetworkNode> free, double[] p, double[] r) {
@@ -471,10 +471,10 @@ public class NetworkNewtonSolver implements Serializable {
   /**
    * Builds a solution result snapshot from the current node pressures and branch flows.
    *
-   * @param converged   whether the solve converged
-   * @param iterations  number of iterations
+   * @param converged whether the solve converged
+   * @param iterations number of iterations
    * @param maxResidual final maximum residual in Sm3/day
-   * @param method      solver method name
+   * @param method solver method name
    * @return the solution result
    */
   private NetworkSolutionResult buildResult(boolean converged, int iterations, double maxResidual, String method) {

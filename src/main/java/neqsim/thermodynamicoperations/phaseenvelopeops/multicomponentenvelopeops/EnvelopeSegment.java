@@ -48,12 +48,12 @@ public final class EnvelopeSegment implements Serializable {
   /**
    * Construct an immutable segment.
    *
-   * @param phaseType    dew or bubble
+   * @param phaseType dew or bubble
    * @param temperatures temperatures in Kelvin (length &ge; 1, no NaN)
-   * @param pressures    pressures in bara (same length as temperatures)
-   * @param enthalpies   enthalpies in kJ/kg (same length, may be all-zero if not tracked)
-   * @param densities    densities in kg/m3 (same length, may be all-zero if not tracked)
-   * @param entropies    entropies in kJ/kg/K (same length, may be all-zero if not tracked)
+   * @param pressures pressures in bara (same length as temperatures)
+   * @param enthalpies enthalpies in kJ/kg (same length, may be all-zero if not tracked)
+   * @param densities densities in kg/m3 (same length, may be all-zero if not tracked)
+   * @param entropies entropies in kJ/kg/K (same length, may be all-zero if not tracked)
    */
   public EnvelopeSegment(PhaseType phaseType, double[] temperatures, double[] pressures, double[] enthalpies,
       double[] densities, double[] entropies) {

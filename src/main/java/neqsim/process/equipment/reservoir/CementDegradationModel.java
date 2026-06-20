@@ -101,7 +101,7 @@ public class CementDegradationModel extends ProcessEquipmentBaseClass {
    * Set initial cement permeability.
    *
    * @param permeability permeability value
-   * @param unit         unit ("mD", "D", "m2")
+   * @param unit unit ("mD", "D", "m2")
    */
   public void setInitialPermeability(double permeability, String unit) {
     if ("D".equalsIgnoreCase(unit)) {
@@ -117,7 +117,7 @@ public class CementDegradationModel extends ProcessEquipmentBaseClass {
    * Set the fully-degraded permeability (end-state when cement is fully carbonated).
    *
    * @param permeability degraded permeability value
-   * @param unit         unit ("mD", "D")
+   * @param unit unit ("mD", "D")
    */
   public void setDegradedPermeability(double permeability, String unit) {
     if ("D".equalsIgnoreCase(unit)) {
@@ -131,7 +131,7 @@ public class CementDegradationModel extends ProcessEquipmentBaseClass {
    * Set cement sheath thickness.
    *
    * @param thickness cement thickness
-   * @param unit      thickness unit ("m", "mm", "in")
+   * @param unit thickness unit ("m", "mm", "in")
    */
   public void setCementThickness(double thickness, String unit) {
     if ("mm".equalsIgnoreCase(unit)) {
@@ -147,7 +147,7 @@ public class CementDegradationModel extends ProcessEquipmentBaseClass {
    * Set CO2 exposure conditions.
    *
    * @param co2PartialPressureBar CO2 partial pressure (bar)
-   * @param temperatureK          temperature (K)
+   * @param temperatureK temperature (K)
    */
   public void setCO2Conditions(double co2PartialPressureBar, double temperatureK) {
     this.co2PartialPressure = co2PartialPressureBar;
@@ -173,7 +173,7 @@ public class CementDegradationModel extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @param years exposure time (years)
-   * @param unit  output unit ("m", "mm", "in")
+   * @param unit output unit ("m", "mm", "in")
    * @return carbonation front depth
    */
   public double getDegradationDepth(double years, String unit) {
@@ -204,7 +204,7 @@ public class CementDegradationModel extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @param years exposure time (years)
-   * @param unit  output unit ("mD", "D")
+   * @param unit output unit ("mD", "D")
    * @return permeability at the specified time
    */
   public double getPermeabilityAtTime(double years, String unit) {

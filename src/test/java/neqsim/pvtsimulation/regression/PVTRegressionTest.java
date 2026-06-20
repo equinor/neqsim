@@ -389,10 +389,10 @@ public class PVTRegressionTest {
   /**
    * Calculate oil viscosity for one pressure, temperature and CSP factor.
    *
-   * @param fluid       fluid to calculate with
-   * @param pressure    pressure in bara
+   * @param fluid fluid to calculate with
+   * @param pressure pressure in bara
    * @param temperature temperature in K
-   * @param cspFactor   third CSP viscosity correction factor
+   * @param cspFactor third CSP viscosity correction factor
    * @return calculated oil viscosity in Pa s
    */
   private double calculateOilViscosity(SystemInterface fluid, double pressure, double temperature, double cspFactor) {

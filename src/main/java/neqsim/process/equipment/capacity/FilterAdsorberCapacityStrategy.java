@@ -109,7 +109,7 @@ public class FilterAdsorberCapacityStrategy implements EquipmentCapacityStrategy
    * Adds constraints specific to filter equipment.
    *
    * @param constraints map to add constraints to
-   * @param filter      the filter
+   * @param filter the filter
    */
   private void addFilterConstraints(Map<String, CapacityConstraint> constraints, Filter filter) {
     // Pressure drop constraint
@@ -124,7 +124,7 @@ public class FilterAdsorberCapacityStrategy implements EquipmentCapacityStrategy
    * Adds constraints specific to adsorber equipment.
    *
    * @param constraints map to add constraints to
-   * @param adsorber    the adsorber
+   * @param adsorber the adsorber
    */
   private void addAdsorberConstraints(Map<String, CapacityConstraint> constraints, SimpleAdsorber adsorber) {
     // NTU constraint

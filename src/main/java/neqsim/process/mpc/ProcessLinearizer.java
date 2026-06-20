@@ -345,8 +345,8 @@ public class ProcessLinearizer {
   /**
    * Calculate the perturbation delta for a variable.
    *
-   * @param mv                   the manipulated variable
-   * @param currentValue         the current value
+   * @param mv the manipulated variable
+   * @param currentValue the current value
    * @param perturbationFraction the perturbation as a fraction
    * @return the perturbation delta
    */
@@ -397,7 +397,7 @@ public class ProcessLinearizer {
   /**
    * Perform linearization at multiple operating points for validation.
    *
-   * @param numPoints        number of operating points to test
+   * @param numPoints number of operating points to test
    * @param perturbationSize perturbation for each linearization
    * @return list of linearization results at different operating points
    */
@@ -451,7 +451,7 @@ public class ProcessLinearizer {
    *
    * @param perturbationSize1 first perturbation size
    * @param perturbationSize2 second perturbation size (should be different)
-   * @param tolerance         acceptable relative difference in gains
+   * @param tolerance acceptable relative difference in gains
    * @return true if gains are consistent (linear behavior)
    */
   public boolean isApproximatelyLinear(double perturbationSize1, double perturbationSize2, double tolerance) {

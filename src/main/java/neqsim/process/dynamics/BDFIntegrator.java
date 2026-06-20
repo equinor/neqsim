@@ -42,9 +42,9 @@ public class BDFIntegrator implements IntegratorStrategy {
   /**
    * Constructor with custom Newton settings.
    *
-   * @param tolerance     Newton tolerance on |Δx| (must be {@code > 0})
+   * @param tolerance Newton tolerance on |Δx| (must be {@code > 0})
    * @param maxIterations maximum Newton iterations (must be {@code >= 1})
-   * @param jacobianEps   finite-difference perturbation (must be {@code > 0})
+   * @param jacobianEps finite-difference perturbation (must be {@code > 0})
    */
   public BDFIntegrator(double tolerance, int maxIterations, double jacobianEps) {
     if (!(tolerance > 0.0)) {

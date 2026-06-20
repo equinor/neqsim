@@ -21,8 +21,8 @@ public final class VesselRuptureCalculator {
    * represent yielding under multiaxial loading.
    *
    * @param internalPressurePa Internal pressure [Pa]
-   * @param innerRadiusM       Vessel inner radius [m]
-   * @param wallThicknessM     Wall thickness [m]
+   * @param innerRadiusM Vessel inner radius [m]
+   * @param wallThicknessM Wall thickness [m]
    * @return von Mises stress in Pascals
    */
   public static double vonMisesStress(double internalPressurePa, double innerRadiusM, double wallThicknessM) {
@@ -42,7 +42,7 @@ public final class VesselRuptureCalculator {
   /**
    * Calculates the safety margin relative to allowable tensile strength.
    *
-   * @param vonMisesStressPa           Calculated von Mises stress [Pa]
+   * @param vonMisesStressPa Calculated von Mises stress [Pa]
    * @param allowableTensileStrengthPa Allowable tensile strength from material data [Pa]
    * @return Positive value indicates remaining margin before rupture; negative indicates failure
    */
@@ -56,7 +56,7 @@ public final class VesselRuptureCalculator {
   /**
    * Indicates whether rupture is expected under current stresses.
    *
-   * @param vonMisesStressPa           Calculated von Mises stress [Pa]
+   * @param vonMisesStressPa Calculated von Mises stress [Pa]
    * @param allowableTensileStrengthPa Allowable tensile strength [Pa]
    * @return {@code true} if von Mises stress exceeds allowable strength
    */

@@ -294,7 +294,7 @@ public class FieldDevelopmentCostEstimator implements Serializable {
    * Set subsea parameters.
    *
    * @param tiebackLength tieback length in km
-   * @param waterDepthM   water depth in meters
+   * @param waterDepthM water depth in meters
    */
   public void setSubseaParameters(double tiebackLength, double waterDepthM) {
     this.includeSubseaCosts = true;
@@ -492,10 +492,10 @@ public class FieldDevelopmentCostEstimator implements Serializable {
    * Uses the six-tenths rule: Cost2/Cost1 = (Capacity2/Capacity1)^0.6
    * </p>
    *
-   * @param baseCapex      base CAPEX in USD
-   * @param baseCapacity   base capacity
+   * @param baseCapex base CAPEX in USD
+   * @param baseCapacity base capacity
    * @param targetCapacity target capacity
-   * @param capacityUnit   capacity unit
+   * @param capacityUnit capacity unit
    * @return scaled CAPEX in USD
    */
   public double scaleCapexByCapacity(double baseCapex, double baseCapacity, double targetCapacity,

@@ -82,9 +82,9 @@ public class AsphalteneCharacterization {
   /**
    * Constructor with SARA fractions.
    *
-   * @param saturates   weight fraction of saturates (0-1)
-   * @param aromatics   weight fraction of aromatics (0-1)
-   * @param resins      weight fraction of resins (0-1)
+   * @param saturates weight fraction of saturates (0-1)
+   * @param aromatics weight fraction of aromatics (0-1)
+   * @param resins weight fraction of resins (0-1)
    * @param asphaltenes weight fraction of asphaltenes (0-1)
    */
   public AsphalteneCharacterization(double saturates, double aromatics, double resins, double asphaltenes) {
@@ -110,9 +110,9 @@ public class AsphalteneCharacterization {
   /**
    * Sets SARA fractions from analysis data.
    *
-   * @param saturates   weight fraction of saturates (0-1)
-   * @param aromatics   weight fraction of aromatics (0-1)
-   * @param resins      weight fraction of resins (0-1)
+   * @param saturates weight fraction of saturates (0-1)
+   * @param aromatics weight fraction of aromatics (0-1)
+   * @param resins weight fraction of resins (0-1)
    * @param asphaltenes weight fraction of asphaltenes (0-1)
    */
   public void setSARAFractions(double saturates, double aromatics, double resins, double asphaltenes) {
@@ -126,7 +126,7 @@ public class AsphalteneCharacterization {
   /**
    * Sets C7+ fraction properties for correlation calculations.
    *
-   * @param mwC7plus      molecular weight of C7+ fraction (g/mol)
+   * @param mwC7plus molecular weight of C7+ fraction (g/mol)
    * @param densityC7plus density of C7+ at standard conditions (kg/m3)
    */
   public void setC7plusProperties(double mwC7plus, double densityC7plus) {
@@ -217,7 +217,7 @@ public class AsphalteneCharacterization {
    * modeling.
    * </p>
    *
-   * @param system           the thermodynamic system to modify
+   * @param system the thermodynamic system to modify
    * @param totalC7plusMoles total moles of C7+ fraction to distribute
    */
   public void addAsphalteneComponents(SystemInterface system, double totalC7plusMoles) {

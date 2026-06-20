@@ -248,7 +248,7 @@ public class SubseaTree extends TwoPortEquipment {
   /**
    * Constructor with name and inlet stream.
    *
-   * @param name     equipment name
+   * @param name equipment name
    * @param inStream inlet stream (from well)
    */
   public SubseaTree(String name, StreamInterface inStream) {

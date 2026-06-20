@@ -83,7 +83,7 @@ public class GibbsReactorCO2 extends TwoPortEquipment {
   /**
    * Creates a new GibbsReactorCO2 with the specified name and inlet stream.
    *
-   * @param name  the equipment name
+   * @param name the equipment name
    * @param inlet the inlet stream
    */
   public GibbsReactorCO2(String name, StreamInterface inlet) {
@@ -184,7 +184,7 @@ public class GibbsReactorCO2 extends TwoPortEquipment {
    * Stage 1: H2S oxidation reactions Stage 2: SO2 processing based on remaining oxygen
    * </p>
    *
-   * @param inlet  the inlet stream
+   * @param inlet the inlet stream
    * @param no2ppm NO2 concentration in ppm
    * @param h2sppm H2S concentration in ppm (unused but kept for API consistency)
    * @return the outlet thermo system
@@ -204,7 +204,7 @@ public class GibbsReactorCO2 extends TwoPortEquipment {
   /**
    * Creates and configures a reactor for H2S oxidation (first stage).
    *
-   * @param inlet  the inlet stream
+   * @param inlet the inlet stream
    * @param no2ppm NO2 concentration in ppm
    * @return configured H2S reactor
    */
@@ -255,7 +255,7 @@ public class GibbsReactorCO2 extends TwoPortEquipment {
   /**
    * Creates a GibbsReactor with standard configuration for acid gas systems.
    *
-   * @param name  the reactor name
+   * @param name the reactor name
    * @param inlet the inlet stream
    * @return configured reactor with default settings and inert components
    */
@@ -284,7 +284,7 @@ public class GibbsReactorCO2 extends TwoPortEquipment {
   /**
    * Gets the concentration of a component in ppm (parts per million).
    *
-   * @param stream        the stream to query
+   * @param stream the stream to query
    * @param componentName the component name
    * @return concentration in ppm, or 0.0 if component not found
    */
@@ -295,7 +295,7 @@ public class GibbsReactorCO2 extends TwoPortEquipment {
   /**
    * Gets the mole fraction of a component in a stream.
    *
-   * @param stream        the stream to query
+   * @param stream the stream to query
    * @param componentName the component name
    * @return mole fraction, or 0.0 if component not found
    */

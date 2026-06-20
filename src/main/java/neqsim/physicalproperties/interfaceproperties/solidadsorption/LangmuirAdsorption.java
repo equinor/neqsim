@@ -227,7 +227,7 @@ public class LangmuirAdsorption extends AbstractAdsorptionModel {
    * Set the maximum adsorption capacity for a component.
    *
    * @param component the component index
-   * @param value     qmax in mol/kg
+   * @param value qmax in mol/kg
    */
   public void setQmax(int component, double value) {
     qmax[component] = value;
@@ -249,7 +249,7 @@ public class LangmuirAdsorption extends AbstractAdsorptionModel {
    * Set the Langmuir constant for a component.
    *
    * @param component the component index
-   * @param value     K in 1/bar
+   * @param value K in 1/bar
    */
   public void setKLangmuir(int component, double value) {
     kLangmuir[component] = value;
@@ -271,7 +271,7 @@ public class LangmuirAdsorption extends AbstractAdsorptionModel {
    * Set the heat of adsorption for a component.
    *
    * @param component the component index
-   * @param value     heat of adsorption in J/mol
+   * @param value heat of adsorption in J/mol
    */
   public void setHeatOfAdsorption(int component, double value) {
     heatOfAdsorption[component] = value;

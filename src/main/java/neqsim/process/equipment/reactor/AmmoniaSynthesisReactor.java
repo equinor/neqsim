@@ -144,7 +144,7 @@ public class AmmoniaSynthesisReactor extends TwoPortEquipment {
   /**
    * Constructor for AmmoniaSynthesisReactor with inlet stream.
    *
-   * @param name        name of the reactor
+   * @param name name of the reactor
    * @param inletStream the synthesis gas feed stream
    */
   public AmmoniaSynthesisReactor(String name, StreamInterface inletStream) {
@@ -251,10 +251,10 @@ public class AmmoniaSynthesisReactor extends TwoPortEquipment {
    * * T + 1.848863e-7 * T^2 + 2001.6 / T + 2.6899
    * </p>
    *
-   * @param tempK       temperature [K]
+   * @param tempK temperature [K]
    * @param pressureBar pressure [bar]
-   * @param n2Moles     moles of N2
-   * @param h2Moles     moles of H2
+   * @param n2Moles moles of N2
+   * @param h2Moles moles of H2
    * @return equilibrium conversion of N2 [0-1]
    */
   private double calculateEquilibriumConversion(double tempK, double pressureBar, double n2Moles, double h2Moles) {

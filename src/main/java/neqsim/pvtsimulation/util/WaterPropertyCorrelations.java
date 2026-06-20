@@ -100,7 +100,7 @@ public final class WaterPropertyCorrelations {
    *
    * @param temperatureK Temperature (Kelvin). Valid: 275 - 475 K
    * @param pressureBara Pressure (bara). Valid: 1 - 350 bara
-   * @param salinityPpm  Total dissolved solids (ppm NaCl equivalent)
+   * @param salinityPpm Total dissolved solids (ppm NaCl equivalent)
    * @return Water formation volume factor (res bbl/STB), dimensionless
    */
   public static double waterFVFOsif(double temperatureK, double pressureBara, double salinityPpm) {
@@ -125,7 +125,7 @@ public final class WaterPropertyCorrelations {
    * $$ \mu_{w,dead} = A T^B $$
    *
    * @param temperatureK Temperature (Kelvin). Valid: 275 - 475 K
-   * @param salinityPpm  Total dissolved solids (ppm NaCl equivalent)
+   * @param salinityPpm Total dissolved solids (ppm NaCl equivalent)
    * @return Dead water viscosity (cP)
    */
   public static double deadWaterViscosityMcCain(double temperatureK, double salinityPpm) {
@@ -153,7 +153,7 @@ public final class WaterPropertyCorrelations {
    *
    * @param temperatureK Temperature (Kelvin)
    * @param pressureBara Pressure (bara)
-   * @param salinityPpm  Total dissolved solids (ppm NaCl equivalent)
+   * @param salinityPpm Total dissolved solids (ppm NaCl equivalent)
    * @return Water viscosity at P and T (cP)
    */
   public static double waterViscosityMcCain(double temperatureK, double pressureBara, double salinityPpm) {
@@ -174,7 +174,7 @@ public final class WaterPropertyCorrelations {
    *
    * @param temperatureK Temperature (Kelvin). Valid: 275 - 450 K
    * @param pressureBara Pressure (bara). Valid: 7 - 350 bara
-   * @param salinityPpm  Total dissolved solids (ppm NaCl equivalent)
+   * @param salinityPpm Total dissolved solids (ppm NaCl equivalent)
    * @return Water compressibility (1/bara)
    */
   public static double waterCompressibilityMcCain(double temperatureK, double pressureBara, double salinityPpm) {
@@ -202,8 +202,8 @@ public final class WaterPropertyCorrelations {
    * Calculates brine density from temperature and pressure. Uses the Batzle-Wang formulation with temperature in
    * Celsius and pressure in MPa internally.
    *
-   * @param temperatureK   Temperature (Kelvin). Valid: 275 - 475 K
-   * @param pressureBara   Pressure (bara). Valid: 1 - 1000 bara
+   * @param temperatureK Temperature (Kelvin). Valid: 275 - 475 K
+   * @param pressureBara Pressure (bara). Valid: 1 - 1000 bara
    * @param salinityWtFrac Salinity as weight fraction [0, 0.3]
    * @return Brine density (kg/m3)
    */
@@ -245,7 +245,7 @@ public final class WaterPropertyCorrelations {
    *
    * @param temperatureK Temperature (Kelvin). Valid: 290 - 510 K
    * @param pressureBara Pressure (bara). Valid: 7 - 700 bara
-   * @param salinityPpm  Total dissolved solids (ppm NaCl equivalent)
+   * @param salinityPpm Total dissolved solids (ppm NaCl equivalent)
    * @return Solution gas-water ratio (Sm3/Sm3)
    */
   public static double solutionGasWaterRatioCulberson(double temperatureK, double pressureBara, double salinityPpm) {
@@ -303,7 +303,7 @@ public final class WaterPropertyCorrelations {
    *
    * @param temperatureK Temperature (Kelvin)
    * @param pressureBara Pressure (bara)
-   * @param salinityPpm  Total dissolved solids (ppm NaCl equivalent)
+   * @param salinityPpm Total dissolved solids (ppm NaCl equivalent)
    * @return Map of property name to value (SI units)
    */
   public static Map<String, Double> waterPropertiesSummary(double temperatureK, double pressureBara,

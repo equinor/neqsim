@@ -44,7 +44,7 @@ public class HeatExchangerCapacityStrategy implements EquipmentCapacityStrategy 
    * Constructor with custom constraints.
    *
    * @param minApproachTemp minimum approach temperature in Celsius
-   * @param maxDutyRatio    maximum duty ratio
+   * @param maxDutyRatio maximum duty ratio
    */
   public HeatExchangerCapacityStrategy(double minApproachTemp, double maxDutyRatio) {
     this.minApproachTemp = minApproachTemp;

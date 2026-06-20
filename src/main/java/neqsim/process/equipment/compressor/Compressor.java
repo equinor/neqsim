@@ -211,7 +211,7 @@ public class Compressor extends TwoPortEquipment
    * Constructor for Compressor.
    * </p>
    *
-   * @param name        a {@link java.lang.String} object
+   * @param name a {@link java.lang.String} object
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public Compressor(String name, StreamInterface inletStream) {
@@ -224,7 +224,7 @@ public class Compressor extends TwoPortEquipment
    * Constructor for Compressor.
    * </p>
    *
-   * @param name                 Name of compressor
+   * @param name Name of compressor
    * @param interpolateMapLookup a boolean
    */
   public Compressor(String name, boolean interpolateMapLookup) {
@@ -412,7 +412,7 @@ public class Compressor extends TwoPortEquipment
    * </p>
    *
    * @param pressure a double
-   * @param unit     a {@link java.lang.String} object
+   * @param unit a {@link java.lang.String} object
    */
   @Override
   public void setOutletPressure(double pressure, String unit) {
@@ -542,8 +542,8 @@ public class Compressor extends TwoPortEquipment
    * findOutPressure.
    * </p>
    *
-   * @param hinn                 a double
-   * @param hout                 a double
+   * @param hinn a double
+   * @param hout a double
    * @param polytropicEfficiency a double
    * @return a double
    */
@@ -651,7 +651,7 @@ public class Compressor extends TwoPortEquipment
    * fallback for systems that seed a non-physical 2-phase split near the cricondenbar (PR #2099).
    *
    * @param thermoOps thermodynamic operations bound to the compressor thermo system
-   * @param hout      target total enthalpy in J
+   * @param hout target total enthalpy in J
    */
   private void runPHflashWithNaNRetry(ThermodynamicOperations thermoOps, double hout) {
     double preFlashTemperature = getThermoSystem().getTemperature();
@@ -686,7 +686,7 @@ public class Compressor extends TwoPortEquipment
   /**
    * Run a pressure-entropy flash with a robust CPA multiphase shortcut.
    *
-   * @param thermoOps     thermodynamic operations bound to the compressor thermo system
+   * @param thermoOps thermodynamic operations bound to the compressor thermo system
    * @param targetEntropy target total entropy in J/K
    */
   private void runRegularPsFlash(ThermodynamicOperations thermoOps, double targetEntropy) {
@@ -730,8 +730,8 @@ public class Compressor extends TwoPortEquipment
   /**
    * Solve {@code S(T, Pcurrent) = targetEntropy} by Newton updates around robust TP flashes.
    *
-   * @param thermoOps          thermodynamic operations bound to the compressor thermo system
-   * @param targetEntropy      target total entropy in J/K
+   * @param thermoOps thermodynamic operations bound to the compressor thermo system
+   * @param targetEntropy target total entropy in J/K
    * @param initialTemperature starting temperature in K
    */
   private void solveEntropyAtCurrentPressureWithTpFlash(ThermodynamicOperations thermoOps, double targetEntropy,
@@ -2550,7 +2550,7 @@ public class Compressor extends TwoPortEquipment
    * </p>
    *
    * @return A double array with two elements: [0] = safe surge flow (m3/hr), [1] = head at safe flow (kJ/kg or meter
-   *         depending on chart headUnit)
+   * depending on chart headUnit)
    */
   public double[] getSafetyFactorCorrectedFlowHeadAtCurrentSpeed() {
     double currentSpeed = getSpeed();
@@ -2844,7 +2844,7 @@ public class Compressor extends TwoPortEquipment
    * </p>
    *
    * @param temperature outlet temperature value
-   * @param unit        temperature unit (e.g., "K", "C", "R", "F")
+   * @param unit temperature unit (e.g., "K", "C", "R", "F")
    */
   @Override
   public void setOutletTemperature(double temperature, String unit) {
@@ -2943,7 +2943,7 @@ public class Compressor extends TwoPortEquipment
    * </p>
    *
    * @param pressure a double
-   * @param unit     a {@link java.lang.String} object
+   * @param unit a {@link java.lang.String} object
    */
   public void setPressure(double pressure, String unit) {
     setOutletPressure(pressure);
@@ -3407,7 +3407,7 @@ public class Compressor extends TwoPortEquipment
    * </pre>
    *
    * @param generationOption The generation option: "normal curves" or "mid range"
-   * @param numberOfSpeeds   Number of speed curves to generate (must be at least 1)
+   * @param numberOfSpeeds Number of speed curves to generate (must be at least 1)
    */
   public void generateCompressorChart(String generationOption, int numberOfSpeeds) {
     CompressorChartGenerator generator = new CompressorChartGenerator(this);
@@ -3439,7 +3439,7 @@ public class Compressor extends TwoPortEquipment
    * compressor.generateCompressorChartFromTemplate("CENTRIFUGAL_STANDARD", 9);
    * </pre>
    *
-   * @param templateName   Name of the template to use
+   * @param templateName Name of the template to use
    * @param numberOfSpeeds Number of speed curves to generate
    */
   public void generateCompressorChartFromTemplate(String templateName, int numberOfSpeeds) {
@@ -3458,7 +3458,7 @@ public class Compressor extends TwoPortEquipment
    * </p>
    *
    * @param generationOption The generation option: "normal curves" or "mid range"
-   * @param speeds           Array of speed values in RPM
+   * @param speeds Array of speed values in RPM
    */
   public void generateCompressorChart(String generationOption, double[] speeds) {
     CompressorChartGenerator generator = new CompressorChartGenerator(this);
@@ -3732,7 +3732,7 @@ public class Compressor extends TwoPortEquipment
    * speed constraint.
    * </p>
    *
-   * @param type       driver type
+   * @param type driver type
    * @param ratedPower rated power in kW
    */
   public void setDriver(DriverType type, double ratedPower) {
@@ -4322,7 +4322,7 @@ public class Compressor extends TwoPortEquipment
    * Update speed considering inertia constraints.
    *
    * @param targetSpd target speed in RPM
-   * @param timeStep  time step in seconds
+   * @param timeStep time step in seconds
    */
   private void updateSpeedWithInertia(double targetSpd, double timeStep) {
     double currentSpd = getSpeed();
@@ -4388,7 +4388,7 @@ public class Compressor extends TwoPortEquipment
    * Fire surge approach event to all listeners.
    *
    * @param surgeMargin current surge margin
-   * @param isCritical  true if critical threshold
+   * @param isCritical true if critical threshold
    */
   private void fireSurgeApproachEvent(double surgeMargin, boolean isCritical) {
     if (eventListeners != null) {
@@ -4415,7 +4415,7 @@ public class Compressor extends TwoPortEquipment
    * Fire speed limit exceeded event.
    *
    * @param currentSpeed current speed
-   * @param ratio        ratio to max speed
+   * @param ratio ratio to max speed
    */
   private void fireSpeedLimitExceededEvent(double currentSpeed, double ratio) {
     if (eventListeners != null) {
@@ -4429,7 +4429,7 @@ public class Compressor extends TwoPortEquipment
    * Fire speed below minimum event.
    *
    * @param currentSpeed current speed
-   * @param ratio        ratio to min speed
+   * @param ratio ratio to min speed
    */
   private void fireSpeedBelowMinimumEvent(double currentSpeed, double ratio) {
     if (eventListeners != null) {
@@ -4443,7 +4443,7 @@ public class Compressor extends TwoPortEquipment
    * Fire power limit exceeded event.
    *
    * @param currentPower current power in kW
-   * @param maxPower     max available power in kW
+   * @param maxPower max available power in kW
    */
   private void firePowerLimitExceededEvent(double currentPower, double maxPower) {
     if (eventListeners != null) {
@@ -5167,7 +5167,7 @@ public class Compressor extends TwoPortEquipment
    * Call this method after setting design speed and maximum speed to update the constraint.
    * </p>
    *
-   * @param designSpeed  the design speed in RPM
+   * @param designSpeed the design speed in RPM
    * @param maximumSpeed the maximum allowable speed in RPM
    */
   public void updateSpeedConstraint(double designSpeed, double maximumSpeed) {
@@ -5566,7 +5566,7 @@ public class Compressor extends TwoPortEquipment
      * Sets the outlet pressure with unit specification.
      *
      * @param pressure outlet pressure value
-     * @param unit     pressure unit (e.g., "bara", "barg", "psia")
+     * @param unit pressure unit (e.g., "bara", "barg", "psia")
      * @return this builder for chaining
      */
     public Builder outletPressure(double pressure, String unit) {
@@ -5659,7 +5659,7 @@ public class Compressor extends TwoPortEquipment
      * Sets the outlet temperature with unit specification.
      *
      * @param temperature outlet temperature value
-     * @param unit        temperature unit ("K", "C", "F")
+     * @param unit temperature unit ("K", "C", "F")
      * @return this builder for chaining
      */
     public Builder outletTemperature(double temperature, String unit) {

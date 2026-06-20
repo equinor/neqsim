@@ -97,8 +97,8 @@ public class ProcessValidator implements Serializable {
      *
      * @param severity issue severity
      * @param location equipment or stream name
-     * @param message  description
-     * @param value    triggering value
+     * @param message description
+     * @param value triggering value
      */
     public ValidationIssue(Severity severity, String location, String message, double value) {
       this.severity = severity;

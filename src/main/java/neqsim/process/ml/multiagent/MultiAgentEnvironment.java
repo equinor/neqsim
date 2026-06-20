@@ -100,11 +100,11 @@ public class MultiAgentEnvironment implements Serializable {
      * Constructor.
      *
      * @param observations agent observations
-     * @param rewards      agent rewards
-     * @param terminated   episode terminated
-     * @param truncated    episode truncated
-     * @param infos        agent infos
-     * @param globalState  global state
+     * @param rewards agent rewards
+     * @param terminated episode terminated
+     * @param truncated episode truncated
+     * @param infos agent infos
+     * @param globalState global state
      */
     public MultiAgentStepResult(Map<String, double[]> observations, Map<String, Double> rewards, boolean terminated,
 	boolean truncated, Map<String, Map<String, Object>> infos, StateVector globalState) {
@@ -317,7 +317,7 @@ public class MultiAgentEnvironment implements Serializable {
   /**
    * Compute team reward for cooperative mode.
    *
-   * @param state   global state
+   * @param state global state
    * @param actions all agent actions
    * @return team reward
    */

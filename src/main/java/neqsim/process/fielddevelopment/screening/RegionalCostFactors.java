@@ -182,13 +182,13 @@ public final class RegionalCostFactors implements Serializable {
   /**
    * Creates regional cost factors.
    *
-   * @param regionCode     region code (e.g., "BR", "US-GOM")
-   * @param regionName     full region name
-   * @param capexFactor    CAPEX multiplier relative to NCS (1.0 = NCS baseline)
-   * @param opexFactor     OPEX multiplier relative to NCS
+   * @param regionCode region code (e.g., "BR", "US-GOM")
+   * @param regionName full region name
+   * @param capexFactor CAPEX multiplier relative to NCS (1.0 = NCS baseline)
+   * @param opexFactor OPEX multiplier relative to NCS
    * @param wellCostFactor well cost multiplier relative to NCS
-   * @param laborFactor    labor cost multiplier relative to NCS
-   * @param notes          additional notes about the region
+   * @param laborFactor labor cost multiplier relative to NCS
+   * @param notes additional notes about the region
    */
   public RegionalCostFactors(String regionCode, String regionName, double capexFactor, double opexFactor,
       double wellCostFactor, double laborFactor, String notes) {
@@ -204,8 +204,8 @@ public final class RegionalCostFactors implements Serializable {
   /**
    * Creates regional cost factors with a single overall factor.
    *
-   * @param regionCode    region code
-   * @param regionName    full region name
+   * @param regionCode region code
+   * @param regionName full region name
    * @param overallFactor single factor applied to all cost categories
    */
   public RegionalCostFactors(String regionCode, String regionName, double overallFactor) {

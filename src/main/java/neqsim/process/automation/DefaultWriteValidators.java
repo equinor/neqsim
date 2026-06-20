@@ -71,7 +71,7 @@ public final class DefaultWriteValidators {
    * unchanged when {@code unit} is null/empty/unrecognised.
    *
    * @param value the pressure value
-   * @param unit  the unit of measure (case-insensitive)
+   * @param unit the unit of measure (case-insensitive)
    * @return the pressure in bara on a best-effort basis
    */
   private static double toBara(double value, String unit) {
@@ -108,7 +108,7 @@ public final class DefaultWriteValidators {
    * unchanged when {@code unit} is null/empty/unrecognised.
    *
    * @param value the temperature value
-   * @param unit  the unit of measure (case-insensitive)
+   * @param unit the unit of measure (case-insensitive)
    * @return the temperature in K on a best-effort basis
    */
   private static double toKelvin(double value, String unit) {

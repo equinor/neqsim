@@ -62,7 +62,7 @@ public class MultiStageSeparatorTest extends BasePVTsimulation {
     /**
      * Create a separator stage.
      *
-     * @param pressure    Stage pressure in bara
+     * @param pressure Stage pressure in bara
      * @param temperature Stage temperature in Celsius
      */
     public SeparatorStage(double pressure, double temperature) {
@@ -72,9 +72,9 @@ public class MultiStageSeparatorTest extends BasePVTsimulation {
     /**
      * Create a named separator stage.
      *
-     * @param pressure    Stage pressure in bara
+     * @param pressure Stage pressure in bara
      * @param temperature Stage temperature in Celsius
-     * @param name        Stage name (e.g., "HP Separator")
+     * @param name Stage name (e.g., "HP Separator")
      */
     public SeparatorStage(double pressure, double temperature, String name) {
       this.pressure = pressure;
@@ -118,8 +118,8 @@ public class MultiStageSeparatorTest extends BasePVTsimulation {
      * Create stage result.
      *
      * @param stageNumber Stage number (1-based)
-     * @param stageName   Stage name
-     * @param pressure    Stage pressure (bara)
+     * @param stageName Stage name
+     * @param pressure Stage pressure (bara)
      * @param temperature Stage temperature (°C)
      */
     public SeparatorStageResult(int stageNumber, String stageName, double pressure, double temperature) {
@@ -204,7 +204,7 @@ public class MultiStageSeparatorTest extends BasePVTsimulation {
   /**
    * Set reservoir conditions.
    *
-   * @param pressure    Reservoir pressure in bara
+   * @param pressure Reservoir pressure in bara
    * @param temperature Reservoir temperature in Celsius
    */
   public void setReservoirConditions(double pressure, double temperature) {
@@ -215,7 +215,7 @@ public class MultiStageSeparatorTest extends BasePVTsimulation {
   /**
    * Add a separator stage.
    *
-   * @param pressure    Stage pressure in bara
+   * @param pressure Stage pressure in bara
    * @param temperature Stage temperature in Celsius
    */
   public void addSeparatorStage(double pressure, double temperature) {
@@ -225,9 +225,9 @@ public class MultiStageSeparatorTest extends BasePVTsimulation {
   /**
    * Add a named separator stage.
    *
-   * @param pressure    Stage pressure in bara
+   * @param pressure Stage pressure in bara
    * @param temperature Stage temperature in Celsius
-   * @param name        Stage name
+   * @param name Stage name
    */
   public void addSeparatorStage(double pressure, double temperature, String name) {
     stages.add(new SeparatorStage(pressure, temperature, name));
@@ -251,9 +251,9 @@ public class MultiStageSeparatorTest extends BasePVTsimulation {
   /**
    * Set up a typical 3-stage separator train.
    *
-   * @param hpPressure    HP separator pressure (bara)
+   * @param hpPressure HP separator pressure (bara)
    * @param hpTemperature HP separator temperature (°C)
-   * @param lpPressure    LP separator pressure (bara)
+   * @param lpPressure LP separator pressure (bara)
    * @param lpTemperature LP separator temperature (°C)
    */
   public void setTypicalThreeStage(double hpPressure, double hpTemperature, double lpPressure, double lpTemperature) {
@@ -551,11 +551,11 @@ public class MultiStageSeparatorTest extends BasePVTsimulation {
      * Create optimization result.
      *
      * @param optPressure Optimal separator pressure (bara)
-     * @param optTemp     Optimal separator temperature (°C)
+     * @param optTemp Optimal separator temperature (°C)
      * @param maxRecovery Maximum oil recovery factor
-     * @param gor         GOR at optimum conditions
-     * @param bo          Bo at optimum conditions
-     * @param api         API gravity at optimum conditions
+     * @param gor GOR at optimum conditions
+     * @param bo Bo at optimum conditions
+     * @param api API gravity at optimum conditions
      */
     public OptimizationResult(double optPressure, double optTemp, double maxRecovery, double gor, double bo,
 	double api) {
@@ -607,11 +607,11 @@ public class MultiStageSeparatorTest extends BasePVTsimulation {
    * with the first stage conditions varied.
    * </p>
    *
-   * @param minPressure      Minimum separator pressure to search (bara)
-   * @param maxPressure      Maximum separator pressure to search (bara)
-   * @param pressureSteps    Number of pressure steps in search grid
-   * @param minTemperature   Minimum separator temperature to search (°C)
-   * @param maxTemperature   Maximum separator temperature to search (°C)
+   * @param minPressure Minimum separator pressure to search (bara)
+   * @param maxPressure Maximum separator pressure to search (bara)
+   * @param pressureSteps Number of pressure steps in search grid
+   * @param minTemperature Minimum separator temperature to search (°C)
+   * @param maxTemperature Maximum separator temperature to search (°C)
    * @param temperatureSteps Number of temperature steps in search grid
    * @return OptimizationResult containing optimal conditions and corresponding properties
    */

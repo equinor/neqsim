@@ -214,8 +214,8 @@ public class WellProductionAllocator implements Serializable {
   /**
    * Allocates total production to individual wells.
    *
-   * @param totalOilRate   total oil rate at separator (Sm3/day)
-   * @param totalGasRate   total gas rate at separator (Sm3/day)
+   * @param totalOilRate total oil rate at separator (Sm3/day)
+   * @param totalGasRate total gas rate at separator (Sm3/day)
    * @param totalWaterRate total water rate at separator (Sm3/day)
    * @return allocation result
    */
@@ -256,9 +256,9 @@ public class WellProductionAllocator implements Serializable {
   /**
    * Allocates based on well test data.
    *
-   * @param oilRates      map to store allocated oil rates by well name
-   * @param gasRates      map to store allocated gas rates by well name
-   * @param waterRates    map to store allocated water rates by well name
+   * @param oilRates map to store allocated oil rates by well name
+   * @param gasRates map to store allocated gas rates by well name
+   * @param waterRates map to store allocated water rates by well name
    * @param uncertainties map to store allocation uncertainties by well name
    */
   private void allocateByWellTest(Map<String, Double> oilRates, Map<String, Double> gasRates,
@@ -285,9 +285,9 @@ public class WellProductionAllocator implements Serializable {
   /**
    * Allocates based on VFM estimates.
    *
-   * @param oilRates      map to store allocated oil rates by well name
-   * @param gasRates      map to store allocated gas rates by well name
-   * @param waterRates    map to store allocated water rates by well name
+   * @param oilRates map to store allocated oil rates by well name
+   * @param gasRates map to store allocated gas rates by well name
+   * @param waterRates map to store allocated water rates by well name
    * @param uncertainties map to store uncertainty values by well name
    */
   private void allocateByVFM(Map<String, Double> oilRates, Map<String, Double> gasRates, Map<String, Double> waterRates,
@@ -304,9 +304,9 @@ public class WellProductionAllocator implements Serializable {
   /**
    * Allocates based on choke model.
    *
-   * @param oilRates      map to store allocated oil rates by well name
-   * @param gasRates      map to store allocated gas rates by well name
-   * @param waterRates    map to store allocated water rates by well name
+   * @param oilRates map to store allocated oil rates by well name
+   * @param gasRates map to store allocated gas rates by well name
+   * @param waterRates map to store allocated water rates by well name
    * @param uncertainties map to store uncertainty values by well name
    */
   private void allocateByChokeModel(Map<String, Double> oilRates, Map<String, Double> gasRates,
@@ -334,9 +334,9 @@ public class WellProductionAllocator implements Serializable {
   /**
    * Allocates using weighted combination of methods.
    *
-   * @param oilRates      map to store allocated oil rates by well name
-   * @param gasRates      map to store allocated gas rates by well name
-   * @param waterRates    map to store allocated water rates by well name
+   * @param oilRates map to store allocated oil rates by well name
+   * @param gasRates map to store allocated gas rates by well name
+   * @param waterRates map to store allocated water rates by well name
    * @param uncertainties map to store uncertainty values by well name
    */
   private void allocateCombined(Map<String, Double> oilRates, Map<String, Double> gasRates,

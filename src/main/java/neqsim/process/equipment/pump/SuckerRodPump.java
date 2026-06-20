@@ -62,7 +62,7 @@ public class SuckerRodPump extends Pump {
   /**
    * Constructor for SuckerRodPump.
    *
-   * @param name        name of sucker-rod pump
+   * @param name name of sucker-rod pump
    * @param inletStream inlet (pump intake) stream
    */
   public SuckerRodPump(String name, StreamInterface inletStream) {

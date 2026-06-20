@@ -50,7 +50,7 @@ public class OnlineSignal implements java.io.Serializable {
    * Constructor for OnlineSignal.
    * </p>
    *
-   * @param plantName       a {@link java.lang.String} object
+   * @param plantName a {@link java.lang.String} object
    * @param transmitterName a {@link java.lang.String} object
    */
   public OnlineSignal(String plantName, String transmitterName) {

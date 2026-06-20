@@ -271,24 +271,24 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   /**
    * Sizes a control valve based on the provided parameters.
    *
-   * @param type           the type of fluid (LIQUID or GAS)
-   * @param rhoOrT         density for liquid or temperature for gas
-   * @param MW             molecular weight of the fluid
-   * @param mu             dynamic viscosity of the fluid
-   * @param gammaOrPsat    specific heat ratio for gas or saturation pressure for liquid
-   * @param ZOrPc          compressibility factor for gas or critical pressure for liquid
-   * @param P1             upstream pressure
-   * @param P2             downstream pressure
-   * @param Q              flow rate
-   * @param D1             upstream pipe diameter
-   * @param D2             downstream pipe diameter
-   * @param d              valve diameter
-   * @param FL             liquid pressure recovery factor
-   * @param Fd             valve style modifier
-   * @param xTOrNone       pressure drop ratio factor for gas
-   * @param allowChoked    whether to allow choked flow
-   * @param allowLaminar   whether to allow laminar flow
-   * @param fullOutput     whether to return full output
+   * @param type the type of fluid (LIQUID or GAS)
+   * @param rhoOrT density for liquid or temperature for gas
+   * @param MW molecular weight of the fluid
+   * @param mu dynamic viscosity of the fluid
+   * @param gammaOrPsat specific heat ratio for gas or saturation pressure for liquid
+   * @param ZOrPc compressibility factor for gas or critical pressure for liquid
+   * @param P1 upstream pressure
+   * @param P2 downstream pressure
+   * @param Q flow rate
+   * @param D1 upstream pipe diameter
+   * @param D2 downstream pipe diameter
+   * @param d valve diameter
+   * @param FL liquid pressure recovery factor
+   * @param Fd valve style modifier
+   * @param xTOrNone pressure drop ratio factor for gas
+   * @param allowChoked whether to allow choked flow
+   * @param allowLaminar whether to allow laminar flow
+   * @param fullOutput whether to return full output
    * @param percentOpening Valve opening percentage (0-100)
    * @return a map containing the sizing results
    */
@@ -309,12 +309,12 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   /**
    * Sizes a control valve for a liquid based on the provided parameters. Aligned with IEC 60534 and 'fluids' library.
    *
-   * @param rho            Density of the liquid [kg/m^3]
-   * @param Psat           Saturation pressure of the liquid [Pa]
-   * @param Pc             Critical pressure of the liquid [Pa]
-   * @param P1             Upstream pressure [Pa]
-   * @param P2             Downstream pressure [Pa]
-   * @param Q              Volumetric flow rate [m^3/s]
+   * @param rho Density of the liquid [kg/m^3]
+   * @param Psat Saturation pressure of the liquid [Pa]
+   * @param Pc Critical pressure of the liquid [Pa]
+   * @param P1 Upstream pressure [Pa]
+   * @param P2 Downstream pressure [Pa]
+   * @param Q Volumetric flow rate [m^3/s]
    * @param percentOpening Valve opening percentage (0-100)
    * @return A map containing the sizing results (Kv, Kv, choked, etc.).
    */
@@ -375,8 +375,8 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
    * calculateFlowRateFromValveOpeningGas.
    * </p>
    *
-   * @param adjustedKv   a double
-   * @param inletStream  a {@link neqsim.process.equipment.stream.StreamInterface} object
+   * @param adjustedKv a double
+   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    * @param outletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    * @return a double
    */
@@ -392,11 +392,11 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
    * Calculates liquid flow rate from valve opening.
    *
    * @param adjustedKv Max flow coefficient of the valve
-   * @param rho        Liquid density [kg/m^3]
-   * @param Psat       Saturation pressure [Pa]
-   * @param Pc         Critical pressure [Pa]
-   * @param P1         Upstream pressure [Pa]
-   * @param P2         Downstream pressure [Pa]
+   * @param rho Liquid density [kg/m^3]
+   * @param Psat Saturation pressure [Pa]
+   * @param Pc Critical pressure [Pa]
+   * @param P1 Upstream pressure [Pa]
+   * @param P2 Downstream pressure [Pa]
    * @return Flow rate [m^3/s]
    */
   public double calculateFlowRateFromValveOpeningLiquid(double adjustedKv, double rho, double Psat, double Pc,
@@ -428,8 +428,8 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
    * calculateFlowRateFromValveOpeningLiquid.
    * </p>
    *
-   * @param adjustedKv   a double
-   * @param inletStream  a {@link neqsim.process.equipment.stream.StreamInterface} object
+   * @param adjustedKv a double
+   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    * @param outletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    * @return a double
    */
@@ -444,13 +444,13 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   /**
    * Calculates required valve opening for a given liquid flow rate.
    *
-   * @param Q    Desired flow rate [m^3/s]
-   * @param Kv   Max flow coefficient of the valve
-   * @param rho  Liquid density [kg/m^3]
+   * @param Q Desired flow rate [m^3/s]
+   * @param Kv Max flow coefficient of the valve
+   * @param rho Liquid density [kg/m^3]
    * @param Psat Saturation pressure [Pa]
-   * @param Pc   Critical pressure [Pa]
-   * @param P1   Upstream pressure [Pa]
-   * @param P2   Downstream pressure [Pa]
+   * @param Pc Critical pressure [Pa]
+   * @param P1 Upstream pressure [Pa]
+   * @param P2 Downstream pressure [Pa]
    * @return Required valve opening percentage (0-100).
    */
   public double calculateValveOpeningFromFlowRateLiquid(double Q, double Kv, double rho, double Psat, double Pc,
@@ -483,9 +483,9 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
    * calculateValveOpeningFromFlowRateLiquid.
    * </p>
    *
-   * @param Q            a double
-   * @param Kv           a double
-   * @param inletStream  a {@link neqsim.process.equipment.stream.StreamInterface} object
+   * @param Q a double
+   * @param Kv a double
+   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    * @param outletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    * @return a double
    */
@@ -501,16 +501,16 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
    * Finds the outlet pressure for a given flow rate Q and a fixed (actual) Kv in a liquid valve. This is solved
    * iteratively using a bisection search algorithm.
    *
-   * @param rho          Density of the liquid [kg/m^3]
-   * @param Psat         Saturation pressure [Pa]
-   * @param Pc           Critical pressure [Pa]
-   * @param mu           Dynamic viscosity [Pa.s] - Note: Not used in this turbulent model
-   * @param P1           Upstream pressure [Pa]
-   * @param Q            Flow rate [m^3/s]
-   * @param actualKv     The actual installed valve's Kv
-   * @param FL           Liquid pressure recovery factor
-   * @param Fd           Valve style modifier
-   * @param allowChoked  Whether to allow choked flowfindOutletPressureForFixedKvLiquid
+   * @param rho Density of the liquid [kg/m^3]
+   * @param Psat Saturation pressure [Pa]
+   * @param Pc Critical pressure [Pa]
+   * @param mu Dynamic viscosity [Pa.s] - Note: Not used in this turbulent model
+   * @param P1 Upstream pressure [Pa]
+   * @param Q Flow rate [m^3/s]
+   * @param actualKv The actual installed valve's Kv
+   * @param FL Liquid pressure recovery factor
+   * @param Fd Valve style modifier
+   * @param allowChoked Whether to allow choked flowfindOutletPressureForFixedKvLiquid
    * @param allowLaminar Whether to allow laminar flow
    * @return Outlet pressure P2 [Pa]
    */
@@ -564,7 +564,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
    * findOutletPressureForFixedKvLiquid.
    * </p>
    *
-   * @param actualKv    a double
+   * @param actualKv a double
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    * @return a double
    */
@@ -580,13 +580,13 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
    * Sizes a control valve for a gas based on the provided parameters. CORRECTED to include Fgamma, aligning with IEC
    * 60534 and 'fluids' library.
    *
-   * @param T              Temperature of the gas [K]
-   * @param MW             Molecular weight of the gas [g/mol]
-   * @param gamma          Specific heat ratio
-   * @param Z              Compressibility factor
-   * @param P1             Upstream pressure [Pa]
-   * @param P2             Downstream pressure [Pa]
-   * @param Q              Volumetric flow rate at inlet conditions [m^3/s]
+   * @param T Temperature of the gas [K]
+   * @param MW Molecular weight of the gas [g/mol]
+   * @param gamma Specific heat ratio
+   * @param Z Compressibility factor
+   * @param P1 Upstream pressure [Pa]
+   * @param P2 Downstream pressure [Pa]
+   * @param Q Volumetric flow rate at inlet conditions [m^3/s]
    * @param percentOpening Valve opening percentage (0-100)
    * @return A map containing the sizing results (Kv, Kv, Y, choked, etc.).
    */
@@ -636,16 +636,16 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   /**
    * Calculates the flow rate for gas based on Kv and valve opening percentage.
    *
-   * @param adjustedKv  full flow coefficient (at 100% opening)
-   * @param T           temperature of the gas (K)
-   * @param MW          molecular weight of the gas (g/mol)
-   * @param mu          dynamic viscosity of the gas (Pa·s)
-   * @param gamma       specific heat ratio of the gas
-   * @param Z           compressibility factor of the gas
-   * @param P1          upstream pressure (Pa)
-   * @param P2          downstream pressure (Pa)
-   * @param FL          liquid pressure recovery factor
-   * @param xT          pressure drop ratio factor for gas
+   * @param adjustedKv full flow coefficient (at 100% opening)
+   * @param T temperature of the gas (K)
+   * @param MW molecular weight of the gas (g/mol)
+   * @param mu dynamic viscosity of the gas (Pa·s)
+   * @param gamma specific heat ratio of the gas
+   * @param Z compressibility factor of the gas
+   * @param P1 upstream pressure (Pa)
+   * @param P2 downstream pressure (Pa)
+   * @param FL liquid pressure recovery factor
+   * @param xT pressure drop ratio factor for gas
    * @param allowChoked whether to allow choked flow
    * @return the calculated flow rate in m^3/s
    */
@@ -688,8 +688,8 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
    * calculateFlowRateFromKvAndValveOpeningGas.
    * </p>
    *
-   * @param adjustedKv   a double
-   * @param inletStream  a {@link neqsim.process.equipment.stream.StreamInterface} object
+   * @param adjustedKv a double
+   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    * @param outletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    * @return a double
    */
@@ -704,17 +704,17 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   /**
    * Calculates the valve opening percentage for gas based on the flow rate and Kv.
    *
-   * @param Q           desired flow rate in m^3/s
-   * @param Kv          full flow coefficient (at 100% opening)
-   * @param T           temperature of the gas (K)
-   * @param MW          molecular weight of the gas (g/mol)
-   * @param mu          dynamic viscosity of the gas (Pa·s)
-   * @param gamma       specific heat ratio of the gas
-   * @param Z           compressibility factor of the gas
-   * @param P1          upstream pressure (Pa)
-   * @param P2          downstream pressure (Pa)
-   * @param FL          liquid pressure recovery factor
-   * @param xT          pressure drop ratio factor for gas
+   * @param Q desired flow rate in m^3/s
+   * @param Kv full flow coefficient (at 100% opening)
+   * @param T temperature of the gas (K)
+   * @param MW molecular weight of the gas (g/mol)
+   * @param mu dynamic viscosity of the gas (Pa·s)
+   * @param gamma specific heat ratio of the gas
+   * @param Z compressibility factor of the gas
+   * @param P1 upstream pressure (Pa)
+   * @param P2 downstream pressure (Pa)
+   * @param FL liquid pressure recovery factor
+   * @param xT pressure drop ratio factor for gas
    * @param allowChoked whether to allow choked flow
    * @return the valve opening percentage (0 to 100%)
    */
@@ -766,10 +766,10 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
    * calculateValveOpeningFromFlowRateGas.
    * </p>
    *
-   * @param Q            a double
-   * @param Kv           a double
+   * @param Q a double
+   * @param Kv a double
    * @param valveOpening a double
-   * @param inletStream  a {@link neqsim.process.equipment.stream.StreamInterface} object
+   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    * @param outletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    * @return a double
    */
@@ -785,12 +785,12 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
    * Finds the outlet pressure for a given flow rate and a fixed Kv in a gas valve. This is solved iteratively using a
    * bisection search algorithm.
    *
-   * @param T        Temperature [K]
-   * @param MW       Molecular Weight [g/mol]
-   * @param gamma    Specific heat ratio
-   * @param Z        Compressibility Factor
-   * @param P1       Upstream pressure [Pa]
-   * @param Q        Volumetric flow rate [m^3/s]
+   * @param T Temperature [K]
+   * @param MW Molecular Weight [g/mol]
+   * @param gamma Specific heat ratio
+   * @param Z Compressibility Factor
+   * @param P1 Upstream pressure [Pa]
+   * @param Q Volumetric flow rate [m^3/s]
    * @param actualKv The actual installed valve's Kv
    * @return The calculated outlet pressure P2 [Pa] that satisfies the conditions.
    */
@@ -846,7 +846,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
    * findOutletPressureForFixedKvGas.
    * </p>
    *
-   * @param actualKv    a double
+   * @param actualKv a double
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    * @return a double
    */

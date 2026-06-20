@@ -280,7 +280,7 @@ public class SubseaManifold extends ProcessEquipmentBaseClass {
   /**
    * Constructor with name and number of slots.
    *
-   * @param name          equipment name
+   * @param name equipment name
    * @param numberOfSlots number of well slots
    */
   public SubseaManifold(String name, int numberOfSlots) {
@@ -319,7 +319,7 @@ public class SubseaManifold extends ProcessEquipmentBaseClass {
    * Add well stream with well name.
    *
    * @param wellStream well inlet stream
-   * @param wellName   well name
+   * @param wellName well name
    * @return slot number assigned
    */
   public int addWellStream(StreamInterface wellStream, String wellName) {
@@ -484,7 +484,7 @@ public class SubseaManifold extends ProcessEquipmentBaseClass {
   /**
    * Apply pressure drop to stream.
    *
-   * @param stream       stream to modify
+   * @param stream stream to modify
    * @param pressureDrop pressure drop in bar
    */
   private void applyPressureDrop(StreamInterface stream, double pressureDrop) {

@@ -499,7 +499,7 @@ public class CO2CorrosionAnalyzer implements Serializable {
    *
    * @param minTempC minimum temperature in Celsius
    * @param maxTempC maximum temperature in Celsius
-   * @param steps    number of temperature steps
+   * @param steps number of temperature steps
    * @return list of result maps for each temperature point
    */
   public List<Map<String, Object>> runTemperatureSweep(double minTempC, double maxTempC, int steps) {
@@ -534,7 +534,7 @@ public class CO2CorrosionAnalyzer implements Serializable {
    *
    * @param minPressBar minimum pressure in bara
    * @param maxPressBar maximum pressure in bara
-   * @param steps       number of pressure steps
+   * @param steps number of pressure steps
    * @return list of result maps for each pressure point
    */
   public List<Map<String, Object>> runPressureSweep(double minPressBar, double maxPressBar, int steps) {

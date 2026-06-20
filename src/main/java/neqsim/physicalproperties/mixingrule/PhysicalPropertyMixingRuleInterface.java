@@ -34,8 +34,8 @@ public interface PhysicalPropertyMixingRuleInterface extends Cloneable {
    * </p>
    *
    * @param val a double
-   * @param i   a int
-   * @param j   a int
+   * @param i a int
+   * @param j a int
    */
   public void setViscosityGij(double val, int i, int j);
 

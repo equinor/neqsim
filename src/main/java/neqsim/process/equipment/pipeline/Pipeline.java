@@ -205,7 +205,7 @@ public class Pipeline extends TwoPortEquipment
   /**
    * Constructor for Pipeline with inlet stream.
    *
-   * @param name     the equipment name
+   * @param name the equipment name
    * @param inStream the inlet stream
    */
   public Pipeline(String name, StreamInterface inStream) {
@@ -456,7 +456,7 @@ public class Pipeline extends TwoPortEquipment
    * Get superficial velocity for a phase at a specific node.
    *
    * @param phaseNum phase index (0=gas, 1=liquid)
-   * @param node     node index
+   * @param node node index
    * @return superficial velocity in m/s
    */
   public double getSuperficialVelocity(int phaseNum, int node) {
@@ -881,7 +881,7 @@ public class Pipeline extends TwoPortEquipment
    * pipe.addFitting("gate valve", 8.0);
    * </pre>
    *
-   * @param name  descriptive name for the fitting
+   * @param name descriptive name for the fitting
    * @param LdivD equivalent length ratio (L/D), dimensionless
    */
   public void addFitting(String name, double LdivD) {
@@ -932,7 +932,7 @@ public class Pipeline extends TwoPortEquipment
    * pipe.addFittings("90-degree elbow", 30.0, 6);
    * </pre>
    *
-   * @param name  fitting name
+   * @param name fitting name
    * @param LdivD L/D ratio for each fitting
    * @param count number of fittings to add
    */
@@ -943,7 +943,7 @@ public class Pipeline extends TwoPortEquipment
   /**
    * Add multiple standard fittings of the same type.
    *
-   * @param type  standard fitting type (e.g., "elbow_90_standard", "valve_gate_open")
+   * @param type standard fitting type (e.g., "elbow_90_standard", "valve_gate_open")
    * @param count number of fittings to add
    * @return true if fittings were added, false if type not recognized
    */
@@ -1512,8 +1512,8 @@ public class Pipeline extends TwoPortEquipment
   /**
    * Set time series for transient simulation.
    *
-   * @param times              array of times
-   * @param systems            array of thermodynamic systems at each time
+   * @param times array of times
+   * @param systems array of thermodynamic systems at each time
    * @param timestepininterval number of time steps in each interval
    */
   public void setTimeSeries(double[] times, SystemInterface[] systems, int timestepininterval) {

@@ -51,7 +51,7 @@ public class ProcessModelThroughputResult implements Serializable {
   /**
    * Creates a throughput result.
    *
-   * @param studyName     study name
+   * @param studyName study name
    * @param objectiveName objective name
    * @param objectiveUnit objective unit
    */

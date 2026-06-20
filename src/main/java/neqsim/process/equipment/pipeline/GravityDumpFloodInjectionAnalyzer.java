@@ -243,8 +243,8 @@ public class GravityDumpFloodInjectionAnalyzer implements Serializable {
   /**
    * Supplies seawater physical properties directly (bypasses the NeqSim fluid calculation).
    *
-   * @param densityKgM3        seawater density [kg/m3], must be positive
-   * @param viscosityCp        seawater dynamic viscosity [cP], must be positive
+   * @param densityKgM3 seawater density [kg/m3], must be positive
+   * @param viscosityCp seawater dynamic viscosity [cP], must be positive
    * @param vapourPressureBara true seawater vapour pressure at seabed temperature [bara]
    */
   public void setSeawaterProperties(double densityKgM3, double viscosityCp, double vapourPressureBara) {
@@ -384,8 +384,8 @@ public class GravityDumpFloodInjectionAnalyzer implements Serializable {
    * Darcy-Weisbach frictional pressure drop using the explicit Haaland friction factor.
    *
    * @param rateSm3PerDay volumetric rate [Sm3/day] (≈ actual for near-incompressible water)
-   * @param idM           pipe inner diameter [m]
-   * @param lengthM       pipe length [m]
+   * @param idM pipe inner diameter [m]
+   * @param lengthM pipe length [m]
    * @return frictional pressure drop [bar]
    */
   private double frictionDropBar(double rateSm3PerDay, double idM, double lengthM) {
@@ -413,9 +413,9 @@ public class GravityDumpFloodInjectionAnalyzer implements Serializable {
    * Sizes the tail-pipe inner diameter whose friction over the sub-seabed length equals the target back-pressure at the
    * design rate. Solves by bisection on diameter.
    *
-   * @param targetBar     target frictional dissipation [bar]
+   * @param targetBar target frictional dissipation [bar]
    * @param rateSm3PerDay design rate [Sm3/day]
-   * @param lengthM       available length [m]
+   * @param lengthM available length [m]
    * @return tail-pipe inner diameter [mm], or 0 if no dissipation is required
    */
   private double sizeFrictionTailpipeIdMm(double targetBar, double rateSm3PerDay, double lengthM) {

@@ -108,7 +108,7 @@ public class LevelControlValve extends ControlValve {
   /**
    * Constructor for LevelControlValve.
    *
-   * @param name     name of the level control valve
+   * @param name name of the level control valve
    * @param inStream inlet stream
    */
   public LevelControlValve(String name, StreamInterface inStream) {

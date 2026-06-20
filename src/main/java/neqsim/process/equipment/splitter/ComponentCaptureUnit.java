@@ -62,7 +62,7 @@ public class ComponentCaptureUnit extends ProcessEquipmentBaseClass {
   /**
    * Constructs a component capture unit with inlet stream.
    *
-   * @param name        unit operation name
+   * @param name unit operation name
    * @param inletStream inlet stream
    */
   public ComponentCaptureUnit(String name, StreamInterface inletStream) {
@@ -282,8 +282,8 @@ public class ComponentCaptureUnit extends ProcessEquipmentBaseClass {
    * Calculates routed moles for one component and one outlet.
    *
    * @param feedComponentName feed component name
-   * @param inletMoles        inlet component moles
-   * @param captured          true when routing to captured outlet
+   * @param inletMoles inlet component moles
+   * @param captured true when routing to captured outlet
    * @return moles routed to the selected outlet
    */
   private double getRoutedMoles(String feedComponentName, double inletMoles, boolean captured) {
@@ -306,9 +306,9 @@ public class ComponentCaptureUnit extends ProcessEquipmentBaseClass {
   /**
    * Initializes a split outlet stream when it contains material.
    *
-   * @param stream     split outlet stream
+   * @param stream split outlet stream
    * @param totalMoles total moles routed to the stream
-   * @param id         calculation identifier
+   * @param id calculation identifier
    */
   private void initializeStream(StreamInterface stream, double totalMoles, UUID id) {
     if (totalMoles > 0.0) {
@@ -341,8 +341,8 @@ public class ComponentCaptureUnit extends ProcessEquipmentBaseClass {
     /**
      * Creates a split result.
      *
-     * @param system                 split thermodynamic system
-     * @param totalMoles             total moles routed to this split
+     * @param system split thermodynamic system
+     * @param totalMoles total moles routed to this split
      * @param selectedComponentMoles selected component moles routed to this split
      */
     private SplitResult(SystemInterface system, double totalMoles, double selectedComponentMoles) {

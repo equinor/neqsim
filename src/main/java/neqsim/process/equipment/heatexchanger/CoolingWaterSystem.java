@@ -97,10 +97,10 @@ public class CoolingWaterSystem implements Serializable {
     /**
      * Creates a cooling requirement.
      *
-     * @param name               cooler name
-     * @param dutyKW             cooling duty in kW
+     * @param name cooler name
+     * @param dutyKW cooling duty in kW
      * @param processOutletTempC process outlet temperature in C
-     * @param approachDeltaTC    minimum approach temperature in C
+     * @param approachDeltaTC minimum approach temperature in C
      */
     public CoolingRequirement(String name, double dutyKW, double processOutletTempC, double approachDeltaTC) {
       this.name = name;
@@ -120,10 +120,10 @@ public class CoolingWaterSystem implements Serializable {
   /**
    * Adds a cooling duty requirement.
    *
-   * @param name               cooler name
-   * @param dutyKW             required cooling duty in kW
+   * @param name cooler name
+   * @param dutyKW required cooling duty in kW
    * @param processOutletTempC process outlet temperature in C
-   * @param approachDeltaTC    minimum approach temperature in C
+   * @param approachDeltaTC minimum approach temperature in C
    */
   public void addCoolingRequirement(String name, double dutyKW, double processOutletTempC, double approachDeltaTC) {
     requirements.add(new CoolingRequirement(name, dutyKW, processOutletTempC, approachDeltaTC));

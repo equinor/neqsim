@@ -52,9 +52,9 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
    * Constructor for OnePhaseFixedStaggeredGrid.
    * </p>
    *
-   * @param pipe    a {@link neqsim.fluidmechanics.flowsystem.onephaseflowsystem.pipeflowsystem.PipeFlowSystem} object
-   * @param length  a double
-   * @param nodes   a int
+   * @param pipe a {@link neqsim.fluidmechanics.flowsystem.onephaseflowsystem.pipeflowsystem.PipeFlowSystem} object
+   * @param length a double
+   * @param nodes a int
    * @param dynamic a boolean
    */
   public OnePhaseFixedStaggeredGrid(
@@ -665,7 +665,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
    * </p>
    *
    * @param componentNumber the component index
-   * @param scheme          the TVD scheme variant (determines limiter function)
+   * @param scheme the TVD scheme variant (determines limiter function)
    */
   private void setComponentConservationMatrixTVD(int componentNumber,
       neqsim.fluidmechanics.flowsolver.AdvectionScheme scheme) {

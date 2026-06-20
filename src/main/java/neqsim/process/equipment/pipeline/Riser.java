@@ -184,7 +184,7 @@ public class Riser extends PipeBeggsAndBrills {
   /**
    * Constructor with name and inlet stream.
    *
-   * @param name     equipment name
+   * @param name equipment name
    * @param inStream inlet stream
    */
   public Riser(String name, StreamInterface inStream) {
@@ -196,8 +196,8 @@ public class Riser extends PipeBeggsAndBrills {
    * Constructor with riser type, name and inlet stream.
    *
    * @param riserType the type of riser
-   * @param name      equipment name
-   * @param inStream  inlet stream
+   * @param name equipment name
+   * @param inStream inlet stream
    */
   public Riser(RiserType riserType, String name, StreamInterface inStream) {
     super(name, inStream);
@@ -210,8 +210,8 @@ public class Riser extends PipeBeggsAndBrills {
   /**
    * Create a Steel Catenary Riser.
    *
-   * @param name       equipment name
-   * @param inStream   inlet stream
+   * @param name equipment name
+   * @param inStream inlet stream
    * @param waterDepth water depth in meters
    * @return configured SCR
    */
@@ -224,8 +224,8 @@ public class Riser extends PipeBeggsAndBrills {
   /**
    * Create a Top Tensioned Riser.
    *
-   * @param name       equipment name
-   * @param inStream   inlet stream
+   * @param name equipment name
+   * @param inStream inlet stream
    * @param waterDepth water depth in meters
    * @return configured TTR
    */
@@ -238,9 +238,9 @@ public class Riser extends PipeBeggsAndBrills {
   /**
    * Create a Lazy-Wave riser.
    *
-   * @param name          equipment name
-   * @param inStream      inlet stream
-   * @param waterDepth    water depth in meters
+   * @param name equipment name
+   * @param inStream inlet stream
+   * @param waterDepth water depth in meters
    * @param buoyancyDepth depth of buoyancy modules from surface
    * @return configured lazy-wave riser
    */
@@ -254,8 +254,8 @@ public class Riser extends PipeBeggsAndBrills {
   /**
    * Create a Flexible riser.
    *
-   * @param name       equipment name
-   * @param inStream   inlet stream
+   * @param name equipment name
+   * @param inStream inlet stream
    * @param waterDepth water depth in meters
    * @return configured flexible riser
    */
@@ -268,8 +268,8 @@ public class Riser extends PipeBeggsAndBrills {
   /**
    * Create a Hybrid riser.
    *
-   * @param name       equipment name
-   * @param inStream   inlet stream
+   * @param name equipment name
+   * @param inStream inlet stream
    * @param waterDepth water depth in meters
    * @return configured hybrid riser
    */

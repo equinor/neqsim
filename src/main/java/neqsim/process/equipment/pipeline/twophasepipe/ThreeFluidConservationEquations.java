@@ -112,9 +112,9 @@ public class ThreeFluidConservationEquations implements Serializable {
   /**
    * Calculate RHS of conservation equations for a three-fluid section.
    *
-   * @param section           Current section state
-   * @param dPdx              Pressure gradient (Pa/m)
-   * @param upstreamSection   Upstream section (for fluxes)
+   * @param section Current section state
+   * @param dPdx Pressure gradient (Pa/m)
+   * @param upstreamSection Upstream section (for fluxes)
    * @param downstreamSection Downstream section (for fluxes)
    * @return ThreeFluidRHS with all source terms
    */
@@ -227,9 +227,9 @@ public class ThreeFluidConservationEquations implements Serializable {
   /**
    * Calculate Colebrook-White friction factor.
    *
-   * @param re        Reynolds number
+   * @param re Reynolds number
    * @param roughness pipe wall roughness in meters
-   * @param diameter  pipe inner diameter in meters
+   * @param diameter pipe inner diameter in meters
    * @return Fanning friction factor
    */
   private double calculateFrictionFactor(double re, double roughness, double diameter) {
@@ -258,12 +258,12 @@ public class ThreeFluidConservationEquations implements Serializable {
    * Uses a simplified model based on relative velocity and density ratio.
    * </p>
    *
-   * @param alpha1         phase 1 volume fraction
-   * @param alpha2         phase 2 volume fraction
-   * @param rho1           phase 1 density (kg/m³)
-   * @param rho2           phase 2 density (kg/m³)
-   * @param relVel         relative velocity between phases (m/s)
-   * @param diameter       pipe diameter (m)
+   * @param alpha1 phase 1 volume fraction
+   * @param alpha2 phase 2 volume fraction
+   * @param rho1 phase 1 density (kg/m³)
+   * @param rho2 phase 2 density (kg/m³)
+   * @param relVel relative velocity between phases (m/s)
+   * @param diameter pipe diameter (m)
    * @param surfaceTension surface tension (N/m)
    * @return interfacial friction factor (dimensionless)
    */
@@ -305,7 +305,7 @@ public class ThreeFluidConservationEquations implements Serializable {
    * Set state vector to section.
    *
    * @param section Three-fluid section
-   * @param state   State vector [gasMass, oilMass, waterMass, gasMom, oilMom, waterMom, energy]
+   * @param state State vector [gasMass, oilMass, waterMass, gasMom, oilMom, waterMom, energy]
    */
   public void setStateVector(ThreeFluidSection section, double[] state) {
     section.setGasMassPerLength(state[0]);

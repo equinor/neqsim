@@ -59,8 +59,8 @@ public class InherentSafetyEvaluator implements Serializable {
    * Score one pillar 0..10 (10 = best inherent-safety performance).
    *
    * @param pillar pillar to score
-   * @param score  score in [0, 10]
-   * @param note   rationale text
+   * @param score score in [0, 10]
+   * @param note rationale text
    * @return this evaluator for chaining
    */
   public InherentSafetyEvaluator score(Pillar pillar, double score, String note) {

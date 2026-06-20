@@ -105,8 +105,8 @@ public class RhonePoulencVelocity implements Serializable {
     /**
      * Construct a ServiceType enum value.
      *
-     * @param cFactor          the C-factor constant
-     * @param exponent         the density exponent
+     * @param cFactor the C-factor constant
+     * @param exponent the density exponent
      * @param maxVelocityLimit upper velocity limit in m/s
      * @param minVelocityLimit lower velocity limit in m/s
      */
@@ -280,7 +280,7 @@ public class RhonePoulencVelocity implements Serializable {
    *
    * @param xTable array of x values (must be sorted ascending)
    * @param yTable array of corresponding y values
-   * @param x      the x value to interpolate at
+   * @param x the x value to interpolate at
    * @return interpolated y value
    */
   private double logLogInterpolate(double[] xTable, double[] yTable, double x) {

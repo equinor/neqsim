@@ -97,7 +97,7 @@ public class GasTurbine extends TwoPortEquipment implements CapacityConstrainedE
    * Constructor for GasTurbine.
    * </p>
    *
-   * @param name        a {@link java.lang.String} object
+   * @param name a {@link java.lang.String} object
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public GasTurbine(String name, StreamInterface inletStream) {
@@ -426,7 +426,7 @@ public class GasTurbine extends TwoPortEquipment implements CapacityConstrainedE
    * Set the rated (maximum) power output with unit.
    *
    * @param ratedPower rated power value
-   * @param unit       power unit ("W", "kW", "MW", "hp")
+   * @param unit power unit ("W", "kW", "MW", "hp")
    */
   public void setRatedPower(double ratedPower, String unit) {
     switch (unit) {

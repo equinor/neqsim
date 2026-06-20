@@ -32,7 +32,7 @@ public class EventTreeAnalyzer implements Serializable {
   /**
    * Construct an event tree.
    *
-   * @param initiatingEventName        description of the initiating event
+   * @param initiatingEventName description of the initiating event
    * @param initiatingFrequencyPerYear frequency of the initiating event in 1/year
    */
   public EventTreeAnalyzer(String initiatingEventName, double initiatingFrequencyPerYear) {
@@ -46,7 +46,7 @@ public class EventTreeAnalyzer implements Serializable {
   /**
    * Add a pivotal-event branch (barrier, decision). Branches are evaluated in the order added.
    *
-   * @param name             pivotal event name (e.g. "Immediate ignition", "ESD success")
+   * @param name pivotal event name (e.g. "Immediate ignition", "ESD success")
    * @param probabilityOfYes probability that the pivotal event occurs (true branch)
    * @return this analyzer for chaining
    */

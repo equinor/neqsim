@@ -76,8 +76,8 @@ public final class DeclineCurveAnalysis {
    *
    * @param qi Initial production rate (any consistent unit, e.g. bbl/d)
    * @param di Initial nominal decline rate (1/day). Must be positive.
-   * @param b  Arps decline exponent (dimensionless). Range: [0, 1]
-   * @param t  Time since start of decline (days). Must be non-negative.
+   * @param b Arps decline exponent (dimensionless). Range: [0, 1]
+   * @param t Time since start of decline (days). Must be non-negative.
    * @return Production rate at time t (same unit as qi)
    */
   public static double rate(double qi, double di, double b, double t) {
@@ -100,7 +100,7 @@ public final class DeclineCurveAnalysis {
    *
    * @param qi Initial production rate
    * @param di Nominal decline rate (1/day)
-   * @param t  Time (days)
+   * @param t Time (days)
    * @return Rate at time t
    */
   public static double rateExponential(double qi, double di, double t) {
@@ -115,8 +115,8 @@ public final class DeclineCurveAnalysis {
    *
    * @param qi Initial production rate
    * @param di Initial nominal decline rate (1/day)
-   * @param b  Arps exponent (0 &lt; b &lt; 1)
-   * @param t  Time (days)
+   * @param b Arps exponent (0 &lt; b &lt; 1)
+   * @param t Time (days)
    * @return Rate at time t
    */
   public static double rateHyperbolic(double qi, double di, double b, double t) {
@@ -131,7 +131,7 @@ public final class DeclineCurveAnalysis {
    *
    * @param qi Initial production rate
    * @param di Initial nominal decline rate (1/day)
-   * @param t  Time (days)
+   * @param t Time (days)
    * @return Rate at time t
    */
   public static double rateHarmonic(double qi, double di, double t) {
@@ -155,8 +155,8 @@ public final class DeclineCurveAnalysis {
    *
    * @param qi Initial production rate
    * @param di Initial nominal decline rate (1/day)
-   * @param b  Arps decline exponent [0, 1]
-   * @param t  Time (days)
+   * @param b Arps decline exponent [0, 1]
+   * @param t Time (days)
    * @return Cumulative production (rate-unit * days, e.g. bbl if qi in bbl/d)
    */
   public static double cumulativeProduction(double qi, double di, double b, double t) {
@@ -184,7 +184,7 @@ public final class DeclineCurveAnalysis {
    *
    * @param qi Initial production rate
    * @param di Nominal decline rate (1/day)
-   * @param t  Time (days)
+   * @param t Time (days)
    * @return Cumulative production
    */
   public static double cumulativeExponential(double qi, double di, double t) {
@@ -196,7 +196,7 @@ public final class DeclineCurveAnalysis {
    *
    * @param qi Initial production rate
    * @param di Nominal decline rate (1/day)
-   * @param t  Time (days)
+   * @param t Time (days)
    * @return Cumulative production
    */
   public static double cumulativeHarmonic(double qi, double di, double t) {
@@ -246,8 +246,8 @@ public final class DeclineCurveAnalysis {
    * For exponential ($b = 0$), $D(t) = D_i$ (constant).
    *
    * @param di Initial nominal decline rate (1/day)
-   * @param b  Arps exponent [0, 1]
-   * @param t  Time (days)
+   * @param b Arps exponent [0, 1]
+   * @param t Time (days)
    * @return Instantaneous decline rate at time t (1/day)
    */
   public static double instantaneousDeclineRate(double di, double b, double t) {
@@ -271,9 +271,9 @@ public final class DeclineCurveAnalysis {
    * <li>$b &gt; 0$: $t = [(q_i/q_{lim})^b - 1] / (b D_i)$</li>
    * </ul>
    *
-   * @param qi     Initial production rate
-   * @param di     Nominal decline rate (1/day)
-   * @param b      Arps exponent [0, 1]
+   * @param qi Initial production rate
+   * @param di Nominal decline rate (1/day)
+   * @param b Arps exponent [0, 1]
    * @param qLimit Target rate (must be less than qi)
    * @return Time from start to reach qLimit (days)
    */
@@ -298,9 +298,9 @@ public final class DeclineCurveAnalysis {
    * <p>
    * Total cumulative production until the well reaches the economic limit rate.
    *
-   * @param qi     Initial production rate
-   * @param di     Nominal decline rate (1/day)
-   * @param b      Arps exponent [0, 1]
+   * @param qi Initial production rate
+   * @param di Nominal decline rate (1/day)
+   * @param b Arps exponent [0, 1]
    * @param qLimit Economic limit rate (same unit as qi)
    * @return EUR (rate-unit * days)
    */
@@ -315,11 +315,11 @@ public final class DeclineCurveAnalysis {
   /**
    * Remaining reserves from current time to economic limit.
    *
-   * @param qi       Initial production rate
-   * @param di       Initial nominal decline rate (1/day)
-   * @param b        Arps exponent [0, 1]
+   * @param qi Initial production rate
+   * @param di Initial nominal decline rate (1/day)
+   * @param b Arps exponent [0, 1]
    * @param tCurrent Current time since start of decline (days)
-   * @param qLimit   Economic limit rate
+   * @param qLimit Economic limit rate
    * @return Remaining reserves (rate-unit * days)
    */
   public static double remainingReserves(double qi, double di, double b, double tCurrent, double qLimit) {
@@ -338,12 +338,12 @@ public final class DeclineCurveAnalysis {
    * <p>
    * Returns a 2D array: result[0] = times, result[1] = rates, result[2] = cumulative production.
    *
-   * @param qi     Initial production rate
-   * @param di     Nominal decline rate (1/day)
-   * @param b      Arps exponent [0, 1]
+   * @param qi Initial production rate
+   * @param di Nominal decline rate (1/day)
+   * @param b Arps exponent [0, 1]
    * @param tStart Start time (days)
-   * @param tEnd   End time (days)
-   * @param tStep  Time step (days)
+   * @param tEnd End time (days)
+   * @param tStep Time step (days)
    * @return 2D array [times, rates, cumulativeProduction]
    */
   public static double[][] forecast(double qi, double di, double b, double tStart, double tEnd, double tStep) {
@@ -483,9 +483,9 @@ public final class DeclineCurveAnalysis {
   /**
    * Generate a comprehensive DCA summary for given parameters.
    *
-   * @param qi     Initial production rate
-   * @param di     Nominal decline rate (1/day)
-   * @param b      Arps exponent [0, 1]
+   * @param qi Initial production rate
+   * @param di Nominal decline rate (1/day)
+   * @param b Arps exponent [0, 1]
    * @param qLimit Economic limit rate
    * @return Map of key DCA metrics
    */

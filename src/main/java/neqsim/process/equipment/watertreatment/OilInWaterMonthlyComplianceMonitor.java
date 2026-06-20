@@ -83,12 +83,12 @@ public class OilInWaterMonthlyComplianceMonitor implements Serializable {
     /**
      * Creates a monthly status object.
      *
-     * @param weightedAverageMgL            weighted OIW average in mg/L
-     * @param remainingAllowedAverageMgL    remaining allowed average in mg/L
+     * @param weightedAverageMgL weighted OIW average in mg/L
+     * @param remainingAllowedAverageMgL remaining allowed average in mg/L
      * @param projectedMonthlyWaterVolumeM3 projected monthly water volume in m3
-     * @param remainingWaterVolumeM3        remaining water volume in m3
-     * @param status                        compliance status
-     * @param recommendation                recommendation text
+     * @param remainingWaterVolumeM3 remaining water volume in m3
+     * @param status compliance status
+     * @param recommendation recommendation text
      */
     public MonthlyStatus(double weightedAverageMgL, double remainingAllowedAverageMgL,
 	double projectedMonthlyWaterVolumeM3, double remainingWaterVolumeM3, ComplianceStatus status,
@@ -269,7 +269,7 @@ public class OilInWaterMonthlyComplianceMonitor implements Serializable {
   /**
    * Determines status from weighted average and remaining allowed average.
    *
-   * @param weightedAverage         weighted OIW average in mg/L
+   * @param weightedAverage weighted OIW average in mg/L
    * @param remainingAllowedAverage remaining allowed average in mg/L
    * @return compliance status
    */

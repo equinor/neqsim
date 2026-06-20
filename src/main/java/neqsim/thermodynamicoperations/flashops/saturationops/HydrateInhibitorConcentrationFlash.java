@@ -29,8 +29,8 @@ public class HydrateInhibitorConcentrationFlash extends ConstantDutyTemperatureF
    * Constructor for HydrateInhibitorConcentrationFlash.
    * </p>
    *
-   * @param system             a {@link neqsim.thermo.system.SystemInterface} object
-   * @param inhibitor          a {@link java.lang.String} object
+   * @param system a {@link neqsim.thermo.system.SystemInterface} object
+   * @param inhibitor a {@link java.lang.String} object
    * @param hydrateTemperature a double
    */
   public HydrateInhibitorConcentrationFlash(SystemInterface system, String inhibitor, double hydrateTemperature) {

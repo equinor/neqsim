@@ -46,9 +46,9 @@ public class SimulationVariable implements Serializable {
   /**
    * Creates a new simulation variable descriptor.
    *
-   * @param address     the stable dot-separated address, e.g. "separator-1.gasOutStream.temperature"
-   * @param name        the short property name, e.g. "temperature"
-   * @param type        whether the variable is INPUT (read-write) or OUTPUT (read-only)
+   * @param address the stable dot-separated address, e.g. "separator-1.gasOutStream.temperature"
+   * @param name the short property name, e.g. "temperature"
+   * @param type whether the variable is INPUT (read-write) or OUTPUT (read-only)
    * @param defaultUnit the default unit of measure, e.g. "K", "bara", "kg/hr"
    * @param description a human-readable description
    */
@@ -61,20 +61,20 @@ public class SimulationVariable implements Serializable {
   /**
    * Creates a fully specified simulation variable descriptor.
    *
-   * @param address            the stable dot-separated address
-   * @param name               the short property name
-   * @param type               whether the variable is INPUT or OUTPUT
-   * @param defaultUnit        the default unit of measure
-   * @param description        a human-readable description
-   * @param category           variable category such as stream, equipment, or tuning
-   * @param source             metadata source identifier
-   * @param unitFamily         physical unit family such as temperature or pressure
-   * @param minimumValue       optional minimum physically meaningful value
-   * @param maximumValue       optional maximum physically meaningful value
-   * @param allowedValues      optional allowed symbolic values
-   * @param writable           true if the variable can be written through automation
+   * @param address the stable dot-separated address
+   * @param name the short property name
+   * @param type whether the variable is INPUT or OUTPUT
+   * @param defaultUnit the default unit of measure
+   * @param description a human-readable description
+   * @param category variable category such as stream, equipment, or tuning
+   * @param source metadata source identifier
+   * @param unitFamily physical unit family such as temperature or pressure
+   * @param minimumValue optional minimum physically meaningful value
+   * @param maximumValue optional maximum physically meaningful value
+   * @param allowedValues optional allowed symbolic values
+   * @param writable true if the variable can be written through automation
    * @param invalidatesProcess true if writes require the process to be rerun
-   * @param applicability      short note describing when the variable applies
+   * @param applicability short note describing when the variable applies
    */
   private SimulationVariable(String address, String name, VariableType type, String defaultUnit, String description,
       String category, String source, String unitFamily, Double minimumValue, Double maximumValue,
@@ -166,7 +166,7 @@ public class SimulationVariable implements Serializable {
   /**
    * Returns a copy with write-safety metadata.
    *
-   * @param writable           true if writable
+   * @param writable true if writable
    * @param invalidatesProcess true if writes require rerunning the process
    * @return copied variable descriptor
    */
@@ -211,15 +211,15 @@ public class SimulationVariable implements Serializable {
   /**
    * Creates a copied descriptor with updated metadata.
    *
-   * @param category           variable category
-   * @param source             metadata source identifier
-   * @param unitFamily         physical unit family
-   * @param minimumValue       optional minimum value
-   * @param maximumValue       optional maximum value
-   * @param allowedValues      allowed symbolic values
-   * @param writable           true if writable
+   * @param category variable category
+   * @param source metadata source identifier
+   * @param unitFamily physical unit family
+   * @param minimumValue optional minimum value
+   * @param maximumValue optional maximum value
+   * @param allowedValues allowed symbolic values
+   * @param writable true if writable
    * @param invalidatesProcess true if writes require process rerun
-   * @param applicability      applicability note
+   * @param applicability applicability note
    * @return copied variable descriptor
    */
   private SimulationVariable copy(String category, String source, String unitFamily, Double minimumValue,

@@ -205,18 +205,18 @@ public class SeparatorPerformanceCalculator implements Serializable {
    * distributions, grade efficiency curves, and separator geometry.
    * </p>
    *
-   * @param gasDensity          gas phase density [kg/m3]
-   * @param oilDensity          oil phase density [kg/m3], 0 if no oil
-   * @param waterDensity        water phase density [kg/m3], 0 if no water
-   * @param gasViscosity        gas phase dynamic viscosity [Pa.s]
-   * @param oilViscosity        oil phase dynamic viscosity [Pa.s]
-   * @param waterViscosity      water phase dynamic viscosity [Pa.s]
-   * @param gasVelocity         superficial gas velocity in gas section [m/s]
-   * @param vesselDiameter      internal diameter of separator [m]
-   * @param vesselLength        length of separator [m]
-   * @param orientation         "horizontal" or "vertical"
+   * @param gasDensity gas phase density [kg/m3]
+   * @param oilDensity oil phase density [kg/m3], 0 if no oil
+   * @param waterDensity water phase density [kg/m3], 0 if no water
+   * @param gasViscosity gas phase dynamic viscosity [Pa.s]
+   * @param oilViscosity oil phase dynamic viscosity [Pa.s]
+   * @param waterViscosity water phase dynamic viscosity [Pa.s]
+   * @param gasVelocity superficial gas velocity in gas section [m/s]
+   * @param vesselDiameter internal diameter of separator [m]
+   * @param vesselLength length of separator [m]
+   * @param orientation "horizontal" or "vertical"
    * @param liquidLevelFraction fraction of vessel cross-section occupied by liquid (horizontal) or fraction of height
-   *                            (vertical) [0-1]
+   * (vertical) [0-1]
    */
   public void calculate(double gasDensity, double oilDensity, double waterDensity, double gasViscosity,
       double oilViscosity, double waterViscosity, double gasVelocity, double vesselDiameter, double vesselLength,
@@ -269,16 +269,16 @@ public class SeparatorPerformanceCalculator implements Serializable {
   /**
    * Standard calculation path (original implementation).
    *
-   * @param gasDensity          gas density [kg/m3]
-   * @param oilDensity          oil density [kg/m3]
-   * @param waterDensity        water density [kg/m3]
-   * @param gasViscosity        gas viscosity [Pa.s]
-   * @param oilViscosity        oil viscosity [Pa.s]
-   * @param waterViscosity      water viscosity [Pa.s]
-   * @param gasVelocity         gas velocity [m/s]
-   * @param vesselDiameter      vessel diameter [m]
-   * @param vesselLength        vessel length [m]
-   * @param orientation         vessel orientation
+   * @param gasDensity gas density [kg/m3]
+   * @param oilDensity oil density [kg/m3]
+   * @param waterDensity water density [kg/m3]
+   * @param gasViscosity gas viscosity [Pa.s]
+   * @param oilViscosity oil viscosity [Pa.s]
+   * @param waterViscosity water viscosity [Pa.s]
+   * @param gasVelocity gas velocity [m/s]
+   * @param vesselDiameter vessel diameter [m]
+   * @param vesselLength vessel length [m]
+   * @param orientation vessel orientation
    * @param liquidLevelFraction liquid level fraction
    */
   private void calculateStandard(double gasDensity, double oilDensity, double waterDensity, double gasViscosity,
@@ -348,16 +348,16 @@ public class SeparatorPerformanceCalculator implements Serializable {
    * <li>Liquid-liquid separation with geometry-based residence time (three-phase)</li>
    * </ol>
    *
-   * @param gasDensity          gas phase density [kg/m3]
-   * @param oilDensity          oil phase density [kg/m3], 0 if no oil
-   * @param waterDensity        water phase density [kg/m3], 0 if no water
-   * @param gasViscosity        gas phase dynamic viscosity [Pa.s]
-   * @param oilViscosity        oil phase dynamic viscosity [Pa.s]
-   * @param waterViscosity      water phase dynamic viscosity [Pa.s]
-   * @param gasVelocity         superficial gas velocity in gas section [m/s]
-   * @param vesselDiameter      internal diameter of separator [m]
-   * @param vesselLength        length of separator [m]
-   * @param orientation         "horizontal" or "vertical"
+   * @param gasDensity gas phase density [kg/m3]
+   * @param oilDensity oil phase density [kg/m3], 0 if no oil
+   * @param waterDensity water phase density [kg/m3], 0 if no water
+   * @param gasViscosity gas phase dynamic viscosity [Pa.s]
+   * @param oilViscosity oil phase dynamic viscosity [Pa.s]
+   * @param waterViscosity water phase dynamic viscosity [Pa.s]
+   * @param gasVelocity superficial gas velocity in gas section [m/s]
+   * @param vesselDiameter internal diameter of separator [m]
+   * @param vesselLength length of separator [m]
+   * @param orientation "horizontal" or "vertical"
    * @param liquidLevelFraction fraction of vessel cross-section occupied by liquid [0-1]
    */
   private void calculateEnhanced(double gasDensity, double oilDensity, double waterDensity, double gasViscosity,
@@ -611,13 +611,13 @@ public class SeparatorPerformanceCalculator implements Serializable {
   /**
    * Calculates gas-liquid separation efficiency combining gravity section and mist eliminator.
    *
-   * @param gasDensity      gas density [kg/m3]
-   * @param liquidDensity   liquid density [kg/m3]
-   * @param gasViscosity    gas viscosity [Pa.s]
-   * @param gasVelocity     superficial gas velocity [m/s]
-   * @param diameter        vessel diameter [m]
-   * @param length          vessel length [m]
-   * @param orientation     vessel orientation
+   * @param gasDensity gas density [kg/m3]
+   * @param liquidDensity liquid density [kg/m3]
+   * @param gasViscosity gas viscosity [Pa.s]
+   * @param gasVelocity superficial gas velocity [m/s]
+   * @param diameter vessel diameter [m]
+   * @param length vessel length [m]
+   * @param orientation vessel orientation
    * @param liquidLevelFrac liquid level fraction
    */
   private void calcGasLiquidSeparation(double gasDensity, double liquidDensity, double gasViscosity, double gasVelocity,
@@ -675,7 +675,7 @@ public class SeparatorPerformanceCalculator implements Serializable {
    *
    * $$ \eta_{combined}(d) = 1 - (1 - \eta_1(d)) \cdot (1 - \eta_2(d)) $$
    *
-   * @param dsd    droplet size distribution
+   * @param dsd droplet size distribution
    * @param stage1 first stage (gravity)
    * @param stage2 second stage (mist eliminator)
    * @return combined overall efficiency
@@ -698,12 +698,12 @@ public class SeparatorPerformanceCalculator implements Serializable {
   /**
    * Calculates gas bubble carry-under in the liquid phase.
    *
-   * @param gasDensity      gas density [kg/m3]
-   * @param liquidDensity   liquid density [kg/m3]
+   * @param gasDensity gas density [kg/m3]
+   * @param liquidDensity liquid density [kg/m3]
    * @param liquidViscosity liquid viscosity [Pa.s]
-   * @param diameter        vessel diameter [m]
-   * @param length          vessel length [m]
-   * @param orientation     vessel orientation
+   * @param diameter vessel diameter [m]
+   * @param length vessel length [m]
+   * @param orientation vessel orientation
    * @param liquidLevelFrac liquid level fraction
    */
   /**
@@ -714,11 +714,11 @@ public class SeparatorPerformanceCalculator implements Serializable {
    * fraction, then divides vessel length by that velocity.
    * </p>
    *
-   * @param diameter        vessel internal diameter [m]
-   * @param length          vessel tangent-to-tangent length [m]
-   * @param orientation     "horizontal" or "vertical"
+   * @param diameter vessel internal diameter [m]
+   * @param length vessel tangent-to-tangent length [m]
+   * @param orientation "horizontal" or "vertical"
    * @param liquidLevelFrac fraction of cross-section occupied by liquid [0-1]
-   * @param gasVelocity     superficial gas velocity [m/s]
+   * @param gasVelocity superficial gas velocity [m/s]
    * @return estimated liquid residence time [s]
    */
   private static double estimateLiquidResidenceTime(double diameter, double length, String orientation,
@@ -761,13 +761,13 @@ public class SeparatorPerformanceCalculator implements Serializable {
   /**
    * Calculates liquid-liquid separation (oil-water and water-oil).
    *
-   * @param oilDensity      oil density [kg/m3]
-   * @param waterDensity    water density [kg/m3]
-   * @param oilViscosity    oil viscosity [Pa.s]
-   * @param waterViscosity  water viscosity [Pa.s]
-   * @param diameter        vessel diameter [m]
-   * @param length          vessel length [m]
-   * @param orientation     vessel orientation
+   * @param oilDensity oil density [kg/m3]
+   * @param waterDensity water density [kg/m3]
+   * @param oilViscosity oil viscosity [Pa.s]
+   * @param waterViscosity water viscosity [Pa.s]
+   * @param diameter vessel diameter [m]
+   * @param length vessel length [m]
+   * @param orientation vessel orientation
    * @param liquidLevelFrac total liquid level fraction
    */
   private void calcLiquidLiquidSeparation(double oilDensity, double waterDensity, double oilViscosity,
@@ -1205,14 +1205,14 @@ public class SeparatorPerformanceCalculator implements Serializable {
     /**
      * Constructs a calibration summary.
      *
-     * @param prevLig      previous liquid-in-gas factor
-     * @param prevGcu      previous gas carry-under factor
-     * @param prevLiqLiq   previous liquid-liquid factor
-     * @param newLig       new liquid-in-gas factor
-     * @param newGcu       new gas carry-under factor
-     * @param newLiqLiq    new liquid-liquid factor
-     * @param ligPoints    number of liquid-in-gas points used
-     * @param gcuPoints    number of gas carry-under points used
+     * @param prevLig previous liquid-in-gas factor
+     * @param prevGcu previous gas carry-under factor
+     * @param prevLiqLiq previous liquid-liquid factor
+     * @param newLig new liquid-in-gas factor
+     * @param newGcu new gas carry-under factor
+     * @param newLiqLiq new liquid-liquid factor
+     * @param ligPoints number of liquid-in-gas points used
+     * @param gcuPoints number of gas carry-under points used
      * @param liqLiqPoints number of liquid-liquid points used
      */
     public CalibrationSummary(double prevLig, double prevGcu, double prevLiqLiq, double newLig, double newGcu,
@@ -1259,18 +1259,18 @@ public class SeparatorPerformanceCalculator implements Serializable {
      * Constructs a calibration case.
      *
      * @param caseIdArg case identifier
-     * @param moig      modeled oil-in-gas
-     * @param mwig      modeled water-in-gas
-     * @param mgio      modeled gas-in-oil
-     * @param mgiw      modeled gas-in-water
-     * @param moiw      modeled oil-in-water
-     * @param mwio      modeled water-in-oil
-     * @param eoig      measured oil-in-gas
-     * @param ewig      measured water-in-gas
-     * @param egio      measured gas-in-oil
-     * @param egiw      measured gas-in-water
-     * @param eoiw      measured oil-in-water
-     * @param ewio      measured water-in-oil
+     * @param moig modeled oil-in-gas
+     * @param mwig modeled water-in-gas
+     * @param mgio modeled gas-in-oil
+     * @param mgiw modeled gas-in-water
+     * @param moiw modeled oil-in-water
+     * @param mwio modeled water-in-oil
+     * @param eoig measured oil-in-gas
+     * @param ewig measured water-in-gas
+     * @param egio measured gas-in-oil
+     * @param egiw measured gas-in-water
+     * @param eoiw measured oil-in-water
+     * @param ewio measured water-in-oil
      */
     public CalibrationCase(String caseIdArg, double moig, double mwig, double mgio, double mgiw, double moiw,
 	double mwio, double eoig, double ewig, double egio, double egiw, double eoiw, double ewio) {
@@ -1309,10 +1309,10 @@ public class SeparatorPerformanceCalculator implements Serializable {
     /**
      * Constructs a batch calibration summary.
      *
-     * @param base   base summary fields
-     * @param cases  number of cases processed
+     * @param base base summary fields
+     * @param cases number of cases processed
      * @param before mean absolute percentage error before calibration
-     * @param after  mean absolute percentage error after calibration
+     * @param after mean absolute percentage error after calibration
      */
     public BatchCalibrationSummary(CalibrationSummary base, int cases, double before, double after) {
       super(base.previousLiquidInGasFactor, base.previousGasCarryUnderFactor, base.previousLiquidLiquidFactor,
@@ -1408,10 +1408,10 @@ public class SeparatorPerformanceCalculator implements Serializable {
    * <li>liquid-liquid: average of oil-in-water and water-in-oil model values</li>
    * </ul>
    *
-   * @param measuredLiquidInGas   measured grouped liquid-in-gas
+   * @param measuredLiquidInGas measured grouped liquid-in-gas
    * @param measuredGasCarryUnder measured grouped gas carry-under
-   * @param measuredLiquidLiquid  measured grouped liquid-liquid cross-contamination
-   * @param modelFloor            minimum model value for ratio fitting
+   * @param measuredLiquidLiquid measured grouped liquid-liquid cross-contamination
+   * @param modelFloor minimum model value for ratio fitting
    * @return calibration summary
    */
   public CalibrationSummary calibrateFromGroupedMeasurements(double measuredLiquidInGas, double measuredGasCarryUnder,
@@ -1445,7 +1445,7 @@ public class SeparatorPerformanceCalculator implements Serializable {
   /**
    * Calibrates factors from a list of modeled/measured cases.
    *
-   * @param cases      calibration cases
+   * @param cases calibration cases
    * @param modelFloor minimum model value for ratio fitting
    * @return batch calibration summary with pre/post error metrics
    */
@@ -1528,8 +1528,8 @@ public class SeparatorPerformanceCalculator implements Serializable {
   /**
    * Builds a JSON calibration report with factors, aggregate error metrics, and per-case residuals.
    *
-   * @param cases      calibration cases used in fitting
-   * @param summary    batch calibration summary returned by {@link #calibrateFromCaseLibrary}
+   * @param cases calibration cases used in fitting
+   * @param summary batch calibration summary returned by {@link #calibrateFromCaseLibrary}
    * @param modelFloor minimum floor used for percentage error calculations
    * @return pretty-printed JSON calibration report
    */
@@ -1612,9 +1612,9 @@ public class SeparatorPerformanceCalculator implements Serializable {
   /**
    * Saves batch calibration report JSON to disk.
    *
-   * @param filePath   output file path
-   * @param cases      calibration cases used in fitting
-   * @param summary    batch calibration summary
+   * @param filePath output file path
+   * @param cases calibration cases used in fitting
+   * @param summary batch calibration summary
    * @param modelFloor minimum floor used for percentage error calculations
    * @throws IOException if file writing fails
    */
@@ -1633,9 +1633,9 @@ public class SeparatorPerformanceCalculator implements Serializable {
    * Parses a numeric CSV column value.
    *
    * @param cols CSV columns
-   * @param idx  header index map
-   * @param key  column key
-   * @param row  row number (for diagnostics)
+   * @param idx header index map
+   * @param key column key
+   * @param row row number (for diagnostics)
    * @return parsed double value
    * @throws IOException if parsing fails
    */
@@ -1658,9 +1658,9 @@ public class SeparatorPerformanceCalculator implements Serializable {
   /**
    * Parses an optional string CSV column value.
    *
-   * @param cols         CSV columns
-   * @param idx          header index map
-   * @param key          column key
+   * @param cols CSV columns
+   * @param idx header index map
+   * @param key column key
    * @param defaultValue default value if column missing/blank
    * @return parsed string
    */
@@ -1680,7 +1680,7 @@ public class SeparatorPerformanceCalculator implements Serializable {
   /**
    * Adds finite ratio values to a list.
    *
-   * @param list  target list
+   * @param list target list
    * @param ratio ratio value
    */
   private static void addRatio(List<Double> list, double ratio) {
@@ -1709,9 +1709,9 @@ public class SeparatorPerformanceCalculator implements Serializable {
   /**
    * Computes absolute percentage error for one modeled/measured pair.
    *
-   * @param modeled  modeled value
+   * @param modeled modeled value
    * @param measured measured value
-   * @param floor    small floor to avoid division by zero
+   * @param floor small floor to avoid division by zero
    * @return absolute percentage error
    */
   private static double pairMape(double modeled, double measured, double floor) {
@@ -1722,8 +1722,8 @@ public class SeparatorPerformanceCalculator implements Serializable {
   /**
    * Returns average of positive values above a floor, or 0 if no values qualify.
    *
-   * @param a     value a
-   * @param b     value b
+   * @param a value a
+   * @param b value b
    * @param floor minimum value threshold
    * @return average or 0
    */
@@ -1761,13 +1761,13 @@ public class SeparatorPerformanceCalculator implements Serializable {
    * valid ratios. If no valid ratios exist in a group, the existing factor is retained.
    * </p>
    *
-   * @param measuredOilInGas   measured oil-in-gas fraction [0-1]
+   * @param measuredOilInGas measured oil-in-gas fraction [0-1]
    * @param measuredWaterInGas measured water-in-gas fraction [0-1]
-   * @param measuredGasInOil   measured gas-in-oil fraction [0-1]
+   * @param measuredGasInOil measured gas-in-oil fraction [0-1]
    * @param measuredGasInWater measured gas-in-water fraction [0-1]
    * @param measuredOilInWater measured oil-in-water fraction [0-1]
    * @param measuredWaterInOil measured water-in-oil fraction [0-1]
-   * @param modelFloor         minimum modeled fraction to use in ratio fitting (e.g. 1e-9)
+   * @param modelFloor minimum modeled fraction to use in ratio fitting (e.g. 1e-9)
    * @return calibration summary containing old/new factors and data-point usage
    */
   public CalibrationSummary calibrateFromMeasuredFractions(double measuredOilInGas, double measuredWaterInGas,
@@ -1807,8 +1807,8 @@ public class SeparatorPerformanceCalculator implements Serializable {
    * Computes measured/model ratio for calibration if modeled value exceeds floor.
    *
    * @param measured measured fraction
-   * @param modeled  modeled fraction
-   * @param floor    minimum modeled value for ratio use
+   * @param modeled modeled fraction
+   * @param floor minimum modeled value for ratio use
    * @return ratio, or NaN if modeled value is below floor
    */
   private static double safeRatio(double measured, double modeled, double floor) {
@@ -1838,7 +1838,7 @@ public class SeparatorPerformanceCalculator implements Serializable {
   /**
    * Calculates the arithmetic mean of finite values, or returns a default value.
    *
-   * @param values       input values
+   * @param values input values
    * @param defaultValue fallback if no finite values are present
    * @return arithmetic mean of finite values or defaultValue
    */
@@ -2127,9 +2127,9 @@ public class SeparatorPerformanceCalculator implements Serializable {
    * </ul>
    *
    * @param interfacialTension oil-water interfacial tension [N/m]
-   * @param continuousDensity  continuous phase density [kg/m3]
-   * @param nozzleVelocity     inlet nozzle velocity [m/s]
-   * @param nozzleDiameter     inlet nozzle diameter [m]
+   * @param continuousDensity continuous phase density [kg/m3]
+   * @param nozzleVelocity inlet nozzle velocity [m/s]
+   * @param nozzleDiameter inlet nozzle diameter [m]
    * @return Rosin-Rammler DSD representing the initial liquid-liquid droplet population
    */
   public static DropletSizeDistribution generateLiquidLiquidDSD(double interfacialTension, double continuousDensity,

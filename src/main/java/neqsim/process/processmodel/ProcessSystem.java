@@ -297,9 +297,9 @@ public class ProcessSystem extends SimulationBaseClass {
     /**
      * Called after each unit operation completes successfully.
      *
-     * @param unit            the completed unit operation
-     * @param unitIndex       zero-based index of current unit in execution order
-     * @param totalUnits      total number of unit operations in the system
+     * @param unit the completed unit operation
+     * @param unitIndex zero-based index of current unit in execution order
+     * @param totalUnits total number of unit operations in the system
      * @param iterationNumber current iteration number (for recycle loops, starts at 1)
      */
     void onUnitComplete(ProcessEquipmentInterface unit, int unitIndex, int totalUnits, int iterationNumber);
@@ -309,8 +309,8 @@ public class ProcessSystem extends SimulationBaseClass {
      * complete pass through all units.
      *
      * @param iterationNumber the iteration that just completed (starts at 1)
-     * @param converged       true if all recycles have converged
-     * @param recycleError    maximum relative error across all recycle streams (0.0 if no recycles)
+     * @param converged true if all recycles have converged
+     * @param recycleError maximum relative error across all recycle streams (0.0 if no recycles)
      */
     default void onIterationComplete(int iterationNumber, boolean converged, double recycleError) {
       // Default implementation does nothing
@@ -319,7 +319,7 @@ public class ProcessSystem extends SimulationBaseClass {
     /**
      * Called if a unit operation encounters an error during execution.
      *
-     * @param unit      the unit operation that failed
+     * @param unit the unit operation that failed
      * @param exception the exception that was thrown
      * @return true to continue with next unit, false to abort simulation
      */
@@ -331,9 +331,9 @@ public class ProcessSystem extends SimulationBaseClass {
      * Called before each unit operation is executed. Useful for state inspection, cache warming, or injecting external
      * data before a unit runs.
      *
-     * @param unit            the unit about to be executed
-     * @param unitIndex       zero-based index of the unit in execution order
-     * @param totalUnits      total number of unit operations
+     * @param unit the unit about to be executed
+     * @param unitIndex zero-based index of the unit in execution order
+     * @param totalUnits total number of unit operations
      * @param iterationNumber current iteration number (starts at 1)
      */
     default void onBeforeUnit(ProcessEquipmentInterface unit, int unitIndex, int totalUnits, int iterationNumber) {
@@ -363,7 +363,7 @@ public class ProcessSystem extends SimulationBaseClass {
      * Called once when the simulation ends, after all iterations complete.
      *
      * @param totalIterations total number of iterations performed
-     * @param converged       true if the simulation converged
+     * @param converged true if the simulation converged
      */
     default void onSimulationComplete(int totalIterations, boolean converged) {
       // Default implementation does nothing
@@ -405,7 +405,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * Add to specific position.
    * </p>
    *
-   * @param position  0-based position
+   * @param position 0-based position
    * @param operation a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    */
   public synchronized void add(int position, ProcessEquipmentInterface operation) {
@@ -493,10 +493,10 @@ public class ProcessSystem extends SimulationBaseClass {
    * {@link #getConnections()}.
    *
    * @param sourceEquipment name of upstream equipment
-   * @param sourcePort      port name on source (e.g. "gasOut")
+   * @param sourcePort port name on source (e.g. "gasOut")
    * @param targetEquipment name of downstream equipment
-   * @param targetPort      port name on target (e.g. "inlet")
-   * @param type            connection type
+   * @param targetPort port name on target (e.g. "inlet")
+   * @param type connection type
    */
   public void connect(String sourceEquipment, String sourcePort, String targetEquipment, String targetPort,
       ProcessConnection.ConnectionType type) {
@@ -539,7 +539,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * Replace a unitoperation.
    * </p>
    *
-   * @param name      Name of the object to replace
+   * @param name Name of the object to replace
    * @param newObject the object to replace it with
    * @return a {@link java.lang.Boolean} object
    */
@@ -775,7 +775,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * replaceObject.
    * </p>
    *
-   * @param unitName  a {@link java.lang.String} object
+   * @param unitName a {@link java.lang.String} object
    * @param operation a {@link neqsim.process.equipment.ProcessEquipmentBaseClass} object
    */
   public synchronized void replaceObject(String unitName, ProcessEquipmentBaseClass operation) {
@@ -1040,8 +1040,8 @@ public class ProcessSystem extends SimulationBaseClass {
    * setFluid.
    * </p>
    *
-   * @param fluid1           a {@link neqsim.thermo.system.SystemInterface} object
-   * @param fluid2           a {@link neqsim.thermo.system.SystemInterface} object
+   * @param fluid1 a {@link neqsim.thermo.system.SystemInterface} object
+   * @param fluid2 a {@link neqsim.thermo.system.SystemInterface} object
    * @param addNewComponents a boolean
    */
   public void setFluid(SystemInterface fluid1, SystemInterface fluid2, boolean addNewComponents) {
@@ -1216,7 +1216,7 @@ public class ProcessSystem extends SimulationBaseClass {
   /**
    * Creates a runtime exception for a failed unit operation run and logs the failure with unit context.
    *
-   * @param unit  the unit operation that failed
+   * @param unit the unit operation that failed
    * @param cause the exception thrown by the unit operation
    * @return runtime exception containing the unit name and original cause
    */
@@ -1235,7 +1235,7 @@ public class ProcessSystem extends SimulationBaseClass {
   /**
    * Converts an execution exception from a worker thread into the original runtime failure when possible.
    *
-   * @param mode      the execution mode that failed
+   * @param mode the execution mode that failed
    * @param exception the execution exception returned by the worker future
    * @return runtime exception to propagate to the process caller
    */
@@ -1388,7 +1388,7 @@ public class ProcessSystem extends SimulationBaseClass {
    *
    * @param node the graph node
    * @return {@code true} if the underlying equipment has 2+ inlet streams or is one of the class-based multi-input
-   *         types
+   * types
    */
   private boolean isMultiInputNode(ProcessNode node) {
     ProcessEquipmentInterface unit = node.getEquipment();
@@ -1563,7 +1563,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * Executes grouped process nodes in one feed-forward level.
    *
    * @param levelGroups independent groups in a level
-   * @param id          calculation identifier
+   * @param id calculation identifier
    * @throws InterruptedException if the executing thread is interrupted while running units
    */
   private void runLevelGroups(List<List<ProcessNode>> levelGroups, UUID id) throws InterruptedException {
@@ -1817,7 +1817,7 @@ public class ProcessSystem extends SimulationBaseClass {
   /**
    * Appends a labelled unit list to a builder if non-empty.
    *
-   * @param sb    target builder
+   * @param sb target builder
    * @param label label prefix
    * @param names unit names
    */
@@ -2402,7 +2402,7 @@ public class ProcessSystem extends SimulationBaseClass {
    *
    * @return a {@link java.lang.Thread} object
    * @deprecated Use {@link #runAsTask()} instead for better resource management. This method creates a new unmanaged
-   *             thread directly.
+   * thread directly.
    */
   @Deprecated
   public Thread runAsThread() {
@@ -2829,7 +2829,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * speedup when profiling was enabled.
    * </p>
    *
-   * @param unitName     the name of the equipment unit
+   * @param unitName the name of the equipment unit
    * @param elapsedNanos the elapsed time in nanoseconds
    */
   private void recordUnitTiming(String unitName, long elapsedNanos) {
@@ -2868,7 +2868,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * Runs a single equipment unit with optional profiling.
    *
    * @param unit the equipment unit to run
-   * @param id   the calculation identifier
+   * @param id the calculation identifier
    */
   private void runUnitProfiled(ProcessEquipmentInterface unit, UUID id) {
     if (unit.isLockedInactive() || !unit.isActive()) {
@@ -2895,8 +2895,8 @@ public class ProcessSystem extends SimulationBaseClass {
    * docs/process/processmodel/low_flow_bypass.md.
    *
    * @param unit the equipment unit to step
-   * @param dt   time step in seconds
-   * @param id   the calculation identifier for this timestep
+   * @param dt time step in seconds
+   * @param id the calculation identifier for this timestep
    */
   private void runUnitTransientSkippingInactive(ProcessEquipmentInterface unit, double dt, UUID id) {
     // Honor only the explicit user lock during dynamic stepping. Units that were
@@ -3006,7 +3006,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * via {@link neqsim.process.equipment.ProcessEquipmentBaseClass#checkAndHandleLowFlow}.
    *
    * @param thresholdKgPerHour low-flow cutoff in kg/hr (must be &gt;= 0); equipment with inlet flow below this value is
-   *                           bypassed
+   * bypassed
    */
   public void setSectionLowFlowThreshold(double thresholdKgPerHour) {
     if (thresholdKgPerHour < 0.0) {
@@ -3021,7 +3021,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * Sets the low-flow bypass threshold ({@code minimumFlow}, kg/hr) on a single named unit operation. Useful for tuning
    * per-unit cutoffs (e.g., a higher threshold on a small recycle pump than on the main feed train).
    *
-   * @param unitName           name of the unit to configure
+   * @param unitName name of the unit to configure
    * @param thresholdKgPerHour low-flow cutoff in kg/hr (must be &gt;= 0)
    * @throws IllegalArgumentException if no unit with the given name exists or the threshold is negative
    */
@@ -3042,7 +3042,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * stream or whose inlet flow lookup fails are skipped.
    *
    * @param fraction fraction of the current inlet flow to use as the cutoff (must be &gt;= 0, typical values 0.001 -
-   *                 0.05)
+   * 0.05)
    * @return the number of units whose threshold was updated
    * @throws IllegalArgumentException if fraction is negative
    */
@@ -3170,7 +3170,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * still-active unit). Complements the {@link ProcessConnection} based check so the guard also protects flowsheets
    * built with {@code getOutletStream()} wiring.
    *
-   * @param node    the mixer or recycle unit being evaluated
+   * @param node the mixer or recycle unit being evaluated
    * @param visited the set of units already scheduled for deactivation
    * @return {@code true} if another active feed reaches the node, {@code false} otherwise
    */
@@ -3226,7 +3226,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * registered with {@link #connect(String, String)}.
    *
    * @param source the unit whose outlet streams should be followed downstream
-   * @param stack  DFS stack to push discovered downstream units onto
+   * @param stack DFS stack to push discovered downstream units onto
    */
   private void pushDownstreamViaStreams(ProcessEquipmentInterface source,
       java.util.Deque<ProcessEquipmentInterface> stack) {
@@ -3338,7 +3338,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * </pre>
    *
    * @param callback Consumer function called with each completed unit operation. May be null for no callbacks
-   *                 (equivalent to regular run()).
+   * (equivalent to regular run()).
    */
   public void runWithCallback(java.util.function.Consumer<ProcessEquipmentInterface> callback) {
     runWithCallback(callback, UUID.randomUUID());
@@ -3348,7 +3348,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * Run simulation with a simple callback for each completed unit operation.
    *
    * @param callback Consumer function called with each completed unit operation
-   * @param id       calculation identifier for tracking
+   * @param id calculation identifier for tracking
    */
   public void runWithCallback(java.util.function.Consumer<ProcessEquipmentInterface> callback, UUID id) {
     // Wrap the simple callback in a full listener if provided
@@ -3529,9 +3529,9 @@ public class ProcessSystem extends SimulationBaseClass {
   /**
    * Notify the progress listener that a unit operation has completed.
    *
-   * @param unit            the completed unit
-   * @param unitIndex       index of the unit
-   * @param totalUnits      total number of units
+   * @param unit the completed unit
+   * @param unitIndex index of the unit
+   * @param totalUnits total number of units
    * @param iterationNumber current iteration
    */
   private void notifyUnitComplete(ProcessEquipmentInterface unit, int unitIndex, int totalUnits, int iterationNumber) {
@@ -3548,8 +3548,8 @@ public class ProcessSystem extends SimulationBaseClass {
    * Notify the progress listener that an iteration has completed.
    *
    * @param iterationNumber the completed iteration
-   * @param converged       whether the system has converged
-   * @param recycleError    maximum recycle error
+   * @param converged whether the system has converged
+   * @param recycleError maximum recycle error
    */
   private void notifyIterationComplete(int iterationNumber, boolean converged, double recycleError) {
     if (progressListener != null) {
@@ -3564,7 +3564,7 @@ public class ProcessSystem extends SimulationBaseClass {
   /**
    * Notify the progress listener that a unit operation encountered an error.
    *
-   * @param unit      the unit that failed
+   * @param unit the unit that failed
    * @param exception the exception
    * @return true to continue, false to abort
    */
@@ -3582,9 +3582,9 @@ public class ProcessSystem extends SimulationBaseClass {
   /**
    * Notify the progress listener that a unit operation is about to start.
    *
-   * @param unit            the unit about to run
-   * @param unitIndex       index of the unit
-   * @param totalUnits      total number of units
+   * @param unit the unit about to run
+   * @param unitIndex index of the unit
+   * @param totalUnits total number of units
    * @param iterationNumber current iteration
    */
   private void notifyBeforeUnit(ProcessEquipmentInterface unit, int unitIndex, int totalUnits, int iterationNumber) {
@@ -3631,7 +3631,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * Notify the progress listener that the simulation has completed.
    *
    * @param totalIterations total number of iterations executed
-   * @param converged       whether the simulation converged
+   * @param converged whether the simulation converged
    */
   private void notifySimulationComplete(int totalIterations, boolean converged) {
     if (progressListener != null) {
@@ -3974,8 +3974,8 @@ public class ProcessSystem extends SimulationBaseClass {
    * Append a multi-line diagnostic block using a fixed indentation prefix.
    *
    * @param diagnostics destination report builder
-   * @param block       diagnostic block to append
-   * @param indent      prefix added before every line of {@code block}
+   * @param block diagnostic block to append
+   * @param indent prefix added before every line of {@code block}
    */
   private void appendIndentedDiagnostics(StringBuilder diagnostics, String block, String indent) {
     String[] lines = block.split("\\R");
@@ -4754,7 +4754,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * </p>
    *
    * @param solveFullyInModelStep {@code true} to fully solve this area on each model step, {@code false} to advance
-   *                              only a single pass
+   * only a single pass
    */
   public void setSolveFullyInModelStep(boolean solveFullyInModelStep) {
     this.solveFullyInModelStep = solveFullyInModelStep;
@@ -4801,7 +4801,7 @@ public class ProcessSystem extends SimulationBaseClass {
   /**
    * Net change in stream exergy aggregated over all unit operations using an explicit surrounding temperature.
    *
-   * @param unit                   energy / power unit of the returned value
+   * @param unit energy / power unit of the returned value
    * @param surroundingTemperature dead-state temperature in K
    * @return total exergy change across all units
    */
@@ -4827,7 +4827,7 @@ public class ProcessSystem extends SimulationBaseClass {
   /**
    * Total exergy destruction rate aggregated over all unit operations using an explicit surrounding temperature.
    *
-   * @param unit                   energy / power unit of the returned value
+   * @param unit energy / power unit of the returned value
    * @param surroundingTemperature dead-state temperature in K
    * @return total exergy destruction in the requested unit
    */
@@ -4868,9 +4868,9 @@ public class ProcessSystem extends SimulationBaseClass {
    * {@link neqsim.process.processmodel.ProcessModel#getExergyAnalysis()} so that multi-area aggregation keeps area
    * labels on every row.
    *
-   * @param report                 report instance to append to
+   * @param report report instance to append to
    * @param surroundingTemperature dead-state temperature in K
-   * @param areaName               optional area name tag; may be {@code null}
+   * @param areaName optional area name tag; may be {@code null}
    */
   public void populateExergyAnalysis(neqsim.process.util.exergy.ExergyAnalysisReport report,
       double surroundingTemperature, String areaName) {
@@ -4900,7 +4900,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * Convert a value in Joules to the requested unit.
    *
    * @param valueJ value in Joules (or watts, treated identically)
-   * @param unit   target unit: J, kJ, MJ, W, kW, MW (unknown falls back to J)
+   * @param unit target unit: J, kJ, MJ, W, kW, MW (unknown falls back to J)
    * @return converted value
    */
   private static double convertEnergy(double valueJ, String unit) {
@@ -5095,7 +5095,7 @@ public class ProcessSystem extends SimulationBaseClass {
   /**
    * Get unit operations that failed mass balance check based on percentage error threshold.
    *
-   * @param unit             unit for mass flow rate (e.g., "kg/sec", "kg/hr", "mole/sec")
+   * @param unit unit for mass flow rate (e.g., "kg/sec", "kg/hr", "mole/sec")
    * @param percentThreshold percentage error threshold (default: 0.1%)
    * @return a map with failed unit operation names and their mass balance results
    */
@@ -5183,7 +5183,7 @@ public class ProcessSystem extends SimulationBaseClass {
   /**
    * Get a formatted report of failed mass balance checks for this process system.
    *
-   * @param unit             unit for mass flow rate (e.g., "kg/sec", "kg/hr", "mole/sec")
+   * @param unit unit for mass flow rate (e.g., "kg/sec", "kg/hr", "mole/sec")
    * @param percentThreshold percentage error threshold
    * @return a formatted string report with failed unit operations
    */
@@ -5263,7 +5263,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * Calculates total inlet flow for a unit from its reported inlet streams.
    *
    * @param unitOp unit operation to inspect
-   * @param unit   flow-rate unit
+   * @param unit flow-rate unit
    * @return total inlet flow in the requested unit, or fallback flow for source units
    */
   private double calculateInletFlow(ProcessEquipmentInterface unitOp, String unit) {
@@ -5318,7 +5318,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * Adds stream entries to a destination list while preserving identity uniqueness.
    *
    * @param sourceStreams source stream entries
-   * @param destination   destination stream list
+   * @param destination destination stream list
    */
   private void addUniqueStreams(Iterable<StreamInterface> sourceStreams, List<StreamInterface> destination) {
     if (sourceStreams == null) {
@@ -5332,7 +5332,7 @@ public class ProcessSystem extends SimulationBaseClass {
   /**
    * Adds a stream if the same stream object is not already present.
    *
-   * @param stream  stream to add
+   * @param stream stream to add
    * @param streams destination stream list
    */
   private void addUniqueStream(StreamInterface stream, List<StreamInterface> streams) {
@@ -5350,9 +5350,9 @@ public class ProcessSystem extends SimulationBaseClass {
   /**
    * Adds streams returned by a no-argument getter if the unit exposes it.
    *
-   * @param unitOp     unit operation to inspect
+   * @param unitOp unit operation to inspect
    * @param getterName name of the getter method
-   * @param streams    destination stream list
+   * @param streams destination stream list
    */
   private void addStreamsFromGetter(ProcessEquipmentInterface unitOp, String getterName,
       List<StreamInterface> streams) {
@@ -5384,7 +5384,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * Sums flow rates for reported streams.
    *
    * @param streams streams to sum
-   * @param unit    flow-rate unit
+   * @param unit flow-rate unit
    * @return total flow rate in the requested unit
    */
   private double sumStreamFlows(List<StreamInterface> streams, String unit) {
@@ -5416,8 +5416,8 @@ public class ProcessSystem extends SimulationBaseClass {
      * Constructor for MassBalanceResult.
      *
      * @param absoluteError absolute mass balance error (outlet - inlet)
-     * @param percentError  percentage error
-     * @param unit          unit of measurement
+     * @param percentError percentage error
+     * @param unit unit of measurement
      */
     public MassBalanceResult(double absoluteError, double percentError, String unit) {
       this.absoluteError = absoluteError;
@@ -5502,9 +5502,9 @@ public class ProcessSystem extends SimulationBaseClass {
    * addUnit.
    * </p>
    *
-   * @param name          a {@link java.lang.String} object
+   * @param name a {@link java.lang.String} object
    * @param equipmentType a {@link java.lang.String} object
-   * @param <T>           a T class
+   * @param <T> a T class
    * @return a T object
    */
   @SuppressWarnings("unchecked")
@@ -5532,9 +5532,9 @@ public class ProcessSystem extends SimulationBaseClass {
    * addUnit.
    * </p>
    *
-   * @param name          a {@link java.lang.String} object
+   * @param name a {@link java.lang.String} object
    * @param equipmentEnum a {@link neqsim.process.equipment.EquipmentEnum} object
-   * @param <T>           a T class
+   * @param <T> a T class
    * @return a T object
    */
   @SuppressWarnings("unchecked")
@@ -5549,7 +5549,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * </p>
    *
    * @param equipmentType a {@link java.lang.String} object
-   * @param <T>           a T class
+   * @param <T> a T class
    * @return a T object
    */
   @SuppressWarnings("unchecked")
@@ -5564,7 +5564,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * </p>
    *
    * @param equipmentEnum a {@link neqsim.process.equipment.EquipmentEnum} object
-   * @param <T>           a T class
+   * @param <T> a T class
    * @return a T object
    */
   @SuppressWarnings("unchecked")
@@ -5575,10 +5575,10 @@ public class ProcessSystem extends SimulationBaseClass {
   /**
    * Adds a new process equipment unit of the specified type and name, and sets its inlet stream.
    *
-   * @param <T>           the type of process equipment
-   * @param name          the name of the equipment (if null or empty, a unique name is generated)
+   * @param <T> the type of process equipment
+   * @param name the name of the equipment (if null or empty, a unique name is generated)
    * @param equipmentType the type of equipment to create (as a String)
-   * @param stream        the inlet stream to set for the new equipment
+   * @param stream the inlet stream to set for the new equipment
    * @return the created and added process equipment unit
    */
   public <T extends ProcessEquipmentInterface> T addUnit(String name, String equipmentType,
@@ -5611,7 +5611,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * addUnit.
    * </p>
    *
-   * @param name      a {@link java.lang.String} object
+   * @param name a {@link java.lang.String} object
    * @param equipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    * @return a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    */
@@ -5756,7 +5756,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * Export the process to Graphviz with configurable stream annotations.
    *
    * @param filename the Graphviz output file
-   * @param options  export options controlling stream annotations and table output
+   * @param options export options controlling stream annotations and table output
    */
   public void exportToGraphviz(String filename, ProcessSystemGraphvizExporter.GraphvizExportOptions options) {
     new ProcessSystemGraphvizExporter().export(this, filename, options);
@@ -5839,7 +5839,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * for both standard and hypothetical/pseudo components.
    * </p>
    *
-   * @param json  the JSON process definition string (the 'fluid' section is ignored)
+   * @param json the JSON process definition string (the 'fluid' section is ignored)
    * @param fluid the pre-built thermodynamic system to use
    * @return a SimulationResult containing the executed process and report, or errors
    * @see JsonProcessBuilder#buildAndRun(String, SystemInterface)
@@ -5991,7 +5991,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * </p>
    *
    * @param targetUnitName the name of the equipment to wire the inlet to
-   * @param sourceRef      the stream reference (e.g., "feed", "HP Sep.gasOut")
+   * @param sourceRef the stream reference (e.g., "feed", "HP Sep.gasOut")
    * @return true if wiring succeeded, false if source or target not found
    */
   public boolean wireStream(String targetUnitName, String sourceRef) {
@@ -6041,7 +6041,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * </ul>
    *
    * @return a {@link neqsim.process.equipment.ProcessEquipmentInterface} object representing the bottleneck, or null if
-   *         no equipment has capacity defined
+   * no equipment has capacity defined
    */
   public ProcessEquipmentInterface getBottleneck() {
     ProcessEquipmentInterface bottleneck = null;
@@ -6383,7 +6383,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * </p>
    *
    * @param useWarmStart true to enable warm-start K-values during run, false to keep the current thread-local setting
-   *                     unchanged
+   * unchanged
    */
   public void setUseFlashWarmStart(boolean useWarmStart) {
     this.useFlashWarmStart = useWarmStart;
@@ -7026,7 +7026,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * </p>
    *
    * @return BottleneckResult containing the bottleneck equipment, limiting constraint, and utilization; returns empty
-   *         result if no constrained equipment found
+   * result if no constrained equipment found
    * @see #getBottleneck()
    */
   public neqsim.process.equipment.capacity.BottleneckResult findBottleneck() {
@@ -7212,7 +7212,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * </p>
    *
    * @param areaLabel optional area name to attach to each unit (use {@code null} for a single, non-area-qualified
-   *                  process system)
+   * process system)
    * @return a JSON array of per-unit utilization objects
    */
   com.google.gson.JsonArray buildUtilizationUnitsJson(String areaLabel) {
@@ -7340,7 +7340,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * </p>
    *
    * @return JSON string {@code {schemaVersion, name, units:[...], bottleneck:{...}, anyOverloaded,
-   *         anyHardLimitExceeded}}
+   * anyHardLimitExceeded}}
    */
   public String getUtilizationSnapshotJson() {
     com.google.gson.JsonObject root = new com.google.gson.JsonObject();
@@ -7429,7 +7429,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * </p>
    *
    * @param companyStandard company name (e.g., "Equinor", "Shell", "TotalEnergies")
-   * @param trDocument      TR document reference (e.g., "TR2000", "DEP-31.38.01.11")
+   * @param trDocument TR document reference (e.g., "TR2000", "DEP-31.38.01.11")
    * @return the number of equipment items that were auto-sized
    */
   public int autoSizeEquipment(String companyStandard, String trDocument) {
@@ -7636,7 +7636,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * Eclipse VFP export.
    * </p>
    *
-   * @param inletStreamName  name of the inlet stream
+   * @param inletStreamName name of the inlet stream
    * @param outletStreamName name of the outlet stream (or equipment)
    * @return a new FlowRateOptimizer configured for this process
    */
@@ -7652,10 +7652,10 @@ public class ProcessSystem extends SimulationBaseClass {
    * control over the optimization process, use {@link #createOptimizer()}.
    * </p>
    *
-   * @param inletPressure  inlet pressure in bara
+   * @param inletPressure inlet pressure in bara
    * @param outletPressure outlet pressure in bara
-   * @param minFlow        minimum flow rate to consider in kg/hr
-   * @param maxFlow        maximum flow rate to consider in kg/hr
+   * @param minFlow minimum flow rate to consider in kg/hr
+   * @param maxFlow maximum flow rate to consider in kg/hr
    * @return the maximum feasible flow rate in kg/hr, or NaN if optimization fails
    */
   public double findMaxThroughput(double inletPressure, double outletPressure, double minFlow, double maxFlow) {
@@ -7672,7 +7672,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * Uses default minimum flow of 100 kg/hr and maximum flow of 1,000,000 kg/hr.
    * </p>
    *
-   * @param inletPressure  inlet pressure in bara
+   * @param inletPressure inlet pressure in bara
    * @param outletPressure outlet pressure in bara
    * @return the maximum feasible flow rate in kg/hr, or NaN if optimization fails
    */
@@ -7688,10 +7688,10 @@ public class ProcessSystem extends SimulationBaseClass {
    * bottleneck information.
    * </p>
    *
-   * @param inletPressure  inlet pressure in bara
+   * @param inletPressure inlet pressure in bara
    * @param outletPressure outlet pressure in bara
-   * @param minFlow        minimum flow rate to consider in kg/hr
-   * @param maxFlow        maximum flow rate to consider in kg/hr
+   * @param minFlow minimum flow rate to consider in kg/hr
+   * @param maxFlow maximum flow rate to consider in kg/hr
    * @return optimization result with detailed information
    */
   public ProcessOptimizationEngine.OptimizationResult optimizeThroughput(double inletPressure, double outletPressure,
@@ -7723,10 +7723,10 @@ public class ProcessSystem extends SimulationBaseClass {
    * to Eclipse VFP format for reservoir simulation.
    * </p>
    *
-   * @param pressures    array of pressures to evaluate (bara)
+   * @param pressures array of pressures to evaluate (bara)
    * @param temperatures array of temperatures to evaluate (K)
-   * @param waterCuts    array of water cuts as fraction
-   * @param GORs         array of gas-oil ratios in Sm3/Sm3
+   * @param waterCuts array of water cuts as fraction
+   * @param GORs array of gas-oil ratios in Sm3/Sm3
    * @return lift curve data
    */
   public ProcessOptimizationEngine.LiftCurveData generateLiftCurve(double[] pressures, double[] temperatures,
@@ -7743,8 +7743,8 @@ public class ProcessSystem extends SimulationBaseClass {
    * the rate of change of key variables.
    * </p>
    *
-   * @param optimalFlow    optimal flow rate to analyze in kg/hr
-   * @param inletPressure  inlet pressure in bara
+   * @param optimalFlow optimal flow rate to analyze in kg/hr
+   * @param inletPressure inlet pressure in bara
    * @param outletPressure outlet pressure in bara
    * @return sensitivity analysis result
    */
@@ -7805,7 +7805,7 @@ public class ProcessSystem extends SimulationBaseClass {
     /**
      * Sets the inlet and outlet pressures.
      *
-     * @param inlet  inlet pressure in bara
+     * @param inlet inlet pressure in bara
      * @param outlet outlet pressure in bara
      * @return this builder for chaining
      */
@@ -7892,10 +7892,10 @@ public class ProcessSystem extends SimulationBaseClass {
     /**
      * Generates a lift curve with the configured settings.
      *
-     * @param pressures    array of pressures to evaluate (bara)
+     * @param pressures array of pressures to evaluate (bara)
      * @param temperatures array of temperatures to evaluate (K)
-     * @param waterCuts    array of water cuts as fraction
-     * @param GORs         array of gas-oil ratios in Sm3/Sm3
+     * @param waterCuts array of water cuts as fraction
+     * @param GORs array of gas-oil ratios in Sm3/Sm3
      * @return lift curve data
      */
     public ProcessOptimizationEngine.LiftCurveData generateLiftCurve(double[] pressures, double[] temperatures,
@@ -8373,7 +8373,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * Reads the current value of a simulation variable by its dot-notation address. Convenience delegate for
    * {@link neqsim.process.automation.ProcessAutomation#getVariableValue(String, String)}.
    *
-   * @param address       the dot-notation address, e.g. "separator-1.gasOutStream.temperature"
+   * @param address the dot-notation address, e.g. "separator-1.gasOutStream.temperature"
    * @param unitOfMeasure the desired unit, e.g. "C", "bara", "kg/hr"
    * @return the variable value in the requested unit
    * @throws IllegalArgumentException if the address cannot be resolved
@@ -8386,8 +8386,8 @@ public class ProcessSystem extends SimulationBaseClass {
    * Sets the value of a simulation input variable. Convenience delegate for
    * {@link neqsim.process.automation.ProcessAutomation#setVariableValue(String, double, String)}.
    *
-   * @param address       the dot-notation address, e.g. "Compressor.outletPressure"
-   * @param value         the value to set
+   * @param address the dot-notation address, e.g. "Compressor.outletPressure"
+   * @param value the value to set
    * @param unitOfMeasure the unit of the provided value, e.g. "bara", "C"
    * @throws IllegalArgumentException if the address cannot be resolved or the variable is read-only
    */

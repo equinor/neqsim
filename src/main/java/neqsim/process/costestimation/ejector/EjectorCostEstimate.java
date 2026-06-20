@@ -280,7 +280,7 @@ public class EjectorCostEstimate extends UnitCostEstimateBaseClass {
    * Calculate annual operating cost.
    *
    * @param operatingHoursPerYear operating hours per year
-   * @param steamCostPerTonne     steam cost in $/tonne
+   * @param steamCostPerTonne steam cost in $/tonne
    * @param coolingWaterCostPerM3 cooling water cost in $/m3
    * @return annual operating cost in USD
    */

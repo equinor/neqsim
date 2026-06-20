@@ -90,12 +90,12 @@ public class ProcessModelThroughputOptimizer implements Serializable {
     /**
      * Creates an automation-addressed producer control.
      *
-     * @param name            control name
-     * @param address         area-qualified automation address
-     * @param baseValue       base value before multiplier scaling
+     * @param name control name
+     * @param address area-qualified automation address
+     * @param baseValue base value before multiplier scaling
      * @param lowerMultiplier lower allowed multiplier
      * @param upperMultiplier upper allowed multiplier
-     * @param unit            unit used when reading and setting the value
+     * @param unit unit used when reading and setting the value
      */
     public ProducerControl(String name, String address, double baseValue, double lowerMultiplier,
 	double upperMultiplier, String unit) {
@@ -110,9 +110,9 @@ public class ProcessModelThroughputOptimizer implements Serializable {
     /**
      * Creates a custom producer multiplier control.
      *
-     * @param name             control name
-     * @param lowerMultiplier  lower allowed multiplier
-     * @param upperMultiplier  upper allowed multiplier
+     * @param name control name
+     * @param lowerMultiplier lower allowed multiplier
+     * @param upperMultiplier upper allowed multiplier
      * @param multiplierSetter custom multiplier setter
      */
     public ProducerControl(String name, double lowerMultiplier, double upperMultiplier,
@@ -202,7 +202,7 @@ public class ProcessModelThroughputOptimizer implements Serializable {
     /**
      * Applies a multiplier to the target control.
      *
-     * @param model      process model
+     * @param model process model
      * @param multiplier multiplier to apply
      */
     private void applyMultiplier(ProcessModel model, double multiplier) {
@@ -229,11 +229,11 @@ public class ProcessModelThroughputOptimizer implements Serializable {
   /**
    * Adds a producer/feed control using its current model value as base value.
    *
-   * @param name            control name
-   * @param address         area-qualified automation address
+   * @param name control name
+   * @param address area-qualified automation address
    * @param lowerMultiplier lower allowed multiplier
    * @param upperMultiplier upper allowed multiplier
-   * @param unit            unit used when reading and setting the value
+   * @param unit unit used when reading and setting the value
    * @return this optimizer for chaining
    */
   public ProcessModelThroughputOptimizer addProducer(String name, String address, double lowerMultiplier,
@@ -244,12 +244,12 @@ public class ProcessModelThroughputOptimizer implements Serializable {
   /**
    * Adds a producer/feed control with an explicit base value.
    *
-   * @param name            control name
-   * @param address         area-qualified automation address
-   * @param baseValue       base value before multiplier scaling
+   * @param name control name
+   * @param address area-qualified automation address
+   * @param baseValue base value before multiplier scaling
    * @param lowerMultiplier lower allowed multiplier
    * @param upperMultiplier upper allowed multiplier
-   * @param unit            unit used when setting the value
+   * @param unit unit used when setting the value
    * @return this optimizer for chaining
    */
   public ProcessModelThroughputOptimizer addProducer(String name, String address, double baseValue,
@@ -261,9 +261,9 @@ public class ProcessModelThroughputOptimizer implements Serializable {
   /**
    * Adds a custom producer multiplier setter.
    *
-   * @param name             control name
-   * @param lowerMultiplier  lower allowed multiplier
-   * @param upperMultiplier  upper allowed multiplier
+   * @param name control name
+   * @param lowerMultiplier lower allowed multiplier
+   * @param upperMultiplier upper allowed multiplier
    * @param multiplierSetter custom setter receiving the model and multiplier
    * @return this optimizer for chaining
    */
@@ -276,9 +276,9 @@ public class ProcessModelThroughputOptimizer implements Serializable {
   /**
    * Sets the throughput objective.
    *
-   * @param name      objective name
+   * @param name objective name
    * @param evaluator objective evaluator
-   * @param unit      objective unit
+   * @param unit objective unit
    * @return this optimizer for chaining
    */
   public ProcessModelThroughputOptimizer setObjective(String name, ToDoubleFunction<ProcessModel> evaluator,
@@ -318,7 +318,7 @@ public class ProcessModelThroughputOptimizer implements Serializable {
    *
    * @param lowerMultiplier lower search multiplier
    * @param upperMultiplier upper search multiplier
-   * @param tolerance       multiplier tolerance for binary search
+   * @param tolerance multiplier tolerance for binary search
    * @return throughput optimization result with all evaluated cases
    */
   public ProcessModelThroughputResult findMaximumThroughput(double lowerMultiplier, double upperMultiplier,
@@ -499,7 +499,7 @@ public class ProcessModelThroughputOptimizer implements Serializable {
   /**
    * Evaluates one multiplier case.
    *
-   * @param evaluator  configured evaluator
+   * @param evaluator configured evaluator
    * @param caseNumber case sequence number
    * @param multiplier throughput multiplier
    * @return evaluated case row
@@ -513,7 +513,7 @@ public class ProcessModelThroughputOptimizer implements Serializable {
   /**
    * Applies a scalar multiplier to all producer controls.
    *
-   * @param model      process model
+   * @param model process model
    * @param multiplier scalar multiplier
    */
   private void applyScalarMultiplier(ProcessModel model, double multiplier) {

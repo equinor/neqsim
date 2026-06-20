@@ -98,8 +98,8 @@ public class ColumnSpecification implements Serializable {
   /**
    * Creates a column specification that does not require a component name.
    *
-   * @param type        the specification type (REFLUX_RATIO, PRODUCT_FLOW_RATE, or DUTY)
-   * @param location    which end of the column this applies to
+   * @param type the specification type (REFLUX_RATIO, PRODUCT_FLOW_RATE, or DUTY)
+   * @param location which end of the column this applies to
    * @param targetValue the target value for this specification
    */
   public ColumnSpecification(SpecificationType type, ProductLocation location, double targetValue) {
@@ -109,9 +109,9 @@ public class ColumnSpecification implements Serializable {
   /**
    * Creates a column specification with a component name.
    *
-   * @param type          the specification type
-   * @param location      which end of the column this applies to
-   * @param targetValue   the target value for this specification
+   * @param type the specification type
+   * @param location which end of the column this applies to
+   * @param targetValue the target value for this specification
    * @param componentName the name of the component (required for PRODUCT_PURITY and COMPONENT_RECOVERY)
    */
   public ColumnSpecification(SpecificationType type, ProductLocation location, double targetValue,

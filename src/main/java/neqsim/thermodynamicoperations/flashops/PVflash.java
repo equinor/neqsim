@@ -39,7 +39,7 @@ public class PVflash extends QfuncFlash {
    * Constructor for PVflash.
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param Vspec  specified volume in m³
+   * @param Vspec specified volume in m³
    */
   public PVflash(SystemInterface system, double Vspec) {
     this.system = system;

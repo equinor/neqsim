@@ -64,13 +64,13 @@ public final class TransactionalBatchResult implements Serializable {
     /**
      * Creates a write outcome.
      *
-     * @param address        the address that was requested
+     * @param address the address that was requested
      * @param requestedValue the value that was requested
-     * @param unit           the unit of measure of {@code requestedValue}, or null for the default
-     * @param previousValue  the value read before the batch began, or null when unreadable
-     * @param validation     the validation result for this write; never null
-     * @param applied        true if the write was actually pushed into the simulation
-     * @param error          the error message if the apply phase threw, otherwise null
+     * @param unit the unit of measure of {@code requestedValue}, or null for the default
+     * @param previousValue the value read before the batch began, or null when unreadable
+     * @param validation the validation result for this write; never null
+     * @param applied true if the write was actually pushed into the simulation
+     * @param error the error message if the apply phase threw, otherwise null
      */
     public WriteOutcome(String address, double requestedValue, String unit, Double previousValue,
 	WriteValidationResult validation, boolean applied, String error) {
@@ -180,10 +180,10 @@ public final class TransactionalBatchResult implements Serializable {
   /**
    * Creates a transactional batch result.
    *
-   * @param committed        true when all phases succeeded and the writes are persisted
+   * @param committed true when all phases succeeded and the writes are persisted
    * @param rollbackCategory the rollback category when {@code committed} is false, otherwise null
-   * @param rollbackReason   a human-readable explanation when {@code committed} is false, otherwise null
-   * @param writes           the per-write outcomes in the order they were requested; never null
+   * @param rollbackReason a human-readable explanation when {@code committed} is false, otherwise null
+   * @param writes the per-write outcomes in the order they were requested; never null
    */
   public TransactionalBatchResult(boolean committed, RollbackCategory rollbackCategory, String rollbackReason,
       List<WriteOutcome> writes) {
@@ -277,8 +277,8 @@ public final class TransactionalBatchResult implements Serializable {
    * Convenience constructor for a rollback.
    *
    * @param category the rollback category; never null
-   * @param reason   the rollback reason; never null
-   * @param writes   per-write outcomes
+   * @param reason the rollback reason; never null
+   * @param writes per-write outcomes
    * @return a rolled-back batch result
    */
   public static TransactionalBatchResult rolledBack(RollbackCategory category, String reason,

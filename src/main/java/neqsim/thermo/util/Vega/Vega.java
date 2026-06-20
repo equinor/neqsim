@@ -46,11 +46,11 @@ public class Vega {
    * </p>
    *
    * @param iFlag a int
-   * @param T     a double
-   * @param P     a double
-   * @param D     a {@link org.netlib.util.doubleW} object
-   * @param ierr  a {@link org.netlib.util.intW} object
-   * @param herr  a {@link org.netlib.util.StringW} object
+   * @param T a double
+   * @param P a double
+   * @param D a {@link org.netlib.util.doubleW} object
+   * @param ierr a {@link org.netlib.util.intW} object
+   * @param herr a {@link org.netlib.util.StringW} object
    */
   public void DensityVega(int iFlag, double T, double P, doubleW D, intW ierr, StringW herr) {
     // Sub DensityGERG(iFlag, T, P, x, D, ierr, herr)
@@ -425,24 +425,24 @@ public class Vega {
    * propertiesVega.
    * </p>
    *
-   * @param T      a double
-   * @param D      a double
-   * @param P      a {@link org.netlib.util.doubleW} object
-   * @param Z      a {@link org.netlib.util.doubleW} object
-   * @param dPdD   a {@link org.netlib.util.doubleW} object
+   * @param T a double
+   * @param D a double
+   * @param P a {@link org.netlib.util.doubleW} object
+   * @param Z a {@link org.netlib.util.doubleW} object
+   * @param dPdD a {@link org.netlib.util.doubleW} object
    * @param d2PdD2 a {@link org.netlib.util.doubleW} object
    * @param d2PdTD a {@link org.netlib.util.doubleW} object
-   * @param dPdT   a {@link org.netlib.util.doubleW} object
-   * @param U      a {@link org.netlib.util.doubleW} object
-   * @param H      a {@link org.netlib.util.doubleW} object
-   * @param S      a {@link org.netlib.util.doubleW} object
-   * @param Cv     a {@link org.netlib.util.doubleW} object
-   * @param Cp     a {@link org.netlib.util.doubleW} object
-   * @param W      a {@link org.netlib.util.doubleW} object
-   * @param G      a {@link org.netlib.util.doubleW} object
-   * @param JT     a {@link org.netlib.util.doubleW} object
-   * @param Kappa  a {@link org.netlib.util.doubleW} object
-   * @param A      a {@link org.netlib.util.doubleW} object
+   * @param dPdT a {@link org.netlib.util.doubleW} object
+   * @param U a {@link org.netlib.util.doubleW} object
+   * @param H a {@link org.netlib.util.doubleW} object
+   * @param S a {@link org.netlib.util.doubleW} object
+   * @param Cv a {@link org.netlib.util.doubleW} object
+   * @param Cp a {@link org.netlib.util.doubleW} object
+   * @param W a {@link org.netlib.util.doubleW} object
+   * @param G a {@link org.netlib.util.doubleW} object
+   * @param JT a {@link org.netlib.util.doubleW} object
+   * @param Kappa a {@link org.netlib.util.doubleW} object
+   * @param A a {@link org.netlib.util.doubleW} object
    */
   public void propertiesVega(double T, double D, doubleW P, doubleW Z, doubleW dPdD, doubleW d2PdD2, doubleW d2PdTD,
       doubleW dPdT, doubleW U, doubleW H, doubleW S, doubleW Cv, doubleW Cp, doubleW W, doubleW G, doubleW JT,

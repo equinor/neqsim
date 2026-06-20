@@ -52,10 +52,10 @@ public class LangmuirInhibitorIsotherm implements Serializable {
   /**
    * Constructs an isotherm with custom adsorption parameters.
    *
-   * @param kAdsRef    reference adsorption constant at 298.15 K [L/mol]
+   * @param kAdsRef reference adsorption constant at 298.15 K [L/mol]
    * @param dHadsKjMol adsorption enthalpy [kJ/mol] (negative for exothermic)
-   * @param thetaMax   maximum coverage cap (0..1)
-   * @param molarMass  inhibitor molar mass [g/mol]
+   * @param thetaMax maximum coverage cap (0..1)
+   * @param molarMass inhibitor molar mass [g/mol]
    */
   public LangmuirInhibitorIsotherm(double kAdsRef, double dHadsKjMol, double thetaMax, double molarMass) {
     this.kAdsRef = kAdsRef;
@@ -78,7 +78,7 @@ public class LangmuirInhibitorIsotherm implements Serializable {
   /**
    * Computes fractional surface coverage at the given inhibitor dose.
    *
-   * @param doseMgL      inhibitor concentration [mg/L]
+   * @param doseMgL inhibitor concentration [mg/L]
    * @param temperatureC operating temperature [C]
    * @return coverage theta in [0,1]
    */
@@ -92,7 +92,7 @@ public class LangmuirInhibitorIsotherm implements Serializable {
   /**
    * Computes inhibition efficiency (fraction of base corrosion rate suppressed).
    *
-   * @param doseMgL      inhibitor concentration [mg/L]
+   * @param doseMgL inhibitor concentration [mg/L]
    * @param temperatureC operating temperature [C]
    * @return efficiency in [0, thetaMax]
    */
@@ -104,7 +104,7 @@ public class LangmuirInhibitorIsotherm implements Serializable {
    * Solves for the dose that gives a target efficiency.
    *
    * @param targetEfficiency target efficiency (0..thetaMax)
-   * @param temperatureC     operating temperature [C]
+   * @param temperatureC operating temperature [C]
    * @return required dose [mg/L]; returns positive infinity if target exceeds thetaMax
    */
   public double getDoseForEfficiency(double targetEfficiency, double temperatureC) {

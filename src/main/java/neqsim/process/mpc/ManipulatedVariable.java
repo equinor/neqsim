@@ -81,8 +81,8 @@ public class ManipulatedVariable extends MPCVariable {
   /**
    * Construct a manipulated variable bound to equipment.
    *
-   * @param name         unique identifier for this MV
-   * @param equipment    the process equipment to control
+   * @param name unique identifier for this MV
+   * @param equipment the process equipment to control
    * @param propertyName the property to manipulate
    */
   public ManipulatedVariable(String name, ProcessEquipmentInterface equipment, String propertyName) {
@@ -92,10 +92,10 @@ public class ManipulatedVariable extends MPCVariable {
   /**
    * Construct a manipulated variable bound to equipment with unit.
    *
-   * @param name         unique identifier for this MV
-   * @param equipment    the process equipment to control
+   * @param name unique identifier for this MV
+   * @param equipment the process equipment to control
    * @param propertyName the property to manipulate
-   * @param unit         the unit for the property value
+   * @param unit the unit for the property value
    */
   public ManipulatedVariable(String name, ProcessEquipmentInterface equipment, String propertyName, String unit) {
     super(name, equipment, propertyName, unit);

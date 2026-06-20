@@ -250,10 +250,10 @@ public class DesignEvaluationResult implements Serializable {
   /**
    * Set detailed thrust balance values.
    *
-   * @param expanderThrustN   expander axial thrust [N]
+   * @param expanderThrustN expander axial thrust [N]
    * @param compressorThrustN compressor axial thrust [N]
-   * @param netThrustN        net axial thrust [N] (positive = towards compressor end)
-   * @param reversalDetected  true if thrust direction reversed vs design
+   * @param netThrustN net axial thrust [N] (positive = towards compressor end)
+   * @param reversalDetected true if thrust direction reversed vs design
    */
   public void setThrustBalanceDetails(double expanderThrustN, double compressorThrustN, double netThrustN,
       boolean reversalDetected) {
@@ -498,7 +498,7 @@ public class DesignEvaluationResult implements Serializable {
   /**
    * Check a margin against thresholds and record warnings / failures.
    *
-   * @param name   human-readable name of the parameter
+   * @param name human-readable name of the parameter
    * @param margin fractional margin
    */
   private void checkMargin(String name, double margin) {

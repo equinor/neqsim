@@ -44,7 +44,7 @@ public abstract class onePhaseFlowNode extends FlowNode {
    * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param pipe   a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
+   * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
    */
   public onePhaseFlowNode(SystemInterface system, GeometryDefinitionInterface pipe) {
     super(system, pipe);

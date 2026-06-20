@@ -120,11 +120,11 @@ public enum DiagramStyle {
   /**
    * Creates a diagram style.
    *
-   * @param displayName     the display name
+   * @param displayName the display name
    * @param backgroundColor the background color (hex or name)
-   * @param streamColor     the default stream color
-   * @param showClusters    whether to show phase zone clusters
-   * @param useHtmlLabels   whether to use HTML table labels for equipment
+   * @param streamColor the default stream color
+   * @param showClusters whether to show phase zone clusters
+   * @param useHtmlLabels whether to use HTML table labels for equipment
    */
   DiagramStyle(String displayName, String backgroundColor, String streamColor, boolean showClusters,
       boolean useHtmlLabels) {

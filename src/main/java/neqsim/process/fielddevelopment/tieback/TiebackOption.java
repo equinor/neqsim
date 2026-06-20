@@ -197,7 +197,7 @@ public class TiebackOption implements Serializable, Comparable<TiebackOption> {
    * Creates a new tieback option.
    *
    * @param discoveryName name of the satellite field
-   * @param hostName      name of the host facility
+   * @param hostName name of the host facility
    */
   public TiebackOption(String discoveryName, String hostName) {
     this.discoveryName = discoveryName;

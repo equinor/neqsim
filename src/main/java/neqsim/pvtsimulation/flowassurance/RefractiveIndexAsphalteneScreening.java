@@ -126,7 +126,7 @@ public class RefractiveIndexAsphalteneScreening {
   /**
    * Constructor with measured RI values.
    *
-   * @param riOil   refractive index of the crude oil
+   * @param riOil refractive index of the crude oil
    * @param riOnset refractive index at onset (from titration)
    */
   public RefractiveIndexAsphalteneScreening(double riOil, double riOnset) {
@@ -233,9 +233,9 @@ public class RefractiveIndexAsphalteneScreening {
    * Correlation from Buckley et al. (1998): RI_onset correlates with asphaltene solubility class and R/A ratio.
    * </p>
    *
-   * @param saturates   weight fraction of saturates
-   * @param aromatics   weight fraction of aromatics
-   * @param resins      weight fraction of resins
+   * @param saturates weight fraction of saturates
+   * @param aromatics weight fraction of aromatics
+   * @param resins weight fraction of resins
    * @param asphaltenes weight fraction of asphaltenes
    * @return estimated onset RI
    */

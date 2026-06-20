@@ -84,14 +84,14 @@ public class DebottleneckAnalyzer implements Serializable {
     /**
      * Creates an equipment status entry.
      *
-     * @param name               equipment name
-     * @param type               equipment type
-     * @param maxUtil            maximum utilization
+     * @param name equipment name
+     * @param type equipment type
+     * @param maxUtil maximum utilization
      * @param limitingConstraint name of limiting constraint
-     * @param currentValue       current value
-     * @param designLimit        design limit
-     * @param status             status string
-     * @param suggestion         debottleneck suggestion
+     * @param currentValue current value
+     * @param designLimit design limit
+     * @param status status string
+     * @param suggestion debottleneck suggestion
      */
     public EquipmentStatus(String name, String type, double maxUtil, String limitingConstraint, double currentValue,
 	double designLimit, String status, String suggestion) {
@@ -196,9 +196,9 @@ public class DebottleneckAnalyzer implements Serializable {
   /**
    * Generates a debottleneck suggestion for the given equipment.
    *
-   * @param equip          the equipment
+   * @param equip the equipment
    * @param constraintName the limiting constraint name
-   * @param utilization    current utilization
+   * @param utilization current utilization
    * @return suggestion text
    */
   private String generateSuggestion(ProcessEquipmentInterface equip, String constraintName, double utilization) {

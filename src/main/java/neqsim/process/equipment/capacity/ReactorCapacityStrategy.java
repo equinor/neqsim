@@ -46,7 +46,7 @@ public class ReactorCapacityStrategy implements EquipmentCapacityStrategy {
    * Constructor with custom constraints.
    *
    * @param maxTemperatureC maximum reactor temperature in Celsius
-   * @param maxDutyKW       maximum heat duty in kW
+   * @param maxDutyKW maximum heat duty in kW
    */
   public ReactorCapacityStrategy(double maxTemperatureC, double maxDutyKW) {
     this.maxTemperatureC = maxTemperatureC;
@@ -120,7 +120,7 @@ public class ReactorCapacityStrategy implements EquipmentCapacityStrategy {
    * Adds constraints specific to plug flow reactors.
    *
    * @param constraints map to add constraints to
-   * @param pfr         the plug flow reactor
+   * @param pfr the plug flow reactor
    */
   private void addPlugFlowConstraints(Map<String, CapacityConstraint> constraints, PlugFlowReactor pfr) {
     // Heat duty constraint
@@ -141,7 +141,7 @@ public class ReactorCapacityStrategy implements EquipmentCapacityStrategy {
    * Adds constraints specific to stirred tank reactors.
    *
    * @param constraints map to add constraints to
-   * @param cstr        the stirred tank reactor
+   * @param cstr the stirred tank reactor
    */
   private void addCSTRConstraints(Map<String, CapacityConstraint> constraints, StirredTankReactor cstr) {
     // Heat duty constraint
@@ -166,7 +166,7 @@ public class ReactorCapacityStrategy implements EquipmentCapacityStrategy {
    * Adds constraints specific to Gibbs reactors.
    *
    * @param constraints map to add constraints to
-   * @param gibbs       the Gibbs reactor
+   * @param gibbs the Gibbs reactor
    */
   private void addGibbsConstraints(Map<String, CapacityConstraint> constraints, GibbsReactor gibbs) {
     // Power (energy) constraint

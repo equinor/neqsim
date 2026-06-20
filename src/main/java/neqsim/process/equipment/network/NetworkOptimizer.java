@@ -619,7 +619,7 @@ public class NetworkOptimizer {
   /**
    * Set custom bounds for a specific choke element.
    *
-   * @param chokeName  name of the choke element
+   * @param chokeName name of the choke element
    * @param minOpening minimum opening in % (default 1)
    * @param maxOpening maximum opening in % (default 100)
    */

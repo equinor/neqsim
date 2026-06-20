@@ -128,8 +128,8 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
     /**
      * Creates an RVP result.
      *
-     * @param value                 computed RVP value in bara
-     * @param method                method used to compute the value
+     * @param value computed RVP value in bara
+     * @param method method used to compute the value
      * @param referenceTemperatureC reference temperature in degrees Celsius
      */
     public RvpResult(double value, RvpMethod method, double referenceTemperatureC) {
@@ -179,7 +179,7 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
      * Serializes this result to a compact JSON string.
      *
      * @return a JSON representation with {@code value}, {@code method}, {@code referenceTemperatureC} and {@code valid}
-     *         fields
+     * fields
      */
     public String toJson() {
       com.google.gson.JsonObject root = new com.google.gson.JsonObject();
@@ -423,7 +423,7 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
    * setReferenceTemperature.
    * </p>
    *
-   * @param refTemp     a double
+   * @param refTemp a double
    * @param refTempUnit a {@link java.lang.String} object
    */
   public void setReferenceTemperature(double refTemp, String refTempUnit) {

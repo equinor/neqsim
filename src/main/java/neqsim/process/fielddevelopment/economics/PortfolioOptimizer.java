@@ -110,10 +110,10 @@ public class PortfolioOptimizer implements Serializable {
     /**
      * Creates a new project.
      *
-     * @param name                 project name
-     * @param capexMusd            total CAPEX in MUSD
-     * @param npvMusd              NPV in MUSD
-     * @param type                 project type
+     * @param name project name
+     * @param capexMusd total CAPEX in MUSD
+     * @param npvMusd NPV in MUSD
+     * @param type project type
      * @param probabilityOfSuccess probability (0-1)
      */
     public Project(String name, double capexMusd, double npvMusd, ProjectType type, double probabilityOfSuccess) {
@@ -525,10 +525,10 @@ public class PortfolioOptimizer implements Serializable {
   /**
    * Add a project to the portfolio candidates.
    *
-   * @param name                 project name
-   * @param capexMusd            total CAPEX in MUSD
-   * @param npvMusd              NPV in MUSD
-   * @param type                 project type
+   * @param name project name
+   * @param capexMusd total CAPEX in MUSD
+   * @param npvMusd NPV in MUSD
+   * @param type project type
    * @param probabilityOfSuccess probability of success (0-1)
    * @return the created project for further configuration
    */
@@ -542,11 +542,11 @@ public class PortfolioOptimizer implements Serializable {
   /**
    * Add a project with detailed CAPEX profile.
    *
-   * @param name                 project name
-   * @param npvMusd              NPV in MUSD
-   * @param type                 project type
+   * @param name project name
+   * @param npvMusd NPV in MUSD
+   * @param type project type
    * @param probabilityOfSuccess probability of success
-   * @param capexProfile         yearly CAPEX profile
+   * @param capexProfile yearly CAPEX profile
    * @return the created project
    */
   public Project addProject(String name, double npvMusd, ProjectType type, double probabilityOfSuccess,
@@ -593,7 +593,7 @@ public class PortfolioOptimizer implements Serializable {
   /**
    * Set annual budget constraint.
    *
-   * @param year       the year
+   * @param year the year
    * @param budgetMusd budget in MUSD
    */
   public void setAnnualBudget(int year, double budgetMusd) {
@@ -612,7 +612,7 @@ public class PortfolioOptimizer implements Serializable {
   /**
    * Set minimum allocation for a project type.
    *
-   * @param type    project type
+   * @param type project type
    * @param minMusd minimum CAPEX allocation
    */
   public void setMinAllocation(ProjectType type, double minMusd) {
@@ -622,7 +622,7 @@ public class PortfolioOptimizer implements Serializable {
   /**
    * Set maximum allocation for a project type.
    *
-   * @param type    project type
+   * @param type project type
    * @param maxMusd maximum CAPEX allocation
    */
   public void setMaxAllocation(ProjectType type, double maxMusd) {
@@ -771,7 +771,7 @@ public class PortfolioOptimizer implements Serializable {
   /**
    * Select projects respecting budget constraints.
    *
-   * @param ranked   list of projects ranked by selection priority
+   * @param ranked list of projects ranked by selection priority
    * @param strategy the optimization strategy being used
    * @return optimized portfolio result with selected projects
    */
@@ -850,9 +850,9 @@ public class PortfolioOptimizer implements Serializable {
   /**
    * Check if a project can be afforded within budget constraints.
    *
-   * @param p               the project to check
+   * @param p the project to check
    * @param remainingBudget map of year to remaining budget for that year
-   * @param remainingTotal  the total remaining budget across all years
+   * @param remainingTotal the total remaining budget across all years
    * @return true if the project can be afforded, false otherwise
    */
   private boolean canAfford(Project p, Map<Integer, Double> remainingBudget, double remainingTotal) {
@@ -876,7 +876,7 @@ public class PortfolioOptimizer implements Serializable {
   /**
    * Deduct project CAPEX from remaining budgets.
    *
-   * @param p               the project whose CAPEX should be deducted
+   * @param p the project whose CAPEX should be deducted
    * @param remainingBudget map of year to remaining budget to update
    */
   private void deductCapex(Project p, Map<Integer, Double> remainingBudget) {
@@ -895,7 +895,7 @@ public class PortfolioOptimizer implements Serializable {
   /**
    * Check if all dependencies are satisfied.
    *
-   * @param p        the project to check dependencies for
+   * @param p the project to check dependencies for
    * @param selected the list of already selected projects
    * @return true if all dependencies are satisfied, false otherwise
    */

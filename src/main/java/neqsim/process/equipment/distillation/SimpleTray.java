@@ -407,7 +407,7 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
    *
    * @param fraction fraction from zero to one
    * @throws IllegalArgumentException if the fraction is not finite, outside zero to one, or the total liquid withdrawal
-   *                                  fraction exceeds one
+   * fraction exceeds one
    */
   public void setLiquidPumparoundDrawFraction(double fraction) {
     validateSideDrawFraction(fraction);
@@ -446,7 +446,7 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
   /**
    * Create the tray gas outlet from the requested phase type and normalize its inventory.
    *
-   * @param phaseTypeName  phase type name to prefer
+   * @param phaseTypeName phase type name to prefer
    * @param outletFraction fraction of the selected phase inventory to route to the outlet
    * @return stream containing the selected normalized phase
    */
@@ -499,7 +499,7 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
   /**
    * Validate that liquid product and pumparound withdrawals leave non-negative tray traffic.
    *
-   * @param productFraction    liquid product side-draw fraction
+   * @param productFraction liquid product side-draw fraction
    * @param pumparoundFraction liquid pumparound draw fraction
    * @throws IllegalArgumentException if total liquid withdrawal exceeds one
    */
@@ -512,7 +512,7 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
   /**
    * Scale a phase outlet system by a split fraction.
    *
-   * @param phaseSystem    phase outlet system to scale
+   * @param phaseSystem phase outlet system to scale
    * @param outletFraction fraction of phase flow to keep in the stream
    */
   private void scalePhaseSystemByFraction(SystemInterface phaseSystem, double outletFraction) {

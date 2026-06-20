@@ -46,7 +46,7 @@ public class TurbineDispatchOptimizer implements Serializable {
   /**
    * Construct an optimizer with fuel and CO2 cost coefficients.
    *
-   * @param fuelPriceNOKPerKg  fuel gas price [NOK/kg]
+   * @param fuelPriceNOKPerKg fuel gas price [NOK/kg]
    * @param co2CostNOKPerTonne effective CO2 cost [NOK/tonne]
    */
   public TurbineDispatchOptimizer(double fuelPriceNOKPerKg, double co2CostNOKPerTonne) {
@@ -85,7 +85,7 @@ public class TurbineDispatchOptimizer implements Serializable {
    * Dispatch the fleet to meet a given demand. Each turbine in {@code fleet} should already have its fuel stream, spec,
    * ambient conditions, and degradation configured.
    *
-   * @param fleet          candidate gas turbines
+   * @param fleet candidate gas turbines
    * @param demandedPowerW total demanded shaft power [W]
    * @return dispatch result
    */

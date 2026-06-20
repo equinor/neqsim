@@ -59,10 +59,10 @@ public class ComponentCoutinhoWax extends ComponentSolid {
   /**
    * Constructor for ComponentCoutinhoWax.
    *
-   * @param name         Name of component.
-   * @param moles        Total number of moles of component.
+   * @param name Name of component.
+   * @param moles Total number of moles of component.
    * @param molesInPhase Number of moles in phase.
-   * @param compIndex    Index number of component in phase object component array.
+   * @param compIndex Index number of component in phase object component array.
    */
   public ComponentCoutinhoWax(String name, double moles, double molesInPhase, int compIndex) {
     super(name, moles, molesInPhase, compIndex);
@@ -270,8 +270,8 @@ public class ComponentCoutinhoWax extends ComponentSolid {
    * </p>
    *
    * @param phase1 Current phase
-   * @param comp1  Index of component 1
-   * @param comp2  Index of component 2
+   * @param comp1 Index of component 1
+   * @param comp2 Index of component 2
    * @return The UNIQUAC interaction parameter lambda_ij [J/mol]
    */
   public double calcLambdaIJ(PhaseInterface phase1, int comp1, int comp2) {
@@ -315,7 +315,7 @@ public class ComponentCoutinhoWax extends ComponentSolid {
    * transition enthalpy (relevant for odd-numbered n-alkanes).
    * </p>
    *
-   * @param phase1    Current phase
+   * @param phase1 Current phase
    * @param compIndex Component index
    * @return Sublimation enthalpy [J/mol]
    */

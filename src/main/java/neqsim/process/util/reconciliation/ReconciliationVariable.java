@@ -66,9 +66,9 @@ public class ReconciliationVariable implements java.io.Serializable {
   /**
    * Creates a reconciliation variable with name, measured value, and uncertainty.
    *
-   * @param name          variable identifier, must be unique within the engine
+   * @param name variable identifier, must be unique within the engine
    * @param measuredValue raw plant measurement
-   * @param uncertainty   measurement standard deviation (sigma), must be positive
+   * @param uncertainty measurement standard deviation (sigma), must be positive
    * @throws IllegalArgumentException if uncertainty is not positive
    */
   public ReconciliationVariable(String name, double measuredValue, double uncertainty) {
@@ -85,11 +85,11 @@ public class ReconciliationVariable implements java.io.Serializable {
   /**
    * Creates a reconciliation variable linked to a specific equipment property.
    *
-   * @param name          variable identifier
+   * @param name variable identifier
    * @param equipmentName name of equipment in the ProcessSystem
-   * @param propertyName  property measured (e.g., "massFlowRate")
+   * @param propertyName property measured (e.g., "massFlowRate")
    * @param measuredValue raw plant measurement
-   * @param uncertainty   measurement standard deviation (sigma), must be positive
+   * @param uncertainty measurement standard deviation (sigma), must be positive
    * @throws IllegalArgumentException if uncertainty is not positive
    */
   public ReconciliationVariable(String name, String equipmentName, String propertyName, double measuredValue,

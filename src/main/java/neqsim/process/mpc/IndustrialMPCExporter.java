@@ -555,8 +555,8 @@ public class IndustrialMPCExporter implements Serializable {
   /**
    * Generate step response coefficients for a first-order system.
    *
-   * @param gain       steady-state gain
-   * @param tau        time constant (seconds)
+   * @param gain steady-state gain
+   * @param tau time constant (seconds)
    * @param sampleTime sample time (seconds)
    * @return array of step response coefficients
    */

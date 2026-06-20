@@ -122,12 +122,12 @@ public class TrappedLiquidFireRuptureStudy implements Serializable {
   /**
    * Records event times for the current transient state.
    *
-   * @param result             result builder
-   * @param timeS              current time in s
-   * @param pressurePa         current pressure in Pa
-   * @param vonMisesStressPa   current von Mises stress in Pa
-   * @param allowableStressPa  current allowable stress in Pa
-   * @param flangeRatingPa     current temperature-reduced flange rating in Pa
+   * @param result result builder
+   * @param timeS current time in s
+   * @param pressurePa current pressure in Pa
+   * @param vonMisesStressPa current von Mises stress in Pa
+   * @param allowableStressPa current allowable stress in Pa
+   * @param flangeRatingPa current temperature-reduced flange rating in Pa
    * @param liquidTemperatureK current liquid temperature in K
    */
   private void recordEvents(TrappedLiquidFireRuptureResult.Builder result, double timeS, double pressurePa,
@@ -161,7 +161,7 @@ public class TrappedLiquidFireRuptureStudy implements Serializable {
   /**
    * Adds setup warnings to the result.
    *
-   * @param result       result builder
+   * @param result result builder
    * @param liquidMassKg effective liquid mass in kg
    */
   private void addInputWarnings(TrappedLiquidFireRuptureResult.Builder result, double liquidMassKg) {
@@ -197,9 +197,9 @@ public class TrappedLiquidFireRuptureStudy implements Serializable {
   /**
    * Calculates pressure rise from blocked-liquid thermal expansion.
    *
-   * @param initialPressurePa   initial pressure in Pa
+   * @param initialPressurePa initial pressure in Pa
    * @param initialTemperatureK initial temperature in K
-   * @param liquidTemperatureK  current liquid temperature in K
+   * @param liquidTemperatureK current liquid temperature in K
    * @return pressure in Pa
    */
   private double pressureFromThermalExpansion(double initialPressurePa, double initialTemperatureK,
@@ -212,7 +212,7 @@ public class TrappedLiquidFireRuptureStudy implements Serializable {
   /**
    * Checks whether a vapor phase appears at the current state.
    *
-   * @param pressurePa   pressure in Pa
+   * @param pressurePa pressure in Pa
    * @param temperatureK temperature in K
    * @return true if a gas phase is detected in the NeqSim flash
    */
@@ -261,7 +261,7 @@ public class TrappedLiquidFireRuptureStudy implements Serializable {
   /**
    * Applies a generic high-temperature derating to an ambient flange pressure class.
    *
-   * @param ambientRatingPa   ambient flange rating in Pa
+   * @param ambientRatingPa ambient flange rating in Pa
    * @param metalTemperatureK metal temperature in K
    * @return temperature-reduced rating in Pa
    */
@@ -389,8 +389,8 @@ public class TrappedLiquidFireRuptureStudy implements Serializable {
      * Sets pipe geometry in SI units.
      *
      * @param pipeInternalDiameterM pipe internal diameter in m
-     * @param wallThicknessM        pipe wall thickness in m
-     * @param exposedLengthM        exposed pipe length in m
+     * @param wallThicknessM pipe wall thickness in m
+     * @param exposedLengthM exposed pipe length in m
      * @return this builder
      */
     public Builder pipeGeometry(double pipeInternalDiameterM, double wallThicknessM, double exposedLengthM) {
@@ -405,11 +405,11 @@ public class TrappedLiquidFireRuptureStudy implements Serializable {
      * Sets pipe geometry with unit conversion.
      *
      * @param pipeInternalDiameter pipe internal diameter value
-     * @param diameterUnit         diameter unit, one of m, mm, in, or ft
-     * @param wallThickness        wall thickness value
-     * @param thicknessUnit        thickness unit, one of m, mm, in, or ft
-     * @param exposedLength        exposed length value
-     * @param lengthUnit           length unit, one of m, mm, in, or ft
+     * @param diameterUnit diameter unit, one of m, mm, in, or ft
+     * @param wallThickness wall thickness value
+     * @param thicknessUnit thickness unit, one of m, mm, in, or ft
+     * @param exposedLength exposed length value
+     * @param lengthUnit length unit, one of m, mm, in, or ft
      * @return this builder
      */
     public Builder pipeGeometry(double pipeInternalDiameter, String diameterUnit, double wallThickness,
@@ -432,8 +432,8 @@ public class TrappedLiquidFireRuptureStudy implements Serializable {
     /**
      * Sets relief set pressure.
      *
-     * @param pressure       pressure value
-     * @param unit           pressure unit supported by {@link PressureUnit}
+     * @param pressure pressure value
+     * @param unit pressure unit supported by {@link PressureUnit}
      * @param limitsPressure true if the relief device is assumed to limit pressure at set pressure
      * @return this builder
      */
@@ -446,7 +446,7 @@ public class TrappedLiquidFireRuptureStudy implements Serializable {
     /**
      * Sets simulation time controls.
      *
-     * @param maxTimeSeconds  maximum simulation time in s
+     * @param maxTimeSeconds maximum simulation time in s
      * @param timeStepSeconds time step in s
      * @return this builder
      */
@@ -459,9 +459,9 @@ public class TrappedLiquidFireRuptureStudy implements Serializable {
     /**
      * Sets liquid thermal properties used for pressure rise.
      *
-     * @param heatCapacityJPerKgK  liquid heat capacity in J/(kg K)
+     * @param heatCapacityJPerKgK liquid heat capacity in J/(kg K)
      * @param thermalExpansionPerK liquid volumetric expansion coefficient in 1/K
-     * @param bulkModulusPa        liquid bulk modulus in Pa
+     * @param bulkModulusPa liquid bulk modulus in Pa
      * @return this builder
      */
     public Builder liquidThermalProperties(double heatCapacityJPerKgK, double thermalExpansionPerK,
@@ -475,8 +475,8 @@ public class TrappedLiquidFireRuptureStudy implements Serializable {
     /**
      * Sets wall thermal properties.
      *
-     * @param densityKgPerM3            wall density in kg/m3
-     * @param heatCapacityJPerKgK       wall heat capacity in J/(kg K)
+     * @param densityKgPerM3 wall density in kg/m3
+     * @param heatCapacityJPerKgK wall heat capacity in J/(kg K)
      * @param thermalConductivityWPerMK wall thermal conductivity in W/(m K)
      * @return this builder
      */
@@ -546,7 +546,7 @@ public class TrappedLiquidFireRuptureStudy implements Serializable {
     /**
      * Validates builder setup.
      *
-     * @throws IllegalStateException    if required input is missing
+     * @throws IllegalStateException if required input is missing
      * @throws IllegalArgumentException if a numeric value is invalid
      */
     private void validate() {
@@ -584,7 +584,7 @@ public class TrappedLiquidFireRuptureStudy implements Serializable {
    * Converts a length value to meters.
    *
    * @param value length value
-   * @param unit  length unit
+   * @param unit length unit
    * @return length in m
    */
   private static double toMeters(double value, String unit) {
@@ -612,7 +612,7 @@ public class TrappedLiquidFireRuptureStudy implements Serializable {
    * Validates that a numeric value is positive and finite.
    *
    * @param value value to validate
-   * @param name  parameter name used in exception messages
+   * @param name parameter name used in exception messages
    * @throws IllegalArgumentException if value is invalid
    */
   private static void validatePositive(double value, String name) {

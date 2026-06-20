@@ -130,9 +130,9 @@ public class AsphalteneStabilityAnalyzer {
    * Reference: de Boer, R.B. et al. (1995). SPE Production &amp; Facilities.
    * </p>
    *
-   * @param reservoirPressure  reservoir pressure (bara)
+   * @param reservoirPressure reservoir pressure (bara)
    * @param saturationPressure bubble point pressure (bara)
-   * @param oilDensity         in-situ oil density (kg/m3)
+   * @param oilDensity in-situ oil density (kg/m3)
    * @return asphaltene risk assessment
    */
   public AsphalteneRisk deBoerScreening(double reservoirPressure, double saturationPressure, double oilDensity) {
@@ -176,9 +176,9 @@ public class AsphalteneStabilityAnalyzer {
   /**
    * Sets SARA fractions for colloidal analysis.
    *
-   * @param saturates   weight fraction of saturates (0-1)
-   * @param aromatics   weight fraction of aromatics (0-1)
-   * @param resins      weight fraction of resins (0-1)
+   * @param saturates weight fraction of saturates (0-1)
+   * @param aromatics weight fraction of aromatics (0-1)
+   * @param resins weight fraction of resins (0-1)
    * @param asphaltenes weight fraction of asphaltenes (0-1)
    */
   public void setSARAFractions(double saturates, double aromatics, double resins, double asphaltenes) {
@@ -313,8 +313,8 @@ public class AsphalteneStabilityAnalyzer {
    * region.
    * </p>
    *
-   * @param minTemp   minimum temperature (K)
-   * @param maxTemp   maximum temperature (K)
+   * @param minTemp minimum temperature (K)
+   * @param maxTemp maximum temperature (K)
    * @param numPoints number of points to calculate
    * @return 2D array: [0]=temperatures, [1]=upper onset P, [2]=lower onset P
    */
@@ -343,10 +343,10 @@ public class AsphalteneStabilityAnalyzer {
   /**
    * Performs a comprehensive stability assessment.
    *
-   * @param reservoirPressure    reservoir pressure (bara)
+   * @param reservoirPressure reservoir pressure (bara)
    * @param reservoirTemperature reservoir temperature (K)
-   * @param wellheadPressure     wellhead pressure (bara)
-   * @param wellheadTemperature  wellhead temperature (K)
+   * @param wellheadPressure wellhead pressure (bara)
+   * @param wellheadTemperature wellhead temperature (K)
    * @return comprehensive assessment report
    */
   public String comprehensiveAssessment(double reservoirPressure, double reservoirTemperature, double wellheadPressure,

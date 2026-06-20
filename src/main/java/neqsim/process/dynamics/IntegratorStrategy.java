@@ -29,7 +29,7 @@ public interface IntegratorStrategy extends Serializable {
     /**
      * Evaluates the slope at (t, x).
      *
-     * @param time  current time in seconds
+     * @param time current time in seconds
      * @param state current state value
      * @return dx/dt at (time, state)
      */
@@ -46,10 +46,10 @@ public interface IntegratorStrategy extends Serializable {
   /**
    * Advances the state from {@code x} at time {@code t} by step size {@code dt}.
    *
-   * @param time  current simulation time in seconds
+   * @param time current simulation time in seconds
    * @param state current state value
    * @param slope slope function
-   * @param dt    step size in seconds (must be {@code > 0})
+   * @param dt step size in seconds (must be {@code > 0})
    * @return state at time {@code t + dt}
    */
   double step(double time, double state, Slope slope, double dt);

@@ -93,7 +93,7 @@ public class RobustOptimizationStudy implements Serializable {
      * Creates a scenario outcome.
      *
      * @param objective the objective value
-     * @param feasible  true if feasible under the scenario
+     * @param feasible true if feasible under the scenario
      */
     public ScenarioOutcome(double objective, boolean feasible) {
       this.objective = objective;
@@ -148,11 +148,11 @@ public class RobustOptimizationStudy implements Serializable {
     /**
      * Creates a robustness result.
      *
-     * @param decision         the decision evaluated
-     * @param p10              10th percentile of the objective
-     * @param p50              50th percentile of the objective
-     * @param p90              90th percentile of the objective
-     * @param mean             mean of the objective across feasible scenarios
+     * @param decision the decision evaluated
+     * @param p10 10th percentile of the objective
+     * @param p50 50th percentile of the objective
+     * @param p90 90th percentile of the objective
+     * @param mean mean of the objective across feasible scenarios
      * @param feasibleFraction fraction of feasible scenarios
      */
     public RobustResult(double[] decision, double p10, double p50, double p90, double mean, double feasibleFraction) {
@@ -237,7 +237,7 @@ public class RobustOptimizationStudy implements Serializable {
    * Sets the sampler used to draw scenarios when no explicit scenarios are supplied.
    *
    * @param sampler the scenario sampler
-   * @param count   the number of scenarios to draw (must be positive)
+   * @param count the number of scenarios to draw (must be positive)
    * @return this study for method chaining
    */
   public RobustOptimizationStudy setSampler(ScenarioSampler sampler, int count) {
@@ -300,7 +300,7 @@ public class RobustOptimizationStudy implements Serializable {
   /**
    * Evaluates the robustness of a single decision across all scenarios.
    *
-   * @param decision  the operating decision vector (must not be null)
+   * @param decision the operating decision vector (must not be null)
    * @param evaluator the scenario evaluator (must not be null)
    * @return the robustness summary of the decision
    */
@@ -347,7 +347,7 @@ public class RobustOptimizationStudy implements Serializable {
    * </p>
    *
    * @param candidates the candidate decision vectors (must not be null or empty)
-   * @param evaluator  the scenario evaluator (must not be null)
+   * @param evaluator the scenario evaluator (must not be null)
    * @return the robustness summary of the selected decision
    */
   public RobustResult selectRobust(List<double[]> candidates, ScenarioEvaluator evaluator) {
@@ -374,7 +374,7 @@ public class RobustOptimizationStudy implements Serializable {
    * Computes a percentile of a sorted array using linear interpolation.
    *
    * @param sorted the sorted values (ascending, non-empty)
-   * @param p      the percentile in the range [0, 100]
+   * @param p the percentile in the range [0, 100]
    * @return the interpolated percentile value
    */
   private static double percentile(double[] sorted, double p) {

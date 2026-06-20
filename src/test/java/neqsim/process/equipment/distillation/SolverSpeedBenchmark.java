@@ -105,10 +105,10 @@ public class SolverSpeedBenchmark {
   /**
    * Append one profiling row.
    *
-   * @param report          profile report builder
-   * @param caseName        benchmark case name
-   * @param solverLabel     configured solver label
-   * @param column          solved column
+   * @param report profile report builder
+   * @param caseName benchmark case name
+   * @param solverLabel configured solver label
+   * @param column solved column
    * @param wallTimeSeconds external wall time in seconds
    */
   private void appendProfileRow(StringBuilder report, String caseName, String solverLabel, DistillationColumn column,
@@ -134,8 +134,8 @@ public class SolverSpeedBenchmark {
   /**
    * Create a configured benchmark column.
    *
-   * @param caseName    benchmark case name
-   * @param solverType  solver type to configure
+   * @param caseName benchmark case name
+   * @param solverType solver type to configure
    * @param solverLabel solver label used in stream and column names
    * @return configured column
    */
@@ -161,10 +161,10 @@ public class SolverSpeedBenchmark {
   /**
    * Create a deethanizer benchmark case.
    *
-   * @param caseName    benchmark case name
-   * @param solverType  solver type to configure
+   * @param caseName benchmark case name
+   * @param solverType solver type to configure
    * @param solverLabel solver label used in stream and column names
-   * @param trayCount   number of simple trays
+   * @param trayCount number of simple trays
    * @return configured column
    */
   private DistillationColumn createDeethanizerColumn(String caseName, DistillationColumn.SolverType solverType,
@@ -186,16 +186,16 @@ public class SolverSpeedBenchmark {
   /**
    * Create a three-component fractionator benchmark case.
    *
-   * @param caseName             benchmark case name
-   * @param solverType           solver type to configure
-   * @param solverLabel          solver label used in stream and column names
-   * @param lightComponent       light component name
-   * @param middleComponent      middle component name
-   * @param heavyComponent       heavy component name
-   * @param pressure             pressure in bara
-   * @param feedTemperature      feed temperature in Kelvin
+   * @param caseName benchmark case name
+   * @param solverType solver type to configure
+   * @param solverLabel solver label used in stream and column names
+   * @param lightComponent light component name
+   * @param middleComponent middle component name
+   * @param heavyComponent heavy component name
+   * @param pressure pressure in bara
+   * @param feedTemperature feed temperature in Kelvin
    * @param condenserTemperature condenser temperature in Kelvin
-   * @param reboilerTemperature  reboiler temperature in Kelvin
+   * @param reboilerTemperature reboiler temperature in Kelvin
    * @return configured column
    */
   private DistillationColumn createThreeComponentFractionator(String caseName, DistillationColumn.SolverType solverType,
@@ -229,8 +229,8 @@ public class SolverSpeedBenchmark {
   /**
    * Create a lean-gas demethanizer benchmark case.
    *
-   * @param caseName    benchmark case name
-   * @param solverType  solver type to configure
+   * @param caseName benchmark case name
+   * @param solverType solver type to configure
    * @param solverLabel solver label used in stream and column names
    * @return configured column
    */
@@ -264,7 +264,7 @@ public class SolverSpeedBenchmark {
   /**
    * Configure solver options shared by benchmark cases.
    *
-   * @param column     column to configure
+   * @param column column to configure
    * @param solverType solver type to configure
    */
   private void configureSolver(DistillationColumn column, DistillationColumn.SolverType solverType) {
@@ -298,7 +298,7 @@ public class SolverSpeedBenchmark {
   /**
    * Write a profile report file.
    *
-   * @param path   output path
+   * @param path output path
    * @param report report content
    * @throws IOException if writing fails
    */

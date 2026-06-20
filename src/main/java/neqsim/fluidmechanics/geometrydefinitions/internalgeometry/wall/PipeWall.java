@@ -261,7 +261,7 @@ public class PipeWall extends Wall {
   /**
    * Calculates the temperature at a given radial position within the wall.
    *
-   * @param radius    Radial position in meters (must be between innerRadius and outerRadius)
+   * @param radius Radial position in meters (must be between innerRadius and outerRadius)
    * @param innerTemp Temperature at inner surface in K
    * @param outerTemp Temperature at outer surface in K
    * @return Temperature at the specified radius in K

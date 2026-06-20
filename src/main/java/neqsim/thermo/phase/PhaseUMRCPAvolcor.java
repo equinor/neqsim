@@ -147,7 +147,7 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
    * getcij - linear translation mixing rule c_ij = (c_i + c_j)/2.
    * </p>
    *
-   * @param compArray  a {@link neqsim.thermo.component.ComponentEosInterface} object
+   * @param compArray a {@link neqsim.thermo.component.ComponentEosInterface} object
    * @param compArray2 a {@link neqsim.thermo.component.ComponentEosInterface} object
    * @return a double
    */
@@ -160,7 +160,7 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
    * getcijT - temperature derivative of the translation mixing rule.
    * </p>
    *
-   * @param compArray  a {@link neqsim.thermo.component.ComponentEosInterface} object
+   * @param compArray a {@link neqsim.thermo.component.ComponentEosInterface} object
    * @param compArray2 a {@link neqsim.thermo.component.ComponentEosInterface} object
    * @return a double
    */
@@ -173,11 +173,11 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
    * calcCi.
    * </p>
    *
-   * @param compNumb    a int
-   * @param phase       a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param compNumb a int
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param temperature a double
-   * @param pressure    a double
-   * @param numbcomp    a int
+   * @param pressure a double
+   * @param numbcomp a int
    * @return a double
    */
   public double calcCi(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
@@ -190,12 +190,12 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
    * calcCij.
    * </p>
    *
-   * @param compNumb    a int
-   * @param compNumbj   a int
-   * @param phase       a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param compNumb a int
+   * @param compNumbj a int
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param temperature a double
-   * @param pressure    a double
-   * @param numbcomp    a int
+   * @param pressure a double
+   * @param numbcomp a int
    * @return a double
    */
   public double calcCij(int compNumb, int compNumbj, PhaseInterface phase, double temperature, double pressure,
@@ -209,11 +209,11 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
    * calcCiT.
    * </p>
    *
-   * @param compNumb    a int
-   * @param phase       a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param compNumb a int
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param temperature a double
-   * @param pressure    a double
-   * @param numbcomp    a int
+   * @param pressure a double
+   * @param numbcomp a int
    * @return a double
    */
   public double calcCiT(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
@@ -226,10 +226,10 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
    * calcCT.
    * </p>
    *
-   * @param phase       a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param temperature a double
-   * @param pressure    a double
-   * @param numbcomp    a int
+   * @param pressure a double
+   * @param numbcomp a int
    * @return a double
    */
   public double calcCT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
@@ -297,10 +297,10 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
    * calcC.
    * </p>
    *
-   * @param phase       a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param temperature a double
-   * @param pressure    a double
-   * @param numbcomp    a int
+   * @param pressure a double
+   * @param numbcomp a int
    * @return a double
    */
   public double calcC(PhaseInterface phase, double temperature, double pressure, int numbcomp) {

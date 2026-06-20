@@ -62,10 +62,10 @@ public class ConstraintManager implements Serializable {
   /**
    * Add a hard upper-bound constraint.
    *
-   * @param name         constraint name
+   * @param name constraint name
    * @param variableName variable to constrain
-   * @param maxValue     maximum allowed value
-   * @param unit         physical unit
+   * @param maxValue maximum allowed value
+   * @param unit physical unit
    * @return this ConstraintManager for chaining
    */
   public ConstraintManager addHardUpperBound(String name, String variableName, double maxValue, String unit) {
@@ -75,10 +75,10 @@ public class ConstraintManager implements Serializable {
   /**
    * Add a hard lower-bound constraint.
    *
-   * @param name         constraint name
+   * @param name constraint name
    * @param variableName variable to constrain
-   * @param minValue     minimum allowed value
-   * @param unit         physical unit
+   * @param minValue minimum allowed value
+   * @param unit physical unit
    * @return this ConstraintManager for chaining
    */
   public ConstraintManager addHardLowerBound(String name, String variableName, double minValue, String unit) {
@@ -88,11 +88,11 @@ public class ConstraintManager implements Serializable {
   /**
    * Add a hard range constraint.
    *
-   * @param name         constraint name
+   * @param name constraint name
    * @param variableName variable to constrain
-   * @param minValue     minimum allowed value
-   * @param maxValue     maximum allowed value
-   * @param unit         physical unit
+   * @param minValue minimum allowed value
+   * @param maxValue maximum allowed value
+   * @param unit physical unit
    * @return this ConstraintManager for chaining
    */
   public ConstraintManager addHardRange(String name, String variableName, double minValue, double maxValue,
@@ -103,11 +103,11 @@ public class ConstraintManager implements Serializable {
   /**
    * Add a soft range constraint.
    *
-   * @param name         constraint name
+   * @param name constraint name
    * @param variableName variable to constrain
-   * @param minValue     minimum preferred value
-   * @param maxValue     maximum preferred value
-   * @param unit         physical unit
+   * @param minValue minimum preferred value
+   * @param maxValue maximum preferred value
+   * @param unit physical unit
    * @return this ConstraintManager for chaining
    */
   public ConstraintManager addSoftRange(String name, String variableName, double minValue, double maxValue,

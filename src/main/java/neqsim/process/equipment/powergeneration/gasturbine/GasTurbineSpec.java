@@ -38,15 +38,15 @@ public final class GasTurbineSpec implements Serializable {
   /**
    * Full constructor.
    *
-   * @param model               engine model identifier
-   * @param type                aero-derivative or industrial
-   * @param ratedPowerW         ISO rated shaft power [W]
-   * @param heatRateKJPerKWh    ISO heat rate (LHV basis) [kJ/kWh]
-   * @param exhaustFlowKgPerS   ISO exhaust mass flow [kg/s]
+   * @param model engine model identifier
+   * @param type aero-derivative or industrial
+   * @param ratedPowerW ISO rated shaft power [W]
+   * @param heatRateKJPerKWh ISO heat rate (LHV basis) [kJ/kWh]
+   * @param exhaustFlowKgPerS ISO exhaust mass flow [kg/s]
    * @param exhaustTemperatureK ISO exhaust temperature [K]
-   * @param noxPpmDLE           NOx emission with dry low-emission combustor [ppmv @ 15 % O2]
-   * @param massTonnes          package dry mass [t]
-   * @param description         short text description
+   * @param noxPpmDLE NOx emission with dry low-emission combustor [ppmv @ 15 % O2]
+   * @param massTonnes package dry mass [t]
+   * @param description short text description
    */
   public GasTurbineSpec(String model, TurbineType type, double ratedPowerW, double heatRateKJPerKWh,
       double exhaustFlowKgPerS, double exhaustTemperatureK, double noxPpmDLE, double massTonnes, String description) {

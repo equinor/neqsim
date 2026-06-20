@@ -47,7 +47,7 @@ public final class ParaOrthoH2Correction implements Serializable {
     /**
      * Creates a catalyst entry for conversion-time screening.
      *
-     * @param referenceTimeSeconds   time constant at 77 K in seconds
+     * @param referenceTimeSeconds time constant at 77 K in seconds
      * @param activationTemperatureK empirical temperature sensitivity in K
      */
     ConversionCatalyst(double referenceTimeSeconds, double activationTemperatureK) {
@@ -110,8 +110,8 @@ public final class ParaOrthoH2Correction implements Serializable {
    * Calculates the heat released between two spin-isomer compositions at fixed temperature.
    *
    * @param initialParaFraction initial para fraction in the range 0 to 1
-   * @param finalParaFraction   final para fraction in the range 0 to 1
-   * @param temperatureK        hydrogen temperature in K, must be greater than 0
+   * @param finalParaFraction final para fraction in the range 0 to 1
+   * @param temperatureK hydrogen temperature in K, must be greater than 0
    * @return heat released in J/kg, positive when the final state has lower rotational energy
    */
   public static double getConversionHeatJPerKg(double initialParaFraction, double finalParaFraction,
@@ -191,7 +191,7 @@ public final class ParaOrthoH2Correction implements Serializable {
    * Estimates para/ortho conversion time for a catalyst family.
    *
    * @param temperatureK hydrogen temperature in K, must be greater than 0
-   * @param catalyst     conversion catalyst family, not null
+   * @param catalyst conversion catalyst family, not null
    * @return first-order conversion time constant in seconds
    */
   public static double estimateEquilibrationTimeSeconds(double temperatureK, ConversionCatalyst catalyst) {
@@ -211,7 +211,7 @@ public final class ParaOrthoH2Correction implements Serializable {
    * Calculates a rotational partition function for either para or ortho states.
    *
    * @param temperatureK hydrogen temperature in K
-   * @param para         true for even-J para states, false for odd-J ortho states
+   * @param para true for even-J para states, false for odd-J ortho states
    * @return partition function and average rotational energy data
    */
   private static RotationalPartition calculatePartition(double temperatureK, boolean para) {
@@ -246,7 +246,7 @@ public final class ParaOrthoH2Correction implements Serializable {
    * Calculates heat capacity by finite-difference differentiation of rotational energy.
    *
    * @param temperatureK hydrogen temperature in K
-   * @param equilibrium  true for spin-equilibrium composition, false for frozen normal composition
+   * @param equilibrium true for spin-equilibrium composition, false for frozen normal composition
    * @return heat capacity in J/(kg K)
    */
   private static double numericalCp(double temperatureK, boolean equilibrium) {
@@ -265,7 +265,7 @@ public final class ParaOrthoH2Correction implements Serializable {
    * Calculates rotational energy for the finite-difference heat capacity routine.
    *
    * @param temperatureK hydrogen temperature in K
-   * @param equilibrium  true for spin-equilibrium composition, false for frozen normal composition
+   * @param equilibrium true for spin-equilibrium composition, false for frozen normal composition
    * @return rotational energy in J/mol
    */
   private static double rotationalEnergyForCp(double temperatureK, boolean equilibrium) {
@@ -288,7 +288,7 @@ public final class ParaOrthoH2Correction implements Serializable {
    * Validates a composition fraction.
    *
    * @param fraction fraction value
-   * @param name     parameter name for diagnostics
+   * @param name parameter name for diagnostics
    */
   private static void validateFraction(double fraction, String name) {
     if (!Double.isFinite(fraction) || fraction < 0.0 || fraction > 1.0) {
@@ -304,7 +304,7 @@ public final class ParaOrthoH2Correction implements Serializable {
     /**
      * Creates rotational partition data.
      *
-     * @param partitionFunction    rotational partition function
+     * @param partitionFunction rotational partition function
      * @param averageEnergyJPerMol average rotational energy in J/mol
      */
     private RotationalPartition(double partitionFunction, double averageEnergyJPerMol) {

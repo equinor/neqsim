@@ -47,7 +47,7 @@ public final class PseudoComponentCombiner {
    * the fluid fraction and the mole fraction of the contributing pseudo components.
    *
    * @param targetPseudoComponents number of pseudo components in the combined fluid
-   * @param fluids                 input fluids
+   * @param fluids input fluids
    * @return combined fluid with the requested number of pseudo components
    */
   public static SystemInterface combineReservoirFluids(int targetPseudoComponents, SystemInterface... fluids) {
@@ -61,7 +61,7 @@ public final class PseudoComponentCombiner {
    * the fluid fraction and the mole fraction of the contributing pseudo components.
    *
    * @param targetPseudoComponents number of pseudo components in the combined fluid
-   * @param fluids                 input fluids
+   * @param fluids input fluids
    * @return combined fluid with the requested number of pseudo components
    */
   public static SystemInterface combineReservoirFluids(int targetPseudoComponents, Collection<SystemInterface> fluids) {
@@ -157,7 +157,7 @@ public final class PseudoComponentCombiner {
    * component cut points are derived from the reference fluid's pseudo component ordering and applied to the source
    * fluid.
    *
-   * @param source    fluid to characterize
+   * @param source fluid to characterize
    * @param reference fluid defining the pseudo component characterization
    * @return characterized fluid containing pseudo components compatible with the reference fluid
    */
@@ -213,9 +213,9 @@ public final class PseudoComponentCombiner {
    * <p>
    * This overload allows specifying options for BIP transfer, normalization, and validation.
    *
-   * @param source    fluid to characterize
+   * @param source fluid to characterize
    * @param reference fluid defining the pseudo component characterization
-   * @param options   characterization options
+   * @param options characterization options
    * @return characterized fluid containing pseudo components compatible with the reference fluid
    */
   public static SystemInterface characterizeToReference(SystemInterface source, SystemInterface reference,
@@ -249,7 +249,7 @@ public final class PseudoComponentCombiner {
    * (first PC to first PC, etc.) since names may differ.
    *
    * @param reference the fluid containing BIPs to copy
-   * @param target    the fluid to receive the BIPs
+   * @param target the fluid to receive the BIPs
    */
   public static void transferBinaryInteractionParameters(SystemInterface reference, SystemInterface target) {
     Objects.requireNonNull(reference, "reference");
@@ -382,8 +382,8 @@ public final class PseudoComponentCombiner {
   /**
    * Generate a validation report comparing source and characterized fluids.
    *
-   * @param source        the original source fluid
-   * @param reference     the reference fluid used for characterization
+   * @param source the original source fluid
+   * @param reference the reference fluid used for characterization
    * @param characterized the resulting characterized fluid
    * @return validation report
    */

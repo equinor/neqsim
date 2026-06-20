@@ -58,12 +58,12 @@ public class PipelineMechanicalDesignDataSource {
     /**
      * Constructor.
      *
-     * @param grade               material grade
+     * @param grade material grade
      * @param specificationNumber specification number
-     * @param smys                minimum yield strength in MPa
-     * @param smts                minimum tensile strength in MPa
-     * @param designFactor        design factor
-     * @param jointFactor         joint factor
+     * @param smys minimum yield strength in MPa
+     * @param smts minimum tensile strength in MPa
+     * @param designFactor design factor
+     * @param jointFactor joint factor
      * @param temperatureDerating temperature derating factor
      */
     public PipeMaterialData(String grade, String specificationNumber, double smys, double smts, double designFactor,
@@ -231,7 +231,7 @@ public class PipelineMechanicalDesignDataSource {
    * Load piping-specific requirements from database.
    *
    * @param companyIdentifier company identifier
-   * @param factors           design factors to update
+   * @param factors design factors to update
    */
   private void loadPipingRequirements(String companyIdentifier, PipeDesignFactors factors) {
     String query = String.format(Locale.ROOT, PIPING_QUERY, companyIdentifier);
@@ -266,9 +266,9 @@ public class PipelineMechanicalDesignDataSource {
   /**
    * Load parameters from the design standards tables based on design code.
    *
-   * @param designCode    the design code (e.g., "ASME-B31.8", "DNV-ST-F101")
+   * @param designCode the design code (e.g., "ASME-B31.8", "DNV-ST-F101")
    * @param equipmentType the equipment type (e.g., "Pipeline", "MultiphasePipe")
-   * @param factors       design factors to update with loaded values
+   * @param factors design factors to update with loaded values
    */
   public void loadFromStandardsTable(String designCode, String equipmentType, PipeDesignFactors factors) {
     if (designCode == null || designCode.isEmpty()) {
@@ -338,9 +338,9 @@ public class PipelineMechanicalDesignDataSource {
   /**
    * Load all pipeline mechanical design data.
    *
-   * @param materialGrade     API 5L material grade
+   * @param materialGrade API 5L material grade
    * @param companyIdentifier company identifier
-   * @param calculator        calculator to update with loaded values
+   * @param calculator calculator to update with loaded values
    */
   public void loadIntoCalculator(String materialGrade, String companyIdentifier,
       PipeMechanicalDesignCalculator calculator) {
@@ -350,11 +350,11 @@ public class PipelineMechanicalDesignDataSource {
   /**
    * Load all pipeline mechanical design data including standards-based parameters.
    *
-   * @param materialGrade     API 5L material grade
+   * @param materialGrade API 5L material grade
    * @param companyIdentifier company identifier
-   * @param designCode        design code (e.g., "ASME-B31.8", "DNV-ST-F101")
-   * @param equipmentType     equipment type (e.g., "Pipeline", "MultiphasePipe")
-   * @param calculator        calculator to update with loaded values
+   * @param designCode design code (e.g., "ASME-B31.8", "DNV-ST-F101")
+   * @param equipmentType equipment type (e.g., "Pipeline", "MultiphasePipe")
+   * @param calculator calculator to update with loaded values
    */
   public void loadIntoCalculator(String materialGrade, String companyIdentifier, String designCode,
       String equipmentType, PipeMechanicalDesignCalculator calculator) {

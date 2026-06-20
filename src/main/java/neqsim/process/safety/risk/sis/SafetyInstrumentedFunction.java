@@ -157,8 +157,8 @@ public class SafetyInstrumentedFunction implements Serializable {
    * Creates a SIF with basic parameters.
    *
    * @param name SIF name
-   * @param sil  Safety Integrity Level (1-4)
-   * @param pfd  Probability of Failure on Demand
+   * @param sil Safety Integrity Level (1-4)
+   * @param pfd Probability of Failure on Demand
    */
   public SafetyInstrumentedFunction(String name, int sil, double pfd) {
     this();
@@ -313,7 +313,7 @@ public class SafetyInstrumentedFunction implements Serializable {
    * Calculates required SIF capability for target risk reduction.
    *
    * @param unmitigatedFrequency current frequency
-   * @param targetFrequency      target frequency
+   * @param targetFrequency target frequency
    * @return required PFD
    */
   public static double calculateRequiredPfd(double unmitigatedFrequency, double targetFrequency) {
@@ -374,7 +374,7 @@ public class SafetyInstrumentedFunction implements Serializable {
   /**
    * Calculates PFD from component failure rates (simplified 1oo1 model).
    *
-   * @param lambdaDU     dangerous undetected failure rate (per hour)
+   * @param lambdaDU dangerous undetected failure rate (per hour)
    * @param testInterval proof test interval (hours)
    * @return average PFD
    */
@@ -386,7 +386,7 @@ public class SafetyInstrumentedFunction implements Serializable {
   /**
    * Calculates PFD for 1oo2 architecture.
    *
-   * @param lambdaDU     dangerous undetected failure rate per channel (per hour)
+   * @param lambdaDU dangerous undetected failure rate per channel (per hour)
    * @param testInterval proof test interval (hours)
    * @return average PFD
    */
@@ -399,7 +399,7 @@ public class SafetyInstrumentedFunction implements Serializable {
   /**
    * Calculates PFD for 2oo3 architecture.
    *
-   * @param lambdaDU     dangerous undetected failure rate per channel (per hour)
+   * @param lambdaDU dangerous undetected failure rate per channel (per hour)
    * @param testInterval proof test interval (hours)
    * @return average PFD
    */
@@ -413,7 +413,7 @@ public class SafetyInstrumentedFunction implements Serializable {
    * Calculates availability including SIF spurious trips.
    *
    * @param baseAvailability baseline availability without spurious trips
-   * @param mttrHours        mean time to restore after spurious trip
+   * @param mttrHours mean time to restore after spurious trip
    * @return availability accounting for spurious trips
    */
   public double getAvailabilityWithSpuriousTrips(double baseAvailability, double mttrHours) {

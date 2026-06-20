@@ -1505,9 +1505,9 @@ public class SystemElectrolyteCPAMMTest {
    * Helper to construct salt name from ion names.
    *
    * @param cation cation name
-   * @param anion  anion name
-   * @param nuCat  stoichiometric coefficient of cation
-   * @param nuAn   stoichiometric coefficient of anion
+   * @param anion anion name
+   * @param nuCat stoichiometric coefficient of cation
+   * @param nuAn stoichiometric coefficient of anion
    * @return salt name string
    */
   private String getSaltName(String cation, String anion, int nuCat, int nuAn) {
@@ -2002,7 +2002,7 @@ public class SystemElectrolyteCPAMMTest {
   /**
    * Print phase table for any SystemInterface and return aqueous phase gamma±.
    *
-   * @param sys       the thermodynamic system after flash
+   * @param sys the thermodynamic system after flash
    * @param modelName display name
    * @return gamma± in aqueous phase (x_water &gt; 0.5), or NaN if no aqueous phase found
    */

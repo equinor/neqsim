@@ -125,8 +125,8 @@ public class MultiScenarioVFPGenerator implements Serializable {
   /**
    * Constructor with process factory for thread-safe parallel execution.
    *
-   * @param processFactory   factory function that creates a fresh process system
-   * @param feedStreamName   name of inlet stream
+   * @param processFactory factory function that creates a fresh process system
+   * @param feedStreamName name of inlet stream
    * @param outletStreamName name of outlet stream (pressure target)
    */
   public MultiScenarioVFPGenerator(Supplier<ProcessSystem> processFactory, String feedStreamName,
@@ -139,8 +139,8 @@ public class MultiScenarioVFPGenerator implements Serializable {
   /**
    * Constructor with single process (for sequential execution or when process is thread-safe).
    *
-   * @param process          the process system (will be copied for parallel execution)
-   * @param feedStreamName   name of inlet stream
+   * @param process the process system (will be copied for parallel execution)
+   * @param feedStreamName name of inlet stream
    * @param outletStreamName name of outlet stream
    */
   public MultiScenarioVFPGenerator(ProcessSystem process, String feedStreamName, String outletStreamName) {
@@ -330,12 +330,12 @@ public class MultiScenarioVFPGenerator implements Serializable {
   /**
    * Try running process at given inlet pressure, check if outlet target achieved.
    *
-   * @param process       the process system
-   * @param feedStream    the feed stream to modify
-   * @param fluid         the fluid composition
-   * @param flowRate      target flow rate
+   * @param process the process system
+   * @param feedStream the feed stream to modify
+   * @param fluid the fluid composition
+   * @param flowRate target flow rate
    * @param targetOutletP target outlet pressure
-   * @param inletP        inlet pressure to try
+   * @param inletP inlet pressure to try
    * @return true if target achieved
    */
   private boolean tryInletPressure(ProcessSystem process, StreamInterface feedStream, SystemInterface fluid,
@@ -391,7 +391,7 @@ public class MultiScenarioVFPGenerator implements Serializable {
   /**
    * Export to Eclipse VFPEXP format.
    *
-   * @param filePath    output file path
+   * @param filePath output file path
    * @param tableNumber VFP table number
    * @throws IOException if writing fails
    */
@@ -402,7 +402,7 @@ public class MultiScenarioVFPGenerator implements Serializable {
   /**
    * Export to Eclipse VFPEXP format.
    *
-   * @param filePath    output file path
+   * @param filePath output file path
    * @param tableNumber VFP table number
    * @throws IOException if writing fails
    */
@@ -769,10 +769,10 @@ public class MultiScenarioVFPGenerator implements Serializable {
     /**
      * Create VFP table with specified dimensions.
      *
-     * @param flowRates       flow rate values
+     * @param flowRates flow rate values
      * @param outletPressures outlet pressure values
-     * @param waterCuts       water cut values
-     * @param GORs            GOR values
+     * @param waterCuts water cut values
+     * @param GORs GOR values
      */
     public VFPTable(double[] flowRates, double[] outletPressures, double[] waterCuts, double[] GORs) {
       this.flowRates = flowRates.clone();
@@ -824,9 +824,9 @@ public class MultiScenarioVFPGenerator implements Serializable {
      * Get BHP at specific indices.
      *
      * @param rateIdx rate index
-     * @param thpIdx  THP index
-     * @param wcIdx   water cut index
-     * @param gorIdx  GOR index
+     * @param thpIdx THP index
+     * @param wcIdx water cut index
+     * @param gorIdx GOR index
      * @return BHP value or NaN if infeasible
      */
     public double getBHP(int rateIdx, int thpIdx, int wcIdx, int gorIdx) {
@@ -837,9 +837,9 @@ public class MultiScenarioVFPGenerator implements Serializable {
      * Check if point is feasible.
      *
      * @param rateIdx rate index
-     * @param thpIdx  THP index
-     * @param wcIdx   water cut index
-     * @param gorIdx  GOR index
+     * @param thpIdx THP index
+     * @param wcIdx water cut index
+     * @param gorIdx GOR index
      * @return true if feasible
      */
     public boolean isFeasible(int rateIdx, int thpIdx, int wcIdx, int gorIdx) {
@@ -933,7 +933,7 @@ public class MultiScenarioVFPGenerator implements Serializable {
     /**
      * Print summary of VFP table at specific WC and GOR.
      *
-     * @param wcIdx  water cut index
+     * @param wcIdx water cut index
      * @param gorIdx GOR index
      */
     public void printSlice(int wcIdx, int gorIdx) {

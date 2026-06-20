@@ -30,7 +30,7 @@ public abstract class TwoPortEquipment extends ProcessEquipmentBaseClass impleme
   /**
    * Constructor for TwoPortEquipment.
    *
-   * @param name   Name of TwoPortEquipment
+   * @param name Name of TwoPortEquipment
    * @param stream Stream to set as inlet Stream. A clone of stream is set as outlet stream.
    */
   public TwoPortEquipment(String name, StreamInterface stream) {

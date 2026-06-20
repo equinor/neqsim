@@ -57,13 +57,13 @@ public class ReservoirToMarketOptimizer implements Serializable {
     /**
      * Creates an optimisation result.
      *
-     * @param feasible       whether the capacity constraint is satisfied
+     * @param feasible whether the capacity constraint is satisfied
      * @param objectiveValue best objective value found
-     * @param fieldRate      field rate at the optimum in Sm3/day
-     * @param revenue        revenue at the optimum in currency per day
-     * @param chokeSettings  per-well choke openings (0..1)
-     * @param wellRates      per-well rate in Sm3/day
-     * @param evaluations    number of network solves performed
+     * @param fieldRate field rate at the optimum in Sm3/day
+     * @param revenue revenue at the optimum in currency per day
+     * @param chokeSettings per-well choke openings (0..1)
+     * @param wellRates per-well rate in Sm3/day
+     * @param evaluations number of network solves performed
      */
     public OptimizationResult(boolean feasible, double objectiveValue, double fieldRate, double revenue,
 	Map<String, Double> chokeSettings, Map<String, Double> wellRates, int evaluations) {
@@ -162,7 +162,7 @@ public class ReservoirToMarketOptimizer implements Serializable {
     /**
      * Appends a string-double map as JSON key-values.
      *
-     * @param sb  target builder
+     * @param sb target builder
      * @param map map to append
      */
     private void appendMap(StringBuilder sb, Map<String, Double> map) {

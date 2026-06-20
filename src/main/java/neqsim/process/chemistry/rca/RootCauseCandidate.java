@@ -44,10 +44,10 @@ public class RootCauseCandidate implements Serializable {
   /**
    * Builds a candidate.
    *
-   * @param code           stable machine-readable code
-   * @param description    plain-language description
-   * @param score          normalised 0..1 score
-   * @param evidence       narrative evidence chain
+   * @param code stable machine-readable code
+   * @param description plain-language description
+   * @param score normalised 0..1 score
+   * @param evidence narrative evidence chain
    * @param recommendation suggested mitigation
    */
   public RootCauseCandidate(String code, String description, double score, String evidence, String recommendation) {

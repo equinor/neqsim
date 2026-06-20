@@ -61,7 +61,7 @@ public class WellMechanicalDesignDataSource implements Serializable {
    * unavailable, the calculator retains its hardcoded NORSOK D-010 defaults.
    * </p>
    *
-   * @param calculator      the well design calculator to configure
+   * @param calculator the well design calculator to configure
    * @param isInjectionWell true if loading injection-specific design factors
    */
   public void loadNorskD010DesignFactors(WellDesignCalculator calculator, boolean isInjectionWell) {
@@ -248,10 +248,10 @@ public class WellMechanicalDesignDataSource implements Serializable {
   /**
    * Apply a specification value from the database to the calculator.
    *
-   * @param specs      the specification map from CSV
-   * @param specName   CSV specification name
+   * @param specs the specification map from CSV
+   * @param specName CSV specification name
    * @param calculator the calculator to update
-   * @param target     which calculator field to set ("burstDF", "collapseDF", "tensionDF", "vmeDF")
+   * @param target which calculator field to set ("burstDF", "collapseDF", "tensionDF", "vmeDF")
    */
   private void applySpecValue(Map<String, double[]> specs, String specName, WellDesignCalculator calculator,
       String target) {

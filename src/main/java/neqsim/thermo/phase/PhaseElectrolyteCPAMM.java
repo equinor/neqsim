@@ -1324,7 +1324,7 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
   /**
    * Calculate Born radius using Maribo-Mogensen empirical correlations.
    *
-   * @param sigma  Lennard-Jones diameter [m]
+   * @param sigma Lennard-Jones diameter [m]
    * @param charge ionic charge (sign indicates cation/anion)
    * @return Born radius [m]
    */
@@ -1992,10 +1992,10 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
   /**
    * Compute Wi = dW/dn_i for component i from the electrolyte mixing rule.
    *
-   * @param compNumb    component index
+   * @param compNumb component index
    * @param temperature temperature in K
-   * @param pressure    pressure in bar
-   * @param numbcomp    number of components
+   * @param pressure pressure in bar
+   * @param numbcomp number of components
    * @return Wi value
    */
   public double calcWi(int compNumb, double temperature, double pressure, int numbcomp) {
@@ -2044,10 +2044,10 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
   /**
    * Compute WiT = d²W/(dn_i dT) for component i (Furst mixing rule version).
    *
-   * @param compNumb    component index
+   * @param compNumb component index
    * @param temperature temperature in K
-   * @param pressure    pressure in bar
-   * @param numbcomp    number of components
+   * @param pressure pressure in bar
+   * @param numbcomp number of components
    * @return WiT value
    */
   public double calcWiT(int compNumb, double temperature, double pressure, int numbcomp) {
@@ -2060,11 +2060,11 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
   /**
    * Compute Wij = d²W/(dn_i dn_j) from the electrolyte mixing rule.
    *
-   * @param i           first component index
-   * @param j           second component index
+   * @param i first component index
+   * @param j second component index
    * @param temperature temperature in K
-   * @param pressure    pressure in bar
-   * @param numbcomp    number of components
+   * @param pressure pressure in bar
+   * @param numbcomp number of components
    * @return Wij value
    */
   public double calcWij(int i, int j, double temperature, double pressure, int numbcomp) {

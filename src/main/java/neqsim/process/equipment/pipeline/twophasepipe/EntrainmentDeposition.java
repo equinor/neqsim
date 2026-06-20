@@ -105,7 +105,7 @@ public class EntrainmentDeposition implements Serializable {
    * Constructor with model specification.
    *
    * @param entrainmentModel Entrainment model to use
-   * @param depositionModel  Deposition model to use
+   * @param depositionModel Deposition model to use
    */
   public EntrainmentDeposition(EntrainmentModel entrainmentModel, DepositionModel depositionModel) {
     this.entrainmentModel = entrainmentModel;
@@ -115,16 +115,16 @@ public class EntrainmentDeposition implements Serializable {
   /**
    * Calculate entrainment and deposition rates.
    *
-   * @param flowRegime      Current flow regime
-   * @param gasVelocity     Superficial gas velocity (m/s)
-   * @param liquidVelocity  Superficial liquid velocity (m/s)
-   * @param gasDensity      Gas density (kg/m³)
-   * @param liquidDensity   Liquid density (kg/m³)
-   * @param gasViscosity    Gas dynamic viscosity (Pa·s)
+   * @param flowRegime Current flow regime
+   * @param gasVelocity Superficial gas velocity (m/s)
+   * @param liquidVelocity Superficial liquid velocity (m/s)
+   * @param gasDensity Gas density (kg/m³)
+   * @param liquidDensity Liquid density (kg/m³)
+   * @param gasViscosity Gas dynamic viscosity (Pa·s)
    * @param liquidViscosity Liquid dynamic viscosity (Pa·s)
-   * @param surfaceTension  Surface tension (N/m)
-   * @param diameter        Pipe diameter (m)
-   * @param liquidHoldup    Liquid holdup fraction
+   * @param surfaceTension Surface tension (N/m)
+   * @param diameter Pipe diameter (m)
+   * @param liquidHoldup Liquid holdup fraction
    * @return EntrainmentResult with rates and droplet properties
    */
   public EntrainmentResult calculate(FlowRegime flowRegime, double gasVelocity, double liquidVelocity,
@@ -186,12 +186,12 @@ public class EntrainmentDeposition implements Serializable {
   /**
    * Check if entrainment is active using Ishii-Grolmes criterion.
    *
-   * @param gasVelocity    gas velocity [m/s]
-   * @param gasDensity     gas density [kg/m³]
-   * @param liquidDensity  liquid density [kg/m³]
+   * @param gasVelocity gas velocity [m/s]
+   * @param gasDensity gas density [kg/m³]
+   * @param liquidDensity liquid density [kg/m³]
    * @param surfaceTension surface tension [N/m]
-   * @param diameter       pipe diameter [m]
-   * @param reFilm         film Reynolds number
+   * @param diameter pipe diameter [m]
+   * @param reFilm film Reynolds number
    * @return true if entrainment is active
    */
   private boolean isEntrainmentActive(double gasVelocity, double gasDensity, double liquidDensity,
@@ -206,15 +206,15 @@ public class EntrainmentDeposition implements Serializable {
   /**
    * Calculate entrainment rate using selected model.
    *
-   * @param gasVelocity     gas velocity [m/s]
-   * @param liquidVelocity  liquid velocity [m/s]
-   * @param gasDensity      gas density [kg/m³]
-   * @param liquidDensity   liquid density [kg/m³]
-   * @param gasViscosity    gas viscosity [Pa·s]
+   * @param gasVelocity gas velocity [m/s]
+   * @param liquidVelocity liquid velocity [m/s]
+   * @param gasDensity gas density [kg/m³]
+   * @param liquidDensity liquid density [kg/m³]
+   * @param gasViscosity gas viscosity [Pa·s]
    * @param liquidViscosity liquid viscosity [Pa·s]
-   * @param surfaceTension  surface tension [N/m]
-   * @param diameter        pipe diameter [m]
-   * @param filmThickness   film thickness [m]
+   * @param surfaceTension surface tension [N/m]
+   * @param diameter pipe diameter [m]
+   * @param filmThickness film thickness [m]
    * @return entrainment rate [kg/(m²·s)]
    */
   private double calculateEntrainmentRate(double gasVelocity, double liquidVelocity, double gasDensity,
@@ -239,12 +239,12 @@ public class EntrainmentDeposition implements Serializable {
   /**
    * Ishii-Mishima entrainment rate correlation.
    *
-   * @param gasVelocity     the velocity of the gas phase
-   * @param gasDensity      the density of the gas phase
-   * @param liquidDensity   the density of the liquid phase
+   * @param gasVelocity the velocity of the gas phase
+   * @param gasDensity the density of the gas phase
+   * @param liquidDensity the density of the liquid phase
    * @param liquidViscosity the dynamic viscosity of the liquid phase
-   * @param surfaceTension  the surface tension between phases
-   * @param diameter        the pipe diameter
+   * @param surfaceTension the surface tension between phases
+   * @param diameter the pipe diameter
    * @return the entrainment rate according to Ishii-Mishima correlation
    */
   private double entrainmentIshiiMishima(double gasVelocity, double gasDensity, double liquidDensity,
@@ -267,14 +267,14 @@ public class EntrainmentDeposition implements Serializable {
   /**
    * Pan-Hanratty entrainment rate correlation.
    *
-   * @param gasVelocity     the velocity of the gas phase
-   * @param liquidVelocity  the velocity of the liquid phase
-   * @param gasDensity      the density of the gas phase
-   * @param liquidDensity   the density of the liquid phase
-   * @param gasViscosity    the dynamic viscosity of the gas phase
+   * @param gasVelocity the velocity of the gas phase
+   * @param liquidVelocity the velocity of the liquid phase
+   * @param gasDensity the density of the gas phase
+   * @param liquidDensity the density of the liquid phase
+   * @param gasViscosity the dynamic viscosity of the gas phase
    * @param liquidViscosity the dynamic viscosity of the liquid phase
-   * @param surfaceTension  the surface tension between phases
-   * @param diameter        the pipe diameter
+   * @param surfaceTension the surface tension between phases
+   * @param diameter the pipe diameter
    * @return the entrainment rate according to Pan-Hanratty correlation
    */
   private double entrainmentPanHanratty(double gasVelocity, double liquidVelocity, double gasDensity,
@@ -295,12 +295,12 @@ public class EntrainmentDeposition implements Serializable {
   /**
    * Oliemans entrainment rate correlation.
    *
-   * @param gasVelocity     gas velocity (m/s)
-   * @param gasDensity      gas density (kg/m³)
-   * @param liquidDensity   liquid density (kg/m³)
+   * @param gasVelocity gas velocity (m/s)
+   * @param gasDensity gas density (kg/m³)
+   * @param liquidDensity liquid density (kg/m³)
    * @param liquidViscosity liquid viscosity (Pa·s)
-   * @param surfaceTension  surface tension (N/m)
-   * @param diameter        pipe diameter (m)
+   * @param surfaceTension surface tension (N/m)
+   * @param diameter pipe diameter (m)
    * @return entrainment rate (kg/m²/s)
    */
   private double entrainmentOliemans(double gasVelocity, double gasDensity, double liquidDensity,
@@ -320,13 +320,13 @@ public class EntrainmentDeposition implements Serializable {
   /**
    * Calculate equilibrium entrainment fraction.
    *
-   * @param gasVelocity     gas velocity in m/s
-   * @param gasDensity      gas density in kg/m3
-   * @param liquidDensity   liquid density in kg/m3
+   * @param gasVelocity gas velocity in m/s
+   * @param gasDensity gas density in kg/m3
+   * @param liquidDensity liquid density in kg/m3
    * @param liquidViscosity liquid viscosity in Pa.s
-   * @param surfaceTension  surface tension in N/m
-   * @param diameter        pipe diameter in m
-   * @param reFilm          Reynolds number of liquid film
+   * @param surfaceTension surface tension in N/m
+   * @param diameter pipe diameter in m
+   * @param reFilm Reynolds number of liquid film
    * @return equilibrium entrainment fraction (dimensionless, 0-1)
    */
   private double calculateEntrainmentFraction(double gasVelocity, double gasDensity, double liquidDensity,
@@ -352,12 +352,12 @@ public class EntrainmentDeposition implements Serializable {
    * Calculate deposition rate using selected model.
    *
    * @param dropletConcentration droplet concentration in kg/m3
-   * @param dropletDiameter      droplet diameter in m
-   * @param gasDensity           gas density in kg/m3
-   * @param gasViscosity         gas viscosity in Pa.s
-   * @param liquidDensity        liquid density in kg/m3
-   * @param gasVelocity          gas velocity in m/s
-   * @param diameter             pipe diameter in m
+   * @param dropletDiameter droplet diameter in m
+   * @param gasDensity gas density in kg/m3
+   * @param gasViscosity gas viscosity in Pa.s
+   * @param liquidDensity liquid density in kg/m3
+   * @param gasVelocity gas velocity in m/s
+   * @param diameter pipe diameter in m
    * @return deposition rate in kg/m2/s
    */
   private double calculateDepositionRate(double dropletConcentration, double dropletDiameter, double gasDensity,
@@ -384,11 +384,11 @@ public class EntrainmentDeposition implements Serializable {
    * McCoy-Hanratty deposition rate correlation.
    *
    * @param dropletConcentration droplet concentration in kg/m3
-   * @param dropletDiameter      droplet diameter in m
-   * @param gasDensity           gas density in kg/m3
-   * @param gasViscosity         gas viscosity in Pa.s
-   * @param gasVelocity          gas velocity in m/s
-   * @param diameter             pipe diameter in m
+   * @param dropletDiameter droplet diameter in m
+   * @param gasDensity gas density in kg/m3
+   * @param gasViscosity gas viscosity in Pa.s
+   * @param gasVelocity gas velocity in m/s
+   * @param diameter pipe diameter in m
    * @return deposition rate in kg/m2/s
    */
   private double depositionMcCoyHanratty(double dropletConcentration, double dropletDiameter, double gasDensity,
@@ -423,12 +423,12 @@ public class EntrainmentDeposition implements Serializable {
    * Particle relaxation time deposition model.
    *
    * @param dropletConcentration droplet concentration in kg/m3
-   * @param dropletDiameter      droplet diameter in m
-   * @param gasDensity           gas density in kg/m3
-   * @param gasViscosity         gas viscosity in Pa.s
-   * @param liquidDensity        liquid density in kg/m3
-   * @param gasVelocity          gas velocity in m/s
-   * @param diameter             pipe diameter in m
+   * @param dropletDiameter droplet diameter in m
+   * @param gasDensity gas density in kg/m3
+   * @param gasViscosity gas viscosity in Pa.s
+   * @param liquidDensity liquid density in kg/m3
+   * @param gasVelocity gas velocity in m/s
+   * @param diameter pipe diameter in m
    * @return deposition rate in kg/m2/s
    */
   private double depositionRelaxation(double dropletConcentration, double dropletDiameter, double gasDensity,
@@ -460,11 +460,11 @@ public class EntrainmentDeposition implements Serializable {
    * Cousins deposition model.
    *
    * @param dropletConcentration droplet concentration in kg/m3
-   * @param dropletDiameter      droplet diameter in m
-   * @param gasVelocity          gas velocity in m/s
-   * @param gasDensity           gas density in kg/m3
-   * @param gasViscosity         gas viscosity in Pa.s
-   * @param diameter             pipe diameter in m
+   * @param dropletDiameter droplet diameter in m
+   * @param gasVelocity gas velocity in m/s
+   * @param gasDensity gas density in kg/m3
+   * @param gasViscosity gas viscosity in Pa.s
+   * @param diameter pipe diameter in m
    * @return deposition rate in kg/m2/s
    */
   private double depositionCousins(double dropletConcentration, double dropletDiameter, double gasVelocity,
@@ -483,8 +483,8 @@ public class EntrainmentDeposition implements Serializable {
   /**
    * Calculate Sauter mean diameter of droplets.
    *
-   * @param gasVelocity    Gas phase velocity (m/s)
-   * @param gasDensity     Gas phase density (kg/m³)
+   * @param gasVelocity Gas phase velocity (m/s)
+   * @param gasDensity Gas phase density (kg/m³)
    * @param surfaceTension Surface tension (N/m)
    * @return Sauter mean diameter (m)
    */
@@ -505,7 +505,7 @@ public class EntrainmentDeposition implements Serializable {
   /**
    * Estimate film thickness from holdup.
    *
-   * @param diameter     pipe diameter [m]
+   * @param diameter pipe diameter [m]
    * @param liquidHoldup liquid holdup fraction
    * @return film thickness [m]
    */
@@ -526,12 +526,12 @@ public class EntrainmentDeposition implements Serializable {
   /**
    * Estimate droplet concentration in gas core.
    *
-   * @param liquidVelocity      liquid velocity [m/s]
-   * @param liquidDensity       liquid density [kg/m³]
-   * @param liquidHoldup        liquid holdup fraction
+   * @param liquidVelocity liquid velocity [m/s]
+   * @param liquidDensity liquid density [kg/m³]
+   * @param liquidHoldup liquid holdup fraction
    * @param entrainmentFraction entrainment fraction
-   * @param gasVelocity         gas velocity [m/s]
-   * @param diameter            pipe diameter [m]
+   * @param gasVelocity gas velocity [m/s]
+   * @param diameter pipe diameter [m]
    * @return droplet concentration [kg/m³]
    */
   private double estimateDropletConcentration(double liquidVelocity, double liquidDensity, double liquidHoldup,

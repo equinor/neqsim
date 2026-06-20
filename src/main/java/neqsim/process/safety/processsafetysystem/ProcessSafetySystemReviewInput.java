@@ -114,7 +114,7 @@ public class ProcessSafetySystemReviewInput implements Serializable {
   /**
    * Adds input metadata.
    *
-   * @param key   metadata key
+   * @param key metadata key
    * @param value metadata value
    * @return this input for fluent construction
    */
@@ -167,7 +167,7 @@ public class ProcessSafetySystemReviewInput implements Serializable {
   /**
    * Adds all known top-level item arrays to the input.
    *
-   * @param input  input receiving parsed items
+   * @param input input receiving parsed items
    * @param object source JSON object
    */
   private static void addTopLevelArrays(ProcessSafetySystemReviewInput input, JsonObject object) {
@@ -181,8 +181,8 @@ public class ProcessSafetySystemReviewInput implements Serializable {
   /**
    * Adds all records from one JSON array.
    *
-   * @param input     input receiving parsed items
-   * @param array     source array
+   * @param input input receiving parsed items
+   * @param array source array
    * @param sourceKey source array key
    */
   private static void addArray(ProcessSafetySystemReviewInput input, JsonArray array, String sourceKey) {
@@ -202,8 +202,8 @@ public class ProcessSafetySystemReviewInput implements Serializable {
   /**
    * Merges a shared object into all review items or creates one global item when no items exist.
    *
-   * @param input     input receiving shared evidence
-   * @param object    source JSON object
+   * @param input input receiving shared evidence
+   * @param object source JSON object
    * @param sourceKey source object key
    */
   private static void mergeSharedEvidence(ProcessSafetySystemReviewInput input, JsonObject object, String sourceKey) {
@@ -265,8 +265,8 @@ public class ProcessSafetySystemReviewInput implements Serializable {
   /**
    * Gets a string value from JSON.
    *
-   * @param object       JSON object
-   * @param key          key to read
+   * @param object JSON object
+   * @param key key to read
    * @param defaultValue default value
    * @return string value or default
    */

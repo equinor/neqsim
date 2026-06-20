@@ -213,10 +213,10 @@ public class WellFlow extends TwoPortEquipment {
     /**
      * Create a reservoir layer.
      *
-     * @param name              layer identifier
-     * @param stream            fluid stream from layer
+     * @param name layer identifier
+     * @param stream fluid stream from layer
      * @param reservoirPressure layer reservoir pressure (bara)
-     * @param pi                layer productivity index
+     * @param pi layer productivity index
      */
     public ReservoirLayer(String name, StreamInterface stream, double reservoirPressure, double pi) {
       this.name = name;
@@ -229,7 +229,7 @@ public class WellFlow extends TwoPortEquipment {
      * Set the fracture pressure for this layer.
      *
      * @param pressure fracture pressure
-     * @param unit     pressure unit ("bara", "psia")
+     * @param unit pressure unit ("bara", "psia")
      */
     public void setFracturePressure(double pressure, String unit) {
       if ("psia".equalsIgnoreCase(unit)) {
@@ -243,7 +243,7 @@ public class WellFlow extends TwoPortEquipment {
      * Set the stress contrast at the barrier/caprock boundary of this layer.
      *
      * @param contrast stress contrast value
-     * @param unit     stress unit ("bar", "psi", "MPa")
+     * @param unit stress unit ("bar", "psi", "MPa")
      */
     public void setBarrierStressContrast(double contrast, String unit) {
       if ("psi".equalsIgnoreCase(unit)) {
@@ -308,10 +308,10 @@ public class WellFlow extends TwoPortEquipment {
    * index. The flow from each layer is calculated based on the common bottom-hole pressure.
    * </p>
    *
-   * @param name              layer identifier
-   * @param stream            stream representing the layer fluid
+   * @param name layer identifier
+   * @param stream stream representing the layer fluid
    * @param reservoirPressure layer reservoir pressure (bara)
-   * @param pi                layer productivity index (Sm3/day/bar² for gas)
+   * @param pi layer productivity index (Sm3/day/bar² for gas)
    */
   public void addLayer(String name, StreamInterface stream, double reservoirPressure, double pi) {
     layers.add(new ReservoirLayer(name, stream, reservoirPressure, pi));
@@ -326,11 +326,11 @@ public class WellFlow extends TwoPortEquipment {
    * maximum allowable BHP. The injectivity index follows: q_i = II_i * (Pwf - Pres_i)
    * </p>
    *
-   * @param name              zone identifier
-   * @param zoneFluid         stream representing the zone fluid
+   * @param name zone identifier
+   * @param zoneFluid stream representing the zone fluid
    * @param reservoirPressure zone reservoir pressure (bara)
-   * @param injectivityIndex  zone injectivity index (Sm3/day/bar for liquid, Sm3/day/bar² for gas)
-   * @param fracturePressure  zone fracture pressure (bara)
+   * @param injectivityIndex zone injectivity index (Sm3/day/bar for liquid, Sm3/day/bar² for gas)
+   * @param fracturePressure zone fracture pressure (bara)
    */
   public void addInjectionZone(String name, StreamInterface zoneFluid, double reservoirPressure,
       double injectivityIndex, double fracturePressure) {
@@ -751,7 +751,7 @@ public class WellFlow extends TwoPortEquipment {
    * </p>
    *
    * @param maxDrawdown the maximum allowable drawdown
-   * @param unit        the pressure unit ("bara", "bar" or "psia")
+   * @param unit the pressure unit ("bara", "bar" or "psia")
    */
   public void setMaxDrawdown(double maxDrawdown, String unit) {
     if ("psia".equalsIgnoreCase(unit) || "psi".equalsIgnoreCase(unit)) {
@@ -781,7 +781,7 @@ public class WellFlow extends TwoPortEquipment {
    * </p>
    *
    * @param minPressure the minimum bottom-hole pressure (use 0 to disable)
-   * @param unit        the pressure unit ("bara", "bar" or "psia")
+   * @param unit the pressure unit ("bara", "bar" or "psia")
    */
   public void setMinBottomHolePressure(double minPressure, String unit) {
     if ("psia".equalsIgnoreCase(unit) || "psi".equalsIgnoreCase(unit)) {
@@ -890,7 +890,7 @@ public class WellFlow extends TwoPortEquipment {
    * {@link #solveFlowFromOutletPressure(boolean)} set to true).
    *
    * @param pressure outlet pressure
-   * @param unit     pressure unit
+   * @param unit pressure unit
    */
   @Override
   public void setOutletPressure(double pressure, String unit) {
@@ -920,8 +920,8 @@ public class WellFlow extends TwoPortEquipment {
   /**
    * Use Vogel inflow performance relationship.
    *
-   * @param qTest             flow rate at test conditions (same unit as stream)
-   * @param pwfTest           bottom-hole pressure at test conditions in bara
+   * @param qTest flow rate at test conditions (same unit as stream)
+   * @param pwfTest bottom-hole pressure at test conditions in bara
    * @param reservoirPressure reservoir pressure in bara
    */
   public void setVogelParameters(double qTest, double pwfTest, double reservoirPressure) {
@@ -935,8 +935,8 @@ public class WellFlow extends TwoPortEquipment {
   /**
    * Use Fetkovich inflow performance relationship.
    *
-   * @param c                 Fetkovich constant C
-   * @param n                 Fetkovich exponent n
+   * @param c Fetkovich constant C
+   * @param n Fetkovich exponent n
    * @param reservoirPressure reservoir pressure in bara
    */
   public void setFetkovichParameters(double c, double n, double reservoirPressure) {
@@ -951,8 +951,8 @@ public class WellFlow extends TwoPortEquipment {
    * Use backpressure equation for gas wells: p<sub>res</sub><sup>2</sup> - p<sub>wf</sub><sup>2</sup> = a·q + b·q².
    * Parameter {@code b} captures non-Darcy (turbulence) effects.
    *
-   * @param a                 deliverability coefficient a
-   * @param b                 deliverability coefficient b (non-Darcy component)
+   * @param a deliverability coefficient a
+   * @param b deliverability coefficient b (non-Darcy component)
    * @param reservoirPressure reservoir pressure in bara (stored for reference)
    */
   public void setBackpressureParameters(double a, double b, double reservoirPressure) {
@@ -968,7 +968,7 @@ public class WellFlow extends TwoPortEquipment {
    * allow monotonic interpolation.
    *
    * @param bottomHolePressures bottom-hole flowing pressures in bara
-   * @param flowRates           flow rates corresponding to each pressure point (same unit as stream)
+   * @param flowRates flow rates corresponding to each pressure point (same unit as stream)
    */
   public void setTableInflow(double[] bottomHolePressures, double[] flowRates) {
     if (bottomHolePressures == null || flowRates == null || bottomHolePressures.length != flowRates.length
@@ -990,12 +990,12 @@ public class WellFlow extends TwoPortEquipment {
    * Estimate well production index from Darcy law parameters. Units: permeability in mD, viscosity in cP and lengths in
    * meter.
    *
-   * @param permeability    reservoir permeability
-   * @param thickness       reservoir thickness
-   * @param viscosity       fluid viscosity
+   * @param permeability reservoir permeability
+   * @param thickness reservoir thickness
+   * @param viscosity fluid viscosity
    * @param reservoirRadius drainage radius
-   * @param wellRadius      wellbore radius
-   * @param skinFactor      skin factor
+   * @param wellRadius wellbore radius
+   * @param skinFactor skin factor
    */
   public void setDarcyLawParameters(double permeability, double thickness, double viscosity, double reservoirRadius,
       double wellRadius, double skinFactor) {

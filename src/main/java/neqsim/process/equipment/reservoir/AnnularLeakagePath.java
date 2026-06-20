@@ -96,10 +96,10 @@ public class AnnularLeakagePath extends ProcessEquipmentBaseClass {
   /**
    * Set the leakage path geometry.
    *
-   * @param depthTop    top depth of leakage path (m TVD)
+   * @param depthTop top depth of leakage path (m TVD)
    * @param depthBottom bottom depth of leakage path (m TVD)
-   * @param width       circumferential width of channel (m), typically 0.01 - 0.3
-   * @param gap         radial aperture of micro-annulus (m), typically 0.0001 - 0.005
+   * @param width circumferential width of channel (m), typically 0.01 - 0.3
+   * @param gap radial aperture of micro-annulus (m), typically 0.0001 - 0.005
    */
   public void setPathGeometry(double depthTop, double depthBottom, double width, double gap) {
     this.depthTop = depthTop;
@@ -115,7 +115,7 @@ public class AnnularLeakagePath extends ProcessEquipmentBaseClass {
    * Set cement permeability for the porous flow model.
    *
    * @param permeability cement permeability value
-   * @param unit         permeability unit ("mD", "D", "m2")
+   * @param unit permeability unit ("mD", "D", "m2")
    */
   public void setCementPermeability(double permeability, String unit) {
     if ("D".equalsIgnoreCase(unit)) {
@@ -176,7 +176,7 @@ public class AnnularLeakagePath extends ProcessEquipmentBaseClass {
    * Calculate leakage flow rates between source and sink pressures.
    *
    * @param sourcePressureBara source zone pressure (bara)
-   * @param sinkPressureBara   sink zone pressure (bara)
+   * @param sinkPressureBara sink zone pressure (bara)
    */
   public void calculate(double sourcePressureBara, double sinkPressureBara) {
     this.sourcePressure = sourcePressureBara;
@@ -303,7 +303,7 @@ public class AnnularLeakagePath extends ProcessEquipmentBaseClass {
    * Convert flow rate from m³/s to the requested unit.
    *
    * @param rateM3s rate in m³/s
-   * @param unit    target unit
+   * @param unit target unit
    * @return converted rate
    */
   private double convertFlowRate(double rateM3s, String unit) {
@@ -359,10 +359,10 @@ public class AnnularLeakagePath extends ProcessEquipmentBaseClass {
    * <li>Fracture pressure at shoe minus hydrostatic head of annular fluid</li>
    * </ul>
    *
-   * @param casingBurstRating    casing burst rating at surface (bara)
+   * @param casingBurstRating casing burst rating at surface (bara)
    * @param tubingCollapseRating tubing collapse rating (bara)
-   * @param shoeDepth            shoe depth (m TVD)
-   * @param fracPressureAtShoe   fracture pressure at shoe (bara)
+   * @param shoeDepth shoe depth (m TVD)
+   * @param fracPressureAtShoe fracture pressure at shoe (bara)
    * @param annularFluidGradient annular fluid pressure gradient (bar/m), default ~0.098 for water
    */
   public void setMAASPParameters(double casingBurstRating, double tubingCollapseRating, double shoeDepth,
@@ -377,7 +377,7 @@ public class AnnularLeakagePath extends ProcessEquipmentBaseClass {
   /**
    * Set MAASP safety factors from standards (typically loaded from API RP 90 CSV data).
    *
-   * @param burstSF    burst safety factor (default 1.10 per API RP 90)
+   * @param burstSF burst safety factor (default 1.10 per API RP 90)
    * @param collapseSF collapse safety factor (default 1.00 per API RP 90)
    */
   public void setMAASPSafetyFactors(double burstSF, double collapseSF) {

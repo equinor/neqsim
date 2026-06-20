@@ -113,7 +113,7 @@ public class ParetoFront implements Serializable, Iterable<ParetoSolution> {
    * Get solutions sorted by a specific objective.
    *
    * @param objectiveIndex index of objective to sort by
-   * @param ascending      if true, sort ascending; otherwise descending
+   * @param ascending if true, sort ascending; otherwise descending
    * @return sorted list of solutions
    */
   public List<ParetoSolution> getSolutionsSortedBy(int objectiveIndex, boolean ascending) {

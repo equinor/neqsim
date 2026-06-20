@@ -45,13 +45,13 @@ public class TripEvent implements Serializable {
   /**
    * Creates a trip event.
    *
-   * @param equipmentName         name of the equipment that tripped
-   * @param parameterName         name of the parameter that triggered the trip
-   * @param threshold             the threshold value that was exceeded
-   * @param actualValue           the actual measured value at the time of the trip
-   * @param highTrip              true if this was a high-limit trip, false for low-limit
+   * @param equipmentName name of the equipment that tripped
+   * @param parameterName name of the parameter that triggered the trip
+   * @param threshold the threshold value that was exceeded
+   * @param actualValue the actual measured value at the time of the trip
+   * @param highTrip true if this was a high-limit trip, false for low-limit
    * @param simulationTimeSeconds time in the simulation when the trip occurred
-   * @param severity              severity level of the trip
+   * @param severity severity level of the trip
    */
   public TripEvent(String equipmentName, String parameterName, double threshold, double actualValue, boolean highTrip,
       double simulationTimeSeconds, Severity severity) {

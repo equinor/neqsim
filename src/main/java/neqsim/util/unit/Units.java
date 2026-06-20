@@ -186,8 +186,8 @@ public class Units {
    * setUnit.
    * </p>
    *
-   * @param name       a {@link java.lang.String} object
-   * @param symbol     a {@link java.lang.String} object
+   * @param name a {@link java.lang.String} object
+   * @param symbol a {@link java.lang.String} object
    * @param symbolName a {@link java.lang.String} object
    */
   public static synchronized void setUnit(String name, String symbol, String symbolName) {

@@ -153,7 +153,7 @@ public class WorkflowResult implements Serializable {
   /**
    * Creates a new workflow result.
    *
-   * @param projectName   project name
+   * @param projectName project name
    * @param fidelityLevel fidelity level used
    */
   public WorkflowResult(String projectName, FieldDevelopmentWorkflow.FidelityLevel fidelityLevel) {

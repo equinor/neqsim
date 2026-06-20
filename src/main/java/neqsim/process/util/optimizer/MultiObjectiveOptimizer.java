@@ -82,7 +82,7 @@ public class MultiObjectiveOptimizer implements Serializable {
     /**
      * Called when a new solution is evaluated.
      *
-     * @param iteration       current iteration number
+     * @param iteration current iteration number
      * @param totalIterations total planned iterations
      * @param currentSolution current solution (may be null if infeasible)
      */
@@ -126,10 +126,10 @@ public class MultiObjectiveOptimizer implements Serializable {
    * solutions on non-convex regions of the front.
    * </p>
    *
-   * @param process               the process system to optimize
-   * @param feedStream            the feed stream to manipulate
-   * @param objectives            list of objectives to optimize
-   * @param baseConfig            base optimization configuration
+   * @param process the process system to optimize
+   * @param feedStream the feed stream to manipulate
+   * @param objectives list of objectives to optimize
+   * @param baseConfig base optimization configuration
    * @param numWeightCombinations number of weight combinations to explore
    * @return Pareto front of non-dominated solutions
    */
@@ -154,12 +154,12 @@ public class MultiObjectiveOptimizer implements Serializable {
    * solutions, the front is likely non-convex and epsilon-constraint or direct sampling methods should be used instead.
    * </p>
    *
-   * @param process               the process system to optimize
-   * @param feedStream            the feed stream to manipulate
-   * @param objectives            list of objectives to optimize
-   * @param baseConfig            base optimization configuration
+   * @param process the process system to optimize
+   * @param feedStream the feed stream to manipulate
+   * @param objectives list of objectives to optimize
+   * @param baseConfig base optimization configuration
    * @param numWeightCombinations number of weight combinations to explore
-   * @param constraints           additional optimization constraints
+   * @param constraints additional optimization constraints
    * @return Pareto front of non-dominated solutions
    */
   public ParetoFront optimizeWeightedSum(ProcessSystem process, StreamInterface feedStream,
@@ -268,12 +268,12 @@ public class MultiObjectiveOptimizer implements Serializable {
    * non-convex regions of the front.
    * </p>
    *
-   * @param process               the process system to optimize
-   * @param feedStream            the feed stream to manipulate
-   * @param primaryObjective      the objective to optimize
+   * @param process the process system to optimize
+   * @param feedStream the feed stream to manipulate
+   * @param primaryObjective the objective to optimize
    * @param constrainedObjectives objectives to treat as constraints
-   * @param baseConfig            base optimization configuration
-   * @param gridPoints            number of epsilon values to try for each constraint
+   * @param baseConfig base optimization configuration
+   * @param gridPoints number of epsilon values to try for each constraint
    * @return Pareto front of non-dominated solutions
    */
   public ParetoFront optimizeEpsilonConstraint(ProcessSystem process, StreamInterface feedStream,
@@ -286,12 +286,12 @@ public class MultiObjectiveOptimizer implements Serializable {
   /**
    * Find Pareto front using epsilon-constraint method with additional constraints.
    *
-   * @param process               the process system to optimize
-   * @param feedStream            the feed stream to manipulate
-   * @param primaryObjective      the objective to optimize
+   * @param process the process system to optimize
+   * @param feedStream the feed stream to manipulate
+   * @param primaryObjective the objective to optimize
    * @param constrainedObjectives objectives to treat as constraints
-   * @param baseConfig            base optimization configuration
-   * @param gridPoints            number of epsilon values to try for each constraint
+   * @param baseConfig base optimization configuration
+   * @param gridPoints number of epsilon values to try for each constraint
    * @param additionalConstraints additional hard constraints
    * @return Pareto front of non-dominated solutions
    */
@@ -394,10 +394,10 @@ public class MultiObjectiveOptimizer implements Serializable {
   /**
    * Optimize a single objective (convenience method).
    *
-   * @param process     the process system to optimize
-   * @param feedStream  the feed stream to manipulate
-   * @param objective   the single objective function to optimize
-   * @param baseConfig  base optimization configuration
+   * @param process the process system to optimize
+   * @param feedStream the feed stream to manipulate
+   * @param objective the single objective function to optimize
+   * @param baseConfig base optimization configuration
    * @param constraints additional optimization constraints
    * @return Pareto front containing the single optimal solution
    */
@@ -441,7 +441,7 @@ public class MultiObjectiveOptimizer implements Serializable {
    * single point.
    * </p>
    *
-   * @param process    the process system to evaluate
+   * @param process the process system to evaluate
    * @param feedStream the feed stream to manipulate
    * @param objectives objectives to evaluate at each sample point
    * @param baseConfig base optimization configuration (defines flow rate range)
@@ -456,11 +456,11 @@ public class MultiObjectiveOptimizer implements Serializable {
   /**
    * Generate Pareto front by sampling at fixed flow rates with constraint checking.
    *
-   * @param process     the process system to evaluate
-   * @param feedStream  the feed stream to manipulate
-   * @param objectives  objectives to evaluate at each sample point
-   * @param baseConfig  base optimization configuration (defines flow rate range)
-   * @param numSamples  number of sample points across the flow range
+   * @param process the process system to evaluate
+   * @param feedStream the feed stream to manipulate
+   * @param objectives objectives to evaluate at each sample point
+   * @param baseConfig base optimization configuration (defines flow rate range)
+   * @param numSamples number of sample points across the flow range
    * @param constraints constraints to check feasibility at each point
    * @return Pareto front of non-dominated solutions from sampled points
    */
@@ -535,8 +535,8 @@ public class MultiObjectiveOptimizer implements Serializable {
   /**
    * Checks process feasibility against equipment utilization limits and hard constraints.
    *
-   * @param process     the process system to check
-   * @param config      optimization configuration providing the utilization limit
+   * @param process the process system to check
+   * @param config optimization configuration providing the utilization limit
    * @param constraints list of explicit optimization constraints
    * @return true if all utilization and hard constraints are satisfied
    */
@@ -570,7 +570,7 @@ public class MultiObjectiveOptimizer implements Serializable {
    * Generates weight combinations for n objectives using linear interpolation (2 objectives) or simplex lattice design
    * (3+ objectives).
    *
-   * @param numObjectives   the number of objectives
+   * @param numObjectives the number of objectives
    * @param numCombinations the number of weight combinations to generate
    * @return list of weight arrays, each summing to 1.0
    */
@@ -594,12 +594,12 @@ public class MultiObjectiveOptimizer implements Serializable {
   /**
    * Recursively generates simplex lattice weights where all entries sum to 1.0.
    *
-   * @param weights       accumulator list for generated weight arrays
+   * @param weights accumulator list for generated weight arrays
    * @param numObjectives total number of objectives
-   * @param divisions     number of divisions along each axis
-   * @param current       working array holding the current partial weight assignment
-   * @param index         current dimension being filled
-   * @param remaining     remaining weight budget (starts at 1.0)
+   * @param divisions number of divisions along each axis
+   * @param current working array holding the current partial weight assignment
+   * @param index current dimension being filled
+   * @param remaining remaining weight budget (starts at 1.0)
    */
   private void generateSimplexWeights(List<double[]> weights, int numObjectives, int divisions, double[] current,
       int index, double remaining) {
@@ -622,7 +622,7 @@ public class MultiObjectiveOptimizer implements Serializable {
    * Creates a single weighted objective that combines multiple objectives with the given weights.
    *
    * @param objectives the list of objective functions
-   * @param weights    array of weights (same length as objectives), should sum to 1.0
+   * @param weights array of weights (same length as objectives), should sum to 1.0
    * @return a ProductionOptimizer objective representing the weighted sum
    */
   private ProductionOptimizer.OptimizationObjective createWeightedObjective(List<ObjectiveFunction> objectives,
@@ -658,7 +658,7 @@ public class MultiObjectiveOptimizer implements Serializable {
   /**
    * Evaluates all objectives for the current process state.
    *
-   * @param process    the process system
+   * @param process the process system
    * @param objectives the list of objective functions
    * @return array of objective values in the same order as the input list
    */
@@ -673,7 +673,7 @@ public class MultiObjectiveOptimizer implements Serializable {
   /**
    * Finds the min/max bounds for each objective by running single-objective optimization.
    *
-   * @param process    the process system template (will be copied)
+   * @param process the process system template (will be copied)
    * @param feedStream the feed stream to vary
    * @param objectives the objectives to bound
    * @param baseConfig the base optimization configuration
@@ -728,7 +728,7 @@ public class MultiObjectiveOptimizer implements Serializable {
    * Generates an epsilon grid for the epsilon-constraint method.
    *
    * @param objectives the constrained objectives
-   * @param bounds     map of objective bounds ([min, max])
+   * @param bounds map of objective bounds ([min, max])
    * @param gridPoints number of grid divisions per objective
    * @return list of epsilon value arrays
    */
@@ -755,12 +755,12 @@ public class MultiObjectiveOptimizer implements Serializable {
   /**
    * Recursively generates a full combinatorial grid of epsilon values.
    *
-   * @param grid       accumulator list for generated epsilon arrays
+   * @param grid accumulator list for generated epsilon arrays
    * @param objectives the constrained objectives
-   * @param bounds     map of objective bounds ([min, max])
+   * @param bounds map of objective bounds ([min, max])
    * @param gridPoints number of grid divisions per objective
-   * @param current    working array for the current grid point
-   * @param index      current dimension being filled
+   * @param current working array for the current grid point
+   * @param index current dimension being filled
    */
   private void generateGrid(List<double[]> grid, List<ObjectiveFunction> objectives,
       Map<ObjectiveFunction, double[]> bounds, int gridPoints, double[] current, int index) {
@@ -781,7 +781,7 @@ public class MultiObjectiveOptimizer implements Serializable {
    * Creates an epsilon constraint bounding an objective from above or below.
    *
    * @param objective the objective function to constrain
-   * @param epsilon   the epsilon bound value
+   * @param epsilon the epsilon bound value
    * @return an optimization constraint enforcing the bound
    */
   private OptimizationConstraint createEpsilonConstraint(ObjectiveFunction objective, double epsilon) {
@@ -811,9 +811,9 @@ public class MultiObjectiveOptimizer implements Serializable {
     /**
      * Constructor for MultiObjectiveResult.
      *
-     * @param paretoFront       the Pareto front
-     * @param objectives        list of objectives
-     * @param method            optimization method used
+     * @param paretoFront the Pareto front
+     * @param objectives list of objectives
+     * @param method optimization method used
      * @param computationTimeMs computation time in milliseconds
      */
     public MultiObjectiveResult(ParetoFront paretoFront, List<ObjectiveFunction> objectives, String method,

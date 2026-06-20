@@ -51,8 +51,8 @@ public class EventScheduler implements Serializable {
     /**
      * Constructor.
      *
-     * @param time   absolute simulation time in seconds (must be finite and {@code >= 0})
-     * @param label  short tag for diagnostics
+     * @param time absolute simulation time in seconds (must be finite and {@code >= 0})
+     * @param label short tag for diagnostics
      * @param action payload (must be non-null and serializable)
      */
     public ScheduledEvent(double time, String label, Runnable action) {
@@ -114,8 +114,8 @@ public class EventScheduler implements Serializable {
   /**
    * Schedules an event at absolute time {@code time}.
    *
-   * @param time   absolute simulation time in seconds
-   * @param label  short tag (may be null)
+   * @param time absolute simulation time in seconds
+   * @param label short tag (may be null)
    * @param action serializable payload
    * @return the scheduled event
    */

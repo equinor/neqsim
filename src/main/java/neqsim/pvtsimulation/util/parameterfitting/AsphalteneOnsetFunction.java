@@ -273,8 +273,8 @@ public class AsphalteneOnsetFunction extends LevenbergMarquardtFunction {
    * Sets the pressure search range.
    *
    * @param start starting pressure (bara)
-   * @param min   minimum pressure (bara)
-   * @param step  pressure step (bara)
+   * @param min minimum pressure (bara)
+   * @param step pressure step (bara)
    */
   public void setPressureRange(double start, double min, double step) {
     this.startPressure = start;

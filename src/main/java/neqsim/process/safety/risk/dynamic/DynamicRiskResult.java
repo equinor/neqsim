@@ -206,12 +206,12 @@ public class DynamicRiskResult extends OperationalRiskResult implements Serializ
   /**
    * Calculates statistics from raw simulation data.
    *
-   * @param totalProductions  production totals per iteration
-   * @param transientLosses   transient losses per iteration
+   * @param totalProductions production totals per iteration
+   * @param transientLosses transient losses per iteration
    * @param steadyStateLosses steady-state losses per iteration
-   * @param availabilities    availability per iteration
-   * @param failureCounts     failure counts per iteration
-   * @param transientCounts   transient event counts per iteration
+   * @param availabilities availability per iteration
+   * @param failureCounts failure counts per iteration
+   * @param transientCounts transient event counts per iteration
    */
   public void calculateStatistics(double[] totalProductions, double[] transientLosses, double[] steadyStateLosses,
       double[] availabilities, int[] failureCounts, int[] transientCounts) {

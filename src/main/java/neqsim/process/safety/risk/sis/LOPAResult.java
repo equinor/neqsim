@@ -114,9 +114,9 @@ public class LOPAResult implements Serializable {
   /**
    * Gets STS0131 overpressure target frequency from pressure severity.
    *
-   * @param eventPressureBara  maximum event pressure in bara
+   * @param eventPressureBara maximum event pressure in bara
    * @param designPressureBara design pressure in bara
-   * @param testPressureBara   test pressure in bara
+   * @param testPressureBara test pressure in bara
    * @return target frequency per year
    * @throws IllegalArgumentException if pressure inputs are non-positive or test pressure is below design pressure
    */
@@ -139,9 +139,9 @@ public class LOPAResult implements Serializable {
   /**
    * Classifies overpressure severity using STS0131 pressure bands.
    *
-   * @param eventPressureBara  maximum event pressure in bara
+   * @param eventPressureBara maximum event pressure in bara
    * @param designPressureBara design pressure in bara
-   * @param testPressureBara   test pressure in bara
+   * @param testPressureBara test pressure in bara
    * @return pressure severity category
    * @throws IllegalArgumentException if pressure inputs are non-positive or test pressure is below design pressure
    */
@@ -168,9 +168,9 @@ public class LOPAResult implements Serializable {
   /**
    * Sets this LOPA target frequency from STS0131 overpressure severity.
    *
-   * @param eventPressureBara  maximum event pressure in bara
+   * @param eventPressureBara maximum event pressure in bara
    * @param designPressureBara design pressure in bara
-   * @param testPressureBara   test pressure in bara
+   * @param testPressureBara test pressure in bara
    * @return this LOPA result for chaining
    * @throws IllegalArgumentException if pressure inputs are invalid
    */
@@ -212,10 +212,10 @@ public class LOPAResult implements Serializable {
   /**
    * Adds a protection layer.
    *
-   * @param name   layer name
-   * @param pfd    probability of failure on demand
+   * @param name layer name
+   * @param pfd probability of failure on demand
    * @param before frequency before this layer
-   * @param after  frequency after this layer
+   * @param after frequency after this layer
    */
   public void addLayer(String name, double pfd, double before, double after) {
     layers.add(new ProtectionLayer(name, pfd, before, after));

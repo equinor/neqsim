@@ -40,7 +40,7 @@ public class CompressorAgent extends ProcessAgent {
   /**
    * Create compressor agent.
    *
-   * @param agentId    agent ID
+   * @param agentId agent ID
    * @param compressor the compressor
    */
   public CompressorAgent(String agentId, Compressor compressor) {

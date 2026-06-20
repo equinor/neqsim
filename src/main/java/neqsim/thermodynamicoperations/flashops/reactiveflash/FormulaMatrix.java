@@ -144,9 +144,9 @@ public class FormulaMatrix implements java.io.Serializable {
   /**
    * Construct formula matrix from explicit data.
    *
-   * @param elementNames   array of element names
+   * @param elementNames array of element names
    * @param componentNames array of component names
-   * @param A              the formula matrix A[NE][NC]
+   * @param A the formula matrix A[NE][NC]
    */
   public FormulaMatrix(String[] elementNames, String[] componentNames, double[][] A) {
     this.elementNames = elementNames.clone();
@@ -205,7 +205,7 @@ public class FormulaMatrix implements java.io.Serializable {
   /**
    * Return a single entry.
    *
-   * @param element   row index
+   * @param element row index
    * @param component column index
    * @return A[element][component]
    */

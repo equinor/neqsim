@@ -30,9 +30,9 @@ public abstract class ThermoException extends java.lang.Exception {
   /**
    * Constructs an <code>ThermoException</code> with the specified detail message.
    *
-   * @param className  Class that exception is raised from
+   * @param className Class that exception is raised from
    * @param methodName Method that exception is raised from
-   * @param msg        specific error message
+   * @param msg specific error message
    */
   public ThermoException(String className, String methodName, String msg) {
     super(className + ":" + methodName + " - " + msg);

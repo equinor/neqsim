@@ -307,8 +307,8 @@ public class PressureBoundaryOptimizer implements Serializable {
   /**
    * Creates a pressure boundary optimizer for a process system.
    *
-   * @param process      the process system to optimize
-   * @param feedStream   the feed stream (inlet boundary)
+   * @param process the process system to optimize
+   * @param feedStream the feed stream (inlet boundary)
    * @param outletStream the outlet stream (outlet boundary)
    */
   public PressureBoundaryOptimizer(ProcessSystem process, StreamInterface feedStream, StreamInterface outletStream) {
@@ -322,8 +322,8 @@ public class PressureBoundaryOptimizer implements Serializable {
   /**
    * Creates a pressure boundary optimizer for a process system.
    *
-   * @param process          the process system to optimize
-   * @param feedStreamName   the name of the feed stream
+   * @param process the process system to optimize
+   * @param feedStreamName the name of the feed stream
    * @param outletStreamName the name of the outlet stream
    */
   public PressureBoundaryOptimizer(ProcessSystem process, String feedStreamName, String outletStreamName) {
@@ -360,10 +360,10 @@ public class PressureBoundaryOptimizer implements Serializable {
    * OptimizationResult result = pbo.findMaxFlowRate(50.0, 100.0, "bara");
    * </pre>
    *
-   * @param process             the process system to optimize
+   * @param process the process system to optimize
    * @param productionOptimizer the pre-configured production optimizer to use
-   * @param feedStream          the feed stream (inlet boundary)
-   * @param outletStream        the outlet stream (outlet boundary)
+   * @param feedStream the feed stream (inlet boundary)
+   * @param outletStream the outlet stream (outlet boundary)
    */
   public PressureBoundaryOptimizer(ProcessSystem process, ProductionOptimizer productionOptimizer,
       StreamInterface feedStream, StreamInterface outletStream) {
@@ -382,10 +382,10 @@ public class PressureBoundaryOptimizer implements Serializable {
    * equipment utilization limits already defined.
    * </p>
    *
-   * @param process             the process system to optimize
+   * @param process the process system to optimize
    * @param productionOptimizer the pre-configured production optimizer to use
-   * @param feedStreamName      the name of the feed stream
-   * @param outletStreamName    the name of the outlet stream
+   * @param feedStreamName the name of the feed stream
+   * @param outletStreamName the name of the outlet stream
    */
   public PressureBoundaryOptimizer(ProcessSystem process, ProductionOptimizer productionOptimizer,
       String feedStreamName, String outletStreamName) {
@@ -399,7 +399,7 @@ public class PressureBoundaryOptimizer implements Serializable {
   /**
    * Finds a stream by name in the process.
    *
-   * @param process    the process system
+   * @param process the process system
    * @param streamName the stream name
    * @return the stream interface
    */
@@ -473,9 +473,9 @@ public class PressureBoundaryOptimizer implements Serializable {
    * <li>All compressors are within operating envelope (surge, stonewall)</li>
    * </ul>
    *
-   * @param inletPressure        the inlet pressure boundary condition
+   * @param inletPressure the inlet pressure boundary condition
    * @param targetOutletPressure the target outlet pressure boundary condition
-   * @param pressureUnit         the pressure unit (e.g., "bara", "barg")
+   * @param pressureUnit the pressure unit (e.g., "bara", "barg")
    * @return optimization result with max flow rate and equipment utilization
    */
   public OptimizationResult findMaxFlowRate(double inletPressure, double targetOutletPressure, String pressureUnit) {
@@ -531,8 +531,8 @@ public class PressureBoundaryOptimizer implements Serializable {
    * Creates an outlet pressure constraint.
    *
    * @param targetPressure the target outlet pressure
-   * @param pressureUnit   the pressure unit
-   * @param tolerance      the relative tolerance
+   * @param pressureUnit the pressure unit
+   * @param tolerance the relative tolerance
    * @return the optimization constraint
    */
   private OptimizationConstraint createOutletPressureConstraint(double targetPressure, String pressureUnit,
@@ -603,9 +603,9 @@ public class PressureBoundaryOptimizer implements Serializable {
    * outlet pressure (column) combination.
    * </p>
    *
-   * @param inletPressures  array of inlet pressures to evaluate
+   * @param inletPressures array of inlet pressures to evaluate
    * @param outletPressures array of outlet pressures to evaluate
-   * @param pressureUnit    the pressure unit
+   * @param pressureUnit the pressure unit
    * @return lift curve table with flow rates and power data
    */
   public LiftCurveTable generateLiftCurveTable(double[] inletPressures, double[] outletPressures, String pressureUnit) {
@@ -646,9 +646,9 @@ public class PressureBoundaryOptimizer implements Serializable {
   /**
    * Generates a capacity curve at fixed inlet pressure.
    *
-   * @param inletPressure   the inlet pressure
+   * @param inletPressure the inlet pressure
    * @param outletPressures array of outlet pressures to evaluate
-   * @param pressureUnit    the pressure unit
+   * @param pressureUnit the pressure unit
    * @return array of max flow rates for each outlet pressure
    */
   public double[] generateCapacityCurve(double inletPressure, double[] outletPressures, String pressureUnit) {
@@ -670,10 +670,10 @@ public class PressureBoundaryOptimizer implements Serializable {
   /**
    * Finds the operating point that minimizes total compressor power for given pressure boundaries.
    *
-   * @param inletPressure        the inlet pressure
+   * @param inletPressure the inlet pressure
    * @param targetOutletPressure the target outlet pressure
-   * @param pressureUnit         the pressure unit
-   * @param targetFlowRate       the target flow rate to achieve
+   * @param pressureUnit the pressure unit
+   * @param targetFlowRate the target flow rate to achieve
    * @return optimization result
    */
   public OptimizationResult findMinimumPowerOperatingPoint(double inletPressure, double targetOutletPressure,
@@ -940,14 +940,14 @@ public class PressureBoundaryOptimizer implements Serializable {
     /**
      * Creates a lift curve table.
      *
-     * @param tableName       the table name
-     * @param inletPressures  inlet pressure values
+     * @param tableName the table name
+     * @param inletPressures inlet pressure values
      * @param outletPressures outlet pressure values
-     * @param flowRates       2D array of flow rates [inlet][outlet]
-     * @param powers          2D array of power values [inlet][outlet]
-     * @param bottlenecks     2D array of bottleneck equipment names
-     * @param pressureUnit    the pressure unit
-     * @param rateUnit        the rate unit
+     * @param flowRates 2D array of flow rates [inlet][outlet]
+     * @param powers 2D array of power values [inlet][outlet]
+     * @param bottlenecks 2D array of bottleneck equipment names
+     * @param pressureUnit the pressure unit
+     * @param rateUnit the rate unit
      */
     public LiftCurveTable(String tableName, double[] inletPressures, double[] outletPressures, double[][] flowRates,
 	double[][] powers, String[][] bottlenecks, String pressureUnit, String rateUnit) {
@@ -1007,7 +1007,7 @@ public class PressureBoundaryOptimizer implements Serializable {
     /**
      * Gets the flow rate at a specific inlet/outlet index.
      *
-     * @param inletIndex  the inlet pressure index
+     * @param inletIndex the inlet pressure index
      * @param outletIndex the outlet pressure index
      * @return the flow rate
      */
@@ -1018,7 +1018,7 @@ public class PressureBoundaryOptimizer implements Serializable {
     /**
      * Gets the power at a specific inlet/outlet index.
      *
-     * @param inletIndex  the inlet pressure index
+     * @param inletIndex the inlet pressure index
      * @param outletIndex the outlet pressure index
      * @return the power in kW
      */
@@ -1029,7 +1029,7 @@ public class PressureBoundaryOptimizer implements Serializable {
     /**
      * Gets the bottleneck equipment at a specific inlet/outlet index.
      *
-     * @param inletIndex  the inlet pressure index
+     * @param inletIndex the inlet pressure index
      * @param outletIndex the outlet pressure index
      * @return the bottleneck equipment name
      */

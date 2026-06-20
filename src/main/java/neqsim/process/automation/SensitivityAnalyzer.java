@@ -153,10 +153,10 @@ public class SensitivityAnalyzer {
    * underlying process is re-run via {@link ProcessAutomation#run()} after each perturbation and is restored to its
    * original value afterwards.
    *
-   * @param inputAddress  dot-notation address of the input variable (must be an INPUT-type variable)
-   * @param inputUnit     unit string for the input value, e.g. "bara"; may be null or empty for default
+   * @param inputAddress dot-notation address of the input variable (must be an INPUT-type variable)
+   * @param inputUnit unit string for the input value, e.g. "bara"; may be null or empty for default
    * @param outputAddress dot-notation address of the output variable
-   * @param outputUnit    unit string for the output value, e.g. "kW"; may be null or empty for default
+   * @param outputUnit unit string for the output value, e.g. "kW"; may be null or empty for default
    * @return ∂(output)/∂(input) in {@code outputUnit / inputUnit}; returns {@link Double#NaN} when either probe failed
    */
   public double partial(String inputAddress, String inputUnit, String outputAddress, String outputUnit) {
@@ -206,10 +206,10 @@ public class SensitivityAnalyzer {
    * Computes the gradient ∇y of a single output with respect to a list of inputs. Each input is perturbed independently
    * with the original values restored between probes.
    *
-   * @param outputAddress  dot-notation address of the output variable
-   * @param outputUnit     unit string for the output value; may be null or empty for default
+   * @param outputAddress dot-notation address of the output variable
+   * @param outputUnit unit string for the output value; may be null or empty for default
    * @param inputAddresses non-null, non-empty list of input addresses
-   * @param inputUnit      unit string applied to all input values; may be null or empty for default
+   * @param inputUnit unit string applied to all input values; may be null or empty for default
    * @return ordered map keyed by input address with ∂y/∂x in each entry
    */
   public Map<String, Double> gradient(String outputAddress, String outputUnit, List<String> inputAddresses,
@@ -229,9 +229,9 @@ public class SensitivityAnalyzer {
    * inputs.
    *
    * @param outputAddresses non-null, non-empty list of output addresses
-   * @param outputUnit      unit string applied to all output values; may be null or empty for default
-   * @param inputAddresses  non-null, non-empty list of input addresses
-   * @param inputUnit       unit string applied to all input values; may be null or empty for default
+   * @param outputUnit unit string applied to all output values; may be null or empty for default
+   * @param inputAddresses non-null, non-empty list of input addresses
+   * @param inputUnit unit string applied to all input values; may be null or empty for default
    * @return Jacobian matrix of shape {@code [outputs.size()][inputs.size()]}
    */
   public double[][] jacobian(List<String> outputAddresses, String outputUnit, List<String> inputAddresses,
@@ -291,12 +291,12 @@ public class SensitivityAnalyzer {
    * Returns a JSON representation of a gradient including the schema version, output address, input addresses and
    * computed derivatives. Useful as a stable agent handoff format.
    *
-   * @param outputAddress  dot-notation address of the output variable
-   * @param outputUnit     unit string for the output value; may be null or empty for default
+   * @param outputAddress dot-notation address of the output variable
+   * @param outputUnit unit string for the output value; may be null or empty for default
    * @param inputAddresses non-null, non-empty list of input addresses
-   * @param inputUnit      unit string applied to all input values; may be null or empty for default
+   * @param inputUnit unit string applied to all input values; may be null or empty for default
    * @return JSON string with keys {@code schemaVersion}, {@code mode}, {@code output}, {@code outputUnit},
-   *         {@code inputUnit}, and {@code gradient}
+   * {@code inputUnit}, and {@code gradient}
    */
   public String gradientAsJson(String outputAddress, String outputUnit, List<String> inputAddresses, String inputUnit) {
     Map<String, Double> g = gradient(outputAddress, outputUnit, inputAddresses, inputUnit);
@@ -320,12 +320,12 @@ public class SensitivityAnalyzer {
    * Returns a JSON representation of a Jacobian.
    *
    * @param outputAddresses non-null, non-empty list of output addresses
-   * @param outputUnit      unit string applied to all output values; may be null or empty for default
-   * @param inputAddresses  non-null, non-empty list of input addresses
-   * @param inputUnit       unit string applied to all input values; may be null or empty for default
+   * @param outputUnit unit string applied to all output values; may be null or empty for default
+   * @param inputAddresses non-null, non-empty list of input addresses
+   * @param inputUnit unit string applied to all input values; may be null or empty for default
    * @return JSON string with keys {@code schemaVersion}, {@code mode}, {@code outputs}, {@code inputs},
-   *         {@code outputUnit}, {@code inputUnit}, and {@code jacobian} (a 2D array indexed as
-   *         {@code [outputIndex][inputIndex]})
+   * {@code outputUnit}, {@code inputUnit}, and {@code jacobian} (a 2D array indexed as
+   * {@code [outputIndex][inputIndex]})
    */
   public String jacobianAsJson(List<String> outputAddresses, String outputUnit, List<String> inputAddresses,
       String inputUnit) {

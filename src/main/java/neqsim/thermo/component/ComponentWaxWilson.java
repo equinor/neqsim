@@ -25,10 +25,10 @@ public class ComponentWaxWilson extends ComponentSolid {
    * Constructor for ComponentWaxWilson.
    * </p>
    *
-   * @param name         Name of component.
-   * @param moles        Total number of moles of component.
+   * @param name Name of component.
+   * @param moles Total number of moles of component.
    * @param molesInPhase Number of moles in phase.
-   * @param compIndex    Index number of component in phase object component array.
+   * @param compIndex Index number of component in phase object component array.
    */
   public ComponentWaxWilson(String name, double moles, double molesInPhase, int compIndex) {
     super(name, moles, molesInPhase, compIndex);
@@ -121,8 +121,8 @@ public class ComponentWaxWilson extends ComponentSolid {
    * </p>
    *
    * @param phase1 a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param comp1  a int
-   * @param comp2  a int
+   * @param comp1 a int
+   * @param comp2 a int
    * @return a double
    */
   public double getCharEnergyParamter(PhaseInterface phase1, int comp1, int comp2) {

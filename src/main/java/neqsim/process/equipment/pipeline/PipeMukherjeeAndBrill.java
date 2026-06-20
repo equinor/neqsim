@@ -182,7 +182,7 @@ public class PipeMukherjeeAndBrill extends Pipeline {
   /**
    * Constructor with name and inlet stream.
    *
-   * @param name     equipment name
+   * @param name equipment name
    * @param inStream inlet stream
    */
   public PipeMukherjeeAndBrill(String name, StreamInterface inStream) {
@@ -251,9 +251,9 @@ public class PipeMukherjeeAndBrill extends Pipeline {
   /**
    * Calculate pressure drop for a single pipe segment using the Mukherjee-Brill method.
    *
-   * @param sys       thermodynamic system at segment conditions
+   * @param sys thermodynamic system at segment conditions
    * @param segLength segment length in meters
-   * @param segElev   segment elevation change in meters (positive = upward)
+   * @param segElev segment elevation change in meters (positive = upward)
    * @return pressure drop in bar
    */
   private double calcSegmentPressureDrop(SystemInterface sys, double segLength, double segElev) {
@@ -380,11 +380,11 @@ public class PipeMukherjeeAndBrill extends Pipeline {
    * properties.
    * </p>
    *
-   * @param vSl   superficial liquid velocity in m/s
-   * @param vSg   superficial gas velocity in m/s
-   * @param rhoL  liquid density in kg/m3
-   * @param rhoG  gas density in kg/m3
-   * @param muL   liquid viscosity in Pa.s
+   * @param vSl superficial liquid velocity in m/s
+   * @param vSg superficial gas velocity in m/s
+   * @param rhoL liquid density in kg/m3
+   * @param rhoG gas density in kg/m3
+   * @param muL liquid viscosity in Pa.s
    * @param sigma surface tension in N/m
    * @param theta pipe inclination angle in radians
    * @return identified flow pattern
@@ -437,10 +437,10 @@ public class PipeMukherjeeAndBrill extends Pipeline {
    * numbers and the pipe inclination angle.
    * </p>
    *
-   * @param nLv     liquid velocity number
-   * @param nGv     gas velocity number
-   * @param nL      liquid viscosity number
-   * @param theta   pipe inclination angle in radians
+   * @param nLv liquid velocity number
+   * @param nGv gas velocity number
+   * @param nL liquid viscosity number
+   * @param theta pipe inclination angle in radians
    * @param lambdaL no-slip liquid fraction
    * @return predicted liquid holdup (0 to 1)
    */

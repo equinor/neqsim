@@ -73,7 +73,7 @@ public class PSDValve extends ThrottlingValve {
   /**
    * Constructor for PSDValve.
    *
-   * @param name        name of PSD valve
+   * @param name name of PSD valve
    * @param inletStream inlet stream to valve
    */
   public PSDValve(String name, StreamInterface inletStream) {

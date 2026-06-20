@@ -104,7 +104,7 @@ public class TurboExpanderSealGasEnvelope implements Serializable {
    * run so the streams and speed reflect the operating point.
    *
    * @return {@code true} if the operating point is mechanically allowable (thrust within bearing capacity, heater duty
-   *         within rating and critical-speed margin satisfied)
+   * within rating and critical-speed margin satisfied)
    */
   public boolean evaluate() {
     calcAxialThrust();
@@ -165,7 +165,7 @@ public class TurboExpanderSealGasEnvelope implements Serializable {
    * Compute the first-critical-speed separation margin at the operating speed.
    *
    * @return the separation margin (fraction); positive means the operating speed is sufficiently above the first
-   *         critical speed
+   * critical speed
    */
   public double calcCriticalSpeedMargin() {
     double speed = maxContinuousSpeed;
@@ -291,7 +291,7 @@ public class TurboExpanderSealGasEnvelope implements Serializable {
   /**
    * Set the effective expander and compressor thrust-balance areas.
    *
-   * @param expanderArea   the effective expander thrust area in m^2
+   * @param expanderArea the effective expander thrust area in m^2
    * @param compressorArea the effective compressor thrust area in m^2
    */
   public void setThrustAreas(double expanderArea, double compressorArea) {

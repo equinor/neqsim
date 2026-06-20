@@ -68,15 +68,14 @@ public class ChemicalInteractionRule implements Serializable {
   /**
    * Constructs a rule.
    *
-   * @param chemical1Type       type of operand 1 (or wildcard {@code *})
+   * @param chemical1Type type of operand 1 (or wildcard {@code *})
    * @param chemical1Ingredient ingredient family of operand 1 (or wildcard)
-   * @param chemical2Type       type of operand 2 (or wildcard)
+   * @param chemical2Type type of operand 2 (or wildcard)
    * @param chemical2Ingredient ingredient family of operand 2 (or wildcard)
-   * @param condition           free-text condition tag (e.g. {@code co_injection}, {@code produced_water},
-   *                            {@code operating})
-   * @param severity            severity classification
-   * @param mechanism           description of the underlying mechanism
-   * @param mitigation          recommended mitigation
+   * @param condition free-text condition tag (e.g. {@code co_injection}, {@code produced_water}, {@code operating})
+   * @param severity severity classification
+   * @param mechanism description of the underlying mechanism
+   * @param mitigation recommended mitigation
    */
   public ChemicalInteractionRule(String chemical1Type, String chemical1Ingredient, String chemical2Type,
       String chemical2Ingredient, String condition, Severity severity, String mechanism, String mitigation) {
@@ -180,11 +179,11 @@ public class ChemicalInteractionRule implements Serializable {
   /**
    * Returns true if this rule's environment operand matches the supplied environment fields.
    *
-   * @param temperatureC   operating temperature in Celsius
-   * @param calciumMgL     calcium concentration in mg/L
-   * @param ironMgL        iron concentration in mg/L
+   * @param temperatureC operating temperature in Celsius
+   * @param calciumMgL calcium concentration in mg/L
+   * @param ironMgL iron concentration in mg/L
    * @param bicarbonateMgL bicarbonate concentration in mg/L
-   * @param material       material identifier (e.g. {@code carbon_steel}, {@code 316L})
+   * @param material material identifier (e.g. {@code carbon_steel}, {@code 316L})
    * @return true if the environment matches
    */
   public boolean environmentMatches(double temperatureC, double calciumMgL, double ironMgL, double bicarbonateMgL,
@@ -222,8 +221,8 @@ public class ChemicalInteractionRule implements Serializable {
   /**
    * Parses a threshold spec like {@code "Ca>2000mgL"} or {@code "T>80C"}.
    *
-   * @param spec  specification string
-   * @param key   expected key prefix
+   * @param spec specification string
+   * @param key expected key prefix
    * @param value the actual numeric value to test
    * @return true if the threshold is exceeded
    */
@@ -260,9 +259,9 @@ public class ChemicalInteractionRule implements Serializable {
   /**
    * Tests whether a chemical matches an operand (type and ingredient with wildcard support).
    *
-   * @param typeSpec       type token from the rule
+   * @param typeSpec type token from the rule
    * @param ingredientSpec ingredient token from the rule
-   * @param c              chemical to test
+   * @param c chemical to test
    * @return true on match
    */
   private static boolean matchOperand(String typeSpec, String ingredientSpec, ProductionChemical c) {

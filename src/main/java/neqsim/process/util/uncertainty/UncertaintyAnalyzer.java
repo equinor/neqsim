@@ -77,7 +77,7 @@ public class UncertaintyAnalyzer {
   /**
    * Adds an input variable with uncertainty.
    *
-   * @param variableName      the input variable name
+   * @param variableName the input variable name
    * @param standardDeviation the standard deviation
    */
   public void addInputUncertainty(String variableName, double standardDeviation) {

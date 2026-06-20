@@ -80,7 +80,7 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
   /**
    * Constructor for Splitter.
    *
-   * @param name     name of splitter
+   * @param name name of splitter
    * @param inStream input stream
    */
   public Splitter(String name, StreamInterface inStream) {
@@ -116,8 +116,8 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
    * Constructor for Splitter.
    * </p>
    *
-   * @param name             a {@link java.lang.String} object
-   * @param inletStream      a {@link neqsim.process.equipment.stream.StreamInterface} object
+   * @param name a {@link java.lang.String} object
+   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    * @param number_of_splits an int
    */
   public Splitter(String name, StreamInterface inletStream, int number_of_splits) {
@@ -167,7 +167,7 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
    * </p>
    *
    * @param flowRates an array of type double
-   * @param flowUnit  a {@link java.lang.String} object
+   * @param flowUnit a {@link java.lang.String} object
    */
   public void setFlowRates(double[] flowRates, String flowUnit) {
     if (flowRates.length != splitNumber) {

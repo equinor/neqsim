@@ -52,9 +52,9 @@ public interface AlarmActionHandler extends Serializable {
    * Creates a handler that activates process logic when alarm conditions are met.
    *
    * @param sourceName the alarm source name to match (e.g., "PT-101")
-   * @param level      the alarm level to match (HIHI, HI, LO, LOLO)
-   * @param eventType  the event type to match (ACTIVATED, CLEARED, ACKNOWLEDGED)
-   * @param logic      the process logic to activate
+   * @param level the alarm level to match (HIHI, HI, LO, LOLO)
+   * @param eventType the event type to match (ACTIVATED, CLEARED, ACKNOWLEDGED)
+   * @param logic the process logic to activate
    * @return alarm action handler
    */
   static AlarmActionHandler activateLogic(String sourceName, AlarmLevel level, AlarmEventType eventType,
@@ -87,7 +87,7 @@ public interface AlarmActionHandler extends Serializable {
    * Creates a handler that activates process logic when HIHI alarm is activated.
    *
    * @param sourceName the alarm source name to match
-   * @param logic      the process logic to activate
+   * @param logic the process logic to activate
    * @return alarm action handler
    */
   static AlarmActionHandler activateLogicOnHIHI(String sourceName, ProcessLogic logic) {
@@ -98,7 +98,7 @@ public interface AlarmActionHandler extends Serializable {
    * Creates a handler that activates process logic when LOLO alarm is activated.
    *
    * @param sourceName the alarm source name to match
-   * @param logic      the process logic to activate
+   * @param logic the process logic to activate
    * @return alarm action handler
    */
   static AlarmActionHandler activateLogicOnLOLO(String sourceName, ProcessLogic logic) {

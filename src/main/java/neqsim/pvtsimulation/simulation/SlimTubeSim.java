@@ -28,7 +28,7 @@ public class SlimTubeSim extends BasePVTsimulation {
    * Constructor for SlimTubeSim.
    * </p>
    *
-   * @param tempSystem   a {@link neqsim.thermo.system.SystemInterface} object
+   * @param tempSystem a {@link neqsim.thermo.system.SystemInterface} object
    * @param injectionGas a {@link neqsim.thermo.system.SystemInterface} object
    */
   public SlimTubeSim(SystemInterface tempSystem, SystemInterface injectionGas) {

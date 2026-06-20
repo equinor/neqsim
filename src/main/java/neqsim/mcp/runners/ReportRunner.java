@@ -119,9 +119,9 @@ public final class ReportRunner {
    * Generates a Markdown report.
    *
    * @param reportType the report type
-   * @param title      the report title
-   * @param author     the author
-   * @param data       the simulation data
+   * @param title the report title
+   * @param author the author
+   * @param data the simulation data
    * @return Markdown string
    */
   private static String generateMarkdown(String reportType, String title, String author, JsonObject data) {
@@ -185,9 +185,9 @@ public final class ReportRunner {
   /**
    * Appends a flat JSON object as a Markdown table.
    *
-   * @param md          the StringBuilder
-   * @param obj         the JSON object
-   * @param keyHeader   the key column header
+   * @param md the StringBuilder
+   * @param obj the JSON object
+   * @param keyHeader the key column header
    * @param valueHeader the value column header
    */
   private static void appendJsonAsTable(StringBuilder md, JsonObject obj, String keyHeader, String valueHeader) {
@@ -215,7 +215,7 @@ public final class ReportRunner {
   /**
    * Extracts structured tables from simulation data.
    *
-   * @param data       the simulation data
+   * @param data the simulation data
    * @param reportType the report type
    * @return JSON array of table objects
    */
@@ -244,9 +244,9 @@ public final class ReportRunner {
   /**
    * Recursively extracts flat numeric values from JSON into table rows.
    *
-   * @param obj    the JSON object
+   * @param obj the JSON object
    * @param prefix the key prefix
-   * @param rows   the rows array to populate
+   * @param rows the rows array to populate
    */
   private static void extractFlatValues(JsonObject obj, String prefix, JsonArray rows) {
     for (Map.Entry<String, JsonElement> entry : obj.entrySet()) {
@@ -314,7 +314,7 @@ public final class ReportRunner {
   /**
    * Extracts chart-ready data arrays from simulation results.
    *
-   * @param data       the simulation data
+   * @param data the simulation data
    * @param reportType the report type
    * @return JSON array of chart data objects
    */
@@ -330,7 +330,7 @@ public final class ReportRunner {
   /**
    * Recursively finds arrays of numbers that could be plotted.
    *
-   * @param obj    the JSON object
+   * @param obj the JSON object
    * @param prefix the key prefix
    * @param charts the charts array to populate
    */
@@ -395,7 +395,7 @@ public final class ReportRunner {
   /**
    * Creates an error JSON string.
    *
-   * @param code    the error code
+   * @param code the error code
    * @param message the error message
    * @return error JSON
    */

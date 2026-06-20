@@ -84,7 +84,7 @@ public class GasTurbineDriver extends DriverCurveBase {
   /**
    * Constructor with rated power and efficiency.
    *
-   * @param ratedPowerKW     rated power in kW at ISO conditions
+   * @param ratedPowerKW rated power in kW at ISO conditions
    * @param designEfficiency design efficiency at rated conditions (0-1)
    */
   public GasTurbineDriver(double ratedPowerKW, double designEfficiency) {
@@ -96,8 +96,8 @@ public class GasTurbineDriver extends DriverCurveBase {
   /**
    * Constructor with full parameters.
    *
-   * @param ratedPowerKW     rated power in kW at ISO conditions
-   * @param ratedSpeedRPM    rated speed in RPM
+   * @param ratedPowerKW rated power in kW at ISO conditions
+   * @param ratedSpeedRPM rated speed in RPM
    * @param designEfficiency design efficiency at rated conditions (0-1)
    */
   public GasTurbineDriver(double ratedPowerKW, double ratedSpeedRPM, double designEfficiency) {
@@ -203,7 +203,7 @@ public class GasTurbineDriver extends DriverCurveBase {
   /**
    * Gets the heat rate at the specified operating point.
    *
-   * @param speed        operating speed in RPM
+   * @param speed operating speed in RPM
    * @param loadFraction load as fraction of available power
    * @return heat rate in kJ/kWh
    */

@@ -15,10 +15,10 @@ public class ViscosityDataPoint {
   /**
    * Create a viscosity data point.
    *
-   * @param pressure    pressure in bara
+   * @param pressure pressure in bara
    * @param temperature temperature in K
-   * @param viscosity   dynamic viscosity in Pa s
-   * @param phaseName   phase name: gas, oil, liquid, aqueous, or water
+   * @param viscosity dynamic viscosity in Pa s
+   * @param phaseName phase name: gas, oil, liquid, aqueous, or water
    * @throws IllegalArgumentException if phaseName is null or empty
    */
   public ViscosityDataPoint(double pressure, double temperature, double viscosity, String phaseName) {

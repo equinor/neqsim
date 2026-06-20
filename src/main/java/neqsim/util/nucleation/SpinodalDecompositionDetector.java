@@ -276,7 +276,7 @@ public class SpinodalDecompositionDetector {
    * significantly supersaturated relative to the liquid, the system may be inside or near the spinodal.
    * </p>
    *
-   * @param phase   the phase to analyze
+   * @param phase the phase to analyze
    * @param numComp number of components
    */
   private void analyzeFugacityBased(PhaseInterface phase, int numComp) {
@@ -333,7 +333,7 @@ public class SpinodalDecompositionDetector {
    * </p>
    *
    * @param matrix the symmetric matrix
-   * @param n      matrix dimension
+   * @param n matrix dimension
    * @return the minimum eigenvalue
    */
   private double findMinEigenvalue(double[][] matrix, int n) {

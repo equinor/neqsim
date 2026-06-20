@@ -31,8 +31,8 @@ public final class FluxLimiter {
    * r = (φ_i - φ_{i-1}) / (φ_{i+1} - φ_i) for positive flow
    * </p>
    *
-   * @param phiUpstream   value at upstream node (i-1)
-   * @param phiCenter     value at center node (i)
+   * @param phiUpstream value at upstream node (i-1)
+   * @param phiCenter value at center node (i)
    * @param phiDownstream value at downstream node (i+1)
    * @return gradient ratio r
    */
@@ -160,7 +160,7 @@ public final class FluxLimiter {
    * Get the flux limiter value for a given advection scheme.
    *
    * @param scheme the advection scheme
-   * @param r      gradient ratio
+   * @param r gradient ratio
    * @return limiter value
    */
   public static double getLimiterValue(AdvectionScheme scheme, double r) {

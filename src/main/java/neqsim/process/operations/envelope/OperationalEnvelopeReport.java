@@ -65,10 +65,10 @@ public final class OperationalEnvelopeReport implements Serializable {
   /**
    * Creates a report.
    *
-   * @param timestampMillis       evaluation timestamp in milliseconds
+   * @param timestampMillis evaluation timestamp in milliseconds
    * @param evaluationTimeSeconds wall-clock evaluation time in seconds
-   * @param margins               ranked operating margins
-   * @param tripPredictions       trip predictions
+   * @param margins ranked operating margins
+   * @param tripPredictions trip predictions
    * @param mitigationSuggestions mitigation suggestions
    */
   public OperationalEnvelopeReport(long timestampMillis, double evaluationTimeSeconds, List<OperationalMargin> margins,
@@ -299,8 +299,8 @@ public final class OperationalEnvelopeReport implements Serializable {
   /**
    * Builds a short report summary.
    *
-   * @param status      overall status
-   * @param margins     ranked margins
+   * @param status overall status
+   * @param margins ranked margins
    * @param predictions trip predictions
    * @return summary text
    */

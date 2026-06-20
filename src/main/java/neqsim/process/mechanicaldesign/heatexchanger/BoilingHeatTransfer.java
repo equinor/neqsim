@@ -75,19 +75,19 @@ public final class BoilingHeatTransfer {
    * <li>S = suppression factor from Re_tp</li>
    * </ul>
    *
-   * @param massFlux           total mass flux G (kg/(m2*s))
-   * @param vaporQuality       local vapor quality x (0 to 1)
-   * @param tubeID             tube inner diameter (m)
-   * @param liquidDensity      liquid density (kg/m3)
-   * @param vaporDensity       vapor density (kg/m3)
-   * @param liquidViscosity    liquid viscosity (Pa*s)
-   * @param vaporViscosity     vapor viscosity (Pa*s)
-   * @param liquidCp           liquid heat capacity (J/(kg*K))
+   * @param massFlux total mass flux G (kg/(m2*s))
+   * @param vaporQuality local vapor quality x (0 to 1)
+   * @param tubeID tube inner diameter (m)
+   * @param liquidDensity liquid density (kg/m3)
+   * @param vaporDensity vapor density (kg/m3)
+   * @param liquidViscosity liquid viscosity (Pa*s)
+   * @param vaporViscosity vapor viscosity (Pa*s)
+   * @param liquidCp liquid heat capacity (J/(kg*K))
    * @param liquidConductivity liquid thermal conductivity (W/(m*K))
-   * @param surfaceTension     surface tension (N/m)
+   * @param surfaceTension surface tension (N/m)
    * @param heatOfVaporization latent heat of vaporization (J/kg)
-   * @param wallSuperheat      wall superheat dT_sat = T_wall - T_sat (K)
-   * @param satPressureDiff    pressure difference corresponding to dT_sat (Pa)
+   * @param wallSuperheat wall superheat dT_sat = T_wall - T_sat (K)
+   * @param satPressureDiff pressure difference corresponding to dT_sat (Pa)
    * @return local two-phase boiling HTC (W/(m2*K))
    */
   public static double calcChenHTC(double massFlux, double vaporQuality, double tubeID, double liquidDensity,
@@ -149,15 +149,15 @@ public final class BoilingHeatTransfer {
    * where Bo is the boiling number q/(G * h_fg).
    * </p>
    *
-   * @param massFlux           total mass flux G (kg/(m2*s))
-   * @param vaporQuality       local vapor quality x (0 to 1)
-   * @param tubeID             tube inner diameter (m)
-   * @param liquidDensity      liquid density (kg/m3)
-   * @param vaporDensity       vapor density (kg/m3)
-   * @param liquidViscosity    liquid viscosity (Pa*s)
-   * @param liquidCp           liquid heat capacity (J/(kg*K))
+   * @param massFlux total mass flux G (kg/(m2*s))
+   * @param vaporQuality local vapor quality x (0 to 1)
+   * @param tubeID tube inner diameter (m)
+   * @param liquidDensity liquid density (kg/m3)
+   * @param vaporDensity vapor density (kg/m3)
+   * @param liquidViscosity liquid viscosity (Pa*s)
+   * @param liquidCp liquid heat capacity (J/(kg*K))
    * @param liquidConductivity liquid thermal conductivity (W/(m*K))
-   * @param heatFlux           heat flux at tube wall (W/m2)
+   * @param heatFlux heat flux at tube wall (W/m2)
    * @param heatOfVaporization latent heat of vaporization (J/kg)
    * @return local two-phase boiling HTC (W/(m2*K))
    */
@@ -201,17 +201,17 @@ public final class BoilingHeatTransfer {
    * boiling (x = 0), uses the nucleate boiling only term.
    * </p>
    *
-   * @param massFlux           total mass flux G (kg/(m2*s))
-   * @param vaporQuality       local vapor quality x (0 to 1)
-   * @param tubeID             tube inner diameter (m)
-   * @param liquidDensity      liquid density (kg/m3)
-   * @param vaporDensity       vapor density (kg/m3)
-   * @param liquidViscosity    liquid viscosity (Pa*s)
-   * @param liquidCp           liquid heat capacity (J/(kg*K))
+   * @param massFlux total mass flux G (kg/(m2*s))
+   * @param vaporQuality local vapor quality x (0 to 1)
+   * @param tubeID tube inner diameter (m)
+   * @param liquidDensity liquid density (kg/m3)
+   * @param vaporDensity vapor density (kg/m3)
+   * @param liquidViscosity liquid viscosity (Pa*s)
+   * @param liquidCp liquid heat capacity (J/(kg*K))
    * @param liquidConductivity liquid thermal conductivity (W/(m*K))
-   * @param heatFlux           heat flux (W/m2)
+   * @param heatFlux heat flux (W/m2)
    * @param heatOfVaporization latent heat (J/kg)
-   * @param isHorizontal       true for horizontal tube orientation
+   * @param isHorizontal true for horizontal tube orientation
    * @return corrected boiling HTC (W/(m2*K))
    */
   public static double calcGungorWintertonCorrectedHTC(double massFlux, double vaporQuality, double tubeID,
@@ -245,11 +245,11 @@ public final class BoilingHeatTransfer {
    * X_tt = ((1 - x) / x) ^ 0.9 * (rho_v / rho_l) ^ 0.5 * (mu_l / mu_v) ^ 0.1
    * </pre>
    *
-   * @param x               vapor quality (0 to 1)
-   * @param liquidDensity   liquid density (kg/m3)
-   * @param vaporDensity    vapor density (kg/m3)
+   * @param x vapor quality (0 to 1)
+   * @param liquidDensity liquid density (kg/m3)
+   * @param vaporDensity vapor density (kg/m3)
    * @param liquidViscosity liquid viscosity (Pa*s)
-   * @param vaporViscosity  vapor viscosity (Pa*s)
+   * @param vaporViscosity vapor viscosity (Pa*s)
    * @return Martinelli parameter X_tt
    */
   public static double calcMartinelliParameter(double x, double liquidDensity, double vaporDensity,
@@ -320,18 +320,18 @@ public final class BoilingHeatTransfer {
    * Uses the Gungor-Winterton correlation integrated over the quality range with Simpson's rule.
    * </p>
    *
-   * @param massFlux           total mass flux (kg/(m2*s))
-   * @param tubeID             tube inner diameter (m)
-   * @param liquidDensity      liquid density (kg/m3)
-   * @param vaporDensity       vapor density (kg/m3)
-   * @param liquidViscosity    liquid viscosity (Pa*s)
-   * @param liquidCp           liquid heat capacity (J/(kg*K))
+   * @param massFlux total mass flux (kg/(m2*s))
+   * @param tubeID tube inner diameter (m)
+   * @param liquidDensity liquid density (kg/m3)
+   * @param vaporDensity vapor density (kg/m3)
+   * @param liquidViscosity liquid viscosity (Pa*s)
+   * @param liquidCp liquid heat capacity (J/(kg*K))
    * @param liquidConductivity liquid thermal conductivity (W/(m*K))
-   * @param heatFlux           heat flux (W/m2)
+   * @param heatFlux heat flux (W/m2)
    * @param heatOfVaporization latent heat (J/kg)
-   * @param qualityIn          quality at zone inlet (0 to 1)
-   * @param qualityOut         quality at zone outlet (0 to 1)
-   * @param intervals          number of integration intervals (minimum 4, must be even)
+   * @param qualityIn quality at zone inlet (0 to 1)
+   * @param qualityOut quality at zone outlet (0 to 1)
+   * @param intervals number of integration intervals (minimum 4, must be even)
    * @return average boiling HTC over the quality range (W/(m2*K))
    */
   public static double calcAverageHTC(double massFlux, double tubeID, double liquidDensity, double vaporDensity,

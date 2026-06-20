@@ -59,12 +59,12 @@ public class FugacityJacobian implements Serializable {
   /**
    * Constructor for FugacityJacobian.
    *
-   * @param phaseIndex     phase index
-   * @param phaseType      phase type description
-   * @param lnPhi          log fugacity coefficients
-   * @param dlnPhidT       derivatives w.r.t. temperature
-   * @param dlnPhidP       derivatives w.r.t. pressure
-   * @param dlnPhidn       derivatives w.r.t. moles (Jacobian matrix)
+   * @param phaseIndex phase index
+   * @param phaseType phase type description
+   * @param lnPhi log fugacity coefficients
+   * @param dlnPhidT derivatives w.r.t. temperature
+   * @param dlnPhidP derivatives w.r.t. pressure
+   * @param dlnPhidn derivatives w.r.t. moles (Jacobian matrix)
    * @param componentNames component names
    */
   public FugacityJacobian(int phaseIndex, String phaseType, double[] lnPhi, double[] dlnPhidT, double[] dlnPhidP,
@@ -217,7 +217,7 @@ public class FugacityJacobian implements Serializable {
    * For a thermodynamically consistent model: n_i * ∂(ln φ_i)/∂n_j = n_j * ∂(ln φ_j)/∂n_i
    * </p>
    *
-   * @param moles     mole numbers
+   * @param moles mole numbers
    * @param tolerance relative tolerance for symmetry check
    * @return true if consistent within tolerance
    */
@@ -240,9 +240,9 @@ public class FugacityJacobian implements Serializable {
    * Compute directional derivative of ln(φ_i) along a perturbation.
    *
    * @param componentIndex component index
-   * @param deltaT         temperature perturbation
-   * @param deltaP         pressure perturbation
-   * @param deltaN         mole perturbations
+   * @param deltaT temperature perturbation
+   * @param deltaP pressure perturbation
+   * @param deltaN mole perturbations
    * @return directional derivative of ln(φ_i)
    */
   public double directionalDerivative(int componentIndex, double deltaT, double deltaP, double[] deltaN) {

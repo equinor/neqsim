@@ -299,7 +299,7 @@ public class SustainabilityMetrics implements Serializable {
   /**
    * Sets feedstock transport parameters.
    *
-   * @param distanceKm    one-way transport distance in km
+   * @param distanceKm one-way transport distance in km
    * @param tonnesPerYear feedstock tonnage per year
    */
   public void setFeedstockTransport(double distanceKm, double tonnesPerYear) {
@@ -346,8 +346,8 @@ public class SustainabilityMetrics implements Serializable {
   /**
    * Adds a custom emission source.
    *
-   * @param source        emission source type
-   * @param description   description of the emission
+   * @param source emission source type
+   * @param description description of the emission
    * @param tCO2eqPerYear annual CO2-equivalent emissions in tonnes
    */
   public void addEmission(EmissionSource source, String description, double tCO2eqPerYear) {
@@ -569,8 +569,8 @@ public class SustainabilityMetrics implements Serializable {
     /**
      * Creates an emission entry.
      *
-     * @param source        emission source type
-     * @param description   description
+     * @param source emission source type
+     * @param description description
      * @param tCO2eqPerYear annual emissions in tCO2eq
      */
     EmissionEntry(EmissionSource source, String description, double tCO2eqPerYear) {

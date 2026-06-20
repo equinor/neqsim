@@ -185,8 +185,8 @@ public class SURFCostEstimator {
    * Constructor with basic field parameters.
    *
    * @param numberOfWells number of production wells
-   * @param waterDepthM   water depth in meters
-   * @param region        cost estimation region
+   * @param waterDepthM water depth in meters
+   * @param region cost estimation region
    */
   public SURFCostEstimator(int numberOfWells, double waterDepthM, SubseaCostEstimator.Region region) {
     this.numberOfWells = numberOfWells;
@@ -337,9 +337,9 @@ public class SURFCostEstimator {
   /**
    * Calculate cost for a rigid steel pipeline.
    *
-   * @param lengthKm       pipeline length in km
+   * @param lengthKm pipeline length in km
    * @param diameterInches outer diameter in inches
-   * @param label          description label
+   * @param label description label
    * @return total cost in USD
    */
   private double calculateRigidPipelineCost(double lengthKm, double diameterInches, String label) {
@@ -443,9 +443,9 @@ public class SURFCostEstimator {
   /**
    * Get installation cost per meter for pipeline.
    *
-   * @param method         installation method (S-lay, J-lay, Reel-lay)
+   * @param method installation method (S-lay, J-lay, Reel-lay)
    * @param outerDiameterM outer diameter in meters
-   * @param waterDepth     water depth in meters
+   * @param waterDepth water depth in meters
    * @return cost per meter in USD
    */
   private double getInstallationCostPerMeter(String method, double outerDiameterM, double waterDepth) {
@@ -500,13 +500,13 @@ public class SURFCostEstimator {
   /**
    * Add a line item to the cost breakdown.
    *
-   * @param category     SURF category (S, U, R, F)
-   * @param description  item description
-   * @param quantity     quantity
-   * @param unit         unit of measure
-   * @param unitCostUSD  unit cost in USD
+   * @param category SURF category (S, U, R, F)
+   * @param description item description
+   * @param quantity quantity
+   * @param unit unit of measure
+   * @param unitCostUSD unit cost in USD
    * @param totalCostUSD total cost in USD
-   * @param vesselDays   vessel days required
+   * @param vesselDays vessel days required
    */
   private void addLineItem(String category, String description, int quantity, String unit, double unitCostUSD,
       double totalCostUSD, double vesselDays) {

@@ -110,7 +110,7 @@ public class PipeFlowSystem extends neqsim.fluidmechanics.flowsystem.onephaseflo
   /**
    * Applies outlet boundary conditions for the current time step.
    *
-   * @param timeStepIndex   the current time step index
+   * @param timeStepIndex the current time step index
    * @param outletNodeIndex the index of the outlet node
    */
   private void applyOutletBoundaryCondition(int timeStepIndex, int outletNodeIndex) {
@@ -155,7 +155,7 @@ public class PipeFlowSystem extends neqsim.fluidmechanics.flowsystem.onephaseflo
    * </pre>
    *
    * @param totalTime total simulation time in seconds
-   * @param timeStep  time step size in seconds
+   * @param timeStep time step size in seconds
    */
   public void runTransient(double totalTime, double timeStep) {
     runTransient(totalTime, timeStep, 10);
@@ -164,8 +164,8 @@ public class PipeFlowSystem extends neqsim.fluidmechanics.flowsystem.onephaseflo
   /**
    * Runs a transient simulation with constant inlet conditions for a specified duration.
    *
-   * @param totalTime  total simulation time in seconds
-   * @param timeStep   time step size in seconds
+   * @param totalTime total simulation time in seconds
+   * @param timeStep time step size in seconds
    * @param solverType solver type (0=momentum, 1=mass, 10=energy, 20=composition)
    */
   public void runTransient(double totalTime, double timeStep, int solverType) {
@@ -201,7 +201,7 @@ public class PipeFlowSystem extends neqsim.fluidmechanics.flowsystem.onephaseflo
    * </pre>
    *
    * @param totalTime total simulation time in seconds
-   * @param timeStep  time step size in seconds
+   * @param timeStep time step size in seconds
    */
   public void runTransientClosedOutlet(double totalTime, double timeStep) {
     runTransientClosedOutlet(totalTime, timeStep, 10);
@@ -210,8 +210,8 @@ public class PipeFlowSystem extends neqsim.fluidmechanics.flowsystem.onephaseflo
   /**
    * Runs a transient simulation with a closed outlet (blocked pipe).
    *
-   * @param totalTime  total simulation time in seconds
-   * @param timeStep   time step size in seconds
+   * @param totalTime total simulation time in seconds
+   * @param timeStep time step size in seconds
    * @param solverType solver type (0=momentum, 1=mass, 10=energy, 20=composition)
    */
   public void runTransientClosedOutlet(double totalTime, double timeStep, int solverType) {
@@ -246,8 +246,8 @@ public class PipeFlowSystem extends neqsim.fluidmechanics.flowsystem.onephaseflo
    * pipe.runTransientControlledOutletVelocity(600.0, 30.0, 2.5); // Outlet at 2.5 m/s
    * </pre>
    *
-   * @param totalTime      total simulation time in seconds
-   * @param timeStep       time step size in seconds
+   * @param totalTime total simulation time in seconds
+   * @param timeStep time step size in seconds
    * @param outletVelocity controlled outlet velocity in m/s
    */
   public void runTransientControlledOutletVelocity(double totalTime, double timeStep, double outletVelocity) {
@@ -257,10 +257,10 @@ public class PipeFlowSystem extends neqsim.fluidmechanics.flowsystem.onephaseflo
   /**
    * Runs a transient simulation with controlled outlet velocity.
    *
-   * @param totalTime      total simulation time in seconds
-   * @param timeStep       time step size in seconds
+   * @param totalTime total simulation time in seconds
+   * @param timeStep time step size in seconds
    * @param outletVelocity controlled outlet velocity in m/s
-   * @param solverType     solver type (0=momentum, 1=mass, 10=energy, 20=composition)
+   * @param solverType solver type (0=momentum, 1=mass, 10=energy, 20=composition)
    */
   public void runTransientControlledOutletVelocity(double totalTime, double timeStep, double outletVelocity,
       int solverType) {
@@ -299,8 +299,8 @@ public class PipeFlowSystem extends neqsim.fluidmechanics.flowsystem.onephaseflo
    * pipe.runTransientControlledOutletPressure(600.0, 30.0, 50.0); // Outlet at 50 bar
    * </pre>
    *
-   * @param totalTime      total simulation time in seconds
-   * @param timeStep       time step size in seconds
+   * @param totalTime total simulation time in seconds
+   * @param timeStep time step size in seconds
    * @param outletPressure controlled outlet pressure in bar
    */
   public void runTransientControlledOutletPressure(double totalTime, double timeStep, double outletPressure) {
@@ -310,10 +310,10 @@ public class PipeFlowSystem extends neqsim.fluidmechanics.flowsystem.onephaseflo
   /**
    * Runs a transient simulation with controlled outlet pressure.
    *
-   * @param totalTime      total simulation time in seconds
-   * @param timeStep       time step size in seconds
+   * @param totalTime total simulation time in seconds
+   * @param timeStep time step size in seconds
    * @param outletPressure controlled outlet pressure in bar
-   * @param solverType     solver type (0=momentum, 1=mass, 10=energy, 20=composition)
+   * @param solverType solver type (0=momentum, 1=mass, 10=energy, 20=composition)
    */
   public void runTransientControlledOutletPressure(double totalTime, double timeStep, double outletPressure,
       int solverType) {

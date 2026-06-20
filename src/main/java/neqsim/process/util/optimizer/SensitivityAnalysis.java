@@ -94,12 +94,12 @@ public class SensitivityAnalysis implements Serializable {
   /**
    * Defines the parameter to vary.
    *
-   * @param name     descriptive name of the parameter
+   * @param name descriptive name of the parameter
    * @param minValue minimum value of the sweep range
    * @param maxValue maximum value of the sweep range
-   * @param steps    number of evaluation points (inclusive of endpoints)
-   * @param setter   action that applies the current parameter value to a process system copy; use
-   *                 {@link #getCurrentValue()} to get the value inside the setter
+   * @param steps number of evaluation points (inclusive of endpoints)
+   * @param setter action that applies the current parameter value to a process system copy; use
+   * {@link #getCurrentValue()} to get the value inside the setter
    * @return this for chaining
    */
   public SensitivityAnalysis setParameter(String name, double minValue, double maxValue, int steps,
@@ -120,11 +120,11 @@ public class SensitivityAnalysis implements Serializable {
    * avoiding the need to call {@link #getCurrentValue()}.
    * </p>
    *
-   * @param name     descriptive name of the parameter
+   * @param name descriptive name of the parameter
    * @param minValue minimum value of the sweep range
    * @param maxValue maximum value of the sweep range
-   * @param steps    number of evaluation points (inclusive of endpoints)
-   * @param setter   action that receives the process copy and parameter value
+   * @param steps number of evaluation points (inclusive of endpoints)
+   * @param setter action that receives the process copy and parameter value
    * @return this for chaining
    */
   public SensitivityAnalysis setParameter(String name, double minValue, double maxValue, int steps,
@@ -153,7 +153,7 @@ public class SensitivityAnalysis implements Serializable {
   /**
    * Adds an output variable to track during the sweep.
    *
-   * @param name      descriptive name of the output (e.g., "power (kW)")
+   * @param name descriptive name of the output (e.g., "power (kW)")
    * @param extractor function that extracts the output value from a process system after it runs
    * @return this for chaining
    */
@@ -237,10 +237,10 @@ public class SensitivityAnalysis implements Serializable {
     /**
      * Creates a sensitivity result.
      *
-     * @param parameterName   name of varied parameter
+     * @param parameterName name of varied parameter
      * @param parameterValues array of parameter values
-     * @param outputs         map of output name to value arrays
-     * @param succeeded       success flag per step
+     * @param outputs map of output name to value arrays
+     * @param succeeded success flag per step
      */
     SensitivityResult(String parameterName, double[] parameterValues, Map<String, double[]> outputs,
 	boolean[] succeeded) {

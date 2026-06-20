@@ -231,7 +231,7 @@ public class SubseaJumper extends TwoPortEquipment {
   /**
    * Constructor with name and inlet stream.
    *
-   * @param name     equipment name
+   * @param name equipment name
    * @param inStream inlet stream
    */
   public SubseaJumper(String name, StreamInterface inStream) {
@@ -241,9 +241,9 @@ public class SubseaJumper extends TwoPortEquipment {
   /**
    * Create rigid M-shaped jumper.
    *
-   * @param name     jumper name
+   * @param name jumper name
    * @param inStream inlet stream
-   * @param length   jumper length in meters
+   * @param length jumper length in meters
    * @return configured jumper
    */
   public static SubseaJumper createRigidMShape(String name, StreamInterface inStream, double length) {
@@ -257,9 +257,9 @@ public class SubseaJumper extends TwoPortEquipment {
   /**
    * Create flexible static jumper.
    *
-   * @param name     jumper name
+   * @param name jumper name
    * @param inStream inlet stream
-   * @param length   jumper length in meters
+   * @param length jumper length in meters
    * @return configured jumper
    */
   public static SubseaJumper createFlexibleStatic(String name, StreamInterface inStream, double length) {

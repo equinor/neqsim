@@ -105,7 +105,7 @@ public class StreamChemistryAdapter implements Serializable {
    * concentrations this is within a few percent.
    * </p>
    *
-   * @param component     component name (e.g. "Ca++", "Na+", "Cl-", "HCO3-")
+   * @param component component name (e.g. "Ca++", "Na+", "Cl-", "HCO3-")
    * @param molarMassGmol molar mass of the species in g/mol
    * @return concentration in mg/L (0 if no aqueous phase or component absent)
    */
@@ -239,7 +239,7 @@ public class StreamChemistryAdapter implements Serializable {
    * approximation (f = 0.02). Returns 0 if no aqueous phase.
    *
    * @param pipeDiameterM pipe internal diameter in m
-   * @param velocityMs    flow velocity in m/s
+   * @param velocityMs flow velocity in m/s
    * @return wall shear stress in Pa
    */
   public double estimateWallShearStressPa(double pipeDiameterM, double velocityMs) {

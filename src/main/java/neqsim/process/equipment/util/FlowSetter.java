@@ -46,7 +46,7 @@ public class FlowSetter extends TwoPortEquipment {
    * Constructor for FlowSetter.
    * </p>
    *
-   * @param name   a {@link java.lang.String} object
+   * @param name a {@link java.lang.String} object
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public FlowSetter(String name, StreamInterface stream) {
@@ -379,10 +379,10 @@ public class FlowSetter extends TwoPortEquipment {
    * setSeparationPT.
    * </p>
    *
-   * @param pressure    an array of type double
-   * @param unitP       a {@link java.lang.String} object
+   * @param pressure an array of type double
+   * @param unitP a {@link java.lang.String} object
    * @param temperature an array of type double
-   * @param unitT       a {@link java.lang.String} object
+   * @param unitT a {@link java.lang.String} object
    */
   public void setSeparationPT(double[] pressure, String unitP, double[] temperature, String unitT) {
     this.pressure = pressure;

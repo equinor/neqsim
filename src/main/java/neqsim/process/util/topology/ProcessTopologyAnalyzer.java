@@ -81,7 +81,7 @@ public class ProcessTopologyAnalyzer implements Serializable {
     /**
      * Creates an equipment node.
      *
-     * @param name          equipment name
+     * @param name equipment name
      * @param equipmentType type of equipment
      */
     public EquipmentNode(String name, String equipmentType) {
@@ -181,8 +181,8 @@ public class ProcessTopologyAnalyzer implements Serializable {
     /**
      * Creates a process edge.
      *
-     * @param from       source equipment
-     * @param to         destination equipment
+     * @param from source equipment
+     * @param to destination equipment
      * @param streamName name of connecting stream
      */
     public ProcessEdge(String from, String to, String streamName) {
@@ -424,7 +424,7 @@ public class ProcessTopologyAnalyzer implements Serializable {
   /**
    * Checks whether a stream is already present in a list by object identity (not name or equality).
    *
-   * @param list   the list to search
+   * @param list the list to search
    * @param stream the stream to look for
    * @return {@code true} if the same stream instance is already in the list
    */
@@ -586,7 +586,7 @@ public class ProcessTopologyAnalyzer implements Serializable {
    * Assigns a functional location to an equipment unit.
    *
    * @param equipmentName the equipment name in the process
-   * @param stidTag       the STID tag (e.g., "1775-KA-23011A")
+   * @param stidTag the STID tag (e.g., "1775-KA-23011A")
    */
   public void setFunctionalLocation(String equipmentName, String stidTag) {
     FunctionalLocation loc = new FunctionalLocation(stidTag);
@@ -601,7 +601,7 @@ public class ProcessTopologyAnalyzer implements Serializable {
    * Assigns a functional location to an equipment unit.
    *
    * @param equipmentName the equipment name
-   * @param location      the functional location object
+   * @param location the functional location object
    */
   public void setFunctionalLocation(String equipmentName, FunctionalLocation location) {
     functionalLocations.put(equipmentName, location);

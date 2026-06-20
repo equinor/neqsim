@@ -175,8 +175,8 @@ public class StandardBasedCsvDataSource implements MechanicalDesignDataSource {
    * MAXVALUE. This allows access to arbitrary specification names beyond the fixed fields in {@link DesignLimitData}.
    * </p>
    *
-   * @param standardCode      the standard code (e.g., "NORSOK-D-010")
-   * @param version           the standard version (e.g., "Rev 5"), or null for any version
+   * @param standardCode the standard code (e.g., "NORSOK-D-010")
+   * @param version the standard version (e.g., "Rev 5"), or null for any version
    * @param equipmentTypeName the equipment type (e.g., "SubseaWell")
    * @return map of specification name to [minValue, maxValue] arrays
    */

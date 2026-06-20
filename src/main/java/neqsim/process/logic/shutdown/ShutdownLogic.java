@@ -80,7 +80,7 @@ public class ShutdownLogic implements ProcessLogic {
    * Adds an action to the shutdown sequence.
    *
    * @param action action to execute
-   * @param delay  delay in seconds before executing (relative to shutdown start)
+   * @param delay delay in seconds before executing (relative to shutdown start)
    */
   public void addAction(LogicAction action, double delay) {
     actions.add(new ActionWithDelay(action, delay));

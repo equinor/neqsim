@@ -52,7 +52,7 @@ public class Flare extends TwoPortEquipment {
   /**
    * Constructor setting inlet stream.
    *
-   * @param name        name of flare
+   * @param name name of flare
    * @param inletStream inlet stream
    */
   public Flare(String name, StreamInterface inletStream) {
@@ -272,7 +272,7 @@ public class Flare extends TwoPortEquipment {
    * Configure the design heat-release capacity for capacity validation.
    *
    * @param value heat-duty value
-   * @param unit  engineering unit (W, kW, MW)
+   * @param unit engineering unit (W, kW, MW)
    */
   public void setDesignHeatDutyCapacity(double value, String unit) {
     if (Double.isNaN(value)) {
@@ -287,7 +287,7 @@ public class Flare extends TwoPortEquipment {
    * Configure the design mass-flow capacity for capacity validation.
    *
    * @param value mass-flow value
-   * @param unit  supported units: kg/sec, kg/hr, kg/day
+   * @param unit supported units: kg/sec, kg/hr, kg/day
    */
   public void setDesignMassFlowCapacity(double value, String unit) {
     designMassFlowCapacityKgS = convertMassFlowToKgPerSec(value, unit);
@@ -297,7 +297,7 @@ public class Flare extends TwoPortEquipment {
    * Configure the design molar-flow capacity for capacity validation.
    *
    * @param value molar-flow value
-   * @param unit  supported units: mole/sec, kmole/hr
+   * @param unit supported units: mole/sec, kmole/hr
    */
   public void setDesignMolarFlowCapacity(double value, String unit) {
     designMolarFlowCapacityMoleS = convertMolarFlowToMolePerSec(value, unit);
@@ -317,7 +317,7 @@ public class Flare extends TwoPortEquipment {
    * Estimate the flame radiation heat flux at a horizontal ground distance for a specified heat duty.
    *
    * @param scenarioHeatDutyW heat duty in W
-   * @param groundDistanceM   horizontal distance from flare base [m]
+   * @param groundDistanceM horizontal distance from flare base [m]
    * @return radiant heat flux [W/m2]
    */
   public double estimateRadiationHeatFlux(double scenarioHeatDutyW, double groundDistanceM) {
@@ -343,7 +343,7 @@ public class Flare extends TwoPortEquipment {
    * duty.
    *
    * @param scenarioHeatDutyW heat duty in W
-   * @param fluxThresholdWm2  target heat flux [W/m2]
+   * @param fluxThresholdWm2 target heat flux [W/m2]
    * @return horizontal distance from flare base [m]
    */
   public double radiationDistanceForFlux(double scenarioHeatDutyW, double fluxThresholdWm2) {
@@ -375,7 +375,7 @@ public class Flare extends TwoPortEquipment {
   /**
    * Build a dispersion surrogate descriptor for a specified mass and molar rate.
    *
-   * @param massRateKgS    mass flow in kg/s
+   * @param massRateKgS mass flow in kg/s
    * @param molarRateMoleS molar flow in mole/s
    * @return surrogate DTO with momentum-like metrics
    */
@@ -413,8 +413,8 @@ public class Flare extends TwoPortEquipment {
    * Evaluate a hypothetical load case against configured design capacities.
    *
    * @param scenarioHeatDutyW heat duty in W
-   * @param massRateKgS       mass flow in kg/s
-   * @param molarRateMoleS    molar flow in mole/s
+   * @param massRateKgS mass flow in kg/s
+   * @param molarRateMoleS molar flow in mole/s
    * @return capacity check result for the specified scenario
    */
   public CapacityCheckResult evaluateCapacity(double scenarioHeatDutyW, double massRateKgS, double molarRateMoleS) {
@@ -461,10 +461,10 @@ public class Flare extends TwoPortEquipment {
   /**
    * Produce a performance summary DTO for a hypothetical load case.
    *
-   * @param scenarioName      label for the scenario
+   * @param scenarioName label for the scenario
    * @param scenarioHeatDutyW heat duty in W (if &lt;=0 the value will be estimated from mass rate)
-   * @param massRateKgS       mass flow in kg/s
-   * @param molarRateMoleS    molar flow in mole/s (optional, negative to auto-estimate)
+   * @param massRateKgS mass flow in kg/s
+   * @param molarRateMoleS molar flow in mole/s (optional, negative to auto-estimate)
    * @return performance DTO containing emissions, radiation and capacity data
    */
   public FlarePerformanceDTO getPerformanceSummary(String scenarioName, double scenarioHeatDutyW, double massRateKgS,

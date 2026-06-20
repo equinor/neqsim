@@ -222,8 +222,8 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
    * Calculates flow rate from valve Kv using IEC 60534 formulas.
    * </p>
    *
-   * @param actualKv  the valve flow coefficient at the current opening
-   * @param inStream  inlet stream
+   * @param actualKv the valve flow coefficient at the current opening
+   * @param inStream inlet stream
    * @param outStream outlet stream
    * @return volumetric flow rate in m3/s
    */
@@ -355,7 +355,7 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
    * </p>
    *
    * @param KvAdjusted the adjusted Kv (at current valve opening)
-   * @param inStream   inlet stream
+   * @param inStream inlet stream
    * @return outlet pressure in Pa
    */
   public double calculateOutletPressure(double KvAdjusted, StreamInterface inStream) {

@@ -62,16 +62,16 @@ public class LinearizationResult implements Serializable {
   /**
    * Construct a successful linearization result.
    *
-   * @param gainMatrix            the MV-to-CV gain matrix
+   * @param gainMatrix the MV-to-CV gain matrix
    * @param disturbanceGainMatrix the DV-to-CV gain matrix
-   * @param mvOperatingPoint      MV values at operating point
-   * @param cvOperatingPoint      CV values at operating point
-   * @param dvOperatingPoint      DV values at operating point
-   * @param mvNames               names of MVs
-   * @param cvNames               names of CVs
-   * @param dvNames               names of DVs
-   * @param perturbationSize      perturbation used
-   * @param computationTimeMs     time taken
+   * @param mvOperatingPoint MV values at operating point
+   * @param cvOperatingPoint CV values at operating point
+   * @param dvOperatingPoint DV values at operating point
+   * @param mvNames names of MVs
+   * @param cvNames names of CVs
+   * @param dvNames names of DVs
+   * @param perturbationSize perturbation used
+   * @param computationTimeMs time taken
    */
   public LinearizationResult(double[][] gainMatrix, double[][] disturbanceGainMatrix, double[] mvOperatingPoint,
       double[] cvOperatingPoint, double[] dvOperatingPoint, String[] mvNames, String[] cvNames, String[] dvNames,
@@ -93,7 +93,7 @@ public class LinearizationResult implements Serializable {
   /**
    * Construct a failed linearization result.
    *
-   * @param errorMessage      the error description
+   * @param errorMessage the error description
    * @param computationTimeMs time taken before failure
    */
   public LinearizationResult(String errorMessage, long computationTimeMs) {

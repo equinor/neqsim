@@ -539,7 +539,7 @@ public class PhaseSrkCPAreduced extends PhaseSrkCPAs {
    * Expand reduced site fraction values to all individual sites on components.
    *
    * @param xType reduced site fraction array (length p)
-   * @param ns    total number of individual sites
+   * @param ns total number of individual sites
    */
   private void expandAndSetSiteFractions(double[] xType, int ns) {
     int idx = 0;
@@ -556,7 +556,7 @@ public class PhaseSrkCPAreduced extends PhaseSrkCPAs {
    * Read individual site fractions from component objects into a flat array.
    *
    * @param xSite array to fill (length ns)
-   * @param ns    total number of individual sites
+   * @param ns total number of individual sites
    */
   private void readXsiteFromComponents(double[] xSite, int ns) {
     int idx = 0;
@@ -585,16 +585,16 @@ public class PhaseSrkCPAreduced extends PhaseSrkCPAs {
    * <li>j_zeta_zeta: volume equation self-sensitivity</li>
    * </ul>
    *
-   * @param jac      Jacobian matrix to populate (dim x dim)
-   * @param xType    reduced site fraction values (length p)
-   * @param tMoles   moles per type (length p)
-   * @param redSum   precomputed reduced summation for each type (length p)
+   * @param jac Jacobian matrix to populate (dim x dim)
+   * @param xType reduced site fraction values (length p)
+   * @param tMoles moles per type (length p)
+   * @param redSum precomputed reduced summation for each type (length p)
    * @param totalVol total volume V
-   * @param gdv1     g'(V) - 1/V
-   * @param zeta     current B/(nV)
-   * @param btemp    co-volume B
-   * @param dim      system dimension (p+1)
-   * @param p        number of unique site types
+   * @param gdv1 g'(V) - 1/V
+   * @param zeta current B/(nV)
+   * @param btemp co-volume B
+   * @param dim system dimension (p+1)
+   * @param p number of unique site types
    */
   private void buildReducedJacobian(double[][] jac, double[] xType, double[] tMoles, double[] redSum, double totalVol,
       double gdv1, double zeta, double btemp, int dim, int p) {
@@ -650,9 +650,9 @@ public class PhaseSrkCPAreduced extends PhaseSrkCPAs {
   /**
    * Invert matrix A into Ainv using Gauss-Jordan elimination with partial pivoting.
    *
-   * @param a    input matrix (will be modified by the elimination)
+   * @param a input matrix (will be modified by the elimination)
    * @param ainv output inverse matrix
-   * @param n    matrix dimension
+   * @param n matrix dimension
    * @return true if successful, false if singular
    */
   private static boolean invertMatrix(double[][] a, double[][] ainv, int n) {
@@ -712,10 +712,10 @@ public class PhaseSrkCPAreduced extends PhaseSrkCPAs {
    * H_new = H + (dx - H*df) * (dx^T * H) / (dx^T * H * df). Cost: O(n^2).
    * </p>
    *
-   * @param invJ  inverse Jacobian (updated in-place)
+   * @param invJ inverse Jacobian (updated in-place)
    * @param dxVec step vector x_{k+1} - x_k
    * @param dfVec residual change R(x_{k+1}) - R(x_k)
-   * @param n     system dimension
+   * @param n system dimension
    */
   private static void broydenUpdate(double[][] invJ, double[] dxVec, double[] dfVec, int n) {
     double[] hdf = new double[n];

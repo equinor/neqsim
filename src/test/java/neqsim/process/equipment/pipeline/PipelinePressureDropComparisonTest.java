@@ -77,11 +77,11 @@ public class PipelinePressureDropComparisonTest {
    * ΔP = f * (L/D) * (ρV²/2)
    * </p>
    *
-   * @param length    pipe length in meters
-   * @param diameter  pipe inner diameter in meters
+   * @param length pipe length in meters
+   * @param diameter pipe inner diameter in meters
    * @param roughness pipe wall roughness in meters
-   * @param density   gas density in kg/m³
-   * @param velocity  gas velocity in m/s
+   * @param density gas density in kg/m³
+   * @param velocity gas velocity in m/s
    * @param viscosity dynamic viscosity in Pa·s
    * @return pressure drop in Pa
    */
@@ -99,7 +99,7 @@ public class PipelinePressureDropComparisonTest {
    * 1/√f = -2 log₁₀(ε/(3.7D) + 2.51/(Re√f))
    * </p>
    *
-   * @param reynoldsNumber    Reynolds number
+   * @param reynoldsNumber Reynolds number
    * @param relativeRoughness ε/D
    * @return Darcy friction factor
    */
@@ -138,14 +138,14 @@ public class PipelinePressureDropComparisonTest {
    * Rearranged for P2: P2 = √[P1² - (Q * Pb / (C * Tb))² * (f * G * Tf * L * Z / D⁵)]
    * </p>
    *
-   * @param inletPressure    inlet pressure in bara
-   * @param flowRateSm3Sec   flow rate in Sm³/s at standard conditions
-   * @param length           pipe length in m
-   * @param diameter         pipe inner diameter in m
-   * @param gasGravity       gas specific gravity
-   * @param temperature      flowing temperature in K
+   * @param inletPressure inlet pressure in bara
+   * @param flowRateSm3Sec flow rate in Sm³/s at standard conditions
+   * @param length pipe length in m
+   * @param diameter pipe inner diameter in m
+   * @param gasGravity gas specific gravity
+   * @param temperature flowing temperature in K
    * @param compressibilityZ compressibility factor
-   * @param frictionFactor   Darcy friction factor
+   * @param frictionFactor Darcy friction factor
    * @return outlet pressure in bara
    */
   private double calcGeneralFlowEquationOutletPressure(double inletPressure, double flowRateSm3Sec, double length,
@@ -190,12 +190,12 @@ public class PipelinePressureDropComparisonTest {
    * Q = 3.7435e-3 * (Tb/Pb) * √[(P1² - P2²) * D^(16/3) / (G * Tf * L * Z)]
    * </p>
    *
-   * @param inletPressure    inlet pressure in bara
-   * @param flowRateSm3Sec   flow rate in Sm³/s at standard conditions
-   * @param length           pipe length in m
-   * @param diameter         pipe inner diameter in m
-   * @param gasGravity       gas specific gravity
-   * @param temperature      flowing temperature in K
+   * @param inletPressure inlet pressure in bara
+   * @param flowRateSm3Sec flow rate in Sm³/s at standard conditions
+   * @param length pipe length in m
+   * @param diameter pipe inner diameter in m
+   * @param gasGravity gas specific gravity
+   * @param temperature flowing temperature in K
    * @param compressibilityZ compressibility factor
    * @return outlet pressure in bara
    */
@@ -236,14 +236,14 @@ public class PipelinePressureDropComparisonTest {
    * The Panhandle A effectively uses f = 0.085 / Re^0.147
    * </p>
    *
-   * @param inletPressure    inlet pressure in bara
-   * @param flowRateSm3Sec   flow rate in Sm³/s at standard conditions
-   * @param length           pipe length in m
-   * @param diameter         pipe inner diameter in m
-   * @param gasGravity       gas specific gravity
-   * @param temperature      flowing temperature in K
+   * @param inletPressure inlet pressure in bara
+   * @param flowRateSm3Sec flow rate in Sm³/s at standard conditions
+   * @param length pipe length in m
+   * @param diameter pipe inner diameter in m
+   * @param gasGravity gas specific gravity
+   * @param temperature flowing temperature in K
    * @param compressibilityZ compressibility factor
-   * @param reynoldsNumber   Reynolds number
+   * @param reynoldsNumber Reynolds number
    * @return outlet pressure in bara
    */
   private double calcPanhandleAOutletPressure(double inletPressure, double flowRateSm3Sec, double length,
@@ -857,9 +857,9 @@ public class PipelinePressureDropComparisonTest {
    * In SI units: ΔP [Pa] = 10.67 * (Q [m³/s])^1.85 * L [m] / (C^1.85 * D^4.87 [m]) * ρg
    * </p>
    *
-   * @param length         pipe length in meters
-   * @param diameter       pipe inner diameter in meters
-   * @param flowRateM3s    volumetric flow rate in m³/s
+   * @param length pipe length in meters
+   * @param diameter pipe inner diameter in meters
+   * @param flowRateM3s volumetric flow rate in m³/s
    * @param hazenWilliamsC Hazen-Williams coefficient (140 for new steel, 120 for average)
    * @return pressure drop in Pa
    */

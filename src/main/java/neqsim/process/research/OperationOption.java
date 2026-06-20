@@ -33,7 +33,7 @@ public class OperationOption {
   /**
    * Creates an operation option.
    *
-   * @param name          operation name; must be non-empty
+   * @param name operation name; must be non-empty
    * @param equipmentType NeqSim JSON equipment type, e.g. Separator or GibbsReactor
    */
   public OperationOption(String name, String equipmentType) {
@@ -77,7 +77,7 @@ public class OperationOption {
    * Sets a numeric equipment property.
    *
    * @param propertyName property setter name without the set prefix
-   * @param value        property value
+   * @param value property value
    * @return this operation option
    */
   public OperationOption setProperty(String propertyName, double value) {
@@ -89,7 +89,7 @@ public class OperationOption {
    * Sets a string equipment property.
    *
    * @param propertyName property setter name without the set prefix
-   * @param value        property value
+   * @param value property value
    * @return this operation option
    */
   public OperationOption setProperty(String propertyName, String value) {
@@ -101,8 +101,8 @@ public class OperationOption {
    * Sets a numeric equipment property with a unit.
    *
    * @param propertyName property setter name without the set prefix
-   * @param value        numeric value
-   * @param unit         unit string accepted by the target equipment setter
+   * @param value numeric value
+   * @param unit unit string accepted by the target equipment setter
    * @return this operation option
    */
   public OperationOption setProperty(String propertyName, double value, String unit) {

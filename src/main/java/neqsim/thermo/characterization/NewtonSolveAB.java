@@ -41,7 +41,7 @@ public class NewtonSolveAB implements java.io.Serializable {
    * Constructor for NewtonSolveAB.
    * </p>
    *
-   * @param system            a {@link neqsim.thermo.system.SystemInterface} object
+   * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param characterizeClass a {@link neqsim.thermo.characterization.TBPCharacterize} object
    */
   public NewtonSolveAB(SystemInterface system, TBPCharacterize characterizeClass) {

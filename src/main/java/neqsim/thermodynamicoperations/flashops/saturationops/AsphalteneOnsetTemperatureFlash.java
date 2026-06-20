@@ -73,10 +73,10 @@ public class AsphalteneOnsetTemperatureFlash extends ConstantDutyFlash {
   /**
    * Constructor with specified temperature range.
    *
-   * @param system           the thermodynamic system
+   * @param system the thermodynamic system
    * @param startTemperature starting temperature for search (K)
-   * @param minTemperature   minimum temperature to search to (K)
-   * @param maxTemperature   maximum temperature to search to (K)
+   * @param minTemperature minimum temperature to search to (K)
+   * @param maxTemperature maximum temperature to search to (K)
    */
   public AsphalteneOnsetTemperatureFlash(SystemInterface system, double startTemperature, double minTemperature,
       double maxTemperature) {
@@ -156,9 +156,9 @@ public class AsphalteneOnsetTemperatureFlash extends ConstantDutyFlash {
   /**
    * Refines the onset temperature using bisection method.
    *
-   * @param stableT   temperature where stable
+   * @param stableT temperature where stable
    * @param unstableT temperature where unstable
-   * @param ops       thermodynamic operations object
+   * @param ops thermodynamic operations object
    * @return refined onset temperature
    */
   private double refineTemperature(double stableT, double unstableT, ThermodynamicOperations ops) {

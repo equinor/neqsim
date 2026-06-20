@@ -55,13 +55,13 @@ public final class FlowsheetProposal implements Serializable {
   /**
    * Creates a proposal.
    *
-   * @param strategy               the structural choice
-   * @param rationale              human-readable explanation
-   * @param processSystem          the assembled flowsheet
-   * @param topProductPredicted    predicted top-product mole fractions keyed by component
+   * @param strategy the structural choice
+   * @param rationale human-readable explanation
+   * @param processSystem the assembled flowsheet
+   * @param topProductPredicted predicted top-product mole fractions keyed by component
    * @param bottomProductPredicted predicted bottom-product mole fractions keyed by component
-   * @param alternatives           alternative proposals considered, with their rejection reason
-   * @param specsMet               true when all duty specs are predicted to be satisfied
+   * @param alternatives alternative proposals considered, with their rejection reason
+   * @param specsMet true when all duty specs are predicted to be satisfied
    */
   public FlowsheetProposal(Strategy strategy, String rationale, ProcessSystem processSystem,
       Map<String, Double> topProductPredicted, Map<String, Double> bottomProductPredicted, List<String> alternatives,

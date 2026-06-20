@@ -213,7 +213,7 @@ public class NeqSimVega {
    * getProperties.
    * </p>
    *
-   * @param phase      a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param properties an array of {@link java.lang.String} objects
    * @return an array of type double
    */

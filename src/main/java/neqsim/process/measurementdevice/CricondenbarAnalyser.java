@@ -37,7 +37,7 @@ public class CricondenbarAnalyser extends StreamMeasurementDeviceBaseClass {
    * Constructor for CricondenbarAnalyser.
    * </p>
    *
-   * @param name   Name of CricondenbarAnalyser
+   * @param name Name of CricondenbarAnalyser
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public CricondenbarAnalyser(String name, StreamInterface stream) {

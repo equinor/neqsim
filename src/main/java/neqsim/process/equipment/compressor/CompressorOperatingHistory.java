@@ -54,18 +54,18 @@ public class CompressorOperatingHistory implements Serializable {
     /**
      * Constructor for OperatingPoint.
      *
-     * @param time              simulation time in seconds
-     * @param flow              volumetric flow rate in m³/hr
-     * @param head              polytropic head in kJ/kg
-     * @param speed             rotational speed in RPM
-     * @param power             shaft power in kW
-     * @param efficiency        polytropic efficiency (0-1)
-     * @param surgeMargin       margin to surge line (ratio)
-     * @param stoneWallMargin   margin to stone wall (ratio)
-     * @param state             compressor operating state
-     * @param inletPressure     inlet pressure in bara
-     * @param outletPressure    outlet pressure in bara
-     * @param inletTemperature  inlet temperature in K
+     * @param time simulation time in seconds
+     * @param flow volumetric flow rate in m³/hr
+     * @param head polytropic head in kJ/kg
+     * @param speed rotational speed in RPM
+     * @param power shaft power in kW
+     * @param efficiency polytropic efficiency (0-1)
+     * @param surgeMargin margin to surge line (ratio)
+     * @param stoneWallMargin margin to stone wall (ratio)
+     * @param state compressor operating state
+     * @param inletPressure inlet pressure in bara
+     * @param outletPressure outlet pressure in bara
+     * @param inletTemperature inlet temperature in K
      * @param outletTemperature outlet temperature in K
      */
     public OperatingPoint(double time, double flow, double head, double speed, double power, double efficiency,
@@ -222,7 +222,7 @@ public class CompressorOperatingHistory implements Serializable {
   /**
    * Record a new operating point from a compressor.
    *
-   * @param time       simulation time in seconds
+   * @param time simulation time in seconds
    * @param compressor the compressor to record data from
    */
   public void recordOperatingPoint(double time, Compressor compressor) {

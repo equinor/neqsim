@@ -89,7 +89,7 @@ public class ThreePhaseSeparator extends Separator {
    * Constructor for ThreePhaseSeparator.
    * </p>
    *
-   * @param name        a {@link java.lang.String} object
+   * @param name a {@link java.lang.String} object
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public ThreePhaseSeparator(String name, StreamInterface inletStream) {
@@ -101,11 +101,11 @@ public class ThreePhaseSeparator extends Separator {
    * setEntrainment.
    * </p>
    *
-   * @param val             a double
-   * @param specType        a {@link java.lang.String} object
+   * @param val a double
+   * @param specType a {@link java.lang.String} object
    * @param specifiedStream a {@link java.lang.String} object
-   * @param phaseFrom       a {@link java.lang.String} object
-   * @param phaseTo         a {@link java.lang.String} object
+   * @param phaseFrom a {@link java.lang.String} object
+   * @param phaseTo a {@link java.lang.String} object
    */
   @Override
   public void setEntrainment(double val, String specType, String specifiedStream, String phaseFrom, String phaseTo) {

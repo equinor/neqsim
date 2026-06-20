@@ -35,7 +35,7 @@ public class FluidBoundarySystem implements FluidBoundarySystemInterface {
    * </p>
    *
    * @param boundary a {@link neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.FluidBoundaryInterface}
-   *                 object
+   * object
    */
   public FluidBoundarySystem(FluidBoundaryInterface boundary) {
     this.boundary = boundary;

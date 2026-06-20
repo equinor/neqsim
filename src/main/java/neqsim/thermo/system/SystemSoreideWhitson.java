@@ -32,8 +32,8 @@ public class SystemSoreideWhitson extends SystemPrEos1978 {
   /**
    * Full constructor.
    *
-   * @param T              temperature in Kelvin
-   * @param P              pressure in bara
+   * @param T temperature in Kelvin
+   * @param P pressure in bara
    * @param checkForSolids check for solids
    */
   public SystemSoreideWhitson(double T, double P, boolean checkForSolids) {
@@ -52,7 +52,7 @@ public class SystemSoreideWhitson extends SystemPrEos1978 {
    * Add the salinity value.
    *
    * @param value the salinity value
-   * @param unit  the unit of the value ("mole/hr" or "mole/sec")
+   * @param unit the unit of the value ("mole/hr" or "mole/sec")
    */
   public void addSalinity(double value, String unit) {
     if (unit == null) {
@@ -74,8 +74,8 @@ public class SystemSoreideWhitson extends SystemPrEos1978 {
    * Add the salinity value for a specific salt type and unit.
    *
    * @param saltType the type of salt (e.g., "Na2SO4", "MgSO4", "Mg(NO3)2", "NaCl", "NaNO3", "KCl", "KNO3")
-   * @param value    the amount of salt added
-   * @param unit     the unit of the value ("mole/hr" or "mole/sec")
+   * @param value the amount of salt added
+   * @param unit the unit of the value ("mole/hr" or "mole/sec")
    */
   public void addSalinity(String saltType, double value, String unit) {
     if (saltType == null) {
@@ -126,7 +126,7 @@ public class SystemSoreideWhitson extends SystemPrEos1978 {
    * Set the salinity value.
    *
    * @param value the salinity value
-   * @param unit  the unit of the value ("mole/hr" or "mole/sec")
+   * @param unit the unit of the value ("mole/hr" or "mole/sec")
    */
   public void setSalinity(double value, String unit) {
     if (unit == null) {

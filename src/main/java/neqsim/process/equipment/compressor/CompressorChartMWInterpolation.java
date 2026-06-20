@@ -78,10 +78,10 @@ public class CompressorChartMWInterpolation extends CompressorChart {
    *
    * @param molecularWeight the molecular weight (g/mol) at which this map was measured
    * @param chartConditions reference conditions [temp °C, pres bara, density kg/m³, MW g/mol]
-   * @param speed           array of speed values (RPM)
-   * @param flow            2D array of flow values for each speed curve (m³/hr)
-   * @param head            2D array of head values for each speed curve (kJ/kg or meter)
-   * @param polyEff         2D array of polytropic efficiency values for each speed curve (%)
+   * @param speed array of speed values (RPM)
+   * @param flow 2D array of flow values for each speed curve (m³/hr)
+   * @param head 2D array of head values for each speed curve (kJ/kg or meter)
+   * @param polyEff 2D array of polytropic efficiency values for each speed curve (%)
    */
   public void addMapAtMW(double molecularWeight, double[] chartConditions, double[] speed, double[][] flow,
       double[][] head, double[][] polyEff) {
@@ -96,10 +96,10 @@ public class CompressorChartMWInterpolation extends CompressorChart {
    * </p>
    *
    * @param molecularWeight the molecular weight (g/mol) at which this map was measured
-   * @param speed           array of speed values (RPM)
-   * @param flow            2D array of flow values for each speed curve (m³/hr)
-   * @param head            2D array of head values for each speed curve (kJ/kg or meter)
-   * @param polyEff         2D array of polytropic efficiency values for each speed curve (%)
+   * @param speed array of speed values (RPM)
+   * @param flow 2D array of flow values for each speed curve (m³/hr)
+   * @param head 2D array of head values for each speed curve (kJ/kg or meter)
+   * @param polyEff 2D array of polytropic efficiency values for each speed curve (%)
    */
   public void addMapAtMW(double molecularWeight, double[] speed, double[][] flow, double[][] head, double[][] polyEff) {
     addMapAtMW(molecularWeight, speed, flow, head, flow, polyEff);
@@ -113,11 +113,11 @@ public class CompressorChartMWInterpolation extends CompressorChart {
    * </p>
    *
    * @param molecularWeight the molecular weight (g/mol) at which this map was measured
-   * @param speed           array of speed values (RPM)
-   * @param flow            2D array of flow values for head curves (m³/hr)
-   * @param head            2D array of head values for each speed curve (kJ/kg or meter)
-   * @param flowPolyEff     2D array of flow values for efficiency curves (m³/hr)
-   * @param polyEff         2D array of polytropic efficiency values for each speed curve (%)
+   * @param speed array of speed values (RPM)
+   * @param flow 2D array of flow values for head curves (m³/hr)
+   * @param head 2D array of head values for each speed curve (kJ/kg or meter)
+   * @param flowPolyEff 2D array of flow values for efficiency curves (m³/hr)
+   * @param polyEff 2D array of polytropic efficiency values for each speed curve (%)
    */
   public void addMapAtMW(double molecularWeight, double[] speed, double[][] flow, double[][] head,
       double[][] flowPolyEff, double[][] polyEff) {
@@ -135,10 +135,10 @@ public class CompressorChartMWInterpolation extends CompressorChart {
    * </p>
    *
    * @param molecularWeight the molecular weight (g/mol) at which this map was measured
-   * @param speed           the compressor speed (RPM)
-   * @param flow            array of flow values (m³/hr)
-   * @param head            array of head values (kJ/kg or meter)
-   * @param polyEff         array of polytropic efficiency values (%)
+   * @param speed the compressor speed (RPM)
+   * @param flow array of flow values (m³/hr)
+   * @param head array of head values (kJ/kg or meter)
+   * @param polyEff array of polytropic efficiency values (%)
    */
   public void addMapAtMW(double molecularWeight, double speed, double[] flow, double[] head, double[] polyEff) {
     addMapAtMW(molecularWeight, speed, flow, head, flow, polyEff);
@@ -153,11 +153,11 @@ public class CompressorChartMWInterpolation extends CompressorChart {
    * </p>
    *
    * @param molecularWeight the molecular weight (g/mol) at which this map was measured
-   * @param speed           the compressor speed (RPM)
-   * @param flow            array of flow values for head curve (m³/hr)
-   * @param head            array of head values (kJ/kg or meter)
-   * @param flowPolyEff     array of flow values for efficiency curve (m³/hr)
-   * @param polyEff         array of polytropic efficiency values (%)
+   * @param speed the compressor speed (RPM)
+   * @param flow array of flow values for head curve (m³/hr)
+   * @param head array of head values (kJ/kg or meter)
+   * @param flowPolyEff array of flow values for efficiency curve (m³/hr)
+   * @param polyEff array of polytropic efficiency values (%)
    */
   public void addMapAtMW(double molecularWeight, double speed, double[] flow, double[] head, double[] flowPolyEff,
       double[] polyEff) {
@@ -176,11 +176,11 @@ public class CompressorChartMWInterpolation extends CompressorChart {
    *
    * @param molecularWeight the molecular weight (g/mol) at which this map was measured
    * @param chartConditions reference conditions [temp °C, pres bara, density kg/m³, MW g/mol]
-   * @param speed           array of speed values (RPM)
-   * @param flow            2D array of flow values for each speed curve (m³/hr)
-   * @param head            2D array of head values for each speed curve (kJ/kg or meter)
-   * @param flowPolyEff     2D array of flow values for efficiency curves (m³/hr)
-   * @param polyEff         2D array of polytropic efficiency values for each speed curve (%)
+   * @param speed array of speed values (RPM)
+   * @param flow 2D array of flow values for each speed curve (m³/hr)
+   * @param head 2D array of head values for each speed curve (kJ/kg or meter)
+   * @param flowPolyEff 2D array of flow values for efficiency curves (m³/hr)
+   * @param polyEff 2D array of polytropic efficiency values for each speed curve (%)
    */
   public void addMapAtMW(double molecularWeight, double[] chartConditions, double[] speed, double[][] flow,
       double[][] head, double[][] flowPolyEff, double[][] polyEff) {
@@ -787,7 +787,7 @@ public class CompressorChartMWInterpolation extends CompressorChart {
    *
    * @param valueLower the value at the lower bound
    * @param valueUpper the value at the upper bound
-   * @param fraction   the interpolation fraction (0.0 = lower, 1.0 = upper)
+   * @param fraction the interpolation fraction (0.0 = lower, 1.0 = upper)
    * @return the interpolated value
    */
   private double linearInterpolate(double valueLower, double valueUpper, double fraction) {
@@ -799,8 +799,8 @@ public class CompressorChartMWInterpolation extends CompressorChart {
    *
    * @param molecularWeight the MW of the map to update
    * @param chartConditions reference conditions
-   * @param surgeFlow       array of surge flow values
-   * @param surgeHead       array of surge head values
+   * @param surgeFlow array of surge flow values
+   * @param surgeHead array of surge head values
    */
   public void setSurgeCurveAtMW(double molecularWeight, double[] chartConditions, double[] surgeFlow,
       double[] surgeHead) {
@@ -817,8 +817,8 @@ public class CompressorChartMWInterpolation extends CompressorChart {
    *
    * @param molecularWeight the MW of the map to update
    * @param chartConditions reference conditions
-   * @param stoneWallFlow   array of stone wall flow values
-   * @param stoneWallHead   array of stone wall head values
+   * @param stoneWallFlow array of stone wall flow values
+   * @param stoneWallHead array of stone wall head values
    */
   public void setStoneWallCurveAtMW(double molecularWeight, double[] chartConditions, double[] stoneWallFlow,
       double[] stoneWallHead) {

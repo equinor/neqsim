@@ -89,7 +89,7 @@ public class ElectricMotorDriver extends DriverCurveBase {
   /**
    * Constructor with rated power and efficiency.
    *
-   * @param ratedPowerKW     rated mechanical output power in kW
+   * @param ratedPowerKW rated mechanical output power in kW
    * @param designEfficiency design efficiency at rated conditions (0-1)
    */
   public ElectricMotorDriver(double ratedPowerKW, double designEfficiency) {
@@ -101,8 +101,8 @@ public class ElectricMotorDriver extends DriverCurveBase {
   /**
    * Constructor with full parameters.
    *
-   * @param ratedPowerKW     rated mechanical output power in kW
-   * @param ratedSpeedRPM    rated speed in RPM
+   * @param ratedPowerKW rated mechanical output power in kW
+   * @param ratedSpeedRPM rated speed in RPM
    * @param designEfficiency design efficiency at rated conditions (0-1)
    */
   public ElectricMotorDriver(double ratedPowerKW, double ratedSpeedRPM, double designEfficiency) {
@@ -226,7 +226,7 @@ public class ElectricMotorDriver extends DriverCurveBase {
   /**
    * Linear interpolation helper.
    *
-   * @param x  the value to interpolate at
+   * @param x the value to interpolate at
    * @param x1 first x coordinate
    * @param x2 second x coordinate
    * @param y1 first y coordinate
@@ -286,7 +286,7 @@ public class ElectricMotorDriver extends DriverCurveBase {
    * Gets the electrical power input for given mechanical output.
    *
    * @param mechanicalPowerKW mechanical output power in kW
-   * @param speed             operating speed in RPM
+   * @param speed operating speed in RPM
    * @return electrical input power in kW
    */
   public double getElectricalInput(double mechanicalPowerKW, double speed) {

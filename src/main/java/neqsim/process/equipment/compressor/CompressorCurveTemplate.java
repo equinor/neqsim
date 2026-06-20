@@ -301,12 +301,12 @@ public class CompressorCurveTemplate implements Serializable {
   /**
    * Constructor for CompressorCurveTemplate.
    *
-   * @param name           Template name/identifier
+   * @param name Template name/identifier
    * @param referenceSpeed Reference speed used for normalization (RPM)
-   * @param speeds         Speed values for each curve (RPM)
-   * @param flows          Flow values for each curve (m³/hr). Will be normalized internally.
-   * @param heads          Head values for each curve (kJ/kg). Will be normalized internally.
-   * @param efficiencies   Polytropic efficiency values (%) for each curve
+   * @param speeds Speed values for each curve (RPM)
+   * @param flows Flow values for each curve (m³/hr). Will be normalized internally.
+   * @param heads Head values for each curve (kJ/kg). Will be normalized internally.
+   * @param efficiencies Polytropic efficiency values (%) for each curve
    */
   public CompressorCurveTemplate(String name, double referenceSpeed, double[] speeds, double[][] flows,
       double[][] heads, double[][] efficiencies) {
@@ -383,9 +383,9 @@ public class CompressorCurveTemplate implements Serializable {
    * at the design speed. Uses interpolate and extrapolate chart type by default.
    * </p>
    *
-   * @param designSpeed    Design speed in RPM
-   * @param designFlow     Design flow rate in m³/hr
-   * @param designHead     Design polytropic head in kJ/kg
+   * @param designSpeed Design speed in RPM
+   * @param designFlow Design flow rate in m³/hr
+   * @param designHead Design polytropic head in kJ/kg
    * @param numberOfSpeeds Number of speed curves to generate (uses evenly spaced speeds from template range)
    * @return A new CompressorChart with scaled curves
    */
@@ -402,11 +402,11 @@ public class CompressorCurveTemplate implements Serializable {
    * at the design speed.
    * </p>
    *
-   * @param designSpeed    Design speed in RPM
-   * @param designFlow     Design flow rate in m³/hr
-   * @param designHead     Design polytropic head in kJ/kg
+   * @param designSpeed Design speed in RPM
+   * @param designFlow Design flow rate in m³/hr
+   * @param designHead Design polytropic head in kJ/kg
    * @param numberOfSpeeds Number of speed curves to generate
-   * @param chartType      Chart type: "simple", "interpolate", or "interpolate and extrapolate"
+   * @param chartType Chart type: "simple", "interpolate", or "interpolate and extrapolate"
    * @return A new CompressorChartInterface with scaled curves
    */
   public CompressorChartInterface scaleToDesignPoint(double designSpeed, double designFlow, double designHead,
@@ -507,7 +507,7 @@ public class CompressorCurveTemplate implements Serializable {
    * Helper method to reduce repetition in template definitions where efficiency curves are identical across speeds.
    * </p>
    *
-   * @param numSpeeds         Number of speed curves
+   * @param numSpeeds Number of speed curves
    * @param efficiencyProfile Single efficiency profile to repeat
    * @return 2D array with repeated efficiency profiles
    */
@@ -1048,7 +1048,7 @@ public class CompressorCurveTemplate implements Serializable {
    * Scale the template curves to match a target speed with specified chart type.
    *
    * @param targetReferenceSpeed The target speed that corresponds to the template's reference speed
-   * @param chartType            Chart type: "simple", "interpolate", or "interpolate and extrapolate"
+   * @param chartType Chart type: "simple", "interpolate", or "interpolate and extrapolate"
    * @return A new CompressorChartInterface with scaled curves
    */
   public CompressorChartInterface scaleToSpeed(double targetReferenceSpeed, String chartType) {

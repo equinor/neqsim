@@ -33,14 +33,14 @@ public class MassTransferCoefficientCalculator {
   /**
    * Calculates the liquid-side mass transfer coefficient.
    *
-   * @param flowPattern  the flow pattern
-   * @param diameter     pipe diameter (m)
+   * @param flowPattern the flow pattern
+   * @param diameter pipe diameter (m)
    * @param liquidHoldup liquid holdup
-   * @param usg          superficial gas velocity (m/s)
-   * @param usl          superficial liquid velocity (m/s)
-   * @param rhoL         liquid density (kg/m³)
-   * @param muL          liquid viscosity (Pa·s)
-   * @param diffL        liquid diffusivity (m²/s)
+   * @param usg superficial gas velocity (m/s)
+   * @param usl superficial liquid velocity (m/s)
+   * @param rhoL liquid density (kg/m³)
+   * @param muL liquid viscosity (Pa·s)
+   * @param diffL liquid diffusivity (m²/s)
    * @return liquid-side mass transfer coefficient k_L (m/s), always non-negative
    */
   public static double calculateLiquidMassTransferCoefficient(FlowPattern flowPattern, double diameter,
@@ -88,13 +88,13 @@ public class MassTransferCoefficientCalculator {
   /**
    * Calculates the gas-side mass transfer coefficient.
    *
-   * @param flowPattern  the flow pattern
-   * @param diameter     pipe diameter (m)
+   * @param flowPattern the flow pattern
+   * @param diameter pipe diameter (m)
    * @param liquidHoldup liquid holdup
-   * @param usg          superficial gas velocity (m/s)
-   * @param rhoG         gas density (kg/m³)
-   * @param muG          gas viscosity (Pa·s)
-   * @param diffG        gas diffusivity (m²/s)
+   * @param usg superficial gas velocity (m/s)
+   * @param rhoG gas density (kg/m³)
+   * @param muG gas viscosity (Pa·s)
+   * @param diffG gas diffusivity (m²/s)
    * @return gas-side mass transfer coefficient k_G (m/s), always non-negative
    */
   public static double calculateGasMassTransferCoefficient(FlowPattern flowPattern, double diameter,
@@ -184,13 +184,13 @@ public class MassTransferCoefficientCalculator {
   /**
    * Calculates liquid-side mass transfer coefficient for stratified flow.
    *
-   * @param diameter     pipe diameter [m]
+   * @param diameter pipe diameter [m]
    * @param liquidHoldup liquid holdup fraction [-]
-   * @param usl          superficial liquid velocity [m/s]
-   * @param rhoL         liquid density [kg/m³]
-   * @param muL          liquid viscosity [Pa·s]
-   * @param diffL        liquid diffusivity [m²/s]
-   * @param scL          liquid Schmidt number [-]
+   * @param usl superficial liquid velocity [m/s]
+   * @param rhoL liquid density [kg/m³]
+   * @param muL liquid viscosity [Pa·s]
+   * @param diffL liquid diffusivity [m²/s]
+   * @param scL liquid Schmidt number [-]
    * @return liquid-side mass transfer coefficient [m/s]
    */
   private static double calculateStratifiedKL(double diameter, double liquidHoldup, double usl, double rhoL, double muL,
@@ -218,13 +218,13 @@ public class MassTransferCoefficientCalculator {
   /**
    * Calculates liquid-side mass transfer coefficient for annular flow.
    *
-   * @param diameter     pipe diameter [m]
+   * @param diameter pipe diameter [m]
    * @param liquidHoldup liquid holdup fraction [-]
-   * @param usl          superficial liquid velocity [m/s]
-   * @param rhoL         liquid density [kg/mA3]
-   * @param muL          liquid viscosity [PaAús]
-   * @param diffL        liquid diffusivity [mAı/s]
-   * @param scL          liquid Schmidt number [-]
+   * @param usl superficial liquid velocity [m/s]
+   * @param rhoL liquid density [kg/mA3]
+   * @param muL liquid viscosity [PaAús]
+   * @param diffL liquid diffusivity [mAı/s]
+   * @param scL liquid Schmidt number [-]
    * @return liquid-side mass transfer coefficient [m/s]
    */
   private static double calculateAnnularKL(double diameter, double liquidHoldup, double usl, double rhoL, double muL,
@@ -252,14 +252,14 @@ public class MassTransferCoefficientCalculator {
   /**
    * Calculates liquid-side mass transfer coefficient for slug flow.
    *
-   * @param diameter     pipe diameter [m]
+   * @param diameter pipe diameter [m]
    * @param liquidHoldup liquid holdup fraction [-]
-   * @param usg          superficial gas velocity [m/s]
-   * @param usl          superficial liquid velocity [m/s]
-   * @param rhoL         liquid density [kg/mA3]
-   * @param muL          liquid viscosity [PaAús]
-   * @param diffL        liquid diffusivity [mAı/s]
-   * @param scL          liquid Schmidt number [-]
+   * @param usg superficial gas velocity [m/s]
+   * @param usl superficial liquid velocity [m/s]
+   * @param rhoL liquid density [kg/mA3]
+   * @param muL liquid viscosity [PaAús]
+   * @param diffL liquid diffusivity [mAı/s]
+   * @param scL liquid Schmidt number [-]
    * @return liquid-side mass transfer coefficient [m/s]
    */
   private static double calculateSlugKL(double diameter, double liquidHoldup, double usg, double usl, double rhoL,
@@ -284,14 +284,14 @@ public class MassTransferCoefficientCalculator {
   /**
    * Calculates liquid-side mass transfer coefficient for bubble flow.
    *
-   * @param diameter     pipe diameter [m]
+   * @param diameter pipe diameter [m]
    * @param liquidHoldup liquid holdup fraction [-]
-   * @param usg          superficial gas velocity [m/s]
-   * @param usl          superficial liquid velocity [m/s]
-   * @param rhoL         liquid density [kg/mA3]
-   * @param muL          liquid viscosity [PaAús]
-   * @param diffL        liquid diffusivity [mAı/s]
-   * @param scL          liquid Schmidt number [-]
+   * @param usg superficial gas velocity [m/s]
+   * @param usl superficial liquid velocity [m/s]
+   * @param rhoL liquid density [kg/mA3]
+   * @param muL liquid viscosity [PaAús]
+   * @param diffL liquid diffusivity [mAı/s]
+   * @param scL liquid Schmidt number [-]
    * @return liquid-side mass transfer coefficient [m/s]
    */
   private static double calculateBubbleKL(double diameter, double liquidHoldup, double usg, double usl, double rhoL,
@@ -319,11 +319,11 @@ public class MassTransferCoefficientCalculator {
    * Calculates liquid-side mass transfer coefficient for droplet flow.
    *
    * @param diameter pipe diameter [m]
-   * @param usg      superficial gas velocity [m/s]
-   * @param rhoL     liquid density [kg/mA3]
-   * @param muL      liquid viscosity [PaAús]
-   * @param diffL    liquid diffusivity [mAı/s]
-   * @param scL      liquid Schmidt number [-]
+   * @param usg superficial gas velocity [m/s]
+   * @param rhoL liquid density [kg/mA3]
+   * @param muL liquid viscosity [PaAús]
+   * @param diffL liquid diffusivity [mAı/s]
+   * @param scL liquid Schmidt number [-]
    * @return liquid-side mass transfer coefficient [m/s]
    */
   private static double calculateDropletKL(double diameter, double usg, double rhoL, double muL, double diffL,
@@ -347,14 +347,14 @@ public class MassTransferCoefficientCalculator {
   /**
    * Calculates liquid-side mass transfer coefficient for churn flow.
    *
-   * @param diameter     pipe diameter [m]
+   * @param diameter pipe diameter [m]
    * @param liquidHoldup liquid holdup fraction [-]
-   * @param usg          superficial gas velocity [m/s]
-   * @param usl          superficial liquid velocity [m/s]
-   * @param rhoL         liquid density [kg/mA3]
-   * @param muL          liquid viscosity [PaAús]
-   * @param diffL        liquid diffusivity [mAı/s]
-   * @param scL          liquid Schmidt number [-]
+   * @param usg superficial gas velocity [m/s]
+   * @param usl superficial liquid velocity [m/s]
+   * @param rhoL liquid density [kg/mA3]
+   * @param muL liquid viscosity [PaAús]
+   * @param diffL liquid diffusivity [mAı/s]
+   * @param scL liquid Schmidt number [-]
    * @return liquid-side mass transfer coefficient [m/s]
    */
   private static double calculateChurnKL(double diameter, double liquidHoldup, double usg, double usl, double rhoL,
@@ -374,13 +374,13 @@ public class MassTransferCoefficientCalculator {
   /**
    * Calculates gas-side mass transfer coefficient for stratified flow.
    *
-   * @param diameter     pipe diameter [m]
+   * @param diameter pipe diameter [m]
    * @param voidFraction void fraction [-]
-   * @param uG           gas velocity [m/s]
-   * @param rhoG         gas density [kg/m³]
-   * @param muG          gas dynamic viscosity [Pa·s]
-   * @param diffG        gas diffusivity [m²/s]
-   * @param scG          gas Schmidt number [-]
+   * @param uG gas velocity [m/s]
+   * @param rhoG gas density [kg/m³]
+   * @param muG gas dynamic viscosity [Pa·s]
+   * @param diffG gas diffusivity [m²/s]
+   * @param scG gas Schmidt number [-]
    * @return gas-side mass transfer coefficient [m/s]
    */
   private static double calculateStratifiedKG(double diameter, double voidFraction, double uG, double rhoG, double muG,
@@ -400,13 +400,13 @@ public class MassTransferCoefficientCalculator {
   /**
    * Calculates gas-side mass transfer coefficient for annular flow.
    *
-   * @param diameter     pipe diameter [m]
+   * @param diameter pipe diameter [m]
    * @param voidFraction void fraction [-]
-   * @param uG           gas velocity [m/s]
-   * @param rhoG         gas density [kg/m³]
-   * @param muG          gas dynamic viscosity [Pa·s]
-   * @param diffG        gas diffusivity [m²/s]
-   * @param scG          gas Schmidt number [-]
+   * @param uG gas velocity [m/s]
+   * @param rhoG gas density [kg/m³]
+   * @param muG gas dynamic viscosity [Pa·s]
+   * @param diffG gas diffusivity [m²/s]
+   * @param scG gas Schmidt number [-]
    * @return gas-side mass transfer coefficient [m/s]
    */
   private static double calculateAnnularKG(double diameter, double voidFraction, double uG, double rhoG, double muG,
@@ -427,11 +427,11 @@ public class MassTransferCoefficientCalculator {
    * Calculates gas-side mass transfer coefficient for bubble flow.
    *
    * @param diameter pipe diameter [m]
-   * @param uG       gas velocity [m/s]
-   * @param rhoG     gas density [kg/m³]
-   * @param muG      gas dynamic viscosity [Pa·s]
-   * @param diffG    gas diffusivity [m²/s]
-   * @param scG      gas Schmidt number [-]
+   * @param uG gas velocity [m/s]
+   * @param rhoG gas density [kg/m³]
+   * @param muG gas dynamic viscosity [Pa·s]
+   * @param diffG gas diffusivity [m²/s]
+   * @param scG gas Schmidt number [-]
    * @return gas-side mass transfer coefficient [m/s]
    */
   private static double calculateBubbleKG(double diameter, double uG, double rhoG, double muG, double diffG,
@@ -450,11 +450,11 @@ public class MassTransferCoefficientCalculator {
    * Calculates gas-side mass transfer coefficient for droplet flow.
    *
    * @param diameter pipe diameter [m]
-   * @param uG       gas velocity [m/s]
-   * @param rhoG     gas density [kg/m³]
-   * @param muG      gas dynamic viscosity [Pa·s]
-   * @param diffG    gas diffusivity [m²/s]
-   * @param scG      gas Schmidt number [-]
+   * @param uG gas velocity [m/s]
+   * @param rhoG gas density [kg/m³]
+   * @param muG gas dynamic viscosity [Pa·s]
+   * @param diffG gas diffusivity [m²/s]
+   * @param scG gas Schmidt number [-]
    * @return gas-side mass transfer coefficient [m/s]
    */
   private static double calculateDropletKG(double diameter, double uG, double rhoG, double muG, double diffG,
@@ -473,11 +473,11 @@ public class MassTransferCoefficientCalculator {
    * Calculates gas-side mass transfer coefficient for churn flow.
    *
    * @param diameter pipe diameter [m]
-   * @param uG       gas velocity [m/s]
-   * @param rhoG     gas density [kg/m³]
-   * @param muG      gas dynamic viscosity [Pa·s]
-   * @param diffG    gas diffusivity [m²/s]
-   * @param scG      gas Schmidt number [-]
+   * @param uG gas velocity [m/s]
+   * @param rhoG gas density [kg/m³]
+   * @param muG gas dynamic viscosity [Pa·s]
+   * @param diffG gas diffusivity [m²/s]
+   * @param scG gas Schmidt number [-]
    * @return gas-side mass transfer coefficient [m/s]
    */
   private static double calculateChurnKG(double diameter, double uG, double rhoG, double muG, double diffG,
@@ -493,7 +493,7 @@ public class MassTransferCoefficientCalculator {
   /**
    * Calculates hydraulic diameter for liquid phase in stratified flow.
    *
-   * @param diameter     pipe diameter [m]
+   * @param diameter pipe diameter [m]
    * @param liquidHoldup liquid holdup fraction [-]
    * @return hydraulic diameter for liquid phase [m]
    */
@@ -514,7 +514,7 @@ public class MassTransferCoefficientCalculator {
   /**
    * Calculates hydraulic diameter for gas phase in stratified flow.
    *
-   * @param diameter     pipe diameter [m]
+   * @param diameter pipe diameter [m]
    * @param voidFraction void fraction [-]
    * @return hydraulic diameter for gas phase [m]
    */
@@ -537,14 +537,14 @@ public class MassTransferCoefficientCalculator {
    * liquid. AIChE Journal, 16(4), 513-519.
    * </p>
    *
-   * @param flowPattern        the flow pattern
-   * @param diameter           pipe diameter (m)
-   * @param liquidHoldup       liquid holdup
-   * @param usg                superficial gas velocity (m/s)
-   * @param usl                superficial liquid velocity (m/s)
-   * @param rhoL               liquid density (kg/m³)
-   * @param muL                liquid viscosity (Pa·s)
-   * @param diffL              liquid diffusivity (m²/s)
+   * @param flowPattern the flow pattern
+   * @param diameter pipe diameter (m)
+   * @param liquidHoldup liquid holdup
+   * @param usg superficial gas velocity (m/s)
+   * @param usl superficial liquid velocity (m/s)
+   * @param rhoL liquid density (kg/m³)
+   * @param muL liquid viscosity (Pa·s)
+   * @param diffL liquid diffusivity (m²/s)
    * @param turbulentIntensity turbulent intensity (0-1, typical 0.05-0.2)
    * @return enhanced liquid-side mass transfer coefficient (m/s)
    */
@@ -588,10 +588,10 @@ public class MassTransferCoefficientCalculator {
    * through liquid interfaces. Ind. Eng. Chem. Fundam., 9(3), 458-465.
    * </p>
    *
-   * @param kLBase                 base mass transfer coefficient (m/s)
+   * @param kLBase base mass transfer coefficient (m/s)
    * @param surfaceTensionGradient gradient of surface tension with concentration (N·m/mol)
-   * @param diffL                  liquid diffusivity (m²/s)
-   * @param muL                    liquid viscosity (Pa·s)
+   * @param diffL liquid diffusivity (m²/s)
+   * @param muL liquid viscosity (Pa·s)
    * @return corrected mass transfer coefficient (m/s)
    */
   public static double applyMarangoniCorrection(double kLBase, double surfaceTensionGradient, double diffL,
@@ -622,18 +622,18 @@ public class MassTransferCoefficientCalculator {
    * calculation.
    * </p>
    *
-   * @param flowPattern            the flow pattern
-   * @param diameter               pipe diameter (m)
-   * @param liquidHoldup           liquid holdup
-   * @param usg                    superficial gas velocity (m/s)
-   * @param usl                    superficial liquid velocity (m/s)
-   * @param rhoL                   liquid density (kg/m³)
-   * @param muL                    liquid viscosity (Pa·s)
-   * @param diffL                  liquid diffusivity (m²/s)
-   * @param turbulentIntensity     turbulent intensity (0-1)
+   * @param flowPattern the flow pattern
+   * @param diameter pipe diameter (m)
+   * @param liquidHoldup liquid holdup
+   * @param usg superficial gas velocity (m/s)
+   * @param usl superficial liquid velocity (m/s)
+   * @param rhoL liquid density (kg/m³)
+   * @param muL liquid viscosity (Pa·s)
+   * @param diffL liquid diffusivity (m²/s)
+   * @param turbulentIntensity turbulent intensity (0-1)
    * @param surfaceTensionGradient surface tension gradient (N·m/mol), 0 to disable
-   * @param includeTurbulence      whether to include turbulence effects
-   * @param includeMarangoni       whether to include Marangoni correction
+   * @param includeTurbulence whether to include turbulence effects
+   * @param includeMarangoni whether to include Marangoni correction
    * @return enhanced mass transfer coefficient (m/s)
    */
   public static double calculateEnhancedLiquidMassTransferCoefficient(FlowPattern flowPattern, double diameter,
@@ -666,7 +666,7 @@ public class MassTransferCoefficientCalculator {
    * </p>
    *
    * @param flowPattern the flow pattern
-   * @param re          Reynolds number
+   * @param re Reynolds number
    * @return estimated turbulent intensity (0-1)
    */
   public static double estimateTurbulentIntensity(FlowPattern flowPattern, double re) {
@@ -714,7 +714,7 @@ public class MassTransferCoefficientCalculator {
    * </ul>
    *
    * @param flowPattern the flow pattern
-   * @param phase       0 for gas, 1 for liquid
+   * @param phase 0 for gas, 1 for liquid
    * @return array containing [min, typical, max] mass transfer coefficient (m/s)
    */
   public static double[] getExpectedMassTransferCoefficientRange(FlowPattern flowPattern, int phase) {
@@ -780,9 +780,9 @@ public class MassTransferCoefficientCalculator {
   /**
    * Validates calculated mass transfer coefficient against literature correlations.
    *
-   * @param calculated  calculated kL or kG value (m/s)
+   * @param calculated calculated kL or kG value (m/s)
    * @param flowPattern the flow pattern
-   * @param phase       0 for gas, 1 for liquid
+   * @param phase 0 for gas, 1 for liquid
    * @return true if within expected range, false otherwise
    */
   public static boolean validateAgainstLiterature(double calculated, FlowPattern flowPattern, int phase) {

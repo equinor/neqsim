@@ -86,7 +86,7 @@ public class DexpiInstrumentTest extends NeqSimTest {
   /**
    * Tests that the writer without instruments still works (backwards compatibility).
    *
-   * @throws IOException             if file operations fail
+   * @throws IOException if file operations fail
    * @throws DexpiXmlReaderException if parsing fails
    */
   @Test
@@ -108,7 +108,7 @@ public class DexpiInstrumentTest extends NeqSimTest {
   /**
    * Tests reading instrument metadata from a DEXPI XML file.
    *
-   * @throws IOException             if file operations fail
+   * @throws IOException if file operations fail
    * @throws DexpiXmlReaderException if parsing fails
    */
   @Test
@@ -134,7 +134,7 @@ public class DexpiInstrumentTest extends NeqSimTest {
   /**
    * Tests reading instruments with loop associations.
    *
-   * @throws IOException             if file operations fail
+   * @throws IOException if file operations fail
    * @throws DexpiXmlReaderException if parsing fails
    */
   @Test
@@ -157,7 +157,7 @@ public class DexpiInstrumentTest extends NeqSimTest {
   /**
    * Tests the round-trip: export instruments then read them back.
    *
-   * @throws IOException             if file operations fail
+   * @throws IOException if file operations fail
    * @throws DexpiXmlReaderException if parsing fails
    */
   @Test

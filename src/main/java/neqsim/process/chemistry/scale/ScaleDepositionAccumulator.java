@@ -67,11 +67,11 @@ public class ScaleDepositionAccumulator implements Serializable {
   /**
    * Sets aqueous-phase chemistry used to evaluate the saturation index per segment.
    *
-   * @param caMgL  calcium concentration [mg/L]
+   * @param caMgL calcium concentration [mg/L]
    * @param hcoMgL bicarbonate concentration [mg/L]
-   * @param soMgL  sulphate concentration [mg/L]
-   * @param baMgL  barium concentration [mg/L]
-   * @param naMgL  sodium concentration [mg/L]
+   * @param soMgL sulphate concentration [mg/L]
+   * @param baMgL barium concentration [mg/L]
+   * @param naMgL sodium concentration [mg/L]
    * @param tdsMgL total dissolved solids [mg/L]
    * @return this for chaining
    */
@@ -89,7 +89,7 @@ public class ScaleDepositionAccumulator implements Serializable {
   /**
    * Sets pH and CO2 partial pressure used by the scale calculator.
    *
-   * @param pH      pH of the aqueous phase
+   * @param pH pH of the aqueous phase
    * @param pco2Bar CO2 partial pressure [bar]
    * @return this for chaining
    */

@@ -93,7 +93,7 @@ public class SensitivityAnalyzer implements Serializable {
   /**
    * Creates a new sensitivity analyzer for the given base case.
    *
-   * @param baseCase     the configured cash flow engine representing the base case
+   * @param baseCase the configured cash flow engine representing the base case
    * @param discountRate discount rate for NPV calculations
    */
   public SensitivityAnalyzer(CashFlowEngine baseCase, double discountRate) {
@@ -187,9 +187,9 @@ public class SensitivityAnalyzer implements Serializable {
   /**
    * Analyzes a single parameter's sensitivity.
    *
-   * @param name             parameter name
+   * @param name parameter name
    * @param variationPercent variation percentage
-   * @param setter           parameter setter function
+   * @param setter parameter setter function
    * @return tornado item with low/high NPV values
    */
   private TornadoItem analyzeParameter(String name, double variationPercent, ParameterSetter setter) {
@@ -213,10 +213,10 @@ public class SensitivityAnalyzer implements Serializable {
   /**
    * Performs three-scenario analysis (low, base, high).
    *
-   * @param lowOilPrice      low case oil price
-   * @param highOilPrice     high case oil price
-   * @param lowGasPrice      low case gas price
-   * @param highGasPrice     high case gas price
+   * @param lowOilPrice low case oil price
+   * @param highOilPrice high case oil price
+   * @param lowGasPrice low case gas price
+   * @param highGasPrice high case gas price
    * @param capexContingency additional CAPEX for low case (e.g., 0.20 for 20% overrun)
    * @return scenario analysis result
    */
@@ -452,7 +452,7 @@ public class SensitivityAnalyzer implements Serializable {
    * Scales one annual profile.
    *
    * @param profile year-to-volume profile
-   * @param factor  multiplier to apply
+   * @param factor multiplier to apply
    * @return scaled profile
    */
   private Map<Integer, Double> scaleProfile(Map<Integer, Double> profile, double factor) {

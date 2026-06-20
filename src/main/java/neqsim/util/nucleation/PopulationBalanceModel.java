@@ -290,8 +290,8 @@ public class PopulationBalanceModel {
    * Adds nucleated particles to the nucleation bin.
    *
    * @param nucleationBin the bin index for newly nucleated particles
-   * @param rate          nucleation rate in particles/(m3*s)
-   * @param dt            time step in seconds
+   * @param rate nucleation rate in particles/(m3*s)
+   * @param dt time step in seconds
    */
   private void applyNucleation(int nucleationBin, double rate, double dt) {
     if (rate > 0.0 && nucleationBin >= 0 && nucleationBin < numberOfBins) {
@@ -312,7 +312,7 @@ public class PopulationBalanceModel {
    * </p>
    *
    * @param growthRateRad growth rate dr/dt in m/s
-   * @param dt            time step in seconds
+   * @param dt time step in seconds
    */
   private void applyCondensationGrowth(double growthRateRad, double dt) {
     if (growthRateRad <= 0.0) {
@@ -357,7 +357,7 @@ public class PopulationBalanceModel {
    * </p>
    *
    * @param kernel coagulation kernel K in m3/s
-   * @param dt     time step in seconds
+   * @param dt time step in seconds
    */
   private void applyCoagulation(double kernel, double dt) {
     if (kernel <= 0.0) {

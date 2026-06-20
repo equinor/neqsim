@@ -70,8 +70,8 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicoperations.B
    * setPressureRange.
    * </p>
    *
-   * @param minPressure   a double
-   * @param maxPressure   a double
+   * @param minPressure a double
+   * @param maxPressure a double
    * @param numberOfSteps a int
    */
   public void setPressureRange(double minPressure, double maxPressure, int numberOfSteps) {
@@ -91,7 +91,7 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicoperations.B
    *
    * @param minTemperature a double
    * @param maxTemperature a double
-   * @param numberOfSteps  a int
+   * @param numberOfSteps a int
    */
   public void setTemperatureRange(double minTemperature, double maxTemperature, int numberOfSteps) {
     temperatures = new double[numberOfSteps];

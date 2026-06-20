@@ -240,12 +240,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     /**
      * Create a side-draw flow specification.
      *
-     * @param trayNumber     bottom-up tray index where the draw is located
-     * @param phase          side-draw phase
+     * @param trayNumber bottom-up tray index where the draw is located
+     * @param phase side-draw phase
      * @param targetFlowRate target side-draw flow rate
-     * @param flowUnit       flow-rate unit for the target and actual flow
+     * @param flowUnit flow-rate unit for the target and actual flow
      * @throws IllegalArgumentException if phase is null, target flow is negative or non-finite, or the flow unit is
-     *                                  empty
+     * empty
      */
     public ColumnSideDrawSpecification(int trayNumber, SideDrawPhase phase, double targetFlowRate, String flowUnit) {
       if (phase == null) {
@@ -395,11 +395,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     /**
      * Create a liquid pumparound definition.
      *
-     * @param name             pumparound name
-     * @param drawTrayNumber   tray index where liquid is withdrawn
+     * @param name pumparound name
+     * @param drawTrayNumber tray index where liquid is withdrawn
      * @param returnTrayNumber tray index where cooled/heated liquid is returned
-     * @param drawFraction     fraction of tray liquid traffic withdrawn
-     * @param temperatureDrop  temperature drop from draw to return in Kelvin
+     * @param drawFraction fraction of tray liquid traffic withdrawn
+     * @param temperatureDrop temperature drop from draw to return in Kelvin
      */
     public ColumnPumparound(String name, int drawTrayNumber, int returnTrayNumber, double drawFraction,
 	double temperatureDrop) {
@@ -477,7 +477,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
      * Update the return stream from a tray liquid draw.
      *
      * @param newDrawStream latest liquid draw stream
-     * @param id            calculation identifier
+     * @param id calculation identifier
      * @return relative change in return flow rate
      */
     private double updateReturnStream(StreamInterface newDrawStream, UUID id) {
@@ -827,10 +827,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Constructor for DistillationColumn.
    * </p>
    *
-   * @param name               Name of distillation column
+   * @param name Name of distillation column
    * @param numberOfTraysLocal Number of SimpleTrays to add (excluding reboiler/condenser)
-   * @param hasReboiler        Set true to add reboiler
-   * @param hasCondenser       Set true to add Condenser
+   * @param hasReboiler Set true to add reboiler
+   * @param hasCondenser Set true to add Condenser
    */
   public DistillationColumn(String name, int numberOfTraysLocal, boolean hasReboiler, boolean hasCondenser) {
     super(name);
@@ -868,7 +868,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Add a feed stream to the specified tray. (Now allows multiple streams on the same trayNumber, using a list.)
    * </p>
    *
-   * @param inputStream    the feed stream
+   * @param inputStream the feed stream
    * @param feedTrayNumber the tray number (0-based in the code) to which this feed goes
    * @throws IllegalArgumentException if the stream is null or the tray index is outside the column tray range
    */
@@ -1380,7 +1380,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Calculate the next side-draw fraction for a flow specification.
    *
-   * @param specification  side-draw flow specification
+   * @param specification side-draw flow specification
    * @param actualFlowRate latest actual flow rate
    * @return next candidate side-draw fraction
    */
@@ -1399,7 +1399,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Get the configured side-draw fraction on a tray.
    *
    * @param trayNumber bottom-up tray index
-   * @param phase      side-draw phase
+   * @param phase side-draw phase
    * @return current side-draw fraction
    */
   private double getSideDrawFraction(int trayNumber, SideDrawPhase phase) {
@@ -1417,8 +1417,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Set a side-draw fraction after clamping it to the available tray phase traffic.
    *
    * @param trayNumber bottom-up tray index
-   * @param phase      side-draw phase
-   * @param fraction   requested side-draw fraction
+   * @param phase side-draw phase
+   * @param fraction requested side-draw fraction
    * @return true if the tray fraction changed, false if the requested value was already set
    */
   private boolean setSideDrawFractionWithinLimit(int trayNumber, SideDrawPhase phase, double fraction) {
@@ -1435,7 +1435,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Get the maximum side-draw fraction available for the selected tray phase.
    *
    * @param trayNumber bottom-up tray index
-   * @param phase      side-draw phase
+   * @param phase side-draw phase
    * @return maximum allowed side-draw fraction
    */
   private double getMaximumSideDrawFraction(int trayNumber, SideDrawPhase phase) {
@@ -1817,7 +1817,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * while leaving the stored public specifications unchanged.
    * </p>
    *
-   * @param id    calculation identifier
+   * @param id calculation identifier
    * @param steps number of continuation stages to run
    */
   private void solveWithSpecificationHomotopy(UUID id, int steps) {
@@ -1865,8 +1865,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Solve the column against the provided effective top and bottom specification targets.
    *
-   * @param id                           calculation identifier
-   * @param effectiveTopSpecification    effective top specification for this solve
+   * @param id calculation identifier
+   * @param effectiveTopSpecification effective top specification for this solve
    * @param effectiveBottomSpecification effective bottom specification for this solve
    */
   private void solveWithSpecificationTargets(UUID id, ColumnSpecification effectiveTopSpecification,
@@ -1981,8 +1981,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Build one staged specification by interpolating from a start value to the final target.
    *
    * @param specification final user specification
-   * @param startValue    initial product value from the warm baseline solve
-   * @param fraction      continuation fraction, where one means the final user target
+   * @param startValue initial product value from the warm baseline solve
+   * @param fraction continuation fraction, where one means the final user target
    * @return staged specification preserving the original tolerance and iteration limit
    */
   private ColumnSpecification createHomotopySpecification(ColumnSpecification specification, double startValue,
@@ -2001,7 +2001,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Bound a staged target so it remains valid for its specification type.
    *
    * @param specification specification defining the valid target range
-   * @param target        staged target candidate
+   * @param target staged target candidate
    * @return bounded finite target value
    */
   private double boundSpecificationTarget(ColumnSpecification specification, double target) {
@@ -2019,9 +2019,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Apply temperature guesses and seed the internal tray-temperature profile.
    *
-   * @param adjustTop         whether the condenser temperature is being adjusted
-   * @param adjustBottom      whether the reboiler temperature is being adjusted
-   * @param topTemperature    top temperature guess in kelvin
+   * @param adjustTop whether the condenser temperature is being adjusted
+   * @param adjustBottom whether the reboiler temperature is being adjusted
+   * @param topTemperature top temperature guess in kelvin
    * @param bottomTemperature bottom temperature guess in kelvin
    */
   private void applySpecificationTemperatureGuess(boolean adjustTop, boolean adjustBottom, double topTemperature,
@@ -2040,7 +2040,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Seed tray temperatures linearly between bottom and top endpoints.
    *
-   * @param topTemperature    top-stage seed temperature in kelvin
+   * @param topTemperature top-stage seed temperature in kelvin
    * @param bottomTemperature bottom-stage seed temperature in kelvin
    */
   private void seedTrayTemperatureProfile(double topTemperature, double bottomTemperature) {
@@ -2067,10 +2067,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Compute the secant method step for temperature adjustment, with safeguards.
    *
-   * @param t0       previous temperature
-   * @param t1       current temperature
-   * @param f0       spec error at t0
-   * @param f1       spec error at t1
+   * @param t0 previous temperature
+   * @param t1 current temperature
+   * @param f0 spec error at t0
+   * @param f1 spec error at t1
    * @param feedTemp reference feed temperature for bounding
    * @return the next temperature guess
    */
@@ -2222,12 +2222,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Finalize a direct Naphtali-Sandholm solve without invoking generic product reconciliation.
    *
-   * @param id                  calculation identifier
-   * @param iterations          number of solver iterations
+   * @param id calculation identifier
+   * @param iterations number of solver iterations
    * @param temperatureResidual final temperature residual
-   * @param massResidual        final mass residual
-   * @param energyResidual      final energy residual
-   * @param startTime           nano time when the solve started
+   * @param massResidual final mass residual
+   * @param energyResidual final energy residual
+   * @param startTime nano time when the solve started
    */
   private void finalizeNaphtaliSolve(UUID id, int iterations, double temperatureResidual, double massResidual,
       double energyResidual, long startTime) {
@@ -2272,7 +2272,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Return the smaller of two finite values, or the finite value when only one is finite.
    *
-   * @param first  first candidate value
+   * @param first first candidate value
    * @param second second candidate value
    * @return finite minimum, or zero if neither value is finite
    */
@@ -2286,7 +2286,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Return a fallback for non-finite values.
    *
-   * @param value    value to inspect
+   * @param value value to inspect
    * @param fallback fallback value
    * @return value when finite, otherwise fallback
    */
@@ -2304,7 +2304,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * residual-monitored solver without changing the legacy Newton solver contract.
    * </p>
    *
-   * @param id                   calculation identifier
+   * @param id calculation identifier
    * @param baselineResidualNorm accepted residual norm before the polish attempt
    * @return {@code true} if the candidate polish was accepted
    */
@@ -2362,10 +2362,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Check whether a Newton polish recovered the MESH product-draw convergence gate.
    *
-   * @param candidateResidualNorm        candidate MESH infinity norm
+   * @param candidateResidualNorm candidate MESH infinity norm
    * @param candidateProductDrawResidual candidate product-draw residual norm
-   * @param baselineResidualNorm         baseline MESH infinity norm
-   * @param baselineProductDrawResidual  baseline product-draw residual norm
+   * @param baselineResidualNorm baseline MESH infinity norm
+   * @param baselineProductDrawResidual baseline product-draw residual norm
    * @return {@code true} when product-draw residuals satisfy their gate without worsening the overall residual norm
    */
   private boolean productDrawGateRecovered(double candidateResidualNorm, double candidateProductDrawResidual,
@@ -2380,8 +2380,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Check whether a MESH Newton polish preserved the accepted terminal product split.
    *
-   * @param candidate          candidate column after Newton polishing
-   * @param baselineGasFlow    gas product flow before polishing in kg/hr
+   * @param candidate candidate column after Newton polishing
+   * @param baselineGasFlow gas product flow before polishing in kg/hr
    * @param baselineLiquidFlow liquid product flow before polishing in kg/hr
    * @return {@code true} when both product flows remain within tolerance
    */
@@ -2417,7 +2417,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Compare a candidate product flow against a baseline flow for MESH polish acceptance.
    *
    * @param candidateFlow candidate flow in kg/hr
-   * @param baselineFlow  baseline flow in kg/hr
+   * @param baselineFlow baseline flow in kg/hr
    * @return {@code true} if the candidate flow is finite and within tolerance
    */
   private boolean productFlowWithinMeshPolishTolerance(double candidateFlow, double baselineFlow) {
@@ -2520,7 +2520,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * existing stream keeps the caller-held reference live and mass-consistent.
    * </p>
    *
-   * @param live   the existing product stream whose identity must be preserved
+   * @param live the existing product stream whose identity must be preserved
    * @param solved the accepted candidate product stream carrying the solved state
    * @return the product stream reference to retain on this column
    */
@@ -2539,7 +2539,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Accept a candidate produced by the automatic solver selector.
    *
-   * @param candidate      solved or best available candidate state
+   * @param candidate solved or best available candidate state
    * @param selectedSolver solver strategy used for the candidate
    */
   void acceptAutoSolverCandidate(DistillationColumn candidate, SolverType selectedSolver) {
@@ -2596,7 +2596,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Accept a damped fallback candidate after an accelerator result has been rejected.
    *
    * @param candidate solved fallback candidate
-   * @param reason    reason the accelerator result was rejected
+   * @param reason reason the accelerator result was rejected
    */
   void acceptDampedFallbackCandidate(DistillationColumn candidate, String reason) {
     logger.warn(
@@ -2617,7 +2617,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * </p>
    *
    * @param candidate solved warm-start candidate to keep
-   * @param reason    reason the direct Naphtali-Sandholm candidate was rejected
+   * @param reason reason the direct Naphtali-Sandholm candidate was rejected
    */
   void acceptNaphtaliWarmStartCandidate(DistillationColumn candidate, String reason) {
     int analyticJacobianColumns = lastNaphtaliAnalyticJacobianColumns;
@@ -2812,7 +2812,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Check whether the column already has a useful tray temperature profile.
    *
    * @param firstFeedTray first tray index included in the check
-   * @param lastFeedTray  last tray index included in the check
+   * @param lastFeedTray last tray index included in the check
    * @return {@code true} when at least two tray temperatures span a useful range
    */
   private boolean hasUsableTrayTemperatureProfile(int firstFeedTray, int lastFeedTray) {
@@ -2834,7 +2834,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Estimate a tray temperature from configured column-end temperatures.
    *
-   * @param trayNumber      tray index to estimate
+   * @param trayNumber tray index to estimate
    * @param feedTemperature feed stream temperature in Kelvin
    * @return estimated tray temperature in Kelvin, or {@link Double#NaN} if no useful profile exists
    */
@@ -2874,7 +2874,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Estimate the top temperature used for initial feed placement.
    *
-   * @param feedTemperature   feed stream temperature in Kelvin
+   * @param feedTemperature feed stream temperature in Kelvin
    * @param bottomTemperature bottom temperature estimate in Kelvin
    * @return top temperature estimate in Kelvin
    */
@@ -2940,23 +2940,23 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     /**
      * Create a tray optimization result.
      *
-     * @param feasible            {@code true} if a candidate met the product specification
-     * @param numberOfTrays       total tray count including reboiler and condenser if present
-     * @param feedTrayNumber      0-based feed tray number selected for all optimization feeds
-     * @param componentName       product component used in the purity specification
-     * @param topProduct          {@code true} when the purity target applies to the top product
-     * @param targetPurity        target product mole fraction
-     * @param productPurity       achieved product mole fraction
-     * @param reboilerDuty        reboiler duty in W
-     * @param condenserDuty       condenser duty in W
-     * @param totalAbsoluteDuty   sum of absolute condenser and reboiler duties in W
-     * @param iterationCount      solver iteration count for the final candidate
+     * @param feasible {@code true} if a candidate met the product specification
+     * @param numberOfTrays total tray count including reboiler and condenser if present
+     * @param feedTrayNumber 0-based feed tray number selected for all optimization feeds
+     * @param componentName product component used in the purity specification
+     * @param topProduct {@code true} when the purity target applies to the top product
+     * @param targetPurity target product mole fraction
+     * @param productPurity achieved product mole fraction
+     * @param reboilerDuty reboiler duty in W
+     * @param condenserDuty condenser duty in W
+     * @param totalAbsoluteDuty sum of absolute condenser and reboiler duties in W
+     * @param iterationCount solver iteration count for the final candidate
      * @param temperatureResidual final temperature residual in K
-     * @param massResidual        final relative mass residual
-     * @param energyResidual      final relative energy residual
-     * @param evaluatedCases      number of tray-count/feed-tray cases evaluated
-     * @param convergedCases      number of evaluated cases that converged
-     * @param message             diagnostic message describing the outcome
+     * @param massResidual final relative mass residual
+     * @param energyResidual final relative energy residual
+     * @param evaluatedCases number of tray-count/feed-tray cases evaluated
+     * @param convergedCases number of evaluated cases that converged
+     * @param message diagnostic message describing the outcome
      */
     public TrayOptimizationResult(boolean feasible, int numberOfTrays, int feedTrayNumber, String componentName,
 	boolean topProduct, double targetPurity, double productPurity, double reboilerDuty, double condenserDuty,
@@ -3167,19 +3167,19 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     /**
      * Create a shortcut initialization result.
      *
-     * @param initialized           whether the rigorous column was configured
-     * @param totalStageCount       total rigorous stage count including condenser/reboiler if present
-     * @param feedTrayNumber        bottom-up rigorous feed tray index
+     * @param initialized whether the rigorous column was configured
+     * @param totalStageCount total rigorous stage count including condenser/reboiler if present
+     * @param feedTrayNumber bottom-up rigorous feed tray index
      * @param feedTrayNumberFromTop shortcut feed tray count from the top product end
-     * @param minimumStages         Fenske minimum theoretical stages
-     * @param minimumRefluxRatio    Underwood minimum reflux ratio
-     * @param actualStages          Gilliland actual theoretical stages
-     * @param actualRefluxRatio     selected actual reflux ratio
-     * @param condenserDuty         estimated condenser duty in W
-     * @param reboilerDuty          estimated reboiler duty in W
-     * @param lightKey              light-key component name
-     * @param heavyKey              heavy-key component name
-     * @param message               diagnostic message
+     * @param minimumStages Fenske minimum theoretical stages
+     * @param minimumRefluxRatio Underwood minimum reflux ratio
+     * @param actualStages Gilliland actual theoretical stages
+     * @param actualRefluxRatio selected actual reflux ratio
+     * @param condenserDuty estimated condenser duty in W
+     * @param reboilerDuty estimated reboiler duty in W
+     * @param lightKey light-key component name
+     * @param heavyKey heavy-key component name
+     * @param message diagnostic message
      */
     public ShortcutInitializationResult(boolean initialized, int totalStageCount, int feedTrayNumber,
 	int feedTrayNumberFromTop, double minimumStages, double minimumRefluxRatio, double actualStages,
@@ -3352,21 +3352,21 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     /**
      * Create an economic tray optimization result from a rigorous tray result.
      *
-     * @param baseResult            rigorous tray optimization result used as the process-design basis
-     * @param capitalCost           installed capital cost estimate in USD
-     * @param annualUtilityCost     annual utility cost estimate in USD/year
+     * @param baseResult rigorous tray optimization result used as the process-design basis
+     * @param capitalCost installed capital cost estimate in USD
+     * @param annualUtilityCost annual utility cost estimate in USD/year
      * @param annualizedCapitalCost annualized capital cost in USD/year
-     * @param totalAnnualizedCost   total annualized cost in USD/year
-     * @param capitalChargeFactor   capital annualization factor in 1/year
+     * @param totalAnnualizedCost total annualized cost in USD/year
+     * @param capitalChargeFactor capital annualization factor in 1/year
      * @param operatingHoursPerYear operating hours used for utility costing in hr/year
-     * @param steamCostPerTonne     steam cost used for reboiler duty in USD/tonne
+     * @param steamCostPerTonne steam cost used for reboiler duty in USD/tonne
      * @param coolingWaterCostPerM3 cooling-water cost used for condenser duty in USD/m3
-     * @param trayEfficiency        overall tray efficiency used to convert theoretical to actual trays
-     * @param actualTrays           actual tray count after tray-efficiency correction
-     * @param columnDiameter        mechanically designed column diameter in m
-     * @param columnHeight          mechanically designed tangent-to-tangent column height in m
-     * @param condenserRefluxRatio  selected condenser reflux ratio, or {@link Double#NaN}
-     * @param reboilerRatio         selected reboiler boilup/reflux ratio, or {@link Double#NaN}
+     * @param trayEfficiency overall tray efficiency used to convert theoretical to actual trays
+     * @param actualTrays actual tray count after tray-efficiency correction
+     * @param columnDiameter mechanically designed column diameter in m
+     * @param columnHeight mechanically designed tangent-to-tangent column height in m
+     * @param condenserRefluxRatio selected condenser reflux ratio, or {@link Double#NaN}
+     * @param reboilerRatio selected reboiler boilup/reflux ratio, or {@link Double#NaN}
      */
     public EconomicTrayOptimizationResult(TrayOptimizationResult baseResult, double capitalCost,
 	double annualUtilityCost, double annualizedCapitalCost, double totalAnnualizedCost, double capitalChargeFactor,
@@ -3592,10 +3592,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * final solved state is left in the object.
    * </p>
    *
-   * @param productSpec   the target purity (mole fraction) of the key component
+   * @param productSpec the target purity (mole fraction) of the key component
    * @param componentName the name of the key component
-   * @param isTopProduct  true if the spec is for the top product, false for the bottom product
-   * @param maxTrays      the maximum total tray count to try including reboiler/condenser if present
+   * @param isTopProduct true if the spec is for the top product, false for the bottom product
+   * @param maxTrays the maximum total tray count to try including reboiler/condenser if present
    * @return structured optimization result with selected tray count, feed tray, duties and residuals
    */
   public TrayOptimizationResult findOptimalTrayConfiguration(double productSpec, String componentName,
@@ -3666,10 +3666,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Find the optimal number of trays to meet a product specification.
    *
-   * @param productSpec   the target purity (mole fraction) of the key component
+   * @param productSpec the target purity (mole fraction) of the key component
    * @param componentName the name of the key component
-   * @param isTopProduct  true if the spec is for the top product (distillate), false for bottom
-   * @param maxTrays      the maximum total tray count to try including reboiler/condenser if present
+   * @param isTopProduct true if the spec is for the top product (distillate), false for bottom
+   * @param maxTrays the maximum total tray count to try including reboiler/condenser if present
    * @return the optimal number of trays, or -1 if the spec could not be met
    */
   public int findOptimalNumberOfTrays(double productSpec, String componentName, boolean isTopProduct, int maxTrays) {
@@ -3688,10 +3688,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * cooling water.
    * </p>
    *
-   * @param productSpec   the target purity (mole fraction) of the key component
+   * @param productSpec the target purity (mole fraction) of the key component
    * @param componentName the name of the key component
-   * @param isTopProduct  true if the spec is for the top product, false for the bottom product
-   * @param maxTrays      the maximum total tray count to try including reboiler/condenser if present
+   * @param isTopProduct true if the spec is for the top product, false for the bottom product
+   * @param maxTrays the maximum total tray count to try including reboiler/condenser if present
    * @return economic optimization result with process, mechanical design, and cost metrics
    */
   public EconomicTrayOptimizationResult findEconomicOptimalTrayConfiguration(double productSpec, String componentName,
@@ -3703,15 +3703,15 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Find the annualized-cost optimum for tray count and feed tray using supplied economics.
    *
-   * @param productSpec           the target purity (mole fraction) of the key component
-   * @param componentName         the name of the key component
-   * @param isTopProduct          true if the spec is for the top product, false for the bottom product
-   * @param maxTrays              the maximum total tray count to try including reboiler/condenser if present
-   * @param capitalChargeFactor   annual capital charge factor in 1/year
+   * @param productSpec the target purity (mole fraction) of the key component
+   * @param componentName the name of the key component
+   * @param isTopProduct true if the spec is for the top product, false for the bottom product
+   * @param maxTrays the maximum total tray count to try including reboiler/condenser if present
+   * @param capitalChargeFactor annual capital charge factor in 1/year
    * @param operatingHoursPerYear operating hours per year for utility costing
-   * @param steamCostPerTonne     steam cost in USD/tonne for reboiler duty
+   * @param steamCostPerTonne steam cost in USD/tonne for reboiler duty
    * @param coolingWaterCostPerM3 cooling-water cost in USD/m3 for condenser duty
-   * @param trayEfficiency        overall tray efficiency used for actual tray count and column height
+   * @param trayEfficiency overall tray efficiency used for actual tray count and column height
    * @return economic optimization result with process, mechanical design, and cost metrics
    */
   public EconomicTrayOptimizationResult findEconomicOptimalTrayConfiguration(double productSpec, String componentName,
@@ -3730,17 +3730,17 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * that end of the column.
    * </p>
    *
-   * @param productSpec           the target purity (mole fraction) of the key component
-   * @param componentName         the name of the key component
-   * @param isTopProduct          true if the spec is for the top product, false for the bottom product
-   * @param maxTrays              the maximum total tray count to try including reboiler/condenser if present
+   * @param productSpec the target purity (mole fraction) of the key component
+   * @param componentName the name of the key component
+   * @param isTopProduct true if the spec is for the top product, false for the bottom product
+   * @param maxTrays the maximum total tray count to try including reboiler/condenser if present
    * @param condenserRefluxRatios optional condenser reflux-ratio candidates to evaluate
-   * @param reboilerRatios        optional reboiler boilup/reflux-ratio candidates to evaluate
-   * @param capitalChargeFactor   annual capital charge factor in 1/year
+   * @param reboilerRatios optional reboiler boilup/reflux-ratio candidates to evaluate
+   * @param capitalChargeFactor annual capital charge factor in 1/year
    * @param operatingHoursPerYear operating hours per year for utility costing
-   * @param steamCostPerTonne     steam cost in USD/tonne for reboiler duty
+   * @param steamCostPerTonne steam cost in USD/tonne for reboiler duty
    * @param coolingWaterCostPerM3 cooling-water cost in USD/m3 for condenser duty
-   * @param trayEfficiency        overall tray efficiency used for actual tray count and column height
+   * @param trayEfficiency overall tray efficiency used for actual tray count and column height
    * @return economic optimization result with process, mechanical design, and cost metrics
    */
   public EconomicTrayOptimizationResult findEconomicOptimalTrayConfiguration(double productSpec, String componentName,
@@ -3838,12 +3838,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * rigorous solving.
    * </p>
    *
-   * @param feedStream                 feed stream used for the shortcut calculation and rigorous column
-   * @param lightKey                   light-key component name
-   * @param heavyKey                   heavy-key component name
+   * @param feedStream feed stream used for the shortcut calculation and rigorous column
+   * @param lightKey light-key component name
+   * @param heavyKey heavy-key component name
    * @param lightKeyRecoveryDistillate light-key recovery to top product, 0 to 1
-   * @param heavyKeyRecoveryBottoms    heavy-key recovery to bottom product, 0 to 1
-   * @param refluxRatioMultiplier      actual reflux divided by minimum reflux, normally greater than 1
+   * @param heavyKeyRecoveryBottoms heavy-key recovery to bottom product, 0 to 1
+   * @param refluxRatioMultiplier actual reflux divided by minimum reflux, normally greater than 1
    * @return shortcut initialization result with applied rigorous-column settings
    */
   public ShortcutInitializationResult initializeFromShortcut(StreamInterface feedStream, String lightKey,
@@ -4011,7 +4011,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Record an AUTO initialization attempt in both report fields and the solver summary.
    *
    * @param summary automatic solver summary, possibly {@code null}
-   * @param label   human-readable initialization label
+   * @param label human-readable initialization label
    * @param applied {@code true} if the initialization changed the candidate column state
    * @param message detailed diagnostic message
    * @return {@code applied}
@@ -4065,7 +4065,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    *
    * @param lightKey light-key component name
    * @param heavyKey heavy-key component name
-   * @param message  diagnostic message
+   * @param message diagnostic message
    * @return failed initialization result
    */
   private ShortcutInitializationResult createFailedShortcutInitialization(String lightKey, String heavyKey,
@@ -4077,7 +4077,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Apply pressure defaults to a shortcut calculation and this rigorous column.
    *
-   * @param shortcut   shortcut column to configure
+   * @param shortcut shortcut column to configure
    * @param feedStream feed stream providing pressure if no endpoint pressure is already set
    */
   private void applyShortcutPressureBasis(ShortcutDistillationColumn shortcut, StreamInterface feedStream) {
@@ -4130,7 +4130,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Apply shortcut endpoint duties and reflux to a rebuild state.
    *
-   * @param state    column optimization state to update before rebuilding trays
+   * @param state column optimization state to update before rebuilding trays
    * @param shortcut solved shortcut column
    */
   private void applyShortcutEndpointDuties(ColumnOptimizationState state, ShortcutDistillationColumn shortcut) {
@@ -4207,7 +4207,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Check whether tray optimization should stop because a configured search budget is exhausted.
    *
-   * @param evaluatedCases         number of candidate cases already evaluated
+   * @param evaluatedCases number of candidate cases already evaluated
    * @param optimizationStartNanos value from {@link System#nanoTime()} at search start
    * @return {@code true} when candidate-count or elapsed-time budget has been reached
    */
@@ -4229,7 +4229,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Create a diagnostic message for a budget-limited optimization search.
    *
-   * @param evaluatedCases         number of candidate cases already evaluated
+   * @param evaluatedCases number of candidate cases already evaluated
    * @param optimizationStartNanos value from {@link System#nanoTime()} at search start
    * @return diagnostic message explaining the active budget limits
    */
@@ -4282,13 +4282,13 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Evaluate one tray-count/feed-tray candidate.
    *
-   * @param totalTrayCount    total tray count for the candidate
-   * @param feedTray          0-based feed tray used for all optimization feeds
-   * @param productSpec       target product mole fraction
-   * @param componentName     component used in the purity specification
-   * @param isTopProduct      {@code true} for top product, {@code false} for bottom product
+   * @param totalTrayCount total tray count for the candidate
+   * @param feedTray 0-based feed tray used for all optimization feeds
+   * @param productSpec target product mole fraction
+   * @param componentName component used in the purity specification
+   * @param isTopProduct {@code true} for top product, {@code false} for bottom product
    * @param optimizationFeeds feed streams to connect to the candidate
-   * @param state             captured column settings to apply during rebuild
+   * @param state captured column settings to apply during rebuild
    * @return candidate result, feasible only when the column converged and met the purity spec
    */
   private TrayOptimizationResult evaluateTrayOptimizationCandidate(int totalTrayCount, int feedTray, double productSpec,
@@ -4310,20 +4310,20 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Evaluate one annualized-cost optimization candidate.
    *
-   * @param totalTrayCount        total tray count for the candidate
-   * @param feedTray              0-based feed tray used for all optimization feeds
-   * @param productSpec           target product mole fraction
-   * @param componentName         component used in the purity specification
-   * @param isTopProduct          {@code true} for top product, {@code false} for bottom product
-   * @param optimizationFeeds     feed streams to connect to the candidate
-   * @param baseState             captured column settings to apply during rebuild
-   * @param condenserRefluxRatio  condenser reflux-ratio candidate, or {@link Double#NaN}
-   * @param reboilerRatio         reboiler boilup/reflux-ratio candidate, or {@link Double#NaN}
-   * @param capitalChargeFactor   annual capital charge factor in 1/year
+   * @param totalTrayCount total tray count for the candidate
+   * @param feedTray 0-based feed tray used for all optimization feeds
+   * @param productSpec target product mole fraction
+   * @param componentName component used in the purity specification
+   * @param isTopProduct {@code true} for top product, {@code false} for bottom product
+   * @param optimizationFeeds feed streams to connect to the candidate
+   * @param baseState captured column settings to apply during rebuild
+   * @param condenserRefluxRatio condenser reflux-ratio candidate, or {@link Double#NaN}
+   * @param reboilerRatio reboiler boilup/reflux-ratio candidate, or {@link Double#NaN}
+   * @param capitalChargeFactor annual capital charge factor in 1/year
    * @param operatingHoursPerYear operating hours per year for utility costing
-   * @param steamCostPerTonne     steam cost in USD/tonne for reboiler duty
+   * @param steamCostPerTonne steam cost in USD/tonne for reboiler duty
    * @param coolingWaterCostPerM3 cooling-water cost in USD/m3 for condenser duty
-   * @param trayEfficiency        overall tray efficiency used for actual tray count and column height
+   * @param trayEfficiency overall tray efficiency used for actual tray count and column height
    * @return economic candidate result, feasible only when converged and meeting the purity spec
    */
   private EconomicTrayOptimizationResult evaluateEconomicTrayOptimizationCandidate(int totalTrayCount, int feedTray,
@@ -4349,20 +4349,20 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Apply selected annualized-cost result to the live column and return final diagnostics.
    *
-   * @param selectedResult        selected economic candidate from the search
-   * @param optimizationFeeds     feed streams to connect to the selected tray
-   * @param state                 captured column settings to apply during rebuild
-   * @param productSpec           target product mole fraction
-   * @param componentName         component used in the purity specification
-   * @param isTopProduct          {@code true} for top product, {@code false} for bottom product
-   * @param evaluatedCases        number of evaluated candidate cases
-   * @param convergedCases        number of converged candidate cases
-   * @param capitalChargeFactor   annual capital charge factor in 1/year
+   * @param selectedResult selected economic candidate from the search
+   * @param optimizationFeeds feed streams to connect to the selected tray
+   * @param state captured column settings to apply during rebuild
+   * @param productSpec target product mole fraction
+   * @param componentName component used in the purity specification
+   * @param isTopProduct {@code true} for top product, {@code false} for bottom product
+   * @param evaluatedCases number of evaluated candidate cases
+   * @param convergedCases number of converged candidate cases
+   * @param capitalChargeFactor annual capital charge factor in 1/year
    * @param operatingHoursPerYear operating hours per year for utility costing
-   * @param steamCostPerTonne     steam cost in USD/tonne for reboiler duty
+   * @param steamCostPerTonne steam cost in USD/tonne for reboiler duty
    * @param coolingWaterCostPerM3 cooling-water cost in USD/m3 for condenser duty
-   * @param trayEfficiency        overall tray efficiency used for actual tray count and column height
-   * @param message               diagnostic message to store in the returned result
+   * @param trayEfficiency overall tray efficiency used for actual tray count and column height
+   * @param message diagnostic message to store in the returned result
    * @return final economic optimization result from the applied selected candidate
    */
   private EconomicTrayOptimizationResult applyEconomicTrayOptimizationResult(
@@ -4395,9 +4395,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Apply optional reflux/boilup ratio overrides to an optimization state.
    *
-   * @param state                state to modify
+   * @param state state to modify
    * @param condenserRefluxRatio condenser reflux-ratio candidate, or {@link Double#NaN}
-   * @param reboilerRatio        reboiler boilup/reflux-ratio candidate, or {@link Double#NaN}
+   * @param reboilerRatio reboiler boilup/reflux-ratio candidate, or {@link Double#NaN}
    */
   private void applyEconomicRatioOverrides(ColumnOptimizationState state, double condenserRefluxRatio,
       double reboilerRatio) {
@@ -4450,11 +4450,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Calculate mechanical design and cost metrics for the current solved candidate.
    *
-   * @param capitalChargeFactor   annual capital charge factor in 1/year
+   * @param capitalChargeFactor annual capital charge factor in 1/year
    * @param operatingHoursPerYear operating hours per year for utility costing
-   * @param steamCostPerTonne     steam cost in USD/tonne for reboiler duty
+   * @param steamCostPerTonne steam cost in USD/tonne for reboiler duty
    * @param coolingWaterCostPerM3 cooling-water cost in USD/m3 for condenser duty
-   * @param trayEfficiency        overall tray efficiency used for actual tray count and column height
+   * @param trayEfficiency overall tray efficiency used for actual tray count and column height
    * @return populated economic metrics for the current column state
    */
   private EconomicTrayOptimizationMetrics calculateEconomicTrayOptimizationMetrics(double capitalChargeFactor,
@@ -4516,15 +4516,15 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Create an economic optimization result.
    *
-   * @param trayResult            rigorous tray optimization result
-   * @param metrics               economic metrics from the current candidate
-   * @param capitalChargeFactor   annual capital charge factor in 1/year
+   * @param trayResult rigorous tray optimization result
+   * @param metrics economic metrics from the current candidate
+   * @param capitalChargeFactor annual capital charge factor in 1/year
    * @param operatingHoursPerYear operating hours per year for utility costing
-   * @param steamCostPerTonne     steam cost in USD/tonne for reboiler duty
+   * @param steamCostPerTonne steam cost in USD/tonne for reboiler duty
    * @param coolingWaterCostPerM3 cooling-water cost in USD/m3 for condenser duty
-   * @param trayEfficiency        overall tray efficiency used for actual tray count and column height
-   * @param condenserRefluxRatio  selected condenser reflux ratio, or {@link Double#NaN}
-   * @param reboilerRatio         selected reboiler boilup/reflux ratio, or {@link Double#NaN}
+   * @param trayEfficiency overall tray efficiency used for actual tray count and column height
+   * @param condenserRefluxRatio selected condenser reflux ratio, or {@link Double#NaN}
+   * @param reboilerRatio selected reboiler boilup/reflux ratio, or {@link Double#NaN}
    * @return economic optimization result
    */
   private EconomicTrayOptimizationResult createEconomicTrayOptimizationResult(TrayOptimizationResult trayResult,
@@ -4540,17 +4540,17 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Create an infeasible economic optimization result.
    *
-   * @param productSpec           target product mole fraction
-   * @param componentName         component used in the purity specification
-   * @param isTopProduct          {@code true} for top product, {@code false} for bottom product
-   * @param evaluatedCases        number of evaluated candidate cases
-   * @param convergedCases        number of converged candidate cases
-   * @param capitalChargeFactor   annual capital charge factor in 1/year
+   * @param productSpec target product mole fraction
+   * @param componentName component used in the purity specification
+   * @param isTopProduct {@code true} for top product, {@code false} for bottom product
+   * @param evaluatedCases number of evaluated candidate cases
+   * @param convergedCases number of converged candidate cases
+   * @param capitalChargeFactor annual capital charge factor in 1/year
    * @param operatingHoursPerYear operating hours per year for utility costing
-   * @param steamCostPerTonne     steam cost in USD/tonne for reboiler duty
+   * @param steamCostPerTonne steam cost in USD/tonne for reboiler duty
    * @param coolingWaterCostPerM3 cooling-water cost in USD/m3 for condenser duty
-   * @param trayEfficiency        overall tray efficiency used for actual tray count and column height
-   * @param message               diagnostic message
+   * @param trayEfficiency overall tray efficiency used for actual tray count and column height
+   * @param message diagnostic message
    * @return infeasible economic optimization result
    */
   private EconomicTrayOptimizationResult createInfeasibleEconomicTrayOptimizationResult(double productSpec,
@@ -4567,7 +4567,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Compare two economic candidates.
    *
-   * @param candidate   candidate result to evaluate
+   * @param candidate candidate result to evaluate
    * @param currentBest current best result, or {@code null}
    * @return {@code true} if the candidate has a lower annualized cost or better tie-breaker
    */
@@ -4639,15 +4639,15 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Apply the selected candidate to the live column and return final diagnostics.
    *
-   * @param selectedResult    selected candidate from the search
+   * @param selectedResult selected candidate from the search
    * @param optimizationFeeds feed streams to connect to the selected tray
-   * @param state             captured column settings to apply during rebuild
-   * @param productSpec       target product mole fraction
-   * @param componentName     component used in the purity specification
-   * @param isTopProduct      {@code true} for top product, {@code false} for bottom product
-   * @param evaluatedCases    number of evaluated candidate cases
-   * @param convergedCases    number of converged candidate cases
-   * @param message           diagnostic message to store in the returned result
+   * @param state captured column settings to apply during rebuild
+   * @param productSpec target product mole fraction
+   * @param componentName component used in the purity specification
+   * @param isTopProduct {@code true} for top product, {@code false} for bottom product
+   * @param evaluatedCases number of evaluated candidate cases
+   * @param convergedCases number of converged candidate cases
+   * @param message diagnostic message to store in the returned result
    * @return final optimization result from the applied selected candidate
    */
   private TrayOptimizationResult applyTrayOptimizationResult(TrayOptimizationResult selectedResult,
@@ -4670,7 +4670,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Rebuild the column internals for an optimization candidate.
    *
    * @param totalTrayCount total tray count including reboiler/condenser if present
-   * @param state          captured column settings to apply to the rebuilt trays
+   * @param state captured column settings to apply to the rebuilt trays
    */
   private void rebuildColumnForOptimization(int totalTrayCount, ColumnOptimizationState state) {
     trays.clear();
@@ -4735,7 +4735,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Add all optimization feeds to a candidate feed tray.
    *
    * @param optimizationFeeds feed streams to connect
-   * @param feedTray          0-based feed tray number
+   * @param feedTray 0-based feed tray number
    */
   private void addOptimizationFeedsToTray(List<StreamInterface> optimizationFeeds, int feedTray) {
     for (StreamInterface feed : optimizationFeeds) {
@@ -4779,7 +4779,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Read product mole fraction for the component used in the optimization specification.
    *
    * @param componentName component name
-   * @param isTopProduct  {@code true} to read top product, {@code false} to read bottom product
+   * @param isTopProduct {@code true} to read top product, {@code false} to read bottom product
    * @return component mole fraction in the requested product
    */
   private double getProductComponentMoleFraction(String componentName, boolean isTopProduct) {
@@ -4792,16 +4792,16 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Create an optimization result from the current column state.
    *
-   * @param feasible       {@code true} if the current candidate meets the target purity
+   * @param feasible {@code true} if the current candidate meets the target purity
    * @param totalTrayCount total tray count for the candidate
-   * @param feedTray       0-based feed tray number used by the candidate
-   * @param productSpec    target product mole fraction
-   * @param componentName  component used in the purity specification
-   * @param isTopProduct   {@code true} for top product, {@code false} for bottom product
-   * @param productPurity  achieved product mole fraction
+   * @param feedTray 0-based feed tray number used by the candidate
+   * @param productSpec target product mole fraction
+   * @param componentName component used in the purity specification
+   * @param isTopProduct {@code true} for top product, {@code false} for bottom product
+   * @param productPurity achieved product mole fraction
    * @param evaluatedCases number of evaluated candidate cases
    * @param convergedCases number of converged candidate cases
-   * @param message        diagnostic message
+   * @param message diagnostic message
    * @return optimization result populated from current duties and residuals
    */
   private TrayOptimizationResult createTrayOptimizationResult(boolean feasible, int totalTrayCount, int feedTray,
@@ -4818,12 +4818,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Create an infeasible tray optimization result.
    *
-   * @param productSpec    target product mole fraction
-   * @param componentName  component used in the purity specification
-   * @param isTopProduct   {@code true} for top product, {@code false} for bottom product
+   * @param productSpec target product mole fraction
+   * @param componentName component used in the purity specification
+   * @param isTopProduct {@code true} for top product, {@code false} for bottom product
    * @param evaluatedCases number of evaluated candidate cases
    * @param convergedCases number of converged candidate cases
-   * @param message        diagnostic message
+   * @param message diagnostic message
    * @return infeasible optimization result
    */
   private TrayOptimizationResult createInfeasibleTrayOptimizationResult(double productSpec, String componentName,
@@ -4836,7 +4836,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Compare two feasible tray optimization candidates for the same tray count.
    *
-   * @param candidate   candidate result to evaluate
+   * @param candidate candidate result to evaluate
    * @param currentBest current best result, or {@code null}
    * @return {@code true} if the candidate is preferred
    */
@@ -4861,7 +4861,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Execute the sequential substitution solver with an adaptive relaxation controller.
    *
-   * @param id                calculation identifier
+   * @param id calculation identifier
    * @param initialRelaxation relaxation factor applied to the first iteration
    */
   private void solveSequential(UUID id, double initialRelaxation) {
@@ -5261,11 +5261,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Decide whether mass and energy balance residuals should be recomputed this iteration.
    *
-   * @param iteration          current iteration index (1-based)
-   * @param iterationLimit     current iteration ceiling
-   * @param polishing          whether the solver is in the polish stage
-   * @param tempResidual       average temperature residual this iteration
-   * @param baseTempTolerance  nominal temperature tolerance
+   * @param iteration current iteration index (1-based)
+   * @param iterationLimit current iteration ceiling
+   * @param polishing whether the solver is in the polish stage
+   * @param tempResidual average temperature residual this iteration
+   * @param baseTempTolerance nominal temperature tolerance
    * @param balanceCheckStride cadence for periodic balance checks
    * @return {@code true} if balances should be evaluated
    */
@@ -5689,10 +5689,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * same profile.
    * </p>
    *
-   * @param iteration            current inside-out outer iteration
-   * @param temperatureResidual  current average temperature residual
+   * @param iteration current inside-out outer iteration
+   * @param temperatureResidual current average temperature residual
    * @param temperatureTolerance active temperature tolerance
-   * @param kValueResidual       current K-value residual
+   * @param kValueResidual current K-value residual
    * @return {@code true} when a Newton handoff is expected to be cheaper than more sweeps
    */
   private boolean shouldSwitchInsideOutToNewton(int iteration, double temperatureResidual, double temperatureTolerance,
@@ -5710,10 +5710,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Store telemetry from the inside-out initializer before finalizing or handing off.
    *
-   * @param outerFlashSweeps    rigorous outside-loop sweeps
+   * @param outerFlashSweeps rigorous outside-loop sweeps
    * @param innerLoopIterations surrogate inner-loop iterations
-   * @param kValueResidual      latest K-value residual
-   * @param surrogateResidual   latest surrogate-model residual
+   * @param kValueResidual latest K-value residual
+   * @param surrogateResidual latest surrogate-model residual
    */
   private void storeInsideOutTelemetry(int outerFlashSweeps, int innerLoopIterations, double kValueResidual,
       double surrogateResidual) {
@@ -5921,9 +5921,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
      * yielding b = (ln(K2) - ln(K1)) / (1/T2 - 1/T1) and a = ln(K1) - b/T1.
      *
      * @param kvalues1 K-values at temperature T1 [tray][component]
-     * @param temps1   tray temperatures at point 1
+     * @param temps1 tray temperatures at point 1
      * @param kvalues2 K-values at temperature T2 [tray][component]
-     * @param temps2   tray temperatures at point 2
+     * @param temps2 tray temperatures at point 2
      */
     void fit(double[][] kvalues1, double[] temps1, double[][] kvalues2, double[] temps2) {
       for (int i = 0; i < nTrays; i++) {
@@ -5962,8 +5962,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     /**
      * Predict K-value for component j on tray i at temperature T.
      *
-     * @param tray        tray index
-     * @param component   component index
+     * @param tray tray index
+     * @param component component index
      * @param temperature temperature in Kelvin
      * @return estimated K-value
      */
@@ -5987,7 +5987,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * cheaper than a rigorous outer iteration.
    * </p>
    *
-   * @param model      the fitted simplified K-value model
+   * @param model the fitted simplified K-value model
    * @param relaxation current relaxation factor
    * @return average absolute temperature change across all trays
    */
@@ -6403,7 +6403,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Recompute tray outlet streams after an accelerated temperature update.
    *
-   * @param id                  calculation identifier
+   * @param id calculation identifier
    * @param firstFeedTrayNumber index of the lowest feed tray
    */
   private void synchronizeTrayStreamsAfterAcceleratedTemperatureUpdate(UUID id, int firstFeedTrayNumber) {
@@ -6446,7 +6446,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Rerun damped substitution after an accelerator throws during a solver adapter call.
    *
-   * @param id        calculation identifier
+   * @param id calculation identifier
    * @param exception exception that caused the accelerator to be rejected
    */
   void solveDampedFallbackAfterAcceleratorFailure(UUID id, RuntimeException exception) {
@@ -6457,7 +6457,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Rerun damped substitution after an accelerator returns a rejected state.
    *
-   * @param id     calculation identifier
+   * @param id calculation identifier
    * @param reason reason the accelerator result was rejected
    */
   void solveDampedFallbackAfterRejectedAccelerator(UUID id, String reason) {
@@ -6957,11 +6957,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Perform a full upward+downward tray sweep, running PH-flash on each tray.
    *
-   * @param id                    calculation identifier
-   * @param firstFeedTrayNumber   index of the lowest feed tray
-   * @param previousGasStreams    cached gas streams from previous iteration (updated in-place)
+   * @param id calculation identifier
+   * @param firstFeedTrayNumber index of the lowest feed tray
+   * @param previousGasStreams cached gas streams from previous iteration (updated in-place)
    * @param previousLiquidStreams cached liquid streams from previous iteration (updated in-place)
-   * @param relaxation            relaxation factor for stream blending
+   * @param relaxation relaxation factor for stream blending
    */
   private void performFullTraySweep(UUID id, int firstFeedTrayNumber, StreamInterface[] previousGasStreams,
       StreamInterface[] previousLiquidStreams, double relaxation) {
@@ -7183,7 +7183,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Create a middle tray (between reboiler and condenser). Sets the reactive flash flag when the column is in reactive
    * mode and the tray index falls inside the reactive section.
    *
-   * @param name            the tray name
+   * @param name the tray name
    * @param middleTrayIndex 0-based index among the middle trays (excluding reboiler/condenser)
    * @return a new SimpleTray with reactive flash configured
    */
@@ -7227,9 +7227,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * (excluding reboiler/condenser). For example, in a column with reboiler + 10 middle trays + condenser,
    * {@code setReactive(true, 3, 7)} makes trays 4–8 (1-based) of the middle section reactive.
    *
-   * @param reactive  {@code true} to enable reactive distillation
+   * @param reactive {@code true} to enable reactive distillation
    * @param startTray first reactive middle-tray index (0-based, inclusive)
-   * @param endTray   last reactive middle-tray index (0-based, inclusive)
+   * @param endTray last reactive middle-tray index (0-based, inclusive)
    */
   public void setReactive(boolean reactive, int startTray, int endTray) {
     this.reactive = reactive;
@@ -7403,7 +7403,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Check whether the current residual diagnostics satisfy all active rigorous convergence gates.
    *
    * @return {@code true} when temperature, mass, energy, internal traffic, MESH, and specification gates are all
-   *         satisfied
+   * satisfied
    */
   private boolean residualConvergenceSatisfied() {
     boolean temperatureSolved = err < getEffectiveTemperatureTolerance();
@@ -7988,7 +7988,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Append modelling and solver recommendations to a convergence diagnostic report.
    *
    * @param diagnostics report builder receiving recommendation lines
-   * @param solved      whether the column currently satisfies its convergence gates
+   * @param solved whether the column currently satisfies its convergence gates
    * @return number of recommendation lines appended
    */
   private int appendConvergenceRecommendations(StringBuilder diagnostics, boolean solved) {
@@ -8401,8 +8401,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * </p>
    *
    * @param trayNumber bottom-up tray index
-   * @param phase      phase to withdraw
-   * @param fraction   fraction of the selected phase outlet to withdraw, from zero to one
+   * @param phase phase to withdraw
+   * @param fraction fraction of the selected phase outlet to withdraw, from zero to one
    */
   public void setSideDrawFraction(int trayNumber, SideDrawPhase phase, double fraction) {
     SimpleTray tray = getTray(trayNumber);
@@ -8420,7 +8420,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Set a vapor side-draw fraction on a tray.
    *
    * @param trayNumber bottom-up tray index
-   * @param fraction   fraction of vapor outlet to withdraw, from zero to one
+   * @param fraction fraction of vapor outlet to withdraw, from zero to one
    */
   public void setGasSideDrawFraction(int trayNumber, double fraction) {
     setSideDrawFraction(trayNumber, SideDrawPhase.GAS, fraction);
@@ -8430,7 +8430,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Set a liquid side-draw fraction on a tray.
    *
    * @param trayNumber bottom-up tray index
-   * @param fraction   fraction of liquid outlet to withdraw, from zero to one
+   * @param fraction fraction of liquid outlet to withdraw, from zero to one
    */
   public void setLiquidSideDrawFraction(int trayNumber, double fraction) {
     setSideDrawFraction(trayNumber, SideDrawPhase.LIQUID, fraction);
@@ -8440,7 +8440,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Get a side-draw stream from a tray.
    *
    * @param trayNumber bottom-up tray index
-   * @param phase      phase to retrieve
+   * @param phase phase to retrieve
    * @return side-draw stream, or a zero-flow stream when no side draw is configured
    */
   public StreamInterface getSideDrawStream(int trayNumber, SideDrawPhase phase) {
@@ -8482,9 +8482,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * </p>
    *
    * @param trayNumber bottom-up tray index
-   * @param phase      side-draw phase
-   * @param flowRate   target flow rate
-   * @param unit       flow-rate unit
+   * @param phase side-draw phase
+   * @param flowRate target flow rate
+   * @param unit flow-rate unit
    * @return configured side-draw specification
    * @throws IllegalArgumentException if the tray number, phase, flow rate, or unit is invalid
    */
@@ -8652,11 +8652,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * reporting continues to use only true feeds and products.
    * </p>
    *
-   * @param name             pumparound name
-   * @param drawTrayNumber   bottom-up tray index where liquid is withdrawn
+   * @param name pumparound name
+   * @param drawTrayNumber bottom-up tray index where liquid is withdrawn
    * @param returnTrayNumber bottom-up tray index where liquid is returned
-   * @param drawFraction     fraction of tray liquid traffic withdrawn
-   * @param temperatureDrop  temperature drop from draw to return in Kelvin
+   * @param drawFraction fraction of tray liquid traffic withdrawn
+   * @param temperatureDrop temperature drop from draw to return in Kelvin
    * @return configured pumparound definition
    * @throws IllegalArgumentException if tray numbers, draw fraction, or temperature drop are invalid
    */
@@ -8716,7 +8716,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Validate that a tray index is inside the column.
    *
    * @param trayNumber tray index to validate
-   * @param label      diagnostic label for the tray role
+   * @param label diagnostic label for the tray role
    */
   private void validateTrayIndex(int trayNumber, String label) {
     if (trayNumber < 0 || trayNumber >= numberOfTrays) {
@@ -8881,7 +8881,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * tray feed inventory grow without bound across repeated runs.
    * </p>
    *
-   * @param trayIndex           tray whose captured direct feeds should be pruned
+   * @param trayIndex tray whose captured direct feeds should be pruned
    * @param registeredFeedNames names of feeds registered through the column API
    */
   private void pruneClonedDirectExternalFeeds(int trayIndex, Set<String> registeredFeedNames) {
@@ -8936,7 +8936,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Add a stream to a list if the exact object is not already present.
    *
-   * @param streams   stream list to update
+   * @param streams stream list to update
    * @param candidate stream to add
    */
   private void addStreamIfMissingByIdentity(List<StreamInterface> streams, StreamInterface candidate) {
@@ -8948,7 +8948,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Check whether a list already contains a stream object by identity.
    *
-   * @param streams   stream list to inspect
+   * @param streams stream list to inspect
    * @param candidate stream to find
    * @return {@code true} if the exact stream object is present
    */
@@ -8964,8 +8964,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Check whether a tray input should be treated as a legacy direct external feed.
    *
-   * @param stream              tray input stream to inspect
-   * @param knownExternalFeeds  external streams already identified
+   * @param stream tray input stream to inspect
+   * @param knownExternalFeeds external streams already identified
    * @param registeredFeedNames names of feeds registered through the column API
    * @return {@code true} if the stream looks like a named direct external feed
    */
@@ -9002,7 +9002,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Get the terminal top product draw used by product-draw residual diagnostics.
    *
    * @return synchronized top product draw stream, or the top tray vapor outlet before a solve has synchronized product
-   *         draws
+   * draws
    */
   StreamInterface getTerminalGasProductDrawStream() {
     if (terminalGasProductDrawStream != null) {
@@ -9018,7 +9018,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Get the terminal bottom product draw used by product-draw residual diagnostics.
    *
    * @return synchronized bottom product draw stream, or the bottom tray liquid outlet before a solve has synchronized
-   *         product draws
+   * product draws
    */
   StreamInterface getTerminalLiquidProductDrawStream() {
     if (terminalLiquidProductDrawStream != null) {
@@ -9033,7 +9033,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Override terminal product draw streams for package-level residual diagnostics.
    *
-   * @param topProductDraw    top product draw stream to use in diagnostics
+   * @param topProductDraw top product draw stream to use in diagnostics
    * @param bottomProductDraw bottom product draw stream to use in diagnostics
    */
   void setTerminalProductDrawStreamsForDiagnostics(StreamInterface topProductDraw, StreamInterface bottomProductDraw) {
@@ -9082,7 +9082,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Configure the condenser operating mode.
    *
    * @param mode condenser operating mode
-   * @throws IllegalStateException    if the column has no condenser
+   * @throws IllegalStateException if the column has no condenser
    * @throws IllegalArgumentException if mode is {@code null} or requires more data
    */
   public void setCondenserMode(CondenserMode mode) {
@@ -9106,7 +9106,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Configure a partial condenser with a fixed liquid reflux split.
    *
    * @param value fixed liquid reflux flow rate
-   * @param unit  flow-rate unit for the fixed reflux value
+   * @param unit flow-rate unit for the fixed reflux value
    * @throws IllegalStateException if the column has no condenser
    */
   public void setCondenserLiquidReflux(double value, String unit) {
@@ -9134,7 +9134,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Configure the reboiler operating mode.
    *
    * @param mode reboiler operating mode
-   * @throws IllegalStateException    if the column has no reboiler
+   * @throws IllegalStateException if the column has no reboiler
    * @throws IllegalArgumentException if mode is {@code null} or requires more data
    */
   public void setReboilerMode(ReboilerMode mode) {
@@ -9154,7 +9154,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    *
    * @param ratio finite non-negative boilup/reflux ratio
    * @throws IllegalArgumentException if ratio is negative or not finite
-   * @throws IllegalStateException    if the column has no reboiler
+   * @throws IllegalStateException if the column has no reboiler
    */
   public void setReboilerVaporBoilupRatio(double ratio) {
     if (!Double.isFinite(ratio) || ratio < 0.0) {
@@ -9229,7 +9229,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Set the reboiler outlet temperature with unit conversion.
    *
    * @param reboilerTemperature reboiler outlet temperature
-   * @param unit                temperature unit, for example {@code "K"} or {@code "C"}
+   * @param unit temperature unit, for example {@code "K"} or {@code "C"}
    * @throws IllegalArgumentException if the temperature unit is unsupported
    */
   public void setReboilerTemperature(double reboilerTemperature, String unit) {
@@ -9265,7 +9265,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Set the condenser outlet temperature with unit conversion.
    *
    * @param condenserTemperature condenser outlet temperature
-   * @param unit                 temperature unit, for example {@code "K"} or {@code "C"}
+   * @param unit temperature unit, for example {@code "K"} or {@code "C"}
    * @throws IllegalArgumentException if the temperature unit is unsupported
    */
   public void setCondenserTemperature(double condenserTemperature, String unit) {
@@ -9663,8 +9663,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Blend the current stream update with the previous iterate using the provided relaxation factor.
    *
-   * @param previous   stream from the previous iteration (may be {@code null})
-   * @param current    current iteration stream
+   * @param previous stream from the previous iteration (may be {@code null})
+   * @param current current iteration stream
    * @param relaxation relaxation factor applied to the update
    * @return relaxed stream instance to be used in the next tear
    */
@@ -9675,8 +9675,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Blend streams using the fast unchanged-clone path for fixed-point sweeps.
    *
-   * @param previous   stream from the previous iteration (may be {@code null})
-   * @param current    current iteration stream
+   * @param previous stream from the previous iteration (may be {@code null})
+   * @param current current iteration stream
    * @param relaxation relaxation factor applied to the update
    * @return relaxed stream instance to be used in the next tear
    */
@@ -9687,9 +9687,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Blend the current stream update with the previous iterate.
    *
-   * @param previous             stream from the previous iteration (may be {@code null})
-   * @param current              current iteration stream
-   * @param relaxation           relaxation factor applied to the update
+   * @param previous stream from the previous iteration (may be {@code null})
+   * @param current current iteration stream
+   * @param relaxation relaxation factor applied to the update
    * @param skipUnchangedReflash whether an unchanged clone can reuse the current stream flash state
    * @return relaxed stream instance to be used in the next tear
    */
@@ -9765,11 +9765,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Check whether two stream compositions can be relaxed component-by-component.
    *
-   * @param previous            previous internal stream state
-   * @param current             current internal stream state
-   * @param relaxed             relaxed stream receiving the mixed composition
+   * @param previous previous internal stream state
+   * @param current current internal stream state
+   * @param relaxed relaxed stream receiving the mixed composition
    * @param previousComposition previous molar composition vector
-   * @param currentComposition  current molar composition vector
+   * @param currentComposition current molar composition vector
    * @return {@code true} when all streams expose the same component count and composition length
    */
   private boolean canRelaxMolarComposition(StreamInterface previous, StreamInterface current, StreamInterface relaxed,
@@ -9788,7 +9788,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Return a relaxed internal flow, applying emergency capping only when active or required.
    *
-   * @param flow                internal flow in kg/hr
+   * @param flow internal flow in kg/hr
    * @param maximumInternalFlow maximum emergency flow magnitude in kg/hr
    * @return uncapped finite flow during normal solves, otherwise capped flow
    */
@@ -9811,7 +9811,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Limit a flow to the configured internal traffic cap.
    *
-   * @param flow        flow rate to limit
+   * @param flow flow rate to limit
    * @param maximumFlow maximum absolute flow rate
    * @return finite capped flow rate
    */
@@ -9826,7 +9826,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Cap a stream flow rate if it exceeds the internal traffic guard.
    *
-   * @param stream      stream to cap
+   * @param stream stream to cap
    * @param maximumFlow maximum absolute flow rate in kg/hr
    */
   private void capStreamFlow(StreamInterface stream, double maximumFlow) {
@@ -9840,12 +9840,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Finalise a successful solver run by updating iteration metrics and product streams.
    *
-   * @param id                  calculation identifier
-   * @param iterations          number of iterations performed
+   * @param id calculation identifier
+   * @param iterations number of iterations performed
    * @param temperatureResidual final average temperature residual
-   * @param massResidual        final relative mass residual
-   * @param energyResidual      final relative energy residual
-   * @param startTime           nano time when the solve started
+   * @param massResidual final relative mass residual
+   * @param energyResidual final relative energy residual
+   * @param startTime nano time when the solve started
    */
   private void finalizeSolve(UUID id, int iterations, double temperatureResidual, double massResidual,
       double energyResidual, long startTime) {
@@ -9937,7 +9937,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    *
    * @param target target product stream to synchronize
    * @param source source product stream containing the balanced thermodynamic system
-   * @param id     calculation identifier to assign to the target
+   * @param id calculation identifier to assign to the target
    */
   private void synchronizeProductStream(StreamInterface target, StreamInterface source, UUID id) {
     if (target == null || source == null || source.getThermoSystem() == null) {
@@ -9966,7 +9966,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Update the strict solve status after product handling and residual diagnostics are current.
    *
-   * @param productReconciled       {@code true} if public products were materially reconciled
+   * @param productReconciled {@code true} if public products were materially reconciled
    * @param fallbackProductsApplied {@code true} if fallback products were generated
    */
   private void updateLastSolveStatus(boolean productReconciled, boolean fallbackProductsApplied) {
@@ -10152,7 +10152,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Check whether two component-flow vectors differ materially for solve-status classification.
    *
    * @param before component mole amounts before reconciliation
-   * @param after  component mole amounts after reconciliation
+   * @param after component mole amounts after reconciliation
    * @return {@code true} when relative component drift exceeds the status tolerance
    */
   private boolean componentMolesMateriallyDiffer(double[] before, double[] after) {
@@ -10196,9 +10196,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Replaces a product stream fluid with the same thermodynamic model at the current stream temperature and pressure
    * but with specified component mole amounts.
    *
-   * @param productStream  stream to update
+   * @param productStream stream to update
    * @param componentMoles component mole amounts on the stream-flow basis
-   * @param id             calculation identifier to assign after the update
+   * @param id calculation identifier to assign after the update
    */
   private void updateProductStreamFromComponentMoles(StreamInterface productStream, double[] componentMoles, UUID id) {
     SystemInterface balancedSystem = productStream.getThermoSystem().clone();
@@ -10228,10 +10228,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * {@code bottomProductPhaseInvalid()}.
    * </p>
    *
-   * @param productStream  stream to update
+   * @param productStream stream to update
    * @param componentMoles component mole amounts on the stream-flow basis
-   * @param phaseTypeName  phase type description ("gas" or "liquid")
-   * @param id             calculation identifier to assign after the update
+   * @param phaseTypeName phase type description ("gas" or "liquid")
+   * @param id calculation identifier to assign after the update
    */
   private void updateProductStreamWithForcedPhase(StreamInterface productStream, double[] componentMoles,
       String phaseTypeName, UUID id) {
@@ -10309,7 +10309,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * </p>
    *
    * @param feedSystem combined external feed system
-   * @param id         calculation identifier to assign to fallback products
+   * @param id calculation identifier to assign to fallback products
    * @return {@code true} if shortcut fallback products were created
    */
   private boolean updateProductsFromShortcutEquilibriumSplit(SystemInterface feedSystem, UUID id) {
@@ -10352,8 +10352,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Estimate a bounded vapor fraction for shortcut fallback products from K-values.
    *
-   * @param feedComponentMoles    feed component mole amounts
-   * @param kSystem               initialized system carrying component K-values at fallback conditions
+   * @param feedComponentMoles feed component mole amounts
+   * @param kSystem initialized system carrying component K-values at fallback conditions
    * @param fallbackVaporFraction vapor fraction to use if the estimate cannot be calculated
    * @return vapor fraction clamped away from zero and one
    */
@@ -10400,9 +10400,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Evaluate the Rachford-Rice residual for a trial vapor fraction.
    *
    * @param feedComponentMoles feed component mole amounts
-   * @param kSystem            initialized system carrying component K-values
-   * @param totalMoles         total positive feed moles
-   * @param vaporFraction      trial vapor fraction from zero to one
+   * @param kSystem initialized system carrying component K-values
+   * @param totalMoles total positive feed moles
+   * @param vaporFraction trial vapor fraction from zero to one
    * @return Rachford-Rice residual
    */
   private double evaluateRachfordRiceResidual(double[] feedComponentMoles, SystemInterface kSystem, double totalMoles,
@@ -10451,10 +10451,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Update a product stream with specified component moles and a fixed phase type.
    *
-   * @param productStream  stream to update
+   * @param productStream stream to update
    * @param componentMoles component mole amounts on the stream-flow basis
-   * @param phaseTypeName  phase type name to assign to the product
-   * @param id             calculation identifier to assign to the product
+   * @param phaseTypeName phase type name to assign to the product
+   * @param id calculation identifier to assign to the product
    */
   private void updateProductStreamFromComponentMolesAsPhase(StreamInterface productStream, double[] componentMoles,
       String phaseTypeName, UUID id) {
@@ -10540,8 +10540,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Find a phase index by type name in a thermodynamic system.
    *
-   * @param system             thermodynamic system to inspect
-   * @param phaseTypeName      phase type name to locate
+   * @param system thermodynamic system to inspect
+   * @param phaseTypeName phase type name to locate
    * @param fallbackPhaseIndex fallback index if the type is not found
    * @return phase index, or {@code -1} if no phase is available
    */
@@ -10587,7 +10587,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Create a phase system normalized so all selected phase products sum to total inventory.
    *
    * @param sourceSystem flashed source system
-   * @param phaseIndex   phase index to extract
+   * @param phaseIndex phase index to extract
    * @return normalized single-phase system
    */
   private SystemInterface createNormalizedPhaseSystem(SystemInterface sourceSystem, int phaseIndex) {
@@ -10602,7 +10602,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Calculate normalized phase moles from a potentially over-specified phase split.
    *
    * @param sourceSystem source thermodynamic system
-   * @param phaseIndex   phase index to normalize
+   * @param phaseIndex phase index to normalize
    * @return phase moles normalized to the source total
    */
   private double getNormalizedPhaseMoles(SystemInterface sourceSystem, int phaseIndex) {
@@ -10624,7 +10624,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Scale all component moles in a system to a target total.
    *
-   * @param system      system to scale
+   * @param system system to scale
    * @param targetMoles target total moles
    */
   private void scaleSystemMoles(SystemInterface system, double targetMoles) {
@@ -10707,7 +10707,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Calculates total component mole amounts entering the column through all external feeds.
    *
    * @return component mole amounts on the stream-flow basis used by NeqSim streams, or an empty array if external feeds
-   *         do not share a common component basis
+   * do not share a common component basis
    */
   private double[] getFeedComponentMoles() {
     int componentCount = getNumberOfComponentsFromFeeds();
@@ -10791,7 +10791,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * has a non-zero composition to scale.
    * </p>
    *
-   * @param system   thermodynamic system to inspect
+   * @param system thermodynamic system to inspect
    * @param gasPhase {@code true} to sum gas-like phases, {@code false} to sum oil/liquid/aqueous phases
    * @return component mole amounts contributed by the matching phases
    */
@@ -11017,7 +11017,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Add a warning for purity or recovery targets close to 0 or 1.
    *
-   * @param result        validation result receiving active-bound warnings
+   * @param result validation result receiving active-bound warnings
    * @param specification column specification to screen
    */
   private void validateSpecificationActiveBound(ValidationResult result, ColumnSpecification specification) {
@@ -11099,7 +11099,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Validate a single feed stream used by the column.
    *
-   * @param result     validation result receiving issues
+   * @param result validation result receiving issues
    * @param feedStream feed stream to validate
    */
   private void validateFeedStream(ValidationResult result, StreamInterface feedStream) {
@@ -11360,8 +11360,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Validate one column specification against column hardware and feed components.
    *
-   * @param result           validation result receiving issues
-   * @param specification    specification to validate
+   * @param result validation result receiving issues
+   * @param specification specification to validate
    * @param expectedLocation expected product location
    */
   private void validateColumnSpecification(ValidationResult result, ColumnSpecification specification,
@@ -11392,7 +11392,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Validate whether a specification can be manipulated by the configured column hardware.
    *
-   * @param result        validation result receiving issues
+   * @param result validation result receiving issues
    * @param specification specification to validate
    */
   private void validateSpecificationHardware(ValidationResult result, ColumnSpecification specification) {
@@ -11414,7 +11414,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Validate component references for component-based specifications.
    *
-   * @param result        validation result receiving issues
+   * @param result validation result receiving issues
    * @param specification specification to validate
    */
   private void validateSpecificationComponent(ValidationResult result, ColumnSpecification specification) {
@@ -11467,7 +11467,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Check whether a thermodynamic system contains a named component.
    *
-   * @param fluid         fluid system to inspect
+   * @param fluid fluid system to inspect
    * @param componentName component name to search for
    * @return {@code true} when the component exists in the fluid
    */
@@ -11546,8 +11546,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * uses finite seeds only when the same stage has no fixed output-temperature specification.
    * </p>
    *
-   * @param stageIndex   bottom-up stage index, where zero is the reboiler when present and {@code numberOfTrays - 1} is
-   *                     the top stage
+   * @param stageIndex bottom-up stage index, where zero is the reboiler when present and {@code numberOfTrays - 1} is
+   * the top stage
    * @param temperatureK seed temperature in kelvin; pass {@link Double#NaN} to clear a stage seed
    */
   public void setSeedTemperature(int stageIndex, double temperatureK) {
@@ -11563,7 +11563,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    *
    * @param stageIndex bottom-up stage index to inspect
    * @return seed temperature in kelvin, or {@link Double#NaN} when no seed is configured or the stage index is outside
-   *         the current column range
+   * the current column range
    */
   public double getSeedTemperature(int stageIndex) {
     if (seedTemperatures == null || stageIndex < 0 || stageIndex >= numberOfTrays) {
@@ -11629,7 +11629,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * algorithm, but the value is stored so external style scripts can round-trip stage efficiency data consistently.
    * </p>
    *
-   * @param stage      0-based stage index in the range {@code [0, numberOfTrays)}
+   * @param stage 0-based stage index in the range {@code [0, numberOfTrays)}
    * @param efficiency value between 0.0 (no separation) and 1.0 (ideal equilibrium stage)
    */
   public void setMurphreeEfficiency(int stage, double efficiency) {
@@ -11838,7 +11838,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Get the latest automatic solver candidate trace.
    *
    * @return candidate trace from {@link SolverType#AUTO}, or an empty string when automatic mode was not used in the
-   *         latest solve
+   * latest solve
    */
   public String getLastAutoSolverSummary() {
     return lastAutoSolverSummary;
@@ -11949,7 +11949,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Convenience method to specify a target mole fraction purity for the top product.
    *
    * @param componentName the component to constrain
-   * @param purity        the desired mole fraction (0 to 1)
+   * @param purity the desired mole fraction (0 to 1)
    */
   public void setTopProductPurity(String componentName, double purity) {
     this.topSpecification = new ColumnSpecification(ColumnSpecification.SpecificationType.PRODUCT_PURITY,
@@ -11960,7 +11960,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Convenience method to specify a target mole fraction purity for the bottom product.
    *
    * @param componentName the component to constrain
-   * @param purity        the desired mole fraction (0 to 1)
+   * @param purity the desired mole fraction (0 to 1)
    */
   public void setBottomProductPurity(String componentName, double purity) {
     this.bottomSpecification = new ColumnSpecification(ColumnSpecification.SpecificationType.PRODUCT_PURITY,
@@ -11984,7 +11984,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Convenience method to specify a target component recovery in the top product.
    *
    * @param componentName the component to constrain
-   * @param recovery      the desired recovery fraction (0 to 1)
+   * @param recovery the desired recovery fraction (0 to 1)
    */
   public void setTopComponentRecovery(String componentName, double recovery) {
     this.topSpecification = new ColumnSpecification(ColumnSpecification.SpecificationType.COMPONENT_RECOVERY,
@@ -11995,7 +11995,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Convenience method to specify a target component recovery in the bottom product.
    *
    * @param componentName the component to constrain
-   * @param recovery      the desired recovery fraction (0 to 1)
+   * @param recovery the desired recovery fraction (0 to 1)
    */
   public void setBottomComponentRecovery(String componentName, double recovery) {
     this.bottomSpecification = new ColumnSpecification(ColumnSpecification.SpecificationType.COMPONENT_RECOVERY,
@@ -12006,7 +12006,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Convenience method to specify a target molar flow rate for the top product.
    *
    * @param flowRate the desired flow rate value
-   * @param unit     the flow rate unit (currently expected as {@code mol/hr})
+   * @param unit the flow rate unit (currently expected as {@code mol/hr})
    */
   public void setTopProductFlowRate(double flowRate, String unit) {
     this.topSpecification = new ColumnSpecification(ColumnSpecification.SpecificationType.PRODUCT_FLOW_RATE,
@@ -12017,7 +12017,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Convenience method to specify a target molar flow rate for the bottom product.
    *
    * @param flowRate the desired flow rate value
-   * @param unit     the flow rate unit (e.g. "mol/hr")
+   * @param unit the flow rate unit (e.g. "mol/hr")
    */
   public void setBottomProductFlowRate(double flowRate, String unit) {
     // Store the specification in mol/hr (the column evaluator uses mol/hr
@@ -12468,7 +12468,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
      * Sets the top tray pressure.
      *
      * @param pressure pressure value
-     * @param unit     pressure unit (e.g. "bara")
+     * @param unit pressure unit (e.g. "bara")
      * @return this builder
      */
     public Builder topPressure(double pressure, String unit) {
@@ -12480,7 +12480,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
      * Sets the bottom tray pressure.
      *
      * @param pressure pressure value
-     * @param unit     pressure unit (e.g. "bara")
+     * @param unit pressure unit (e.g. "bara")
      * @return this builder
      */
     public Builder bottomPressure(double pressure, String unit) {
@@ -12492,7 +12492,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
      * Sets both top and bottom pressure to the same value.
      *
      * @param pressure pressure value
-     * @param unit     pressure unit (e.g. "bara")
+     * @param unit pressure unit (e.g. "bara")
      * @return this builder
      */
     public Builder pressure(double pressure, String unit) {
@@ -12601,7 +12601,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     /**
      * Adds a feed stream at the specified tray index.
      *
-     * @param feed      the feed stream
+     * @param feed the feed stream
      * @param trayIndex the tray index for this feed
      * @return this builder
      */
@@ -12614,7 +12614,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
      * Sets a top product purity specification.
      *
      * @param componentName the component name
-     * @param purity        the target mole fraction
+     * @param purity the target mole fraction
      * @return this builder
      */
     public Builder topProductPurity(String componentName, double purity) {

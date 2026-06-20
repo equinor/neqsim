@@ -62,7 +62,7 @@ public class WaterGasShiftReactor extends TwoPortEquipment {
   /**
    * Constructs a water-gas shift reactor with an inlet stream.
    *
-   * @param name        unit operation name
+   * @param name unit operation name
    * @param inletStream syngas inlet stream
    */
   public WaterGasShiftReactor(String name, StreamInterface inletStream) {
@@ -83,7 +83,7 @@ public class WaterGasShiftReactor extends TwoPortEquipment {
    * Sets the isothermal shift temperature with unit conversion.
    *
    * @param temperature shift temperature value
-   * @param unit        temperature unit, accepted values are K, C, and F
+   * @param unit temperature unit, accepted values are K, C, and F
    */
   public void setShiftTemperature(double temperature, String unit) {
     setShiftTemperature(toKelvin(temperature, unit));
@@ -238,9 +238,9 @@ public class WaterGasShiftReactor extends TwoPortEquipment {
    * Updates reactor metrics after equilibrium calculation.
    *
    * @param outletSystem outlet equilibrium system
-   * @param coIn         inlet carbon monoxide amount
-   * @param h2In         inlet hydrogen amount
-   * @param co2In        inlet carbon dioxide amount
+   * @param coIn inlet carbon monoxide amount
+   * @param h2In inlet hydrogen amount
+   * @param co2In inlet carbon dioxide amount
    */
   private void updateMetrics(SystemInterface outletSystem, double coIn, double h2In, double co2In) {
     double coOut = HydrogenProductionUtils.getComponentMoles(outletSystem, "CO");
@@ -259,10 +259,10 @@ public class WaterGasShiftReactor extends TwoPortEquipment {
    * Calculates the WGS reaction quotient from outlet component amounts.
    *
    * @param outletSystem outlet system used only for finite-system validation
-   * @param coOut        outlet carbon monoxide amount
-   * @param waterOut     outlet water amount
-   * @param co2Out       outlet carbon dioxide amount
-   * @param h2Out        outlet hydrogen amount
+   * @param coOut outlet carbon monoxide amount
+   * @param waterOut outlet water amount
+   * @param co2Out outlet carbon dioxide amount
+   * @param h2Out outlet hydrogen amount
    * @return WGS reaction quotient, or {@link Double#NaN} when undefined
    */
   private double calculateWgsEquilibriumRatio(SystemInterface outletSystem, double coOut, double waterOut,
@@ -277,7 +277,7 @@ public class WaterGasShiftReactor extends TwoPortEquipment {
    * Converts temperature values to Kelvin.
    *
    * @param temperature temperature value
-   * @param unit        unit string, accepted values are K, C, and F
+   * @param unit unit string, accepted values are K, C, and F
    * @return temperature in Kelvin
    */
   private double toKelvin(double temperature, String unit) {
@@ -296,7 +296,7 @@ public class WaterGasShiftReactor extends TwoPortEquipment {
   /**
    * Validates positive finite values.
    *
-   * @param value         value to validate
+   * @param value value to validate
    * @param parameterName parameter name used in exception messages
    */
   private void validatePositive(double value, String parameterName) {

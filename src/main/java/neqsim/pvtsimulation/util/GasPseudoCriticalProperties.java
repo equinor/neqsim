@@ -110,9 +110,9 @@ public final class GasPseudoCriticalProperties {
    * Piper-McCain-Corredor correlation for pseudocritical temperature (2012).
    *
    * @param gammaG Total gas specific gravity (air = 1.0)
-   * @param yH2S   Mole fraction of H2S [0, 1]
-   * @param yCO2   Mole fraction of CO2 [0, 1]
-   * @param yN2    Mole fraction of N2 [0, 1]
+   * @param yH2S Mole fraction of H2S [0, 1]
+   * @param yCO2 Mole fraction of CO2 [0, 1]
+   * @param yN2 Mole fraction of N2 [0, 1]
    * @return Pseudocritical temperature (Kelvin)
    */
   public static double pseudoCriticalTemperaturePiper(double gammaG, double yH2S, double yCO2, double yN2) {
@@ -125,9 +125,9 @@ public final class GasPseudoCriticalProperties {
    * Piper-McCain-Corredor correlation for pseudocritical pressure (2012).
    *
    * @param gammaG Total gas specific gravity (air = 1.0)
-   * @param yH2S   Mole fraction of H2S [0, 1]
-   * @param yCO2   Mole fraction of CO2 [0, 1]
-   * @param yN2    Mole fraction of N2 [0, 1]
+   * @param yH2S Mole fraction of H2S [0, 1]
+   * @param yCO2 Mole fraction of CO2 [0, 1]
+   * @param yN2 Mole fraction of N2 [0, 1]
    * @return Pseudocritical pressure (bara)
    */
   public static double pseudoCriticalPressurePiper(double gammaG, double yH2S, double yCO2, double yN2) {
@@ -156,9 +156,9 @@ public final class GasPseudoCriticalProperties {
    * calculations in Rankine/psia.
    *
    * @param gammaG Total gas specific gravity (air = 1.0)
-   * @param yH2S   Mole fraction of H2S
-   * @param yCO2   Mole fraction of CO2
-   * @param yN2    Mole fraction of N2
+   * @param yH2S Mole fraction of H2S
+   * @param yCO2 Mole fraction of CO2
+   * @param yN2 Mole fraction of N2
    * @return double array [J, K]
    */
   private static double[] piperJK(double gammaG, double yH2S, double yCO2, double yN2) {
@@ -196,9 +196,9 @@ public final class GasPseudoCriticalProperties {
    * (B^{0.5} - B^4) $$ where $A = y_{H_2S} + y_{CO_2}$ and $B = y_{H_2S}$.
    *
    * @param tpcKelvin Pseudocritical temperature (Kelvin)
-   * @param ppcBara   Pseudocritical pressure (bara)
-   * @param yH2S      Mole fraction of H2S [0, 1]
-   * @param yCO2      Mole fraction of CO2 [0, 1]
+   * @param ppcBara Pseudocritical pressure (bara)
+   * @param yH2S Mole fraction of H2S [0, 1]
+   * @param yCO2 Mole fraction of CO2 [0, 1]
    * @return double array: [corrected Tpc (Kelvin), corrected Ppc (bara)]
    */
   public static double[] wichertAzizCorrection(double tpcKelvin, double ppcBara, double yH2S, double yCO2) {
@@ -223,7 +223,7 @@ public final class GasPseudoCriticalProperties {
    * Calculate pseudoreduced temperature.
    *
    * @param temperatureK Temperature (Kelvin)
-   * @param tpcKelvin    Pseudocritical temperature (Kelvin)
+   * @param tpcKelvin Pseudocritical temperature (Kelvin)
    * @return Pseudoreduced temperature (dimensionless)
    */
   public static double pseudoReducedTemperature(double temperatureK, double tpcKelvin) {
@@ -234,7 +234,7 @@ public final class GasPseudoCriticalProperties {
    * Calculate pseudoreduced pressure.
    *
    * @param pressureBara Pressure (bara)
-   * @param ppcBara      Pseudocritical pressure (bara)
+   * @param ppcBara Pseudocritical pressure (bara)
    * @return Pseudoreduced pressure (dimensionless)
    */
   public static double pseudoReducedPressure(double pressureBara, double ppcBara) {

@@ -396,7 +396,7 @@ public class SQPoptimizer implements Serializable {
    * Compute finite-difference gradient of a function.
    *
    * @param func function to differentiate
-   * @param x    evaluation point
+   * @param x evaluation point
    * @return gradient vector
    */
   private double[] computeGradient(ObjectiveFunc func, double[] x) {
@@ -416,7 +416,7 @@ public class SQPoptimizer implements Serializable {
    * Evaluate a list of constraint functions.
    *
    * @param constraints list of constraint functions
-   * @param x           evaluation point
+   * @param x evaluation point
    * @return array of constraint values
    */
   private double[] evaluateConstraints(List<ConstraintFunc> constraints, double[] x) {
@@ -431,7 +431,7 @@ public class SQPoptimizer implements Serializable {
    * Compute Jacobian of constraint functions via finite differences.
    *
    * @param constraints list of constraint functions
-   * @param x           evaluation point
+   * @param x evaluation point
    * @return Jacobian matrix [m x n]
    */
   private double[][] computeJacobian(List<ConstraintFunc> constraints, double[] x) {
@@ -455,12 +455,12 @@ public class SQPoptimizer implements Serializable {
   /**
    * Compute KKT optimality error.
    *
-   * @param gradF   gradient of objective
-   * @param gEq     equality constraint values
-   * @param hIneq   inequality constraint values
-   * @param jacEq   equality constraint Jacobian [mEq x n]
+   * @param gradF gradient of objective
+   * @param gEq equality constraint values
+   * @param hIneq inequality constraint values
+   * @param jacEq equality constraint Jacobian [mEq x n]
    * @param jacIneq inequality constraint Jacobian [mIneq x n]
-   * @param x       current point
+   * @param x current point
    * @return KKT error (inf-norm)
    */
   private double computeKKTError(double[] gradF, double[] gEq, double[] hIneq, double[][] jacEq, double[][] jacIneq,
@@ -535,12 +535,12 @@ public class SQPoptimizer implements Serializable {
    * approach with active-set handling.
    * </p>
    *
-   * @param gradF   gradient of objective
-   * @param gEq     equality constraint values
-   * @param hIneq   inequality constraint values
-   * @param jacEq   equality constraint Jacobian
+   * @param gradF gradient of objective
+   * @param gEq equality constraint values
+   * @param hIneq inequality constraint values
+   * @param jacEq equality constraint Jacobian
    * @param jacIneq inequality constraint Jacobian
-   * @param x       current point
+   * @param x current point
    * @return search direction d
    */
   private double[] solveQPSubproblem(double[] gradF, double[] gEq, double[] hIneq, double[][] jacEq, double[][] jacIneq,
@@ -650,10 +650,10 @@ public class SQPoptimizer implements Serializable {
   /**
    * L1 exact penalty merit function line search.
    *
-   * @param x     current point
-   * @param dx    search direction
-   * @param f0    current objective value
-   * @param gEq   current equality constraint values
+   * @param x current point
+   * @param dx search direction
+   * @param f0 current objective value
+   * @param gEq current equality constraint values
    * @param hIneq current inequality constraint values
    * @return step length alpha
    */
@@ -686,8 +686,8 @@ public class SQPoptimizer implements Serializable {
   /**
    * Compute L1 exact penalty merit function.
    *
-   * @param f     objective value
-   * @param gEq   equality constraint values
+   * @param f objective value
+   * @param gEq equality constraint values
    * @param hIneq inequality constraint values
    * @return merit function value
    */
@@ -707,12 +707,12 @@ public class SQPoptimizer implements Serializable {
   /**
    * Damped BFGS update of the Hessian approximation.
    *
-   * @param x        new point
-   * @param xPrev    previous point
-   * @param gradF    new gradient
+   * @param x new point
+   * @param xPrev previous point
+   * @param gradF new gradient
    * @param gradPrev previous gradient
-   * @param gEq      equality constraints (for Lagrangian gradient)
-   * @param hIneq    inequality constraints (for Lagrangian gradient)
+   * @param gEq equality constraints (for Lagrangian gradient)
+   * @param hIneq inequality constraints (for Lagrangian gradient)
    */
   private void updateBFGS(double[] x, double[] xPrev, double[] gradF, double[] gradPrev, double[] gEq, double[] hIneq) {
     double[] s = new double[n]; // Step
@@ -757,7 +757,7 @@ public class SQPoptimizer implements Serializable {
    * Solve a linear system A*x = b using Gaussian elimination with partial pivoting.
    *
    * @param aMatrix coefficient matrix
-   * @param b       right-hand side
+   * @param b right-hand side
    * @return solution vector x
    */
   private double[] solveLinearSystem(double[][] aMatrix, double[] b) {
@@ -906,7 +906,7 @@ public class SQPoptimizer implements Serializable {
    * Matrix-vector multiplication.
    *
    * @param matrix the matrix
-   * @param vec    the vector
+   * @param vec the vector
    * @return result vector
    */
   private double[] matVecMult(double[][] matrix, double[] vec) {
@@ -949,9 +949,9 @@ public class SQPoptimizer implements Serializable {
      *
      * @param optimalPoint optimal variable values
      * @param optimalValue optimal objective value
-     * @param iterations   number of iterations
-     * @param converged    whether converged
-     * @param kktError     final KKT error
+     * @param iterations number of iterations
+     * @param converged whether converged
+     * @param kktError final KKT error
      */
     public OptimizationResult(double[] optimalPoint, double optimalValue, int iterations, boolean converged,
 	double kktError) {

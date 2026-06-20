@@ -69,7 +69,7 @@ public final class HAZOPStudyRunner {
   /**
    * Builds the full HAZOP study context from input JSON.
    *
-   * @param input   input JSON object
+   * @param input input JSON object
    * @param studyId study identifier
    * @return populated study context
    */
@@ -99,7 +99,7 @@ public final class HAZOPStudyRunner {
   /**
    * Builds the output JSON for a populated study context.
    *
-   * @param input   original input JSON
+   * @param input original input JSON
    * @param context populated study context
    * @return output JSON object
    */
@@ -161,7 +161,7 @@ public final class HAZOPStudyRunner {
   /**
    * Runs generated scenarios when requested by the input.
    *
-   * @param context   study context with process and options
+   * @param context study context with process and options
    * @param generator automatic scenario generator
    * @param scenarios generated scenarios
    * @return map from scenario name to scenario result
@@ -212,7 +212,7 @@ public final class HAZOPStudyRunner {
   /**
    * Parses HAZOP nodes, or creates one node per non-stream process unit.
    *
-   * @param input   HAZOP study input JSON
+   * @param input HAZOP study input JSON
    * @param process built process system
    * @return list of HAZOP nodes
    */
@@ -270,7 +270,7 @@ public final class HAZOPStudyRunner {
   /**
    * Parses enabled failure modes from input.
    *
-   * @param input    HAZOP study input JSON
+   * @param input HAZOP study input JSON
    * @param warnings mutable warning list
    * @return selected failure modes
    */
@@ -297,8 +297,8 @@ public final class HAZOPStudyRunner {
   /**
    * Adds string values from multiple possible JSON fields.
    *
-   * @param input      source JSON object
-   * @param values     target set of strings
+   * @param input source JSON object
+   * @param values target set of strings
    * @param fieldNames field names to inspect
    */
   private static void addStringValues(JsonObject input, Set<String> values, String... fieldNames) {
@@ -395,7 +395,7 @@ public final class HAZOPStudyRunner {
    * Builds a consequence text that references simulation status.
    *
    * @param failure equipment failure
-   * @param result  scenario run result, or null when simulations are disabled
+   * @param result scenario run result, or null when simulations are disabled
    * @return consequence text
    */
   private static String buildConsequence(EquipmentFailure failure,
@@ -415,7 +415,7 @@ public final class HAZOPStudyRunner {
    * Builds a recommendation text for a HAZOP row.
    *
    * @param failure equipment failure
-   * @param result  scenario run result, or null when simulations are disabled
+   * @param result scenario run result, or null when simulations are disabled
    * @return recommendation text
    */
   private static String buildRecommendation(EquipmentFailure failure,
@@ -429,16 +429,16 @@ public final class HAZOPStudyRunner {
   /**
    * Builds one worksheet row JSON object.
    *
-   * @param studyId        study identifier
-   * @param rowNumber      one-based row number
-   * @param node           HAZOP node
-   * @param failure        equipment failure
-   * @param guideWord      HAZOP guideword
-   * @param parameter      HAZOP parameter
-   * @param consequence    consequence text
-   * @param safeguards     safeguard text
+   * @param studyId study identifier
+   * @param rowNumber one-based row number
+   * @param node HAZOP node
+   * @param failure equipment failure
+   * @param guideWord HAZOP guideword
+   * @param parameter HAZOP parameter
+   * @param consequence consequence text
+   * @param safeguards safeguard text
    * @param recommendation recommendation text
-   * @param result         scenario run result
+   * @param result scenario run result
    * @return row JSON object
    */
   private static JsonObject buildRow(String studyId, int rowNumber, HazopNode node, EquipmentFailure failure,
@@ -466,7 +466,7 @@ public final class HAZOPStudyRunner {
   /**
    * Builds output JSON for a HAZOP node.
    *
-   * @param node      HAZOP node
+   * @param node HAZOP node
    * @param worksheet populated worksheet
    * @return node JSON output
    */
@@ -485,9 +485,9 @@ public final class HAZOPStudyRunner {
   /**
    * Builds a study summary.
    *
-   * @param context         study context
-   * @param failures        identified equipment failures
-   * @param rows            HAZOP rows
+   * @param context study context
+   * @param failures identified equipment failures
+   * @param rows HAZOP rows
    * @param scenarioResults scenario results by name
    * @return summary JSON object
    */
@@ -574,7 +574,7 @@ public final class HAZOPStudyRunner {
    * Builds simple quality gates for human review.
    *
    * @param context study context
-   * @param rows    generated HAZOP rows
+   * @param rows generated HAZOP rows
    * @return quality-gate JSON object
    */
   private static JsonObject buildQualityGates(StudyContext context, JsonArray rows) {
@@ -591,7 +591,7 @@ public final class HAZOPStudyRunner {
   /**
    * Adds optional barrier-register output when the input includes a register.
    *
-   * @param input  original input JSON
+   * @param input original input JSON
    * @param output output JSON object to enrich
    */
   private static void addBarrierRegisterHandoff(JsonObject input, JsonObject output) {
@@ -614,9 +614,9 @@ public final class HAZOPStudyRunner {
   /**
    * Builds a compact report markdown string.
    *
-   * @param context    study context
+   * @param context study context
    * @param worksheets worksheets by node id
-   * @param rows       generated HAZOP rows
+   * @param rows generated HAZOP rows
    * @return markdown report text
    */
   private static String buildReportMarkdown(StudyContext context, Map<String, HAZOPTemplate> worksheets,
@@ -721,8 +721,8 @@ public final class HAZOPStudyRunner {
   /**
    * Reads an optional string field.
    *
-   * @param input        source JSON object
-   * @param field        field name
+   * @param input source JSON object
+   * @param field field name
    * @param defaultValue default value
    * @return field string or default value
    */
@@ -733,8 +733,8 @@ public final class HAZOPStudyRunner {
   /**
    * Reads an optional boolean field.
    *
-   * @param input        source JSON object
-   * @param field        field name
+   * @param input source JSON object
+   * @param field field name
    * @param defaultValue default value
    * @return field boolean or default value
    */

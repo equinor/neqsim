@@ -93,9 +93,9 @@ public class TripEventDetector implements Serializable {
      *
      * @param equipmentName equipment to monitor
      * @param parameterName parameter to monitor
-     * @param threshold     threshold value
-     * @param highTrip      true for high-limit trip, false for low-limit
-     * @param severity      trip severity
+     * @param threshold threshold value
+     * @param highTrip true for high-limit trip, false for low-limit
+     * @param severity trip severity
      */
     TripCondition(String equipmentName, String parameterName, double threshold, boolean highTrip,
 	TripEvent.Severity severity) {
@@ -130,9 +130,9 @@ public class TripEventDetector implements Serializable {
    *
    * @param equipmentName name of the equipment
    * @param parameterName parameter to monitor (e.g., "outletPressure", "temperature")
-   * @param threshold     the trip threshold value
-   * @param highTrip      true if trip triggers when value exceeds threshold, false for below
-   * @param severity      severity level of this trip
+   * @param threshold the trip threshold value
+   * @param highTrip true if trip triggers when value exceeds threshold, false for below
+   * @param severity severity level of this trip
    */
   public void addTripCondition(String equipmentName, String parameterName, double threshold, boolean highTrip,
       TripEvent.Severity severity) {

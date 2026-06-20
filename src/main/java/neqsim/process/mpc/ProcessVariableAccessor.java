@@ -104,9 +104,9 @@ public class ProcessVariableAccessor {
   /**
    * Extract numeric value from method result.
    *
-   * @param result     the result object from method invocation
+   * @param result the result object from method invocation
    * @param arrayIndex the array index if result is an array, -1 otherwise
-   * @param path       the variable path for error messages
+   * @param path the variable path for error messages
    * @return the extracted numeric value
    */
   private double extractNumericValue(Object result, int arrayIndex, String path) {
@@ -143,7 +143,7 @@ public class ProcessVariableAccessor {
    * Find a method with no parameters.
    *
    * @param clazz the class to search for the method
-   * @param name  the method name to find
+   * @param name the method name to find
    * @return the Method object if found, null otherwise
    */
   private Method findMethodNoParams(Class<?> clazz, String name) {
@@ -193,7 +193,7 @@ public class ProcessVariableAccessor {
   /**
    * Set a variable value by path.
    *
-   * @param path  variable path
+   * @param path variable path
    * @param value value to set
    */
   public void setValue(String path, double value) {
@@ -252,9 +252,9 @@ public class ProcessVariableAccessor {
   /**
    * Set a variable value with unit specification.
    *
-   * @param path  variable path
+   * @param path variable path
    * @param value value to set
-   * @param unit  unit of the value
+   * @param unit unit of the value
    */
   public void setValue(String path, double value, String unit) {
     try {
@@ -360,8 +360,8 @@ public class ProcessVariableAccessor {
   /**
    * Find a method by name and parameter types.
    *
-   * @param clazz      the class to search for the method
-   * @param name       the method name to find
+   * @param clazz the class to search for the method
+   * @param name the method name to find
    * @param paramTypes the parameter types of the method
    * @return the Method object if found, null otherwise
    */
@@ -384,7 +384,7 @@ public class ProcessVariableAccessor {
   /**
    * Check if method parameters match.
    *
-   * @param method     the method to check
+   * @param method the method to check
    * @param paramTypes the expected parameter types
    * @return true if the method parameters match the expected types
    */

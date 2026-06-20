@@ -295,9 +295,9 @@ public class ProcessGraph implements Serializable {
    * execute in the correct sequence.
    * </p>
    *
-   * @param source   source node
-   * @param target   target node
-   * @param name     descriptive name for the signal edge
+   * @param source source node
+   * @param target target node
+   * @param name descriptive name for the signal edge
    * @param edgeType the edge type (typically {@link ProcessEdge.EdgeType#SIGNAL})
    * @return the created edge
    */
@@ -320,7 +320,7 @@ public class ProcessGraph implements Serializable {
    *
    * @param sourceEquipment source equipment
    * @param targetEquipment target equipment
-   * @param stream          the stream connecting them (may be null)
+   * @param stream the stream connecting them (may be null)
    * @return the created edge, or null if either equipment is not in the graph
    */
   public ProcessEdge addEdge(neqsim.process.equipment.ProcessEquipmentInterface sourceEquipment,
@@ -1002,7 +1002,7 @@ public class ProcessGraph implements Serializable {
   /**
    * Selects the best tear stream for a single SCC using heuristics.
    *
-   * @param scc      the strongly connected component
+   * @param scc the strongly connected component
    * @param sccEdges edges within the SCC
    * @return the best tear stream edge
    */
@@ -1029,7 +1029,7 @@ public class ProcessGraph implements Serializable {
    * Computes a heuristic score for a potential tear stream. Higher scores indicate better tear stream candidates.
    *
    * @param edge the candidate edge
-   * @param scc  the SCC containing the edge
+   * @param scc the SCC containing the edge
    * @return heuristic score
    */
   private double computeTearStreamScore(ProcessEdge edge, List<ProcessNode> scc) {
@@ -1201,8 +1201,8 @@ public class ProcessGraph implements Serializable {
    * <p>
    * Lower sensitivity indicates a better tear stream candidate.
    *
-   * @param edge     the candidate tear stream
-   * @param scc      the SCC containing the edge
+   * @param edge the candidate tear stream
+   * @param scc the SCC containing the edge
    * @param sccNodes set of nodes in the SCC for fast lookup
    * @return sensitivity score
    */
@@ -1252,8 +1252,8 @@ public class ProcessGraph implements Serializable {
   /**
    * Computes the path length from source to target within an SCC.
    *
-   * @param source   starting node
-   * @param target   ending node
+   * @param source starting node
+   * @param target ending node
    * @param sccNodes nodes in the SCC
    * @return path length, or -1 if no path exists
    */
@@ -1331,7 +1331,7 @@ public class ProcessGraph implements Serializable {
   /**
    * Computes the average branching factor in an SCC.
    *
-   * @param scc      the SCC nodes
+   * @param scc the SCC nodes
    * @param sccNodes set of SCC nodes for lookup
    * @return average branching factor
    */
@@ -1483,7 +1483,7 @@ public class ProcessGraph implements Serializable {
   /**
    * DFS helper to detect cycles ignoring specified tear streams.
    *
-   * @param node    the current node to check
+   * @param node the current node to check
    * @param visited set of already visited nodes
    * @param inStack set of nodes currently in the recursion stack
    * @param tearSet set of tear edges to ignore

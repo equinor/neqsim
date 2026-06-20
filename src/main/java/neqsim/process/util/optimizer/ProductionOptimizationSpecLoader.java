@@ -178,12 +178,12 @@ public final class ProductionOptimizationSpecLoader {
    * extension.
    * </p>
    *
-   * @param specPath  path to the YAML (.yaml, .yml) or JSON (.json) specification file
+   * @param specPath path to the YAML (.yaml, .yml) or JSON (.json) specification file
    * @param processes map of process name (as used in spec) to ProcessSystem instances
-   * @param feeds     map of feed stream name (as used in spec) to StreamInterface instances
-   * @param metrics   map of metric name (as used in spec) to evaluation functions
+   * @param feeds map of feed stream name (as used in spec) to StreamInterface instances
+   * @param metrics map of metric name (as used in spec) to evaluation functions
    * @return list of ScenarioRequest objects ready for optimization
-   * @throws IOException              if the file cannot be read or parsed
+   * @throws IOException if the file cannot be read or parsed
    * @throws IllegalArgumentException if a referenced process, feed, or metric is not found in the provided maps
    */
   public static List<ScenarioRequest> load(Path specPath, Map<String, ProcessSystem> processes,
@@ -255,7 +255,7 @@ public final class ProductionOptimizationSpecLoader {
    * Looks up a metric function by key, throwing if not found.
    *
    * @param metrics the metrics map to search
-   * @param key     the metric key to look up
+   * @param key the metric key to look up
    * @return the metric evaluation function
    * @throws IllegalArgumentException if the key is not found
    */

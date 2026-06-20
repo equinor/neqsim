@@ -60,8 +60,8 @@ public class HypothesisGenerator implements Serializable {
    * Registers a custom hypothesis for an equipment type and symptom.
    *
    * @param equipmentType equipment type key (e.g., "Compressor", "Separator")
-   * @param symptom       the observable symptom
-   * @param hypothesis    pre-built hypothesis to add
+   * @param symptom the observable symptom
+   * @param hypothesis pre-built hypothesis to add
    */
   public void register(String equipmentType, Symptom symptom, Hypothesis hypothesis) {
     String key = makeKey(equipmentType, symptom);
@@ -91,7 +91,7 @@ public class HypothesisGenerator implements Serializable {
    * </p>
    *
    * @param equipment the process equipment exhibiting the symptom
-   * @param symptom   the observed symptom
+   * @param symptom the observed symptom
    * @return list of hypotheses sorted by prior probability (descending)
    */
   public List<Hypothesis> generate(ProcessEquipmentInterface equipment, Symptom symptom) {
@@ -145,7 +145,7 @@ public class HypothesisGenerator implements Serializable {
   /**
    * Adjusts hypothesis prior probabilities using OREDA failure-mode data.
    *
-   * @param hypotheses    hypotheses to adjust
+   * @param hypotheses hypotheses to adjust
    * @param equipmentType equipment type for OREDA lookup
    */
   void adjustPriorsFromOreda(List<Hypothesis> hypotheses, String equipmentType) {
@@ -190,7 +190,7 @@ public class HypothesisGenerator implements Serializable {
    * </p>
    *
    * @param modeProbabilities normalized failure mode probability map
-   * @param failureMode       hypothesis failure mode
+   * @param failureMode hypothesis failure mode
    * @return matched probability, or null if no reliable match is found
    */
   private Double findFuzzyModeProbability(Map<String, Double> modeProbabilities, String failureMode) {
@@ -299,7 +299,7 @@ public class HypothesisGenerator implements Serializable {
    * Builds a registry key.
    *
    * @param equipmentType equipment type
-   * @param symptom       symptom
+   * @param symptom symptom
    * @return key string
    */
   private String makeKey(String equipmentType, Symptom symptom) {
@@ -749,8 +749,8 @@ public class HypothesisGenerator implements Serializable {
    * Utility to register a list of builders for an equipment type and symptom.
    *
    * @param equipmentType equipment type key
-   * @param symptom       symptom
-   * @param builders      hypothesis builders
+   * @param symptom symptom
+   * @param builders hypothesis builders
    */
   private void putBuilders(String equipmentType, Symptom symptom, List<Hypothesis.Builder> builders) {
     registry.put(makeKey(equipmentType, symptom), new ArrayList<>(builders));

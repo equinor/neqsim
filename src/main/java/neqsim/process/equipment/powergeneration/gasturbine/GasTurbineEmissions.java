@@ -54,7 +54,7 @@ public class GasTurbineEmissions implements Serializable {
   /**
    * Compute the CO2 mass flow from a hydrocarbon fuel stream.
    *
-   * @param fuel                 fuel system
+   * @param fuel fuel system
    * @param fuelMolarFlowMolPerS fuel molar flow [mol/s]
    * @return CO2 mass flow [kg/s]
    */
@@ -92,7 +92,7 @@ public class GasTurbineEmissions implements Serializable {
   /**
    * Compute the methane slip mass flow.
    *
-   * @param fuel                 fuel system
+   * @param fuel fuel system
    * @param fuelMolarFlowMolPerS fuel molar flow [mol/s]
    * @return methane slip mass flow [kg/s]
    */
@@ -114,8 +114,8 @@ public class GasTurbineEmissions implements Serializable {
   /**
    * Compute the NOx mass flow expressed as NO2 from a ppmv-on-exhaust figure.
    *
-   * @param noxPpm                    NOx concentration [ppmv at 15 % O2]
-   * @param exhaustMassFlowKgPerS     exhaust mass flow [kg/s]
+   * @param noxPpm NOx concentration [ppmv at 15 % O2]
+   * @param exhaustMassFlowKgPerS exhaust mass flow [kg/s]
    * @param exhaustMolarMassKgPerKmol exhaust gas molar mass [kg/kmol] (typical ≈ 28.7)
    * @return NOx mass flow [kg/s]
    */

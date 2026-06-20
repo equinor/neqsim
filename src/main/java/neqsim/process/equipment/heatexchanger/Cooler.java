@@ -34,7 +34,7 @@ public class Cooler extends Heater {
    * Constructor for Cooler.
    * </p>
    *
-   * @param name     a {@link java.lang.String} object
+   * @param name a {@link java.lang.String} object
    * @param inStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public Cooler(String name, StreamInterface inStream) {

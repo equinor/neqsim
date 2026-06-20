@@ -28,10 +28,10 @@ public class ComponentHydrateStatoil extends ComponentHydrate {
    * Constructor for ComponentHydrateStatoil.
    * </p>
    *
-   * @param name         Name of component.
-   * @param moles        Total number of moles of component.
+   * @param name Name of component.
+   * @param moles Total number of moles of component.
    * @param molesInPhase Number of moles in phase.
-   * @param compIndex    Index number of component in phase object component array.
+   * @param compIndex Index number of component in phase object component array.
    */
   public ComponentHydrateStatoil(String name, double moles, double molesInPhase, int compIndex) {
     super(name, moles, molesInPhase, compIndex);
@@ -185,8 +185,8 @@ public class ComponentHydrateStatoil extends ComponentHydrate {
    * delt.
    * </p>
    *
-   * @param n          a double
-   * @param radius     a double
+   * @param n a double
+   * @param radius a double
    * @param struccture a int
    * @param cavityType a int
    * @return a double

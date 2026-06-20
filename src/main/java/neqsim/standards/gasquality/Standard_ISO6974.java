@@ -126,7 +126,7 @@ public class Standard_ISO6974 extends GasChromotograpyhBase {
   /**
    * Sets the standard uncertainty (1 sigma) for a specific component.
    *
-   * @param componentName             name of the component
+   * @param componentName name of the component
    * @param stdUncertaintyMolFraction standard uncertainty in mol fraction
    */
   public void setComponentUncertainty(String componentName, double stdUncertaintyMolFraction) {
@@ -272,9 +272,9 @@ public class Standard_ISO6974 extends GasChromotograpyhBase {
   /**
    * Renormalises remaining components after perturbing component at index pertIndex.
    *
-   * @param sys       the perturbed system
+   * @param sys the perturbed system
    * @param pertIndex index of the perturbed component
-   * @param newZ      new mol fraction for the perturbed component
+   * @param newZ new mol fraction for the perturbed component
    */
   private void renormaliseAfterPerturbation(SystemInterface sys, int pertIndex, double newZ) {
     int nComp = sys.getPhase(0).getNumberOfComponents();

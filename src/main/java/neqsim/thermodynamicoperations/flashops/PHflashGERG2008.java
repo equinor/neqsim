@@ -31,7 +31,7 @@ public class PHflashGERG2008 extends Flash {
    * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param Hspec  a double
+   * @param Hspec a double
    */
   public PHflashGERG2008(SystemInterface system, double Hspec) {
     this.system = system;

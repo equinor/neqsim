@@ -68,11 +68,11 @@ public class ValueChainObjective implements Serializable {
     /**
      * Creates an immutable value result.
      *
-     * @param revenueNokPerDay    sales revenue in currency per day
+     * @param revenueNokPerDay sales revenue in currency per day
      * @param energyCostNokPerDay energy operating cost in currency per day
      * @param carbonCostNokPerDay carbon cost in currency per day
-     * @param co2TonnePerDay      emitted CO2 in tonnes per day
-     * @param netValueNokPerDay   net value in currency per day
+     * @param co2TonnePerDay emitted CO2 in tonnes per day
+     * @param netValueNokPerDay net value in currency per day
      */
     public ValueResult(double revenueNokPerDay, double energyCostNokPerDay, double carbonCostNokPerDay,
 	double co2TonnePerDay, double netValueNokPerDay) {
@@ -182,7 +182,7 @@ public class ValueChainObjective implements Serializable {
    *
    * @param exportGasSm3PerDay export sales-gas rate in Sm3/day (non-negative)
    * @param exportOilSm3PerDay export oil/condensate rate in Sm3/day (non-negative; 0 for dry gas)
-   * @param totalPowerKw       total consumed shaft/electrical power in kW (non-negative)
+   * @param totalPowerKw total consumed shaft/electrical power in kW (non-negative)
    * @return the value breakdown for this operating point
    */
   public ValueResult evaluate(double exportGasSm3PerDay, double exportOilSm3PerDay, double totalPowerKw) {
@@ -197,9 +197,9 @@ public class ValueChainObjective implements Serializable {
    * {@code carbonPriceNokPerTonne} to trace a revenue-versus-emissions Pareto front for a fixed operating point.
    * </p>
    *
-   * @param exportGasSm3PerDay     export sales-gas rate in Sm3/day (non-negative)
-   * @param exportOilSm3PerDay     export oil/condensate rate in Sm3/day (non-negative)
-   * @param totalPowerKw           total consumed shaft/electrical power in kW (non-negative)
+   * @param exportGasSm3PerDay export sales-gas rate in Sm3/day (non-negative)
+   * @param exportOilSm3PerDay export oil/condensate rate in Sm3/day (non-negative)
+   * @param totalPowerKw total consumed shaft/electrical power in kW (non-negative)
    * @param carbonPriceNokPerTonne carbon price in currency per tonne CO2 (non-negative)
    * @return the value breakdown for this operating point
    */
@@ -223,7 +223,7 @@ public class ValueChainObjective implements Serializable {
    * </p>
    *
    * @param netValueNokPerDay the net daily value in currency per day
-   * @param year              the year in which the cash flow is received (0 = present)
+   * @param year the year in which the cash flow is received (0 = present)
    * @return the present value of one year of cash flow in the configured currency
    */
   public double presentValueOfAnnualCashFlow(double netValueNokPerDay, double year) {

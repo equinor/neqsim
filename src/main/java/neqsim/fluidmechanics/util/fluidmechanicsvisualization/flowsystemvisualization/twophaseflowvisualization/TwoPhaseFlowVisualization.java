@@ -23,7 +23,7 @@ public class TwoPhaseFlowVisualization
    * Constructor for TwoPhaseFlowVisualization.
    * </p>
    *
-   * @param nodes     a int
+   * @param nodes a int
    * @param timeSteps a int
    */
   public TwoPhaseFlowVisualization(int nodes, int timeSteps) {

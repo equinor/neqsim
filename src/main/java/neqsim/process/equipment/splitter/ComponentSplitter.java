@@ -51,7 +51,7 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
    * Constructor for Splitter.
    * </p>
    *
-   * @param name        a {@link java.lang.String} object
+   * @param name a {@link java.lang.String} object
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public ComponentSplitter(String name, StreamInterface inletStream) {

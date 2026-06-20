@@ -18,10 +18,10 @@ public class ComponentWater extends ComponentEos {
   /**
    * Construct a water component.
    *
-   * @param name         component name
-   * @param moles        total moles of the component
+   * @param name component name
+   * @param moles total moles of the component
    * @param molesInPhase moles in the current phase
-   * @param compIndex    index of component in phase array
+   * @param compIndex index of component in phase array
    */
   public ComponentWater(String name, double moles, double molesInPhase, int compIndex) {
     super(name, moles, molesInPhase, compIndex);
@@ -31,11 +31,11 @@ public class ComponentWater extends ComponentEos {
    * Constructor with basic critical properties – not used in the IF97 model but provided for completeness.
    *
    * @param number a int
-   * @param tc     a double
-   * @param pc     a double
-   * @param m      a double
-   * @param a      a double
-   * @param moles  a double
+   * @param tc a double
+   * @param pc a double
+   * @param m a double
+   * @param a a double
+   * @param moles a double
    */
   public ComponentWater(int number, double tc, double pc, double m, double a, double moles) {
     super(number, tc, pc, m, a, moles);

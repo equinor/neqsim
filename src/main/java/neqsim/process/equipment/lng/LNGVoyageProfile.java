@@ -180,8 +180,8 @@ public class LNGVoyageProfile implements Serializable {
   /**
    * Create a uniform voyage with constant conditions.
    *
-   * @param name                voyage name
-   * @param durationHours       total voyage duration (hours)
+   * @param name voyage name
+   * @param durationHours total voyage duration (hours)
    * @param ambientTemperatureK constant ambient temperature (K)
    * @return configured voyage profile
    */
@@ -232,12 +232,12 @@ public class LNGVoyageProfile implements Serializable {
     /**
      * Constructor for voyage Segment.
      *
-     * @param startTimeHours        start time (hours from voyage start)
-     * @param endTimeHours          end time (hours from voyage start)
-     * @param ambientTemperature    ambient temperature (K)
+     * @param startTimeHours start time (hours from voyage start)
+     * @param endTimeHours end time (hours from voyage start)
+     * @param ambientTemperature ambient temperature (K)
      * @param significantWaveHeight significant wave height (m)
-     * @param windSpeed             wind speed (m/s)
-     * @param solarRadiation        solar radiation (W/m2)
+     * @param windSpeed wind speed (m/s)
+     * @param solarRadiation solar radiation (W/m2)
      */
     public Segment(double startTimeHours, double endTimeHours, double ambientTemperature, double significantWaveHeight,
 	double windSpeed, double solarRadiation) {
@@ -335,10 +335,10 @@ public class LNGVoyageProfile implements Serializable {
     /**
      * Constructor for EnvironmentConditions.
      *
-     * @param ambientTemperature    ambient temperature (K)
+     * @param ambientTemperature ambient temperature (K)
      * @param significantWaveHeight wave height (m)
-     * @param windSpeed             wind speed (m/s)
-     * @param solarRadiation        solar radiation (W/m2)
+     * @param windSpeed wind speed (m/s)
+     * @param solarRadiation solar radiation (W/m2)
      */
     public EnvironmentConditions(double ambientTemperature, double significantWaveHeight, double windSpeed,
 	double solarRadiation) {

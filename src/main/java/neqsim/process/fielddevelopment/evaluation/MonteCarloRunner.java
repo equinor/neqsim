@@ -85,11 +85,11 @@ public class MonteCarloRunner implements Serializable {
     /**
      * Creates a new uncertain variable.
      *
-     * @param name         variable name
+     * @param name variable name
      * @param distribution distribution type
-     * @param param1       first parameter (interpretation depends on distribution)
-     * @param param2       second parameter
-     * @param param3       third parameter (only for triangular)
+     * @param param1 first parameter (interpretation depends on distribution)
+     * @param param2 second parameter
+     * @param param3 third parameter (only for triangular)
      */
     public UncertainVariable(String name, DistributionType distribution, double param1, double param2, double param3) {
       this.name = name;
@@ -169,7 +169,7 @@ public class MonteCarloRunner implements Serializable {
     /**
      * Set an input value.
      *
-     * @param name  input variable name
+     * @param name input variable name
      * @param value sampled value
      */
     public void setInput(String name, double value) {
@@ -312,7 +312,7 @@ public class MonteCarloRunner implements Serializable {
    * Creates a new Monte Carlo runner with specified seed for reproducibility.
    *
    * @param engine cash flow engine
-   * @param seed   random seed
+   * @param seed random seed
    */
   public MonteCarloRunner(CashFlowEngine engine, long seed) {
     this(engine);
@@ -323,9 +323,9 @@ public class MonteCarloRunner implements Serializable {
    * Add an uncertain variable with triangular distribution.
    *
    * @param name variable name (e.g., "oilPrice", "capex", "opex")
-   * @param min  minimum value
+   * @param min minimum value
    * @param mode most likely value
-   * @param max  maximum value
+   * @param max maximum value
    */
   public void addTriangular(String name, double min, double mode, double max) {
     addVariable(name, DistributionType.TRIANGULAR, min, mode, max);
@@ -334,8 +334,8 @@ public class MonteCarloRunner implements Serializable {
   /**
    * Add an uncertain variable with normal distribution.
    *
-   * @param name   variable name
-   * @param mean   mean value
+   * @param name variable name
+   * @param mean mean value
    * @param stdDev standard deviation
    */
   public void addNormal(String name, double mean, double stdDev) {
@@ -345,8 +345,8 @@ public class MonteCarloRunner implements Serializable {
   /**
    * Add an uncertain variable with lognormal distribution.
    *
-   * @param name        variable name
-   * @param meanOfLog   mean of underlying normal distribution
+   * @param name variable name
+   * @param meanOfLog mean of underlying normal distribution
    * @param stdDevOfLog standard deviation of underlying normal
    */
   public void addLognormal(String name, double meanOfLog, double stdDevOfLog) {
@@ -357,8 +357,8 @@ public class MonteCarloRunner implements Serializable {
    * Add an uncertain variable with uniform distribution.
    *
    * @param name variable name
-   * @param min  minimum value
-   * @param max  maximum value
+   * @param min minimum value
+   * @param max maximum value
    */
   public void addUniform(String name, double min, double max) {
     addVariable(name, DistributionType.UNIFORM, min, max, 0.0);
@@ -367,11 +367,11 @@ public class MonteCarloRunner implements Serializable {
   /**
    * Add an uncertain variable with specified distribution.
    *
-   * @param name         variable name
+   * @param name variable name
    * @param distribution distribution type
-   * @param param1       first parameter (min for triangular/uniform, mean for normal/lognormal)
-   * @param param2       second parameter (mode for triangular, max for uniform, stddev for normal)
-   * @param param3       third parameter (max for triangular, unused for others)
+   * @param param1 first parameter (min for triangular/uniform, mean for normal/lognormal)
+   * @param param2 second parameter (mode for triangular, max for uniform, stddev for normal)
+   * @param param3 third parameter (max for triangular, unused for others)
    */
   public void addVariable(String name, DistributionType distribution, double param1, double param2, double param3) {
     variables.add(new UncertainVariable(name, distribution, param1, param2, param3));
@@ -451,9 +451,9 @@ public class MonteCarloRunner implements Serializable {
   /**
    * Sample from triangular distribution.
    *
-   * @param min  minimum
+   * @param min minimum
    * @param mode most likely
-   * @param max  maximum
+   * @param max maximum
    * @return sampled value
    */
   private double sampleTriangular(double min, double mode, double max) {
@@ -470,7 +470,7 @@ public class MonteCarloRunner implements Serializable {
   /**
    * Sample from normal distribution.
    *
-   * @param mean   mean
+   * @param mean mean
    * @param stdDev standard deviation
    * @return sampled value
    */
@@ -481,7 +481,7 @@ public class MonteCarloRunner implements Serializable {
   /**
    * Sample from lognormal distribution.
    *
-   * @param meanOfLog   mean of underlying normal
+   * @param meanOfLog mean of underlying normal
    * @param stdDevOfLog std dev of underlying normal
    * @return sampled value
    */
@@ -557,7 +557,7 @@ public class MonteCarloRunner implements Serializable {
   /**
    * Apply a sampled variable value to the cash flow engine.
    *
-   * @param name  variable name
+   * @param name variable name
    * @param value sampled value
    */
   private void applyVariable(String name, double value) {
@@ -583,7 +583,7 @@ public class MonteCarloRunner implements Serializable {
   /**
    * Get the percentile value for a result metric.
    *
-   * @param metric     metric name ("npv", "irr", "payback")
+   * @param metric metric name ("npv", "irr", "payback")
    * @param percentile percentile (0-100)
    * @return percentile value
    */

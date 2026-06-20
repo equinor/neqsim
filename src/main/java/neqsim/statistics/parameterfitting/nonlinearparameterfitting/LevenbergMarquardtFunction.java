@@ -66,7 +66,7 @@ public class LevenbergMarquardtFunction extends BaseFunction {
    * </p>
    *
    * @param parameterNumber a int
-   * @param parameterVal    a double
+   * @param parameterVal a double
    */
   public void setFittingParam(int parameterNumber, double parameterVal) {
     params[parameterNumber] = parameterVal;

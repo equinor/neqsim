@@ -29,7 +29,7 @@ public class ProcessResearchMetrics {
   /**
    * Sets a metric value.
    *
-   * @param name  metric name including units where relevant
+   * @param name metric name including units where relevant
    * @param value metric value
    * @return this metrics object
    */
@@ -41,7 +41,7 @@ public class ProcessResearchMetrics {
   /**
    * Adds to a metric value.
    *
-   * @param name  metric name including units where relevant
+   * @param name metric name including units where relevant
    * @param value value to add
    * @return this metrics object
    */
@@ -53,7 +53,7 @@ public class ProcessResearchMetrics {
   /**
    * Gets a metric value.
    *
-   * @param name         metric name
+   * @param name metric name
    * @param defaultValue value returned when the metric is absent
    * @return metric value or default value
    */

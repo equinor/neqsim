@@ -31,8 +31,8 @@ public class ProcessResult {
    * Creates a process result.
    *
    * @param processSystemName the process system name
-   * @param processSystem     the process system reference (transient - not serialized)
-   * @param reportJson        the simulation report as JSON string
+   * @param processSystem the process system reference (transient - not serialized)
+   * @param reportJson the simulation report as JSON string
    */
   public ProcessResult(String processSystemName, ProcessSystem processSystem, String reportJson) {
     this.processSystemName = processSystemName;
@@ -47,9 +47,9 @@ public class ProcessResult {
    * Creates a process-model result.
    *
    * @param processModelName the process model name
-   * @param processModel     the process model reference (transient - not serialized)
-   * @param reportJson       the simulation report as JSON string
-   * @param areaNames        area names included in the model
+   * @param processModel the process model reference (transient - not serialized)
+   * @param reportJson the simulation report as JSON string
+   * @param areaNames area names included in the model
    */
   public ProcessResult(String processModelName, ProcessModel processModel, String reportJson, List<String> areaNames) {
     this.processSystemName = null;

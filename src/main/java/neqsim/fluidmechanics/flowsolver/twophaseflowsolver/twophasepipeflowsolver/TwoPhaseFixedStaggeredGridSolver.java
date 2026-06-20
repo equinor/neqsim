@@ -243,9 +243,9 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
    * Constructor for TwoPhaseFixedStaggeredGridSolver.
    * </p>
    *
-   * @param pipe   a {@link neqsim.fluidmechanics.flowsystem.FlowSystemInterface} object
+   * @param pipe a {@link neqsim.fluidmechanics.flowsystem.FlowSystemInterface} object
    * @param length a double
-   * @param nodes  a int
+   * @param nodes a int
    */
   public TwoPhaseFixedStaggeredGridSolver(FlowSystemInterface pipe, double length, int nodes) {
     super(pipe, length, nodes);
@@ -256,9 +256,9 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
    * Constructor for TwoPhaseFixedStaggeredGridSolver.
    * </p>
    *
-   * @param pipe    a {@link neqsim.fluidmechanics.flowsystem.FlowSystemInterface} object
-   * @param length  a double
-   * @param nodes   a int
+   * @param pipe a {@link neqsim.fluidmechanics.flowsystem.FlowSystemInterface} object
+   * @param length a double
+   * @param nodes a int
    * @param dynamic a boolean
    */
   public TwoPhaseFixedStaggeredGridSolver(FlowSystemInterface pipe, double length, int nodes, boolean dynamic) {
@@ -990,7 +990,7 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
    * </p>
    *
    * @param phaseNum a int
-   * @param comp     a int
+   * @param comp a int
    */
   public void initComposition(int phaseNum, int comp) {
     for (int j = 0; j < numberOfNodes; j++) {
@@ -1540,7 +1540,7 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
    * setComponentConservationMatrix2.
    * </p>
    *
-   * @param phaseNum        a int
+   * @param phaseNum a int
    * @param componentNumber a int
    */
   public void setComponentConservationMatrix2(int phaseNum, int componentNumber) {
@@ -1603,7 +1603,7 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
    * setComponentConservationMatrix.
    * </p>
    *
-   * @param phaseNum        a int
+   * @param phaseNum a int
    * @param componentNumber a int
    */
   public void setComponentConservationMatrix(int phaseNum, int componentNumber) {
@@ -2005,7 +2005,7 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
   /**
    * Get the mass transfer rate at a specific node for a given component.
    *
-   * @param nodeIndex       The node index
+   * @param nodeIndex The node index
    * @param componentNumber The component index
    * @return Mass transfer rate [mol/s] (positive = dissolution, negative = evaporation)
    */

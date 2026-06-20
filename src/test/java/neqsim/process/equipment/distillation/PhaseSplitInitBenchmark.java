@@ -44,7 +44,7 @@ public class PhaseSplitInitBenchmark {
   /**
    * Build a fresh deethanizer column for one timed run.
    *
-   * @param trayCount  number of trays
+   * @param trayCount number of trays
    * @param solverType solver type
    * @return configured column ready to run
    */
@@ -70,11 +70,11 @@ public class PhaseSplitInitBenchmark {
   /**
    * Time one case with warm-up and report distribution statistics.
    *
-   * @param label      case label
-   * @param trayCount  number of trays
+   * @param label case label
+   * @param trayCount number of trays
    * @param solverType solver type
-   * @param warmup     warm-up iterations (discarded)
-   * @param reps       measured iterations
+   * @param warmup warm-up iterations (discarded)
+   * @param reps measured iterations
    */
   private void timeCase(String label, int trayCount, DistillationColumn.SolverType solverType, int warmup, int reps) {
     for (int i = 0; i < warmup; i++) {

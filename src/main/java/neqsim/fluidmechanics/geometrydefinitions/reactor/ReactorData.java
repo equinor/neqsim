@@ -42,7 +42,7 @@ public class ReactorData extends GeometryDefinition {
    * Constructor for ReactorData.
    * </p>
    *
-   * @param diameter  a double
+   * @param diameter a double
    * @param roughness a double
    */
   public ReactorData(double diameter, double roughness) {
@@ -55,7 +55,7 @@ public class ReactorData extends GeometryDefinition {
    * Constructor for ReactorData.
    * </p>
    *
-   * @param diameter    a double
+   * @param diameter a double
    * @param packingType a int
    */
   public ReactorData(double diameter, int packingType) {

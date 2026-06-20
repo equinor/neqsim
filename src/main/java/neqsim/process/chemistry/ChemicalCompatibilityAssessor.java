@@ -294,12 +294,12 @@ public class ChemicalCompatibilityAssessor implements Serializable {
   /**
    * Records an issue and bumps the highest severity.
    *
-   * @param a          primary chemical
-   * @param b          secondary chemical (may be null)
-   * @param category   short category label
-   * @param mechanism  mechanism description
+   * @param a primary chemical
+   * @param b secondary chemical (may be null)
+   * @param category short category label
+   * @param mechanism mechanism description
    * @param mitigation recommended mitigation
-   * @param severity   severity classification
+   * @param severity severity classification
    */
   private void addIssue(ProductionChemical a, ProductionChemical b, String category, String mechanism,
       String mitigation, ChemicalInteractionRule.Severity severity) {
@@ -319,8 +319,8 @@ public class ChemicalCompatibilityAssessor implements Serializable {
   /**
    * Updates a cell in the symmetric pairwise matrix, keeping the worst severity seen.
    *
-   * @param a     row key
-   * @param b     column key
+   * @param a row key
+   * @param b column key
    * @param label severity label
    */
   private void updateMatrix(String a, String b, String label) {
@@ -331,8 +331,8 @@ public class ChemicalCompatibilityAssessor implements Serializable {
   /**
    * Sets a single matrix cell, keeping the worst severity seen.
    *
-   * @param a     row key
-   * @param b     column key
+   * @param a row key
+   * @param b column key
    * @param label new severity label
    */
   private void setMatrixCell(String a, String b, String label) {
@@ -349,7 +349,7 @@ public class ChemicalCompatibilityAssessor implements Serializable {
   /**
    * Returns true if {@code newLabel} is worse than {@code currentLabel} on the severity scale.
    *
-   * @param newLabel     new severity label
+   * @param newLabel new severity label
    * @param currentLabel current severity label
    * @return true if newLabel is worse
    */

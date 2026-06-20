@@ -48,9 +48,9 @@ public class CompressorCapacityStrategy implements EquipmentCapacityStrategy {
   /**
    * Constructor with custom constraints.
    *
-   * @param minSurgeMargin     minimum surge margin as fraction
+   * @param minSurgeMargin minimum surge margin as fraction
    * @param minStonewallMargin minimum stonewall margin as fraction
-   * @param maxDischargeTemp   maximum discharge temperature in Celsius
+   * @param maxDischargeTemp maximum discharge temperature in Celsius
    */
   public CompressorCapacityStrategy(double minSurgeMargin, double minStonewallMargin, double maxDischargeTemp) {
     this.minSurgeMargin = minSurgeMargin;

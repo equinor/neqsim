@@ -33,7 +33,7 @@ public class LevelTransmitter extends MeasurementDeviceBaseClass {
    * Constructor for LevelTransmitter.
    * </p>
    *
-   * @param name      Name of LevelTransmitter
+   * @param name Name of LevelTransmitter
    * @param separator a {@link neqsim.process.equipment.separator.Separator} object
    */
   public LevelTransmitter(String name, Separator separator) {

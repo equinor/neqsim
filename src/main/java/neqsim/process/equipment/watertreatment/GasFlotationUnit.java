@@ -94,7 +94,7 @@ public class GasFlotationUnit extends Separator {
   /**
    * Creates a gas flotation unit with inlet stream.
    *
-   * @param name        equipment name
+   * @param name equipment name
    * @param inletStream water stream from upstream treatment
    */
   public GasFlotationUnit(String name, StreamInterface inletStream) {

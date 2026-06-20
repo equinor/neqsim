@@ -100,7 +100,7 @@ public class VariableFrequencyDrive implements java.io.Serializable {
   /**
    * Select VFD topology based on power and voltage.
    *
-   * @param powerKW  rated power in kW
+   * @param powerKW rated power in kW
    * @param voltageV rated voltage in V
    */
   private void selectTopology(double powerKW, double voltageV) {
@@ -171,7 +171,7 @@ public class VariableFrequencyDrive implements java.io.Serializable {
   /**
    * Get VFD efficiency at a given load and speed fraction.
    *
-   * @param loadFraction  load fraction (0-1)
+   * @param loadFraction load fraction (0-1)
    * @param speedFraction speed fraction (0-1)
    * @return efficiency in percent
    */
@@ -192,7 +192,7 @@ public class VariableFrequencyDrive implements java.io.Serializable {
   /**
    * Estimate VFD weight.
    *
-   * @param powerKW  rated power in kW
+   * @param powerKW rated power in kW
    * @param voltageV rated voltage in V
    * @return weight in kg
    */
@@ -211,7 +211,7 @@ public class VariableFrequencyDrive implements java.io.Serializable {
   /**
    * Estimate VFD cost in USD.
    *
-   * @param powerKW  rated power in kW
+   * @param powerKW rated power in kW
    * @param voltageV rated voltage in V
    * @return estimated cost in USD
    */

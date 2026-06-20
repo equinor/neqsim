@@ -37,7 +37,7 @@ public interface MultiStreamHeatExchangerInterface extends ProcessEquipmentInter
   /**
    * Sets the feed stream at a specific index.
    *
-   * @param index    Index of the stream to set
+   * @param index Index of the stream to set
    * @param inStream Input stream to set at the specified index
    * @throws java.lang.IndexOutOfBoundsException if the index is out of range
    */
@@ -149,7 +149,7 @@ public interface MultiStreamHeatExchangerInterface extends ProcessEquipmentInter
    * Calculates the thermal effectiveness based on the Number of Transfer Units (NTU) and the capacity ratio (Cr).
    *
    * @param NTU Number of Transfer Units
-   * @param Cr  Capacity ratio (Cmin/Cmax)
+   * @param Cr Capacity ratio (Cmin/Cmax)
    * @return Calculated thermal effectiveness
    */
   double calcThermalEffectiveness(double NTU, double Cr);
@@ -259,7 +259,7 @@ public interface MultiStreamHeatExchangerInterface extends ProcessEquipmentInter
    * Sets the guessed outlet temperature with a specified unit.
    *
    * @param guessOutTemperature Guessed outlet temperature
-   * @param unit                Unit of the temperature (e.g., "K", "C")
+   * @param unit Unit of the temperature (e.g., "K", "C")
    */
   void setGuessOutTemperature(double guessOutTemperature, String unit);
 

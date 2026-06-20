@@ -310,15 +310,15 @@ public class AlarmTripScheduleGenerator implements Serializable {
     /**
      * Creates an alarm/trip entry.
      *
-     * @param equipmentTag  equipment tag name
+     * @param equipmentTag equipment tag name
      * @param instrumentTag instrument tag (e.g. PT, TT, LT, FT)
-     * @param serviceType   service type enum
-     * @param setpointType  setpoint category (LO, HI, LOLO, HIHI)
+     * @param serviceType service type enum
+     * @param setpointType setpoint category (LO, HI, LOLO, HIHI)
      * @param setpointValue numeric setpoint value
-     * @param unit          engineering unit
-     * @param priority      alarm priority
-     * @param actionType    action (Alarm or Trip)
-     * @param description   textual description
+     * @param unit engineering unit
+     * @param priority alarm priority
+     * @param actionType action (Alarm or Trip)
+     * @param description textual description
      */
     public AlarmTripEntry(String equipmentTag, String instrumentTag, ServiceType serviceType, String setpointType,
 	double setpointValue, String unit, AlarmPriority priority, String actionType, String description) {

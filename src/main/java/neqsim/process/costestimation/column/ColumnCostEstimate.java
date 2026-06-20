@@ -401,8 +401,8 @@ public class ColumnCostEstimate extends UnitCostEstimateBaseClass {
   /**
    * Calculate annual utility cost for reboiler and condenser.
    *
-   * @param hoursPerYear          operating hours per year
-   * @param steamCostPerTonne     steam cost in $/tonne
+   * @param hoursPerYear operating hours per year
+   * @param steamCostPerTonne steam cost in $/tonne
    * @param coolingWaterCostPerM3 cooling water cost in $/m3
    * @return annual utility cost in USD
    */

@@ -77,7 +77,7 @@ public interface OperationInterface extends Runnable, java.io.Serializable {
    * overload makes Python/JPype usage natural: {@code pe_data.get("dewT", emptyArray)} mirrors the Python dict
    * {@code .get(key, default)} idiom.
    *
-   * @param name         the result key (e.g. "dewT", "bubP")
+   * @param name the result key (e.g. "dewT", "bubP")
    * @param defaultValue the array to return when the key is absent or maps to {@code null}
    * @return the result array, or {@code defaultValue} if not found
    */

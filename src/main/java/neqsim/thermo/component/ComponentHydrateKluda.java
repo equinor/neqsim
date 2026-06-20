@@ -35,10 +35,10 @@ public class ComponentHydrateKluda extends Component {
    * Constructor for ComponentHydrateKluda.
    * </p>
    *
-   * @param name         Name of component.
-   * @param moles        Total number of moles of component.
+   * @param name Name of component.
+   * @param moles Total number of moles of component.
    * @param molesInPhase Number of moles in phase.
-   * @param compIndex    Index number of component in phase object component array.
+   * @param compIndex Index number of component in phase object component array.
    */
   public ComponentHydrateKluda(String name, double moles, double molesInPhase, int compIndex) {
     super(name, moles, molesInPhase, compIndex);
@@ -74,10 +74,10 @@ public class ComponentHydrateKluda extends Component {
    * Calculate, set and return fugacity coefficient.
    * </p>
    *
-   * @param phase         a {@link neqsim.thermo.phase.PhaseInterface} object to get fugacity coefficient of.
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object to get fugacity coefficient of.
    * @param numberOfComps a int
-   * @param temp          a double
-   * @param pres          a double
+   * @param temp a double
+   * @param pres a double
    * @return Fugacity coefficient
    */
   public double fugcoef(PhaseInterface phase, int numberOfComps, double temp, double pres) {
@@ -123,10 +123,10 @@ public class ComponentHydrateKluda extends Component {
    * dfugdt.
    * </p>
    *
-   * @param phase         a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComps a int
-   * @param temp          a double
-   * @param pres          a double
+   * @param temp a double
+   * @param pres a double
    * @return a double
    */
   public double dfugdt(PhaseInterface phase, int numberOfComps, double temp, double pres) {
@@ -156,7 +156,7 @@ public class ComponentHydrateKluda extends Component {
    * getEmptyHydrateStructureVapourPressure.
    * </p>
    *
-   * @param type        a int
+   * @param type a int
    * @param temperature a double
    * @return a double
    */
@@ -182,7 +182,7 @@ public class ComponentHydrateKluda extends Component {
    * getEmptyHydrateStructureVapourPressuredT.
    * </p>
    *
-   * @param type        a int
+   * @param type a int
    * @param temperature a double
    * @return a double
    */
@@ -202,9 +202,9 @@ public class ComponentHydrateKluda extends Component {
    * calcYKI.
    * </p>
    *
-   * @param stucture   a int
+   * @param stucture a int
    * @param cavityType a int
-   * @param phase      a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
    */
   public double calcYKI(int stucture, int cavityType, PhaseInterface phase) {
@@ -227,9 +227,9 @@ public class ComponentHydrateKluda extends Component {
    * calcCKI.
    * </p>
    *
-   * @param stucture   a int
+   * @param stucture a int
    * @param cavityType a int
-   * @param phase      a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
    */
   public double calcCKI(int stucture, int cavityType, PhaseInterface phase) {
@@ -246,7 +246,7 @@ public class ComponentHydrateKluda extends Component {
    * </p>
    *
    * @param compNumbm a int
-   * @param val       a double
+   * @param val a double
    */
   public void setRefFug(int compNumbm, double val) {
     reffug[compNumbm] = val;
@@ -257,10 +257,10 @@ public class ComponentHydrateKluda extends Component {
    * potIntegral.
    * </p>
    *
-   * @param intnumb    a int
-   * @param stucture   a int
+   * @param intnumb a int
+   * @param stucture a int
    * @param cavityType a int
-   * @param phase      a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
    */
   public double potIntegral(int intnumb, int stucture, int cavityType, PhaseInterface phase) {
@@ -285,11 +285,11 @@ public class ComponentHydrateKluda extends Component {
    * getPot.
    * </p>
    *
-   * @param intnumb    a int
-   * @param radius     a double
+   * @param intnumb a int
+   * @param radius a double
    * @param struccture a int
    * @param cavityType a int
-   * @param phase      a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
    */
   public double getPot(int intnumb, double radius, int struccture, int cavityType, PhaseInterface phase) {
@@ -344,12 +344,12 @@ public class ComponentHydrateKluda extends Component {
    * delt.
    * </p>
    *
-   * @param intnumb    a int
-   * @param n          a double
-   * @param radius     a double
+   * @param intnumb a int
+   * @param n a double
+   * @param radius a double
    * @param struccture a int
    * @param cavityType a int
-   * @param phase      a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
    */
   public double delt(int intnumb, double n, double radius, int struccture, int cavityType, PhaseInterface phase) {

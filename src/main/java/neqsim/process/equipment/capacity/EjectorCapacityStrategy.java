@@ -49,8 +49,8 @@ public class EjectorCapacityStrategy implements EquipmentCapacityStrategy {
    * Constructor with custom constraints.
    *
    * @param maxEntrainmentRatio maximum entrainment ratio
-   * @param minSuctionPressure  minimum suction pressure in bara
-   * @param maxMotiveFlowRate   maximum motive flow rate in kg/hr
+   * @param minSuctionPressure minimum suction pressure in bara
+   * @param maxMotiveFlowRate maximum motive flow rate in kg/hr
    */
   public EjectorCapacityStrategy(double maxEntrainmentRatio, double minSuctionPressure, double maxMotiveFlowRate) {
     this.maxEntrainmentRatio = maxEntrainmentRatio;

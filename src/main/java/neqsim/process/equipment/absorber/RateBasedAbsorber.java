@@ -504,10 +504,10 @@ public class RateBasedAbsorber extends SimpleAbsorber {
   /**
    * Calculate mass transfer for a single stage.
    *
-   * @param gasPhase    gas-phase system (modified in place)
+   * @param gasPhase gas-phase system (modified in place)
    * @param liquidPhase liquid-phase system (modified in place)
    * @param stageHeight height of this stage segment [m]
-   * @param stageIndex  stage number (0-based)
+   * @param stageIndex stage number (0-based)
    * @return stage calculation result
    */
   private StageResult calculateStage(SystemInterface gasPhase, SystemInterface liquidPhase, double stageHeight,
@@ -656,12 +656,12 @@ public class RateBasedAbsorber extends SimpleAbsorber {
    * Wetted area: a_w/a_p = 1 - exp(-1.45 * (sigma_c/sigma_L)^0.75 * Re_L^0.1 * Fr_L^(-0.05) * We_L^0.2)
    * </p>
    *
-   * @param uG     gas superficial velocity [m/s]
-   * @param uL     liquid superficial velocity [m/s]
-   * @param rhoG   gas density [kg/m3]
-   * @param rhoL   liquid density [kg/m3]
-   * @param muG    gas viscosity [Pa.s]
-   * @param muL    liquid viscosity [Pa.s]
+   * @param uG gas superficial velocity [m/s]
+   * @param uL liquid superficial velocity [m/s]
+   * @param rhoG gas density [kg/m3]
+   * @param rhoL liquid density [kg/m3]
+   * @param muG gas viscosity [Pa.s]
+   * @param muL liquid viscosity [Pa.s]
    * @param sigmaL liquid surface tension [N/m]
    * @return array [kG, kL, aw] where kG in [mol/(m2.s.Pa)], kL in [m/s], aw in [m2/m3]
    */
@@ -717,12 +717,12 @@ public class RateBasedAbsorber extends SimpleAbsorber {
   /**
    * Calculate mass transfer coefficients using the Billet-Schultes (1999) correlation.
    *
-   * @param uG     gas superficial velocity [m/s]
-   * @param uL     liquid superficial velocity [m/s]
-   * @param rhoG   gas density [kg/m3]
-   * @param rhoL   liquid density [kg/m3]
-   * @param muG    gas viscosity [Pa.s]
-   * @param muL    liquid viscosity [Pa.s]
+   * @param uG gas superficial velocity [m/s]
+   * @param uL liquid superficial velocity [m/s]
+   * @param rhoG gas density [kg/m3]
+   * @param rhoL liquid density [kg/m3]
+   * @param muG gas viscosity [Pa.s]
+   * @param muL liquid viscosity [Pa.s]
    * @param sigmaL liquid surface tension [N/m]
    * @return array [kG, kL, aw] where kG in [m/s], kL in [m/s], aw in [m2/m3]
    */
@@ -767,9 +767,9 @@ public class RateBasedAbsorber extends SimpleAbsorber {
   /**
    * Calculate operating liquid holdup (simplified Stichlmair model).
    *
-   * @param uL   liquid superficial velocity [m/s]
+   * @param uL liquid superficial velocity [m/s]
    * @param rhoL liquid density [kg/m3]
-   * @param muL  liquid viscosity [Pa.s]
+   * @param muL liquid viscosity [Pa.s]
    * @return liquid holdup fraction [-]
    */
   private double calculateLiquidHoldup(double uL, double rhoL, double muL) {
@@ -786,10 +786,10 @@ public class RateBasedAbsorber extends SimpleAbsorber {
   /**
    * Calculate enhancement factor for chemical absorption.
    *
-   * @param kL          physical liquid-side mass transfer coefficient [m/s]
+   * @param kL physical liquid-side mass transfer coefficient [m/s]
    * @param liquidPhase liquid phase system
-   * @param rhoL        liquid density [kg/m3]
-   * @param muL         liquid viscosity [Pa.s]
+   * @param rhoL liquid density [kg/m3]
+   * @param muL liquid viscosity [Pa.s]
    * @return enhancement factor E [-]
    */
   private double calculateEnhancementFactor(double kL, SystemInterface liquidPhase, double rhoL, double muL) {

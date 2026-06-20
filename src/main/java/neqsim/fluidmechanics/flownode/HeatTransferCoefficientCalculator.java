@@ -36,15 +36,15 @@ public class HeatTransferCoefficientCalculator {
   /**
    * Calculates the liquid-side interphase heat transfer coefficient.
    *
-   * @param flowPattern  the flow pattern
-   * @param diameter     pipe diameter (m)
+   * @param flowPattern the flow pattern
+   * @param diameter pipe diameter (m)
    * @param liquidHoldup liquid holdup
-   * @param usg          superficial gas velocity (m/s)
-   * @param usl          superficial liquid velocity (m/s)
-   * @param rhoL         liquid density (kg/m³)
-   * @param muL          liquid viscosity (Pa·s)
-   * @param cpL          liquid heat capacity (J/(kg·K))
-   * @param kL           liquid thermal conductivity (W/(m·K))
+   * @param usg superficial gas velocity (m/s)
+   * @param usl superficial liquid velocity (m/s)
+   * @param rhoL liquid density (kg/m³)
+   * @param muL liquid viscosity (Pa·s)
+   * @param cpL liquid heat capacity (J/(kg·K))
+   * @param kL liquid thermal conductivity (W/(m·K))
    * @return liquid-side heat transfer coefficient h_L (W/(m²·K)), always non-negative
    */
   public static double calculateLiquidHeatTransferCoefficient(FlowPattern flowPattern, double diameter,
@@ -92,14 +92,14 @@ public class HeatTransferCoefficientCalculator {
   /**
    * Calculates the gas-side interphase heat transfer coefficient.
    *
-   * @param flowPattern  the flow pattern
-   * @param diameter     pipe diameter (m)
+   * @param flowPattern the flow pattern
+   * @param diameter pipe diameter (m)
    * @param liquidHoldup liquid holdup
-   * @param usg          superficial gas velocity (m/s)
-   * @param rhoG         gas density (kg/m³)
-   * @param muG          gas viscosity (Pa·s)
-   * @param cpG          gas heat capacity (J/(kg·K))
-   * @param kG           gas thermal conductivity (W/(m·K))
+   * @param usg superficial gas velocity (m/s)
+   * @param rhoG gas density (kg/m³)
+   * @param muG gas viscosity (Pa·s)
+   * @param cpG gas heat capacity (J/(kg·K))
+   * @param kG gas thermal conductivity (W/(m·K))
    * @return gas-side heat transfer coefficient h_G (W/(m²·K)), always non-negative
    */
   public static double calculateGasHeatTransferCoefficient(FlowPattern flowPattern, double diameter,
@@ -175,8 +175,8 @@ public class HeatTransferCoefficientCalculator {
    *       n = 0.3 for cooling (fluid being cooled)
    * </pre>
    *
-   * @param re      Reynolds number
-   * @param pr      Prandtl number
+   * @param re Reynolds number
+   * @param pr Prandtl number
    * @param heating true if fluid is being heated, false if being cooled
    * @return Nusselt number
    */
@@ -207,8 +207,8 @@ public class HeatTransferCoefficientCalculator {
    * Valid for: 3000 &lt; Re &lt; 5×10^6, 0.5 &lt; Pr &lt; 2000
    * </pre>
    *
-   * @param re             Reynolds number
-   * @param pr             Prandtl number
+   * @param re Reynolds number
+   * @param pr Prandtl number
    * @param frictionFactor Darcy friction factor
    * @return Nusselt number
    */
@@ -231,12 +231,12 @@ public class HeatTransferCoefficientCalculator {
    * Nu = 0.943 · [ρ_L(ρ_L-ρ_G)g·h_fg·L³ / (μ_L·k_L·ΔT)]^0.25
    * </pre>
    *
-   * @param rhoL   liquid density (kg/m³)
-   * @param rhoG   gas density (kg/m³)
-   * @param hfg    latent heat of vaporization (J/kg)
+   * @param rhoL liquid density (kg/m³)
+   * @param rhoG gas density (kg/m³)
+   * @param hfg latent heat of vaporization (J/kg)
    * @param length characteristic length (m)
-   * @param muL    liquid viscosity (Pa·s)
-   * @param kL     liquid thermal conductivity (W/(m·K))
+   * @param muL liquid viscosity (Pa·s)
+   * @param kL liquid thermal conductivity (W/(m·K))
    * @param deltaT temperature difference (K)
    * @return Nusselt number
    */
@@ -453,10 +453,10 @@ public class HeatTransferCoefficientCalculator {
    * St = h / (ρ · u · Cp) = Nu / (Re · Pr)
    * </pre>
    *
-   * @param h   heat transfer coefficient (W/(m²·K))
+   * @param h heat transfer coefficient (W/(m²·K))
    * @param rho density (kg/m³)
-   * @param u   velocity (m/s)
-   * @param cp  heat capacity (J/(kg·K))
+   * @param u velocity (m/s)
+   * @param cp heat capacity (J/(kg·K))
    * @return Stanton number (dimensionless)
    */
   public static double calculateStantonNumber(double h, double rho, double u, double cp) {
@@ -475,14 +475,14 @@ public class HeatTransferCoefficientCalculator {
    * where h_fg' = h_fg + 0.68·cp_L·ΔT (modified latent heat)
    * </pre>
    *
-   * @param rhoL     liquid density (kg/m³)
-   * @param rhoG     gas density (kg/m³)
-   * @param kL       liquid thermal conductivity (W/(m·K))
-   * @param hfg      latent heat of vaporization (J/kg)
-   * @param cpL      liquid heat capacity (J/(kg·K))
-   * @param muL      liquid viscosity (Pa·s)
+   * @param rhoL liquid density (kg/m³)
+   * @param rhoG gas density (kg/m³)
+   * @param kL liquid thermal conductivity (W/(m·K))
+   * @param hfg latent heat of vaporization (J/kg)
+   * @param cpL liquid heat capacity (J/(kg·K))
+   * @param muL liquid viscosity (Pa·s)
    * @param diameter tube diameter (m)
-   * @param deltaT   temperature difference between saturation and wall (K)
+   * @param deltaT temperature difference between saturation and wall (K)
    * @return condensation heat transfer coefficient (W/(m²·K))
    */
   public static double calculateCondensationHTC(double rhoL, double rhoG, double kL, double hfg, double cpL, double muL,
@@ -502,13 +502,13 @@ public class HeatTransferCoefficientCalculator {
   /**
    * Estimates the evaporation heat transfer coefficient for nucleate pool boiling using the Rohsenow correlation.
    *
-   * @param rhoL  liquid density (kg/m³)
-   * @param rhoG  gas density (kg/m³)
-   * @param cpL   liquid heat capacity (J/(kg·K))
-   * @param hfg   latent heat of vaporization (J/kg)
+   * @param rhoL liquid density (kg/m³)
+   * @param rhoG gas density (kg/m³)
+   * @param cpL liquid heat capacity (J/(kg·K))
+   * @param hfg latent heat of vaporization (J/kg)
    * @param sigma surface tension (N/m)
-   * @param muL   liquid viscosity (Pa·s)
-   * @param prL   liquid Prandtl number
+   * @param muL liquid viscosity (Pa·s)
+   * @param prL liquid Prandtl number
    * @param qFlux heat flux (W/m²)
    * @return evaporation heat transfer coefficient (W/(m²·K))
    */

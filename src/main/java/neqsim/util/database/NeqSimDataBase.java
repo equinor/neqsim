@@ -73,7 +73,7 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
    * </p>
    *
    * @return a Connection object
-   * @throws java.sql.SQLException            if any.
+   * @throws java.sql.SQLException if any.
    * @throws java.lang.ClassNotFoundException if any.
    */
   public Connection openConnection() throws SQLException, ClassNotFoundException {
@@ -289,7 +289,7 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
    * Setter for the field <code>dataBaseType</code>.
    * </p>
    *
-   * @param aDataBaseType    a {@link java.lang.String} object
+   * @param aDataBaseType a {@link java.lang.String} object
    * @param connectionString a {@link java.lang.String} object
    */
   public static void setDataBaseType(String aDataBaseType, String connectionString) {
@@ -464,7 +464,7 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
    * Drops and re-creates table from contents in csv file.
    *
    * @param tableName Name of table to replace
-   * @param path      Path to csv file to get table data from
+   * @param path Path to csv file to get table data from
    */
   public static void updateTable(String tableName, String path) {
     URL url = NeqSimDataBase.class.getClassLoader().getResource(path);
@@ -486,7 +486,7 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
    * Drops and re-creates table from contents in csv file.
    *
    * @param tableName Name of table to replace
-   * @param path      Path to csv file to
+   * @param path Path to csv file to
    */
   public static void replaceTable(String tableName, String path) {
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {

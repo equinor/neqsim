@@ -240,10 +240,10 @@ public class DynamicProcessHelper {
   /**
    * Instruments a separator with pressure and level transmitters and creates PID controllers on downstream valves.
    *
-   * @param sep          the separator to instrument
-   * @param gasValves    map of separator name to downstream gas valve
+   * @param sep the separator to instrument
+   * @param gasValves map of separator name to downstream gas valve
    * @param liquidValves map of separator name to downstream liquid valve
-   * @param waterValves  map of separator name to downstream water valve
+   * @param waterValves map of separator name to downstream water valve
    */
   private void instrumentSeparator(Separator sep, Map<String, ThrottlingValve> gasValves,
       Map<String, ThrottlingValve> liquidValves, Map<String, ThrottlingValve> waterValves) {
@@ -343,12 +343,12 @@ public class DynamicProcessHelper {
   /**
    * Creates a PID controller connected to a transmitter with the given tuning.
    *
-   * @param name          controller tag name
-   * @param transmitter   measurement input
-   * @param setpoint      controller set point
-   * @param kp            proportional gain
-   * @param ti            integral time in seconds
-   * @param td            derivative time in seconds
+   * @param name controller tag name
+   * @param transmitter measurement input
+   * @param setpoint controller set point
+   * @param kp proportional gain
+   * @param ti integral time in seconds
+   * @param td derivative time in seconds
    * @param reverseActing true if controller output increases when measurement is above setpoint
    * @return configured PID controller
    */
@@ -365,7 +365,7 @@ public class DynamicProcessHelper {
   /**
    * Adds a transmitter to the internal registry and to the process.
    *
-   * @param tag    transmitter tag name
+   * @param tag transmitter tag name
    * @param device the transmitter
    */
   private void addTransmitter(String tag, MeasurementDeviceInterface device) {
@@ -376,7 +376,7 @@ public class DynamicProcessHelper {
   /**
    * Adds a controller to the internal registry.
    *
-   * @param tag        controller tag name
+   * @param tag controller tag name
    * @param controller the controller
    */
   private void addController(String tag, ControllerDeviceInterface controller) {
@@ -425,11 +425,11 @@ public class DynamicProcessHelper {
    * Creates a flow transmitter on a stream and a flow controller that drives a valve. This is a convenience method for
    * adding flow control to any valve in the process.
    *
-   * @param tag          ISA tag for the flow loop (e.g. "FIC-101")
-   * @param valve        the valve to control
-   * @param stream       the stream to measure flow on (typically the valve inlet)
+   * @param tag ISA tag for the flow loop (e.g. "FIC-101")
+   * @param valve the valve to control
+   * @param stream the stream to measure flow on (typically the valve inlet)
    * @param flowSetpoint the desired flow rate
-   * @param flowUnit     the unit for flow measurement (e.g. "kg/hr")
+   * @param flowUnit the unit for flow measurement (e.g. "kg/hr")
    * @return the flow controller
    */
   public ControllerDeviceInterface addFlowController(String tag, ThrottlingValve valve, StreamInterface stream,
@@ -450,9 +450,9 @@ public class DynamicProcessHelper {
    * Creates a temperature transmitter and a temperature controller that drives a heater or cooler duty. This is a
    * convenience method for adding temperature control.
    *
-   * @param tag           ISA tag for the temperature loop (e.g. "TIC-101")
+   * @param tag ISA tag for the temperature loop (e.g. "TIC-101")
    * @param heatExchanger the heater or cooler to control
-   * @param outletStream  the outlet stream to measure temperature on
+   * @param outletStream the outlet stream to measure temperature on
    * @param tempSetpointC the desired outlet temperature in Celsius
    * @return the temperature controller
    */
@@ -491,7 +491,7 @@ public class DynamicProcessHelper {
    *
    * @param file DEXPI XML file to read
    * @return list of instrument info records
-   * @throws IOException             if the file cannot be read
+   * @throws IOException if the file cannot be read
    * @throws DexpiXmlReaderException if the file cannot be parsed
    */
   public List<DexpiInstrumentInfo> readDexpiInstruments(File file) throws IOException, DexpiXmlReaderException {

@@ -130,7 +130,7 @@ public final class ProcessComparisonRunner {
   /**
    * Builds a comparison summary from individual case results.
    *
-   * @param caseNames   list of case names
+   * @param caseNames list of case names
    * @param caseResults list of result JSON objects
    * @return comparison JSON object
    */

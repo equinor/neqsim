@@ -52,7 +52,7 @@ public class WellDeliverabilityCurve implements Serializable {
   /**
    * Creates a deliverability curve from tabulated (pressure, rate) points.
    *
-   * @param pressureBara  wellhead/back pressures in bara, ascending; length &ge; 2
+   * @param pressureBara wellhead/back pressures in bara, ascending; length &ge; 2
    * @param rateSm3PerDay surface rate in Sm3/day for each pressure; non-increasing
    */
   public WellDeliverabilityCurve(double[] pressureBara, double[] rateSm3PerDay) {
@@ -89,7 +89,7 @@ public class WellDeliverabilityCurve implements Serializable {
   /**
    * Builds a curve from tabulated points.
    *
-   * @param pressureBara  wellhead/back pressures in bara, ascending
+   * @param pressureBara wellhead/back pressures in bara, ascending
    * @param rateSm3PerDay surface rate in Sm3/day, non-increasing
    * @return a new deliverability curve
    */
@@ -105,7 +105,7 @@ public class WellDeliverabilityCurve implements Serializable {
    * smooth strictly decreasing curve that is convenient for screening studies and tests.
    * </p>
    *
-   * @param aofpSm3PerDay      absolute open-flow potential (rate at zero back-pressure) in Sm3/day
+   * @param aofpSm3PerDay absolute open-flow potential (rate at zero back-pressure) in Sm3/day
    * @param shutInPressureBara shut-in (no-flow) wellhead pressure in bara
    * @return a new deliverability curve with 11 sample points
    */
@@ -137,10 +137,10 @@ public class WellDeliverabilityCurve implements Serializable {
    * samples are clamped to zero.
    * </p>
    *
-   * @param well                    a fully configured integrated well model
+   * @param well a fully configured integrated well model
    * @param minWellheadPressureBara lowest wellhead pressure to sample in bara
    * @param maxWellheadPressureBara highest wellhead pressure to sample in bara
-   * @param nPoints                 number of sample points (&ge; 2)
+   * @param nPoints number of sample points (&ge; 2)
    * @return a deliverability curve representing the sampled well
    */
   public static WellDeliverabilityCurve fromWellSystem(neqsim.process.equipment.reservoir.WellSystem well,

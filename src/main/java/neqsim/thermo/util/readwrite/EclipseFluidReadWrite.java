@@ -41,7 +41,7 @@ public class EclipseFluidReadWrite {
    *
    * @param name component name read from the E300 {@code CNAMES} section
    * @return NeqSim database component name, or {@code null} when the component should be treated as a characterized TBP
-   *         pseudo-fraction
+   * pseudo-fraction
    */
   private static String mapE300ComponentName(String name) {
     if (name == null) {
@@ -172,8 +172,8 @@ public class EclipseFluidReadWrite {
    * setComposition.
    * </p>
    *
-   * @param fluid        a {@link neqsim.thermo.system.SystemInterface} object
-   * @param inputFile    a {@link java.lang.String} object
+   * @param fluid a {@link neqsim.thermo.system.SystemInterface} object
+   * @param inputFile a {@link java.lang.String} object
    * @param pseudoNameIn a {@link java.lang.String} object
    */
   public static void setComposition(SystemInterface fluid, String inputFile, String pseudoNameIn) {
@@ -186,7 +186,7 @@ public class EclipseFluidReadWrite {
    * setComposition.
    * </p>
    *
-   * @param fluid     a {@link neqsim.thermo.system.SystemInterface} object
+   * @param fluid a {@link neqsim.thermo.system.SystemInterface} object
    * @param inputFile a {@link java.lang.String} object
    */
   public static void setComposition(SystemInterface fluid, String inputFile) {
@@ -228,7 +228,7 @@ public class EclipseFluidReadWrite {
    * read.
    * </p>
    *
-   * @param inputFile    a {@link java.lang.String} object
+   * @param inputFile a {@link java.lang.String} object
    * @param pseudoNameIn a {@link java.lang.String} object
    * @return a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -251,7 +251,7 @@ public class EclipseFluidReadWrite {
    * EclipseFluidReadWrite.read(e300Path, fluid);
    * </pre>
    *
-   * @param inputFile   a {@link java.lang.String} object — path to the E300 file
+   * @param inputFile a {@link java.lang.String} object — path to the E300 file
    * @param targetFluid a pre-created {@link neqsim.thermo.system.SystemInterface} to populate
    * @return the same {@code targetFluid} instance, now populated with components and BIPs
    * @throws java.lang.IllegalArgumentException if the input file cannot be read
@@ -290,7 +290,7 @@ public class EclipseFluidReadWrite {
    * Internal implementation. If {@code forcedFluid} is non-null it is used as the target (EOS keyword in file is
    * ignored). Otherwise the EOS keyword drives fluid creation.
    *
-   * @param inputFile   path to the Eclipse E300 fluid file
+   * @param inputFile path to the Eclipse E300 fluid file
    * @param forcedFluid optional pre-created fluid to populate (null to auto-create from EOS keyword)
    * @return the populated fluid system
    */
@@ -717,7 +717,7 @@ public class EclipseFluidReadWrite {
    * </p>
    *
    * @param inputFile path to the Eclipse E300 fluid file
-   * @param addWater  if true, add a water component with default kij = 0.5
+   * @param addWater if true, add a water component with default kij = 0.5
    * @return a {@link neqsim.thermo.system.SystemInterface} object
    * @throws java.lang.IllegalArgumentException if the input file does not exist or cannot be read
    */
@@ -735,8 +735,8 @@ public class EclipseFluidReadWrite {
    * </p>
    *
    * @param inputFile path to the Eclipse E300 fluid file
-   * @param addWater  if true, add a water component
-   * @param waterKij  binary interaction parameter between water and all other components (typical value: 0.5)
+   * @param addWater if true, add a water component
+   * @param waterKij binary interaction parameter between water and all other components (typical value: 0.5)
    * @return a {@link neqsim.thermo.system.SystemInterface} object
    * @throws java.lang.IllegalArgumentException if the input file does not exist or cannot be read
    */
@@ -751,9 +751,9 @@ public class EclipseFluidReadWrite {
   /**
    * Read an Eclipse E300 fluid file with a pseudo-name suffix and optionally add a water component.
    *
-   * @param inputFile    path to the Eclipse E300 fluid file
+   * @param inputFile path to the Eclipse E300 fluid file
    * @param pseudoNameIn pseudo-name suffix appended to pseudo-component names
-   * @param addWater     if true, add a water component with default kij = 0.5
+   * @param addWater if true, add a water component with default kij = 0.5
    * @return a {@link neqsim.thermo.system.SystemInterface} object
    * @throws java.lang.IllegalArgumentException if the input file does not exist or cannot be read
    */
@@ -765,10 +765,10 @@ public class EclipseFluidReadWrite {
    * Read an Eclipse E300 fluid file with a pseudo-name suffix and optionally add a water component with a custom kij
    * value.
    *
-   * @param inputFile    path to the Eclipse E300 fluid file
+   * @param inputFile path to the Eclipse E300 fluid file
    * @param pseudoNameIn pseudo-name suffix appended to pseudo-component names
-   * @param addWater     if true, add a water component
-   * @param waterKij     binary interaction parameter between water and all other components
+   * @param addWater if true, add a water component
+   * @param waterKij binary interaction parameter between water and all other components
    * @return a {@link neqsim.thermo.system.SystemInterface} object
    * @throws java.lang.IllegalArgumentException if the input file does not exist or cannot be read
    */
@@ -795,7 +795,7 @@ public class EclipseFluidReadWrite {
    * If the fluid already contains a water component, this method does nothing.
    * </p>
    *
-   * @param fluid    the fluid to add water to
+   * @param fluid the fluid to add water to
    * @param waterKij binary interaction parameter between water and all other components (typical value: 0.5)
    */
   public static void addWaterToFluid(SystemInterface fluid, double waterKij) {
@@ -860,7 +860,7 @@ public class EclipseFluidReadWrite {
    * read.
    * </p>
    *
-   * @param inputFile  a {@link java.lang.String} object representing the path to the input file
+   * @param inputFile a {@link java.lang.String} object representing the path to the input file
    * @param fluidNames an array of {@link java.lang.String} objects representing the names of the fluids
    * @return a {@link neqsim.thermo.system.SystemInterface} object representing the thermodynamic system
    * @throws java.lang.IllegalArgumentException if the input file does not exist or cannot be read
@@ -1361,7 +1361,7 @@ public class EclipseFluidReadWrite {
    * parachors, mole fractions, and binary interaction coefficients.
    * </p>
    *
-   * @param fluid      the fluid to export
+   * @param fluid the fluid to export
    * @param outputFile path to output file (e.g., "myfluid.e300")
    * @throws IOException if writing fails
    */
@@ -1372,8 +1372,8 @@ public class EclipseFluidReadWrite {
   /**
    * Write a NeqSim fluid to Eclipse E300 compositional EOS file format.
    *
-   * @param fluid          the fluid to export
-   * @param outputFile     path to output file
+   * @param fluid the fluid to export
+   * @param outputFile path to output file
    * @param reservoirTempC reservoir temperature in Celsius for RTEMP keyword
    * @throws IOException if writing fails
    */
@@ -1384,8 +1384,8 @@ public class EclipseFluidReadWrite {
   /**
    * Write a NeqSim fluid to Eclipse E300 compositional EOS file format.
    *
-   * @param fluid          the fluid to export
-   * @param outputPath     output file path
+   * @param fluid the fluid to export
+   * @param outputPath output file path
    * @param reservoirTempC reservoir temperature in Celsius
    * @throws IOException if writing fails
    */
@@ -1408,7 +1408,7 @@ public class EclipseFluidReadWrite {
   /**
    * Convert a NeqSim fluid to Eclipse E300 format string.
    *
-   * @param fluid          the fluid to export
+   * @param fluid the fluid to export
    * @param reservoirTempC reservoir temperature in Celsius
    * @return E300 format content as string
    */
@@ -1435,8 +1435,8 @@ public class EclipseFluidReadWrite {
   /**
    * Internal method to write E300 content to a Writer.
    *
-   * @param fluid          the fluid to export
-   * @param writer         output writer
+   * @param fluid the fluid to export
+   * @param writer output writer
    * @param reservoirTempC reservoir temperature in Celsius
    * @throws IOException if writing fails
    */
@@ -1753,7 +1753,7 @@ public class EclipseFluidReadWrite {
   /**
    * Apply LBC viscosity model with custom parameters to fluid.
    *
-   * @param fluid     the fluid to configure
+   * @param fluid the fluid to configure
    * @param lbcParams array of 5 LBC dense contribution parameters
    */
   private static void applyLBCViscosityModel(SystemInterface fluid, double[] lbcParams) {

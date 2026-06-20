@@ -216,7 +216,7 @@ public class Standard_ASTM_D4737 extends neqsim.standards.Standard {
    * Converts a temperature from Celsius to the requested unit.
    *
    * @param valueC temperature value in Celsius (may be NaN)
-   * @param unit   target unit, one of {@code "C"}, {@code "K"}, {@code "F"}, {@code "R"}
+   * @param unit target unit, one of {@code "C"}, {@code "K"}, {@code "F"}, {@code "R"}
    * @return the converted temperature, or the Celsius value if the unit is unrecognised
    */
   private double convertTempFromC(double valueC, String unit) {

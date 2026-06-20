@@ -27,9 +27,9 @@ public final class ExperimentalDataSet implements Serializable {
   /**
    * Creates an experimental data set.
    *
-   * @param name                   data set name
-   * @param responseName           measured response name
-   * @param responseUnit           measured response unit
+   * @param name data set name
+   * @param responseName measured response name
+   * @param responseUnit measured response unit
    * @param dependentVariableNames names of independent variables passed to the fitting function
    * @param dependentVariableUnits units of independent variables passed to the fitting function
    * @throws IllegalArgumentException if dependent variable metadata is empty or inconsistent
@@ -47,8 +47,8 @@ public final class ExperimentalDataSet implements Serializable {
   /**
    * Creates an experimental data set without explicit unit metadata.
    *
-   * @param name                   data set name
-   * @param responseName           measured response name
+   * @param name data set name
+   * @param responseName measured response name
    * @param dependentVariableNames names of independent variables passed to the fitting function
    * @throws IllegalArgumentException if dependent variable metadata is empty
    */
@@ -77,9 +77,9 @@ public final class ExperimentalDataSet implements Serializable {
   /**
    * Adds an experimental data point.
    *
-   * @param measuredValue     measured response value
+   * @param measuredValue measured response value
    * @param standardDeviation positive standard deviation for the measured response
-   * @param dependentValues   independent variable values used by the fitting function
+   * @param dependentValues independent variable values used by the fitting function
    * @return this data set for fluent construction
    * @throws IllegalArgumentException if values are invalid or dimensions do not match metadata
    */
@@ -90,11 +90,11 @@ public final class ExperimentalDataSet implements Serializable {
   /**
    * Adds an experimental data point with reference metadata.
    *
-   * @param measuredValue     measured response value
+   * @param measuredValue measured response value
    * @param standardDeviation positive standard deviation for the measured response
-   * @param dependentValues   independent variable values used by the fitting function
-   * @param reference         source reference for the data point
-   * @param description       short description of the data point
+   * @param dependentValues independent variable values used by the fitting function
+   * @param reference source reference for the data point
+   * @param description short description of the data point
    * @return this data set for fluent construction
    * @throws IllegalArgumentException if values are invalid or dimensions do not match metadata
    */
@@ -123,7 +123,7 @@ public final class ExperimentalDataSet implements Serializable {
    * Splits the data set into training and validation subsets while preserving point order.
    *
    * @param trainingFraction fraction of rows assigned to the training subset, exclusive range
-   *                         {@code 0.0 < trainingFraction < 1.0}
+   * {@code 0.0 < trainingFraction < 1.0}
    * @return two data sets: index 0 is training and index 1 is validation
    * @throws IllegalArgumentException if the fraction is outside the valid range or fewer than two points are available
    */
@@ -234,10 +234,10 @@ public final class ExperimentalDataSet implements Serializable {
   /**
    * Reads an experimental data set from a CSV file.
    *
-   * @param file                   CSV file with a header row
-   * @param name                   data set name
-   * @param responseName           response name and default measured-value column
-   * @param responseUnit           response unit used in the resulting data set
+   * @param file CSV file with a header row
+   * @param name data set name
+   * @param responseName response name and default measured-value column
+   * @param responseUnit response unit used in the resulting data set
    * @param dependentVariableNames independent variable names and default column names
    * @param dependentVariableUnits independent variable units used in the resulting data set
    * @return experimental data set
@@ -252,7 +252,7 @@ public final class ExperimentalDataSet implements Serializable {
   /**
    * Reads an experimental data set from a CSV file using explicit mapping options.
    *
-   * @param file    CSV file with a header row
+   * @param file CSV file with a header row
    * @param options CSV mapping options
    * @return experimental data set
    * @throws IOException if the file cannot be read
@@ -352,7 +352,7 @@ public final class ExperimentalDataSet implements Serializable {
   /**
    * Returns a default string if the supplied value is null.
    *
-   * @param value        user supplied value
+   * @param value user supplied value
    * @param defaultValue fallback value
    * @return value or defaultValue if value is null
    */

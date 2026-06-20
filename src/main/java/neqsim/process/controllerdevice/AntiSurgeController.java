@@ -85,8 +85,8 @@ public class AntiSurgeController extends ControllerDeviceBaseClass {
   /**
    * Constructs an AntiSurgeController wired to a compressor and recycle valve.
    *
-   * @param name         the controller name
-   * @param compressor   the compressor whose surge margin is protected
+   * @param name the controller name
+   * @param compressor the compressor whose surge margin is protected
    * @param recycleValve the recycle valve actuator
    */
   public AntiSurgeController(String name, Compressor compressor, ThrottlingValve recycleValve) {
