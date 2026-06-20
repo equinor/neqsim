@@ -1150,14 +1150,19 @@ def format_benchmark_html(results):
     h += '<th>Test</th><th>Description</th><th>Status</th><th>Details</th>'
     h += '</tr></thead><tbody>\n'
     for key, val in bv.items():
+        if not isinstance(val, dict):
+            continue
         label = key.replace("_", " ").title()
-        desc = val.get("description", key)
-        status = val.get("status", "N/A")
+        desc = val.get("description") or val.get("reference") or key
+        status = val.get("status")
+        if status is None:
+            p = val.get("pass")
+            status = "PASS" if p is True else ("FAIL" if p is False else "N/A")
         css = ' class="pass"' if status == "PASS" else (' class="fail"' if status == "FAIL" else "")
         # Gather numeric details
         details = []
         for dk, dv in val.items():
-            if dk in ("description", "status"):
+            if dk in ("description", "status", "reference", "pass", "points"):
                 continue
             dl = dk.replace("_", " ").title()
             if isinstance(dv, float):
@@ -1326,12 +1331,17 @@ def add_benchmark_word_table(doc, results):
     headers = ["Test", "Description", "Status", "Details"]
     data_rows = []
     for key, val in bv.items():
+        if not isinstance(val, dict):
+            continue
         label = key.replace("_", " ").title()
-        desc = val.get("description", key)
-        status = val.get("status", "N/A")
+        desc = val.get("description") or val.get("reference") or key
+        status = val.get("status")
+        if status is None:
+            p = val.get("pass")
+            status = "PASS" if p is True else ("FAIL" if p is False else "N/A")
         details = []
         for dk, dv in val.items():
-            if dk in ("description", "status"):
+            if dk in ("description", "status", "reference", "pass", "points"):
                 continue
             dl = dk.replace("_", " ").title()
             if isinstance(dv, float):
@@ -2422,8 +2432,13 @@ def build_paper_sections(results, task_spec):
         bv = results["benchmark_validation"]
         bv_lines = []
         for key, val in bv.items():
-            desc = val.get("description", key)
-            status = val.get("status", "N/A")
+            if not isinstance(val, dict):
+                continue
+            desc = val.get("description") or val.get("reference") or key
+            status = val.get("status")
+            if status is None:
+                p = val.get("pass")
+                status = "PASS" if p is True else ("FAIL" if p is False else "N/A")
             bv_lines.append("- {}: {}".format(desc, status))
             if "max_deviation_pct" in val:
                 bv_lines.append("  Max deviation: {:.4f}%".format(
