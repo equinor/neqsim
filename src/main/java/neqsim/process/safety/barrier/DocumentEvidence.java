@@ -29,9 +29,10 @@ public class DocumentEvidence implements Serializable {
   private final String sourceReference;
   private final String excerpt;
   private final double confidence;
+  private final String installationCode;
 
   /**
-   * Creates a document evidence record.
+   * Creates a document evidence record without an installation code.
    *
    * @param evidenceId stable evidence identifier
    * @param documentId source document identifier or number
@@ -45,6 +46,25 @@ public class DocumentEvidence implements Serializable {
    */
   public DocumentEvidence(String evidenceId, String documentId, String documentTitle, String revision, String section,
       int page, String sourceReference, String excerpt, double confidence) {
+    this(evidenceId, documentId, documentTitle, revision, section, page, sourceReference, excerpt, confidence, "");
+  }
+
+  /**
+   * Creates a document evidence record with an installation code for STID traceability.
+   *
+   * @param evidenceId stable evidence identifier
+   * @param documentId source document identifier or number
+   * @param documentTitle source document title
+   * @param revision document revision identifier
+   * @param section clause, drawing zone, table, or section reference
+   * @param page one-based page number, or 0 when not applicable
+   * @param sourceReference path, URI, tag reference, or repository-local source pointer
+   * @param excerpt short supporting text extracted from the source
+   * @param confidence extraction confidence in the range 0 to 1
+   * @param installationCode installation or facility code that scopes the document, or empty when unknown
+   */
+  public DocumentEvidence(String evidenceId, String documentId, String documentTitle, String revision, String section,
+      int page, String sourceReference, String excerpt, double confidence, String installationCode) {
     this.evidenceId = normalize(evidenceId);
     this.documentId = normalize(documentId);
     this.documentTitle = normalize(documentTitle);
@@ -54,6 +74,7 @@ public class DocumentEvidence implements Serializable {
     this.sourceReference = normalize(sourceReference);
     this.excerpt = normalize(excerpt);
     this.confidence = Math.max(0.0, Math.min(1.0, confidence));
+    this.installationCode = normalize(installationCode);
   }
 
   /**
@@ -109,6 +130,15 @@ public class DocumentEvidence implements Serializable {
    */
   public String getSection() {
     return section;
+  }
+
+  /**
+   * Gets the installation or facility code that scopes the source document.
+   *
+   * @return installation code, or empty string when unknown
+   */
+  public String getInstallationCode() {
+    return installationCode;
   }
 
   /**
@@ -168,6 +198,7 @@ public class DocumentEvidence implements Serializable {
     map.put("documentId", documentId);
     map.put("documentTitle", documentTitle);
     map.put("revision", revision);
+    map.put("installationCode", installationCode);
     map.put("section", section);
     map.put("page", page);
     map.put("sourceReference", sourceReference);
