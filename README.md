@@ -324,25 +324,26 @@ mvnw.cmd install      # Windows
 ./mvnw checkstyle:check spotbugs:check pmd:check  # static analysis
 ```
 
-### Enable pre-commit hooks
+### Code formatting (Spotless)
 
-This repository uses pre-commit hooks to enforce Java formatting:
+Java formatting is enforced by Spotless. CI runs a **check-only** gate (it never edits or pushes
+your code), so format locally before pushing:
 
-- on commit: `spotless:apply`
-- on push: `spotless:check`
+```bash
+./mvnw spotless:apply     # auto-format all Java files
+./mvnw spotless:check      # verify formatting — must exit 0 before pushing
+```
 
-Install and enable hooks:
+Optionally, install local pre-commit hooks to format on commit and verify on push (requires a
+local JDK + Maven):
 
 ```bash
 pip install pre-commit
 pre-commit install --hook-type pre-commit --hook-type pre-push
+pre-commit run --all-files   # run hooks manually across the repo
 ```
 
-Run all hooks manually:
-
-```bash
-pre-commit run --all-files
-```
+See [CONTRIBUTING.md](CONTRIBUTING.md#code-formatting-spotless) for details.
 
 ### Open in VS Code
 

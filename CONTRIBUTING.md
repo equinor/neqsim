@@ -21,28 +21,54 @@ neqsim doctor              # detailed environment health check
 
 See [VISION_AGENTS.md](VISION_AGENTS.md) for what belongs in the core repo vs. community contributions.
 
-## Pre-commit Hooks
+## Code Formatting (Spotless)
 
-This repository uses [pre-commit](https://pre-commit.com/) to enforce formatting checks before
-changes are committed and pushed.
+Java code formatting is enforced by [Spotless](https://github.com/diffplug/spotless). **CI runs a
+check-only gate** — the `Pre-commit checks` workflow verifies formatting on every pull request but
+**never modifies your code or pushes commits**. Formatting is the contributor's responsibility.
 
-Configured hooks in `.pre-commit-config.yaml`:
+If the gate fails, your PR shows a `spotless:check` violation. To fix it, run the formatter
+locally and commit the result.
 
-- `pre-commit` stage: `spotless:apply` (auto-format Java files)
-- `pre-push` stage: `spotless:check` (verify formatting)
+### Make the formatting check pass
 
-Install and enable hooks after cloning:
+Run these from the repository root (use `./mvnw` on Linux/macOS, `mvnw.cmd` on Windows):
+
+```bash
+./mvnw spotless:apply     # auto-format all Java files (fixes violations)
+./mvnw spotless:check      # verify formatting — must exit 0 before pushing
+```
+
+Always run `spotless:apply`, then commit the changes, **before** opening or updating a PR:
+
+```bash
+./mvnw spotless:apply
+git add -A
+git commit -m "Apply Spotless formatting"
+```
+
+### Optional: automate it with pre-commit hooks
+
+To format automatically on every commit (and verify on push), install the local
+[pre-commit](https://pre-commit.com/) hooks from `.pre-commit-config.yaml`:
+
+- `pre-commit` stage: `spotless:apply` (auto-format Java files on commit)
+- `pre-push` stage: `spotless:check` (verify formatting before push)
 
 ```bash
 pip install pre-commit
 pre-commit install --hook-type pre-commit --hook-type pre-push
 ```
 
-Run hooks manually across the repository:
+Run the hooks manually across the whole repository:
 
 ```bash
 pre-commit run --all-files
 ```
+
+> These hooks require a local JDK and Maven (they shell out to `./mvnw`). They are **not** run by
+> pre-commit.ci, which has no JVM — formatting is checked by the `Pre-commit checks` GitHub Action
+> instead.
 
 ## Pull Request Process
 
