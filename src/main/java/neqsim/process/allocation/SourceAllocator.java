@@ -353,6 +353,15 @@ public SourceAllocator setBaseCase(ProcessSystem process) {
   }
 
   /**
+   * Gets the base-case process system (available after {@link #setBaseCase(ProcessSystem)}).
+   *
+   * @return the base-case process system, or {@code null} if no base case is set
+   */
+  public ProcessSystem getBaseCase() {
+    return process;
+  }
+
+  /**
    * Gets the configurable linear solver.
    *
    * @return the solver
