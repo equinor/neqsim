@@ -27,6 +27,23 @@ Use class logger fields and parameterized logging calls:
 - `logger.warn("Message {}", value);`
 - `logger.error("Message {}", ex.getMessage(), ex);`
 
+## Critical Constraint: Code Formatting (Spotless)
+
+**AI-generated Java is NOT auto-formatted.** After creating or editing ANY `.java`
+file you MUST run Spotless before committing — do not rely on local pre-commit
+hooks being installed:
+
+```bash
+./mvnw spotless:apply    # reformats all Java to the project style
+./mvnw spotless:check    # verifies formatting (this is what CI runs)
+```
+
+- Formatter profile: Eclipse `.config/neqsim_formatter.xml` (configured in `pom.xml`),
+  applied to `src/main/java` and `src/test/java`.
+- CI runs `./mvnw spotless:check` and **fails the build on any unformatted file**.
+- NEVER bypass the gate with `git commit --no-verify`.
+- Run `spotless:apply`, then `git add` the reformatted files, then commit.
+
 ## Build & Test
 
 ```bash
@@ -34,6 +51,8 @@ Use class logger fields and parameterized logging calls:
 mvnw.cmd install                          # Windows
 ./mvnw test -Dtest=SeparatorTest          # single test class
 ./mvnw test -Dtest=SeparatorTest#testTwo  # single method
+./mvnw spotless:apply                     # auto-format Java (run before committing)
+./mvnw spotless:check                     # verify formatting (CI gate)
 ./mvnw checkstyle:check spotbugs:check pmd:check  # static analysis
 ```
 

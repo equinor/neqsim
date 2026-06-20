@@ -47,6 +47,23 @@ import org.apache.commons.lang3.StringUtils;
 // Usage: StringUtils.repeat("=", 70)
 ```
 
+## Code Formatting (Spotless) — MANDATORY
+
+AI-generated Java is NOT auto-formatted. After creating or editing ANY `.java`
+file, reformat it before committing — do not rely on local pre-commit hooks
+being installed:
+
+```bash
+./mvnw spotless:apply    # reformats Java to the project style (Eclipse profile)
+./mvnw spotless:check    # verifies formatting — this is what CI runs
+```
+
+- Formatter profile: `.config/neqsim_formatter.xml` (configured in `pom.xml`),
+  applied to `src/main/java` and `src/test/java`.
+- CI runs `./mvnw spotless:check` and FAILS the build on any unformatted file.
+- Run `spotless:apply`, then `git add` the reformatted files, then commit.
+- NEVER bypass the gate with `git commit --no-verify`.
+
 ## API Verification (MANDATORY)
 
 Before using any NeqSim class in code or examples:
