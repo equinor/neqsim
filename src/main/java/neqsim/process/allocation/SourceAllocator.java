@@ -188,6 +188,12 @@ public class SourceAllocator implements Serializable {
       entryUnits[j] = network.findEntryUnit(src.getFeedStream());
       if (entryUnits[j] < 0) {
 	logger.warn("Source '{}' feed stream is not connected to any node; it will allocate zero.", src.getName());
+      } else if (network.findProducer(src.getFeedStream()) != null) {
+	logger.warn(
+	    "Source '{}' feed stream is produced by a node inside the network (it is an internal stream, not an"
+		+ " external feed). Its component flow is injected as a source AND routed by the network, which"
+		+ " double-counts that contribution. Register an external (terminal) feed stream instead.",
+	    src.getName());
       }
       for (int k = 0; k < numComp; k++) {
 	injections[j][k] = RecoveryFactorExtractor.componentFlow(src.getFeedStream(), componentNames.get(k));
