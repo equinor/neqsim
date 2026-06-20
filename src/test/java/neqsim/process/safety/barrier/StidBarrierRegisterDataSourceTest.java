@@ -9,8 +9,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 /**
- * Tests for {@link StidBarrierRegisterDataSource}, which builds a barrier register from normalized
- * STID JSON.
+ * Tests for {@link StidBarrierRegisterDataSource}, which builds a barrier register from normalized STID JSON.
  *
  * @author NeqSim contributors
  * @version 1.0
@@ -19,18 +18,16 @@ public class StidBarrierRegisterDataSourceTest {
 
   private static final String SAMPLE_JSON = "{" + "\"registerId\": \"REG-AAA\","
       + "\"name\": \"Example installation barrier register\"," + "\"installationCode\": \"AAA\","
-      + "\"safetyCriticalElements\": [" + "  {" + "    \"id\": \"SCE-PSD\","
-      + "    \"tag\": \"PSD\"," + "    \"name\": \"Process shutdown\","
-      + "    \"type\": \"INSTRUMENTED_FUNCTION\"," + "    \"equipmentTags\": [\"VA-2001\"],"
-      + "    \"barriers\": ["
+      + "\"safetyCriticalElements\": [" + "  {" + "    \"id\": \"SCE-PSD\"," + "    \"tag\": \"PSD\","
+      + "    \"name\": \"Process shutdown\"," + "    \"type\": \"INSTRUMENTED_FUNCTION\","
+      + "    \"equipmentTags\": [\"VA-2001\"]," + "    \"barriers\": ["
       + "      {\"id\": \"B-PSD-2001\", \"name\": \"PSD on separator\", \"type\": \"PREVENTION\","
-      + "       \"status\": \"AVAILABLE\", \"pfd\": 0.01, \"equipmentTags\": [\"VA-2001\"]}"
-      + "    ]" + "  }" + "]," + "\"barriers\": [" + "  {" + "    \"id\": \"B-PSV-2001\","
-      + "    \"name\": \"PSV on inlet separator\"," + "    \"type\": \"mitigation\","
-      + "    \"status\": \"out of service\"," + "    \"equipmentTags\": [\"VA-2001\"],"
-      + "    \"hazardIds\": [\"H-OVP-1\"]," + "    \"evidence\": ["
-      + "      {\"documentId\": \"PSV-LIST\", \"revision\": \"03\", \"excerpt\": \"PSV-2001 set 75 barg\"}"
-      + "    ]" + "  }" + "]" + "}";
+      + "       \"status\": \"AVAILABLE\", \"pfd\": 0.01, \"equipmentTags\": [\"VA-2001\"]}" + "    ]" + "  }" + "],"
+      + "\"barriers\": [" + "  {" + "    \"id\": \"B-PSV-2001\"," + "    \"name\": \"PSV on inlet separator\","
+      + "    \"type\": \"mitigation\"," + "    \"status\": \"out of service\","
+      + "    \"equipmentTags\": [\"VA-2001\"]," + "    \"hazardIds\": [\"H-OVP-1\"]," + "    \"evidence\": ["
+      + "      {\"documentId\": \"PSV-LIST\", \"revision\": \"03\", \"excerpt\": \"PSV-2001 set 75 barg\"}" + "    ]"
+      + "  }" + "]" + "}";
 
   @Test
   void readsInstallationCode() {

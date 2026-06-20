@@ -47,12 +47,12 @@ public class WellIntegrityScreeningTest {
   @Test
   void testSustainedCasingPressureDetected() {
     WellIntegrityScreening screening = new WellIntegrityScreening("WELL-A1");
-    screening.addAnnulus(new WellIntegrityScreening.AnnulusReading("A", 30.0, 80.0).setBleedsToZero(false)
-        .setRebuildsAfterBleed(true));
+    screening.addAnnulus(
+	new WellIntegrityScreening.AnnulusReading("A", 30.0, 80.0).setBleedsToZero(false).setRebuildsAfterBleed(true));
     WellIntegrityScreening.IntegrityDisposition disposition = screening.screen();
     assertEquals(WellIntegrityScreening.IntegrityDisposition.INTERVENTION_REQUIRED, disposition);
     assertEquals(WellIntegrityScreening.AnnulusClassification.SUSTAINED_CASING_PRESSURE,
-        screening.getAnnulusResults().get("A"));
+	screening.getAnnulusResults().get("A"));
   }
 
   /**
