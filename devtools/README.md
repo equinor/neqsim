@@ -125,7 +125,7 @@ for a full explanation of the architecture and internals.
 | `new_task.py` | Create task-solving folders for the 4-step AI workflow |
 | `new_skill.py` | Scaffold a new skill for the agentic system (`neqsim new-skill "name"`) |
 | `install_skill.py` | Community/private skill manager — `neqsim skill list/search/install/remove/publish` |
-| `install_agent.py` | Community/private agent manager — `neqsim agent list/search/install/remove/validate/schema` |
+| `install_agent.py` | Community/private agent manager — `neqsim agent list/search/install[/--all]/remove/validate/schema` |
 | `neqsim_doctor.py` | Diagnostic tool — checks Java, Maven, JAR, Python, agents, skills, cross-tool configs |
 | `onboard.py` | Interactive onboarding wizard — walks new contributors through full environment setup |
 | `consistency_checker.py` | **Pre-report quality gate.** Extracts numerical values from notebooks and results.json, detects inconsistencies (numerical mismatches, scope mismatches, contradictory claims). Run before `generate_report.py`. Produces `consistency_report.json`. |
