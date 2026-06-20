@@ -41,13 +41,13 @@ public final class OperationalAction implements Serializable {
   /**
    * Creates an action.
    *
-   * @param type            action type
-   * @param target          action target such as an automation address or valve name
-   * @param value           action value
-   * @param unit            engineering unit for the value
+   * @param type action type
+   * @param target action target such as an automation address or valve name
+   * @param value action value
+   * @param unit engineering unit for the value
    * @param durationSeconds transient duration in seconds
    * @param timeStepSeconds transient time step in seconds
-   * @param description     human-readable description
+   * @param description human-readable description
    */
   private OperationalAction(ActionType type, String target, double value, String unit, double durationSeconds,
       double timeStepSeconds, String description) {
@@ -67,8 +67,8 @@ public final class OperationalAction implements Serializable {
    * Creates an action that writes an automation variable.
    *
    * @param address automation address
-   * @param value   value to set
-   * @param unit    engineering unit
+   * @param value value to set
+   * @param unit engineering unit
    * @return operational action
    */
   public static OperationalAction setVariable(String address, double value, String unit) {
@@ -79,7 +79,7 @@ public final class OperationalAction implements Serializable {
   /**
    * Creates an action that sets a throttling valve opening percentage.
    *
-   * @param valveName   valve unit name
+   * @param valveName valve unit name
    * @param percentOpen target opening in percent from 0 to 100
    * @return operational action
    */

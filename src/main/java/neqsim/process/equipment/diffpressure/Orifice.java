@@ -59,14 +59,14 @@ public class Orifice extends TwoPortEquipment {
    * is typically used for transient/dynamic simulations where the orifice controls flow based on pressure differential.
    * </p>
    *
-   * @param name                 Name of the orifice equipment
-   * @param diameter             Upstream pipe internal diameter in meters
-   * @param orificeDiameter      Orifice bore diameter in meters
-   * @param pressureUpstream     Upstream design pressure in bara (used for reference)
-   * @param pressureDownstream   Downstream boundary pressure in bara (e.g., flare header pressure). This value is used
-   *                             in transient simulations to establish the driving pressure differential.
+   * @param name Name of the orifice equipment
+   * @param diameter Upstream pipe internal diameter in meters
+   * @param orificeDiameter Orifice bore diameter in meters
+   * @param pressureUpstream Upstream design pressure in bara (used for reference)
+   * @param pressureDownstream Downstream boundary pressure in bara (e.g., flare header pressure). This value is used in
+   * transient simulations to establish the driving pressure differential.
    * @param dischargeCoefficient Orifice discharge coefficient (typically 0.60-0.62 for sharp-edged orifices, or
-   *                             calculated using Reader-Harris/Gallagher method)
+   * calculated using Reader-Harris/Gallagher method)
    */
   public Orifice(String name, double diameter, double orificeDiameter, double pressureUpstream,
       double pressureDownstream, double dischargeCoefficient) {
@@ -86,9 +86,9 @@ public class Orifice extends TwoPortEquipment {
    * diameter, orificeDiameter, and dischargeCoefficient instead for transient simulations.
    * </p>
    *
-   * @param diameter       Orifice diameter
+   * @param diameter Orifice diameter
    * @param diameter_outer Outer diameter
-   * @param C              Discharge coefficient
+   * @param C Discharge coefficient
    * @deprecated Use constructor parameters instead
    */
   @Deprecated
@@ -126,11 +126,11 @@ public class Orifice extends TwoPortEquipment {
   /**
    * Calculates the orifice discharge coefficient using the Reader-Harris Gallagher method.
    *
-   * @param D    Upstream internal pipe diameter, in meters.
-   * @param Do   Diameter of orifice at flow conditions, in meters.
-   * @param rho  Density of fluid at P1, in kg/m^3.
-   * @param mu   Viscosity of fluid at P1, in Pa*s.
-   * @param m    Mass flow rate of fluid through the orifice, in kg/s.
+   * @param D Upstream internal pipe diameter, in meters.
+   * @param Do Diameter of orifice at flow conditions, in meters.
+   * @param rho Density of fluid at P1, in kg/m^3.
+   * @param mu Viscosity of fluid at P1, in Pa*s.
+   * @param m Mass flow rate of fluid through the orifice, in kg/s.
    * @param taps Tap type ("corner", "flange", "D", or "D/2").
    * @return Discharge coefficient of the orifice.
    */
@@ -174,11 +174,11 @@ public class Orifice extends TwoPortEquipment {
   /**
    * Calculates the expansibility factor for orifice plate calculations.
    *
-   * @param D  Upstream internal pipe diameter, in meters.
+   * @param D Upstream internal pipe diameter, in meters.
    * @param Do Diameter of orifice at flow conditions, in meters.
    * @param P1 Static pressure of fluid upstream, in Pa.
    * @param P2 Static pressure of fluid downstream, in Pa.
-   * @param k  Isentropic exponent of fluid.
+   * @param k Isentropic exponent of fluid.
    * @return Expansibility factor (1 for incompressible fluids).
    */
   public static double calculateExpansibility(double D, double Do, double P1, double P2, double k) {
@@ -190,11 +190,11 @@ public class Orifice extends TwoPortEquipment {
   /**
    * Calculates the non-recoverable pressure drop across the orifice plate.
    *
-   * @param D  Upstream internal pipe diameter, in meters.
+   * @param D Upstream internal pipe diameter, in meters.
    * @param Do Diameter of orifice at flow conditions, in meters.
    * @param P1 Static pressure of fluid upstream, in Pa.
    * @param P2 Static pressure of fluid downstream, in Pa.
-   * @param C  Discharge coefficient.
+   * @param C Discharge coefficient.
    * @return Non-recoverable pressure drop, in Pa.
    */
   public static double calculatePressureDrop(double D, double Do, double P1, double P2, double C) {
@@ -210,7 +210,7 @@ public class Orifice extends TwoPortEquipment {
   /**
    * Calculates the diameter ratio (beta) of the orifice plate.
    *
-   * @param D  Upstream internal pipe diameter, in meters.
+   * @param D Upstream internal pipe diameter, in meters.
    * @param Do Diameter of orifice at flow conditions, in meters.
    * @return Diameter ratio (beta).
    */
@@ -226,13 +226,13 @@ public class Orifice extends TwoPortEquipment {
    * convergence.
    * </p>
    *
-   * @param D    upstream internal pipe diameter in meters
-   * @param Do   orifice diameter in meters
-   * @param P1   upstream static pressure in Pa
-   * @param P2   downstream static pressure in Pa
-   * @param rho  fluid density in kg/m3 at P1
-   * @param mu   fluid viscosity in Pa*s at P1
-   * @param k    isentropic exponent of the fluid
+   * @param D upstream internal pipe diameter in meters
+   * @param Do orifice diameter in meters
+   * @param P1 upstream static pressure in Pa
+   * @param P2 downstream static pressure in Pa
+   * @param rho fluid density in kg/m3 at P1
+   * @param mu fluid viscosity in Pa*s at P1
+   * @param k isentropic exponent of the fluid
    * @param taps pressure tap type ("corner", "flange", "D", or "D/2")
    * @return mass flow rate in kg/s
    */

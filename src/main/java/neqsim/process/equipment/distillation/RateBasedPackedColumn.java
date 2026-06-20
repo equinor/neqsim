@@ -238,8 +238,8 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Create a rate-based packed column with inlet streams.
    *
-   * @param name           equipment name
-   * @param gasInStream    gas inlet stream entering the bottom of the packing
+   * @param name equipment name
+   * @param gasInStream gas inlet stream entering the bottom of the packing
    * @param liquidInStream liquid inlet stream entering the top of the packing
    */
   public RateBasedPackedColumn(String name, StreamInterface gasInStream, StreamInterface liquidInStream) {
@@ -1021,7 +1021,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Solve the counter-current segment profile by fixed-point iteration.
    *
-   * @param gasIn    gas inlet system
+   * @param gasIn gas inlet system
    * @param liquidIn liquid inlet system
    * @return converged counter-current solution
    */
@@ -1035,7 +1035,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Solve the counter-current profile by fixed-point liquid profile iteration.
    *
-   * @param gasIn    gas inlet system
+   * @param gasIn gas inlet system
    * @param liquidIn liquid inlet system
    * @return converged counter-current solution
    */
@@ -1077,7 +1077,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Solve the full packed section with a column-wide equation-oriented residual system.
    *
-   * @param gasIn    gas inlet system
+   * @param gasIn gas inlet system
    * @param liquidIn liquid inlet system
    * @return equation-oriented counter-current solution
    */
@@ -1111,7 +1111,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Create a column-wide unknown vector from an existing profile solution.
    *
-   * @param seed       seed profile solution
+   * @param seed seed profile solution
    * @param components active transfer components
    * @return unknown vector containing segment fluxes, interface temperatures, and outlet temperatures
    */
@@ -1137,11 +1137,11 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Solve the column-wide residual equations at one homotopy continuation factor.
    *
-   * @param gasIn           gas inlet system
-   * @param liquidIn        liquid inlet system
-   * @param components      active transfer components
+   * @param gasIn gas inlet system
+   * @param liquidIn liquid inlet system
+   * @param components active transfer components
    * @param initialUnknowns initial unknown vector
-   * @param homotopyFactor  continuation factor from zero to one
+   * @param homotopyFactor continuation factor from zero to one
    * @return best residual evaluation found
    */
   private ColumnResidualEvaluation solveColumnResiduals(SystemInterface gasIn, SystemInterface liquidIn,
@@ -1184,12 +1184,12 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Evaluate the full column residual vector for the equation-oriented solver.
    *
-   * @param gasIn          gas inlet system
-   * @param liquidIn       liquid inlet system
-   * @param components     active transfer components
-   * @param unknowns       column unknown vector
+   * @param gasIn gas inlet system
+   * @param liquidIn liquid inlet system
+   * @param components active transfer components
+   * @param unknowns column unknown vector
    * @param homotopyFactor continuation factor from zero to one
-   * @param iterations     iteration count represented by this evaluation
+   * @param iterations iteration count represented by this evaluation
    * @return column residual evaluation
    */
   private ColumnResidualEvaluation evaluateColumnResidual(SystemInterface gasIn, SystemInterface liquidIn,
@@ -1294,11 +1294,11 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Calculate one sparse-pattern Newton step for the column residual equations.
    *
-   * @param gasIn          gas inlet system
-   * @param liquidIn       liquid inlet system
-   * @param components     active transfer components
-   * @param unknowns       current column unknown vector
-   * @param evaluation     current residual evaluation
+   * @param gasIn gas inlet system
+   * @param liquidIn liquid inlet system
+   * @param components active transfer components
+   * @param unknowns current column unknown vector
+   * @param evaluation current residual evaluation
    * @param homotopyFactor continuation factor from zero to one
    * @return Newton step, or null if the least-squares solve fails
    */
@@ -1351,11 +1351,11 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Apply a damped column residual step and clamp to physical bounds.
    *
-   * @param unknowns   current unknown vector
-   * @param step       Newton step
-   * @param damping    damping factor from zero to one
-   * @param gasIn      gas inlet system
-   * @param liquidIn   liquid inlet system
+   * @param unknowns current unknown vector
+   * @param step Newton step
+   * @param damping damping factor from zero to one
+   * @param gasIn gas inlet system
+   * @param liquidIn liquid inlet system
    * @param components active transfer components
    * @return bounded candidate unknowns
    */
@@ -1371,10 +1371,10 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Build gas and liquid segment states from column-wide flux and temperature unknowns.
    *
-   * @param gasIn      gas inlet system
-   * @param liquidIn   liquid inlet system
+   * @param gasIn gas inlet system
+   * @param liquidIn liquid inlet system
    * @param components active transfer components
-   * @param unknowns   bounded column unknown vector
+   * @param unknowns bounded column unknown vector
    * @return reconstructed column state
    */
   private ColumnState buildColumnState(SystemInterface gasIn, SystemInterface liquidIn, List<String> components,
@@ -1423,9 +1423,9 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Clamp column unknowns to inventory and temperature limits.
    *
-   * @param unknowns   column unknown vector
-   * @param gasIn      gas inlet system
-   * @param liquidIn   liquid inlet system
+   * @param unknowns column unknown vector
+   * @param gasIn gas inlet system
+   * @param liquidIn liquid inlet system
    * @param components active transfer components
    * @return clamped unknown vector
    */
@@ -1474,8 +1474,8 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
    * Clamp one column temperature unknown.
    *
    * @param unknowns unknown vector to update
-   * @param index    temperature unknown index
-   * @param gasIn    gas inlet system
+   * @param index temperature unknown index
+   * @param gasIn gas inlet system
    * @param liquidIn liquid inlet system
    */
   private void clampColumnTemperatureUnknown(double[] unknowns, int index, SystemInterface gasIn,
@@ -1491,7 +1491,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Build a component inventory map for active components.
    *
-   * @param system     thermodynamic system
+   * @param system thermodynamic system
    * @param components active transfer components
    * @return component moles by component name
    */
@@ -1507,8 +1507,8 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Add a bounded component delta to a system.
    *
-   * @param system     system to update
-   * @param component  component name
+   * @param system system to update
+   * @param component component name
    * @param deltaMoles component delta in mol/s stream basis
    */
   private void addComponentDelta(SystemInterface system, String component, double deltaMoles) {
@@ -1534,9 +1534,9 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Get the unknown index for a segment component flux.
    *
-   * @param segment        segment index
+   * @param segment segment index
    * @param componentIndex component index
-   * @param components     active transfer components
+   * @param components active transfer components
    * @return flux unknown index
    */
   private int columnFluxIndex(int segment, int componentIndex, List<String> components) {
@@ -1546,7 +1546,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Get the unknown index for a segment interface temperature.
    *
-   * @param segment    segment index
+   * @param segment segment index
    * @param components active transfer components
    * @return interface-temperature unknown index
    */
@@ -1557,7 +1557,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Get the unknown index for a segment gas outlet temperature.
    *
-   * @param segment    segment index
+   * @param segment segment index
    * @param components active transfer components
    * @return gas outlet temperature unknown index
    */
@@ -1568,7 +1568,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Get the unknown index for a segment liquid outlet temperature.
    *
-   * @param segment    segment index
+   * @param segment segment index
    * @param components active transfer components
    * @return liquid outlet temperature unknown index
    */
@@ -1579,8 +1579,8 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Calculate finite-difference step size for a column unknown.
    *
-   * @param unknowns       current unknown vector
-   * @param variable       variable index
+   * @param unknowns current unknown vector
+   * @param variable variable index
    * @param componentCount number of component flux unknowns per segment
    * @return finite-difference step
    */
@@ -1623,8 +1623,8 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Run one bottom-to-top gas pass against the current counter-current liquid profile.
    *
-   * @param gasIn          gas inlet system
-   * @param liquidIn       liquid inlet system
+   * @param gasIn gas inlet system
+   * @param liquidIn liquid inlet system
    * @param liquidEntering liquid systems entering each segment
    * @return one profile iteration solution
    */
@@ -1647,7 +1647,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Shift liquid leaving one segment into the segment below for the next iteration.
    *
-   * @param liquidIn      fresh liquid inlet system
+   * @param liquidIn fresh liquid inlet system
    * @param liquidLeaving liquid systems leaving each segment from the previous iteration
    * @return updated segment liquid inlet profile
    */
@@ -1690,8 +1690,8 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Calculate one rate-based segment.
    *
-   * @param segment  segment index from bottom, zero based
-   * @param gasIn    gas system entering the segment
+   * @param segment segment index from bottom, zero based
+   * @param gasIn gas system entering the segment
    * @param liquidIn liquid system entering the segment
    * @return segment computation with outlet systems and result data
    */
@@ -1747,8 +1747,8 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Calculate transport properties and packing coefficients for one segment.
    *
-   * @param gas           gas system in the segment
-   * @param liquid        liquid system in the segment
+   * @param gas gas system in the segment
+   * @param liquid liquid system in the segment
    * @param segmentHeight segment height in metres
    * @return transport snapshot for the segment
    */
@@ -1809,10 +1809,10 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Calculate component transfer rate for a component in one segment.
    *
-   * @param component            component name
-   * @param gas                  gas system
-   * @param liquid               liquid system
-   * @param snapshot             transport snapshot for the segment
+   * @param component component name
+   * @param gas gas system
+   * @param liquid liquid system
+   * @param snapshot transport snapshot for the segment
    * @param interfaceEquilibrium interface equilibrium data
    * @return transfer rate in mol/s, positive from gas to liquid
    */
@@ -1825,10 +1825,10 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Calculate the unbounded Maxwell-Stefan film transfer rate for one component.
    *
-   * @param component            component name
-   * @param gas                  gas system
-   * @param liquid               liquid system
-   * @param snapshot             transport snapshot for the segment
+   * @param component component name
+   * @param gas gas system
+   * @param liquid liquid system
+   * @param snapshot transport snapshot for the segment
    * @param interfaceEquilibrium interface equilibrium data
    * @return unbounded transfer rate in mol/s, positive from gas to liquid
    */
@@ -1868,9 +1868,9 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Calculate one segment using simultaneous flux and interfacial energy residuals.
    *
-   * @param segment       segment index from bottom, zero based
-   * @param gas           gas system entering the segment
-   * @param liquid        liquid system entering the segment
+   * @param segment segment index from bottom, zero based
+   * @param gas gas system entering the segment
+   * @param liquid liquid system entering the segment
    * @param segmentHeight segment height in metres
    * @return segment computation with outlet systems and residual diagnostics
    */
@@ -1918,9 +1918,9 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Solve the simultaneous residual equations for a segment.
    *
-   * @param gas        gas system entering the segment
-   * @param liquid     liquid system entering the segment
-   * @param snapshot   transport snapshot for the segment
+   * @param gas gas system entering the segment
+   * @param liquid liquid system entering the segment
+   * @param snapshot transport snapshot for the segment
    * @param components active transfer components
    * @return best residual evaluation found
    */
@@ -1964,9 +1964,9 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Create initial guesses for component transfers and interface temperature.
    *
-   * @param gas        gas system
-   * @param liquid     liquid system
-   * @param snapshot   transport snapshot
+   * @param gas gas system
+   * @param liquid liquid system
+   * @param snapshot transport snapshot
    * @param components active transfer components
    * @return residual unknown vector
    */
@@ -1984,11 +1984,11 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Evaluate normalized residuals for the simultaneous segment equations.
    *
-   * @param gas        gas system
-   * @param liquid     liquid system
-   * @param snapshot   transport snapshot
+   * @param gas gas system
+   * @param liquid liquid system
+   * @param snapshot transport snapshot
    * @param components active transfer components
-   * @param unknowns   residual unknown vector
+   * @param unknowns residual unknown vector
    * @param iterations iteration count represented by the evaluation
    * @return residual evaluation
    */
@@ -2036,11 +2036,11 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Calculate a Newton step for normalized segment residuals.
    *
-   * @param gas        gas system
-   * @param liquid     liquid system
-   * @param snapshot   transport snapshot
+   * @param gas gas system
+   * @param liquid liquid system
+   * @param snapshot transport snapshot
    * @param components active transfer components
-   * @param unknowns   current unknown vector
+   * @param unknowns current unknown vector
    * @param evaluation current residual evaluation
    * @return Newton step, or null if the linear solve fails
    */
@@ -2085,11 +2085,11 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Apply a damped residual step and clamp the unknowns to physical bounds.
    *
-   * @param unknowns   current unknowns
-   * @param step       Newton step
-   * @param damping    damping factor from zero to one
-   * @param gas        gas system
-   * @param liquid     liquid system
+   * @param unknowns current unknowns
+   * @param step Newton step
+   * @param damping damping factor from zero to one
+   * @param gas gas system
+   * @param liquid liquid system
    * @param components active transfer components
    * @return bounded candidate unknowns
    */
@@ -2105,9 +2105,9 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Clamp residual unknowns to available component inventory and temperature bounds.
    *
-   * @param unknowns   unknown vector to clamp
-   * @param gas        gas system
-   * @param liquid     liquid system
+   * @param unknowns unknown vector to clamp
+   * @param gas gas system
+   * @param liquid liquid system
    * @param components active transfer components
    * @return clamped unknown vector
    */
@@ -2132,8 +2132,8 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Calculate finite-difference step size for a residual unknown.
    *
-   * @param unknowns       current unknown vector
-   * @param variable       variable index
+   * @param unknowns current unknown vector
+   * @param variable variable index
    * @param componentCount number of component transfer unknowns
    * @return finite-difference step
    */
@@ -2147,10 +2147,10 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Calculate the transfer residual scaling for one component.
    *
-   * @param component         component name
+   * @param component component name
    * @param predictedTransfer predicted transfer rate in mol/s
-   * @param gas               gas system
-   * @param liquid            liquid system
+   * @param gas gas system
+   * @param liquid liquid system
    * @return positive residual scaling in mol/s
    */
   private double transferResidualScale(String component, double predictedTransfer, SystemInterface gas,
@@ -2162,9 +2162,9 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Calculate heat residual scaling.
    *
-   * @param gasSensibleHeat    gas-side sensible heat rate in W
+   * @param gasSensibleHeat gas-side sensible heat rate in W
    * @param liquidSensibleHeat liquid-side sensible heat rate in W
-   * @param gasMassEnthalpy    gas-side transferred component enthalpy rate in W
+   * @param gasMassEnthalpy gas-side transferred component enthalpy rate in W
    * @param liquidMassEnthalpy liquid-side transferred component enthalpy rate in W
    * @return positive residual scaling in W
    */
@@ -2191,7 +2191,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Apply a total enthalpy target by pressure-enthalpy flash.
    *
-   * @param system         thermodynamic system to flash
+   * @param system thermodynamic system to flash
    * @param targetEnthalpy target total enthalpy in J or W-equivalent stream basis
    */
   private void applyEnthalpyTarget(SystemInterface system, double targetEnthalpy) {
@@ -2215,7 +2215,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Estimate a temperature for an enthalpy target if PH flash fails.
    *
-   * @param system         thermodynamic system
+   * @param system thermodynamic system
    * @param targetEnthalpy target total enthalpy in J or W-equivalent stream basis
    * @return estimated temperature in kelvin
    */
@@ -2232,9 +2232,9 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
    * Apply a component transfer to gas and liquid systems.
    *
    * @param component component name
-   * @param transfer  transfer rate in mol/s, positive from gas to liquid
-   * @param gas       gas system to update
-   * @param liquid    liquid system to update
+   * @param transfer transfer rate in mol/s, positive from gas to liquid
+   * @param gas gas system to update
+   * @param liquid liquid system to update
    */
   private void applyComponentTransfer(String component, double transfer, SystemInterface gas, SystemInterface liquid) {
     gas.addComponent(component, -transfer);
@@ -2244,10 +2244,10 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Limit transfer to available component inventory and configured stability fraction.
    *
-   * @param component        component name
+   * @param component component name
    * @param proposedTransfer proposed transfer in mol/s, positive from gas to liquid
-   * @param gas              gas system
-   * @param liquid           liquid system
+   * @param gas gas system
+   * @param liquid liquid system
    * @return bounded transfer in mol/s
    */
   private double limitTransfer(String component, double proposedTransfer, SystemInterface gas, SystemInterface liquid) {
@@ -2264,8 +2264,8 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Calculate interface equilibrium compositions for the mixed segment fluids.
    *
-   * @param gas      gas system
-   * @param liquid   liquid system
+   * @param gas gas system
+   * @param liquid liquid system
    * @param snapshot transport snapshot containing the interfacial temperature estimate
    * @return interface equilibrium data
    */
@@ -2314,8 +2314,8 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Calculate interface equilibrium at a specified temperature.
    *
-   * @param gas                   gas system
-   * @param liquid                liquid system
+   * @param gas gas system
+   * @param liquid liquid system
    * @param interfaceTemperatureK interface temperature in kelvin
    * @return interface equilibrium data
    */
@@ -2330,11 +2330,11 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Calculate the active film coefficient for one component.
    *
-   * @param phase                phase to inspect
-   * @param component            component name
-   * @param baseCoefficient      scalar packed-bed film coefficient
+   * @param phase phase to inspect
+   * @param component component name
+   * @param baseCoefficient scalar packed-bed film coefficient
    * @param referenceDiffusivity reference effective diffusivity in m2/s
-   * @param gasPhase             true when the phase is gas
+   * @param gasPhase true when the phase is gas
    * @return component film coefficient in 1/s
    */
   private double calculateFilmCoefficient(PhaseInterface phase, String component, double baseCoefficient,
@@ -2348,11 +2348,11 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Calculate a Maxwell-Stefan matrix-corrected film coefficient for one component.
    *
-   * @param phase                phase to inspect
-   * @param component            component name
-   * @param baseCoefficient      scalar packed-bed film coefficient
+   * @param phase phase to inspect
+   * @param component component name
+   * @param baseCoefficient scalar packed-bed film coefficient
    * @param referenceDiffusivity reference effective diffusivity in m2/s
-   * @param gasPhase             true when the phase is gas
+   * @param gasPhase true when the phase is gas
    * @return Maxwell-Stefan corrected film coefficient in 1/s
    */
   private double maxwellStefanFilmCoefficient(PhaseInterface phase, String component, double baseCoefficient,
@@ -2406,7 +2406,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Combine gas- and liquid-side volumetric flux densities with a rate-limiting harmonic mean.
    *
-   * @param gasFluxDensity    gas-side flux density in mol/(m3 s)
+   * @param gasFluxDensity gas-side flux density in mol/(m3 s)
    * @param liquidFluxDensity liquid-side flux density in mol/(m3 s)
    * @return combined transfer density in mol/(m3 s)
    */
@@ -2427,8 +2427,8 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Apply interphase heat transfer to gas and liquid segment systems.
    *
-   * @param gas      gas system to update
-   * @param liquid   liquid system to update
+   * @param gas gas system to update
+   * @param liquid liquid system to update
    * @param snapshot transport snapshot for the segment
    * @return heat-transfer rate in W, positive from gas to liquid
    */
@@ -2462,11 +2462,11 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
    * Calculate a volumetric heat-transfer coefficient from the Chilton-Colburn analogy.
    *
    * @param massTransferCoefficient volumetric mass-transfer coefficient in 1/s
-   * @param density                 phase density in kg/m3
-   * @param heatCapacity            phase heat capacity in J/(kg K)
-   * @param viscosity               phase viscosity in kg/(m s)
-   * @param diffusivity             phase diffusivity in m2/s
-   * @param thermalConductivity     thermal conductivity in W/(m K)
+   * @param density phase density in kg/m3
+   * @param heatCapacity phase heat capacity in J/(kg K)
+   * @param viscosity phase viscosity in kg/(m s)
+   * @param diffusivity phase diffusivity in m2/s
+   * @param thermalConductivity thermal conductivity in W/(m K)
    * @return volumetric heat-transfer coefficient in W/(m3 K)
    */
   private double calculateVolumetricHeatTransferCoefficient(double massTransferCoefficient, double density,
@@ -2488,7 +2488,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Combine gas and liquid heat-transfer coefficients as series resistances.
    *
-   * @param gasCoefficient    gas-side volumetric heat-transfer coefficient in W/(m3 K)
+   * @param gasCoefficient gas-side volumetric heat-transfer coefficient in W/(m3 K)
    * @param liquidCoefficient liquid-side volumetric heat-transfer coefficient in W/(m3 K)
    * @return overall volumetric heat-transfer coefficient in W/(m3 K)
    */
@@ -2502,9 +2502,9 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Calculate an interfacial temperature estimate from heat-transfer resistances.
    *
-   * @param gasTemperature    gas bulk temperature in K
+   * @param gasTemperature gas bulk temperature in K
    * @param liquidTemperature liquid bulk temperature in K
-   * @param gasCoefficient    gas-side heat-transfer coefficient in W/(m3 K)
+   * @param gasCoefficient gas-side heat-transfer coefficient in W/(m3 K)
    * @param liquidCoefficient liquid-side heat-transfer coefficient in W/(m3 K)
    * @return estimated interface temperature in K
    */
@@ -2520,7 +2520,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Get heat capacity on a mass basis.
    *
-   * @param phase    phase to inspect
+   * @param phase phase to inspect
    * @param fallback fallback heat capacity in J/(kg K)
    * @return heat capacity in J/(kg K)
    */
@@ -2549,10 +2549,10 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Get component molar enthalpy at an interface temperature.
    *
-   * @param phase       phase to inspect
-   * @param component   component name
+   * @param phase phase to inspect
+   * @param component component name
    * @param temperature temperature in kelvin
-   * @param fallback    fallback molar enthalpy in J/mol
+   * @param fallback fallback molar enthalpy in J/mol
    * @return component molar enthalpy in J/mol
    */
   private double componentMolarEnthalpy(PhaseInterface phase, String component, double temperature, double fallback) {
@@ -2570,7 +2570,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Get phase thermal conductivity.
    *
-   * @param phase    phase to inspect
+   * @param phase phase to inspect
    * @param fallback fallback thermal conductivity in W/(m K)
    * @return thermal conductivity in W/(m K)
    */
@@ -2585,7 +2585,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Calculate phase heat-capacity rate.
    *
-   * @param phase        phase to inspect
+   * @param phase phase to inspect
    * @param heatCapacity heat capacity in J/(kg K)
    * @return heat-capacity rate in W/K
    */
@@ -2596,7 +2596,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Find a component index in a phase.
    *
-   * @param phase     phase to inspect
+   * @param phase phase to inspect
    * @param component component name
    * @return component index, or minus one if absent
    */
@@ -2615,7 +2615,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Get a component mole fraction by component index.
    *
-   * @param phase          phase to inspect
+   * @param phase phase to inspect
    * @param componentIndex component index
    * @return mole fraction, or zero if unavailable
    */
@@ -2629,12 +2629,12 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Calculate a binary film coefficient by diffusivity scaling.
    *
-   * @param phase                phase to inspect
-   * @param firstComponent       first component index
-   * @param secondComponent      second component index
-   * @param baseCoefficient      scalar packed-bed film coefficient
+   * @param phase phase to inspect
+   * @param firstComponent first component index
+   * @param secondComponent second component index
+   * @param baseCoefficient scalar packed-bed film coefficient
    * @param referenceDiffusivity reference diffusivity in m2/s
-   * @param gasPhase             true for gas fallback diffusivity
+   * @param gasPhase true for gas fallback diffusivity
    * @return binary film coefficient in 1/s
    */
   private double binaryFilmCoefficient(PhaseInterface phase, int firstComponent, int secondComponent,
@@ -2650,8 +2650,8 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Scale a film coefficient by diffusivity relative to a reference value.
    *
-   * @param baseCoefficient      scalar packed-bed film coefficient
-   * @param diffusivity          component or binary diffusivity in m2/s
+   * @param baseCoefficient scalar packed-bed film coefficient
+   * @param diffusivity component or binary diffusivity in m2/s
    * @param referenceDiffusivity reference diffusivity in m2/s
    * @return scaled film coefficient in 1/s
    */
@@ -2664,10 +2664,10 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Calculate a mixture diffusivity for one component.
    *
-   * @param phase                phase to inspect
-   * @param componentIndex       component index
+   * @param phase phase to inspect
+   * @param componentIndex component index
    * @param referenceDiffusivity reference diffusivity in m2/s
-   * @param gasPhase             true for gas fallback diffusivity
+   * @param gasPhase true for gas fallback diffusivity
    * @return mixture diffusivity in m2/s
    */
   private double mixtureDiffusivityForComponent(PhaseInterface phase, int componentIndex, double referenceDiffusivity,
@@ -2691,11 +2691,11 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Get a binary diffusion coefficient from NeqSim physical properties.
    *
-   * @param phase                phase to inspect
-   * @param firstComponent       first component index
-   * @param secondComponent      second component index
+   * @param phase phase to inspect
+   * @param firstComponent first component index
+   * @param secondComponent second component index
    * @param referenceDiffusivity reference diffusivity in m2/s
-   * @param gasPhase             true for gas fallback diffusivity
+   * @param gasPhase true for gas fallback diffusivity
    * @return binary diffusivity in m2/s
    */
   private double binaryDiffusivity(PhaseInterface phase, int firstComponent, int secondComponent,
@@ -2722,10 +2722,10 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Calculate residual between previous and current outlets.
    *
-   * @param previousGas    previous gas outlet, or null on the first iteration
-   * @param currentGas     current gas outlet
+   * @param previousGas previous gas outlet, or null on the first iteration
+   * @param currentGas current gas outlet
    * @param previousLiquid previous liquid outlet, or null on the first iteration
-   * @param currentLiquid  current liquid outlet
+   * @param currentLiquid current liquid outlet
    * @return maximum absolute component residual in mol/s
    */
   private double calculateOutletResidual(SystemInterface previousGas, SystemInterface currentGas,
@@ -2801,7 +2801,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Estimate average diffusivity for a phase.
    *
-   * @param phase    phase to inspect
+   * @param phase phase to inspect
    * @param gasPhase true for gas fallback values, false for liquid fallback values
    * @return finite diffusivity in m2/s
    */
@@ -2829,7 +2829,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Estimate surface tension between the segment gas and liquid phases.
    *
-   * @param gas    gas system
+   * @param gas gas system
    * @param liquid liquid system
    * @return surface tension in N/m
    */
@@ -2934,7 +2934,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Get a component mole fraction in a phase.
    *
-   * @param phase     phase to inspect
+   * @param phase phase to inspect
    * @param component component name
    * @return mole fraction, or zero if the component is absent
    */
@@ -2948,7 +2948,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Get total component moles in a system.
    *
-   * @param system    thermodynamic system
+   * @param system thermodynamic system
    * @param component component name
    * @return component moles in the system
    */
@@ -2981,7 +2981,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Get the active transfer component list.
    *
-   * @param gas    gas system
+   * @param gas gas system
    * @param liquid liquid system
    * @return active component names
    */
@@ -2999,7 +2999,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
    * Validate a positive finite value.
    *
    * @param value numeric value
-   * @param name  field name for error messages
+   * @param name field name for error messages
    * @throws IllegalArgumentException if the value is not positive and finite
    */
   private void validatePositive(double value, String name) {
@@ -3012,7 +3012,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
    * Validate a non-negative finite value.
    *
    * @param value numeric value
-   * @param name  field name for error messages
+   * @param name field name for error messages
    * @throws IllegalArgumentException if the value is negative or not finite
    */
   private void validateNonNegative(double value, String name) {
@@ -3034,7 +3034,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Replace invalid values with a fallback.
    *
-   * @param value    value to check
+   * @param value value to check
    * @param fallback fallback value
    * @return value if positive and finite, otherwise fallback
    */
@@ -3045,7 +3045,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /**
    * Replace invalid or negative values with a fallback.
    *
-   * @param value    value to check
+   * @param value value to check
    * @param fallback fallback value
    * @return value if non-negative and finite, otherwise fallback
    */
@@ -3057,8 +3057,8 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
    * Clamp a value between lower and upper bounds.
    *
    * @param value value to clamp
-   * @param min   lower bound
-   * @param max   upper bound
+   * @param min lower bound
+   * @param max upper bound
    * @return clamped value
    */
   private double clamp(double value, double min, double max) {
@@ -3177,40 +3177,40 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
     /**
      * Create a segment result.
      *
-     * @param segmentNumber                  segment number from bottom to top
-     * @param heightFromBottom               segment midpoint height in metres
-     * @param gasTemperatureK                gas temperature in kelvin
-     * @param liquidTemperatureK             liquid temperature in kelvin
-     * @param gasPressureBar                 gas pressure in bara
-     * @param liquidPressureBar              liquid pressure in bara
-     * @param gasMolarFlow                   gas molar flow in mol/s
-     * @param liquidMolarFlow                liquid molar flow in mol/s
-     * @param gasDensity                     gas density in kg/m3
-     * @param liquidDensity                  liquid density in kg/m3
-     * @param gasViscosity                   gas viscosity in kg/(m s)
-     * @param liquidViscosity                liquid viscosity in kg/(m s)
-     * @param gasDiffusivity                 gas diffusivity in m2/s
-     * @param liquidDiffusivity              liquid diffusivity in m2/s
-     * @param wettedArea                     wetted area in m2/m3
-     * @param kGa                            gas-phase volumetric mass-transfer coefficient in 1/s
-     * @param kLa                            liquid-phase volumetric mass-transfer coefficient in 1/s
-     * @param gasHeatTransferCoefficient     gas-side heat-transfer coefficient in W/(m3 K)
-     * @param liquidHeatTransferCoefficient  liquid-side heat-transfer coefficient in W/(m3 K)
+     * @param segmentNumber segment number from bottom to top
+     * @param heightFromBottom segment midpoint height in metres
+     * @param gasTemperatureK gas temperature in kelvin
+     * @param liquidTemperatureK liquid temperature in kelvin
+     * @param gasPressureBar gas pressure in bara
+     * @param liquidPressureBar liquid pressure in bara
+     * @param gasMolarFlow gas molar flow in mol/s
+     * @param liquidMolarFlow liquid molar flow in mol/s
+     * @param gasDensity gas density in kg/m3
+     * @param liquidDensity liquid density in kg/m3
+     * @param gasViscosity gas viscosity in kg/(m s)
+     * @param liquidViscosity liquid viscosity in kg/(m s)
+     * @param gasDiffusivity gas diffusivity in m2/s
+     * @param liquidDiffusivity liquid diffusivity in m2/s
+     * @param wettedArea wetted area in m2/m3
+     * @param kGa gas-phase volumetric mass-transfer coefficient in 1/s
+     * @param kLa liquid-phase volumetric mass-transfer coefficient in 1/s
+     * @param gasHeatTransferCoefficient gas-side heat-transfer coefficient in W/(m3 K)
+     * @param liquidHeatTransferCoefficient liquid-side heat-transfer coefficient in W/(m3 K)
      * @param overallHeatTransferCoefficient overall heat-transfer coefficient in W/(m3 K)
-     * @param interfaceTemperatureK          interface equilibrium temperature in K
-     * @param heatTransferRateW              heat-transfer rate in W, positive from gas to liquid
-     * @param pressureDropPerMeter           pressure drop per metre in Pa/m
-     * @param percentFlood                   percent flooding
-     * @param netMolarTransfer               net molar transfer in mol/s
-     * @param componentMoleTransfer          component transfer map in mol/s
-     * @param interfaceGasMoleFractions      gas-side interface mole fractions by component
-     * @param interfaceLiquidMoleFractions   liquid-side interface mole fractions by component
-     * @param interfaceEquilibriumRatios     interface equilibrium ratios by component
-     * @param segmentSolver                  segment solver name
-     * @param residualIterations             residual solver iterations
-     * @param maxFluxResidualMolPerSec       maximum component flux residual in mol/s
-     * @param heatBalanceResidualW           interfacial heat-balance residual in W
-     * @param enthalpyBalanceResidualW       total outlet enthalpy-balance residual in W-equivalent stream basis
+     * @param interfaceTemperatureK interface equilibrium temperature in K
+     * @param heatTransferRateW heat-transfer rate in W, positive from gas to liquid
+     * @param pressureDropPerMeter pressure drop per metre in Pa/m
+     * @param percentFlood percent flooding
+     * @param netMolarTransfer net molar transfer in mol/s
+     * @param componentMoleTransfer component transfer map in mol/s
+     * @param interfaceGasMoleFractions gas-side interface mole fractions by component
+     * @param interfaceLiquidMoleFractions liquid-side interface mole fractions by component
+     * @param interfaceEquilibriumRatios interface equilibrium ratios by component
+     * @param segmentSolver segment solver name
+     * @param residualIterations residual solver iterations
+     * @param maxFluxResidualMolPerSec maximum component flux residual in mol/s
+     * @param heatBalanceResidualW interfacial heat-balance residual in W
+     * @param enthalpyBalanceResidualW total outlet enthalpy-balance residual in W-equivalent stream basis
      */
     public SegmentResult(int segmentNumber, double heightFromBottom, double gasTemperatureK, double liquidTemperatureK,
 	double gasPressureBar, double liquidPressureBar, double gasMolarFlow, double liquidMolarFlow, double gasDensity,
@@ -3577,9 +3577,9 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
     /**
      * Create a segment computation container.
      *
-     * @param gasOutlet    segment gas outlet system
+     * @param gasOutlet segment gas outlet system
      * @param liquidOutlet segment liquid outlet system
-     * @param result       segment result
+     * @param result segment result
      */
     private SegmentComputation(SystemInterface gasOutlet, SystemInterface liquidOutlet, SegmentResult result) {
       this.gasOutlet = gasOutlet;
@@ -3602,10 +3602,10 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
     /**
      * Create a counter-current solution.
      *
-     * @param gasOutlet             column gas outlet system
-     * @param liquidOutlet          column liquid outlet system
+     * @param gasOutlet column gas outlet system
+     * @param liquidOutlet column liquid outlet system
      * @param liquidLeavingSegments liquid systems leaving each segment
-     * @param segmentResults        segment profile results
+     * @param segmentResults segment profile results
      */
     private CounterCurrentSolution(SystemInterface gasOutlet, SystemInterface liquidOutlet,
 	List<SystemInterface> liquidLeavingSegments, List<SegmentResult> segmentResults) {
@@ -3656,23 +3656,23 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
     /**
      * Create a transport snapshot.
      *
-     * @param gasDensity                     gas density in kg/m3
-     * @param liquidDensity                  liquid density in kg/m3
-     * @param gasViscosity                   gas viscosity in kg/(m s)
-     * @param liquidViscosity                liquid viscosity in kg/(m s)
-     * @param gasDiffusivity                 gas diffusivity in m2/s
-     * @param liquidDiffusivity              liquid diffusivity in m2/s
-     * @param wettedArea                     wetted area in m2/m3
-     * @param kGa                            gas-phase volumetric mass-transfer coefficient in 1/s
-     * @param kLa                            liquid-phase volumetric mass-transfer coefficient in 1/s
-     * @param gasHeatCapacity                gas heat capacity in J/(kg K)
-     * @param liquidHeatCapacity             liquid heat capacity in J/(kg K)
-     * @param gasHeatTransferCoefficient     gas-side heat-transfer coefficient in W/(m3 K)
-     * @param liquidHeatTransferCoefficient  liquid-side heat-transfer coefficient in W/(m3 K)
+     * @param gasDensity gas density in kg/m3
+     * @param liquidDensity liquid density in kg/m3
+     * @param gasViscosity gas viscosity in kg/(m s)
+     * @param liquidViscosity liquid viscosity in kg/(m s)
+     * @param gasDiffusivity gas diffusivity in m2/s
+     * @param liquidDiffusivity liquid diffusivity in m2/s
+     * @param wettedArea wetted area in m2/m3
+     * @param kGa gas-phase volumetric mass-transfer coefficient in 1/s
+     * @param kLa liquid-phase volumetric mass-transfer coefficient in 1/s
+     * @param gasHeatCapacity gas heat capacity in J/(kg K)
+     * @param liquidHeatCapacity liquid heat capacity in J/(kg K)
+     * @param gasHeatTransferCoefficient gas-side heat-transfer coefficient in W/(m3 K)
+     * @param liquidHeatTransferCoefficient liquid-side heat-transfer coefficient in W/(m3 K)
      * @param overallHeatTransferCoefficient overall heat-transfer coefficient in W/(m3 K)
-     * @param interfaceTemperatureK          estimated interface equilibrium temperature in K
-     * @param pressureDropPerMeter           pressure drop per metre in Pa/m
-     * @param percentFlood                   percent flooding
+     * @param interfaceTemperatureK estimated interface equilibrium temperature in K
+     * @param pressureDropPerMeter pressure drop per metre in Pa/m
+     * @param percentFlood percent flooding
      */
     private TransportSnapshot(double gasDensity, double liquidDensity, double gasViscosity, double liquidViscosity,
 	double gasDiffusivity, double liquidDiffusivity, double wettedArea, double kGa, double kLa,
@@ -3718,10 +3718,10 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
      * Create interface equilibrium data.
      *
      * @param interfaceTemperatureK interface equilibrium temperature in K
-     * @param gasMoleFractions      gas-side mole fractions by component
-     * @param liquidMoleFractions   liquid-side mole fractions by component
-     * @param equilibriumRatios     gas-to-liquid equilibrium ratios by component
-     * @param gasMolarEnthalpies    gas-side component molar enthalpies by component
+     * @param gasMoleFractions gas-side mole fractions by component
+     * @param liquidMoleFractions liquid-side mole fractions by component
+     * @param equilibriumRatios gas-to-liquid equilibrium ratios by component
+     * @param gasMolarEnthalpies gas-side component molar enthalpies by component
      * @param liquidMolarEnthalpies liquid-side component molar enthalpies by component
      */
     private InterfaceEquilibrium(double interfaceTemperatureK, Map<String, Double> gasMoleFractions,
@@ -3739,7 +3739,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
      * Get a gas-side interface mole fraction.
      *
      * @param component component name
-     * @param fallback  fallback value
+     * @param fallback fallback value
      * @return gas-side interface mole fraction
      */
     private double getGasMoleFraction(String component, double fallback) {
@@ -3751,7 +3751,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
      * Get a liquid-side interface mole fraction.
      *
      * @param component component name
-     * @param fallback  fallback value
+     * @param fallback fallback value
      * @return liquid-side interface mole fraction
      */
     private double getLiquidMoleFraction(String component, double fallback) {
@@ -3811,12 +3811,12 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
     /**
      * Create a reconstructed column state.
      *
-     * @param gasEntering    gas systems entering each segment
-     * @param gasLeaving     gas systems leaving each segment
+     * @param gasEntering gas systems entering each segment
+     * @param gasLeaving gas systems leaving each segment
      * @param liquidEntering liquid systems entering each segment
-     * @param liquidLeaving  liquid systems leaving each segment
-     * @param gasOutlet      column gas outlet system
-     * @param liquidOutlet   column liquid outlet system
+     * @param liquidLeaving liquid systems leaving each segment
+     * @param gasOutlet column gas outlet system
+     * @param liquidOutlet column liquid outlet system
      */
     private ColumnState(List<SystemInterface> gasEntering, List<SystemInterface> gasLeaving,
 	List<SystemInterface> liquidEntering, List<SystemInterface> liquidLeaving, SystemInterface gasOutlet,
@@ -3842,7 +3842,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
     /**
      * Create a sparse Jacobian.
      *
-     * @param rows    number of residual rows
+     * @param rows number of residual rows
      * @param columns number of unknown columns
      */
     private SparseJacobian(int rows, int columns) {
@@ -3853,9 +3853,9 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
     /**
      * Set a sparse matrix entry.
      *
-     * @param row    row index
+     * @param row row index
      * @param column column index
-     * @param value  matrix value
+     * @param value matrix value
      */
     private void set(int row, int column, double value) {
       Map<Integer, Double> rowValues = values.get(Integer.valueOf(row));
@@ -3909,15 +3909,15 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
     /**
      * Create a column residual evaluation.
      *
-     * @param unknowns                          bounded unknown vector
-     * @param normalizedResiduals               normalized residual vector
-     * @param norm                              infinity norm of normalized residuals
-     * @param solution                          counter-current solution represented by the unknown vector
-     * @param iterations                        Newton iteration count
-     * @param maxFluxResidual                   maximum flux residual in mol/s
-     * @param maxHeatResidual                   maximum heat residual in W
-     * @param maxEnergyBalanceResidual          maximum energy residual in W-equivalent stream basis
-     * @param maxGasComponentBalanceResidual    maximum gas component-balance residual in mol/s
+     * @param unknowns bounded unknown vector
+     * @param normalizedResiduals normalized residual vector
+     * @param norm infinity norm of normalized residuals
+     * @param solution counter-current solution represented by the unknown vector
+     * @param iterations Newton iteration count
+     * @param maxFluxResidual maximum flux residual in mol/s
+     * @param maxHeatResidual maximum heat residual in W
+     * @param maxEnergyBalanceResidual maximum energy residual in W-equivalent stream basis
+     * @param maxGasComponentBalanceResidual maximum gas component-balance residual in mol/s
      * @param maxLiquidComponentBalanceResidual maximum liquid component-balance residual in mol/s
      */
     private ColumnResidualEvaluation(double[] unknowns, double[] normalizedResiduals, double norm,
@@ -3974,16 +3974,16 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
     /**
      * Create a residual evaluation.
      *
-     * @param interfaceEquilibrium     interface equilibrium data
-     * @param componentTransfers       proposed component transfers in mol/s
-     * @param normalizedResiduals      normalized residual vector
-     * @param norm                     infinity norm of normalized residuals
+     * @param interfaceEquilibrium interface equilibrium data
+     * @param componentTransfers proposed component transfers in mol/s
+     * @param normalizedResiduals normalized residual vector
+     * @param norm infinity norm of normalized residuals
      * @param maxFluxResidualMolPerSec maximum component flux residual in mol/s
-     * @param heatBalanceResidualW     interfacial heat-balance residual in W
-     * @param heatTransferRateW        sensible heat transferred to liquid in W
-     * @param gasTargetEnthalpy        gas outlet enthalpy target in J or W-equivalent stream basis
-     * @param liquidTargetEnthalpy     liquid outlet enthalpy target in J or W-equivalent stream basis
-     * @param iterations               residual iterations used for this evaluation
+     * @param heatBalanceResidualW interfacial heat-balance residual in W
+     * @param heatTransferRateW sensible heat transferred to liquid in W
+     * @param gasTargetEnthalpy gas outlet enthalpy target in J or W-equivalent stream basis
+     * @param liquidTargetEnthalpy liquid outlet enthalpy target in J or W-equivalent stream basis
+     * @param iterations residual iterations used for this evaluation
      */
     private SegmentResidualEvaluation(InterfaceEquilibrium interfaceEquilibrium, Map<String, Double> componentTransfers,
 	double[] normalizedResiduals, double norm, double maxFluxResidualMolPerSec, double heatBalanceResidualW,

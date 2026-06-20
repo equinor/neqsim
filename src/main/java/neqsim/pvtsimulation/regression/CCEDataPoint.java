@@ -16,9 +16,9 @@ public class CCEDataPoint {
   /**
    * Create a CCE data point.
    *
-   * @param pressure       pressure in bar
+   * @param pressure pressure in bar
    * @param relativeVolume relative volume V/Vsat
-   * @param temperature    temperature in K
+   * @param temperature temperature in K
    */
   public CCEDataPoint(double pressure, double relativeVolume, double temperature) {
     this.pressure = pressure;

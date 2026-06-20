@@ -37,9 +37,9 @@ public class ManifoldMechanicalDesignDataSource implements Serializable {
   /**
    * Load design parameters from database into calculator.
    *
-   * @param calc          the calculator to load parameters into
-   * @param company       the company for company-specific standards
-   * @param designCode    the design code (ASME-B31.3, DNV-ST-F101, etc.)
+   * @param calc the calculator to load parameters into
+   * @param company the company for company-specific standards
+   * @param designCode the design code (ASME-B31.3, DNV-ST-F101, etc.)
    * @param equipmentType the equipment type (Manifold)
    */
   public void loadIntoCalculator(ManifoldMechanicalDesignCalculator calc, String company, String designCode,
@@ -51,8 +51,8 @@ public class ManifoldMechanicalDesignDataSource implements Serializable {
   /**
    * Load company-specific requirements from TechnicalRequirements_Process.
    *
-   * @param calc          the calculator to load parameters into
-   * @param company       the company name
+   * @param calc the calculator to load parameters into
+   * @param company the company name
    * @param equipmentType the equipment type
    */
   public void loadCompanyRequirements(ManifoldMechanicalDesignCalculator calc, String company, String equipmentType) {
@@ -80,8 +80,8 @@ public class ManifoldMechanicalDesignDataSource implements Serializable {
   /**
    * Load standards-specific parameters.
    *
-   * @param calc          the calculator to load parameters into
-   * @param designCode    the design code
+   * @param calc the calculator to load parameters into
+   * @param designCode the design code
    * @param equipmentType the equipment type
    */
   public void loadStandardsParameters(ManifoldMechanicalDesignCalculator calc, String designCode,
@@ -100,7 +100,7 @@ public class ManifoldMechanicalDesignDataSource implements Serializable {
   /**
    * Load ASME B31.3 parameters from asme_standards table.
    *
-   * @param calc          the calculator
+   * @param calc the calculator
    * @param equipmentType the equipment type
    */
   public void loadASMEParameters(ManifoldMechanicalDesignCalculator calc, String equipmentType) {
@@ -125,7 +125,7 @@ public class ManifoldMechanicalDesignDataSource implements Serializable {
   /**
    * Load DNV-ST-F101 parameters from dnv_iso_en_standards table.
    *
-   * @param calc          the calculator
+   * @param calc the calculator
    * @param equipmentType the equipment type
    */
   public void loadDNVParameters(ManifoldMechanicalDesignCalculator calc, String equipmentType) {
@@ -151,9 +151,9 @@ public class ManifoldMechanicalDesignDataSource implements Serializable {
   /**
    * Apply company-specific parameter to calculator.
    *
-   * @param calc      the calculator
+   * @param calc the calculator
    * @param paramName parameter name
-   * @param numValue  numeric value
+   * @param numValue numeric value
    * @param textValue text value
    */
   private void applyCompanyParameter(ManifoldMechanicalDesignCalculator calc, String paramName, double numValue,
@@ -187,8 +187,8 @@ public class ManifoldMechanicalDesignDataSource implements Serializable {
   /**
    * Apply ASME B31.3 parameter to calculator.
    *
-   * @param calc   the calculator
-   * @param spec   specification name
+   * @param calc the calculator
+   * @param spec specification name
    * @param minVal minimum value
    * @param maxVal maximum value
    */
@@ -207,8 +207,8 @@ public class ManifoldMechanicalDesignDataSource implements Serializable {
   /**
    * Apply DNV-ST-F101 parameter to calculator.
    *
-   * @param calc   the calculator
-   * @param spec   specification name
+   * @param calc the calculator
+   * @param spec specification name
    * @param minVal minimum value
    * @param maxVal maximum value
    */

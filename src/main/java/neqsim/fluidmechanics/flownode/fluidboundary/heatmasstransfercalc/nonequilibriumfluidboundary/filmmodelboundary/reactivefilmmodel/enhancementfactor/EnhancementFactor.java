@@ -37,8 +37,7 @@ public class EnhancementFactor implements EnhancementFactorInterface {
    * </p>
    *
    * @param fluidBoundary a
-   *                      {@link neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.FluidBoundaryInterface}
-   *                      object
+   * {@link neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.FluidBoundaryInterface} object
    */
   public EnhancementFactor(FluidBoundaryInterface fluidBoundary) {
     this();
@@ -52,7 +51,7 @@ public class EnhancementFactor implements EnhancementFactorInterface {
    * calcEnhancementVec.
    * </p>
    *
-   * @param phase           a int
+   * @param phase a int
    * @param enhancementType a int
    */
   public void calcEnhancementVec(int phase, int enhancementType) {
@@ -87,7 +86,7 @@ public class EnhancementFactor implements EnhancementFactorInterface {
   /**
    * Indexed setter for property enhancementVec.
    *
-   * @param index          Index of the property.
+   * @param index Index of the property.
    * @param enhancementVec New value of the property at <CODE>index</CODE>.
    */
   public void setEnhancementVec(int index, double enhancementVec) {

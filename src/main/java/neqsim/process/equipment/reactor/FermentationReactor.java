@@ -213,7 +213,7 @@ public class FermentationReactor extends Fermenter {
   /**
    * Creates a fermentation reactor with inlet stream.
    *
-   * @param name        equipment name
+   * @param name equipment name
    * @param inletStream feed stream
    */
   public FermentationReactor(String name, StreamInterface inletStream) {
@@ -725,7 +725,7 @@ public class FermentationReactor extends Fermenter {
   /**
    * Runs continuous CSTR simulation solving steady-state mass balances.
    *
-   * @param id   UUID for this run
+   * @param id UUID for this run
    * @param volL reactor volume in liters
    */
   private void runContinuous(UUID id, double volL) {
@@ -790,7 +790,7 @@ public class FermentationReactor extends Fermenter {
   /**
    * Runs batch or fed-batch simulation using time integration.
    *
-   * @param id   UUID for this run
+   * @param id UUID for this run
    * @param volL reactor volume in liters
    */
   private void runBatch(UUID id, double volL) {
@@ -940,7 +940,7 @@ public class FermentationReactor extends Fermenter {
   /**
    * Creates the liquid and gas output streams from fermentation results.
    *
-   * @param id                   UUID for this run
+   * @param id UUID for this run
    * @param volumetricFlowLPerHr volumetric flow in L/hr
    */
   private void buildOutputStreams(UUID id, double volumetricFlowLPerHr) {

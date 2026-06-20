@@ -145,9 +145,9 @@ public class ReliabilityDataSource implements Serializable {
      * Creates reliability data.
      *
      * @param equipmentType equipment type
-     * @param subType       equipment subtype
-     * @param mtbf          mean time between failures in hours
-     * @param mttr          mean time to repair in hours
+     * @param subType equipment subtype
+     * @param mtbf mean time between failures in hours
+     * @param mttr mean time to repair in hours
      */
     public ReliabilityData(String equipmentType, String subType, double mtbf, double mttr) {
       this.equipmentType = equipmentType;
@@ -241,8 +241,8 @@ public class ReliabilityDataSource implements Serializable {
      * Creates failure mode data.
      *
      * @param equipmentType equipment type
-     * @param failureMode   failure mode name
-     * @param probability   probability percentage
+     * @param failureMode failure mode name
+     * @param probability probability percentage
      */
     public FailureModeData(String equipmentType, String failureMode, double probability) {
       this.equipmentType = equipmentType;
@@ -665,7 +665,7 @@ public class ReliabilityDataSource implements Serializable {
    * Gets reliability data for equipment type and subtype.
    *
    * @param equipmentType equipment type (e.g., "Compressor")
-   * @param subType       equipment subtype (e.g., "Centrifugal")
+   * @param subType equipment subtype (e.g., "Centrifugal")
    * @return reliability data or null if not found
    */
   public ReliabilityData getReliabilityData(String equipmentType, String subType) {
@@ -694,7 +694,7 @@ public class ReliabilityDataSource implements Serializable {
    * Gets failure modes for equipment type and subtype.
    *
    * @param equipmentType equipment type
-   * @param subType       equipment subtype
+   * @param subType equipment subtype
    * @return list of failure modes (may be empty)
    */
   public List<FailureModeData> getFailureModes(String equipmentType, String subType) {
@@ -758,7 +758,7 @@ public class ReliabilityDataSource implements Serializable {
    *
    * @param equipmentName name for the equipment
    * @param equipmentType type to lookup
-   * @param subType       subtype to lookup
+   * @param subType subtype to lookup
    * @return equipment failure mode with MTTR from database
    */
   public EquipmentFailureMode createFailureMode(String equipmentName, String equipmentType, String subType) {

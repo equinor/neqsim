@@ -78,8 +78,8 @@ public class LiftCurveGenerator implements Serializable {
   /**
    * Creates a lift curve generator for a ProcessSystem.
    *
-   * @param processSystem    the process system to analyze
-   * @param inletStreamName  name of the inlet stream
+   * @param processSystem the process system to analyze
+   * @param inletStreamName name of the inlet stream
    * @param outletStreamName name of the outlet stream
    */
   public LiftCurveGenerator(ProcessSystem processSystem, String inletStreamName, String outletStreamName) {
@@ -90,8 +90,8 @@ public class LiftCurveGenerator implements Serializable {
   /**
    * Creates a lift curve generator for a ProcessModel.
    *
-   * @param processModel     the process model to analyze
-   * @param inletStreamName  name of the inlet stream
+   * @param processModel the process model to analyze
+   * @param inletStreamName name of the inlet stream
    * @param outletStreamName name of the outlet stream
    */
   public LiftCurveGenerator(ProcessModel processModel, String inletStreamName, String outletStreamName) {
@@ -107,8 +107,8 @@ public class LiftCurveGenerator implements Serializable {
    * operating point. If the point is infeasible (e.g., due to constraint violations), the BHP is set to NaN.
    * </p>
    *
-   * @param flowRates    array of flow rates to evaluate
-   * @param thpValues    array of THP (outlet pressure) values
+   * @param flowRates array of flow rates to evaluate
+   * @param thpValues array of THP (outlet pressure) values
    * @param pressureUnit unit for pressure values
    * @param flowRateUnit unit for flow rates
    * @return generated lift curve table
@@ -172,8 +172,8 @@ public class LiftCurveGenerator implements Serializable {
    * pressure), it calculates the achievable flow rate.
    * </p>
    *
-   * @param bhpValues    array of BHP (inlet pressure) values
-   * @param thpValues    array of THP (outlet pressure) values
+   * @param bhpValues array of BHP (inlet pressure) values
+   * @param thpValues array of THP (outlet pressure) values
    * @param pressureUnit unit for pressure values
    * @param flowRateUnit unit for output flow rates
    * @return generated table with flow rates instead of BHP
@@ -238,12 +238,12 @@ public class LiftCurveGenerator implements Serializable {
   /**
    * Generates a table with automatic range determination based on equipment limits.
    *
-   * @param numFlowPoints     number of flow rate points
+   * @param numFlowPoints number of flow rate points
    * @param numPressurePoints number of pressure points
-   * @param minTHP            minimum THP value
-   * @param maxTHP            maximum THP value
-   * @param pressureUnit      pressure unit
-   * @param flowRateUnit      flow rate unit
+   * @param minTHP minimum THP value
+   * @param maxTHP maximum THP value
+   * @param pressureUnit pressure unit
+   * @param flowRateUnit flow rate unit
    * @return generated table
    */
   public LiftCurveTable generateTableAutoRange(int numFlowPoints, int numPressurePoints, double minTHP, double maxTHP,
@@ -346,7 +346,7 @@ public class LiftCurveGenerator implements Serializable {
    * Sets optimizer parameters.
    *
    * @param maxIterations maximum iterations
-   * @param tolerance     convergence tolerance
+   * @param tolerance convergence tolerance
    */
   public void setOptimizerParameters(int maxIterations, double tolerance) {
     optimizer.setMaxIterations(maxIterations);

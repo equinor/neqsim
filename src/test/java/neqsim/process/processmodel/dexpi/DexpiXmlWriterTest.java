@@ -570,7 +570,7 @@ public class DexpiXmlWriterTest extends NeqSimTest {
    * Counts occurrences of a substring in a string.
    *
    * @param text the text to search
-   * @param sub  the substring to count
+   * @param sub the substring to count
    * @return the number of occurrences
    */
   private int countOccurrences(String text, String sub) {

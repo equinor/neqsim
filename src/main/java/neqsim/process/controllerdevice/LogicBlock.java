@@ -96,7 +96,7 @@ public class LogicBlock extends NamedBaseClass implements ControllerDeviceInterf
   /**
    * Constructor for LogicBlock.
    *
-   * @param name     identifier for this logic block
+   * @param name identifier for this logic block
    * @param operator the logical operation to perform
    */
   public LogicBlock(String name, Operator operator) {
@@ -107,8 +107,8 @@ public class LogicBlock extends NamedBaseClass implements ControllerDeviceInterf
   /**
    * Add an input signal from a measurement device with a comparison threshold.
    *
-   * @param device     the measurement device providing the signal
-   * @param threshold  the threshold value for comparison
+   * @param device the measurement device providing the signal
+   * @param threshold the threshold value for comparison
    * @param comparator how to compare the measurement against the threshold
    */
   public void addInput(MeasurementDeviceInterface device, double threshold, Comparator comparator) {
@@ -349,8 +349,8 @@ public class LogicBlock extends NamedBaseClass implements ControllerDeviceInterf
     /**
      * Create a logic input.
      *
-     * @param device     the measurement device
-     * @param threshold  the threshold value
+     * @param device the measurement device
+     * @param threshold the threshold value
      * @param comparator how to compare
      */
     public LogicInput(MeasurementDeviceInterface device, double threshold, Comparator comparator) {

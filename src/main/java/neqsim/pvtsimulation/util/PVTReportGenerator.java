@@ -99,8 +99,8 @@ public class PVTReportGenerator {
      *
      * @param pressure Pressure (bara)
      * @param property Property name (e.g., "Bo", "Rs", "RelVol")
-     * @param value    Measured value
-     * @param unit     Unit string
+     * @param value Measured value
+     * @param unit Unit string
      */
     public LabDataPoint(double pressure, String property, double value, String unit) {
       this.pressure = pressure;
@@ -140,7 +140,7 @@ public class PVTReportGenerator {
    * Set project information.
    *
    * @param projectName Project name
-   * @param fluidName   Fluid/sample name
+   * @param fluidName Fluid/sample name
    * @return this for chaining
    */
   public PVTReportGenerator setProjectInfo(String projectName, String fluidName) {
@@ -152,7 +152,7 @@ public class PVTReportGenerator {
   /**
    * Set lab information.
    *
-   * @param labName    Laboratory name
+   * @param labName Laboratory name
    * @param sampleDate Sample date
    * @return this for chaining
    */
@@ -165,7 +165,7 @@ public class PVTReportGenerator {
   /**
    * Set reservoir conditions.
    *
-   * @param pressure           Reservoir pressure (bara)
+   * @param pressure Reservoir pressure (bara)
    * @param temperatureCelsius Reservoir temperature (°C)
    * @return this for chaining
    */
@@ -189,7 +189,7 @@ public class PVTReportGenerator {
   /**
    * Set saturation pressure directly.
    *
-   * @param pressure      Saturation pressure (bara)
+   * @param pressure Saturation pressure (bara)
    * @param isBubblePoint true if bubble point, false if dew point
    * @return this for chaining
    */
@@ -336,8 +336,8 @@ public class PVTReportGenerator {
    *
    * @param pressure Pressure (bara)
    * @param property Property name
-   * @param value    Measured value
-   * @param unit     Unit
+   * @param value Measured value
+   * @param unit Unit
    * @return this for chaining
    */
   public PVTReportGenerator addLabCCEData(double pressure, String property, double value, String unit) {
@@ -350,8 +350,8 @@ public class PVTReportGenerator {
    *
    * @param pressure Pressure (bara)
    * @param property Property name
-   * @param value    Measured value
-   * @param unit     Unit
+   * @param value Measured value
+   * @param unit Unit
    * @return this for chaining
    */
   public PVTReportGenerator addLabDLEData(double pressure, String property, double value, String unit) {
@@ -1117,8 +1117,8 @@ public class PVTReportGenerator {
   /**
    * Linear interpolation helper.
    *
-   * @param x  X values (must be sorted)
-   * @param y  Y values
+   * @param x X values (must be sorted)
+   * @param y Y values
    * @param xi X value to interpolate at
    * @return Interpolated y value, or NaN if out of range
    */

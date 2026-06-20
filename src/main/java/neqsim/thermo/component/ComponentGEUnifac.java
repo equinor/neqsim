@@ -41,10 +41,10 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
    * Constructor for ComponentGEUnifac.
    * </p>
    *
-   * @param name         Name of component.
-   * @param moles        Total number of moles of component.
+   * @param name Name of component.
+   * @param moles Total number of moles of component.
    * @param molesInPhase Number of moles in phase.
-   * @param compIndex    Index number of component in phase object component array.
+   * @param compIndex Index number of component in phase object component array.
    */
   public ComponentGEUnifac(String name, double moles, double molesInPhase, int compIndex) {
     super(name, moles, molesInPhase, compIndex);
@@ -158,7 +158,7 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
    * calclnGammak.
    * </p>
    *
-   * @param k     a int
+   * @param k a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    */
   public void calclnGammak(int k, PhaseInterface phase) {

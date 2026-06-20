@@ -85,8 +85,8 @@ public class BottleneckAnalysisOptimizerTest {
    * Creates a processing train with inlet pipe, separator, and outlet pipe.
    *
    * @param trainName name prefix for the train equipment
-   * @param inlet     inlet stream
-   * @param process   process system to add equipment to
+   * @param inlet inlet stream
+   * @param process process system to add equipment to
    * @return outlet pipe of the train
    */
   private PipeBeggsAndBrills createProcessingTrain(String trainName, StreamInterface inlet, ProcessSystem process) {
@@ -118,8 +118,8 @@ public class BottleneckAnalysisOptimizerTest {
    * Creates an upstream compressor train with pipes, separator, and compressor.
    *
    * @param trainName name prefix for the train equipment
-   * @param inlet     inlet stream
-   * @param process   process system to add equipment to
+   * @param inlet inlet stream
+   * @param process process system to add equipment to
    * @return outlet stream from the compressor discharge pipe
    */
   private StreamInterface createUpstreamCompressors(String trainName, StreamInterface inlet, ProcessSystem process) {

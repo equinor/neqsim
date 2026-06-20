@@ -115,7 +115,7 @@ public class ReleaseDispersionScenarioGenerator implements Serializable {
    * Sets the representative leak hole diameter with unit conversion.
    *
    * @param holeDiameter hole diameter value, must be positive
-   * @param unit         diameter unit, one of m, mm, or in
+   * @param unit diameter unit, one of m, mm, or in
    * @return this generator
    */
   public ReleaseDispersionScenarioGenerator holeDiameter(double holeDiameter, String unit) {
@@ -126,7 +126,7 @@ public class ReleaseDispersionScenarioGenerator implements Serializable {
    * Sets the full-bore rupture diameter used by the taxonomy.
    *
    * @param diameter full-bore diameter value, must be positive
-   * @param unit     diameter unit, one of m, mm, or in
+   * @param unit diameter unit, one of m, mm, or in
    * @return this generator
    */
   public ReleaseDispersionScenarioGenerator fullBoreDiameter(double diameter, String unit) {
@@ -185,7 +185,7 @@ public class ReleaseDispersionScenarioGenerator implements Serializable {
    * Sets release duration and time step for generated source terms.
    *
    * @param releaseDurationSeconds release duration in seconds, must be positive
-   * @param timeStepSeconds        time step in seconds, must be positive
+   * @param timeStepSeconds time step in seconds, must be positive
    * @return this generator
    */
   public ReleaseDispersionScenarioGenerator releaseDuration(double releaseDurationSeconds, double timeStepSeconds) {
@@ -284,7 +284,7 @@ public class ReleaseDispersionScenarioGenerator implements Serializable {
    * Adds a toxic endpoint calculation to every generated dispersion scenario.
    *
    * @param componentName component name in the NeqSim fluid
-   * @param thresholdPpm  toxic threshold in ppm, must be positive
+   * @param thresholdPpm toxic threshold in ppm, must be positive
    * @return this generator
    */
   public ReleaseDispersionScenarioGenerator toxicEndpoint(String componentName, double thresholdPpm) {
@@ -330,7 +330,7 @@ public class ReleaseDispersionScenarioGenerator implements Serializable {
   /**
    * Adds a named weather case to the batch weather envelope.
    *
-   * @param name       weather case name
+   * @param name weather case name
    * @param conditions boundary conditions
    * @return this generator
    */
@@ -493,7 +493,7 @@ public class ReleaseDispersionScenarioGenerator implements Serializable {
   /**
    * Creates a neutral-sector weather case.
    *
-   * @param name             weather case name
+   * @param name weather case name
    * @param windDirectionDeg wind direction in degrees
    * @return weather case
    */
@@ -524,10 +524,10 @@ public class ReleaseDispersionScenarioGenerator implements Serializable {
   /**
    * Adds a stream candidate if it is valid and has not already been added.
    *
-   * @param candidates     target candidate list
+   * @param candidates target candidate list
    * @param seenStreamKeys identity keys already added
-   * @param equipment      owning or producing equipment
-   * @param stream         stream to evaluate
+   * @param equipment owning or producing equipment
+   * @param stream stream to evaluate
    */
   private void addCandidate(List<StreamCandidate> candidates, Set<String> seenStreamKeys,
       ProcessEquipmentInterface equipment, StreamInterface stream) {
@@ -559,7 +559,7 @@ public class ReleaseDispersionScenarioGenerator implements Serializable {
   /**
    * Generates one release-dispersion scenario from a stream candidate.
    *
-   * @param candidate   stream candidate to screen
+   * @param candidate stream candidate to screen
    * @param releaseCase release taxonomy case
    * @param weatherCase weather case
    * @return generated scenario, or null if source-term generation gives no release
@@ -651,7 +651,7 @@ public class ReleaseDispersionScenarioGenerator implements Serializable {
   /**
    * Creates a readable scenario name.
    *
-   * @param candidate   stream candidate
+   * @param candidate stream candidate
    * @param releaseCase release case
    * @param weatherCase weather case
    * @return scenario name
@@ -666,7 +666,7 @@ public class ReleaseDispersionScenarioGenerator implements Serializable {
   /**
    * Returns a fallback name when a process object name is empty.
    *
-   * @param name     original name
+   * @param name original name
    * @param fallback fallback name
    * @return non-empty name
    */
@@ -681,7 +681,7 @@ public class ReleaseDispersionScenarioGenerator implements Serializable {
    * Converts a diameter value to meters.
    *
    * @param value diameter value
-   * @param unit  diameter unit
+   * @param unit diameter unit
    * @return diameter in m
    */
   private static double toMeters(double value, String unit) {
@@ -756,7 +756,7 @@ public class ReleaseDispersionScenarioGenerator implements Serializable {
      * Creates a stream candidate.
      *
      * @param equipment equipment that owns or produces the stream
-     * @param stream    stream to screen
+     * @param stream stream to screen
      */
     private StreamCandidate(ProcessEquipmentInterface equipment, StreamInterface stream) {
       this.equipment = equipment;
@@ -796,11 +796,11 @@ public class ReleaseDispersionScenarioGenerator implements Serializable {
     /**
      * Creates a release case.
      *
-     * @param caseName                  readable case name
-     * @param category                  case category
-     * @param holeDiameterM             representative hole diameter in m
+     * @param caseName readable case name
+     * @param category case category
+     * @param holeDiameterM representative hole diameter in m
      * @param screeningFrequencyPerYear generic screening frequency in 1/year
-     * @param description               case description
+     * @param description case description
      */
     ReleaseCase(String caseName, String category, double holeDiameterM, double screeningFrequencyPerYear,
 	String description) {
@@ -850,7 +850,7 @@ public class ReleaseDispersionScenarioGenerator implements Serializable {
     /**
      * Gets the effective hole diameter.
      *
-     * @param fullBoreDiameterM       full-bore diameter in m
+     * @param fullBoreDiameterM full-bore diameter in m
      * @param configuredHoleDiameterM configured hole diameter in m
      * @return effective hole diameter in m
      */
@@ -874,7 +874,7 @@ public class ReleaseDispersionScenarioGenerator implements Serializable {
     /**
      * Creates a weather case.
      *
-     * @param name               weather case name
+     * @param name weather case name
      * @param boundaryConditions boundary conditions
      */
     public WeatherCase(String name, BoundaryConditions boundaryConditions) {
@@ -935,11 +935,11 @@ public class ReleaseDispersionScenarioGenerator implements Serializable {
     /**
      * Creates a consequence branch.
      *
-     * @param branchId               stable branch id
-     * @param consequenceType        consequence type, for example Jet fire or VCE
+     * @param branchId stable branch id
+     * @param consequenceType consequence type, for example Jet fire or VCE
      * @param conditionalProbability branch probability conditional on the release, from 0 to 1
-     * @param ignitionTiming         ignition timing, for example immediate, delayed or none
-     * @param description            branch description
+     * @param ignitionTiming ignition timing, for example immediate, delayed or none
+     * @param description branch description
      */
     public ConsequenceBranch(String branchId, String consequenceType, double conditionalProbability,
 	String ignitionTiming, String description) {
@@ -1033,26 +1033,26 @@ public class ReleaseDispersionScenarioGenerator implements Serializable {
     /**
      * Creates a release-dispersion scenario result.
      *
-     * @param processName              process system name
-     * @param scenarioName             scenario name
-     * @param equipmentName            equipment name
-     * @param equipmentType            equipment Java type
-     * @param streamName               stream name
-     * @param streamPressureBara       stream pressure in bara
-     * @param streamTemperatureK       stream temperature in K
+     * @param processName process system name
+     * @param scenarioName scenario name
+     * @param equipmentName equipment name
+     * @param equipmentType equipment Java type
+     * @param streamName stream name
+     * @param streamPressureBara stream pressure in bara
+     * @param streamTemperatureK stream temperature in K
      * @param streamMassFlowRateKgPerS stream mass flow rate in kg/s
-     * @param holeDiameterM            leak hole diameter in m
-     * @param inventoryVolumeM3        representative inventory volume in m3
-     * @param releaseDurationSeconds   source-term duration in s
-     * @param releaseHeightM           release height in m
-     * @param releaseOrientation       release orientation
-     * @param releaseCase              release taxonomy case
-     * @param weatherCase              weather case
-     * @param sourceTerm               source-term result
-     * @param dispersionResult         dispersion screening result
-     * @param trappedInventoryResult   optional trapped inventory result
-     * @param componentMoleFractions   stream component mole fractions
-     * @param consequenceBranches      consequence branches
+     * @param holeDiameterM leak hole diameter in m
+     * @param inventoryVolumeM3 representative inventory volume in m3
+     * @param releaseDurationSeconds source-term duration in s
+     * @param releaseHeightM release height in m
+     * @param releaseOrientation release orientation
+     * @param releaseCase release taxonomy case
+     * @param weatherCase weather case
+     * @param sourceTerm source-term result
+     * @param dispersionResult dispersion screening result
+     * @param trappedInventoryResult optional trapped inventory result
+     * @param componentMoleFractions stream component mole fractions
+     * @param consequenceBranches consequence branches
      */
     public ReleaseDispersionScenario(String processName, String scenarioName, String equipmentName,
 	String equipmentType, String streamName, double streamPressureBara, double streamTemperatureK,

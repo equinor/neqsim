@@ -109,7 +109,7 @@ public class AntiSurgeDynamicBenchmark {
    * Runs the transient and records the surge-margin and valve-opening histories.
    *
    * @param controllerActive whether the anti-surge controller is allowed to act; when {@code false} the recycle valve
-   *                         stays closed (open-loop reference case)
+   * stays closed (open-loop reference case)
    */
   public void run(boolean controllerActive) {
     controller.setActive(controllerActive);
@@ -282,7 +282,7 @@ public class AntiSurgeDynamicBenchmark {
     /**
      * Constructs a benchmark compressor with an initial distance to surge.
      *
-     * @param name          the equipment name
+     * @param name the equipment name
      * @param initialMargin the initial distance to surge
      */
     private BenchmarkCompressor(String name, double initialMargin) {

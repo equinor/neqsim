@@ -182,7 +182,7 @@ public class NorsokP002LineSizingValidator implements Serializable {
   /**
    * Gets the representative pipe velocity.
    *
-   * @param pipe  pipeline model
+   * @param pipe pipeline model
    * @param fluid inlet fluid
    * @return velocity in m/s, or NaN when unavailable
    */
@@ -271,7 +271,7 @@ public class NorsokP002LineSizingValidator implements Serializable {
   /**
    * Gets the upper velocity limit for the service.
    *
-   * @param serviceType                   detected service type
+   * @param serviceType detected service type
    * @param allowedErosionalVelocityMPerS allowed erosional velocity in m/s
    * @return upper velocity limit in m/s, or NaN when not applicable
    */
@@ -309,19 +309,19 @@ public class NorsokP002LineSizingValidator implements Serializable {
     /**
      * Creates a line-sizing result.
      *
-     * @param serviceType                   detected service type
-     * @param velocityMPerS                 velocity in m/s
-     * @param lowerVelocityLimitMPerS       lower velocity limit in m/s
-     * @param upperVelocityLimitMPerS       upper velocity limit in m/s
-     * @param pressureGradientPaPerM        pressure gradient in Pa/m
-     * @param pressureGradientLimitPaPerM   pressure gradient limit in Pa/m
-     * @param densityKgPerM3                mixture density in kg/m3
-     * @param erosionalVelocityMPerS        erosional velocity in m/s
+     * @param serviceType detected service type
+     * @param velocityMPerS velocity in m/s
+     * @param lowerVelocityLimitMPerS lower velocity limit in m/s
+     * @param upperVelocityLimitMPerS upper velocity limit in m/s
+     * @param pressureGradientPaPerM pressure gradient in Pa/m
+     * @param pressureGradientLimitPaPerM pressure gradient limit in Pa/m
+     * @param densityKgPerM3 mixture density in kg/m3
+     * @param erosionalVelocityMPerS erosional velocity in m/s
      * @param allowedErosionalVelocityMPerS allowed erosional velocity in m/s
-     * @param velocityAboveMinimum          true when velocity is above the minimum limit
-     * @param velocityBelowMaximum          true when velocity is below the maximum limit
-     * @param pressureGradientOk            true when pressure gradient is acceptable
-     * @param erosionalVelocityOk           true when erosional velocity limit is acceptable
+     * @param velocityAboveMinimum true when velocity is above the minimum limit
+     * @param velocityBelowMaximum true when velocity is below the maximum limit
+     * @param pressureGradientOk true when pressure gradient is acceptable
+     * @param erosionalVelocityOk true when erosional velocity limit is acceptable
      */
     public LineSizingResult(ServiceType serviceType, double velocityMPerS, double lowerVelocityLimitMPerS,
 	double upperVelocityLimitMPerS, double pressureGradientPaPerM, double pressureGradientLimitPaPerM,

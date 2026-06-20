@@ -185,7 +185,7 @@ public class MulticomponentNucleation {
    * Enables or disables heterogeneous nucleation with a specified contact angle.
    *
    * @param isHeterogeneous true to enable heterogeneous nucleation
-   * @param angleDegrees    contact angle in degrees (0 to 180)
+   * @param angleDegrees contact angle in degrees (0 to 180)
    */
   public void setHeterogeneous(boolean isHeterogeneous, double angleDegrees) {
     this.heterogeneous = isHeterogeneous;

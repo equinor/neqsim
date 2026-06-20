@@ -862,12 +862,12 @@ public class ThermalDesignCalculator {
   /**
    * Sets all tube-side fluid properties.
    *
-   * @param density      density (kg/m3)
-   * @param viscosity    dynamic viscosity (Pa*s)
-   * @param cp           heat capacity (J/(kg*K))
+   * @param density density (kg/m3)
+   * @param viscosity dynamic viscosity (Pa*s)
+   * @param cp heat capacity (J/(kg*K))
    * @param conductivity thermal conductivity (W/(m*K))
    * @param massFlowRate mass flow rate (kg/s)
-   * @param heating      true if tube fluid is being heated
+   * @param heating true if tube fluid is being heated
    */
   public void setTubeSideFluid(double density, double viscosity, double cp, double conductivity, double massFlowRate,
       boolean heating) {
@@ -882,9 +882,9 @@ public class ThermalDesignCalculator {
   /**
    * Sets all shell-side fluid properties.
    *
-   * @param density      density (kg/m3)
-   * @param viscosity    dynamic viscosity (Pa*s)
-   * @param cp           heat capacity (J/(kg*K))
+   * @param density density (kg/m3)
+   * @param viscosity dynamic viscosity (Pa*s)
+   * @param cp heat capacity (J/(kg*K))
    * @param conductivity thermal conductivity (W/(m*K))
    * @param massFlowRate mass flow rate (kg/s)
    */

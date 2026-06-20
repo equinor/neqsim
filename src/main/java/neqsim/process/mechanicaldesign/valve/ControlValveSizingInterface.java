@@ -25,8 +25,8 @@ public interface ControlValveSizingInterface {
    * calculateFlowRateFromValveOpening.
    * </p>
    *
-   * @param ActualKv     a double
-   * @param inletStream  a {@link neqsim.process.equipment.stream.StreamInterface} object
+   * @param ActualKv a double
+   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    * @param outletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    * @return a double
    */
@@ -38,10 +38,10 @@ public interface ControlValveSizingInterface {
    * calculateValveOpeningFromFlowRate.
    * </p>
    *
-   * @param Q              a double
+   * @param Q a double
    * @param ActualActualKv a double
-   * @param inletStream    a {@link neqsim.process.equipment.stream.StreamInterface} object
-   * @param outletStream   a {@link neqsim.process.equipment.stream.StreamInterface} object
+   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
+   * @param outletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    * @return a double
    */
   public double calculateValveOpeningFromFlowRate(double Q, double ActualActualKv, StreamInterface inletStream,
@@ -52,7 +52,7 @@ public interface ControlValveSizingInterface {
    * findOutletPressureForFixedKv.
    * </p>
    *
-   * @param ActualKv    a double
+   * @param ActualKv a double
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    * @return a double
    */

@@ -87,8 +87,8 @@ public class GasDispersionAnalyzer implements Serializable {
   /**
    * Analyze a process stream as a continuous release using the stream flow rate.
    *
-   * @param scenarioName       scenario identifier
-   * @param stream             process stream providing fluid and flow rate
+   * @param scenarioName scenario identifier
+   * @param stream process stream providing fluid and flow rate
    * @param boundaryConditions ambient boundary conditions
    * @return gas dispersion screening result
    */
@@ -184,8 +184,8 @@ public class GasDispersionAnalyzer implements Serializable {
    *
    * @param selectedModel selected model
    * @param sourceDensity source gas density in kg/m3
-   * @param airDensity    air density in kg/m3
-   * @param fuelData      fuel mixture data
+   * @param airDensity air density in kg/m3
+   * @param fuelData fuel mixture data
    * @return flammable endpoint data
    */
   private FlammableEndpoint calculateFlammableEndpoint(ModelSelection selectedModel, double sourceDensity,
@@ -223,8 +223,8 @@ public class GasDispersionAnalyzer implements Serializable {
    *
    * @param selectedModel selected model
    * @param sourceDensity source gas density in kg/m3
-   * @param airDensity    air density in kg/m3
-   * @param ambientFluid  expanded fluid at ambient conditions
+   * @param airDensity air density in kg/m3
+   * @param ambientFluid expanded fluid at ambient conditions
    * @return toxic endpoint data
    */
   private ToxicEndpoint calculateToxicEndpoint(ModelSelection selectedModel, double sourceDensity, double airDensity,
@@ -255,7 +255,7 @@ public class GasDispersionAnalyzer implements Serializable {
    * Select the model to use from explicit configuration or gas density ratio.
    *
    * @param sourceDensity source gas density in kg/m3
-   * @param airDensity    air density in kg/m3
+   * @param airDensity air density in kg/m3
    * @return selected model
    */
   private ModelSelection selectModel(double sourceDensity, double airDensity) {
@@ -280,7 +280,7 @@ public class GasDispersionAnalyzer implements Serializable {
    * Create a dense gas screening model.
    *
    * @param sourceDensity source gas density in kg/m3
-   * @param airDensity    air density in kg/m3
+   * @param airDensity air density in kg/m3
    * @return heavy gas dispersion model
    */
   private HeavyGasDispersion createHeavyGasModel(double sourceDensity, double airDensity) {
@@ -292,7 +292,7 @@ public class GasDispersionAnalyzer implements Serializable {
    * Calculate dense-gas distance to concentration ratio with input guards.
    *
    * @param denseGas dense-gas model
-   * @param ratio    target concentration ratio
+   * @param ratio target concentration ratio
    * @return distance in m, or NaN if the target is not meaningful
    */
   private static double distanceToDenseGasRatio(HeavyGasDispersion denseGas, double ratio) {
@@ -305,9 +305,9 @@ public class GasDispersionAnalyzer implements Serializable {
   /**
    * Estimate a Gaussian cloud volume above a concentration threshold.
    *
-   * @param plume            Gaussian plume model
+   * @param plume Gaussian plume model
    * @param thresholdKgPerM3 threshold concentration in kg/m3
-   * @param distanceM        maximum centerline distance to the threshold in m
+   * @param distanceM maximum centerline distance to the threshold in m
    * @return estimated cloud volume in m3
    */
   private static double estimateGaussianCloudVolume(GaussianPlume plume, double thresholdKgPerM3, double distanceM) {
@@ -351,7 +351,7 @@ public class GasDispersionAnalyzer implements Serializable {
   /**
    * Convert a gas volume fraction to mass concentration at ambient conditions.
    *
-   * @param volumeFraction    volume fraction in air
+   * @param volumeFraction volume fraction in air
    * @param molarMassKgPerMol molar mass in kg/mol
    * @return concentration in kg/m3
    */
@@ -375,7 +375,7 @@ public class GasDispersionAnalyzer implements Serializable {
   /**
    * Prepare expanded release gas at ambient pressure and temperature.
    *
-   * @param input              input process fluid
+   * @param input input process fluid
    * @param boundaryConditions ambient boundary conditions
    * @return expanded fluid clone
    */
@@ -475,7 +475,7 @@ public class GasDispersionAnalyzer implements Serializable {
   /**
    * Calculate fuel mixture data from a gas phase.
    *
-   * @param system    thermodynamic system at release composition
+   * @param system thermodynamic system at release composition
    * @param manualLfl manual LFL override, or NaN to use component library
    * @return fuel data
    */
@@ -514,7 +514,7 @@ public class GasDispersionAnalyzer implements Serializable {
   /**
    * Gets component mole, mass and molar-mass data.
    *
-   * @param system        thermodynamic system
+   * @param system thermodynamic system
    * @param componentName component name to find
    * @return component data
    */
@@ -583,8 +583,8 @@ public class GasDispersionAnalyzer implements Serializable {
   /**
    * Put an LFL value into the lookup table using normalized key.
    *
-   * @param lfl            target lookup table
-   * @param componentName  component name
+   * @param lfl target lookup table
+   * @param componentName component name
    * @param volumeFraction LFL volume fraction in air
    */
   private static void putLfl(Map<String, Double> lfl, String componentName, double volumeFraction) {
@@ -734,7 +734,7 @@ public class GasDispersionAnalyzer implements Serializable {
      * Set a toxic endpoint to evaluate.
      *
      * @param componentName component name in the NeqSim fluid
-     * @param thresholdPpm  endpoint threshold in ppm
+     * @param thresholdPpm endpoint threshold in ppm
      * @return this builder
      */
     public Builder toxicEndpoint(String componentName, double thresholdPpm) {
@@ -764,9 +764,9 @@ public class GasDispersionAnalyzer implements Serializable {
     /**
      * Creates fuel data.
      *
-     * @param fuelMoleFraction                  fuel mole fraction
-     * @param fuelMassFraction                  fuel mass fraction
-     * @param fuelMolarMassKgPerMol             fuel molar mass in kg/mol
+     * @param fuelMoleFraction fuel mole fraction
+     * @param fuelMassFraction fuel mass fraction
+     * @param fuelMolarMassKgPerMol fuel molar mass in kg/mol
      * @param lowerFlammableLimitVolumeFraction LFL volume fraction in air
      */
     private FuelData(double fuelMoleFraction, double fuelMassFraction, double fuelMolarMassKgPerMol,
@@ -806,8 +806,8 @@ public class GasDispersionAnalyzer implements Serializable {
     /**
      * Creates component data.
      *
-     * @param moleFraction      component mole fraction
-     * @param massFraction      component mass fraction
+     * @param moleFraction component mole fraction
+     * @param massFraction component mass fraction
      * @param molarMassKgPerMol component molar mass in kg/mol
      */
     private ComponentData(double moleFraction, double massFraction, double molarMassKgPerMol) {
@@ -848,10 +848,10 @@ public class GasDispersionAnalyzer implements Serializable {
      * Creates a flammable endpoint holder.
      *
      * @param endpointFractionOfLfl configured endpoint fraction of LFL
-     * @param distanceToEndpointM   distance to the configured endpoint in m
-     * @param distanceToHalfLflM    distance to 50 percent LFL in m
-     * @param distanceToLflM        distance to 100 percent LFL in m
-     * @param cloudVolumeM3         estimated cloud volume in m3
+     * @param distanceToEndpointM distance to the configured endpoint in m
+     * @param distanceToHalfLflM distance to 50 percent LFL in m
+     * @param distanceToLflM distance to 100 percent LFL in m
+     * @param cloudVolumeM3 estimated cloud volume in m3
      */
     private FlammableEndpoint(double endpointFractionOfLfl, double distanceToEndpointM, double distanceToHalfLflM,
 	double distanceToLflM, double cloudVolumeM3) {
@@ -874,8 +874,8 @@ public class GasDispersionAnalyzer implements Serializable {
      * Creates a toxic endpoint holder.
      *
      * @param componentName component name
-     * @param thresholdPpm  threshold in ppm
-     * @param distanceM     distance in m
+     * @param thresholdPpm threshold in ppm
+     * @param distanceM distance in m
      */
     private ToxicEndpoint(String componentName, double thresholdPpm, double distanceM) {
       this.componentName = componentName;

@@ -61,7 +61,7 @@ public class MaterialsReviewEngine {
    * Extracts process conditions from a process system, overlays material-register data, and evaluates the result.
    *
    * @param process process system supplying temperatures, pressures, and stream compositions
-   * @param input   optional material register and defaults to overlay by tag
+   * @param input optional material register and defaults to overlay by tag
    * @return materials review report
    */
   public MaterialsReviewReport evaluate(ProcessSystem process, MaterialsReviewInput input) {
@@ -73,7 +73,7 @@ public class MaterialsReviewEngine {
   /**
    * Evaluates one item.
    *
-   * @param item                   material review item
+   * @param item material review item
    * @param defaultDesignLifeYears default design life in years
    * @return item review result
    */
@@ -120,15 +120,15 @@ public class MaterialsReviewEngine {
   /**
    * Runs NORSOK M-506 CO2 corrosion when relevant.
    *
-   * @param service         service envelope
-   * @param result          item result
-   * @param temperatureC    operating temperature in Celsius
-   * @param pressureBara    operating pressure in bara
+   * @param service service envelope
+   * @param result item result
+   * @param temperatureC operating temperature in Celsius
+   * @param pressureBara operating pressure in bara
    * @param co2MoleFraction CO2 mole fraction
    * @param h2sMoleFraction H2S mole fraction
-   * @param chlorideMgL     chloride concentration in mg/L
-   * @param pH              aqueous pH
-   * @param freeWater       true when free water is present
+   * @param chlorideMgL chloride concentration in mg/L
+   * @param pH aqueous pH
+   * @param freeWater true when free water is present
    * @return configured and calculated corrosion model
    */
   private NorsokM506CorrosionRate runCo2Corrosion(MaterialServiceEnvelope service, MaterialReviewResult result,
@@ -186,14 +186,14 @@ public class MaterialsReviewEngine {
   /**
    * Runs NORSOK M-001 material selection and stores the recommendation.
    *
-   * @param service            service envelope
-   * @param result             item result
-   * @param co2Corrosion       calculated CO2 corrosion model
+   * @param service service envelope
+   * @param result item result
+   * @param co2Corrosion calculated CO2 corrosion model
    * @param designTemperatureC design temperature in Celsius
-   * @param designLifeYears    design life in years
-   * @param chlorideMgL        chloride concentration in mg/L
-   * @param pH                 aqueous pH
-   * @param freeWater          true when free water is present
+   * @param designLifeYears design life in years
+   * @param chlorideMgL chloride concentration in mg/L
+   * @param pH aqueous pH
+   * @param freeWater true when free water is present
    */
   private void runMaterialSelection(MaterialServiceEnvelope service, MaterialReviewResult result,
       NorsokM506CorrosionRate co2Corrosion, double designTemperatureC, double designLifeYears, double chlorideMgL,
@@ -238,16 +238,16 @@ public class MaterialsReviewEngine {
   /**
    * Runs sour-service assessment.
    *
-   * @param service         service envelope
-   * @param result          item result
-   * @param material        material grade/type
-   * @param temperatureC    temperature in Celsius
-   * @param pressureBara    pressure in bara
+   * @param service service envelope
+   * @param result item result
+   * @param material material grade/type
+   * @param temperatureC temperature in Celsius
+   * @param pressureBara pressure in bara
    * @param co2MoleFraction CO2 mole fraction
    * @param h2sMoleFraction H2S mole fraction
-   * @param chlorideMgL     chloride concentration in mg/L
-   * @param pH              aqueous pH
-   * @param freeWater       true when free water is present
+   * @param chlorideMgL chloride concentration in mg/L
+   * @param pH aqueous pH
+   * @param freeWater true when free water is present
    */
   private void runSourService(MaterialServiceEnvelope service, MaterialReviewResult result, String material,
       double temperatureC, double pressureBara, double co2MoleFraction, double h2sMoleFraction, double chlorideMgL,
@@ -293,12 +293,12 @@ public class MaterialsReviewEngine {
   /**
    * Runs chloride SCC assessment.
    *
-   * @param service      service envelope
-   * @param result       item result
-   * @param material     material grade/type
+   * @param service service envelope
+   * @param result item result
+   * @param material material grade/type
    * @param temperatureC temperature in Celsius
-   * @param chlorideMgL  chloride concentration in mg/L
-   * @param pH           aqueous pH
+   * @param chlorideMgL chloride concentration in mg/L
+   * @param pH aqueous pH
    */
   private void runChlorideScc(MaterialServiceEnvelope service, MaterialReviewResult result, String material,
       double temperatureC, double chlorideMgL, double pH) {
@@ -331,11 +331,11 @@ public class MaterialsReviewEngine {
   /**
    * Runs dissolved oxygen corrosion assessment.
    *
-   * @param service      service envelope
-   * @param result       item result
-   * @param material     material grade/type
+   * @param service service envelope
+   * @param result item result
+   * @param material material grade/type
    * @param temperatureC temperature in Celsius
-   * @param chlorideMgL  chloride concentration in mg/L
+   * @param chlorideMgL chloride concentration in mg/L
    */
   private void runOxygenCorrosion(MaterialServiceEnvelope service, MaterialReviewResult result, String material,
       double temperatureC, double chlorideMgL) {
@@ -367,14 +367,14 @@ public class MaterialsReviewEngine {
   /**
    * Runs dense-phase CO2 impurity and wet-corrosion assessment.
    *
-   * @param service         service envelope
-   * @param result          item result
-   * @param material        material grade/type
-   * @param temperatureC    temperature in Celsius
-   * @param pressureBara    pressure in bara
+   * @param service service envelope
+   * @param result item result
+   * @param material material grade/type
+   * @param temperatureC temperature in Celsius
+   * @param pressureBara pressure in bara
    * @param co2MoleFraction CO2 mole fraction
    * @param h2sMoleFraction H2S mole fraction
-   * @param h2MoleFraction  H2 mole fraction
+   * @param h2MoleFraction H2 mole fraction
    */
   private void runDenseCo2(MaterialServiceEnvelope service, MaterialReviewResult result, String material,
       double temperatureC, double pressureBara, double co2MoleFraction, double h2sMoleFraction, double h2MoleFraction) {
@@ -407,15 +407,15 @@ public class MaterialsReviewEngine {
   /**
    * Runs hydrogen service assessment.
    *
-   * @param service         service envelope
-   * @param result          item result
-   * @param material        material grade/type
-   * @param temperatureC    temperature in Celsius
-   * @param pressureBara    pressure in bara
-   * @param h2MoleFraction  hydrogen mole fraction
+   * @param service service envelope
+   * @param result item result
+   * @param material material grade/type
+   * @param temperatureC temperature in Celsius
+   * @param pressureBara pressure in bara
+   * @param h2MoleFraction hydrogen mole fraction
    * @param h2sMoleFraction H2S mole fraction
-   * @param chlorideMgL     chloride concentration in mg/L
-   * @param freeWater       true when free water is present
+   * @param chlorideMgL chloride concentration in mg/L
+   * @param freeWater true when free water is present
    * @param designLifeYears design life in years
    */
   private void runHydrogen(MaterialServiceEnvelope service, MaterialReviewResult result, String material,
@@ -463,11 +463,11 @@ public class MaterialsReviewEngine {
   /**
    * Runs API 941 Nelson curve screening when hydrogen and high temperature are relevant.
    *
-   * @param service        service envelope
-   * @param result         item result
-   * @param material       material grade/type
-   * @param temperatureC   temperature in Celsius
-   * @param pressureBara   pressure in bara
+   * @param service service envelope
+   * @param result item result
+   * @param material material grade/type
+   * @param temperatureC temperature in Celsius
+   * @param pressureBara pressure in bara
    * @param h2MoleFraction hydrogen mole fraction
    */
   private void runNelsonCurve(MaterialServiceEnvelope service, MaterialReviewResult result, String material,
@@ -497,9 +497,9 @@ public class MaterialsReviewEngine {
   /**
    * Runs ammonia compatibility screening.
    *
-   * @param service      service envelope
-   * @param result       item result
-   * @param material     material grade/type
+   * @param service service envelope
+   * @param result item result
+   * @param material material grade/type
    * @param temperatureC temperature in Celsius
    * @param pressureBara pressure in bara
    */
@@ -537,9 +537,9 @@ public class MaterialsReviewEngine {
   /**
    * Runs corrosion-under-insulation screening.
    *
-   * @param service      service envelope
-   * @param result       item result
-   * @param material     material grade/type
+   * @param service service envelope
+   * @param result item result
+   * @param material material grade/type
    * @param temperatureC temperature in Celsius
    */
   private void runCui(MaterialServiceEnvelope service, MaterialReviewResult result, String material,
@@ -567,12 +567,12 @@ public class MaterialsReviewEngine {
   /**
    * Runs direct screening checks for mechanisms that do not yet have dedicated calculators.
    *
-   * @param service      service envelope
-   * @param result       item result
-   * @param material     material grade/type
+   * @param service service envelope
+   * @param result item result
+   * @param material material grade/type
    * @param temperatureC temperature in Celsius
-   * @param chlorideMgL  chloride concentration in mg/L
-   * @param freeWater    true when free water is present
+   * @param chlorideMgL chloride concentration in mg/L
+   * @param freeWater true when free water is present
    */
   private void runScreeningMechanisms(MaterialServiceEnvelope service, MaterialReviewResult result, String material,
       double temperatureC, double chlorideMgL, boolean freeWater) {
@@ -611,8 +611,8 @@ public class MaterialsReviewEngine {
   /**
    * Runs remaining-life screening from wall thickness and corrosion rate.
    *
-   * @param service      service envelope
-   * @param result       item result
+   * @param service service envelope
+   * @param result item result
    * @param co2Corrosion CO2 corrosion model supplying default corrosion rate
    */
   private void runIntegrityLife(MaterialServiceEnvelope service, MaterialReviewResult result,
@@ -664,9 +664,9 @@ public class MaterialsReviewEngine {
   /**
    * Reads the first available numeric value from an envelope.
    *
-   * @param service      service envelope
+   * @param service service envelope
    * @param defaultValue default value
-   * @param keys         candidate keys
+   * @param keys candidate keys
    * @return numeric value
    */
   private double value(MaterialServiceEnvelope service, double defaultValue, String... keys) {
@@ -682,7 +682,7 @@ public class MaterialsReviewEngine {
    * Reads a fraction from mole fraction or percent-style fields.
    *
    * @param service service envelope
-   * @param keys    candidate keys
+   * @param keys candidate keys
    * @return value as fraction from 0 to 1
    */
   private double fractionValue(MaterialServiceEnvelope service, String... keys) {

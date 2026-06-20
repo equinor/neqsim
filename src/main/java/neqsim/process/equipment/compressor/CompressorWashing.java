@@ -426,7 +426,7 @@ public class CompressorWashing implements Serializable {
   /**
    * Calculate annual wash chemical cost.
    *
-   * @param washesPerYear        number of washes per year
+   * @param washesPerYear number of washes per year
    * @param chemicalCostPerLiter cost per liter of wash solution
    * @return annual chemical cost
    */
@@ -464,8 +464,8 @@ public class CompressorWashing implements Serializable {
    * Estimate annual production loss due to fouling.
    *
    * @param baseProductionRate base production rate [units/hr]
-   * @param avgFouling         average fouling factor over year
-   * @param operatingHours     annual operating hours
+   * @param avgFouling average fouling factor over year
+   * @param operatingHours annual operating hours
    * @return production loss [units]
    */
   public double estimateAnnualProductionLoss(double baseProductionRate, double avgFouling, double operatingHours) {
@@ -494,10 +494,10 @@ public class CompressorWashing implements Serializable {
     /**
      * Creates a wash event record.
      *
-     * @param method   washing method used
-     * @param hours    operating hours at time of wash
-     * @param before   fouling factor before wash
-     * @param after    fouling factor after wash
+     * @param method washing method used
+     * @param hours operating hours at time of wash
+     * @param before fouling factor before wash
+     * @param after fouling factor after wash
      * @param recovery performance recovery achieved
      */
     public WashEvent(WashingMethod method, double hours, double before, double after, double recovery) {

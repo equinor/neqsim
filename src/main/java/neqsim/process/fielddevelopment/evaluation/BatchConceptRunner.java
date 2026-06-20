@@ -231,7 +231,7 @@ public class BatchConceptRunner {
      * Called when progress is made.
      *
      * @param completed number of completed evaluations
-     * @param total     total number of evaluations
+     * @param total total number of evaluations
      */
     void onProgress(int completed, int total);
   }

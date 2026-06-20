@@ -144,11 +144,11 @@ public class PhaseElectrolyteCPAAdvanced extends PhaseElectrolyteCPAstatoil {
    * and ions without advanced parameters, the parent mixing rule is used.
    * </p>
    *
-   * @param compNumb    component index
-   * @param phase       phase object
+   * @param compNumb component index
+   * @param phase phase object
    * @param temperature temperature in Kelvin
-   * @param pressure    pressure in bara
-   * @param numbcomp    number of components
+   * @param pressure pressure in bara
+   * @param numbcomp number of components
    * @return composition-weighted W parameter for component compNumb
    */
   @Override
@@ -175,11 +175,11 @@ public class PhaseElectrolyteCPAAdvanced extends PhaseElectrolyteCPAstatoil {
    * Calculate the temperature derivative of the composition-weighted short-range interaction parameter using
    * ion-specific parameters from {@link IonParametersAdvanced}.
    *
-   * @param compNumb    component index
-   * @param phase       phase object
+   * @param compNumb component index
+   * @param phase phase object
    * @param temperature temperature in Kelvin
-   * @param pressure    pressure in bara
-   * @param numbcomp    number of components
+   * @param pressure pressure in bara
+   * @param numbcomp number of components
    * @return temperature derivative of composition-weighted W parameter
    */
   @Override

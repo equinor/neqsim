@@ -94,7 +94,7 @@ public class CPAMixingRuleHandler extends MixingRuleHandler {
    * getMixingRule.
    * </p>
    *
-   * @param mr    a int
+   * @param mr a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a {@link neqsim.thermo.mixingrule.CPAMixingRulesInterface} object
    */
@@ -149,7 +149,7 @@ public class CPAMixingRuleHandler extends MixingRuleHandler {
    * resetMixingRule.
    * </p>
    *
-   * @param i     a int
+   * @param i a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a {@link neqsim.thermo.mixingrule.CPAMixingRulesInterface} object
    */
@@ -668,7 +668,7 @@ public class CPAMixingRuleHandler extends MixingRuleHandler {
    * </p>
    *
    * @param compnumb a int
-   * @param phase    a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return an array of int objects
    */
   public int[][] setAssociationScheme(int compnumb, PhaseInterface phase) {
@@ -690,9 +690,9 @@ public class CPAMixingRuleHandler extends MixingRuleHandler {
    * setCrossAssociationScheme.
    * </p>
    *
-   * @param compnumb  a int
+   * @param compnumb a int
    * @param compnumb2 a int
-   * @param phase     a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return an array of int objects
    */
   public int[][] setCrossAssociationScheme(int compnumb, int compnumb2, PhaseInterface phase) {

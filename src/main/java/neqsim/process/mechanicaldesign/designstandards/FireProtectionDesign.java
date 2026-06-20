@@ -56,11 +56,11 @@ public class FireProtectionDesign implements Serializable {
    * side and critical steel temperature on the other.
    * </p>
    *
-   * @param fireTempC          fire temperature in Celsius (typically 1100 for HC fire)
+   * @param fireTempC fire temperature in Celsius (typically 1100 for HC fire)
    * @param steelCriticalTempC maximum allowable steel temperature in Celsius (default 400)
-   * @param exposureTimeMin    fire rating time in minutes (e.g. H-60, H-120)
-   * @param pfpConductivity    PFP thermal conductivity in W/(m*K), typical 0.12 for cementitious
-   * @param sectionFactorM     section factor Hp/A in 1/m for steel member
+   * @param exposureTimeMin fire rating time in minutes (e.g. H-60, H-120)
+   * @param pfpConductivity PFP thermal conductivity in W/(m*K), typical 0.12 for cementitious
+   * @param sectionFactorM section factor Hp/A in 1/m for steel member
    * @return required PFP thickness in mm
    */
   public static double pfpThickness(double fireTempC, double steelCriticalTempC, double exposureTimeMin,
@@ -92,10 +92,10 @@ public class FireProtectionDesign implements Serializable {
    * Simplified calculation assuming H-120 rating and standard HC fire curve for uninsulated equipment.
    * </p>
    *
-   * @param vesselODMm        vessel or pipe outer diameter in mm
-   * @param wallThicknessMm   steel wall thickness in mm
+   * @param vesselODMm vessel or pipe outer diameter in mm
+   * @param wallThicknessMm steel wall thickness in mm
    * @param fireRatingMinutes required fire rating in minutes (60, 90, or 120)
-   * @param pfpConductivity   PFP thermal conductivity in W/(m*K)
+   * @param pfpConductivity PFP thermal conductivity in W/(m*K)
    * @return required PFP thickness in mm
    */
   public static double vesselPfpThickness(double vesselODMm, double wallThicknessMm, double fireRatingMinutes,
@@ -111,10 +111,10 @@ public class FireProtectionDesign implements Serializable {
    * Based on NORSOK S-001 requirements for deluge and hydrant systems.
    * </p>
    *
-   * @param protectedAreaM2      equipment surface area requiring water spray in m2
+   * @param protectedAreaM2 equipment surface area requiring water spray in m2
    * @param applicationRateLpmM2 water application rate in L/(min*m2), typical 10 for vessels
-   * @param numberOfHydrants     number of fire hydrants to operate simultaneously (typically 2-3)
-   * @param hydrantFlowLpm       flow per hydrant in L/min (typically 1200 for NORSOK)
+   * @param numberOfHydrants number of fire hydrants to operate simultaneously (typically 2-3)
+   * @param hydrantFlowLpm flow per hydrant in L/min (typically 1200 for NORSOK)
    * @return total firewater demand in m3/hr
    */
   public static double firewaterDemand(double protectedAreaM2, double applicationRateLpmM2, int numberOfHydrants,
@@ -133,12 +133,12 @@ public class FireProtectionDesign implements Serializable {
    * under fire exposure. Target is typically 6.9 barg (100 psig) within 15 minutes.
    * </p>
    *
-   * @param inventoryKg           total hydrocarbon inventory in the segment in kg
-   * @param initialPressureBara   initial operating pressure in bara
-   * @param targetPressureBara    target blowdown pressure (typically 6.9 barg + 1 = 7.9 bara)
-   * @param orificeAreaMm2        blowdown orifice area in mm2
+   * @param inventoryKg total hydrocarbon inventory in the segment in kg
+   * @param initialPressureBara initial operating pressure in bara
+   * @param targetPressureBara target blowdown pressure (typically 6.9 barg + 1 = 7.9 bara)
+   * @param orificeAreaMm2 blowdown orifice area in mm2
    * @param molecularWeightKgKmol gas molecular weight in kg/kmol
-   * @param temperatureK          gas temperature in Kelvin
+   * @param temperatureK gas temperature in Kelvin
    * @return estimated blowdown time in minutes
    */
   public static double blowdownTime(double inventoryKg, double initialPressureBara, double targetPressureBara,
@@ -169,12 +169,12 @@ public class FireProtectionDesign implements Serializable {
   /**
    * Check whether blowdown meets NORSOK S-001 15-minute requirement.
    *
-   * @param inventoryKg           total hydrocarbon inventory in kg
-   * @param initialPressureBara   initial pressure in bara
-   * @param targetPressureBara    target pressure in bara (default 7.9)
-   * @param orificeAreaMm2        blowdown orifice area in mm2
+   * @param inventoryKg total hydrocarbon inventory in kg
+   * @param initialPressureBara initial pressure in bara
+   * @param targetPressureBara target pressure in bara (default 7.9)
+   * @param orificeAreaMm2 blowdown orifice area in mm2
    * @param molecularWeightKgKmol gas molecular weight in kg/kmol
-   * @param temperatureK          gas temperature in Kelvin
+   * @param temperatureK gas temperature in Kelvin
    * @return true if blowdown completes within 15 minutes
    */
   public static boolean meetsBlowdownRequirement(double inventoryKg, double initialPressureBara,
@@ -192,8 +192,8 @@ public class FireProtectionDesign implements Serializable {
    * </p>
    *
    * @param heatReleaseRateKW total fire heat release rate in kW
-   * @param fractionRadiated  fraction of heat radiated (0.15-0.35 typical)
-   * @param distanceM         distance from fire center in meters
+   * @param fractionRadiated fraction of heat radiated (0.15-0.35 typical)
+   * @param distanceM distance from fire center in meters
    * @return incident thermal radiation in kW/m2
    */
   public static double pointSourceRadiation(double heatReleaseRateKW, double fractionRadiated, double distanceM) {
@@ -207,8 +207,8 @@ public class FireProtectionDesign implements Serializable {
    * Determine safe separation distance for a given radiation threshold.
    *
    * @param heatReleaseRateKW total fire heat release rate in kW
-   * @param fractionRadiated  fraction of heat radiated (typically 0.2 for gas)
-   * @param thresholdKwM2     acceptable radiation level in kW/m2 (4.7 for escape, 12.5 for equipment)
+   * @param fractionRadiated fraction of heat radiated (typically 0.2 for gas)
+   * @param thresholdKwM2 acceptable radiation level in kW/m2 (4.7 for escape, 12.5 for equipment)
    * @return minimum safe distance in meters
    */
   public static double safeDistance(double heatReleaseRateKW, double fractionRadiated, double thresholdKwM2) {
@@ -225,7 +225,7 @@ public class FireProtectionDesign implements Serializable {
    * Q = m_dot * A * deltaH_c * chi
    * </p>
    *
-   * @param poolDiameterM        pool diameter in meters
+   * @param poolDiameterM pool diameter in meters
    * @param massBurningRateKgM2s mass burning rate in kg/(m2*s), typical 0.055 for LNG
    * @param heatOfCombustionKJKg heat of combustion in kJ/kg
    * @param combustionEfficiency combustion efficiency (typically 0.8-0.95)
@@ -245,7 +245,7 @@ public class FireProtectionDesign implements Serializable {
    * flame lengths consistent with Shell FRED predictions for gaseous releases up to about 50 kg/s.
    * </p>
    *
-   * @param massReleaseKgS       release rate in kg/s
+   * @param massReleaseKgS release rate in kg/s
    * @param heatOfCombustionKJKg lower heating value in kJ/kg
    * @return jet fire flame length in meters
    */
@@ -300,8 +300,8 @@ public class FireProtectionDesign implements Serializable {
    * </p>
    *
    * @param pressureBara vessel failure pressure in bara
-   * @param volumeM3     vessel volume in m3
-   * @param distanceM    distance from vessel in meters
+   * @param volumeM3 vessel volume in m3
+   * @param distanceM distance from vessel in meters
    * @return estimated peak overpressure in kPa
    */
   public static double bleveOverpressure(double pressureBara, double volumeM3, double distanceM) {
@@ -334,14 +334,14 @@ public class FireProtectionDesign implements Serializable {
    * Calculates pool fire, jet fire, and BLEVE impacts based on equipment parameters.
    * </p>
    *
-   * @param equipmentName         equipment tag name
-   * @param inventoryKg           hydrocarbon inventory in kg
+   * @param equipmentName equipment tag name
+   * @param inventoryKg hydrocarbon inventory in kg
    * @param operatingPressureBara operating pressure in bara
-   * @param vesselVolumeM3        vessel volume in m3 (0 if pipe/compact)
-   * @param poolDiameterM         estimated pool diameter in meters
-   * @param releaseRateKgS        leak rate in kg/s for jet fire
-   * @param heatingValueKJKg      lower heating value in kJ/kg
-   * @param massBurningRateKgM2s  pool fire burning rate in kg/(m2*s), typically 0.055
+   * @param vesselVolumeM3 vessel volume in m3 (0 if pipe/compact)
+   * @param poolDiameterM estimated pool diameter in meters
+   * @param releaseRateKgS leak rate in kg/s for jet fire
+   * @param heatingValueKJKg lower heating value in kJ/kg
+   * @param massBurningRateKgM2s pool fire burning rate in kg/(m2*s), typically 0.055
    * @return fire scenario assessment result
    */
   public static FireScenarioResult assessFireScenarios(String equipmentName, double inventoryKg,

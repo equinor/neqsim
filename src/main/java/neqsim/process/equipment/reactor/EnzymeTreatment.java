@@ -87,7 +87,7 @@ public class EnzymeTreatment extends StirredTankReactor {
   /**
    * Constructor for EnzymeTreatment with inlet stream.
    *
-   * @param name        name of the enzyme treatment unit
+   * @param name name of the enzyme treatment unit
    * @param inletStream the feed stream
    */
   public EnzymeTreatment(String name, StreamInterface inletStream) {

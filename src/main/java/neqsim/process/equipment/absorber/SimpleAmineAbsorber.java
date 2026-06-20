@@ -157,7 +157,7 @@ public class SimpleAmineAbsorber extends SimpleAbsorber {
   /**
    * Creates a simple amine absorber with a sour gas feed stream.
    *
-   * @param name          equipment name
+   * @param name equipment name
    * @param sourGasStream sour gas inlet stream
    */
   public SimpleAmineAbsorber(String name, StreamInterface sourGasStream) {
@@ -453,8 +453,8 @@ public class SimpleAmineAbsorber extends SimpleAbsorber {
    * </pre>
    *
    * @param acidGasMolFlowMolPerSec molar flow of acid gas to remove (mol/s)
-   * @param amineDensityKgPerM3     lean amine solution density (kg/m3)
-   * @param amineMolarMassKgPerMol  amine molar mass (kg/mol)
+   * @param amineDensityKgPerM3 lean amine solution density (kg/m3)
+   * @param amineMolarMassKgPerMol amine molar mass (kg/mol)
    * @return required circulation rate in m3/h
    */
   public double calcRequiredCirculationRate(double acidGasMolFlowMolPerSec, double amineDensityKgPerM3,
@@ -489,7 +489,7 @@ public class SimpleAmineAbsorber extends SimpleAbsorber {
    * </p>
    *
    * @param htuM height of a transfer unit in metres (typically 0.5-1.5 m)
-   * @param ntu  number of transfer units
+   * @param ntu number of transfer units
    */
   public void calcPackingHeight(double htuM, double ntu) {
     setHTU(htuM);
@@ -526,8 +526,8 @@ public class SimpleAmineAbsorber extends SimpleAbsorber {
    * K = Vs * sqrt(rho_gas / (rho_liquid - rho_gas))
    * </pre>
    *
-   * @param gasVelocityMs     superficial gas velocity through the demister (m/s)
-   * @param gasDensityKgM3    gas density (kg/m3)
+   * @param gasVelocityMs superficial gas velocity through the demister (m/s)
+   * @param gasDensityKgM3 gas density (kg/m3)
    * @param liquidDensityKgM3 amine liquid density (kg/m3)
    * @return K-factor in m/s
    */
@@ -588,7 +588,7 @@ public class SimpleAmineAbsorber extends SimpleAbsorber {
    * Checks if the amine temperature has sufficient margin above the gas feed temperature to prevent hydrocarbon
    * condensation in the contactor.
    *
-   * @param gasFeedTemperatureC    gas feed temperature in degrees Celsius
+   * @param gasFeedTemperatureC gas feed temperature in degrees Celsius
    * @param amineInletTemperatureC lean amine inlet temperature in degrees Celsius
    * @return true if the margin is sufficient
    */
@@ -805,7 +805,7 @@ public class SimpleAmineAbsorber extends SimpleAbsorber {
     /**
      * Creates a design check result.
      *
-     * @param name   check name
+     * @param name check name
      * @param passed whether it passed
      * @param detail description
      */

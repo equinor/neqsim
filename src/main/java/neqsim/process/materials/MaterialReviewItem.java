@@ -189,7 +189,7 @@ public class MaterialReviewItem implements Serializable {
   /**
    * Adds metadata to the item.
    *
-   * @param key   metadata key
+   * @param key metadata key
    * @param value metadata value
    * @return this item for fluent construction
    */
@@ -257,7 +257,7 @@ public class MaterialReviewItem implements Serializable {
    * Returns the first non-empty string value for a list of keys.
    *
    * @param source source map
-   * @param keys   keys to test
+   * @param keys keys to test
    * @return first non-empty value, or an empty string
    */
   private static String firstString(Map<String, Object> source, String... keys) {
@@ -269,7 +269,7 @@ public class MaterialReviewItem implements Serializable {
    * Returns the first non-null object value for a list of keys.
    *
    * @param source source map
-   * @param keys   keys to test
+   * @param keys keys to test
    * @return first non-null value, or null
    */
   private static Object firstObject(Map<String, Object> source, String... keys) {

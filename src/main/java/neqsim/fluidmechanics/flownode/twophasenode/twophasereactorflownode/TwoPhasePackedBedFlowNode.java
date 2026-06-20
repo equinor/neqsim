@@ -42,7 +42,7 @@ public class TwoPhasePackedBedFlowNode extends TwoPhaseFlowNode {
    * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param pipe   a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
+   * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
    */
   public TwoPhasePackedBedFlowNode(SystemInterface system, GeometryDefinitionInterface pipe) {
     super(system, pipe);
@@ -57,9 +57,9 @@ public class TwoPhasePackedBedFlowNode extends TwoPhaseFlowNode {
    * Constructor for TwoPhasePackedBedFlowNode.
    * </p>
    *
-   * @param system           a {@link neqsim.thermo.system.SystemInterface} object
+   * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param interphaseSystem a {@link neqsim.thermo.system.SystemInterface} object
-   * @param pipe             a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
+   * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
    */
   public TwoPhasePackedBedFlowNode(SystemInterface system, SystemInterface interphaseSystem,
       GeometryDefinitionInterface pipe) {

@@ -171,7 +171,7 @@ public class WaterHammerPipe extends Pipeline {
   /**
    * Constructor for WaterHammerPipe with inlet stream.
    *
-   * @param name     Equipment name
+   * @param name Equipment name
    * @param inStream Inlet stream
    */
   public WaterHammerPipe(String name, StreamInterface inStream) {
@@ -193,7 +193,7 @@ public class WaterHammerPipe extends Pipeline {
    * Set the pipe length with unit.
    *
    * @param length Length value
-   * @param unit   Unit ("m", "km", "ft")
+   * @param unit Unit ("m", "km", "ft")
    */
   public void setLength(double length, String unit) {
     switch (unit.toLowerCase()) {
@@ -230,7 +230,7 @@ public class WaterHammerPipe extends Pipeline {
    * Set the pipe inner diameter with unit.
    *
    * @param diameter Diameter value
-   * @param unit     Unit ("m", "mm", "in")
+   * @param unit Unit ("m", "mm", "in")
    */
   public void setDiameter(double diameter, String unit) {
     switch (unit.toLowerCase()) {
@@ -570,7 +570,7 @@ public class WaterHammerPipe extends Pipeline {
    * Calculate Joukowsky pressure surge for instantaneous velocity change.
    *
    * @param velocityChange Change in velocity (m/s)
-   * @param unit           Output unit ("Pa", "bar", "psi")
+   * @param unit Output unit ("Pa", "bar", "psi")
    * @return Pressure surge in specified unit
    */
   public double calcJoukowskyPressureSurge(double velocityChange, String unit) {
@@ -1056,7 +1056,7 @@ public class WaterHammerPipe extends Pipeline {
    * Converts a pressure array to the requested unit.
    *
    * @param pressures pressure values in Pa
-   * @param unit      requested unit, for example Pa, bar, or psi
+   * @param unit requested unit, for example Pa, bar, or psi
    * @return converted pressure values
    */
   private double[] convertPressureArray(double[] pressures, String unit) {

@@ -45,7 +45,7 @@ public interface NetworkBranch extends Serializable {
   /**
    * Computes the volumetric flow through the branch.
    *
-   * @param upstreamPressureBara   upstream node pressure in bara
+   * @param upstreamPressureBara upstream node pressure in bara
    * @param downstreamPressureBara downstream node pressure in bara
    * @return volumetric surface flow in Sm3/day, positive from upstream to downstream
    */

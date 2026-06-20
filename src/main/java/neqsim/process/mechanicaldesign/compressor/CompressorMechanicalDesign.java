@@ -331,7 +331,7 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
    * ASME VIII, ASME B16.5, and NACE MR0175.
    * </p>
    *
-   * @param compressor   the compressor equipment
+   * @param compressor the compressor equipment
    * @param shaftPowerKW shaft power in kW
    */
   private void calculateCasingDesign(Compressor compressor, double shaftPowerKW) {
@@ -413,7 +413,7 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
    *
    * @param volumeFlowM3hr inlet volume flow rate in m3/hr
    * @param polytropicHead total polytropic head in kJ/kg
-   * @param speedRPM       shaft speed in rpm
+   * @param speedRPM shaft speed in rpm
    */
   private void calculateImpellerSizing(double volumeFlowM3hr, double polytropicHead, double speedRPM) {
     if (speedRPM <= 0 || volumeFlowM3hr <= 0) {
@@ -453,7 +453,7 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
   /**
    * Calculate shaft diameter based on torque requirements.
    *
-   * @param powerKW  shaft power in kW
+   * @param powerKW shaft power in kW
    * @param speedRPM shaft speed in rpm
    */
   private void calculateShaftDiameter(double powerKW, double speedRPM) {
@@ -535,7 +535,7 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
   /**
    * Calculate compressor weights.
    *
-   * @param massFlowKghr       mass flow rate in kg/hr
+   * @param massFlowKghr mass flow rate in kg/hr
    * @param designPressureBara design pressure in bara
    */
   private void calculateWeights(double massFlowKghr, double designPressureBara) {
@@ -1309,8 +1309,8 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
   /**
    * Validates that design operating point is within acceptable margins.
    *
-   * @param actualFlowM3hr    actual operating flow in m3/hr
-   * @param surgeFlowM3hr     calculated surge flow in m3/hr
+   * @param actualFlowM3hr actual operating flow in m3/hr
+   * @param surgeFlowM3hr calculated surge flow in m3/hr
    * @param stonewallFlowM3hr calculated stonewall flow in m3/hr
    * @return true if operating point is acceptable
    */

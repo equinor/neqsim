@@ -74,15 +74,15 @@ public class FlowlineScaleProfile implements Serializable {
   /**
    * Sets the water chemistry for the flowline.
    *
-   * @param caMgL   calcium mg/L
-   * @param baMgL   barium mg/L
-   * @param srMgL   strontium mg/L
-   * @param feMgL   iron mg/L
+   * @param caMgL calcium mg/L
+   * @param baMgL barium mg/L
+   * @param srMgL strontium mg/L
+   * @param feMgL iron mg/L
    * @param hco3MgL bicarbonate mg/L
-   * @param so4MgL  sulphate mg/L
-   * @param tdsMgL  TDS mg/L
-   * @param co2pp   CO2 partial pressure bar
-   * @param pH      pH value
+   * @param so4MgL sulphate mg/L
+   * @param tdsMgL TDS mg/L
+   * @param co2pp CO2 partial pressure bar
+   * @param pH pH value
    */
   public void setWaterChemistry(double caMgL, double baMgL, double srMgL, double feMgL, double hco3MgL, double so4MgL,
       double tdsMgL, double co2pp, double pH) {
@@ -111,7 +111,7 @@ public class FlowlineScaleProfile implements Serializable {
   /**
    * Sets the inlet (wellhead) conditions.
    *
-   * @param tempC    temperature Celsius
+   * @param tempC temperature Celsius
    * @param pressBar pressure bara
    */
   public void setInletConditions(double tempC, double pressBar) {
@@ -122,7 +122,7 @@ public class FlowlineScaleProfile implements Serializable {
   /**
    * Sets the outlet (host) conditions.
    *
-   * @param tempC    temperature Celsius
+   * @param tempC temperature Celsius
    * @param pressBar pressure bara
    */
   public void setOutletConditions(double tempC, double pressBar) {
@@ -229,7 +229,7 @@ public class FlowlineScaleProfile implements Serializable {
   /**
    * Returns the SI for a named scale at a segment result.
    *
-   * @param sr   the segment result
+   * @param sr the segment result
    * @param name scale name
    * @return SI value
    */

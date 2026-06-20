@@ -44,9 +44,9 @@ public class PipingStressAnalysis implements Serializable {
   /**
    * Calculate thermal expansion of a pipe run.
    *
-   * @param lengthM         pipe length in meters
-   * @param installTempC    installation temperature in Celsius
-   * @param operatingTempC  operating temperature in Celsius
+   * @param lengthM pipe length in meters
+   * @param installTempC installation temperature in Celsius
+   * @param operatingTempC operating temperature in Celsius
    * @param coefficientMmMC thermal expansion coefficient in mm/(m*C), default 0.012 for CS
    * @return thermal expansion in mm
    */
@@ -58,8 +58,8 @@ public class PipingStressAnalysis implements Serializable {
   /**
    * Calculate thermal expansion using default carbon steel coefficient.
    *
-   * @param lengthM        pipe length in meters
-   * @param installTempC   installation temperature in Celsius
+   * @param lengthM pipe length in meters
+   * @param installTempC installation temperature in Celsius
    * @param operatingTempC operating temperature in Celsius
    * @return thermal expansion in mm
    */
@@ -76,7 +76,7 @@ public class PipingStressAnalysis implements Serializable {
    *
    * @param scMPa basic allowable stress at minimum (cold) temperature in MPa
    * @param shMPa basic allowable stress at maximum (hot) temperature in MPa
-   * @param f     stress range reduction factor (1.0 for less than 7000 cycles)
+   * @param f stress range reduction factor (1.0 for less than 7000 cycles)
    * @return allowable expansion stress range in MPa
    */
   public static double allowableExpansionStressRange(double scMPa, double shMPa, double f) {
@@ -90,10 +90,10 @@ public class PipingStressAnalysis implements Serializable {
    * S_L = P*D/(4*t) + 0.75*i*M_A/Z
    * </p>
    *
-   * @param pressureMPa                 internal design pressure in MPa
-   * @param pipeODMm                    pipe outer diameter in mm
-   * @param wallThicknessMm             pipe wall thickness in mm
-   * @param bendingMomentNm             sustained bending moment at point in N*m (use 0 for straight pipe)
+   * @param pressureMPa internal design pressure in MPa
+   * @param pipeODMm pipe outer diameter in mm
+   * @param wallThicknessMm pipe wall thickness in mm
+   * @param bendingMomentNm sustained bending moment at point in N*m (use 0 for straight pipe)
    * @param stressIntensificationFactor SIF (1.0 for straight pipe)
    * @return sustained stress in MPa
    */
@@ -114,7 +114,7 @@ public class PipingStressAnalysis implements Serializable {
   /**
    * Calculate section modulus of pipe cross-section.
    *
-   * @param pipeODMm        pipe outer diameter in mm
+   * @param pipeODMm pipe outer diameter in mm
    * @param wallThicknessMm pipe wall thickness in mm
    * @return section modulus in mm3
    */
@@ -127,7 +127,7 @@ public class PipingStressAnalysis implements Serializable {
   /**
    * Calculate moment of inertia of pipe cross-section.
    *
-   * @param pipeODMm        pipe outer diameter in mm
+   * @param pipeODMm pipe outer diameter in mm
    * @param wallThicknessMm pipe wall thickness in mm
    * @return moment of inertia in mm4
    */
@@ -145,13 +145,13 @@ public class PipingStressAnalysis implements Serializable {
    * limit. Returns the lesser of deflection-limited and stress-limited spans.
    * </p>
    *
-   * @param pipeODMm              pipe outer diameter in mm
-   * @param wallThicknessMm       pipe wall thickness in mm
-   * @param contentDensityKgM3    density of pipe contents in kg/m3
+   * @param pipeODMm pipe outer diameter in mm
+   * @param wallThicknessMm pipe wall thickness in mm
+   * @param contentDensityKgM3 density of pipe contents in kg/m3
    * @param insulationThicknessMm insulation thickness in mm (0 if none)
    * @param insulationDensityKgM3 insulation density in kg/m3 (0 if none)
-   * @param maxDeflectionMm       maximum allowable midspan deflection in mm (typically 3)
-   * @param allowableStressMPa    allowable bending stress in MPa
+   * @param maxDeflectionMm maximum allowable midspan deflection in mm (typically 3)
+   * @param allowableStressMPa allowable bending stress in MPa
    * @return maximum support span in meters
    */
   public static double maxSupportSpan(double pipeODMm, double wallThicknessMm, double contentDensityKgM3,
@@ -195,8 +195,8 @@ public class PipingStressAnalysis implements Serializable {
    * Using the simplified formula: L_loop = sqrt(3 * E * D * delta / S_A)
    * </p>
    *
-   * @param expansionMm        total thermal expansion to absorb in mm
-   * @param pipeODMm           pipe outer diameter in mm
+   * @param expansionMm total thermal expansion to absorb in mm
+   * @param pipeODMm pipe outer diameter in mm
    * @param allowableStressMPa allowable expansion stress in MPa
    * @return required loop leg length in meters
    */
@@ -211,9 +211,9 @@ public class PipingStressAnalysis implements Serializable {
   /**
    * Check whether code stress requirements are met.
    *
-   * @param sustainedStressMPa    calculated sustained stress in MPa
-   * @param expansionStressMPa    calculated expansion stress in MPa
-   * @param allowableHotMPa       allowable stress at hot temperature in MPa
+   * @param sustainedStressMPa calculated sustained stress in MPa
+   * @param expansionStressMPa calculated expansion stress in MPa
+   * @param allowableHotMPa allowable stress at hot temperature in MPa
    * @param allowableExpansionMPa allowable expansion stress range in MPa
    * @return true if both sustained and expansion stresses are within limits
    */

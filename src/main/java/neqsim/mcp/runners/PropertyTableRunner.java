@@ -271,8 +271,8 @@ public class PropertyTableRunner {
   /**
    * Adds a named property value to a JSON row object.
    *
-   * @param row      the JSON row to add to
-   * @param fluid    the fluid system to read from
+   * @param row the JSON row to add to
+   * @param fluid the fluid system to read from
    * @param property the property name
    */
   private static void addProperty(JsonObject row, SystemInterface fluid, String property) {
@@ -351,8 +351,8 @@ public class PropertyTableRunner {
   /**
    * Creates a standard error JSON response.
    *
-   * @param code        the error code
-   * @param message     the error message
+   * @param code the error code
+   * @param message the error message
    * @param remediation the fix suggestion
    * @return JSON error string
    */

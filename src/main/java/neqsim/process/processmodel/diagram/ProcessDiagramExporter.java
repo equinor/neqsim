@@ -118,7 +118,7 @@ public class ProcessDiagramExporter implements Serializable {
    * Creates a new diagram exporter with custom layout policy.
    *
    * @param processSystem the process system
-   * @param layoutPolicy  the layout policy to use
+   * @param layoutPolicy the layout policy to use
    */
   public ProcessDiagramExporter(ProcessSystem processSystem, PFDLayoutPolicy layoutPolicy) {
     this.processSystem = processSystem;
@@ -278,9 +278,9 @@ public class ProcessDiagramExporter implements Serializable {
    * <li>Water processing is at BOTTOM (max vertical position)</li>
    * </ul>
    *
-   * @param sb         the string builder
+   * @param sb the string builder
    * @param rankGroups the rank groups (by phase)
-   * @param graph      the process graph
+   * @param graph the process graph
    */
   private void appendRankSubgraphs(StringBuilder sb, Map<Integer, List<ProcessNode>> rankGroups, ProcessGraph graph) {
     sb.append("  // Industry PFD layout: left-to-right flow with vertical phase zones\n\n");
@@ -368,8 +368,8 @@ public class ProcessDiagramExporter implements Serializable {
   /**
    * Finds a central processing node (typically a separator) to anchor the layout.
    *
-   * @param graph        the process graph
-   * @param feedNodes    feed nodes to exclude
+   * @param graph the process graph
+   * @param feedNodes feed nodes to exclude
    * @param productNodes product nodes to exclude
    * @return a central processing node, or null if none found
    */
@@ -401,10 +401,10 @@ public class ProcessDiagramExporter implements Serializable {
    * Uses invisible edges to enforce vertical ordering: Gas → Separation → Oil → Water
    * </p>
    *
-   * @param sb          the string builder
-   * @param graph       the process graph
+   * @param sb the string builder
+   * @param graph the process graph
    * @param sourceNodes feed streams (excluded from phase ordering)
-   * @param sinkNodes   product streams (included for water zone vertical positioning)
+   * @param sinkNodes product streams (included for water zone vertical positioning)
    */
   private void appendPhaseZoneOrdering(StringBuilder sb, ProcessGraph graph, List<ProcessNode> sourceNodes,
       List<ProcessNode> sinkNodes) {
@@ -485,7 +485,7 @@ public class ProcessDiagramExporter implements Serializable {
    * Deprecated: Use {@link #appendRankSubgraphs(StringBuilder, Map, ProcessGraph)} instead.
    * </p>
    *
-   * @param sb         the string builder
+   * @param sb the string builder
    * @param rankGroups the rank groups
    */
   @SuppressWarnings("unused")
@@ -526,7 +526,7 @@ public class ProcessDiagramExporter implements Serializable {
    * <li>Water Processing (bottom) - blue background</li>
    * </ul>
    *
-   * @param sb    the string builder
+   * @param sb the string builder
    * @param graph the process graph
    */
   private void appendClusters(StringBuilder sb, ProcessGraph graph) {
@@ -677,7 +677,7 @@ public class ProcessDiagramExporter implements Serializable {
   /**
    * Appends a node definition to the DOT output.
    *
-   * @param sb   the string builder
+   * @param sb the string builder
    * @param node the process node
    */
   private void appendNode(StringBuilder sb, ProcessNode node) {
@@ -741,8 +741,8 @@ public class ProcessDiagramExporter implements Serializable {
    * Appends a mixer or splitter node with triangle shape. Mixer: right-pointing (▶) - multiple inlets, single outlet
    * Splitter: left-pointing (◀) - single inlet, multiple outlets
    *
-   * @param sb         the string builder
-   * @param name       the equipment name
+   * @param sb the string builder
+   * @param name the equipment name
    * @param isSplitter true if splitter, false if mixer
    */
   private void appendMixerSplitterNode(StringBuilder sb, String name, boolean isSplitter) {
@@ -766,8 +766,8 @@ public class ProcessDiagramExporter implements Serializable {
   /**
    * Appends a valve node with bowtie symbol like HYSYS. Classic PFD valve symbol with two triangles tip-to-tip.
    *
-   * @param sb        the string builder
-   * @param name      the valve name
+   * @param sb the string builder
+   * @param name the valve name
    * @param lowerType the lowercase valve type for color selection
    */
   private void appendValveNode(StringBuilder sb, String name, String lowerType) {
@@ -800,10 +800,10 @@ public class ProcessDiagramExporter implements Serializable {
   /**
    * Appends a heat exchanger (heater/cooler) node with circle shape.
    *
-   * @param sb        the string builder
-   * @param node      the process node
-   * @param name      the equipment name
-   * @param type      the equipment type
+   * @param sb the string builder
+   * @param node the process node
+   * @param name the equipment name
+   * @param type the equipment type
    * @param lowerType the lowercase equipment type
    */
   private void appendHeatExchangerNode(StringBuilder sb, ProcessNode node, String name, String type, String lowerType) {
@@ -829,7 +829,7 @@ public class ProcessDiagramExporter implements Serializable {
    * Appends a pump node with circle on triangle (standard PFD pump symbol). Circle represents the casing, small circle
    * inside represents impeller, triangle below represents the discharge direction.
    *
-   * @param sb   the string builder
+   * @param sb the string builder
    * @param name the pump name
    */
   private void appendPumpNode(StringBuilder sb, String name) {
@@ -869,7 +869,7 @@ public class ProcessDiagramExporter implements Serializable {
   /**
    * Appends a column node (absorber, stripper, distillation) with tray visualization.
    *
-   * @param sb   the string builder
+   * @param sb the string builder
    * @param name the column name
    * @param type the column type
    */
@@ -912,7 +912,7 @@ public class ProcessDiagramExporter implements Serializable {
    * Adjusts the brightness of a hex color.
    *
    * @param hexColor the hex color (e.g., "#FF6347")
-   * @param amount   the brightness adjustment (-255 to 255)
+   * @param amount the brightness adjustment (-255 to 255)
    * @return the adjusted hex color
    */
   private String adjustBrightness(String hexColor, int amount) {
@@ -951,8 +951,8 @@ public class ProcessDiagramExporter implements Serializable {
    * Builds a node label based on the detail level.
    *
    * @param equipment the equipment
-   * @param name      the equipment name
-   * @param type      the equipment type
+   * @param name the equipment name
+   * @param type the equipment type
    * @return the formatted label
    */
   private String buildNodeLabel(ProcessEquipmentInterface equipment, String name, String type) {
@@ -1005,7 +1005,7 @@ public class ProcessDiagramExporter implements Serializable {
    * This enriches diagram labels with P&amp;ID reference information for equipment imported from DEXPI XML files.
    * </p>
    *
-   * @param label     the label builder to append to
+   * @param label the label builder to append to
    * @param equipment the equipment to check for DEXPI metadata
    */
   private void appendDexpiMetadata(StringBuilder label, ProcessEquipmentInterface equipment) {
@@ -1041,7 +1041,7 @@ public class ProcessDiagramExporter implements Serializable {
   /**
    * Appends an edge definition to the DOT output.
    *
-   * @param sb   the string builder
+   * @param sb the string builder
    * @param edge the process edge
    */
   private void appendEdge(StringBuilder sb, ProcessEdge edge) {
@@ -1132,7 +1132,7 @@ public class ProcessDiagramExporter implements Serializable {
   /**
    * Builds a stream label based on display settings.
    *
-   * @param stream    the stream
+   * @param stream the stream
    * @param isRecycle whether this is a recycle stream
    * @return the label string (plain text or HTML)
    */
@@ -1151,7 +1151,7 @@ public class ProcessDiagramExporter implements Serializable {
   /**
    * Builds a simple text label for a stream.
    *
-   * @param stream    the stream
+   * @param stream the stream
    * @param isRecycle whether this is a recycle stream
    * @return the text label
    */
@@ -1191,7 +1191,7 @@ public class ProcessDiagramExporter implements Serializable {
   /**
    * Builds an HTML table label for a stream (professional engineering style).
    *
-   * @param stream    the stream
+   * @param stream the stream
    * @param isRecycle whether this is a recycle stream
    * @return the HTML table label
    */
@@ -1388,7 +1388,7 @@ public class ProcessDiagramExporter implements Serializable {
   /**
    * Exports using Graphviz command-line tool.
    *
-   * @param path   output path
+   * @param path output path
    * @param format output format (svg, png, pdf)
    * @throws IOException if export fails
    */

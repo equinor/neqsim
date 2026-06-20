@@ -93,7 +93,7 @@ public class StartupLogic implements ProcessLogic {
    * Adds an action to the startup sequence.
    *
    * @param action action to execute
-   * @param delay  delay in seconds before executing (relative to previous action completion)
+   * @param delay delay in seconds before executing (relative to previous action completion)
    */
   public void addAction(LogicAction action, double delay) {
     actions.add(new ActionWithDelay(action, delay));

@@ -17,7 +17,7 @@ public class InvalidOutputException extends neqsim.util.exception.ThermoExceptio
   /**
    * Constructs an <code>InvalidOutputException</code> with a default message.
    *
-   * @param className  Class that exception is raised from
+   * @param className Class that exception is raised from
    * @param methodName Method that exception is raised from
    * @param outputName Name of invalid output
    */
@@ -29,10 +29,10 @@ public class InvalidOutputException extends neqsim.util.exception.ThermoExceptio
   /**
    * Constructs an <code>InvalidOutputException</code> with the specified detail message.
    *
-   * @param className  Class that exception is raised from
+   * @param className Class that exception is raised from
    * @param methodName Method that exception is raised from
    * @param outputName Name of invalid output
-   * @param msg        error message detailing output problem
+   * @param msg error message detailing output problem
    */
   public InvalidOutputException(String className, String methodName, String outputName, String msg) {
     super(className, methodName, "output " + outputName + " " + msg);
@@ -42,7 +42,7 @@ public class InvalidOutputException extends neqsim.util.exception.ThermoExceptio
   /**
    * Constructs an <code>InvalidOutputException</code> with a default message.
    *
-   * @param obj        Object that exception is raised from
+   * @param obj Object that exception is raised from
    * @param methodName Method that exception is raised from
    * @param outputName Name of invalid output
    */
@@ -53,10 +53,10 @@ public class InvalidOutputException extends neqsim.util.exception.ThermoExceptio
   /**
    * Constructs an <code>InvalidOutputException</code> with a default message.
    *
-   * @param obj        Object that exception is raised from
+   * @param obj Object that exception is raised from
    * @param methodName Method that exception is raised from
    * @param outputName Name of invalid output
-   * @param msg        error message detailing output problem
+   * @param msg error message detailing output problem
    */
   public InvalidOutputException(Object obj, String methodName, String outputName, String msg) {
     this(obj.getClass().getSimpleName(), methodName, outputName, msg);

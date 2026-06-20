@@ -161,9 +161,9 @@ public class Water extends LiquidPhysicalPropertyMethod implements DensityInterf
    * Here T is in °C and w_i is the mass fraction of the salt.
    * </p>
    *
-   * @param params       correlation parameters for the salt
+   * @param params correlation parameters for the salt
    * @param temperatureC temperature in Celsius
-   * @param wSalt        mass fraction of the salt
+   * @param wSalt mass fraction of the salt
    * @return partial specific volume in m^3/kg
    */
   private double calcPartialVolumeSalt(double[] params, double temperatureC, double wSalt) {
@@ -184,9 +184,9 @@ public class Water extends LiquidPhysicalPropertyMethod implements DensityInterf
   /**
    * Estimate density for non-salt solutes using available pure component data.
    *
-   * @param comp         component to evaluate
+   * @param comp component to evaluate
    * @param temperatureK temperature [K]
-   * @param pressureBar  pressure [bar]
+   * @param pressureBar pressure [bar]
    * @return estimated density in kg/m^3 or {@code 0.0} if no estimate is available
    */
   private double estimateComponentDensity(ComponentInterface comp, double temperatureK, double pressureBar) {
@@ -280,7 +280,7 @@ public class Water extends LiquidPhysicalPropertyMethod implements DensityInterf
    * </p>
    *
    * @param temperatureK Temperature in Kelvin
-   * @param pressureBar  Pressure in bar
+   * @param pressureBar Pressure in bar
    * @return density in kg/m^3
    */
   public static double calculatePureWaterDensity(double temperatureK, double pressureBar) {

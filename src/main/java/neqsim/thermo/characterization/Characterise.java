@@ -315,7 +315,7 @@ public class Characterise implements java.io.Serializable, Cloneable {
    * </pre>
    *
    * @param referenceFluid the fluid defining the target pseudo-component structure
-   * @param options        characterization options
+   * @param options characterization options
    * @return a new fluid with pseudo-components matching the reference
    */
   public SystemInterface characterizeToReference(SystemInterface referenceFluid, CharacterizationOptions options) {

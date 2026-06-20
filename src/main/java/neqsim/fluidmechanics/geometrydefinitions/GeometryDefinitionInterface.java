@@ -157,9 +157,9 @@ public interface GeometryDefinitionInterface extends Cloneable {
    * setPackingType.
    * </p>
    *
-   * @param name     a {@link java.lang.String} object
+   * @param name a {@link java.lang.String} object
    * @param material a {@link java.lang.String} object
-   * @param size     a int
+   * @param size a int
    */
   public void setPackingType(String name, String material, int size);
 
@@ -223,8 +223,7 @@ public interface GeometryDefinitionInterface extends Cloneable {
    * </p>
    *
    * @param surroundingEnvironment a
-   *                               {@link neqsim.fluidmechanics.geometrydefinitions.surrounding.SurroundingEnvironment}
-   *                               object
+   * {@link neqsim.fluidmechanics.geometrydefinitions.surrounding.SurroundingEnvironment} object
    */
   public void setSurroundingEnvironment(SurroundingEnvironment surroundingEnvironment);
 }

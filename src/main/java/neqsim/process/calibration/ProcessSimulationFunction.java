@@ -91,7 +91,7 @@ public class ProcessSimulationFunction extends LevenbergMarquardtFunction {
   /**
    * Adds a tunable parameter.
    *
-   * @param path       path to the parameter (e.g., "Pipe1.heatTransferCoefficient")
+   * @param path path to the parameter (e.g., "Pipe1.heatTransferCoefficient")
    * @param lowerBound minimum allowed value
    * @param upperBound maximum allowed value
    * @return this function for chaining
@@ -145,7 +145,7 @@ public class ProcessSimulationFunction extends LevenbergMarquardtFunction {
   /**
    * Sets the current data point and measurement indices for evaluation.
    *
-   * @param dataPointIndex   index of the data point
+   * @param dataPointIndex index of the data point
    * @param measurementIndex index of the measurement within the data point
    */
   public void setCurrentIndices(int dataPointIndex, int measurementIndex) {
@@ -293,7 +293,7 @@ public class ProcessSimulationFunction extends LevenbergMarquardtFunction {
   /**
    * Sets a property value in the process using path-based access.
    *
-   * @param path  the property path
+   * @param path the property path
    * @param value the value to set
    */
   private void setPropertyValue(String path, double value) {
@@ -321,7 +321,7 @@ public class ProcessSimulationFunction extends LevenbergMarquardtFunction {
   /**
    * Invokes a getter method on an object.
    *
-   * @param obj      the object to invoke getter on
+   * @param obj the object to invoke getter on
    * @param property the property name
    * @return the property value
    * @throws Exception if reflection fails
@@ -351,9 +351,9 @@ public class ProcessSimulationFunction extends LevenbergMarquardtFunction {
   /**
    * Invokes a setter method on an object.
    *
-   * @param obj      the object to invoke setter on
+   * @param obj the object to invoke setter on
    * @param property the property name
-   * @param value    the value to set
+   * @param value the value to set
    * @throws Exception if reflection fails
    */
   private void invokeSetter(Object obj, String property, double value) throws Exception {
@@ -437,7 +437,7 @@ public class ProcessSimulationFunction extends LevenbergMarquardtFunction {
    * Gets the sensitivity for a specific output/input pair from cached Jacobian.
    *
    * @param measurementIndex index of the measurement
-   * @param parameterIndex   index of the parameter
+   * @param parameterIndex index of the parameter
    * @return the sensitivity value, or NaN if not available
    */
   public double getSensitivity(int measurementIndex, int parameterIndex) {

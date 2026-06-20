@@ -163,7 +163,7 @@ public final class FlowsheetSynthesisEngine {
   /**
    * Identifies the light and heavy keys from the duty specs and the flash result.
    *
-   * @param duty    the duty
+   * @param duty the duty
    * @param flashed the post-flash system (two-phase)
    * @return key descriptor; fields may be null/NaN when no candidate is found
    */
@@ -232,7 +232,7 @@ public final class FlowsheetSynthesisEngine {
   /**
    * Reads the K-value of a component from a flashed (two-phase) system.
    *
-   * @param sys           the flashed system
+   * @param sys the flashed system
    * @param componentName the component
    * @return K = y/x, or NaN when the component is not present
    */
@@ -258,7 +258,7 @@ public final class FlowsheetSynthesisEngine {
   /**
    * Returns the mole-fraction vector of phase {@code phaseIdx} keyed by component name.
    *
-   * @param sys      the flashed system
+   * @param sys the flashed system
    * @param phaseIdx 0 for gas, 1 for liquid
    * @return mole-fraction map
    */
@@ -276,7 +276,7 @@ public final class FlowsheetSynthesisEngine {
   /**
    * Tests whether predicted mole fractions satisfy the duty specs.
    *
-   * @param duty     the duty
+   * @param duty the duty
    * @param gasFracs predicted top-product mole fractions
    * @param liqFracs predicted bottom-product mole fractions
    * @return true when every spec is met
@@ -301,7 +301,7 @@ public final class FlowsheetSynthesisEngine {
    * Builds and runs a single-flash flowsheet.
    *
    * @param duty the duty
-   * @param opP  operating pressure in bara
+   * @param opP operating pressure in bara
    * @return populated and run {@link ProcessSystem}
    */
   private ProcessSystem buildSingleFlash(SeparationDuty duty, double opP) {
@@ -323,11 +323,11 @@ public final class FlowsheetSynthesisEngine {
   /**
    * Builds (but does not run) a distillation flowsheet sized from a Fenske estimate.
    *
-   * @param duty         the duty
-   * @param flashed      the post-flash system used for K-value estimates
-   * @param opP          operating pressure in bara
+   * @param duty the duty
+   * @param flashed the post-flash system used for K-value estimates
+   * @param opP operating pressure in bara
    * @param alternatives the running list of rejected alternatives
-   * @param rationale    rationale text to embed in the proposal
+   * @param rationale rationale text to embed in the proposal
    * @return populated FlowsheetProposal with strategy DISTILLATION
    */
   private FlowsheetProposal buildDistillation(SeparationDuty duty, SystemInterface flashed, double opP,
@@ -382,9 +382,9 @@ public final class FlowsheetSynthesisEngine {
   /**
    * Falls back to a single-stage flash when the main flow fails.
    *
-   * @param duty   the duty
+   * @param duty the duty
    * @param reason rationale text
-   * @param opP    operating pressure
+   * @param opP operating pressure
    * @return INFEASIBLE proposal with the best-effort flash
    */
   private FlowsheetProposal buildFallback(SeparationDuty duty, String reason, double opP) {

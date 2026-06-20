@@ -33,7 +33,7 @@ class SystemUMRCPAEoSPaperValidationTest extends neqsim.NeqSimTest {
    * Compute the bubble-point (saturation) pressure of a pure component at a given temperature.
    *
    * @param componentName the NeqSim component name
-   * @param temperature   the temperature in Kelvin
+   * @param temperature the temperature in Kelvin
    * @param pressureGuess an initial pressure guess in bara
    * @return the saturation pressure in bara
    */

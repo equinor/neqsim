@@ -106,7 +106,7 @@ public class Standard_EN16723 extends neqsim.standards.Standard {
    * Constructor for Standard_EN16723 with part specification.
    *
    * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
-   * @param part         1 for grid injection, 2 for automotive
+   * @param part 1 for grid injection, 2 for automotive
    */
   public Standard_EN16723(SystemInterface thermoSystem, int part) {
     super("Standard_EN16723", "Natural gas and biomethane for use in transport and biomethane for injection",

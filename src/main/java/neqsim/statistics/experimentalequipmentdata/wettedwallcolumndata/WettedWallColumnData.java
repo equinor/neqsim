@@ -31,8 +31,8 @@ public class WettedWallColumnData extends ExperimentalEquipmentData {
    * </p>
    *
    * @param diameter a double
-   * @param length   a double
-   * @param volume   a double
+   * @param length a double
+   * @param volume a double
    */
   public WettedWallColumnData(double diameter, double length, double volume) {
     this.diameter = diameter;

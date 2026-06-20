@@ -502,9 +502,9 @@ public final class CompositionRunner {
   /**
    * Adds a recommendation entry to an array.
    *
-   * @param arr      the array
-   * @param server   the server name
-   * @param reason   the reason
+   * @param arr the array
+   * @param server the server name
+   * @param reason the reason
    * @param priority the priority level
    */
   private static void addRecommendation(JsonArray arr, String server, String reason, String priority) {
@@ -518,10 +518,10 @@ public final class CompositionRunner {
   /**
    * Adds a workflow step to an array.
    *
-   * @param arr         the array
-   * @param order       the step order
-   * @param server      the server
-   * @param tool        the tool
+   * @param arr the array
+   * @param order the step order
+   * @param server the server
+   * @param tool the tool
    * @param description the description
    */
   private static void addStep(JsonArray arr, int order, String server, String tool, String description) {
@@ -536,8 +536,8 @@ public final class CompositionRunner {
   /**
    * Creates a standard error JSON response.
    *
-   * @param code        the error code
-   * @param message     the error message
+   * @param code the error code
+   * @param message the error message
    * @param remediation the fix
    * @return the JSON string
    */
@@ -648,9 +648,9 @@ public final class CompositionRunner {
     /**
      * Creates a workflow step.
      *
-     * @param order       the step order
-     * @param server      the server name
-     * @param tool        the tool name
+     * @param order the step order
+     * @param server the server name
+     * @param tool the tool name
      * @param description the step description
      */
     WorkflowStep(int order, String server, String tool, String description) {

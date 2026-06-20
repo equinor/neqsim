@@ -37,7 +37,7 @@ public class MarginTrendTracker implements Serializable {
    * Adds a margin sample.
    *
    * @param timestampSeconds sample timestamp in seconds
-   * @param marginPercent    margin value in percent
+   * @param marginPercent margin value in percent
    * @return this tracker for fluent setup
    */
   public MarginTrendTracker addSample(double timestampSeconds, double marginPercent) {
@@ -50,7 +50,7 @@ public class MarginTrendTracker implements Serializable {
    * Adds the current margin sample at the supplied timestamp.
    *
    * @param timestampSeconds current timestamp in seconds
-   * @param margin           current margin
+   * @param margin current margin
    * @return this tracker for fluent setup
    */
   public MarginTrendTracker addCurrentMargin(double timestampSeconds, OperationalMargin margin) {
@@ -243,7 +243,7 @@ public class MarginTrendTracker implements Serializable {
      * Creates a margin sample.
      *
      * @param timestampSeconds timestamp in seconds
-     * @param marginPercent    margin value in percent
+     * @param marginPercent margin value in percent
      */
     public MarginSample(double timestampSeconds, double marginPercent) {
       this.timestampSeconds = timestampSeconds;

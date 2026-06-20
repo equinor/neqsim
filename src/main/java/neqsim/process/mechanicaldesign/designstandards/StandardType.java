@@ -120,11 +120,11 @@ public enum StandardType {
   /**
    * Constructor for StandardType.
    *
-   * @param code                     the standard code identifier
-   * @param name                     the full name of the standard
-   * @param defaultVersion           the default version to use
+   * @param code the standard code identifier
+   * @param name the full name of the standard
+   * @param defaultVersion the default version to use
    * @param applicableEquipmentTypes equipment types this standard applies to
-   * @param designStandardCategory   the NeqSim design standard category key
+   * @param designStandardCategory the NeqSim design standard category key
    */
   StandardType(String code, String name, String defaultVersion, String[] applicableEquipmentTypes,
       String designStandardCategory) {

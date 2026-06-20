@@ -47,9 +47,9 @@ public class ConditionalAction implements LogicAction {
   /**
    * Creates a conditional action with primary action only (no alternative).
    *
-   * @param condition     condition to evaluate
+   * @param condition condition to evaluate
    * @param primaryAction action to execute if condition is true
-   * @param description   description of this conditional
+   * @param description description of this conditional
    */
   public ConditionalAction(LogicCondition condition, LogicAction primaryAction, String description) {
     this(condition, primaryAction, null, description);
@@ -58,10 +58,10 @@ public class ConditionalAction implements LogicAction {
   /**
    * Creates a conditional action with both primary and alternative actions.
    *
-   * @param condition         condition to evaluate
-   * @param primaryAction     action to execute if condition is true
+   * @param condition condition to evaluate
+   * @param primaryAction action to execute if condition is true
    * @param alternativeAction action to execute if condition is false (can be null)
-   * @param description       description of this conditional
+   * @param description description of this conditional
    */
   public ConditionalAction(LogicCondition condition, LogicAction primaryAction, LogicAction alternativeAction,
       String description) {

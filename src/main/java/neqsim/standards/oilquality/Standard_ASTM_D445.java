@@ -100,7 +100,7 @@ public class Standard_ASTM_D445 extends neqsim.standards.Standard {
    * Performs flash at specified temperature and extracts liquid viscosity and density.
    *
    * @param temperatureC temperature in degrees Celsius
-   * @param is40C        true if storing results for 40 C, false for 100 C
+   * @param is40C true if storing results for 40 C, false for 100 C
    */
   private void calculateAtTemperature(double temperatureC, boolean is40C) {
     try {
@@ -159,7 +159,7 @@ public class Standard_ASTM_D445 extends neqsim.standards.Standard {
    * using the empirical correlation.
    * </p>
    *
-   * @param kv40  kinematic viscosity at 40 C in mm2/s
+   * @param kv40 kinematic viscosity at 40 C in mm2/s
    * @param kv100 kinematic viscosity at 100 C in mm2/s
    * @return viscosity index
    */

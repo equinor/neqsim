@@ -57,7 +57,7 @@ public class ChemEq implements java.io.Serializable {
    * </p>
    *
    * @deprecated This constructor is incomplete and may cause NPE. Use
-   *             {@link #ChemEq(double, double, double[][], double[], double[], double[])} instead.
+   * {@link #ChemEq(double, double, double[][], double[], double[], double[])} instead.
    */
   @Deprecated
   public ChemEq() {
@@ -91,11 +91,11 @@ public class ChemEq implements java.io.Serializable {
    * Constructor for ChemEq.
    * </p>
    *
-   * @param T         a double
-   * @param P         a double
-   * @param A_matrix  an array of type double
-   * @param n_mol     an array of type double
-   * @param chem_ref  an array of type double
+   * @param T a double
+   * @param P a double
+   * @param A_matrix an array of type double
+   * @param n_mol an array of type double
+   * @param chem_ref an array of type double
    * @param b_element an array of type double
    */
   public ChemEq(double T, double P, double[][] A_matrix, double[] n_mol, double[] chem_ref, double[] b_element) {
@@ -154,8 +154,8 @@ public class ChemEq implements java.io.Serializable {
    * Constructor for ChemEq.
    * </p>
    *
-   * @param T        a double
-   * @param P        a double
+   * @param T a double
+   * @param P a double
    * @param A_matrix an array of type double
    */
   public ChemEq(double T, double P, double[][] A_matrix) {
@@ -324,9 +324,9 @@ public class ChemEq implements java.io.Serializable {
    * </p>
    *
    * @param startIndex starting index for loop (fixes bug where instance field was used)
-   * @param n_omega    an array of type double
-   * @param check      a int
-   * @param step       a double
+   * @param n_omega an array of type double
+   * @param check a int
+   * @param step a double
    * @return a double
    */
   public double innerStep(int startIndex, double[] n_omega, int check, double step) {
@@ -358,9 +358,9 @@ public class ChemEq implements java.io.Serializable {
    * solve.
    * </p>
    *
-   * @param T        a double
-   * @param P        a double
-   * @param n_mol    an array of type double
+   * @param T a double
+   * @param P a double
+   * @param n_mol an array of type double
    * @param chem_ref an array of type double
    */
   public void solve(double T, double P, double[] n_mol, double[] chem_ref) {

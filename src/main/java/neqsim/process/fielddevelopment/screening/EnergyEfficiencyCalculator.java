@@ -223,7 +223,7 @@ public class EnergyEfficiencyCalculator implements Serializable {
   /**
    * Calculates energy efficiency from a FieldConcept.
    *
-   * @param concept        field concept
+   * @param concept field concept
    * @param facilityConfig facility configuration
    * @return energy report
    */
@@ -473,7 +473,7 @@ public class EnergyEfficiencyCalculator implements Serializable {
    * Calculates simple payback period.
    *
    * @param savingsKW annual energy savings (kW)
-   * @param capex     capital expenditure (USD)
+   * @param capex capital expenditure (USD)
    * @return payback years
    */
   private double calculatePayback(double savingsKW, double capex) {
@@ -520,7 +520,7 @@ public class EnergyEfficiencyCalculator implements Serializable {
    * Sets compressor power.
    *
    * @param power power value
-   * @param unit  unit ("kW", "MW")
+   * @param unit unit ("kW", "MW")
    * @return this for chaining
    */
   public EnergyEfficiencyCalculator setCompressorPower(double power, String unit) {
@@ -547,7 +547,7 @@ public class EnergyEfficiencyCalculator implements Serializable {
    * Sets pump power.
    *
    * @param power power value
-   * @param unit  unit ("kW", "MW")
+   * @param unit unit ("kW", "MW")
    * @return this for chaining
    */
   public EnergyEfficiencyCalculator setPumpPower(double power, String unit) {

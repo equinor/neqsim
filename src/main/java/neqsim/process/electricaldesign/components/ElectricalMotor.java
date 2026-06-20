@@ -68,8 +68,8 @@ public class ElectricalMotor implements java.io.Serializable {
    * </p>
    *
    * @param shaftPowerKW required shaft power in kW
-   * @param margin       sizing margin (e.g. 1.10 for 10% margin)
-   * @param standard     motor standard ("IEC" or "NEMA")
+   * @param margin sizing margin (e.g. 1.10 for 10% margin)
+   * @param standard motor standard ("IEC" or "NEMA")
    */
   public void sizeMotor(double shaftPowerKW, double margin, String standard) {
     double requiredPower = shaftPowerKW * margin;
@@ -157,9 +157,9 @@ public class ElectricalMotor implements java.io.Serializable {
    * Based on IEC 60034-30-1 minimum efficiency values for 4-pole machines at 50 Hz.
    * </p>
    *
-   * @param powerKW    motor power in kW
+   * @param powerKW motor power in kW
    * @param motorPoles number of poles
-   * @param iecClass   efficiency class (IE1-IE4)
+   * @param iecClass efficiency class (IE1-IE4)
    * @return estimated efficiency in percent
    */
   private double estimateEfficiency(double powerKW, int motorPoles, String iecClass) {
@@ -231,9 +231,9 @@ public class ElectricalMotor implements java.io.Serializable {
   /**
    * Estimate IEC frame size designation.
    *
-   * @param powerKW    motor power in kW
+   * @param powerKW motor power in kW
    * @param motorPoles number of poles
-   * @param standard   "IEC" or "NEMA"
+   * @param standard "IEC" or "NEMA"
    * @return frame size string
    */
   private String estimateFrameSize(double powerKW, int motorPoles, String standard) {

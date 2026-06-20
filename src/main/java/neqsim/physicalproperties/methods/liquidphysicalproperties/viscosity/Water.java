@@ -166,9 +166,9 @@ public class Water extends Viscosity {
   /**
    * Solute viscosity (mPa·s) by Laliberté for given ν1..ν6, temperature (°C) and w_w.
    *
-   * @param v     the Laliberté coefficients ν1..ν6
+   * @param v the Laliberté coefficients ν1..ν6
    * @param tempC temperature in Celsius
-   * @param w_w   weight fraction of water
+   * @param w_w weight fraction of water
    * @return solute viscosity in mPa·s
    */
   private double soluteViscosity_mPaS(double[] v, double tempC, double w_w) {

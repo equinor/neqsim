@@ -109,8 +109,8 @@ public class ScenarioExecutionSummary {
   /**
    * Adds a logic execution result.
    *
-   * @param logicName         name of the logic sequence
-   * @param finalState        final state of the logic
+   * @param logicName name of the logic sequence
+   * @param finalState final state of the logic
    * @param statusDescription detailed status description
    */
   public void addLogicResult(String logicName, LogicState finalState, String statusDescription) {
@@ -220,7 +220,7 @@ public class ScenarioExecutionSummary {
     /**
      * Creates a logic result.
      *
-     * @param finalState        final state of the logic
+     * @param finalState final state of the logic
      * @param statusDescription status description
      */
     public LogicResult(LogicState finalState, String statusDescription) {

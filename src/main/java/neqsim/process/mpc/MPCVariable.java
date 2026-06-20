@@ -74,8 +74,8 @@ public abstract class MPCVariable implements Serializable {
   /**
    * Construct an MPC variable bound to equipment.
    *
-   * @param name         unique identifier for this variable
-   * @param equipment    the process equipment to bind to
+   * @param name unique identifier for this variable
+   * @param equipment the process equipment to bind to
    * @param propertyName the property to read/write
    */
   protected MPCVariable(String name, ProcessEquipmentInterface equipment, String propertyName) {
@@ -87,10 +87,10 @@ public abstract class MPCVariable implements Serializable {
   /**
    * Construct an MPC variable bound to equipment with unit specification.
    *
-   * @param name         unique identifier for this variable
-   * @param equipment    the process equipment to bind to
+   * @param name unique identifier for this variable
+   * @param equipment the process equipment to bind to
    * @param propertyName the property to read/write
-   * @param unit         the unit for the property value
+   * @param unit the unit for the property value
    */
   protected MPCVariable(String name, ProcessEquipmentInterface equipment, String propertyName, String unit) {
     this(name, equipment, propertyName);

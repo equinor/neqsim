@@ -32,10 +32,10 @@ public class FittingParameter implements Serializable {
   /**
    * Creates a bounded linear fitting parameter.
    *
-   * @param name         parameter name
+   * @param name parameter name
    * @param initialValue initial physical parameter value
-   * @param lowerBound   lower physical parameter bound
-   * @param upperBound   upper physical parameter bound
+   * @param lowerBound lower physical parameter bound
+   * @param upperBound upper physical parameter bound
    */
   public FittingParameter(String name, double initialValue, double lowerBound, double upperBound) {
     this(name, initialValue, lowerBound, upperBound, "", ParameterTransform.LINEAR, "generic", Double.NaN, Double.NaN);
@@ -44,14 +44,14 @@ public class FittingParameter implements Serializable {
   /**
    * Creates a complete fitting parameter definition.
    *
-   * @param name                   parameter name
-   * @param initialValue           initial physical parameter value
-   * @param lowerBound             lower physical parameter bound
-   * @param upperBound             upper physical parameter bound
-   * @param unit                   parameter unit label
-   * @param transform              parameter-space transform
-   * @param category               parameter category or physical meaning
-   * @param priorValue             optional prior value, or NaN when unused
+   * @param name parameter name
+   * @param initialValue initial physical parameter value
+   * @param lowerBound lower physical parameter bound
+   * @param upperBound upper physical parameter bound
+   * @param unit parameter unit label
+   * @param transform parameter-space transform
+   * @param category parameter category or physical meaning
+   * @param priorValue optional prior value, or NaN when unused
    * @param priorStandardDeviation optional prior standard deviation, or NaN when unused
    */
   public FittingParameter(String name, double initialValue, double lowerBound, double upperBound, String unit,
@@ -296,7 +296,7 @@ public class FittingParameter implements Serializable {
   /**
    * Returns a default string when the value is null.
    *
-   * @param value        user-supplied value
+   * @param value user-supplied value
    * @param defaultValue fallback value
    * @return value or defaultValue
    */
@@ -307,7 +307,7 @@ public class FittingParameter implements Serializable {
   /**
    * Validates that a number is finite.
    *
-   * @param name  value name used in exception messages
+   * @param name value name used in exception messages
    * @param value value to validate
    */
   private static void validateFinite(String name, double value) {

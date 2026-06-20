@@ -70,16 +70,16 @@ public final class MitigationSuggestion implements Serializable, Comparable<Miti
   /**
    * Creates a mitigation suggestion.
    *
-   * @param marginKey           margin key that triggered the suggestion
-   * @param description         suggested action description
-   * @param targetEquipment     target equipment name
-   * @param targetVariable      target variable or constraint name
-   * @param suggestedValue      suggested value, or {@link Double#NaN} when qualitative
-   * @param unit                engineering unit
-   * @param priority            priority level
-   * @param category            action category
+   * @param marginKey margin key that triggered the suggestion
+   * @param description suggested action description
+   * @param targetEquipment target equipment name
+   * @param targetVariable target variable or constraint name
+   * @param suggestedValue suggested value, or {@link Double#NaN} when qualitative
+   * @param unit engineering unit
+   * @param priority priority level
+   * @param category action category
    * @param expectedImprovement expected improvement text
-   * @param confidence          confidence from 0.0 to 1.0
+   * @param confidence confidence from 0.0 to 1.0
    */
   public MitigationSuggestion(String marginKey, String description, String targetEquipment, String targetVariable,
       double suggestedValue, String unit, Priority priority, Category category, String expectedImprovement,

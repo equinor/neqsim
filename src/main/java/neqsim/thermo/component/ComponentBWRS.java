@@ -48,10 +48,10 @@ public class ComponentBWRS extends ComponentSrk {
    * Constructor for ComponentBWRS.
    * </p>
    *
-   * @param name         Name of component.
-   * @param moles        Total number of moles of component.
+   * @param name Name of component.
+   * @param moles Total number of moles of component.
    * @param molesInPhase Number of moles in phase.
-   * @param compIndex    Index number of component in phase object component array.
+   * @param compIndex Index number of component in phase object component array.
    */
   public ComponentBWRS(String name, double moles, double molesInPhase, int compIndex) {
     super(name, moles, molesInPhase, compIndex);
@@ -112,11 +112,11 @@ public class ComponentBWRS extends ComponentSrk {
    * </p>
    *
    * @param number a int. Not used.
-   * @param TC     Critical temperature [K]
-   * @param PC     Critical pressure [bara]
-   * @param M      Molar mass
-   * @param a      Acentric factor
-   * @param moles  Total number of moles of component.
+   * @param TC Critical temperature [K]
+   * @param PC Critical pressure [bara]
+   * @param M Molar mass
+   * @param a Acentric factor
+   * @param moles Total number of moles of component.
    */
   public ComponentBWRS(int number, double TC, double PC, double M, double a, double moles) {
     super(number, TC, PC, M, a, moles);
@@ -215,10 +215,10 @@ public class ComponentBWRS extends ComponentSrk {
    * getFpoldn.
    * </p>
    *
-   * @param phase                   a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponentphases a int
-   * @param temperature             a double
-   * @param pressure                a double
+   * @param temperature a double
+   * @param pressure a double
    * @return a double
    */
   public double getFpoldn(PhaseInterface phase, int numberOfComponentphases, double temperature, double pressure) {
@@ -236,10 +236,10 @@ public class ComponentBWRS extends ComponentSrk {
    * getdRhodn.
    * </p>
    *
-   * @param phase                   a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponentphases a int
-   * @param temperature             a double
-   * @param pressure                a double
+   * @param temperature a double
+   * @param pressure a double
    * @return a double
    */
   public double getdRhodn(PhaseInterface phase, int numberOfComponentphases, double temperature, double pressure) {
@@ -251,10 +251,10 @@ public class ComponentBWRS extends ComponentSrk {
    * getELdn.
    * </p>
    *
-   * @param phase                   a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponentphases a int
-   * @param temperature             a double
-   * @param pressure                a double
+   * @param temperature a double
+   * @param pressure a double
    * @return a double
    */
   public double getELdn(PhaseInterface phase, int numberOfComponentphases, double temperature, double pressure) {
@@ -268,10 +268,10 @@ public class ComponentBWRS extends ComponentSrk {
    * getFexpdn.
    * </p>
    *
-   * @param phase                   a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponentphases a int
-   * @param temperature             a double
-   * @param pressure                a double
+   * @param temperature a double
+   * @param pressure a double
    * @return a double
    */
   public double getFexpdn(PhaseInterface phase, int numberOfComponentphases, double temperature, double pressure) {

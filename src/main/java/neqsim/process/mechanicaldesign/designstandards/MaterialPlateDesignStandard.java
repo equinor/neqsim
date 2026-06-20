@@ -31,7 +31,7 @@ public class MaterialPlateDesignStandard extends DesignStandard {
    * Constructor for MaterialPlateDesignStandard.
    * </p>
    *
-   * @param name         a {@link java.lang.String} object
+   * @param name a {@link java.lang.String} object
    * @param equipmentInn a {@link neqsim.process.mechanicaldesign.MechanicalDesign} object
    */
   public MaterialPlateDesignStandard(String name, MechanicalDesign equipmentInn) {
@@ -73,9 +73,9 @@ public class MaterialPlateDesignStandard extends DesignStandard {
    * readMaterialDesignStandard.
    * </p>
    *
-   * @param name       a {@link java.lang.String} object
-   * @param specNo     a {@link java.lang.String} object
-   * @param grade      a {@link java.lang.String} object
+   * @param name a {@link java.lang.String} object
+   * @param specNo a {@link java.lang.String} object
+   * @param grade a {@link java.lang.String} object
    * @param divClassNo a int
    */
   public void readMaterialDesignStandard(String name, String specNo, String grade, int divClassNo) {

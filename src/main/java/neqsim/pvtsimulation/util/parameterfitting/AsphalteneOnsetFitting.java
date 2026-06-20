@@ -104,7 +104,7 @@ public class AsphalteneOnsetFitting {
      *
      * @param temperatureK temperature in Kelvin
      * @param pressureBara onset pressure in bara
-     * @param stdDev       standard deviation of measurement
+     * @param stdDev standard deviation of measurement
      */
     public OnsetDataPoint(double temperatureK, double pressureBara, double stdDev) {
       this.temperatureK = temperatureK;
@@ -141,7 +141,7 @@ public class AsphalteneOnsetFitting {
    *
    * @param temperatureK temperature in Kelvin
    * @param pressureBara measured onset pressure in bara
-   * @param stdDev       standard deviation of measurement
+   * @param stdDev standard deviation of measurement
    */
   public void addOnsetPoint(double temperatureK, double pressureBara, double stdDev) {
     onsetData.add(new OnsetDataPoint(temperatureK, pressureBara, stdDev));
@@ -169,7 +169,7 @@ public class AsphalteneOnsetFitting {
    * Sets the initial parameter guess for association parameters.
    *
    * @param epsilonOverR association energy epsilon/R in Kelvin
-   * @param kappa        association volume (dimensionless)
+   * @param kappa association volume (dimensionless)
    */
   public void setInitialGuess(double epsilonOverR, double kappa) {
     double[] guess = { epsilonOverR, kappa };
@@ -190,8 +190,8 @@ public class AsphalteneOnsetFitting {
    * Sets the pressure search range for onset calculation.
    *
    * @param startPressure starting pressure in bara
-   * @param minPressure   minimum pressure in bara
-   * @param pressureStep  pressure step in bara
+   * @param minPressure minimum pressure in bara
+   * @param pressureStep pressure step in bara
    */
   public void setPressureRange(double startPressure, double minPressure, double pressureStep) {
     function.setPressureRange(startPressure, minPressure, pressureStep);

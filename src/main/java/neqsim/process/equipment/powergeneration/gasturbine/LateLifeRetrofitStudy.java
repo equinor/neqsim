@@ -46,11 +46,11 @@ public class LateLifeRetrofitStudy implements Serializable {
   /**
    * Construct a study.
    *
-   * @param baselineFleet     existing turbines (each with spec/ambient/degradation)
-   * @param retrofitFleet     replacement turbines
-   * @param demandProfileMW   year-by-year average demanded power [MW]
-   * @param startYear         calendar year of the first demand entry
-   * @param co2TaxSchedule    CO2 cost schedule
+   * @param baselineFleet existing turbines (each with spec/ambient/degradation)
+   * @param retrofitFleet replacement turbines
+   * @param demandProfileMW year-by-year average demanded power [MW]
+   * @param startYear calendar year of the first demand entry
+   * @param co2TaxSchedule CO2 cost schedule
    * @param fuelPriceNOKPerKg fuel price [NOK/kg]
    */
   public LateLifeRetrofitStudy(List<GasTurbineUnit> baselineFleet, List<GasTurbineUnit> retrofitFleet,

@@ -106,9 +106,9 @@ public class RiserConfiguration {
   /**
    * Factory method to create a riser with default parameters.
    *
-   * @param type       the riser type
-   * @param name       equipment name
-   * @param inlet      inlet stream
+   * @param type the riser type
+   * @param name equipment name
+   * @param inlet inlet stream
    * @param waterDepth water depth in meters
    * @return configured PipeBeggsAndBrills as a riser
    */
@@ -121,8 +121,8 @@ public class RiserConfiguration {
   /**
    * Factory method to create a Steel Catenary Riser.
    *
-   * @param name       equipment name
-   * @param inlet      inlet stream
+   * @param name equipment name
+   * @param inlet inlet stream
    * @param waterDepth water depth in meters
    * @return configured SCR
    */
@@ -133,8 +133,8 @@ public class RiserConfiguration {
   /**
    * Factory method to create a Top Tensioned Riser (vertical).
    *
-   * @param name       equipment name
-   * @param inlet      inlet stream
+   * @param name equipment name
+   * @param inlet inlet stream
    * @param waterDepth water depth in meters
    * @return configured TTR
    */
@@ -145,9 +145,9 @@ public class RiserConfiguration {
   /**
    * Factory method to create a Lazy-Wave riser.
    *
-   * @param name          equipment name
-   * @param inlet         inlet stream
-   * @param waterDepth    water depth in meters
+   * @param name equipment name
+   * @param inlet inlet stream
+   * @param waterDepth water depth in meters
    * @param buoyancyDepth depth of buoyancy modules from surface
    * @return configured lazy-wave riser
    */
@@ -162,7 +162,7 @@ public class RiserConfiguration {
   /**
    * Create a riser using the current configuration.
    *
-   * @param name  equipment name
+   * @param name equipment name
    * @param inlet inlet stream
    * @return configured pipe as riser
    */
@@ -491,7 +491,7 @@ public class RiserConfiguration {
    * Set inner diameter with unit.
    *
    * @param innerDiameter diameter value
-   * @param unit          unit (m, mm, inch, in)
+   * @param unit unit (m, mm, inch, in)
    * @return this configuration for chaining
    */
   public RiserConfiguration setInnerDiameter(double innerDiameter, String unit) {

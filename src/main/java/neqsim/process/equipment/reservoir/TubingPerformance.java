@@ -216,7 +216,7 @@ public class TubingPerformance extends TwoPortEquipment {
   /**
    * Constructor for TubingPerformance with inlet stream.
    *
-   * @param name        equipment name
+   * @param name equipment name
    * @param inletStream inlet stream (typically from reservoir or WellFlow)
    */
   public TubingPerformance(String name, StreamInterface inletStream) {
@@ -228,7 +228,7 @@ public class TubingPerformance extends TwoPortEquipment {
    * Set tubing measured depth (along wellbore).
    *
    * @param length tubing length
-   * @param unit   length unit ("m", "ft")
+   * @param unit length unit ("m", "ft")
    */
   public void setTubingLength(double length, String unit) {
     if (unit.equalsIgnoreCase("ft")) {
@@ -242,7 +242,7 @@ public class TubingPerformance extends TwoPortEquipment {
    * Set tubing inner diameter.
    *
    * @param diameter inner diameter
-   * @param unit     diameter unit ("m", "in", "mm")
+   * @param unit diameter unit ("m", "in", "mm")
    */
   public void setTubingDiameter(double diameter, String unit) {
     switch (unit.toLowerCase()) {
@@ -261,7 +261,7 @@ public class TubingPerformance extends TwoPortEquipment {
    * Set pipe wall roughness.
    *
    * @param roughness wall roughness
-   * @param unit      roughness unit ("m", "mm", "in")
+   * @param unit roughness unit ("m", "mm", "in")
    */
   public void setWallRoughness(double roughness, String unit) {
     switch (unit.toLowerCase()) {
@@ -316,7 +316,7 @@ public class TubingPerformance extends TwoPortEquipment {
    * Set bottom-hole temperature (reservoir temperature).
    *
    * @param temperature bottom-hole temperature
-   * @param unit        temperature unit ("K", "C", "F")
+   * @param unit temperature unit ("K", "C", "F")
    */
   public void setBottomHoleTemperature(double temperature, String unit) {
     this.bottomHoleTemperature = convertTemperatureToKelvin(temperature, unit);
@@ -326,7 +326,7 @@ public class TubingPerformance extends TwoPortEquipment {
    * Set wellhead temperature.
    *
    * @param temperature wellhead temperature
-   * @param unit        temperature unit ("K", "C", "F")
+   * @param unit temperature unit ("K", "C", "F")
    */
   public void setWellheadTemperature(double temperature, String unit) {
     this.wellheadTemperature = convertTemperatureToKelvin(temperature, unit);
@@ -336,7 +336,7 @@ public class TubingPerformance extends TwoPortEquipment {
    * Set geothermal gradient for Ramey model.
    *
    * @param gradient temperature gradient
-   * @param unit     gradient unit ("K/m", "C/100m", "F/100ft")
+   * @param unit gradient unit ("K/m", "C/100m", "F/100ft")
    */
   public void setGeothermalGradient(double gradient, String unit) {
     switch (unit.toLowerCase()) {
@@ -480,7 +480,7 @@ public class TubingPerformance extends TwoPortEquipment {
   /**
    * Calculate temperature at a given depth using the selected temperature model.
    *
-   * @param depth  current depth (m from surface, 0 = surface)
+   * @param depth current depth (m from surface, 0 = surface)
    * @param bhTemp bottom-hole temperature (K)
    * @return temperature at depth (K)
    */
@@ -517,7 +517,7 @@ public class TubingPerformance extends TwoPortEquipment {
    * <li>Time-dependent behavior (transient heat conduction)</li>
    * </ul>
    *
-   * @param depth  depth from surface (m)
+   * @param depth depth from surface (m)
    * @param bhTemp bottom-hole temperature (K)
    * @return temperature at depth (K)
    */
@@ -554,7 +554,7 @@ public class TubingPerformance extends TwoPortEquipment {
   /**
    * Calculate pressure drop for a single segment using the selected correlation.
    *
-   * @param fluid         fluid at segment conditions
+   * @param fluid fluid at segment conditions
    * @param segmentLength length of segment (m)
    * @return pressure drop (bar)
    */
@@ -577,7 +577,7 @@ public class TubingPerformance extends TwoPortEquipment {
   /**
    * Beggs and Brill (1973) pressure drop calculation.
    *
-   * @param fluid         the fluid system
+   * @param fluid the fluid system
    * @param segmentLength the segment length in meters
    * @return pressure drop in bar
    */
@@ -668,7 +668,7 @@ public class TubingPerformance extends TwoPortEquipment {
   /**
    * Hagedorn and Brown (1965) pressure drop - optimized for vertical oil wells.
    *
-   * @param fluid         the fluid system
+   * @param fluid the fluid system
    * @param segmentLength the segment length in meters
    * @return pressure drop in bar
    */
@@ -725,7 +725,7 @@ public class TubingPerformance extends TwoPortEquipment {
   /**
    * Gray (1974) pressure drop - optimized for gas wells with condensate.
    *
-   * @param fluid         the fluid system
+   * @param fluid the fluid system
    * @param segmentLength the segment length in meters
    * @return pressure drop in bar
    */
@@ -770,7 +770,7 @@ public class TubingPerformance extends TwoPortEquipment {
   /**
    * Hasan and Kabir (2002) mechanistic model.
    *
-   * @param fluid         the fluid system
+   * @param fluid the fluid system
    * @param segmentLength the segment length in meters
    * @return pressure drop in bar
    */
@@ -826,7 +826,7 @@ public class TubingPerformance extends TwoPortEquipment {
   /**
    * Duns and Ros (1963) pressure drop - for gas wells.
    *
-   * @param fluid         the fluid system
+   * @param fluid the fluid system
    * @param segmentLength the segment length in meters
    * @return pressure drop in bar
    */
@@ -863,8 +863,8 @@ public class TubingPerformance extends TwoPortEquipment {
    * essential for nodal analysis and reservoir simulation coupling.
    * </p>
    *
-   * @param flowRates    array of flow rates to evaluate
-   * @param flowUnit     flow rate unit ("Sm3/day", "bbl/day", "kg/sec", etc.)
+   * @param flowRates array of flow rates to evaluate
+   * @param flowUnit flow rate unit ("Sm3/day", "bbl/day", "kg/sec", etc.)
    * @param pressureUnit pressure unit for output ("bara", "psia", etc.)
    * @return 2D array: [0]=flow rates, [1]=bottom-hole pressures, [2]=wellhead pressures
    */
@@ -875,10 +875,10 @@ public class TubingPerformance extends TwoPortEquipment {
   /**
    * Generate a VLP curve for a specified wellhead pressure.
    *
-   * @param flowRates    array of flow rates to evaluate
-   * @param flowUnit     flow rate unit
+   * @param flowRates array of flow rates to evaluate
+   * @param flowUnit flow rate unit
    * @param pressureUnit pressure unit for output
-   * @param targetWHP    target wellhead pressure (bara)
+   * @param targetWHP target wellhead pressure (bara)
    * @return 2D array: [0]=flow rates, [1]=bottom-hole pressures, [2]=wellhead pressures
    */
   public double[][] generateVLPCurve(double[] flowRates, String flowUnit, String pressureUnit, double targetWHP) {
@@ -958,9 +958,9 @@ public class TubingPerformance extends TwoPortEquipment {
    * This produces a family of VLP curves useful for sensitivity analysis and reservoir simulator table generation.
    * </p>
    *
-   * @param flowRates    array of flow rates
-   * @param flowUnit     flow rate unit
-   * @param whPressures  array of wellhead pressures
+   * @param flowRates array of flow rates
+   * @param flowUnit flow rate unit
+   * @param whPressures array of wellhead pressures
    * @param pressureUnit pressure unit
    * @return List of VLP curves, one per WHP
    */
@@ -981,9 +981,9 @@ public class TubingPerformance extends TwoPortEquipment {
    * VLP.
    * </p>
    *
-   * @param iprModel         WellFlow object representing the IPR
+   * @param iprModel WellFlow object representing the IPR
    * @param wellheadPressure target wellhead pressure
-   * @param pressureUnit     pressure unit
+   * @param pressureUnit pressure unit
    * @return double[2]: [0]=operating flow rate (Sm3/day), [1]=BHP (bara)
    */
   public double[] findOperatingPoint(WellFlow iprModel, double wellheadPressure, String pressureUnit) {
@@ -1032,8 +1032,8 @@ public class TubingPerformance extends TwoPortEquipment {
   /**
    * Calculate IPR pressure for a given flow rate using the WellFlow model.
    *
-   * @param iprModel          the WellFlow IPR model
-   * @param flowRate          the flow rate
+   * @param iprModel the WellFlow IPR model
+   * @param flowRate the flow rate
    * @param reservoirPressure the reservoir pressure in bar
    * @return the calculated bottom-hole pressure in bar
    */
@@ -1206,9 +1206,9 @@ public class TubingPerformance extends TwoPortEquipment {
    * correlations. This is useful when you have measured or pre-calculated VLP data.
    * </p>
    *
-   * @param flowRates           flow rates (same unit as stream flow rate)
+   * @param flowRates flow rates (same unit as stream flow rate)
    * @param bottomHolePressures corresponding bottom-hole pressures (bara)
-   * @param wellheadPressure    wellhead pressure that the curve was generated for (bara)
+   * @param wellheadPressure wellhead pressure that the curve was generated for (bara)
    */
   public void setTableVLP(double[] flowRates, double[] bottomHolePressures, double wellheadPressure) {
     if (flowRates == null || bottomHolePressures == null || flowRates.length != bottomHolePressures.length
@@ -1250,7 +1250,7 @@ public class TubingPerformance extends TwoPortEquipment {
    * 5.0,225
    * </pre>
    *
-   * @param filePath         path to the CSV file
+   * @param filePath path to the CSV file
    * @param wellheadPressure wellhead pressure the curve was generated for (bara)
    * @throws IOException if file cannot be read
    */
@@ -1261,7 +1261,7 @@ public class TubingPerformance extends TwoPortEquipment {
   /**
    * Load VLP curve from a CSV file.
    *
-   * @param filePath         path to the CSV file
+   * @param filePath path to the CSV file
    * @param wellheadPressure wellhead pressure the curve was generated for (bara)
    * @throws IOException if file cannot be read
    * @see #loadVLPFromFile(String, double)

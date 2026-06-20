@@ -124,7 +124,7 @@ class NeqSimThreadPoolTest {
    * Creates a process system with a feed stream, valve, and separator. Each process is independent with its own fluid
    * system.
    *
-   * @param id           unique identifier for naming units
+   * @param id unique identifier for naming units
    * @param feedPressure inlet pressure in bara
    * @return configured ProcessSystem ready to run
    */

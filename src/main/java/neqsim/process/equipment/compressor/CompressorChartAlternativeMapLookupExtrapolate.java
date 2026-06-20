@@ -151,10 +151,10 @@ public class CompressorChartAlternativeMapLookupExtrapolate extends CompressorCh
    * Extrapolates or interpolates a value based on the given flow using the provided flow data, value data, and
    * polynomial spline function.
    *
-   * @param flow      the flow value for which the corresponding value needs to be determined
-   * @param flowData  an array of flow data points
+   * @param flow the flow value for which the corresponding value needs to be determined
+   * @param flowData an array of flow data points
    * @param valueData an array of value data points corresponding to the flow data points
-   * @param spline    a polynomial spline function created from the flow and value data points
+   * @param spline a polynomial spline function created from the flow and value data points
    * @return the extrapolated or interpolated value corresponding to the given flow
    */
   private double extrapolateOrInterpolate(double flow, double[] flowData, double[] valueData,
@@ -180,7 +180,7 @@ public class CompressorChartAlternativeMapLookupExtrapolate extends CompressorCh
    * Extrapolates or interpolates a value based on the given speed and two reference speeds with their corresponding
    * values.
    *
-   * @param speed  the speed at which to extrapolate or interpolate the value
+   * @param speed the speed at which to extrapolate or interpolate the value
    * @param speed1 the first reference speed
    * @param speed2 the second reference speed
    * @param value1 the value corresponding to the first reference speed
@@ -205,7 +205,7 @@ public class CompressorChartAlternativeMapLookupExtrapolate extends CompressorCh
    * Performs linear interpolation to estimate the value of y at a given x, based on two known points (x1, y1) and (x2,
    * y2).
    *
-   * @param x  the x-value at which to interpolate
+   * @param x the x-value at which to interpolate
    * @param x1 the x-value of the first known point
    * @param x2 the x-value of the second known point
    * @param y1 the y-value of the first known point

@@ -29,7 +29,7 @@ public final class FireHeatLoadCalculator {
    * where F is the environmental factor and A is the wetted surface area [m2]. This metric form is derived from
    * 21,000,000 * F * A^0.82 [Btu/hr].
    *
-   * @param wettedArea          Wetted surface area exposed to fire [m2]
+   * @param wettedArea Wetted surface area exposed to fire [m2]
    * @param environmentalFactor API 521 environmental factor, unitless (e.g., insulation quality)
    * @return Heat input from pool fire in Watts
    */
@@ -50,9 +50,9 @@ public final class FireHeatLoadCalculator {
    * This method supports modern fire heat load calculations that use configuration/view factors instead of a pure
    * point-source assumption.
    *
-   * @param emissivity          Effective flame emissivity (0-1)
-   * @param viewFactor          Geometric view/configuration factor between flame and surface (0-1)
-   * @param flameTemperatureK   Flame or source temperature [K]
+   * @param emissivity Effective flame emissivity (0-1)
+   * @param viewFactor Geometric view/configuration factor between flame and surface (0-1)
+   * @param flameTemperatureK Flame or source temperature [K]
    * @param surfaceTemperatureK Current surface temperature [K]
    * @return Radiative heat flux toward the surface in W/m2
    */

@@ -82,10 +82,10 @@ public enum EquipmentRole {
   /**
    * Constructor for EquipmentRole.
    *
-   * @param displayName   human-readable name
+   * @param displayName human-readable name
    * @param preferredZone preferred zone in layout
-   * @param defaultColor  default color in hex format
-   * @param rankPriority  rank priority for vertical layout
+   * @param defaultColor default color in hex format
+   * @param rankPriority rank priority for vertical layout
    */
   EquipmentRole(String displayName, String preferredZone, String defaultColor, int rankPriority) {
     this.displayName = displayName;

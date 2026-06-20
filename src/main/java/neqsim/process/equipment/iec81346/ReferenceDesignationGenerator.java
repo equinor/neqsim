@@ -322,9 +322,9 @@ public class ReferenceDesignationGenerator implements Serializable {
   /**
    * Generates designations for a single process system.
    *
-   * @param system     the process system
+   * @param system the process system
    * @param funcPrefix the function prefix for this system
-   * @param locPrefix  the location prefix for this system
+   * @param locPrefix the location prefix for this system
    */
   private void generateForSystem(ProcessSystem system, String funcPrefix, String locPrefix) {
     // Counter per letter code for generating sequence numbers
@@ -388,10 +388,10 @@ public class ReferenceDesignationGenerator implements Serializable {
   /**
    * Generates designations for measurement devices in a process system.
    *
-   * @param system     the process system
+   * @param system the process system
    * @param funcPrefix the function prefix
-   * @param locPrefix  the location prefix
-   * @param counters   the letter code counters (shared with equipment)
+   * @param locPrefix the location prefix
+   * @param counters the letter code counters (shared with equipment)
    */
   private void generateForMeasurementDevices(ProcessSystem system, String funcPrefix, String locPrefix,
       Map<IEC81346LetterCode, Integer> counters) {
@@ -425,7 +425,7 @@ public class ReferenceDesignationGenerator implements Serializable {
   /**
    * Increments and returns the counter for a given letter code.
    *
-   * @param counters   the counter map
+   * @param counters the counter map
    * @param letterCode the letter code to increment
    * @return the new sequence number (1-based)
    */
@@ -636,12 +636,12 @@ public class ReferenceDesignationGenerator implements Serializable {
     /**
      * Creates a new designation entry.
      *
-     * @param equipmentName        the original equipment name
-     * @param equipmentType        the simple class name of the equipment
+     * @param equipmentName the original equipment name
+     * @param equipmentType the simple class name of the equipment
      * @param referenceDesignation the full reference designation string
-     * @param letterCode           the IEC 81346-2 letter code
-     * @param sequenceNumber       the sequence number within the letter code category
-     * @param functionArea         the function area identifier
+     * @param letterCode the IEC 81346-2 letter code
+     * @param sequenceNumber the sequence number within the letter code category
+     * @param functionArea the function area identifier
      */
     public DesignationEntry(String equipmentName, String equipmentType, String referenceDesignation,
 	IEC81346LetterCode letterCode, int sequenceNumber, String functionArea) {

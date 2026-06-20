@@ -49,7 +49,7 @@ public class MDMTCalculator implements Serializable {
   /**
    * Construct an MDMT calculator.
    *
-   * @param curve                material toughness curve from UCS-66
+   * @param curve material toughness curve from UCS-66
    * @param governingThicknessMm governing thickness per UCS-66.3 in mm
    */
   public MDMTCalculator(MaterialCurve curve, double governingThicknessMm) {

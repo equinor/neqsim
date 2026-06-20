@@ -38,12 +38,12 @@ public class FlowlineBranch implements NetworkBranch {
   /**
    * Creates a flowline branch with explicit pressure-drop coefficients.
    *
-   * @param name           unique branch name
-   * @param fromNode       upstream node name
-   * @param toNode         downstream node name
-   * @param linearCoeff    linear friction coefficient a in bar per Sm3/day
+   * @param name unique branch name
+   * @param fromNode upstream node name
+   * @param toNode downstream node name
+   * @param linearCoeff linear friction coefficient a in bar per Sm3/day
    * @param quadraticCoeff quadratic friction coefficient b in bar per (Sm3/day)&sup2;
-   * @param staticHeadBar  static elevation head in bar (positive = upstream below downstream)
+   * @param staticHeadBar static elevation head in bar (positive = upstream below downstream)
    */
   public FlowlineBranch(String name, String fromNode, String toNode, double linearCoeff, double quadraticCoeff,
       double staticHeadBar) {
@@ -59,12 +59,12 @@ public class FlowlineBranch implements NetworkBranch {
    * Builds a flowline branch whose quadratic coefficient is fitted to a single reference operating point (pure
    * turbulent assumption, a = 0).
    *
-   * @param name                     unique branch name
-   * @param fromNode                 upstream node name
-   * @param toNode                   downstream node name
+   * @param name unique branch name
+   * @param fromNode upstream node name
+   * @param toNode downstream node name
    * @param referencePressureDropBar measured pressure drop at the reference rate, in bar
-   * @param referenceRateSm3PerDay   reference rate in Sm3/day
-   * @param staticHeadBar            static elevation head in bar
+   * @param referenceRateSm3PerDay reference rate in Sm3/day
+   * @param staticHeadBar static elevation head in bar
    * @return a flowline branch
    */
   public static FlowlineBranch fromReferencePoint(String name, String fromNode, String toNode,
@@ -84,10 +84,10 @@ public class FlowlineBranch implements NetworkBranch {
    * reference fluid density.
    * </p>
    *
-   * @param name     unique branch name
+   * @param name unique branch name
    * @param fromNode upstream node name
-   * @param toNode   downstream node name
-   * @param pipe     a configured and run Beggs and Brill pipe model
+   * @param toNode downstream node name
+   * @param pipe a configured and run Beggs and Brill pipe model
    * @return a flowline branch fitted to the pipe model
    */
   public static FlowlineBranch fromBeggsBrillSample(String name, String fromNode, String toNode,

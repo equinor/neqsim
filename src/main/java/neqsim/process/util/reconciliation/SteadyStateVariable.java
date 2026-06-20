@@ -69,7 +69,7 @@ public class SteadyStateVariable implements java.io.Serializable {
   /**
    * Creates a steady-state monitoring variable.
    *
-   * @param name       variable identifier (e.g., DCS tag name)
+   * @param name variable identifier (e.g., DCS tag name)
    * @param windowSize maximum number of recent values to retain
    */
   public SteadyStateVariable(String name, int windowSize) {

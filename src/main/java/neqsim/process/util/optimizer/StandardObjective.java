@@ -353,7 +353,7 @@ public enum StandardObjective implements ObjectiveFunction {
    * Create an objective for a specific stream's flow rate.
    *
    * @param streamName name of the stream to minimize
-   * @param unit       flow rate unit (e.g., "kg/hr", "Sm3/hr")
+   * @param unit flow rate unit (e.g., "kg/hr", "Sm3/hr")
    * @return objective function
    * @throws IllegalArgumentException if streamName is null or empty
    */
@@ -432,8 +432,8 @@ public enum StandardObjective implements ObjectiveFunction {
    * the analyzer to the process and using minimizeFIV_LOF().
    * </p>
    *
-   * @param pipelineName       name of the PipeBeggsAndBrills pipeline
-   * @param method             "LOF" for Likelihood of Failure, "FRMS" for RMS method
+   * @param pipelineName name of the PipeBeggsAndBrills pipeline
+   * @param method "LOF" for Likelihood of Failure, "FRMS" for RMS method
    * @param supportArrangement for LOF: "Stiff", "Medium stiff", "Medium", or other
    * @return objective function
    * @throws IllegalArgumentException if pipelineName is null or empty

@@ -82,7 +82,7 @@ public class TransientWellbore extends Pipeline {
   /**
    * Constructor for TransientWellbore with inlet stream.
    *
-   * @param name        the equipment name
+   * @param name the equipment name
    * @param inletStream the inlet (feed) stream defining initial fluid conditions
    */
   public TransientWellbore(String name, StreamInterface inletStream) {
@@ -129,7 +129,7 @@ public class TransientWellbore extends Pipeline {
    * Sets the formation temperature at the wellhead and bottom-hole. A linear geothermal gradient is assumed between
    * these two points.
    *
-   * @param topTempKelvin    formation temperature at the wellhead in Kelvin
+   * @param topTempKelvin formation temperature at the wellhead in Kelvin
    * @param bottomTempKelvin formation temperature at the bottom-hole in Kelvin
    */
   public void setFormationTemperature(double topTempKelvin, double bottomTempKelvin) {
@@ -215,7 +215,7 @@ public class TransientWellbore extends Pipeline {
    * wellbore cools toward the formation temperature over the specified duration.
    *
    * @param totalTimeHours the total simulation duration in hours
-   * @param timeStepHours  the time step size in hours
+   * @param timeStepHours the time step size in hours
    */
   public void runShutdownSimulation(double totalTimeHours, double timeStepHours) {
     snapshots.clear();
@@ -281,11 +281,11 @@ public class TransientWellbore extends Pipeline {
   /**
    * Creates a snapshot of the wellbore state at a given time by performing flash calculations at each segment.
    *
-   * @param timeHours    the simulation time in hours
-   * @param depths       the depth array
+   * @param timeHours the simulation time in hours
+   * @param depths the depth array
    * @param temperatures the temperature array in Kelvin
-   * @param pressures    the pressure array in bara
-   * @param baseFluid    the base fluid for cloning
+   * @param pressures the pressure array in bara
+   * @param baseFluid the base fluid for cloning
    * @return a TransientSnapshot with all segment data
    */
   private TransientSnapshot createSnapshot(double timeHours, double[] depths, double[] temperatures, double[] pressures,
@@ -438,7 +438,7 @@ public class TransientWellbore extends Pipeline {
      * Constructor for TransientSnapshot.
      *
      * @param timeHours the simulation time
-     * @param size      the number of depth points
+     * @param size the number of depth points
      */
     public TransientSnapshot(double timeHours, int size) {
       this.timeHours = timeHours;
@@ -453,9 +453,9 @@ public class TransientWellbore extends Pipeline {
     /**
      * Adds gas phase composition data for a segment.
      *
-     * @param segmentIndex  the segment index
+     * @param segmentIndex the segment index
      * @param componentName the component name
-     * @param moleFraction  the mole fraction in the gas phase
+     * @param moleFraction the mole fraction in the gas phase
      */
     public void addGasComposition(int segmentIndex, String componentName, double moleFraction) {
       Map<String, Double> compMap = gasCompositions.get(segmentIndex);

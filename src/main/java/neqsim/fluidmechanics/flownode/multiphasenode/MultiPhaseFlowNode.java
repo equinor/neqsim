@@ -35,7 +35,7 @@ public abstract class MultiPhaseFlowNode extends FlowNode {
    * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param pipe   a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
+   * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
    */
   public MultiPhaseFlowNode(SystemInterface system, GeometryDefinitionInterface pipe) {
     super(system, pipe);

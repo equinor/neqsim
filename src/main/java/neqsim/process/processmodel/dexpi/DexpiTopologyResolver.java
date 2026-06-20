@@ -67,9 +67,9 @@ public final class DexpiTopologyResolver {
      *
      * @param sourceEquipmentId the ID of the source equipment
      * @param targetEquipmentId the ID of the target equipment
-     * @param sourceNozzleId    the ID of the source nozzle (may be null)
-     * @param targetNozzleId    the ID of the target nozzle (may be null)
-     * @param pipingSegmentId   the piping segment ID carrying this connection (may be null)
+     * @param sourceNozzleId the ID of the source nozzle (may be null)
+     * @param targetNozzleId the ID of the target nozzle (may be null)
+     * @param pipingSegmentId the piping segment ID carrying this connection (may be null)
      */
     public TopologyEdge(String sourceEquipmentId, String targetEquipmentId, String sourceNozzleId,
 	String targetNozzleId, String pipingSegmentId) {
@@ -151,9 +151,9 @@ public final class DexpiTopologyResolver {
      * Creates a new resolved topology.
      *
      * @param orderedEquipmentIds equipment IDs in topological order
-     * @param edges               the directed edges between equipment
-     * @param nozzleToEquipment   map from nozzle ID to owning equipment ID
-     * @param equipmentElements   map from equipment ID to its XML element
+     * @param edges the directed edges between equipment
+     * @param nozzleToEquipment map from nozzle ID to owning equipment ID
+     * @param equipmentElements map from equipment ID to its XML element
      */
     public ResolvedTopology(List<String> orderedEquipmentIds, List<TopologyEdge> edges,
 	Map<String, String> nozzleToEquipment, Map<String, Element> equipmentElements) {
@@ -311,7 +311,7 @@ public final class DexpiTopologyResolver {
   /**
    * Collects all equipment elements and their nozzle-to-equipment mappings from the document.
    *
-   * @param document          the XML document
+   * @param document the XML document
    * @param nozzleToEquipment map to populate with nozzle ID to equipment ID
    * @param equipmentElements map to populate with equipment ID to XML element
    */
@@ -356,8 +356,8 @@ public final class DexpiTopologyResolver {
   /**
    * Recursively collects Nozzle elements from an equipment element and its sub-components.
    *
-   * @param element           the parent element
-   * @param equipId           the owning equipment ID
+   * @param element the parent element
+   * @param equipId the owning equipment ID
    * @param nozzleToEquipment map to populate
    */
   private static void collectNozzlesFrom(Element element, String equipId, Map<String, String> nozzleToEquipment) {
@@ -383,7 +383,7 @@ public final class DexpiTopologyResolver {
   /**
    * Collects all piping component IDs from PipingComponent wrapper elements.
    *
-   * @param document           the XML document
+   * @param document the XML document
    * @param pipingComponentIds set to populate with IDs
    */
   private static void collectPipingComponentIds(Document document, Set<String> pipingComponentIds) {
@@ -412,8 +412,8 @@ public final class DexpiTopologyResolver {
   /**
    * Parses all Connection elements from PipingNetworkSegments into raw edges.
    *
-   * @param document           the XML document
-   * @param nozzleToEquipment  nozzle to equipment mapping
+   * @param document the XML document
+   * @param nozzleToEquipment nozzle to equipment mapping
    * @param pipingComponentIds known piping component IDs
    * @return list of raw edges (may reference nozzles, piping components, or off-page connectors)
    */
@@ -481,7 +481,7 @@ public final class DexpiTopologyResolver {
   /**
    * Resolves an ID (nozzle or equipment) to an equipment ID.
    *
-   * @param id                the ID to resolve
+   * @param id the ID to resolve
    * @param nozzleToEquipment nozzle mapping
    * @return equipment ID, or null if not found
    */
@@ -496,8 +496,8 @@ public final class DexpiTopologyResolver {
    * Collapses raw edges that pass through intermediate piping components into direct equipment-to-equipment edges. For
    * example, Equipment-A &gt; Valve-1 &gt; Equipment-B becomes Equipment-A &gt; Equipment-B.
    *
-   * @param rawEdges           the raw edges from Connection elements
-   * @param equipmentIds       the set of actual equipment IDs
+   * @param rawEdges the raw edges from Connection elements
+   * @param equipmentIds the set of actual equipment IDs
    * @param pipingComponentIds the set of piping component IDs
    * @return list of equipment-level edges
    */
@@ -573,7 +573,7 @@ public final class DexpiTopologyResolver {
    * Performs a topological sort (Kahn's algorithm) on the equipment graph.
    *
    * @param equipmentIds all equipment IDs
-   * @param edges        directed edges between equipment
+   * @param edges directed edges between equipment
    * @return equipment IDs in topological order
    */
   private static List<String> topologicalSort(Set<String> equipmentIds, List<TopologyEdge> edges) {

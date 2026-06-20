@@ -35,8 +35,8 @@ public final class NumericalDerivative implements java.io.Serializable {
    * calcDerivative.
    * </p>
    *
-   * @param system          a {@link neqsim.statistics.parameterfitting.StatisticsBaseClass} object
-   * @param sampleNumber    a int
+   * @param system a {@link neqsim.statistics.parameterfitting.StatisticsBaseClass} object
+   * @param sampleNumber a int
    * @param parameterNumber a int
    * @return a double
    */

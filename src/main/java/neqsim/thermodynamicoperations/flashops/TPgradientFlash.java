@@ -38,8 +38,8 @@ public class TPgradientFlash extends Flash {
   /**
    * Constructor for TPgradientFlash with system, height, and temperature.
    *
-   * @param system      a {@link neqsim.thermo.system.SystemInterface} object
-   * @param height      a double representing the height
+   * @param system a {@link neqsim.thermo.system.SystemInterface} object
+   * @param height a double representing the height
    * @param temperature a double representing the temperature
    */
   public TPgradientFlash(SystemInterface system, double height, double temperature) {

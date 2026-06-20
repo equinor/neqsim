@@ -57,7 +57,7 @@ public final class DexpiXmlWriter {
    * Writes the provided {@link ProcessSystem} to a DEXPI XML file.
    *
    * @param processSystem process model to export
-   * @param file          output file
+   * @param file output file
    * @throws IOException if writing fails
    */
   public static void write(ProcessSystem processSystem, File file) throws IOException {
@@ -76,7 +76,7 @@ public final class DexpiXmlWriter {
    * Writes the provided {@link ProcessSystem} to a DEXPI XML stream.
    *
    * @param processSystem process model to export
-   * @param outputStream  destination stream
+   * @param outputStream destination stream
    * @throws IOException if writing fails
    */
   public static void write(ProcessSystem processSystem, OutputStream outputStream) throws IOException {
@@ -188,8 +188,8 @@ public final class DexpiXmlWriter {
    * the approach in {@link neqsim.process.processmodel.dexpi.DexpiXmlWriter#appendIEC81346Attributes}.
    *
    * @param document the XML document
-   * @param parent   the GenericAttributes element to append to
-   * @param unit     the process equipment to extract IEC 81346 data from
+   * @param parent the GenericAttributes element to append to
+   * @param unit the process equipment to extract IEC 81346 data from
    */
   private static void appendIEC81346Attributes(Document document, Element parent, ProcessEquipmentInterface unit) {
     neqsim.process.equipment.iec81346.ReferenceDesignation refDes = unit.getReferenceDesignation();

@@ -64,8 +64,8 @@ public class StateVariable extends MPCVariable {
   /**
    * Construct a state variable linked to process equipment.
    *
-   * @param name         variable name
-   * @param equipment    linked process equipment
+   * @param name variable name
+   * @param equipment linked process equipment
    * @param propertyName property to read from equipment
    */
   public StateVariable(String name, ProcessEquipmentInterface equipment, String propertyName) {
@@ -243,8 +243,8 @@ public class StateVariable extends MPCVariable {
    * Predict bias at a future time.
    *
    * @param predictionTime time into the future (seconds)
-   * @param previousBias   bias at previous time step
-   * @param sampleTime     sample time (seconds)
+   * @param previousBias bias at previous time step
+   * @param sampleTime sample time (seconds)
    * @return predicted bias
    */
   public double predictBias(double predictionTime, double previousBias, double sampleTime) {

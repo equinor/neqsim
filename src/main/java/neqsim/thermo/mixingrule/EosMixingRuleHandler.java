@@ -136,7 +136,7 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
    * getMixingRule.
    * </p>
    *
-   * @param mr    a int
+   * @param mr a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a {@link neqsim.thermo.mixingrule.EosMixingRulesInterface} object
    */
@@ -514,7 +514,7 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
    * resetMixingRule.
    * </p>
    *
-   * @param i     a int
+   * @param i a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a {@link neqsim.thermo.mixingrule.EosMixingRulesInterface} object
    */
@@ -576,9 +576,9 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
   /**
    * Compares two numeric matrices using an absolute tolerance.
    *
-   * @param firstMatrix  the first matrix to compare, or {@code null}
+   * @param firstMatrix the first matrix to compare, or {@code null}
    * @param secondMatrix the second matrix to compare, or {@code null}
-   * @param tolerance    the non-negative absolute tolerance for each element
+   * @param tolerance the non-negative absolute tolerance for each element
    * @return {@code true} if both matrices have the same shape and all values differ by no more than {@code tolerance}
    */
   private static boolean areMatricesEqual(double[][] firstMatrix, double[][] secondMatrix, double tolerance) {
@@ -2304,9 +2304,9 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     /**
      * Constructor for SRKHuronVidal2.
      *
-     * @param phase   the phase interface
+     * @param phase the phase interface
      * @param HValpha the HV alpha parameter matrix
-     * @param HVDij   the HV Dij parameter matrix
+     * @param HVDij the HV Dij parameter matrix
      * @param mixRule the mixing rule matrix
      */
     public SRKHuronVidal2(PhaseInterface phase, double[][] HValpha, double[][] HVDij, String[][] mixRule) {
@@ -2358,10 +2358,10 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     /**
      * init.
      *
-     * @param phase       Phase to initialize for.
+     * @param phase Phase to initialize for.
      * @param temperature Temperature to initialize at.
-     * @param pressure    Pressure to initialize at.
-     * @param numbcomp    Number of components.
+     * @param pressure Pressure to initialize at.
+     * @param numbcomp Number of components.
      */
     public void init(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
       ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
@@ -2982,7 +2982,7 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
      * Enable or disable the predictive descriptor-based Wij model.
      *
      * @param usePredictive true to use predictive model based on dielectric constant, false to use solvent-specific
-     *                      fitted parameters
+     * fitted parameters
      */
     public void setUsePredictiveModel(boolean usePredictive) {
       this.usePredictiveModel = usePredictive;
@@ -3650,7 +3650,7 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
    * </p>
    *
    * @param intType a {@link java.lang.String} object
-   * @param phase   a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    */
   @ExcludeFromJacocoGeneratedReport
   public void displayInteractionCoefficients(String intType, PhaseInterface phase) {

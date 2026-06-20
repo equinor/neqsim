@@ -66,8 +66,8 @@ public class AsphalteneMethodComparison {
   /**
    * Constructor with thermodynamic system and conditions.
    *
-   * @param system               the thermodynamic system
-   * @param reservoirPressure    reservoir pressure (bara)
+   * @param system the thermodynamic system
+   * @param reservoirPressure reservoir pressure (bara)
    * @param reservoirTemperature reservoir temperature (K)
    */
   public AsphalteneMethodComparison(SystemInterface system, double reservoirPressure, double reservoirTemperature) {
@@ -83,9 +83,9 @@ public class AsphalteneMethodComparison {
   /**
    * Sets SARA fractions for both De Boer and CPA analysis.
    *
-   * @param saturates   weight fraction of saturates
-   * @param aromatics   weight fraction of aromatics
-   * @param resins      weight fraction of resins
+   * @param saturates weight fraction of saturates
+   * @param aromatics weight fraction of aromatics
+   * @param resins weight fraction of resins
    * @param asphaltenes weight fraction of asphaltenes
    */
   public void setSARAFractions(double saturates, double aromatics, double resins, double asphaltenes) {
@@ -289,7 +289,7 @@ public class AsphalteneMethodComparison {
   /**
    * Truncates a string to specified length.
    *
-   * @param s         string to truncate, or null
+   * @param s string to truncate, or null
    * @param maxLength maximum returned string length; must be at least 3 when truncation is needed
    * @return truncated string, original string if short enough, or an empty string when input is null
    */

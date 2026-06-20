@@ -204,8 +204,8 @@ public class SafetySystemPerformanceReport implements Serializable {
     /**
      * Creates a finding.
      *
-     * @param severity    finding severity
-     * @param message     finding message
+     * @param severity finding severity
+     * @param message finding message
      * @param remediation recommended remediation
      */
     public Finding(FindingSeverity severity, String message, String remediation) {
@@ -364,7 +364,7 @@ public class SafetySystemPerformanceReport implements Serializable {
     /**
      * Adds a numeric or textual metric to the assessment.
      *
-     * @param name  metric name
+     * @param name metric name
      * @param value metric value
      * @return this assessment
      */
@@ -407,8 +407,8 @@ public class SafetySystemPerformanceReport implements Serializable {
     /**
      * Adds a finding and updates the assessment verdict.
      *
-     * @param severity    finding severity
-     * @param message     finding message
+     * @param severity finding severity
+     * @param message finding message
      * @param remediation recommended remediation
      * @return this assessment
      */

@@ -51,7 +51,7 @@ public class SafetyScreener {
   /**
    * Performs safety screening for a field concept with facility configuration.
    *
-   * @param concept        field concept
+   * @param concept field concept
    * @param facilityConfig facility configuration
    * @return safety report
    */

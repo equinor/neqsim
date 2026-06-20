@@ -68,9 +68,9 @@ public class SetPoint extends ProcessEquipmentBaseClass {
    * Constructor for SetPoint.
    * </p>
    *
-   * @param name            a {@link java.lang.String} object
+   * @param name a {@link java.lang.String} object
    * @param targetEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
-   * @param targetVariable  a {@link java.lang.String} object
+   * @param targetVariable a {@link java.lang.String} object
    * @param sourceEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    */
   public SetPoint(String name, ProcessEquipmentInterface targetEquipment, String targetVariable,
@@ -88,7 +88,7 @@ public class SetPoint extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @param adjustedEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
-   * @param adjstedVariable   a {@link java.lang.String} object
+   * @param adjstedVariable a {@link java.lang.String} object
    */
   public void setSourceVariable(ProcessEquipmentInterface adjustedEquipment, String adjstedVariable) {
     this.sourceEquipment = adjustedEquipment;
@@ -113,9 +113,9 @@ public class SetPoint extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @param targetEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
-   * @param targetVariable  a {@link java.lang.String} object
-   * @param targetValue     a double
-   * @param targetUnit      a {@link java.lang.String} object
+   * @param targetVariable a {@link java.lang.String} object
+   * @param targetValue a double
+   * @param targetUnit a {@link java.lang.String} object
    */
   public void setTargetVariable(ProcessEquipmentInterface targetEquipment, String targetVariable, double targetValue,
       String targetUnit) {
@@ -131,7 +131,7 @@ public class SetPoint extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @param targetEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
-   * @param targetVariable  a {@link java.lang.String} object
+   * @param targetVariable a {@link java.lang.String} object
    */
   public void setTargetVariable(ProcessEquipmentInterface targetEquipment, String targetVariable) {
     this.targetEquipment = targetEquipment;
@@ -155,10 +155,10 @@ public class SetPoint extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @param targetEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
-   * @param targetVariable  a {@link java.lang.String} object
-   * @param targetValue     a double
-   * @param targetUnit      a {@link java.lang.String} object
-   * @param targetPhase     a {@link java.lang.String} object
+   * @param targetVariable a {@link java.lang.String} object
+   * @param targetValue a double
+   * @param targetUnit a {@link java.lang.String} object
+   * @param targetPhase a {@link java.lang.String} object
    */
   public void setTargetVariable(ProcessEquipmentInterface targetEquipment, String targetVariable, double targetValue,
       String targetUnit, String targetPhase) {
@@ -175,10 +175,10 @@ public class SetPoint extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @param targetEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
-   * @param targetVariable  a {@link java.lang.String} object
-   * @param targetValue     a double
-   * @param targetUnit      a {@link java.lang.String} object
-   * @param targetPhase     a {@link java.lang.String} object
+   * @param targetVariable a {@link java.lang.String} object
+   * @param targetValue a double
+   * @param targetUnit a {@link java.lang.String} object
+   * @param targetPhase a {@link java.lang.String} object
    * @param targetComponent a {@link java.lang.String} object
    */
   public void setTargetVariable(ProcessEquipmentInterface targetEquipment, String targetVariable, double targetValue,

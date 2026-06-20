@@ -346,7 +346,7 @@ public class LagrangianSlugTracker implements Serializable {
    * </ol>
    *
    * @param sections pipe sections array
-   * @param dt       time step (s)
+   * @param dt time step (s)
    */
   public void advanceTimeStep(PipeSection[] sections, double dt) {
     if (sections == null || sections.length == 0 || dt <= 0) {
@@ -392,7 +392,7 @@ public class LagrangianSlugTracker implements Serializable {
    * Check conditions for slug initiation.
    *
    * @param sections pipe sections
-   * @param dt       time step (s)
+   * @param dt time step (s)
    */
   private void checkSlugInitiation(PipeSection[] sections, double dt) {
     // Inlet slug generation
@@ -417,7 +417,7 @@ public class LagrangianSlugTracker implements Serializable {
    * </p>
    *
    * @param sections pipe sections
-   * @param dt       time step (s)
+   * @param dt time step (s)
    */
   private void checkInletSlugGeneration(PipeSection[] sections, double dt) {
     if (sections.length == 0) {
@@ -535,7 +535,7 @@ public class LagrangianSlugTracker implements Serializable {
    * </p>
    *
    * @param characteristics slug characteristics from accumulation tracker
-   * @param sections        pipe sections
+   * @param sections pipe sections
    * @return new slug unit
    */
   public SlugBubbleUnit initializeTerrainSlug(LiquidAccumulationTracker.SlugCharacteristics characteristics,
@@ -605,7 +605,7 @@ public class LagrangianSlugTracker implements Serializable {
    * Check for stochastic slug initiation from instabilities.
    *
    * @param sections pipe sections
-   * @param dt       time step (s)
+   * @param dt time step (s)
    */
   private void checkStochasticInitiation(PipeSection[] sections, double dt) {
     // Check each section for potential instability-driven slug initiation
@@ -652,9 +652,9 @@ public class LagrangianSlugTracker implements Serializable {
   /**
    * Generate slug from flow instability.
    *
-   * @param section      section where instability occurs
+   * @param section section where instability occurs
    * @param sectionIndex index of the section
-   * @param sections     all pipe sections
+   * @param sections all pipe sections
    * @return new slug unit
    */
   private SlugBubbleUnit generateInstabilitySlug(PipeSection section, int sectionIndex, PipeSection[] sections) {
@@ -716,9 +716,9 @@ public class LagrangianSlugTracker implements Serializable {
   /**
    * Advance a single slug by one time step.
    *
-   * @param slug     the slug to advance
+   * @param slug the slug to advance
    * @param sections pipe sections
-   * @param dt       time step (s)
+   * @param dt time step (s)
    */
   private void advanceSlug(SlugBubbleUnit slug, PipeSection[] sections, double dt) {
     slug.age += dt;
@@ -810,7 +810,7 @@ public class LagrangianSlugTracker implements Serializable {
    * The tail velocity is determined by mass balance: V_tail = V_front - (pickup - shedding) / (A * (H_slug - H_film))
    * </p>
    *
-   * @param slug    the slug unit
+   * @param slug the slug unit
    * @param section pipe section at slug location
    */
   private void calculateSlugVelocities(SlugBubbleUnit slug, PipeSection section) {
@@ -884,10 +884,10 @@ public class LagrangianSlugTracker implements Serializable {
   /**
    * Calculate drift velocity using Bendiksen (1984) correlation.
    *
-   * @param D        pipe diameter (m)
-   * @param theta    pipe inclination (radians)
+   * @param D pipe diameter (m)
+   * @param theta pipe inclination (radians)
    * @param deltaRho density difference (kg/m³)
-   * @param rhoL     liquid density (kg/m³)
+   * @param rhoL liquid density (kg/m³)
    * @return drift velocity (m/s)
    */
   private double calculateDriftVelocity(double D, double theta, double deltaRho, double rhoL) {
@@ -933,9 +933,9 @@ public class LagrangianSlugTracker implements Serializable {
    * slug
    * </p>
    *
-   * @param slug    the slug unit
+   * @param slug the slug unit
    * @param section pipe section
-   * @param dt      time step (s)
+   * @param dt time step (s)
    */
   private void calculateMassExchange(SlugBubbleUnit slug, PipeSection section, double dt) {
     double rhoL = section.getLiquidDensity();
@@ -974,7 +974,7 @@ public class LagrangianSlugTracker implements Serializable {
   /**
    * Update Taylor bubble length.
    *
-   * @param slug    the slug unit
+   * @param slug the slug unit
    * @param section pipe section
    */
   private void updateBubbleLength(SlugBubbleUnit slug, PipeSection section) {
@@ -1221,7 +1221,7 @@ public class LagrangianSlugTracker implements Serializable {
   /**
    * Return mass from dissipating slug to Eulerian cells.
    *
-   * @param slug     the dissipating slug
+   * @param slug the dissipating slug
    * @param sections pipe sections
    */
   private void returnMassToEulerian(SlugBubbleUnit slug, PipeSection[] sections) {

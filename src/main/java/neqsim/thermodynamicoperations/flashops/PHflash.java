@@ -30,8 +30,8 @@ public class PHflash extends Flash {
    * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param Hspec  a double
-   * @param type   a int
+   * @param Hspec a double
+   * @param type a int
    */
   public PHflash(SystemInterface system, double Hspec, int type) {
     this.system = system;

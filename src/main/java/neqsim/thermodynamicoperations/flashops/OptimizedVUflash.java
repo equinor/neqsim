@@ -56,8 +56,8 @@ public class OptimizedVUflash extends Flash {
    * Constructor for OptimizedVUflash.
    *
    * @param system thermodynamic system to flash
-   * @param Vspec  specified total volume
-   * @param Uspec  specified internal energy
+   * @param Vspec specified total volume
+   * @param Uspec specified internal energy
    */
   public OptimizedVUflash(SystemInterface system, double Vspec, double Uspec) {
     this.system = system;

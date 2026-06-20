@@ -53,7 +53,7 @@ public interface AutoSizeable {
    * </p>
    *
    * @param companyStandard company name (e.g., "Equinor", "Shell", "TotalEnergies")
-   * @param trDocument      TR document reference (e.g., "TR2000", "DEP-31.38.01.11")
+   * @param trDocument TR document reference (e.g., "TR2000", "DEP-31.38.01.11")
    */
   default void autoSize(String companyStandard, String trDocument) {
     // Default implementation uses standard safety factor

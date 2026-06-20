@@ -72,7 +72,7 @@ public class ProcessSynthesisFeasibilityPruner {
    * Checks whether a reaction option passes basic synthesis rules.
    *
    * @param reaction reaction option to inspect
-   * @param spec     process research specification
+   * @param spec process research specification
    * @return feasibility result
    */
   public FeasibilityResult checkReaction(ReactionOption reaction, ProcessResearchSpec spec) {
@@ -147,7 +147,7 @@ public class ProcessSynthesisFeasibilityPruner {
    * Checks if any reaction option produces a component.
    *
    * @param componentName component name to find
-   * @param spec          process research specification
+   * @param spec process research specification
    * @return true if a reaction produces the component
    */
   private boolean reactionProducesComponent(String componentName, ProcessResearchSpec spec) {

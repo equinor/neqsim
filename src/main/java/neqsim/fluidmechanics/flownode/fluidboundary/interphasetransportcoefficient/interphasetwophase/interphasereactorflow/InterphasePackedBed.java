@@ -148,7 +148,7 @@ public class InterphasePackedBed extends InterphaseReactorFlow
   /**
    * Return a fallback when a value is not positive and finite.
    *
-   * @param value    value to inspect
+   * @param value value to inspect
    * @param fallback fallback value
    * @return value if finite and positive, otherwise fallback
    */

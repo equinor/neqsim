@@ -49,9 +49,9 @@ public class StirredCellSolver extends TwoPhasePipeFlowSolver implements neqsim.
    * Constructor for StirredCellSolver.
    * </p>
    *
-   * @param pipe   a {@link neqsim.fluidmechanics.flowsystem.FlowSystemInterface} object
+   * @param pipe a {@link neqsim.fluidmechanics.flowsystem.FlowSystemInterface} object
    * @param length a double
-   * @param nodes  a int
+   * @param nodes a int
    */
   public StirredCellSolver(FlowSystemInterface pipe, double length, int nodes) {
     super(pipe, length, nodes);
@@ -62,9 +62,9 @@ public class StirredCellSolver extends TwoPhasePipeFlowSolver implements neqsim.
    * Constructor for StirredCellSolver.
    * </p>
    *
-   * @param pipe    a {@link neqsim.fluidmechanics.flowsystem.FlowSystemInterface} object
-   * @param length  a double
-   * @param nodes   a int
+   * @param pipe a {@link neqsim.fluidmechanics.flowsystem.FlowSystemInterface} object
+   * @param length a double
+   * @param nodes a int
    * @param dynamic a boolean
    */
   public StirredCellSolver(FlowSystemInterface pipe, double length, int nodes, boolean dynamic) {
@@ -270,7 +270,7 @@ public class StirredCellSolver extends TwoPhasePipeFlowSolver implements neqsim.
    * </p>
    *
    * @param phaseNum a int
-   * @param comp     a int
+   * @param comp a int
    */
   public void initComposition(int phaseNum, int comp) {
     for (int j = 0; j < numberOfNodes; j++) {

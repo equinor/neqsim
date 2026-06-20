@@ -342,7 +342,7 @@ public class HeatExchangerDesignFeasibilityReport {
   /**
    * Check if the supplier type matches the requested type.
    *
-   * @param supplierType  supplier's exchanger type
+   * @param supplierType supplier's exchanger type
    * @param requestedType requested exchanger type
    * @return true if types are compatible
    */
@@ -623,7 +623,7 @@ public class HeatExchangerDesignFeasibilityReport {
   /**
    * Safely parse a double value.
    *
-   * @param value        string value
+   * @param value string value
    * @param defaultValue default if parsing fails
    * @return parsed value
    */
@@ -840,7 +840,7 @@ public class HeatExchangerDesignFeasibilityReport {
   /**
    * Round a double value to the specified number of decimal places.
    *
-   * @param value    the value to round
+   * @param value the value to round
    * @param decimals number of decimal places
    * @return rounded value
    */
@@ -881,7 +881,7 @@ public class HeatExchangerDesignFeasibilityReport {
      *
      * @param severity issue severity
      * @param category category code
-     * @param message  descriptive message
+     * @param message descriptive message
      */
     public FeasibilityIssue(IssueSeverity severity, String category, String message) {
       this.severity = severity;

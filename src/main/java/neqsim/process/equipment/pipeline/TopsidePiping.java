@@ -335,7 +335,7 @@ public class TopsidePiping extends PipeBeggsAndBrills {
   /**
    * Constructor with name and inlet stream.
    *
-   * @param name     equipment name
+   * @param name equipment name
    * @param inStream inlet stream
    */
   public TopsidePiping(String name, StreamInterface inStream) {
@@ -346,8 +346,8 @@ public class TopsidePiping extends PipeBeggsAndBrills {
    * Constructor with service type, name and inlet stream.
    *
    * @param serviceType the service type
-   * @param name        equipment name
-   * @param inStream    inlet stream
+   * @param name equipment name
+   * @param inStream inlet stream
    */
   public TopsidePiping(ServiceType serviceType, String name, StreamInterface inStream) {
     super(name, inStream);
@@ -359,7 +359,7 @@ public class TopsidePiping extends PipeBeggsAndBrills {
   /**
    * Create process gas piping.
    *
-   * @param name     equipment name
+   * @param name equipment name
    * @param inStream inlet stream
    * @return configured process gas piping
    */
@@ -371,7 +371,7 @@ public class TopsidePiping extends PipeBeggsAndBrills {
   /**
    * Create process liquid piping.
    *
-   * @param name     equipment name
+   * @param name equipment name
    * @param inStream inlet stream
    * @return configured process liquid piping
    */
@@ -383,7 +383,7 @@ public class TopsidePiping extends PipeBeggsAndBrills {
   /**
    * Create multiphase piping.
    *
-   * @param name     equipment name
+   * @param name equipment name
    * @param inStream inlet stream
    * @return configured multiphase piping
    */
@@ -395,7 +395,7 @@ public class TopsidePiping extends PipeBeggsAndBrills {
   /**
    * Create flare header piping.
    *
-   * @param name     equipment name
+   * @param name equipment name
    * @param inStream inlet stream
    * @return configured flare header piping
    */
@@ -407,7 +407,7 @@ public class TopsidePiping extends PipeBeggsAndBrills {
   /**
    * Create fuel gas piping.
    *
-   * @param name     equipment name
+   * @param name equipment name
    * @param inStream inlet stream
    * @return configured fuel gas piping
    */
@@ -419,7 +419,7 @@ public class TopsidePiping extends PipeBeggsAndBrills {
   /**
    * Create steam piping.
    *
-   * @param name     equipment name
+   * @param name equipment name
    * @param inStream inlet stream
    * @return configured steam piping
    */
@@ -965,8 +965,8 @@ public class TopsidePiping extends PipeBeggsAndBrills {
    *
    * @param elbows90 number of 90-degree elbows
    * @param elbows45 number of 45-degree elbows
-   * @param tees     number of tees
-   * @param valves   number of valves
+   * @param tees number of tees
+   * @param valves number of valves
    */
   public void setFittings(int elbows90, int elbows45, int tees, int valves) {
     this.numberOfElbows90 = elbows90;
@@ -978,7 +978,7 @@ public class TopsidePiping extends PipeBeggsAndBrills {
   /**
    * Set insulation configuration.
    *
-   * @param type      insulation type
+   * @param type insulation type
    * @param thickness thickness in meters
    */
   public void setInsulation(InsulationType type, double thickness) {
@@ -989,8 +989,8 @@ public class TopsidePiping extends PipeBeggsAndBrills {
   /**
    * Set operating envelope.
    *
-   * @param minPressure    minimum operating pressure in bara
-   * @param maxPressure    maximum operating pressure in bara
+   * @param minPressure minimum operating pressure in bara
+   * @param maxPressure maximum operating pressure in bara
    * @param minTemperature minimum operating temperature in Celsius
    * @param maxTemperature maximum operating temperature in Celsius
    */

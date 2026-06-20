@@ -263,9 +263,9 @@ public class ProcessSuperstructureExporter {
   /**
    * Adds a finite JSON number or JSON null for an unbounded value.
    *
-   * @param object   JSON object to update
+   * @param object JSON object to update
    * @param property property name
-   * @param value    numeric value
+   * @param value numeric value
    */
   private void addFiniteOrNull(JsonObject object, String property, double value) {
     if (Double.isInfinite(value) || Double.isNaN(value)) {

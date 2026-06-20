@@ -57,7 +57,7 @@ public class ClosedLoopDepositionSolver implements Serializable {
   /**
    * Constructs a solver bound to the given pipe and accumulator.
    *
-   * @param pipe        the host Beggs-and-Brills pipe
+   * @param pipe the host Beggs-and-Brills pipe
    * @param accumulator the scale deposition accumulator (already configured with brine chemistry)
    */
   public ClosedLoopDepositionSolver(PipeBeggsAndBrills pipe, ScaleDepositionAccumulator accumulator) {

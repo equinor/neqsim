@@ -48,7 +48,7 @@ public class CalibrationFrameworkExample {
    * Creates well fluid.
    *
    * @param temperature the well temperature [°C]
-   * @param pressure    the well pressure [Pa]
+   * @param pressure the well pressure [Pa]
    * @return the initialized thermodynamic system
    */
   private SystemInterface createWellFluid(double temperature, double pressure) {

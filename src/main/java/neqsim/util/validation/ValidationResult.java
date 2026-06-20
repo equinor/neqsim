@@ -54,9 +54,9 @@ public class ValidationResult {
     /**
      * Create a validation issue.
      *
-     * @param severity    issue severity
-     * @param category    issue category (e.g., "thermo", "equipment", "stream")
-     * @param message     description of the issue
+     * @param severity issue severity
+     * @param category issue category (e.g., "thermo", "equipment", "stream")
+     * @param message description of the issue
      * @param remediation how to fix the issue
      */
     public ValidationIssue(Severity severity, String category, String message, String remediation) {
@@ -111,8 +111,8 @@ public class ValidationResult {
   /**
    * Add a critical error.
    *
-   * @param category    issue category
-   * @param message     error description
+   * @param category issue category
+   * @param message error description
    * @param remediation how to fix
    */
   public void addError(String category, String message, String remediation) {
@@ -131,8 +131,8 @@ public class ValidationResult {
   /**
    * Add a warning.
    *
-   * @param category   issue category
-   * @param message    warning description
+   * @param category issue category
+   * @param message warning description
    * @param suggestion how to improve
    */
   public void addWarning(String category, String message, String suggestion) {

@@ -44,7 +44,7 @@ public class PedersenPlusModelSolver implements java.io.Serializable {
    * Constructor for PedersenPlusModelSolver.
    * </p>
    *
-   * @param system            a {@link neqsim.thermo.system.SystemInterface} object
+   * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param characterizeClass a {@link neqsim.thermo.characterization.PlusFractionModel.PedersenPlusModel} object
    */
   public PedersenPlusModelSolver(SystemInterface system, PlusFractionModel.PedersenPlusModel characterizeClass) {

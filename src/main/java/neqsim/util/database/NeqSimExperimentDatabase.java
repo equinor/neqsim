@@ -83,7 +83,7 @@ public class NeqSimExperimentDatabase implements neqsim.util.util.FileSystemSett
    * </p>
    *
    * @return a Connection object
-   * @throws java.sql.SQLException            if any.
+   * @throws java.sql.SQLException if any.
    * @throws java.lang.ClassNotFoundException if any.
    */
   public Connection openConnection() throws SQLException, ClassNotFoundException {
@@ -196,7 +196,7 @@ public class NeqSimExperimentDatabase implements neqsim.util.util.FileSystemSett
    * Setter for the field <code>dataBaseType</code>.
    * </p>
    *
-   * @param aDataBaseType    a {@link java.lang.String} object
+   * @param aDataBaseType a {@link java.lang.String} object
    * @param connectionString a {@link java.lang.String} object
    */
   public static void setDataBaseType(String aDataBaseType, String connectionString) {

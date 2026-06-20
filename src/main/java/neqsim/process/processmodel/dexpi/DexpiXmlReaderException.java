@@ -23,7 +23,7 @@ public class DexpiXmlReaderException extends Exception {
    * Creates a new exception with the specified message and cause.
    *
    * @param message the error message
-   * @param cause   the underlying cause
+   * @param cause the underlying cause
    */
   public DexpiXmlReaderException(String message, Throwable cause) {
     super(message, cause);

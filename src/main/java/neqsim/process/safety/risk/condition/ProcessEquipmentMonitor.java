@@ -97,12 +97,12 @@ public class ProcessEquipmentMonitor implements Serializable {
     /**
      * Creates a monitor reading.
      *
-     * @param timestamp           reading time
-     * @param temperature         temperature in K
-     * @param pressure            pressure in bara
+     * @param timestamp reading time
+     * @param temperature temperature in K
+     * @param pressure pressure in bara
      * @param capacityUtilization capacity utilization 0-1
-     * @param healthIndex         calculated health index 0-1
-     * @param failureRate         adjusted failure rate per hour
+     * @param healthIndex calculated health index 0-1
+     * @param failureRate adjusted failure rate per hour
      */
     public MonitorReading(Instant timestamp, double temperature, double pressure, double capacityUtilization,
 	double healthIndex, double failureRate) {
@@ -224,8 +224,8 @@ public class ProcessEquipmentMonitor implements Serializable {
   /**
    * Manually sets current values (for testing or external data integration).
    *
-   * @param temperature         temperature in Kelvin
-   * @param pressure            pressure in bara
+   * @param temperature temperature in Kelvin
+   * @param pressure pressure in bara
    * @param capacityUtilization capacity utilization 0-1
    */
   public void setCurrentValues(double temperature, double pressure, double capacityUtilization) {
@@ -567,9 +567,9 @@ public class ProcessEquipmentMonitor implements Serializable {
   /**
    * Sets indicator weights for health calculation.
    *
-   * @param tempWeight  temperature weight
+   * @param tempWeight temperature weight
    * @param pressWeight pressure weight
-   * @param capWeight   capacity utilization weight
+   * @param capWeight capacity utilization weight
    */
   public void setWeights(double tempWeight, double pressWeight, double capWeight) {
     this.temperatureWeight = tempWeight;

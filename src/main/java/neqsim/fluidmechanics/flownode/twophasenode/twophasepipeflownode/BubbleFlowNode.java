@@ -41,7 +41,7 @@ public class BubbleFlowNode extends TwoPhaseFlowNode {
    * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param pipe   a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
+   * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
    */
   public BubbleFlowNode(SystemInterface system, GeometryDefinitionInterface pipe) {
     super(system, pipe);
@@ -56,9 +56,9 @@ public class BubbleFlowNode extends TwoPhaseFlowNode {
    * Constructor for BubbleFlowNode.
    * </p>
    *
-   * @param system           a {@link neqsim.thermo.system.SystemInterface} object
+   * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param interphaseSystem a {@link neqsim.thermo.system.SystemInterface} object
-   * @param pipe             a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
+   * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
    */
   public BubbleFlowNode(SystemInterface system, SystemInterface interphaseSystem, GeometryDefinitionInterface pipe) {
     super(system, pipe);

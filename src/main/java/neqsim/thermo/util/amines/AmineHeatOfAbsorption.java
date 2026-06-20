@@ -50,8 +50,8 @@ public class AmineHeatOfAbsorption implements java.io.Serializable {
     /**
      * Constructor for AmineType enum.
      *
-     * @param name       display name
-     * @param molarMass  molar mass in g/mol
+     * @param name display name
+     * @param molarMass molar mass in g/mol
      * @param maxLoading maximum practical CO2 loading (mol CO2/mol amine)
      */
     AmineType(String name, double molarMass, double maxLoading) {
@@ -102,10 +102,10 @@ public class AmineHeatOfAbsorption implements java.io.Serializable {
   /**
    * Constructor for AmineHeatOfAbsorption with parameters.
    *
-   * @param amineType          the type of amine
+   * @param amineType the type of amine
    * @param amineConcentration mass fraction of amine in solution (0 to 1)
-   * @param co2Loading         CO2 loading in mol CO2 / mol amine
-   * @param temperatureK       temperature in Kelvin
+   * @param co2Loading CO2 loading in mol CO2 / mol amine
+   * @param temperatureK temperature in Kelvin
    */
   public AmineHeatOfAbsorption(AmineType amineType, double amineConcentration, double co2Loading, double temperatureK) {
     this.amineType = amineType;

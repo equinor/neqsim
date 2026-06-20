@@ -210,15 +210,15 @@ public class WellCostEstimator {
   /**
    * Calculate total well cost.
    *
-   * @param wellType              well type string (OIL_PRODUCER, GAS_PRODUCER, WATER_INJECTOR, etc.)
-   * @param rigType               rig type string (SEMI_SUBMERSIBLE, DRILLSHIP, etc.)
-   * @param completionType        completion type string
-   * @param measuredDepth         measured depth in meters
-   * @param waterDepth            water depth in meters
-   * @param drillingDays          planned drilling days
-   * @param completionDays        planned completion days
-   * @param rigDayRateOverride    rig day rate override (0 to use default)
-   * @param hasDHSV               whether well has downhole safety valve
+   * @param wellType well type string (OIL_PRODUCER, GAS_PRODUCER, WATER_INJECTOR, etc.)
+   * @param rigType rig type string (SEMI_SUBMERSIBLE, DRILLSHIP, etc.)
+   * @param completionType completion type string
+   * @param measuredDepth measured depth in meters
+   * @param waterDepth water depth in meters
+   * @param drillingDays planned drilling days
+   * @param completionDays planned completion days
+   * @param rigDayRateOverride rig day rate override (0 to use default)
+   * @param hasDHSV whether well has downhole safety valve
    * @param numberOfCasingStrings number of casing strings
    */
   public void calculateWellCost(String wellType, String rigType, String completionType, double measuredDepth,
@@ -333,7 +333,7 @@ public class WellCostEstimator {
   /**
    * Estimate casing weight from well depth and string count.
    *
-   * @param measuredDepth   measured depth in meters
+   * @param measuredDepth measured depth in meters
    * @param numberOfStrings number of casing strings
    * @return estimated weight in tonnes
    */
@@ -346,7 +346,7 @@ public class WellCostEstimator {
   /**
    * Estimate cement volume from depth and string count.
    *
-   * @param measuredDepth   measured depth in meters
+   * @param measuredDepth measured depth in meters
    * @param numberOfStrings number of casing strings
    * @return cement volume in m3
    */
@@ -462,11 +462,11 @@ public class WellCostEstimator {
   /**
    * Create a BOM item.
    *
-   * @param name        item name
+   * @param name item name
    * @param description item description
-   * @param category    item category
-   * @param quantity    quantity
-   * @param unit        unit of measure
+   * @param category item category
+   * @param quantity quantity
+   * @param unit unit of measure
    * @return map representing the BOM item
    */
   private Map<String, Object> createBOMItem(String name, String description, String category, double quantity,

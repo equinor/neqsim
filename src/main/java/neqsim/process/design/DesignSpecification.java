@@ -143,7 +143,7 @@ public class DesignSpecification {
    * Set the company technical requirements document.
    *
    * @param company company name (e.g., "Equinor", "Shell")
-   * @param trDoc   TR document reference (e.g., "TR2000", "DEP-31.38.01.11")
+   * @param trDoc TR document reference (e.g., "TR2000", "DEP-31.38.01.11")
    * @return this specification for chaining
    */
   public DesignSpecification setTRDocument(String company, String trDoc) {
@@ -181,7 +181,7 @@ public class DesignSpecification {
    * Set the separator internal diameter.
    *
    * @param diameter diameter value
-   * @param unit     unit (e.g., "m", "mm", "inch")
+   * @param unit unit (e.g., "m", "mm", "inch")
    * @return this specification for chaining
    */
   public DesignSpecification setDiameter(double diameter, String unit) {
@@ -194,7 +194,7 @@ public class DesignSpecification {
    * Set the separator length.
    *
    * @param length length value
-   * @param unit   unit (e.g., "m", "mm", "ft")
+   * @param unit unit (e.g., "m", "mm", "ft")
    * @return this specification for chaining
    */
   public DesignSpecification setLength(double length, String unit) {
@@ -234,7 +234,7 @@ public class DesignSpecification {
    * Set the pipeline internal diameter.
    *
    * @param diameter diameter value
-   * @param unit     unit (e.g., "m", "mm", "inch")
+   * @param unit unit (e.g., "m", "mm", "inch")
    * @return this specification for chaining
    */
   public DesignSpecification setPipeDiameter(double diameter, String unit) {
@@ -247,7 +247,7 @@ public class DesignSpecification {
    * Set the pipeline length.
    *
    * @param length length value
-   * @param unit   unit (e.g., "m", "km", "ft")
+   * @param unit unit (e.g., "m", "km", "ft")
    * @return this specification for chaining
    */
   public DesignSpecification setPipeLength(double length, String unit) {
@@ -277,7 +277,7 @@ public class DesignSpecification {
    * Set the wall thickness for the pipeline.
    *
    * @param thickness thickness value
-   * @param unit      unit (e.g., "m", "mm", "inch")
+   * @param unit unit (e.g., "m", "mm", "inch")
    * @return this specification for chaining
    */
   public DesignSpecification setWallThickness(double thickness, String unit) {

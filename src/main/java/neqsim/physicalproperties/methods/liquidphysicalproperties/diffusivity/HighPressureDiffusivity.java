@@ -59,7 +59,7 @@ public class HighPressureDiffusivity extends Diffusivity {
    * Constructor with custom base model.
    *
    * @param liquidPhase a {@link neqsim.physicalproperties.system.PhysicalProperties} object
-   * @param baseModel   the low-pressure diffusivity model to use as base
+   * @param baseModel the low-pressure diffusivity model to use as base
    */
   public HighPressureDiffusivity(PhysicalProperties liquidPhase, Diffusivity baseModel) {
     super(liquidPhase);

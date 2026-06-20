@@ -28,10 +28,10 @@ public class AllocationResult implements Serializable {
   /**
    * Creates an allocation result.
    *
-   * @param oilRates        oil rates by well name (Sm3/day)
-   * @param gasRates        gas rates by well name (Sm3/day)
-   * @param waterRates      water rates by well name (Sm3/day)
-   * @param uncertainties   allocation uncertainties by well
+   * @param oilRates oil rates by well name (Sm3/day)
+   * @param gasRates gas rates by well name (Sm3/day)
+   * @param waterRates water rates by well name (Sm3/day)
+   * @param uncertainties allocation uncertainties by well
    * @param allocationError total allocation error
    */
   public AllocationResult(Map<String, Double> oilRates, Map<String, Double> gasRates, Map<String, Double> waterRates,

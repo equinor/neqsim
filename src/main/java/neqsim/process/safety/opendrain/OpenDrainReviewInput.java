@@ -141,7 +141,7 @@ public class OpenDrainReviewInput implements Serializable {
   /**
    * Adds input metadata.
    *
-   * @param key   metadata key
+   * @param key metadata key
    * @param value metadata value
    * @return this input for fluent construction
    */
@@ -214,8 +214,8 @@ public class OpenDrainReviewInput implements Serializable {
   /**
    * Gets a string value from JSON.
    *
-   * @param object       JSON object
-   * @param key          key to read
+   * @param object JSON object
+   * @param key key to read
    * @param defaultValue default value
    * @return string value or default
    */
@@ -226,8 +226,8 @@ public class OpenDrainReviewInput implements Serializable {
   /**
    * Gets a double value from JSON.
    *
-   * @param object       JSON object
-   * @param key          key to read
+   * @param object JSON object
+   * @param key key to read
    * @param defaultValue default value
    * @return double value or default
    */
@@ -239,7 +239,7 @@ public class OpenDrainReviewInput implements Serializable {
    * Gets the first available array from a list of keys.
    *
    * @param object JSON object
-   * @param keys   keys to test
+   * @param keys keys to test
    * @return first array found, or null
    */
   private static JsonArray getFirstArray(JsonObject object, String... keys) {

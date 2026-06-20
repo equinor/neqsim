@@ -44,7 +44,7 @@ public class GERG2008NH3ValidationTest {
   /**
    * Helper to compute density from T(K) and P(kPa) for pure ammonia.
    *
-   * @param T     temperature in K
+   * @param T temperature in K
    * @param P_kPa pressure in kPa
    * @return density in mol/L, or -1 if failed
    */
@@ -408,9 +408,9 @@ public class GERG2008NH3ValidationTest {
    * Helper: compute properties using a specific GERG2008 model instance.
    *
    * @param model the GERG model
-   * @param T     temperature in K
-   * @param D     density in mol/L
-   * @param x     composition
+   * @param T temperature in K
+   * @param D density in mol/L
+   * @param x composition
    * @return array: [P_kPa, Z, Cv, Cp, W, H, S]
    */
   private double[] allProperties(GERG2008 model, double T, double D, double[] x) {

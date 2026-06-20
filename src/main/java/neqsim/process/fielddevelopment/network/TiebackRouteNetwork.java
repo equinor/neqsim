@@ -319,15 +319,15 @@ public final class TiebackRouteNetwork implements Serializable {
     /**
      * Adds a generic route segment.
      *
-     * @param name                        segment name
-     * @param type                        segment type
-     * @param lengthKm                    segment length in kilometres; must be non-negative
-     * @param diameterInches              inner diameter in inches; must be non-negative
-     * @param inletWaterDepthM            inlet water depth in metres; must be non-negative
-     * @param outletWaterDepthM           outlet water depth in metres; must be non-negative
-     * @param seabedTemperatureC          representative seabed temperature in Celsius
+     * @param name segment name
+     * @param type segment type
+     * @param lengthKm segment length in kilometres; must be non-negative
+     * @param diameterInches inner diameter in inches; must be non-negative
+     * @param inletWaterDepthM inlet water depth in metres; must be non-negative
+     * @param outletWaterDepthM outlet water depth in metres; must be non-negative
+     * @param seabedTemperatureC representative seabed temperature in Celsius
      * @param heatTransferCoefficientWm2K heat-transfer coefficient in W/m2K; zero means adiabatic
-     * @param shared                      true if this segment is shared by several discoveries or phases
+     * @param shared true if this segment is shared by several discoveries or phases
      * @return this builder
      */
     public Builder addSegment(String name, SegmentType type, double lengthKm, double diameterInches,
@@ -341,10 +341,10 @@ public final class TiebackRouteNetwork implements Serializable {
     /**
      * Adds a main flowline segment.
      *
-     * @param name           segment name
-     * @param lengthKm       length in kilometres
+     * @param name segment name
+     * @param lengthKm length in kilometres
      * @param diameterInches diameter in inches
-     * @param waterDepthM    representative water depth in metres
+     * @param waterDepthM representative water depth in metres
      * @return this builder
      */
     public Builder addFlowline(String name, double lengthKm, double diameterInches, double waterDepthM) {
@@ -355,10 +355,10 @@ public final class TiebackRouteNetwork implements Serializable {
     /**
      * Adds a shared corridor segment.
      *
-     * @param name           segment name
-     * @param lengthKm       length in kilometres
+     * @param name segment name
+     * @param lengthKm length in kilometres
      * @param diameterInches diameter in inches
-     * @param waterDepthM    representative water depth in metres
+     * @param waterDepthM representative water depth in metres
      * @return this builder
      */
     public Builder addSharedCorridor(String name, double lengthKm, double diameterInches, double waterDepthM) {
@@ -369,10 +369,10 @@ public final class TiebackRouteNetwork implements Serializable {
     /**
      * Adds a riser segment.
      *
-     * @param name           segment name
-     * @param lengthKm       length in kilometres
+     * @param name segment name
+     * @param lengthKm length in kilometres
      * @param diameterInches diameter in inches
-     * @param seabedDepthM   water depth at riser base in metres
+     * @param seabedDepthM water depth at riser base in metres
      * @return this builder
      */
     public Builder addRiser(String name, double lengthKm, double diameterInches, double seabedDepthM) {
@@ -382,10 +382,10 @@ public final class TiebackRouteNetwork implements Serializable {
     /**
      * Adds a branch segment.
      *
-     * @param name           segment name
-     * @param lengthKm       length in kilometres
+     * @param name segment name
+     * @param lengthKm length in kilometres
      * @param diameterInches diameter in inches
-     * @param waterDepthM    representative water depth in metres
+     * @param waterDepthM representative water depth in metres
      * @return this builder
      */
     public Builder addBranch(String name, double lengthKm, double diameterInches, double waterDepthM) {
@@ -421,15 +421,15 @@ public final class TiebackRouteNetwork implements Serializable {
     /**
      * Creates a route segment.
      *
-     * @param name                        segment name
-     * @param type                        segment type
-     * @param lengthKm                    length in kilometres
-     * @param diameterInches              diameter in inches
-     * @param inletWaterDepthM            inlet water depth in metres
-     * @param outletWaterDepthM           outlet water depth in metres
-     * @param seabedTemperatureC          seabed temperature in Celsius
+     * @param name segment name
+     * @param type segment type
+     * @param lengthKm length in kilometres
+     * @param diameterInches diameter in inches
+     * @param inletWaterDepthM inlet water depth in metres
+     * @param outletWaterDepthM outlet water depth in metres
+     * @param seabedTemperatureC seabed temperature in Celsius
      * @param heatTransferCoefficientWm2K heat-transfer coefficient in W/m2K
-     * @param shared                      true if shared by multiple fields or phases
+     * @param shared true if shared by multiple fields or phases
      */
     private RouteSegment(String name, SegmentType type, double lengthKm, double diameterInches, double inletWaterDepthM,
 	double outletWaterDepthM, double seabedTemperatureC, double heatTransferCoefficientWm2K, boolean shared) {

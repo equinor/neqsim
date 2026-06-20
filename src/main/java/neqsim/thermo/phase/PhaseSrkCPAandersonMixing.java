@@ -395,8 +395,8 @@ public class PhaseSrkCPAandersonMixing extends PhaseSrkCPAs {
    * </p>
    *
    * @param gMatrix history of residual differences (m x ns, using rows 0..histLen-1)
-   * @param gVec    current residual vector (length ns)
-   * @param ns      number of association sites
+   * @param gVec current residual vector (length ns)
+   * @param ns number of association sites
    * @param histLen number of stored history vectors
    * @return mixing coefficients gamma (length histLen)
    */

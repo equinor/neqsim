@@ -41,7 +41,7 @@ public class InterphaseTransportCoefficientBaseClass implements InterphaseTransp
    * Includes transition zone interpolation.
    *
    * @param phase phase index
-   * @param node  flow node interface
+   * @param node flow node interface
    * @return Darcy friction factor (dimensionless)
    */
   @Override

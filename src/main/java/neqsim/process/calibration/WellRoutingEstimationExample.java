@@ -86,7 +86,7 @@ public class WellRoutingEstimationExample {
    * Creates a typical well fluid.
    *
    * @param temperature wellhead temperature in °C
-   * @param pressure    wellhead pressure in bar-a
+   * @param pressure wellhead pressure in bar-a
    * @return configured fluid system
    */
   private SystemInterface createWellFluid(double temperature, double pressure) {
@@ -298,7 +298,7 @@ public class WellRoutingEstimationExample {
    * Runs pre-deployment validation tests.
    *
    * @param estimator the estimator to validate
-   * @param harness   the test harness
+   * @param harness the test harness
    * @return true if validation passes
    */
   public boolean runValidation(EnKFParameterEstimator estimator, EstimationTestHarness harness) {
@@ -433,9 +433,9 @@ public class WellRoutingEstimationExample {
   /**
    * Prints current estimates.
    *
-   * @param estimates     the current parameter estimates
+   * @param estimates the current parameter estimates
    * @param uncertainties the uncertainties for each parameter
-   * @param prefix        the prefix to print before estimates
+   * @param prefix the prefix to print before estimates
    */
   private void printEstimates(double[] estimates, double[] uncertainties, String prefix) {
     StringBuilder sb = new StringBuilder(prefix + "Estimates: [");

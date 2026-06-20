@@ -92,8 +92,8 @@ public class LeeViscosityMethod extends Viscosity {
    * This static method can be used independently without creating a phase object.
    * </p>
    *
-   * @param temperatureK   temperature in Kelvin
-   * @param densityKgM3    density in kg/m³
+   * @param temperatureK temperature in Kelvin
+   * @param densityKgM3 density in kg/m³
    * @param molarMassKgMol molar mass in kg/mol
    * @return viscosity in Pa·s
    */
@@ -126,7 +126,7 @@ public class LeeViscosityMethod extends Viscosity {
    * 1e-4
    * </p>
    *
-   * @param temperatureK   temperature in Kelvin
+   * @param temperatureK temperature in Kelvin
    * @param molarMassKgMol molar mass in kg/mol
    * @return low-pressure viscosity in Pa·s
    */

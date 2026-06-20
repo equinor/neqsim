@@ -201,7 +201,7 @@ public class PSACascade extends TwoPortEquipment {
   /**
    * Construct a PSA cascade with the given name and feed stream.
    *
-   * @param name        name of the unit operation
+   * @param name name of the unit operation
    * @param inletStream feed stream (typically shifted syngas at 20-30 bara)
    */
   public PSACascade(String name, StreamInterface inletStream) {

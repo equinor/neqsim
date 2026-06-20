@@ -162,8 +162,8 @@ public class MultiVariableAdjuster extends ProcessEquipmentBaseClass {
    * Add an adjusted (manipulated) variable.
    *
    * @param equipment the equipment whose variable is manipulated
-   * @param variable  the variable name (pressure, temperature, flow)
-   * @param unit      the unit string (bara, C, kg/hr, etc.)
+   * @param variable the variable name (pressure, temperature, flow)
+   * @param unit the unit string (bara, C, kg/hr, etc.)
    */
   public void addAdjustedVariable(ProcessEquipmentInterface equipment, String variable, String unit) {
     AdjustedVariable av = new AdjustedVariable();
@@ -176,10 +176,10 @@ public class MultiVariableAdjuster extends ProcessEquipmentBaseClass {
   /**
    * Add a target specification.
    *
-   * @param equipment   the equipment whose variable is observed
-   * @param variable    the variable name (pressure, temperature, flow, volume)
+   * @param equipment the equipment whose variable is observed
+   * @param variable the variable name (pressure, temperature, flow, volume)
    * @param targetValue the desired target value
-   * @param unit        the unit string
+   * @param unit the unit string
    */
   public void addTargetSpecification(ProcessEquipmentInterface equipment, String variable, double targetValue,
       String unit) {
@@ -194,12 +194,12 @@ public class MultiVariableAdjuster extends ProcessEquipmentBaseClass {
   /**
    * Add a target specification with phase and component.
    *
-   * @param equipment   the equipment whose variable is observed
-   * @param variable    the variable name
+   * @param equipment the equipment whose variable is observed
+   * @param variable the variable name
    * @param targetValue the desired target value
-   * @param unit        the unit string
-   * @param phase       the phase name (gas, oil, aqueous)
-   * @param component   the component name
+   * @param unit the unit string
+   * @param phase the phase name (gas, oil, aqueous)
+   * @param component the component name
    */
   public void addTargetSpecification(ProcessEquipmentInterface equipment, String variable, double targetValue,
       String unit, String phase, String component) {

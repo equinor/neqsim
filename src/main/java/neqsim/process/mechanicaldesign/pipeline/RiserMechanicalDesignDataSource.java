@@ -165,7 +165,7 @@ public class RiserMechanicalDesignDataSource {
    * Load design parameters into the riser calculator.
    *
    * @param calculator the riser calculator to populate
-   * @param company    company name for TR-specific values
+   * @param company company name for TR-specific values
    * @param designCode the design standard code
    */
   public void loadIntoCalculator(RiserMechanicalDesignCalculator calculator, String company, String designCode) {
@@ -223,11 +223,11 @@ public class RiserMechanicalDesignDataSource {
   /**
    * Apply a parameter value to the design parameters object.
    *
-   * @param params        the parameters object
+   * @param params the parameters object
    * @param specification the parameter name
-   * @param minValue      minimum value
-   * @param maxValue      maximum value
-   * @param documentId    the source document ID
+   * @param minValue minimum value
+   * @param maxValue maximum value
+   * @param documentId the source document ID
    */
   private void applyParameter(RiserDesignParameters params, String specification, double minValue, double maxValue,
       String documentId) {

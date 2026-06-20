@@ -57,12 +57,12 @@ public class TransientWallHeatTransfer {
   /**
    * Creates a transient wall heat transfer model for a single-layer wall.
    *
-   * @param thickness           Wall thickness [m]
+   * @param thickness Wall thickness [m]
    * @param thermalConductivity Thermal conductivity [W/(m*K)]
-   * @param density             Material density [kg/m^3]
-   * @param heatCapacity        Specific heat capacity [J/(kg*K)]
+   * @param density Material density [kg/m^3]
+   * @param heatCapacity Specific heat capacity [J/(kg*K)]
    * @param initialTemperatureK Initial uniform temperature [K]
-   * @param numNodes            Number of spatial nodes (minimum 3)
+   * @param numNodes Number of spatial nodes (minimum 3)
    */
   public TransientWallHeatTransfer(double thickness, double thermalConductivity, double density, double heatCapacity,
       double initialTemperatureK, int numNodes) {
@@ -104,16 +104,16 @@ public class TransientWallHeatTransfer {
    * This is typical for Type III/IV hydrogen vessels with an inner liner and outer shell.
    * </p>
    *
-   * @param linerThickness      Inner liner thickness [m]
-   * @param linerK              Liner thermal conductivity [W/(m*K)]
-   * @param linerDensity        Liner density [kg/m^3]
-   * @param linerCp             Liner heat capacity [J/(kg*K)]
-   * @param shellThickness      Outer shell thickness [m]
-   * @param shellK              Shell thermal conductivity [W/(m*K)]
-   * @param shellDensity        Shell density [kg/m^3]
-   * @param shellCp             Shell heat capacity [J/(kg*K)]
+   * @param linerThickness Inner liner thickness [m]
+   * @param linerK Liner thermal conductivity [W/(m*K)]
+   * @param linerDensity Liner density [kg/m^3]
+   * @param linerCp Liner heat capacity [J/(kg*K)]
+   * @param shellThickness Outer shell thickness [m]
+   * @param shellK Shell thermal conductivity [W/(m*K)]
+   * @param shellDensity Shell density [kg/m^3]
+   * @param shellCp Shell heat capacity [J/(kg*K)]
    * @param initialTemperatureK Initial uniform temperature [K]
-   * @param numNodes            Total number of spatial nodes (minimum 5)
+   * @param numNodes Total number of spatial nodes (minimum 5)
    */
   public TransientWallHeatTransfer(double linerThickness, double linerK, double linerDensity, double linerCp,
       double shellThickness, double shellK, double shellDensity, double shellCp, double initialTemperatureK,
@@ -167,10 +167,10 @@ public class TransientWallHeatTransfer {
    * -k * dT/dx = h_outer * (T_outer - T_ambient) at x = L
    * </pre>
    *
-   * @param dt                          Time step [s]
-   * @param innerFluidTemperatureK      Process fluid temperature [K]
+   * @param dt Time step [s]
+   * @param innerFluidTemperatureK Process fluid temperature [K]
    * @param innerFilmCoefficientWPerM2K Internal film coefficient [W/(m^2*K)]
-   * @param outerAmbientTemperatureK    Ambient/fire temperature [K]
+   * @param outerAmbientTemperatureK Ambient/fire temperature [K]
    * @param outerFilmCoefficientWPerM2K External film coefficient [W/(m^2*K)]
    */
   public void advanceTimeStep(double dt, double innerFluidTemperatureK, double innerFilmCoefficientWPerM2K,
@@ -196,13 +196,13 @@ public class TransientWallHeatTransfer {
    *
    * where additionalOuterFlux is positive into the wall (e.g., fire radiation + convection).
    *
-   * @param dt                          Time step [s]
-   * @param innerFluidTemperatureK      Process fluid temperature [K]
+   * @param dt Time step [s]
+   * @param innerFluidTemperatureK Process fluid temperature [K]
    * @param innerFilmCoefficientWPerM2K Internal film coefficient [W/(m^2*K)]
-   * @param outerAmbientTemperatureK    Ambient temperature [K]
+   * @param outerAmbientTemperatureK Ambient temperature [K]
    * @param outerFilmCoefficientWPerM2K External film coefficient [W/(m^2*K)]
-   * @param additionalOuterFluxWPerM2   Additional heat flux at outer boundary [W/m^2], positive into wall (e.g., fire
-   *                                    heat flux)
+   * @param additionalOuterFluxWPerM2 Additional heat flux at outer boundary [W/m^2], positive into wall (e.g., fire
+   * heat flux)
    */
   public void advanceTimeStep(double dt, double innerFluidTemperatureK, double innerFilmCoefficientWPerM2K,
       double outerAmbientTemperatureK, double outerFilmCoefficientWPerM2K, double additionalOuterFluxWPerM2) {
@@ -230,12 +230,12 @@ public class TransientWallHeatTransfer {
   /**
    * Internal time step advancement (assumes stability is already checked).
    *
-   * @param dt                          Time step [s]
-   * @param innerFluidTemperatureK      Process fluid temperature [K]
+   * @param dt Time step [s]
+   * @param innerFluidTemperatureK Process fluid temperature [K]
    * @param innerFilmCoefficientWPerM2K Internal film coefficient [W/(m^2*K)]
-   * @param outerAmbientTemperatureK    Ambient temperature [K]
+   * @param outerAmbientTemperatureK Ambient temperature [K]
    * @param outerFilmCoefficientWPerM2K External film coefficient [W/(m^2*K)]
-   * @param additionalOuterFluxWPerM2   Additional heat flux at outer boundary [W/m^2]
+   * @param additionalOuterFluxWPerM2 Additional heat flux at outer boundary [W/m^2]
    */
   private void advanceTimeStepInternal(double dt, double innerFluidTemperatureK, double innerFilmCoefficientWPerM2K,
       double outerAmbientTemperatureK, double outerFilmCoefficientWPerM2K, double additionalOuterFluxWPerM2) {
@@ -357,7 +357,7 @@ public class TransientWallHeatTransfer {
   /**
    * Calculates the heat absorbed by the wall during a time step.
    *
-   * @param wallAreaM2               Wall surface area [m^2]
+   * @param wallAreaM2 Wall surface area [m^2]
    * @param previousMeanTemperatureK Previous mean temperature [K]
    * @return Heat absorbed [J]
    */

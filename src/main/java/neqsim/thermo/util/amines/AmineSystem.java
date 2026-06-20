@@ -136,7 +136,7 @@ public class AmineSystem implements java.io.Serializable {
   /**
    * Creates an amine system at specified conditions.
    *
-   * @param amineType    the type of amine to use
+   * @param amineType the type of amine to use
    * @param temperatureK temperature in Kelvin
    * @param pressureBara pressure in bara
    */

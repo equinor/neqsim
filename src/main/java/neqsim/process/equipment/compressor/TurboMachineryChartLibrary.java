@@ -78,8 +78,8 @@ public class TurboMachineryChartLibrary implements Serializable {
   /**
    * Returns a named compressor reference map for the supplied fluid.
    *
-   * @param name                  the reference map name (see {@link #listCompressorCharts})
-   * @param fluid                 the working fluid the map will be applied to
+   * @param name the reference map name (see {@link #listCompressorCharts})
+   * @param fluid the working fluid the map will be applied to
    * @param impellerOuterDiameter the impeller outer diameter in m
    * @return a fully-initialised {@link CompressorChartKhader2015} with a generated surge curve
    * @throws IllegalArgumentException if the name is unknown or the fluid is {@code null}
@@ -98,7 +98,7 @@ public class TurboMachineryChartLibrary implements Serializable {
   /**
    * Returns a named expander reference map normalised on the supplied reference fluid.
    *
-   * @param name           the reference map name (see {@link #listExpanderCharts})
+   * @param name the reference map name (see {@link #listExpanderCharts})
    * @param referenceFluid the fluid used to normalise the map (may be {@code null} to skip composition correction)
    * @return a fully-initialised {@link ExpanderChartKhader}
    * @throws IllegalArgumentException if the name is unknown
@@ -116,7 +116,7 @@ public class TurboMachineryChartLibrary implements Serializable {
   /**
    * Builds the generic three-speed centrifugal compressor reference map.
    *
-   * @param fluid                 the working fluid the map will be applied to
+   * @param fluid the working fluid the map will be applied to
    * @param impellerOuterDiameter the impeller outer diameter in m
    * @return a populated {@link CompressorChartKhader2015} with a generated surge curve
    */

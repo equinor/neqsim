@@ -280,15 +280,15 @@ public class CDFTSurfaceTension extends SurfaceTension {
    *
    * @param rhoLiq liquid molar density (mol/m3)
    * @param rhoVap vapor molar density (mol/m3)
-   * @param temp   temperature (K)
-   * @param a      EOS energy parameter (Pa m6/mol2)
-   * @param b      covolume (m3/mol)
-   * @param d1     EOS constant delta1
-   * @param d2     EOS constant delta2
-   * @param dMol   molecular diameter (m)
-   * @param delta  interface half-width parameter (m)
-   * @param muEq   equilibrium chemical potential (J/mol)
-   * @param pBulk  equilibrium pressure (Pa)
+   * @param temp temperature (K)
+   * @param a EOS energy parameter (Pa m6/mol2)
+   * @param b covolume (m3/mol)
+   * @param d1 EOS constant delta1
+   * @param d2 EOS constant delta2
+   * @param dMol molecular diameter (m)
+   * @param delta interface half-width parameter (m)
+   * @param muEq equilibrium chemical potential (J/mol)
+   * @param pBulk equilibrium pressure (Pa)
    * @return interfacial tension (N/m)
    */
   private double computeSigmaForDelta(double rhoLiq, double rhoVap, double temp, double a, double b, double d1,
@@ -346,10 +346,10 @@ public class CDFTSurfaceTension extends SurfaceTension {
    * Step-function convolution: W(z_i) = sum_{k=-nKernHalf}^{nKernHalf} wVal * rho(i+k) * dz.
    *
    * @param rho density profile
-   * @param n   grid size
-   * @param nk  half-width of kernel in grid points
-   * @param wv  kernel constant value
-   * @param dz  grid spacing
+   * @param n grid size
+   * @param nk half-width of kernel in grid points
+   * @param wv kernel constant value
+   * @param dz grid spacing
    * @return convolution result
    */
   private double[] stepConvolve(double[] rho, int n, int nk, double wv, double dz) {
@@ -376,8 +376,8 @@ public class CDFTSurfaceTension extends SurfaceTension {
    * b*rho)]
    *
    * @param rhoM molar density (mol/m3)
-   * @param t    temperature (K)
-   * @param b    covolume (m3/mol)
+   * @param t temperature (K)
+   * @param b covolume (m3/mol)
    * @return excess chemical potential (J/mol)
    */
   private double muRepExcess(double rhoM, double t, double b) {
@@ -393,10 +393,10 @@ public class CDFTSurfaceTension extends SurfaceTension {
    * a/((V+d1*b)(V+d2*b)): mu_att = a/((d1-d2)*b) * ln((1+d2*b*rho)/(1+d1*b*rho)) - a*rho / ((1+d1*b*rho)(1+d2*b*rho))
    *
    * @param rhoM molar density (mol/m3)
-   * @param a    EOS energy parameter (Pa m6/mol2)
-   * @param b    covolume (m3/mol)
-   * @param d1   EOS constant delta1
-   * @param d2   EOS constant delta2
+   * @param a EOS energy parameter (Pa m6/mol2)
+   * @param b covolume (m3/mol)
+   * @param d1 EOS constant delta1
+   * @param d2 EOS constant delta2
    * @return attractive chemical potential (J/mol)
    */
   private double muAtt(double rhoM, double a, double b, double d1, double d2) {
@@ -413,10 +413,10 @@ public class CDFTSurfaceTension extends SurfaceTension {
    * ln((1+d2*b*rho)/(1+d1*b*rho))
    *
    * @param rhoM molar density (mol/m3)
-   * @param a    EOS energy parameter (Pa m6/mol2)
-   * @param b    covolume (m3/mol)
-   * @param d1   EOS constant delta1
-   * @param d2   EOS constant delta2
+   * @param a EOS energy parameter (Pa m6/mol2)
+   * @param b covolume (m3/mol)
+   * @param d1 EOS constant delta1
+   * @param d2 EOS constant delta2
    * @return attractive free energy density (J/m3)
    */
   private double fAttLocal(double rhoM, double a, double b, double d1, double d2) {
@@ -430,11 +430,11 @@ public class CDFTSurfaceTension extends SurfaceTension {
    * Equation of state pressure.
    *
    * @param rhoM molar density (mol/m3)
-   * @param t    temperature (K)
-   * @param a    EOS energy parameter (Pa m6/mol2)
-   * @param b    covolume (m3/mol)
-   * @param d1   EOS constant delta1
-   * @param d2   EOS constant delta2
+   * @param t temperature (K)
+   * @param a EOS energy parameter (Pa m6/mol2)
+   * @param b covolume (m3/mol)
+   * @param d1 EOS constant delta1
+   * @param d2 EOS constant delta2
    * @return pressure (Pa)
    */
   private double pressure(double rhoM, double t, double a, double b, double d1, double d2) {
@@ -663,16 +663,16 @@ public class CDFTSurfaceTension extends SurfaceTension {
    *
    * @param rhoLiq component densities in the liquid phase (mol/m3)
    * @param rhoVap component densities in the vapour phase (mol/m3)
-   * @param temp   temperature (K)
-   * @param aij    cross EOS energy parameters (Pa m6/mol2)
-   * @param bComp  component covolumes (m3/mol)
-   * @param d1     EOS constant delta1
-   * @param d2     EOS constant delta2
-   * @param dMol   average molecular diameter (m)
-   * @param delta  interface half-width parameter (m)
-   * @param muEq   equilibrium chemical potentials (J/mol)
-   * @param pBulk  equilibrium pressure (Pa)
-   * @param nc     number of components
+   * @param temp temperature (K)
+   * @param aij cross EOS energy parameters (Pa m6/mol2)
+   * @param bComp component covolumes (m3/mol)
+   * @param d1 EOS constant delta1
+   * @param d2 EOS constant delta2
+   * @param dMol average molecular diameter (m)
+   * @param delta interface half-width parameter (m)
+   * @param muEq equilibrium chemical potentials (J/mol)
+   * @param pBulk equilibrium pressure (Pa)
+   * @param nc number of components
    * @return interfacial tension (N/m)
    */
   private double computeMixtureSigmaForDelta(double[] rhoLiq, double[] rhoVap, double temp, double[][] aij,
@@ -783,13 +783,13 @@ public class CDFTSurfaceTension extends SurfaceTension {
   /**
    * Computes the total Helmholtz free energy density for a mixture at given component densities.
    *
-   * @param rho   component molar densities (mol/m3)
-   * @param aij   cross energy parameters (Pa m6/mol2)
+   * @param rho component molar densities (mol/m3)
+   * @param aij cross energy parameters (Pa m6/mol2)
    * @param bComp component covolumes (m3/mol)
-   * @param temp  temperature (K)
-   * @param d1    EOS constant delta1
-   * @param d2    EOS constant delta2
-   * @param nc    number of components
+   * @param temp temperature (K)
+   * @param d1 EOS constant delta1
+   * @param d2 EOS constant delta2
+   * @param nc number of components
    * @return free energy density (J/m3)
    */
   private double mixtureFreeEnergyDensity(double[] rho, double[][] aij, double[] bComp, double temp, double d1,
@@ -832,13 +832,13 @@ public class CDFTSurfaceTension extends SurfaceTension {
   /**
    * Computes the EOS pressure for a mixture.
    *
-   * @param rho   component molar densities (mol/m3)
-   * @param aij   cross energy parameters (Pa m6/mol2)
+   * @param rho component molar densities (mol/m3)
+   * @param aij cross energy parameters (Pa m6/mol2)
    * @param bComp component covolumes (m3/mol)
-   * @param temp  temperature (K)
-   * @param d1    EOS constant delta1
-   * @param d2    EOS constant delta2
-   * @param nc    number of components
+   * @param temp temperature (K)
+   * @param d1 EOS constant delta1
+   * @param d2 EOS constant delta2
+   * @param nc number of components
    * @return pressure (Pa)
    */
   private double mixturePressure(double[] rho, double[][] aij, double[] bComp, double temp, double d1, double d2,

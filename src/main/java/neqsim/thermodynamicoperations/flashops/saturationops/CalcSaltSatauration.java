@@ -26,7 +26,7 @@ public class CalcSaltSatauration extends ConstantDutyTemperatureFlash {
    * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param name   a {@link java.lang.String} object
+   * @param name a {@link java.lang.String} object
    */
   public CalcSaltSatauration(SystemInterface system, String name) {
     super(system);

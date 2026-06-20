@@ -107,7 +107,7 @@ class TPmultiflashTest {
    * Creates the methane/n-heptane PR system used in binary hydrocarbon flash regression tests.
    *
    * @param binaryInteractionParameter methane/n-heptane binary interaction parameter
-   * @param enhancedCheck              true to enable enhanced multiphase checks
+   * @param enhancedCheck true to enable enhanced multiphase checks
    * @return configured methane/n-heptane PR thermodynamic system
    */
   private SystemInterface createMethaneHeptanePrSystem(double binaryInteractionParameter, boolean enhancedCheck) {

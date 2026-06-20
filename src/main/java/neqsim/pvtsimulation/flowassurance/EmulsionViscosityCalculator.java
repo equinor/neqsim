@@ -399,7 +399,7 @@ public class EmulsionViscosityCalculator implements Serializable {
    *
    * @param waterCutMin minimum water cut (volume fraction)
    * @param waterCutMax maximum water cut (volume fraction)
-   * @param steps       number of data points
+   * @param steps number of data points
    * @return a two-dimensional array where [i][0] is water cut and [i][1] is effective viscosity in mPa.s
    */
   public double[][] calculateViscosityCurve(double waterCutMin, double waterCutMax, int steps) {

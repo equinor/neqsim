@@ -18,7 +18,7 @@ public class TemperatureUnit extends neqsim.util.unit.BaseUnit {
    * </p>
    *
    * @param value a double
-   * @param name  a {@link java.lang.String} object
+   * @param name a {@link java.lang.String} object
    */
   public TemperatureUnit(double value, String name) {
     super(value, name);

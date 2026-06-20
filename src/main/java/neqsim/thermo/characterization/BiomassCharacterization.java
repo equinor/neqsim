@@ -114,10 +114,10 @@ public class BiomassCharacterization implements Serializable {
   /**
    * Sets the proximate analysis on a dry basis.
    *
-   * @param moisturePercent       moisture content (wt%, as-received)
+   * @param moisturePercent moisture content (wt%, as-received)
    * @param volatileMatterPercent volatile matter (wt%, dry basis)
-   * @param fixedCarbonPercent    fixed carbon (wt%, dry basis)
-   * @param ashPercent            ash content (wt%, dry basis)
+   * @param fixedCarbonPercent fixed carbon (wt%, dry basis)
+   * @param ashPercent ash content (wt%, dry basis)
    */
   public void setProximateAnalysis(double moisturePercent, double volatileMatterPercent, double fixedCarbonPercent,
       double ashPercent) {
@@ -131,11 +131,11 @@ public class BiomassCharacterization implements Serializable {
   /**
    * Sets the ultimate analysis on a dry-ash-free basis.
    *
-   * @param carbonPercent   carbon (wt%, daf)
+   * @param carbonPercent carbon (wt%, daf)
    * @param hydrogenPercent hydrogen (wt%, daf)
-   * @param oxygenPercent   oxygen (wt%, daf)
+   * @param oxygenPercent oxygen (wt%, daf)
    * @param nitrogenPercent nitrogen (wt%, daf)
-   * @param sulfurPercent   sulfur (wt%, daf)
+   * @param sulfurPercent sulfur (wt%, daf)
    * @param chlorinePercent chlorine (wt%, daf)
    */
   public void setUltimateAnalysis(double carbonPercent, double hydrogenPercent, double oxygenPercent,

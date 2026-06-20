@@ -56,7 +56,7 @@ public final class StandardRegistry {
    * </p>
    *
    * @param standardType the international standard type
-   * @param equipment    the mechanical design equipment context
+   * @param equipment the mechanical design equipment context
    * @return a new DesignStandard instance
    * @throws IllegalArgumentException if standardType is null
    */
@@ -68,8 +68,8 @@ public final class StandardRegistry {
    * Create a DesignStandard instance for the given standard type with a specific version.
    *
    * @param standardType the international standard type
-   * @param version      the specific version to use (null for default)
-   * @param equipment    the mechanical design equipment context
+   * @param version the specific version to use (null for default)
+   * @param equipment the mechanical design equipment context
    * @return a new DesignStandard instance
    * @throws IllegalArgumentException if standardType is null
    */
@@ -133,7 +133,7 @@ public final class StandardRegistry {
    * Set a version override for a standard type.
    *
    * @param standardType the standard type to override
-   * @param version      the version to use (null to clear override)
+   * @param version the version to use (null to clear override)
    */
   public static void setVersionOverride(StandardType standardType, String version) {
     if (standardType == null) {
@@ -243,7 +243,7 @@ public final class StandardRegistry {
   /**
    * Check if a standard type is applicable to an equipment type.
    *
-   * @param standardType       the standard type to check
+   * @param standardType the standard type to check
    * @param equipmentClassName the equipment class name
    * @return true if the standard applies to the equipment
    */

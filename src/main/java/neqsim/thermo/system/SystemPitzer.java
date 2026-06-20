@@ -42,8 +42,8 @@ public class SystemPitzer extends SystemEos {
    * Constructor for SystemPitzer.
    * </p>
    *
-   * @param T              temperature in K
-   * @param P              pressure in bara
+   * @param T temperature in K
+   * @param P pressure in bara
    * @param checkForSolids include solid phase
    */
   public SystemPitzer(double T, double P, boolean checkForSolids) {

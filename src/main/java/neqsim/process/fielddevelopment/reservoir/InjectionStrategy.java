@@ -107,7 +107,7 @@ public class InjectionStrategy implements Serializable {
   /**
    * Creates a WAG strategy.
    *
-   * @param wagRatio  water/gas ratio
+   * @param wagRatio water/gas ratio
    * @param cycleDays cycle duration in days
    * @return injection strategy
    */
@@ -133,9 +133,9 @@ public class InjectionStrategy implements Serializable {
   /**
    * Calculates required injection rates for voidage replacement.
    *
-   * @param reservoir           the reservoir
-   * @param oilProductionRate   oil production rate (Sm3/day)
-   * @param gasProductionRate   gas production rate (Sm3/day)
+   * @param reservoir the reservoir
+   * @param oilProductionRate oil production rate (Sm3/day)
+   * @param gasProductionRate gas production rate (Sm3/day)
    * @param waterProductionRate water production rate (Sm3/day)
    * @return injection result with water and gas rates
    */
@@ -202,8 +202,8 @@ public class InjectionStrategy implements Serializable {
    * Calculates production voidage at reservoir conditions.
    *
    * @param reservoir the reservoir
-   * @param oilRate   oil rate (Sm3/day)
-   * @param gasRate   gas rate (Sm3/day)
+   * @param oilRate oil rate (Sm3/day)
+   * @param gasRate gas rate (Sm3/day)
    * @param waterRate water rate (Sm3/day)
    * @return production voidage (m3/day at reservoir conditions)
    */
@@ -250,7 +250,7 @@ public class InjectionStrategy implements Serializable {
   /**
    * Calculates water injection rate for target reservoir volume.
    *
-   * @param reservoir    the reservoir
+   * @param reservoir the reservoir
    * @param targetVolume target reservoir volume (m3/day)
    * @return water injection rate (Sm3/day)
    */
@@ -263,7 +263,7 @@ public class InjectionStrategy implements Serializable {
   /**
    * Calculates gas injection rate for target reservoir volume.
    *
-   * @param reservoir    the reservoir
+   * @param reservoir the reservoir
    * @param targetVolume target reservoir volume (m3/day)
    * @return gas injection rate (Sm3/day)
    */
@@ -304,7 +304,7 @@ public class InjectionStrategy implements Serializable {
    *
    * @param reservoir the reservoir
    * @param waterRate water rate (Sm3/day)
-   * @param gasRate   gas rate (Sm3/day)
+   * @param gasRate gas rate (Sm3/day)
    * @return injection volume (m3/day at reservoir conditions)
    */
   private double calculateInjectionVolume(SimpleReservoir reservoir, double waterRate, double gasRate) {

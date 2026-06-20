@@ -61,7 +61,7 @@ public class RootCauseReport implements Serializable {
    *
    * @param equipmentName equipment name
    * @param equipmentType equipment type classification
-   * @param symptom       reported symptom
+   * @param symptom reported symptom
    */
   public RootCauseReport(String equipmentName, String equipmentType, Symptom symptom) {
     this.equipmentName = equipmentName;

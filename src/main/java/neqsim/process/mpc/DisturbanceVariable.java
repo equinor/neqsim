@@ -73,8 +73,8 @@ public class DisturbanceVariable extends MPCVariable {
   /**
    * Construct a disturbance variable bound to equipment.
    *
-   * @param name         unique identifier for this DV
-   * @param equipment    the process equipment to monitor
+   * @param name unique identifier for this DV
+   * @param equipment the process equipment to monitor
    * @param propertyName the property to read
    */
   public DisturbanceVariable(String name, ProcessEquipmentInterface equipment, String propertyName) {
@@ -84,10 +84,10 @@ public class DisturbanceVariable extends MPCVariable {
   /**
    * Construct a disturbance variable bound to equipment with unit.
    *
-   * @param name         unique identifier for this DV
-   * @param equipment    the process equipment to monitor
+   * @param name unique identifier for this DV
+   * @param equipment the process equipment to monitor
    * @param propertyName the property to read
-   * @param unit         the unit for the property value
+   * @param unit the unit for the property value
    */
   public DisturbanceVariable(String name, ProcessEquipmentInterface equipment, String propertyName, String unit) {
     super(name, equipment, propertyName, unit);
@@ -131,7 +131,7 @@ public class DisturbanceVariable extends MPCVariable {
   /**
    * Set the predicted future value for feedforward control.
    *
-   * @param value   the predicted value
+   * @param value the predicted value
    * @param horizon the time horizon for the prediction
    * @return this variable for method chaining
    */

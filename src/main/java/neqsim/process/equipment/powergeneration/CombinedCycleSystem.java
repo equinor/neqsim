@@ -98,7 +98,7 @@ public class CombinedCycleSystem extends TwoPortEquipment implements CapacityCon
   /**
    * Constructor for CombinedCycleSystem with fuel gas inlet.
    *
-   * @param name         equipment name
+   * @param name equipment name
    * @param fuelGasInlet fuel gas stream to the gas turbine
    */
   public CombinedCycleSystem(String name, StreamInterface fuelGasInlet) {
@@ -274,7 +274,7 @@ public class CombinedCycleSystem extends TwoPortEquipment implements CapacityCon
    * Set steam temperature with unit.
    *
    * @param temperature steam temperature
-   * @param unit        temperature unit ("C", "K")
+   * @param unit temperature unit ("C", "K")
    */
   public void setSteamTemperature(double temperature, String unit) {
     if ("C".equals(unit)) {
@@ -373,7 +373,7 @@ public class CombinedCycleSystem extends TwoPortEquipment implements CapacityCon
    * Set the rated (maximum) total power output with unit.
    *
    * @param ratedPower rated total power value
-   * @param unit       power unit ("W", "kW", "MW", "hp")
+   * @param unit power unit ("W", "kW", "MW", "hp")
    */
   public void setRatedTotalPower(double ratedPower, String unit) {
     switch (unit) {

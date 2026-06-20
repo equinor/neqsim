@@ -25,7 +25,7 @@ public class AdsorptionDehydrationDesignStandard extends DesignStandard {
    * Constructor for AdsorptionDehydrationDesignStandard.
    * </p>
    *
-   * @param name         a {@link java.lang.String} object
+   * @param name a {@link java.lang.String} object
    * @param equipmentInn a {@link neqsim.process.mechanicaldesign.MechanicalDesign} object
    */
   public AdsorptionDehydrationDesignStandard(String name, MechanicalDesign equipmentInn) {

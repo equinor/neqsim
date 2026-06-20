@@ -45,7 +45,7 @@ public class TPmultiflashWAX extends TPflash {
    * Constructor for TPmultiflashWAX.
    * </p>
    *
-   * @param system         a {@link neqsim.thermo.system.SystemInterface} object
+   * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param checkForSolids Set true to do solid phase check and calculations
    */
   public TPmultiflashWAX(SystemInterface system, boolean checkForSolids) {

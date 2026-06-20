@@ -55,8 +55,8 @@ public class ChemicalDoseLagModel implements Serializable {
    * Advances the chemical inventory over one time step.
    *
    * @param setpointDosePpm injected chemical dose in ppm by produced-water mass
-   * @param waterRateM3h    produced-water flow rate in m3/h
-   * @param timeStepHours   time step in hours
+   * @param waterRateM3h produced-water flow rate in m3/h
+   * @param timeStepHours time step in hours
    * @return effective outlet dose in ppm
    */
   public double step(double setpointDosePpm, double waterRateM3h, double timeStepHours) {
@@ -92,7 +92,7 @@ public class ChemicalDoseLagModel implements Serializable {
    * Resets the model to steady state at a specified setpoint and water rate.
    *
    * @param setpointDosePpm injected chemical dose in ppm
-   * @param waterRateM3h    produced-water flow rate in m3/h
+   * @param waterRateM3h produced-water flow rate in m3/h
    */
   public void resetToSteadyState(double setpointDosePpm, double waterRateM3h) {
     if (waterRateM3h <= 0.0) {

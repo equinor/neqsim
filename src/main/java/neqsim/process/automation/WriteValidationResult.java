@@ -41,9 +41,9 @@ public final class WriteValidationResult implements Serializable {
    * Creates a validation result.
    *
    * @param severity the severity classification; never null
-   * @param code     a short machine-readable code such as {@code "OUTLET_PRESSURE_BELOW_INLET"}, or {@code null} for
-   *                 {@link Severity#OK}
-   * @param message  a human-readable explanation, or {@code null} for {@link Severity#OK}
+   * @param code a short machine-readable code such as {@code "OUTLET_PRESSURE_BELOW_INLET"}, or {@code null} for
+   * {@link Severity#OK}
+   * @param message a human-readable explanation, or {@code null} for {@link Severity#OK}
    */
   public WriteValidationResult(Severity severity, String code, String message) {
     if (severity == null) {
@@ -66,7 +66,7 @@ public final class WriteValidationResult implements Serializable {
   /**
    * Creates a hard-failure validation result.
    *
-   * @param code    the machine-readable code
+   * @param code the machine-readable code
    * @param message the human-readable explanation
    * @return a failing validation result with severity {@link Severity#ERROR}
    */
@@ -77,7 +77,7 @@ public final class WriteValidationResult implements Serializable {
   /**
    * Creates a soft-warning validation result.
    *
-   * @param code    the machine-readable code
+   * @param code the machine-readable code
    * @param message the human-readable explanation
    * @return a validation result with severity {@link Severity#WARNING}
    */

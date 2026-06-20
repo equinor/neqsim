@@ -95,7 +95,7 @@ public enum StudyClass {
   /**
    * Constructor.
    *
-   * @param displayName          human-readable name
+   * @param displayName human-readable name
    * @param requiredDeliverables set of required deliverable types
    */
   StudyClass(String displayName, Set<DeliverableType> requiredDeliverables) {

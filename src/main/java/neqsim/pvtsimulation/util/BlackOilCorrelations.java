@@ -67,10 +67,10 @@ public final class BlackOilCorrelations {
   /**
    * Standing correlation for bubble point pressure.
    *
-   * @param Rs     Solution GOR at bubble point (scf/STB)
+   * @param Rs Solution GOR at bubble point (scf/STB)
    * @param gammaG Gas specific gravity (air = 1)
    * @param gammaO Oil specific gravity (water = 1) or API gravity if useAPI=true
-   * @param T      Temperature (°F)
+   * @param T Temperature (°F)
    * @param useAPI If true, gammaO is treated as API gravity
    * @return Bubble point pressure (psia)
    */
@@ -84,10 +84,10 @@ public final class BlackOilCorrelations {
   /**
    * Vasquez-Beggs correlation for bubble point pressure.
    *
-   * @param Rs     Solution GOR (scf/STB)
+   * @param Rs Solution GOR (scf/STB)
    * @param gammaG Gas specific gravity (air = 1)
-   * @param api    API gravity
-   * @param T      Temperature (°F)
+   * @param api API gravity
+   * @param T Temperature (°F)
    * @return Bubble point pressure (psia)
    */
   public static double bubblePointVasquezBeggs(double Rs, double gammaG, double api, double T) {
@@ -112,10 +112,10 @@ public final class BlackOilCorrelations {
   /**
    * Glaso correlation for bubble point pressure.
    *
-   * @param Rs     Solution GOR (scf/STB)
+   * @param Rs Solution GOR (scf/STB)
    * @param gammaG Gas specific gravity (air = 1)
-   * @param api    API gravity
-   * @param T      Temperature (°F)
+   * @param api API gravity
+   * @param T Temperature (°F)
    * @return Bubble point pressure (psia)
    */
   public static double bubblePointGlaso(double Rs, double gammaG, double api, double T) {
@@ -130,10 +130,10 @@ public final class BlackOilCorrelations {
   /**
    * Standing correlation for bubble point pressure with unit support.
    *
-   * @param Rs         Solution GOR at bubble point (in inputUnits)
-   * @param gammaG     Gas specific gravity (air = 1)
-   * @param api        API gravity
-   * @param T          Temperature (in inputUnits)
+   * @param Rs Solution GOR at bubble point (in inputUnits)
+   * @param gammaG Gas specific gravity (air = 1)
+   * @param api API gravity
+   * @param T Temperature (in inputUnits)
    * @param inputUnits Unit system for inputs and outputs
    * @return Bubble point pressure (in inputUnits)
    */
@@ -147,10 +147,10 @@ public final class BlackOilCorrelations {
   /**
    * Standing correlation for bubble point using SI units (bara, °C, Sm³/Sm³).
    *
-   * @param Rs     Solution GOR (Sm³/Sm³)
+   * @param Rs Solution GOR (Sm³/Sm³)
    * @param gammaG Gas specific gravity (air = 1)
-   * @param api    API gravity
-   * @param T      Temperature (°C)
+   * @param api API gravity
+   * @param T Temperature (°C)
    * @return Bubble point pressure (bara)
    */
   public static double bubblePointStandingSI(double Rs, double gammaG, double api, double T) {
@@ -160,10 +160,10 @@ public final class BlackOilCorrelations {
   /**
    * Vasquez-Beggs correlation for bubble point pressure with unit support.
    *
-   * @param Rs         Solution GOR (in inputUnits)
-   * @param gammaG     Gas specific gravity (air = 1)
-   * @param api        API gravity
-   * @param T          Temperature (in inputUnits)
+   * @param Rs Solution GOR (in inputUnits)
+   * @param gammaG Gas specific gravity (air = 1)
+   * @param api API gravity
+   * @param T Temperature (in inputUnits)
    * @param inputUnits Unit system for inputs and outputs
    * @return Bubble point pressure (in inputUnits)
    */
@@ -178,10 +178,10 @@ public final class BlackOilCorrelations {
   /**
    * Vasquez-Beggs correlation for bubble point using SI units (bara, °C, Sm³/Sm³).
    *
-   * @param Rs     Solution GOR (Sm³/Sm³)
+   * @param Rs Solution GOR (Sm³/Sm³)
    * @param gammaG Gas specific gravity (air = 1)
-   * @param api    API gravity
-   * @param T      Temperature (°C)
+   * @param api API gravity
+   * @param T Temperature (°C)
    * @return Bubble point pressure (bara)
    */
   public static double bubblePointVasquesBeggsS(double Rs, double gammaG, double api, double T) {
@@ -191,10 +191,10 @@ public final class BlackOilCorrelations {
   /**
    * Glaso correlation for bubble point pressure with unit support.
    *
-   * @param Rs         Solution GOR (in inputUnits)
-   * @param gammaG     Gas specific gravity (air = 1)
-   * @param api        API gravity
-   * @param T          Temperature (in inputUnits)
+   * @param Rs Solution GOR (in inputUnits)
+   * @param gammaG Gas specific gravity (air = 1)
+   * @param api API gravity
+   * @param T Temperature (in inputUnits)
    * @param inputUnits Unit system for inputs and outputs
    * @return Bubble point pressure (in inputUnits)
    */
@@ -208,10 +208,10 @@ public final class BlackOilCorrelations {
   /**
    * Glaso correlation for bubble point using SI units (bara, °C, Sm³/Sm³).
    *
-   * @param Rs     Solution GOR (Sm³/Sm³)
+   * @param Rs Solution GOR (Sm³/Sm³)
    * @param gammaG Gas specific gravity (air = 1)
-   * @param api    API gravity
-   * @param T      Temperature (°C)
+   * @param api API gravity
+   * @param T Temperature (°C)
    * @return Bubble point pressure (bara)
    */
   public static double bubblePointGlasoSI(double Rs, double gammaG, double api, double T) {
@@ -223,10 +223,10 @@ public final class BlackOilCorrelations {
   /**
    * Standing correlation for solution GOR.
    *
-   * @param p      Pressure (psia)
+   * @param p Pressure (psia)
    * @param gammaG Gas specific gravity (air = 1)
-   * @param api    API gravity
-   * @param T      Temperature (°F)
+   * @param api API gravity
+   * @param T Temperature (°F)
    * @return Rs in scf/STB
    */
   public static double solutionGORStanding(double p, double gammaG, double api, double T) {
@@ -238,10 +238,10 @@ public final class BlackOilCorrelations {
   /**
    * Vasquez-Beggs correlation for solution GOR.
    *
-   * @param p      Pressure (psia)
+   * @param p Pressure (psia)
    * @param gammaG Gas specific gravity (air = 1)
-   * @param api    API gravity
-   * @param T      Temperature (°F)
+   * @param api API gravity
+   * @param T Temperature (°F)
    * @return Rs in scf/STB
    */
   public static double solutionGORVasquezBeggs(double p, double gammaG, double api, double T) {
@@ -267,10 +267,10 @@ public final class BlackOilCorrelations {
   /**
    * Standing correlation for solution GOR with unit support.
    *
-   * @param p          Pressure (in inputUnits)
-   * @param gammaG     Gas specific gravity (air = 1)
-   * @param api        API gravity
-   * @param T          Temperature (in inputUnits)
+   * @param p Pressure (in inputUnits)
+   * @param gammaG Gas specific gravity (air = 1)
+   * @param api API gravity
+   * @param T Temperature (in inputUnits)
    * @param inputUnits Unit system for inputs and outputs
    * @return Rs (in inputUnits)
    */
@@ -284,10 +284,10 @@ public final class BlackOilCorrelations {
   /**
    * Standing correlation for solution GOR using SI units.
    *
-   * @param p      Pressure (bara)
+   * @param p Pressure (bara)
    * @param gammaG Gas specific gravity (air = 1)
-   * @param api    API gravity
-   * @param T      Temperature (°C)
+   * @param api API gravity
+   * @param T Temperature (°C)
    * @return Rs in Sm³/Sm³
    */
   public static double solutionGORStandingSI(double p, double gammaG, double api, double T) {
@@ -297,10 +297,10 @@ public final class BlackOilCorrelations {
   /**
    * Vasquez-Beggs correlation for solution GOR with unit support.
    *
-   * @param p          Pressure (in inputUnits)
-   * @param gammaG     Gas specific gravity (air = 1)
-   * @param api        API gravity
-   * @param T          Temperature (in inputUnits)
+   * @param p Pressure (in inputUnits)
+   * @param gammaG Gas specific gravity (air = 1)
+   * @param api API gravity
+   * @param T Temperature (in inputUnits)
    * @param inputUnits Unit system for inputs and outputs
    * @return Rs (in inputUnits)
    */
@@ -315,10 +315,10 @@ public final class BlackOilCorrelations {
   /**
    * Vasquez-Beggs correlation for solution GOR using SI units.
    *
-   * @param p      Pressure (bara)
+   * @param p Pressure (bara)
    * @param gammaG Gas specific gravity (air = 1)
-   * @param api    API gravity
-   * @param T      Temperature (°C)
+   * @param api API gravity
+   * @param T Temperature (°C)
    * @return Rs in Sm³/Sm³
    */
   public static double solutionGORVasquesBeggsS(double p, double gammaG, double api, double T) {
@@ -330,10 +330,10 @@ public final class BlackOilCorrelations {
   /**
    * Standing correlation for Bo (saturated oil).
    *
-   * @param Rs     Solution GOR (scf/STB)
+   * @param Rs Solution GOR (scf/STB)
    * @param gammaG Gas specific gravity (air = 1)
    * @param gammaO Oil specific gravity (water = 1)
-   * @param T      Temperature (°F)
+   * @param T Temperature (°F)
    * @return Bo in bbl/STB
    */
   public static double oilFVFStanding(double Rs, double gammaG, double gammaO, double T) {
@@ -345,10 +345,10 @@ public final class BlackOilCorrelations {
   /**
    * Vasquez-Beggs correlation for Bo (saturated oil).
    *
-   * @param Rs     Solution GOR (scf/STB)
+   * @param Rs Solution GOR (scf/STB)
    * @param gammaG Gas specific gravity (air = 1)
-   * @param api    API gravity
-   * @param T      Temperature (°F)
+   * @param api API gravity
+   * @param T Temperature (°F)
    * @return Bo in bbl/STB
    */
   public static double oilFVFVasquezBeggs(double Rs, double gammaG, double api, double T) {
@@ -373,9 +373,9 @@ public final class BlackOilCorrelations {
    * Calculate undersaturated oil Bo using compressibility.
    *
    * @param Bob Bo at bubble point (bbl/STB)
-   * @param co  Oil compressibility (1/psi)
-   * @param p   Current pressure (psia)
-   * @param pb  Bubble point pressure (psia)
+   * @param co Oil compressibility (1/psi)
+   * @param p Current pressure (psia)
+   * @param pb Bubble point pressure (psia)
    * @return Bo in bbl/STB
    */
   public static double oilFVFUndersaturated(double Bob, double co, double p, double pb) {
@@ -387,10 +387,10 @@ public final class BlackOilCorrelations {
   /**
    * Standing correlation for Bo with unit support.
    *
-   * @param Rs         Solution GOR (in inputUnits)
-   * @param gammaG     Gas specific gravity (air = 1)
-   * @param gammaO     Oil specific gravity (water = 1)
-   * @param T          Temperature (in inputUnits)
+   * @param Rs Solution GOR (in inputUnits)
+   * @param gammaG Gas specific gravity (air = 1)
+   * @param gammaO Oil specific gravity (water = 1)
+   * @param T Temperature (in inputUnits)
    * @param inputUnits Unit system for inputs
    * @return Bo in bbl/STB (dimensionless ratio, same in all units)
    */
@@ -403,10 +403,10 @@ public final class BlackOilCorrelations {
   /**
    * Standing correlation for Bo using SI units.
    *
-   * @param Rs     Solution GOR (Sm³/Sm³)
+   * @param Rs Solution GOR (Sm³/Sm³)
    * @param gammaG Gas specific gravity (air = 1)
    * @param gammaO Oil specific gravity (water = 1)
-   * @param T      Temperature (°C)
+   * @param T Temperature (°C)
    * @return Bo (m³/Sm³)
    */
   public static double oilFVFStandingSI(double Rs, double gammaG, double gammaO, double T) {
@@ -416,10 +416,10 @@ public final class BlackOilCorrelations {
   /**
    * Vasquez-Beggs correlation for Bo with unit support.
    *
-   * @param Rs         Solution GOR (in inputUnits)
-   * @param gammaG     Gas specific gravity (air = 1)
-   * @param api        API gravity
-   * @param T          Temperature (in inputUnits)
+   * @param Rs Solution GOR (in inputUnits)
+   * @param gammaG Gas specific gravity (air = 1)
+   * @param api API gravity
+   * @param T Temperature (in inputUnits)
    * @param inputUnits Unit system for inputs
    * @return Bo in bbl/STB (dimensionless ratio, same in all units)
    */
@@ -432,10 +432,10 @@ public final class BlackOilCorrelations {
   /**
    * Vasquez-Beggs correlation for Bo using SI units.
    *
-   * @param Rs     Solution GOR (Sm³/Sm³)
+   * @param Rs Solution GOR (Sm³/Sm³)
    * @param gammaG Gas specific gravity (air = 1)
-   * @param api    API gravity
-   * @param T      Temperature (°C)
+   * @param api API gravity
+   * @param T Temperature (°C)
    * @return Bo (m³/Sm³)
    */
   public static double oilFVFVasquesBeggsS(double Rs, double gammaG, double api, double T) {
@@ -445,10 +445,10 @@ public final class BlackOilCorrelations {
   /**
    * Calculate undersaturated oil Bo with unit support.
    *
-   * @param Bob        Bo at bubble point
-   * @param co         Oil compressibility (in inputUnits: 1/psi for FIELD, 1/bara for SI/NEQSIM)
-   * @param p          Current pressure (in inputUnits)
-   * @param pb         Bubble point pressure (in inputUnits)
+   * @param Bob Bo at bubble point
+   * @param co Oil compressibility (in inputUnits: 1/psi for FIELD, 1/bara for SI/NEQSIM)
+   * @param p Current pressure (in inputUnits)
+   * @param pb Bubble point pressure (in inputUnits)
    * @param inputUnits Unit system for inputs
    * @return Bo (dimensionless)
    */
@@ -464,11 +464,11 @@ public final class BlackOilCorrelations {
   /**
    * Vasquez-Beggs correlation for undersaturated oil compressibility.
    *
-   * @param Rs     Solution GOR at Pb (scf/STB)
+   * @param Rs Solution GOR at Pb (scf/STB)
    * @param gammaG Gas specific gravity
-   * @param api    API gravity
-   * @param T      Temperature (°F)
-   * @param p      Pressure (psia)
+   * @param api API gravity
+   * @param T Temperature (°F)
+   * @param p Pressure (psia)
    * @return Oil compressibility (1/psi)
    */
   public static double oilCompressibilityVasquezBeggs(double Rs, double gammaG, double api, double T, double p) {
@@ -479,11 +479,11 @@ public final class BlackOilCorrelations {
   /**
    * Vasquez-Beggs correlation for oil compressibility with unit support.
    *
-   * @param Rs         Solution GOR at Pb (in inputUnits)
-   * @param gammaG     Gas specific gravity
-   * @param api        API gravity
-   * @param T          Temperature (in inputUnits)
-   * @param p          Pressure (in inputUnits)
+   * @param Rs Solution GOR at Pb (in inputUnits)
+   * @param gammaG Gas specific gravity
+   * @param api API gravity
+   * @param T Temperature (in inputUnits)
+   * @param p Pressure (in inputUnits)
    * @param inputUnits Unit system for inputs and outputs
    * @return Oil compressibility (in inputUnits: 1/psi for FIELD, 1/bara for SI/NEQSIM)
    */
@@ -499,11 +499,11 @@ public final class BlackOilCorrelations {
   /**
    * Vasquez-Beggs correlation for oil compressibility using SI units.
    *
-   * @param Rs     Solution GOR at Pb (Sm³/Sm³)
+   * @param Rs Solution GOR at Pb (Sm³/Sm³)
    * @param gammaG Gas specific gravity
-   * @param api    API gravity
-   * @param T      Temperature (°C)
-   * @param p      Pressure (bara)
+   * @param api API gravity
+   * @param T Temperature (°C)
+   * @param p Pressure (bara)
    * @return Oil compressibility (1/bara)
    */
   public static double oilCompressibilityVasquesBeggsS(double Rs, double gammaG, double api, double T, double p) {
@@ -516,7 +516,7 @@ public final class BlackOilCorrelations {
    * Beggs-Robinson correlation for dead oil viscosity.
    *
    * @param api API gravity
-   * @param T   Temperature (°F)
+   * @param T Temperature (°F)
    * @return Dead oil viscosity (cP)
    */
   public static double deadOilViscosityBeggsRobinson(double api, double T) {
@@ -531,7 +531,7 @@ public final class BlackOilCorrelations {
    * Glaso correlation for dead oil viscosity.
    *
    * @param api API gravity
-   * @param T   Temperature (°F)
+   * @param T Temperature (°F)
    * @return Dead oil viscosity (cP)
    */
   public static double deadOilViscosityGlaso(double api, double T) {
@@ -544,7 +544,7 @@ public final class BlackOilCorrelations {
    * Kartoatmodjo-Schmidt correlation for dead oil viscosity.
    *
    * @param api API gravity
-   * @param T   Temperature (°F)
+   * @param T Temperature (°F)
    * @return Dead oil viscosity (cP)
    */
   public static double deadOilViscosityKartoatmodjo(double api, double T) {
@@ -558,8 +558,8 @@ public final class BlackOilCorrelations {
   /**
    * Beggs-Robinson correlation for dead oil viscosity with unit support.
    *
-   * @param api        API gravity
-   * @param T          Temperature (in inputUnits)
+   * @param api API gravity
+   * @param T Temperature (in inputUnits)
    * @param inputUnits Unit system for inputs and outputs
    * @return Dead oil viscosity (in inputUnits: cP for FIELD, Pa·s for SI/NEQSIM)
    */
@@ -573,7 +573,7 @@ public final class BlackOilCorrelations {
    * Beggs-Robinson correlation for dead oil viscosity using SI units.
    *
    * @param api API gravity
-   * @param T   Temperature (°C)
+   * @param T Temperature (°C)
    * @return Dead oil viscosity (Pa·s)
    */
   public static double deadOilViscosityBeggsRobinsonSI(double api, double T) {
@@ -583,8 +583,8 @@ public final class BlackOilCorrelations {
   /**
    * Glaso correlation for dead oil viscosity with unit support.
    *
-   * @param api        API gravity
-   * @param T          Temperature (in inputUnits)
+   * @param api API gravity
+   * @param T Temperature (in inputUnits)
    * @param inputUnits Unit system for inputs and outputs
    * @return Dead oil viscosity (in inputUnits: cP for FIELD, Pa·s for SI/NEQSIM)
    */
@@ -598,7 +598,7 @@ public final class BlackOilCorrelations {
    * Glaso correlation for dead oil viscosity using SI units.
    *
    * @param api API gravity
-   * @param T   Temperature (°C)
+   * @param T Temperature (°C)
    * @return Dead oil viscosity (Pa·s)
    */
   public static double deadOilViscosityGlasoSI(double api, double T) {
@@ -608,8 +608,8 @@ public final class BlackOilCorrelations {
   /**
    * Kartoatmodjo-Schmidt correlation for dead oil viscosity with unit support.
    *
-   * @param api        API gravity
-   * @param T          Temperature (in inputUnits)
+   * @param api API gravity
+   * @param T Temperature (in inputUnits)
    * @param inputUnits Unit system for inputs and outputs
    * @return Dead oil viscosity (in inputUnits: cP for FIELD, Pa·s for SI/NEQSIM)
    */
@@ -623,7 +623,7 @@ public final class BlackOilCorrelations {
    * Kartoatmodjo-Schmidt correlation for dead oil viscosity using SI units.
    *
    * @param api API gravity
-   * @param T   Temperature (°C)
+   * @param T Temperature (°C)
    * @return Dead oil viscosity (Pa·s)
    */
   public static double deadOilViscosityKartoatmodjoSI(double api, double T) {
@@ -636,7 +636,7 @@ public final class BlackOilCorrelations {
    * Beggs-Robinson correlation for saturated oil viscosity.
    *
    * @param muOD Dead oil viscosity (cP)
-   * @param Rs   Solution GOR (scf/STB)
+   * @param Rs Solution GOR (scf/STB)
    * @return Saturated oil viscosity (cP)
    */
   public static double saturatedOilViscosityBeggsRobinson(double muOD, double Rs) {
@@ -650,7 +650,7 @@ public final class BlackOilCorrelations {
    * Kartoatmodjo-Schmidt correlation for saturated oil viscosity.
    *
    * @param muOD Dead oil viscosity (cP)
-   * @param Rs   Solution GOR (scf/STB)
+   * @param Rs Solution GOR (scf/STB)
    * @return Saturated oil viscosity (cP)
    */
   public static double saturatedOilViscosityKartoatmodjo(double muOD, double Rs) {
@@ -665,8 +665,8 @@ public final class BlackOilCorrelations {
   /**
    * Beggs-Robinson correlation for saturated oil viscosity with unit support.
    *
-   * @param muOD       Dead oil viscosity (in inputUnits: cP for FIELD, Pa·s for SI/NEQSIM)
-   * @param Rs         Solution GOR (in inputUnits)
+   * @param muOD Dead oil viscosity (in inputUnits: cP for FIELD, Pa·s for SI/NEQSIM)
+   * @param Rs Solution GOR (in inputUnits)
    * @param inputUnits Unit system for inputs and outputs
    * @return Saturated oil viscosity (in inputUnits)
    */
@@ -681,7 +681,7 @@ public final class BlackOilCorrelations {
    * Beggs-Robinson correlation for saturated oil viscosity using SI units.
    *
    * @param muOD Dead oil viscosity (Pa·s)
-   * @param Rs   Solution GOR (Sm³/Sm³)
+   * @param Rs Solution GOR (Sm³/Sm³)
    * @return Saturated oil viscosity (Pa·s)
    */
   public static double saturatedOilViscosityBeggsRobinsonSI(double muOD, double Rs) {
@@ -691,8 +691,8 @@ public final class BlackOilCorrelations {
   /**
    * Kartoatmodjo-Schmidt correlation for saturated oil viscosity with unit support.
    *
-   * @param muOD       Dead oil viscosity (in inputUnits: cP for FIELD, Pa·s for SI/NEQSIM)
-   * @param Rs         Solution GOR (in inputUnits)
+   * @param muOD Dead oil viscosity (in inputUnits: cP for FIELD, Pa·s for SI/NEQSIM)
+   * @param Rs Solution GOR (in inputUnits)
    * @param inputUnits Unit system for inputs and outputs
    * @return Saturated oil viscosity (in inputUnits)
    */
@@ -707,7 +707,7 @@ public final class BlackOilCorrelations {
    * Kartoatmodjo-Schmidt correlation for saturated oil viscosity using SI units.
    *
    * @param muOD Dead oil viscosity (Pa·s)
-   * @param Rs   Solution GOR (Sm³/Sm³)
+   * @param Rs Solution GOR (Sm³/Sm³)
    * @return Saturated oil viscosity (Pa·s)
    */
   public static double saturatedOilViscosityKartoatmodjoSI(double muOD, double Rs) {
@@ -720,8 +720,8 @@ public final class BlackOilCorrelations {
    * Vasquez-Beggs correlation for undersaturated oil viscosity.
    *
    * @param muOb Saturated oil viscosity at Pb (cP)
-   * @param p    Pressure (psia)
-   * @param pb   Bubble point pressure (psia)
+   * @param p Pressure (psia)
+   * @param pb Bubble point pressure (psia)
    * @return Undersaturated oil viscosity (cP)
    */
   public static double undersaturatedOilViscosityVasquezBeggs(double muOb, double p, double pb) {
@@ -734,8 +734,8 @@ public final class BlackOilCorrelations {
    * Bergman-Sutton correlation for undersaturated oil viscosity.
    *
    * @param muOb Saturated oil viscosity at Pb (cP)
-   * @param p    Pressure (psia)
-   * @param pb   Bubble point pressure (psia)
+   * @param p Pressure (psia)
+   * @param pb Bubble point pressure (psia)
    * @return Undersaturated oil viscosity (cP)
    */
   public static double undersaturatedOilViscosityBergmanSutton(double muOb, double p, double pb) {
@@ -750,9 +750,9 @@ public final class BlackOilCorrelations {
   /**
    * Vasquez-Beggs correlation for undersaturated oil viscosity with unit support.
    *
-   * @param muOb       Saturated oil viscosity at Pb (in inputUnits)
-   * @param p          Pressure (in inputUnits)
-   * @param pb         Bubble point pressure (in inputUnits)
+   * @param muOb Saturated oil viscosity at Pb (in inputUnits)
+   * @param p Pressure (in inputUnits)
+   * @param pb Bubble point pressure (in inputUnits)
    * @param inputUnits Unit system for inputs and outputs
    * @return Undersaturated oil viscosity (in inputUnits)
    */
@@ -769,8 +769,8 @@ public final class BlackOilCorrelations {
    * Vasquez-Beggs correlation for undersaturated oil viscosity using SI units.
    *
    * @param muOb Saturated oil viscosity at Pb (Pa·s)
-   * @param p    Pressure (bara)
-   * @param pb   Bubble point pressure (bara)
+   * @param p Pressure (bara)
+   * @param pb Bubble point pressure (bara)
    * @return Undersaturated oil viscosity (Pa·s)
    */
   public static double undersaturatedOilViscosityVasquesBeggsS(double muOb, double p, double pb) {
@@ -780,9 +780,9 @@ public final class BlackOilCorrelations {
   /**
    * Bergman-Sutton correlation for undersaturated oil viscosity with unit support.
    *
-   * @param muOb       Saturated oil viscosity at Pb (in inputUnits)
-   * @param p          Pressure (in inputUnits)
-   * @param pb         Bubble point pressure (in inputUnits)
+   * @param muOb Saturated oil viscosity at Pb (in inputUnits)
+   * @param p Pressure (in inputUnits)
+   * @param pb Bubble point pressure (in inputUnits)
    * @param inputUnits Unit system for inputs and outputs
    * @return Undersaturated oil viscosity (in inputUnits)
    */
@@ -799,8 +799,8 @@ public final class BlackOilCorrelations {
    * Bergman-Sutton correlation for undersaturated oil viscosity using SI units.
    *
    * @param muOb Saturated oil viscosity at Pb (Pa·s)
-   * @param p    Pressure (bara)
-   * @param pb   Bubble point pressure (bara)
+   * @param p Pressure (bara)
+   * @param pb Bubble point pressure (bara)
    * @return Undersaturated oil viscosity (Pa·s)
    */
   public static double undersaturatedOilViscosityBergmanSuttonSI(double muOb, double p, double pb) {
@@ -839,9 +839,9 @@ public final class BlackOilCorrelations {
   /**
    * Calculate gas formation volume factor with unit support.
    *
-   * @param p          Pressure (in inputUnits)
-   * @param T          Temperature (in inputUnits)
-   * @param z          Z-factor (dimensionless)
+   * @param p Pressure (in inputUnits)
+   * @param T Temperature (in inputUnits)
+   * @param z Z-factor (dimensionless)
    * @param inputUnits Unit system for inputs
    * @return Bg in rcf/scf (field units)
    */
@@ -868,9 +868,9 @@ public final class BlackOilCorrelations {
   /**
    * Lee-Gonzalez-Eakin correlation for gas viscosity.
    *
-   * @param T    Temperature (°R)
+   * @param T Temperature (°R)
    * @param rhoG Gas density (lb/ft3)
-   * @param Mg   Gas molecular weight
+   * @param Mg Gas molecular weight
    * @return Gas viscosity (cP)
    */
   public static double gasViscosityLeeGonzalezEakin(double T, double rhoG, double Mg) {
@@ -886,9 +886,9 @@ public final class BlackOilCorrelations {
   /**
    * Lee-Gonzalez-Eakin correlation for gas viscosity with unit support.
    *
-   * @param T          Temperature (in inputUnits)
-   * @param rhoG       Gas density (in inputUnits: lb/ft³ for FIELD, kg/m³ for SI/NEQSIM)
-   * @param Mg         Gas molecular weight
+   * @param T Temperature (in inputUnits)
+   * @param rhoG Gas density (in inputUnits: lb/ft³ for FIELD, kg/m³ for SI/NEQSIM)
+   * @param Mg Gas molecular weight
    * @param inputUnits Unit system for inputs and outputs
    * @return Gas viscosity (in inputUnits: cP for FIELD, Pa·s for SI/NEQSIM)
    */
@@ -902,9 +902,9 @@ public final class BlackOilCorrelations {
   /**
    * Lee-Gonzalez-Eakin correlation for gas viscosity using SI units.
    *
-   * @param T    Temperature (°C)
+   * @param T Temperature (°C)
    * @param rhoG Gas density (kg/m³)
-   * @param Mg   Gas molecular weight
+   * @param Mg Gas molecular weight
    * @return Gas viscosity (Pa·s)
    */
   public static double gasViscosityLeeGonzalezEakinSI(double T, double rhoG, double Mg) {

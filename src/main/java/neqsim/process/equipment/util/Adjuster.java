@@ -103,8 +103,8 @@ public class Adjuster extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @param adjustedEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
-   * @param adjstedVariable   a {@link java.lang.String} object
-   * @param unit              a string
+   * @param adjstedVariable a {@link java.lang.String} object
+   * @param unit a string
    */
   public void setAdjustedVariable(ProcessEquipmentInterface adjustedEquipment, String adjstedVariable, String unit) {
     this.adjustedEquipment = adjustedEquipment;
@@ -118,7 +118,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @param adjustedEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
-   * @param adjstedVariable   a {@link java.lang.String} object
+   * @param adjstedVariable a {@link java.lang.String} object
    */
   public void setAdjustedVariable(ProcessEquipmentInterface adjustedEquipment, String adjstedVariable) {
     this.adjustedEquipment = adjustedEquipment;
@@ -153,7 +153,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @param targetEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
-   * @param targetVariable  a {@link java.lang.String} object
+   * @param targetVariable a {@link java.lang.String} object
    */
   public void setTargetVariable(ProcessEquipmentInterface targetEquipment, String targetVariable) {
     this.targetEquipment = targetEquipment;
@@ -166,9 +166,9 @@ public class Adjuster extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @param targetEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
-   * @param targetVariable  a {@link java.lang.String} object
-   * @param targetValue     a double
-   * @param targetUnit      a {@link java.lang.String} object
+   * @param targetVariable a {@link java.lang.String} object
+   * @param targetValue a double
+   * @param targetUnit a {@link java.lang.String} object
    */
   public void setTargetVariable(ProcessEquipmentInterface targetEquipment, String targetVariable, double targetValue,
       String targetUnit) {
@@ -184,10 +184,10 @@ public class Adjuster extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @param targetEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
-   * @param targetVariable  a {@link java.lang.String} object
-   * @param targetValue     a double
-   * @param targetUnit      a {@link java.lang.String} object
-   * @param targetPhase     a {@link java.lang.String} object
+   * @param targetVariable a {@link java.lang.String} object
+   * @param targetValue a double
+   * @param targetUnit a {@link java.lang.String} object
+   * @param targetPhase a {@link java.lang.String} object
    */
   public void setTargetVariable(ProcessEquipmentInterface targetEquipment, String targetVariable, double targetValue,
       String targetUnit, String targetPhase) {
@@ -204,10 +204,10 @@ public class Adjuster extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @param targetEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
-   * @param targetVariable  a {@link java.lang.String} object
-   * @param targetValue     a double
-   * @param targetUnit      a {@link java.lang.String} object
-   * @param targetPhase     a {@link java.lang.String} object
+   * @param targetVariable a {@link java.lang.String} object
+   * @param targetValue a double
+   * @param targetUnit a {@link java.lang.String} object
+   * @param targetPhase a {@link java.lang.String} object
    * @param targetComponent a {@link java.lang.String} object
    */
   public void setTargetVariable(ProcessEquipmentInterface targetEquipment, String targetVariable, double targetValue,

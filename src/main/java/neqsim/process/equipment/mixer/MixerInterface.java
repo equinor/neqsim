@@ -55,7 +55,7 @@ public interface MixerInterface extends ProcessEquipmentInterface {
    * replaceStream.
    * </p>
    *
-   * @param i         a int
+   * @param i a int
    * @param newStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public void replaceStream(int i, StreamInterface newStream);

@@ -155,8 +155,8 @@ public class KineticReaction implements Serializable {
    * Add a reactant with stoichiometric coefficient and reaction order.
    *
    * @param componentName component name matching NeqSim database
-   * @param stoichCoeff   positive stoichiometric coefficient (stored internally as negative)
-   * @param order         kinetic order for this species in the rate expression
+   * @param stoichCoeff positive stoichiometric coefficient (stored internally as negative)
+   * @param order kinetic order for this species in the rate expression
    */
   public void addReactant(String componentName, double stoichCoeff, double order) {
     stoichiometry.put(componentName, -Math.abs(stoichCoeff));
@@ -167,7 +167,7 @@ public class KineticReaction implements Serializable {
    * Add a product with stoichiometric coefficient.
    *
    * @param componentName component name matching NeqSim database
-   * @param stoichCoeff   positive stoichiometric coefficient
+   * @param stoichCoeff positive stoichiometric coefficient
    */
   public void addProduct(String componentName, double stoichCoeff) {
     stoichiometry.put(componentName, Math.abs(stoichCoeff));
@@ -177,8 +177,8 @@ public class KineticReaction implements Serializable {
    * Add a product with stoichiometric coefficient and reverse reaction order.
    *
    * @param componentName component name matching NeqSim database
-   * @param stoichCoeff   positive stoichiometric coefficient
-   * @param reverseOrder  kinetic order in reverse rate expression (for reversible reactions)
+   * @param stoichCoeff positive stoichiometric coefficient
+   * @param reverseOrder kinetic order in reverse rate expression (for reversible reactions)
    */
   public void addProduct(String componentName, double stoichCoeff, double reverseOrder) {
     stoichiometry.put(componentName, Math.abs(stoichCoeff));
@@ -196,7 +196,7 @@ public class KineticReaction implements Serializable {
    * For LHHW: r = k(T) * drivingForce / (adsorptionTerm)^m
    * </p>
    *
-   * @param system     the thermodynamic system with current T, P, composition
+   * @param system the thermodynamic system with current T, P, composition
    * @param phaseIndex phase to evaluate concentrations in (0=combined, typically 0 or gas phase)
    * @return reaction rate in units consistent with rateBasis
    */
@@ -249,10 +249,10 @@ public class KineticReaction implements Serializable {
   /**
    * Calculate power-law rate.
    *
-   * @param system       thermodynamic system
-   * @param phaseIndex   phase index
+   * @param system thermodynamic system
+   * @param phaseIndex phase index
    * @param rateConstant pre-calculated k(T)
-   * @param temperature  temperature [K]
+   * @param temperature temperature [K]
    * @return rate [units per rateBasis]
    */
   private double calculatePowerLawRate(SystemInterface system, int phaseIndex, double rateConstant,
@@ -293,10 +293,10 @@ public class KineticReaction implements Serializable {
   /**
    * Calculate LHHW rate.
    *
-   * @param system       thermodynamic system
-   * @param phaseIndex   phase index
+   * @param system thermodynamic system
+   * @param phaseIndex phase index
    * @param rateConstant pre-calculated k(T)
-   * @param temperature  temperature [K]
+   * @param temperature temperature [K]
    * @return LHHW rate
    */
   private double calculateLHHWRate(SystemInterface system, int phaseIndex, double rateConstant, double temperature) {
@@ -333,8 +333,8 @@ public class KineticReaction implements Serializable {
   /**
    * Get molar concentration of a component in the specified phase.
    *
-   * @param system        thermodynamic system
-   * @param phaseIndex    phase index
+   * @param system thermodynamic system
+   * @param phaseIndex phase index
    * @param componentName component name
    * @return concentration in mol/m3
    */
@@ -529,8 +529,8 @@ public class KineticReaction implements Serializable {
   /**
    * Add an LHHW adsorption term for a component.
    *
-   * @param componentName   component name
-   * @param kiFactor        relative adsorption constant factor
+   * @param componentName component name
+   * @param kiFactor relative adsorption constant factor
    * @param adsorptionOrder adsorption concentration order
    */
   public void addAdsorptionTerm(String componentName, double kiFactor, double adsorptionOrder) {

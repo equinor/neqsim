@@ -58,12 +58,12 @@ public class PropertyGradient implements Serializable {
   /**
    * Constructor for PropertyGradient.
    *
-   * @param propertyName   name of the property
-   * @param unit           unit of the property
-   * @param value          current value of the property
-   * @param dT             derivative with respect to temperature
-   * @param dP             derivative with respect to pressure
-   * @param dz             derivatives with respect to composition
+   * @param propertyName name of the property
+   * @param unit unit of the property
+   * @param value current value of the property
+   * @param dT derivative with respect to temperature
+   * @param dP derivative with respect to pressure
+   * @param dz derivatives with respect to composition
    * @param componentNames names of components
    */
   public PropertyGradient(String propertyName, String unit, double value, double dT, double dP, double[] dz,
@@ -81,11 +81,11 @@ public class PropertyGradient implements Serializable {
    * Simplified constructor without component names.
    *
    * @param propertyName name of the property
-   * @param unit         unit of the property
-   * @param value        current value of the property
-   * @param dT           derivative with respect to temperature
-   * @param dP           derivative with respect to pressure
-   * @param dz           derivatives with respect to composition
+   * @param unit unit of the property
+   * @param value current value of the property
+   * @param dT derivative with respect to temperature
+   * @param dP derivative with respect to pressure
+   * @param dz derivatives with respect to composition
    */
   public PropertyGradient(String propertyName, String unit, double value, double dT, double dP, double[] dz) {
     this(propertyName, unit, value, dT, dP, dz, null);
@@ -211,9 +211,9 @@ public class PropertyGradient implements Serializable {
   /**
    * Create a zero gradient for a given property.
    *
-   * @param propertyName       name of the property
-   * @param unit               unit of the property
-   * @param value              current value
+   * @param propertyName name of the property
+   * @param unit unit of the property
+   * @param value current value
    * @param numberOfComponents number of components
    * @return zero gradient
    */

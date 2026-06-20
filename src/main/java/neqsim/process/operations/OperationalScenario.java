@@ -101,7 +101,7 @@ public final class OperationalScenario implements Serializable {
   /**
    * Requires a non-empty text value.
    *
-   * @param text      text to validate
+   * @param text text to validate
    * @param fieldName field name used in error messages
    * @return trimmed text
    * @throws IllegalArgumentException if the text is null or empty

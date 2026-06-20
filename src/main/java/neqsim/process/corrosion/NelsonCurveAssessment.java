@@ -354,7 +354,7 @@ public class NelsonCurveAssessment implements Serializable {
   /**
    * Interpolates the maximum allowable temperature at a given H2 partial pressure.
    *
-   * @param curve        Nelson curve data
+   * @param curve Nelson curve data
    * @param pressurePsia H2 partial pressure [psia]
    * @return maximum allowable temperature [°F]
    */
@@ -420,7 +420,7 @@ public class NelsonCurveAssessment implements Serializable {
   /**
    * Finds the minimum material upgrade that would be acceptable at these conditions.
    *
-   * @param tempF        temperature [°F]
+   * @param tempF temperature [°F]
    * @param pressurePsia H2 partial pressure [psia]
    * @return recommended material name, or empty if none found
    */

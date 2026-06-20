@@ -40,10 +40,10 @@ public class AquiferDrive implements ReservoirDrive {
    * Creates an aquifer-supported gas drive.
    *
    * @param initialPressureBara initial reservoir pressure in bara
-   * @param giipSm3             initial gas in place in surface Sm3
-   * @param averageZ            average gas deviation factor (dimensionless, &gt; 0)
+   * @param giipSm3 initial gas in place in surface Sm3
+   * @param averageZ average gas deviation factor (dimensionless, &gt; 0)
    * @param aquiferProductivity aquifer influx index in Sm3/day of gas-equivalent voidage per bar
-   * @param aquiferCapacitySm3  total gas-equivalent voidage the aquifer can supply, in Sm3
+   * @param aquiferCapacitySm3 total gas-equivalent voidage the aquifer can supply, in Sm3
    */
   public AquiferDrive(double initialPressureBara, double giipSm3, double averageZ, double aquiferProductivity,
       double aquiferCapacitySm3) {

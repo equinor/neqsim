@@ -35,15 +35,15 @@ final class ColumnSolveResult {
   /**
    * Create a solve result.
    *
-   * @param solverType              solver used for the run
-   * @param solved                  whether the column satisfies its convergence contract
-   * @param iterationCount          number of iterations used
-   * @param temperatureResidual     latest temperature residual in Kelvin
-   * @param massResidual            latest relative mass residual
-   * @param energyResidual          latest relative energy residual
-   * @param meshResidualNorm        latest MESH residual infinity norm
+   * @param solverType solver used for the run
+   * @param solved whether the column satisfies its convergence contract
+   * @param iterationCount number of iterations used
+   * @param temperatureResidual latest temperature residual in Kelvin
+   * @param massResidual latest relative mass residual
+   * @param energyResidual latest relative energy residual
+   * @param meshResidualNorm latest MESH residual infinity norm
    * @param productDrawResidualNorm latest product-draw residual infinity norm
-   * @param solveTimeSeconds        solver wall time in seconds
+   * @param solveTimeSeconds solver wall time in seconds
    */
   private ColumnSolveResult(DistillationColumn.SolverType solverType, boolean solved, int iterationCount,
       double temperatureResidual, double massResidual, double energyResidual, double meshResidualNorm,
@@ -62,7 +62,7 @@ final class ColumnSolveResult {
   /**
    * Build a result from the current column diagnostics.
    *
-   * @param column     solved column to summarize
+   * @param column solved column to summarize
    * @param solverType solver used for the run
    * @return immutable solve result
    */

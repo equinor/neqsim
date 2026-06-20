@@ -42,13 +42,13 @@ public class PTphaseEnvelopeNew3 implements OperationInterface {
    * Constructor for PTphaseEnvelopeNew3.
    * </p>
    *
-   * @param system       a {@link neqsim.thermo.system.SystemInterface} object
-   * @param minPressure  a double
-   * @param maxPressure  a double
-   * @param minTemp      a double
-   * @param maxTemp      a double
+   * @param system a {@link neqsim.thermo.system.SystemInterface} object
+   * @param minPressure a double
+   * @param maxPressure a double
+   * @param minTemp a double
+   * @param maxTemp a double
    * @param pressureStep a double
-   * @param tempStep     a double
+   * @param tempStep a double
    */
   public PTphaseEnvelopeNew3(SystemInterface system, double minPressure, double maxPressure, double minTemp,
       double maxTemp, double pressureStep, double tempStep) {

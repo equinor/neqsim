@@ -34,8 +34,8 @@ public class PressureCondition implements LogicCondition {
    * Creates a pressure condition with default tolerance (0.1 bara).
    *
    * @param equipment equipment with stream to check
-   * @param setpoint  pressure setpoint in bara
-   * @param operator  comparison operator (&gt;, &gt;=, &lt;, &lt;=, ==, !=)
+   * @param setpoint pressure setpoint in bara
+   * @param operator comparison operator (&gt;, &gt;=, &lt;, &lt;=, ==, !=)
    */
   public PressureCondition(ProcessEquipmentInterface equipment, double setpoint, String operator) {
     this(equipment, setpoint, operator, 0.1);
@@ -45,8 +45,8 @@ public class PressureCondition implements LogicCondition {
    * Creates a pressure condition with specified tolerance.
    *
    * @param equipment equipment with stream to check
-   * @param setpoint  pressure setpoint in bara
-   * @param operator  comparison operator (&gt;, &gt;=, &lt;, &lt;=, ==, !=)
+   * @param setpoint pressure setpoint in bara
+   * @param operator comparison operator (&gt;, &gt;=, &lt;, &lt;=, ==, !=)
    * @param tolerance tolerance for equality checks (bara)
    */
   public PressureCondition(ProcessEquipmentInterface equipment, double setpoint, String operator, double tolerance) {

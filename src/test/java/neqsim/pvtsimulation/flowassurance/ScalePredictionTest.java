@@ -472,7 +472,7 @@ public class ScalePredictionTest {
   /**
    * Helper: compute CaCO3 SI at given T and P with standard brine composition.
    *
-   * @param tempC    temperature Celsius
+   * @param tempC temperature Celsius
    * @param pressBar pressure bara
    * @return CaCO3 saturation index
    */

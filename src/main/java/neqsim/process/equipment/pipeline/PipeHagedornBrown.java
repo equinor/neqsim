@@ -138,7 +138,7 @@ public class PipeHagedornBrown extends Pipeline {
   /**
    * Constructor with name and inlet stream.
    *
-   * @param name     equipment name
+   * @param name equipment name
    * @param inStream inlet stream
    */
   public PipeHagedornBrown(String name, StreamInterface inStream) {
@@ -204,9 +204,9 @@ public class PipeHagedornBrown extends Pipeline {
   /**
    * Calculate pressure drop for a single pipe segment using the Hagedorn-Brown method.
    *
-   * @param sys       thermodynamic system at segment conditions
+   * @param sys thermodynamic system at segment conditions
    * @param segLength segment length in meters
-   * @param segElev   segment elevation change in meters (positive = upward)
+   * @param segElev segment elevation change in meters (positive = upward)
    * @return pressure drop in bar
    */
   private double calcSegmentPressureDrop(SystemInterface sys, double segLength, double segElev) {
@@ -326,10 +326,10 @@ public class PipeHagedornBrown extends Pipeline {
    * function of dimensionless velocity, diameter, and viscosity numbers.
    * </p>
    *
-   * @param nVl     liquid velocity number
-   * @param nVg     gas velocity number
-   * @param nD      pipe diameter number
-   * @param nL      liquid viscosity number
+   * @param nVl liquid velocity number
+   * @param nVg gas velocity number
+   * @param nD pipe diameter number
+   * @param nL liquid viscosity number
    * @param lambdaL no-slip liquid fraction
    * @return predicted liquid holdup (0 to 1)
    */

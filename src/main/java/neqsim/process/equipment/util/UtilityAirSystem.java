@@ -268,7 +268,7 @@ public class UtilityAirSystem extends ProcessEquipmentBaseClass {
   /**
    * Constructor with capacity.
    *
-   * @param name          system name
+   * @param name system name
    * @param airDemandNm3h total air demand in Nm³/hr
    */
   public UtilityAirSystem(String name, double airDemandNm3h) {
@@ -279,9 +279,9 @@ public class UtilityAirSystem extends ProcessEquipmentBaseClass {
   /**
    * Constructor with quality specification.
    *
-   * @param name          system name
+   * @param name system name
    * @param airDemandNm3h total air demand
-   * @param qualityClass  target air quality
+   * @param qualityClass target air quality
    */
   public UtilityAirSystem(String name, double airDemandNm3h, AirQualityClass qualityClass) {
     super(name);
@@ -307,9 +307,9 @@ public class UtilityAirSystem extends ProcessEquipmentBaseClass {
   /**
    * Add an air consumer by parameters.
    *
-   * @param name       consumer name
+   * @param name consumer name
    * @param demandNm3h air demand [Nm³/hr]
-   * @param quality    required quality class
+   * @param quality required quality class
    */
   public void addConsumer(String name, double demandNm3h, AirQualityClass quality) {
     consumers.add(new AirConsumer(name, demandNm3h, quality));
@@ -729,9 +729,9 @@ public class UtilityAirSystem extends ProcessEquipmentBaseClass {
     /**
      * Creates an air consumer.
      *
-     * @param name       consumer name
+     * @param name consumer name
      * @param demandNm3h air demand [Nm³/hr]
-     * @param quality    required air quality
+     * @param quality required air quality
      */
     public AirConsumer(String name, double demandNm3h, AirQualityClass quality) {
       this.name = name;

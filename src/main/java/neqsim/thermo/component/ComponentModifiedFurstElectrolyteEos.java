@@ -70,10 +70,10 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
    * Constructor for ComponentModifiedFurstElectrolyteEos.
    * </p>
    *
-   * @param name         Name of component.
-   * @param moles        Total number of moles of component.
+   * @param name Name of component.
+   * @param moles Total number of moles of component.
    * @param molesInPhase Number of moles in phase.
-   * @param compIndex    Index number of component in phase object component array.
+   * @param compIndex Index number of component in phase object component array.
    */
   public ComponentModifiedFurstElectrolyteEos(String name, double moles, double molesInPhase, int compIndex) {
     super(name, moles, molesInPhase, compIndex);
@@ -98,11 +98,11 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
    * </p>
    *
    * @param number a int. Not used.
-   * @param TC     Critical temperature [K]
-   * @param PC     Critical pressure [bara]
-   * @param M      Molar mass
-   * @param a      Acentric factor
-   * @param moles  Total number of moles of component.
+   * @param TC Critical temperature [K]
+   * @param PC Critical pressure [bara]
+   * @param M Molar mass
+   * @param a Acentric factor
+   * @param moles Total number of moles of component.
    */
   public ComponentModifiedFurstElectrolyteEos(int number, double TC, double PC, double M, double a, double moles) {
     super(number, TC, PC, M, a, moles);
@@ -205,11 +205,11 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
    * dAlphaLRdndn.
    * </p>
    *
-   * @param j                  a int
-   * @param phase              a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param j a int
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
-   * @param temperature        a double
-   * @param pressure           a double
+   * @param temperature a double
+   * @param pressure a double
    * @return a double
    */
   public double dAlphaLRdndn(int j, PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
@@ -278,10 +278,10 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
    * dFLRdN.
    * </p>
    *
-   * @param phase              a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
-   * @param temperature        a double
-   * @param pressure           a double
+   * @param temperature a double
+   * @param pressure a double
    * @return a double
    */
   public double dFLRdN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
@@ -295,10 +295,10 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
    * dFLRdNdT.
    * </p>
    *
-   * @param phase              a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
-   * @param temperature        a double
-   * @param pressure           a double
+   * @param temperature a double
+   * @param pressure a double
    * @return a double
    */
   public double dFLRdNdT(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
@@ -312,10 +312,10 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
    * dFLRdNdV.
    * </p>
    *
-   * @param phase              a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
-   * @param temperature        a double
-   * @param pressure           a double
+   * @param temperature a double
+   * @param pressure a double
    * @return a double
    */
   public double dFLRdNdV(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
@@ -329,11 +329,11 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
    * dFLRdNdN.
    * </p>
    *
-   * @param j                  a int
-   * @param phase              a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param j a int
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
-   * @param temperature        a double
-   * @param pressure           a double
+   * @param temperature a double
+   * @param pressure a double
    * @return a double
    */
   public double dFLRdNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
@@ -352,10 +352,10 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
    * calcXLRdN.
    * </p>
    *
-   * @param phase              a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
-   * @param temperature        a double
-   * @param pressure           a double
+   * @param temperature a double
+   * @param pressure a double
    * @return a double
    */
   public double calcXLRdN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
@@ -380,10 +380,10 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
    * calcSolventdiElectricdn.
    * </p>
    *
-   * @param phase              a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
-   * @param temperature        a double
-   * @param pressure           a double
+   * @param temperature a double
+   * @param pressure a double
    * @return a double
    */
   public double calcSolventdiElectricdn(PhaseInterface phase, int numberOfComponents, double temperature,
@@ -407,11 +407,11 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
    * calcSolventdiElectricdndn.
    * </p>
    *
-   * @param j                  a int
-   * @param phase              a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param j a int
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
-   * @param temperature        a double
-   * @param pressure           a double
+   * @param temperature a double
+   * @param pressure a double
    * @return a double
    */
   public double calcSolventdiElectricdndn(int j, PhaseInterface phase, int numberOfComponents, double temperature,
@@ -436,10 +436,10 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
    * calcSolventdiElectricdndT.
    * </p>
    *
-   * @param phase              a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
-   * @param temperature        a double
-   * @param pressure           a double
+   * @param temperature a double
+   * @param pressure a double
    * @return a double
    */
   public double calcSolventdiElectricdndT(PhaseInterface phase, int numberOfComponents, double temperature,
@@ -463,10 +463,10 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
    * calcdiElectricdn.
    * </p>
    *
-   * @param phase              a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
-   * @param temperature        a double
-   * @param pressure           a double
+   * @param temperature a double
+   * @param pressure a double
    * @return a double
    */
   public double calcdiElectricdn(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
@@ -484,10 +484,10 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
    * calcdiElectricdndV.
    * </p>
    *
-   * @param phase              a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
-   * @param temperature        a double
-   * @param pressure           a double
+   * @param temperature a double
+   * @param pressure a double
    * @return a double
    */
   public double calcdiElectricdndV(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
@@ -507,11 +507,11 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
    * calcdiElectricdndn.
    * </p>
    *
-   * @param j                  a int
-   * @param phase              a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param j a int
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
-   * @param temperature        a double
-   * @param pressure           a double
+   * @param temperature a double
+   * @param pressure a double
    * @return a double
    */
   public double calcdiElectricdndn(int j, PhaseInterface phase, int numberOfComponents, double temperature,
@@ -543,10 +543,10 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
    * calcdiElectricdndT.
    * </p>
    *
-   * @param phase              a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
-   * @param temperature        a double
-   * @param pressure           a double
+   * @param temperature a double
+   * @param pressure a double
    * @return a double
    */
   public double calcdiElectricdndT(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
@@ -565,10 +565,10 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
    * calcGammaLRdn.
    * </p>
    *
-   * @param phase              a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
-   * @param temperature        a double
-   * @param pressure           a double
+   * @param temperature a double
+   * @param pressure a double
    * @return a double
    */
   public double calcGammaLRdn(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
@@ -604,10 +604,10 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
    * dFSR2dN.
    * </p>
    *
-   * @param phase              a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
-   * @param temperature        a double
-   * @param pressure           a double
+   * @param temperature a double
+   * @param pressure a double
    * @return a double
    */
   public double dFSR2dN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
@@ -620,10 +620,10 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
    * dFSR2dNdT.
    * </p>
    *
-   * @param phase              a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
-   * @param temperature        a double
-   * @param pressure           a double
+   * @param temperature a double
+   * @param pressure a double
    * @return a double
    */
   public double dFSR2dNdT(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
@@ -637,10 +637,10 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
    * dFSR2dNdV.
    * </p>
    *
-   * @param phase              a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
-   * @param temperature        a double
-   * @param pressure           a double
+   * @param temperature a double
+   * @param pressure a double
    * @return a double
    */
   public double dFSR2dNdV(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
@@ -658,11 +658,11 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
    * dFSR2dNdN.
    * </p>
    *
-   * @param j                  a int
-   * @param phase              a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param j a int
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
-   * @param temperature        a double
-   * @param pressure           a double
+   * @param temperature a double
+   * @param pressure a double
    * @return a double
    */
   public double dFSR2dNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
@@ -682,10 +682,10 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
    * dEpsdNi.
    * </p>
    *
-   * @param phase              a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
-   * @param temperature        a double
-   * @param pressure           a double
+   * @param temperature a double
+   * @param pressure a double
    * @return a double
    */
   public double dEpsdNi(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
@@ -698,10 +698,10 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
    * dEpsdNidV.
    * </p>
    *
-   * @param phase              a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
-   * @param temperature        a double
-   * @param pressure           a double
+   * @param temperature a double
+   * @param pressure a double
    * @return a double
    */
   public double dEpsdNidV(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
@@ -714,10 +714,10 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
    * dEpsIonicdNi.
    * </p>
    *
-   * @param phase              a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
-   * @param temperature        a double
-   * @param pressure           a double
+   * @param temperature a double
+   * @param pressure a double
    * @return a double
    */
   public double dEpsIonicdNi(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
@@ -734,10 +734,10 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
    * dEpsIonicdNidV.
    * </p>
    *
-   * @param phase              a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
-   * @param temperature        a double
-   * @param pressure           a double
+   * @param temperature a double
+   * @param pressure a double
    * @return a double
    */
   public double dEpsIonicdNidV(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
@@ -754,10 +754,10 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
    * dFBorndN.
    * </p>
    *
-   * @param phase              a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
-   * @param temperature        a double
-   * @param pressure           a double
+   * @param temperature a double
+   * @param pressure a double
    * @return a double
    */
   public double dFBorndN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
@@ -770,10 +770,10 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
    * dFBorndNdT.
    * </p>
    *
-   * @param phase              a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
-   * @param temperature        a double
-   * @param pressure           a double
+   * @param temperature a double
+   * @param pressure a double
    * @return a double
    */
   public double dFBorndNdT(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
@@ -791,11 +791,11 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
    * dFBorndNdN.
    * </p>
    *
-   * @param j                  a int
-   * @param phase              a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param j a int
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
-   * @param temperature        a double
-   * @param pressure           a double
+   * @param temperature a double
+   * @param pressure a double
    * @return a double
    */
   public double dFBorndNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {

@@ -33,7 +33,7 @@ public class EnergizeESDValveAction implements LogicAction {
   /**
    * Creates an action to energize and open an ESD valve.
    *
-   * @param valve         The ESD valve to energize and open
+   * @param valve The ESD valve to energize and open
    * @param targetOpening The target valve opening percentage (0-100)
    */
   public EnergizeESDValveAction(ESDValve valve, double targetOpening) {

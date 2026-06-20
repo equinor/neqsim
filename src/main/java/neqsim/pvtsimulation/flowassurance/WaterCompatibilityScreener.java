@@ -94,17 +94,17 @@ public class WaterCompatibilityScreener implements Serializable {
   /**
    * Sets the formation water composition.
    *
-   * @param caMgL    calcium mg/L
-   * @param baMgL    barium mg/L
-   * @param srMgL    strontium mg/L
-   * @param feMgL    iron mg/L
-   * @param hco3MgL  bicarbonate mg/L
-   * @param so4MgL   sulphate mg/L
-   * @param tdsMgL   TDS mg/L
-   * @param tempC    temperature Celsius
+   * @param caMgL calcium mg/L
+   * @param baMgL barium mg/L
+   * @param srMgL strontium mg/L
+   * @param feMgL iron mg/L
+   * @param hco3MgL bicarbonate mg/L
+   * @param so4MgL sulphate mg/L
+   * @param tdsMgL TDS mg/L
+   * @param tempC temperature Celsius
    * @param pressBar pressure bara
-   * @param co2pp    CO2 partial pressure bar
-   * @param pH       pH
+   * @param co2pp CO2 partial pressure bar
+   * @param pH pH
    */
   public void setFormationWater(double caMgL, double baMgL, double srMgL, double feMgL, double hco3MgL, double so4MgL,
       double tdsMgL, double tempC, double pressBar, double co2pp, double pH) {
@@ -124,17 +124,17 @@ public class WaterCompatibilityScreener implements Serializable {
   /**
    * Sets the injection water composition.
    *
-   * @param caMgL    calcium mg/L
-   * @param baMgL    barium mg/L
-   * @param srMgL    strontium mg/L
-   * @param feMgL    iron mg/L
-   * @param hco3MgL  bicarbonate mg/L
-   * @param so4MgL   sulphate mg/L
-   * @param tdsMgL   TDS mg/L
-   * @param tempC    temperature Celsius
+   * @param caMgL calcium mg/L
+   * @param baMgL barium mg/L
+   * @param srMgL strontium mg/L
+   * @param feMgL iron mg/L
+   * @param hco3MgL bicarbonate mg/L
+   * @param so4MgL sulphate mg/L
+   * @param tdsMgL TDS mg/L
+   * @param tempC temperature Celsius
    * @param pressBar pressure bara
-   * @param co2pp    CO2 partial pressure bar
-   * @param pH       pH
+   * @param co2pp CO2 partial pressure bar
+   * @param pH pH
    */
   public void setInjectionWater(double caMgL, double baMgL, double srMgL, double feMgL, double hco3MgL, double so4MgL,
       double tdsMgL, double tempC, double pressBar, double co2pp, double pH) {
@@ -245,8 +245,8 @@ public class WaterCompatibilityScreener implements Serializable {
   /**
    * Checks if a given SI is the worst case seen so far.
    *
-   * @param si        saturation index
-   * @param ratio     mixing ratio
+   * @param si saturation index
+   * @param ratio mixing ratio
    * @param scaleName scale type name
    */
   private void checkWorstCase(double si, double ratio, String scaleName) {

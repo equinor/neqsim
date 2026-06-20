@@ -107,7 +107,7 @@ public class SaturationPressure extends BasePVTsimulation {
   /**
    * Refines the upper saturation pressure between a two-phase and a single-phase point.
    *
-   * @param twoPhasePressure    lower pressure known to be inside a two-phase region, in bara
+   * @param twoPhasePressure lower pressure known to be inside a two-phase region, in bara
    * @param singlePhasePressure higher pressure known to be outside the two-phase region, in bara
    * @return refined upper saturation pressure in bara
    */

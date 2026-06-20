@@ -78,7 +78,7 @@ public class ReactiveStabilityAnalysis implements java.io.Serializable {
   /**
    * Constructor.
    *
-   * @param system        the thermodynamic system at feed conditions
+   * @param system the thermodynamic system at feed conditions
    * @param formulaMatrix the element-component formula matrix
    */
   public ReactiveStabilityAnalysis(SystemInterface system, FormulaMatrix formulaMatrix) {

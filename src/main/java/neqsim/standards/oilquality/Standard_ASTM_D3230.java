@@ -182,7 +182,7 @@ public class Standard_ASTM_D3230 extends neqsim.standards.Standard {
    * Sets the water cut from a value and unit.
    *
    * @param waterCut water cut value
-   * @param unit     one of {@code "fraction"} (0 to 1) or {@code "vol%"} / {@code "%"} (0 to 100)
+   * @param unit one of {@code "fraction"} (0 to 1) or {@code "vol%"} / {@code "%"} (0 to 100)
    */
   public void setWaterCut(double waterCut, String unit) {
     if ("vol%".equalsIgnoreCase(unit) || "%".equalsIgnoreCase(unit) || "volpercent".equalsIgnoreCase(unit)) {
@@ -196,7 +196,7 @@ public class Standard_ASTM_D3230 extends neqsim.standards.Standard {
    * Sets the brine salinity.
    *
    * @param salinity brine salinity value
-   * @param unit     one of {@code "kg/m3"}, {@code "g/L"} (equivalent to kg/m3), or {@code "mg/L"}
+   * @param unit one of {@code "kg/m3"}, {@code "g/L"} (equivalent to kg/m3), or {@code "mg/L"}
    */
   public void setBrineSalinity(double salinity, String unit) {
     if ("mg/L".equalsIgnoreCase(unit) || "mg/l".equalsIgnoreCase(unit)) {

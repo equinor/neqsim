@@ -143,9 +143,9 @@ public class GTSurfaceTension extends SurfaceTension {
    * Prince method, similar to the MATLAB routine ode45.
    * </p>
    *
-   * @param system       NeqSIM system interface
-   * @param interface1   Index of the phase to consider for the surface
-   * @param interface2   Index of the phase to consider for the surface
+   * @param system NeqSIM system interface
+   * @param interface1 Index of the phase to consider for the surface
+   * @param interface2 Index of the phase to consider for the surface
    * @param refcompIndex Index of the reference component to use when using a component density as integration variable.
    * @return Surface tension in units of N/m.
    */
@@ -219,7 +219,7 @@ public class GTSurfaceTension extends SurfaceTension {
    * This is a block tridiagonal system that can be solved using a band solver or a sparse matrix solver.
    * </p>
    *
-   * @param system     NeqSIM system interface
+   * @param system NeqSIM system interface
    * @param interface1 Index of the phase to consider for the surface
    * @param interface2 Index of the phase to consider for the surface
    * @return Surface tension in units of N/m.

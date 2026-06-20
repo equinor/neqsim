@@ -17,7 +17,7 @@ public class CharCoalFilter extends Filter {
   /**
    * Constructor for CharCoalFilter.
    *
-   * @param name     name of filter
+   * @param name name of filter
    * @param inStream input stream
    */
   public CharCoalFilter(String name, StreamInterface inStream) {

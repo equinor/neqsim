@@ -217,8 +217,8 @@ public class SachdevaChokeFlow extends MultiphaseChokeFlow {
    * Calculates the mixture density using mass fractions.
    *
    * @param gasQuality gas mass fraction
-   * @param rhoGas     gas density in kg/m3
-   * @param rhoLiquid  liquid density in kg/m3
+   * @param rhoGas gas density in kg/m3
+   * @param rhoLiquid liquid density in kg/m3
    * @return mixture density in kg/m3
    */
   private double calculateMixtureDensity(double gasQuality, double rhoGas, double rhoLiquid) {
@@ -235,7 +235,7 @@ public class SachdevaChokeFlow extends MultiphaseChokeFlow {
   /**
    * Gets the gas density from the fluid.
    *
-   * @param fluid    thermodynamic system
+   * @param fluid thermodynamic system
    * @param pressure pressure in Pa
    * @return gas density in kg/m3
    */
@@ -273,9 +273,9 @@ public class SachdevaChokeFlow extends MultiphaseChokeFlow {
   /**
    * Calculates liquid-only flow through the choke.
    *
-   * @param fluid     thermodynamic system
-   * @param P1        upstream pressure in Pa
-   * @param P2        downstream pressure in Pa
+   * @param fluid thermodynamic system
+   * @param P1 upstream pressure in Pa
+   * @param P2 downstream pressure in Pa
    * @param rhoLiquid liquid density in kg/m3
    * @return mass flow rate in kg/s
    */
@@ -291,11 +291,11 @@ public class SachdevaChokeFlow extends MultiphaseChokeFlow {
   /**
    * Calculates gas-only flow through the choke.
    *
-   * @param fluid   thermodynamic system
-   * @param P1      upstream pressure in Pa
-   * @param P2      downstream pressure in Pa
+   * @param fluid thermodynamic system
+   * @param P1 upstream pressure in Pa
+   * @param P2 downstream pressure in Pa
    * @param rhoGas1 upstream gas density in kg/m3
-   * @param gamma   specific heat ratio
+   * @param gamma specific heat ratio
    * @return mass flow rate in kg/s
    */
   private double calculateGasOnlyFlow(SystemInterface fluid, double P1, double P2, double rhoGas1, double gamma) {
@@ -324,7 +324,7 @@ public class SachdevaChokeFlow extends MultiphaseChokeFlow {
    * This method provides a variable discharge coefficient that accounts for flow conditions.
    * </p>
    *
-   * @param reynoldsNumber  Reynolds number at choke throat
+   * @param reynoldsNumber Reynolds number at choke throat
    * @param gasVoidFraction volumetric gas fraction at throat
    * @return adjusted discharge coefficient
    */

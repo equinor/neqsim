@@ -63,8 +63,8 @@ public class SafetyEnvelope {
   /**
    * Creates a new safety envelope.
    *
-   * @param name      envelope identifier
-   * @param type      type of safety limit
+   * @param name envelope identifier
+   * @param type type of safety limit
    * @param numPoints number of data points
    */
   public SafetyEnvelope(String name, EnvelopeType type, int numPoints) {
@@ -304,7 +304,7 @@ public class SafetyEnvelope {
    * Exports to OSIsoft PI-compatible format.
    *
    * @param tagPrefix PI tag prefix for the data
-   * @param filename  output file path
+   * @param filename output file path
    */
   public void exportToPIFormat(String tagPrefix, String filename) {
     try (PrintWriter writer = new PrintWriter(new FileWriter(filename))) {

@@ -42,7 +42,7 @@ public class pHProbe extends StreamMeasurementDeviceBaseClass {
    * Constructor for pHProbe.
    * </p>
    *
-   * @param name   Name of pHProbe
+   * @param name Name of pHProbe
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public pHProbe(String name, StreamInterface stream) {

@@ -25,10 +25,10 @@ public class ComponentGeDuanSun extends ComponentGE {
    * Constructor for ComponentGeDuanSun.
    * </p>
    *
-   * @param name         Name of component.
-   * @param moles        Total number of moles of component.
+   * @param name Name of component.
+   * @param moles Total number of moles of component.
    * @param molesInPhase Number of moles in phase.
-   * @param compIndex    Index number of component in phase object component array.
+   * @param compIndex Index number of component in phase object component array.
    */
   public ComponentGeDuanSun(String name, double moles, double molesInPhase, int compIndex) {
     super(name, moles, molesInPhase, compIndex);
@@ -39,13 +39,13 @@ public class ComponentGeDuanSun extends ComponentGE {
    * getGamma.
    * </p>
    *
-   * @param phase              a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
-   * @param temperature        a double
-   * @param pressure           a double
-   * @param pt                 the PhaseType of the phase
-   * @param HValpha            an array of type double
-   * @param HVgij              an array of type double
+   * @param temperature a double
+   * @param pressure a double
+   * @param pt the PhaseType of the phase
+   * @param HValpha an array of type double
+   * @param HVgij an array of type double
    * @return a double
    */
   public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
@@ -71,13 +71,13 @@ public class ComponentGeDuanSun extends ComponentGE {
    * getGammaNRTL.
    * </p>
    *
-   * @param phase              a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
-   * @param temperature        a double
-   * @param pressure           a double
-   * @param pt                 the PhaseType of the phase
-   * @param HValpha            an array of type double
-   * @param HVgij              an array of type double
+   * @param temperature a double
+   * @param pressure a double
+   * @param pt the PhaseType of the phase
+   * @param HValpha an array of type double
+   * @param HVgij an array of type double
    * @return a double
    */
   public double getGammaNRTL(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
@@ -434,12 +434,12 @@ public class ComponentGeDuanSun extends ComponentGE {
    * getGammaPitzer.
    * </p>
    *
-   * @param phase              a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
-   * @param temperature        a double
-   * @param pressure           a double
-   * @param pt                 the PhaseType of the phase
-   * @param salinity           a double
+   * @param temperature a double
+   * @param pressure a double
+   * @param pt the PhaseType of the phase
+   * @param salinity a double
    * @return a double
    */
   public double getGammaPitzer(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,

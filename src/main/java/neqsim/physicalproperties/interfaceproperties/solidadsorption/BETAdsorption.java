@@ -145,7 +145,7 @@ public class BETAdsorption extends AbstractAdsorptionModel {
   /**
    * Set default BET parameters for a component.
    *
-   * @param comp     the component index
+   * @param comp the component index
    * @param phaseNum the phase number
    */
   private void setDefaultParameters(int comp, int phaseNum) {
@@ -215,7 +215,7 @@ public class BETAdsorption extends AbstractAdsorptionModel {
    * Set the monolayer capacity for a component.
    *
    * @param component the component index
-   * @param value     monolayer capacity in mol/kg
+   * @param value monolayer capacity in mol/kg
    */
   public void setMonolayerCapacity(int component, double value) {
     qMonolayer[component] = value;
@@ -236,7 +236,7 @@ public class BETAdsorption extends AbstractAdsorptionModel {
    * Set the BET constant for a component.
    *
    * @param component the component index
-   * @param value     BET constant (dimensionless)
+   * @param value BET constant (dimensionless)
    */
   public void setBETConstant(int component, double value) {
     cBET[component] = value;
@@ -257,7 +257,7 @@ public class BETAdsorption extends AbstractAdsorptionModel {
    * Set the saturation pressure for a component.
    *
    * @param component the component index
-   * @param value     saturation pressure in bar
+   * @param value saturation pressure in bar
    */
   public void setSaturationPressure(int component, double value) {
     pSat[component] = value;
@@ -299,7 +299,7 @@ public class BETAdsorption extends AbstractAdsorptionModel {
   /**
    * Calculate the relative pressure (P/P0) for a component.
    *
-   * @param phaseNum  the phase number
+   * @param phaseNum the phase number
    * @param component the component index
    * @return relative pressure (0 to 1)
    */
@@ -316,7 +316,7 @@ public class BETAdsorption extends AbstractAdsorptionModel {
    * </p>
    * $$A_{BET} = q_m \cdot N_A \cdot \sigma$$
    *
-   * @param component          the component index
+   * @param component the component index
    * @param crossSectionalArea molecular cross-sectional area in nm2
    * @return BET surface area in m2/g
    */

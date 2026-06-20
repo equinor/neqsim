@@ -27,8 +27,8 @@ public class BottleneckResult {
   /**
    * Creates a bottleneck result.
    *
-   * @param equipment   the bottleneck equipment (may be null if no constraints defined)
-   * @param constraint  the limiting constraint (may be null if no constraints defined)
+   * @param equipment the bottleneck equipment (may be null if no constraints defined)
+   * @param constraint the limiting constraint (may be null if no constraints defined)
    * @param utilization the utilization as fraction (1.0 = 100%)
    */
   public BottleneckResult(ProcessEquipmentInterface equipment, CapacityConstraint constraint, double utilization) {

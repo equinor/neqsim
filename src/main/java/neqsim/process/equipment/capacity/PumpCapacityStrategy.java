@@ -44,7 +44,7 @@ public class PumpCapacityStrategy implements EquipmentCapacityStrategy {
   /**
    * Constructor with custom constraints.
    *
-   * @param minNpshMargin  minimum NPSH margin in meters
+   * @param minNpshMargin minimum NPSH margin in meters
    * @param maxPowerFactor maximum power factor (1.1 = 110% of rated)
    */
   public PumpCapacityStrategy(double minNpshMargin, double maxPowerFactor) {

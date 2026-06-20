@@ -77,11 +77,11 @@ public class ScenarioTestRunner {
   /**
    * Executes a scenario with automatic logic activation, KPI collection, and reset.
    *
-   * @param scenarioName    the display name for the scenario
-   * @param scenario        the safety scenario to execute
+   * @param scenarioName the display name for the scenario
+   * @param scenario the safety scenario to execute
    * @param logicToActivate the name of the logic sequence to activate (can be null)
-   * @param duration        the simulation duration in seconds
-   * @param timeStep        the time step in seconds
+   * @param duration the simulation duration in seconds
+   * @param timeStep the time step in seconds
    * @return the scenario execution summary
    */
   public ScenarioExecutionSummary executeScenario(String scenarioName, ProcessSafetyScenario scenario,
@@ -119,9 +119,9 @@ public class ScenarioTestRunner {
    * Executes a scenario without activating any logic.
    *
    * @param scenarioName the display name for the scenario
-   * @param scenario     the safety scenario to execute
-   * @param duration     the simulation duration in seconds
-   * @param timeStep     the time step in seconds
+   * @param scenario the safety scenario to execute
+   * @param duration the simulation duration in seconds
+   * @param timeStep the time step in seconds
    * @return the scenario execution summary
    */
   public ScenarioExecutionSummary executeScenario(String scenarioName, ProcessSafetyScenario scenario, double duration,
@@ -136,13 +136,13 @@ public class ScenarioTestRunner {
    * This is useful for simulating manual interventions or automatic triggers that occur after some time during the
    * scenario.
    *
-   * @param scenarioName      the display name for the scenario
-   * @param scenario          the safety scenario to execute
-   * @param logicToActivate   the name of the logic sequence to activate
-   * @param activationDelay   the delay in milliseconds before activating logic
+   * @param scenarioName the display name for the scenario
+   * @param scenario the safety scenario to execute
+   * @param logicToActivate the name of the logic sequence to activate
+   * @param activationDelay the delay in milliseconds before activating logic
    * @param activationMessage the message to print when activating logic
-   * @param duration          the simulation duration in seconds
-   * @param timeStep          the time step in seconds
+   * @param duration the simulation duration in seconds
+   * @param timeStep the time step in seconds
    * @return the scenario execution summary
    */
   public ScenarioExecutionSummary executeScenarioWithDelayedActivation(String scenarioName,
@@ -254,11 +254,11 @@ public class ScenarioTestRunner {
     /**
      * Adds a standard scenario to the batch.
      *
-     * @param name            the display name for the scenario
-     * @param scenario        the safety scenario to execute
+     * @param name the display name for the scenario
+     * @param scenario the safety scenario to execute
      * @param logicToActivate the name of the logic to activate (can be null)
-     * @param duration        the simulation duration in seconds
-     * @param timeStep        the time step in seconds
+     * @param duration the simulation duration in seconds
+     * @param timeStep the time step in seconds
      * @return this batch executor for method chaining
      */
     public BatchExecutor add(String name, ProcessSafetyScenario scenario, String logicToActivate, double duration,
@@ -270,13 +270,13 @@ public class ScenarioTestRunner {
     /**
      * Adds a scenario with delayed logic activation to the batch.
      *
-     * @param name              the display name for the scenario
-     * @param scenario          the safety scenario to execute
-     * @param logicToActivate   the name of the logic to activate
-     * @param activationDelay   the delay in milliseconds before activating logic
+     * @param name the display name for the scenario
+     * @param scenario the safety scenario to execute
+     * @param logicToActivate the name of the logic to activate
+     * @param activationDelay the delay in milliseconds before activating logic
      * @param activationMessage the message to print when activating logic
-     * @param duration          the simulation duration in seconds
-     * @param timeStep          the time step in seconds
+     * @param duration the simulation duration in seconds
+     * @param timeStep the time step in seconds
      * @return this batch executor for method chaining
      */
     public BatchExecutor addDelayed(String name, ProcessSafetyScenario scenario, String logicToActivate,

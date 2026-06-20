@@ -244,8 +244,8 @@ class CDFTCriticalCorrectionCalibrationTest {
   /**
    * Print per-component results at given lambda.
    *
-   * @param eos             equation of state label
-   * @param lambda          kernel range factor
+   * @param eos equation of state label
+   * @param lambda kernel range factor
    * @param applyCorrection whether to apply critical exponent correction
    */
   private void printPerComponent(String eos, double lambda, boolean applyCorrection) {

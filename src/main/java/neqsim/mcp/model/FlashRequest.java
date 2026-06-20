@@ -203,7 +203,7 @@ public class FlashRequest {
   /**
    * Adds a component with mole fraction.
    *
-   * @param name         the component name
+   * @param name the component name
    * @param moleFraction the mole fraction
    * @return this request for chaining
    */

@@ -75,9 +75,9 @@ public class ProcessModelOptimizationView extends ProcessSystem {
   /**
    * Creates a view over the given model with explicit convergence settings.
    *
-   * @param model         the multi-area plant to optimize (must not be null)
+   * @param model the multi-area plant to optimize (must not be null)
    * @param maxIterations maximum cross-area convergence iterations (must be greater than zero)
-   * @param tolerance     convergence tolerance for {@code runUntilConverged} (must be greater than zero)
+   * @param tolerance convergence tolerance for {@code runUntilConverged} (must be greater than zero)
    */
   public ProcessModelOptimizationView(ProcessModel model, int maxIterations, double tolerance) {
     super("ProcessModelOptimizationView");

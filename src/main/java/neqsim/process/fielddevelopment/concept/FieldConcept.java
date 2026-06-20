@@ -68,9 +68,9 @@ public final class FieldConcept implements Serializable {
   /**
    * Creates a simple gas tieback concept with defaults.
    *
-   * @param name             concept name
-   * @param tiebackKm        tieback distance in km
-   * @param wellCount        number of wells
+   * @param name concept name
+   * @param tiebackKm tieback distance in km
+   * @param wellCount number of wells
    * @param ratePerWellMSm3d rate per well in MSm3/d
    * @return configured FieldConcept
    */
@@ -85,10 +85,10 @@ public final class FieldConcept implements Serializable {
   /**
    * Creates a simple oil development concept with defaults.
    *
-   * @param name            concept name
-   * @param wellCount       number of wells
+   * @param name concept name
+   * @param wellCount number of wells
    * @param ratePerWellBopd rate per well in bopd
-   * @param waterCut        water cut fraction
+   * @param waterCut water cut fraction
    * @return configured FieldConcept
    */
   public static FieldConcept oilDevelopment(String name, int wellCount, double ratePerWellBopd, double waterCut) {

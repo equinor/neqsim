@@ -42,8 +42,8 @@ public class SeparatorAgent extends ProcessAgent {
   /**
    * Create separator agent with level control only.
    *
-   * @param agentId     agent ID
-   * @param separator   the separator
+   * @param agentId agent ID
+   * @param separator the separator
    * @param liquidValve liquid outlet valve
    */
   public SeparatorAgent(String agentId, Separator separator, ThrottlingValve liquidValve) {
@@ -58,10 +58,10 @@ public class SeparatorAgent extends ProcessAgent {
   /**
    * Create separator agent with level and pressure control.
    *
-   * @param agentId     agent ID
-   * @param separator   the separator
+   * @param agentId agent ID
+   * @param separator the separator
    * @param liquidValve liquid outlet valve
-   * @param gasValve    gas outlet valve
+   * @param gasValve gas outlet valve
    */
   public SeparatorAgent(String agentId, Separator separator, ThrottlingValve liquidValve, ThrottlingValve gasValve) {
     super(agentId, separator);

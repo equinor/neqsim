@@ -252,9 +252,9 @@ public class HostFacility implements Serializable {
    * capacity misleading.
    * </p>
    *
-   * @param additionalGasMSm3d  additional gas rate in MSm3/d
-   * @param additionalOilBopd   additional oil rate in bbl/d
-   * @param additionalWaterM3d  additional produced water rate in m3/d
+   * @param additionalGasMSm3d additional gas rate in MSm3/d
+   * @param additionalOilBopd additional oil rate in bbl/d
+   * @param additionalWaterM3d additional produced water rate in m3/d
    * @param additionalLiquidM3d additional total liquid rate in m3/d
    * @return host capacity report with pass/fail status and bottleneck summary
    */
@@ -308,15 +308,15 @@ public class HostFacility implements Serializable {
   /**
    * Builds a concise capacity summary string.
    *
-   * @param additionalGasMSm3d  additional gas rate in MSm3/d
-   * @param additionalOilBopd   additional oil rate in bbl/d
-   * @param additionalWaterM3d  additional produced water rate in m3/d
+   * @param additionalGasMSm3d additional gas rate in MSm3/d
+   * @param additionalOilBopd additional oil rate in bbl/d
+   * @param additionalWaterM3d additional produced water rate in m3/d
    * @param additionalLiquidM3d additional total liquid rate in m3/d
-   * @param gasOk               true if gas capacity passes
-   * @param oilOk               true if oil capacity passes
-   * @param waterOk             true if water capacity passes
-   * @param liquidOk            true if liquid capacity passes
-   * @param processMessage      process-model bottleneck message
+   * @param gasOk true if gas capacity passes
+   * @param oilOk true if oil capacity passes
+   * @param waterOk true if water capacity passes
+   * @param liquidOk true if liquid capacity passes
+   * @param processMessage process-model bottleneck message
    * @return formatted capacity summary
    */
   private String buildCapacitySummary(double additionalGasMSm3d, double additionalOilBopd, double additionalWaterM3d,
@@ -347,7 +347,7 @@ public class HostFacility implements Serializable {
   /**
    * Calculates the great-circle distance to another location.
    *
-   * @param targetLatitude  target latitude in degrees
+   * @param targetLatitude target latitude in degrees
    * @param targetLongitude target longitude in degrees
    * @return distance in kilometers
    */
@@ -716,26 +716,26 @@ public class HostFacility implements Serializable {
     /**
      * Creates a host capacity report.
      *
-     * @param hostName                     host name
-     * @param capacityAvailable            true if all capacity checks pass
-     * @param gasCapacityAvailable         true if gas capacity passes
-     * @param oilCapacityAvailable         true if oil capacity passes
-     * @param waterCapacityAvailable       true if water capacity passes
-     * @param liquidCapacityAvailable      true if liquid capacity passes
-     * @param processCapacityAvailable     true if process model has acceptable bottleneck utilization
-     * @param processModelUsed             true if an attached process model was checked
-     * @param requiredGasMSm3d             required gas rate in MSm3/d
-     * @param spareGasMSm3d                spare gas capacity in MSm3/d
-     * @param requiredOilBopd              required oil rate in bbl/d
-     * @param spareOilBopd                 spare oil capacity in bbl/d
-     * @param requiredWaterM3d             required water rate in m3/d
-     * @param spareWaterM3d                spare water capacity in m3/d
-     * @param requiredLiquidM3d            required liquid rate in m3/d
-     * @param spareLiquidM3d               spare liquid capacity in m3/d
-     * @param primaryBottleneckName        primary bottleneck equipment name
+     * @param hostName host name
+     * @param capacityAvailable true if all capacity checks pass
+     * @param gasCapacityAvailable true if gas capacity passes
+     * @param oilCapacityAvailable true if oil capacity passes
+     * @param waterCapacityAvailable true if water capacity passes
+     * @param liquidCapacityAvailable true if liquid capacity passes
+     * @param processCapacityAvailable true if process model has acceptable bottleneck utilization
+     * @param processModelUsed true if an attached process model was checked
+     * @param requiredGasMSm3d required gas rate in MSm3/d
+     * @param spareGasMSm3d spare gas capacity in MSm3/d
+     * @param requiredOilBopd required oil rate in bbl/d
+     * @param spareOilBopd spare oil capacity in bbl/d
+     * @param requiredWaterM3d required water rate in m3/d
+     * @param spareWaterM3d spare water capacity in m3/d
+     * @param requiredLiquidM3d required liquid rate in m3/d
+     * @param spareLiquidM3d spare liquid capacity in m3/d
+     * @param primaryBottleneckName primary bottleneck equipment name
      * @param primaryBottleneckUtilization primary bottleneck utilization fraction
-     * @param activeBottleneckCount        number of active bottlenecks above threshold
-     * @param summary                      concise text summary
+     * @param activeBottleneckCount number of active bottlenecks above threshold
+     * @param summary concise text summary
      */
     private HostCapacityReport(String hostName, boolean capacityAvailable, boolean gasCapacityAvailable,
 	boolean oilCapacityAvailable, boolean waterCapacityAvailable, boolean liquidCapacityAvailable,
@@ -992,7 +992,7 @@ public class HostFacility implements Serializable {
     /**
      * Sets the location.
      *
-     * @param latitude  latitude in degrees
+     * @param latitude latitude in degrees
      * @param longitude longitude in degrees
      * @return this builder
      */

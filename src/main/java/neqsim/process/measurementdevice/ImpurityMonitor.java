@@ -58,7 +58,7 @@ public class ImpurityMonitor extends StreamMeasurementDeviceBaseClass {
   /**
    * Constructor for ImpurityMonitor with specified name.
    *
-   * @param name   the device name/tag
+   * @param name the device name/tag
    * @param stream the stream to monitor
    */
   public ImpurityMonitor(String name, StreamInterface stream) {
@@ -68,7 +68,7 @@ public class ImpurityMonitor extends StreamMeasurementDeviceBaseClass {
   /**
    * Adds a component to the tracked list. The alarm threshold is in mole fraction (e.g. 0.04 for 4%).
    *
-   * @param componentName         the name of the component as registered in the fluid
+   * @param componentName the name of the component as registered in the fluid
    * @param alarmThresholdMolFrac the gas phase mole fraction threshold for alarm (0 to disable)
    */
   public void addTrackedComponent(String componentName, double alarmThresholdMolFrac) {

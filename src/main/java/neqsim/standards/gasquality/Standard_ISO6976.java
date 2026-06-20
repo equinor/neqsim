@@ -92,8 +92,8 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
   /**
    * Constructor for Standard_ISO6976.
    *
-   * @param name         Name of standard
-   * @param description  Description of standard
+   * @param name Name of standard
+   * @param description Description of standard
    * @param thermoSystem SystemInterface to base object on
    */
   public Standard_ISO6976(String name, String description, SystemInterface thermoSystem) {
@@ -187,10 +187,10 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
    * Constructor for Standard_ISO6976.
    * </p>
    *
-   * @param thermoSystem                       a {@link neqsim.thermo.system.SystemInterface} object
+   * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
    * @param volumetricReferenceTemperaturedegC a double (valid are 0, 15, 15.55 and 20)
-   * @param energyReferenceTemperaturedegC     a double (valid are 0, 15, 15.55 and 20)
-   * @param calculationType                    a {@link java.lang.String} object
+   * @param energyReferenceTemperaturedegC a double (valid are 0, 15, 15.55 and 20)
+   * @param calculationType a {@link java.lang.String} object
    */
   public Standard_ISO6976(SystemInterface thermoSystem, double volumetricReferenceTemperaturedegC,
       double energyReferenceTemperaturedegC, String calculationType) {

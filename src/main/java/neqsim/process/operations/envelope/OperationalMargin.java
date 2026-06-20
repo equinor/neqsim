@@ -80,19 +80,19 @@ public final class OperationalMargin implements Serializable, Comparable<Operati
   /**
    * Creates an operational margin snapshot.
    *
-   * @param equipmentName      equipment name
-   * @param constraintName     constraint name
-   * @param currentValue       current value in the constraint unit
-   * @param limitValue         design or minimum limit value in the constraint unit
+   * @param equipmentName equipment name
+   * @param constraintName constraint name
+   * @param currentValue current value in the constraint unit
+   * @param limitValue design or minimum limit value in the constraint unit
    * @param utilizationPercent current utilization in percent
-   * @param marginPercent      remaining margin in percent
-   * @param unit               engineering unit
-   * @param constraintType     constraint type name
-   * @param severity           constraint severity name
-   * @param dataSource         design data source label
-   * @param description        human-readable constraint description
-   * @param minimumConstraint  true when lower values are worse
-   * @param hardLimitExceeded  true when an absolute hard limit is exceeded
+   * @param marginPercent remaining margin in percent
+   * @param unit engineering unit
+   * @param constraintType constraint type name
+   * @param severity constraint severity name
+   * @param dataSource design data source label
+   * @param description human-readable constraint description
+   * @param minimumConstraint true when lower values are worse
+   * @param hardLimitExceeded true when an absolute hard limit is exceeded
    */
   public OperationalMargin(String equipmentName, String constraintName, double currentValue, double limitValue,
       double utilizationPercent, double marginPercent, String unit, String constraintType, String severity,
@@ -118,7 +118,7 @@ public final class OperationalMargin implements Serializable, Comparable<Operati
    * Builds an operational margin from a capacity constraint.
    *
    * @param equipmentName equipment name
-   * @param constraint    capacity constraint to read
+   * @param constraint capacity constraint to read
    * @return operational margin snapshot
    * @throws IllegalArgumentException if the constraint is null
    */
@@ -136,7 +136,7 @@ public final class OperationalMargin implements Serializable, Comparable<Operati
   /**
    * Classifies a margin value into an operational status.
    *
-   * @param marginPercent     margin in percent
+   * @param marginPercent margin in percent
    * @param hardLimitExceeded true when an absolute hard limit is exceeded
    * @return operational margin status
    */

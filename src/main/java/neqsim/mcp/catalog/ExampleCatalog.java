@@ -490,9 +490,9 @@ public final class ExampleCatalog {
   /**
    * Builds a common Clause 10 example item.
    *
-   * @param functionId    function identifier
-   * @param functionType  function type
-   * @param equipmentTag  protected equipment tag
+   * @param functionId function identifier
+   * @param functionType function type
+   * @param equipmentTag protected equipment tag
    * @param logicEvidence true when logic solver evidence should be included
    * @return JSON object text
    */
@@ -1057,7 +1057,7 @@ public final class ExampleCatalog {
    * Returns an example JSON by category and name.
    *
    * @param category the category (flash, process, validation)
-   * @param name     the example name within that category
+   * @param name the example name within that category
    * @return the example JSON string, or null if not found
    */
   public static String getExample(String category, String name) {

@@ -37,8 +37,8 @@ public class SystemAmmoniaEos extends SystemEos {
    * Constructor for SystemAmmoniaEos.
    * </p>
    *
-   * @param T              a double
-   * @param P              a double
+   * @param T a double
+   * @param P a double
    * @param checkForSolids a boolean
    */
   public SystemAmmoniaEos(double T, double P, boolean checkForSolids) {

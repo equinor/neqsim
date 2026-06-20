@@ -77,7 +77,7 @@ public class CompressorTrain extends TwoPortEquipment implements CapacityConstra
   /**
    * Constructor with name and inlet stream.
    *
-   * @param name        train name
+   * @param name train name
    * @param inletStream inlet stream
    */
   public CompressorTrain(String name, StreamInterface inletStream) {
@@ -220,7 +220,7 @@ public class CompressorTrain extends TwoPortEquipment implements CapacityConstra
    * Set the aftercooler outlet temperature with units.
    *
    * @param temperature temperature value
-   * @param unit        temperature unit ("C" or "K")
+   * @param unit temperature unit ("C" or "K")
    */
   public void setAftercoolerTemperature(double temperature, String unit) {
     if ("C".equalsIgnoreCase(unit)) {

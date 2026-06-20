@@ -285,7 +285,7 @@ public class LiftCurveTable implements Serializable {
    * Gets the BHP value at specified flow rate and THP indices.
    *
    * @param flowIndex flow rate index
-   * @param thpIndex  THP index
+   * @param thpIndex THP index
    * @return BHP value, or NaN if infeasible
    */
   public double getBHP(int flowIndex, int thpIndex) {
@@ -296,8 +296,8 @@ public class LiftCurveTable implements Serializable {
    * Sets the BHP value at specified indices.
    *
    * @param flowIndex flow rate index
-   * @param thpIndex  THP index
-   * @param bhp       BHP value (or NaN for infeasible)
+   * @param thpIndex THP index
+   * @param bhp BHP value (or NaN for infeasible)
    */
   public void setBHP(int flowIndex, int thpIndex, double bhp) {
     bhpValues[flowIndex][thpIndex] = bhp;
@@ -307,7 +307,7 @@ public class LiftCurveTable implements Serializable {
    * Interpolates BHP for given flow rate and THP using bilinear interpolation.
    *
    * @param flowRate flow rate
-   * @param thp      THP value
+   * @param thp THP value
    * @return interpolated BHP, or NaN if outside bounds or near infeasible points
    */
   public double interpolateBHP(double flowRate, double thp) {

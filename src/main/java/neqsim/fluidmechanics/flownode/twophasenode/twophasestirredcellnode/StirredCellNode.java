@@ -45,7 +45,7 @@ public class StirredCellNode extends TwoPhaseFlowNode {
    * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param pipe   a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
+   * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
    */
   public StirredCellNode(SystemInterface system, GeometryDefinitionInterface pipe) {
     super(system, pipe);
@@ -60,9 +60,9 @@ public class StirredCellNode extends TwoPhaseFlowNode {
    * Constructor for StirredCellNode.
    * </p>
    *
-   * @param system           a {@link neqsim.thermo.system.SystemInterface} object
+   * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param interphaseSystem a {@link neqsim.thermo.system.SystemInterface} object
-   * @param pipe             a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
+   * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
    */
   public StirredCellNode(SystemInterface system, SystemInterface interphaseSystem, GeometryDefinitionInterface pipe) {
     super(system, pipe);
@@ -182,7 +182,7 @@ public class StirredCellNode extends TwoPhaseFlowNode {
    * Setter for property stirrerRate.
    *
    * @param stirrerRate New value of property stirrerRate.
-   * @param i           a int
+   * @param i a int
    */
   public void setStirrerSpeed(int i, double stirrerRate) {
     this.stirrerRate[i] = stirrerRate;

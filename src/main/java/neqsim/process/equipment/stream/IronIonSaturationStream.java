@@ -42,7 +42,7 @@ public class IronIonSaturationStream extends Stream {
   /**
    * Constructor for IronIonSaturationStream.
    *
-   * @param name   name of stream
+   * @param name name of stream
    * @param stream input stream
    */
   public IronIonSaturationStream(String name, StreamInterface stream) {
@@ -54,7 +54,7 @@ public class IronIonSaturationStream extends Stream {
    * Constructor for IronIonSaturationStream.
    * </p>
    *
-   * @param name         a {@link java.lang.String} object
+   * @param name a {@link java.lang.String} object
    * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
    */
   public IronIonSaturationStream(String name, SystemInterface thermoSystem) {

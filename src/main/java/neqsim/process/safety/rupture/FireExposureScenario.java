@@ -44,15 +44,15 @@ public class FireExposureScenario implements Serializable {
   /**
    * Creates a fire exposure scenario.
    *
-   * @param name                            scenario name
-   * @param fireType                        fire calculation method
-   * @param exposedAreaM2                   exposed external area in m2; must be positive
-   * @param heatFluxWPerM2                  fixed heat flux in W/m2 for fixed-flux cases
-   * @param environmentalFactor             API 521 environmental factor for pool-fire cases
-   * @param emissivity                      effective flame emissivity for radiative cases
-   * @param viewFactor                      view factor for radiative cases
-   * @param flameTemperatureK               flame temperature in K for radiative cases
-   * @param ambientTemperatureK             ambient temperature in K; must be positive
+   * @param name scenario name
+   * @param fireType fire calculation method
+   * @param exposedAreaM2 exposed external area in m2; must be positive
+   * @param heatFluxWPerM2 fixed heat flux in W/m2 for fixed-flux cases
+   * @param environmentalFactor API 521 environmental factor for pool-fire cases
+   * @param emissivity effective flame emissivity for radiative cases
+   * @param viewFactor view factor for radiative cases
+   * @param flameTemperatureK flame temperature in K for radiative cases
+   * @param ambientTemperatureK ambient temperature in K; must be positive
    * @param passiveProtectionHeatFluxFactor heat flux multiplier after PFP or insulation, from 0 to 1
    * @throws IllegalArgumentException if the scenario input is invalid
    */
@@ -82,7 +82,7 @@ public class FireExposureScenario implements Serializable {
   /**
    * Creates an API 521 pool-fire exposure.
    *
-   * @param exposedAreaM2       exposed external area in m2; must be positive
+   * @param exposedAreaM2 exposed external area in m2; must be positive
    * @param environmentalFactor API 521 environmental factor; must be positive
    * @return fire exposure scenario
    */
@@ -96,7 +96,7 @@ public class FireExposureScenario implements Serializable {
   /**
    * Creates a fixed heat-flux exposure.
    *
-   * @param exposedAreaM2  exposed external area in m2; must be positive
+   * @param exposedAreaM2 exposed external area in m2; must be positive
    * @param heatFluxWPerM2 incident heat flux in W/m2; must be positive
    * @return fire exposure scenario
    */
@@ -109,10 +109,10 @@ public class FireExposureScenario implements Serializable {
   /**
    * Creates a radiative fire exposure using Stefan-Boltzmann heat flux.
    *
-   * @param exposedAreaM2       exposed external area in m2; must be positive
-   * @param emissivity          effective flame emissivity from 0 to 1
-   * @param viewFactor          geometric view factor from 0 to 1
-   * @param flameTemperatureK   flame temperature in K; must be positive
+   * @param exposedAreaM2 exposed external area in m2; must be positive
+   * @param emissivity effective flame emissivity from 0 to 1
+   * @param viewFactor geometric view factor from 0 to 1
+   * @param flameTemperatureK flame temperature in K; must be positive
    * @param ambientTemperatureK ambient temperature in K; must be positive
    * @return fire exposure scenario
    */
@@ -239,7 +239,7 @@ public class FireExposureScenario implements Serializable {
    * Validates that a numeric value is positive and finite.
    *
    * @param value value to validate
-   * @param name  parameter name used in exception messages
+   * @param name parameter name used in exception messages
    * @throws IllegalArgumentException if the value is invalid
    */
   private static void validatePositive(double value, String name) {

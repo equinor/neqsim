@@ -96,8 +96,8 @@ public class ControlledVariable extends MPCVariable {
   /**
    * Construct a controlled variable bound to equipment.
    *
-   * @param name         unique identifier for this CV
-   * @param equipment    the process equipment to monitor
+   * @param name unique identifier for this CV
+   * @param equipment the process equipment to monitor
    * @param propertyName the property to control
    */
   public ControlledVariable(String name, ProcessEquipmentInterface equipment, String propertyName) {
@@ -107,10 +107,10 @@ public class ControlledVariable extends MPCVariable {
   /**
    * Construct a controlled variable bound to equipment with unit.
    *
-   * @param name         unique identifier for this CV
-   * @param equipment    the process equipment to monitor
+   * @param name unique identifier for this CV
+   * @param equipment the process equipment to monitor
    * @param propertyName the property to control
-   * @param unit         the unit for the property value
+   * @param unit the unit for the property value
    */
   public ControlledVariable(String name, ProcessEquipmentInterface equipment, String propertyName, String unit) {
     super(name, equipment, propertyName, unit);

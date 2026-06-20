@@ -97,7 +97,7 @@ public class DETAIL {
    * MolarMassDetail.
    * </p>
    *
-   * @param x  an array of type double
+   * @param x an array of type double
    * @param Mm a {@link org.netlib.util.doubleW} object
    */
   public void MolarMassDetail(double[] x, doubleW Mm) {
@@ -174,10 +174,10 @@ public class DETAIL {
    * DensityDetail.
    * </p>
    *
-   * @param T    a double
-   * @param P    a double
-   * @param x    an array of type double
-   * @param D    a {@link org.netlib.util.doubleW} object
+   * @param T a double
+   * @param P a double
+   * @param x an array of type double
+   * @param D a {@link org.netlib.util.doubleW} object
    * @param ierr a {@link org.netlib.util.intW} object
    * @param herr a {@link org.netlib.util.StringW} object
    */
@@ -259,24 +259,24 @@ public class DETAIL {
    * PropertiesDetail.
    * </p>
    *
-   * @param T      a double
-   * @param D      a double
-   * @param x      an array of type double
-   * @param P      a {@link org.netlib.util.doubleW} object
-   * @param Z      a {@link org.netlib.util.doubleW} object
-   * @param dPdD   a {@link org.netlib.util.doubleW} object
+   * @param T a double
+   * @param D a double
+   * @param x an array of type double
+   * @param P a {@link org.netlib.util.doubleW} object
+   * @param Z a {@link org.netlib.util.doubleW} object
+   * @param dPdD a {@link org.netlib.util.doubleW} object
    * @param d2PdD2 a {@link org.netlib.util.doubleW} object
    * @param d2PdTD a {@link org.netlib.util.doubleW} object
-   * @param dPdT   a {@link org.netlib.util.doubleW} object
-   * @param U      a {@link org.netlib.util.doubleW} object
-   * @param H      a {@link org.netlib.util.doubleW} object
-   * @param S      a {@link org.netlib.util.doubleW} object
-   * @param Cv     a {@link org.netlib.util.doubleW} object
-   * @param Cp     a {@link org.netlib.util.doubleW} object
-   * @param W      a {@link org.netlib.util.doubleW} object
-   * @param G      a {@link org.netlib.util.doubleW} object
-   * @param JT     a {@link org.netlib.util.doubleW} object
-   * @param Kappa  a {@link org.netlib.util.doubleW} object
+   * @param dPdT a {@link org.netlib.util.doubleW} object
+   * @param U a {@link org.netlib.util.doubleW} object
+   * @param H a {@link org.netlib.util.doubleW} object
+   * @param S a {@link org.netlib.util.doubleW} object
+   * @param Cv a {@link org.netlib.util.doubleW} object
+   * @param Cp a {@link org.netlib.util.doubleW} object
+   * @param W a {@link org.netlib.util.doubleW} object
+   * @param G a {@link org.netlib.util.doubleW} object
+   * @param JT a {@link org.netlib.util.doubleW} object
+   * @param Kappa a {@link org.netlib.util.doubleW} object
    */
   public void PropertiesDetail(double T, double D, double[] x, doubleW P, doubleW Z, doubleW dPdD, doubleW d2PdD2,
       doubleW d2PdTD, doubleW dPdT, doubleW U, doubleW H, doubleW S, doubleW Cv, doubleW Cp, doubleW W, doubleW G,
@@ -458,9 +458,9 @@ public class DETAIL {
   }
 
   /**
-   * @param T  ...
-   * @param D  ...
-   * @param x  ...
+   * @param T ...
+   * @param D ...
+   * @param x ...
    * @param a0 ...
    */
   void Alpha0Detail(double T, double D, double[] x, doubleW[] a0) {
@@ -533,9 +533,9 @@ public class DETAIL {
   /**
    * @param itau ....
    * @param idel ...
-   * @param T    ...
-   * @param D    ...
-   * @param ar   ...
+   * @param T ...
+   * @param D ...
+   * @param ar ...
    */
   void AlpharDetail(int itau, int idel, double T, double D, doubleW[][] ar) {
     // Private Sub AlpharDetail(itau, idel, T, D, ar)

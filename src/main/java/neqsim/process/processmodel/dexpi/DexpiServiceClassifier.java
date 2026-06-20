@@ -103,10 +103,10 @@ final class DexpiServiceClassifier {
      * Creates a service type.
      *
      * @param lineWeight ISO 15519-1 line weight in mm
-     * @param lineType   DEXPI line type code
-     * @param colorR     presentation red component (0-1)
-     * @param colorG     presentation green component (0-1)
-     * @param colorB     presentation blue component (0-1)
+     * @param lineType DEXPI line type code
+     * @param colorR presentation red component (0-1)
+     * @param colorG presentation green component (0-1)
+     * @param colorB presentation blue component (0-1)
      */
     ServiceType(double lineWeight, int lineType, String colorR, String colorG, String colorB) {
       this.lineWeight = lineWeight;
@@ -234,9 +234,9 @@ final class DexpiServiceClassifier {
    * 15519-1 is respected.
    * </p>
    *
-   * @param stream              the process stream (may be null)
+   * @param stream the process stream (may be null)
    * @param mainProcessFlowKgHr the reference main-process flow in kg/hr used to scale weight, or a non-positive value
-   *                            to skip the relative-weight demotion
+   * to skip the relative-weight demotion
    * @return the classified service type (never null)
    */
   static ServiceType classify(StreamInterface stream, double mainProcessFlowKgHr) {

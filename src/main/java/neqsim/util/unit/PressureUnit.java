@@ -21,7 +21,7 @@ public class PressureUnit extends neqsim.util.unit.BaseUnit {
    * </p>
    *
    * @param value Pressure value
-   * @param unit  Engineering unit of value
+   * @param unit Engineering unit of value
    */
   public PressureUnit(double value, String unit) {
     super(value, unit);

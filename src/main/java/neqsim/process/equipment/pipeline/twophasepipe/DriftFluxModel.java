@@ -140,12 +140,12 @@ public class DriftFluxModel implements Serializable {
    * Calculate parameters for bubble flow.
    *
    * @param params output structure for drift-flux parameters
-   * @param U_M    mixture velocity [m/s]
-   * @param D      pipe diameter [m]
-   * @param theta  pipe inclination [rad]
-   * @param rho_L  liquid density [kg/m³]
-   * @param rho_G  gas density [kg/m³]
-   * @param sigma  surface tension [N/m]
+   * @param U_M mixture velocity [m/s]
+   * @param D pipe diameter [m]
+   * @param theta pipe inclination [rad]
+   * @param rho_L liquid density [kg/m³]
+   * @param rho_G gas density [kg/m³]
+   * @param sigma surface tension [N/m]
    */
   private void calculateBubbleFlowParameters(DriftFluxParameters params, double U_M, double D, double theta,
       double rho_L, double rho_G, double sigma) {
@@ -182,13 +182,13 @@ public class DriftFluxModel implements Serializable {
    * </p>
    *
    * @param params output structure for drift-flux parameters
-   * @param U_M    mixture velocity [m/s]
-   * @param D      pipe diameter [m]
-   * @param theta  pipe inclination [rad]
-   * @param rho_L  liquid density [kg/m³]
-   * @param rho_G  gas density [kg/m³]
-   * @param sigma  surface tension [N/m]
-   * @param mu_L   liquid viscosity [Pa.s]
+   * @param U_M mixture velocity [m/s]
+   * @param D pipe diameter [m]
+   * @param theta pipe inclination [rad]
+   * @param rho_L liquid density [kg/m³]
+   * @param rho_G gas density [kg/m³]
+   * @param sigma surface tension [N/m]
+   * @param mu_L liquid viscosity [Pa.s]
    */
   private void calculateSlugFlowParameters(DriftFluxParameters params, double U_M, double D, double theta, double rho_L,
       double rho_G, double sigma, double mu_L) {
@@ -229,12 +229,12 @@ public class DriftFluxModel implements Serializable {
    * Calculate parameters for annular flow.
    *
    * @param params drift flux parameters to be calculated
-   * @param U_M    mixture velocity
-   * @param D      pipe diameter
-   * @param theta  pipe inclination angle
-   * @param rho_L  liquid density
-   * @param rho_G  gas density
-   * @param sigma  surface tension
+   * @param U_M mixture velocity
+   * @param D pipe diameter
+   * @param theta pipe inclination angle
+   * @param rho_L liquid density
+   * @param rho_G gas density
+   * @param sigma surface tension
    */
   private void calculateAnnularFlowParameters(DriftFluxParameters params, double U_M, double D, double theta,
       double rho_L, double rho_G, double sigma) {
@@ -255,13 +255,13 @@ public class DriftFluxModel implements Serializable {
    * </p>
    *
    * @param params drift flux parameters to be calculated
-   * @param U_SL   superficial liquid velocity
-   * @param U_SG   superficial gas velocity
-   * @param D      pipe diameter
-   * @param theta  pipe inclination angle
-   * @param rho_L  liquid density
-   * @param rho_G  gas density
-   * @param mu_L   liquid viscosity
+   * @param U_SL superficial liquid velocity
+   * @param U_SG superficial gas velocity
+   * @param D pipe diameter
+   * @param theta pipe inclination angle
+   * @param rho_L liquid density
+   * @param rho_G gas density
+   * @param mu_L liquid viscosity
    */
   private void calculateStratifiedFlowParameters(DriftFluxParameters params, double U_SL, double U_SG, double D,
       double theta, double rho_L, double rho_G, double mu_L) {
@@ -292,13 +292,13 @@ public class DriftFluxModel implements Serializable {
   /**
    * Estimate liquid level in stratified flow.
    *
-   * @param U_SL  superficial liquid velocity (m/s)
-   * @param U_SG  superficial gas velocity (m/s)
-   * @param D     pipe diameter (m)
+   * @param U_SL superficial liquid velocity (m/s)
+   * @param U_SG superficial gas velocity (m/s)
+   * @param D pipe diameter (m)
    * @param theta pipe inclination angle (rad)
    * @param rho_L liquid density (kg/m³)
    * @param rho_G gas density (kg/m³)
-   * @param mu_L  liquid viscosity (Pa·s)
+   * @param mu_L liquid viscosity (Pa·s)
    * @return liquid level height (m)
    */
   private double estimateStratifiedLevel(double U_SL, double U_SG, double D, double theta, double rho_L, double rho_G,
@@ -355,7 +355,7 @@ public class DriftFluxModel implements Serializable {
    * Calculate pressure gradient for drift-flux model.
    *
    * @param section Pipe section
-   * @param params  Drift-flux parameters
+   * @param params Drift-flux parameters
    * @return Total pressure gradient (Pa/m), negative means pressure decreases in flow direction
    */
   public double calculatePressureGradient(PipeSection section, DriftFluxParameters params) {
@@ -392,8 +392,8 @@ public class DriftFluxModel implements Serializable {
   /**
    * Calculate friction pressure gradient.
    *
-   * @param section   pipe section with flow properties
-   * @param params    drift-flux model parameters
+   * @param section pipe section with flow properties
+   * @param params drift-flux model parameters
    * @param roughness pipe wall roughness (m)
    * @return friction pressure gradient (Pa/m)
    */
@@ -435,7 +435,7 @@ public class DriftFluxModel implements Serializable {
   /**
    * Calculate friction for single-phase gas flow.
    *
-   * @param section   pipe section with gas properties
+   * @param section pipe section with gas properties
    * @param roughness pipe wall roughness (m)
    * @return friction factor
    */
@@ -463,7 +463,7 @@ public class DriftFluxModel implements Serializable {
   /**
    * Calculate friction for single-phase liquid flow.
    *
-   * @param section   pipe section with liquid properties
+   * @param section pipe section with liquid properties
    * @param roughness pipe wall roughness (m)
    * @return friction factor
    */
@@ -491,8 +491,8 @@ public class DriftFluxModel implements Serializable {
   /**
    * Calculate friction for homogeneous model (bubble, slug, dispersed).
    *
-   * @param section   Pipe section
-   * @param params    Drift-flux parameters
+   * @param section Pipe section
+   * @param params Drift-flux parameters
    * @param roughness Pipe roughness (m)
    * @return Friction factor
    */
@@ -520,8 +520,8 @@ public class DriftFluxModel implements Serializable {
   /**
    * Calculate friction for stratified flow (two-fluid approach).
    *
-   * @param section   Pipe section
-   * @param params    Drift-flux parameters
+   * @param section Pipe section
+   * @param params Drift-flux parameters
    * @param roughness Pipe roughness (m)
    * @return Friction factor
    */
@@ -570,8 +570,8 @@ public class DriftFluxModel implements Serializable {
   /**
    * Calculate friction for annular model.
    *
-   * @param section   Pipe section
-   * @param params    Drift-flux parameters
+   * @param section Pipe section
+   * @param params Drift-flux parameters
    * @param roughness Pipe roughness (m)
    * @return Friction factor
    */
@@ -606,9 +606,9 @@ public class DriftFluxModel implements Serializable {
   /**
    * Calculate Darcy friction factor using Haaland correlation.
    *
-   * @param Re        Reynolds number
+   * @param Re Reynolds number
    * @param roughness pipe roughness [m]
-   * @param D         pipe diameter [m]
+   * @param D pipe diameter [m]
    * @return Darcy friction factor
    */
   private double calcFrictionFactor(double Re, double roughness, double D) {
@@ -676,13 +676,13 @@ public class DriftFluxModel implements Serializable {
    * For multiphase flow, mixture properties are used with appropriate averaging.
    * </p>
    *
-   * @param section                  Current pipe section with fluid state
-   * @param params                   Drift-flux parameters from calculateDriftFlux
-   * @param dt                       Time step (s)
-   * @param dx                       Spatial step (m)
-   * @param ambientTemperature       Ambient temperature (K)
+   * @param section Current pipe section with fluid state
+   * @param params Drift-flux parameters from calculateDriftFlux
+   * @param dt Time step (s)
+   * @param dx Spatial step (m)
+   * @param ambientTemperature Ambient temperature (K)
    * @param overallHeatTransferCoeff Overall heat transfer coefficient U (W/(m²·K))
-   * @param jouleThomsonCoeff        Joule-Thomson coefficient (K/Pa), typically ~2e-6 for gas
+   * @param jouleThomsonCoeff Joule-Thomson coefficient (K/Pa), typically ~2e-6 for gas
    * @return EnergyEquationResult containing temperature change components
    */
   public EnergyEquationResult calculateEnergyEquation(PipeSection section, DriftFluxParameters params, double dt,
@@ -788,13 +788,13 @@ public class DriftFluxModel implements Serializable {
    * <li>Friction heating (usually small)</li>
    * </ul>
    *
-   * @param section                  Pipe section
-   * @param upstreamTemperature      Temperature at upstream section (K)
-   * @param dx                       Distance from upstream section (m)
-   * @param ambientTemperature       Ambient temperature (K)
+   * @param section Pipe section
+   * @param upstreamTemperature Temperature at upstream section (K)
+   * @param dx Distance from upstream section (m)
+   * @param ambientTemperature Ambient temperature (K)
    * @param overallHeatTransferCoeff Heat transfer coefficient U (W/(m²·K))
-   * @param massFlowRate             Mass flow rate (kg/s)
-   * @param jouleThomsonCoeff        Joule-Thomson coefficient (K/Pa)
+   * @param massFlowRate Mass flow rate (kg/s)
+   * @param jouleThomsonCoeff Joule-Thomson coefficient (K/Pa)
    * @return New temperature at this section (K)
    */
   public double calculateSteadyStateTemperature(PipeSection section, double upstreamTemperature, double dx,
@@ -849,8 +849,8 @@ public class DriftFluxModel implements Serializable {
    * <li>Liquids: typically very small (~1e-8 K/Pa)</li>
    * </ul>
    *
-   * @param temperature  Temperature (K)
-   * @param pressure     Pressure (Pa)
+   * @param temperature Temperature (K)
+   * @param pressure Pressure (Pa)
    * @param gasMolWeight Gas molecular weight (g/mol)
    * @return Estimated Joule-Thomson coefficient (K/Pa)
    */
@@ -878,9 +878,9 @@ public class DriftFluxModel implements Serializable {
    * Uses mass-weighted average of phase heat capacities.
    * </p>
    *
-   * @param section   Pipe section with phase properties
-   * @param params    Drift-flux parameters
-   * @param Cp_gas    Gas heat capacity (J/(kg·K))
+   * @param section Pipe section with phase properties
+   * @param params Drift-flux parameters
+   * @param Cp_gas Gas heat capacity (J/(kg·K))
    * @param Cp_liquid Liquid heat capacity (J/(kg·K))
    * @return Mixture heat capacity (J/(kg·K))
    */

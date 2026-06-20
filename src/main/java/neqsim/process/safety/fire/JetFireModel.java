@@ -36,9 +36,9 @@ public class JetFireModel implements Serializable {
   /**
    * Construct a jet fire radiation model.
    *
-   * @param massFlowKgPerS         release rate burning at the jet, kg/s
+   * @param massFlowKgPerS release rate burning at the jet, kg/s
    * @param heatOfCombustionJPerKg lower heating value of fuel, J/kg
-   * @param radiativeFraction      fraction of combustion heat radiated (0.10 – 0.40 typical; natural gas ≈ 0.20)
+   * @param radiativeFraction fraction of combustion heat radiated (0.10 – 0.40 typical; natural gas ≈ 0.20)
    */
   public JetFireModel(double massFlowKgPerS, double heatOfCombustionJPerKg, double radiativeFraction) {
     if (massFlowKgPerS < 0.0 || heatOfCombustionJPerKg <= 0.0) {

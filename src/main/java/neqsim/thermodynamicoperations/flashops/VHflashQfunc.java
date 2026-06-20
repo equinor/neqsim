@@ -31,8 +31,8 @@ public class VHflashQfunc extends Flash {
    * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param Vspec  a double
-   * @param Hspec  a double
+   * @param Vspec a double
+   * @param Hspec a double
    */
   public VHflashQfunc(SystemInterface system, double Vspec, double Hspec) {
     this.system = system;

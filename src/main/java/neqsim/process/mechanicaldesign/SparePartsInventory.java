@@ -213,9 +213,9 @@ public class SparePartsInventory implements Serializable {
      *
      * @param equipmentName the equipment this spare is for
      * @param equipmentType type keyword
-     * @param partName      description of the spare part
-     * @param quantity      recommended stock quantity
-     * @param criticality   criticality level (Critical, Major, Minor)
+     * @param partName description of the spare part
+     * @param quantity recommended stock quantity
+     * @param criticality criticality level (Critical, Major, Minor)
      * @param leadTimeWeeks procurement lead time in weeks
      */
     public SparePartEntry(String equipmentName, String equipmentType, String partName, int quantity, String criticality,

@@ -94,7 +94,7 @@ public class MultilayerThermalCalculator implements Serializable {
    * </p>
    *
    * @param thickness Layer thickness [m]
-   * @param material  Material type preset
+   * @param material Material type preset
    * @return The created layer for further customization
    */
   public RadialThermalLayer addLayer(double thickness, RadialThermalLayer.MaterialType material) {
@@ -108,11 +108,11 @@ public class MultilayerThermalCalculator implements Serializable {
   /**
    * Add a custom thermal layer.
    *
-   * @param name                Layer identifier
-   * @param thickness           Layer thickness [m]
+   * @param name Layer identifier
+   * @param thickness Layer thickness [m]
    * @param thermalConductivity Thermal conductivity [W/(m·K)]
-   * @param density             Density [kg/m³]
-   * @param specificHeat        Specific heat [J/(kg·K)]
+   * @param density Density [kg/m³]
+   * @param specificHeat Specific heat [J/(kg·K)]
    * @return The created layer
    */
   public RadialThermalLayer addCustomLayer(String name, double thickness, double thermalConductivity, double density,
@@ -137,11 +137,11 @@ public class MultilayerThermalCalculator implements Serializable {
    * <li>Concrete weight coating (if specified)</li>
    * </ol>
    *
-   * @param pipeInnerDiameter   Pipe inner diameter [m]
-   * @param wallThickness       Steel wall thickness [m]
+   * @param pipeInnerDiameter Pipe inner diameter [m]
+   * @param wallThickness Steel wall thickness [m]
    * @param insulationThickness Insulation thickness [m] (0 for uninsulated)
-   * @param concreteThickness   Concrete coating thickness [m] (0 for none)
-   * @param insulationMaterial  Type of insulation material
+   * @param concreteThickness Concrete coating thickness [m] (0 for none)
+   * @param insulationMaterial Type of insulation material
    */
   public void createSubseaPipeConfig(double pipeInnerDiameter, double wallThickness, double insulationThickness,
       double concreteThickness, RadialThermalLayer.MaterialType insulationMaterial) {
@@ -171,7 +171,7 @@ public class MultilayerThermalCalculator implements Serializable {
    * Create a typical uninsulated subsea pipe.
    *
    * @param pipeInnerDiameter Pipe inner diameter [m]
-   * @param wallThickness     Steel wall thickness [m]
+   * @param wallThickness Steel wall thickness [m]
    */
   public void createBareSubseaPipe(double pipeInnerDiameter, double wallThickness) {
     createSubseaPipeConfig(pipeInnerDiameter, wallThickness, 0, 0, null);
@@ -180,8 +180,8 @@ public class MultilayerThermalCalculator implements Serializable {
   /**
    * Create a typical insulated subsea pipe with PU foam.
    *
-   * @param pipeInnerDiameter   Pipe inner diameter [m]
-   * @param wallThickness       Steel wall thickness [m]
+   * @param pipeInnerDiameter Pipe inner diameter [m]
+   * @param wallThickness Steel wall thickness [m]
    * @param insulationThickness Insulation thickness [m]
    */
   public void createInsulatedSubseaPipe(double pipeInnerDiameter, double wallThickness, double insulationThickness) {
@@ -193,9 +193,9 @@ public class MultilayerThermalCalculator implements Serializable {
    * Create a buried onshore pipe configuration.
    *
    * @param pipeInnerDiameter Pipe inner diameter [m]
-   * @param wallThickness     Steel wall thickness [m]
-   * @param burialDepth       Depth of cover [m]
-   * @param soilType          Wet or dry soil
+   * @param wallThickness Steel wall thickness [m]
+   * @param burialDepth Depth of cover [m]
+   * @param soilType Wet or dry soil
    */
   public void createBuriedOnshorePipe(double pipeInnerDiameter, double wallThickness, double burialDepth,
       RadialThermalLayer.MaterialType soilType) {
@@ -225,7 +225,7 @@ public class MultilayerThermalCalculator implements Serializable {
    * </p>
    *
    * @param pipeOuterRadius Pipe outer radius [m]
-   * @param burialDepth     Depth to pipe centerline [m]
+   * @param burialDepth Depth to pipe centerline [m]
    * @return Equivalent soil layer thickness [m]
    */
   private double calculateEquivalentSoilThickness(double pipeOuterRadius, double burialDepth) {
@@ -328,7 +328,7 @@ public class MultilayerThermalCalculator implements Serializable {
   /**
    * Calculate steady-state temperature at the interface between two layers.
    *
-   * @param layerIndex     Layer index (0 = first layer after fluid)
+   * @param layerIndex Layer index (0 = first layer after fluid)
    * @param atOuterSurface True for outer surface, false for inner
    * @return Temperature in Kelvin
    */
@@ -734,12 +734,12 @@ public class MultilayerThermalCalculator implements Serializable {
    * Nu = 0.023 * Re^0.8 * Pr^n where n = 0.4 for heating, 0.3 for cooling h = Nu * k / D
    * </p>
    *
-   * @param velocity            Fluid velocity [m/s]
-   * @param density             Fluid density [kg/m³]
-   * @param viscosity           Dynamic viscosity [Pa·s]
+   * @param velocity Fluid velocity [m/s]
+   * @param density Fluid density [kg/m³]
+   * @param viscosity Dynamic viscosity [Pa·s]
    * @param thermalConductivity Fluid thermal conductivity [W/(m·K)]
-   * @param prandtl             Prandtl number
-   * @param isHeating           True if fluid is being heated, false if cooled
+   * @param prandtl Prandtl number
+   * @param isHeating True if fluid is being heated, false if cooled
    * @return Heat transfer coefficient in W/(m²·K)
    */
   public double calculateInnerHTCDittusBoelter(double velocity, double density, double viscosity,

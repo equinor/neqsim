@@ -45,7 +45,7 @@ public class SimulationVerifier implements Serializable {
   /**
    * Creates a simulation verifier.
    *
-   * @param baseProcess   the base process system, cloned before perturbation
+   * @param baseProcess the base process system, cloned before perturbation
    * @param equipmentName name of the equipment being diagnosed
    */
   public SimulationVerifier(ProcessSystem baseProcess, String equipmentName) {
@@ -101,7 +101,7 @@ public class SimulationVerifier implements Serializable {
   /**
    * Applies a perturbation to the cloned process matching the hypothesis.
    *
-   * @param process    cloned process to modify
+   * @param process cloned process to modify
    * @param hypothesis hypothesis dictating which perturbation to apply
    * @return perturbation result with status and explanation
    */
@@ -151,9 +151,9 @@ public class SimulationVerifier implements Serializable {
   /**
    * Applies a compressor perturbation with graduated severity based on failure mode.
    *
-   * @param compressor  compressor to perturb
+   * @param compressor compressor to perturb
    * @param failureMode lower-case failure mode text
-   * @param category    hypothesis category
+   * @param category hypothesis category
    * @return perturbation result
    */
   private PerturbationResult perturbCompressor(Compressor compressor, String failureMode,
@@ -184,9 +184,9 @@ public class SimulationVerifier implements Serializable {
   /**
    * Applies a pump perturbation.
    *
-   * @param pump        pump to perturb
+   * @param pump pump to perturb
    * @param failureMode lower-case failure mode text
-   * @param category    hypothesis category
+   * @param category hypothesis category
    * @return perturbation result
    */
   private PerturbationResult perturbPump(Pump pump, String failureMode, Hypothesis.Category category) {
@@ -204,9 +204,9 @@ public class SimulationVerifier implements Serializable {
   /**
    * Applies a cooler perturbation.
    *
-   * @param cooler      cooler to perturb
+   * @param cooler cooler to perturb
    * @param failureMode lower-case failure mode text
-   * @param category    hypothesis category
+   * @param category hypothesis category
    * @return perturbation result
    */
   private PerturbationResult perturbCooler(Cooler cooler, String failureMode, Hypothesis.Category category) {
@@ -228,9 +228,9 @@ public class SimulationVerifier implements Serializable {
   /**
    * Applies a heater perturbation.
    *
-   * @param heater      heater to perturb
+   * @param heater heater to perturb
    * @param failureMode lower-case failure mode text
-   * @param category    hypothesis category
+   * @param category hypothesis category
    * @return perturbation result
    */
   private PerturbationResult perturbHeater(Heater heater, String failureMode, Hypothesis.Category category) {
@@ -253,8 +253,8 @@ public class SimulationVerifier implements Serializable {
    * </p>
    *
    * @param heatExchanger heat exchanger to perturb
-   * @param failureMode   lower-case failure mode text
-   * @param category      hypothesis category
+   * @param failureMode lower-case failure mode text
+   * @param category hypothesis category
    * @return perturbation result
    */
   private PerturbationResult perturbHeatExchanger(HeatExchanger heatExchanger, String failureMode,
@@ -284,9 +284,9 @@ public class SimulationVerifier implements Serializable {
   /**
    * Applies a separator perturbation.
    *
-   * @param separator   separator to perturb
+   * @param separator separator to perturb
    * @param failureMode lower-case failure mode text
-   * @param category    hypothesis category
+   * @param category hypothesis category
    * @return perturbation result
    */
   private PerturbationResult perturbSeparator(Separator separator, String failureMode, Hypothesis.Category category) {
@@ -307,9 +307,9 @@ public class SimulationVerifier implements Serializable {
   /**
    * Applies a valve perturbation.
    *
-   * @param valve       valve to perturb
+   * @param valve valve to perturb
    * @param failureMode lower-case failure mode text
-   * @param category    hypothesis category
+   * @param category hypothesis category
    * @return perturbation result
    */
   private PerturbationResult perturbValve(ThrottlingValve valve, String failureMode, Hypothesis.Category category) {
@@ -368,11 +368,11 @@ public class SimulationVerifier implements Serializable {
   /**
    * Reads one KPI and stores it if available.
    *
-   * @param auto    process automation facade
+   * @param auto process automation facade
    * @param address automation address
-   * @param key     output key
-   * @param unit    requested unit, or empty for native unit
-   * @param kpis    target KPI map
+   * @param key output key
+   * @param unit requested unit, or empty for native unit
+   * @param kpis target KPI map
    */
   private void readKpi(ProcessAutomation auto, String address, String key, String unit, Map<String, Double> kpis) {
     try {
@@ -475,9 +475,9 @@ public class SimulationVerifier implements Serializable {
    * Builds the simulation verification summary.
    *
    * @param perturbation perturbation that was applied
-   * @param baseline     baseline KPI values
-   * @param modified     modified KPI values
-   * @param score        verification score
+   * @param baseline baseline KPI values
+   * @param modified modified KPI values
+   * @param score verification score
    * @return summary text
    */
   private String buildSummary(PerturbationResult perturbation, Map<String, Double> baseline,
@@ -517,9 +517,9 @@ public class SimulationVerifier implements Serializable {
     /**
      * Creates a perturbation result.
      *
-     * @param applied         true if the process was changed
+     * @param applied true if the process was changed
      * @param changedVariable changed variable name
-     * @param description     human-readable description
+     * @param description human-readable description
      */
     private PerturbationResult(boolean applied, String changedVariable, String description) {
       this.applied = applied;
@@ -531,7 +531,7 @@ public class SimulationVerifier implements Serializable {
      * Creates an applied result.
      *
      * @param changedVariable changed variable name
-     * @param description     human-readable description
+     * @param description human-readable description
      * @return applied perturbation result
      */
     private static PerturbationResult applied(String changedVariable, String description) {

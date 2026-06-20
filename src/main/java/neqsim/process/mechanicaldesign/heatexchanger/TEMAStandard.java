@@ -508,10 +508,10 @@ public class TEMAStandard {
     /**
      * Creates a new TEMA configuration.
      *
-     * @param frontHead         front head type
-     * @param shell             shell type
-     * @param rearHead          rear head type
-     * @param description       configuration description
+     * @param frontHead front head type
+     * @param shell shell type
+     * @param rearHead rear head type
+     * @param description configuration description
      * @param applicableClasses applicable TEMA classes
      */
     public TEMAConfiguration(FrontHeadType frontHead, ShellType shell, RearHeadType rearHead, String description,
@@ -655,8 +655,8 @@ public class TEMAStandard {
    * Creates a custom TEMA configuration.
    *
    * @param frontHead front head type letter (A, B, C, N, D)
-   * @param shell     shell type letter (E, F, G, H, J, K, X)
-   * @param rearHead  rear head type letter (L, M, N, P, S, T, U, W)
+   * @param shell shell type letter (E, F, G, H, J, K, X)
+   * @param rearHead rear head type letter (L, M, N, P, S, T, U, W)
    * @return new configuration
    * @throws IllegalArgumentException if any letter is invalid
    */
@@ -671,10 +671,10 @@ public class TEMAStandard {
   /**
    * Recommends TEMA configuration based on application.
    *
-   * @param needsCleanable                true if shell side needs mechanical cleaning
+   * @param needsCleanable true if shell side needs mechanical cleaning
    * @param hasLargeTemperatureDifference true if large temperature differential
-   * @param isHighPressure                true if high-pressure application
-   * @param isHazardous                   true if hazardous fluid involved
+   * @param isHighPressure true if high-pressure application
+   * @param isHazardous true if hazardous fluid involved
    * @return recommended TEMA designation
    */
   public static String recommendConfiguration(boolean needsCleanable, boolean hasLargeTemperatureDifference,
@@ -710,7 +710,7 @@ public class TEMAStandard {
   /**
    * Calculates minimum tube pitch per TEMA standards.
    *
-   * @param tubeOD  tube outer diameter in mm
+   * @param tubeOD tube outer diameter in mm
    * @param pattern tube pitch pattern
    * @return minimum tube pitch in mm
    */
@@ -721,10 +721,10 @@ public class TEMAStandard {
   /**
    * Calculates estimated tube count for given shell diameter.
    *
-   * @param shellID    shell inside diameter in mm
-   * @param tubeOD     tube outer diameter in mm
-   * @param tubePitch  tube pitch in mm
-   * @param pattern    tube layout pattern
+   * @param shellID shell inside diameter in mm
+   * @param tubeOD tube outer diameter in mm
+   * @param tubePitch tube pitch in mm
+   * @param pattern tube layout pattern
    * @param tubePasses number of tube passes
    * @return estimated tube count
    */
@@ -752,7 +752,7 @@ public class TEMAStandard {
   /**
    * Gets maximum allowable unsupported tube span per TEMA.
    *
-   * @param tubeOD       tube outer diameter in mm
+   * @param tubeOD tube outer diameter in mm
    * @param tubeMaterial tube material (CARBON_STEEL, STAINLESS, etc.)
    * @return maximum unsupported span in mm
    */
@@ -789,7 +789,7 @@ public class TEMAStandard {
   /**
    * Calculates minimum baffle spacing per TEMA.
    *
-   * @param shellID   shell inside diameter in mm
+   * @param shellID shell inside diameter in mm
    * @param temaClass TEMA class
    * @return minimum baffle spacing in mm
    */

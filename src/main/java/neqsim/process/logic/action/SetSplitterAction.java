@@ -17,7 +17,7 @@ public class SetSplitterAction implements LogicAction {
   /**
    * Creates a set splitter action.
    *
-   * @param splitter     splitter to configure
+   * @param splitter splitter to configure
    * @param splitFactors new split factors
    */
   public SetSplitterAction(Splitter splitter, double[] splitFactors) {

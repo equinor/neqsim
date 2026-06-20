@@ -187,9 +187,9 @@ public class NorwegianTaxModel implements TaxModel {
    * </ol>
    *
    * @param grossRevenue total revenue for the year (any currency unit)
-   * @param opex         operating expenditure for the year (same unit as revenue)
+   * @param opex operating expenditure for the year (same unit as revenue)
    * @param depreciation depreciation deduction for the year (same unit as revenue)
-   * @param uplift       uplift deduction for the year (same unit as revenue)
+   * @param uplift uplift deduction for the year (same unit as revenue)
    * @return tax calculation result
    */
   @Override
@@ -235,7 +235,7 @@ public class NorwegianTaxModel implements TaxModel {
    * Calculates annual depreciation using straight-line method.
    *
    * @param capex total capital expenditure
-   * @param year  year number (1 = first year of depreciation)
+   * @param year year number (1 = first year of depreciation)
    * @return depreciation amount for the specified year
    */
   @Override
@@ -250,7 +250,7 @@ public class NorwegianTaxModel implements TaxModel {
    * Calculates uplift deduction for a specific year.
    *
    * @param capex total capital expenditure
-   * @param year  year number (1 = first year of uplift eligibility)
+   * @param year year number (1 = first year of uplift eligibility)
    * @return uplift amount for the specified year
    */
   @Override
@@ -274,9 +274,9 @@ public class NorwegianTaxModel implements TaxModel {
    * </ul>
    *
    * @param grossRevenue total revenue
-   * @param opex         operating expenditure
+   * @param opex operating expenditure
    * @param depreciation depreciation deduction
-   * @param uplift       uplift deduction
+   * @param uplift uplift deduction
    * @return effective tax rate (0-1)
    */
   @Override
@@ -301,9 +301,9 @@ public class NorwegianTaxModel implements TaxModel {
    * </ul>
    *
    * @param grossRevenue total revenue
-   * @param opex         operating expenditure
+   * @param opex operating expenditure
    * @param depreciation depreciation deduction
-   * @param uplift       uplift deduction
+   * @param uplift uplift deduction
    * @return government take percentage (0-1)
    */
   public double calculateGovernmentTake(double grossRevenue, double opex, double depreciation, double uplift) {
@@ -594,16 +594,16 @@ public class NorwegianTaxModel implements TaxModel {
     /**
      * Creates a new tax result.
      *
-     * @param grossRevenue     gross revenue
-     * @param opex             operating expenditure
-     * @param depreciation     depreciation deduction
-     * @param uplift           uplift deduction
+     * @param grossRevenue gross revenue
+     * @param opex operating expenditure
+     * @param depreciation depreciation deduction
+     * @param uplift uplift deduction
      * @param corporateTaxBase corporate tax base after deductions
-     * @param corporateTax     corporate tax amount
+     * @param corporateTax corporate tax amount
      * @param petroleumTaxBase petroleum tax base after deductions
-     * @param petroleumTax     petroleum tax amount
-     * @param totalTax         total tax (corporate + petroleum)
-     * @param afterTaxIncome   after-tax income
+     * @param petroleumTax petroleum tax amount
+     * @param totalTax total tax (corporate + petroleum)
+     * @param afterTaxIncome after-tax income
      */
     public TaxResult(double grossRevenue, double opex, double depreciation, double uplift, double corporateTaxBase,
 	double corporateTax, double petroleumTaxBase, double petroleumTax, double totalTax, double afterTaxIncome) {

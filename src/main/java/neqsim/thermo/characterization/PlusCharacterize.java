@@ -284,7 +284,7 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
    * </p>
    *
    * @param start a int
-   * @param end   a int
+   * @param end a int
    */
   public void addPseudoTBPfraction(int start, int end) {
   }

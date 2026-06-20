@@ -96,14 +96,14 @@ public class OilWaterFlowRegimeDetector implements Serializable {
     /**
      * Constructor for OilWaterResult.
      *
-     * @param regime                     the detected flow regime
-     * @param waterWetting               whether water wets the pipe wall
-     * @param effectiveViscosity         effective emulsion viscosity (Pa.s)
-     * @param inversionWaterFraction     phase inversion water fraction
+     * @param regime the detected flow regime
+     * @param waterWetting whether water wets the pipe wall
+     * @param effectiveViscosity effective emulsion viscosity (Pa.s)
+     * @param inversionWaterFraction phase inversion water fraction
      * @param criticalDispersionVelocity critical velocity for full dispersion (m/s)
-     * @param maxDropletDiameter         maximum stable droplet diameter (m)
-     * @param oilContinuous              whether oil is the continuous phase
-     * @param waterDropoutRisk           whether there is risk of water dropout
+     * @param maxDropletDiameter maximum stable droplet diameter (m)
+     * @param oilContinuous whether oil is the continuous phase
+     * @param waterDropoutRisk whether there is risk of water dropout
      */
     public OilWaterResult(OilWaterFlowRegime regime, boolean waterWetting, double effectiveViscosity,
 	double inversionWaterFraction, double criticalDispersionVelocity, double maxDropletDiameter,
@@ -134,15 +134,15 @@ public class OilWaterFlowRegimeDetector implements Serializable {
   /**
    * Detect oil-water flow regime and compute associated properties.
    *
-   * @param waterCut        water volume fraction in liquid (0-1)
+   * @param waterCut water volume fraction in liquid (0-1)
    * @param mixtureVelocity superficial mixture liquid velocity (m/s)
-   * @param rhoOil          oil density (kg/m3)
-   * @param rhoWater        water density (kg/m3)
-   * @param muOil           oil dynamic viscosity (Pa.s)
-   * @param muWater         water dynamic viscosity (Pa.s)
-   * @param sigmaOW         oil-water interfacial tension (N/m)
-   * @param pipeDiameter    pipe internal diameter (m)
-   * @param inclination     pipe inclination (radians, positive = uphill)
+   * @param rhoOil oil density (kg/m3)
+   * @param rhoWater water density (kg/m3)
+   * @param muOil oil dynamic viscosity (Pa.s)
+   * @param muWater water dynamic viscosity (Pa.s)
+   * @param sigmaOW oil-water interfacial tension (N/m)
+   * @param pipeDiameter pipe internal diameter (m)
+   * @param inclination pipe inclination (radians, positive = uphill)
    * @return OilWaterResult with regime classification and properties
    */
   public OilWaterResult detect(double waterCut, double mixtureVelocity, double rhoOil, double rhoWater, double muOil,
@@ -241,8 +241,8 @@ public class OilWaterFlowRegimeDetector implements Serializable {
    * reaches equilibrium. For equal viscosity fluids, inversion is near 50%.
    * </p>
    *
-   * @param muRatio  oil-to-water viscosity ratio (mu_o/mu_w)
-   * @param rhoOil   oil density (kg/m3)
+   * @param muRatio oil-to-water viscosity ratio (mu_o/mu_w)
+   * @param rhoOil oil density (kg/m3)
    * @param rhoWater water density (kg/m3)
    * @return water volume fraction at inversion point (0-1)
    */
@@ -270,10 +270,10 @@ public class OilWaterFlowRegimeDetector implements Serializable {
    * </p>
    *
    * @param waterCut water volume fraction (0-1)
-   * @param rhoOil   oil density (kg/m3)
+   * @param rhoOil oil density (kg/m3)
    * @param rhoWater water density (kg/m3)
-   * @param muCont   viscosity of continuous phase (Pa.s)
-   * @param sigmaOW  oil-water interfacial tension (N/m)
+   * @param muCont viscosity of continuous phase (Pa.s)
+   * @param sigmaOW oil-water interfacial tension (N/m)
    * @param diameter pipe diameter (m)
    * @return critical mixture velocity (m/s)
    */
@@ -311,10 +311,10 @@ public class OilWaterFlowRegimeDetector implements Serializable {
    * </p>
    *
    * @param velocity mixture velocity (m/s)
-   * @param rhoCont  density of continuous phase (kg/m3)
-   * @param sigmaOW  oil-water interfacial tension (N/m)
+   * @param rhoCont density of continuous phase (kg/m3)
+   * @param sigmaOW oil-water interfacial tension (N/m)
    * @param diameter pipe diameter (m)
-   * @param muCont   viscosity of continuous phase (Pa.s)
+   * @param muCont viscosity of continuous phase (Pa.s)
    * @return maximum stable droplet diameter (m)
    */
   public double calcMaxDropletDiameter(double velocity, double rhoCont, double sigmaOW, double diameter,
@@ -353,9 +353,9 @@ public class OilWaterFlowRegimeDetector implements Serializable {
    * </ul>
    * where phi is the dispersed phase volume fraction and phi_max ~ 0.74 is maximum packing.
    *
-   * @param waterCut      water volume fraction (0-1)
-   * @param muOil         oil viscosity (Pa.s)
-   * @param muWater       water viscosity (Pa.s)
+   * @param waterCut water volume fraction (0-1)
+   * @param muOil oil viscosity (Pa.s)
+   * @param muWater water viscosity (Pa.s)
    * @param oilContinuous true if oil is the continuous phase
    * @return effective mixture viscosity (Pa.s)
    */
@@ -398,12 +398,12 @@ public class OilWaterFlowRegimeDetector implements Serializable {
    * <li>After uphill sections where water may slide back</li>
    * </ul>
    *
-   * @param waterCut        water volume fraction (0-1)
+   * @param waterCut water volume fraction (0-1)
    * @param mixtureVelocity mixture velocity (m/s)
-   * @param rhoOil          oil density (kg/m3)
-   * @param rhoWater        water density (kg/m3)
-   * @param muOil           oil viscosity (Pa.s)
-   * @param diameter        pipe diameter (m)
+   * @param rhoOil oil density (kg/m3)
+   * @param rhoWater water density (kg/m3)
+   * @param muOil oil viscosity (Pa.s)
+   * @param diameter pipe diameter (m)
    * @param dropletDiameter water droplet diameter (m)
    * @return true if water dropout is likely
    */

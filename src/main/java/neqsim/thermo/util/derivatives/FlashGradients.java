@@ -81,14 +81,14 @@ public class FlashGradients implements Serializable {
   /**
    * Constructor for successful gradient computation.
    *
-   * @param kValues        current K-values
-   * @param beta           current vapor fraction
-   * @param dKdT           K-value temperature derivatives
-   * @param dKdP           K-value pressure derivatives
-   * @param dKdz           K-value composition derivatives
-   * @param dBetadT        vapor fraction temperature derivative
-   * @param dBetadP        vapor fraction pressure derivative
-   * @param dBetadz        vapor fraction composition derivatives
+   * @param kValues current K-values
+   * @param beta current vapor fraction
+   * @param dKdT K-value temperature derivatives
+   * @param dKdP K-value pressure derivatives
+   * @param dKdz K-value composition derivatives
+   * @param dBetadT vapor fraction temperature derivative
+   * @param dBetadP vapor fraction pressure derivative
+   * @param dBetadz vapor fraction composition derivatives
    * @param componentNames component names
    */
   public FlashGradients(double[] kValues, double beta, double[] dKdT, double[] dKdP, double[][] dKdz, double dBetadT,
@@ -116,7 +116,7 @@ public class FlashGradients implements Serializable {
    * Constructor for failed gradient computation.
    *
    * @param numberOfComponents number of components
-   * @param errorMessage       error description
+   * @param errorMessage error description
    */
   public FlashGradients(int numberOfComponents, String errorMessage) {
     this.numberOfComponents = numberOfComponents;
@@ -324,7 +324,7 @@ public class FlashGradients implements Serializable {
    * </p>
    *
    * @param componentIndex component index
-   * @param z              feed composition
+   * @param z feed composition
    * @return dx_i/dT
    */
   public double getDxdT(int componentIndex, double[] z) {
@@ -343,7 +343,7 @@ public class FlashGradients implements Serializable {
    * </p>
    *
    * @param componentIndex component index
-   * @param z              feed composition
+   * @param z feed composition
    * @return dy_i/dT
    */
   public double getDydT(int componentIndex, double[] z) {

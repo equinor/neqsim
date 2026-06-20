@@ -19,7 +19,7 @@ public class CascadeControllerStructure implements ControlStructureInterface {
   /**
    * Create a cascade control structure.
    *
-   * @param primaryController   outer loop controller
+   * @param primaryController outer loop controller
    * @param secondaryController inner loop controller
    */
   public CascadeControllerStructure(ControllerDeviceInterface primaryController,

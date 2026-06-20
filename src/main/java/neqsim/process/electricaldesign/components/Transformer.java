@@ -50,8 +50,8 @@ public class Transformer implements java.io.Serializable {
    * Size the transformer based on the total load.
    *
    * @param totalLoadKVA total apparent power load in kVA
-   * @param primaryV     primary voltage in V
-   * @param secondaryV   secondary voltage in V
+   * @param primaryV primary voltage in V
+   * @param secondaryV secondary voltage in V
    */
   public void sizeTransformer(double totalLoadKVA, double primaryV, double secondaryV) {
     this.primaryVoltageV = primaryV;
@@ -155,7 +155,7 @@ public class Transformer implements java.io.Serializable {
    * Estimate transformer cost.
    *
    * @param ratingKVA transformer rating in kVA
-   * @param primaryV  primary voltage in V
+   * @param primaryV primary voltage in V
    * @return cost in USD
    */
   private double estimateCost(double ratingKVA, double primaryV) {

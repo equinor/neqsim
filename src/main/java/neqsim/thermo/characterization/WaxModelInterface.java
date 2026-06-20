@@ -48,7 +48,7 @@ public interface WaxModelInterface extends java.io.Serializable, Cloneable {
    * setWaxParameter.
    * </p>
    *
-   * @param i          a int
+   * @param i a int
    * @param parameters a double
    */
   public void setWaxParameter(int i, double parameters);
@@ -58,7 +58,7 @@ public interface WaxModelInterface extends java.io.Serializable, Cloneable {
    * setParameterWaxHeatOfFusion.
    * </p>
    *
-   * @param i          a int
+   * @param i a int
    * @param parameters a double
    */
   public void setParameterWaxHeatOfFusion(int i, double parameters);
@@ -111,7 +111,7 @@ public interface WaxModelInterface extends java.io.Serializable, Cloneable {
    * setParameterWaxTriplePointTemperature.
    * </p>
    *
-   * @param i          a int
+   * @param i a int
    * @param parameters a double
    */
   public void setParameterWaxTriplePointTemperature(int i, double parameters);

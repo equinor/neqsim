@@ -89,7 +89,7 @@ public class AutomationRunner {
    * name is incorrect, attempts fuzzy matching and returns suggestions.
    *
    * @param processJson the JSON process definition
-   * @param unitName    the equipment unit name to query variables for
+   * @param unitName the equipment unit name to query variables for
    * @return JSON string with list of variables including address, type, unit, and description
    */
   public static String listVariables(String processJson, String unitName) {
@@ -168,8 +168,8 @@ public class AutomationRunner {
    * attempts fuzzy matching and auto-correction, returning suggestions in the response.
    *
    * @param processJson the JSON process definition
-   * @param address     the dot-notation variable address (e.g., "HP Sep.gasOutStream.temperature")
-   * @param unit        the desired unit of measurement (e.g., "C", "bara", "kg/hr")
+   * @param address the dot-notation variable address (e.g., "HP Sep.gasOutStream.temperature")
+   * @param unit the desired unit of measurement (e.g., "C", "bara", "kg/hr")
    * @return JSON string with the variable value, auto-correction info, or diagnostic suggestions
    */
   public static String getVariable(String processJson, String address, String unit) {
@@ -202,9 +202,9 @@ public class AutomationRunner {
    * before setting.
    *
    * @param processJson the JSON process definition
-   * @param address     the dot-notation variable address to modify
-   * @param value       the new value to set
-   * @param unit        the unit of the value
+   * @param address the dot-notation variable address to modify
+   * @param value the new value to set
+   * @param unit the unit of the value
    * @return JSON string with the updated simulation results or diagnostic info
    */
   public static String setVariableAndRun(String processJson, String address, double value, String unit) {
@@ -252,8 +252,8 @@ public class AutomationRunner {
   /**
    * Runs a process from JSON and saves its state as a lifecycle snapshot.
    *
-   * @param processJson  the JSON process definition
-   * @param stateName    name for the snapshot
+   * @param processJson the JSON process definition
+   * @param stateName name for the snapshot
    * @param stateVersion version string for the snapshot
    * @return JSON string with the serialized process state
    */
@@ -339,9 +339,9 @@ public class AutomationRunner {
    * Diagnoses a failed automation operation and returns suggestions for fixing it. This is the entry point agents
    * should call when an automation operation returns an error to get actionable remediation hints.
    *
-   * @param processJson   the JSON process definition
+   * @param processJson the JSON process definition
    * @param failedAddress the address that failed (e.g., "HP separator.gasOut.temp")
-   * @param operation     the operation that failed ("get", "set", or "list")
+   * @param operation the operation that failed ("get", "set", or "list")
    * @return JSON string with diagnostic information including suggestions and auto-corrections
    */
   public static String diagnose(String processJson, String failedAddress, String operation) {
@@ -459,12 +459,12 @@ public class AutomationRunner {
    * previous trial. This is far cheaper than issuing one {@code setVariableAndRun} call per trial (which rebuilds and
    * re-runs the whole flowsheet every time).
    *
-   * @param processJson   the JSON process definition
-   * @param trialsJson    JSON array of setpoint batches; each batch is a JSON object mapping a dot-notation address to
-   *                      a numeric value, e.g. {@code [{"Comp.outletPressure":150},{"Comp.outletPressure":160}]}
+   * @param processJson the JSON process definition
+   * @param trialsJson JSON array of setpoint batches; each batch is a JSON object mapping a dot-notation address to a
+   * numeric value, e.g. {@code [{"Comp.outletPressure":150},{"Comp.outletPressure":160}]}
    * @param readbacksJson JSON array of objective / constraint addresses to read after each trial; may be null or empty
-   * @param setpointUnit  unit applied to every setpoint, or null/empty for per-variable defaults
-   * @param readbackUnit  unit applied to every read-back, or null/empty for per-variable defaults
+   * @param setpointUnit unit applied to every setpoint, or null/empty for per-variable defaults
+   * @param readbackUnit unit applied to every read-back, or null/empty for per-variable defaults
    * @return JSON string with one schema-versioned trial result per batch and a feasible-trial count
    */
   public static String runLoop(String processJson, String trialsJson, String readbacksJson, String setpointUnit,
@@ -579,7 +579,7 @@ public class AutomationRunner {
   /**
    * Adds agent-facing metadata from a simulation variable to JSON.
    *
-   * @param varObj   mutable variable JSON object
+   * @param varObj mutable variable JSON object
    * @param variable simulation variable descriptor
    */
   private static void addVariableMetadata(JsonObject varObj, SimulationVariable variable) {
@@ -605,10 +605,10 @@ public class AutomationRunner {
   /**
    * Wraps a raw automation JSON string with the standard MCP response fields.
    *
-   * @param rawJson         raw JSON response from an automation helper
-   * @param toolName        MCP tool name that produced the response
+   * @param rawJson raw JSON response from an automation helper
+   * @param toolName MCP tool name that produced the response
    * @param calculationType provenance calculation type
-   * @param successMessage  validation message for successful responses
+   * @param successMessage validation message for successful responses
    * @return JSON string with standard MCP response fields
    */
   private static String standardResponse(String rawJson, String toolName, String calculationType,
@@ -633,10 +633,10 @@ public class AutomationRunner {
    * Wraps an automation JSON object with the standard MCP response fields while preserving legacy top-level fields for
    * backwards compatibility.
    *
-   * @param result          mutable raw response object
-   * @param toolName        MCP tool name that produced the response
+   * @param result mutable raw response object
+   * @param toolName MCP tool name that produced the response
    * @param calculationType provenance calculation type
-   * @param successMessage  validation message for successful responses
+   * @param successMessage validation message for successful responses
    * @return JSON string with standard MCP response fields
    */
   private static String standardResponse(JsonObject result, String toolName, String calculationType,
@@ -661,9 +661,9 @@ public class AutomationRunner {
   /**
    * Builds a provenance block for automation and lifecycle tools.
    *
-   * @param toolName        MCP tool name
+   * @param toolName MCP tool name
    * @param calculationType calculation type description
-   * @param converged       true when the operation completed without an error response
+   * @param converged true when the operation completed without an error response
    * @return provenance metadata
    */
   private static ResultProvenance automationProvenance(String toolName, String calculationType, boolean converged) {
@@ -721,7 +721,7 @@ public class AutomationRunner {
   /**
    * Determines the quality-gate verdict for an automation response.
    *
-   * @param result        response object to inspect
+   * @param result response object to inspect
    * @param errorResponse true if the response is an error
    * @return quality-gate verdict
    */
@@ -741,7 +741,7 @@ public class AutomationRunner {
   /**
    * Extracts a human-readable response message.
    *
-   * @param result   response object to inspect
+   * @param result response object to inspect
    * @param fallback fallback message
    * @return response message
    */
@@ -762,8 +762,8 @@ public class AutomationRunner {
    * Builds a standard error JSON response.
    *
    * @param toolName MCP tool name that produced the response
-   * @param code     the error code
-   * @param message  the error message
+   * @param code the error code
+   * @param message the error message
    * @return JSON error string
    */
   private static String errorJson(String toolName, String code, String message) {

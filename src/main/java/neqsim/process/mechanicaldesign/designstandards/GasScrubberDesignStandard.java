@@ -29,7 +29,7 @@ public class GasScrubberDesignStandard extends DesignStandard {
    * Constructor for GasScrubberDesignStandard.
    * </p>
    *
-   * @param name         a {@link java.lang.String} object
+   * @param name a {@link java.lang.String} object
    * @param equipmentInn a {@link neqsim.process.mechanicaldesign.MechanicalDesign} object
    */
   public GasScrubberDesignStandard(String name, MechanicalDesign equipmentInn) {

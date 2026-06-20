@@ -67,11 +67,11 @@ public class ElectricalCable implements java.io.Serializable {
    * to verify it meets limits.
    * </p>
    *
-   * @param loadCurrentA  load current in A
-   * @param voltageV      system voltage in V
-   * @param cableLengthM  cable length in meters
+   * @param loadCurrentA load current in A
+   * @param voltageV system voltage in V
+   * @param cableLengthM cable length in meters
    * @param installMethod installation method (Tray, Conduit, Direct burial, Ladder)
-   * @param ambientTempC  ambient temperature in degrees C
+   * @param ambientTempC ambient temperature in degrees C
    */
   public void sizeCable(double loadCurrentA, double voltageV, double cableLengthM, String installMethod,
       double ambientTempC) {
@@ -214,7 +214,7 @@ public class ElectricalCable implements java.io.Serializable {
    * Calculate short-circuit thermal withstand (1s basis) per IEC 60949.
    *
    * @param crossSection cable cross section in mm2
-   * @param duration     fault duration in seconds
+   * @param duration fault duration in seconds
    * @return withstand current in kA
    */
   private double calculateShortCircuitWithstand(double crossSection, double duration) {
@@ -227,7 +227,7 @@ public class ElectricalCable implements java.io.Serializable {
    * Estimate cable cost per meter.
    *
    * @param crossSection cross-section in mm2
-   * @param voltageV     rated voltage
+   * @param voltageV rated voltage
    * @return cost per meter in USD
    */
   private double estimateCostPerMeter(double crossSection, double voltageV) {

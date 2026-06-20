@@ -300,8 +300,8 @@ public class RiskMLInterface implements Serializable {
     /**
      * Creates a prediction record with auto-generated timestamp.
      *
-     * @param modelId    model ID
-     * @param features   input features
+     * @param modelId model ID
+     * @param features input features
      * @param prediction predicted value
      */
     public PredictionRecord(String modelId, Map<String, Double> features, double prediction) {
@@ -311,10 +311,10 @@ public class RiskMLInterface implements Serializable {
     /**
      * Creates a prediction record with specified timestamp.
      *
-     * @param modelId    model ID
-     * @param features   input features
+     * @param modelId model ID
+     * @param features input features
      * @param prediction predicted value
-     * @param timestamp  timestamp of prediction
+     * @param timestamp timestamp of prediction
      */
     public PredictionRecord(String modelId, Map<String, Double> features, double prediction, Instant timestamp) {
       this.modelId = modelId;
@@ -378,7 +378,7 @@ public class RiskMLInterface implements Serializable {
   /**
    * Creates and registers a failure prediction model.
    *
-   * @param modelId   model ID
+   * @param modelId model ID
    * @param modelName model name
    * @return created model
    */
@@ -391,7 +391,7 @@ public class RiskMLInterface implements Serializable {
   /**
    * Creates and registers an anomaly detection model.
    *
-   * @param modelId   model ID
+   * @param modelId model ID
    * @param modelName model name
    * @return created model
    */
@@ -404,7 +404,7 @@ public class RiskMLInterface implements Serializable {
   /**
    * Creates and registers an RUL prediction model.
    *
-   * @param modelId   model ID
+   * @param modelId model ID
    * @param modelName model name
    * @return created model
    */
@@ -417,7 +417,7 @@ public class RiskMLInterface implements Serializable {
   /**
    * Registers a feature extractor.
    *
-   * @param name      extractor name
+   * @param name extractor name
    * @param extractor feature extractor
    */
   public void registerFeatureExtractor(String name, FeatureExtractor extractor) {
@@ -427,7 +427,7 @@ public class RiskMLInterface implements Serializable {
   /**
    * Makes a prediction using a registered model.
    *
-   * @param modelId  model ID
+   * @param modelId model ID
    * @param features input features
    * @return prediction result
    */
@@ -461,9 +461,9 @@ public class RiskMLInterface implements Serializable {
   /**
    * Makes a prediction with feature extraction.
    *
-   * @param modelId       model ID
+   * @param modelId model ID
    * @param extractorName feature extractor name
-   * @param processData   raw process data
+   * @param processData raw process data
    * @return prediction result
    */
   public MLPrediction predictWithExtraction(String modelId, String extractorName, Map<String, Object> processData) {
@@ -480,7 +480,7 @@ public class RiskMLInterface implements Serializable {
    * Provides feedback on a prediction (for model improvement).
    *
    * @param predictionTimestamp timestamp of prediction
-   * @param actualValue         actual observed value
+   * @param actualValue actual observed value
    */
   public void provideFeedback(Instant predictionTimestamp, double actualValue) {
     synchronized (predictionHistory) {

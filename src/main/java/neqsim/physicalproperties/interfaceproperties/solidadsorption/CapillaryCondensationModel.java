@@ -220,9 +220,9 @@ public class CapillaryCondensationModel implements Serializable, ThermodynamicCo
   /**
    * Integrate condensate volume over pore size distribution.
    *
-   * @param comp           the component index
+   * @param comp the component index
    * @param criticalRadius the critical radius for condensation (nm)
-   * @param phaseNum       the phase number
+   * @param phaseNum the phase number
    * @return condensate amount in mol/kg
    */
   private double integrateOverPoreDistribution(int comp, double criticalRadius, int phaseNum) {
@@ -317,8 +317,8 @@ public class CapillaryCondensationModel implements Serializable, ThermodynamicCo
    * Calculate the pressure at which capillary condensation begins in a given pore.
    *
    * @param poreRadius the pore radius (nm)
-   * @param component  the component index
-   * @param phaseNum   the phase number
+   * @param component the component index
+   * @param phaseNum the phase number
    * @return relative pressure P/P0 for condensation
    */
   public double getCondensationPressure(double poreRadius, int component, int phaseNum) {

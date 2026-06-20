@@ -889,7 +889,7 @@ public class OilGasProcessSimulationOptimization {
    * </p>
    *
    * @param designSpeed the design speed in RPM (e.g., 10000)
-   * @param maxSpeed    the maximum allowable speed in RPM (e.g., 11000)
+   * @param maxSpeed the maximum allowable speed in RPM (e.g., 11000)
    */
   public void configureCompressorCharts(double designSpeed, double maxSpeed) {
     // Store in class fields for use in getOutput()

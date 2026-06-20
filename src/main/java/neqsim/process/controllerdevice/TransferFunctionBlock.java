@@ -451,7 +451,7 @@ public class TransferFunctionBlock extends NamedBaseClass implements ControllerD
   /**
    * First-order lag: y(k) = alpha * y(k-1) + (1 - alpha) * K * u(k) where alpha = tau / (tau + dt).
    *
-   * @param u  the input signal value
+   * @param u the input signal value
    * @param dt the time step in seconds
    * @return the filtered output value
    */
@@ -470,7 +470,7 @@ public class TransferFunctionBlock extends NamedBaseClass implements ControllerD
    * Lead-lag: implemented as a first-order lag plus a derivative lead correction. Discretized as: y(k) =
    * (tauLead/tauLag) * K * u(k) + (1 - tauLead/tauLag) * lagFiltered(K*u).
    *
-   * @param u  the input signal value
+   * @param u the input signal value
    * @param dt the time step in seconds
    * @return the lead-lag filtered output value
    */
@@ -499,7 +499,7 @@ public class TransferFunctionBlock extends NamedBaseClass implements ControllerD
   /**
    * Pure dead time: stores the input in a circular buffer and reads out the delayed value.
    *
-   * @param u  the input signal value
+   * @param u the input signal value
    * @param dt the time step in seconds
    * @return the delayed output value
    */
@@ -521,7 +521,7 @@ public class TransferFunctionBlock extends NamedBaseClass implements ControllerD
   /**
    * Second-order system: cascade of two first-order lags. G(s) = K / (tau1*s + 1)(tau2*s + 1)
    *
-   * @param u  the input signal value
+   * @param u the input signal value
    * @param dt the time step in seconds
    * @return the second-order filtered output value
    */
@@ -546,7 +546,7 @@ public class TransferFunctionBlock extends NamedBaseClass implements ControllerD
    * Apply dead time via circular buffer.
    *
    * @param currentValue the current signal value to delay
-   * @param dt           the time step in seconds
+   * @param dt the time step in seconds
    * @return the delayed output value from the circular buffer
    */
   private double applyDeadTime(double currentValue, double dt) {

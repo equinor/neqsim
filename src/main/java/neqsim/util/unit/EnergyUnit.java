@@ -17,7 +17,7 @@ public class EnergyUnit extends neqsim.util.unit.BaseUnit {
    * Constructor for EnergyUnit.
    *
    * @param value energy value
-   * @param unit  engineering unit of value
+   * @param unit engineering unit of value
    */
   public EnergyUnit(double value, String unit) {
     super(value, unit);

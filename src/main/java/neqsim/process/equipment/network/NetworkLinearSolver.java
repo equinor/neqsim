@@ -60,7 +60,7 @@ public class NetworkLinearSolver {
    *
    * @param matA coefficient matrix (n x n)
    * @param vecB right-hand side vector (n)
-   * @param n    system size
+   * @param n system size
    * @return solution vector x
    */
   public static double[] solve(double[][] matA, double[] vecB, int n) {
@@ -100,7 +100,7 @@ public class NetworkLinearSolver {
    *
    * @param matA coefficient matrix (n x n)
    * @param vecB right-hand side vector (n)
-   * @param n    system size
+   * @param n system size
    * @return solution vector x
    */
   public static double[] solveDense(double[][] matA, double[] vecB, int n) {
@@ -142,7 +142,7 @@ public class NetworkLinearSolver {
    *
    * @param matA coefficient matrix (n x n) — may have many zeros
    * @param vecB right-hand side vector (n)
-   * @param n    system size
+   * @param n system size
    * @return solution vector x
    */
   public static double[] solveSparse(double[][] matA, double[] vecB, int n) {
@@ -207,7 +207,7 @@ public class NetworkLinearSolver {
    *
    * @param matAOrig coefficient matrix (n x n) — not modified
    * @param vecBOrig right-hand side vector (n) — not modified
-   * @param n        system size
+   * @param n system size
    * @return solution vector x
    */
   public static double[] solveGaussian(double[][] matAOrig, double[] vecBOrig, int n) {
@@ -272,7 +272,7 @@ public class NetworkLinearSolver {
    * @param nodeCount number of free nodes
    * @param pipeCount number of pipe elements
    * @return array [density, nonzeros, recommended_threshold] where recommended_threshold is 0 for dense and 1 for
-   *         sparse
+   * sparse
    */
   public static double[] estimateSparsity(int nodeCount, int pipeCount) {
     // In a pipe network, each pipe connects exactly 2 nodes.

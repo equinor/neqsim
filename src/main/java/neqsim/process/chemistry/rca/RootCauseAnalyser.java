@@ -608,7 +608,7 @@ public class RootCauseAnalyser implements Serializable {
   /**
    * Convenience overload: adds a single piece of evidence for one candidate code.
    *
-   * @param code       candidate code (e.g. "CO2_CORROSION")
+   * @param code candidate code (e.g. "CO2_CORROSION")
    * @param likelihood P(evidence | this code) &gt;= 0
    */
   public void addEvidence(String code, double likelihood) {

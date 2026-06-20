@@ -126,8 +126,8 @@ public class OLGApropertyTableGeneratorWaterStudentsPH extends neqsim.thermodyna
    * setPressureRange.
    * </p>
    *
-   * @param minPressure   a double
-   * @param maxPressure   a double
+   * @param minPressure a double
+   * @param maxPressure a double
    * @param numberOfSteps a int
    */
   public void setPressureRange(double minPressure, double maxPressure, int numberOfSteps) {
@@ -145,8 +145,8 @@ public class OLGApropertyTableGeneratorWaterStudentsPH extends neqsim.thermodyna
    * setEnthalpyRange.
    * </p>
    *
-   * @param minEnthalpy   a double
-   * @param maxEnthalpy   a double
+   * @param minEnthalpy a double
+   * @param maxEnthalpy a double
    * @param numberOfSteps a int
    */
   public void setEnthalpyRange(double minEnthalpy, double maxEnthalpy, int numberOfSteps) {

@@ -67,10 +67,10 @@ public class SeparatorLevelControlEnv extends RLEnvironment {
   /**
    * Create a separator level control environment with custom process.
    *
-   * @param process       the process system containing a separator
+   * @param process the process system containing a separator
    * @param separatorName name of the separator in the process
-   * @param valveName     name of the liquid outlet valve
-   * @param feedName      name of the feed stream
+   * @param valveName name of the liquid outlet valve
+   * @param feedName name of the feed stream
    */
   public SeparatorLevelControlEnv(ProcessSystem process, String separatorName, String valveName, String feedName) {
     super(process);

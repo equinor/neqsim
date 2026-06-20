@@ -93,7 +93,7 @@ public class StreamValidator {
    * Validate stream composition (helper for validateStream).
    *
    * @param builder the validation builder to add results to
-   * @param phase   the phase object to validate composition for
+   * @param phase the phase object to validate composition for
    */
   private static void validateComposition(ValidationBuilder builder, Object phase) {
     // This is a simplified check due to varying phase implementations
@@ -140,7 +140,7 @@ public class StreamValidator {
    * Validate state consistency between two streams (e.g., outlet of equipment A matches inlet of equipment B).
    *
    * @param outlet the outlet stream
-   * @param inlet  the inlet stream
+   * @param inlet the inlet stream
    * @return validation result with any errors or warnings
    */
   public static ValidationResult validateStreamConnection(StreamInterface outlet, StreamInterface inlet) {

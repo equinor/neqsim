@@ -94,7 +94,7 @@ public class DataHandling {
    * </p>
    *
    * @param series a int
-   * @param item   a int
+   * @param item a int
    * @return a {@link java.lang.Number} object
    */
   public Number getXValue(int series, int item) {
@@ -105,7 +105,7 @@ public class DataHandling {
    * Returns the y-value for the specified series and item. Series are numbered 0, 1, ...
    *
    * @param series The index (zero-based) of the series;
-   * @param item   The index (zero-based) of the required item;
+   * @param item The index (zero-based) of the required item;
    * @return The y-value for the specified series and item.
    */
   public Number getYValue(int series, int item) {
@@ -121,7 +121,7 @@ public class DataHandling {
    * printToFile.
    * </p>
    *
-   * @param points   an array of type double
+   * @param points an array of type double
    * @param filename a {@link java.lang.String} object
    */
   public void printToFile(double[][] points, String filename) {

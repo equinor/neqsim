@@ -510,9 +510,9 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     /**
      * Constructor for network pipe.
      *
-     * @param name     pipe name
+     * @param name pipe name
      * @param fromNode source node name
-     * @param toNode   target node name
+     * @param toNode target node name
      */
     public NetworkPipe(String name, String fromNode, String toNode) {
       this.name = name;
@@ -1719,7 +1719,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * source node.
    * </p>
    *
-   * @param name       network name
+   * @param name network name
    * @param feedStream inlet stream providing fluid composition, temperature and pressure
    */
   public LoopedPipeNetwork(String name, StreamInterface feedStream) {
@@ -1739,7 +1739,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @param sourceNodeName name of an existing source node
-   * @param stream         the feed stream
+   * @param stream the feed stream
    */
   public void setFeedStream(String sourceNodeName, StreamInterface stream) {
     if (stream == null) {
@@ -1854,8 +1854,8 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
   /**
    * Add a source node to the network.
    *
-   * @param name         node name
-   * @param pressureBar  fixed pressure in bara
+   * @param name node name
+   * @param pressureBar fixed pressure in bara
    * @param flowRateKgHr supply flow rate in kg/hr (optional, for validation)
    */
   public void addSourceNode(String name, double pressureBar, double flowRateKgHr) {
@@ -1869,10 +1869,10 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
   /**
    * Add a source node with specified elevation.
    *
-   * @param name         node name
-   * @param pressureBar  fixed pressure in bara
+   * @param name node name
+   * @param pressureBar fixed pressure in bara
    * @param flowRateKgHr supply flow rate in kg/hr
-   * @param elevationM   node elevation in meters
+   * @param elevationM node elevation in meters
    */
   public void addSourceNode(String name, double pressureBar, double flowRateKgHr, double elevationM) {
     addSourceNode(name, pressureBar, flowRateKgHr);
@@ -1882,7 +1882,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
   /**
    * Add a sink node (demand point) to the network.
    *
-   * @param name       node name
+   * @param name node name
    * @param demandKgHr demand flow rate in kg/hr
    */
   public void addSinkNode(String name, double demandKgHr) {
@@ -1894,7 +1894,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
   /**
    * Add a sink node with specified elevation.
    *
-   * @param name       node name
+   * @param name node name
    * @param demandKgHr demand flow rate in kg/hr
    * @param elevationM node elevation in meters
    */
@@ -1912,7 +1912,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * fixed-pressure deliverability calculation.
    * </p>
    *
-   * @param name        node name
+   * @param name node name
    * @param pressureBar delivery pressure in bara
    */
   public void addFixedPressureSinkNode(String name, double pressureBar) {
@@ -1926,9 +1926,9 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
   /**
    * Add a fixed-pressure sink node with specified elevation.
    *
-   * @param name        node name
+   * @param name node name
    * @param pressureBar delivery pressure in bara
-   * @param elevationM  node elevation in meters
+   * @param elevationM node elevation in meters
    */
   public void addFixedPressureSinkNode(String name, double pressureBar, double elevationM) {
     addFixedPressureSinkNode(name, pressureBar);
@@ -1949,7 +1949,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
   /**
    * Add a junction node with specified elevation.
    *
-   * @param name       node name
+   * @param name node name
    * @param elevationM node elevation in meters
    */
   public void addJunctionNode(String name, double elevationM) {
@@ -1960,10 +1960,10 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
   /**
    * Add a pipe connecting two nodes.
    *
-   * @param fromNode  source node name
-   * @param toNode    target node name
-   * @param pipeName  pipe name
-   * @param lengthM   pipe length in meters
+   * @param fromNode source node name
+   * @param toNode target node name
+   * @param pipeName pipe name
+   * @param lengthM pipe length in meters
    * @param diameterM pipe inner diameter in meters
    * @return the created pipe
    */
@@ -1994,11 +1994,11 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
   /**
    * Add a pipe with specified roughness.
    *
-   * @param fromNode   source node name
-   * @param toNode     target node name
-   * @param pipeName   pipe name
-   * @param lengthM    pipe length in meters
-   * @param diameterM  pipe inner diameter in meters
+   * @param fromNode source node name
+   * @param toNode target node name
+   * @param pipeName pipe name
+   * @param lengthM pipe length in meters
+   * @param diameterM pipe inner diameter in meters
    * @param roughnessM pipe roughness in meters
    * @return the created pipe
    */
@@ -2018,11 +2018,11 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * Pwf).
    * </p>
    *
-   * @param reservoirNode       name of reservoir (source) node (must be fixed-pressure)
-   * @param wellboreNode        name of wellbore/bottomhole node
-   * @param elementName         element name
+   * @param reservoirNode name of reservoir (source) node (must be fixed-pressure)
+   * @param wellboreNode name of wellbore/bottomhole node
+   * @param elementName element name
    * @param productivityIndexSI productivity index in kg/s/Pa (oil) or kg/s/Pa^2 (gas)
-   * @param isGas               true for gas wells (P^2 formulation)
+   * @param isGas true for gas wells (P^2 formulation)
    * @return the created element
    */
   public NetworkPipe addWellIPR(String reservoirNode, String wellboreNode, String elementName,
@@ -2044,9 +2044,9 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * Add a well IPR element using the Vogel model for solution-gas-drive oil wells.
    *
    * @param reservoirNode name of reservoir (source) node
-   * @param wellboreNode  name of wellbore node
-   * @param elementName   element name
-   * @param qmaxKgS       absolute open flow in kg/s
+   * @param wellboreNode name of wellbore node
+   * @param elementName element name
+   * @param qmaxKgS absolute open flow in kg/s
    * @return the created element
    */
   public NetworkPipe addWellIPRVogel(String reservoirNode, String wellboreNode, String elementName, double qmaxKgS) {
@@ -2065,10 +2065,10 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * Add a well IPR element using the Fetkovich model for gas wells.
    *
    * @param reservoirNode name of reservoir (source) node
-   * @param wellboreNode  name of wellbore node
-   * @param elementName   element name
-   * @param cCoeff        Fetkovich coefficient C in kg/s/Pa^(2n)
-   * @param nExp          Fetkovich exponent n (0.5-1.0)
+   * @param wellboreNode name of wellbore node
+   * @param elementName element name
+   * @param cCoeff Fetkovich coefficient C in kg/s/Pa^(2n)
+   * @param nExp Fetkovich exponent n (0.5-1.0)
    * @return the created element
    */
   public NetworkPipe addWellIPRFetkovich(String reservoirNode, String wellboreNode, String elementName, double cCoeff,
@@ -2094,10 +2094,10 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * the pressure drop is limited by the critical pressure ratio.
    * </p>
    *
-   * @param fromNode       upstream node name
-   * @param toNode         downstream node name
-   * @param elementName    element name
-   * @param kv             valve flow coefficient in m3/hr per sqrt(bar)
+   * @param fromNode upstream node name
+   * @param toNode downstream node name
+   * @param elementName element name
+   * @param kv valve flow coefficient in m3/hr per sqrt(bar)
    * @param openingPercent valve opening (0-100%)
    * @return the created element
    */
@@ -2117,11 +2117,11 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * acceleration. Uses a simplified Beggs-Brill-like approach with gravity and friction components.
    * </p>
    *
-   * @param bottomNode     bottomhole node name (higher pressure)
-   * @param topNode        wellhead node name (lower pressure)
-   * @param elementName    element name
-   * @param lengthM        tubing measured depth in meters
-   * @param diameterM      tubing inner diameter in meters
+   * @param bottomNode bottomhole node name (higher pressure)
+   * @param topNode wellhead node name (lower pressure)
+   * @param elementName element name
+   * @param lengthM tubing measured depth in meters
+   * @param diameterM tubing inner diameter in meters
    * @param inclinationDeg inclination from horizontal (90 = vertical)
    * @return the created element
    */
@@ -2141,11 +2141,11 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * suitable for subsea flowlines and production pipelines carrying gas-oil or gas-oil-water mixtures.
    * </p>
    *
-   * @param fromNode    upstream node name
-   * @param toNode      downstream node name
+   * @param fromNode upstream node name
+   * @param toNode downstream node name
    * @param elementName element name
-   * @param lengthM     pipe length in meters
-   * @param diameterM   pipe inner diameter in meters
+   * @param lengthM pipe length in meters
+   * @param diameterM pipe inner diameter in meters
    * @return the created element
    */
   public NetworkPipe addMultiphasePipe(String fromNode, String toNode, String elementName, double lengthM,
@@ -2163,9 +2163,9 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * compression ratio, or from a performance chart if provided. Wraps NeqSim's {@link Compressor} class internally.
    * </p>
    *
-   * @param fromNode             suction (upstream) node name
-   * @param toNode               discharge (downstream) node name
-   * @param elementName          element name
+   * @param fromNode suction (upstream) node name
+   * @param toNode discharge (downstream) node name
+   * @param elementName element name
    * @param polytropicEfficiency polytropic efficiency (0-1, typically 0.70-0.85)
    * @return the created element
    */
@@ -2184,10 +2184,10 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * solver iterates to find the operating point on the curve.
    * </p>
    *
-   * @param fromNode    suction node name
-   * @param toNode      discharge node name
+   * @param fromNode suction node name
+   * @param toNode discharge node name
    * @param elementName element name
-   * @param compressor  pre-configured NeqSim {@link Compressor} with chart
+   * @param compressor pre-configured NeqSim {@link Compressor} with chart
    * @return the created element
    */
   public NetworkPipe addCompressorWithChart(String fromNode, String toNode, String elementName, Compressor compressor) {
@@ -2208,8 +2208,8 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * the regulator is fully open (acts as a pipe).
    * </p>
    *
-   * @param fromNode    upstream node name
-   * @param toNode      downstream node name
+   * @param fromNode upstream node name
+   * @param toNode downstream node name
    * @param elementName element name
    * @param setPointBar downstream pressure set-point in bara
    * @return the created element
@@ -2233,7 +2233,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * bottomhole to wellhead. The model applies a head-loss reduction factor based on the injection rate.
    * </p>
    *
-   * @param elementName     name of the well element (IPR or tubing)
+   * @param elementName name of the well element (IPR or tubing)
    * @param gasLiftRateKgHr gas lift injection rate in kg/hr
    */
   public void setGasLift(String elementName, double gasLiftRateKgHr) {
@@ -2253,9 +2253,9 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * / volumetricFlowRate. This enables production from wells that cannot flow naturally.
    * </p>
    *
-   * @param elementName  name of the well element (IPR or tubing)
+   * @param elementName name of the well element (IPR or tubing)
    * @param ratedPowerKW ESP rated power in kW
-   * @param efficiency   pump efficiency (0-1, typically 0.3-0.7)
+   * @param efficiency pump efficiency (0-1, typically 0.3-0.7)
    */
   public void setESP(String elementName, double ratedPowerKW, double efficiency) {
     NetworkPipe pipe = pipes.get(elementName);
@@ -2275,9 +2275,9 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * ESP with an equivalent power and efficiency.
    * </p>
    *
-   * @param elementName       name of the well element
+   * @param elementName name of the well element
    * @param equivalentPowerKW equivalent hydraulic power in kW
-   * @param efficiency        nozzle-throat efficiency (typically 0.2-0.4)
+   * @param efficiency nozzle-throat efficiency (typically 0.2-0.4)
    */
   public void setJetPump(String elementName, double equivalentPowerKW, double efficiency) {
     NetworkPipe pipe = pipes.get(elementName);
@@ -2297,9 +2297,9 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * displacement and stroke rate.
    * </p>
    *
-   * @param elementName       name of the well element
+   * @param elementName name of the well element
    * @param equivalentPowerKW equivalent mechanical power in kW
-   * @param efficiency        pump efficiency (typically 0.4-0.6)
+   * @param efficiency pump efficiency (typically 0.4-0.6)
    */
   public void setRodPump(String elementName, double equivalentPowerKW, double efficiency) {
     NetworkPipe pipe = pipes.get(elementName);
@@ -2356,7 +2356,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @param elementName name of the element
-   * @param waterCut    water cut fraction (0-1)
+   * @param waterCut water cut fraction (0-1)
    */
   public void setWaterCut(String elementName, double waterCut) {
     NetworkPipe pipe = pipes.get(elementName);
@@ -2374,9 +2374,9 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * reservoir) and increases reservoir pressure.
    * </p>
    *
-   * @param sourceNode        water supply node
-   * @param reservoirNode     reservoir node
-   * @param elementName       element name
+   * @param sourceNode water supply node
+   * @param reservoirNode reservoir node
+   * @param elementName element name
    * @param injectionRateKgHr injection rate in kg/hr
    * @return the created element
    */
@@ -2451,10 +2451,10 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * exceeds the breakthrough threshold, the water cut ramps up linearly to the final water cut.
    * </p>
    *
-   * @param elementName    well element name
+   * @param elementName well element name
    * @param breakthroughWC water cut at breakthrough (typically 0.05-0.10)
-   * @param finalWC        ultimate water cut (typically 0.80-0.95)
-   * @param currentWC      current water cut
+   * @param finalWC ultimate water cut (typically 0.80-0.95)
+   * @param currentWC current water cut
    */
   public void setWaterBreakthrough(String elementName, double breakthroughWC, double finalWC, double currentWC) {
     NetworkPipe pipe = pipes.get(elementName);
@@ -2474,7 +2474,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
   /**
    * Set the sand production rate for a well element.
    *
-   * @param elementName  well element name
+   * @param elementName well element name
    * @param sandRateKgHr sand production rate in kg/hr
    */
   public void setSandRate(String elementName, double sandRateKgHr) {
@@ -2514,7 +2514,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @return map of pipe name to sand results: [0]=sandConc_kgm3, [1]=erosionRate_mmyr, [2]=depositionRate_kgmyr,
-   *         [3]=sandVelocity_ms
+   * [3]=sandVelocity_ms
    */
   public Map<String, double[]> calculateSandTransport() {
     pipeSandResults.clear();
@@ -2646,7 +2646,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * Set the corrosion model for a pipe element.
    *
    * @param elementName pipe element name
-   * @param model       "deWaard" for de Waard-Milliams (1975/1991) or "norsokM506" for NORSOK M-506
+   * @param model "deWaard" for de Waard-Milliams (1975/1991) or "norsokM506" for NORSOK M-506
    */
   public void setCorrosionModel(String elementName, String model) {
     NetworkPipe pipe = pipes.get(elementName);
@@ -2679,7 +2679,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * </ul>
    *
    * @return map of pipe name to corrosion results: [0]=corrosionRate_mmyr, [1]=co2PartialPressure_bar,
-   *         [2]=h2sPartialPressure_bar, [3]=remainingLife_yr
+   * [2]=h2sPartialPressure_bar, [3]=remainingLife_yr
    */
   public Map<String, double[]> calculateCorrosion() {
     pipeCorrosionResults.clear();
@@ -2821,7 +2821,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @return map of compressor element name to emissions array: [0]=CO2_kghr, [1]=CH4_slip_kghr, [2]=CO2eq_kghr,
-   *         [3]=power_kW, [4]=fuelGas_kghr
+   * [3]=power_kW, [4]=fuelGas_kghr
    */
   public Map<String, double[]> calculateEmissions() {
     emissionsResults.clear();
@@ -2921,7 +2921,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @param sourceNodeName name of the source node
-   * @param fluid          the fluid composition at this source
+   * @param fluid the fluid composition at this source
    */
   public void setNodeFluid(String sourceNodeName, SystemInterface fluid) {
     if (fluid != null) {
@@ -2962,7 +2962,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * means new pipe; 0.85 means 15% degradation. The friction loss is multiplied by {@code 1/efficiency}.
    * </p>
    *
-   * @param pipeName   pipe name
+   * @param pipeName pipe name
    * @param efficiency efficiency factor (0.5-1.0, typically 0.85-1.0)
    */
   public void setPipeEfficiency(String pipeName, double efficiency) {
@@ -3455,7 +3455,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * production choke, tubing VLP, or multiphase pipe.
    * </p>
    *
-   * @param pipe  the network element
+   * @param pipe the network element
    * @param fluid fluid properties
    * @return head loss in Pa (positive = pressure drop from-to direction)
    */
@@ -3520,7 +3520,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
   /**
    * Calculate head loss for a standard pipe using Darcy-Weisbach equation with elevation.
    *
-   * @param pipe  the pipe
+   * @param pipe the pipe
    * @param fluid fluid properties
    * @return head loss in Pa
    */
@@ -3595,7 +3595,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * <li>Fetkovich: q = C * (Pr^2 - Pwf^2)^n</li>
    * </ul>
    *
-   * @param pipe  the IPR element
+   * @param pipe the IPR element
    * @param fluid fluid properties (not used directly, IPR is empirical)
    * @return head loss in Pa
    */
@@ -3671,7 +3671,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * For critical (choked) flow, the effective dP is limited by the critical pressure ratio.
    * </p>
    *
-   * @param pipe  the choke element
+   * @param pipe the choke element
    * @param fluid fluid properties
    * @return head loss in Pa
    */
@@ -3762,7 +3762,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * * g * L * sin(theta) + f * (L/D) * (rho * v^2 / 2)
    * </p>
    *
-   * @param pipe  the tubing element
+   * @param pipe the tubing element
    * @param fluid fluid properties
    * @return head loss in Pa (positive = pressure drop bottom-to-top)
    */
@@ -3814,7 +3814,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * sin(angle) where angle is calculated from pipe-level elevation difference.
    * </p>
    *
-   * @param pipe  the multiphase pipe element
+   * @param pipe the multiphase pipe element
    * @param fluid fluid properties
    * @return head loss in Pa
    */
@@ -3899,7 +3899,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * is computed from the polytropic efficiency and compression ratio, or from a performance chart if available.
    * </p>
    *
-   * @param pipe  the compressor element
+   * @param pipe the compressor element
    * @param fluid fluid properties
    * @return head loss in Pa (negative = pressure rise)
    */
@@ -3982,7 +3982,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * fully open (minimal resistance).
    * </p>
    *
-   * @param pipe  the regulator element
+   * @param pipe the regulator element
    * @param fluid fluid properties (used for velocity calculation only)
    * @return head loss in Pa
    */
@@ -4015,7 +4015,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
   /**
    * Calculate derivative of head loss with respect to flow rate for any element type.
    *
-   * @param pipe  the network element
+   * @param pipe the network element
    * @param fluid fluid properties
    * @return dh/dQ in Pa/(kg/s)
    */
@@ -4106,7 +4106,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
   /**
    * Calculate dh/dQ for choke element.
    *
-   * @param pipe  the choke element
+   * @param pipe the choke element
    * @param fluid fluid properties
    * @return dh/dQ in Pa/(kg/s)
    */
@@ -4155,7 +4155,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * uses 2|h|/Q.
    * </p>
    *
-   * @param pipe  the compressor element
+   * @param pipe the compressor element
    * @param fluid fluid properties
    * @return dh/dQ in Pa/(kg/s) — typically negative (head rise decreases with more flow)
    */
@@ -4177,7 +4177,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * pressure drop is nearly independent of flow, so the derivative is small.
    * </p>
    *
-   * @param pipe  the regulator element
+   * @param pipe the regulator element
    * @param fluid fluid properties
    * @return dh/dQ in Pa/(kg/s)
    */
@@ -4390,7 +4390,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * Propagate pressure from a node to connected nodes.
    *
    * @param nodeName starting node name
-   * @param fluid    fluid for calculations
+   * @param fluid fluid for calculations
    */
   private void propagatePressure(String nodeName, SystemInterface fluid) {
     java.util.Set<String> visited = new java.util.HashSet<>();
@@ -4938,9 +4938,9 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * <li>"operatingRate" - single value, operating rate in kg/hr</li>
    * </ul>
    *
-   * @param iprElementName     name of the WELL_IPR element
+   * @param iprElementName name of the WELL_IPR element
    * @param outflowElementName name of the downstream element (pipe, choke, or tubing)
-   * @param numPoints          number of sweep points (default 20 if &lt;= 0)
+   * @param numPoints number of sweep points (default 20 if &lt;= 0)
    * @return map with nodal analysis arrays, or empty map if elements not found
    */
   public Map<String, double[]> nodalAnalysis(String iprElementName, String outflowElementName, int numPoints) {
@@ -5011,8 +5011,8 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * Compute IPR flow rate at a given bottom-hole pressure.
    *
    * @param iprPipe the IPR element
-   * @param pResPa  reservoir pressure in Pa
-   * @param bhpPa   bottom-hole pressure in Pa
+   * @param pResPa reservoir pressure in Pa
+   * @param bhpPa bottom-hole pressure in Pa
    * @return flow rate in kg/s (positive)
    */
   private double computeIPRFlowRate(NetworkPipe iprPipe, double pResPa, double bhpPa) {
@@ -5041,7 +5041,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @param outPipe the outflow element
-   * @param bhpPa   available bottom-hole pressure in Pa
+   * @param bhpPa available bottom-hole pressure in Pa
    * @return flow rate in kg/s (positive)
    */
   private double estimateVLPRate(NetworkPipe outPipe, double bhpPa) {
@@ -5100,7 +5100,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * hydrate formation limits, etc.
    * </p>
    *
-   * @param nodeName       name of the node
+   * @param nodeName name of the node
    * @param minPressureBar minimum acceptable pressure in bara
    * @param maxPressureBar maximum acceptable pressure in bara
    */
@@ -5383,7 +5383,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @param maxIterations maximum number of optimization iterations
-   * @param tolerance     convergence tolerance for relative change in total production
+   * @param tolerance convergence tolerance for relative change in total production
    * @return total optimized production in kg/s
    */
   public double optimizeChokeOpenings(int maxIterations, double tolerance) {
@@ -5487,11 +5487,11 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * creates a VFP table covering the specified flow rate, THP, and parameter ranges.
    * </p>
    *
-   * @param filePath  the file path to write VFP tables to
+   * @param filePath the file path to write VFP tables to
    * @param flowRates array of flow rates (Sm3/d) for VFP table
-   * @param thps      array of tubing head pressures (bara) for VFP table
+   * @param thps array of tubing head pressures (bara) for VFP table
    * @param waterCuts array of water cuts (fraction) for VFP table
-   * @param gors      array of gas-oil ratios (Sm3/Sm3) for VFP table
+   * @param gors array of gas-oil ratios (Sm3/Sm3) for VFP table
    */
   public void exportVFPTables(String filePath, double[] flowRates, double[] thps, double[] waterCuts, double[] gors) {
     try {
@@ -5530,11 +5530,11 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
   /**
    * Generate BHP table for a well element across parameter ranges.
    *
-   * @param pipe      the well element (IPR or tubing)
+   * @param pipe the well element (IPR or tubing)
    * @param flowRates flow rates to evaluate (Sm3/d)
-   * @param thps      tubing head pressures (bara)
+   * @param thps tubing head pressures (bara)
    * @param waterCuts water cut values (fraction)
-   * @param gors      GOR values (Sm3/Sm3)
+   * @param gors GOR values (Sm3/Sm3)
    * @return 5D BHP table: [flow][thp][wc][gor][alq]
    */
   private double[][][][][] generateBHPTable(NetworkPipe pipe, double[] flowRates, double[] thps, double[] waterCuts,
@@ -5640,7 +5640,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * Set per-well product price for revenue allocation.
    *
    * @param wellOrChokeName name of the well IPR or choke element
-   * @param pricePerKg      product price in USD/kg
+   * @param pricePerKg product price in USD/kg
    */
   public void setWellPrice(String wellOrChokeName, double pricePerKg) {
     wellOilPrices.put(wellOrChokeName, pricePerKg);
@@ -5655,7 +5655,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @param maxIterations maximum number of optimization iterations
-   * @param tolerance     convergence tolerance for relative revenue change
+   * @param tolerance convergence tolerance for relative revenue change
    * @return optimized total revenue in USD/hr (or total flow in kg/hr if no prices set)
    */
   public double optimizeProduction(int maxIterations, double tolerance) {
@@ -5835,9 +5835,9 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * Supported parameter types: "reservoir_pressure", "well_pi", "choke_opening", "sink_pressure", "pipe_diameter".
    * </p>
    *
-   * @param elementName   name of the element to sweep
+   * @param elementName name of the element to sweep
    * @param parameterType type of parameter to vary
-   * @param values        array of parameter values to evaluate
+   * @param values array of parameter values to evaluate
    * @return map with keys "paramValues", "totalFlow_kghr", "sinkPressures_bara" containing results
    */
   public Map<String, double[]> sensitivityAnalysis(String elementName, String parameterType, double[] values) {
@@ -5901,9 +5901,9 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
   /**
    * Apply a parameter value to a network element.
    *
-   * @param elementName   element name
+   * @param elementName element name
    * @param parameterType parameter type
-   * @param value         value to set
+   * @param value value to set
    */
   private void applyParameterValue(String elementName, String parameterType, double value) {
     NetworkPipe pipe = getPipe(elementName);
@@ -5944,7 +5944,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @param reservoirPressures array of reservoir pressures (bara) at each timestep
-   * @param timestepYears      array of time values (years) corresponding to each pressure
+   * @param timestepYears array of time values (years) corresponding to each pressure
    * @return map with keys "time_years", "rate_kghr", "cumulative_kg", "avg_pressure_bara"
    */
   public Map<String, double[]> productionForecast(double[] reservoirPressures, double[] timestepYears) {
@@ -6009,7 +6009,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @param flowRates_kghr array of flow rates (kg/hr) for VFP table
-   * @param thps           array of tubing head pressures (bara) for VFP table
+   * @param thps array of tubing head pressures (bara) for VFP table
    * @return map from well name to 2D BHP table [flowRate][THP] in bara
    */
   public Map<String, double[][]> generateCoupledVFPTables(double[] flowRates_kghr, double[] thps) {
@@ -6072,8 +6072,8 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * Compute BHP from IPR model given a flow rate.
    *
    * @param iprPipe the IPR element
-   * @param pResPa  reservoir pressure in Pa
-   * @param qKgs    flow rate in kg/s
+   * @param pResPa reservoir pressure in Pa
+   * @param qKgs flow rate in kg/s
    * @return bottom-hole pressure in Pa
    */
   private double computeBHPFromIPR(NetworkPipe iprPipe, double pResPa, double qKgs) {
@@ -6148,9 +6148,9 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * VFP table file.
    * </p>
    *
-   * @param filePath       base file path for VFP files
+   * @param filePath base file path for VFP files
    * @param flowRates_kghr flow rates in kg/hr
-   * @param thps           tubing head pressures in bara
+   * @param thps tubing head pressures in bara
    */
   public void exportCoupledVFPTables(String filePath, double[] flowRates_kghr, double[] thps) {
     Map<String, double[][]> tables = generateCoupledVFPTables(flowRates_kghr, thps);
@@ -6280,12 +6280,12 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * discrepancy as a percentage error.
    * </p>
    *
-   * @param vfpTable       2D BHP table [flowRate][THP] from generateCoupledVFPTables
+   * @param vfpTable 2D BHP table [flowRate][THP] from generateCoupledVFPTables
    * @param flowRates_kghr flow rate axis values in kg/hr
-   * @param thps           THP axis values in bara
-   * @param actualRate     actual rate in kg/hr
-   * @param actualTHP      actual THP in bara
-   * @param actualBHP      actual BHP in bara
+   * @param thps THP axis values in bara
+   * @param actualRate actual rate in kg/hr
+   * @param actualTHP actual THP in bara
+   * @param actualBHP actual BHP in bara
    * @return map with "vfpBHP_bara", "actualBHP_bara", "error_pct"
    */
   public Map<String, Double> validateVFPPoint(double[][] vfpTable, double[] flowRates_kghr, double[] thps,
@@ -6312,8 +6312,8 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * @param table BHP table [flowRate][THP]
    * @param xAxis flow rate axis
    * @param yAxis THP axis
-   * @param x     query flow rate
-   * @param y     query THP
+   * @param x query flow rate
+   * @param y query THP
    * @return interpolated BHP
    */
   private double interpolateVFP(double[][] table, double[] xAxis, double[] yAxis, double x, double y) {
@@ -6603,7 +6603,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * BFS distance computation from seed nodes through pipe connections.
    *
    * @param queue initial queue of seed nodes
-   * @param dist  map to populate with distances
+   * @param dist map to populate with distances
    */
   private void bfsDistances(java.util.Queue<String> queue, Map<String, Integer> dist) {
     while (!queue.isEmpty()) {
@@ -6887,7 +6887,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    *
    * @param matA coefficient matrix (n x n)
    * @param vecB right-hand side vector (n)
-   * @param n    system size
+   * @param n system size
    * @return solution vector x
    */
   private double[] solveLinearSystem(double[][] matA, double[] vecB, int n) {
@@ -7500,7 +7500,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * {@link IllegalArgumentException} if the node does not exist.
    * </p>
    *
-   * @param nodeName    name of the existing node
+   * @param nodeName name of the existing node
    * @param pressureBar new pressure in bara
    */
   public void setNodePressure(String nodeName, double pressureBar) {
@@ -7520,7 +7520,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @param sourceNodeName name of the reservoir source node
-   * @param pressureBar    new reservoir pressure in bara
+   * @param pressureBar new reservoir pressure in bara
    */
   public void setReservoirPressure(String sourceNodeName, double pressureBar) {
     setNodePressure(sourceNodeName, pressureBar);
@@ -7558,7 +7558,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * {@link ProcessSystem} containing at minimum an inlet separator.
    * </p>
    *
-   * @param topside      the topside {@link ProcessSystem}
+   * @param topside the topside {@link ProcessSystem}
    * @param sinkNodeName the network sink node to couple (the arrival point)
    */
   public void setTopsideModel(ProcessSystem topside, String sinkNodeName) {
@@ -7644,7 +7644,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @return a map with coupling results: arrivalPressure_bara, totalFlow_kghr, separatorUtilization,
-   *         compressorPower_MW, converged, iterations
+   * compressorPower_MW, converged, iterations
    */
   public Map<String, Double> runCoupled() {
     Map<String, Double> result = new LinkedHashMap<>();
@@ -7792,12 +7792,12 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @param reservoirPressureProfiles map from source-node name to pressure profiles (bara). Each array must have the
-   *                                  same length as timestepYears.
-   * @param timestepYears             array of timestep years (e.g., 0, 1, 2, ... 20)
-   * @param optimMaxIter              max iterations for choke optimisation at each timestep
-   * @param optimTolerance            convergence tolerance for optimisation
+   * same length as timestepYears.
+   * @param timestepYears array of timestep years (e.g., 0, 1, 2, ... 20)
+   * @param optimMaxIter max iterations for choke optimisation at each timestep
+   * @param optimTolerance convergence tolerance for optimisation
    * @return map with time-series results: time_years, rate_kghr, cumulative_kg, revenue_usd_hr, separator_util_pct,
-   *         compressor_power_MW, plus per-reservoir pressures
+   * compressor_power_MW, plus per-reservoir pressures
    */
   public Map<String, double[]> productionForecastWithOptimization(Map<String, double[]> reservoirPressureProfiles,
       double[] timestepYears, int optimMaxIter, double optimTolerance) {
@@ -7886,11 +7886,11 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * {@link #productionForecastWithOptimization(Map, double[], int, double)}.
    * </p>
    *
-   * @param sourceNodeName     name of the reservoir source node
+   * @param sourceNodeName name of the reservoir source node
    * @param reservoirPressures pressure profile (bara) at each timestep
-   * @param timestepYears      array of timestep years
-   * @param optimMaxIter       max iterations for optimisation
-   * @param optimTolerance     convergence tolerance
+   * @param timestepYears array of timestep years
+   * @param optimMaxIter max iterations for optimisation
+   * @param optimTolerance convergence tolerance
    * @return time-series results map
    */
   public Map<String, double[]> productionForecastWithOptimization(String sourceNodeName, double[] reservoirPressures,
@@ -7932,7 +7932,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @param sourceNodeName name of the reservoir source node
-   * @param e300FilePath   path to the E300 file with ZI section for this reservoir
+   * @param e300FilePath path to the E300 file with ZI section for this reservoir
    */
   public void setReservoirCompositionFromE300(String sourceNodeName, String e300FilePath) {
     NetworkNode node = nodes.get(sourceNodeName);
@@ -7955,7 +7955,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * BIPs, and component properties are preserved. Only the mole fractions change.
    * </p>
    *
-   * @param sourceNodeName   name of the reservoir source node
+   * @param sourceNodeName name of the reservoir source node
    * @param molarComposition mole fractions (same component order as template)
    */
   public void setReservoirComposition(String sourceNodeName, double[] molarComposition) {
@@ -7984,10 +7984,10 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * optionally sweeps arrival pressure to find the best overall operating point.
    * </p>
    *
-   * @param optimMaxIter   max iterations for choke optimisation
+   * @param optimMaxIter max iterations for choke optimisation
    * @param optimTolerance tolerance for optimisation convergence
    * @return map with results: arrivalPressure_bara, totalFlow_kghr, revenue_usd_hr, separatorUtilization,
-   *         compressorPower_MW, chokeSettings (per-well)
+   * compressorPower_MW, chokeSettings (per-well)
    */
   public Map<String, Object> optimizeFullField(int optimMaxIter, double optimTolerance) {
     Map<String, Object> result = new LinkedHashMap<>();
@@ -8037,7 +8037,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @param reservoirPressureProfiles map from source-node name to pressure arrays (bara)
-   * @param timestepYears             array of years
+   * @param timestepYears array of years
    * @return comprehensive forecast results per timestep
    */
   public Map<String, double[]> fullFieldForecast(Map<String, double[]> reservoirPressureProfiles,
@@ -8089,9 +8089,9 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @param sourceNodeName name of the reservoir source node in the network
-   * @param reservoir      the SimpleReservoir instance
-   * @param wellType       type of producer well: "gas" or "oil"
-   * @param wellIndex      index of the well in the reservoir's producer list (0-based)
+   * @param reservoir the SimpleReservoir instance
+   * @param wellType type of producer well: "gas" or "oil"
+   * @param wellIndex index of the well in the reservoir's producer list (0-based)
    */
   public void attachReservoir(String sourceNodeName, SimpleReservoir reservoir, String wellType, int wellIndex) {
     if (!nodes.containsKey(sourceNodeName)) {
@@ -8107,8 +8107,8 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * Attach a SimpleReservoir to a source node (convenience: assumes well index 0).
    *
    * @param sourceNodeName name of the reservoir source node
-   * @param reservoir      the SimpleReservoir instance
-   * @param wellType       "gas" or "oil"
+   * @param reservoir the SimpleReservoir instance
+   * @param wellType "gas" or "oil"
    */
   public void attachReservoir(String sourceNodeName, SimpleReservoir reservoir, String wellType) {
     attachReservoir(sourceNodeName, reservoir, wellType, 0);
@@ -8147,8 +8147,8 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * <li>Read the new reservoir pressure and update the network source node + IPR elements</li>
    * </ol>
    *
-   * @param dtSeconds      timestep duration in seconds
-   * @param optimMaxIter   max iterations for choke optimisation (0 to skip optimisation)
+   * @param dtSeconds timestep duration in seconds
+   * @param optimMaxIter max iterations for choke optimisation (0 to skip optimisation)
    * @param optimTolerance convergence tolerance for optimisation
    * @return map with post-step state: reservoir pressures, total flow, GIP/OIP
    */
@@ -8253,11 +8253,11 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * Reservoirs must be attached via {@link #attachReservoir} before calling this method.
    * </p>
    *
-   * @param timestepYears  array of timestep years (e.g., 0, 1, 2, ... 20)
-   * @param optimMaxIter   max iterations for choke optimisation at each timestep
+   * @param timestepYears array of timestep years (e.g., 0, 1, 2, ... 20)
+   * @param optimMaxIter max iterations for choke optimisation at each timestep
    * @param optimTolerance convergence tolerance for optimisation
    * @return map with time-series: time_years, rate_kghr, cumulative_kg, revenue_usd_hr, separator_util_pct,
-   *         compressor_power_MW, plus per-reservoir pressures and GIP/OIP
+   * compressor_power_MW, plus per-reservoir pressures and GIP/OIP
    */
   public Map<String, double[]> productionForecastCoupled(double[] timestepYears, int optimMaxIter,
       double optimTolerance) {

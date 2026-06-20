@@ -82,7 +82,7 @@ public class MonteCarloSimulator implements Serializable {
      * Applies a parameter value to a process system.
      *
      * @param process the process system to modify
-     * @param value   the parameter value to apply
+     * @param value the parameter value to apply
      */
     void apply(ProcessSystem process, double value);
   }
@@ -91,7 +91,7 @@ public class MonteCarloSimulator implements Serializable {
    * Creates a Monte Carlo simulator.
    *
    * @param baseProcess the base process system to clone for each iteration
-   * @param iterations  number of Monte Carlo iterations (recommended 200+ for NeqSim)
+   * @param iterations number of Monte Carlo iterations (recommended 200+ for NeqSim)
    */
   public MonteCarloSimulator(ProcessSystem baseProcess, int iterations) {
     if (baseProcess == null) {
@@ -115,10 +115,10 @@ public class MonteCarloSimulator implements Serializable {
   /**
    * Adds an uncertain parameter with a triangular distribution.
    *
-   * @param name    descriptive name (e.g., "Gas Price (NOK/Sm3)")
-   * @param low     minimum value
-   * @param mode    most likely value
-   * @param high    maximum value
+   * @param name descriptive name (e.g., "Gas Price (NOK/Sm3)")
+   * @param low minimum value
+   * @param mode most likely value
+   * @param high maximum value
    * @param applier function to apply the sampled value to a process system
    * @return this for chaining
    */
@@ -131,9 +131,9 @@ public class MonteCarloSimulator implements Serializable {
   /**
    * Adds an uncertain parameter with a uniform distribution.
    *
-   * @param name    descriptive name
-   * @param low     minimum value
-   * @param high    maximum value
+   * @param name descriptive name
+   * @param low minimum value
+   * @param high maximum value
    * @param applier function to apply the sampled value
    * @return this for chaining
    */
@@ -146,7 +146,7 @@ public class MonteCarloSimulator implements Serializable {
   /**
    * Sets the output variable to track.
    *
-   * @param name      output variable name
+   * @param name output variable name
    * @param extractor function that extracts the output value from a run process system
    * @return this for chaining
    */
@@ -223,7 +223,7 @@ public class MonteCarloSimulator implements Serializable {
   /**
    * Samples from a triangular distribution.
    *
-   * @param low  minimum value
+   * @param low minimum value
    * @param mode most likely value
    * @param high maximum value
    * @return sampled value
@@ -272,7 +272,7 @@ public class MonteCarloSimulator implements Serializable {
   /**
    * Runs with one parameter overridden and all others at their mode values.
    *
-   * @param paramIndex    index of the parameter to override
+   * @param paramIndex index of the parameter to override
    * @param overrideValue value to use for the overridden parameter
    * @return output value
    * @throws Exception if simulation fails
@@ -309,12 +309,12 @@ public class MonteCarloSimulator implements Serializable {
     /**
      * Creates an uncertain parameter.
      *
-     * @param name         parameter name
-     * @param low          minimum value
-     * @param mode         most likely value
-     * @param high         maximum value
+     * @param name parameter name
+     * @param low minimum value
+     * @param mode most likely value
+     * @param high maximum value
      * @param distribution distribution type
-     * @param applier      applier function
+     * @param applier applier function
      */
     UncertainParameter(String name, double low, double mode, double high, String distribution,
 	ParameterApplier applier) {
@@ -345,10 +345,10 @@ public class MonteCarloSimulator implements Serializable {
     /**
      * Creates a tornado entry.
      *
-     * @param parameter  parameter description
-     * @param lowResult  result at low value
+     * @param parameter parameter description
+     * @param lowResult result at low value
      * @param highResult result at high value
-     * @param swing      absolute swing
+     * @param swing absolute swing
      */
     TornadoEntry(String parameter, double lowResult, double highResult, double swing) {
       this.parameter = parameter;
@@ -375,13 +375,13 @@ public class MonteCarloSimulator implements Serializable {
     /**
      * Creates a Monte Carlo result.
      *
-     * @param outputName      name of the output variable
-     * @param sortedValues    sorted array of successful output values
+     * @param outputName name of the output variable
+     * @param sortedValues sorted array of successful output values
      * @param totalIterations total iterations attempted
-     * @param successCount    successful iterations
-     * @param failCount       failed iterations
-     * @param tornado         tornado sensitivity entries
-     * @param parameters      input parameters
+     * @param successCount successful iterations
+     * @param failCount failed iterations
+     * @param tornado tornado sensitivity entries
+     * @param parameters input parameters
      */
     MonteCarloResult(String outputName, double[] sortedValues, int totalIterations, int successCount, int failCount,
 	List<TornadoEntry> tornado, List<UncertainParameter> parameters) {

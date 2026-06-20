@@ -221,11 +221,11 @@ public abstract class Component implements ComponentInterface {
    * </p>
    *
    * @param number a int. Not used.
-   * @param TC     Critical temperature [K]
-   * @param PC     Critical pressure [bara]
-   * @param M      Molar mass
-   * @param a      Acentric factor
-   * @param moles  Total number of moles of component.
+   * @param TC Critical temperature [K]
+   * @param PC Critical pressure [bara]
+   * @param M Molar mass
+   * @param a Acentric factor
+   * @param moles Total number of moles of component.
    */
   public Component(int number, double TC, double PC, double M, double a, double moles) {
     criticalPressure = PC;
@@ -240,10 +240,10 @@ public abstract class Component implements ComponentInterface {
    * Constructor for Component.
    * </p>
    *
-   * @param name         Name of component.
-   * @param moles        Total number of moles of component.
+   * @param name Name of component.
+   * @param moles Total number of moles of component.
    * @param molesInPhase Number of moles in phase.
-   * @param compIndex    Index number of component in phase object component array.
+   * @param compIndex Index number of component in phase object component array.
    */
   public Component(String name, double moles, double molesInPhase, int compIndex) {
     createComponent(name, moles, molesInPhase, compIndex);
@@ -1381,7 +1381,7 @@ public abstract class Component implements ComponentInterface {
    * getFugacitydN.
    * </p>
    *
-   * @param i     a int
+   * @param i a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
    */
@@ -1416,7 +1416,7 @@ public abstract class Component implements ComponentInterface {
    * getChemicalPotentialdP.
    * </p>
    *
-   * @param i     a int
+   * @param i a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
    */
@@ -1792,7 +1792,7 @@ public abstract class Component implements ComponentInterface {
    * Setter for the field <code>matiascopemanParamsPR</code>.
    * </p>
    *
-   * @param index               a int
+   * @param index a int
    * @param matiascopemanParams a double
    */
   public void setMatiascopemanParamsPR(int index, double matiascopemanParams) {

@@ -16,10 +16,10 @@ public class ComponentSpanWagnerEos extends ComponentEos {
    * Constructor for ComponentSpanWagnerEos.
    * </p>
    *
-   * @param name         a {@link java.lang.String} object
-   * @param moles        a double
+   * @param name a {@link java.lang.String} object
+   * @param moles a double
    * @param molesInPhase a double
-   * @param compIndex    a int
+   * @param compIndex a int
    */
   public ComponentSpanWagnerEos(String name, double moles, double molesInPhase, int compIndex) {
     super(name, moles, molesInPhase, compIndex);
@@ -31,11 +31,11 @@ public class ComponentSpanWagnerEos extends ComponentEos {
    * </p>
    *
    * @param number a int
-   * @param TC     a double
-   * @param PC     a double
-   * @param M      a double
-   * @param a      a double
-   * @param moles  a double
+   * @param TC a double
+   * @param PC a double
+   * @param M a double
+   * @param a a double
+   * @param moles a double
    */
   public ComponentSpanWagnerEos(int number, double TC, double PC, double M, double a, double moles) {
     super(number, TC, PC, M, a, moles);

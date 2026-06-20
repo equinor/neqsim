@@ -80,7 +80,7 @@ public class ProcessEventBus implements Serializable {
   /**
    * Subscribes to events of a specific type.
    *
-   * @param type     event type
+   * @param type event type
    * @param listener event listener
    */
   public void subscribe(ProcessEvent.EventType type, ProcessEventListener listener) {
@@ -107,7 +107,7 @@ public class ProcessEventBus implements Serializable {
   /**
    * Unsubscribes from a specific event type.
    *
-   * @param type     event type
+   * @param type event type
    * @param listener listener to remove
    */
   public void unsubscribe(ProcessEvent.EventType type, ProcessEventListener listener) {
@@ -143,7 +143,7 @@ public class ProcessEventBus implements Serializable {
   /**
    * Publishes an info event.
    *
-   * @param source      event source
+   * @param source event source
    * @param description description
    */
   public void publishInfo(String source, String description) {
@@ -153,7 +153,7 @@ public class ProcessEventBus implements Serializable {
   /**
    * Publishes a warning event.
    *
-   * @param source      event source
+   * @param source event source
    * @param description description
    */
   public void publishWarning(String source, String description) {
@@ -163,7 +163,7 @@ public class ProcessEventBus implements Serializable {
   /**
    * Publishes an alarm event.
    *
-   * @param source      event source
+   * @param source event source
    * @param description description
    */
   public void publishAlarm(String source, String description) {
@@ -233,7 +233,7 @@ public class ProcessEventBus implements Serializable {
   /**
    * Gets events by type from history.
    *
-   * @param type  event type
+   * @param type event type
    * @param count maximum events to retrieve
    * @return list of events
    */
@@ -254,7 +254,7 @@ public class ProcessEventBus implements Serializable {
    * Gets events by severity from history.
    *
    * @param minSeverity minimum severity level
-   * @param count       maximum events to retrieve
+   * @param count maximum events to retrieve
    * @return list of events
    */
   public List<ProcessEvent> getEventsBySeverity(ProcessEvent.Severity minSeverity, int count) {

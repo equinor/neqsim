@@ -176,7 +176,7 @@ public final class TaskWorkflowBridge {
    * Extracts key flash results.
    *
    * @param output flash tool output
-   * @param kr     key_results to populate
+   * @param kr key_results to populate
    */
   private static void extractFlashResults(JsonObject output, JsonObject kr) {
     if (output.has("fluid")) {
@@ -213,7 +213,7 @@ public final class TaskWorkflowBridge {
    * Extracts key process results.
    *
    * @param output process tool output
-   * @param kr     key_results to populate
+   * @param kr key_results to populate
    */
   private static void extractProcessResults(JsonObject output, JsonObject kr) {
     if (output.has("equipment")) {
@@ -228,7 +228,7 @@ public final class TaskWorkflowBridge {
    * Extracts key PVT results.
    *
    * @param output PVT tool output
-   * @param kr     key_results to populate
+   * @param kr key_results to populate
    */
   private static void extractPVTResults(JsonObject output, JsonObject kr) {
     if (output.has("results")) {
@@ -246,7 +246,7 @@ public final class TaskWorkflowBridge {
    * Extracts key pipeline results.
    *
    * @param output pipeline tool output
-   * @param kr     key_results to populate
+   * @param kr key_results to populate
    */
   private static void extractPipelineResults(JsonObject output, JsonObject kr) {
     if (output.has("results")) {
@@ -264,7 +264,7 @@ public final class TaskWorkflowBridge {
    * Extracts key standards results.
    *
    * @param output standards tool output
-   * @param kr     key_results to populate
+   * @param kr key_results to populate
    */
   private static void extractStandardsResults(JsonObject output, JsonObject kr) {
     if (output.has("results") || output.has("properties")) {
@@ -281,7 +281,7 @@ public final class TaskWorkflowBridge {
    * Extracts key economics results.
    *
    * @param output economics tool output
-   * @param kr     key_results to populate
+   * @param kr key_results to populate
    */
   private static void extractEconomicsResults(JsonObject output, JsonObject kr) {
     if (output.has("results")) {

@@ -35,7 +35,7 @@ public class AttractiveTermMatCop extends AttractiveTermSrk {
    * </p>
    *
    * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
-   * @param params    an array of type double
+   * @param params an array of type double
    */
   public AttractiveTermMatCop(ComponentEosInterface component, double[] params) {
     this(component);

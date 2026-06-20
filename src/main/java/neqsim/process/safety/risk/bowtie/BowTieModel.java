@@ -307,7 +307,7 @@ public class BowTieModel implements Serializable {
   /**
    * Creates a bow-tie model.
    *
-   * @param hazardId          hazard identifier
+   * @param hazardId hazard identifier
    * @param hazardDescription hazard description
    */
   public BowTieModel(String hazardId, String hazardDescription) {
@@ -348,7 +348,7 @@ public class BowTieModel implements Serializable {
   /**
    * Links a barrier to a threat.
    *
-   * @param threatId  threat ID
+   * @param threatId threat ID
    * @param barrierId barrier ID
    */
   public void linkBarrierToThreat(String threatId, String barrierId) {
@@ -364,7 +364,7 @@ public class BowTieModel implements Serializable {
    * Links a barrier to a consequence.
    *
    * @param consequenceId consequence ID
-   * @param barrierId     barrier ID
+   * @param barrierId barrier ID
    */
   public void linkBarrierToConsequence(String consequenceId, String barrierId) {
     for (Consequence consequence : consequences) {

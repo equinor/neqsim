@@ -105,7 +105,7 @@ public class GradeEfficiencyCurve implements Serializable {
    * </p>
    *
    * @param cutDiameter50 d_50 diameter at 50% efficiency [m]
-   * @param sharpness     n steepness parameter (typically 2.0-3.0)
+   * @param sharpness n steepness parameter (typically 2.0-3.0)
    * @param maxEfficiency maximum efficiency below flooding (typically 0.99-0.999)
    * @return a new GradeEfficiencyCurve
    */
@@ -147,7 +147,7 @@ public class GradeEfficiencyCurve implements Serializable {
    * </p>
    *
    * @param cutDiameter50 d_50 diameter at 50% efficiency [m]
-   * @param sharpness     steepness parameter (typically 1.5-2.5)
+   * @param sharpness steepness parameter (typically 1.5-2.5)
    * @param maxEfficiency maximum efficiency (typically 0.99-0.995)
    * @return a new GradeEfficiencyCurve
    */
@@ -188,7 +188,7 @@ public class GradeEfficiencyCurve implements Serializable {
    * </p>
    *
    * @param cutDiameter50 d_50 diameter at 50% efficiency [m]
-   * @param sharpness     steepness (typically 3.0-5.0)
+   * @param sharpness steepness (typically 3.0-5.0)
    * @param maxEfficiency maximum efficiency (typically 0.995-0.999)
    * @return a new GradeEfficiencyCurve
    */
@@ -243,7 +243,7 @@ public class GradeEfficiencyCurve implements Serializable {
   /**
    * Creates a custom grade efficiency curve from a lookup table.
    *
-   * @param diametersM   diameter values [m], ascending order
+   * @param diametersM diameter values [m], ascending order
    * @param efficiencies corresponding efficiency values [0-1]
    * @return a new GradeEfficiencyCurve
    */

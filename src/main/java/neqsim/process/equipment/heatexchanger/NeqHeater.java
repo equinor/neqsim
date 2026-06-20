@@ -32,7 +32,7 @@ public class NeqHeater extends Heater {
   /**
    * Constructor for NeqHeater.
    *
-   * @param name     name of heater
+   * @param name name of heater
    * @param inStream input stream
    */
   public NeqHeater(String name, StreamInterface inStream) {

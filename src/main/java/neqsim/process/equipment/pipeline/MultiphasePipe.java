@@ -100,7 +100,7 @@ public class MultiphasePipe extends Pipeline {
   /**
    * Constructor for MultiphasePipe with inlet stream.
    *
-   * @param name     the equipment name
+   * @param name the equipment name
    * @param inStream the inlet stream
    */
   public MultiphasePipe(String name, StreamInterface inStream) {

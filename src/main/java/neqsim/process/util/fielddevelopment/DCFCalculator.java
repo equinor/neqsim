@@ -149,7 +149,7 @@ public class DCFCalculator implements Serializable {
   /**
    * Adds CAPEX investment for a specific year.
    *
-   * @param year   the year (0-based)
+   * @param year the year (0-based)
    * @param amount CAPEX amount in currency units
    */
   public void addCapex(int year, double amount) {

@@ -137,9 +137,9 @@ public class DemistingInternal implements Serializable {
    * </p>
    *
    * @param gasVelocitySuperficial superficial gas velocity [m/s] (not used in max calc, but retained for signature
-   *                               compatibility)
-   * @param gasDensity             gas phase density [kg/m3]
-   * @param liquidDensity          liquid phase density [kg/m3]
+   * compatibility)
+   * @param gasDensity gas phase density [kg/m3]
+   * @param liquidDensity liquid phase density [kg/m3]
    * @return maximum allowable gas velocity [m/s]
    */
   public double calcGasVelocity(double gasVelocitySuperficial, double gasDensity, double liquidDensity) {
@@ -158,7 +158,7 @@ public class DemistingInternal implements Serializable {
    * </p>
    *
    * @param gasVelocity gas velocity through the demister [m/s]
-   * @param gasDensity  gas phase density [kg/m3]
+   * @param gasDensity gas phase density [kg/m3]
    * @return pressure drop [Pa]
    */
   public double calcPressureDrop(double gasVelocity, double gasDensity) {
@@ -173,7 +173,7 @@ public class DemistingInternal implements Serializable {
    * For velocity ratios below 1.0, carry-over is near zero. Above 1.0, carry-over rises rapidly towards 1.0 (flooding).
    * </p>
    *
-   * @param gasVelocity    actual gas velocity [m/s]
+   * @param gasVelocity actual gas velocity [m/s]
    * @param maxGasVelocity maximum allowable gas velocity [m/s]
    * @return liquid carry-over fraction [0..1], where 0 = no carry-over, 1 = total flooding
    */

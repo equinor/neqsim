@@ -119,7 +119,7 @@ public class LNGRolloverDetector implements Serializable {
      * Constructor for RolloverAssessment.
      *
      * @param riskLevel the assessed risk level
-     * @param message   descriptive message
+     * @param message descriptive message
      */
     public RolloverAssessment(RolloverRiskLevel riskLevel, String message) {
       this.riskLevel = riskLevel;
@@ -384,7 +384,7 @@ public class LNGRolloverDetector implements Serializable {
    * kinematic viscosity, alpha = thermal diffusivity.
    * </p>
    *
-   * @param deltaT      temperature difference between layers (K)
+   * @param deltaT temperature difference between layers (K)
    * @param layerHeight height of the layer (m)
    * @return Rayleigh number
    */
@@ -493,8 +493,8 @@ public class LNGRolloverDetector implements Serializable {
    * Set LNG physical properties for Rayleigh calculation.
    *
    * @param thermalExpansionCoeff thermal expansion coefficient (1/K)
-   * @param kinematicViscosity    kinematic viscosity (m2/s)
-   * @param thermalDiffusivity    thermal diffusivity (m2/s)
+   * @param kinematicViscosity kinematic viscosity (m2/s)
+   * @param thermalDiffusivity thermal diffusivity (m2/s)
    */
   public void setLNGProperties(double thermalExpansionCoeff, double kinematicViscosity, double thermalDiffusivity) {
     this.thermalExpansionCoeff = thermalExpansionCoeff;

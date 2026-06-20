@@ -29,10 +29,10 @@ public class PhaseGENRTLmodifiedWS extends PhaseGENRTLmodifiedHV {
    * Constructor for PhaseGENRTLmodifiedWS.
    * </p>
    *
-   * @param phase    a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param alpha    an array of type double
-   * @param Dij      an array of type double
-   * @param mixRule  an array of {@link java.lang.String} objects
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param alpha an array of type double
+   * @param Dij an array of type double
+   * @param mixRule an array of {@link java.lang.String} objects
    * @param intparam an array of type double
    */
   public PhaseGENRTLmodifiedWS(PhaseInterface phase, double[][] alpha, double[][] Dij, String[][] mixRule,
@@ -52,11 +52,11 @@ public class PhaseGENRTLmodifiedWS extends PhaseGENRTLmodifiedHV {
    * Constructor for PhaseGENRTLmodifiedWS.
    * </p>
    *
-   * @param phase    a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param alpha    an array of type double
-   * @param Dij      an array of type double
-   * @param DijT     an array of type double
-   * @param mixRule  an array of {@link java.lang.String} objects
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param alpha an array of type double
+   * @param Dij an array of type double
+   * @param DijT an array of type double
+   * @param mixRule an array of {@link java.lang.String} objects
    * @param intparam an array of type double
    */
   public PhaseGENRTLmodifiedWS(PhaseInterface phase, double[][] alpha, double[][] Dij, double[][] DijT,

@@ -66,7 +66,7 @@ public class TPmultiflash extends TPflash {
    * Constructor for TPmultiflash.
    * </p>
    *
-   * @param system         a {@link neqsim.thermo.system.SystemInterface} object
+   * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param checkForSolids Set true to do solid phase check and calculations
    */
   public TPmultiflash(SystemInterface system, boolean checkForSolids) {
@@ -315,7 +315,7 @@ public class TPmultiflash extends TPflash {
    * removed phase's mass leaks into the remaining phases through {@code normalizeBeta()}, which halves trace liquid
    * dropout (see UMR-PRU trace oil regression).
    *
-   * @param keepPhase    index of the phase to keep
+   * @param keepPhase index of the phase to keep
    * @param removePhase2 index of the duplicate phase to remove
    */
   private void mergeAndRemoveDuplicatePhase(int keepPhase, int removePhase2) {

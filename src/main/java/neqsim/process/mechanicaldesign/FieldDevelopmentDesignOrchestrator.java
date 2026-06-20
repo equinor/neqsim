@@ -282,7 +282,7 @@ public class FieldDevelopmentDesignOrchestrator implements Serializable {
    * Create a new orchestrator for the given process system.
    *
    * @param processSystem the process system to design
-   * @param projectId     unique project identifier
+   * @param projectId unique project identifier
    * @throws IllegalArgumentException if processSystem is null
    */
   public FieldDevelopmentDesignOrchestrator(ProcessSystem processSystem, String projectId) {
@@ -398,7 +398,7 @@ public class FieldDevelopmentDesignOrchestrator implements Serializable {
    * Load TORG and apply to process system.
    *
    * @param torgProjectId the TORG project ID to load
-   * @param dataSource    the data source to load from
+   * @param dataSource the data source to load from
    * @return true if loaded and applied successfully
    */
   public boolean loadTorg(String torgProjectId, TorgDataSource dataSource) {
@@ -673,7 +673,7 @@ public class FieldDevelopmentDesignOrchestrator implements Serializable {
   /**
    * Validate detailed design requirements.
    *
-   * @param equipment  the equipment
+   * @param equipment the equipment
    * @param mechDesign the mechanical design
    */
   private void validateDetailedDesign(ProcessEquipmentInterface equipment, MechanicalDesign mechDesign) {

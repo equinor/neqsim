@@ -135,7 +135,7 @@ public class CPAContribution implements Serializable {
    * </p>
    *
    * @param molarVolume molar volume in m³/mol
-   * @param molarB      molar co-volume parameter b in m³/mol
+   * @param molarB molar co-volume parameter b in m³/mol
    * @return g value
    */
   public static double calcG(double molarVolume, double molarB) {
@@ -148,7 +148,7 @@ public class CPAContribution implements Serializable {
    * Calculate first volume derivative of ln(g).
    *
    * @param totalVolume total volume in m³
-   * @param totalB      total co-volume parameter B in m³
+   * @param totalB total co-volume parameter B in m³
    * @return d(ln g)/dV
    */
   public static double calcLngV(double totalVolume, double totalB) {

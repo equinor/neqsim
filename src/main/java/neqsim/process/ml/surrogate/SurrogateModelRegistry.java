@@ -82,7 +82,7 @@ public class SurrogateModelRegistry implements Serializable {
    * Registers a surrogate model.
    *
    * @param modelId unique identifier for the model
-   * @param model   the surrogate model implementation
+   * @param model the surrogate model implementation
    */
   public void register(String modelId, SurrogateModel model) {
     register(modelId, model, new SurrogateMetadata());
@@ -91,8 +91,8 @@ public class SurrogateModelRegistry implements Serializable {
   /**
    * Registers a surrogate model with metadata.
    *
-   * @param modelId  unique identifier for the model
-   * @param model    the surrogate model implementation
+   * @param modelId unique identifier for the model
+   * @param model the surrogate model implementation
    * @param metadata model metadata (training info, validity, etc.)
    */
   public void register(String modelId, SurrogateModel model, SurrogateMetadata metadata) {
@@ -138,8 +138,8 @@ public class SurrogateModelRegistry implements Serializable {
    * If the surrogate model fails or is outside its validity range, the physics model will be used as a fallback.
    * </p>
    *
-   * @param modelId         the surrogate model identifier
-   * @param input           input vector
+   * @param modelId the surrogate model identifier
+   * @param input input vector
    * @param physicsFallback fallback physics calculation
    * @return prediction result
    */
@@ -175,7 +175,7 @@ public class SurrogateModelRegistry implements Serializable {
   /**
    * Saves a model to disk.
    *
-   * @param modelId  the model identifier
+   * @param modelId the model identifier
    * @param filePath output file path
    * @throws IOException if save fails
    */
@@ -193,9 +193,9 @@ public class SurrogateModelRegistry implements Serializable {
   /**
    * Loads a model from disk.
    *
-   * @param modelId  identifier to register the model under
+   * @param modelId identifier to register the model under
    * @param filePath input file path
-   * @throws IOException            if load fails
+   * @throws IOException if load fails
    * @throws ClassNotFoundException if model class not found
    */
   public void loadModel(String modelId, String filePath) throws IOException, ClassNotFoundException {

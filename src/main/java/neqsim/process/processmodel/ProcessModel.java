@@ -67,7 +67,7 @@ public class ProcessModel implements Runnable, Serializable {
     /**
      * Creates a stream reference descriptor.
      *
-     * @param areaName        name of the producing process area
+     * @param areaName name of the producing process area
      * @param streamReference stream reference inside the producing area
      */
     private AreaStreamReference(String areaName, String streamReference) {
@@ -101,9 +101,9 @@ public class ProcessModel implements Runnable, Serializable {
     /**
      * Creates an immutable execution-plan holder.
      *
-     * @param levels            ordered inter-area execution levels
-     * @param successors        downstream area adjacency map
-     * @param boundaryStreams   streams crossing process-area boundaries
+     * @param levels ordered inter-area execution levels
+     * @param successors downstream area adjacency map
+     * @param boundaryStreams streams crossing process-area boundaries
      * @param boundaryConsumers consumer areas for each boundary stream
      * @param structureVersions process structure versions observed while building the plan
      */
@@ -204,10 +204,10 @@ public class ProcessModel implements Runnable, Serializable {
     /**
      * Called after a process area completes a single execution pass.
      *
-     * @param areaName        the name of the process area
-     * @param process         the ProcessSystem that completed
-     * @param areaIndex       zero-based index of the area in execution order
-     * @param totalAreas      total number of process areas
+     * @param areaName the name of the process area
+     * @param process the ProcessSystem that completed
+     * @param areaIndex zero-based index of the area in execution order
+     * @param totalAreas total number of process areas
      * @param iterationNumber current outer iteration number (starts at 1)
      */
     void onProcessAreaComplete(String areaName, ProcessSystem process, int areaIndex, int totalAreas,
@@ -216,10 +216,10 @@ public class ProcessModel implements Runnable, Serializable {
     /**
      * Called before a process area is executed.
      *
-     * @param areaName        the name of the process area about to run
-     * @param process         the ProcessSystem about to run
-     * @param areaIndex       zero-based index of the area
-     * @param totalAreas      total number of process areas
+     * @param areaName the name of the process area about to run
+     * @param process the ProcessSystem about to run
+     * @param areaIndex zero-based index of the area
+     * @param totalAreas total number of process areas
      * @param iterationNumber current outer iteration number (starts at 1)
      */
     default void onBeforeProcessArea(String areaName, ProcessSystem process, int areaIndex, int totalAreas,
@@ -231,8 +231,8 @@ public class ProcessModel implements Runnable, Serializable {
      * Called when an outer iteration of the model completes.
      *
      * @param iterationNumber the iteration that just completed (starts at 1)
-     * @param converged       true if the model has converged
-     * @param maxError        maximum relative error across all variables
+     * @param converged true if the model has converged
+     * @param maxError maximum relative error across all variables
      */
     default void onIterationComplete(int iterationNumber, boolean converged, double maxError) {
       // Default does nothing
@@ -260,7 +260,7 @@ public class ProcessModel implements Runnable, Serializable {
      * Called once when the model finishes execution.
      *
      * @param totalIterations total number of iterations performed
-     * @param converged       true if the model converged
+     * @param converged true if the model converged
      */
     default void onModelComplete(int totalIterations, boolean converged) {
       // Default does nothing
@@ -269,8 +269,8 @@ public class ProcessModel implements Runnable, Serializable {
     /**
      * Called if a process area encounters an error during execution.
      *
-     * @param areaName  name of the area that failed
-     * @param process   the ProcessSystem that failed
+     * @param areaName name of the area that failed
+     * @param process the ProcessSystem that failed
      * @param exception the exception that was thrown
      * @return true to continue with next area, false to abort
      */
@@ -715,7 +715,7 @@ public class ProcessModel implements Runnable, Serializable {
   /**
    * Adds a process to the model.
    *
-   * @param name    a {@link java.lang.String} object
+   * @param name a {@link java.lang.String} object
    * @param process a {@link neqsim.process.processmodel.ProcessSystem} object
    * @return a boolean
    */
@@ -871,7 +871,7 @@ public class ProcessModel implements Runnable, Serializable {
    * Propagates a low-flow bypass threshold to every equipment in every area of this model.
    *
    * @param threshold low-flow cutoff in kg/hr (must be &gt;= 0). Equipment whose primary inlet flow is below this value
-   *                  auto-bypasses on the next run.
+   * auto-bypasses on the next run.
    */
   public void setSectionLowFlowThreshold(double threshold) {
     for (ProcessSystem ps : processes.values()) {
@@ -883,7 +883,7 @@ public class ProcessModel implements Runnable, Serializable {
    * Sets the low-flow bypass threshold on a single named unit. Searches every area for the unit name and applies the
    * threshold to the first match.
    *
-   * @param unitName  name of the unit
+   * @param unitName name of the unit
    * @param threshold low-flow cutoff in kg/hr (must be &gt;= 0)
    * @return true if a matching unit was found and updated, false otherwise
    */
@@ -1204,7 +1204,7 @@ public class ProcessModel implements Runnable, Serializable {
    * Convert Joules to the requested energy / power unit.
    *
    * @param valueJ value in Joules (treated identically to watts for rate quantities)
-   * @param unit   target unit (J, kJ, MJ, W, kW, MW)
+   * @param unit target unit (J, kJ, MJ, W, kW, MW)
    * @return converted value
    */
   private static double convertEnergy(double valueJ, String unit) {
@@ -1435,7 +1435,7 @@ public class ProcessModel implements Runnable, Serializable {
    * Runs runnable ProcessSystems using a caller-supplied area execution plan.
    *
    * @param runnableAreas process areas to run, or {@code null} to run every area
-   * @param areaPlan      cached inter-area execution plan
+   * @param areaPlan cached inter-area execution plan
    */
   private void runAllProcesses(java.util.Set<ProcessSystem> runnableAreas, AreaExecutionPlan areaPlan) {
     if (processes.size() <= 1) {
@@ -1495,9 +1495,9 @@ public class ProcessModel implements Runnable, Serializable {
   /**
    * Runs a single ProcessSystem with optional child-level parallelism.
    *
-   * @param process                     the process to run
+   * @param process the process to run
    * @param allowInnerParallelExecution true to allow the child ProcessSystem to choose optimized parallel/hybrid
-   *                                    execution, false to force sequential child execution for this run
+   * execution, false to force sequential child execution for this run
    */
   private void runSingleProcess(ProcessSystem process, boolean allowInnerParallelExecution) {
     // Skip areas whose units are all bypassed (manually locked or auto-bypassed via
@@ -1609,7 +1609,7 @@ public class ProcessModel implements Runnable, Serializable {
   /**
    * Checks whether a process area should run in the current outer iteration.
    *
-   * @param process       process area to check
+   * @param process process area to check
    * @param runnableAreas process areas selected for execution, or {@code null} for all areas
    * @return true if the area should be run
    */
@@ -1620,7 +1620,7 @@ public class ProcessModel implements Runnable, Serializable {
   /**
    * Filters a level down to areas selected for execution.
    *
-   * @param level         process areas in one execution level
+   * @param level process areas in one execution level
    * @param runnableAreas process areas selected for execution, or {@code null} for all areas
    * @return active areas from the level in original order
    */
@@ -1653,7 +1653,7 @@ public class ProcessModel implements Runnable, Serializable {
    * Runs all ProcessSystems with listener hooks and optional dirty-area filtering.
    *
    * @param iterationNumber current outer iteration number (starts at 1)
-   * @param runnableAreas   process areas to run, or {@code null} to run every area
+   * @param runnableAreas process areas to run, or {@code null} to run every area
    */
   private void runAllProcessesWithHooks(int iterationNumber, java.util.Set<ProcessSystem> runnableAreas) {
     runAllProcessesWithHooks(iterationNumber, runnableAreas, getAreaExecutionPlan());
@@ -1663,8 +1663,8 @@ public class ProcessModel implements Runnable, Serializable {
    * Runs all ProcessSystems with listener hooks using a caller-supplied area plan.
    *
    * @param iterationNumber current outer iteration number (starts at 1)
-   * @param runnableAreas   process areas to run, or {@code null} to run every area
-   * @param areaPlan        cached inter-area execution plan
+   * @param runnableAreas process areas to run, or {@code null} to run every area
+   * @param areaPlan cached inter-area execution plan
    */
   private void runAllProcessesWithHooks(int iterationNumber, java.util.Set<ProcessSystem> runnableAreas,
       AreaExecutionPlan areaPlan) {
@@ -2154,7 +2154,7 @@ public class ProcessModel implements Runnable, Serializable {
    * Finds boundary streams that changed beyond any configured convergence tolerance.
    *
    * @param previous previous boundary stream states
-   * @param current  current boundary stream states
+   * @param current current boundary stream states
    * @return identity-set of changed boundary stream objects
    */
   private java.util.Set<Object> findChangedBoundaryStreams(Map<Object, double[]> previous,
@@ -2193,7 +2193,7 @@ public class ProcessModel implements Runnable, Serializable {
   /**
    * Selects areas to rerun using an already resolved area execution plan.
    *
-   * @param plan                   cached area execution plan
+   * @param plan cached area execution plan
    * @param changedBoundaryStreams streams that changed beyond convergence tolerance
    * @return areas to run on the next iteration, or {@code null} to run every area
    */
@@ -2238,7 +2238,7 @@ public class ProcessModel implements Runnable, Serializable {
    * Calculate maximum relative errors between previous and current stream states.
    *
    * @param previous previous stream states
-   * @param current  current stream states
+   * @param current current stream states
    * @return array of [maxFlowError, maxTempError, maxPressError]
    */
   private double[] calculateConvergenceErrors(Map<?, double[]> previous, Map<?, double[]> current) {
@@ -2328,8 +2328,8 @@ public class ProcessModel implements Runnable, Serializable {
    * </p>
    *
    * @param maxIterations maximum number of outer iterations to attempt; must be at least 1
-   * @param tolerance     relative convergence tolerance applied to flow, temperature and pressure; must be a finite
-   *                      positive value
+   * @param tolerance relative convergence tolerance applied to flow, temperature and pressure; must be a finite
+   * positive value
    * @return true if the model converged within the iteration limit, false otherwise
    * @throws IllegalArgumentException if maxIterations is less than 1 or tolerance is not a finite positive number
    */
@@ -2405,7 +2405,7 @@ public class ProcessModel implements Runnable, Serializable {
   /**
    * Builds a single error entry for {@link #getConvergenceReportJson()}.
    *
-   * @param error     the relative error value for the variable
+   * @param error the relative error value for the variable
    * @param tolerance the convergence tolerance for the variable
    * @return a JSON object with {@code value}, {@code tolerance} and {@code converged} fields
    */
@@ -2437,7 +2437,7 @@ public class ProcessModel implements Runnable, Serializable {
    * Formats a unit-name list for compact convergence diagnostics.
    *
    * @param unitNames names to format
-   * @param maxNames  maximum number of names to include before truncating
+   * @param maxNames maximum number of names to include before truncating
    * @return comma-separated unit list with truncation count when needed
    */
   private String formatUnitNameList(List<String> unitNames, int maxNames) {
@@ -2512,7 +2512,7 @@ public class ProcessModel implements Runnable, Serializable {
    *
    * @return a {@link java.lang.Thread} object
    * @deprecated Use {@link #runAsTask()} instead for better resource management. This method creates a new unmanaged
-   *             thread directly.
+   * thread directly.
    */
   @Deprecated
   public Thread runAsThread() {
@@ -2668,7 +2668,7 @@ public class ProcessModel implements Runnable, Serializable {
   /**
    * Get unit operations that failed mass balance check in all processes based on percentage error threshold.
    *
-   * @param unit             unit for mass flow rate (e.g., "kg/sec", "kg/hr", "mole/sec")
+   * @param unit unit for mass flow rate (e.g., "kg/sec", "kg/hr", "mole/sec")
    * @param percentThreshold percentage error threshold (default: 0.1%)
    * @return a map with process name and a map of failed unit operation names and their mass balance results
    */
@@ -2752,7 +2752,7 @@ public class ProcessModel implements Runnable, Serializable {
   /**
    * Get a formatted report of failed mass balance checks for all processes.
    *
-   * @param unit             unit for mass flow rate (e.g., "kg/sec", "kg/hr", "mole/sec")
+   * @param unit unit for mass flow rate (e.g., "kg/sec", "kg/hr", "mole/sec")
    * @param percentThreshold percentage error threshold
    * @return a formatted string report with process name and failed unit operations
    */
@@ -2884,9 +2884,9 @@ public class ProcessModel implements Runnable, Serializable {
   /**
    * Collects stream references that are locally produced by one process area.
    *
-   * @param areaName                 name of the process area being exported
-   * @param process                  process area being exported
-   * @param exporter                 exporter used for this area
+   * @param areaName name of the process area being exported
+   * @param process process area being exported
+   * @param exporter exporter used for this area
    * @param producedStreamReferences identity map to populate with produced stream references
    */
   private void collectProducedStreamReferences(String areaName, ProcessSystem process, JsonProcessExporter exporter,
@@ -2907,9 +2907,9 @@ public class ProcessModel implements Runnable, Serializable {
   /**
    * Adds one locally produced stream reference to the identity map.
    *
-   * @param areaName                 name of the producing process area
-   * @param stream                   produced stream object
-   * @param exporter                 exporter used for this area
+   * @param areaName name of the producing process area
+   * @param stream produced stream object
+   * @param exporter exporter used for this area
    * @param producedStreamReferences identity map to populate with produced stream references
    */
   private void addProducedStreamReference(String areaName, StreamInterface stream, JsonProcessExporter exporter,
@@ -3073,7 +3073,7 @@ public class ProcessModel implements Runnable, Serializable {
   /**
    * Applies one inter-area stream link.
    *
-   * @param link     JSON link definition
+   * @param link JSON link definition
    * @param warnings mutable warning list to append to
    * @return true if the link was applied and model topology changed
    */
@@ -3119,7 +3119,7 @@ public class ProcessModel implements Runnable, Serializable {
    * Gets a string field from a JSON object.
    *
    * @param object JSON object to inspect
-   * @param field  field name
+   * @param field field name
    * @return field value, or an empty string when absent
    */
   private String getString(JsonObject object, String field) {
@@ -3132,7 +3132,7 @@ public class ProcessModel implements Runnable, Serializable {
   /**
    * Resolves a stream reference inside one process area.
    *
-   * @param process   process area containing the referenced unit
+   * @param process process area containing the referenced unit
    * @param reference stream reference such as {@code feed}, {@code Sep.gasOut}, or {@code Tee.split0}
    * @return resolved stream, or {@code null} when no stream matches the reference
    */
@@ -3206,7 +3206,7 @@ public class ProcessModel implements Runnable, Serializable {
   /**
    * Parses a non-negative integer suffix from a port name.
    *
-   * @param value  port name to parse
+   * @param value port name to parse
    * @param prefix expected prefix before the number
    * @return parsed suffix, or {@code -1} when the value does not match
    */
@@ -3224,9 +3224,9 @@ public class ProcessModel implements Runnable, Serializable {
   /**
    * Replaces one inlet reference on an equipment unit with a live inter-area stream.
    *
-   * @param targetUnit       equipment whose inlet should be replaced
+   * @param targetUnit equipment whose inlet should be replaced
    * @param targetInletIndex zero-based inlet index
-   * @param sourceStream     replacement source stream
+   * @param sourceStream replacement source stream
    * @return true if the inlet was replaced
    */
   private boolean replaceInletReference(ProcessEquipmentInterface targetUnit, int targetInletIndex,
@@ -3251,9 +3251,9 @@ public class ProcessModel implements Runnable, Serializable {
   /**
    * Invokes a {@code replaceStream(int, StreamInterface)} style method when available.
    *
-   * @param targetUnit       equipment whose inlet should be replaced
+   * @param targetUnit equipment whose inlet should be replaced
    * @param targetInletIndex zero-based inlet index
-   * @param sourceStream     replacement source stream
+   * @param sourceStream replacement source stream
    * @return true if a replacement method existed and completed
    */
   private boolean invokeIndexedStreamReplacement(ProcessEquipmentInterface targetUnit, int targetInletIndex,
@@ -3271,7 +3271,7 @@ public class ProcessModel implements Runnable, Serializable {
   /**
    * Invokes a single-inlet setter on equipment with one inlet.
    *
-   * @param targetUnit   equipment whose inlet should be replaced
+   * @param targetUnit equipment whose inlet should be replaced
    * @param sourceStream replacement source stream
    * @return true if a setter existed and completed
    */
@@ -3746,7 +3746,7 @@ public class ProcessModel implements Runnable, Serializable {
    * </p>
    *
    * @param companyStandard company name (e.g., "Equinor", "Shell", "TotalEnergies")
-   * @param trDocument      TR document reference (e.g., "TR2000", "DEP-31.38.01.11")
+   * @param trDocument TR document reference (e.g., "TR2000", "DEP-31.38.01.11")
    * @return the number of equipment items that were auto-sized
    */
   public int autoSizeEquipment(String companyStandard, String trDocument) {
@@ -3916,7 +3916,7 @@ public class ProcessModel implements Runnable, Serializable {
    * </p>
    *
    * @return the plant-wide {@link neqsim.process.equipment.capacity.BottleneckResult}; an empty result if no enabled
-   *         constraints are found in any area
+   * constraints are found in any area
    */
   public neqsim.process.equipment.capacity.BottleneckResult findBottleneck() {
     neqsim.process.equipment.capacity.BottleneckResult best = neqsim.process.equipment.capacity.BottleneckResult
@@ -4036,7 +4036,7 @@ public class ProcessModel implements Runnable, Serializable {
    * </p>
    *
    * @return JSON string {@code {schemaVersion, name, units:[...], bottleneck:{...}, anyOverloaded,
-   *         anyHardLimitExceeded}}
+   * anyHardLimitExceeded}}
    */
   public String getUtilizationSnapshotJson() {
     com.google.gson.JsonObject root = new com.google.gson.JsonObject();
@@ -4087,7 +4087,7 @@ public class ProcessModel implements Runnable, Serializable {
    * Notify the listener that the model has completed.
    *
    * @param totalIterations total iterations performed
-   * @param converged       whether the model converged
+   * @param converged whether the model converged
    */
   private void notifyModelComplete(int totalIterations, boolean converged) {
     if (progressListener != null) {
@@ -4118,8 +4118,8 @@ public class ProcessModel implements Runnable, Serializable {
    * Notify the listener that an iteration has completed.
    *
    * @param iterationNumber the iteration that completed
-   * @param converged       whether convergence was achieved
-   * @param maxError        maximum relative error across all variables
+   * @param converged whether convergence was achieved
+   * @param maxError maximum relative error across all variables
    */
   private void notifyIterationComplete(int iterationNumber, boolean converged, double maxError) {
     if (progressListener != null) {
@@ -4134,10 +4134,10 @@ public class ProcessModel implements Runnable, Serializable {
   /**
    * Notify the listener that a process area is about to run.
    *
-   * @param areaName        name of the area
-   * @param process         the ProcessSystem
-   * @param areaIndex       area index
-   * @param totalAreas      total number of areas
+   * @param areaName name of the area
+   * @param process the ProcessSystem
+   * @param areaIndex area index
+   * @param totalAreas total number of areas
    * @param iterationNumber current iteration
    */
   private void notifyBeforeProcessArea(String areaName, ProcessSystem process, int areaIndex, int totalAreas,
@@ -4154,10 +4154,10 @@ public class ProcessModel implements Runnable, Serializable {
   /**
    * Notify the listener that a process area has completed.
    *
-   * @param areaName        name of the area
-   * @param process         the ProcessSystem
-   * @param areaIndex       area index
-   * @param totalAreas      total number of areas
+   * @param areaName name of the area
+   * @param process the ProcessSystem
+   * @param areaIndex area index
+   * @param totalAreas total number of areas
    * @param iterationNumber current iteration
    */
   private void notifyProcessAreaComplete(String areaName, ProcessSystem process, int areaIndex, int totalAreas,
@@ -4174,8 +4174,8 @@ public class ProcessModel implements Runnable, Serializable {
   /**
    * Notify the listener that a process area encountered an error.
    *
-   * @param areaName  name of the failed area
-   * @param process   the ProcessSystem that failed
+   * @param areaName name of the failed area
+   * @param process the ProcessSystem that failed
    * @param exception the exception
    * @return true to continue execution, false to abort
    */
@@ -4193,9 +4193,9 @@ public class ProcessModel implements Runnable, Serializable {
   /**
    * Publish a model-level event to the ProcessEventBus if event publishing is enabled.
    *
-   * @param type        the event type
+   * @param type the event type
    * @param description event description
-   * @param severity    event severity
+   * @param severity event severity
    */
   private void publishModelEvent(ProcessEvent.EventType type, String description, ProcessEvent.Severity severity) {
     if (publishEvents) {
@@ -4365,7 +4365,7 @@ public class ProcessModel implements Runnable, Serializable {
    * {@code "AreaName::unitName.property"}. Convenience delegate for
    * {@link neqsim.process.automation.ProcessAutomation#getVariableValue(String, String)}.
    *
-   * @param address       the area-qualified address, e.g. "Separation::HP Sep.gasOutStream.temperature"
+   * @param address the area-qualified address, e.g. "Separation::HP Sep.gasOutStream.temperature"
    * @param unitOfMeasure the desired unit, e.g. "C", "bara", "kg/hr"
    * @return the variable value in the requested unit
    * @throws IllegalArgumentException if the address cannot be resolved
@@ -4379,8 +4379,8 @@ public class ProcessModel implements Runnable, Serializable {
    * {@code "AreaName::Compressor.outletPressure"}. Convenience delegate for
    * {@link neqsim.process.automation.ProcessAutomation#setVariableValue(String, double, String)}.
    *
-   * @param address       the area-qualified address, e.g. "Compression::Compressor.outletPressure"
-   * @param value         the value to set
+   * @param address the area-qualified address, e.g. "Compression::Compressor.outletPressure"
+   * @param value the value to set
    * @param unitOfMeasure the unit of the provided value, e.g. "bara", "C"
    * @throws IllegalArgumentException if the address cannot be resolved or the variable is read-only
    */

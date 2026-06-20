@@ -39,10 +39,10 @@ public class DataSmoother {
    * </p>
    *
    * @param nonSmoothedNumbers an array of type double
-   * @param nl                 a int
-   * @param nr                 a int
-   * @param ld                 a int
-   * @param m                  a int
+   * @param nl a int
+   * @param nr a int
+   * @param ld a int
+   * @param m a int
    */
   public DataSmoother(double[] nonSmoothedNumbers, int nl, int nr, int ld, int m) {
     this.nonSmoothedNumbers = new double[nonSmoothedNumbers.length];

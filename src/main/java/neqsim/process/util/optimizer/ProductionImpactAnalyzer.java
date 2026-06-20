@@ -105,8 +105,8 @@ public class ProductionImpactAnalyzer implements Serializable {
   /**
    * Creates a production impact analyzer with specified streams.
    *
-   * @param processSystem     the process system
-   * @param feedStreamName    name of the feed stream
+   * @param processSystem the process system
+   * @param feedStreamName name of the feed stream
    * @param productStreamName name of the product stream
    */
   public ProductionImpactAnalyzer(ProcessSystem processSystem, String feedStreamName, String productStreamName) {
@@ -206,7 +206,7 @@ public class ProductionImpactAnalyzer implements Serializable {
    * Analyzes the production impact of a specific failure mode.
    *
    * @param equipmentName name of the equipment
-   * @param failureMode   the failure mode to simulate
+   * @param failureMode the failure mode to simulate
    * @return production impact result
    */
   public ProductionImpactResult analyzeFailureImpact(String equipmentName, EquipmentFailureMode failureMode) {
@@ -316,10 +316,10 @@ public class ProductionImpactAnalyzer implements Serializable {
   /**
    * Applies a failure mode to equipment in the process.
    *
-   * @param process       the process system containing the equipment
+   * @param process the process system containing the equipment
    * @param equipmentName the name of the equipment to fail
-   * @param failureMode   the failure mode to apply
-   * @param result        the result object to populate with failure details
+   * @param failureMode the failure mode to apply
+   * @param result the result object to populate with failure details
    */
   private void applyFailure(ProcessSystem process, String equipmentName, EquipmentFailureMode failureMode,
       ProductionImpactResult result) {
@@ -378,9 +378,9 @@ public class ProductionImpactAnalyzer implements Serializable {
   /**
    * Identifies equipment affected by the failure.
    *
-   * @param process         the process system to analyze
+   * @param process the process system to analyze
    * @param failedEquipment the name of the failed equipment
-   * @param result          the result object to populate with affected equipment
+   * @param result the result object to populate with affected equipment
    */
   private void identifyAffectedEquipment(ProcessSystem process, String failedEquipment, ProductionImpactResult result) {
 
@@ -400,9 +400,9 @@ public class ProductionImpactAnalyzer implements Serializable {
   /**
    * Optimizes operation with failed equipment.
    *
-   * @param failedProcess   the process system with the failed equipment
+   * @param failedProcess the process system with the failed equipment
    * @param failedEquipment the name of the failed equipment
-   * @param result          the production impact result to update with optimized values
+   * @param result the production impact result to update with optimized values
    */
   private void optimizeDegradedOperation(ProcessSystem failedProcess, String failedEquipment,
       ProductionImpactResult result) {

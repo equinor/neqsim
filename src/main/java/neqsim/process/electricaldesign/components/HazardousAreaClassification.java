@@ -35,9 +35,9 @@ public class HazardousAreaClassification implements java.io.Serializable {
    * process fluid properties.
    * </p>
    *
-   * @param equipmentType        type of process equipment (Compressor, Pump, Separator, etc.)
+   * @param equipmentType type of process equipment (Compressor, Pump, Separator, etc.)
    * @param containsHydrocarbons whether process fluid contains hydrocarbons
-   * @param maxSurfaceTempC      maximum surface temperature in degrees C
+   * @param maxSurfaceTempC maximum surface temperature in degrees C
    */
   public void classify(String equipmentType, boolean containsHydrocarbons, double maxSurfaceTempC) {
     if (!containsHydrocarbons) {

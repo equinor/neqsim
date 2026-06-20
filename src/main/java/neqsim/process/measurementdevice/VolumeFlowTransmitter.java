@@ -34,7 +34,7 @@ public class VolumeFlowTransmitter extends StreamMeasurementDeviceBaseClass {
    * Constructor for VolumeFlowTransmitter.
    * </p>
    *
-   * @param name   Name of VolumeFlowTransmitter
+   * @param name Name of VolumeFlowTransmitter
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public VolumeFlowTransmitter(String name, StreamInterface stream) {

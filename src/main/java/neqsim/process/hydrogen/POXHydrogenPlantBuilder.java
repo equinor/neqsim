@@ -133,7 +133,7 @@ public class POXHydrogenPlantBuilder extends HydrogenPlantBuilderBase {
   /**
    * Validates positive finite values.
    *
-   * @param value         value to validate
+   * @param value value to validate
    * @param parameterName parameter name for exception text
    */
   private void validatePositive(double value, String parameterName) {

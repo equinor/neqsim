@@ -42,7 +42,7 @@ public class WaxDepositionFlowNode extends MultiPhaseFlowNode {
    * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param pipe   a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
+   * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
    */
   public WaxDepositionFlowNode(SystemInterface system, GeometryDefinitionInterface pipe) {
     super(system, pipe);
@@ -57,9 +57,9 @@ public class WaxDepositionFlowNode extends MultiPhaseFlowNode {
    * Constructor for WaxDepositionFlowNode.
    * </p>
    *
-   * @param system           a {@link neqsim.thermo.system.SystemInterface} object
+   * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param interphaseSystem a {@link neqsim.thermo.system.SystemInterface} object
-   * @param pipe             a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
+   * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
    */
   public WaxDepositionFlowNode(SystemInterface system, SystemInterface interphaseSystem,
       GeometryDefinitionInterface pipe) {

@@ -26,10 +26,10 @@ public class PhaseBNS extends PhasePrEos {
    * Constructor for PhaseBNS.
    * </p>
    *
-   * @param tcs    an array of double objects
-   * @param pcs    an array of double objects
-   * @param mws    an array of double objects
-   * @param acfs   an array of double objects
+   * @param tcs an array of double objects
+   * @param pcs an array of double objects
+   * @param mws an array of double objects
+   * @param acfs an array of double objects
    * @param omegaA an array of double objects
    * @param omegaB an array of double objects
    * @param vshift an array of double objects

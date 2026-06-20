@@ -41,8 +41,8 @@ public final class ToxicLibrary {
     public final double aegl2Ppm;
 
     /**
-     * @param name     chemical name
-     * @param idlhPpm  IDLH in ppm
+     * @param name chemical name
+     * @param idlhPpm IDLH in ppm
      * @param erpg2Ppm ERPG-2 in ppm
      * @param aegl2Ppm AEGL-2 in ppm
      */
@@ -97,10 +97,10 @@ public final class ToxicLibrary {
   /**
    * Convert a concentration in ppm (mole basis) to kg/m³.
    *
-   * @param ppm               concentration in ppm
+   * @param ppm concentration in ppm
    * @param molarMassKgPerMol component molar mass in kg/mol
-   * @param tempK             temperature in K
-   * @param pressureBara      pressure in bara
+   * @param tempK temperature in K
+   * @param pressureBara pressure in bara
    * @return concentration in kg/m³
    */
   public static double ppmToKgPerM3(double ppm, double molarMassKgPerMol, double tempK, double pressureBara) {

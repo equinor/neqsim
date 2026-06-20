@@ -110,12 +110,12 @@ public class FrictionTheoryViscosityMethod extends Viscosity implements neqsim.t
   /**
    * Allow user supplied friction-theory constants for other EOS models.
    *
-   * @param kapac  first constant set
-   * @param kaprc  second constant set
+   * @param kapac first constant set
+   * @param kaprc second constant set
    * @param kaprrc third constant set
-   * @param kapa   matrix for attractive term
-   * @param kapr   matrix for repulsive term
-   * @param kaprr  constant for repulsive-repulsive term
+   * @param kapa matrix for attractive term
+   * @param kapr matrix for repulsive term
+   * @param kaprr constant for repulsive-repulsive term
    */
   public void setFrictionTheoryConstants(double kapac, double kaprc, double kaprrc, double[][] kapa, double[][] kapr,
       double kaprr) {
@@ -213,7 +213,7 @@ public class FrictionTheoryViscosityMethod extends Viscosity implements neqsim.t
   /**
    * Reduced repulsive constant.
    *
-   * @param phi      a double
+   * @param phi a double
    * @param bigGamma a double
    * @return a double
    */
@@ -227,7 +227,7 @@ public class FrictionTheoryViscosityMethod extends Viscosity implements neqsim.t
   /**
    * Reduced repulsive-repulsive constant.
    *
-   * @param phi      a double
+   * @param phi a double
    * @param bigGamma a double
    * @return a double
    */
@@ -238,7 +238,7 @@ public class FrictionTheoryViscosityMethod extends Viscosity implements neqsim.t
   /**
    * Reduced attractive constant.
    *
-   * @param phi      a double
+   * @param phi a double
    * @param bigGamma a double
    * @return a double
    */

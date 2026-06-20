@@ -42,7 +42,7 @@ public class ProcessResearcher {
    *
    * @param generator candidate generator
    * @param evaluator candidate evaluator
-   * @param pruner    feasibility pruner
+   * @param pruner feasibility pruner
    */
   public ProcessResearcher(ProcessCandidateGenerator generator, ProcessCandidateEvaluator evaluator,
       ProcessSynthesisFeasibilityPruner pruner) {
@@ -110,7 +110,7 @@ public class ProcessResearcher {
   /**
    * Checks whether one candidate dominates another.
    *
-   * @param left  candidate that may dominate
+   * @param left candidate that may dominate
    * @param right candidate that may be dominated
    * @return true if left dominates right
    */
@@ -139,7 +139,7 @@ public class ProcessResearcher {
   /**
    * Gets a minimization metric value, treating absent values as zero burden.
    *
-   * @param candidate  candidate to inspect
+   * @param candidate candidate to inspect
    * @param metricName metric name
    * @return metric value
    */
@@ -150,8 +150,8 @@ public class ProcessResearcher {
   /**
    * Gets a utility metric value with a fallback raw duty metric.
    *
-   * @param candidate      candidate to inspect
-   * @param primaryMetric  primary utility metric name
+   * @param candidate candidate to inspect
+   * @param primaryMetric primary utility metric name
    * @param fallbackMetric fallback duty metric name
    * @return utility burden in kW
    */

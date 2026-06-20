@@ -19,7 +19,7 @@ public class PipingDesignStandard extends DesignStandard {
    * Constructor for PipingDesignStandard.
    * </p>
    *
-   * @param name         a {@link java.lang.String} object
+   * @param name a {@link java.lang.String} object
    * @param equipmentInn a {@link neqsim.process.mechanicaldesign.MechanicalDesign} object
    */
   public PipingDesignStandard(String name, MechanicalDesign equipmentInn) {

@@ -513,9 +513,9 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
    * </p>
    *
    * @param inlet primary inlet stream (may be null, in which case no bypass is applied)
-   * @param id    current calculation identifier
+   * @param id current calculation identifier
    * @return true if the equipment was auto-bypassed and {@code run()} should return immediately, false if the equipment
-   *         should execute normally
+   * should execute normally
    */
   protected boolean checkAndHandleLowFlow(neqsim.process.equipment.stream.StreamInterface inlet, UUID id) {
     if (inlet == null) {
@@ -550,7 +550,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
    * on one outlet does not abort propagation to the others.
    * </p>
    *
-   * @param id      current calculation identifier
+   * @param id current calculation identifier
    * @param outlets outlet streams to zero out (may include null entries)
    */
   protected void propagateZeroFlow(UUID id, neqsim.process.equipment.stream.StreamInterface... outlets) {

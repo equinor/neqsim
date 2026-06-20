@@ -39,12 +39,12 @@ public class ProcessSafetySystemAssessment implements Serializable {
   /**
    * Creates an assessment.
    *
-   * @param requirementId  stable requirement identifier
-   * @param standard       standard identifier
-   * @param clause         clause identifier
-   * @param status         requirement status
-   * @param severity       severity string such as LOW, MEDIUM, HIGH, or CRITICAL
-   * @param message        finding message
+   * @param requirementId stable requirement identifier
+   * @param standard standard identifier
+   * @param clause clause identifier
+   * @param status requirement status
+   * @param severity severity string such as LOW, MEDIUM, HIGH, or CRITICAL
+   * @param message finding message
    * @param recommendation recommended action
    */
   public ProcessSafetySystemAssessment(String requirementId, String standard, String clause, Status status,
@@ -61,9 +61,9 @@ public class ProcessSafetySystemAssessment implements Serializable {
   /**
    * Creates a passing assessment.
    *
-   * @param requirementId  stable requirement identifier
-   * @param clause         clause identifier
-   * @param message        finding message
+   * @param requirementId stable requirement identifier
+   * @param clause clause identifier
+   * @param message finding message
    * @param recommendation recommended action
    * @return passing assessment
    */
@@ -76,10 +76,10 @@ public class ProcessSafetySystemAssessment implements Serializable {
   /**
    * Creates a warning assessment.
    *
-   * @param requirementId  stable requirement identifier
-   * @param clause         clause identifier
-   * @param severity       severity string
-   * @param message        finding message
+   * @param requirementId stable requirement identifier
+   * @param clause clause identifier
+   * @param severity severity string
+   * @param message finding message
    * @param recommendation recommended action
    * @return warning assessment
    */
@@ -92,10 +92,10 @@ public class ProcessSafetySystemAssessment implements Serializable {
   /**
    * Creates a failing assessment.
    *
-   * @param requirementId  stable requirement identifier
-   * @param clause         clause identifier
-   * @param severity       severity string
-   * @param message        finding message
+   * @param requirementId stable requirement identifier
+   * @param clause clause identifier
+   * @param severity severity string
+   * @param message finding message
    * @param recommendation recommended action
    * @return failing assessment
    */
@@ -108,9 +108,9 @@ public class ProcessSafetySystemAssessment implements Serializable {
   /**
    * Creates an informational assessment.
    *
-   * @param requirementId  stable requirement identifier
-   * @param clause         clause identifier
-   * @param message        finding message
+   * @param requirementId stable requirement identifier
+   * @param clause clause identifier
+   * @param message finding message
    * @param recommendation recommended action
    * @return informational assessment
    */
@@ -124,8 +124,8 @@ public class ProcessSafetySystemAssessment implements Serializable {
    * Creates a not-applicable assessment.
    *
    * @param requirementId stable requirement identifier
-   * @param clause        clause identifier
-   * @param message       not-applicable reason
+   * @param clause clause identifier
+   * @param message not-applicable reason
    * @return not-applicable assessment
    */
   public static ProcessSafetySystemAssessment notApplicable(String requirementId, String clause, String message) {
@@ -136,7 +136,7 @@ public class ProcessSafetySystemAssessment implements Serializable {
   /**
    * Adds a JSON-safe detail value.
    *
-   * @param key   detail key
+   * @param key detail key
    * @param value detail value
    * @return this assessment for fluent construction
    */

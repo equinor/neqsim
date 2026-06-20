@@ -98,9 +98,9 @@ public class SubrModlExporter implements Serializable {
     /**
      * Create a model parameter.
      *
-     * @param name        parameter name
-     * @param value       parameter value
-     * @param unit        engineering unit
+     * @param name parameter name
+     * @param value parameter value
+     * @param unit engineering unit
      * @param description parameter description
      */
     public ModelParameter(String name, double value, String unit, String description) {
@@ -142,10 +142,10 @@ public class SubrModlExporter implements Serializable {
     /**
      * Create a SubrXvr definition.
      *
-     * @param name  variable name
+     * @param name variable name
      * @param dtaIx data index for C++ linking
      * @param text1 primary description
-     * @param init  initial value
+     * @param init initial value
      */
     public SubrXvr(String name, String dtaIx, String text1, double init) {
       this.name = name;
@@ -206,10 +206,10 @@ public class SubrModlExporter implements Serializable {
     /**
      * Create a state variable.
      *
-     * @param name        variable name
-     * @param dtaIx       data index
+     * @param name variable name
+     * @param dtaIx data index
      * @param description variable description
-     * @param modelValue  initial model value
+     * @param modelValue initial model value
      */
     public StateVariable(String name, String dtaIx, String description, double modelValue) {
       this.name = name;
@@ -302,9 +302,9 @@ public class SubrModlExporter implements Serializable {
   /**
    * Add a model parameter (constant).
    *
-   * @param name  parameter name
+   * @param name parameter name
    * @param value parameter value
-   * @param unit  engineering unit
+   * @param unit engineering unit
    * @return this exporter for chaining
    */
   public SubrModlExporter addParameter(String name, double value, String unit) {
@@ -315,9 +315,9 @@ public class SubrModlExporter implements Serializable {
   /**
    * Add a model parameter with description.
    *
-   * @param name        parameter name
-   * @param value       parameter value
-   * @param unit        engineering unit
+   * @param name parameter name
+   * @param value parameter value
+   * @param unit engineering unit
    * @param description parameter description
    * @return this exporter for chaining
    */
@@ -329,10 +329,10 @@ public class SubrModlExporter implements Serializable {
   /**
    * Add a SubrXvr definition.
    *
-   * @param name        variable name
-   * @param dtaIx       data index for C++ linking
+   * @param name variable name
+   * @param dtaIx data index for C++ linking
    * @param description variable description
-   * @param init        initial value
+   * @param init initial value
    * @return this exporter for chaining
    */
   public SubrModlExporter addSubrXvr(String name, String dtaIx, String description, double init) {
@@ -346,10 +346,10 @@ public class SubrModlExporter implements Serializable {
   /**
    * Add a state variable (SVR).
    *
-   * @param name        variable name
-   * @param dtaIx       data index
+   * @param name variable name
+   * @param dtaIx data index
    * @param description variable description
-   * @param modelValue  initial model value
+   * @param modelValue initial model value
    * @return this exporter for chaining
    */
   public SubrModlExporter addStateVariable(String name, String dtaIx, String description, double modelValue) {
@@ -456,7 +456,7 @@ public class SubrModlExporter implements Serializable {
    * This generates the SmpcAppl configuration section with tuning parameters for nonlinear MPC.
    * </p>
    *
-   * @param filename     the output filename
+   * @param filename the output filename
    * @param useNonlinear whether to use nonlinear (SQP) or linear (QP) solver
    * @throws IOException if writing fails
    */

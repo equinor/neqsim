@@ -36,7 +36,7 @@ public class TwoPhasePipeLine extends Pipeline {
    * Constructor for TwoPhasePipeLine.
    * </p>
    *
-   * @param name     a {@link java.lang.String} object
+   * @param name a {@link java.lang.String} object
    * @param inStream a {@link neqsim.process.equipment.stream.Stream} object
    */
   public TwoPhasePipeLine(String name, StreamInterface inStream) {

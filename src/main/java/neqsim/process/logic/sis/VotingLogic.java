@@ -63,9 +63,9 @@ public enum VotingLogic {
   /**
    * Creates a voting logic pattern.
    *
-   * @param notation      standard notation (e.g., "2oo3")
+   * @param notation standard notation (e.g., "2oo3")
    * @param requiredTrips number of sensors that must trip
-   * @param totalSensors  total number of sensors
+   * @param totalSensors total number of sensors
    */
   VotingLogic(String notation, int requiredTrips, int totalSensors) {
     this.notation = notation;

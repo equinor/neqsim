@@ -37,11 +37,11 @@ public final class CompressionProposal implements Serializable {
   /**
    * Creates a compression proposal.
    *
-   * @param processSystem         the assembled flowsheet (non-null)
-   * @param stages                number of compression stages
+   * @param processSystem the assembled flowsheet (non-null)
+   * @param stages number of compression stages
    * @param perStagePressureRatio per-stage ratio (geometric)
-   * @param rationale             human-readable description
-   * @param stageNames            ordered list of compressor unit names, oldest first
+   * @param rationale human-readable description
+   * @param stageNames ordered list of compressor unit names, oldest first
    */
   public CompressionProposal(ProcessSystem processSystem, int stages, double perStagePressureRatio, String rationale,
       List<String> stageNames) {

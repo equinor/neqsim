@@ -98,7 +98,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
   /**
    * Adds an inlet stream to the multi-stream heat exchanger.
    *
-   * @param inStream   a {@link neqsim.process.equipment.stream.StreamInterface} object
+   * @param inStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    * @param streamType a {@link java.lang.String} object
    * @param outletTemp a {@link java.lang.Double} object
    */

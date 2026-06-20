@@ -59,13 +59,13 @@ public class EquipmentVisualStyle implements Serializable {
   /**
    * Creates a new visual style with the specified attributes.
    *
-   * @param shape       Graphviz shape name
-   * @param fillColor   fill color (hex or named)
+   * @param shape Graphviz shape name
+   * @param fillColor fill color (hex or named)
    * @param borderColor border color (hex or named)
-   * @param fontColor   font color
-   * @param width       node width in inches
-   * @param height      node height in inches
-   * @param style       additional style (filled, rounded, etc.)
+   * @param fontColor font color
+   * @param width node width in inches
+   * @param height node height in inches
+   * @param style additional style (filled, rounded, etc.)
    */
   public EquipmentVisualStyle(String shape, String fillColor, String borderColor, String fontColor, String width,
       String height, String style) {
@@ -81,8 +81,8 @@ public class EquipmentVisualStyle implements Serializable {
   /**
    * Creates a visual style with default dimensions.
    *
-   * @param shape       Graphviz shape name
-   * @param fillColor   fill color
+   * @param shape Graphviz shape name
+   * @param fillColor fill color
    * @param borderColor border color
    */
   public EquipmentVisualStyle(String shape, String fillColor, String borderColor) {

@@ -332,7 +332,7 @@ public final class BoundaryConditions implements Serializable {
      * Sets ambient temperature with unit.
      *
      * @param temperature ambient temperature value
-     * @param unit        temperature unit ("K", "C", "F")
+     * @param unit temperature unit ("K", "C", "F")
      * @return this builder
      */
     public Builder ambientTemperature(double temperature, String unit) {

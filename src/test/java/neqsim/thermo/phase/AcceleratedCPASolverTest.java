@@ -503,8 +503,8 @@ public class AcceleratedCPASolverTest {
   /**
    * Create a system with the given solver type at given T (K) and P (bar).
    *
-   * @param type     solver type: standard, implicit, broyden, anderson
-   * @param temp     temperature in K
+   * @param type solver type: standard, implicit, broyden, anderson
+   * @param temp temperature in K
    * @param pressure pressure in bar
    * @return the system
    */
@@ -630,7 +630,7 @@ public class AcceleratedCPASolverTest {
   /**
    * Run a single system case by index.
    *
-   * @param solver      solver type
+   * @param solver solver type
    * @param systemIndex 0-10 corresponding to the 11 system types
    */
   private void runSystemCase(String solver, int systemIndex) {

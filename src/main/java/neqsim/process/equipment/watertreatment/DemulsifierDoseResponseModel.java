@@ -85,7 +85,7 @@ public class DemulsifierDoseResponseModel implements Serializable {
    * Predicts outlet OIW from untreated OIW and effective demulsifier dose.
    *
    * @param untreatedOilInWaterMgL untreated or pre-chemical OIW concentration in mg/L
-   * @param effectiveDosePpm       effective demulsifier dose in ppm by produced-water mass
+   * @param effectiveDosePpm effective demulsifier dose in ppm by produced-water mass
    * @return predicted OIW concentration in mg/L
    */
   public double predictOilInWater(double untreatedOilInWaterMgL, double effectiveDosePpm) {
@@ -109,8 +109,8 @@ public class DemulsifierDoseResponseModel implements Serializable {
    * suitable for initial model fitting before a more advanced external optimizer is used.
    * </p>
    *
-   * @param dosePpm                demulsifier doses in ppm
-   * @param observedOilInWaterMgL  observed OIW concentrations in mg/L
+   * @param dosePpm demulsifier doses in ppm
+   * @param observedOilInWaterMgL observed OIW concentrations in mg/L
    * @param untreatedOilInWaterMgL untreated or zero-chemical reference OIW in mg/L
    * @return root mean square error after calibration in mg/L
    * @throws IllegalArgumentException if the arrays are null, have different lengths, or contain fewer than two points
@@ -218,7 +218,7 @@ public class DemulsifierDoseResponseModel implements Serializable {
   /**
    * Validates calibration arrays before fitting.
    *
-   * @param dosePpm               dose array
+   * @param dosePpm dose array
    * @param observedOilInWaterMgL observed OIW array
    * @throws IllegalArgumentException if the arrays cannot be calibrated
    */
@@ -237,8 +237,8 @@ public class DemulsifierDoseResponseModel implements Serializable {
   /**
    * Calculates RMSE for the current parameters.
    *
-   * @param dosePpm                dose array
-   * @param observedOilInWaterMgL  observed OIW array
+   * @param dosePpm dose array
+   * @param observedOilInWaterMgL observed OIW array
    * @param untreatedOilInWaterMgL untreated OIW reference
    * @return root mean square error in mg/L
    */
@@ -257,7 +257,7 @@ public class DemulsifierDoseResponseModel implements Serializable {
    * Builds half-dose candidates for the deterministic grid search.
    *
    * @param minPositiveDose minimum positive dose in the data
-   * @param maxDose         maximum dose in the data
+   * @param maxDose maximum dose in the data
    * @return array of candidate half-effect doses
    */
   private double[] buildHalfDoseCandidates(double minPositiveDose, double maxDose) {

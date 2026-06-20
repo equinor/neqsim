@@ -36,9 +36,9 @@ public class FlowRatioMeter extends MeasurementDeviceBaseClass {
   /**
    * Constructor with default name.
    *
-   * @param numeratorStream   stream whose flow forms the numerator
+   * @param numeratorStream stream whose flow forms the numerator
    * @param denominatorStream stream whose flow forms the denominator
-   * @param flowBasis         basis on which the ratio is computed
+   * @param flowBasis basis on which the ratio is computed
    */
   public FlowRatioMeter(StreamInterface numeratorStream, StreamInterface denominatorStream, FlowBasis flowBasis) {
     this("Flow Ratio Meter", numeratorStream, denominatorStream, flowBasis);
@@ -47,10 +47,10 @@ public class FlowRatioMeter extends MeasurementDeviceBaseClass {
   /**
    * Constructor.
    *
-   * @param name              device tag
-   * @param numeratorStream   non-null numerator stream
+   * @param name device tag
+   * @param numeratorStream non-null numerator stream
    * @param denominatorStream non-null denominator stream
-   * @param flowBasis         MASS, MOLE, or VOLUME (non-null)
+   * @param flowBasis MASS, MOLE, or VOLUME (non-null)
    */
   public FlowRatioMeter(String name, StreamInterface numeratorStream, StreamInterface denominatorStream,
       FlowBasis flowBasis) {

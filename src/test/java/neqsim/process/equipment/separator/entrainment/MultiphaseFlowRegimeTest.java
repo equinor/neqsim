@@ -15,15 +15,15 @@ class MultiphaseFlowRegimeTest {
   /**
    * Helper to configure a MultiphaseFlowRegime with common properties.
    *
-   * @param calc            the calculator to configure
-   * @param vsg             gas superficial velocity [m/s]
-   * @param vsl             liquid superficial velocity [m/s]
-   * @param gasDensity      gas density [kg/m3]
-   * @param liquidDensity   liquid density [kg/m3]
-   * @param gasViscosity    gas viscosity [Pa.s]
+   * @param calc the calculator to configure
+   * @param vsg gas superficial velocity [m/s]
+   * @param vsl liquid superficial velocity [m/s]
+   * @param gasDensity gas density [kg/m3]
+   * @param liquidDensity liquid density [kg/m3]
+   * @param gasViscosity gas viscosity [Pa.s]
    * @param liquidViscosity liquid viscosity [Pa.s]
-   * @param surfaceTension  surface tension [N/m]
-   * @param pipeDiameter    pipe diameter [m]
+   * @param surfaceTension surface tension [N/m]
+   * @param pipeDiameter pipe diameter [m]
    * @param pipeOrientation "horizontal" or "vertical"
    */
   private void configure(MultiphaseFlowRegime calc, double vsg, double vsl, double gasDensity, double liquidDensity,

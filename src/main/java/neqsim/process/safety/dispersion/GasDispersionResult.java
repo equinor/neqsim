@@ -41,26 +41,26 @@ public class GasDispersionResult implements Serializable {
   /**
    * Creates a gas dispersion result.
    *
-   * @param scenarioName                      scenario identifier
-   * @param selectedModel                     selected dispersion model name
-   * @param massReleaseRateKgPerS             total released gas mass rate in kg/s
-   * @param flammableMassReleaseRateKgPerS    released flammable mass rate in kg/s
-   * @param sourceDensityKgPerM3              expanded source gas density in kg/m3
-   * @param airDensityKgPerM3                 ambient air density in kg/m3
-   * @param fuelMoleFraction                  fuel mole fraction in the released gas
-   * @param fuelMassFraction                  fuel mass fraction in the released gas
+   * @param scenarioName scenario identifier
+   * @param selectedModel selected dispersion model name
+   * @param massReleaseRateKgPerS total released gas mass rate in kg/s
+   * @param flammableMassReleaseRateKgPerS released flammable mass rate in kg/s
+   * @param sourceDensityKgPerM3 expanded source gas density in kg/m3
+   * @param airDensityKgPerM3 ambient air density in kg/m3
+   * @param fuelMoleFraction fuel mole fraction in the released gas
+   * @param fuelMassFraction fuel mass fraction in the released gas
    * @param lowerFlammableLimitVolumeFraction lower flammable limit as volume fraction in air
-   * @param flammableEndpointFractionOfLfl    endpoint concentration fraction of LFL
-   * @param distanceToFlammableEndpointM      distance to configured endpoint in m
-   * @param distanceToHalfLflM                distance to 50 percent LFL in m
-   * @param distanceToLflM                    distance to 100 percent LFL in m
-   * @param flammableCloudVolumeM3            estimated flammable cloud volume in m3
-   * @param toxicComponentName                toxic component name, or empty string when not evaluated
-   * @param toxicThresholdPpm                 toxic endpoint threshold in ppm
-   * @param toxicDistanceM                    distance to the toxic endpoint in m
-   * @param windSpeedMPerS                    wind speed used in m/s
-   * @param stabilityClass                    Pasquill stability class A to F
-   * @param screeningBasis                    text describing the screening method basis
+   * @param flammableEndpointFractionOfLfl endpoint concentration fraction of LFL
+   * @param distanceToFlammableEndpointM distance to configured endpoint in m
+   * @param distanceToHalfLflM distance to 50 percent LFL in m
+   * @param distanceToLflM distance to 100 percent LFL in m
+   * @param flammableCloudVolumeM3 estimated flammable cloud volume in m3
+   * @param toxicComponentName toxic component name, or empty string when not evaluated
+   * @param toxicThresholdPpm toxic endpoint threshold in ppm
+   * @param toxicDistanceM distance to the toxic endpoint in m
+   * @param windSpeedMPerS wind speed used in m/s
+   * @param stabilityClass Pasquill stability class A to F
+   * @param screeningBasis text describing the screening method basis
    */
   public GasDispersionResult(String scenarioName, String selectedModel, double massReleaseRateKgPerS,
       double flammableMassReleaseRateKgPerS, double sourceDensityKgPerM3, double airDensityKgPerM3,
@@ -93,24 +93,24 @@ public class GasDispersionResult implements Serializable {
   /**
    * Creates a gas dispersion result using 50 percent LFL as the configured endpoint.
    *
-   * @param scenarioName                      scenario identifier
-   * @param selectedModel                     selected dispersion model name
-   * @param massReleaseRateKgPerS             total released gas mass rate in kg/s
-   * @param flammableMassReleaseRateKgPerS    released flammable mass rate in kg/s
-   * @param sourceDensityKgPerM3              expanded source gas density in kg/m3
-   * @param airDensityKgPerM3                 ambient air density in kg/m3
-   * @param fuelMoleFraction                  fuel mole fraction in the released gas
-   * @param fuelMassFraction                  fuel mass fraction in the released gas
+   * @param scenarioName scenario identifier
+   * @param selectedModel selected dispersion model name
+   * @param massReleaseRateKgPerS total released gas mass rate in kg/s
+   * @param flammableMassReleaseRateKgPerS released flammable mass rate in kg/s
+   * @param sourceDensityKgPerM3 expanded source gas density in kg/m3
+   * @param airDensityKgPerM3 ambient air density in kg/m3
+   * @param fuelMoleFraction fuel mole fraction in the released gas
+   * @param fuelMassFraction fuel mass fraction in the released gas
    * @param lowerFlammableLimitVolumeFraction lower flammable limit as volume fraction in air
-   * @param distanceToHalfLflM                distance to 50 percent LFL in m
-   * @param distanceToLflM                    distance to 100 percent LFL in m
-   * @param flammableCloudVolumeM3            estimated flammable cloud volume in m3
-   * @param toxicComponentName                toxic component name, or empty string when not evaluated
-   * @param toxicThresholdPpm                 toxic endpoint threshold in ppm
-   * @param toxicDistanceM                    distance to the toxic endpoint in m
-   * @param windSpeedMPerS                    wind speed used in m/s
-   * @param stabilityClass                    Pasquill stability class A to F
-   * @param screeningBasis                    text describing the screening method basis
+   * @param distanceToHalfLflM distance to 50 percent LFL in m
+   * @param distanceToLflM distance to 100 percent LFL in m
+   * @param flammableCloudVolumeM3 estimated flammable cloud volume in m3
+   * @param toxicComponentName toxic component name, or empty string when not evaluated
+   * @param toxicThresholdPpm toxic endpoint threshold in ppm
+   * @param toxicDistanceM distance to the toxic endpoint in m
+   * @param windSpeedMPerS wind speed used in m/s
+   * @param stabilityClass Pasquill stability class A to F
+   * @param screeningBasis text describing the screening method basis
    */
   public GasDispersionResult(String scenarioName, String selectedModel, double massReleaseRateKgPerS,
       double flammableMassReleaseRateKgPerS, double sourceDensityKgPerM3, double airDensityKgPerM3,
@@ -357,8 +357,8 @@ public class GasDispersionResult implements Serializable {
   /**
    * Append a JSON string field.
    *
-   * @param json  builder to append to
-   * @param name  field name
+   * @param json builder to append to
+   * @param name field name
    * @param value field value
    * @param comma true to append a trailing comma
    */
@@ -373,8 +373,8 @@ public class GasDispersionResult implements Serializable {
   /**
    * Append a JSON numeric field.
    *
-   * @param json  builder to append to
-   * @param name  field name
+   * @param json builder to append to
+   * @param name field name
    * @param value numeric value
    * @param comma true to append a trailing comma
    */

@@ -45,7 +45,7 @@ public class SolidsCentrifuge extends SolidsSeparator {
   /**
    * Constructor for SolidsCentrifuge with inlet stream.
    *
-   * @param name        name of the centrifuge
+   * @param name name of the centrifuge
    * @param inletStream the feed stream
    */
   public SolidsCentrifuge(String name, StreamInterface inletStream) {

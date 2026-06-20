@@ -34,7 +34,7 @@ public class PHsolidFlash extends Flash {
    * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param ent    a double
+   * @param ent a double
    */
   public PHsolidFlash(SystemInterface system, double ent) {
     this.system = system;

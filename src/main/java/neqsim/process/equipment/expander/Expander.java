@@ -43,7 +43,7 @@ public class Expander extends Compressor implements ExpanderInterface {
    * Constructor for Expander.
    * </p>
    *
-   * @param name        a {@link java.lang.String} object
+   * @param name a {@link java.lang.String} object
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public Expander(String name, StreamInterface inletStream) {

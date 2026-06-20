@@ -43,7 +43,7 @@ public class OilLevelTransmitter extends MeasurementDeviceBaseClass {
    * Constructor for OilLevelTransmitter.
    * </p>
    *
-   * @param name      Name of OilLevelTransmitter
+   * @param name Name of OilLevelTransmitter
    * @param separator a {@link neqsim.process.equipment.separator.ThreePhaseSeparator} object
    */
   public OilLevelTransmitter(String name, ThreePhaseSeparator separator) {

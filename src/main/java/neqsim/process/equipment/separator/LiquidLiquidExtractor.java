@@ -86,8 +86,8 @@ public class LiquidLiquidExtractor extends ProcessEquipmentBaseClass {
   /**
    * Constructor for LiquidLiquidExtractor with feed and solvent streams.
    *
-   * @param name          name of the extractor
-   * @param feedStream    the feed stream
+   * @param name name of the extractor
+   * @param feedStream the feed stream
    * @param solventStream the solvent stream
    */
   public LiquidLiquidExtractor(String name, StreamInterface feedStream, StreamInterface solventStream) {

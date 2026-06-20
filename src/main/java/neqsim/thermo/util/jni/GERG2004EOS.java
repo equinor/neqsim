@@ -25,15 +25,15 @@ public class GERG2004EOS {
    * POTDX.
    * </p>
    *
-   * @param c1  a double
-   * @param c2  a double
-   * @param c3  a double
-   * @param c4  a double
-   * @param c5  a double
-   * @param c6  a double
-   * @param c7  a double
-   * @param c8  a double
-   * @param c9  a double
+   * @param c1 a double
+   * @param c2 a double
+   * @param c3 a double
+   * @param c4 a double
+   * @param c5 a double
+   * @param c6 a double
+   * @param c7 a double
+   * @param c8 a double
+   * @param c9 a double
    * @param c10 a double
    * @param c11 a double
    * @param c12 a double
@@ -56,26 +56,26 @@ public class GERG2004EOS {
    * ZOTPX.
    * </p>
    *
-   * @param c1     a double
-   * @param c2     a double
-   * @param c3     a double
-   * @param c4     a double
-   * @param c5     a double
-   * @param c6     a double
-   * @param c7     a double
-   * @param c8     a double
-   * @param c9     a double
-   * @param c10    a double
-   * @param c11    a double
-   * @param c12    a double
-   * @param c13    a double
-   * @param c14    a double
-   * @param c15    a double
-   * @param c16    a double
-   * @param c17    a double
-   * @param c18    a double
-   * @param c19    a double
-   * @param c20    a double
+   * @param c1 a double
+   * @param c2 a double
+   * @param c3 a double
+   * @param c4 a double
+   * @param c5 a double
+   * @param c6 a double
+   * @param c7 a double
+   * @param c8 a double
+   * @param c9 a double
+   * @param c10 a double
+   * @param c11 a double
+   * @param c12 a double
+   * @param c13 a double
+   * @param c14 a double
+   * @param c15 a double
+   * @param c16 a double
+   * @param c17 a double
+   * @param c18 a double
+   * @param c19 a double
+   * @param c20 a double
    * @param IPHASE a int
    * @return a double
    */
@@ -88,26 +88,26 @@ public class GERG2004EOS {
    * HOTPX.
    * </p>
    *
-   * @param c1     a double
-   * @param c2     a double
-   * @param c3     a double
-   * @param c4     a double
-   * @param c5     a double
-   * @param c6     a double
-   * @param c7     a double
-   * @param c8     a double
-   * @param c9     a double
-   * @param c10    a double
-   * @param c11    a double
-   * @param c12    a double
-   * @param c13    a double
-   * @param c14    a double
-   * @param c15    a double
-   * @param c16    a double
-   * @param c17    a double
-   * @param c18    a double
-   * @param c19    a double
-   * @param c20    a double
+   * @param c1 a double
+   * @param c2 a double
+   * @param c3 a double
+   * @param c4 a double
+   * @param c5 a double
+   * @param c6 a double
+   * @param c7 a double
+   * @param c8 a double
+   * @param c9 a double
+   * @param c10 a double
+   * @param c11 a double
+   * @param c12 a double
+   * @param c13 a double
+   * @param c14 a double
+   * @param c15 a double
+   * @param c16 a double
+   * @param c17 a double
+   * @param c18 a double
+   * @param c19 a double
+   * @param c20 a double
    * @param IPHASE a int
    * @return a double
    */
@@ -120,26 +120,26 @@ public class GERG2004EOS {
    * SOTPX.
    * </p>
    *
-   * @param c1     a double
-   * @param c2     a double
-   * @param c3     a double
-   * @param c4     a double
-   * @param c5     a double
-   * @param c6     a double
-   * @param c7     a double
-   * @param c8     a double
-   * @param c9     a double
-   * @param c10    a double
-   * @param c11    a double
-   * @param c12    a double
-   * @param c13    a double
-   * @param c14    a double
-   * @param c15    a double
-   * @param c16    a double
-   * @param c17    a double
-   * @param c18    a double
-   * @param c19    a double
-   * @param c20    a double
+   * @param c1 a double
+   * @param c2 a double
+   * @param c3 a double
+   * @param c4 a double
+   * @param c5 a double
+   * @param c6 a double
+   * @param c7 a double
+   * @param c8 a double
+   * @param c9 a double
+   * @param c10 a double
+   * @param c11 a double
+   * @param c12 a double
+   * @param c13 a double
+   * @param c14 a double
+   * @param c15 a double
+   * @param c16 a double
+   * @param c17 a double
+   * @param c18 a double
+   * @param c19 a double
+   * @param c20 a double
    * @param IPHASE a int
    * @return a double
    */
@@ -152,26 +152,26 @@ public class GERG2004EOS {
    * CPOTPX.
    * </p>
    *
-   * @param c1     a double
-   * @param c2     a double
-   * @param c3     a double
-   * @param c4     a double
-   * @param c5     a double
-   * @param c6     a double
-   * @param c7     a double
-   * @param c8     a double
-   * @param c9     a double
-   * @param c10    a double
-   * @param c11    a double
-   * @param c12    a double
-   * @param c13    a double
-   * @param c14    a double
-   * @param c15    a double
-   * @param c16    a double
-   * @param c17    a double
-   * @param c18    a double
-   * @param c19    a double
-   * @param c20    a double
+   * @param c1 a double
+   * @param c2 a double
+   * @param c3 a double
+   * @param c4 a double
+   * @param c5 a double
+   * @param c6 a double
+   * @param c7 a double
+   * @param c8 a double
+   * @param c9 a double
+   * @param c10 a double
+   * @param c11 a double
+   * @param c12 a double
+   * @param c13 a double
+   * @param c14 a double
+   * @param c15 a double
+   * @param c16 a double
+   * @param c17 a double
+   * @param c18 a double
+   * @param c19 a double
+   * @param c20 a double
    * @param IPHASE a int
    * @return a double
    */
@@ -184,26 +184,26 @@ public class GERG2004EOS {
    * WOTPX.
    * </p>
    *
-   * @param c1     a double
-   * @param c2     a double
-   * @param c3     a double
-   * @param c4     a double
-   * @param c5     a double
-   * @param c6     a double
-   * @param c7     a double
-   * @param c8     a double
-   * @param c9     a double
-   * @param c10    a double
-   * @param c11    a double
-   * @param c12    a double
-   * @param c13    a double
-   * @param c14    a double
-   * @param c15    a double
-   * @param c16    a double
-   * @param c17    a double
-   * @param c18    a double
-   * @param c19    a double
-   * @param c20    a double
+   * @param c1 a double
+   * @param c2 a double
+   * @param c3 a double
+   * @param c4 a double
+   * @param c5 a double
+   * @param c6 a double
+   * @param c7 a double
+   * @param c8 a double
+   * @param c9 a double
+   * @param c10 a double
+   * @param c11 a double
+   * @param c12 a double
+   * @param c13 a double
+   * @param c14 a double
+   * @param c15 a double
+   * @param c16 a double
+   * @param c17 a double
+   * @param c18 a double
+   * @param c19 a double
+   * @param c20 a double
    * @param IPHASE a int
    * @return a double
    */
@@ -216,26 +216,26 @@ public class GERG2004EOS {
    * RJTOTPX.
    * </p>
    *
-   * @param c1     a double
-   * @param c2     a double
-   * @param c3     a double
-   * @param c4     a double
-   * @param c5     a double
-   * @param c6     a double
-   * @param c7     a double
-   * @param c8     a double
-   * @param c9     a double
-   * @param c10    a double
-   * @param c11    a double
-   * @param c12    a double
-   * @param c13    a double
-   * @param c14    a double
-   * @param c15    a double
-   * @param c16    a double
-   * @param c17    a double
-   * @param c18    a double
-   * @param c19    a double
-   * @param c20    a double
+   * @param c1 a double
+   * @param c2 a double
+   * @param c3 a double
+   * @param c4 a double
+   * @param c5 a double
+   * @param c6 a double
+   * @param c7 a double
+   * @param c8 a double
+   * @param c9 a double
+   * @param c10 a double
+   * @param c11 a double
+   * @param c12 a double
+   * @param c13 a double
+   * @param c14 a double
+   * @param c15 a double
+   * @param c16 a double
+   * @param c17 a double
+   * @param c18 a double
+   * @param c19 a double
+   * @param c20 a double
    * @param IPHASE a int
    * @return a double
    */
@@ -248,26 +248,26 @@ public class GERG2004EOS {
    * GOTPX.
    * </p>
    *
-   * @param c1     a double
-   * @param c2     a double
-   * @param c3     a double
-   * @param c4     a double
-   * @param c5     a double
-   * @param c6     a double
-   * @param c7     a double
-   * @param c8     a double
-   * @param c9     a double
-   * @param c10    a double
-   * @param c11    a double
-   * @param c12    a double
-   * @param c13    a double
-   * @param c14    a double
-   * @param c15    a double
-   * @param c16    a double
-   * @param c17    a double
-   * @param c18    a double
-   * @param c19    a double
-   * @param c20    a double
+   * @param c1 a double
+   * @param c2 a double
+   * @param c3 a double
+   * @param c4 a double
+   * @param c5 a double
+   * @param c6 a double
+   * @param c7 a double
+   * @param c8 a double
+   * @param c9 a double
+   * @param c10 a double
+   * @param c11 a double
+   * @param c12 a double
+   * @param c13 a double
+   * @param c14 a double
+   * @param c15 a double
+   * @param c16 a double
+   * @param c17 a double
+   * @param c18 a double
+   * @param c19 a double
+   * @param c20 a double
    * @param IPHASE a int
    * @return a double
    */
@@ -280,26 +280,26 @@ public class GERG2004EOS {
    * UOTPX.
    * </p>
    *
-   * @param c1     a double
-   * @param c2     a double
-   * @param c3     a double
-   * @param c4     a double
-   * @param c5     a double
-   * @param c6     a double
-   * @param c7     a double
-   * @param c8     a double
-   * @param c9     a double
-   * @param c10    a double
-   * @param c11    a double
-   * @param c12    a double
-   * @param c13    a double
-   * @param c14    a double
-   * @param c15    a double
-   * @param c16    a double
-   * @param c17    a double
-   * @param c18    a double
-   * @param c19    a double
-   * @param c20    a double
+   * @param c1 a double
+   * @param c2 a double
+   * @param c3 a double
+   * @param c4 a double
+   * @param c5 a double
+   * @param c6 a double
+   * @param c7 a double
+   * @param c8 a double
+   * @param c9 a double
+   * @param c10 a double
+   * @param c11 a double
+   * @param c12 a double
+   * @param c13 a double
+   * @param c14 a double
+   * @param c15 a double
+   * @param c16 a double
+   * @param c17 a double
+   * @param c18 a double
+   * @param c19 a double
+   * @param c20 a double
    * @param IPHASE a int
    * @return a double
    */
@@ -312,26 +312,26 @@ public class GERG2004EOS {
    * AOTPX.
    * </p>
    *
-   * @param c1     a double
-   * @param c2     a double
-   * @param c3     a double
-   * @param c4     a double
-   * @param c5     a double
-   * @param c6     a double
-   * @param c7     a double
-   * @param c8     a double
-   * @param c9     a double
-   * @param c10    a double
-   * @param c11    a double
-   * @param c12    a double
-   * @param c13    a double
-   * @param c14    a double
-   * @param c15    a double
-   * @param c16    a double
-   * @param c17    a double
-   * @param c18    a double
-   * @param c19    a double
-   * @param c20    a double
+   * @param c1 a double
+   * @param c2 a double
+   * @param c3 a double
+   * @param c4 a double
+   * @param c5 a double
+   * @param c6 a double
+   * @param c7 a double
+   * @param c8 a double
+   * @param c9 a double
+   * @param c10 a double
+   * @param c11 a double
+   * @param c12 a double
+   * @param c13 a double
+   * @param c14 a double
+   * @param c15 a double
+   * @param c16 a double
+   * @param c17 a double
+   * @param c18 a double
+   * @param c19 a double
+   * @param c20 a double
    * @param IPHASE a int
    * @return a double
    */
@@ -344,26 +344,26 @@ public class GERG2004EOS {
    * SFUGOTPX.
    * </p>
    *
-   * @param c1     a double
-   * @param c2     a double
-   * @param c3     a double
-   * @param c4     a double
-   * @param c5     a double
-   * @param c6     a double
-   * @param c7     a double
-   * @param c8     a double
-   * @param c9     a double
-   * @param c10    a double
-   * @param c11    a double
-   * @param c12    a double
-   * @param c13    a double
-   * @param c14    a double
-   * @param c15    a double
-   * @param c16    a double
-   * @param c17    a double
-   * @param c18    a double
-   * @param c19    a double
-   * @param c20    a double
+   * @param c1 a double
+   * @param c2 a double
+   * @param c3 a double
+   * @param c4 a double
+   * @param c5 a double
+   * @param c6 a double
+   * @param c7 a double
+   * @param c8 a double
+   * @param c9 a double
+   * @param c10 a double
+   * @param c11 a double
+   * @param c12 a double
+   * @param c13 a double
+   * @param c14 a double
+   * @param c15 a double
+   * @param c16 a double
+   * @param c17 a double
+   * @param c18 a double
+   * @param c19 a double
+   * @param c20 a double
    * @param IPHASE a int
    * @return an array of type double
    */
@@ -376,26 +376,26 @@ public class GERG2004EOS {
    * SPHIOTPX.
    * </p>
    *
-   * @param c1     a double
-   * @param c2     a double
-   * @param c3     a double
-   * @param c4     a double
-   * @param c5     a double
-   * @param c6     a double
-   * @param c7     a double
-   * @param c8     a double
-   * @param c9     a double
-   * @param c10    a double
-   * @param c11    a double
-   * @param c12    a double
-   * @param c13    a double
-   * @param c14    a double
-   * @param c15    a double
-   * @param c16    a double
-   * @param c17    a double
-   * @param c18    a double
-   * @param c19    a double
-   * @param c20    a double
+   * @param c1 a double
+   * @param c2 a double
+   * @param c3 a double
+   * @param c4 a double
+   * @param c5 a double
+   * @param c6 a double
+   * @param c7 a double
+   * @param c8 a double
+   * @param c9 a double
+   * @param c10 a double
+   * @param c11 a double
+   * @param c12 a double
+   * @param c13 a double
+   * @param c14 a double
+   * @param c15 a double
+   * @param c16 a double
+   * @param c17 a double
+   * @param c18 a double
+   * @param c19 a double
+   * @param c20 a double
    * @param IPHASE a int
    * @return an array of type double
    */
@@ -408,26 +408,26 @@ public class GERG2004EOS {
    * CVOTPX.
    * </p>
    *
-   * @param c1     a double
-   * @param c2     a double
-   * @param c3     a double
-   * @param c4     a double
-   * @param c5     a double
-   * @param c6     a double
-   * @param c7     a double
-   * @param c8     a double
-   * @param c9     a double
-   * @param c10    a double
-   * @param c11    a double
-   * @param c12    a double
-   * @param c13    a double
-   * @param c14    a double
-   * @param c15    a double
-   * @param c16    a double
-   * @param c17    a double
-   * @param c18    a double
-   * @param c19    a double
-   * @param c20    a double
+   * @param c1 a double
+   * @param c2 a double
+   * @param c3 a double
+   * @param c4 a double
+   * @param c5 a double
+   * @param c6 a double
+   * @param c7 a double
+   * @param c8 a double
+   * @param c9 a double
+   * @param c10 a double
+   * @param c11 a double
+   * @param c12 a double
+   * @param c13 a double
+   * @param c14 a double
+   * @param c15 a double
+   * @param c16 a double
+   * @param c17 a double
+   * @param c18 a double
+   * @param c19 a double
+   * @param c20 a double
    * @param IPHASE a int
    * @return a double
    */
@@ -440,26 +440,26 @@ public class GERG2004EOS {
    * SALLOTPX.
    * </p>
    *
-   * @param c1     a double
-   * @param c2     a double
-   * @param c3     a double
-   * @param c4     a double
-   * @param c5     a double
-   * @param c6     a double
-   * @param c7     a double
-   * @param c8     a double
-   * @param c9     a double
-   * @param c10    a double
-   * @param c11    a double
-   * @param c12    a double
-   * @param c13    a double
-   * @param c14    a double
-   * @param c15    a double
-   * @param c16    a double
-   * @param c17    a double
-   * @param c18    a double
-   * @param c19    a double
-   * @param c20    a double
+   * @param c1 a double
+   * @param c2 a double
+   * @param c3 a double
+   * @param c4 a double
+   * @param c5 a double
+   * @param c6 a double
+   * @param c7 a double
+   * @param c8 a double
+   * @param c9 a double
+   * @param c10 a double
+   * @param c11 a double
+   * @param c12 a double
+   * @param c13 a double
+   * @param c14 a double
+   * @param c15 a double
+   * @param c16 a double
+   * @param c17 a double
+   * @param c18 a double
+   * @param c19 a double
+   * @param c20 a double
    * @param IPHASE a int
    * @return an array of type double
    */

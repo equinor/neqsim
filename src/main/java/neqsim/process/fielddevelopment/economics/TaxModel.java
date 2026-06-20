@@ -61,9 +61,9 @@ public interface TaxModel extends Serializable {
    * Calculates tax for a single year.
    *
    * @param grossRevenue total revenue for the year
-   * @param opex         operating expenditure for the year
+   * @param opex operating expenditure for the year
    * @param depreciation depreciation deduction for the year
-   * @param uplift       uplift/incentive deduction for the year
+   * @param uplift uplift/incentive deduction for the year
    * @return tax calculation result
    */
   TaxResult calculateTax(double grossRevenue, double opex, double depreciation, double uplift);
@@ -72,7 +72,7 @@ public interface TaxModel extends Serializable {
    * Calculates annual depreciation.
    *
    * @param capex total capital expenditure
-   * @param year  year number (1 = first year of depreciation)
+   * @param year year number (1 = first year of depreciation)
    * @return depreciation amount for the specified year
    */
   double calculateDepreciation(double capex, int year);
@@ -81,7 +81,7 @@ public interface TaxModel extends Serializable {
    * Calculates uplift/investment incentive deduction.
    *
    * @param capex total capital expenditure
-   * @param year  year number (1 = first year of eligibility)
+   * @param year year number (1 = first year of eligibility)
    * @return uplift amount for the specified year
    */
   double calculateUplift(double capex, int year);
@@ -98,9 +98,9 @@ public interface TaxModel extends Serializable {
    * Calculates the effective tax rate.
    *
    * @param grossRevenue total revenue
-   * @param opex         operating expenditure
+   * @param opex operating expenditure
    * @param depreciation depreciation deduction
-   * @param uplift       uplift deduction
+   * @param uplift uplift deduction
    * @return effective tax rate (0-1)
    */
   double calculateEffectiveTaxRate(double grossRevenue, double opex, double depreciation, double uplift);
@@ -150,17 +150,17 @@ public interface TaxModel extends Serializable {
     /**
      * Creates a new tax result.
      *
-     * @param grossRevenue     gross revenue
-     * @param opex             operating expenditure
-     * @param depreciation     depreciation
-     * @param uplift           uplift deduction
-     * @param royalty          royalty
+     * @param grossRevenue gross revenue
+     * @param opex operating expenditure
+     * @param depreciation depreciation
+     * @param uplift uplift deduction
+     * @param royalty royalty
      * @param corporateTaxBase corporate tax base
-     * @param corporateTax     corporate tax
-     * @param resourceTaxBase  resource tax base
-     * @param resourceTax      resource tax
-     * @param totalTax         total tax
-     * @param afterTaxIncome   after-tax income
+     * @param corporateTax corporate tax
+     * @param resourceTaxBase resource tax base
+     * @param resourceTax resource tax
+     * @param totalTax total tax
+     * @param afterTaxIncome after-tax income
      */
     public TaxResult(double grossRevenue, double opex, double depreciation, double uplift, double royalty,
 	double corporateTaxBase, double corporateTax, double resourceTaxBase, double resourceTax, double totalTax,
@@ -182,16 +182,16 @@ public interface TaxModel extends Serializable {
     /**
      * Creates a tax result without royalty (for backward compatibility).
      *
-     * @param grossRevenue     gross revenue
-     * @param opex             operating expenditure
-     * @param depreciation     depreciation
-     * @param uplift           uplift deduction
+     * @param grossRevenue gross revenue
+     * @param opex operating expenditure
+     * @param depreciation depreciation
+     * @param uplift uplift deduction
      * @param corporateTaxBase corporate tax base
-     * @param corporateTax     corporate tax
-     * @param resourceTaxBase  resource tax base
-     * @param resourceTax      resource tax
-     * @param totalTax         total tax
-     * @param afterTaxIncome   after-tax income
+     * @param corporateTax corporate tax
+     * @param resourceTaxBase resource tax base
+     * @param resourceTax resource tax
+     * @param totalTax total tax
+     * @param afterTaxIncome after-tax income
      */
     public TaxResult(double grossRevenue, double opex, double depreciation, double uplift, double corporateTaxBase,
 	double corporateTax, double resourceTaxBase, double resourceTax, double totalTax, double afterTaxIncome) {

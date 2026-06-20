@@ -1887,7 +1887,7 @@ public final class SchemaCatalog {
   /**
    * Returns a schema by tool name and schema type (input/output).
    *
-   * @param toolName   the tool name
+   * @param toolName the tool name
    * @param schemaType "input" or "output"
    * @return the JSON Schema string, or null if not found
    */
@@ -2076,10 +2076,10 @@ public final class SchemaCatalog {
   /**
    * Creates a ValueWithUnit JSON Schema fragment (oneOf: number or object).
    *
-   * @param description     the field description
+   * @param description the field description
    * @param unitDescription the unit field description
-   * @param allowedUnits    the allowed unit values
-   * @param defaultUnit     the default unit
+   * @param allowedUnits the allowed unit values
+   * @param defaultUnit the default unit
    * @return the schema map
    */
   private static Map<String, Object> valueWithUnitSchema(String description, String unitDescription,
@@ -2171,7 +2171,7 @@ public final class SchemaCatalog {
    * Creates an enum string property schema.
    *
    * @param description the property description
-   * @param values      the enum values
+   * @param values the enum values
    * @return the schema map
    */
   private static Map<String, Object> enumProp(String description, List<String> values) {

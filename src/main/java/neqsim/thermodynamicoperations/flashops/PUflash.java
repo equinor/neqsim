@@ -31,7 +31,7 @@ public class PUflash extends Flash {
    * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param Uspec  a double
+   * @param Uspec a double
    */
   public PUflash(SystemInterface system, double Uspec) {
     this.system = system;

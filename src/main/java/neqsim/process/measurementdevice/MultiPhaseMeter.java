@@ -43,7 +43,7 @@ public class MultiPhaseMeter extends StreamMeasurementDeviceBaseClass {
    * Constructor for MultiPhaseMeter.
    * </p>
    *
-   * @param name   a {@link java.lang.String} object
+   * @param name a {@link java.lang.String} object
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public MultiPhaseMeter(String name, StreamInterface stream) {
@@ -67,7 +67,7 @@ public class MultiPhaseMeter extends StreamMeasurementDeviceBaseClass {
    * </p>
    *
    * @param pressure a double
-   * @param unitP    a {@link java.lang.String} object
+   * @param unitP a {@link java.lang.String} object
    */
   public void setPressure(double pressure, String unitP) {
     this.pressure = pressure;
@@ -91,7 +91,7 @@ public class MultiPhaseMeter extends StreamMeasurementDeviceBaseClass {
    * </p>
    *
    * @param temperature a double
-   * @param unitT       a {@link java.lang.String} object
+   * @param unitT a {@link java.lang.String} object
    */
   public void setTemperature(double temperature, String unitT) {
     this.temperature = temperature;
@@ -109,7 +109,7 @@ public class MultiPhaseMeter extends StreamMeasurementDeviceBaseClass {
    * "GOR_std".
    *
    * @param measurement Measurement value to get.
-   * @param unit        Unit to get value in
+   * @param unit Unit to get value in
    * @return Measured value
    */
   public double getMeasuredValue(String measurement, String unit) {

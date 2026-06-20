@@ -147,15 +147,15 @@ public class FacilityCapacity implements Serializable {
     /**
      * Creates a capacity period.
      *
-     * @param periodName            descriptive name for the period
-     * @param time                  time from start
-     * @param timeUnit              time unit
-     * @param maxFacilityRate       maximum sustainable rate
-     * @param rateUnit              rate unit
-     * @param bottleneckEquipment   name of bottleneck equipment
+     * @param periodName descriptive name for the period
+     * @param time time from start
+     * @param timeUnit time unit
+     * @param maxFacilityRate maximum sustainable rate
+     * @param rateUnit rate unit
+     * @param bottleneckEquipment name of bottleneck equipment
      * @param bottleneckUtilization utilization of bottleneck
      * @param equipmentUtilizations map of equipment name to utilization
-     * @param nearBottlenecks       list of near-bottleneck equipment names
+     * @param nearBottlenecks list of near-bottleneck equipment names
      * @param isFacilityConstrained true if facility limits production
      */
     public CapacityPeriod(String periodName, double time, String timeUnit, double maxFacilityRate, String rateUnit,
@@ -290,18 +290,18 @@ public class FacilityCapacity implements Serializable {
     /**
      * Creates a debottleneck option.
      *
-     * @param equipmentName         equipment name
-     * @param equipmentType         equipment class type
-     * @param description           upgrade description
-     * @param currentCapacity       current capacity
-     * @param upgradedCapacity      proposed capacity after upgrade
-     * @param currentUtilization    current utilization
+     * @param equipmentName equipment name
+     * @param equipmentType equipment class type
+     * @param description upgrade description
+     * @param currentCapacity current capacity
+     * @param upgradedCapacity proposed capacity after upgrade
+     * @param currentUtilization current utilization
      * @param incrementalProduction additional production enabled
-     * @param rateUnit              rate unit
-     * @param capex                 capital expenditure
-     * @param currency              currency code
-     * @param paybackYears          simple payback period
-     * @param npv                   net present value of upgrade
+     * @param rateUnit rate unit
+     * @param capex capital expenditure
+     * @param currency currency code
+     * @param paybackYears simple payback period
+     * @param npv net present value of upgrade
      */
     public DebottleneckOption(String equipmentName, Class<?> equipmentType, String description, double currentCapacity,
 	double upgradedCapacity, double currentUtilization, double incrementalProduction, String rateUnit, double capex,
@@ -473,15 +473,15 @@ public class FacilityCapacity implements Serializable {
     /**
      * Creates a capacity assessment.
      *
-     * @param currentMaxRate        maximum sustainable rate
-     * @param rateUnit              rate unit
-     * @param currentBottleneck     bottleneck equipment name
+     * @param currentMaxRate maximum sustainable rate
+     * @param rateUnit rate unit
+     * @param currentBottleneck bottleneck equipment name
      * @param bottleneckUtilization bottleneck utilization
-     * @param utilizationRecords    all utilization records
-     * @param nearBottlenecks       near-bottleneck equipment names
-     * @param debottleneckOptions   generated debottleneck options
-     * @param equipmentHeadroom     map of equipment to remaining capacity
-     * @param feasible              true if a feasible operating point was found
+     * @param utilizationRecords all utilization records
+     * @param nearBottlenecks near-bottleneck equipment names
+     * @param debottleneckOptions generated debottleneck options
+     * @param equipmentHeadroom map of equipment to remaining capacity
+     * @param feasible true if a feasible operating point was found
      */
     public CapacityAssessment(double currentMaxRate, String rateUnit, String currentBottleneck,
 	double bottleneckUtilization, List<UtilizationRecord> utilizationRecords, List<String> nearBottlenecks,
@@ -670,7 +670,7 @@ public class FacilityCapacity implements Serializable {
    * @param feedStream feed stream for rate adjustment
    * @param lowerBound lower bound for rate optimization
    * @param upperBound upper bound for rate optimization
-   * @param rateUnit   rate unit
+   * @param rateUnit rate unit
    * @return comprehensive capacity assessment
    */
   public CapacityAssessment assess(StreamInterface feedStream, double lowerBound, double upperBound, String rateUnit) {
@@ -715,7 +715,7 @@ public class FacilityCapacity implements Serializable {
    * @param feedStream the feed stream used for capacity calculations
    * @param lowerBound the lower bound of the rate range
    * @param upperBound the upper bound of the rate range
-   * @param rateUnit   the unit of measurement for the rate
+   * @param rateUnit the unit of measurement for the rate
    * @return list of debottleneck options sorted by NPV (best first)
    */
   private List<DebottleneckOption> generateDebottleneckOptions(OptimizationResult baseResult,
@@ -755,12 +755,12 @@ public class FacilityCapacity implements Serializable {
   /**
    * Creates a debottleneck option for a piece of equipment.
    *
-   * @param equipment  the equipment to evaluate for debottlenecking
+   * @param equipment the equipment to evaluate for debottlenecking
    * @param baseResult the baseline optimization result
    * @param feedStream the feed stream to the facility
    * @param lowerBound the lower bound of the rate range
    * @param upperBound the upper bound of the rate range
-   * @param rateUnit   the unit for production rates
+   * @param rateUnit the unit for production rates
    * @return the debottleneck option, or null if not applicable
    */
   private DebottleneckOption createDebottleneckOption(ProcessEquipmentInterface equipment,
@@ -816,8 +816,8 @@ public class FacilityCapacity implements Serializable {
   /**
    * Estimates CAPEX for a capacity upgrade.
    *
-   * @param equipment        the equipment being upgraded
-   * @param currentCapacity  the current capacity
+   * @param equipment the equipment being upgraded
+   * @param currentCapacity the current capacity
    * @param upgradedCapacity the target upgraded capacity
    * @return the estimated capital expenditure in currency units
    */
@@ -840,10 +840,10 @@ public class FacilityCapacity implements Serializable {
    * Calculates simplified NPV for a debottleneck investment.
    *
    * @param dailyIncrementalProduction daily incremental production from the upgrade
-   * @param revenuePerUnit             revenue per unit of production
-   * @param capex                      capital expenditure for the upgrade
-   * @param discountRate               annual discount rate for NPV calculation
-   * @param years                      number of years for NPV calculation
+   * @param revenuePerUnit revenue per unit of production
+   * @param capex capital expenditure for the upgrade
+   * @param discountRate annual discount rate for NPV calculation
+   * @param years number of years for NPV calculation
    * @return the net present value of the investment
    */
   private double calculateSimpleNPV(double dailyIncrementalProduction, double revenuePerUnit, double capex,
@@ -881,10 +881,10 @@ public class FacilityCapacity implements Serializable {
    * gains and costs.
    *
    * @param feedStream feed stream for optimization
-   * @param options    debottleneck options to compare
+   * @param options debottleneck options to compare
    * @param lowerBound lower bound for rate optimization
    * @param upperBound upper bound for rate optimization
-   * @param rateUnit   rate unit
+   * @param rateUnit rate unit
    * @return scenario comparison result
    */
   public ScenarioComparisonResult compareDebottleneckScenarios(StreamInterface feedStream,
@@ -921,7 +921,7 @@ public class FacilityCapacity implements Serializable {
    * <p>
    * Tracks how the bottleneck shifts as production declines, identifying when the facility becomes unconstrained.
    *
-   * @param forecast   production forecast from {@link ProductionProfile}
+   * @param forecast production forecast from {@link ProductionProfile}
    * @param feedStream feed stream for facility analysis
    * @return list of capacity periods showing evolution
    */
@@ -989,10 +989,10 @@ public class FacilityCapacity implements Serializable {
    * <li>Discount rate for time value of money</li>
    * </ul>
    *
-   * @param option         debottleneck option to evaluate
-   * @param productPrice   price per unit of production (e.g., $/bbl)
-   * @param opexPerUnit    operating cost per unit
-   * @param discountRate   annual discount rate (e.g., 0.10 for 10%)
+   * @param option debottleneck option to evaluate
+   * @param productPrice price per unit of production (e.g., $/bbl)
+   * @param opexPerUnit operating cost per unit
+   * @param discountRate annual discount rate (e.g., 0.10 for 10%)
    * @param yearsOfBenefit number of years to realize benefit
    * @return net present value
    */
@@ -1070,7 +1070,7 @@ public class FacilityCapacity implements Serializable {
    * Sets a cost factor for a specific equipment type.
    *
    * @param equipmentType equipment class
-   * @param costPerUnit   cost per unit of capacity increase
+   * @param costPerUnit cost per unit of capacity increase
    */
   public void setCostFactorForType(Class<?> equipmentType, double costPerUnit) {
     costFactorsByType.put(equipmentType, costPerUnit);
@@ -1080,7 +1080,7 @@ public class FacilityCapacity implements Serializable {
    * Sets a cost factor for a specific equipment name.
    *
    * @param equipmentName equipment name
-   * @param costPerUnit   cost per unit of capacity increase
+   * @param costPerUnit cost per unit of capacity increase
    */
   public void setCostFactorForName(String equipmentName, double costPerUnit) {
     costFactorsByName.put(equipmentName, costPerUnit);

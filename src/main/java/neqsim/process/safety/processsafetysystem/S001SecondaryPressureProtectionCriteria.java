@@ -193,9 +193,9 @@ public class S001SecondaryPressureProtectionCriteria implements Serializable {
   /**
    * Gets a default target frequency from pressure severity bands.
    *
-   * @param eventPressureBara  event pressure in bara
+   * @param eventPressureBara event pressure in bara
    * @param designPressureBara design pressure in bara
-   * @param testPressureBara   test pressure in bara
+   * @param testPressureBara test pressure in bara
    * @return target annual frequency, or NaN when inputs are incomplete
    */
   public static double getDefaultTargetFrequencyPerYear(double eventPressureBara, double designPressureBara,

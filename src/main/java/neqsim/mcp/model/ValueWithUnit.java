@@ -32,7 +32,7 @@ public class ValueWithUnit {
    * Creates a value with unit.
    *
    * @param value the numeric value
-   * @param unit  the unit string
+   * @param unit the unit string
    */
   public ValueWithUnit(double value, String unit) {
     this.value = value;
@@ -61,7 +61,7 @@ public class ValueWithUnit {
    * Parses a ValueWithUnit from a JSON element. Accepts either a bare number (using defaultUnit) or an object with
    * "value" and optional "unit" fields.
    *
-   * @param element     the JSON element to parse
+   * @param element the JSON element to parse
    * @param defaultUnit the unit to use if not specified
    * @return the parsed ValueWithUnit, or null if parsing fails
    */

@@ -63,9 +63,9 @@ public class SystemBnsEos extends SystemEos {
    * Calculates the volume shift parameter.
    *
    * @param ciField volume shift field coefficient
-   * @param omegaB  PR equation omega B parameter
-   * @param tc      critical temperature [K]
-   * @param pc      critical pressure [bar]
+   * @param omegaB PR equation omega B parameter
+   * @param tc critical temperature [K]
+   * @param pc critical pressure [bar]
    * @return volume shift parameter
    */
   private static double calcVshift(double ciField, double omegaB, double tc, double pc) {
@@ -172,13 +172,13 @@ public class SystemBnsEos extends SystemEos {
   /**
    * Constructs a BNS-PR system with composition.
    *
-   * @param T             a double
-   * @param P             a double
-   * @param sg            a double
-   * @param yCO2          a double
-   * @param yH2S          a double
-   * @param yN2           a double
-   * @param yH2           a double
+   * @param T a double
+   * @param P a double
+   * @param sg a double
+   * @param yCO2 a double
+   * @param yH2S a double
+   * @param yN2 a double
+   * @param yH2 a double
    * @param associatedGas a boolean
    */
   public SystemBnsEos(double T, double P, double sg, double yCO2, double yH2S, double yN2, double yH2,
@@ -193,11 +193,11 @@ public class SystemBnsEos extends SystemEos {
    * Sets the composition using BNS-specific parameters matching the Python interface. This method matches the Python
    * call: setComposition(sg, yCO2, yH2S, yN2, yH2, associatedGas)
    *
-   * @param sg            relative density (specific gravity)
-   * @param yCO2          mole fraction of CO2 (must be &gt;= 0)
-   * @param yH2S          mole fraction of H2S (must be &gt;= 0)
-   * @param yN2           mole fraction of N2 (must be &gt;= 0)
-   * @param yH2           mole fraction of H2 (must be &gt;= 0)
+   * @param sg relative density (specific gravity)
+   * @param yCO2 mole fraction of CO2 (must be &gt;= 0)
+   * @param yH2S mole fraction of H2S (must be &gt;= 0)
+   * @param yN2 mole fraction of N2 (must be &gt;= 0)
+   * @param yH2 mole fraction of H2 (must be &gt;= 0)
    * @param associatedGas true for associated gas, false for gas condensate
    * @throws java.lang.IllegalArgumentException if any mole fraction is negative or sum exceeds 1.0
    */
@@ -212,8 +212,8 @@ public class SystemBnsEos extends SystemEos {
    *
    * @param yCO2 mole fraction of CO2 (must be &gt;= 0)
    * @param yH2S mole fraction of H2S (must be &gt;= 0)
-   * @param yN2  mole fraction of N2 (must be &gt;= 0)
-   * @param yH2  mole fraction of H2 (must be &gt;= 0)
+   * @param yN2 mole fraction of N2 (must be &gt;= 0)
+   * @param yH2 mole fraction of H2 (must be &gt;= 0)
    * @throws java.lang.IllegalArgumentException if any mole fraction is negative or sum exceeds 1.0
    */
   public void setComposition(double yCO2, double yH2S, double yN2, double yH2) {

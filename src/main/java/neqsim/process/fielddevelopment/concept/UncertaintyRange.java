@@ -22,9 +22,9 @@ public final class UncertaintyRange implements Serializable {
    *
    * @param name assumption name
    * @param unit engineering unit for the values
-   * @param p10  P10 case value
-   * @param p50  P50 case value
-   * @param p90  P90 case value
+   * @param p10 P10 case value
+   * @param p50 P50 case value
+   * @param p90 P90 case value
    */
   public UncertaintyRange(String name, String unit, double p10, double p50, double p90) {
     this.name = name == null ? "assumption" : name;
@@ -37,8 +37,8 @@ public final class UncertaintyRange implements Serializable {
   /**
    * Creates a deterministic range where P10, P50, and P90 are equal.
    *
-   * @param name  assumption name
-   * @param unit  engineering unit for the value
+   * @param name assumption name
+   * @param unit engineering unit for the value
    * @param value deterministic value
    * @return deterministic uncertainty range
    */

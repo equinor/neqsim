@@ -160,9 +160,9 @@ public class TiebackAnalyzer implements Serializable {
    * Options are ranked by NPV, with infeasible options marked accordingly.
    * </p>
    *
-   * @param discovery          the satellite field concept
-   * @param hosts              list of potential host facilities
-   * @param discoveryLatitude  discovery latitude in degrees
+   * @param discovery the satellite field concept
+   * @param hosts list of potential host facilities
+   * @param discoveryLatitude discovery latitude in degrees
    * @param discoveryLongitude discovery longitude in degrees
    * @return comprehensive tieback report with ranked options
    */
@@ -174,11 +174,11 @@ public class TiebackAnalyzer implements Serializable {
   /**
    * Analyzes tieback options with optional route networks per host.
    *
-   * @param discovery           the satellite field concept
-   * @param hosts               list of potential host facilities
+   * @param discovery the satellite field concept
+   * @param hosts list of potential host facilities
    * @param routeNetworksByHost optional map from host name to route network
-   * @param discoveryLatitude   discovery latitude in degrees
-   * @param discoveryLongitude  discovery longitude in degrees
+   * @param discoveryLatitude discovery latitude in degrees
+   * @param discoveryLongitude discovery longitude in degrees
    * @return comprehensive tieback report with ranked options
    */
   public TiebackReport analyze(FieldConcept discovery, List<HostFacility> hosts,
@@ -202,7 +202,7 @@ public class TiebackAnalyzer implements Serializable {
    * Analyzes tieback options using concept infrastructure input for location.
    *
    * @param discovery the satellite field concept
-   * @param hosts     list of potential host facilities
+   * @param hosts list of potential host facilities
    * @return comprehensive tieback report
    */
   public TiebackReport analyze(FieldConcept discovery, List<HostFacility> hosts) {
@@ -226,9 +226,9 @@ public class TiebackAnalyzer implements Serializable {
   /**
    * Evaluates a single tieback option.
    *
-   * @param discovery          the satellite field concept
-   * @param host               the host facility
-   * @param discoveryLatitude  discovery latitude
+   * @param discovery the satellite field concept
+   * @param host the host facility
+   * @param discoveryLatitude discovery latitude
    * @param discoveryLongitude discovery longitude
    * @return evaluated tieback option
    */
@@ -240,10 +240,10 @@ public class TiebackAnalyzer implements Serializable {
   /**
    * Evaluates a single tieback option using an optional multi-segment route network.
    *
-   * @param discovery          the satellite field concept
-   * @param host               the host facility
-   * @param routeNetwork       route network to use, or null for scalar route-length screening
-   * @param discoveryLatitude  discovery latitude
+   * @param discovery the satellite field concept
+   * @param host the host facility
+   * @param routeNetwork route network to use, or null for scalar route-length screening
+   * @param discoveryLatitude discovery latitude
    * @param discoveryLongitude discovery longitude
    * @return evaluated tieback option
    */
@@ -353,14 +353,14 @@ public class TiebackAnalyzer implements Serializable {
   /**
    * Screens the tieback route using pipeline hydraulics and thermodynamic flow-assurance checks.
    *
-   * @param option       tieback option to update
-   * @param discovery    discovery concept
-   * @param host         receiving host facility
-   * @param reservoir    reservoir input, or null for defaults
-   * @param wells        well input, or null for defaults
-   * @param isGasField   true when gas-rate economics and capacity should be used
-   * @param totalRate    total wellhead rate in the supplied rate unit
-   * @param rateUnit     total rate unit
+   * @param option tieback option to update
+   * @param discovery discovery concept
+   * @param host receiving host facility
+   * @param reservoir reservoir input, or null for defaults
+   * @param wells well input, or null for defaults
+   * @param isGasField true when gas-rate economics and capacity should be used
+   * @param totalRate total wellhead rate in the supplied rate unit
+   * @param rateUnit total rate unit
    * @param routeNetwork route network model, or null to use tieback-level route defaults
    */
   private void screenFlowAssurance(TiebackOption option, FieldConcept discovery, HostFacility host,
@@ -423,7 +423,7 @@ public class TiebackAnalyzer implements Serializable {
    *
    * @param option tieback option to update
    * @param result pipeline hydraulic result
-   * @param host   receiving host facility
+   * @param host receiving host facility
    */
   private void applyHydraulicResult(TiebackOption option, PipelineResult result, HostFacility host) {
     option.setArrivalPressureBara(result.getArrivalPressureBar());
@@ -539,11 +539,11 @@ public class TiebackAnalyzer implements Serializable {
   /**
    * Resolves the route length used for screening.
    *
-   * @param discovery          discovery concept
-   * @param host               host facility
-   * @param discoveryLatitude  discovery latitude in degrees
+   * @param discovery discovery concept
+   * @param host host facility
+   * @param discoveryLatitude discovery latitude in degrees
    * @param discoveryLongitude discovery longitude in degrees
-   * @param routeNetwork       optional route network
+   * @param routeNetwork optional route network
    * @return route length in km
    */
   private double resolveRouteLengthKm(FieldConcept discovery, HostFacility host, double discoveryLatitude,
@@ -561,8 +561,8 @@ public class TiebackAnalyzer implements Serializable {
   /**
    * Resolves water depth from concept infrastructure and host data.
    *
-   * @param discovery    discovery concept
-   * @param host         host facility
+   * @param discovery discovery concept
+   * @param host host facility
    * @param routeNetwork optional route network
    * @return maximum route water depth in meters
    */
@@ -576,7 +576,7 @@ public class TiebackAnalyzer implements Serializable {
   /**
    * Applies route-network metadata to a tieback option.
    *
-   * @param option       tieback option to update
+   * @param option tieback option to update
    * @param routeNetwork optional route network
    */
   private void applyRouteNetworkSummary(TiebackOption option, TiebackRouteNetwork routeNetwork) {
@@ -594,7 +594,7 @@ public class TiebackAnalyzer implements Serializable {
   /**
    * Estimates produced-water rate from water cut and oil rate.
    *
-   * @param reservoir   reservoir input, or null
+   * @param reservoir reservoir input, or null
    * @param oilRateBopd oil rate in bbl/d
    * @return produced-water rate in m3/d
    */
@@ -613,7 +613,7 @@ public class TiebackAnalyzer implements Serializable {
   /**
    * Estimates total liquid rate.
    *
-   * @param oilRateBopd  oil rate in bbl/d
+   * @param oilRateBopd oil rate in bbl/d
    * @param waterRateM3d water rate in m3/d
    * @return total liquid rate in m3/d
    */
@@ -624,9 +624,9 @@ public class TiebackAnalyzer implements Serializable {
   /**
    * Estimates a screening pipeline diameter.
    *
-   * @param wellCount  number of producing wells
-   * @param totalRate  total production rate
-   * @param rateUnit   total production rate unit
+   * @param wellCount number of producing wells
+   * @param totalRate total production rate
+   * @param rateUnit total production rate unit
    * @param isGasField true for gas field concepts
    * @return pipeline diameter in inches
    */
@@ -676,12 +676,12 @@ public class TiebackAnalyzer implements Serializable {
   /**
    * Creates a representative wellhead stream for hydraulic screening.
    *
-   * @param reservoir    reservoir input, or null for defaults
+   * @param reservoir reservoir input, or null for defaults
    * @param pressureBara wellhead pressure in bara
    * @param temperatureC wellhead temperature in Celsius
-   * @param isGasField   true for gas field concepts
-   * @param totalRate    total production rate
-   * @param rateUnit     total production rate unit
+   * @param isGasField true for gas field concepts
+   * @param totalRate total production rate
+   * @param rateUnit total production rate unit
    * @return representative stream with total mass flow set
    */
   private Stream createRepresentativeWellheadStream(ReservoirInput reservoir, double pressureBara, double temperatureC,
@@ -696,7 +696,7 @@ public class TiebackAnalyzer implements Serializable {
   /**
    * Creates a representative fluid for hydraulic screening.
    *
-   * @param reservoir    reservoir input, or null for defaults
+   * @param reservoir reservoir input, or null for defaults
    * @param temperatureC temperature in Celsius
    * @param pressureBara pressure in bara
    * @return initialized thermodynamic system
@@ -760,8 +760,8 @@ public class TiebackAnalyzer implements Serializable {
    * Estimates total mass flow for hydraulic screening.
    *
    * @param isGasField true for gas field concepts
-   * @param totalRate  total rate
-   * @param rateUnit   rate unit
+   * @param totalRate total rate
+   * @param rateUnit rate unit
    * @return mass flow in kg/hr
    */
   private double estimateMassFlowKgHr(boolean isGasField, double totalRate, String rateUnit) {
@@ -781,10 +781,10 @@ public class TiebackAnalyzer implements Serializable {
   /**
    * Estimates arrival temperature if the hydraulic model cannot run.
    *
-   * @param inletTemperatureC  inlet temperature in Celsius
+   * @param inletTemperatureC inlet temperature in Celsius
    * @param seabedTemperatureC seabed temperature in Celsius
-   * @param distanceKm         route length in km
-   * @param infrastructure     infrastructure input, or null
+   * @param distanceKm route length in km
+   * @param infrastructure infrastructure input, or null
    * @return estimated arrival temperature in Celsius
    */
   private double estimateArrivalTemperatureC(double inletTemperatureC, double seabedTemperatureC, double distanceKm,
@@ -800,10 +800,10 @@ public class TiebackAnalyzer implements Serializable {
   /**
    * Estimates shutdown cooldown time to hydrate risk.
    *
-   * @param option             tieback option with hydrate results
-   * @param inletTemperatureC  inlet temperature in Celsius
+   * @param option tieback option with hydrate results
+   * @param inletTemperatureC inlet temperature in Celsius
    * @param seabedTemperatureC seabed temperature in Celsius
-   * @param infrastructure     infrastructure input, or null
+   * @param infrastructure infrastructure input, or null
    * @return cooldown time in hours
    */
   private double estimateShutdownCooldownHours(TiebackOption option, double inletTemperatureC,
@@ -828,7 +828,7 @@ public class TiebackAnalyzer implements Serializable {
   /**
    * Estimates shutdown cooldown risk score.
    *
-   * @param option         tieback option with cooldown results
+   * @param option tieback option with cooldown results
    * @param infrastructure infrastructure input, or null
    * @return risk score from 0 to 1
    */
@@ -855,9 +855,9 @@ public class TiebackAnalyzer implements Serializable {
   /**
    * Builds human-readable flow-assurance notes.
    *
-   * @param option             tieback option
-   * @param report             flow assurance report
-   * @param hydraulicResult    hydraulic result, or null if hydraulic screening failed
+   * @param option tieback option
+   * @param report flow assurance report
+   * @param hydraulicResult hydraulic result, or null if hydraulic screening failed
    * @param seabedTemperatureC seabed temperature in Celsius
    * @return notes string
    */
@@ -1031,11 +1031,11 @@ public class TiebackAnalyzer implements Serializable {
    * <li>Pressure compatibility</li>
    * </ul>
    *
-   * @param discoveryLat  discovery latitude
-   * @param discoveryLon  discovery longitude
+   * @param discoveryLat discovery latitude
+   * @param discoveryLon discovery longitude
    * @param reservesMMboe reserves in MMboe
-   * @param waterDepthM   water depth in meters
-   * @param host          potential host facility
+   * @param waterDepthM water depth in meters
+   * @param host potential host facility
    * @return screening result with pass/fail and reason
    */
   public TiebackScreeningResult quickScreen(double discoveryLat, double discoveryLon, double reservesMMboe,
@@ -1080,11 +1080,11 @@ public class TiebackAnalyzer implements Serializable {
   /**
    * Screen multiple hosts quickly and return ranked results.
    *
-   * @param discoveryLat  discovery latitude
-   * @param discoveryLon  discovery longitude
+   * @param discoveryLat discovery latitude
+   * @param discoveryLon discovery longitude
    * @param reservesMMboe reserves in MMboe
-   * @param waterDepthM   water depth in meters
-   * @param hosts         list of potential hosts
+   * @param waterDepthM water depth in meters
+   * @param hosts list of potential hosts
    * @return list of screening results, ranked by estimated NPV
    */
   public List<TiebackScreeningResult> screenAllHosts(double discoveryLat, double discoveryLon, double reservesMMboe,
@@ -1115,7 +1115,7 @@ public class TiebackAnalyzer implements Serializable {
   /**
    * Quick CAPEX estimate for screening.
    *
-   * @param distanceKm  the tieback distance in kilometers
+   * @param distanceKm the tieback distance in kilometers
    * @param waterDepthM the water depth in meters
    * @return the estimated CAPEX in million USD
    */
@@ -1136,7 +1136,7 @@ public class TiebackAnalyzer implements Serializable {
    * Quick NPV estimate for screening.
    *
    * @param reservesMMboe recoverable reserves in million barrels of oil equivalent
-   * @param capexMusd     capital expenditure in million USD
+   * @param capexMusd capital expenditure in million USD
    * @return estimated net present value in million USD
    */
   private double estimateQuickNpv(double reservesMMboe, double capexMusd) {

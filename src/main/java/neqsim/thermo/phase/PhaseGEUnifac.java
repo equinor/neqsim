@@ -43,10 +43,10 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
    * Constructor for PhaseGEUnifac.
    * </p>
    *
-   * @param phase    a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param alpha    an array of type double
-   * @param Dij      an array of type double
-   * @param mixRule  an array of {@link java.lang.String} objects
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param alpha an array of type double
+   * @param Dij an array of type double
+   * @param mixRule an array of {@link java.lang.String} objects
    * @param intparam an array of type double
    */
   public PhaseGEUnifac(PhaseInterface phase, double[][] alpha, double[][] Dij, String[][] mixRule,
@@ -222,8 +222,8 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
    * Setter for the field <code>aij</code>.
    * </p>
    *
-   * @param i   a int
-   * @param j   a int
+   * @param i a int
+   * @param j a int
    * @param val a double
    */
   public void setAij(int i, int j, double val) {
@@ -248,8 +248,8 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
    * Setter for the field <code>bij</code>.
    * </p>
    *
-   * @param i   a int
-   * @param j   a int
+   * @param i a int
+   * @param j a int
    * @param val a double
    */
   public void setBij(int i, int j, double val) {
@@ -274,8 +274,8 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
    * Setter for the field <code>cij</code>.
    * </p>
    *
-   * @param i   a int
-   * @param j   a int
+   * @param i a int
+   * @param j a int
    * @param val a double
    */
   public void setCij(int i, int j, double val) {

@@ -45,9 +45,9 @@ public class VCEModel implements Serializable {
   /**
    * Construct a TNO multi-energy VCE model.
    *
-   * @param cloudFuelMassKg        mass of fuel in the flammable portion of the cloud, kg
+   * @param cloudFuelMassKg mass of fuel in the flammable portion of the cloud, kg
    * @param heatOfCombustionJPerKg lower heating value, J/kg
-   * @param strengthClass          TNO strength class 1..10 (4 typical for petrochemical plants)
+   * @param strengthClass TNO strength class 1..10 (4 typical for petrochemical plants)
    */
   public VCEModel(double cloudFuelMassKg, double heatOfCombustionJPerKg, int strengthClass) {
     if (cloudFuelMassKg < 0.0 || heatOfCombustionJPerKg <= 0.0) {

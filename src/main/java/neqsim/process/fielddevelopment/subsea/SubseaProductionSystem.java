@@ -215,7 +215,7 @@ public class SubseaProductionSystem implements Serializable {
   /**
    * Sets discovery location.
    *
-   * @param latitude  latitude in degrees
+   * @param latitude latitude in degrees
    * @param longitude longitude in degrees
    * @return this for chaining
    */

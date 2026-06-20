@@ -65,9 +65,9 @@ public class ALARPAuditReport implements Serializable {
   /**
    * Add a candidate risk-reduction measure.
    *
-   * @param description          measure description
+   * @param description measure description
    * @param riskReductionPerYear averted fatality frequency per year
-   * @param annualisedCostNOK    annualised implementation cost in NOK/year
+   * @param annualisedCostNOK annualised implementation cost in NOK/year
    * @return this report for chaining
    */
   public ALARPAuditReport addMeasure(String description, double riskReductionPerYear, double annualisedCostNOK) {

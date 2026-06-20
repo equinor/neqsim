@@ -268,10 +268,10 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
    * PipeFlowResult result = pipe.solve();
    * </pre>
    *
-   * @param fluid          the thermodynamic system (must have 2 phases)
+   * @param fluid the thermodynamic system (must have 2 phases)
    * @param diameterMeters pipe inner diameter in meters
-   * @param lengthMeters   pipe length in meters
-   * @param nodes          number of calculation nodes
+   * @param lengthMeters pipe length in meters
+   * @param nodes number of calculation nodes
    * @return a configured and initialized TwoPhasePipeFlowSystem
    * @throws IllegalArgumentException if fluid is null or parameters are invalid
    */
@@ -291,11 +291,11 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
    * For vertical pipes, the flow pattern defaults to BUBBLE for upward flow and ANNULAR for downward flow.
    * </p>
    *
-   * @param fluid          the thermodynamic system (must have 2 phases)
+   * @param fluid the thermodynamic system (must have 2 phases)
    * @param diameterMeters pipe inner diameter in meters
-   * @param lengthMeters   pipe length in meters
-   * @param nodes          number of calculation nodes
-   * @param upwardFlow     true for upward flow, false for downward flow
+   * @param lengthMeters pipe length in meters
+   * @param nodes number of calculation nodes
+   * @param upwardFlow true for upward flow, false for downward flow
    * @return a configured and initialized TwoPhasePipeFlowSystem
    * @throws IllegalArgumentException if fluid is null or parameters are invalid
    */
@@ -313,10 +313,10 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   /**
    * Creates an inclined pipe with specified angle.
    *
-   * @param fluid              the thermodynamic system (must have 2 phases)
-   * @param diameterMeters     pipe inner diameter in meters
-   * @param lengthMeters       pipe length in meters
-   * @param nodes              number of calculation nodes
+   * @param fluid the thermodynamic system (must have 2 phases)
+   * @param diameterMeters pipe inner diameter in meters
+   * @param lengthMeters pipe length in meters
+   * @param nodes number of calculation nodes
    * @param inclinationDegrees inclination angle in degrees (positive = upward)
    * @return a configured and initialized TwoPhasePipeFlowSystem
    * @throws IllegalArgumentException if fluid is null or parameters are invalid
@@ -338,10 +338,10 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
    * seawater temperature and high external heat transfer coefficient.
    * </p>
    *
-   * @param fluid               the thermodynamic system (must have 2 phases)
-   * @param diameterMeters      pipe inner diameter in meters
-   * @param lengthMeters        pipe length in meters
-   * @param nodes               number of calculation nodes
+   * @param fluid the thermodynamic system (must have 2 phases)
+   * @param diameterMeters pipe inner diameter in meters
+   * @param lengthMeters pipe length in meters
+   * @param nodes number of calculation nodes
    * @param seawaterTempCelsius seawater temperature in Celsius
    * @return a configured and initialized TwoPhasePipeFlowSystem
    * @throws IllegalArgumentException if fluid is null or parameters are invalid
@@ -367,10 +367,10 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
    * pipelines: ground temperature and low external heat transfer coefficient.
    * </p>
    *
-   * @param fluid             the thermodynamic system (must have 2 phases)
-   * @param diameterMeters    pipe inner diameter in meters
-   * @param lengthMeters      pipe length in meters
-   * @param nodes             number of calculation nodes
+   * @param fluid the thermodynamic system (must have 2 phases)
+   * @param diameterMeters pipe inner diameter in meters
+   * @param lengthMeters pipe length in meters
+   * @param nodes number of calculation nodes
    * @param groundTempCelsius ground/soil temperature in Celsius
    * @return a configured and initialized TwoPhasePipeFlowSystem
    * @throws IllegalArgumentException if fluid is null or parameters are invalid
@@ -404,8 +404,8 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
    * Validates geometry parameters.
    *
    * @param diameter the pipe diameter [m]
-   * @param length   the pipe length [m]
-   * @param nodes    the number of computational nodes
+   * @param length the pipe length [m]
+   * @param nodes the number of computational nodes
    * @throws IllegalArgumentException if any geometry parameter is invalid
    */
   private static void validateGeometry(double diameter, double length, int nodes) {
@@ -585,8 +585,8 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
    *
    * @param type the solver type (deprecated - use {@link #setSolverType} instead)
    * @deprecated Use {@link #solve()} or {@link #solveSteadyState(UUID)} instead. Set the solver type using
-   *             {@link #setSolverType} before calling. This method ignores the type parameter and uses the configured
-   *             solver type enum.
+   * {@link #setSolverType} before calling. This method ignores the type parameter and uses the configured solver type
+   * enum.
    */
   @Override
   @Deprecated
@@ -1272,7 +1272,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
    * </p>
    *
    * @param temperature the wall temperature
-   * @param unit        the temperature unit ("K", "C", or "F")
+   * @param unit the temperature unit ("K", "C", or "F")
    */
   public void setConstantWallTemperature(double temperature, String unit) {
     switch (unit.toUpperCase()) {
@@ -1361,7 +1361,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
    * </p>
    *
    * @param temperature the ambient temperature
-   * @param unit        the temperature unit ("K", "C", or "F")
+   * @param unit the temperature unit ("K", "C", or "F")
    */
   public void setAmbientTemperature(double temperature, String unit) {
     switch (unit.toUpperCase()) {
@@ -1582,7 +1582,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
    * Calculates the liquid-side mass transfer coefficient at a specific node.
    * </p>
    *
-   * @param nodeNumber  the node index
+   * @param nodeNumber the node index
    * @param diffusivity liquid diffusivity in m²/s
    * @return liquid-side mass transfer coefficient k_L (m/s)
    */
@@ -1614,7 +1614,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
    * Calculates the gas-side mass transfer coefficient at a specific node.
    * </p>
    *
-   * @param nodeNumber  the node index
+   * @param nodeNumber the node index
    * @param diffusivity gas diffusivity in m²/s
    * @return gas-side mass transfer coefficient k_G (m/s)
    */
@@ -1686,7 +1686,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
    * ṁ = k_L·a · V · ΔC
    * </pre>
    *
-   * @param nodeNumber  the node index
+   * @param nodeNumber the node index
    * @param diffusivity liquid diffusivity in m²/s
    * @return volumetric mass transfer coefficient k_L·a (1/s)
    */
@@ -1997,7 +1997,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
    * Sc = μ / (ρ·D) = ν / D (momentum diffusivity / mass diffusivity)
    * </p>
    *
-   * @param phaseIndex  0 for gas phase, 1 for liquid phase
+   * @param phaseIndex 0 for gas phase, 1 for liquid phase
    * @param diffusivity mass diffusivity in m²/s
    * @return an array of Schmidt numbers at each node
    */
@@ -2022,7 +2022,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
    * Sh = k·L / D (convective / diffusive mass transfer)
    * </p>
    *
-   * @param phaseIndex  0 for gas phase, 1 for liquid phase
+   * @param phaseIndex 0 for gas phase, 1 for liquid phase
    * @param diffusivity mass diffusivity in m²/s
    * @return an array of Sherwood numbers at each node
    */
@@ -2075,7 +2075,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
    * Le = Sc / Pr = α / D (thermal diffusivity / mass diffusivity)
    * </p>
    *
-   * @param phaseIndex  0 for gas phase, 1 for liquid phase
+   * @param phaseIndex 0 for gas phase, 1 for liquid phase
    * @param diffusivity mass diffusivity in m²/s
    * @return an array of Lewis numbers at each node
    */
@@ -2495,7 +2495,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
    * pressure, composition, velocities, and phase fractions.
    * </p>
    *
-   * @param nodeIndex  the node index to transition
+   * @param nodeIndex the node index to transition
    * @param newPattern the new flow pattern
    */
   protected void transitionFlowNodeType(int nodeIndex, FlowPattern newPattern) {
@@ -2532,8 +2532,8 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
    * Creates a flow node of the specified flow pattern type.
    * </p>
    *
-   * @param pattern  the flow pattern
-   * @param system   the thermodynamic system
+   * @param pattern the flow pattern
+   * @param system the thermodynamic system
    * @param geometry the pipe geometry
    * @return the created flow node
    */
@@ -2799,7 +2799,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
    * Sets the pipe inclination angle with unit.
    *
    * @param angle the inclination angle
-   * @param unit  the angle unit ("deg", "degrees", "rad", "radians")
+   * @param unit the angle unit ("deg", "degrees", "rad", "radians")
    */
   public void setInclination(double angle, String unit) {
     switch (unit.toLowerCase()) {
@@ -2922,7 +2922,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   /**
    * Exports all simulation results to a CSV file with a custom delimiter.
    *
-   * @param filePath  the path to the output CSV file
+   * @param filePath the path to the output CSV file
    * @param delimiter the column delimiter (e.g., "," or ";")
    * @throws java.io.IOException if file writing fails
    */
@@ -2988,8 +2988,8 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   /**
    * Exports selected profiles to a CSV file with a custom delimiter.
    *
-   * @param filePath  the path to the output CSV file
-   * @param profiles  array of profile names to export
+   * @param filePath the path to the output CSV file
+   * @param profiles array of profile names to export
    * @param delimiter the column delimiter
    * @throws java.io.IOException if file writing fails
    */

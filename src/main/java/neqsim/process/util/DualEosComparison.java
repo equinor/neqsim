@@ -95,9 +95,9 @@ public class DualEosComparison implements Serializable {
   /**
    * Creates a DualEosComparison from explicit composition.
    *
-   * @param componentNames   array of component names
+   * @param componentNames array of component names
    * @param molarComposition array of molar fractions (must sum to ~1.0)
-   * @param mixingRule       mixing rule name (e.g., "classic")
+   * @param mixingRule mixing rule name (e.g., "classic")
    */
   public DualEosComparison(String[] componentNames, double[] molarComposition, String mixingRule) {
     this.componentNames = componentNames;
@@ -127,7 +127,7 @@ public class DualEosComparison implements Serializable {
    * Adds a temperature-pressure condition to evaluate.
    *
    * @param temperatureKelvin temperature in Kelvin
-   * @param pressureBara      pressure in bara
+   * @param pressureBara pressure in bara
    */
   public void addCondition(double temperatureKelvin, double pressureBara) {
     conditions.add(new double[] { temperatureKelvin, pressureBara });
@@ -137,7 +137,7 @@ public class DualEosComparison implements Serializable {
    * Adds a temperature-pressure condition using Celsius.
    *
    * @param temperatureCelsius temperature in Celsius
-   * @param pressureBara       pressure in bara
+   * @param pressureBara pressure in bara
    */
   public void addConditionCelsius(double temperatureCelsius, double pressureBara) {
     conditions.add(new double[] { temperatureCelsius + 273.15, pressureBara });
@@ -412,10 +412,10 @@ public class DualEosComparison implements Serializable {
     /**
      * Checks a single property pair for deviation.
      *
-     * @param name      property name
-     * @param srkVal    SRK value
-     * @param pr78Val   PR78 value
-     * @param unit      unit string
+     * @param name property name
+     * @param srkVal SRK value
+     * @param pr78Val PR78 value
+     * @param unit unit string
      * @param threshold fractional deviation threshold
      */
     private void checkDeviation(String name, double srkVal, double pr78Val, String unit, double threshold) {
@@ -483,9 +483,9 @@ public class DualEosComparison implements Serializable {
     /**
      * Adds an SRK/PR78/deviation triplet to a JSON object.
      *
-     * @param parent  parent JSON object
-     * @param name    property name
-     * @param srkVal  SRK value
+     * @param parent parent JSON object
+     * @param name property name
+     * @param srkVal SRK value
      * @param pr78Val PR78 value
      */
     private void addPair(JsonObject parent, String name, double srkVal, double pr78Val) {

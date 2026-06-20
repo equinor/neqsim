@@ -134,7 +134,7 @@ public class Standard_GPA2172 extends neqsim.standards.Standard {
   /**
    * Calculates gallons per Mcf for a given component.
    *
-   * @param name         the component name
+   * @param name the component name
    * @param moleFraction the mole fraction
    * @return GPM value
    */

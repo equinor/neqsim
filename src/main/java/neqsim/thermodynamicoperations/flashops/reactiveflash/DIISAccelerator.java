@@ -65,7 +65,7 @@ public class DIISAccelerator implements java.io.Serializable {
    * Construct a DIIS accelerator.
    *
    * @param vectorLength length of each iterate and residual vector
-   * @param maxHistory   maximum number of stored pairs (typically 5-8)
+   * @param maxHistory maximum number of stored pairs (typically 5-8)
    */
   public DIISAccelerator(int vectorLength, int maxHistory) {
     this.vectorLength = vectorLength;
@@ -83,7 +83,7 @@ public class DIISAccelerator implements java.io.Serializable {
    * The iterate and residual arrays are copied internally. When the buffer is full, the oldest entry is overwritten.
    * </p>
    *
-   * @param iterate  the current iterate vector (will be copied)
+   * @param iterate the current iterate vector (will be copied)
    * @param residual the residual vector at this iterate (will be copied)
    */
   public void addEntry(double[] iterate, double[] residual) {

@@ -81,7 +81,7 @@ public class CompressorDriver implements Serializable {
   /**
    * Constructor with driver type and rated power.
    *
-   * @param type       the driver type
+   * @param type the driver type
    * @param ratedPower rated power in kW
    */
   public CompressorDriver(DriverType type, double ratedPower) {
@@ -208,7 +208,7 @@ public class CompressorDriver implements Serializable {
    * Check if the driver can deliver the required power at a specific speed.
    *
    * @param requiredPower required power in kW
-   * @param speed         current speed in RPM
+   * @param speed current speed in RPM
    * @return true if power can be delivered at this speed
    */
   public boolean canDeliverPowerAtSpeed(double requiredPower, double speed) {
@@ -219,7 +219,7 @@ public class CompressorDriver implements Serializable {
    * Get the power margin (remaining power capacity) at a specific speed.
    *
    * @param currentPower current power demand in kW
-   * @param speed        current speed in RPM
+   * @param speed current speed in RPM
    * @return power margin in kW
    */
   public double getPowerMarginAtSpeed(double currentPower, double speed) {
@@ -245,7 +245,7 @@ public class CompressorDriver implements Serializable {
    * Calculate required driver power for given compressor shaft power.
    *
    * @param shaftPower compressor shaft power in kW
-   * @param speed      current speed in RPM
+   * @param speed current speed in RPM
    * @return required driver power in kW
    */
   public double getRequiredDriverPower(double shaftPower, double speed) {
@@ -317,9 +317,9 @@ public class CompressorDriver implements Serializable {
    * Calculate speed change over a time step.
    *
    * @param currentSpeed current speed in RPM
-   * @param targetSpeed  target speed in RPM
+   * @param targetSpeed target speed in RPM
    * @param currentPower current power demand in kW
-   * @param timeStep     time step in seconds
+   * @param timeStep time step in seconds
    * @return new speed in RPM
    */
   public double calculateSpeedChange(double currentSpeed, double targetSpeed, double currentPower, double timeStep) {
@@ -362,7 +362,7 @@ public class CompressorDriver implements Serializable {
    * Update overload tracking and check for trip.
    *
    * @param currentPower current power in kW
-   * @param timeStep     time step in seconds
+   * @param timeStep time step in seconds
    * @return true if driver should trip due to overload
    */
   public boolean checkOverloadTrip(double currentPower, double timeStep) {
@@ -809,8 +809,8 @@ public class CompressorDriver implements Serializable {
    * driver.setMaxPowerSpeedCurve(speeds, powers, "MW");
    * </pre>
    *
-   * @param speeds    array of speed values in RPM (must be in ascending order)
-   * @param powers    array of max power values (same length as speeds)
+   * @param speeds array of speed values in RPM (must be in ascending order)
+   * @param powers array of max power values (same length as speeds)
    * @param powerUnit unit of power values: "kW", "MW", or "W"
    * @throws IllegalArgumentException if arrays have different lengths or speeds not in order
    */
@@ -919,9 +919,9 @@ public class CompressorDriver implements Serializable {
    * 7383,44.4
    * </pre>
    *
-   * @param filePath  path to the CSV file
+   * @param filePath path to the CSV file
    * @param powerUnit unit of power values in the CSV: "kW", "MW", or "W"
-   * @throws IOException              if the file cannot be read
+   * @throws IOException if the file cannot be read
    * @throws IllegalArgumentException if the file has invalid format or insufficient data
    */
   public void loadMaxPowerCurveFromCsv(String filePath, String powerUnit) throws IOException {
@@ -982,8 +982,8 @@ public class CompressorDriver implements Serializable {
    * </p>
    *
    * @param resourcePath classpath resource path (e.g., "/compressor_data/driver_curve.csv")
-   * @param powerUnit    unit of power values: "kW", "MW", or "W"
-   * @throws IOException              if the resource cannot be read
+   * @param powerUnit unit of power values: "kW", "MW", or "W"
+   * @throws IOException if the resource cannot be read
    * @throws IllegalArgumentException if the resource has invalid format or insufficient data
    */
   public void loadMaxPowerCurveFromResource(String resourcePath, String powerUnit) throws IOException {

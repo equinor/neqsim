@@ -59,8 +59,8 @@ public class GasLiftNetworkOptimizer implements Serializable {
      * Creates an allocation result.
      *
      * @param liftRates per-well lift-gas allocation in Sm3/day
-     * @param oilRates  per-well oil rate in Sm3/day
-     * @param totalOil  total oil rate in Sm3/day
+     * @param oilRates per-well oil rate in Sm3/day
+     * @param totalOil total oil rate in Sm3/day
      * @param totalLift total lift gas used in Sm3/day
      */
     public AllocationResult(Map<String, Double> liftRates, Map<String, Double> oilRates, double totalOil,
@@ -113,7 +113,7 @@ public class GasLiftNetworkOptimizer implements Serializable {
   /**
    * Registers a gas-lifted well.
    *
-   * @param name  unique well name
+   * @param name unique well name
    * @param curve gas-lift performance curve for the well
    * @return this optimiser for chaining
    */
@@ -176,7 +176,7 @@ public class GasLiftNetworkOptimizer implements Serializable {
   /**
    * Finds the lift-gas rate at which a curve's incremental slope equals a target value.
    *
-   * @param curve       gas-lift performance curve
+   * @param curve gas-lift performance curve
    * @param targetSlope target incremental slope
    * @return lift-gas rate in Sm3/day (clamped to [0, peak])
    */

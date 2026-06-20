@@ -89,9 +89,8 @@ public class FlowInducedVibrationAnalyser extends MeasurementDeviceBaseClass {
    * {@inheritDoc}
    *
    * @throws IllegalStateException if the LOF method is requested but the pipe wall thickness is not a positive number.
-   *                               The LOF correlation divides by the wall thickness (via the diameter-over-thickness
-   *                               ratio), so a zero or unset thickness would otherwise yield a silent
-   *                               {@code NaN}/{@code Infinity}.
+   * The LOF correlation divides by the wall thickness (via the diameter-over-thickness ratio), so a zero or unset
+   * thickness would otherwise yield a silent {@code NaN}/{@code Infinity}.
    */
   @Override
   public double getMeasuredValue(String unit) {

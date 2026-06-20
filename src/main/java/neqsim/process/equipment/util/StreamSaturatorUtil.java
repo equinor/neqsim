@@ -43,7 +43,7 @@ public class StreamSaturatorUtil extends TwoPortEquipment {
   /**
    * Constructor for StreamSaturatorUtil.
    *
-   * @param name     name of unit opeation
+   * @param name name of unit opeation
    * @param inStream input stream
    */
   public StreamSaturatorUtil(String name, StreamInterface inStream) {

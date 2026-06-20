@@ -264,7 +264,7 @@ public class EconomicsEstimator {
    * assessment.
    * </p>
    *
-   * @param concept        the field concept containing reservoir, wells, and infrastructure data
+   * @param concept the field concept containing reservoir, wells, and infrastructure data
    * @param facilityConfig the facility configuration with specific process blocks, or null for simplified estimation
    * @return an economics report with CAPEX, OPEX, and derived metrics
    * @throws NullPointerException if concept is null
@@ -417,7 +417,7 @@ public class EconomicsEstimator {
    * cost
    * </p>
    *
-   * @param concept        the field concept with infrastructure data
+   * @param concept the field concept with infrastructure data
    * @param facilityConfig the facility configuration (currently unused)
    * @return estimated facility CAPEX in million USD
    */
@@ -453,7 +453,7 @@ public class EconomicsEstimator {
    * estimated from concept requirements (CO2 removal, dehydration, etc.).
    * </p>
    *
-   * @param concept        the field concept with processing requirements
+   * @param concept the field concept with processing requirements
    * @param facilityConfig optional facility configuration with specific blocks
    * @return estimated equipment CAPEX in million USD
    */
@@ -619,7 +619,7 @@ public class EconomicsEstimator {
    * 10 MW, with additional power per compression stage.
    * </p>
    *
-   * @param concept        the field concept
+   * @param concept the field concept
    * @param facilityConfig optional facility configuration for detailed power estimation
    * @return estimated annual power OPEX in million USD
    */
@@ -1095,7 +1095,7 @@ public class EconomicsEstimator {
       /**
        * Adds a CAPEX breakdown item.
        *
-       * @param item  the cost category name (e.g., "facility", "equipment")
+       * @param item the cost category name (e.g., "facility", "equipment")
        * @param value the cost in million USD
        * @return this builder for chaining
        */
@@ -1107,7 +1107,7 @@ public class EconomicsEstimator {
       /**
        * Adds an OPEX breakdown item.
        *
-       * @param item  the cost category name (e.g., "maintenance", "power")
+       * @param item the cost category name (e.g., "maintenance", "power")
        * @param value the annual cost in million USD
        * @return this builder for chaining
        */

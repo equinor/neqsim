@@ -36,9 +36,9 @@ public class HeatStream implements Serializable {
   /**
    * Constructor for HeatStream.
    *
-   * @param name                        stream name
-   * @param supplyTemperature_C         supply temperature in Celsius
-   * @param targetTemperature_C         target temperature in Celsius
+   * @param name stream name
+   * @param supplyTemperature_C supply temperature in Celsius
+   * @param targetTemperature_C target temperature in Celsius
    * @param heatCapacityFlowRate_kWperK heat capacity flow rate in kW/K
    */
   public HeatStream(String name, double supplyTemperature_C, double targetTemperature_C,

@@ -101,7 +101,7 @@ public class Heater extends TwoPortEquipment
    * Constructor for Heater.
    * </p>
    *
-   * @param name     a {@link java.lang.String} object
+   * @param name a {@link java.lang.String} object
    * @param inStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public Heater(String name, StreamInterface inStream) {
@@ -190,7 +190,7 @@ public class Heater extends TwoPortEquipment
    * Convenience method to set the utility supply temperature.
    *
    * @param temperature utility temperature value
-   * @param unit        unit of the provided value (e.g. "K" or "C")
+   * @param unit unit of the provided value (e.g. "K" or "C")
    */
   public void setUtilitySupplyTemperature(double temperature, String unit) {
     utilitySpecification.setSupplyTemperature(temperature, unit);
@@ -200,7 +200,7 @@ public class Heater extends TwoPortEquipment
    * Convenience method to set the utility return temperature.
    *
    * @param temperature utility temperature value
-   * @param unit        unit of the provided value (e.g. "K" or "C")
+   * @param unit unit of the provided value (e.g. "K" or "C")
    */
   public void setUtilityReturnTemperature(double temperature, String unit) {
     utilitySpecification.setReturnTemperature(temperature, unit);
@@ -210,7 +210,7 @@ public class Heater extends TwoPortEquipment
    * Convenience method to set the minimum approach temperature between process and utility.
    *
    * @param approach minimum temperature difference
-   * @param unit     unit of the provided value (e.g. "K" or "C")
+   * @param unit unit of the provided value (e.g. "K" or "C")
    */
   public void setUtilityApproachTemperature(double approach, String unit) {
     utilitySpecification.setApproachTemperature(approach, unit);
@@ -562,7 +562,7 @@ public class Heater extends TwoPortEquipment
    * Sets the maximum design duty with unit specification.
    *
    * @param maxDuty maximum design duty value
-   * @param unit    unit of the duty value (e.g., "W", "kW", "MW")
+   * @param unit unit of the duty value (e.g., "W", "kW", "MW")
    */
   public void setMaxDesignDuty(double maxDuty, String unit) {
     neqsim.util.unit.PowerUnit powerUnit = new neqsim.util.unit.PowerUnit(maxDuty, unit);
@@ -614,7 +614,7 @@ public class Heater extends TwoPortEquipment
    * Sets the maximum outlet temperature limit with unit specification.
    *
    * @param maxTemp maximum outlet temperature value
-   * @param unit    unit of the temperature value (e.g., "K", "C")
+   * @param unit unit of the temperature value (e.g., "K", "C")
    */
   public void setMaxOutletTemperature(double maxTemp, String unit) {
     neqsim.util.unit.TemperatureUnit tempUnit = new neqsim.util.unit.TemperatureUnit(maxTemp, unit);
@@ -666,7 +666,7 @@ public class Heater extends TwoPortEquipment
    * Sets the minimum outlet temperature limit with unit specification.
    *
    * @param minTemp minimum outlet temperature value
-   * @param unit    unit of the temperature value (e.g., "K", "C")
+   * @param unit unit of the temperature value (e.g., "K", "C")
    */
   public void setMinOutletTemperature(double minTemp, String unit) {
     neqsim.util.unit.TemperatureUnit tempUnit = new neqsim.util.unit.TemperatureUnit(minTemp, unit);

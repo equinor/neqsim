@@ -80,7 +80,7 @@ public class TwoPhasePipeFlowSystemBuilder {
    * Sets the pipe diameter.
    *
    * @param diameter the diameter value
-   * @param unit     the unit ("m", "mm", "in", "ft")
+   * @param unit the unit ("m", "mm", "in", "ft")
    * @return this builder
    */
   public TwoPhasePipeFlowSystemBuilder withDiameter(double diameter, String unit) {
@@ -92,7 +92,7 @@ public class TwoPhasePipeFlowSystemBuilder {
    * Sets the pipe length.
    *
    * @param length the length value
-   * @param unit   the unit ("m", "km", "ft", "mi")
+   * @param unit the unit ("m", "km", "ft", "mi")
    * @return this builder
    */
   public TwoPhasePipeFlowSystemBuilder withLength(double length, String unit) {
@@ -115,7 +115,7 @@ public class TwoPhasePipeFlowSystemBuilder {
   /**
    * Sets the number of legs and nodes per leg.
    *
-   * @param legs        the number of pipe legs
+   * @param legs the number of pipe legs
    * @param nodesPerLeg the number of nodes per leg
    * @return this builder
    */
@@ -165,7 +165,7 @@ public class TwoPhasePipeFlowSystemBuilder {
    * Sets the wall heat transfer model to constant wall temperature.
    *
    * @param temperature the wall temperature
-   * @param unit        the temperature unit ("K", "C", "F")
+   * @param unit the temperature unit ("K", "C", "F")
    * @return this builder
    */
   public TwoPhasePipeFlowSystemBuilder withWallTemperature(double temperature, String unit) {
@@ -190,8 +190,8 @@ public class TwoPhasePipeFlowSystemBuilder {
    * Sets up convective boundary condition.
    *
    * @param ambientTemperature the ambient temperature
-   * @param tempUnit           the temperature unit ("K", "C", "F")
-   * @param uValue             the overall heat transfer coefficient in W/(m²·K)
+   * @param tempUnit the temperature unit ("K", "C", "F")
+   * @param uValue the overall heat transfer coefficient in W/(m²·K)
    * @return this builder
    */
   public TwoPhasePipeFlowSystemBuilder withConvectiveBoundary(double ambientTemperature, String tempUnit,
@@ -236,7 +236,7 @@ public class TwoPhasePipeFlowSystemBuilder {
    * Sets the pipe roughness.
    *
    * @param roughness the roughness value
-   * @param unit      the unit ("m", "mm", "um")
+   * @param unit the unit ("m", "mm", "um")
    * @return this builder
    */
   public TwoPhasePipeFlowSystemBuilder withRoughness(double roughness, String unit) {
@@ -266,7 +266,7 @@ public class TwoPhasePipeFlowSystemBuilder {
    * </p>
    *
    * @param angle the inclination angle
-   * @param unit  the angle unit ("deg", "degrees", "rad", "radians")
+   * @param unit the angle unit ("deg", "degrees", "rad", "radians")
    * @return this builder
    */
   public TwoPhasePipeFlowSystemBuilder withInclination(double angle, String unit) {
@@ -496,7 +496,7 @@ public class TwoPhasePipeFlowSystemBuilder {
    * Converts length to meters.
    *
    * @param value the length value in the specified unit
-   * @param unit  the unit of the input value ("m", "cm", "inch", "ft", etc.)
+   * @param unit the unit of the input value ("m", "cm", "inch", "ft", etc.)
    * @return the converted length in meters
    */
   private double convertLength(double value, String unit) {
@@ -524,7 +524,7 @@ public class TwoPhasePipeFlowSystemBuilder {
    * Converts temperature to Kelvin.
    *
    * @param value the temperature value in the specified unit
-   * @param unit  the unit of the input value ("C", "F", "K")
+   * @param unit the unit of the input value ("C", "F", "K")
    * @return the converted temperature in Kelvin
    */
   private double convertTemperature(double value, String unit) {

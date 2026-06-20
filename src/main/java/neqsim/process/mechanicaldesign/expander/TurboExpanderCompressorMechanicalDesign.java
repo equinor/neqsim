@@ -476,7 +476,7 @@ public class TurboExpanderCompressorMechanicalDesign extends MechanicalDesign {
   /**
    * Size the expander wheel per API 617 radial-inflow turbine practice.
    *
-   * @param volFlowM3hr      inlet volume flow [m3/hr]
+   * @param volFlowM3hr inlet volume flow [m3/hr]
    * @param enthalpyDropKJkg isentropic enthalpy drop [kJ/kg]
    */
   private void sizeExpanderWheel(double volFlowM3hr, double enthalpyDropKJkg) {
@@ -524,7 +524,7 @@ public class TurboExpanderCompressorMechanicalDesign extends MechanicalDesign {
   /**
    * Size the compressor impeller per API 617 centrifugal compressor practice.
    *
-   * @param volFlowM3hr    suction volume flow [m3/hr]
+   * @param volFlowM3hr suction volume flow [m3/hr]
    * @param polytropicHead total polytropic head [kJ/kg]
    */
   private void sizeCompressorImpeller(double volFlowM3hr, double polytropicHead) {
@@ -568,7 +568,7 @@ public class TurboExpanderCompressorMechanicalDesign extends MechanicalDesign {
    * Size the shared shaft for the combined torque from both ends.
    *
    * @param totalPowerKW total power transmitted through shaft [kW]
-   * @param speedRPM     shaft speed [rpm]
+   * @param speedRPM shaft speed [rpm]
    */
   private void sizeShaft(double totalPowerKW, double speedRPM) {
     if (speedRPM <= 0 || totalPowerKW <= 0) {
@@ -676,7 +676,7 @@ public class TurboExpanderCompressorMechanicalDesign extends MechanicalDesign {
   /**
    * Estimate the expander nozzle throat area for choke calculations.
    *
-   * @param volFlowM3hr      inlet volume flow [m3/hr]
+   * @param volFlowM3hr inlet volume flow [m3/hr]
    * @param enthalpyDropKJkg isentropic enthalpy drop [kJ/kg]
    */
   private void estimateExpanderNozzleThroatArea(double volFlowM3hr, double enthalpyDropKJkg) {
@@ -785,16 +785,16 @@ public class TurboExpanderCompressorMechanicalDesign extends MechanicalDesign {
    * All pressures in bara, temperatures in deg C, flows in kg/hr, molar masses in kg/kmol.
    * </p>
    *
-   * @param expInletP      expander inlet pressure [bara]
-   * @param expOutletP     expander outlet pressure [bara]
-   * @param expInletT      expander inlet temperature [deg C]
-   * @param compInletP     compressor suction pressure [bara]
+   * @param expInletP expander inlet pressure [bara]
+   * @param expOutletP expander outlet pressure [bara]
+   * @param expInletT expander inlet temperature [deg C]
+   * @param compInletP compressor suction pressure [bara]
    * @param compDischargeP compressor discharge pressure [bara]
-   * @param compInletT     compressor suction temperature [deg C]
-   * @param expMassFlow    expander mass flow [kg/hr]
-   * @param compMassFlow   compressor mass flow [kg/hr]
-   * @param expMolarMass   expander gas molar mass [kg/kmol]
-   * @param compMolarMass  compressor gas molar mass [kg/kmol]
+   * @param compInletT compressor suction temperature [deg C]
+   * @param expMassFlow expander mass flow [kg/hr]
+   * @param compMassFlow compressor mass flow [kg/hr]
+   * @param expMolarMass expander gas molar mass [kg/kmol]
+   * @param compMolarMass compressor gas molar mass [kg/kmol]
    * @return evaluation result with margins and pass/fail
    */
   public DesignEvaluationResult evaluateDesignAtConditions(double expInletP, double expOutletP, double expInletT,
@@ -992,10 +992,10 @@ public class TurboExpanderCompressorMechanicalDesign extends MechanicalDesign {
    * approximations.
    * </p>
    *
-   * @param expanderFluid   expander inlet fluid (will be cloned, not modified)
-   * @param expOutletP      expander outlet pressure [bara]
+   * @param expanderFluid expander inlet fluid (will be cloned, not modified)
+   * @param expOutletP expander outlet pressure [bara]
    * @param compressorFluid compressor inlet fluid (will be cloned, not modified)
-   * @param compDischargeP  compressor discharge pressure [bara]
+   * @param compDischargeP compressor discharge pressure [bara]
    * @return evaluation result with margins and pass/fail
    */
   public DesignEvaluationResult evaluateDesignWithFluid(SystemInterface expanderFluid, double expOutletP,
@@ -2321,19 +2321,19 @@ public class TurboExpanderCompressorMechanicalDesign extends MechanicalDesign {
    * {@link #evaluateDesignAtConditions} for each off-design case.
    * </p>
    *
-   * @param expanderWheelDiameterMm      expander wheel outer diameter [mm]
+   * @param expanderWheelDiameterMm expander wheel outer diameter [mm]
    * @param compressorImpellerDiameterMm compressor impeller diameter [mm]
-   * @param ratedSpeedRpm                rated operating speed [rpm]
-   * @param maxContSpeedRpm              maximum continuous speed [rpm]
-   * @param tripSpeedRpm                 overspeed trip speed [rpm]
-   * @param firstCritRpm                 first lateral critical speed [rpm]
-   * @param secondCritRpm                second lateral critical speed [rpm]
-   * @param shaftDiameterMm              shaft diameter [mm]
-   * @param bearingSpanMm                bearing span [mm]
-   * @param expCasingDesignP             expander casing design pressure [bara]
-   * @param expCasingDesignT             expander casing design temperature [deg C]
-   * @param compCasingDesignP            compressor casing design pressure [bara]
-   * @param compCasingDesignT            compressor casing design temperature [deg C]
+   * @param ratedSpeedRpm rated operating speed [rpm]
+   * @param maxContSpeedRpm maximum continuous speed [rpm]
+   * @param tripSpeedRpm overspeed trip speed [rpm]
+   * @param firstCritRpm first lateral critical speed [rpm]
+   * @param secondCritRpm second lateral critical speed [rpm]
+   * @param shaftDiameterMm shaft diameter [mm]
+   * @param bearingSpanMm bearing span [mm]
+   * @param expCasingDesignP expander casing design pressure [bara]
+   * @param expCasingDesignT expander casing design temperature [deg C]
+   * @param compCasingDesignP compressor casing design pressure [bara]
+   * @param compCasingDesignT compressor casing design temperature [deg C]
    */
   public void setFromDatasheet(double expanderWheelDiameterMm, double compressorImpellerDiameterMm,
       double ratedSpeedRpm, double maxContSpeedRpm, double tripSpeedRpm, double firstCritRpm, double secondCritRpm,
@@ -2357,13 +2357,13 @@ public class TurboExpanderCompressorMechanicalDesign extends MechanicalDesign {
   /**
    * Set rated operating conditions from vendor performance guarantee.
    *
-   * @param expInletP      expander rated inlet pressure [bara]
-   * @param expOutletP     expander rated outlet pressure [bara]
-   * @param expInletT      expander rated inlet temperature [deg C]
-   * @param expOutletT     expander rated outlet temperature [deg C]
-   * @param compSuctionP   compressor rated suction pressure [bara]
+   * @param expInletP expander rated inlet pressure [bara]
+   * @param expOutletP expander rated outlet pressure [bara]
+   * @param expInletT expander rated inlet temperature [deg C]
+   * @param expOutletT expander rated outlet temperature [deg C]
+   * @param compSuctionP compressor rated suction pressure [bara]
    * @param compDischargeP compressor rated discharge pressure [bara]
-   * @param compSuctionT   compressor rated suction temperature [deg C]
+   * @param compSuctionT compressor rated suction temperature [deg C]
    * @param compDischargeT compressor rated discharge temperature [deg C]
    */
   public void setRatedConditions(double expInletP, double expOutletP, double expInletT, double expOutletT,
@@ -2381,12 +2381,12 @@ public class TurboExpanderCompressorMechanicalDesign extends MechanicalDesign {
   /**
    * Set rated performance data from vendor datasheet.
    *
-   * @param expanderPower        rated expander power [kW]
-   * @param compressorPower      rated compressor power [kW]
+   * @param expanderPower rated expander power [kW]
+   * @param compressorPower rated compressor power [kW]
    * @param expanderEnthalpyDrop isentropic enthalpy drop [kJ/kg]
-   * @param compPolytropicHead   compressor polytropic head [kJ/kg]
-   * @param surgeFlow            surge line flow [m3/hr actual]
-   * @param stonewallFlow        stonewall flow [m3/hr actual]
+   * @param compPolytropicHead compressor polytropic head [kJ/kg]
+   * @param surgeFlow surge line flow [m3/hr actual]
+   * @param stonewallFlow stonewall flow [m3/hr actual]
    */
   public void setRatedPerformance(double expanderPower, double compressorPower, double expanderEnthalpyDrop,
       double compPolytropicHead, double surgeFlow, double stonewallFlow) {
@@ -2426,7 +2426,7 @@ public class TurboExpanderCompressorMechanicalDesign extends MechanicalDesign {
    * </ul>
    *
    * @param scenarioNames descriptive name for each scenario
-   * @param scenarios     list of scenario parameter maps
+   * @param scenarios list of scenario parameter maps
    * @return list of evaluation results, one per scenario
    */
   public List<DesignEvaluationResult> evaluateMultipleScenarios(List<String> scenarioNames,
@@ -2452,7 +2452,7 @@ public class TurboExpanderCompressorMechanicalDesign extends MechanicalDesign {
    * Get a value from a scenario map with a default of 0.0.
    *
    * @param scenario the scenario parameter map
-   * @param key      the parameter key
+   * @param key the parameter key
    * @return the value, or 0.0 if not present
    */
   private double getScenarioValue(Map<String, Double> scenario, String key) {
@@ -2464,7 +2464,7 @@ public class TurboExpanderCompressorMechanicalDesign extends MechanicalDesign {
    * Generate a comprehensive evaluation report comparing the design against multiple scenarios.
    *
    * @param scenarioNames names for each scenario
-   * @param scenarios     list of scenario parameter maps
+   * @param scenarios list of scenario parameter maps
    * @return JSON string with full evaluation report
    */
   public String evaluationReportToJson(List<String> scenarioNames, List<Map<String, Double>> scenarios) {

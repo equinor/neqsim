@@ -51,7 +51,7 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
    * Constructor for SimpleAdsorber.
    * </p>
    *
-   * @param name      name of the unit operation
+   * @param name name of the unit operation
    * @param inStream1 a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public SimpleAdsorber(String name, StreamInterface inStream1) {

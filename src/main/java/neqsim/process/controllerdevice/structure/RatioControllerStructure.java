@@ -21,7 +21,7 @@ public class RatioControllerStructure implements ControlStructureInterface {
   /**
    * Create a ratio controller structure.
    *
-   * @param controller       feedback controller acting on the manipulated variable
+   * @param controller feedback controller acting on the manipulated variable
    * @param ratioMeasurement measurement providing the base for the ratio
    */
   public RatioControllerStructure(ControllerDeviceInterface controller, MeasurementDeviceInterface ratioMeasurement) {

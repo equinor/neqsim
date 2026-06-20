@@ -63,12 +63,12 @@ public class IntegratedProductionModel implements Serializable {
     /**
      * Creates a well unit.
      *
-     * @param name           well name
-     * @param drive          reservoir drive feeding the well
-     * @param wellBranch     well deliverability branch
+     * @param name well name
+     * @param drive reservoir drive feeding the well
+     * @param wellBranch well deliverability branch
      * @param flowlineBranch flowline branch to the export node
-     * @param reservoirNode  reservoir node name
-     * @param wellheadNode   wellhead node name
+     * @param reservoirNode reservoir node name
+     * @param wellheadNode wellhead node name
      */
     WellUnit(String name, ReservoirDrive drive, WellBranch wellBranch, FlowlineBranch flowlineBranch,
 	String reservoirNode, String wellheadNode) {
@@ -157,8 +157,8 @@ public class IntegratedProductionModel implements Serializable {
    * Adds a well with a direct (low-resistance) tie-in to the export node.
    *
    * @param wellName unique well name
-   * @param drive    reservoir drive feeding the well
-   * @param curve    well deliverability curve
+   * @param drive reservoir drive feeding the well
+   * @param curve well deliverability curve
    * @return the created well unit (for further configuration)
    */
   public WellUnit addWell(String wellName, ReservoirDrive drive, WellDeliverabilityCurve curve) {
@@ -171,8 +171,8 @@ public class IntegratedProductionModel implements Serializable {
    * Adds a well with an explicit flowline to the export node.
    *
    * @param wellName unique well name
-   * @param drive    reservoir drive feeding the well
-   * @param curve    well deliverability curve
+   * @param drive reservoir drive feeding the well
+   * @param curve well deliverability curve
    * @param flowline flowline branch from the wellhead to the export node
    * @return the created well unit (for further configuration)
    */
@@ -277,7 +277,7 @@ public class IntegratedProductionModel implements Serializable {
   /**
    * Marches a production profile forward in time, depleting each well's reservoir drive.
    *
-   * @param years   total horizon in years
+   * @param years total horizon in years
    * @param dtYears time-step length in years
    * @return the production profile
    */

@@ -106,7 +106,7 @@ public class ProducedWaterTreatmentTrain extends ProcessEquipmentBaseClass {
   /**
    * Creates a produced water treatment train with inlet stream.
    *
-   * @param name        equipment name
+   * @param name equipment name
    * @param inletStream water stream from production separator
    */
   public ProducedWaterTreatmentTrain(String name, StreamInterface inletStream) {
@@ -173,7 +173,7 @@ public class ProducedWaterTreatmentTrain extends ProcessEquipmentBaseClass {
   /**
    * Sets stage efficiency by name.
    *
-   * @param stageName  stage name
+   * @param stageName stage name
    * @param efficiency efficiency (0.0-1.0)
    */
   public void setStageEfficiency(String stageName, double efficiency) {
@@ -212,8 +212,8 @@ public class ProducedWaterTreatmentTrain extends ProcessEquipmentBaseClass {
    * Recommends a demulsifier dose using the configured optimizer.
    *
    * @param untreatedOilInWaterMgL untreated or pre-chemical OIW concentration in mg/L
-   * @param waterRateM3h           produced-water flow rate in m3/h
-   * @param dayOfMonth             current day of month, starting at 1
+   * @param waterRateM3h produced-water flow rate in m3/h
+   * @param dayOfMonth current day of month, starting at 1
    * @return dose recommendation
    */
   public OilInWaterDoseOptimizer.DoseRecommendation recommendDemulsifierDose(double untreatedOilInWaterMgL,
@@ -435,8 +435,8 @@ public class ProducedWaterTreatmentTrain extends ProcessEquipmentBaseClass {
     /**
      * Creates a treatment stage.
      *
-     * @param name       stage name
-     * @param type       equipment type
+     * @param name stage name
+     * @param type equipment type
      * @param efficiency removal efficiency (0.0-1.0)
      */
     public WaterTreatmentStage(String name, StageType type, double efficiency) {

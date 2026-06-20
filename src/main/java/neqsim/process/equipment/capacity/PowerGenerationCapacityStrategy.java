@@ -123,7 +123,7 @@ public class PowerGenerationCapacityStrategy implements EquipmentCapacityStrateg
    * Adds constraints for gas turbine.
    *
    * @param constraints map to add constraints to
-   * @param gt          the gas turbine
+   * @param gt the gas turbine
    */
   private void addGasTurbineConstraints(Map<String, CapacityConstraint> constraints, GasTurbine gt) {
     CapacityConstraint powerConstraint = new CapacityConstraint("power").setDesignValue(ratedPowerKW)
@@ -137,7 +137,7 @@ public class PowerGenerationCapacityStrategy implements EquipmentCapacityStrateg
    * Adds constraints for steam turbine.
    *
    * @param constraints map to add constraints to
-   * @param st          the steam turbine
+   * @param st the steam turbine
    */
   private void addSteamTurbineConstraints(Map<String, CapacityConstraint> constraints, SteamTurbine st) {
     CapacityConstraint powerConstraint = new CapacityConstraint("power").setDesignValue(ratedPowerKW)
@@ -151,7 +151,7 @@ public class PowerGenerationCapacityStrategy implements EquipmentCapacityStrateg
    * Adds constraints for HRSG.
    *
    * @param constraints map to add constraints to
-   * @param hrsg        the HRSG
+   * @param hrsg the HRSG
    */
   private void addHRSGConstraints(Map<String, CapacityConstraint> constraints, HRSG hrsg) {
     CapacityConstraint heatConstraint = new CapacityConstraint("heatTransferred").setDesignValue(ratedPowerKW)
@@ -165,7 +165,7 @@ public class PowerGenerationCapacityStrategy implements EquipmentCapacityStrateg
    * Adds constraints for combined cycle system.
    *
    * @param constraints map to add constraints to
-   * @param ccs         the combined cycle system
+   * @param ccs the combined cycle system
    */
   private void addCombinedCycleConstraints(Map<String, CapacityConstraint> constraints, CombinedCycleSystem ccs) {
     CapacityConstraint powerConstraint = new CapacityConstraint("totalPower").setDesignValue(ratedPowerKW)

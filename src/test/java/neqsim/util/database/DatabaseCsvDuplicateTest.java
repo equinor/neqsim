@@ -84,8 +84,8 @@ class DatabaseCsvDuplicateTest extends NeqSimTest {
    * Finds duplicate key values in a CSV resource.
    *
    * @param resourcePath classpath resource path to the CSV file
-   * @param unordered    whether multi-column keys should be sorted before grouping
-   * @param keyColumns   column names that define the unique key
+   * @param unordered whether multi-column keys should be sorted before grouping
+   * @param keyColumns column names that define the unique key
    * @return formatted duplicate key descriptions
    * @throws IOException if the CSV resource cannot be read
    */
@@ -125,8 +125,8 @@ class DatabaseCsvDuplicateTest extends NeqSimTest {
    * Finds duplicate key values that are attached to different values in another column.
    *
    * @param resourcePath classpath resource path to the CSV file
-   * @param keyColumn    column name that defines the lookup key
-   * @param valueColumn  column name that must stay consistent for a duplicate key
+   * @param keyColumn column name that defines the lookup key
+   * @param valueColumn column name that must stay consistent for a duplicate key
    * @return formatted duplicate key descriptions
    * @throws IOException if the CSV resource cannot be read
    */
@@ -168,7 +168,7 @@ class DatabaseCsvDuplicateTest extends NeqSimTest {
   /**
    * Checks whether rows have more than one distinct value in a column.
    *
-   * @param rows        rows to inspect
+   * @param rows rows to inspect
    * @param valueColumn column name to compare
    * @return true if rows contain different non-empty values
    */
@@ -233,7 +233,7 @@ class DatabaseCsvDuplicateTest extends NeqSimTest {
   /**
    * Normalizes one component name index line.
    *
-   * @param line       raw line text
+   * @param line raw line text
    * @param lineNumber one-based resource line number
    * @return normalized component name
    */
@@ -249,8 +249,8 @@ class DatabaseCsvDuplicateTest extends NeqSimTest {
    * Formats one duplicate component name index entry.
    *
    * @param resourcePath classpath resource path to the component name index
-   * @param name         duplicate component name
-   * @param lines        line numbers where the name appears
+   * @param name duplicate component name
+   * @param lines line numbers where the name appears
    * @return formatted duplicate name description
    */
   private static String formatDuplicateNameIndexEntry(String resourcePath, String name, List<Integer> lines) {
@@ -288,9 +288,9 @@ class DatabaseCsvDuplicateTest extends NeqSimTest {
   /**
    * Builds a normalized key from one CSV row.
    *
-   * @param row        row to read
+   * @param row row to read
    * @param keyColumns column names that define the key
-   * @param unordered  whether key values should be sorted before joining
+   * @param unordered whether key values should be sorted before joining
    * @return normalized key
    */
   private static String buildKey(CsvRow row, String[] keyColumns, boolean unordered) {
@@ -316,9 +316,9 @@ class DatabaseCsvDuplicateTest extends NeqSimTest {
    * Formats one duplicate group.
    *
    * @param resourcePath classpath resource path to the CSV file
-   * @param keyColumns   column names that define the duplicate key
-   * @param key          duplicate key value
-   * @param rows         rows sharing the duplicate key
+   * @param keyColumns column names that define the duplicate key
+   * @param key duplicate key value
+   * @param rows rows sharing the duplicate key
    * @return formatted duplicate group description
    */
   private static String formatDuplicate(String resourcePath, String[] keyColumns, String key, List<CsvRow> rows) {
@@ -487,7 +487,7 @@ class DatabaseCsvDuplicateTest extends NeqSimTest {
      * Creates a parsed CSV table.
      *
      * @param header header fields
-     * @param rows   data rows
+     * @param rows data rows
      */
     private CsvTable(List<String> header, List<CsvRow> rows) {
       this.header = header;
@@ -506,7 +506,7 @@ class DatabaseCsvDuplicateTest extends NeqSimTest {
      * Creates a parsed CSV row.
      *
      * @param startLine starting line number for the record
-     * @param values    parsed row values by header name
+     * @param values parsed row values by header name
      */
     private CsvRow(int startLine, Map<String, String> values) {
       this.startLine = startLine;

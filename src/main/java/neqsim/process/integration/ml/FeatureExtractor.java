@@ -53,7 +53,7 @@ public class FeatureExtractor {
   /**
    * Extracts specified features from a stream.
    *
-   * @param stream       the stream to extract features from
+   * @param stream the stream to extract features from
    * @param featureNames names of features to extract
    * @return array of feature values
    */
@@ -70,7 +70,7 @@ public class FeatureExtractor {
   /**
    * Extracts a single feature from a stream.
    *
-   * @param stream      the stream
+   * @param stream the stream
    * @param featureName the feature name
    * @return feature value or NaN if not available
    */
@@ -176,8 +176,8 @@ public class FeatureExtractor {
    * Normalizes features using z-score normalization.
    *
    * @param features raw features
-   * @param means    feature means
-   * @param stds     feature standard deviations
+   * @param means feature means
+   * @param stds feature standard deviations
    * @return normalized features
    */
   public static double[] normalizeZScore(double[] features, double[] means, double[] stds) {
@@ -196,8 +196,8 @@ public class FeatureExtractor {
    * Normalizes features using min-max normalization.
    *
    * @param features raw features
-   * @param mins     feature minimums
-   * @param maxs     feature maximums
+   * @param mins feature minimums
+   * @param maxs feature maximums
    * @return normalized features (0-1 range)
    */
   public static double[] normalizeMinMax(double[] features, double[] mins, double[] maxs) {

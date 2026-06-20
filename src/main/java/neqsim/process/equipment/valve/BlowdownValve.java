@@ -84,7 +84,7 @@ public class BlowdownValve extends ThrottlingValve {
   /**
    * Constructor for BlowdownValve.
    *
-   * @param name        name of blowdown valve
+   * @param name name of blowdown valve
    * @param inletStream inlet stream to valve
    */
   public BlowdownValve(String name, StreamInterface inletStream) {

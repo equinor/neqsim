@@ -618,7 +618,7 @@ public class ArtificialLiftScreener implements Serializable {
    * Sets reservoir pressure.
    *
    * @param pressure pressure value
-   * @param unit     unit ("bara", "psia")
+   * @param unit unit ("bara", "psia")
    * @return this for chaining
    */
   public ArtificialLiftScreener setReservoirPressure(double pressure, String unit) {
@@ -634,7 +634,7 @@ public class ArtificialLiftScreener implements Serializable {
    * Sets reservoir temperature.
    *
    * @param temperature temperature value
-   * @param unit        unit ("K", "C", "F")
+   * @param unit unit ("K", "C", "F")
    * @return this for chaining
    */
   public ArtificialLiftScreener setReservoirTemperature(double temperature, String unit) {
@@ -652,7 +652,7 @@ public class ArtificialLiftScreener implements Serializable {
    * Sets wellhead pressure.
    *
    * @param pressure pressure value
-   * @param unit     unit
+   * @param unit unit
    * @return this for chaining
    */
   public ArtificialLiftScreener setWellheadPressure(double pressure, String unit) {
@@ -668,7 +668,7 @@ public class ArtificialLiftScreener implements Serializable {
    * Sets well depth (TVD).
    *
    * @param depth depth value
-   * @param unit  unit ("m", "ft")
+   * @param unit unit ("m", "ft")
    * @return this for chaining
    */
   public ArtificialLiftScreener setWellDepth(double depth, String unit) {
@@ -695,7 +695,7 @@ public class ArtificialLiftScreener implements Serializable {
    * Sets oil gravity.
    *
    * @param gravity gravity value
-   * @param unit    unit ("API", "SG")
+   * @param unit unit ("API", "SG")
    * @return this for chaining
    */
   public ArtificialLiftScreener setOilGravity(double gravity, String unit) {
@@ -733,7 +733,7 @@ public class ArtificialLiftScreener implements Serializable {
    * Sets oil viscosity.
    *
    * @param viscosity viscosity value
-   * @param unit      unit ("cP", "Pa.s")
+   * @param unit unit ("cP", "Pa.s")
    * @return this for chaining
    */
   public ArtificialLiftScreener setOilViscosity(double viscosity, String unit) {
@@ -987,9 +987,9 @@ public class ArtificialLiftScreener implements Serializable {
     /**
      * Calculates NPV for the method.
      *
-     * @param oilPrice     oil price (USD/bbl)
+     * @param oilPrice oil price (USD/bbl)
      * @param discountRate annual discount rate
-     * @param years        economic life
+     * @param years economic life
      */
     public void calculateEconomics(double oilPrice, double discountRate, int years) {
       if (!feasible || productionRate <= 0) {

@@ -107,7 +107,7 @@ public class IncompressiblePipeFlow extends AdiabaticPipe {
   /**
    * Constructor for IncompressiblePipeFlow with inlet stream.
    *
-   * @param name     name of pipe
+   * @param name name of pipe
    * @param inStream input stream
    */
   public IncompressiblePipeFlow(String name, StreamInterface inStream) {

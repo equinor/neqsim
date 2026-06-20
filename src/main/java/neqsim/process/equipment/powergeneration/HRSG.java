@@ -75,7 +75,7 @@ public class HRSG extends TwoPortEquipment implements CapacityConstrainedEquipme
   /**
    * Constructor for HRSG with hot gas inlet stream (from gas turbine exhaust).
    *
-   * @param name              equipment name
+   * @param name equipment name
    * @param hotGasInletStream hot gas stream from gas turbine exhaust
    */
   public HRSG(String name, StreamInterface hotGasInletStream) {
@@ -145,7 +145,7 @@ public class HRSG extends TwoPortEquipment implements CapacityConstrainedEquipme
   /**
    * Estimate steam specific enthalpy using simplified correlation.
    *
-   * @param pressure    steam pressure in bara
+   * @param pressure steam pressure in bara
    * @param temperature steam temperature in Kelvin
    * @return specific enthalpy in J/kg
    */
@@ -257,7 +257,7 @@ public class HRSG extends TwoPortEquipment implements CapacityConstrainedEquipme
    * Set steam temperature with unit.
    *
    * @param temperature steam temperature
-   * @param unit        temperature unit ("C", "K", "F")
+   * @param unit temperature unit ("C", "K", "F")
    */
   public void setSteamTemperature(double temperature, String unit) {
     if ("C".equals(unit)) {
@@ -282,7 +282,7 @@ public class HRSG extends TwoPortEquipment implements CapacityConstrainedEquipme
    * Set feed water temperature with unit.
    *
    * @param temperature feed water temperature
-   * @param unit        temperature unit ("C", "K")
+   * @param unit temperature unit ("C", "K")
    */
   public void setFeedWaterTemperature(double temperature, String unit) {
     if ("C".equals(unit)) {
@@ -350,7 +350,7 @@ public class HRSG extends TwoPortEquipment implements CapacityConstrainedEquipme
    * Set the design (maximum) heat transfer duty with unit.
    *
    * @param designHeatDuty design heat duty value
-   * @param unit           heat unit ("W", "kW", "MW")
+   * @param unit heat unit ("W", "kW", "MW")
    */
   public void setDesignHeatDuty(double designHeatDuty, String unit) {
     switch (unit) {

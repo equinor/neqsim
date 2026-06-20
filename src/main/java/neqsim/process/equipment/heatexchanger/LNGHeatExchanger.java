@@ -87,10 +87,10 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
     /**
      * Construct with key dimensions.
      *
-     * @param finHeight    fin height in m
-     * @param finPitch     fin pitch in m
+     * @param finHeight fin height in m
+     * @param finPitch fin pitch in m
      * @param finThickness fin thickness in m
-     * @param stripLength  offset strip length in m
+     * @param stripLength offset strip length in m
      */
     public FinGeometry(double finHeight, double finPitch, double finThickness, double stripLength) {
       this.finHeight = finHeight;
@@ -307,10 +307,10 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
     /**
      * Construct a transient data point.
      *
-     * @param timeHours     time in hours
-     * @param metalTempC    average metal temperature in deg C
+     * @param timeHours time in hours
+     * @param metalTempC average metal temperature in deg C
      * @param fluidOutTempC fluid outlet temperature in deg C
-     * @param dutyKW        instantaneous duty in kW
+     * @param dutyKW instantaneous duty in kW
      */
     public TransientPoint(double timeHours, double metalTempC, double fluidOutTempC, double dutyKW) {
       this.timeHours = timeHours;
@@ -455,7 +455,7 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
    * stream(s) become hot and the colder one(s) become cold.
    * </p>
    *
-   * @param name      name of the heat exchanger
+   * @param name name of the heat exchanger
    * @param inStreams list of inlet streams
    */
   public LNGHeatExchanger(String name, List<StreamInterface> inStreams) {
@@ -512,7 +512,7 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
    * </p>
    *
    * @param streamIndex 0-based index in the pending stream list
-   * @param isHot       true if the stream is hot (will be cooled)
+   * @param isHot true if the stream is hot (will be cooled)
    */
   public void setStreamIsHot(int streamIndex, boolean isHot) {
     while (pendingIsHot.size() <= streamIndex) {
@@ -573,7 +573,7 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
    * </p>
    *
    * @param streamIndex 0-based index of the registered stream
-   * @param deltaPBar   pressure drop in bar (positive value)
+   * @param deltaPBar pressure drop in bar (positive value)
    */
   public void setStreamPressureDrop(int streamIndex, double deltaPBar) {
     while (streamPressureDrops.size() <= streamIndex) {
@@ -731,7 +731,7 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
    * </p>
    *
    * @param streamIndex 0-based stream index
-   * @param fin         fin geometry object
+   * @param fin fin geometry object
    */
   public void setStreamFinGeometry(int streamIndex, FinGeometry fin) {
     while (streamFinGeometry.size() <= streamIndex) {
@@ -848,7 +848,7 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
    * Get the hot composite curve data (from rigorous zone-by-zone flash).
    *
    * @return 2D array [numberOfZones+1][2] where col 0 = cumulative duty (kW) from cold end and col 1 = temperature (deg
-   *         C)
+   * C)
    */
   public double[][] getHotCompositeCurve() {
     return hotCompositeCurve;
@@ -858,7 +858,7 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
    * Get the cold composite curve data (from rigorous zone-by-zone flash).
    *
    * @return 2D array [numberOfZones+1][2] where col 0 = cumulative duty (kW) from cold end and col 1 = temperature (deg
-   *         C)
+   * C)
    */
   public double[][] getColdCompositeCurve() {
     return coldCompositeCurve;
@@ -1436,7 +1436,7 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
    * derived from fin geometry.
    * </p>
    *
-   * @param re  Reynolds number based on hydraulic diameter
+   * @param re Reynolds number based on hydraulic diameter
    * @param fin fin geometry
    * @return double array [j, f] where j = Colburn factor, f = Fanning friction factor
    */
@@ -1482,11 +1482,11 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
    * The two-phase multiplier phi_L squared is then evaluated using the Chisholm (1967) C-parameter correlation.
    * </p>
    *
-   * @param x    vapour quality (mass fraction), 0 to 1
+   * @param x vapour quality (mass fraction), 0 to 1
    * @param rhoL liquid density in kg/m3
    * @param rhoG gas density in kg/m3
-   * @param muL  liquid viscosity in Pa s
-   * @param muG  gas viscosity in Pa s
+   * @param muL liquid viscosity in Pa s
+   * @param muG gas viscosity in Pa s
    * @return two-phase multiplier phi_L squared (dimensionless, &gt;= 1.0)
    */
   private double lockhartMartinelliPhiL2(double x, double rhoL, double rhoG, double muL, double muG) {
@@ -1509,11 +1509,11 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
   /**
    * Compute detailed pressure drop per stream using Manglik-Bergles (P5) and Lockhart-Martinelli (P6) correlations.
    *
-   * @param streamDensity   density at each zone boundary [stream][point] in kg/m3
+   * @param streamDensity density at each zone boundary [stream][point] in kg/m3
    * @param streamViscosity viscosity at each zone boundary [stream][point] in Pa s
-   * @param streamVapFrac   vapour fraction at each zone boundary [stream][point]
-   * @param massFlowKgS     mass flow rate per stream in kg/s
-   * @param effectiveZones  number of zones used
+   * @param streamVapFrac vapour fraction at each zone boundary [stream][point]
+   * @param massFlowKgS mass flow rate per stream in kg/s
+   * @param effectiveZones number of zones used
    */
   private void computeDetailedPressureDrop(double[][] streamDensity, double[][] streamViscosity,
       double[][] streamVapFrac, double[] massFlowKgS, int effectiveZones) {
@@ -1602,9 +1602,9 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
    * The core thermal mass and UA must be set before calling this method.
    * </p>
    *
-   * @param targetTempC    target metal temperature in deg C
-   * @param ambientTempC   initial metal temperature (ambient) in deg C
-   * @param timeSteps      number of time steps for the simulation
+   * @param targetTempC target metal temperature in deg C
+   * @param ambientTempC initial metal temperature (ambient) in deg C
+   * @param timeSteps number of time steps for the simulation
    * @param totalTimeHours total simulation duration in hours
    */
   public void runCooldownTransient(double targetTempC, double ambientTempC, int timeSteps, double totalTimeHours) {
@@ -1801,10 +1801,10 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
   /**
    * Compute mass-flow-weighted composite temperature at a given position from cold end.
    *
-   * @param inletTempC     inlet temperatures in deg C per stream
-   * @param outletTempC    outlet temperatures in deg C per stream
-   * @param massFlowKgS    mass flow rates in kg/s per stream
-   * @param hotSide        true for hot composite, false for cold composite
+   * @param inletTempC inlet temperatures in deg C per stream
+   * @param outletTempC outlet temperatures in deg C per stream
+   * @param massFlowKgS mass flow rates in kg/s per stream
+   * @param hotSide true for hot composite, false for cold composite
    * @param posFromColdEnd position index from cold end (0 to numberOfZones)
    * @return weighted average temperature in deg C
    */
@@ -1836,9 +1836,9 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
    * Used with adaptive zone refinement where zone positions are non-uniform.
    * </p>
    *
-   * @param streamTempC    pre-computed temperatures per stream per zone point
-   * @param massFlowKgS    mass flow rates in kg/s per stream
-   * @param hotSide        true for hot composite, false for cold composite
+   * @param streamTempC pre-computed temperatures per stream per zone point
+   * @param massFlowKgS mass flow rates in kg/s per stream
+   * @param hotSide true for hot composite, false for cold composite
    * @param effectiveZones total number of effective zones
    * @param posFromColdEnd position index from cold end (0 to effectiveZones)
    * @return weighted average temperature in deg C

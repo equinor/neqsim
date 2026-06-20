@@ -202,7 +202,7 @@ public class CompressorChartGenerator {
    * </p>
    *
    * @param generationOption Specifies how to generate the compressor chart. Options: "normal curves" or other types.
-   * @param numberOfSpeeds   The number of speed curves to generate (must be at least 1).
+   * @param numberOfSpeeds The number of speed curves to generate (must be at least 1).
    * @return A {@link neqsim.process.equipment.compressor.CompressorChartInterface} object.
    */
   public CompressorChartInterface generateCompressorChart(String generationOption, int numberOfSpeeds) {
@@ -242,7 +242,7 @@ public class CompressorChartGenerator {
    * <li>"CENTRIFUGAL_HIGH_HEAD" - High head, narrower operating range</li>
    * </ul>
    *
-   * @param templateName   Name of the template to use
+   * @param templateName Name of the template to use
    * @param numberOfSpeeds Number of speed curves to generate
    * @return A {@link neqsim.process.equipment.compressor.CompressorChartInterface} object
    */
@@ -254,7 +254,7 @@ public class CompressorChartGenerator {
   /**
    * Generates a compressor chart from a curve template object.
    *
-   * @param template       The template to use
+   * @param template The template to use
    * @param numberOfSpeeds Number of speed curves to generate
    * @return A {@link neqsim.process.equipment.compressor.CompressorChartInterface} object
    */
@@ -274,7 +274,7 @@ public class CompressorChartGenerator {
    * Generates a compressor chart from a predefined curve template with specific speeds.
    *
    * @param templateName Name of the template to use
-   * @param speeds       Array of speed values in RPM to generate curves for
+   * @param speeds Array of speed values in RPM to generate curves for
    * @return A {@link neqsim.process.equipment.compressor.CompressorChartInterface} object
    */
   public CompressorChartInterface generateFromTemplate(String templateName, double[] speeds) {
@@ -291,10 +291,10 @@ public class CompressorChartGenerator {
   /**
    * Scale a template to specific speed values.
    *
-   * @param template     the compressor curve template
-   * @param designSpeed  the design speed in RPM
-   * @param designFlow   the design flow in m3/hr
-   * @param designHead   the design head in kJ/kg
+   * @param template the compressor curve template
+   * @param designSpeed the design speed in RPM
+   * @param designFlow the design flow in m3/hr
+   * @param designHead the design head in kJ/kg
    * @param targetSpeeds array of target speeds
    * @return the scaled compressor chart
    */
@@ -361,7 +361,7 @@ public class CompressorChartGenerator {
    * </ul>
    *
    * @param generationOption Specifies how to generate the compressor chart. Options: "normal curves" or other types.
-   * @param speeds           An array of speed values in RPM to generate curves for.
+   * @param speeds An array of speed values in RPM to generate curves for.
    * @return A {@link neqsim.process.equipment.compressor.CompressorChartInterface} object.
    */
   public CompressorChartInterface generateCompressorChart(String generationOption, double[] speeds) {
@@ -587,13 +587,13 @@ public class CompressorChartGenerator {
    * values.
    * </p>
    *
-   * @param compChart      the compressor chart object
-   * @param refFlow        the reference flow rate
-   * @param refSpeed       the reference speed
-   * @param minFlow        the minimum flow rate
-   * @param maxFlow        the maximum flow rate
-   * @param minSpeed       the minimum speed
-   * @param maxSpeed       the maximum speed
+   * @param compChart the compressor chart object
+   * @param refFlow the reference flow rate
+   * @param refSpeed the reference speed
+   * @param minFlow the minimum flow rate
+   * @param maxFlow the maximum flow rate
+   * @param minSpeed the minimum speed
+   * @param maxSpeed the maximum speed
    * @param isNormalCurves whether to generate normal curves
    * @return a {@link SafeSplineSurgeCurve} object representing the surge curve
    */

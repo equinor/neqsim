@@ -75,8 +75,8 @@ public enum DesignCase {
   /**
    * Constructor.
    *
-   * @param displayName       human-readable name
-   * @param description       case description
+   * @param displayName human-readable name
+   * @param description case description
    * @param typicalLoadFactor typical load factor relative to normal (1.0 = 100%)
    */
   DesignCase(String displayName, String description, double typicalLoadFactor) {

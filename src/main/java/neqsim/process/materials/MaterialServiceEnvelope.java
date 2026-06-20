@@ -52,7 +52,7 @@ public class MaterialServiceEnvelope implements Serializable {
   /**
    * Adds or replaces one service-envelope value.
    *
-   * @param key   normalized key name
+   * @param key normalized key name
    * @param value value to store
    * @return this envelope for fluent construction
    */
@@ -86,7 +86,7 @@ public class MaterialServiceEnvelope implements Serializable {
   /**
    * Reads a value as a double.
    *
-   * @param key          key to retrieve
+   * @param key key to retrieve
    * @param defaultValue value returned when missing or not numeric
    * @return numeric value or default value
    */
@@ -108,7 +108,7 @@ public class MaterialServiceEnvelope implements Serializable {
   /**
    * Reads a value as a string.
    *
-   * @param key          key to retrieve
+   * @param key key to retrieve
    * @param defaultValue value returned when missing
    * @return string value or default value
    */
@@ -123,7 +123,7 @@ public class MaterialServiceEnvelope implements Serializable {
   /**
    * Reads a value as a boolean.
    *
-   * @param key          key to retrieve
+   * @param key key to retrieve
    * @param defaultValue value returned when missing or not boolean-like
    * @return boolean value or default value
    */

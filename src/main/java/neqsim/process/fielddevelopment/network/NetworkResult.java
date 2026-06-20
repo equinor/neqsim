@@ -79,7 +79,7 @@ public class NetworkResult implements Serializable {
    * Gets a well's production rate.
    *
    * @param wellName well name
-   * @param unit     rate unit
+   * @param unit rate unit
    * @return well rate
    */
   public double getWellRate(String wellName, String unit) {

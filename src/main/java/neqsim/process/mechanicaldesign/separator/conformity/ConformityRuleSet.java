@@ -431,9 +431,9 @@ public abstract class ConformityRuleSet implements Serializable {
     /**
      * Calculates the gas-load K-factor.
      *
-     * @param diameterM     vessel internal diameter in m
-     * @param gasFlowM3s    gas volumetric flow rate in m3/s
-     * @param gasDensity    gas density in kg/m3
+     * @param diameterM vessel internal diameter in m
+     * @param gasFlowM3s gas volumetric flow rate in m3/s
+     * @param gasDensity gas density in kg/m3
      * @param liquidDensity liquid density in kg/m3
      * @return Souders-Brown K-factor in m/s, or NaN when the inputs are invalid
      */

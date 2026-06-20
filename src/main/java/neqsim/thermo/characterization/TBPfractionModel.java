@@ -971,7 +971,7 @@ public class TBPfractionModel implements java.io.Serializable {
      * Calculate boiling point using Riazi-Daubert correlation.
      *
      * @param molarMass molar mass in g/mol
-     * @param density   specific gravity (g/cm³)
+     * @param density specific gravity (g/cm³)
      * @return boiling point in Kelvin
      */
     @Override
@@ -987,7 +987,7 @@ public class TBPfractionModel implements java.io.Serializable {
      * Calculate critical temperature using Lee-Kesler correlation with API correction.
      *
      * @param molarMass molar mass in g/mol
-     * @param density   specific gravity (g/cm³)
+     * @param density specific gravity (g/cm³)
      * @return critical temperature in Kelvin
      */
     @Override
@@ -1012,7 +1012,7 @@ public class TBPfractionModel implements java.io.Serializable {
      * Calculate critical pressure using Lee-Kesler correlation with API correction.
      *
      * @param molarMass molar mass in g/mol
-     * @param density   specific gravity (g/cm³)
+     * @param density specific gravity (g/cm³)
      * @return critical pressure in bar
      */
     @Override
@@ -1039,7 +1039,7 @@ public class TBPfractionModel implements java.io.Serializable {
      * Calculate acentric factor using Edmister correlation.
      *
      * @param molarMass molar mass in g/mol
-     * @param density   specific gravity (g/cm³)
+     * @param density specific gravity (g/cm³)
      * @return acentric factor (dimensionless)
      */
     @Override
@@ -1214,7 +1214,7 @@ public class TBPfractionModel implements java.io.Serializable {
    * </ul>
    *
    * @param molarMass molar mass in kg/mol
-   * @param density   density in g/cm³ (specific gravity)
+   * @param density density in g/cm³ (specific gravity)
    * @return Watson characterization factor (dimensionless)
    */
   public double calcWatsonKFactor(double molarMass, double density) {
@@ -1242,9 +1242,9 @@ public class TBPfractionModel implements java.io.Serializable {
    * <li>Equation of state being used (SRK vs PR)</li>
    * </ul>
    *
-   * @param avgMW      average molecular weight of plus fraction in kg/mol
+   * @param avgMW average molecular weight of plus fraction in kg/mol
    * @param avgDensity average density/specific gravity in g/cm³
-   * @param eosType    equation of state type: "SRK" or "PR"
+   * @param eosType equation of state type: "SRK" or "PR"
    * @return recommended model name as a String
    */
   public String recommendTBPModel(double avgMW, double avgDensity, String eosType) {

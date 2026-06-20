@@ -49,10 +49,10 @@ public final class OperationalEnvelopeEvaluator {
   /**
    * Evaluates a process with optional margin history.
    *
-   * @param process                  process system to evaluate
-   * @param history                  margin history keyed by margin key
+   * @param process process system to evaluate
+   * @param history margin history keyed by margin key
    * @param predictionHorizonSeconds maximum time horizon for predictions in seconds
-   * @param includeMitigations       true to include generic mitigation suggestions
+   * @param includeMitigations true to include generic mitigation suggestions
    * @return operational envelope report
    */
   public static OperationalEnvelopeReport evaluate(ProcessSystem process, Map<String, MarginTrendTracker> history,
@@ -94,10 +94,10 @@ public final class OperationalEnvelopeEvaluator {
   /**
    * Builds trip predictions from margin history.
    *
-   * @param margins                  current margin list
-   * @param trackers                 margin history trackers
+   * @param margins current margin list
+   * @param trackers margin history trackers
    * @param predictionHorizonSeconds maximum prediction horizon in seconds
-   * @param currentTimestampSeconds  current timestamp in seconds
+   * @param currentTimestampSeconds current timestamp in seconds
    * @return sorted prediction list
    */
   private static List<TripPrediction> buildPredictions(List<OperationalMargin> margins,
@@ -140,7 +140,7 @@ public final class OperationalEnvelopeEvaluator {
   /**
    * Selects a timestamp for the current sample without mixing relative and epoch histories.
    *
-   * @param tracker                  trend tracker with optional existing samples
+   * @param tracker trend tracker with optional existing samples
    * @param fallbackTimestampSeconds fallback timestamp in seconds
    * @return timestamp for the current sample
    */

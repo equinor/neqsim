@@ -42,7 +42,7 @@ public class TimestampedValue implements Serializable {
    * Creates a new timestamped value with current time and GOOD quality.
    *
    * @param value the numeric value
-   * @param unit  the engineering unit
+   * @param unit the engineering unit
    */
   public TimestampedValue(double value, String unit) {
     this(value, unit, Instant.now(), Quality.GOOD);
@@ -51,8 +51,8 @@ public class TimestampedValue implements Serializable {
   /**
    * Creates a new timestamped value with specified timestamp and GOOD quality.
    *
-   * @param value     the numeric value
-   * @param unit      the engineering unit
+   * @param value the numeric value
+   * @param unit the engineering unit
    * @param timestamp the timestamp
    */
   public TimestampedValue(double value, String unit, Instant timestamp) {
@@ -62,10 +62,10 @@ public class TimestampedValue implements Serializable {
   /**
    * Creates a new timestamped value with all parameters.
    *
-   * @param value     the numeric value
-   * @param unit      the engineering unit
+   * @param value the numeric value
+   * @param unit the engineering unit
    * @param timestamp the timestamp
-   * @param quality   the quality indicator
+   * @param quality the quality indicator
    */
   public TimestampedValue(double value, String unit, Instant timestamp, Quality quality) {
     this.value = value;
@@ -123,7 +123,7 @@ public class TimestampedValue implements Serializable {
    * Creates a new TimestampedValue marked as simulated.
    *
    * @param value the numeric value
-   * @param unit  the engineering unit
+   * @param unit the engineering unit
    * @return a new TimestampedValue with SIMULATED quality
    */
   public static TimestampedValue simulated(double value, String unit) {

@@ -75,7 +75,7 @@ public class StidMaterialsDataSource implements MaterialsReviewDataSource {
    * Adds all records from a named array.
    *
    * @param input input object receiving records
-   * @param key   array key in the source object
+   * @param key array key in the source object
    */
   private void addArray(MaterialsReviewInput input, String key) {
     if (!source.has(key) || !source.get(key).isJsonArray()) {
@@ -94,7 +94,7 @@ public class StidMaterialsDataSource implements MaterialsReviewDataSource {
    * Merges one parsed record into the input by tag.
    *
    * @param input input to update
-   * @param item  parsed item
+   * @param item parsed item
    */
   private void mergeItem(MaterialsReviewInput input, MaterialReviewItem item) {
     MaterialsReviewInput single = new MaterialsReviewInput();
@@ -105,7 +105,7 @@ public class StidMaterialsDataSource implements MaterialsReviewDataSource {
   /**
    * Converts one STID-like record to a material review item.
    *
-   * @param record    record object from a normalized STID extract
+   * @param record record object from a normalized STID extract
    * @param sourceKey name of the source array
    * @return material review item
    */
@@ -140,8 +140,8 @@ public class StidMaterialsDataSource implements MaterialsReviewDataSource {
   /**
    * Copies one field under a normalized target key.
    *
-   * @param record    source record
-   * @param envelope  target envelope
+   * @param record source record
+   * @param envelope target envelope
    * @param sourceKey source key
    * @param targetKey target key
    */
@@ -161,8 +161,8 @@ public class StidMaterialsDataSource implements MaterialsReviewDataSource {
   /**
    * Merges a nested JSON object into a service envelope.
    *
-   * @param record    source record
-   * @param envelope  target envelope
+   * @param record source record
+   * @param envelope target envelope
    * @param objectKey nested object key
    */
   private void mergeObject(JsonObject record, MaterialServiceEnvelope envelope, String objectKey) {
@@ -186,7 +186,7 @@ public class StidMaterialsDataSource implements MaterialsReviewDataSource {
    * Returns the first available string for a set of keys.
    *
    * @param object JSON object
-   * @param keys   keys to test
+   * @param keys keys to test
    * @return first available value, or empty string
    */
   private String firstString(JsonObject object, String... keys) {

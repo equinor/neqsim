@@ -115,9 +115,9 @@ public enum PipeMaterial {
   /**
    * Constructor for PipeMaterial.
    *
-   * @param displayName          Human-readable material name
-   * @param thermalConductivity  Thermal conductivity in W/(m·K)
-   * @param density              Density in kg/m³
+   * @param displayName Human-readable material name
+   * @param thermalConductivity Thermal conductivity in W/(m·K)
+   * @param density Density in kg/m³
    * @param specificHeatCapacity Specific heat capacity in J/(kg·K)
    */
   PipeMaterial(String displayName, double thermalConductivity, double density, double specificHeatCapacity) {

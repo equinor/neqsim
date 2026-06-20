@@ -120,8 +120,8 @@ public class MapTurboExpanderCompressor extends ProcessEquipmentBaseClass {
   /**
    * Constructor for MapTurboExpanderCompressor.
    *
-   * @param name                  name of the unit operation
-   * @param expanderInletStream   high-pressure feed to the expander
+   * @param name name of the unit operation
+   * @param expanderInletStream high-pressure feed to the expander
    * @param compressorInletStream feed to the brake compressor
    */
   public MapTurboExpanderCompressor(String name, StreamInterface expanderInletStream,
@@ -374,7 +374,7 @@ public class MapTurboExpanderCompressor extends ProcessEquipmentBaseClass {
    * Compute the compressor absorbed power at a given shaft speed using the compressor performance map.
    *
    * @param speed shaft speed in RPM
-   * @param id    calculation identifier
+   * @param id calculation identifier
    * @return compressor absorbed power in Watt
    */
   private double compressorPowerAtSpeed(double speed, UUID id) {

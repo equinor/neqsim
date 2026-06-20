@@ -57,15 +57,15 @@ public class ConformityResult implements Serializable {
   /**
    * Constructs a ConformityResult.
    *
-   * @param checkName    short identifier for the check (e.g., "k-factor", "inlet-momentum")
-   * @param standard     the conformity standard (e.g., "TR3500", "API-12J")
+   * @param checkName short identifier for the check (e.g., "k-factor", "inlet-momentum")
+   * @param standard the conformity standard (e.g., "TR3500", "API-12J")
    * @param internalType the internal this check applies to (e.g., "mesh-pad", "demisting-cyclones") or empty string for
-   *                     vessel-level checks
-   * @param actualValue  the calculated actual value
-   * @param limitValue   the acceptance limit from the standard
-   * @param unit         the engineering unit (e.g., "m/s", "Pa", "mm")
-   * @param direction    whether the limit is a maximum or minimum
-   * @param description  human-readable description of the check
+   * vessel-level checks
+   * @param actualValue the calculated actual value
+   * @param limitValue the acceptance limit from the standard
+   * @param unit the engineering unit (e.g., "m/s", "Pa", "mm")
+   * @param direction whether the limit is a maximum or minimum
+   * @param description human-readable description of the check
    */
   public ConformityResult(String checkName, String standard, String internalType, double actualValue, double limitValue,
       String unit, LimitDirection direction, String description) {
@@ -84,8 +84,8 @@ public class ConformityResult implements Serializable {
    * Creates a NOT_APPLICABLE result when a check cannot be evaluated.
    *
    * @param checkName short identifier for the check
-   * @param standard  the conformity standard
-   * @param reason    why the check is not applicable
+   * @param standard the conformity standard
+   * @param reason why the check is not applicable
    * @return a ConformityResult with NOT_APPLICABLE status
    */
   public static ConformityResult notApplicable(String checkName, String standard, String reason) {
@@ -105,8 +105,8 @@ public class ConformityResult implements Serializable {
    * Evaluates the status based on actual value, limit, and direction.
    *
    * @param actual the actual value
-   * @param limit  the limit value
-   * @param dir    the direction (MAXIMUM or MINIMUM)
+   * @param limit the limit value
+   * @param dir the direction (MAXIMUM or MINIMUM)
    * @return the evaluated status
    */
   private static Status evaluateStatus(double actual, double limit, LimitDirection dir) {

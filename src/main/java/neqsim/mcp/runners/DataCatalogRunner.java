@@ -222,7 +222,7 @@ public final class DataCatalogRunner {
   /**
    * Queries a specific standards table for parameters applicable to an equipment type.
    *
-   * @param standardCode  the standard code (e.g., "ASME-VIII-Div1")
+   * @param standardCode the standard code (e.g., "ASME-VIII-Div1")
    * @param equipmentType the equipment type to filter by (optional)
    * @return JSON with standard parameters
    */
@@ -460,7 +460,7 @@ public final class DataCatalogRunner {
   /**
    * Adds rows from a standards query result set to a JSON response.
    *
-   * @param rs     result set to read
+   * @param rs result set to read
    * @param result JSON response to populate
    * @throws java.sql.SQLException if reading the result set fails
    */
@@ -489,12 +489,12 @@ public final class DataCatalogRunner {
   /**
    * Adds an EOS model entry to the models array.
    *
-   * @param models        the array to add to
-   * @param code          the short code
-   * @param fullName      the full name
-   * @param description   the description
+   * @param models the array to add to
+   * @param code the short code
+   * @param fullName the full name
+   * @param description the description
    * @param applicability when to use this model
-   * @param year          the year introduced
+   * @param year the year introduced
    */
   private static void addEOS(JsonArray models, String code, String fullName, String description, String applicability,
       String year) {
@@ -510,8 +510,8 @@ public final class DataCatalogRunner {
   /**
    * Adds a table description entry.
    *
-   * @param tables      the array to add to
-   * @param name        the table name
+   * @param tables the array to add to
+   * @param name the table name
    * @param description the description
    */
   private static void addTable(JsonArray tables, String name, String description) {

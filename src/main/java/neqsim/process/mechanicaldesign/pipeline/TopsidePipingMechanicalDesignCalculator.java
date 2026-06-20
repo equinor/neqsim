@@ -352,10 +352,10 @@ public class TopsidePipingMechanicalDesignCalculator extends PipeMechanicalDesig
   /**
    * Calculate acoustic power level for AIV screening.
    *
-   * @param upstreamPressure   upstream pressure in bara
+   * @param upstreamPressure upstream pressure in bara
    * @param downstreamPressure downstream pressure in bara
-   * @param temperature        temperature in Celsius
-   * @param molecularWeight    molecular weight in kg/kmol
+   * @param temperature temperature in Celsius
+   * @param molecularWeight molecular weight in kg/kmol
    * @return acoustic power level in Watts
    */
   public double calculateAcousticPowerLevel(double upstreamPressure, double downstreamPressure, double temperature,
@@ -382,7 +382,7 @@ public class TopsidePipingMechanicalDesignCalculator extends PipeMechanicalDesig
   /**
    * Calculate likelihood of failure from AIV.
    *
-   * @param branchDiameter   branch diameter in meters
+   * @param branchDiameter branch diameter in meters
    * @param mainPipeDiameter main pipe diameter in meters
    * @return likelihood of failure (0.0-1.0)
    */
@@ -641,7 +641,7 @@ public class TopsidePipingMechanicalDesignCalculator extends PipeMechanicalDesig
   /**
    * Calculate occasional stress per ASME B31.3.
    *
-   * @param windLoad       wind load in N/m
+   * @param windLoad wind load in N/m
    * @param supportSpacing support spacing in meters
    * @return occasional stress in MPa
    */

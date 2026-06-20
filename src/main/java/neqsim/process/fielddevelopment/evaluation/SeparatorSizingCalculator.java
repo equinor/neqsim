@@ -168,9 +168,9 @@ public class SeparatorSizingCalculator implements Serializable {
    * <li>μ = viscosity of continuous phase (Pa·s)</li>
    * </ul>
    *
-   * @param dropletDiameterM         droplet or bubble diameter (m)
-   * @param heavyPhaseDensity        density of heavier phase (kg/m³)
-   * @param lightPhaseDensity        density of lighter phase (kg/m³)
+   * @param dropletDiameterM droplet or bubble diameter (m)
+   * @param heavyPhaseDensity density of heavier phase (kg/m³)
+   * @param lightPhaseDensity density of lighter phase (kg/m³)
    * @param continuousPhaseViscosity viscosity of continuous phase (Pa·s)
    * @return settling velocity (m/s), positive = downward for droplets
    */
@@ -192,9 +192,9 @@ public class SeparatorSizingCalculator implements Serializable {
    * Calculates oil droplet settling velocity in gas phase.
    *
    * @param dropletDiameterMicrons droplet diameter in microns
-   * @param oilDensity             oil density (kg/m³)
-   * @param gasDensity             gas density (kg/m³)
-   * @param gasViscosity           gas viscosity (Pa·s)
+   * @param oilDensity oil density (kg/m³)
+   * @param gasDensity gas density (kg/m³)
+   * @param gasViscosity gas viscosity (Pa·s)
    * @return settling velocity (m/s)
    */
   public double oilDropletSettlingInGas(double dropletDiameterMicrons, double oilDensity, double gasDensity,
@@ -207,9 +207,9 @@ public class SeparatorSizingCalculator implements Serializable {
    * Calculates gas bubble rise velocity in liquid phase.
    *
    * @param bubbleDiameterMm bubble diameter in mm
-   * @param liquidDensity    liquid density (kg/m³)
-   * @param gasDensity       gas density (kg/m³)
-   * @param liquidViscosity  liquid viscosity (Pa·s)
+   * @param liquidDensity liquid density (kg/m³)
+   * @param gasDensity gas density (kg/m³)
+   * @param liquidViscosity liquid viscosity (Pa·s)
    * @return rise velocity (m/s)
    */
   public double gasBubbleRiseInLiquid(double bubbleDiameterMm, double liquidDensity, double gasDensity,
@@ -256,9 +256,9 @@ public class SeparatorSizingCalculator implements Serializable {
    * <li>0.10-0.15 m/s for separators with wire mesh demister</li>
    * </ul>
    *
-   * @param kFactor       Souders-Brown K factor (m/s)
+   * @param kFactor Souders-Brown K factor (m/s)
    * @param liquidDensity liquid density (kg/m³)
-   * @param gasDensity    gas density (kg/m³)
+   * @param gasDensity gas density (kg/m³)
    * @return maximum gas velocity (m/s)
    */
   public double soudersbrownGasVelocity(double kFactor, double liquidDensity, double gasDensity) {
@@ -275,7 +275,7 @@ public class SeparatorSizingCalculator implements Serializable {
   /**
    * Returns recommended K-factor based on separator configuration.
    *
-   * @param type        separator type
+   * @param type separator type
    * @param hasDemister true if wire mesh demister is installed
    * @return recommended K-factor (m/s)
    */
@@ -303,8 +303,8 @@ public class SeparatorSizingCalculator implements Serializable {
    * <li>Slenderness ratio limits (L/D)</li>
    * </ul>
    *
-   * @param feed     inlet stream to separator
-   * @param type     separator orientation
+   * @param feed inlet stream to separator
+   * @param type separator orientation
    * @param standard design standard to apply
    * @return sizing result with dimensions and constraints
    */
@@ -413,8 +413,8 @@ public class SeparatorSizingCalculator implements Serializable {
   /**
    * Creates a sized Separator equipment from a sizing result.
    *
-   * @param name   equipment name
-   * @param feed   inlet stream
+   * @param name equipment name
+   * @param feed inlet stream
    * @param result sizing result
    * @return configured Separator
    */

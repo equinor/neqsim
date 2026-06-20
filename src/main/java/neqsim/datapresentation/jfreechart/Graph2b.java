@@ -99,11 +99,11 @@ public class Graph2b extends javax.swing.JFrame {
    * Constructor for graph2b.
    * </p>
    *
-   * @param points      an array of type double
+   * @param points an array of type double
    * @param seriesNames an array of {@link java.lang.String} objects
-   * @param tit         a {@link java.lang.String} object
-   * @param xaxis       a {@link java.lang.String} object
-   * @param yaxis       a {@link java.lang.String} object
+   * @param tit a {@link java.lang.String} object
+   * @param xaxis a {@link java.lang.String} object
+   * @param yaxis a {@link java.lang.String} object
    */
   public Graph2b(double[][] points, String[] seriesNames, String tit, String xaxis, String yaxis) {
     XYSeriesCollection seriesCol = new XYSeriesCollection();
@@ -140,12 +140,12 @@ public class Graph2b extends javax.swing.JFrame {
    * Constructor for graph2b.
    * </p>
    *
-   * @param xpoints     an array of type double
-   * @param points      an array of type double
+   * @param xpoints an array of type double
+   * @param points an array of type double
    * @param seriesNames an array of {@link java.lang.String} objects
-   * @param tit         a {@link java.lang.String} object
-   * @param xaxis       a {@link java.lang.String} object
-   * @param yaxis       a {@link java.lang.String} object
+   * @param tit a {@link java.lang.String} object
+   * @param xaxis a {@link java.lang.String} object
+   * @param yaxis a {@link java.lang.String} object
    */
   public Graph2b(double[][] xpoints, double[][] points, String[] seriesNames, String tit, String xaxis, String yaxis) {
     XYSeriesCollection seriesCol = new XYSeriesCollection();

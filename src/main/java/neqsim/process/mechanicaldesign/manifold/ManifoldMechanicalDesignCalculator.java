@@ -606,7 +606,7 @@ public class ManifoldMechanicalDesignCalculator implements Serializable {
   /**
    * Calculate acoustic power level for AIV screening.
    *
-   * @param upstreamPressure   upstream pressure in bara
+   * @param upstreamPressure upstream pressure in bara
    * @param downstreamPressure downstream pressure in bara
    * @return acoustic power level in W
    */

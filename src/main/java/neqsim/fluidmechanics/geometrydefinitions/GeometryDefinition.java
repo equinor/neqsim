@@ -104,7 +104,7 @@ public abstract class GeometryDefinition
    * Constructor for GeometryDefinition.
    * </p>
    *
-   * @param diameter  a double
+   * @param diameter a double
    * @param roughness a double
    */
   public GeometryDefinition(double diameter, double roughness) {

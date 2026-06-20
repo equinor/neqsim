@@ -24,7 +24,7 @@ public enum ParameterTransform implements Serializable {
   /**
    * Converts a physical parameter value to the optimizer parameter value.
    *
-   * @param value      physical parameter value
+   * @param value physical parameter value
    * @param lowerBound physical lower bound
    * @param upperBound physical upper bound
    * @return transformed optimizer value
@@ -56,7 +56,7 @@ public enum ParameterTransform implements Serializable {
   /**
    * Converts an optimizer parameter value to the physical parameter value.
    *
-   * @param value      optimizer parameter value
+   * @param value optimizer parameter value
    * @param lowerBound physical lower bound
    * @param upperBound physical upper bound
    * @return physical parameter value
@@ -118,7 +118,7 @@ public enum ParameterTransform implements Serializable {
   /**
    * Validates that a value is finite.
    *
-   * @param name  value name used in the exception message
+   * @param name value name used in the exception message
    * @param value value to validate
    * @throws IllegalArgumentException if value is NaN or infinite
    */

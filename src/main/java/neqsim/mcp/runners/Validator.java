@@ -178,7 +178,7 @@ public class Validator {
   /**
    * Validates a flash definition JSON.
    *
-   * @param root   the parsed JSON
+   * @param root the parsed JSON
    * @param issues the issue list to populate
    */
   private static void validateFlashDefinition(JsonObject root, List<Issue> issues) {
@@ -232,7 +232,7 @@ public class Validator {
   /**
    * Validates a process definition JSON.
    *
-   * @param root   the parsed JSON
+   * @param root the parsed JSON
    * @param issues the issue list to populate
    */
   private static void validateProcessDefinition(JsonObject root, List<Issue> issues) {
@@ -275,7 +275,7 @@ public class Validator {
   /**
    * Validates a multi-area ProcessModel JSON definition.
    *
-   * @param root   the parsed root JSON object
+   * @param root the parsed root JSON object
    * @param issues the issue list to populate
    */
   private static void validateProcessModelDefinition(JsonObject root, List<Issue> issues) {
@@ -311,7 +311,7 @@ public class Validator {
    * Validates a fluid block (used in process definitions).
    *
    * @param fluidDef the fluid JSON object
-   * @param issues   the issue list to populate
+   * @param issues the issue list to populate
    */
   private static void validateFluidBlock(JsonObject fluidDef, List<Issue> issues) {
     if (fluidDef.has("model")) {
@@ -334,10 +334,10 @@ public class Validator {
   /**
    * Validates a single process unit definition.
    *
-   * @param unit         the unit JSON object
-   * @param index        the unit index in the process array
+   * @param unit the unit JSON object
+   * @param index the unit index in the process array
    * @param definedNames set of equipment names defined so far
-   * @param issues       the issue list to populate
+   * @param issues the issue list to populate
    */
   private static void validateProcessUnit(JsonObject unit, int index, Set<String> definedNames, List<Issue> issues) {
     if (!unit.has("type")) {
@@ -396,7 +396,7 @@ public class Validator {
    * Validates a components map — checks names and composition sum.
    *
    * @param components the components JSON object
-   * @param issues     the issue list to populate
+   * @param issues the issue list to populate
    */
   private static void validateComponents(JsonObject components, List<Issue> issues) {
     if (components.entrySet().isEmpty()) {
@@ -443,7 +443,7 @@ public class Validator {
   /**
    * Validates temperature if present.
    *
-   * @param root   the root JSON
+   * @param root the root JSON
    * @param issues the issue list to populate
    */
   private static void validateTemperature(JsonObject root, List<Issue> issues) {
@@ -466,7 +466,7 @@ public class Validator {
   /**
    * Validates pressure if present.
    *
-   * @param root   the root JSON
+   * @param root the root JSON
    * @param issues the issue list to populate
    */
   private static void validatePressure(JsonObject root, List<Issue> issues) {
@@ -526,9 +526,9 @@ public class Validator {
     /**
      * Creates an issue.
      *
-     * @param severity    "error" or "warning"
-     * @param code        machine-readable issue code
-     * @param message     human-readable description
+     * @param severity "error" or "warning"
+     * @param code machine-readable issue code
+     * @param message human-readable description
      * @param remediation how to fix the issue
      */
     Issue(String severity, String code, String message, String remediation) {
@@ -541,8 +541,8 @@ public class Validator {
     /**
      * Creates an error-level issue.
      *
-     * @param code        the issue code
-     * @param message     the description
+     * @param code the issue code
+     * @param message the description
      * @param remediation how to fix
      * @return the issue
      */
@@ -553,8 +553,8 @@ public class Validator {
     /**
      * Creates a warning-level issue.
      *
-     * @param code        the issue code
-     * @param message     the description
+     * @param code the issue code
+     * @param message the description
      * @param remediation how to fix
      * @return the issue
      */

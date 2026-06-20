@@ -68,9 +68,9 @@ public class ProducedWaterFluidBuilder {
    * {@link #createFromIons(double, double, Map)} instead.
    * </p>
    *
-   * @param temperatureK      temperature in Kelvin
-   * @param pressureBara      pressure in bara
-   * @param tds               total dissolved solids in mg/L
+   * @param temperatureK temperature in Kelvin
+   * @param pressureBara pressure in bara
+   * @param tds total dissolved solids in mg/L
    * @param waterMoleFraction water mole fraction in the overall system (0 to 1)
    * @return configured SystemInterface with electrolyte CPA and chemical reactions initialized
    */
@@ -137,7 +137,7 @@ public class ProducedWaterFluidBuilder {
    *
    * @param temperatureK temperature in Kelvin
    * @param pressureBara pressure in bara
-   * @param waterType    one of "condensed_water", "brackish", "seawater", "formation_low", "formation_high"
+   * @param waterType one of "condensed_water", "brackish", "seawater", "formation_low", "formation_high"
    * @return configured SystemInterface with electrolyte CPA and chemical reactions initialized
    * @throws IllegalArgumentException if waterType is not recognized
    */
@@ -164,10 +164,10 @@ public class ProducedWaterFluidBuilder {
    * Na+, Cl-, Ca++, Mg++, HCO3-, SO4--.
    * </p>
    *
-   * @param temperatureK      temperature in Kelvin
-   * @param pressureBara      pressure in bara
+   * @param temperatureK temperature in Kelvin
+   * @param pressureBara pressure in bara
    * @param ionConcentrations map of ion name to concentration in mg/L. Supported keys: "Na+", "Cl-", "Ca++", "Mg++",
-   *                          "HCO3-", "SO4--"
+   * "HCO3-", "SO4--"
    * @return configured SystemInterface with electrolyte CPA and chemical reactions initialized
    */
   public static SystemInterface createFromIons(double temperatureK, double pressureBara,
@@ -211,8 +211,8 @@ public class ProducedWaterFluidBuilder {
    * mole fractions that are normalized to fit the requested gas-to-water ratio.
    * </p>
    *
-   * @param system              existing electrolyte CPA system
-   * @param gasComposition      map of component name to mole fraction (will be normalized)
+   * @param system existing electrolyte CPA system
+   * @param gasComposition map of component name to mole fraction (will be normalized)
    * @param gasToWaterMoleRatio ratio of total gas moles to total water-phase moles
    * @return the same system with gas components added
    */

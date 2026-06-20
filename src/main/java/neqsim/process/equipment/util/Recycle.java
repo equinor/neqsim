@@ -717,7 +717,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
    * The q-factor is bounded to prevent divergence: - q between qMin and qMax (typically -5 to 0) - q = 0 corresponds to
    * direct substitution - Negative q provides acceleration for monotonic convergence
    *
-   * @param currentInput  the input values for current iteration (x_n)
+   * @param currentInput the input values for current iteration (x_n)
    * @param currentOutput the output values from current iteration (g(x_n))
    * @return accelerated values for next iteration input
    */

@@ -177,8 +177,8 @@ public final class PipeSectionAnalyzer {
    * Analyzes a single pipe section.
    *
    * @param sectionName identifier for the section
-   * @param section     JSON section definition
-   * @param fluidSpec   top-level fluid specification
+   * @param section JSON section definition
+   * @param fluidSpec top-level fluid specification
    * @return JSON result for the section
    */
   private static JsonObject analyzeOneSection(String sectionName, JsonObject section, FluidSpec fluidSpec) {
@@ -252,8 +252,8 @@ public final class PipeSectionAnalyzer {
   /**
    * Creates a fluid for one pipe section, potentially with section-level component overrides.
    *
-   * @param fluidSpec    top-level fluid specification
-   * @param section      section JSON with optional component overrides
+   * @param fluidSpec top-level fluid specification
+   * @param section section JSON with optional component overrides
    * @param temperatureC temperature in Celsius
    * @param pressureBara pressure in bara
    * @return configured fluid
@@ -282,8 +282,8 @@ public final class PipeSectionAnalyzer {
   /**
    * Applies flow rate to a stream from section or top-level spec.
    *
-   * @param feed      stream to configure
-   * @param section   section JSON
+   * @param feed stream to configure
+   * @param section section JSON
    * @param fluidSpec top-level fluid spec with default flow rate
    */
   private static void applyFlowRate(Stream feed, JsonObject section, FluidSpec fluidSpec) {
@@ -308,9 +308,9 @@ public final class PipeSectionAnalyzer {
    * {@code flowRate_kg_hr}, {@code inletPressure_bara}, or {@code inletTemperature_C}.
    * </p>
    *
-   * @param section         section JSON to update
-   * @param sectionName     name of the current section
-   * @param fieldData       field data map from tagreader
+   * @param section section JSON to update
+   * @param sectionName name of the current section
+   * @param fieldData field data map from tagreader
    * @param sectionBindings list of section binding objects
    */
   private static void applyFieldDataOverrides(JsonObject section, String sectionName, Map<String, Double> fieldData,
@@ -457,8 +457,8 @@ public final class PipeSectionAnalyzer {
   /**
    * Gets a string from a JSON object with a default.
    *
-   * @param obj          JSON object
-   * @param key          property name
+   * @param obj JSON object
+   * @param key property name
    * @param defaultValue fallback value
    * @return string value or default
    */
@@ -472,8 +472,8 @@ public final class PipeSectionAnalyzer {
   /**
    * Gets a double from a JSON object with a default.
    *
-   * @param obj          JSON object
-   * @param key          property name
+   * @param obj JSON object
+   * @param key property name
    * @param defaultValue fallback value
    * @return double value or default
    */
@@ -491,8 +491,8 @@ public final class PipeSectionAnalyzer {
   /**
    * Gets an int from a JSON object with a default.
    *
-   * @param obj          JSON object
-   * @param key          property name
+   * @param obj JSON object
+   * @param key property name
    * @param defaultValue fallback value
    * @return int value or default
    */
@@ -510,8 +510,8 @@ public final class PipeSectionAnalyzer {
   /**
    * Creates an error JSON response.
    *
-   * @param code        error code
-   * @param message     error message
+   * @param code error code
+   * @param message error message
    * @param remediation fix suggestion
    * @return JSON string with error details
    */

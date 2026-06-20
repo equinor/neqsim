@@ -536,13 +536,13 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos imp
    * molarVolume3.
    * </p>
    *
-   * @param pressure    a double
+   * @param pressure a double
    * @param temperature a double
-   * @param A           a double
-   * @param B           a double
-   * @param pt          the PhaseType of the phase
+   * @param A a double
+   * @param B a double
+   * @param pt the PhaseType of the phase
    * @return a double
-   * @throws neqsim.util.exception.IsNaNException             if any.
+   * @throws neqsim.util.exception.IsNaNException if any.
    * @throws neqsim.util.exception.TooManyIterationsException if any.
    */
   public double molarVolume3(double pressure, double temperature, double A, double B, PhaseType pt)

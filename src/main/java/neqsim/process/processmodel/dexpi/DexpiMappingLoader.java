@@ -91,7 +91,7 @@ public final class DexpiMappingLoader {
    * Loads a mapping from a properties file on the classpath.
    *
    * @param resourcePath the classpath resource path
-   * @param label        a descriptive label for logging
+   * @param label a descriptive label for logging
    * @return an unmodifiable map from DEXPI class name to EquipmentEnum
    */
   private static Map<String, EquipmentEnum> loadMapping(String resourcePath, String label) {

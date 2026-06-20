@@ -504,7 +504,7 @@ public class PipelineMechanicalDesign extends MechanicalDesign {
   /**
    * Populates the corrosion model with conditions extracted from a process stream.
    *
-   * @param model  the corrosion rate model to populate
+   * @param model the corrosion rate model to populate
    * @param stream the process stream to extract conditions from
    */
   private void populateFromStream(NorsokM506CorrosionRate model, StreamInterface stream) {
@@ -555,8 +555,8 @@ public class PipelineMechanicalDesign extends MechanicalDesign {
   /**
    * Safely gets a component mole fraction from a fluid phase.
    *
-   * @param fluid         the fluid system
-   * @param phaseNum      the phase number
+   * @param fluid the fluid system
+   * @param phaseNum the phase number
    * @param componentName the component name
    * @return mole fraction, or 0 if component not present
    */

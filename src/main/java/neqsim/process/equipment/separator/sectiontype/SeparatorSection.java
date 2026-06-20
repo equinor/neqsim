@@ -30,7 +30,7 @@ public class SeparatorSection extends NamedBaseClass {
    *
    * @param name a {@link java.lang.String} object
    * @param type a {@link java.lang.String} object
-   * @param sep  a {@link neqsim.process.equipment.separator.Separator} object
+   * @param sep a {@link neqsim.process.equipment.separator.Separator} object
    */
   public SeparatorSection(String name, String type, Separator sep) {
     super(name);

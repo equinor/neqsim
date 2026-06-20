@@ -650,8 +650,8 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
    * Set lower and upper bounds for a control variable.
    *
    * @param index control index
-   * @param min   minimum allowed value (may be {@link Double#NEGATIVE_INFINITY})
-   * @param max   maximum allowed value (may be {@link Double#POSITIVE_INFINITY})
+   * @param min minimum allowed value (may be {@link Double#NEGATIVE_INFINITY})
+   * @param max maximum allowed value (may be {@link Double#POSITIVE_INFINITY})
    */
   public void setControlLimits(int index, double min, double max) {
     ensureControlIndex(index);
@@ -668,7 +668,7 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
    * Constrain the permitted change of a control variable relative to the previously applied value. Limits are
    * interpreted as {@code minDelta <= u - u_prev <= maxDelta}.
    *
-   * @param index    control index
+   * @param index control index
    * @param minDelta minimum permitted change (may be {@link Double#NEGATIVE_INFINITY})
    * @param maxDelta maximum permitted change (may be {@link Double#POSITIVE_INFINITY})
    */
@@ -685,8 +685,8 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
    * Convenience overload to configure move limits by control name.
    *
    * @param controlName name of the control variable
-   * @param minDelta    minimum permitted change
-   * @param maxDelta    maximum permitted change
+   * @param minDelta minimum permitted change
+   * @param maxDelta maximum permitted change
    */
   public void setControlMoveLimits(String controlName, double minDelta, double maxDelta) {
     int index = controlNames.indexOf(controlName);
@@ -700,8 +700,8 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
    * Convenience overload allowing limits to be set by control name.
    *
    * @param controlName name of the control variable
-   * @param min         minimum allowed value
-   * @param max         maximum allowed value
+   * @param min minimum allowed value
+   * @param max maximum allowed value
    */
   public void setControlLimits(String controlName, double min, double max) {
     int index = controlNames.indexOf(controlName);
@@ -763,7 +763,7 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
 
   /**
    * @deprecated Use {@link #setPreferredControlVector(double...)} to configure the nominal control point. This method
-   *             is retained for backwards compatibility with earlier snapshots of the MPC implementation.
+   * is retained for backwards compatibility with earlier snapshots of the MPC implementation.
    *
    * @param references preferred control levels for the energy terms
    */
@@ -842,7 +842,7 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
    * {@link MeasurementDeviceInterface}. The value is stored in the controller and will be used as the baseline for the
    * next optimisation step.
    *
-   * @param name        quality constraint identifier
+   * @param name quality constraint identifier
    * @param measurement measured specification value in the constraint unit
    * @return {@code true} if the constraint was found and updated
    */
@@ -879,7 +879,7 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
    * MPC optimisation.
    *
    * @param composition component molar fractions (will be normalised outside the method)
-   * @param feedRate    molar feed rate
+   * @param feedRate molar feed rate
    */
   public void updateFeedConditions(Map<String, Double> composition, double feedRate) {
     Map<String, Double> copy = new LinkedHashMap<>();
@@ -916,7 +916,7 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
    * and bias.
    *
    * @param windowSize number of recent samples to keep in the estimation window (minimum of
-   *                   {@value #MIN_ESTIMATION_SAMPLES})
+   * {@value #MIN_ESTIMATION_SAMPLES})
    */
   public void enableMovingHorizonEstimation(int windowSize) {
     if (windowSize < MIN_ESTIMATION_SAMPLES) {
@@ -1017,9 +1017,9 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
    * the same structure as the moving-horizon estimator where {@code measurements.size() == controls.size() + 1} and
    * {@code sampleTimes.size() == controls.size()}.
    *
-   * @param measurements  ordered list of measured process values
-   * @param controls      ordered list of control signals that produced the subsequent measurements
-   * @param sampleTimes   sampling intervals between consecutive measurements (seconds)
+   * @param measurements ordered list of measured process values
+   * @param controls ordered list of control signals that produced the subsequent measurements
+   * @param sampleTimes sampling intervals between consecutive measurements (seconds)
    * @param configuration optional tuning configuration
    * @return tuning result containing the identified parameters and applied configuration
    */
@@ -1083,7 +1083,7 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
   /**
    * Configure the internal first order process model.
    *
-   * @param gain         steady-state process gain relating control action to the measured variable
+   * @param gain steady-state process gain relating control action to the measured variable
    * @param timeConstant dominant time constant of the process model (seconds)
    */
   public void setProcessModel(double gain, double timeConstant) {
@@ -1101,8 +1101,8 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
    * Configure the internal first order process model including dead time. Dead time is represented as an equivalent
    * time constant increase because the simplified controller does not maintain an explicit delay line.
    *
-   * @param gain            steady-state process gain relating control action to the measured variable
-   * @param timeConstant    dominant time constant of the process model (seconds)
+   * @param gain steady-state process gain relating control action to the measured variable
+   * @param timeConstant dominant time constant of the process model (seconds)
    * @param deadTimeSeconds estimated dead time (seconds)
    */
   public void setProcessModel(double gain, double timeConstant, double deadTimeSeconds) {
@@ -1126,9 +1126,9 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
   /**
    * Set quadratic weights for output tracking, absolute control effort and control movement.
    *
-   * @param outputWeight  weight on future tracking error
+   * @param outputWeight weight on future tracking error
    * @param controlWeight weight on absolute control magnitude (e.g. energy/emission usage)
-   * @param moveWeight    weight on control movements between successive time steps
+   * @param moveWeight weight on control movements between successive time steps
    */
   public void setWeights(double outputWeight, double controlWeight, double moveWeight) {
     if (outputWeight < 0.0 || controlWeight < 0.0 || moveWeight < 0.0) {
@@ -1168,7 +1168,7 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
 
   /**
    * @deprecated Use {@link #setPreferredControlValue(double)} when configuring the MPC economic target. This method is
-   *             kept for compatibility with earlier code samples.
+   * kept for compatibility with earlier code samples.
    *
    * @param reference preferred steady-state control value for the single-input controller
    */
@@ -1257,9 +1257,9 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
    * the control system. The sample updates the diagnostic state of the controller and provides a fallback measurement
    * if no transmitter is configured.
    *
-   * @param measurement    latest measured process value
+   * @param measurement latest measured process value
    * @param appliedControl control signal that was active when the sample was taken
-   * @param dt             sample interval since the previous measurement
+   * @param dt sample interval since the previous measurement
    */
   public void ingestPlantSample(double measurement, double appliedControl, double dt) {
     if (!Double.isFinite(measurement)) {
@@ -1278,7 +1278,7 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
    * Convenience overload of {@link #ingestPlantSample(double, double, double)} when only the measurement and applied
    * control are known.
    *
-   * @param measurement    measured process value
+   * @param measurement measured process value
    * @param appliedControl applied control signal
    */
   public void ingestPlantSample(double measurement, double appliedControl) {
@@ -2016,7 +2016,7 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
    * constant.
    *
    * @param steps number of steps ahead to predict (must be positive)
-   * @param dt    sampling interval in seconds
+   * @param dt sampling interval in seconds
    * @return predicted measurements for each step into the future
    */
   public double[] getPredictedTrajectory(int steps, double dt) {
