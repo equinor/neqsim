@@ -62,9 +62,9 @@ public class LinearProgrammingChemicalEquilibrium implements neqsim.thermo.Therm
    *
    * @param chemRefPot an array of type double
    * @param components an array of {@link neqsim.thermo.component.ComponentInterface} objects
-   * @param elements   an array of {@link java.lang.String} objects
+   * @param elements an array of {@link java.lang.String} objects
    * @param operations a {@link neqsim.chemicalreactions.ChemicalReactionOperations} object
-   * @param phaseNum   a int
+   * @param phaseNum a int
    */
   public LinearProgrammingChemicalEquilibrium(double[] chemRefPot, ComponentInterface[] components, String[] elements,
       ChemicalReactionOperations operations, int phaseNum) {
@@ -281,7 +281,7 @@ public class LinearProgrammingChemicalEquilibrium implements neqsim.thermo.Therm
    * calcx.
    * </p>
    *
-   * @param atemp        a {@link Jama.Matrix} object
+   * @param atemp a {@link Jama.Matrix} object
    * @param lagrangeTemp a {@link Jama.Matrix} object
    */
   public void calcx(Matrix atemp, Matrix lagrangeTemp) {
@@ -311,10 +311,10 @@ public class LinearProgrammingChemicalEquilibrium implements neqsim.thermo.Therm
    * generateInitialEstimates.
    * </p>
    *
-   * @param system     a {@link neqsim.thermo.system.SystemInterface} object
-   * @param bVector    an array of type double
+   * @param system a {@link neqsim.thermo.system.SystemInterface} object
+   * @param bVector an array of type double
    * @param inertMoles a double
-   * @param phaseNum   a int
+   * @param phaseNum a int
    * @return an array of type double
    */
   public double[] generateInitialEstimates(SystemInterface system, double[] bVector, double inertMoles, int phaseNum) {

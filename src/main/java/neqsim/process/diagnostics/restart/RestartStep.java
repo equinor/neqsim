@@ -42,13 +42,13 @@ public class RestartStep implements Serializable {
   /**
    * Creates a restart step.
    *
-   * @param sequenceNumber          order in the restart sequence (1-based)
-   * @param equipmentName           target equipment name
-   * @param action                  description of the action to take
-   * @param precondition            precondition that must be met before this step (may be null)
+   * @param sequenceNumber order in the restart sequence (1-based)
+   * @param equipmentName target equipment name
+   * @param action description of the action to take
+   * @param precondition precondition that must be met before this step (may be null)
    * @param recommendedDelaySeconds recommended delay after the previous step completes
-   * @param priority                priority level
-   * @param notes                   additional notes or warnings (may be null)
+   * @param priority priority level
+   * @param notes additional notes or warnings (may be null)
    */
   public RestartStep(int sequenceNumber, String equipmentName, String action, String precondition,
       double recommendedDelaySeconds, Priority priority, String notes) {

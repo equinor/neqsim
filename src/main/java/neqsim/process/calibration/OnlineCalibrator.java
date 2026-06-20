@@ -127,7 +127,7 @@ public class OnlineCalibrator implements Serializable {
    * Records a data point and checks if calibration is needed.
    *
    * @param measurements actual measured values
-   * @param predictions  model predicted values
+   * @param predictions model predicted values
    * @return true if deviation exceeds threshold
    */
   public boolean recordDataPoint(Map<String, Double> measurements, Map<String, Double> predictions) {
@@ -138,8 +138,8 @@ public class OnlineCalibrator implements Serializable {
    * Records a data point with operating conditions.
    *
    * @param measurements actual measured values
-   * @param predictions  model predicted values
-   * @param conditions   operating conditions (P, T, etc.)
+   * @param predictions model predicted values
+   * @param conditions operating conditions (P, T, etc.)
    * @return true if deviation exceeds threshold
    */
   public boolean recordDataPoint(Map<String, Double> measurements, Map<String, Double> predictions,
@@ -176,7 +176,7 @@ public class OnlineCalibrator implements Serializable {
    * Performs incremental calibration update (fast, for real-time).
    *
    * @param measurements current measured values
-   * @param predictions  current predicted values
+   * @param predictions current predicted values
    * @return calibration result
    */
   public CalibrationResult incrementalUpdate(Map<String, Double> measurements, Map<String, Double> predictions) {
@@ -277,7 +277,7 @@ public class OnlineCalibrator implements Serializable {
    * Calculates calibration quality metrics.
    *
    * @param samples the number of samples used
-   * @param rmse    the root mean square error
+   * @param rmse the root mean square error
    * @return the calibration quality assessment
    */
   private CalibrationQuality calculateQuality(int samples, double rmse) {

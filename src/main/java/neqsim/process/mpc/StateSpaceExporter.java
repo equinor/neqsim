@@ -364,7 +364,7 @@ public class StateSpaceExporter implements Serializable {
   /**
    * Export step response coefficients for DMC-style controllers.
    *
-   * @param filename        the output filename
+   * @param filename the output filename
    * @param numCoefficients number of step coefficients per MV-CV pair
    * @throws IOException if writing fails
    */
@@ -419,12 +419,12 @@ public class StateSpaceExporter implements Serializable {
     /**
      * Construct a state-space model.
      *
-     * @param A           state transition matrix
-     * @param B           input matrix
-     * @param C           output matrix
-     * @param D           feedthrough matrix
-     * @param sampleTime  sample time in seconds
-     * @param inputNames  names of inputs (MVs)
+     * @param A state transition matrix
+     * @param B input matrix
+     * @param C output matrix
+     * @param D feedthrough matrix
+     * @param sampleTime sample time in seconds
+     * @param inputNames names of inputs (MVs)
      * @param outputNames names of outputs (CVs)
      */
     public StateSpaceModel(double[][] A, double[][] B, double[][] C, double[][] D, double sampleTime,
@@ -547,7 +547,7 @@ public class StateSpaceExporter implements Serializable {
      * </p>
      *
      * @param outputIndex the output index
-     * @param inputIndex  the input index
+     * @param inputIndex the input index
      * @return the steady-state gain
      */
     public double getSteadyStateGain(int outputIndex, int inputIndex) {

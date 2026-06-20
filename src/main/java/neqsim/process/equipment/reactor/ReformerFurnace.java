@@ -106,7 +106,7 @@ public class ReformerFurnace extends ProcessEquipmentBaseClass {
   /**
    * Creates a reformer furnace with a process inlet stream.
    *
-   * @param name               equipment name
+   * @param name equipment name
    * @param processInletStream tube-side feed stream
    */
   public ReformerFurnace(String name, StreamInterface processInletStream) {
@@ -160,9 +160,9 @@ public class ReformerFurnace extends ProcessEquipmentBaseClass {
   /**
    * Sets tube geometry.
    *
-   * @param lengthM        heated tube length in metres
+   * @param lengthM heated tube length in metres
    * @param innerDiameterM tube inside diameter in metres
-   * @param tubes          number of tubes
+   * @param tubes number of tubes
    */
   public void setTubeGeometry(double lengthM, double innerDiameterM, int tubes) {
     validatePositive(lengthM, "lengthM");
@@ -439,7 +439,7 @@ public class ReformerFurnace extends ProcessEquipmentBaseClass {
    * Validates positive finite inputs.
    *
    * @param value value to validate
-   * @param name  parameter name used in exception text
+   * @param name parameter name used in exception text
    */
   private void validatePositive(double value, String name) {
     if (!Double.isFinite(value) || value <= 0.0) {

@@ -21,7 +21,7 @@ public class FeedForwardControllerStructure implements ControlStructureInterface
   /**
    * Create a feed-forward control structure.
    *
-   * @param feedbackController     feedback controller
+   * @param feedbackController feedback controller
    * @param disturbanceMeasurement measurement providing disturbance signal
    */
   public FeedForwardControllerStructure(ControllerDeviceInterface feedbackController,

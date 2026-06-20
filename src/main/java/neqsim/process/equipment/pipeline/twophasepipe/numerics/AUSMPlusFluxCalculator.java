@@ -75,12 +75,12 @@ public class AUSMPlusFluxCalculator implements Serializable {
     /**
      * Constructor with all fields.
      *
-     * @param density    phase density (kg/m3)
-     * @param velocity   phase velocity (m/s)
-     * @param pressure   phase pressure (Pa)
+     * @param density phase density (kg/m3)
+     * @param velocity phase velocity (m/s)
+     * @param pressure phase pressure (Pa)
      * @param soundSpeed speed of sound (m/s)
-     * @param enthalpy   specific enthalpy (J/kg)
-     * @param holdup     volume fraction (0-1)
+     * @param enthalpy specific enthalpy (J/kg)
+     * @param holdup volume fraction (0-1)
      */
     public PhaseState(double density, double velocity, double pressure, double soundSpeed, double enthalpy,
 	double holdup) {
@@ -151,9 +151,9 @@ public class AUSMPlusFluxCalculator implements Serializable {
   /**
    * Calculate AUSM+ flux for a single phase.
    *
-   * @param left  Left state
+   * @param left Left state
    * @param right Right state
-   * @param area  Cross-sectional area (m²)
+   * @param area Cross-sectional area (m²)
    * @return Phase flux at interface
    */
   public PhaseFlux calcPhaseFlux(PhaseState left, PhaseState right, double area) {
@@ -212,11 +212,11 @@ public class AUSMPlusFluxCalculator implements Serializable {
   /**
    * Calculate AUSM+ fluxes for both phases in two-fluid model.
    *
-   * @param gasLeft     Gas state on left of interface
-   * @param gasRight    Gas state on right of interface
-   * @param liquidLeft  Liquid state on left of interface
+   * @param gasLeft Gas state on left of interface
+   * @param gasRight Gas state on right of interface
+   * @param liquidLeft Liquid state on left of interface
    * @param liquidRight Liquid state on right of interface
-   * @param area        Cross-sectional area (m²)
+   * @param area Cross-sectional area (m²)
    * @return Combined flux for both phases
    */
   public TwoFluidFlux calcTwoFluidFlux(PhaseState gasLeft, PhaseState gasRight, PhaseState liquidLeft,
@@ -323,9 +323,9 @@ public class AUSMPlusFluxCalculator implements Serializable {
   /**
    * Calculate simple first-order upwind flux (for comparison/fallback).
    *
-   * @param left  Left state
+   * @param left Left state
    * @param right Right state
-   * @param area  Cross-sectional area (m²)
+   * @param area Cross-sectional area (m²)
    * @return Phase flux at interface
    */
   public PhaseFlux calcUpwindFlux(PhaseState left, PhaseState right, double area) {
@@ -352,9 +352,9 @@ public class AUSMPlusFluxCalculator implements Serializable {
    * More dissipative but unconditionally stable. Useful for startup.
    * </p>
    *
-   * @param left  Left state
+   * @param left Left state
    * @param right Right state
-   * @param area  Cross-sectional area (m²)
+   * @param area Cross-sectional area (m²)
    * @return Phase flux at interface
    */
   public PhaseFlux calcRusanovFlux(PhaseState left, PhaseState right, double area) {

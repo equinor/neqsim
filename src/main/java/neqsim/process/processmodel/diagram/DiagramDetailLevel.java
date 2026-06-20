@@ -115,11 +115,11 @@ public enum DiagramDetailLevel {
   /**
    * Constructor for DiagramDetailLevel.
    *
-   * @param showConditions     whether to show T, P conditions
-   * @param showFlowRates      whether to show flow rates
-   * @param showCompositions   whether to show compositions
+   * @param showConditions whether to show T, P conditions
+   * @param showFlowRates whether to show flow rates
+   * @param showCompositions whether to show compositions
    * @param showSpecifications whether to show equipment specs
-   * @param compactLabels      whether to use compact labels
+   * @param compactLabels whether to use compact labels
    */
   DiagramDetailLevel(boolean showConditions, boolean showFlowRates, boolean showCompositions,
       boolean showSpecifications, boolean compactLabels) {

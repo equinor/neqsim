@@ -36,14 +36,14 @@ public class InterfacialAreaCalculator {
   /**
    * Calculates the interfacial area per unit volume for the given flow pattern.
    *
-   * @param flowPattern  the flow pattern
-   * @param diameter     pipe diameter (m)
+   * @param flowPattern the flow pattern
+   * @param diameter pipe diameter (m)
    * @param liquidHoldup liquid holdup (volume fraction, 0-1)
-   * @param rhoG         gas density (kg/m³)
-   * @param rhoL         liquid density (kg/m³)
-   * @param usg          superficial gas velocity (m/s)
-   * @param usl          superficial liquid velocity (m/s)
-   * @param sigma        surface tension (N/m)
+   * @param rhoG gas density (kg/m³)
+   * @param rhoL liquid density (kg/m³)
+   * @param usg superficial gas velocity (m/s)
+   * @param usl superficial liquid velocity (m/s)
+   * @param sigma surface tension (N/m)
    * @return interfacial area per unit volume (1/m)
    */
   public static double calculateInterfacialArea(FlowPattern flowPattern, double diameter, double liquidHoldup,
@@ -84,7 +84,7 @@ public class InterfacialAreaCalculator {
    * a = S_i / A = 4·sin(θ/2) / (π·D)
    * </pre>
    *
-   * @param diameter     pipe diameter (m)
+   * @param diameter pipe diameter (m)
    * @param liquidHoldup liquid holdup
    * @return interfacial area per unit volume (1/m)
    */
@@ -123,7 +123,7 @@ public class InterfacialAreaCalculator {
    * Interfacial area: a = 4/(D·sqrt(1 - α_L))
    * </pre>
    *
-   * @param diameter     pipe diameter (m)
+   * @param diameter pipe diameter (m)
    * @param liquidHoldup liquid holdup
    * @return interfacial area per unit volume (1/m)
    */
@@ -151,13 +151,13 @@ public class InterfacialAreaCalculator {
    * of the two regions.
    * </p>
    *
-   * @param diameter     pipe diameter (m)
+   * @param diameter pipe diameter (m)
    * @param liquidHoldup liquid holdup
-   * @param rhoG         gas density (kg/m³)
-   * @param rhoL         liquid density (kg/m³)
-   * @param usg          superficial gas velocity (m/s)
-   * @param usl          superficial liquid velocity (m/s)
-   * @param sigma        surface tension (N/m)
+   * @param rhoG gas density (kg/m³)
+   * @param rhoL liquid density (kg/m³)
+   * @param usg superficial gas velocity (m/s)
+   * @param usl superficial liquid velocity (m/s)
+   * @param sigma surface tension (N/m)
    * @return interfacial area per unit volume (1/m)
    */
   public static double calculateSlugArea(double diameter, double liquidHoldup, double rhoG, double rhoL, double usg,
@@ -201,11 +201,11 @@ public class InterfacialAreaCalculator {
    * d_max = 0.725·(σ/ρ_L)^0.6 · ε^(-0.4)
    * </pre>
    *
-   * @param diameter     pipe diameter (m)
+   * @param diameter pipe diameter (m)
    * @param liquidHoldup liquid holdup
-   * @param rhoG         gas density (kg/m³)
-   * @param rhoL         liquid density (kg/m³)
-   * @param sigma        surface tension (N/m)
+   * @param rhoG gas density (kg/m³)
+   * @param rhoL liquid density (kg/m³)
+   * @param sigma surface tension (N/m)
    * @return interfacial area per unit volume (1/m)
    */
   public static double calculateBubbleArea(double diameter, double liquidHoldup, double rhoG, double rhoL,
@@ -249,11 +249,11 @@ public class InterfacialAreaCalculator {
    * a = 6·α_L / d_32
    * </pre>
    *
-   * @param diameter     pipe diameter (m)
+   * @param diameter pipe diameter (m)
    * @param liquidHoldup liquid holdup
-   * @param rhoG         gas density (kg/m³)
-   * @param usg          superficial gas velocity (m/s)
-   * @param sigma        surface tension (N/m)
+   * @param rhoG gas density (kg/m³)
+   * @param usg superficial gas velocity (m/s)
+   * @param sigma surface tension (N/m)
    * @return interfacial area per unit volume (1/m)
    */
   public static double calculateDropletArea(double diameter, double liquidHoldup, double rhoG, double usg,
@@ -287,7 +287,7 @@ public class InterfacialAreaCalculator {
    * bubble.
    * </p>
    *
-   * @param diameter     pipe diameter (m)
+   * @param diameter pipe diameter (m)
    * @param liquidHoldup liquid holdup
    * @return interfacial area per unit volume (1/m)
    */
@@ -348,10 +348,10 @@ public class InterfacialAreaCalculator {
   /**
    * Calculates the Sauter mean diameter for dispersed bubbles or droplets.
    *
-   * @param rhoDispersed  density of dispersed phase (kg/m³)
+   * @param rhoDispersed density of dispersed phase (kg/m³)
    * @param rhoContinuous density of continuous phase (kg/m³)
-   * @param sigma         surface tension (N/m)
-   * @param epsilon       turbulent energy dissipation rate (m²/s³)
+   * @param sigma surface tension (N/m)
+   * @param epsilon turbulent energy dissipation rate (m²/s³)
    * @return Sauter mean diameter d_32 (m)
    */
   public static double calculateSauterDiameter(double rhoDispersed, double rhoContinuous, double sigma,
@@ -378,13 +378,13 @@ public class InterfacialAreaCalculator {
    * Engineering Science, 86, 49-57.
    * </p>
    *
-   * @param diameter     pipe diameter (m)
+   * @param diameter pipe diameter (m)
    * @param liquidHoldup liquid holdup (0-1)
-   * @param usg          superficial gas velocity (m/s)
-   * @param usl          superficial liquid velocity (m/s)
-   * @param rhoG         gas density (kg/m³)
-   * @param rhoL         liquid density (kg/m³)
-   * @param sigma        surface tension (N/m)
+   * @param usg superficial gas velocity (m/s)
+   * @param usl superficial liquid velocity (m/s)
+   * @param rhoG gas density (kg/m³)
+   * @param rhoL liquid density (kg/m³)
+   * @param sigma surface tension (N/m)
    * @return interfacial area per unit volume with wave enhancement (1/m)
    */
   public static double calculateStratifiedWavyArea(double diameter, double liquidHoldup, double usg, double usl,
@@ -448,13 +448,13 @@ public class InterfacialAreaCalculator {
    * Journal of Heat and Mass Transfer, 32(10), 1835-1846.
    * </p>
    *
-   * @param diameter     pipe diameter (m)
+   * @param diameter pipe diameter (m)
    * @param liquidHoldup liquid holdup (0-1)
-   * @param rhoG         gas density (kg/m³)
-   * @param rhoL         liquid density (kg/m³)
-   * @param usg          superficial gas velocity (m/s)
-   * @param muL          liquid viscosity (Pa·s)
-   * @param sigma        surface tension (N/m)
+   * @param rhoG gas density (kg/m³)
+   * @param rhoL liquid density (kg/m³)
+   * @param usg superficial gas velocity (m/s)
+   * @param muL liquid viscosity (Pa·s)
+   * @param sigma surface tension (N/m)
    * @return interfacial area per unit volume including entrainment (1/m)
    */
   public static double calculateAnnularAreaWithEntrainment(double diameter, double liquidHoldup, double rhoG,
@@ -518,17 +518,17 @@ public class InterfacialAreaCalculator {
    * should be used when accurate mass transfer calculations are needed.
    * </p>
    *
-   * @param flowPattern            the flow pattern
-   * @param diameter               pipe diameter (m)
-   * @param liquidHoldup           liquid holdup (0-1)
-   * @param rhoG                   gas density (kg/m³)
-   * @param rhoL                   liquid density (kg/m³)
-   * @param usg                    superficial gas velocity (m/s)
-   * @param usl                    superficial liquid velocity (m/s)
-   * @param muL                    liquid viscosity (Pa·s)
-   * @param sigma                  surface tension (N/m)
+   * @param flowPattern the flow pattern
+   * @param diameter pipe diameter (m)
+   * @param liquidHoldup liquid holdup (0-1)
+   * @param rhoG gas density (kg/m³)
+   * @param rhoL liquid density (kg/m³)
+   * @param usg superficial gas velocity (m/s)
+   * @param usl superficial liquid velocity (m/s)
+   * @param muL liquid viscosity (Pa·s)
+   * @param sigma surface tension (N/m)
    * @param includeWaveEnhancement whether to include wave effects for stratified flow
-   * @param includeEntrainment     whether to include droplet entrainment for annular flow
+   * @param includeEntrainment whether to include droplet entrainment for annular flow
    * @return interfacial area per unit volume (1/m)
    */
   public static double calculateEnhancedInterfacialArea(FlowPattern flowPattern, double diameter, double liquidHoldup,
@@ -597,7 +597,7 @@ public class InterfacialAreaCalculator {
    * </ul>
    *
    * @param flowPattern the flow pattern
-   * @param diameter    pipe diameter (m)
+   * @param diameter pipe diameter (m)
    * @return array containing [min, typical, max] interfacial area (1/m)
    */
   public static double[] getExpectedInterfacialAreaRange(FlowPattern flowPattern, double diameter) {

@@ -125,7 +125,7 @@ public class ReactiveMultiphaseTPflash extends BaseOperation {
   /**
    * Constructor with solid phase check option.
    *
-   * @param system             the thermodynamic system
+   * @param system the thermodynamic system
    * @param checkForSolidPhase whether to check for solid phase formation
    */
   public ReactiveMultiphaseTPflash(SystemInterface system, boolean checkForSolidPhase) {
@@ -465,7 +465,7 @@ public class ReactiveMultiphaseTPflash extends BaseOperation {
   /**
    * Solve the Rachford-Rice equation using Newton-Raphson.
    *
-   * @param lnK      log K-values
+   * @param lnK log K-values
    * @param betaInit initial guess for vapor fraction
    * @return converged vapor fraction
    */

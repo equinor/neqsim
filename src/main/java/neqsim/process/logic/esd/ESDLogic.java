@@ -56,7 +56,7 @@ public class ESDLogic implements ProcessLogic {
    * Adds an action to the ESD sequence.
    *
    * @param action action to execute
-   * @param delay  delay in seconds before executing this action (relative to previous action)
+   * @param delay delay in seconds before executing this action (relative to previous action)
    */
   public void addAction(LogicAction action, double delay) {
     actions.add(new ActionWithDelay(action, delay));

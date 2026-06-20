@@ -225,7 +225,7 @@ public class DynamicRiskSimulator extends OperationalRiskSimulator implements Se
   /**
    * Runs Monte Carlo simulation with dynamic transient modeling.
    *
-   * @param iterations      number of Monte Carlo iterations
+   * @param iterations number of Monte Carlo iterations
    * @param timeHorizonDays simulation time horizon in days
    * @return dynamic risk result with transient details
    */
@@ -296,7 +296,7 @@ public class DynamicRiskSimulator extends OperationalRiskSimulator implements Se
   /**
    * Simulates a single failure event with dynamic transients.
    *
-   * @param failure             the equipment failure mode
+   * @param failure the equipment failure mode
    * @param repairDurationHours repair time in hours
    * @return production profile for the event
    */
@@ -349,11 +349,11 @@ public class DynamicRiskSimulator extends OperationalRiskSimulator implements Se
   /**
    * Simulates dynamic iteration with transient tracking.
    *
-   * @param random             random number generator for Monte Carlo sampling
-   * @param timeHorizonHours   total simulation time in hours
+   * @param random random number generator for Monte Carlo sampling
+   * @param timeHorizonHours total simulation time in hours
    * @param baselineProduction baseline production rate
-   * @param degradedRates      map of equipment names to degraded production rates
-   * @param reliability        map of equipment names to reliability data
+   * @param degradedRates map of equipment names to degraded production rates
+   * @param reliability map of equipment names to reliability data
    * @return dynamic iteration state with simulation results
    */
   private DynamicIterationState simulateDynamicIteration(Random random, double timeHorizonHours,
@@ -514,9 +514,9 @@ public class DynamicRiskSimulator extends OperationalRiskSimulator implements Se
    * Calculates production loss during a transient period.
    *
    * @param fromRate the starting production rate
-   * @param toRate   the ending production rate
+   * @param toRate the ending production rate
    * @param duration the duration of the transition in hours
-   * @param profile  the ramp profile type
+   * @param profile the ramp profile type
    * @return the production loss during the transient period
    */
   private double calculateTransientLoss(double fromRate, double toRate, double duration, RampProfile profile) {
@@ -548,7 +548,7 @@ public class DynamicRiskSimulator extends OperationalRiskSimulator implements Se
    *
    * @param timeRemaining time remaining in the transition in hours
    * @param totalDuration total duration of the transition in hours
-   * @param profile       the ramp profile type
+   * @param profile the ramp profile type
    * @return the transient factor (0-1) indicating progress through transition
    */
   private double calculateTransientFactor(double timeRemaining, double totalDuration, RampProfile profile) {
@@ -581,7 +581,7 @@ public class DynamicRiskSimulator extends OperationalRiskSimulator implements Se
    * Samples repair time from exponential distribution.
    *
    * @param random the random number generator
-   * @param mttr   the mean time to repair in hours
+   * @param mttr the mean time to repair in hours
    * @return sampled repair time in hours
    */
   private double sampleRepairTime(Random random, double mttr) {

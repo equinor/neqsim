@@ -115,8 +115,8 @@ public class ThreeStageSeparationTemplate implements ProcessTemplate {
   /**
    * Gets stage pressure from basis or returns default.
    *
-   * @param basis           the process basis
-   * @param stageNumber     the stage number (1=HP, 2=MP, 3=LP)
+   * @param basis the process basis
+   * @param stageNumber the stage number (1=HP, 2=MP, 3=LP)
    * @param defaultPressure the default pressure if not specified
    * @return the stage pressure in bara
    */

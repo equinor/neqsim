@@ -189,11 +189,11 @@ public class PipeFlowNetwork extends ProcessEquipmentBaseClass {
   /**
    * Add an inlet pipeline from a feed stream to a manifold.
    *
-   * @param pipeName      pipeline name
-   * @param feedStream    feed stream (source)
-   * @param toManifold    target manifold name
-   * @param length        pipeline length in meters
-   * @param diameter      pipeline diameter in meters
+   * @param pipeName pipeline name
+   * @param feedStream feed stream (source)
+   * @param toManifold target manifold name
+   * @param length pipeline length in meters
+   * @param diameter pipeline diameter in meters
    * @param numberOfNodes number of computational nodes
    * @return the created pipeline segment
    */
@@ -221,11 +221,11 @@ public class PipeFlowNetwork extends ProcessEquipmentBaseClass {
   /**
    * Connect two manifolds with a pipeline.
    *
-   * @param fromManifold  source manifold name
-   * @param toManifold    target manifold name
-   * @param pipeName      pipeline name
-   * @param length        pipeline length in meters
-   * @param diameter      pipeline diameter in meters
+   * @param fromManifold source manifold name
+   * @param toManifold target manifold name
+   * @param pipeName pipeline name
+   * @param length pipeline length in meters
+   * @param diameter pipeline diameter in meters
    * @param numberOfNodes number of computational nodes
    * @return the created pipeline segment
    */
@@ -262,10 +262,10 @@ public class PipeFlowNetwork extends ProcessEquipmentBaseClass {
   /**
    * Create and configure a pipeline.
    *
-   * @param name          the pipeline name
-   * @param inletStream   the inlet stream
-   * @param length        the pipeline length in meters
-   * @param diameter      the pipeline diameter in meters
+   * @param name the pipeline name
+   * @param inletStream the inlet stream
+   * @param length the pipeline length in meters
+   * @param diameter the pipeline diameter in meters
    * @param numberOfNodes the number of computational nodes
    * @return the configured pipeline
    */
@@ -308,7 +308,7 @@ public class PipeFlowNetwork extends ProcessEquipmentBaseClass {
    * Set default heat transfer coefficients for new pipelines.
    *
    * @param outerCoeff outer heat transfer coefficient (W/m2K)
-   * @param wallCoeff  wall heat transfer coefficient (W/m2K)
+   * @param wallCoeff wall heat transfer coefficient (W/m2K)
    */
   public void setDefaultHeatTransferCoefficients(double outerCoeff, double wallCoeff) {
     this.defaultOuterHeatTransfer = new double[] { outerCoeff, outerCoeff };
@@ -527,7 +527,7 @@ public class PipeFlowNetwork extends ProcessEquipmentBaseClass {
    * Get the pressure profile along a specific pipeline.
    *
    * @param pipeName pipeline name
-   * @param unit     pressure unit ("bara" or "Pa")
+   * @param unit pressure unit ("bara" or "Pa")
    * @return array of pressures at each node
    */
   public double[] getPressureProfile(String pipeName, String unit) {
@@ -543,7 +543,7 @@ public class PipeFlowNetwork extends ProcessEquipmentBaseClass {
    * Get the temperature profile along a specific pipeline.
    *
    * @param pipeName pipeline name
-   * @param unit     temperature unit ("K" or "C")
+   * @param unit temperature unit ("K" or "C")
    * @return array of temperatures at each node
    */
   public double[] getTemperatureProfile(String pipeName, String unit) {
@@ -558,7 +558,7 @@ public class PipeFlowNetwork extends ProcessEquipmentBaseClass {
   /**
    * Get the composition profile along a specific pipeline.
    *
-   * @param pipeName      pipeline name
+   * @param pipeName pipeline name
    * @param componentName component name
    * @return array of mass fractions at each node
    */

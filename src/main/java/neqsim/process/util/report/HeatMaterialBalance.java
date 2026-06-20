@@ -371,7 +371,7 @@ public class HeatMaterialBalance implements Serializable {
   /**
    * Rounds a double to the specified number of decimal places.
    *
-   * @param value  the value to round
+   * @param value the value to round
    * @param places number of decimal places
    * @return rounded value
    */

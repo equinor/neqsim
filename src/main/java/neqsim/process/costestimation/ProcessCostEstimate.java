@@ -303,7 +303,7 @@ public class ProcessCostEstimate implements java.io.Serializable {
   /**
    * Constructor with process system and mechanical design.
    *
-   * @param processSystem          the process system
+   * @param processSystem the process system
    * @param systemMechanicalDesign the system mechanical design
    */
   public ProcessCostEstimate(ProcessSystem processSystem, SystemMechanicalDesign systemMechanicalDesign) {
@@ -721,7 +721,7 @@ public class ProcessCostEstimate implements java.io.Serializable {
   /**
    * Truncate string to max length.
    *
-   * @param str    the string to truncate
+   * @param str the string to truncate
    * @param maxLen maximum length
    * @return truncated string
    */
@@ -828,9 +828,9 @@ public class ProcessCostEstimate implements java.io.Serializable {
    *
    * @param operatingHoursPerYear annual operating hours (typically 8000-8760)
    * @param electricityCostPerKWh electricity cost in $/kWh
-   * @param steamCostPerTonne     steam cost in $/tonne
+   * @param steamCostPerTonne steam cost in $/tonne
    * @param coolingWaterCostPerM3 cooling water cost in $/m3
-   * @param laborCostPerHour      labor cost in $/hr
+   * @param laborCostPerHour labor cost in $/hr
    * @return total annual operating cost in USD
    */
   public double calculateOperatingCost(int operatingHoursPerYear, double electricityCostPerKWh,
@@ -1010,8 +1010,8 @@ public class ProcessCostEstimate implements java.io.Serializable {
   /**
    * Calculate net present value (NPV).
    *
-   * @param annualRevenue    annual revenue in USD
-   * @param discountRate     annual discount rate (e.g., 0.10 for 10%)
+   * @param annualRevenue annual revenue in USD
+   * @param discountRate annual discount rate (e.g., 0.10 for 10%)
    * @param projectLifeYears project life in years
    * @return NPV in USD
    */

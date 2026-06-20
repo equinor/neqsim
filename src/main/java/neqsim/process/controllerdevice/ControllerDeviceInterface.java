@@ -51,7 +51,7 @@ public interface ControllerDeviceInterface extends ProcessElementInterface {
    * </p>
    *
    * @param signal a double
-   * @param unit   a {@link java.lang.String} object
+   * @param unit a {@link java.lang.String} object
    */
   public default void setControllerSetPoint(double signal, String unit) {
     setUnit(unit);
@@ -101,7 +101,7 @@ public interface ControllerDeviceInterface extends ProcessElementInterface {
    * Calculates controller output. Sets calc identifier UUID.
    *
    * @param initResponse Init value for response calculation
-   * @param dt           Delta time [s]
+   * @param dt Delta time [s]
    */
   public default void runTransient(double initResponse, double dt) {
     runTransient(initResponse, dt, UUID.randomUUID());
@@ -114,8 +114,8 @@ public interface ControllerDeviceInterface extends ProcessElementInterface {
    * Calculates controller output. Sets calc identifier UUID.
    *
    * @param initResponse Init value for response calculation
-   * @param dt           Delta time [s]
-   * @param id           Calculation identifier
+   * @param dt Delta time [s]
+   * @param id Calculation identifier
    */
   public void runTransient(double initResponse, double dt, UUID id);
 
@@ -183,7 +183,7 @@ public interface ControllerDeviceInterface extends ProcessElementInterface {
    * Auto tune controller using ultimate gain and period from a closed-loop test.
    * </p>
    *
-   * @param ultimateGain   Ultimate gain where oscillations start
+   * @param ultimateGain Ultimate gain where oscillations start
    * @param ultimatePeriod Ultimate period of sustained oscillations [s]
    */
   public default void autoTune(double ultimateGain, double ultimatePeriod) {
@@ -194,7 +194,7 @@ public interface ControllerDeviceInterface extends ProcessElementInterface {
    * Auto tune controller using ultimate gain and period from a closed-loop test with optional derivative tuning.
    * </p>
    *
-   * @param ultimateGain   Ultimate gain where oscillations start
+   * @param ultimateGain Ultimate gain where oscillations start
    * @param ultimatePeriod Ultimate period of sustained oscillations [s]
    * @param tuneDerivative true to tune derivative action, false to tune PI only
    */
@@ -305,9 +305,9 @@ public interface ControllerDeviceInterface extends ProcessElementInterface {
    * Auto tune controller from an open-loop step response using process gain, time constant and dead time.
    * </p>
    *
-   * @param processGain  Process gain from step response
+   * @param processGain Process gain from step response
    * @param timeConstant Process time constant [s]
-   * @param deadTime     Process dead time [s]
+   * @param deadTime Process dead time [s]
    */
   public default void autoTuneStepResponse(double processGain, double timeConstant, double deadTime) {
   }
@@ -318,9 +318,9 @@ public interface ControllerDeviceInterface extends ProcessElementInterface {
    * derivative tuning.
    * </p>
    *
-   * @param processGain    Process gain from step response
-   * @param timeConstant   Process time constant [s]
-   * @param deadTime       Process dead time [s]
+   * @param processGain Process gain from step response
+   * @param timeConstant Process time constant [s]
+   * @param deadTime Process dead time [s]
    * @param tuneDerivative true to tune derivative action, false to tune PI only
    */
   public default void autoTuneStepResponse(double processGain, double timeConstant, double deadTime,
@@ -360,9 +360,9 @@ public interface ControllerDeviceInterface extends ProcessElementInterface {
    * </p>
    *
    * @param processValue Measurement threshold for parameter set
-   * @param Kp           Proportional gain at this operating point
-   * @param Ti           Integral time [s] at this operating point
-   * @param Td           Derivative time [s] at this operating point
+   * @param Kp Proportional gain at this operating point
+   * @param Ti Integral time [s] at this operating point
+   * @param Td Derivative time [s] at this operating point
    */
   public default void addGainSchedulePoint(double processValue, double Kp, double Ti, double Td) {
   }

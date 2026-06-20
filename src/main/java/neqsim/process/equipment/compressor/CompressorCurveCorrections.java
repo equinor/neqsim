@@ -66,7 +66,7 @@ public class CompressorCurveCorrections implements Serializable {
    * more accuracy).
    * </p>
    *
-   * @param actualReynolds    Actual Reynolds number at operating conditions
+   * @param actualReynolds Actual Reynolds number at operating conditions
    * @param referenceReynolds Reference Reynolds number for the performance map (default 1e7)
    * @return Efficiency correction factor (multiply by reference efficiency)
    */
@@ -105,8 +105,8 @@ public class CompressorCurveCorrections implements Serializable {
    * Where u is tip speed, D is impeller diameter, and ν is kinematic viscosity.
    * </p>
    *
-   * @param tipSpeed           Impeller tip speed in m/s
-   * @param impellerDiameter   Impeller diameter in m
+   * @param tipSpeed Impeller tip speed in m/s
+   * @param impellerDiameter Impeller diameter in m
    * @param kinematicViscosity Kinematic viscosity in m²/s
    * @return Reynolds number (dimensionless)
    */
@@ -120,7 +120,7 @@ public class CompressorCurveCorrections implements Serializable {
   /**
    * Calculate impeller tip speed from rotational speed and diameter.
    *
-   * @param rpm      Rotational speed in revolutions per minute
+   * @param rpm Rotational speed in revolutions per minute
    * @param diameter Impeller diameter in m
    * @return Tip speed in m/s
    */
@@ -139,7 +139,7 @@ public class CompressorCurveCorrections implements Serializable {
    * Ma = V / c
    * </pre>
    *
-   * @param gasVelocity   Gas velocity in m/s
+   * @param gasVelocity Gas velocity in m/s
    * @param sonicVelocity Speed of sound in the gas in m/s
    * @return Mach number (dimensionless)
    */
@@ -165,9 +165,9 @@ public class CompressorCurveCorrections implements Serializable {
    * Where k is the heat capacity ratio, R is the gas constant, T is temperature, and M is molar mass.
    * </p>
    *
-   * @param kappa                 Heat capacity ratio (Cp/Cv)
-   * @param temperature           Temperature in K
-   * @param molarMass             Molar mass in kg/kmol
+   * @param kappa Heat capacity ratio (Cp/Cv)
+   * @param temperature Temperature in K
+   * @param molarMass Molar mass in kg/kmol
    * @param compressibilityFactor Z-factor (use 1.0 for ideal gas)
    * @return Speed of sound in m/s
    */
@@ -199,8 +199,8 @@ public class CompressorCurveCorrections implements Serializable {
    * Where A is the flow area, c is sonic velocity, and Ma_critical ≈ 0.9-1.0.
    * </p>
    *
-   * @param designFlow       Design flow rate in m³/hr
-   * @param sonicVelocity    Speed of sound at inlet conditions in m/s
+   * @param designFlow Design flow rate in m³/hr
+   * @param sonicVelocity Speed of sound at inlet conditions in m/s
    * @param designMachNumber Mach number at design flow (typically 0.6-0.8)
    * @return Maximum (stonewall) flow in m³/hr
    */
@@ -221,10 +221,10 @@ public class CompressorCurveCorrections implements Serializable {
    * </p>
    *
    * @param referenceStonewallFlow Stonewall flow at reference conditions in m³/hr
-   * @param referenceMolarMass     Reference gas molar mass in kg/kmol
-   * @param actualMolarMass        Actual gas molar mass in kg/kmol
-   * @param referenceKappa         Reference heat capacity ratio
-   * @param actualKappa            Actual heat capacity ratio
+   * @param referenceMolarMass Reference gas molar mass in kg/kmol
+   * @param actualMolarMass Actual gas molar mass in kg/kmol
+   * @param referenceKappa Reference heat capacity ratio
+   * @param actualKappa Actual heat capacity ratio
    * @return Corrected stonewall flow in m³/hr
    */
   public static double correctStonewallFlowForGas(double referenceStonewallFlow, double referenceMolarMass,
@@ -253,8 +253,8 @@ public class CompressorCurveCorrections implements Serializable {
    * </p>
    *
    * @param surgeFanLawFlow Surge flow predicted by simple fan law in m³/hr
-   * @param speedRatio      Actual speed / Design speed (0 to 1)
-   * @param numberOfStages  Number of compression stages
+   * @param speedRatio Actual speed / Design speed (0 to 1)
+   * @param numberOfStages Number of compression stages
    * @return Corrected surge flow in m³/hr
    */
   public static double calculateMultistageSurgeCorrection(double surgeFanLawFlow, double speedRatio,
@@ -284,8 +284,8 @@ public class CompressorCurveCorrections implements Serializable {
    * </p>
    *
    * @param surgeFanLawHead Surge head predicted by simple fan law in kJ/kg
-   * @param speedRatio      Actual speed / Design speed
-   * @param numberOfStages  Number of compression stages
+   * @param speedRatio Actual speed / Design speed
+   * @param numberOfStages Number of compression stages
    * @return Corrected surge head in kJ/kg
    */
   public static double calculateMultistageSurgeHeadCorrection(double surgeFanLawHead, double speedRatio,
@@ -316,8 +316,8 @@ public class CompressorCurveCorrections implements Serializable {
    * </pre>
    *
    * @param maxEfficiency Maximum (BEP) efficiency as fraction (0-1)
-   * @param flowRatio     Actual flow / Design flow
-   * @param curveFactor   Shape factor k (typically 0.3-0.5 for centrifugal compressors)
+   * @param flowRatio Actual flow / Design flow
+   * @param curveFactor Shape factor k (typically 0.3-0.5 for centrifugal compressors)
    * @return Efficiency at the specified flow ratio
    */
   public static double calculateEfficiencyAtFlow(double maxEfficiency, double flowRatio, double curveFactor) {
@@ -335,7 +335,7 @@ public class CompressorCurveCorrections implements Serializable {
    *
    * @param baseEfficiency Base polytropic efficiency at design point (fraction 0-1)
    * @param actualReynolds Actual Reynolds number
-   * @param flowRatio      Actual flow / Design flow
+   * @param flowRatio Actual flow / Design flow
    * @return Corrected efficiency (fraction 0-1)
    */
   public static double calculateCorrectedEfficiency(double baseEfficiency, double actualReynolds, double flowRatio) {

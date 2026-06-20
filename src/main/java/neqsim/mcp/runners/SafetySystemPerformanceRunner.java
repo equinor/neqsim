@@ -104,7 +104,7 @@ public final class SafetySystemPerformanceRunner {
   /**
    * Parses demand cases from JSON.
    *
-   * @param input  top-level input
+   * @param input top-level input
    * @param parsed parsed register context for evidence references
    * @return demand-case list
    */
@@ -123,7 +123,7 @@ public final class SafetySystemPerformanceRunner {
   /**
    * Parses one demand case.
    *
-   * @param input  demand-case JSON
+   * @param input demand-case JSON
    * @param parsed parsed register context for evidence references
    * @return demand case
    */
@@ -150,8 +150,8 @@ public final class SafetySystemPerformanceRunner {
   /**
    * Applies one optional numeric demand field.
    *
-   * @param input  demand JSON
-   * @param field  JSON field name
+   * @param input demand JSON
+   * @param field JSON field name
    * @param demand demand case to update
    * @param number target number selector
    */
@@ -199,7 +199,7 @@ public final class SafetySystemPerformanceRunner {
   /**
    * Adds referenced or embedded evidence to a demand case.
    *
-   * @param input  demand JSON
+   * @param input demand JSON
    * @param parsed parsed register context
    * @param demand demand case to update
    */
@@ -283,7 +283,7 @@ public final class SafetySystemPerformanceRunner {
   /**
    * Adds event/voting and quantitative SIFs from JSON to the analyzer.
    *
-   * @param input    top-level input
+   * @param input top-level input
    * @param analyzer analyzer to update
    */
   private static void addSafetyInstrumentedFunctions(JsonObject input, SafetySystemPerformanceAnalyzer analyzer) {
@@ -386,8 +386,8 @@ public final class SafetySystemPerformanceRunner {
   /**
    * Parses or calculates PFDavg for a quantitative SIF.
    *
-   * @param input             SIF JSON
-   * @param architecture      default architecture
+   * @param input SIF JSON
+   * @param architecture default architecture
    * @param testIntervalHours proof-test interval in hours
    * @return PFDavg
    */
@@ -421,7 +421,7 @@ public final class SafetySystemPerformanceRunner {
   /**
    * Builds a compact summary for the runner output.
    *
-   * @param report      safety-system performance report
+   * @param report safety-system performance report
    * @param demandCount number of demand cases parsed
    * @param deviceCount number of measurement devices parsed
    * @return summary JSON
@@ -466,9 +466,9 @@ public final class SafetySystemPerformanceRunner {
   /**
    * Builds one standards template record.
    *
-   * @param code        standard or template code
+   * @param code standard or template code
    * @param description template description
-   * @param fields      expected fields
+   * @param fields expected fields
    * @return standard template JSON
    */
   private static JsonObject buildStandardTemplate(String code, String description, String[] fields) {
@@ -507,7 +507,7 @@ public final class SafetySystemPerformanceRunner {
    * Computes PFD for a detector/component architecture.
    *
    * @param architecture architecture string
-   * @param lambdaDU     dangerous undetected failure rate per hour
+   * @param lambdaDU dangerous undetected failure rate per hour
    * @param testInterval proof-test interval in hours
    * @return PFDavg
    */
@@ -642,8 +642,8 @@ public final class SafetySystemPerformanceRunner {
   /**
    * Merges two optional top-level arrays.
    *
-   * @param input  JSON object
-   * @param first  first field name
+   * @param input JSON object
+   * @param first first field name
    * @param second second field name
    * @return merged array
    */
@@ -661,8 +661,8 @@ public final class SafetySystemPerformanceRunner {
   /**
    * Gets optional string value.
    *
-   * @param input        JSON object
-   * @param field        field name
+   * @param input JSON object
+   * @param field field name
    * @param defaultValue default value
    * @return field value or default
    */
@@ -676,8 +676,8 @@ public final class SafetySystemPerformanceRunner {
   /**
    * Gets optional integer value.
    *
-   * @param input        JSON object
-   * @param field        field name
+   * @param input JSON object
+   * @param field field name
    * @param defaultValue default value
    * @return field value or default
    */
@@ -691,8 +691,8 @@ public final class SafetySystemPerformanceRunner {
   /**
    * Gets optional double value.
    *
-   * @param input        JSON object
-   * @param field        field name
+   * @param input JSON object
+   * @param field field name
    * @param defaultValue default value
    * @return field value or default
    */
@@ -706,8 +706,8 @@ public final class SafetySystemPerformanceRunner {
   /**
    * Gets optional boolean value.
    *
-   * @param input        JSON object
-   * @param field        field name
+   * @param input JSON object
+   * @param field field name
    * @param defaultValue default value
    * @return field value or default
    */

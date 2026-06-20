@@ -77,8 +77,8 @@ public class BowTieSvgExporter implements Serializable {
   /**
    * Creates an SVG exporter with custom dimensions.
    *
-   * @param model  bow-tie model to export
-   * @param width  canvas width in pixels
+   * @param model bow-tie model to export
+   * @param width canvas width in pixels
    * @param height canvas height in pixels
    */
   public BowTieSvgExporter(BowTieModel model, int width, int height) {
@@ -413,7 +413,7 @@ public class BowTieSvgExporter implements Serializable {
   /**
    * Truncates text to specified length.
    *
-   * @param text   text to truncate
+   * @param text text to truncate
    * @param maxLen maximum length
    * @return truncated text
    */

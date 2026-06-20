@@ -41,7 +41,7 @@ public final class OpenDrainProcessEvidenceCalculator {
    * Creates a review input containing one item calculated from a NeqSim stream.
    *
    * @param projectName project, asset, or review name
-   * @param stream      stream providing fluid state and flow rate
+   * @param stream stream providing fluid state and flow rate
    * @param designBasis open-drain design and safeguard basis
    * @return review input populated with NeqSim-calculated evidence
    * @throws IllegalArgumentException if {@code stream} is null
@@ -56,7 +56,7 @@ public final class OpenDrainProcessEvidenceCalculator {
   /**
    * Creates one review item from a NeqSim stream.
    *
-   * @param stream      stream providing fluid state and flow rate
+   * @param stream stream providing fluid state and flow rate
    * @param designBasis open-drain design and safeguard basis
    * @return review item populated with calculated evidence
    * @throws IllegalArgumentException if {@code stream} is null
@@ -99,7 +99,7 @@ public final class OpenDrainProcessEvidenceCalculator {
   /**
    * Creates one review item from a NeqSim process equipment object.
    *
-   * @param equipment   process equipment providing inlet or outlet streams
+   * @param equipment process equipment providing inlet or outlet streams
    * @param designBasis open-drain design and safeguard basis
    * @return review item populated with calculated evidence
    * @throws IllegalArgumentException if {@code equipment} is null or has no streams
@@ -122,7 +122,7 @@ public final class OpenDrainProcessEvidenceCalculator {
   /**
    * Creates review input from every process-system unit that exposes an inlet or outlet stream.
    *
-   * @param process     process system to inspect
+   * @param process process system to inspect
    * @param designBasis default open-drain design and safeguard basis
    * @return review input populated with one item per stream-bearing unit
    * @throws IllegalArgumentException if {@code process} is null
@@ -146,8 +146,8 @@ public final class OpenDrainProcessEvidenceCalculator {
   /**
    * Calculates credible liquid leak rate from the NeqSim liquid mass flow.
    *
-   * @param liquidMassFlowKgPerS      liquid mass flow rate in kg/s
-   * @param leakFractionOfLiquidFlow  credible leak fraction of liquid flow
+   * @param liquidMassFlowKgPerS liquid mass flow rate in kg/s
+   * @param leakFractionOfLiquidFlow credible leak fraction of liquid flow
    * @param maximumCredibleLeakKgPerS maximum credible leak cap in kg/s, or NaN for no cap
    * @return credible liquid leak rate in kg/s
    */
@@ -167,9 +167,9 @@ public final class OpenDrainProcessEvidenceCalculator {
   /**
    * Calculates fire-water mass load from application rate and area.
    *
-   * @param fireWaterAreaM2          protected or deluged area in m2
+   * @param fireWaterAreaM2 protected or deluged area in m2
    * @param applicationRateLPerMinM2 fire-water application rate in L/min/m2
-   * @param fireWaterDensityKgPerM3  fire-water density in kg/m3
+   * @param fireWaterDensityKgPerM3 fire-water density in kg/m3
    * @return fire-water mass load in kg/s, or zero if area or rate is not configured
    */
   public static double calculateFireWaterLoadKgPerS(double fireWaterAreaM2, double applicationRateLPerMinM2,
@@ -186,10 +186,10 @@ public final class OpenDrainProcessEvidenceCalculator {
    * Calculates gravity drain hydraulic capacity for a liquid-filled open-drain pipe.
    *
    * @param liquidDensityKgPerM3 liquid density in kg/m3
-   * @param drainPipeDiameterM   drain internal diameter in m
-   * @param availableHeadM       available hydraulic head in m liquid
+   * @param drainPipeDiameterM drain internal diameter in m
+   * @param availableHeadM available hydraulic head in m liquid
    * @param dischargeCoefficient discharge coefficient for the drain inlet or pipe entrance
-   * @param backpressureBarg     downstream backpressure in barg opposing the available head
+   * @param backpressureBarg downstream backpressure in barg opposing the available head
    * @return drain mass-flow capacity in kg/s, or zero when effective head is not available
    */
   public static double calculateGravityDrainCapacityKgPerS(double liquidDensityKgPerM3, double drainPipeDiameterM,
@@ -215,7 +215,7 @@ public final class OpenDrainProcessEvidenceCalculator {
   /**
    * Creates a base review item from design-basis metadata.
    *
-   * @param areaId      calculated area identifier
+   * @param areaId calculated area identifier
    * @param designBasis design and safeguard basis
    * @return base review item
    */
@@ -231,7 +231,7 @@ public final class OpenDrainProcessEvidenceCalculator {
   /**
    * Applies document or design-basis safeguards that the numerical calculation cannot infer.
    *
-   * @param item        item receiving safeguard evidence
+   * @param item item receiving safeguard evidence
    * @param designBasis safeguard basis
    */
   private static void applySafeguardEvidence(OpenDrainReviewItem item, DesignBasis designBasis) {
@@ -348,7 +348,7 @@ public final class OpenDrainProcessEvidenceCalculator {
    * Gets stream pressure from the stream or cloned fluid.
    *
    * @param stream source stream
-   * @param fluid  prepared fluid fallback
+   * @param fluid prepared fluid fallback
    * @return pressure in bara
    */
   private static double getStreamPressureBara(StreamInterface stream, SystemInterface fluid) {
@@ -363,7 +363,7 @@ public final class OpenDrainProcessEvidenceCalculator {
    * Gets stream temperature from the stream or cloned fluid.
    *
    * @param stream source stream
-   * @param fluid  prepared fluid fallback
+   * @param fluid prepared fluid fallback
    * @return temperature in deg C
    */
   private static double getStreamTemperatureC(StreamInterface stream, SystemInterface fluid) {
@@ -377,8 +377,8 @@ public final class OpenDrainProcessEvidenceCalculator {
   /**
    * Adds a finite numeric value to a review item.
    *
-   * @param item  item receiving the value
-   * @param key   evidence key
+   * @param item item receiving the value
+   * @param key evidence key
    * @param value numeric value
    */
   private static void putIfFinite(OpenDrainReviewItem item, String key, double value) {

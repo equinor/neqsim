@@ -120,8 +120,8 @@ public class Ejector extends ProcessEquipmentBaseClass
   /**
    * Constructs an Ejector with the specified name, motive stream, and suction stream.
    *
-   * @param name          the name of the ejector
-   * @param motiveStream  the motive stream
+   * @param name the name of the ejector
+   * @param motiveStream the motive stream
    * @param suctionStream the suction stream
    */
   public Ejector(String name, StreamInterface motiveStream, StreamInterface suctionStream) {
@@ -590,7 +590,7 @@ public class Ejector extends ProcessEquipmentBaseClass
    *
    * @param minDischargePressure minimum discharge pressure in bara
    * @param maxDischargePressure maximum discharge pressure in bara
-   * @param numPoints            number of points in the curve
+   * @param numPoints number of points in the curve
    * @return list of double arrays [dischargePressure, entrainmentRatio, compressionRatio]
    */
   public List<double[]> generatePerformanceCurve(double minDischargePressure, double maxDischargePressure,
@@ -758,9 +758,9 @@ public class Ejector extends ProcessEquipmentBaseClass
    * than analytic formulas, especially for compressible gas ejectors where density varies significantly with pressure.
    * </p>
    *
-   * @param mixedFluidClone          a clone of the mixed fluid for trial flashes
-   * @param totalEnthalpy            total (stagnation) enthalpy of mixed stream in J/kg
-   * @param mixingPressureLocal      mixing pressure in bara
+   * @param mixedFluidClone a clone of the mixed fluid for trial flashes
+   * @param totalEnthalpy total (stagnation) enthalpy of mixed stream in J/kg
+   * @param mixingPressureLocal mixing pressure in bara
    * @param currentDischargePressure current discharge pressure in bara (starting point)
    * @return estimated critical back pressure in bara
    */

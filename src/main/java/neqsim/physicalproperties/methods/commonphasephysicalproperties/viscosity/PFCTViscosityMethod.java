@@ -130,15 +130,15 @@ public class PFCTViscosityMethod extends Viscosity {
   /**
    * Calculates the CSP viscosity from the reference component and four correction factors.
    *
-   * @param referenceViscosity           methane reference viscosity in Pa s
-   * @param mixtureCriticalTemperature   mixture critical temperature in K
+   * @param referenceViscosity methane reference viscosity in Pa s
+   * @param mixtureCriticalTemperature mixture critical temperature in K
    * @param referenceCriticalTemperature reference critical temperature in K
-   * @param mixtureCriticalPressure      mixture critical pressure in bara
-   * @param referenceCriticalPressure    reference critical pressure in bara
-   * @param mixtureMolarMass             mixture molar mass in g/mol
-   * @param referenceMolarMass           reference molar mass in g/mol
-   * @param mixtureAlpha                 mixture alpha correction
-   * @param referenceAlpha               reference alpha correction
+   * @param mixtureCriticalPressure mixture critical pressure in bara
+   * @param referenceCriticalPressure reference critical pressure in bara
+   * @param mixtureMolarMass mixture molar mass in g/mol
+   * @param referenceMolarMass reference molar mass in g/mol
+   * @param mixtureAlpha mixture alpha correction
+   * @param referenceAlpha reference alpha correction
    * @return calculated CSP viscosity in Pa s
    */
   private double calculateCorrespondingStatesViscosity(double referenceViscosity, double mixtureCriticalTemperature,

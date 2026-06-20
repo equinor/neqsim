@@ -100,7 +100,7 @@ public class Dryer extends ProcessEquipmentBaseClass {
   /**
    * Constructor for Dryer with inlet stream.
    *
-   * @param name        name of the dryer
+   * @param name name of the dryer
    * @param inletStream the wet feed stream
    */
   public Dryer(String name, StreamInterface inletStream) {
@@ -200,7 +200,7 @@ public class Dryer extends ProcessEquipmentBaseClass {
    * Set the outlet temperature with unit.
    *
    * @param temperature temperature value
-   * @param unit        temperature unit ("K", "C", "F")
+   * @param unit temperature unit ("K", "C", "F")
    */
   public void setOutletTemperature(double temperature, String unit) {
     if ("C".equalsIgnoreCase(unit)) {

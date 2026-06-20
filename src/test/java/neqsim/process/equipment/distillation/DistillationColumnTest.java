@@ -573,7 +573,7 @@ public class DistillationColumnTest {
   /**
    * Create a binary hydrocarbon stream for terminal tray regression tests.
    *
-   * @param name              stream name
+   * @param name stream name
    * @param flowRateKgPerHour stream mass flow rate in kg/hr
    * @return stream configured with SRK EOS and classic mixing rule
    */
@@ -651,8 +651,8 @@ public class DistillationColumnTest {
     /**
      * Create a diagnostic tray fixture.
      *
-     * @param name       tray name
-     * @param gasDraw    vapor terminal draw stream
+     * @param name tray name
+     * @param gasDraw vapor terminal draw stream
      * @param liquidDraw liquid terminal draw stream
      */
     DiagnosticTray(String name, StreamInterface gasDraw, StreamInterface liquidDraw) {
@@ -688,8 +688,8 @@ public class DistillationColumnTest {
     /**
      * Create a broken energy diagnostic tray fixture.
      *
-     * @param name       tray name
-     * @param gasDraw    vapor terminal draw stream
+     * @param name tray name
+     * @param gasDraw vapor terminal draw stream
      * @param liquidDraw liquid terminal draw stream
      */
     BrokenEnergyDiagnosticTray(String name, StreamInterface gasDraw, StreamInterface liquidDraw) {

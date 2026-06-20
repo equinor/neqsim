@@ -57,10 +57,10 @@ public class ScrubColumn extends DistillationColumn {
   /**
    * Constructor for ScrubColumn.
    *
-   * @param name          name of the scrub column
+   * @param name name of the scrub column
    * @param numberOfTrays number of theoretical trays (excluding condenser/reboiler)
-   * @param hasReboiler   set true to include a reboiler
-   * @param hasCondenser  set true to include a condenser
+   * @param hasReboiler set true to include a reboiler
+   * @param hasCondenser set true to include a condenser
    */
   public ScrubColumn(String name, int numberOfTrays, boolean hasReboiler, boolean hasCondenser) {
     super(name, numberOfTrays, hasReboiler, hasCondenser);
@@ -106,7 +106,7 @@ public class ScrubColumn extends DistillationColumn {
    * Set the minimum bottoms temperature to avoid freeze-out.
    *
    * @param temperature minimum temperature
-   * @param unit        temperature unit ("K" or "C")
+   * @param unit temperature unit ("K" or "C")
    */
   public void setMinimumBottomsTemperature(double temperature, String unit) {
     if ("C".equalsIgnoreCase(unit)) {

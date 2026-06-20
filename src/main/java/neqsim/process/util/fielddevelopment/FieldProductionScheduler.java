@@ -232,20 +232,20 @@ public class FieldProductionScheduler implements Serializable {
     /**
      * Creates a schedule step.
      *
-     * @param date                step date
-     * @param timeYears           time from start in years
-     * @param gasRate             gas production rate (Sm3/day)
-     * @param oilRate             oil production rate (Sm3/day)
-     * @param waterRate           water production rate (Sm3/day)
-     * @param cumulativeGas       cumulative gas produced (Sm3)
-     * @param cumulativeOil       cumulative oil produced (Sm3)
-     * @param cumulativeWater     cumulative water produced (Sm3)
-     * @param reservoirPressure   average reservoir pressure (bara)
+     * @param date step date
+     * @param timeYears time from start in years
+     * @param gasRate gas production rate (Sm3/day)
+     * @param oilRate oil production rate (Sm3/day)
+     * @param waterRate water production rate (Sm3/day)
+     * @param cumulativeGas cumulative gas produced (Sm3)
+     * @param cumulativeOil cumulative oil produced (Sm3)
+     * @param cumulativeWater cumulative water produced (Sm3)
+     * @param reservoirPressure average reservoir pressure (bara)
      * @param facilityUtilization facility utilization fraction
-     * @param limitingFactor      what limits production
-     * @param revenue             period revenue (currency)
-     * @param discountedRevenue   discounted revenue (currency)
-     * @param wellRates           map of well name to rate
+     * @param limitingFactor what limits production
+     * @param revenue period revenue (currency)
+     * @param discountedRevenue discounted revenue (currency)
+     * @param wellRates map of well name to rate
      */
     public ScheduleStep(LocalDate date, double timeYears, double gasRate, double oilRate, double waterRate,
 	double cumulativeGas, double cumulativeOil, double cumulativeWater, double reservoirPressure,
@@ -343,7 +343,7 @@ public class FieldProductionScheduler implements Serializable {
      *
      * @param fieldName field name
      * @param startDate schedule start date
-     * @param rateUnit  rate unit for display
+     * @param rateUnit rate unit for display
      */
     public ProductionSchedule(String fieldName, LocalDate startDate, String rateUnit) {
       this.fieldName = fieldName;
@@ -579,7 +579,7 @@ public class FieldProductionScheduler implements Serializable {
    * Sets the plateau duration.
    *
    * @param duration duration value
-   * @param unit     "years", "months", or "days"
+   * @param unit "years", "months", or "days"
    * @return this scheduler for chaining
    */
   public FieldProductionScheduler setPlateauDuration(double duration, String unit) {
@@ -613,7 +613,7 @@ public class FieldProductionScheduler implements Serializable {
    * Sets the gas price for economic calculations.
    *
    * @param price gas price
-   * @param unit  price unit (e.g., "USD/MMBtu", "USD/Sm3")
+   * @param unit price unit (e.g., "USD/MMBtu", "USD/Sm3")
    * @return this scheduler for chaining
    */
   public FieldProductionScheduler setGasPrice(double price, String unit) {
@@ -626,7 +626,7 @@ public class FieldProductionScheduler implements Serializable {
    * Sets the oil price for economic calculations.
    *
    * @param price oil price
-   * @param unit  price unit (e.g., "USD/bbl", "USD/Sm3")
+   * @param unit price unit (e.g., "USD/bbl", "USD/Sm3")
    * @return this scheduler for chaining
    */
   public FieldProductionScheduler setOilPrice(double price, String unit) {
@@ -694,9 +694,9 @@ public class FieldProductionScheduler implements Serializable {
   /**
    * Generates a production schedule for the field.
    *
-   * @param startDate     schedule start date
+   * @param startDate schedule start date
    * @param durationYears forecast duration in years
-   * @param timeStepDays  time step in days
+   * @param timeStepDays time step in days
    * @return production schedule
    */
   public ProductionSchedule generateSchedule(LocalDate startDate, double durationYears, double timeStepDays) {
@@ -811,9 +811,9 @@ public class FieldProductionScheduler implements Serializable {
   /**
    * Converts rate between units.
    *
-   * @param value    rate value
+   * @param value rate value
    * @param fromUnit source unit
-   * @param toUnit   target unit
+   * @param toUnit target unit
    * @return converted rate
    */
   private double convertRate(double value, String fromUnit, String toUnit) {
@@ -842,7 +842,7 @@ public class FieldProductionScheduler implements Serializable {
    *
    * @param gasRate gas rate (Sm3/day)
    * @param oilRate oil rate (Sm3/day)
-   * @param days    period duration in days
+   * @param days period duration in days
    * @return revenue in currency units
    */
   private double calculateRevenue(double gasRate, double oilRate, double days) {

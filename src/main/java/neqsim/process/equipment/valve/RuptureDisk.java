@@ -47,7 +47,7 @@ public class RuptureDisk extends ThrottlingValve {
    * Constructor for RuptureDisk.
    * </p>
    *
-   * @param name        a {@link java.lang.String} object
+   * @param name a {@link java.lang.String} object
    * @param inletStream a {@link neqsim.process.equipment.stream.Stream} object
    */
   public RuptureDisk(String name, StreamInterface inletStream) {

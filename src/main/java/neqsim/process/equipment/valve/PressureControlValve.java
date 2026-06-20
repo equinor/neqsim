@@ -100,7 +100,7 @@ public class PressureControlValve extends ControlValve {
   /**
    * Constructor for PressureControlValve.
    *
-   * @param name     name of the pressure control valve
+   * @param name name of the pressure control valve
    * @param inStream inlet stream
    */
   public PressureControlValve(String name, StreamInterface inStream) {

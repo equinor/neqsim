@@ -239,7 +239,7 @@ public class UnitCostEstimateBaseClass implements java.io.Serializable {
    * Calculate annual operating cost.
    *
    * @param electricityCostPerKWh electricity cost in $/kWh
-   * @param steamCostPerTonne     steam cost in $/tonne
+   * @param steamCostPerTonne steam cost in $/tonne
    * @param coolingWaterCostPerM3 cooling water cost in $/m3
    * @param operatingHoursPerYear annual operating hours
    * @return annual operating cost in USD

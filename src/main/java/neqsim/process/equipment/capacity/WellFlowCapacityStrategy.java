@@ -42,7 +42,7 @@ public class WellFlowCapacityStrategy implements EquipmentCapacityStrategy {
   /**
    * Constructor with custom constraints.
    *
-   * @param maxPI          maximum well production index
+   * @param maxPI maximum well production index
    * @param maxDrawdownBar maximum drawdown pressure in bar
    */
   public WellFlowCapacityStrategy(double maxPI, double maxDrawdownBar) {
@@ -115,7 +115,7 @@ public class WellFlowCapacityStrategy implements EquipmentCapacityStrategy {
    * Adds constraints for well flow.
    *
    * @param constraints map to add constraints to
-   * @param well        the well flow equipment
+   * @param well the well flow equipment
    */
   private void addWellFlowConstraints(Map<String, CapacityConstraint> constraints, WellFlow well) {
     // Well production index constraint

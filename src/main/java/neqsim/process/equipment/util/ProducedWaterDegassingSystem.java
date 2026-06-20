@@ -170,7 +170,7 @@ public class ProducedWaterDegassingSystem implements Serializable {
    * Set water flow rate.
    *
    * @param flowRate flow rate value
-   * @param unit     "kg/hr", "m3/hr", "bbl/day"
+   * @param unit "kg/hr", "m3/hr", "bbl/day"
    */
   public void setWaterFlowRate(double flowRate, String unit) {
     switch (unit.toLowerCase()) {
@@ -193,7 +193,7 @@ public class ProducedWaterDegassingSystem implements Serializable {
    * Set water temperature.
    *
    * @param temperature temperature value
-   * @param unit        "C", "K", "F"
+   * @param unit "C", "K", "F"
    */
   public void setWaterTemperature(double temperature, String unit) {
     switch (unit.toUpperCase()) {
@@ -216,7 +216,7 @@ public class ProducedWaterDegassingSystem implements Serializable {
    * Set inlet pressure (from upstream separator).
    *
    * @param pressure pressure in bara
-   * @param unit     "bara", "barg", "psia"
+   * @param unit "bara", "barg", "psia"
    */
   public void setInletPressure(double pressure, String unit) {
     inletPressure_bara = convertPressure(pressure, unit);
@@ -227,7 +227,7 @@ public class ProducedWaterDegassingSystem implements Serializable {
    * Set degasser pressure.
    *
    * @param pressure pressure value
-   * @param unit     "bara", "barg", "psia"
+   * @param unit "bara", "barg", "psia"
    */
   public void setDegasserPressure(double pressure, String unit) {
     degasserPressure_bara = convertPressure(pressure, unit);
@@ -238,7 +238,7 @@ public class ProducedWaterDegassingSystem implements Serializable {
    * Set CFU pressure.
    *
    * @param pressure pressure value
-   * @param unit     "bara", "barg", "psia"
+   * @param unit "bara", "barg", "psia"
    */
   public void setCFUPressure(double pressure, String unit) {
     cfuPressure_bara = convertPressure(pressure, unit);
@@ -249,7 +249,7 @@ public class ProducedWaterDegassingSystem implements Serializable {
    * Set caisson pressure (typically atmospheric).
    *
    * @param pressure pressure value
-   * @param unit     "bara", "barg", "psia"
+   * @param unit "bara", "barg", "psia"
    */
   public void setCaissonPressure(double pressure, String unit) {
     caissonPressure_bara = convertPressure(pressure, unit);
@@ -260,7 +260,7 @@ public class ProducedWaterDegassingSystem implements Serializable {
    * Set water salinity.
    *
    * @param salinity salinity value
-   * @param unit     "wt%", "ppm", "molal"
+   * @param unit "wt%", "ppm", "molal"
    */
   public void setSalinity(double salinity, String unit) {
     switch (unit.toLowerCase()) {
@@ -283,7 +283,7 @@ public class ProducedWaterDegassingSystem implements Serializable {
   /**
    * Set dissolved gas composition.
    *
-   * @param components    array of component names
+   * @param components array of component names
    * @param moleFractions array of mole fractions (should sum to 1.0)
    */
   public void setDissolvedGasComposition(String[] components, double[] moleFractions) {

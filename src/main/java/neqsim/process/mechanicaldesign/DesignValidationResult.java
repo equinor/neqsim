@@ -50,11 +50,11 @@ public class DesignValidationResult implements Serializable {
     /**
      * Constructor.
      *
-     * @param severity      message severity
-     * @param category      message category (e.g., "Pressure Rating", "Standards Compliance")
+     * @param severity message severity
+     * @param category message category (e.g., "Pressure Rating", "Standards Compliance")
      * @param equipmentName name of affected equipment
-     * @param message       the validation message
-     * @param remediation   suggested fix or action
+     * @param message the validation message
+     * @param remediation suggested fix or action
      */
     public ValidationMessage(Severity severity, String category, String equipmentName, String message,
 	String remediation) {
@@ -130,11 +130,11 @@ public class DesignValidationResult implements Serializable {
   /**
    * Add a validation message.
    *
-   * @param severity      message severity
-   * @param category      message category
+   * @param severity message severity
+   * @param category message category
    * @param equipmentName affected equipment
-   * @param message       the message
-   * @param remediation   suggested fix
+   * @param message the message
+   * @param remediation suggested fix
    * @return this instance for chaining
    */
   public DesignValidationResult addMessage(Severity severity, String category, String equipmentName, String message,
@@ -148,7 +148,7 @@ public class DesignValidationResult implements Serializable {
    * Add an info message.
    *
    * @param equipmentName affected equipment
-   * @param message       the message
+   * @param message the message
    * @return this instance for chaining
    */
   public DesignValidationResult addInfo(String equipmentName, String message) {
@@ -158,10 +158,10 @@ public class DesignValidationResult implements Serializable {
   /**
    * Add a warning message.
    *
-   * @param category      message category
+   * @param category message category
    * @param equipmentName affected equipment
-   * @param message       the message
-   * @param remediation   suggested fix
+   * @param message the message
+   * @param remediation suggested fix
    * @return this instance for chaining
    */
   public DesignValidationResult addWarning(String category, String equipmentName, String message, String remediation) {
@@ -171,10 +171,10 @@ public class DesignValidationResult implements Serializable {
   /**
    * Add an error message.
    *
-   * @param category      message category
+   * @param category message category
    * @param equipmentName affected equipment
-   * @param message       the message
-   * @param remediation   suggested fix
+   * @param message the message
+   * @param remediation suggested fix
    * @return this instance for chaining
    */
   public DesignValidationResult addError(String category, String equipmentName, String message, String remediation) {
@@ -184,10 +184,10 @@ public class DesignValidationResult implements Serializable {
   /**
    * Add a critical error message.
    *
-   * @param category      message category
+   * @param category message category
    * @param equipmentName affected equipment
-   * @param message       the message
-   * @param remediation   suggested fix
+   * @param message the message
+   * @param remediation suggested fix
    * @return this instance for chaining
    */
   public DesignValidationResult addCritical(String category, String equipmentName, String message, String remediation) {
@@ -197,7 +197,7 @@ public class DesignValidationResult implements Serializable {
   /**
    * Add a metric value.
    *
-   * @param name  metric name
+   * @param name metric name
    * @param value metric value
    * @return this instance for chaining
    */

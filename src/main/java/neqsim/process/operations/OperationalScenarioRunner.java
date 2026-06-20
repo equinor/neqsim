@@ -30,7 +30,7 @@ public final class OperationalScenarioRunner {
   /**
    * Runs an operational scenario against a process system.
    *
-   * @param process  process system to manipulate
+   * @param process process system to manipulate
    * @param scenario ordered scenario to execute
    * @return execution result with logs and before/after values
    */
@@ -53,8 +53,8 @@ public final class OperationalScenarioRunner {
    * Executes one action and records its result.
    *
    * @param process process system
-   * @param action  action to execute
-   * @param result  result object to update
+   * @param action action to execute
+   * @param result result object to update
    */
   private static void executeAction(ProcessSystem process, OperationalAction action, OperationalScenarioResult result) {
     try {
@@ -91,7 +91,7 @@ public final class OperationalScenarioRunner {
    * Executes a valve-opening action using existing valve logic when possible.
    *
    * @param process process system
-   * @param action  valve action
+   * @param action valve action
    */
   private static void executeValveOpening(ProcessSystem process, OperationalAction action) {
     ProcessEquipmentInterface unit = process.getUnit(action.getTarget());
@@ -109,7 +109,7 @@ public final class OperationalScenarioRunner {
    * Runs transient steps for an action.
    *
    * @param process process system
-   * @param action  transient action containing duration and time step
+   * @param action transient action containing duration and time step
    */
   private static void runTransient(ProcessSystem process, OperationalAction action) {
     if (action.getDurationSeconds() <= 0.0) {
@@ -147,9 +147,9 @@ public final class OperationalScenarioRunner {
    *
    * @param process process system
    * @param address automation address
-   * @param unit    unit of measure
-   * @param before  true for before-action storage, false for after-action storage
-   * @param result  result object to update
+   * @param unit unit of measure
+   * @param before true for before-action storage, false for after-action storage
+   * @param result result object to update
    */
   private static void captureValue(ProcessSystem process, String address, String unit, boolean before,
       OperationalScenarioResult result) {

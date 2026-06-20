@@ -341,7 +341,7 @@ public class FlexiblePipe extends TwoPortEquipment {
   /**
    * Constructor with name and inlet stream.
    *
-   * @param name     equipment name
+   * @param name equipment name
    * @param inStream inlet stream
    */
   public FlexiblePipe(String name, StreamInterface inStream) {
@@ -351,8 +351,8 @@ public class FlexiblePipe extends TwoPortEquipment {
   /**
    * Create dynamic riser configuration.
    *
-   * @param name          riser name
-   * @param inStream      inlet stream
+   * @param name riser name
+   * @param inStream inlet stream
    * @param configuration riser configuration
    * @return configured flexible pipe
    */
@@ -368,8 +368,8 @@ public class FlexiblePipe extends TwoPortEquipment {
   /**
    * Create static flowline.
    *
-   * @param name         flowline name
-   * @param inStream     inlet stream
+   * @param name flowline name
+   * @param inStream inlet stream
    * @param lengthMeters length in meters
    * @return configured flexible pipe
    */

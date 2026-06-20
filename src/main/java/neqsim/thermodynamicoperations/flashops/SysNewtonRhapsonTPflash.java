@@ -71,8 +71,8 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
    * Constructor for sysNewtonRhapsonTPflash.
    * </p>
    *
-   * @param system             a {@link neqsim.thermo.system.SystemInterface} object
-   * @param numberOfPhases     a int
+   * @param system a {@link neqsim.thermo.system.SystemInterface} object
+   * @param numberOfPhases a int
    * @param numberOfComponents a int
    */
   public SysNewtonRhapsonTPflash(SystemInterface system, int numberOfPhases, int numberOfComponents) {

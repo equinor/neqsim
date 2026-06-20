@@ -160,7 +160,7 @@ public class WellBarrierSchematic implements Serializable {
   /**
    * Set barrier element count requirements (from standards data).
    *
-   * @param minPrimary   minimum elements in primary envelope
+   * @param minPrimary minimum elements in primary envelope
    * @param minSecondary minimum elements in secondary envelope
    */
   public void setMinimumElements(int minPrimary, int minSecondary) {

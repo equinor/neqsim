@@ -144,7 +144,7 @@ class ProcessModelExecutionOptimizationTest {
    * Adds independent stream nodes so the child ProcessSystem exposes useful inner parallelism.
    *
    * @param process process system to populate
-   * @param count   number of independent streams to add
+   * @param count number of independent streams to add
    */
   private static void addIndependentStreams(ProcessSystem process, int count) {
     for (int i = 0; i < count; i++) {

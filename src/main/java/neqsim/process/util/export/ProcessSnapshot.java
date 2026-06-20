@@ -43,7 +43,7 @@ public class ProcessSnapshot implements Serializable {
    * Creates a snapshot with a specific timestamp.
    *
    * @param snapshotId unique identifier
-   * @param timestamp  the snapshot timestamp
+   * @param timestamp the snapshot timestamp
    */
   public ProcessSnapshot(String snapshotId, Instant timestamp) {
     this.snapshotId = snapshotId;
@@ -56,9 +56,9 @@ public class ProcessSnapshot implements Serializable {
   /**
    * Stores a measurement value.
    *
-   * @param name  measurement name
+   * @param name measurement name
    * @param value measurement value
-   * @param unit  measurement unit
+   * @param unit measurement unit
    */
   public void setMeasurement(String name, double value, String unit) {
     measurementValues.put(name, value);
@@ -97,7 +97,7 @@ public class ProcessSnapshot implements Serializable {
   /**
    * Stores additional state information.
    *
-   * @param key   state key
+   * @param key state key
    * @param value state value
    */
   public void setState(String key, Object value) {

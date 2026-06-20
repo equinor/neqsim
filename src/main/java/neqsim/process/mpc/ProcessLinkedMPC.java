@@ -130,7 +130,7 @@ public class ProcessLinkedMPC implements Serializable {
   /**
    * Construct a process-linked MPC controller.
    *
-   * @param name          the controller name
+   * @param name the controller name
    * @param processSystem the process system to control
    */
   public ProcessLinkedMPC(String name, ProcessSystem processSystem) {
@@ -147,9 +147,9 @@ public class ProcessLinkedMPC implements Serializable {
    * Add a manipulated variable.
    *
    * @param equipmentName the equipment name
-   * @param propertyName  the property name (opening, duty, flowRate, etc.)
-   * @param minValue      minimum value
-   * @param maxValue      maximum value
+   * @param propertyName the property name (opening, duty, flowRate, etc.)
+   * @param minValue minimum value
+   * @param maxValue maximum value
    * @return the created ManipulatedVariable
    */
   public ManipulatedVariable addMV(String equipmentName, String propertyName, double minValue, double maxValue) {
@@ -163,10 +163,10 @@ public class ProcessLinkedMPC implements Serializable {
   /**
    * Add a manipulated variable with rate limits.
    *
-   * @param equipmentName   the equipment name
-   * @param propertyName    the property name
-   * @param minValue        minimum value
-   * @param maxValue        maximum value
+   * @param equipmentName the equipment name
+   * @param propertyName the property name
+   * @param minValue minimum value
+   * @param maxValue maximum value
    * @param maxRateOfChange maximum rate of change per sample
    * @return the created ManipulatedVariable
    */
@@ -181,8 +181,8 @@ public class ProcessLinkedMPC implements Serializable {
    * Add a controlled variable with setpoint.
    *
    * @param equipmentName the equipment name
-   * @param propertyName  the property name (pressure, temperature, level, etc.)
-   * @param setpoint      the setpoint value
+   * @param propertyName the property name (pressure, temperature, level, etc.)
+   * @param setpoint the setpoint value
    * @return the created ControlledVariable
    */
   public ControlledVariable addCV(String equipmentName, String propertyName, double setpoint) {
@@ -197,9 +197,9 @@ public class ProcessLinkedMPC implements Serializable {
    * Add a controlled variable with zone control.
    *
    * @param equipmentName the equipment name
-   * @param propertyName  the property name
-   * @param lowSetpoint   low zone boundary
-   * @param highSetpoint  high zone boundary
+   * @param propertyName the property name
+   * @param lowSetpoint low zone boundary
+   * @param highSetpoint high zone boundary
    * @return the created ControlledVariable
    */
   public ControlledVariable addCVZone(String equipmentName, String propertyName, double lowSetpoint,
@@ -213,9 +213,9 @@ public class ProcessLinkedMPC implements Serializable {
    * Set constraints on a controlled variable.
    *
    * @param equipmentName the equipment name
-   * @param propertyName  the property name
-   * @param minValue      minimum constraint
-   * @param maxValue      maximum constraint
+   * @param propertyName the property name
+   * @param minValue minimum constraint
+   * @param maxValue maximum constraint
    */
   public void setConstraint(String equipmentName, String propertyName, double minValue, double maxValue) {
     String fullName = equipmentName + "." + propertyName;
@@ -232,7 +232,7 @@ public class ProcessLinkedMPC implements Serializable {
    * Add a disturbance variable.
    *
    * @param equipmentName the equipment name
-   * @param propertyName  the property name
+   * @param propertyName the property name
    * @return the created DisturbanceVariable
    */
   public DisturbanceVariable addDV(String equipmentName, String propertyName) {
@@ -251,7 +251,7 @@ public class ProcessLinkedMPC implements Serializable {
    * </p>
    *
    * @param equipmentName the equipment name
-   * @param propertyName  the property name
+   * @param propertyName the property name
    * @return the created StateVariable
    */
   public StateVariable addSVR(String equipmentName, String propertyName) {
@@ -265,8 +265,8 @@ public class ProcessLinkedMPC implements Serializable {
    * Add a state variable with a data index.
    *
    * @param equipmentName the equipment name
-   * @param propertyName  the property name
-   * @param dtaIx         data index for C++ code linking
+   * @param propertyName the property name
+   * @param dtaIx data index for C++ code linking
    * @return the created StateVariable
    */
   public StateVariable addSVR(String equipmentName, String propertyName, String dtaIx) {
@@ -655,7 +655,7 @@ public class ProcessLinkedMPC implements Serializable {
   /**
    * Set a CV setpoint.
    *
-   * @param cvName   the CV name
+   * @param cvName the CV name
    * @param setpoint the new setpoint
    */
   public void setSetpoint(String cvName, double setpoint) {

@@ -68,23 +68,23 @@ public class ThroughputCaseRow implements Serializable {
   /**
    * Creates a throughput case row.
    *
-   * @param caseNumber           case sequence number
+   * @param caseNumber case sequence number
    * @param throughputMultiplier scalar throughput multiplier
-   * @param producerMultipliers  producer multipliers used in the case
-   * @param objectiveValue       raw objective value
-   * @param feasible             true when all hard constraints are satisfied
-   * @param simulationConverged  true when the model converged
-   * @param activeArea           active bottleneck area name
-   * @param activeEquipment      active bottleneck equipment name
-   * @param activeConstraint     active bottleneck constraint name
-   * @param utilization          active bottleneck utilization
-   * @param currentValue         current bottleneck load
-   * @param designValue          bottleneck design value
-   * @param capacityMargin       remaining capacity in engineering units
-   * @param utilizationMargin    remaining utilization margin
-   * @param unit                 bottleneck unit
-   * @param errorMessage         error message if the case failed
-   * @param evaluationTimeMs     evaluation wall-clock time in milliseconds
+   * @param producerMultipliers producer multipliers used in the case
+   * @param objectiveValue raw objective value
+   * @param feasible true when all hard constraints are satisfied
+   * @param simulationConverged true when the model converged
+   * @param activeArea active bottleneck area name
+   * @param activeEquipment active bottleneck equipment name
+   * @param activeConstraint active bottleneck constraint name
+   * @param utilization active bottleneck utilization
+   * @param currentValue current bottleneck load
+   * @param designValue bottleneck design value
+   * @param capacityMargin remaining capacity in engineering units
+   * @param utilizationMargin remaining utilization margin
+   * @param unit bottleneck unit
+   * @param errorMessage error message if the case failed
+   * @param evaluationTimeMs evaluation wall-clock time in milliseconds
    */
   public ThroughputCaseRow(int caseNumber, double throughputMultiplier, Map<String, Double> producerMultipliers,
       double objectiveValue, boolean feasible, boolean simulationConverged, String activeArea, String activeEquipment,
@@ -112,10 +112,10 @@ public class ThroughputCaseRow implements Serializable {
   /**
    * Creates a row from a process-model evaluator result.
    *
-   * @param caseNumber           case sequence number
+   * @param caseNumber case sequence number
    * @param throughputMultiplier scalar throughput multiplier
-   * @param producerMultipliers  producer multipliers used in the case
-   * @param evaluation           evaluation result
+   * @param producerMultipliers producer multipliers used in the case
+   * @param evaluation evaluation result
    * @return populated throughput case row
    */
   public static ThroughputCaseRow fromEvaluation(int caseNumber, double throughputMultiplier,

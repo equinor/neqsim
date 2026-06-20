@@ -362,8 +362,8 @@ public class PipeMechanicalDesignCalculator implements Serializable {
   /**
    * Constructor with basic parameters.
    *
-   * @param outerDiameter     pipe outer diameter in meters
-   * @param designPressure    design pressure in MPa
+   * @param outerDiameter pipe outer diameter in meters
+   * @param designPressure design pressure in MPa
    * @param designTemperature design temperature in Celsius
    */
   public PipeMechanicalDesignCalculator(double outerDiameter, double designPressure, double designTemperature) {
@@ -499,8 +499,8 @@ public class PipeMechanicalDesignCalculator implements Serializable {
    * For restrained pipe: σL = ν × σh - E × α × ΔT + P × D / (4 × t)
    * </p>
    *
-   * @param pressure   internal pressure in MPa
-   * @param deltaT     temperature change from installation in Celsius
+   * @param pressure internal pressure in MPa
+   * @param deltaT temperature change from installation in Celsius
    * @param restrained true if pipe is restrained (buried or anchored)
    * @return longitudinal stress in MPa
    */
@@ -534,8 +534,8 @@ public class PipeMechanicalDesignCalculator implements Serializable {
    * σvm = √(σh² + σL² - σh × σL + 3τ²)
    * </p>
    *
-   * @param pressure   internal pressure in MPa
-   * @param deltaT     temperature change from installation in Celsius
+   * @param pressure internal pressure in MPa
+   * @param deltaT temperature change from installation in Celsius
    * @param restrained true if pipe is restrained
    * @return von Mises stress in MPa
    */
@@ -669,7 +669,7 @@ public class PipeMechanicalDesignCalculator implements Serializable {
   /**
    * Calculate required concrete coating thickness for on-bottom stability.
    *
-   * @param contentDensity        density of pipe contents in kg/m3
+   * @param contentDensity density of pipe contents in kg/m3
    * @param targetSubmergedWeight target submerged weight in kg/m
    * @return required concrete coating thickness in meters
    */
@@ -747,7 +747,7 @@ public class PipeMechanicalDesignCalculator implements Serializable {
   /**
    * Calculate expansion loop length for thermal expansion.
    *
-   * @param deltaT   temperature change from installation in Celsius
+   * @param deltaT temperature change from installation in Celsius
    * @param loopType "U-loop", "Z-loop", or "L-loop"
    * @return required loop leg length in meters
    */
@@ -921,7 +921,7 @@ public class PipeMechanicalDesignCalculator implements Serializable {
   /**
    * Estimate fatigue life based on DNV-RP-C203.
    *
-   * @param stressRange    stress range per cycle in MPa
+   * @param stressRange stress range per cycle in MPa
    * @param numberOfCycles expected number of cycles per year
    * @return estimated fatigue life in years
    */
@@ -942,10 +942,10 @@ public class PipeMechanicalDesignCalculator implements Serializable {
   /**
    * Calculate insulation thickness for heat loss control.
    *
-   * @param inletTemperature      fluid inlet temperature in Celsius
+   * @param inletTemperature fluid inlet temperature in Celsius
    * @param minArrivalTemperature minimum arrival temperature in Celsius
-   * @param massFlowRate          mass flow rate in kg/s
-   * @param specificHeat          fluid specific heat in J/(kg·K)
+   * @param massFlowRate mass flow rate in kg/s
+   * @param specificHeat fluid specific heat in J/(kg·K)
    * @return required insulation thickness in meters
    */
   public double calculateInsulationThickness(double inletTemperature, double minArrivalTemperature, double massFlowRate,
@@ -1426,7 +1426,7 @@ public class PipeMechanicalDesignCalculator implements Serializable {
    * Set design pressure with unit.
    *
    * @param pressure design pressure value
-   * @param unit     pressure unit ("MPa", "bar", "bara", "psi")
+   * @param unit pressure unit ("MPa", "bar", "bara", "psi")
    */
   public void setDesignPressure(double pressure, String unit) {
     String lowerUnit = unit.toLowerCase().trim();
@@ -1481,7 +1481,7 @@ public class PipeMechanicalDesignCalculator implements Serializable {
    * Set outer diameter with unit.
    *
    * @param diameter outer diameter value
-   * @param unit     diameter unit ("m", "mm", "inch", "in")
+   * @param unit diameter unit ("m", "mm", "inch", "in")
    */
   public void setOuterDiameter(double diameter, String unit) {
     String lowerUnit = unit.toLowerCase().trim();
@@ -1531,7 +1531,7 @@ public class PipeMechanicalDesignCalculator implements Serializable {
    * Set nominal wall thickness with unit.
    *
    * @param thickness wall thickness value
-   * @param unit      thickness unit ("m", "mm", "inch")
+   * @param unit thickness unit ("m", "mm", "inch")
    */
   public void setNominalWallThickness(double thickness, String unit) {
     String lowerUnit = unit.toLowerCase().trim();
@@ -1569,7 +1569,7 @@ public class PipeMechanicalDesignCalculator implements Serializable {
    * Set corrosion allowance with unit.
    *
    * @param allowance corrosion allowance value
-   * @param unit      unit ("m", "mm")
+   * @param unit unit ("m", "mm")
    */
   public void setCorrosionAllowance(double allowance, String unit) {
     String lowerUnit = unit.toLowerCase().trim();
@@ -2601,8 +2601,8 @@ public class PipeMechanicalDesignCalculator implements Serializable {
    *
    * @param grade API 5L material grade (e.g., "X52", "X65", "X70")
    * @deprecated Use {@link PipelineMechanicalDesign#loadMaterialFromDatabase(String)} instead. The
-   *             PipelineMechanicalDesign class provides centralized database access via
-   *             PipelineMechanicalDesignDataSource, following the same pattern as separators.
+   * PipelineMechanicalDesign class provides centralized database access via PipelineMechanicalDesignDataSource,
+   * following the same pattern as separators.
    */
   @Deprecated
   public void loadMaterialFromDatabase(String grade) {
@@ -2647,8 +2647,8 @@ public class PipeMechanicalDesignCalculator implements Serializable {
    *
    * @param company company identifier (e.g., "Equinor", "Statoil")
    * @deprecated Use {@link PipelineMechanicalDesign#loadDesignFactorsFromDatabase()} instead. The
-   *             PipelineMechanicalDesign class provides centralized database access via
-   *             PipelineMechanicalDesignDataSource, following the same pattern as separators.
+   * PipelineMechanicalDesign class provides centralized database access via PipelineMechanicalDesignDataSource,
+   * following the same pattern as separators.
    */
   @Deprecated
   public void loadDesignFactorsFromDatabase(String company) {
@@ -2686,10 +2686,10 @@ public class PipeMechanicalDesignCalculator implements Serializable {
    * </p>
    *
    * @param materialGrade API 5L material grade
-   * @param company       company identifier
+   * @param company company identifier
    * @deprecated Use {@link PipelineMechanicalDesign#loadFromDatabase()} instead. The PipelineMechanicalDesign class
-   *             provides centralized database access via PipelineMechanicalDesignDataSource, following the same pattern
-   *             as separators.
+   * provides centralized database access via PipelineMechanicalDesignDataSource, following the same pattern as
+   * separators.
    */
   @Deprecated
   public void loadFromDatabase(String materialGrade, String company) {

@@ -104,7 +104,7 @@ public class VirtualFlowMeter extends StreamMeasurementDeviceBaseClass {
   /**
    * Creates a new Virtual Flow Meter.
    *
-   * @param name   the meter name/tag
+   * @param name the meter name/tag
    * @param stream the stream to measure
    */
   public VirtualFlowMeter(String name, StreamInterface stream) {
@@ -150,7 +150,7 @@ public class VirtualFlowMeter extends StreamMeasurementDeviceBaseClass {
   /**
    * Sets the measurement uncertainties.
    *
-   * @param pressureRelative    relative pressure uncertainty (e.g., 0.01 for 1%)
+   * @param pressureRelative relative pressure uncertainty (e.g., 0.01 for 1%)
    * @param temperatureAbsolute absolute temperature uncertainty in K
    */
   public void setMeasurementUncertainties(double pressureRelative, double temperatureAbsolute) {
@@ -170,8 +170,8 @@ public class VirtualFlowMeter extends StreamMeasurementDeviceBaseClass {
   /**
    * Calculates flow rates from specified P, T, dP conditions.
    *
-   * @param pressure             upstream pressure in bara
-   * @param temperature          temperature in K
+   * @param pressure upstream pressure in bara
+   * @param temperature temperature in K
    * @param differentialPressure pressure drop in bar
    * @return VFM result with flow rates and uncertainties
    */
@@ -234,9 +234,9 @@ public class VirtualFlowMeter extends StreamMeasurementDeviceBaseClass {
   /**
    * Calculates uncertainty using simplified error propagation.
    *
-   * @param rate           phase flow rate in Sm3/d
+   * @param rate phase flow rate in Sm3/d
    * @param pressureUncert relative pressure uncertainty (fraction)
-   * @param tempUncert     absolute temperature uncertainty (K)
+   * @param tempUncert absolute temperature uncertainty (K)
    * @return one standard deviation of the flow-rate estimate
    */
   private double calculateUncertainty(double rate, double pressureUncert, double tempUncert) {
@@ -249,7 +249,7 @@ public class VirtualFlowMeter extends StreamMeasurementDeviceBaseClass {
   /**
    * Determines result quality based on operating conditions and calibration.
    *
-   * @param pressure    current operating pressure in bara
+   * @param pressure current operating pressure in bara
    * @param temperature current operating temperature in Kelvin
    * @return quality indicator based on calibration range and age
    */

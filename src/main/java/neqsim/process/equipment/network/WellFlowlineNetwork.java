@@ -187,8 +187,8 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
    * outlet and its outlet is attached to the terminal manifold by default.
    *
    * @param branchName branch identifier
-   * @param well       configured {@link WellFlow}
-   * @param pipeline   configured {@link PipeBeggsAndBrills}
+   * @param well configured {@link WellFlow}
+   * @param pipeline configured {@link PipeBeggsAndBrills}
    * @return the added {@link Branch}
    */
   public Branch addBranch(String branchName, WellFlow well, PipeBeggsAndBrills pipeline) {
@@ -199,9 +199,9 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
    * Add a branch to a specific manifold in the network.
    *
    * @param branchName branch identifier
-   * @param well       configured {@link WellFlow}
-   * @param pipeline   configured {@link PipeBeggsAndBrills}
-   * @param manifold   manifold that should receive the branch outlet
+   * @param well configured {@link WellFlow}
+   * @param pipeline configured {@link PipeBeggsAndBrills}
+   * @param manifold manifold that should receive the branch outlet
    * @return the added {@link Branch}
    */
   public Branch addBranch(String branchName, WellFlow well, PipeBeggsAndBrills pipeline, ManifoldNode manifold) {
@@ -212,10 +212,10 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
    * Add a branch with an optional production choke to a specific manifold.
    *
    * @param branchName branch identifier
-   * @param well       configured {@link WellFlow}
-   * @param pipeline   configured {@link PipeBeggsAndBrills}
-   * @param choke      optional {@link ThrottlingValve} placed between the well outlet and pipeline inlet
-   * @param manifold   manifold that should receive the branch outlet
+   * @param well configured {@link WellFlow}
+   * @param pipeline configured {@link PipeBeggsAndBrills}
+   * @param choke optional {@link ThrottlingValve} placed between the well outlet and pipeline inlet
+   * @param manifold manifold that should receive the branch outlet
    * @return the added {@link Branch}
    */
   public Branch addBranch(String branchName, WellFlow well, PipeBeggsAndBrills pipeline, ThrottlingValve choke,
@@ -232,7 +232,7 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
    * Convenience helper that creates a branch from a reservoir stream by instantiating a {@link WellFlow} and
    * {@link PipeBeggsAndBrills} pair and attaching it to the terminal manifold.
    *
-   * @param branchName      branch identifier
+   * @param branchName branch identifier
    * @param reservoirStream stream representing reservoir inflow
    * @return the created {@link Branch}
    */
@@ -243,9 +243,9 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
   /**
    * Convenience helper that creates a branch from a reservoir stream for a specific manifold.
    *
-   * @param branchName      branch identifier
+   * @param branchName branch identifier
    * @param reservoirStream stream representing reservoir inflow
-   * @param manifold        manifold that should receive the branch outlet
+   * @param manifold manifold that should receive the branch outlet
    * @return the created {@link Branch}
    */
   public Branch addBranch(String branchName, StreamInterface reservoirStream, ManifoldNode manifold) {
@@ -303,7 +303,7 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
    * Add an additional manifold downstream of the current endpoint, connecting it with the supplied pipeline. The
    * pipeline inlet is automatically wired to the current terminal manifold outlet.
    *
-   * @param name               manifold name
+   * @param name manifold name
    * @param connectionPipeline pipeline from the current endpoint manifold to the new manifold
    * @return the created {@link ManifoldNode}
    */
@@ -323,8 +323,8 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
   /**
    * Connect an upstream manifold to a downstream manifold using the provided pipeline.
    *
-   * @param upstream           upstream manifold
-   * @param downstream         downstream manifold that should receive the pipeline outlet
+   * @param upstream upstream manifold
+   * @param downstream downstream manifold that should receive the pipeline outlet
    * @param connectionPipeline pipeline from upstream to downstream
    */
   public void connectManifolds(ManifoldNode upstream, ManifoldNode downstream, PipeBeggsAndBrills connectionPipeline) {
@@ -363,7 +363,7 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
    * well rates from backpressure.
    *
    * @param pressure target endpoint pressure
-   * @param unit     pressure unit
+   * @param unit pressure unit
    */
   public void setTargetEndpointPressure(double pressure, String unit) {
     this.targetEndpointPressure = new PressureUnit(pressure, unit).getValue("bara");
@@ -549,7 +549,7 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
    * Execute branch runs and facility pipeline while enforcing a specified terminal manifold pressure.
    *
    * @param manifoldPressure pressure in bara at the terminal manifold
-   * @param id               calculation identifier
+   * @param id calculation identifier
    * @return pressure achieved at the endpoint (arrival if no facility pipeline, otherwise facility pipeline outlet)
    */
   private double runWithEndpointPressure(double manifoldPressure, UUID id) {
@@ -568,9 +568,9 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
   /**
    * Run through all manifolds and branches in upstream-to-downstream order.
    *
-   * @param id                    calculation identifier
+   * @param id calculation identifier
    * @param forceEndpointPressure whether to force endpoint pressure
-   * @param endpointPressure      the endpoint pressure to force
+   * @param endpointPressure the endpoint pressure to force
    */
   private void runManifolds(UUID id, boolean forceEndpointPressure, Double endpointPressure) {
     List<ManifoldNode> orderedManifolds = getReachableManifoldsInFlowOrder();

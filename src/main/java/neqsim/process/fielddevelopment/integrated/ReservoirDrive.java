@@ -31,7 +31,7 @@ public interface ReservoirDrive extends Serializable {
    * Advances the drive by producing a volume over a time step.
    *
    * @param producedVolumeSm3 surface volume produced during the step in Sm3
-   * @param dtDays            length of the time step in days
+   * @param dtDays length of the time step in days
    */
   void produce(double producedVolumeSm3, double dtDays);
 

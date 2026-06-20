@@ -25,7 +25,7 @@ public class CompressorDesignStandard extends DesignStandard {
    * Constructor for CompressorDesignStandard.
    * </p>
    *
-   * @param name         a {@link java.lang.String} object
+   * @param name a {@link java.lang.String} object
    * @param equipmentInn a {@link neqsim.process.mechanicaldesign.MechanicalDesign} object
    */
   public CompressorDesignStandard(String name, MechanicalDesign equipmentInn) {

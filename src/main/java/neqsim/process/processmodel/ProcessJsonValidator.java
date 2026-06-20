@@ -48,7 +48,7 @@ public final class ProcessJsonValidator {
    * Validates all named areas in a ProcessModel JSON object.
    *
    * @param report validation report to populate
-   * @param areas  areas object keyed by area name
+   * @param areas areas object keyed by area name
    */
   private static void validateAreas(ValidationReport report, JsonObject areas) {
     for (Map.Entry<String, JsonElement> entry : areas.entrySet()) {
@@ -68,8 +68,8 @@ public final class ProcessJsonValidator {
   /**
    * Validates one ProcessSystem JSON object.
    *
-   * @param report  validation report to populate
-   * @param root    process-system JSON object containing a process array
+   * @param report validation report to populate
+   * @param root process-system JSON object containing a process array
    * @param context context label used in messages
    */
   private static void validateProcessObject(ValidationReport report, JsonObject root, String context) {

@@ -53,12 +53,12 @@ public class PipingRouteBuilder implements Serializable {
   /**
    * Adds one route segment and assigns a generated segment id such as {@code S1}.
    *
-   * @param fromNode        upstream node name from the line list
-   * @param toNode          downstream node name from the line list
-   * @param length          straight pipe length, must be positive
-   * @param lengthUnit      unit for {@code length}, for example {@code m}, {@code km}, {@code ft}
+   * @param fromNode upstream node name from the line list
+   * @param toNode downstream node name from the line list
+   * @param length straight pipe length, must be positive
+   * @param lengthUnit unit for {@code length}, for example {@code m}, {@code km}, {@code ft}
    * @param nominalDiameter hydraulic diameter used by the pipe model, must be positive
-   * @param diameterUnit    unit for {@code nominalDiameter}, for example {@code m}, {@code mm}, {@code inch}
+   * @param diameterUnit unit for {@code nominalDiameter}, for example {@code m}, {@code mm}, {@code inch}
    * @return this builder for chaining
    * @throws IllegalArgumentException if inputs are blank, non-positive, duplicated, or unsupported
    */
@@ -71,13 +71,13 @@ public class PipingRouteBuilder implements Serializable {
   /**
    * Adds one route segment with an explicit segment id.
    *
-   * @param segmentId       unique segment id, for example a line number or {@code S1}
-   * @param fromNode        upstream node name from the line list
-   * @param toNode          downstream node name from the line list
-   * @param length          straight pipe length, must be positive
-   * @param lengthUnit      unit for {@code length}, for example {@code m}, {@code km}, {@code ft}
+   * @param segmentId unique segment id, for example a line number or {@code S1}
+   * @param fromNode upstream node name from the line list
+   * @param toNode downstream node name from the line list
+   * @param length straight pipe length, must be positive
+   * @param lengthUnit unit for {@code length}, for example {@code m}, {@code km}, {@code ft}
    * @param nominalDiameter hydraulic diameter used by the pipe model, must be positive
-   * @param diameterUnit    unit for {@code nominalDiameter}, for example {@code m}, {@code mm}, {@code inch}
+   * @param diameterUnit unit for {@code nominalDiameter}, for example {@code m}, {@code mm}, {@code inch}
    * @return this builder for chaining
    * @throws IllegalArgumentException if inputs are blank, non-positive, duplicated, or unsupported
    */
@@ -98,9 +98,9 @@ public class PipingRouteBuilder implements Serializable {
   /**
    * Sets segment wall thickness metadata and pipe wall thickness on the generated pipe.
    *
-   * @param segmentId     segment id or {@code fromNode->toNode} route reference
+   * @param segmentId segment id or {@code fromNode->toNode} route reference
    * @param wallThickness wall thickness, must be non-negative
-   * @param unit          unit for {@code wallThickness}, for example {@code m}, {@code mm}, {@code inch}
+   * @param unit unit for {@code wallThickness}, for example {@code m}, {@code mm}, {@code inch}
    * @return this builder for chaining
    * @throws IllegalArgumentException if the segment cannot be found or the value/unit is invalid
    */
@@ -114,9 +114,9 @@ public class PipingRouteBuilder implements Serializable {
   /**
    * Sets segment elevation change from inlet to outlet.
    *
-   * @param segmentId       segment id or {@code fromNode->toNode} route reference
+   * @param segmentId segment id or {@code fromNode->toNode} route reference
    * @param elevationChange elevation change, positive for uphill and negative for downhill
-   * @param unit            unit for {@code elevationChange}, for example {@code m}, {@code ft}
+   * @param unit unit for {@code elevationChange}, for example {@code m}, {@code ft}
    * @return this builder for chaining
    * @throws IllegalArgumentException if the segment cannot be found or the unit is invalid
    */
@@ -132,7 +132,7 @@ public class PipingRouteBuilder implements Serializable {
    *
    * @param segmentId segment id or {@code fromNode->toNode} route reference
    * @param roughness roughness, must be non-negative
-   * @param unit      unit for {@code roughness}, for example {@code m}, {@code mm}, {@code micrometer}
+   * @param unit unit for {@code roughness}, for example {@code m}, {@code mm}, {@code micrometer}
    * @return this builder for chaining
    * @throws IllegalArgumentException if the segment cannot be found or the value/unit is invalid
    */
@@ -146,9 +146,9 @@ public class PipingRouteBuilder implements Serializable {
   /**
    * Adds one K-value minor loss to a segment.
    *
-   * @param segmentId   segment id or {@code fromNode->toNode} route reference
+   * @param segmentId segment id or {@code fromNode->toNode} route reference
    * @param fittingType fitting, valve, strainer, bend, or equipment-loss description
-   * @param kValue      resistance coefficient K, must be non-negative
+   * @param kValue resistance coefficient K, must be non-negative
    * @return this builder for chaining
    * @throws IllegalArgumentException if the segment cannot be found or the K value is invalid
    */
@@ -164,7 +164,7 @@ public class PipingRouteBuilder implements Serializable {
    * Sets the default wall roughness used for segments without explicit roughness.
    *
    * @param roughness roughness, must be non-negative
-   * @param unit      unit for {@code roughness}, for example {@code m}, {@code mm}, {@code micrometer}
+   * @param unit unit for {@code roughness}, for example {@code m}, {@code mm}, {@code micrometer}
    * @return this builder for chaining
    * @throws IllegalArgumentException if the roughness or unit is invalid
    */
@@ -220,7 +220,7 @@ public class PipingRouteBuilder implements Serializable {
    * @param inletStream inlet stream for the first pipe segment, must not be null
    * @return process system containing the inlet stream and route pipe units
    * @throws IllegalArgumentException if no route segments have been added
-   * @throws NullPointerException     if {@code inletStream} is null
+   * @throws NullPointerException if {@code inletStream} is null
    */
   public ProcessSystem build(StreamInterface inletStream) {
     Objects.requireNonNull(inletStream, "inletStream");
@@ -241,11 +241,11 @@ public class PipingRouteBuilder implements Serializable {
    * directly to downstream equipment constructors.
    * </p>
    *
-   * @param process     process system that will receive the generated pipe units, must not be null
+   * @param process process system that will receive the generated pipe units, must not be null
    * @param inletStream stream connected to the first generated pipe, must not be null
    * @return outlet stream from the last generated pipe
    * @throws IllegalArgumentException if no route segments have been added
-   * @throws NullPointerException     if {@code process} or {@code inletStream} is null
+   * @throws NullPointerException if {@code process} or {@code inletStream} is null
    */
   public StreamInterface addToProcessSystem(ProcessSystem process, StreamInterface inletStream) {
     Objects.requireNonNull(inletStream, "inletStream");
@@ -262,13 +262,13 @@ public class PipingRouteBuilder implements Serializable {
    * the topology metadata in {@link ProcessConnection} records.
    * </p>
    *
-   * @param process             process system that will receive the generated pipe units, must not be null
-   * @param inletStream         stream connected to the first generated pipe, must not be null
+   * @param process process system that will receive the generated pipe units, must not be null
+   * @param inletStream stream connected to the first generated pipe, must not be null
    * @param sourceEquipmentName upstream equipment name for the first material connection
-   * @param sourcePortName      upstream port name for the first material connection
+   * @param sourcePortName upstream port name for the first material connection
    * @return outlet stream from the last generated pipe
    * @throws IllegalArgumentException if no route segments have been added or source metadata is blank
-   * @throws NullPointerException     if {@code process} or {@code inletStream} is null
+   * @throws NullPointerException if {@code process} or {@code inletStream} is null
    */
   public StreamInterface addToProcessSystem(ProcessSystem process, StreamInterface inletStream,
       String sourceEquipmentName, String sourcePortName) {
@@ -324,7 +324,7 @@ public class PipingRouteBuilder implements Serializable {
   /**
    * Creates and configures one Beggs-and-Brill pipe for a route segment.
    *
-   * @param segment     route segment definition
+   * @param segment route segment definition
    * @param inletStream inlet stream connected to the pipe
    * @return configured pipe unit
    */
@@ -420,7 +420,7 @@ public class PipingRouteBuilder implements Serializable {
   /**
    * Requires a non-empty text value.
    *
-   * @param value     text value to validate
+   * @param value text value to validate
    * @param fieldName field name used in error messages
    * @return trimmed text value
    * @throws IllegalArgumentException if the value is null or blank
@@ -435,7 +435,7 @@ public class PipingRouteBuilder implements Serializable {
   /**
    * Requires a finite positive value.
    *
-   * @param value     numeric value to validate
+   * @param value numeric value to validate
    * @param fieldName field name used in error messages
    * @return validated value
    * @throws IllegalArgumentException if the value is not finite and positive
@@ -451,7 +451,7 @@ public class PipingRouteBuilder implements Serializable {
   /**
    * Requires a finite non-negative value.
    *
-   * @param value     numeric value to validate
+   * @param value numeric value to validate
    * @param fieldName field name used in error messages
    * @return validated value
    * @throws IllegalArgumentException if the value is not finite or is negative
@@ -467,7 +467,7 @@ public class PipingRouteBuilder implements Serializable {
   /**
    * Requires a finite value.
    *
-   * @param value     numeric value to validate
+   * @param value numeric value to validate
    * @param fieldName field name used in error messages
    * @return validated value
    * @throws IllegalArgumentException if the value is NaN or infinite
@@ -483,8 +483,8 @@ public class PipingRouteBuilder implements Serializable {
    * Converts a length-like value to meters.
    *
    * @param value value to convert
-   * @param unit  source unit, for example {@code m}, {@code km}, {@code mm}, {@code inch}, {@code ft}, or
-   *              {@code micrometer}
+   * @param unit source unit, for example {@code m}, {@code km}, {@code mm}, {@code inch}, {@code ft}, or
+   * {@code micrometer}
    * @return value converted to meters
    * @throws IllegalArgumentException if the unit is blank or unsupported
    */
@@ -539,11 +539,11 @@ public class PipingRouteBuilder implements Serializable {
     /**
      * Creates one route segment.
      *
-     * @param segmentId             unique segment id
-     * @param fromNode              upstream node name
-     * @param toNode                downstream node name
-     * @param sourceLength          original length value before unit conversion
-     * @param lengthMeters          converted length in meters
+     * @param segmentId unique segment id
+     * @param fromNode upstream node name
+     * @param toNode downstream node name
+     * @param sourceLength original length value before unit conversion
+     * @param lengthMeters converted length in meters
      * @param sourceNominalDiameter original diameter value before unit conversion
      * @param nominalDiameterMeters converted hydraulic diameter in meters
      */
@@ -750,8 +750,8 @@ public class PipingRouteBuilder implements Serializable {
     /**
      * Creates one minor loss.
      *
-     * @param fittingType           fitting or valve description
-     * @param kValue                resistance coefficient K
+     * @param fittingType fitting or valve description
+     * @param kValue resistance coefficient K
      * @param equivalentLengthRatio equivalent length ratio L/D
      */
     private MinorLoss(String fittingType, double kValue, double equivalentLengthRatio) {

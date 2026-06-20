@@ -396,7 +396,7 @@ public final class OperationalStudyRunner {
   /**
    * Applies design capacities when supplied and tags default data sources otherwise.
    *
-   * @param input   operational study input
+   * @param input operational study input
    * @param process process system to update
    * @return report of applied design capacities, or null when no design capacities were supplied
    */
@@ -548,7 +548,7 @@ public final class OperationalStudyRunner {
   /**
    * Builds one operational scenario from a JSON object.
    *
-   * @param input       scenario JSON object containing actions
+   * @param input scenario JSON object containing actions
    * @param defaultName default scenario name
    * @return operational scenario
    */
@@ -580,9 +580,9 @@ public final class OperationalStudyRunner {
   /**
    * Passes an optional JSON field through to the output.
    *
-   * @param input      source JSON object
-   * @param result     target JSON object
-   * @param inputName  source field name
+   * @param input source JSON object
+   * @param result target JSON object
+   * @param inputName source field name
    * @param outputName target field name
    */
   private static void addOptionalPassThrough(JsonObject input, JsonObject result, String inputName, String outputName) {
@@ -644,8 +644,8 @@ public final class OperationalStudyRunner {
   /**
    * Reads an array under either of two accepted names.
    *
-   * @param input     JSON object
-   * @param primary   primary field name
+   * @param input JSON object
+   * @param primary primary field name
    * @param secondary secondary field name
    * @return JSON array
    * @throws IllegalArgumentException if neither field contains an array
@@ -698,8 +698,8 @@ public final class OperationalStudyRunner {
   /**
    * Returns an optional double field.
    *
-   * @param input        source JSON object
-   * @param field        field name
+   * @param input source JSON object
+   * @param field field name
    * @param defaultValue value returned when the field is missing
    * @return field value or default value
    */
@@ -710,8 +710,8 @@ public final class OperationalStudyRunner {
   /**
    * Returns an optional boolean field.
    *
-   * @param input        source JSON object
-   * @param field        field name
+   * @param input source JSON object
+   * @param field field name
    * @param defaultValue value returned when the field is missing
    * @return field value or default value
    */
@@ -722,8 +722,8 @@ public final class OperationalStudyRunner {
   /**
    * Returns an optional string field.
    *
-   * @param input        source JSON object
-   * @param field        field name
+   * @param input source JSON object
+   * @param field field name
    * @param defaultValue value returned when the field is missing
    * @return field value or default value
    */
@@ -773,7 +773,7 @@ public final class OperationalStudyRunner {
    * Adds a process report to a result when available.
    *
    * @param process process system
-   * @param result  result object to update
+   * @param result result object to update
    */
   private static void addProcessReport(ProcessSystem process, JsonObject result) {
     String report = process.getReport_json();
@@ -804,8 +804,8 @@ public final class OperationalStudyRunner {
   /**
    * Builds a standard error JSON response.
    *
-   * @param code        error code
-   * @param message     human-readable message
+   * @param code error code
+   * @param message human-readable message
    * @param remediation remediation guidance
    * @return JSON string
    */

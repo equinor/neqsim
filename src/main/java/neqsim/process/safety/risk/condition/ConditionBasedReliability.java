@@ -232,8 +232,8 @@ public class ConditionBasedReliability implements Serializable {
   /**
    * Creates a condition-based reliability model.
    *
-   * @param equipmentId     equipment identifier
-   * @param equipmentName   equipment name
+   * @param equipmentId equipment identifier
+   * @param equipmentName equipment name
    * @param baseFailureRate base failure rate (failures/hour)
    */
   public ConditionBasedReliability(String equipmentId, String equipmentName, double baseFailureRate) {
@@ -258,10 +258,10 @@ public class ConditionBasedReliability implements Serializable {
   /**
    * Creates and adds a vibration indicator.
    *
-   * @param id       indicator ID
-   * @param name     indicator name
-   * @param normal   normal value (mm/s RMS)
-   * @param warning  warning threshold
+   * @param id indicator ID
+   * @param name indicator name
+   * @param normal normal value (mm/s RMS)
+   * @param warning warning threshold
    * @param critical critical threshold
    * @return created indicator
    */
@@ -276,10 +276,10 @@ public class ConditionBasedReliability implements Serializable {
   /**
    * Creates and adds a temperature indicator.
    *
-   * @param id       indicator ID
-   * @param name     indicator name
-   * @param normal   normal temperature (C)
-   * @param warning  warning threshold
+   * @param id indicator ID
+   * @param name indicator name
+   * @param normal normal temperature (C)
+   * @param warning warning threshold
    * @param critical critical threshold
    * @return created indicator
    */
@@ -295,7 +295,7 @@ public class ConditionBasedReliability implements Serializable {
    * Updates indicator value and recalculates health.
    *
    * @param indicatorId indicator ID
-   * @param value       new value
+   * @param value new value
    */
   public void updateIndicator(String indicatorId, double value) {
     for (ConditionIndicator indicator : indicators) {

@@ -231,9 +231,9 @@ public class ControllerDataExchange implements Serializable {
   /**
    * Update input values with quality flags.
    *
-   * @param mvValues  current MV values
-   * @param cvValues  current CV values
-   * @param dvValues  current DV values
+   * @param mvValues current MV values
+   * @param cvValues current CV values
+   * @param dvValues current DV values
    * @param mvQuality MV quality flags
    * @param cvQuality CV quality flags
    * @param dvQuality DV quality flags
@@ -275,7 +275,7 @@ public class ControllerDataExchange implements Serializable {
   /**
    * Update CV limits from external source.
    *
-   * @param lowLimits  new low limits
+   * @param lowLimits new low limits
    * @param highLimits new high limits
    */
   public void updateLimits(double[] lowLimits, double[] highLimits) {
@@ -488,11 +488,11 @@ public class ControllerDataExchange implements Serializable {
     /**
      * Construct a controller output.
      *
-     * @param mvTargets     the MV target values
+     * @param mvTargets the MV target values
      * @param cvPredictions the CV prediction trajectories
-     * @param status        the execution status
-     * @param message       the execution message
-     * @param timestamp     the execution timestamp
+     * @param status the execution status
+     * @param message the execution message
+     * @param timestamp the execution timestamp
      */
     public ControllerOutput(double[] mvTargets, double[][] cvPredictions, ExecutionStatus status, String message,
 	Instant timestamp) {

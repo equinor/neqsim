@@ -372,7 +372,7 @@ public class CfdSourceTermCase implements Serializable {
   /**
    * Creates an inventory map.
    *
-   * @param inventoryResult        optional trapped inventory result
+   * @param inventoryResult optional trapped inventory result
    * @param representativeVolumeM3 representative fallback volume in m3
    * @return ordered inventory map
    */
@@ -429,7 +429,7 @@ public class CfdSourceTermCase implements Serializable {
   /**
    * Returns the maximum finite value from two endpoint distances.
    *
-   * @param first  first endpoint value
+   * @param first first endpoint value
    * @param second second endpoint value
    * @return maximum finite value, or NaN if neither value is finite
    */
@@ -545,8 +545,8 @@ public class CfdSourceTermCase implements Serializable {
   /**
    * Requires a text value.
    *
-   * @param value  text value
-   * @param field  field name
+   * @param value text value
+   * @param field field name
    * @param errors error list
    */
   private static void requireText(String value, String field, List<String> errors) {
@@ -558,8 +558,8 @@ public class CfdSourceTermCase implements Serializable {
   /**
    * Requires a map value.
    *
-   * @param map    map to check
-   * @param field  field name
+   * @param map map to check
+   * @param field field name
    * @param errors error list
    */
   private static void requireMap(Map<String, Object> map, String field, List<String> errors) {
@@ -571,8 +571,8 @@ public class CfdSourceTermCase implements Serializable {
   /**
    * Requires a positive numeric value.
    *
-   * @param value  value to check
-   * @param field  field name
+   * @param value value to check
+   * @param field field name
    * @param errors error list
    */
   private static void requirePositiveNumber(Object value, String field, List<String> errors) {
@@ -800,7 +800,7 @@ public class CfdSourceTermCase implements Serializable {
     /**
      * Creates a validation result.
      *
-     * @param errors   validation errors
+     * @param errors validation errors
      * @param warnings validation warnings
      */
     private ValidationResult(List<String> errors, List<String> warnings) {

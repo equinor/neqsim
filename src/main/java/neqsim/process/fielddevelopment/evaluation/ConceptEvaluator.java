@@ -134,9 +134,9 @@ public class ConceptEvaluator {
    * </p>
    *
    * @param flowAssuranceScreener custom flow assurance screener
-   * @param safetyScreener        custom safety screener
-   * @param emissionsTracker      custom emissions tracker
-   * @param economicsEstimator    custom economics estimator
+   * @param safetyScreener custom safety screener
+   * @param emissionsTracker custom emissions tracker
+   * @param economicsEstimator custom economics estimator
    */
   public ConceptEvaluator(FlowAssuranceScreener flowAssuranceScreener, SafetyScreener safetyScreener,
       EmissionsTracker emissionsTracker, EconomicsEstimator economicsEstimator) {
@@ -172,7 +172,7 @@ public class ConceptEvaluator {
    * configurations for the same reservoir.
    * </p>
    *
-   * @param concept        field concept to evaluate (must not be null)
+   * @param concept field concept to evaluate (must not be null)
    * @param facilityConfig facility configuration defining process blocks
    * @return comprehensive concept KPIs including all screening results
    */
@@ -322,7 +322,7 @@ public class ConceptEvaluator {
   /**
    * Gets the peak production rate in profile units.
    *
-   * @param concept    field concept
+   * @param concept field concept
    * @param gasConcept true for gas concepts
    * @return gas rate in Sm3/d or oil rate in bbl/d
    */
@@ -348,9 +348,9 @@ public class ConceptEvaluator {
   /**
    * Calculates cumulative production in the resource unit.
    *
-   * @param profile           annual production profile
-   * @param gasConcept        true for gas concepts
-   * @param resourceUnit      resource unit
+   * @param profile annual production profile
+   * @param gasConcept true for gas concepts
+   * @param resourceUnit resource unit
    * @param targetRecoverable target recoverable resource in the resource unit
    * @return cumulative production in the resource unit
    */
@@ -369,9 +369,9 @@ public class ConceptEvaluator {
   /**
    * Estimates field life from the profile and recoverable-resource target.
    *
-   * @param profile           annual production profile
-   * @param gasConcept        true for gas concepts
-   * @param resourceUnit      resource unit
+   * @param profile annual production profile
+   * @param gasConcept true for gas concepts
+   * @param resourceUnit resource unit
    * @param targetRecoverable target recoverable resource in the resource unit
    * @return field life in years
    */
@@ -396,7 +396,7 @@ public class ConceptEvaluator {
    * Converts an annual profile volume to the reservoir resource unit.
    *
    * @param annualVolume annual volume in Sm3 for gas or bbl for oil
-   * @param gasConcept   true for gas concepts
+   * @param gasConcept true for gas concepts
    * @param resourceUnit resource unit
    * @return annual volume in the resource unit
    */

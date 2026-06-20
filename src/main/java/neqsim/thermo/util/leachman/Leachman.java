@@ -130,15 +130,15 @@ public class Leachman {
    * the state point is 2-phase, the output density will represent a metastable state.
    *
    * @param iFlag Set to 0 for strict pressure solver in the gas phase without checks (fastest mode, but output state
-   *              may not be stable single phase). Set to 1 to make checks for possible 2-phase states (result may still
-   *              not be stable single phase, but many unstable states will be identified). Set to 2 to search for
-   *              liquid phase (and make the same checks when iFlag=1).
-   * @param T     Temperature (K)
-   * @param P     Pressure (kPa)
-   * @param D     Density (mol/l). For the liquid phase, an initial value can be sent to the routine to avoid a solution
-   *              in the metastable or gas phases. The initial value should be sent as a negative number.
-   * @param ierr  Error number (0 indicates no error)
-   * @param herr  Error message if ierr is not equal to zero
+   * may not be stable single phase). Set to 1 to make checks for possible 2-phase states (result may still not be
+   * stable single phase, but many unstable states will be identified). Set to 2 to search for liquid phase (and make
+   * the same checks when iFlag=1).
+   * @param T Temperature (K)
+   * @param P Pressure (kPa)
+   * @param D Density (mol/l). For the liquid phase, an initial value can be sent to the routine to avoid a solution in
+   * the metastable or gas phases. The initial value should be sent as a negative number.
+   * @param ierr Error number (0 indicates no error)
+   * @param herr Error message if ierr is not equal to zero
    */
   public void DensityLeachman(int iFlag, double T, double P, doubleW D, intW ierr, StringW herr) {
     // Sub DensityGERG(iFlag, T, P, x, D, ierr, herr)
@@ -342,11 +342,11 @@ public class Leachman {
    * <li>ar(2,0) - tau^2*partial^2(ar)/partial(tau)^2</li>
    * </ul>
    *
-   * @param itau   Order of derivative with respect to tau
+   * @param itau Order of derivative with respect to tau
    * @param idelta Order of derivative with respect to delta
-   * @param T      Temperature (K)
-   * @param D      Density (mol/l)
-   * @param ar     Output array for Helmholtz energy and its derivatives
+   * @param T Temperature (K)
+   * @param D Density (mol/l)
+   * @param ar Output array for Helmholtz energy and its derivatives
    */
   void AlpharLeachman(int itau, int idelta, double T, double D, doubleW[][] ar) {
     // Select parameters based on hydrogen type
@@ -508,8 +508,8 @@ public class Leachman {
   /**
    * Calculate the ideal gas Helmholtz energy and its derivatives with respect to tau and delta.
    *
-   * @param T  Temperature (K)
-   * @param D  Density (mol/l)
+   * @param T Temperature (K)
+   * @param D Density (mol/l)
    * @param a0 Output array for ideal gas Helmholtz energy and its derivatives
    */
   void Alpha0Leachman(double T, double D, doubleW[] a0) {
@@ -564,24 +564,24 @@ public class Leachman {
    * PropertiesGERG.
    * </p>
    *
-   * @param T      a double
-   * @param D      a double
-   * @param P      a {@link org.netlib.util.doubleW} object
-   * @param Z      a {@link org.netlib.util.doubleW} object
-   * @param dPdD   a {@link org.netlib.util.doubleW} object
+   * @param T a double
+   * @param D a double
+   * @param P a {@link org.netlib.util.doubleW} object
+   * @param Z a {@link org.netlib.util.doubleW} object
+   * @param dPdD a {@link org.netlib.util.doubleW} object
    * @param d2PdD2 a {@link org.netlib.util.doubleW} object
    * @param d2PdTD a {@link org.netlib.util.doubleW} object
-   * @param dPdT   a {@link org.netlib.util.doubleW} object
-   * @param U      a {@link org.netlib.util.doubleW} object
-   * @param H      a {@link org.netlib.util.doubleW} object
-   * @param S      a {@link org.netlib.util.doubleW} object
-   * @param Cv     a {@link org.netlib.util.doubleW} object
-   * @param Cp     a {@link org.netlib.util.doubleW} object
-   * @param W      a {@link org.netlib.util.doubleW} object
-   * @param G      a {@link org.netlib.util.doubleW} object
-   * @param JT     a {@link org.netlib.util.doubleW} object
-   * @param Kappa  a {@link org.netlib.util.doubleW} object
-   * @param A      a {@link org.netlib.util.doubleW} object
+   * @param dPdT a {@link org.netlib.util.doubleW} object
+   * @param U a {@link org.netlib.util.doubleW} object
+   * @param H a {@link org.netlib.util.doubleW} object
+   * @param S a {@link org.netlib.util.doubleW} object
+   * @param Cv a {@link org.netlib.util.doubleW} object
+   * @param Cp a {@link org.netlib.util.doubleW} object
+   * @param W a {@link org.netlib.util.doubleW} object
+   * @param G a {@link org.netlib.util.doubleW} object
+   * @param JT a {@link org.netlib.util.doubleW} object
+   * @param Kappa a {@link org.netlib.util.doubleW} object
+   * @param A a {@link org.netlib.util.doubleW} object
    */
   public void propertiesLeachman(double T, double D, doubleW P, doubleW Z, doubleW dPdD, doubleW d2PdD2, doubleW d2PdTD,
       doubleW dPdT, doubleW U, doubleW H, doubleW S, doubleW Cv, doubleW Cp, doubleW W, doubleW G, doubleW JT,

@@ -125,7 +125,7 @@ public final class ProcessModelGraphBuilder {
    * </p>
    *
    * @param modelName name for the combined model
-   * @param systems   the process systems to combine
+   * @param systems the process systems to combine
    * @return the constructed ProcessModelGraph
    */
   public static ProcessModelGraph buildModelGraph(String modelName, ProcessSystem... systems) {
@@ -193,9 +193,9 @@ public final class ProcessModelGraphBuilder {
    * equipment.
    *
    * @param subSystemGraphs list of sub-system graphs to analyze
-   * @param nodeToSystem    mapping from nodes to their owning system names
-   * @param connections     list to populate with detected inter-system connections
-   * @param flattenedGraph  the flattened graph containing all nodes
+   * @param nodeToSystem mapping from nodes to their owning system names
+   * @param connections list to populate with detected inter-system connections
+   * @param flattenedGraph the flattened graph containing all nodes
    */
   private static void detectInterSystemConnections(List<ProcessModelGraph.SubSystemGraph> subSystemGraphs,
       Map<ProcessNode, String> nodeToSystem, List<ProcessModelGraph.InterSystemConnection> connections,
@@ -355,10 +355,10 @@ public final class ProcessModelGraphBuilder {
   /**
    * Collect output streams from specific equipment types.
    *
-   * @param equipment       the equipment to collect outputs from
-   * @param systemName      the name of the system containing the equipment
+   * @param equipment the equipment to collect outputs from
+   * @param systemName the name of the system containing the equipment
    * @param streamProducers map to populate with stream-to-producer mappings
-   * @param streamToSystem  map to populate with stream-to-system mappings
+   * @param streamToSystem map to populate with stream-to-system mappings
    */
   private static void collectEquipmentOutputs(ProcessEquipmentInterface equipment, String systemName,
       Map<Object, ProcessEquipmentInterface> streamProducers, Map<Object, String> streamToSystem) {
@@ -480,8 +480,8 @@ public final class ProcessModelGraphBuilder {
    * Check if a connection already exists.
    *
    * @param connections the list of existing connections
-   * @param source      the source node
-   * @param target      the target node
+   * @param source the source node
+   * @param target the target node
    * @return true if the connection exists, false otherwise
    */
   private static boolean connectionExists(List<ProcessModelGraph.InterSystemConnection> connections, ProcessNode source,
@@ -516,12 +516,12 @@ public final class ProcessModelGraphBuilder {
   /**
    * Check Mixer inputs for cross-system connections.
    *
-   * @param mixer            the mixer equipment to check
+   * @param mixer the mixer equipment to check
    * @param targetSystemName the name of the target process system
-   * @param streamProducers  map from streams to their producing equipment
-   * @param streamToSystem   map from streams to their originating system name
-   * @param flattenedGraph   the flattened process graph
-   * @param connections      list to populate with discovered inter-system connections
+   * @param streamProducers map from streams to their producing equipment
+   * @param streamToSystem map from streams to their originating system name
+   * @param flattenedGraph the flattened process graph
+   * @param connections list to populate with discovered inter-system connections
    */
   private static void checkMixerInputs(ProcessEquipmentInterface mixer, String targetSystemName,
       Map<Object, ProcessEquipmentInterface> streamProducers, Map<Object, String> streamToSystem,
@@ -570,7 +570,7 @@ public final class ProcessModelGraphBuilder {
   /**
    * Find a field in class hierarchy.
    *
-   * @param clazz     the class to search
+   * @param clazz the class to search
    * @param fieldName the name of the field to find
    * @return the field, or null if not found
    */

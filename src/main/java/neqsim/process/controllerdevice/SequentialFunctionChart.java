@@ -67,8 +67,8 @@ public class SequentialFunctionChart implements Serializable {
    * Adds a transition between two steps.
    *
    * @param fromStep source step name
-   * @param toStep   target step name
-   * @param guard    the boolean condition that must be true to advance
+   * @param toStep target step name
+   * @param guard the boolean condition that must be true to advance
    */
   public void addTransition(String fromStep, String toStep, BooleanSupplier guard) {
     transitions.add(new SfcTransition(fromStep, toStep, guard));
@@ -77,8 +77,8 @@ public class SequentialFunctionChart implements Serializable {
   /**
    * Adds a timed transition that fires after the specified duration in the source step.
    *
-   * @param fromStep     source step name
-   * @param toStep       target step name
+   * @param fromStep source step name
+   * @param toStep target step name
    * @param delaySeconds time in seconds the step must be active before transition fires
    */
   public void addTimedTransition(String fromStep, String toStep, double delaySeconds) {
@@ -357,8 +357,8 @@ public class SequentialFunctionChart implements Serializable {
      * Constructs a transition.
      *
      * @param fromStep source step name
-     * @param toStep   target step name
-     * @param guard    the guard condition
+     * @param toStep target step name
+     * @param guard the guard condition
      */
     public SfcTransition(String fromStep, String toStep, BooleanSupplier guard) {
       this.fromStep = fromStep;

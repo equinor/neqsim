@@ -27,10 +27,10 @@ public class ComponentDesmukhMather extends ComponentGE {
    * Constructor for ComponentDesmukhMather.
    * </p>
    *
-   * @param name         Name of component.
-   * @param moles        Total number of moles of component.
+   * @param name Name of component.
+   * @param moles Total number of moles of component.
    * @param molesInPhase Number of moles in phase.
-   * @param compIndex    Index number of component in phase object component array.
+   * @param compIndex Index number of component in phase object component array.
    */
   public ComponentDesmukhMather(String name, double moles, double molesInPhase, int compIndex) {
     super(name, moles, molesInPhase, compIndex);
@@ -68,11 +68,11 @@ public class ComponentDesmukhMather extends ComponentGE {
    * getGamma.
    * </p>
    *
-   * @param phase              a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
-   * @param temperature        a double
-   * @param pressure           a double
-   * @param pt                 the PhaseType of the phase
+   * @param temperature a double
+   * @param pressure a double
+   * @param pt the PhaseType of the phase
    * @return a double
    */
   public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,

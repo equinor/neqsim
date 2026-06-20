@@ -226,7 +226,7 @@ public class PhysicsBasedRiskMonitor implements Serializable {
    * Sets base failure rate for specific equipment.
    *
    * @param equipmentName equipment name
-   * @param failureRate   failure rate in failures per hour
+   * @param failureRate failure rate in failures per hour
    */
   public void setBaseFailureRate(String equipmentName, double failureRate) {
     baseFailureRates.put(equipmentName, failureRate);
@@ -240,8 +240,8 @@ public class PhysicsBasedRiskMonitor implements Serializable {
    * Sets design limits for equipment temperature monitoring.
    *
    * @param equipmentName equipment name
-   * @param minTemp       minimum design temperature in Kelvin
-   * @param maxTemp       maximum design temperature in Kelvin
+   * @param minTemp minimum design temperature in Kelvin
+   * @param maxTemp maximum design temperature in Kelvin
    */
   public void setDesignTemperatureRange(String equipmentName, double minTemp, double maxTemp) {
     ProcessEquipmentMonitor monitor = equipmentMonitors.get(equipmentName);
@@ -254,8 +254,8 @@ public class PhysicsBasedRiskMonitor implements Serializable {
    * Sets design limits for equipment pressure monitoring.
    *
    * @param equipmentName equipment name
-   * @param minPressure   minimum design pressure in bara
-   * @param maxPressure   maximum design pressure in bara
+   * @param minPressure minimum design pressure in bara
+   * @param maxPressure maximum design pressure in bara
    */
   public void setDesignPressureRange(String equipmentName, double minPressure, double maxPressure) {
     ProcessEquipmentMonitor monitor = equipmentMonitors.get(equipmentName);

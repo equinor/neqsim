@@ -15,9 +15,9 @@ public class NotInitializedException extends neqsim.util.exception.ThermoExcepti
   /**
    * Constructs an <code>NotInitializedException</code> with the specified detail message.
    *
-   * @param className  Class exception is raised from
+   * @param className Class exception is raised from
    * @param methodName Method exception is raised from
-   * @param msg        Detailed error message
+   * @param msg Detailed error message
    */
   public NotInitializedException(String className, String methodName, String msg) {
     super(className, methodName, msg);
@@ -26,9 +26,9 @@ public class NotInitializedException extends neqsim.util.exception.ThermoExcepti
   /**
    * Constructs an <code>NotInitializedException</code> with default detail message.
    *
-   * @param className  Class exception is raised from
+   * @param className Class exception is raised from
    * @param methodName Method exception is raised from
-   * @param parameter  Parameter not initialized
+   * @param parameter Parameter not initialized
    * @param initMethod Method to call to initialize parameter
    */
   public NotInitializedException(String className, String methodName, String parameter, String initMethod) {
@@ -39,9 +39,9 @@ public class NotInitializedException extends neqsim.util.exception.ThermoExcepti
   /**
    * Constructs an <code>NotInitializedException</code> with the specified detail message.
    *
-   * @param obj        Object exception is raised from
+   * @param obj Object exception is raised from
    * @param methodName Method exception is raised from
-   * @param msg        Detailed error message
+   * @param msg Detailed error message
    */
   public NotInitializedException(Object obj, String methodName, String msg) {
     this(obj.getClass().getSimpleName(), methodName, msg);
@@ -50,9 +50,9 @@ public class NotInitializedException extends neqsim.util.exception.ThermoExcepti
   /**
    * Constructs an <code>NotInitializedException</code> with default detail message.
    *
-   * @param obj        Object exception is raised from
+   * @param obj Object exception is raised from
    * @param methodName Method exception is raised from
-   * @param parameter  Parameter not initialized
+   * @param parameter Parameter not initialized
    * @param initMethod Method to call to initialize parameter
    */
   public NotInitializedException(Object obj, String methodName, String parameter, String initMethod) {

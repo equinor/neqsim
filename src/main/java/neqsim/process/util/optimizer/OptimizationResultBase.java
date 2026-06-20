@@ -104,11 +104,11 @@ public class OptimizationResultBase implements Serializable {
     /**
      * Constructor with all fields.
      *
-     * @param equipmentName    name of equipment
-     * @param constraintName   name of constraint
-     * @param currentValue     current value
-     * @param limitValue       limit value
-     * @param unit             unit of measurement
+     * @param equipmentName name of equipment
+     * @param constraintName name of constraint
+     * @param currentValue current value
+     * @param limitValue limit value
+     * @param unit unit of measurement
      * @param isHardConstraint whether this is a hard constraint
      */
     public ConstraintViolation(String equipmentName, String constraintName, double currentValue, double limitValue,

@@ -100,7 +100,7 @@ public class MultiEffectEvaporator extends ProcessEquipmentBaseClass {
   /**
    * Constructor for MultiEffectEvaporator with inlet stream.
    *
-   * @param name        name of the evaporator
+   * @param name name of the evaporator
    * @param inletStream the feed stream
    */
   public MultiEffectEvaporator(String name, StreamInterface inletStream) {

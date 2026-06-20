@@ -40,19 +40,19 @@ public final class DevelopmentCaseTemplate implements Serializable {
   /**
    * Creates a development case template.
    *
-   * @param name                      case name
-   * @param caseType                  case type label
-   * @param concept                   field concept
-   * @param facilityConfig            facility configuration or null if not generated
-   * @param capexBreakdownMusd        CAPEX breakdown in MUSD
-   * @param productionProfile         annual production profile in Sm3/year for gas or bbl/year for oil
-   * @param annualOpexMusd            annual OPEX in MUSD/year
-   * @param powerMw                   estimated power demand in MW
-   * @param annualEmissionsTonnes     annual emissions in tonnes CO2e/year
-   * @param firstProductionYear       first production year
+   * @param name case name
+   * @param caseType case type label
+   * @param concept field concept
+   * @param facilityConfig facility configuration or null if not generated
+   * @param capexBreakdownMusd CAPEX breakdown in MUSD
+   * @param productionProfile annual production profile in Sm3/year for gas or bbl/year for oil
+   * @param annualOpexMusd annual OPEX in MUSD/year
+   * @param powerMw estimated power demand in MW
+   * @param annualEmissionsTonnes annual emissions in tonnes CO2e/year
+   * @param firstProductionYear first production year
    * @param developmentDurationMonths development duration in months
-   * @param economics                 cash-flow result
-   * @param assumptionsSummary        concise assumptions summary
+   * @param economics cash-flow result
+   * @param assumptionsSummary concise assumptions summary
    */
   public DevelopmentCaseTemplate(String name, String caseType, FieldConcept concept, FacilityConfig facilityConfig,
       Map<String, Double> capexBreakdownMusd, Map<Integer, Double> productionProfile, double annualOpexMusd,
@@ -66,20 +66,20 @@ public final class DevelopmentCaseTemplate implements Serializable {
   /**
    * Creates a development case template with uncertainty and lifecycle emissions.
    *
-   * @param name                      case name
-   * @param caseType                  case type label
-   * @param concept                   field concept
-   * @param facilityConfig            facility configuration or null if not generated
-   * @param capexBreakdownMusd        CAPEX breakdown in MUSD
-   * @param productionProfile         annual production profile in Sm3/year for gas or bbl/year for oil
-   * @param annualOpexMusd            annual OPEX in MUSD/year
-   * @param powerMw                   estimated power demand in MW
-   * @param annualEmissionsTonnes     annual emissions in tonnes CO2e/year
-   * @param firstProductionYear       first production year
+   * @param name case name
+   * @param caseType case type label
+   * @param concept field concept
+   * @param facilityConfig facility configuration or null if not generated
+   * @param capexBreakdownMusd CAPEX breakdown in MUSD
+   * @param productionProfile annual production profile in Sm3/year for gas or bbl/year for oil
+   * @param annualOpexMusd annual OPEX in MUSD/year
+   * @param powerMw estimated power demand in MW
+   * @param annualEmissionsTonnes annual emissions in tonnes CO2e/year
+   * @param firstProductionYear first production year
    * @param developmentDurationMonths development duration in months
-   * @param economics                 cash-flow result
-   * @param assumptionsSummary        concise assumptions summary
-   * @param uncertainty               probabilistic assumption bundle
+   * @param economics cash-flow result
+   * @param assumptionsSummary concise assumptions summary
+   * @param uncertainty probabilistic assumption bundle
    * @param lifecycleEmissionsProfile lifecycle emissions time series
    */
   public DevelopmentCaseTemplate(String name, String caseType, FieldConcept concept, FacilityConfig facilityConfig,

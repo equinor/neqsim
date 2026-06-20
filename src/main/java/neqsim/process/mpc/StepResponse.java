@@ -64,15 +64,15 @@ public class StepResponse implements Serializable {
   /**
    * Construct a step response.
    *
-   * @param mvName        name of the manipulated variable
-   * @param cvName        name of the controlled variable
-   * @param time          array of time points (seconds)
-   * @param response      array of CV response values
-   * @param stepSize      the step size applied to MV
+   * @param mvName name of the manipulated variable
+   * @param cvName name of the controlled variable
+   * @param time array of time points (seconds)
+   * @param response array of CV response values
+   * @param stepSize the step size applied to MV
    * @param baselineValue CV value before the step
-   * @param sampleTime    sample interval in seconds
-   * @param mvUnit        unit for MV
-   * @param cvUnit        unit for CV
+   * @param sampleTime sample interval in seconds
+   * @param mvUnit unit for MV
+   * @param cvUnit unit for CV
    */
   public StepResponse(String mvName, String cvName, double[] time, double[] response, double stepSize,
       double baselineValue, double sampleTime, String mvUnit, String cvUnit) {

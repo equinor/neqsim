@@ -63,7 +63,7 @@ public class RiskEvent {
   /**
    * Creates a new risk event.
    *
-   * @param name            unique identifier for the event
+   * @param name unique identifier for the event
    * @param initiatingEvent the type of initiating event
    */
   public RiskEvent(String name, InitiatingEvent initiatingEvent) {
@@ -78,8 +78,8 @@ public class RiskEvent {
   /**
    * Creates a new risk event with description.
    *
-   * @param name            unique identifier for the event
-   * @param description     detailed description of the event
+   * @param name unique identifier for the event
+   * @param description detailed description of the event
    * @param initiatingEvent the type of initiating event
    */
   public RiskEvent(String name, String description, InitiatingEvent initiatingEvent) {

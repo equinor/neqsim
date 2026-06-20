@@ -269,8 +269,8 @@ public class PortfolioRiskAnalyzer implements Serializable {
   /**
    * Creates and adds an asset.
    *
-   * @param id            asset ID
-   * @param name          asset name
+   * @param id asset ID
+   * @param name asset name
    * @param maxProduction maximum production rate
    * @return created asset
    */
@@ -292,9 +292,9 @@ public class PortfolioRiskAnalyzer implements Serializable {
   /**
    * Creates a regional weather scenario.
    *
-   * @param region    affected region
+   * @param region affected region
    * @param frequency annual frequency
-   * @param duration  duration in days
+   * @param duration duration in days
    * @return created scenario
    */
   public CommonCauseScenario createRegionalWeatherScenario(String region, double frequency, double duration) {

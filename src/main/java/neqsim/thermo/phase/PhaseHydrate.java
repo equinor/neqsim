@@ -183,8 +183,8 @@ public class PhaseHydrate extends Phase {
    * </p>
    *
    * @param componentName the name of the guest component
-   * @param structure     the hydrate structure (1 for Structure I, 2 for Structure II)
-   * @param cavityType    the cavity type (0 for small cavity, 1 for large cavity)
+   * @param structure the hydrate structure (1 for Structure I, 2 for Structure II)
+   * @param cavityType the cavity type (0 for small cavity, 1 for large cavity)
    * @return the cavity occupancy fraction (0 to 1), or 0 if component not found
    */
   public double getCavityOccupancy(String componentName, int structure, int cavityType) {

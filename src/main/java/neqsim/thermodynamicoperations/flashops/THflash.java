@@ -39,7 +39,7 @@ public class THflash extends QfuncFlash {
    * Constructor for THflash.
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param Hspec  specified enthalpy in J
+   * @param Hspec specified enthalpy in J
    */
   public THflash(SystemInterface system, double Hspec) {
     this.system = system;

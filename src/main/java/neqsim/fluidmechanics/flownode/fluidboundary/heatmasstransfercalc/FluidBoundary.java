@@ -261,7 +261,7 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
    * </p>
    *
    * @param phaseNum a int
-   * @param k        a int
+   * @param k a int
    */
   public void calcFluxTypeCorrectionMatrix(int phaseNum, int k) {
     fluxTypeCorrectionMatrixV[phaseNum] = new Matrix(bulkSystem.getPhase(phaseNum).getNumberOfComponents(), 1);

@@ -123,12 +123,12 @@ public class BiorefineryCostEstimator implements Serializable {
     /**
      * Creates a biorefinery equipment constant.
      *
-     * @param name         display name
+     * @param name display name
      * @param baseCapacity base capacity value
-     * @param unit         capacity unit
-     * @param baseCost     base cost in USD
-     * @param exponent     scaling exponent
-     * @param instFactor   installation factor
+     * @param unit capacity unit
+     * @param baseCost base cost in USD
+     * @param exponent scaling exponent
+     * @param instFactor installation factor
      */
     BiorefineryEquipment(String name, double baseCapacity, String unit, double baseCost, double exponent,
 	double instFactor) {
@@ -274,7 +274,7 @@ public class BiorefineryCostEstimator implements Serializable {
   /**
    * Adds an equipment item with its actual capacity.
    *
-   * @param equipment      the equipment type
+   * @param equipment the equipment type
    * @param actualCapacity the actual capacity in the equipment's native units
    */
   public void addEquipment(BiorefineryEquipment equipment, double actualCapacity) {
@@ -319,9 +319,9 @@ public class BiorefineryCostEstimator implements Serializable {
   /**
    * Sets the product price and annual production for revenue calculation.
    *
-   * @param price      product price per unit
+   * @param price product price per unit
    * @param annualProd annual production in product units
-   * @param unit       product unit description (e.g. "Nm3", "kg", "MWh")
+   * @param unit product unit description (e.g. "Nm3", "kg", "MWh")
    */
   public void setProduct(double price, double annualProd, String unit) {
     this.productPrice = price;
@@ -385,7 +385,7 @@ public class BiorefineryCostEstimator implements Serializable {
    * Sets the utility cost parameters.
    *
    * @param pricePerKWh utility price in USD/kWh
-   * @param annualKWh   annual utility consumption in kWh
+   * @param annualKWh annual utility consumption in kWh
    */
   public void setUtilityCost(double pricePerKWh, double annualKWh) {
     this.utilityCostUSDPerKWh = pricePerKWh;
@@ -430,7 +430,7 @@ public class BiorefineryCostEstimator implements Serializable {
    * Uses the power-law scaling correlation: Cost = BaseCost * (Capacity / BaseCapacity)^n
    * </p>
    *
-   * @param equipment      the equipment type
+   * @param equipment the equipment type
    * @param actualCapacity actual capacity
    * @return purchased equipment cost in USD
    */
@@ -484,7 +484,7 @@ public class BiorefineryCostEstimator implements Serializable {
    * Creates a configured DCFCalculator from this cost estimate for full NPV/IRR analysis.
    *
    * @param projectLifeYears project life in years
-   * @param discountRate     discount rate (e.g. 0.08)
+   * @param discountRate discount rate (e.g. 0.08)
    * @return configured DCFCalculator ready to calculate
    */
   public DCFCalculator toDCFCalculator(int projectLifeYears, double discountRate) {

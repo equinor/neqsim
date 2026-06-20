@@ -60,7 +60,7 @@ public interface SimulationInterface {
    * Setter for the field <code>temperature</code>.
    * </p>
    *
-   * @param temperature     the temperature to set
+   * @param temperature the temperature to set
    * @param temperatureUnit the unit of temperature as string
    */
   public void setTemperature(double temperature, String temperatureUnit);

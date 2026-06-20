@@ -353,7 +353,7 @@ public class EclipseVFPExporter implements Serializable {
   /**
    * Writes an array of values in Eclipse format.
    *
-   * @param out    the appendable to write values to
+   * @param out the appendable to write values to
    * @param values the array of values to write
    * @throws IOException if an I/O error occurs
    */
@@ -376,8 +376,8 @@ public class EclipseVFPExporter implements Serializable {
   /**
    * Writes an array of values with line splitting after specified number of values.
    *
-   * @param out           output appendable
-   * @param values        array of values
+   * @param out output appendable
+   * @param values array of values
    * @param valuesPerLine number of values per line before wrapping
    * @throws IOException if an I/O error occurs
    */
@@ -457,7 +457,7 @@ public class EclipseVFPExporter implements Serializable {
   /**
    * Fills missing values in a row with the nearest valid value.
    *
-   * @param values   array of values (modified in place)
+   * @param values array of values (modified in place)
    * @param hasValue boolean array indicating which values are valid
    */
   private void fillMissingWithNearest(double[] values, boolean[] hasValue) {
@@ -554,10 +554,10 @@ public class EclipseVFPExporter implements Serializable {
    * Gets a BHP value from the table.
    *
    * @param iFlow the flow rate index
-   * @param iTHP  the tubing head pressure index
-   * @param iWC   the water cut index
-   * @param iGOR  the gas-oil ratio index
-   * @param iALQ  the artificial lift quantity index
+   * @param iTHP the tubing head pressure index
+   * @param iWC the water cut index
+   * @param iGOR the gas-oil ratio index
+   * @param iALQ the artificial lift quantity index
    * @return the bottom hole pressure value
    */
   private double getBHPValue(int iFlow, int iTHP, int iWC, int iGOR, int iALQ) {
@@ -667,7 +667,7 @@ public class EclipseVFPExporter implements Serializable {
   /**
    * Exports VFP tables for multiple scenarios.
    *
-   * @param scenarios    list of scenario configurations
+   * @param scenarios list of scenario configurations
    * @param baseFilename base filename for outputs
    * @throws IOException if files cannot be written
    */

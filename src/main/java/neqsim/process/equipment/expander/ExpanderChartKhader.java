@@ -80,8 +80,8 @@ public class ExpanderChartKhader implements Serializable {
   /**
    * Constructs an ExpanderChartKhader with a reference fluid and impeller diameter.
    *
-   * @param referenceFluid   the fluid the OEM map was digitised on (may be {@code null} to skip composition correction
-   *                         and use the head directly)
+   * @param referenceFluid the fluid the OEM map was digitised on (may be {@code null} to skip composition correction
+   * and use the head directly)
    * @param impellerDiameter the impeller outer diameter in m
    */
   public ExpanderChartKhader(SystemInterface referenceFluid, double impellerDiameter) {
@@ -98,9 +98,9 @@ public class ExpanderChartKhader implements Serializable {
    * the same length, but different IGV positions may use a different number of points.
    * </p>
    *
-   * @param igvPositions    array of IGV positions (fraction of maximum area, 0..1), strictly increasing
-   * @param uc              2-D array of velocity ratios U/C, one row per IGV position
-   * @param eta             2-D array of isentropic efficiencies (0..1), one row per IGV position
+   * @param igvPositions array of IGV positions (fraction of maximum area, 0..1), strictly increasing
+   * @param uc 2-D array of velocity ratios U/C, one row per IGV position
+   * @param eta 2-D array of isentropic efficiencies (0..1), one row per IGV position
    * @param headDropKjPerKg 2-D array of isentropic stage head drops in kJ/kg, one row per IGV position
    * @throws IllegalArgumentException if the array shapes are inconsistent
    */
@@ -155,7 +155,7 @@ public class ExpanderChartKhader implements Serializable {
    * Compute (and cache) the reference fluid sound speed used to normalise the head coefficient.
    *
    * @return the reference sound speed in m/s (1.0 if no reference fluid is set, leaving the head effectively
-   *         un-normalised)
+   * un-normalised)
    */
   private double computeReferenceSoundSpeed() {
     if (referenceFluid == null) {
@@ -182,7 +182,7 @@ public class ExpanderChartKhader implements Serializable {
    * Returns whether a performance map has been loaded.
    *
    * @return {@code true} if {@link #setCurves(double[], double[][], double[][], double[][])} has been called with valid
-   *         data
+   * data
    */
   public boolean isMapDefined() {
     return mapDefined;
@@ -191,7 +191,7 @@ public class ExpanderChartKhader implements Serializable {
   /**
    * Get the isentropic efficiency at a given velocity ratio and IGV position using bilinear interpolation over the map.
    *
-   * @param uc  velocity ratio U/C
+   * @param uc velocity ratio U/C
    * @param igv IGV position (fraction of maximum area, 0..1)
    * @return the interpolated isentropic efficiency (0..1)
    */
@@ -204,8 +204,8 @@ public class ExpanderChartKhader implements Serializable {
    * dimensionless head coefficient is scaled by the actual fluid sound speed squared to make the result composition
    * aware.
    *
-   * @param uc           velocity ratio U/C
-   * @param igv          IGV position (fraction of maximum area, 0..1)
+   * @param uc velocity ratio U/C
+   * @param igv IGV position (fraction of maximum area, 0..1)
    * @param processFluid the actual process fluid (may be {@code null} to use the reference sound speed)
    * @return the isentropic stage head drop in kJ/kg
    */
@@ -252,8 +252,8 @@ public class ExpanderChartKhader implements Serializable {
    * Bilinear interpolation of a stored grid quantity over velocity ratio and IGV position. Linear blending is used
    * between the two bracketing IGV curves and clamped at the edges.
    *
-   * @param uc   velocity ratio U/C
-   * @param igv  IGV position (fraction of maximum area)
+   * @param uc velocity ratio U/C
+   * @param igv IGV position (fraction of maximum area)
    * @param grid the per-IGV value grid to interpolate (efficiency or head coefficient)
    * @return the interpolated value
    */
@@ -293,8 +293,8 @@ public class ExpanderChartKhader implements Serializable {
    * range.
    *
    * @param uc velocity ratio to evaluate
-   * @param x  sorted velocity-ratio abscissa array
-   * @param y  matching ordinate array
+   * @param x sorted velocity-ratio abscissa array
+   * @param y matching ordinate array
    * @return the interpolated value
    */
   private double interpolateCurve(double uc, double[] x, double[] y) {

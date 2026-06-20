@@ -57,7 +57,7 @@ public class ProcessModelGraphvizExporter implements Serializable {
      * Creates a unit-node descriptor.
      *
      * @param areaName process area name
-     * @param unit     unit operation represented by this node
+     * @param unit unit operation represented by this node
      */
     private UnitNode(String areaName, ProcessEquipmentInterface unit) {
       this.areaName = areaName;
@@ -189,10 +189,10 @@ public class ProcessModelGraphvizExporter implements Serializable {
   /**
    * Collects area nodes and stream endpoints for the common DOT graph.
    *
-   * @param areaNodes      map to populate with nodes grouped by area
+   * @param areaNodes map to populate with nodes grouped by area
    * @param areaNodeByName map to populate with node lookup by area and unit name
-   * @param producers      map to populate with producer nodes by stream identity
-   * @param consumers      map to populate with consumer nodes by stream identity
+   * @param producers map to populate with producer nodes by stream identity
+   * @param consumers map to populate with consumer nodes by stream identity
    */
   private void collectNodesAndStreams(Map<String, List<UnitNode>> areaNodes,
       Map<String, Map<String, UnitNode>> areaNodeByName, Map<StreamInterface, List<UnitNode>> producers,
@@ -221,7 +221,7 @@ public class ProcessModelGraphvizExporter implements Serializable {
   /**
    * Collects stream producer and consumer endpoints for one unit node.
    *
-   * @param node      unit node to inspect
+   * @param node unit node to inspect
    * @param producers stream producer map to populate
    * @param consumers stream consumer map to populate
    */
@@ -242,8 +242,8 @@ public class ProcessModelGraphvizExporter implements Serializable {
    * Adds a unit node as an endpoint for a stream, preserving insertion order and uniqueness.
    *
    * @param endpoints endpoint map to update
-   * @param stream    stream identity key
-   * @param node      unit node endpoint
+   * @param stream stream identity key
+   * @param node unit node endpoint
    */
   private void addEndpoint(Map<StreamInterface, List<UnitNode>> endpoints, StreamInterface stream, UnitNode node) {
     if (stream == null || node == null) {
@@ -292,7 +292,7 @@ public class ProcessModelGraphvizExporter implements Serializable {
   /**
    * Appends clusters for all process areas.
    *
-   * @param builder   DOT builder to append to
+   * @param builder DOT builder to append to
    * @param areaNodes nodes grouped by area name
    */
   private void appendAreaClusters(StringBuilder builder, Map<String, List<UnitNode>> areaNodes) {
@@ -315,7 +315,7 @@ public class ProcessModelGraphvizExporter implements Serializable {
   /**
    * Appends stream-derived edges to the common DOT graph.
    *
-   * @param builder   DOT builder to append to
+   * @param builder DOT builder to append to
    * @param producers producer nodes by stream identity
    * @param consumers consumer nodes by stream identity
    */
@@ -358,9 +358,9 @@ public class ProcessModelGraphvizExporter implements Serializable {
    * Adds one stream-derived edge line if the endpoints are distinct.
    *
    * @param edgeLines edge-line set to update
-   * @param source    source node
-   * @param sink      sink node
-   * @param stream    stream carried by the edge
+   * @param source source node
+   * @param sink sink node
+   * @param stream stream carried by the edge
    */
   private void addStreamEdge(Set<String> edgeLines, UnitNode source, UnitNode sink, StreamInterface stream) {
     if (source == null || sink == null || source == sink) {
@@ -381,7 +381,7 @@ public class ProcessModelGraphvizExporter implements Serializable {
   /**
    * Appends explicit connection metadata as graph edges.
    *
-   * @param builder        DOT builder to append to
+   * @param builder DOT builder to append to
    * @param areaNodeByName node lookup by area and unit name
    */
   private void appendExplicitConnections(StringBuilder builder, Map<String, Map<String, UnitNode>> areaNodeByName) {
@@ -404,9 +404,9 @@ public class ProcessModelGraphvizExporter implements Serializable {
   /**
    * Adds one explicit connection edge if both endpoints are present.
    *
-   * @param edgeLines  edge-line set to update
-   * @param source     source node
-   * @param target     target node
+   * @param edgeLines edge-line set to update
+   * @param source source node
+   * @param target target node
    * @param connection explicit process connection
    */
   private void addExplicitConnectionEdge(Set<String> edgeLines, UnitNode source, UnitNode target,
@@ -429,7 +429,7 @@ public class ProcessModelGraphvizExporter implements Serializable {
   /**
    * Appends prepared edge lines to a DOT graph builder.
    *
-   * @param builder   DOT builder to append to
+   * @param builder DOT builder to append to
    * @param edgeLines prepared edge lines
    */
   private void appendEdgeLines(StringBuilder builder, Set<String> edgeLines) {
@@ -445,8 +445,8 @@ public class ProcessModelGraphvizExporter implements Serializable {
   /**
    * Builds a DOT edge line from endpoint ids and attributes.
    *
-   * @param sourceId   source node id
-   * @param targetId   target node id
+   * @param sourceId source node id
+   * @param targetId target node id
    * @param attributes DOT attributes to include
    * @return formatted DOT edge line
    */
@@ -535,7 +535,7 @@ public class ProcessModelGraphvizExporter implements Serializable {
   /**
    * Makes a file base unique within an export operation.
    *
-   * @param preferred     preferred base name
+   * @param preferred preferred base name
    * @param usedFileBases file bases already used
    * @return unique file base name
    */

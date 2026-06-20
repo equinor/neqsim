@@ -20,7 +20,7 @@ public class CDFTSurfaceTensionBenchmarkTest {
    * Computes IFT using a specified model.
    *
    * @param system the thermodynamic system (after VLE flash)
-   * @param model  the IFT model name
+   * @param model the IFT model name
    * @return IFT in mN/m, or -1 if calculation fails
    */
   private double computeIFT(SystemInterface system, String model) {
@@ -36,9 +36,9 @@ public class CDFTSurfaceTensionBenchmarkTest {
   /**
    * Sets up a pure-component system at VLE.
    *
-   * @param eosType   "PR" or "SRK"
+   * @param eosType "PR" or "SRK"
    * @param component component name
-   * @param tempK     temperature in Kelvin
+   * @param tempK temperature in Kelvin
    * @return system at VLE, or null if flash fails
    */
   private SystemInterface setupVLE(String eosType, String component, double tempK) {

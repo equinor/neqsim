@@ -77,8 +77,8 @@ public class Setter extends ProcessEquipmentBaseClass {
   /**
    * Add a parameter to the list of parameters.
    *
-   * @param type  a {@link java.lang.String} object representing the type
-   * @param unit  a {@link java.lang.String} object representing the unit
+   * @param type a {@link java.lang.String} object representing the type
+   * @param unit a {@link java.lang.String} object representing the unit
    * @param value a double representing the value
    */
   public void addParameter(String type, String unit, double value) {

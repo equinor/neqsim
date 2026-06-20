@@ -88,7 +88,7 @@ public class InadvertentValveOperationAnalyzer {
    * Set the design pressure (MAWP) of the segment that becomes exposed by the IVO.
    *
    * @param pressure design pressure value
-   * @param unit     unit (only {@code "bara"} is supported)
+   * @param unit unit (only {@code "bara"} is supported)
    * @return this analyser (for chaining)
    */
   public InadvertentValveOperationAnalyzer setDesignPressure(double pressure, String unit) {
@@ -104,7 +104,7 @@ public class InadvertentValveOperationAnalyzer {
    * connected to a lower-pressure system).
    *
    * @param pressure downstream design pressure value
-   * @param unit     unit (only {@code "bara"} is supported)
+   * @param unit unit (only {@code "bara"} is supported)
    * @return this analyser (for chaining)
    */
   public InadvertentValveOperationAnalyzer setDownstreamDesignPressure(double pressure, String unit) {
@@ -133,7 +133,7 @@ public class InadvertentValveOperationAnalyzer {
    * Override the upstream source pressure (e.g. when the valve has not been simulated with the IVO upset condition).
    *
    * @param pressure upstream pressure value
-   * @param unit     unit (only {@code "bara"} is supported)
+   * @param unit unit (only {@code "bara"} is supported)
    * @return this analyser (for chaining)
    */
   public InadvertentValveOperationAnalyzer setUpstreamPressure(double pressure, String unit) {

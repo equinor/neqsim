@@ -64,7 +64,7 @@ public class NeqSimGERG2008 {
    * Constructor for NeqSimGERG2008 with specified model type.
    * </p>
    *
-   * @param phase     a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param modelType the GERG-2008 model variant to use (STANDARD or HYDROGEN_ENHANCED)
    */
   public NeqSimGERG2008(PhaseInterface phase, GERG2008Type modelType) {
@@ -250,7 +250,7 @@ public class NeqSimGERG2008 {
    * getProperties.
    * </p>
    *
-   * @param phase      a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param properties an array of {@link java.lang.String} objects
    * @return an array of type double
    */

@@ -79,8 +79,8 @@ public abstract class MultiphaseChokeFlow implements Serializable {
   /**
    * Calculates the mass flow rate through the choke.
    *
-   * @param fluid              the thermodynamic system representing the fluid
-   * @param upstreamPressure   upstream pressure in Pa
+   * @param fluid the thermodynamic system representing the fluid
+   * @param upstreamPressure upstream pressure in Pa
    * @param downstreamPressure downstream pressure in Pa
    * @return mass flow rate in kg/s
    */
@@ -90,9 +90,9 @@ public abstract class MultiphaseChokeFlow implements Serializable {
   /**
    * Calculates the downstream pressure for a given mass flow rate.
    *
-   * @param fluid            the thermodynamic system representing the fluid
+   * @param fluid the thermodynamic system representing the fluid
    * @param upstreamPressure upstream pressure in Pa
-   * @param massFlowRate     mass flow rate in kg/s
+   * @param massFlowRate mass flow rate in kg/s
    * @return downstream pressure in Pa
    */
   public abstract double calculateDownstreamPressure(SystemInterface fluid, double upstreamPressure,
@@ -101,7 +101,7 @@ public abstract class MultiphaseChokeFlow implements Serializable {
   /**
    * Calculates the critical pressure ratio for two-phase flow.
    *
-   * @param gasQuality        gas mass fraction (0 to 1)
+   * @param gasQuality gas mass fraction (0 to 1)
    * @param specificHeatRatio ratio of specific heats (Cp/Cv)
    * @return critical pressure ratio (P2/P1 at choking)
    */
@@ -110,8 +110,8 @@ public abstract class MultiphaseChokeFlow implements Serializable {
   /**
    * Determines the flow regime (critical or subcritical).
    *
-   * @param fluid              the thermodynamic system
-   * @param upstreamPressure   upstream pressure in Pa
+   * @param fluid the thermodynamic system
+   * @param upstreamPressure upstream pressure in Pa
    * @param downstreamPressure downstream pressure in Pa
    * @return the flow regime
    */
@@ -210,8 +210,8 @@ public abstract class MultiphaseChokeFlow implements Serializable {
   /**
    * Calculates complete sizing results including all parameters.
    *
-   * @param fluid              the thermodynamic system
-   * @param upstreamPressure   upstream pressure in Pa
+   * @param fluid the thermodynamic system
+   * @param upstreamPressure upstream pressure in Pa
    * @param downstreamPressure downstream pressure in Pa
    * @return map containing all sizing results
    */
@@ -285,7 +285,7 @@ public abstract class MultiphaseChokeFlow implements Serializable {
    * Sets the choke diameter with unit specification.
    *
    * @param diameter choke diameter value
-   * @param unit     unit of diameter ("m", "mm", "in", "64ths")
+   * @param unit unit of diameter ("m", "mm", "in", "64ths")
    */
   public void setChokeDiameter(double diameter, String unit) {
     switch (unit.toLowerCase()) {

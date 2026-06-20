@@ -29,7 +29,7 @@ public class OnePhaseFlowVisualization
    * Constructor for OnePhaseFlowVisualization.
    * </p>
    *
-   * @param nodes     a int
+   * @param nodes a int
    * @param timeSteps a int
    */
   public OnePhaseFlowVisualization(int nodes, int timeSteps) {

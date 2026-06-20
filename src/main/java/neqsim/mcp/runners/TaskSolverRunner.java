@@ -243,7 +243,7 @@ public final class TaskSolverRunner {
   /**
    * Classifies a task description into a category.
    *
-   * @param task  the task description
+   * @param task the task description
    * @param input the full input JSON
    * @return the task category
    */
@@ -301,7 +301,7 @@ public final class TaskSolverRunner {
    * Builds an execution plan based on task type.
    *
    * @param taskType the classified task type
-   * @param input    the full input JSON
+   * @param input the full input JSON
    * @return list of plan steps
    */
   private static List<PlanStep> buildPlan(String taskType, JsonObject input) {
@@ -370,9 +370,9 @@ public final class TaskSolverRunner {
   /**
    * Builds input JSON for a specific step.
    *
-   * @param step          the plan step
+   * @param step the plan step
    * @param originalInput the original task input
-   * @param carryForward  data carried from previous steps
+   * @param carryForward data carried from previous steps
    * @return JSON input for the step runner
    */
   private static String buildStepInput(PlanStep step, JsonObject originalInput, JsonObject carryForward) {
@@ -417,7 +417,7 @@ public final class TaskSolverRunner {
   /**
    * Executes a single step by routing to the appropriate runner.
    *
-   * @param step      the plan step
+   * @param step the plan step
    * @param inputJson the step input JSON
    * @return the runner output JSON
    */
@@ -461,13 +461,13 @@ public final class TaskSolverRunner {
   /**
    * Builds the final task report.
    *
-   * @param task             the original task description
-   * @param taskType         the classified type
-   * @param plan             the execution plan
-   * @param results          the step results
-   * @param carryForward     the combined data
+   * @param task the original task description
+   * @param taskType the classified type
+   * @param plan the execution plan
+   * @param results the step results
+   * @param carryForward the combined data
    * @param validationReport the validation report JSON, or null
-   * @param totalTimeMs      total execution time
+   * @param totalTimeMs total execution time
    * @return the complete report JSON
    */
   private static String buildTaskReport(String task, String taskType, List<PlanStep> plan, List<StepResult> results,
@@ -525,7 +525,7 @@ public final class TaskSolverRunner {
   /**
    * Creates a standard error JSON.
    *
-   * @param code    the error code
+   * @param code the error code
    * @param message the error message
    * @return error JSON string
    */
@@ -561,10 +561,10 @@ public final class TaskSolverRunner {
     /**
      * Creates a plan step.
      *
-     * @param name        the step name
-     * @param runner      the runner name
+     * @param name the step name
+     * @param runner the runner name
      * @param description the description
-     * @param optional    whether optional
+     * @param optional whether optional
      */
     PlanStep(String name, String runner, String description, boolean optional) {
       this.name = name;
@@ -595,9 +595,9 @@ public final class TaskSolverRunner {
      * Creates a step result.
      *
      * @param stepName the step name
-     * @param runner   the runner name
-     * @param output   the raw output
-     * @param timeMs   the time in ms
+     * @param runner the runner name
+     * @param output the raw output
+     * @param timeMs the time in ms
      */
     StepResult(String stepName, String runner, String output, long timeMs) {
       this.stepName = stepName;

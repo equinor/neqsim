@@ -196,7 +196,7 @@ public class BatchRunner {
   /**
    * Merges two JSON objects, with the override taking precedence.
    *
-   * @param base      the base object
+   * @param base the base object
    * @param overrides the overriding values
    * @return a new merged JSON object
    */
@@ -216,8 +216,8 @@ public class BatchRunner {
   /**
    * Creates a standard error JSON response.
    *
-   * @param code        the error code
-   * @param message     the error message
+   * @param code the error code
+   * @param message the error message
    * @param remediation the fix suggestion
    * @return JSON error string
    */

@@ -89,7 +89,7 @@ public class FaultTreeAnalyzer implements Serializable {
    * Probability of at least k of n independent failures (Poisson-binomial sum).
    *
    * @param probs list of n failure probabilities
-   * @param k     votes required
+   * @param k votes required
    * @return P(at least k failures)
    */
   private double votingGate(List<Double> probs, int k) {
@@ -114,7 +114,7 @@ public class FaultTreeAnalyzer implements Serializable {
    * Enumerate minimal cut sets (sets of basic events whose simultaneous failure causes the top). Implementation:
    * brute-force enumeration up to a maximum cardinality (kept small for tractability).
    *
-   * @param root           root fault tree node
+   * @param root root fault tree node
    * @param maxCardinality maximum cut-set size to enumerate
    * @return set of cut sets, each as a sorted list of basic-event names
    */

@@ -239,7 +239,7 @@ public class MethaneNumberCalculator implements Serializable {
    * Check if MN meets a minimum specification.
    *
    * @param composition mole fractions
-   * @param minMN       minimum required methane number
+   * @param minMN minimum required methane number
    * @return true if MN meets specification
    */
   public boolean meetsSpecification(Map<String, Double> composition, double minMN) {
@@ -254,7 +254,7 @@ public class MethaneNumberCalculator implements Serializable {
   /**
    * Get the mole fraction of a component (0.0 if not present).
    *
-   * @param composition   composition map
+   * @param composition composition map
    * @param componentName component name
    * @return mole fraction (0.0-1.0)
    */
@@ -266,7 +266,7 @@ public class MethaneNumberCalculator implements Serializable {
   /**
    * Get the mole percent of a component (0.0 if not present).
    *
-   * @param composition   composition map (mole fractions)
+   * @param composition composition map (mole fractions)
    * @param componentName component name
    * @return mole percent (0.0-100.0)
    */

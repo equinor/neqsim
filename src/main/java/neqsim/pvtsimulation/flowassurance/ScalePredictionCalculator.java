@@ -380,18 +380,18 @@ public class ScalePredictionCalculator implements Serializable {
    * constants from Garrels &amp; Thompson (1962) with T-corrections.
    * </p>
    *
-   * @param cCa        total calcium mol/L
-   * @param cMg        total magnesium mol/L
-   * @param cNa        total sodium mol/L
-   * @param cBa        total barium mol/L
-   * @param cSr        total strontium mol/L
-   * @param cFe        total iron mol/L
-   * @param cSO4       total sulphate mol/L
-   * @param cCO3       total carbonate mol/L
-   * @param cHCO3      total bicarbonate mol/L
-   * @param TK         temperature in Kelvin
+   * @param cCa total calcium mol/L
+   * @param cMg total magnesium mol/L
+   * @param cNa total sodium mol/L
+   * @param cBa total barium mol/L
+   * @param cSr total strontium mol/L
+   * @param cFe total iron mol/L
+   * @param cSO4 total sulphate mol/L
+   * @param cCO3 total carbonate mol/L
+   * @param cHCO3 total bicarbonate mol/L
+   * @param TK temperature in Kelvin
    * @param gammaDival activity coefficient for divalent ions
-   * @param gammaMono  activity coefficient for monovalent ions
+   * @param gammaMono activity coefficient for monovalent ions
    * @return array [freeCa, freeSO4, freeCO3, freeHCO3]
    */
   private double[] correctForIonPairing(double cCa, double cMg, double cNa, double cBa, double cSr, double cFe,
@@ -492,7 +492,7 @@ public class ScalePredictionCalculator implements Serializable {
    * }
    * </pre>
    *
-   * @param charge        ion charge
+   * @param charge ion charge
    * @param ionicStrength ionic strength mol/L
    * @return activity coefficient
    */
@@ -545,8 +545,8 @@ public class ScalePredictionCalculator implements Serializable {
    * }
    * </pre>
    *
-   * @param cHCO3           bicarbonate concentration in mol/L
-   * @param TK              temperature in Kelvin
+   * @param cHCO3 bicarbonate concentration in mol/L
+   * @param TK temperature in Kelvin
    * @param gammaMonovalent activity coefficient for monovalent ions
    * @return carbonate concentration in mol/L
    */
@@ -562,9 +562,9 @@ public class ScalePredictionCalculator implements Serializable {
   /**
    * Estimates pH from CO2 partial pressure and bicarbonate concentration.
    *
-   * @param TK            temperature in Kelvin
+   * @param TK temperature in Kelvin
    * @param ionicStrength ionic strength mol/L
-   * @param gamma         activity coefficient for monovalent ions
+   * @param gamma activity coefficient for monovalent ions
    * @return estimated pH
    */
   private double estimatePH(double TK, double ionicStrength, double gamma) {
@@ -591,8 +591,8 @@ public class ScalePredictionCalculator implements Serializable {
    * bara, R = 83.1446 cm³·bar/(mol·K).
    * </p>
    *
-   * @param ksp0   solubility product at 1 atm
-   * @param TK     temperature in Kelvin
+   * @param ksp0 solubility product at 1 atm
+   * @param TK temperature in Kelvin
    * @param vDelta molar volume change in cm³/mol
    * @return pressure-corrected Ksp
    */
@@ -862,9 +862,9 @@ public class ScalePredictionCalculator implements Serializable {
   /**
    * Adds a saturation index entry to a map.
    *
-   * @param map  target map
+   * @param map target map
    * @param name scale type name
-   * @param si   saturation index value
+   * @param si saturation index value
    */
   private void addSI(Map<String, Object> map, String name, double si) {
     Map<String, Object> entry = new LinkedHashMap<String, Object>();

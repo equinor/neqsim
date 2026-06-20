@@ -48,13 +48,13 @@ public class CatalystDeactivationKinetics implements Serializable {
     /**
      * Creates a catalyst-family default data set.
      *
-     * @param displayName                      human-readable catalyst name
-     * @param sulfurCoefficientPerHourPerPpm   sulfur poisoning coefficient in 1/(h ppmv)
+     * @param displayName human-readable catalyst name
+     * @param sulfurCoefficientPerHourPerPpm sulfur poisoning coefficient in 1/(h ppmv)
      * @param chlorideCoefficientPerHourPerPpm chloride poisoning coefficient in 1/(h ppmv)
-     * @param cokingCoefficientPerHour         coking damage coefficient in 1/h
-     * @param sinteringPreExponentialPerHour   sintering pre-exponential factor in 1/h
+     * @param cokingCoefficientPerHour coking damage coefficient in 1/h
+     * @param sinteringPreExponentialPerHour sintering pre-exponential factor in 1/h
      * @param sinteringActivationEnergyJPerMol sintering activation energy in J/mol
-     * @param sinteringOnsetTemperatureK       sintering onset temperature in K
+     * @param sinteringOnsetTemperatureK sintering onset temperature in K
      */
     CatalystFamily(String displayName, double sulfurCoefficientPerHourPerPpm, double chlorideCoefficientPerHourPerPpm,
 	double cokingCoefficientPerHour, double sinteringPreExponentialPerHour, double sinteringActivationEnergyJPerMol,
@@ -418,7 +418,7 @@ public class CatalystDeactivationKinetics implements Serializable {
    * Validates a finite non-negative input.
    *
    * @param value value to validate
-   * @param name  parameter name for diagnostics
+   * @param name parameter name for diagnostics
    */
   private static void validateNonNegative(double value, String name) {
     if (!Double.isFinite(value) || value < 0.0) {

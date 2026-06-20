@@ -252,7 +252,7 @@ public class InjectionWellModel implements Serializable {
    * Calculates wellhead injection pressure from BHP.
    *
    * @param rateSm3d injection rate (Sm3/day)
-   * @param bhp      bottomhole pressure (bara)
+   * @param bhp bottomhole pressure (bara)
    * @return wellhead pressure (bara)
    */
   private double calculateWellheadPressure(double rateSm3d, double bhp) {
@@ -284,7 +284,7 @@ public class InjectionWellModel implements Serializable {
    * Calculates friction pressure drop in tubing.
    *
    * @param rateSm3d rate (Sm3/day)
-   * @param density  fluid density (kg/m³)
+   * @param density fluid density (kg/m³)
    * @return friction pressure drop (bar)
    */
   private double calculateFrictionPressureDrop(double rateSm3d, double density) {
@@ -331,7 +331,7 @@ public class InjectionWellModel implements Serializable {
   /**
    * Calculates pump power requirement.
    *
-   * @param rateSm3d  injection rate (Sm3/day)
+   * @param rateSm3d injection rate (Sm3/day)
    * @param deltaPbar pressure boost (bar)
    * @return pump power (kW)
    */
@@ -367,9 +367,9 @@ public class InjectionWellModel implements Serializable {
   /**
    * Calculates injection with pressure interference from nearby producers.
    *
-   * @param targetRate        target rate (Sm3/day)
+   * @param targetRate target rate (Sm3/day)
    * @param producerDistances distances to nearby producers (m)
-   * @param producerRates     production rates of nearby wells (Sm3/day)
+   * @param producerRates production rates of nearby wells (Sm3/day)
    * @return adjusted injection result
    */
   public InjectionWellResult calculateWithInterference(double targetRate, double[] producerDistances,
@@ -427,7 +427,7 @@ public class InjectionWellModel implements Serializable {
    * Sets reservoir pressure.
    *
    * @param pressure pressure value
-   * @param unit     unit ("bara", "psia")
+   * @param unit unit ("bara", "psia")
    * @return this for chaining
    */
   public InjectionWellModel setReservoirPressure(double pressure, String unit) {
@@ -443,7 +443,7 @@ public class InjectionWellModel implements Serializable {
    * Sets reservoir temperature.
    *
    * @param temperature temperature value
-   * @param unit        unit ("K", "C", "F")
+   * @param unit unit ("K", "C", "F")
    * @return this for chaining
    */
   public InjectionWellModel setReservoirTemperature(double temperature, String unit) {
@@ -461,7 +461,7 @@ public class InjectionWellModel implements Serializable {
    * Sets formation permeability.
    *
    * @param permeability permeability value
-   * @param unit         unit ("mD", "D")
+   * @param unit unit ("mD", "D")
    * @return this for chaining
    */
   public InjectionWellModel setFormationPermeability(double permeability, String unit) {
@@ -477,7 +477,7 @@ public class InjectionWellModel implements Serializable {
    * Sets formation thickness.
    *
    * @param thickness thickness value
-   * @param unit      unit ("m", "ft")
+   * @param unit unit ("m", "ft")
    * @return this for chaining
    */
   public InjectionWellModel setFormationThickness(double thickness, String unit) {
@@ -504,7 +504,7 @@ public class InjectionWellModel implements Serializable {
    * Sets well depth.
    *
    * @param depth depth value
-   * @param unit  unit ("m", "ft")
+   * @param unit unit ("m", "ft")
    * @return this for chaining
    */
   public InjectionWellModel setWellDepth(double depth, String unit) {
@@ -520,7 +520,7 @@ public class InjectionWellModel implements Serializable {
    * Sets tubing ID.
    *
    * @param diameter diameter value
-   * @param unit     unit ("m", "in", "mm")
+   * @param unit unit ("m", "in", "mm")
    * @return this for chaining
    */
   public InjectionWellModel setTubingID(double diameter, String unit) {
@@ -538,7 +538,7 @@ public class InjectionWellModel implements Serializable {
    * Sets maximum BHP (operating limit below fracture pressure).
    *
    * @param pressure pressure value
-   * @param unit     unit ("bara", "psia")
+   * @param unit unit ("bara", "psia")
    * @return this for chaining
    */
   public InjectionWellModel setMaxBHP(double pressure, String unit) {
@@ -554,7 +554,7 @@ public class InjectionWellModel implements Serializable {
    * Sets fracture pressure.
    *
    * @param pressure pressure value
-   * @param unit     unit ("bara", "psia")
+   * @param unit unit ("bara", "psia")
    * @return this for chaining
    */
   public InjectionWellModel setFracturePressure(double pressure, String unit) {
@@ -570,7 +570,7 @@ public class InjectionWellModel implements Serializable {
    * Sets surface injection pressure available.
    *
    * @param pressure pressure value
-   * @param unit     unit ("bara", "psia")
+   * @param unit unit ("bara", "psia")
    * @return this for chaining
    */
   public InjectionWellModel setSurfaceInjectionPressure(double pressure, String unit) {
@@ -778,12 +778,12 @@ public class InjectionWellModel implements Serializable {
     /**
      * Creates an injection zone.
      *
-     * @param name              zone name
-     * @param depth             TVD to zone midpoint (m)
+     * @param name zone name
+     * @param depth TVD to zone midpoint (m)
      * @param reservoirPressure reservoir pressure (bara)
-     * @param permeability      formation permeability (mD)
-     * @param thickness         formation thickness (m)
-     * @param fracturePressure  fracture pressure (bara)
+     * @param permeability formation permeability (mD)
+     * @param thickness formation thickness (m)
+     * @param fracturePressure fracture pressure (bara)
      */
     public InjectionZone(String name, double depth, double reservoirPressure, double permeability, double thickness,
 	double fracturePressure) {
@@ -1037,8 +1037,8 @@ public class InjectionWellModel implements Serializable {
    * delta_sigma_thermal = alpha_T * E / (1 - nu) * (T_inj - T_res)
    * </p>
    *
-   * @param injectionTemp    injection fluid temperature (K)
-   * @param reservoirTemp    reservoir temperature (K)
+   * @param injectionTemp injection fluid temperature (K)
+   * @param reservoirTemp reservoir temperature (K)
    * @param thermalExpansion linear thermal expansion coefficient (1/K), typically 1e-5 to 3e-5
    * @param youngsModulusGPa Young's modulus (GPa), typically 10-50 GPa for reservoir rock
    */

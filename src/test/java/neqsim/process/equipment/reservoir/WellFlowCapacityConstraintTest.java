@@ -22,7 +22,7 @@ public class WellFlowCapacityConstraintTest {
   /**
    * Builds a reservoir + well subsurface area and adds both to the supplied process.
    *
-   * @param pi      the well production index (MSm3/day/bar^2)
+   * @param pi the well production index (MSm3/day/bar^2)
    * @param process the process system the reservoir and well are added to
    * @return the configured well flow unit (its outlet stream is the area export)
    */

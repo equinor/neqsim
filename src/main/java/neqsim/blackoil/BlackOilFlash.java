@@ -23,7 +23,7 @@ public final class BlackOilFlash implements Serializable {
    * Constructor for BlackOilFlash.
    * </p>
    *
-   * @param pvt      a {@link neqsim.blackoil.BlackOilPVTTable} object
+   * @param pvt a {@link neqsim.blackoil.BlackOilPVTTable} object
    * @param rho_o_sc a double
    * @param rho_g_sc a double
    * @param rho_w_sc a double
@@ -40,11 +40,11 @@ public final class BlackOilFlash implements Serializable {
    * flash.
    * </p>
    *
-   * @param P        a double
-   * @param T        a double
+   * @param P a double
+   * @param T a double
    * @param Otot_std a double
    * @param Gtot_std a double
-   * @param W_std    a double
+   * @param W_std a double
    * @return a {@link neqsim.blackoil.BlackOilFlashResult} object
    */
   public BlackOilFlashResult flash(double P, double T, double Otot_std, double Gtot_std, double W_std) {

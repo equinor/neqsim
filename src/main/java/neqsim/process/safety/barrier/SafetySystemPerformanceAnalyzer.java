@@ -106,7 +106,7 @@ public class SafetySystemPerformanceAnalyzer {
    * Adds a quantitative SIL/PFD safety instrumented function.
    *
    * @param safetyInstrumentedFunction quantitative SIF with claimed SIL, PFD, architecture, and protected-equipment
-   *                                   metadata
+   * metadata
    * @return this analyzer
    */
   public SafetySystemPerformanceAnalyzer addQuantitativeSafetyInstrumentedFunction(
@@ -157,7 +157,7 @@ public class SafetySystemPerformanceAnalyzer {
   /**
    * Assesses one barrier against one optional demand case.
    *
-   * @param barrier    barrier to assess
+   * @param barrier barrier to assess
    * @param demandCase demand case, or null for a generic register assessment
    * @return barrier assessment
    */
@@ -185,7 +185,7 @@ public class SafetySystemPerformanceAnalyzer {
   /**
    * Evaluates whether the barrier can be credited based on status and evidence.
    *
-   * @param barrier    barrier to evaluate
+   * @param barrier barrier to evaluate
    * @param assessment assessment to update
    */
   private void evaluateBarrierCredit(SafetyBarrier barrier, BarrierAssessment assessment) {
@@ -203,7 +203,7 @@ public class SafetySystemPerformanceAnalyzer {
   /**
    * Evaluates quantitative performance-standard criteria.
    *
-   * @param barrier    barrier to evaluate
+   * @param barrier barrier to evaluate
    * @param demandCase demand case, or null
    * @param assessment assessment to update
    */
@@ -226,8 +226,8 @@ public class SafetySystemPerformanceAnalyzer {
   /**
    * Checks the PFD requirement.
    *
-   * @param barrier    barrier to evaluate
-   * @param standard   linked performance standard
+   * @param barrier barrier to evaluate
+   * @param standard linked performance standard
    * @param demandCase demand case, or null
    * @param assessment assessment to update
    */
@@ -253,7 +253,7 @@ public class SafetySystemPerformanceAnalyzer {
   /**
    * Checks the availability requirement.
    *
-   * @param standard   linked performance standard
+   * @param standard linked performance standard
    * @param demandCase demand case, or null
    * @param assessment assessment to update
    */
@@ -280,7 +280,7 @@ public class SafetySystemPerformanceAnalyzer {
   /**
    * Checks the response-time requirement.
    *
-   * @param standard   linked performance standard
+   * @param standard linked performance standard
    * @param demandCase demand case, or null
    * @param assessment assessment to update
    */
@@ -308,7 +308,7 @@ public class SafetySystemPerformanceAnalyzer {
   /**
    * Checks effectiveness requirements when available.
    *
-   * @param barrier    barrier to evaluate
+   * @param barrier barrier to evaluate
    * @param demandCase demand case, or null
    * @param assessment assessment to update
    */
@@ -333,7 +333,7 @@ public class SafetySystemPerformanceAnalyzer {
   /**
    * Evaluates demand versus capacity values.
    *
-   * @param category   safety-system category
+   * @param category safety-system category
    * @param demandCase demand case, or null
    * @param assessment assessment to update
    */
@@ -359,8 +359,8 @@ public class SafetySystemPerformanceAnalyzer {
   /**
    * Evaluates linked instruments and SIF voting status.
    *
-   * @param category   safety-system category
-   * @param barrier    barrier to evaluate
+   * @param category safety-system category
+   * @param barrier barrier to evaluate
    * @param demandCase demand case, or null
    * @param assessment assessment to update
    */
@@ -411,7 +411,7 @@ public class SafetySystemPerformanceAnalyzer {
   /**
    * Evaluates category-specific demand completeness.
    *
-   * @param category   safety-system category
+   * @param category safety-system category
    * @param demandCase demand case, or null
    * @param assessment assessment to update
    */
@@ -430,7 +430,7 @@ public class SafetySystemPerformanceAnalyzer {
   /**
    * Evaluates one event/voting safety instrumented function.
    *
-   * @param sif        safety instrumented function
+   * @param sif safety instrumented function
    * @param assessment assessment to update
    */
   private void evaluateSafetyInstrumentedFunction(SafetyInstrumentedFunction sif, BarrierAssessment assessment) {
@@ -477,7 +477,7 @@ public class SafetySystemPerformanceAnalyzer {
   /**
    * Evaluates one quantitative SIL/PFD safety instrumented function.
    *
-   * @param sif        quantitative safety instrumented function
+   * @param sif quantitative safety instrumented function
    * @param assessment assessment to update
    */
   private void evaluateQuantitativeSafetyInstrumentedFunction(
@@ -507,7 +507,7 @@ public class SafetySystemPerformanceAnalyzer {
   /**
    * Determines a safety-system category from demand data, barrier text, and SCE type.
    *
-   * @param barrier    barrier to classify
+   * @param barrier barrier to classify
    * @param demandCase demand case, or null
    * @return inferred category
    */
@@ -592,7 +592,7 @@ public class SafetySystemPerformanceAnalyzer {
   /**
    * Checks whether text contains any keyword.
    *
-   * @param text     lower-case text to search
+   * @param text lower-case text to search
    * @param keywords lower-case or mixed-case keywords
    * @return true if any keyword is present
    */
@@ -608,7 +608,7 @@ public class SafetySystemPerformanceAnalyzer {
   /**
    * Finds measurement devices related to a barrier.
    *
-   * @param barrier  barrier to match
+   * @param barrier barrier to match
    * @param category safety-system category
    * @return related measurement devices
    */
@@ -629,7 +629,7 @@ public class SafetySystemPerformanceAnalyzer {
   /**
    * Checks whether a measurement device is relevant to a category.
    *
-   * @param device   measurement device
+   * @param device measurement device
    * @param category safety-system category
    * @return true when the device is relevant
    */
@@ -643,7 +643,7 @@ public class SafetySystemPerformanceAnalyzer {
   /**
    * Checks whether a measurement device matches barrier equipment tags.
    *
-   * @param device  measurement device
+   * @param device measurement device
    * @param barrier barrier to match
    * @return true when device name, tag, or location matches
    */
@@ -735,7 +735,7 @@ public class SafetySystemPerformanceAnalyzer {
   /**
    * Checks whether a SIF matches a barrier.
    *
-   * @param sif     safety instrumented function
+   * @param sif safety instrumented function
    * @param barrier barrier to match
    * @return true when SIF or detector names match barrier data
    */
@@ -756,7 +756,7 @@ public class SafetySystemPerformanceAnalyzer {
   /**
    * Checks whether a quantitative SIF matches a barrier.
    *
-   * @param sif     quantitative SIF
+   * @param sif quantitative SIF
    * @param barrier barrier to match
    * @return true when SIF identity or protected-equipment metadata matches barrier data
    */
@@ -796,7 +796,7 @@ public class SafetySystemPerformanceAnalyzer {
   /**
    * Checks whether two text values match by exact or containment comparison.
    *
-   * @param value   first text value
+   * @param value first text value
    * @param pattern second text value
    * @return true when values match
    */
@@ -812,7 +812,7 @@ public class SafetySystemPerformanceAnalyzer {
   /**
    * Selects the first finite value from two candidates.
    *
-   * @param first  first candidate
+   * @param first first candidate
    * @param second second candidate
    * @return first finite value, second finite value, or NaN
    */

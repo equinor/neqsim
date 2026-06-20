@@ -38,9 +38,9 @@ public class OverrideControllerStructure implements ControlStructureInterface {
   /**
    * Create an override control structure.
    *
-   * @param primaryController  the normal-operation controller
+   * @param primaryController the normal-operation controller
    * @param overrideController the safety/override controller
-   * @param selectionType      HIGH_SELECT or LOW_SELECT
+   * @param selectionType HIGH_SELECT or LOW_SELECT
    */
   public OverrideControllerStructure(ControllerDeviceInterface primaryController,
       ControllerDeviceInterface overrideController, SelectionType selectionType) {
@@ -74,7 +74,7 @@ public class OverrideControllerStructure implements ControlStructureInterface {
    * Check whether the override controller is currently dominating the output.
    *
    * @return {@code true} if the override controller output was selected, {@code false} if the primary controller is in
-   *         control
+   * control
    */
   public boolean isOverrideActive() {
     return overrideActive;

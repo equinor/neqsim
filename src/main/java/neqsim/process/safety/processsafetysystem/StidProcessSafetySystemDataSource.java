@@ -102,7 +102,7 @@ public class StidProcessSafetySystemDataSource {
    * Adds records from one named array.
    *
    * @param input input receiving records
-   * @param key   source array key
+   * @param key source array key
    */
   private void addArray(ProcessSafetySystemReviewInput input, String key) {
     if (!source.has(key) || !source.get(key).isJsonArray()) {
@@ -123,7 +123,7 @@ public class StidProcessSafetySystemDataSource {
   /**
    * Converts one record to a review item.
    *
-   * @param record    source record
+   * @param record source record
    * @param sourceKey source array key
    * @return review item
    */

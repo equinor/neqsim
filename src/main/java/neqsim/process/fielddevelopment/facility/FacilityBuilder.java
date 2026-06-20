@@ -169,7 +169,7 @@ public final class FacilityBuilder implements Serializable {
   /**
    * Adds compression with specified stages and outlet pressure.
    *
-   * @param stages         compression stages
+   * @param stages compression stages
    * @param outletPressure target outlet pressure in bara
    * @return this builder
    */
@@ -214,7 +214,7 @@ public final class FacilityBuilder implements Serializable {
   /**
    * Specifies that a block type should have redundancy (n+x).
    *
-   * @param blockName  name of block requiring redundancy
+   * @param blockName name of block requiring redundancy
    * @param spareCount number of spare units (e.g., 1 for n+1)
    * @return this builder
    */

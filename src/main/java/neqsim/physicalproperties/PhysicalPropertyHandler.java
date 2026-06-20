@@ -50,7 +50,7 @@ public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable 
    * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param ppm   PhysicalPropertyModel enum object
+   * @param ppm PhysicalPropertyModel enum object
    */
   public void setPhysicalProperties(PhaseInterface phase, PhysicalPropertyModel ppm) {
     switch (ppm) {

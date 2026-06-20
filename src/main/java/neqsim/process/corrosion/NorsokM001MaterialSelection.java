@@ -363,7 +363,7 @@ public class NorsokM001MaterialSelection implements Serializable {
   /**
    * Selects material for sweet (CO2 only) service per NORSOK M-001.
    *
-   * @param highChloride     true if Cl greater than 1000 mg/L
+   * @param highChloride true if Cl greater than 1000 mg/L
    * @param veryHighChloride true if Cl greater than 50000 mg/L
    */
   private void selectSweetServiceMaterial(boolean highChloride, boolean veryHighChloride) {
@@ -424,8 +424,8 @@ public class NorsokM001MaterialSelection implements Serializable {
   /**
    * Selects material for sour service per NORSOK M-001 and NACE MR0175/ISO 15156.
    *
-   * @param isSevereSour     true if H2S pp greater than 0.1 bar
-   * @param highChloride     true if Cl greater than 1000 mg/L
+   * @param isSevereSour true if H2S pp greater than 0.1 bar
+   * @param highChloride true if Cl greater than 1000 mg/L
    * @param veryHighChloride true if Cl greater than 50000 mg/L
    */
   private void selectSourServiceMaterial(boolean isSevereSour, boolean highChloride, boolean veryHighChloride) {

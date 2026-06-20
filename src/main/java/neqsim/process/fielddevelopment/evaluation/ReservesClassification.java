@@ -107,10 +107,10 @@ public final class ReservesClassification implements Serializable {
     /**
      * Creates a classification result.
      *
-     * @param resourceClass    the normalised maturity stage identifier
+     * @param resourceClass the normalised maturity stage identifier
      * @param resourceCategory the high-level resource category
-     * @param prmsClassRange   a human-readable PRMS class label
-     * @param maturityWarning  screening flag: {@code "ok"}, {@code "watch"}, or {@code "unclassified"}
+     * @param prmsClassRange a human-readable PRMS class label
+     * @param maturityWarning screening flag: {@code "ok"}, {@code "watch"}, or {@code "unclassified"}
      */
     public Result(String resourceClass, ResourceCategory resourceCategory, String prmsClassRange,
 	String maturityWarning) {
@@ -161,7 +161,7 @@ public final class ReservesClassification implements Serializable {
    * Classifies a maturity stage assuming commerciality is unknown.
    *
    * @param maturityStage the project maturity stage (e.g. {@code "on production"}, {@code "development pending"},
-   *                      {@code "prospect"}); must be non-null and non-blank
+   * {@code "prospect"}); must be non-null and non-blank
    * @return the {@link Result} of the classification
    * @throws IllegalArgumentException if {@code maturityStage} is null or blank
    */
@@ -173,10 +173,10 @@ public final class ReservesClassification implements Serializable {
    * Classifies a maturity stage against the SPE-PRMS categories.
    *
    * @param maturityStage the project maturity stage (e.g. {@code "on production"}, {@code "development pending"},
-   *                      {@code "prospect"}); must be non-null and non-blank
-   * @param commercial    whether the volumes are judged commercial; may be {@code null} when unknown. When
-   *                      {@link Boolean#FALSE} on a reserves-stage input the warning is raised to {@code "watch"}
-   *                      because reserves require commercial volumes.
+   * {@code "prospect"}); must be non-null and non-blank
+   * @param commercial whether the volumes are judged commercial; may be {@code null} when unknown. When
+   * {@link Boolean#FALSE} on a reserves-stage input the warning is raised to {@code "watch"} because reserves require
+   * commercial volumes.
    * @return the {@link Result} of the classification
    * @throws IllegalArgumentException if {@code maturityStage} is null or blank
    */

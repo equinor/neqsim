@@ -128,10 +128,10 @@ public class DistillationColumnMechanicalDesign extends MechanicalDesign {
    * column cost-estimation correlations.
    * </p>
    *
-   * @param productSpec   the target purity (mole fraction) of the key component
+   * @param productSpec the target purity (mole fraction) of the key component
    * @param componentName the name of the key component
-   * @param isTopProduct  true if the spec is for the top product, false for the bottom product
-   * @param maxTrays      the maximum total tray count to try including reboiler/condenser if present
+   * @param isTopProduct true if the spec is for the top product, false for the bottom product
+   * @param maxTrays the maximum total tray count to try including reboiler/condenser if present
    * @return economic optimization result with process, mechanical design, and cost metrics
    * @throws IllegalStateException if the associated equipment is not a distillation column
    */
@@ -144,15 +144,15 @@ public class DistillationColumnMechanicalDesign extends MechanicalDesign {
   /**
    * Optimize the tray configuration on annualized cost using supplied economics and ratios.
    *
-   * @param productSpec           the target purity (mole fraction) of the key component
-   * @param componentName         the name of the key component
-   * @param isTopProduct          true if the spec is for the top product, false for the bottom product
-   * @param maxTrays              the maximum total tray count to try including reboiler/condenser if present
+   * @param productSpec the target purity (mole fraction) of the key component
+   * @param componentName the name of the key component
+   * @param isTopProduct true if the spec is for the top product, false for the bottom product
+   * @param maxTrays the maximum total tray count to try including reboiler/condenser if present
    * @param condenserRefluxRatios optional condenser reflux-ratio candidates to evaluate
-   * @param reboilerRatios        optional reboiler boilup/reflux-ratio candidates to evaluate
-   * @param capitalChargeFactor   annual capital charge factor in 1/year
+   * @param reboilerRatios optional reboiler boilup/reflux-ratio candidates to evaluate
+   * @param capitalChargeFactor annual capital charge factor in 1/year
    * @param operatingHoursPerYear operating hours per year for utility costing
-   * @param steamCostPerTonne     steam cost in USD/tonne for reboiler duty
+   * @param steamCostPerTonne steam cost in USD/tonne for reboiler duty
    * @param coolingWaterCostPerM3 cooling-water cost in USD/m3 for condenser duty
    * @return economic optimization result with process, mechanical design, and cost metrics
    * @throws IllegalStateException if the associated equipment is not a distillation column

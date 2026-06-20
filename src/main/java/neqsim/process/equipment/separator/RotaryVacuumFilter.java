@@ -51,7 +51,7 @@ public class RotaryVacuumFilter extends SolidsSeparator {
   /**
    * Constructor for RotaryVacuumFilter with inlet stream.
    *
-   * @param name        name of the filter
+   * @param name name of the filter
    * @param inletStream the feed stream
    */
   public RotaryVacuumFilter(String name, StreamInterface inletStream) {

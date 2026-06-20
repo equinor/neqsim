@@ -228,13 +228,13 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
    * molarVolume2.
    * </p>
    *
-   * @param pressure    a double
+   * @param pressure a double
    * @param temperature a double
-   * @param A           a double
-   * @param B           a double
-   * @param pt          the PhaseType of the phase
+   * @param A a double
+   * @param B a double
+   * @param pt the PhaseType of the phase
    * @return a double
-   * @throws neqsim.util.exception.IsNaNException             if any.
+   * @throws neqsim.util.exception.IsNaNException if any.
    * @throws neqsim.util.exception.TooManyIterationsException if any.
    */
   public double molarVolume2(double pressure, double temperature, double A, double B, PhaseType pt)
@@ -318,9 +318,9 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
    * Analytic molar volume solver for cubic equations of state. Used as a fallback when the numerical solver does not
    * converge.
    *
-   * @param pressure    system pressure
+   * @param pressure system pressure
    * @param temperature system temperature
-   * @param pt          phase type (gas or liquid)
+   * @param pt phase type (gas or liquid)
    * @return molar volume [m3/mol * 1e5]
    * @throws neqsim.util.exception.IsNaNException if no real roots are found
    */
@@ -541,10 +541,10 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
    * calcAT.
    * </p>
    *
-   * @param phase       a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param temperature a double
-   * @param pressure    a double
-   * @param numbcomp    a int
+   * @param pressure a double
+   * @param numbcomp a int
    * @return a double
    */
   public double calcAT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
@@ -557,10 +557,10 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
    * calcATT.
    * </p>
    *
-   * @param phase       a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param temperature a double
-   * @param pressure    a double
-   * @param numbcomp    a int
+   * @param pressure a double
+   * @param numbcomp a int
    * @return a double
    */
   public double calcATT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {

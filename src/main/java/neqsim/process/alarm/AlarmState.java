@@ -28,11 +28,11 @@ public class AlarmState implements Serializable {
   /**
    * Evaluates the alarm state using the supplied configuration and measurement.
    *
-   * @param config      alarm configuration
-   * @param value       measured value
-   * @param dt          simulation time step
+   * @param config alarm configuration
+   * @param value measured value
+   * @param dt simulation time step
    * @param currentTime simulation time of the evaluation
-   * @param source      originating measurement name
+   * @param source originating measurement name
    * @return list of events produced during the evaluation
    */
   public List<AlarmEvent> evaluate(AlarmConfig config, double value, double dt, double currentTime, String source) {
@@ -221,7 +221,7 @@ public class AlarmState implements Serializable {
   /**
    * Acknowledges the active alarm if one exists.
    *
-   * @param source      name of the originating measurement
+   * @param source name of the originating measurement
    * @param currentTime simulation time
    * @return acknowledgement event, or {@code null} if nothing was acknowledged
    */
@@ -262,7 +262,7 @@ public class AlarmState implements Serializable {
    * Shelves this alarm point until the specified simulation time. After expiry, normal alarm evaluation resumes
    * automatically.
    *
-   * @param reason     operator-provided reason for shelving
+   * @param reason operator-provided reason for shelving
    * @param expiryTime simulation time when shelving expires
    */
   public void shelve(String reason, double expiryTime) {

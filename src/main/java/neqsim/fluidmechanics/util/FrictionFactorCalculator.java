@@ -41,7 +41,7 @@ public final class FrictionFactorCalculator {
    * Note: The Darcy friction factor is 4 times the Fanning friction factor.
    * </p>
    *
-   * @param reynoldsNumber    the Reynolds number (dimensionless)
+   * @param reynoldsNumber the Reynolds number (dimensionless)
    * @param relativeRoughness the relative roughness ε/D (dimensionless)
    * @return the Darcy friction factor (dimensionless)
    */
@@ -77,7 +77,7 @@ public final class FrictionFactorCalculator {
    * Note: The Fanning friction factor is 1/4 of the Darcy friction factor.
    * </p>
    *
-   * @param reynoldsNumber    the Reynolds number (dimensionless)
+   * @param reynoldsNumber the Reynolds number (dimensionless)
    * @param relativeRoughness the relative roughness ε/D (dimensionless)
    * @return the Fanning friction factor (dimensionless)
    */
@@ -97,7 +97,7 @@ public final class FrictionFactorCalculator {
    * 1/√f = -1.8 log₁₀[(ε/3.7D)^1.11 + 6.9/Re]
    * </p>
    *
-   * @param reynoldsNumber    the Reynolds number (dimensionless), must be positive
+   * @param reynoldsNumber the Reynolds number (dimensionless), must be positive
    * @param relativeRoughness the relative roughness ε/D (dimensionless)
    * @return the Darcy friction factor (dimensionless)
    */
@@ -129,9 +129,9 @@ public final class FrictionFactorCalculator {
    * Calculates the pressure drop per unit length using Darcy-Weisbach equation.
    *
    * @param frictionFactor the Darcy friction factor (dimensionless)
-   * @param diameter       the pipe inner diameter (m)
-   * @param density        the fluid density (kg/m³)
-   * @param velocity       the fluid velocity (m/s)
+   * @param diameter the pipe inner diameter (m)
+   * @param density the fluid density (kg/m³)
+   * @param velocity the fluid velocity (m/s)
    * @return pressure drop per unit length (Pa/m)
    */
   public static double calcPressureDropPerLength(double frictionFactor, double diameter, double density,

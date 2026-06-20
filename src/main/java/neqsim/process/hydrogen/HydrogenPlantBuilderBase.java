@@ -23,11 +23,11 @@ abstract class HydrogenPlantBuilderBase {
   /**
    * Creates a methane and steam feed stream.
    *
-   * @param name               stream name
+   * @param name stream name
    * @param methaneMolesPerSec methane flow in mole/sec
-   * @param steamToCarbon      steam-to-carbon molar ratio
-   * @param temperatureK       feed temperature in Kelvin
-   * @param pressureBara       feed pressure in bara
+   * @param steamToCarbon steam-to-carbon molar ratio
+   * @param temperatureK feed temperature in Kelvin
+   * @param pressureBara feed pressure in bara
    * @return configured stream
    */
   protected Stream createMethaneSteamFeed(String name, double methaneMolesPerSec, double steamToCarbon,
@@ -44,12 +44,12 @@ abstract class HydrogenPlantBuilderBase {
   /**
    * Creates a methane, steam, and oxygen feed stream.
    *
-   * @param name               stream name
+   * @param name stream name
    * @param methaneMolesPerSec methane flow in mole/sec
-   * @param steamToCarbon      steam-to-carbon molar ratio
-   * @param oxygenToCarbon     oxygen-to-carbon molar ratio
-   * @param temperatureK       feed temperature in Kelvin
-   * @param pressureBara       feed pressure in bara
+   * @param steamToCarbon steam-to-carbon molar ratio
+   * @param oxygenToCarbon oxygen-to-carbon molar ratio
+   * @param temperatureK feed temperature in Kelvin
+   * @param pressureBara feed pressure in bara
    * @return configured stream
    */
   protected Stream createMethaneSteamOxygenFeed(String name, double methaneMolesPerSec, double steamToCarbon,
@@ -67,10 +67,10 @@ abstract class HydrogenPlantBuilderBase {
   /**
    * Creates a methane fuel stream.
    *
-   * @param name               stream name
+   * @param name stream name
    * @param methaneMolesPerSec methane flow in mole/sec
-   * @param temperatureK       temperature in Kelvin
-   * @param pressureBara       pressure in bara
+   * @param temperatureK temperature in Kelvin
+   * @param pressureBara pressure in bara
    * @return configured stream
    */
   protected Stream createMethaneFuel(String name, double methaneMolesPerSec, double temperatureK, double pressureBara) {
@@ -90,10 +90,10 @@ abstract class HydrogenPlantBuilderBase {
   /**
    * Creates a dry air stream.
    *
-   * @param name              stream name
+   * @param name stream name
    * @param oxygenMolesPerSec oxygen flow in mole/sec
-   * @param temperatureK      temperature in Kelvin
-   * @param pressureBara      pressure in bara
+   * @param temperatureK temperature in Kelvin
+   * @param pressureBara pressure in bara
    * @return configured air stream
    */
   protected Stream createAir(String name, double oxygenMolesPerSec, double temperatureK, double pressureBara) {

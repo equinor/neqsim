@@ -88,8 +88,8 @@ public class InjectionConformanceMonitor extends ProcessEquipmentBaseClass {
      * Create an injection data point.
      *
      * @param timeDays time in days
-     * @param whpBar   wellhead pressure in bar
-     * @param rateM3d  injection rate in m3/day
+     * @param whpBar wellhead pressure in bar
+     * @param rateM3d injection rate in m3/day
      */
     public InjectionDataPoint(double timeDays, double whpBar, double rateM3d) {
       this.timeDays = timeDays;
@@ -138,10 +138,10 @@ public class InjectionConformanceMonitor extends ProcessEquipmentBaseClass {
     /**
      * Create a zone profile data point.
      *
-     * @param zoneName           zone name
-     * @param depthM             zone depth in meters
+     * @param zoneName zone name
+     * @param depthM zone depth in meters
      * @param allocationFraction fraction of total injection going to this zone
-     * @param isTargetZone       whether this is the intended injection zone
+     * @param isTargetZone whether this is the intended injection zone
      */
     public ZoneProfilePoint(String zoneName, double depthM, double allocationFraction, boolean isTargetZone) {
       this.zoneName = zoneName;
@@ -212,8 +212,8 @@ public class InjectionConformanceMonitor extends ProcessEquipmentBaseClass {
   /**
    * Record an injection data point.
    *
-   * @param timeDays              time since start of monitoring (days)
-   * @param wellheadPressureBar   wellhead pressure (bar)
+   * @param timeDays time since start of monitoring (days)
+   * @param wellheadPressureBar wellhead pressure (bar)
    * @param injectionRateM3perDay injection rate (m3/day)
    */
   public void recordInjectionData(double timeDays, double wellheadPressureBar, double injectionRateM3perDay) {
@@ -224,10 +224,10 @@ public class InjectionConformanceMonitor extends ProcessEquipmentBaseClass {
   /**
    * Add a zone to the injection profile.
    *
-   * @param zoneName           zone identifier
-   * @param depthM             zone depth (m)
+   * @param zoneName zone identifier
+   * @param depthM zone depth (m)
    * @param allocationFraction fraction of total injection going to this zone (0.0-1.0)
-   * @param isTargetZone       whether this is the intended injection zone
+   * @param isTargetZone whether this is the intended injection zone
    */
   public void addZoneProfile(String zoneName, double depthM, double allocationFraction, boolean isTargetZone) {
     injectionProfile.add(new ZoneProfilePoint(zoneName, depthM, allocationFraction, isTargetZone));
@@ -480,7 +480,7 @@ public class InjectionConformanceMonitor extends ProcessEquipmentBaseClass {
    * Calculate slope using least-squares linear regression on the Hall plot.
    *
    * @param startIdx start index (inclusive)
-   * @param endIdx   end index (inclusive)
+   * @param endIdx end index (inclusive)
    * @return slope (bar day / m3)
    */
   private double calculateSlopeLinearRegression(int startIdx, int endIdx) {

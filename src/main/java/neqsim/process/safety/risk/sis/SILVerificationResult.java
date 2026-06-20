@@ -263,11 +263,11 @@ public class SILVerificationResult implements Serializable {
   /**
    * Adds component contribution to PFD.
    *
-   * @param name        component name
-   * @param type        component type (sensor, logic, final element)
+   * @param name component name
+   * @param type component type (sensor, logic, final element)
    * @param failureRate dangerous failure rate (per hour)
-   * @param pfd         PFD contribution
-   * @param percent     percentage of total PFD
+   * @param pfd PFD contribution
+   * @param percent percentage of total PFD
    */
   public void addComponentContribution(String name, String type, double failureRate, double pfd, double percent) {
     componentContributions.add(new ComponentContribution(name, type, failureRate, pfd, percent));

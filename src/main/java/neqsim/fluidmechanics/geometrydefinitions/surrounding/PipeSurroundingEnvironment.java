@@ -94,7 +94,7 @@ public class PipeSurroundingEnvironment extends SurroundingEnvironmentBaseClass 
    * Creates an environment for a pipe exposed to air.
    *
    * @param airTemperatureK Air temperature in Kelvin
-   * @param windVelocityMs  Wind velocity in m/s
+   * @param windVelocityMs Wind velocity in m/s
    * @return Configured PipeSurroundingEnvironment
    */
   public static PipeSurroundingEnvironment exposedToAir(double airTemperatureK, double windVelocityMs) {
@@ -108,7 +108,7 @@ public class PipeSurroundingEnvironment extends SurroundingEnvironmentBaseClass 
    * Creates an environment for a subsea pipe.
    *
    * @param seawaterTemperatureK Seawater temperature in Kelvin
-   * @param currentVelocityMs    Current velocity in m/s
+   * @param currentVelocityMs Current velocity in m/s
    * @return Configured PipeSurroundingEnvironment
    */
   public static PipeSurroundingEnvironment subseaPipe(double seawaterTemperatureK, double currentVelocityMs) {
@@ -122,9 +122,9 @@ public class PipeSurroundingEnvironment extends SurroundingEnvironmentBaseClass 
    * Creates an environment for a buried pipe.
    *
    * @param groundTemperatureK Undisturbed ground temperature in Kelvin
-   * @param burialDepthM       Burial depth to pipe centerline in meters
-   * @param pipeOuterRadiusM   Outer radius of the pipe in meters
-   * @param soilMaterial       Type of soil
+   * @param burialDepthM Burial depth to pipe centerline in meters
+   * @param pipeOuterRadiusM Outer radius of the pipe in meters
+   * @param soilMaterial Type of soil
    * @return Configured PipeSurroundingEnvironment
    */
   public static PipeSurroundingEnvironment buriedPipe(double groundTemperatureK, double burialDepthM,
@@ -190,9 +190,9 @@ public class PipeSurroundingEnvironment extends SurroundingEnvironmentBaseClass 
    * coefficient.
    * </p>
    *
-   * @param depthM       Burial depth to pipe centerline in meters
+   * @param depthM Burial depth to pipe centerline in meters
    * @param outerRadiusM Outer radius of the pipe in meters
-   * @param soil         Soil material type
+   * @param soil Soil material type
    */
   public void setForBuried(double depthM, double outerRadiusM, PipeMaterial soil) {
     this.environmentType = EnvironmentType.BURIED;
@@ -225,9 +225,9 @@ public class PipeSurroundingEnvironment extends SurroundingEnvironmentBaseClass 
    * h = k_soil * S / (2π * r)
    * </pre>
    *
-   * @param depthM       Burial depth to centerline in meters
+   * @param depthM Burial depth to centerline in meters
    * @param outerRadiusM Pipe outer radius in meters
-   * @param kSoil        Soil thermal conductivity in W/(m·K)
+   * @param kSoil Soil thermal conductivity in W/(m·K)
    * @return Equivalent heat transfer coefficient in W/(m²·K)
    */
   public static double calcBuriedPipeHeatTransferCoefficient(double depthM, double outerRadiusM, double kSoil) {
@@ -247,9 +247,9 @@ public class PipeSurroundingEnvironment extends SurroundingEnvironmentBaseClass 
   /**
    * Calculates the thermal resistance per unit length for a buried pipe.
    *
-   * @param depthM       Burial depth to centerline in meters
+   * @param depthM Burial depth to centerline in meters
    * @param outerRadiusM Pipe outer radius in meters
-   * @param kSoil        Soil thermal conductivity in W/(m·K)
+   * @param kSoil Soil thermal conductivity in W/(m·K)
    * @return Thermal resistance in K·m/W
    */
   public static double calcBuriedPipeThermalResistance(double depthM, double outerRadiusM, double kSoil) {

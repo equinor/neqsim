@@ -76,7 +76,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
    * <code>streamObject.clone(newName)</code> rather than <code>new Stream(newName,streamObject)</code>
    * </p>
    *
-   * @param name   name of stream
+   * @param name name of stream
    * @param stream Stream to use as internal Stream.
    */
   public Stream(String name, StreamInterface stream) {
@@ -95,7 +95,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
    * NB! This construct uses the input thermoSystem object internally, i.e., it is not cloned.
    * </p>
    *
-   * @param name         name of stream
+   * @param name name of stream
    * @param thermoSystem System to use as internal System.
    */
   public Stream(String name, SystemInterface thermoSystem) {
@@ -633,9 +633,9 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
    * </p>
    *
    * @param propertyName a {@link java.lang.String} object
-   * @param unit         a {@link java.lang.String} object
-   * @param phase        a {@link java.lang.String} object
-   * @param component    a {@link java.lang.String} object
+   * @param unit a {@link java.lang.String} object
+   * @param phase a {@link java.lang.String} object
+   * @param component a {@link java.lang.String} object
    * @return a {@link java.lang.Object} object
    */
   public Object getProperty(String propertyName, String unit, String phase, String component) {

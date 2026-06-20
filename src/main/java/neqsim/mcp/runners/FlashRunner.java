@@ -510,10 +510,10 @@ public class FlashRunner {
   /**
    * Adds model applicability warnings for common agent-facing mistakes.
    *
-   * @param warnings     warning list to append to
-   * @param model        thermodynamic model name
+   * @param warnings warning list to append to
+   * @param model thermodynamic model name
    * @param pressureBara pressure in bara
-   * @param components   validated component map
+   * @param components validated component map
    */
   private static void addApplicabilityWarnings(List<String> warnings, String model, double pressureBara,
       Map<String, Double> components) {
@@ -559,7 +559,7 @@ public class FlashRunner {
   /**
    * Creates a SystemInterface based on the model type string.
    *
-   * @param model        the model name (e.g., "SRK", "PR", "CPA")
+   * @param model the model name (e.g., "SRK", "PR", "CPA")
    * @param temperatureK temperature in Kelvin
    * @param pressureBara pressure in bara
    * @return the created fluid system
@@ -757,8 +757,8 @@ public class FlashRunner {
   /**
    * Creates a typed flash error envelope with tool metadata.
    *
-   * @param code        the diagnostic code
-   * @param message     the diagnostic message
+   * @param code the diagnostic code
+   * @param message the diagnostic message
    * @param remediation the remediation hint
    * @return typed flash error envelope
    */
@@ -828,8 +828,8 @@ public class FlashRunner {
   /**
    * Creates a standard error JSON response.
    *
-   * @param code        the error code
-   * @param message     the error message
+   * @param code the error code
+   * @param message the error message
    * @param remediation the fix suggestion
    * @return JSON error string
    */

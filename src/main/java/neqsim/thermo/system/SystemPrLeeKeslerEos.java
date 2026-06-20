@@ -55,8 +55,8 @@ public class SystemPrLeeKeslerEos extends SystemPrEos {
   /**
    * Constructs a PR-LK system with optional solid phase calculations.
    *
-   * @param T              the temperature in Kelvin
-   * @param P              the pressure in bara (absolute pressure)
+   * @param T the temperature in Kelvin
+   * @param P the pressure in bara (absolute pressure)
    * @param checkForSolids set {@code true} to enable solid phase calculations
    */
   public SystemPrLeeKeslerEos(double T, double P, boolean checkForSolids) {

@@ -84,8 +84,8 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
    * Constructor for sysNewtonRhapsonPhaseEnvelope.
    * </p>
    *
-   * @param system             a {@link neqsim.thermo.system.SystemInterface} object
-   * @param numberOfPhases     a int
+   * @param system a {@link neqsim.thermo.system.SystemInterface} object
+   * @param numberOfPhases a int
    * @param numberOfComponents a int
    */
   public SysNewtonRhapsonPhaseEnvelope(SystemInterface system, int numberOfPhases, int numberOfComponents) {

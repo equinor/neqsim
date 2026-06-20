@@ -37,7 +37,7 @@ public final class EngineeringValidator {
    * Validates simulation results JSON against engineering rules.
    *
    * @param resultsJson JSON from any runner (process, pipeline, flash, etc.)
-   * @param context     optional context string ("process", "flash", "pipeline", "compressor", etc.)
+   * @param context optional context string ("process", "flash", "pipeline", "compressor", etc.)
    * @return JSON with validation findings
    */
   public static String validate(String resultsJson, String context) {
@@ -106,7 +106,7 @@ public final class EngineeringValidator {
   /**
    * Checks temperatures against physical and practical limits.
    *
-   * @param results  the results JSON
+   * @param results the results JSON
    * @param findings the findings list to append to
    */
   private static void checkTemperatureRanges(JsonObject results, List<ValidationFinding> findings) {
@@ -140,7 +140,7 @@ public final class EngineeringValidator {
   /**
    * Checks pressures against physical and practical limits.
    *
-   * @param results  the results JSON
+   * @param results the results JSON
    * @param findings the findings list to append to
    */
   private static void checkPressureRanges(JsonObject results, List<ValidationFinding> findings) {
@@ -170,7 +170,7 @@ public final class EngineeringValidator {
   /**
    * Checks compressor-specific parameters.
    *
-   * @param results  the results JSON
+   * @param results the results JSON
    * @param findings the findings list
    */
   private static void checkCompressorRules(JsonObject results, List<ValidationFinding> findings) {
@@ -210,7 +210,7 @@ public final class EngineeringValidator {
   /**
    * Detailed compressor design validation.
    *
-   * @param eq       equipment JSON
+   * @param eq equipment JSON
    * @param findings findings list
    */
   private static void checkCompressorDesign(JsonObject eq, List<ValidationFinding> findings) {
@@ -240,7 +240,7 @@ public final class EngineeringValidator {
   /**
    * Checks separator-specific parameters.
    *
-   * @param results  the results JSON
+   * @param results the results JSON
    * @param findings the findings list
    */
   private static void checkSeparatorRules(JsonObject results, List<ValidationFinding> findings) {
@@ -265,7 +265,7 @@ public final class EngineeringValidator {
   /**
    * Detailed separator design validation.
    *
-   * @param eq       equipment JSON
+   * @param eq equipment JSON
    * @param findings findings list
    */
   private static void checkSeparatorDesign(JsonObject eq, List<ValidationFinding> findings) {
@@ -279,7 +279,7 @@ public final class EngineeringValidator {
   /**
    * Checks heat exchanger rules.
    *
-   * @param results  the results JSON
+   * @param results the results JSON
    * @param findings the findings list
    */
   private static void checkHeatExchangerRules(JsonObject results, List<ValidationFinding> findings) {
@@ -307,7 +307,7 @@ public final class EngineeringValidator {
   /**
    * Detailed HX design validation.
    *
-   * @param eq       equipment JSON
+   * @param eq equipment JSON
    * @param findings findings list
    */
   private static void checkHeatExchangerDesign(JsonObject eq, List<ValidationFinding> findings) {
@@ -321,7 +321,7 @@ public final class EngineeringValidator {
   /**
    * Checks pipeline-specific parameters.
    *
-   * @param results  the results JSON
+   * @param results the results JSON
    * @param findings the findings list
    */
   private static void checkPipelineRules(JsonObject results, List<ValidationFinding> findings) {
@@ -360,7 +360,7 @@ public final class EngineeringValidator {
   /**
    * Detailed pipeline design validation.
    *
-   * @param eq       equipment JSON
+   * @param eq equipment JSON
    * @param findings findings list
    */
   private static void checkPipelineDesign(JsonObject eq, List<ValidationFinding> findings) {
@@ -370,7 +370,7 @@ public final class EngineeringValidator {
   /**
    * Valve design validation.
    *
-   * @param eq       equipment JSON
+   * @param eq equipment JSON
    * @param findings findings list
    */
   private static void checkValveDesign(JsonObject eq, List<ValidationFinding> findings) {
@@ -397,7 +397,7 @@ public final class EngineeringValidator {
   /**
    * Checks phase-related issues.
    *
-   * @param results  the results JSON
+   * @param results the results JSON
    * @param findings the findings list
    */
   private static void checkPhaseRules(JsonObject results, List<ValidationFinding> findings) {
@@ -415,7 +415,7 @@ public final class EngineeringValidator {
   /**
    * Checks mass balance closure.
    *
-   * @param results  the results JSON
+   * @param results the results JSON
    * @param findings the findings list
    */
   private static void checkMassBalance(JsonObject results, List<ValidationFinding> findings) {
@@ -430,7 +430,7 @@ public final class EngineeringValidator {
   /**
    * Checks energy balance closure.
    *
-   * @param results  the results JSON
+   * @param results the results JSON
    * @param findings the findings list
    */
   private static void checkEnergyBalance(JsonObject results, List<ValidationFinding> findings) {
@@ -445,7 +445,7 @@ public final class EngineeringValidator {
   /**
    * Checks convergence status.
    *
-   * @param results  the results JSON
+   * @param results the results JSON
    * @param findings the findings list
    */
   private static void checkConvergence(JsonObject results, List<ValidationFinding> findings) {
@@ -465,7 +465,7 @@ public final class EngineeringValidator {
   /**
    * Recursively searches a JSON object for a numeric field by key name.
    *
-   * @param obj       the JSON object
+   * @param obj the JSON object
    * @param fieldName the field name to search for
    * @return the numeric value, or null if not found
    */
@@ -489,14 +489,14 @@ public final class EngineeringValidator {
   /**
    * Checks a numeric field against min/max bounds.
    *
-   * @param results      the results JSON
-   * @param fieldName    the field name
-   * @param min          the minimum value
-   * @param max          the maximum value
-   * @param unit         the unit string
-   * @param findings     the findings list
+   * @param results the results JSON
+   * @param fieldName the field name
+   * @param min the minimum value
+   * @param max the maximum value
+   * @param unit the unit string
+   * @param findings the findings list
    * @param errorMessage the error message
-   * @param remediation  the remediation hint
+   * @param remediation the remediation hint
    */
   private static void checkNumericField(JsonObject results, String fieldName, double min, double max, String unit,
       List<ValidationFinding> findings, String errorMessage, String remediation) {
@@ -512,7 +512,7 @@ public final class EngineeringValidator {
    * Builds the validation report JSON.
    *
    * @param findings the list of findings
-   * @param context  the validation context
+   * @param context the validation context
    * @return JSON report string
    */
   private static String buildReport(List<ValidationFinding> findings, String context) {
@@ -594,9 +594,9 @@ public final class EngineeringValidator {
     /**
      * Creates a validation finding.
      *
-     * @param code        the finding code
-     * @param severity    the severity
-     * @param message     the message
+     * @param code the finding code
+     * @param severity the severity
+     * @param message the message
      * @param remediation the remediation hint
      */
     ValidationFinding(String code, Severity severity, String message, String remediation) {

@@ -55,7 +55,7 @@ public class Symptom implements Serializable {
   /**
    * Builds a symptom.
    *
-   * @param category    symptom category
+   * @param category symptom category
    * @param description plain-language description
    */
   public Symptom(Category category, String description) {
@@ -67,7 +67,7 @@ public class Symptom implements Serializable {
   /**
    * Adds a numeric measurement.
    *
-   * @param key   measurement key
+   * @param key measurement key
    * @param value value
    * @return this for chaining
    */

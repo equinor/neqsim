@@ -145,7 +145,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface,
    * Constructor for Pump.
    * </p>
    *
-   * @param name        name of pump
+   * @param name name of pump
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public Pump(String name, StreamInterface inletStream) {
@@ -648,7 +648,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface,
    * </p>
    *
    * @param temperature outlet temperature value
-   * @param unit        temperature unit ("K", "C", "F", or "R"), case-insensitive
+   * @param unit temperature unit ("K", "C", "F", or "R"), case-insensitive
    */
   @Override
   public void setOutletTemperature(double temperature, String unit) {
@@ -698,7 +698,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface,
    * </p>
    *
    * @param pressure a double
-   * @param unit     a {@link java.lang.String} object
+   * @param unit a {@link java.lang.String} object
    */
   public void setPressure(double pressure, String unit) {
     setOutletPressure(pressure);
@@ -717,7 +717,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface,
    * </p>
    *
    * @param pressure a double
-   * @param unit     a {@link java.lang.String} object
+   * @param unit a {@link java.lang.String} object
    */
   @Override
   public void setOutletPressure(double pressure, String unit) {

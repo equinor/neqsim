@@ -39,7 +39,7 @@ public class GORfitter extends TwoPortEquipment {
    * Constructor for GORfitter.
    * </p>
    *
-   * @param name   a {@link java.lang.String} object
+   * @param name a {@link java.lang.String} object
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public GORfitter(String name, StreamInterface stream) {
@@ -86,7 +86,7 @@ public class GORfitter extends TwoPortEquipment {
    * </p>
    *
    * @param pressure a double
-   * @param unitP    a {@link java.lang.String} object
+   * @param unitP a {@link java.lang.String} object
    */
   public void setPressure(double pressure, String unitP) {
     this.pressure = pressure;
@@ -105,7 +105,7 @@ public class GORfitter extends TwoPortEquipment {
    * </p>
    *
    * @param temperature a double
-   * @param unitT       a {@link java.lang.String} object
+   * @param unitT a {@link java.lang.String} object
    */
   public void setTemperature(double temperature, String unitT) {
     this.temperature = temperature;

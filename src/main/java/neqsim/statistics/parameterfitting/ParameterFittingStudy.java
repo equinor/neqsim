@@ -37,7 +37,7 @@ public class ParameterFittingStudy {
   /**
    * Creates a parameter fitting study.
    *
-   * @param dataSet  experimental data set to fit
+   * @param dataSet experimental data set to fit
    * @param function fitting function that predicts the measured response
    * @throws IllegalArgumentException if dataSet or function is null
    */
@@ -55,9 +55,9 @@ public class ParameterFittingStudy {
   /**
    * Creates a parameter fitting study using a complete fitting specification.
    *
-   * @param dataSet  experimental data set to fit
+   * @param dataSet experimental data set to fit
    * @param function fitting function that predicts the measured response
-   * @param spec     fitting specification
+   * @param spec fitting specification
    * @throws IllegalArgumentException if any argument is null or invalid
    */
   public ParameterFittingStudy(ExperimentalDataSet dataSet, BaseFunction function, ParameterFittingSpec spec) {
@@ -372,8 +372,8 @@ public class ParameterFittingStudy {
    * Runs one multi-start candidate.
    *
    * @param fittingDataSet data set used for fitting
-   * @param validation     data set used for validation, or null
-   * @param initialGuess   physical initial parameter values
+   * @param validation data set used for validation, or null
+   * @param initialGuess physical initial parameter values
    * @return candidate result
    */
   private Result runSingleStart(ExperimentalDataSet fittingDataSet, ExperimentalDataSet validation,
@@ -416,10 +416,10 @@ public class ParameterFittingStudy {
   /**
    * Creates a result object from the final fitted function state.
    *
-   * @param fittingDataSet       data set used for fitting
-   * @param validation           data set used for validation, or null
-   * @param optimizerResult      optimizer result to include
-   * @param robustPasses         number of robust reweighting passes completed
+   * @param fittingDataSet data set used for fitting
+   * @param validation data set used for validation, or null
+   * @param optimizerResult optimizer result to include
+   * @param robustPasses number of robust reweighting passes completed
    * @param optimizationFunction function used by the optimizer
    * @return fitting study result
    */
@@ -516,9 +516,9 @@ public class ParameterFittingStudy {
   /**
    * Creates a sample set with standard deviations adjusted by robust weights.
    *
-   * @param fittingDataSet       source data set
+   * @param fittingDataSet source data set
    * @param optimizationFunction function to attach to each sample
-   * @param weights              robust weights
+   * @param weights robust weights
    * @return weighted sample set
    */
   private SampleSet createWeightedSampleSet(ExperimentalDataSet fittingDataSet, BaseFunction optimizationFunction,
@@ -541,7 +541,7 @@ public class ParameterFittingStudy {
   /**
    * Calculates the configured objective value from physical residuals and priors.
    *
-   * @param fittingDataSet   data set used for fitting
+   * @param fittingDataSet data set used for fitting
    * @param fittedParameters physical fitted parameter values
    * @return objective value
    */
@@ -676,7 +676,7 @@ public class ParameterFittingStudy {
   /**
    * Validates a finite double array.
    *
-   * @param name   array name used in error messages
+   * @param name array name used in error messages
    * @param values values to validate
    * @throws IllegalArgumentException if values are null, empty or contain non-finite entries
    */
@@ -788,13 +788,13 @@ public class ParameterFittingStudy {
     /**
      * Creates metrics.
      *
-     * @param calculatedValues            calculated values
-     * @param residuals                   residuals
-     * @param weightedResiduals           weighted residuals
-     * @param rootMeanSquareError         root mean square error
-     * @param meanAbsoluteError           mean absolute error
+     * @param calculatedValues calculated values
+     * @param residuals residuals
+     * @param weightedResiduals weighted residuals
+     * @param rootMeanSquareError root mean square error
+     * @param meanAbsoluteError mean absolute error
      * @param weightedRootMeanSquareError weighted root mean square error
-     * @param reducedChiSquare            reduced chi-square
+     * @param reducedChiSquare reduced chi-square
      */
     private Metrics(double[] calculatedValues, double[] residuals, double[] weightedResiduals,
 	double rootMeanSquareError, double meanAbsoluteError, double weightedRootMeanSquareError,
@@ -833,8 +833,8 @@ public class ParameterFittingStudy {
      * Creates a spec-backed fitting function.
      *
      * @param delegate physical fitting function
-     * @param spec     fitting specification
-     * @param adapter  optional parameter update adapter
+     * @param spec fitting specification
+     * @param adapter optional parameter update adapter
      */
     private SpecBackedFunction(BaseFunction delegate, ParameterFittingSpec spec, ParameterUpdateAdapter adapter) {
       this.delegate = delegate;
@@ -893,7 +893,7 @@ public class ParameterFittingStudy {
      * Converts physical values to optimizer-space values.
      *
      * @param values physical parameter values
-     * @param spec   fitting specification
+     * @param spec fitting specification
      * @return optimizer-space parameter values
      */
     private static double[] toInternal(double[] values, ParameterFittingSpec spec) {
@@ -940,24 +940,24 @@ public class ParameterFittingStudy {
     /**
      * Creates a result object.
      *
-     * @param optimizerResult                       optimizer result
-     * @param fittedParameters                      final fitted parameter values
-     * @param parameterNames                        final fitted parameter names
-     * @param calculatedValues                      model calculated values for each data point
-     * @param residuals                             measured minus calculated residuals
-     * @param weightedResiduals                     residuals divided by standard deviations
-     * @param rootMeanSquareError                   unweighted root mean square error
-     * @param meanAbsoluteError                     unweighted mean absolute error
-     * @param weightedRootMeanSquareError           weighted root mean square error
-     * @param reducedChiSquare                      reduced chi-square using training residuals
-     * @param objectiveFunctionType                 objective function type
-     * @param objectiveValue                        final objective value
-     * @param robustIterations                      number of robust reweighting passes
-     * @param validationCalculatedValues            validation calculated values
-     * @param validationResiduals                   validation residuals
-     * @param validationWeightedResiduals           validation weighted residuals
-     * @param validationRootMeanSquareError         validation root mean square error
-     * @param validationMeanAbsoluteError           validation mean absolute error
+     * @param optimizerResult optimizer result
+     * @param fittedParameters final fitted parameter values
+     * @param parameterNames final fitted parameter names
+     * @param calculatedValues model calculated values for each data point
+     * @param residuals measured minus calculated residuals
+     * @param weightedResiduals residuals divided by standard deviations
+     * @param rootMeanSquareError unweighted root mean square error
+     * @param meanAbsoluteError unweighted mean absolute error
+     * @param weightedRootMeanSquareError weighted root mean square error
+     * @param reducedChiSquare reduced chi-square using training residuals
+     * @param objectiveFunctionType objective function type
+     * @param objectiveValue final objective value
+     * @param robustIterations number of robust reweighting passes
+     * @param validationCalculatedValues validation calculated values
+     * @param validationResiduals validation residuals
+     * @param validationWeightedResiduals validation weighted residuals
+     * @param validationRootMeanSquareError validation root mean square error
+     * @param validationMeanAbsoluteError validation mean absolute error
      * @param validationWeightedRootMeanSquareError validation weighted root mean square error
      */
     private Result(LevenbergMarquardtResult optimizerResult, double[] fittedParameters, String[] parameterNames,

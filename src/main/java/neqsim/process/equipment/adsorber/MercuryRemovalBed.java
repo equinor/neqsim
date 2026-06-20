@@ -177,7 +177,7 @@ public class MercuryRemovalBed extends TwoPortEquipment {
   /**
    * Constructor for MercuryRemovalBed with inlet stream.
    *
-   * @param name        the name of the unit operation
+   * @param name the name of the unit operation
    * @param inletStream the inlet gas stream
    */
   public MercuryRemovalBed(String name, StreamInterface inletStream) {
@@ -683,9 +683,9 @@ public class MercuryRemovalBed extends TwoPortEquipment {
   /**
    * Set the outlet mercury content by scaling the inlet mole fraction.
    *
-   * @param sys        the working thermodynamic system to modify
+   * @param sys the working thermodynamic system to modify
    * @param outletConc outlet Hg concentration (microgram/Nm3)
-   * @param inletConc  inlet Hg concentration (microgram/Nm3)
+   * @param inletConc inlet Hg concentration (microgram/Nm3)
    */
   private void setOutletMercuryFromConcentration(SystemInterface sys, double outletConc, double inletConc) {
     if (mercuryIndex < 0 || inletConc <= 0) {
@@ -704,7 +704,7 @@ public class MercuryRemovalBed extends TwoPortEquipment {
    * Calculate pressure drop across the packed bed using the Ergun equation.
    *
    * @param sys the thermodynamic system for fluid properties
-   * @param us  superficial velocity (m/s)
+   * @param us superficial velocity (m/s)
    * @return total pressure drop (Pa)
    */
   private double calcErgunPressureDrop(SystemInterface sys, double us) {

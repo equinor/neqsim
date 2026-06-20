@@ -230,7 +230,7 @@ public final class SeparatorFireExposure {
    * separator and a simple configuration object.
    *
    * @param separator separator instance that already reflects the current level/pressure/temperature
-   * @param config    fire scenario configuration; defaults match typical API 521 pool fire settings
+   * @param config fire scenario configuration; defaults match typical API 521 pool fire settings
    * @return populated {@link FireExposureResult}
    */
   public static FireExposureResult evaluate(Separator separator, FireScenarioConfig config) {
@@ -241,9 +241,9 @@ public final class SeparatorFireExposure {
    * Aggregates fire heat-load, wall-temperature, and rupture calculations including optional flare radiation based on
    * the actual flaring heat duty.
    *
-   * @param separator            separator instance that already reflects the current level/pressure/temperature
-   * @param config               fire scenario configuration; defaults match typical API 521 pool fire settings
-   * @param flare                flare instance supplying real-time heat duty and radiation parameters; may be null
+   * @param separator separator instance that already reflects the current level/pressure/temperature
+   * @param config fire scenario configuration; defaults match typical API 521 pool fire settings
+   * @param flare flare instance supplying real-time heat duty and radiation parameters; may be null
    * @param flareGroundDistanceM horizontal distance from flare base to separator [m]
    * @return populated {@link FireExposureResult}
    */
@@ -299,8 +299,8 @@ public final class SeparatorFireExposure {
    * {@link Separator#runTransient(double, java.util.UUID)}, which consumes the heat input when performing the energy
    * balance.
    *
-   * @param separator       separator to update
-   * @param fireState       fire heat-load bundle produced by {@link #evaluate(Separator, FireScenarioConfig)}
+   * @param separator separator to update
+   * @param fireState fire heat-load bundle produced by {@link #evaluate(Separator, FireScenarioConfig)}
    * @param timeStepSeconds timestep duration in seconds (retained for backward compatibility)
    * @return heat duty applied to the separator in watts
    */

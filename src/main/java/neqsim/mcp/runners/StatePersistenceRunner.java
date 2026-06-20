@@ -698,9 +698,9 @@ public final class StatePersistenceRunner {
   /**
    * Compares a string field between two JSON objects.
    *
-   * @param diff  the diff object to populate
-   * @param obj1  first object
-   * @param obj2  second object
+   * @param diff the diff object to populate
+   * @param obj1 first object
+   * @param obj2 second object
    * @param field the field name
    */
   private static void compareField(JsonObject diff, JsonObject obj1, JsonObject obj2, String field) {
@@ -717,8 +717,8 @@ public final class StatePersistenceRunner {
   /**
    * Creates a standard error JSON response.
    *
-   * @param code        the error code
-   * @param message     the error message
+   * @param code the error code
+   * @param message the error message
    * @param remediation how to fix
    * @return the error JSON string
    */

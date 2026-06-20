@@ -41,14 +41,14 @@ public final class SeparationDuty implements Serializable {
   /**
    * Creates a separation duty.
    *
-   * @param name                  short identifier used in the generated flowsheet
-   * @param feed                  the feed stream; must have been {@code run()} so that flow and composition are valid
-   * @param topProductSpecs       map from component name to required mole fraction in the top product (gas/overhead);
-   *                              may be null or empty
-   * @param bottomProductSpecs    map from component name to required mole fraction in the bottom product
-   *                              (liquid/bottoms); may be null or empty
+   * @param name short identifier used in the generated flowsheet
+   * @param feed the feed stream; must have been {@code run()} so that flow and composition are valid
+   * @param topProductSpecs map from component name to required mole fraction in the top product (gas/overhead); may be
+   * null or empty
+   * @param bottomProductSpecs map from component name to required mole fraction in the bottom product (liquid/bottoms);
+   * may be null or empty
    * @param operatingPressureBara operating pressure for the separation stage in bara; pass {@code Double.NaN} to use
-   *                              the feed pressure
+   * the feed pressure
    */
   public SeparationDuty(String name, StreamInterface feed, Map<String, Double> topProductSpecs,
       Map<String, Double> bottomProductSpecs, double operatingPressureBara) {

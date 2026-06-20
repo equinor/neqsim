@@ -162,8 +162,8 @@ public abstract class SystemThermo implements SystemInterface {
    * Constructor for SystemThermo.
    * </p>
    *
-   * @param T              The temperature in unit Kelvin
-   * @param P              The pressure in unit bara (absolute pressure)
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
    * @param checkForSolids Set true to do solid phase check and calculations
    */
   public SystemThermo(double T, double P, boolean checkForSolids) {
@@ -3618,7 +3618,7 @@ public abstract class SystemThermo implements SystemInterface {
    * </p>
    *
    * @param type a int. 0 to initialize and 1 to reset, 2 to calculate T and P derivatives, 3 to calculate all
-   *             derivatives and 4 to calculate all derivatives numerically
+   * derivatives and 4 to calculate all derivatives numerically
    */
   public void initAnalytic(int type) {
     if (type == 0) {
@@ -3706,7 +3706,7 @@ public abstract class SystemThermo implements SystemInterface {
    * initAnalytic.
    * </p>
    *
-   * @param type     a int
+   * @param type a int
    * @param phaseNum a int
    */
   public void initAnalytic(int type, int phaseNum) {
@@ -3892,7 +3892,7 @@ public abstract class SystemThermo implements SystemInterface {
    * </p>
    *
    * @param initType a int
-   * @param phasen   a int
+   * @param phasen a int
    */
   public void initNumeric(int initType, int phasen) {
     if (initType < 2) {
@@ -5122,7 +5122,7 @@ public abstract class SystemThermo implements SystemInterface {
    * Wrapper function for addComponent to set fluid type and specify mole fractions.
    *
    * @param molefractions Component mole fraction of each component.
-   * @param type          Type of fluid. Supports "PlusFluid", "Plus" and default.
+   * @param type Type of fluid. Supports "PlusFluid", "Plus" and default.
    */
   private void setMolarFractions(double[] molefractions, String type) {
     double sum = 0;

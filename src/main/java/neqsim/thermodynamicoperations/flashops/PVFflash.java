@@ -42,7 +42,7 @@ public class PVFflash extends Flash {
   /**
    * Constructor for PVFflash.
    *
-   * @param system            the thermodynamic system (pressure must be set)
+   * @param system the thermodynamic system (pressure must be set)
    * @param vaporFractionSpec target molar vapor fraction (0.0 = bubble point, 1.0 = dew point)
    * @throws IllegalArgumentException if vaporFractionSpec is not in [0, 1]
    */

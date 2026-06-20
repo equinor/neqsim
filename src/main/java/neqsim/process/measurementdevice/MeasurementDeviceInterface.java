@@ -179,8 +179,8 @@ public interface MeasurementDeviceInterface extends ProcessElementInterface {
    * Evaluates the alarm state using the supplied measurement value.
    *
    * @param measuredValue measured value
-   * @param dt            simulation time step
-   * @param time          current simulation time
+   * @param dt simulation time step
+   * @param time current simulation time
    * @return events generated during the evaluation
    */
   public List<AlarmEvent> evaluateAlarm(double measuredValue, double dt, double time);

@@ -232,7 +232,7 @@ public class FuelGasSystem extends ProcessEquipmentBaseClass {
   /**
    * Constructor with inlet stream.
    *
-   * @param name        system name
+   * @param name system name
    * @param inletStream fuel gas inlet
    */
   public FuelGasSystem(String name, StreamInterface inletStream) {
@@ -284,8 +284,8 @@ public class FuelGasSystem extends ProcessEquipmentBaseClass {
   /**
    * Add consumer by parameters.
    *
-   * @param name      consumer name
-   * @param type      consumer type
+   * @param name consumer name
+   * @param type consumer type
    * @param demandKgh fuel demand [kg/hr]
    */
   public void addConsumer(String name, ConsumerType type, double demandKgh) {
@@ -598,8 +598,8 @@ public class FuelGasSystem extends ProcessEquipmentBaseClass {
     /**
      * Creates a fuel gas consumer.
      *
-     * @param name      consumer name
-     * @param type      consumer type
+     * @param name consumer name
+     * @param type consumer type
      * @param demandKgh fuel demand [kg/hr]
      */
     public FuelGasConsumer(String name, ConsumerType type, double demandKgh) {

@@ -104,7 +104,7 @@ public final class EclipseEOSExporter {
     /**
      * Set standard conditions for stock tank properties.
      *
-     * @param pressure    pressure in bar
+     * @param pressure pressure in bar
      * @param temperature temperature in Kelvin
      * @return this config for chaining
      */
@@ -199,7 +199,7 @@ public final class EclipseEOSExporter {
   /**
    * Export a compositional fluid to an Eclipse include file using default settings.
    *
-   * @param fluid      NeqSim compositional fluid
+   * @param fluid NeqSim compositional fluid
    * @param outputPath output file path
    * @throws IOException if writing fails
    */
@@ -210,9 +210,9 @@ public final class EclipseEOSExporter {
   /**
    * Export a compositional fluid to an Eclipse include file.
    *
-   * @param fluid      NeqSim compositional fluid
+   * @param fluid NeqSim compositional fluid
    * @param outputPath output file path
-   * @param config     export configuration
+   * @param config export configuration
    * @throws IOException if writing fails
    */
   public static void toFile(SystemInterface fluid, Path outputPath, ExportConfig config) throws IOException {
@@ -238,7 +238,7 @@ public final class EclipseEOSExporter {
   /**
    * Export a compositional fluid to an Eclipse format string.
    *
-   * @param fluid  NeqSim compositional fluid
+   * @param fluid NeqSim compositional fluid
    * @param config export configuration
    * @return Eclipse include file content
    */
@@ -258,9 +258,9 @@ public final class EclipseEOSExporter {
   /**
    * Export a Black-Oil PVT table to an Eclipse include file.
    *
-   * @param pvt        Black-Oil PVT table
-   * @param rhoOilSc   oil density at standard conditions (kg/m³)
-   * @param rhoGasSc   gas density at standard conditions (kg/m³)
+   * @param pvt Black-Oil PVT table
+   * @param rhoOilSc oil density at standard conditions (kg/m³)
+   * @param rhoGasSc gas density at standard conditions (kg/m³)
    * @param rhoWaterSc water density at standard conditions (kg/m³)
    * @param outputPath output file path
    * @throws IOException if writing fails
@@ -273,12 +273,12 @@ public final class EclipseEOSExporter {
   /**
    * Export a Black-Oil PVT table to an Eclipse include file.
    *
-   * @param pvt        Black-Oil PVT table
-   * @param rhoOilSc   oil density at standard conditions (kg/m³)
-   * @param rhoGasSc   gas density at standard conditions (kg/m³)
+   * @param pvt Black-Oil PVT table
+   * @param rhoOilSc oil density at standard conditions (kg/m³)
+   * @param rhoGasSc gas density at standard conditions (kg/m³)
    * @param rhoWaterSc water density at standard conditions (kg/m³)
    * @param outputPath output file path
-   * @param config     export configuration
+   * @param config export configuration
    * @throws IOException if writing fails
    */
   public static void toFile(BlackOilPVTTable pvt, double rhoOilSc, double rhoGasSc, double rhoWaterSc, Path outputPath,
@@ -295,9 +295,9 @@ public final class EclipseEOSExporter {
   /**
    * Export a Black-Oil PVT table to an Eclipse format string.
    *
-   * @param pvt        Black-Oil PVT table
-   * @param rhoOilSc   oil density at standard conditions (kg/m³)
-   * @param rhoGasSc   gas density at standard conditions (kg/m³)
+   * @param pvt Black-Oil PVT table
+   * @param rhoOilSc oil density at standard conditions (kg/m³)
+   * @param rhoGasSc gas density at standard conditions (kg/m³)
    * @param rhoWaterSc water density at standard conditions (kg/m³)
    * @return Eclipse include file content
    */
@@ -308,11 +308,11 @@ public final class EclipseEOSExporter {
   /**
    * Export a Black-Oil PVT table to an Eclipse format string.
    *
-   * @param pvt        Black-Oil PVT table
-   * @param rhoOilSc   oil density at standard conditions (kg/m³)
-   * @param rhoGasSc   gas density at standard conditions (kg/m³)
+   * @param pvt Black-Oil PVT table
+   * @param rhoOilSc oil density at standard conditions (kg/m³)
+   * @param rhoGasSc gas density at standard conditions (kg/m³)
    * @param rhoWaterSc water density at standard conditions (kg/m³)
-   * @param config     export configuration
+   * @param config export configuration
    * @return Eclipse include file content
    */
   public static String toString(BlackOilPVTTable pvt, double rhoOilSc, double rhoGasSc, double rhoWaterSc,

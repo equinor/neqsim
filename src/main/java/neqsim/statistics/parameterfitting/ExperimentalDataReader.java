@@ -37,10 +37,10 @@ public final class ExperimentalDataReader {
   /**
    * Reads an experimental data set from a CSV file.
    *
-   * @param file                   CSV file with a header row
-   * @param name                   data set name
-   * @param responseName           response name and default measured-value column
-   * @param responseUnit           response unit used in the resulting data set
+   * @param file CSV file with a header row
+   * @param name data set name
+   * @param responseName response name and default measured-value column
+   * @param responseUnit response unit used in the resulting data set
    * @param dependentVariableNames independent variable names and default column names
    * @param dependentVariableUnits independent variable units used in the resulting data set
    * @return experimental data set
@@ -56,10 +56,10 @@ public final class ExperimentalDataReader {
   /**
    * Reads an experimental data set from a CSV file.
    *
-   * @param file    CSV file with a header row
+   * @param file CSV file with a header row
    * @param options CSV mapping options
    * @return experimental data set
-   * @throws IOException              if the file cannot be read
+   * @throws IOException if the file cannot be read
    * @throws IllegalArgumentException if required columns are missing or values are invalid
    */
   public static ExperimentalDataSet fromCsv(File file, CsvOptions options) throws IOException {
@@ -234,9 +234,9 @@ public final class ExperimentalDataReader {
   /**
    * Returns a required column value.
    *
-   * @param values      row values
+   * @param values row values
    * @param headerIndex header index map
-   * @param column      column name
+   * @param column column name
    * @return column value text
    */
   private static String getColumnValue(List<String> values, Map<String, Integer> headerIndex, String column) {
@@ -253,9 +253,9 @@ public final class ExperimentalDataReader {
   /**
    * Returns an optional column value.
    *
-   * @param values      row values
+   * @param values row values
    * @param headerIndex header index map
-   * @param column      optional column name
+   * @param column optional column name
    * @return column value text, or unknown when unavailable
    */
   private static String optionalColumnValue(List<String> values, Map<String, Integer> headerIndex, String column) {
@@ -273,8 +273,8 @@ public final class ExperimentalDataReader {
   /**
    * Parses a finite double value from CSV text.
    *
-   * @param value      value text
-   * @param column     column name
+   * @param value value text
+   * @param column column name
    * @param lineNumber one-based line number
    * @return parsed value
    */
@@ -294,9 +294,9 @@ public final class ExperimentalDataReader {
    * Converts an absolute value between recognized units.
    *
    * @param variableName variable name used for diagnostics
-   * @param value        value to convert
-   * @param fromUnit     source unit
-   * @param toUnit       target unit
+   * @param value value to convert
+   * @param fromUnit source unit
+   * @param toUnit target unit
    * @return converted value
    */
   private static double convertAbsoluteValue(String variableName, double value, String fromUnit, String toUnit) {
@@ -317,9 +317,9 @@ public final class ExperimentalDataReader {
    * Converts a standard deviation between recognized units without applying offsets.
    *
    * @param variableName variable name used for diagnostics
-   * @param value        standard deviation value
-   * @param fromUnit     source unit
-   * @param toUnit       target unit
+   * @param value standard deviation value
+   * @param fromUnit source unit
+   * @param toUnit target unit
    * @return converted standard deviation
    */
   private static double convertDeltaValue(String variableName, double value, String fromUnit, String toUnit) {
@@ -344,7 +344,7 @@ public final class ExperimentalDataReader {
    * Returns whether units are effectively equal or unspecified.
    *
    * @param fromUnit source unit
-   * @param toUnit   target unit
+   * @param toUnit target unit
    * @return true if no conversion is needed
    */
   private static boolean sameOrEmptyUnit(String fromUnit, String toUnit) {
@@ -377,8 +377,8 @@ public final class ExperimentalDataReader {
   /**
    * Reads a text value from a JSON/YAML node.
    *
-   * @param node         parent node
-   * @param field        field name
+   * @param node parent node
+   * @param field field name
    * @param defaultValue fallback value
    * @return text value or fallback
    */
@@ -390,7 +390,7 @@ public final class ExperimentalDataReader {
   /**
    * Reads a required double value from a JSON/YAML node.
    *
-   * @param node  parent node
+   * @param node parent node
    * @param field field name
    * @return double value
    */
@@ -405,7 +405,7 @@ public final class ExperimentalDataReader {
   /**
    * Reads a string array from a JSON/YAML node.
    *
-   * @param node  parent node
+   * @param node parent node
    * @param field field name
    * @return string array
    */
@@ -424,7 +424,7 @@ public final class ExperimentalDataReader {
   /**
    * Reads a double array from a JSON/YAML node.
    *
-   * @param node  parent node
+   * @param node parent node
    * @param field field name
    * @return double array
    */
@@ -490,9 +490,9 @@ public final class ExperimentalDataReader {
     /**
      * Creates CSV options from data-set metadata.
      *
-     * @param name                   data set name
-     * @param responseName           response name
-     * @param responseUnit           response unit
+     * @param name data set name
+     * @param responseName response name
+     * @param responseUnit response unit
      * @param dependentVariableNames independent variable names
      * @param dependentVariableUnits independent variable target units
      */

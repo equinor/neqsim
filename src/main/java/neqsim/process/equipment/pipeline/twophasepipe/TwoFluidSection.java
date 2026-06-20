@@ -194,9 +194,9 @@ public class TwoFluidSection extends PipeSection {
   /**
    * Constructor with geometry.
    *
-   * @param position    Position from inlet (m)
-   * @param length      Segment length (m)
-   * @param diameter    Pipe diameter (m)
+   * @param position Position from inlet (m)
+   * @param length Segment length (m)
+   * @param diameter Pipe diameter (m)
    * @param inclination Pipe inclination (radians)
    */
   public TwoFluidSection(double position, double length, double diameter, double inclination) {

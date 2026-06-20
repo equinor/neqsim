@@ -101,7 +101,7 @@ public class WhitsonPVTReader {
   /**
    * Read a Whitson PVT parameter file and create a NeqSim fluid with specified molar composition.
    *
-   * @param filePath         path to the parameter file
+   * @param filePath path to the parameter file
    * @param molarComposition array of molar fractions (same order as components in file)
    * @return configured SystemInterface fluid
    * @throws IOException if file cannot be read
@@ -390,7 +390,7 @@ public class WhitsonPVTReader {
    * Add a component to the fluid with all properties from the parameter file.
    *
    * @param fluid target fluid system
-   * @param comp  component data parsed from the Whitson PVT file
+   * @param comp component data parsed from the Whitson PVT file
    * @param moles moles of the component to add
    */
   private void addComponentToFluid(SystemInterface fluid, ComponentData comp, double moles) {
@@ -434,10 +434,10 @@ public class WhitsonPVTReader {
   /**
    * Set all component properties from the data.
    *
-   * @param fluid    The fluid system to modify
-   * @param phase    The phase index
-   * @param name     The component name
-   * @param comp     The component data containing properties
+   * @param fluid The fluid system to modify
+   * @param phase The phase index
+   * @param name The component name
+   * @param comp The component data containing properties
    * @param tcKelvin Critical temperature in Kelvin
    * @param tbKelvin Normal boiling point in Kelvin
    */

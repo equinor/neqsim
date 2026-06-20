@@ -62,7 +62,7 @@ public class EndFlash extends Separator {
   /**
    * Constructor for EndFlash with inlet stream.
    *
-   * @param name        name of the end flash drum
+   * @param name name of the end flash drum
    * @param inletStream inlet sub-cooled LNG stream
    */
   public EndFlash(String name, StreamInterface inletStream) {

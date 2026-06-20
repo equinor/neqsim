@@ -23,7 +23,7 @@ public class methaneBWR32 {
    * </p>
    *
    * @param molDens a double
-   * @param temp    a double
+   * @param temp a double
    * @return a double
    */
   public double calcPressure(double molDens, double temp) {
@@ -58,7 +58,7 @@ public class methaneBWR32 {
    *
    * @param temp a double
    * @param pres a double
-   * @param gas  a boolean
+   * @param gas a boolean
    * @return a double
    */
   public double molDens(double temp, double pres, boolean gas) {

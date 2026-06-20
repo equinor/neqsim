@@ -33,12 +33,12 @@ public class NoiseAssessment implements Serializable {
   /**
    * Estimate valve noise per IEC 60534-8-3.
    *
-   * @param massFlowKgS           mass flow through valve in kg/s
-   * @param upstreamPressureBar   upstream pressure in bara
+   * @param massFlowKgS mass flow through valve in kg/s
+   * @param upstreamPressureBar upstream pressure in bara
    * @param downstreamPressureBar downstream pressure in bara
-   * @param molecularWeight       molecular weight in kg/kmol
-   * @param temperatureK          temperature in K
-   * @param pipeDiameterM         downstream pipe diameter in meters
+   * @param molecularWeight molecular weight in kg/kmol
+   * @param temperatureK temperature in K
+   * @param pipeDiameterM downstream pipe diameter in meters
    * @return sound pressure level at 1m downstream in dB(A)
    */
   public static double valveNoise(double massFlowKgS, double upstreamPressureBar, double downstreamPressureBar,
@@ -74,7 +74,7 @@ public class NoiseAssessment implements Serializable {
   /**
    * Estimate compressor noise per NORSOK S-002 / API 617 guidelines.
    *
-   * @param powerKW        shaft power in kW
+   * @param powerKW shaft power in kW
    * @param compressorType "CENTRIFUGAL", "RECIPROCATING", or "SCREW"
    * @return sound pressure level at 1m in dB(A)
    */
@@ -96,7 +96,7 @@ public class NoiseAssessment implements Serializable {
   /**
    * Estimate pump noise.
    *
-   * @param powerKW  pump power in kW
+   * @param powerKW pump power in kW
    * @param pumpType "CENTRIFUGAL" or "POSITIVE_DISPLACEMENT"
    * @return sound pressure level at 1m in dB(A)
    */
@@ -113,8 +113,8 @@ public class NoiseAssessment implements Serializable {
   /**
    * Estimate flare noise per API 521.
    *
-   * @param heatReleaseMW  total heat release in MW
-   * @param tipDiameterM   flare tip diameter in meters
+   * @param heatReleaseMW total heat release in MW
+   * @param tipDiameterM flare tip diameter in meters
    * @param exitVelocityMS exit gas velocity in m/s
    * @return sound pressure level at 100m in dB(A)
    */
@@ -158,7 +158,7 @@ public class NoiseAssessment implements Serializable {
   /**
    * Estimate SPL at a given distance from a known SPL at 1m.
    *
-   * @param spl1m     SPL at 1 meter in dB(A)
+   * @param spl1m SPL at 1 meter in dB(A)
    * @param distanceM distance to receiver in meters
    * @return SPL at the distance in dB(A)
    */
@@ -198,8 +198,8 @@ public class NoiseAssessment implements Serializable {
    * 70% RH, 101.325 kPa). For more precise work, use the full temperature-humidity-dependent model.
    * </p>
    *
-   * @param frequencyHz         octave band centre frequency in Hz
-   * @param temperatureC        ambient temperature in Celsius
+   * @param frequencyHz octave band centre frequency in Hz
+   * @param temperatureC ambient temperature in Celsius
    * @param relativeHumidityPct relative humidity in percent
    * @return atmospheric absorption coefficient in dB/m
    */
@@ -232,9 +232,9 @@ public class NoiseAssessment implements Serializable {
    * method uses the standard octave-band approach with A-weighting.
    * </p>
    *
-   * @param soundPowerLevelDbA  overall A-weighted sound power level in dB(A)
-   * @param distanceM           distance from source in meters
-   * @param temperatureC        ambient temperature in Celsius
+   * @param soundPowerLevelDbA overall A-weighted sound power level in dB(A)
+   * @param distanceM distance from source in meters
+   * @param temperatureC ambient temperature in Celsius
    * @param relativeHumidityPct relative humidity in percent
    * @return A-weighted SPL at distance including atmospheric absorption, in dB(A)
    */
@@ -262,9 +262,9 @@ public class NoiseAssessment implements Serializable {
    * absorption and A-weighting, then sums to get the overall result.
    * </p>
    *
-   * @param soundPowerLevelDb   overall unweighted sound power level in dB
-   * @param distanceM           distance from source in meters
-   * @param temperatureC        ambient temperature in Celsius
+   * @param soundPowerLevelDb overall unweighted sound power level in dB
+   * @param distanceM distance from source in meters
+   * @param temperatureC ambient temperature in Celsius
    * @param relativeHumidityPct relative humidity in percent
    * @return A-weighted SPL at distance in dB(A)
    */

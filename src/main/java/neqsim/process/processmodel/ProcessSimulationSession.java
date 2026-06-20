@@ -94,7 +94,7 @@ public class ProcessSimulationSession {
      * Creates a session entry.
      *
      * @param processSystem the process system
-     * @param templateName  name of the template used (nullable)
+     * @param templateName name of the template used (nullable)
      */
     SessionEntry(ProcessSystem processSystem, String templateName) {
       this.processSystem = processSystem;
@@ -132,7 +132,7 @@ public class ProcessSimulationSession {
    * Creates a session manager with custom settings.
    *
    * @param timeoutMinutes session timeout in minutes (0 = no timeout)
-   * @param maxSessions    maximum number of concurrent sessions
+   * @param maxSessions maximum number of concurrent sessions
    */
   public ProcessSimulationSession(long timeoutMinutes, int maxSessions) {
     this.timeoutMinutes = timeoutMinutes;
@@ -164,7 +164,7 @@ public class ProcessSimulationSession {
    * not affect existing sessions.
    * </p>
    *
-   * @param name     the template name
+   * @param name the template name
    * @param template the process system to use as a template
    */
   public void registerTemplate(String name, ProcessSystem template) {

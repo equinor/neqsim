@@ -238,8 +238,8 @@ public class GilbertChokeFlow extends MultiphaseChokeFlow {
    * Calculates liquid-only mass flow (pure liquid case).
    *
    * @param fluid thermodynamic system
-   * @param P1    upstream pressure in Pa
-   * @param P2    downstream pressure in Pa
+   * @param P1 upstream pressure in Pa
+   * @param P2 downstream pressure in Pa
    * @return mass flow rate in kg/s
    */
   private double calculateLiquidOnlyMassFlow(SystemInterface fluid, double P1, double P2) {
@@ -282,9 +282,9 @@ public class GilbertChokeFlow extends MultiphaseChokeFlow {
    * Inverts the Gilbert equation to find choke diameter.
    * </p>
    *
-   * @param fluid            thermodynamic system
+   * @param fluid thermodynamic system
    * @param upstreamPressure upstream pressure in Pa
-   * @param liquidFlowRate   liquid flow rate in m3/s
+   * @param liquidFlowRate liquid flow rate in m3/s
    * @return required choke diameter in meters
    */
   public double calculateRequiredChokeDiameter(SystemInterface fluid, double upstreamPressure, double liquidFlowRate) {

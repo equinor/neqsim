@@ -38,10 +38,10 @@ public class SampleXYDataSource {
    * Constructor for SampleXYDataSource.
    * </p>
    *
-   * @param p      an array of type double
-   * @param name   an array of {@link java.lang.String} objects
-   * @param title  a {@link java.lang.String} object
-   * @param xaxis  a {@link java.lang.String} object
+   * @param p an array of type double
+   * @param name an array of {@link java.lang.String} objects
+   * @param title a {@link java.lang.String} object
+   * @param xaxis a {@link java.lang.String} object
    * @param yaxsis a {@link java.lang.String} object
    */
   public SampleXYDataSource(double[][] p, String[] name, String title, String xaxis, String yaxsis) {
@@ -92,7 +92,7 @@ public class SampleXYDataSource {
    * Returns the x-value for the specified series and item. Series are numbered 0, 1, ...
    *
    * @param series The index (zero-based) of the series;
-   * @param item   The index (zero-based) of the required item;
+   * @param item The index (zero-based) of the required item;
    * @return The x-value for the specified series and item.
    */
   public Number getXValue(int series, int item) {
@@ -103,7 +103,7 @@ public class SampleXYDataSource {
    * Returns the y-value for the specified series and item. Series are numbered 0, 1, ...
    *
    * @param series The index (zero-based) of the series;
-   * @param item   The index (zero-based) of the required item;
+   * @param item The index (zero-based) of the required item;
    * @return The y-value for the specified series and item.
    */
   public Number getYValue(int series, int item) {

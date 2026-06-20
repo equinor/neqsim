@@ -28,7 +28,7 @@ public class HydrateEquilibriumTemperatureAnalyser extends StreamMeasurementDevi
    * Constructor for HydrateEquilibriumTemperatureAnalyser.
    * </p>
    *
-   * @param name   Name of HydrateEquilibriumTemperatureAnalyser
+   * @param name Name of HydrateEquilibriumTemperatureAnalyser
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public HydrateEquilibriumTemperatureAnalyser(String name, StreamInterface stream) {

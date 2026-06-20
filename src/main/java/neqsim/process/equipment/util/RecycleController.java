@@ -273,7 +273,7 @@ public class RecycleController implements java.io.Serializable {
   /**
    * Sets the acceleration method for recycles at the specified priority level.
    *
-   * @param method   the acceleration method to use
+   * @param method the acceleration method to use
    * @param priority the priority level to apply to
    */
   public void setAccelerationMethod(AccelerationMethod method, int priority) {
@@ -498,7 +498,7 @@ public class RecycleController implements java.io.Serializable {
    * Applies accelerated values to a recycle's outlet stream.
    *
    * @param recycle the recycle to update
-   * @param values  array of [temperature, pressure, flow, mole_fractions...]
+   * @param values array of [temperature, pressure, flow, mole_fractions...]
    */
   private void applyAcceleratedValuesToRecycle(Recycle recycle, double[] values) {
     if (recycle.getOutletStream() == null || recycle.getOutletStream().getThermoSystem() == null) {

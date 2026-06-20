@@ -135,10 +135,10 @@ public class IncrementalZoneAnalysis implements Serializable {
   /**
    * Sets the tube geometry parameters.
    *
-   * @param tubeID     tube inner diameter (m)
-   * @param tubeOD     tube outer diameter (m)
+   * @param tubeID tube inner diameter (m)
+   * @param tubeOD tube outer diameter (m)
    * @param tubeLength tube length (m)
-   * @param tubeCount  number of tubes
+   * @param tubeCount number of tubes
    * @param tubePasses number of tube passes
    */
   public void setGeometry(double tubeID, double tubeOD, double tubeLength, int tubeCount, int tubePasses) {
@@ -152,9 +152,9 @@ public class IncrementalZoneAnalysis implements Serializable {
   /**
    * Sets the shell-side geometry parameters.
    *
-   * @param shellID         shell inside diameter (m)
-   * @param baffleSpacing   baffle spacing (m)
-   * @param tubePitch       tube pitch (m)
+   * @param shellID shell inside diameter (m)
+   * @param baffleSpacing baffle spacing (m)
+   * @param tubePitch tube pitch (m)
    * @param triangularPitch true for triangular layout
    */
   public void setShellGeometry(double shellID, double baffleSpacing, double tubePitch, boolean triangularPitch) {
@@ -167,7 +167,7 @@ public class IncrementalZoneAnalysis implements Serializable {
   /**
    * Sets fouling resistances.
    *
-   * @param tubeFouling  tube-side fouling resistance (m2*K/W)
+   * @param tubeFouling tube-side fouling resistance (m2*K/W)
    * @param shellFouling shell-side fouling resistance (m2*K/W)
    */
   public void setFouling(double tubeFouling, double shellFouling) {
@@ -314,10 +314,10 @@ public class IncrementalZoneAnalysis implements Serializable {
   /**
    * Calculates single-phase HTC using Gnielinski or laminar correlation.
    *
-   * @param massFlux     mass flux (kg/(m2*s))
-   * @param density      density (kg/m3)
-   * @param viscosity    viscosity (Pa*s)
-   * @param cp           heat capacity (J/(kg*K))
+   * @param massFlux mass flux (kg/(m2*s))
+   * @param density density (kg/m3)
+   * @param viscosity viscosity (Pa*s)
+   * @param cp heat capacity (J/(kg*K))
    * @param conductivity thermal conductivity (W/(m*K))
    * @return heat transfer coefficient (W/(m2*K))
    */
@@ -352,7 +352,7 @@ public class IncrementalZoneAnalysis implements Serializable {
   /**
    * Calculates the overall U for a zone using resistance-in-series.
    *
-   * @param hTube  tube-side HTC (W/(m2*K))
+   * @param hTube tube-side HTC (W/(m2*K))
    * @param hShell shell-side HTC (W/(m2*K))
    * @return overall U based on outer area (W/(m2*K))
    */
@@ -722,9 +722,9 @@ public class IncrementalZoneAnalysis implements Serializable {
     /**
      * Sets the temperature endpoints for this zone.
      *
-     * @param hotIn   hot-side inlet temperature (K)
-     * @param hotOut  hot-side outlet temperature (K)
-     * @param coldIn  cold-side inlet temperature (K)
+     * @param hotIn hot-side inlet temperature (K)
+     * @param hotOut hot-side outlet temperature (K)
+     * @param coldIn cold-side inlet temperature (K)
      * @param coldOut cold-side outlet temperature (K)
      */
     public void setTemperatures(double hotIn, double hotOut, double coldIn, double coldOut) {
@@ -737,12 +737,12 @@ public class IncrementalZoneAnalysis implements Serializable {
     /**
      * Sets single-phase tube-side properties.
      *
-     * @param density      density (kg/m3)
-     * @param viscosity    viscosity (Pa*s)
-     * @param cp           heat capacity (J/(kg*K))
+     * @param density density (kg/m3)
+     * @param viscosity viscosity (Pa*s)
+     * @param cp heat capacity (J/(kg*K))
      * @param conductivity thermal conductivity (W/(m*K))
      * @param massFlowRate mass flow rate (kg/s)
-     * @param regime       phase regime
+     * @param regime phase regime
      */
     public void setTubeSideProperties(double density, double viscosity, double cp, double conductivity,
 	double massFlowRate, PhaseRegime regime) {
@@ -757,12 +757,12 @@ public class IncrementalZoneAnalysis implements Serializable {
     /**
      * Sets shell-side properties.
      *
-     * @param density      density (kg/m3)
-     * @param viscosity    viscosity (Pa*s)
-     * @param cp           heat capacity (J/(kg*K))
+     * @param density density (kg/m3)
+     * @param viscosity viscosity (Pa*s)
+     * @param cp heat capacity (J/(kg*K))
      * @param conductivity thermal conductivity (W/(m*K))
      * @param massFlowRate mass flow rate (kg/s)
-     * @param regime       phase regime
+     * @param regime phase regime
      */
     public void setShellSideProperties(double density, double viscosity, double cp, double conductivity,
 	double massFlowRate, PhaseRegime regime) {

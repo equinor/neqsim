@@ -104,7 +104,7 @@ public class Standard_AGA3 extends neqsim.standards.Standard {
    * Sets the orifice geometry.
    *
    * @param orificeDiameterM orifice bore diameter in meters
-   * @param pipeDiameterM    pipe internal diameter in meters
+   * @param pipeDiameterM pipe internal diameter in meters
    */
   public void setOrificeDimensions(double orificeDiameterM, double pipeDiameterM) {
     this.orificeDiameter = orificeDiameterM;
@@ -218,7 +218,7 @@ public class Standard_AGA3 extends neqsim.standards.Standard {
    * Calculates discharge coefficient using Reader-Harris/Gallagher equation.
    *
    * @param beta beta ratio d/D
-   * @param re   Reynolds number based on orifice diameter
+   * @param re Reynolds number based on orifice diameter
    * @return discharge coefficient Cd
    */
   private double calculateDischargeCoefficient(double beta, double re) {
@@ -257,9 +257,9 @@ public class Standard_AGA3 extends neqsim.standards.Standard {
   /**
    * Calculates the expansion factor for compressible flow.
    *
-   * @param beta  beta ratio
-   * @param dp    differential pressure in Pa
-   * @param p1    upstream static pressure in Pa
+   * @param beta beta ratio
+   * @param dp differential pressure in Pa
+   * @param p1 upstream static pressure in Pa
    * @param kappa isentropic exponent
    * @return expansion factor Y
    */

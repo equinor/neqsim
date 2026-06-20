@@ -300,7 +300,7 @@ public final class IonParametersAdvanced implements Serializable {
    * recompiling. Creates a new AdvancedIonData with the updated W0 while keeping all other parameters.
    *
    * @param ionName the ion name (e.g., "Na+", "Cl-")
-   * @param newW0   new W0 value in J*m3/mol2
+   * @param newW0 new W0 value in J*m3/mol2
    */
   public static void setW0(String ionName, double newW0) {
     AdvancedIonData old = ION_DATA.get(ionName);
@@ -314,9 +314,9 @@ public final class IonParametersAdvanced implements Serializable {
    * Set the W parameters (W0, WT, WTT) for a given ion. Used during parameter fitting.
    *
    * @param ionName the ion name (e.g., "Na+", "Cl-")
-   * @param newW0   base interaction energy at T_ref in J*m3/mol2
-   * @param newWT   linear T-coefficient in J*m3/(mol2*K)
-   * @param newWTT  quadratic T-coefficient in J*m3/(mol2*K2)
+   * @param newW0 base interaction energy at T_ref in J*m3/mol2
+   * @param newWT linear T-coefficient in J*m3/(mol2*K)
+   * @param newWTT quadratic T-coefficient in J*m3/(mol2*K2)
    */
   public static void setWParameters(String ionName, double newW0, double newWT, double newWTT) {
     AdvancedIonData old = ION_DATA.get(ionName);
@@ -350,7 +350,7 @@ public final class IonParametersAdvanced implements Serializable {
    * Get ion-pair formation data for a cation-anion pair.
    *
    * @param cationName the cation name (e.g., "Ca++")
-   * @param anionName  the anion name (e.g., "SO4--")
+   * @param anionName the anion name (e.g., "SO4--")
    * @return IonPairData object, or null if no ion pairing data available
    */
   public static IonPairData getIonPairData(String cationName, String anionName) {
@@ -367,7 +367,7 @@ public final class IonParametersAdvanced implements Serializable {
    * Check if ion pairing is expected for a given cation-anion combination.
    *
    * @param cationName the cation name
-   * @param anionName  the anion name
+   * @param anionName the anion name
    * @return true if ion-pair formation data exists
    */
   public static boolean hasIonPairData(String cationName, String anionName) {
@@ -377,7 +377,7 @@ public final class IonParametersAdvanced implements Serializable {
   /**
    * Calculate the ion-water interaction energy W at a given temperature.
    *
-   * @param ionName     the ion name
+   * @param ionName the ion name
    * @param temperature the temperature in Kelvin
    * @return the interaction energy W(T) in J*m3/mol2
    */
@@ -393,7 +393,7 @@ public final class IonParametersAdvanced implements Serializable {
   /**
    * Calculate the temperature derivative of W.
    *
-   * @param ionName     the ion name
+   * @param ionName the ion name
    * @param temperature the temperature in Kelvin
    * @return dW/dT in J*m3/(mol2*K)
    */
@@ -423,7 +423,7 @@ public final class IonParametersAdvanced implements Serializable {
   /**
    * Calculate the Born radius at a given temperature.
    *
-   * @param ionName     the ion name
+   * @param ionName the ion name
    * @param temperature the temperature in Kelvin
    * @return Born radius in Angstrom
    */
@@ -438,8 +438,8 @@ public final class IonParametersAdvanced implements Serializable {
   /**
    * Calculate ion-pair formation constant at a given temperature.
    *
-   * @param cationName  the cation name
-   * @param anionName   the anion name
+   * @param cationName the cation name
+   * @param anionName the anion name
    * @param temperature the temperature in Kelvin
    * @return K_IP in L/mol
    */
@@ -483,13 +483,13 @@ public final class IonParametersAdvanced implements Serializable {
     /**
      * Constructor for AdvancedIonData.
      *
-     * @param sigma       hard-sphere diameter in Angstrom
-     * @param w0          ion-water interaction at T_ref in J*m3/mol2
-     * @param wT          linear T-coefficient in J*m3/(mol2*K)
-     * @param wTT         quadratic T-coefficient in J*m3/(mol2*K2)
-     * @param rBorn0      Born radius at T_ref in Angstrom
-     * @param rBornT      T-coefficient of Born radius in Angstrom/K
-     * @param charge      ionic charge (signed integer)
+     * @param sigma hard-sphere diameter in Angstrom
+     * @param w0 ion-water interaction at T_ref in J*m3/mol2
+     * @param wT linear T-coefficient in J*m3/(mol2*K)
+     * @param wTT quadratic T-coefficient in J*m3/(mol2*K2)
+     * @param rBorn0 Born radius at T_ref in Angstrom
+     * @param rBornT T-coefficient of Born radius in Angstrom/K
+     * @param charge ionic charge (signed integer)
      * @param dGhydration hydration Gibbs energy in kJ/mol
      */
     public AdvancedIonData(double sigma, double w0, double wT, double wTT, double rBorn0, double rBornT, int charge,
@@ -525,8 +525,8 @@ public final class IonParametersAdvanced implements Serializable {
     /**
      * Constructor for IonPairData.
      *
-     * @param k0  ion-pair formation constant at T_ref in L/mol
-     * @param dH  enthalpy of ion-pair formation in J/mol
+     * @param k0 ion-pair formation constant at T_ref in L/mol
+     * @param dH enthalpy of ion-pair formation in J/mol
      * @param dIP contact distance in Angstrom
      */
     public IonPairData(double k0, double dH, double dIP) {

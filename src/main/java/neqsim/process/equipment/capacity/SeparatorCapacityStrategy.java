@@ -43,7 +43,7 @@ public class SeparatorCapacityStrategy implements EquipmentCapacityStrategy {
    * Constructor with custom constraints.
    *
    * @param maxGasLoadFactor maximum gas load factor
-   * @param maxLiquidLevel   maximum liquid level fraction
+   * @param maxLiquidLevel maximum liquid level fraction
    */
   public SeparatorCapacityStrategy(double maxGasLoadFactor, double maxLiquidLevel) {
     this.maxGasLoadFactor = maxGasLoadFactor;

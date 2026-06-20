@@ -741,8 +741,8 @@ public final class ValidationProfileRunner {
   /**
    * Creates a standard error JSON response.
    *
-   * @param code        the error code
-   * @param message     the error message
+   * @param code the error code
+   * @param message the error message
    * @param remediation how to fix
    * @return the error JSON string
    */

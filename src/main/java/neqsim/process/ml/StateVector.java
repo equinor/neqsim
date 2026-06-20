@@ -50,11 +50,11 @@ public class StateVector implements Serializable {
   /**
    * Add a state variable with bounds.
    *
-   * @param name       variable name (e.g., "temperature", "pressure")
-   * @param value      current value in physical units
+   * @param name variable name (e.g., "temperature", "pressure")
+   * @param value current value in physical units
    * @param lowerBound physical lower bound
    * @param upperBound physical upper bound
-   * @param unit       unit string (e.g., "K", "bar", "kg/s")
+   * @param unit unit string (e.g., "K", "bar", "kg/s")
    * @return this StateVector for chaining
    */
   public StateVector add(String name, double value, double lowerBound, double upperBound, String unit) {
@@ -68,9 +68,9 @@ public class StateVector implements Serializable {
   /**
    * Add a state variable without explicit bounds (uses value as reference).
    *
-   * @param name  variable name
+   * @param name variable name
    * @param value current value
-   * @param unit  unit string
+   * @param unit unit string
    * @return this StateVector for chaining
    */
   public StateVector add(String name, double value, String unit) {

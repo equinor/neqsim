@@ -38,7 +38,7 @@ public class WaterLevelTransmitter extends MeasurementDeviceBaseClass {
    * Constructor for WaterLevelTransmitter.
    * </p>
    *
-   * @param name      Name of WaterLevelTransmitter
+   * @param name Name of WaterLevelTransmitter
    * @param separator a {@link neqsim.process.equipment.separator.ThreePhaseSeparator} object
    */
   public WaterLevelTransmitter(String name, ThreePhaseSeparator separator) {

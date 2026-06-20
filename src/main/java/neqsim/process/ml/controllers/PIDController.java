@@ -29,14 +29,14 @@ public class PIDController implements Controller {
   /**
    * Create PID controller.
    *
-   * @param name       controller name
+   * @param name controller name
    * @param errorIndex index of error in observation array
-   * @param kp         proportional gain
-   * @param ki         integral gain
-   * @param kd         derivative gain
-   * @param actionMin  minimum action value
-   * @param actionMax  maximum action value
-   * @param dt         time step for integration
+   * @param kp proportional gain
+   * @param ki integral gain
+   * @param kd derivative gain
+   * @param actionMin minimum action value
+   * @param actionMax maximum action value
+   * @param dt time step for integration
    */
   public PIDController(String name, int errorIndex, double kp, double ki, double kd, double actionMin, double actionMax,
       double dt) {

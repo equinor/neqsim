@@ -25,7 +25,7 @@ public class PHflashLeachman extends Flash {
    * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param Hspec  a double
+   * @param Hspec a double
    */
   public PHflashLeachman(SystemInterface system, double Hspec) {
     this.system = system;

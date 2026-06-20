@@ -77,7 +77,7 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
   /**
    * Constructor for MultiStreamHeatExchanger with initial input streams.
    *
-   * @param name      Name of the heat exchanger
+   * @param name Name of the heat exchanger
    * @param inStreams Initial list of input streams
    */
   public MultiStreamHeatExchanger(String name, List<StreamInterface> inStreams) {
@@ -726,7 +726,7 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
    * the difference in enthalpy between the outlet and inlet streams for the given stream index.
    *
    * @param streamNumber the index of the stream for which the heat duty is to be calculated. Must be less than the
-   *                     total number of input streams.
+   * total number of input streams.
    * @return the heat duty (in appropriate energy units) for the specified stream in W
    * @throws java.lang.IndexOutOfBoundsException if the specified stream index is out of bounds.
    */

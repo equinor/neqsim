@@ -108,7 +108,7 @@ public class JsonFluidReadWrite {
    * Read a fluid from a JSON file and optionally add a water component.
    *
    * @param inputFile path to the JSON file
-   * @param addWater  if true, add a water component with default kij = 0.5
+   * @param addWater if true, add a water component with default kij = 0.5
    * @return a {@link SystemInterface} with all EOS parameters set
    * @throws IllegalArgumentException if the file does not exist, cannot be read, or has invalid content
    */
@@ -120,8 +120,8 @@ public class JsonFluidReadWrite {
    * Read a fluid from a JSON file and optionally add a water component with a custom kij value.
    *
    * @param inputFile path to the JSON file
-   * @param addWater  if true, add a water component
-   * @param waterKij  binary interaction parameter between water and all other components
+   * @param addWater if true, add a water component
+   * @param waterKij binary interaction parameter between water and all other components
    * @return a {@link SystemInterface} with all EOS parameters set
    * @throws IllegalArgumentException if the file does not exist, cannot be read, or has invalid content
    */
@@ -247,7 +247,7 @@ public class JsonFluidReadWrite {
   /**
    * Read a fluid from a JSON string and optionally add a water component.
    *
-   * @param json     the JSON string
+   * @param json the JSON string
    * @param addWater if true, add a water component with kij = 0.5
    * @return a {@link SystemInterface} with all EOS parameters set
    * @throws IllegalArgumentException if the JSON is invalid
@@ -259,7 +259,7 @@ public class JsonFluidReadWrite {
   /**
    * Read a fluid from a JSON string and optionally add a water component with custom kij.
    *
-   * @param json     the JSON string
+   * @param json the JSON string
    * @param addWater if true, add a water component
    * @param waterKij binary interaction parameter between water and all other components
    * @return a {@link SystemInterface} with all EOS parameters set
@@ -276,7 +276,7 @@ public class JsonFluidReadWrite {
   /**
    * Write a fluid to a JSON file.
    *
-   * @param fluid      the fluid to export
+   * @param fluid the fluid to export
    * @param outputFile path to output file (e.g., "myfluid.json")
    * @throws IOException if writing fails
    */
@@ -287,8 +287,8 @@ public class JsonFluidReadWrite {
   /**
    * Write a fluid to a JSON file with a specified reservoir temperature.
    *
-   * @param fluid          the fluid to export
-   * @param outputFile     path to output file
+   * @param fluid the fluid to export
+   * @param outputFile path to output file
    * @param reservoirTempC reservoir temperature in Celsius
    * @throws IOException if writing fails
    */
@@ -299,7 +299,7 @@ public class JsonFluidReadWrite {
   /**
    * Write a fluid to a JSON file at the given path.
    *
-   * @param fluid      the fluid to export
+   * @param fluid the fluid to export
    * @param outputPath output file path
    * @throws IOException if writing fails
    */
@@ -310,8 +310,8 @@ public class JsonFluidReadWrite {
   /**
    * Write a fluid to a JSON file at the given path with a specified reservoir temperature.
    *
-   * @param fluid          the fluid to export
-   * @param outputPath     output file path
+   * @param fluid the fluid to export
+   * @param outputPath output file path
    * @param reservoirTempC reservoir temperature in Celsius
    * @throws IOException if writing fails
    */
@@ -333,7 +333,7 @@ public class JsonFluidReadWrite {
   /**
    * Convert a NeqSim fluid to a JSON string with full EOS parameters and a specified reservoir temperature.
    *
-   * @param fluid          the fluid to export
+   * @param fluid the fluid to export
    * @param reservoirTempC reservoir temperature in Celsius
    * @return JSON string representing the fluid
    */
@@ -425,9 +425,9 @@ public class JsonFluidReadWrite {
    * Convenience method that reads an E300 file and writes a JSON file.
    * </p>
    *
-   * @param inputE300File  path to the E300 input file
+   * @param inputE300File path to the E300 input file
    * @param outputJsonFile path to the JSON output file
-   * @throws IOException              if reading or writing fails
+   * @throws IOException if reading or writing fails
    * @throws IllegalArgumentException if the E300 file is invalid
    */
   public static void convertE300ToJson(String inputE300File, String outputJsonFile) throws IOException {
@@ -438,10 +438,10 @@ public class JsonFluidReadWrite {
   /**
    * Convert a fluid from E300 format to JSON format with a specified reservoir temperature.
    *
-   * @param inputE300File  path to the E300 input file
+   * @param inputE300File path to the E300 input file
    * @param outputJsonFile path to the JSON output file
    * @param reservoirTempC reservoir temperature in Celsius
-   * @throws IOException              if reading or writing fails
+   * @throws IOException if reading or writing fails
    * @throws IllegalArgumentException if the E300 file is invalid
    */
   public static void convertE300ToJson(String inputE300File, String outputJsonFile, double reservoirTempC)
@@ -457,9 +457,9 @@ public class JsonFluidReadWrite {
    * Convenience method that reads a JSON file and writes an E300 file.
    * </p>
    *
-   * @param inputJsonFile  path to the JSON input file
+   * @param inputJsonFile path to the JSON input file
    * @param outputE300File path to the E300 output file
-   * @throws IOException              if reading or writing fails
+   * @throws IOException if reading or writing fails
    * @throws IllegalArgumentException if the JSON file is invalid
    */
   public static void convertJsonToE300(String inputJsonFile, String outputE300File) throws IOException {
@@ -470,10 +470,10 @@ public class JsonFluidReadWrite {
   /**
    * Convert a fluid from JSON format to E300 format with a specified reservoir temperature.
    *
-   * @param inputJsonFile  path to the JSON input file
+   * @param inputJsonFile path to the JSON input file
    * @param outputE300File path to the E300 output file
    * @param reservoirTempC reservoir temperature in Celsius
-   * @throws IOException              if reading or writing fails
+   * @throws IOException if reading or writing fails
    * @throws IllegalArgumentException if the JSON file is invalid
    */
   public static void convertJsonToE300(String inputJsonFile, String outputE300File, double reservoirTempC)
@@ -488,7 +488,7 @@ public class JsonFluidReadWrite {
    * Create a SystemInterface for the given EOS type.
    *
    * @param eosType the EOS type string (SRK, PR, etc.)
-   * @param prcorr  whether to use the 1978 PR correction
+   * @param prcorr whether to use the 1978 PR correction
    * @return a new SystemInterface instance
    */
   private static SystemInterface createFluidByEOS(String eosType, boolean prcorr) {
@@ -543,8 +543,8 @@ public class JsonFluidReadWrite {
   /**
    * Get a double value from a JSON object, or return a default if the field is missing.
    *
-   * @param obj          the JSON object
-   * @param field        the field name
+   * @param obj the JSON object
+   * @param field the field name
    * @param defaultValue the default value
    * @return the field value or the default
    */
@@ -599,9 +599,9 @@ public class JsonFluidReadWrite {
    * The array contains objects with "i", "j", and "kij" fields. Components are referenced by name.
    * </p>
    *
-   * @param fluid          the fluid
+   * @param fluid the fluid
    * @param componentNames list of component names in order
-   * @param bicArray       the JSON array of BIC entries
+   * @param bicArray the JSON array of BIC entries
    */
   private static void applyBinaryInteractionCoefficients(SystemInterface fluid, List<String> componentNames,
       JsonArray bicArray) {
@@ -632,9 +632,9 @@ public class JsonFluidReadWrite {
    * Find the index of a component in the fluid by name. Tries exact match first, then checks the mapped names in the
    * componentNames list.
    *
-   * @param fluid          the fluid
+   * @param fluid the fluid
    * @param componentNames ordered list of component names
-   * @param name           the name to find
+   * @param name the name to find
    * @return the component index, or -1 if not found
    */
   private static int findComponentIndex(SystemInterface fluid, List<String> componentNames, String name) {
@@ -662,7 +662,7 @@ public class JsonFluidReadWrite {
   /**
    * Apply viscosity model configuration from JSON to the fluid.
    *
-   * @param fluid   the fluid
+   * @param fluid the fluid
    * @param viscObj the viscosity model JSON object
    */
   private static void applyViscosityModel(SystemInterface fluid, JsonObject viscObj) {

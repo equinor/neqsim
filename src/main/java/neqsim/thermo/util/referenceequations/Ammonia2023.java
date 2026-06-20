@@ -234,7 +234,7 @@ public class Ammonia2023 {
    * Compute residual Helmholtz energy and derivatives.
    *
    * @param delta reduced density (rho / rhoCrit)
-   * @param tau   inverse reduced temperature (Tcrit / T)
+   * @param tau inverse reduced temperature (Tcrit / T)
    * @return container with residual Helmholtz energy derivatives
    */
   private static ResidualDerivs residual(double delta, double tau) {
@@ -322,7 +322,7 @@ public class Ammonia2023 {
    * Compute ideal-gas Helmholtz energy and derivatives.
    *
    * @param delta reduced density (rho / rhoCrit)
-   * @param tau   inverse reduced temperature (Tcrit / T)
+   * @param tau inverse reduced temperature (Tcrit / T)
    * @return container with ideal Helmholtz derivatives
    */
   private static IdealDerivs ideal(double delta, double tau) {

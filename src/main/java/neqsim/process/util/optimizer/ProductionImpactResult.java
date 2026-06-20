@@ -131,7 +131,7 @@ public class ProductionImpactResult implements Serializable {
    * Creates a production impact result for a specific equipment failure.
    *
    * @param equipmentName name of the failed equipment
-   * @param failureMode   the failure mode
+   * @param failureMode the failure mode
    */
   public ProductionImpactResult(String equipmentName, EquipmentFailureMode failureMode) {
     this();
@@ -501,7 +501,7 @@ public class ProductionImpactResult implements Serializable {
    * Adds an optimized setpoint.
    *
    * @param equipmentName the equipment name
-   * @param setpoint      the recommended setpoint
+   * @param setpoint the recommended setpoint
    */
   public void addOptimizedSetpoint(String equipmentName, double setpoint) {
     this.optimizedSetpoints.put(equipmentName, setpoint);

@@ -277,7 +277,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    * temperature, pressure, flow rate) for the simulation.
    *
    *
-   * @param name        Pipe name used for identification in process systems
+   * @param name Pipe name used for identification in process systems
    * @param inletStream Inlet stream containing fluid properties and flow conditions
    */
   public TransientPipe(String name, StreamInterface inletStream) {
@@ -660,7 +660,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    *
    *
    * @param dt Time step to advance in seconds. The method will use internal sub-stepping if required for numerical
-   *           stability.
+   * stability.
    * @param id Calculation identifier for tracking
    * @see #run(UUID)
    * @see neqsim.process.processmodel.ProcessSystem#runTransient(double, UUID)
@@ -1288,7 +1288,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
   /**
    * Calculate AUSM+ numerical flux at interface.
    *
-   * @param left  left pipe section
+   * @param left left pipe section
    * @param right right pipe section
    * @return flux array [mass_L, mass_G, momentum_L, momentum_G]
    */
@@ -1437,9 +1437,9 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    *
    * These are integrated as: U[2]_new = U[2]_old + S × dt
    *
-   * @param U       conserved variable array to be modified in-place
+   * @param U conserved variable array to be modified in-place
    * @param section pipe section for which to calculate source terms
-   * @param dt      time step size in seconds
+   * @param dt time step size in seconds
    */
   private void addSourceTerms(double[] U, PipeSection section, double dt) {
     double rho_m = section.getMixtureDensity();
@@ -1498,12 +1498,12 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    * residual to properly capture acoustic wave propagation.
    * </p>
    *
-   * @param section           Current section to update
-   * @param oldSection        Previous time step section state
-   * @param U                 Conservative variables [ρ_G·α_G, ρ_L·α_L, ρ_m·u, ρ_m·E]
-   * @param sectionIndex      Index of this section (0 to numberOfSections-1)
-   * @param dt                Time step (s)
-   * @param momentumFluxLeft  Momentum flux at left face (Pa)
+   * @param section Current section to update
+   * @param oldSection Previous time step section state
+   * @param U Conservative variables [ρ_G·α_G, ρ_L·α_L, ρ_m·u, ρ_m·E]
+   * @param sectionIndex Index of this section (0 to numberOfSections-1)
+   * @param dt Time step (s)
+   * @param momentumFluxLeft Momentum flux at left face (Pa)
    * @param momentumFluxRight Momentum flux at right face (Pa)
    */
   private void updatePrimitiveVariables(PipeSection section, PipeSection oldSection, double[] U, int sectionIndex,

@@ -58,7 +58,7 @@ public class EmissionsTracker {
   /**
    * Estimates emissions for a concept with facility configuration.
    *
-   * @param concept        field concept
+   * @param concept field concept
    * @param facilityConfig facility configuration
    * @return emissions report
    */
@@ -133,8 +133,8 @@ public class EmissionsTracker {
    * follow decline profiles rather than a single annual screening value.
    * </p>
    *
-   * @param concept           field concept
-   * @param facilityConfig    facility configuration
+   * @param concept field concept
+   * @param facilityConfig facility configuration
    * @param productionProfile annual production profile in Sm3/year for gas or bbl/year for oil
    * @return lifecycle emissions profile
    */

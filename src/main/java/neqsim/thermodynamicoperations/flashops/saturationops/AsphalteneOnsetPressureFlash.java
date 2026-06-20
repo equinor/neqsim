@@ -79,9 +79,9 @@ public class AsphalteneOnsetPressureFlash extends ConstantDutyFlash {
   /**
    * Constructor with specified pressure range.
    *
-   * @param system        the thermodynamic system
+   * @param system the thermodynamic system
    * @param startPressure starting pressure for search (bara)
-   * @param minPressure   minimum pressure to search to (bara)
+   * @param minPressure minimum pressure to search to (bara)
    */
   public AsphalteneOnsetPressureFlash(SystemInterface system, double startPressure, double minPressure) {
     super(system);
@@ -159,7 +159,7 @@ public class AsphalteneOnsetPressureFlash extends ConstantDutyFlash {
    *
    * @param upperP upper pressure bound (stable)
    * @param lowerP lower pressure bound (unstable)
-   * @param ops    thermodynamic operations object
+   * @param ops thermodynamic operations object
    * @return refined onset pressure
    */
   private double refinePressure(double upperP, double lowerP, ThermodynamicOperations ops) {

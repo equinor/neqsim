@@ -40,7 +40,7 @@ public class StratifiedFlowNode extends TwoPhaseFlowNode {
    * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param pipe   a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
+   * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
    */
   public StratifiedFlowNode(SystemInterface system, GeometryDefinitionInterface pipe) {
     super(system, pipe);
@@ -55,9 +55,9 @@ public class StratifiedFlowNode extends TwoPhaseFlowNode {
    * Constructor for StratifiedFlowNode.
    * </p>
    *
-   * @param system           a {@link neqsim.thermo.system.SystemInterface} object
+   * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param interphaseSystem a {@link neqsim.thermo.system.SystemInterface} object
-   * @param pipe             a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
+   * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
    */
   public StratifiedFlowNode(SystemInterface system, SystemInterface interphaseSystem,
       GeometryDefinitionInterface pipe) {

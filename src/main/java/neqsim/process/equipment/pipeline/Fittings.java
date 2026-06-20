@@ -195,7 +195,7 @@ public class Fittings implements Serializable {
    * means the fitting causes the same pressure drop as 30 diameters of straight pipe.
    * </p>
    *
-   * @param name  descriptive name for the fitting
+   * @param name descriptive name for the fitting
    * @param LdivD equivalent length ratio (L/D), dimensionless
    */
   public void add(String name, double LdivD) {
@@ -252,7 +252,7 @@ public class Fittings implements Serializable {
    * Convenience method for adding several fittings of the same type.
    * </p>
    *
-   * @param name  fitting name
+   * @param name fitting name
    * @param LdivD L/D ratio for each fitting
    * @param count number of fittings to add
    */
@@ -265,7 +265,7 @@ public class Fittings implements Serializable {
   /**
    * Add multiple standard fittings of the same type.
    *
-   * @param type  standard fitting type
+   * @param type standard fitting type
    * @param count number of fittings to add
    * @return true if all fittings were added, false if type not recognized
    */
@@ -397,7 +397,7 @@ public class Fittings implements Serializable {
     /**
      * Constructor with explicit L/D ratio.
      *
-     * @param name  fitting name
+     * @param name fitting name
      * @param LdivD equivalent length ratio (L/D)
      */
     public Fitting(String name, double LdivD) {

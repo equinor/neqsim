@@ -470,7 +470,7 @@ public final class StreamingRunner {
    * Converts temperature to Kelvin.
    *
    * @param value the temperature value
-   * @param unit  the temperature unit
+   * @param unit the temperature unit
    * @return temperature in Kelvin
    */
   private static double convertToKelvin(double value, String unit) {
@@ -516,7 +516,7 @@ public final class StreamingRunner {
    * Converts pressure to bara.
    *
    * @param value the pressure value
-   * @param unit  the pressure unit
+   * @param unit the pressure unit
    * @return pressure in bara
    */
   private static double convertToBara(double value, String unit) {
@@ -577,7 +577,7 @@ public final class StreamingRunner {
    * Calculates a percentile from a list of doubles.
    *
    * @param values the values
-   * @param pct    the percentile (0-100)
+   * @param pct the percentile (0-100)
    * @return the percentile value
    */
   private static double percentile(List<Double> values, int pct) {
@@ -594,8 +594,8 @@ public final class StreamingRunner {
   /**
    * Creates a standard error JSON response.
    *
-   * @param code        the error code
-   * @param message     the error message
+   * @param code the error code
+   * @param message the error message
    * @param remediation the fix suggestion
    * @return the JSON string
    */
@@ -654,7 +654,7 @@ public final class StreamingRunner {
      * Creates a new streaming operation.
      *
      * @param operationId the operation ID
-     * @param type        the operation type
+     * @param type the operation type
      */
     StreamingOperation(String operationId, String type) {
       this.operationId = operationId;

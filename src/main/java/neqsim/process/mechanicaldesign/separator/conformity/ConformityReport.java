@@ -28,7 +28,7 @@ public class ConformityReport implements Serializable {
    * Constructs a ConformityReport.
    *
    * @param equipmentName name of the equipment being checked
-   * @param standard      the conformity standard applied
+   * @param standard the conformity standard applied
    */
   public ConformityReport(String equipmentName, String standard) {
     this.equipmentName = equipmentName;

@@ -21,10 +21,10 @@ public class ComponentGEWilson extends ComponentGE {
    * Constructor for ComponentGEWilson.
    * </p>
    *
-   * @param name         Name of component.
-   * @param moles        Total number of moles of component.
+   * @param name Name of component.
+   * @param moles Total number of moles of component.
    * @param molesInPhase Number of moles in phase.
-   * @param compIndex    Index number of component in phase object component array.
+   * @param compIndex Index number of component in phase object component array.
    */
   public ComponentGEWilson(String name, double moles, double molesInPhase, int compIndex) {
     super(name, moles, molesInPhase, compIndex);
@@ -35,11 +35,11 @@ public class ComponentGEWilson extends ComponentGE {
    * Calculate, set and return fugacity coefficient.
    * </p>
    *
-   * @param phase              a {@link neqsim.thermo.phase.PhaseInterface} object to get fugacity coefficient of.
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object to get fugacity coefficient of.
    * @param numberOfComponents a int
-   * @param temperature        a double
-   * @param pressure           a double
-   * @param pt                 the PhaseType of the phase
+   * @param temperature a double
+   * @param pressure a double
+   * @param pt the PhaseType of the phase
    * @return Fugacity coefficient
    */
   public double fugcoef(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
@@ -54,11 +54,11 @@ public class ComponentGEWilson extends ComponentGE {
    * getGamma.
    * </p>
    *
-   * @param phase              a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
-   * @param temperature        a double
-   * @param pressure           a double
-   * @param pt                 the PhaseType of the phase
+   * @param temperature a double
+   * @param pressure a double
+   * @param pt the PhaseType of the phase
    * @return a double
    */
   public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
@@ -106,8 +106,8 @@ public class ComponentGEWilson extends ComponentGE {
    * </p>
    *
    * @param phase1 a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param comp1  a int
-   * @param comp2  a int
+   * @param comp1 a int
+   * @param comp2 a int
    * @return a double
    */
   public double getCharEnergyParamter(PhaseInterface phase1, int comp1, int comp2) {

@@ -169,7 +169,7 @@ public class AirCooler extends Cooler {
   /**
    * Constructor for AirCooler with inlet stream.
    *
-   * @param name     equipment name
+   * @param name equipment name
    * @param inStream inlet process stream
    */
   public AirCooler(String name, StreamInterface inStream) {
@@ -182,7 +182,7 @@ public class AirCooler extends Cooler {
    * Set air inlet temperature.
    *
    * @param temperature temperature value
-   * @param unit        "C" for Celsius, "K" for Kelvin
+   * @param unit "C" for Celsius, "K" for Kelvin
    */
   public void setAirInletTemperature(double temperature, String unit) {
     airInletTemperature = unit.equalsIgnoreCase("C") ? temperature + 273.15 : temperature;
@@ -192,7 +192,7 @@ public class AirCooler extends Cooler {
    * Set air outlet temperature.
    *
    * @param temperature temperature value
-   * @param unit        "C" for Celsius, "K" for Kelvin
+   * @param unit "C" for Celsius, "K" for Kelvin
    */
   public void setAirOutletTemperature(double temperature, String unit) {
     airOutletTemperature = unit.equalsIgnoreCase("C") ? temperature + 273.15 : temperature;
@@ -395,7 +395,7 @@ public class AirCooler extends Cooler {
    * Set design ambient temperature (for ambient correction).
    *
    * @param temperature temperature value
-   * @param unit        "C" or "K"
+   * @param unit "C" or "K"
    */
   public void setDesignAmbientTemperature(double temperature, String unit) {
     designAmbientTemperature = unit.equalsIgnoreCase("C") ? temperature + 273.15 : temperature;
@@ -627,7 +627,7 @@ public class AirCooler extends Cooler {
   /**
    * Calculate LMTD for cross-flow with F correction. Uses process inlet/outlet and air inlet/outlet temperatures.
    *
-   * @param tProcessIn  process inlet temperature [K]
+   * @param tProcessIn process inlet temperature [K]
    * @param tProcessOut process outlet temperature [K]
    */
   private void calcLMTD(double tProcessIn, double tProcessOut) {

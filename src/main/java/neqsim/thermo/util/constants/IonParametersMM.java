@@ -238,7 +238,7 @@ public final class IonParametersMM {
    * ΔU_iw(T) = u⁰_iw + uᵀ_iw × (T - 298.15)
    * </pre>
    *
-   * @param ionName     the name of the ion
+   * @param ionName the name of the ion
    * @param temperature temperature in Kelvin
    * @return interaction energy in Kelvin, or 0 if not found
    */
@@ -257,7 +257,7 @@ public final class IonParametersMM {
    * If solvent-specific parameters are not available, falls back to water parameters.
    * </p>
    *
-   * @param ionName     the name of the ion
+   * @param ionName the name of the ion
    * @param solventName the name of the solvent (use constants: WATER, METHANOL, MEG, etc.)
    * @param temperature temperature in Kelvin
    * @return interaction energy in Kelvin, or 0 if not found
@@ -287,7 +287,7 @@ public final class IonParametersMM {
   /**
    * Get the temperature derivative of the ion-solvent interaction energy for a specific solvent.
    *
-   * @param ionName     the name of the ion
+   * @param ionName the name of the ion
    * @param solventName the name of the solvent
    * @return dΔU_is/dT in K/K, or 0 if not found
    */
@@ -307,7 +307,7 @@ public final class IonParametersMM {
    * This is the NRTL τ parameter at T_ref = 298.15 K.
    * </p>
    *
-   * @param ionName     the name of the ion
+   * @param ionName the name of the ion
    * @param solventName the name of the solvent
    * @return u0 in Kelvin, or 0 if not found
    */
@@ -330,7 +330,7 @@ public final class IonParametersMM {
    * τ(T) = u0 + uT × (T - 298.15)
    * </p>
    *
-   * @param ionName     the name of the ion
+   * @param ionName the name of the ion
    * @param solventName the name of the solvent
    * @return uT in K/K, or 0 if not found
    */
@@ -348,7 +348,7 @@ public final class IonParametersMM {
   /**
    * Check if solvent-specific parameters exist for an ion-solvent pair.
    *
-   * @param ionName     the name of the ion
+   * @param ionName the name of the ion
    * @param solventName the name of the solvent
    * @return true if solvent-specific parameters exist
    */
@@ -429,9 +429,9 @@ public final class IonParametersMM {
     /**
      * Constructor for IonData.
      *
-     * @param sigma  Lennard-Jones diameter in Ångströms
-     * @param u0_iw  ion-solvent interaction at 298.15 K in Kelvin
-     * @param uT_iw  temperature coefficient of interaction in K/K
+     * @param sigma Lennard-Jones diameter in Ångströms
+     * @param u0_iw ion-solvent interaction at 298.15 K in Kelvin
+     * @param uT_iw temperature coefficient of interaction in K/K
      * @param charge ionic charge
      */
     public IonData(double sigma, double u0_iw, double uT_iw, int charge) {

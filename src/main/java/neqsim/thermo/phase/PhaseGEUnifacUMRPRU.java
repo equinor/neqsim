@@ -43,10 +43,10 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
    * Constructor for PhaseGEUnifacUMRPRU.
    * </p>
    *
-   * @param phase    a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param alpha    an array of type double
-   * @param Dij      an array of type double
-   * @param mixRule  an array of {@link java.lang.String} objects
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param alpha an array of type double
+   * @param Dij an array of type double
+   * @param mixRule an array of {@link java.lang.String} objects
    * @param intparam an array of type double
    */
   public PhaseGEUnifacUMRPRU(PhaseInterface phase, double[][] alpha, double[][] Dij, String[][] mixRule,
@@ -70,11 +70,11 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
   /**
    * Calculate common temp.
    *
-   * @param phase              a PhaseInterface
+   * @param phase a PhaseInterface
    * @param numberOfComponents a int
-   * @param temperature        a double
-   * @param pressure           a double
-   * @param pt                 the PhaseType of the phase
+   * @param temperature a double
+   * @param pressure a double
+   * @param pt the PhaseType of the phase
    */
   public void calcCommontemp(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
       PhaseType pt) {
@@ -230,7 +230,7 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
    * </p>
    *
    * @return {@code true} when the {@code _umrmc} tables should be queried, {@code false} for the original {@code _umr}
-   *         tables
+   * tables
    */
   protected boolean useMcInteractionParameters() {
     int term = getPhase().getComponent(0).getAttractiveTermNumber();

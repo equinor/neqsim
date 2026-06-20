@@ -19,10 +19,10 @@ public class ComponentVegaEos extends ComponentEos {
    * Constructor for ComponentGERG2004.
    * </p>
    *
-   * @param name         Name of component.
-   * @param moles        Total number of moles of component.
+   * @param name Name of component.
+   * @param moles Total number of moles of component.
    * @param molesInPhase Number of moles in phase.
-   * @param compIndex    Index number of component in phase object component array.
+   * @param compIndex Index number of component in phase object component array.
    */
   public ComponentVegaEos(String name, double moles, double molesInPhase, int compIndex) {
     super(name, moles, molesInPhase, compIndex);
@@ -34,11 +34,11 @@ public class ComponentVegaEos extends ComponentEos {
    * </p>
    *
    * @param number a int. Not used.
-   * @param TC     Critical temperature [K]
-   * @param PC     Critical pressure [bara]
-   * @param M      Molar mass
-   * @param a      Acentric factor
-   * @param moles  Total number of moles of component.
+   * @param TC Critical temperature [K]
+   * @param PC Critical pressure [bara]
+   * @param M Molar mass
+   * @param a Acentric factor
+   * @param moles Total number of moles of component.
    */
   public ComponentVegaEos(int number, double TC, double PC, double M, double a, double moles) {
     super(number, TC, PC, M, a, moles);

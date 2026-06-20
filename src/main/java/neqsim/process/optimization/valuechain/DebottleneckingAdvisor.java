@@ -73,13 +73,13 @@ public class DebottleneckingAdvisor implements Serializable {
     /**
      * Creates a debottlenecking candidate.
      *
-     * @param name                      descriptive name of the upgrade
-     * @param targetEquipment           name of the equipment the upgrade targets
-     * @param capexNok                  capital cost in the configured currency (non-negative)
-     * @param firstYear                 first year (inclusive) the upgrade starts unlocking value (>= 0)
-     * @param lastYear                  last year (inclusive) the upgrade continues unlocking value (>= firstYear)
+     * @param name descriptive name of the upgrade
+     * @param targetEquipment name of the equipment the upgrade targets
+     * @param capexNok capital cost in the configured currency (non-negative)
+     * @param firstYear first year (inclusive) the upgrade starts unlocking value (>= 0)
+     * @param lastYear last year (inclusive) the upgrade continues unlocking value (>= firstYear)
      * @param annualIncrementalValueNok incremental value unlocked in currency per year
-     * @param constraint                optional live constraint the upgrade relaxes; may be null
+     * @param constraint optional live constraint the upgrade relaxes; may be null
      */
     public DebottleneckCandidate(String name, String targetEquipment, double capexNok, int firstYear, int lastYear,
 	double annualIncrementalValueNok, CapacityConstraint constraint) {
@@ -182,11 +182,11 @@ public class DebottleneckingAdvisor implements Serializable {
     /**
      * Creates a recommendation.
      *
-     * @param candidate        the candidate the recommendation refers to
-     * @param npvNok           net present value in the configured currency
-     * @param pvBenefitsNok    present value of benefits in the configured currency
+     * @param candidate the candidate the recommendation refers to
+     * @param npvNok net present value in the configured currency
+     * @param pvBenefitsNok present value of benefits in the configured currency
      * @param benefitCostRatio benefit-cost ratio
-     * @param paybackYears     simple payback in years
+     * @param paybackYears simple payback in years
      */
     public Recommendation(DebottleneckCandidate candidate, double npvNok, double pvBenefitsNok, double benefitCostRatio,
 	double paybackYears) {

@@ -12,9 +12,9 @@ public interface CompressorChartInterface extends Cloneable {
   /**
    * This method is used add a curve to the CompressorChart object.
    *
-   * @param speed                a double
-   * @param flow                 an array of type double
-   * @param head                 an array of type double
+   * @param speed a double
+   * @param flow an array of type double
+   * @param head an array of type double
    * @param polytropicEfficiency an array of type double
    */
   public void addCurve(double speed, double[] flow, double[] head, double[] polytropicEfficiency);
@@ -22,11 +22,11 @@ public interface CompressorChartInterface extends Cloneable {
   /**
    * This method is used add a curve to the CompressorChart object.
    *
-   * @param speed                    a double
-   * @param flowHead                 an array of type double
-   * @param head                     an array of type double
+   * @param speed a double
+   * @param flowHead an array of type double
+   * @param head an array of type double
    * @param flowPolytropicEfficiency an array of type double
-   * @param polytropicEfficiency     an array of type double
+   * @param polytropicEfficiency an array of type double
    */
   public void addCurve(double speed, double[] flowHead, double[] head, double[] flowPolytropicEfficiency,
       double[] polytropicEfficiency);
@@ -35,10 +35,10 @@ public interface CompressorChartInterface extends Cloneable {
    * This method is used add a set of curves to the CompressorChart object.
    *
    * @param chartConditions an array of type double
-   * @param speed           an array of type double
-   * @param flow            an array of type double
-   * @param head            an array of type double
-   * @param polyEff         an array of type double
+   * @param speed an array of type double
+   * @param flow an array of type double
+   * @param head an array of type double
+   * @param polyEff an array of type double
    */
   public void setCurves(double[] chartConditions, double[] speed, double[][] flow, double[][] head, double[][] polyEff);
 
@@ -46,11 +46,11 @@ public interface CompressorChartInterface extends Cloneable {
    * This method is used add a set of curves to the CompressorChart object.
    *
    * @param chartConditions an array of type double
-   * @param speed           an array of type double
-   * @param flow            an array of type double
-   * @param head            an array of type double
-   * @param flowPolyEff     an array of type double
-   * @param polyEff         an array of type double
+   * @param speed an array of type double
+   * @param flow an array of type double
+   * @param head an array of type double
+   * @param flowPolyEff an array of type double
+   * @param polyEff an array of type double
    */
   public void setCurves(double[] chartConditions, double[] speed, double[][] flow, double[][] head,
       double[][] flowPolyEff, double[][] polyEff);
@@ -58,7 +58,7 @@ public interface CompressorChartInterface extends Cloneable {
   /**
    * Get method for polytropic head from reference curves.
    *
-   * @param flow  [m3/h], speed in [rpm].
+   * @param flow [m3/h], speed in [rpm].
    * @param speed a double
    * @return polytropic head in unit [getHeadUnit]
    */
@@ -67,7 +67,7 @@ public interface CompressorChartInterface extends Cloneable {
   /**
    * Get method for polytropic efficiency from reference curves.
    *
-   * @param flow  [m3/h], speed in [rpm].
+   * @param flow [m3/h], speed in [rpm].
    * @param speed a double
    * @return polytropic efficiency [%].
    */
@@ -76,10 +76,10 @@ public interface CompressorChartInterface extends Cloneable {
   /**
    * Set method for the reference conditions of the compressor chart.
    *
-   * @param refMW          a double
+   * @param refMW a double
    * @param refTemperature a double
-   * @param refPressure    a double
-   * @param refZ           a double
+   * @param refPressure a double
+   * @param refZ a double
    */
   public void setReferenceConditions(double refMW, double refTemperature, double refPressure, double refZ);
 
@@ -217,8 +217,8 @@ public interface CompressorChartInterface extends Cloneable {
    * getFlow.
    * </p>
    *
-   * @param head      a double
-   * @param speed     a double
+   * @param head a double
+   * @param speed a double
    * @param guessFlow a double
    * @return a double
    */
@@ -356,7 +356,7 @@ public interface CompressorChartInterface extends Cloneable {
    *
    * @param speed The compressor speed in RPM
    * @return The surge head at the specified speed in kJ/kg or meter (depending on headUnit), or Double.NaN if no curves
-   *         exist
+   * exist
    */
   public double getSurgeHeadAtSpeed(double speed);
 
@@ -377,7 +377,7 @@ public interface CompressorChartInterface extends Cloneable {
    *
    * @param speed The compressor speed in RPM
    * @return The stone wall head at the specified speed in kJ/kg or meter (depending on headUnit), or Double.NaN if no
-   *         curves exist
+   * curves exist
    */
   public double getStoneWallHeadAtSpeed(double speed);
 
@@ -440,7 +440,7 @@ public interface CompressorChartInterface extends Cloneable {
    * Get the head values for all compressor curves.
    *
    * @return a 2D array where each row corresponds to a speed and contains head values in the unit specified by
-   *         getHeadUnit(), or null if not set
+   * getHeadUnit(), or null if not set
    */
   public double[][] getHeads();
 
@@ -448,7 +448,7 @@ public interface CompressorChartInterface extends Cloneable {
    * Get the polytropic efficiency values for all compressor curves.
    *
    * @return a 2D array where each row corresponds to a speed and contains polytropic efficiency values in %, or null if
-   *         not set
+   * not set
    */
   public double[][] getPolytropicEfficiencies();
 
@@ -482,7 +482,7 @@ public interface CompressorChartInterface extends Cloneable {
    * </p>
    *
    * @return a 2D array where each row corresponds to a speed and contains pressure ratio values (dimensionless), or
-   *         null if not available
+   * null if not available
    */
   public default double[][] getPressureRatios() {
     return null;
@@ -552,7 +552,7 @@ public interface CompressorChartInterface extends Cloneable {
    * </p>
    *
    * @return a 2D array where each row corresponds to a speed and contains discharge temperature values in Kelvin, or
-   *         null if not available
+   * null if not available
    */
   public default double[][] getDischargeTemperatures() {
     return null;

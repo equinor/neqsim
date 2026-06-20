@@ -147,7 +147,7 @@ public class LNGAgeingScenario extends ProcessEquipmentBaseClass {
   /**
    * Constructor with name and inlet stream.
    *
-   * @param name        equipment name
+   * @param name equipment name
    * @param inletStream LNG cargo stream
    */
   public LNGAgeingScenario(String name, StreamInterface inletStream) {
@@ -750,9 +750,9 @@ public class LNGAgeingScenario extends ProcessEquipmentBaseClass {
     /**
      * Constructor.
      *
-     * @param eventType      type of event
+     * @param eventType type of event
      * @param startTimeHours start time (hours)
-     * @param durationHours  duration (hours)
+     * @param durationHours duration (hours)
      */
     public OperationalEvent(EventType eventType, double startTimeHours, double durationHours) {
       this.eventType = eventType;

@@ -54,7 +54,7 @@ public class CapacityConstraintAdapter implements ProcessConstraint {
    * Creates an adapter wrapping the given capacity constraint.
    *
    * @param qualifiedName qualified name for this constraint (e.g., "Compressor1/speed")
-   * @param delegate      the equipment capacity constraint to wrap
+   * @param delegate the equipment capacity constraint to wrap
    * @throws IllegalArgumentException if qualifiedName or delegate is null
    */
   public CapacityConstraintAdapter(String qualifiedName, CapacityConstraint delegate) {
@@ -72,7 +72,7 @@ public class CapacityConstraintAdapter implements ProcessConstraint {
    * Creates an adapter with a custom penalty weight.
    *
    * @param qualifiedName qualified name for this constraint
-   * @param delegate      the equipment capacity constraint to wrap
+   * @param delegate the equipment capacity constraint to wrap
    * @param penaltyWeight custom penalty weight (must be non-negative)
    * @throws IllegalArgumentException if arguments are invalid
    */
@@ -105,7 +105,7 @@ public class CapacityConstraintAdapter implements ProcessConstraint {
    * </p>
    *
    * @param process the process system (not used for value lookup, since the underlying {@link CapacityConstraint} has
-   *                its own value supplier; the process must have been run so equipment state is current)
+   * its own value supplier; the process must have been run so equipment state is current)
    * @return margin (positive = satisfied, negative = violated)
    */
   @Override

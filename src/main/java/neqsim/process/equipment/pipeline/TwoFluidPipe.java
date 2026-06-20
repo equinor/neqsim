@@ -673,7 +673,7 @@ public class TwoFluidPipe extends Pipeline {
   /**
    * Constructor with inlet stream.
    *
-   * @param name     Equipment name
+   * @param name Equipment name
    * @param inStream Inlet stream
    */
   public TwoFluidPipe(String name, StreamInterface inStream) {
@@ -1414,7 +1414,7 @@ public class TwoFluidPipe extends Pipeline {
    * the pipeline.
    * </p>
    *
-   * @param massFlow     Total mass flow rate [kg/s]
+   * @param massFlow Total mass flow rate [kg/s]
    * @param localMDotGas Array to store local gas mass flow rates [kg/s]
    * @param localMDotLiq Array to store local liquid mass flow rates [kg/s]
    */
@@ -1596,7 +1596,7 @@ public class TwoFluidPipe extends Pipeline {
    * </p>
    *
    * @param massFlow Total mass flow rate [kg/s]
-   * @param area     Pipe cross-sectional area [m²]
+   * @param area Pipe cross-sectional area [m²]
    */
   private void updateTemperatureProfile(double massFlow, double area) {
     // Get mixture heat capacity from inlet fluid
@@ -1719,8 +1719,8 @@ public class TwoFluidPipe extends Pipeline {
    * </p>
    *
    * @param massFlow Total mass flow rate [kg/s]
-   * @param area     Pipe cross-sectional area [m²]
-   * @param dt       Time step [s]
+   * @param area Pipe cross-sectional area [m²]
+   * @param dt Time step [s]
    */
   private void updateTransientTemperature(double massFlow, double area, double dt) {
     // Get mixture heat capacity from inlet fluid
@@ -1842,10 +1842,10 @@ public class TwoFluidPipe extends Pipeline {
    * </ul>
    *
    * @param massFlow Total mass flow rate [kg/s]
-   * @param area     Pipe cross-sectional area [m²]
-   * @param dt       Time step [s]
-   * @param Cp       Fluid heat capacity [J/(kg·K)]
-   * @param muJT     Joule-Thomson coefficient [K/Pa]
+   * @param area Pipe cross-sectional area [m²]
+   * @param dt Time step [s]
+   * @param Cp Fluid heat capacity [J/(kg·K)]
+   * @param muJT Joule-Thomson coefficient [K/Pa]
    */
   private void updateTransientTemperatureMultilayer(double massFlow, double area, double dt, double Cp, double muJT) {
     double pipePerimeter = Math.PI * diameter;
@@ -1918,7 +1918,7 @@ public class TwoFluidPipe extends Pipeline {
    * </p>
    *
    * @param massFlow Mass flow rate [kg/s]
-   * @param area     Pipe cross-sectional area [m²]
+   * @param area Pipe cross-sectional area [m²]
    * @return Inner HTC in W/(m²·K)
    */
   private double calculateInnerHTC(double massFlow, double area) {
@@ -1963,11 +1963,11 @@ public class TwoFluidPipe extends Pipeline {
    * <li>DRIFT_FLUX: Original NeqSim drift-flux model</li>
    * </ul>
    *
-   * @param sec     Current section
-   * @param prev    Previous section (upstream)
+   * @param sec Current section
+   * @param prev Previous section (upstream)
    * @param mDotGas Gas mass flow rate [kg/s]
    * @param mDotLiq Liquid mass flow rate [kg/s]
-   * @param area    Pipe cross-sectional area [m²]
+   * @param area Pipe cross-sectional area [m²]
    * @return Array with [liquidHoldup, gasHoldup]
    */
   private double[] calculateLocalHoldup(TwoFluidSection sec, TwoFluidSection prev, double mDotGas, double mDotLiq,
@@ -2207,11 +2207,11 @@ public class TwoFluidPipe extends Pipeline {
    * <li>v_gj = drift velocity (gas rises relative to mixture)</li>
    * </ul>
    *
-   * @param vsG         Gas superficial velocity [m/s]
-   * @param vsL         Liquid superficial velocity [m/s]
-   * @param rhoG        Gas density [kg/m³]
-   * @param rhoL        Liquid density [kg/m³]
-   * @param sigma       Surface tension [N/m]
+   * @param vsG Gas superficial velocity [m/s]
+   * @param vsL Liquid superficial velocity [m/s]
+   * @param rhoG Gas density [kg/m³]
+   * @param rhoL Liquid density [kg/m³]
+   * @param sigma Surface tension [N/m]
    * @param inclination Pipe inclination [radians]
    * @return Liquid holdup [-]
    */
@@ -2295,14 +2295,14 @@ public class TwoFluidPipe extends Pipeline {
    * Engineering, May 1991, pp. 171-180
    * </p>
    *
-   * @param vsG   Gas superficial velocity [m/s]
-   * @param vsL   Liquid superficial velocity [m/s]
-   * @param rhoG  Gas density [kg/m³]
-   * @param rhoL  Liquid density [kg/m³]
-   * @param muG   Gas dynamic viscosity [Pa·s]
-   * @param muL   Liquid dynamic viscosity [Pa·s]
+   * @param vsG Gas superficial velocity [m/s]
+   * @param vsL Liquid superficial velocity [m/s]
+   * @param rhoG Gas density [kg/m³]
+   * @param rhoL Liquid density [kg/m³]
+   * @param muG Gas dynamic viscosity [Pa·s]
+   * @param muL Liquid dynamic viscosity [Pa·s]
    * @param sigma Surface tension [N/m]
-   * @param D     Pipe diameter [m]
+   * @param D Pipe diameter [m]
    * @param theta Pipe inclination [radians]
    * @return Equilibrium liquid holdup [-]
    */
@@ -2504,14 +2504,14 @@ public class TwoFluidPipe extends Pipeline {
    * Reference: Bendiksen et al. (1991) and OLGA Technical Manual
    * </p>
    *
-   * @param vsG   Gas superficial velocity [m/s]
-   * @param vsL   Liquid superficial velocity [m/s]
-   * @param rhoG  Gas density [kg/m³]
-   * @param rhoL  Liquid density [kg/m³]
-   * @param muG   Gas dynamic viscosity [Pa·s]
-   * @param muL   Liquid dynamic viscosity [Pa·s]
+   * @param vsG Gas superficial velocity [m/s]
+   * @param vsL Liquid superficial velocity [m/s]
+   * @param rhoG Gas density [kg/m³]
+   * @param rhoL Liquid density [kg/m³]
+   * @param muG Gas dynamic viscosity [Pa·s]
+   * @param muL Liquid dynamic viscosity [Pa·s]
    * @param sigma Surface tension [N/m]
-   * @param D     Pipe diameter [m]
+   * @param D Pipe diameter [m]
    * @param theta Pipe inclination [radians]
    * @return Array with [total liquid holdup, film holdup, entrained fraction]
    */
@@ -2649,13 +2649,13 @@ public class TwoFluidPipe extends Pipeline {
    * <li>Slug frequency and length</li>
    * </ul>
    *
-   * @param vsG   Gas superficial velocity [m/s]
-   * @param vsL   Liquid superficial velocity [m/s]
-   * @param rhoG  Gas density [kg/m³]
-   * @param rhoL  Liquid density [kg/m³]
-   * @param muL   Liquid dynamic viscosity [Pa·s]
+   * @param vsG Gas superficial velocity [m/s]
+   * @param vsL Liquid superficial velocity [m/s]
+   * @param rhoG Gas density [kg/m³]
+   * @param rhoL Liquid density [kg/m³]
+   * @param muL Liquid dynamic viscosity [Pa·s]
    * @param sigma Surface tension [N/m]
-   * @param D     Pipe diameter [m]
+   * @param D Pipe diameter [m]
    * @param theta Pipe inclination [radians]
    * @return Slug flow average liquid holdup [-]
    */
@@ -2728,8 +2728,8 @@ public class TwoFluidPipe extends Pipeline {
    * Engineering, May 1991, pp. 171-180
    * </p>
    *
-   * @param sec        Current pipe section
-   * @param prev       Previous pipe section
+   * @param sec Current pipe section
+   * @param prev Previous pipe section
    * @param baseHoldup Base holdup from flow regime correlation
    * @return Enhanced holdup accounting for terrain effects
    */
@@ -3001,10 +3001,10 @@ public class TwoFluidPipe extends Pipeline {
   /**
    * Calculate Darcy friction factor using the Haaland equation.
    *
-   * @param rho      fluid density (kg/m3)
+   * @param rho fluid density (kg/m3)
    * @param velocity flow velocity (m/s)
-   * @param D        pipe diameter (m)
-   * @param mu       dynamic viscosity (Pa.s)
+   * @param D pipe diameter (m)
+   * @param mu dynamic viscosity (Pa.s)
    * @return Darcy friction factor
    */
   private double calcDarcyFrictionFactor(double rho, double velocity, double D, double mu) {
@@ -3031,10 +3031,10 @@ public class TwoFluidPipe extends Pipeline {
   /**
    * Update oil/water holdups without inventing an absent liquid phase.
    *
-   * @param sec    current pipe section
-   * @param prev   previous pipe section
+   * @param sec current pipe section
+   * @param prev previous pipe section
    * @param alphaL total liquid holdup
-   * @param area   pipe cross-sectional area
+   * @param area pipe cross-sectional area
    */
   private void updateLiquidPhaseSplit(TwoFluidSection sec, TwoFluidSection prev, double alphaL, double area) {
     double waterCut = sec.getWaterCut();
@@ -3068,10 +3068,10 @@ public class TwoFluidPipe extends Pipeline {
    * <li>Slip between oil and water phases</li>
    * </ul>
    *
-   * @param sec    Current section
-   * @param prev   Previous section (upstream)
+   * @param sec Current section
+   * @param prev Previous section (upstream)
    * @param alphaL Total liquid holdup
-   * @param area   Pipe cross-sectional area
+   * @param area Pipe cross-sectional area
    */
   private void updateWaterOilHoldups(TwoFluidSection sec, TwoFluidSection prev, double alphaL, double area) {
     double rhoOil = sec.getOilDensity();
@@ -3571,7 +3571,7 @@ public class TwoFluidPipe extends Pipeline {
   /**
    * Validate and correct state vector to prevent numerical instabilities.
    *
-   * @param U_new  New state to validate
+   * @param U_new New state to validate
    * @param U_prev Previous state for fallback
    */
   private void validateAndCorrectState(double[][] U_new, double[][] U_prev) {
@@ -4833,9 +4833,9 @@ public class TwoFluidPipe extends Pipeline {
    * This method provides access to advanced slug tracking configuration for the OLGA-style Lagrangian model.
    * </p>
    *
-   * @param enableInletGeneration   enable hydrodynamic slug generation at inlet
+   * @param enableInletGeneration enable hydrodynamic slug generation at inlet
    * @param enableTerrainGeneration enable terrain-induced slug generation
-   * @param enableWakeEffects       enable wake interaction between slugs
+   * @param enableWakeEffects enable wake interaction between slugs
    */
   public void configureLagrangianSlugTracking(boolean enableInletGeneration, boolean enableTerrainGeneration,
       boolean enableWakeEffects) {
@@ -5122,7 +5122,7 @@ public class TwoFluidPipe extends Pipeline {
    * longer sections (50-200 m) on uniform runs.
    * </p>
    *
-   * @param baseSections     Base number of sections for uniform regions
+   * @param baseSections Base number of sections for uniform regions
    * @param refinementFactor How much finer to make sections at elevation changes (2-10)
    */
   public void generateRefinedMesh(int baseSections, double refinementFactor) {
@@ -5297,7 +5297,7 @@ public class TwoFluidPipe extends Pipeline {
    * Set inlet mass flow with unit for CONSTANT_FLOW boundary condition.
    *
    * @param massFlow Mass flow rate value
-   * @param unit     Unit ("kg/s", "kg/hr", "kg/sec", "ton/hr")
+   * @param unit Unit ("kg/s", "kg/hr", "kg/sec", "ton/hr")
    */
   public void setInletMassFlow(double massFlow, String unit) {
     double mDot;
@@ -5329,7 +5329,7 @@ public class TwoFluidPipe extends Pipeline {
    * Set inlet pressure with unit.
    *
    * @param pressure Pressure value
-   * @param unit     Pressure unit ("Pa", "bara", "barg", "psia")
+   * @param unit Pressure unit ("Pa", "bara", "barg", "psia")
    */
   public void setInletPressure(double pressure, String unit) {
     double P_pa;
@@ -5354,7 +5354,7 @@ public class TwoFluidPipe extends Pipeline {
    * Set outlet pressure with unit.
    *
    * @param pressure Pressure value
-   * @param unit     Pressure unit ("Pa", "bara", "barg", "psia")
+   * @param unit Pressure unit ("Pa", "bara", "barg", "psia")
    */
   @Override
   public void setOutletPressure(double pressure, String unit) {
@@ -5411,7 +5411,7 @@ public class TwoFluidPipe extends Pipeline {
    * Open the pipe outlet with specified pressure.
    *
    * @param pressure Outlet pressure value
-   * @param unit     Pressure unit ("Pa", "bara", "barg", "psia")
+   * @param unit Pressure unit ("Pa", "bara", "barg", "psia")
    */
   public void openOutlet(double pressure, String unit) {
     setOutletPressure(pressure, unit);
@@ -5542,7 +5542,7 @@ public class TwoFluidPipe extends Pipeline {
    * </p>
    *
    * @param temperature Surface temperature in the specified unit
-   * @param unit        Temperature unit ("K" or "C")
+   * @param unit Temperature unit ("K" or "C")
    */
   public void setSurfaceTemperature(double temperature, String unit) {
     if ("K".equals(unit)) {
@@ -5897,7 +5897,7 @@ public class TwoFluidPipe extends Pipeline {
    * </p>
    *
    * @param useAdaptive true to use correlation-only minimum (recommended for lean gas), false to also enforce absolute
-   *                    floor
+   * floor
    */
   public void setUseAdaptiveMinimumOnly(boolean useAdaptive) {
     this.useAdaptiveMinimumOnly = useAdaptive;
@@ -6240,8 +6240,8 @@ public class TwoFluidPipe extends Pipeline {
   /**
    * Set pipe wall properties for transient thermal calculations.
    *
-   * @param thickness    Wall thickness [m]
-   * @param density      Wall material density [kg/m³]
+   * @param thickness Wall thickness [m]
+   * @param density Wall material density [kg/m³]
    * @param heatCapacity Wall specific heat capacity [J/(kg·K)]
    */
   public void setWallProperties(double thickness, double density, double heatCapacity) {
@@ -6362,8 +6362,8 @@ public class TwoFluidPipe extends Pipeline {
    * </ol>
    *
    * @param insulationThickness Insulation thickness [m], 0 for uninsulated
-   * @param concreteThickness   Concrete coating thickness [m], 0 for none
-   * @param insulationMaterial  Type of insulation material
+   * @param concreteThickness Concrete coating thickness [m], 0 for none
+   * @param insulationMaterial Type of insulation material
    */
   public void configureSubseaThermalModel(double insulationThickness, double concreteThickness,
       RadialThermalLayer.MaterialType insulationMaterial) {
@@ -6381,7 +6381,7 @@ public class TwoFluidPipe extends Pipeline {
    * Configure buried onshore pipe thermal model.
    *
    * @param burialDepth Depth of cover [m]
-   * @param wetSoil     true for wet soil, false for dry
+   * @param wetSoil true for wet soil, false for dry
    */
   public void configureBuriedThermalModel(double burialDepth, boolean wetSoil) {
     MultilayerThermalCalculator calc = getThermalCalculator();
@@ -6403,7 +6403,7 @@ public class TwoFluidPipe extends Pipeline {
    * </p>
    *
    * @param targetTemperature Target temperature
-   * @param unit              Temperature unit ("K" or "C")
+   * @param unit Temperature unit ("K" or "C")
    * @return Cooldown time in hours
    */
   public double calculateCooldownTime(double targetTemperature, String unit) {
@@ -6517,7 +6517,7 @@ public class TwoFluidPipe extends Pipeline {
    * Set hydrate formation temperature for risk monitoring.
    *
    * @param temperature Hydrate formation temperature
-   * @param unit        Temperature unit ("K" or "C")
+   * @param unit Temperature unit ("K" or "C")
    */
   public void setHydrateFormationTemperature(double temperature, String unit) {
     if ("K".equals(unit)) {
@@ -6542,7 +6542,7 @@ public class TwoFluidPipe extends Pipeline {
    * Set wax appearance temperature for risk monitoring.
    *
    * @param temperature Wax appearance temperature
-   * @param unit        Temperature unit ("K" or "C")
+   * @param unit Temperature unit ("K" or "C")
    */
   public void setWaxAppearanceTemperature(double temperature, String unit) {
     if ("K".equals(unit)) {
@@ -7177,7 +7177,7 @@ public class TwoFluidPipe extends Pipeline {
    * </table>
    *
    * @param position Distance from inlet (m)
-   * @param kFactor  Loss coefficient (dimensionless)
+   * @param kFactor Loss coefficient (dimensionless)
    */
   public void addLocalLoss(double position, double kFactor) {
     if (position >= 0 && position <= length && kFactor >= 0) {

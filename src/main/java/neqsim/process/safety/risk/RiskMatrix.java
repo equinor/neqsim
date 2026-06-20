@@ -470,7 +470,7 @@ public class RiskMatrix implements Serializable {
    * Sets the product price.
    *
    * @param price the price
-   * @param unit  the unit (e.g., "USD/tonne", "USD/kg", "NOK/Sm3")
+   * @param unit the unit (e.g., "USD/tonne", "USD/kg", "NOK/Sm3")
    * @return this matrix for chaining
    */
   public RiskMatrix setProductPrice(double price, String unit) {
@@ -512,9 +512,9 @@ public class RiskMatrix implements Serializable {
   /**
    * Adds custom equipment risk data (overrides database).
    *
-   * @param equipmentName   equipment name
+   * @param equipmentName equipment name
    * @param failuresPerYear expected failures per year
-   * @param mttr            mean time to repair in hours
+   * @param mttr mean time to repair in hours
    * @return this matrix for chaining
    */
   public RiskMatrix addEquipmentRisk(String equipmentName, double failuresPerYear, double mttr) {

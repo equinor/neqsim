@@ -49,7 +49,7 @@ public class QuenchSection extends TwoPortEquipment {
   /**
    * Creates a quench section with an inlet stream.
    *
-   * @param name        equipment name
+   * @param name equipment name
    * @param inletStream hot syngas inlet stream
    */
   public QuenchSection(String name, StreamInterface inletStream) {
@@ -72,7 +72,7 @@ public class QuenchSection extends TwoPortEquipment {
    * Sets the target outlet temperature with unit conversion.
    *
    * @param temperature temperature value
-   * @param unit        temperature unit, either K or C
+   * @param unit temperature unit, either K or C
    */
   public void setTargetTemperature(double temperature, String unit) {
     if ("C".equalsIgnoreCase(unit)) {

@@ -57,10 +57,10 @@ public final class ProductionLoad implements Serializable {
   /**
    * Creates a production load with a default period name and one-year length.
    *
-   * @param year          calendar year for the period
-   * @param gasRateMSm3d  average gas rate in MSm3/d
-   * @param oilRateBopd   average oil rate in bbl/d
-   * @param waterRateM3d  average water rate in m3/d
+   * @param year calendar year for the period
+   * @param gasRateMSm3d average gas rate in MSm3/d
+   * @param oilRateBopd average oil rate in bbl/d
+   * @param waterRateM3d average water rate in m3/d
    * @param liquidRateM3d explicit total-liquid rate in m3/d, or zero to infer from oil and water
    */
   public ProductionLoad(int year, double gasRateMSm3d, double oilRateBopd, double waterRateM3d, double liquidRateM3d) {
@@ -70,11 +70,11 @@ public final class ProductionLoad implements Serializable {
   /**
    * Creates a production load with a named period and one-year length.
    *
-   * @param periodName    display name for the period
-   * @param year          calendar year for the period
-   * @param gasRateMSm3d  average gas rate in MSm3/d
-   * @param oilRateBopd   average oil rate in bbl/d
-   * @param waterRateM3d  average water rate in m3/d
+   * @param periodName display name for the period
+   * @param year calendar year for the period
+   * @param gasRateMSm3d average gas rate in MSm3/d
+   * @param oilRateBopd average oil rate in bbl/d
+   * @param waterRateM3d average water rate in m3/d
    * @param liquidRateM3d explicit total-liquid rate in m3/d, or zero to infer from oil and water
    */
   public ProductionLoad(String periodName, int year, double gasRateMSm3d, double oilRateBopd, double waterRateM3d,
@@ -85,16 +85,16 @@ public final class ProductionLoad implements Serializable {
   /**
    * Creates a fully specified production load.
    *
-   * @param periodName          display name for the period
-   * @param year                calendar year for the period
-   * @param gasRateMSm3d        average gas rate in MSm3/d
-   * @param oilRateBopd         average oil rate in bbl/d
-   * @param waterRateM3d        average water rate in m3/d
-   * @param liquidRateM3d       explicit total-liquid rate in m3/d, or zero to infer from oil and water
-   * @param periodLengthDays    number of days represented by the period
-   * @param gasValueUsdPerMSm3  gas value in USD/MSm3
-   * @param oilValueUsdPerBbl   oil value in USD/bbl
-   * @param waterValueUsdPerM3  water value in USD/m3
+   * @param periodName display name for the period
+   * @param year calendar year for the period
+   * @param gasRateMSm3d average gas rate in MSm3/d
+   * @param oilRateBopd average oil rate in bbl/d
+   * @param waterRateM3d average water rate in m3/d
+   * @param liquidRateM3d explicit total-liquid rate in m3/d, or zero to infer from oil and water
+   * @param periodLengthDays number of days represented by the period
+   * @param gasValueUsdPerMSm3 gas value in USD/MSm3
+   * @param oilValueUsdPerBbl oil value in USD/bbl
+   * @param waterValueUsdPerM3 water value in USD/m3
    * @param liquidValueUsdPerM3 liquid value in USD/m3
    */
   public ProductionLoad(String periodName, int year, double gasRateMSm3d, double oilRateBopd, double waterRateM3d,
@@ -116,7 +116,7 @@ public final class ProductionLoad implements Serializable {
   /**
    * Creates a zero load for a planning period.
    *
-   * @param year       calendar year for the period
+   * @param year calendar year for the period
    * @param periodName display name for the period
    * @return zero production load
    */
@@ -303,7 +303,7 @@ public final class ProductionLoad implements Serializable {
    * Creates a load with a different period name and year.
    *
    * @param newPeriodName new period name
-   * @param newYear       new calendar year
+   * @param newYear new calendar year
    * @return copied load with the new period identity
    */
   public ProductionLoad withPeriod(String newPeriodName, int newYear) {
@@ -314,9 +314,9 @@ public final class ProductionLoad implements Serializable {
   /**
    * Creates a load with updated commodity values.
    *
-   * @param gasUsdPerMSm3  gas value in USD/MSm3
-   * @param oilUsdPerBbl   oil value in USD/bbl
-   * @param waterUsdPerM3  water value in USD/m3
+   * @param gasUsdPerMSm3 gas value in USD/MSm3
+   * @param oilUsdPerBbl oil value in USD/bbl
+   * @param waterUsdPerM3 water value in USD/m3
    * @param liquidUsdPerM3 liquid value in USD/m3
    * @return copied load with updated values
    */
@@ -384,7 +384,7 @@ public final class ProductionLoad implements Serializable {
   /**
    * Combines explicit liquid rates when either load uses them.
    *
-   * @param first  first load
+   * @param first first load
    * @param second second load
    * @return combined explicit total-liquid rate or zero when both loads infer liquid rate
    */

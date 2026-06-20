@@ -27,7 +27,7 @@ public final class AlarmReporter {
    * Displays current alarm status in a formatted box.
    *
    * @param alarmManager the alarm manager
-   * @param context      description of current context
+   * @param context description of current context
    */
   public static void displayAlarmStatus(ProcessAlarmManager alarmManager, String context) {
     List<AlarmStatusSnapshot> activeAlarms = alarmManager.getActiveAlarms();
@@ -64,7 +64,7 @@ public final class AlarmReporter {
   /**
    * Displays complete alarm history in a formatted report.
    *
-   * @param alarmManager    the alarm manager
+   * @param alarmManager the alarm manager
    * @param maxRecentEvents maximum number of recent events to display
    */
   public static void displayAlarmHistory(ProcessAlarmManager alarmManager, int maxRecentEvents) {

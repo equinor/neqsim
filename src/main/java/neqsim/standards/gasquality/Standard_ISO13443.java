@@ -95,10 +95,10 @@ public class Standard_ISO13443 extends neqsim.standards.Standard {
   /**
    * Sets the conversion from one reference condition to another.
    *
-   * @param fromTempK       source reference temperature in Kelvin
+   * @param fromTempK source reference temperature in Kelvin
    * @param fromPressureKPa source reference pressure in kPa
-   * @param toTempK         target reference temperature in Kelvin
-   * @param toPressureKPa   target reference pressure in kPa
+   * @param toTempK target reference temperature in Kelvin
+   * @param toPressureKPa target reference pressure in kPa
    */
   public void setConversionConditions(double fromTempK, double fromPressureKPa, double toTempK, double toPressureKPa) {
     this.refTemp1 = fromTempK;
@@ -111,7 +111,7 @@ public class Standard_ISO13443 extends neqsim.standards.Standard {
    * Sets conversion using named reference conditions.
    *
    * @param fromCondition "15C", "0C", "60F", or "20C"
-   * @param toCondition   "15C", "0C", "60F", or "20C"
+   * @param toCondition "15C", "0C", "60F", or "20C"
    */
   public void setConversionConditions(String fromCondition, String toCondition) {
     refTemp1 = getTemperatureForCondition(fromCondition);

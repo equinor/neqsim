@@ -100,7 +100,7 @@ public final class GasTurbineCatalog implements Serializable {
    * Find the smallest catalog entry whose rated power is at least the requested demand multiplied by the safety /
    * redundancy factor.
    *
-   * @param demandW          power demand [W]
+   * @param demandW power demand [W]
    * @param redundancyFactor multiplier (e.g. 1.0 for 1×100 %, 2.0 for N+1 with two equal units)
    * @return best-fit spec, or {@code null} if no entry is large enough
    */
@@ -125,10 +125,10 @@ public final class GasTurbineCatalog implements Serializable {
    * multi-unit dispatch will be required). When the flag is {@code false}, the behaviour matches the two-argument
    * overload and {@code null} is returned for infeasible single-unit cases.
    *
-   * @param demandW                 power demand [W]
-   * @param redundancyFactor        multiplier (e.g. 1.0 for 1×100 %, 2.0 for N+1 with two equal units)
+   * @param demandW power demand [W]
+   * @param redundancyFactor multiplier (e.g. 1.0 for 1×100 %, 2.0 for N+1 with two equal units)
    * @param returnLargestIfNoneFits if true, fall back to the largest catalog entry when no single unit covers the
-   *                                demand
+   * demand
    * @return best-fit spec, or the largest spec, or {@code null} if the catalog is empty
    */
   public static GasTurbineSpec findBestFit(double demandW, double redundancyFactor, boolean returnLargestIfNoneFits) {

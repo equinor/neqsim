@@ -118,7 +118,7 @@ public class DiffusivityModelSelector {
    * Create a diffusivity model instance based on the selected type.
    *
    * @param liquidPhase the physical properties object
-   * @param modelType   the model type to create
+   * @param modelType the model type to create
    * @return the diffusivity model instance
    */
   public static Diffusivity createModel(PhysicalProperties liquidPhase, DiffusivityModelType modelType) {
@@ -174,7 +174,7 @@ public class DiffusivityModelSelector {
   /**
    * Check if the phase contains a specific component.
    *
-   * @param phase         the phase to check
+   * @param phase the phase to check
    * @param componentName the component name to find
    * @return true if component is present with non-zero mole fraction
    */

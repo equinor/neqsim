@@ -59,8 +59,8 @@ public final class HumidAir {
    * Formula from ASHRAE Fundamentals (2017) with enhancement factor neglected.
    * </p>
    *
-   * @param temperature      Temperature in K
-   * @param pressure         total pressure in Pa
+   * @param temperature Temperature in K
+   * @param pressure total pressure in Pa
    * @param relativeHumidity relative humidity [-]
    * @return humidity ratio (kg water/kg dry air)
    */
@@ -73,8 +73,8 @@ public final class HumidAir {
   /**
    * Relative humidity from humidity ratio.
    *
-   * @param temperature   temperature in K
-   * @param pressure      total pressure in Pa
+   * @param temperature temperature in K
+   * @param pressure total pressure in Pa
    * @param humidityRatio humidity ratio (kg/kg dry air)
    * @return relative humidity [-]
    */
@@ -92,7 +92,7 @@ public final class HumidAir {
    * </p>
    *
    * @param humidityRatio humidity ratio (kg/kg dry air)
-   * @param pressure      total pressure in Pa
+   * @param pressure total pressure in Pa
    * @return dew point temperature in K
    */
   public static double dewPointTemperature(double humidityRatio, double pressure) {
@@ -116,7 +116,7 @@ public final class HumidAir {
    * Correlation from ASHRAE Fundamentals (2017) in kJ/kg dry air.
    * </p>
    *
-   * @param temperature   temperature in K
+   * @param temperature temperature in K
    * @param humidityRatio humidity ratio (kg/kg dry air)
    * @return specific enthalpy in kJ/kg dry air
    */

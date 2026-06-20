@@ -274,7 +274,7 @@ public class Hydrocyclone extends Separator {
   /**
    * Creates a hydrocyclone with an inlet stream.
    *
-   * @param name        equipment name/tag
+   * @param name equipment name/tag
    * @param inletStream produced water stream containing dispersed oil
    */
   public Hydrocyclone(String name, StreamInterface inletStream) {
@@ -955,9 +955,9 @@ public class Hydrocyclone extends Separator {
    * Calculates the required inlet pressure given downstream back-pressures.
    *
    * @param waterOutletPressureBar water outlet back-pressure (bar)
-   * @param rejectValveDPBar       pressure drop across reject control valve (bar)
-   * @param rejectLineDPBar        pressure drop in reject piping (bar)
-   * @param heightDifferenceDPBar  static head difference to reject destination (bar)
+   * @param rejectValveDPBar pressure drop across reject control valve (bar)
+   * @param rejectLineDPBar pressure drop in reject piping (bar)
+   * @param heightDifferenceDPBar static head difference to reject destination (bar)
    * @return required inlet pressure (bar)
    */
   public double calcRequiredInletPressure(double waterOutletPressureBar, double rejectValveDPBar,
@@ -973,7 +973,7 @@ public class Hydrocyclone extends Separator {
    * degC and 5 bar dP.
    * </p>
    *
-   * @param availableDPBar    available differential pressure (bar)
+   * @param availableDPBar available differential pressure (bar)
    * @param waterTemperatureC water temperature (degrees Celsius)
    * @return estimated oil removal efficiency (0.0-1.0)
    */

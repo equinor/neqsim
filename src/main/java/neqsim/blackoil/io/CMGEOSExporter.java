@@ -125,7 +125,7 @@ public final class CMGEOSExporter {
     /**
      * Set standard conditions for stock tank properties.
      *
-     * @param pressure    pressure in kPa
+     * @param pressure pressure in kPa
      * @param temperature temperature in Kelvin
      * @return this config for chaining
      */
@@ -187,7 +187,7 @@ public final class CMGEOSExporter {
   /**
    * Export a compositional fluid to a CMG file using default settings.
    *
-   * @param fluid      NeqSim compositional fluid
+   * @param fluid NeqSim compositional fluid
    * @param outputPath output file path
    * @throws IOException if writing fails
    */
@@ -198,9 +198,9 @@ public final class CMGEOSExporter {
   /**
    * Export a compositional fluid to a CMG file for a specific simulator.
    *
-   * @param fluid      NeqSim compositional fluid
+   * @param fluid NeqSim compositional fluid
    * @param outputPath output file path
-   * @param simulator  target CMG simulator
+   * @param simulator target CMG simulator
    * @throws IOException if writing fails
    */
   public static void toFile(SystemInterface fluid, Path outputPath, Simulator simulator) throws IOException {
@@ -210,9 +210,9 @@ public final class CMGEOSExporter {
   /**
    * Export a compositional fluid to a CMG file.
    *
-   * @param fluid      NeqSim compositional fluid
+   * @param fluid NeqSim compositional fluid
    * @param outputPath output file path
-   * @param config     export configuration
+   * @param config export configuration
    * @throws IOException if writing fails
    */
   public static void toFile(SystemInterface fluid, Path outputPath, ExportConfig config) throws IOException {
@@ -238,7 +238,7 @@ public final class CMGEOSExporter {
   /**
    * Export a compositional fluid to a CMG format string.
    *
-   * @param fluid  NeqSim compositional fluid
+   * @param fluid NeqSim compositional fluid
    * @param config export configuration
    * @return CMG format content
    */
@@ -258,9 +258,9 @@ public final class CMGEOSExporter {
   /**
    * Export a Black-Oil PVT table to a CMG file.
    *
-   * @param pvt        Black-Oil PVT table
-   * @param rhoOilSc   oil density at standard conditions (kg/m³)
-   * @param rhoGasSc   gas density at standard conditions (kg/m³)
+   * @param pvt Black-Oil PVT table
+   * @param rhoOilSc oil density at standard conditions (kg/m³)
+   * @param rhoGasSc gas density at standard conditions (kg/m³)
    * @param rhoWaterSc water density at standard conditions (kg/m³)
    * @param outputPath output file path
    * @throws IOException if writing fails
@@ -273,12 +273,12 @@ public final class CMGEOSExporter {
   /**
    * Export a Black-Oil PVT table to a CMG file.
    *
-   * @param pvt        Black-Oil PVT table
-   * @param rhoOilSc   oil density at standard conditions (kg/m³)
-   * @param rhoGasSc   gas density at standard conditions (kg/m³)
+   * @param pvt Black-Oil PVT table
+   * @param rhoOilSc oil density at standard conditions (kg/m³)
+   * @param rhoGasSc gas density at standard conditions (kg/m³)
    * @param rhoWaterSc water density at standard conditions (kg/m³)
    * @param outputPath output file path
-   * @param config     export configuration
+   * @param config export configuration
    * @throws IOException if writing fails
    */
   public static void toFile(BlackOilPVTTable pvt, double rhoOilSc, double rhoGasSc, double rhoWaterSc, Path outputPath,
@@ -295,9 +295,9 @@ public final class CMGEOSExporter {
   /**
    * Export a Black-Oil PVT table to a CMG format string.
    *
-   * @param pvt        Black-Oil PVT table
-   * @param rhoOilSc   oil density at standard conditions (kg/m³)
-   * @param rhoGasSc   gas density at standard conditions (kg/m³)
+   * @param pvt Black-Oil PVT table
+   * @param rhoOilSc oil density at standard conditions (kg/m³)
+   * @param rhoGasSc gas density at standard conditions (kg/m³)
    * @param rhoWaterSc water density at standard conditions (kg/m³)
    * @return CMG format content
    */
@@ -308,11 +308,11 @@ public final class CMGEOSExporter {
   /**
    * Export a Black-Oil PVT table to a CMG format string.
    *
-   * @param pvt        Black-Oil PVT table
-   * @param rhoOilSc   oil density at standard conditions (kg/m³)
-   * @param rhoGasSc   gas density at standard conditions (kg/m³)
+   * @param pvt Black-Oil PVT table
+   * @param rhoOilSc oil density at standard conditions (kg/m³)
+   * @param rhoGasSc gas density at standard conditions (kg/m³)
    * @param rhoWaterSc water density at standard conditions (kg/m³)
-   * @param config     export configuration
+   * @param config export configuration
    * @return CMG format content
    */
   public static String toString(BlackOilPVTTable pvt, double rhoOilSc, double rhoGasSc, double rhoWaterSc,

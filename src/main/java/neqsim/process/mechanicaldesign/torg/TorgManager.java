@@ -112,7 +112,7 @@ public class TorgManager {
    * Load a TORG by company and project name.
    *
    * @param companyIdentifier the company identifier
-   * @param projectName       the project name
+   * @param projectName the project name
    * @return optional containing the TORG if found
    */
   public Optional<TechnicalRequirementsDocument> load(String companyIdentifier, String projectName) {
@@ -128,7 +128,7 @@ public class TorgManager {
   /**
    * Load a TORG and apply it to a process system.
    *
-   * @param projectId     the project identifier
+   * @param projectId the project identifier
    * @param processSystem the process system to configure
    * @return true if TORG was found and applied
    */
@@ -150,7 +150,7 @@ public class TorgManager {
    * the TORG based on equipment type.
    * </p>
    *
-   * @param torg          the TORG to apply
+   * @param torg the TORG to apply
    * @param processSystem the process system to configure
    */
   public void apply(TechnicalRequirementsDocument torg, ProcessSystem processSystem) {
@@ -174,7 +174,7 @@ public class TorgManager {
   /**
    * Apply a TORG to a single equipment item.
    *
-   * @param torg      the TORG to apply
+   * @param torg the TORG to apply
    * @param equipment the equipment to configure
    */
   public void applyToEquipment(TechnicalRequirementsDocument torg, ProcessEquipmentInterface equipment) {

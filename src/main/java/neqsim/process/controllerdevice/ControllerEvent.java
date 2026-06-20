@@ -20,11 +20,11 @@ public class ControllerEvent implements Serializable {
   /**
    * Create a new event log entry.
    *
-   * @param time          simulation time of the event
+   * @param time simulation time of the event
    * @param measuredValue current transmitter measurement
-   * @param setPoint      active controller set-point
-   * @param error         controller error at this time
-   * @param response      controller output signal
+   * @param setPoint active controller set-point
+   * @param error controller error at this time
+   * @param response controller output signal
    */
   public ControllerEvent(double time, double measuredValue, double setPoint, double error, double response) {
     this.time = time;

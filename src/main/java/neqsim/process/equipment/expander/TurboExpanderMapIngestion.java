@@ -49,9 +49,9 @@ public class TurboExpanderMapIngestion implements Serializable {
     /**
      * Constructs an anchor point.
      *
-     * @param label              human-readable label
-     * @param velocityRatio      velocity ratio U/C
-     * @param igvOpening         IGV opening (fraction of maximum area)
+     * @param label human-readable label
+     * @param velocityRatio velocity ratio U/C
+     * @param igvOpening IGV opening (fraction of maximum area)
      * @param expanderEfficiency certified expander isentropic efficiency (0..1)
      */
     public AnchorPoint(String label, double velocityRatio, double igvOpening, double expanderEfficiency) {
@@ -119,9 +119,9 @@ public class TurboExpanderMapIngestion implements Serializable {
   /**
    * Constructs a map-ingestion utility with a reference fluid and impeller diameters.
    *
-   * @param referenceFluid             the reference fluid the OEM curves were digitised on
+   * @param referenceFluid the reference fluid the OEM curves were digitised on
    * @param compressorImpellerDiameter the compressor impeller outer diameter in m
-   * @param expanderImpellerDiameter   the expander impeller outer diameter in m
+   * @param expanderImpellerDiameter the expander impeller outer diameter in m
    */
   public TurboExpanderMapIngestion(SystemInterface referenceFluid, double compressorImpellerDiameter,
       double expanderImpellerDiameter) {
@@ -133,9 +133,9 @@ public class TurboExpanderMapIngestion implements Serializable {
   /**
    * Register a certified anchor operating point used to validate the assembled expander map.
    *
-   * @param label              human-readable label (e.g. "Design 1998", "Case B")
-   * @param velocityRatio      velocity ratio U/C at the anchor point
-   * @param igvOpening         IGV opening (fraction of maximum area)
+   * @param label human-readable label (e.g. "Design 1998", "Case B")
+   * @param velocityRatio velocity ratio U/C at the anchor point
+   * @param igvOpening IGV opening (fraction of maximum area)
    * @param expanderEfficiency certified expander isentropic efficiency (0..1)
    */
   public void addAnchorPoint(String label, double velocityRatio, double igvOpening, double expanderEfficiency) {
@@ -154,14 +154,14 @@ public class TurboExpanderMapIngestion implements Serializable {
   /**
    * Build a Khader-style compressor chart from digitised OEM map points.
    *
-   * @param processFluid    the actual process fluid the chart will run on
+   * @param processFluid the actual process fluid the chart will run on
    * @param chartConditions array with temperature [C], pressure [bara], (optionally density, molecular weight) of the
-   *                        reference conditions
-   * @param speed           array of speed lines in rpm
-   * @param flow            2-D array of volumetric flows in m3/hr (one row per speed, strictly increasing per row)
-   * @param head            2-D array of polytropic heads (one row per speed)
-   * @param flowPolyEff     2-D array of flows for the efficiency curve (one row per speed)
-   * @param polyEff         2-D array of polytropic efficiencies (one row per speed)
+   * reference conditions
+   * @param speed array of speed lines in rpm
+   * @param flow 2-D array of volumetric flows in m3/hr (one row per speed, strictly increasing per row)
+   * @param head 2-D array of polytropic heads (one row per speed)
+   * @param flowPolyEff 2-D array of flows for the efficiency curve (one row per speed)
+   * @param polyEff 2-D array of polytropic efficiencies (one row per speed)
    * @return the assembled compressor chart
    */
   public CompressorChartKhader2015 buildCompressorChart(SystemInterface processFluid, double[] chartConditions,
@@ -180,9 +180,9 @@ public class TurboExpanderMapIngestion implements Serializable {
   /**
    * Build a Khader-style expander chart from digitised OEM map points.
    *
-   * @param igvPositions    array of IGV positions (fraction of maximum area, 0..1)
-   * @param uc              2-D array of velocity ratios U/C (one row per IGV position)
-   * @param eta             2-D array of isentropic efficiencies (one row per IGV position)
+   * @param igvPositions array of IGV positions (fraction of maximum area, 0..1)
+   * @param uc 2-D array of velocity ratios U/C (one row per IGV position)
+   * @param eta 2-D array of isentropic efficiencies (one row per IGV position)
    * @param headDropKjPerKg 2-D array of isentropic stage head drops in kJ/kg (one row per IGV position)
    * @return the assembled expander chart
    */
@@ -196,7 +196,7 @@ public class TurboExpanderMapIngestion implements Serializable {
   /**
    * Validate an assembled expander chart against the registered anchor points.
    *
-   * @param chart     the expander chart to validate
+   * @param chart the expander chart to validate
    * @param tolerance the allowed absolute efficiency deviation (e.g. 0.02 for 2 efficiency points)
    * @return {@code true} if every anchor point is reproduced within the tolerance
    */

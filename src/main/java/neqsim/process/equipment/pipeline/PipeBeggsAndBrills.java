@@ -637,7 +637,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   /**
    * Constructor for PipeBeggsAndBrills.
    *
-   * @param name     name of pipe
+   * @param name name of pipe
    * @param inStream input stream
    */
   public PipeBeggsAndBrills(String name, StreamInterface inStream) {
@@ -665,7 +665,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    * </p>
    *
    * @param nominalDiameter a double in inch
-   * @param pipeSec         a {@link java.lang.String} object
+   * @param pipeSec a {@link java.lang.String} object
    */
   @Override
   public void setPipeSpecification(double nominalDiameter, String pipeSec) {
@@ -792,7 +792,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    * </p>
    *
    * @param temperature a double
-   * @param unit        a {@link java.lang.String} object
+   * @param unit a {@link java.lang.String} object
    */
   public void setConstantSurfaceTemperature(double temperature, String unit) {
     if (unit.equals("K")) {
@@ -829,9 +829,8 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    * </p>
    *
    * @param inletTemperature the formation temperature at the pipe inlet in the specified unit
-   * @param gradient         the temperature gradient in K/m (typically 0.03 for geothermal, sign follows elevation
-   *                         convention)
-   * @param unit             temperature unit for inletTemperature ("K" or "C")
+   * @param gradient the temperature gradient in K/m (typically 0.03 for geothermal, sign follows elevation convention)
+   * @param unit temperature unit for inletTemperature ("K" or "C")
    */
   public void setFormationTemperatureGradient(double inletTemperature, double gradient, String unit) {
     if (unit.equals("K")) {
@@ -969,7 +968,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    * specified, the run() method will iterate to find the flow rate that achieves the specified outlet pressure.
    *
    * @param pressure the desired outlet pressure
-   * @param unit     the pressure unit (e.g., "bara", "barg", "Pa", "MPa")
+   * @param unit the pressure unit (e.g., "bara", "barg", "Pa", "MPa")
    */
   @Override
   public void setOutletPressure(double pressure, String unit) {
@@ -1682,7 +1681,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    *
    * @param flowRate the flow rate to test
    * @param flowUnit the unit for flow rate
-   * @param id       calculation identifier
+   * @param id calculation identifier
    * @return the outlet pressure, or a very low value if calculation fails (pressure went negative)
    */
   private double tryCalculatePressure(double flowRate, String flowUnit, UUID id) {
@@ -1779,7 +1778,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    * The Shah correlation provides enhancement factors for convective heat transfer in two-phase flow. It accounts for
    * the increased turbulence and interfacial effects in gas-liquid flow.
    *
-   * @param system         the thermodynamic system
+   * @param system the thermodynamic system
    * @param singlePhaseHTC the single-phase heat transfer coefficient [W/(m²·K)]
    * @return the two-phase heat transfer coefficient [W/(m²·K)]
    */
@@ -1947,7 +1946,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    * <li>Syntactic foam (subsea): 0.10-0.15 W/(m·K)</li>
    * </ul>
    *
-   * @param thickness    the insulation thickness [m]
+   * @param thickness the insulation thickness [m]
    * @param conductivity the thermal conductivity [W/(m·K)]
    * @throws IllegalArgumentException if thickness or conductivity is negative
    */
@@ -2103,8 +2102,8 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    * </p>
    *
    * @param enthalpy the initial enthalpy of the system
-   * @param system   the thermodynamic system for which the heat balance is to be calculated
-   * @param testOps  the thermodynamic operations to be performed
+   * @param system the thermodynamic system for which the heat balance is to be calculated
+   * @param testOps the thermodynamic operations to be performed
    * @return the calculated enthalpy after performing the heat balance
    */
   public double calcHeatBalance(double enthalpy, SystemInterface system, ThermodynamicOperations testOps) {
@@ -2319,9 +2318,9 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    * Calculates friction pressure drop for transient simulation. Uses simplified correlations that don't depend on
    * steady-state flow regime detection.
    *
-   * @param velocity      mixture velocity in m/s
-   * @param density       mixture density in kg/m3
-   * @param viscosity     mixture viscosity in Pa.s (not cP)
+   * @param velocity mixture velocity in m/s
+   * @param density mixture density in kg/m3
+   * @param viscosity mixture viscosity in Pa.s (not cP)
    * @param segmentLength length of segment in m
    * @return friction pressure drop in bar
    */
@@ -2362,7 +2361,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   /**
    * Calculates hydrostatic pressure drop for transient simulation.
    *
-   * @param density         mixture density in kg/m3
+   * @param density mixture density in kg/m3
    * @param elevationChange elevation change in m (positive = uphill)
    * @return hydrostatic pressure drop in bar
    */
@@ -3595,7 +3594,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    * Enable Rhone-Poulenc maximum velocity calculation using tabulated data with log-log interpolation for higher
    * accuracy.
    *
-   * @param serviceType      the gas service type
+   * @param serviceType the gas service type
    * @param useInterpolation true to use tabulated interpolation, false for power-law formula
    */
   public void setRhonePoulencServiceType(RhonePoulencVelocity.ServiceType serviceType, boolean useInterpolation) {

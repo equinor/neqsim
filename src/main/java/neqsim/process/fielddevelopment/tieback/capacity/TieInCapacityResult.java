@@ -36,12 +36,12 @@ public final class TieInCapacityResult implements Serializable {
   /**
    * Creates an aggregated capacity result.
    *
-   * @param hostName              host facility name
-   * @param allocationPolicy      allocation policy used
-   * @param holdbackPolicy        holdback policy used
-   * @param periodResults         period-by-period results
+   * @param hostName host facility name
+   * @param allocationPolicy allocation policy used
+   * @param holdbackPolicy holdback policy used
+   * @param periodResults period-by-period results
    * @param debottleneckDecisions debottleneck decisions
-   * @param summary               summary text
+   * @param summary summary text
    */
   public TieInCapacityResult(String hostName, CapacityAllocationPolicy allocationPolicy, HoldbackPolicy holdbackPolicy,
       List<TieInPeriodResult> periodResults, List<DebottleneckDecision> debottleneckDecisions, String summary) {

@@ -145,7 +145,7 @@ public class ProductionChemical implements Serializable {
   /**
    * Creates a phosphonate-based scale inhibitor with default properties.
    *
-   * @param name      commercial name
+   * @param name commercial name
    * @param dosagePpm dose in ppm
    * @return configured ProductionChemical
    */
@@ -164,7 +164,7 @@ public class ProductionChemical implements Serializable {
   /**
    * Creates an imidazoline-based corrosion inhibitor with default properties.
    *
-   * @param name      commercial name
+   * @param name commercial name
    * @param dosagePpm dose in ppm
    * @return configured ProductionChemical
    */
@@ -184,9 +184,9 @@ public class ProductionChemical implements Serializable {
   /**
    * Creates a thermodynamic hydrate inhibitor (MEG by default).
    *
-   * @param name      commercial name
+   * @param name commercial name
    * @param dosagePpm dose in ppm (for trace) — for bulk MEG injection use dosagePpm = 0 and set the actual mass flow on
-   *                  the injection stream
+   * the injection stream
    * @return configured ProductionChemical
    */
   public static ProductionChemical thermodynamicHydrateInhibitor(String name, double dosagePpm) {
@@ -204,7 +204,7 @@ public class ProductionChemical implements Serializable {
   /**
    * Creates a triazine-based H2S scavenger.
    *
-   * @param name      commercial name
+   * @param name commercial name
    * @param dosagePpm dose in ppm
    * @return configured ProductionChemical
    */
@@ -223,7 +223,7 @@ public class ProductionChemical implements Serializable {
   /**
    * Creates a mineral acid for stimulation / cleaning (HCl by default).
    *
-   * @param name        commercial name
+   * @param name commercial name
    * @param activeWtPct acid concentration in wt%
    * @return configured ProductionChemical
    */

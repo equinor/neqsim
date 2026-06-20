@@ -30,9 +30,9 @@ public class AddIonToScaleSaturation extends ConstantDutyTemperatureFlash {
    * Constructor for addIonToScaleSaturation.
    * </p>
    *
-   * @param system             a {@link neqsim.thermo.system.SystemInterface} object
-   * @param phaseNumber        a int
-   * @param scaleSaltName      a {@link java.lang.String} object
+   * @param system a {@link neqsim.thermo.system.SystemInterface} object
+   * @param phaseNumber a int
+   * @param scaleSaltName a {@link java.lang.String} object
    * @param nameOfIonToBeAdded a {@link java.lang.String} object
    */
   public AddIonToScaleSaturation(SystemInterface system, int phaseNumber, String scaleSaltName,

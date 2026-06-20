@@ -48,7 +48,7 @@ public class ExpanderOld extends TwoPortEquipment implements ExpanderInterface {
    * Constructor for ExpanderOld.
    * </p>
    *
-   * @param name        name of expander
+   * @param name name of expander
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public ExpanderOld(String name, StreamInterface inletStream) {

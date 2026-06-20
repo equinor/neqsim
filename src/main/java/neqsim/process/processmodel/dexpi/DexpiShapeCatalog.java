@@ -95,7 +95,7 @@ final class DexpiShapeCatalog {
    * Appends a complete {@code <ShapeCatalogue>} element to the given parent.
    *
    * @param document the XML document
-   * @param parent   the parent element (PlantModel root)
+   * @param parent the parent element (PlantModel root)
    */
   static void appendShapeCatalogue(Document document, Element parent) {
     Element catalogue = document.createElement("ShapeCatalogue");
@@ -533,8 +533,8 @@ final class DexpiShapeCatalog {
    * Appends a PolyLine with instrument presentation (green, 0.2 weight).
    *
    * @param document the XML document
-   * @param parent   the parent element
-   * @param coords   array of [x, y] coordinate pairs
+   * @param parent the parent element
+   * @param coords array of [x, y] coordinate pairs
    */
   private static void appendInstrumentPolyLine(Document document, Element parent, double[][] coords) {
     Element polyLine = document.createElement("PolyLine");
@@ -558,13 +558,13 @@ final class DexpiShapeCatalog {
   /**
    * Appends a TrimmedCurve (arc) with instrument presentation (green, 0.2 weight).
    *
-   * @param document   the XML document
-   * @param parent     the parent element
+   * @param document the XML document
+   * @param parent the parent element
    * @param startAngle arc start angle in degrees
-   * @param endAngle   arc end angle in degrees
-   * @param radius     the circle radius
-   * @param cx         center X
-   * @param cy         center Y
+   * @param endAngle arc end angle in degrees
+   * @param radius the circle radius
+   * @param cx center X
+   * @param cy center Y
    */
   private static void appendInstrumentTrimmedCurve(Document document, Element parent, double startAngle,
       double endAngle, double radius, double cx, double cy) {
@@ -597,11 +597,11 @@ final class DexpiShapeCatalog {
   /**
    * Creates a shape element with ComponentName and ISO registration number.
    *
-   * @param document      the XML document
-   * @param tagName       the XML element tag (Equipment, PipingComponent, Nozzle)
-   * @param id            the shape element ID
+   * @param document the XML document
+   * @param tagName the XML element tag (Equipment, PipingComponent, Nozzle)
+   * @param id the shape element ID
    * @param componentName the ComponentName attribute
-   * @param isoNumber     the ISO 10628 registration number (may be empty)
+   * @param isoNumber the ISO 10628 registration number (may be empty)
    * @return the created element
    */
   private static Element createShapeElement(Document document, String tagName, String id, String componentName,
@@ -628,8 +628,8 @@ final class DexpiShapeCatalog {
    * Appends a PolyLine element with the given coordinate pairs.
    *
    * @param document the XML document
-   * @param parent   the parent element
-   * @param coords   array of [x, y] coordinate pairs
+   * @param parent the parent element
+   * @param coords array of [x, y] coordinate pairs
    */
   private static void appendPolyLine(Document document, Element parent, double[][] coords) {
     Element polyLine = document.createElement("PolyLine");
@@ -656,11 +656,11 @@ final class DexpiShapeCatalog {
    * Appends a Circle element.
    *
    * @param document the XML document
-   * @param parent   the parent element
-   * @param radius   the circle radius
-   * @param cx       center X coordinate
-   * @param cy       center Y coordinate
-   * @param filled   whether the circle is filled solid
+   * @param parent the parent element
+   * @param radius the circle radius
+   * @param cx center X coordinate
+   * @param cy center Y coordinate
+   * @param filled whether the circle is filled solid
    */
   private static void appendCircle(Document document, Element parent, double radius, double cx, double cy,
       boolean filled) {
@@ -693,13 +693,13 @@ final class DexpiShapeCatalog {
   /**
    * Appends a TrimmedCurve (arc) element.
    *
-   * @param document   the XML document
-   * @param parent     the parent element
+   * @param document the XML document
+   * @param parent the parent element
    * @param startAngle arc start angle in degrees
-   * @param endAngle   arc end angle in degrees
-   * @param radius     the circle radius
-   * @param cx         center X coordinate
-   * @param cy         center Y coordinate
+   * @param endAngle arc end angle in degrees
+   * @param radius the circle radius
+   * @param cx center X coordinate
+   * @param cy center Y coordinate
    */
   private static void appendTrimmedCurve(Document document, Element parent, double startAngle, double endAngle,
       double radius, double cx, double cy) {

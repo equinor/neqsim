@@ -216,7 +216,7 @@ public class ScaleInhibitorPerformance implements Serializable {
    * Base MIC at standard reference conditions (60 C, TDS 50 g/L, SR=5, Ca=1000 mg/L).
    *
    * @param scale scale type
-   * @param chem  inhibitor chemistry
+   * @param chem inhibitor chemistry
    * @return base MIC in mg/L
    */
   private static double baseMic(ScaleType scale, InhibitorChemistry chem) {
@@ -274,7 +274,7 @@ public class ScaleInhibitorPerformance implements Serializable {
    * Temperature scaling factor (Arrhenius-like ramp above an inhibitor-specific knee).
    *
    * @param chem inhibitor chemistry
-   * @param tC   temperature in Celsius
+   * @param tC temperature in Celsius
    * @return multiplier on base MIC
    */
   private static double temperatureFactor(InhibitorChemistry chem, double tC) {
@@ -334,7 +334,7 @@ public class ScaleInhibitorPerformance implements Serializable {
   /**
    * Calcium tolerance factor (penalises phosphonate in high-Ca brines).
    *
-   * @param chem  inhibitor chemistry
+   * @param chem inhibitor chemistry
    * @param caMgL calcium in mg/L
    * @return multiplier
    */

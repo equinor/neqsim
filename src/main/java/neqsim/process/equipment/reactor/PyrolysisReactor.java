@@ -165,7 +165,7 @@ public class PyrolysisReactor extends ProcessEquipmentBaseClass {
   /**
    * Sets the biomass feedstock and feed rate.
    *
-   * @param biomass         biomass characterization
+   * @param biomass biomass characterization
    * @param feedRateKgPerHr dry biomass feed rate in kg/hr
    */
   public void setBiomass(BiomassCharacterization biomass, double feedRateKgPerHr) {
@@ -204,7 +204,7 @@ public class PyrolysisReactor extends ProcessEquipmentBaseClass {
    * Sets the pyrolysis temperature with unit specification.
    *
    * @param temperature temperature value
-   * @param unit        unit string ("K", "C", "F")
+   * @param unit unit string ("K", "C", "F")
    */
   public void setPyrolysisTemperature(double temperature, String unit) {
     if ("C".equalsIgnoreCase(unit)) {
@@ -282,9 +282,9 @@ public class PyrolysisReactor extends ProcessEquipmentBaseClass {
   /**
    * Sets product yield fractions manually. All three must sum to approximately 1.0.
    *
-   * @param charYieldFrac   char yield fraction (0-1)
+   * @param charYieldFrac char yield fraction (0-1)
    * @param bioOilYieldFrac bio-oil yield fraction (0-1)
-   * @param gasYieldFrac    gas yield fraction (0-1)
+   * @param gasYieldFrac gas yield fraction (0-1)
    */
   public void setProductYields(double charYieldFrac, double bioOilYieldFrac, double gasYieldFrac) {
     this.charYield = charYieldFrac;
@@ -714,7 +714,7 @@ public class PyrolysisReactor extends ProcessEquipmentBaseClass {
   /**
    * Returns the mole fraction of a component in a system, or 0 if not present.
    *
-   * @param system        the thermo system
+   * @param system the thermo system
    * @param componentName the component name
    * @return mole fraction
    */
@@ -732,7 +732,7 @@ public class PyrolysisReactor extends ProcessEquipmentBaseClass {
   /**
    * Ensures a component exists in the fluid at a trace amount.
    *
-   * @param fluid         the system interface
+   * @param fluid the system interface
    * @param componentName the component name
    */
   private void ensureComponent(SystemInterface fluid, String componentName) {

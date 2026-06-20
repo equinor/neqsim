@@ -174,8 +174,8 @@ public class ThermalUtilitySummary implements Serializable {
   /**
    * Classifies a heating duty as LP/MP/HP steam based on required temperature.
    *
-   * @param name     equipment name
-   * @param dutyKW   heating duty in kW
+   * @param name equipment name
+   * @param dutyKW heating duty in kW
    * @param outTempC outlet temperature in Celsius
    */
   private void classifyHeatingDuty(String name, double dutyKW, double outTempC) {
@@ -321,10 +321,10 @@ public class ThermalUtilitySummary implements Serializable {
      * Creates a utility consumer record.
      *
      * @param equipmentName equipment name
-     * @param utilityType   utility type (e.g. "Cooling Water", "LP Steam")
-     * @param dutyKW        duty in kW
-     * @param flow          utility flow rate
-     * @param flowUnit      unit for the flow rate
+     * @param utilityType utility type (e.g. "Cooling Water", "LP Steam")
+     * @param dutyKW duty in kW
+     * @param flow utility flow rate
+     * @param flowUnit unit for the flow rate
      */
     public UtilityConsumer(String equipmentName, String utilityType, double dutyKW, double flow, String flowUnit) {
       this.equipmentName = equipmentName;

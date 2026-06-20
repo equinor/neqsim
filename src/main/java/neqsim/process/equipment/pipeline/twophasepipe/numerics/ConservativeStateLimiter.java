@@ -19,7 +19,7 @@ public final class ConservativeStateLimiter {
    * finite state when available.
    * </p>
    *
-   * @param state    conservative cell state [gasMass, oilMass, waterMass, gasMom, oilMom, waterMom, energy]
+   * @param state conservative cell state [gasMass, oilMass, waterMass, gasMom, oilMom, waterMom, energy]
    * @param fallback previous finite conservative state, or {@code null}
    */
   public static void enforceThreePhaseMassPositivity(double[] state, double[] fallback) {

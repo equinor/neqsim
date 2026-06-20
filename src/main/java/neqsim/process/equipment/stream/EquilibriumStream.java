@@ -35,7 +35,7 @@ public class EquilibriumStream extends Stream {
    * Constructor for EquilibriumStream.
    * </p>
    *
-   * @param name         a {@link java.lang.String} object
+   * @param name a {@link java.lang.String} object
    * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
    */
   public EquilibriumStream(String name, SystemInterface thermoSystem) {

@@ -63,8 +63,8 @@ public class SysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
    * Constructor for sysNewtonRhapsonPHflash.
    * </p>
    *
-   * @param system             a {@link neqsim.thermo.system.SystemInterface} object
-   * @param numberOfPhases     a int
+   * @param system a {@link neqsim.thermo.system.SystemInterface} object
+   * @param numberOfPhases a int
    * @param numberOfComponents a int
    */
   public SysNewtonRhapsonPHflash(SystemInterface system, int numberOfPhases, int numberOfComponents) {
@@ -89,10 +89,10 @@ public class SysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
    * Constructor for sysNewtonRhapsonPHflash.
    * </p>
    *
-   * @param system             a {@link neqsim.thermo.system.SystemInterface} object
-   * @param numberOfPhases     a int
+   * @param system a {@link neqsim.thermo.system.SystemInterface} object
+   * @param numberOfPhases a int
    * @param numberOfComponents a int
-   * @param type               a int
+   * @param type a int
    */
   public SysNewtonRhapsonPHflash(SystemInterface system, int numberOfPhases, int numberOfComponents, int type) {
     this(system, numberOfPhases, numberOfComponents);

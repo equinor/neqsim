@@ -215,7 +215,7 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
    * I = sum_{n=0}^{10} sum_{m=0}^{10-n} c[n][m] * Tr^m * rhoStar^n
    * </p>
    *
-   * @param Tr      reduced temperature T / (epsilon/kB)
+   * @param Tr reduced temperature T / (epsilon/kB)
    * @param rhoStar reduced segment density rhoS * sigma^3
    * @return value of the I integral
    */
@@ -239,7 +239,7 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   /**
    * Evaluates the partial derivative dI/d(rhoStar) of the Dufal 2015 association integral.
    *
-   * @param Tr      reduced temperature T / (epsilon/kB)
+   * @param Tr reduced temperature T / (epsilon/kB)
    * @param rhoStar reduced segment density rhoS * sigma^3
    * @return dI/d(rhoStar)
    */
@@ -263,7 +263,7 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   /**
    * Evaluates the partial derivative dI/dTr of the Dufal 2015 association integral.
    *
-   * @param Tr      reduced temperature T / (epsilon/kB)
+   * @param Tr reduced temperature T / (epsilon/kB)
    * @param rhoStar reduced segment density rhoS * sigma^3
    * @return dI/dTr
    */
@@ -420,9 +420,9 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
    * Sets up self-association scheme matrix for a given scheme type. Following the standard CPA/SAFT convention: sites
    * are split into electron donors and acceptors.
    *
-   * @param scheme     output matrix [nSites][nSites] to fill with 0/1
+   * @param scheme output matrix [nSites][nSites] to fill with 0/1
    * @param schemeName scheme name from database: "4C", "2B", "3B", "1A", "2A"
-   * @param nSites     number of sites
+   * @param nSites number of sites
    */
   private void setupAssociationScheme(int[][] scheme, String schemeName, int nSites) {
     if (schemeName == null) {
@@ -466,7 +466,7 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
    * Sets up cross-association scheme between two components using CR-1 combining rule. Donors on one component bond
    * with acceptors on the other.
    *
-   * @param scheme  output matrix [nSitesI][nSitesJ]
+   * @param scheme output matrix [nSitesI][nSitesJ]
    * @param schemeI scheme name of component I
    * @param nSitesI number of sites on I
    * @param schemeJ scheme name of component J
@@ -493,7 +493,7 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
    * Returns donor mask for sites of a given scheme type.
    *
    * @param schemeName scheme name
-   * @param nSites     number of sites
+   * @param nSites number of sites
    * @return boolean array where true = donor
    */
   private boolean[] getSiteDonors(String schemeName, int nSites) {
@@ -519,7 +519,7 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
    * Returns acceptor mask for sites of a given scheme type.
    *
    * @param schemeName scheme name
-   * @param nSites     number of sites
+   * @param nSites number of sites
    * @return boolean array where true = acceptor
    */
   private boolean[] getSiteAcceptors(String schemeName, int nSites) {
@@ -676,7 +676,7 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
    * ln(g_Mie_ii). For mixtures, components with m_i = 1 do not contribute (their chain weight is zero).
    *
    * @param etaVal packing fraction
-   * @param alpha  g_Mie blend fraction (0 = g_HS only, 1 = full g_Mie)
+   * @param alpha g_Mie blend fraction (0 = g_HS only, 1 = full g_Mie)
    * @return weighted average ln(g)
    */
   private double calcLnGChainEffective(double etaVal, double alpha) {
@@ -718,7 +718,7 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
    * Effective packing fraction coefficient c_i(lambda) (Lafitte 2013 Table 5). c_i(lambda) = A[i][0] + A[i][1]/lambda +
    * A[i][2]/lambda^2 + A[i][3]/lambda^3.
    *
-   * @param i      coefficient index (0-3 for c1-c4)
+   * @param i coefficient index (0-3 for c1-c4)
    * @param lambda Mie exponent
    * @return c_i(lambda)
    */
@@ -731,7 +731,7 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   /**
    * Effective packing fraction eta_eff = c1*eta + c2*eta^2 + c3*eta^3 + c4*eta^4.
    *
-   * @param eta    actual packing fraction
+   * @param eta actual packing fraction
    * @param lambda Mie exponent
    * @return eta_eff
    */
@@ -746,7 +746,7 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   /**
    * d(eta_eff)/d(eta).
    *
-   * @param eta    actual packing fraction
+   * @param eta actual packing fraction
    * @param lambda Mie exponent
    * @return derivative
    */
@@ -763,8 +763,8 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   /**
    * First-order Sutherland mean-field energy a1S/(kT) (Lafitte 2013 Eq. 25).
    *
-   * @param eta       packing fraction
-   * @param lambda    Mie exponent
+   * @param eta packing fraction
+   * @param lambda Mie exponent
    * @param epsOverKT epsilon/(kT)
    * @return a1S_bar (dimensionless)
    */
@@ -779,10 +779,10 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
    * [gHS(eta)*I(x0,lambda) - 9*eta*(1+eta)/(2*(1-eta)^3)*J(x0,lambda)] where I = (1 - x0^(3-lambda))/(lambda-3) and J =
    * (1 - (lambda-3)*x0^(4-lambda) + (lambda-4)*x0^(3-lambda)) / ((lambda-3)*(lambda-4)).
    *
-   * @param eta       packing fraction
-   * @param lambda    Mie exponent
+   * @param eta packing fraction
+   * @param lambda Mie exponent
    * @param epsOverKT epsilon/(kT)
-   * @param x0        sigma/d ratio
+   * @param x0 sigma/d ratio
    * @return B (dimensionless, including 12*eta*eps/kT factor)
    */
   static double calcBCorrection(double eta, double lambda, double epsOverKT, double x0) {
@@ -800,12 +800,12 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   /**
    * Full first-order Mie perturbation a1/(NkT) at a given eta value (Lafitte 2013 Eq. 40).
    *
-   * @param eta       packing fraction
-   * @param lambdaR   repulsive exponent
-   * @param lambdaA   attractive exponent
+   * @param eta packing fraction
+   * @param lambdaR repulsive exponent
+   * @param lambdaA attractive exponent
    * @param epsOverKT epsilon/(kT)
-   * @param cMie      Mie prefactor
-   * @param x0        sigma/d ratio
+   * @param cMie Mie prefactor
+   * @param x0 sigma/d ratio
    * @return a1_Mie (dimensionless)
    */
   public static double calcA1MieAtEta(double eta, double lambdaR, double lambdaA, double epsOverKT, double cMie,
@@ -847,7 +847,7 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
    * Padé approximant function f_m(alpha) from Lafitte 2013 Table 3.
    *
    * @param funcIndex function index: 0=f1, 1=f2, 2=f3, 3=f4, 4=f5, 5=f6
-   * @param alpha     Mie alpha parameter
+   * @param alpha Mie alpha parameter
    * @return f_m(alpha)
    */
   public static double calcPadeF(int funcIndex, double alpha) {
@@ -863,7 +863,7 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
    * Chi correction for second-order perturbation (Lafitte 2013 Eq. 42). chi = f1(alpha) * zetaSt + f2(alpha) * zetaSt^5
    * + f3(alpha) * zetaSt^8, where zetaSt is the sigma-based packing fraction.
    *
-   * @param zetaSt  sigma-based packing fraction (pi/6 * rhoS * sigma^3)
+   * @param zetaSt sigma-based packing fraction (pi/6 * rhoS * sigma^3)
    * @param lambdaR repulsive exponent
    * @param lambdaA attractive exponent
    * @return chi
@@ -879,13 +879,13 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   /**
    * Full second-order Mie perturbation a2/(NkT) at a given eta value.
    *
-   * @param eta       packing fraction (d-based)
-   * @param zetaSt    sigma-based packing fraction
-   * @param lambdaR   repulsive exponent
-   * @param lambdaA   attractive exponent
+   * @param eta packing fraction (d-based)
+   * @param zetaSt sigma-based packing fraction
+   * @param lambdaR repulsive exponent
+   * @param lambdaA attractive exponent
    * @param epsOverKT epsilon/(kT)
-   * @param cMie      Mie prefactor
-   * @param x0        sigma/d ratio
+   * @param cMie Mie prefactor
+   * @param x0 sigma/d ratio
    * @return a2_Mie (dimensionless)
    */
   public static double calcA2MieAtEta(double eta, double zetaSt, double lambdaR, double lambdaA, double epsOverKT,
@@ -910,9 +910,9 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
    * Third-order Mie perturbation a3/(NkT) (Lafitte 2013 Eq. 50). a3 = -(eps/kT)^3 * f4(alpha) * zetaSt * exp(f5(alpha)
    * * zetaSt + f6(alpha) * zetaSt^2).
    *
-   * @param zetaSt    sigma-based packing fraction
-   * @param lambdaR   repulsive exponent
-   * @param lambdaA   attractive exponent
+   * @param zetaSt sigma-based packing fraction
+   * @param lambdaR repulsive exponent
+   * @param lambdaA attractive exponent
    * @param epsOverKT epsilon/(kT)
    * @return a3 (dimensionless)
    */
@@ -930,7 +930,7 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
    * Bare first-order Sutherland mean-field (without 12*eps*eta/kT prefactor). Following Clapeyron convention: aS1_bare
    * = -1/(lambda-3) * gCS(zetaEff).
    *
-   * @param eta    packing fraction
+   * @param eta packing fraction
    * @param lambda Mie exponent
    * @return aS1 bare (dimensionless)
    */
@@ -944,9 +944,9 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   /**
    * Bare B correction (without 12*eps*eta/kT prefactor). Following Clapeyron convention.
    *
-   * @param eta    packing fraction
+   * @param eta packing fraction
    * @param lambda Mie exponent
-   * @param x0     sigma/d ratio
+   * @param x0 sigma/d ratio
    * @return B bare (dimensionless)
    */
   public static double calcBBare(double eta, double lambda, double x0) {
@@ -964,7 +964,7 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
    * the CS contact value. At x0 &gt; 1 it gives the correct RDF at sigma.
    *
    * @param eta packing fraction
-   * @param x0  sigma/d ratio
+   * @param x0 sigma/d ratio
    * @return g_d^HS(sigma)
    */
   public static double calcGHS_x0(double eta, double x0) {
@@ -987,11 +987,11 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
    * First-order perturbation correction g1 for the chain RDF at sigma (Lafitte 2013 Eq. 37). Uses the bare
    * (Clapeyron-convention) perturbation terms.
    *
-   * @param eta     packing fraction
+   * @param eta packing fraction
    * @param lambdaR repulsive exponent
    * @param lambdaA attractive exponent
-   * @param cMie    Mie prefactor
-   * @param x0      sigma/d ratio
+   * @param cMie Mie prefactor
+   * @param x0 sigma/d ratio
    * @return g1 (dimensionless)
    */
   public static double calcG1Chain(double eta, double lambdaR, double lambdaA, double cMie, double x0) {
@@ -1025,13 +1025,13 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
    * Second-order perturbation correction g2 for the chain RDF at sigma (Lafitte 2013 Eq. 38). Uses the bare
    * perturbation terms and gamma_c correction.
    *
-   * @param eta       packing fraction
-   * @param zetaSt    sigma-based packing fraction
-   * @param lambdaR   repulsive exponent
-   * @param lambdaA   attractive exponent
+   * @param eta packing fraction
+   * @param zetaSt sigma-based packing fraction
+   * @param lambdaR repulsive exponent
+   * @param lambdaA attractive exponent
    * @param epsOverKT epsilon/(kT)
-   * @param cMie      Mie prefactor
-   * @param x0        sigma/d ratio
+   * @param cMie Mie prefactor
+   * @param x0 sigma/d ratio
    * @return g2 (dimensionless)
    */
   public static double calcG2Chain(double eta, double zetaSt, double lambdaR, double lambdaA, double epsOverKT,
@@ -1093,13 +1093,13 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
    * Full Mie-corrected RDF at distance sigma for the chain contribution (Lafitte 2013 Eq. 35). g_Mie(sigma) = g_HS(x0;
    * eta) * exp(tau * g1/g0 + tau^2 * g2/g0).
    *
-   * @param eta       packing fraction
-   * @param zetaSt    sigma-based packing fraction
-   * @param lambdaR   repulsive exponent
-   * @param lambdaA   attractive exponent
+   * @param eta packing fraction
+   * @param zetaSt sigma-based packing fraction
+   * @param lambdaR repulsive exponent
+   * @param lambdaA attractive exponent
    * @param epsOverKT epsilon/(kT)
-   * @param cMie      Mie prefactor
-   * @param x0        sigma/d ratio
+   * @param cMie Mie prefactor
+   * @param x0 sigma/d ratio
    * @return g_Mie(sigma)
    */
   public static double calcGMie(double eta, double zetaSt, double lambdaR, double lambdaA, double epsOverKT,
@@ -1125,13 +1125,13 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
    * Blended g for the chain contribution: g_HS(x0) * exp(alpha * correction). When alpha=0, returns g_HS(x0). When
    * alpha=1, returns full g_Mie.
    *
-   * @param eta       packing fraction
-   * @param x0        sigma/d ratio
-   * @param lambdaR   repulsive exponent
-   * @param lambdaA   attractive exponent
+   * @param eta packing fraction
+   * @param x0 sigma/d ratio
+   * @param lambdaR repulsive exponent
+   * @param lambdaA attractive exponent
    * @param epsOverKT epsilon/(kT)
-   * @param cMie      Mie prefactor
-   * @param alpha     blending fraction (0 to 1)
+   * @param cMie Mie prefactor
+   * @param alpha blending fraction (0 to 1)
    * @return blended g chain
    */
   static double calcGMieBlended(double eta, double x0, double lambdaR, double lambdaA, double epsOverKT, double cMie,
@@ -1187,14 +1187,14 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   /**
    * Computes dispersion terms for a single effective fluid (pure component or one-fluid mapped).
    *
-   * @param eta       packing fraction
+   * @param eta packing fraction
    * @param epsOverKT reduced energy parameter
-   * @param cMie      Mie prefactor
-   * @param x0        sigma/d ratio
-   * @param lambdaR   repulsive exponent
-   * @param lambdaA   attractive exponent
-   * @param sigma     segment diameter in m
-   * @param epsk      energy parameter eps/k in K
+   * @param cMie Mie prefactor
+   * @param x0 sigma/d ratio
+   * @param lambdaR repulsive exponent
+   * @param lambdaA attractive exponent
+   * @param sigma segment diameter in m
+   * @param epsk energy parameter eps/k in K
    */
   private void computeDispTermsSingleFluid(double eta, double epsOverKT, double cMie, double x0, double lambdaR,
       double lambdaA, double sigma, double epsk) {
@@ -1333,7 +1333,7 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
    * Evaluates pair-summed a1, a2, a3 at given eta and temperature. For each pair (i,j), computes cross parameters per
    * Lafitte 2013 Eq. 36 including the sigma^3-corrected epsilon and BH diameter from the cross-potential.
    *
-   * @param eta  packing fraction
+   * @param eta packing fraction
    * @param temp temperature in K
    * @return double[3] = {a1_sum, a2_sum, a3_sum}
    */
@@ -1397,7 +1397,7 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
    * Computes per-component weighted dispersion sums: aDispPerComp[i] = sum_l xs_l * (a1_il+a2_il+a3_il). Used for the
    * analytical dF_DISP/dNi formula.
    *
-   * @param eta  packing fraction
+   * @param eta packing fraction
    * @param temp temperature in K
    * @return array of per-component dispersion sums
    */
@@ -2862,8 +2862,8 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   /**
    * Returns the d(dSAFT)/dN_i helper for composition differentiation.
    *
-   * @param mi     segment number of component i
-   * @param di     diameter of component i
+   * @param mi segment number of component i
+   * @param di diameter of component i
    * @param nMoles total moles
    * @return d(dSAFT)/dN_i contribution (partial through d^3 sum)
    */

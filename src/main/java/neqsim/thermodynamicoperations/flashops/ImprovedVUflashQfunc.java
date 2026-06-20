@@ -44,8 +44,8 @@ public class ImprovedVUflashQfunc extends Flash {
    * Constructor for ImprovedVUflashQfunc.
    *
    * @param system thermodynamic system to flash
-   * @param Vspec  specified volume
-   * @param Uspec  specified internal energy
+   * @param Vspec specified volume
+   * @param Uspec specified internal energy
    */
   public ImprovedVUflashQfunc(SystemInterface system, double Vspec, double Uspec) {
     this.system = system;
@@ -74,7 +74,7 @@ public class ImprovedVUflashQfunc extends Flash {
   /**
    * Validates pressure and temperature bounds.
    *
-   * @param pressure    pressure in bar
+   * @param pressure pressure in bar
    * @param temperature temperature in Kelvin
    * @return {@code true} when both values fall within the configured solver bounds
    */

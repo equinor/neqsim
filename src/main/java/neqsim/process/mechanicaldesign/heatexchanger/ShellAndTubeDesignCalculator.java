@@ -475,7 +475,7 @@ public class ShellAndTubeDesignCalculator {
    * Gets allowable stress for material at temperature. Uses database value if loaded, otherwise falls back to
    * simplified ASME Section II tables.
    *
-   * @param material    material name
+   * @param material material name
    * @param temperature temperature in degrees C
    * @return allowable stress in MPa
    */
@@ -513,7 +513,7 @@ public class ShellAndTubeDesignCalculator {
    * Loads a single material's properties from the database.
    *
    * @param materialGrade the material grade to look up
-   * @param isShell       true if this is a shell material, false for tube
+   * @param isShell true if this is a shell material, false for tube
    */
   private void loadMaterialFromDB(String materialGrade, boolean isShell) {
     try (NeqSimProcessDesignDataBase database = new NeqSimProcessDesignDataBase();
@@ -820,12 +820,12 @@ public class ShellAndTubeDesignCalculator {
   /**
    * Sets tube-side fluid properties for thermal-hydraulic calculations.
    *
-   * @param density      density (kg/m3)
-   * @param viscosity    dynamic viscosity (Pa*s)
-   * @param cp           heat capacity (J/(kg*K))
+   * @param density density (kg/m3)
+   * @param viscosity dynamic viscosity (Pa*s)
+   * @param cp heat capacity (J/(kg*K))
    * @param conductivity thermal conductivity (W/(m*K))
    * @param massFlowRate mass flow rate (kg/s)
-   * @param heating      true if fluid is being heated
+   * @param heating true if fluid is being heated
    */
   public void setTubeSideFluidProperties(double density, double viscosity, double cp, double conductivity,
       double massFlowRate, boolean heating) {
@@ -841,9 +841,9 @@ public class ShellAndTubeDesignCalculator {
   /**
    * Sets shell-side fluid properties for thermal-hydraulic calculations.
    *
-   * @param density      density (kg/m3)
-   * @param viscosity    dynamic viscosity (Pa*s)
-   * @param cp           heat capacity (J/(kg*K))
+   * @param density density (kg/m3)
+   * @param viscosity dynamic viscosity (Pa*s)
+   * @param cp heat capacity (J/(kg*K))
    * @param conductivity thermal conductivity (W/(m*K))
    * @param massFlowRate mass flow rate (kg/s)
    */

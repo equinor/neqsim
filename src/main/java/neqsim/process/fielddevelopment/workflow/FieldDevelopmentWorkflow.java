@@ -190,7 +190,7 @@ public class FieldDevelopmentWorkflow implements Serializable {
    * Creates a workflow with concept.
    *
    * @param projectName name of the project/field
-   * @param concept     field concept definition
+   * @param concept field concept definition
    */
   public FieldDevelopmentWorkflow(String projectName, FieldConcept concept) {
     this.projectName = projectName;
@@ -515,8 +515,8 @@ public class FieldDevelopmentWorkflow implements Serializable {
    *
    * @param firstYear first production year
    * @param fieldLife total field life in years
-   * @param plateau   plateau duration in years
-   * @param decline   annual decline rate after plateau
+   * @param plateau plateau duration in years
+   * @param decline annual decline rate after plateau
    * @return this for chaining
    */
   public FieldDevelopmentWorkflow setProductionTiming(int firstYear, int fieldLife, double plateau, double decline) {
@@ -530,8 +530,8 @@ public class FieldDevelopmentWorkflow implements Serializable {
   /**
    * Sets commodity prices.
    *
-   * @param oil    oil price in USD/bbl
-   * @param gas    gas price in USD/Sm3
+   * @param oil oil price in USD/bbl
+   * @param gas gas price in USD/Sm3
    * @param tariff gas transport tariff in USD/Sm3
    * @return this for chaining
    */
@@ -908,7 +908,7 @@ public class FieldDevelopmentWorkflow implements Serializable {
   /**
    * Runs reservoir depletion with wells to generate production profile.
    *
-   * @param res      the reservoir to deplete
+   * @param res the reservoir to deplete
    * @param wellList the list of wells producing from the reservoir
    * @return map of year to annual production rate in Sm3/day
    */
@@ -941,12 +941,12 @@ public class FieldDevelopmentWorkflow implements Serializable {
   /**
    * Creates a quick screening workflow for a gas tieback.
    *
-   * @param name             project name
-   * @param giipGSm3         gas initially in place (GSm3)
-   * @param tiebackKm        tieback distance (km)
-   * @param wellCount        number of wells
+   * @param name project name
+   * @param giipGSm3 gas initially in place (GSm3)
+   * @param tiebackKm tieback distance (km)
+   * @param wellCount number of wells
    * @param ratePerWellMSm3d rate per well (MSm3/d)
-   * @param countryCode      tax jurisdiction
+   * @param countryCode tax jurisdiction
    * @return configured workflow
    */
   public static FieldDevelopmentWorkflow quickGasTieback(String name, double giipGSm3, double tiebackKm, int wellCount,
@@ -959,11 +959,11 @@ public class FieldDevelopmentWorkflow implements Serializable {
   /**
    * Creates a quick screening workflow for oil development.
    *
-   * @param name            project name
-   * @param stoiipMMbbl     stock tank oil initially in place (MMbbl)
-   * @param wellCount       number of wells
+   * @param name project name
+   * @param stoiipMMbbl stock tank oil initially in place (MMbbl)
+   * @param wellCount number of wells
    * @param ratePerWellBopd rate per well (bopd)
-   * @param countryCode     tax jurisdiction
+   * @param countryCode tax jurisdiction
    * @return configured workflow
    */
   public static FieldDevelopmentWorkflow quickOilDevelopment(String name, double stoiipMMbbl, int wellCount,
@@ -1084,7 +1084,7 @@ public class FieldDevelopmentWorkflow implements Serializable {
   /**
    * Calculates CO2 emissions from process system.
    *
-   * @param result  the workflow result to populate
+   * @param result the workflow result to populate
    * @param process the process system
    */
   private void calculateProcessEmissions(WorkflowResult result, ProcessSystem process) {

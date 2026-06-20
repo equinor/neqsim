@@ -74,7 +74,7 @@ public class StandardsDesignReview implements Serializable {
    * Reviews one gas scrubber against TR1965.
    *
    * @param scrubber gas scrubber to review
-   * @param report   report receiving the review requirements
+   * @param report report receiving the review requirements
    */
   private void reviewGasScrubber(GasScrubber scrubber, StandardsComplianceReport report) {
     if (scrubber.getMechanicalDesign() == null) {
@@ -93,7 +93,7 @@ public class StandardsDesignReview implements Serializable {
   /**
    * Reviews one pipeline against NORSOK P-002.
    *
-   * @param pipe   pipeline to review
+   * @param pipe pipeline to review
    * @param report report receiving the review requirements
    */
   private void reviewPipeline(PipeLineInterface pipe, StandardsComplianceReport report) {

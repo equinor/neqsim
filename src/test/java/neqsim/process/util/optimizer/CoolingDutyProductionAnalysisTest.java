@@ -193,12 +193,12 @@ public class CoolingDutyProductionAnalysisTest {
   /**
    * Runs optimization for a given cooling delta T and records results.
    *
-   * @param coolingDeltaT       temperature drop in the cooler (Â°C)
-   * @param coolingDeltaTs      list to store delta T values
-   * @param coolingDuties       list to store cooling duties
-   * @param optimalFlows        list to store optimal flow rates
+   * @param coolingDeltaT temperature drop in the cooler (Â°C)
+   * @param coolingDeltaTs list to store delta T values
+   * @param coolingDuties list to store cooling duties
+   * @param optimalFlows list to store optimal flow rates
    * @param productionIncreases list to store production increases
-   * @param bottlenecks         list to store bottleneck equipment names
+   * @param bottlenecks list to store bottleneck equipment names
    * @return optimal flow rate for this configuration
    */
   private double runOptimizationWithCooling(double coolingDeltaT, List<Double> coolingDeltaTs,
@@ -651,7 +651,7 @@ public class CoolingDutyProductionAnalysisTest {
    * Builds the process system with specified cooling and pressure drop.
    *
    * @param coolingDeltaT temperature drop in cooler (Â°C)
-   * @param pressureDrop  pressure drop in cooler (bar)
+   * @param pressureDrop pressure drop in cooler (bar)
    * @return configured ProcessSystem
    */
   private ProcessSystem buildProcessWithPressureDrop(double coolingDeltaT, double pressureDrop) {
@@ -1626,7 +1626,7 @@ public class CoolingDutyProductionAnalysisTest {
    * Builds process for 2027 max capacity with configurable cooling AND pressure drop.
    *
    * @param coolingDeltaT temperature drop in cooler (Â°C), 0 = no cooling
-   * @param pressureDrop  pressure drop in cooler (bar)
+   * @param pressureDrop pressure drop in cooler (bar)
    * @return configured ProcessSystem
    */
   private ProcessSystem buildProcess2027MaxCapacityWithPressureDrop(double coolingDeltaT, double pressureDrop) {
@@ -4054,11 +4054,11 @@ public class CoolingDutyProductionAnalysisTest {
   /**
    * Builds Troll East process WITH COOLER for a specific year's conditions.
    *
-   * @param inletPressure  compressor inlet pressure (bara)
+   * @param inletPressure compressor inlet pressure (bara)
    * @param outletPressure compressor outlet pressure (bara)
    * @param numCompressors number of compressors (2 or 3)
-   * @param coolingDeltaT  temperature drop in cooler (Â°C)
-   * @param pressureDrop   pressure drop across cooler (bar)
+   * @param coolingDeltaT temperature drop in cooler (Â°C)
+   * @param pressureDrop pressure drop across cooler (bar)
    * @return configured ProcessSystem
    */
   private ProcessSystem buildTrollEastProcessWithCooler(double inletPressure, double outletPressure, int numCompressors,

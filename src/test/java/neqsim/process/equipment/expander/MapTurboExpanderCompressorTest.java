@@ -37,7 +37,7 @@ public class MapTurboExpanderCompressorTest extends neqsim.NeqSimTest {
   /**
    * Attach a multi-speed performance map to the compressor side.
    *
-   * @param machine        the turboexpander-compressor
+   * @param machine the turboexpander-compressor
    * @param compressorFeed the compressor inlet stream
    */
   private void setCompressorChart(MapTurboExpanderCompressor machine, Stream compressorFeed) {

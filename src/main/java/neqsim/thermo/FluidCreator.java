@@ -43,8 +43,8 @@ public final class FluidCreator {
    * Create SystemInterface.
    *
    * @param componentNames name of components to be added to a fluid
-   * @param flowrate       flow rate
-   * @param unit           unit of flow rate
+   * @param flowrate flow rate
+   * @param unit unit of flow rate
    * @return a fluid object (SystemInterface)
    */
   public static SystemInterface create(String[] componentNames, double[] flowrate, String unit) {

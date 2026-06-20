@@ -712,9 +712,9 @@ public final class BenchmarkTrust {
   /**
    * Builds a validation case entry.
    *
-   * @param description     case description
-   * @param model           EOS model used
-   * @param expectedResult  accuracy expectation
+   * @param description case description
+   * @param model EOS model used
+   * @param expectedResult accuracy expectation
    * @param referenceSource published reference
    * @return JSON object for the validation case
    */

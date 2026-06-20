@@ -35,7 +35,7 @@ public class CompositionAnalyzer extends StreamMeasurementDeviceBaseClass {
   /**
    * Constructor with default name derived from component.
    *
-   * @param stream        the stream to monitor
+   * @param stream the stream to monitor
    * @param componentName the component to track
    * @param analyzerPhase the phase to sample
    */
@@ -46,8 +46,8 @@ public class CompositionAnalyzer extends StreamMeasurementDeviceBaseClass {
   /**
    * Constructor.
    *
-   * @param name          device tag
-   * @param stream        the stream to monitor
+   * @param name device tag
+   * @param stream the stream to monitor
    * @param componentName the component to track (must match a component in the stream)
    * @param analyzerPhase the phase to sample
    */

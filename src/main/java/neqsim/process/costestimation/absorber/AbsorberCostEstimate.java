@@ -389,7 +389,7 @@ public class AbsorberCostEstimate extends UnitCostEstimateBaseClass {
    * Calculate annual operating cost.
    *
    * @param operatingHoursPerYear operating hours per year
-   * @param steamCostPerTonne     steam cost in $/tonne
+   * @param steamCostPerTonne steam cost in $/tonne
    * @param electricityCostPerKWh electricity cost in $/kWh
    * @return annual operating cost in USD
    */

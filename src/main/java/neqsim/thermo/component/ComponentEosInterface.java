@@ -200,7 +200,7 @@ public interface ComponentEosInterface extends ComponentInterface {
    * </p>
    *
    * @param jComp a int
-   * @param val   a double
+   * @param val a double
    */
   public void setdAdndn(int jComp, double val);
 
@@ -265,7 +265,7 @@ public interface ComponentEosInterface extends ComponentInterface {
    * </p>
    *
    * @param jComp a int
-   * @param val   a double
+   * @param val a double
    */
   public void setdBdndn(int jComp, double val);
 
@@ -328,10 +328,10 @@ public interface ComponentEosInterface extends ComponentInterface {
    * dFdN.
    * </p>
    *
-   * @param phase              a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
-   * @param temperature        a double
-   * @param pressure           a double
+   * @param temperature a double
+   * @param pressure a double
    * @return a double
    */
   public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure);
@@ -341,10 +341,10 @@ public interface ComponentEosInterface extends ComponentInterface {
    * dFdNdT.
    * </p>
    *
-   * @param phase              a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
-   * @param temperature        a double
-   * @param pressure           a double
+   * @param temperature a double
+   * @param pressure a double
    * @return a double
    */
   public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature, double pressure);
@@ -354,10 +354,10 @@ public interface ComponentEosInterface extends ComponentInterface {
    * dFdNdV.
    * </p>
    *
-   * @param phase              a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
-   * @param temperature        a double
-   * @param pressure           a double
+   * @param temperature a double
+   * @param pressure a double
    * @return a double
    */
   public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature, double pressure);
@@ -367,11 +367,11 @@ public interface ComponentEosInterface extends ComponentInterface {
    * dFdNdN.
    * </p>
    *
-   * @param j                  a int
-   * @param phase              a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param j a int
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
-   * @param temperature        a double
-   * @param pressure           a double
+   * @param temperature a double
+   * @param pressure a double
    * @return a double
    */
   public double dFdNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature, double pressure);

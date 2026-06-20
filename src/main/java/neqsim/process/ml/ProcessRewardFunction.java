@@ -89,10 +89,10 @@ public class ProcessRewardFunction implements Serializable {
   /**
    * Add product quality tracking toward a target value. Uses quadratic penalty for deviation from the setpoint.
    *
-   * @param streamName   name of the product stream equipment
+   * @param streamName name of the product stream equipment
    * @param propertyName property to track (e.g., "temperature", "methane_molfrac")
-   * @param target       target value in physical units
-   * @param weight       reward weight
+   * @param target target value in physical units
+   * @param weight reward weight
    * @return this for chaining
    */
   public ProcessRewardFunction addProductQualityTarget(String streamName, String propertyName, double target,
@@ -110,7 +110,7 @@ public class ProcessRewardFunction implements Serializable {
    * Add throughput maximization for a product stream.
    *
    * @param streamName name of the product stream equipment
-   * @param weight     reward weight
+   * @param weight reward weight
    * @return this for chaining
    */
   public ProcessRewardFunction addThroughputMaximization(String streamName, double weight) {
@@ -144,7 +144,7 @@ public class ProcessRewardFunction implements Serializable {
    * Add specific energy minimization (energy per unit product).
    *
    * @param productStreamName name of the product stream
-   * @param weight            reward weight
+   * @param weight reward weight
    * @return this for chaining
    */
   public ProcessRewardFunction addSpecificEnergyMinimization(String productStreamName, double weight) {
@@ -252,10 +252,10 @@ public class ProcessRewardFunction implements Serializable {
   /**
    * Compute squared deviation of a product stream property from its target.
    *
-   * @param proc         the process system
-   * @param streamName   equipment name of the product stream
+   * @param proc the process system
+   * @param streamName equipment name of the product stream
    * @param propertyName "temperature" (K), "pressure" (bar), or component name for mole fraction
-   * @param target       target value
+   * @param target target value
    * @return squared normalized deviation (0 at target, increases with distance)
    */
   public static double productQuality(ProcessSystem proc, String streamName, String propertyName, double target) {
@@ -279,7 +279,7 @@ public class ProcessRewardFunction implements Serializable {
   /**
    * Compute mass throughput of a product stream in kg/s.
    *
-   * @param proc       the process system
+   * @param proc the process system
    * @param streamName equipment name
    * @return mass flow rate in kg/s, or 0 if not found
    */
@@ -367,7 +367,7 @@ public class ProcessRewardFunction implements Serializable {
   /**
    * Compute specific energy consumption (energy per unit of product).
    *
-   * @param proc              the process system
+   * @param proc the process system
    * @param productStreamName product stream name
    * @return specific energy in MJ/kg, or a large number if no throughput
    */
@@ -383,9 +383,9 @@ public class ProcessRewardFunction implements Serializable {
   /**
    * Compute deviation of a stream property from target.
    *
-   * @param stream       the stream
+   * @param stream the stream
    * @param propertyName "temperature", "pressure", or component name for mole fraction
-   * @param target       target value
+   * @param target target value
    * @return squared normalized deviation
    */
   private static double computePropertyDeviation(StreamInterface stream, String propertyName, double target) {
@@ -438,7 +438,7 @@ public class ProcessRewardFunction implements Serializable {
     /**
      * Constructor.
      *
-     * @param name   component name
+     * @param name component name
      * @param weight component weight
      */
     RewardComponent(String name, double weight) {

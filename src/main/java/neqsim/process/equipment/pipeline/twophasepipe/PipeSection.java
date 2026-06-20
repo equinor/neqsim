@@ -105,9 +105,9 @@ public class PipeSection implements Cloneable, Serializable {
   /**
    * Constructor with geometry.
    *
-   * @param position    Position from inlet (m)
-   * @param length      Segment length (m)
-   * @param diameter    Pipe diameter (m)
+   * @param position Position from inlet (m)
+   * @param length Segment length (m)
+   * @param diameter Pipe diameter (m)
    * @param inclination Pipe inclination (radians)
    */
   public PipeSection(double position, double length, double diameter, double inclination) {
@@ -148,7 +148,7 @@ public class PipeSection implements Cloneable, Serializable {
    * Calculate liquid level from holdup for circular pipe.
    *
    * @param holdup Liquid holdup (0-1)
-   * @param D      Diameter (m)
+   * @param D Diameter (m)
    * @return Liquid level (m)
    */
   private double calcLiquidLevelFromHoldup(double holdup, double D) {
@@ -196,7 +196,7 @@ public class PipeSection implements Cloneable, Serializable {
   /**
    * Set state from conservative variables.
    *
-   * @param U        Conservative variables
+   * @param U Conservative variables
    * @param gasProps Gas density and enthalpy
    * @param liqProps Liquid density and enthalpy
    */

@@ -117,12 +117,12 @@ public class ProcessSafetySystemReviewEngine {
   /**
    * Adds a coverage assessment for a function type.
    *
-   * @param result         result receiving the assessment
-   * @param input          review input
-   * @param requirementId  requirement identifier
-   * @param clause         clause identifier
-   * @param typeToken      function type token
-   * @param passMessage    pass message
+   * @param result result receiving the assessment
+   * @param input review input
+   * @param requirementId requirement identifier
+   * @param clause clause identifier
+   * @param typeToken function type token
+   * @param passMessage pass message
    * @param recommendation recommendation for missing evidence
    */
   private void addCoverageAssessment(ProcessSafetySystemReviewResult result, ProcessSafetySystemReviewInput input,
@@ -139,7 +139,7 @@ public class ProcessSafetySystemReviewEngine {
   /**
    * Checks role and interface evidence.
    *
-   * @param item   review item
+   * @param item review item
    * @param result result receiving assessments
    */
   private void checkRoleAndInterfaces(ProcessSafetySystemReviewItem item, ProcessSafetySystemReviewResult result) {
@@ -156,7 +156,7 @@ public class ProcessSafetySystemReviewEngine {
   /**
    * Checks lifecycle traceability from hazard identification to operation.
    *
-   * @param item   review item
+   * @param item review item
    * @param result result receiving assessments
    */
   private void checkSafetyLifecycle(ProcessSafetySystemReviewItem item, ProcessSafetySystemReviewResult result) {
@@ -185,7 +185,7 @@ public class ProcessSafetySystemReviewEngine {
   /**
    * Checks means of protection and design basis evidence.
    *
-   * @param item   review item
+   * @param item review item
    * @param result result receiving assessments
    */
   private void checkMeansOfProtection(ProcessSafetySystemReviewItem item, ProcessSafetySystemReviewResult result) {
@@ -202,7 +202,7 @@ public class ProcessSafetySystemReviewEngine {
   /**
    * Checks process safety principles.
    *
-   * @param item   review item
+   * @param item review item
    * @param result result receiving assessments
    */
   private void checkProcessSafetyPrinciples(ProcessSafetySystemReviewItem item,
@@ -220,7 +220,7 @@ public class ProcessSafetySystemReviewEngine {
   /**
    * Checks PSD valve and shutdown action evidence.
    *
-   * @param item   review item
+   * @param item review item
    * @param result result receiving assessments
    */
   private void checkPsdValves(ProcessSafetySystemReviewItem item, ProcessSafetySystemReviewResult result) {
@@ -246,7 +246,7 @@ public class ProcessSafetySystemReviewEngine {
   /**
    * Checks PSV protection evidence.
    *
-   * @param item   review item
+   * @param item review item
    * @param result result receiving assessments
    */
   private void checkPsvProtection(ProcessSafetySystemReviewItem item, ProcessSafetySystemReviewResult result) {
@@ -290,7 +290,7 @@ public class ProcessSafetySystemReviewEngine {
   /**
    * Checks alarm and operator action evidence.
    *
-   * @param item   review item
+   * @param item review item
    * @param result result receiving assessments
    */
   private void checkAlarmActions(ProcessSafetySystemReviewItem item, ProcessSafetySystemReviewResult result) {
@@ -314,7 +314,7 @@ public class ProcessSafetySystemReviewEngine {
   /**
    * Checks response time evidence.
    *
-   * @param item   review item
+   * @param item review item
    * @param result result receiving assessments
    */
   private void checkResponseTime(ProcessSafetySystemReviewItem item, ProcessSafetySystemReviewResult result) {
@@ -330,7 +330,7 @@ public class ProcessSafetySystemReviewEngine {
   /**
    * Checks logic solver evidence.
    *
-   * @param item   review item
+   * @param item review item
    * @param result result receiving assessments
    */
   private void checkLogicSolver(ProcessSafetySystemReviewItem item, ProcessSafetySystemReviewResult result) {
@@ -356,7 +356,7 @@ public class ProcessSafetySystemReviewEngine {
   /**
    * Checks instrumented secondary pressure protection evidence.
    *
-   * @param item   review item
+   * @param item review item
    * @param result result receiving assessments
    */
   private void checkSecondaryPressureProtection(ProcessSafetySystemReviewItem item,
@@ -395,7 +395,7 @@ public class ProcessSafetySystemReviewEngine {
   /**
    * Checks required utility evidence.
    *
-   * @param item   review item
+   * @param item review item
    * @param result result receiving assessments
    */
   private void checkUtilityDependencies(ProcessSafetySystemReviewItem item, ProcessSafetySystemReviewResult result) {
@@ -420,7 +420,7 @@ public class ProcessSafetySystemReviewEngine {
   /**
    * Checks PSD principle evidence.
    *
-   * @param item   review item
+   * @param item review item
    * @param result result receiving assessments
    */
   private void checkPsdPrinciples(ProcessSafetySystemReviewItem item, ProcessSafetySystemReviewResult result) {
@@ -442,7 +442,7 @@ public class ProcessSafetySystemReviewEngine {
   /**
    * Checks survivability evidence.
    *
-   * @param item   review item
+   * @param item review item
    * @param result result receiving assessments
    */
   private void checkSurvivability(ProcessSafetySystemReviewItem item, ProcessSafetySystemReviewResult result) {
@@ -458,7 +458,7 @@ public class ProcessSafetySystemReviewEngine {
   /**
    * Checks optional tagreader or instrument-data evidence.
    *
-   * @param item   review item
+   * @param item review item
    * @param result result receiving assessments
    */
   private void checkOperationalEvidence(ProcessSafetySystemReviewItem item, ProcessSafetySystemReviewResult result) {
@@ -498,7 +498,7 @@ public class ProcessSafetySystemReviewEngine {
   /**
    * Checks technical-documentation and source-reference quality.
    *
-   * @param item   review item
+   * @param item review item
    * @param result result receiving assessments
    */
   private void checkEvidenceQuality(ProcessSafetySystemReviewItem item, ProcessSafetySystemReviewResult result) {
@@ -519,12 +519,12 @@ public class ProcessSafetySystemReviewEngine {
   /**
    * Adds a boolean requirement assessment.
    *
-   * @param result         result receiving the assessment
-   * @param item           review item
-   * @param requirementId  requirement identifier
-   * @param clause         clause identifier
-   * @param keys           boolean evidence keys
-   * @param passMessage    message when requirement is met
+   * @param result result receiving the assessment
+   * @param item review item
+   * @param requirementId requirement identifier
+   * @param clause clause identifier
+   * @param keys boolean evidence keys
+   * @param passMessage message when requirement is met
    * @param recommendation recommendation for missing or failing evidence
    */
   private void addRequiredBoolean(ProcessSafetySystemReviewResult result, ProcessSafetySystemReviewItem item,
@@ -549,14 +549,14 @@ public class ProcessSafetySystemReviewEngine {
   /**
    * Compares two time values.
    *
-   * @param result        result receiving assessment
-   * @param item          review item
+   * @param result result receiving assessment
+   * @param item review item
    * @param requirementId requirement identifier
-   * @param clause        clause identifier
-   * @param actualKey     key for actual or required value depending on wording
-   * @param limitKey      key for limit value depending on wording
-   * @param actualLabel   actual value label
-   * @param limitLabel    limit value label
+   * @param clause clause identifier
+   * @param actualKey key for actual or required value depending on wording
+   * @param limitKey key for limit value depending on wording
+   * @param actualLabel actual value label
+   * @param limitLabel limit value label
    */
   private void compareTimes(ProcessSafetySystemReviewResult result, ProcessSafetySystemReviewItem item,
       String requirementId, String clause, String actualKey, String limitKey, String actualLabel, String limitLabel) {
@@ -584,13 +584,13 @@ public class ProcessSafetySystemReviewEngine {
   /**
    * Compares a documented capacity or duration against a minimum required value.
    *
-   * @param result        result receiving assessment
-   * @param item          review item
+   * @param result result receiving assessment
+   * @param item review item
    * @param requirementId requirement identifier
-   * @param clause        clause identifier
-   * @param minimumKey    key for the minimum required value
-   * @param providedKey   key for the documented provided value
-   * @param minimumLabel  minimum value label
+   * @param clause clause identifier
+   * @param minimumKey key for the minimum required value
+   * @param providedKey key for the documented provided value
+   * @param minimumLabel minimum value label
    * @param providedLabel provided value label
    */
   private void compareMinimum(ProcessSafetySystemReviewResult result, ProcessSafetySystemReviewItem item,
@@ -650,7 +650,7 @@ public class ProcessSafetySystemReviewEngine {
   /**
    * Tests whether the input has an item matching a type token.
    *
-   * @param input     review input
+   * @param input review input
    * @param typeToken type token
    * @return true when an item matches the type
    */
@@ -666,7 +666,7 @@ public class ProcessSafetySystemReviewEngine {
   /**
    * Tests whether an item has evidence keys for a type.
    *
-   * @param item      review item
+   * @param item review item
    * @param typeToken type token
    * @return true when item has matching evidence keys
    */
@@ -775,7 +775,7 @@ public class ProcessSafetySystemReviewEngine {
   /**
    * Tests whether text contains any keyword ignoring case.
    *
-   * @param text     text to search
+   * @param text text to search
    * @param keywords keywords to find
    * @return true when any keyword is present
    */
@@ -791,7 +791,7 @@ public class ProcessSafetySystemReviewEngine {
   /**
    * Tests whether text contains a token ignoring case.
    *
-   * @param text  text to search
+   * @param text text to search
    * @param token token to find
    * @return true when token is present
    */

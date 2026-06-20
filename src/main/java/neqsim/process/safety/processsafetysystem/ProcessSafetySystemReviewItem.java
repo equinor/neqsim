@@ -158,7 +158,7 @@ public class ProcessSafetySystemReviewItem implements Serializable {
   /**
    * Adds or replaces one normalized value.
    *
-   * @param key   normalized key
+   * @param key normalized key
    * @param value value to store
    * @return this item for fluent construction
    */
@@ -208,7 +208,7 @@ public class ProcessSafetySystemReviewItem implements Serializable {
    * Reads the first present value as a double.
    *
    * @param defaultValue value returned when no numeric key is present
-   * @param keys         keys to test in order
+   * @param keys keys to test in order
    * @return numeric value or default value
    */
   public double getDouble(double defaultValue, String... keys) {
@@ -259,7 +259,7 @@ public class ProcessSafetySystemReviewItem implements Serializable {
    * Reads the first present value as a boolean.
    *
    * @param defaultValue value returned when no boolean-like key is present
-   * @param keys         keys to test in order
+   * @param keys keys to test in order
    * @return boolean value or default value
    */
   public boolean getBoolean(boolean defaultValue, String... keys) {
@@ -271,7 +271,7 @@ public class ProcessSafetySystemReviewItem implements Serializable {
    * Reads the first present value as a string.
    *
    * @param defaultValue value returned when missing
-   * @param keys         keys to test in order
+   * @param keys keys to test in order
    * @return string value or default value
    */
   public String getString(String defaultValue, String... keys) {
@@ -334,7 +334,7 @@ public class ProcessSafetySystemReviewItem implements Serializable {
   /**
    * Adds one or more references from an object.
    *
-   * @param item       item receiving source references
+   * @param item item receiving source references
    * @param references source reference object
    */
   private static void addReferences(ProcessSafetySystemReviewItem item, Object references) {
@@ -353,7 +353,7 @@ public class ProcessSafetySystemReviewItem implements Serializable {
    * Returns the first non-empty string value.
    *
    * @param source source map
-   * @param keys   keys to test
+   * @param keys keys to test
    * @return first non-empty string, or an empty string
    */
   private static String firstString(Map<String, Object> source, String... keys) {
@@ -365,7 +365,7 @@ public class ProcessSafetySystemReviewItem implements Serializable {
    * Returns the first non-null object value.
    *
    * @param source source map
-   * @param keys   keys to test
+   * @param keys keys to test
    * @return first non-null value, or null
    */
   private static Object firstObject(Map<String, Object> source, String... keys) {

@@ -35,8 +35,8 @@ public final class EmergencyShutdownTestRunner {
   /**
    * Runs an ESD dynamic test with one or more process logic sequences.
    *
-   * @param process        process system to test
-   * @param plan           ESD test plan
+   * @param process process system to test
+   * @param plan ESD test plan
    * @param logicSequences process logic sequences available to the test
    * @return ESD test report
    */
@@ -50,8 +50,8 @@ public final class EmergencyShutdownTestRunner {
   /**
    * Runs an ESD dynamic test with a list of process logic sequences.
    *
-   * @param process        process system to test
-   * @param plan           ESD test plan
+   * @param process process system to test
+   * @param plan ESD test plan
    * @param logicSequences process logic sequences available to the test
    * @return ESD test report
    */
@@ -87,8 +87,8 @@ public final class EmergencyShutdownTestRunner {
    * Applies field data through the operational tag map.
    *
    * @param process process system
-   * @param plan    test plan
-   * @param result  result receiving warnings and errors
+   * @param plan test plan
+   * @param result result receiving warnings and errors
    */
   private static void applyFieldData(ProcessSystem process, EmergencyShutdownTestPlan plan,
       EmergencyShutdownTestResult result) {
@@ -106,8 +106,8 @@ public final class EmergencyShutdownTestRunner {
    * Runs the initial steady-state calculation when configured.
    *
    * @param process process system
-   * @param plan    test plan
-   * @param result  result receiving warnings and errors
+   * @param plan test plan
+   * @param result result receiving warnings and errors
    */
   private static void initializeProcess(ProcessSystem process, EmergencyShutdownTestPlan plan,
       EmergencyShutdownTestResult result) {
@@ -125,8 +125,8 @@ public final class EmergencyShutdownTestRunner {
    * Applies the configured process safety scenario.
    *
    * @param process process system
-   * @param plan    test plan
-   * @param result  result receiving warnings and errors
+   * @param plan test plan
+   * @param result result receiving warnings and errors
    */
   private static void applyScenario(ProcessSystem process, EmergencyShutdownTestPlan plan,
       EmergencyShutdownTestResult result) {
@@ -143,11 +143,11 @@ public final class EmergencyShutdownTestRunner {
   /**
    * Runs the transient loop and captures monitored samples.
    *
-   * @param process      process system
-   * @param plan         test plan
+   * @param process process system
+   * @param plan test plan
    * @param enabledLogic logic sequences executed each step
    * @param triggerLogic logic sequences activated at trigger time
-   * @param result       result receiving samples, warnings, and errors
+   * @param result result receiving samples, warnings, and errors
    */
   private static void runTransientLoop(ProcessSystem process, EmergencyShutdownTestPlan plan,
       List<ProcessLogic> enabledLogic, List<ProcessLogic> triggerLogic, EmergencyShutdownTestResult result) {
@@ -175,8 +175,8 @@ public final class EmergencyShutdownTestRunner {
    * Selects enabled logic from the supplied logic list.
    *
    * @param availableLogic available logic sequences
-   * @param names          requested logic names
-   * @param result         result receiving warnings
+   * @param names requested logic names
+   * @param result result receiving warnings
    * @return selected logic list
    */
   private static List<ProcessLogic> selectLogic(List<ProcessLogic> availableLogic, List<String> names,
@@ -204,8 +204,8 @@ public final class EmergencyShutdownTestRunner {
    * Selects logic sequences to activate at the trigger time.
    *
    * @param enabledLogic enabled logic sequences
-   * @param plan         test plan
-   * @param result       result receiving warnings
+   * @param plan test plan
+   * @param result result receiving warnings
    * @return trigger logic list
    */
   private static List<ProcessLogic> selectTriggerLogic(List<ProcessLogic> enabledLogic, EmergencyShutdownTestPlan plan,
@@ -220,7 +220,7 @@ public final class EmergencyShutdownTestRunner {
    * Activates trigger logic sequences.
    *
    * @param triggerLogic logic sequences to activate
-   * @param result       result receiving warnings
+   * @param result result receiving warnings
    */
   private static void activateLogic(List<ProcessLogic> triggerLogic, EmergencyShutdownTestResult result) {
     if (triggerLogic.isEmpty()) {
@@ -239,9 +239,9 @@ public final class EmergencyShutdownTestRunner {
   /**
    * Executes active logic sequences for one time step.
    *
-   * @param enabledLogic    enabled logic sequences
+   * @param enabledLogic enabled logic sequences
    * @param timeStepSeconds time step in seconds
-   * @param result          result receiving errors
+   * @param result result receiving errors
    */
   private static void executeLogic(List<ProcessLogic> enabledLogic, double timeStepSeconds,
       EmergencyShutdownTestResult result) {
@@ -261,9 +261,9 @@ public final class EmergencyShutdownTestRunner {
    * Captures one monitored sample.
    *
    * @param timeSeconds elapsed time in seconds
-   * @param process     process system
-   * @param plan        test plan
-   * @param result      result receiving warnings
+   * @param process process system
+   * @param plan test plan
+   * @param result result receiving warnings
    * @return signal sample
    */
   private static EmergencyShutdownTestResult.SignalSample captureSample(double timeSeconds, ProcessSystem process,
@@ -282,10 +282,10 @@ public final class EmergencyShutdownTestRunner {
    * Reads a monitored value from a tag binding or direct automation address.
    *
    * @param process process system
-   * @param tagMap  operational tag map
-   * @param tag     logical tag or automation address
-   * @param units   units keyed by tag
-   * @param result  result receiving warnings
+   * @param tagMap operational tag map
+   * @param tag logical tag or automation address
+   * @param units units keyed by tag
+   * @param result result receiving warnings
    * @return monitored value, or null when unavailable
    */
   private static Double readMonitorValue(ProcessSystem process, OperationalTagMap tagMap, String tag,
@@ -315,7 +315,7 @@ public final class EmergencyShutdownTestRunner {
    * Records final logic states.
    *
    * @param logicSequences logic sequences
-   * @param result         result to update
+   * @param result result to update
    */
   private static void recordLogicStates(List<ProcessLogic> logicSequences, EmergencyShutdownTestResult result) {
     for (ProcessLogic logic : logicSequences) {
@@ -326,7 +326,7 @@ public final class EmergencyShutdownTestRunner {
   /**
    * Builds model-to-field comparisons for field-data backed tags.
    *
-   * @param plan   test plan
+   * @param plan test plan
    * @param result result to update
    */
   private static void buildFieldComparisons(EmergencyShutdownTestPlan plan, EmergencyShutdownTestResult result) {
@@ -345,7 +345,7 @@ public final class EmergencyShutdownTestRunner {
   /**
    * Finds field data using logical tag first and historian tag second.
    *
-   * @param binding   tag binding
+   * @param binding tag binding
    * @param fieldData field-data map
    * @return field value, or null
    */
@@ -362,7 +362,7 @@ public final class EmergencyShutdownTestRunner {
   /**
    * Evaluates all acceptance criteria.
    *
-   * @param plan   test plan
+   * @param plan test plan
    * @param result result to update
    */
   private static void evaluateCriteria(EmergencyShutdownTestPlan plan, EmergencyShutdownTestResult result) {

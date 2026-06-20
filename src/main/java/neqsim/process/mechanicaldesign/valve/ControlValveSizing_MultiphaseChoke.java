@@ -83,7 +83,7 @@ public class ControlValveSizing_MultiphaseChoke implements ControlValveSizingInt
    * Constructs a new multiphase choke sizing method with specified model type.
    *
    * @param valveMechanicalDesign the parent valve mechanical design
-   * @param modelType             model type: "Sachdeva", "Gilbert", "Baxendell", "Ros", or "Achong"
+   * @param modelType model type: "Sachdeva", "Gilbert", "Baxendell", "Ros", or "Achong"
    */
   public ControlValveSizing_MultiphaseChoke(ValveMechanicalDesign valveMechanicalDesign, String modelType) {
     this.valveMechanicalDesign = valveMechanicalDesign;
@@ -127,7 +127,7 @@ public class ControlValveSizing_MultiphaseChoke implements ControlValveSizingInt
    * Sets the choke diameter.
    *
    * @param diameter diameter value
-   * @param unit     unit: "m", "mm", "in", "64ths"
+   * @param unit unit: "m", "mm", "in", "64ths"
    */
   public void setChokeDiameter(double diameter, String unit) {
     this.chokeDiameter = convertToMeters(diameter, unit);
@@ -165,7 +165,7 @@ public class ControlValveSizing_MultiphaseChoke implements ControlValveSizingInt
    * Converts diameter to meters from various units.
    *
    * @param value the value to convert
-   * @param unit  the unit of the input value (m, mm, in, inch, inches, 64ths, 64th)
+   * @param unit the unit of the input value (m, mm, in, inch, inches, 64ths, 64th)
    * @return the value converted to meters
    */
   private double convertToMeters(double value, String unit) {
@@ -401,7 +401,7 @@ public class ControlValveSizing_MultiphaseChoke implements ControlValveSizingInt
   /**
    * Gets comprehensive choke sizing results as a formatted string.
    *
-   * @param inletStream         the inlet stream
+   * @param inletStream the inlet stream
    * @param outletPressure_bara outlet pressure in bara
    * @return formatted results string
    */

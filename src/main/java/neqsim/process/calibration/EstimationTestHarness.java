@@ -134,13 +134,13 @@ public class EstimationTestHarness implements Serializable {
     /**
      * Constructor.
      *
-     * @param testName           the name of the test
-     * @param numSteps           the number of estimation steps
-     * @param finalEstimates     the final parameter estimates
-     * @param trueValues         the true parameter values
+     * @param testName the name of the test
+     * @param numSteps the number of estimation steps
+     * @param finalEstimates the final parameter estimates
+     * @param trueValues the true parameter values
      * @param finalUncertainties the final uncertainties
-     * @param estimateHistory    history of estimates at each step
-     * @param rmseHistory        history of RMSE values at each step
+     * @param estimateHistory history of estimates at each step
+     * @param rmseHistory history of RMSE values at each step
      */
     public TestReport(String testName, int numSteps, double[] finalEstimates, double[] trueValues,
 	double[] finalUncertainties, List<double[]> estimateHistory, List<double[]> rmseHistory) {
@@ -271,8 +271,8 @@ public class EstimationTestHarness implements Serializable {
     /**
      * Checks if test passes given criteria.
      *
-     * @param maxRMSE             maximum allowed RMSE
-     * @param minCoverage         minimum coverage rate
+     * @param maxRMSE maximum allowed RMSE
+     * @param minCoverage minimum coverage rate
      * @param maxConvergenceSteps maximum steps to converge
      * @return true if all criteria pass
      */
@@ -328,7 +328,7 @@ public class EstimationTestHarness implements Serializable {
   /**
    * Adds a parameter with known true value.
    *
-   * @param path      variable path
+   * @param path variable path
    * @param trueValue ground truth value
    * @return this harness for chaining
    */
@@ -339,10 +339,10 @@ public class EstimationTestHarness implements Serializable {
   /**
    * Adds a parameter with known true value and bounds.
    *
-   * @param path      variable path
+   * @param path variable path
    * @param trueValue ground truth value
-   * @param minBound  minimum bound
-   * @param maxBound  maximum bound
+   * @param minBound minimum bound
+   * @param maxBound maximum bound
    * @return this harness for chaining
    */
   public EstimationTestHarness addParameter(String path, double trueValue, double minBound, double maxBound) {
@@ -353,8 +353,8 @@ public class EstimationTestHarness implements Serializable {
   /**
    * Adds a measurement variable.
    *
-   * @param path     variable path
-   * @param unit     unit of measurement
+   * @param path variable path
+   * @param unit unit of measurement
    * @param noiseStd measurement noise standard deviation
    * @return this harness for chaining
    */
@@ -393,7 +393,7 @@ public class EstimationTestHarness implements Serializable {
    * Runs a convergence test.
    *
    * @param estimator the estimator to test
-   * @param numSteps  number of update steps
+   * @param numSteps number of update steps
    * @return test report
    */
   public TestReport runConvergenceTest(EnKFParameterEstimator estimator, int numSteps) {
@@ -403,9 +403,9 @@ public class EstimationTestHarness implements Serializable {
   /**
    * Runs a convergence test with optional progress callback.
    *
-   * @param estimator        the estimator to test
-   * @param numSteps         number of update steps
-   * @param noiseMultiplier  noise level multiplier
+   * @param estimator the estimator to test
+   * @param numSteps number of update steps
+   * @param noiseMultiplier noise level multiplier
    * @param progressCallback optional callback for progress updates
    * @return test report
    */
@@ -440,9 +440,9 @@ public class EstimationTestHarness implements Serializable {
   /**
    * Runs a noise robustness test at multiple noise levels.
    *
-   * @param estimator     the estimator to test
+   * @param estimator the estimator to test
    * @param stepsPerLevel steps at each noise level
-   * @param noiseLevels   array of noise multipliers to test
+   * @param noiseLevels array of noise multipliers to test
    * @return map of noise level to test report
    */
   public Map<Double, TestReport> runNoiseRobustnessTest(EnKFParameterEstimator estimator, int stepsPerLevel,
@@ -462,10 +462,10 @@ public class EstimationTestHarness implements Serializable {
   /**
    * Runs a parameter drift tracking test.
    *
-   * @param estimator          the estimator to test
-   * @param numSteps           number of steps
+   * @param estimator the estimator to test
+   * @param numSteps number of steps
    * @param driftingParamIndex which parameter drifts
-   * @param driftRate          rate of drift per step
+   * @param driftRate rate of drift per step
    * @return test report with tracking accuracy
    */
   public TestReport runDriftTrackingTest(EnKFParameterEstimator estimator, int numSteps, int driftingParamIndex,
@@ -509,8 +509,8 @@ public class EstimationTestHarness implements Serializable {
    * Runs Monte Carlo validation with multiple trials.
    *
    * @param estimatorFactory factory to create fresh estimator instances
-   * @param numTrials        number of Monte Carlo trials
-   * @param stepsPerTrial    steps per trial
+   * @param numTrials number of Monte Carlo trials
+   * @param stepsPerTrial steps per trial
    * @return summary statistics across all trials
    */
   public MonteCarloReport runMonteCarloValidation(java.util.function.Supplier<EnKFParameterEstimator> estimatorFactory,

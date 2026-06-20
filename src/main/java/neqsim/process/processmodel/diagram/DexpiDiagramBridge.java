@@ -95,7 +95,7 @@ public final class DexpiDiagramBridge implements Serializable {
    *
    * @param dexpiXmlFile path to the DEXPI XML file
    * @return diagram exporter for the imported process
-   * @throws IOException             if the file cannot be read
+   * @throws IOException if the file cannot be read
    * @throws DexpiXmlReaderException if the XML is invalid
    */
   public static ProcessDiagramExporter importAndCreateExporter(Path dexpiXmlFile)
@@ -108,10 +108,10 @@ public final class DexpiDiagramBridge implements Serializable {
   /**
    * Imports a DEXPI XML file with a custom template stream and creates a diagram exporter.
    *
-   * @param dexpiXmlFile   path to the DEXPI XML file
+   * @param dexpiXmlFile path to the DEXPI XML file
    * @param templateStream stream template for thermodynamic properties
    * @return diagram exporter for the imported process
-   * @throws IOException             if the file cannot be read
+   * @throws IOException if the file cannot be read
    * @throws DexpiXmlReaderException if the XML is invalid
    */
   public static ProcessDiagramExporter importAndCreateExporter(Path dexpiXmlFile, Stream templateStream)
@@ -129,7 +129,7 @@ public final class DexpiDiagramBridge implements Serializable {
    *
    * @param dexpiXmlFile path to the DEXPI XML file
    * @return the imported process system
-   * @throws IOException             if the file cannot be read
+   * @throws IOException if the file cannot be read
    * @throws DexpiXmlReaderException if the XML is invalid
    */
   public static ProcessSystem importDexpi(Path dexpiXmlFile) throws IOException, DexpiXmlReaderException {
@@ -140,10 +140,10 @@ public final class DexpiDiagramBridge implements Serializable {
   /**
    * Imports a DEXPI XML file into a ProcessSystem with a custom template.
    *
-   * @param dexpiXmlFile   path to the DEXPI XML file
+   * @param dexpiXmlFile path to the DEXPI XML file
    * @param templateStream stream template for thermodynamic properties
    * @return the imported process system
-   * @throws IOException             if the file cannot be read
+   * @throws IOException if the file cannot be read
    * @throws DexpiXmlReaderException if the XML is invalid
    */
   public static ProcessSystem importDexpi(Path dexpiXmlFile, Stream templateStream)
@@ -160,7 +160,7 @@ public final class DexpiDiagramBridge implements Serializable {
    * </p>
    *
    * @param processSystem the process system to export
-   * @param outputFile    the output file path
+   * @param outputFile the output file path
    * @throws IOException if the file cannot be written
    */
   public static void exportToDexpi(ProcessSystem processSystem, Path outputFile) throws IOException {
@@ -177,7 +177,7 @@ public final class DexpiDiagramBridge implements Serializable {
    * </p>
    *
    * @param processSystem the process system to export
-   * @param outputFile    the output file path
+   * @param outputFile the output file path
    * @throws IOException if the file cannot be written
    */
   public static void exportForPyDexpi(ProcessSystem processSystem, Path outputFile) throws IOException {
@@ -196,11 +196,11 @@ public final class DexpiDiagramBridge implements Serializable {
    * <li>Enriching DEXPI files with simulation results</li>
    * </ul>
    *
-   * @param inputDexpi  path to input DEXPI XML file
-   * @param outputDot   path for output DOT diagram file
+   * @param inputDexpi path to input DEXPI XML file
+   * @param outputDot path for output DOT diagram file
    * @param outputDexpi path for re-exported DEXPI XML file
    * @return the processed system
-   * @throws IOException             if file operations fail
+   * @throws IOException if file operations fail
    * @throws DexpiXmlReaderException if the input XML is invalid
    */
   public static ProcessSystem roundTrip(Path inputDexpi, Path outputDot, Path outputDexpi)

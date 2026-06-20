@@ -23,8 +23,8 @@ public abstract class SystemEos extends neqsim.thermo.system.SystemThermo {
    * Constructor for SystemEos.
    * </p>
    *
-   * @param T              The temperature in unit Kelvin
-   * @param P              The pressure in unit bara (absolute pressure)
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
    * @param checkForSolids Set true to do solid phase check and calculations
    */
   public SystemEos(double T, double P, boolean checkForSolids) {

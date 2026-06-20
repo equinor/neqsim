@@ -36,10 +36,10 @@ public class WellBranch implements NetworkBranch {
   /**
    * Creates a well branch.
    *
-   * @param name                           unique branch name
-   * @param reservoirNode                  upstream reservoir node name
-   * @param downstreamNode                 downstream node name (wellhead/manifold)
-   * @param curve                          well deliverability curve
+   * @param name unique branch name
+   * @param reservoirNode upstream reservoir node name
+   * @param downstreamNode downstream node name (wellhead/manifold)
+   * @param curve well deliverability curve
    * @param referenceReservoirPressureBara reservoir pressure at which the curve was built, in bara
    */
   public WellBranch(String name, String reservoirNode, String downstreamNode, WellDeliverabilityCurve curve,

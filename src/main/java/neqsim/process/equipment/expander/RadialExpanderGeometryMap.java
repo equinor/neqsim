@@ -106,8 +106,8 @@ public class RadialExpanderGeometryMap implements Serializable {
    * Constructs a generator for a specific rotor geometry.
    *
    * @param impellerOuterDiameter the rotor inlet (tip) diameter in m
-   * @param radiusRatio           the exit/inlet radius ratio r3/r2 (0..1)
-   * @param degreeOfReaction      the stage degree of reaction (0..1)
+   * @param radiusRatio the exit/inlet radius ratio r3/r2 (0..1)
+   * @param degreeOfReaction the stage degree of reaction (0..1)
    */
   public RadialExpanderGeometryMap(double impellerOuterDiameter, double radiusRatio, double degreeOfReaction) {
     setImpellerOuterDiameter(impellerOuterDiameter);
@@ -118,12 +118,12 @@ public class RadialExpanderGeometryMap implements Serializable {
   /**
    * Generates an {@link ExpanderChartKhader} from blade geometry for the supplied IGV schedule.
    *
-   * @param igvPositions   IGV positions (fraction of maximum area, 0..1), strictly increasing
+   * @param igvPositions IGV positions (fraction of maximum area, 0..1), strictly increasing
    * @param nozzleAngleDeg absolute rotor-inlet flow angle (from the meridional/radial direction) in degrees, one value
-   *                       per IGV position; larger angles correspond to more closed vanes
+   * per IGV position; larger angles correspond to more closed vanes
    * @return a populated {@link ExpanderChartKhader} ready for use by a turbo-expander model
    * @throws IllegalArgumentException if the inputs are null, empty or of mismatched length, or if any nozzle angle is
-   *                                  outside the open interval (0, 90) degrees
+   * outside the open interval (0, 90) degrees
    */
   public ExpanderChartKhader generateChart(double[] igvPositions, double[] nozzleAngleDeg) {
     if (igvPositions == null || nozzleAngleDeg == null) {

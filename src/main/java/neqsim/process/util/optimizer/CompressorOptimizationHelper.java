@@ -108,13 +108,13 @@ public class CompressorOptimizationHelper {
     /**
      * Constructs compressor bounds.
      *
-     * @param minSpeed      minimum operating speed (RPM)
-     * @param maxSpeed      maximum operating speed (RPM)
-     * @param minFlow       minimum flow at minimum speed
-     * @param maxFlow       maximum flow at maximum speed
-     * @param surgeFlow     surge line flow at reference speed
+     * @param minSpeed minimum operating speed (RPM)
+     * @param maxSpeed maximum operating speed (RPM)
+     * @param minFlow minimum flow at minimum speed
+     * @param maxFlow maximum flow at maximum speed
+     * @param surgeFlow surge line flow at reference speed
      * @param stoneWallFlow stone wall (choke) flow at reference speed
-     * @param flowUnit      flow rate unit
+     * @param flowUnit flow rate unit
      */
     public CompressorBounds(double minSpeed, double maxSpeed, double minFlow, double maxFlow, double surgeFlow,
 	double stoneWallFlow, String flowUnit) {
@@ -226,15 +226,15 @@ public class CompressorOptimizationHelper {
     /**
      * Constructs a two-stage result.
      *
-     * @param totalFlow         optimal total flow rate
-     * @param flowUnit          flow rate unit
-     * @param trainSplits       split fractions per train
-     * @param trainFlows        flow rates per train
+     * @param totalFlow optimal total flow rate
+     * @param flowUnit flow rate unit
+     * @param trainSplits split fractions per train
+     * @param trainFlows flow rates per train
      * @param trainUtilizations utilization per train
-     * @param trainPowers       power consumption per train (kW)
+     * @param trainPowers power consumption per train (kW)
      * @param trainSurgeMargins surge margin per train
-     * @param stage1Result      result from load balancing stage
-     * @param stage2Result      result from throughput maximization stage
+     * @param stage1Result result from load balancing stage
+     * @param stage2Result result from throughput maximization stage
      */
     public TwoStageResult(double totalFlow, String flowUnit, Map<String, Double> trainSplits,
 	Map<String, Double> trainFlows, Map<String, Double> trainUtilizations, Map<String, Double> trainPowers,
@@ -455,8 +455,8 @@ public class CompressorOptimizationHelper {
    * Create a manipulated variable for compressor speed.
    *
    * @param compressor the compressor to control
-   * @param minSpeed   minimum speed in RPM
-   * @param maxSpeed   maximum speed in RPM
+   * @param minSpeed minimum speed in RPM
+   * @param maxSpeed maximum speed in RPM
    * @return manipulated variable for speed optimization
    */
   public static ManipulatedVariable createSpeedVariable(Compressor compressor, double minSpeed, double maxSpeed) {
@@ -469,7 +469,7 @@ public class CompressorOptimizationHelper {
   /**
    * Create a manipulated variable for compressor outlet pressure.
    *
-   * @param compressor  the compressor to control
+   * @param compressor the compressor to control
    * @param minPressure minimum outlet pressure in bara
    * @param maxPressure maximum outlet pressure in bara
    * @return manipulated variable for pressure optimization
@@ -486,7 +486,7 @@ public class CompressorOptimizationHelper {
    * Create an objective to minimize total compressor power.
    *
    * @param compressors list of compressors to include
-   * @param weight      objective weight (typically 1.0)
+   * @param weight objective weight (typically 1.0)
    * @return optimization objective for power minimization
    */
   public static OptimizationObjective createPowerObjective(List<Compressor> compressors, double weight) {
@@ -504,7 +504,7 @@ public class CompressorOptimizationHelper {
    * Create an objective to maximize minimum surge margin across compressors.
    *
    * @param compressors list of compressors to include
-   * @param weight      objective weight (typically 1.0)
+   * @param weight objective weight (typically 1.0)
    * @return optimization objective for surge margin maximization
    */
   public static OptimizationObjective createSurgeMarginObjective(List<Compressor> compressors, double weight) {
@@ -525,7 +525,7 @@ public class CompressorOptimizationHelper {
    * Create an objective to maximize average polytropic efficiency.
    *
    * @param compressors list of compressors to include
-   * @param weight      objective weight (typically 1.0)
+   * @param weight objective weight (typically 1.0)
    * @return optimization objective for efficiency maximization
    */
   public static OptimizationObjective createEfficiencyObjective(List<Compressor> compressors, double weight) {
@@ -548,8 +548,8 @@ public class CompressorOptimizationHelper {
    * Create a constraint requiring minimum surge margin on all compressors.
    *
    * @param compressors list of compressors to constrain
-   * @param minMargin   minimum required surge margin (e.g., 0.10 for 10%)
-   * @param severity    constraint severity (HARD or SOFT)
+   * @param minMargin minimum required surge margin (e.g., 0.10 for 10%)
+   * @param severity constraint severity (HARD or SOFT)
    * @return optimization constraint for surge margin
    */
   public static OptimizationConstraint createSurgeMarginConstraint(List<Compressor> compressors, double minMargin,
@@ -593,13 +593,13 @@ public class CompressorOptimizationHelper {
    * splits, maximize total flow subject to constraints.
    * </p>
    *
-   * @param process            the process system
-   * @param feedStream         the main feed stream
-   * @param compressors        list of parallel compressors (one per train)
+   * @param process the process system
+   * @param feedStream the main feed stream
+   * @param compressors list of parallel compressors (one per train)
    * @param trainStreamSetters functions to set each train's flow fraction
-   * @param flowLowerBound     minimum total flow
-   * @param flowUpperBound     maximum total flow
-   * @param config             optimization configuration
+   * @param flowLowerBound minimum total flow
+   * @param flowUpperBound maximum total flow
+   * @param config optimization configuration
    * @return two-stage optimization result
    */
   public static TwoStageResult optimizeTwoStage(ProcessSystem process, StreamInterface feedStream,

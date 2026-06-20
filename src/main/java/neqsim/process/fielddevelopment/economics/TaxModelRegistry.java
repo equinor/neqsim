@@ -137,7 +137,7 @@ public final class TaxModelRegistry {
    * Gets fiscal parameters for a country, with fallback.
    *
    * @param countryCode country code
-   * @param fallback    fallback parameters if country not found
+   * @param fallback fallback parameters if country not found
    * @return fiscal parameters
    */
   public static FiscalParameters getParametersOrDefault(String countryCode, FiscalParameters fallback) {
@@ -469,7 +469,7 @@ public final class TaxModelRegistry {
   /**
    * Truncates a string.
    *
-   * @param s      string to truncate
+   * @param s string to truncate
    * @param maxLen maximum length
    * @return truncated string
    */

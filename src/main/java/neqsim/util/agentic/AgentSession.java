@@ -97,7 +97,7 @@ public class AgentSession implements Serializable {
   /**
    * Start a new agent session.
    *
-   * @param agentName       name of the agent (e.g., "solve.task", "process.model")
+   * @param agentName name of the agent (e.g., "solve.task", "process.model")
    * @param taskDescription brief description of the engineering task
    * @return new session instance
    */
@@ -108,7 +108,7 @@ public class AgentSession implements Serializable {
   /**
    * Constructor.
    *
-   * @param agentName       name of the agent
+   * @param agentName name of the agent
    * @param taskDescription task description
    */
   private AgentSession(String agentName, String taskDescription) {
@@ -152,7 +152,7 @@ public class AgentSession implements Serializable {
   /**
    * Record a tool invocation during the session.
    *
-   * @param toolName    name of the tool or agent invoked
+   * @param toolName name of the tool or agent invoked
    * @param description what the tool was used for
    */
   public void recordToolUse(String toolName, String description) {
@@ -162,8 +162,8 @@ public class AgentSession implements Serializable {
   /**
    * Record a simulation run and its outcome.
    *
-   * @param description     what simulation was run
-   * @param success         whether it succeeded
+   * @param description what simulation was run
+   * @param success whether it succeeded
    * @param durationSeconds execution time in seconds
    */
   public void recordSimulationRun(String description, boolean success, double durationSeconds) {
@@ -173,7 +173,7 @@ public class AgentSession implements Serializable {
   /**
    * Add metadata to the session.
    *
-   * @param key   metadata key
+   * @param key metadata key
    * @param value metadata value
    */
   public void addMetadata(String key, String value) {
@@ -403,7 +403,7 @@ public class AgentSession implements Serializable {
     /**
      * Constructor.
      *
-     * @param toolName    tool name
+     * @param toolName tool name
      * @param description invocation description
      */
     ToolInvocation(String toolName, String description) {
@@ -431,8 +431,8 @@ public class AgentSession implements Serializable {
     /**
      * Constructor.
      *
-     * @param description     simulation description
-     * @param success         whether it succeeded
+     * @param description simulation description
+     * @param success whether it succeeded
      * @param durationSeconds execution duration
      */
     SimulationRun(String description, boolean success, double durationSeconds) {

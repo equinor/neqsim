@@ -128,8 +128,8 @@ public class MechanisticCorrosionModel implements Serializable {
   /**
    * Sets aqueous-phase chemistry.
    *
-   * @param pH            pH value (use -1 to compute equilibrium pH from CO2)
-   * @param bicarbMgL     bicarbonate concentration [mg/L]
+   * @param pH pH value (use -1 to compute equilibrium pH from CO2)
+   * @param bicarbMgL bicarbonate concentration [mg/L]
    * @param ionicStrength ionic strength [mol/L]
    * @return this for chaining
    */
@@ -143,9 +143,9 @@ public class MechanisticCorrosionModel implements Serializable {
   /**
    * Sets pipe and flow geometry.
    *
-   * @param velocityMs   flow velocity [m/s]
-   * @param diameterM    pipe ID [m]
-   * @param densityKgM3  liquid density [kg/m3]
+   * @param velocityMs flow velocity [m/s]
+   * @param diameterM pipe ID [m]
+   * @param densityKgM3 liquid density [kg/m3]
    * @param viscosityPas dynamic viscosity [Pa.s]
    * @return this for chaining
    */
@@ -162,7 +162,7 @@ public class MechanisticCorrosionModel implements Serializable {
    * Sets the inhibitor model and dose.
    *
    * @param inhibitor Langmuir isotherm (use {@code null} to keep default imidazoline)
-   * @param doseMgL   inhibitor dose [mg/L]
+   * @param doseMgL inhibitor dose [mg/L]
    * @return this for chaining
    */
   public MechanisticCorrosionModel setInhibitor(LangmuirInhibitorIsotherm inhibitor, double doseMgL) {

@@ -245,7 +245,7 @@ public class AIIntegrationHelper implements Serializable {
     /**
      * Creates a warning result.
      *
-     * @param message    the warning message
+     * @param message the warning message
      * @param validation the validation result
      * @return an ExecutionResult with WARNING status
      */
@@ -256,7 +256,7 @@ public class AIIntegrationHelper implements Serializable {
     /**
      * Creates a failure result.
      *
-     * @param message    the failure message
+     * @param message the failure message
      * @param validation the validation result
      * @return an ExecutionResult with FAILURE status
      */
@@ -268,7 +268,7 @@ public class AIIntegrationHelper implements Serializable {
      * Creates an error result.
      *
      * @param message the error message
-     * @param e       the exception that caused the error
+     * @param e the exception that caused the error
      * @return an ExecutionResult with ERROR status
      */
     public static ExecutionResult error(String message, Exception e) {

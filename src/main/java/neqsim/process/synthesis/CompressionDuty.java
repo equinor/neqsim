@@ -41,10 +41,10 @@ public final class CompressionDuty implements Serializable {
   /**
    * Creates a compression duty.
    *
-   * @param name                  short identifier used in the generated flowsheet
-   * @param feed                  the feed stream; must have been {@code run()} so that flow, T and P are valid
+   * @param name short identifier used in the generated flowsheet
+   * @param feed the feed stream; must have been {@code run()} so that flow, T and P are valid
    * @param dischargePressureBara target discharge pressure of the train, in bara; must be strictly greater than the
-   *                              feed pressure
+   * feed pressure
    */
   public CompressionDuty(String name, StreamInterface feed, double dischargePressureBara) {
     if (name == null || name.trim().isEmpty()) {
@@ -108,7 +108,7 @@ public final class CompressionDuty implements Serializable {
    * Configures whether a final after-cooler is added downstream of the last stage and at what temperature.
    *
    * @param enabled true to add an after-cooler (default), false to leave the last stage discharge uncooled
-   * @param tC      after-cooler outlet temperature in °C; ignored when {@code enabled} is false
+   * @param tC after-cooler outlet temperature in °C; ignored when {@code enabled} is false
    * @return this duty for chaining
    */
   public CompressionDuty setAfterCooler(boolean enabled, double tC) {

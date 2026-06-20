@@ -21,7 +21,7 @@ public class BukacekWaterInGas {
    * </p>
    *
    * @param temperature a double
-   * @param pressure    a double
+   * @param pressure a double
    * @return a double
    */
   public static double getWaterInGas(double temperature, double pressure) {
@@ -51,7 +51,7 @@ public class BukacekWaterInGas {
    * </p>
    *
    * @param moleFractionWaterInGas a double
-   * @param pressure               a double
+   * @param pressure a double
    * @return a double
    */
   public static double waterDewPointTemperature(double moleFractionWaterInGas, double pressure) {

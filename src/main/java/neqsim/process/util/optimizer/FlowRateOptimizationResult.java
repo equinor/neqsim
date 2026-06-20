@@ -88,11 +88,11 @@ public class FlowRateOptimizationResult implements Serializable {
     /**
      * Creates a new constraint violation record.
      *
-     * @param constraintName  name of the violated constraint
-     * @param equipmentName   name of the equipment with the violation
-     * @param currentValue    current value of the constrained variable
-     * @param limitValue      limit value that was exceeded
-     * @param unit            unit of measurement
+     * @param constraintName name of the violated constraint
+     * @param equipmentName name of the equipment with the violation
+     * @param currentValue current value of the constrained variable
+     * @param limitValue limit value that was exceeded
+     * @param unit unit of measurement
      * @param isHardViolation true if this is a hard constraint violation
      */
     public ConstraintViolation(String constraintName, String equipmentName, double currentValue, double limitValue,
@@ -189,11 +189,11 @@ public class FlowRateOptimizationResult implements Serializable {
   /**
    * Creates a successful optimization result.
    *
-   * @param flowRate       optimal flow rate
-   * @param flowRateUnit   unit of flow rate
-   * @param inletPressure  achieved inlet pressure
+   * @param flowRate optimal flow rate
+   * @param flowRateUnit unit of flow rate
+   * @param inletPressure achieved inlet pressure
    * @param outletPressure achieved outlet pressure
-   * @param pressureUnit   unit of pressure
+   * @param pressureUnit unit of pressure
    * @return the result
    */
   public static FlowRateOptimizationResult success(double flowRate, String flowRateUnit, double inletPressure,
@@ -224,7 +224,7 @@ public class FlowRateOptimizationResult implements Serializable {
   /**
    * Creates an infeasible result due to constraint violations.
    *
-   * @param reason     description of constraint violation
+   * @param reason description of constraint violation
    * @param violations list of constraint violations
    * @return the result
    */
@@ -240,7 +240,7 @@ public class FlowRateOptimizationResult implements Serializable {
    * Creates a not-converged result.
    *
    * @param iterations number of iterations performed
-   * @param lastError  last convergence error
+   * @param lastError last convergence error
    * @return the result
    */
   public static FlowRateOptimizationResult notConverged(int iterations, double lastError) {

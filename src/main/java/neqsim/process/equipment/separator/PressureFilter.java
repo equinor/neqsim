@@ -49,7 +49,7 @@ public class PressureFilter extends SolidsSeparator {
   /**
    * Constructor for PressureFilter with inlet stream.
    *
-   * @param name        name of the filter
+   * @param name name of the filter
    * @param inletStream the feed stream
    */
   public PressureFilter(String name, StreamInterface inletStream) {

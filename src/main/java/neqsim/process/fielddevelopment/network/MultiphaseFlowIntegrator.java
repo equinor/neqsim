@@ -455,7 +455,7 @@ public class MultiphaseFlowIntegrator implements Serializable {
   /**
    * Calculate pipeline hydraulics using Beggs and Brill correlation.
    *
-   * @param inlet              inlet stream
+   * @param inlet inlet stream
    * @param arrivalPressureBar required arrival pressure (bara)
    * @return pipeline result
    */
@@ -545,9 +545,9 @@ public class MultiphaseFlowIntegrator implements Serializable {
   /**
    * Calculate hydraulics for a range of flow rates.
    *
-   * @param baseFluid        base fluid composition
+   * @param baseFluid base fluid composition
    * @param inletPressureBar inlet pressure
-   * @param flowRatesKgHr    array of flow rates to evaluate
+   * @param flowRatesKgHr array of flow rates to evaluate
    * @return list of results for each flow rate
    */
   public List<PipelineResult> calculateHydraulicsCurve(SystemInterface baseFluid, double inletPressureBar,
@@ -571,8 +571,8 @@ public class MultiphaseFlowIntegrator implements Serializable {
   /**
    * Size pipeline diameter for given constraints.
    *
-   * @param inlet            inlet stream
-   * @param minArrivalP      minimum arrival pressure (bara)
+   * @param inlet inlet stream
+   * @param minArrivalP minimum arrival pressure (bara)
    * @param maxVelocityRatio maximum erosional velocity ratio
    * @return recommended diameter in meters
    */
@@ -603,7 +603,7 @@ public class MultiphaseFlowIntegrator implements Serializable {
   /**
    * Estimate liquid holdup using simplified Beggs-Brill.
    *
-   * @param fluid  the fluid system
+   * @param fluid the fluid system
    * @param mixVel the mixture velocity in m/s
    * @return estimated liquid holdup as fraction (0-1)
    */
@@ -631,8 +631,8 @@ public class MultiphaseFlowIntegrator implements Serializable {
   /**
    * Identify flow regime.
    *
-   * @param fluid        the fluid system interface
-   * @param mixVel       mixture velocity in m/s
+   * @param fluid the fluid system interface
+   * @param mixVel mixture velocity in m/s
    * @param liquidHoldup liquid holdup fraction (0-1)
    * @return the identified flow regime
    */
@@ -671,7 +671,7 @@ public class MultiphaseFlowIntegrator implements Serializable {
   /**
    * Estimate slug frequency using Gregory correlation.
    *
-   * @param mixVel   mixture velocity in m/s
+   * @param mixVel mixture velocity in m/s
    * @param diameter pipe inner diameter in m
    * @return estimated slug frequency in slugs per minute
    */
@@ -685,7 +685,7 @@ public class MultiphaseFlowIntegrator implements Serializable {
   /**
    * Check feasibility against constraints.
    *
-   * @param result      the pipeline result to check and update
+   * @param result the pipeline result to check and update
    * @param minArrivalP minimum required arrival pressure in bar
    */
   private void checkFeasibility(PipelineResult result, double minArrivalP) {

@@ -27,8 +27,8 @@ public class PVTRegressionFunction extends LevenbergMarquardtFunction {
   /**
    * Create a PVT regression function.
    *
-   * @param baseFluid         the base fluid to tune
-   * @param parameterConfigs  list of parameter configurations
+   * @param baseFluid the base fluid to tune
+   * @param parameterConfigs list of parameter configurations
    * @param experimentWeights weights for each experiment type
    */
   public PVTRegressionFunction(SystemInterface baseFluid, List<RegressionParameterConfig> parameterConfigs,
@@ -165,9 +165,9 @@ public class PVTRegressionFunction extends LevenbergMarquardtFunction {
   /**
    * Calculate DLE property value.
    *
-   * @param fluid         the thermodynamic system to use for calculation
-   * @param pressure      the pressure in bara
-   * @param temperature   the temperature in Kelvin
+   * @param fluid the thermodynamic system to use for calculation
+   * @param pressure the pressure in bara
+   * @param temperature the temperature in Kelvin
    * @param propertyIndex the property index (0=Rs, 1=Bo, 2=Oil density)
    * @return the calculated DLE property value
    */
@@ -195,10 +195,10 @@ public class PVTRegressionFunction extends LevenbergMarquardtFunction {
   /**
    * Calculate separator test property value.
    *
-   * @param fluid                the thermodynamic system to use for calculation
-   * @param separatorPressure    the separator pressure in bara
+   * @param fluid the thermodynamic system to use for calculation
+   * @param separatorPressure the separator pressure in bara
    * @param separatorTemperature the separator temperature in Kelvin
-   * @param propertyIndex        the property index (0=GOR, etc.)
+   * @param propertyIndex the property index (0=GOR, etc.)
    * @param reservoirTemperature the reservoir temperature in Kelvin
    * @return the calculated separator property value
    */
@@ -248,9 +248,9 @@ public class PVTRegressionFunction extends LevenbergMarquardtFunction {
   /**
    * Calculate viscosity property value.
    *
-   * @param fluid         the thermodynamic system to use for calculation
-   * @param pressure      the pressure in bara
-   * @param temperature   the temperature in Kelvin
+   * @param fluid the thermodynamic system to use for calculation
+   * @param pressure the pressure in bara
+   * @param temperature the temperature in Kelvin
    * @param propertyIndex phase index mapping, 0=gas, 1=oil/liquid, 2=aqueous/water, 3=phase zero
    * @return calculated dynamic viscosity in Pa s
    */

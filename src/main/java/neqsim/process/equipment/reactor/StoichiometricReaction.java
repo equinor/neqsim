@@ -68,7 +68,7 @@ public class StoichiometricReaction implements Serializable {
    * Add a reactant to this reaction.
    *
    * @param componentName name matching NeqSim component database
-   * @param coefficient   positive stoichiometric coefficient (will be stored as negative internally)
+   * @param coefficient positive stoichiometric coefficient (will be stored as negative internally)
    */
   public void addReactant(String componentName, double coefficient) {
     stoichiometry.put(componentName, -Math.abs(coefficient));
@@ -78,7 +78,7 @@ public class StoichiometricReaction implements Serializable {
    * Add a product to this reaction.
    *
    * @param componentName name matching NeqSim component database
-   * @param coefficient   positive stoichiometric coefficient
+   * @param coefficient positive stoichiometric coefficient
    */
   public void addProduct(String componentName, double coefficient) {
     stoichiometry.put(componentName, Math.abs(coefficient));
@@ -246,7 +246,7 @@ public class StoichiometricReaction implements Serializable {
   /**
    * Join strings with a delimiter (Java 8 compatible).
    *
-   * @param parts     list of strings
+   * @param parts list of strings
    * @param delimiter the delimiter
    * @return joined string
    */

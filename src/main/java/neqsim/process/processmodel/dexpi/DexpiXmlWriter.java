@@ -115,7 +115,7 @@ public final class DexpiXmlWriter {
    * explicit measurement devices or controllers.
    *
    * @param enabled {@code true} to synthesize standard control loops (default), {@code false} to export only explicitly
-   *                modelled instrumentation
+   * modelled instrumentation
    */
   public static void setAutoSynthesizeInstrumentation(boolean enabled) {
     AUTO_SYNTHESIZE_INSTRUMENTS.set(Boolean.valueOf(enabled));
@@ -133,10 +133,10 @@ public final class DexpiXmlWriter {
    * and exported back with updated process data (temperatures, pressures, flow rates, compositions).
    * </p>
    *
-   * @param inputFile      the source DEXPI XML file to read
-   * @param outputFile     the destination file for the enriched DEXPI XML
+   * @param inputFile the source DEXPI XML file to read
+   * @param outputFile the destination file for the enriched DEXPI XML
    * @param templateStream the template stream providing fluid composition for simulation
-   * @throws IOException             if reading or writing fails
+   * @throws IOException if reading or writing fails
    * @throws DexpiXmlReaderException if the DEXPI XML cannot be parsed
    */
   public static void roundTrip(File inputFile, File outputFile, Stream templateStream)
@@ -154,7 +154,7 @@ public final class DexpiXmlWriter {
    * Writes the provided {@link ProcessSystem} to a DEXPI XML file.
    *
    * @param processSystem process model to export
-   * @param file          output file
+   * @param file output file
    * @throws IOException if writing fails
    */
   public static void write(ProcessSystem processSystem, File file) throws IOException {
@@ -173,7 +173,7 @@ public final class DexpiXmlWriter {
    * </p>
    *
    * @param processSystem process model to export
-   * @param file          output file
+   * @param file output file
    * @throws IOException if writing fails
    */
   public static void writeForPyDexpi(ProcessSystem processSystem, File file) throws IOException {
@@ -192,7 +192,7 @@ public final class DexpiXmlWriter {
    * can be parsed directly by pyDEXPI.
    *
    * @param processSystem process model to export
-   * @param outputStream  destination stream
+   * @param outputStream destination stream
    * @throws IOException if writing fails
    * @see #writeForPyDexpi(ProcessSystem, File)
    */
@@ -218,7 +218,7 @@ public final class DexpiXmlWriter {
    * </p>
    *
    * @param plant the process model to export
-   * @param file  output file
+   * @param file output file
    * @throws IOException if writing fails
    */
   public static void write(ProcessModel plant, File file) throws IOException {
@@ -236,7 +236,7 @@ public final class DexpiXmlWriter {
   /**
    * Writes a multi-area {@link ProcessModel} to a single combined DEXPI XML stream.
    *
-   * @param plant        the process model to export
+   * @param plant the process model to export
    * @param outputStream destination stream
    * @throws IOException if writing fails
    * @see #write(ProcessModel, File)
@@ -257,7 +257,7 @@ public final class DexpiXmlWriter {
    * are terminated with off-page connectors.
    * </p>
    *
-   * @param plant           the process model to export
+   * @param plant the process model to export
    * @param outputDirectory the directory to write the per-area sheets into (created if absent)
    * @return the list of files written, one per area
    * @throws IOException if writing fails
@@ -329,7 +329,7 @@ public final class DexpiXmlWriter {
   /**
    * Produces a filesystem-safe file name from an area name.
    *
-   * @param name     the raw area name (may be null or blank)
+   * @param name the raw area name (may be null or blank)
    * @param fallback the fallback base name when {@code name} is blank
    * @return a sanitised base file name containing only identifier-safe characters
    */
@@ -346,9 +346,9 @@ public final class DexpiXmlWriter {
    * provided.
    *
    * @param processSystem process model to export
-   * @param file          output file
-   * @param transmitters  map of tag name to transmitter (may be null)
-   * @param controllers   map of tag name to controller (may be null)
+   * @param file output file
+   * @param transmitters map of tag name to transmitter (may be null)
+   * @param controllers map of tag name to controller (may be null)
    * @throws IOException if writing fails
    */
   public static void write(ProcessSystem processSystem, File file, Map<String, MeasurementDeviceInterface> transmitters,
@@ -368,7 +368,7 @@ public final class DexpiXmlWriter {
    * Writes the provided {@link ProcessSystem} to a DEXPI XML stream.
    *
    * @param processSystem process model to export
-   * @param outputStream  destination stream
+   * @param outputStream destination stream
    * @throws IOException if writing fails
    */
   public static void write(ProcessSystem processSystem, OutputStream outputStream) throws IOException {
@@ -380,9 +380,9 @@ public final class DexpiXmlWriter {
    * provided.
    *
    * @param processSystem process model to export
-   * @param outputStream  destination stream
-   * @param transmitters  map of tag name to transmitter (may be null)
-   * @param controllers   map of tag name to controller (may be null)
+   * @param outputStream destination stream
+   * @param transmitters map of tag name to transmitter (may be null)
+   * @param controllers map of tag name to controller (may be null)
    * @throws IOException if writing fails
    */
   public static void write(ProcessSystem processSystem, OutputStream outputStream,
@@ -668,14 +668,14 @@ public final class DexpiXmlWriter {
   /**
    * Appends a native NeqSim equipment (non-DEXPI-origin) to the document using reverse mapping.
    *
-   * @param document        the XML document
-   * @param parent          the parent element
-   * @param unit            the process equipment
-   * @param usedIds         set of used IDs
-   * @param inletNozzleId   the inlet nozzle ID to create
+   * @param document the XML document
+   * @param parent the parent element
+   * @param unit the process equipment
+   * @param usedIds set of used IDs
+   * @param inletNozzleId the inlet nozzle ID to create
    * @param outletNozzleIds the outlet nozzle IDs to create
-   * @param position        the computed layout position (may be null)
-   * @param labelIndex      label counter for unique IDs
+   * @param position the computed layout position (may be null)
+   * @param labelIndex label counter for unique IDs
    * @param nozzlePositions map of nozzle positions for graphical rendering
    */
   private static void appendNativeEquipment(Document document, Element parent, ProcessEquipmentInterface unit,
@@ -746,10 +746,10 @@ public final class DexpiXmlWriter {
   /**
    * Appends a Nozzle child element to the parent equipment element with optional position.
    *
-   * @param document        the XML document
-   * @param parent          the equipment element
-   * @param nozzleId        the nozzle ID
-   * @param usedIds         set of used IDs
+   * @param document the XML document
+   * @param parent the equipment element
+   * @param nozzleId the nozzle ID
+   * @param usedIds set of used IDs
    * @param nozzlePositions map of nozzle positions (may be null)
    */
   private static void appendNozzle(Document document, Element parent, String nozzleId, Set<String> usedIds,
@@ -778,9 +778,9 @@ public final class DexpiXmlWriter {
   /**
    * Appends simulation result attributes (P, T, flow) from equipment outlet streams.
    *
-   * @param document          the XML document
+   * @param document the XML document
    * @param genericAttributes the GenericAttributes element to append to
-   * @param unit              the process equipment
+   * @param unit the process equipment
    */
   private static void appendSimulationResults(Document document, Element genericAttributes,
       ProcessEquipmentInterface unit) {
@@ -810,8 +810,8 @@ public final class DexpiXmlWriter {
    * non-zero/non-default values are exported.
    *
    * @param document the XML document
-   * @param parent   the equipment element
-   * @param unit     the process equipment
+   * @param parent the equipment element
+   * @param unit the process equipment
    */
   private static void appendMechanicalDesignAttributes(Document document, Element parent,
       ProcessEquipmentInterface unit) {
@@ -868,11 +868,11 @@ public final class DexpiXmlWriter {
   /**
    * Appends an EquipmentBarLabel using simulation results from the equipment outlet.
    *
-   * @param document    the XML document
-   * @param element     the equipment element
-   * @param unit        the process equipment
-   * @param position    the equipment position
-   * @param labelId     the unique label ID
+   * @param document the XML document
+   * @param element the equipment element
+   * @param unit the process equipment
+   * @param position the equipment position
+   * @param labelId the unique label ID
    * @param equipmentId the equipment element ID
    */
   private static void appendEquipmentBarFromSimulation(Document document, Element element,
@@ -1041,13 +1041,13 @@ public final class DexpiXmlWriter {
   /**
    * Builds a PipingComponent XML element for a valve unit.
    *
-   * @param document        the XML document
-   * @param unit            the valve unit
-   * @param usedIds         set of used IDs
-   * @param inletNozzleId   the inlet nozzle ID
+   * @param document the XML document
+   * @param unit the valve unit
+   * @param usedIds set of used IDs
+   * @param inletNozzleId the inlet nozzle ID
    * @param outletNozzleIds the outlet nozzle IDs
-   * @param position        the computed layout position (may be null)
-   * @param labelIndex      label counter for unique IDs
+   * @param position the computed layout position (may be null)
+   * @param labelIndex label counter for unique IDs
    * @param nozzlePositions map of nozzle positions for graphical rendering
    * @return the PipingComponent element
    */
@@ -1134,8 +1134,8 @@ public final class DexpiXmlWriter {
    * the water outlet.
    * </p>
    *
-   * @param unit                 the process equipment
-   * @param outNozzles           the list of outlet nozzle IDs
+   * @param unit the process equipment
+   * @param outNozzles the list of outlet nozzle IDs
    * @param outletStreamToNozzle map to populate with identity hash to nozzle ID
    */
   private static void registerOutletNozzles(ProcessEquipmentInterface unit, List<String> outNozzles,
@@ -1166,9 +1166,9 @@ public final class DexpiXmlWriter {
    * + 10). Multiple outlets are vertically offset to match the layout.
    * </p>
    *
-   * @param position        the equipment position (may be null)
-   * @param inNozzle        the inlet nozzle ID
-   * @param outNozzles      the outlet nozzle IDs
+   * @param position the equipment position (may be null)
+   * @param inNozzle the inlet nozzle ID
+   * @param outNozzles the outlet nozzle IDs
    * @param nozzlePositions map to populate with nozzle ID to {x, y} coordinates
    */
   private static void registerNozzlePositions(DexpiLayoutEngine.EquipmentPosition position, String inNozzle,
@@ -1212,7 +1212,7 @@ public final class DexpiXmlWriter {
    * wrapper itself so downstream equipment that took the wrapper as its inlet can be connected.
    * </p>
    *
-   * @param processSystem        the process system
+   * @param processSystem the process system
    * @param outletStreamToNozzle map of outlet stream identity hash to nozzle ID
    */
   private static void registerPassThroughStreams(ProcessSystem processSystem,
@@ -1261,10 +1261,10 @@ public final class DexpiXmlWriter {
    * liquid outlets going to different downstream equipment).
    * </p>
    *
-   * @param processSystem        the process system
+   * @param processSystem the process system
    * @param outletStreamToNozzle map of outlet stream identity hash to nozzle ID
-   * @param inletNozzles         map of equipment name to inlet nozzle ID
-   * @param connections          list to populate with connections
+   * @param inletNozzles map of equipment name to inlet nozzle ID
+   * @param connections list to populate with connections
    */
   private static void buildConnections(ProcessSystem processSystem, Map<Integer, String> outletStreamToNozzle,
       Map<String, String> inletNozzles, List<NozzleConnection> connections) {
@@ -1286,12 +1286,12 @@ public final class DexpiXmlWriter {
   /**
    * Appends a PipingNetworkSystem containing Connection elements for equipment wiring.
    *
-   * @param document              the XML document
-   * @param parent                the root element
-   * @param connections           the list of connections
-   * @param usedIds               set of used IDs
+   * @param document the XML document
+   * @param parent the root element
+   * @param connections the list of connections
+   * @param usedIds set of used IDs
    * @param valvePipingComponents pre-built PipingComponent elements for valves, keyed by inlet nozzle ID
-   * @param nozzlePositions       map of nozzle ID to {x, y} coordinates for line geometry
+   * @param nozzlePositions map of nozzle ID to {x, y} coordinates for line geometry
    */
   private static void appendConnectionSystem(Document document, Element parent, List<NozzleConnection> connections,
       Set<String> usedIds, Map<String, Element> valvePipingComponents, Map<String, double[]> nozzlePositions) {
@@ -1393,12 +1393,12 @@ public final class DexpiXmlWriter {
    * Splits an orthogonal connection route into its horizontal and vertical sub-segments and records them for the later
    * line-crossing-hop pass.
    *
-   * @param fromX              source X coordinate
-   * @param fromY              source Y coordinate
-   * @param toX                target X coordinate
-   * @param toY                target Y coordinate
+   * @param fromX source X coordinate
+   * @param fromY source Y coordinate
+   * @param toX target X coordinate
+   * @param toY target Y coordinate
    * @param horizontalSegments collector of {x1, x2, y} horizontal sub-segments
-   * @param verticalSegments   collector of {x, y1, y2} vertical sub-segments
+   * @param verticalSegments collector of {x, y1, y2} vertical sub-segments
    */
   private static void collectRouteSegments(double fromX, double fromY, double toX, double toY,
       List<double[]> horizontalSegments, List<double[]> verticalSegments) {
@@ -1420,10 +1420,10 @@ public final class DexpiXmlWriter {
    * Appends line-crossing hop arcs for every horizontal sub-segment that crosses the interior of a vertical
    * sub-segment.
    *
-   * @param document           the XML document
-   * @param parent             the PipingNetworkSystem element to append the hop arcs to
+   * @param document the XML document
+   * @param parent the PipingNetworkSystem element to append the hop arcs to
    * @param horizontalSegments {x1, x2, y} horizontal sub-segments
-   * @param verticalSegments   {x, y1, y2} vertical sub-segments
+   * @param verticalSegments {x, y1, y2} vertical sub-segments
    */
   private static void appendCrossingHops(Document document, Element parent, List<double[]> horizontalSegments,
       List<double[]> verticalSegments) {
@@ -1439,12 +1439,12 @@ public final class DexpiXmlWriter {
    * never the destination of an internal connection; a product is an outlet nozzle that is never the source of an
    * internal connection.
    *
-   * @param document             the XML document
-   * @param parent               the root PlantModel element
-   * @param connections          the internal nozzle-to-nozzle connections
+   * @param document the XML document
+   * @param parent the root PlantModel element
+   * @param connections the internal nozzle-to-nozzle connections
    * @param equipmentInletNozzle map of unit name to its inlet nozzle ID
    * @param outletStreamToNozzle map of outlet stream identity hash to its nozzle ID
-   * @param nozzlePositions      map of nozzle ID to {x, y} coordinates
+   * @param nozzlePositions map of nozzle ID to {x, y} coordinates
    */
   private static void appendBoundaryConnectors(Document document, Element parent, List<NozzleConnection> connections,
       Map<String, String> equipmentInletNozzle, Map<Integer, String> outletStreamToNozzle,
@@ -1487,10 +1487,10 @@ public final class DexpiXmlWriter {
    * Appends the operating line data (service category, fluid code, pressure, temperature and flow) for a connection as
    * DEXPI {@code GenericAttribute} elements so the pipe carries real process data rather than only geometry.
    *
-   * @param document       the XML document
+   * @param document the XML document
    * @param segmentElement the PipingNetworkSegment element to attach attributes to
-   * @param stream         the process stream carried by the connection (may be null)
-   * @param service        the classified service category (may be null)
+   * @param stream the process stream carried by the connection (may be null)
+   * @param service the classified service category (may be null)
    */
   private static void appendConnectionLineAttributes(Document document, Element segmentElement, StreamInterface stream,
       DexpiServiceClassifier.ServiceType service) {
@@ -1630,14 +1630,14 @@ public final class DexpiXmlWriter {
    * {@code ActuatingFunction}. Finally, an {@code InstrumentationLoopFunction} groups each loop's elements.
    * </p>
    *
-   * @param document        the XML document
-   * @param parent          the root element to append to
-   * @param transmitters    map of tag to transmitter
-   * @param controllers     map of tag to controller (may be null)
-   * @param usedIds         set of already used XML IDs
+   * @param document the XML document
+   * @param parent the root element to append to
+   * @param transmitters map of tag to transmitter
+   * @param controllers map of tag to controller (may be null)
+   * @param usedIds set of already used XML IDs
    * @param layoutPositions equipment layout positions keyed by equipment name
    * @param nozzlePositions nozzle positions keyed by nozzle ID
-   * @param processSystem   the process system for stream-to-equipment matching
+   * @param processSystem the process system for stream-to-equipment matching
    */
   private static void appendInstruments(Document document, Element parent,
       Map<String, MeasurementDeviceInterface> transmitters, Map<String, ControllerDeviceInterface> controllers,
@@ -2015,8 +2015,8 @@ public final class DexpiXmlWriter {
    * </p>
    *
    * @param processSystem the process system to instrument
-   * @param transmitters  the (initially empty) transmitter map to populate, keyed by ISA tag
-   * @param controllers   the controller map to populate, keyed by derived ISA controller tag
+   * @param transmitters the (initially empty) transmitter map to populate, keyed by ISA tag
+   * @param controllers the controller map to populate, keyed by derived ISA controller tag
    */
   private static void synthesizeStandardInstrumentation(ProcessSystem processSystem,
       Map<String, MeasurementDeviceInterface> transmitters, Map<String, ControllerDeviceInterface> controllers) {
@@ -2078,7 +2078,7 @@ public final class DexpiXmlWriter {
   /**
    * Builds a PID controller seeded with a realistic set-point for synthesized instrumentation.
    *
-   * @param name     the ISA controller tag
+   * @param name the ISA controller tag
    * @param setPoint the controller set-point value
    * @return a configured controller device
    */
@@ -2142,7 +2142,7 @@ public final class DexpiXmlWriter {
   /**
    * Finds the name of the equipment whose inlet or outlet stream matches the transmitter's stream.
    *
-   * @param device        the measurement device
+   * @param device the measurement device
    * @param processSystem the process system
    * @return the equipment name, or null if not found
    */
@@ -2192,9 +2192,9 @@ public final class DexpiXmlWriter {
    * Appends a Position element with Location, Axis, and Reference for an instrument bubble.
    *
    * @param document the XML document
-   * @param parent   the element to append to
-   * @param x        the X coordinate
-   * @param y        the Y coordinate
+   * @param parent the element to append to
+   * @param x the X coordinate
+   * @param y the Y coordinate
    */
   private static void appendInstrumentPosition(Document document, Element parent, double x, double y) {
     Element position = document.createElement("Position");
@@ -2222,12 +2222,12 @@ public final class DexpiXmlWriter {
   /**
    * Appends a Text element inside an instrument label.
    *
-   * @param document            the XML document
-   * @param label               the Label element
-   * @param text                the display text
-   * @param x                   X position of the text
-   * @param y                   Y position of the text
-   * @param pifId               the parent ProcessInstrumentationFunction ID
+   * @param document the XML document
+   * @param label the Label element
+   * @param text the display text
+   * @param x X position of the text
+   * @param y Y position of the text
+   * @param pifId the parent ProcessInstrumentationFunction ID
    * @param dependantAttributes the DependantAttribute names for TextStringFormatSpecification
    */
   private static void appendInstrumentLabelText(Document document, Element label, String text, double x, double y,
@@ -2264,10 +2264,10 @@ public final class DexpiXmlWriter {
    * Appends a signal Node with position inside a ConnectionPoints element.
    *
    * @param document the XML document
-   * @param parent   the ConnectionPoints element
-   * @param nodeId   the unique node ID
-   * @param x        the X coordinate
-   * @param y        the Y coordinate
+   * @param parent the ConnectionPoints element
+   * @param nodeId the unique node ID
+   * @param x the X coordinate
+   * @param y the Y coordinate
    */
   private static void appendSignalNode(Document document, Element parent, String nodeId, double x, double y) {
     Element node = document.createElement("Node");
@@ -2380,9 +2380,9 @@ public final class DexpiXmlWriter {
   /**
    * Builds a single stream table entry from a stream's simulation results.
    *
-   * @param df          the decimal format for numeric values
+   * @param df the decimal format for numeric values
    * @param streamLabel the stream label/number
-   * @param stream      the stream to extract data from
+   * @param stream the stream to extract data from
    * @return the stream table entry, or null if data is unavailable
    */
   private static DexpiLayoutEngine.StreamTableEntry buildStreamEntry(DecimalFormat df, String streamLabel,
@@ -2473,9 +2473,9 @@ public final class DexpiXmlWriter {
    * <li>{@code IEC81346LetterCode}: The equipment letter code (e.g. "B", "K", "Q")</li>
    * </ul>
    *
-   * @param document          the XML document
+   * @param document the XML document
    * @param genericAttributes the parent element for generic attributes
-   * @param unit              the process equipment
+   * @param unit the process equipment
    */
   private static void appendIEC81346Attributes(Document document, Element genericAttributes,
       ProcessEquipmentInterface unit) {

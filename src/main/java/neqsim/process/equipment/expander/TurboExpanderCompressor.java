@@ -142,7 +142,7 @@ public class TurboExpanderCompressor extends Expander {
   /**
    * Construct a TurboExpanderCompressor with the specified name and inlet stream.
    *
-   * @param name        the name of the turbo expander compressor
+   * @param name the name of the turbo expander compressor
    * @param inletStream the inlet stream for the expander
    */
   public TurboExpanderCompressor(String name, StreamInterface inletStream) {
@@ -366,7 +366,7 @@ public class TurboExpanderCompressor extends Expander {
    *
    * @param targetTemperature the desired expander outlet temperature [K]
    * @return the required actual isentropic efficiency (dimensionless), or {@code -1.0} if the isentropic enthalpy drop
-   *         is non-positive
+   * is non-positive
    */
   private double calcRequiredExpanderEfficiencyForOutletT(double targetTemperature) {
     SystemInterface fluid = expanderFeedStream.getThermoSystem().clone();
@@ -588,7 +588,7 @@ public class TurboExpanderCompressor extends Expander {
   /**
    * Fit a constrained parabola: efficiency = a*(uc - h)^2 + k, with vertex at (h, k) = (1, 1).
    *
-   * @param ucValues         array of uc values
+   * @param ucValues array of uc values
    * @param efficiencyValues array of efficiency values
    */
   public void setUCcurve(double[] ucValues, double[] efficiencyValues) {
@@ -632,9 +632,9 @@ public class TurboExpanderCompressor extends Expander {
    * performance map (P1) has been supplied it is used directly; otherwise the fitted velocity-ratio parabola scaled by
    * the design efficiency is used. The Q/N correction factor and the IGV efficiency penalty (P2) are then applied.
    *
-   * @param ucRaw        the raw velocity ratio U/C (used for the 2-D map lookup)
-   * @param ucNorm       the normalised velocity ratio U/C/designUC (used for the legacy parabola)
-   * @param igv          the IGV opening (fraction of maximum area, 0..1)
+   * @param ucRaw the raw velocity ratio U/C (used for the 2-D map lookup)
+   * @param ucNorm the normalised velocity ratio U/C/designUC (used for the legacy parabola)
+   * @param igv the IGV opening (fraction of maximum area, 0..1)
    * @param qnCorrection the multiplicative Q/N efficiency correction factor
    * @return the isentropic efficiency (0..1)
    */
@@ -691,7 +691,7 @@ public class TurboExpanderCompressor extends Expander {
    * Set the IGV efficiency penalty curve (P2). The penalty is applied as a multiplicative factor to the expander
    * efficiency, allowing the IGV schedule fitted to OEM data to act as a validatable control law.
    *
-   * @param openings       array of IGV openings (fraction of maximum area, 0..1)
+   * @param openings array of IGV openings (fraction of maximum area, 0..1)
    * @param penaltyFactors matching multiplicative efficiency penalty factors (0..1)
    */
   public void setIgvEfficiencyPenaltyCurve(double[] openings, double[] penaltyFactors) {
@@ -762,7 +762,7 @@ public class TurboExpanderCompressor extends Expander {
   /**
    * Fit a Q/N efficiency curve using cubic spline interpolation.
    *
-   * @param qnValues         array of Q/N values (does not need to be sorted)
+   * @param qnValues array of Q/N values (does not need to be sorted)
    * @param efficiencyValues array of efficiency values
    */
   public void setQNEfficiencycurve(double[] qnValues, double[] efficiencyValues) {
@@ -844,7 +844,7 @@ public class TurboExpanderCompressor extends Expander {
   /**
    * Fit a Q/N head curve using cubic spline interpolation.
    *
-   * @param qnValues   array of Q/N values (does not need to be sorted)
+   * @param qnValues array of Q/N values (does not need to be sorted)
    * @param headValues array of head values
    */
   public void setQNHeadcurve(double[] qnValues, double[] headValues) {
@@ -1564,7 +1564,7 @@ public class TurboExpanderCompressor extends Expander {
    * configured expander outlet pressure.
    *
    * @param temperature the target expander outlet temperature
-   * @param unit        the temperature unit ("K", "C", "F" or "R")
+   * @param unit the temperature unit ("K", "C", "F" or "R")
    */
   public void setExpanderOutTemperature(double temperature, String unit) {
     this.expanderOutTemperatureSpec = new neqsim.util.unit.TemperatureUnit(temperature, unit).getValue("K");

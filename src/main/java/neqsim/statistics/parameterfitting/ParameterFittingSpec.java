@@ -507,7 +507,7 @@ public class ParameterFittingSpec implements Serializable {
   /**
    * Returns a default string when the value is null.
    *
-   * @param value        user-supplied value
+   * @param value user-supplied value
    * @param defaultValue fallback value
    * @return value or defaultValue
    */

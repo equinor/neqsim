@@ -140,7 +140,7 @@ public class SolutionGasWaterRatio extends BasePVTsimulation {
    * </p>
    *
    * @param salinity the salinity value
-   * @param unit     the unit: "molal" (mol/kg water), "wt%" (weight percent NaCl), or "ppm" (mg/L)
+   * @param unit the unit: "molal" (mol/kg water), "wt%" (weight percent NaCl), or "ppm" (mg/L)
    */
   public void setSalinity(double salinity, String unit) {
     if (unit == null) {
@@ -180,7 +180,7 @@ public class SolutionGasWaterRatio extends BasePVTsimulation {
    * </p>
    *
    * @param temperatures array of temperatures in Kelvin
-   * @param pressures    array of pressures in bara
+   * @param pressures array of pressures in bara
    */
   public void setTemperaturesAndPressures(double[] temperatures, double[] pressures) {
     if (temperatures.length != pressures.length) {
@@ -474,7 +474,7 @@ public class SolutionGasWaterRatio extends BasePVTsimulation {
    * (volume of water at standard conditions)
    * </p>
    *
-   * @param system       the flashed system
+   * @param system the flashed system
    * @param temperatureK reservoir temperature in Kelvin
    * @param pressureBara reservoir pressure in bara
    * @return Rsw in Sm³ gas / Sm³ water

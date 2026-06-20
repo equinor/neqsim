@@ -149,7 +149,7 @@ public class LargeCombinedModelsTest {
   /**
    * Creates a separation train process for the given input streams.
    *
-   * @param firstStageStream   the input stream for the first stage
+   * @param firstStageStream the input stream for the first stage
    * @param seccondStageStream the input stream for the second stage
    * @return the configured ProcessSystem object representing the separation train
    */
@@ -426,11 +426,11 @@ public class LargeCombinedModelsTest {
   /**
    * Creates an expander process model.
    *
-   * @param dewPointScrubber2    the second dew point scrubber separator
+   * @param dewPointScrubber2 the second dew point scrubber separator
    * @param fourthStageSeparator the fourth stage separator
-   * @param secondstagegasmixer  the second stage gas mixer
-   * @param firststagegasmixer   the first stage gas mixer
-   * @param mpLiqmixer           the mixer for medium pressure liquid
+   * @param secondstagegasmixer the second stage gas mixer
+   * @param firststagegasmixer the first stage gas mixer
+   * @param mpLiqmixer the mixer for medium pressure liquid
    * @return the created process system
    */
   public ProcessSystem createExpanderProcessModel(Separator dewPointScrubber2, ThreePhaseSeparator fourthStageSeparator,

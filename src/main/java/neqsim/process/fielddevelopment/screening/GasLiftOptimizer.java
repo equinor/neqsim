@@ -129,8 +129,8 @@ public class GasLiftOptimizer implements Serializable {
      * Creates a curve from a parametric model (simplified hyperbolic).
      *
      * @param naturalRate natural flow rate (Sm³/d)
-     * @param maxRate     maximum rate with gas lift (Sm³/d)
-     * @param optimalGas  optimal gas injection (Sm³/d)
+     * @param maxRate maximum rate with gas lift (Sm³/d)
+     * @param optimalGas optimal gas injection (Sm³/d)
      */
     public PerformanceCurve(double naturalRate, double maxRate, double optimalGas) {
       this.naturalFlowRate = naturalRate;
@@ -240,10 +240,10 @@ public class GasLiftOptimizer implements Serializable {
      * due to liquid loading.
      * </p>
      *
-     * @param gas     gas injection rate (Sm³/d)
+     * @param gas gas injection rate (Sm³/d)
      * @param natural natural flow rate without gas lift (Sm³/d)
      * @param maxRate maximum achievable rate with optimal gas lift (Sm³/d)
-     * @param optGas  optimal gas injection rate (Sm³/d)
+     * @param optGas optimal gas injection rate (Sm³/d)
      * @return calculated oil rate (Sm³/d)
      */
     private double calculateOilRate(double gas, double natural, double maxRate, double optGas) {
@@ -432,8 +432,8 @@ public class GasLiftOptimizer implements Serializable {
   /**
    * Adds a well with its performance curve.
    *
-   * @param name       well name
-   * @param curve      gas lift performance curve
+   * @param name well name
+   * @param curve gas lift performance curve
    * @param maxGasRate maximum gas injection rate (Sm³/d)
    * @return this for chaining
    */
@@ -445,11 +445,11 @@ public class GasLiftOptimizer implements Serializable {
   /**
    * Adds a well with simplified curve parameters.
    *
-   * @param name        well name
+   * @param name well name
    * @param naturalRate natural flow rate (Sm³/d)
-   * @param maxRate     maximum rate with gas lift (Sm³/d)
-   * @param optimalGas  optimal gas injection (Sm³/d)
-   * @param maxGasRate  maximum allowed gas rate (Sm³/d)
+   * @param maxRate maximum rate with gas lift (Sm³/d)
+   * @param optimalGas optimal gas injection (Sm³/d)
+   * @param maxGasRate maximum allowed gas rate (Sm³/d)
    * @return this for chaining
    */
   public GasLiftOptimizer addWell(String name, double naturalRate, double maxRate, double optimalGas,
@@ -461,7 +461,7 @@ public class GasLiftOptimizer implements Serializable {
   /**
    * Sets the available lift gas.
    *
-   * @param gas  available gas
+   * @param gas available gas
    * @param unit unit (Sm3/d, MSm3/d)
    * @return this for chaining
    */
@@ -499,7 +499,7 @@ public class GasLiftOptimizer implements Serializable {
   /**
    * Sets compression pressures.
    *
-   * @param suction   suction pressure (bara)
+   * @param suction suction pressure (bara)
    * @param discharge discharge pressure (bara)
    * @return this for chaining
    */
@@ -524,7 +524,7 @@ public class GasLiftOptimizer implements Serializable {
    * Sets a well's enabled status.
    *
    * @param wellName well name
-   * @param enabled  true to include in optimization
+   * @param enabled true to include in optimization
    * @return this for chaining
    */
   public GasLiftOptimizer setWellEnabled(String wellName, boolean enabled) {
@@ -776,7 +776,7 @@ public class GasLiftOptimizer implements Serializable {
    * Uses the diminishing returns property: higher gas rates yield lower marginal response.
    * </p>
    *
-   * @param well        well data with performance curve
+   * @param well well data with performance curve
    * @param targetSlope target marginal response (Sm³ oil / Sm³ gas)
    * @return gas rate that achieves target slope (Sm³/d)
    */

@@ -172,8 +172,8 @@ public class EnvironmentalReporter implements Serializable {
   /**
    * Sets annual production volumes.
    *
-   * @param oilSm3  oil production (Sm³/year)
-   * @param gasSm3  gas production (Sm³/year)
+   * @param oilSm3 oil production (Sm³/year)
+   * @param gasSm3 gas production (Sm³/year)
    * @param waterM3 water production (m³/year)
    * @return this for chaining
    */
@@ -322,7 +322,7 @@ public class EnvironmentalReporter implements Serializable {
   /**
    * Generates a comprehensive environmental report including water treatment.
    *
-   * @param facility  process system
+   * @param facility process system
    * @param treatment water treatment train
    * @return environmental report
    */

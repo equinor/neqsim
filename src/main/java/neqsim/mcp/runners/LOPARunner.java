@@ -102,7 +102,7 @@ public final class LOPARunner {
   /**
    * Rounds a value.
    *
-   * @param value    value
+   * @param value value
    * @param decimals decimals
    * @return rounded value
    */

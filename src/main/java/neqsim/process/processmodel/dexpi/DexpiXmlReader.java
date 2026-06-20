@@ -113,7 +113,7 @@ public final class DexpiXmlReader {
    *
    * @param file DEXPI XML file
    * @return a process system populated with units found in the XML
-   * @throws IOException             if the file cannot be read
+   * @throws IOException if the file cannot be read
    * @throws DexpiXmlReaderException if the file cannot be parsed
    */
   public static ProcessSystem read(File file) throws IOException, DexpiXmlReaderException {
@@ -124,11 +124,11 @@ public final class DexpiXmlReader {
    * Reads the provided DEXPI XML file and returns a populated {@link ProcessSystem} using a template {@link Stream} for
    * generated piping segments.
    *
-   * @param file           DEXPI XML file
+   * @param file DEXPI XML file
    * @param templateStream stream providing default fluid, temperature, pressure, and flow rate for generated piping
-   *                       segments. If {@code null}, a methane/ethane default is used.
+   * segments. If {@code null}, a methane/ethane default is used.
    * @return a process system populated with units found in the XML
-   * @throws IOException             if the file cannot be read
+   * @throws IOException if the file cannot be read
    * @throws DexpiXmlReaderException if the file cannot be parsed
    */
   public static ProcessSystem read(File file, Stream templateStream) throws IOException, DexpiXmlReaderException {
@@ -144,7 +144,7 @@ public final class DexpiXmlReader {
    *
    * @param inputStream stream containing DEXPI XML data
    * @return a process system populated with units found in the XML
-   * @throws IOException             if the stream cannot be read
+   * @throws IOException if the stream cannot be read
    * @throws DexpiXmlReaderException if the stream cannot be parsed
    */
   public static ProcessSystem read(InputStream inputStream) throws IOException, DexpiXmlReaderException {
@@ -155,11 +155,11 @@ public final class DexpiXmlReader {
    * Reads the provided DEXPI XML stream and returns a populated {@link ProcessSystem} using a template {@link Stream}
    * for any generated piping segments.
    *
-   * @param inputStream    stream containing DEXPI XML data
+   * @param inputStream stream containing DEXPI XML data
    * @param templateStream stream providing default fluid, temperature, pressure, and flow rate for generated piping
-   *                       segments. If {@code null}, a methane/ethane default is used.
+   * segments. If {@code null}, a methane/ethane default is used.
    * @return a process system populated with units found in the XML
-   * @throws IOException             if the stream cannot be read
+   * @throws IOException if the stream cannot be read
    * @throws DexpiXmlReaderException if the stream cannot be parsed
    */
   public static ProcessSystem read(InputStream inputStream, Stream templateStream)
@@ -172,9 +172,9 @@ public final class DexpiXmlReader {
   /**
    * Populates an existing {@link ProcessSystem} with units parsed from a DEXPI XML file.
    *
-   * @param file          XML file to parse
+   * @param file XML file to parse
    * @param processSystem target process system
-   * @throws IOException             if reading fails
+   * @throws IOException if reading fails
    * @throws DexpiXmlReaderException if the file cannot be parsed
    */
   public static void load(File file, ProcessSystem processSystem) throws IOException, DexpiXmlReaderException {
@@ -184,11 +184,11 @@ public final class DexpiXmlReader {
   /**
    * Populates an existing {@link ProcessSystem} with units parsed from a DEXPI XML file.
    *
-   * @param file           XML file to parse
-   * @param processSystem  target process system
+   * @param file XML file to parse
+   * @param processSystem target process system
    * @param templateStream stream providing default fluid, temperature, pressure, and flow rate for generated piping
-   *                       segments. If {@code null}, a methane/ethane default is used.
-   * @throws IOException             if reading fails
+   * segments. If {@code null}, a methane/ethane default is used.
+   * @throws IOException if reading fails
    * @throws DexpiXmlReaderException if the file cannot be parsed
    */
   public static void load(File file, ProcessSystem processSystem, Stream templateStream)
@@ -203,9 +203,9 @@ public final class DexpiXmlReader {
   /**
    * Populates an existing {@link ProcessSystem} with units parsed from a DEXPI XML stream.
    *
-   * @param inputStream   XML input stream
+   * @param inputStream XML input stream
    * @param processSystem target process system
-   * @throws IOException             if reading fails
+   * @throws IOException if reading fails
    * @throws DexpiXmlReaderException if the stream cannot be parsed
    */
   public static void load(InputStream inputStream, ProcessSystem processSystem)
@@ -216,11 +216,11 @@ public final class DexpiXmlReader {
   /**
    * Populates an existing {@link ProcessSystem} with units parsed from a DEXPI XML stream.
    *
-   * @param inputStream    XML input stream
-   * @param processSystem  target process system
+   * @param inputStream XML input stream
+   * @param processSystem target process system
    * @param templateStream stream providing default fluid, temperature, pressure, and flow rate for generated piping
-   *                       segments. If {@code null}, a methane/ethane default is used.
-   * @throws IOException             if reading fails
+   * segments. If {@code null}, a methane/ethane default is used.
+   * @throws IOException if reading fails
    * @throws DexpiXmlReaderException if the stream cannot be parsed
    */
   public static void load(InputStream inputStream, ProcessSystem processSystem, Stream templateStream)
@@ -231,12 +231,12 @@ public final class DexpiXmlReader {
   /**
    * Populates an existing {@link ProcessSystem} with units parsed from a DEXPI XML stream.
    *
-   * @param inputStream    XML input stream
-   * @param processSystem  target process system
+   * @param inputStream XML input stream
+   * @param processSystem target process system
    * @param templateStream stream providing default fluid, temperature, pressure, and flow rate for generated piping
-   *                       segments. If {@code null}, a methane/ethane default is used.
+   * segments. If {@code null}, a methane/ethane default is used.
    * @param namespaceAware whether to enable namespace-aware XML parsing
-   * @throws IOException             if reading fails
+   * @throws IOException if reading fails
    * @throws DexpiXmlReaderException if the stream cannot be parsed
    */
   public static void load(InputStream inputStream, ProcessSystem processSystem, Stream templateStream,
@@ -263,7 +263,7 @@ public final class DexpiXmlReader {
    *
    * @param file DEXPI XML file
    * @return list of instrument info records parsed from the file
-   * @throws IOException             if the file cannot be read
+   * @throws IOException if the file cannot be read
    * @throws DexpiXmlReaderException if the file cannot be parsed
    */
   public static List<DexpiInstrumentInfo> readInstruments(File file) throws IOException, DexpiXmlReaderException {
@@ -278,7 +278,7 @@ public final class DexpiXmlReader {
    *
    * @param inputStream stream containing DEXPI XML data
    * @return list of instrument info records parsed from the stream
-   * @throws IOException             if the stream cannot be read
+   * @throws IOException if the stream cannot be read
    * @throws DexpiXmlReaderException if the stream cannot be parsed
    */
   public static List<DexpiInstrumentInfo> readInstruments(InputStream inputStream)

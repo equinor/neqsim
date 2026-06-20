@@ -125,8 +125,8 @@ public class AnaerobicDigester extends Fermenter {
      * Creates a substrate type enum constant.
      *
      * @param specificMethaneYield Nm3 CH4 / kg VS destroyed
-     * @param vsDestruction        VS destruction fraction
-     * @param vstsRatio            VS/TS ratio
+     * @param vsDestruction VS destruction fraction
+     * @param vstsRatio VS/TS ratio
      */
     SubstrateType(double specificMethaneYield, double vsDestruction, double vstsRatio) {
       this.specificMethaneYield = specificMethaneYield;
@@ -232,7 +232,7 @@ public class AnaerobicDigester extends Fermenter {
   /**
    * Creates an anaerobic digester with the given name and inlet stream.
    *
-   * @param name        equipment name
+   * @param name equipment name
    * @param inletStream the sludge/substrate inlet stream
    */
   public AnaerobicDigester(String name, StreamInterface inletStream) {
@@ -311,7 +311,7 @@ public class AnaerobicDigester extends Fermenter {
    * Sets the digester temperature with unit specification.
    *
    * @param temperature temperature value
-   * @param unit        unit string ("K", "C", "F")
+   * @param unit unit string ("K", "C", "F")
    */
   public void setDigesterTemperature(double temperature, String unit) {
     if ("C".equalsIgnoreCase(unit)) {

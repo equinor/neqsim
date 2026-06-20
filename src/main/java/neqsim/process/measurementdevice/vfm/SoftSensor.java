@@ -72,8 +72,8 @@ public class SoftSensor extends StreamMeasurementDeviceBaseClass {
   /**
    * Creates a new soft sensor.
    *
-   * @param name         the sensor name/tag
-   * @param stream       the stream to analyze
+   * @param name the sensor name/tag
+   * @param stream the stream to analyze
    * @param propertyType the property to estimate
    */
   public SoftSensor(String name, StreamInterface stream, PropertyType propertyType) {
@@ -127,7 +127,7 @@ public class SoftSensor extends StreamMeasurementDeviceBaseClass {
   /**
    * Sets a single input value.
    *
-   * @param name  input name (e.g., "pressure", "temperature")
+   * @param name input name (e.g., "pressure", "temperature")
    * @param value input value
    */
   public void setInput(String name, double value) {
@@ -330,7 +330,7 @@ public class SoftSensor extends StreamMeasurementDeviceBaseClass {
   /**
    * Gets uncertainty bounds for the estimate.
    *
-   * @param pressureUncertainty    pressure measurement uncertainty in bar
+   * @param pressureUncertainty pressure measurement uncertainty in bar
    * @param temperatureUncertainty temperature measurement uncertainty in K
    * @return uncertainty bounds for the estimated property
    */

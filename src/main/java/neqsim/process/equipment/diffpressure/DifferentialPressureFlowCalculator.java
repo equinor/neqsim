@@ -98,15 +98,15 @@ public final class DifferentialPressureFlowCalculator {
   /**
    * Calculates flow rates for the provided operating conditions.
    *
-   * @param pressureBarg             pressure values in barg
-   * @param temperatureC             temperature values in degrees Celsius
+   * @param pressureBarg pressure values in barg
+   * @param temperatureC temperature values in degrees Celsius
    * @param differentialPressureMbar differential pressure across restriction in mbar
-   * @param flowType                 device type (Venturi, Orifice, ISA1932, V-Cone, DallTube, Annubar, Nozzle,
-   *                                 Simplified, Perrys-Orifice)
-   * @param flowData                 geometry parameters (see individual calculation methods)
-   * @param components               gas component names
-   * @param fractions                component fractions (mole basis)
-   * @param normalizeFractions       whether to normalise the composition fractions
+   * @param flowType device type (Venturi, Orifice, ISA1932, V-Cone, DallTube, Annubar, Nozzle, Simplified,
+   * Perrys-Orifice)
+   * @param flowData geometry parameters (see individual calculation methods)
+   * @param components gas component names
+   * @param fractions component fractions (mole basis)
+   * @param normalizeFractions whether to normalise the composition fractions
    * @return flow calculation result
    */
   public static FlowCalculationResult calculate(double[] pressureBarg, double[] temperatureC,
@@ -187,12 +187,12 @@ public final class DifferentialPressureFlowCalculator {
   /**
    * Convenience overload using default composition and normalisation.
    *
-   * @param pressureBarg             pressure values in barg
-   * @param temperatureC             temperature values in degrees Celsius
+   * @param pressureBarg pressure values in barg
+   * @param temperatureC temperature values in degrees Celsius
    * @param differentialPressureMbar differential pressure across restriction in mbar
-   * @param flowType                 device type (Venturi, Orifice, ISA1932, V-Cone, DallTube, Annubar, Nozzle,
-   *                                 Simplified, Perrys-Orifice)
-   * @param flowData                 geometry parameters (see individual calculation methods)
+   * @param flowType device type (Venturi, Orifice, ISA1932, V-Cone, DallTube, Annubar, Nozzle, Simplified,
+   * Perrys-Orifice)
+   * @param flowData geometry parameters (see individual calculation methods)
    * @return flow calculation result
    */
   public static FlowCalculationResult calculate(double[] pressureBarg, double[] temperatureC,
@@ -203,11 +203,11 @@ public final class DifferentialPressureFlowCalculator {
   /**
    * Convenience overload with default flow data and composition.
    *
-   * @param pressureBarg             pressure values in barg
-   * @param temperatureC             temperature values in degrees Celsius
+   * @param pressureBarg pressure values in barg
+   * @param temperatureC temperature values in degrees Celsius
    * @param differentialPressureMbar differential pressure across restriction in mbar
-   * @param flowType                 device type (Venturi, Orifice, ISA1932, V-Cone, DallTube, Annubar, Nozzle,
-   *                                 Simplified, Perrys-Orifice)
+   * @param flowType device type (Venturi, Orifice, ISA1932, V-Cone, DallTube, Annubar, Nozzle, Simplified,
+   * Perrys-Orifice)
    * @return flow calculation result
    */
   public static FlowCalculationResult calculate(double[] pressureBarg, double[] temperatureC,
@@ -574,12 +574,12 @@ public final class DifferentialPressureFlowCalculator {
    * pressure ratio.
    * </p>
    *
-   * @param massFlowKgPerHour    mass flow rate in kg/h
-   * @param pressureBara         upstream pressure in bara
-   * @param density              fluid density in kg/m³
-   * @param kappa                isentropic exponent (Cp/Cv)
-   * @param pipeDiameterMm       pipe diameter in mm
-   * @param throatDiameterMm     throat diameter in mm
+   * @param massFlowKgPerHour mass flow rate in kg/h
+   * @param pressureBara upstream pressure in bara
+   * @param density fluid density in kg/m³
+   * @param kappa isentropic exponent (Cp/Cv)
+   * @param pipeDiameterMm pipe diameter in mm
+   * @param throatDiameterMm throat diameter in mm
    * @param dischargeCoefficient discharge coefficient (default 0.985 for Venturi)
    * @return differential pressure in mbar
    */
@@ -629,11 +629,11 @@ public final class DifferentialPressureFlowCalculator {
    * Calculates differential pressure from mass flow rate for a Venturi meter using default discharge coefficient.
    *
    * @param massFlowKgPerHour mass flow rate in kg/h
-   * @param pressureBara      upstream pressure in bara
-   * @param density           fluid density in kg/m³
-   * @param kappa             isentropic exponent (Cp/Cv)
-   * @param pipeDiameterMm    pipe diameter in mm
-   * @param throatDiameterMm  throat diameter in mm
+   * @param pressureBara upstream pressure in bara
+   * @param density fluid density in kg/m³
+   * @param kappa isentropic exponent (Cp/Cv)
+   * @param pipeDiameterMm pipe diameter in mm
+   * @param throatDiameterMm throat diameter in mm
    * @return differential pressure in mbar
    */
   public static double calculateDpFromFlowVenturi(double massFlowKgPerHour, double pressureBara, double density,
@@ -645,13 +645,13 @@ public final class DifferentialPressureFlowCalculator {
   /**
    * Calculates differential pressure from mass flow rate using NeqSim thermodynamic properties.
    *
-   * @param massFlowKgPerHour  mass flow rate in kg/h
-   * @param pressureBarg       pressure in barg
-   * @param temperatureC       temperature in degrees Celsius
-   * @param flowType           device type (currently only "Venturi" supported)
-   * @param flowData           geometry parameters [pipeDiameterMm, throatDiameterMm, dischargeCoefficient]
-   * @param components         gas component names
-   * @param fractions          component fractions (mole basis)
+   * @param massFlowKgPerHour mass flow rate in kg/h
+   * @param pressureBarg pressure in barg
+   * @param temperatureC temperature in degrees Celsius
+   * @param flowType device type (currently only "Venturi" supported)
+   * @param flowData geometry parameters [pipeDiameterMm, throatDiameterMm, dischargeCoefficient]
+   * @param components gas component names
+   * @param fractions component fractions (mole basis)
    * @param normalizeFractions whether to normalise the composition fractions
    * @return differential pressure in mbar
    */

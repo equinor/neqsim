@@ -115,7 +115,7 @@ public class BroydenAccelerator implements Serializable {
    * Given the current iterate x and the fixed-point function output g(x), this method computes an accelerated next
    * iterate that should converge faster than direct substitution (x_{n+1} = g(x_n)).
    *
-   * @param currentX       current input values (x_n)
+   * @param currentX current input values (x_n)
    * @param functionOutput output from fixed-point function (g(x_n))
    * @return accelerated next iterate
    */

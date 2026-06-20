@@ -106,17 +106,17 @@ public final class TR2237Templates {
   /**
    * Adds one performance standard and a linked starter barrier to a register.
    *
-   * @param register               register receiving the standard and barrier
-   * @param id                     performance standard identifier
-   * @param title                  performance standard title
-   * @param safetyFunction         safety function description
-   * @param demandMode             demand mode
-   * @param targetPfd              target PFD, or NaN when not applicable
-   * @param availability           required availability, or NaN when not applicable
+   * @param register register receiving the standard and barrier
+   * @param id performance standard identifier
+   * @param title performance standard title
+   * @param safetyFunction safety function description
+   * @param demandMode demand mode
+   * @param targetPfd target PFD, or NaN when not applicable
+   * @param availability required availability, or NaN when not applicable
    * @param proofTestIntervalHours proof test interval in hours, or NaN when not applicable
-   * @param responseTimeSeconds    response time in seconds, or NaN when not applicable
-   * @param acceptanceCriterion    acceptance criterion text
-   * @param barrierType            barrier type
+   * @param responseTimeSeconds response time in seconds, or NaN when not applicable
+   * @param acceptanceCriterion acceptance criterion text
+   * @param barrierType barrier type
    */
   private static void addStandardWithBarrier(BarrierRegister register, String id, String title, String safetyFunction,
       DemandMode demandMode, double targetPfd, double availability, double proofTestIntervalHours,

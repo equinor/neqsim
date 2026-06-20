@@ -727,7 +727,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   /**
    * Calculate the average value of the {@link ControllerEvent} properties for the last entries in the event log.
    *
-   * @param count     number of samples to include in the average
+   * @param count number of samples to include in the average
    * @param extractor function returning the value to average from the event
    * @return average of the selected event property
    */

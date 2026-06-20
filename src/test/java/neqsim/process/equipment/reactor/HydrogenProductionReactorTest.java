@@ -108,13 +108,13 @@ public class HydrogenProductionReactorTest extends neqsim.NeqSimTest {
   /**
    * Creates a water-gas shift benchmark feed stream.
    *
-   * @param name                      stream name
+   * @param name stream name
    * @param carbonMonoxideMolesPerSec carbon monoxide flow in mole/sec
-   * @param waterMolesPerSec          water flow in mole/sec
-   * @param hydrogenMolesPerSec       hydrogen flow in mole/sec
-   * @param carbonDioxideMolesPerSec  carbon dioxide flow in mole/sec
-   * @param temperatureK              temperature in Kelvin
-   * @param pressureBara              pressure in bara
+   * @param waterMolesPerSec water flow in mole/sec
+   * @param hydrogenMolesPerSec hydrogen flow in mole/sec
+   * @param carbonDioxideMolesPerSec carbon dioxide flow in mole/sec
+   * @param temperatureK temperature in Kelvin
+   * @param pressureBara pressure in bara
    * @return configured stream
    */
   private Stream createShiftFeed(String name, double carbonMonoxideMolesPerSec, double waterMolesPerSec,
@@ -136,11 +136,11 @@ public class HydrogenProductionReactorTest extends neqsim.NeqSimTest {
   /**
    * Creates a methane and steam feed stream.
    *
-   * @param name               stream name
+   * @param name stream name
    * @param methaneMolesPerSec methane flow in mole/sec
-   * @param steamToCarbon      steam-to-carbon ratio
-   * @param temperatureK       temperature in Kelvin
-   * @param pressureBara       pressure in bara
+   * @param steamToCarbon steam-to-carbon ratio
+   * @param temperatureK temperature in Kelvin
+   * @param pressureBara pressure in bara
    * @return configured stream
    */
   private Stream createMethaneSteamFeed(String name, double methaneMolesPerSec, double steamToCarbon,
@@ -151,12 +151,12 @@ public class HydrogenProductionReactorTest extends neqsim.NeqSimTest {
   /**
    * Creates a methane, steam, and oxygen feed stream.
    *
-   * @param name               stream name
+   * @param name stream name
    * @param methaneMolesPerSec methane flow in mole/sec
-   * @param steamToCarbon      steam-to-carbon ratio
-   * @param oxygenToCarbon     oxygen-to-carbon ratio
-   * @param temperatureK       temperature in Kelvin
-   * @param pressureBara       pressure in bara
+   * @param steamToCarbon steam-to-carbon ratio
+   * @param oxygenToCarbon oxygen-to-carbon ratio
+   * @param temperatureK temperature in Kelvin
+   * @param pressureBara pressure in bara
    * @return configured stream
    */
   private Stream createMethaneSteamOxygenFeed(String name, double methaneMolesPerSec, double steamToCarbon,
@@ -174,10 +174,10 @@ public class HydrogenProductionReactorTest extends neqsim.NeqSimTest {
   /**
    * Creates a methane fuel stream.
    *
-   * @param name               stream name
+   * @param name stream name
    * @param methaneMolesPerSec methane flow in mole/sec
-   * @param temperatureK       temperature in Kelvin
-   * @param pressureBara       pressure in bara
+   * @param temperatureK temperature in Kelvin
+   * @param pressureBara pressure in bara
    * @return configured stream
    */
   private Stream createMethaneFuel(String name, double methaneMolesPerSec, double temperatureK, double pressureBara) {
@@ -194,10 +194,10 @@ public class HydrogenProductionReactorTest extends neqsim.NeqSimTest {
   /**
    * Creates an air stream.
    *
-   * @param name              stream name
+   * @param name stream name
    * @param oxygenMolesPerSec oxygen flow in mole/sec
-   * @param temperatureK      temperature in Kelvin
-   * @param pressureBara      pressure in bara
+   * @param temperatureK temperature in Kelvin
+   * @param pressureBara pressure in bara
    * @return configured stream
    */
   private Stream createAir(String name, double oxygenMolesPerSec, double temperatureK, double pressureBara) {

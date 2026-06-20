@@ -15,7 +15,7 @@ public interface ValveCharacteristic extends Serializable {
    * getActualKv.
    * </p>
    *
-   * @param Kv             a double
+   * @param Kv a double
    * @param percentOpening a double
    * @return a double
    */

@@ -312,7 +312,7 @@ public class BottleneckAnalyzer implements Serializable {
   /**
    * Evaluates debottlenecking options for a specific equipment.
    *
-   * @param equipmentName          name of bottleneck equipment
+   * @param equipmentName name of bottleneck equipment
    * @param targetCapacityIncrease target capacity increase (0.0-1.0, e.g., 0.20 for 20%)
    * @return list of debottlenecking options
    */
@@ -507,11 +507,11 @@ public class BottleneckAnalyzer implements Serializable {
     /**
      * Creates a debottlenecking option.
      *
-     * @param name             option name
-     * @param description      detailed description
+     * @param name option name
+     * @param description detailed description
      * @param capacityIncrease capacity increase (0.0-1.0)
-     * @param costMUSD         estimated cost in MUSD
-     * @param months           implementation time in months
+     * @param costMUSD estimated cost in MUSD
+     * @param months implementation time in months
      */
     public DebottleneckOption(String name, String description, double capacityIncrease, double costMUSD, int months) {
       this.name = name;

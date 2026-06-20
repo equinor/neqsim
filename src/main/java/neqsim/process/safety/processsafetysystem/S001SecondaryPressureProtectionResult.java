@@ -34,21 +34,21 @@ public class S001SecondaryPressureProtectionResult implements Serializable {
   /**
    * Creates a secondary pressure protection result.
    *
-   * @param maximumEventPressureBara   maximum event pressure in bara
-   * @param designPressureBara         design pressure in bara
-   * @param testPressureBara           pressure test pressure in bara
-   * @param demandFrequencyPerYear     demand frequency per year
-   * @param targetFrequencyPerYear     target frequency per year
-   * @param pressureBasisComplete      true when pressure basis is complete
-   * @param testPressureValid          true when test pressure is at least design pressure
+   * @param maximumEventPressureBara maximum event pressure in bara
+   * @param designPressureBara design pressure in bara
+   * @param testPressureBara pressure test pressure in bara
+   * @param demandFrequencyPerYear demand frequency per year
+   * @param targetFrequencyPerYear target frequency per year
+   * @param pressureBasisComplete true when pressure basis is complete
+   * @param testPressureValid true when test pressure is at least design pressure
    * @param pressureWithinTestPressure true when event pressure is no higher than test pressure
-   * @param frequencyConfigured        true when demand and target frequencies are configured
-   * @param frequencyCriterionMet      true when demand frequency is at or below target
-   * @param leakageAssessed            true when leakage has been assessed
-   * @param leakageRoutedSafe          true when leakage is routed to a safe location
-   * @param proofTestConfigured        true when proof-test interval is configured
-   * @param proofTestCriterionMet      true when proof-test interval is acceptable
-   * @param acceptable                 true when all configured criteria are acceptable
+   * @param frequencyConfigured true when demand and target frequencies are configured
+   * @param frequencyCriterionMet true when demand frequency is at or below target
+   * @param leakageAssessed true when leakage has been assessed
+   * @param leakageRoutedSafe true when leakage is routed to a safe location
+   * @param proofTestConfigured true when proof-test interval is configured
+   * @param proofTestCriterionMet true when proof-test interval is acceptable
+   * @param acceptable true when all configured criteria are acceptable
    */
   public S001SecondaryPressureProtectionResult(double maximumEventPressureBara, double designPressureBara,
       double testPressureBara, double demandFrequencyPerYear, double targetFrequencyPerYear,

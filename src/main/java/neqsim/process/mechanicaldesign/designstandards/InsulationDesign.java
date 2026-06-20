@@ -119,9 +119,9 @@ public class InsulationDesign implements Serializable {
    *
    * @param processTempC process temperature in Celsius
    * @param ambientTempC ambient temperature in Celsius
-   * @param material     insulation material
-   * @param purpose      insulation purpose
-   * @param windSpeedMS  wind speed in m/s (for outdoor installations)
+   * @param material insulation material
+   * @param purpose insulation purpose
+   * @param windSpeedMS wind speed in m/s (for outdoor installations)
    * @return required insulation thickness in mm
    */
   public static double flatSurfaceThickness(double processTempC, double ambientTempC, InsulationMaterial material,
@@ -180,10 +180,10 @@ public class InsulationDesign implements Serializable {
    *
    * @param processTempC process temperature in Celsius
    * @param ambientTempC ambient temperature in Celsius
-   * @param pipeODMm     pipe outer diameter in mm
-   * @param material     insulation material
-   * @param purpose      insulation purpose
-   * @param windSpeedMS  wind speed in m/s
+   * @param pipeODMm pipe outer diameter in mm
+   * @param material insulation material
+   * @param purpose insulation purpose
+   * @param windSpeedMS wind speed in m/s
    * @return required insulation thickness in mm
    */
   public static double pipeThickness(double processTempC, double ambientTempC, double pipeODMm,
@@ -234,12 +234,12 @@ public class InsulationDesign implements Serializable {
   /**
    * Calculate heat loss from an insulated pipe per meter of length.
    *
-   * @param processTempC          process temperature in Celsius
-   * @param ambientTempC          ambient temperature in Celsius
-   * @param pipeODMm              pipe outer diameter in mm
+   * @param processTempC process temperature in Celsius
+   * @param ambientTempC ambient temperature in Celsius
+   * @param pipeODMm pipe outer diameter in mm
    * @param insulationThicknessMm insulation thickness in mm
-   * @param material              insulation material
-   * @param windSpeedMS           wind speed in m/s
+   * @param material insulation material
+   * @param windSpeedMS wind speed in m/s
    * @return heat loss in W/m
    */
   public static double pipeHeatLossPerMeter(double processTempC, double ambientTempC, double pipeODMm,
@@ -259,9 +259,9 @@ public class InsulationDesign implements Serializable {
   /**
    * Calculate insulation weight per meter of pipe.
    *
-   * @param pipeODMm              pipe outer diameter in mm
+   * @param pipeODMm pipe outer diameter in mm
    * @param insulationThicknessMm insulation thickness in mm
-   * @param material              insulation material
+   * @param material insulation material
    * @return weight in kg/m (insulation only, excludes cladding)
    */
   public static double pipeInsulationWeightPerMeter(double pipeODMm, double insulationThicknessMm,
@@ -277,7 +277,7 @@ public class InsulationDesign implements Serializable {
    * Select recommended insulation material based on process temperature and purpose.
    *
    * @param processTempC process temperature in Celsius
-   * @param purpose      insulation purpose
+   * @param purpose insulation purpose
    * @return recommended insulation material
    */
   public static InsulationMaterial selectMaterial(double processTempC, InsulationPurpose purpose) {

@@ -116,7 +116,7 @@ public class LNGSloshingModel implements Serializable {
    * </p>
    *
    * @param significantWaveHeight significant wave height Hs (m)
-   * @param fillFraction          tank fill fraction (0.0 to 1.0)
+   * @param fillFraction tank fill fraction (0.0 to 1.0)
    * @return mixing enhancement factor (1.0 = no enhancement)
    */
   public double calculateMixingFactor(double significantWaveHeight, double fillFraction) {
@@ -147,7 +147,7 @@ public class LNGSloshingModel implements Serializable {
    * </p>
    *
    * @param significantWaveHeight significant wave height Hs (m)
-   * @param fillFraction          tank fill fraction (0.0 to 1.0)
+   * @param fillFraction tank fill fraction (0.0 to 1.0)
    * @return BOG enhancement factor (1.0 = no enhancement)
    */
   public double calculateBOGEnhancement(double significantWaveHeight, double fillFraction) {

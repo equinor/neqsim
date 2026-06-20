@@ -42,8 +42,8 @@ public class LoadItem implements java.io.Serializable {
   /**
    * Construct a LoadItem.
    *
-   * @param tagNumber    equipment tag number
-   * @param description  load description
+   * @param tagNumber equipment tag number
+   * @param description load description
    * @param ratedPowerKW rated power in kW
    */
   public LoadItem(String tagNumber, String description, double ratedPowerKW) {

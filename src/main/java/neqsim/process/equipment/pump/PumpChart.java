@@ -301,7 +301,7 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
    * Uses affinity law scaling: NPSH = NPSH_reduced × N²
    * </p>
    *
-   * @param flow  flow rate in m³/hr
+   * @param flow flow rate in m³/hr
    * @param speed pump speed in rpm
    * @return NPSH required in meters, or 0.0 if no NPSH curve is available
    */
@@ -446,7 +446,7 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
    * efficiency.
    * </p>
    *
-   * @param flow  a double
+   * @param flow a double
    * @param speed a double
    * @return a double
    */
@@ -480,7 +480,7 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
    * checkSurge2.
    * </p>
    *
-   * @param flow  a double
+   * @param flow a double
    * @param speed a double
    * @return a boolean
    */
@@ -493,7 +493,7 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
    * checkStoneWall.
    * </p>
    *
-   * @param flow  a double
+   * @param flow a double
    * @param speed a double
    * @return a boolean
    */
@@ -567,7 +567,7 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
   /**
    * Check operating status of pump at given flow and speed.
    *
-   * @param flow  flow rate in m³/hr
+   * @param flow flow rate in m³/hr
    * @param speed pump speed in rpm
    * @return operating status string
    */
@@ -751,8 +751,8 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
    * If no reference density is set, returns the uncorrected head.
    * </p>
    *
-   * @param flow          flow rate in m³/hr
-   * @param speed         pump speed in rpm
+   * @param flow flow rate in m³/hr
+   * @param speed pump speed in rpm
    * @param actualDensity actual fluid density in kg/m³
    * @return corrected head in the unit specified by getHeadUnit()
    */
@@ -791,9 +791,9 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
    * </p>
    *
    * @param viscosity kinematic viscosity in cSt (centistokes)
-   * @param flowBEP   flow at best efficiency point in m³/hr
-   * @param headBEP   head at best efficiency point in meters
-   * @param speed     pump speed in rpm
+   * @param flowBEP flow at best efficiency point in m³/hr
+   * @param headBEP head at best efficiency point in meters
+   * @param speed pump speed in rpm
    */
   @Override
   public void calculateViscosityCorrection(double viscosity, double flowBEP, double headBEP, double speed) {
@@ -911,9 +911,9 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
   /**
    * Get head with both viscosity and density corrections applied.
    *
-   * @param flow            flow rate in m³/hr
-   * @param speed           pump speed in rpm
-   * @param actualDensity   actual fluid density in kg/m³
+   * @param flow flow rate in m³/hr
+   * @param speed pump speed in rpm
+   * @param actualDensity actual fluid density in kg/m³
    * @param actualViscosity actual kinematic viscosity in cSt
    * @return fully corrected head
    */
@@ -946,8 +946,8 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
   /**
    * Get efficiency with viscosity correction applied.
    *
-   * @param flow            flow rate in m³/hr
-   * @param speed           pump speed in rpm
+   * @param flow flow rate in m³/hr
+   * @param speed pump speed in rpm
    * @param actualViscosity actual kinematic viscosity in cSt
    * @return corrected efficiency in percent
    */

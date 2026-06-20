@@ -50,9 +50,9 @@ public class OnePhasePipeFlowSolver extends neqsim.fluidmechanics.flowsolver.one
    * Constructor for OnePhasePipeFlowSolver.
    * </p>
    *
-   * @param pipe   a {@link neqsim.fluidmechanics.flowsystem.onephaseflowsystem.pipeflowsystem.PipeFlowSystem} object
+   * @param pipe a {@link neqsim.fluidmechanics.flowsystem.onephaseflowsystem.pipeflowsystem.PipeFlowSystem} object
    * @param length a double
-   * @param nodes  a int
+   * @param nodes a int
    */
   public OnePhasePipeFlowSolver(PipeFlowSystem pipe, double length, int nodes) {
     this.pipe = pipe;

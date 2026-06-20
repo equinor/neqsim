@@ -76,7 +76,7 @@ public enum BlackOilUnits {
   /**
    * Convert pressure from psia.
    *
-   * @param psia   Pressure in psia
+   * @param psia Pressure in psia
    * @param toUnit Target unit system
    * @return Pressure in target units
    */
@@ -98,7 +98,7 @@ public enum BlackOilUnits {
    * Convert temperature to Fahrenheit.
    *
    * @param temperature Temperature value
-   * @param fromUnit    Source unit system
+   * @param fromUnit Source unit system
    * @return Temperature in °F
    */
   public static double toFahrenheit(double temperature, BlackOilUnits fromUnit) {
@@ -118,7 +118,7 @@ public enum BlackOilUnits {
    * Convert temperature from Fahrenheit.
    *
    * @param fahrenheit Temperature in °F
-   * @param toUnit     Target unit system
+   * @param toUnit Target unit system
    * @return Temperature in target units
    */
   public static double fromFahrenheit(double fahrenheit, BlackOilUnits toUnit) {
@@ -138,7 +138,7 @@ public enum BlackOilUnits {
    * Convert temperature to Rankine.
    *
    * @param temperature Temperature value
-   * @param fromUnit    Source unit system
+   * @param fromUnit Source unit system
    * @return Temperature in °R
    */
   public static double toRankine(double temperature, BlackOilUnits fromUnit) {
@@ -153,7 +153,7 @@ public enum BlackOilUnits {
   /**
    * Convert GOR to scf/STB.
    *
-   * @param gor      GOR value
+   * @param gor GOR value
    * @param fromUnit Source unit system
    * @return GOR in scf/STB
    */
@@ -173,7 +173,7 @@ public enum BlackOilUnits {
    * Convert GOR from scf/STB.
    *
    * @param scfPerStb GOR in scf/STB
-   * @param toUnit    Target unit system
+   * @param toUnit Target unit system
    * @return GOR in target units
    */
   public static double fromScfPerStb(double scfPerStb, BlackOilUnits toUnit) {
@@ -197,7 +197,7 @@ public enum BlackOilUnits {
    * Note: SI viscosity is in Pa·s (= 1000 cP), NEQSIM also uses Pa·s. FIELD uses cP.
    *
    * @param viscosity Viscosity value
-   * @param fromUnit  Source unit system
+   * @param fromUnit Source unit system
    * @return Viscosity in cP
    */
   public static double toCentipoise(double viscosity, BlackOilUnits fromUnit) {
@@ -219,7 +219,7 @@ public enum BlackOilUnits {
    * Note: SI viscosity is in Pa·s (= 1000 cP), NEQSIM also uses Pa·s. FIELD uses cP.
    *
    * @param centipoise Viscosity in cP
-   * @param toUnit     Target unit system
+   * @param toUnit Target unit system
    * @return Viscosity in target units (Pa·s for SI/NEQSIM, cP for FIELD)
    */
   public static double fromCentipoise(double centipoise, BlackOilUnits toUnit) {
@@ -242,7 +242,7 @@ public enum BlackOilUnits {
   /**
    * Convert density to lb/ft³.
    *
-   * @param density  Density value
+   * @param density Density value
    * @param fromUnit Source unit system
    * @return Density in lb/ft³
    */
@@ -262,7 +262,7 @@ public enum BlackOilUnits {
    * Convert density from lb/ft³.
    *
    * @param lbPerFt3 Density in lb/ft³
-   * @param toUnit   Target unit system
+   * @param toUnit Target unit system
    * @return Density in target units
    */
   public static double fromLbPerFt3(double lbPerFt3, BlackOilUnits toUnit) {
@@ -282,7 +282,7 @@ public enum BlackOilUnits {
   /**
    * Oil FVF is dimensionless (volume ratio), same in all unit systems.
    *
-   * @param bo       Oil FVF
+   * @param bo Oil FVF
    * @param fromUnit Source unit system (ignored)
    * @return Oil FVF (unchanged)
    */
@@ -296,7 +296,7 @@ public enum BlackOilUnits {
   /**
    * Gas FVF: rcf/scf ≈ rm³/Sm³ (both are volume ratios at similar conditions).
    *
-   * @param bg       Gas FVF
+   * @param bg Gas FVF
    * @param fromUnit Source unit system (ignored for simple ratio)
    * @return Gas FVF (unchanged)
    */
@@ -310,7 +310,7 @@ public enum BlackOilUnits {
    * Convert compressibility to 1/psi.
    *
    * @param compressibility Compressibility value
-   * @param fromUnit        Source unit system
+   * @param fromUnit Source unit system
    * @return Compressibility in 1/psi
    */
   public static double toPerPsi(double compressibility, BlackOilUnits fromUnit) {

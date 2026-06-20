@@ -57,7 +57,7 @@ public class CapillaryDewPointFlash extends ConstantDutyTemperatureFlash {
   /**
    * Constructor with default contact angle of 0 (perfect wetting).
    *
-   * @param system      the thermodynamic system
+   * @param system the thermodynamic system
    * @param poreRadiusM the effective pore radius in meters, must be positive
    */
   public CapillaryDewPointFlash(SystemInterface system, double poreRadiusM) {
@@ -72,8 +72,8 @@ public class CapillaryDewPointFlash extends ConstantDutyTemperatureFlash {
   /**
    * Constructor with specified contact angle.
    *
-   * @param system          the thermodynamic system
-   * @param poreRadiusM     the effective pore radius in meters, must be positive
+   * @param system the thermodynamic system
+   * @param poreRadiusM the effective pore radius in meters, must be positive
    * @param contactAngleRad the contact angle in radians (0 = perfect wetting)
    */
   public CapillaryDewPointFlash(SystemInterface system, double poreRadiusM, double contactAngleRad) {

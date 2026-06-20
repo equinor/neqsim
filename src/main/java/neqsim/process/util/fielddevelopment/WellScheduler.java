@@ -402,7 +402,7 @@ public class WellScheduler implements Serializable {
      * Checks if the intervention overlaps with a date range.
      *
      * @param rangeStart start of date range
-     * @param rangeEnd   end of date range
+     * @param rangeEnd end of date range
      * @return true if any overlap exists
      */
     public boolean overlaps(LocalDate rangeStart, LocalDate rangeEnd) {
@@ -503,7 +503,7 @@ public class WellScheduler implements Serializable {
       /**
        * Sets the cost.
        *
-       * @param cost     intervention cost
+       * @param cost intervention cost
        * @param currency currency code
        * @return this builder
        */
@@ -567,9 +567,9 @@ public class WellScheduler implements Serializable {
     /**
      * Creates a new well record.
      *
-     * @param wellName         well identifier
+     * @param wellName well identifier
      * @param initialPotential initial production potential
-     * @param rateUnit         rate unit
+     * @param rateUnit rate unit
      */
     public WellRecord(String wellName, double initialPotential, String rateUnit) {
       this.wellName = wellName;
@@ -640,7 +640,7 @@ public class WellScheduler implements Serializable {
      * Sets the current well status and records it in history.
      *
      * @param status new status
-     * @param date   date of status change
+     * @param date date of status change
      */
     public void setStatus(WellStatus status, LocalDate date) {
       this.currentStatus = status;
@@ -705,7 +705,7 @@ public class WellScheduler implements Serializable {
      * Calculates availability over a period.
      *
      * @param startDate start of period
-     * @param endDate   end of period
+     * @param endDate end of period
      * @return availability fraction (0-1)
      */
     public double calculateAvailability(LocalDate startDate, LocalDate endDate) {
@@ -725,7 +725,7 @@ public class WellScheduler implements Serializable {
      * Gets interventions within a date range.
      *
      * @param startDate start of range
-     * @param endDate   end of range
+     * @param endDate end of range
      * @return list of interventions overlapping the range
      */
     public List<Intervention> getInterventionsInRange(LocalDate startDate, LocalDate endDate) {
@@ -755,14 +755,14 @@ public class WellScheduler implements Serializable {
     /**
      * Creates a schedule result.
      *
-     * @param optimizedSchedule       list of scheduled interventions
-     * @param wellUptime              map of well name to uptime fraction
+     * @param optimizedSchedule list of scheduled interventions
+     * @param wellUptime map of well name to uptime fraction
      * @param totalDeferredProduction production lost during interventions
-     * @param totalProductionGain     production gained from interventions
-     * @param dailyFacilityRate       daily total production rates
-     * @param dailyBottleneck         daily bottleneck equipment
-     * @param overallAvailability     overall system availability
-     * @param rateUnit                rate unit for production values
+     * @param totalProductionGain production gained from interventions
+     * @param dailyFacilityRate daily total production rates
+     * @param dailyBottleneck daily bottleneck equipment
+     * @param overallAvailability overall system availability
+     * @param rateUnit rate unit for production values
      */
     public ScheduleResult(List<Intervention> optimizedSchedule, Map<String, Double> wellUptime,
 	double totalDeferredProduction, double totalProductionGain, Map<LocalDate, Double> dailyFacilityRate,
@@ -922,7 +922,7 @@ public class WellScheduler implements Serializable {
    * Creates a well scheduler with reservoir and facility models.
    *
    * @param reservoir reservoir model for production tracking
-   * @param facility  surface facility for bottleneck analysis
+   * @param facility surface facility for bottleneck analysis
    */
   public WellScheduler(SimpleReservoir reservoir, ProcessSystem facility) {
     this.reservoir = reservoir;
@@ -933,9 +933,9 @@ public class WellScheduler implements Serializable {
   /**
    * Adds a well with initial production potential.
    *
-   * @param name             well name (unique identifier)
+   * @param name well name (unique identifier)
    * @param initialPotential unconstrained production rate
-   * @param rateUnit         rate unit (e.g., "Sm3/day")
+   * @param rateUnit rate unit (e.g., "Sm3/day")
    * @return the created well record
    */
   public WellRecord addWell(String name, double initialPotential, String rateUnit) {
@@ -1008,8 +1008,8 @@ public class WellScheduler implements Serializable {
    * <li>Facility constraints (if facility is provided)</li>
    * </ul>
    *
-   * @param startDate                  start of scheduling period
-   * @param endDate                    end of scheduling period
+   * @param startDate start of scheduling period
+   * @param endDate end of scheduling period
    * @param maxConcurrentInterventions maximum number of simultaneous interventions
    * @return optimized schedule result
    */
@@ -1153,7 +1153,7 @@ public class WellScheduler implements Serializable {
    * Counts concurrent interventions on a specific date.
    *
    * @param interventions list of interventions to check
-   * @param date          the date to check for concurrency
+   * @param date the date to check for concurrency
    * @return the count of concurrent interventions on the specified date
    */
   private long countConcurrentOnDate(List<Intervention> interventions, LocalDate date) {
@@ -1164,7 +1164,7 @@ public class WellScheduler implements Serializable {
    * Calculates system-wide availability over a period.
    *
    * @param startDate start of period
-   * @param endDate   end of period
+   * @param endDate end of period
    * @return weighted average availability across all wells
    */
   public double calculateSystemAvailability(LocalDate startDate, LocalDate endDate) {

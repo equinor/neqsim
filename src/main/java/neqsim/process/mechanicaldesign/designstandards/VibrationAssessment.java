@@ -46,13 +46,13 @@ public class VibrationAssessment implements Serializable {
    * screening criterion based on diameter and wall thickness.
    * </p>
    *
-   * @param massFlowKgS           mass flow rate in kg/s
-   * @param upstreamPressureBar   upstream pressure in bara
+   * @param massFlowKgS mass flow rate in kg/s
+   * @param upstreamPressureBar upstream pressure in bara
    * @param downstreamPressureBar downstream pressure in bara
-   * @param temperatureK          fluid temperature in K
-   * @param molecularWeight       molecular weight in kg/kmol
-   * @param pipeDiameterMm        pipe outer diameter in mm
-   * @param pipeWallThicknessMm   pipe wall thickness in mm
+   * @param temperatureK fluid temperature in K
+   * @param molecularWeight molecular weight in kg/kmol
+   * @param pipeDiameterMm pipe outer diameter in mm
+   * @param pipeWallThicknessMm pipe wall thickness in mm
    * @return vibration risk level
    */
   public static VibrationRisk aivScreening(double massFlowKgS, double upstreamPressureBar, double downstreamPressureBar,
@@ -80,11 +80,11 @@ public class VibrationAssessment implements Serializable {
    * the acoustic efficiency.
    * </p>
    *
-   * @param massFlowKgS           mass flow rate in kg/s
-   * @param upstreamPressureBar   upstream pressure in bara
+   * @param massFlowKgS mass flow rate in kg/s
+   * @param upstreamPressureBar upstream pressure in bara
    * @param downstreamPressureBar downstream pressure in bara
-   * @param temperatureK          temperature in K
-   * @param molecularWeight       molecular weight in kg/kmol
+   * @param temperatureK temperature in K
+   * @param molecularWeight molecular weight in kg/kmol
    * @return acoustic power level in dB (re 1e-12 W)
    */
   public static double acousticPowerLevel(double massFlowKgS, double upstreamPressureBar, double downstreamPressureBar,
@@ -122,7 +122,7 @@ public class VibrationAssessment implements Serializable {
    * wall thickness in inches.
    * </p>
    *
-   * @param pipeDiameterMm      pipe outer diameter in mm
+   * @param pipeDiameterMm pipe outer diameter in mm
    * @param pipeWallThicknessMm pipe wall thickness in mm
    * @return screening limit in dB
    */
@@ -140,12 +140,12 @@ public class VibrationAssessment implements Serializable {
    * exceeds 70% of the critical velocity.
    * </p>
    *
-   * @param crossFlowVelocityMS   shell-side cross-flow velocity in m/s
-   * @param tubePitchMm           tube pitch in mm
-   * @param tubeODMm              tube outer diameter in mm
-   * @param tubeNaturalFreqHz     tube natural frequency in Hz
+   * @param crossFlowVelocityMS shell-side cross-flow velocity in m/s
+   * @param tubePitchMm tube pitch in mm
+   * @param tubeODMm tube outer diameter in mm
+   * @param tubeNaturalFreqHz tube natural frequency in Hz
    * @param shellFluidDensityKgM3 shell-side fluid density in kg/m3
-   * @param tubeMassPerLengthKgM  tube linear mass per length in kg/m
+   * @param tubeMassPerLengthKgM tube linear mass per length in kg/m
    * @return vibration risk level
    */
   public static VibrationRisk fivHeatExchangerScreening(double crossFlowVelocityMS, double tubePitchMm, double tubeODMm,
@@ -184,9 +184,9 @@ public class VibrationAssessment implements Serializable {
    * </p>
    *
    * @param dischargePressureBar discharge pressure in bara
-   * @param pistonSpeedMps       mean piston speed in m/s (2 * stroke * rpm / 60)
+   * @param pistonSpeedMps mean piston speed in m/s (2 * stroke * rpm / 60)
    * @param cylinderVolumeLiters cylinder swept volume in liters
-   * @param pipeDiameterMm       discharge pipe diameter in mm
+   * @param pipeDiameterMm discharge pipe diameter in mm
    * @return vibration risk level
    */
   public static VibrationRisk reciprocatingPulsationScreening(double dischargePressureBar, double pistonSpeedMps,

@@ -129,7 +129,7 @@ public final class BarrierRegisterRunner {
   /**
    * Parses a performance standard from JSON.
    *
-   * @param input  performance-standard JSON
+   * @param input performance-standard JSON
    * @param parsed parsed register context
    * @return performance standard
    */
@@ -160,7 +160,7 @@ public final class BarrierRegisterRunner {
   /**
    * Parses a safety barrier from JSON.
    *
-   * @param input  barrier JSON
+   * @param input barrier JSON
    * @param parsed parsed register context
    * @return safety barrier
    */
@@ -208,7 +208,7 @@ public final class BarrierRegisterRunner {
   /**
    * Parses a safety critical element from JSON.
    *
-   * @param input  SCE JSON
+   * @param input SCE JSON
    * @param parsed parsed register context
    * @return safety critical element
    */
@@ -245,9 +245,9 @@ public final class BarrierRegisterRunner {
   /**
    * Links a performance standard to a barrier from references or embedded JSON.
    *
-   * @param input   barrier JSON
+   * @param input barrier JSON
    * @param barrier barrier object
-   * @param parsed  parsed register context
+   * @param parsed parsed register context
    */
   private static void linkPerformanceStandard(JsonObject input, SafetyBarrier barrier, ParsedRegister parsed) {
     String standardId = optString(input, "performanceStandardId", "");
@@ -265,9 +265,9 @@ public final class BarrierRegisterRunner {
   /**
    * Adds referenced and embedded evidence to a standard.
    *
-   * @param input    JSON object carrying evidence fields
+   * @param input JSON object carrying evidence fields
    * @param standard target standard
-   * @param parsed   parsed register context
+   * @param parsed parsed register context
    */
   private static void linkEvidenceToStandard(JsonObject input, PerformanceStandard standard, ParsedRegister parsed) {
     addEvidenceRefs(input, parsed, new EvidenceConsumer() {
@@ -287,9 +287,9 @@ public final class BarrierRegisterRunner {
   /**
    * Adds referenced and embedded evidence to a barrier.
    *
-   * @param input   JSON object carrying evidence fields
+   * @param input JSON object carrying evidence fields
    * @param barrier target barrier
-   * @param parsed  parsed register context
+   * @param parsed parsed register context
    */
   private static void linkEvidenceToBarrier(JsonObject input, SafetyBarrier barrier, ParsedRegister parsed) {
     addEvidenceRefs(input, parsed, new EvidenceConsumer() {
@@ -309,9 +309,9 @@ public final class BarrierRegisterRunner {
   /**
    * Adds referenced and embedded evidence to an SCE.
    *
-   * @param input   JSON object carrying evidence fields
+   * @param input JSON object carrying evidence fields
    * @param element target SCE
-   * @param parsed  parsed register context
+   * @param parsed parsed register context
    */
   private static void linkEvidenceToElement(JsonObject input, SafetyCriticalElement element, ParsedRegister parsed) {
     addEvidenceRefs(input, parsed, new EvidenceConsumer() {
@@ -331,8 +331,8 @@ public final class BarrierRegisterRunner {
   /**
    * Adds evidence referenced by {@code evidenceRefs}.
    *
-   * @param input    JSON object carrying evidenceRefs
-   * @param parsed   parsed register context
+   * @param input JSON object carrying evidenceRefs
+   * @param parsed parsed register context
    * @param consumer evidence consumer
    */
   private static void addEvidenceRefs(JsonObject input, ParsedRegister parsed, EvidenceConsumer consumer) {
@@ -348,8 +348,8 @@ public final class BarrierRegisterRunner {
   /**
    * Adds embedded evidence objects from an {@code evidence} array.
    *
-   * @param input    JSON object carrying evidence
-   * @param parsed   parsed register context
+   * @param input JSON object carrying evidence
+   * @param parsed parsed register context
    * @param consumer evidence consumer
    */
   private static void addEmbeddedEvidence(JsonObject input, ParsedRegister parsed, EvidenceConsumer consumer) {
@@ -633,7 +633,7 @@ public final class BarrierRegisterRunner {
    * Builds one document-extraction template section.
    *
    * @param documentType source document type
-   * @param fields       fields agents should extract from that document type
+   * @param fields fields agents should extract from that document type
    * @return extraction-section JSON object
    */
   private static JsonObject buildExtractionSection(String documentType, String[] fields) {
@@ -648,8 +648,8 @@ public final class BarrierRegisterRunner {
   /**
    * Adds string array values to a consumer.
    *
-   * @param input    JSON object
-   * @param field    field name
+   * @param input JSON object
+   * @param field field name
    * @param consumer string consumer
    */
   private static void addStringArrayValues(JsonObject input, String field, StringConsumer consumer) {
@@ -662,8 +662,8 @@ public final class BarrierRegisterRunner {
   /**
    * Gets an optional string field.
    *
-   * @param input        JSON object
-   * @param field        field name
+   * @param input JSON object
+   * @param field field name
    * @param defaultValue default value
    * @return field value or default
    */
@@ -677,8 +677,8 @@ public final class BarrierRegisterRunner {
   /**
    * Gets an optional integer field.
    *
-   * @param input        JSON object
-   * @param field        field name
+   * @param input JSON object
+   * @param field field name
    * @param defaultValue default value
    * @return field value or default
    */
@@ -692,8 +692,8 @@ public final class BarrierRegisterRunner {
   /**
    * Gets an optional double field.
    *
-   * @param input        JSON object
-   * @param field        field name
+   * @param input JSON object
+   * @param field field name
    * @param defaultValue default value
    * @return field value or default
    */

@@ -27,7 +27,7 @@ public class CheckScalePotential extends ConstantDutyTemperatureFlash {
    * Constructor for checkScalePotential.
    * </p>
    *
-   * @param system      a {@link neqsim.thermo.system.SystemInterface} object
+   * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param phaseNumber a int
    */
   public CheckScalePotential(SystemInterface system, int phaseNumber) {
@@ -203,14 +203,14 @@ public class CheckScalePotential extends ConstantDutyTemperatureFlash {
    * Compute the saturation ratio (SR = IAP/Ksp) in log-space to avoid numerical underflow/overflow when ion molalities
    * or activity coefficients are very small or large.
    *
-   * @param m1            molality of ion 1 (mol/kg water)
-   * @param m2            molality of ion 2 (mol/kg water)
-   * @param compNumb1     component number of ion 1
-   * @param compNumb2     component number of ion 2
+   * @param m1 molality of ion 1 (mol/kg water)
+   * @param m2 molality of ion 2 (mol/kg water)
+   * @param compNumb1 component number of ion 1
+   * @param compNumb2 component number of ion 2
    * @param waterCompNumb component number of water
-   * @param stoc1         stoichiometric coefficient of ion 1
-   * @param stoc2         stoichiometric coefficient of ion 2
-   * @param ksp           solubility product constant
+   * @param stoc1 stoichiometric coefficient of ion 1
+   * @param stoc2 stoichiometric coefficient of ion 2
+   * @param ksp solubility product constant
    * @return saturation ratio (SR), clamped to [0, exp(LN_SR_CLAMP)]
    */
   private double computeSRLogSpace(double m1, double m2, int compNumb1, int compNumb2, int waterCompNumb, double stoc1,
@@ -246,15 +246,15 @@ public class CheckScalePotential extends ConstantDutyTemperatureFlash {
    * Compute the saturation ratio for hydromagnesite in log-space. Hydromagnesite (3MgCO3-Mg(OH)2-3H2O) has a complex
    * IAP involving four ion terms.
    *
-   * @param m1            molality of Mg++ (mol/kg water)
-   * @param m2            molality of CO3-- (mol/kg water)
-   * @param compNumb1     component number of Mg++
-   * @param compNumb2     component number of CO3--
+   * @param m1 molality of Mg++ (mol/kg water)
+   * @param m2 molality of CO3-- (mol/kg water)
+   * @param compNumb1 component number of Mg++
+   * @param compNumb2 component number of CO3--
    * @param waterCompNumb component number of water
-   * @param waterDenom    denominator for molality conversion (xWater * MWwater)
-   * @param stoc1         stoichiometric coefficient of Mg++ (4)
-   * @param stoc2         stoichiometric coefficient of CO3-- (3)
-   * @param ksp           solubility product constant
+   * @param waterDenom denominator for molality conversion (xWater * MWwater)
+   * @param stoc1 stoichiometric coefficient of Mg++ (4)
+   * @param stoc2 stoichiometric coefficient of CO3-- (3)
+   * @param ksp solubility product constant
    * @return saturation ratio (SR), clamped to [0, exp(LN_SR_CLAMP)]
    */
   private double computeHydromagnesiteSR(double m1, double m2, int compNumb1, int compNumb2, int waterCompNumb,

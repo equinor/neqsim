@@ -90,7 +90,7 @@ public class AdiabaticPipe extends Pipeline implements neqsim.process.design.Aut
   /**
    * Constructor for AdiabaticPipe.
    *
-   * @param name     name of pipe
+   * @param name name of pipe
    * @param inStream input stream
    */
   public AdiabaticPipe(String name, StreamInterface inStream) {
@@ -493,7 +493,7 @@ public class AdiabaticPipe extends Pipeline implements neqsim.process.design.Aut
    * Enable Rhone-Poulenc maximum velocity calculation using tabulated data with log-log interpolation for higher
    * accuracy.
    *
-   * @param serviceType      the gas service type
+   * @param serviceType the gas service type
    * @param useInterpolation true to use tabulated interpolation, false for power-law formula
    */
   public void setRhonePoulencServiceType(RhonePoulencVelocity.ServiceType serviceType, boolean useInterpolation) {

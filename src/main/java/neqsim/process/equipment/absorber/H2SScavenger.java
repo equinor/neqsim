@@ -116,10 +116,10 @@ public class H2SScavenger extends TwoPortEquipment {
     /**
      * Constructor for ScavengerType enum.
      *
-     * @param displayName       human-readable name
+     * @param displayName human-readable name
      * @param baseStoichiometry theoretical lb scavenger per lb H2S
-     * @param baseEfficiency    base removal efficiency (0-1)
-     * @param density           specific gravity of liquid scavenger
+     * @param baseEfficiency base removal efficiency (0-1)
+     * @param density specific gravity of liquid scavenger
      */
     ScavengerType(String displayName, double baseStoichiometry, double baseEfficiency, double density) {
       this.displayName = displayName;
@@ -199,7 +199,7 @@ public class H2SScavenger extends TwoPortEquipment {
   /**
    * Constructor for H2SScavenger with inlet stream.
    *
-   * @param name     equipment name
+   * @param name equipment name
    * @param inStream inlet gas stream
    */
   public H2SScavenger(String name, StreamInterface inStream) {
@@ -365,8 +365,8 @@ public class H2SScavenger extends TwoPortEquipment {
    * </ul>
    *
    * @param inletH2SMassFlow H2S mass flow in inlet stream (kg/hr)
-   * @param temperature      operating temperature (K)
-   * @param pressure         operating pressure (bara)
+   * @param temperature operating temperature (K)
+   * @param pressure operating pressure (bara)
    * @return removal efficiency as fraction (0-1)
    */
   private double calculateRemovalEfficiency(double inletH2SMassFlow, double temperature, double pressure) {
@@ -667,7 +667,7 @@ public class H2SScavenger extends TwoPortEquipment {
    * Calculate scavenger cost.
    *
    * @param costPerUnit cost per unit of scavenger
-   * @param unit        cost unit basis ("$/L", "$/gal", "$/kg", "$/lb")
+   * @param unit cost unit basis ("$/L", "$/gal", "$/kg", "$/lb")
    * @return hourly cost in same currency
    */
   public double calculateHourlyCost(double costPerUnit, String unit) {

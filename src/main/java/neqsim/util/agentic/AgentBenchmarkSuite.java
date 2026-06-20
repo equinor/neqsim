@@ -109,7 +109,7 @@ public class AgentBenchmarkSuite implements Serializable {
    * Submits an agent result for a specific problem.
    *
    * @param problemId the unique identifier of the benchmark problem
-   * @param value     the computed result value
+   * @param value the computed result value
    */
   public void addResult(String problemId, double value) {
     submittedResults.put(problemId, value);
@@ -291,13 +291,13 @@ public class AgentBenchmarkSuite implements Serializable {
     /**
      * Creates a new benchmark problem.
      *
-     * @param id              unique identifier for the problem
-     * @param category        engineering discipline category
-     * @param difficulty      difficulty level
-     * @param description     human-readable description of what to compute
-     * @param unit            unit of the expected result
-     * @param expectedValue   reference value from literature or validated simulation
-     * @param tolerancePct    acceptable deviation in percent
+     * @param id unique identifier for the problem
+     * @param category engineering discipline category
+     * @param difficulty difficulty level
+     * @param description human-readable description of what to compute
+     * @param unit unit of the expected result
+     * @param expectedValue reference value from literature or validated simulation
+     * @param tolerancePct acceptable deviation in percent
      * @param referenceSource source of the reference value
      */
     public BenchmarkProblem(String id, ProblemCategory category, Difficulty difficulty, String description, String unit,
@@ -418,11 +418,11 @@ public class AgentBenchmarkSuite implements Serializable {
     /**
      * Creates a new problem result.
      *
-     * @param problem     the benchmark problem
+     * @param problem the benchmark problem
      * @param actualValue the agent-submitted value
-     * @param passed      whether the result passed the tolerance check
-     * @param verdict     short verdict string (PASS, FAIL, NOT_ATTEMPTED, etc.)
-     * @param detail      detailed explanation of the comparison
+     * @param passed whether the result passed the tolerance check
+     * @param verdict short verdict string (PASS, FAIL, NOT_ATTEMPTED, etc.)
+     * @param detail detailed explanation of the comparison
      */
     public ProblemResult(BenchmarkProblem problem, double actualValue, boolean passed, String verdict, String detail) {
       this.problem = problem;
@@ -493,10 +493,10 @@ public class AgentBenchmarkSuite implements Serializable {
     /**
      * Creates a new benchmark report.
      *
-     * @param suiteName    the name of the benchmark suite
-     * @param results      individual problem results
-     * @param passed       number of passed problems
-     * @param failed       number of failed problems
+     * @param suiteName the name of the benchmark suite
+     * @param results individual problem results
+     * @param passed number of passed problems
+     * @param failed number of failed problems
      * @param notAttempted number of problems not attempted
      */
     public BenchmarkReport(String suiteName, List<ProblemResult> results, int passed, int failed, int notAttempted) {

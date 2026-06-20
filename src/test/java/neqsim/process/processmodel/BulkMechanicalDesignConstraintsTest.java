@@ -21,8 +21,8 @@ public class BulkMechanicalDesignConstraintsTest {
   /**
    * Builds a heater with a fixed pressure drop and positive duty inside its own process system.
    *
-   * @param name           the equipment and stream name prefix
-   * @param inletPressure  inlet pressure in bara
+   * @param name the equipment and stream name prefix
+   * @param inletPressure inlet pressure in bara
    * @param outletPressure outlet pressure in bara
    * @return a run process system whose single heater is named {@code name}
    */

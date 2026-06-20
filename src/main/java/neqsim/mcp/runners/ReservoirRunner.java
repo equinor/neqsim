@@ -205,8 +205,8 @@ public class ReservoirRunner {
   /**
    * Creates a standard error JSON string.
    *
-   * @param code        the error code
-   * @param message     the error message
+   * @param code the error code
+   * @param message the error message
    * @param remediation the fix suggestion
    * @return the error JSON string
    */

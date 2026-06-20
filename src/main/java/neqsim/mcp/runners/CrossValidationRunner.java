@@ -143,8 +143,8 @@ public class CrossValidationRunner {
   /**
    * Runs the process with a specific EoS model, extracting the requested variables.
    *
-   * @param baseProcess  the base process JSON definition
-   * @param modelName    the EoS model name to use
+   * @param baseProcess the base process JSON definition
+   * @param modelName the EoS model name to use
    * @param compareSpecs list of variables to extract after simulation
    * @return a ModelRun containing extracted values and convergence status
    */
@@ -199,8 +199,8 @@ public class CrossValidationRunner {
   /**
    * Builds per-variable cross-model comparisons with deviation analysis.
    *
-   * @param specs      list of variables to compare
-   * @param runs       list of model run results
+   * @param specs list of variables to compare
+   * @param runs list of model run results
    * @param tolerances per-variable tolerance overrides
    * @param defaultTol default tolerance percentage
    * @return a JSON array of comparison objects
@@ -263,8 +263,8 @@ public class CrossValidationRunner {
   /**
    * Builds an overall risk assessment summary.
    *
-   * @param specs      list of variables to assess
-   * @param runs       list of model run results
+   * @param specs list of variables to assess
+   * @param runs list of model run results
    * @param tolerances per-variable tolerance overrides
    * @param defaultTol default tolerance percentage
    * @return a JSON object with the risk assessment summary

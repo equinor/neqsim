@@ -89,7 +89,7 @@ public class TurboExpanderOperatingEnvelope implements Serializable {
    * Set the inlet pressure and feed flow grids for the sweep.
    *
    * @param inletPressures inlet pressure grid in bara
-   * @param flowRates      feed flow grid in kg/hr
+   * @param flowRates feed flow grid in kg/hr
    */
   public void setGrid(double[] inletPressures, double[] flowRates) {
     this.inletPressures = inletPressures == null ? null

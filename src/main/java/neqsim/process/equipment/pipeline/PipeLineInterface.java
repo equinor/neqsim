@@ -422,7 +422,7 @@ public interface PipeLineInterface extends SimulationInterface, TwoPortInterface
    * Set pipe specification from database.
    *
    * @param nominalDiameter nominal diameter in mm or inches
-   * @param specification   pipe specification code (e.g., "API 5L", "ANSI B36.10")
+   * @param specification pipe specification code (e.g., "API 5L", "ANSI B36.10")
    */
   public void setPipeSpecification(double nominalDiameter, String specification);
 
@@ -765,7 +765,7 @@ public interface PipeLineInterface extends SimulationInterface, TwoPortInterface
    * Set design pressure with unit.
    *
    * @param pressure design pressure value
-   * @param unit     pressure unit ("MPa", "bar", "bara", "psi")
+   * @param unit pressure unit ("MPa", "bar", "bara", "psi")
    */
   public void setDesignPressure(double pressure, String unit);
 

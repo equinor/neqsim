@@ -167,7 +167,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
    * calcTrueValue.
    * </p>
    *
-   * @param val    a double
+   * @param val a double
    * @param sample a {@link neqsim.statistics.parameterfitting.SampleValue} object
    * @return a double
    */
@@ -196,7 +196,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
    * </p>
    *
    * @param parameterNumber a int
-   * @param parameterVal    a double
+   * @param parameterVal a double
    */
   public void setFittingParameter(int parameterNumber, double parameterVal) {
     for (int i = 0; i < sampleSet.getLength(); i++) {
@@ -620,8 +620,8 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
    * </p>
    *
    * @param coVarianceMatrix a {@link Jama.Matrix} object
-   * @param name             a {@link java.lang.String} object
-   * @param d                a int
+   * @param name a {@link java.lang.String} object
+   * @param d a int
    */
   @ExcludeFromJacocoGeneratedReport
   public void displayMatrix(Matrix coVarianceMatrix, String name, int d) {

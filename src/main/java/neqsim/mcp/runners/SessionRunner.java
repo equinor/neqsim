@@ -348,9 +348,9 @@ public final class SessionRunner {
    * cheap atomic step for agent optimization loops.
    *
    * @param input JSON with sessionId, setpoints (object of address-&gt;value), optional readbacks (array of addresses),
-   *              optional setpointUnit, readbackUnit, maxIterations, tolerance
+   * optional setpointUnit, readbackUnit, maxIterations, tolerance
    * @return JSON envelope containing the schema-versioned evaluation result (including the feasible flag, rejected
-   *         setpoints, and read-back errors)
+   * setpoints, and read-back errors)
    */
   private static String evaluateSession(JsonObject input) {
     SessionState state = getValidSession(input);
@@ -430,7 +430,7 @@ public final class SessionRunner {
    * Writes a batch of input variables to the cached session process, optionally re-running once.
    *
    * @param input JSON with sessionId, updates (object of address-&gt;value), optional unit, optional runAfter (default
-   *              true)
+   * true)
    * @return JSON envelope with the count of variables set and whether the process was re-run
    */
   private static String setValuesSession(JsonObject input) {
@@ -502,7 +502,7 @@ public final class SessionRunner {
    * Parses a nested JSON object of address-&gt;number into an ordered map.
    *
    * @param input the parent JSON object
-   * @param key   the field name holding the address-&gt;value object
+   * @param key the field name holding the address-&gt;value object
    * @return an ordered map (never null; empty if the field is absent)
    */
   private static Map<String, Double> parseDoubleMap(JsonObject input, String key) {
@@ -520,7 +520,7 @@ public final class SessionRunner {
    * Parses a JSON array field into a list of strings.
    *
    * @param input the parent JSON object
-   * @param key   the field name holding the array
+   * @param key the field name holding the array
    * @return a list of strings (never null; empty if the field is absent)
    */
   private static List<String> parseStringList(JsonObject input, String key) {
@@ -538,7 +538,7 @@ public final class SessionRunner {
    * Returns a trimmed string field, or {@code null} when the field is absent or blank.
    *
    * @param input the parent JSON object
-   * @param key   the field name
+   * @param key the field name
    * @return the string value, or {@code null} for absent/blank
    */
   private static String optString(JsonObject input, String key) {
@@ -770,8 +770,8 @@ public final class SessionRunner {
   /**
    * Creates a standard error JSON string.
    *
-   * @param code        the error code
-   * @param message     the error message
+   * @param code the error code
+   * @param message the error message
    * @param remediation the fix suggestion
    * @return the error JSON string
    */
@@ -830,8 +830,8 @@ public final class SessionRunner {
      * Creates a new session state.
      *
      * @param sessionId the session ID
-     * @param name      the session name
-     * @param ownerId   the owner identifier
+     * @param name the session name
+     * @param ownerId the owner identifier
      */
     SessionState(String sessionId, String name, String ownerId) {
       this.sessionId = sessionId;

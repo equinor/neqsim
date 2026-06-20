@@ -240,7 +240,7 @@ public class BAHXCostEstimator extends UnitCostEstimateBaseClass {
   /**
    * Round a double value to the specified number of decimal places.
    *
-   * @param value    the value to round
+   * @param value the value to round
    * @param decimals number of decimal places
    * @return rounded value
    */

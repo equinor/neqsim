@@ -16,10 +16,10 @@ public class ComponentGePitzer extends ComponentGE {
   /**
    * Constructor for ComponentGePitzer.
    *
-   * @param name         Name of component
-   * @param moles        total number of moles
+   * @param name Name of component
+   * @param moles total number of moles
    * @param molesInPhase moles in phase
-   * @param compIndex    component index
+   * @param compIndex component index
    */
   public ComponentGePitzer(String name, double moles, double molesInPhase, int compIndex) {
     super(name, moles, molesInPhase, compIndex);
@@ -49,11 +49,11 @@ public class ComponentGePitzer extends ComponentGE {
    * other neutral species (dissolved gases): returns gamma = 1.0 (no lambda/mu parameters available).
    * </p>
    *
-   * @param phase              phase object
+   * @param phase phase object
    * @param numberOfComponents number of components in phase
-   * @param temperature        temperature in Kelvin
-   * @param pressure           pressure in bara
-   * @param pt                 phase type
+   * @param temperature temperature in Kelvin
+   * @param pressure pressure in bara
+   * @param pt phase type
    * @return activity coefficient (dimensionless)
    */
   public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
@@ -216,9 +216,9 @@ public class ComponentGePitzer extends ComponentGE {
    * Activity coefficient (Raoult convention): gamma_w = a_w / x_w
    * </p>
    *
-   * @param phase              the Pitzer phase
+   * @param phase the Pitzer phase
    * @param numberOfComponents number of components
-   * @param TK                 temperature in Kelvin
+   * @param TK temperature in Kelvin
    * @return water activity coefficient (mole fraction basis, Raoult convention)
    */
   private double getWaterGamma(PhaseInterface phase, int numberOfComponents, double TK) {

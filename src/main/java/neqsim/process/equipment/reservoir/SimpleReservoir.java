@@ -304,9 +304,9 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
-   * @param gasVolume    a double
-   * @param oilVolume    a double
-   * @param waterVolume  a double
+   * @param gasVolume a double
+   * @param oilVolume a double
+   * @param waterVolume a double
    */
   public void setReservoirFluid(SystemInterface thermoSystem, double gasVolume, double oilVolume, double waterVolume) {
     this.thermoSystem = thermoSystem;
@@ -816,7 +816,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @param value a double
-   * @param unit  a {@link java.lang.String} object
+   * @param unit a {@link java.lang.String} object
    */
   public void setLowPressureLimit(double value, String unit) {
     PressureUnit conver = new PressureUnit(value, unit);

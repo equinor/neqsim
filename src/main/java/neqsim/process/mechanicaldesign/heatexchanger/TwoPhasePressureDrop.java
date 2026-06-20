@@ -54,14 +54,14 @@ public final class TwoPhasePressureDrop {
    * typically within 30% for the recommended range.
    * </p>
    *
-   * @param massFlux        total mass flux G (kg/(m2*s))
-   * @param vaporQuality    local vapor quality x (0 to 1)
-   * @param tubeID          tube inner diameter (m)
-   * @param liquidDensity   liquid density (kg/m3)
-   * @param vaporDensity    vapor density (kg/m3)
+   * @param massFlux total mass flux G (kg/(m2*s))
+   * @param vaporQuality local vapor quality x (0 to 1)
+   * @param tubeID tube inner diameter (m)
+   * @param liquidDensity liquid density (kg/m3)
+   * @param vaporDensity vapor density (kg/m3)
    * @param liquidViscosity liquid dynamic viscosity (Pa*s)
-   * @param vaporViscosity  vapor dynamic viscosity (Pa*s)
-   * @param surfaceTension  surface tension (N/m)
+   * @param vaporViscosity vapor dynamic viscosity (Pa*s)
+   * @param surfaceTension surface tension (N/m)
    * @return frictional pressure drop gradient (Pa/m)
    */
   public static double calcFriedelGradient(double massFlux, double vaporQuality, double tubeID, double liquidDensity,
@@ -122,15 +122,15 @@ public final class TwoPhasePressureDrop {
   /**
    * Calculates the total two-phase frictional pressure drop over a tube length.
    *
-   * @param massFlux        total mass flux (kg/(m2*s))
-   * @param vaporQuality    vapor quality (assumed constant along length) (0 to 1)
-   * @param tubeID          tube inner diameter (m)
-   * @param tubeLength      tube length (m)
-   * @param liquidDensity   liquid density (kg/m3)
-   * @param vaporDensity    vapor density (kg/m3)
+   * @param massFlux total mass flux (kg/(m2*s))
+   * @param vaporQuality vapor quality (assumed constant along length) (0 to 1)
+   * @param tubeID tube inner diameter (m)
+   * @param tubeLength tube length (m)
+   * @param liquidDensity liquid density (kg/m3)
+   * @param vaporDensity vapor density (kg/m3)
    * @param liquidViscosity liquid viscosity (Pa*s)
-   * @param vaporViscosity  vapor viscosity (Pa*s)
-   * @param surfaceTension  surface tension (N/m)
+   * @param vaporViscosity vapor viscosity (Pa*s)
+   * @param surfaceTension surface tension (N/m)
    * @return total frictional pressure drop (Pa)
    */
   public static double calcFriedelPressureDrop(double massFlux, double vaporQuality, double tubeID, double tubeLength,
@@ -147,17 +147,17 @@ public final class TwoPhasePressureDrop {
    * Integrates the Friedel gradient over the quality range using Simpson's rule.
    * </p>
    *
-   * @param massFlux        total mass flux (kg/(m2*s))
-   * @param qualityIn       inlet vapor quality (0 to 1)
-   * @param qualityOut      outlet vapor quality (0 to 1)
-   * @param tubeID          tube inner diameter (m)
-   * @param tubeLength      tube length (m)
-   * @param liquidDensity   liquid density (kg/m3)
-   * @param vaporDensity    vapor density (kg/m3)
+   * @param massFlux total mass flux (kg/(m2*s))
+   * @param qualityIn inlet vapor quality (0 to 1)
+   * @param qualityOut outlet vapor quality (0 to 1)
+   * @param tubeID tube inner diameter (m)
+   * @param tubeLength tube length (m)
+   * @param liquidDensity liquid density (kg/m3)
+   * @param vaporDensity vapor density (kg/m3)
    * @param liquidViscosity liquid viscosity (Pa*s)
-   * @param vaporViscosity  vapor viscosity (Pa*s)
-   * @param surfaceTension  surface tension (N/m)
-   * @param intervals       number of integration intervals (minimum 4, must be even)
+   * @param vaporViscosity vapor viscosity (Pa*s)
+   * @param surfaceTension surface tension (N/m)
+   * @param intervals number of integration intervals (minimum 4, must be even)
    * @return average frictional pressure drop over the tube (Pa)
    */
   public static double calcFriedelAveragePressureDrop(double massFlux, double qualityIn, double qualityOut,
@@ -219,13 +219,13 @@ public final class TwoPhasePressureDrop {
    * Accuracy is typically within 30-50%, but the method is very robust and easy to implement.
    * </p>
    *
-   * @param massFlux        total mass flux G (kg/(m2*s))
-   * @param vaporQuality    local vapor quality (0 to 1)
-   * @param tubeID          tube inner diameter (m)
-   * @param liquidDensity   liquid density (kg/m3)
-   * @param vaporDensity    vapor density (kg/m3)
+   * @param massFlux total mass flux G (kg/(m2*s))
+   * @param vaporQuality local vapor quality (0 to 1)
+   * @param tubeID tube inner diameter (m)
+   * @param liquidDensity liquid density (kg/m3)
+   * @param vaporDensity vapor density (kg/m3)
    * @param liquidViscosity liquid viscosity (Pa*s)
-   * @param vaporViscosity  vapor viscosity (Pa*s)
+   * @param vaporViscosity vapor viscosity (Pa*s)
    * @return frictional pressure drop gradient (Pa/m)
    */
   public static double calcMullerSteinhagenHeckGradient(double massFlux, double vaporQuality, double tubeID,
@@ -266,9 +266,9 @@ public final class TwoPhasePressureDrop {
    * (dP/dz)_grav = rho_tp * g
    * </pre>
    *
-   * @param vaporQuality  vapor quality (0 to 1)
+   * @param vaporQuality vapor quality (0 to 1)
    * @param liquidDensity liquid density (kg/m3)
-   * @param vaporDensity  vapor density (kg/m3)
+   * @param vaporDensity vapor density (kg/m3)
    * @return gravitational pressure drop gradient (Pa/m), positive for upflow
    */
   public static double calcGravitationalGradient(double vaporQuality, double liquidDensity, double vaporDensity) {
@@ -301,11 +301,11 @@ public final class TwoPhasePressureDrop {
    *          - x_in^2/(alpha_in*rho_v) - (1-x_in)^2/((1-alpha_in)*rho_l)]
    * </pre>
    *
-   * @param massFlux      total mass flux (kg/(m2*s))
-   * @param qualityIn     inlet vapor quality (0 to 1)
-   * @param qualityOut    outlet vapor quality (0 to 1)
+   * @param massFlux total mass flux (kg/(m2*s))
+   * @param qualityIn inlet vapor quality (0 to 1)
+   * @param qualityOut outlet vapor quality (0 to 1)
    * @param liquidDensity liquid density (kg/m3)
-   * @param vaporDensity  vapor density (kg/m3)
+   * @param vaporDensity vapor density (kg/m3)
    * @return acceleration pressure drop (Pa)
    */
   public static double calcAccelerationPressureDrop(double massFlux, double qualityIn, double qualityOut,
@@ -324,9 +324,9 @@ public final class TwoPhasePressureDrop {
   /**
    * Calculates the momentum flux term for a given quality.
    *
-   * @param quality       vapor quality (0 to 1)
+   * @param quality vapor quality (0 to 1)
    * @param liquidDensity liquid density (kg/m3)
-   * @param vaporDensity  vapor density (kg/m3)
+   * @param vaporDensity vapor density (kg/m3)
    * @return momentum flux term (m3/kg)
    */
   private static double calcMomentumFlux(double quality, double liquidDensity, double vaporDensity) {

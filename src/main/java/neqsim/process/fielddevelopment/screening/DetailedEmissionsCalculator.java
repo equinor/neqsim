@@ -455,9 +455,9 @@ public class DetailedEmissionsCalculator implements Serializable {
   /**
    * Adds a gas turbine combustion source.
    *
-   * @param name  turbine name
+   * @param name turbine name
    * @param power power output
-   * @param unit  power unit ("MW", "kW")
+   * @param unit power unit ("MW", "kW")
    * @return this for chaining
    */
   public DetailedEmissionsCalculator addGasTurbine(String name, double power, String unit) {
@@ -472,7 +472,7 @@ public class DetailedEmissionsCalculator implements Serializable {
   /**
    * Adds a combined cycle gas turbine.
    *
-   * @param name  unit name
+   * @param name unit name
    * @param power power output (MW)
    * @return this for chaining
    */
@@ -505,7 +505,7 @@ public class DetailedEmissionsCalculator implements Serializable {
   /**
    * Adds a diesel engine.
    *
-   * @param name                  engine name
+   * @param name engine name
    * @param fuelRateLitersPerHour fuel consumption rate
    * @return this for chaining
    */
@@ -559,10 +559,10 @@ public class DetailedEmissionsCalculator implements Serializable {
   /**
    * Sets component counts for fugitive emissions calculation.
    *
-   * @param flanges         number of flanges
-   * @param valves          number of valves
+   * @param flanges number of flanges
+   * @param valves number of valves
    * @param compressorSeals number of compressor seals
-   * @param pumpSeals       number of pump seals
+   * @param pumpSeals number of pump seals
    * @return this for chaining
    */
   public DetailedEmissionsCalculator setComponentCounts(int flanges, int valves, int compressorSeals, int pumpSeals) {

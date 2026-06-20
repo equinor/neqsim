@@ -37,7 +37,7 @@ public class TemperatureTransmitter extends StreamMeasurementDeviceBaseClass {
    * Constructor for TemperatureTransmitter.
    * </p>
    *
-   * @param name   Name of TemperatureTransmitter
+   * @param name Name of TemperatureTransmitter
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public TemperatureTransmitter(String name, StreamInterface stream) {

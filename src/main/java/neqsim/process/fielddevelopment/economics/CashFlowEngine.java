@@ -219,7 +219,7 @@ public class CashFlowEngine implements Serializable {
    * Sets total CAPEX for a single year.
    *
    * @param capexMusd CAPEX in million USD
-   * @param year      year of expenditure
+   * @param year year of expenditure
    */
   public void setCapex(double capexMusd, int year) {
     capexByYear.clear();
@@ -232,7 +232,7 @@ public class CashFlowEngine implements Serializable {
    * Adds CAPEX for a specific year.
    *
    * @param capexMusd CAPEX in million USD
-   * @param year      year of expenditure
+   * @param year year of expenditure
    */
   public void addCapex(double capexMusd, int year) {
     Double existing = capexByYear.get(year);
@@ -346,7 +346,7 @@ public class CashFlowEngine implements Serializable {
   /**
    * Adds annual production for a specific year.
    *
-   * @param year   production year
+   * @param year production year
    * @param oilBbl annual oil production in barrels
    * @param gasSm3 annual gas production in Sm3
    * @param nglBbl annual NGL production in barrels
@@ -917,19 +917,19 @@ public class CashFlowEngine implements Serializable {
     /**
      * Creates a new annual cash flow record.
      *
-     * @param year               the year
-     * @param grossRevenue       gross revenue (MUSD)
-     * @param tariff             tariff costs (MUSD)
-     * @param netRevenue         net revenue after tariff (MUSD)
-     * @param capex              capital expenditure (MUSD)
-     * @param opex               operating expenditure (MUSD)
-     * @param depreciation       depreciation deduction (MUSD)
-     * @param uplift             uplift deduction (MUSD)
-     * @param corporateTax       corporate tax (MUSD)
-     * @param petroleumTax       petroleum tax (MUSD)
-     * @param totalTax           total tax (MUSD)
-     * @param preTaxCashFlow     pre-tax cash flow (MUSD)
-     * @param afterTaxCashFlow   after-tax cash flow (MUSD)
+     * @param year the year
+     * @param grossRevenue gross revenue (MUSD)
+     * @param tariff tariff costs (MUSD)
+     * @param netRevenue net revenue after tariff (MUSD)
+     * @param capex capital expenditure (MUSD)
+     * @param opex operating expenditure (MUSD)
+     * @param depreciation depreciation deduction (MUSD)
+     * @param uplift uplift deduction (MUSD)
+     * @param corporateTax corporate tax (MUSD)
+     * @param petroleumTax petroleum tax (MUSD)
+     * @param totalTax total tax (MUSD)
+     * @param preTaxCashFlow pre-tax cash flow (MUSD)
+     * @param afterTaxCashFlow after-tax cash flow (MUSD)
      * @param cumulativeCashFlow cumulative cash flow (MUSD)
      * @param discountedCashFlow discounted cash flow (MUSD)
      */
@@ -1037,13 +1037,13 @@ public class CashFlowEngine implements Serializable {
      * Creates a new cash flow result.
      *
      * @param annualCashFlows list of annual cash flows
-     * @param npv             net present value (MUSD)
-     * @param irr             internal rate of return
-     * @param paybackYears    payback period in years
-     * @param discountRate    discount rate used
-     * @param totalCapex      total capital expenditure (MUSD)
-     * @param firstYear       first year of project
-     * @param lastYear        last year of project
+     * @param npv net present value (MUSD)
+     * @param irr internal rate of return
+     * @param paybackYears payback period in years
+     * @param discountRate discount rate used
+     * @param totalCapex total capital expenditure (MUSD)
+     * @param firstYear first year of project
+     * @param lastYear last year of project
      */
     public CashFlowResult(List<AnnualCashFlow> annualCashFlows, double npv, double irr, double paybackYears,
 	double discountRate, double totalCapex, int firstYear, int lastYear) {

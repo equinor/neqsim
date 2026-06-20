@@ -111,7 +111,7 @@ public class DesignOptimizer {
    * Create a DesignOptimizer from a template.
    *
    * @param template the process template
-   * @param basis    the process basis
+   * @param basis the process basis
    * @return new DesignOptimizer with created process
    */
   public static DesignOptimizer fromTemplate(ProcessTemplate template, ProcessBasis basis) {

@@ -85,8 +85,8 @@ public class RiskResult {
    * Creates a new risk result container.
    *
    * @param analysisName name of the analysis
-   * @param iterations   number of Monte Carlo iterations
-   * @param seed         random seed used
+   * @param iterations number of Monte Carlo iterations
+   * @param seed random seed used
    */
   public RiskResult(String analysisName, int iterations, long seed) {
     this.analysisName = analysisName;

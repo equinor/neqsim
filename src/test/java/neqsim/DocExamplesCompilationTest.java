@@ -621,7 +621,7 @@ public class DocExamplesCompilationTest {
   /**
    * Create a gas stream for rate-based packed-column documentation examples.
    *
-   * @param name        stream name
+   * @param name stream name
    * @param co2Fraction carbon dioxide mole fraction
    * @return initialized gas stream
    */
@@ -640,7 +640,7 @@ public class DocExamplesCompilationTest {
   /**
    * Create a liquid stream for rate-based packed-column documentation examples.
    *
-   * @param name        stream name
+   * @param name stream name
    * @param co2Fraction carbon dioxide mole fraction
    * @return initialized liquid stream
    */

@@ -23,8 +23,8 @@ public class PHflashSingleComp extends Flash {
    * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param Hspec  a double
-   * @param type   a int
+   * @param Hspec a double
+   * @param type a int
    */
   public PHflashSingleComp(SystemInterface system, double Hspec, int type) {
     this.system = system;

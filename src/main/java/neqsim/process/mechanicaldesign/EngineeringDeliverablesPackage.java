@@ -154,7 +154,7 @@ public class EngineeringDeliverablesPackage implements Serializable {
    * Create a deliverables package for the given process system and study class.
    *
    * @param processSystem the process system (must have been run)
-   * @param studyClass    the study class determining required deliverables
+   * @param studyClass the study class determining required deliverables
    * @throws IllegalArgumentException if processSystem is null
    */
   public EngineeringDeliverablesPackage(ProcessSystem processSystem, StudyClass studyClass) {

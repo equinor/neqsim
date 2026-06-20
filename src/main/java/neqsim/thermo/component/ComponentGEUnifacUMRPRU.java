@@ -41,10 +41,10 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
    * Constructor for ComponentGEUnifacUMRPRU.
    * </p>
    *
-   * @param name         Name of component.
-   * @param moles        Total number of moles of component.
+   * @param name Name of component.
+   * @param moles Total number of moles of component.
    * @param molesInPhase Number of moles in phase.
-   * @param compIndex    Index number of component in phase object component array.
+   * @param compIndex Index number of component in phase object component array.
    */
   public ComponentGEUnifacUMRPRU(String name, double moles, double molesInPhase, int compIndex) {
     super(name, moles, molesInPhase, compIndex);
@@ -233,8 +233,8 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
    * calclnGammakdn.
    * </p>
    *
-   * @param k           a int
-   * @param phase       a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param k a int
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param derCompNumb a int
    */
   public void calclnGammakdn(int k, PhaseInterface phase, int derCompNumb) {
@@ -263,7 +263,7 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
    * calclnGammakdTdT.
    * </p>
    *
-   * @param k     a int
+   * @param k a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    */
   public void calclnGammakdTdT(int k, PhaseInterface phase) {
@@ -523,11 +523,11 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
    * calcGammaNumericalDerivatives.
    * </p>
    *
-   * @param phase              a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
-   * @param temperature        a double
-   * @param pressure           a double
-   * @param pt                 the PhaseType of the phase
+   * @param temperature a double
+   * @param pressure a double
+   * @param pt the PhaseType of the phase
    */
   public void calcGammaNumericalDerivatives(PhaseInterface phase, int numberOfComponents, double temperature,
       double pressure, PhaseType pt) {
@@ -595,8 +595,8 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
    * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param i     a int
-   * @param j     a int
+   * @param i a int
+   * @param j a int
    * @return a double
    */
   public double calcaij(PhaseInterface phase, int i, int j) {
@@ -611,8 +611,8 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
    * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param i     a int
-   * @param j     a int
+   * @param i a int
+   * @param j a int
    * @return a double
    */
   public double calcaijdT(PhaseInterface phase, int i, int j) {
@@ -626,8 +626,8 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
    * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param i     a int
-   * @param j     a int
+   * @param i a int
+   * @param j a int
    * @return a double
    */
   public double calcaijdTdT(PhaseInterface phase, int i, int j) {

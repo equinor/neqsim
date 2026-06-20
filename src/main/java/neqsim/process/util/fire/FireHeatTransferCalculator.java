@@ -24,7 +24,7 @@ public final class FireHeatTransferCalculator {
     /**
      * Creates a result container.
      *
-     * @param heatFlux              Heat flux through the wall [W/m2]
+     * @param heatFlux Heat flux through the wall [W/m2]
      * @param innerWallTemperatureK Inner wall temperature [K]
      * @param outerWallTemperatureK Outer wall temperature [K]
      */
@@ -55,10 +55,10 @@ public final class FireHeatTransferCalculator {
    * convection/boiling. It is valid for both wetted and unwetted regions as long as appropriate film coefficients are
    * supplied.
    *
-   * @param processFluidTemperatureK       Fluid bulk temperature [K]
-   * @param fireTemperatureK               Incident fire temperature [K]
-   * @param wallThicknessM                 Wall thickness [m]
-   * @param thermalConductivityWPerMPerK   Metal thermal conductivity [W/(m*K)]
+   * @param processFluidTemperatureK Fluid bulk temperature [K]
+   * @param fireTemperatureK Incident fire temperature [K]
+   * @param wallThicknessM Wall thickness [m]
+   * @param thermalConductivityWPerMPerK Metal thermal conductivity [W/(m*K)]
    * @param internalFilmCoefficientWPerM2K Internal film coefficient (boiling/condensation vs. gas) [W/(m2*K)]
    * @param externalFilmCoefficientWPerM2K External film coefficient (radiation/impingement) [W/(m2* K)]
    * @return Heat flux and wall temperatures for the section

@@ -48,10 +48,10 @@ public class ProcessAlarmManager implements Serializable {
   /**
    * Evaluates alarms for a single measurement value.
    *
-   * @param device        measurement device producing the value
+   * @param device measurement device producing the value
    * @param measuredValue current measured value
-   * @param dt            time step
-   * @param time          current simulation time
+   * @param dt time step
+   * @param time current simulation time
    * @return events generated during evaluation
    */
   public List<AlarmEvent> evaluateMeasurement(MeasurementDeviceInterface device, double measuredValue, double dt,
@@ -173,7 +173,7 @@ public class ProcessAlarmManager implements Serializable {
   /**
    * Copies the content of another manager instance.
    *
-   * @param source             source manager to copy from
+   * @param source source manager to copy from
    * @param measurementDevices devices that should be supervised by this manager
    */
   public void applyFrom(ProcessAlarmManager source, List<MeasurementDeviceInterface> measurementDevices) {

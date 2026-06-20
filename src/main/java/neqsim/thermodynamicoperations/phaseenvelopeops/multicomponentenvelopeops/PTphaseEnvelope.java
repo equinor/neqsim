@@ -129,11 +129,11 @@ public class PTphaseEnvelope extends BaseOperation {
    * Constructor for pTphaseEnvelope.
    * </p>
    *
-   * @param system        a {@link neqsim.thermo.system.SystemInterface} object
-   * @param name          a {@link java.lang.String} object
+   * @param system a {@link neqsim.thermo.system.SystemInterface} object
+   * @param name a {@link java.lang.String} object
    * @param phaseFraction a double
-   * @param lowPres       a double
-   * @param bubfirst      a boolean
+   * @param lowPres a double
+   * @param bubfirst a boolean
    */
   public PTphaseEnvelope(SystemInterface system, String name, double phaseFraction, double lowPres, boolean bubfirst) {
     this.bubblePointFirst = bubfirst;
@@ -861,7 +861,7 @@ public class PTphaseEnvelope extends BaseOperation {
    * </p>
    *
    * @param beta overall vapor fraction
-   * @param P    pressure in barA
+   * @param P pressure in barA
    * @return estimated temperature in Kelvin
    */
   public double tempKWilson(double beta, double P) {

@@ -67,11 +67,11 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
   /**
    * Constructor for ComponentSrkCPAMM.
    *
-   * @param name         Name of component
-   * @param moles        Total number of moles of component
+   * @param name Name of component
+   * @param moles Total number of moles of component
    * @param molesInPhase Number of moles in phase
-   * @param compIndex    Index number of component in phase object component array
-   * @param phase        Phase object
+   * @param compIndex Index number of component in phase object component array
+   * @param phase Phase object
    */
   public ComponentSrkCPAMM(String name, double moles, double molesInPhase, int compIndex, PhaseInterface phase) {
     super(name, moles, molesInPhase, compIndex, phase);
@@ -317,10 +317,10 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
    * through the dilution effect.
    * </p>
    *
-   * @param phase              the phase
+   * @param phase the phase
    * @param numberOfComponents number of components
-   * @param temperature        temperature in K
-   * @param pressure           pressure in bar
+   * @param temperature temperature in K
+   * @param pressure pressure in bar
    * @return dF^DH/dn_i contribution
    */
   public double dFDebyeHuckeldN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
@@ -392,10 +392,10 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
    * The complete derivative is: dF^Born/dn_i = (∂F/∂X_Born) × (∂X_Born/∂n_i) + (∂F/∂ε) × (∂ε/∂n_i)
    * </p>
    *
-   * @param phase              the phase
+   * @param phase the phase
    * @param numberOfComponents number of components
-   * @param temperature        temperature in K
-   * @param pressure           pressure in bar
+   * @param temperature temperature in K
+   * @param pressure pressure in bar
    * @return dF^Born/dn_i contribution
    */
   public double dFBorndN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
@@ -431,10 +431,10 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
   /**
    * Temperature derivative of Debye-Hückel contribution to dF/dN_i.
    *
-   * @param phase              the phase
+   * @param phase the phase
    * @param numberOfComponents number of components
-   * @param temperature        temperature in K
-   * @param pressure           pressure in bar
+   * @param temperature temperature in K
+   * @param pressure pressure in bar
    * @return d²F^DH/(dn_i dT) contribution
    */
   public double dFDebyeHuckeldNdT(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
@@ -462,10 +462,10 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
    * term.
    * </p>
    *
-   * @param phase              the phase
+   * @param phase the phase
    * @param numberOfComponents number of components
-   * @param temperature        temperature in K
-   * @param pressure           pressure in bar
+   * @param temperature temperature in K
+   * @param pressure pressure in bar
    * @return d²F^Born/(dn_i dT) contribution
    */
   public double dFBorndNdT(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
@@ -513,10 +513,10 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
   /**
    * Volume derivative of Debye-Hückel contribution to dF/dN_i.
    *
-   * @param phase              the phase
+   * @param phase the phase
    * @param numberOfComponents number of components
-   * @param temperature        temperature in K
-   * @param pressure           pressure in bar
+   * @param temperature temperature in K
+   * @param pressure pressure in bar
    * @return d²F^DH/(dn_i dV) contribution
    */
   public double dFDebyeHuckeldNdV(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
@@ -565,10 +565,10 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
   /**
    * Volume derivative of Born contribution to dF/dN_i.
    *
-   * @param phase              the phase
+   * @param phase the phase
    * @param numberOfComponents number of components
-   * @param temperature        temperature in K
-   * @param pressure           pressure in bar
+   * @param temperature temperature in K
+   * @param pressure pressure in bar
    * @return d²F^Born/(dn_i dV) contribution
    */
   public double dFBorndNdV(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
@@ -582,11 +582,11 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
   /**
    * Composition derivative of Debye-Hückel contribution to dF/dN_i.
    *
-   * @param j                  index of second component
-   * @param phase              the phase
+   * @param j index of second component
+   * @param phase the phase
    * @param numberOfComponents number of components
-   * @param temperature        temperature in K
-   * @param pressure           pressure in bar
+   * @param temperature temperature in K
+   * @param pressure pressure in bar
    * @return d²F^DH/(dn_i dn_j) contribution
    */
   public double dFDebyeHuckeldNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature,
@@ -635,11 +635,11 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
    * d²F^Born/(dn_i dn_j) includes cross derivatives of FBornX and FBornD terms.
    * </p>
    *
-   * @param j                  index of second component
-   * @param phase              the phase
+   * @param j index of second component
+   * @param phase the phase
    * @param numberOfComponents number of components
-   * @param temperature        temperature in K
-   * @param pressure           pressure in bar
+   * @param temperature temperature in K
+   * @param pressure pressure in bar
    * @return d²F^Born/(dn_i dn_j) contribution
    */
   public double dFBorndNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
@@ -707,9 +707,9 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
   /**
    * Initialize short-range parameters for this component from the electrolyte mixing rule.
    *
-   * @param phase              the MM phase
-   * @param temperature        temperature in K
-   * @param pressure           pressure in bar
+   * @param phase the MM phase
+   * @param temperature temperature in K
+   * @param pressure pressure in bar
    * @param numberOfComponents number of components
    */
   private void initSRParameters(PhaseElectrolyteCPAMM phase, double temperature, double pressure,
@@ -736,10 +736,10 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
    * dFSR2/dn_i = FSR2eps * epsi + FSR2W * Wi
    * </pre>
    *
-   * @param phase              the phase
+   * @param phase the phase
    * @param numberOfComponents number of components
-   * @param temperature        temperature in K
-   * @param pressure           pressure in bar
+   * @param temperature temperature in K
+   * @param pressure pressure in bar
    * @return dF_SR/dn_i contribution
    */
   public double dFShortRangedN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
@@ -767,10 +767,10 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
    * d²F_SR/(dn_i dT) = WiT/(nT*T*(1-η)) - Wi/(nT*T²*(1-η)) - dFSRdT/nT
    * </p>
    *
-   * @param phase              the phase
+   * @param phase the phase
    * @param numberOfComponents number of components
-   * @param temperature        temperature in K
-   * @param pressure           pressure in bar
+   * @param temperature temperature in K
+   * @param pressure pressure in bar
    * @return d²F_SR/(dn_i dT) contribution
    */
   public double dFShortRangedNdT(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
@@ -793,10 +793,10 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
    * Volume derivative of MM short-range contribution to dF/dN_i. Approximately zero for dilute electrolyte solutions
    * where the packing fraction η is small.
    *
-   * @param phase              the phase
+   * @param phase the phase
    * @param numberOfComponents number of components
-   * @param temperature        temperature in K
-   * @param pressure           pressure in bar
+   * @param temperature temperature in K
+   * @param pressure pressure in bar
    * @return d²F_SR/(dn_i dV) contribution
    */
   public double dFShortRangedNdV(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
@@ -814,11 +814,11 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
    * d²F_SR/(dn_i dn_j) = 2*wij[i][j]/(nT*T*(1-η)) - (Wi + Wj)/(nT²*T*(1-η)) + 2*F_SR/nT²
    * </p>
    *
-   * @param j                  index of second component
-   * @param phase              the phase
+   * @param j index of second component
+   * @param phase the phase
    * @param numberOfComponents number of components
-   * @param temperature        temperature in K
-   * @param pressure           pressure in bar
+   * @param temperature temperature in K
+   * @param pressure pressure in bar
    * @return d²F_SR/(dn_i dn_j) contribution
    */
   public double dFShortRangedNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature,

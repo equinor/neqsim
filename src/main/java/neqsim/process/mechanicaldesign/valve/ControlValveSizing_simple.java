@@ -129,9 +129,9 @@ public class ControlValveSizing_simple extends ControlValveSizing {
   /**
    * Calculates the flow rate through a control valve based on the valve opening, Kv, and inlet/outlet streams.
    *
-   * @param Kv           Flow coefficient (for 100% opening)
+   * @param Kv Flow coefficient (for 100% opening)
    * @param valveOpening Opening fraction of the valve (0.0 - 1.0)
-   * @param inletStream  Inlet stream to the valve
+   * @param inletStream Inlet stream to the valve
    * @param outletStream Outlet stream from the valve
    * @return Calculated flow rate in m³/s
    */
@@ -202,10 +202,10 @@ public class ControlValveSizing_simple extends ControlValveSizing {
    * specified flow rate Q, given the valve's Kv and the inlet/outlet conditions.
    * </p>
    *
-   * @param Q            Desired volumetric flow rate [m³/s]
-   * @param Kv           Flow coefficient at 100% opening
+   * @param Q Desired volumetric flow rate [m³/s]
+   * @param Kv Flow coefficient at 100% opening
    * @param valveOpening Current valve opening percentage (not used in calculation)
-   * @param inletStream  Inlet stream to the valve
+   * @param inletStream Inlet stream to the valve
    * @param outletStream Outlet stream from the valve
    * @return Required valve opening percentage (0-100)
    */
@@ -266,9 +266,9 @@ public class ControlValveSizing_simple extends ControlValveSizing {
   /**
    * Finds the outlet pressure for a given Kv, valve opening, and inlet stream.
    *
-   * @param Kv           Flow coefficient (for 100% opening)
+   * @param Kv Flow coefficient (for 100% opening)
    * @param valveOpening Opening fraction of the valve (0.0 - 1.0)
-   * @param inletStream  Inlet stream to the valve
+   * @param inletStream Inlet stream to the valve
    * @return Outlet pressure (unit Pa)
    */
   public double findOutletPressureForFixedKv(double Kv, double valveOpening, StreamInterface inletStream) {

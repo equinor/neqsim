@@ -164,11 +164,11 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
   /**
    * Constructor for PTPhaseEnvelopeMichelsen.
    *
-   * @param system        the thermodynamic system
-   * @param name          output file name (unused, kept for API compatibility)
+   * @param system the thermodynamic system
+   * @param name output file name (unused, kept for API compatibility)
    * @param phaseFraction initial phase fraction (near 0 = bubble, near 1 = dew)
-   * @param lowPres       starting low pressure in bara
-   * @param bubfirst      if true, trace bubble point curve first
+   * @param lowPres starting low pressure in bara
+   * @param bubfirst if true, trace bubble point curve first
    */
   public PTPhaseEnvelopeMichelsen(SystemInterface system, String name, double phaseFraction, double lowPres,
       boolean bubfirst) {
@@ -664,8 +664,8 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
   /**
    * Estimate the initial temperature using Wilson correlation for a given system.
    *
-   * @param sys      the thermodynamic system to use
-   * @param beta     overall vapor fraction
+   * @param sys the thermodynamic system to use
+   * @param beta overall vapor fraction
    * @param pressure pressure in bara
    * @return estimated temperature in Kelvin
    */
@@ -826,7 +826,7 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
    * TP flash with stability analysis enabled.
    *
    * @param temperature temperature in Kelvin
-   * @param pressure    pressure in bara
+   * @param pressure pressure in bara
    * @return number of equilibrium phases (1, 2, or 3+), or -1 if the flash failed
    */
   public int checkPhaseCount(double temperature, double pressure) {
@@ -936,13 +936,13 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
   /**
    * Append every contiguous non-NaN run of a flat branch array as a segment.
    *
-   * @param out  list to append to
+   * @param out list to append to
    * @param type phase type for the segments being extracted
-   * @param T    temperatures (possibly containing NaN break sentinels)
-   * @param P    pressures, same length as T
-   * @param H    mass enthalpies, same length as T
-   * @param D    mass densities, same length as T
-   * @param S    mass entropies, same length as T
+   * @param T temperatures (possibly containing NaN break sentinels)
+   * @param P pressures, same length as T
+   * @param H mass enthalpies, same length as T
+   * @param D mass densities, same length as T
+   * @param S mass entropies, same length as T
    */
   private static void extractSegmentsInto(ArrayList<EnvelopeSegment> out, EnvelopeSegment.PhaseType type, double[] T,
       double[] P, double[] H, double[] D, double[] S) {
@@ -998,7 +998,7 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
    * </p>
    *
    * @param beta overall vapor fraction
-   * @param P    pressure in bara
+   * @param P pressure in bara
    * @return estimated temperature in Kelvin
    */
   private double tempKWilson(double beta, double P) {

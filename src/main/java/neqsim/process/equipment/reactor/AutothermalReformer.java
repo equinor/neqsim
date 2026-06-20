@@ -74,7 +74,7 @@ public class AutothermalReformer extends TwoPortEquipment {
   /**
    * Creates an autothermal reformer with an inlet stream.
    *
-   * @param name        equipment name
+   * @param name equipment name
    * @param inletStream feed stream containing methane, steam, and oxygen or ratio-controlled basis
    */
   public AutothermalReformer(String name, StreamInterface inletStream) {
@@ -299,7 +299,7 @@ public class AutothermalReformer extends TwoPortEquipment {
    * Validates a non-negative finite input.
    *
    * @param value value to validate
-   * @param name  parameter name used in exception text
+   * @param name parameter name used in exception text
    */
   private void validateNonNegative(double value, String name) {
     if (!Double.isFinite(value) || value < 0.0) {

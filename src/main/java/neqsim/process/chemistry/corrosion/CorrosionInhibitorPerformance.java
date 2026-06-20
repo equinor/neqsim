@@ -176,9 +176,9 @@ public class CorrosionInhibitorPerformance implements Serializable {
    * Convenience factory: builds a CorrosionInhibitorPerformance with operating conditions seeded from a stream and a
    * Pa-level wall shear estimate from the bulk velocity (caller still picks inhibitor chemistry and dose).
    *
-   * @param stream       produced fluid stream
+   * @param stream produced fluid stream
    * @param pipeIdMeters pipe inside diameter in meters (for wall-shear estimate)
-   * @param velocityMps  bulk flow velocity in m/s (for wall-shear estimate)
+   * @param velocityMps bulk flow velocity in m/s (for wall-shear estimate)
    * @return configured (but not evaluated) performance model
    */
   public static CorrosionInhibitorPerformance fromStream(neqsim.process.equipment.stream.StreamInterface stream,
@@ -300,7 +300,7 @@ public class CorrosionInhibitorPerformance implements Serializable {
    * Temperature penalty factor.
    *
    * @param chem chemistry
-   * @param tC   temperature in Celsius
+   * @param tC temperature in Celsius
    * @return penalty 0..1 (1 = no penalty)
    */
   private static double temperaturePenalty(InhibitorChemistry chem, double tC) {

@@ -183,8 +183,8 @@ public class STS0131AcceptanceCriteria implements Serializable {
   /**
    * Interpolates a time-series value.
    *
-   * @param time       time vector in s
-   * @param values     value vector
+   * @param time time vector in s
+   * @param values value vector
    * @param targetTime target time in s
    * @return interpolated value, or the nearest endpoint value outside the vector range
    */
@@ -211,7 +211,7 @@ public class STS0131AcceptanceCriteria implements Serializable {
   /**
    * Finds the maximum discharge rate up to the limiting time.
    *
-   * @param result       depressurization result
+   * @param result depressurization result
    * @param limitingTime limiting time in s
    * @return maximum discharge rate in kg/s
    */

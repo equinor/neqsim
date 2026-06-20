@@ -40,8 +40,8 @@ public class SystemPCSAFTa extends SystemSrkEos {
    * Constructor for SystemPCSAFTa.
    * </p>
    *
-   * @param T              The temperature in unit Kelvin
-   * @param P              The pressure in unit bara (absolute pressure)
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
    * @param checkForSolids Set true to do solid phase check and calculations
    */
   public SystemPCSAFTa(double T, double P, boolean checkForSolids) {

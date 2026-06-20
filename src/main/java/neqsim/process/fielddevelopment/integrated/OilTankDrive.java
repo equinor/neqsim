@@ -35,10 +35,10 @@ public class OilTankDrive implements ReservoirDrive {
   /**
    * Creates an oil-tank depletion drive.
    *
-   * @param initialPressureBara             initial reservoir pressure in bara
-   * @param stoiipSm3                       stock-tank oil in place in Sm3
+   * @param initialPressureBara initial reservoir pressure in bara
+   * @param stoiipSm3 stock-tank oil in place in Sm3
    * @param depletionGradientBarPerFraction pressure drop in bar per unit fraction of STOIIP produced
-   * @param abandonmentPressureBara         minimum (abandonment) pressure in bara
+   * @param abandonmentPressureBara minimum (abandonment) pressure in bara
    */
   public OilTankDrive(double initialPressureBara, double stoiipSm3, double depletionGradientBarPerFraction,
       double abandonmentPressureBara) {

@@ -134,11 +134,11 @@ public class EnKFParameterEstimator implements Serializable {
     /**
      * Constructor.
      *
-     * @param path               variable path
-     * @param unit               unit of measurement
-     * @param minValue           minimum bound
-     * @param maxValue           maximum bound
-     * @param initialValue       starting value
+     * @param path variable path
+     * @param unit unit of measurement
+     * @param minValue minimum bound
+     * @param maxValue maximum bound
+     * @param initialValue starting value
      * @param initialUncertainty initial std dev
      */
     public TunableParameterSpec(String path, String unit, double minValue, double maxValue, double initialValue,
@@ -170,8 +170,8 @@ public class EnKFParameterEstimator implements Serializable {
     /**
      * Constructor.
      *
-     * @param path     variable path
-     * @param unit     unit of measurement
+     * @param path variable path
+     * @param unit unit of measurement
      * @param noiseStd measurement noise std dev
      */
     public MeasuredVariableSpec(String path, String unit, double noiseStd) {
@@ -198,11 +198,11 @@ public class EnKFParameterEstimator implements Serializable {
     /**
      * Constructor.
      *
-     * @param step            update step number
-     * @param estimates       parameter estimates
-     * @param uncertainties   parameter uncertainties (std dev)
-     * @param measurements    observed measurements
-     * @param predictions     model predictions
+     * @param step update step number
+     * @param estimates parameter estimates
+     * @param uncertainties parameter uncertainties (std dev)
+     * @param measurements observed measurements
+     * @param predictions model predictions
      * @param anomalyDetected whether anomaly was detected
      */
     public EnKFResult(int step, double[] estimates, double[] uncertainties, double[] measurements, double[] predictions,
@@ -340,10 +340,10 @@ public class EnKFParameterEstimator implements Serializable {
   /**
    * Adds a tunable parameter to estimate.
    *
-   * @param path         variable path (e.g., "Pipe1.heatTransferCoefficient")
-   * @param unit         unit of measurement
-   * @param minValue     minimum bound
-   * @param maxValue     maximum bound
+   * @param path variable path (e.g., "Pipe1.heatTransferCoefficient")
+   * @param unit unit of measurement
+   * @param minValue minimum bound
+   * @param maxValue maximum bound
    * @param initialValue initial/prior value
    * @return this estimator for chaining
    */
@@ -357,11 +357,11 @@ public class EnKFParameterEstimator implements Serializable {
   /**
    * Adds a tunable parameter with explicit uncertainty.
    *
-   * @param path               variable path
-   * @param unit               unit of measurement
-   * @param minValue           minimum bound
-   * @param maxValue           maximum bound
-   * @param initialValue       initial value
+   * @param path variable path
+   * @param unit unit of measurement
+   * @param minValue minimum bound
+   * @param maxValue maximum bound
+   * @param initialValue initial value
    * @param initialUncertainty initial standard deviation
    * @return this estimator for chaining
    */
@@ -374,8 +374,8 @@ public class EnKFParameterEstimator implements Serializable {
   /**
    * Adds a measured variable to match.
    *
-   * @param path     variable path (e.g., "Separator.temperature")
-   * @param unit     unit of measurement
+   * @param path variable path (e.g., "Separator.temperature")
+   * @param unit unit of measurement
    * @param noiseStd measurement noise standard deviation
    * @return this estimator for chaining
    */
@@ -410,7 +410,7 @@ public class EnKFParameterEstimator implements Serializable {
    * Initializes the EnKF ensemble.
    *
    * @param ensembleSize number of ensemble members (typically 20-100)
-   * @param seed         random seed for reproducibility
+   * @param seed random seed for reproducibility
    */
   public void initialize(int ensembleSize, long seed) {
     if (tunableParameters.isEmpty()) {
@@ -455,7 +455,7 @@ public class EnKFParameterEstimator implements Serializable {
    * Clips a value to parameter bounds.
    *
    * @param value the value to clip
-   * @param spec  the parameter specification with bounds
+   * @param spec the parameter specification with bounds
    * @return the clipped value within bounds
    */
   private double clipToBounds(double value, TunableParameterSpec spec) {

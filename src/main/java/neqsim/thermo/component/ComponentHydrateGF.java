@@ -27,10 +27,10 @@ public class ComponentHydrateGF extends ComponentHydrate {
    * Constructor for ComponentHydrateGF.
    * </p>
    *
-   * @param name         Name of component.
-   * @param moles        Total number of moles of component.
+   * @param name Name of component.
+   * @param moles Total number of moles of component.
    * @param molesInPhase Number of moles in phase.
-   * @param compIndex    Index number of component in phase object component array.
+   * @param compIndex Index number of component in phase object component array.
    */
   public ComponentHydrateGF(String name, double moles, double molesInPhase, int compIndex) {
     super(name, moles, molesInPhase, compIndex);
@@ -160,10 +160,10 @@ public class ComponentHydrateGF extends ComponentHydrate {
    * fugcoef2.
    * </p>
    *
-   * @param phase         a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComps a int
-   * @param temp          a double
-   * @param pres          a double
+   * @param temp a double
+   * @param pres a double
    * @return a double
    */
   public double fugcoef2(PhaseInterface phase, int numberOfComps, double temp, double pres) {

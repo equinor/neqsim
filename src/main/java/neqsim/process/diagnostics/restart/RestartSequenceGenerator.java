@@ -114,7 +114,7 @@ public class RestartSequenceGenerator implements Serializable {
    * Sets a custom precondition for a specific equipment.
    *
    * @param equipmentName equipment name
-   * @param precondition  precondition description
+   * @param precondition precondition description
    */
   public void setCustomPrecondition(String equipmentName, String precondition) {
     customPreconditions.put(equipmentName, precondition);
@@ -388,7 +388,7 @@ public class RestartSequenceGenerator implements Serializable {
    * Gets the restart priority for an equipment based on its role in the propagation.
    *
    * @param equipmentName equipment name
-   * @param propagation   the failure propagation result
+   * @param propagation the failure propagation result
    * @return restart priority
    */
   private RestartStep.Priority getRestartPriority(String equipmentName,

@@ -463,8 +463,8 @@ public class ProcessInterconnectionDesign implements java.io.Serializable {
    * Create a pipe segment from stream properties.
    *
    * @param fromEquip from equipment name
-   * @param toEquip   to equipment name
-   * @param stream    the stream
+   * @param toEquip to equipment name
+   * @param stream the stream
    * @return pipe segment or null if unable to create
    */
   private PipeSegment createPipeSegment(String fromEquip, String toEquip, StreamInterface stream) {
@@ -558,7 +558,7 @@ public class ProcessInterconnectionDesign implements java.io.Serializable {
   /**
    * Calculate wall thickness per ASME B31.3.
    *
-   * @param outsideDiameterMm  outside diameter in mm
+   * @param outsideDiameterMm outside diameter in mm
    * @param designPressureBara design pressure in bara
    * @return wall thickness in mm
    */
@@ -812,7 +812,7 @@ public class ProcessInterconnectionDesign implements java.io.Serializable {
   /**
    * Repeat a string n times (Java 8 compatible).
    *
-   * @param str   string to repeat
+   * @param str string to repeat
    * @param count number of times
    * @return repeated string
    */

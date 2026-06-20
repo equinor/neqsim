@@ -59,8 +59,8 @@ public class LoopDetector implements Serializable {
     /**
      * Create an edge.
      *
-     * @param from     source node
-     * @param to       target node
+     * @param from source node
+     * @param to target node
      * @param pipeName pipe name
      */
     Edge(String from, String to, String pipeName) {
@@ -115,7 +115,7 @@ public class LoopDetector implements Serializable {
    * Add an edge (pipe) to the graph.
    *
    * @param fromNode source node name
-   * @param toNode   target node name
+   * @param toNode target node name
    * @param pipeName pipe name
    */
   public void addEdge(String fromNode, String toNode, String pipeName) {
@@ -386,7 +386,7 @@ public class LoopDetector implements Serializable {
    * Find an edge between two adjacent nodes.
    *
    * @param from source node
-   * @param to   target node
+   * @param to target node
    * @return the edge, or null if not found
    */
   private Edge findEdgeBetween(String from, String to) {

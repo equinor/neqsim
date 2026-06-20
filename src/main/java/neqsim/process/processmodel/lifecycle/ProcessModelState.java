@@ -201,8 +201,8 @@ public class ProcessModelState implements Serializable {
   /**
    * Checks if a stream comes from a different process and adds an inter-process connection.
    *
-   * @param stream          the stream to check
-   * @param currentProcess  the name of the current process
+   * @param stream the stream to check
+   * @param currentProcess the name of the current process
    * @param streamToProcess map from stream names to their originating process
    */
   private void checkAndAddInterProcessConnection(neqsim.process.equipment.stream.StreamInterface stream,
@@ -530,7 +530,7 @@ public class ProcessModelState implements Serializable {
   /**
    * Migrates a ProcessModelState to the specified target schema version.
    *
-   * @param state         the state to migrate
+   * @param state the state to migrate
    * @param targetVersion the target schema version string
    * @return the migrated state (may be the same instance if already at target version)
    */
@@ -731,7 +731,7 @@ public class ProcessModelState implements Serializable {
   /**
    * Sets a custom property.
    *
-   * @param key   property key
+   * @param key property key
    * @param value property value
    */
   public void setCustomProperty(String key, Object value) {
@@ -779,9 +779,9 @@ public class ProcessModelState implements Serializable {
      * Creates an inter-process connection.
      *
      * @param sourceProcess name of the source ProcessSystem
-     * @param streamName    name of the connecting stream
+     * @param streamName name of the connecting stream
      * @param targetProcess name of the target ProcessSystem
-     * @param targetPort    port on the target equipment
+     * @param targetPort port on the target equipment
      */
     public InterProcessConnection(String sourceProcess, String streamName, String targetProcess, String targetPort) {
       this.sourceProcess = sourceProcess;

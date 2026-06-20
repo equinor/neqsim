@@ -38,7 +38,7 @@ public class PipeFlowVisualization extends
    * Constructor for PipeFlowVisualization.
    * </p>
    *
-   * @param nodes     a int
+   * @param nodes a int
    * @param timeSteps a int
    */
   public PipeFlowVisualization(int nodes, int timeSteps) {

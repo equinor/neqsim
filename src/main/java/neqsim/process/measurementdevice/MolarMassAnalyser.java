@@ -31,7 +31,7 @@ public class MolarMassAnalyser extends StreamMeasurementDeviceBaseClass {
    * Constructor for MolarMassAnalyser.
    * </p>
    *
-   * @param name   Name of MolarMassAnalyser
+   * @param name Name of MolarMassAnalyser
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public MolarMassAnalyser(String name, StreamInterface stream) {

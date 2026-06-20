@@ -269,7 +269,7 @@ public final class EmergencyShutdownTestPlan implements Serializable {
   /**
    * Requires a positive numeric value.
    *
-   * @param value     value to validate
+   * @param value value to validate
    * @param fieldName field name for error messages
    * @return validated value
    */
@@ -283,7 +283,7 @@ public final class EmergencyShutdownTestPlan implements Serializable {
   /**
    * Requires a non-empty text value.
    *
-   * @param text      text value
+   * @param text text value
    * @param fieldName field name for error messages
    * @return trimmed text
    */
@@ -392,7 +392,7 @@ public final class EmergencyShutdownTestPlan implements Serializable {
     /**
      * Adds field data from tagreader or a saved historian snapshot.
      *
-     * @param tag   logical or historian tag
+     * @param tag logical or historian tag
      * @param value field value
      * @return this builder
      */
@@ -459,7 +459,7 @@ public final class EmergencyShutdownTestPlan implements Serializable {
      * Adds a monitored logical tag or direct automation address.
      *
      * @param logicalTag logical tag or automation address
-     * @param unit       engineering unit
+     * @param unit engineering unit
      * @return this builder
      */
     public Builder monitor(String logicalTag, String unit) {
@@ -519,7 +519,7 @@ public final class EmergencyShutdownTestPlan implements Serializable {
      * Adds non-empty text to a list.
      *
      * @param target target list
-     * @param value  text value
+     * @param value text value
      */
     private static void addText(List<String> target, String value) {
       if (value != null && !value.trim().isEmpty()) {

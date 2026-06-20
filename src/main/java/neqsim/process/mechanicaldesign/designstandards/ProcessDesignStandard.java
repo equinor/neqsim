@@ -83,7 +83,7 @@ public class ProcessDesignStandard extends DesignStandard {
   /**
    * Constructs a ProcessDesignStandard for specific equipment type.
    *
-   * @param equipmentType    the type of equipment (e.g., "Separator", "HeatExchanger")
+   * @param equipmentType the type of equipment (e.g., "Separator", "HeatExchanger")
    * @param mechanicalDesign the mechanical design to apply standards to
    */
   public ProcessDesignStandard(String equipmentType, MechanicalDesign mechanicalDesign) {

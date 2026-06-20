@@ -40,7 +40,7 @@ public class TVflash extends Flash {
    * Constructor for TVflash.
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param Vspec  specified volume in cm³
+   * @param Vspec specified volume in cm³
    */
   public TVflash(SystemInterface system, double Vspec) {
     this.system = system;

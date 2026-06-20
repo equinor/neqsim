@@ -99,9 +99,9 @@ public class MUSCLReconstructor implements Serializable {
   /**
    * Reconstruct interface values between cells i and i+1.
    *
-   * @param uLeft     Value at cell i-1 (or i for boundary)
-   * @param uCenter   Value at cell i
-   * @param uRight    Value at cell i+1
+   * @param uLeft Value at cell i-1 (or i for boundary)
+   * @param uCenter Value at cell i
+   * @param uRight Value at cell i+1
    * @param uFarRight Value at cell i+2 (or i+1 for boundary)
    * @return Reconstructed left and right states at interface i+1/2
    */
@@ -158,7 +158,7 @@ public class MUSCLReconstructor implements Serializable {
   /**
    * Calculate limited slope using current limiter.
    *
-   * @param deltaLeft  Left difference (U_i - U_{i-1})
+   * @param deltaLeft Left difference (U_i - U_{i-1})
    * @param deltaRight Right difference (U_{i+1} - U_i)
    * @return Limited slope
    */

@@ -41,7 +41,7 @@ public class NewtonSolveCDplus implements java.io.Serializable {
    * Constructor for NewtonSolveCDplus.
    * </p>
    *
-   * @param system            a {@link neqsim.thermo.system.SystemInterface} object
+   * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param characterizeClass a {@link neqsim.thermo.characterization.PlusCharacterize} object
    */
   public NewtonSolveCDplus(SystemInterface system, PlusCharacterize characterizeClass) {

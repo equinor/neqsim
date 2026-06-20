@@ -159,7 +159,7 @@ public class MLIntegrationExamples {
     /**
      * Creates an ONNX adapter.
      *
-     * @param modelPath     path to ONNX model file
+     * @param modelPath path to ONNX model file
      * @param inputFeatures list of input feature names in order
      */
     public OnnxAdapter(String modelPath, List<String> inputFeatures) {
@@ -249,9 +249,9 @@ public class MLIntegrationExamples {
     /**
      * Creates a TensorFlow adapter.
      *
-     * @param modelDir         path to SavedModel directory
-     * @param inputFeatures    input feature names
-     * @param inputTensorName  name of input tensor
+     * @param modelDir path to SavedModel directory
+     * @param inputFeatures input feature names
+     * @param inputTensorName name of input tensor
      * @param outputTensorName name of output tensor
      */
     public TensorFlowAdapter(String modelDir, List<String> inputFeatures, String inputTensorName,
@@ -326,7 +326,7 @@ public class MLIntegrationExamples {
     /**
      * Creates a REST API adapter.
      *
-     * @param endpoint      model serving endpoint URL
+     * @param endpoint model serving endpoint URL
      * @param inputFeatures input feature names
      */
     public RestApiAdapter(String endpoint, List<String> inputFeatures) {
@@ -350,7 +350,7 @@ public class MLIntegrationExamples {
     /**
      * Adds a request header.
      *
-     * @param name  header name
+     * @param name header name
      * @param value header value
      */
     public void addHeader(String name, String value) {
@@ -428,9 +428,9 @@ public class MLIntegrationExamples {
     /**
      * Adds a threshold rule.
      *
-     * @param feature   feature name
+     * @param feature feature name
      * @param threshold threshold value
-     * @param weight    contribution weight when threshold exceeded
+     * @param weight contribution weight when threshold exceeded
      */
     public void addThreshold(String feature, double threshold, double weight) {
       inputFeatures.add(feature);

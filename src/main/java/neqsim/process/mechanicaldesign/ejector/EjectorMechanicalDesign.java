@@ -57,24 +57,24 @@ public class EjectorMechanicalDesign extends MechanicalDesign {
   /**
    * Store the latest mechanical design results from an ejector calculation.
    *
-   * @param mixingPressure              mixing chamber pressure in Pa
-   * @param motiveNozzleThroatArea      motive nozzle throat area in m2
-   * @param motiveNozzleExitVelocity    motive nozzle exit velocity in m/s
-   * @param suctionInletArea            suction inlet area in m2
-   * @param suctionInletVelocity        suction inlet velocity in m/s
-   * @param mixingChamberArea           mixing chamber area in m2
-   * @param mixingChamberVelocity       mixing chamber velocity in m/s
-   * @param diffuserOutletArea          diffuser outlet area in m2
-   * @param diffuserOutletVelocity      diffuser outlet velocity in m/s
-   * @param entrainmentRatio            ratio of suction to motive mass flow
+   * @param mixingPressure mixing chamber pressure in Pa
+   * @param motiveNozzleThroatArea motive nozzle throat area in m2
+   * @param motiveNozzleExitVelocity motive nozzle exit velocity in m/s
+   * @param suctionInletArea suction inlet area in m2
+   * @param suctionInletVelocity suction inlet velocity in m/s
+   * @param mixingChamberArea mixing chamber area in m2
+   * @param mixingChamberVelocity mixing chamber velocity in m/s
+   * @param diffuserOutletArea diffuser outlet area in m2
+   * @param diffuserOutletVelocity diffuser outlet velocity in m/s
+   * @param entrainmentRatio ratio of suction to motive mass flow
    * @param motiveNozzleEffectiveLength motive nozzle effective length in m
-   * @param suctionInletLength          suction inlet length in m
-   * @param mixingChamberLength         mixing chamber length in m
-   * @param diffuserOutletLength        diffuser outlet length in m
-   * @param bodyVolume                  ejector body volume in m3
-   * @param connectedPipingVolume       connected piping volume in m3
-   * @param suctionConnectionLength     suction connection length in m
-   * @param dischargeConnectionLength   discharge connection length in m
+   * @param suctionInletLength suction inlet length in m
+   * @param mixingChamberLength mixing chamber length in m
+   * @param diffuserOutletLength diffuser outlet length in m
+   * @param bodyVolume ejector body volume in m3
+   * @param connectedPipingVolume connected piping volume in m3
+   * @param suctionConnectionLength suction connection length in m
+   * @param dischargeConnectionLength discharge connection length in m
    */
   public void updateDesign(double mixingPressure, double motiveNozzleThroatArea, double motiveNozzleExitVelocity,
       double suctionInletArea, double suctionInletVelocity, double mixingChamberArea, double mixingChamberVelocity,

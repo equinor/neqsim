@@ -37,9 +37,9 @@ public class BLEVECalculator implements Serializable {
   /**
    * Construct a BLEVE calculator.
    *
-   * @param fuelMassKg             total mass of vaporizing fuel in kg
+   * @param fuelMassKg total mass of vaporizing fuel in kg
    * @param heatOfCombustionJPerKg lower heating value, J/kg
-   * @param radiativeFraction      fraction of combustion energy radiated (0.25 – 0.40)
+   * @param radiativeFraction fraction of combustion energy radiated (0.25 – 0.40)
    */
   public BLEVECalculator(double fuelMassKg, double heatOfCombustionJPerKg, double radiativeFraction) {
     if (fuelMassKg <= 0.0 || heatOfCombustionJPerKg <= 0.0) {

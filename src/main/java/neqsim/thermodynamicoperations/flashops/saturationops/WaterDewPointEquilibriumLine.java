@@ -26,7 +26,7 @@ public class WaterDewPointEquilibriumLine extends ConstantDutyTemperatureFlash {
    * Constructor for WaterDewPointEquilibriumLine.
    * </p>
    *
-   * @param system  a {@link neqsim.thermo.system.SystemInterface} object
+   * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param minPres a double
    * @param maxPres a double
    */

@@ -49,7 +49,7 @@ public class MonteCarloSimulation {
    * </p>
    *
    * @param baseStatClass a {@link neqsim.statistics.parameterfitting.StatisticsBaseClass} object
-   * @param numberOfRuns  a int
+   * @param numberOfRuns a int
    */
   public MonteCarloSimulation(StatisticsBaseClass baseStatClass, int numberOfRuns) {
     this.baseStatClass = baseStatClass;

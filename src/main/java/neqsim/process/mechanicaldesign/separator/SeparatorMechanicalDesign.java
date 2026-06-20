@@ -1202,9 +1202,9 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
    * internal diameter.
    *
    * @param hhll High-High Liquid Level in meters
-   * @param hll  High Liquid Level in meters
-   * @param nll  Normal Liquid Level in meters
-   * @param lll  Low Liquid Level in meters
+   * @param hll High Liquid Level in meters
+   * @param nll Normal Liquid Level in meters
+   * @param lll Low Liquid Level in meters
    */
   public void setLiquidLevelsFromHeights(double hhll, double hll, double nll, double lll) {
     if (innerDiameter > 0) {
@@ -1218,9 +1218,9 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   /**
    * Configure interface levels for three-phase separator based on heights.
    *
-   * @param hil  High Interface Level in meters
-   * @param nil  Normal Interface Level in meters
-   * @param lil  Low Interface Level in meters
+   * @param hil High Interface Level in meters
+   * @param nil Normal Interface Level in meters
+   * @param lil Low Interface Level in meters
    * @param weir Weir height in meters
    */
   public void setInterfaceLevelsFromHeights(double hil, double nil, double lil, double weir) {
@@ -1259,9 +1259,9 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
    * Configure all separator dimensions from an existing pre-designed separator. This allows importing a complete design
    * from external sources (e.g., vendor data).
    *
-   * @param id           Inner diameter in meters
+   * @param id Inner diameter in meters
    * @param tanTanLength Tan-tan length in meters
-   * @param wallThick    Wall thickness in meters
+   * @param wallThick Wall thickness in meters
    */
   public void setFromExistingDesign(double id, double tanTanLength, double wallThick) {
     this.innerDiameter = id;
@@ -1274,15 +1274,15 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
    * Configure all separator dimensions and levels from an existing design. This is the comprehensive method for
    * importing a complete pre-designed separator.
    *
-   * @param id           Inner diameter in meters
+   * @param id Inner diameter in meters
    * @param tanTanLength Tan-tan length in meters
-   * @param wallThick    Wall thickness in meters
-   * @param lEffLiquid   Effective length for liquid separation in meters
-   * @param lEffGas      Effective length for gas separation in meters
-   * @param inletNozzle  Inlet nozzle ID in meters
-   * @param gasNozzle    Gas outlet nozzle ID in meters
-   * @param oilNozzle    Oil outlet nozzle ID in meters
-   * @param waterNozzle  Water outlet nozzle ID in meters (0 for two-phase)
+   * @param wallThick Wall thickness in meters
+   * @param lEffLiquid Effective length for liquid separation in meters
+   * @param lEffGas Effective length for gas separation in meters
+   * @param inletNozzle Inlet nozzle ID in meters
+   * @param gasNozzle Gas outlet nozzle ID in meters
+   * @param oilNozzle Oil outlet nozzle ID in meters
+   * @param waterNozzle Water outlet nozzle ID in meters (0 for two-phase)
    */
   public void setFromExistingDesign(double id, double tanTanLength, double wallThick, double lEffLiquid, double lEffGas,
       double inletNozzle, double gasNozzle, double oilNozzle, double waterNozzle) {
@@ -1299,9 +1299,9 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
    * Configure all liquid levels from heights in meters. Automatically calculates fractions based on internal diameter.
    *
    * @param hhll High-High Liquid Level in meters
-   * @param hll  High Liquid Level in meters
-   * @param nll  Normal Liquid Level in meters
-   * @param lll  Low Liquid Level in meters
+   * @param hll High Liquid Level in meters
+   * @param nll Normal Liquid Level in meters
+   * @param lll Low Liquid Level in meters
    * @param llll Low-Low Liquid Level in meters
    */
   public void setAllLiquidLevelsFromHeights(double hhll, double hll, double nll, double lll, double llll) {
@@ -1318,19 +1318,19 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
    * Set all design parameters from a Python-style dictionary-like specification. This method mirrors the Python dict
    * format: {'ID': 3.154, 'L': 13.1, ...}.
    *
-   * @param id            Inner diameter in meters
-   * @param length        Tan-tan length in meters
-   * @param lEffLiquid    Effective length for liquid separation in meters
-   * @param lEffGas       Effective length for gas separation in meters
+   * @param id Inner diameter in meters
+   * @param length Tan-tan length in meters
+   * @param lEffLiquid Effective length for liquid separation in meters
+   * @param lEffGas Effective length for gas separation in meters
    * @param inletNozzleId Inlet nozzle ID in meters
-   * @param hhll          HHLL height in meters
-   * @param hll           HLL height in meters
-   * @param nll           NLL height in meters
-   * @param lll           LLL height in meters
-   * @param weir          Weir height in meters
-   * @param hil           HIL height in meters
-   * @param nil           NIL height in meters
-   * @param lil           LIL height in meters
+   * @param hhll HHLL height in meters
+   * @param hll HLL height in meters
+   * @param nll NLL height in meters
+   * @param lll LLL height in meters
+   * @param weir Weir height in meters
+   * @param hil HIL height in meters
+   * @param nil NIL height in meters
+   * @param lil LIL height in meters
    */
   public void setFromDesignSpec(double id, double length, double lEffLiquid, double lEffGas, double inletNozzleId,
       double hhll, double hll, double nll, double lll, double weir, double hil, double nil, double lil) {
@@ -2111,9 +2111,9 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   /**
    * Calculates the terminal settling velocity for a droplet using Stokes' law.
    *
-   * @param dropletDiameterUm   droplet diameter in micrometers
-   * @param continuousDensity   density of continuous phase in kg/m³
-   * @param dispersedDensity    density of dispersed phase in kg/m³
+   * @param dropletDiameterUm droplet diameter in micrometers
+   * @param continuousDensity density of continuous phase in kg/m³
+   * @param dispersedDensity density of dispersed phase in kg/m³
    * @param continuousViscosity viscosity of continuous phase in Pa·s
    * @return terminal velocity in m/s
    */
@@ -2128,7 +2128,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   /**
    * Calculates the maximum allowable gas velocity using Souders-Brown equation.
    *
-   * @param gasDensity    gas density in kg/m³
+   * @param gasDensity gas density in kg/m³
    * @param liquidDensity liquid density in kg/m³
    * @return maximum gas velocity in m/s
    */
@@ -2240,7 +2240,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
    * Validates that the actual retention time meets minimum requirements.
    *
    * @param actualRetentionMinutes actual retention time in minutes
-   * @param isOil                  true for oil retention, false for water retention
+   * @param isOil true for oil retention, false for water retention
    * @return true if retention time is sufficient
    */
   public boolean validateRetentionTime(double actualRetentionMinutes, boolean isOil) {
@@ -2252,7 +2252,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
    * Validates that the droplet diameter is appropriate for separation.
    *
    * @param actualDropletDiameterUm actual droplet diameter in micrometers
-   * @param isGasLiquid             true for gas-liquid separation, false for liquid-liquid
+   * @param isGasLiquid true for gas-liquid separation, false for liquid-liquid
    * @return true if droplet diameter is at or above design diameter
    */
   public boolean validateDropletDiameter(double actualDropletDiameterUm, boolean isGasLiquid) {

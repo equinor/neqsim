@@ -526,9 +526,9 @@ public class BlueHydrogenPlantBuilder extends SMRHydrogenPlantBuilder {
    * Adds all blue-H2 process units to the process system.
    *
    * @param process process system to populate
-   * @param feed    process methane/steam feed
-   * @param fuel    furnace fuel stream
-   * @param air     combustion air stream
+   * @param feed process methane/steam feed
+   * @param fuel furnace fuel stream
+   * @param air combustion air stream
    */
   private void addUnits(ProcessSystem process, Stream feed, Stream fuel, Stream air) {
     process.add(feed);
@@ -552,9 +552,9 @@ public class BlueHydrogenPlantBuilder extends SMRHydrogenPlantBuilder {
    * Records explicit process connections for topology-aware tools.
    *
    * @param process process system to update
-   * @param feed    process methane/steam feed
-   * @param fuel    furnace fuel stream
-   * @param air     combustion air stream
+   * @param feed process methane/steam feed
+   * @param fuel furnace fuel stream
+   * @param air combustion air stream
    */
   private void connectUnits(ProcessSystem process, Stream feed, Stream fuel, Stream air) {
     process.connect(feed.getName(), reformerFurnace.getName());
@@ -578,8 +578,8 @@ public class BlueHydrogenPlantBuilder extends SMRHydrogenPlantBuilder {
   /**
    * Gets selected component mass flow from a stream.
    *
-   * @param stream            stream to inspect
-   * @param componentName     component name
+   * @param stream stream to inspect
+   * @param componentName component name
    * @param molarMassKgPerMol component molar mass in kg/mol
    * @return component mass flow in kg/hr
    */
@@ -607,7 +607,7 @@ public class BlueHydrogenPlantBuilder extends SMRHydrogenPlantBuilder {
   /**
    * Gets component moles from a thermodynamic system.
    *
-   * @param system        thermodynamic system
+   * @param system thermodynamic system
    * @param componentName component name
    * @return component moles in the stream basis, or zero when absent
    */
@@ -625,7 +625,7 @@ public class BlueHydrogenPlantBuilder extends SMRHydrogenPlantBuilder {
   /**
    * Validates positive finite values.
    *
-   * @param value         value to validate
+   * @param value value to validate
    * @param parameterName parameter name used in exception messages
    */
   private void validatePositive(double value, String parameterName) {
@@ -637,7 +637,7 @@ public class BlueHydrogenPlantBuilder extends SMRHydrogenPlantBuilder {
   /**
    * Validates a closed unit interval fraction.
    *
-   * @param value         fraction value
+   * @param value fraction value
    * @param parameterName parameter name used in exception messages
    */
   private void validateFraction(double value, String parameterName) {

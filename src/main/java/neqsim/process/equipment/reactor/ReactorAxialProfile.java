@@ -57,9 +57,9 @@ public class ReactorAxialProfile implements Serializable {
   /**
    * Constructor for ReactorAxialProfile.
    *
-   * @param numberOfSteps      number of axial discretization points
+   * @param numberOfSteps number of axial discretization points
    * @param numberOfComponents number of chemical components
-   * @param componentNames     names of components
+   * @param componentNames names of components
    */
   public ReactorAxialProfile(int numberOfSteps, int numberOfComponents, String[] componentNames) {
     this.numberOfSteps = numberOfSteps;
@@ -75,12 +75,12 @@ public class ReactorAxialProfile implements Serializable {
   /**
    * Set data at a specific axial step.
    *
-   * @param step  step index (0-based)
-   * @param z     axial position [m]
-   * @param temp  temperature [K]
+   * @param step step index (0-based)
+   * @param z axial position [m]
+   * @param temp temperature [K]
    * @param press pressure [bara]
-   * @param conv  conversion of key component [-]
-   * @param rate  total reaction rate [mol/(m3*s)]
+   * @param conv conversion of key component [-]
+   * @param rate total reaction rate [mol/(m3*s)]
    * @param flows molar flows for each component [mol/s]
    */
   public void setData(int step, double z, double temp, double press, double conv, double rate, double[] flows) {
@@ -129,7 +129,7 @@ public class ReactorAxialProfile implements Serializable {
    *
    * @param xArr independent variable array
    * @param yArr dependent variable array
-   * @param x    target interpolation point
+   * @param x target interpolation point
    * @return interpolated y value
    */
   private double interpolate(double[] xArr, double[] yArr, double x) {

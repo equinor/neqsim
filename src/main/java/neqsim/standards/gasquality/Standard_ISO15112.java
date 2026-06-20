@@ -81,10 +81,10 @@ public class Standard_ISO15112 extends neqsim.standards.Standard {
   /**
    * Constructor for Standard_ISO15112 with specified conditions.
    *
-   * @param thermoSystem      a {@link neqsim.thermo.system.SystemInterface} object
+   * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
    * @param volumeFlowRateM3h volume flow rate at metering conditions in m3/h
-   * @param volumeRefTempC    volume reference temperature in degrees C
-   * @param energyRefTempC    energy reference temperature in degrees C
+   * @param volumeRefTempC volume reference temperature in degrees C
+   * @param energyRefTempC energy reference temperature in degrees C
    */
   public Standard_ISO15112(SystemInterface thermoSystem, double volumeFlowRateM3h, double volumeRefTempC,
       double energyRefTempC) {

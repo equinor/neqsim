@@ -97,12 +97,12 @@ public class BatchResult implements Serializable {
    * Creates a new batch result.
    *
    * @param parameterNames names of the parameters
-   * @param estimates      optimized parameter values
-   * @param uncertainties  standard deviations
-   * @param chiSquare      chi-square value
-   * @param iterations     number of iterations
+   * @param estimates optimized parameter values
+   * @param uncertainties standard deviations
+   * @param chiSquare chi-square value
+   * @param iterations number of iterations
    * @param dataPointCount number of data points
-   * @param converged      whether optimization converged
+   * @param converged whether optimization converged
    */
   public BatchResult(String[] parameterNames, double[] estimates, double[] uncertainties, double chiSquare,
       int iterations, int dataPointCount, boolean converged) {
@@ -113,18 +113,18 @@ public class BatchResult implements Serializable {
   /**
    * Full constructor with all statistics.
    *
-   * @param parameterNames        names of the parameters
-   * @param estimates             optimized parameter values
-   * @param uncertainties         standard deviations
-   * @param chiSquare             chi-square value
-   * @param iterations            number of iterations
-   * @param dataPointCount        number of data points
-   * @param converged             whether optimization converged
-   * @param covarianceMatrix      parameter covariance matrix
-   * @param correlationMatrix     parameter correlation matrix
+   * @param parameterNames names of the parameters
+   * @param estimates optimized parameter values
+   * @param uncertainties standard deviations
+   * @param chiSquare chi-square value
+   * @param iterations number of iterations
+   * @param dataPointCount number of data points
+   * @param converged whether optimization converged
+   * @param covarianceMatrix parameter covariance matrix
+   * @param correlationMatrix parameter correlation matrix
    * @param meanAbsoluteDeviation mean absolute deviation
-   * @param bias                  mean signed deviation
-   * @param rSquared              coefficient of determination
+   * @param bias mean signed deviation
+   * @param rSquared coefficient of determination
    */
   public BatchResult(String[] parameterNames, double[] estimates, double[] uncertainties, double chiSquare,
       int iterations, int dataPointCount, boolean converged, double[][] covarianceMatrix, double[][] correlationMatrix,

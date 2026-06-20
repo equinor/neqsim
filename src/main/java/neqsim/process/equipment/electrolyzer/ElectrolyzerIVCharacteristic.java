@@ -190,7 +190,7 @@ public class ElectrolyzerIVCharacteristic implements java.io.Serializable {
    * </p>
    *
    * @param currentDensity current density (A/cm2), must be non-negative
-   * @param temperatureK   stack temperature (Kelvin), must be positive
+   * @param temperatureK stack temperature (Kelvin), must be positive
    * @return cell voltage (V)
    */
   public double getCellVoltage(double currentDensity, double temperatureK) {

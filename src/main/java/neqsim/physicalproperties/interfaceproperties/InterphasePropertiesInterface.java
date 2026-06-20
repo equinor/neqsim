@@ -92,7 +92,7 @@ public interface InterphasePropertiesInterface extends Cloneable {
    *
    * @param numb1 First phase number.
    * @param numb2 Second phase number.
-   * @param unit  a {@link java.lang.String} object
+   * @param unit a {@link java.lang.String} object
    * @return Surface tension in specified unit.
    */
   public double getSurfaceTension(int numb1, int numb2, String unit);
@@ -123,7 +123,7 @@ public interface InterphasePropertiesInterface extends Cloneable {
    *
    * @param phase1 a {@link java.lang.String} object
    * @param phase2 a {@link java.lang.String} object
-   * @param model  a {@link java.lang.String} object
+   * @param model a {@link java.lang.String} object
    */
   public void setInterfacialTensionModel(String phase1, String phase2, String model);
 
@@ -142,7 +142,7 @@ public interface InterphasePropertiesInterface extends Cloneable {
    * </p>
    *
    * @return an array of {@link neqsim.physicalproperties.interfaceproperties.solidadsorption.AdsorptionInterface}
-   *         objects
+   * objects
    */
   public AdsorptionInterface[] getAdsorptionCalc();
 
@@ -162,8 +162,7 @@ public interface InterphasePropertiesInterface extends Cloneable {
    * </p>
    *
    * @param adsorptionCalc an array of
-   *                       {@link neqsim.physicalproperties.interfaceproperties.solidadsorption.AdsorptionInterface}
-   *                       objects
+   * {@link neqsim.physicalproperties.interfaceproperties.solidadsorption.AdsorptionInterface} objects
    */
   public void setAdsorptionCalc(AdsorptionInterface[] adsorptionCalc);
 }

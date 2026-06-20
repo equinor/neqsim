@@ -105,7 +105,7 @@ class AgenticEngineeringKernelTest {
    * Checks whether a workflow step id exists.
    *
    * @param steps workflow step array
-   * @param id    step id
+   * @param id step id
    * @return true when found
    */
   private static boolean containsStep(JsonArray steps, String id) {

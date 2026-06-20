@@ -182,10 +182,10 @@ public class SubseaCostEstimator {
   /**
    * Calculate PLET cost estimate.
    *
-   * @param dryWeightTonnes    dry weight in tonnes
-   * @param hubSizeInches      hub size in inches
-   * @param waterDepthM        water depth in meters
-   * @param hasIsolationValve  has isolation valve
+   * @param dryWeightTonnes dry weight in tonnes
+   * @param hubSizeInches hub size in inches
+   * @param waterDepthM water depth in meters
+   * @param hasIsolationValve has isolation valve
    * @param hasPiggingFacility has pigging facilities
    */
   public void calculatePLETCost(double dryWeightTonnes, double hubSizeInches, double waterDepthM,
@@ -232,10 +232,10 @@ public class SubseaCostEstimator {
    * Calculate Subsea Tree cost estimate.
    *
    * @param pressureRatingPsi pressure rating in psi
-   * @param boreSizeInches    bore size in inches
-   * @param waterDepthM       water depth in meters
-   * @param isHorizontal      is horizontal tree
-   * @param isDualBore        is dual bore tree
+   * @param boreSizeInches bore size in inches
+   * @param waterDepthM water depth in meters
+   * @param isHorizontal is horizontal tree
+   * @param isDualBore is dual bore tree
    */
   public void calculateTreeCost(double pressureRatingPsi, double boreSizeInches, double waterDepthM,
       boolean isHorizontal, boolean isDualBore) {
@@ -284,10 +284,10 @@ public class SubseaCostEstimator {
   /**
    * Calculate Subsea Manifold cost estimate.
    *
-   * @param numberOfSlots   number of well slots
+   * @param numberOfSlots number of well slots
    * @param dryWeightTonnes dry weight in tonnes
-   * @param waterDepthM     water depth in meters
-   * @param hasTestHeader   has test header
+   * @param waterDepthM water depth in meters
+   * @param hasTestHeader has test header
    */
   public void calculateManifoldCost(int numberOfSlots, double dryWeightTonnes, double waterDepthM,
       boolean hasTestHeader) {
@@ -331,10 +331,10 @@ public class SubseaCostEstimator {
   /**
    * Calculate Subsea Jumper cost estimate.
    *
-   * @param lengthM        length in meters
+   * @param lengthM length in meters
    * @param diameterInches diameter in inches
-   * @param isRigid        is rigid jumper
-   * @param waterDepthM    water depth in meters
+   * @param isRigid is rigid jumper
+   * @param waterDepthM water depth in meters
    */
   public void calculateJumperCost(double lengthM, double diameterInches, boolean isRigid, double waterDepthM) {
     if (isRigid) {
@@ -402,12 +402,12 @@ public class SubseaCostEstimator {
   /**
    * Calculate Umbilical cost estimate.
    *
-   * @param lengthKm                 length in kilometers
-   * @param numberOfHydraulicLines   number of hydraulic lines
-   * @param numberOfChemicalLines    number of chemical lines
+   * @param lengthKm length in kilometers
+   * @param numberOfHydraulicLines number of hydraulic lines
+   * @param numberOfChemicalLines number of chemical lines
    * @param numberOfElectricalCables number of electrical cables
-   * @param waterDepthM              water depth in meters
-   * @param isDynamic                is dynamic section
+   * @param waterDepthM water depth in meters
+   * @param isDynamic is dynamic section
    */
   public void calculateUmbilicalCost(double lengthKm, int numberOfHydraulicLines, int numberOfChemicalLines,
       int numberOfElectricalCables, double waterDepthM, boolean isDynamic) {
@@ -452,11 +452,11 @@ public class SubseaCostEstimator {
   /**
    * Calculate Flexible Pipe cost estimate.
    *
-   * @param lengthM             length in meters
+   * @param lengthM length in meters
    * @param innerDiameterInches inner diameter in inches
-   * @param waterDepthM         water depth in meters
-   * @param isDynamic           is dynamic riser
-   * @param hasBuoyancy         has buoyancy modules
+   * @param waterDepthM water depth in meters
+   * @param isDynamic is dynamic riser
+   * @param hasBuoyancy has buoyancy modules
    */
   public void calculateFlexiblePipeCost(double lengthM, double innerDiameterInches, double waterDepthM,
       boolean isDynamic, boolean hasBuoyancy) {
@@ -516,9 +516,9 @@ public class SubseaCostEstimator {
   /**
    * Calculate Subsea Booster cost estimate.
    *
-   * @param powerMW       power in MW
-   * @param isCompressor  is compressor (vs pump)
-   * @param waterDepthM   water depth in meters
+   * @param powerMW power in MW
+   * @param isCompressor is compressor (vs pump)
+   * @param waterDepthM water depth in meters
    * @param hasRedundancy has redundant motor
    */
   public void calculateBoosterCost(double powerMW, boolean isCompressor, double waterDepthM, boolean hasRedundancy) {
@@ -583,8 +583,8 @@ public class SubseaCostEstimator {
   /**
    * Calculate generic subsea installation cost.
    *
-   * @param weightTonnes      equipment weight in tonnes
-   * @param waterDepthM       water depth in meters
+   * @param weightTonnes equipment weight in tonnes
+   * @param waterDepthM water depth in meters
    * @param requiresPrecision requires precision landing
    */
   private void calculateSubseaInstallation(double weightTonnes, double waterDepthM, boolean requiresPrecision) {
@@ -684,7 +684,7 @@ public class SubseaCostEstimator {
    * Generate bill of materials.
    *
    * @param equipmentType equipment type name
-   * @param details       equipment details
+   * @param details equipment details
    * @return list of BOM items
    */
   public List<Map<String, Object>> generateBillOfMaterials(String equipmentType, Map<String, Object> details) {
@@ -895,8 +895,8 @@ public class SubseaCostEstimator {
    * Generate bill of materials for subsea equipment.
    *
    * @param equipmentType type of equipment
-   * @param weightTonnes  equipment weight in tonnes
-   * @param waterDepth    water depth in meters
+   * @param weightTonnes equipment weight in tonnes
+   * @param waterDepth water depth in meters
    * @return list of BOM items
    */
   public List<Map<String, Object>> generateBOM(String equipmentType, double weightTonnes, double waterDepth) {

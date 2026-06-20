@@ -83,7 +83,7 @@ public class HIPPSLogic implements ProcessLogic {
   /**
    * Creates a HIPPS logic instance.
    *
-   * @param name        HIPPS name/tag (e.g., "HIPPS-101")
+   * @param name HIPPS name/tag (e.g., "HIPPS-101")
    * @param votingLogic voting pattern for pressure sensors (typically 2oo3 for SIL 3)
    */
   public HIPPSLogic(String name, VotingLogic votingLogic) {
@@ -118,7 +118,7 @@ public class HIPPSLogic implements ProcessLogic {
    * Links HIPPS to an escalation logic (typically ESD) that activates if HIPPS fails to control pressure.
    *
    * @param escalationLogic ESD or other backup logic
-   * @param delay           time in seconds before escalating
+   * @param delay time in seconds before escalating
    */
   public void linkToEscalationLogic(ProcessLogic escalationLogic, double delay) {
     this.escalationLogic = escalationLogic;

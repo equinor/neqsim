@@ -63,7 +63,7 @@ public enum Symptom {
   /**
    * Constructs a symptom.
    *
-   * @param description       human-readable description
+   * @param description human-readable description
    * @param relatedCategories hypothesis categories related to this symptom
    */
   Symptom(String description, List<String> relatedCategories) {

@@ -300,12 +300,12 @@ public class Costald extends LiquidPhysicalPropertyMethod implements DensityInte
   /**
    * Applies the Aalto et al. (1996) compressed liquid correction.
    *
-   * @param vsSat              saturated liquid molar volume in cm3/mol
+   * @param vsSat saturated liquid molar volume in cm3/mol
    * @param reducedTemperature reduced temperature T/Tc_m
-   * @param omega              acentric factor of mixture
-   * @param vstarMix           characteristic volume of mixture in cm3/mol
-   * @param tcMix              pseudocritical temperature of mixture in K
-   * @param pressure           system pressure in bar
+   * @param omega acentric factor of mixture
+   * @param vstarMix characteristic volume of mixture in cm3/mol
+   * @param tcMix pseudocritical temperature of mixture in K
+   * @param pressure system pressure in bar
    * @return corrected liquid molar volume in cm3/mol
    */
   private double applyCompressedLiquidCorrection(double vsSat, double reducedTemperature, double omega, double vstarMix,
@@ -418,7 +418,7 @@ public class Costald extends LiquidPhysicalPropertyMethod implements DensityInte
    *
    * @param compIdx component index in the phase
    * @return estimated V* in cm3/mol, or 0 if estimation fails (e.g., near-critical or supercritical at standard
-   *         conditions with Tr &gt; 0.9, missing data)
+   * conditions with Tr &gt; 0.9, missing data)
    */
   private double estimateVstarFromDensity(int compIdx) {
     double normalDensity = liquidPhase.getPhase().getComponent(compIdx).getNormalLiquidDensity();

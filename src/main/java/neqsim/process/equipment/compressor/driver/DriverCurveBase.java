@@ -48,8 +48,8 @@ public abstract class DriverCurveBase implements DriverCurve, Serializable {
   /**
    * Constructor with basic parameters.
    *
-   * @param ratedPower       rated power in kW
-   * @param ratedSpeed       rated speed in RPM
+   * @param ratedPower rated power in kW
+   * @param ratedSpeed rated speed in RPM
    * @param designEfficiency design efficiency (0-1)
    */
   protected DriverCurveBase(double ratedPower, double ratedSpeed, double designEfficiency) {

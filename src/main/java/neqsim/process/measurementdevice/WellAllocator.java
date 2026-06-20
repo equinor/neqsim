@@ -32,7 +32,7 @@ public class WellAllocator extends StreamMeasurementDeviceBaseClass {
    * Constructor for WellAllocator.
    * </p>
    *
-   * @param name   a {@link java.lang.String} object
+   * @param name a {@link java.lang.String} object
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public WellAllocator(String name, StreamInterface stream) {
@@ -71,7 +71,7 @@ public class WellAllocator extends StreamMeasurementDeviceBaseClass {
    * Get specific measurement type. Supports "gas export rate", "oil export rate" and "total export rate".
    *
    * @param measurement Measurement value to get
-   * @param unit        Unit to get value in
+   * @param unit Unit to get value in
    * @return Measured value
    */
   public double getMeasuredValue(String measurement, String unit) {

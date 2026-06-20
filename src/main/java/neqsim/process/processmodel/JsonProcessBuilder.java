@@ -125,7 +125,7 @@ public class JsonProcessBuilder {
    * 'fluid' section from JSON. This is the recommended path when importing fluids from external sources (e.g., Eclipse
    * E300 files) that preserve all component critical properties and BIPs.
    *
-   * @param root          the root JSON object
+   * @param root the root JSON object
    * @param preBuiltFluid optional pre-built fluid system (null to use JSON fluid section)
    * @return a SimulationResult containing the built ProcessSystem or errors
    */
@@ -347,8 +347,8 @@ public class JsonProcessBuilder {
   /**
    * Copies a root JSON section if present.
    *
-   * @param root        the source root object
-   * @param metadata    target metadata object
+   * @param root the source root object
+   * @param metadata target metadata object
    * @param sectionName section name to copy
    */
   private void copyRootSection(JsonObject root, JsonObject metadata, String sectionName) {
@@ -361,7 +361,7 @@ public class JsonProcessBuilder {
    * Applies optional root-level design data to matching process units.
    *
    * @param process the process system being built
-   * @param root    the root JSON object
+   * @param root the root JSON object
    * @return JSON report describing design data that was applied
    */
   private JsonObject applyRootDesignData(ProcessSystem process, JsonObject root) {
@@ -378,7 +378,7 @@ public class JsonProcessBuilder {
   /**
    * Applies normalized design capacity data using the shared capacity utility.
    *
-   * @param process          the process system containing equipment
+   * @param process the process system containing equipment
    * @param designCapacities design capacity object keyed by unit name
    * @return JSON report keyed by unit name
    */
@@ -394,7 +394,7 @@ public class JsonProcessBuilder {
   /**
    * Applies the advisory {@code equipmentDesign} section used by large extracted process models.
    *
-   * @param process         the process system containing equipment
+   * @param process the process system containing equipment
    * @param equipmentDesign the root equipmentDesign JSON section
    * @return JSON report describing applied groups and generated capacity data
    */
@@ -449,7 +449,7 @@ public class JsonProcessBuilder {
   /**
    * Applies separator sizing groups and records capacity data.
    *
-   * @param groups                    separatorSizing array
+   * @param groups separatorSizing array
    * @param generatedDesignCapacities normalized design capacity object to populate
    * @return JSON array with one report object per group
    */
@@ -480,7 +480,7 @@ public class JsonProcessBuilder {
   /**
    * Applies compressor sizing records and records capacity data.
    *
-   * @param groups                    compressorSizing array
+   * @param groups compressorSizing array
    * @param generatedDesignCapacities normalized design capacity object to populate
    * @return JSON array with one report object per compressor record
    */
@@ -540,7 +540,7 @@ public class JsonProcessBuilder {
   /**
    * Applies cooler sizing groups and records capacity data.
    *
-   * @param groups                    coolerSizing array
+   * @param groups coolerSizing array
    * @param generatedDesignCapacities normalized design capacity object to populate
    * @return JSON array with one report object per group
    */
@@ -575,9 +575,9 @@ public class JsonProcessBuilder {
   /**
    * Adds a mapped numeric property when the source key exists.
    *
-   * @param target    target property object
+   * @param target target property object
    * @param targetKey target property name
-   * @param source    source object
+   * @param source source object
    * @param sourceKey source property name
    */
   private void addMappedNumber(JsonObject target, String targetKey, JsonObject source, String sourceKey) {
@@ -654,7 +654,7 @@ public class JsonProcessBuilder {
    * Applies properties to one named equipment item.
    *
    * @param unitName equipment name
-   * @param props    properties to apply
+   * @param props properties to apply
    * @return JSON report for the unit
    */
   private JsonObject applyUnitProperties(String unitName, JsonObject props) {
@@ -677,8 +677,8 @@ public class JsonProcessBuilder {
    * Adds capacity data for all unit names in a group.
    *
    * @param designCapacities target designCapacities object
-   * @param group            source group containing unitNames
-   * @param capacityProps    capacity properties to add
+   * @param group source group containing unitNames
+   * @param capacityProps capacity properties to add
    */
   private void addCapacityDataForUnitNames(JsonObject designCapacities, JsonObject group, JsonObject capacityProps) {
     if (capacityProps.size() == 0) {
@@ -698,8 +698,8 @@ public class JsonProcessBuilder {
    * Adds capacity data for a single unitName in a record.
    *
    * @param designCapacities target designCapacities object
-   * @param group            source group containing unitName
-   * @param capacityProps    capacity properties to add
+   * @param group source group containing unitName
+   * @param capacityProps capacity properties to add
    */
   private void addCapacityDataForUnitName(JsonObject designCapacities, JsonObject group, JsonObject capacityProps) {
     if (capacityProps.size() == 0 || !group.has("unitName")) {
@@ -829,7 +829,7 @@ public class JsonProcessBuilder {
   /**
    * Applies component property overrides to all matching components in a fluid.
    *
-   * @param fluid               the fluid to update
+   * @param fluid the fluid to update
    * @param componentProperties component property definitions from JSON
    */
   private void applyComponentProperties(SystemInterface fluid, JsonArray componentProperties) {
@@ -867,9 +867,9 @@ public class JsonProcessBuilder {
   /**
    * Applies component property overrides to a component selected by component index.
    *
-   * @param fluid          the fluid to update
+   * @param fluid the fluid to update
    * @param componentIndex the component index in each phase
-   * @param props          the property definitions to apply
+   * @param props the property definitions to apply
    */
   private void applyComponentPropertiesToIndex(SystemInterface fluid, int componentIndex, JsonObject props) {
     for (int phase = 0; phase < fluid.getMaxNumberOfPhases(); phase++) {
@@ -884,9 +884,9 @@ public class JsonProcessBuilder {
   /**
    * Applies component property overrides to a component selected by component name.
    *
-   * @param fluid         the fluid to update
+   * @param fluid the fluid to update
    * @param componentName the component name used in the rebuilt fluid
-   * @param props         the property definitions to apply
+   * @param props the property definitions to apply
    */
   private void applyComponentPropertiesToName(SystemInterface fluid, String componentName, JsonObject props) {
     for (int phase = 0; phase < fluid.getMaxNumberOfPhases(); phase++) {
@@ -902,7 +902,7 @@ public class JsonProcessBuilder {
    * Applies scalar component property overrides to a component.
    *
    * @param component the component to update
-   * @param props     the property definitions to apply
+   * @param props the property definitions to apply
    */
   private void applyComponentProperties(ComponentInterface component, JsonObject props) {
     if (props.has("molarMass")) {
@@ -953,9 +953,9 @@ public class JsonProcessBuilder {
   /**
    * Creates a SystemInterface based on the model type string.
    *
-   * @param model       the model name (e.g., "SRK", "PR", "CPA")
+   * @param model the model name (e.g., "SRK", "PR", "CPA")
    * @param temperature temperature in Kelvin
-   * @param pressure    pressure in bara
+   * @param pressure pressure in bara
    * @return the created fluid system, or null if unknown model
    */
   private SystemInterface createFluidByModel(String model, double temperature, double pressure) {
@@ -984,10 +984,10 @@ public class JsonProcessBuilder {
   /**
    * Pass 1: Creates a unit (no wiring) and registers it.
    *
-   * @param process      the process system
-   * @param unitDef      the JSON definition
+   * @param process the process system
+   * @param unitDef the JSON definition
    * @param defaultFluid the default fluid
-   * @param index        the unit index
+   * @param index the unit index
    */
   private void createUnit(ProcessSystem process, JsonObject unitDef, SystemInterface defaultFluid, int index) {
     if (!unitDef.has("type")) {
@@ -1055,7 +1055,7 @@ public class JsonProcessBuilder {
    * Creates a DistillationColumn from its JSON definition, extracting tray count and condenser/reboiler flags from
    * properties.
    *
-   * @param name    the column name
+   * @param name the column name
    * @param unitDef the JSON definition
    * @return the created DistillationColumn
    */
@@ -1084,7 +1084,7 @@ public class JsonProcessBuilder {
    * Reports an unwired unit as a warning (not a hard error). Extracts reference details so the user knows which
    * connections could not be resolved.
    *
-   * @param name    the unit name
+   * @param name the unit name
    * @param unitDef the JSON definition
    */
   private void reportUnwiredUnit(String name, JsonObject unitDef) {
@@ -1111,7 +1111,7 @@ public class JsonProcessBuilder {
   /**
    * Pass 2: Wires inlet connections for a unit (all units now exist).
    *
-   * @param name    the unit name
+   * @param name the unit name
    * @param unitDef the JSON definition
    */
   private void wireUnit(String name, JsonObject unitDef) {
@@ -1167,7 +1167,7 @@ public class JsonProcessBuilder {
    * allowing downstream units to use this unit's outlets. Does not add error details on failure (those are added by the
    * fallback wireUnit call).
    *
-   * @param name    the unit name
+   * @param name the unit name
    * @param unitDef the JSON definition
    * @return true if all inlet references resolved and were wired
    */
@@ -1269,10 +1269,10 @@ public class JsonProcessBuilder {
   /**
    * Builds a single process unit from its JSON definition and adds it to the process.
    *
-   * @param process      the process system to add the unit to
-   * @param unitDef      the JSON object defining the unit
+   * @param process the process system to add the unit to
+   * @param unitDef the JSON object defining the unit
    * @param defaultFluid the default fluid to use for streams
-   * @param index        the unit index (for error reporting)
+   * @param index the unit index (for error reporting)
    * @deprecated Use createUnit + wireUnit two-pass approach instead
    */
   @Deprecated
@@ -1286,10 +1286,10 @@ public class JsonProcessBuilder {
   /**
    * Creates a unit and wires its inlet stream based on the JSON definition.
    *
-   * @param process      the process system
-   * @param type         the equipment type
-   * @param name         the equipment name
-   * @param unitDef      the JSON definition
+   * @param process the process system
+   * @param type the equipment type
+   * @param name the equipment name
+   * @param unitDef the JSON definition
    * @param defaultFluid the default fluid
    * @return the created equipment, or null if creation failed
    */
@@ -1337,8 +1337,8 @@ public class JsonProcessBuilder {
   /**
    * Creates a Stream from its JSON definition.
    *
-   * @param name         the stream name
-   * @param unitDef      the JSON definition
+   * @param name the stream name
+   * @param unitDef the JSON definition
    * @param defaultFluid the default fluid
    * @return the created stream
    */
@@ -1504,7 +1504,7 @@ public class JsonProcessBuilder {
    * Wires an inlet stream to an equipment unit via reflection.
    *
    * @param equipment the equipment to wire
-   * @param stream    the inlet stream
+   * @param stream the inlet stream
    */
   private void wireInletStream(ProcessEquipmentInterface equipment, StreamInterface stream) {
     // Special handling for DistillationColumn — uses addFeedStream, not
@@ -1541,7 +1541,7 @@ public class JsonProcessBuilder {
   /**
    * Applies property settings from JSON to an equipment unit via reflection.
    *
-   * @param equipment  the equipment to configure
+   * @param equipment the equipment to configure
    * @param properties the properties JSON object
    */
   private void applyProperties(ProcessEquipmentInterface equipment, JsonObject properties) {
@@ -1586,7 +1586,7 @@ public class JsonProcessBuilder {
    * Applies recycle-specific convergence settings from JSON.
    *
    * @param recycle the recycle to configure
-   * @param props   recycle property definitions
+   * @param props recycle property definitions
    */
   private void applyRecycleProperties(Recycle recycle, JsonObject props) {
     if (props.has("accelerationMethod")) {
@@ -1609,7 +1609,7 @@ public class JsonProcessBuilder {
    * Applies compressor chart data from JSON to a compressor.
    *
    * @param compressor the compressor to configure
-   * @param chartJson  chart JSON object
+   * @param chartJson chart JSON object
    */
   private void applyCompressorChart(Compressor compressor, JsonObject chartJson) {
     try {
@@ -1689,8 +1689,8 @@ public class JsonProcessBuilder {
   /**
    * Reads a power value in kW from JSON with optional unit-specific key variants.
    *
-   * @param source       source JSON object
-   * @param baseKey      base key, for example {@code ratedPower}
+   * @param source source JSON object
+   * @param baseKey base key, for example {@code ratedPower}
    * @param defaultValue value returned when no matching key exists
    * @return power value in kW
    */
@@ -1713,7 +1713,7 @@ public class JsonProcessBuilder {
   /**
    * Applies scalar compressor driver properties.
    *
-   * @param driver     the driver to configure
+   * @param driver the driver to configure
    * @param driverJson driver JSON object
    */
   private void applyDriverScalarProperties(CompressorDriver driver, JsonObject driverJson) {
@@ -1769,7 +1769,7 @@ public class JsonProcessBuilder {
   /**
    * Applies compressor driver curve properties.
    *
-   * @param driver     the driver to configure
+   * @param driver the driver to configure
    * @param driverJson driver JSON object
    */
   private void applyDriverCurveProperties(CompressorDriver driver, JsonObject driverJson) {
@@ -1794,7 +1794,7 @@ public class JsonProcessBuilder {
   /**
    * Applies a tabular max-power speed curve to a compressor driver.
    *
-   * @param driver     the driver to configure
+   * @param driver the driver to configure
    * @param driverJson driver JSON object
    */
   private void applyDriverMaxPowerSpeedCurve(CompressorDriver driver, JsonObject driverJson) {
@@ -1819,7 +1819,7 @@ public class JsonProcessBuilder {
   /**
    * Applies an anti-surge controller configuration from JSON.
    *
-   * @param compressor    compressor owning the controller
+   * @param compressor compressor owning the controller
    * @param antiSurgeJson anti-surge JSON object
    */
   private void applyAntiSurge(Compressor compressor, JsonObject antiSurgeJson) {
@@ -1883,7 +1883,7 @@ public class JsonProcessBuilder {
   /**
    * Applies a surge curve to a compressor chart.
    *
-   * @param chart     compressor chart to update
+   * @param chart compressor chart to update
    * @param curveJson JSON curve definition
    */
   private void applySurgeCurve(CompressorChartInterface chart, JsonObject curveJson) {
@@ -1902,7 +1902,7 @@ public class JsonProcessBuilder {
   /**
    * Applies a stone wall curve to a compressor chart.
    *
-   * @param chart     compressor chart to update
+   * @param chart compressor chart to update
    * @param curveJson JSON curve definition
    */
   private void applyStoneWallCurve(CompressorChartInterface chart, JsonObject curveJson) {
@@ -1922,7 +1922,7 @@ public class JsonProcessBuilder {
    * Wires calculator input and output equipment references from JSON.
    *
    * @param calculator the calculator to configure
-   * @param props      calculator properties
+   * @param props calculator properties
    */
   private void wireCalculator(Calculator calculator, JsonObject props) {
     if (props.has("calculatorInputs") && calculator.getInputVariable().isEmpty()) {
@@ -2036,7 +2036,7 @@ public class JsonProcessBuilder {
    * </pre>
    *
    * @param adjuster the adjuster to configure
-   * @param props    the properties JSON object
+   * @param props the properties JSON object
    */
   private void wireAdjuster(Adjuster adjuster, JsonObject props) {
     // Wire adjusted variable (the variable being changed)
@@ -2083,7 +2083,7 @@ public class JsonProcessBuilder {
    * to {@link Separator#setEntrainment(double, String, String, String, String)}.
    * </p>
    *
-   * @param separator          the separator to configure
+   * @param separator the separator to configure
    * @param entrainmentElement the JSON element (expected to be a JsonArray)
    */
   private void applyEntrainment(Separator separator, JsonElement entrainmentElement) {
@@ -2114,8 +2114,8 @@ public class JsonProcessBuilder {
    * Applies a single property to an equipment unit.
    *
    * @param equipment the equipment
-   * @param propName  the property name
-   * @param value     the property value
+   * @param propName the property name
+   * @param value the property value
    */
   private void applyProperty(ProcessEquipmentInterface equipment, String propName, JsonElement value) {
     applyPropertyObject(equipment, equipment.getName(), propName, value);
@@ -2193,7 +2193,7 @@ public class JsonProcessBuilder {
    * the JSON. The pre-built fluid preserves all critical properties (Tc, Pc, acentric factor, MW, BIPs) for both
    * standard and hypothetical/pseudo components.
    *
-   * @param json  the JSON process definition (the 'fluid' section is ignored)
+   * @param json the JSON process definition (the 'fluid' section is ignored)
    * @param fluid the pre-built thermodynamic system to use
    * @return the simulation result with report
    */

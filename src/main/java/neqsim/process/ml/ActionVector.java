@@ -35,10 +35,10 @@ public class ActionVector implements Serializable {
   /**
    * Define an action dimension with bounds.
    *
-   * @param name       action name (e.g., "valve_opening", "setpoint")
+   * @param name action name (e.g., "valve_opening", "setpoint")
    * @param lowerBound minimum allowed value
    * @param upperBound maximum allowed value
-   * @param unit       unit string
+   * @param unit unit string
    * @return this ActionVector for chaining
    */
   public ActionVector define(String name, double lowerBound, double upperBound, String unit) {
@@ -52,7 +52,7 @@ public class ActionVector implements Serializable {
   /**
    * Set an action value, clamping to bounds.
    *
-   * @param name  action name
+   * @param name action name
    * @param value desired value (will be clamped to bounds)
    * @return this ActionVector for chaining
    */
@@ -69,7 +69,7 @@ public class ActionVector implements Serializable {
   /**
    * Set action from normalized value [0, 1].
    *
-   * @param name            action name
+   * @param name action name
    * @param normalizedValue value in [0, 1] range
    * @return this ActionVector for chaining
    */

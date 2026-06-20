@@ -52,7 +52,7 @@ public class SeparatorDesignStandard extends DesignStandard {
    * Constructor for SeparatorDesignStandard.
    * </p>
    *
-   * @param name         a {@link java.lang.String} object
+   * @param name a {@link java.lang.String} object
    * @param equipmentInn a {@link neqsim.process.mechanicaldesign.MechanicalDesign} object
    */
   public SeparatorDesignStandard(String name, MechanicalDesign equipmentInn) {
@@ -129,7 +129,7 @@ public class SeparatorDesignStandard extends DesignStandard {
    * getLiquidRetentionTime.
    * </p>
    *
-   * @param name         a {@link java.lang.String} object
+   * @param name a {@link java.lang.String} object
    * @param equipmentInn a {@link neqsim.process.mechanicaldesign.MechanicalDesign} object
    * @return a double
    */

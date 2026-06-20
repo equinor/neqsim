@@ -32,7 +32,7 @@ public class dTPflash extends TPflash {
    * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param comps  an array of {@link java.lang.String} objects
+   * @param comps an array of {@link java.lang.String} objects
    */
   public dTPflash(SystemInterface system, String[] comps) {
     this.system = system;

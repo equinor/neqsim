@@ -46,9 +46,9 @@ public class Switchgear implements java.io.Serializable {
    * Size the switchgear based on motor parameters.
    *
    * @param motorRatedCurrentA motor full-load current in A
-   * @param motorRatedPowerKW  motor rated power in kW
-   * @param voltageV           system voltage in V
-   * @param useVFD             whether VFD is used
+   * @param motorRatedPowerKW motor rated power in kW
+   * @param voltageV system voltage in V
+   * @param useVFD whether VFD is used
    */
   public void sizeSwitchgear(double motorRatedCurrentA, double motorRatedPowerKW, double voltageV, boolean useVFD) {
     this.ratedVoltageV = voltageV;
@@ -144,7 +144,7 @@ public class Switchgear implements java.io.Serializable {
    *
    * @param voltageV system voltage in V
    * @param currentA rated current in A
-   * @param starter  starter type
+   * @param starter starter type
    * @return cost in USD
    */
   private double estimateCost(double voltageV, double currentA, String starter) {

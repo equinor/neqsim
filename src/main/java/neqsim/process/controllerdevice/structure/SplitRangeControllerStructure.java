@@ -29,7 +29,7 @@ public class SplitRangeControllerStructure implements ControlStructureInterface 
    * Create a split-range structure with equal-width ranges for the specified number of elements. For two elements:
    * element 0 gets 0-50%, element 1 gets 50-100%.
    *
-   * @param controller       the single controller driving the split-range
+   * @param controller the single controller driving the split-range
    * @param numberOfElements number of final control elements
    */
   public SplitRangeControllerStructure(ControllerDeviceInterface controller, int numberOfElements) {
@@ -51,8 +51,8 @@ public class SplitRangeControllerStructure implements ControlStructureInterface 
    * Create a split-range structure with custom ranges for each element.
    *
    * @param controller the single controller driving the split-range
-   * @param rangeLow   array of lower bounds (0-100%) for each element
-   * @param rangeHigh  array of upper bounds (0-100%) for each element
+   * @param rangeLow array of lower bounds (0-100%) for each element
+   * @param rangeHigh array of upper bounds (0-100%) for each element
    */
   public SplitRangeControllerStructure(ControllerDeviceInterface controller, double[] rangeLow, double[] rangeHigh) {
     if (rangeLow.length != rangeHigh.length || rangeLow.length < 2) {

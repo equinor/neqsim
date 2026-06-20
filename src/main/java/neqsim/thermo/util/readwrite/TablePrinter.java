@@ -73,7 +73,7 @@ public class TablePrinter implements Serializable {
   /**
    * Prints a row of the table with appropriate padding based on column widths.
    *
-   * @param row          The row of data to be printed.
+   * @param row The row of data to be printed.
    * @param columnWidths An array containing the maximum width of each column.
    */
   private static void printRow(String[] row, int[] columnWidths) {

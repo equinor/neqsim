@@ -97,7 +97,7 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
      * Creates a variable specification.
      *
      * @param equipmentName name of the equipment
-     * @param propertyName  name of the property (e.g., "temperature", "pressure", "flowRate")
+     * @param propertyName name of the property (e.g., "temperature", "pressure", "flowRate")
      */
     public VariableSpec(String equipmentName, String propertyName) {
       this(equipmentName, propertyName, null);
@@ -107,8 +107,8 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
      * Creates a variable specification with unit.
      *
      * @param equipmentName name of the equipment
-     * @param propertyName  name of the property
-     * @param unit          unit for the property (used for setting values)
+     * @param propertyName name of the property
+     * @param unit unit for the property (used for setting values)
      */
     public VariableSpec(String equipmentName, String propertyName, String unit) {
       this.equipmentName = equipmentName;
@@ -176,7 +176,7 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
    * Adds an input variable for sensitivity analysis.
    *
    * @param equipmentName name of the equipment
-   * @param propertyName  name of the property to perturb
+   * @param propertyName name of the property to perturb
    * @return this analyzer for chaining
    */
   public ProcessSensitivityAnalyzer withInput(String equipmentName, String propertyName) {
@@ -188,8 +188,8 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
    * Adds an input variable with unit specification.
    *
    * @param equipmentName name of the equipment
-   * @param propertyName  name of the property
-   * @param unit          unit for the property
+   * @param propertyName name of the property
+   * @param unit unit for the property
    * @return this analyzer for chaining
    */
   public ProcessSensitivityAnalyzer withInput(String equipmentName, String propertyName, String unit) {
@@ -201,7 +201,7 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
    * Adds an output variable for sensitivity analysis.
    *
    * @param equipmentName name of the equipment
-   * @param propertyName  name of the property to monitor
+   * @param propertyName name of the property to monitor
    * @return this analyzer for chaining
    */
   public ProcessSensitivityAnalyzer withOutput(String equipmentName, String propertyName) {
@@ -213,8 +213,8 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
    * Adds an output variable with unit specification.
    *
    * @param equipmentName name of the equipment
-   * @param propertyName  name of the property
-   * @param unit          unit for the property
+   * @param propertyName name of the property
+   * @param unit unit for the property
    * @return this analyzer for chaining
    */
   public ProcessSensitivityAnalyzer withOutput(String equipmentName, String propertyName, String unit) {
@@ -383,7 +383,7 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
   /**
    * Computes sensitivities directly from Broyden Jacobian.
    *
-   * @param result   the sensitivity matrix to populate
+   * @param result the sensitivity matrix to populate
    * @param computed boolean matrix tracking which entries have been computed
    */
   private void computeFromBroyden(SensitivityMatrix result, boolean[][] computed) {
@@ -422,7 +422,7 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
   /**
    * Computes sensitivities using chain rule through tear streams.
    *
-   * @param result   the sensitivity matrix to populate
+   * @param result the sensitivity matrix to populate
    * @param computed boolean matrix tracking which entries have been computed
    */
   private void computeViaChainRule(SensitivityMatrix result, boolean[][] computed) {
@@ -488,7 +488,7 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
   /**
    * Computes remaining sensitivities via finite differences.
    *
-   * @param result   the sensitivity matrix to populate
+   * @param result the sensitivity matrix to populate
    * @param computed boolean matrix tracking which entries have been computed
    */
   private void computeViaFiniteDifferences(SensitivityMatrix result, boolean[][] computed) {
@@ -597,7 +597,7 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
   /**
    * Sets a property value on equipment using reflection.
    *
-   * @param spec  the variable specification
+   * @param spec the variable specification
    * @param value the value to set
    */
   private void setPropertyValue(VariableSpec spec, double value) {
@@ -632,8 +632,8 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
    * Gets a property value from equipment using reflection.
    *
    * @param equipment the process equipment to read from
-   * @param property  the property name
-   * @param unit      the unit string, or null
+   * @param property the property name
+   * @param unit the unit string, or null
    * @return the property value, or NaN if not found
    */
   private double getPropertyFromEquipment(ProcessEquipmentInterface equipment, String property, String unit) {
@@ -681,8 +681,8 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
    * Gets standard properties that are common across equipment types.
    *
    * @param equipment the process equipment to read from
-   * @param property  the property name (e.g., temperature, pressure, flowrate)
-   * @param unit      the unit string, or null for default units
+   * @param property the property name (e.g., temperature, pressure, flowrate)
+   * @param unit the unit string, or null for default units
    * @return the property value, or NaN if not found
    */
   private double getStandardProperty(ProcessEquipmentInterface equipment, String property, String unit) {
@@ -717,9 +717,9 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
   /**
    * Calls a method with optional unit parameter.
    *
-   * @param equipment   the process equipment to call the method on
-   * @param methodName  the name of the method to invoke
-   * @param unit        the unit string to pass, or null to use default
+   * @param equipment the process equipment to call the method on
+   * @param methodName the name of the method to invoke
+   * @param unit the unit string to pass, or null to use default
    * @param defaultUnit the default unit if unit is null
    * @return the result of the method call as a double
    * @throws Exception if the method invocation fails
@@ -752,9 +752,9 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
    * Sets a property value on equipment using reflection.
    *
    * @param equipment the process equipment to set the property on
-   * @param property  the property name to set
-   * @param value     the value to set
-   * @param unit      the unit string for the value, or null
+   * @param property the property name to set
+   * @param value the value to set
+   * @param unit the unit string for the value, or null
    */
   private void setPropertyOnEquipment(ProcessEquipmentInterface equipment, String property, double value, String unit) {
     String capitalizedProperty = property.substring(0, 1).toUpperCase() + property.substring(1);
@@ -792,9 +792,9 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
    * Sets standard properties common across equipment types.
    *
    * @param equipment equipment whose property should be set
-   * @param property  standard or generic property name
-   * @param value     value to assign to the property
-   * @param unit      unit for the value, or null to use the default for the property
+   * @param property standard or generic property name
+   * @param value value to assign to the property
+   * @param unit unit for the value, or null to use the default for the property
    */
   private void setStandardProperty(ProcessEquipmentInterface equipment, String property, double value, String unit) {
     try {
@@ -823,10 +823,10 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
   /**
    * Calls a setter with optional unit parameter.
    *
-   * @param equipment   equipment containing the setter
-   * @param methodName  setter method name to call
-   * @param value       numeric value to pass to the setter
-   * @param unit        requested unit, or null to use {@code defaultUnit}
+   * @param equipment equipment containing the setter
+   * @param methodName setter method name to call
+   * @param value numeric value to pass to the setter
+   * @param unit requested unit, or null to use {@code defaultUnit}
    * @param defaultUnit fallback unit used when {@code unit} is null
    * @throws Exception if reflective method invocation fails
    */
@@ -851,8 +851,8 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
   /**
    * Finds a method on a class, searching up the hierarchy.
    *
-   * @param clazz      class where the search starts
-   * @param name       method name to find
+   * @param clazz class where the search starts
+   * @param name method name to find
    * @param paramTypes ordered parameter types for the method signature
    * @return matching method, or null if no matching method exists
    */

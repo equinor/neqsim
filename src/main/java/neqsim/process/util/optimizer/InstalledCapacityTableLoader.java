@@ -71,15 +71,15 @@ public final class InstalledCapacityTableLoader {
     /**
      * Creates an installed capacity record.
      *
-     * @param area                process area name
-     * @param equipment           equipment name
-     * @param constraint          constraint name
+     * @param area process area name
+     * @param equipment equipment name
+     * @param constraint constraint name
      * @param currentValueAddress automation address for current value
-     * @param designValue         design value
-     * @param maxValue            maximum value
-     * @param unit                unit
-     * @param severity            severity
-     * @param enabled             true when enabled
+     * @param designValue design value
+     * @param maxValue maximum value
+     * @param unit unit
+     * @param severity severity
+     * @param enabled true when enabled
      */
     public InstalledCapacityRecord(String area, String equipment, String constraint, String currentValueAddress,
 	double designValue, double maxValue, String unit, ConstraintSeverity severity, boolean enabled) {
@@ -179,7 +179,7 @@ public final class InstalledCapacityTableLoader {
   /**
    * Loads installed capacity constraints from a CSV file.
    *
-   * @param model    process model to attach constraints to
+   * @param model process model to attach constraints to
    * @param filePath CSV file path
    * @return loaded records
    * @throws IOException if reading fails
@@ -197,7 +197,7 @@ public final class InstalledCapacityTableLoader {
    * {@code enabled}, and {@code description}.
    * </p>
    *
-   * @param model    process model to attach constraints to
+   * @param model process model to attach constraints to
    * @param filePath CSV file path
    * @return loaded records
    * @throws IOException if reading fails
@@ -236,10 +236,10 @@ public final class InstalledCapacityTableLoader {
   /**
    * Parses and attaches one installed capacity record.
    *
-   * @param model       process model
+   * @param model process model
    * @param headerIndex map from normalized header to column index
-   * @param values      CSV row values
-   * @param rowNumber   row number for diagnostics
+   * @param values CSV row values
+   * @param rowNumber row number for diagnostics
    * @return installed capacity record
    */
   private static InstalledCapacityRecord parseRecord(ProcessModel model, Map<String, Integer> headerIndex,
@@ -263,9 +263,9 @@ public final class InstalledCapacityTableLoader {
   /**
    * Attaches a loaded record to its target equipment.
    *
-   * @param model       process model
-   * @param record      installed capacity record
-   * @param typeText    optional constraint type text
+   * @param model process model
+   * @param record installed capacity record
+   * @param typeText optional constraint type text
    * @param description optional description
    */
   private static void attachRecord(final ProcessModel model, final InstalledCapacityRecord record, String typeText,
@@ -289,10 +289,10 @@ public final class InstalledCapacityTableLoader {
   /**
    * Verifies that the target equipment exists.
    *
-   * @param model         process model
-   * @param areaName      area name
+   * @param model process model
+   * @param areaName area name
    * @param equipmentName equipment name
-   * @param rowNumber     CSV row number
+   * @param rowNumber CSV row number
    */
   private static void validateTargetExists(ProcessModel model, String areaName, String equipmentName, int rowNumber) {
     ProcessSystem area = model.get(areaName);
@@ -323,9 +323,9 @@ public final class InstalledCapacityTableLoader {
    * Gets a required CSV value.
    *
    * @param headerIndex header index map
-   * @param values      row values
-   * @param header      required header
-   * @param rowNumber   row number for diagnostics
+   * @param values row values
+   * @param header required header
+   * @param rowNumber row number for diagnostics
    * @return trimmed value
    */
   private static String getRequired(Map<String, Integer> headerIndex, List<String> values, String header,
@@ -341,8 +341,8 @@ public final class InstalledCapacityTableLoader {
    * Gets an optional CSV value.
    *
    * @param headerIndex header index map
-   * @param values      row values
-   * @param header      optional header
+   * @param values row values
+   * @param header optional header
    * @return trimmed value, or empty string when absent
    */
   private static String getOptional(Map<String, Integer> headerIndex, List<String> values, String header) {
@@ -396,7 +396,7 @@ public final class InstalledCapacityTableLoader {
   /**
    * Parses a double value.
    *
-   * @param value     value text
+   * @param value value text
    * @param fieldName field name for diagnostics
    * @param rowNumber row number for diagnostics
    * @return parsed value
@@ -413,7 +413,7 @@ public final class InstalledCapacityTableLoader {
   /**
    * Parses a boolean value.
    *
-   * @param value        value text
+   * @param value value text
    * @param defaultValue default value when text is empty
    * @return parsed boolean
    */

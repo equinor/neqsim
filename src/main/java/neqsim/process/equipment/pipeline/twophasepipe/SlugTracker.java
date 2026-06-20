@@ -142,7 +142,7 @@ public class SlugTracker implements Serializable {
    * </p>
    *
    * @param characteristics Slug characteristics from accumulation tracker
-   * @param sections        Pipe sections
+   * @param sections Pipe sections
    * @return New slug unit
    */
   public SlugUnit initializeTerrainSlug(LiquidAccumulationTracker.SlugCharacteristics characteristics,
@@ -199,7 +199,7 @@ public class SlugTracker implements Serializable {
    * Generate slug at inlet based on flow conditions.
    *
    * @param inletSection Inlet pipe section
-   * @param pipeArea     Pipe cross-sectional area (m²)
+   * @param pipeArea Pipe cross-sectional area (m²)
    * @return New slug if generated, null otherwise
    */
   public SlugUnit generateInletSlug(PipeSection inletSection, double pipeArea) {
@@ -235,7 +235,7 @@ public class SlugTracker implements Serializable {
    * Advance all slugs by one time step.
    *
    * @param sections Pipe sections
-   * @param dt       Time step (s)
+   * @param dt Time step (s)
    */
   public void advanceSlugs(PipeSection[] sections, double dt) {
     if (sections.length == 0) {
@@ -284,9 +284,9 @@ public class SlugTracker implements Serializable {
   /**
    * Advance a single slug.
    *
-   * @param slug     the slug unit to advance
+   * @param slug the slug unit to advance
    * @param sections the pipe sections array
-   * @param dt       the time step
+   * @param dt the time step
    */
   private void advanceSlug(SlugUnit slug, PipeSection[] sections, double dt) {
     slug.age += dt;
@@ -375,10 +375,10 @@ public class SlugTracker implements Serializable {
   /**
    * Calculate drift velocity using Bendiksen correlation.
    *
-   * @param D        pipe diameter (m)
-   * @param theta    pipe inclination angle (radians)
+   * @param D pipe diameter (m)
+   * @param theta pipe inclination angle (radians)
    * @param deltaRho density difference between liquid and gas (kg/m³)
-   * @param rho_L    liquid density (kg/m³)
+   * @param rho_L liquid density (kg/m³)
    * @return drift velocity (m/s)
    */
   private double calculateDriftVelocity(double D, double theta, double deltaRho, double rho_L) {
@@ -411,7 +411,7 @@ public class SlugTracker implements Serializable {
   /**
    * Calculate Taylor bubble/film region length.
    *
-   * @param slug    the slug unit
+   * @param slug the slug unit
    * @param section the pipe section
    * @return bubble length (m)
    */
@@ -501,7 +501,7 @@ public class SlugTracker implements Serializable {
    * properties for friction/pressure calculations.
    * </p>
    *
-   * @param slug     the slug unit to mark sections for
+   * @param slug the slug unit to mark sections for
    * @param sections array of pipe sections to check for slug overlap
    */
   private void markSlugSections(SlugUnit slug, PipeSection[] sections) {
@@ -621,7 +621,7 @@ public class SlugTracker implements Serializable {
    * This maintains mass conservation between the Lagrangian slug tracking and Eulerian field representation.
    * </p>
    *
-   * @param slug     The dissipating slug
+   * @param slug The dissipating slug
    * @param sections Pipe sections to receive the returned mass
    */
   private void returnMassToEulerianCells(SlugUnit slug, PipeSection[] sections) {

@@ -563,7 +563,7 @@ final class ColumnSolverFactory {
   /**
    * Prepare an automatic-solver candidate with robust defaults.
    *
-   * @param candidate       candidate column copy to prepare
+   * @param candidate candidate column copy to prepare
    * @param candidateSolver solver to apply to the candidate
    */
   private static void prepareAutoCandidate(DistillationColumn candidate,
@@ -660,8 +660,8 @@ final class ColumnSolverFactory {
    * Run the relaxed base stage used by automatic solver mode.
    *
    * @param candidateSource candidate source column to warm start
-   * @param id              calculation identifier
-   * @param summary         automatic solver summary builder
+   * @param id calculation identifier
+   * @param summary automatic solver summary builder
    * @return solve result from the relaxed base stage
    */
   private static ColumnSolveResult runAutoWarmBase(DistillationColumn candidateSource, UUID id, StringBuilder summary) {
@@ -682,9 +682,9 @@ final class ColumnSolverFactory {
   /**
    * Run one AUTO candidate probe without allowing the candidate wrapper to perform its own damped fallback solve.
    *
-   * @param candidate       candidate column copy
+   * @param candidate candidate column copy
    * @param candidateSolver solver to probe
-   * @param id              calculation identifier
+   * @param id calculation identifier
    * @return result reported by the probed solver before AUTO-level fallback
    */
   private static ColumnSolveResult runAutoProbeCandidate(DistillationColumn candidate,
@@ -720,8 +720,8 @@ final class ColumnSolverFactory {
    * Build an explanatory note for an AUTO candidate probe.
    *
    * @param candidateSolver solver type being probed
-   * @param candidate       candidate column after the probe
-   * @param result          probe result
+   * @param candidate candidate column after the probe
+   * @param result probe result
    * @return note for the AUTO summary, or {@code null} when no note is needed
    */
   private static String autoProbeNote(DistillationColumn.SolverType candidateSolver, DistillationColumn candidate,
@@ -743,7 +743,7 @@ final class ColumnSolverFactory {
    * Check whether an AUTO candidate can be accepted without running the live fallback.
    *
    * @param candidate candidate column after the probe
-   * @param result    probe result
+   * @param result probe result
    * @return {@code true} when the candidate is solved and did not rely on fallback products
    */
   private static boolean isAcceptableAutoCandidate(DistillationColumn candidate, ColumnSolveResult result) {
@@ -760,9 +760,9 @@ final class ColumnSolverFactory {
    * product specifications and larger columns.
    * </p>
    *
-   * @param column    live AUTO column
+   * @param column live AUTO column
    * @param candidate warmed candidate source
-   * @param result    warmed base result
+   * @param result warmed base result
    * @return {@code true} when the warmed base solve is a sufficient AUTO result
    */
   private static boolean shouldAcceptWarmBaseResult(DistillationColumn column, DistillationColumn candidate,
@@ -774,7 +774,7 @@ final class ColumnSolverFactory {
   /**
    * Append feasibility pre-screen status to the automatic solver trace.
    *
-   * @param summary     summary builder receiving a one-line status
+   * @param summary summary builder receiving a one-line status
    * @param feasibility feasibility validation result
    */
   private static void appendAutoFeasibilitySummary(StringBuilder summary, ValidationResult feasibility) {
@@ -788,8 +788,8 @@ final class ColumnSolverFactory {
   /**
    * Run the robust fallback directly on the live column when trial copies are unavailable.
    *
-   * @param column  live column
-   * @param id      calculation identifier
+   * @param column live column
+   * @param id calculation identifier
    * @param summary automatic solver summary builder
    * @return solve result from the fallback solver
    */
@@ -805,10 +805,10 @@ final class ColumnSolverFactory {
   /**
    * Append one candidate attempt to the automatic solver trace.
    *
-   * @param summary         summary builder to append to
+   * @param summary summary builder to append to
    * @param candidateSolver solver requested for the candidate
-   * @param result          candidate result, or {@code null} when no result is available
-   * @param note            optional explanatory note
+   * @param result candidate result, or {@code null} when no result is available
+   * @param note optional explanatory note
    */
   private static void appendAutoCandidateSummary(StringBuilder summary, DistillationColumn.SolverType candidateSolver,
       ColumnSolveResult result, String note) {
@@ -833,7 +833,7 @@ final class ColumnSolverFactory {
   /**
    * Score a candidate result for best-effort automatic fallback.
    *
-   * @param result    candidate result
+   * @param result candidate result
    * @param candidate candidate column, or {@code null} if only the result is available
    * @return finite scalar score where lower is better
    */
@@ -868,11 +868,11 @@ final class ColumnSolverFactory {
   /**
    * Apply damped substitution from a clean candidate when an accelerator is rejected.
    *
-   * @param column            live column to update
+   * @param column live column to update
    * @param fallbackCandidate clean fallback candidate, or {@code null} if unavailable
-   * @param id                calculation identifier
-   * @param reason            rejection reason
-   * @param exception         optional accelerator exception
+   * @param id calculation identifier
+   * @param reason rejection reason
+   * @param exception optional accelerator exception
    */
   private static void applyDampedFallback(DistillationColumn column, DistillationColumn fallbackCandidate, UUID id,
       String reason, RuntimeException exception) {
@@ -898,10 +898,10 @@ final class ColumnSolverFactory {
   /**
    * Validate an accelerator result against a damped-substitution candidate.
    *
-   * @param column            accelerated result
+   * @param column accelerated result
    * @param fallbackCandidate clean damped candidate, or {@code null} if unavailable
-   * @param id                calculation identifier
-   * @param solverName        name of the accelerator being validated
+   * @param id calculation identifier
+   * @param solverName name of the accelerator being validated
    */
   private static void validateAcceleratedProductSplit(DistillationColumn column, DistillationColumn fallbackCandidate,
       UUID id, String solverName) {
@@ -925,9 +925,9 @@ final class ColumnSolverFactory {
    * Keep the residual-monitored warm start when an initializer-only Naphtali-Sandholm candidate produces a materially
    * different product split.
    *
-   * @param column             live column containing the Naphtali-Sandholm candidate result
+   * @param column live column containing the Naphtali-Sandholm candidate result
    * @param warmStartCandidate clean candidate used to compute the guarded warm-start state
-   * @param id                 calculation identifier
+   * @param id calculation identifier
    * @return {@code true} when the warm-start candidate was accepted on the live column
    */
   private static boolean validateNaphtaliWarmStartProductSplit(DistillationColumn column,
@@ -959,7 +959,7 @@ final class ColumnSolverFactory {
    * Check whether two solved columns expose materially different product splits.
    *
    * @param accelerated accelerated result
-   * @param reference   reference damped-substitution result
+   * @param reference reference damped-substitution result
    * @return {@code true} when gas or liquid product flows differ beyond tolerance
    */
   private static boolean productSplitDiffers(DistillationColumn accelerated, DistillationColumn reference) {
@@ -974,7 +974,7 @@ final class ColumnSolverFactory {
   /**
    * Compare two product flow values with a relative tolerance.
    *
-   * @param actual    accelerated value
+   * @param actual accelerated value
    * @param reference reference value
    * @return {@code true} when the values differ materially
    */

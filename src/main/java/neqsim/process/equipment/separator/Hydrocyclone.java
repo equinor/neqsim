@@ -40,7 +40,7 @@ public class Hydrocyclone extends Separator {
    * Constructor for Hydrocyclone.
    * </p>
    *
-   * @param name        a {@link java.lang.String} object
+   * @param name a {@link java.lang.String} object
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public Hydrocyclone(String name, StreamInterface inletStream) {

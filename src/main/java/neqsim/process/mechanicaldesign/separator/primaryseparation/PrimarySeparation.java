@@ -84,7 +84,7 @@ public class PrimarySeparation implements Serializable {
    * $$ \rho v^2 = \rho_{mix} \left(\frac{Q_{mix}}{A_{nozzle}}\right)^2 $$
    * </p>
    *
-   * @param mixtureDensity     density of the two-phase mixture [kg/m3]
+   * @param mixtureDensity density of the two-phase mixture [kg/m3]
    * @param volumetricFlowRate total volumetric flow rate [m3/s]
    * @return inlet momentum [Pa]
    */
@@ -101,7 +101,7 @@ public class PrimarySeparation implements Serializable {
   /**
    * Checks whether the inlet momentum is within the allowable limit for this device type.
    *
-   * @param mixtureDensity     density of the two-phase mixture [kg/m3]
+   * @param mixtureDensity density of the two-phase mixture [kg/m3]
    * @param volumetricFlowRate total volumetric flow rate [m3/s]
    * @return true if within limits, false if inlet momentum exceeds maximum
    */
@@ -113,7 +113,7 @@ public class PrimarySeparation implements Serializable {
    * Calculates the liquid carry-over fraction past the inlet device. A simple model where carry-over is (1 -
    * bulkSeparationEfficiency), modified by how close the momentum is to the limit.
    *
-   * @param mixtureDensity     density of the two-phase mixture [kg/m3]
+   * @param mixtureDensity density of the two-phase mixture [kg/m3]
    * @param volumetricFlowRate total volumetric flow rate [m3/s]
    * @return liquid carry-over fraction [0..1]
    */

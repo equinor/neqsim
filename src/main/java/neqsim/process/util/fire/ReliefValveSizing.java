@@ -64,17 +64,17 @@ public final class ReliefValveSizing {
     /**
      * Creates a PSV sizing result.
      *
-     * @param requiredArea         Required orifice area [m²]
-     * @param requiredAreaIn2      Required orifice area [in²]
-     * @param massFlowCapacity     Mass flow capacity at set pressure [kg/s]
-     * @param recommendedOrifice   Recommended standard orifice letter
-     * @param selectedArea         Selected standard orifice area [m²]
-     * @param selectedAreaIn2      Selected standard orifice area [in²]
+     * @param requiredArea Required orifice area [m²]
+     * @param requiredAreaIn2 Required orifice area [in²]
+     * @param massFlowCapacity Mass flow capacity at set pressure [kg/s]
+     * @param recommendedOrifice Recommended standard orifice letter
+     * @param selectedArea Selected standard orifice area [m²]
+     * @param selectedAreaIn2 Selected standard orifice area [in²]
      * @param overpressureFraction Overpressure fraction (typically 0.1 or 0.21)
      * @param backPressureFraction Back pressure / set pressure ratio
-     * @param kd                   Discharge coefficient
-     * @param kb                   Back pressure correction factor
-     * @param kc                   Combination correction factor
+     * @param kd Discharge coefficient
+     * @param kb Back pressure correction factor
+     * @param kc Combination correction factor
      */
     public PSVSizingResult(double requiredArea, double requiredAreaIn2, double massFlowCapacity,
 	String recommendedOrifice, double selectedArea, double selectedAreaIn2, double overpressureFraction,
@@ -147,16 +147,16 @@ public final class ReliefValveSizing {
    * A = W / (C * Kd * P1 * Kb * Kc) * sqrt(T * Z / M)
    * </pre>
    *
-   * @param massFlowRate         Required relieving rate [kg/s]
-   * @param setPressure          PSV set pressure [Pa absolute]
+   * @param massFlowRate Required relieving rate [kg/s]
+   * @param setPressure PSV set pressure [Pa absolute]
    * @param overpressureFraction Overpressure fraction (0.10 for fire, 0.21 for external fire)
-   * @param backPressure         Downstream/back pressure [Pa absolute]
-   * @param temperature          Relieving temperature [K]
-   * @param molecularWeight      Molecular weight [kg/mol]
-   * @param compressibility      Compressibility factor Z
-   * @param specificHeatRatio    Cp/Cv ratio (gamma/k)
-   * @param isBalancedBellows    true for balanced-bellows PSV
-   * @param hasRuptureDisk       true if rupture disk is installed upstream
+   * @param backPressure Downstream/back pressure [Pa absolute]
+   * @param temperature Relieving temperature [K]
+   * @param molecularWeight Molecular weight [kg/mol]
+   * @param compressibility Compressibility factor Z
+   * @param specificHeatRatio Cp/Cv ratio (gamma/k)
+   * @param isBalancedBellows true for balanced-bellows PSV
+   * @param hasRuptureDisk true if rupture disk is installed upstream
    * @return PSV sizing result
    */
   public static PSVSizingResult calculateRequiredArea(double massFlowRate, double setPressure,
@@ -244,14 +244,14 @@ public final class ReliefValveSizing {
   /**
    * Calculates the mass flow capacity of a PSV for gas/vapor service.
    *
-   * @param orificeArea          Effective orifice area [m²]
-   * @param setPressure          PSV set pressure [Pa absolute]
+   * @param orificeArea Effective orifice area [m²]
+   * @param setPressure PSV set pressure [Pa absolute]
    * @param overpressureFraction Overpressure fraction
-   * @param backPressure         Back pressure [Pa absolute]
-   * @param temperature          Relieving temperature [K]
-   * @param molecularWeight      Molecular weight [kg/mol]
-   * @param compressibility      Compressibility factor Z
-   * @param specificHeatRatio    Cp/Cv ratio
+   * @param backPressure Back pressure [Pa absolute]
+   * @param temperature Relieving temperature [K]
+   * @param molecularWeight Molecular weight [kg/mol]
+   * @param compressibility Compressibility factor Z
+   * @param specificHeatRatio Cp/Cv ratio
    * @param dischargeCoefficient Discharge coefficient (typically 0.975)
    * @return Mass flow capacity [kg/s]
    */
@@ -287,7 +287,7 @@ public final class ReliefValveSizing {
    * </p>
    *
    * @param massFlowCapacity PSV mass flow capacity [kg/s]
-   * @param latentHeat       Latent heat of vaporization (or Cp*dT for sensible heating) [J/kg]
+   * @param latentHeat Latent heat of vaporization (or Cp*dT for sensible heating) [J/kg]
    * @return Maximum heat absorption rate [W]
    */
   public static double calculateMaxHeatAbsorption(double massFlowCapacity, double latentHeat) {
@@ -302,17 +302,17 @@ public final class ReliefValveSizing {
    * (more realistic) PSV sizes.
    * </p>
    *
-   * @param initialMass        Initial fluid inventory [kg]
-   * @param initialPressure    Initial pressure [Pa]
-   * @param setPressure        PSV set pressure [Pa]
+   * @param initialMass Initial fluid inventory [kg]
+   * @param initialPressure Initial pressure [Pa]
+   * @param setPressure PSV set pressure [Pa]
    * @param initialTemperature Initial temperature [K]
-   * @param fireHeatInput      Constant fire heat input [W]
-   * @param vesselVolume       Vessel volume [m³]
-   * @param molecularWeight    Molecular weight [kg/mol]
-   * @param specificHeatRatio  Cp/Cv ratio
-   * @param compressibility    Compressibility factor
-   * @param heatCapacity       Heat capacity [J/(kg*K)]
-   * @param blowdownTime       Target blowdown time [s] (typically 15 minutes = 900s per API 521)
+   * @param fireHeatInput Constant fire heat input [W]
+   * @param vesselVolume Vessel volume [m³]
+   * @param molecularWeight Molecular weight [kg/mol]
+   * @param specificHeatRatio Cp/Cv ratio
+   * @param compressibility Compressibility factor
+   * @param heatCapacity Heat capacity [J/(kg*K)]
+   * @param blowdownTime Target blowdown time [s] (typically 15 minutes = 900s per API 521)
    * @return PSV sizing result for fire case
    */
   public static PSVSizingResult dynamicFireSizing(double initialMass, double initialPressure, double setPressure,
@@ -350,7 +350,7 @@ public final class ReliefValveSizing {
   /**
    * Calculates the blowdown (reseat) pressure for a PSV.
    *
-   * @param setPressure     PSV set pressure [Pa]
+   * @param setPressure PSV set pressure [Pa]
    * @param blowdownPercent Blowdown percentage (typically 7-10%)
    * @return Blowdown/reseat pressure [Pa]
    */
@@ -365,7 +365,7 @@ public final class ReliefValveSizing {
    * This allows the PSV to be modeled as an equivalent control valve in process simulations.
    * </p>
    *
-   * @param orificeArea          Orifice area [m²]
+   * @param orificeArea Orifice area [m²]
    * @param dischargeCoefficient Discharge coefficient
    * @return Flow coefficient Cv [gpm/sqrt(psi)]
    */
@@ -379,7 +379,7 @@ public final class ReliefValveSizing {
   /**
    * Validates PSV sizing against API 521 requirements.
    *
-   * @param result     PSV sizing result to validate
+   * @param result PSV sizing result to validate
    * @param isFireCase true if this is a fire scenario
    * @return Validation message (empty if valid, otherwise describes issues)
    */
@@ -460,15 +460,15 @@ public final class ReliefValveSizing {
     /**
      * Creates a liquid PSV sizing result.
      *
-     * @param requiredAreaM2     Required orifice area [m2]
-     * @param requiredAreaIn2    Required orifice area [in2]
-     * @param massFlowRate       Mass flow rate [kg/s]
-     * @param volumeFlowRate     Volume flow rate [m3/s]
+     * @param requiredAreaM2 Required orifice area [m2]
+     * @param requiredAreaIn2 Required orifice area [in2]
+     * @param massFlowRate Mass flow rate [kg/s]
+     * @param volumeFlowRate Volume flow rate [m3/s]
      * @param recommendedOrifice Recommended standard orifice letter
-     * @param selectedAreaIn2    Selected standard orifice area [in2]
-     * @param kd                 Discharge coefficient
-     * @param kw                 Back pressure correction factor
-     * @param kv                 Viscosity correction factor
+     * @param selectedAreaIn2 Selected standard orifice area [in2]
+     * @param kd Discharge coefficient
+     * @param kw Back pressure correction factor
+     * @param kv Viscosity correction factor
      */
     public LiquidPSVSizingResult(double requiredAreaM2, double requiredAreaIn2, double massFlowRate,
 	double volumeFlowRate, String recommendedOrifice, double selectedAreaIn2, double kd, double kw, double kv) {
@@ -581,13 +581,13 @@ public final class ReliefValveSizing {
    * pressure [psig].
    * </p>
    *
-   * @param volumeFlowRate       Volume flow rate at relieving conditions [m3/s]
-   * @param liquidDensity        Liquid density at relieving conditions [kg/m3]
-   * @param setPressure          PSV set pressure [Pa absolute]
+   * @param volumeFlowRate Volume flow rate at relieving conditions [m3/s]
+   * @param liquidDensity Liquid density at relieving conditions [kg/m3]
+   * @param setPressure PSV set pressure [Pa absolute]
    * @param overpressureFraction Overpressure fraction (0.10 or 0.25 for fire)
-   * @param backPressure         Downstream/back pressure [Pa absolute]
-   * @param viscosity            Dynamic viscosity [Pa*s]
-   * @param isBalancedBellows    true for balanced-bellows PSV
+   * @param backPressure Downstream/back pressure [Pa absolute]
+   * @param viscosity Dynamic viscosity [Pa*s]
+   * @param isBalancedBellows true for balanced-bellows PSV
    * @return Liquid PSV sizing result
    */
   public static LiquidPSVSizingResult calculateLiquidReliefArea(double volumeFlowRate, double liquidDensity,
@@ -683,16 +683,16 @@ public final class ReliefValveSizing {
    * accounts for the vapour generation during depressurization.
    * </p>
    *
-   * @param massFlowRate         Total two-phase mass flow rate [kg/s]
-   * @param setPressure          PSV set pressure [Pa absolute]
+   * @param massFlowRate Total two-phase mass flow rate [kg/s]
+   * @param setPressure PSV set pressure [Pa absolute]
    * @param overpressureFraction Overpressure fraction
-   * @param backPressure         Back pressure [Pa absolute]
-   * @param inletTemperature     Inlet temperature [K]
-   * @param gasFraction          Mass fraction of gas at inlet conditions
-   * @param gasDensity           Gas density at inlet [kg/m3]
-   * @param liquidDensity        Liquid density at inlet [kg/m3]
-   * @param latentHeat           Latent heat of vaporization [J/kg]
-   * @param liquidCp             Liquid heat capacity [J/(kg*K)]
+   * @param backPressure Back pressure [Pa absolute]
+   * @param inletTemperature Inlet temperature [K]
+   * @param gasFraction Mass fraction of gas at inlet conditions
+   * @param gasDensity Gas density at inlet [kg/m3]
+   * @param liquidDensity Liquid density at inlet [kg/m3]
+   * @param latentHeat Latent heat of vaporization [J/kg]
+   * @param liquidCp Liquid heat capacity [J/(kg*K)]
    * @return Required orifice area [m2]
    */
   public static double calculateTwoPhaseReliefArea(double massFlowRate, double setPressure, double overpressureFraction,
@@ -740,8 +740,8 @@ public final class ReliefValveSizing {
    * Uses Q = C1 * F * Aws^alpha where C1 and alpha depend on drainage and fire-fighting facilities.
    * </p>
    *
-   * @param wettedAreaM2    Wetted surface area [m2]
-   * @param hasDrainage     true if adequate drainage exists
+   * @param wettedAreaM2 Wetted surface area [m2]
+   * @param hasDrainage true if adequate drainage exists
    * @param hasFireFighting true if firefighting equipment available
    * @return Heat absorption rate [W]
    */

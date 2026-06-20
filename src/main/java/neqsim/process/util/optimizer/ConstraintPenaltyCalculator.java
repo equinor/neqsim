@@ -210,7 +210,7 @@ public class ConstraintPenaltyCalculator implements Serializable {
    * </ul>
    *
    * @param rawObjective the raw (unpenalized) objective value
-   * @param process      the process system (must have been run)
+   * @param process the process system (must have been run)
    * @return penalized objective (equals rawObjective if feasible, worse if infeasible)
    */
   public double penalize(double rawObjective, ProcessSystem process) {
@@ -280,9 +280,9 @@ public class ConstraintPenaltyCalculator implements Serializable {
    * </p>
    *
    * @param rawObjective the raw (unpenalized) objective value
-   * @param hardMargins  array of margins for hard/critical constraints (negative = violated)
-   * @param softMargins  array of margins for soft/advisory constraints (negative = violated)
-   * @param softWeights  array of penalty weights for each soft constraint (same length as softMargins)
+   * @param hardMargins array of margins for hard/critical constraints (negative = violated)
+   * @param softMargins array of margins for soft/advisory constraints (negative = violated)
+   * @param softWeights array of penalty weights for each soft constraint (same length as softMargins)
    * @return penalized objective (equals rawObjective if all margins &gt;= 0)
    */
   public static double applyPenaltyFormula(double rawObjective, double[] hardMargins, double[] softMargins,
@@ -332,11 +332,11 @@ public class ConstraintPenaltyCalculator implements Serializable {
     /**
      * Constructs a constraint evaluation snapshot.
      *
-     * @param name        constraint name
-     * @param severity    severity level
-     * @param margin      constraint margin
-     * @param satisfied   whether the constraint is satisfied
-     * @param penalty     computed penalty
+     * @param name constraint name
+     * @param severity severity level
+     * @param margin constraint margin
+     * @param satisfied whether the constraint is satisfied
+     * @param penalty computed penalty
      * @param description constraint description
      */
     public ConstraintEvaluation(String name, ConstraintSeverityLevel severity, double margin, boolean satisfied,

@@ -123,7 +123,7 @@ public class HydrateRiskMapper implements Serializable {
   /**
    * Adds a point along the pipeline profile.
    *
-   * @param distanceKm   distance from inlet in kilometers
+   * @param distanceKm distance from inlet in kilometers
    * @param pressureBara pressure at this point in bara
    * @param temperatureC temperature at this point in degrees Celsius
    * @return this for chaining
@@ -136,7 +136,7 @@ public class HydrateRiskMapper implements Serializable {
   /**
    * Sets the subcooling thresholds for risk classification.
    *
-   * @param highRiskC   subcooling below which risk is HIGH (default 3.0 C)
+   * @param highRiskC subcooling below which risk is HIGH (default 3.0 C)
    * @param mediumRiskC subcooling below which risk is MEDIUM (default 6.0 C)
    * @return this for chaining
    */
@@ -221,7 +221,7 @@ public class HydrateRiskMapper implements Serializable {
     /**
      * Creates a profile point.
      *
-     * @param distanceKm   distance from inlet in km
+     * @param distanceKm distance from inlet in km
      * @param pressureBara pressure in bara
      * @param temperatureC temperature in C
      */
@@ -254,12 +254,12 @@ public class HydrateRiskMapper implements Serializable {
     /**
      * Creates a risk point.
      *
-     * @param distanceKm          distance from inlet
-     * @param pressureBara        pressure
-     * @param actualTemperatureC  actual temperature
+     * @param distanceKm distance from inlet
+     * @param pressureBara pressure
+     * @param actualTemperatureC actual temperature
      * @param hydrateTemperatureC hydrate formation temperature
-     * @param subcoolingC         subcooling margin
-     * @param riskLevel           risk classification
+     * @param subcoolingC subcooling margin
+     * @param riskLevel risk classification
      */
     RiskPoint(double distanceKm, double pressureBara, double actualTemperatureC, double hydrateTemperatureC,
 	double subcoolingC, RiskLevel riskLevel) {
@@ -286,8 +286,8 @@ public class HydrateRiskMapper implements Serializable {
     /**
      * Creates a risk profile.
      *
-     * @param points             list of risk points along the pipeline
-     * @param overallRisk        worst risk level across all points
+     * @param points list of risk points along the pipeline
+     * @param overallRisk worst risk level across all points
      * @param minimumSubcoolingC minimum subcooling margin
      * @param criticalPointCount number of points in CRITICAL region
      */

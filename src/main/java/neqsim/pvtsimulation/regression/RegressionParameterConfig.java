@@ -16,9 +16,9 @@ public class RegressionParameterConfig {
   /**
    * Create a regression parameter configuration.
    *
-   * @param parameter    the parameter type
-   * @param lowerBound   lower bound
-   * @param upperBound   upper bound
+   * @param parameter the parameter type
+   * @param lowerBound lower bound
+   * @param upperBound upper bound
    * @param initialGuess initial guess
    */
   public RegressionParameterConfig(RegressionParameter parameter, double lowerBound, double upperBound,

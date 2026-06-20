@@ -30,7 +30,7 @@ public class PSFlashLeachman extends QfuncFlash {
    * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param Sspec  a double
+   * @param Sspec a double
    */
   public PSFlashLeachman(SystemInterface system, double Sspec) {
     this.system = system;

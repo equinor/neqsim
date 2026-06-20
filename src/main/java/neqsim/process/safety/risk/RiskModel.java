@@ -150,9 +150,9 @@ public class RiskModel {
   /**
    * Creates and adds a simple initiating event.
    *
-   * @param name      event name
+   * @param name event name
    * @param frequency annual frequency
-   * @param category  consequence category
+   * @param category consequence category
    * @return the created event
    */
   public RiskEvent addInitiatingEvent(String name, double frequency, ConsequenceCategory category) {
@@ -164,10 +164,10 @@ public class RiskModel {
   /**
    * Adds a conditional event (branch in event tree).
    *
-   * @param name        event name
+   * @param name event name
    * @param parentEvent the parent event
    * @param probability conditional probability
-   * @param category    consequence category if this branch occurs
+   * @param category consequence category if this branch occurs
    * @return the created event
    */
   public RiskEvent addConditionalEvent(String name, RiskEvent parentEvent, double probability,
@@ -340,7 +340,7 @@ public class RiskModel {
    * Varies each event frequency by the specified factors and observes the effect on total risk.
    * </p>
    *
-   * @param lowFactor  multiplier for low case (e.g., 0.1)
+   * @param lowFactor multiplier for low case (e.g., 0.1)
    * @param highFactor multiplier for high case (e.g., 10.0)
    * @return sensitivity analysis result
    */
@@ -351,9 +351,9 @@ public class RiskModel {
   /**
    * Runs sensitivity analysis with specified number of points.
    *
-   * @param lowFactor  multiplier for low case
+   * @param lowFactor multiplier for low case
    * @param highFactor multiplier for high case
-   * @param numPoints  number of points between low and high (including endpoints)
+   * @param numPoints number of points between low and high (including endpoints)
    * @return sensitivity analysis result
    */
   public SensitivityResult runSensitivityAnalysis(double lowFactor, double highFactor, int numPoints) {
