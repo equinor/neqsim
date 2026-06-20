@@ -11,17 +11,15 @@ on:
   push:
     branches:
       - master
-  workflow_run:
-    workflows:
-      - Pre-commit checks
-    types:
-      - completed
+  pull_request:
+    branches:
+      - master
 
 jobs:
   changes:
     name: Detect Java/XML changes
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' || github.event_name == 'push' || github.event.workflow_run.conclusion == 'success'
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'push' || github.event_name == 'pull_request'
     outputs:
       run_tests: ${{ steps.filter.outputs.run_tests }}
     steps:
@@ -153,7 +151,7 @@ jobs:
   verify_agent_skills:
     name: Verify agent-skill cross-references
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'push' || github.event_name == 'pull_request'
     steps:
       - uses: actions/checkout@v6
         with:
