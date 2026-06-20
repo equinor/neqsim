@@ -211,6 +211,74 @@ public class ProductionAllocationResult implements Serializable {
   }
 
   /**
+   * Gets the field-wide total flow delivered to all custody outlets of a given product category, summed over every
+   * source and component.
+   *
+   * @param productType the product category to sum over; must be non-null
+   * @param unit the target unit
+   * @return the aggregated field product flow in the requested unit
+   */
+  public double getProductTotal(ProductType productType, String unit) {
+    double total = 0.0;
+    for (int c = 0; c < custodyNames.length; c++) {
+      if (custodyTypes[c] == productType) {
+	for (int j = 0; j < sourceNames.length; j++) {
+	  for (int k = 0; k < componentNames.length; k++) {
+	    total += convert(allocMole[j][c][k], k, unit);
+	  }
+	}
+      }
+    }
+    return total;
+  }
+
+  /**
+   * Gets the allocation factor of a source to a custody outlet: the fraction of that source's total allocated
+   * production that is delivered to the outlet. The allocation factors of a source over all custody outlets sum to one.
+   *
+   * @param source the source name; must exist
+   * @param custody the custody outlet name; must exist
+   * @return the dimensionless allocation factor in {@code [0, 1]}, or {@code 0.0} if the source allocates nothing
+   */
+  public double getAllocationFactor(String source, String custody) {
+    double sourceTotal = getSourceTotal(source, "mole/sec");
+    if (sourceTotal <= 0.0) {
+      return 0.0;
+    }
+    return getAllocatedFlow(source, custody, "mole/sec") / sourceTotal;
+  }
+
+  /**
+   * Gets the recovery factor of a component at a custody outlet: the fraction of that component's total allocated flow
+   * (summed over all sources and all custody outlets) that is delivered to the given outlet.
+   *
+   * <p>
+   * For a gas/oil split this reproduces the classic component oil/gas recovery factor (ORF): the share of the component
+   * recovered in a particular product stream. The recovery factors of a component over all custody outlets sum to one.
+   * </p>
+   *
+   * @param custody the custody outlet name; must exist
+   * @param component the component name; must be on the master slate
+   * @return the dimensionless recovery factor in {@code [0, 1]}, or {@code 0.0} if the component is absent everywhere
+   */
+  public double getComponentRecoveryFactor(String custody, String component) {
+    int c = requireCustody(custody);
+    int k = requireComponent(component);
+    double here = 0.0;
+    double everywhere = 0.0;
+    for (int j = 0; j < sourceNames.length; j++) {
+      here += allocMole[j][c][k];
+      for (int cc = 0; cc < custodyNames.length; cc++) {
+	everywhere += allocMole[j][cc][k];
+      }
+    }
+    if (everywhere <= 0.0) {
+      return 0.0;
+    }
+    return here / everywhere;
+  }
+
+  /**
    * Renormalises each custody outlet so that the sum over sources of every component exactly matches a measured (or
    * base-case) target, enforcing mass closure. Components whose modelled sum is zero are left untouched.
    *
@@ -354,6 +422,7 @@ public class ProductionAllocationResult implements Serializable {
 	Map<String, Object> custodyEntry = new LinkedHashMap<>();
 	custodyEntry.put("molePerSec", getAllocatedFlow(sourceNames[j], custodyNames[c], "mole/sec"));
 	custodyEntry.put("kgPerHr", getAllocatedFlow(sourceNames[j], custodyNames[c], "kg/hr"));
+	custodyEntry.put("allocationFactor", getAllocationFactor(sourceNames[j], custodyNames[c]));
 	custodyEntry.put("productType", custodyTypes[c].name());
 	toCustody.put(custodyNames[c], custodyEntry);
       }

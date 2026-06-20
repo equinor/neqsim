@@ -118,7 +118,10 @@ ProductionAllocationResult result = allocator.allocate(); // auto-detect
 |--------|---------|
 | `getAllocatedFlow(source, custody, unit)` | Total flow from a source to a custody outlet. |
 | `getAllocatedComponentFlow(source, custody, component, unit)` | Single-component flow. |
-| `getProductAllocation(source, ProductType, unit)` | Aggregated allocation across all custody outlets of a product type. |
+| `getProductAllocation(source, ProductType, unit)` | Aggregated allocation of one source across all custody outlets of a product type. |
+| `getProductTotal(ProductType, unit)` | Field-wide total of a product type across every source and custody outlet. |
+| `getAllocationFactor(source, custody)` | Fraction of a source's own production delivered to a custody outlet (a source's factors sum to 1). |
+| `getComponentRecoveryFactor(custody, component)` | Share of a component's total production recovered at a custody outlet — the classic oil/gas recovery factor (ORF). A component's factors sum to 1. |
 | `getSourceTotal(source, unit)` / `getCustodyTotal(custody, unit)` | Roll-up totals. |
 | `getMaxResidual()` | Largest per-component solver residual (closure quality). |
 | `toJson()` | Schema-versioned JSON report with allocations, totals, product summaries and solver diagnostics. |
@@ -349,8 +352,8 @@ report (`schemaVersion = "1.0"`):
       "totalMolePerSec": 0.0123,
       "totalKgPerHr": 100.0,
       "custody": {
-        "ExportGas": { "molePerSec": 0.0101, "kgPerHr": 58.2, "productType": "GAS" },
-        "ExportOil": { "molePerSec": 0.0022, "kgPerHr": 41.8, "productType": "OIL" }
+        "ExportGas": { "molePerSec": 0.0101, "kgPerHr": 58.2, "allocationFactor": 0.582, "productType": "GAS" },
+        "ExportOil": { "molePerSec": 0.0022, "kgPerHr": 41.8, "allocationFactor": 0.418, "productType": "OIL" }
       },
       "productKgPerHr": { "GAS": 58.2, "OIL": 41.8 }
     }
@@ -406,8 +409,40 @@ correct metering streams and product labels.
 - Split factors are linearised around the base case. For operating points far
   from the base case, re-extract from a representative converged run.
 
+## Choosing an allocation method
+
+Several allocation methods exist. The table contrasts the main families and where
+the linear recovery-factor proxy (this package) fits.
+
+| Method | How it works | Pros | Cons | Best for |
+|--------|--------------|------|------|----------|
+| **Pro-rata / uniform** | Split the metered totals by an assumed ratio (well test, theoretical rate, ownership share). | Trivial; no model or simulation. | Ignores phase behaviour and composition differences; systematically unfair when wells differ. | Rough screening, single-phase streams, equal-composition wells. |
+| **Per-source component tagging (tracer)** | Duplicate every component per source and re-run the rigorous simulation so each source's mass is tracked through every unit. | Rigorous; captures the full non-linear coupling between sources exactly. | Cost scales with *sources × components*; the simulation must be re-run for every operating point or ownership scenario; large component slates become expensive. | Few sources, infrequent allocation, when maximum rigour is required. |
+| **Linear recovery-factor proxy** *(this package)* | Freeze per-unit, per-component split factors from **one** base run, then superpose each source through the linear network. | Fast — cost scales with *components × units*, **not** sources; one base case serves any number of sources; handles recycle/reflux; exact mass closure; adding a source is one extra right-hand side. | Linearised around the base case; strong cross-well non-linearity needs a base-case refresh; reactive/contacting units are black-boxed. | Routine, frequent allocation over many sources at a reasonably stable operating point. |
+| **EOS re-flash per allocation** | Re-flash the commingled fluid for each ownership/scenario split. | Accurate for each individual snapshot. | No superposition — every scenario is a fresh flash; expensive and harder to audit at scale. | One-off accurate snapshots, not routine multi-source allocation. |
+
+**Practical guidance.** Use the linear method as the default for production and
+fiscal back-allocation across many commingled sources. Refresh the base case
+(re-extract the split factors) whenever the commingled composition or operating
+envelope shifts materially between meter readings — the
+[demonstration notebook](../../examples/notebooks/production_allocation.ipynb)
+includes a sensitivity study showing when cross-well coupling becomes significant.
+For a small number of sources where maximum rigour is mandated, per-source
+component tagging remains the reference. General metering and allocation practice
+is covered by the Energy Institute *HM-96* hydrocarbon allocation guidelines.
+
+## Worked notebook
+
+A complete, executed demonstration is provided in
+[`examples/notebooks/production_allocation.ipynb`](../../examples/notebooks/production_allocation.ipynb).
+It builds a two-well, two-stage separation process, allocates the export gas and
+oil back to each well, reproduces the per-component recovery factor (ORF) curve,
+shows the per-well allocation factors and mass closure, exports the JSON report,
+and runs a Well-B rate sensitivity that illustrates cross-well coupling.
+
 ## Related documentation
 
 - [Process Simulation Documentation](README.md)
 - [ProcessSystem and flowsheet management](processmodel/)
 - [Production optimization and bottleneck analysis](optimization/OPTIMIZATION_OVERVIEW.md)
+- [Allocation demonstration notebook](../../examples/notebooks/production_allocation.ipynb)
