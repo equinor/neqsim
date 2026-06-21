@@ -349,6 +349,29 @@ LaTeX string → latex2mathml → MathML XML → XSLT (MML2OMML.XSL) → OMML el
 **Fallback:** If OMML pipeline is unavailable, equations render as Unicode text
 (Greek letters, operators) — readable but not editable as math objects.
 
+### Reusable Helpers for Per-Paper `build_word.py`
+
+Per-paper `build_word.py` scripts MUST reuse the shared helpers in
+`tools/math_utils.py` rather than flattening LaTeX to plain text (which renders
+poorly in Word — literal `^`, `_`, and `(a)/(b)` fractions):
+
+```python
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "tools"))
+import math_utils
+
+# Display equation ($$...$$): centered native OMML, Unicode fallback
+p = math_utils.add_display_equation(doc, eq_text, size=11)
+
+# Inline math ($...$): native OMML appended to an existing paragraph
+math_utils.append_inline_math(paragraph, latex, size=10.5)
+```
+
+Both helpers automatically fall back to a Unicode text run when the OMML
+toolchain (latex2mathml + `MML2OMML.XSL`) is unavailable, so builds stay robust
+on CI and machines without Microsoft Office.
+
 ### Word Rendering Features
 
 | Feature | Implementation |

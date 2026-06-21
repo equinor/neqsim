@@ -732,11 +732,58 @@ class WordRenderer:
         + r']*' + SUPERSCRIPT_CITE_CLOSE + r')'  # group 5: superscript citation
     )
 
-    def render_rich_text(self, paragraph, text, bold_all=False):
+    @staticmethod
+    def _scale_omml_runs(omml_el, half_points):
+        """Set a font size on every math run inside an OMML element.
+
+        Inline ``$math$`` inside a table cell otherwise renders at the document
+        default size, which looks oversized next to the smaller table font. This
+        walks each ``<m:r>`` run and sets ``<w:sz>``/``<w:szCs>`` so the equation
+        matches the surrounding cell text.
+
+        Parameters
+        ----------
+        omml_el : lxml.etree._Element
+            The ``<m:oMath>`` element to resize (modified in place).
+        half_points : int
+            Desired font size expressed in half-points (e.g. ``18`` for 9 pt).
+        """
+        try:
+            m_ns = 'http://schemas.openxmlformats.org/officeDocument/2006/math'
+            w_ns = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'
+            val = str(int(half_points))
+            for run in omml_el.iter('{%s}r' % m_ns):
+                wrpr = run.find('{%s}rPr' % w_ns)
+                if wrpr is None:
+                    wrpr = etree.SubElement(run, '{%s}rPr' % w_ns)
+                    # Move the new w:rPr to the front (before m:t) for schema order
+                    run.remove(wrpr)
+                    run.insert(0, wrpr)
+                for tag in ('sz', 'szCs'):
+                    el = wrpr.find('{%s}%s' % (w_ns, tag))
+                    if el is None:
+                        el = etree.SubElement(wrpr, '{%s}%s' % (w_ns, tag))
+                    el.set('{%s}val' % w_ns, val)
+        except Exception:
+            pass
+
+    def render_rich_text(self, paragraph, text, bold_all=False, math_half_points=None):
         """Render text with inline $math$, **bold**, *italic*, `code` into paragraph.
 
         Uses a single-pass tokenizer so that ``*`` inside ``$math$`` is never
         misinterpreted as markdown bold or italic.
+
+        Parameters
+        ----------
+        paragraph : docx.text.paragraph.Paragraph
+            Target paragraph to append runs to.
+        text : str
+            Markdown-flavoured inline text.
+        bold_all : bool, optional
+            When ``True`` every run is bolded (table header cells).
+        math_half_points : int, optional
+            When set, inline ``$math$`` runs are scaled to this font size in
+            half-points so equations match a smaller table font.
         """
         # Resolve citations first
         text = resolve_citations(text, self.cite_map, self.citation_style,
@@ -758,6 +805,8 @@ class WordRenderer:
                 latex = m.group(1)[1:-1]
                 omml = latex_to_omml(latex) if self.has_omml else None
                 if omml is not None:
+                    if math_half_points is not None:
+                        self._scale_omml_runs(omml, math_half_points)
                     paragraph._element.append(omml)
                 else:
                     math_text = self._safe_text(latex_to_unicode(latex))
@@ -841,6 +890,7 @@ class WordRenderer:
         table.style = 'Table Grid'
 
         font_sz = Pt(self.get("font_size_table"))
+        math_hp = int(round(self.get("font_size_table") * 2))
 
         # Header row
         for j, h in enumerate(headers):
@@ -850,7 +900,7 @@ class WordRenderer:
             p.alignment = WD_ALIGN_PARAGRAPH.CENTER
             p.paragraph_format.space_before = Pt(2)
             p.paragraph_format.space_after = Pt(2)
-            self.render_rich_text(p, h, bold_all=True)
+            self.render_rich_text(p, h, bold_all=True, math_half_points=math_hp)
             for run in p.runs:
                 run.font.size = font_sz
             self._set_cell_shading(cell, self.get("table_header_fill"))
@@ -867,7 +917,7 @@ class WordRenderer:
                 p.alignment = WD_ALIGN_PARAGRAPH.CENTER if j > 0 else WD_ALIGN_PARAGRAPH.LEFT
                 p.paragraph_format.space_before = Pt(2)
                 p.paragraph_format.space_after = Pt(2)
-                self.render_rich_text(p, cell_text)
+                self.render_rich_text(p, cell_text, math_half_points=math_hp)
                 for run in p.runs:
                     run.font.size = font_sz
                 if i == n_rows - 1:
