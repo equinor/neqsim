@@ -110,6 +110,7 @@ ProductionAllocationResult result = allocator.allocate(); // auto-detect
 | `AllocationNetwork` | Assembles routing matrices and resolves source/custody streams. |
 | `LinearAllocationSolver` | Solves `(I − A_k) v = b` per component (direct + Neumann fallback). |
 | `ProductionAllocationResult` | Queryable result: unit conversion, product aggregation, mass closure, JSON export. |
+| `AllocationUncertaintyEstimator` | Closed-form first-order variance propagation that reuses the cached `(I − A_k)⁻¹` factorisation to produce per-source, per-custody confidence intervals at no extra factorisation cost. |
 | `ProductType` | Product category (GAS, OIL, WATER, MIXED, UNKNOWN). |
 
 ## Result queries
@@ -283,6 +284,7 @@ sums back to its 100 kg/hr feed (conservation).
 | `setEnforceMassClosure(boolean)` | Toggle renormalisation to measured custody totals (default `true`). Fluent. |
 | `allocate()` | Run the allocation and return a `ProductionAllocationResult`. Auto-detects sources/custody if none were tagged. |
 | `getExtractor()` / `getNetwork()` / `getSolver()` | Access the underlying components (e.g. to tune solver tolerances). |
+| `getSources()` / `getCustodyOutlets()` | Unmodifiable views of the registered sources and custody outlets — used by `AllocationUncertaintyEstimator` so it shares the same names as the allocation result. Empty until `allocate()` has been called when auto-detection is in effect. |
 
 ### `RecoveryFactorExtractor`
 
@@ -371,6 +373,111 @@ report (`schemaVersion = "1.0"`):
 ```
 
 (The numbers above are illustrative.)
+
+## Uncertainty propagation
+
+Monte-Carlo loops around a rigorous allocation are expensive because every
+perturbation forces a fresh simulation. Once the split factors have been frozen
+and the per-component matrix $(\mathbf{I} - \mathbf{A}_k)$ factorised, however,
+the map from per-source per-component **injection** $\mathbf{b}_k$ to per-source
+per-node **flow** $\mathbf{v}^k$ is **linear**:
+
+$$
+\mathbf{v}^k = (\mathbf{I} - \mathbf{A}_k)^{-1}\,\mathbf{b}_k
+          = \mathbf{J}_k\,\mathbf{b}_k.
+$$
+
+First-order Gaussian propagation of an input covariance $\Sigma_{b_k}$ is then
+the one-liner
+
+$$
+\Sigma_{v_k} = \mathbf{J}_k\,\Sigma_{b_k}\,\mathbf{J}_k^{\top},
+$$
+
+so the variance of the flow allocated from source $s$ to custody outlet $c$
+(produced by node $w$ with custody factor $f_w(j,k)$) is
+
+$$
+\mathrm{Var}\bigl(\mathrm{alloc}(s,j,k)\bigr)
+  = f_w(j,k)^2\,\sum_{u,u'} (\mathbf{J}_k)_{wu}\,(\mathbf{J}_k)_{wu'}\,(\Sigma_{b_k})_{uu'},
+$$
+
+which collapses to $f_w(j,k)^2\,(\mathbf{J}_k)_{w e_s}^{\,2}\,\sigma_{s,k}^2$
+for the common case of independent per-source metering with variance
+$\sigma_{s,k}^2$ at entry node $e_s$.
+
+`AllocationUncertaintyEstimator` implements the independent-metering case. The
+back-substitution that produced the allocation also yields the relevant columns
+of $\mathbf{J}_k$, so the entire variance propagation costs one extra
+multi-RHS solve per component — no additional factorisation, no Monte-Carlo
+repeats.
+
+### Quick start
+
+```java
+import neqsim.process.allocation.AllocationUncertaintyEstimator;
+import neqsim.process.allocation.AllocationUncertaintyEstimator.UncertaintyResult;
+import neqsim.process.allocation.ProductType;
+import neqsim.process.allocation.SourceAllocator;
+
+SourceAllocator allocator = new SourceAllocator()
+    .setBaseCase(process)
+    .addSource("Well-A", wellA)
+    .addSource("Well-B", wellB)
+    .addCustodyOutlet("ExportGas", separator.getGasOutStream(), ProductType.GAS)
+    .addCustodyOutlet("ExportOil", separator.getOilOutStream(), ProductType.OIL);
+allocator.allocate();
+
+// 1% relative metering uncertainty on every component, every source
+int nSources = allocator.getSources().size();
+int nComps = allocator.getExtractor().getComponentNames().size();
+double[][] sigma2 = new double[nSources][nComps];
+for (int j = 0; j < nSources; j++) {
+  // … fill sigma2[j][k] = (0.01 * b_jk)^2 for each component k …
+}
+
+UncertaintyResult unc =
+    AllocationUncertaintyEstimator.propagate(allocator, sigma2);
+
+double stdGas = unc.getProductAllocationStdDev("Well-A", ProductType.GAS, "kg/hr");
+double stdOil = unc.getAllocatedFlowStdDevKgPerHr("Well-A", "ExportOil");
+String json   = unc.toJson();
+```
+
+### API
+
+| Method | Purpose |
+|--------|---------|
+| `propagate(SourceAllocator, double[][] injectionVariance)` | Convenience entry point — reads sources, custody outlets, components and the cached routing matrices from an already-allocated `SourceAllocator`. `injectionVariance[j][k]` is the per-source per-component injection variance (units of (mol/s)²). |
+| `propagate(AllocationNetwork, int[] sourceEntryUnits, List<CustodyOutlet>, String[] sourceNames, String[] custodyNames, ProductType[] custodyTypes, String[] componentNames, double[] molarMass, double[][] injectionVariance)` | Low-level entry point for callers that already manage their own bookkeeping. |
+| `setNegativeClipTolerance(double)` | Floor on tiny negative round-off variances (default `1.0e-12`). |
+
+`UncertaintyResult` queries — all read-only, all return `0` for components or
+sources whose input variance was zero:
+
+| Method | Returns |
+|--------|---------|
+| `getAllocatedFlowVariance(source, custody)` | Total flow variance (mol/s)². |
+| `getAllocatedFlowStdDevMoles(source, custody)` | Total flow standard deviation in mol/s. |
+| `getAllocatedFlowStdDevKgPerHr(source, custody)` | Total flow standard deviation in kg/hr (per-component mass-weighted, $\sigma_m = \sqrt{\sum_k (M_k \cdot 3.6)^2 \sigma_{n,k}^2}$). |
+| `getAllocatedComponentFlowStdDevMoles(source, custody, component)` | Single-component standard deviation in mol/s. |
+| `getProductAllocationStdDev(source, ProductType, unit)` | Standard deviation of a source's allocation aggregated across every custody outlet of a product type. Supported units: `mole/sec`, `kg/sec`, `kg/hr`. |
+| `getSourceNames()` / `getCustodyNames()` / `getComponentNames()` | Index order for downstream tooling. |
+| `toJson()` | Pretty-printed JSON report (`schemaVersion = "1.0"`). |
+
+### Scope
+
+- **Independent per-source per-component metering** is implemented as a closed
+  form. Correlated metering (a full $\Sigma_{b_k}$ with off-diagonal terms) is
+  a straightforward extension and is listed as future work in the methodology
+  paper.
+- **Uncertainty in the frozen split factors themselves** contributes an
+  additional first-order term $\sum_u \bigl(\partial \mathbf{v}^k /
+  \partial f_u(r,k)\bigr)\sigma_{f_u(r,k)}^2$ that is obtainable from the same
+  cached factorisation by the implicit-function theorem; it is also listed as
+  future work.
+- Negative round-off variances (well below working precision) are clipped to
+  zero and logged once; configure the floor with `setNegativeClipTolerance`.
 
 ## Auto-detection
 
