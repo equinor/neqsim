@@ -11,6 +11,34 @@ into a submission-ready LaTeX or Word document.
 - Converting between journal formats (e.g., rejected → resubmit elsewhere)
 - Checking manuscript compliance with journal guidelines
 
+## Scope: Journal Papers Only (Not Books)
+
+This skill and the `--journal` profiles apply **only to single-manuscript
+journal papers** built with the `paperflow new / draft / format / render`
+pipeline (`papers/`). The journal `latex_class` and `citation_style` metadata
+drive the paper renderer in `tools/paper_renderer.py`.
+
+**Books are a separate pipeline and do NOT use journal profiles.** A book lives
+under `books/<slug>/`, is configured by `book.yaml` (not a journal YAML), and is
+produced by `paperflow book-render --format {pdf|docx|html|epub|odf}` via the
+dedicated `tools/book_render_*` renderers:
+
+| Format | Book renderer | Engine |
+|--------|---------------|--------|
+| PDF | `book_render_pdf.py` | Typst (auto-generated preamble) |
+| Word | `book_render_word.py` | python-docx |
+| HTML | `book_render_html.py` | custom HTML template |
+| EPUB | `book_render_epub.py` | pandoc |
+| ODF | `book_render_odf.py` | odfpy |
+| JATS/DocBook | `book_render_xml.py` (via `book-render-xml`) | pandoc |
+
+`cmd_book_render` never calls `load_journal_profile`, so `--journal`,
+`elsarticle`/`achemso` classes, and the compliance checks below are irrelevant
+to books. Style books through `book.yaml` and the `book_render_*` engines
+instead. The shared building blocks between the two pipelines are bibliography
+handling (`refs.bib`, Crossref enrichment) and the equation/figure utilities in
+`tools/math_utils.py` — not the journal class machinery.
+
 ## Supported Journals
 
 Each journal has a YAML profile in `journals/`. Run
