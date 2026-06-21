@@ -196,7 +196,7 @@ public class AsphalteneOnsetFlashTest {
     boolean hasSolid = srkSystem.hasPhaseType("solid");
 
     // The test verifies the API works without throwing exceptions
-    srkSystem.prettyPrint();
+    // srkSystem.prettyPrint();
 
     // Test the AOP calculation - should run without errors
     double onsetP = ops.asphalteneOnsetPressure(200.0, 1.0);

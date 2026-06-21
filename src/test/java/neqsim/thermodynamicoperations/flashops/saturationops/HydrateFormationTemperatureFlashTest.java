@@ -60,7 +60,7 @@ public class HydrateFormationTemperatureFlashTest {
     logger.info("=== Hydrate Temperature Test: MEG + Brine at 50 bara ===");
     logger.info("Hydrate formation temperature: " + hydrateTemp + " °C");
     logger.info("Number of phases: " + fluid.getNumberOfPhases());
-    fluid.prettyPrint();
+    // fluid.prettyPrint();
 
     // Verify we got a result
     assertNotNull(fluid.getTemperature());
@@ -105,7 +105,7 @@ public class HydrateFormationTemperatureFlashTest {
     logger.info("=== Hydrate Temperature Test: MEG + Brine at 100 bara ===");
     logger.info("Hydrate formation temperature: " + hydrateTemp + " °C");
     logger.info("Number of phases: " + fluid.getNumberOfPhases());
-    fluid.prettyPrint();
+    // fluid.prettyPrint();
 
     // Verify we got a result
     assertNotNull(fluid.getTemperature());
@@ -157,7 +157,7 @@ public class HydrateFormationTemperatureFlashTest {
       }
     }
 
-    fluid.prettyPrint();
+    // fluid.prettyPrint();
 
     // Should have at least 2 phases (gas + aqueous)
     assertTrue(fluid.getNumberOfPhases() >= 2,
@@ -198,7 +198,7 @@ public class HydrateFormationTemperatureFlashTest {
     logger.info("=== Hydrate Temperature Test: MEG Only (No Electrolytes) at 50 bara ===");
     logger.info("Hydrate formation temperature: " + hydrateTemp + " °C");
     logger.info("Number of phases: " + fluid.getNumberOfPhases());
-    fluid.prettyPrint();
+    // fluid.prettyPrint();
 
     assertNotNull(fluid.getTemperature());
 
@@ -291,7 +291,7 @@ public class HydrateFormationTemperatureFlashTest {
 	  + String.format("%.4f", fluid.getBeta(i)) + ")");
     }
 
-    fluid.prettyPrint();
+    // fluid.prettyPrint();
 
     // Should have at least 2 phases
     assertTrue(fluid.getNumberOfPhases() >= 2, "Should have at least 2 phases at -20°C");
@@ -428,9 +428,9 @@ public class HydrateFormationTemperatureFlashTest {
       }
     }
 
-    fluidNoElectrolyte.prettyPrint();
+    // fluidNoElectrolyte.prettyPrint();
     logger.info("\n");
-    fluidElectrolyte.prettyPrint();
+    // fluidElectrolyte.prettyPrint();
 
     // Test 3: Electrolyte system at low temperature (hydrate conditions)
     logger.info("\n--- Electrolyte CPA System at -10°C, 100 bara (hydrate conditions) ---");
@@ -461,7 +461,7 @@ public class HydrateFormationTemperatureFlashTest {
 	}
       }
     }
-    fluidCold.prettyPrint();
+    // fluidCold.prettyPrint();
 
     // Test 4: Same temperature but WITHOUT MEG
     logger.info("\n--- Electrolyte CPA at -10°C, 100 bara WITHOUT MEG ---");

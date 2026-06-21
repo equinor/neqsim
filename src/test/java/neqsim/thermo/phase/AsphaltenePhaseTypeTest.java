@@ -104,7 +104,7 @@ public class AsphaltenePhaseTypeTest {
 
     logger.info("\nHas ASPHALTENE phase type: " + hasAsphaltenePhase);
 
-    fluid.prettyPrint();
+    // fluid.prettyPrint();
 
     // At low pressure with light gas + heavy oil + asphaltene, we expect multiple phases
     assertTrue(fluid.getNumberOfPhases() >= 2, "Should have at least 2 phases at these conditions");
@@ -210,7 +210,7 @@ public class AsphaltenePhaseTypeTest {
     logger.info("Has ASPHALTENE phase: " + hasAsphaltenePhase);
     logger.info("Has GAS phase: " + hasGasPhase);
 
-    fluid.prettyPrint();
+    // fluid.prettyPrint();
 
     // At high pressure with heavy oil + asphaltene, we expect oil + asphaltene (no gas)
     assertTrue(fluid.getNumberOfPhases() >= 2, "Should have at least 2 phases");

@@ -38,7 +38,7 @@ class TPmultiflashTest {
       testOps.TPflash();
       testSystem.initProperties();
       logger.info("Pressure: " + p + " bara");
-      testSystem.prettyPrint();
+      // testSystem.prettyPrint();
       if (testSystem.getNumberOfPhases() == 1) {
 	logger.info("Single phase detected at pressure: " + p + " bara");
       } else {

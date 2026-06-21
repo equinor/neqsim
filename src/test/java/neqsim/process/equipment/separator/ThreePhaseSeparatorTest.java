@@ -138,7 +138,7 @@ class ThreePhaseSeparatorTest {
 
     ThreePhaseSeparator test_separator = new ThreePhaseSeparator("TEST_SEPARATOR", inlet_stream_test_sep);
     test_separator.run();
-    test_separator.getWaterOutStream().getThermoSystem().prettyPrint();
+    // test_separator.getWaterOutStream().getThermoSystem().prettyPrint();
 
     Heater heater_TP_setter_test_stream = new Heater("TP_SETTER_FOR_THE_DEGASSER_TEST_SEP_STREAM",
 	test_separator.getWaterOutStream());
@@ -148,7 +148,7 @@ class ThreePhaseSeparatorTest {
     // logger.info("Gas out from degasser " +
     // heater_TP_setter_test_stream.getOutStream()
     // .getFluid().getPhase("gas").getFlowRate("kg/hr"));
-    heater_TP_setter_test_stream.getOutletStream().getThermoSystem().prettyPrint();
+    // heater_TP_setter_test_stream.getOutletStream().getThermoSystem().prettyPrint();
 
     Heater heater_TP_setter_test_stream2 = new Heater("TP_SETTER_FOR_THE_DEGASSER_TEST_SEP_STREAM",
 	test_separator.getWaterOutStream());

@@ -258,7 +258,7 @@ public class SingleComponentFlash {
 	  + " temp_out " + liquidValve.getOutletStream().getTemperature("C"));
     }
 
-    liquidValve.getOutletStream().getFluid().prettyPrint();
+    // liquidValve.getOutletStream().getFluid().prettyPrint();
     double finalOut = gasValve.getOutletStream().getFlowRate("kg/hr")
 	+ liquidValve.getOutletStream().getFlowRate("kg/hr");
     // assertTrue(finalOut < initialOut);
