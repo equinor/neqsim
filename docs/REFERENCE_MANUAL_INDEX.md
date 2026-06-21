@@ -689,6 +689,10 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | HAZOP Worksheet            | [docs/safety/HAZOP.md](safety/HAZOP)                                               | IEC 61882 guidewords, process parameters, deviation rows, and text reports        |
 | FMEA / FMECA               | [docs/safety/FMEA.md](safety/FMEA)                                                 | IEC 60812 RPN = S·O·D, criticality threshold filtering                            |
 | Event & Fault Trees        | [docs/safety/event_fault_trees.md](safety/event_fault_trees)                       | IEC 61025 / 62502 ETA + FTA with β-factor common-cause and k-of-N voting gates    |
+| NOG 070 SIL / STS-0131 / ESD | [docs/safety/nog070_sil_sts0131_esd.md](safety/nog070_sil_sts0131_esd)           | Pre-determined SIL (NOG 070), STS-0131 acceptance gate, IEC 61511 ESD response time |
+| API 14C SAFE / NORSOK P-002 | [docs/safety/api14c_norsok_p002.md](safety/api14c_norsok_p002)                    | API RP 14C SAFE chart, NORSOK P-002 flare/blowdown/vent screening, coupled blowdown |
+| MAH Bow-Tie / EI AVIFF FIV | [docs/safety/mah_bowtie_fiv_screening.md](safety/mah_bowtie_fiv_screening)         | ISO 17776 major-accident-hazard bow-tie and EI AVIFF flow-induced-vibration screening |
+| Flare Flame / Hazardous Area / PFP | [docs/safety/flare_flame_hazardous_area_pfp.md](safety/flare_flame_hazardous_area_pfp) | API 537 flare flame/radiation/noise, IEC 60079-10-1 zoning, API 521 PFP demand |
 
 ### Chapter 35: Risk Simulation Framework
 
