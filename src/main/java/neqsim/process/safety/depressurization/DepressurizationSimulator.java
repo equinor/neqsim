@@ -148,6 +148,29 @@ public class DepressurizationSimulator implements Serializable {
     double tempK = fluid.getTemperature();
     double density = fluid.getDensity("kg/m3");
     double mass = density * vesselVolume;
+
+    // Align the fluid mole basis with the physical vessel inventory so the extensive
+    // internal energy and enthalpy used in the energy balance below are consistent with
+    // the discharged mass. Without this, a fluid supplied on a 1-mol (or phase-fraction)
+    // basis produces an energy balance that drives the VU flash to a non-physical state
+    // (instant pressure collapse, no cooling). The moles are scaled by adding per-component
+    // mole deltas (preserving composition); pressure and temperature are intensive and so
+    // are unchanged. NOTE: setTotalNumberOfMoles(...) MUST NOT be used here because it only
+    // sets the scalar total without re-scaling the component moles, which corrupts the
+    // average molar mass and density.
+    double currentMoles = fluid.getNumberOfMoles();
+    double molarMass = fluid.getMolarMass(); // kg/mol
+    if (molarMass > 0.0 && currentMoles > 0.0) {
+      double targetMoles = mass / molarMass;
+      scaleMoles(targetMoles / currentMoles);
+      ops.TPflash();
+      fluid.initProperties();
+      tempK = fluid.getTemperature();
+      pPa = fluid.getPressure() * 1.0e5;
+      density = fluid.getDensity("kg/m3");
+      mass = density * vesselVolume;
+    }
+
     double wallTemp = tempK; // start at fluid temperature
 
     DepressurizationResult res = new DepressurizationResult();
@@ -213,8 +236,12 @@ public class DepressurizationSimulator implements Serializable {
       // New internal energy
       double newU = (fluid.getInternalEnergy()) + dU;
 
-      // Update fluid state by VU flash (constant volume, new internal energy)
-      fluid.setTotalNumberOfMoles(newMass / mw);
+      // Update fluid state by VU flash (constant volume, new internal energy).
+      // Scale the remaining inventory by adding per-component mole deltas (preserving
+      // composition) instead of setTotalNumberOfMoles, which would corrupt the molar mass.
+      if (mass > 0.0) {
+	scaleMoles(newMass / mass);
+      }
       try {
 	ops.VUflash(vesselVolume, newU, "m3", "J");
 	fluid.initProperties();
@@ -240,6 +267,26 @@ public class DepressurizationSimulator implements Serializable {
     // Acceptance evaluation per API 521 §5.20
     res.evaluate(p0Pa);
     return res;
+  }
+
+  /**
+   * Scale the total mole inventory of the fluid by the given factor while preserving the composition (mole fractions).
+   * Each component's moles are adjusted by adding a delta of {@code currentMoles * (factor - 1)}. This is the correct
+   * way to change the absolute inventory of a closed {@link SystemInterface}; {@code setTotalNumberOfMoles} only sets
+   * the scalar total and leaves the component moles unchanged, corrupting the average molar mass.
+   *
+   * @param factor the multiplicative scaling factor for the total moles; values &lt;= 0, NaN or equal to 1 are ignored
+   */
+  private void scaleMoles(double factor) {
+    if (factor <= 0.0 || Double.isNaN(factor) || Math.abs(factor - 1.0) < 1.0e-12) {
+      return;
+    }
+    int nc = fluid.getNumberOfComponents();
+    for (int i = 0; i < nc; i++) {
+      double cur = fluid.getComponent(i).getNumberOfmoles();
+      fluid.addComponent(i, cur * (factor - 1.0));
+    }
+    fluid.init(0);
   }
 
   // ----------------------------------------------------------------------
