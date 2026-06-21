@@ -398,17 +398,6 @@ correct metering streams and product labels.
 | `Unknown source` / `Unknown custody outlet` / `Unknown component` | Query name not tagged / not on the master slate. | Use names exactly as tagged; check `getSourceNames()` / `getCustodyNames()` / `getComponentNames()`. |
 | Large `maxResidual` | Loop gain close to one or inconsistent base case. | Re-extract from a fully converged base case; raise `maxIterations` if the iterative fallback was used. |
 
-## Scope and limitations
-
-- Applies to any conservative separation / scrubber / column / valve / cooler /
-  heater / mixer / splitter / pump / compressor network — i.e. all oil and gas
-  field process configurations, **including recycle and reflux loops**.
-- Reactive or mass-transfer contacting units (amine, glycol, MEG, scavengers)
-  are treated as black boxes reproducing the base-case redistribution. For
-  hydrocarbon allocation, water and MEG handling does not affect the result.
-- Split factors are linearised around the base case. For operating points far
-  from the base case, re-extract from a representative converged run.
-
 ## Choosing an allocation method
 
 Several allocation methods exist. The table contrasts the main families and where

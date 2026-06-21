@@ -91,12 +91,14 @@ public class SourceAllocator implements Serializable {
    * @param process the base-case process system; must be non-null and already solved
    * @return this allocator (fluent)
    */
-  public SourceAllocator setBaseCase(ProcessSystem process) {
-    this.process = process;
-    this.extractor = new RecoveryFactorExtractor(process).extract();
-    this.network = new AllocationNetwork(extractor);
-    return this;
-  }
+public SourceAllocator setBaseCase(ProcessSystem process) {
+  this.process = process;
+  sources.clear();
+  custodyOutlets.clear();
+  this.extractor = new RecoveryFactorExtractor(process).extract();
+  this.network = new AllocationNetwork(extractor);
+  return this;
+}
 
   /**
    * Tags a production source by name and feed stream.
@@ -189,11 +191,9 @@ public class SourceAllocator implements Serializable {
       if (entryUnits[j] < 0) {
 	logger.warn("Source '{}' feed stream is not connected to any node; it will allocate zero.", src.getName());
       } else if (network.findProducer(src.getFeedStream()) != null) {
-	logger.warn(
-	    "Source '{}' feed stream is produced by a node inside the network (it is an internal stream, not an"
-		+ " external feed). Its component flow is injected as a source AND routed by the network, which"
-		+ " double-counts that contribution. Register an external (terminal) feed stream instead.",
-	    src.getName());
+        throw new IllegalArgumentException(
+            "Source '" + src.getName() + "' feed stream is produced by a node inside the network (internal stream). "
+                + "Register an external (terminal) feed stream instead.");
       }
       for (int k = 0; k < numComp; k++) {
 	injections[j][k] = RecoveryFactorExtractor.componentFlow(src.getFeedStream(), componentNames.get(k));
@@ -350,6 +350,15 @@ public class SourceAllocator implements Serializable {
    */
   public AllocationNetwork getNetwork() {
     return network;
+  }
+
+  /**
+   * Gets the base-case process system (available after {@link #setBaseCase(ProcessSystem)}).
+   *
+   * @return the base-case process system, or {@code null} if no base case is set
+   */
+  public ProcessSystem getBaseCase() {
+    return process;
   }
 
   /**
