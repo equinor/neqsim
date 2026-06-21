@@ -7,14 +7,12 @@ Generates a formatted .docx following Computers & Chemical Engineering style:
 - Proper heading hierarchy (section/subsection numbering)
 - Tables with three-line style (booktabs equivalent)
 - Embedded figures with captions
-- Equations rendered as native Word (Office Math / OMML) equations, with a
-  Unicode text fallback when the OMML toolchain is unavailable
+- Equation rendering as formatted text
 - Citation handling (cite key -> [N])
 - Highlights box, abstract, keywords
 """
 
 import re
-import sys
 import json
 from pathlib import Path
 
@@ -25,11 +23,6 @@ from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.enum.section import WD_ORIENT
 from docx.oxml.ns import qn, nsdecls
 from docx.oxml import parse_xml
-
-# ── Shared LaTeX -> native Word (OMML) equation rendering ──
-# tools/ lives at the repository (neqsim-paperlab) root: papers/<name>/build_word.py
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "tools"))
-import math_utils  # noqa: E402
 
 # ── Paths ──
 PAPER_DIR = Path(__file__).parent
@@ -131,42 +124,13 @@ def clean_latex_math_inline(text):
     return text.strip()
 
 
-def process_inline_text(paragraph, text, base_font=None, base_size=None,
-                        bold_all=False, code_size=Pt(9), math_size=10.5):
-    """Add text to a paragraph, handling bold, italic, code, math, and citations.
-
-    Parameters
-    ----------
-    paragraph : docx.text.paragraph.Paragraph
-        Target paragraph to append runs to.
-    text : str
-        Markdown-flavoured inline text (``**bold**``, ``*italic*``, ``` `code` ```,
-        ``$math$``, and ``\\cite{}``).
-    base_font : str, optional
-        Font name applied to plain/bold/italic runs (e.g. ``'Arial'`` for table
-        cells). ``None`` leaves the document default font.
-    base_size : docx.shared.Pt, optional
-        Font size applied to plain/bold/italic runs. ``None`` leaves the default.
-    bold_all : bool, optional
-        When ``True``, every text run is bolded (used for table header cells).
-    code_size : docx.shared.Pt, optional
-        Font size for inline ``` `code` ``` runs.
-    math_size : float, optional
-        Point size for inline ``$math$`` equations.
-    """
+def process_inline_text(paragraph, text):
+    """Add text to a paragraph, handling bold, italic, code, math, and citations."""
     # Resolve citations first
     text = re.sub(r'\\cite\{([^}]+)\}', resolve_cite, text)
 
     # Remove HTML comments
     text = re.sub(r'<!--.*?-->', '', text, flags=re.DOTALL)
-
-    def _apply_base(run):
-        if base_font is not None:
-            run.font.name = base_font
-        if base_size is not None:
-            run.font.size = base_size
-        if bold_all:
-            run.bold = True
 
     # Split on formatting markers
     # Pattern handles: **bold**, *italic*, `code`, $math$
@@ -178,24 +142,23 @@ def process_inline_text(paragraph, text, base_font=None, base_size=None,
         if part.startswith('**') and part.endswith('**'):
             run = paragraph.add_run(part[2:-2])
             run.bold = True
-            _apply_base(run)
         elif part.startswith('*') and part.endswith('*') and not part.startswith('**'):
             run = paragraph.add_run(part[1:-1])
             run.italic = True
-            _apply_base(run)
         elif part.startswith('`') and part.endswith('`'):
             run = paragraph.add_run(part[1:-1])
             run.font.name = 'Consolas'
-            run.font.size = code_size
+            run.font.size = Pt(9)
             run.font.color.rgb = RGBColor(0x33, 0x33, 0x99)
-            if bold_all:
-                run.bold = True
         elif part.startswith('$') and part.endswith('$'):
-            # Inline math -> native Word (OMML) equation, Unicode fallback
-            math_utils.append_inline_math(paragraph, part[1:-1], size=math_size)
+            # Inline math
+            math_text = clean_latex_math_inline(part[1:-1])
+            run = paragraph.add_run(math_text)
+            run.italic = True
+            run.font.name = 'Cambria Math'
+            run.font.size = Pt(10.5)
         else:
-            run = paragraph.add_run(part)
-            _apply_base(run)
+            paragraph.add_run(part)
 
 
 def set_cell_shading(cell, color_hex):
@@ -249,8 +212,10 @@ def add_table_from_markdown(doc, md_lines):
         cell.text = ''
         p = cell.paragraphs[0]
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        process_inline_text(p, h, base_font='Arial', base_size=Pt(9),
-                            bold_all=True, code_size=Pt(8.5), math_size=9.5)
+        run = p.add_run(clean_latex_math_inline(h))
+        run.bold = True
+        run.font.size = Pt(9)
+        run.font.name = 'Arial'
         set_cell_shading(cell, 'E3F2FD')
         set_cell_borders(cell, top=12, bottom=8)
 
@@ -263,8 +228,10 @@ def add_table_from_markdown(doc, md_lines):
             cell.text = ''
             p = cell.paragraphs[0]
             p.alignment = WD_ALIGN_PARAGRAPH.CENTER if j > 0 else WD_ALIGN_PARAGRAPH.LEFT
-            process_inline_text(p, cell_text, base_font='Arial', base_size=Pt(9),
-                                code_size=Pt(8.5), math_size=9.5)
+            cleaned = clean_latex_math_inline(cell_text)
+            run = p.add_run(cleaned)
+            run.font.size = Pt(9)
+            run.font.name = 'Arial'
             # Bottom border on last row
             if i == n_rows - 1:
                 set_cell_borders(cell, bottom=12)
@@ -288,12 +255,17 @@ def add_table_from_markdown(doc, md_lines):
 
 
 def add_equation_block(doc, eq_text):
-    """Add a display equation as a centered native Word (OMML) equation.
-
-    Falls back to a centered Unicode text run when the OMML toolchain
-    (latex2mathml + MML2OMML.XSL) is unavailable.
-    """
-    return math_utils.add_display_equation(doc, eq_text, size=11)
+    """Add a display equation as a centered italic paragraph."""
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p.paragraph_format.space_before = Pt(6)
+    p.paragraph_format.space_after = Pt(6)
+    cleaned = clean_latex_math_inline(eq_text)
+    run = p.add_run(cleaned)
+    run.italic = True
+    run.font.name = 'Cambria Math'
+    run.font.size = Pt(11)
+    return p
 
 
 def add_figure(doc, img_path, caption_text, fig_num):
