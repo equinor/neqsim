@@ -573,8 +573,8 @@ public class AllocationUncertaintyEstimator implements Serializable {
    * @return {@code true} if every entry is finite
    */
   private static boolean isFinite(SimpleMatrix m) {
-    for (int i = 0; i < m.getNumRows(); i++) {
-      for (int j = 0; j < m.getNumCols(); j++) {
+    for (int i = 0; i < m.numRows(); i++) {
+      for (int j = 0; j < m.numCols(); j++) {
 	if (!Double.isFinite(m.get(i, j))) {
 	  return false;
 	}
