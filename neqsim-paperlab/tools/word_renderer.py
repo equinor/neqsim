@@ -24,8 +24,13 @@ Usage:
 
 import os
 import re
+import sys
 import json
 from pathlib import Path
+
+# Ensure sibling tools (paper_renderer, etc.) are importable regardless of cwd.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from paper_renderer import normalize_figure_captions
 
 try:
     from docx import Document
@@ -1344,6 +1349,7 @@ class WordRenderer:
         Returns the Document object. Call .save() on it or use render_word_document().
         """
         raw_md = (self.paper_dir / "paper.md").read_text(encoding="utf-8")
+        raw_md = normalize_figure_captions(raw_md)
         paper_md = strip_comments(raw_md)
         sections = parse_sections(paper_md)
 
