@@ -154,6 +154,60 @@ double mdotPeak = sim.peakMassFlow();
 This is the standard handoff between the depressurization model and the flare
 network sizing skill (`neqsim-relief-flare-network`).
 
+## Method 5 — Coupled Multi-Vessel Blowdown to a Shared Header (API 521 §7)
+
+When several vessels blow down simultaneously into one flare/disposal header, the
+**combined** load — not any single vessel — sizes the header. `MultiVesselBlowdownStudy`
+superimposes each source on a common time grid and checks the header Mach at the peak.
+
+```java
+import neqsim.process.safety.depressurization.MultiVesselBlowdownStudy;
+import neqsim.process.safety.depressurization.MultiVesselBlowdownStudy.MultiVesselBlowdownResult;
+
+MultiVesselBlowdownResult res = new MultiVesselBlowdownStudy()
+    .addSource("V-100", bdvSim100)        // configured DepressurizationSimulator
+    .addSource("V-200", bdvSim200)
+    .addSourceResult("V-300", precomputed) // or a pre-computed DepressurizationResult
+    .setHeader(0.6, 1.5, 288.15, 0.020, 1.30) // D[m], P[bara], T[K], M[kg/mol], gamma
+    .setMaxAllowableMach(0.70)             // API 521 §7 / NORSOK P-002
+    .run();
+
+double peak   = res.getPeakTotalMassFlowKgPerS();
+double tPeak  = res.getPeakTimeS();
+double mach   = res.getHeaderMach();
+boolean okMach = res.isHeaderMachAcceptable();
+String report  = res.summary();
+```
+
+Use `addSourceResult(...)` with a pre-computed `DepressurizationResult` to avoid
+re-running the (slow) VU-flash transient for vessels already simulated.
+
+## Method 6 — ESD Response-Time Budget (NOG 070 / IEC 61511)
+
+The blowdown / isolation only mitigates the relief load if the ESD valve actually
+closes in time. `EsdResponseTimeSimulator` sums the SIF loop contributions and
+compares against the allowable budget.
+
+```java
+import neqsim.process.safety.esd.EsdResponseTimeSimulator;
+import neqsim.process.safety.esd.EsdResponseTimeSimulator.EsdResponseTimeResult;
+
+EsdResponseTimeResult esd = new EsdResponseTimeSimulator()
+    .setSifTag("SIF-2001 ESDV closure")
+    .addDetection("PT-2001 detection", 2.0)        // s
+    .addLogic("Logic solver scan + 2oo3 vote", 0.5)
+    .addValve("ESDV-2001 close", 1.0, 18.0)        // solenoid delay, valve stroke
+    .setAllowableResponseTimeS(45.0)
+    .evaluate();
+
+double total  = esd.getTotalResponseTimeS();
+double margin = esd.getMarginS();
+boolean ok    = esd.isWithinBudget();
+```
+
+This is a budgeting tool — it does not replace certified SIS proof testing or
+FAT/SAT. Pair with `neqsim-process-safety` for the SIL determination of the SIF.
+
 ## Common Pitfalls
 
 - **Adiabatic vs fire case** — running adiabatic blowdown gives the *coldest*
@@ -176,7 +230,7 @@ network sizing skill (`neqsim-relief-flare-network`).
 ## Verification Tests
 
 ```bash
-./mvnw test -Dtest=DepressurizationSimulatorTest,MDMTCalculatorTest
+./mvnw test -Dtest=DepressurizationSimulatorTest,MDMTCalculatorTest,MultiVesselBlowdownStudyTest,EsdResponseTimeSimulatorTest
 ```
 
 ## See Also

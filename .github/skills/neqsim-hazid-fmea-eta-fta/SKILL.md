@@ -2,13 +2,14 @@
 name: neqsim-hazid-fmea-eta-fta
 version: "1.0.0"
 description: "Structured hazard-identification workflows — HAZOP worksheets with the seven IEC 61882 guidewords, FMEA failure-mode tables with RPN/criticality scoring, event-tree analysis (ETA) for outcome frequency, fault-tree analysis (FTA) with β-factor common-cause modelling and minimal cut sets, and escalation-graph (domino) screening. USE WHEN: a task requires systematic hazard identification, qualitative-to-quantitative scenario development, top-event decomposition, or escalation/domino analysis between adjacent equipment. Anchors on neqsim.process.safety.hazid, neqsim.process.safety.risk.eta, neqsim.process.safety.risk.fta, neqsim.process.safety.escalation."
-last_verified: "2026-04-26"
+last_verified: "2026-06-23"
 requires:
   java_packages:
     - neqsim.process.safety.hazid
     - neqsim.process.safety.risk.eta
     - neqsim.process.safety.risk.fta
     - neqsim.process.safety.escalation
+    - neqsim.process.safety.vibration
 ---
 
 # NeqSim HAZID / FMEA / ETA / FTA Skill
@@ -145,6 +146,66 @@ java.util.List<String> chain =
 
 Used to screen plot-plan layouts before detailed CFD (KFX / FLACS) runs.
 
+## Method 6 — ISO 17776 Major-Accident-Hazard Bow-Tie
+
+Generate a pre-populated bow-tie (threats → top event → consequences, with
+prevention/mitigation barriers) for each ISO 17776 major accident hazard from
+`MahCatalogue` / `MahBowTieBuilder`:
+
+```java
+import neqsim.process.safety.hazid.MahType;
+import neqsim.process.safety.hazid.MahCatalogue;
+import neqsim.process.safety.hazid.MahBowTieBuilder;
+import neqsim.process.safety.risk.bowtie.BowTieModel;
+
+// One call builds a complete bow-tie with default threat freq + barrier PFD
+BowTieModel bt = MahBowTieBuilder.build(MahType.TOPSIDE_HYDROCARBON_RELEASE);
+bt.getThreats();        // ≥ 4 standard threats
+bt.getConsequences();   // ≥ 3 standard consequences
+bt.getBarriers();       // ≥ 5 prevention/mitigation barriers
+
+// Or inspect the raw catalogue lists to tailor a custom bow-tie
+MahCatalogue.threatsFor(MahType.WELL_BLOWOUT);
+MahCatalogue.consequencesFor(MahType.FIRE_EXPLOSION);
+MahCatalogue.barriersFor(MahType.TOXIC_RELEASE);
+```
+
+`MahType` covers the standard offshore MAHs: `TOPSIDE_HYDROCARBON_RELEASE`,
+`RISER_LEAK`, `WELL_BLOWOUT`, `STRUCTURAL_COLLAPSE`, `DROPPED_OBJECT`,
+`HELICOPTER_LOSS`, `SHIP_COLLISION`, `FIRE_EXPLOSION`, `TOXIC_RELEASE`,
+`LOSS_OF_BUOYANCY`, `EXTREME_WEATHER`. Defaults exposed as
+`MahBowTieBuilder.DEFAULT_THREAT_FREQUENCY` and `DEFAULT_BARRIER_PFD`. Quantify
+the assembled `BowTieModel` with the bow-tie analyzer (see
+`neqsim-process-safety`). Verified by `MahBowTieBuilderTest`.
+
+## Method 7 — EI AVIFF Flow-Induced-Vibration Screening
+
+Screen piping for flow-induced vibration (FIV) likelihood-of-failure per the
+Energy Institute AVIFF guidelines with `PipingFivScreening` (static helpers):
+
+```java
+import neqsim.process.safety.vibration.PipingFivScreening;
+import neqsim.process.safety.vibration.PipingFivLikelihood;
+import neqsim.process.safety.vibration.FivLikelihoodResult;
+
+// screenGas(tag, rho[kg/m3], v[m/s], D[m], t[m], nBranches, pulsationFactor, supportFactor)
+FivLikelihoodResult gas =
+    PipingFivScreening.screenGas("Compressor discharge", 80.0, 30.0, 0.3, 0.006, 2, 4.0, 2.0);
+gas.getLofScore();        // dimensionless LOF
+gas.getLikelihood();      // VERY_HIGH
+
+// screenLiquid(tag, v[m/s], D[m], t[m], nBranches, supportFactor)
+FivLikelihoodResult liq =
+    PipingFivScreening.screenLiquid("Pump discharge", 3.5, 0.15, 0.005, 1, 1.5);
+
+PipingFivLikelihood band = PipingFivScreening.bandFor(0.7);  // HIGH
+String json = gas.toJson();   // contains "lofScore", "likelihood"
+```
+
+Likelihood bands: `LOW` (< 0.3), `MEDIUM` (0.3–0.5), `HIGH` (0.5–1.0),
+`VERY_HIGH` (≥ 1.0). High/very-high lines feed detailed AVIFF assessment or CFD.
+Verified by `PipingFivScreeningTest`.
+
 ## Workflow — From STID to Simulation-backed HAZOP
 
 1. Retrieve STID/P&ID, C&E, SRS, line-list, and operating-data documents into
@@ -186,7 +247,7 @@ A reference end-to-end workflow lives in the test class
 ## Verification Tests
 
 ```bash
-./mvnw test -Dtest=HAZOPFMEATest,EventTreeAnalyzerTest,FaultTreeAnalyzerTest,EscalationGraphAnalyzerTest
+./mvnw test -Dtest=HAZOPFMEATest,EventTreeAnalyzerTest,FaultTreeAnalyzerTest,EscalationGraphAnalyzerTest,MahBowTieBuilderTest,PipingFivScreeningTest
 ```
 
 ## See Also

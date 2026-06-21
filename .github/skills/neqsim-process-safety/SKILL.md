@@ -2,9 +2,9 @@
 name: neqsim-process-safety
 version: "1.0.0"
 description: "Process safety methodology — barrier management, PSFs/SCEs, HAZOP guidewords, LOPA worksheets, SIL determination per IEC 61511, bow-tie analysis, risk-matrix scoring, and trapped-liquid fire rupture screening. USE WHEN: a task requires barrier registers, hazard identification, layer-of-protection analysis, safety-integrity-level assignment for an SIF, trapped liquid rupture/PFP demand, or quantitative risk evaluation. Anchors on neqsim.process.safety.barrier, neqsim.process.safety.risk, and neqsim.process.safety.rupture classes."
-last_verified: "2026-05-07"
+last_verified: "2026-06-23"
 requires:
-  java_packages: [neqsim.process.safety.barrier, neqsim.process.safety.risk, neqsim.process.safety.rupture]
+  java_packages: [neqsim.process.safety.barrier, neqsim.process.safety.risk, neqsim.process.safety.rupture, neqsim.process.safety.risk.sis.nog070, neqsim.process.safety.esd, neqsim.process.safety.api14c, neqsim.process.safety.compliance]
 ---
 
 # NeqSim Process Safety Skill
@@ -160,6 +160,55 @@ int silAchieved = sif.getSil();
 | 3   | 1e-4 to 1e-3        | 1000–10000      |
 | 4   | 1e-5 to 1e-4        | 10000–100000    |
 
+### Method 3b — NOG 070 SIL Catalogue (Norwegian shelf typical SIFs)
+
+For Norwegian-shelf projects, the NOG 070 (070 Norsk olje og gass) guideline
+gives **pre-determined minimum SIL** for typical SIFs — use
+`Nog070SilCatalogue` / `Nog070SilDetermination` to look up the minimum and
+verify the achieved SIL from PFD:
+
+```java
+import neqsim.process.safety.risk.sis.nog070.Nog070SifType;
+import neqsim.process.safety.risk.sis.nog070.Nog070SilDetermination;
+
+// HIPPS minimum is SIL 3; PFD 1e-4 achieves SIL 3 → compliant
+Nog070SilDetermination r =
+    Nog070SilDetermination.evaluate(Nog070SifType.HIPPS_PIPELINE, 1.0e-4);
+int achieved = r.getAchievedSil();   // 3
+int minimum  = r.getMinimumSil();    // 3
+boolean ok   = r.isCompliant();      // true
+String json  = r.toJson();
+```
+
+`Nog070SifType` includes `HIPPS_PIPELINE`, `ESD_SUBSEA_ISOLATION` (SIL 3),
+`BLOWDOWN_HYDROCARBON_SEGMENT`, `PSD_PROCESS_SEGMENT` (SIL 2), and `CUSTOM`
+(supply an explicit minimum via the 3-arg `evaluate`). Verified by
+`Nog070SilCatalogueTest`.
+
+### Method 3c — ESD Response-Time Budget (NOG 070 / IEC 61511)
+
+Verify the full detection → logic → final-element chain fits the allowable ESD
+response time with `EsdResponseTimeSimulator`:
+
+```java
+import neqsim.process.safety.esd.EsdResponseTimeSimulator;
+import neqsim.process.safety.esd.EsdResponseTimeSimulator.EsdResponseTimeResult;
+
+EsdResponseTimeResult res = new EsdResponseTimeSimulator()
+    .setSifTag("ESD-1234")
+    .addDetection("PT-1001 high-pressure", 1.0)         // [s]
+    .addLogic("Logic solver scan + 2oo3 vote", 0.5)     // [s]
+    .addValve("ESDV-2001", 0.5, 8.0)                    // command delay + stroke [s]
+    .setAllowableResponseTimeS(15.0)
+    .evaluate();
+
+double total = res.getTotalResponseTimeS();   // 10.0
+double margin = res.getMarginS();             // 5.0
+boolean within = res.isWithinBudget();        // true
+```
+
+Verified by `EsdResponseTimeSimulatorTest`.
+
 ## Method 4 — Bow-Tie Analysis
 
 Use [`BowTieModel`](../../../src/main/java/neqsim/process/safety/risk/bowtie/BowTieModel.java)
@@ -187,6 +236,80 @@ Export to SVG with `BowTieSvgExporter` for the report.
 Use [`RiskMatrix`](../../../src/main/java/neqsim/process/safety/risk/RiskMatrix.java) to score and rank scenarios per ISO 31000 / NORSOK Z-013.
 Frequencies × Consequence categories → ALARP / intolerable / broadly acceptable bands.
 
+## Method 6 — API RP 14C SAFE Chart (offshore device coverage)
+
+Auto-enumerate process equipment and check that each has its API RP 14C–required
+protective devices (PSH/PSL/LSH/LSL/PSV …) with `Api14cSafeChartBuilder`:
+
+```java
+import java.util.EnumSet;
+import neqsim.process.safety.api14c.Api14cSafeChartBuilder;
+import neqsim.process.safety.api14c.Api14cDeviceType;
+
+// declarePresent(...) lists the devices actually installed, then build(process)
+Api14cSafeChartBuilder chart = new Api14cSafeChartBuilder()
+    .declarePresent("HP separator",
+        EnumSet.of(Api14cDeviceType.PSH, Api14cDeviceType.PSV))
+    .build(process);
+
+boolean complete = chart.isComplete();   // false → missing devices
+chart.getGaps();                         // equipment with missing required devices
+String md = chart.toMarkdown();          // SAFE chart table
+String json = chart.toJson();
+```
+
+`buildAssumingComplete(process)` enumerates equipment and assumes full coverage
+(useful for generating the SAFE chart skeleton). Equipment categories come from
+`Api14cEquipmentCategory` (e.g. `PRESSURE_VESSEL`). Verified by
+`Api14cSafeChartBuilderTest`.
+
+## Method 7 — NORSOK P-002 Process Design Compliance
+
+Screen flare/blowdown/vent hydraulics and drainage against NORSOK P-002 limits
+with `NorsokP002ComplianceChecker` (fluent, aggregates all findings):
+
+```java
+import neqsim.process.safety.compliance.NorsokP002ComplianceChecker;
+
+NorsokP002ComplianceChecker c = new NorsokP002ComplianceChecker()
+    .checkFlareLineMach("Header", 0.5)             // ≤ 0.7 Mach
+    .checkBlowdownRhoV2("BDV-1", 150000.0)         // ρv² limit [Pa]
+    .checkVentGasVelocity("Vent", 45.0)
+    .checkLiquidCarryOver("V-100", 1.0e-4)
+    .checkErosionalVelocity("Line-200", 80000.0)
+    .recordDepressurisationValve("BDV-2", true, "Sized for fire case")
+    .recordDrainSlope("CD-1", true, "1:100 slope OK");
+
+boolean compliant = c.isCompliant();
+int failures = c.countNonCompliant();
+String json = c.toJson();      // findings tagged e.g. "FLARE_LINE_MACH_07"
+```
+
+Verified by `NorsokP002ComplianceCheckerTest`.
+
+## Method 8 — STS-0131 Technical Safety Gate
+
+Aggregate the project safety acceptance checks (PSV margin, MDMT, SIL, custom)
+into a single pass/fail gate with `Sts0131Gate`:
+
+```java
+import neqsim.process.safety.compliance.Sts0131Gate;
+import neqsim.process.safety.risk.sis.nog070.Nog070SifType;
+import neqsim.process.safety.risk.sis.nog070.Nog070SilDetermination;
+
+Sts0131Gate gate = new Sts0131Gate();
+gate.addPsvSizingMargin(1.0, 1.15, 0.10);   // required, available, minMargin
+gate.addMdmt(-20.0, -29.0);                 // operating MDMT vs design min
+gate.addSil(Nog070SilDetermination.evaluate(Nog070SifType.PSD_PROCESS_SEGMENT, 5.0e-3));
+gate.addCustom("Fire case", true, "Heat input within API 521 envelope");
+
+boolean acceptable = gate.isAcceptable();
+int failures = gate.countFailures();
+String json = gate.toJson();
+```
+
+Verified by `Sts0131GateTest`.
+
 ## Common Mistakes
 
 | Mistake                                              | Fix                                                                  |
@@ -207,6 +330,12 @@ Frequencies × Consequence categories → ALARP / intolerable / broadly acceptab
 - [ ] SIL claimed ≤ SIL achieved by PFD_avg
 - [ ] Spurious-trip rate documented (production impact)
 - [ ] Results saved to `results.json` with `safety_analysis` section + JSON from `LOPAResult.toJson()` / `SILVerificationResult.toJson()`
+
+## Verification Tests
+
+```bash
+./mvnw test -Dtest=Nog070SilCatalogueTest,Sts0131GateTest,Api14cSafeChartBuilderTest,NorsokP002ComplianceCheckerTest,EsdResponseTimeSimulatorTest
+```
 
 ## Related Skills
 
