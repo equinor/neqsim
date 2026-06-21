@@ -3027,3 +3027,19 @@ class TestHyphenatedCitationKeys:
                                          "abstract_words_max": 250})
         cite = [c for c in checks if c["check"] == "Citation keys resolved"]
         assert cite and cite[0]["status"] == "PASS"
+
+
+class TestListJournals:
+    """`list-journals` prints every shipped journal profile."""
+
+    def test_lists_all_profiles(self, capsys):
+        import paperflow as pf
+        n_profiles = len(list((pf.JOURNALS_DIR).glob("*.yaml")))
+        pf.cmd_list_journals(argparse.Namespace())
+        out = capsys.readouterr().out
+        # Header and a known profile name are present.
+        assert "--journal" in out
+        assert "fluid_phase_equilibria" in out
+        assert "achemso" in out  # at least one ACS profile listed
+        assert f"{n_profiles} journal profiles total" in out
+

@@ -13,17 +13,30 @@ into a submission-ready LaTeX or Word document.
 
 ## Supported Journals
 
-Each journal has a YAML profile in `journals/`. Currently supported:
+Each journal has a YAML profile in `journals/`. Run
+`python paperflow.py list-journals` to print this list with the exact
+`--journal` names. Currently supported (10 profiles):
 
-| Journal | File | Publisher | Template |
-|---------|------|-----------|----------|
-| Fluid Phase Equilibria | `fluid_phase_equilibria.yaml` | Elsevier | `elsarticle` |
-| Computers & Chemical Engineering | `computers_chem_eng.yaml` | Elsevier | `elsarticle` |
-| Industrial & Engineering Chemistry Research | `iecr.yaml` | ACS | `achemso` |
-| AIChE Journal | `aiche.yaml` | Wiley | Custom |
-| Chemical Engineering Science | `chem_eng_sci.yaml` | Elsevier | `elsarticle` |
+| Journal | `--journal` name | Publisher | LaTeX Class | Citation Style |
+|---------|------------------|-----------|-------------|----------------|
+| Fluid Phase Equilibria | `fluid_phase_equilibria` | Elsevier | `elsarticle` | `numbered` |
+| Chemical Engineering Science | `chem_eng_sci` | Elsevier | `elsarticle` | `numbered` |
+| Computers & Chemical Engineering | `computers_chem_eng` | Elsevier | `elsarticle` | `authoryear` |
+| Geoenergy Science and Engineering | `geoenergy_sci_eng` | Elsevier | `elsarticle` | `numbered` |
+| Int. J. of Greenhouse Gas Control | `ijggc` | Elsevier | `elsarticle` | `numbered` |
+| Industrial & Engineering Chemistry Research | `iecr` | ACS | `achemso` | `numbered_superscript` |
+| Journal of Chemical & Engineering Data | `jced` | ACS | `achemso` | `numbered_superscript` |
+| Energy & Fuels | `energy_fuels` | ACS | `achemso` | `numbered_superscript` |
+| AIChE Journal | `aiche` | Wiley | `custom` | `numbered` |
+| SPE Conference Paper | `spe` | SPE | `custom` | `numbered` |
 
-## Elsevier Formatting
+The `latex_class` value drives how the LaTeX renderer
+(`tools/paper_renderer.py`, `render_latex`) emits front matter — see the
+class-specific sections below. The three supported `citation_style` values are
+`numbered` (square-bracket `[1]`), `numbered_superscript` (ACS-style `¹`), and
+`authoryear` (`(Author, Year)`).
+
+## Elsevier Formatting (`elsarticle`)
 
 ### LaTeX Class
 
@@ -124,6 +137,88 @@ Near-critical  & 100  & 85.0  & 92.0  & 22 & 16 \\
 \end{tabular}
 \end{table}
 ```
+
+## ACS Formatting (`achemso`)
+
+ACS journals (`iecr`, `jced`, `energy_fuels`) use the `achemso` document class.
+Unlike `elsarticle`, **achemso declares authors, affiliations, and the title in
+the preamble — before `\begin{document}`** — and has no `frontmatter` or
+`highlights` environment. The renderer emits this automatically based on
+`latex_class: achemso`.
+
+### LaTeX Class
+
+```latex
+\documentclass{achemso}
+% achemso auto-detects the journal style from \journal{} when set; the
+% journal profiles deliberately set `latex_options: null` so no class options
+% are injected (the renderer omits the [] brackets entirely).
+```
+
+### Preamble (before `\begin{document}`)
+
+```latex
+\author{First Author}
+\affiliation{Department of Chemistry, NTNU, Trondheim, Norway}
+\author{Second Author}
+\affiliation{Equinor ASA, Stavanger, Norway}
+\email{corresponding@institution.no}   % only for the corresponding author
+\title{Your Title Here}
+
+\begin{document}
+```
+
+### Body front matter (after `\begin{document}`)
+
+```latex
+\begin{abstract}
+% Check journal profile for the abstract word limit
+\end{abstract}
+
+\keywords{flash calculation; phase equilibrium; equation of state}
+```
+
+### Citations and References
+
+ACS journals use **superscript numbered** citations
+(`citation_style: numbered_superscript`):
+
+```latex
+\bibliographystyle{achemso}
+\bibliography{refs}
+```
+
+> **Highlights:** `achemso` has no `highlights` environment. When a profile sets
+> `highlights_required: true`, the renderer preserves the highlight text as a
+> LaTeX comment block so no content is lost, but it does not appear in the
+> compiled PDF. Move highlight content into the abstract for ACS submissions.
+
+## Custom / Generic Formatting (`custom`)
+
+`aiche` (Wiley) and `spe` (SPE) set `latex_class: custom` because the publisher
+supplies its own class file. The renderer falls back to a **generic
+`\maketitle` front matter** that compiles with the standard `article` class as a
+preview, then you drop in the publisher template for the real submission.
+
+```latex
+\documentclass{custom}      % swap for the publisher-provided class
+
+\begin{document}
+
+\title{Your Title Here}
+\author{First Author \and Second Author}
+\maketitle
+
+\begin{abstract}
+% ...
+\end{abstract}
+
+\noindent\textbf{Keywords:} keyword one, keyword two, keyword three
+```
+
+Both custom journals use `citation_style: numbered`. Replace the generic
+preamble with the publisher's macros (Wiley `\corraddress`, SPE template fields)
+before final submission.
 
 ## Compliance Checklist Generator
 

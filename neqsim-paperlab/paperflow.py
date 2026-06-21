@@ -106,6 +106,49 @@ def cmd_list(args):
     print(f"\n{len(rows)} papers total")
 
 
+def cmd_list_journals(args):
+    """List available journal profiles and their formatting metadata."""
+    if not JOURNALS_DIR.exists():
+        print("No journals directory found.")
+        return
+
+    sys.path.insert(0, str(TOOLS_DIR))
+    from paper_renderer import load_journal_profile
+
+    rows = []
+    for yml in sorted(JOURNALS_DIR.glob("*.yaml")):
+        name = yml.stem
+        try:
+            profile = load_journal_profile(name, str(JOURNALS_DIR))
+        except Exception:  # noqa: BLE001 - report unreadable profiles gracefully
+            rows.append((name, "BROKEN", "", "", ""))
+            continue
+        rows.append((
+            name,
+            str(profile.get("journal_name", "")),
+            str(profile.get("publisher", "")),
+            str(profile.get("latex_class", "")),
+            str(profile.get("citation_style", "")),
+        ))
+
+    if not rows:
+        print("No journal profiles found.")
+        return
+
+    headers = ("--journal", "Journal", "Publisher", "Class", "Citation")
+    widths = [max(len(h), max((len(str(r[i])) for r in rows), default=0))
+              for i, h in enumerate(headers)]
+    fmt = "  ".join(f"{{:<{w}}}" for w in widths)
+
+    print(fmt.format(*headers))
+    print(fmt.format(*("-" * w for w in widths)))
+    for row in rows:
+        print(fmt.format(*row))
+    print(f"\n{len(rows)} journal profiles total")
+    print("\nUse a name from the first column, e.g.:")
+    print(f"  python paperflow.py format papers/my_paper/ --journal {rows[0][0]}")
+
+
 def cmd_new(args):
     """Create a new paper project."""
     title = args.title
@@ -2351,6 +2394,8 @@ Examples:
 
     # list
     subparsers.add_parser("list", help="List all papers with status and metadata")
+    subparsers.add_parser("list-journals",
+                          help="List available journal profiles for --journal")
 
     # benchmark
     p_bench = subparsers.add_parser("benchmark", help="Run benchmark suite")
@@ -2963,6 +3008,8 @@ Examples:
         cmd_new(args)
     elif args.command == "list":
         cmd_list(args)
+    elif args.command == "list-journals":
+        cmd_list_journals(args)
     elif args.command == "benchmark":
         cmd_benchmark(args)
     elif args.command == "figures":
