@@ -42,6 +42,93 @@ def strip_tags_and_comments(md_text):
     return text
 
 
+def resolve_citations_and_references(md_text, paper_dir, journal_profile=None):
+    r"""Resolve ``\cite{}`` and inject the reference list from ``refs.bib``.
+
+    The PDF (typst) pipeline renders ``paper.md`` directly, but the actual
+    reference entries live in ``refs.bib`` and the body uses ``\cite{key}``.
+    This mirrors what the Word renderer does so the citation style and the
+    reference list are identical across the Word document and the PDF.
+
+    The citation style is taken from the journal profile (``citation_style``)
+    and may be ``numbered`` (``[1, 2]``), ``numbered_superscript`` (superscript
+    ``1,2`` rendered via pandoc ``^...^``), or ``authoryear``
+    (``(Surname et al., Year)`` with an unnumbered reference list). Numbering is
+    sequential and alphabetical by BibTeX key (the same scheme the Word renderer
+    uses). The formatted reference list is inserted after the ``## References``
+    heading (or appended if no such heading exists).
+
+    Parameters
+    ----------
+    md_text : str
+        Raw markdown source of the paper.
+    paper_dir : str or pathlib.Path
+        Paper directory containing ``refs.bib``.
+    journal_profile : dict, optional
+        Journal profile; the ``citation_style`` key selects the citation format.
+
+    Returns
+    -------
+    str
+        Markdown with ``\cite{}`` resolved and references injected. If
+        ``refs.bib`` is missing or the shared helpers cannot be imported, the
+        input text is returned unchanged.
+    """
+    refs_bib = Path(paper_dir) / "refs.bib"
+    if not refs_bib.exists():
+        return md_text
+    try:
+        from word_renderer import (
+            build_citation_map,
+            build_authoryear_map,
+            resolve_citations,
+            parse_bibtex_entries,
+            format_bibtex_reference,
+            SUPERSCRIPT_CITE_OPEN,
+            SUPERSCRIPT_CITE_CLOSE,
+        )
+    except ImportError:
+        return md_text
+
+    style = (journal_profile or {}).get("citation_style", "numbered")
+    authoryear = style == "authoryear"
+
+    cite_map = build_citation_map(refs_bib)
+    authoryear_map = build_authoryear_map(refs_bib)
+    if cite_map or authoryear_map:
+        md_text = resolve_citations(md_text, cite_map, style, authoryear_map)
+    # Convert Word superscript markers into pandoc superscript syntax (^...^).
+    if style == "numbered_superscript":
+        md_text = re.sub(
+            re.escape(SUPERSCRIPT_CITE_OPEN) + r'([^' + re.escape(SUPERSCRIPT_CITE_CLOSE)
+            + r']*)' + re.escape(SUPERSCRIPT_CITE_CLOSE),
+            lambda m: '^' + m.group(1).replace(' ', '') + '^',
+            md_text,
+        )
+
+    entries = parse_bibtex_entries(refs_bib)
+    if not entries:
+        return md_text
+
+    # One reference per paragraph (blank line between) so pandoc keeps them
+    # as separate list entries.
+    ref_block = "\n\n".join(
+        format_bibtex_reference(idx + 1, etype, fields, numbered=not authoryear)
+        for idx, (key, etype, fields) in enumerate(entries)
+    )
+
+    new_text, n = re.subn(
+        r'(^##\s+References\s*$)',
+        lambda m: m.group(0) + "\n\n" + ref_block + "\n",
+        md_text,
+        count=1,
+        flags=re.MULTILINE,
+    )
+    if n == 0:
+        new_text = md_text.rstrip() + "\n\n## References\n\n" + ref_block + "\n"
+    return new_text
+
+
 # ---------------------------------------------------------------------------
 # Typst preamble builder
 # ---------------------------------------------------------------------------
@@ -239,11 +326,22 @@ def _extract_metadata_from_plan(paper_dir):
 # Public API
 # ---------------------------------------------------------------------------
 
-def render_pdf(paper_dir):
+def render_pdf(paper_dir, journal_profile=None):
     """Render ``paper.md`` inside *paper_dir* to a typeset PDF.
 
-    Returns the *Path* to the generated PDF, or ``None`` on failure.
-    The output is placed at ``<paper_dir>/submission/paper.pdf``.
+    Parameters
+    ----------
+    paper_dir : str or pathlib.Path
+        Paper directory containing ``paper.md`` and ``refs.bib``.
+    journal_profile : dict, optional
+        Journal profile; the ``citation_style`` key selects the citation format
+        used for the in-body citations and the reference list.
+
+    Returns
+    -------
+    pathlib.Path or None
+        Path to the generated PDF (``<paper_dir>/submission/paper.pdf``), or
+        ``None`` on failure.
     """
     paper_dir = Path(paper_dir)
     paper_md = paper_dir / "paper.md"
@@ -272,6 +370,7 @@ def render_pdf(paper_dir):
 
     # 1. Read & preprocess ------------------------------------------------
     md_text = paper_md.read_text(encoding="utf-8")
+    md_text = resolve_citations_and_references(md_text, paper_dir, journal_profile)
     clean_text = strip_tags_and_comments(md_text)
     clean_md.write_text(clean_text, encoding="utf-8")
 
@@ -354,14 +453,53 @@ def _cleanup(*paths):
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: python render_pdf.py <paper_dir>")
+        print("Usage: python render_pdf.py <paper_dir> [journal]")
         sys.exit(1)
 
     paper_dir = sys.argv[1]
-    result = render_pdf(paper_dir)
+
+    # Resolve the journal profile so the standalone CLI honors citation style.
+    # The journal is taken from argv[2] if given, otherwise from plan.json.
+    journal_profile = _load_journal_profile_for_pdf(paper_dir,
+                                                    sys.argv[2] if len(sys.argv) > 2 else None)
+
+    result = render_pdf(paper_dir, journal_profile=journal_profile)
     if result is None:
         sys.exit(1)
     print(f"\nDone. PDF at: {result}")
+
+
+def _load_journal_profile_for_pdf(paper_dir, journal=None):
+    """Best-effort load of a journal profile for the standalone PDF CLI.
+
+    Parameters
+    ----------
+    paper_dir : str or pathlib.Path
+        Paper directory (used to read ``plan.json`` for ``target_journal``).
+    journal : str, optional
+        Explicit journal name; overrides ``plan.json``.
+
+    Returns
+    -------
+    dict or None
+        The journal profile, or ``None`` if it cannot be resolved.
+    """
+    if not journal:
+        plan_path = Path(paper_dir) / "plan.json"
+        if plan_path.exists():
+            try:
+                import json
+                journal = json.loads(plan_path.read_text(encoding="utf-8")).get("target_journal")
+            except (ValueError, OSError):
+                journal = None
+    if not journal:
+        return None
+    try:
+        from paper_renderer import load_journal_profile
+        journals_dir = Path(__file__).resolve().parent.parent / "journals"
+        return load_journal_profile(journal, str(journals_dir))
+    except Exception:
+        return None
 
 
 if __name__ == "__main__":

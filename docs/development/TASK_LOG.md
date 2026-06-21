@@ -36,6 +36,12 @@ requirement`, or `confidential compressor route`.
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-05-12 — Scientific paper: linear recovery-factor allocation proxy network (PaperLab)
+**Type:** G (Workflow)
+**Keywords:** scientific paper, neqsim-paperlab, production allocation, recovery factor proxy, split factor network, routing matrix, (I-A)v=b superposition, spectral radius, Neumann series, commingled production, custody allocation, method comparison, pro-rata, uniform recovery factor, component tagging, mass closure, Peng-Robinson, computers chemical engineering
+**Solution:** `neqsim-paperlab/papers/production_allocation_2026/` — `paper.md` (method paper, 100% PaperLab quality score), `plan.json`, `refs.bib` (19 refs), `claims_manifest.json` + `approved_claims.json`, `benchmark_config.json`, `build_word.py`, `algorithm/allocation_benchmark.py` (the data generator), 5 figures, 3 tables, `results/raw/allocation_results.json`, `submission/paper.docx`. Documents the `neqsim.process.allocation` method (from PR #2325 / issue #2317).
+**Notes:** Two-well 15-component PR-EOS commingled HP(75)/MP(8.6)/LP(1.9) separation example based on a public Colab allocation notebook. Benchmark results: linear proxy matches an independent component-tagging reference to 4e-16 with 0.0% mass-closure error; pro-rata & uniform reach 1.71 max relative error, isolated re-sim 1.03; proxy cost flat (~1.0 s) vs isolated re-sim 65.6 s at 64 sources; frozen-factor drift 0.47→7.0 %pts over the oil-rate sweep. **GOTCHAS:** (1) NeqSim renames TBP fractions added via `addTBPfraction("C6",...)` to `"C6_PC"` — derive the component slate from the live fluid via `getComponentName()`, never assume the input name; strip `_PC` only for display labels. (2) PaperLab quality gate enforces ≤85 chars per highlight and ≤200-word abstract — trim before `build_word.py`. (3) `build_word.py` is generic across papers (parses paper.md + refs.bib + figures/) — copy verbatim from an existing paper folder. (4) Mirror the `gibbs_minimization_2026` paper folder structure exactly (plan.json/claims/approved_claims/benchmark_config schema).
+
 ### 2026-06-18 — Linear recovery-factor production allocation (proxy network) — issue #2317
 **Type:** E (Feature) / B (Process)
 **Keywords:** production allocation, source allocation, back-allocation, recovery factor, split factor, custody metering, proxy network, commingled production, well allocation, ProcessSystem allocation, mass closure, (I-A)v=b, neqsim.process.allocation, SourceAllocator

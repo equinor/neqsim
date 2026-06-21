@@ -465,7 +465,7 @@ def cmd_format(args):
     print("\nRendering PDF...")
     try:
         from render_pdf import render_pdf
-        pdf_file = render_pdf(str(paper_dir))
+        pdf_file = render_pdf(str(paper_dir), journal_profile=profile)
         if pdf_file:
             print(f"PDF:    {pdf_file}")
         else:
@@ -524,7 +524,7 @@ def cmd_draft(args):
         if profile_path.exists():
             try:
                 import yaml
-                with open(profile_path) as f:
+                with open(profile_path, encoding="utf-8") as f:
                     profile = yaml.safe_load(f)
             except ImportError:
                 print("Warning: PyYAML not installed - journal profile not loaded")
@@ -771,7 +771,7 @@ def cmd_iterate(args):
         if profile_path.exists():
             try:
                 import yaml
-                with open(profile_path) as f:
+                with open(profile_path, encoding="utf-8") as f:
                     profile = yaml.safe_load(f)
             except ImportError:
                 pass
@@ -1163,7 +1163,14 @@ def cmd_render(args):
     print("Rendering PDF...")
     try:
         from render_pdf import render_pdf
-        pdf_file = render_pdf(str(paper_dir))
+        pdf_profile = None
+        if journal_name:
+            try:
+                from paper_renderer import load_journal_profile as _load_jp
+                pdf_profile = _load_jp(journal_name, str(JOURNALS_DIR))
+            except Exception:
+                pdf_profile = None
+        pdf_file = render_pdf(str(paper_dir), journal_profile=pdf_profile)
         if pdf_file:
             print(f"  Output: {pdf_file}")
         else:
@@ -1818,16 +1825,17 @@ def cmd_book_new(args):
     from book_builder import create_book_project
 
     try:
+        book_type = getattr(args, "type", "textbook")
         book_dir = create_book_project(
             title=args.title,
             publisher=args.publisher,
             n_chapters=args.chapters,
             books_dir=BOOKS_DIR,
-            book_type=args.type,
+            book_type=book_type,
         )
         print(f"Book project created: {book_dir}")
         print(f"  Publisher: {args.publisher}")
-        print(f"  Type:      {args.type}")
+        print(f"  Type:      {book_type}")
         print(f"  Chapters:  {args.chapters}")
         print(f"\nNext steps:")
         print(f"  1. Edit book.yaml to set authors, titles, parts")

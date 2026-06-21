@@ -2669,3 +2669,361 @@ class TestBookCLI:
             book_dir=str(bd), out_format="html", chapter=None,
         )
         pf.cmd_book_render(args)
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# Citation-style awareness (Word + PDF shared logic in word_renderer)
+# ═══════════════════════════════════════════════════════════════════════
+
+_SAMPLE_BIB = r"""
+@article{Smith2020,
+  author = {Smith, John and Doe, Jane and Roe, Richard},
+  title = {A study of flash algorithms},
+  journal = {Fluid Phase Equilibria},
+  year = {2020},
+  volume = {500},
+  pages = {112--130}
+}
+
+@article{quoted2019,
+  author = "Brown, Alice",
+  title = "Quoted field value entry",
+  journal = "Chem. Eng. Sci.",
+  year = 2019,
+  volume = 42,
+  pages = "1-9"
+}
+
+@techreport{DNV-OS-F101,
+  author = {{Det Norske Veritas}},
+  title = {Submarine Pipeline Systems},
+  year = {2021},
+  publisher = {DNV}
+}
+"""
+
+
+@pytest.fixture
+def sample_bib(tmp_path):
+    """Write a sample refs.bib covering author/key edge cases."""
+    bib = tmp_path / "refs.bib"
+    bib.write_text(_SAMPLE_BIB, encoding="utf-8")
+    return bib
+
+
+class TestBibtexParsing:
+    def test_keys_sorted_and_hyphenated(self, sample_bib):
+        import word_renderer as wr
+        entries = wr.parse_bibtex_entries(sample_bib)
+        keys = [e[0] for e in entries]
+        assert keys == sorted(keys, key=str.lower)
+        # hyphenated/standard keys must parse (regex previously used \w+ only)
+        assert "DNV-OS-F101" in keys
+
+    def test_quoted_and_bare_field_values(self, sample_bib):
+        import word_renderer as wr
+        fields = {k: f for k, _t, f in wr.parse_bibtex_entries(sample_bib)}
+        assert fields["quoted2019"]["journal"] == "Chem. Eng. Sci."
+        assert fields["quoted2019"]["year"] == "2019"   # bare value
+        assert fields["quoted2019"]["volume"] == "42"   # bare value
+
+    def test_citation_map_is_alphabetical(self, sample_bib):
+        import word_renderer as wr
+        cmap = wr.build_citation_map(sample_bib)
+        assert cmap == {"DNV-OS-F101": 1, "quoted2019": 2, "Smith2020": 3}
+
+
+class TestAuthorYearLabel:
+    def test_one_two_three_authors(self):
+        import word_renderer as wr
+        assert wr._author_year_label("Smith, John") == "Smith"
+        assert wr._author_year_label(
+            "Smith, John and Doe, Jane") == "Smith and Doe"
+        assert wr._author_year_label(
+            "Smith, John and Doe, Jane and Roe, Richard") == "Smith et al."
+
+    def test_no_comma_uses_last_word(self):
+        import word_renderer as wr
+        assert wr._author_year_label("John Smith") == "Smith"
+
+    def test_corporate_author_kept_whole(self):
+        import word_renderer as wr
+        # A name carrying the corporate sentinel must be kept as one label
+        corp = "Det" + wr.CORPORATE_NAME_SPACE + "Norske" + \
+            wr.CORPORATE_NAME_SPACE + "Veritas"
+        assert wr._author_year_label(corp) == "Det Norske Veritas"
+
+    def test_empty_author(self):
+        import word_renderer as wr
+        assert wr._author_year_label("") == "Anon."
+
+
+class TestResolveCitations:
+    def _setup(self, sample_bib):
+        import word_renderer as wr
+        cmap = wr.build_citation_map(sample_bib)
+        amap = wr.build_authoryear_map(sample_bib)
+        return wr, cmap, amap
+
+    def test_numbered(self, sample_bib):
+        wr, cmap, amap = self._setup(sample_bib)
+        out = wr.resolve_citations(
+            r"see \cite{Smith2020, quoted2019}", cmap, "numbered", amap)
+        assert "[2, 3]" in out
+
+    def test_numbered_superscript_markers(self, sample_bib):
+        wr, cmap, amap = self._setup(sample_bib)
+        out = wr.resolve_citations(
+            r"see \cite{Smith2020, quoted2019}", cmap,
+            "numbered_superscript", amap)
+        assert wr.SUPERSCRIPT_CITE_OPEN in out
+        assert wr.SUPERSCRIPT_CITE_CLOSE in out
+        assert "2,3" in out
+
+    def test_authoryear(self, sample_bib):
+        wr, cmap, amap = self._setup(sample_bib)
+        out = wr.resolve_citations(
+            r"see \cite{Smith2020, quoted2019}", cmap, "authoryear", amap)
+        assert "(Smith et al., 2020; Brown, 2019)" in out
+
+    def test_authoryear_corporate(self, sample_bib):
+        wr, cmap, amap = self._setup(sample_bib)
+        out = wr.resolve_citations(
+            r"per \cite{DNV-OS-F101}", cmap, "authoryear", amap)
+        assert "(Det Norske Veritas, 2021)" in out
+
+    def test_unknown_key_marked(self, sample_bib):
+        wr, cmap, amap = self._setup(sample_bib)
+        out = wr.resolve_citations(
+            r"see \cite{NoSuchKey}", cmap, "numbered", amap)
+        assert "?NoSuchKey" in out
+
+
+class TestFormatBibtexReference:
+    def test_numbered_prefix(self, sample_bib):
+        import word_renderer as wr
+        fields = {k: f for k, _t, f in wr.parse_bibtex_entries(sample_bib)}
+        ref = wr.format_bibtex_reference(
+            1, "article", fields["Smith2020"], numbered=True)
+        assert ref.startswith("[1]")
+        assert "(2020)" in ref
+
+    def test_unnumbered_for_authoryear(self, sample_bib):
+        import word_renderer as wr
+        fields = {k: f for k, _t, f in wr.parse_bibtex_entries(sample_bib)}
+        ref = wr.format_bibtex_reference(
+            1, "article", fields["Smith2020"], numbered=False)
+        assert not ref.startswith("[1]")
+
+    def test_corporate_sentinel_removed(self, sample_bib):
+        import word_renderer as wr
+        fields = {k: f for k, _t, f in wr.parse_bibtex_entries(sample_bib)}
+        ref = wr.format_bibtex_reference(
+            1, "techreport", fields["DNV-OS-F101"], numbered=True)
+        # internal sentinel must not leak into rendered output
+        assert wr.CORPORATE_NAME_SPACE not in ref
+        assert "Det Norske Veritas" in ref
+
+
+class TestJournalCitationStyles:
+    """Every shipped journal profile declares a supported citation_style."""
+
+    SUPPORTED = {"numbered", "numbered_superscript", "authoryear"}
+
+    def test_all_profiles_have_supported_style(self):
+        from paper_renderer import load_journal_profile
+        journals_dir = PAPERLAB_ROOT / "journals"
+        for yml in journals_dir.glob("*.yaml"):
+            profile = load_journal_profile(yml.stem, str(journals_dir))
+            style = profile.get("citation_style", "numbered")
+            assert style in self.SUPPORTED, (
+                "{0}: unsupported citation_style {1!r}".format(yml.stem, style))
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# Test: class-aware LaTeX front matter + plan.json authors + section order
+# ═══════════════════════════════════════════════════════════════════════
+
+def _write_min_paper(paper_dir, plan=None, paper_md=None):
+    """Write a minimal paper.md/plan.json/refs.bib for renderer tests."""
+    paper_dir.mkdir(parents=True, exist_ok=True)
+    if paper_md is None:
+        paper_md = (
+            "# A Study of Something\n\n"
+            "## Abstract\n\nThis is the abstract.\n\n"
+            "## Keywords\n\nthermodynamics, EOS, flash\n\n"
+            "## Highlights\n\n- First highlight\n- Second highlight\n\n"
+            "## 1. Introduction\n\nIntro text.\n\n"
+            "## 2. Methods\n\nMethod text.\n\n"
+            "## 3. Results and Discussion\n\nResults text.\n\n"
+            "## 4. Conclusions\n\nConclusion text.\n"
+        )
+    (paper_dir / "paper.md").write_text(paper_md, encoding="utf-8")
+    if plan is not None:
+        (paper_dir / "plan.json").write_text(json.dumps(plan), encoding="utf-8")
+    (paper_dir / "refs.bib").write_text(
+        "@software{neqsim, title={NeqSim}}\n", encoding="utf-8")
+
+
+class TestLatexClassAwareFrontMatter:
+    """render_latex emits class-appropriate front matter."""
+
+    def _profile(self, latex_class):
+        return {
+            "journal_name": "Test Journal",
+            "latex_class": latex_class,
+            "latex_options": "review",
+            "citation_style": "numbered",
+            "reference_style": "elsarticle-num",
+            "highlights_required": True,
+        }
+
+    def test_elsarticle_uses_frontmatter(self, tmp_path):
+        from paper_renderer import render_latex
+        pdir = tmp_path / "p"
+        _write_min_paper(pdir)
+        tex = render_latex(pdir, self._profile("elsarticle")).read_text(
+            encoding="utf-8")
+        assert "\\begin{frontmatter}" in tex
+        assert "\\journal{Test Journal}" in tex
+        assert "\\begin{highlights}" in tex
+        assert "\\begin{keyword}" in tex
+
+    def test_achemso_declares_authors_in_preamble(self, tmp_path):
+        from paper_renderer import render_latex
+        pdir = tmp_path / "p"
+        _write_min_paper(pdir)
+        tex = render_latex(pdir, self._profile("achemso")).read_text(
+            encoding="utf-8")
+        # No elsarticle-only constructs for ACS journals.
+        assert "\\begin{frontmatter}" not in tex
+        assert "\\journal{" not in tex
+        assert "\\begin{highlights}" not in tex
+        # achemso authors appear before \begin{document}.
+        body_start = tex.index("\\begin{document}")
+        assert "\\author{" in tex[:body_start]
+        assert "\\keywords{" in tex
+
+    def test_generic_class_uses_maketitle(self, tmp_path):
+        from paper_renderer import render_latex
+        pdir = tmp_path / "p"
+        _write_min_paper(pdir)
+        tex = render_latex(pdir, self._profile("custom")).read_text(
+            encoding="utf-8")
+        assert "\\begin{frontmatter}" not in tex
+        assert "\\maketitle" in tex
+        assert "\\textbf{Keywords:}" in tex
+
+    def test_authors_read_from_plan(self, tmp_path):
+        from paper_renderer import render_latex
+        pdir = tmp_path / "p"
+        plan = {"authors": [
+            {"name": "Ada Lovelace", "affiliation": "Analytical Engine Lab",
+             "email": "ada@example.org", "corresponding": True,
+             "city": "London", "country": "UK"},
+            {"name": "Charles Babbage", "affiliation": "Analytical Engine Lab"},
+        ]}
+        _write_min_paper(pdir, plan=plan)
+        tex = render_latex(pdir, self._profile("elsarticle")).read_text(
+            encoding="utf-8")
+        assert "Ada Lovelace" in tex
+        assert "Charles Babbage" in tex
+        assert "ada@example.org" in tex
+        assert "First Author" not in tex
+        assert "email@institution.no" not in tex
+
+    def test_placeholder_author_when_no_plan(self, tmp_path):
+        from paper_renderer import render_latex
+        pdir = tmp_path / "p"
+        _write_min_paper(pdir)
+        tex = render_latex(pdir, self._profile("elsarticle")).read_text(
+            encoding="utf-8")
+        assert "First Author" in tex
+
+    def test_null_latex_options_omits_brackets(self, tmp_path):
+        from paper_renderer import render_latex
+        pdir = tmp_path / "p"
+        _write_min_paper(pdir)
+        profile = self._profile("achemso")
+        profile["latex_options"] = None
+        tex = render_latex(pdir, profile).read_text(encoding="utf-8")
+        # No literal "None" must leak into the documentclass options.
+        assert "\\documentclass{achemso}" in tex
+        assert "[None]" not in tex
+
+
+class TestSectionOrderCheck:
+    """check_compliance flags section-order deviations as WARN."""
+
+    def _profile(self):
+        return {
+            "journal_name": "Test Journal",
+            "abstract_words_max": 250,
+            "section_order": [
+                "Abstract", "Keywords", "Introduction", "Methods",
+                "Results and Discussion", "Conclusions",
+            ],
+        }
+
+    def test_in_order_passes(self, tmp_path):
+        from paper_renderer import check_compliance
+        pdir = tmp_path / "p"
+        _write_min_paper(pdir)
+        checks = check_compliance(pdir, self._profile())
+        order = [c for c in checks
+                 if c["check"] == "Section order matches journal template"]
+        assert order and order[0]["status"] == "PASS"
+
+    def test_out_of_order_warns(self, tmp_path):
+        from paper_renderer import check_compliance
+        pdir = tmp_path / "p"
+        scrambled = (
+            "# Title\n\n"
+            "## Abstract\n\nAbs.\n\n"
+            "## Keywords\n\na, b\n\n"
+            "## 1. Conclusions\n\nEarly conclusion.\n\n"
+            "## 2. Introduction\n\nLate intro.\n\n"
+            "## 3. Methods\n\nM.\n\n"
+            "## 4. Results and Discussion\n\nR.\n"
+        )
+        _write_min_paper(pdir, paper_md=scrambled)
+        checks = check_compliance(pdir, self._profile())
+        order = [c for c in checks
+                 if c["check"] == "Section order matches journal template"]
+        assert order and order[0]["status"] == "WARN"
+
+
+class TestPrintComplianceRobust:
+    """print_compliance tolerates unexpected status values."""
+
+    def test_unknown_status_no_keyerror(self, capsys):
+        from paper_renderer import print_compliance
+        print_compliance([
+            {"check": "Weird", "status": "SKIPPED"},
+            {"check": "Good", "status": "PASS"},
+        ])
+        out = capsys.readouterr().out
+        assert "Weird" in out
+        assert "[??]" in out
+
+
+class TestHyphenatedCitationKeys:
+    """Citation-key validation accepts hyphenated/dotted bib keys."""
+
+    def test_hyphenated_key_resolves(self, tmp_path):
+        from paper_renderer import check_compliance
+        pdir = tmp_path / "p"
+        paper_md = (
+            "# Title\n\n## Abstract\n\nAbs.\n\n"
+            "## Keywords\n\na, b\n\n"
+            "## 1. Introduction\n\nSee \\cite{DNV-OS-F101}.\n\n"
+            "## 2. Conclusions\n\nDone.\n"
+        )
+        _write_min_paper(pdir, paper_md=paper_md)
+        (pdir / "refs.bib").write_text(
+            "@standard{DNV-OS-F101, title={Submarine Pipeline Systems}}\n",
+            encoding="utf-8")
+        checks = check_compliance(pdir, {"journal_name": "T",
+                                         "abstract_words_max": 250})
+        cite = [c for c in checks if c["check"] == "Citation keys resolved"]
+        assert cite and cite[0]["status"] == "PASS"
