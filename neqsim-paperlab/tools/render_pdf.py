@@ -197,7 +197,10 @@ def build_typst_preamble(title="Untitled", author="", affiliation=""):
   leading: 0.65em,
 )
 
-#set heading(numbering: "1.1")
+// Section headings already carry manual journal-style numbers in the
+// markdown (e.g. "## 2.1 ..."), so template auto-numbering is disabled to
+// avoid producing a duplicate number such as "0.7 4. ...".
+#set heading(numbering: none)
 
 #show heading.where(level: 1): it => {{
   v(1.2em)

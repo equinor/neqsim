@@ -55,6 +55,63 @@ except ImportError:
 _omml_transform = None
 _omml_available = None
 
+# MathML namespace used by latex2mathml output.
+_MATHML_NS = 'http://www.w3.org/1998/Math/MathML'
+
+# Over/under script characters that denote a math accent rather than a limit.
+# latex2mathml emits <mover>/<munder> for \dot, \hat, \bar, \tilde, \vec,
+# \ddot, etc. WITHOUT the accent="true" attribute. Without that attribute the
+# MML2OMML XSLT lowers them to m:limUpp/m:limLow (limit overscripts), which
+# Word fails to lay out when nested inside a subscripted/superscripted base or
+# a fraction — silently dropping the affected term. Marking the construct as an
+# accent makes the XSLT emit a proper m:acc element that Word renders.
+_ACCENT_CHARS = frozenset([
+    '\u02d9',  # dot above            -> \dot
+    '\u00a8',  # diaeresis            -> \ddot
+    '\u005e',  # circumflex           -> \hat
+    '\u02c6',  # modifier circumflex  -> \hat
+    '\u0302',  # combining circumflex
+    '\u00af',  # macron               -> \bar / \overline
+    '\u0304',  # combining macron
+    '\u007e',  # tilde                -> \tilde
+    '\u02dc',  # small tilde          -> \tilde
+    '\u0303',  # combining tilde
+    '\u2192',  # rightwards arrow     -> \vec
+    '\u20d7',  # combining right arrow
+    '\u0060',  # grave accent         -> \grave
+    '\u00b4',  # acute accent         -> \acute
+    '\u02c7',  # caron                -> \check
+    '\u02d8',  # breve                -> \breve
+    '\u0307',  # combining dot above
+])
+
+
+def _mark_accents(tree):
+    """Flag accent <mover>/<munder> constructs so the XSLT emits m:acc.
+
+    latex2mathml omits the ``accent="true"`` attribute for accent macros such
+    as ``\\dot``/``\\hat``/``\\bar``/``\\tilde``/``\\vec``. Without it the
+    MML2OMML transform produces a limit overscript that Word cannot render
+    inside scripts or fractions, dropping the term. This walks the parsed
+    MathML and sets ``accent="true"`` on any over/under script whose script
+    child is a single ``<mo>`` holding a known accent character.
+
+    :param tree: parsed MathML element tree (lxml element)
+    :return: the same tree, mutated in place
+    """
+    for tag in ('mover', 'munder'):
+        for node in tree.iter('{%s}%s' % (_MATHML_NS, tag)):
+            children = list(node)
+            if len(children) != 2:
+                continue
+            script = children[1]
+            if script.tag != '{%s}mo' % _MATHML_NS:
+                continue
+            if (script.text or '').strip() in _ACCENT_CHARS \
+                    and node.get('accent') != 'true':
+                node.set('accent', 'true')
+    return tree
+
 
 def _init_omml():
     """Lazily initialize the MML2OMML XSLT transform."""
@@ -95,6 +152,7 @@ def latex_to_omml(latex_str):
     try:
         mathml = latex2mathml.converter.convert(latex_str)
         tree = etree.fromstring(mathml.encode('utf-8'))
+        _mark_accents(tree)
         omml = _omml_transform(tree)
         root = omml.getroot()
         # Always return <m:oMath> so it works inline inside <w:p>.

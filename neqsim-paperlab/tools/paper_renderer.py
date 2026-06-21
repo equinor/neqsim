@@ -593,6 +593,11 @@ def render_latex(paper_dir, journal_profile, output_dir=None):
     if journal_profile.get("double_spacing_required"):
         lines.append("\\usepackage{setspace}")
 
+    # Section headings already carry manual journal-style numbers in the
+    # markdown (e.g. "## 2.1 ..."), so suppress LaTeX auto section numbering
+    # to avoid a duplicate number such as "1 1. Introduction".
+    lines.append("\\setcounter{secnumdepth}{-1}")
+
     lines.append("")
 
     # Class-aware front matter. elsarticle uses \journal{} and a

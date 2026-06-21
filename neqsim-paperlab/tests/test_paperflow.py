@@ -2711,6 +2711,47 @@ def sample_bib(tmp_path):
     return bib
 
 
+class TestEquationOmml:
+    """OMML equation pipeline (LaTeX -> MathML -> OMML) regression tests.
+
+    Skipped when the Windows-only MML2OMML.XSL transform is unavailable
+    (e.g. on Linux CI), since the OMML conversion cannot run there.
+    """
+
+    def _wr_or_skip(self):
+        import word_renderer as wr
+        if not wr._init_omml():
+            pytest.skip("OMML pipeline unavailable (no MML2OMML.XSL)")
+        return wr
+
+    def test_accents_render_as_m_acc_not_limupp(self):
+        # \dot/\hat/\bar/\tilde/\vec/\ddot must become m:acc accents, never
+        # m:limUpp limit overscripts (which Word drops inside scripts/fracs).
+        wr = self._wr_or_skip()
+        from lxml import etree
+        for macro in (r"\dot{n}", r"\hat{x}", r"\bar{v}",
+                      r"\tilde{a}", r"\vec{b}", r"\ddot{y}"):
+            omml = wr.latex_to_omml(macro)
+            assert omml is not None, macro
+            xml = etree.tostring(omml, encoding="unicode")
+            assert "<m:acc" in xml, "missing m:acc for %s" % macro
+            assert "<m:limUpp" not in xml, "stray m:limUpp for %s" % macro
+
+    def test_split_factor_equation_keeps_fraction_and_accents(self):
+        # Regression for the dropped RHS of the split-factor equation: the
+        # accented, sub/superscripted fraction must survive conversion intact.
+        wr = self._wr_or_skip()
+        from lxml import etree
+        latex = (r"f_u(r, k) = \frac{\dot{n}^{k}_{\text{out},\,r}}"
+                 r"{\dot{n}^{k}_{\text{in},\,u}},")
+        omml = wr.latex_to_omml(latex)
+        assert omml is not None
+        xml = etree.tostring(omml, encoding="unicode")
+        assert "<m:f>" in xml          # fraction preserved
+        assert "<m:acc" in xml         # dot accents preserved
+        assert "<m:limUpp" not in xml  # no broken limit overscript
+
+
 class TestBibtexParsing:
     def test_keys_sorted_and_hyphenated(self, sample_bib):
         import word_renderer as wr
