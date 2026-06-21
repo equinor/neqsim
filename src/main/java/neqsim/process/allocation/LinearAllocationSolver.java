@@ -212,24 +212,24 @@ public class LinearAllocationSolver implements Serializable {
       }
 
       if (v == null) {
-        SimpleMatrix aSimple = toSimple(a);
-        v = b.copy();
-        method = "iterative";
-        double bNorm = Math.max(b.normF(), 1.0e-30);
-        boolean converged = false;
-        for (iterations = 1; iterations <= maxIterations; iterations++) {
-          SimpleMatrix next = b.plus(aSimple.mult(v));
-          double change = next.minus(v).normF() / bNorm;
-          v = next;
-          if (change < tolerance) {
-            converged = true;
-            break;
-          }
-        }
-        if (!converged) {
-          logger.warn("Iterative fallback did not converge for component {} after {} iterations (tol={})", k,
-              maxIterations, tolerance);
-        }
+	SimpleMatrix aSimple = toSimple(a);
+	v = b.copy();
+	method = "iterative";
+	double bNorm = Math.max(b.normF(), 1.0e-30);
+	boolean converged = false;
+	for (iterations = 1; iterations <= maxIterations; iterations++) {
+	  SimpleMatrix next = b.plus(aSimple.mult(v));
+	  double change = next.minus(v).normF() / bNorm;
+	  v = next;
+	  if (change < tolerance) {
+	    converged = true;
+	    break;
+	  }
+	}
+	if (!converged) {
+	  logger.warn("Iterative fallback did not converge for component {} after {} iterations (tol={})", k,
+	      maxIterations, tolerance);
+	}
       }
 
       double residual = mMatrix.mult(v).minus(b).normF() / Math.max(b.normF(), 1.0e-30);

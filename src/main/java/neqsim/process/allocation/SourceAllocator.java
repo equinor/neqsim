@@ -91,14 +91,14 @@ public class SourceAllocator implements Serializable {
    * @param process the base-case process system; must be non-null and already solved
    * @return this allocator (fluent)
    */
-public SourceAllocator setBaseCase(ProcessSystem process) {
-  this.process = process;
-  sources.clear();
-  custodyOutlets.clear();
-  this.extractor = new RecoveryFactorExtractor(process).extract();
-  this.network = new AllocationNetwork(extractor);
-  return this;
-}
+  public SourceAllocator setBaseCase(ProcessSystem process) {
+    this.process = process;
+    sources.clear();
+    custodyOutlets.clear();
+    this.extractor = new RecoveryFactorExtractor(process).extract();
+    this.network = new AllocationNetwork(extractor);
+    return this;
+  }
 
   /**
    * Tags a production source by name and feed stream.
@@ -191,9 +191,9 @@ public SourceAllocator setBaseCase(ProcessSystem process) {
       if (entryUnits[j] < 0) {
 	logger.warn("Source '{}' feed stream is not connected to any node; it will allocate zero.", src.getName());
       } else if (network.findProducer(src.getFeedStream()) != null) {
-        throw new IllegalArgumentException(
-            "Source '" + src.getName() + "' feed stream is produced by a node inside the network (internal stream). "
-                + "Register an external (terminal) feed stream instead.");
+	throw new IllegalArgumentException(
+	    "Source '" + src.getName() + "' feed stream is produced by a node inside the network (internal stream). "
+		+ "Register an external (terminal) feed stream instead.");
       }
       for (int k = 0; k < numComp; k++) {
 	injections[j][k] = RecoveryFactorExtractor.componentFlow(src.getFeedStream(), componentNames.get(k));
@@ -368,5 +368,35 @@ public SourceAllocator setBaseCase(ProcessSystem process) {
    */
   public LinearAllocationSolver getSolver() {
     return solver;
+  }
+
+  /**
+   * Gets the list of tagged production sources in registration order.
+   *
+   * <p>
+   * Used by downstream tools such as {@link AllocationUncertaintyEstimator} that need to walk the same source list that
+   * {@link #allocate()} uses. Auto-detected sources do not appear in this list until {@link #allocate()} has been
+   * called.
+   * </p>
+   *
+   * @return an unmodifiable view of the registered sources
+   */
+  public List<AllocationSource> getSources() {
+    return java.util.Collections.unmodifiableList(sources);
+  }
+
+  /**
+   * Gets the list of tagged custody outlets in registration order.
+   *
+   * <p>
+   * Used by downstream tools such as {@link AllocationUncertaintyEstimator} that need to walk the same custody-outlet
+   * list that {@link #allocate()} uses. Auto-detected outlets do not appear in this list until {@link #allocate()} has
+   * been called.
+   * </p>
+   *
+   * @return an unmodifiable view of the registered custody outlets
+   */
+  public List<CustodyOutlet> getCustodyOutlets() {
+    return java.util.Collections.unmodifiableList(custodyOutlets);
   }
 }
