@@ -1,0 +1,20 @@
+{
+  "key_results": {
+    "field_gas_t_per_day": 2960.5,
+    "field_oil_t_per_day": 2079.5,
+    "wellA_gas_allocation_factor": 0.97,
+    "wellB_oil_allocation_factor": 0.516,
+    "max_solver_residual": 0.0
+  },
+  "validation": {
+    "mass_closure_error_pct": 0.0,
+    "acceptance_criteria_met": true
+  },
+  "approach": "Linear recovery-factor proxy network: a two-well commingled two-stage separation process is run once with SRK EOS, frozen per-unit per-component split factors are extracted, and the export gas/oil streams are back-allocated to each well by superposition with enforced mass closure.",
+  "conclusions": "Component recovery factors reproduce the expected ORF trend (light ends to gas, heavy ends to oil). The gas-rich well is allocated mostly to gas and the oil-rich well mostly to oil. A sensitivity on Well-B rate shows the cross-well coupling that requires periodic base-case refresh.",
+  "figure_captions": {
+    "allocation_recovery_factors.png": "Component recovery factor (ORF) to gas vs oil custody streams.",
+    "allocation_factors.png": "Allocation factor of each well across the three custody outlets.",
+    "allocation_sensitivity.png": "Well-A allocation factors as Well-B feed rate varies."
+  }
+}

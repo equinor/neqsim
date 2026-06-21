@@ -374,3 +374,131 @@ def split_math_blocks(text):
             break
 
     return segments
+
+
+# ---------------------------------------------------------------------------
+# python-docx insertion helpers (native Word equations with Unicode fallback)
+# ---------------------------------------------------------------------------
+
+_OMML_NS = "http://schemas.openxmlformats.org/officeDocument/2006/math"
+
+
+def _omml_localname(element):
+    """Return the namespace-stripped local tag name of an lxml element."""
+    tag = getattr(element, "tag", "")
+    if isinstance(tag, str):
+        return tag.split("}")[-1]
+    return ""
+
+
+def _extract_omath(omml_root):
+    """Return the inline ``<m:oMath>`` element from an OMML conversion result.
+
+    Microsoft's ``MML2OMML.XSL`` may return either an ``<m:oMath>`` (inline) or
+    an ``<m:oMathPara>`` (display) root. For consistent insertion — and so that
+    an equation number can sit on the same line as a centered display equation —
+    this always returns the bare inline ``<m:oMath>`` element.
+
+    Parameters
+    ----------
+    omml_root : lxml.etree._Element or None
+        The root element returned by :func:`latex_to_omml`.
+
+    Returns
+    -------
+    lxml.etree._Element or None
+        The inline ``<m:oMath>`` element, or None when not found.
+    """
+    if omml_root is None:
+        return None
+    if _omml_localname(omml_root) == "oMath":
+        return omml_root
+    for el in omml_root.iter():
+        if _omml_localname(el) == "oMath":
+            return el
+    return None
+
+
+def add_display_equation(doc, latex, fontname="Cambria Math", size=11,
+                         space_before=6, space_after=6):
+    """Append a centered display equation to a Word document as native OMML.
+
+    Renders the equation as a native, editable Word equation (Office Math /
+    OMML) when conversion is available, falling back to a centered Unicode text
+    run otherwise. The bare ``<m:oMath>`` element is inserted into a centered
+    paragraph so a trailing equation-number run stays on the same line.
+
+    Parameters
+    ----------
+    doc : docx.document.Document
+        The Word document to append the equation paragraph to.
+    latex : str
+        The LaTeX math source (without surrounding ``$$`` delimiters).
+    fontname : str
+        Font applied to the Unicode fallback run. Defaults to "Cambria Math".
+    size : int
+        Point size for the Unicode fallback run. Defaults to 11.
+    space_before : int
+        Paragraph space-before in points. Defaults to 6.
+    space_after : int
+        Paragraph space-after in points. Defaults to 6.
+
+    Returns
+    -------
+    docx.text.paragraph.Paragraph
+        The created (centered) paragraph, so callers can append an equation
+        number on the same line.
+    """
+    from docx.enum.text import WD_ALIGN_PARAGRAPH
+    from docx.shared import Pt
+
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p.paragraph_format.space_before = Pt(space_before)
+    p.paragraph_format.space_after = Pt(space_after)
+
+    omath = _extract_omath(latex_to_omml(latex))
+    if omath is not None:
+        p._p.append(omath)
+        return p
+
+    run = p.add_run(latex_to_unicode(latex))
+    run.italic = True
+    run.font.name = fontname
+    run.font.size = Pt(size)
+    return p
+
+
+def append_inline_math(paragraph, latex, fontname="Cambria Math", size=10.5):
+    """Append inline math to an existing paragraph as native Word OMML.
+
+    Inserts a native, editable inline Word equation (Office Math / OMML) when
+    conversion is available, otherwise appends an italic Unicode fallback run so
+    the equation still reads sensibly.
+
+    Parameters
+    ----------
+    paragraph : docx.text.paragraph.Paragraph
+        The paragraph to append the inline equation to.
+    latex : str
+        The LaTeX math source (without surrounding ``$`` delimiters).
+    fontname : str
+        Font applied to the Unicode fallback run. Defaults to "Cambria Math".
+    size : float
+        Point size for the Unicode fallback run. Defaults to 10.5.
+
+    Returns
+    -------
+    None
+    """
+    from docx.shared import Pt
+
+    omath = _extract_omath(latex_to_omml(latex))
+    if omath is not None:
+        paragraph._p.append(omath)
+        return
+
+    run = paragraph.add_run(latex_to_unicode(latex))
+    run.italic = True
+    run.font.name = fontname
+    run.font.size = Pt(size)

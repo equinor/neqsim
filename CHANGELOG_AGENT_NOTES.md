@@ -9,6 +9,43 @@
 
 ---
 
+## 2026-06-21 — Closed-form uncertainty propagation for linear production allocation
+
+### Summary
+The `neqsim.process.allocation` package now ships a closed-form first-order
+uncertainty propagator that reuses the cached `(I − A_k)⁻¹` factorisation built
+by `SourceAllocator.allocate()`. Per-source per-custody confidence intervals
+are therefore available **at no extra factorisation cost** — no Monte-Carlo
+loop, no fresh simulations.
+
+### What's new (additive, no breaking change)
+- `AllocationUncertaintyEstimator` (new) — implements `Σ_v = J Σ_b Jᵀ` for the
+  independent-metering case. Two `propagate(...)` overloads (convenience over a
+  `SourceAllocator`, and a low-level overload over raw network/source/custody
+  arrays). The result object exposes per-source per-custody flow variance,
+  std-dev in mol/s and kg/hr, per-component std-dev, product-type aggregates,
+  and a `toJson()` with `schemaVersion = "1.0"`.
+- `SourceAllocator.getSources()` and `SourceAllocator.getCustodyOutlets()`
+  (new, unmodifiable views) — used by the estimator so that uncertainty
+  results share the same names as the allocation result. Empty until
+  `allocate()` has run when auto-detection is in effect.
+
+### Agent guidance
+- For 1 % per-source metering uncertainty (or any independent Gaussian
+  injection variance): prefer `AllocationUncertaintyEstimator.propagate(...)`
+  over wrapping the allocator in a Monte-Carlo loop.
+- Correlated metering and frozen-split-factor uncertainty are listed as
+  future work (see `docs/process/production-allocation.md` § "Uncertainty
+  propagation" → Scope).
+
+### Docs touched
+- `docs/process/production-allocation.md` — new "Uncertainty propagation"
+  section with math, API, scope and a code example.
+- `docs/REFERENCE_MANUAL_INDEX.md` — production-allocation row mentions
+  closed-form uncertainty propagation.
+
+---
+
 ## 2026-06-19 — Optional equal-mass (shared-imaginary) reference boundaries for `characterizeToReference`
 
 ### Summary

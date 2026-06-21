@@ -125,6 +125,7 @@ python paperflow.py scan                    # scan NeqSim for opportunities
 python paperflow.py scan --literature -v    # with Semantic Scholar + details
 
 # 1. Create a new paper project (specify paper_type!)
+python paperflow.py list-journals           # list valid --journal names first
 python paperflow.py new "Reactive Gibbs Convergence" \
     --journal fluid_phase_equilibria \
     --topic gibbs_reactor
@@ -241,12 +242,18 @@ neqsim-paperlab/
 ├── PAPER_WRITING_GUIDELINES.md   # Mandatory scientific writing rules
 ├── paperflow.py                  # CLI orchestrator (new, draft, iterate, revise, ...)
 ├── requirements.txt              # Python dependencies
-├── journals/                     # Journal profile configs (YAML)
-│   ├── fluid_phase_equilibria.yaml
-│   ├── computers_chem_eng.yaml
-│   ├── chem_eng_sci.yaml
-│   ├── iecr.yaml
-│   └── aiche.yaml
+├── journals/                     # Journal profile configs (YAML) — 10 profiles
+│   ├── fluid_phase_equilibria.yaml   # Elsevier / elsarticle
+│   ├── chem_eng_sci.yaml             # Elsevier / elsarticle
+│   ├── computers_chem_eng.yaml       # Elsevier / elsarticle (authoryear)
+│   ├── geoenergy_sci_eng.yaml        # Elsevier / elsarticle
+│   ├── ijggc.yaml                    # Elsevier / elsarticle
+│   ├── iecr.yaml                     # ACS / achemso
+│   ├── jced.yaml                     # ACS / achemso
+│   ├── energy_fuels.yaml             # ACS / achemso
+│   ├── aiche.yaml                    # Wiley / custom
+│   └── spe.yaml                      # SPE / custom
+│   # Run `python paperflow.py list-journals` to print the --journal names
 ├── agents/                       # Agent definitions (VS Code Copilot)
 │   ├── research_scout.agent.md
 │   ├── planner.agent.md

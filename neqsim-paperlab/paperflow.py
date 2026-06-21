@@ -106,6 +106,49 @@ def cmd_list(args):
     print(f"\n{len(rows)} papers total")
 
 
+def cmd_list_journals(args):
+    """List available journal profiles and their formatting metadata."""
+    if not JOURNALS_DIR.exists():
+        print("No journals directory found.")
+        return
+
+    sys.path.insert(0, str(TOOLS_DIR))
+    from paper_renderer import load_journal_profile
+
+    rows = []
+    for yml in sorted(JOURNALS_DIR.glob("*.yaml")):
+        name = yml.stem
+        try:
+            profile = load_journal_profile(name, str(JOURNALS_DIR))
+        except Exception:  # noqa: BLE001 - report unreadable profiles gracefully
+            rows.append((name, "BROKEN", "", "", ""))
+            continue
+        rows.append((
+            name,
+            str(profile.get("journal_name", "")),
+            str(profile.get("publisher", "")),
+            str(profile.get("latex_class", "")),
+            str(profile.get("citation_style", "")),
+        ))
+
+    if not rows:
+        print("No journal profiles found.")
+        return
+
+    headers = ("--journal", "Journal", "Publisher", "Class", "Citation")
+    widths = [max(len(h), max((len(str(r[i])) for r in rows), default=0))
+              for i, h in enumerate(headers)]
+    fmt = "  ".join(f"{{:<{w}}}" for w in widths)
+
+    print(fmt.format(*headers))
+    print(fmt.format(*("-" * w for w in widths)))
+    for row in rows:
+        print(fmt.format(*row))
+    print(f"\n{len(rows)} journal profiles total")
+    print("\nUse a name from the first column, e.g.:")
+    print(f"  python paperflow.py format papers/my_paper/ --journal {rows[0][0]}")
+
+
 def cmd_new(args):
     """Create a new paper project."""
     title = args.title
@@ -465,7 +508,7 @@ def cmd_format(args):
     print("\nRendering PDF...")
     try:
         from render_pdf import render_pdf
-        pdf_file = render_pdf(str(paper_dir))
+        pdf_file = render_pdf(str(paper_dir), journal_profile=profile)
         if pdf_file:
             print(f"PDF:    {pdf_file}")
         else:
@@ -524,7 +567,7 @@ def cmd_draft(args):
         if profile_path.exists():
             try:
                 import yaml
-                with open(profile_path) as f:
+                with open(profile_path, encoding="utf-8") as f:
                     profile = yaml.safe_load(f)
             except ImportError:
                 print("Warning: PyYAML not installed - journal profile not loaded")
@@ -771,7 +814,7 @@ def cmd_iterate(args):
         if profile_path.exists():
             try:
                 import yaml
-                with open(profile_path) as f:
+                with open(profile_path, encoding="utf-8") as f:
                     profile = yaml.safe_load(f)
             except ImportError:
                 pass
@@ -1163,7 +1206,14 @@ def cmd_render(args):
     print("Rendering PDF...")
     try:
         from render_pdf import render_pdf
-        pdf_file = render_pdf(str(paper_dir))
+        pdf_profile = None
+        if journal_name:
+            try:
+                from paper_renderer import load_journal_profile as _load_jp
+                pdf_profile = _load_jp(journal_name, str(JOURNALS_DIR))
+            except Exception:
+                pdf_profile = None
+        pdf_file = render_pdf(str(paper_dir), journal_profile=pdf_profile)
         if pdf_file:
             print(f"  Output: {pdf_file}")
         else:
@@ -1818,16 +1868,17 @@ def cmd_book_new(args):
     from book_builder import create_book_project
 
     try:
+        book_type = getattr(args, "type", "textbook")
         book_dir = create_book_project(
             title=args.title,
             publisher=args.publisher,
             n_chapters=args.chapters,
             books_dir=BOOKS_DIR,
-            book_type=args.type,
+            book_type=book_type,
         )
         print(f"Book project created: {book_dir}")
         print(f"  Publisher: {args.publisher}")
-        print(f"  Type:      {args.type}")
+        print(f"  Type:      {book_type}")
         print(f"  Chapters:  {args.chapters}")
         print(f"\nNext steps:")
         print(f"  1. Edit book.yaml to set authors, titles, parts")
@@ -2343,6 +2394,8 @@ Examples:
 
     # list
     subparsers.add_parser("list", help="List all papers with status and metadata")
+    subparsers.add_parser("list-journals",
+                          help="List available journal profiles for --journal")
 
     # benchmark
     p_bench = subparsers.add_parser("benchmark", help="Run benchmark suite")
@@ -2955,6 +3008,8 @@ Examples:
         cmd_new(args)
     elif args.command == "list":
         cmd_list(args)
+    elif args.command == "list-journals":
+        cmd_list_journals(args)
     elif args.command == "benchmark":
         cmd_benchmark(args)
     elif args.command == "figures":
