@@ -160,7 +160,7 @@ public class WhitsonPVTReaderGammaCharacterizationTest {
 
     logger.info("Number of components after Whitson Gamma characterization: " + fluid.getNumberOfComponents());
     logger.info("Vapor fraction: " + fluid.getBeta());
-    fluid.prettyPrint();
+    // fluid.prettyPrint();
   }
 
   /**
@@ -207,7 +207,7 @@ public class WhitsonPVTReaderGammaCharacterizationTest {
     assertTrue(fluid.getNumberOfComponents() >= 7, "Should have components after characterization");
 
     logger.info("Components after fluent API config: " + fluid.getNumberOfComponents());
-    fluid.prettyPrint();
+    // fluid.prettyPrint();
   }
 
   /**
@@ -270,7 +270,7 @@ public class WhitsonPVTReaderGammaCharacterizationTest {
     fluidGamma.init(3);
     ThermodynamicOperations opsGamma = new ThermodynamicOperations(fluidGamma);
     opsGamma.TPflash();
-    fluidGamma.prettyPrint();
+    // fluidGamma.prettyPrint();
 
     // Both should produce valid results
     assertTrue(fluidPedersen.getNumberOfComponents() >= 7, "Pedersen should have at least 7 components");

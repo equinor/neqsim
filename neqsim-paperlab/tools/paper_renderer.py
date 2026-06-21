@@ -43,9 +43,64 @@ def load_journal_profile(journal_name, journals_dir="journals"):
         return yaml.safe_load(f)
 
 
+_FIGURE_CAPTION_PATTERN = re.compile(
+    r'(!\[)([^\]]*)(\]\()([^)]+)(\))'                       # 1-5: markdown image
+    r'([ \t]*\n[ \t]*\n+)'                                  # 6: blank-line separator
+    r'[ \t]*\*((?:Figure|Fig\.?)\s*\d+[.:][^*\n]*?)\*[ \t]*'  # 7: italic "Figure N. ..."
+    r'(?=\n|$)',
+    flags=re.IGNORECASE,
+)
+_FIGURE_LABEL_PREFIX = re.compile(
+    r'^(?:Figure|Fig\.?)\s*\d+[.:]\s*',
+    flags=re.IGNORECASE,
+)
+
+
+def normalize_figure_captions(md_text):
+    """Pre-process markdown to fix the "Figure N: Figure N" caption duplication.
+
+    A common authoring convention is:
+
+        ![Figure N](path)
+
+        *Figure N. Real descriptive caption.*
+
+    All downstream renderers (LaTeX ``\\caption``, Word native caption, HTML
+    ``<figcaption>``) take the markdown image alt-text directly as the caption,
+    so this convention renders as "Figure N: Figure N" plus a duplicated italic
+    line of body text below the figure.
+
+    This pre-pass detects an image followed (after a blank line) by an italic
+    paragraph that starts with "Figure N." or "Fig. N." and rewrites it as
+    ``![<cleaned caption>](path)`` with the redundant italic line removed.
+    The "Figure N." / "Fig. N." prefix is stripped because every renderer
+    auto-numbers figures.
+
+    Only triggers on the explicit "Figure N." / "Fig. N." italic prefix to
+    avoid swallowing legitimate italic body text that happens to follow a
+    figure.
+
+    Args:
+        md_text: Raw markdown source.
+
+    Returns:
+        Markdown source with figure-caption duplications collapsed.
+    """
+    def _merge(match):
+        alt = match.group(2).strip()
+        path = match.group(4)
+        italic_caption = match.group(7).strip()
+        cleaned = _FIGURE_LABEL_PREFIX.sub('', italic_caption).strip()
+        caption = cleaned if cleaned else alt
+        return "![" + caption + "](" + path + ")\n"
+
+    return _FIGURE_CAPTION_PATTERN.sub(_merge, md_text)
+
+
 def parse_manuscript(paper_md_path):
     """Parse a Markdown manuscript into sections."""
     text = Path(paper_md_path).read_text(encoding="utf-8")
+    text = normalize_figure_captions(text)
 
     sections = []
     current_section = None
@@ -100,7 +155,7 @@ def markdown_to_latex(md_text):
     Handles: bold, italic, inline math, display math, code blocks,
     lists, tables, figures, horizontal rules, and HTML comments.
     """
-    tex = md_text
+    tex = normalize_figure_captions(md_text)
 
     # Remove HTML comments
     tex = re.sub(r'<!--.*?-->', '', tex, flags=re.DOTALL)

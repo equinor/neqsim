@@ -162,7 +162,7 @@ public class PedersenAsphalteneCharacterizationTest {
     assertTrue(Pc > 5.0, "Asphaltene Pc should be set correctly, got " + Pc);
 
     logger.info("\nSystem with asphaltene:");
-    system.prettyPrint();
+    // system.prettyPrint();
   }
 
   @Test
@@ -193,7 +193,7 @@ public class PedersenAsphalteneCharacterizationTest {
     assertTrue(comp5Name.startsWith("Asph_"), "Component 5 should be Asph_3, got: " + comp5Name);
 
     logger.info("\nSystem with distributed asphaltene:");
-    system.prettyPrint();
+    // system.prettyPrint();
   }
 
   @Test
@@ -225,7 +225,7 @@ public class PedersenAsphalteneCharacterizationTest {
     logger.info("\nFlash results with asphaltene:");
     logger.info("Number of phases: " + system.getNumberOfPhases());
     logger.info("Gas fraction: " + system.getBeta());
-    system.prettyPrint();
+    // system.prettyPrint();
   }
 
   @Test
@@ -407,7 +407,7 @@ public class PedersenAsphalteneCharacterizationTest {
     logger.info("\n=== TBP Characterized Oil with Asphaltene ===");
     logger.info("Number of components: " + oil.getPhase(0).getNumberOfComponents());
     logger.info("Number of phases: " + oil.getNumberOfPhases());
-    oil.prettyPrint();
+    // oil.prettyPrint();
 
     // Verify that characterization worked
     assertTrue(oil.getPhase(0).getNumberOfComponents() >= 18,
@@ -453,7 +453,7 @@ public class PedersenAsphalteneCharacterizationTest {
     logger.info("\n=== Heavy Oil with Distributed Asphaltene ===");
     logger.info("Number of components: " + heavyOil.getPhase(0).getNumberOfComponents());
     logger.info("Total asphaltene pseudo-components: 3");
-    heavyOil.prettyPrint();
+    // heavyOil.prettyPrint();
 
     // Verify distributed asphaltene was added
     assertTrue(heavyOil.getPhase(0).getNumberOfComponents() >= 14, "Should have at least 14 components");

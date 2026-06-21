@@ -8,6 +8,7 @@
 \usepackage[authoryear]{natbib}
 \usepackage{lineno}
 \usepackage{setspace}
+\setcounter{secnumdepth}{-1}
 
 \journal{Computers & Chemical Engineering}
 
@@ -20,19 +21,17 @@
 \title{Robust Gibbs Free Energy Minimization for Chemical Equilibrium Calculations with Cubic Equations of State}
 
 \author[inst1]{First Author\corref{cor1}}
-\cortext[cor1]{Corresponding author}
 \ead{email@institution.no}
+\cortext[cor1]{Corresponding author}
 
-\affiliation[inst1]{organization={Department, Institution},
-                     city={City},
-                     country={Country}}
+\affiliation[inst1]{organization={Department, Institution}, city={City}, country={Country}}
 
 \begin{abstract}
 Chemical equilibrium calculations via Gibbs free energy minimization are fundamental to process simulation and reactive system design. The standard Lagrangian Newton-Raphson method solves the Karush-Kuhn-Tucker system for element-balance-constrained minimization, but is only locally convergent; practical implementations rely on ad hoc damping. This paper presents three enhancements for Gibbs minimization coupled with cubic equations of state: (1) an Armijo backtracking line search guaranteeing monotonic Gibbs energy decrease, (2) Tikhonov regularization of the KKT Jacobian for ill-conditioned systems, and (3) an adaptive step-size limiter inspired by NASA CEA. All enhancements are integrated with the Soave-Redlich-Kwong equation of state in the open-source NeqSim library. Benchmarks on five systems — including methane combustion, ammonia synthesis at 300 bar, and Claus sulfur formation — show that the combined algorithm reduces iterations by up to 17.8$\times$ on stiff systems (1776 to 100) while preserving compositions to within $4 \times 10^{-5}$ mole fraction. Convergence diagnostics provide quantitative insight into solver behavior.
 \end{abstract}
 
 \begin{keyword}
-Gibbs free energy minimization \sep  chemical equilibrium \sep  Newton-Raphson method \sep  Armijo line search \sep  Tikhonov regularization \sep  equation of state
+Gibbs free energy minimization \sep chemical equilibrium \sep Newton-Raphson method \sep Armijo line search \sep Tikhonov regularization \sep equation of state
 \end{keyword}
 
 \begin{highlights}

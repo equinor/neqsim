@@ -19,6 +19,7 @@ from pathlib import Path
 # Ensure sibling modules (this tools/ dir) are importable regardless of cwd.
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from katex_head import KATEX_HEAD_BLOCK
+from paper_renderer import normalize_figure_captions
 
 # ---------------------------------------------------------------------------
 # Markdown parser
@@ -286,6 +287,7 @@ def render_html(paper_dir):
     """Render paper.md to a standalone HTML file with KaTeX math."""
     paper_dir = Path(paper_dir)
     text = (paper_dir / "paper.md").read_text(encoding="utf-8")
+    text = normalize_figure_captions(text)
     sections = parse_sections(strip_comments(text))
     title = extract_title(sections)
     figures = find_figures(paper_dir)
@@ -450,7 +452,9 @@ def render_word(paper_dir):
         return None
 
     paper_dir = Path(paper_dir)
-    text = strip_comments((paper_dir / "paper.md").read_text(encoding="utf-8"))
+    raw_md = (paper_dir / "paper.md").read_text(encoding="utf-8")
+    raw_md = normalize_figure_captions(raw_md)
+    text = strip_comments(raw_md)
     sections = parse_sections(text)
     title = extract_title(sections)
     figures = find_figures(paper_dir)
