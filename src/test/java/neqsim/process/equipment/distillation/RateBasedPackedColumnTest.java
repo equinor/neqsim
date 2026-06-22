@@ -300,7 +300,7 @@ public class RateBasedPackedColumnTest {
   /**
    * Create a configured rate-based column.
    *
-   * @param gas    gas inlet stream
+   * @param gas gas inlet stream
    * @param liquid liquid inlet stream
    * @param height packed height in metres
    * @return configured column
@@ -321,7 +321,7 @@ public class RateBasedPackedColumnTest {
   /**
    * Create a gas stream with methane and optional carbon dioxide.
    *
-   * @param name        stream name
+   * @param name stream name
    * @param co2Fraction carbon dioxide mole fraction from zero to one
    * @return gas stream
    */
@@ -340,7 +340,7 @@ public class RateBasedPackedColumnTest {
   /**
    * Create a liquid stream with water and optional dissolved carbon dioxide.
    *
-   * @param name        stream name
+   * @param name stream name
    * @param co2Fraction carbon dioxide mole fraction from zero to one
    * @return liquid stream
    */
@@ -390,7 +390,7 @@ public class RateBasedPackedColumnTest {
   /**
    * Create a lean TEG stream with a small water loading and specified circulation rate.
    *
-   * @param name         stream name
+   * @param name stream name
    * @param flowRateKgHr lean TEG solution circulation rate in kg/hr
    * @return lean TEG stream
    */
@@ -410,7 +410,7 @@ public class RateBasedPackedColumnTest {
   /**
    * Get component mole fraction in phase zero.
    *
-   * @param system        thermodynamic system
+   * @param system thermodynamic system
    * @param componentName component name
    * @return component mole fraction, or zero when absent
    */
@@ -424,12 +424,12 @@ public class RateBasedPackedColumnTest {
   /**
    * Assert component material balance across the column.
    *
-   * @param gasIn         gas inlet system
-   * @param liquidIn      liquid inlet system
-   * @param gasOut        gas outlet system
-   * @param liquidOut     liquid outlet system
+   * @param gasIn gas inlet system
+   * @param liquidIn liquid inlet system
+   * @param gasOut gas outlet system
+   * @param liquidOut liquid outlet system
    * @param componentName component name
-   * @param tolerance     balance tolerance in mol/s
+   * @param tolerance balance tolerance in mol/s
    */
   private void assertComponentBalance(SystemInterface gasIn, SystemInterface liquidIn, SystemInterface gasOut,
       SystemInterface liquidOut, String componentName, double tolerance) {
@@ -441,7 +441,7 @@ public class RateBasedPackedColumnTest {
   /**
    * Get component moles in a system.
    *
-   * @param system        thermodynamic system
+   * @param system thermodynamic system
    * @param componentName component name
    * @return component moles
    */
@@ -455,7 +455,7 @@ public class RateBasedPackedColumnTest {
   /**
    * Get component mass flow in a system.
    *
-   * @param system        thermodynamic system
+   * @param system thermodynamic system
    * @param componentName component name
    * @return component mass flow in kg/hr
    */

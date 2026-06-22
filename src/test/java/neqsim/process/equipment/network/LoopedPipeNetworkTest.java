@@ -2908,7 +2908,7 @@ class LoopedPipeNetworkTest {
   /**
    * Helper: build a standard single-well coupled network.
    *
-   * @param network     the network to configure
+   * @param network the network to configure
    * @param resPressure reservoir pressure in bara
    */
   private void buildSingleWellCoupledNetwork(LoopedPipeNetwork network, double resPressure) {

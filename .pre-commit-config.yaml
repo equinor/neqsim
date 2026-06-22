@@ -3,7 +3,7 @@ repos:
     hooks:
       - id: spotless-apply
         name: Spotless Format (Java)
-        entry: python devtools/run_spotless.py apply
+        entry: bash devtools/run_spotless.sh apply
         language: system
         files: \.(java)$
         pass_filenames: false
@@ -14,7 +14,7 @@ repos:
     hooks:
       - id: spotless-check
         name: Spotless Check (Java)
-        entry: python devtools/run_spotless.py check
+        entry: bash devtools/run_spotless.sh check
         language: system
         files: \.(java)$
         pass_filenames: false
