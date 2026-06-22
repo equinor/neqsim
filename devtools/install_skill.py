@@ -539,6 +539,91 @@ def save_manifest(manifest):
     MANIFEST_FILE.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
 
 
+# ── VS Code export ──────────────────────────────────────────
+VSCODE_WORKSPACE_MARKERS = (".github", ".git", "pom.xml", "package.json")
+
+
+def find_workspace_root(start=None):
+    """Find the nearest workspace root by scanning upward for markers.
+
+    @param start the directory to start scanning from (defaults to CWD)
+    @return the workspace root Path, or None when no marker is found
+    """
+    start_path = Path(start).resolve() if start else Path.cwd().resolve()
+    for candidate in [start_path] + list(start_path.parents):
+        for marker in VSCODE_WORKSPACE_MARKERS:
+            if (candidate / marker).exists():
+                return candidate
+    return None
+
+
+def resolve_vscode_skills_dir(explicit_dir=None):
+    """Resolve the VS Code skills directory for --vscode export.
+
+    VS Code discovers skills from <workspace>/.github/skills/**/SKILL.md, so the
+    export target is always workspace-scoped. Resolution order: explicit dir,
+    NEQSIM_VSCODE_SKILLS_DIR env var, then the nearest workspace root.
+
+    @param explicit_dir an explicit target directory (overrides detection)
+    @return the resolved skills directory Path, or None when none can be found
+    """
+    if explicit_dir:
+        return Path(explicit_dir).expanduser().resolve()
+    env_dir = os.environ.get("NEQSIM_VSCODE_SKILLS_DIR", "")
+    if env_dir:
+        return Path(env_dir).expanduser().resolve()
+    root = find_workspace_root()
+    if root is None:
+        return None
+    return root / ".github" / "skills"
+
+
+def export_skill_to_vscode(name, source_dir, vscode_dir):
+    """Copy an installed skill folder into a VS Code skills directory.
+
+    @param name the skill name (used as the destination subfolder)
+    @param source_dir the installed skill folder containing SKILL.md
+    @param vscode_dir the VS Code skills directory to export into
+    @return the destination skill folder Path
+    """
+    import shutil
+    dest = Path(vscode_dir) / name
+    dest.mkdir(parents=True, exist_ok=True)
+    for item in Path(source_dir).iterdir():
+        target = dest / item.name
+        if item.is_dir():
+            shutil.copytree(str(item), str(target), dirs_exist_ok=True)
+        else:
+            shutil.copy2(str(item), str(target))
+    return dest
+
+
+def _export_installed_skill_to_vscode(name, source_dir, args, manifest):
+    """Export a freshly installed skill into the VS Code skills directory.
+
+    @param name the installed skill name
+    @param source_dir the installed skill folder under ~/.neqsim/skills/<name>
+    @param args parsed CLI arguments (reads vscode_dir)
+    @param manifest the installed-skills manifest, updated with vscode_path
+    @return None
+    """
+    vscode_dir = resolve_vscode_skills_dir(getattr(args, "vscode_dir", None))
+    if vscode_dir is None:
+        print("  [!!] Could not locate a VS Code workspace for --vscode export.")
+        print("       Run from inside a workspace, set NEQSIM_VSCODE_SKILLS_DIR,")
+        print("       or pass --vscode-dir <path-to/.github/skills>.")
+        return
+    try:
+        dest = export_skill_to_vscode(name, source_dir, vscode_dir)
+    except Exception as exc:
+        print("  [!!] VS Code export failed: {exc}".format(exc=exc))
+        return
+    manifest[name]["vscode_path"] = str(dest)
+    save_manifest(manifest)
+    print("  [OK] Exported to VS Code skills: {dest}".format(dest=dest))
+    print("       Reload VS Code (Developer: Reload Window) to pick it up.")
+
+
 # ── Commands ───────────────────────────────────────────────────────────
 
 def cmd_list(skills, args):
@@ -716,6 +801,9 @@ def cmd_install(skills, args):
         print(f"  [OK] Installed to: {dest_file}")
         print(f"\n  To use in your AI tool, point it at: {dest_dir}\n")
 
+        if getattr(args, "vscode", False):
+            _export_installed_skill_to_vscode(name, dest_dir, args, manifest)
+
     except Exception as e:
         print(f"  [!!] Download failed: {e}")
         print(f"  You can manually download from: https://github.com/{skill.get('repo', '')}\n")
@@ -751,6 +839,14 @@ def cmd_remove(skills, args):
     if skill_dir.exists():
         import shutil
         shutil.rmtree(skill_dir)
+
+    vscode_path = manifest.get(name, {}).get("vscode_path", "")
+    if vscode_path:
+        vp = Path(vscode_path)
+        if vp.exists():
+            import shutil
+            shutil.rmtree(str(vp), ignore_errors=True)
+            print(f"  [OK] Removed VS Code copy: {vp}")
 
     del manifest[name]
     save_manifest(manifest)
@@ -954,6 +1050,7 @@ def main():
               neqsim skill list --private
               neqsim skill search "flow assurance"
               neqsim skill install neqsim-example-skill
+              neqsim skill install neqsim-example-skill --vscode
               neqsim skill installed
               neqsim skill remove neqsim-example-skill
               neqsim skill publish user/neqsim-my-skill
@@ -983,6 +1080,12 @@ def main():
     p_install = sub.add_parser("install", help="Install a skill")
     p_install.add_argument("name", help="Skill name from catalog")
     p_install.add_argument("--force", action="store_true", help="Reinstall if exists")
+    p_install.add_argument(
+        "--vscode", action="store_true",
+        help="Also export the skill to a VS Code workspace .github/skills folder")
+    p_install.add_argument(
+        "--vscode-dir", default=None,
+        help="Explicit VS Code skills directory for --vscode export")
 
     sub.add_parser("installed", help="Show installed skills")
 

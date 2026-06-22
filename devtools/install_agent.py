@@ -685,6 +685,96 @@ def save_manifest(manifest):
     MANIFEST_FILE.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
 
 
+# ── VS Code export ─────────────────────────────────────────────────────
+
+def _vscode_user_dir():
+    """Return the VS Code stable User config directory for this platform.
+
+    @return the platform-specific VS Code User directory Path
+    """
+    if sys.platform.startswith("win"):
+        appdata = os.environ.get("APPDATA", "")
+        base = Path(appdata) if appdata else Path.home() / "AppData" / "Roaming"
+        return base / "Code" / "User"
+    if sys.platform == "darwin":
+        return Path.home() / "Library" / "Application Support" / "Code" / "User"
+    return Path.home() / ".config" / "Code" / "User"
+
+
+def resolve_vscode_agents_dir(scope="user", explicit_dir=None):
+    """Resolve the VS Code agents directory for --vscode export.
+
+    Resolution order: explicit dir, NEQSIM_VSCODE_AGENTS_DIR env var, then the
+    scope default. 'user' scope targets the global prompts folder (available in
+    every workspace); 'workspace' scope targets <workspace>/.github/agents.
+
+    @param scope 'user' (default) for the global prompts folder, or 'workspace'
+    @param explicit_dir an explicit target directory (overrides detection)
+    @return the resolved agents directory Path, or None when none can be found
+    """
+    if explicit_dir:
+        return Path(explicit_dir).expanduser().resolve()
+    env_dir = os.environ.get("NEQSIM_VSCODE_AGENTS_DIR", "")
+    if env_dir:
+        return Path(env_dir).expanduser().resolve()
+    if scope == "workspace":
+        root = install_skill.find_workspace_root()
+        if root is None:
+            return None
+        return root / ".github" / "agents"
+    return _vscode_user_dir() / "prompts"
+
+
+def export_agent_to_vscode(name, main_file, vscode_dir):
+    """Copy an installed agent's main definition into a VS Code agents dir.
+
+    VS Code discovers agents from *.agent.md files, so the main definition is
+    copied and renamed to <name>.agent.md.
+
+    @param name the agent name (used for the destination filename)
+    @param main_file the installed agent's main markdown definition
+    @param vscode_dir the VS Code agents directory to export into
+    @return the destination *.agent.md Path
+    """
+    vscode_dir = Path(vscode_dir)
+    vscode_dir.mkdir(parents=True, exist_ok=True)
+    dest = vscode_dir / "{name}.agent.md".format(name=name)
+    shutil.copy2(str(main_file), str(dest))
+    return dest
+
+
+def _export_installed_agent_to_vscode(name, main_file, args, manifest):
+    """Export a freshly installed agent into the VS Code agents directory.
+
+    @param name the installed agent name
+    @param main_file the installed agent's main markdown definition path
+    @param args parsed CLI arguments (reads vscode_scope, vscode_dir)
+    @param manifest the installed-agents manifest, updated with vscode_path
+    @return None
+    """
+    if not main_file or not Path(main_file).exists():
+        print("  [!!] VS Code export skipped: agent main file not found.")
+        return
+    scope = getattr(args, "vscode_scope", "user")
+    vscode_dir = resolve_vscode_agents_dir(
+        scope, getattr(args, "vscode_dir", None))
+    if vscode_dir is None:
+        print("  [!!] Could not locate a VS Code workspace for --vscode export.")
+        print("       Use --vscode-scope user (default), run inside a workspace,")
+        print("       set NEQSIM_VSCODE_AGENTS_DIR, or pass --vscode-dir <path>.")
+        return
+    try:
+        dest = export_agent_to_vscode(name, main_file, vscode_dir)
+    except Exception as exc:
+        print("  [!!] VS Code export failed: {exc}".format(exc=exc))
+        return
+    manifest[name]["vscode_path"] = str(dest)
+    save_manifest(manifest)
+    print("  [OK] Exported to VS Code agents ({scope}): {dest}".format(
+        scope=scope, dest=dest))
+    print("       Reload VS Code (Developer: Reload Window) to pick it up.")
+
+
 def _validate_safe_name(name):
     """Exit if an install name is not safe for a local folder."""
     if not name or name in (".", "..") or "/" in name or "\\" in name or ".." in name:
@@ -1323,6 +1413,9 @@ def _install_agent_record(agent, args, manifest):
         print("\n  Agent tools can read the installed package from: {path}\n".format(
             path=dest_dir
         ))
+        if getattr(args, "vscode", False):
+            _export_installed_agent_to_vscode(
+                name, manifest[name].get("main_file", ""), args, manifest)
         return True
     except Exception as exc:
         shutil.rmtree(str(dest_dir), ignore_errors=True)
@@ -1368,6 +1461,17 @@ def cmd_remove(agents, args):
     agent_dir = INSTALL_DIR / name
     if agent_dir.exists():
         shutil.rmtree(str(agent_dir))
+
+    vscode_path = manifest.get(name, {}).get("vscode_path", "")
+    if vscode_path:
+        vp = Path(vscode_path)
+        if vp.exists():
+            if vp.is_dir():
+                shutil.rmtree(str(vp), ignore_errors=True)
+            else:
+                vp.unlink()
+            print("  [OK] Removed VS Code copy: {path}".format(path=vp))
+
     del manifest[name]
     save_manifest(manifest)
     print("\n  [OK] Removed agent '{name}'.\n".format(name=name))
@@ -1454,6 +1558,7 @@ def main():
               neqsim agent search "tie-in"
               neqsim agent install neqsim-example-agent
                             neqsim agent install neqsim-example-agent --no-install-missing-skills
+              neqsim agent install neqsim-example-agent --vscode
               neqsim agent install --all
               neqsim agent installed
               neqsim agent info neqsim-example-agent
@@ -1501,6 +1606,15 @@ def main():
         action="store_true",
         help="Deprecated alias; auto-install is enabled by default",
     )
+    p_install.add_argument(
+        "--vscode", action="store_true",
+        help="Also export the agent to a VS Code agents location")
+    p_install.add_argument(
+        "--vscode-scope", choices=["user", "workspace"], default="user",
+        help="VS Code export scope: 'user' (all workspaces, default) or 'workspace'")
+    p_install.add_argument(
+        "--vscode-dir", default=None,
+        help="Explicit VS Code agents directory for --vscode export")
 
     sub.add_parser("installed", help="Show installed agents")
 
