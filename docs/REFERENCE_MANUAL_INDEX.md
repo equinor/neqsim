@@ -263,6 +263,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | **UniSim/HYSYS Conversion** | [docs/process/unisim-to-neqsim-conversion.md](process/unisim-to-neqsim-conversion)                                  | **Convert UniSim Design (.usc) models to NeqSim and export NeqSim back to UniSim — COM automation, mapping tables, topology reconstruction, verification** |
 | **Exergy Analysis**   | [docs/process/exergy-analysis.md](process/exergy-analysis)                                                                 | **Plant-wide exergy destruction hotspots — ProcessSystem, ProcessModel, ExergyAnalysisReport API, JSON export** |
 | **Production Allocation** | [docs/process/production-allocation.md](process/production-allocation)                                                  | **Back-allocate metered production to wells/sources via a linear recovery-factor proxy network — split factors, (I−A)v=b solve, mass closure, auto-detection, closed-form first-order uncertainty propagation, JSON export** |
+| **Cached K-Value Fast Simulation** | [docs/process/k-value-fast-simulation.md](process/k-value-fast-simulation)                                      | **Run one rigorous base-case ProcessSystem, freeze separator K-values and fallback split factors, then execute fast source-rate scenarios without repeated EOS flashes** |
 
 ### Chapter 13: Streams & Mixers
 
@@ -1154,7 +1155,7 @@ hypothesis scoring with OREDA, historian, STID, and NeqSim simulation verificati
 | ---------------------- | ------- |
 | Wiki/Tutorials         | 60      |
 | Thermodynamics         | 26      |
-| Process Simulation     | 47      |
+| Process Simulation     | 48      |
 | Safety Systems         | 18      |
 | **Risk Simulation**    | **13**  |
 | Field Development      | 11      |

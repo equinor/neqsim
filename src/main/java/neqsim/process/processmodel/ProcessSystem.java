@@ -8394,4 +8394,27 @@ public class ProcessSystem extends SimulationBaseClass {
   public void setVariableValue(String address, double value, String unitOfMeasure) {
     getAutomation().setVariableValue(address, value, unitOfMeasure);
   }
+
+  /**
+   * Creates a fast K-value process simulator from the current solved process state.
+   *
+   * <p>
+   * Call {@link #run()} once first to establish rigorous base-case K-values and fallback split factors. The returned
+   * simulator can then evaluate source-flow scenarios without running EOS flashes in every unit operation.
+   * </p>
+   *
+   * @return a K-value based fast process simulator
+   */
+  public neqsim.process.fastsimulation.KValueProcessSimulator createKValueProcessSimulator() {
+    return neqsim.process.fastsimulation.KValueProcessSimulator.fromBaseCase(this);
+  }
+
+  /**
+   * Runs a fast K-value process simulation for the current base-case source flows.
+   *
+   * @return component-resolved fast simulation result
+   */
+  public neqsim.process.fastsimulation.KValueProcessResult runFastKValueSimulation() {
+    return createKValueProcessSimulator().run();
+  }
 }
