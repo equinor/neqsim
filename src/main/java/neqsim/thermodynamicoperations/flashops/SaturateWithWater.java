@@ -54,24 +54,29 @@ public class SaturateWithWater extends QfuncFlash {
       system.addComponent("water", system.getTotalNumberOfMoles());
     }
     this.tpFlash = new TPflash(system);
-    tpFlash.run();
-    boolean hasAq = false;
-    if (system.hasPhaseType(PhaseType.AQUEOUS)) {
-      hasAq = true;
-    }
-    double lastdn = 0.0;
-    if (system.hasPhaseType(PhaseType.AQUEOUS)) {
-      lastdn = system.getPhase(PhaseType.AQUEOUS).getNumberOfMolesInPhase();
-    } else {
-      lastdn = system.getPhase(0).getNumberOfMolesInPhase();
-    }
+
     // Snapshot of the last successfully converged composition (absolute moles).
     // The bisection-style refinement below drives the aqueous phase towards zero,
     // and the underlying TPflash can diverge for a vanishingly small aqueous phase.
     // The exact point of divergence depends on the JVM's transcendental math
-    // implementation (JDK 8 vs newer), so a flash failure here is recovered by
-    // restoring the last converged state instead of aborting the whole flowsheet.
+    // implementation (JDK 8 vs newer), so a flash failure at any step is recovered
+    // by restoring the last converged state instead of aborting the whole flowsheet.
     double[] lastConvergedMoles = captureMoles(system);
+    if (!runFlashSafely(lastConvergedMoles)) {
+      if (changedMultiPhase) {
+	system.setMultiPhaseCheck(false);
+      }
+      return;
+    }
+    lastConvergedMoles = captureMoles(system);
+
+    boolean hasAq = system.hasPhaseType(PhaseType.AQUEOUS);
+    double lastdn = 0.0;
+    if (hasAq) {
+      lastdn = system.getPhase(PhaseType.AQUEOUS).getNumberOfMolesInPhase();
+    } else {
+      lastdn = system.getPhase(0).getNumberOfMolesInPhase();
+    }
     double dn = 1.0;
     int i = 0;
     do {
@@ -85,20 +90,10 @@ public class SaturateWithWater extends QfuncFlash {
       }
       dn = lastdn / system.getNumberOfMoles();
       system.addComponent("water", lastdn);
-      try {
-	tpFlash.run();
-	lastConvergedMoles = captureMoles(system);
-      } catch (RuntimeException ex) {
-	logger.warn("water saturation refinement flash diverged near the saturation point; "
-	    + "restoring last converged state: " + ex.getMessage());
-	restoreMoles(system, lastConvergedMoles);
-	try {
-	  tpFlash.run();
-	} catch (RuntimeException ex2) {
-	  logger.warn("recovery flash after water saturation divergence failed: " + ex2.getMessage());
-	}
+      if (!runFlashSafely(lastConvergedMoles)) {
 	break;
       }
+      lastConvergedMoles = captureMoles(system);
       hasAq = system.hasPhaseType(PhaseType.AQUEOUS);
     } while (Math.abs(dn) > 1e-7 && i <= 50);
     if (i == 50) {
@@ -106,14 +101,40 @@ public class SaturateWithWater extends QfuncFlash {
     }
     if (system.hasPhaseType(PhaseType.AQUEOUS)) {
       system.removePhase(system.getNumberOfPhases() - 1);
-      try {
-	tpFlash.run();
-      } catch (RuntimeException ex) {
-	logger.warn("flash after removing residual aqueous phase in water saturation failed: " + ex.getMessage());
-      }
+      runFlashSafely(captureMoles(system));
     }
     if (changedMultiPhase) {
       system.setMultiPhaseCheck(false);
+    }
+  }
+
+  /**
+   * Runs the TP flash and recovers from a divergence near the water saturation point.
+   *
+   * <p>
+   * On a {@link RuntimeException} the system is restored to the supplied last converged composition and a single
+   * recovery flash is attempted, so that water saturation never propagates a flash failure up to the calling unit
+   * operation. The point of divergence is JVM-dependent (JDK 8 transcendental math differs from newer JDKs).
+   * </p>
+   *
+   * @param lastConvergedMoles absolute component mole numbers of the last converged state, as produced by
+   * {@link #captureMoles(SystemInterface)}
+   * @return {@code true} if the flash converged, {@code false} if it diverged and the last converged state was restored
+   */
+  private boolean runFlashSafely(double[] lastConvergedMoles) {
+    try {
+      tpFlash.run();
+      return true;
+    } catch (RuntimeException ex) {
+      logger.warn("water saturation flash diverged near the saturation point; " + "restoring last converged state: "
+	  + ex.getMessage());
+      restoreMoles(system, lastConvergedMoles);
+      try {
+	tpFlash.run();
+      } catch (RuntimeException ex2) {
+	logger.warn("recovery flash after water saturation divergence failed: " + ex2.getMessage());
+      }
+      return false;
     }
   }
 
