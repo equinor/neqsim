@@ -39,6 +39,44 @@ public class CharacterizationOptions {
     CARBON_NUMBER
   }
 
+  /**
+   * Basis on which delumped single-carbon-number sub-fractions are binned onto the reference cuts.
+   */
+  public enum DelumpBinningBasis {
+    /**
+     * Bin on molar mass (the conserved, monotonic quantity; the default). Preferred because molar mass is the basis on
+     * which the Pedersen molar distribution (Eq. 5.27) and the conservation closures (Eqs. 5.35-5.37) are defined.
+     */
+    MOLAR_MASS,
+    /** Bin on normal boiling point (the legacy sorting-key behaviour, with molar-mass fallback). */
+    BOILING_POINT
+  }
+
+  /**
+   * Scope of the Whitson gamma molar-distribution fit used to shape the delumping of a lump into sub-fractions.
+   */
+  public enum DelumpGammaScope {
+    /** Fit one global gamma to the whole C7+ lump set (smoother, more Whitson-faithful). */
+    GLOBAL,
+    /** Fit a local gamma to each lump from its immediate neighbours (the default). */
+    NEIGHBOURS
+  }
+
+  /**
+   * Quantity conserved exactly when a coarse lump is delumped into single-carbon-number sub-fractions.
+   */
+  public enum DelumpConservation {
+    /**
+     * Conserve both the parent moles and the parent mass (the default). Achieved by normalizing the sub-fraction mole
+     * weights (moles) and rescaling the gamma conditional-mean molar masses to the parent mass (mass).
+     */
+    BOTH,
+    /** Conserve the parent moles exactly and keep the sub-fraction molar masses unscaled; the parent mass may drift. */
+    MOLES,
+    /** Conserve the parent mass exactly by rescaling the sub-fraction moles; the parent moles may drift. */
+    MASS
+  }
+
   private final boolean transferBinaryInteractionParameters;
   private final boolean normalizeComposition;
   private final NamingScheme namingScheme;
@@ -48,6 +86,9 @@ public class CharacterizationOptions {
   private final boolean delumpBeforeRecharacterization;
   private final int delumpResolution;
   private final boolean sharedImaginaryBoundaries;
+  private final DelumpBinningBasis delumpBinningBasis;
+  private final DelumpGammaScope delumpGammaScope;
+  private final DelumpConservation delumpConservation;
 
   private CharacterizationOptions(Builder builder) {
     this.transferBinaryInteractionParameters = builder.transferBinaryInteractionParameters;
@@ -59,6 +100,9 @@ public class CharacterizationOptions {
     this.delumpBeforeRecharacterization = builder.delumpBeforeRecharacterization;
     this.delumpResolution = builder.delumpResolution;
     this.sharedImaginaryBoundaries = builder.sharedImaginaryBoundaries;
+    this.delumpBinningBasis = builder.delumpBinningBasis;
+    this.delumpGammaScope = builder.delumpGammaScope;
+    this.delumpConservation = builder.delumpConservation;
   }
 
   /**
@@ -177,6 +221,46 @@ public class CharacterizationOptions {
   }
 
   /**
+   * Returns the basis on which delumped single-carbon-number sub-fractions are binned onto the reference cuts.
+   *
+   * <p>
+   * Defaults to {@link DelumpBinningBasis#MOLAR_MASS}. Molar mass is the quantity on which the Pedersen molar
+   * distribution (Eq. 5.27) and the conservation closures are defined, so it gives a monotonic, conservation-faithful
+   * binning. {@link DelumpBinningBasis#BOILING_POINT} reproduces the legacy sorting-key behaviour.
+   *
+   * @return the delumping binning basis (never null)
+   */
+  public DelumpBinningBasis getDelumpBinningBasis() {
+    return delumpBinningBasis;
+  }
+
+  /**
+   * Returns the scope of the Whitson gamma molar-distribution fit used to shape the delumping.
+   *
+   * <p>
+   * Defaults to {@link DelumpGammaScope#NEIGHBOURS}, which fits a local gamma to each lump from its immediate
+   * neighbours. {@link DelumpGammaScope#GLOBAL} fits a single gamma to the whole C7+ lump set.
+   *
+   * @return the delumping gamma scope (never null)
+   */
+  public DelumpGammaScope getDelumpGammaScope() {
+    return delumpGammaScope;
+  }
+
+  /**
+   * Returns the quantity conserved exactly when a coarse lump is delumped into single-carbon-number sub-fractions.
+   *
+   * <p>
+   * Defaults to {@link DelumpConservation#BOTH}, which conserves both the parent moles and the parent mass.
+   * {@link DelumpConservation#MOLES} conserves moles only; {@link DelumpConservation#MASS} conserves mass only.
+   *
+   * @return the delumping conservation mode (never null)
+   */
+  public DelumpConservation getDelumpConservation() {
+    return delumpConservation;
+  }
+
+  /**
    * Creates a new builder with default options.
    *
    * @return a new builder instance
@@ -216,6 +300,9 @@ public class CharacterizationOptions {
     private boolean delumpBeforeRecharacterization = false;
     private int delumpResolution = 12;
     private boolean sharedImaginaryBoundaries = false;
+    private DelumpBinningBasis delumpBinningBasis = DelumpBinningBasis.MOLAR_MASS;
+    private DelumpGammaScope delumpGammaScope = DelumpGammaScope.NEIGHBOURS;
+    private DelumpConservation delumpConservation = DelumpConservation.BOTH;
 
     /**
      * Set whether to transfer binary interaction parameters from the reference fluid.
@@ -348,6 +435,58 @@ public class CharacterizationOptions {
      */
     public Builder sharedImaginaryBoundaries(boolean shared) {
       this.sharedImaginaryBoundaries = shared;
+      return this;
+    }
+
+    /**
+     * Set the basis on which delumped single-carbon-number sub-fractions are binned onto the reference cuts.
+     *
+     * <p>
+     * Defaults to {@link DelumpBinningBasis#MOLAR_MASS}. Molar mass is the quantity on which the Pedersen molar
+     * distribution and the conservation closures are defined, giving a monotonic, conservation-faithful binning;
+     * {@link DelumpBinningBasis#BOILING_POINT} reproduces the legacy boiling-point sorting-key behaviour.
+     *
+     * @param basis the delumping binning basis (must not be null)
+     * @return this builder
+     */
+    public Builder delumpBinningBasis(DelumpBinningBasis basis) {
+      if (basis != null) {
+	this.delumpBinningBasis = basis;
+      }
+      return this;
+    }
+
+    /**
+     * Set the scope of the Whitson gamma molar-distribution fit used to shape the delumping.
+     *
+     * <p>
+     * Defaults to {@link DelumpGammaScope#NEIGHBOURS} (a local gamma fitted per lump from its immediate neighbours).
+     * {@link DelumpGammaScope#GLOBAL} fits a single gamma to the whole C7+ lump set.
+     *
+     * @param scope the delumping gamma scope (must not be null)
+     * @return this builder
+     */
+    public Builder delumpGammaScope(DelumpGammaScope scope) {
+      if (scope != null) {
+	this.delumpGammaScope = scope;
+      }
+      return this;
+    }
+
+    /**
+     * Set the quantity conserved exactly when a coarse lump is delumped into single-carbon-number sub-fractions.
+     *
+     * <p>
+     * Defaults to {@link DelumpConservation#BOTH} (parent moles and mass both conserved).
+     * {@link DelumpConservation#MOLES} conserves moles only; {@link DelumpConservation#MASS} conserves mass only.
+     *
+     * @param conservation the delumping conservation mode (must not be null)
+     * @return this builder
+     */
+    public Builder delumpConservation(DelumpConservation conservation) {
+      if (conservation != null) {
+	this.delumpConservation = conservation;
+      }
       return this;
     }
 
