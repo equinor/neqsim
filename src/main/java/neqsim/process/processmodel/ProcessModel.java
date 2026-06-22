@@ -9,15 +9,16 @@ import java.util.Collection;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import neqsim.process.dynamics.EventScheduler;
 import neqsim.process.dynamics.IntegratorStrategy;
 import neqsim.process.equipment.ProcessEquipmentInterface;
@@ -2291,17 +2292,19 @@ public class ProcessModel implements Runnable, Serializable {
     sb.append("Boundary values converged: ").append(lastBoundaryValuesConverged ? "YES" : "NO").append("\n");
     sb.append("All process areas solved: ").append(lastAllProcessesSolved ? "YES" : "NO").append("\n");
     sb.append("\nFinal Errors (relative):\n");
-    sb.append(String.format("  Flow rate:    %.2e (tolerance: %.2e) %s\n", lastMaxFlowError, flowTolerance,
+    sb.append(String.format(Locale.US, "  Flow rate:    %.2e (tolerance: %.2e) %s\n", lastMaxFlowError, flowTolerance,
 	lastMaxFlowError < flowTolerance ? "OK" : "NOT CONVERGED"));
-    sb.append(String.format("  Temperature:  %.2e (tolerance: %.2e) %s\n", lastMaxTemperatureError,
+
+    sb.append(String.format(Locale.US, "  Temperature:  %.2e (tolerance: %.2e) %s\n", lastMaxTemperatureError,
 	temperatureTolerance, lastMaxTemperatureError < temperatureTolerance ? "OK" : "NOT CONVERGED"));
-    sb.append(String.format("  Pressure:     %.2e (tolerance: %.2e) %s\n", lastMaxPressureError, pressureTolerance,
-	lastMaxPressureError < pressureTolerance ? "OK" : "NOT CONVERGED"));
+
+    sb.append(String.format(Locale.US, "  Pressure:     %.2e (tolerance: %.2e) %s\n", lastMaxPressureError,
+	pressureTolerance, lastMaxPressureError < pressureTolerance ? "OK" : "NOT CONVERGED"));
 
     sb.append("\nProcess Status:\n");
     for (Map.Entry<String, ProcessSystem> entry : processes.entrySet()) {
       boolean processSolved = entry.getValue().solved();
-      sb.append(String.format("  %-30s: %s\n", entry.getKey(), processSolved ? "SOLVED" : "NOT SOLVED"));
+      sb.append(String.format(Locale.US, "  %-30s: %s\n", entry.getKey(), processSolved ? "SOLVED" : "NOT SOLVED"));
       if (!processSolved) {
 	List<String> unsolvedUnits = getUnsolvedUnitNames(entry.getValue());
 	if (!unsolvedUnits.isEmpty()) {
