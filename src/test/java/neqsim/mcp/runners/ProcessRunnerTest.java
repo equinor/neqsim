@@ -3,8 +3,6 @@ package neqsim.mcp.runners;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -125,9 +123,7 @@ class ProcessRunnerTest {
     assertTrue(root.get("convergenceSummary").getAsString().contains("ProcessModel"));
   }
 
-  @Disabled("TODO: not working per 19.06.2060")
   @Test
-  @Tag("failing")
   void testRun_processModelHonorsExecutionSettings() {
     String json = processModelJson().replace("{\"areas\":",
 	"{\"runStep\": true," + "\"maxIterations\": 7,\"flowTolerance\": 0.02,\"temperatureTolerance\": 0.03,"
