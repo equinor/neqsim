@@ -173,5 +173,105 @@ skills:
         self.assertEqual(["direct"], parsed["skills"][0]["tags"])
 
 
+class SkillVsCodeExportTest(unittest.TestCase):
+    """Tests for the --vscode export of installed skills."""
+
+    def test_find_workspace_root_detects_marker(self):
+        """A directory containing a marker is detected as the workspace root."""
+        import tempfile
+        from pathlib import Path
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / ".github").mkdir()
+            nested = root / "a" / "b"
+            nested.mkdir(parents=True)
+            found = install_skill.find_workspace_root(nested)
+            self.assertEqual(root.resolve(), found.resolve())
+
+    def test_resolve_vscode_skills_dir_prefers_explicit(self):
+        """An explicit directory overrides workspace/env detection."""
+        from pathlib import Path
+
+        result = install_skill.resolve_vscode_skills_dir("custom/skills")
+        self.assertEqual(Path("custom/skills").expanduser().resolve(), result)
+
+    def test_resolve_vscode_skills_dir_uses_env(self):
+        """NEQSIM_VSCODE_SKILLS_DIR is honoured when no explicit dir is given."""
+        from pathlib import Path
+
+        with mock.patch.dict(os.environ, {"NEQSIM_VSCODE_SKILLS_DIR": "env/skills"}):
+            result = install_skill.resolve_vscode_skills_dir()
+        self.assertEqual(Path("env/skills").expanduser().resolve(), result)
+
+    def test_export_skill_to_vscode_copies_folder(self):
+        """Exporting copies the whole skill folder into <vscode_dir>/<name>."""
+        import tempfile
+        from pathlib import Path
+
+        with tempfile.TemporaryDirectory() as tmp:
+            src = Path(tmp) / "src"
+            src.mkdir()
+            (src / "SKILL.md").write_text("# demo skill", encoding="utf-8")
+            (src / "extra.txt").write_text("data", encoding="utf-8")
+            vscode_dir = Path(tmp) / "vscode-skills"
+
+            dest = install_skill.export_skill_to_vscode(
+                "neqsim-demo", src, vscode_dir)
+
+            self.assertEqual((vscode_dir / "neqsim-demo").resolve(),
+                             dest.resolve())
+            self.assertTrue((dest / "SKILL.md").exists())
+            self.assertTrue((dest / "extra.txt").exists())
+
+    def test_cmd_install_with_vscode_exports_and_remove_cleans_up(self):
+        """A --vscode install exports the skill and remove deletes the copy."""
+        import argparse
+        import json
+        import tempfile
+        from pathlib import Path
+
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            source = tmp_path / "SKILL.md"
+            source.write_text(
+                "---\nname: neqsim-demo\ndescription: Demo skill.\n---\n"
+                "# Demo skill body with enough content.\n",
+                encoding="utf-8")
+            install_dir = tmp_path / "installed-skills"
+            manifest_file = install_dir / "installed.json"
+            vscode_dir = tmp_path / "vscode-skills"
+            catalog = [{
+                "name": "neqsim-demo",
+                "description": "Demo skill",
+                "author": "tests",
+                "source": "local",
+                "path": str(source),
+                "_source": "private",
+            }]
+
+            with mock.patch.object(install_skill, "INSTALL_DIR", install_dir), \
+                    mock.patch.object(install_skill, "MANIFEST_FILE", manifest_file):
+                args = argparse.Namespace(
+                    name="neqsim-demo",
+                    force=False,
+                    vscode=True,
+                    vscode_dir=str(vscode_dir),
+                )
+                install_skill.cmd_install(catalog, args)
+                manifest = json.loads(
+                    manifest_file.read_text(encoding="utf-8"))
+                exported = vscode_dir / "neqsim-demo" / "SKILL.md"
+                self.assertTrue(exported.exists())
+                self.assertEqual(
+                    str(vscode_dir / "neqsim-demo"),
+                    manifest["neqsim-demo"]["vscode_path"])
+
+                remove_args = argparse.Namespace(name="neqsim-demo")
+                install_skill.cmd_remove(catalog, remove_args)
+                self.assertFalse(
+                    (vscode_dir / "neqsim-demo").exists())
+
+
 if __name__ == "__main__":
     unittest.main()
