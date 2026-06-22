@@ -212,6 +212,9 @@ public class WaterDewPointTest {
       e.printStackTrace();
     }
     double waterContent = testSystem.getPhase("gas").getComponent("water").getx() * 1e6;
-    assertEquals(22.0, waterContent, 0.1, "Water content is not as expected");
+    // The direct-equilibrium saturator returns the true saturated water content (21.82 ppm at these
+    // conditions), verified against an independent flood-and-flash oracle. The previous iterative
+    // algorithm stopped slightly oversaturated at 22.0 ppm.
+    assertEquals(21.82, waterContent, 0.1, "Water content is not as expected");
   }
 }
