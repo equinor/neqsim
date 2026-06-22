@@ -262,7 +262,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Simulation Hooks      | [docs/process/simulation-hooks-and-events.md](process/simulation-hooks-and-events)                                         | Lifecycle hooks, ProcessEventBus, auto-validation for ProcessSystem and ProcessModel |
 | **UniSim/HYSYS Conversion** | [docs/process/unisim-to-neqsim-conversion.md](process/unisim-to-neqsim-conversion)                                  | **Convert UniSim Design (.usc) models to NeqSim and export NeqSim back to UniSim — COM automation, mapping tables, topology reconstruction, verification** |
 | **Exergy Analysis**   | [docs/process/exergy-analysis.md](process/exergy-analysis)                                                                 | **Plant-wide exergy destruction hotspots — ProcessSystem, ProcessModel, ExergyAnalysisReport API, JSON export** |
-| **Production Allocation** | [docs/process/production-allocation.md](process/production-allocation)                                                  | **Back-allocate metered production to wells/sources via a linear recovery-factor proxy network — split factors, (I−A)v=b solve, mass closure, auto-detection, closed-form first-order uncertainty propagation, JSON export** |
+| **Production Allocation** | [docs/process/production-allocation.md](process/production-allocation)                                                  | **Back-allocate metered production to wells/sources via a linear recovery-factor proxy network — split factors, (I−A)v=b solve, mass closure, auto-detection, closed-form first-order uncertainty propagation, multi-method comparison (component-ratio / all-in / stand-alone) with auto-recommendation, JSON export** |
 
 ### Chapter 13: Streams & Mixers
 

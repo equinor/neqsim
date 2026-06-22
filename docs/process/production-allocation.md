@@ -1,6 +1,6 @@
 ---
 title: Linear Recovery-Factor Production Allocation
-description: Allocate metered production back to wells, templates, and commingled sources using a fast linear proxy network of frozen per-unit, per-component split factors. Works for any conservative oil and gas process, including recycle and reflux loops.
+description: Allocate metered production back to wells, templates, and commingled sources using a fast linear proxy network of frozen per-unit, per-component split factors. Includes multi-method allocation (component-ratio, all-in proxy, stand-alone re-simulation) with auto-recommendation. Works for any conservative oil and gas process, including recycle and reflux loops.
 ---
 
 # Linear Recovery-Factor Production Allocation
@@ -111,6 +111,9 @@ ProductionAllocationResult result = allocator.allocate(); // auto-detect
 | `LinearAllocationSolver` | Solves `(I − A_k) v = b` per component (direct + Neumann fallback). |
 | `ProductionAllocationResult` | Queryable result: unit conversion, product aggregation, mass closure, JSON export. |
 | `AllocationUncertaintyEstimator` | Closed-form first-order variance propagation that reuses the cached `(I − A_k)⁻¹` factorisation to produce per-source, per-custody confidence intervals at no extra factorisation cost. |
+| `MultiMethodAllocator` | Runs and compares the three `AllocationMethod`s (component ratio, all-in proxy, stand-alone re-simulation) on one base case. |
+| `AllocationComparison` | Auto-evaluates method agreement, computes owner sensitivity, and recommends a method. |
+| `AllocationMethod` | The three facility-split methods (`COMPONENT_RATIO`, `ALL_IN`, `STAND_ALONE`). |
 | `ProductType` | Product category (GAS, OIL, WATER, MIXED, UNKNOWN). |
 
 ## Result queries
@@ -505,6 +508,108 @@ correct metering streams and product labels.
 | `Unknown source` / `Unknown custody outlet` / `Unknown component` | Query name not tagged / not on the master slate. | Use names exactly as tagged; check `getSourceNames()` / `getCustodyNames()` / `getComponentNames()`. |
 | Large `maxResidual` | Loop gain close to one or inconsistent base case. | Re-extract from a fully converged base case; raise `maxIterations` if the iterative fallback was used. |
 
+## Multi-method allocation and method comparison
+
+Beyond the standalone linear proxy (`SourceAllocator`), the package provides a
+**multi-method allocator** that runs and compares three concrete facility-split
+methods on a single rigorous base case, then auto-recommends one. This lets an
+analyst quantify *how much the choice of method changes each owner's booked
+production* before committing to a fiscal method.
+
+### The three methods (`AllocationMethod`)
+
+The methods form a fidelity-versus-cost ladder. All three share one component
+slate and, when mass closure is enabled (the default), partition exactly the
+same measured commingled custody totals — so they are compared on a fair basis.
+
+| Method (`AllocationMethod`) | How it works | Relative cost |
+|-----------------------------|--------------|:---:|
+| `COMPONENT_RATIO` | A single common per-component, per-custody recovery factor (ORF) extracted from the commingled base case and applied to every source. Exact mass closure by construction. | 1 (no extra simulation) |
+| `ALL_IN` | Frozen per-equipment split factors propagated through the linear proxy network by superposition (delegates to `SourceAllocator`). Captures source-dependent routing. | 2 (one base case + linear solves) |
+| `STAND_ALONE` | Each source is run through the process alone (other feeds suppressed to a near-zero multiplier); the standalone custody distributions are renormalised to the measured commingled totals. Captures non-linear compositional coupling. | 3 (one rigorous run per source) |
+
+`AllocationMethod` exposes `getDisplayName()`, `getDescription()` and
+`getRelativeCostRank()` for reporting.
+
+### Quick start
+
+```java
+import neqsim.process.allocation.AllocationComparison;
+import neqsim.process.allocation.AllocationMethod;
+import neqsim.process.allocation.MultiMethodAllocator;
+import neqsim.process.allocation.ProductType;
+import neqsim.process.allocation.ProductionAllocationResult;
+
+MultiMethodAllocator allocator = new MultiMethodAllocator();
+allocator.setBaseCase(process);                 // already run once, commingled
+allocator.addSource("Well-A", wellAFeed);
+allocator.addSource("Well-B", wellBFeed);
+allocator.addCustodyOutlet("ExportGas", sep.getGasOutStream(), ProductType.GAS);
+allocator.addCustodyOutlet("ExportOil", sep.getLiquidOutStream(), ProductType.OIL);
+
+// Run one method in isolation:
+ProductionAllocationResult standalone = allocator.allocate(AllocationMethod.STAND_ALONE);
+
+// Or run all three and let the comparison recommend one:
+AllocationComparison comparison = allocator.allocateAll();
+AllocationMethod recommended = comparison.getRecommendedMethod();
+String why = comparison.getRecommendationRationale();
+String json = comparison.toJson();
+```
+
+### How the recommendation is made
+
+`AllocationComparison` measures the **maximum relative difference** of any
+source's per-product (gas/oil/water) allocation between two methods and applies
+a simple decision rule (default tolerance 1 %, set with `setTolerance`):
+
+1. If `ALL_IN` and `STAND_ALONE` disagree by more than the tolerance →
+   commingling introduces material non-linear coupling → recommend
+   **`STAND_ALONE`** and flag a base-case refresh.
+2. Else if `COMPONENT_RATIO` and `ALL_IN` disagree by more than the tolerance →
+   source-dependent routing matters but coupling is weak → recommend
+   **`ALL_IN`**.
+3. Otherwise all methods agree → recommend the cheapest and most auditable
+   **`COMPONENT_RATIO`**.
+
+### Owner sensitivity
+
+`getOwnerSensitivity(unit)` returns one row per source-product combination
+giving the per-method allocation and the **spread** (max − min across methods).
+A large spread means the choice of method materially changes that owner's booked
+production — the key input to a fiscal-method decision.
+
+```java
+for (AllocationComparison.OwnerSensitivity row : comparison.getOwnerSensitivity("tonnes/year")) {
+  System.out.printf("%s %s: spread = %.1f %s%n",
+      row.getSource(), row.getProduct(), row.getSpread(), row.getUnit());
+}
+```
+
+### `MultiMethodAllocator` API
+
+| Method | Purpose |
+|--------|---------|
+| `setBaseCase(ProcessSystem)` | Set the already-run commingled base case. Fluent. |
+| `addSource(String, StreamInterface)` / `addSource(AllocationSource)` | Tag a production source. Fluent. |
+| `addCustodyOutlet(String, StreamInterface, ProductType)` / `addCustodyOutlet(CustodyOutlet)` | Tag a metered product outlet. Fluent. |
+| `setEnforceMassClosure(boolean)` | Renormalise each method to the measured custody totals (default `true`). Fluent. |
+| `setStandaloneZeroFactor(double)` | Relative multiplier applied to suppressed feeds during stand-alone runs (default `1.0e-10`). Fluent. |
+| `allocate(AllocationMethod)` | Run a single method and return a `ProductionAllocationResult`. |
+| `allocateAll()` | Run all three methods and return an `AllocationComparison`. Restores the base case after stand-alone runs. |
+
+### `AllocationComparison` API
+
+| Method | Purpose |
+|--------|---------|
+| `getResult(AllocationMethod)` / `getResults()` | Per-method `ProductionAllocationResult`. |
+| `getRuntimeMillis(AllocationMethod)` | Wall-clock runtime per method. |
+| `getMaxRelativeDifference(a, b)` | Worst per-source per-product relative difference between two methods. |
+| `getRecommendedMethod()` / `getRecommendationRationale()` | Auto-recommended method and its plain-language justification. |
+| `setTolerance(double)` | Agreement tolerance for the recommendation (default `0.01`). Fluent. |
+| `getOwnerSensitivity(unit)` | Per-source per-product table with the spread across methods. |
+| `toJson()` | Schema-versioned JSON (`schemaVersion = "1.0"`) with recommendation, pairwise differences, per-method runtimes/residuals and owner sensitivity. |
+
 ## Choosing an allocation method
 
 Several allocation methods exist. The table contrasts the main families and where
@@ -526,6 +631,105 @@ includes a sensitivity study showing when cross-well coupling becomes significan
 For a small number of sources where maximum rigour is mandated, per-source
 component tagging remains the reference. General metering and allocation practice
 is covered by the Energy Institute *HM-96* hydrocarbon allocation guidelines.
+
+## Running and comparing several methods: `MultiMethodAllocator`
+
+When the question is *"which method should we use, and how much does the choice
+change each owner's allocated volumes?"*, the `MultiMethodAllocator` runs three
+allocation methods on the **same base case, the same component slate, and the
+same measured custody totals**, so they are compared on a fair, mass-closing
+basis. The three methods form a fidelity-versus-cost ladder (`AllocationMethod`):
+
+| `AllocationMethod` | Principle | Cost rank |
+|--------------------|-----------|-----------|
+| `COMPONENT_RATIO` | A single **common overall recovery factor** per component and custody outlet, taken from the commingled base case and applied to every source. | 1 (no extra run) |
+| `ALL_IN` | **Linearised per-equipment recovery factors** propagated through the flowsheet by superposition — the linear proxy network of `SourceAllocator`. | 2 (one base run + linear solves) |
+| `STAND_ALONE` | Each source is run through the process **alone** (the other feeds scaled to a near-zero multiplier, default `1e-10`), and the resulting standalone custody distributions are **renormalised to the measured commingled totals**. | 3 (one rigorous run per source) |
+
+> **Fair-basis note.** Run in isolation, each source produces a different phase
+> split from the commingled base case, so the raw standalone custody outputs do
+> **not** sum to the metered custody totals. `STAND_ALONE` therefore renormalises
+> each standalone run to the measured totals (a pro-rata distribution with
+> component scaling) before reporting — without this step the standalone numbers
+> would conflate the genuine commingling-coupling effect with a mass-closure
+> mismatch. `COMPONENT_RATIO` and `ALL_IN` coincide when all sources enter at the
+> same point; they diverge once sources enter at different network locations.
+
+### Quick start
+
+```java
+import neqsim.process.allocation.AllocationComparison;
+import neqsim.process.allocation.AllocationMethod;
+import neqsim.process.allocation.MultiMethodAllocator;
+import neqsim.process.allocation.ProductType;
+import neqsim.process.allocation.ProductionAllocationResult;
+
+MultiMethodAllocator allocator = new MultiMethodAllocator()
+    .setBaseCase(process)
+    .addSource("Well-A", wellA)
+    .addSource("Well-B", wellB)
+    .addCustodyOutlet("ExportGas", separator.getGasOutStream(), ProductType.GAS)
+    .addCustodyOutlet("ExportOil", separator.getLiquidOutStream(), ProductType.OIL);
+
+// Run one method on demand …
+ProductionAllocationResult standAlone = allocator.allocate(AllocationMethod.STAND_ALONE);
+
+// … or run all three and compare them automatically.
+AllocationComparison comparison = allocator.allocateAll();
+
+AllocationMethod best = comparison.getRecommendedMethod();
+String why = comparison.getRecommendationRationale();
+double spread = comparison.getMaxRelativeDifference(
+    AllocationMethod.ALL_IN, AllocationMethod.STAND_ALONE);
+
+String json = comparison.toJson();
+```
+
+### Owner-impact analysis
+
+Because all three methods partition the same measured totals, the difference
+between them is exactly *"what each method gives each owner"*. `getOwnerSensitivity`
+returns, per source and product, the allocated flow under every method and the
+spread between the largest and smallest — the figure that drives equity disputes.
+
+```java
+import neqsim.process.allocation.AllocationComparison.OwnerSensitivity;
+
+for (OwnerSensitivity s : comparison.getOwnerSensitivity("kg/hr")) {
+  // s.getSource(), s.getProduct(), s.getPerMethod() (value per AllocationMethod),
+  // s.getSpread() = max − min across methods, in s.getUnit()
+}
+```
+
+A large spread for a poor-quality (heavy, oil-rich) feed is the classic signal
+that `ALL_IN` lets a low-quality owner benefit from the shared ratio, whereas
+`STAND_ALONE` pays each owner for the quality of their own fluid.
+
+### `MultiMethodAllocator` API
+
+| Method | Purpose |
+|--------|---------|
+| `setBaseCase(ProcessSystem)` | Set the already-run commingled base case. Fluent. |
+| `addSource(String, StreamInterface)` / `addSource(AllocationSource)` | Tag a production source. Fluent. |
+| `addCustodyOutlet(String, StreamInterface, ProductType)` / `addCustodyOutlet(CustodyOutlet)` | Tag a metered product outlet. Fluent. |
+| `setEnforceMassClosure(boolean)` | Toggle renormalisation to measured custody totals (default `true`). Fluent. |
+| `setStandaloneZeroFactor(double)` | Near-zero multiplier applied to suppressed feeds in `STAND_ALONE` (default `1e-10`). Fluent. |
+| `allocate(AllocationMethod)` | Run a single method and return a `ProductionAllocationResult`. |
+| `allocateAll()` | Run `COMPONENT_RATIO`, `ALL_IN` and `STAND_ALONE` and return an `AllocationComparison`. |
+| `getSources()` / `getCustodyOutlets()` / `getBaseCase()` | Read-back of the configuration. |
+
+### `AllocationComparison` API
+
+| Method | Returns |
+|--------|---------|
+| `getResult(AllocationMethod)` / `getResults()` | The per-method `ProductionAllocationResult`. |
+| `getRuntimeMillis(AllocationMethod)` | Wall-clock time of each method's run. |
+| `getMaxRelativeDifference(a, b)` | Largest relative difference in allocated gas/oil/water between two methods. |
+| `getRecommendedMethod()` | Automatic selection: `STAND_ALONE` if it differs materially from `ALL_IN` (commingling coupling matters); else `ALL_IN` if it differs from `COMPONENT_RATIO` (network routing matters); else the cheap `COMPONENT_RATIO`. |
+| `getRecommendationRationale()` | Human-readable explanation of the recommendation. |
+| `setTolerance(double)` | Relative-difference threshold for the recommendation logic (default `0.01`). Fluent. |
+| `getOwnerSensitivity(unit)` | Per-source, per-product allocated flow under every method plus the spread. |
+| `toJson()` | Schema-versioned JSON report (`schemaVersion = "1.0"`) with per-method allocations, runtimes, the recommendation and the owner-sensitivity table. |
 
 ## Worked notebook
 
