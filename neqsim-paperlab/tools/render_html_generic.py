@@ -7,12 +7,16 @@ Usage:
     python render_html.py papers/tpflash_algorithms_2026
     python render_html.py papers/gibbs_minimization_2026
 """
+import os
 import re
 import sys
 import json
 from pathlib import Path
 
+# Ensure sibling tools (paper_renderer, etc.) are importable regardless of cwd.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from katex_head import KATEX_HEAD_BLOCK
+from paper_renderer import normalize_figure_captions
 
 
 def get_html_header(title="Paper"):
@@ -115,6 +119,7 @@ def render_paper_html(paper_dir):
         sys.exit(1)
 
     paper = paper_file.read_text(encoding="utf-8")
+    paper = normalize_figure_captions(paper)
 
     # Extract title from H1
     title_match = re.search(r'^# (.+)$', paper, re.MULTILINE)

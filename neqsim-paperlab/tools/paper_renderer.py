@@ -39,13 +39,68 @@ def load_journal_profile(journal_name, journals_dir="journals"):
             f"Available: {available}"
         )
 
-    with open(profile_path) as f:
+    with open(profile_path, encoding="utf-8") as f:
         return yaml.safe_load(f)
+
+
+_FIGURE_CAPTION_PATTERN = re.compile(
+    r'(!\[)([^\]]*)(\]\()([^)]+)(\))'                       # 1-5: markdown image
+    r'([ \t]*\n[ \t]*\n+)'                                  # 6: blank-line separator
+    r'[ \t]*\*((?:Figure|Fig\.?)\s*\d+[.:][^*\n]*?)\*[ \t]*'  # 7: italic "Figure N. ..."
+    r'(?=\n|$)',
+    flags=re.IGNORECASE,
+)
+_FIGURE_LABEL_PREFIX = re.compile(
+    r'^(?:Figure|Fig\.?)\s*\d+[.:]\s*',
+    flags=re.IGNORECASE,
+)
+
+
+def normalize_figure_captions(md_text):
+    """Pre-process markdown to fix the "Figure N: Figure N" caption duplication.
+
+    A common authoring convention is:
+
+        ![Figure N](path)
+
+        *Figure N. Real descriptive caption.*
+
+    All downstream renderers (LaTeX ``\\caption``, Word native caption, HTML
+    ``<figcaption>``) take the markdown image alt-text directly as the caption,
+    so this convention renders as "Figure N: Figure N" plus a duplicated italic
+    line of body text below the figure.
+
+    This pre-pass detects an image followed (after a blank line) by an italic
+    paragraph that starts with "Figure N." or "Fig. N." and rewrites it as
+    ``![<cleaned caption>](path)`` with the redundant italic line removed.
+    The "Figure N." / "Fig. N." prefix is stripped because every renderer
+    auto-numbers figures.
+
+    Only triggers on the explicit "Figure N." / "Fig. N." italic prefix to
+    avoid swallowing legitimate italic body text that happens to follow a
+    figure.
+
+    Args:
+        md_text: Raw markdown source.
+
+    Returns:
+        Markdown source with figure-caption duplications collapsed.
+    """
+    def _merge(match):
+        alt = match.group(2).strip()
+        path = match.group(4)
+        italic_caption = match.group(7).strip()
+        cleaned = _FIGURE_LABEL_PREFIX.sub('', italic_caption).strip()
+        caption = cleaned if cleaned else alt
+        return "![" + caption + "](" + path + ")\n"
+
+    return _FIGURE_CAPTION_PATTERN.sub(_merge, md_text)
 
 
 def parse_manuscript(paper_md_path):
     """Parse a Markdown manuscript into sections."""
     text = Path(paper_md_path).read_text(encoding="utf-8")
+    text = normalize_figure_captions(text)
 
     sections = []
     current_section = None
@@ -100,7 +155,7 @@ def markdown_to_latex(md_text):
     Handles: bold, italic, inline math, display math, code blocks,
     lists, tables, figures, horizontal rules, and HTML comments.
     """
-    tex = md_text
+    tex = normalize_figure_captions(md_text)
 
     # Remove HTML comments
     tex = re.sub(r'<!--.*?-->', '', tex, flags=re.DOTALL)
@@ -282,8 +337,273 @@ def markdown_to_latex(md_text):
     return tex
 
 
+def _load_plan(paper_dir):
+    """Load plan.json from a paper directory if present.
+
+    Args:
+        paper_dir: Path to the paper directory.
+
+    Returns:
+        Parsed plan dict, or an empty dict when plan.json is missing or invalid.
+    """
+    plan_file = Path(paper_dir) / "plan.json"
+    if not plan_file.exists():
+        return {}
+    try:
+        return json.loads(plan_file.read_text(encoding="utf-8"))
+    except (ValueError, OSError):
+        return {}
+
+
+def _normalize_authors(plan):
+    """Build a normalized author list from a plan dict.
+
+    Accepts either a list of name strings or a list of dicts under the
+    ``authors`` key. Falls back to a single placeholder author when no
+    author metadata is available, so rendering never produces an empty
+    author block.
+
+    Args:
+        plan: Parsed plan.json dict (may be empty).
+
+    Returns:
+        List of author dicts with keys: name, affiliation, email,
+        corresponding (bool), city, country.
+    """
+    raw = plan.get("authors") if isinstance(plan, dict) else None
+    authors = []
+    if isinstance(raw, list):
+        for entry in raw:
+            if isinstance(entry, str) and entry.strip():
+                authors.append({"name": entry.strip()})
+            elif isinstance(entry, dict) and entry.get("name"):
+                authors.append(dict(entry))
+    if not authors:
+        authors = [{
+            "name": "First Author",
+            "affiliation": "Department, Institution",
+            "email": "email@institution.no",
+            "corresponding": True,
+            "city": "City",
+            "country": "Country",
+        }]
+    if not any(a.get("corresponding") for a in authors):
+        authors[0]["corresponding"] = True
+    return authors
+
+
+def _affiliation_index(authors):
+    """Assign stable institution ids to unique affiliations.
+
+    Args:
+        authors: Normalized author list.
+
+    Returns:
+        Tuple (affil_ids, ordered) where affil_ids maps an affiliation
+        string to an ``instN`` id and ordered is a list of
+        (inst_id, author_dict) pairs in first-seen order.
+    """
+    affil_ids = {}
+    ordered = []
+    for a in authors:
+        affil = (a.get("affiliation") or "Department, Institution").strip()
+        if affil not in affil_ids:
+            inst_id = "inst{}".format(len(affil_ids) + 1)
+            affil_ids[affil] = inst_id
+            ordered.append((inst_id, a))
+    return affil_ids, ordered
+
+
+def _find_title(sections):
+    """Return the manuscript title (first H1 section) or a placeholder.
+
+    Args:
+        sections: Parsed manuscript sections.
+
+    Returns:
+        Title string.
+    """
+    for sec in sections:
+        if sec["level"] == 1:
+            return sec["title"]
+    return "TITLE PLACEHOLDER"
+
+
+def _emit_abstract_keywords_highlights(lines, sections, journal_profile,
+                                       keyword_mode, highlight_env):
+    """Emit abstract, keywords, and (optionally) highlights blocks.
+
+    Args:
+        lines: Output line list (mutated in place).
+        sections: Parsed manuscript sections.
+        journal_profile: Journal profile dict.
+        keyword_mode: One of "sep" (elsarticle keyword env), "macro"
+            (achemso \\keywords), or "inline" (plain bold paragraph).
+        highlight_env: When True, emit the elsarticle highlights
+            environment; otherwise highlights are skipped here.
+    """
+    for sec in sections:
+        if "abstract" in sec["title"].lower():
+            lines.append("\\begin{abstract}")
+            lines.append(markdown_to_latex(sec["content"]))
+            lines.append("\\end{abstract}")
+            lines.append("")
+            break
+
+    for sec in sections:
+        if "keyword" in sec["title"].lower():
+            kw_content = re.sub(r'^\s*---\s*$', '', sec["content"],
+                                flags=re.MULTILINE).strip()
+            kws = [k.strip() for k in kw_content.split(",") if k.strip()]
+            if keyword_mode == "sep":
+                lines.append("\\begin{keyword}")
+                lines.append(" \\sep ".join(kws))
+                lines.append("\\end{keyword}")
+            elif keyword_mode == "macro":
+                lines.append("\\keywords{{{}}}".format("; ".join(kws)))
+            else:
+                lines.append("\\noindent\\textbf{{Keywords:}} {}".format(
+                    ", ".join(kws)))
+            lines.append("")
+            break
+
+    if journal_profile.get("highlights_required") and highlight_env:
+        for sec in sections:
+            if "highlight" in sec["title"].lower():
+                lines.append("\\begin{highlights}")
+                for item_line in sec["content"].split("\n"):
+                    item = re.sub(r'^\s*[-*]\s+', '', item_line).strip()
+                    if item:
+                        lines.append(f"\\item {item}")
+                lines.append("\\end{highlights}")
+                lines.append("")
+                break
+
+
+def _emit_elsarticle_frontmatter(lines, title, authors, sections,
+                                 journal_profile):
+    """Emit elsarticle-style front matter (Elsevier journals).
+
+    Args:
+        lines: Output line list (mutated in place).
+        title: Manuscript title.
+        authors: Normalized author list.
+        sections: Parsed manuscript sections.
+        journal_profile: Journal profile dict.
+    """
+    affil_ids, ordered_affils = _affiliation_index(authors)
+    lines.append("\\begin{frontmatter}")
+    lines.append("")
+    lines.append(f"\\title{{{title}}}")
+    lines.append("")
+    cor_idx = 0
+    for a in authors:
+        inst = affil_ids[(a.get("affiliation")
+                          or "Department, Institution").strip()]
+        corref = ""
+        if a.get("corresponding"):
+            cor_idx += 1
+            corref = f"\\corref{{cor{cor_idx}}}"
+        lines.append(f"\\author[{inst}]{{{a['name']}{corref}}}")
+        if a.get("corresponding") and a.get("email"):
+            lines.append(f"\\ead{{{a['email']}}}")
+    cor_idx = 0
+    for a in authors:
+        if a.get("corresponding"):
+            cor_idx += 1
+            lines.append(f"\\cortext[cor{cor_idx}]{{Corresponding author}}")
+    lines.append("")
+    for inst, a in ordered_affils:
+        org = (a.get("affiliation") or "Department, Institution").strip()
+        parts = ["organization={{{}}}".format(org)]
+        if a.get("city"):
+            parts.append("city={{{}}}".format(a["city"]))
+        if a.get("country"):
+            parts.append("country={{{}}}".format(a["country"]))
+        lines.append("\\affiliation[{}]{{{}}}".format(inst, ", ".join(parts)))
+    lines.append("")
+    _emit_abstract_keywords_highlights(lines, sections, journal_profile,
+                                       keyword_mode="sep", highlight_env=True)
+    lines.append("\\end{frontmatter}")
+    lines.append("")
+
+
+def _emit_achemso_preamble(lines, title, authors):
+    """Emit achemso (ACS) author/affiliation/title block in the preamble.
+
+    Args:
+        lines: Output line list (mutated in place).
+        title: Manuscript title.
+        authors: Normalized author list.
+    """
+    for a in authors:
+        lines.append(f"\\author{{{a['name']}}}")
+        affil = (a.get("affiliation") or "Department, Institution").strip()
+        loc = ", ".join(p for p in [a.get("city"), a.get("country")] if p)
+        if loc:
+            affil = f"{affil}, {loc}"
+        lines.append(f"\\affiliation{{{affil}}}")
+        if a.get("corresponding") and a.get("email"):
+            lines.append(f"\\email{{{a['email']}}}")
+    lines.append(f"\\title{{{title}}}")
+    lines.append("")
+
+
+def _emit_achemso_body(lines, sections, journal_profile):
+    """Emit achemso (ACS) abstract/keywords after \\begin{document}.
+
+    The achemso class has no highlights environment, so required
+    highlights are emitted as a commented checklist for manual placement.
+
+    Args:
+        lines: Output line list (mutated in place).
+        sections: Parsed manuscript sections.
+        journal_profile: Journal profile dict.
+    """
+    _emit_abstract_keywords_highlights(lines, sections, journal_profile,
+                                       keyword_mode="macro", highlight_env=False)
+    if journal_profile.get("highlights_required"):
+        for sec in sections:
+            if "highlight" in sec["title"].lower():
+                lines.append("% Highlights (ACS: place per author guidelines):")
+                for item_line in sec["content"].split("\n"):
+                    item = re.sub(r'^\s*[-*]\s+', '', item_line).strip()
+                    if item:
+                        lines.append(f"%   - {item}")
+                lines.append("")
+                break
+
+
+def _emit_generic_frontmatter(lines, title, authors, sections,
+                              journal_profile):
+    """Emit generic article-style front matter for non-templated classes.
+
+    Used when the journal's latex_class is neither elsarticle nor achemso
+    (e.g. "custom"). Produces a portable \\maketitle structure.
+
+    Args:
+        lines: Output line list (mutated in place).
+        title: Manuscript title.
+        authors: Normalized author list.
+        sections: Parsed manuscript sections.
+        journal_profile: Journal profile dict.
+    """
+    lines.append(f"\\title{{{title}}}")
+    author_names = " \\and ".join(a["name"] for a in authors)
+    lines.append(f"\\author{{{author_names}}}")
+    lines.append("\\maketitle")
+    lines.append("")
+    _emit_abstract_keywords_highlights(lines, sections, journal_profile,
+                                       keyword_mode="inline", highlight_env=False)
+
+
 def render_latex(paper_dir, journal_profile, output_dir=None):
     """Render a Markdown manuscript to LaTeX.
+
+    Author and affiliation metadata is read from ``plan.json`` (the
+    optional ``authors`` field) when present, falling back to placeholders
+    otherwise. Front matter is emitted in a document-class-aware manner so
+    that elsarticle, achemso, and generic classes each receive valid markup.
 
     Args:
         paper_dir: Path to paper directory containing paper.md
@@ -306,7 +626,10 @@ def render_latex(paper_dir, journal_profile, output_dir=None):
     latex_options = journal_profile.get("latex_options", "review,3p")
 
     lines = []
-    lines.append(f"\\documentclass[{latex_options}]{{{latex_class}}}")
+    if latex_options is None or str(latex_options).strip() in ("", "None"):
+        lines.append(f"\\documentclass{{{latex_class}}}")
+    else:
+        lines.append(f"\\documentclass[{latex_options}]{{{latex_class}}}")
     lines.append("")
     lines.append("% Packages")
     lines.append("\\usepackage{amsmath,amssymb}")
@@ -325,9 +648,25 @@ def render_latex(paper_dir, journal_profile, output_dir=None):
     if journal_profile.get("double_spacing_required"):
         lines.append("\\usepackage{setspace}")
 
+    # Section headings already carry manual journal-style numbers in the
+    # markdown (e.g. "## 2.1 ..."), so suppress LaTeX auto section numbering
+    # to avoid a duplicate number such as "1 1. Introduction".
+    lines.append("\\setcounter{secnumdepth}{-1}")
+
     lines.append("")
-    lines.append(f"\\journal{{{journal_profile['journal_name']}}}")
-    lines.append("")
+
+    # Class-aware front matter. elsarticle uses \journal{} and a
+    # \begin{frontmatter} block; achemso declares authors in the preamble.
+    plan = _load_plan(paper_dir)
+    authors = _normalize_authors(plan)
+    title = _find_title(sections)
+
+    if latex_class == "elsarticle":
+        lines.append(f"\\journal{{{journal_profile['journal_name']}}}")
+        lines.append("")
+    elif latex_class == "achemso":
+        _emit_achemso_preamble(lines, title, authors)
+
     lines.append("\\begin{document}")
 
     if journal_profile.get("line_numbering_required"):
@@ -338,65 +677,14 @@ def render_latex(paper_dir, journal_profile, output_dir=None):
 
     lines.append("")
 
-    # Front matter
-    lines.append("\\begin{frontmatter}")
-    lines.append("")
-
-    # Find title (first H1 section)
-    title = "TITLE PLACEHOLDER"
-    for sec in sections:
-        if sec["level"] == 1:
-            title = sec["title"]
-            break
-    lines.append(f"\\title{{{title}}}")
-    lines.append("")
-
-    # Author placeholder
-    lines.append("\\author[inst1]{First Author\\corref{cor1}}")
-    lines.append("\\cortext[cor1]{Corresponding author}")
-    lines.append("\\ead{email@institution.no}")
-    lines.append("")
-    lines.append("\\affiliation[inst1]{organization={Department, Institution},")
-    lines.append("                     city={City},")
-    lines.append("                     country={Country}}")
-    lines.append("")
-
-    # Abstract
-    for sec in sections:
-        if "abstract" in sec["title"].lower():
-            lines.append("\\begin{abstract}")
-            lines.append(markdown_to_latex(sec["content"]))
-            lines.append("\\end{abstract}")
-            lines.append("")
-            break
-
-    # Keywords
-    for sec in sections:
-        if "keyword" in sec["title"].lower():
-            # Clean content: remove HR markers and blank lines
-            kw_content = re.sub(r'^\s*---\s*$', '', sec["content"], flags=re.MULTILINE).strip()
-            keywords = kw_content.replace(",", " \\sep ")
-            lines.append("\\begin{keyword}")
-            lines.append(keywords)
-            lines.append("\\end{keyword}")
-            lines.append("")
-            break
-
-    # Highlights
-    if journal_profile.get("highlights_required"):
-        for sec in sections:
-            if "highlight" in sec["title"].lower():
-                lines.append("\\begin{highlights}")
-                for item_line in sec["content"].split("\n"):
-                    item = re.sub(r'^\s*[-*]\s+', '', item_line).strip()
-                    if item:
-                        lines.append(f"\\item {item}")
-                lines.append("\\end{highlights}")
-                lines.append("")
-                break
-
-    lines.append("\\end{frontmatter}")
-    lines.append("")
+    if latex_class == "elsarticle":
+        _emit_elsarticle_frontmatter(lines, title, authors, sections,
+                                     journal_profile)
+    elif latex_class == "achemso":
+        _emit_achemso_body(lines, sections, journal_profile)
+    else:
+        _emit_generic_frontmatter(lines, title, authors, sections,
+                                  journal_profile)
 
     # Body sections
     section_cmds = {1: "\\section", 2: "\\section", 3: "\\subsection"}
@@ -901,6 +1189,31 @@ def validate_tables(paper_dir, journal_profile):
     return checks
 
 
+def _section_matches(title, canon):
+    """Return True if a manuscript section title matches a template entry.
+
+    Matching is tolerant: it succeeds on substring containment or on any
+    shared significant word, so "Results and Discussion" matches a
+    "Results" section and "Methods / Algorithm Description" matches
+    "Methodology".
+
+    Args:
+        title: Lower-case manuscript section title.
+        canon: Journal-template section name.
+
+    Returns:
+        True when the titles are considered the same section.
+    """
+    title = title.lower()
+    canon = canon.lower()
+    if canon in title or title in canon:
+        return True
+    stop = {"and", "of", "the", "a", "to", "or"}
+    title_words = set(re.findall(r"[a-z]+", title)) - stop
+    canon_words = set(re.findall(r"[a-z]+", canon)) - stop
+    return bool(title_words & canon_words)
+
+
 def check_compliance(paper_dir, journal_profile):
     """Check manuscript compliance with journal requirements.
 
@@ -979,6 +1292,27 @@ def check_compliance(paper_dir, journal_profile):
             "check": f"Section '{group_name}*' present",
             "status": "PASS" if found else "FAIL",
             "detail": f"Matched: {', '.join(synonyms)}" if not found else None,
+        })
+
+    # Section order adherence (advisory) — compare the order of the
+    # manuscript's recognized sections against the journal template.
+    section_order = journal_profile.get("section_order")
+    if section_order:
+        present = []
+        for sec in sections:
+            t = sec["title"].lower()
+            for idx, canon in enumerate(section_order):
+                if _section_matches(t, canon):
+                    present.append((idx, sec["title"]))
+                    break
+        order_indices = [idx for idx, _ in present]
+        in_order = order_indices == sorted(order_indices)
+        checks.append({
+            "check": "Section order matches journal template",
+            "status": "PASS" if in_order else "WARN",
+            "detail": None if in_order else
+            "Sections deviate from recommended order: "
+            + ", ".join(t for _, t in present),
         })
 
     # References file
@@ -1075,7 +1409,8 @@ def check_compliance(paper_dir, journal_profile):
         bib_keys = set()
         if refs_file.exists():
             bib_text = refs_file.read_text(encoding="utf-8")
-            bib_keys = set(re.findall(r'@\w+\{(\w+),', bib_text))
+            # Allow hyphens/dots in keys (e.g. DNV-OS-F101), not just \w.
+            bib_keys = set(re.findall(r'@\w+\{([^,\s]+)\s*,', bib_text))
 
         missing_keys = cite_keys - bib_keys
         if missing_keys:
@@ -1111,7 +1446,7 @@ def print_compliance(checks):
     all_pass = True
     for check in checks:
         status = check["status"]
-        icon = {"PASS": "[OK]", "FAIL": "[!!]", "WARN": "[??]"}[status]
+        icon = {"PASS": "[OK]", "FAIL": "[!!]", "WARN": "[??]"}.get(status, "[??]")
         detail = f" — {check['detail']}" if "detail" in check else ""
         print(f"  {icon} {check['check']}{detail}")
         if status == "FAIL":

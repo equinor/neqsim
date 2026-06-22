@@ -9,6 +9,160 @@
 
 ---
 
+## 2026-06-24 — Pedersen-faithful gamma delumping for `characterizeToReference`
+
+### Summary
+The delumping stage of `PseudoComponentCombiner` (`delumpContributions`) was
+rewritten to follow the Pedersen et al. (Chapter 5) gamma-distribution
+treatment instead of the previous fixed ±0.4 carbon-window exponential-decay
+heuristic. Each coarse lump is now split into single-carbon-number
+sub-fractions over a **neighbour-bounded** carbon range, with sub-fraction
+moles drawn from a **Whitson gamma molar distribution on the molar-mass axis**,
+molar mass set by Eq. 5.27 (`M = 14·C − 4`), and normal boiling point from the
+Katz–Firoozabadi correlation (Eq. 5.28). Parent moles and mass are conserved
+according to a configurable mode. Additive, no breaking change.
+
+### What's new (all additive)
+- `CharacterizationOptions` enums + builder methods:
+  - `DelumpBinningBasis {MOLAR_MASS, BOILING_POINT}` (default `MOLAR_MASS`)
+  - `DelumpGammaScope {NEIGHBOURS, GLOBAL}` (default `NEIGHBOURS`)
+  - `DelumpConservation {BOTH, MOLES, MASS}` (default `BOTH`)
+  - getters `getDelumpBinningBasis()` / `getDelumpGammaScope()` /
+    `getDelumpConservation()` and matching builder setters.
+- `PseudoComponentCombiner`: 4-arg
+  `delumpContributions(List, int, DelumpGammaScope, DelumpConservation)` gamma
+  implementation plus molar-mass-basis overloads of
+  `determineQuantileBoundaries`, `determineReferenceBoundaries`, and
+  `distributeToProfiles`, and gamma helpers (`fitGlobalGamma`,
+  `fitGammaByMoments`, `katzFiroozabadiBoilingPoint`, carbon-number/molar-mass
+  conversions).
+
+### Verification
+```bash
+./mvnw test -Dtest=PseudoComponentDelumpDistributionTest,CharacterizeToReferenceDelumpTest,CharacterizeToCommonSlateTest
+```
+
+### Docs touched
+- `docs/pvtsimulation/fluid_characterization_mathematics.md` — gamma delumping
+  subsection, options table, and builder example.
+
+---
+
+## 2026-06-23 — Process-safety rollout: NOG 070 / STS-0131 / API 14C / NORSOK P-002 / ISO 17776 / EI AVIFF / API 521 §7 / IEC 60079 / API 537 PFP
+
+### Summary
+New additive classes under `neqsim.process.safety.*` close the gap between
+NeqSim's existing consequence/relief models and the Equinor TR + international
+standards stack used on NCS projects. Five phases, all with JUnit 5 tests, no
+breaking changes.
+
+### What's new (all additive)
+
+**Phase 1 — SIL / SIS (NOG 070, STS-0131)**
+- `neqsim.process.safety.risk.sis.nog070.Nog070SilCatalogue` /
+  `Nog070SilDetermination` / `Nog070SifType` — Norwegian Oil & Gas 070
+  minimum-SIL catalogue and per-SIF determination.
+- `neqsim.process.safety.compliance.Sts0131Gate` — Equinor STS-0131
+  safety-gate screening.
+
+**Phase 2 — SAFE charts / piping (API RP 14C, NORSOK P-002)**
+- `neqsim.process.safety.api14c.{Api14cEquipmentCategory, Api14cSafetyAnalysisTable,
+  Api14cSafeChartItem, Api14cSafeChartBuilder}` — API RP 14C Safety Analysis
+  Function Evaluation (SAFE) chart builder.
+- `neqsim.process.safety.compliance.{P002Finding, NorsokP002ComplianceChecker}` —
+  NORSOK P-002 process-design compliance checker.
+
+**Phase 3 — Major-accident bow-tie + piping vibration (ISO 17776, EI AVIFF)**
+- `neqsim.process.safety.hazid.{MahCatalogue, MahBowTieBuilder}` — ISO 17776
+  major-accident-hazard catalogue → bow-tie builder.
+- `neqsim.process.safety.vibration.{PipingFivLikelihood, PipingFivScreening}` —
+  Energy Institute AVIFF flow-induced-vibration likelihood screening.
+
+**Phase 4 — Coupled blowdown + ESD timing (API 521 §7, NOG 070 / IEC 61511)**
+- `neqsim.process.safety.depressurization.MultiVesselBlowdownStudy` — superimposes
+  multiple vessel blowdowns on a shared flare header (peak load, header Mach check).
+  Constructor-less; build with `.addSource(name, DepressurizationSimulator)` or
+  `.addSourceResult(name, DepressurizationResult)`, `.setHeader(diameterM,
+  pressureBara, temperatureK, molarMassKgPerMol, gamma)`, `.run()` →
+  `MultiVesselBlowdownResult` (`getPeakTotalMassFlowKgPerS`, `getPeakTimeS`,
+  `getHeaderMach`, `isHeaderMachAcceptable`, `summary`).
+- `neqsim.process.safety.esd.EsdResponseTimeSimulator` — ESD loop response-time
+  budget. `.addDetection(name, s)`, `.addLogic(name, s)`,
+  `.addValve(name, solenoidDelayS, strokeS)`, `.setAllowableResponseTimeS(s)`,
+  `.evaluate()` → `EsdResponseTimeResult` (`getTotalResponseTimeS`, `getMarginS`,
+  `isWithinBudget`).
+
+**Phase 5 — Flare flame, hazardous area, PFP demand (API 537, IEC 60079-10-1, API 521 / NORSOK S-001)**
+- `neqsim.process.safety.fire.Api537FlareFlameModel` — flare flame length (Kent),
+  wind tilt, sterile-zone iso-flux radii, noise PWL/SPL.
+  `new Api537FlareFlameModel(massFlowKgPerS, hocJPerKg, radiantFraction, exitVelocityMPerS)`
+  then `.setStackHeightM(...)`, `.setWindSpeedMPerS(...)`; flux constants
+  `FLUX_1_58_KW`, `FLUX_4_73_KW`, `FLUX_9_46_KW`.
+- `neqsim.process.safety.dispersion.HazardousAreaCalculator` — IEC 60079-10-1 jet
+  hazardous-area zone classification.
+  `new HazardousAreaCalculator(massFlowKgPerS, pressureBara, temperatureK,
+  lflVolFraction, molarMassKgPerMol)`, `.setReleaseGrade(ReleaseGrade.SECONDARY)`,
+  `.zoneClassification()` → `"Zone 0/1/2"`.
+- `neqsim.process.safety.fire.PfpDemandCalculator` — passive-fire-protection
+  rating + intumescent thickness.
+  `new PfpDemandCalculator(fireHeatFluxWPerM2, wallThicknessM)`,
+  `.setFireType(FireType.POOL|JET)`, `.evaluate(requiredSurvivalTimeS)` →
+  `PfpDemandResult` (`isPfpRequired`, `getRequiredPfpThicknessMm`, `getRating`).
+
+### Agent guidance
+- Skills updated: `neqsim-depressurization-mdmt` (multi-vessel + ESD timing),
+  `neqsim-relief-flare-network` (`Api537FlareFlameModel`, `MultiVesselBlowdownStudy`),
+  `neqsim-consequence-analysis` (`Api537FlareFlameModel`, `HazardousAreaCalculator`,
+  `PfpDemandCalculator`), `neqsim-process-safety` (NOG 070 SIL, STS-0131,
+  API 14C SAFE chart, NORSOK P-002, ESD timing),
+  `neqsim-hazid-fmea-eta-fta` (ISO 17776 MAH bow-tie, EI AVIFF FIV screening).
+- Use the exact constructor/method signatures above — no convenience overloads
+  are assumed by the verifying tests.
+
+### Verification
+```bash
+./mvnw test -Dtest=Nog070SilCatalogueTest,Sts0131GateTest,Api14cSafeChartBuilderTest,NorsokP002ComplianceCheckerTest,PipingFivScreeningTest,MultiVesselBlowdownStudyTest,EsdResponseTimeSimulatorTest,Api537FlareFlameModelTest,HazardousAreaCalculatorTest,PfpDemandCalculatorTest
+```
+
+---
+
+## 2026-06-21 — Closed-form uncertainty propagation for linear production allocation
+
+### Summary
+The `neqsim.process.allocation` package now ships a closed-form first-order
+uncertainty propagator that reuses the cached `(I − A_k)⁻¹` factorisation built
+by `SourceAllocator.allocate()`. Per-source per-custody confidence intervals
+are therefore available **at no extra factorisation cost** — no Monte-Carlo
+loop, no fresh simulations.
+
+### What's new (additive, no breaking change)
+- `AllocationUncertaintyEstimator` (new) — implements `Σ_v = J Σ_b Jᵀ` for the
+  independent-metering case. Two `propagate(...)` overloads (convenience over a
+  `SourceAllocator`, and a low-level overload over raw network/source/custody
+  arrays). The result object exposes per-source per-custody flow variance,
+  std-dev in mol/s and kg/hr, per-component std-dev, product-type aggregates,
+  and a `toJson()` with `schemaVersion = "1.0"`.
+- `SourceAllocator.getSources()` and `SourceAllocator.getCustodyOutlets()`
+  (new, unmodifiable views) — used by the estimator so that uncertainty
+  results share the same names as the allocation result. Empty until
+  `allocate()` has run when auto-detection is in effect.
+
+### Agent guidance
+- For 1 % per-source metering uncertainty (or any independent Gaussian
+  injection variance): prefer `AllocationUncertaintyEstimator.propagate(...)`
+  over wrapping the allocator in a Monte-Carlo loop.
+- Correlated metering and frozen-split-factor uncertainty are listed as
+  future work (see `docs/process/production-allocation.md` § "Uncertainty
+  propagation" → Scope).
+
+### Docs touched
+- `docs/process/production-allocation.md` — new "Uncertainty propagation"
+  section with math, API, scope and a code example.
+- `docs/REFERENCE_MANUAL_INDEX.md` — production-allocation row mentions
+  closed-form uncertainty propagation.
+
+---
+
 ## 2026-06-19 — Optional equal-mass (shared-imaginary) reference boundaries for `characterizeToReference`
 
 ### Summary

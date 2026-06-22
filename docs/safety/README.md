@@ -42,6 +42,15 @@ This folder contains guides for implementing safety systems in process simulatio
 | [sis_logic_implementation.md](sis_logic_implementation) | Safety Instrumented Systems (SIS) logic |
 | [integration_safety_chain_tests.md](integration_safety_chain_tests) | Safety chain integration testing |
 | [SAFETY_SIMULATION_ROADMAP.md](SAFETY_SIMULATION_ROADMAP) | Safety simulation development roadmap |
+
+### Standards Compliance and Hazard Screening
+
+| Document | Description |
+|----------|-------------|
+| [NOG 070 SIL, STS-0131 Gate and ESD Response Time](nog070_sil_sts0131_esd.md) | Pre-determined SIL (NOG 070), aggregated STS-0131 acceptance gate, and IEC 61511 ESD response-time budget |
+| [API 14C SAFE Chart and NORSOK P-002 Compliance](api14c_norsok_p002.md) | API RP 14C / ISO 10418 SAFE chart, NORSOK P-002 flare/blowdown/vent screening, and coupled multi-vessel blowdown header load |
+| [ISO 17776 MAH Bow-Tie and EI AVIFF FIV Screening](mah_bowtie_fiv_screening.md) | Major-accident-hazard bow-tie from the ISO 17776 catalogue and Energy Institute AVIFF flow-induced-vibration screening |
+| [Flare Flame, Hazardous Area and PFP Demand](flare_flame_hazardous_area_pfp.md) | API 537 flare flame/radiation/noise, IEC 60079-10-1 hazardous-area zoning, and API 521 passive-fire-protection demand |
 | [Automated HAZOP from STID and Simulation](automated_hazop_from_stid.md) | End-to-end STID/P&ID, plant data, NeqSim simulation, HAZOP, barrier, and report workflow |
 | [Open Drain Review with NeqSim Evidence](open_drain_review.md) | NORSOK S-001 Clause 9 review using NeqSim-calculated liquid leak rate, firewater load, density, pressure, and drain capacity plus STID/tagreader evidence |
 

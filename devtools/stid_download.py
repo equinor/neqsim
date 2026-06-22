@@ -268,15 +268,35 @@ def main():
 
     # Add specific document numbers
     if args.docs:
+        from stidapi import Doc
+
         for doc_no in args.docs:
-            if doc_no not in all_docs:
-                all_docs[doc_no] = {
-                    "docNo": doc_no,
-                    "docTitle": "(requested directly)",
-                    "docType": "",
-                    "files": [{"id": None, "fileName": doc_no + ".pdf", "blobId": ""}],
-                    "tags_referencing": [],
-                }
+            if doc_no in all_docs:
+                continue
+            # Resolve real file metadata via the Doc API so direct downloads work.
+            doc_title = "(requested directly)"
+            files = []
+            try:
+                d = Doc(inst_code=args.inst, doc_no=doc_no)
+                for f in d.get_files():
+                    files.append({
+                        "id": getattr(f, "id", None),
+                        "fileName": getattr(f, "fileName", "") or "",
+                        "blobId": getattr(f, "blobId", "") or "",
+                    })
+            except Exception as exc:  # noqa: BLE001
+                print("  [WARN] {}: could not resolve files ({})".format(
+                    doc_no, str(exc)[:80]))
+            if not files:
+                print("  [WARN] {}: no downloadable files (likely a "
+                      "spec/record with no PDF)".format(doc_no))
+            all_docs[doc_no] = {
+                "docNo": doc_no,
+                "docTitle": doc_title,
+                "docType": "",
+                "files": files,
+                "tags_referencing": [],
+            }
 
     if not all_docs:
         print("No documents to download. Provide --tags or --docs.")

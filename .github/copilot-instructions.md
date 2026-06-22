@@ -59,6 +59,29 @@ import org.apache.commons.lang3.StringUtils;
 
 ---
 
+## ⚠️ CRITICAL: Run Spotless After Editing ANY Java File (READ SECOND)
+
+**The CI runs `spotless:check` (via the pre-commit GitHub Action) and FAILS the
+build on any unformatted `.java` file.** AI-generated/edited Java is NOT
+auto-formatted — agents that hand-indent multi-line method chains or long string
+concatenations WILL produce violations (this is exactly what failed PR #2324).
+
+**Mandatory workflow after creating OR editing ANY `.java` file (main, test, or
+examples) — before committing:**
+
+```powershell
+.\mvnw.cmd spotless:apply    # reformats to the project style (Windows)
+git add <the reformatted files>
+.\mvnw.cmd spotless:check    # OPTIONAL local verify — this is what CI runs
+```
+
+- Run `spotless:apply` (NOT just `check`) to actually fix the files.
+- Do NOT rely on local pre-commit hooks being installed — run it explicitly.
+- NEVER bypass with `git commit --no-verify`.
+- This is non-negotiable: a single unformatted file fails the entire CI build.
+
+---
+
 ## Quick Commands
 
 - **Package and Update Python**: When the user says "package and update python" or similar, run these commands:

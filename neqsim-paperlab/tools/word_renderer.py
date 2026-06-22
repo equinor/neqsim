@@ -24,8 +24,13 @@ Usage:
 
 import os
 import re
+import sys
 import json
 from pathlib import Path
+
+# Ensure sibling tools (paper_renderer, etc.) are importable regardless of cwd.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from paper_renderer import normalize_figure_captions
 
 try:
     from docx import Document
@@ -54,6 +59,63 @@ except ImportError:
 
 _omml_transform = None
 _omml_available = None
+
+# MathML namespace used by latex2mathml output.
+_MATHML_NS = 'http://www.w3.org/1998/Math/MathML'
+
+# Over/under script characters that denote a math accent rather than a limit.
+# latex2mathml emits <mover>/<munder> for \dot, \hat, \bar, \tilde, \vec,
+# \ddot, etc. WITHOUT the accent="true" attribute. Without that attribute the
+# MML2OMML XSLT lowers them to m:limUpp/m:limLow (limit overscripts), which
+# Word fails to lay out when nested inside a subscripted/superscripted base or
+# a fraction — silently dropping the affected term. Marking the construct as an
+# accent makes the XSLT emit a proper m:acc element that Word renders.
+_ACCENT_CHARS = frozenset([
+    '\u02d9',  # dot above            -> \dot
+    '\u00a8',  # diaeresis            -> \ddot
+    '\u005e',  # circumflex           -> \hat
+    '\u02c6',  # modifier circumflex  -> \hat
+    '\u0302',  # combining circumflex
+    '\u00af',  # macron               -> \bar / \overline
+    '\u0304',  # combining macron
+    '\u007e',  # tilde                -> \tilde
+    '\u02dc',  # small tilde          -> \tilde
+    '\u0303',  # combining tilde
+    '\u2192',  # rightwards arrow     -> \vec
+    '\u20d7',  # combining right arrow
+    '\u0060',  # grave accent         -> \grave
+    '\u00b4',  # acute accent         -> \acute
+    '\u02c7',  # caron                -> \check
+    '\u02d8',  # breve                -> \breve
+    '\u0307',  # combining dot above
+])
+
+
+def _mark_accents(tree):
+    """Flag accent <mover>/<munder> constructs so the XSLT emits m:acc.
+
+    latex2mathml omits the ``accent="true"`` attribute for accent macros such
+    as ``\\dot``/``\\hat``/``\\bar``/``\\tilde``/``\\vec``. Without it the
+    MML2OMML transform produces a limit overscript that Word cannot render
+    inside scripts or fractions, dropping the term. This walks the parsed
+    MathML and sets ``accent="true"`` on any over/under script whose script
+    child is a single ``<mo>`` holding a known accent character.
+
+    :param tree: parsed MathML element tree (lxml element)
+    :return: the same tree, mutated in place
+    """
+    for tag in ('mover', 'munder'):
+        for node in tree.iter('{%s}%s' % (_MATHML_NS, tag)):
+            children = list(node)
+            if len(children) != 2:
+                continue
+            script = children[1]
+            if script.tag != '{%s}mo' % _MATHML_NS:
+                continue
+            if (script.text or '').strip() in _ACCENT_CHARS \
+                    and node.get('accent') != 'true':
+                node.set('accent', 'true')
+    return tree
 
 
 def _init_omml():
@@ -95,6 +157,7 @@ def latex_to_omml(latex_str):
     try:
         mathml = latex2mathml.converter.convert(latex_str)
         tree = etree.fromstring(mathml.encode('utf-8'))
+        _mark_accents(tree)
         omml = _omml_transform(tree)
         root = omml.getroot()
         # Always return <m:oMath> so it works inline inside <w:p>.
@@ -132,7 +195,9 @@ _OPERATORS = {
     r'\nabla': '\u2207', r'\pm': '\u00b1', r'\to': '\u2192',
     r'\rightarrow': '\u2192', r'\leftarrow': '\u2190',
     r'\sum': '\u2211', r'\prod': '\u220f', r'\in': '\u2208',
-    r'\ll': '\u226a', r'\gg': '\u226b',
+    r'\ll': '\u226a', r'\gg': '\u226b', r'\notin': '\u2209',
+    r'\forall': '\u2200', r'\exists': '\u2203', r'\subseteq': '\u2286',
+    r'\subset': '\u2282', r'\equiv': '\u2261', r'\propto': '\u221d',
 }
 
 
@@ -143,20 +208,39 @@ def latex_to_unicode(text):
     for cmd, char in _OPERATORS.items():
         text = text.replace(cmd, char)
 
-    # Clean LaTeX commands
+    # Clean LaTeX commands and math-font wrappers (keep the enclosed letters)
     text = re.sub(r'\\text\{([^}]*)\}', r'\1', text)
     text = re.sub(r'\\mathrm\{([^}]*)\}', r'\1', text)
+    text = re.sub(r'\\mathbf\{([^}]*)\}', r'\1', text)
+    text = re.sub(r'\\mathbb\{([^}]*)\}', r'\1', text)
+    text = re.sub(r'\\mathcal\{([^}]*)\}', r'\1', text)
+    text = re.sub(r'\\boldsymbol\{([^}]*)\}', r'\1', text)
     text = re.sub(r'\\textbf\{([^}]*)\}', r'\1', text)
     text = re.sub(r'\\texttt\{([^}]*)\}', r'\1', text)
     text = re.sub(r'\\textit\{([^}]*)\}', r'\1', text)
     text = re.sub(r'\\hat\{([^}]*)\}', lambda m: m.group(1) + '\u0302', text)
     text = re.sub(r'\\tilde\{([^}]*)\}', lambda m: m.group(1) + '\u0303', text)
     text = re.sub(r'\\bar\{([^}]*)\}', lambda m: m.group(1) + '\u0304', text)
-    text = re.sub(r'\\frac\{([^}]*)\}\{([^}]*)\}', r'(\1)/(\2)', text)
+    text = re.sub(r'\\dot\{([^}]*)\}', lambda m: m.group(1) + '\u0307', text)
+    text = re.sub(r'\\vec\{([^}]*)\}', lambda m: m.group(1) + '\u20d7', text)
+
+    # Spacing commands -> single space. Must run before the generic \command
+    # stripper below, which only matches letters and so would leave
+    # \, \; \: \! behind as stray backslashes.
+    text = text.replace(r'\qquad', ' ').replace(r'\quad', ' ')
+    text = text.replace(r'\,', ' ').replace(r'\;', ' ').replace(r'\:', ' ')
+    text = text.replace(r'\!', '').replace('\\ ', ' ')
+    text = text.replace(r'\left', '').replace(r'\right', '')
+
+    # Superscript/subscript markers first so that any braces nested inside a
+    # fraction's numerator/denominator are collapsed before \frac runs.
     text = re.sub(r'\^{([^}]*)}', r'^\1', text)
     text = re.sub(r'_{([^}]*)}', r'_\1', text)
+    text = re.sub(r'\\frac\{([^}]*)\}\{([^}]*)\}', r'(\1)/(\2)', text)
+
     text = re.sub(r'\\[a-zA-Z]+', '', text)
     text = text.replace('{', '').replace('}', '')
+    text = re.sub(r'[ \t]{2,}', ' ', text)
     return text.strip()
 
 
@@ -164,27 +248,112 @@ def latex_to_unicode(text):
 # Citation Handling
 # ═══════════════════════════════════════════════════════════════════════════
 
+# Private-use markers used to flag superscript citations so the Word renderer
+# can emit them as superscript runs (plain text cannot carry run formatting).
+SUPERSCRIPT_CITE_OPEN = "\uE000"
+SUPERSCRIPT_CITE_CLOSE = "\uE001"
+
+# Sentinel that protects intra-word spaces in brace-grouped corporate author
+# names (BibTeX ``{{Det Norske Veritas}}``) so they are not split into
+# given-name/surname. Restored to a normal space when rendered.
+CORPORATE_NAME_SPACE = "\uE002"
+
+# BibTeX keys may contain letters, digits and punctuation such as _ : . - / +
+# (e.g. ``DNV-OS-F101`` or ``Smith:2020``). Capture everything up to the comma.
+_BIBKEY_RE = r'@(\w+)\s*\{\s*([^,\s]+)\s*,'
+
+
 def build_citation_map(refs_bib_path):
     """Parse refs.bib and assign sequential citation numbers (alphabetical order)."""
     if not Path(refs_bib_path).exists():
         return {}
     text = Path(refs_bib_path).read_text(encoding="utf-8")
-    keys = re.findall(r'@\w+\{(\w+),', text)
+    keys = [m.group(2) for m in re.finditer(_BIBKEY_RE, text)]
     keys_sorted = sorted(set(keys), key=str.lower)
     return {k: i + 1 for i, k in enumerate(keys_sorted)}
 
 
-def resolve_citations(text, cite_map):
-    """Replace \\cite{key1, key2} with [N1, N2]."""
+def _author_year_label(author_str):
+    """Return a short author label for author-year citations.
+
+    One author -> ``Surname``; two -> ``Surname1 and Surname2``;
+    three or more -> ``Surname1 et al.``.
+    """
+    if not author_str:
+        return "Anon."
+    authors = [a.strip() for a in re.split(r'\s+and\s+', author_str) if a.strip()]
+
+    def surname(name):
+        if CORPORATE_NAME_SPACE in name:
+            return name.replace(CORPORATE_NAME_SPACE, " ").strip()
+        if "," in name:
+            return name.split(",", 1)[0].strip()
+        parts = name.split()
+        return parts[-1] if parts else name
+
+    surs = [surname(a) for a in authors]
+    if len(surs) == 1:
+        return surs[0]
+    if len(surs) == 2:
+        return "{0} and {1}".format(surs[0], surs[1])
+    return "{0} et al.".format(surs[0])
+
+
+def build_authoryear_map(refs_bib_path):
+    """Return ``{key: (author_label, year)}`` for author-year citation styles."""
+    out = {}
+    for key, _etype, fields in parse_bibtex_entries(refs_bib_path):
+        out[key] = (_author_year_label(fields.get("author", "")), fields.get("year", ""))
+    return out
+
+
+def resolve_citations(text, cite_map, style="numbered", authoryear_map=None):
+    r"""Replace ``\cite{key1, key2}`` with a journal-appropriate citation.
+
+    Supported *style* values:
+
+    - ``"numbered"`` (default): ``[1, 2]``
+    - ``"numbered_superscript"``: superscript ``1,2`` (wrapped in private-use
+      markers so the Word renderer can apply superscript run formatting)
+    - ``"authoryear"``: ``(Surname et al., Year)``
+
+    Parameters
+    ----------
+    text : str
+        Source text containing ``\cite{...}`` commands.
+    cite_map : dict
+        Mapping of citation key to sequential number.
+    style : str
+        Journal citation style (see above).
+    authoryear_map : dict, optional
+        Mapping of citation key to ``(author_label, year)`` for author-year style.
+
+    Returns
+    -------
+    str
+        Text with citations replaced.
+    """
+    authoryear_map = authoryear_map or {}
+
     def _repl(m):
-        keys = [k.strip() for k in m.group(1).split(",")]
+        keys = [k.strip() for k in m.group(1).split(",") if k.strip()]
+        if style == "authoryear":
+            parts = []
+            for k in keys:
+                label, year = authoryear_map.get(k, ("?" + k, ""))
+                parts.append("{0}, {1}".format(label, year).strip().rstrip(","))
+            return "(" + "; ".join(parts) + ")"
         nums = []
         for k in keys:
             if k in cite_map:
                 nums.append(str(cite_map[k]))
             else:
-                nums.append(f"?{k}")
-        return "[" + ", ".join(sorted(nums, key=lambda x: int(x) if x.isdigit() else 999)) + "]"
+                nums.append("?" + k)
+        nums = sorted(nums, key=lambda x: int(x) if x.isdigit() else 999)
+        if style == "numbered_superscript":
+            return SUPERSCRIPT_CITE_OPEN + ",".join(nums) + SUPERSCRIPT_CITE_CLOSE
+        return "[" + ", ".join(nums) + "]"
+
     return re.sub(r'\\cite\{([^}]+)\}', _repl, text)
 
 
@@ -254,23 +423,190 @@ def _extract_brace_value(text, start):
     return text[start + 1:], len(text)
 
 
+def _extract_quoted_value(text, start):
+    """Extract a double-quote-delimited value starting at the ``"`` at *start*.
+
+    Returns ``(value_content, end_pos)`` where *end_pos* is the index after the
+    closing quote. Brace groups inside the quotes are respected so a closing
+    quote inside ``{...}`` does not terminate the value prematurely.
+    """
+    depth = 0
+    i = start + 1
+    while i < len(text):
+        c = text[i]
+        if c == '{':
+            depth += 1
+        elif c == '}':
+            depth = max(0, depth - 1)
+        elif c == '"' and depth == 0:
+            return text[start + 1:i], i + 1
+        i += 1
+    return text[start + 1:], len(text)
+
+
+_FIELD_NAME_RE = re.compile(r'([A-Za-z][A-Za-z0-9_\-]*)\s*=\s*')
+
+
+def _parse_bibtex_fields(body):
+    """Parse the field portion of a BibTeX entry body into a dict.
+
+    Supports brace-delimited (``{...}``), quote-delimited (``"..."``) and bare
+    (``year = 1982``) field values.
+
+    Parameters
+    ----------
+    body : str
+        Entry body following the citation key (``field = value, ...``).
+
+    Returns
+    -------
+    dict
+        Lower-cased field names mapped to LaTeX-cleaned values.
+    """
+    fields = {}
+    i = 0
+    n = len(body)
+    while i < n:
+        fm = _FIELD_NAME_RE.match(body, i)
+        if not fm:
+            i += 1
+            continue
+        name = fm.group(1).lower()
+        j = fm.end()
+        if j < n and body[j] == '{':
+            value, end = _extract_brace_value(body, j)
+        elif j < n and body[j] == '"':
+            value, end = _extract_quoted_value(body, j)
+        else:
+            vm = re.compile(r'[^,\n]*').match(body, j)
+            value = vm.group(0)
+            end = vm.end()
+        if name == 'author':
+            fields[name] = _clean_author_field(value.strip())
+        else:
+            fields[name] = clean_bibtex_latex(value.strip())
+        i = end
+    return fields
+
+
+def _clean_author_field(value):
+    r"""Clean an ``author`` field while preserving corporate-author grouping.
+
+    The BibTeX convention ``author = {{Det Norske Veritas}}`` (a name wrapped in
+    an extra brace pair) marks a literal corporate name that must not be split
+    into "given name / surname". This protects such brace-wrapped segments with
+    a non-breaking-space sentinel so :func:`_author_year_label` keeps them whole,
+    then cleans the remaining LaTeX markup normally.
+
+    Parameters
+    ----------
+    value : str
+        Raw author field value (braces still present).
+
+    Returns
+    -------
+    str
+        Cleaned author string with corporate names protected.
+    """
+    def _protect(m):
+        inner = clean_bibtex_latex(m.group(1))
+        return inner.replace(' ', CORPORATE_NAME_SPACE)
+
+    protected = re.sub(r'\{([^{}]+)\}', _protect, value)
+    return clean_bibtex_latex(protected)
+
+
 def parse_bibtex_entries(refs_bib_path):
-    """Parse refs.bib into a list of (key, type, fields) tuples."""
+    """Parse refs.bib into a list of ``(key, type, fields)`` tuples.
+
+    Handles citation keys containing punctuation and field values delimited by
+    braces, double quotes, or written bare (e.g. ``year = 1982``).
+
+    Parameters
+    ----------
+    refs_bib_path : str or Path
+        Path to the ``refs.bib`` file.
+
+    Returns
+    -------
+    list
+        Alphabetically sorted list of ``(key, entry_type, fields)`` tuples.
+    """
     if not Path(refs_bib_path).exists():
         return []
     text = Path(refs_bib_path).read_text(encoding="utf-8")
     entries = []
-    for match in re.finditer(r'@(\w+)\{(\w+),\s*(.*?)\n\}', text, flags=re.DOTALL):
-        body = match.group(3)
-        fields = {}
-        # Match field_name = { ... } with brace balancing
-        for fm in re.finditer(r'(\w+)\s*=\s*\{', body):
-            field_name = fm.group(1).lower()
-            value, _ = _extract_brace_value(body, fm.end() - 1)
-            fields[field_name] = clean_bibtex_latex(value.strip())
-        entries.append((match.group(2), match.group(1), fields))
+    for em in re.finditer(_BIBKEY_RE, text):
+        etype = em.group(1).lower()
+        key = em.group(2)
+        brace_start = text.find('{', em.start())
+        if brace_start == -1:
+            continue
+        entry_body, _ = _extract_brace_value(text, brace_start)
+        # entry_body begins with "key, <fields>" — drop up to the first comma.
+        comma = entry_body.find(',')
+        field_body = entry_body[comma + 1:] if comma != -1 else ''
+        fields = _parse_bibtex_fields(field_body)
+        entries.append((key, etype, fields))
     entries.sort(key=lambda x: x[0].lower())
     return entries
+
+
+def format_bibtex_reference(num, etype, fields, numbered=True):
+    """Format a parsed BibTeX entry as a single reference string.
+
+    Produces ``[N]  Author (year). Title. Journal, volume, pages.`` (numbered
+    styles) or ``Author (year). Title. Journal, volume, pages.`` (author-year
+    style). This is the canonical reference format shared by the Word and PDF
+    renderers so the reference list is identical across all generated documents.
+
+    Parameters
+    ----------
+    num : int
+        Sequential citation number (1-based). Ignored when *numbered* is False.
+    etype : str
+        BibTeX entry type (e.g. ``article``, ``book``) — currently unused but
+        accepted so callers can pass the full parsed tuple.
+    fields : dict
+        Parsed BibTeX fields (lower-cased keys), already LaTeX-cleaned.
+    numbered : bool
+        When True, prefix the reference with ``[N]``; when False, omit the
+        number (used for author-year reference lists).
+
+    Returns
+    -------
+    str
+        The formatted reference line.
+    """
+    author = fields.get('author', 'Unknown').replace(CORPORATE_NAME_SPACE, ' ')
+    title = fields.get('title', '')
+    year = fields.get('year', '')
+    journal = fields.get('journal', '')
+    volume = fields.get('volume', '')
+    pages = fields.get('pages', '')
+    publisher = fields.get('publisher', '')
+    booktitle = fields.get('booktitle', '')
+
+    if numbered:
+        ref_parts = ['[{0}]  {1}'.format(num, author)]
+    else:
+        ref_parts = ['{0}'.format(author)]
+    if year:
+        ref_parts[-1] += ' ({0}).'.format(year)
+    if title:
+        ref_parts.append('  {0}.'.format(title))
+    if journal:
+        ref_parts.append('  {0}'.format(journal))
+        if volume:
+            ref_parts[-1] += ', {0}'.format(volume)
+        if pages:
+            ref_parts[-1] += ', {0}'.format(pages)
+        ref_parts[-1] += '.'
+    elif booktitle:
+        ref_parts.append('  In: {0}.'.format(booktitle))
+    elif publisher:
+        ref_parts.append('  {0}.'.format(publisher))
+    return ''.join(ref_parts)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -357,7 +693,9 @@ class WordRenderer:
             self.cfg["line_spacing"] = self.profile["line_spacing"]
 
         # Citations
+        self.citation_style = self.profile.get("citation_style", "numbered")
         self.cite_map = build_citation_map(self.refs_file)
+        self.authoryear_map = build_authoryear_map(self.refs_file)
 
         # Counters
         self.eq_counter = 0
@@ -453,16 +791,66 @@ class WordRenderer:
         r'|(\*\*.+?\*\*)'           # group 2: bold         **...**
         r'|(\*(?!\*).+?\*(?!\*))'   # group 3: italic       *...*
         r'|(`[^`]+`)'               # group 4: code         `...`
+        r'|(' + SUPERSCRIPT_CITE_OPEN + r'[^' + SUPERSCRIPT_CITE_CLOSE
+        + r']*' + SUPERSCRIPT_CITE_CLOSE + r')'  # group 5: superscript citation
     )
 
-    def render_rich_text(self, paragraph, text, bold_all=False):
+    @staticmethod
+    def _scale_omml_runs(omml_el, half_points):
+        """Set a font size on every math run inside an OMML element.
+
+        Inline ``$math$`` inside a table cell otherwise renders at the document
+        default size, which looks oversized next to the smaller table font. This
+        walks each ``<m:r>`` run and sets ``<w:sz>``/``<w:szCs>`` so the equation
+        matches the surrounding cell text.
+
+        Parameters
+        ----------
+        omml_el : lxml.etree._Element
+            The ``<m:oMath>`` element to resize (modified in place).
+        half_points : int
+            Desired font size expressed in half-points (e.g. ``18`` for 9 pt).
+        """
+        try:
+            m_ns = 'http://schemas.openxmlformats.org/officeDocument/2006/math'
+            w_ns = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'
+            val = str(int(half_points))
+            for run in omml_el.iter('{%s}r' % m_ns):
+                wrpr = run.find('{%s}rPr' % w_ns)
+                if wrpr is None:
+                    wrpr = etree.SubElement(run, '{%s}rPr' % w_ns)
+                    # Move the new w:rPr to the front (before m:t) for schema order
+                    run.remove(wrpr)
+                    run.insert(0, wrpr)
+                for tag in ('sz', 'szCs'):
+                    el = wrpr.find('{%s}%s' % (w_ns, tag))
+                    if el is None:
+                        el = etree.SubElement(wrpr, '{%s}%s' % (w_ns, tag))
+                    el.set('{%s}val' % w_ns, val)
+        except Exception:
+            pass
+
+    def render_rich_text(self, paragraph, text, bold_all=False, math_half_points=None):
         """Render text with inline $math$, **bold**, *italic*, `code` into paragraph.
 
         Uses a single-pass tokenizer so that ``*`` inside ``$math$`` is never
         misinterpreted as markdown bold or italic.
+
+        Parameters
+        ----------
+        paragraph : docx.text.paragraph.Paragraph
+            Target paragraph to append runs to.
+        text : str
+            Markdown-flavoured inline text.
+        bold_all : bool, optional
+            When ``True`` every run is bolded (table header cells).
+        math_half_points : int, optional
+            When set, inline ``$math$`` runs are scaled to this font size in
+            half-points so equations match a smaller table font.
         """
         # Resolve citations first
-        text = resolve_citations(text, self.cite_map)
+        text = resolve_citations(text, self.cite_map, self.citation_style,
+                                 self.authoryear_map)
         # Join continuation lines (single newline → space)
         text = re.sub(r'\n(?!\n)', ' ', text)
 
@@ -480,6 +868,8 @@ class WordRenderer:
                 latex = m.group(1)[1:-1]
                 omml = latex_to_omml(latex) if self.has_omml else None
                 if omml is not None:
+                    if math_half_points is not None:
+                        self._scale_omml_runs(omml, math_half_points)
                     paragraph._element.append(omml)
                 else:
                     math_text = self._safe_text(latex_to_unicode(latex))
@@ -497,6 +887,12 @@ class WordRenderer:
                 run.font.name = self.get("font_code")
                 run.font.size = Pt(self.get("font_size_body") - 1)
                 run.font.color.rgb = RGBColor(0x33, 0x33, 0x99)
+                if bold_all:
+                    run.bold = True
+            elif m.group(5):     # superscript citation ⟨N,M⟩
+                digits = m.group(5)[1:-1]
+                run = paragraph.add_run(self._safe_text(digits))
+                run.font.superscript = True
                 if bold_all:
                     run.bold = True
 
@@ -557,6 +953,7 @@ class WordRenderer:
         table.style = 'Table Grid'
 
         font_sz = Pt(self.get("font_size_table"))
+        math_hp = int(round(self.get("font_size_table") * 2))
 
         # Header row
         for j, h in enumerate(headers):
@@ -566,7 +963,7 @@ class WordRenderer:
             p.alignment = WD_ALIGN_PARAGRAPH.CENTER
             p.paragraph_format.space_before = Pt(2)
             p.paragraph_format.space_after = Pt(2)
-            self.render_rich_text(p, h, bold_all=True)
+            self.render_rich_text(p, h, bold_all=True, math_half_points=math_hp)
             for run in p.runs:
                 run.font.size = font_sz
             self._set_cell_shading(cell, self.get("table_header_fill"))
@@ -583,7 +980,7 @@ class WordRenderer:
                 p.alignment = WD_ALIGN_PARAGRAPH.CENTER if j > 0 else WD_ALIGN_PARAGRAPH.LEFT
                 p.paragraph_format.space_before = Pt(2)
                 p.paragraph_format.space_after = Pt(2)
-                self.render_rich_text(p, cell_text)
+                self.render_rich_text(p, cell_text, math_half_points=math_hp)
                 for run in p.runs:
                     run.font.size = font_sz
                 if i == n_rows - 1:
@@ -697,12 +1094,16 @@ class WordRenderer:
     def add_reference_list(self, md_content=None):
         """Generate formatted reference list.
 
-        If md_content contains pre-numbered references (e.g. [1] Author...),
-        use those directly to preserve the paper.md ordering. Otherwise
-        fall back to generating from refs.bib (alphabetical order).
+        For numbered citation styles, pre-numbered references in paper.md
+        (e.g. ``[1] Author...``) are used directly to preserve ordering;
+        otherwise the list is generated from refs.bib (alphabetical order).
+        For the author-year style the list is always regenerated unnumbered
+        and alphabetical, since author-year journals do not number references.
         """
-        # Check if paper.md already has numbered references
-        if md_content:
+        authoryear = self.citation_style == "authoryear"
+
+        # Check if paper.md already has numbered references (numbered styles only)
+        if md_content and not authoryear:
             ref_lines = [l.strip() for l in md_content.split('\n') if l.strip()]
             numbered = [l for l in ref_lines if re.match(r'^\[\d+\]', l)]
             if len(numbered) >= 3:  # at least 3 numbered refs → use paper.md order
@@ -723,33 +1124,8 @@ class WordRenderer:
         entries = parse_bibtex_entries(self.refs_file)
         for idx, (key, etype, fields) in enumerate(entries):
             num = idx + 1
-            author = fields.get('author', 'Unknown')
-            title = fields.get('title', '')
-            year = fields.get('year', '')
-            journal = fields.get('journal', '')
-            volume = fields.get('volume', '')
-            pages = fields.get('pages', '')
-            publisher = fields.get('publisher', '')
-            booktitle = fields.get('booktitle', '')
-
-            ref_parts = [f'[{num}]  {author}']
-            if year:
-                ref_parts[-1] += f' ({year}).'
-            if title:
-                ref_parts.append(f'  {title}.')
-            if journal:
-                ref_parts.append(f'  {journal}')
-                if volume:
-                    ref_parts[-1] += f', {volume}'
-                if pages:
-                    ref_parts[-1] += f', {pages}'
-                ref_parts[-1] += '.'
-            elif booktitle:
-                ref_parts.append(f'  In: {booktitle}.')
-            elif publisher:
-                ref_parts.append(f'  {publisher}.')
-
-            ref_text = ''.join(ref_parts)
+            ref_text = format_bibtex_reference(num, etype, fields,
+                                               numbered=not authoryear)
 
             p = self.doc.add_paragraph()
             p.paragraph_format.left_indent = Inches(0.4)
@@ -973,6 +1349,7 @@ class WordRenderer:
         Returns the Document object. Call .save() on it or use render_word_document().
         """
         raw_md = (self.paper_dir / "paper.md").read_text(encoding="utf-8")
+        raw_md = normalize_figure_captions(raw_md)
         paper_md = strip_comments(raw_md)
         sections = parse_sections(paper_md)
 
@@ -1126,11 +1503,11 @@ def render_word_document(paper_dir, journal_profile=None, output_dir=None):
     # Post-render validation
     issues = validate_word_output(out_path, paper_dir, journal_profile)
     if issues:
-        print("\n  ⚠ POST-RENDER VALIDATION ISSUES:")
+        print("\n  [!!] POST-RENDER VALIDATION ISSUES:")
         for issue in issues:
             print(f"    [{issue['severity']}] {issue['message']}")
     else:
-        print("  ✓ Post-render validation: all checks passed")
+        print("  [OK] Post-render validation: all checks passed")
 
     return out_path
 

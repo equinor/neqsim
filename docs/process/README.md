@@ -53,6 +53,7 @@ This documentation is organized into the following sections:
 | [water_hammer_implementation.md](../wiki/water_hammer_implementation.md) | **Water hammer/liquid hammer screening** — fast valve closure, pump trip, STID route, tagreader event, and MCP runWaterHammer workflow |
 | [operational_evidence_package.md](operational_evidence_package) | **Operational evidence package** — combine P&ID/STID references, tagreader values, scenario actions, and bottleneck detection |
 | [exergy-analysis.md](exergy-analysis) | **Exergy analysis** — plant-wide destruction hotspots for ProcessSystem and ProcessModel |
+| [production-allocation.md](production-allocation) | **Production allocation** — back-allocate metered production to wells/sources via a linear recovery-factor proxy network (handles recycle/reflux) |
 
 ### Process Design Guide
 

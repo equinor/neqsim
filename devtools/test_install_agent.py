@@ -558,5 +558,107 @@ def json_load(path):
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
 
+class AgentVsCodeExportTest(unittest.TestCase):
+    """Tests for the --vscode export of installed agents."""
+
+    def test_vscode_user_dir_is_platform_specific(self):
+        """The user dir resolves to a Code/User path for the platform."""
+        result = install_agent._vscode_user_dir()
+        self.assertEqual("User", result.name)
+        self.assertEqual("Code", result.parent.name)
+
+    def test_resolve_vscode_agents_dir_user_scope(self):
+        """User scope targets the global prompts folder."""
+        result = install_agent.resolve_vscode_agents_dir(scope="user")
+        self.assertEqual("prompts", result.name)
+
+    def test_resolve_vscode_agents_dir_prefers_explicit(self):
+        """An explicit directory overrides scope/env detection."""
+        result = install_agent.resolve_vscode_agents_dir(
+            scope="user", explicit_dir="custom/agents")
+        self.assertEqual(
+            Path("custom/agents").expanduser().resolve(), result)
+
+    def test_resolve_vscode_agents_dir_uses_env(self):
+        """NEQSIM_VSCODE_AGENTS_DIR is honoured when no explicit dir is given."""
+        with mock.patch.dict(os.environ, {"NEQSIM_VSCODE_AGENTS_DIR": "env/agents"}):
+            result = install_agent.resolve_vscode_agents_dir(scope="user")
+        self.assertEqual(Path("env/agents").expanduser().resolve(), result)
+
+    def test_resolve_vscode_agents_dir_workspace_scope(self):
+        """Workspace scope targets <workspace>/.github/agents."""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / ".github").mkdir()
+            with mock.patch.object(install_agent.install_skill,
+                                   "find_workspace_root", return_value=root):
+                result = install_agent.resolve_vscode_agents_dir(scope="workspace")
+            self.assertEqual((root / ".github" / "agents").resolve(),
+                             result.resolve())
+
+    def test_export_agent_to_vscode_renames_to_agent_md(self):
+        """Exporting copies the main file renamed to <name>.agent.md."""
+        with tempfile.TemporaryDirectory() as tmp:
+            main_file = Path(tmp) / "AGENT.md"
+            main_file.write_text(
+                "---\nname: demo\ndescription: x\n---\n# Demo", encoding="utf-8")
+            vscode_dir = Path(tmp) / "prompts"
+
+            dest = install_agent.export_agent_to_vscode(
+                "neqsim-demo", main_file, vscode_dir)
+
+            self.assertEqual("neqsim-demo.agent.md", dest.name)
+            self.assertTrue(dest.exists())
+            self.assertIn("# Demo", dest.read_text(encoding="utf-8"))
+
+    def test_cmd_install_with_vscode_exports_and_remove_cleans_up(self):
+        """A --vscode install exports the agent and remove deletes the copy."""
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            source = tmp_path / "local.agent.md"
+            source.write_text(
+                "---\n"
+                "name: Local Test Agent\n"
+                "description: Local agent used by the installer tests.\n"
+                "---\n"
+                "Body.\n",
+                encoding="utf-8",
+            )
+            install_dir = tmp_path / "installed-agents"
+            manifest_file = install_dir / "installed.json"
+            vscode_dir = tmp_path / "prompts"
+            catalog = [{
+                "name": "local-test-agent",
+                "description": "Local test agent",
+                "author": "tests",
+                "source": "local",
+                "path": str(source),
+                "_source": "private",
+                "required_skills": [],
+            }]
+
+            with mock.patch.object(install_agent, "INSTALL_DIR", install_dir), \
+                    mock.patch.object(install_agent, "MANIFEST_FILE", manifest_file):
+                args = argparse.Namespace(
+                    name="local-test-agent",
+                    force=False,
+                    install_missing_skills=False,
+                    vscode=True,
+                    vscode_scope="user",
+                    vscode_dir=str(vscode_dir),
+                )
+                install_agent.cmd_install(catalog, args)
+                manifest = json_load(manifest_file)
+                exported = vscode_dir / "local-test-agent.agent.md"
+                self.assertTrue(exported.exists())
+                self.assertEqual(
+                    str(exported),
+                    manifest["local-test-agent"]["vscode_path"])
+
+                remove_args = argparse.Namespace(name="local-test-agent")
+                install_agent.cmd_remove(catalog, remove_args)
+                self.assertFalse(exported.exists())
+
+
 if __name__ == "__main__":
     unittest.main()

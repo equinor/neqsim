@@ -174,6 +174,67 @@ Compare against acceptance criteria:
 | NORSOK FAR       | 10 fatalities / 10⁸ h    | NORSOK S-001        |
 | Public 1 % fatal | 35 m typical for 12.5 kW/m² | API 752         |
 
+## Method 9 — Flare Flame Radiation & Noise (API 537)
+
+```java
+import neqsim.process.safety.fire.Api537FlareFlameModel;
+
+Api537FlareFlameModel flame = new Api537FlareFlameModel(
+        50.0, 50.0e6, 0.20, 200.0)   // mDot[kg/s], HoC[J/kg], radiantFrac, vExit[m/s]
+    .setStackHeightM(40.0)
+    .setWindSpeedMPerS(10.0);
+
+double r473 = flame.sterileZoneRadiusM(Api537FlareFlameModel.FLUX_4_73_KW); // property line
+double q75  = flame.heatFluxAtGroundDistance(75.0);  // W/m²
+double spl  = flame.soundPressureLevelDb(100.0);     // dB at 100 m
+```
+
+Use this instead of the point-source jet-fire form when the source is an elevated
+flare tip (it accounts for stack height, wind tilt, and flame geometry).
+
+## Method 10 — Hazardous-Area Zone Classification (IEC 60079-10-1)
+
+```java
+import neqsim.process.safety.dispersion.HazardousAreaCalculator;
+import neqsim.process.safety.dispersion.HazardousAreaCalculator.ReleaseGrade;
+
+HazardousAreaCalculator calc = new HazardousAreaCalculator(
+        0.1,      // release mass flow [kg/s]
+        6.0,      // process pressure [bara]
+        340.0,    // temperature [K]
+        0.044,    // LFL [volume fraction]
+        0.01604)  // molar mass [kg/mol]
+    .setReleaseGrade(ReleaseGrade.SECONDARY)  // CONTINUOUS / PRIMARY / SECONDARY
+    .setSafetyFactor(0.5);
+
+double dHaz = calc.hazardousDistanceM();
+String zone = calc.zoneClassification();   // "Zone 0" / "Zone 1" / "Zone 2"
+```
+
+Maps the dispersion result to an Ex zone for electrical-equipment selection.
+CONTINUOUS → Zone 0, PRIMARY → Zone 1, SECONDARY → Zone 2.
+
+## Method 11 — Passive Fire Protection (PFP) Demand (API 521 / NORSOK S-001)
+
+```java
+import neqsim.process.safety.fire.PfpDemandCalculator;
+import neqsim.process.safety.fire.PfpDemandCalculator.FireType;
+import neqsim.process.safety.fire.PfpDemandCalculator.PfpDemandResult;
+
+PfpDemandResult pfp = new PfpDemandCalculator(
+        100.0e3,   // fire heat flux [W/m²] (pool ~100 kW/m², jet ~250+ kW/m²)
+        0.012)     // wall thickness [m]
+    .setFireType(FireType.POOL)               // POOL / JET
+    .evaluate(3600.0);                        // required survival time [s]
+
+boolean need = pfp.isPfpRequired();
+double thkMm = pfp.getRequiredPfpThicknessMm();
+PfpDemandResult.PfpRating rating = pfp.getRating(); // NONE / H60 / J120 ...
+```
+
+Determines whether unprotected steel reaches its critical temperature before the
+required survival time, and if so the intumescent thickness and H/J rating.
+
 ## Source Term for External CFD
 
 `ConsequenceAnalysisEngine.exportSourceTerm()` writes a JSON block usable by
@@ -200,7 +261,7 @@ duration and chemistry — the standard handoff format described in
 tests for every model. Run:
 
 ```bash
-./mvnw test -Dtest=FireModelsTest,GaussianPlumeTest,ProbitModelTest,ConsequenceAnalysisEngineTest
+./mvnw test -Dtest=FireModelsTest,GaussianPlumeTest,ProbitModelTest,ConsequenceAnalysisEngineTest,Api537FlareFlameModelTest,HazardousAreaCalculatorTest,PfpDemandCalculatorTest
 ```
 
 ## See Also

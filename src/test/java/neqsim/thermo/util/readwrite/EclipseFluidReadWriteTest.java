@@ -282,7 +282,7 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     testSystem.setTemperature(30.0, "C");
     testOps.TPflash();
 
-    testSystem.prettyPrint();
+    // testSystem.prettyPrint();
     Assertions.assertEquals(3, testSystem.getNumberOfPhases());
   }
 
@@ -305,7 +305,7 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     testSystem.setMultiPhaseCheck(true);
     testOps.TPflash();
 
-    testSystem.prettyPrint();
+    // testSystem.prettyPrint();
 
     // Create stream and three-phase separator
     Stream stream1 = new Stream("Stream1", testSystem);
@@ -431,7 +431,7 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
       Assertions.assertEquals(0.8,
 	  stream1.getFluid().getPhase("gas").getCorrectedVolume() / stream1.getFluid().getCorrectedVolume(), 0.01);
     }
-    stream1.getFluid().prettyPrint();
+    // stream1.getFluid().prettyPrint();
   }
 
   @Test

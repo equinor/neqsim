@@ -483,6 +483,9 @@ neqsim agent info neqsim-example-agent
 # Install an agent definition to ~/.neqsim/agents/
 neqsim agent install neqsim-example-agent
 
+# Install every agent in the catalog at once
+neqsim agent install --all
+
 # Optionally install missing required skills that are present in skill catalogs
 neqsim agent install neqsim-example-agent --install-missing-skills
 

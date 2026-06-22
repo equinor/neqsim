@@ -120,6 +120,35 @@ API 521 §6.4 radiation criteria:
 | Property line / 2-min escape       | 4.73                        |
 | Solar background                   | ~1.0 (subtract from above)  |
 
+### Pattern 5b — Detailed Flare Flame & Sterile-Zone (API 537)
+
+For sterile-zone radii, wind-tilted flame geometry, and flare noise, use
+`Api537FlareFlameModel` (Kent 1968 flame length + tilt + iso-flux solver):
+
+```java
+import neqsim.process.safety.fire.Api537FlareFlameModel;
+
+Api537FlareFlameModel flame = new Api537FlareFlameModel(
+        50.0,      // relief mass flow [kg/s]
+        50.0e6,    // heat of combustion [J/kg]
+        0.20,      // radiant fraction
+        200.0)     // tip exit velocity [m/s]
+    .setStackHeightM(40.0)
+    .setWindSpeedMPerS(10.0);
+
+double lFlame = flame.flameLengthM();
+double tilt   = flame.flameTiltRad();
+double r158   = flame.sterileZoneRadiusM(Api537FlareFlameModel.FLUX_1_58_KW); // ~personnel continuous
+double r473   = flame.sterileZoneRadiusM(Api537FlareFlameModel.FLUX_4_73_KW); // property line
+double r946   = flame.sterileZoneRadiusM(Api537FlareFlameModel.FLUX_9_46_KW); // emergency-only
+double q75    = flame.heatFluxAtGroundDistance(75.0);  // W/m²
+double pwl    = flame.soundPowerLevelDb();
+double spl    = flame.soundPressureLevelDb(100.0);
+```
+
+Verified by `Api537FlareFlameModelTest`. Radii are nested (lower flux reaches
+further); flame tilts downwind and the tip moves horizontally with wind speed.
+
 ## Pattern 6 — Plant Load Summation
 
 For each contingency (general power failure, total reflux failure, fire zone):
@@ -134,6 +163,12 @@ double totalReliefLoad = psvs.stream()
     .mapToDouble(p -> p.getMassFlowCapacity())
     .sum();
 ```
+
+For **simultaneous blowdown** contingencies (multiple BDVs into one header), use
+`MultiVesselBlowdownStudy` (see `neqsim-depressurization-mdmt`) — it superimposes
+the transient blowdown curves on a common time grid and reports the **peak**
+combined header mass flow and the header Mach at that instant, which is the load
+that actually sizes the header.
 
 ## Pattern 7 — Header Back-Pressure & Mach
 
@@ -186,6 +221,8 @@ FlareDispersionSurrogateDTO disp = flare.getDispersionSurrogate();
 
 - [`neqsim-process-safety`](../neqsim-process-safety/SKILL.md) — when PSV is the IPL of last resort in LOPA
 - [`neqsim-trapped-liquid-fire-rupture`](../neqsim-trapped-liquid-fire-rupture/SKILL.md) — blocked-in liquid fire rupture screening before thermal relief/PFP decisions
+- [`neqsim-depressurization-mdmt`](../neqsim-depressurization-mdmt/SKILL.md) — blowdown transients + `MultiVesselBlowdownStudy` for coupled header loads
+- [`neqsim-consequence-analysis`](../neqsim-consequence-analysis/SKILL.md) — `Api537FlareFlameModel` radiation/noise and hazardous-area zoning
 - [`neqsim-dynamic-simulation`](../neqsim-dynamic-simulation/SKILL.md) — depressurization (blowdown) is separate from PSV
 - [`neqsim-mechanical-design`](../neqsim-api-patterns/SKILL.md) — PSV mechanical via `SafetyValveMechanicalDesign`
 - [`neqsim-standards-lookup`](../neqsim-standards-lookup/SKILL.md) — API 520 / 521 / 526 / 537

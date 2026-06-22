@@ -6,6 +6,7 @@ Usage:
     neqsim agent list --private
     neqsim agent search <query>
     neqsim agent install <name>
+    neqsim agent install --all
     neqsim agent installed
     neqsim agent remove <name>
     neqsim agent info <name>
@@ -64,11 +65,16 @@ ALLOWED_MANIFEST_FIELDS = set([
     "required_skills",
     "skills",
     "supported_domains",
+    "coordinated_agents",
+    "referenced_skills",
+    "reviewed_skill_outputs",
     "inputs",
     "outputs",
     "requires_mcp_tools",
     "human_review_required",
     "trust_level",
+    "agent_type",
+    "status",
     "tags",
     "author",
     "license",
@@ -82,6 +88,9 @@ LIST_MANIFEST_FIELDS = set([
     "required_skills",
     "skills",
     "supported_domains",
+    "coordinated_agents",
+    "referenced_skills",
+    "reviewed_skill_outputs",
     "inputs",
     "outputs",
     "requires_mcp_tools",
@@ -479,7 +488,7 @@ def _clean_required_skill_name(skill):
     cleaned = skill.strip().strip("`").lstrip("@").rstrip(".")
     if not cleaned:
         return ""
-    return re.split(r"\s+", cleaned, 1)[0].strip("`").rstrip(".")
+    return re.split(r"\s+", cleaned, maxsplit=1)[0].strip("`").rstrip(".")
 
 
 def _extract_required_skills(content, metadata=None):
@@ -682,6 +691,96 @@ def save_manifest(manifest):
     """Save the installed-agents manifest."""
     MANIFEST_FILE.parent.mkdir(parents=True, exist_ok=True)
     MANIFEST_FILE.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+
+
+# ── VS Code export ─────────────────────────────────────────────────────
+
+def _vscode_user_dir():
+    """Return the VS Code stable User config directory for this platform.
+
+    @return the platform-specific VS Code User directory Path
+    """
+    if sys.platform.startswith("win"):
+        appdata = os.environ.get("APPDATA", "")
+        base = Path(appdata) if appdata else Path.home() / "AppData" / "Roaming"
+        return base / "Code" / "User"
+    if sys.platform == "darwin":
+        return Path.home() / "Library" / "Application Support" / "Code" / "User"
+    return Path.home() / ".config" / "Code" / "User"
+
+
+def resolve_vscode_agents_dir(scope="user", explicit_dir=None):
+    """Resolve the VS Code agents directory for --vscode export.
+
+    Resolution order: explicit dir, NEQSIM_VSCODE_AGENTS_DIR env var, then the
+    scope default. 'user' scope targets the global prompts folder (available in
+    every workspace); 'workspace' scope targets <workspace>/.github/agents.
+
+    @param scope 'user' (default) for the global prompts folder, or 'workspace'
+    @param explicit_dir an explicit target directory (overrides detection)
+    @return the resolved agents directory Path, or None when none can be found
+    """
+    if explicit_dir:
+        return Path(explicit_dir).expanduser().resolve()
+    env_dir = os.environ.get("NEQSIM_VSCODE_AGENTS_DIR", "")
+    if env_dir:
+        return Path(env_dir).expanduser().resolve()
+    if scope == "workspace":
+        root = install_skill.find_workspace_root()
+        if root is None:
+            return None
+        return root / ".github" / "agents"
+    return _vscode_user_dir() / "prompts"
+
+
+def export_agent_to_vscode(name, main_file, vscode_dir):
+    """Copy an installed agent's main definition into a VS Code agents dir.
+
+    VS Code discovers agents from *.agent.md files, so the main definition is
+    copied and renamed to <name>.agent.md.
+
+    @param name the agent name (used for the destination filename)
+    @param main_file the installed agent's main markdown definition
+    @param vscode_dir the VS Code agents directory to export into
+    @return the destination *.agent.md Path
+    """
+    vscode_dir = Path(vscode_dir)
+    vscode_dir.mkdir(parents=True, exist_ok=True)
+    dest = vscode_dir / "{name}.agent.md".format(name=name)
+    shutil.copy2(str(main_file), str(dest))
+    return dest
+
+
+def _export_installed_agent_to_vscode(name, main_file, args, manifest):
+    """Export a freshly installed agent into the VS Code agents directory.
+
+    @param name the installed agent name
+    @param main_file the installed agent's main markdown definition path
+    @param args parsed CLI arguments (reads vscode_scope, vscode_dir)
+    @param manifest the installed-agents manifest, updated with vscode_path
+    @return None
+    """
+    if not main_file or not Path(main_file).exists():
+        print("  [!!] VS Code export skipped: agent main file not found.")
+        return
+    scope = getattr(args, "vscode_scope", "user")
+    vscode_dir = resolve_vscode_agents_dir(
+        scope, getattr(args, "vscode_dir", None))
+    if vscode_dir is None:
+        print("  [!!] Could not locate a VS Code workspace for --vscode export.")
+        print("       Use --vscode-scope user (default), run inside a workspace,")
+        print("       set NEQSIM_VSCODE_AGENTS_DIR, or pass --vscode-dir <path>.")
+        return
+    try:
+        dest = export_agent_to_vscode(name, main_file, vscode_dir)
+    except Exception as exc:
+        print("  [!!] VS Code export failed: {exc}".format(exc=exc))
+        return
+    manifest[name]["vscode_path"] = str(dest)
+    save_manifest(manifest)
+    print("  [OK] Exported to VS Code agents ({scope}): {dest}".format(
+        scope=scope, dest=dest))
+    print("       Reload VS Code (Developer: Reload Window) to pick it up.")
 
 
 def _validate_safe_name(name):
@@ -1157,8 +1256,16 @@ def _install_from_github(agent, dest_dir):
 
 
 def cmd_install(agents, args):
-    """Install an agent from the catalog."""
+    """Install an agent (or every agent) from the catalog."""
+    if getattr(args, "all", False) or args.name == "*":
+        _install_all_agents(agents, args)
+        return
+
     name = args.name
+    if not name:
+        print("\n  Specify an agent name, or use --all to install every agent.")
+        print("  Run: neqsim agent list\n")
+        sys.exit(1)
     _validate_safe_name(name)
     agent = next((item for item in agents if item.get("name") == name), None)
     if not agent:
@@ -1167,12 +1274,63 @@ def cmd_install(agents, args):
         sys.exit(1)
 
     manifest = load_manifest()
+    if not _install_agent_record(agent, args, manifest):
+        sys.exit(1)
+
+
+def _install_all_agents(agents, args):
+    """Install every catalog agent, continuing past individual failures."""
+    seen = set()
+    unique = []
+    for agent in agents:
+        name = agent.get("name", "")
+        if not name or name in seen:
+            continue
+        seen.add(name)
+        unique.append(agent)
+
+    total = len(unique)
+    print("\n  Installing {total} agent(s) from the catalog...\n".format(total=total))
+    manifest = load_manifest()
+    installed = []
+    failed = []
+    for index, agent in enumerate(unique, start=1):
+        name = agent.get("name", "")
+        print("  [{index}/{total}] {name}".format(
+            index=index, total=total, name=name))
+        try:
+            _validate_safe_name(name)
+        except SystemExit:
+            failed.append(name)
+            continue
+        if _install_agent_record(agent, args, manifest):
+            installed.append(name)
+        else:
+            failed.append(name)
+
+    print("\n  ==== Install summary ====")
+    print("  Installed/OK: {count}".format(count=len(installed)))
+    print("  Failed: {count}".format(count=len(failed)))
+    if failed:
+        print("  Failed agents: {names}".format(names=", ".join(failed)))
+        sys.exit(1)
+
+
+def _install_agent_record(agent, args, manifest):
+    """Install a single resolved agent record.
+
+    @param agent the resolved catalog agent mapping to install
+    @param args the parsed CLI arguments (force, install_missing_skills)
+    @param manifest the loaded installed-agents manifest, updated in place
+    @return True if the agent is installed (or already present), False on failure
+    """
+    name = agent.get("name", "")
     if name in manifest and not args.force:
         print("\n  Agent '{name}' already installed at {path}".format(
             name=name, path=manifest[name]["path"]
         ))
         print("  Use --force to reinstall.\n")
-        return
+        return True
 
     source_type = agent.get("source", "github")
     dest_dir = INSTALL_DIR / name
@@ -1184,7 +1342,7 @@ def cmd_install(agents, args):
                 path=source_path
             ))
             print("  Move the source package outside ~/.neqsim/agents/ and retry.\n")
-            sys.exit(1)
+            return False
     if dest_dir.exists():
         shutil.rmtree(str(dest_dir))
     dest_dir.mkdir(parents=True, exist_ok=True)
@@ -1206,7 +1364,7 @@ def cmd_install(agents, args):
             print("  [!!] Installed content is not a valid agent package:")
             for error in report["errors"]:
                 print("    - {error}".format(error=error))
-            sys.exit(1)
+            return False
 
         merge_errors, merge_warnings, merged_metadata = _merge_manifest_metadata(
             report.get("metadata", {}), agent
@@ -1216,7 +1374,7 @@ def cmd_install(agents, args):
             print("  [!!] Agent manifest metadata is invalid:")
             for error in merge_errors:
                 print("    - {error}".format(error=error))
-            sys.exit(1)
+            return False
 
         required_skills = _dedupe_strings(
             _normalize_list(merged_metadata.get("required_skills"))
@@ -1263,6 +1421,10 @@ def cmd_install(agents, args):
         print("\n  Agent tools can read the installed package from: {path}\n".format(
             path=dest_dir
         ))
+        if getattr(args, "vscode", False):
+            _export_installed_agent_to_vscode(
+                name, manifest[name].get("main_file", ""), args, manifest)
+        return True
     except Exception as exc:
         shutil.rmtree(str(dest_dir), ignore_errors=True)
         print("  [!!] Download failed: {exc}".format(exc=exc))
@@ -1270,7 +1432,8 @@ def cmd_install(agents, args):
             print("  You can manually download from: https://github.com/{repo}\n".format(
                 repo=agent.get("repo")
             ))
-        sys.exit(1)
+        return False
+
 
 
 def cmd_installed(agents, args):
@@ -1306,6 +1469,17 @@ def cmd_remove(agents, args):
     agent_dir = INSTALL_DIR / name
     if agent_dir.exists():
         shutil.rmtree(str(agent_dir))
+
+    vscode_path = manifest.get(name, {}).get("vscode_path", "")
+    if vscode_path:
+        vp = Path(vscode_path)
+        if vp.exists():
+            if vp.is_dir():
+                shutil.rmtree(str(vp), ignore_errors=True)
+            else:
+                vp.unlink()
+            print("  [OK] Removed VS Code copy: {path}".format(path=vp))
+
     del manifest[name]
     save_manifest(manifest)
     print("\n  [OK] Removed agent '{name}'.\n".format(name=name))
@@ -1392,6 +1566,8 @@ def main():
               neqsim agent search "tie-in"
               neqsim agent install neqsim-example-agent
                             neqsim agent install neqsim-example-agent --no-install-missing-skills
+              neqsim agent install neqsim-example-agent --vscode
+              neqsim agent install --all
               neqsim agent installed
               neqsim agent info neqsim-example-agent
               neqsim agent validate neqsim-example-agent
@@ -1419,7 +1595,10 @@ def main():
     p_inspect.add_argument("name", help="Agent name")
 
     p_install = sub.add_parser("install", help="Install an agent")
-    p_install.add_argument("name", help="Agent name from catalog")
+    p_install.add_argument(
+        "name", nargs="?", help="Agent name from catalog (omit when using --all)")
+    p_install.add_argument("--all", action="store_true",
+                           help="Install every agent in the catalog")
     p_install.add_argument("--force", action="store_true",
                            help="Reinstall if exists")
     p_install.set_defaults(install_missing_skills=True)
@@ -1435,6 +1614,15 @@ def main():
         action="store_true",
         help="Deprecated alias; auto-install is enabled by default",
     )
+    p_install.add_argument(
+        "--vscode", action="store_true",
+        help="Also export the agent to a VS Code agents location")
+    p_install.add_argument(
+        "--vscode-scope", choices=["user", "workspace"], default="user",
+        help="VS Code export scope: 'user' (all workspaces, default) or 'workspace'")
+    p_install.add_argument(
+        "--vscode-dir", default=None,
+        help="Explicit VS Code agents directory for --vscode export")
 
     sub.add_parser("installed", help="Show installed agents")
 

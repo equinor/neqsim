@@ -48,7 +48,7 @@ public class HydrateComprehensiveTest extends neqsim.NeqSimTest {
 
     // Check phase distribution
     ops.TPflash();
-    fluid.prettyPrint();
+    // fluid.prettyPrint();
   }
 
   /**
@@ -367,7 +367,7 @@ public class HydrateComprehensiveTest extends neqsim.NeqSimTest {
     logger.info("Number of phases: " + fluid.getNumberOfPhases());
     logger.info("Hydrate fraction: " + fluid.getHydrateFraction());
 
-    fluid.prettyPrint();
+    // fluid.prettyPrint();
 
     // Should have at least gas and aqueous phases
     assertTrue(fluid.getNumberOfPhases() >= 2, "Should have at least 2 phases");

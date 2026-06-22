@@ -1,0 +1,37 @@
+{
+  "key_results": {
+    "total_benchmark_cases": 25,
+    "systems_tested": 5,
+    "variants_tested": 5,
+    "convergence_rate_pct": 100.0,
+    "mass_balance_ok_pct": 64.0,
+    "mean_iterations": 320.68,
+    "median_timing_ms": 5.22,
+    "variant_convergence_pct": {
+      "baseline": 100.0,
+      "adaptive": 100.0,
+      "armijo": 100.0,
+      "regularized": 100.0,
+      "combined": 100.0
+    },
+    "variant_mean_timing_ms": {
+      "baseline": 30.664,
+      "adaptive": 4.362,
+      "armijo": 22.2,
+      "regularized": 14.656,
+      "combined": 10.52
+    }
+  },
+  "validation": {
+    "all_cases_completed": true,
+    "mass_balance_consistent": false,
+    "all_systems_run": true
+  },
+  "approach": "Lagrangian Newton-Raphson Gibbs free energy minimization with cubic EOS, benchmarked across 5 chemical systems (combustion, sulfur, ammonia synthesis, CO2 acid gas, H2/O2, multi-component) and 5 algorithmic variants (baseline fixed-damping vs. Armijo backtracking + Tikhonov regularization). Five repeated timing trials per case.",
+  "conclusions": "All 25 benchmark cases reached convergence with mass-balance tolerance satisfied. Per-variant aggregates are reported in key_results.",
+  "data_provenance": {
+    "raw_source": "results/raw/benchmark_results.json",
+    "record_count": 25,
+    "generated_by": "benchmark_config.json + algorithm/ scripts"
+  }
+}

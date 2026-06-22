@@ -9,15 +9,16 @@ import java.util.Collection;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import neqsim.process.dynamics.EventScheduler;
 import neqsim.process.dynamics.IntegratorStrategy;
 import neqsim.process.equipment.ProcessEquipmentInterface;
@@ -2291,17 +2292,19 @@ public class ProcessModel implements Runnable, Serializable {
     sb.append("Boundary values converged: ").append(lastBoundaryValuesConverged ? "YES" : "NO").append("\n");
     sb.append("All process areas solved: ").append(lastAllProcessesSolved ? "YES" : "NO").append("\n");
     sb.append("\nFinal Errors (relative):\n");
-    sb.append(String.format("  Flow rate:    %.2e (tolerance: %.2e) %s\n", lastMaxFlowError, flowTolerance,
+    sb.append(String.format(Locale.US, "  Flow rate:    %.2e (tolerance: %.2e) %s\n", lastMaxFlowError, flowTolerance,
 	lastMaxFlowError < flowTolerance ? "OK" : "NOT CONVERGED"));
-    sb.append(String.format("  Temperature:  %.2e (tolerance: %.2e) %s\n", lastMaxTemperatureError,
+
+    sb.append(String.format(Locale.US, "  Temperature:  %.2e (tolerance: %.2e) %s\n", lastMaxTemperatureError,
 	temperatureTolerance, lastMaxTemperatureError < temperatureTolerance ? "OK" : "NOT CONVERGED"));
-    sb.append(String.format("  Pressure:     %.2e (tolerance: %.2e) %s\n", lastMaxPressureError, pressureTolerance,
-	lastMaxPressureError < pressureTolerance ? "OK" : "NOT CONVERGED"));
+
+    sb.append(String.format(Locale.US, "  Pressure:     %.2e (tolerance: %.2e) %s\n", lastMaxPressureError,
+	pressureTolerance, lastMaxPressureError < pressureTolerance ? "OK" : "NOT CONVERGED"));
 
     sb.append("\nProcess Status:\n");
     for (Map.Entry<String, ProcessSystem> entry : processes.entrySet()) {
       boolean processSolved = entry.getValue().solved();
-      sb.append(String.format("  %-30s: %s\n", entry.getKey(), processSolved ? "SOLVED" : "NOT SOLVED"));
+      sb.append(String.format(Locale.US, "  %-30s: %s\n", entry.getKey(), processSolved ? "SOLVED" : "NOT SOLVED"));
       if (!processSolved) {
 	List<String> unsolvedUnits = getUnsolvedUnitNames(entry.getValue());
 	if (!unsolvedUnits.isEmpty()) {
@@ -2988,6 +2991,35 @@ public class ProcessModel implements Runnable, Serializable {
     }
 
     ProcessModel model = new ProcessModel();
+    applyModelSettings(model, root);
+    com.google.gson.JsonObject areas = root.getAsJsonObject("areas");
+
+    for (Map.Entry<String, com.google.gson.JsonElement> entry : areas.entrySet()) {
+      String areaName = entry.getKey();
+      String areaJson = entry.getValue().toString();
+      SimulationResult result = new JsonProcessBuilder().build(areaJson);
+      if (result.isSuccess()) {
+	model.add(areaName, result.getProcessSystem());
+      } else {
+	logger.warn("Failed to build area '{}': {}", areaName, result);
+      }
+    }
+    if (root.has(INTER_AREA_LINKS_KEY) && root.get(INTER_AREA_LINKS_KEY).isJsonArray()) {
+      List<String> warnings = model.applyInterAreaLinks(root.getAsJsonArray(INTER_AREA_LINKS_KEY));
+      for (String warning : warnings) {
+	logger.warn(warning);
+      }
+    }
+    return model;
+  }
+
+  /**
+   * Applies model-level execution settings from the root JSON object onto a ProcessModel.
+   *
+   * @param model the model to configure
+   * @param root the root JSON object that may contain settings keys
+   */
+  private static void applyModelSettings(ProcessModel model, com.google.gson.JsonObject root) {
     if (root.has("runStep")) {
       model.setRunStep(root.get("runStep").getAsBoolean());
     }
@@ -3024,25 +3056,130 @@ public class ProcessModel implements Runnable, Serializable {
     if (root.has("useFlashWarmStart")) {
       model.setUseFlashWarmStart(root.get("useFlashWarmStart").getAsBoolean());
     }
+  }
+
+  /**
+   * Builds a multi-area ProcessModel from JSON, returning a structured, never-throwing result.
+   *
+   * <p>
+   * This is the agent-friendly counterpart to {@link #fromJson(String)}. Where {@code fromJson} only logs per-area
+   * build failures, this method captures each area's {@link SimulationResult}, the names of areas that failed to build,
+   * and any inter-area link warnings inside a {@link ProcessModelResult}. Invalid input (null, empty, or missing the
+   * {@code "areas"} key) yields an error result rather than a thrown exception, so an automated pipeline that builds a
+   * plant from extracted JSON can degrade gracefully.
+   * </p>
+   *
+   * <p>
+   * The expected JSON format is identical to {@link #fromJson(String)}: an {@code "areas"} object whose values are
+   * individual process definitions (as understood by {@link JsonProcessBuilder}), plus an optional
+   * {@code "interAreaLinks"} array.
+   * </p>
+   *
+   * @param json the JSON string with the {@code "areas"} structure
+   * @return a structured build result; never null and never throwing
+   * @see #fromJson(String)
+   * @see #buildFromJsonAndRun(String)
+   */
+  public static ProcessModelResult buildFromJson(String json) {
+    if (json == null || json.trim().isEmpty()) {
+      return ProcessModelResult.error("EMPTY_INPUT", "JSON input is null or empty",
+	  "Provide a JSON string with an 'areas' object");
+    }
+    com.google.gson.JsonObject root;
+    try {
+      com.google.gson.JsonElement parsed = com.google.gson.JsonParser.parseString(json);
+      if (!parsed.isJsonObject()) {
+	return ProcessModelResult.error("JSON_PARSE_ERROR", "Top-level JSON is not an object",
+	    "Wrap the model definition in a JSON object with an 'areas' key");
+      }
+      root = parsed.getAsJsonObject();
+    } catch (RuntimeException ex) {
+      return ProcessModelResult.error("JSON_PARSE_ERROR", "Could not parse JSON: " + ex.getMessage(),
+	  "Verify the JSON syntax is valid");
+    }
+    if (!root.has("areas") || !root.get("areas").isJsonObject()) {
+      return ProcessModelResult.error("MISSING_AREAS", "JSON must contain an 'areas' object with named process systems",
+	  "Add an 'areas' object whose keys are area names and values are process definitions");
+    }
+
+    ProcessModel model = new ProcessModel();
+    applyModelSettings(model, root);
+
+    Map<String, SimulationResult> areaResults = new java.util.LinkedHashMap<String, SimulationResult>();
+    List<String> failedAreas = new ArrayList<String>();
+    List<String> warnings = new ArrayList<String>();
     com.google.gson.JsonObject areas = root.getAsJsonObject("areas");
 
     for (Map.Entry<String, com.google.gson.JsonElement> entry : areas.entrySet()) {
       String areaName = entry.getKey();
-      String areaJson = entry.getValue().toString();
-      SimulationResult result = new JsonProcessBuilder().build(areaJson);
-      if (result.isSuccess()) {
+      SimulationResult result;
+      try {
+	result = new JsonProcessBuilder().build(entry.getValue().toString());
+      } catch (RuntimeException ex) {
+	result = SimulationResult.error("AREA_BUILD_EXCEPTION", "Area '" + areaName + "' threw: " + ex.getMessage(),
+	    "Inspect the area definition for invalid equipment or stream references");
+      }
+      areaResults.put(areaName, result);
+      if (result.isSuccess() && result.getProcessSystem() != null) {
 	model.add(areaName, result.getProcessSystem());
       } else {
-	logger.warn("Failed to build area '{}': {}", areaName, result);
+	failedAreas.add(areaName);
+	warnings.add("Failed to build area '" + areaName + "'");
       }
     }
+
+    List<String> interAreaLinkWarnings = new ArrayList<String>();
     if (root.has(INTER_AREA_LINKS_KEY) && root.get(INTER_AREA_LINKS_KEY).isJsonArray()) {
-      List<String> warnings = model.applyInterAreaLinks(root.getAsJsonArray(INTER_AREA_LINKS_KEY));
-      for (String warning : warnings) {
-	logger.warn(warning);
+      try {
+	interAreaLinkWarnings.addAll(model.applyInterAreaLinks(root.getAsJsonArray(INTER_AREA_LINKS_KEY)));
+      } catch (RuntimeException ex) {
+	interAreaLinkWarnings.add("Could not apply inter-area links: " + ex.getMessage());
       }
     }
-    return model;
+
+    if (model.size() == 0) {
+      List<SimulationResult.ErrorDetail> errors = new ArrayList<SimulationResult.ErrorDetail>();
+      errors.add(new SimulationResult.ErrorDetail("NO_AREAS_BUILT", "No process area could be built", null,
+	  "Check the per-area errors in the result"));
+      return ProcessModelResult.failure(errors, areaResults, failedAreas, warnings);
+    }
+    return ProcessModelResult.success(model, areaResults, failedAreas, interAreaLinkWarnings, warnings, null);
+  }
+
+  /**
+   * Builds a multi-area ProcessModel from JSON and runs it, returning a structured, never-throwing result.
+   *
+   * <p>
+   * Combines {@link #buildFromJson(String)} with execution. The model is run only when at least one area built
+   * successfully. Run failures are captured as a warning plus the model's run-status JSON instead of being thrown, so
+   * an automated pipeline always receives a usable {@link ProcessModelResult}.
+   * </p>
+   *
+   * @param json the JSON string with the {@code "areas"} structure
+   * @return a structured build-and-run result; never null and never throwing
+   * @see #buildFromJson(String)
+   * @see #fromJsonAndRun(String)
+   */
+  public static ProcessModelResult buildFromJsonAndRun(String json) {
+    ProcessModelResult buildResult = buildFromJson(json);
+    if (!buildResult.isSuccess() || buildResult.getModel() == null) {
+      return buildResult;
+    }
+    ProcessModel model = buildResult.getModel();
+    List<String> warnings = new ArrayList<String>(buildResult.getWarnings());
+    String runStatusJson = null;
+    try {
+      model.run();
+    } catch (RuntimeException ex) {
+      warnings.add("Model run did not complete cleanly: " + ex.getMessage());
+    }
+    try {
+      runStatusJson = model.getRunStatusJson();
+    } catch (RuntimeException ex) {
+      warnings.add("Could not read run status: " + ex.getMessage());
+    }
+    return ProcessModelResult.success(model, buildResult.getAreaResults(), buildResult.getFailedAreas(),
+	buildResult.getInterAreaLinkWarnings(), warnings, runStatusJson);
   }
 
   /**

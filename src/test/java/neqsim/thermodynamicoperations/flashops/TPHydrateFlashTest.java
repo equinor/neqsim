@@ -90,7 +90,7 @@ public class TPHydrateFlashTest {
     assertTrue(fluid.getNumberOfPhases() >= 1);
 
     // Verify prettyPrint works with hydrate phase
-    fluid.prettyPrint();
+    // fluid.prettyPrint();
   }
 
   /**
@@ -293,7 +293,7 @@ public class TPHydrateFlashTest {
 
     // At 4°C and 100 bar, hydrate should form with this composition
     // The system should handle the multi-phase equilibrium correctly
-    fluid.prettyPrint();
+    // fluid.prettyPrint();
   }
 
   /**
@@ -325,7 +325,7 @@ public class TPHydrateFlashTest {
 
     // MEG should inhibit hydrate formation or reduce hydrate fraction
     // The exact behavior depends on the MEG concentration and model accuracy
-    fluid.prettyPrint();
+    // fluid.prettyPrint();
   }
 
   /**
@@ -393,7 +393,7 @@ public class TPHydrateFlashTest {
     assertTrue(fluid.getNumberOfPhases() >= 1);
 
     // Print results for inspection
-    fluid.prettyPrint();
+    // fluid.prettyPrint();
   }
 
   /**
@@ -495,7 +495,7 @@ public class TPHydrateFlashTest {
     assertNotNull(fluid);
 
     // At these extreme conditions (-2°C, 150 bar) with low MEG, hydrate should form
-    fluid.prettyPrint();
+    // fluid.prettyPrint();
 
     // Check for expected phases
     assertTrue(fluid.getNumberOfPhases() >= 2, "Should have multiple phases");
@@ -536,7 +536,7 @@ public class TPHydrateFlashTest {
     assertTrue(fluid.getNumberOfPhases() >= 1);
 
     // Print to see the phases
-    fluid.prettyPrint();
+    // fluid.prettyPrint();
 
     // Verify mass conservation
     double totalMolesExpected = 0.85 + 0.03 + 0.115 + 0.005;
@@ -577,7 +577,7 @@ public class TPHydrateFlashTest {
 
     // Print to see the phases
     logger.info("=== Gas-Hydrate with Trace Water ===");
-    fluid.prettyPrint();
+    // fluid.prettyPrint();
 
     // Verify hydrate forms
     assertTrue(fluid.hasHydratePhase(), "Hydrate should form at these conditions");
@@ -637,7 +637,7 @@ public class TPHydrateFlashTest {
 
     // Print to see the phases
     logger.info("=== Dry Gas with Trace Water Hydrate ===");
-    fluid.prettyPrint();
+    // fluid.prettyPrint();
 
     // Verify hydrate forms at these extreme conditions
     assertTrue(fluid.hasHydratePhase(), "Hydrate should definitely form at -10°C, 150 bar");
@@ -682,7 +682,7 @@ public class TPHydrateFlashTest {
 
     // Print to see the phases
     logger.info("=== Gas-Hydrate Equilibrium at 300 bar, -15°C, 0.5% water ===");
-    fluid.prettyPrint();
+    // fluid.prettyPrint();
 
     // Print phase information
     logger.info("Number of phases: " + fluid.getNumberOfPhases());
@@ -730,7 +730,7 @@ public class TPHydrateFlashTest {
 
     // Print to see the phases
     logger.info("=== Gas-Hydrate Equilibrium at 500 bar, -20°C, 0.1% water ===");
-    fluid.prettyPrint();
+    // fluid.prettyPrint();
 
     // Print phase information
     logger.info("Number of phases: " + fluid.getNumberOfPhases());
@@ -800,7 +800,7 @@ public class TPHydrateFlashTest {
     ops.hydrateTPflash();
 
     logger.info("\n=== After hydrate flash ===");
-    fluid.prettyPrint();
+    // fluid.prettyPrint();
 
     logger.info("Number of phases: " + fluid.getNumberOfPhases());
     for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
@@ -858,7 +858,7 @@ public class TPHydrateFlashTest {
     ops.hydrateTPflash();
 
     logger.info("\n=== After hydrate flash ===");
-    fluid.prettyPrint();
+    // fluid.prettyPrint();
 
     logger.info("Number of phases: " + fluid.getNumberOfPhases());
     for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
@@ -925,7 +925,7 @@ public class TPHydrateFlashTest {
     ops.gasHydrateTPflash();
 
     logger.info("=== Gas-Hydrate TPflash (200 ppm water at -15°C, 250 bar) ===");
-    fluid.prettyPrint();
+    // fluid.prettyPrint();
 
     // Count phase types
     boolean hasGas = false;
@@ -999,7 +999,7 @@ public class TPHydrateFlashTest {
     ops.gasHydrateTPflash();
 
     logger.info("=== Gas-Hydrate TPflash (500 ppm water at -20°C, 300 bar) ===");
-    fluid.prettyPrint();
+    // fluid.prettyPrint();
 
     // Count phase types
     boolean hasHydrate = false;
@@ -1059,7 +1059,7 @@ public class TPHydrateFlashTest {
     ops.gasHydrateTPflash();
 
     logger.info("=== Natural Gas Hydrate TPflash (1% water at -5°C, 150 bar) ===");
-    fluid.prettyPrint();
+    // fluid.prettyPrint();
 
     // Verify hydrate forms
     boolean hasHydrate = false;

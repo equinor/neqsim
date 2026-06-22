@@ -712,7 +712,7 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
     logger.info("Comprehensive offshore scenario hydrate temp: " + hydrateTemp + "°C");
 
     // Print full results
-    fluid.prettyPrint();
+    // fluid.prettyPrint();
   }
 
   /**
@@ -741,7 +741,7 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
     logger.info("Hydrate fraction at 4°C, 100 bar with electrolyte CPA: " + hydrateFraction);
 
     // Print results
-    fluid.prettyPrint();
+    // fluid.prettyPrint();
   }
 
   /**
@@ -766,7 +766,7 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
     assertTrue(fluid.getNumberOfPhases() >= 1);
 
     // Print results
-    fluid.prettyPrint();
+    // fluid.prettyPrint();
   }
 
   /**
