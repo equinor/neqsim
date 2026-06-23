@@ -31,6 +31,17 @@ basis, and acceptance criteria. Then use `neqsim.process.safety.rupture` through
 the `neqsim-trapped-liquid-fire-rupture` skill and keep missing evidence visible
 as assumptions/gaps in the report.
 
+For STID/TR2000-driven blowdown pipe-fire rupture studies, do not call
+`PipeFireRuptureStudy` as a naked solver unless the user explicitly requests a
+raw screening calculation. Build `SafetyEvidenceReference` records for STID,
+TR2000, process/depressurization, material, and fire/PFP inputs; assemble a
+`PipeFireRuptureDataSource`; run `PipeFireRuptureStudyRunner`; and report the
+returned `PipeFireRuptureStudyHandoff`. Gate outputs on
+`SafetyStudyReadiness`: `NOT_READY` blocks calculation, `SCREENING` permits a
+clearly labelled screening result, and `DESIGN_GRADE` requires reviewed
+controlled evidence. When rupture is predicted, carry the
+`pipe_fire_rupture_source_term_handoff.v1` map into consequence analysis.
+
 ## Applicable Standards (MANDATORY)
 
 Safety analyses are inherently standards-driven. Always identify and apply:
