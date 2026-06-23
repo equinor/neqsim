@@ -10,8 +10,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
- * Tests for CO2CorrosionAnalyzer — coupled electrolyte CPA flash and de Waard-Milliams corrosion
- * model.
+ * Tests for CO2CorrosionAnalyzer — coupled electrolyte CPA flash and de Waard-Milliams corrosion model.
  */
 public class CO2CorrosionAnalyzerTest {
   @Tag("slow")
@@ -24,8 +23,7 @@ public class CO2CorrosionAnalyzerTest {
 
     assertTrue(analyzer.isFreeWaterPresent(), "Free water should be present");
     double pH = analyzer.getAqueousPH();
-    assertTrue(pH > 2.5 && pH < 5.5,
-        "pH should be in range 2.5-5.5 for CO2-saturated water, got " + pH);
+    assertTrue(pH > 2.5 && pH < 5.5, "pH should be in range 2.5-5.5 for CO2-saturated water, got " + pH);
 
     double corrosionRate = analyzer.getCorrosionRate();
     assertTrue(corrosionRate > 0, "Corrosion rate should be positive: " + corrosionRate);
@@ -79,7 +77,7 @@ public class CO2CorrosionAnalyzerTest {
     analyzerHigh.run();
 
     assertTrue(analyzerHigh.getBaselineCorrosionRate() > analyzerLow.getBaselineCorrosionRate(),
-        "Baseline rate at 70°C should exceed 30°C");
+	"Baseline rate at 70°C should exceed 30°C");
   }
 
   @Test
@@ -98,8 +96,7 @@ public class CO2CorrosionAnalyzerTest {
       assertTrue(T > prevT, "Temperature should increase");
       prevT = T;
 
-      assertTrue(((Double) point.get("corrosionRate_mmyr")) >= 0,
-          "Corrosion rate should be non-negative");
+      assertTrue(((Double) point.get("corrosionRate_mmyr")) >= 0, "Corrosion rate should be non-negative");
     }
   }
 
@@ -196,6 +193,6 @@ public class CO2CorrosionAnalyzerTest {
     withInhibitor.run();
 
     assertTrue(withInhibitor.getCorrosionRate() < noInhibitor.getCorrosionRate(),
-        "Inhibitor should reduce corrosion rate");
+	"Inhibitor should reduce corrosion rate");
   }
 }
