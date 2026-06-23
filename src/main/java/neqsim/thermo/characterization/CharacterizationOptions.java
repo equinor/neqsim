@@ -77,6 +77,28 @@ public class CharacterizationOptions {
     MASS
   }
 
+  /**
+   * Rule used to place the cut edges between adjacent reference pseudo-components when a source fluid is
+   * re-characterized onto a fixed reference slate.
+   */
+  public enum ReferenceBoundaryMode {
+    /**
+     * Place each cut edge at the arithmetic midpoint of the two adjacent cut keys (the default, legacy behaviour). This
+     * implicitly assumes the reference cuts are equally wide.
+     */
+    MIDPOINT,
+    /**
+     * Require each reference cut key to be the centroid of its own span, giving the recurrence
+     * {@code b_i = 2*key_i - b_(i-1)} anchored at {@code b_0 = key_0 - 0.5*(key_1 - key_0)} and walked from the
+     * lightest to the heaviest cut. Each candidate boundary is clamped strictly between its two adjacent keys (with a
+     * midpoint fallback when it would fall out of range or break monotonicity). The recurrence is linear in the cut
+     * key, so it is only applied on the {@link DelumpBinningBasis#MOLAR_MASS} basis; the boiling-point basis falls back
+     * to {@link #MIDPOINT}. Use this when the reference slate has very unequal cut widths, where the midpoint of the
+     * means mis-bins material into the narrower neighbour.
+     */
+    CENTROID_SPAN
+  }
+
   private final boolean transferBinaryInteractionParameters;
   private final boolean normalizeComposition;
   private final NamingScheme namingScheme;
@@ -89,6 +111,7 @@ public class CharacterizationOptions {
   private final DelumpBinningBasis delumpBinningBasis;
   private final DelumpGammaScope delumpGammaScope;
   private final DelumpConservation delumpConservation;
+  private final ReferenceBoundaryMode referenceBoundaryMode;
 
   private CharacterizationOptions(Builder builder) {
     this.transferBinaryInteractionParameters = builder.transferBinaryInteractionParameters;
@@ -103,6 +126,7 @@ public class CharacterizationOptions {
     this.delumpBinningBasis = builder.delumpBinningBasis;
     this.delumpGammaScope = builder.delumpGammaScope;
     this.delumpConservation = builder.delumpConservation;
+    this.referenceBoundaryMode = builder.referenceBoundaryMode;
   }
 
   /**
@@ -261,6 +285,21 @@ public class CharacterizationOptions {
   }
 
   /**
+   * Returns the rule used to place the cut edges between adjacent reference pseudo-components on the reference-only
+   * re-characterization path.
+   *
+   * <p>
+   * Defaults to {@link ReferenceBoundaryMode#MIDPOINT} (the legacy arithmetic-midpoint behaviour).
+   * {@link ReferenceBoundaryMode#CENTROID_SPAN} requires each reference cut key to be the centroid of its own span and
+   * is only applied on the {@link DelumpBinningBasis#MOLAR_MASS} basis.
+   *
+   * @return the reference boundary placement mode (never null)
+   */
+  public ReferenceBoundaryMode getReferenceBoundaryMode() {
+    return referenceBoundaryMode;
+  }
+
+  /**
    * Creates a new builder with default options.
    *
    * @return a new builder instance
@@ -303,6 +342,7 @@ public class CharacterizationOptions {
     private DelumpBinningBasis delumpBinningBasis = DelumpBinningBasis.MOLAR_MASS;
     private DelumpGammaScope delumpGammaScope = DelumpGammaScope.NEIGHBOURS;
     private DelumpConservation delumpConservation = DelumpConservation.BOTH;
+    private ReferenceBoundaryMode referenceBoundaryMode = ReferenceBoundaryMode.MIDPOINT;
 
     /**
      * Set whether to transfer binary interaction parameters from the reference fluid.
@@ -486,6 +526,27 @@ public class CharacterizationOptions {
     public Builder delumpConservation(DelumpConservation conservation) {
       if (conservation != null) {
 	this.delumpConservation = conservation;
+      }
+      return this;
+    }
+
+    /**
+     * Set the rule used to place the cut edges between adjacent reference pseudo-components on the reference-only
+     * re-characterization path.
+     *
+     * <p>
+     * Defaults to {@link ReferenceBoundaryMode#MIDPOINT} (legacy arithmetic midpoint of the adjacent cut keys). Set to
+     * {@link ReferenceBoundaryMode#CENTROID_SPAN} to require each reference cut key to be the centroid of its own span,
+     * which avoids mis-binning material into a narrower neighbour when the reference cut widths are very unequal. The
+     * centroid-span rule is only applied on the {@link DelumpBinningBasis#MOLAR_MASS} basis; the boiling-point basis
+     * falls back to the midpoint rule.
+     *
+     * @param mode the reference boundary placement mode (must not be null)
+     * @return this builder
+     */
+    public Builder referenceBoundaryMode(ReferenceBoundaryMode mode) {
+      if (mode != null) {
+	this.referenceBoundaryMode = mode;
       }
       return this;
     }

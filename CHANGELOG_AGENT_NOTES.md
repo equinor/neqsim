@@ -9,6 +9,48 @@
 
 ---
 
+## 2026-06-24 — Span-aware reference cut boundaries (`ReferenceBoundaryMode.CENTROID_SPAN`)
+
+### Summary
+`characterizeToReference` gains an opt-in boundary-placement mode that fixes
+mis-binning when the reference slate mixes a narrow cut with a much wider
+neighbour. The default `MIDPOINT` rule places each cut edge at the arithmetic
+midpoint of two adjacent cut keys — correct only for equal-width cuts. The new
+`CENTROID_SPAN` rule requires each cut key to be the **centroid of its own
+span**, walking light→heavy from `b₀ = key₀ − ½(key₁ − key₀)` via the
+recurrence `bᵢ = 2·keyᵢ − bᵢ₋₁`, with each boundary clamped strictly between
+its adjacent keys (midpoint fallback on overshoot). The recurrence is linear in
+molar mass, so it is applied only on the `MOLAR_MASS` basis; the boiling-point
+basis falls back to `MIDPOINT`. Additive, no breaking change — the default stays
+`MIDPOINT` so all existing results are unchanged.
+
+### What's new (all additive)
+- `CharacterizationOptions`:
+  - nested enum `ReferenceBoundaryMode {MIDPOINT, CENTROID_SPAN}` (default
+    `MIDPOINT`)
+  - getter `getReferenceBoundaryMode()` and builder setter
+    `referenceBoundaryMode(ReferenceBoundaryMode)` (null-guarded)
+- `PseudoComponentCombiner`: `determineReferenceBoundaries(...)` gained a
+  `ReferenceBoundaryMode` argument and a new private
+  `determineReferenceCentroidSpanBoundaries(...)` helper; the boundary mode is
+  threaded through `characterizeToReferenceCore(...)`.
+
+### Effect
+On a Grane→Oseberg per-series case the contested heavy cuts re-align toward the
+reference: F4 moves 33.94 → 26.38 (reference 25.21) and F3 5.99 → 1.52 when
+`CENTROID_SPAN` is enabled on the molar-mass basis.
+
+### Verification
+```bash
+./mvnw test -Dtest=CharacterizeToReferenceCentroidBoundaryTest,CharacterizeToReferenceCommonSlateTest,CharacterizeToReferenceSharedSlateTest,CharacterizeToReferenceDelumpTest,CharacterizationOptionsTest
+```
+
+### Docs touched
+- `docs/pvtsimulation/fluid_characterization_mathematics.md` — `referenceBoundaryMode`
+  options-table row and "Span-aware reference boundaries" subsection.
+
+---
+
 ## 2026-06-24 — Pedersen-faithful gamma delumping for `characterizeToReference`
 
 ### Summary

@@ -978,6 +978,7 @@ SystemInterface matched = PseudoComponentCombiner.characterizeToReference(
 | `delumpGammaScope` | Scope of the Whitson gamma molar-distribution fit used to shape the delumping: `NEIGHBOURS` (a local gamma per lump fitted from its immediate neighbours) or `GLOBAL` (one gamma fitted to the whole C7+ slate) | `NEIGHBOURS` |
 | `delumpConservation` | Quantity conserved exactly per parent lump when delumping: `BOTH` (moles and mass), `MOLES` (moles only, mass floats), or `MASS` (mass only, moles float) | `BOTH` |
 | `sharedImaginaryBoundaries` | Place reference cut boundaries as carbon-number **equal-mass** cut points on the reference's imaginary (delumped) composition (Pedersen Ch. 5.6, Eqs. 5.58–5.59) instead of boiling-point midpoints | `false` |
+| `referenceBoundaryMode` | How each reference cut boundary is placed between adjacent cut keys: `MIDPOINT` (arithmetic midpoint of the two cut keys) or `CENTROID_SPAN` (each cut key is required to be the centroid of its own span). `CENTROID_SPAN` is linear in molar mass and therefore applied only on the `MOLAR_MASS` basis; the boiling-point basis falls back to `MIDPOINT` | `MIDPOINT` |
 
 #### Property inheritance vs. recomputation (`inheritReferenceProperties`)
 
@@ -1004,6 +1005,16 @@ The same neighbour-aware delumping also drives the imaginary-composition cut pla
 By default the reference cut boundaries are the arithmetic boiling-point midpoints between adjacent reference lumps, which ignores how much mass each lump represents. With `sharedImaginaryBoundaries(true)` the reference is first rebuilt into a fine single-carbon-number "imaginary" composition (using `delumpResolution`) and the cut points are placed so each cut carries an **equal mass fraction** — the reference-only (NFLUID = 1) form of the Pedersen Ch. 5.6 common-slate rule (Eqs. 5.58–5.59 with §5.3 cut criterion). Each equal-mass cut is then *clamped* into the gap between the two adjacent reference pseudo-components, guaranteeing every reference lump stays inside its own cut so the one-to-one property inheritance is preserved even when the reference lumps carry unequal mass. With `delumpResolution ≤ 1` it falls back to boiling-point midpoints.
 
 > **Why reference-only here?** `characterizeToReference` inherits the trusted reference's lump properties one-to-one, so the reference fluid is the correct authority for the grid. The pooled multi-fluid imaginary composition of Eqs. 5.58–5.59 remains used by `characterizeToCommonSlate` (free new slate); applying it to the inherit-from-fixed-reference path would break the inherit alignment.
+
+#### Span-aware reference boundaries (`referenceBoundaryMode`)
+
+The default `MIDPOINT` rule places each cut edge at the arithmetic midpoint of the two adjacent reference cut keys. That midpoint of the means is the true span edge only when neighbouring cuts have *equal width*; when a narrow cut sits next to a much wider one, the midpoint is biased toward the wider cut and material that physically belongs to the heavy cut is mis-binned into the narrow neighbour. With `referenceBoundaryMode(ReferenceBoundaryMode.CENTROID_SPAN)` each cut key is instead required to be the **centroid of its own span**: walking light→heavy from the anchor $b_0 = \text{key}_0 - \tfrac{1}{2}(\text{key}_1 - \text{key}_0)$, each successive boundary follows the recurrence
+
+$$
+b_i = 2\,\text{key}_i - b_{i-1},
+$$
+
+so that $\text{key}_i = \tfrac{1}{2}(b_{i-1} + b_i)$ holds exactly. Every boundary is then *clamped* strictly between its two adjacent cut keys (falling back to the midpoint if the recurrence would overshoot a neighbour), preserving the one-to-one inheritance guarantee. The recurrence is linear in molar mass, so `CENTROID_SPAN` is only applied on the `MOLAR_MASS` basis (i.e. with delumping on and `delumpBinningBasis(MOLAR_MASS)`); the boiling-point basis falls back to the midpoint rule. The default stays `MIDPOINT`, so existing results are unchanged unless the mode is set explicitly.
 
 ### Common Slate for Multiple Fluids (`characterizeToCommonSlate`)
 

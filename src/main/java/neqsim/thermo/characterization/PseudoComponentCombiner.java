@@ -15,6 +15,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.characterization.CharacterizationOptions.DelumpBinningBasis;
 import neqsim.thermo.characterization.CharacterizationOptions.DelumpConservation;
 import neqsim.thermo.characterization.CharacterizationOptions.DelumpGammaScope;
+import neqsim.thermo.characterization.CharacterizationOptions.ReferenceBoundaryMode;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermInterface;
 import neqsim.thermo.phase.PhaseEos;
@@ -167,7 +168,7 @@ public final class PseudoComponentCombiner {
    */
   public static SystemInterface characterizeToReference(SystemInterface source, SystemInterface reference) {
     return characterizeToReferenceCore(source, reference, false, false, 0, false, DelumpBinningBasis.MOLAR_MASS,
-	DelumpGammaScope.NEIGHBOURS, DelumpConservation.BOTH);
+	DelumpGammaScope.NEIGHBOURS, DelumpConservation.BOTH, ReferenceBoundaryMode.MIDPOINT);
   }
 
   /**
@@ -193,11 +194,15 @@ public final class PseudoComponentCombiner {
    * {@code delump} is {@code true} (otherwise the legacy boiling-point key is used to preserve backward compatibility)
    * @param gammaScope scope of the Whitson gamma molar-distribution fit used to shape the delumping
    * @param conservation quantity (moles, mass, or both) conserved exactly when a lump is delumped
+   * @param boundaryMode rule used to place the cut edges between adjacent reference pseudo-components; only the
+   * {@link ReferenceBoundaryMode#CENTROID_SPAN} mode on the {@link DelumpBinningBasis#MOLAR_MASS} basis changes the
+   * legacy midpoint placement
    * @return characterized fluid containing pseudo components compatible with the reference fluid
    */
   private static SystemInterface characterizeToReferenceCore(SystemInterface source, SystemInterface reference,
       boolean inheritReferenceProperties, boolean delump, int delumpResolution, boolean sharedImaginaryBoundaries,
-      DelumpBinningBasis binningBasis, DelumpGammaScope gammaScope, DelumpConservation conservation) {
+      DelumpBinningBasis binningBasis, DelumpGammaScope gammaScope, DelumpConservation conservation,
+      ReferenceBoundaryMode boundaryMode) {
     Objects.requireNonNull(source, "source");
     Objects.requireNonNull(reference, "reference");
 
@@ -234,7 +239,7 @@ public final class PseudoComponentCombiner {
     List<Double> boundaries = sharedImaginaryBoundaries
 	? determineReferenceEqualMassBoundaries(referenceExtraction.pseudoComponents, delumpResolution, basis,
 	    gammaScope, conservation)
-	: determineReferenceBoundaries(referenceExtraction.pseudoComponents, basis);
+	: determineReferenceBoundaries(referenceExtraction.pseudoComponents, basis, boundaryMode);
     List<PseudoComponentProfile> profiles = distributeToProfiles(sourcePseudoComponents, boundaries,
 	referenceExtraction.pseudoComponents.size(), basis);
 
@@ -286,7 +291,7 @@ public final class PseudoComponentCombiner {
     SystemInterface characterized = characterizeToReferenceCore(source, reference,
 	options.isInheritReferenceProperties(), options.isDelumpBeforeRecharacterization(),
 	options.getDelumpResolution(), options.isSharedImaginaryBoundaries(), options.getDelumpBinningBasis(),
-	options.getDelumpGammaScope(), options.getDelumpConservation());
+	options.getDelumpGammaScope(), options.getDelumpConservation(), options.getReferenceBoundaryMode());
 
     if (options.isTransferBinaryInteractionParameters()) {
       transferBinaryInteractionParameters(reference, characterized);
@@ -1554,9 +1559,13 @@ public final class PseudoComponentCombiner {
   }
 
   private static List<Double> determineReferenceBoundaries(List<PseudoComponentContribution> referenceContributions,
-      DelumpBinningBasis basis) {
+      DelumpBinningBasis basis, ReferenceBoundaryMode boundaryMode) {
     if (referenceContributions.size() <= 1) {
       return Collections.emptyList();
+    }
+
+    if (boundaryMode == ReferenceBoundaryMode.CENTROID_SPAN && basis == DelumpBinningBasis.MOLAR_MASS) {
+      return determineReferenceCentroidSpanBoundaries(referenceContributions, basis);
     }
 
     List<Double> boundaries = new ArrayList<>(referenceContributions.size() - 1);
@@ -1565,6 +1574,52 @@ public final class PseudoComponentCombiner {
       double key2 = referenceContributions.get(i + 1).binningKey(basis);
       double boundary = Double.isFinite(key1) && Double.isFinite(key2) ? 0.5 * (key1 + key2) : Math.max(key1, key2);
       boundaries.add(boundary);
+    }
+    return boundaries;
+  }
+
+  /**
+   * Place the reference cut boundaries so that each reference cut key is the centroid of its own span.
+   *
+   * <p>
+   * The default {@link #determineReferenceBoundaries} places each edge at the arithmetic midpoint of two adjacent cut
+   * keys, which implicitly assumes every cut is equally wide. When the reference slate mixes very narrow and very wide
+   * cuts (e.g. a one-carbon cut next to a fifteen-carbon cut) the midpoint of the means is not the true span edge, so
+   * material is mis-binned into the narrower neighbour. Requiring each key to sit at the centroid of its span gives the
+   * recurrence {@code b_i = 2*key_i - b_(i-1)}, anchored at {@code b_0 = key_0 - 0.5*(key_1 - key_0)} and walked from
+   * the lightest to the heaviest cut. Each candidate is clamped to lie strictly between its two adjacent keys (and to
+   * stay monotone), falling back to the arithmetic midpoint otherwise, so the strict one-to-one inheritance ordering is
+   * preserved. The recurrence is linear in the cut key, so it is only valid on a basis that is itself linear in the
+   * binning quantity ({@link DelumpBinningBasis#MOLAR_MASS}).
+   *
+   * @param referenceContributions the reference pseudo-components, sorted ascending by binning key
+   * @param basis the (molar-mass) binning key on which the centroid recurrence and clamping bounds are evaluated
+   * @return the clamped centroid-span cut boundaries (size {@code referenceContributions.size() - 1})
+   */
+  private static List<Double> determineReferenceCentroidSpanBoundaries(
+      List<PseudoComponentContribution> referenceContributions, DelumpBinningBasis basis) {
+    int n = referenceContributions.size();
+    double[] key = new double[n];
+    for (int i = 0; i < n; i++) {
+      key[i] = referenceContributions.get(i).binningKey(basis);
+    }
+    List<Double> boundaries = new ArrayList<>(n - 1);
+    double prev = Double.isFinite(key[0]) && Double.isFinite(key[1]) ? key[0] - 0.5 * (key[1] - key[0]) : key[0];
+    for (int i = 0; i < n - 1; i++) {
+      double midpoint = Double.isFinite(key[i]) && Double.isFinite(key[i + 1]) ? 0.5 * (key[i] + key[i + 1])
+	  : Math.max(key[i], key[i + 1]);
+      double candidate = 2.0 * key[i] - prev;
+      double boundary;
+      if (Double.isFinite(candidate) && candidate > key[i] && candidate < key[i + 1]) {
+	boundary = candidate;
+      } else {
+	boundary = midpoint;
+      }
+      if (!boundaries.isEmpty() && boundary <= boundaries.get(boundaries.size() - 1)) {
+	boundary = midpoint;
+      }
+      boundaries.add(boundary);
+      prev = boundary;
     }
     return boundaries;
   }
@@ -1605,7 +1660,7 @@ public final class PseudoComponentCombiner {
       return Collections.emptyList();
     }
     if (resolution <= 1) {
-      return determineReferenceBoundaries(referenceContributions, basis);
+      return determineReferenceBoundaries(referenceContributions, basis, ReferenceBoundaryMode.MIDPOINT);
     }
 
     List<PseudoComponentContribution> imaginary = delumpContributions(referenceContributions, resolution, gammaScope,
