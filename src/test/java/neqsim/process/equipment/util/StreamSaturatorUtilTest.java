@@ -33,8 +33,7 @@ public class StreamSaturatorUtilTest extends neqsim.NeqSimTest {
     processOps.run();
 
     assertEquals(0.001231852266295992,
-        streamSaturator.getOutletStream().getFluid().getPhase(0).getComponent("water").getx(),
-        1e-8);
+	streamSaturator.getOutletStream().getFluid().getPhase(0).getComponent("water").getx(), 1e-8);
   }
 
   @Test
@@ -56,8 +55,7 @@ public class StreamSaturatorUtilTest extends neqsim.NeqSimTest {
     processOps.run();
 
     assertEquals(0.001231852266295992 * 0.93,
-        streamSaturator.getOutletStream().getFluid().getPhase(0).getComponent("water").getx(),
-        1e-3);
+	streamSaturator.getOutletStream().getFluid().getPhase(0).getComponent("water").getx(), 1e-3);
   }
 
   @Test
