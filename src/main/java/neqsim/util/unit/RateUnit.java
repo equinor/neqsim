@@ -143,6 +143,7 @@ public class RateUnit extends neqsim.util.unit.BaseUnit {
     return factor;
   }
 
+  @Override
   public String getSIUnit() {
     return "mol/sec";
   }
