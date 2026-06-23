@@ -3,7 +3,7 @@
 
 if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "win32" || "$OSTYPE" == "cygwin" ]]; then
   # Windows
-  mvnw.cmd spotless:$1 -q
+  ./mvnw.cmd spotless:$1 -q
 else
   # Unix-like (macOS, Linux)
   ./mvnw spotless:$1 -q
