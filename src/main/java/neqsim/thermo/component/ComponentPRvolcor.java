@@ -44,8 +44,6 @@ public class ComponentPRvolcor extends ComponentPR {
     super(number, TC, PC, M, a, moles);
   }
 
-  /// ** {@inheritDoc} */
-  // @Override
   /**
    * <p>
    * calcc.
