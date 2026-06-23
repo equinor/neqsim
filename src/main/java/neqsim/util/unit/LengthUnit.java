@@ -18,7 +18,7 @@ public class LengthUnit extends neqsim.util.unit.BaseUnit implements LinearScale
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
-  private static final String[] ALLOWED_UNITS = { "m", "meter", "metre", "cm", "mm", "km", "in", "inch", "ft", "feet" };
+  private static final String[] ALLOWED_UNITS = {"m", "meter", "metre", "cm", "mm", "km", "in", "inch", "ft", "feet"};
 
   /**
    * Constructor for LengthUnit.
@@ -80,7 +80,6 @@ public class LengthUnit extends neqsim.util.unit.BaseUnit implements LinearScale
    * <li>LengthUnit(5, "ft").getValue("m") = 1.524</li>
    * <li>LengthUnit(1, "km").getValue("ft") = 3280.84</li>
    * </ul>
-   * </p>
    *
    * @param toUnit target unit name (one of the supported units)
    * @return converted value in the target unit
@@ -101,7 +100,6 @@ public class LengthUnit extends neqsim.util.unit.BaseUnit implements LinearScale
    * <li>LengthUnit.convert(100, "cm", "m") = 1.0</li>
    * <li>LengthUnit.convert(5280, "ft", "km") = 1.60934</li>
    * </ul>
-   * </p>
    *
    * @param value value to convert
    * @param unit source unit name
