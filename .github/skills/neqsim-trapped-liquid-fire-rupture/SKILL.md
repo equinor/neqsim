@@ -33,6 +33,13 @@ layer instead of calling the low-level solver directly: build
 readiness, deterministic uncertainty cases, and the post-rupture source-term
 handoff in one JSON-safe package.
 
+When the blowdown pressure profile has not yet been generated, first use the
+dynamic flare/blowdown layer from `neqsim-depressurization-mdmt`: assemble
+`LineEquipmentListEvidence` and `DynamicBlowdownFlareStudyDataSource`, run
+`DynamicBlowdownFlareStudyRunner`, and use the returned source pressure profiles
+and `dynamic_blowdown_flare_load_handoff.v1` as the governed basis for the
+pipe-fire rupture profile and flare/consequence handoff.
+
 Use the workflow generically. Do not encode operator-specific criteria in public
 examples. If a private task has project-specific acceptance criteria, keep them
 inside the task folder and cite the private basis only in that task deliverable.
@@ -327,6 +334,9 @@ Key pipe-fire classes:
 - `PipeFireRuptureStudyHandoff`: versioned package containing data source, readiness, result, uncertainty, and source term.
 - `PipeFireRuptureStandardsValidator`: API 521 / ISO 23251 / NORSOK S-001 / TR2000 evidence-quality gate.
 - `PipeFireRuptureUncertaintyRunner`: deterministic one-at-a-time perturbation screening of wall, corrosion, heat-flux, and initial-temperature assumptions.
+- `LineEquipmentListEvidence`, `DynamicBlowdownFlareStudyDataSource`, `DynamicBlowdownFlareStudyRunner`, and
+  `DynamicBlowdownFlareStudyHandoff`: governed dynamic depressurization, PSV, and flare-load setup used to create a
+  source-traceable pressure profile before pipe-fire rupture screening.
 
 ## Reusable Safety Report Template
 

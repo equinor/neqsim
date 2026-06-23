@@ -42,6 +42,15 @@ clearly labelled screening result, and `DESIGN_GRADE` requires reviewed
 controlled evidence. When rupture is predicted, carry the
 `pipe_fire_rupture_source_term_handoff.v1` map into consequence analysis.
 
+For STID/TR2000-driven dynamic flare and blowdown network studies, do not wire
+ad hoc transient notebooks directly from extracted tags. Build `LineEquipmentListEvidence`,
+`PidTopologyEvidence`, and `DynamicBlowdownFlareStudyDataSource` with one
+`BlowdownSource` per protected equipment item. Run `DynamicBlowdownFlareStudyRunner`
+to execute NeqSim `DepressurizationSimulator` cases, aggregate simultaneous loads
+with `MultiVesselBlowdownStudy`, size PSV orifices where set-pressure evidence is
+available, and generate `dynamic_blowdown_flare_load_handoff.v1` for flare-network,
+consequence, and report consumers.
+
 ## Applicable Standards (MANDATORY)
 
 Safety analyses are inherently standards-driven. Always identify and apply:
