@@ -32,7 +32,6 @@ public interface LinearScaleUnit extends Unit {
    * <li>Between any two units:
    * <code>value_target = value_source * getConversionFactor(source) / getConversionFactor(target)</code></li>
    * </ul>
-   * </p>
    *
    * <p>
    * For example, if this implementation is LengthUnit with getSIUnit() = "m" (meters):
@@ -43,7 +42,6 @@ public interface LinearScaleUnit extends Unit {
    * km</li>
    * <li>cm to km: 500 cm * 0.01 / 1000.0 = 0.005 km</li>
    * </ul>
-   * </p>
    *
    * @param unit unit name (the exact unit names supported depend on the implementing class)
    * @return conversion factor from the named unit to SI unit (always positive)
