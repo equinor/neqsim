@@ -7,6 +7,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Tag;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import org.apache.logging.log4j.LogManager;
@@ -557,6 +558,7 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
    *
    * @throws Exception if calculation fails
    */
+  @Tag("slow")
   @Test
   @DisplayName("test hydrate temperature with methanol inhibitor")
   public void testHydrateTemperatureWithMethanol() throws Exception {

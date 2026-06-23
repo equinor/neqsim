@@ -2,6 +2,7 @@ package neqsim.physicalproperties.interfaceproperties.surfacetension;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
@@ -41,6 +42,7 @@ class CDFTSurfaceTensionCalibrationTest {
    * can be used for the paper figure.
    * </p>
    */
+  @Tag("slow")
   @Test
   void sweepAttractiveRangeFactor() {
     logger.info("\n=== cDFT Kernel Range Calibration ===");
@@ -151,6 +153,7 @@ class CDFTSurfaceTensionCalibrationTest {
   /**
    * Fine-grained sweep around the expected optimal region (0.6-1.2) with SRK and PR.
    */
+  @Tag("slow")
   @Test
   void fineSweepAroundOptimal() {
     logger.info("\n=== Fine sweep with both PR and SRK ===");

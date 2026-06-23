@@ -3,6 +3,7 @@ package neqsim.thermodynamicoperations.flashops;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Tag;
 import neqsim.thermo.mixingrule.EosMixingRulesInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -167,6 +168,7 @@ class TPmultiflashTest {
    * Test that scans temperature/pressure range for three-phase region in sour gas. This helps verify the stability
    * analysis can find three-phase regions.
    */
+  @Tag("slow")
   @Test
   void testSourGasThreePhaseRegionScan() {
     SystemInterface sourGas = new neqsim.thermo.system.SystemPrEos();

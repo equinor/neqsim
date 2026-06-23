@@ -44,8 +44,6 @@ public class ComponentSrkvolcor extends ComponentSrk {
     super(number, TC, PC, M, a, moles);
   }
 
-  /// ** {@inheritDoc} */
-  // @Override
   /**
    * <p>
    * calcc.
