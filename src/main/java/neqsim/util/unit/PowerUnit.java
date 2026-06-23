@@ -11,7 +11,7 @@ import neqsim.util.exception.InvalidInputException;
 public class PowerUnit extends neqsim.util.unit.BaseUnit implements LinearScaleUnit {
   private static final long serialVersionUID = 1000L;
 
-  private static final String[] ALLOWED_UNITS = { "W", "kW", "MW", "hp", "BTU/hr" };
+  private static final String[] ALLOWED_UNITS = {"W", "kW", "MW", "hp", "BTU/hr"};
 
   /**
    * Constructor for PowerUnit.
@@ -71,7 +71,6 @@ public class PowerUnit extends neqsim.util.unit.BaseUnit implements LinearScaleU
    * <li>PowerUnit(1, "MW").getValue("kW") = 1000</li>
    * <li>PowerUnit(745.7, "hp").getValue("W") ≈ 556000</li>
    * </ul>
-   * </p>
    *
    * @param toUnit target unit name (one of the supported units)
    * @return converted value in the target unit
@@ -93,7 +92,6 @@ public class PowerUnit extends neqsim.util.unit.BaseUnit implements LinearScaleU
    * <li>PowerUnit.convert(1000, "W", "kW") = 1</li>
    * <li>PowerUnit.convert(746, "hp", "W") ≈ 557000</li>
    * </ul>
-   * </p>
    *
    * @param value value to convert
    * @param unit source unit name

@@ -10,7 +10,7 @@ public class TemperatureUnit extends neqsim.util.unit.BaseUnit implements BiasAd
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
-  private static final String[] ALLOWED_UNITS = { "K", "C", "F", "R" };
+  private static final String[] ALLOWED_UNITS = {"K", "C", "F", "R"};
 
   /**
    * Constructor for TemperatureUnit.

@@ -11,7 +11,7 @@ import neqsim.util.exception.InvalidInputException;
 public class EnergyUnit extends neqsim.util.unit.BaseUnit implements LinearScaleUnit {
   private static final long serialVersionUID = 1000L;
 
-  private static final String[] ALLOWED_UNITS = { "J", "kJ", "MJ", "Wh", "kWh", "MWh", "BTU", "kcal" };
+  private static final String[] ALLOWED_UNITS = {"J", "kJ", "MJ", "Wh", "kWh", "MWh", "BTU", "kcal"};
 
   /**
    * Constructor for EnergyUnit.
@@ -86,7 +86,6 @@ public class EnergyUnit extends neqsim.util.unit.BaseUnit implements LinearScale
    * <li>EnergyUnit(3.6, "MJ").getValue("kWh") = 1.0</li>
    * <li>EnergyUnit(1055, "BTU").getValue("kJ") ≈ 1114</li>
    * </ul>
-   * </p>
    *
    * @param toUnit target unit name (one of the supported units)
    * @return converted value in the target unit
@@ -108,7 +107,6 @@ public class EnergyUnit extends neqsim.util.unit.BaseUnit implements LinearScale
    * <li>EnergyUnit.convert(3600, "Wh", "MJ") = 12.96</li>
    * <li>EnergyUnit.convert(4184, "kcal", "J") = 17513056</li>
    * </ul>
-   * </p>
    *
    * @param value value to convert
    * @param unit source unit name

@@ -18,8 +18,7 @@ public class TimeUnit extends neqsim.util.unit.BaseUnit implements LinearScaleUn
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
-  private static final String[] ALLOWED_UNITS = { "s", "sec", "second", "min", "minute", "h", "hr", "hour", "d",
-      "day" };
+  private static final String[] ALLOWED_UNITS = {"s", "sec", "second", "min", "minute", "h", "hr", "hour", "d", "day"};
 
   /**
    * Constructor for TimeUnit.
@@ -72,12 +71,12 @@ public class TimeUnit extends neqsim.util.unit.BaseUnit implements LinearScaleUn
    * <p>
    * Converts the stored value from its original unit to the target unit. Supported units: s, sec, second, min, minute,
    * h, hr, hour, d, day. Examples:
+   * </p>
    * <ul>
    * <li>TimeUnit(60, "min").getValue("s") = 3600</li>
    * <li>TimeUnit(24, "h").getValue("d") = 1.0</li>
    * <li>TimeUnit(1, "d").getValue("s") = 86400</li>
    * </ul>
-   * </p>
    *
    * @param toUnit target unit name (one of the supported units)
    * @return converted value in the target unit
@@ -94,12 +93,12 @@ public class TimeUnit extends neqsim.util.unit.BaseUnit implements LinearScaleUn
    * <p>
    * Static convenience method for converting between any two supported units. Supported units: s, sec, second, min,
    * minute, h, hr, hour, d, day. Examples:
+   * </p>
    * <ul>
    * <li>TimeUnit.convert(60, "min", "h") = 1.0</li>
    * <li>TimeUnit.convert(2, "h", "min") = 120</li>
    * <li>TimeUnit.convert(1, "d", "s") = 86400</li>
    * </ul>
-   * </p>
    *
    * @param value value to convert
    * @param unit source unit name

@@ -13,8 +13,8 @@ public class PressureUnit extends neqsim.util.unit.BaseUnit implements BiasAdjus
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
-  private static final String[] ALLOWED_UNITS = { "bara", "bar", "barg", "psi", "psia", "psig", "Pa", "kPa", "MPa",
-      "atm" };
+  private static final String[] ALLOWED_UNITS = {"bara", "bar", "barg", "psi", "psia", "psig", "Pa", "kPa", "MPa",
+      "atm"};
 
   /**
    * Constructor for PressureUnit.
