@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Tag;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkEos;
@@ -353,6 +354,7 @@ class AsphalteneMultiMethodBenchmarkTest {
     assertTrue(heavyModel.isConfiguredFromAPI(), "Should be marked as configured from API");
   }
 
+  @Tag("slow")
   @Test
   void testFloryHugginsWithAPIGravityImprovesLiteraturePredictions() {
     // Test that API-gravity-configured FH model produces onset for more cases

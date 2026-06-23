@@ -1,6 +1,7 @@
 package neqsim.process.processmodel;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Tag;
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.security.AnyTypePermission;
 import neqsim.process.equipment.absorber.SimpleTEGAbsorber;
@@ -22,6 +23,7 @@ import neqsim.process.measurementdevice.HydrateEquilibriumTemperatureAnalyser;
 import neqsim.process.measurementdevice.WaterDewPointAnalyser;
 
 public class ProcessSystemSerializationTest extends neqsim.NeqSimTest {
+  @Tag("slow")
   @Test
   public void runTEGProcessTest2() {
     neqsim.thermo.system.SystemInterface feedGas = new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);

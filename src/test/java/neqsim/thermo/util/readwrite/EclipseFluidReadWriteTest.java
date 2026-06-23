@@ -3,7 +3,10 @@ package neqsim.thermo.util.readwrite;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.io.File;
 import java.io.IOException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.compressor.CompressorChart;
@@ -21,8 +24,6 @@ import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.phase.PhaseEos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * @author ESOL
@@ -737,6 +738,7 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
 	"valve outlet density must not be NaN");
   }
 
+  @Tag("slow")
   @Test
   void distillation_deethanizer() throws IOException {
     testSystem = EclipseFluidReadWrite.read(gow);

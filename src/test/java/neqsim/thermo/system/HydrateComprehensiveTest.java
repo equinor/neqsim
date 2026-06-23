@@ -3,6 +3,7 @@ package neqsim.thermo.system;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Tag;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -97,6 +98,7 @@ public class HydrateComprehensiveTest extends neqsim.NeqSimTest {
   /**
    * Test hydrate with gas-condensate fluid including pentanes and hexanes.
    */
+  @Tag("slow")
   @Test
   @DisplayName("Hydrate with gas-condensate (C1-C6)")
   public void testHydrateGasCondensate() throws Exception {

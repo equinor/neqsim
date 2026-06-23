@@ -6,16 +6,16 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 import java.util.Map;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
  * Tests for CO2CorrosionAnalyzer — coupled electrolyte CPA flash and de Waard-Milliams corrosion model.
  */
 public class CO2CorrosionAnalyzerTest {
-
+  @Tag("slow")
   @Test
   void testPureCO2WaterSystem() {
-    // Pure CO2 + water at 60°C, 50 bar → pH should be ~3.0-4.5
     CO2CorrosionAnalyzer analyzer = new CO2CorrosionAnalyzer(60.0, 50.0);
     analyzer.setCO2MoleFractionInGas(0.50);
     analyzer.setWaterMoleFractionInGas(0.50);
