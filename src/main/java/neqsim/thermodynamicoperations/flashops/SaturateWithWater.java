@@ -44,68 +44,93 @@ public class SaturateWithWater extends QfuncFlash {
       system.setMixingRule(system.getMixingRule());
     }
 
+    // Snapshot the caller's starting composition. If saturation cannot be established (the flood
+    // flash diverges, or flooding does not produce a free aqueous phase) the fluid is restored to
+    // this state rather than being left flooded with a large water excess.
+    double[] originalMoles = captureMoles(system);
+
     boolean changedMultiPhase = false;
     if (!system.doMultiPhaseCheck()) {
       system.setMultiPhaseCheck(true);
       changedMultiPhase = true;
     }
 
-    if (system.getComponent("water").getNumberOfmoles() < system.getTotalNumberOfMoles() / 2.0) {
-      system.addComponent("water", system.getTotalNumberOfMoles());
-    }
+    // Flood the fluid with a large excess of water so that a free aqueous phase is guaranteed to
+    // form. When an aqueous phase coexists, the remaining (gas/oil) phases are - by definition of
+    // phase equilibrium - exactly water saturated, so the water already dissolved in them is the
+    // saturation amount we are looking for.
+    system.addComponent("water", system.getTotalNumberOfMoles());
     this.tpFlash = new TPflash(system);
 
-    // Snapshot of the last successfully converged composition (absolute moles).
-    // The bisection-style refinement below drives the aqueous phase towards zero,
-    // and the underlying TPflash can diverge for a vanishingly small aqueous phase.
-    // The exact point of divergence depends on the JVM's transcendental math
-    // implementation (JDK 8 vs newer), so a flash failure at any step is recovered
-    // by restoring the last converged state instead of aborting the whole flowsheet.
-    double[] lastConvergedMoles = captureMoles(system);
-    if (!runFlashSafely(lastConvergedMoles)) {
+    // The TPflash can diverge for a vanishingly small aqueous phase; the exact point of divergence
+    // depends on the JVM's transcendental math implementation (JDK 8 vs newer), so a flash failure
+    // is recovered instead of aborting the whole flowsheet.
+    if (!runFlashSafely(captureMoles(system))) {
+      // Flood flash diverged: do not leave the fluid flooded - restore the caller's composition.
+      restoreMoles(system, originalMoles);
+      runFlashSafely(originalMoles);
       if (changedMultiPhase) {
 	system.setMultiPhaseCheck(false);
       }
       return;
     }
-    lastConvergedMoles = captureMoles(system);
 
-    boolean hasAq = system.hasPhaseType(PhaseType.AQUEOUS);
-    double lastdn = 0.0;
-    if (hasAq) {
-      lastdn = system.getPhase(PhaseType.AQUEOUS).getNumberOfMolesInPhase();
-    } else {
-      lastdn = system.getPhase(0).getNumberOfMolesInPhase();
-    }
-    double dn = 1.0;
-    int i = 0;
-    do {
-      i++;
-      if (system.getNumberOfPhases() == 1 && hasAq) {
-	lastdn = -system.getComponent("water").getNumberOfmoles() * 0.1;
-      } else if (!hasAq) {
-	lastdn = Math.abs(lastdn) * 1.05;
-      } else {
-	lastdn = -system.getPhase(PhaseType.AQUEOUS).getComponent("water").getNumberOfMolesInPhase() * 0.9;
+    int aqueousIndex = indexOfAqueousPhase(system);
+    if (aqueousIndex < 0) {
+      // Flooding did not create a free aqueous phase (e.g. a fully water-miscible dense or
+      // supercritical region near the water critical point). Saturation is undefined here, so the
+      // caller's composition is restored rather than left over-watered.
+      logger.warn("water saturation: no free aqueous phase formed after flooding; " + "restoring original composition");
+      restoreMoles(system, originalMoles);
+      runFlashSafely(originalMoles);
+      if (changedMultiPhase) {
+	system.setMultiPhaseCheck(false);
       }
-      dn = lastdn / system.getNumberOfMoles();
-      system.addComponent("water", lastdn);
-      if (!runFlashSafely(lastConvergedMoles)) {
-	break;
-      }
-      lastConvergedMoles = captureMoles(system);
-      hasAq = system.hasPhaseType(PhaseType.AQUEOUS);
-    } while (Math.abs(dn) > 1e-7 && i <= 50);
-    if (i == 50) {
-      logger.error("could not find solution - in water saturate : dn  " + dn);
+      return;
     }
-    if (system.hasPhaseType(PhaseType.AQUEOUS)) {
-      system.removePhase(system.getNumberOfPhases() - 1);
+
+    // Read the water dissolved in every non-aqueous phase. This is the exact saturated water
+    // content, computed directly from the equilibrium flash rather than by iterative refinement.
+    // Resetting the overall water to that amount removes the whole free aqueous phase in a single
+    // step and never drives the aqueous phase through the divergence-prone near-zero regime.
+    double saturatedWaterMoles = 0.0;
+    for (int p = 0; p < system.getNumberOfPhases(); p++) {
+      if (p == aqueousIndex) {
+	continue;
+      }
+      saturatedWaterMoles += system.getPhase(p).getComponent("water").getNumberOfMolesInPhase();
+    }
+    double currentWaterMoles = system.getComponent("water").getNumberOfmoles();
+    system.addComponent("water", saturatedWaterMoles - currentWaterMoles);
+    runFlashSafely(captureMoles(system));
+
+    // The fluid now sits at (or just below) the saturation boundary. Any residual incipient aqueous
+    // phase is located explicitly (not assumed to be the last phase) and removed so the result is a
+    // single water-saturated hydrocarbon stream.
+    int residualAqueous = indexOfAqueousPhase(system);
+    if (residualAqueous >= 0 && system.getNumberOfPhases() > 1) {
+      system.removePhase(residualAqueous);
       runFlashSafely(captureMoles(system));
     }
+
     if (changedMultiPhase) {
       system.setMultiPhaseCheck(false);
     }
+  }
+
+  /**
+   * Returns the index of the (first) aqueous phase in the system, or {@code -1} if no aqueous phase is present.
+   *
+   * @param sys the thermodynamic system to inspect
+   * @return the phase index of the aqueous phase, or {@code -1} if none is present
+   */
+  private static int indexOfAqueousPhase(SystemInterface sys) {
+    for (int p = 0; p < sys.getNumberOfPhases(); p++) {
+      if (sys.getPhase(p).getType() == PhaseType.AQUEOUS) {
+	return p;
+      }
+    }
+    return -1;
   }
 
   /**
