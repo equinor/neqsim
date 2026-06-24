@@ -1595,6 +1595,10 @@ def auto_executive_summary(results, task_spec):
         else:
             parts.append("Some validation checks require attention.")
 
+    readiness = infer_safety_readiness(results) if results else None
+    if readiness:
+        parts.append("Safety study readiness: {}.".format(readiness["verdict"]))
+
     # Benchmark status
     if results and results.get("benchmark_validation"):
         bv = results["benchmark_validation"]
@@ -1643,6 +1647,106 @@ def auto_problem_description(results, task_spec):
     if parts:
         return "\\n\\n".join(parts)
     return ""
+
+
+def _format_list_item_text(item):
+    """Format a result-list item as readable report text."""
+    if isinstance(item, dict):
+        preferred = []
+        for key in ("gap", "description", "finding", "item", "action", "recommendation"):
+            if item.get(key):
+                preferred.append(str(item.get(key)))
+        if preferred:
+            return " - ".join(preferred)
+        parts = []
+        for key in sorted(item.keys()):
+            parts.append("{}: {}".format(key.replace("_", " "), item[key]))
+        return "; ".join(parts)
+    return str(item)
+
+
+def format_list_items_text(items):
+    """Format strings or dictionaries from results.json as bullet text."""
+    if not items:
+        return ""
+    if isinstance(items, dict):
+        iterable = [items]
+    elif isinstance(items, list):
+        iterable = items
+    else:
+        iterable = [items]
+    return "\\n".join(["- {}".format(_format_list_item_text(item)) for item in iterable])
+
+
+def _validation_failures(results):
+    """Return false validation checks as report-facing blockers."""
+    failures = []
+    validation = results.get("validation", {}) if results else {}
+    for check, outcome in validation.items():
+        if outcome is False:
+            failures.append(check.replace("_", " ").title())
+    return failures
+
+
+def infer_safety_readiness(results):
+    """Infer a report-facing safety readiness label from results.json."""
+    if not results:
+        return None
+    safety_keys = ("safety_readiness", "readiness", "evidence_gaps",
+                   "assumptions_gaps", "standards_findings",
+                   "source_term_handoff", "source_basis_summary")
+    text = " ".join([
+        str(results.get("task_type", "")),
+        str(results.get("objective", "")),
+        str(results.get("approach", "")),
+        str(results.get("conclusions", "")),
+    ]).lower()
+    has_context = any(results.get(key) for key in safety_keys) or any(
+        token in text for token in ("safety", "rupture", "fire", "blowdown"))
+    if not has_context:
+        return None
+    explicit = results.get("safety_readiness") or results.get("readiness")
+    findings = []
+    if isinstance(explicit, dict):
+        verdict = str(explicit.get("verdict") or explicit.get("label") or "").strip()
+        raw_findings = explicit.get("findings") or explicit.get("blockers") or []
+        if isinstance(raw_findings, list):
+            findings.extend([str(item) for item in raw_findings])
+        elif raw_findings:
+            findings.append(str(raw_findings))
+    elif explicit:
+        verdict = str(explicit).strip()
+    else:
+        verdict = ""
+    evidence_gaps = results.get("evidence_gaps") or results.get("assumptions_gaps") or []
+    validation_failures = _validation_failures(results)
+    if evidence_gaps and isinstance(evidence_gaps, list):
+        findings.extend([_format_list_item_text(item) for item in evidence_gaps[:5]])
+    findings.extend(validation_failures)
+    if not verdict:
+        if evidence_gaps or validation_failures:
+            verdict = "SCREENING - DESIGN-GRADE BLOCKED"
+        else:
+            verdict = "SCREENING / READY FOR HUMAN REVIEW"
+    elif verdict.upper() == "SCREENING" and (evidence_gaps or validation_failures):
+        verdict = "SCREENING - DESIGN-GRADE BLOCKED"
+    return {"verdict": verdict, "findings": findings}
+
+
+def format_safety_readiness_text(results):
+    """Format safety readiness as a report section."""
+    readiness = infer_safety_readiness(results)
+    if not readiness:
+        return ""
+    lines = ["Readiness label: {}".format(readiness["verdict"])]
+    findings = [item for item in readiness.get("findings", []) if item]
+    if findings:
+        lines.append("")
+        lines.append("Design-grade blockers / review findings:")
+        lines.extend(["- {}".format(item) for item in findings])
+    lines.append("")
+    lines.append("Safety-study outputs remain screening/preparation until blockers are closed and reviewed by a qualified engineer.")
+    return "\\n".join(lines)
 
 
 def _parse_key_name(key):
@@ -2727,6 +2831,16 @@ def build_sections(results, task_spec):
         "content": prob_desc,
     })
 
+    next_section_num = 3
+
+    safety_readiness = format_safety_readiness_text(results) if results else ""
+    if safety_readiness:
+        sections.append({
+            "heading": "{}. Safety Study Readiness".format(next_section_num),
+            "content": safety_readiness,
+        })
+        next_section_num += 1
+
     # 3. Scope and Standards (auto-populated from task_spec.md)
     scope_parts = []
     standards = extract_spec_section(task_spec, "Applicable Standards")
@@ -2747,20 +2861,22 @@ def build_sections(results, task_spec):
         "Edit step1_scope_and_research/task_spec.md and re-run.]"
     )
     sections.append({
-        "heading": "3. Scope and Standards",
+        "heading": "{}. Scope and Standards".format(next_section_num),
         "content": scope_content,
         "has_scope": True,
     })
+    next_section_num += 1
 
     # 4. Approach
     approach = MANUAL_SECTIONS["approach"]
     if results and results.get("approach"):
         approach = results["approach"]
     sections.append({
-        "heading": "4. Approach",
+        "heading": "{}. Approach".format(next_section_num),
         "content": approach,
         "has_equations": True,
     })
+    next_section_num += 1
 
     # 5. Results (auto-populated from results.json)
     if results and results.get("key_results"):
@@ -2771,20 +2887,22 @@ def build_sections(results, task_spec):
             "Save results with the pattern shown in the task README.]"
         )
     sections.append({
-        "heading": "5. Results",
+        "heading": "{}. Results".format(next_section_num),
         "content": results_text,
         "has_figures": True,
     })
+    next_section_num += 1
 
     # 6. Results Discussion (auto-populated from figure_discussion)
     discussion_content = MANUAL_SECTIONS["results_discussion"]
     if results and results.get("figure_discussion"):
         discussion_content = "See structured discussion below."
     sections.append({
-        "heading": "6. Results Discussion",
+        "heading": "{}. Results Discussion".format(next_section_num),
         "content": discussion_content,
         "has_discussion": True,
     })
+    next_section_num += 1
 
     # 7. Validation Summary (auto-populated from results.json)
     if results and results.get("validation"):
@@ -2795,46 +2913,64 @@ def build_sections(results, task_spec):
             "Add validation checks to your notebook results output.]"
         )
     sections.append({
-        "heading": "7. Validation Summary",
+        "heading": "{}. Validation Summary".format(next_section_num),
         "content": validation_text,
     })
+    next_section_num += 1
 
     # 8. Benchmark Validation (auto-populated from results.json)
     if results and results.get("benchmark_validation"):
         sections.append({
-            "heading": "8. Benchmark Validation",
+            "heading": "{}. Benchmark Validation".format(next_section_num),
             "content": "See benchmark comparison below.",
             "has_benchmark": True,
         })
+        next_section_num += 1
 
     # 9. Uncertainty Analysis (auto-populated from results.json)
     if results and results.get("uncertainty"):
         sections.append({
-            "heading": "9. Uncertainty Analysis",
+            "heading": "{}. Uncertainty Analysis".format(next_section_num),
             "content": "See uncertainty analysis below.",
             "has_uncertainty": True,
         })
+        next_section_num += 1
 
     # 10. Risk Evaluation (auto-populated from results.json)
     if results and results.get("risk_evaluation"):
         sections.append({
-            "heading": "10. Risk Evaluation",
+            "heading": "{}. Risk Evaluation".format(next_section_num),
             "content": "See risk evaluation below.",
             "has_risk": True,
         })
+        next_section_num += 1
+
+    if results and (results.get("evidence_gaps") or results.get("assumptions_gaps")):
+        sections.append({
+            "heading": "{}. Evidence Gaps and Design-Grade Blockers".format(next_section_num),
+            "content": format_list_items_text(
+                results.get("evidence_gaps") or results.get("assumptions_gaps")),
+        })
+        next_section_num += 1
+
+    if results and results.get("recommendations"):
+        sections.append({
+            "heading": "{}. Recommendations".format(next_section_num),
+            "content": format_list_items_text(results.get("recommendations")),
+        })
+        next_section_num += 1
 
     # N. Conclusions and Recommendations
-    sec_n = len(sections) + 1
     conclusions = MANUAL_SECTIONS["conclusions"]
     if results and results.get("conclusions"):
         conclusions = results["conclusions"]
     sections.append({
-        "heading": "{}. Conclusions and Recommendations".format(sec_n),
+        "heading": "{}. Conclusions and Recommendations".format(next_section_num),
         "content": conclusions,
     })
+    next_section_num += 1
 
     # N+1. References (auto-populated from results.json if available)
-    sec_n = len(sections) + 1
     refs_content = MANUAL_SECTIONS["references"]
     if results and results.get("references"):
         ref_lines = []
@@ -2847,7 +2983,7 @@ def build_sections(results, task_spec):
                 ref_lines.append("[{}] {}".format(i, ref_text))
         refs_content = "\\n".join(ref_lines)
     sections.append({
-        "heading": "{}. References".format(sec_n),
+        "heading": "{}. References".format(next_section_num),
         "content": refs_content,
         "has_references": True,
     })

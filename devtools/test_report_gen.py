@@ -55,6 +55,25 @@ def create_test_task(tmpdir):
         'validation': {'mass_balance_pct': 0.01, 'criteria_met': True},
         'approach': 'Used SRK EOS with classic mixing rule.',
         'conclusions': 'The analysis confirms safe operation.',
+        'source_basis_summary': {
+            'basis': 'Script-backed safety screening with controlled evidence gaps.'
+        },
+        'safety_readiness': {
+            'verdict': 'SCREENING - DESIGN-GRADE BLOCKED',
+            'findings': ['Material certificate pending engineering review'],
+        },
+        'evidence_gaps': [
+            {
+                'gap': 'Material certificate pending engineering review',
+                'action': 'Confirm material curve before design use',
+            }
+        ],
+        'recommendations': [
+            {
+                'recommendation': 'Close the controlled-document evidence gaps before sign-off.',
+                'priority': 'High',
+            }
+        ],
         'figure_captions': {'plot.png': 'Temperature profile'},
         'figure_discussion': [
             {
@@ -190,9 +209,17 @@ def main():
             'Auto exec summary - uncertainty': 'P50',
             'Auto exec summary - benchmark count': 'benchmark comparisons',
             'Auto exec summary - risk level': 'Overall project risk',
+            'Auto exec summary - safety readiness': 'Safety study readiness',
             # Auto-generated problem description
             'Auto problem desc - objective': 'thermal performance',
             'Auto problem desc - operating envelope': 'Operating envelope',
+            # Safety-readiness and evidence-gate sections
+            'Safety readiness section': 'Safety Study Readiness',
+            'Safety readiness verdict': 'SCREENING - DESIGN-GRADE BLOCKED',
+            'Evidence gaps section': 'Evidence Gaps and Design-Grade Blockers',
+            'Evidence gap text': 'Material certificate pending engineering review',
+            'Recommendations section': 'Recommendations',
+            'Recommendation text': 'controlled-document evidence gaps',
             # Discussion with numbering
             'Results Discussion section': 'Results Discussion',
             'discussion-block class': 'discussion-block',
@@ -225,6 +252,12 @@ def main():
                 errors.append("MISSING in HTML: {} ('{}')".format(desc, needle))
             else:
                 print("  OK: {}".format(desc))
+        placeholder_markers = ['[Replace with', '[Auto-populated from', '[List references']
+        for marker in placeholder_markers:
+            if marker in html:
+                errors.append("HTML still contains placeholder marker: {}".format(marker))
+            else:
+                print("  OK: no placeholder marker {}".format(marker))
 
     # ---- Consistency checker tests ----
     print("\n  ---- Consistency Checker Tests ----")

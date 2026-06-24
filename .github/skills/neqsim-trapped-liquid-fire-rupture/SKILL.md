@@ -364,6 +364,23 @@ repeatable evidence-first structure. At minimum include:
   rupture is predicted.
 10. **Calculation lineage** from document field to NeqSim input to reported result.
 
+Before the report is considered complete, apply these hard QA gates:
+
+- The executive summary and problem description must be populated from the
+  current `task_spec.md` and `results.json`; no placeholder text may remain.
+- The report front page must state the readiness label (`NOT_READY`,
+  `SCREENING`, or `DESIGN_GRADE`) and whether design-grade use is blocked.
+- The method in `task_spec.md`, source scripts, generated `results.json`, and
+  report must agree on the pressure-profile basis. If the task moved from a
+  reconstructed profile to a direct dynamic NeqSim profile, update all four.
+- Script-backed studies are acceptable when `study_config.yaml` explicitly sets
+  notebooks to not required; do not create false notebook execution warnings.
+- `analysis.md` and `neqsim_improvements.md` must be filled for safety-critical
+  workflow/code gaps, including reporting, evidence-readiness, pressure-profile
+  export, historian/tagreader evidence, and governed handoff gaps.
+- The evidence gaps/design blockers and recommendations must appear before or
+  alongside the conclusions, not only in appendix-style detail.
+
 ## Results to Save
 
 Save a `trapped_liquid_fire_rupture` section in `results.json`:
