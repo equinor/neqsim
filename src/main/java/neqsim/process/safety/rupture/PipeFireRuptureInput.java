@@ -61,7 +61,7 @@ public class PipeFireRuptureInput implements Serializable {
     this.initialTemperatureC = builder.initialTemperatureC;
     this.exposedLengthM = builder.exposedLengthM;
     this.evidenceReferences = Collections
-	.unmodifiableList(new ArrayList<SafetyEvidenceReference>(builder.evidenceReferences));
+        .unmodifiableList(new ArrayList<SafetyEvidenceReference>(builder.evidenceReferences));
   }
 
   /**
@@ -234,12 +234,12 @@ public class PipeFireRuptureInput implements Serializable {
    */
   public Builder toBuilder() {
     Builder builder = builder(segmentId).pipeClass(pipeClass).nominalDiameterInches(nominalDiameterInches)
-	.outsideDiameter(outsideDiameterM, "m").nominalWallThickness(nominalWallThicknessM, "m")
-	.corrosionAllowance(corrosionAllowanceM, "m")
-	.wallThicknessUndertoleranceFraction(wallThicknessUndertoleranceFraction).weldFactor(weldFactor)
-	.weightStressMPa(weightStressMPa).fluidDensityKgPerM3(fluidDensityKgPerM3)
-	.fluidHeatCapacityJPerKgK(fluidHeatCapacityJPerKgK).gasMolecularWeightKgPerKmol(gasMolecularWeightKgPerKmol)
-	.initialTemperatureC(initialTemperatureC).exposedLength(exposedLengthM, "m");
+        .outsideDiameter(outsideDiameterM, "m").nominalWallThickness(nominalWallThicknessM, "m")
+        .corrosionAllowance(corrosionAllowanceM, "m")
+        .wallThicknessUndertoleranceFraction(wallThicknessUndertoleranceFraction).weldFactor(weldFactor)
+        .weightStressMPa(weightStressMPa).fluidDensityKgPerM3(fluidDensityKgPerM3)
+        .fluidHeatCapacityJPerKgK(fluidHeatCapacityJPerKgK).gasMolecularWeightKgPerKmol(gasMolecularWeightKgPerKmol)
+        .initialTemperatureC(initialTemperatureC).exposedLength(exposedLengthM, "m");
     for (SafetyEvidenceReference reference : evidenceReferences) {
       builder.evidenceReference(reference);
     }
@@ -332,7 +332,7 @@ public class PipeFireRuptureInput implements Serializable {
      */
     private Builder(String segmentId) {
       if (segmentId == null || segmentId.trim().isEmpty()) {
-	throw new IllegalArgumentException("segmentId must not be empty");
+        throw new IllegalArgumentException("segmentId must not be empty");
       }
       this.segmentId = segmentId.trim();
     }
@@ -416,7 +416,7 @@ public class PipeFireRuptureInput implements Serializable {
      */
     public Builder weldFactor(double weldFactor) {
       if (weldFactor <= 0.0 || weldFactor > 1.0 || Double.isNaN(weldFactor) || Double.isInfinite(weldFactor)) {
-	throw new IllegalArgumentException("weldFactor must be in (0,1]");
+        throw new IllegalArgumentException("weldFactor must be in (0,1]");
       }
       this.weldFactor = weldFactor;
       return this;
@@ -430,7 +430,7 @@ public class PipeFireRuptureInput implements Serializable {
      */
     public Builder weightStressMPa(double weightStressMPa) {
       if (Double.isNaN(weightStressMPa) || Double.isInfinite(weightStressMPa)) {
-	throw new IllegalArgumentException("weightStressMPa must be finite");
+        throw new IllegalArgumentException("weightStressMPa must be finite");
       }
       this.weightStressMPa = weightStressMPa;
       return this;
@@ -480,7 +480,7 @@ public class PipeFireRuptureInput implements Serializable {
      */
     public Builder initialTemperatureC(double initialTemperatureC) {
       if (Double.isNaN(initialTemperatureC) || Double.isInfinite(initialTemperatureC)) {
-	throw new IllegalArgumentException("initialTemperatureC must be finite");
+        throw new IllegalArgumentException("initialTemperatureC must be finite");
       }
       this.initialTemperatureC = initialTemperatureC;
       return this;
@@ -506,7 +506,7 @@ public class PipeFireRuptureInput implements Serializable {
      */
     public Builder evidenceReference(SafetyEvidenceReference reference) {
       if (reference != null) {
-	evidenceReferences.add(reference);
+        evidenceReferences.add(reference);
       }
       return this;
     }
@@ -530,11 +530,11 @@ public class PipeFireRuptureInput implements Serializable {
       validatePositive(nominalWallThicknessM, "nominalWallThicknessM");
       validatePositive(exposedLengthM, "exposedLengthM");
       if (nominalWallThicknessM * (1.0 - wallThicknessUndertoleranceFraction) - corrosionAllowanceM <= 0.0) {
-	throw new IllegalArgumentException("effective wall thickness must be positive");
+        throw new IllegalArgumentException("effective wall thickness must be positive");
       }
       if (outsideDiameterM <= 2.0
-	  * (nominalWallThicknessM * (1.0 - wallThicknessUndertoleranceFraction) - corrosionAllowanceM)) {
-	throw new IllegalArgumentException("effective inside diameter must be positive");
+          * (nominalWallThicknessM * (1.0 - wallThicknessUndertoleranceFraction) - corrosionAllowanceM)) {
+        throw new IllegalArgumentException("effective inside diameter must be positive");
       }
     }
 
@@ -549,10 +549,10 @@ public class PipeFireRuptureInput implements Serializable {
       validateNonNegative(value, "length");
       String normalized = unit == null ? "m" : unit.trim().toLowerCase();
       if ("m".equals(normalized) || "meter".equals(normalized) || "metre".equals(normalized)) {
-	return value;
+        return value;
       }
       if ("mm".equals(normalized) || "millimeter".equals(normalized) || "millimetre".equals(normalized)) {
-	return value / 1000.0;
+        return value / 1000.0;
       }
       throw new IllegalArgumentException("Unsupported length unit: " + unit);
     }

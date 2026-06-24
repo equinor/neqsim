@@ -10,10 +10,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Transient depressurization (blowdown) simulator for pressurized vessels.
  *
  * <p>
- * Solves the coupled mass and energy balance for a vessel discharging through an orifice or
- * blowdown valve. Tracks fluid temperature, pressure, inventory, and (optionally) a lumped wall
- * metal temperature. Reports compliance against API 521 §5.20 / BS EN ISO 23251 acceptance
- * criteria:
+ * Solves the coupled mass and energy balance for a vessel discharging through an orifice or blowdown valve. Tracks
+ * fluid temperature, pressure, inventory, and (optionally) a lumped wall metal temperature. Reports compliance against
+ * API 521 §5.20 / BS EN ISO 23251 acceptance criteria:
  * <ul>
  * <li>50% of initial absolute pressure within 15 minutes (depressurization rate criterion)</li>
  * <li>Reach 7 barg within 15 minutes (fire-case criterion)</li>
@@ -21,10 +20,10 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </ul>
  *
  * <p>
- * Mass flow uses isenthalpic compressible orifice relations (choked / subsonic). The internal
- * energy balance uses Q_fire (optional, from API 521) minus enthalpy of discharged fluid. When
- * wall-first fire heating is enabled, the external fire duty heats the lumped wall and the fluid
- * receives heat through the configured internal heat-transfer coefficient.
+ * Mass flow uses isenthalpic compressible orifice relations (choked / subsonic). The internal energy balance uses
+ * Q_fire (optional, from API 521) minus enthalpy of discharged fluid. When wall-first fire heating is enabled, the
+ * external fire duty heats the lumped wall and the fluid receives heat through the configured internal heat-transfer
+ * coefficient.
  *
  * <p>
  * <b>References:</b> API STD 521 (7th Ed), BS EN ISO 23251, NORSOK P-001.
@@ -62,8 +61,8 @@ public class DepressurizationSimulator implements Serializable {
    * @param dischargeCoefficient orifice Cd (typical 0.61–0.85)
    * @param backPressure downstream absolute pressure in Pa (typically flare header)
    */
-  public DepressurizationSimulator(SystemInterface fluid, double vesselVolume,
-      double orificeDiameter, double dischargeCoefficient, double backPressure) {
+  public DepressurizationSimulator(SystemInterface fluid, double vesselVolume, double orificeDiameter,
+      double dischargeCoefficient, double backPressure) {
     if (fluid == null) {
       throw new IllegalArgumentException("fluid must not be null");
     }
@@ -78,8 +77,8 @@ public class DepressurizationSimulator implements Serializable {
   }
 
   /**
-   * Set fire heat input per API 521 §4.3 (constant heat duty applied to the fluid unless wall-first
-   * heating is enabled).
+   * Set fire heat input per API 521 §4.3 (constant heat duty applied to the fluid unless wall-first heating is
+   * enabled).
    *
    * @param qFire fire heat input in W (positive value)
    * @return this simulator for chaining
@@ -93,10 +92,9 @@ public class DepressurizationSimulator implements Serializable {
    * Configure whether the fire heat input heats the wall before transferring to the fluid.
    *
    * <p>
-   * If set to {@code true} and a wall model is configured, the external fire duty increases the
-   * lumped wall metal temperature and the fluid receives heat through the internal film
-   * heat-transfer term. If no wall model is configured, the heat duty is still applied directly to
-   * the fluid so fire heat is not silently discarded.
+   * If set to {@code true} and a wall model is configured, the external fire duty increases the lumped wall metal
+   * temperature and the fluid receives heat through the internal film heat-transfer term. If no wall model is
+   * configured, the heat duty is still applied directly to the fluid so fire heat is not silently discarded.
    *
    * @param fireHeatInputToWall true to route fire heat through the wall model
    * @return this simulator for chaining
@@ -115,8 +113,8 @@ public class DepressurizationSimulator implements Serializable {
    * @param insideHTC inside film heat transfer coefficient in W/(m²·K)
    * @return this simulator for chaining
    */
-  public DepressurizationSimulator setWall(double wallMass, double wallArea,
-      double wallSpecificHeat, double insideHTC) {
+  public DepressurizationSimulator setWall(double wallMass, double wallArea, double wallSpecificHeat,
+      double insideHTC) {
     this.wallMass = wallMass;
     this.wallArea = wallArea;
     this.wallCp = wallSpecificHeat;
@@ -233,8 +231,7 @@ public class DepressurizationSimulator implements Serializable {
         if (term < 0.0) {
           term = 0.0;
         }
-        mDot =
-            dischargeCoefficient * area * pPa * Math.sqrt(mw / (z * R * tempK)) * Math.sqrt(term);
+        mDot = dischargeCoefficient * area * pPa * Math.sqrt(mw / (z * R * tempK)) * Math.sqrt(term);
       }
       if (mDot < 0.0 || Double.isNaN(mDot)) {
         mDot = 0.0;
@@ -303,14 +300,12 @@ public class DepressurizationSimulator implements Serializable {
   }
 
   /**
-   * Scale the total mole inventory of the fluid by the given factor while preserving the
-   * composition (mole fractions). Each component's moles are adjusted by adding a delta of
-   * {@code currentMoles * (factor - 1)}. This is the correct way to change the absolute inventory
-   * of a closed {@link SystemInterface}; {@code setTotalNumberOfMoles} only sets the scalar total
-   * and leaves the component moles unchanged, corrupting the average molar mass.
+   * Scale the total mole inventory of the fluid by the given factor while preserving the composition (mole fractions).
+   * Each component's moles are adjusted by adding a delta of {@code currentMoles * (factor - 1)}. This is the correct
+   * way to change the absolute inventory of a closed {@link SystemInterface}; {@code setTotalNumberOfMoles} only sets
+   * the scalar total and leaves the component moles unchanged, corrupting the average molar mass.
    *
-   * @param factor the multiplicative scaling factor for the total moles; values &lt;= 0, NaN or
-   *        equal to 1 are ignored
+   * @param factor the multiplicative scaling factor for the total moles; values &lt;= 0, NaN or equal to 1 are ignored
    */
   private void scaleMoles(double factor) {
     if (factor <= 0.0 || Double.isNaN(factor) || Math.abs(factor - 1.0) < 1.0e-12) {
@@ -390,8 +385,7 @@ public class DepressurizationSimulator implements Serializable {
       }
       if (!massKg.isEmpty()) {
         double previousMassKg = massKg.get(massKg.size() - 1);
-        double massToleranceKg =
-            Math.max(1.0e-8, Math.abs(previousMassKg) * MASS_MONOTONIC_RELATIVE_TOLERANCE);
+        double massToleranceKg = Math.max(1.0e-8, Math.abs(previousMassKg) * MASS_MONOTONIC_RELATIVE_TOLERANCE);
         if (mass > previousMassKg + massToleranceKg) {
           massMonotonicNonIncreasing = false;
         }

@@ -57,17 +57,17 @@ public final class PipeFireRuptureUncertaintyRunner implements Serializable {
     List<CaseResult> cases = new ArrayList<CaseResult>();
     cases.add(runCase("base", dataSource.getInput(), dataSource.getScenario(), dataSource));
     cases.add(runCase("wall_thickness_minus_10_pct", scaleWall(dataSource.getInput(), 0.90), dataSource.getScenario(),
-	dataSource));
+        dataSource));
     cases.add(runCase("wall_thickness_plus_10_pct", scaleWall(dataSource.getInput(), 1.10), dataSource.getScenario(),
-	dataSource));
+        dataSource));
     cases.add(runCase("corrosion_allowance_plus_1_mm", addCorrosionAllowance(dataSource.getInput(), 0.001),
-	dataSource.getScenario(), dataSource));
+        dataSource.getScenario(), dataSource));
     cases.add(runCase("fire_heat_flux_factor_minus_20_pct", dataSource.getInput(),
-	scaleHeatFlux(dataSource.getScenario(), 0.80), dataSource));
+        scaleHeatFlux(dataSource.getScenario(), 0.80), dataSource));
     cases.add(runCase("initial_temperature_minus_20_C", shiftInitialTemperature(dataSource.getInput(), -20.0),
-	dataSource.getScenario(), dataSource));
+        dataSource.getScenario(), dataSource));
     cases.add(runCase("initial_temperature_plus_20_C", shiftInitialTemperature(dataSource.getInput(), 20.0),
-	dataSource.getScenario(), dataSource));
+        dataSource.getScenario(), dataSource));
     return new UncertaintySummary(cases, "Deterministic one-at-a-time perturbation screening.");
   }
 
@@ -83,11 +83,11 @@ public final class PipeFireRuptureUncertaintyRunner implements Serializable {
   private CaseResult runCase(String caseName, PipeFireRuptureInput input, PipeFireRuptureScenario scenario,
       PipeFireRuptureDataSource dataSource) {
     PipeFireRuptureResult result = PipeFireRuptureStudy
-	.builder(input, dataSource.getMaterial(), scenario, dataSource.getPressureProfile())
-	.timeStepSeconds(timeStepSeconds).maxTimeSeconds(maxTimeSeconds)
-	.spreadsheetGasThermalMass(spreadsheetGasThermalMass).build().run();
+        .builder(input, dataSource.getMaterial(), scenario, dataSource.getPressureProfile())
+        .timeStepSeconds(timeStepSeconds).maxTimeSeconds(maxTimeSeconds)
+        .spreadsheetGasThermalMass(spreadsheetGasThermalMass).build().run();
     return new CaseResult(caseName, result.getStatus().name(), result.getRuptureTimeSeconds(),
-	result.getRupturePressureBarg());
+        result.getRupturePressureBarg());
   }
 
   /**
@@ -249,7 +249,7 @@ public final class PipeFireRuptureUncertaintyRunner implements Serializable {
       map.put("p90RuptureTimeSeconds", finiteOrNull(percentile(90.0)));
       List<Map<String, Object>> caseMaps = new ArrayList<Map<String, Object>>();
       for (CaseResult item : cases) {
-	caseMaps.add(item.toMap());
+        caseMaps.add(item.toMap());
       }
       map.put("cases", caseMaps);
       return map;
@@ -273,24 +273,24 @@ public final class PipeFireRuptureUncertaintyRunner implements Serializable {
     private double percentile(double percentile) {
       List<Double> values = new ArrayList<Double>();
       for (CaseResult item : cases) {
-	if (Double.isFinite(item.getRuptureTimeSeconds())) {
-	  values.add(Double.valueOf(item.getRuptureTimeSeconds()));
-	}
+        if (Double.isFinite(item.getRuptureTimeSeconds())) {
+          values.add(Double.valueOf(item.getRuptureTimeSeconds()));
+        }
       }
       if (values.isEmpty()) {
-	return Double.NaN;
+        return Double.NaN;
       }
       Collections.sort(values, new Comparator<Double>() {
-	@Override
-	public int compare(Double first, Double second) {
-	  return first.compareTo(second);
-	}
+        @Override
+        public int compare(Double first, Double second) {
+          return first.compareTo(second);
+        }
       });
       double rank = Math.max(0.0, Math.min(100.0, percentile)) / 100.0 * (values.size() - 1);
       int lower = (int) Math.floor(rank);
       int upper = (int) Math.ceil(rank);
       if (lower == upper) {
-	return values.get(lower).doubleValue();
+        return values.get(lower).doubleValue();
       }
       double fraction = rank - lower;
       return values.get(lower).doubleValue() * (1.0 - fraction) + values.get(upper).doubleValue() * fraction;

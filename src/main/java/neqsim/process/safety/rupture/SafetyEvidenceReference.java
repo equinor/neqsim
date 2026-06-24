@@ -270,13 +270,13 @@ public final class SafetyEvidenceReference implements Serializable {
      */
     private void validate() {
       if (clean(sourceSystem).isEmpty()) {
-	throw new IllegalArgumentException("sourceSystem must not be empty");
+        throw new IllegalArgumentException("sourceSystem must not be empty");
       }
       if (clean(fieldName).isEmpty()) {
-	throw new IllegalArgumentException("fieldName must not be empty");
+        throw new IllegalArgumentException("fieldName must not be empty");
       }
       if (confidence < 0.0 || confidence > 1.0 || Double.isNaN(confidence) || Double.isInfinite(confidence)) {
-	throw new IllegalArgumentException("confidence must be between 0 and 1");
+        throw new IllegalArgumentException("confidence must be between 0 and 1");
       }
     }
   }

@@ -65,7 +65,7 @@ public final class LineEquipmentListEvidence implements Serializable {
    */
   public boolean isSimulationReady() {
     return lineListReviewed && equipmentListReviewed && !lineItems.isEmpty() && !equipmentItems.isEmpty()
-	&& missingFields.isEmpty();
+        && missingFields.isEmpty();
   }
 
   /**
@@ -95,23 +95,23 @@ public final class LineEquipmentListEvidence implements Serializable {
     SafetyStudyReadiness.Builder readiness = SafetyStudyReadiness.builder();
     if (!lineListReviewed) {
       readiness.addWarning("line_list", "Line-list evidence has not been marked reviewed.",
-	  "Review source drawing, E3D, and piping-specification line rows before design-grade dynamic blowdown modelling.");
+          "Review source drawing, E3D, and piping-specification line rows before design-grade dynamic blowdown modelling.");
     }
     if (!equipmentListReviewed) {
       readiness.addWarning("equipment_list", "Equipment-list evidence has not been marked reviewed.",
-	  "Review vessel/equipment inventory, protected equipment tags, and design conditions.");
+          "Review vessel/equipment inventory, protected equipment tags, and design conditions.");
     }
     if (lineItems.isEmpty()) {
       readiness.addWarning("line_list", "No line-list rows are present.",
-	  "Extract line ids, from/to nodes, sizes, wall thicknesses, and flare/blowdown connections.");
+          "Extract line ids, from/to nodes, sizes, wall thicknesses, and flare/blowdown connections.");
     }
     if (equipmentItems.isEmpty()) {
       readiness.addWarning("equipment_list", "No equipment-list rows are present.",
-	  "Extract protected vessel/equipment tags, volumes, design pressure, and operating state.");
+          "Extract protected vessel/equipment tags, volumes, design pressure, and operating state.");
     }
     if (!missingFields.isEmpty()) {
       readiness.addWarning("line_equipment_list", "Required extracted fields are missing: " + missingFields,
-	  "Close missing rows or keep them as explicit dynamic study gaps.");
+          "Close missing rows or keep them as explicit dynamic study gaps.");
     }
     return readiness.build();
   }
@@ -211,9 +211,9 @@ public final class LineEquipmentListEvidence implements Serializable {
      * @param material material grade or MDS basis
      */
     public LineItem(String lineId, String fromTag, String toTag, double nominalDiameterInches, double internalDiameterM,
-	double wallThicknessM, double lengthM, String pipeClass, String material) {
+        double wallThicknessM, double lengthM, String pipeClass, String material) {
       if (clean(lineId).isEmpty()) {
-	throw new IllegalArgumentException("lineId must not be empty");
+        throw new IllegalArgumentException("lineId must not be empty");
       }
       this.lineId = clean(lineId);
       this.fromTag = clean(fromTag);
@@ -277,9 +277,9 @@ public final class LineEquipmentListEvidence implements Serializable {
      * @param operatingTemperatureK operating temperature in K
      */
     public EquipmentItem(String equipmentTag, String equipmentType, double volumeM3, double designPressureBara,
-	double operatingPressureBara, double operatingTemperatureK) {
+        double operatingPressureBara, double operatingTemperatureK) {
       if (clean(equipmentTag).isEmpty()) {
-	throw new IllegalArgumentException("equipmentTag must not be empty");
+        throw new IllegalArgumentException("equipmentTag must not be empty");
       }
       this.equipmentTag = clean(equipmentTag);
       this.equipmentType = clean(equipmentType);
@@ -382,9 +382,9 @@ public final class LineEquipmentListEvidence implements Serializable {
      * @return this builder
      */
     public Builder addLine(String lineId, String fromTag, String toTag, double nominalDiameterInches,
-	double internalDiameterM, double wallThicknessM, double lengthM, String pipeClass, String material) {
+        double internalDiameterM, double wallThicknessM, double lengthM, String pipeClass, String material) {
       lineItems.add(new LineItem(lineId, fromTag, toTag, nominalDiameterInches, internalDiameterM, wallThicknessM,
-	  lengthM, pipeClass, material));
+          lengthM, pipeClass, material));
       return this;
     }
 
@@ -400,9 +400,9 @@ public final class LineEquipmentListEvidence implements Serializable {
      * @return this builder
      */
     public Builder addEquipment(String equipmentTag, String equipmentType, double volumeM3, double designPressureBara,
-	double operatingPressureBara, double operatingTemperatureK) {
+        double operatingPressureBara, double operatingTemperatureK) {
       equipmentItems.add(new EquipmentItem(equipmentTag, equipmentType, volumeM3, designPressureBara,
-	  operatingPressureBara, operatingTemperatureK));
+          operatingPressureBara, operatingTemperatureK));
       return this;
     }
 
@@ -414,7 +414,7 @@ public final class LineEquipmentListEvidence implements Serializable {
      */
     public Builder addMissingField(String field) {
       if (!clean(field).isEmpty()) {
-	missingFields.add(clean(field));
+        missingFields.add(clean(field));
       }
       return this;
     }
@@ -435,7 +435,7 @@ public final class LineEquipmentListEvidence implements Serializable {
      */
     private void validate() {
       if (clean(sourceId).isEmpty()) {
-	throw new IllegalArgumentException("sourceId must not be empty");
+        throw new IllegalArgumentException("sourceId must not be empty");
       }
     }
   }
