@@ -258,6 +258,57 @@ String report = mechDesign.toJson();
 
 ---
 
+## Flowline Cooldown and No-Touch Time
+
+After a planned or unplanned shutdown, an insulated subsea flowline or riser
+cools toward the seabed temperature. The **no-touch time** is how long operators
+can wait before the fluid reaches the hydrate formation temperature (plus a
+safety margin) and remedial action (depressurization, MEG/methanol injection) is
+required. NeqSim couples a live fluid to a lumped cooldown engine with
+`SurfCooldownAnalyzer`.
+
+```java
+// Live fluid carries composition; analyzer auto-extracts density, Cp, hydrate Teq
+SurfCooldownAnalyzer analyzer = new SurfCooldownAnalyzer(fluid);  // SystemInterface
+analyzer.setInternalDiameter(0.254);        // m
+analyzer.setWallThickness(0.0159);          // m
+analyzer.setInsulationThickness(0.060);     // m
+analyzer.setInsulationConductivity(0.17);   // W/m·K (wet insulation, PP foam)
+analyzer.setSeabedTemperature(4.0);         // °C
+analyzer.setHydrateMargin(3.0);             // K above hydrate Teq
+analyzer.setRequiredNoTouchTimeHours(8.0);  // operational target (optional)
+
+// Either give an overall U-value directly, or let the layer model compute it:
+analyzer.setOverallUValue(2.5);             // W/m²·K  (skip for layer calc)
+
+analyzer.calculate();
+double noTouch = analyzer.getNoTouchTimeHours();
+String verdict = analyzer.getVerdict();     // OK / MARGINAL / CRITICAL / NO_HYDRATE_RISK
+double hydrateTeqC = analyzer.getHydrateEquilibriumTemperatureK() - 273.15;
+double tau = analyzer.getTimeConstantHours();
+String json = analyzer.toJson();
+```
+
+**How it works:**
+- Clones the fluid, runs `TPflash` + `initProperties`, and reads `getDensity("kg/m3")`
+  and `getCp("J/kgK")` for the lumped thermal mass.
+- Computes the hydrate equilibrium temperature via `hydrateFormationTemperature()`.
+  If the fluid has no free water (no hydrate risk), the verdict is `NO_HYDRATE_RISK`.
+- Delegates the transient to `PipelineCooldownCalculator` (exponential lumped
+  cooldown, layer or direct U-value). No-touch time is the time to reach
+  `hydrateTeq + margin`.
+- Verdict bands: with a required no-touch time, `OK` ≥ required, `MARGINAL` ≥ 0.75×,
+  else `CRITICAL`. Without one, `OK` ≥ 12 h, `MARGINAL` ≥ 6 h, else `CRITICAL`.
+
+**Standards:** DNV-RP-F109 (cooldown / no-touch time basis), API RP 17A
+(subsea system thermal management). Screening-level lumped model — use a
+distributed transient thermal-hydraulic tool for detailed design.
+
+`package`: `neqsim.pvtsimulation.flowassurance` —
+`SurfCooldownAnalyzer`, `PipelineCooldownCalculator`.
+
+---
+
 ## Artificial Lift Screening
 
 ```java
